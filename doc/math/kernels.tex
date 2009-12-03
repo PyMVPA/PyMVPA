@@ -30,9 +30,13 @@
 
 \section{Introduction}
 This document gives a detailed description of kernels implemented in
-PyMVPA together with derivation of their gradients. Gradients are
-useful when trying to maximize the marginal likelihood of a Gaussian,
-i.e., during model selection.
+PyMVPA together with derivation of their gradients. These kernels are
+used mainly by Gaussian Process Regression but can be of use for other
+kernel methods. Gradients are useful when trying to maximize the
+marginal likelihood of a Gaussian Process, i.e., during model
+selection. In some cases a further reparametrization in log scale is
+provided in order to reduce numerical stability issues when computing
+likelihoods.
 
 The following notation and definitions are used:
 \begin{itemize}
@@ -74,7 +78,7 @@ The following notation and definitions are used:
   through the weight vector $\mathbf{w} \in \R^D$. It is
   straightforward that $\dm(\X,\X') = \dm(\X,\X',\mathbf{J}_{D,1})$.
 \item $\X \bullet \mathbf{Y}$ : the Hadamard (or Schur) matrix
-  product, i.e. the entrywise product between matrices of the same
+  product, i.e. the entry-wise product between matrices of the same
   size. Let $\mathbf{Z} = \X \bullet \mathbf{Y}$, then $z_{ij} =
   x_{ij} y_{ij}$.
 \item $\X^{\alpha}$ : $(\X^{\alpha})_{ij} = (X_{ij})^{\alpha}$.
@@ -101,26 +105,42 @@ Note that using $A$ as hyperparameter the gradient becomes constant.
 Let $\Ivec{\Sigma}_p$ be the $D \times D$ covariance matrix of the Gaussian
 prior probability $\mathcal{N}(\Ivec{0},\Ivec{\Sigma}_p)$ of the weights of
 the Bayesian linear regression.
-$$k(\x,\x') = \x^{\top} \Ivec{\Sigma}_p \x'$$
-$$\K(\X,\X') = \X \Ivec{\Sigma}_p \X'^{\top}$$
+$$k(\x,\x') = \x^{\top} \Ivec{\Sigma}_p \x' + \sigma_2^2$$
+$$\K(\X,\X') = \X \Ivec{\Sigma}_p \X'^{\top} + \Ivec{I}\sigma_0^2$$
 In order to simplify formulas we assume $\Ivec{\Sigma}_p$ is diagonal, i.e.,
 $\Ivec{\Sigma}_p = diag(\Ivec{\sigma}^2_p)$ where $\Ivec{\sigma}^2_p =
 ({\sigma^2_p}_1,\ldots,{\sigma^2_p}_D)$:
-$$k(\x,\x') = \sum_{i=1}^D {\sigma^2_p}_i x_i x'_i$$
-$$\mathbf{\Theta} = \{{\sigma_p}_1,\ldots,{\sigma_p}_D\}$$
+$$k(\x,\x') = \sum_{i=1}^D {\sigma^2_p}_i x_i x'_i + \sigma_0^2$$
+$$\mathbf{\Theta} = \{{\sigma_p}_1,\ldots,{\sigma_p}_D,\sigma_0\}$$
 $$\frac{\partial k}{\partial {\sigma_p}_i} = 2 {\sigma_p}_i x_i x'_i$$
 $$A_i = {\sigma_p^2}_i$$
 $$A_i \ge 0$$
 $$\mathbf{A} = (A_1,\ldots,A_D)^{\top}$$
-$$\mathbf{\Theta}^* = \{ \mathbf{A} \}$$
-$$k(\x,\x') = \x^{\top} diag(\mathbf{A}) \x'$$
-$$\K(\X,\X') = \X diag(\mathbf{A}) \X'^{\top}$$
+$$\frac{\partial k}{\partial \sigma_0} = 2 \sigma_0$$
+$$B = \sigma_0^2$$
+$$\mathbf{\Theta}^* = \{ \mathbf{A} , B\}$$
+$$k(\x,\x') = \x^{\top} diag(\mathbf{A}) \x' + B$$
+$$\K(\X,\X') = \X diag(\mathbf{A}) \X'^{\top} + \Ivec{I}B$$
 $$\frac{\partial k}{\partial A_i} = x_i x'_i$$
 $$\frac{\partial \K}{\partial A_i} = \X_{* i} {\X'_{* i}}^{\top}$$
 $$\nabla_{\mathbf{A}} \K = ( \X_{* 1} {\X'_{* 1}}^{\top}, \ldots,
 \X_{* D} {\X'_{* D}}^{\top})$$
+$$\frac{\partial k}{\partial B} = 1$$
+$$\frac{\partial \K}{\partial B} = \Ivec{I}$$
 As expected the gradient is independent of the hyperparameters values
 and can be computed once for all at the beginning.
+
+Logscale:
+$$A_i = \ln{\sigma_{p_i}^2}$$
+$$\sigma_{p_i}^2 = e^{A_i}$$
+$$\frac{\partial k}{\partial A_i} = \sigma_{p_i}^2 x_i x_j$$
+$$B = \ln{\sigma_0}$$
+$$\sigma_0^2 = e^{2B}$$
+$$\frac{\partial k}{\partial B} = 2 e^{2B} = 2 \sigma_0^2$$
+Another reparametrization:
+$$C = \ln{\sigma_0^2}$$
+$$\sigma_0^2 = e^C$$
+$$\frac{\partial k}{\partial C} = \sigma_0^2$$
 
 \section{Polynomial kernel}
 $$k(\x,\x') = (\sigma_0^2 + \x^{\top} \Ivec{\Sigma}_p \x')^p =
@@ -154,7 +174,7 @@ $$\mathbf{M} = A \mathbf{J}_{N,N'}+ \sum_{i=1}^D B_i \X_{*i} \X'_{*i}$$
 $$\nabla_{A,\mathbf{B},p} \K = \left(p\mathbf{M}^{p-1},\left\{p\mathbf{M}^{p-1} \X_{*i} {\X'_{*i}}^{\top} \right\}_{i=1,\ldots,D}, \K(\X,\X') \bullet \ln(\mathbf{M}) \right)$$
 
 \section{Exponential kernel}
-\subsection{Scalar Lengthscale $\ell$}
+\subsection{Scalar Length-scale $\ell$}
 $$k(\x,\x') = \sigma_f^2 e^{-\frac{\|\x-\x'\|_2}{\ell}}$$
 $$\ell > 0$$
 $$\sigma_f \ge 0$$
@@ -178,7 +198,7 @@ Note that if $\K(\X,\X')$ is precomputed, then the gradient consists
 in just two element-by-element products, the second being against a
 constant matrix independent of the hyperparameters.
 
-\subsection{Vector of Lengthscales $\Ivec{\ell}$}
+\subsection{Vector of Length-Scales $\Ivec{\ell}$}
 Given $\Ivec{\ell} = (\ell_1,\ldots,\ell_D)$, $\ell_i \ge 0$ and
 $\ELL^{-1} = (1/\ell_1,\ldots,1/\ell_D)$
 $$k(\x,\x') = \sigma_f^2 e^{-\|\x-\x',\ELL^{-2}\|_2}= \sigma_f^2
@@ -213,7 +233,7 @@ $$\nabla_{A,\mathbf{B}} \K = \left(\frac{1}{A}\K(\X,\X'), \left\{-\frac{1}{2}
 Note that $\frac{\partial \K}{\partial A}$ requires just the
 multiplication of a constant by the kernel matrix $\K(\X,\X')$ whose
 values usually already available. Instead $\frac{\partial \K}{\partial
-  B_i}$ is a entrywise product of 3 matrices: $\K(\X,\X')$ (usually
+  B_i}$ is a entry-wise product of 3 matrices: $\K(\X,\X')$ (usually
 already available), $\dm(\X-\X',\mathbf{B})^3$ (which is, apart the
 cube, part of the computation of $\K(\X,\X')$ so it can be stored in
 advance), and $(\X_{*i}J_{1,N'}- (\X'_{*i}J_{1,N})^{\top})^2$ which
@@ -224,7 +244,7 @@ for all. Note that in NumPy $(\X_{*i}J_{1,N'}-
 
 \section{Squared Exponential kernel}
 
-\subsection{Scalar Lengthscale $\ell$}
+\subsection{Scalar Length-Scale $\ell$}
 $$k(\x,\x') = \sigma_f^2 e^{-\frac{1}{2\ell^2} (\x-\x')^{\top}(\x-\x')}
   = \sigma_f^2 e^{-\frac{1}{2\ell^2} \sum_{i=1}^D (x_i - x'_i)^2} =
   \sigma_f^2 e^{-\frac{1}{2\ell^2} \|\x-\x'\|_2^2}$$ 
@@ -266,7 +286,7 @@ Note that $\nabla_{A,B} \K$ is similar to that of the exponential
 kernel so almost all comments made before applies here as well.
 
 
-\subsection{Vector of Lengthscales $\ELL$}
+\subsection{Vector of Length-Scales $\ELL$}
 Let $\mathbf{L} = diag(\ELL)$:
 $$k(\x,\x') = \sigma_f^2 e^{-\frac{1}{2}(\x-\x')^{\top} \LL^{-2}
   (\x-\x')} = \sigma_f e^{-\frac{1}{2}\sum_{i=1}^D \frac{(x_i -
@@ -311,7 +331,7 @@ $$\nabla_{A,\mathbf{B}} \K = \left(\frac{\K(\X,\X')}{A}, \left\{ K(\X,\X')
   \ldots D} \right)$$
 
 Note that $\nabla_{A,\mathbf{B}} \K$ requires to compute $K(\X,\X')$
-(which is usually already available), and its entrywise product with
+(which is usually already available), and its entry-wise product with
 $(\X_{*i}J_{1,N'}- (\X'_{*i}J_{1,N})^{\top})^2$ which is independent
 of the value of the hyperparameters and can be precomputed once for
 all.
@@ -353,3 +373,5 @@ $$\ell > 0$$
 
 
 \end{document}
+
+% LocalWords:  Logscale
