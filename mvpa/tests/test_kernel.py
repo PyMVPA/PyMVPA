@@ -31,6 +31,23 @@ class KernelTests(unittest.TestCase):
     """
 
     # mvpa.kernel stuff
+    
+    def kernel_equiv(self, k1, k2, accuracy = 1e-12):
+        """Test how accurately two kernels agree
+        
+        Will fail if maximum difference (per element) > accurracy
+        OR if the float32 casts are not exactly equal
+        """
+        k1m = k1.as_np()._k
+        k2m = k2.as_np()._k
+        diff = N.abs(k1m - k2m)
+        dmax = diff.max()
+        self.failUnless(dmax <= accuracy,
+                        '\n%s\nand\n%s\ndiffer by %s'%(k1, k2, dmax))
+        self.failUnless(N.all(k1m.astype('float32') == \
+                              k2m.astype('float32')),
+                        '\n%s\nand\n%s\nare unequal as float32'%(k1, k2))
+            
     def testLinearKernel(self):
         """Simplistic testing of linear kernel"""
         d1 = Dataset(N.asarray([range(5)]*10, dtype=float))
@@ -69,7 +86,7 @@ class KernelTests(unittest.TestCase):
         for chunk in [d[d.sa.chunks==i] for i in range(nchunks)]:
             rk.compute(chunk)
             ck.compute(chunk)
-            self.kernel_equiv(rk, ck, accuracy=1e-12)
+            self.kernel_equiv(rk, ck, accuracy=0)
             self.failIf(ck._recomputed,
                         "CachedKernel incorrectly recomputed it's kernel")
 
@@ -99,16 +116,6 @@ class KernelTests(unittest.TestCase):
         # Not clear if this is just for CustomKernels as there are some
         # remaining innaccuracies in others, but this might be due to other
         # sources of noise.  In all cases float32 should be identical
-        def kernel_equiv(self, nk, sk, accuracy = 1e-12):
-            nkm = nk._k
-            skm = sk.as_np()._k
-            diff = N.abs(nkm - skm)
-            dmax = diff.max()
-            self.failUnless(dmax < accuracy,
-                            '\n%s\nand\n%s\ndiffer by %s'%(nk, sk, dmax))
-            self.failUnless(N.all(nkm.astype('float32') == \
-                                  skm.astype('float32')),
-                            '\n%s\nand\n%s\nare unequal as float32'%(nk, sk))
             
         def testSgConversions(self):
             nk = PrecomputedKernel(matrix=N.random.randn(50, 50))
