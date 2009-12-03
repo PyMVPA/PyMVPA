@@ -25,6 +25,7 @@ import numpy as N
 from mvpa.base.types import is_datasetlike
 from mvpa.misc.state import ClassWithCollections
 from mvpa.misc.param import Parameter
+from mvpa.misc.sampleslookup import SamplesLookup # required for CachedKernel
 
 # Imports enough to convert to shogun kernels if shogun is installed
 #try:
@@ -158,11 +159,11 @@ class CachedKernel(NumpyKernel):
     def _init(self, ds1, ds2=None):
         """Initializes internal lookups + _kfull
         """
-        self._lhsids = SampleLookup(ds1)
+        self._lhsids = SamplesLookup(ds1)
         if ds2 is None:
             self._rhsids = self._lhsids
         else:
-            self._rhsids = SampleLookup(ds2)
+            self._rhsids = SamplesLookup(ds2)
 
         ckernel = self.params.kernel
         ckernel.compute(ds1, ds2)
@@ -178,9 +179,10 @@ class CachedKernel(NumpyKernel):
         # Check either those ds1, ds2 are coming from the same
         # dataset as before
 
-        # TODO: figure out if params were modified...
+        # TODO: figure out if data were modified...
         # params_modified = True
-        if params_modified:
+        changedData = False
+        if len(self.params.whichSet()) or changedData:
             self._init(ds1, ds2)
         else:
             # figure d1, d2
