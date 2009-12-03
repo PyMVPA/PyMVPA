@@ -52,7 +52,7 @@ def dumbFeatureDataset():
             [12, 1]]
     regs = ([1] * 8) + ([2] * 8) + ([3] * 8)
 
-    return dataset(samples=data, labels=regs, chunks=range(len(regs)))
+    return dataset(samples=N.array(data), labels=regs, chunks=range(len(regs)))
 
 
 def dumbFeatureBinaryDataset():
@@ -64,7 +64,7 @@ def dumbFeatureBinaryDataset():
             [12, 1]]
     regs = ([0] * 12) + ([1] * 12)
 
-    return dataset(samples=data, labels=regs, chunks=range(len(regs)))
+    return dataset(samples=N.array(data), labels=regs, chunks=range(len(regs)))
 
 
 

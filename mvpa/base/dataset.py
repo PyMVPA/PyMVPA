@@ -216,7 +216,7 @@ class Dataset(object):
         if not sa is None:
             self.sa.update(sa)
         if hasattr(samples, 'shape'):
-            length = samples.shape[1]
+            length = N.prod(samples.shape[1:])
         else:
             length = None
         self.fa = FeatureAttributesCollection(length=length)
@@ -593,6 +593,10 @@ class DatasetAttributeExtractor(object):
         ds : Dataset
         """
         return ds.__dict__[self._col][self._key].value
+
+    def __repr__(self):
+        return "%s(%s, %s)" % (self.__class__.__name__,
+                               repr(self._col), repr(self._key))
 
 
 # shortcut that allows for more finger/screen-friendly specification of

@@ -27,6 +27,37 @@ if __debug__:
 
 
 class Dataset(BaseDataset):
+    def get_mapped(self, mapper):
+        """Feed this dataset through a mapper (forward).
+
+        Parameters
+        ----------
+        mapper : Mapper
+
+        Returns
+        -------
+        Dataset
+          The forward-mapped dataset.
+        """
+        mds = mapper.forward(self)
+        mds._append_mapper(mapper)
+        return mds
+
+
+    def _append_mapper(self, mapper):
+        if not 'mapper' in self.a:
+            self.a['mapper'] = mapper
+            return
+
+        pmapper = self.a.mapper
+        # otherwise we have a mapper already, but is it a chain?
+        if not isinstance(pmapper, ChainMapper):
+            self.a.mapper = ChainMapper([pmapper])
+
+        # is a chain mapper
+        self.a.mapper.append(mapper)
+
+
     @property
     def idhash(self):
         """To verify if dataset is in the same state as when smth else was done
@@ -81,19 +112,6 @@ class Dataset(BaseDataset):
         --------
         blah blah
         """
-        # we depend on arrays
-        samples = N.asanyarray(samples)
-
-        # put mapper as a dataset attribute in the general attributes collection
-        # need to do that first, since we want to know the final
-        # #samples/#features
-        a_items = {}
-        if not mapper is None:
-            # forward-map the samples
-            samples = mapper.forward(samples)
-            # and store the mapper
-            a_items['mapper'] = mapper
-
        # compile the necessary samples attributes collection
         sa_items = {}
 
@@ -110,10 +128,10 @@ class Dataset(BaseDataset):
                                                    'chunks')
 
         # common checks should go into __init__
-        ds = cls(samples, sa=sa_items, a=a_items)
-
+        ds = cls(samples, sa=sa_items)
+        if not mapper is None:
+            ds = ds.get_mapped(mapper)
         return ds
-
 
 
     @classmethod

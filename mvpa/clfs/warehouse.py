@@ -20,7 +20,7 @@ from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN
 from mvpa.clfs.gnb import GNB
-from mvpa.clfs.kernel import KernelLinear, KernelSquaredExponential
+from mvpa.kernels.np import LinearKernel, SquaredExponentialKernel
 
 # Helpers
 from mvpa.base import externals, cfg
@@ -332,8 +332,8 @@ clfswh += \
 if externals.exists('scipy'):
     from mvpa.clfs.gpr import GPR
 
-    clfswh += GPR(kernel=KernelLinear(), descr="GPR(kernel='linear')")
-    clfswh += GPR(kernel=KernelSquaredExponential(),
+    clfswh += GPR(kernel=LinearKernel(), descr="GPR(kernel='linear')")
+    clfswh += GPR(kernel=SquaredExponentialKernel(),
                   descr="GPR(kernel='sqexp')")
 
 # BLR

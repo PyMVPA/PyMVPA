@@ -96,7 +96,8 @@ def _setdebug(obj, partname):
 def _tosg(data):
     """Draft helper function to convert data we have into SG suitable format
 
-    TODO: Support different datatypes
+    TODO: Remove once kernels are implemented here (or, possibly for non-kernel
+    solvers, modify?)
     """
 
     if __debug__:

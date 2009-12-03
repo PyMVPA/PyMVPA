@@ -14,9 +14,10 @@ from mvpa.datasets import Dataset
 from mvpa.clfs.distance import squared_euclidean_distance, \
      pnorm_w, pnorm_w_python
 
-import mvpa.kernels.base as K
+import mvpa.kernels.np as npK
+from mvpa.kernels.base import PrecomputedKernel, CachedKernel
 try:
-    import mvpa.kernels.sg as SGK
+    import mvpa.kernels.sg as sgK
     _has_sg = True
 except RuntimeError:
     _has_sg = False
@@ -33,28 +34,151 @@ class KernelTests(unittest.TestCase):
     def testLinearKernel(self):
         """Simplistic testing of linear kernel"""
         d1 = Dataset(N.asarray([range(5)]*10, dtype=float))
-        lk = K.LinearKernel()
+        lk = npK.LinearKernel()
         lk.compute(d1)
         self.failUnless(lk._k.shape == (10, 10),
                         "Failure computing LinearKernel (Size mismatch)")
         self.failUnless((lk._k == 30).all(),
                         "Failure computing LinearKernel")
 
-    def testStaticKernel(self):
+    def testPrecomputedKernel(self):
         """Statistic Kernels"""
         d = N.random.randn(50, 50)
-        sk = K.StaticKernel(d)
-        self.failUnless((d == sk._k).all(),
-                        'Failure setting and retrieving StaticKernel data')
+        nk = PrecomputedKernel(matrix=d)
+        nk.compute()
+        self.failUnless((d == nk._k).all(),
+                        'Failure setting and retrieving PrecomputedKernel data')
 
+    def testCachedKernel(self):
+        nchunks = 5
+        n=50*nchunks
+        d = Dataset(N.random.randn(n, 132))
+        d.sa.chunks = N.random.randint(nchunks, size=n)
+        
+        # We'll compare against an Rbf just because it has a parameter to change
+        rk = npK.RbfKernel(gamma=1.5)
+        
+        # Assure two kernels are independent for this test
+        ck = CachedKernel(kernel=npK.RbfKernel(gamma=1.5))
+        ck.compute(d) # Initial cache of all data
+        
+        self.failUnless(ck._recomputed,
+                        'CachedKernel was not initially computed')
+        
+        # Try some splitting
+        for chunk in [d[d.sa.chunks==i] for i in range(nchunks)]:
+            rk.compute(chunk)
+            ck.compute(chunk)
+            self.kernel_equiv(rk, ck, accuracy=1e-12)
+            self.failIf(ck._recomputed,
+                        "CachedKernel incorrectly recomputed it's kernel")
+
+        # Test what happens when a parameter changes
+        ck.params.gamma = 3.5
+        ck.compute(d)
+        self.failUnless(ck._recomputed,
+                        "CachedKernel doesn't recompute on kernel change")
+        rk.params.gamma = 3.5
+        rk.compute(d)
+        self.failUnless(N.all(rk._k == ck._k),
+                        'Cached and rbf kernels disagree after kernel change')
+        
+        # Now test handling new data
+        d2 = Dataset(N.random.randn(32, 43))
+        ck.compute(d2)
+        self.failUnless(ck._recomputed,
+                        "CachedKernel did not automatically recompute new data")
+        ck.compute(d)
+        self.failUnless(ck._recomputed,
+                        "CachedKernel did not recompute old data which had\n" +\
+                        "previously been computed, but had the cache overriden")
+    
     if _has_sg:
         # Unit tests which require shogun kernels
+        # Note - there is a loss of precision from double to float32 in SG
+        # Not clear if this is just for CustomKernels as there are some
+        # remaining innaccuracies in others, but this might be due to other
+        # sources of noise.  In all cases float32 should be identical
+        def kernel_equiv(self, nk, sk, accuracy = 1e-12):
+            nkm = nk._k
+            skm = sk.as_np()._k
+            diff = N.abs(nkm - skm)
+            dmax = diff.max()
+            self.failUnless(dmax < accuracy,
+                            '\n%s\nand\n%s\ndiffer by %s'%(nk, sk, dmax))
+            self.failUnless(N.all(nkm.astype('float32') == \
+                                  skm.astype('float32')),
+                            '\n%s\nand\n%s\nare unequal as float32'%(nk, sk))
+            
         def testSgConversions(self):
-            nk = K.StaticKernel(N.random.randn(50, 50))
+            nk = PrecomputedKernel(matrix=N.random.randn(50, 50))
+            nk.compute()
             sk = nk.as_sg()
-            # There is some loss of accuracy here - why???
-            self.failUnless((N.abs(nk._k - sk.as_np()._k) < 1e-6).all(),
+            sk.compute()
+            # CustomKernels interally store as float32
+            self.failUnless((nk._k.astype('float32') == \
+                             sk.as_np()._k.astype('float32')).all(),
                             'Failure converting arrays between NP as SG')
+            
+        def testLinearSG(self):
+            d1 = N.random.randn(105, 32)
+            d2 = N.random.randn(41, 32)
+            
+            nk = npK.LinearKernel()
+            sk = sgK.LinearSGKernel()
+            nk.compute(d1, d2)
+            sk.compute(d1,d2)
+            
+            self.kernel_equiv(nk, sk)
+            
+        def testPolySG(self):
+            d1 = N.random.randn(105, 32)
+            d2 = N.random.randn(41, 32)
+            sk = sgK.PolySGKernel()
+            nk = npK.PolyKernel(offset=1)
+            ordervals = [1, 2, 3, 5, 7]
+            for p in ordervals:
+                sk.params.degree=p
+                nk.params.degree=p
+                sk.compute(d1, d2)
+                nk.compute(d1, d2)
+                
+                # This has less accuracy than other kernels - dunno why, but
+                # given that it is less accurate only for higher orders I don't
+                # think this is a huge issue --SG
+                self.kernel_equiv(nk, sk, accuracy = 10.**(p-12))
+                
+        def testRbfSG(self):
+            d1 = N.random.randn(105, 32)
+            d2 = N.random.randn(41, 32)
+            sk = sgK.RbfSGKernel()
+            nk = npK.RbfKernel()
+            gammavals = N.logspace(-2, 5, num=10)
+            for g in gammavals:
+                sk.params.gamma=g
+                nk.params.gamma=g
+                sk.compute(d1, d2)
+                nk.compute(d1, d2)
+                
+                self.kernel_equiv(nk, sk)
+                
+        def testCustomSG(self):
+            lk = sgK.LinearSGKernel()
+            cl = sgK.CustomSGKernel(sgK.sgk.LinearKernel)
+            poly = sgK.PolySGKernel()
+            custom = sgK.CustomSGKernel(sgK.sgk.PolyKernel, 
+                                        kernelparams=[('order',2),
+                                                      ('inhomogenous', True)])
+            d = N.random.randn(253, 52)
+            lk.compute(d)
+            cl.compute(d)
+            poly.compute(d)
+            custom.compute(d)
+            
+            self.failUnless(N.all(lk.as_np()._k == cl.as_np()._k),
+                            'CustomSGKernel does not agree with Linear')
+            self.failUnless(N.all(poly.as_np()._k == custom.as_np()._k),
+                            'CustomSGKernel does not agree with Poly')
 
     # Older kernel stuff (ie not mvpa.kernel) - perhaps refactor?
     def testEuclidDist(self):
