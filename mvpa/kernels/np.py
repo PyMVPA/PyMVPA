@@ -31,7 +31,35 @@ from mvpa.kernels.base import NumpyKernel
 if __debug__:
     from mvpa.base import debug, warning
 
+# Simple stuff
 
+class LinearKernel(NumpyKernel):
+    """Simple linear kernel: K(a,b) = a*b.T"""
+    def _compute(self, d1, d2):
+        self._k = N.dot(d1, d2.T)
+
+
+class PolyKernel(NumpyKernel):
+    """Polynomial kernel: K(a,b) = (a*b.T+offset)**degree"""
+    degree = Parameter(2, doc="Polynomial degree")
+    offset = Parameter(1, doc="Offset added to dot product before exponent")
+    
+    def _compute(self, d1, d2):
+        self._k = N.power(N.dot(d1, d2.T)+self.params.offset,
+                          self.params.degree)
+
+
+class RbfKernel(NumpyKernel):
+    """Radial basis function (aka Gausian, aka ) kernel
+    K(a,b) = exp(-||a-b||**2/gamma)
+    """
+    gamma = Parameter(1.0, allowedtype=float, doc="Scale parameter gamma")
+    
+    def _compute(self, d1, d2):
+        # Do the Rbf
+        self._k = N.exp(-squared_euclidean_distance(d1,d2) / self.params.gamma)
+        
+# More complex
 class ConstantKernel(NumpyKernel):
     """The constant kernel class.
     """
@@ -77,34 +105,6 @@ class ConstantKernel(NumpyKernel):
     pass
 
 
-class LinearKernel(NumpyKernel):
-    """Simple linear kernel
-    """
-    def _compute(self, d1, d2):
-        self._k = N.dot(d1, d2.T)
-
-class PolyKernel(NumpyKernel):
-    degree = Parameter(2, doc="Polynomial degree")
-    offset = Parameter(1, doc="Offset added to dot product before exponent")
-    
-    def _compute(self, d1, d2):
-        self._k = N.power(N.dot(d1, d2.T)+self.params.offset,
-                          self.params.degree)
-
-class RbfKernel(NumpyKernel):
-    gamma = Parameter(1.0, allowedtype=float, doc="Scale parameter gamma")
-    
-    def _compute(self, d1, d2):
-        # Calculate squared distance between all points
-        Kij = N.dot(d1, d2.T)
-        Kii = (d1**2).sum(axis=1).reshape((d1.shape[0], 1))
-        Kjj = (d2**2).sum(axis=1).reshape((1, d2.shape[0]))
-        d2 = Kii-2*Kij+Kjj
-        d2 = N.where(d2 < 0, 0, d2)
-        
-        # Do the Rbf
-        self._k = N.exp(-d2 / self.params.gamma)
-        
 class GeneralizedLinearKernel(NumpyKernel):
     """The linear kernel class.
     """
@@ -664,7 +664,10 @@ class RationalQuadraticKernel(NumpyKernel):
 
 # dictionary of avalable kernels with names as keys:
 kernel_dictionary = {'constant': ConstantKernel,
-                     'linear': GeneralizedLinearKernel,
+                     'linear': LinearKernel, #GeneralizedLinearKernel,
+                     'genlinear': GeneralizedLinearKernel,
+                     'poly': PolyKernel,
+                     'rbf': RbfKernel,
                      'exponential': ExponentialKernel,
                      'squared exponential': SquaredExponentialKernel,
                      'Matern ni=3/2': Matern_3_2Kernel,
