@@ -158,7 +158,7 @@ class CachedKernel(NumpyKernel):
         self.params.update(self.params.kernel.params)
         self._rhids = self._lhids = None
 
-    def _init(self, ds1, ds2=None):
+    def _cache(self, ds1, ds2=None):
         """Initializes internal lookups + _kfull
         """
         self._lhsids = SamplesLookup(ds1)
@@ -172,6 +172,8 @@ class CachedKernel(NumpyKernel):
         self._kfull = ckernel.as_np()._k
         ckernel.cleanup()
         self._k = self._kfull
+        
+        self._recomputed=True
         # TODO: store params representation for later comparison
 
     def compute(self, ds1, ds2=None):
@@ -184,8 +186,11 @@ class CachedKernel(NumpyKernel):
         # TODO: figure out if data were modified...
         # params_modified = True
         changedData = False
+        self._recomputed=False # Flag lets us know whether cache was recomputed
         if len(self.params.whichSet()) or changedData:
-            self._init(ds1, ds2)
+            self._cache(ds1, ds2)
+            self.params.reset() # hopefully this will never reset values, just
+            # changed status
         else:
             # figure d1, d2
             # TODO: find saner numpy way to select both rows and columns
@@ -199,7 +204,7 @@ class CachedKernel(NumpyKernel):
                     lhsids, axis=0).take(
                     rhsids, axis=1)
             except KeyError:
-                self._init(ds1, ds2)
+                self._cache(ds1, ds2)
 
 """
 if ds1 is the "derived" dataset as it was computed on:
