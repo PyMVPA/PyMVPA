@@ -15,7 +15,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.misc.state import StateVariable
-from mvpa.clfs.base import Classifier
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 
 if __debug__:
     from mvpa.misc import debug
@@ -115,6 +115,7 @@ class BLR(Classifier):
         pass
 
 
+    @accepts_dataset_as_samples
     def _predict(self, data):
         """
         Predict the output for the provided data.

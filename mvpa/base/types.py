@@ -17,3 +17,19 @@ def is_datasetlike(obj):
         return True
 
     return False
+
+
+def accepts_dataset_as_samples(fx):
+    """Decorator to extract samples from Datasets.
+
+    Little helper to allow methods to be written for plain data (if they
+    don't need information from a Dataset), but at the same time also
+    accept whole Datasets as input.
+    """
+    def extract_samples(obj, data):
+        if is_datasetlike(data):
+            return fx(obj, data.samples)
+        else:
+            return fx(obj, data)
+    return extract_samples
+

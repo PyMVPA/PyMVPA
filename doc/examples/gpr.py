@@ -78,7 +78,7 @@ for i in range(rows*columns):
     """
 
     sigma_f, length_scale, sigma_noise = hyperparameters[i, :]
-    kse = KernelSquaredExponential(length_scale=length_scale,
+    kse = SquaredExponentialKernel(length_scale=length_scale,
                                    sigma_f=sigma_f)
     g = GPR(kse, sigma_noise=sigma_noise, regression=regression)
     print g

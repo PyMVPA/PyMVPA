@@ -22,7 +22,7 @@ if externals.exists('rpy', raiseException=True) and \
     rpy.r.library('glmnet')
 
 # local imports
-from mvpa.clfs.base import Classifier
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.param import Parameter
 
@@ -201,6 +201,7 @@ class _GLMNET(Classifier):
             self.__weights = rpy.r.as_matrix(weights)[1:]
 
 
+    @accepts_dataset_as_samples
     def _predict(self, data):
         """
         Predict the output for the provided data.
