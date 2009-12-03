@@ -2,9 +2,9 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   Copyright (c) 2008 Emanuele Olivetti <emanuele@relativita.com>
-#   See COPYING file distributed along with the PyMVPA package for the
-#   copyright and license terms.
+#   Copyright (c) 2008 Emanuele Olivetti <emanuele@relativita.com> and
+#   PyMVPA Team. See COPYING file distributed along with the PyMVPA
+#   package for complete list of copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Kernels for Gaussian Process Regression and Classification."""
@@ -23,6 +23,8 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from mvpa.misc.state import StateVariable
+from mvpa.misc.param import Parameter
 from mvpa.misc.exceptions import InvalidHyperparameterError
 from mvpa.clfs.distance import squared_euclidean_distance
 from mvpa.kernels.base import NumpyKernel
@@ -30,54 +32,16 @@ if __debug__:
     from mvpa.base import debug, warning
 
 
-## class Kernel(object):
-##     """Kernel function base class.
-
-##     """
-
-##     def __init__(self):
-##         pass
-
-##     def __repr__(self):
-##         return "Kernel()"
-
-##     def compute(self, data1, data2=None):
-##         raise NotImplementedError
-
-##     def reset(self):
-##         """Resets the kernel dropping internal variables to the original values"""
-##         pass
-
-##     def compute_gradient(self,alphaalphaTK):
-##         raise NotImplementedError
-
-##     def compute_lml_gradient(self,alphaalphaT_Kinv,data):
-##         raise NotImplementedError
-
-##     def compute_lml_gradient_logscale(self,alphaalphaT_Kinv,data):
-##         raise NotImplementedError
-
-##     pass
-
 class ConstantKernel(NumpyKernel):
     """The constant kernel class.
     """
-    def __init__(self, sigma_0=1.0, **kwargs):
-        """Initialize the constant kernel instance.
 
-        :Parameters:
-          sigma_0 : float
-            standard deviation of the Gaussian prior probability
-            N(0,sigma_0**2) of the intercept of the constant regression.
-            (Defaults to 1.0)
-        """
-        # init base class first
-        NumpyKernel.__init__(self, **kwargs)
-
-        self.sigma_0 = sigma_0
-
-    def __repr__(self):
-        return "%s(sigma_0=%s)" % (self.__class__.__name__, str(self.sigma_0))
+    sigma_0 = Parameter(1.0,
+                        doc="""
+       A simple constant squared value of which is broadcasted across
+       kernel. In the case of GPR -- standard deviation of the Gaussian
+       prior probability N(0,sigma_0**2) of the intercept of the
+       constant regression.""")
 
     def _compute(self, data1, data2):
         """Compute kernel matrix.
@@ -90,68 +54,87 @@ class ConstantKernel(NumpyKernel):
             (Defaults to None)
         """
         self._k = \
-            (self.sigma_0 ** 2) * N.ones((data1.shape[0], data2.shape[0]))
+            (self.params.sigma_0 ** 2) * N.ones((data1.shape[0], data2.shape[0]))
 
-    def set_hyperparameters(self, hyperparameter):
-        if hyperparameter < 0:
-            raise InvalidHyperparameterError()
-        self.sigma_0 = hyperparameter
-        return
+    ## def set_hyperparameters(self, hyperparameter):
+    ##     if hyperparameter < 0:
+    ##         raise InvalidHyperparameterError()
+    ##     self.sigma_0 = hyperparameter
+    ##     return
 
-    def compute_lml_gradient(self,alphaalphaT_Kinv,data):
-        K_grad_sigma_0 = 2*self.sigma_0
+    def compute_lml_gradient(self, alphaalphaT_Kinv, data):
+        K_grad_sigma_0 = 2*self.params.sigma_0
         # self.lml_gradient = 0.5*(N.trace(N.dot(alphaalphaT_Kinv,K_grad_sigma_0*N.ones(alphaalphaT_Kinv.shape)))
         # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
         # Fastest when B is a constant: B*A.sum()
         self.lml_gradient = 0.5*N.array(K_grad_sigma_0*alphaalphaT_Kinv.sum())
-        return self.lml_gradient
+        #return self.lml_gradient
 
-    def compute_lml_gradient_logscale(self,alphaalphaT_Kinv,data):
-        K_grad_sigma_0 = 2*self.sigma_0**2
+    def compute_lml_gradient_logscale(self, alphaalphaT_Kinv, data):
+        K_grad_sigma_0 = 2*self.params.sigma_0**2
         self.lml_gradient = 0.5*N.array(K_grad_sigma_0*alphaalphaT_Kinv.sum())
-        return self.lml_gradient
-
+        #return self.lml_gradient
     pass
 
 
 class LinearKernel(NumpyKernel):
     """Simple linear kernel
     """
-
     def _compute(self, d1, d2):
         self._k = N.dot(d1, d2.T)
-
 
 
 class GeneralizedLinearKernel(NumpyKernel):
     """The linear kernel class.
     """
-    def __init__(self, Sigma_p=None, sigma_0=1.0, **kwargs):
-        """Initialize the linear kernel instance.
 
-        :Parameters:
-          Sigma_p : numpy.ndarray
-            Covariance matrix of the Gaussian prior probability N(0,Sigma_p)
-            on the weights of the linear regression.
-            (Defaults to None)
-          sigma_0 : float
-            the standard deviation of the Gaussian prior N(0,sigma_0**2)
-            of the intercept of the linear regression.
-            (Deafults to 1.0)
-        """
-        # init base class first
-        NumpyKernel.__init__(self, **kwargs)
+    sigma_0 = Parameter(1.0,
+                        doc="""
+       A simple constant squared value of which is broadcasted across
+       kernel. In the case of GPR -- standard deviation of the Gaussian
+       prior probability N(0,sigma_0**2) of the intercept of the
+       constant regression.""")
 
-        # TODO: figure out cleaner way... probably by using KernelParameters ;-)
-        self.Sigma_p = Sigma_p
-        self.sigma_0 = sigma_0
+    Sigma_p = Parameter(1.0,
+                        doc="""
+       TODO: generic description.
+       In the case of GPR -- scalar or a diagonal of covariance matrix
+       of the Gaussian prior probability N(0,Sigma_p) on the weights
+       of the linear regression.""")
+
+    gradients = StateVariable(enabled=False,
+        doc="Dictionary of gradients per a parameter")
+
+    gradientslog = StateVariable(enabled=False,
+        doc="Dictionary of gradients per a parameter in logspace")
+
+    ## def __init__(self, Sigma_p=None, sigma_0=1.0, **kwargs):
+    ##     """Initialize the linear kernel instance.
+
+    ##     :Parameters:
+    ##       Sigma_p : numpy.ndarray
+    ##         Covariance matrix of the Gaussian prior probability N(0,Sigma_p)
+    ##         on the weights of the linear regression.
+    ##         (Defaults to None)
+    ##       sigma_0 : float
+    ##         the standard deviation of the Gaussian prior N(0,sigma_0**2)
+    ##         of the intercept of the linear regression.
+    ##         (Deafults to 1.0)
+    ##     """
+    ##     # init base class first
+    ##     NumpyKernel.__init__(self, **kwargs)
+
+    ##     # TODO: figure out cleaner way... probably by using KernelParameters ;-)
+    ##     self.Sigma_p = Sigma_p
+    ##     self.sigma_0 = sigma_0
 
 
-    def __repr__(self):
-        return "%s(Sigma_p=%s, sigma_0=%s)" \
-            % (self.__class__.__name__, str(self.Sigma_p), str(self.sigma_0))
+    ## def __repr__(self):
+    ##     return "%s(Sigma_p=%s, sigma_0=%s)" \
+    ##         % (self.__class__.__name__, str(self.Sigma_p), str(self.sigma_0))
 
-
+    # XXX ??? would we reset correctly to the original value... model selection
+    #     currently depends on this I believe
     def reset(self):
         super(GeneralizedLinearKernel, self).reset()
         self._Sigma_p = self._Sigma_p_orig
@@ -159,22 +142,15 @@ class GeneralizedLinearKernel(NumpyKernel):
 
     def _compute(self, data1, data2):
         """Compute kernel matrix.
-        Set Sigma_p to correct dimensions and default value if necessary.
-
-        :Parameters:
-          data1 : numpy.ndarray
-            data
-          data2 : numpy.ndarray
-            data
-            (Defaults to None)
         """
-
         # it is better to use separate lines of computation, to don't
         # incure computation cost without need (otherwise
         # N.dot(self.Sigma_p, data2.T) can take forever for relatively
         # large number of features)
 
-        Sigma_p = self.Sigma_p          # local binding
+        Sigma_p = self.params.Sigma_p          # local binding
+        sigma_0 = self.params.sigma_0
+
         #if scalar - scale second term appropriately
         if N.isscalar(Sigma_p):
             if Sigma_p == 1.0:
@@ -193,72 +169,38 @@ class GeneralizedLinearKernel(NumpyKernel):
         # if it is a full matrix -- full-featured and lengthy
         # matrix product
         else:
+            raise ValueError, "Please provide Sigma_p as a scalar or a vector"
             data2_sc = N.dot(Sigma_p, data2.T)
             pass
 
         # XXX if Sigma_p is changed a warning should be issued!
         # XXX other cases of incorrect Sigma_p could be catched
-        self._k = N.dot(data1, data2_sc) + self.sigma_0 ** 2
+        self._k = k = N.dot(data1, data2_sc) + sigma_0 ** 2
 
-    def set_hyperparameters(self, hyperparameter):
-        # XXX in the next line we assume that the values we want to
-        # assign to Sigma_p are a constant or a vector (the diagonal
-        # of Sigma_p actually). This is a limitation since these
-        # values could be in general an hermitian matrix (i.e., a
-        # covariance matrix)... but how to tell ModelSelector/OpenOpt
-        # to proved just "hermitian" set of values? So for now we skip
-        # the general case, which seems not to useful indeed.
-        if N.any(hyperparameter < 0):
-            raise InvalidHyperparameterError()
-        self.sigma_0 = N.array(hyperparameter[0])
-        self._Sigma_p = N.diagflat(hyperparameter[1:])
-        return
-
-    def compute_lml_gradient(self,alphaalphaT_Kinv,data):
-        def lml_grad(K_grad_i):
-            # return N.trace(N.dot(alphaalphaT_Kinv,K_grad_i))
-            # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
-            return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
-        lml_gradient = []
-        lml_gradient.append(2*self.sigma_0*alphaalphaT_Kinv.sum())
-        for i in range(self.Sigma_p.shape[0]):
-            # Note that Sigma_p is not squared in compute() so it
-            # disappears in the partial derivative:
-            K_grad_i = N.multiply.outer(data[:,i],data[:,i])
-            lml_gradient.append(lml_grad(K_grad_i))
-            pass
-        self.lml_gradient = lml_gradient = 0.5*N.array(lml_gradient)
-        return lml_gradient
-
-    def compute_lml_gradient_logscale(self,alphaalphaT_Kinv,data):
-        def lml_grad(K_grad_i):
-            # return N.trace(N.dot(alphaalphaT_Kinv,K_grad_i))
-            # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
-            return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
-        lml_gradient = []
-        lml_gradient.append(2*self.sigma_0**2*alphaalphaT_Kinv.sum())
-        Sigma_p = self.Sigma_p          # local binding
-        for i in range(Sigma_p.shape[0]):
-            # Note that Sigma_p is not squared in compute() so it
-            # disappears in the partial derivative:
-            K_grad_log_i = Sigma_p[i,i]*N.multiply.outer(data[:,i],data[:,i])
-            lml_gradient.append(lml_grad(K_grad_log_i))
-            pass
-        self.lml_gradient = lml_gradient = 0.5*N.array(lml_gradient)
-        return lml_gradient
-
-
-    def _setSigma_p(self, v):
-        """Set Sigma_p value and store _orig for reset
-        """
-        if (v is None):
-            # if Sigma_p is not set use a scalar 1.0
-            v = 1.0
-        self._Sigma_p_orig = self._Sigma_p = v
-
-    Sigma_p = property(fget=lambda x:x._Sigma_p,
-                       fset=_setSigma_p)
-
+        # Compute gradients if any was requested
+        do_g  = self.states.isEnabled('gradients')
+        do_gl = self.states.isEnabled('gradientslog')
+        if do_g or do_gl:
+            if N.isscalar(Sigma_p):
+                g_Sigma_p = N.dot(data1.T, data2)
+                gl_Sigma_p = Sigma_p * g_Sigma_p
+            else:
+                nfeat = len(Sigma_p)
+                gsize = (len(data1), len(data2), nfeat)
+                if do_g:  g_Sigma_p = N.empty(gsize)
+                if do_gl: gl_Sigma_p = N.empty(gsize)
+                for i in xrange(nfeat):
+                    outer = N.multiply.outer(data1[:, i], data2[:, i])
+                    if do_g:  g_Sigma_p[:, :, i] = outer
+                    if do_gl: gl_Sigma_p = Sigma_p[i] * outer
+            if do_g:
+                self.states.gradients = dict(
+                    sigma_0=2*sigma_0,
+                    Sigma_p=g_Sigma_p)
+            if do_gl:
+                self.states.gradientslog = dict(
+                    sigma_0=2*sigma_0**2,
+                    Sigma_p=gl_Sigma_p)
     pass
 
 
@@ -269,29 +211,38 @@ class ExponentialKernel(NumpyKernel):
     Automtic Relevance Determination.
 
     """
-    def __init__(self, length_scale=1.0, sigma_f = 1.0, **kwargs):
-        """Initialize an Exponential kernel instance.
 
-        :Parameters:
-          length_scale : float OR numpy.ndarray
-            the characteristic length-scale (or length-scales) of the
-            phenomenon under investigation.
-            (Defaults to 1.0)
-          sigma_f : float
-            Signal standard deviation.
-            (Defaults to 1.0)
-        """
-        # init base class first
-        NumpyKernel.__init__(self, **kwargs)
+    length_scale = Parameter(1.0, allowedtype='float or ndarray', doc="""
+        The characteristic length-scale (or length-scales) of the phenomenon
+        under investigation.""")
 
-        self.length_scale = length_scale
-        self.sigma_f = sigma_f
-        self._k = None
+    sigma_f = Parameter(1.0, allowedtype='float',
+        doc="""Signal standard deviation.""")
 
 
-    def __repr__(self):
-        return "%s(length_scale=%s, sigma_f=%s)" \
-          % (self.__class__.__name__, str(self.length_scale), str(self.sigma_f))
+    ## def __init__(self, length_scale=1.0, sigma_f = 1.0, **kwargs):
+    ##     """Initialize an Exponential kernel instance.
+
+    ##     :Parameters:
+    ##       length_scale : float OR numpy.ndarray
+    ##         the characteristic length-scale (or length-scales) of the
+    ##         phenomenon under investigation.
+    ##         (Defaults to 1.0)
+    ##       sigma_f : float
+    ##         Signal standard deviation.
+    ##         (Defaults to 1.0)
+    ##     """
+    ##     # init base class first
+    ##     NumpyKernel.__init__(self, **kwargs)
+
+    ##     self.length_scale = length_scale
+    ##     self.sigma_f = sigma_f
+    ##     self._k = None
+
+
+    ## def __repr__(self):
+    ##     return "%s(length_scale=%s, sigma_f=%s)" \
+    ##       % (self.__class__.__name__, str(self.length_scale), str(self.sigma_f))
 
     def _compute(self, data1, data2):
         """Compute kernel matrix.
@@ -303,14 +254,15 @@ class ExponentialKernel(NumpyKernel):
             data
             (Defaults to None)
         """
+        params = self.params
         # XXX the following computation can be (maybe) made more
         # efficient since length_scale is squared and then
         # square-rooted uselessly.
         # Weighted euclidean distance matrix:
         self.wdm = N.sqrt(squared_euclidean_distance(
-            data1, data2, weight=(self.length_scale**-2)))
+            data1, data2, weight=(params.length_scale**-2)))
         self._k = \
-            self.sigma_f**2 * N.exp(-self.wdm)
+            params.sigma_f**2 * N.exp(-self.wdm)
 
     def gradient(self, data1, data2):
         """Compute gradient of the kernel matrix. A must for fast
@@ -318,16 +270,16 @@ class ExponentialKernel(NumpyKernel):
         """
         raise NotImplementedError
 
-    def set_hyperparameters(self, hyperparameter):
-        """Set hyperaparmeters from a vector.
+    ## def set_hyperparameters(self, hyperparameter):
+    ##     """Set hyperaparmeters from a vector.
 
-        Used by model selection.
-        """
-        if N.any(hyperparameter < 0):
-            raise InvalidHyperparameterError()
-        self.sigma_f = hyperparameter[0]
-        self.length_scale = hyperparameter[1:]
-        return
+    ##     Used by model selection.
+    ##     """
+    ##     if N.any(hyperparameter < 0):
+    ##         raise InvalidHyperparameterError()
+    ##     self.sigma_f = hyperparameter[0]
+    ##     self.length_scale = hyperparameter[1:]
+    ##     return
 
     def compute_lml_gradient(self,alphaalphaT_Kinv,data):
         """Compute grandient of the kernel and return the portion of
@@ -413,7 +365,7 @@ class SquaredExponentialKernel(NumpyKernel):
         self.length_scale = length_scale
         self.sigma_f = sigma_f
 
-
+    # XXX ??? 
     def reset(self):
         super(SquaredExponentialKernel, self).reset()
         self._length_scale = self._length_scale_orig
@@ -697,3 +649,4 @@ kernel_dictionary = {'constant': ConstantKernel,
                      'Matern ni=3/2': Matern_3_2Kernel,
                      'Matern ni=5/2': Matern_5_2Kernel,
                      'rational quadratic': RationalQuadraticKernel}
+
