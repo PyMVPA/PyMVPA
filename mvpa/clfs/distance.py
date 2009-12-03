@@ -440,3 +440,21 @@ else:
     pnorm_w = pnorm_w_python
     pass
 
+
+### XXX EO: This is code to compute streamline-streamline distance.
+### Currently used just for testing purpose for the PrototypeMapper.
+
+def mean_min(streamline1, streamline2):
+    """Basic building block to compute several distances between
+    streamlines.
+    """
+    d_e_12 = N.sqrt(squared_euclidean_distance(streamline1, streamline2))
+    return N.array([d_e_12.min(1).mean(), d_e_12.min(0).mean()])
+
+
+def corouge(streamline1, streamline2):
+    """Mean of the mean min distances. See Zhang et al., Identifying
+    White-Matter Fiber Bundles in DTI Data Using an Automated
+    Proximity-Based Fiber-Clustering Method, 2008.
+    """
+    return mean_min(streamline1, streamline2).mean()
