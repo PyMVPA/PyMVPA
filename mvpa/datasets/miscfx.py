@@ -20,7 +20,8 @@ import random
 
 import numpy as N
 
-from mvpa.datasets.base import Dataset, datasetmethod
+from mvpa.base.dataset import datasetmethod
+from mvpa.datasets.base import Dataset
 from mvpa.base.dochelpers import table2string
 from mvpa.misc.support import getBreakPoints
 
