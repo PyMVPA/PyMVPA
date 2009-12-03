@@ -171,7 +171,8 @@ class NiftiDataset(Dataset):
         return NiftiImage(dsarray, dataset.a.niftihdr)
 
 
-def nifti_dataset(samples, labels=None, chunks=None, mask=None, enforce_dim=4):
+def nifti_dataset(samples, labels=None, chunks=None, mask=None, enforce_dim=4,
+        space=None):
     # load the samples
     niftisamples = getNiftiFromAnySource(samples, ensure=True,
                                          enforce_dim=enforce_dim)
@@ -189,7 +190,8 @@ def nifti_dataset(samples, labels=None, chunks=None, mask=None, enforce_dim=4):
 
     # create a dataset
     ds = NiftiDataset.from_basic(samples, labels=labels, chunks=chunks,
-                                 mapper=FlattenMapper(shape=samples.shape[1:]))
+                                 mapper=FlattenMapper(shape=samples.shape[1:],
+                                                      inspace=space))
     # now apply the mask if any
     if not mask is None:
         flatmask = ds.a.mapper.forward(mask)
