@@ -50,21 +50,61 @@ class KernelTests(unittest.TestCase):
                         'Failure setting and retrieving PrecomputedKernel data')
 
     # Don't have sample id's yet
-    #def testCachedKernel(self):
-        #d = Dataset(N.random.randn(50, 132))
-        #k = CachedKernel(kernel=npK.LinearKernel())
-        #k.compute(d)
-        #pass
+    def testCachedKernel(self):
+        n=100
+        d = Dataset(N.random.randn(n, 132))
+        d.sa.chunks = N.random.randint(3, size=n)
+        lk = npK.LinearKernel()
+        
+        # Assure two kernels are independent
+        ck = CachedKernel(kernel=npK.LinearKernel())
+        ck.compute(d) # Initial cache
+        
+        self.failUnless(ck._recomputed,
+                        'CachedKernel was not initially computed')
+        
+        # Try some splitting
+        for chunk in [d[d.sa.chunks==i] for i in range(3)]:
+            lk.compute(chunk)
+            ck.compute(chunk)
+            self.failUnless(N.all(lk._k == ck._k),
+                            'Cached and linear kernels do not agree')
+            self.failIf(ck._recomputed,
+                        "CachedKernel incorrectly recomputed it's kernel")
+        
+        # Now test handling new data
+        d2 = Dataset(N.random.randn(32, 43))
+        ck.compute(d2)
+        self.failUnless(ck._recomputed,
+                        "CachedKernel did not automatically recompute new data")
+        ck.compute(d)
+        self.failUnless(ck._recomputed,
+                        "CachedKernel did not recompute old data which had " +\
+                        "previously been computed, but had the cache overriden")
     
     if _has_sg:
         # Unit tests which require shogun kernels
         # Note - there is a loss of precision from double to float32 in SG
+        # Not clear if this is just for CustomKernels as there are some
+        # remaining innaccuracies in others, but this might be due to other
+        # sources of noise.  In all cases float32 should be identical
+        def kernel_equiv(self, nk, sk, accuracy = 1e-12):
+            nkm = nk._k
+            skm = sk.as_np()._k
+            diff = N.abs(nkm - skm)
+            dmax = diff.max()
+            self.failUnless(dmax < accuracy,
+                            '\n%s\nand\n%s\ndiffer by %s'%(nk, sk, dmax))
+            self.failUnless(N.all(nkm.astype('float32') == \
+                                  skm.astype('float32')),
+                            '\n%s\nand\n%s\nare unequal as float32'%(nk, sk))
+            
         def testSgConversions(self):
             nk = PrecomputedKernel(matrix=N.random.randn(50, 50))
             nk.compute()
             sk = nk.as_sg()
             sk.compute()
-            
+            # CustomKernels interally store as float32
             self.failUnless((nk._k.astype('float32') == \
                              sk.as_np()._k.astype('float32')).all(),
                             'Failure converting arrays between NP as SG')
@@ -78,9 +118,7 @@ class KernelTests(unittest.TestCase):
             nk.compute(d1, d2)
             sk.compute(d1,d2)
             
-            self.failUnless(N.all(nk._k.astype('float32') == \
-                                  sk.as_np()._k.astype('float32')),
-                            'Numpy and SG linear kernels are inconsistent')
+            self.kernel_equiv(nk, sk)
             
         def testPolySG(self):
             d1 = N.random.randn(105, 32)
@@ -93,11 +131,12 @@ class KernelTests(unittest.TestCase):
                 nk.params.degree=p
                 sk.compute(d1, d2)
                 nk.compute(d1, d2)
-                self.failUnless(N.all(nk._k.astype('float32') == \
-                                      sk.as_np()._k.astype('float32')),
-                                'Numpy and SG PolyKernels differ with order=%s'\
-                                %p)
-        
+                
+                # This has less accuracy than other kernels - dunno why, but
+                # given that it is less accurate only for higher orders I don't
+                # think this is a huge issue --SG
+                self.kernel_equiv(nk, sk, accuracy = 10.**(p-12))
+                
         def testRbfSG(self):
             d1 = N.random.randn(105, 32)
             d2 = N.random.randn(41, 32)
@@ -109,10 +148,8 @@ class KernelTests(unittest.TestCase):
                 nk.params.gamma=g
                 sk.compute(d1, d2)
                 nk.compute(d1, d2)
-                self.failUnless(N.all(nk._k.astype('float32') == \
-                                      sk.as_np()._k.astype('float32')),
-                                'Numpy and SG Rbf kernels differ with gamma=%s'\
-                                %g)
+                
+                self.kernel_equiv(nk, sk)
                 
         def testCustomSG(self):
             lk = sgK.LinearSGKernel()
