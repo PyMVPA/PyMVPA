@@ -23,7 +23,7 @@ if externals.exists('rpy', raiseException=True) and \
 
 
 # local imports
-from mvpa.clfs.base import Classifier
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.measures.base import Sensitivity
 
 if __debug__:
@@ -157,6 +157,7 @@ class ENET(Classifier):
 #         self.__weights = self.__trained_model['beta'][-1,:]
 
 
+    @accepts_dataset_as_samples
     def _predict(self, data):
         """Predict the output for the provided data.
         """

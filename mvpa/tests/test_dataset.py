@@ -9,17 +9,16 @@
 """Unit tests for PyMVPA dataset handling"""
 
 import unittest
-import random
 import numpy as N
 from sets import Set
 from mvpa.datasets import Dataset
 from mvpa.mappers.mask import MaskMapper
-from mvpa.misc.exceptions import DatasetError
 from mvpa.support import copy
 
 from tests_warehouse import datasets
 
 class DatasetTests(unittest.TestCase):
+    """Basic dataset unitests"""
 
     def testFeatureSelection(self):
         """Testing feature selection: sorted/not sorted, feature groups

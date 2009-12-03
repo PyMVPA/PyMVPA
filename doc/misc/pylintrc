@@ -28,7 +28,9 @@ class-rgx=[A-Z_]+[a-zA-Z0-9]+$
 function-rgx=[a-z_]+[a-z0-9_][a-z0-9]*$
 
 # Regular expression which should only match correct method names
-method-rgx=([a-z_]|__)[a-z0-9_]*(__)?$
+# Allow upper cases in testFeatureSelection where FeatureSelection
+# is a class name
+method-rgx=(([a-z_]|__)[a-z0-9_]*(__)?|test[a-zA-Z0-9_]*)$
 
 # Regular expression which should only match correct argument names
 argument-rgx=[a-z][a-z0-9]*_*[a-z0-9]*_*[a-z0-9]*_?$
