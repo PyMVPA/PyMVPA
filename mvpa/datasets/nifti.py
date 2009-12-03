@@ -35,9 +35,9 @@ if externals.exists('nifti', raiseException=True):
         __name__ = oldname
 
 from mvpa.datasets.base import Dataset
-from mvpa.mappers.base import CombinedMapper
+from mvpa.mappers.base import CombinedMapper, FeatureSubsetMapper
 from mvpa.mappers.metric import DescreteMetric, cartesianDistance
-from mvpa.mappers.array import DenseArrayMapper
+from mvpa.mappers.flatten import FlattenMapper
 from mvpa.base import warning
 
 
@@ -151,60 +151,7 @@ class NiftiDataset(Dataset):
     http://niftilib.sourceforge.net/pynifti/ for more information about
     pynifti.
     """
-    @classmethod
-    def from_anynifti(cls, samples, labels=None, chunks=None, mask=None,
-                      enforce_dim=4):
-        """
-        :Parameters:
-          samples: str | NiftiImage
-            Filename of a NIfTI image or a `NiftiImage` instance.
-          mask: str | NiftiImage | ndarray
-            Filename of a NIfTI image or a `NiftiImage` instance or an ndarray
-            of appropriate shape.
-          enforce_dim : int or None
-            If not None, it is the dimensionality of the data to be enforced,
-            commonly 4D for the data, and 3D for the mask in case of fMRI.
-        """
-        # load the samples
-        niftisamples = getNiftiFromAnySource(samples, ensure=True,
-                                             enforce_dim=enforce_dim)
-        samples = niftisamples.data
-
-        # figure out what the mask is, but onyl handle known cases, the rest
-        # goes directly into the mapper which maybe knows more
-        niftimask = getNiftiFromAnySource(mask)
-        if niftimask is None:
-            pass
-        elif isinstance(niftimask, N.ndarray):
-            mask = niftimask
-        else:
-            mask = getNiftiData(niftimask)
-
-        # build an appropriate mapper that knows about the metrics of the NIfTI
-        # data
-        # NiftiDataset uses a DescreteMetric with cartesian
-        # distance and element size from the NIfTI header
-
-        # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
-        elementsize = [i for i in reversed(niftisamples.voxdim)]
-        mapper = DenseArrayMapper(mask=mask, shape=samples.shape[1:],
-                    metric=DescreteMetric(elementsize=elementsize,
-                                          distance_function=cartesianDistance))
-
-        ds = cls.from_basic(samples, labels=labels, chunks=chunks,
-                            mapper=mapper)
-
-        # do not put the whole NiftiImage in the dict as this will most
-        # likely be deepcopy'ed at some point and ensuring data integrity
-        # of the complex Python-C-Swig hybrid might be a tricky task.
-        # Only storing the header dict should achieve the same and is more
-        # memory efficient and even simpler
-        ds.a.add('niftihdr', niftisamples.header)
-
-        return ds
-
-
-    def map2Nifti(self, data=None):
+    def map2nifti(dataset, data=None):
         """Maps a data vector into the dataspace and wraps it with a
         NiftiImage. The header data of this object is used to initialize
         the new NiftiImage.
@@ -216,58 +163,50 @@ class NiftiDataset(Dataset):
             instance -- takes its samples for mapping
         """
         if data is None:
-            data = self.samples
+            data = dataset.samples
         elif isinstance(data, Dataset):
             # ease users life
             data = data.samples
-        dsarray = self.a.mapper.reverse(data)
-        return NiftiImage(dsarray, self.a.niftihdr)
+        dsarray = dataset.a.mapper.reverse(data)
+        return NiftiImage(dsarray, dataset.a.niftihdr)
 
 
-#    def getDt(self):
-#        """Return the temporal distance of two samples/volumes.
-#
-#        This method tries to be clever and always returns `dt` in seconds, by
-#        using unit information from the NIfTI header. If such information is
-#        not present the assumed unit will also be `seconds`.
-#        """
-#        # plain value
-#        hdr = self.niftihdr
-#        TR = hdr['pixdim'][4]
-#
-#        # by default assume seconds as unit and do not scale
-#        scale = 1.0
-#
-#        # figure out units, if available
-#        if hdr.has_key('time_unit'):
-#            unit_code = hdr['time_unit'] / 8
-#        elif hdr.has_key('xyzt_unit'):
-#            unit_code = int(hdr['xyzt_unit']) / 8
-#        else:
-#            warning("No information on time units is available. Assuming "
-#                    "seconds")
-#            unit_code = 0
-#
-#        # handle known units
-#        # XXX should be refactored to use actual unit labels from pynifti
-#        # when version 0.20090205 or later is assumed to be available on all
-#        # machines
-#        if unit_code in [0, 1, 2, 3]:
-#            if unit_code == 0:
-#                warning("Time units were not specified in NiftiImage. "
-#                        "Assuming seconds.")
-#            scale = [ 1.0, 1.0, 1e-3, 1e-6 ][unit_code]
-#        else:
-#            warning("Time units are incorrectly coded: value %d whenever "
-#                    "allowed are 8 (sec), 16 (millisec), 24 (microsec). "
-#                    "Assuming seconds." % (unit_code * 8,)
-#                    )
-#        return TR * scale
+def nifti_dataset(samples, labels=None, chunks=None, mask=None, enforce_dim=4):
+    # load the samples
+    niftisamples = getNiftiFromAnySource(samples, ensure=True,
+                                         enforce_dim=enforce_dim)
+    samples = niftisamples.data
 
+    # figure out what the mask is, but onyl handle known cases, the rest
+    # goes directly into the mapper which maybe knows more
+    niftimask = getNiftiFromAnySource(mask)
+    if niftimask is None:
+        pass
+    elif isinstance(niftimask, N.ndarray):
+        mask = niftimask
+    else:
+        mask = getNiftiData(niftimask)
 
+    # create a dataset
+    ds = NiftiDataset.from_basic(samples, labels=labels, chunks=chunks,
+                                 mapper=FlattenMapper(shape=samples.shape[1:]))
+    # now apply the mask if any
+    if not mask is None:
+        flatmask = ds.a.mapper.forward(mask)
+        ds = ds.get_mapped(FeatureSubsetMapper(flatmask))
 
-# convenience alias
-nifti_dataset = NiftiDataset.from_anynifti
+    # store interesting props in the dataset
+    # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
+    ds.a.elementsize = [i for i in reversed(niftisamples.voxdim)]
+    # do not put the whole NiftiImage in the dict as this will most
+    # likely be deepcopy'ed at some point and ensuring data integrity
+    # of the complex Python-C-Swig hybrid might be a tricky task.
+    # Only storing the header dict should achieve the same and is more
+    # memory efficient and even simpler
+    ds.a['niftihdr'] = niftisamples.header
+
+    return ds
+
 
 
 class ERNiftiDataset(Dataset):

@@ -93,7 +93,7 @@ from mvpa.mappers.array import *
 if externals.exists('scipy'):
     from mvpa.mappers.zscore import ZScoreMapper
 if externals.exists('mdp'):
-    from mvpa.mappers.pca import *
+    from mvpa.mappers.mdp_adaptor import *
     from mvpa.mappers.ica import *
 if externals.exists('mdp ge 2.4'):
     from mvpa.mappers.lle import *
