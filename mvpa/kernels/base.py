@@ -95,6 +95,9 @@ class Kernel(ClassWithCollections):
 class NumpyKernel(Kernel):
     """A Kernel object with internal representation as a 2d numpy array"""
 
+    _ATTRIBUTE_COLLECTIONS = Kernel._ATTRIBUTE_COLLECTIONS + ['states']
+    # enforce presence of params AND states collections for gradients etc
+
     def __array__(self):
         # By definintion, a NumpyKernel's internal representation is an array
         return self._k
