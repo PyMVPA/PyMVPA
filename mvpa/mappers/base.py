@@ -158,20 +158,20 @@ class Mapper(object):
     # The following methods are candidates for reimplementation in derived
     # classes, in cases where the provided default behavior is not appropriate.
     #
-    def is_valid_outid(self, outId):
+    def is_valid_outid(self, outid):
         """Validate feature id in OUT space.
 
         Override if OUT space is not simly a 1D vector
         """
-        return(outId >= 0 and outId < self.get_outsize())
+        return(outid >= 0 and outid < self.get_outsize())
 
 
-    def is_valid_inid(self, inId):
+    def is_valid_inid(self, inid):
         """Validate id in IN space.
 
         Override if IN space is not simly a 1D vector
         """
-        return(inId >= 0 and inId < self.getInSize())
+        return(inid >= 0 and inid < self.get_insize())
 
 
     def train(self, dataset):
@@ -316,9 +316,9 @@ class Mapper(object):
 
 
     def __repr__(self):
-        # TODO come on!
-        s=''
-        return "%s(%s)" % (self.__class__.__name__, s)
+        return "%s(inspace=%s)" \
+                % (self.__class__.__name__,
+                   repr(self.get_inspace()))
 
 
     def __call__(self, data):
@@ -902,8 +902,7 @@ class ChainMapper(Mapper):
 
     def __ensure_selectable_tail(self):
         """Append a FeatureSubsetMapper to the chain if there is none yet."""
-        last_mapper = self[-1]
-        if not isinstance(last_mapper, FeatureSubsetMapper):
+        if not isinstance(self[-1], FeatureSubsetMapper):
             self.append(FeatureSubsetMapper(last_mapper.get_outsize()))
 
 

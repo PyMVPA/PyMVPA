@@ -116,6 +116,13 @@ def test_flatten():
         ok_(isinstance(dsflat.samples, myarray))
         assert_array_equal(dsflat.samples, target)
 
+        # test index creation
+        d = Dataset(N.ones((2,2,2)))
+        f = FlattenMapper(inspace='voxel')
+        f.train(d)
+        md = f(d)
+        t = array(([0,0],[0,1],[1,0],[1,1]))
+        assert_array_equal(t, md.fa.voxel)
 
 
 def test_subset():
@@ -268,7 +275,6 @@ def test_chainmapper():
     assert_raises(ValueError, cm.append, FeatureSubsetMapper(16))
 
     # check reproduction
-    print repr(cm)
     cm_clone = eval(repr(cm))
     assert_equal(repr(cm_clone), repr(cm))
 
