@@ -275,7 +275,6 @@ def test_chainmapper():
     assert_raises(ValueError, cm.append, FeatureSubsetMapper(16))
 
     # check reproduction
-    print repr(cm)
     cm_clone = eval(repr(cm))
     assert_equal(repr(cm_clone), repr(cm))
 

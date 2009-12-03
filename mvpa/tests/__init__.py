@@ -96,7 +96,6 @@ def collectTestSuites():
                          ('scipy', 'zscoremapper'),
                          ('pywt', 'waveletmapper'),
                          (['cPickle', 'gzip'], 'hamster'),
-    #                     ('mdp', 'pcamapper'),
                        ]
 
     if not cfg.getboolean('tests', 'lowmem', default='no'):
@@ -129,6 +128,7 @@ def collectNoseTests():
               'test_datasetng',
               'test_attrmap',
               'test_mapper',
+              'test_mdp',
               ]
     return tests
 

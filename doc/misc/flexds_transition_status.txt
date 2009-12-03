@@ -61,7 +61,6 @@ test_meg.py                 pass
 test_neighbor.py            pass
 test_niftidataset.py        broken (ERNiftiDataset waiting for nextgen Mappers)
 test_params.py              pass
-test_pcamapper.py           broken by design
 test_perturbsensana.py      pass
 test_plr.py                 pass
 test_procrust.py            pass
