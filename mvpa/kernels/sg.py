@@ -41,34 +41,62 @@ class SGKernel(Kernel):
         """Converts data to shogun features"""
         return RealFeatures(data.astype(float).T)
 
-class BasicSGKernel(SGKernel):
+class _BasicSGKernel(SGKernel):
     """Abstract class which can handle most shogun kernel types"""
     #_KNOWN_KERNELS={'linear':sgk.LinearKernel, # Figure out shortcuts later
                     #'rbf':sgk.GaussianKernel,
                     #'poly':sgk.PolyKernel,
                     #}
+                    
+    # Subclasses can specify new kernels using the following declarations:
+    #__kernel_cls__ = Shogun kernel class
+    #__kp_order__ = Tuple which specifies order of kernel params
+    # If there is only one kernel param, this is not necessary
+    
     def _compute(self, d1, d2):
         d1 = SGKernel._data2features(d1)
         d2 = SGKernel._data2features(d2)
-        kvals = [self.params[kp].value for kp in self.params._getNames()]
-        self._k = self.__kernel_impl__(d1, d2, *kvals)
+        try:
+            order = self.__kp_order__
+        except AttributeError:
+            order = self.params._getNames()
+        kvals = [self.params[kp].value for kp in order]
+        self._k = self.__kernel_cls__(d1, d2, *kvals)
+        
+        # XXX: Not sure if this is always the best thing to do - some kernels
+        # by default normalize with specific methods automatically, which
+        # can cause issues in CV etc -- SG
+        self._k.set_normalizer(sgk.IdentityKernelNormalizer())
 
-class CustomSGKernel(BasicSGKernel):
+class CustomSGKernel(_BasicSGKernel):
     # TODO: Don't know if this works or how to wrap generic SG func
-    def __init__(self, kernel_cls, kps={}, **kwargs):
-        self.__kernel_impl__ = kernel_cls
-        self.params.update(kps)
+    def __init__(self, kernel_cls, kernelparams=[], **kwargs):
+        """
+        :Parameters:
+        kernelparams: list
+          Each item in this list should be a tuple of (kernelparamname, value),
+          and the order is the explicit order required by the Shogun constructor
+        """
+        self.__kernel_cls__ = kernel_cls # These are normally static
         
-class LinearSGKernel(BasicSGKernel):
-    __kernel_impl__ = sgk.LinearKernel
+        _BasicSGKernel.__init__(self, **kwargs)
+        order = []
+        for k,v in kernelparams:
+            self.params.add_collectable(Parameter(name=k, default=v))
+            order.append(k)
+        self.__kp_order__ = tuple(order)
         
-class RbfSGKernel(BasicSGKernel):
-    __kernel_impl__ = sgk.GaussianKernel
+class LinearSGKernel(_BasicSGKernel):
+    __kernel_cls__ = sgk.LinearKernel
+        
+class RbfSGKernel(_BasicSGKernel):
+    __kernel_cls__ = sgk.GaussianKernel
     gamma = Parameter(1, doc="Scaling value for gaussian/rbf kernel")
         
-class PolySGKernel(BasicSGKernel):
-    __kernel_impl__ = sgk.PolyKernel
-    degree = Parameter(2, doc="Polynomial order of the kernel")
+class PolySGKernel(_BasicSGKernel):
+    __kernel_cls__ = sgk.PolyKernel
+    __kp_order__ = ('degree', 'inhomogenous')
+    degree = Parameter(2, allowedtype=int, doc="Polynomial order of the kernel")
     inhomogenous = Parameter(True, allowedtype=bool,
                              doc="Whether +1 is added within the expression")
     
