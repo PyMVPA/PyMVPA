@@ -129,6 +129,7 @@ def collectNoseTests():
               'test_attrmap',
               'test_mapper',
               'test_mdp',
+              'test_neighborhood',
               ]
     return tests
 
