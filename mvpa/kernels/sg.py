@@ -91,9 +91,9 @@ class LinearSGKernel(_BasicSGKernel):
     __kernel_cls__ = sgk.LinearKernel
         
 class RbfSGKernel(_BasicSGKernel):
-    """Radial basis function: K(a,b) = exp(-||a-b||**2/gamma)"""
+    """Radial basis function: K(a,b) = exp(-||a-b||**2/sigma)"""
     __kernel_cls__ = sgk.GaussianKernel
-    gamma = Parameter(1, doc="Scaling value for gaussian/rbf kernel")
+    sigma = Parameter(1, doc="Width/division parameter for gaussian kernel")
         
 class PolySGKernel(_BasicSGKernel):
     """Polynomial kernel: K(a,b) = (a*b.T + c)**degree
