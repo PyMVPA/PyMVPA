@@ -50,7 +50,7 @@ class PrototypeMapper(ProjectionMapper):
 
 
     @accepts_dataset_as_samples
-    def _train(self, samples, fraction=0.1):
+    def _train(self, samples):
         """Compute similarities between instances in dataset and
         prototypes using the provided similarity functions.
         
@@ -61,13 +61,8 @@ class PrototypeMapper(ProjectionMapper):
           fraction : when prototypes are not explicitely given use a
             random subset of dataset whose size is a fraction of it.
         """
-        self.fraction = fraction
-        self.prototype_number = int(samples.shape[0]*self.fraction)
-        
-        if self.prototypes is None:
-            debug("MAP","Generating "+str(self.prototype_number)+" random prototypes.")
-            self.prototypes = samples[N.random.permutation(samples.shape[0])[:self.prototype_number]]
         
         self._proj = N.hstack([similarity.compute(samples,self.prototypes) for similarity in self.similarities])
+        debug("MAP","projected data: "+str(self._proj))
         debug("MAP","Projected data is"+str(self._proj.shape))
         
