@@ -45,18 +45,18 @@ class SVM(_SVM):
     probabilities = StateVariable(enabled=False,
         doc="Estimates of samples probabilities as provided by LibSVM")
 
-    _KERNELS = { "linear":  (svm.svmc.LINEAR, None, LinearSVMWeights),
-                 "rbf" :    (svm.svmc.RBF, ('gamma',), None),
-                 "poly":    (svm.svmc.POLY, ('gamma', 'degree', 'coef0'), None),
-                 "sigmoid": (svm.svmc.SIGMOID, ('gamma', 'coef0'), None),
-                 }
+    #_KERNELS = { "linear":  (svm.svmc.LINEAR, None, LinearSVMWeights),
+                 #"rbf" :    (svm.svmc.RBF, ('gamma',), None),
+                 #"poly":    (svm.svmc.POLY, ('gamma', 'degree', 'coef0'), None),
+                 #"sigmoid": (svm.svmc.SIGMOID, ('gamma', 'coef0'), None),
+                 #}
     # TODO: Complete the list ;-)
 
     # TODO p is specific for SVR
     _KNOWN_PARAMS = [ 'epsilon', 'probability', 'shrinking',
                       'weight_label', 'weight']
 
-    _KNOWN_KERNEL_PARAMS = [ 'cache_size' ]
+    #_KNOWN_KERNEL_PARAMS = [ 'cache_size' ]
 
     _KNOWN_IMPLEMENTATIONS = {
         'C_SVC' : (svm.svmc.C_SVC, ('C',),
@@ -74,7 +74,6 @@ class SVM(_SVM):
     _clf_internals = _SVM._clf_internals + [ 'libsvm' ]
 
     def __init__(self,
-                 kernel_type='linear',
                  **kwargs):
         # XXX Determine which parameters depend on each other and implement
         # safety/simplifying logic around them
@@ -106,7 +105,7 @@ class SVM(_SVM):
         kwargs['svm_impl'] = svm_impl
 
         # init base class
-        _SVM.__init__(self, kernel_type, **kwargs)
+        _SVM.__init__(self, **kwargs)
 
         self._svm_type = self._KNOWN_IMPLEMENTATIONS[svm_impl][0]
 
@@ -156,7 +155,7 @@ class SVM(_SVM):
         # **kwargs and create appropriate parameters within .params or
         # .kernel_params
         libsvm_param = svm.SVMParameter(
-            kernel_type=self._kernel_type,
+            kernel_type=self.kernel.as_ls()._k,
             svm_type=self._svm_type,
             **dict(args))
         """Store SVM parameters in libSVM compatible format."""

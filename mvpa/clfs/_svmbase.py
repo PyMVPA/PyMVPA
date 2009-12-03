@@ -17,7 +17,7 @@ from mvpa.support.copy import deepcopy
 
 from mvpa.base import warning
 from mvpa.base.dochelpers import handleDocString, _rst, _rst_sep2
-
+from mvpa.kernels.base import Kernel
 from mvpa.clfs.base import Classifier
 from mvpa.misc.param import Parameter
 from mvpa.misc.transformers import SecondAxisSumOfAbs
@@ -58,8 +58,13 @@ class _SVM(Classifier):
 
     """
 
-    _ATTRIBUTE_COLLECTIONS = ['params', 'kernel_params'] # enforce presence of params collections
+    
+    _ATTRIBUTE_COLLECTIONS = ['params'] # enforce presence of params collections
 
+    
+    kernel = Parameter(None, allowedtype=Kernel,
+                       doc='Kernel object')
+    
     _SVM_PARAMS = {
         'C' : Parameter(-1.0,
                   doc='Trade-off parameter between width of the '
@@ -71,26 +76,26 @@ class _SVM(Classifier):
                   doc='Fraction of datapoints within the margin'),
         'cache_size': Parameter(100,
                   doc='Size of the kernel cache, specified in megabytes'),
-        'coef0': Parameter(0.5,
-                  doc='Offset coefficient in polynomial and sigmoid kernels'),
-        'degree': Parameter(3, doc='Degree of polynomial kernel'),
+        #'coef0': Parameter(0.5,
+                  #doc='Offset coefficient in polynomial and sigmoid kernels'),
+        #'degree': Parameter(3, doc='Degree of polynomial kernel'),
             # init the parameter interface
         'tube_epsilon': Parameter(0.01,
                   doc='Epsilon in epsilon-insensitive loss function of '
                       'epsilon-SVM regression (SVR)'),
-        'gamma': Parameter(0,
-                  doc='Scaling (width in RBF) within non-linear kernels'),
+        #'gamma': Parameter(0,
+                  #doc='Scaling (width in RBF) within non-linear kernels'),
         'tau': Parameter(1e-6, doc='TAU parameter of KRR regression in shogun'),
-        'max_shift': Parameter(10, min=0.0,
-                  doc='Maximal shift for SGs GaussianShiftKernel'),
-        'shift_step': Parameter(1, min=0.0,
-                  doc='Shift step for SGs GaussianShiftKernel'),
+        #'max_shift': Parameter(10, min=0.0,
+                  #doc='Maximal shift for SGs GaussianShiftKernel'),
+        #'shift_step': Parameter(1, min=0.0,
+                  #doc='Shift step for SGs GaussianShiftKernel'),
         'probability': Parameter(0,
                   doc='Flag to signal either probability estimate is obtained '
                       'within LIBSVM'),
-        'scale': Parameter(1.0,
-                  doc='Scale factor for linear kernel. '
-                      '(0 triggers automagic rescaling by SG'),
+        #'scale': Parameter(1.0,
+                  #doc='Scale factor for linear kernel. '
+                      #'(0 triggers automagic rescaling by SG'),
         'shrinking': Parameter(1, doc='Either shrinking is to be conducted'),
         'weight_label': Parameter([], allowedtype='[int]',
                   doc='To be used in conjunction with weight for custom '
@@ -108,12 +113,8 @@ class _SVM(Classifier):
 
     _clf_internals = [ 'svm', 'kernel-based' ]
 
-    def __init__(self, kernel_type='linear', **kwargs):
+    def __init__(self, **kwargs):
         """Init base class of SVMs. *Not to be publicly used*
-
-        :Parameters:
-          kernel_type : basestr
-            String must be a valid key for cls._KERNELS
 
         TODO: handling of parameters might migrate to be generic for
         all classifiers. SVMs are chosen to be testbase for that
@@ -129,12 +130,6 @@ class _SVM(Classifier):
                                      self._KNOWN_IMPLEMENTATIONS.keys())
         self._svm_impl = svm_impl
 
-        # Check the kernel
-        kernel_type = kernel_type.lower()
-        if not kernel_type in self._KERNELS:
-            raise ValueError, "Unknown kernel " + kernel_type
-        self._kernel_type_literal = kernel_type
-
         impl, add_params, add_internals, descr = \
               self._KNOWN_IMPLEMENTATIONS[svm_impl]
 
@@ -144,12 +139,7 @@ class _SVM(Classifier):
             self._KNOWN_PARAMS = \
                  self._KNOWN_PARAMS[:] + list(add_params)
 
-        # Add corresponding kernel parameters to 'known' depending on what
-        # kernel chosen
-        if self._KERNELS[kernel_type][1] is not None:
-            self._KNOWN_KERNEL_PARAMS = \
-                 self._KNOWN_KERNEL_PARAMS[:] + list(self._KERNELS[kernel_type][1])
-
+        
         # Assign per-instance _clf_internals
         self._clf_internals = self._clf_internals[:]
 
@@ -158,33 +148,31 @@ class _SVM(Classifier):
             self._clf_internals += list(add_internals)
         self._clf_internals.append(svm_impl)
 
-        if kernel_type == 'linear':
-            self._clf_internals += [ 'linear', 'has_sensitivity' ]
-        else:
-            self._clf_internals += [ 'non-linear' ]
-
         # pop out all args from **kwargs which are known to be SVM parameters
         _args = {}
-        for param in self._KNOWN_KERNEL_PARAMS + self._KNOWN_PARAMS + ['svm_impl']:
+        for param in self._KNOWN_PARAMS + ['svm_impl']: # Update to remove kp's?
             if param in kwargs:
                 _args[param] = kwargs.pop(param)
 
         try:
             Classifier.__init__(self, **kwargs)
+            try:
+                self.kernel_params = self.kernel.params
+            except AttributeError:
+                raise RuntimeError, 'SVM needs a kernel in init!'
+            
         except TypeError, e:
             if "__init__() got an unexpected keyword argument " in e.args[0]:
                 # TODO: make it even more specific -- if that argument is listed
                 # within _SVM_PARAMS
                 e.args = tuple( [e.args[0] +
                                  "\n Given SVM instance of class %s knows following parameters: %s" %
-                                 (self.__class__, self._KNOWN_PARAMS) +
-                                 ", and kernel parameters: %s" %
-                                 self._KNOWN_KERNEL_PARAMS] + list(e.args)[1:])
+                                 (self.__class__, self._KNOWN_PARAMS) + \
+                                 list(e.args)[1:]])
             raise e
 
         # populate collections and add values from arguments
-        for paramfamily, paramset in ( (self._KNOWN_PARAMS, self.params),
-                                       (self._KNOWN_KERNEL_PARAMS, self.kernel_params)):
+        for paramfamily, paramset in ( (self._KNOWN_PARAMS, self.params),):
             for paramname in paramfamily:
                 if not (paramname in self._SVM_PARAMS):
                     raise ValueError, "Unknown parameter %s" % paramname + \
@@ -197,13 +185,16 @@ class _SVM(Classifier):
 
                 paramset.add_collectable(param)
 
+        # TODO: Below commented out because kernel_type has been removed.  
+        # Find way to set default C as necessary
+        
         # tune up C if it has one and non-linear classifier is used
-        if self.params.isKnown('C') and kernel_type != "linear" \
-               and self.params['C'].isDefault:
-            if __debug__:
-                debug("SVM_", "Assigning default C value to be 1.0 for SVM "
-                      "%s with non-linear kernel" % self)
-            self.params['C'].default = 1.0
+        #if self.params.isKnown('C') and kernel_type != "linear" \
+               #and self.params['C'].isDefault:
+            #if __debug__:
+                #debug("SVM_", "Assigning default C value to be 1.0 for SVM "
+                      #"%s with non-linear kernel" % self)
+            #self.params['C'].default = 1.0
 
         # Some postchecks
         if self.params.isKnown('weight') and self.params.isKnown('weight_label'):
@@ -211,17 +202,16 @@ class _SVM(Classifier):
                 raise ValueError, "Lenghts of 'weight' and 'weight_label' lists" \
                       "must be equal."
 
-        self._kernel_type = self._KERNELS[kernel_type][0]
         if __debug__:
-            debug("SVM", "Initialized %s with kernel %s:%s" % 
-                  (self, kernel_type, self._kernel_type))
+            debug("SVM", "Initialized %s with kernel %s" % 
+                  (self, self.kernel))
 
 
     def __repr__(self):
         """Definition of the object summary over the object
         """
-        res = "%s(kernel_type='%s', svm_impl='%s'" % \
-              (self.__class__.__name__, self._kernel_type_literal,
+        res = "%s(kernel='%s', svm_impl='%s'" % \
+              (self.__class__.__name__, self.kernel,
                self._svm_impl)
         sep = ", "
         for col in [self.params, self.kernel_params]:
@@ -245,15 +235,17 @@ class _SVM(Classifier):
         TODO: for non-linear SVMs
         """
 
-        if self._kernel_type_literal == 'linear':
-            datasetnorm = N.mean(N.sqrt(N.sum(data*data, axis=1)))
-            value = 1.0/(datasetnorm*datasetnorm)
-            if __debug__:
-                debug("SVM", "Default C computed to be %f" % value)
-        else:
-            warning("TODO: Computation of default C is not yet implemented" +
-                    " for non-linear SVMs. Assigning 1.0")
-            value = 1.0
+        # TODO: kernel_type_literal has been removed, fix this
+        #if self._kernel_type_literal == 'linear':
+            #datasetnorm = N.mean(N.sqrt(N.sum(data*data, axis=1)))
+            #value = 1.0/(datasetnorm*datasetnorm)
+            #if __debug__:
+                #debug("SVM", "Default C computed to be %f" % value)
+        #else:
+            #warning("TODO: Computation of default C is not yet implemented" +
+                    #" for non-linear SVMs. Assigning 1.0")
+            #value = 1.0
+        value = 1.
 
         return value
 
@@ -274,16 +266,17 @@ class _SVM(Classifier):
 
         return value
 
-    def getSensitivityAnalyzer(self, **kwargs):
-        """Returns an appropriate SensitivityAnalyzer."""
-        sana = self._KERNELS[self._kernel_type_literal][2]
-        if sana is not None:
-            kwargs.setdefault('combiner', SecondAxisSumOfAbs)
-            return sana(self, **kwargs)
-        else:
-            raise NotImplementedError, \
-                  "Sensitivity analyzers for kernel %s is TODO" % \
-                  self._kernel_type_literal
+    # TODO: handle with help of kernel object
+    #def getSensitivityAnalyzer(self, **kwargs):
+        #"""Returns an appropriate SensitivityAnalyzer."""
+        #sana = self._KERNELS[self._kernel_type_literal][2]
+        #if sana is not None:
+            #kwargs.setdefault('combiner', SecondAxisSumOfAbs)
+            #return sana(self, **kwargs)
+        #else:
+            #raise NotImplementedError, \
+                  #"Sensitivity analyzers for kernel %s is TODO" % \
+                  #self._kernel_type_literal
 
 
     @classmethod
@@ -333,21 +326,20 @@ parameters), and what tasks it is capable to deal with
         # Describe kernels
         idoc += """
 
-Kernel choice is specified as a string argument `kernel_type` and it
-can be specialized with additional arguments to this constructor
-function. Some kernels might allow computation of per feature
+Kernel choice is specified as a kernel instance with kwargument 'kernel`.
+Some kernels might allow computation of per feature
 sensitivity.
 
 %sKernels%s""" % (_rst_sep2, _rst_sep2)
 
-        idoc += ''.join(
-            ['\n  %s' % k
-             + ('', ' : provides sensitivity')[int(v[2] is not None)]
-             + '\n    ' + NOS(v[1], '%s', 'No parameters')
-             for k,v in cls._KERNELS.iteritems()])
+        #idoc += ''.join(
+            #['\n  %s' % k
+             #+ ('', ' : provides sensitivity')[int(v[2] is not None)]
+             #+ '\n    ' + NOS(v[1], '%s', 'No parameters')
+             #for k,v in cls._KERNELS.iteritems()])
 
         # Finally parameters
-        NOS.seen += cls._KNOWN_PARAMS + cls._KNOWN_KERNEL_PARAMS
+        NOS.seen += cls._KNOWN_PARAMS# + cls._KNOWN_KERNEL_PARAMS
 
         idoc += '\n:Parameters:\n' + '\n'.join(
             [v.doc(indent='  ')
