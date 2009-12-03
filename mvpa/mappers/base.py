@@ -308,8 +308,7 @@ class Mapper(object):
             if in_ids is None:
                 in_ids = kwargs[ourspace]
             else:
-                # XXX maybe allow for a 'union' mode??
-                in_ids = list(set(in_ids).intersection(kwargs[ourspace]))
+                in_ids = list(set(in_ids).union(kwargs[ourspace]))
 
             # remove the space contraint, since it has been processed
             del kwargs[ourspace]
