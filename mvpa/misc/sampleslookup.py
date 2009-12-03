@@ -21,19 +21,40 @@ class SamplesLookup(object):
         ds : Dataset
             Dataset for which to create the map
         """
-        sample_ids = ds.sa.origids
-        self._orig_ds_id = ds.a.magic_id
+        
+        # TODO: Generate origids and magic_id in Dataset!!
+        # They are simply added here for development convenience, but they
+        # should be removed.  We should also consider how exactly to calculate
+        # the magic ids and sample ids as this is not necessarily the fastest/
+        # most robust method --SG
+        try:
+            sample_ids = ds.sa.origids
+        except AttributeError:
+            # origids not yet generated
+            if __debug__:
+                Warning("Generating dataset origids in SamplesLookup")
+            ds.sa.update({'origids':N.arange(ds.nsamples)})
+            sample_ids = ds.sa.origids
+        
+        try:
+            self._orig_ds_id = ds.a.magic_id
+        except AttributeError:
+            ds.a.update({'magic_id':hash(ds)})
+            self._orig_ds_id = ds.a.magic_id
+            if __debug__:
+                Warning("Generating dataset magic_id in SamplesLookup")
+                
         self._map = dict(zip(sample_ids,
                              range(len(sample_ids))))
 
     def __call__(self, ds):
         """
         .. note:
-           Would raise KeyError if lookup for sample_ids fails.
-           Does not validate if it is for the same ds as was inited for
+           Will raise KeyError if lookup for sample_ids fails, or ds has not 
+           been mapped at all
            """
-        if ds.a.magic_id != self._orig_ds_id:
-            raise KeyError()
+        if (not 'magic_id' in ds.a) or ds.a.magic_id != self._orig_ds_id:
+            raise KeyError, 'This dataset is not indexed by this SamplesLookup'
         _map = self._map
         return N.array([_map[i] for i in ds.sa.origids])
 

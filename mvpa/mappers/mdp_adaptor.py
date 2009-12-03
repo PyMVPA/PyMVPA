@@ -17,7 +17,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import mdp
 
-from mvpa.datasets.base import DatasetAttributeExtractor
+from mvpa.base.dataset import DatasetAttributeExtractor
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
 from mvpa.misc.support import isInVolume
 
@@ -72,6 +72,13 @@ class MDPNodeMapper(Mapper):
         self.__pristine_node = None
         self.node = node
         self.nodeargs = nodeargs
+
+
+    def __repr__(self):
+        s = super(MDPNodeMapper, self).__repr__()
+        return s.replace("(", "(node=%s, nodeargs=%s, "
+                              % (repr(self.node),
+                                 repr(self.nodeargs)), 1)
 
 
     def _expand_args(self, phase, ds=None):
@@ -146,6 +153,35 @@ class MDPNodeMapper(Mapper):
         return []
 
 
+class PCAMapper(MDPNodeMapper):
+    def __init__(self, alg='PCA', **kwargs):
+        """
+        Parameters
+        ----------
+        alg : {'PCA', 'NIPALS'}
+          Which MDP implementation of a PCA to use.
+        **kwargs
+          See the base class for information about additional arguments.
+        """
+        if alg == 'PCA':
+            node = mdp.nodes.PCANode()
+        elif alg == 'NIPALS':
+            node = mdp.nodes.NIPALSNode()
+        else:
+            raise ValueError("Unkown algorithm '%s' for PCAMapper."
+                             % alg)
+        MDPNodeMapper.__init__(self, node, **kwargs)
+
+
+    proj = property(fget=lambda self: self.node.get_projmatrix(),
+                    doc="Projection matrix (as an array)")
+    recon = property(fget=lambda self: self.node.get_projmatrix(),
+                     doc="Backprojection matrix (as an array)")
+    var = property(fget=lambda self: self.node.d, doc="Variances per component")
+    centroid = property(fget=lambda self: self.node.avg,
+                        doc="Mean of the traiing data")
+
+
 
 class MDPFlowMapper(Mapper):
     def __init__(self, flow, data_iterables=None, inspace=None):
@@ -157,6 +193,13 @@ class MDPFlowMapper(Mapper):
         self.__pristine_flow = None
         self.flow = flow
         self.data_iterables = data_iterables
+
+
+    def __repr__(self):
+        s = super(MDPFlowMapper, self).__repr__()
+        return s.replace("(", "(flow=%s, data_iterables=%s, "
+                              % (repr(self.flow),
+                                 repr(self.data_iterables)), 1)
 
 
     def _expand_nodeargs(self, ds, args):

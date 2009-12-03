@@ -14,26 +14,29 @@ Kernel-Demo
 This is an example demonstrating various kernel implementation in PyMVPA.
 """
 
-from mvpa.suite import *
-from mvpa.clfs.kernel import *
+import numpy as N
 import pylab as P
+
+#from mvpa.suite import *
+from mvpa.base import cfg
+from mvpa.kernels.np import *
 
 
 # N.random.seed(1)
 data = N.random.rand(4, 2)
 
 for kernel_class, kernel_args in (
-    (KernelConstant, {'sigma_0':1.0}),
-    (KernelConstant, {'sigma_0':1.0}),
-    (KernelLinear, {'Sigma_p':N.eye(data.shape[1])}),
-    (KernelLinear, {'Sigma_p':N.ones(data.shape[1])}),
-    (KernelLinear, {'Sigma_p':2.0}),
-    (KernelLinear, {}),
-    (KernelExponential, {}),
-    (KernelSquaredExponential, {}),
-    (KernelMatern_3_2, {}),
-    (KernelMatern_5_2, {}),
-    (KernelRationalQuadratic, {}),
+    (ConstantKernel, {'sigma_0':1.0}),
+    (ConstantKernel, {'sigma_0':1.0}),
+    (GeneralizedLinearKernel, {'Sigma_p':N.eye(data.shape[1])}),
+    (GeneralizedLinearKernel, {'Sigma_p':N.ones(data.shape[1])}),
+    (GeneralizedLinearKernel, {'Sigma_p':2.0}),
+    (GeneralizedLinearKernel, {}),
+    (ExponentialKernel, {}),
+    (SquaredExponentialKernel, {}),
+    (Matern_3_2Kernel, {}),
+    (Matern_5_2Kernel, {}),
+    (RationalQuadraticKernel, {}),
     ):
     kernel = kernel_class(**kernel_args)
     print kernel
@@ -47,16 +50,18 @@ for kernel_class, kernel_args in (
 # used for regression/classfication with GPR/GPC.
 count = 1
 for k in kernel_dictionary.keys():
-    P.subplot(3,4,count)
+    P.subplot(3, 4, count)
     # X = N.random.rand(size)*12.0-6.0
     # X.sort()
-    X = N.arange(-1,1,.02)
-    X = X[:,N.newaxis]
+    X = N.arange(-1, 1, .02)
+    X = X[:, N.newaxis]
     ker = kernel_dictionary[k]()
-    K = ker.compute(X,X)
+    ker.compute(X, X)
+    print k
+    K = N.asarray(ker)
     for i in range(10):
-        f = N.random.multivariate_normal(N.zeros(X.shape[0]),K)
-        P.plot(X[:,0],f,"b-")
+        f = N.random.multivariate_normal(N.zeros(X.shape[0]), K)
+        P.plot(X[:, 0], f, "b-")
 
     P.title(k)
     P.axis('tight')

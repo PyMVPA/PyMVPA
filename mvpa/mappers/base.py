@@ -316,9 +316,9 @@ class Mapper(object):
 
 
     def __repr__(self):
-        # TODO come on!
-        s=''
-        return "%s(%s)" % (self.__class__.__name__, s)
+        return "%s(inspace=%s)" \
+                % (self.__class__.__name__,
+                   repr(self.get_inspace()))
 
 
     def __call__(self, data):
@@ -902,8 +902,7 @@ class ChainMapper(Mapper):
 
     def __ensure_selectable_tail(self):
         """Append a FeatureSubsetMapper to the chain if there is none yet."""
-        last_mapper = self[-1]
-        if not isinstance(last_mapper, FeatureSubsetMapper):
+        if not isinstance(self[-1], FeatureSubsetMapper):
             self.append(FeatureSubsetMapper(last_mapper.get_outsize()))
 
 
