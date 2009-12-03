@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.base import warning, externals
-from mvpa.clfs.base import Classifier
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import ConvergenceError
 from mvpa.misc.param import Parameter
@@ -462,7 +462,7 @@ class SMLR(Classifier):
         """
         return N.where(N.max(N.abs(self.__weights), axis=1)>0)[0]
 
-
+    @accepts_dataset_as_samples
     def _predict(self, data):
         """Predict the output for the provided data.
         """

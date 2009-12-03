@@ -21,6 +21,9 @@ from mvpa.support.copy import deepcopy
 
 import time
 
+from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
+
+from mvpa.datasets.base import dataset
 from mvpa.misc.support import idhash
 from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.param import Parameter
@@ -32,6 +35,22 @@ from mvpa.base import warning
 
 if __debug__:
     from mvpa.base import debug
+
+__all__ = [ 'Classifier',
+            'accepts_dataset_as_samples', 'accepts_samples_as_dataset']
+
+def accepts_samples_as_dataset(fx):
+    """Decorator to wrap samples into a Dataset.
+
+    Little helper to allow methods to accept plain data whenever
+    dataset is generally required.
+    """
+    def wrap_samples(obj, data):
+        if is_datasetlike(data):
+            return fx(obj, data)
+        else:
+            return fx(obj, dataset(data))
+    return wrap_samples
 
 
 class Classifier(ClassWithCollections):
@@ -388,7 +407,7 @@ class Classifier(ClassWithCollections):
         return result
 
 
-    def _prepredict(self, data):
+    def _prepredict(self, dataset):
         """Functionality prior prediction
         """
         if not ('notrain2predict' in self._clf_internals):
@@ -397,7 +416,7 @@ class Classifier(ClassWithCollections):
                 raise ValueError, \
                       "Classifier %s wasn't yet trained, therefore can't " \
                       "predict" % self
-            nfeatures = data.shape[1]
+            nfeatures = dataset.nfeatures #data.shape[1]
             # check if number of features is the same as in the data
             # it was trained on
             if nfeatures != self.__trainednfeatures:
@@ -411,6 +430,7 @@ class Classifier(ClassWithCollections):
             if not self.__changedData_isset:
                 self.__resetChangedData()
                 _changedData = self._changedData
+                data = N.asanyarray(dataset.samples)
                 _changedData['testdata'] = \
                                         self.__wasDataChanged('testdata', data)
                 if __debug__:
@@ -418,20 +438,20 @@ class Classifier(ClassWithCollections):
                           % (_changedData))
 
 
-    def _postpredict(self, data, result):
+    def _postpredict(self, dataset, result):
         """Functionality after prediction is computed
         """
         self.states.predictions = result
         if self.params.retrainable:
             self.__changedData_isset = False
 
-    def _predict(self, data):
+    def _predict(self, dataset):
         """Actual prediction
         """
         raise NotImplementedError
 
-
-    def predict(self, data):
+    @accepts_samples_as_dataset
+    def predict(self, dataset):
         """Predict classifier on data
 
         Shouldn't be overridden in subclasses unless explicitly needed
@@ -440,10 +460,10 @@ class Classifier(ClassWithCollections):
         since otherwise it would loop
         """
         ## ??? yoh: changed to asany from as without exhaustive check
-        data = N.asanyarray(data)
+        data = N.asanyarray(dataset.samples)
         if __debug__:
-            debug("CLF", "Predicting classifier %(clf)s on data %(data)s",
-                msgargs={'clf':self, 'data':data.shape})
+            debug("CLF", "Predicting classifier %(clf)s on ds %(dataset)s",
+                msgargs={'clf':self, 'dataset':dataset})
 
         # remember the time when started computing predictions
         t0 = time.time()
@@ -453,11 +473,11 @@ class Classifier(ClassWithCollections):
         # post-training)
         states.reset(['values', 'predictions'])
 
-        self._prepredict(data)
+        self._prepredict(dataset)
 
         if self.__trainednfeatures > 0 \
                or 'notrain2predict' in self._clf_internals:
-            result = self._predict(data)
+            result = self._predict(dataset)
         else:
             warning("Trying to predict using classifier trained on no features")
             if __debug__:
@@ -508,7 +528,7 @@ class Classifier(ClassWithCollections):
         if self._attrmap:
             result = self._attrmap.to_literal(result)
 
-        self._postpredict(data, result)
+        self._postpredict(dataset, result)
         return result
 
     # deprecate ???
@@ -777,7 +797,8 @@ class Classifier(ClassWithCollections):
         self.train(dataset)
 
 
-    def repredict(self, data, **kwargs):
+    @accepts_samples_as_dataset
+    def repredict(self, dataset, **kwargs):
         """Helper to avoid check if data was changed actually changed
 
         Useful if classifier was (re)trained but with the same data
@@ -790,8 +811,8 @@ class Classifier(ClassWithCollections):
         obvious mistakes.
 
         :Parameters:
-          data
-            data which is conventionally given to predict
+          dataset
+            dataset which is conventionally given to predict
           kwargs
             that is what _changedData gets updated with. So, smth like
             ``(params=['C'], labels=True)`` if parameter C and labels
@@ -813,7 +834,7 @@ class Classifier(ClassWithCollections):
 
         # check if we are attempted to perform on the same data
         if __debug__ and 'CHECK_RETRAIN' in debug.active:
-            for key, data_ in (('testdata', data),):
+            for key, data_ in (('testdata', dataset.samples),):
                 # so it wasn't told to be invalid
                 #if not chd[key]:# and not ichd.get(key, False):
                 if self.__wasDataChanged(key, data_, update=False):
@@ -825,12 +846,12 @@ class Classifier(ClassWithCollections):
         # remove in future???
         if __debug__ and 'CHECK_RETRAIN' in debug.active \
                and not self._changedData['testdata'] \
-               and self.__trained['testdata'].shape != data.shape:
+               and self.__trained['testdata'].shape != dataset.samples.shape:
             raise ValueError, "In repredict got dataset with %s size, " \
                   "whenever previously was trained on %s size" \
-                  % (data.shape, self.__trained['testdata'].shape)
+                  % (dataset.samples.shape, self.__trained['testdata'].shape)
 
-        return self.predict(data)
+        return self.predict(dataset)
 
 
     # TODO: callback into retrainable parameter

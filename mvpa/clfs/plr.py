@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.misc.exceptions import ConvergenceError
-from mvpa.clfs.base import Classifier
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 
 if __debug__:
     from mvpa.base import debug
@@ -137,6 +137,7 @@ class PLR(Classifier):
         return 1. / (1 + N.exp(-y))
 
 
+    @accepts_dataset_as_samples
     def _predict(self, data):
         """
         Predict the class labels for the provided data

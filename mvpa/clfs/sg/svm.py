@@ -50,6 +50,7 @@ import operator
 from mvpa.misc.param import Parameter
 from mvpa.base import warning
 
+from mvpa.clfs.base import accepts_dataset_as_samples
 from mvpa.clfs.meta import MulticlassClassifier
 from mvpa.clfs._svmbase import _SVM
 from mvpa.misc.state import StateVariable
@@ -462,6 +463,10 @@ class SVM(_SVM):
                 targets=dataset.labels,
                 predictions=trained_labels)
 
+
+    # XXX actually this is the beast which started this evil conversion
+    #     so -- make use of dataset here! ;)
+    @accepts_dataset_as_samples
     def _predict(self, data):
         """Predict values for the data
         """
