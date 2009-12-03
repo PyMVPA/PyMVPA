@@ -73,10 +73,10 @@ class KernelTests(unittest.TestCase):
         d.sa.chunks = N.random.randint(nchunks, size=n)
         
         # We'll compare against an Rbf just because it has a parameter to change
-        rk = npK.RbfKernel(gamma=1.5)
+        rk = npK.RbfKernel(sigma=1.5)
         
         # Assure two kernels are independent for this test
-        ck = CachedKernel(kernel=npK.RbfKernel(gamma=1.5))
+        ck = CachedKernel(kernel=npK.RbfKernel(sigma=1.5))
         ck.compute(d) # Initial cache of all data
         
         self.failUnless(ck._recomputed,
@@ -91,11 +91,11 @@ class KernelTests(unittest.TestCase):
                         "CachedKernel incorrectly recomputed it's kernel")
 
         # Test what happens when a parameter changes
-        ck.params.gamma = 3.5
+        ck.params.sigma = 3.5
         ck.compute(d)
         self.failUnless(ck._recomputed,
                         "CachedKernel doesn't recompute on kernel change")
-        rk.params.gamma = 3.5
+        rk.params.sigma = 3.5
         rk.compute(d)
         self.failUnless(N.all(rk._k == ck._k),
                         'Cached and rbf kernels disagree after kernel change')
@@ -142,7 +142,7 @@ class KernelTests(unittest.TestCase):
             d1 = N.random.randn(105, 32)
             d2 = N.random.randn(41, 32)
             sk = sgK.PolySGKernel()
-            nk = npK.PolyKernel(offset=1)
+            nk = npK.PolyKernel(coef0=1)
             ordervals = [1, 2, 3, 5, 7]
             for p in ordervals:
                 sk.params.degree=p
@@ -160,10 +160,10 @@ class KernelTests(unittest.TestCase):
             d2 = N.random.randn(41, 32)
             sk = sgK.RbfSGKernel()
             nk = npK.RbfKernel()
-            gammavals = N.logspace(-2, 5, num=10)
-            for g in gammavals:
-                sk.params.gamma=g
-                nk.params.gamma=g
+            sigmavals = N.logspace(-2, 5, num=10)
+            for s in sigmavals:
+                sk.params.sigma=s
+                nk.params.sigma=s
                 sk.compute(d1, d2)
                 nk.compute(d1, d2)
                 
