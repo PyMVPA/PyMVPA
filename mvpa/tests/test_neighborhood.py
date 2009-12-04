@@ -44,6 +44,9 @@ def test_sphere():
     s = ne.Sphere(9)
     assert_equal(len(s.coord_list), 257)
 
+    #XXX do the test for a sphere with a limited extent here
+
+
 def test_query_enigne():
     # load example 4 d dataset
     data = nifti.nifti_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),

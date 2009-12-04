@@ -28,7 +28,7 @@ class Sphere(object):
     >>>coords = s((1,1,1))
 
     """
-    def __init__(self, diameter, extent=sys.maxint):
+    def __init__(self, diameter, extent=(sys.maxint, sys.maxint, sys.maxint)):
         """ Initialise the Sphere
 
         Parameters
@@ -39,16 +39,17 @@ class Sphere(object):
             maximum index to consider
 
         """
+        self.extent = N.asanyarray(extent)
         if __debug__:
             if diameter%2 != 1:
                 raise ValueError("Sphere diameter must be odd, but is: %d"
                                 % diameter)
-            if type(extent) is not int:
-                raise ValueError("Sphere extent must be an integer, was: %s"
+            if len(self.extent) != 3 \
+                or self.extent.dtype.char not in N.typecodes['AllInteger']:
+                raise ValueError("Sphere extent must be all integers, was: %s"
                                 % type(extent))
         self.diameter = diameter
         self.coord_list = self._create_template()
-        self.extent = extent
         self.dataset = None
 
     def _create_template(self):
