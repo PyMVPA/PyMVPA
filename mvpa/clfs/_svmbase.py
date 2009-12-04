@@ -12,6 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 import textwrap
+import operator
 
 from mvpa.support.copy import deepcopy
 
@@ -228,7 +229,23 @@ class _SVM(Classifier):
         res += ")"
         return res
 
+    def _getCvec(self, data):
+        if self.params.isKnown('C'):#svm_type in [_svm.svmc.C_SVC]:
+            C = self.params.C
+            if not operator.isSequenceType(C):
+                # we were not given a tuple for balancing between classes
+                C = [C]
 
+            Cs = list(C[:])               # copy
+            for i in xrange(len(Cs)):
+                if Cs[i] < 0:
+                    Cs[i] = self._getDefaultC(data.samples)*abs(Cs[i])
+                    if __debug__:
+                        debug("SVM", "Default C for %s was computed to be %s" %
+                              (C[i], Cs[i]))
+
+            return Cs
+                
     def _getDefaultC(self, data):
         """Compute default C
 
