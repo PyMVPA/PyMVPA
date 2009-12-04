@@ -21,7 +21,10 @@ if externals.exists("scipy", raiseException=True):
 
 # no sense to import this module if openopt is not available
 if externals.exists("openopt", raiseException=True):
-    from scikits.openopt import NLP
+    try:
+        from openopt import NLP
+    except ImportError:
+        from scikits.openopt import NLP
 
 if __debug__:
     from mvpa.base import debug
