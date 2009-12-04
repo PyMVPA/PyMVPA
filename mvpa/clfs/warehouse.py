@@ -32,6 +32,10 @@ from mvpa.featsel.helpers import FractionTailSelector, \
 
 from mvpa.featsel.base import SensitivityBasedFeatureSelection
 
+# Kernels
+from mvpa.kernels.libsvm import LinearLSKernel, RbfLSKernel, \
+     PolyLSKernel, SigmoidLSKernel
+
 _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'smlr', 'does_feature_selection', 'has_sensitivity',
         'multiclass', 'non-linear', 'kernel-based', 'lars',
@@ -179,12 +183,12 @@ if externals.exists('libsvm'):
              libsvm.SVM(svm_impl='NU_SVC',
                         descr="libsvm.LinNuSVM(nu=def)", probability=1)
              ]
-    clfswh += [libsvm.SVM(kernel_type='RBF', descr="libsvm.RbfSVM()"),
-             libsvm.SVM(kernel_type='RBF', svm_impl='NU_SVC',
+    clfswh += [libsvm.SVM(kernel=RbfLSKernel(), descr="libsvm.RbfSVM()"),
+             libsvm.SVM(kernel=RbfLSKernel(), svm_impl='NU_SVC',
                         descr="libsvm.RbfNuSVM(nu=def)"),
-             libsvm.SVM(kernel_type='poly',
+             libsvm.SVM(kernel=PolyLSKernel(),
                         descr='libsvm.PolySVM()', probability=1),
-             #libsvm.svm.SVM(kernel_type='sigmoid',
+             #libsvm.svm.SVM(kernel=SigmoidLSKernel(),
              #               svm_impl='C_SVC',
              #               descr='libsvm.SigmoidSVM()'),
              ]
@@ -198,6 +202,8 @@ if externals.exists('libsvm'):
 
 if externals.exists('shogun'):
     from mvpa.clfs import sg
+    
+    from mvpa.kernels.sg import LinearSGKernel, PolySGKernel, RbfSGKernel
     clfswh._known_tags.union_update(sg.SVM._KNOWN_IMPLEMENTATIONS)
 
     # some classifiers are not yet ready to be used out-of-the-box in
@@ -232,13 +238,13 @@ if externals.exists('shogun'):
                 C=1.0, descr="sg.LinSVM(C=1)/%s" % impl, svm_impl=impl),
             ]
         clfswh += [
-            sg.SVM(kernel_type='RBF',
+            sg.SVM(kernel=RbfSGKernel(),
                    descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
-#            sg.SVM(kernel_type='RBF',
+#            sg.SVM(kernel=RbfSGKernel(),
 #                   descr="sg.RbfSVM(gamma=0.1)/%s"
 #                    % impl, svm_impl=impl, gamma=0.1),
 #           sg.SVM(descr="sg.SigmoidSVM()/%s"
-#                   % impl, svm_impl=impl, kernel_type="sigmoid"),
+#                   % impl, svm_impl=impl, kernel=SigmoidSGKernel(),),
             ]
 
     for impl in ['libsvr', 'krr']:# \

@@ -156,10 +156,6 @@ class _SVM(Classifier):
 
         try:
             Classifier.__init__(self, **kwargs)
-            try:
-                self.kernel_params = self.kernel.params
-            except AttributeError:
-                raise RuntimeError, 'SVM needs a kernel in init!'
             
         except TypeError, e:
             if "__init__() got an unexpected keyword argument " in e.args[0]:
@@ -202,16 +198,23 @@ class _SVM(Classifier):
                 raise ValueError, "Lenghts of 'weight' and 'weight_label' lists" \
                       "must be equal."
 
+        if self.params.kernel is None:
+            self.params.kernel = self.__default_kernel_class__()
+            
         if __debug__:
             debug("SVM", "Initialized %s with kernel %s" % 
-                  (self, self.kernel))
+                  (self, self.params.kernel))
 
 
+    @property
+    def kernel_params(self):
+        return self.params.kernel.params
+    
     def __repr__(self):
         """Definition of the object summary over the object
         """
         res = "%s(kernel='%s', svm_impl='%s'" % \
-              (self.__class__.__name__, self.kernel,
+              (self.__class__.__name__, self.params.kernel,
                self._svm_impl)
         sep = ", "
         for col in [self.params, self.kernel_params]:

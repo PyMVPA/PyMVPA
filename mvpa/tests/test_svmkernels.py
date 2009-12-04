@@ -14,10 +14,16 @@ from mvpa.datasets import Dataset
 from mvpa.clfs.libsvmc import SVM as lsSVM
 from mvpa.clfs.sg import SVM as sgSVM
 
-from tests_warehouse import datasets
+from tests_warehouse import datasets, sweepargs
 
 class SVMKernelTests(unittest.TestCase):
-    pass
+    
+    @sweepargs(clf=[lsSVM(), sgSVM()])
+    def testBasicClfTrainPredict(self, clf):
+        d = datasets['uni4medium']
+        clf.train(d)
+        clf.predict(d)
+        pass
 
 def suite():
     return unittest.makeSuite(KernelTests)
