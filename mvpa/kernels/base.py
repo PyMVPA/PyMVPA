@@ -73,7 +73,15 @@ class Kernel(ClassWithCollections):
         self._compute(ds1, ds2)
 
     def _compute(self, d1, d2):
+        """Specific implementation to be overridden
+        """
         raise NotImplemented, "Abstract method"
+
+    def computed(self, *args, **kwargs):
+        """Compute kernel and return self
+        """
+        self.compute(*args, **kwargs)
+        return self
 
     def __array__(self):
         return self.as_np()._k
@@ -111,6 +119,8 @@ class NumpyKernel(Kernel):
 
 
 class CustomKernel(NumpyKernel):
+    """Custom Kernel defined by an arbitrary function
+    """
 
     kernelfunc = Parameter(None, doc="""Function to generate the matrix""")
 
@@ -197,13 +207,13 @@ class CachedKernel(NumpyKernel):
         self._k = self._kfull
         
         self._recomputed=True
-        self.params.reset() 
+        self.params.reset()
         # TODO: store params representation for later comparison
 
     def compute(self, ds1, ds2=None):
         """Automatically computes computes and caches the kernel or extracts the 
         relevant part of a precached kernel into self._k
-        """        
+        """
         self._recomputed=False # Flag lets us know whether cache was recomputed
         
         #if self._ds_cached_info is not None:
@@ -221,7 +231,7 @@ class CachedKernel(NumpyKernel):
             # figure d1, d2
             # TODO: find saner numpy way to select both rows and columns
             try:
-                lhsids = self._lhsids(ds1) # 
+                lhsids = self._lhsids(ds1) #
                 if ds2 is None:
                     rhsids = lhsids
                 else:
