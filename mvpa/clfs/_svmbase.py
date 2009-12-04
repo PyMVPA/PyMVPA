@@ -148,6 +148,14 @@ class _SVM(Classifier):
             self._clf_internals += list(add_internals)
         self._clf_internals.append(svm_impl)
 
+        k = kwargs.get('kernel', None)
+        if k is None:
+            kwargs['kernel'] = self.__default_kernel_class__()
+        if 'linear' in ('%s'%kwargs['kernel']).lower(): # not necessarily best
+            self._clf_internals += [ 'linear', 'has_sensitivity' ]
+        else:
+            self._clf_internals += [ 'non-linear' ]
+
         # pop out all args from **kwargs which are known to be SVM parameters
         _args = {}
         for param in self._KNOWN_PARAMS + ['svm_impl']: # Update to remove kp's?
@@ -198,8 +206,6 @@ class _SVM(Classifier):
                 raise ValueError, "Lenghts of 'weight' and 'weight_label' lists" \
                       "must be equal."
 
-        if self.params.kernel is None:
-            self.params.kernel = self.__default_kernel_class__()
             
         if __debug__:
             debug("SVM", "Initialized %s with kernel %s" % 
