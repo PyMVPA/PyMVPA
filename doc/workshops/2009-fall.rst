@@ -163,7 +163,7 @@ Workshop Results
 ================
 
 Grand Kernel Unification
-__________________
+------------------------
 
 Yaroslav O. Halchenko, Scott Gorlin, and Emanuele Olivetti
 
@@ -172,7 +172,7 @@ most of these algorithms have their own naming standards and backend
 implementations which are not interchangeable, meaning that new advances in
 kernel logic or software implementations are not generally beneficial to PyMVPA
 as a whole.  To solve this, we have implemented a new class hierarchy which not
-only specifies a standarad kernel interface, but also allows the automatic
+only specifies a standard kernel interface, but also allows the automatic
 translation of kernels from one software backend to another.
 
 Specifically, it is now possible to specify new kernel classes in pure Python 
@@ -185,7 +185,7 @@ GPR), or the automatic exchange of kernels for any implementation in the future.
 
 
 Cached Kernel Optimization
-__________________________
+--------------------------
 
 Yaroslav O. Halchenko, Scott Gorlin
 
@@ -198,3 +198,26 @@ cross-validation, bootstrapping, etc, where the kernel product is normally
 recalculated every time it is computed - e.g., every time SVM.train(...) is
 called.  Caching the kernel will avoid these expensive computations and greatly
 speed up this type of analysis by several orders of magnitude.
+
+
+Flexible, straightforward adaptor for arbitrary MDP nodes and flows
+-------------------------------------------------------------------
+
+Michael Hanke, Tiziano Zito
+
+Although previously PyMVPA used MDP to provide a subset of its functionality
+through Mappers, this was limited to single nodes (e.g. PCA, ICA) and was not
+meant to be extended by users (except for subclassing and writing a new node
+wrapper by hand).  Now, PyMVPA included flexible adaptors for arbitrary MDP
+nodes, or whole MDP flows. Besides incremental training, these adaptors offer
+access to the full functionality of the underlying node or flow.
+Straightforward (single-line of code) wrapping allows to seamlessly blend MDP
+into PyMVPA.
+
+The benefits are two-fold: PyMVPA users have now access to the full
+functionality of MDP without having to develop custom mappers. This includes
+algorithms, such as PCA, ICA, factor analysis, discriminant analysis, slow
+feature analysis, or restricted Boltzmann machines, and many more. MDP users
+can now use PyMVPA to perform convenient cross-validation of classification
+procedures with arbitrary mixes of PyMVPA classifiers and measure and MDP nodes,
+and flows.
