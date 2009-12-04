@@ -11,6 +11,24 @@
 It was devised to provide conditional storage 
 """
 
+_DEV_DOC = """
+TODO:
++ Use %r instead of %s in repr for ClasswithCollections
+  Replaced few %s's... might be fixed
++ Check why __doc__ is not set in kernels
+  Seems to be there now...
+- puke if *args and **kwargs are provided and exceed necessary number
++ for Parameter add ability to make it 'final'/read-only
++ repr(instance.params) contains only default value -- not current or
+  set in the constructor... not good
+  Now if value is not default -- would be present
+? check/possible assure order of parameters/states to be as listed in the
+  constructor
+  There is _instance_index (could be set with 'index' parameter in
+  Parameter). ATM it is used in documentation to list them in original
+  order.
+"""
+
 # XXX: MH: The use of `index` as variable name confuses me. IMHO `index` refers
 #          to a position in a container (i.e. list access). However, in this
 #          file it is mostly used in the context of a `key` for dictionary
@@ -52,9 +70,9 @@ _object_setattr = object.__setattr__
 ###################################################################
 # Collections
 #
-# TODO: refactor into collections.py. state.py now has
-#       little in common with the main part of this file
-#
+# TODO:
+#  - refactor: use base.collections and unify this to that
+#  - minimize interface
 
 
 class Collection(object):
@@ -161,7 +179,7 @@ class Collection(object):
         """Initialize `index` (no check performed) with `value`
         """
         # by default we just set corresponding value
-        self[index].value = value
+        self[index]._set(value, init=True)
 
 
     def __repr__(self):
@@ -1049,7 +1067,7 @@ class ClassWithCollections(object):
         self.__params_set = False
 
         # need to check to avoid override of enabled states in the case
-           # of multiple inheritance, like both ClassWithCollectionsl and Harvestable
+        # of multiple inheritance, like both ClassWithCollectionsl and Harvestable
         if not s__dict__.has_key('_collections'):
             s__class__ = self.__class__
 
@@ -1095,14 +1113,14 @@ class ClassWithCollections(object):
             # Assign attributes values if they are given among
             # **kwargs
             for arg, argument in kwargs.items():
-                set = False
+                isset = False
                 for collection in collections.itervalues():
                     if collection._is_initializable(arg):
                         collection._initialize(arg, argument)
-                        set = True
+                        isset = True
                         break
-                if set:
-                    trash = kwargs.pop(arg)
+                if isset:
+                    _ = kwargs.pop(arg)
                 else:
                     known_params = reduce(
                        lambda x,y:x+y,
@@ -1241,7 +1259,7 @@ class ClassWithCollections(object):
             if 'MODULE_IN_REPR' in debug.active:
                 fullname = True
             if 'ID_IN_REPR' in debug.active:
-                id_str = '#%s' % id(self)
+                id_str = '#%r' % id(self)
 
         if fullname:
             modulename = '%s' % self.__class__.__module__
@@ -1260,7 +1278,7 @@ class ClassWithCollections(object):
         # Description if present
         descr = self.__descr
         if descr is not None:
-            prefixes.append("descr=%s" % repr(descr))
+            prefixes.append("descr=%r" % descr)
 
         return "%s%s(%s)%s" % (module_str, self.__class__.__name__,
                                ', '.join(prefixes), id_str)

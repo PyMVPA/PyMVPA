@@ -91,7 +91,6 @@ def collectTestSuites():
                          ('scipy', 'stats_sp'),
                          ('scipy', 'datasetfx_sp'),
                          (['lars','scipy'], 'lars'),
-## broken                         ('nifti', 'niftidataset'),
                          ('mdp', 'icamapper'),
                          ('scipy', 'zscoremapper'),
                          ('pywt', 'waveletmapper'),
@@ -126,9 +125,11 @@ def collectNoseTests():
     """
     tests = [ 'test_collections',
               'test_datasetng',
+              'test_niftidataset',
               'test_attrmap',
               'test_mapper',
               'test_mdp',
+              'test_neighborhood',
               ]
     return tests
 

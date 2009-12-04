@@ -174,8 +174,8 @@ class KernelTests(unittest.TestCase):
             cl = sgK.CustomSGKernel(sgK.sgk.LinearKernel)
             poly = sgK.PolySGKernel()
             custom = sgK.CustomSGKernel(sgK.sgk.PolyKernel, 
-                                        kernelparams=[('order',2),
-                                                      ('inhomogenous', True)])
+                                        kernel_params=[('order',2),
+                                                       ('inhomogenous', True)])
             d = N.random.randn(253, 52)
             lk.compute(d)
             cl.compute(d)
