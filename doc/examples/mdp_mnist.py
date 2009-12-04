@@ -80,6 +80,9 @@ testds = Dataset.from_basic(
         labels=data['testlabels'],
         mapper=ds.a.mapper)
 
+ds.init_origids('samples')
+testds.init_origids('samples')
+
 examples = [0, 25024, 50000, 59000]
 
 P.figure(figsize=(6,6))
@@ -90,7 +93,7 @@ for i, id in enumerate(examples):
     P.imshow(data['traindata'][id].T, cmap=P.cm.gist_yarg,
              interpolation='nearest', aspect='equal')
 
-P.subplots_adjust(left=0,right=1,bottom=0,top=1,wspace=0,hspace=0)
+P.subplots_adjust(left=0,right=1,bottom=0,top=1,wspace=0.05,hspace=0.05)
 P.show()
 
 
@@ -99,19 +102,29 @@ fdaflow = (mdp.nodes.WhiteningNode(output_dim=10, dtype='d') +
            mdp.nodes.FDANode(output_dim=9))
 fdaflow.verbose = True
 
-mapper = MDPFlowMapper(fdaflow, ([], [], [DAE('sa', 'labels')]))
+mapper = MDPFlowMapper(fdaflow, ([], [], [DatasetAttributeExtractor('sa', 'labels')]))
 
 terr = TransferError(MappedClassifier(SMLR(), mapper),
                      enable_states=['confusion',
                                     'samples_error'])
 err = terr(testds, ds)
 print 'Test error:', err
-
+try:
+    from enthought.mayavi.mlab import points3d
+    P3D = True
+except:
+    print 'Sorry, no 3D plots!'
+    P3D = False
+    
 fmts = ['bo', 'ro', 'ko', 'mo']
+pts = []
 for i, ex in enumerate(examples):
-    pts = mapper.forward(ds.samples[ex:ex+100])[:,:2].T
-    P.plot(pts[0], pts[1], fmts[i])
+    pts.append(mapper.forward(ds.samples[ex:ex+100])[:,:3])
 
-if cfg.getboolean('examples', 'interactive', True):
+if P3D:
+    for p in pts:
+        points3d(p[:,0],p[:,1],p[:,2])
+
+#if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
-    P.show()
+#    P.show()
