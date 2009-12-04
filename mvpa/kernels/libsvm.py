@@ -18,17 +18,26 @@ __docformat__ = 'restructuredtext'
 from mvpa.base import externals, warning
 from mvpa.kernels.base import Kernel, N
 from mvpa.misc.param import Parameter
-from mvpa.clfs.libsvmc import _svmc
+
+
+#from mvpa.clfs.libsvmc import _svmc
+# circular import bug: manually defining these for now
+class _svmc(object):
+    LINEAR = 0
+    POLY = 1
+    RBF = 2
+    SIGMOID = 3
+
 
 class LSKernel(Kernel):
     """A Kernel object which dictates how LibSVM will calculate the kernel"""
     
-    @property
-    def _k(self):
-        return self.__kernel_type__
+    def __init__(self, *args, **kwargs):
+        Kernel.__init__(self, *args, **kwargs)
+        self.compute()
     
     def compute(self, *args, **kwargs):
-        pass # Nothing to compute
+        self._k = self.__kernel_type__ # Nothing to compute
     
     def as_ls(self):
         return self
@@ -36,7 +45,11 @@ class LSKernel(Kernel):
     def as_np(self):
         raise NotImplemented, 'LibSVM calculates kernels internally; they ' +\
               'cannot be converted to Numpy'
-
+# Monkey patch Kernel
+def _as_ls(kernel):
+    raise NotImplemented, 'LibSVM calculates kernels internally; they ' +\
+          'cannot be converted from Numpy'
+Kernel.as_ls = _as_ls
 
 class LinearLSKernel(LSKernel):
     """A simple Linear kernel: K(a,b) = a*b.T"""

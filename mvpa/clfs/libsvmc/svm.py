@@ -20,7 +20,8 @@ from mvpa.misc.state import StateVariable
 from mvpa.clfs.base import accepts_dataset_as_samples
 from mvpa.clfs._svmbase import _SVM
 
-from mvpa.clfs.libsvmc import _svm as svm
+from mvpa.clfs.libsvmc import _svm
+from mvpa.kernels.libsvm import LinearLSKernel
 from sens import LinearSVMWeights
 
 if __debug__:
@@ -45,13 +46,6 @@ class SVM(_SVM):
     probabilities = StateVariable(enabled=False,
         doc="Estimates of samples probabilities as provided by LibSVM")
 
-    #_KERNELS = { "linear":  (svm.svmc.LINEAR, None, LinearSVMWeights),
-                 #"rbf" :    (svm.svmc.RBF, ('gamma',), None),
-                 #"poly":    (svm.svmc.POLY, ('gamma', 'degree', 'coef0'), None),
-                 #"sigmoid": (svm.svmc.SIGMOID, ('gamma', 'coef0'), None),
-                 #}
-    # TODO: Complete the list ;-)
-
     # TODO p is specific for SVR
     _KNOWN_PARAMS = [ 'epsilon', 'probability', 'shrinking',
                       'weight_label', 'weight']
@@ -59,18 +53,19 @@ class SVM(_SVM):
     #_KNOWN_KERNEL_PARAMS = [ 'cache_size' ]
 
     _KNOWN_IMPLEMENTATIONS = {
-        'C_SVC' : (svm.svmc.C_SVC, ('C',),
+        'C_SVC' : (_svm.svmc.C_SVC, ('C',),
                    ('binary', 'multiclass'), 'C-SVM classification'),
-        'NU_SVC' : (svm.svmc.NU_SVC, ('nu',),
+        'NU_SVC' : (_svm.svmc.NU_SVC, ('nu',),
                     ('binary', 'multiclass'), 'nu-SVM classification'),
-        'ONE_CLASS' : (svm.svmc.ONE_CLASS, (),
+        'ONE_CLASS' : (_svm.svmc.ONE_CLASS, (),
                        ('oneclass',), 'one-class-SVM'),
-        'EPSILON_SVR' : (svm.svmc.EPSILON_SVR, ('C', 'tube_epsilon'),
+        'EPSILON_SVR' : (_svm.svmc.EPSILON_SVR, ('C', 'tube_epsilon'),
                          ('regression',), 'epsilon-SVM regression'),
-        'NU_SVR' : (svm.svmc.NU_SVR, ('nu', 'tube_epsilon'),
+        'NU_SVR' : (_svm.svmc.NU_SVR, ('nu', 'tube_epsilon'),
                     ('regression',), 'nu-SVM regression')
         }
 
+    __default_kernel_class__ = LinearLSKernel
     _clf_internals = _SVM._clf_internals + [ 'libsvm' ]
 
     def __init__(self,
@@ -84,6 +79,7 @@ class SVM(_SVM):
         Default implementation (C/nu/epsilon SVM) is chosen depending
         on the given parameters (C/nu/tube_epsilon).
         """
+    
         svm_impl = kwargs.get('svm_impl', None)
         # Depending on given arguments, figure out desired SVM
         # implementation
@@ -131,7 +127,7 @@ class SVM(_SVM):
         # libsvm cannot handle literal labels
         labels = self._attrmap.to_numeric(dataset.sa.labels).tolist()
 
-        svmprob = svm.SVMProblem(labels, src )
+        svmprob = _svm.SVMProblem(labels, src )
 
 
         # Translate few params
@@ -142,7 +138,7 @@ class SVM(_SVM):
                 + self.kernel_params.items.items():
             if paramname in TRANSLATEDICT:
                 argname = TRANSLATEDICT[paramname]
-            elif paramname in svm.SVMParameter.default_parameters:
+            elif paramname in _svm.SVMParameter.default_parameters:
                 argname = paramname
             else:
                 if __debug__:
@@ -154,13 +150,13 @@ class SVM(_SVM):
         # ??? All those parameters should be fetched if present from
         # **kwargs and create appropriate parameters within .params or
         # .kernel_params
-        libsvm_param = svm.SVMParameter(
-            kernel_type=self.kernel.as_ls()._k,
+        libsvm_param = _svm.SVMParameter(
+            kernel_type=self.params.kernel.as_ls()._k,
             svm_type=self._svm_type,
             **dict(args))
         """Store SVM parameters in libSVM compatible format."""
 
-        if self.params.isKnown('C'):#svm_type in [svm.svmc.C_SVC]:
+        if self.params.isKnown('C'):#svm_type in [_svm.svmc.C_SVC]:
             C = self.params.C
             if not operator.isSequenceType(C):
                 # we were not given a tuple for balancing between classes
@@ -187,7 +183,7 @@ class SVM(_SVM):
                 weight = [ c*scale for c in Cs ]
                 libsvm_param._setParameter('weight', weight)
 
-        self.__model = svm.SVMModel(svmprob, libsvm_param)
+        self.__model = _svm.SVMModel(svmprob, libsvm_param)
 
 
     @accepts_dataset_as_samples
@@ -259,14 +255,14 @@ class SVM(_SVM):
         if self.trained:
             s += '\n # of SVs: %d' % self.__model.getTotalNSV()
             try:
-                prm = svm.svmc.svm_model_param_get(self.__model.model)
-                C = svm.svmc.svm_parameter_C_get(prm)
+                prm = _svm.svmc.svm_model_param_get(self.__model.model)
+                C = _svm.svmc.svm_parameter_C_get(prm)
                 # extract information of how many SVs sit inside the margin,
                 # i.e. so called 'bounded SVs'
                 inside_margin = N.sum(
                     # take 0.99 to avoid rounding issues
                     N.abs(self.__model.getSVCoef())
-                          >= 0.99*svm.svmc.svm_parameter_C_get(prm))
+                          >= 0.99*_svm.svmc.svm_parameter_C_get(prm))
                 s += ' #bounded SVs:%d' % inside_margin
                 s += ' used C:%5g' % C
             except:
@@ -361,9 +357,9 @@ try:
     # if externals.exists('libsvm verbosity control'):
     if __debug__ and "LIBSVM" in debug.active:
         debug("LIBSVM", "Setting verbosity for libsvm to 255")
-        svm.svmc.svm_set_verbosity(255)
+        _svm.svmc.svm_set_verbosity(255)
     else:
-        svm.svmc.svm_set_verbosity(0)
+        _svm.svmc.svm_set_verbosity(0)
 except AttributeError:
     warning("Available LIBSVM has no way to control verbosity of the output")
 
