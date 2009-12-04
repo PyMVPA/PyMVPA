@@ -112,6 +112,7 @@ class WTF(object):
             ('lxml', None, ('.etree.__version__',)),
             ('nifti', None, SV),
             ('numpy', None, SV),
+            ('openopt', 'openopt', SV),
             ('openopt', 'scikits.openopt', ('.openopt.__version__',)),
             ('pywt', None, SV),
             ('rpy', None, ('.rpy_version',)),
