@@ -59,7 +59,6 @@ def collectTestSuites():
         # Various algorithms
         'test_svdmapper',
         'test_procrust',
-## broken        'test_samplegroupmapper',
         'test_hyperalignment',
         'test_transformers',
 ## broken        'test_transerror',
@@ -128,6 +127,7 @@ def collectNoseTests():
               'test_attrmap',
               'test_arraymapper',
               'test_mapper',
+              'test_samplegroupmapper',
               'test_mdp',
               'test_neighborhood',
               ]
