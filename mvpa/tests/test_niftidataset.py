@@ -26,11 +26,13 @@ def testNiftiDataset():
     """Basic testing of NiftiDataset
     """
     ds = nifti_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
-                       labels=[1,2])
+                       labels=[1,2], space='voxel')
     assert_equal(ds.nfeatures, 294912)
     assert_equal(ds.nsamples, 2)
 
     assert_array_equal(ds.a.elementsize, ds.a.niftihdr['pixdim'][3:0:-1])
+    assert_true(ds.a['voxel_extent'].value == (24,96,128))
+
 
     # XXX move elsewhere
     #check that mapper honours elementsize
