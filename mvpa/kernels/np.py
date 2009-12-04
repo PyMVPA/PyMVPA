@@ -40,24 +40,25 @@ class LinearKernel(NumpyKernel):
 
 
 class PolyKernel(NumpyKernel):
-    """Polynomial kernel: K(a,b) = (a*b.T+offset)**degree"""
+    """Polynomial kernel: K(a,b) = (gamma*a*b.T+coef0)**degree"""
+    gamma = Parameter(1, doc='Gamma scaling coefficient')
     degree = Parameter(2, doc="Polynomial degree")
-    offset = Parameter(1, doc="Offset added to dot product before exponent")
+    coef0 = Parameter(1, doc="Offset added to dot product before exponent")
     
     def _compute(self, d1, d2):
-        self._k = N.power(N.dot(d1, d2.T)+self.params.offset,
+        self._k = N.power(self.params.gamma*N.dot(d1, d2.T)+self.params.coef0,
                           self.params.degree)
 
 
 class RbfKernel(NumpyKernel):
     """Radial basis function (aka Gausian, aka ) kernel
-    K(a,b) = exp(-||a-b||**2/gamma)
+    K(a,b) = exp(-||a-b||**2/sigma)
     """
-    gamma = Parameter(1.0, allowedtype=float, doc="Scale parameter gamma")
+    sigma = Parameter(1.0, allowedtype=float, doc="Width parameter sigma")
     
     def _compute(self, d1, d2):
         # Do the Rbf
-        self._k = N.exp(-squared_euclidean_distance(d1,d2) / self.params.gamma)
+        self._k = N.exp(-squared_euclidean_distance(d1,d2) / self.params.sigma)
         
 # More complex
 class ConstantKernel(NumpyKernel):
@@ -111,14 +112,17 @@ class GeneralizedLinearKernel(NumpyKernel):
 
     sigma_0 = Parameter(1.0,
                         doc="""
-       A simple constant squared value of which is broadcasted across
+       A simple constant squared value which is broadcasted across
        kernel. In the case of GPR -- standard deviation of the Gaussian
        prior probability N(0,sigma_0**2) of the intercept of the
        constant regression.""")
 
     Sigma_p = Parameter(1.0,
                         doc="""
-       TODO: generic description.
+       A generic scalar or vector, or diagonal matrix to scale all
+       dimensions or associate different scaling to each dimensions
+       while computing te kernel matrix:
+       math::     k(x_A,x_B) = x_A^\top \Sigma_p x_B + \sigma_0^2
        In the case of GPR -- scalar or a diagonal of covariance matrix
        of the Gaussian prior probability N(0,Sigma_p) on the weights
        of the linear regression.""")

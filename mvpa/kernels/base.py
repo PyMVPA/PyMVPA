@@ -73,7 +73,15 @@ class Kernel(ClassWithCollections):
         self._compute(ds1, ds2)
 
     def _compute(self, d1, d2):
+        """Specific implementation to be overridden
+        """
         raise NotImplemented, "Abstract method"
+
+    def computed(self, *args, **kwargs):
+        """Compute kernel and return self
+        """
+        self.compute(*args, **kwargs)
+        return self
 
     def __array__(self):
         return self.as_np()._k
@@ -104,6 +112,7 @@ class NumpyKernel(Kernel):
         return self._k
 
     def as_np(self):
+        """Converts this kernel to a Numpy-based representation"""
         # Already numpy!!
         return self
 
@@ -111,6 +120,8 @@ class NumpyKernel(Kernel):
 
 
 class CustomKernel(NumpyKernel):
+    """Custom Kernel defined by an arbitrary function
+    """
 
     kernelfunc = Parameter(None, doc="""Function to generate the matrix""")
 
@@ -124,25 +135,36 @@ class PrecomputedKernel(NumpyKernel):
     """
 
     matrix = Parameter(None, allowedtype="ndarray",
-                       doc="""ndarray to use as a matrix for the kernel""")
+                       doc="ndarray to use as a matrix for the kernel",
+                       ro=True)
 
-    # NB: to avoid storing matrix twice, after compute 
+    # NB: to avoid storing matrix twice, after compute
     # self.params.matrix = self._k
     def __init__(self, *args, **kwargs):
         NumpyKernel.__init__(self, *args, **kwargs)
-        self.compute() # Makes sure _k is always available
-        
+
+        m = self.params.matrix
+        if m is None:
+            # Otherwise SG would segfault ;-)
+            raise TypeError, "You must specify matrix parameter"
+
+        # Make sure _k is always available
+        self.__set_matrix(m)
+
+    def __set_matrix(self, m):
+        """Set matrix -- may be some time we would allow params.matrix to be R/W
+        """
+        self._k = N.asanyarray(m)
+        self.params['matrix']._set(self._k, init=True)
+
     def compute(self, *args, **kwargs):
-        if self._k is None:
-            self._k = N.asanyarray(self.params.matrix)
-            self.params.matrix = self._k
-        #pass
+        pass
 
 
 class CachedKernel(NumpyKernel):
     """Kernel which caches all data to avoid duplicate computation
     
-    This kernel is very usefull for any analysis which will retrain or
+    This kernel is very useful for any analysis which will retrain or
     repredict the same data multiple times, as this kernel will avoid
     recalculating the kernel function.  Examples of such analyses include cross
     validation, bootstrapping, and model selection (assuming the kernel function
@@ -155,7 +177,7 @@ class CachedKernel(NumpyKernel):
     kernel on the entire superset of your data before using this kernel
     normally.
     
-    The cache is asymmetric for lhs and rhs: 
+    The cache is asymmetric for lhs and rhs:
     """
 
     # TODO: Figure out how to design objects like CrossValidation etc to
@@ -168,7 +190,7 @@ class CachedKernel(NumpyKernel):
     def __init__(self, *args, **kwargs):
         super(CachedKernel, self).__init__(*args, **kwargs)
         self.params.update(self.params.kernel.params)
-        self._rhids = self._lhids = None
+        self._rhsids = self._lhsids = self._kfull = None
 
     def _cache(self, ds1, ds2=None):
         """Initializes internal lookups + _kfull via caching the kernel matrix
@@ -185,15 +207,16 @@ class CachedKernel(NumpyKernel):
         ckernel.cleanup()
         self._k = self._kfull
         
-        self._recomputed=True
-        self.params.reset() 
+        self._recomputed = True
+        self.params.reset()
         # TODO: store params representation for later comparison
 
     def compute(self, ds1, ds2=None):
-        """Automatically computes computes and caches the kernel or extracts the 
+        """Automatically computes and caches the kernel or extracts the
         relevant part of a precached kernel into self._k
-        """        
-        self._recomputed=False # Flag lets us know whether cache was recomputed
+        """
+        # Flag lets us know whether cache was recomputed
+        self._recomputed = False
         
         #if self._ds_cached_info is not None:
         # Check either those ds1, ds2 are coming from the same
@@ -210,7 +233,7 @@ class CachedKernel(NumpyKernel):
             # figure d1, d2
             # TODO: find saner numpy way to select both rows and columns
             try:
-                lhsids = self._lhsids(ds1) # 
+                lhsids = self._lhsids(ds1) #
                 if ds2 is None:
                     rhsids = lhsids
                 else:

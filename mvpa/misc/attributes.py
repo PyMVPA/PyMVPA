@@ -56,14 +56,20 @@ class CollectableAttribute(object):
           respective collection.
         doc : str
           Documentation about the purpose of this attribute.
-        index : ???
-          ???
+        index : int or None
+          Index of collectable among the others.  Determines order of listing
+          in help.  If None, order of instantiation determines the index.
         value : arbitrary (see derived implementations)
           The actual value of this attribute.
         """
         if index is None:
             CollectableAttribute._instance_index += 1
             index = CollectableAttribute._instance_index
+        else:
+            # TODO: there can be collision between custom provided indexes
+            #       and the ones automagically assigned.
+            #       Check might be due
+            pass
         self._instance_index = index
         self.__doc__ = doc
         self.__name = name
@@ -71,10 +77,11 @@ class CollectableAttribute(object):
         self._isset = False
         self.reset()
         if not value is None:
-            self._set(value)
-        if __debug__:
+            self._set(value, init=True)
+        if __debug__ and 'COL' in debug.active:
             debug("COL",
-                  "Initialized new collectable #%d:%s" % (index,name) + `self`)
+                  "Initialized new collectable #%d:%s %r"
+                  % (index, name, self))
 
 
     def __copy__(self):
@@ -98,14 +105,18 @@ class CollectableAttribute(object):
         return self._value
 
 
-    def _set(self, val):
-        if __debug__:
-            # Since this call is quite often, don't convert
-            # values to strings here, rely on passing them
-            # withing msgargs
+    def _set(self, val, init=False):
+        """4Developers: Override this method in derived classes if you desire
+           some logic (drop value in case of states, or not allow to set value
+           for read-only Parameters unless called with init=1) etc)
+        """
+        if __debug__: # Since this call is quite often, don't convert
+            # values to strings here, rely on passing them # withing
             debug("COL",
-                  "Setting %(self)s to %(val)s ",
-                  msgargs={'self':self, 'val':val})
+                  "%(istr)s %(self)s to %(val)s ",
+                  msgargs={'istr':{True: 'Initializing',
+                                   False: 'Setting'}[init],
+                           'self':self, 'val':val})
         self._value = val
         self._isset = True
 
@@ -211,7 +222,7 @@ class StateVariable(CollectableAttribute):
         return CollectableAttribute._get(self)
 
 
-    def _set(self, val):
+    def _set(self, val, init=False):
         if self.isEnabled:
             # XXX may be should have left simple assignment
             # self._value = val

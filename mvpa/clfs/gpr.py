@@ -109,6 +109,9 @@ class GPR(Classifier):
         # set kernel:
         if kernel is None:
             kernel = SquaredExponentialKernel()
+            debug("GPR",
+                  "No kernel was provided, falling back to default: %s"
+                  % kernel)
         self.__kernel = kernel
 
         # append proper clf_internal depending on the kernel
@@ -177,7 +180,8 @@ class GPR(Classifier):
         # XXX EO: Do some memoizing since it could happen that some
         # hyperparameters are kept constant by user request, so we
         # don't need (somtimes) to recompute the corresponding
-        # gradient again.
+        # gradient again. COULD THIS BE TAKEN INTO ACCOUNT BY THE
+        # NEW CACHED KERNEL INFRASTRUCTURE?
 
         # self.Kinv = N.linalg.inv(self._C)
         # Faster:
