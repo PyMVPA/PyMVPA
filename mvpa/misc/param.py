@@ -44,14 +44,29 @@ class Parameter(CollectableAttribute):
         step  - increment/decrement stepsize
     """
 
-    def __init__(self, default, name=None, doc=None, index=None, **kwargs):
-        """Specify a parameter by its default value and optionally an arbitrary
+    def __init__(self, default, name=None, doc=None, index=None, ro=False,
+                 value=None, **kwargs):
+        """Specify a Parameter with a default value and arbitrary
         number of additional parameters.
 
-        TODO: :Parameters: for Parameter
+        Parameters
+        ----------
+        name : str
+          Name of the parameter under which it should be available in its
+          respective collection.
+        doc : str
+          Documentation about the purpose of this parameter.
+        index : int or None
+          Index of parameter among the others.  Determines order of listing
+          in help.  If None, order of instantiation determines the index.
+        ro : bool
+          Either value which will be assigned in the constructor is read-only and
+          cannot be changed
+        value
+          Actual value of the parameter to be assigned
         """
         self.__default = default
-
+        self._ro = ro
         # XXX probably is too generic...
         # and potentially dangerous...
         # let's at least keep track of what is passed
@@ -62,10 +77,11 @@ class Parameter(CollectableAttribute):
 
         # needs to come after kwargs processing, since some debug statements
         # rely on working repr()
-        CollectableAttribute.__init__(self, name=name, doc=doc, index=index)
-
-        self.resetvalue()
+        CollectableAttribute.__init__(self, name=name, doc=doc, index=index,
+                                      value=value)
         self._isset = False
+        if self.value is None:
+            self._set(self.__default, init=True)
 
         if __debug__:
             if kwargs.has_key('val'):
@@ -83,6 +99,8 @@ class Parameter(CollectableAttribute):
     def __repr__(self):
         # cannot use CollectableAttribute's repr(), since the contructor
         # needs to handle the mandatory 'default' argument
+        # TODO: so what? just tune it up ;)
+        # TODO: think what to do with index parameter...
         s = "%s(%s, name=%s, doc=%s" % (self.__class__.__name__,
                                         self.__default,
                                         repr(self.name),
@@ -91,6 +109,10 @@ class Parameter(CollectableAttribute):
                     for p in self._additional_props]
         if len(plist):
             s += ', ' + ', '.join(plist)
+        if self._ro:
+            s += ', ro=True'
+        if not self.isDefault:
+            s += ', value=%r' % self.value
         s += ')'
         return s
 
@@ -132,13 +154,17 @@ class Parameter(CollectableAttribute):
     def resetvalue(self):
         """Reset value to the default"""
         #CollectableAttribute.reset(self)
-        if not self.isDefault:
+        if not self.isDefault and not self._ro:
             self._isset = True
             self.value = self.__default
 
-    def _set(self, val):
+    def _set(self, val, init=False):
         comparison = self._value != val
         isarray = isinstance(comparison, N.ndarray)
+        if self._ro and not init:
+            raise RuntimeError, \
+                  "Attempt to set read-only parameter %s to %s" \
+                  % (self.name, val)
         if (isarray and N.any(comparison)) or \
            ((not isarray) and comparison):
             if __debug__:
