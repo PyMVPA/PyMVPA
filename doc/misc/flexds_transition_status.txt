@@ -59,7 +59,7 @@ test_knn.py                 pass
 test_lars.py                pass (same as for _enet)
 test_meg.py                 pass
 test_neighbor.py            pass
-test_niftidataset.py        broken (ERNiftiDataset waiting for nextgen Mappers)
+test_niftidataset.py        pass (some test could be re-added and moved elsewhere)
 test_params.py              pass
 test_perturbsensana.py      pass
 test_plr.py                 pass

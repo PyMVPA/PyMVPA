@@ -16,8 +16,8 @@ from nose.tools import ok_, assert_raises, assert_false, assert_equal
 
 from mvpa.base.types import is_datasetlike
 from mvpa.base.dataset import DatasetError
+from mvpa.mappers.flatten import mask_mapper
 from mvpa.datasets.base import dataset, Dataset
-from mvpa.mappers.array import DenseArrayMapper
 from mvpa.misc.data_generators import normalFeatureDataset
 import mvpa.support.copy as copy
 from mvpa.base.collections import SampleAttributesCollection, \
@@ -199,12 +199,8 @@ def test_samples_shape():
 def test_basic_datamapping():
     samples = N.arange(24).reshape((4, 3, 2)).view(myarray)
 
-    # cannot handle 3d samples without a mapper
-    # XXX we might allow that...
-    #assert_raises(ValueError, Dataset, samples)
-
     ds = Dataset.from_basic(samples,
-            mapper=DenseArrayMapper(shape=samples.shape[1:]))
+            mapper=mask_mapper(shape=samples.shape[1:]))
 
     # array subclass survives
     ok_(isinstance(ds.samples, myarray))
