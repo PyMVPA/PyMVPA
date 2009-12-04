@@ -206,6 +206,9 @@ def nifti_dataset(samples, labels=None, chunks=None, mask=None, enforce_dim=4,
     # Only storing the header dict should achieve the same and is more
     # memory efficient and even simpler
     ds.a['niftihdr'] = niftisamples.header
+    # If there is a space assigned , store the extent of that space
+    if space is not None:
+        ds.a[space + '_extent'] = samples.shape[1:]
 
     return ds
 
