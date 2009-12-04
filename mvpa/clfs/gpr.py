@@ -109,6 +109,8 @@ class GPR(Classifier):
         # set kernel:
         if kernel is None:
             kernel = SquaredExponentialKernel()
+            debug("GPR", "No kernel was provided, falling back to
+            default: " + str(kernel)
         self.__kernel = kernel
 
         # append proper clf_internal depending on the kernel
@@ -177,7 +179,8 @@ class GPR(Classifier):
         # XXX EO: Do some memoizing since it could happen that some
         # hyperparameters are kept constant by user request, so we
         # don't need (somtimes) to recompute the corresponding
-        # gradient again.
+        # gradient again. COULD THIS BE TAKEN INTO ACCOUNT BY THE
+        # NEW CACHED KERNEL INFRASTRUCTURE?
 
         # self.Kinv = N.linalg.inv(self._C)
         # Faster:
@@ -324,7 +327,7 @@ class GPR(Classifier):
                 # apply regularization
                 epsilon = self.params.lm * N.eye(self._C.shape[0])
                 self._L = SLcholesky(self._C + epsilon, lower=True)
-                self._LL = (self._L, True)
+                self._LL = (self._L, lower=True)
             except SLAError:
                 raise SLAError("Kernel matrix is not positive, definite.  " + \
                                "Try increasing the lm parameter.")
