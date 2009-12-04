@@ -14,7 +14,6 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.datasets.base import Dataset
-from mvpa.mappers.mask import MaskMapper
 from mvpa.base.dochelpers import enhancedDocString
 
 import mvpa.support.copy as copy
