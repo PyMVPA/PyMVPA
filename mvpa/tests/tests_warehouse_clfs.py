@@ -42,6 +42,7 @@ class SameSignClassifier(Classifier):
         pass
 
     def _predict(self, data):
+        data = N.asanyarray(data)
         datalen = len(data)
         values = []
         for d in data:

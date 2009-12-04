@@ -61,10 +61,12 @@ class _SVM(Classifier):
     
     _ATTRIBUTE_COLLECTIONS = ['params'] # enforce presence of params collections
 
-    
+    # Placeholder: map kernel names to sensitivity classes, ie
+    # 'linear':LinearSVMWeights, for each backend
+    _KNOWN_SENSITIVITIES={} 
     kernel = Parameter(None, allowedtype=Kernel,
                        doc='Kernel object')
-    
+
     _SVM_PARAMS = {
         'C' : Parameter(-1.0,
                   doc='Trade-off parameter between width of the '
@@ -76,26 +78,13 @@ class _SVM(Classifier):
                   doc='Fraction of datapoints within the margin'),
         'cache_size': Parameter(100,
                   doc='Size of the kernel cache, specified in megabytes'),
-        #'coef0': Parameter(0.5,
-                  #doc='Offset coefficient in polynomial and sigmoid kernels'),
-        #'degree': Parameter(3, doc='Degree of polynomial kernel'),
-            # init the parameter interface
         'tube_epsilon': Parameter(0.01,
                   doc='Epsilon in epsilon-insensitive loss function of '
                       'epsilon-SVM regression (SVR)'),
-        #'gamma': Parameter(0,
-                  #doc='Scaling (width in RBF) within non-linear kernels'),
         'tau': Parameter(1e-6, doc='TAU parameter of KRR regression in shogun'),
-        #'max_shift': Parameter(10, min=0.0,
-                  #doc='Maximal shift for SGs GaussianShiftKernel'),
-        #'shift_step': Parameter(1, min=0.0,
-                  #doc='Shift step for SGs GaussianShiftKernel'),
         'probability': Parameter(0,
                   doc='Flag to signal either probability estimate is obtained '
                       'within LIBSVM'),
-        #'scale': Parameter(1.0,
-                  #doc='Scale factor for linear kernel. '
-                      #'(0 triggers automagic rescaling by SG'),
         'shrinking': Parameter(1, doc='Either shrinking is to be conducted'),
         'weight_label': Parameter([], allowedtype='[int]',
                   doc='To be used in conjunction with weight for custom '
@@ -247,47 +236,49 @@ class _SVM(Classifier):
         """
 
         # TODO: kernel_type_literal has been removed, fix this
-        #if self._kernel_type_literal == 'linear':
-            #datasetnorm = N.mean(N.sqrt(N.sum(data*data, axis=1)))
-            #value = 1.0/(datasetnorm*datasetnorm)
-            #if __debug__:
-                #debug("SVM", "Default C computed to be %f" % value)
-        #else:
-            #warning("TODO: Computation of default C is not yet implemented" +
-                    #" for non-linear SVMs. Assigning 1.0")
-            #value = 1.0
-        value = 1.
-
-        return value
-
-
-    def _getDefaultGamma(self, dataset):
-        """Compute default Gamma
-
-        TODO: unify bloody libsvm interface so it makes use of this function.
-        Now it is computed within SVMModel.__init__
-        """
-
-        if self.kernel_params.isKnown('gamma'):
-            value = 1.0 / len(dataset.uniquelabels)
+        if self.params.kernel.__kernel_name__ == 'linear':
+            datasetnorm = N.mean(N.sqrt(N.sum(data*data, axis=1)))
+            value = 1.0/(datasetnorm*datasetnorm)
             if __debug__:
-                debug("SVM", "Default Gamma is computed to be %f" % value)
+                debug("SVM", "Default C computed to be %f" % value)
         else:
-            raise RuntimeError, "Shouldn't ask for default Gamma here"
+            warning("TODO: Computation of default C is not yet implemented" +
+                    " for non-linear SVMs. Assigning 1.0")
+            value = 1.0
 
         return value
 
-    # TODO: handle with help of kernel object
-    #def getSensitivityAnalyzer(self, **kwargs):
-        #"""Returns an appropriate SensitivityAnalyzer."""
-        #sana = self._KERNELS[self._kernel_type_literal][2]
-        #if sana is not None:
-            #kwargs.setdefault('combiner', SecondAxisSumOfAbs)
-            #return sana(self, **kwargs)
+
+    # TODO: make part of kernel object
+    #def _getDefaultGamma(self, dataset):
+        #"""Compute default Gamma
+
+        #TODO: unify bloody libsvm interface so it makes use of this function.
+        #Now it is computed within SVMModel.__init__
+        #"""
+
+        ## TODO: Check validity of this w/ new kernels (ie sg.Rbf has sigma)
+        #if self.kernel_params.isKnown('gamma'):
+            #value = 1.0 / len(dataset.uniquelabels)
+            #if __debug__:
+                #debug("SVM", "Default Gamma is computed to be %f" % value)
         #else:
-            #raise NotImplementedError, \
-                  #"Sensitivity analyzers for kernel %s is TODO" % \
-                  #self._kernel_type_literal
+            #raise RuntimeError, "Shouldn't ask for default Gamma here"
+
+        #return value
+
+    def getSensitivityAnalyzer(self, **kwargs):
+        """Returns an appropriate SensitivityAnalyzer."""
+
+        sana = self._KNOWN_SENSITIVITIES.get(self.params.kernel.__kernel_name__,
+                                             None)
+        if sana:
+            kwargs.setdefault('combiner', SecondAxisSumOfAbs)
+            return sana(self, **kwargs)
+        else:
+            raise NotImplementedError, \
+                  "Sensitivity analyzers for kernel %s is unknown" % \
+                  self.params.kernel
 
 
     @classmethod

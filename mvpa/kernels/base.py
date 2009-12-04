@@ -48,6 +48,13 @@ class Kernel(ClassWithCollections):
 
     _ATTRIBUTE_COLLECTIONS = ['params'] # enforce presence of params collections
 
+    # Define this per class: standard string describing kernel type, ie 
+    # 'linear', or 'rbf', to help coordinate kernel types across backends
+    __kernel_name__ = None
+    
+    # Class holder which can create feature sensitivities
+    __svm_sensitivity__ = None
+    
     def __init__(self, *args, **kwargs):
         ClassWithCollections.__init__(self, *args, **kwargs)
         self._k = None
@@ -176,6 +183,11 @@ class CachedKernel(NumpyKernel):
                        doc="Base kernel to cache.  Any kernel which can be " +\
                        "converted to a NumpyKernel is allowed")
 
+    @property
+    def __kernel_name__(self):
+        """Allows checking name of subkernel"""
+        return self.params.kernel.__kernel_name__
+    
     def __init__(self, *args, **kwargs):
         super(CachedKernel, self).__init__(*args, **kwargs)
         self.params.update(self.params.kernel.params)

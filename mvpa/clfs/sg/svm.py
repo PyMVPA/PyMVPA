@@ -49,6 +49,7 @@ if externals.exists('shogun', raiseException=True):
 import operator
 
 from mvpa.misc.param import Parameter
+from mvpa.misc.attrmap import AttributeMap
 from mvpa.base import warning
 
 from mvpa.clfs.base import accepts_dataset_as_samples
@@ -152,6 +153,8 @@ class SVM(_SVM):
     And yes currently we only implemented parallel training for svmlight,
     however all SVMs can be evaluated in parallel.
     """
+    _KNOWN_SENSITIVITIES={'linear':LinearSVMWeights,
+                          }
     _KNOWN_IMPLEMENTATIONS = {}
     if externals.exists('shogun', raiseException=True):
         _KNOWN_IMPLEMENTATIONS = {
@@ -247,9 +250,10 @@ class SVM(_SVM):
             debug("SG_", "Creating labels instance")
 
         if 'regression' in self._clf_internals:
-            labels_ = N.asarray(dataset.labels, dtype='double')
+            labels_ = N.asarray(dataset.sa['labels'], dtype='double')
         else:
-            ul = dataset.sa['labels'].unique
+            la = dataset.sa['labels']
+            ul = la.unique
             ul.sort()
 
             if len(ul) == 2:
@@ -261,21 +265,11 @@ class SVM(_SVM):
                 # can't use plain enumerate since we need them swapped
                 _labels_dict = dict([ (ul[i], i) for i in range(len(ul))])
 
-            # reverse labels dict for back mapping in _predict
-            _labels_dict_rev = dict([(x[1], x[0])
-                                     for x in _labels_dict.items()])
-
-            # bind to instance as well
-            self._labels_dict = _labels_dict
-            self._labels_dict_rev = _labels_dict_rev
-
-            # Map labels
-            #
-            # TODO: top level classifier should take care about labels
-            # mapping if that is needed
+            self._label_map = AttributeMap(_labels_dict)
+            
             if __debug__:
                 debug("SG__", "Mapping labels using dict %s" % _labels_dict)
-            labels_ = N.asarray([ _labels_dict[x] for x in dataset.labels ], dtype='double')
+            labels_ = self._label_map.to_numeric(la.value).astype(float)
 
         labels = shogun.Features.Labels(labels_)
         _setdebug(labels, 'Labels')
@@ -500,21 +494,14 @@ class SVM(_SVM):
         if ('regression' in self._clf_internals):
             predictions = values
         else:
-            # local bindings
-            _labels_dict = self._labels_dict
-            _labels_dict_rev = self._labels_dict_rev
 
-            if len(_labels_dict) == 2:
-                predictions = 1.0 - 2*N.signbit(values)
+            if len(self._label_map.keys()) == 2:
+                predictions = N.sign(values)
             else:
                 predictions = values
 
-            # assure that we have the same type
-            label_type = type(_labels_dict.values()[0])
-
             # remap labels back adjusting their type
-            predictions = [_labels_dict_rev[label_type(x)]
-                           for x in predictions]
+            predictions = self._label_map.to_literal(predictions)
 
             if __debug__:
                 debug("SG__", "Tuned predictions %s" % predictions)
