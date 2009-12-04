@@ -183,7 +183,8 @@ class Parameter(CollectableAttribute):
                       "Valid choices for parameter %s are %s. Got %s" % \
                       (self.name, self.choices, val)
             self._value = val
-            self._isset = True
+            # Set 'isset' only if not called from initialization routine
+            self._isset = not init #True
         elif __debug__:
             debug("COL",
                   "Parameter: not setting %s since value is the same" \
