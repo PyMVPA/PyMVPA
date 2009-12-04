@@ -311,18 +311,7 @@ class SVM(_SVM):
         if not retrainable or self.__svm is None or _changedData['params']:
             # SVM
             if self.params.isKnown('C'):
-                C = self.params.C
-                if not operator.isSequenceType(C):
-                    # we were not given a tuple for balancing between classes
-                    C = [C]
-
-                Cs = list(C[:])               # copy
-                for i in xrange(len(Cs)):
-                    if Cs[i]<0:
-                        Cs[i] = self._getDefaultC(dataset.samples)*abs(Cs[i])
-                    if __debug__:
-                        debug("SG_", "Default C for %s was computed to be %s" %
-                              (C[i], Cs[i]))
+                Cs = self._getCvec(dataset)
 
                 # XXX do not jump over the head and leave it up to the user
                 #     ie do not rescale automagically by the number of samples

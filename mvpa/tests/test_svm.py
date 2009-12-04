@@ -131,7 +131,7 @@ class SVMTests(unittest.TestCase):
 
         e = cve(ds_)
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(cve.states.confusion.stats["P'"][1] < 10, # Originally 5, dunno why worse now - SG
+            self.failUnless(cve.states.confusion.stats["P'"][1] < 5,
                             msg="With disballance we should have almost no "
                             "hits. Got %f" % cve.states.confusion.stats["P'"][1])
             #print "D:", cve.confusion.stats["P'"][1], cve.confusion.stats['MCC'][1]

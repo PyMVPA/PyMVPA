@@ -22,13 +22,6 @@ if externals.exists('shogun', raiseException=True):
     import shogun.Kernel as sgk
     from shogun.Features import RealFeatures
 
-# Monkey patch Kernel for sg conversion required due to import/definition race
-def as_sg(kernel):
-    """Converts this kernel to a Shogun-based representation"""
-    p = PrecomputedSGKernel(matrix=N.array(kernel))
-    p.compute()
-    return p
-Kernel.as_sg = as_sg
 
 class SGKernel(Kernel):
     """A Kernel object with internal representation in Shogun"""
@@ -43,6 +36,15 @@ class SGKernel(Kernel):
     def _data2features(data):
         """Converts data to shogun features"""
         return RealFeatures(data.astype(float).T)
+    
+# Monkey patch Kernel for sg conversion required due to import/definition race
+def _as_sg(kernel):
+    """Converts this kernel to a Shogun-based representation"""
+    p = PrecomputedSGKernel(matrix=N.array(kernel))
+    p.compute()
+    return p
+Kernel.as_sg = _as_sg
+
 
 class _BasicSGKernel(SGKernel):
     """Abstract class which can handle most shogun kernel types
@@ -53,11 +55,6 @@ class _BasicSGKernel(SGKernel):
       - __kp_order__ = Tuple which specifies the order of kernel params.
         If there is only one kernel param, this is not necessary
     """
-    #_KNOWN_KERNELS={'linear':sgk.LinearKernel, # Figure out shortcuts later
-                    #'rbf':sgk.GaussianKernel,
-                    #'poly':sgk.PolyKernel,
-                    #}
-                    
 
     def _compute(self, d1, d2):
         d1 = SGKernel._data2features(d1)
@@ -152,7 +149,6 @@ class PrecomputedSGKernel(SGKernel):
         self._k = sgk.CustomKernel(m)
         # Ad-hoc way to override R/O parameter ;)
         self.params['matrix']._set(self._k, init=True)
-
 
     def compute(self, *args, **kwargs):
         """'Compute' `PrecomputedSGKernel -- no actual "computation" is done
