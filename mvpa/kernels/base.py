@@ -112,6 +112,7 @@ class NumpyKernel(Kernel):
         return self._k
 
     def as_np(self):
+        """Converts this kernel to a Numpy-based representation"""
         # Already numpy!!
         return self
 
@@ -137,7 +138,7 @@ class PrecomputedKernel(NumpyKernel):
                        doc="ndarray to use as a matrix for the kernel",
                        ro=True)
 
-    # NB: to avoid storing matrix twice, after compute 
+    # NB: to avoid storing matrix twice, after compute
     # self.params.matrix = self._k
     def __init__(self, *args, **kwargs):
         NumpyKernel.__init__(self, *args, **kwargs)
@@ -163,7 +164,7 @@ class PrecomputedKernel(NumpyKernel):
 class CachedKernel(NumpyKernel):
     """Kernel which caches all data to avoid duplicate computation
     
-    This kernel is very usefull for any analysis which will retrain or
+    This kernel is very useful for any analysis which will retrain or
     repredict the same data multiple times, as this kernel will avoid
     recalculating the kernel function.  Examples of such analyses include cross
     validation, bootstrapping, and model selection (assuming the kernel function
@@ -176,7 +177,7 @@ class CachedKernel(NumpyKernel):
     kernel on the entire superset of your data before using this kernel
     normally.
     
-    The cache is asymmetric for lhs and rhs: 
+    The cache is asymmetric for lhs and rhs:
     """
 
     # TODO: Figure out how to design objects like CrossValidation etc to
@@ -189,7 +190,7 @@ class CachedKernel(NumpyKernel):
     def __init__(self, *args, **kwargs):
         super(CachedKernel, self).__init__(*args, **kwargs)
         self.params.update(self.params.kernel.params)
-        self._rhids = self._lhids = None
+        self._rhsids = self._lhsids = self._kfull = None
 
     def _cache(self, ds1, ds2=None):
         """Initializes internal lookups + _kfull via caching the kernel matrix
@@ -206,15 +207,16 @@ class CachedKernel(NumpyKernel):
         ckernel.cleanup()
         self._k = self._kfull
         
-        self._recomputed=True
+        self._recomputed = True
         self.params.reset()
         # TODO: store params representation for later comparison
 
     def compute(self, ds1, ds2=None):
-        """Automatically computes computes and caches the kernel or extracts the 
+        """Automatically computes and caches the kernel or extracts the
         relevant part of a precached kernel into self._k
         """
-        self._recomputed=False # Flag lets us know whether cache was recomputed
+        # Flag lets us know whether cache was recomputed
+        self._recomputed = False
         
         #if self._ds_cached_info is not None:
         # Check either those ds1, ds2 are coming from the same
