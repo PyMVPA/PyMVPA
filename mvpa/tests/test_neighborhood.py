@@ -44,7 +44,8 @@ def test_sphere():
     s = ne.Sphere(9)
     assert_equal(len(s.coord_list), 257)
 
-    #XXX do the test for a sphere with a limited extent here
+    s = ne.Sphere(9,extent=(1,1,1))
+    assert_array_equal(array(s((0,0,0))), array([[0,0,0]]))
 
 
 def test_query_enigne():

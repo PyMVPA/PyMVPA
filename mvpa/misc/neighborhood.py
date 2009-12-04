@@ -88,7 +88,7 @@ class Sphere(object):
         # now filter out illegal coordinates
         coord_array = array([c for c in coord_array \
                                      if (c >= 0).all()
-                                     and (c <= self.extent).all()])
+                                     and (c < self.extent).all()])
         coord_array = coord_array.transpose()
         return zip(coord_array[0], coord_array[1], coord_array[2])
 
