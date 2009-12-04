@@ -83,13 +83,11 @@ from mvpa import mappers
 from mvpa.mappers.base import *
 from mvpa.mappers.projection import *
 from mvpa.mappers.metric import *
-from mvpa.mappers.mask import *
 from mvpa.mappers.svd import *
 from mvpa.mappers.procrustean import *
 from mvpa.mappers.boxcar import *
 from mvpa.mappers.samplegroup import *
 from mvpa.mappers.som import *
-from mvpa.mappers.array import *
 if externals.exists('scipy'):
     from mvpa.mappers.zscore import ZScoreMapper
 if externals.exists('mdp'):

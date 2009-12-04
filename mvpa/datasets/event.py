@@ -13,11 +13,10 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.mappers.array import DenseArrayMapper
 from mvpa.mappers.boxcar import BoxcarMapper
-from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.base import Dataset
 from mvpa.mappers.base import ChainMapper, CombinedMapper
+from mvpa.mappers.flatten import mask_mapper
 from mvpa.base import warning
 
 class EventDataset(Dataset):
@@ -166,7 +165,7 @@ class EventDataset(Dataset):
 
         # now we can build the array mapper, using the optionally provided
         # custom metric
-        amapper = DenseArrayMapper(mask=mask, shape=bcshape, metric=dametric)
+        amapper = mask_mapper(mask=mask, shape=bcshape)
 
         # now compose the full mapper for the main samples
         mapper = ChainMapper([bcmapper, amapper])
@@ -177,7 +176,7 @@ class EventDataset(Dataset):
             # for unstructured additional features
             mapper = CombinedMapper(
                         (mapper,
-                         MaskMapper(mask=N.ones(extrafeatures.shape[1]))))
+                         mask_mapper(mask=N.ones(extrafeatures.shape[1]))))
 
             # add extra features to the samples
             samples = (samples, extrafeatures)

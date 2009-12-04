@@ -12,7 +12,8 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
+from mvpa.mappers.base import Mapper, accepts_dataset_as_samples, \
+        ChainMapper, FeatureSubsetMapper
 from mvpa.misc.support import isInVolume
 
 
@@ -192,3 +193,41 @@ class FlattenMapper(Mapper):
 
 
 
+def mask_mapper(mask=None, shape=None, inspace=None):
+    """
+    Parameters
+    ----------
+    mask : array
+      an array in the original dataspace and its nonzero elements are
+      used to define the features included in the dataset. alternatively,
+      the `shape` argument can be used to define the array dimensions.
+    shape: tuple
+      The shape of the array to be mapped. If `shape` is provided instead
+      of `mask`, a full mask (all True) of the desired shape is
+      constructed. If `shape` is specified in addition to `mask`, the
+      provided mask is extended to have the same number of dimensions.
+    """
+    if mask is None:
+        if shape is None:
+            raise ValueError, \
+                  "Either `shape` or `mask` have to be specified."
+        else:
+            # make full dataspace mask if nothing else is provided
+            mask = N.ones(shape, dtype='bool')
+    else:
+        if not shape is None:
+            # expand mask to span all dimensions but first one
+            # necessary e.g. if only one slice from timeseries of volumes is
+            # requested.
+            mask = N.asanyarray(mask, ndmin=len(shape))
+            # check for compatibility
+            if not shape == mask.shape:
+                raise ValueError, \
+                    "The mask dataspace shape %s is not " \
+                    "compatible with the provided shape %s." \
+                    % (mask.shape, shape)
+
+    fm = FlattenMapper(shape=mask.shape, inspace=inspace)
+    flatmask = fm.forward(mask)
+    mapper = ChainMapper([fm, FeatureSubsetMapper(flatmask)])
+    return mapper
