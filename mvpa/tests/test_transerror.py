@@ -184,6 +184,7 @@ class ErrorsTests(unittest.TestCase):
     @sweepargs(l_clf=clfswh['linear', 'svm'])
     def testPerSampleError(self, l_clf):
         train = datasets['uni2medium']
+        train.init_origids('samples')
         terr = TransferError(clf=l_clf, enable_states=['samples_error'])
         err = terr(train, train)
         se = terr.states.samples_error
