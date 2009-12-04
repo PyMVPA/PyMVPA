@@ -27,10 +27,10 @@ import numpy as N
 from sets import Set
 
 from mvpa.misc.args import group_kwargs
-from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.datasets.miscfx import get_samples_by_attr
 from mvpa.misc.state import StateVariable, ClassWithCollections, Harvestable
+from mvpa.mappers.base import FeatureSubsetMapper
 
 from mvpa.clfs.base import Classifier
 from mvpa.misc.transformers import FirstAxisMean
@@ -1308,7 +1308,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         # TODO -- think about making selected_ids a MaskMapper
         mappermask = N.zeros(dataset.nfeatures)
         mappermask[self.__feature_selection.states.selected_ids] = 1
-        mapper = MaskMapper(mappermask)
+        mapper = FeatureSubsetMapper(mappermask)
 
         self.__feature_selection.states._resetEnabledTemporarily()
 
