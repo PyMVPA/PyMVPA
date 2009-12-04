@@ -82,14 +82,28 @@ def test_mdpflowmapper():
     assert_equal(fm.get_outsize(), ds.nfeatures)
 
 
-def test_mdpmadness():
+def test_mdpflow_additional_arguments():
     ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
     flow = mdp.nodes.PCANode() + mdp.nodes.IdentityNode() + mdp.nodes.FDANode()
     # this is what it would look like in MDP itself
     #flow.train([[ds.samples],
     #            [[ds.samples, ds.sa.labels]]])
-    assert_raises(ValueError, MDPFlowMapper, flow, data_iterables=[[],[]])
-    fm = MDPFlowMapper(flow, data_iterables = [[], [], [DAE('sa', 'labels')]])
+    assert_raises(ValueError, MDPFlowMapper, flow, node_arguments=[[],[]])
+    fm = MDPFlowMapper(flow, node_arguments = ([], [], [DAE('sa', 'labels')]))
+    fm.train(ds)
+    fds = fm.forward(ds)
+    assert_equal(ds.samples.shape, fds.samples.shape)
+    rds = fm.reverse(fds)
+    assert_array_almost_equal(ds.samples, rds.samples)
+
+def test_mdpflow_additional_arguments_Nones():
+    ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+    flow = mdp.nodes.PCANode() + mdp.nodes.IdentityNode() + mdp.nodes.FDANode()
+    # this is what it would look like in MDP itself
+    #flow.train([[ds.samples],
+    #            [[ds.samples, ds.sa.labels]]])
+    assert_raises(ValueError, MDPFlowMapper, flow, node_arguments=[[],[]])
+    fm = MDPFlowMapper(flow, node_arguments = (None, None, [ds.sa.labels]))
     fm.train(ds)
     fds = fm.forward(ds)
     assert_equal(ds.samples.shape, fds.samples.shape)
