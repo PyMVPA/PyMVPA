@@ -81,7 +81,7 @@ class _BasicSGKernel(SGKernel):
 class CustomSGKernel(_BasicSGKernel):
     """Class which can wrap any Shogun kernel and it's kernel parameters
     """
-    
+    # TODO: rename args here for convenience?
     def __init__(self, kernel_cls, kernel_params=[], **kwargs):
         """Initialize CustomSGKernel.
         
@@ -104,10 +104,12 @@ class CustomSGKernel(_BasicSGKernel):
 class LinearSGKernel(_BasicSGKernel):
     """A basic linear kernel computed via Shogun: K(a,b) = a*b.T"""
     __kernel_cls__ = sgk.LinearKernel
+    __kernel_name__ = 'linear'
         
 class RbfSGKernel(_BasicSGKernel):
     """Radial basis function: K(a,b) = exp(-||a-b||**2/sigma)"""
     __kernel_cls__ = sgk.GaussianKernel
+    __kernel_name__ = 'rbf'
     sigma = Parameter(1, doc="Width/division parameter for gaussian kernel")
         
 class PolySGKernel(_BasicSGKernel):
@@ -115,6 +117,7 @@ class PolySGKernel(_BasicSGKernel):
     c is 1 if and only if 'inhomogenous' is True
     """
     __kernel_cls__ = sgk.PolyKernel
+    __kernel_name__ = 'poly'
     __kp_order__ = ('degree', 'inhomogenous')
     degree = Parameter(2, allowedtype=int, doc="Polynomial order of the kernel")
     inhomogenous = Parameter(True, allowedtype=bool,

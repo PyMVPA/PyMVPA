@@ -52,6 +52,8 @@ class SVM(_SVM):
 
     #_KNOWN_KERNEL_PARAMS = [ 'cache_size' ]
 
+    _KNOWN_SENSITIVITIES = {'linear':LinearSVMWeights,
+                            }
     _KNOWN_IMPLEMENTATIONS = {
         'C_SVC' : (_svm.svmc.C_SVC, ('C',),
                    ('binary', 'multiclass'), 'C-SVM classification'),
