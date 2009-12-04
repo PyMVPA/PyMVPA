@@ -53,6 +53,11 @@ if __debug__:
 if externals.exists('shogun'):
     from mvpa.clfs import sg
     SVM = sg.SVM
+    
+    from mvpa.kernels import sg as ksg
+    LinearKernel = ksg.LinearSGKernel
+    RbfKernel = ksg.RbfSGKernel
+    
     #if not 'LinearCSVMC' in locals():
     #    from mvpa.clfs.sg.svm import *
 
@@ -66,6 +71,9 @@ if externals.exists('libsvm'):
                   'Default SVM backend %s was not found, so using libsvm'
                   % default_backend)
         SVM = libsvm.SVM
+        from mvpa.kernels import libsvm as kls
+        LinearKernel = kls.LinearLSKernel
+        RbfKernel = kls.RbfLSKernel
     #from mvpa.clfs.libsvm.svm import *
 
 if SVM is None:
@@ -85,7 +93,7 @@ else:
             """
             """
             # init base class
-            SVM.__init__(self, C=C, kernel_type='linear', **kwargs)
+            SVM.__init__(self, C=C, kernel=LinearKernel(), **kwargs)
 
 
     class RbfCSVMC(SVM):
@@ -98,7 +106,7 @@ else:
             """
             """
             # init base class
-            SVM.__init__(self, C=C, kernel_type='RBF', **kwargs)
+            SVM.__init__(self, C=C, kernel=RbfKernel(), **kwargs)
 
     if _NuSVM is not None:
         class LinearNuSVMC(_NuSVM):
@@ -111,7 +119,7 @@ else:
                 """
                 """
                 # init base class
-                _NuSVM.__init__(self, nu=nu, kernel_type='linear', **kwargs)
+                _NuSVM.__init__(self, nu=nu, kernel=LinearKernel(), **kwargs)
 
         class RbfNuSVMC(SVM):
             """Nu-SVM classifier using a radial basis function kernel.
@@ -121,5 +129,5 @@ else:
 
             def __init__(self, nu=_defaultNu, **kwargs):
                 # init base class
-                SVM.__init__(self, nu=nu, kernel_type='RBF', **kwargs)
+                SVM.__init__(self, nu=nu, kernel=RbfKernel(), **kwargs)
 

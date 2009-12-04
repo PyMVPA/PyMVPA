@@ -208,7 +208,9 @@ class _SVM(Classifier):
 
     @property
     def kernel_params(self):
-        return self.params.kernel.params
+        if self.params.kernel:
+            return self.params.kernel.params
+        return None
     
     def __repr__(self):
         """Definition of the object summary over the object
@@ -217,7 +219,7 @@ class _SVM(Classifier):
               (self.__class__.__name__, self.params.kernel,
                self._svm_impl)
         sep = ", "
-        for col in [self.params, self.kernel_params]:
+        for col in [self.params]:#, self.kernel_params]:
             for k in col.names:
                 # list only params with not default values
                 if col[k].isDefault: continue
