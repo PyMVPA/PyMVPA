@@ -235,6 +235,14 @@ def __check_in_ipython():
         return
     raise RuntimeError, "Not running in IPython session"
 
+def __check_openopt():
+    try:
+        import openopt as _
+        return
+    except ImportError:
+        pass
+    import scikits.openopt as _
+    return
 
 def __check_matplotlib():
     """Check for presence of matplotlib and set backend if requested."""
@@ -331,7 +339,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'matplotlib': "__check_matplotlib()",
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
-          'openopt': "import scikits.openopt as __",
+          'openopt': "__check_openopt()",
           'mdp': "import mdp as __",
           'mdp ge 2.4': "from mdp.nodes import LLENode as __",
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
