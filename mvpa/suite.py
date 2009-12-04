@@ -39,7 +39,6 @@ from mvpa.algorithms.cvtranserror import *
 
 from mvpa import clfs
 from mvpa.clfs.distance import *
-from mvpa.clfs.kernel import *
 from mvpa.clfs.base import *
 from mvpa.clfs.meta import *
 from mvpa.clfs.knn import *
