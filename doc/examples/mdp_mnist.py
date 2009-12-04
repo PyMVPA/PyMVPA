@@ -29,7 +29,6 @@ class DigitsIterator:
     def __init__(self, digits, labels):
         self.digits = digits
         self.labels = labels
-
     def __iter__(self):
         frac = 10
         ll = len(self.labels)
@@ -83,11 +82,17 @@ testds = Dataset.from_basic(
 
 examples = [0, 25024, 50000, 59000]
 
-for i, id in enumerate(examples):
-    P.subplot(2, 2, i+1)
-    P.imshow(data['traindata'][id].T, cmap=P.cm.gist_yarg)
+P.figure(figsize=(6,6))
 
+for i, id in enumerate(examples):
+    ax = P.subplot(2, 2, i+1)
+    ax.axison = False
+    P.imshow(data['traindata'][id].T, cmap=P.cm.gist_yarg,
+             interpolation='nearest', aspect='equal')
+
+P.subplots_adjust(left=0,right=1,bottom=0,top=1,wspace=0,hspace=0)
 P.show()
+
 
 fdaflow = (mdp.nodes.WhiteningNode(output_dim=10, dtype='d') +
            mdp.nodes.PolynomialExpansionNode(2) +
