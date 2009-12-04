@@ -22,7 +22,6 @@ from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
 from mvpa.misc.support import isInVolume
 
 
-
 class MDPNodeMapper(Mapper):
     """Mapper encapsulating an arbitray MDP node.
 
@@ -131,12 +130,12 @@ class MDPNodeMapper(Mapper):
 
     def _forward_data(self, data):
         args, kwargs = self._expand_args('exec', data)
-        return self.node.execute(data, *args, **kwargs)
+        return self.node.execute(N.atleast_2d(data), *args, **kwargs).squeeze()
 
 
     def _reverse_data(self, data):
         args, kwargs = self._expand_args('inv', data)
-        return self.node.inverse(data, *args, **kwargs)
+        return self.node.inverse(N.atleast_2d(data), *args, **kwargs).squeeze()
 
 
     def get_insize(self):
@@ -239,11 +238,11 @@ class MDPFlowMapper(Mapper):
 
 
     def _forward_data(self, data):
-        return self.flow.execute(data)
+        return self.flow.execute(N.atleast_2d(data)).squeeze()
 
 
     def _reverse_data(self, data):
-        return self.flow.inverse(data)
+        return self.flow.inverse(N.atleast_2d(data)).squeeze()
 
 
     def is_valid_outid(self, id):

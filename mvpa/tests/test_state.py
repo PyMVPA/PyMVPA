@@ -45,6 +45,9 @@ class TestClassProperChild(TestClassProper):
 
     state4 = StateVariable(enabled=False, doc="state4 doc")
 
+class TestClassReadOnlyParameter(ClassWithCollections):
+    paramro = Parameter(0, doc="state4 doc", ro=True)
+
 
 class TestClassParametrized(TestClassProper, ClassWithCollections):
     p1 = Parameter(0)
@@ -299,6 +302,17 @@ class StateTests(unittest.TestCase):
             self.fail(msg="Failed to generate an instance out of "
                       "representation  %s of params. Got exception: %s" % (aparams_str, e))
 
+    def testReadOnly(self):
+        # Should be able to assign in constructor
+        cro = TestClassReadOnlyParameter(paramro=12)
+        # but not run time
+        self.failUnlessRaises(RuntimeError, cro.params['paramro']._set, 13)
+        # Test if value wasn't actually changed
+        self.failUnlessEqual(cro.params.paramro, 12)
+
+    def testValueInConstructor(self):
+        param = Parameter(0, value=True)
+        self.failUnless(param.value)
 
 def suite():
     return unittest.makeSuite(StateTests)
