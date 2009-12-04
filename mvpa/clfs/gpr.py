@@ -109,8 +109,9 @@ class GPR(Classifier):
         # set kernel:
         if kernel is None:
             kernel = SquaredExponentialKernel()
-            debug("GPR", "No kernel was provided, falling back to
-            default: " + str(kernel)
+            debug("GPR",
+                  "No kernel was provided, falling back to default: %s"
+                  % kernel)
         self.__kernel = kernel
 
         # append proper clf_internal depending on the kernel
@@ -327,7 +328,7 @@ class GPR(Classifier):
                 # apply regularization
                 epsilon = self.params.lm * N.eye(self._C.shape[0])
                 self._L = SLcholesky(self._C + epsilon, lower=True)
-                self._LL = (self._L, lower=True)
+                self._LL = (self._L, True)
             except SLAError:
                 raise SLAError("Kernel matrix is not positive, definite.  " + \
                                "Try increasing the lm parameter.")
