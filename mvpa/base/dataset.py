@@ -216,7 +216,8 @@ class Dataset(object):
         if not sa is None:
             self.sa.update(sa)
         if hasattr(samples, 'shape'):
-            length = N.prod(samples.shape[1:])
+            self.samples = N.atleast_2d(self.samples)
+            length = N.prod(self.samples.shape[1:])
         else:
             length = None
         self.fa = FeatureAttributesCollection(length=length)
@@ -503,11 +504,15 @@ class Dataset(object):
     def __array__(self, dtype=None):
         return self.samples.__array__(dtype)
 
+    def get_nfeatures(self):
+        if hasattr(self.samples, 'shape'):
+            return self.samples.shape[1]
+        else:
+            return None
 
     # shortcut properties
-    nsamples = property(fget=lambda self:self.samples.shape[0])
-    nfeatures = property(fget=lambda self:self.samples.shape[1])
-
+    nsamples = property(fget=lambda self:len(self.samples))
+    nfeatures = property(fget=get_nfeatures)
 
 def datasetmethod(func):
     """Decorator to easily bind functions to a Dataset class
