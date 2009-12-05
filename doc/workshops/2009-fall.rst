@@ -183,7 +183,6 @@ immediate advantage of allowing custom kernels for any Shogun-based classifier
 GPR), or the automatic exchange of kernels for any implementation in the future.
 
 
-
 Cached Kernel Optimization
 --------------------------
 
@@ -223,30 +222,29 @@ procedures with arbitrary mixes of PyMVPA classifiers and measure and MDP nodes,
 and flows.
 
 
-
-Non-matrix Dataset and prototype mapper for tractography data (and everything!)
--------------------------------------------------------------------------------
+Non-matrix Dataset and prototype mapper for tractography data (and more!)
+-------------------------------------------------------------------------
 
 Emanuele Olivetti, Michael Hanke
 
-The vast majority of the algorithms available (and desirable) in PyMVPA
-requires data in a 2D matrix format. For this reason, until now, PyMVPA
-accepted only 2D matrices as samples in a Dataset. This is not the case, for
-example, of tractography data which consist of a set of streamlines, a
+The vast majority of algorithms available (and desirable) in PyMVPA requires
+data in a 2D matrix format. For this reason, until now, PyMVPA accepted only 2D
+matrices as samples in a Dataset. However, sometimes this causes problems, for
+example, with tractography data. That consists of a set of streamlines, a
 streamline being a polyline made of a non-constant number of points. In PyMVPA
-terms it means that the number of features of the corresponding dataset of
+terms it means that the number of features in the corresponding dataset of
 streamlines would be different across instances.
 
-The purpose of this set of patches is twofold: first to allow PyMVPA to accept
-also row-wise iterable collections as a Dataset independently of the content
-of each row and second to provide a mapper to transform these every kind of
-Dataset into 2D matrix Dataset. The mapper is prototype-based which means that
-each instance within the Dataset (e.g., each streamline) is mapped into a
-fixed size M-dimensional vector. The M values are computed by specifying a
-similarity (or kernel, or distance) function which evaluates the distance of
-that instance against a given set of other M instances (e.g., other M
-streamlines) called *prototypes*. An example of application is supervised
-tract segmentation from tractography data which now can be mapped into a
-standard binary classification problem over the usual 2D matrix class-labelled
-dataset. This approach is not limited to the tractography domain and can be
-immediately extended to any other kind of data.
+The purpose of a set of patches made during the workshop is twofold: first to
+allow PyMVPA to accept also row-wise iterable collections as a Dataset
+independently of the content of each row and second to provide a mapper to
+transform these every kind of Dataset into 2D matrix Dataset. The mapper is
+prototype-based which means that each instance within the Dataset (e.g., each
+streamline) is mapped into a fixed size M-dimensional vector. The M values are
+computed by specifying a similarity (or kernel, or distance) function which
+evaluates the distance of that instance against a given set of other M
+instances (e.g., other M streamlines) called *prototypes*. An example
+application is supervised tract segmentation from tractography data which now
+can be mapped into a standard binary classification problem over the usual 2D
+matrix class-labeled dataset. This approach to adress varying features-space
+sizes is flexible, and not limited to the tractography domain.
