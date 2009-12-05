@@ -35,7 +35,7 @@ if __debug__:
     from mvpa.base import debug
 
 # Some local bindings for bits of speed up
-asarray = N.asarray
+from numpy import array, asarray
 Nlog = N.log
 Ndot = N.dot
 Ndiag = N.diag
