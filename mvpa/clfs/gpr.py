@@ -19,7 +19,8 @@ from mvpa.base import externals
 from mvpa.misc.state import StateVariable
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.misc.param import Parameter
-from mvpa.kernels.np import SquaredExponentialKernel, GeneralizedLinearKernel
+from mvpa.kernels.np import SquaredExponentialKernel, GeneralizedLinearKernel, \
+     LinearKernel
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import InvalidHyperparameterError
 from mvpa.datasets import dataset
@@ -115,9 +116,10 @@ class GPR(Classifier):
         self.__kernel = kernel
 
         # append proper clf_internal depending on the kernel
-        # TODO: unify finally all kernel-based machines.
-        #       make SMLR to use kernels
-        if isinstance(kernel, GeneralizedLinearKernel):
+        # TODO: add "_clf_internals" to kernels since the check
+        #       below does not scale
+        if isinstance(kernel, GeneralizedLinearKernel) or \
+           isinstance(kernel, LinearKernel):
             self._clf_internals += ['linear']
         else:
             self._clf_internals += ['non-linear']
