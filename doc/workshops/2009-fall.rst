@@ -43,23 +43,22 @@ includes:
 Participants
 ============
 
-(confirmed)
-
+* Satrajit Ghosh, MIT, USA (for the kick-off talks)
 * Scott Gorlin, MIT, USA
 * Valentin Haenel, BCCN, Germany
 * Yaroslav O. Halchenko, Dartmouth College, USA
 * Michael Hanke, Dartmouth College, USA
-* James M. Hughes, Dartmouth College, USA
 * Emanuele Olivetti, Fondazione Bruno Kessler, Italy
 * Per B. Sederberg, Princeton University, USA (virtual)
 * Tiziano Zito, BCCN, Germany
 
 
-Tentative Schedule
-==================
+Schedule
+========
 
-The workshop will start on *Monday Nov 30th at 9:30* am with a series of talks
-covering the various aspects of the workshop:
+The workshop started on *Monday Nov 30th at 9:30am* with a series of talks
+covering the various aspects of the workshop (abstracts below). The rest of
+the week was a dedicated to actual development projects.
 
 
 PyMVPA: Where we are now, and where we are going
@@ -162,6 +161,13 @@ analytical technique implementations by several orders of magnitude.
 Workshop Results
 ================
 
+.. figure:: ../pics/extravaganza-dc09.jpg
+
+  Workshop participants (from left to right and top to bottom): Emanuele
+  Olivetti, Scott Gorlin, Michael Hanke, Tiziano Zito, Yaroslav O.
+  Halchenko, Valentin Haenel
+
+
 Grand Kernel Unification
 ------------------------
 
@@ -248,3 +254,4 @@ application is supervised tract segmentation from tractography data which now
 can be mapped into a standard binary classification problem over the usual 2D
 matrix class-labeled dataset. This approach to adress varying features-space
 sizes is flexible, and not limited to the tractography domain.
+
