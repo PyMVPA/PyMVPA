@@ -143,7 +143,8 @@ class GPR(Classifier):
         self._alpha = None
         self._L = None
         self._LL = None
-        self.__kernel.reset()
+        # XXX EO: useful for model selection but not working in general
+        # self.__kernel.reset()
         pass
 
 
