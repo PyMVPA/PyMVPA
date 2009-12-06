@@ -178,7 +178,7 @@ usual identifying and fixing a number of bugs.
 Grand Kernel Unification
 ------------------------
 
-Yaroslav O. Halchenko, Scott Gorlin, and Emanuele Olivetti
+Scott Gorlin, Yaroslav O. Halchenko, and Emanuele Olivetti
 
 Many core MVPA algorithms rely on expensive kernel computations.  However,
 most of these algorithms have their own naming standards and backend 
@@ -199,7 +199,7 @@ GPR), or the automatic exchange of kernels for any implementation in the future.
 Cached Kernel Optimization
 --------------------------
 
-Yaroslav O. Halchenko, Scott Gorlin
+Scott Gorlin, Yaroslav O. Halchenko
 
 The main benefit of the kernel unification work is that new kernel classes can
 be specified in pure Python.  A new optimized kernel class we have implemented
