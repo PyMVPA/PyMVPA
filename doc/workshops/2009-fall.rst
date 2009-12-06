@@ -14,19 +14,19 @@
 PyMVPA Extravaganza -- Fall 2009
 ********************************
 
-This development workshop will take place at Dartmouth College (Nov 30th -- Dec
-4th).
+This development workshop took take place at Dartmouth College, Nov 30 -- Dec
+4, 2009.
 
 
 Goals
 =====
 
-The primary purpose of this first PyMVPA workshop is to gather all people
-involved in (or related to) the development of PyMVPA. Participants introduce
-their projects and we will discuss their integration into, or interoperation
-with the PyMVPA main line.
+The primary purpose of this first PyMVPA workshop was to gather all people
+involved in (or related to) the development of PyMVPA. Participants introduced
+their projects and discussed their integration into, or interoperation with the
+PyMVPA main line.
 
-In addition, we will discuss changes scheduled for the upcoming 0.5 release of
+In addition, we discussed changes scheduled for the upcoming 0.5 release of
 PyMVPA that are supposed to improve shortcomings of the original design, or
 missing features that have been identified over the past two years. This
 includes:
@@ -53,19 +53,17 @@ Participants
 * Tiziano Zito, BCCN, Germany
 
 
-Schedule
-========
+Kick-off Talks
+==============
 
 The workshop started on *Monday Nov 30th at 9:30am* with a series of talks
-covering the various aspects of the workshop (abstracts below). The rest of
-the week was a dedicated to actual development projects.
+covering the various aspects of the workshop (abstracts below).
 
 
 PyMVPA: Where we are now, and where we are going
 ------------------------------------------------
 
-Yaroslav O. Halchenko,
-Michael Hanke
+Yaroslav O. Halchenko, Michael Hanke
 
 This talk will give a brief summary of our original concept of PyMVPA that we
 had in mind when designing it two years ago, and how the project evolved since
@@ -154,12 +152,21 @@ greatly simplifying the underlying computations and accelerating many
 analytical technique implementations by several orders of magnitude.
 
 
-.. CUDA for world-domination (Per)
-
-
 
 Workshop Results
 ================
+
+The workshop has been a huge success. We worked on further integrating PyMVPA
+with other Python-based software packages, both to make use of them inside
+PyMVPA, but also to better expose PyMVPA's functionality to other packages.
+The kick-off talks were followed by four days of intensiv coding. During these
+days we were able to integrate virtually all outstanding patches that have been
+offered over the last year, but could not be merged yet due to required changes
+in the codebase. Below is a list of projects that we have been working on
+during the workshop.  Moreover, we were able to continue the transition towards
+the new dataset implementation that had been started prior to the workshop. A
+significant number of additional unittest has been ported to the new code -- as
+usual identifying and fixing a number of bugs.
 
 .. figure:: ../pics/extravaganza-dc09.jpg
 
@@ -255,3 +262,24 @@ can be mapped into a standard binary classification problem over the usual 2D
 matrix class-labeled dataset. This approach to adress varying features-space
 sizes is flexible, and not limited to the tractography domain.
 
+
+Optimization and Generalization of Searchlight-analyses
+-------------------------------------------------------
+
+Valentin Haenel, Michael Hanke
+
+The searchlight analysis code has been ported to the new dataset/mapper
+framework, taking into account the result of a profiling analysis done by
+Valentin Haenel during the last year. The new code avoids significant
+look-up penalties of the previous implementation. Moreover, it has been
+generalized to support abitrary look-up algorithms (e.g. kd-tree_) and is no
+longer limited to sphere-based spatial searchlights.
+
+.. _kd-tree: http://en.wikipedia.org/wiki/Kd-tree
+
+
+Acknowledgements
+================
+
+We are grateful to Prof. James Haxby for sponsoring this workshop and hosting
+it in his lab.
