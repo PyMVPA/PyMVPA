@@ -19,13 +19,17 @@ We are very grateful to the following people, who have contributed
 valuable advice, code or documentation to PyMVPA:
 
 * `Greg Detre`_, Princeton University, USA
-* `James M. Hughes`_, Dartmouth College, USA
 * `Ingo Fründ`_, TU Berlin, Germany
-* `James Kyle`_, UCLA, USA
 * `Scott Gorlin`_, MIT, USA
+* `Valentin Haenel`_, TU Berlin, Germany
+* `James M. Hughes`_, Dartmouth College, USA
+* `James Kyle`_, UCLA, USA
+* `Tiziano Zito`_, BCCN, Germany
 
 .. _Greg Detre: http://www.princeton.edu/~gdetre/
 .. _James M. Hughes: http://www.cs.dartmouth.edu/~hughes/index.html
-.. _Ingo Fründ: http://www-e.uni-magdeburg.de/fruend/
+.. _Ingo Fründ: http://www.cognition.tu-berlin.de/menue/members/ingo_fruend/
 .. _James Kyle: http://www.ccn.ucla.edu/users/jkyle
 .. _Scott Gorlin: http://www.scottgorlin.com
+.. _Valentin Haenel: http://www.cognition.tu-berlin.de/menue/members/valentin_haenel/
+.. _Tiziano Zito: http://itb.biologie.hu-berlin.de/~zito/
