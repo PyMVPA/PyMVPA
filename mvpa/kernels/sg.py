@@ -29,6 +29,9 @@ class SGKernel(Kernel):
     def as_sg(self):
         return self
 
+    def as_raw_sg(self):
+        return self._k
+    
     def __array__(self):
         return self._k.get_kernel_matrix()
 
@@ -36,14 +39,15 @@ class SGKernel(Kernel):
     def _data2features(data):
         """Converts data to shogun features"""
         return RealFeatures(data.astype(float).T)
-    
-# Monkey patch Kernel for sg conversion required due to import/definition race
+
+# Conversion methods
+def _as_raw_sg(kernel):
+    """Converts directly to a Shogun kernel"""
+    return sgk.CustomKernel(kernel.as_raw_np())
 def _as_sg(kernel):
     """Converts this kernel to a Shogun-based representation"""
-    p = PrecomputedSGKernel(matrix=N.array(kernel))
-    p.compute()
-    return p
-Kernel.as_sg = _as_sg
+    return PrecomputedSGKernel(matrix=kernel.as_raw_np())
+Kernel.add_conversion('sg', _as_sg, _as_raw_sg)
 
 
 class _BasicSGKernel(SGKernel):
@@ -127,28 +131,21 @@ class PrecomputedSGKernel(SGKernel):
     
     # NB: To avoid storing kernel twice, self.params.matrix = self._k once the
     # kernel is 'computed'
-    matrix = Parameter(None, doc='NP array, SGKernel, or raw shogun kernel',
-                       ro=True)
     
-    def __init__(self, *args, **kwargs):
-        SGKernel.__init__(self, *args, **kwargs)
-
-        m = self.params.matrix
-        if m is None:
+    def __init__(self, matrix=None, **kwargs):
+        
+        # Convert to appropriate kernel for input
+        if isinstance(matrix, SGKernel):
+            k = m._k # Take internal shogun
+        elif isinstance(matrix, Kernel):
+            k = matrix.as_raw_np() # Convert to NP otherwise
+        else:
             # Otherwise SG would segfault ;-)
-            raise TypeError, "You must specify matrix parameter"
+            k = N.array(matrix)
 
-        # Make sure _k is always available
-        self.__set_matrix(m)
+        SGKernel.__init__(self, **kwargs)
 
-    def __set_matrix(self, m):
-        """Set matrix -- may be some time we would allow params.matrix to be R/W
-        """
-        if isinstance(m, SGKernel):
-            m = m._k
-        self._k = sgk.CustomKernel(m)
-        # Ad-hoc way to override R/O parameter ;)
-        self.params['matrix']._set(self._k, init=True)
+        self._k = sgk.CustomKernel(k)
 
     def compute(self, *args, **kwargs):
         """'Compute' `PrecomputedSGKernel -- no actual "computation" is done

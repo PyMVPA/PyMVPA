@@ -38,17 +38,24 @@ class LSKernel(Kernel):
     def compute(self, *args, **kwargs):
         self._k = self.__kernel_type__ # Nothing to compute
     
+    def as_raw_ls(self):
+        return self._k
+    
     def as_ls(self):
         return self
     
-    def as_np(self):
-        raise NotImplemented, 'LibSVM calculates kernels internally; they ' +\
+    def as_raw_np(self):
+        raise ValueError, 'LibSVM calculates kernels internally; they ' +\
               'cannot be converted to Numpy'
-# Monkey patch Kernel
+
+# Conversion methods
 def _as_ls(kernel):
     raise NotImplemented, 'LibSVM calculates kernels internally; they ' +\
           'cannot be converted from Numpy'
-Kernel.as_ls = _as_ls
+def _as_raw_ls(kernel):
+    raise NotImplemented, 'LibSVM calculates kernels internally; they ' +\
+          'cannot be converted from Numpy'
+Kernel.add_conversion('ls', _as_ls, _as_raw_ls)
 
 class LinearLSKernel(LSKernel):
     """A simple Linear kernel: K(a,b) = a*b.T"""

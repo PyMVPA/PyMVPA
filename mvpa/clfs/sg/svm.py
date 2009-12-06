@@ -52,7 +52,8 @@ from mvpa.misc.param import Parameter
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.base import warning
 
-from mvpa.clfs.base import accepts_dataset_as_samples
+from mvpa.clfs.base import accepts_dataset_as_samples, \
+     accepts_samples_as_dataset
 from mvpa.clfs.meta import MulticlassClassifier
 from mvpa.clfs._svmbase import _SVM
 from mvpa.misc.state import StateVariable
@@ -293,7 +294,7 @@ class SVM(_SVM):
 
             k = self.params.kernel
             k.compute(dataset)
-            self.__kernel = kernel = k.as_sg()._k
+            self.__kernel = kernel = k.as_raw_sg()
 
             newkernel = True
             self.kernel_params.reset()  # mark them as not-changed
@@ -416,7 +417,7 @@ class SVM(_SVM):
 
     # XXX actually this is the beast which started this evil conversion
     #     so -- make use of dataset here! ;)
-    @accepts_dataset_as_samples
+    @accepts_samples_as_dataset
     def _predict(self, data):
         """Predict values for the data
         """
@@ -449,7 +450,7 @@ class SVM(_SVM):
                 #_setdebug(kernel_test, 'Kernels')
 
                 #_setdebug(kernel_test_custom, 'Kernels')
-                self.__kernel_test = self.params.kernel.as_sg()._k
+                self.__kernel_test = self.params.kernel.as_raw_sg()
                 
             elif __debug__:
                 debug("SG__", "Re-using testing kernel")
