@@ -122,9 +122,9 @@ class KernelTests(unittest.TestCase):
             nk.compute()
             sk = nk.as_sg()
             sk.compute()
-            # CustomKernels interally store as float32
+            # CustomKernels interally store as float32 ??
             self.failUnless((nk._k.astype('float32') == \
-                             sk.as_np()._k.astype('float32')).all(),
+                             sk.as_raw_np().astype('float32')).all(),
                             'Failure converting arrays between NP as SG')
             
         def testLinearSG(self):

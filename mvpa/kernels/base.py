@@ -44,6 +44,17 @@ class Kernel(ClassWithCollections):
 
     This class should not be used directly, but rather use a subclass which
     enforces a consistent internal representation.
+    
+    Conversion mechanisms:
+    Each kernel type should implement methods as necessary for the following two
+    methods to work:
+
+    kernel.as_np() # Return a new NumpyKernel object with internal Numpy kernel
+    kernel.as_raw_np() # Return a raw Numpy array from this kernel
+    
+    Other kernel types should implement similar mechanisms to convert numpy
+    arrays to their own internal representations.  Assuming such methods exist,
+    all kernel types should be seamlessly convertable amongst each other.
     """
 
     _ATTRIBUTE_COLLECTIONS = ['params'] # enforce presence of params collections
@@ -90,12 +101,21 @@ class Kernel(ClassWithCollections):
         self.compute(*args, **kwargs)
         return self
 
+    ############################################################################
+    # The following methods are circularly defined.  Child kernel types can
+    # override either one of them to allow conversion to Numpy
     def __array__(self):
-        return self.as_np()._k
+        return self.as_raw_np()
 
+    def as_raw_np(self):
+        """Directly return this kernel as a numpy array"""
+        return N.array(self)
+    
+    ############################################################################
+    
     def as_np(self):
         """Converts this kernel to a Numpy-based representation"""
-        p = PrecomputedKernel(matrix=N.array(self))
+        p = PrecomputedKernel(matrix=self.as_raw_np())
         p.compute()
         return p
 
@@ -107,6 +127,24 @@ class Kernel(ClassWithCollections):
         """
         self._k = None
 
+    @classmethod
+    def add_conversion(cls, typename, methodfull, methodraw):
+        """Adds methods to the Kernel class for new conversions
+        
+        :Parameters:
+        typename: string naming kernel type
+        methodfull: method which converts to the new kernel object class
+        methodraw: method which returns a raw kernel
+        
+        :Examples:
+        Kernel.add_conversion('np', fullmethod, rawmethod)
+        binds kernel.as_np() to fullmethod()
+        binds kernel.as_raw_np() to rawmethod()
+        
+        Can also be used on subclasses to override the default conversions
+        """
+        setattr(cls, 'as_%s'%typename, methodfull)
+        setattr(cls, 'as_raw_%s'%typename, methodraw)
 
 class NumpyKernel(Kernel):
     """A Kernel object with internal representation as a 2d numpy array"""
@@ -123,6 +161,8 @@ class NumpyKernel(Kernel):
         # Already numpy!!
         return self
 
+    def as_raw_np(self):
+        return self._k
     # wasn't that easy?
 
 
@@ -199,9 +239,15 @@ class CachedKernel(NumpyKernel):
         """Allows checking name of subkernel"""
         return self.params.kernel.__kernel_name__
     
-    def __init__(self, *args, **kwargs):
-        super(CachedKernel, self).__init__(*args, **kwargs)
-        self.params.update(self.params.kernel.params)
+    def __init__(self, kernel=None, **kwargs):
+        """
+        :Parameters:
+        kernel: Base kernel to cache.  Any kernel which can be converted to a 
+          NumpyKernel is allowed
+        """
+        super(CachedKernel, self).__init__(**kwargs)
+        self._kernel = kernel
+        self.params.update(self._kernel.params)
         self._rhsids = self._lhsids = self._kfull = None
 
     def _cache(self, ds1, ds2=None):
@@ -213,9 +259,9 @@ class CachedKernel(NumpyKernel):
         else:
             self._rhsids = SamplesLookup(ds2)
 
-        ckernel = self.params.kernel
+        ckernel = self._kernel
         ckernel.compute(ds1, ds2)
-        self._kfull = ckernel.as_np()._k
+        self._kfull = ckernel.as_raw_np()
         ckernel.cleanup()
         self._k = self._kfull
         
