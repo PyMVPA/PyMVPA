@@ -415,12 +415,6 @@ class Dataset(object):
             if isinstance(a, int):
                 args[i] = [a]
 
-        # if we get an slicing array for feature selection and it is *not* 1D
-        # try feeding it through the mapper (if there is any)
-        if isinstance(args[1], N.ndarray) and len(args[1].shape) > 1 and \
-                self.a.has_key('mapper'):
-                    args[1] = self.a.mapper.forward(args[1])
-
         # simultaneous slicing of numpy arrays only yields intended results
         # if at least one of the slicing args is an actual slice and not
         # and index list are selection mask vector
@@ -471,10 +465,6 @@ class Dataset(object):
             newattr.value = copy.copy(attr.value)
             # assign to target collection
             a[attr.name] = newattr
-
-        # and adjusting the mapper (if any)
-        if a.has_key('mapper'):
-            a['mapper'].value.select_out(args[1])
 
         # and after a long way instantiate the new dataset of the same type
         return self.__class__(samples, sa=sa, fa=fa, a=a)
