@@ -28,8 +28,8 @@ PyMVPA main line.
 
 In addition, we discussed changes scheduled for the upcoming 0.5 release of
 PyMVPA that are supposed to improve shortcomings of the original design, or
-missing features that have been identified over the past two years. This
-includes:
+missing features that have been identified over the past two years. These
+include:
 
 * More flexible data storage: A new dataset implementation.
 * Better integration of PyMVPA and MDP_.
@@ -159,7 +159,7 @@ Workshop Results
 The workshop has been a huge success. We worked on further integrating PyMVPA
 with other Python-based software packages, both to make use of them inside
 PyMVPA, but also to better expose PyMVPA's functionality to other packages.
-The kick-off talks were followed by four days of intensiv coding. During these
+The kick-off talks were followed by four days of intensive coding. During these
 days we were able to integrate virtually all outstanding patches that have been
 offered over the last year, but could not be merged yet due to required changes
 in the codebase. Below is a list of projects that we have been working on
@@ -272,7 +272,7 @@ The searchlight analysis code has been ported to the new dataset/mapper
 framework, taking into account the result of a profiling analysis done by
 Valentin Haenel during the last year. The new code avoids significant
 look-up penalties of the previous implementation. Moreover, it has been
-generalized to support abitrary look-up algorithms (e.g. kd-tree_) and is no
+generalized to support arbitrary look-up algorithms (e.g. kd-tree_) and is no
 longer limited to sphere-based spatial searchlights.
 
 .. _kd-tree: http://en.wikipedia.org/wiki/Kd-tree
