@@ -27,12 +27,8 @@ from mvpa.misc.state import ClassWithCollections
 from mvpa.misc.param import Parameter
 from mvpa.misc.sampleslookup import SamplesLookup # required for CachedKernel
 
-# Imports enough to convert to shogun kernels if shogun is installed
-#try:
-    #from mvpa.kernels.sg import SGKernel
-    #_has_shogun=True
-#except RuntimeError:
-    #_has_shogun=False
+__all__ = ['Kernel', 'NumpyKernel', 'CustomKernel', 'PrecomputedKernel',
+           'CachedKernel']
 
 class Kernel(ClassWithCollections):
     """Abstract class which calculates a kernel function between datasets
@@ -45,7 +41,9 @@ class Kernel(ClassWithCollections):
     This class should not be used directly, but rather use a subclass which
     enforces a consistent internal representation.
     
-    Conversion mechanisms:
+    Conversion mechanisms
+    ---------------------
+    
     Each kernel type should implement methods as necessary for the following two
     methods to work:
 
@@ -53,7 +51,8 @@ class Kernel(ClassWithCollections):
     kernel.as_raw_np() # Return a raw Numpy array from this kernel
     
     Other kernel types should implement similar mechanisms to convert numpy
-    arrays to their own internal representations.  Assuming such methods exist,
+    arrays to their own internal representations.  See `add_conversion` for a
+    helper method.  Assuming such `Kernel.as_*` methods exist,
     all kernel types should be seamlessly convertable amongst each other.
     """
 
@@ -64,6 +63,8 @@ class Kernel(ClassWithCollections):
     __kernel_name__ = None
     
     # Class holder which can create feature sensitivities
+    # XXX YOH: is this used anywhere? and besides, base class should be agnostic
+    #     of any particular Kernel machine
     __svm_sensitivity__ = None
     
     def __init__(self, *args, **kwargs):
@@ -131,12 +132,17 @@ class Kernel(ClassWithCollections):
     def add_conversion(cls, typename, methodfull, methodraw):
         """Adds methods to the Kernel class for new conversions
         
-        :Parameters:
-        typename: string naming kernel type
-        methodfull: method which converts to the new kernel object class
-        methodraw: method which returns a raw kernel
+        Parameters
+        ----------
+        typename : string
+          Describes kernel type
+        methodfull : function
+          Method which converts to the new kernel object class
+        methodraw : function
+          Method which returns a raw kernel
         
-        :Examples:
+        Examples
+        --------
         Kernel.add_conversion('np', fullmethod, rawmethod)
         binds kernel.as_np() to fullmethod()
         binds kernel.as_raw_np() to rawmethod()
@@ -162,12 +168,16 @@ class NumpyKernel(Kernel):
         return self
 
     def as_raw_np(self):
+        """Directly return this kernel as a numpy array.
+
+        For Numpy-based kernels - simply returns stored matrix."""
+
         return self._k
     # wasn't that easy?
 
 
 class CustomKernel(NumpyKernel):
-    """Custom Kernel defined by an arbitrary function"""
+    """Custom Kernel defined by an arbitrary function
 
     Examples
     --------
