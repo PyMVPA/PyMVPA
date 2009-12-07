@@ -167,13 +167,26 @@ class NumpyKernel(Kernel):
 
 
 class CustomKernel(NumpyKernel):
-    """Custom Kernel defined by an arbitrary function
-    """
+    """Custom Kernel defined by an arbitrary function"""
 
-    kernelfunc = Parameter(None, doc="""Function to generate the matrix""")
+    def __init__(self, kernelfunc=None, **kwargs):
+        """
+        :Parameters:
+        kernelfunc: Any callable function which takes two numpy arrays and 
+          calculates a kernel function, treating the rows as samples and the
+          columns as features. It is called from compute(d1, d2) -> func(d1,d2)
+          and should return a numpy matrix K(i,j) which holds the kernel
+          evaluated from d1 sample i and d2 sample j
+          
+        :Examples:
+        # Basic linear kernel
+        k = CustomKernel(kernelfunc=lambda a,b: numpy.dot(a,b.T))
+        """
+        NumpyKernel.__init__(self, **kwargs)
+        self._kernelfunc = kernelfunc
 
     def _compute(self, d1, d2):
-        self._k = self.params.kernelfunc(d1, d2)
+        self._k = self._kernelfunc(d1, d2)
 
 
 
@@ -181,28 +194,16 @@ class PrecomputedKernel(NumpyKernel):
     """Precomputed matrix
     """
 
-    matrix = Parameter(None, allowedtype="ndarray",
-                       doc="ndarray to use as a matrix for the kernel",
-                       ro=True)
-
     # NB: to avoid storing matrix twice, after compute
     # self.params.matrix = self._k
-    def __init__(self, *args, **kwargs):
+    def __init__(self, matrix=None, **kwargs):
+        """
+        :Parameters:
+        matrix: Numpy array or convertable kernel, or other object type
+        """
         NumpyKernel.__init__(self, *args, **kwargs)
 
-        m = self.params.matrix
-        if m is None:
-            # Otherwise SG would segfault ;-)
-            raise TypeError, "You must specify matrix parameter"
-
-        # Make sure _k is always available
-        self.__set_matrix(m)
-
-    def __set_matrix(self, m):
-        """Set matrix -- may be some time we would allow params.matrix to be R/W
-        """
-        self._k = N.asanyarray(m)
-        self.params['matrix']._set(self._k, init=True)
+        self._k = N.array(matrix)
 
     def compute(self, *args, **kwargs):
         pass
@@ -222,22 +223,19 @@ class CachedKernel(NumpyKernel):
     through compute again.  If new (uncached) data is sent through compute, then
     the cache is recreated from scratch.  Therefore, you should compute the
     kernel on the entire superset of your data before using this kernel
-    normally.
+    normally (computing a new cache invalidates any previous cached data).
     
-    The cache is asymmetric for lhs and rhs:
+    The cache is asymmetric for lhs and rhs, so compute(d1, d2) does not create
+    a cache usable for compute(d2, d1).
     """
 
     # TODO: Figure out how to design objects like CrossValidation etc to
     # precompute this kernel automatically, making it transparent to the user
     
-    kernel = Parameter(None, allowedtype=Kernel,
-                       doc="Base kernel to cache.  Any kernel which can be " +\
-                       "converted to a NumpyKernel is allowed")
-
     @property
     def __kernel_name__(self):
         """Allows checking name of subkernel"""
-        return self.params.kernel.__kernel_name__
+        return self._kernel.__kernel_name__
     
     def __init__(self, kernel=None, **kwargs):
         """
