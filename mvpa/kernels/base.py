@@ -169,20 +169,30 @@ class NumpyKernel(Kernel):
 class CustomKernel(NumpyKernel):
     """Custom Kernel defined by an arbitrary function"""
 
-    def __init__(self, kernelfunc=None, **kwargs):
-        """
-        :Parameters:
-        kernelfunc: Any callable function which takes two numpy arrays and 
+    Examples
+    --------
+
+    Basic linear kernel
+    >>> k = CustomKernel(kernelfunc=lambda a,b: numpy.dot(a,b.T))
+    """
+
+    __TODO__ = """
+    - repr/doc sicne now kernelfunc is not a Parameter
+    """
+
+    def __init__(self, kernelfunc=None, *args, **kwargs):
+        """Initialize CustomKernel with an arbitrary function.
+
+        Parameters
+        ----------
+        kernelfunc: function
+          Any callable function which takes two numpy arrays and
           calculates a kernel function, treating the rows as samples and the
           columns as features. It is called from compute(d1, d2) -> func(d1,d2)
           and should return a numpy matrix K(i,j) which holds the kernel
           evaluated from d1 sample i and d2 sample j
-          
-        :Examples:
-        # Basic linear kernel
-        k = CustomKernel(kernelfunc=lambda a,b: numpy.dot(a,b.T))
         """
-        NumpyKernel.__init__(self, **kwargs)
+        NumpyKernel.__init__(self, *args, **kwargs)
         self._kernelfunc = kernelfunc
 
     def _compute(self, d1, d2):
@@ -194,9 +204,13 @@ class PrecomputedKernel(NumpyKernel):
     """Precomputed matrix
     """
 
+    __TODO__ = """
+    - repr/doc sicne now matrix is not a Parameter
+    """
+
     # NB: to avoid storing matrix twice, after compute
     # self.params.matrix = self._k
-    def __init__(self, matrix=None, **kwargs):
+    def __init__(self, matrix=None, *args, **kwargs):
         """
         :Parameters:
         matrix: Numpy array or convertable kernel, or other object type
@@ -237,16 +251,19 @@ class CachedKernel(NumpyKernel):
         """Allows checking name of subkernel"""
         return self._kernel.__kernel_name__
     
-    def __init__(self, kernel=None, **kwargs):
+    def __init__(self, kernel=None, *args, **kwargs):
         """
-        :Parameters:
-        kernel: Base kernel to cache.  Any kernel which can be converted to a 
+        Parameters
+        ----------
+        kernel : Kernel
+          Base kernel to cache.  Any kernel which can be converted to a
           NumpyKernel is allowed
         """
-        super(CachedKernel, self).__init__(**kwargs)
+        super(CachedKernel, self).__init__(*args, **kwargs)
         self._kernel = kernel
         self.params.update(self._kernel.params)
         self._rhsids = self._lhsids = self._kfull = None
+        self._recomputed = None
 
     def _cache(self, ds1, ds2=None):
         """Initializes internal lookups + _kfull via caching the kernel matrix
