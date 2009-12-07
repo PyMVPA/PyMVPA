@@ -24,20 +24,36 @@ if __debug__:
 
 __add_init2doc = False
 __in_ipython = externals.exists('running ipython env')
+
 # if ran within IPython -- might need to add doc to init
 if __in_ipython:
-    __rst_mode = 0                           # either to do ReST links at all
-    _rst_sep = ""
-    _rst_sep2 = ""
+    __rst_mode = False                           # either to do ReST links at all
     from IPython import Release
     # XXX figure out exact version when init doc started to be added to class
     # description
     if Release.version <= '0.8.1':
         __add_init2doc = True
 else:
-    __rst_mode = 1
+    __rst_mode = True
+
+#
+# Predefine some sugarings depending on syntax convention to be used
+#
+# XXX Might need to be removed or become proper cfg parameter
+__rst_conventions = 'numpy'
+if __rst_conventions == 'epydoc':
     _rst_sep = "`"
-    _rst_sep2 = ":"
+    #_rst_sep2 = ":"
+    _rst_indentstr = "  "
+    _rst_params = ":Parameters:"
+elif __rst_conventions == 'numpy':
+    _rst_sep = ""
+    #_rst_sep2 = ""
+    _rst_indentstr = ""
+    _rst_params = "Parameters\n----------"
+else:
+    raise ValueError, "Unknown convention %s for RST" % __rst_conventions
+
 
 def _rst(s, snotrst=''):
     """Produce s only in __rst mode"""
@@ -81,13 +97,19 @@ def handleDocString(text, polite=True):
             return textwrap.dedent(text)
 
 
-def _indent(text, istr='  '):
+def _indent(text, istr=_rst_indentstr):
     """Simple indenter
     """
     return '\n'.join(istr + s for s in text.split('\n'))
 
-__parameters_str_re = re.compile("[\n^]\s*:?Parameters?:?\s*\n")
-"""regexp to match :Parameter: and :Parameters: stand alone in a line"""
+
+__parameters_str_re = re.compile("[\n^]\s*:?Parameters?:?\s*\n(:?\s*-+\s*\n)")
+"""regexp to match :Parameter: and :Parameters: stand alone in a line
+or
+Parameters
+----------
+in multiple lines"""
+
 
 def _splitOutParametersStr(initdoc):
     """Split documentation into (header, parameters, suffix)
@@ -265,8 +287,8 @@ def enhancedDocString(item, *args, **kwargs):
         if len(params_list):
             params_ = '\n'.join([i[1].rstrip() for i in params_list
                                  if not i[0] in skip_params])
-            initdoc += "\n\n%sParameters%s\n" % ( (_rst_sep2,)*2 ) \
-                       + _indent(params_)
+            #initdoc += "\n\n%sParameters%s\n" % ( (_rst_sep2,)*2 ) \
+            initdoc += "\n\n%s\n" % _rst_params + _indent(params_)
 
         if suffix != "":
             initdoc += "\n\n" + suffix
@@ -285,7 +307,7 @@ def enhancedDocString(item, *args, **kwargs):
                   initdoc ]
 
     # Add information about the states if available
-    if lcl.has_key('_statesdoc'):
+    if lcl.has_key('_statesdoc') and len(item._statesdoc):
         # no indent is necessary since states list must be already indented
         docs += [_rst('.. note::\n  ') + 'Available state variables:',
                      handleDocString(item._statesdoc)]
