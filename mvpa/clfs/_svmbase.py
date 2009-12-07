@@ -17,8 +17,10 @@ import operator
 from mvpa.support.copy import deepcopy
 
 from mvpa.base import warning
-from mvpa.base.dochelpers import handleDocString, _rst, _rst_sep2
 from mvpa.kernels.base import Kernel
+from mvpa.base.dochelpers import handleDocString, _rst, _rst_section, \
+     _rst_indentstr
+
 from mvpa.clfs.base import Classifier
 from mvpa.misc.param import Parameter
 from mvpa.misc.transformers import SecondAxisSumOfAbs
@@ -315,7 +317,7 @@ specific to them parameters (described below among the rest of
 parameters), and what tasks it is capable to deal with
 (e.g. regression, binary and/or multiclass classification).
 
-%sImplementations%s""" % (_rst_sep2, _rst_sep2)
+%s""" % (_rst_section('Implementations'),)
 
 
         class NOSClass(object):
@@ -336,10 +338,10 @@ parameters), and what tasks it is capable to deal with
 
         # Describe implementations
         idoc += ''.join(
-            ['\n  %s : %s' % (k, v[3])
-             + NOS(v[1], "\n    Parameters: %s")
-             + NOS(v[2], "\n%s    Capabilities: %%s" %
-                   _rst(('','\n')[int(len(v[1])>0)], ''))
+            ['\n%s%s : %s' % (_rst_indentstr, k, v[3])
+             + NOS(v[1], "\n" + _rst_indentstr + "  Parameters: %s")
+             + NOS(v[2], "\n%s" % _rst(('','\n')[int(len(v[1])>0)], '')
+                   + _rst_indentstr + "  Capabilities: %s")
              for k,v in cls._KNOWN_IMPLEMENTATIONS.iteritems()])
 
         # Describe kernels
@@ -349,13 +351,13 @@ Kernel choice is specified as a kernel instance with kwargument 'kernel`.
 Some kernels might allow computation of per feature
 sensitivity.
 
-%sKernels%s""" % (_rst_sep2, _rst_sep2)
+%s""" % (_rst_section('Kernels'),)
 
         #idoc += ''.join(
-            #['\n  %s' % k
-             #+ ('', ' : provides sensitivity')[int(v[2] is not None)]
-             #+ '\n    ' + NOS(v[1], '%s', 'No parameters')
-             #for k,v in cls._KERNELS.iteritems()])
+        #    ['\n%s%s' % (_rst_indentstr, k)
+        #     + ('', ' : provides sensitivity')[int(v[2] is not None)]
+        #     + '\n    ' + NOS(v[1], '%s', 'No parameters')
+        #     for k,v in cls._KERNELS.iteritems()])
 
         # Finally parameters
         NOS.seen += cls._KNOWN_PARAMS# + cls._KNOWN_KERNEL_PARAMS
