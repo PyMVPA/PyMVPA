@@ -58,6 +58,32 @@ class Dataset(BaseDataset):
         self.a.mapper.append(mapper)
 
 
+    def __getitem__(self, args):
+        # uniformize for checks below; it is not a tuple if just single slicing
+        # spec is passed
+        if not isinstance(args, tuple):
+            args = (args,)
+
+        # if we get an slicing array for feature selection and it is *not* 1D
+        # try feeding it through the mapper (if there is any)
+        if len(args) > 1 and isinstance(args[1], N.ndarray) \
+           and len(args[1].shape) > 1 \
+           and self.a.has_key('mapper'):
+            args = list(args)
+            args[1] = self.a.mapper.forward(args[1])
+            args = tuple(args)
+
+        # let the base do the work
+        ds = super(Dataset, self).__getitem__(args)
+
+        # and adjusting the mapper (if any)
+        if len(args) > 1 and 'mapper' in ds.a:
+            ds.a.mapper.select_out(args[1])
+
+        return ds
+
+
+
     @property
     def idhash(self):
         """To verify if dataset is in the same state as when smth else was done

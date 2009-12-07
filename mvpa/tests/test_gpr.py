@@ -9,11 +9,25 @@
 """Unit tests for PyMVPA GPR."""
 
 from tests_warehouse import *
+from mvpa.misc import data_generators
+from mvpa.kernels.np import GeneralizedLinearKernel
+from mvpa.clfs.gpr import GPR
+
+from numpy.testing import assert_array_equal, assert_array_almost_equal
+
+if __debug__:
+    from mvpa.base import debug
+    
 
 class GPRTests(unittest.TestCase):
 
     def testBasic(self):
-        pass
+        dataset = data_generators.linear1d_gaussian_noise()
+        k = GeneralizedLinearKernel()
+        clf = GPR(k)
+        clf.train(dataset)
+        y = clf.predict(dataset.samples)
+        assert_array_equal(y.shape, dataset.labels)
 
     def testLinear(self):
         pass
