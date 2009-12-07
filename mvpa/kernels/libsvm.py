@@ -15,13 +15,13 @@ to standardize the interface between other kernel machines.
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.base import externals, warning
-from mvpa.kernels.base import Kernel, N
+from mvpa.kernels.base import Kernel
 from mvpa.misc.param import Parameter
 
 #from mvpa.clfs.libsvmc import _svmc
-# circular import bug: manually defining these for now
 class _svmc(object):
+    """Locally defining constants for LibSVM to avoid circular import.
+    """
     LINEAR = 0
     POLY = 1
     RBF = 2
@@ -63,7 +63,7 @@ class LinearLSKernel(LSKernel):
     __kernel_name__ = 'linear'
     
 class RbfLSKernel(LSKernel):
-    """Radial Basis Function kernel (aka Gaussian): 
+    """Radial Basis Function kernel (aka Gaussian):
     K(a,b) = exp(-gamma*||a-b||**2)
     """
     __kernel_type__ = _svmc.RBF

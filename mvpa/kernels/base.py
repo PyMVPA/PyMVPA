@@ -262,12 +262,13 @@ class CachedKernel(NumpyKernel):
         return self._kernel.__kernel_name__
     
     def __init__(self, kernel=None, *args, **kwargs):
-        """
+        """Initialize `CachedKernel`
+
         Parameters
         ----------
         kernel : Kernel
           Base kernel to cache.  Any kernel which can be converted to a
-          NumpyKernel is allowed
+          `NumpyKernel` is allowed
         """
         super(CachedKernel, self).__init__(*args, **kwargs)
         self._kernel = kernel
@@ -327,7 +328,7 @@ class CachedKernel(NumpyKernel):
             except KeyError:
                 self._cache(ds1, ds2)
 
-"""
+__BOGUS_NOTES__ = """
 if ds1 is the "derived" dataset as it was computed on:
     * ds2 is None
       ds2 bound to ds1
