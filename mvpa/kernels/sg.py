@@ -64,7 +64,7 @@ class _BasicSGKernel(SGKernel):
         If there is only one kernel param, this is not necessary
     """
 
-    __TODO__ = "
+    __TODO__ = """
 
     - normalizers: figure out destiny of normalizer -- might be a Parameter,
       but then it must be a class, not instance -- what about parametrization?
