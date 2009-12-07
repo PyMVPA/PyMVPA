@@ -38,9 +38,9 @@ class MDPNodeMapper(Mapper):
 
     Note
     ----
-    MDP nodes requiring multiple training phases are not supported.
-    Moreover, it is not possible to perform incremental training of a
-    node.
+    MDP nodes requiring multiple training phases are not supported. Use a
+    MDPFlowWrapper for that. Moreover, it is not possible to perform
+    incremental training of a node.
     """
     def __init__(self, node, nodeargs=None, inspace=None):
         """
@@ -50,7 +50,7 @@ class MDPNodeMapper(Mapper):
           This node instance is taken as the pristine source of which a
           copy is made for actual processing upon each training attempt.
         nodeargs : dict
-          Dictionary for additional arguments for all call to the MDP
+          Dictionary for additional arguments for all calls to the MDP
           node. The dictionary key's meaning is as follows:
 
             'train': Arguments for calls to `Node.train()`
@@ -62,8 +62,11 @@ class MDPNodeMapper(Mapper):
           tuple (for the arguments), and a dictonary (for keyword
           arguments), i.e.  ((), {}). Both, tuple and dictonary have to be
           provided even if they are empty.
+         inspace: see base class
         """
         # Tiziano will check if there can be/is a public way to do it
+        # TODO: starting from MDP2.5 this check should become:
+        # TODO:   if node.has_multiple_training_phases():      
         if not len(node._train_seq) == 1:
             raise ValueError("MDPNodeMapper does not support MDP nodes with "
                              "multiple training phases.")
@@ -183,22 +186,56 @@ class PCAMapper(MDPNodeMapper):
 
 
 class MDPFlowMapper(Mapper):
-    def __init__(self, flow, data_iterables=None, inspace=None):
-        if not data_iterables is None and len(data_iterables) != len(flow):
-            raise ValueError("Length of data_iterables (%i) does not match the "
+    """Mapper encapsulating an arbitray MDP flow.
+
+    This mapper wraps an MDP flow and uses it for forward and reverse data
+    mapping (reverse is only available if the underlying MDP flow supports
+    it).  It is possible to specify arbitrary arguments for the training of
+    the MDP flow.
+
+    Because MDP does not allow to 'reset' a flow and (re)train it from
+    scratch the mapper uses a copy of the initially wrapped flow for the
+    actual processing. Upon subsequent training attempts a new copy of the
+    original flow is made and replaces the previous one.
+
+    Note
+    ----
+    It is not possible to perform incremental training of the MDP flow. 
+    """
+    def __init__(self, flow, node_arguments=None, inspace=None):
+        """
+        Parameters
+        ----------
+        flow : mdp.Flow instance
+          This flow instance is taken as the pristine source of which a
+          copy is made for actual processing upon each training attempt.
+        node_arguments : tuple, list
+          A tuple or a list the same length as the flow. Each item is a
+          list of arguments for the training of the corresponding node in
+          the flow. If a node does not require additional arguments, None
+          can be provided instead. Keyword arguments are currently not
+          supported by mdp.Flow.
+          Example:
+            flow = (mdp.nodes.PCANode() + mdp.nodes.IdentityNode() +
+                    mdp.nodes.FDANode())
+            MDPFlowMapper(flow, node_arguments = (None, None, [labels]))
+         inspace: see base class
+         """
+        if not node_arguments is None and len(node_arguments) != len(flow):
+            raise ValueError("Length of node_arguments (%i) does not match the "
                              "number of nodes in the flow (%i)."
-                             % (len(data_iterables), len(flow)))
+                             % (len(node_arguments), len(flow)))
         Mapper.__init__(self, inspace=inspace)
         self.__pristine_flow = None
         self.flow = flow
-        self.data_iterables = data_iterables
+        self.node_arguments = node_arguments
 
 
     def __repr__(self):
         s = super(MDPFlowMapper, self).__repr__()
-        return s.replace("(", "(flow=%s, data_iterables=%s, "
+        return s.replace("(", "(flow=%s, node_arguments=%s, "
                               % (repr(self.flow),
-                                 repr(self.data_iterables)), 1)
+                                 repr(self.node_arguments)), 1)
 
 
     def _expand_nodeargs(self, ds, args):
@@ -211,30 +248,32 @@ class MDPFlowMapper(Mapper):
         return enal
 
 
-    def _build_data_iterables(self, ds):
-        if self.data_iterables is not None:
-            data_iterables = []
-            for ndi in self.data_iterables:
+    def _build_node_arguments(self, ds):
+        if self.node_arguments is not None:
+            node_arguments = []
+            for ndi in self.node_arguments:
                 l = [ds.samples]
-                l.extend(self._expand_nodeargs(ds, ndi))
-                data_iterables.append([l])
+                if ndi is not None:
+                    l = [ds.samples]
+                    l.extend(self._expand_nodeargs(ds, ndi))
+                node_arguments.append([l])
         else:
-            data_iterables = ds.samples
-        return data_iterables
+            node_arguments = ds.samples
+        return node_arguments
 
 
     def _train(self, ds):
-        # whenever we have no cannonical node source, we assign the current
-        # node -- this can only happen prior training and allow modifying
-        # the node of having the MDPNodeMapper instance
+        # whenever we have no cannonical flow source, we assign the current
+        # flow -- this can only happen prior training and allow modifying
+        # the flow of having the MDPNodeMapper instance
         if self.__pristine_flow is None:
             self.__pristine_flow = self.flow
 
-        # training is done on a copy of the pristine node, because nodes cannot
+        # training is done on a copy of the pristine flow, because flows cannot
         # be reset, but PyMVPA's mapper need to be able to be retrained from
         # scratch
         self.flow = self.__pristine_flow.copy()
-        self.flow.train(self._build_data_iterables(ds))
+        self.flow.train(self._build_node_arguments(ds))
 
 
     def _forward_data(self, data):
@@ -278,7 +317,7 @@ class MDPFlowMapper(Mapper):
         # first contrain the set of in_ids if a known space is given
         if not ourspace is None and ourspace in kwargs:
             # XXX don't do anything for now -- we claim that we cannot
-            # track features through the MDP node
+            # track features through the MDP flow
             # remove the space contraint, since it has been processed
             del kwargs[ourspace]
 

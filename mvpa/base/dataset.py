@@ -216,7 +216,8 @@ class Dataset(object):
         if not sa is None:
             self.sa.update(sa)
         if hasattr(samples, 'shape'):
-            length = N.prod(samples.shape[1:])
+            self.samples = N.atleast_2d(self.samples)
+            length = N.prod(self.samples.shape[1:])
         else:
             length = None
         self.fa = FeatureAttributesCollection(length=length)
@@ -414,12 +415,6 @@ class Dataset(object):
             if isinstance(a, int):
                 args[i] = [a]
 
-        # if we get an slicing array for feature selection and it is *not* 1D
-        # try feeding it through the mapper (if there is any)
-        if isinstance(args[1], N.ndarray) and len(args[1].shape) > 1 and \
-                self.a.has_key('mapper'):
-                    args[1] = self.a.mapper.forward(args[1])
-
         # simultaneous slicing of numpy arrays only yields intended results
         # if at least one of the slicing args is an actual slice and not
         # and index list are selection mask vector
@@ -471,10 +466,6 @@ class Dataset(object):
             # assign to target collection
             a[attr.name] = newattr
 
-        # and adjusting the mapper (if any)
-        if a.has_key('mapper'):
-            a['mapper'].value.select_out(args[1])
-
         # and after a long way instantiate the new dataset of the same type
         return self.__class__(samples, sa=sa, fa=fa, a=a)
 
@@ -503,11 +494,15 @@ class Dataset(object):
     def __array__(self, dtype=None):
         return self.samples.__array__(dtype)
 
+    def get_nfeatures(self):
+        if hasattr(self.samples, 'shape'):
+            return self.samples.shape[1]
+        else:
+            return None
 
     # shortcut properties
-    nsamples = property(fget=lambda self:self.samples.shape[0])
-    nfeatures = property(fget=lambda self:self.samples.shape[1])
-
+    nsamples = property(fget=lambda self:len(self.samples))
+    nfeatures = property(fget=get_nfeatures)
 
 def datasetmethod(func):
     """Decorator to easily bind functions to a Dataset class
