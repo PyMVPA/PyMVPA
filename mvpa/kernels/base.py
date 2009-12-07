@@ -39,7 +39,7 @@ class Kernel(ClassWithCollections):
     Numpy and Shogun-based kernels.
 
     This class should not be used directly, but rather use a subclass which
-    enforces a consistent internal representation.
+    enforces a consistent internal representation, such as a NumpyKernel.
     
     Conversion mechanisms
     ---------------------
@@ -48,12 +48,39 @@ class Kernel(ClassWithCollections):
     methods to work:
 
     kernel.as_np() # Return a new NumpyKernel object with internal Numpy kernel
+      This method can be generally inherited from the base Kernel class by 
+      creating a PrecomputedKernel from the raw numpy matrix, as implemented
+      here.
+      
     kernel.as_raw_np() # Return a raw Numpy array from this kernel
+      This method should behave identically to numpy.array(kernel), and in fact,
+      defining either method (via defining Kernel.__array__) will be sufficient
+      for both method calls to work.  See this source code for more details.
     
     Other kernel types should implement similar mechanisms to convert numpy
     arrays to their own internal representations.  See `add_conversion` for a
-    helper method.  Assuming such `Kernel.as_*` methods exist,
-    all kernel types should be seamlessly convertable amongst each other.
+    helper method, and examples in mvpa.kernels.sg
+    
+    Assuming such `Kernel.as_*` methods exist, all kernel types should be
+    seamlessly convertable amongst each other.
+    
+    Note that kernels are not meant to be 'functionally translateable' in the 
+    sense that one kernel can be created, translated, then used to compute
+    results in a new framework.  Rather, the results are meant to be
+    exchangeable, hence the standard practice of using a precomputed kernel
+    object to store the results in the new kernel type.
+    
+    For example:
+    k = SomeShogunKernel()
+    k.compute(data1, data2)
+    
+    # Incorrect and unsupported use
+    k2 = k.as_cuda()
+    k2.compute(data3, data4) # Would require 'functional translation' to the new
+                             # backend, which is impossible
+    
+    # Correct use
+    someOtherAlgorithm(k.as_raw_cuda()) # Simply uses kernel results in CUDA
     """
 
     _ATTRIBUTE_COLLECTIONS = ['params'] # enforce presence of params collections
@@ -61,11 +88,6 @@ class Kernel(ClassWithCollections):
     # Define this per class: standard string describing kernel type, ie 
     # 'linear', or 'rbf', to help coordinate kernel types across backends
     __kernel_name__ = None
-    
-    # Class holder which can create feature sensitivities
-    # XXX YOH: is this used anywhere? and besides, base class should be agnostic
-    #     of any particular Kernel machine
-    __svm_sensitivity__ = None
     
     def __init__(self, *args, **kwargs):
         ClassWithCollections.__init__(self, *args, **kwargs)
@@ -104,7 +126,7 @@ class Kernel(ClassWithCollections):
 
     ############################################################################
     # The following methods are circularly defined.  Child kernel types can
-    # override either one of them to allow conversion to Numpy
+    # override either one or both to allow conversion to Numpy
     def __array__(self):
         return self.as_raw_np()
 
