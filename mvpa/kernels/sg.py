@@ -8,6 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """PyMVPA shogun-based kernels
 
+Provides interface to kernels defined in shogun toolbox.  Commonly
+used kernels are provided with convenience classes: `LinearSGKernel`,
+`RbfSGKernel`, `PolySGKernel`.  If you need to use some other shogun
+kernel, use `CustomSGKernel` to define one.
 """
 
 __docformat__ = 'restructuredtext'
@@ -31,7 +35,7 @@ class SGKernel(Kernel):
 
     def as_raw_sg(self):
         return self._k
-    
+
     def __array__(self):
         return self._k.get_kernel_matrix()
 
@@ -60,6 +64,14 @@ class _BasicSGKernel(SGKernel):
         If there is only one kernel param, this is not necessary
     """
 
+    __TODO__ = "
+
+    - normalizers: figure out destiny of normalizer -- might be a Parameter,
+      but then it must be a class, not instance -- what about parametrization?
+      So may be just a parameter to the constructor with parametrization arguments
+      if necessary, to be instantiated/applied upon _compute
+    """
+
     def _compute(self, d1, d2):
         d1 = SGKernel._data2features(d1)
         d2 = SGKernel._data2features(d2)
@@ -79,6 +91,7 @@ class _BasicSGKernel(SGKernel):
         #          worth it?)
         self._k.set_normalizer(sgk.IdentityKernelNormalizer())
 
+
 class CustomSGKernel(_BasicSGKernel):
     """Class which can wrap any Shogun kernel and it's kernel parameters
     """
@@ -88,7 +101,7 @@ class CustomSGKernel(_BasicSGKernel):
         
         :Parameters:
           kernel_cls : Shogun.Kernel
-            Class of a Kernel from Shogun 
+            Class of a Kernel from Shogun
           kernel_params: list
             Each item in this list should be a tuple of (kernelparamname, value),
             and the order is the explicit order required by the Shogun constructor
@@ -125,7 +138,7 @@ class PolySGKernel(_BasicSGKernel):
                              doc="Whether +1 is added within the expression")
     
 class PrecomputedSGKernel(SGKernel):
-    """A kernel which is precomputed from a numpy array or Shogun kernel"""
+    """A kernel which is precomputed from a numpy array or a Shogun kernel"""
     # This class can't be handled directly by BasicSGKernel because it never
     # should take data, and never has compute called, etc
     
@@ -133,7 +146,13 @@ class PrecomputedSGKernel(SGKernel):
     # kernel is 'computed'
     
     def __init__(self, matrix=None, **kwargs):
-        
+        """Initialize PrecomputedSGKernel
+
+        Parameters
+        ----------
+        matrix : SGKernel or Kernel or ndarray
+          Kernel matrix to be used
+        """
         # Convert to appropriate kernel for input
         if isinstance(matrix, SGKernel):
             k = m._k # Take internal shogun
