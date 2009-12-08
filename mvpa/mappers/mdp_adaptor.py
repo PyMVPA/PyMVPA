@@ -151,9 +151,6 @@ class MDPNodeMapper(Mapper):
         return self.node.output_dim
 
 
-    def _get_outids(self, in_ids):
-        return []
-
 
 class PCAMapper(MDPNodeMapper):
     def __init__(self, alg='PCA', **kwargs):
@@ -310,15 +307,3 @@ class MDPFlowMapper(Mapper):
     def get_outsize(self):
         """Return the size of output space vectors."""
         return self.flow[-1].output_dim
-
-
-    def get_outids(self, in_ids=None, **kwargs):
-        ourspace = self.get_inspace()
-        # first contrain the set of in_ids if a known space is given
-        if not ourspace is None and ourspace in kwargs:
-            # XXX don't do anything for now -- we claim that we cannot
-            # track features through the MDP flow
-            # remove the space contraint, since it has been processed
-            del kwargs[ourspace]
-
-        return ([], kwargs)
