@@ -62,9 +62,8 @@ class MDPNodeMapper(Mapper):
           tuple (for the arguments), and a dictonary (for keyword
           arguments), i.e.  ((), {}). Both, tuple and dictonary have to be
           provided even if they are empty.
-         inspace: see base class
+        inspace: see base class
         """
-        # Tiziano will check if there can be/is a public way to do it
         # TODO: starting from MDP2.5 this check should become:
         # TODO:   if node.has_multiple_training_phases():      
         if not len(node._train_seq) == 1:
@@ -195,6 +194,17 @@ class MDPFlowMapper(Mapper):
     actual processing. Upon subsequent training attempts a new copy of the
     original flow is made and replaces the previous one.
 
+    Examples
+    --------
+    >>> import mdp
+    >>> from mvpa.mappers.mdp_adaptor import MDPFlowMapper
+    >>> from mvpa.base.dataset import DAE
+    >>> flow = (mdp.nodes.PCANode() + mdp.nodes.IdentityNode() +
+    ...         mdp.nodes.FDANode())
+    >>> mapper = MDPFlowMapper(flow,
+    ...                        node_arguments=(None, None,
+    ...                        [DAE('sa', 'labels')]))
+
     Note
     ----
     It is not possible to perform incremental training of the MDP flow. 
@@ -212,10 +222,6 @@ class MDPFlowMapper(Mapper):
           the flow. If a node does not require additional arguments, None
           can be provided instead. Keyword arguments are currently not
           supported by mdp.Flow.
-          Example:
-            flow = (mdp.nodes.PCANode() + mdp.nodes.IdentityNode() +
-                    mdp.nodes.FDANode())
-            MDPFlowMapper(flow, node_arguments = (None, None, [labels]))
          inspace: see base class
          """
         if not node_arguments is None and len(node_arguments) != len(flow):
