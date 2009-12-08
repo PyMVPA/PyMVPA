@@ -61,7 +61,7 @@ def collectTestSuites():
         'test_procrust',
         'test_hyperalignment',
         'test_transformers',
-## broken        'test_transerror',
+        'test_transerror',
         'test_clfcrossval',
         'test_searchlight',
         'test_rfe',
