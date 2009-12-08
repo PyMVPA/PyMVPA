@@ -443,49 +443,6 @@ def test_labelpermutation_randomsampling():
     assert_array_equal(ds.chunks, ods.chunks)
 
 
-def test_feature2coord():
-    origdata = N.random.standard_normal((10, 2, 4, 3, 5))
-    data = Dataset.from_masked(origdata, labels=2, chunks=2)
-
-    def random_coord(shape):
-        return [random.sample(range(size), 1)[0] for size in shape]
-
-    # check 100 random coord2feature transformations
-    for i in xrange(100):
-        # choose random coord
-        c = random_coord((2, 4, 3, 5))
-        # tranform to feature_id
-        id_ = data.a.mapper.get_outids([c])[0][0]
-
-        # compare data from orig array (selected by coord)
-        # and data from pattern array (selected by feature id)
-        orig = origdata[:, c[0], c[1], c[2], c[3]]
-        pat = data.samples[:, id_]
-
-        assert_array_equal(orig, pat)
-
-
-def test_coord2feature():
-    origdata = N.random.standard_normal((10, 2, 4, 3, 5))
-    data = Dataset.from_masked(origdata, labels=2, chunks=2)
-
-    def random_coord(shape):
-        return [random.sample(range(size), 1)[0] for size in shape]
-
-    #for id_ in xrange(data.nfeatures):
-        # transform to coordinate
-        # XXX put back when coord -> fattr is implemented
-        #c = data.a.mapper.getInId(id_)
-        #assert_equal(len(c), 4)
-
-        # compare data from orig array (selected by coord)
-        # and data from pattern array (selected by feature id)
-        #orig = origdata[:, c[0], c[1], c[2], c[3]]
-        #pat = data.samples[:, id_]
-
-        #assert_array_equal(orig, pat)
-
-
 def test_masked_featureselection():
     origdata = N.random.standard_normal((10, 2, 4, 3, 5)).view(myarray)
     data = Dataset.from_masked(origdata, labels=2, chunks=2)
@@ -545,10 +502,6 @@ def test_feature_masking():
 
     # check simple masking
     ok_(data.nfeatures == 2)
-    ok_(data.a.mapper.get_outids([(2, 1), (4, 0)])[0] == [0, 1])
-    assert_raises(ValueError, data.a.mapper.get_outids, [(2, 3)])
-    # XXX put back when coord -> fattr is implemented
-    #ok_(tuple(data.a.mapper.getInId(1)) == (4, 0))
 
     # selection should be idempotent
     ok_(data[:, mask].nfeatures == data.nfeatures)
@@ -557,9 +510,6 @@ def test_feature_masking():
     # XXX put back when coord -> fattr is implemented
     #ok_(tuple(data[:, 1].a.mapper.getInId(0)) == (4, 0))
     ok_(data[:, 1].a.mapper.get_outsize() == 1)
-
-    # previous selections should not affect the original mapper
-    ok_(data.a.mapper.get_outids([(2, 1), (4, 0)])[0] == [0, 1])
 
     # check sugarings
     # XXX put me back

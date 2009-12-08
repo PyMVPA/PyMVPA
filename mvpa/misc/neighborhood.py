@@ -119,5 +119,9 @@ class QueryEngine(object):
             self.spaces_to_fcoord[space] = feature_coord
         # now that we have collected the coordinates for each space
         # do the siftig via the mapper
+
+        #XXX This needs a refactoring, since get_outids() is no longer part of
+        #mappers ( this is not a comment 
+        raise NotImplementedError
         return self.ds.mapper.get_outids([], **self.spaces_to_fcoord)
 
