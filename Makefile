@@ -54,6 +54,7 @@ debian-build:
 
 build: build-stamp
 build-stamp: 3rd
+	@echo "I: Building PyMVPA and symlinking dynamic libraries inplace"
 	python setup.py config --noisy --with-libsvm
 	python setup.py build --with-libsvm
 # to overcome the issue of not-installed svmc.so
@@ -72,6 +73,7 @@ build-stamp: 3rd
 
 # this target is used to clean things for a fresh build
 clean:
+	@echo "I: Performing clean operation"
 # clean 3rd party pieces
 	find 3rd -mindepth 1 -maxdepth 1  -type d | \
 	 while read d; do \
@@ -120,19 +122,23 @@ debian-clean:
 doc: website manpages
 
 manpages: mkdir-MAN_DIR
+	@echo "I: Creating manpages"
 	PYTHONPATH=.:$(PYTHONPATH) help2man -N -n 'preprocess fMRI data for PyMVPA' \
 		bin/mvpa-prep-fmri > $(MAN_DIR)/mvpa-prep-fmri.1
 	PYTHONPATH=. help2man -N -n 'query stereotaxic atlases' \
 		bin/atlaslabeler > $(MAN_DIR)/atlaslabeler.1
 
 prepare-docsrc: mkdir-BUILDDIR
+	@echo "I: Preparing sources for documentation build"
 	rsync --copy-unsafe-links -rvuhp doc/ $(BUILDDIR)/doc
 	rsync --copy-unsafe-links -rvhup doc/pics/ $(DOCSRC_DIR)/examples/pics
 
 references:
+	@echo "I: Generating references"
 	tools/bib2rst_ref.py
 
 htmldoc: modref-templates examples2rst build
+	@echo "I: Creating an HTML version of documentation"
 	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) html BUILDROOT=$(BUILDDIR)
 	cd $(HTML_DIR)/modref && ln -sf ../_static
 	cd $(HTML_DIR)/examples && ln -sf ../_static
@@ -140,18 +146,21 @@ htmldoc: modref-templates examples2rst build
 
 pdfdoc: modref-templates examples2rst build pdfdoc-stamp
 pdfdoc-stamp:
+	@echo "I: Creating a PDF version of documentation"
 	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=../..:$(PYTHONPATH) $(MAKE) latex BUILDROOT=$(BUILDDIR)
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
 	touch $@
 
 # Create a handy .pdf of the manual to be printed as a book
 handbook: pdfdoc
+	@echo "I: Creating a handbook of the manual"
 	cd tools && $(MAKE) pdfbook
 	build/tools/pdfbook -2 \
 	 $(LATEX_DIR)/PyMVPA-Manual.pdf $(LATEX_DIR)/PyMVPA-Manual-Handbook.pdf
 
 modref-templates: prepare-docsrc modref-templates-stamp
 modref-templates-stamp:
+	@echo "I: Creating modref templates"
 	PYTHONPATH=.:$(PYTHONPATH) tools/build_modref_templates.py
 	touch $@
 
@@ -172,12 +181,14 @@ apidoc-stamp: build
 # but e.g. dpkg-buildpackage runs the indep target anyway -- not sure about
 # the buildds, though.
 #apidoc-stamp: profile
+	@echo "I: Creating an API documentation with epydoc"
 	mkdir -p $(HTML_DIR)/api
 	LC_ALL=C MVPA_EPYDOC_WARNINGS=once tools/epydoc --config doc/api/epydoc.conf
 	touch $@
 
 # this takes some minutes !!
 profile: build mvpa/tests/main.py
+	@echo "I: Profiling unittests"
 	@PYTHONPATH=.:$(PYTHONPATH) tools/profile -K  -O $(PROFILE_FILE) mvpa/tests/main.py
 
 

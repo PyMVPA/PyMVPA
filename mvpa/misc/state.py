@@ -892,8 +892,8 @@ _COLLECTIONS_ORDER = ['params', 'kernel_params', 'states']
 
 
 class AttributesCollector(type):
-    """Intended to collect and compose StateCollection for any child
-    class of this metaclass
+    """Intended to collect and compose collections for any child
+    class of ClassWithCollections
     """
 
 
@@ -1017,9 +1017,9 @@ class AttributesCollector(type):
   disable_states : None or list of basestring
     Names of the state variables which should be disabled
 """
-            statesdoc = "  * "
-            statesdoc += '\n  * '.join(collections['states'].listing)
-            statesdoc += "\n\n(States enabled by default are listed with `+`)"
+            if len(collections['states']._items):
+                statesdoc += '\n'.join(['  * ' + x for x in collections['states'].listing])
+                statesdoc += "\n\n(States enabled by default are listed with `+`)"
             if __debug__:
                 debug("COLR", "Assigning __statesdoc to be %s" % statesdoc)
             setattr(cls, "_statesdoc", statesdoc)
