@@ -13,6 +13,8 @@ from numpy import array
 import operator
 import sys
 
+from mvpa.clfs.distance import cartesianDistance
+
 class Sphere(object):
     """ 3 Dimensional sphere
 
@@ -59,7 +61,7 @@ class Sphere(object):
         return array([array((i,j,k)) for i in lr
                               for j in lr
                               for k in lr
-                              if _euclid(array((i,j,k)),center) <= radius])
+                              if cartesianDistance(array((i,j,k)),center) <= radius])
 
     def train(self, dataset):
         # XXX techincally this is not needed
@@ -92,9 +94,6 @@ class Sphere(object):
         coord_array = coord_array.transpose()
         return zip(coord_array[0], coord_array[1], coord_array[2])
 
-
-def _euclid(coord1, coord2):
-    return N.sqrt(N.sum((coord1-coord2)**2))
 
 class QueryEngine(object):
     """ XXX Please document me """
