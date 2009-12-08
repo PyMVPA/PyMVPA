@@ -27,8 +27,6 @@ def collectTestSuites():
         'test_externals',
         'test_base',
         'test_dochelpers',
-## replaced with below   'test_dataset',
-## NOSE       'test_datasetng',
         'test_boxcarmapper',
         'test_som',
         'test_neighbor',
