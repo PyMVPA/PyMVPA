@@ -255,6 +255,7 @@ class Dataset(object):
         feature selections).
 
         Calling this method will overwrite any potentially existing IDs (of the
+        XXX)
 
         Parameters
         ----------
