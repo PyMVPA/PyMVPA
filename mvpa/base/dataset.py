@@ -492,7 +492,13 @@ class Dataset(object):
 
 
     def __array__(self, dtype=None):
+        # XXX This wouldn't work if .samples is not an ndarray subclass.
         return self.samples.__array__(dtype)
+
+
+    def __len__(self):
+        return self.samples.__len__()
+
 
     def get_nfeatures(self):
         if hasattr(self.samples, 'shape'):
