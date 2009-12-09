@@ -50,17 +50,17 @@ class Sphere(object):
                 raise ValueError("Sphere extent must be 3 integers, was: %s"
                                 % type(extent))
         self.diameter = diameter
+        self.radius = diameter/2
         self.coord_list = self._create_template()
         self.dataset = None
 
     def _create_template(self):
         center = array((0,0,0))
-        radius = self.diameter/2
-        lr = range(-radius,radius+1) # linear range
+        lr = range(-self.radius,self.radius+1) # linear range
         return array([array((i,j,k)) for i in lr
                               for j in lr
                               for k in lr
-                              if _euclid(array((i,j,k)),center) <= radius])
+                              if _euclid(array((i,j,k)),center) <= self.radius])
 
     def train(self, dataset):
         # XXX techincally this is not needed
