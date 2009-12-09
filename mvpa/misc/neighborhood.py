@@ -57,6 +57,8 @@ class Sphere(object):
     def _create_template(self):
         center = array((0,0,0))
         lr = range(-self.radius,self.radius+1) # linear range
+        # TODO create additional distance metrics, for example manhatten
+        # TODO create a way to specify shape of quantised sphere i.e. < vs <=
         return array([array((i,j,k)) for i in lr
                               for j in lr
                               for k in lr
