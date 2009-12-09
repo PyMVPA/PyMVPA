@@ -86,10 +86,14 @@ class Sphere(object):
             #                     "train(dataset) first. ")
         # function call
         coord_array = (coordinate + self.coord_list)
-        # now filter out illegal coordinates
-        coord_array = array([c for c in coord_array \
-                                     if (c >= 0).all()
-                                     and (c < self.extent).all()])
+        # now filter out illegal coordinates if they really are outside the
+        # bounds
+        if (coordinate - self.radius < 0).any() \
+        or (coordinate + self.radius >= self.extent).any():
+            coord_array = array([c for c in coord_array \
+                                   if (c >= 0).all()
+                                   and (c < self.extent).all()])
+
         coord_array = coord_array.transpose()
         return zip(coord_array[0], coord_array[1], coord_array[2])
 
