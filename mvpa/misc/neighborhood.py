@@ -47,7 +47,7 @@ class Sphere(object):
                                 % diameter)
             if len(self.extent) != 3 \
                 or self.extent.dtype.char not in N.typecodes['AllInteger']:
-                raise ValueError("Sphere extent must be all integers, was: %s"
+                raise ValueError("Sphere extent must be 3 integers, was: %s"
                                 % type(extent))
         self.diameter = diameter
         self.coord_list = self._create_template()
