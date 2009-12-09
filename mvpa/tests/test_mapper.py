@@ -109,20 +109,25 @@ def test_subset():
             [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31],
             [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47],
             [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]])
+    # float array doesn't work
+    assert_raises(ValueError, FeatureSubsetMapper, N.ones(16))
     # full mask
-    sm = FeatureSubsetMapper(N.ones(16))
+    sm = FeatureSubsetMapper(16)
     # should not change single samples
-    assert_array_equal(sm.forward(data[0].copy()), data[0])
+    assert_array_equal(sm.forward(data[0:1].copy()), data[0:1])
     # or multi-samples
     assert_array_equal(sm.forward(data.copy()), data)
+    # forward is fine this way, but reverse doesn't work without training
+    assert_raises(RuntimeError, sm.reverse, data[0])
+    sm.train(data)
     # same on reverse
-    assert_array_equal(sm.reverse(data[0].copy()), data[0])
+    assert_array_equal(sm.reverse(data[0:1].copy()), data[0:1])
     # or multi-samples
     assert_array_equal(sm.reverse(data.copy()), data)
 
     # test basic properties
     assert_equal(sm.get_outsize(), 16)
-    assert_array_equal(sm.get_mask(), N.ones(16))
+    assert_array_equal(sm.get_mask(), N.arange(16))
 
     # id transformation
     for id in range(16):
@@ -142,27 +147,23 @@ def test_subset():
         # should do copy-on-write for all important stuff!!
         subsm.select_out(sub)
         # test if selection did its job
-        assert_array_equal(subsm.get_mask(), bsubset)
-        assert_equal(subsm.get_outsize(), 4)
+        if isinstance(sub, list):
+            assert_array_equal(subsm.get_mask(), sub)
+            assert_equal(subsm.get_outsize(), len(sub))
+            assert_array_equal(subsm.forward(data[0:1].copy()), [sub])
+        else:
+            assert_array_equal(subsm.get_mask(), sids)
+            assert_array_equal(subsm.forward(data[0:1].copy()), [sids])
+            assert_equal(subsm.get_outsize(), 4)
         assert_array_equal([subsm.is_valid_inid(i) for i in range(16)], bsubset)
-        assert_array_equal([subsm.is_valid_outid(i) for i in range(16)],
-                           [True] * 4 + [False] * 12)
-        assert_array_equal(subsm.forward(data[0].copy()), sids)
 
     # all of the above shouldn't change the original mapper
-    assert_array_equal(sm.get_mask(), N.ones(16))
-    # but without COW it should be affected as well
-    subsm = copy(sm)
-    subsm.select_out(sids, cow=False)
-    assert_equal(subsm.get_outsize(), 4)
-    assert_array_equal(sm.get_mask(copy=False), subsm.get_mask(copy=False))
-    # however, the original mapper is now invalid, hence only for internal use
-    assert_equal(sm.get_outsize(), 16)
+    assert_array_equal(sm.get_mask(), N.arange(16))
 
     # check for some bug catchers
     assert_raises(ValueError, FeatureSubsetMapper, N.ones((2,1)))
     # no 3D input
-    assert_raises(ValueError, subsm.forward, N.ones((3,2,1)))
+    assert_raises(IndexError, subsm.forward, N.ones((3,2,1)))
     # no input of wrong length
     assert_raises(ValueError, subsm.forward, N.ones(4))
     # same on reverse
@@ -220,7 +221,7 @@ def test_chainmapper():
     assert_equal(cm.get_outsize(), 16)
 
     # a new mapper should appear when doing feature selection
-    cm.discard_out([0])
+    cm.select_out(range(1,16))
     assert_equal(cm.get_outsize(), 15)
     assert_equal(len(cm), 2)
     # if there is already a FeatureSubsetMapper at the end, nothing is added
