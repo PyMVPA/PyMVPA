@@ -47,7 +47,7 @@ class GNBTests(unittest.TestCase):
                                     gnb_)
                     # if normalized -- check if values are such
                     if n and 'values' in es:
-                        v = gnb_.values
+                        v = gnb_.states.values
                         if ls:          # in log space -- take exp ;)
                             v = N.exp(v)
                         d1 = N.sum(v, axis=1) - 1.0

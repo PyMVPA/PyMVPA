@@ -28,7 +28,7 @@ News
 ====
 
 PyMVPA Extravaganza 2009 at Dartmotuh College [30th Nov -- 4th Dec]
-  :ref:`Read more ... <chap_workshop_2009fall>`
+  :ref:`Read more <chap_workshop_2009fall>` about the topics and achievements.
 
 PyMVPA 0.4.3 is out [5 Sep 2009]
   This release brings some new stuff,  lots of fixes for old stuff and some speed

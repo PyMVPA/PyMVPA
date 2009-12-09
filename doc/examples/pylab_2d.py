@@ -51,8 +51,8 @@ feat_test = N.array((N.ravel(x), N.ravel(y)))
 from mvpa.suite import *
 
 # create the pymvpa dataset from the labeled features
-patternsPos = Dataset(samples=feat_pos.T, labels=1)
-patternsNeg = Dataset(samples=feat_neg.T, labels=0)
+patternsPos = dataset(samples=feat_pos.T, labels=1)
+patternsNeg = dataset(samples=feat_neg.T, labels=0)
 ds_lin = patternsPos + patternsNeg
 
 """Let's add another dataset: XOR. This problem is not linear separable
@@ -131,19 +131,19 @@ for id, ds in datasets.iteritems():
             res = N.asarray(pre)
         elif c == 'Logistic Regression':
             # get out the values used for the prediction
-            res = N.asarray(clf.values)
+            res = N.asarray(clf.states.values)
         elif c in ['SMLR']:
-            res = N.asarray(clf.values[:, 1])
+            res = N.asarray(clf.states.values[:, 1])
         elif c.startswith('GNB'):
             # Since probabilities are raw: for visualization lets
             # operate on logprobs and in comparison one to another
-            res = clf.values[:, 1] - clf.values[:, 0]
+            res = clf.states.values[:, 1] - clf.states.values[:, 0]
             # Scale and position around 0.5
             res = 0.5 + res/max(N.abs(res))
         else:
             # get the probabilities from the svm
             res = N.asarray([(q[1][1] - q[1][0] + 1) / 2
-                    for q in clf.probabilities])
+                    for q in clf.states.probabilities])
 
         # reshape the results
         z = N.asarray(res).reshape((npoints, npoints))

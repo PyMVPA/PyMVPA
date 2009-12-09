@@ -80,23 +80,6 @@ def testMapperAliases():
                        mm.forward(N.ones((3,4,2))))
 
 
-def testGetInOutIdBehaviour():
-    mask=N.zeros((3,4,2))
-    mask[0,0,1]=1
-    mask[2,1,0]=1
-    mask[0,3,1]=1
-
-    mm=mask_mapper(mask)
-
-    assert_equal(mm.nfeatures, 3)
-
-    # 'Out'
-    assert_raises(ValueError, mm.get_outids, [(0,0,0)])
-    assert_equal(mm.get_outids([(0,0,1)])[0], [0])
-    assert_equal(mm.get_outids([(0,3,1)])[0], [1])
-    assert_equal(mm.get_outids([(2,1,0)])[0], [2])
-
-
 def testSelects():
     mask = N.ones((3,2))
     mask[1,1] = 0

@@ -13,6 +13,8 @@ from numpy import array
 import operator
 import sys
 
+from mvpa.clfs.distance import cartesianDistance
+
 class Sphere(object):
     """ 3 Dimensional sphere
 
@@ -62,7 +64,8 @@ class Sphere(object):
         return array([array((i,j,k)) for i in lr
                               for j in lr
                               for k in lr
-                              if _euclid(array((i,j,k)),center) <= self.radius])
+                              if cartesianDistance(array((i,j,k)),center)
+                                 <= self.radius])
 
     def train(self, dataset):
         # XXX techincally this is not needed
@@ -100,9 +103,6 @@ class Sphere(object):
         return zip(coord_array[0], coord_array[1], coord_array[2])
 
 
-def _euclid(coord1, coord2):
-    return N.sqrt(N.sum((coord1-coord2)**2))
-
 class QueryEngine(object):
     """ XXX Please document me """
     def __init__(self, **kwargs):
@@ -127,5 +127,9 @@ class QueryEngine(object):
             self.spaces_to_fcoord[space] = feature_coord
         # now that we have collected the coordinates for each space
         # do the siftig via the mapper
+
+        #XXX This needs a refactoring, since get_outids() is no longer part of
+        #mappers ( this is not a comment 
+        raise NotImplementedError
         return self.ds.mapper.get_outids([], **self.spaces_to_fcoord)
 
