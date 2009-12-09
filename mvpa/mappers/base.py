@@ -238,82 +238,10 @@ class Mapper(object):
         pass
 
 
-    def _get_outids(self, in_ids):
-        """Determine the output ids from a list of input space id/coordinates.
-
-        Parameters
-        ----------
-        in_ids : list
-          List of input ids whos output ids shall be determined.
-
-        Returns
-        -------
-        list
-          The list that contains all corresponding output ids. The default
-          implementation returns the `in_ids` as is.
-        """
-        # reimplement in derived classes to actually perform something useful
-        return in_ids
-
-
     #
     # The following methods provide common functionality for all mappers
     # and there should be no immediate need to reimplement them
     #
-    def get_outids(self, in_ids=None, **kwargs):
-        """Determine the output ids from a list of input space id/coordinates.
-
-        Parameters
-        ----------
-        in_ids : list
-          List of input ids whos output ids shall be determined.
-        **kwargs: anything
-          Further qualification of coordinates in particular spaces. Spaces are
-          identified by the respected keyword and the values expresses an
-          additional criterion. If the mapper has any information about the
-          given space it uses this information to further restrict the set of
-          output ids. Information about unkown spaces is returned as is.
-
-        Returns
-        -------
-        (list, dict)
-          The list that contains all corresponding output ids. The default
-          implementation returns an empty list -- meaning there is no
-          one-to-one, or one-to-many correspondance of input and output feature
-          spaces. The dictionary contains all space-related information that
-          have not been processed by the mapper (i.e. the spaces they referred
-          to are unknown to the mapper. By default all additional keyword
-          arguments are returned as is.
-        """
-        ourspace = self.get_inspace()
-        # first contrain the set of in_ids if a known space is given
-        if not ourspace is None and kwargs.has_key(ourspace):
-            # merge with the current set, if there is any
-            if in_ids is None:
-                in_ids = kwargs[ourspace]
-            else:
-                in_ids = list(set(in_ids).union(kwargs[ourspace]))
-
-            # remove the space contraint, since it has been processed
-            del kwargs[ourspace]
-
-        # return early if there is nothing to do
-        if in_ids is None:
-            return ([], kwargs)
-
-        if __debug__:
-            # check for proper coordinate (also handle the case of 1d coords
-            # given
-            for in_id in in_ids:
-                if not self.is_valid_inid(in_id):
-                    raise ValueError(
-                            "Invalid input id/coordinate (%s) for mapper '%s' "
-                            % (str(in_id), self))
-
-        # this whole thing only works for C-ordered arrays
-        return (self._get_outids(in_ids), kwargs)
-
-
     def __repr__(self):
         return "%s(inspace=%s)" \
                 % (self.__class__.__name__,
@@ -499,13 +427,6 @@ class FeatureSubsetMapper(Mapper):
             return False
         # otherwise look into the mask
         return self.__mask[id]
-
-
-    def _get_outids(self, in_ids):
-        # lazy forward mapping
-        if self.__forwardmap is None:
-            self.__init_forwardmap()
-        return [self.__forwardmap[in_id] for in_id in in_ids]
 
 
     def select_out(self, slicearg, cow=True):
@@ -877,26 +798,6 @@ class ChainMapper(Mapper):
     def is_valid_outid(self, id):
         """Queries the last mapper in the chain for this information."""
         return self[-1].is_valid_outid(id)
-
-
-    def get_outids(self, in_ids=None, **kwargs):
-        """Determine the output ids from a list of input space id/coordinates.
-
-        See the documentation of this method in the base class for more
-        information. This implementation simply calls this method subsequently
-        for all mappers in the chain.
-        """
-        # first call the baseclass method to let it take care of any
-        # space-specific kwargs that apply to the chain mapper itself
-        # no in_ids will be transformed, since the base class implementation
-        # of _get_outids() does nothing by default
-        in_ids, kwargs = Mapper.get_outids(self, in_ids=in_ids, **kwargs)
-
-        # no feed it though the chain
-        for mapper in (self):
-            in_ids, kwargs = mapper.get_outids(in_ids, **kwargs)
-
-        return (in_ids, kwargs)
 
 
     def __ensure_selectable_tail(self):

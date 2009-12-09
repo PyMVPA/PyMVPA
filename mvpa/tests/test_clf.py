@@ -22,6 +22,7 @@ from mvpa.clfs.meta import CombinedClassifier, \
      TreeClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
+from mvpa.mappers.flatten import mask_mapper
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
@@ -268,9 +269,9 @@ class ClassifiersTests(unittest.TestCase):
         res101 = [-1, 1, -1, -1, 1]
         res011 = [-1, 1, -1, 1, -1]
 
-        clf110 = MappedClassifier(clf=self.clf_sign, mapper=MaskMapper(N.array([1,1,0])))
-        clf101 = MappedClassifier(clf=self.clf_sign, mapper=MaskMapper(N.array([1,0,1])))
-        clf011 = MappedClassifier(clf=self.clf_sign, mapper=MaskMapper(N.array([0,1,1])))
+        clf110 = MappedClassifier(clf=self.clf_sign, mapper=mask_mapper(N.array([1,1,0])))
+        clf101 = MappedClassifier(clf=self.clf_sign, mapper=mask_mapper(N.array([1,0,1])))
+        clf011 = MappedClassifier(clf=self.clf_sign, mapper=mask_mapper(N.array([0,1,1])))
 
         self.failUnlessEqual(clf110.predict(samples), res110)
         self.failUnlessEqual(clf101.predict(samples), res101)

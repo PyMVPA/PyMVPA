@@ -374,7 +374,7 @@ def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
                             x_min=-2.0, x_max=3.0, sigma=0.2):
     """A straight line with some Gaussian noise.
     """
-    x = N.linspace(start=x_min, stop=x_max, num=size)
+    x = N.linspace(start=x_min, stop=x_max, num=size)[:,None]
     noise = N.random.randn(size)*sigma
     y = x * slope + intercept + noise
     return dataset(samples=x, labels=y)
