@@ -78,6 +78,10 @@ class Sphere(object):
         ----------
         coordinate : sequence type of length 3 with integers
 
+        Returns
+        -------
+        list of tuples of size 3
+
         """
         # type checking
         coordinate = N.asanyarray(coordinate)
