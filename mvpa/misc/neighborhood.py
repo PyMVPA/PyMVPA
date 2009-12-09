@@ -34,9 +34,10 @@ class Sphere(object):
         Parameters
         ----------
         diameter : odd int
-            diameter of the sphere
-        extent :  int OR sequence of 3 ints
+            diameter of the sphere in voxels
+        extent :  sequence of 3 ints
             maximum index to consider
+            if this is not provided it will be the maximum value of an integer
 
         """
         self.extent = N.asanyarray(extent)
