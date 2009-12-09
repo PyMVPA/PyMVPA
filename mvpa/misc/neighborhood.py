@@ -44,13 +44,13 @@ class Sphere(object):
         """
         self.extent = N.asanyarray(extent)
         if __debug__:
-            if diameter%2 != 1:
-                raise ValueError("Sphere diameter must be odd, but is: %d"
-                                % diameter)
-            if len(self.extent) != 3 \
+            if diameter%2 != 1 or type(diameter) is not int:
+                raise ValueError("Sphere diameter must be odd integer, but is: "+
+                                 str(diameter) + str(type(diameter)))
+            if self.extent.size != 3 \
                 or self.extent.dtype.char not in N.typecodes['AllInteger']:
                 raise ValueError("Sphere extent must be 3 integers, was: %s"
-                                % type(extent))
+                                % str(extent))
         self.diameter = diameter
         self.radius = diameter/2
         self.coord_list = self._create_template()
@@ -82,7 +82,7 @@ class Sphere(object):
         # type checking
         coordinate = N.asanyarray(coordinate)
         if __debug__:
-            if len(coordinate) != 3 \
+            if coordinate.size != 3 \
             or coordinate.dtype.char not in N.typecodes['AllInteger']:
                 raise ValueError("Sphere must be called on a sequence of integers of "
                                  "length 3, you gave: "+ str(coordinate))
