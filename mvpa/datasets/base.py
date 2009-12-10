@@ -70,7 +70,6 @@ class Dataset(BaseDataset):
            and len(args[1].shape) > 1 \
            and self.a.has_key('mapper'):
             args = list(args)
-            print self.a.mapper
             args[1] = self.a.mapper.forward1(args[1])
             args = tuple(args)
 

@@ -12,7 +12,8 @@ import numpy as N
 import random
 
 from numpy.testing import assert_array_equal
-from nose.tools import ok_, assert_raises, assert_false, assert_equal
+from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
+        assert_true
 
 from mvpa.base.types import is_datasetlike
 from mvpa.base.dataset import DatasetError
@@ -39,6 +40,11 @@ def test_from_basic():
 
     ds = Dataset.from_basic(samples, labels, chunks)
     ds.init_origids('both')
+    first = ds.sa.origids
+    # now do again and check that they get regenerated
+    ds.init_origids('both')
+    assert_false(first is ds.sa.origids)
+    assert_array_equal(first, ds.sa.origids)
 
     ok_(is_datasetlike(ds))
     ok_(not is_datasetlike(labels))
@@ -253,7 +259,7 @@ def test_ds_deepcopy():
     ds = normalFeatureDataset()
     ds.samples = ds.samples.view(myarray)
     # Clone the beast
-    ds_ = copy.deepcopy(ds)
+    ds_ = ds.copy()
     # array subclass survives
     ok_(isinstance(ds_.samples, myarray))
 
@@ -600,4 +606,95 @@ def test_repr():
     ds = datasets['uni2small']
     ds_repr = repr(ds)
     ok_(repr(eval(ds_repr)) == ds_repr)
+
+
+def test_other_samples_dtypes():
+    import scipy.sparse as sparse
+    dshape = (4, 3)
+    # test for ndarray, custom ndarray-subclass, matrix,
+    # and all sparse matrix types we know
+    stypes = [N.arange(N.prod(dshape)).reshape(dshape),
+              N.arange(N.prod(dshape)).reshape(dshape).view(myarray),
+              N.matrix(N.arange(N.prod(dshape)).reshape(dshape)),
+              sparse.csc_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
+              sparse.csr_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
+              # BSR cannot be sliced, but is more efficient for sparse
+              # arithmetic operations than CSC pr CSR
+              sparse.bsr_matrix(N.arange(N.prod(dshape)).reshape(dshape))]
+              # LIL and COO are best for constructing matrices, not for
+              # doing somthing with them
+              #sparse.lil_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
+              #sparse.coo_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
+              # DOK doesn't allow duplicates and is bad at array-like slicing
+              #sparse.dok_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
+              # DIA only has diagonal storage and cannot be sliced
+              #sparse.dia_matrix(N.arange(N.prod(dshape)).reshape(dshape))]
+
+    # it needs to have .shape (the only way to get len(sparse))
+    for s in stypes:
+        ds = Dataset(s)
+        # nothing happended to the original dtype
+        assert_equal(type(s), type(ds.samples))
+        # no shape change
+        assert_equal(ds.shape, dshape)
+        assert_equal(ds.nsamples, dshape[0])
+        assert_equal(ds.nfeatures, dshape[1])
+
+        # sparse doesn't work like an array
+        if sparse.isspmatrix(ds.samples):
+            assert_raises(RuntimeError, N.mean, ds)
+        else:
+            # need to convert results, since matrices return matrices
+            assert_array_equal(N.mean(ds, axis=0),
+                               N.array(N.mean(ds.samples, axis=0)).squeeze())
+
+        # select subset and see what happens
+        # bsr type doesn't support first axis slicing
+        if isinstance(s, sparse.bsr_matrix):
+            assert_raises(NotImplementedError, ds.__getitem__, [0])
+        else:
+            sel = ds[1:3]
+            assert_equal(sel.shape, (2, dshape[1]))
+            assert_equal(type(s), type(sel.samples))
+            if sparse.isspmatrix(sel.samples):
+                assert_array_equal(sel.samples[1].todense(),
+                                   ds.samples[2].todense())
+            else:
+                assert_array_equal(sel.samples[1],
+                                   ds.samples[2])
+
+       # feature selection
+        if isinstance(s, sparse.bsr_matrix):
+            assert_raises(NotImplementedError, ds.__getitem__, (slice(None), 0))
+        else:
+            sel = ds[:, 1:3]
+            assert_equal(sel.shape, (dshape[0], 2))
+            assert_equal(type(s), type(sel.samples))
+            if sparse.isspmatrix(sel.samples):
+                assert_array_equal(sel.samples[:,1].todense(),
+                        ds.samples[:,2].todense())
+            else:
+                assert_array_equal(sel.samples[:,1],
+                        ds.samples[:,2])
+
+
+        # what we don't do
+        # lists
+        assert_raises(ValueError, Dataset, range(5))
+        class voodoo:
+            dtype = 'fancy'
+
+        # voodoo
+        assert_raises(ValueError, Dataset, voodoo())
+        # crippled
+        assert_raises(ValueError, Dataset, N.array(5))
+
+        # things that might behave in surprising ways
+        # arrays of objects
+        data = N.array([{},{}])
+        ds = Dataset(data)
+        assert_equal(ds.shape, (2,))
+        assert_equal(ds.nsamples, 2)
+        # Nothing to index, hence no features
+        assert_equal(ds.nfeatures, None)
 
