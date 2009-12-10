@@ -44,7 +44,7 @@ def test_flatten():
     for fm in [FlattenMapper(), ChainMapper([FlattenMapper()])]:
         # not working if untrained
         assert_raises(RuntimeError,
-                      fm.forward,
+                      fm.forward1,
                       N.arange(N.sum(samples_shape) + 1))
 
         fm.train(data)
@@ -72,8 +72,8 @@ def test_flatten():
         # check one dimensional data, treated as scalar samples
         oned = N.arange(5)
         oned_target = [[0],[1],[2],[3],[4]]
-        fm.train(oned)
-        assert_array_equal(fm.forward(oned), oned_target)
+        fm.train(Dataset(oned))
+        assert_array_equal(fm.forward1(oned), oned_target)
         assert_array_equal(fm.reverse(N.array(oned_target)), oned)
 
         # check one dimensional samples
