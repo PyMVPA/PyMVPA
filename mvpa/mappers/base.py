@@ -792,7 +792,7 @@ class ChainMapper(Mapper):
         """
         if not self.get_outsize() == mapper.get_insize():
             raise ValueError("To be appended mapper does not match the output "
-                             "size of the current chain (%i vs. %i)."
+                             "size of the current chain (%s vs. %s)."
                              % (mapper.get_insize(),  self.get_outsize()))
         self._mappers.append(mapper)
 

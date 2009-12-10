@@ -15,14 +15,14 @@ from nose.tools import ok_, assert_raises, assert_false, assert_equal
 import numpy as N
 
 def testForwardDenseArrayMapper():
-    mask = N.ones((3,2))
+    mask = N.ones((3,2), dtype='bool')
     map_ = mask_mapper(mask)
 
     # test shape reports
     assert_equal(map_.nfeatures, 6)
 
     # test 1sample mapping
-    assert_array_equal(map_.forward(N.arange(6).reshape(3,2)),
+    assert_array_equal(map_.forward1(N.arange(6).reshape(3,2)),
                        [0,1,2,3,4,5])
 
     # test 4sample mapping
@@ -37,7 +37,7 @@ def testForwardDenseArrayMapper():
     mask[1,1] = 0
     map_ = mask_mapper(mask)
     assert_equal(map_.nfeatures, 5)
-    assert_array_equal(map_.forward(N.arange(6).reshape(3,2)),
+    assert_array_equal(map_.forward1(N.arange(6).reshape(3,2)),
                        [0,1,2,4,5])
 
     # check that it doesn't accept wrong dataspace
@@ -48,16 +48,16 @@ def testForwardDenseArrayMapper():
 
     # check that a full mask is automatically created when providing shape
     m = mask_mapper(shape=(2, 3, 4))
-    mp = m.forward(N.arange(24).reshape(2, 3, 4))
+    mp = m.forward1(N.arange(24).reshape(2, 3, 4))
     assert_array_equal(mp, N.arange(24))
 
 
 def testReverseDenseArrayMapper():
-    mask = N.ones((3,2))
+    mask = N.ones((3,2), dtype='bool')
     mask[1,1] = 0
     map_ = mask_mapper(mask)
 
-    rmapped = map_.reverse(N.arange(1,6))
+    rmapped = map_.reverse1(N.arange(1,6))
     assert_equal(rmapped.shape, (3,2))
     assert_equal(rmapped[1,1], 0)
     assert_equal(rmapped[2,1], 5)
@@ -75,13 +75,13 @@ def testReverseDenseArrayMapper():
 
 
 def testMapperAliases():
-    mm=mask_mapper(N.ones((3,4,2)))
-    assert_array_equal(mm(N.ones((3,4,2))),
-                       mm.forward(N.ones((3,4,2))))
+    mm=mask_mapper(N.ones((3,4,2), dtype='bool'))
+    assert_array_equal(mm(N.ones((2,3,4,2))),
+                       mm.forward(N.ones((2,3,4,2))))
 
 
 def testSelects():
-    mask = N.ones((3,2))
+    mask = N.ones((3,2), dtype='bool')
     mask[1,1] = 0
     mask0 = mask.copy()
     data = N.arange(6).reshape(mask.shape)
@@ -93,20 +93,13 @@ def testSelects():
 
     # remove 1,2
     map_.select_out([0,3,4])
-    assert_array_equal(map_.forward(data), [0, 4, 5])
+    assert_array_equal(map_.forward1(data), [0, 4, 5])
     # remove 1 more
     map_.select_out([0,2])
-    assert_array_equal(map_.forward(data), [0, 5])
+    assert_array_equal(map_.forward1(data), [0, 5])
 
     # check if original mask wasn't perturbed
     assert_array_equal(mask, mask0)
-
-    # do the same but using discardOut
-    map_ = mask_mapper(mask)
-    map_.discard_out([1,2])
-    assert_array_equal(map_.forward(data), [0, 4, 5])
-    map_.discard_out([1])
-    assert_array_equal(map_.forward(data), [0, 5])
 
     # check if original mask wasn't perturbed
     assert_array_equal(mask, mask0)
