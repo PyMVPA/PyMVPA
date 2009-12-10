@@ -43,7 +43,6 @@ class FlattenMapper(Mapper):
         Mapper.__init__(self, **kwargs)
         self.__origshape = None
         self.__nfeatures = None
-        self.__coord_helper = None
         if not shape is None:
             self._train_with_shape(shape)
 
@@ -73,19 +72,9 @@ class FlattenMapper(Mapper):
         self.__origshape = shape
         # total number of features in a sample
         self.__nfeatures = N.prod(self.__origshape)
-        # compute a vector that aids computing in coords into feature ids
-        # this whole thing only works for C-ordered arrays
-        self.__coord_helper = \
-                N.array([N.prod(self.__origshape[i:])
-                            for i in range(1, len(self.__origshape))]
-                        + [1])
 
 
     def _forward_data(self, data):
-        if N.isfortran(data):
-            raise ValueError("FlattenMapper currently works for C-ordered "
-                             "arrays only.")
-
         # local binding
         dshape = data.shape
         oshape = self.__origshape
@@ -106,37 +95,59 @@ class FlattenMapper(Mapper):
                          "shape '%s' (known only '%s')."
                          % (str(dshape), str(oshape)))
 
+
     def _forward_dataset(self, dataset):
         # invoke super class _forward_dataset, this calls, _forward_dataset
         # and this calles _forward_data in this class
         mds = super(FlattenMapper, self)._forward_dataset(dataset)
+        # attribute collection needs to have a new length check
+        mds.fa.set_length_check(mds.nfeatures)
+        # now flatten all feature attributes
+        for k in mds.fa:
+            mds.fa[k] = self.forward1(mds.fa[k].value)
+
         # if there is no inspace return immediately
         if self.get_inspace() is None:
             return mds
         # otherwise create the coordinates as feature attributes
         else:
             mds.fa[self.get_inspace()] = \
-            N.transpose(N.isfinite(dataset.samples[0]).nonzero())
+                N.transpose(N.isfinite(dataset.samples[0]).nonzero())
             return mds
 
+
     def _reverse_data(self, data):
-        if N.isfortran(data):
-            raise ValueError("FlattenMapper currently works for C-ordered "
-                             "arrays only.")
         # local binding
         dshape = data.shape
         oshape = self.__origshape
         nfeatures = self.__nfeatures
 
-        # if data is a single samples
-        if len(data) == nfeatures:
-            return data.reshape(oshape)
-        # multiple samples
-        elif dshape[1:] == (nfeatures,):
+        if dshape[1:] == (nfeatures,):
             return data.reshape((dshape[0],) + oshape)
 
         raise ValueError("FlattenMapper has not been trained for data "
-                         "shape '%s'."% str(dshape))
+                         "with shape '%s', but '%s'."
+                         % (str(dshape[1:]), (nfeatures,)))
+
+
+    def _reverse_dataset(self, dataset):
+        # invoke super class _reverse_dataset, this calls, _reverse_dataset
+        # and this calles _reverse_data in this class
+        mds = super(FlattenMapper, self)._reverse_dataset(dataset)
+        # attribute collection needs to have a new length check
+        mds.fa.set_length_check(mds.nfeatures)
+        # now unflatten all feature attributes
+        inspace = self.get_inspace()
+        for k in mds.fa:
+            # reverse map all attributes, but not the inspace indices, since the
+            # did not come through this mapper and make not sense in inspace
+            if k != inspace:
+                mds.fa[k] = self.reverse1(mds.fa[k].value)
+        # wipe out the inspace attribute -- needs to be done after the loop to
+        # not change the size of the dict
+        if inspace:
+            del mds.fa[inspace]
+        return mds
 
 
     def is_valid_outid(self, id):
