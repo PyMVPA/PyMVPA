@@ -390,7 +390,12 @@ class FeatureSubsetMapper(Mapper):
 
     def get_insize(self):
         """Return the length of the input space vectors."""
-        return len(self.__mask)
+        if not self.__dshape is None:
+            # should be just length 1, but if this becomes generic slicing
+            # mapper this might change
+            return N.prod(self.__dshape)
+        else:
+            return None
 
 
     def get_outsize(self):

@@ -60,7 +60,7 @@ def testNiftiDataset():
                           labels=[1,2],
                           mask=mask)
     assert_equal(nddata.nfeatures, 1)
-    rmap = nddata.a.mapper.reverse(N.array([44]))
+    rmap = nddata.a.mapper.reverse1(N.array([44]))
     assert_equal(rmap.shape, (24, 96, 128))
     assert_equal(N.sum(rmap), 44)
     assert_equal(rmap[12, 20, 40], 44)

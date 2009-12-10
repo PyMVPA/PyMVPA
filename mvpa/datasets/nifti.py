@@ -167,7 +167,11 @@ class NiftiDataset(Dataset):
         elif isinstance(data, Dataset):
             # ease users life
             data = data.samples
-        dsarray = dataset.a.mapper.reverse(data)
+        # call the appropriate function to map single samples or multiples
+        if len(data.shape) > 1:
+            dsarray = dataset.a.mapper.reverse(data)
+        else:
+            dsarray = dataset.a.mapper.reverse1(data)
         return NiftiImage(dsarray, dataset.a.niftihdr)
 
 
@@ -194,7 +198,11 @@ def nifti_dataset(samples, labels=None, chunks=None, mask=None, enforce_dim=4,
                                                       inspace=space))
     # now apply the mask if any
     if not mask is None:
-        flatmask = ds.a.mapper.forward(mask)
+        flatmask = ds.a.mapper.forward1(mask != 0)
+        print ds.a.mapper.get_outsize()
+        mapper = FeatureSubsetMapper(flatmask)
+        print mapper.get_insize()
+        print mapper.get_outsize()
         ds = ds.get_mapped(FeatureSubsetMapper(flatmask))
 
     # store interesting props in the dataset
