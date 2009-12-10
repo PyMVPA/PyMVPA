@@ -47,6 +47,12 @@ class FlattenMapper(Mapper):
             self._train_with_shape(shape)
 
 
+    def __repr__(self):
+        s = Mapper.__repr__(self)
+        m_repr = 'shape=%s' % repr(self.__origshape)
+        return s.replace("(", "(%s, " % m_repr, 1)
+
+
     @accepts_dataset_as_samples
     def _train(self, samples):
         """Train the mapper.
@@ -58,9 +64,6 @@ class FlattenMapper(Mapper):
           case of a 1D-array each element is considered to be an individual
           element and *not* the whole array as a single sample!
         """
-        if N.isfortran(samples):
-            raise ValueError("FlattenMapper currently works for C-ordered "
-                             "arrays only.")
         self._train_with_shape(samples.shape[1:])
 
 
