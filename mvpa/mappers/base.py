@@ -51,12 +51,15 @@ class Mapper(object):
 
         Parameters
         ----------
-        data: Dataset-like, anything
+        data: Dataset-like, (at least 2D)-array-like
           Typically this is a `Dataset`, but it might also be a plain data
           array, or even something completely different(TM) that is supported
           by a subclass' implementation. If such an object is Dataset-like it
           is handled by a dedicated method that also transforms dataset
-          attributes if necessary.
+          attributes if necessary. If an array-like is passed, it has to be
+          at least two-dimensional, with the first axis separating samples
+          or observations. For single samples `forward1()` might be more
+          appropriate.
         """
         if is_datasetlike(data):
             return self._forward_dataset(data)
@@ -64,10 +67,21 @@ class Mapper(object):
             if __debug__:
                 if hasattr(data, 'ndim') and data.ndim < 2:
                     raise ValueError(
-                        'PyMVPA mappers only support mapping of data with'
-                        'at least two dimensions, where the first axis'
-                        'separates samples/observations')
+                        'Mapper.forward() only support mapping of data with '
+                        'at least two dimensions, where the first axis '
+                        'separates samples/observations. Consider using '
+                        'Mapper.forward1() instead.')
             return self._forward_data(data)
+
+
+    def forward1(self, data):
+        """Wrapper method to map single samples.
+
+        It is basically identical to `forward()`, but also accepts
+        one-dimensional arguments. The map whole dataset this method cannot
+        be used. but `forward()` handles them.
+        """
+        return self.forward(N.array([data]))[0]
 
 
     def _forward_data(self, data):
@@ -117,6 +131,16 @@ class Mapper(object):
             return self._reverse_dataset(data)
         else:
             return self._reverse_data(data)
+
+
+    def reverse1(self, data):
+        """Wrapper method to map single samples.
+
+        It is basically identical to `reverse()`, but accepts one-dimensional
+        arguments. To map whole dataset this method cannot be used. but
+        `reverse()` handles them.
+        """
+        return self.reverse(N.atleast_2d(data))[0]
 
 
     def _reverse_data(self, data):
@@ -428,7 +452,7 @@ class FeatureSubsetMapper(Mapper):
         -------
         `FeatureSubsetMapper.discard_out()`
         """
-        self.__mask = self.__mask[slicearg]
+        self.__mask = N.atleast_1d(self.__mask[slicearg])
 
 
 

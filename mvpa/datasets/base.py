@@ -70,7 +70,8 @@ class Dataset(BaseDataset):
            and len(args[1].shape) > 1 \
            and self.a.has_key('mapper'):
             args = list(args)
-            args[1] = self.a.mapper.forward(args[1])
+            print self.a.mapper
+            args[1] = self.a.mapper.forward1(args[1])
             args = tuple(args)
 
         # let the base do the work
@@ -175,7 +176,7 @@ class Dataset(BaseDataset):
             mask = N.ones(samples.shape[1:], dtype='bool')
 
         fm = FlattenMapper(shape=mask.shape)
-        submapper = FeatureSubsetMapper(mask=fm.forward(mask))
+        submapper = FeatureSubsetMapper(mask=fm.forward1(mask))
         mapper = ChainMapper([fm, submapper])
         return cls.from_basic(samples, labels=labels, chunks=chunks,
                               mapper=mapper)
