@@ -203,6 +203,9 @@ class Dataset(object):
           Dataset attributes collection.
 
         """
+        # conversions
+        if isinstance(samples, list):
+            samples = N.array(samples)
         # Check all conditions we need to have for `samples` dtypes
         if not hasattr(samples, 'dtype'):
             raise ValueError(
@@ -215,13 +218,19 @@ class Dataset(object):
         if not len(samples.shape):
             raise ValueError("Only `samples` with at least one axis are "
                     "supported (got: %i)" % len(samples.shape))
+
+        # handling of 1D-samples
+        # i.e. 1D is treated as multiple samples with a single feature
+        if len(samples.shape) == 1:
+            samples = N.atleast_2d(samples).T
+
         # that's all -- accepted
         self.samples = samples
 
         # Everything in a dataset (except for samples) is organized in
         # collections
         # Number of samples is .shape[0] for sparse matrix support
-        self.sa = SampleAttributesCollection(length=samples.shape[0])
+        self.sa = SampleAttributesCollection(length=len(self))
         if not sa is None:
             self.sa.update(sa)
         self.fa = FeatureAttributesCollection(length=self.nfeatures)
@@ -491,21 +500,9 @@ class Dataset(object):
     def __len__(self):
         return self.shape[0]
 
-
-    def get_nfeatures(self):
-        if len(self.shape) > 1:
-            # there might be multi-dimensional features, but the number of
-            # features is just that
-            return self.shape[1]
-        else:
-            # it is essential to return None in this case, since that also
-            # disables length checking in the fa collection.
-            return None
-
-
     # shortcut properties
     nsamples = property(fget=lambda self:len(self))
-    nfeatures = property(fget=get_nfeatures)
+    nfeatures = property(fget=lambda self:self.shape[1])
     shape = property(fget=lambda self:self.samples.shape)
 
 

@@ -201,6 +201,11 @@ def test_samples_shape():
     ds = Dataset.from_masked(N.ones((10, 2, 3, 4)), labels=1, chunks=1)
     ok_(ds.samples.shape == (10, 24))
 
+    # what happens to 1D samples
+    ds = Dataset(N.arange(5))
+    assert_equal(ds.shape, (5, 1))
+    assert_equal(ds.nfeatures, 1)
+
 
 def test_basic_datamapping():
     samples = N.arange(24).reshape((4, 3, 2)).view(myarray)
@@ -679,22 +684,23 @@ def test_other_samples_dtypes():
 
 
         # what we don't do
-        # lists
-        assert_raises(ValueError, Dataset, range(5))
         class voodoo:
             dtype = 'fancy'
-
         # voodoo
         assert_raises(ValueError, Dataset, voodoo())
         # crippled
         assert_raises(ValueError, Dataset, N.array(5))
 
         # things that might behave in surprising ways
+        # lists -- first axis is samples, hence single feature
+        ds = Dataset(range(5))
+        assert_equal(ds.nfeatures, 1)
+        assert_equal(ds.shape, (5, 1))
         # arrays of objects
         data = N.array([{},{}])
         ds = Dataset(data)
-        assert_equal(ds.shape, (2,))
+        assert_equal(ds.shape, (2, 1))
         assert_equal(ds.nsamples, 2)
         # Nothing to index, hence no features
-        assert_equal(ds.nfeatures, None)
+        assert_equal(ds.nfeatures, 1)
 
