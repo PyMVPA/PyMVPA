@@ -203,48 +203,33 @@ class Dataset(object):
           Dataset attributes collection.
 
         """
-        # sanity checks
-        #if not len(samples.shape) == 2:
-        #    raise ValueError('The samples array must be 2D or mappable into'
-        #                     ' 2D (current shape is: %s)'
-        #                     % str(samples.shape))
+        # Check all conditions we need to have for `samples` dtypes
+        if not hasattr(samples, 'dtype'):
+            raise ValueError(
+                "Dataset only supports dtypes as samples that have a `dtype` "
+                "attribute that behaves similiar to the one of an array-like.")
+        if not hasattr(samples, 'shape'):
+            raise ValueError(
+                "Dataset only supports dtypes as samples that have a `shape` "
+                "attribute that behaves similiar to the one of an array-like.")
+        if not len(samples.shape):
+            raise ValueError("Only `samples` with at least one axis are "
+                    "supported (got: %i)" % len(samples.shape))
+        # that's all -- accepted
         self.samples = samples
 
-       # Everything in a dataset (except for samples) is organized in
+        # Everything in a dataset (except for samples) is organized in
         # collections
-        self.sa = SampleAttributesCollection(length=len(samples))
+        # Number of samples is .shape[0] for sparse matrix support
+        self.sa = SampleAttributesCollection(length=samples.shape[0])
         if not sa is None:
             self.sa.update(sa)
-        if hasattr(samples, 'shape'):
-            self.samples = N.atleast_2d(self.samples)
-            length = N.prod(self.samples.shape[1:])
-        else:
-            length = None
-        self.fa = FeatureAttributesCollection(length=length)
+        self.fa = FeatureAttributesCollection(length=self.nfeatures)
         if not fa is None:
             self.fa.update(fa)
         self.a = DatasetAttributesCollection()
         if not a is None:
             self.a.update(a)
-
-        # XXX should we make them conditional?
-        # samples attributes
-        # this should rather be self.sa.iteritems(), but there is none yet
-        for attr in self.sa.keys():
-            if not len(self.sa[attr].value) == self.nsamples:
-                raise ValueError("Length of samples attribute '%s' (%i) "
-                                 "doesn't match the number of samples (%i)"
-                                 % (attr,
-                                    len(self.sa[attr].value),
-                                    self.nsamples))
-        # feature attributes
-        for attr in self.fa.keys():
-            if not len(self.fa[attr].value) == self.nfeatures:
-                raise ValueError("Length of feature attribute '%s' (%i) "
-                                 "doesn't match the number of features (%i)"
-                                 % (attr,
-                                    len(self.fa[attr].value),
-                                    self.nfeatures))
 
 
     def init_origids(self, which, attr='origids'):
@@ -271,22 +256,21 @@ class Dataset(object):
         """
         # now do evil to ensure unique ids across multiple datasets
         # so that they could be merged together
-        if not which is None:
-            thisid = str(id(self))
-            if which == 'samples' or which == 'both':
-                ids = N.array(['%s-%i' % (thisid, i)
-                                    for i in xrange(self.samples.shape[0])])
-                if self.sa.has_key(attr):
-                    self.sa[attr].value = ids
-                else:
-                    self.sa[attr] = ids
-            if which == 'features' or which == 'both':
-                ids = N.array(['%s-%i' % (thisid, i)
-                                    for i in xrange(self.samples.shape[1])])
-                if self.fa.has_key(attr):
-                    self.fa[attr].value = ids
-                else:
-                    self.fa[attr] = ids
+        thisid = str(id(self))
+        if which == 'samples' or which == 'both':
+            ids = N.array(['%s-%i' % (thisid, i)
+                                for i in xrange(self.samples.shape[0])])
+            if self.sa.has_key(attr):
+                self.sa[attr].value = ids
+            else:
+                self.sa[attr] = ids
+        if which == 'features' or which == 'both':
+            ids = N.array(['%s-%i' % (thisid, i)
+                                for i in xrange(self.samples.shape[1])])
+            if self.fa.has_key(attr):
+                self.fa[attr].value = ids
+            else:
+                self.fa[attr] = ids
 
 
     def __copy__(self):
@@ -419,7 +403,8 @@ class Dataset(object):
         # simultaneous slicing of numpy arrays only yields intended results
         # if at least one of the slicing args is an actual slice and not
         # and index list are selection mask vector
-        if N.any([isinstance(a, slice) for a in args]):
+        if isinstance(self.samples, N.ndarray) \
+           and N.any([isinstance(a, slice) for a in args]):
             samples = self.samples[args[0], args[1]]
         else:
             # in all other cases we have to do the selection sequentially
@@ -493,23 +478,36 @@ class Dataset(object):
 
 
     def __array__(self, dtype=None):
-        # XXX This wouldn't work if .samples is not an ndarray subclass.
+        # another possibility would be converting .todense() for sparse data
+        # but that might easily kill the machine ;-)
+        if not hasattr(self.samples, '__array__'):
+            raise RuntimeError(
+                "This Dataset instance cannot be used like a Numpy array since "
+                "its data-container does not provide an '__array__' methods. "
+                "Container type is %s." % type(self.samples))
         return self.samples.__array__(dtype)
 
 
     def __len__(self):
-        return self.samples.__len__()
+        return self.shape[0]
 
 
     def get_nfeatures(self):
-        if hasattr(self.samples, 'shape'):
-            return self.samples.shape[1]
+        if len(self.shape) > 1:
+            # there might be multi-dimensional features, but the number of
+            # features is just that
+            return self.shape[1]
         else:
+            # it is essential to return None in this case, since that also
+            # disables length checking in the fa collection.
             return None
 
+
     # shortcut properties
-    nsamples = property(fget=lambda self:len(self.samples))
+    nsamples = property(fget=lambda self:len(self))
     nfeatures = property(fget=get_nfeatures)
+    shape = property(fget=lambda self:self.samples.shape)
+
 
 def datasetmethod(func):
     """Decorator to easily bind functions to a Dataset class
