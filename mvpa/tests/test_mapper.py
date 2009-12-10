@@ -20,6 +20,7 @@ from mvpa.mappers.flatten import FlattenMapper
 from mvpa.mappers.base import FeatureSubsetMapper, ChainMapper
 from mvpa.support.copy import copy
 from mvpa.datasets.base import Dataset
+from mvpa.base.collections import ArrayCollectable
 
 # arbitrary ndarray subclass for testing
 class myarray(N.ndarray):
@@ -35,13 +36,19 @@ def test_flatten():
               [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47],
               [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]]
     target = N.array(target).view(myarray)
+    index_target = N.array([[0, 0, 0], [0, 0, 1], [0, 0, 2], [0, 0, 3],
+                            [0, 1, 0], [0, 1, 1], [0, 1, 2], [0, 1, 3],
+                            [1, 0, 0], [1, 0, 1], [1, 0, 2], [1, 0, 3],
+                            [1, 1, 0], [1, 1, 1], [1, 1, 2], [1, 1, 3]])
+
 
     # array subclass survives
     ok_(isinstance(data, myarray))
 
     # actually, there should be no difference between a plain FlattenMapper and
     # a chain that only has a FlattenMapper as the one element
-    for fm in [FlattenMapper(), ChainMapper([FlattenMapper()])]:
+    for fm in [FlattenMapper(inspace='voxel'),
+               ChainMapper([FlattenMapper(inspace='voxel')])]:
         # not working if untrained
         assert_raises(RuntimeError,
                       fm.forward1,
@@ -54,53 +61,60 @@ def test_flatten():
         assert_array_equal(fm.forward(data), target)
         assert_array_equal(fm.forward(data[2]), target[2])
         assert_raises(ValueError, fm.forward, N.arange(4))
-        assert_raises(ValueError, fm.forward, N.array(data[0], order='F'))
 
         # all of that leaves that data unmodified
         assert_array_equal(data, pristinedata)
 
         # reverse mapping
         ok_(isinstance(fm.reverse(target), myarray))
-        ok_(isinstance(fm.reverse(target[0]), myarray))
+        ok_(isinstance(fm.reverse1(target[0]), myarray))
         ok_(isinstance(fm.reverse(target[1:2]), myarray))
         assert_array_equal(fm.reverse(target), data)
-        assert_array_equal(fm.reverse(target[0]), data[0])
+        assert_array_equal(fm.reverse1(target[0]), data[0])
         assert_array_equal(fm.reverse(target[1:2]), data[1:2])
         assert_raises(ValueError, fm.reverse, N.arange(14))
-        assert_raises(ValueError, fm.reverse, N.array(target, order='F'))
 
         # check one dimensional data, treated as scalar samples
         oned = N.arange(5)
-        oned_target = [[0],[1],[2],[3],[4]]
         fm.train(Dataset(oned))
-        assert_array_equal(fm.forward1(oned), oned_target)
-        assert_array_equal(fm.reverse(N.array(oned_target)), oned)
+        # needs 2D
+        assert_raises(ValueError, fm.forward, oned)
+        # doesn't match mapper, since Dataset turns `oned` into (5,1)
+        assert_raises(ValueError, fm.forward, oned)
+        assert_equal(Dataset(oned).nfeatures, 1)
 
         # check one dimensional samples
         oneds = N.array([range(5)])
         oneds_target = [[0, 1, 2, 3, 4]]
         fm.train(oneds)
         assert_array_equal(fm.forward(oneds), oneds_target)
-        assert_array_equal(fm.forward(oneds[0]), oneds_target[0])
+        assert_array_equal(fm.forward1(oneds[0]), oneds_target[0])
         assert_array_equal(fm.reverse(N.array(oneds_target)), oneds)
-        assert_array_equal(fm.reverse(N.array(oneds_target[0])), oneds[0])
+        assert_array_equal(fm.reverse1(N.array(oneds_target[0])), oneds[0])
 
-        # try dataset mode
-        ds = Dataset(data)
+        # try dataset mode, with some feature attribute
+        fattr = N.arange(N.prod(samples_shape)).reshape(samples_shape)
+        ds = Dataset(data, fa={'awesome': fattr.copy()})
         assert_equal(ds.samples.shape, data_shape)
         fm.train(ds)
         dsflat = fm.forward(ds)
         ok_(isinstance(dsflat, Dataset))
         ok_(isinstance(dsflat.samples, myarray))
         assert_array_equal(dsflat.samples, target)
-
+        assert_array_equal(dsflat.fa.awesome, N.arange(N.prod(samples_shape)))
+        assert_true(isinstance(dsflat.fa['awesome'], ArrayCollectable))
         # test index creation
-        d = Dataset(N.ones((2,2,2)))
-        f = FlattenMapper(inspace='voxel')
-        f.train(d)
-        md = f(d)
-        t = array(([0,0],[0,1],[1,0],[1,1]))
-        assert_array_equal(t, md.fa.voxel)
+        assert_array_equal(index_target, dsflat.fa.voxel)
+
+        # and back
+        revds = fm.reverse(dsflat)
+        ok_(isinstance(revds, Dataset))
+        ok_(isinstance(revds.samples, myarray))
+        assert_array_equal(revds.samples, data)
+        assert_array_equal(revds.fa.awesome, fattr)
+        assert_true(isinstance(revds.fa['awesome'], ArrayCollectable))
+        assert_false('voxel' in revds.fa)
+
 
 
 def test_subset():
