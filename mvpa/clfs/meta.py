@@ -1306,7 +1306,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
 
         # create a mask to devise a mapper
         # TODO -- think about making selected_ids a MaskMapper
-        mappermask = N.zeros(dataset.nfeatures)
+        mappermask = N.zeros(dataset.nfeatures, dtype='bool')
         mappermask[self.__feature_selection.states.selected_ids] = 1
         mapper = FeatureSubsetMapper(mappermask)
 
