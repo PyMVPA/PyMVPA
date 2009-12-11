@@ -131,8 +131,6 @@ def test_subset():
     assert_array_equal(sm.forward(data[0:1].copy()), data[0:1])
     # or multi-samples
     assert_array_equal(sm.forward(data.copy()), data)
-    # forward is fine this way, but reverse doesn't work without training
-    assert_raises(RuntimeError, sm.reverse, data[0])
     sm.train(data)
     # same on reverse
     assert_array_equal(sm.reverse(data[0:1].copy()), data[0:1])
