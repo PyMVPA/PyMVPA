@@ -321,6 +321,7 @@ class FeatureSubsetMapper(Mapper):
         # store it here, might be modified later
         self.__dshape = dshape
         if isinstance(mask, int):
+            self.__dshape = (mask, )
             mask = N.arange(mask)
         else:
             if not len(mask.shape) == 1:
