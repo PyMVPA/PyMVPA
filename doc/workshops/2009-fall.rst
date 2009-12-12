@@ -94,6 +94,26 @@ advantages, limitations and possible alternatives. I will conclude with a
 summary of the current status and future plans for MDP development.
 
 
+Nipype - A Python framework for neuroimaging
+--------------------------------------------
+
+Satrajit Ghosh
+
+Nipype is a project under the umbrella of Nipy, an effort to develop
+open-source, community-developed neuroimaging tools in Python.  The goals of
+Nipype are two-fold: 1) to provide a uniform interface to existing
+neuroimaging software packages; and 2) to provide a pipelined environment
+for efficient batch-processing that can tie together different neuroimaging
+data analysis algorithms. By exposing a consistent interface to the external
+packages, researchers are able to explore a wide range of imaging algorithms
+and configure their own analysis pipeline which best fits their data and
+research objectives, and perform their analysis in a highly structured
+environment. The nipype framework is accessible to the wide range of
+programming expertise often found in neuroimaging, allowing for both
+easy-to-use high-level scripting and low-level algorithm development for
+unlimited customization.
+
+
 Profiling PyMVPA
 ----------------
 
