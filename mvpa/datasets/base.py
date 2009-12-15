@@ -19,7 +19,7 @@ from mvpa.base.collections import SampleAttributesCollection, \
 from mvpa.base.dataset import Dataset as BaseDataset
 from mvpa.base.dataset import _expand_attribute
 from mvpa.misc.support import idhash as idhash_
-from mvpa.mappers.base import ChainMapper, FeatureSubsetMapper
+from mvpa.mappers.base import ChainMapper, FeatureSliceMapper
 from mvpa.mappers.flatten import FlattenMapper
 
 if __debug__:
@@ -79,8 +79,8 @@ class Dataset(BaseDataset):
         # and adjusting the mapper (if any)
         if len(args) > 1 and 'mapper' in ds.a:
             # create matching mapper
-            subsetmapper = FeatureSubsetMapper(args[1],
-                                               dshape=(self.nfeatures,))
+            subsetmapper = FeatureSliceMapper(args[1],
+                                              dshape=self.samples.shape[1:])
             ds._append_mapper(subsetmapper)
 
         return ds
@@ -178,7 +178,8 @@ class Dataset(BaseDataset):
             mask = N.ones(samples.shape[1:], dtype='bool')
 
         fm = FlattenMapper(shape=mask.shape)
-        submapper = FeatureSubsetMapper(mask=fm.forward1(mask))
+        flatmask = fm.forward1(mask)
+        submapper = FeatureSliceMapper(flatmask, dshape=flatmask.shape)
         mapper = ChainMapper([fm, submapper])
         return cls.from_basic(samples, labels=labels, chunks=chunks,
                               mapper=mapper)

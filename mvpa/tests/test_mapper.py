@@ -248,7 +248,8 @@ def test_chainmapper():
     assert_equal(cm.get_insize(), 16)
 
     # we cannot add a mapper with the wrong size
-    assert_raises(ValueError, cm.append, FeatureSubsetMapper(16))
+    #EXCEPTION HAS BEEN REMOVED, to get rid of get_outsize()
+    #assert_raises(ValueError, cm.append, FeatureSubsetMapper(16))
 
     # check reproduction
     cm_clone = eval(repr(cm))

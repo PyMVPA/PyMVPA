@@ -300,6 +300,73 @@ class Mapper(object):
 
 
 
+class FeatureSliceMapper(Mapper):
+    """Mapper to select a subset of features.
+    """
+    def __init__(self, slicearg, dshape=None, **kwargs):
+        """
+        Parameters
+        ----------
+        slicearg : int, list(int), array(int), array(bool)
+        dshape : tuple
+        """
+        Mapper.__init__(self, **kwargs)
+        # store it here, might be modified later
+        self.__dshape = dshape
+
+        # convert int sliceargs into lists to prevent getting scalar values when
+        # slicing
+        if isinstance(slicearg, int):
+            slicearg = [slicearg]
+        self._slicearg = slicearg
+
+
+    def __repr__(self):
+        s = super(FeatureSliceMapper, self).__repr__()
+        return s.replace("(",
+                         "(slicearg=%s, dshape=%s, "
+                          % (repr(self._slicearg), repr(self.__dshape)),
+                         1)
+
+
+    def _forward_data(self, data):
+        """Map data from the original dataspace into featurespace.
+
+        Parameters
+        ----------
+        data : array-like
+          Either one-dimensional sample or two-dimensional samples matrix.
+        """
+        return data[:, self._slicearg]
+
+
+    def _reverse_data(self, data):
+        """Reverse map data from featurespace into the original dataspace.
+
+        Parameters
+        ----------
+        data : array-like
+          Either one-dimensional sample or two-dimensional samples matrix.
+        """
+        if self.__dshape is None:
+            raise RuntimeError(
+                "Cannot reverse-map data since the original data shape is "
+                "unknown. Either set `dshape` in the constructor, or call "
+                "train().")
+        mapped = N.zeros(data.shape[:1] + self.__dshape,
+                         dtype=data.dtype)
+        mapped[:, self._slicearg] = data
+        return mapped
+
+
+    @accepts_dataset_as_samples
+    def _train(self, data):
+        if self.__dshape is None:
+            # XXX what about arrays of generic objects???
+            self.__dshape = data.shape[1:]
+
+
+
 class FeatureSubsetMapper(Mapper):
     """Mapper to select a subset of features.
 
@@ -782,7 +849,7 @@ class ChainMapper(Mapper):
     def __repr__(self):
         s = Mapper.__repr__(self)
         m_repr = 'mappers=[%s]' % ', '.join([repr(m) for m in self])
-        return s.replace("(", "(%s," % m_repr, 1)
+        return s.replace("(", "(%s, " % m_repr, 1)
 
     #
     # Behave as a container
@@ -793,10 +860,11 @@ class ChainMapper(Mapper):
         The mapper's input size has to match the output size of the current
         chain.
         """
-        if not self.get_outsize() == mapper.get_insize():
-            raise ValueError("To be appended mapper does not match the output "
-                             "size of the current chain (%s vs. %s)."
-                             % (mapper.get_insize(),  self.get_outsize()))
+        # not checking, since get_outsize() is about to vanish
+        #if not self.get_outsize() == mapper.get_insize():
+        #    raise ValueError("To be appended mapper does not match the output "
+        #                     "size of the current chain (%s vs. %s)."
+        #                     % (mapper.get_insize(),  self.get_outsize()))
         self._mappers.append(mapper)
 
 
@@ -814,4 +882,12 @@ class ChainMapper(Mapper):
 
 
     def __getitem__(self, key):
-        return self._mappers[key]
+        # if just one is requested return just one, otherwise return a
+        # ChainMapper again
+        if isinstance(key, int):
+            return self._mappers[key]
+        else:
+         # operate on shallow copy of self
+         sliced = copy.copy(self)
+         sliced._mappers = self._mappers[key]
+         return sliced
