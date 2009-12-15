@@ -68,6 +68,23 @@ def test_from_basic():
     assert_array_equal(ds.chunks, chunks)
 
     ok_(sorted(ds.sa.keys()) == ['chunks', 'labels', 'origids'])
+    ok_(sorted(ds.fa.keys()) == ['origids'])
+    # add some more
+    ds.a['random'] = 'blurb'
+
+    # check stripping attributes from a copy
+    cds = ds.copy() # full copy
+    ok_(sorted(cds.sa.keys()) == ['chunks', 'labels', 'origids'])
+    ok_(sorted(cds.fa.keys()) == ['origids'])
+    ok_(sorted(cds.a.keys()) == ['random'])
+    cds = ds.copy(sa=[], fa=[], a=[]) # plain copy
+    ok_(cds.sa.keys() == [])
+    ok_(cds.fa.keys() == [])
+    ok_(cds.a.keys() == [])
+    cds = ds.copy(sa=['labels'], fa=None, a=['random']) # partial copy
+    ok_(cds.sa.keys() == ['labels'])
+    ok_(cds.fa.keys() == ['origids'])
+    ok_(cds.a.keys() == ['random'])
 
     # there is not necessarily a mapper present
     ok_(not ds.a.has_key('mapper'))
