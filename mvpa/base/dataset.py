@@ -283,42 +283,14 @@ class Dataset(object):
 
 
     def __copy__(self):
-        # first we create new collections of the right type for each of the
-        # three essential collections of a dataset
-        sa = self.sa.__class__(length=self.samples.shape[0])
-        sa.update(self.sa, copyvalues='shallow')
-        fa = self.fa.__class__(length=self.samples.shape[1])
-        fa.update(self.fa, copyvalues='shallow')
-        a = self.a.__class__()
-        a.update(self.a, copyvalues='shallow')
-
-        # and finally the samples
-        samples = self.samples.view()
-
-        # call the generic init
-        out = self.__class__(samples, sa=sa, fa=fa, a=a)
-        return out
+        return self.copy(deep=False)
 
 
     def __deepcopy__(self, memo=None):
-        # first we create new collections of the right type for each of the
-        # three essential collections of a dataset
-        sa = self.sa.__class__(length=self.samples.shape[0])
-        sa.update(self.sa, copyvalues='deep')
-        fa = self.fa.__class__(length=self.samples.shape[1])
-        fa.update(self.fa, copyvalues='deep')
-        a = self.a.__class__()
-        a.update(self.a, copyvalues='deep')
-
-        # and finally the samples
-        samples = copy.deepcopy(self.samples, memo)
-
-        # call the generic init
-        out = self.__class__(samples, sa=sa, fa=fa, a=a)
-        return out
+        return self.copy(deep=True, memo=memo)
 
 
-    def copy(self, deep=True):
+    def copy(self, deep=True, memo=None):
         """Create a copy of a dataset.
 
         By default this is going to be a deep copy of the dataset, hence no
@@ -331,11 +303,30 @@ class Dataset(object):
           contains only views of the samples, sample attributes and feature
           feature attributes, as well as shallow copies of all dataset
           attributes.
+        memo : dict
+          Developers only: This argument is only useful if copy() is called
+          inside the __deepcopy__() method and refers to the dict-arhument
+          `memo` in the Python documentation.
         """
         if deep:
-            return copy.deepcopy(self)
+            copyvalues='deep'
+            samples = copy.deepcopy(self.samples, memo)
         else:
-            return copy.copy(self)
+            samples = self.samples.view()
+            copyvalues='shallow'
+
+        # first we create new collections of the right type for each of the
+        # three essential collections of a dataset
+        sa = self.sa.__class__(length=self.samples.shape[0])
+        sa.update(self.sa, copyvalues=copyvalues)
+        fa = self.fa.__class__(length=self.samples.shape[1])
+        fa.update(self.fa, copyvalues=copyvalues)
+        a = self.a.__class__()
+        a.update(self.a, copyvalues=copyvalues)
+
+        # call the generic init
+        out = self.__class__(samples, sa=sa, fa=fa, a=a)
+        return out
 
 
     def __iadd__(self, other):
