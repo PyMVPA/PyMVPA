@@ -81,7 +81,10 @@ class Mapper(object):
         one-dimensional arguments. The map whole dataset this method cannot
         be used. but `forward()` handles them.
         """
-        return self.forward(N.array([data]))[0]
+        if isinstance(data, N.ndarray):
+            return self.forward(data[N.newaxis])[0]
+        else:
+            return self.forward(N.array([data]))[0]
 
 
     def _forward_data(self, data):
@@ -140,7 +143,10 @@ class Mapper(object):
         arguments. To map whole dataset this method cannot be used. but
         `reverse()` handles them.
         """
-        return self.reverse(N.atleast_2d(data))[0]
+        if isinstance(data, N.ndarray):
+            return self.reverse(data[N.newaxis])[0]
+        else:
+            return self.reverse(N.array([data]))[0]
 
 
     def _reverse_data(self, data):
@@ -353,8 +359,14 @@ class FeatureSliceMapper(Mapper):
                 "Cannot reverse-map data since the original data shape is "
                 "unknown. Either set `dshape` in the constructor, or call "
                 "train().")
-        mapped = N.zeros(data.shape[:1] + self.__dshape,
-                         dtype=data.dtype)
+        # this wouldn't preserve ndarray subclasses
+        #mapped = N.zeros(data.shape[:1] + self.__dshape,
+        #                 dtype=data.dtype)
+        # let's do it a little awkward but pass subclasses through
+        # suggestions for improvements welcome
+        mapped = data.copy() # make sure we the array data
+        mapped.resize(data.shape[:1] + self.__dshape)
+        mapped.fill(0)
         mapped[:, self._slicearg] = data
         return mapped
 
