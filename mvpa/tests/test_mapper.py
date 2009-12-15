@@ -48,7 +48,8 @@ def test_flatten():
     # actually, there should be no difference between a plain FlattenMapper and
     # a chain that only has a FlattenMapper as the one element
     for fm in [FlattenMapper(inspace='voxel'),
-               ChainMapper([FlattenMapper(inspace='voxel')])]:
+               ChainMapper([FlattenMapper(inspace='voxel'),
+                            FeatureSliceMapper(slice(None))])]:
         # not working if untrained
         assert_raises(RuntimeError,
                       fm.forward1,
@@ -57,15 +58,16 @@ def test_flatten():
         fm.train(data)
 
         ok_(isinstance(fm.forward(data), myarray))
-        ok_(isinstance(fm.forward(data[2]), myarray))
+        ok_(isinstance(fm.forward1(data[2]), myarray))
         assert_array_equal(fm.forward(data), target)
-        assert_array_equal(fm.forward(data[2]), target[2])
+        assert_array_equal(fm.forward1(data[2]), target[2])
         assert_raises(ValueError, fm.forward, N.arange(4))
 
         # all of that leaves that data unmodified
         assert_array_equal(data, pristinedata)
 
         # reverse mapping
+        print type(fm.reverse(target))
         ok_(isinstance(fm.reverse(target), myarray))
         ok_(isinstance(fm.reverse1(target[0]), myarray))
         ok_(isinstance(fm.reverse(target[1:2]), myarray))
@@ -82,15 +84,6 @@ def test_flatten():
         # doesn't match mapper, since Dataset turns `oned` into (5,1)
         assert_raises(ValueError, fm.forward, oned)
         assert_equal(Dataset(oned).nfeatures, 1)
-
-        # check one dimensional samples
-        oneds = N.array([range(5)])
-        oneds_target = [[0, 1, 2, 3, 4]]
-        fm.train(oneds)
-        assert_array_equal(fm.forward(oneds), oneds_target)
-        assert_array_equal(fm.forward1(oneds[0]), oneds_target[0])
-        assert_array_equal(fm.reverse(N.array(oneds_target)), oneds)
-        assert_array_equal(fm.reverse1(N.array(oneds_target[0])), oneds[0])
 
         # try dataset mode, with some feature attribute
         fattr = N.arange(N.prod(samples_shape)).reshape(samples_shape)
