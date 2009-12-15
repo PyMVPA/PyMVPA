@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples, \
-        ChainMapper, FeatureSubsetMapper
+        ChainMapper, FeatureSliceMapper
 from mvpa.misc.support import isInVolume
 
 
@@ -236,6 +236,7 @@ def mask_mapper(mask=None, shape=None, inspace=None):
                     % (mask.shape, shape)
 
     fm = FlattenMapper(shape=mask.shape, inspace=inspace)
-    flatmask = fm.forward(mask)
-    mapper = ChainMapper([fm, FeatureSubsetMapper(flatmask)])
+    flatmask = fm.forward1(mask)
+    mapper = ChainMapper([fm, FeatureSliceMapper(flatmask,
+                                                 dshape=flatmask.shape)])
     return mapper

@@ -17,7 +17,7 @@ from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
 from mvpa.mappers.flatten import FlattenMapper
-from mvpa.mappers.base import FeatureSubsetMapper, ChainMapper
+from mvpa.mappers.base import FeatureSliceMapper, ChainMapper
 from mvpa.support.copy import copy
 from mvpa.datasets.base import Dataset
 from mvpa.base.collections import ArrayCollectable
@@ -124,9 +124,11 @@ def test_subset():
             [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47],
             [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]])
     # float array doesn't work
-    assert_raises(ValueError, FeatureSubsetMapper, N.ones(16))
+    sm = FeatureSliceMapper(N.ones(16))
+    assert_raises(IndexError, sm.forward, data)
+
     # full mask
-    sm = FeatureSubsetMapper(16)
+    sm = FeatureSliceMapper(slice(None))
     # should not change single samples
     assert_array_equal(sm.forward(data[0:1].copy()), data[0:1])
     # or multi-samples
@@ -137,72 +139,60 @@ def test_subset():
     # or multi-samples
     assert_array_equal(sm.reverse(data.copy()), data)
 
-    # test basic properties
-    assert_equal(sm.get_outsize(), 16)
-    assert_array_equal(sm.get_mask(), N.arange(16))
+    ## test basic properties
+    #assert_equal(sm.get_outsize(), 16)
+    #assert_array_equal(sm.get_mask(), N.arange(16))
 
-    # id transformation
-    for id in range(16):
-        ok_(sm.is_valid_inid(id))
-        ok_(sm.is_valid_outid(id))  
+    ## id transformation
+    #for id in range(16):
+    #    ok_(sm.is_valid_inid(id))
+    #    ok_(sm.is_valid_outid(id))  
 
-    # test subsets
-    sids = [3,4,5,6]
-    bsubset = N.zeros(16, dtype='bool')
-    bsubset[sids] = True
-    subsets = [sids, slice(3,7), bsubset, [3,3,4,4,6,6,6,5]]
-    # all test subset result in equivalent masks, hence should do the same to
-    # the mapper and result in identical behavior
-    for sub in subsets:
-        # shallow copy
-        subsm = copy(sm)
-        # should do copy-on-write for all important stuff!!
-        subsm.select_out(sub)
-        # test if selection did its job
-        if isinstance(sub, list):
-            assert_array_equal(subsm.get_mask(), sub)
-            assert_equal(subsm.get_outsize(), len(sub))
-            assert_array_equal(subsm.forward(data[0:1].copy()), [sub])
-        else:
-            assert_array_equal(subsm.get_mask(), sids)
-            assert_array_equal(subsm.forward(data[0:1].copy()), [sids])
-            assert_equal(subsm.get_outsize(), 4)
-        assert_array_equal([subsm.is_valid_inid(i) for i in range(16)], bsubset)
+    ## test subsets
+    #sids = [3,4,5,6]
+    #bsubset = N.zeros(16, dtype='bool')
+    #bsubset[sids] = True
+    #subsets = [sids, slice(3,7), bsubset, [3,3,4,4,6,6,6,5]]
+    ## all test subset result in equivalent masks, hence should do the same to
+    ## the mapper and result in identical behavior
+    #for sub in subsets:
+    #    # shallow copy
+    #    subsm = copy(sm)
+    #    # should do copy-on-write for all important stuff!!
+    #    subsm.select_out(sub)
+    #    # test if selection did its job
+    #    if isinstance(sub, list):
+    #        assert_array_equal(subsm.get_mask(), sub)
+    #        assert_equal(subsm.get_outsize(), len(sub))
+    #        assert_array_equal(subsm.forward(data[0:1].copy()), [sub])
+    #    else:
+    #        assert_array_equal(subsm.get_mask(), sids)
+    #        assert_array_equal(subsm.forward(data[0:1].copy()), [sids])
+    #        assert_equal(subsm.get_outsize(), 4)
+    #    assert_array_equal([subsm.is_valid_inid(i) for i in range(16)], bsubset)
 
-    # all of the above shouldn't change the original mapper
-    assert_array_equal(sm.get_mask(), N.arange(16))
+    ## all of the above shouldn't change the original mapper
+    #assert_array_equal(sm.get_mask(), N.arange(16))
 
-    # check for some bug catchers
-    assert_raises(ValueError, FeatureSubsetMapper, N.ones((2,1)))
+    # check for some bug catcher
     # no 3D input
-    assert_raises(IndexError, subsm.forward, N.ones((3,2,1)))
+    #assert_raises(IndexError, sm.forward, N.ones((3,2,1)))
     # no input of wrong length
-    assert_raises(ValueError, subsm.forward, N.ones(4))
+    assert_raises(ValueError, sm.forward, N.ones(4))
     # same on reverse
-    assert_raises(ValueError, subsm.reverse, N.ones(16))
+    #assert_raises(ValueError, sm.reverse, N.ones(16))
     # invalid ids
-    assert_false(subsm.is_valid_inid(-1))
-    assert_false(subsm.is_valid_inid(16))
+    #assert_false(subsm.is_valid_inid(-1))
+    #assert_false(subsm.is_valid_inid(16))
 
 
-def test_coordspaces():
+def test_repr():
     # this time give mask only by its target length
-    sm = FeatureSubsetMapper(5, inspace='myspace')
+    sm = FeatureSliceMapper(slice(None), inspace='myspace')
 
     # check reproduction
     sm_clone = eval(repr(sm))
     assert_equal(repr(sm_clone), repr(sm))
-
-    # id transformation
-    # works without spaces (see above) should still work with them
-    for id in range(5):
-        ok_(sm.is_valid_inid(id))
-        ok_(sm.is_valid_outid(id))
-    # we should achieve them same when providing the same information as space
-    # specific coords
-    for id in range(5):
-        ok_(sm.is_valid_inid(id))
-        ok_(sm.is_valid_outid(id))
 
 
 def test_chainmapper():
@@ -233,19 +223,13 @@ def test_chainmapper():
     assert_equal(cm.get_outsize(), 16)
 
     # a new mapper should appear when doing feature selection
-    cm.select_out(range(1,16))
-    assert_equal(cm.get_outsize(), 15)
+    cm.append(FeatureSliceMapper(range(1,16)))
+    assert_equal(cm.forward1(data[0]).shape, (15,))
     assert_equal(len(cm), 2)
-    # if there is already a FeatureSubsetMapper at the end, nothing is added
-    cm.select_out([9,14])
-    assert_equal(cm.get_outsize(), 2)
-    assert_equal(len(cm), 2)
-    # only two left
-    assert_true(cm.is_valid_outid(0))
-    assert_true(cm.is_valid_outid(1))
-    assert_false(cm.is_valid_outid(2))
-    # but input is still full
-    assert_equal(cm.get_insize(), 16)
+    # multiple slicing
+    cm.append(FeatureSliceMapper([9,14]))
+    assert_equal(cm.forward1(data[0]).shape, (2,))
+    assert_equal(len(cm), 3)
 
     # we cannot add a mapper with the wrong size
     #EXCEPTION HAS BEEN REMOVED, to get rid of get_outsize()
@@ -257,14 +241,8 @@ def test_chainmapper():
 
     # what happens if we retrain the whole beast an same data as before
     cm.train(data)
-    assert_equal(cm.get_outsize(), 2)
-    assert_equal(len(cm), 2)
-    # only two left
-    assert_true(cm.is_valid_outid(0))
-    assert_true(cm.is_valid_outid(1))
-    assert_false(cm.is_valid_outid(2))
-    # but input is still full
-    assert_equal(cm.get_insize(), 16)
+    assert_equal(cm.forward1(data[0]).shape, (2,))
+    assert_equal(len(cm), 3)
 
     # let's map something
     mdata = cm.forward(data)
