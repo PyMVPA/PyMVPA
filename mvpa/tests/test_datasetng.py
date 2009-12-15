@@ -464,7 +464,7 @@ def test_masked_featureselection():
 
     # default must be no mask
     ok_(data.nfeatures == 120)
-    ok_(data.a.mapper.get_outsize() == 120)
+    ok_(data.a.mapper.forward1(origdata[0]).shape == (120,))
 
     # check that full mask uses all features
     # this uses auto-mapping of selection arrays in __getitem__
@@ -482,7 +482,7 @@ def test_masked_featureselection():
 
     # check that feature selection does not change source data
     ok_(data.nfeatures == 120)
-    assert_equal(data.a.mapper.get_outsize(), 120)
+    ok_(data.a.mapper.forward1(origdata[0]).shape == (120,))
 
     # check selection with feature list
     sel = data[:, [0, 37, 119]]
@@ -520,7 +520,7 @@ def test_feature_masking():
     assert_array_equal(data[:, 1].samples[:, 0], [12, 27, 42, 57])
     # XXX put back when coord -> fattr is implemented
     #ok_(tuple(data[:, 1].a.mapper.getInId(0)) == (4, 0))
-    ok_(data[:, 1].a.mapper.get_outsize() == 1)
+    ok_(data[:, 1].a.mapper.forward1(mask).shape == (1,))
 
     # check sugarings
     # XXX put me back
