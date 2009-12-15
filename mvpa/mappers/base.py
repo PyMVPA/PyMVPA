@@ -324,6 +324,8 @@ class FeatureSubsetMapper(Mapper):
             self.__dshape = (mask, )
             mask = N.arange(mask)
         else:
+            # must be an array (will convert e.g. list arguments)
+            mask = N.asanyarray(mask)
             if not len(mask.shape) == 1:
                 raise ValueError("The mask has to be a one-dimensional vector. "
                                  "For multidimensional data consider FlattenMapper "
