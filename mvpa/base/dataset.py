@@ -290,7 +290,7 @@ class Dataset(object):
         return self.copy(deep=True, memo=memo)
 
 
-    def copy(self, deep=True, memo=None):
+    def copy(self, deep=True, sa=None, fa=None, a=None, memo=None):
         """Create a copy of a dataset.
 
         By default this is going to be a deep copy of the dataset, hence no
@@ -303,6 +303,18 @@ class Dataset(object):
           contains only views of the samples, sample attributes and feature
           feature attributes, as well as shallow copies of all dataset
           attributes.
+        sa : list, None
+          List of attributes in the sample attributes collection to include in
+          the copy of the dataset. If `None` all attributes are considered. If
+          an empty list is given, all attributes are stripped from the copy.
+        fa : list, None
+          List of attributes in the feature attributes collection to include in
+          the copy of the dataset. If `None` all attributes are considered If
+          an empty list is given, all attributes are stripped from the copy..
+        a : list, None
+          List of attributes in the dataset attributes collection to include in
+          the copy of the dataset. If `None` all attributes are considered If
+          an empty list is given, all attributes are stripped from the copy..
         memo : dict
           Developers only: This argument is only useful if copy() is called
           inside the __deepcopy__() method and refers to the dict-arhument
@@ -317,15 +329,32 @@ class Dataset(object):
 
         # first we create new collections of the right type for each of the
         # three essential collections of a dataset
-        sa = self.sa.__class__(length=self.samples.shape[0])
-        sa.update(self.sa, copyvalues=copyvalues)
-        fa = self.fa.__class__(length=self.samples.shape[1])
-        fa.update(self.fa, copyvalues=copyvalues)
-        a = self.a.__class__()
-        a.update(self.a, copyvalues=copyvalues)
+        sanew = self.sa.__class__(length=self.samples.shape[0])
+        # filter the attributes if necessary
+        if sa is None:
+            saorig = self.sa
+        else:
+            saorig = dict([(k, v) for k, v in self.sa.iteritems() if k in sa])
+        sanew.update(saorig, copyvalues=copyvalues)
+
+        # filter the attributes if necessary
+        if fa is None:
+            faorig = self.fa
+        else:
+            faorig = dict([(k, v) for k, v in self.fa.iteritems() if k in fa])
+        fanew = self.fa.__class__(length=self.samples.shape[1])
+        fanew.update(faorig, copyvalues=copyvalues)
+
+        # filter the attributes if necessary
+        if a is None:
+            aorig = self.a
+        else:
+            aorig = dict([(k, v) for k, v in self.a.iteritems() if k in a])
+        anew = self.a.__class__()
+        anew.update(aorig, copyvalues=copyvalues)
 
         # call the generic init
-        out = self.__class__(samples, sa=sa, fa=fa, a=a)
+        out = self.__class__(samples, sa=sanew, fa=fanew, a=anew)
         return out
 
 
