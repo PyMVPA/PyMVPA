@@ -78,7 +78,10 @@ class Dataset(BaseDataset):
 
         # and adjusting the mapper (if any)
         if len(args) > 1 and 'mapper' in ds.a:
-            ds.a.mapper.select_out(args[1])
+            # create matching mapper
+            subsetmapper = FeatureSubsetMapper(args[1],
+                                               dshape=(self.nfeatures,))
+            ds._append_mapper(subsetmapper)
 
         return ds
 
