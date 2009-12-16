@@ -55,7 +55,13 @@ class Dataset(BaseDataset):
             self.a.mapper = ChainMapper([pmapper])
 
         # is a chain mapper
-        self.a.mapper.append(mapper)
+        # merge slicer?
+        lastmapper = self.a.mapper[-1]
+        if isinstance(lastmapper, FeatureSliceMapper) \
+           and lastmapper.is_mergable(mapper):
+            lastmapper += mapper
+        else:
+            self.a.mapper.append(mapper)
 
 
     def __getitem__(self, args):

@@ -412,7 +412,7 @@ class FeatureSliceMapper(Mapper):
             self._slicearg = self._slicearg.nonzero()[0]
             # do not return since it needs further processing
         if self._slicearg.dtype.char in N.typecodes['AllInteger']:
-            self._slicearg = self._slicearg[self._slicearg][other._slicearg]
+            self._slicearg = self._slicearg[other._slicearg]
             return self
 
         raise RuntimeError("This should not happen. Undetected condition!")
