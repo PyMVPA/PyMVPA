@@ -67,7 +67,6 @@ def test_flatten():
         assert_array_equal(data, pristinedata)
 
         # reverse mapping
-        print type(fm.reverse(target))
         ok_(isinstance(fm.reverse(target), myarray))
         ok_(isinstance(fm.reverse1(target[0]), myarray))
         ok_(isinstance(fm.reverse(target[1:2]), myarray))
@@ -136,33 +135,36 @@ def test_subset():
     #assert_equal(sm.get_outsize(), 16)
     #assert_array_equal(sm.get_mask(), N.arange(16))
 
-    ## id transformation
-    #for id in range(16):
-    #    ok_(sm.is_valid_inid(id))
-    #    ok_(sm.is_valid_outid(id))  
+    # identical mappers
+    sm_none = FeatureSliceMapper(slice(None))
+    sm_int = FeatureSliceMapper(N.arange(16))
+    sm_bool = FeatureSliceMapper(N.ones(16, dtype='bool'))
+    sms = [sm_none, sm_int, sm_bool]
 
-    ## test subsets
-    #sids = [3,4,5,6]
-    #bsubset = N.zeros(16, dtype='bool')
-    #bsubset[sids] = True
-    #subsets = [sids, slice(3,7), bsubset, [3,3,4,4,6,6,6,5]]
-    ## all test subset result in equivalent masks, hence should do the same to
-    ## the mapper and result in identical behavior
-    #for sub in subsets:
-    #    # shallow copy
-    #    subsm = copy(sm)
-    #    # should do copy-on-write for all important stuff!!
-    #    subsm.select_out(sub)
-    #    # test if selection did its job
-    #    if isinstance(sub, list):
-    #        assert_array_equal(subsm.get_mask(), sub)
-    #        assert_equal(subsm.get_outsize(), len(sub))
-    #        assert_array_equal(subsm.forward(data[0:1].copy()), [sub])
-    #    else:
-    #        assert_array_equal(subsm.get_mask(), sids)
-    #        assert_array_equal(subsm.forward(data[0:1].copy()), [sids])
-    #        assert_equal(subsm.get_outsize(), 4)
-    #    assert_array_equal([subsm.is_valid_inid(i) for i in range(16)], bsubset)
+    # test subsets
+    sids = [3,4,5,6]
+    bsubset = N.zeros(16, dtype='bool')
+    bsubset[sids] = True
+    subsets = [sids, slice(3,7), bsubset, [3,3,4,4,6,6,6,5]]
+    # all test subset result in equivalent masks, hence should do the same to
+    # the mapper and result in identical behavior
+    for st in sms:
+        print st
+        for i, sub in enumerate(subsets):
+            # shallow copy
+            orig = copy(st)
+            subsm = FeatureSliceMapper(sub)
+            # should do copy-on-write for all important stuff!!
+            assert_true(orig.is_mergable(subsm))
+            orig += subsm
+            print orig
+            # test if selection did its job
+            print i
+            if i == 3:
+                # special case of multiplying features
+                assert_array_equal(orig.forward1(data[0].copy()), subsets[i])
+            else:
+                assert_array_equal(orig.forward1(data[0].copy()), sids)
 
     ## all of the above shouldn't change the original mapper
     #assert_array_equal(sm.get_mask(), N.arange(16))
