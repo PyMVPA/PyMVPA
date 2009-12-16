@@ -16,6 +16,7 @@ import sys
 import numpy as N
 from mvpa.support.copy import deepcopy
 from mvpa.base.collections import DatasetAttribute
+from mvpa.base.dataset import _expand_attribute
 
 if __debug__:
     from mvpa.base import debug
@@ -35,7 +36,7 @@ if externals.exists('nifti', raiseException=True):
         __name__ = oldname
 
 from mvpa.datasets.base import Dataset
-from mvpa.mappers.base import CombinedMapper, FeatureSubsetMapper
+from mvpa.mappers.base import CombinedMapper
 from mvpa.mappers.metric import DescreteMetric, cartesianDistance
 from mvpa.mappers.flatten import FlattenMapper
 from mvpa.base import warning
@@ -172,14 +173,13 @@ class NiftiDataset(Dataset):
             dsarray = dataset.a.mapper.reverse(data)
         else:
             dsarray = dataset.a.mapper.reverse1(data)
-        return NiftiImage(dsarray, dataset.a.niftihdr)
+        return NiftiImage(dsarray, dataset.a.imghdr)
 
 
-def nifti_dataset(samples, labels=None, chunks=None, mask=None, enforce_dim=4,
-        space=None):
+def fmri_dataset(samples, labels=None, chunks=None, mask=None,
+                 sprefix='voxels', tprefix='time'):
     # load the samples
-    niftisamples = getNiftiFromAnySource(samples, ensure=True,
-                                         enforce_dim=enforce_dim)
+    niftisamples = getNiftiFromAnySource(samples, ensure=True, enforce_dim=4)
     samples = niftisamples.data
 
     # figure out what the mask is, but onyl handle known cases, the rest
@@ -192,31 +192,48 @@ def nifti_dataset(samples, labels=None, chunks=None, mask=None, enforce_dim=4,
     else:
         mask = getNiftiData(niftimask)
 
+    # compile the samples attributes
+    sa = {}
+    if not labels is None:
+        sa['labels'] = _expand_attribute(labels, samples.shape[0], 'labels')
+    if not chunks is None:
+        sa['chunks'] = _expand_attribute(chunks, samples.shape[0], 'chunks')
+
     # create a dataset
-    ds = NiftiDataset.from_basic(samples, labels=labels, chunks=chunks,
-                                 mapper=FlattenMapper(shape=samples.shape[1:],
-                                                      inspace=space))
+    ds = NiftiDataset(samples, sa=sa)
+    if sprefix is None:
+        inspace = None
+    else:
+        inspace = sprefix + '_indices'
+    ds = ds.get_mapped(FlattenMapper(shape=samples.shape[1:], inspace=inspace))
+
     # now apply the mask if any
     if not mask is None:
         flatmask = ds.a.mapper.forward1(mask != 0)
-        print ds.a.mapper.get_outsize()
-        mapper = FeatureSubsetMapper(flatmask)
-        print mapper.get_insize()
-        print mapper.get_outsize()
-        ds = ds.get_mapped(FeatureSubsetMapper(flatmask))
+        # direct slicing is possible, and it is potentially more efficient,
+        # so let's use it
+        #mapper = FeatureSliceMapper(flatmask)
+        #ds = ds.get_mapped(FeatureSliceMapper(flatmask))
+        ds = ds[:, flatmask]
 
     # store interesting props in the dataset
-    # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
-    ds.a.elementsize = [i for i in reversed(niftisamples.voxdim)]
     # do not put the whole NiftiImage in the dict as this will most
     # likely be deepcopy'ed at some point and ensuring data integrity
     # of the complex Python-C-Swig hybrid might be a tricky task.
     # Only storing the header dict should achieve the same and is more
     # memory efficient and even simpler
-    ds.a['niftihdr'] = niftisamples.header
+    ds.a['imghdr'] = niftisamples.header
     # If there is a space assigned , store the extent of that space
-    if space is not None:
-        ds.a[space + '_extent'] = samples.shape[1:]
+    if sprefix is not None:
+        ds.a[sprefix + '_dim'] = samples.shape[1:]
+        # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
+        ds.a[sprefix + '_eldim'] = [i for i in reversed(niftisamples.voxdim)]
+        # TODO extend with the unit
+    if tprefix is not None:
+        ds.sa[tprefix + '_indices'] = N.arange(len(ds), dtype='int')
+        ds.sa[tprefix + '_coords'] = N.arange(len(ds), dtype='float') \
+                                     * niftisamples.header['pixdim'][4]
+        # TODO extend with the unit
 
     return ds
 
@@ -281,7 +298,7 @@ class ERNiftiDataset(Dataset):
         # of the complex Python-C-Swig hybrid might be a tricky task.
         # Only storing the header dict should achieve the same and is more
         # memory efficient and even simpler
-        dsattr = {'niftihdr': nifti.header}
+        dsattr = {'imghdr': nifti.header}
 
         # determine TR, take from NIfTI header by default
         dt = nifti.rtime
@@ -371,8 +388,8 @@ class ERNiftiDataset(Dataset):
         else:
             pass
 
-        return NiftiImage(mr, self.niftihdr)
+        return NiftiImage(mr, self.imghdr)
 
 
-    niftihdr = property(fget=lambda self: self._dsattr['niftihdr'],
+    imghdr = property(fget=lambda self: self._dsattr['imghdr'],
                         doc='Access to the NIfTI header dictionary.')
