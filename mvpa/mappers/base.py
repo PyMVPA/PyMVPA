@@ -364,8 +364,8 @@ class FeatureSliceMapper(Mapper):
         #                 dtype=data.dtype)
         # let's do it a little awkward but pass subclasses through
         # suggestions for improvements welcome
-        mapped = data.copy() # make sure we the array data
-        mapped.resize(data.shape[:1] + self.__dshape)
+        mapped = data.copy() # make sure we own the array data
+        mapped.resize(data.shape[:1] + self.__dshape, refcheck=False)
         mapped.fill(0)
         mapped[:, self._slicearg] = data
         return mapped
@@ -376,6 +376,46 @@ class FeatureSliceMapper(Mapper):
         if self.__dshape is None:
             # XXX what about arrays of generic objects???
             self.__dshape = data.shape[1:]
+
+
+    def is_mergable(self, other):
+        """Checks whether a mapper can be merged into this one.
+        """
+        if not isinstance(other, FeatureSliceMapper):
+            return False
+        # we can always merge if the slicing arg can be sliced itself (i.e. it
+        # is not a slice-object... unless it doesn't really slice
+        # we do not want to expand slices into index lists to become mergable,
+        # since that would cause cheap view-based slicing to become expensive
+        # copy-based slicing
+        if isinstance(self._slicearg, slice) \
+           and not self._slicearg == slice(None):
+               return False
+
+        return True
+
+
+    def __iadd__(self, other):
+        # the checker has to catch all awkward conditions
+        if not self.is_mergable(other):
+            raise ValueError("Mapper cannot be merged into target "
+                             "(got: '%s', target: '%s')."
+                             % (repr(other), repr(self)))
+
+        # either replace non-slicing, or slice
+        if isinstance(self._slicearg, slice) and self._slicearg == slice(None):
+            self._slicearg = other._slicearg
+            return self
+        if self._slicearg.dtype.type is N.bool_:
+            # simply convert it into an index array --prevents us from copying a
+            # lot and allows for sliceargs such as [3,3,4,4,5,5]
+            self._slicearg = self._slicearg.nonzero()[0]
+            # do not return since it needs further processing
+        if self._slicearg.dtype.char in N.typecodes['AllInteger']:
+            self._slicearg = self._slicearg[self._slicearg][other._slicearg]
+            return self
+
+        raise RuntimeError("This should not happen. Undetected condition!")
 
 
 
