@@ -22,16 +22,16 @@ import os
 from mvpa import pymvpa_dataroot
 from mvpa.misc.plot import plotFeatureHist, plotSamplesDistance
 from mvpa import cfg
-from mvpa.datasets.nifti import nifti_dataset
+from mvpa.datasets.nifti import fmri_dataset
 from mvpa.misc.io import SampleAttributes
 from mvpa.datasets.miscfx import zscore, detrend
 
 # load example fmri dataset
 attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
-ds = nifti_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                   labels=attr.labels,
-                   chunks=attr.chunks,
-                   mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+                  labels=attr.labels,
+                  chunks=attr.chunks,
+                  mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 # only use the first 5 chunks to save some cpu-cycles
 ds = ds[ds.chunks < 5]
