@@ -102,6 +102,9 @@ class _SVM(Classifier):
                   doc='Tolerance of termination criteria. (For nu-SVM default is 0.001)')
         }
 
+    _KNOWN_PARAMS = ()                  # just a placeholder to please lintian
+    """Parameters which are specific to a given instantiation of SVM
+    """
 
     _clf_internals = [ 'svm', 'kernel-based' ]
 
@@ -232,29 +235,33 @@ class _SVM(Classifier):
         return res
 
     def _getCvec(self, data):
-        if self.params.isKnown('C'):#svm_type in [_svm.svmc.C_SVC]:
-            C = self.params.C
-            if not operator.isSequenceType(C):
-                # we were not given a tuple for balancing between classes
-                C = [C]
+        """Estimate default and return scaled by it negative user's C values
+        """
+        if not self.params.isKnown('C'):#svm_type in [_svm.svmc.C_SVC]:
+            raise RuntimeError, \
+                  "Requested estimation of default C whenever C was not set"
 
-            Cs = list(C[:])               # copy
-            for i in xrange(len(Cs)):
-                if Cs[i] < 0:
-                    Cs[i] = self._getDefaultC(data.samples)*abs(Cs[i])
-                    if __debug__:
-                        debug("SVM", "Default C for %s was computed to be %s" %
-                              (C[i], Cs[i]))
+        C = self.params.C
+        if not operator.isSequenceType(C):
+            # we were not given a tuple for balancing between classes
+            C = [C]
 
-            return Cs
-                
+        Cs = list(C[:])               # copy
+        for i in xrange(len(Cs)):
+            if Cs[i] < 0:
+                Cs[i] = self._getDefaultC(data.samples)*abs(Cs[i])
+                if __debug__:
+                    debug("SVM", "Default C for %s was computed to be %s" %
+                          (C[i], Cs[i]))
+
+        return Cs
+
     def _getDefaultC(self, data):
         """Compute default C
 
         TODO: for non-linear SVMs
         """
 
-        # TODO: kernel_type_literal has been removed, fix this
         if self.params.kernel.__kernel_name__ == 'linear':
             datasetnorm = N.mean(N.sqrt(N.sum(data*data, axis=1)))
             value = 1.0/(datasetnorm*datasetnorm)
@@ -371,6 +378,6 @@ sensitivity.
 
 
 # populate names in parameters
-for k,v in _SVM._SVM_PARAMS.iteritems():
+for k, v in _SVM._SVM_PARAMS.iteritems():
     v._setName(k)
 
