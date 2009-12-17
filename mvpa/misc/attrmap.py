@@ -66,9 +66,9 @@ class AttributeMap(object):
     def __repr__(self):
         """String representation of AttributeMap
         """
-        s = "%s(%s)" % (self.__class__.__name__,
-                        {False: repr(self._nmap),
-                         True: ''} % self._nmap)
+        return "%s(%s)" % (self.__class__.__name__,
+                           {False: repr(self._nmap),
+                            True: ''}[self._nmap is None])
 
     def __len__(self):
         if self._nmap is None:
