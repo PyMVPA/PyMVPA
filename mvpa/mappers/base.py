@@ -51,17 +51,40 @@ class Mapper(object):
 
         Parameters
         ----------
-        data: Dataset-like, anything
+        data: Dataset-like, (at least 2D)-array-like
           Typically this is a `Dataset`, but it might also be a plain data
           array, or even something completely different(TM) that is supported
           by a subclass' implementation. If such an object is Dataset-like it
           is handled by a dedicated method that also transforms dataset
-          attributes if necessary.
+          attributes if necessary. If an array-like is passed, it has to be
+          at least two-dimensional, with the first axis separating samples
+          or observations. For single samples `forward1()` might be more
+          appropriate.
         """
         if is_datasetlike(data):
             return self._forward_dataset(data)
         else:
+            if __debug__:
+                if hasattr(data, 'ndim') and data.ndim < 2:
+                    raise ValueError(
+                        'Mapper.forward() only support mapping of data with '
+                        'at least two dimensions, where the first axis '
+                        'separates samples/observations. Consider using '
+                        'Mapper.forward1() instead.')
             return self._forward_data(data)
+
+
+    def forward1(self, data):
+        """Wrapper method to map single samples.
+
+        It is basically identical to `forward()`, but also accepts
+        one-dimensional arguments. The map whole dataset this method cannot
+        be used. but `forward()` handles them.
+        """
+        if isinstance(data, N.ndarray):
+            return self.forward(data[N.newaxis])[0]
+        else:
+            return self.forward(N.array([data]))[0]
 
 
     def _forward_data(self, data):
@@ -111,6 +134,19 @@ class Mapper(object):
             return self._reverse_dataset(data)
         else:
             return self._reverse_data(data)
+
+
+    def reverse1(self, data):
+        """Wrapper method to map single samples.
+
+        It is basically identical to `reverse()`, but accepts one-dimensional
+        arguments. To map whole dataset this method cannot be used. but
+        `reverse()` handles them.
+        """
+        if isinstance(data, N.ndarray):
+            return self.reverse(data[N.newaxis])[0]
+        else:
+            return self.reverse(N.array([data]))[0]
 
 
     def _reverse_data(self, data):
@@ -238,82 +274,10 @@ class Mapper(object):
         pass
 
 
-    def _get_outids(self, in_ids):
-        """Determine the output ids from a list of input space id/coordinates.
-
-        Parameters
-        ----------
-        in_ids : list
-          List of input ids whos output ids shall be determined.
-
-        Returns
-        -------
-        list
-          The list that contains all corresponding output ids. The default
-          implementation returns the `in_ids` as is.
-        """
-        # reimplement in derived classes to actually perform something useful
-        return in_ids
-
-
     #
     # The following methods provide common functionality for all mappers
     # and there should be no immediate need to reimplement them
     #
-    def get_outids(self, in_ids=None, **kwargs):
-        """Determine the output ids from a list of input space id/coordinates.
-
-        Parameters
-        ----------
-        in_ids : list
-          List of input ids whos output ids shall be determined.
-        **kwargs: anything
-          Further qualification of coordinates in particular spaces. Spaces are
-          identified by the respected keyword and the values expresses an
-          additional criterion. If the mapper has any information about the
-          given space it uses this information to further restrict the set of
-          output ids. Information about unkown spaces is returned as is.
-
-        Returns
-        -------
-        (list, dict)
-          The list that contains all corresponding output ids. The default
-          implementation returns an empty list -- meaning there is no
-          one-to-one, or one-to-many correspondance of input and output feature
-          spaces. The dictionary contains all space-related information that
-          have not been processed by the mapper (i.e. the spaces they referred
-          to are unknown to the mapper. By default all additional keyword
-          arguments are returned as is.
-        """
-        ourspace = self.get_inspace()
-        # first contrain the set of in_ids if a known space is given
-        if not ourspace is None and kwargs.has_key(ourspace):
-            # merge with the current set, if there is any
-            if in_ids is None:
-                in_ids = kwargs[ourspace]
-            else:
-                in_ids = list(set(in_ids).union(kwargs[ourspace]))
-
-            # remove the space contraint, since it has been processed
-            del kwargs[ourspace]
-
-        # return early if there is nothing to do
-        if in_ids is None:
-            return ([], kwargs)
-
-        if __debug__:
-            # check for proper coordinate (also handle the case of 1d coords
-            # given
-            for in_id in in_ids:
-                if not self.is_valid_inid(in_id):
-                    raise ValueError(
-                            "Invalid input id/coordinate (%s) for mapper '%s' "
-                            % (str(in_id), self))
-
-        # this whole thing only works for C-ordered arrays
-        return (self._get_outids(in_ids), kwargs)
-
-
     def __repr__(self):
         return "%s(inspace=%s)" \
                 % (self.__class__.__name__,
@@ -342,54 +306,33 @@ class Mapper(object):
 
 
 
-class FeatureSubsetMapper(Mapper):
+class FeatureSliceMapper(Mapper):
     """Mapper to select a subset of features.
-
-    This mapper only operates on one-dimensional samples or two-dimensional
-    samples matrices. If necessary it can be combined for FlattenMapper to
-    handle multidimensional data.
     """
-    def __init__(self, mask, **kwargs):
+    def __init__(self, slicearg, dshape=None, **kwargs):
         """
         Parameters
         ----------
-        mask : array, int
-          This is a one-dimensional array whos non-zero elements define both
-          the feature subset and the data shape the mapper is going to handle.
-          In case `mask` is an int, it is expaned into a boolean vector consisting
-          of as many `True` elements.
+        slicearg : int, list(int), array(int), array(bool)
+        dshape : tuple
         """
         Mapper.__init__(self, **kwargs)
-        self.__forwardmap = None
+        # store it here, might be modified later
+        self.__dshape = dshape
 
-        if isinstance(mask, int):
-            self.__mask = N.ones(mask, dtype='bool')
-        else:
-            if not len(mask.shape) == 1:
-                raise ValueError("The mask has to be a one-dimensional vector. "
-                                 "For multidimensional data consider FlattenMapper "
-                                 "before running SubsetMapper.")
-            self.__mask = (mask != 0)
-        self.__masknonzerosize = N.sum(self.__mask) # number of non-zeros
+        # convert int sliceargs into lists to prevent getting scalar values when
+        # slicing
+        if isinstance(slicearg, int):
+            slicearg = [slicearg]
+        self._slicearg = slicearg
 
 
     def __repr__(self):
-        s = super(FeatureSubsetMapper, self).__repr__()
-        return s.replace("(", "(mask=%s," % repr(self.__mask), 1)
-
-
-    def __init_forwardmap(self):
-        """Init the forward coordinate map needed for id translation.
-
-        This is a separate function for lazy-computation of this map
-        """
-        # Store forward mapping (ie from coord into outId)
-        # we do not initialize to save some CPU-cycles, especially for
-        # large datasets -- This should be save, since we only need it
-        # for coordinate lookup that is limited to non-zero mask elements
-        # which are initialized next
-        self.__forwardmap = N.empty(self.__mask.shape, dtype=N.int64)
-        self.__forwardmap[self.__mask] = N.arange(self.__masknonzerosize)
+        s = super(FeatureSliceMapper, self).__repr__()
+        return s.replace("(",
+                         "(slicearg=%s, dshape=%s, "
+                          % (repr(self._slicearg), repr(self.__dshape)),
+                         1)
 
 
     def _forward_data(self, data):
@@ -400,19 +343,7 @@ class FeatureSubsetMapper(Mapper):
         data : array-like
           Either one-dimensional sample or two-dimensional samples matrix.
         """
-        datadim = len(data.shape)
-        # single sample and matching data shape
-        if datadim == 1 and data.shape == self.__mask.shape:
-            return data[self.__mask]
-        # multiple samples and matching sample shape
-        elif datadim == 2 and data.shape[1:] == self.__mask.shape:
-            return data[:, self.__mask]
-        else:
-            raise ValueError(
-                  "Shape of the to be mapped data, does not match the mapper "
-                  "mask %s. Only one (optional) additional dimension (for "
-                  "multiple samples) exceeding the mask shape is supported."
-                    % `self.__mask.shape`)
+        return data[:, self._slicearg]
 
 
     def _reverse_data(self, data):
@@ -423,174 +354,68 @@ class FeatureSubsetMapper(Mapper):
         data : array-like
           Either one-dimensional sample or two-dimensional samples matrix.
         """
-        datadim = len(data.shape)
-
-        # single sample, matching shape
-        if datadim == 1 and len(data) == self.__masknonzerosize:
-            # Verify that we are trying to reverse data of proper dimension.
-            # In 1D case numpy would not complain and will broadcast
-            # the values
-            mapped = N.zeros(self.__mask.shape, dtype=data.dtype)
-            mapped[self.__mask] = data
-            return mapped
-        # multiple samples, matching shape
-        elif datadim == 2 and len(data[0]) == self.__masknonzerosize:
-            mapped = N.zeros(data.shape[:1] + self.__mask.shape,
-                             dtype=data.dtype)
-            mapped[:, self.__mask] = data
-            return mapped
-        else:
-            raise ValueError(
-                  "Only 2d or 1d data can be reverse mapped. Additionally, "
-                  "each sample vector has to match the size of the mask. "
-                  "Got data of shape %s, when mask non-zeros are %i"
-                  % (data.shape, self.__masknonzerosize))
+        if self.__dshape is None:
+            raise RuntimeError(
+                "Cannot reverse-map data since the original data shape is "
+                "unknown. Either set `dshape` in the constructor, or call "
+                "train().")
+        # this wouldn't preserve ndarray subclasses
+        #mapped = N.zeros(data.shape[:1] + self.__dshape,
+        #                 dtype=data.dtype)
+        # let's do it a little awkward but pass subclasses through
+        # suggestions for improvements welcome
+        mapped = data.copy() # make sure we own the array data
+        mapped.resize(data.shape[:1] + self.__dshape, refcheck=False)
+        mapped.fill(0)
+        mapped[:, self._slicearg] = data
+        return mapped
 
 
-    def _train(self, dataset):
-        # nothing to be trained here
-        pass
+    @accepts_dataset_as_samples
+    def _train(self, data):
+        if self.__dshape is None:
+            # XXX what about arrays of generic objects???
+            self.__dshape = data.shape[1:]
 
 
-    def get_insize(self):
-        """Return the length of the input space vectors."""
-        return len(self.__mask)
-
-
-    def get_outsize(self):
-        """OutSize is a number of non-0 elements in the mask"""
-        return self.__masknonzerosize
-
-
-    def get_mask(self, copy=True):
-        """By default returns a copy of the current mask.
-
-        Parameters
-        ----------
-        copy : bool
-          If False a reference to the mask is returned, a copy otherwise.
-          This shared mask must not be modified!
+    def is_mergable(self, other):
+        """Checks whether a mapper can be merged into this one.
         """
-        if copy:
-            return self.__mask.copy()
-        else:
-            return self.__mask
-
-
-    def is_valid_outid(self, id):
-        """Return whether a particular id is a valid output id/coordinate.
-
-        Parameters
-        ----------
-        id : int
-        """
-        return id >=0 and id < self.get_outsize()
-
-
-    def is_valid_inid(self, id):
-        """Return whether a particular id is a valid input id/coordinate.
-
-        Parameters
-        ----------
-        id : int
-        """
-        # if it exceeds range it cannot be right
-        if not (id >=0 and id < len(self.__mask)):
+        if not isinstance(other, FeatureSliceMapper):
             return False
-        # otherwise look into the mask
-        return self.__mask[id]
+        # we can always merge if the slicing arg can be sliced itself (i.e. it
+        # is not a slice-object... unless it doesn't really slice
+        # we do not want to expand slices into index lists to become mergable,
+        # since that would cause cheap view-based slicing to become expensive
+        # copy-based slicing
+        if isinstance(self._slicearg, slice) \
+           and not self._slicearg == slice(None):
+               return False
+
+        return True
 
 
-    def _get_outids(self, in_ids):
-        # lazy forward mapping
-        if self.__forwardmap is None:
-            self.__init_forwardmap()
-        return [self.__forwardmap[in_id] for in_id in in_ids]
+    def __iadd__(self, other):
+        # the checker has to catch all awkward conditions
+        if not self.is_mergable(other):
+            raise ValueError("Mapper cannot be merged into target "
+                             "(got: '%s', target: '%s')."
+                             % (repr(other), repr(self)))
 
+        # either replace non-slicing, or slice
+        if isinstance(self._slicearg, slice) and self._slicearg == slice(None):
+            self._slicearg = other._slicearg
+            return self
+        if self._slicearg.dtype.type is N.bool_:
+            # simply convert it into an index array --prevents us from copying a
+            # lot and allows for sliceargs such as [3,3,4,4,5,5]
+            self._slicearg = self._slicearg.nonzero()[0]
+            # do not return since it needs further processing
+        if self._slicearg.dtype.char in N.typecodes['AllInteger']:
+            self._slicearg = self._slicearg[other._slicearg]
+            return self
 
-    def select_out(self, slicearg, cow=True):
-        """Limit the feature subset selection.
-
-        Parameters
-        ----------
-        slicearg : array(bool), list, slice
-          Any valid Numpy slicing argument defining a subset of the current
-          feature set.
-        cow: bool
-          For internal use only!
-          If `True`, it is safe to call the function on a shallow copy of
-          another FeatureSubsetMapper instance without affecting the original
-          mapper instance. If `False`, modifications done to one instance
-          invalidate the other.
-
-        Seealso
-        -------
-        `FeatureSubsetMapper.discard_out()`
-        """
-        # create a boolean mask covering all present 'out' features
-        # before subset selection
-        submask = N.zeros(self.__masknonzerosize, dtype='bool')
-        # now apply the slicearg to it to enable the desired features
-        # everything slicing that numpy supports is possible and even better
-        # the order of ids in the case of a list argument is irrelevant
-        submask[slicearg] = True
-        # call the utility method
-        self.__select_out(submask, cow)
-
-
-    def discard_out(self, slicearg, cow=True):
-        """Limit the feature subset selection.
-
-        Parameters
-        ----------
-        slicearg : array(bool), list, slice
-          Any valid Numpy slicing argument defining a subset of the current
-          feature set that should be discarded.
-        cow: bool
-          For internal use only!
-          If `True`, it is safe to call the function on a shallow copy of
-          another FeatureSubsetMapper instance without affecting the original
-          mapper instance. If `False`, modifications done to one instance
-          invalidate the other.
-
-        Seealso
-        -------
-        `FeatureSubsetMapper.select_out()`
-        """
-        # create a boolean mask covering all present 'out' features
-        # before subset selection
-        submask = N.ones(self.__masknonzerosize, dtype='bool')
-        # now apply the slicearg to it to disable the desired features
-        # everything slicing that numpy supports is possible and even better
-        # the order of ids in the case of a list argument is irrelevant
-        submask[slicearg] = False
-        # call the utility method
-        self.__select_out(submask, cow)
-
-
-    def __select_out(self, submask, cow):
-        if cow:
-            mask = self.__mask.copy()
-            # do not update the forwardmap right away but wait till it becomes
-            # necessary
-            self.__forwardmap = forwardmap = None
-        else:
-            mask = self.__mask
-            forwardmap = self.__forwardmap
-
-        # adjust the mask: self-masking will give current feature set, assigning
-        # the desired submask will do incremental masking
-        mask[mask] = submask
-        self.__masknonzerosize = N.sum(submask)
-        # regenerate forward map if not COW and lazy computing -- old values
-        # can remain since we only consider values with a corresponding mask
-        # element that is True
-        if not forwardmap is None:
-            forwardmap[mask] = N.arange(self.__masknonzerosize)
-
-        # reassign
-        self.__mask = mask
-        self.__forwardmap = forwardmap
+        raise RuntimeError("This should not happen. Undetected condition!")
 
 
 
@@ -879,60 +704,10 @@ class ChainMapper(Mapper):
         return self[-1].is_valid_outid(id)
 
 
-    def get_outids(self, in_ids=None, **kwargs):
-        """Determine the output ids from a list of input space id/coordinates.
-
-        See the documentation of this method in the base class for more
-        information. This implementation simply calls this method subsequently
-        for all mappers in the chain.
-        """
-        # first call the baseclass method to let it take care of any
-        # space-specific kwargs that apply to the chain mapper itself
-        # no in_ids will be transformed, since the base class implementation
-        # of _get_outids() does nothing by default
-        in_ids, kwargs = Mapper.get_outids(self, in_ids=in_ids, **kwargs)
-
-        # no feed it though the chain
-        for mapper in (self):
-            in_ids, kwargs = mapper.get_outids(in_ids, **kwargs)
-
-        return (in_ids, kwargs)
-
-
-    def __ensure_selectable_tail(self):
-        """Append a FeatureSubsetMapper to the chain if there is none yet."""
-        if not isinstance(self[-1], FeatureSubsetMapper):
-            self.append(FeatureSubsetMapper(self[-1].get_outsize()))
-
-
-    def select_out(self, slicearg, cow=True):
-        """Limit the feature subset selection.
-
-        To achieve this a FeatureSubsetMapper is appended to the mapper chain
-        (if necessary) and the arguments are passed to it.
-
-        See baseclass method for more information.
-        """
-        self.__ensure_selectable_tail()
-        self[-1].select_out(slicearg, cow)
-
-
-    def discard_out(self, slicearg, cow=True):
-        """Limit the feature subset selection.
-
-        To achieve this a FeatureSubsetMapper is appended to the mapper chain
-        (if necessary) and the arguments are passed to it.
-
-        See baseclass method for more information.
-        """
-        self.__ensure_selectable_tail()
-        self[-1].discard_out(slicearg, cow)
-
-
     def __repr__(self):
         s = Mapper.__repr__(self)
         m_repr = 'mappers=[%s]' % ', '.join([repr(m) for m in self])
-        return s.replace("(", "(%s," % m_repr, 1)
+        return s.replace("(", "(%s, " % m_repr, 1)
 
     #
     # Behave as a container
@@ -943,10 +718,11 @@ class ChainMapper(Mapper):
         The mapper's input size has to match the output size of the current
         chain.
         """
-        if not self.get_outsize() == mapper.get_insize():
-            raise ValueError("To be appended mapper does not match the output "
-                             "size of the current chain (%i vs. %i)."
-                             % (mapper.get_insize(),  self.get_outsize()))
+        # not checking, since get_outsize() is about to vanish
+        #if not self.get_outsize() == mapper.get_insize():
+        #    raise ValueError("To be appended mapper does not match the output "
+        #                     "size of the current chain (%s vs. %s)."
+        #                     % (mapper.get_insize(),  self.get_outsize()))
         self._mappers.append(mapper)
 
 
@@ -964,4 +740,12 @@ class ChainMapper(Mapper):
 
 
     def __getitem__(self, key):
-        return self._mappers[key]
+        # if just one is requested return just one, otherwise return a
+        # ChainMapper again
+        if isinstance(key, int):
+            return self._mappers[key]
+        else:
+         # operate on shallow copy of self
+         sliced = copy.copy(self)
+         sliced._mappers = self._mappers[key]
+         return sliced

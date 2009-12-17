@@ -26,10 +26,10 @@ if __debug__:
 # load PyMVPA example dataset
 #
 attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
-dataset = nifti_dataset(os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                        labels=attr.labels,
-                        chunks=attr.chunks,
-                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+dataset = fmri_dataset(os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+                       labels=attr.labels,
+                       chunks=attr.chunks,
+                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 #
 # preprocessing
@@ -80,7 +80,7 @@ for desc, clf in clfs:
             enable_states=['results'])
     cv(dataset)
 
-    results.append(cv.results)
+    results.append(cv.states.results)
     labels.append(desc)
 
 plotBars(results, labels=labels,

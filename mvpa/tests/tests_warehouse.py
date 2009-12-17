@@ -172,7 +172,7 @@ for kind, spec in specs.iteritems():
     labels = N.concatenate( ( N.repeat( 0, spec['perlabel'] ),
                               N.repeat( 1, spec['perlabel'] ) ) )
     chunks = N.asarray(range(nchunks)*(total/nchunks))
-    mask = N.ones( (3, 6, 6) )
+    mask = N.ones((3, 6, 6), dtype='bool')
     mask[0,0,0] = 0
     mask[1,3,2] = 0
     ds = Dataset.from_masked(samples=data, labels=labels, chunks=chunks,
