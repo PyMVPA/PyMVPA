@@ -26,13 +26,13 @@ from mvpa.suite import *
 # load PyMVPA example dataset
 attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes_literal.txt'),
                         literallabels=True)
-dataset = nifti_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                        labels=attr.labels,
-                        chunks=attr.chunks,
-                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+                       labels=attr.labels,
+                       chunks=attr.chunks,
+                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 # since we don't have a proper anatomical -- lets overlay on BOLD
-nianat = NiftiImage(dataset.O[0], header=dataset.a.niftihdr)
+nianat = NiftiImage(dataset.O[0], header=dataset.a.imghdr)
 
 # do chunkswise linear detrending on dataset
 detrend(dataset, perchunk=True, model='linear')
@@ -56,7 +56,7 @@ mri_args = {
     'interactive' : cfg.getboolean('examples', 'interactive', True),
     }
 
-fig = plotMRI(overlay=dataset.map2Nifti(sens),
+fig = plotMRI(overlay=dataset.map2nifti(sens),
               vlim=(0.5, None),
               #vlim_type="symneg_z",
               **mri_args)

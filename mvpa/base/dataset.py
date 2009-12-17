@@ -203,48 +203,42 @@ class Dataset(object):
           Dataset attributes collection.
 
         """
-        # sanity checks
-        #if not len(samples.shape) == 2:
-        #    raise ValueError('The samples array must be 2D or mappable into'
-        #                     ' 2D (current shape is: %s)'
-        #                     % str(samples.shape))
+        # conversions
+        if isinstance(samples, list):
+            samples = N.array(samples)
+        # Check all conditions we need to have for `samples` dtypes
+        if not hasattr(samples, 'dtype'):
+            raise ValueError(
+                "Dataset only supports dtypes as samples that have a `dtype` "
+                "attribute that behaves similiar to the one of an array-like.")
+        if not hasattr(samples, 'shape'):
+            raise ValueError(
+                "Dataset only supports dtypes as samples that have a `shape` "
+                "attribute that behaves similiar to the one of an array-like.")
+        if not len(samples.shape):
+            raise ValueError("Only `samples` with at least one axis are "
+                    "supported (got: %i)" % len(samples.shape))
+
+        # handling of 1D-samples
+        # i.e. 1D is treated as multiple samples with a single feature
+        if len(samples.shape) == 1:
+            samples = N.atleast_2d(samples).T
+
+        # that's all -- accepted
         self.samples = samples
 
-       # Everything in a dataset (except for samples) is organized in
+        # Everything in a dataset (except for samples) is organized in
         # collections
-        self.sa = SampleAttributesCollection(length=len(samples))
+        # Number of samples is .shape[0] for sparse matrix support
+        self.sa = SampleAttributesCollection(length=len(self))
         if not sa is None:
             self.sa.update(sa)
-        if hasattr(samples, 'shape'):
-            self.samples = N.atleast_2d(self.samples)
-            length = N.prod(self.samples.shape[1:])
-        else:
-            length = None
-        self.fa = FeatureAttributesCollection(length=length)
+        self.fa = FeatureAttributesCollection(length=self.nfeatures)
         if not fa is None:
             self.fa.update(fa)
         self.a = DatasetAttributesCollection()
         if not a is None:
             self.a.update(a)
-
-        # XXX should we make them conditional?
-        # samples attributes
-        # this should rather be self.sa.iteritems(), but there is none yet
-        for attr in self.sa.keys():
-            if not len(self.sa[attr].value) == self.nsamples:
-                raise ValueError("Length of samples attribute '%s' (%i) "
-                                 "doesn't match the number of samples (%i)"
-                                 % (attr,
-                                    len(self.sa[attr].value),
-                                    self.nsamples))
-        # feature attributes
-        for attr in self.fa.keys():
-            if not len(self.fa[attr].value) == self.nfeatures:
-                raise ValueError("Length of feature attribute '%s' (%i) "
-                                 "doesn't match the number of features (%i)"
-                                 % (attr,
-                                    len(self.fa[attr].value),
-                                    self.nfeatures))
 
 
     def init_origids(self, which, attr='origids'):
@@ -271,61 +265,32 @@ class Dataset(object):
         """
         # now do evil to ensure unique ids across multiple datasets
         # so that they could be merged together
-        if not which is None:
-            thisid = str(id(self))
-            if which == 'samples' or which == 'both':
-                ids = N.array(['%s-%i' % (thisid, i)
-                                    for i in xrange(self.samples.shape[0])])
-                if self.sa.has_key(attr):
-                    self.sa[attr].value = ids
-                else:
-                    self.sa[attr] = ids
-            if which == 'features' or which == 'both':
-                ids = N.array(['%s-%i' % (thisid, i)
-                                    for i in xrange(self.samples.shape[1])])
-                if self.fa.has_key(attr):
-                    self.fa[attr].value = ids
-                else:
-                    self.fa[attr] = ids
+        thisid = str(id(self))
+        if which == 'samples' or which == 'both':
+            ids = N.array(['%s-%i' % (thisid, i)
+                                for i in xrange(self.samples.shape[0])])
+            if self.sa.has_key(attr):
+                self.sa[attr].value = ids
+            else:
+                self.sa[attr] = ids
+        if which == 'features' or which == 'both':
+            ids = N.array(['%s-%i' % (thisid, i)
+                                for i in xrange(self.samples.shape[1])])
+            if self.fa.has_key(attr):
+                self.fa[attr].value = ids
+            else:
+                self.fa[attr] = ids
 
 
     def __copy__(self):
-        # first we create new collections of the right type for each of the
-        # three essential collections of a dataset
-        sa = self.sa.__class__(length=self.samples.shape[0])
-        sa.update(self.sa, copyvalues='shallow')
-        fa = self.fa.__class__(length=self.samples.shape[1])
-        fa.update(self.fa, copyvalues='shallow')
-        a = self.a.__class__()
-        a.update(self.a, copyvalues='shallow')
-
-        # and finally the samples
-        samples = self.samples.view()
-
-        # call the generic init
-        out = self.__class__(samples, sa=sa, fa=fa, a=a)
-        return out
+        return self.copy(deep=False)
 
 
     def __deepcopy__(self, memo=None):
-        # first we create new collections of the right type for each of the
-        # three essential collections of a dataset
-        sa = self.sa.__class__(length=self.samples.shape[0])
-        sa.update(self.sa, copyvalues='deep')
-        fa = self.fa.__class__(length=self.samples.shape[1])
-        fa.update(self.fa, copyvalues='deep')
-        a = self.a.__class__()
-        a.update(self.a, copyvalues='deep')
-
-        # and finally the samples
-        samples = copy.deepcopy(self.samples, memo)
-
-        # call the generic init
-        out = self.__class__(samples, sa=sa, fa=fa, a=a)
-        return out
+        return self.copy(deep=True, memo=memo)
 
 
-    def copy(self, deep=True):
+    def copy(self, deep=True, sa=None, fa=None, a=None, memo=None):
         """Create a copy of a dataset.
 
         By default this is going to be a deep copy of the dataset, hence no
@@ -338,11 +303,59 @@ class Dataset(object):
           contains only views of the samples, sample attributes and feature
           feature attributes, as well as shallow copies of all dataset
           attributes.
+        sa : list, None
+          List of attributes in the sample attributes collection to include in
+          the copy of the dataset. If `None` all attributes are considered. If
+          an empty list is given, all attributes are stripped from the copy.
+        fa : list, None
+          List of attributes in the feature attributes collection to include in
+          the copy of the dataset. If `None` all attributes are considered If
+          an empty list is given, all attributes are stripped from the copy..
+        a : list, None
+          List of attributes in the dataset attributes collection to include in
+          the copy of the dataset. If `None` all attributes are considered If
+          an empty list is given, all attributes are stripped from the copy..
+        memo : dict
+          Developers only: This argument is only useful if copy() is called
+          inside the __deepcopy__() method and refers to the dict-arhument
+          `memo` in the Python documentation.
         """
         if deep:
-            return copy.deepcopy(self)
+            copyvalues='deep'
+            samples = copy.deepcopy(self.samples, memo)
         else:
-            return copy.copy(self)
+            samples = self.samples.view()
+            copyvalues='shallow'
+
+        # first we create new collections of the right type for each of the
+        # three essential collections of a dataset
+        sanew = self.sa.__class__(length=self.samples.shape[0])
+        # filter the attributes if necessary
+        if sa is None:
+            saorig = self.sa
+        else:
+            saorig = dict([(k, v) for k, v in self.sa.iteritems() if k in sa])
+        sanew.update(saorig, copyvalues=copyvalues)
+
+        # filter the attributes if necessary
+        if fa is None:
+            faorig = self.fa
+        else:
+            faorig = dict([(k, v) for k, v in self.fa.iteritems() if k in fa])
+        fanew = self.fa.__class__(length=self.samples.shape[1])
+        fanew.update(faorig, copyvalues=copyvalues)
+
+        # filter the attributes if necessary
+        if a is None:
+            aorig = self.a
+        else:
+            aorig = dict([(k, v) for k, v in self.a.iteritems() if k in a])
+        anew = self.a.__class__()
+        anew.update(aorig, copyvalues=copyvalues)
+
+        # call the generic init
+        out = self.__class__(samples, sa=sanew, fa=fanew, a=anew)
+        return out
 
 
     def __iadd__(self, other):
@@ -416,16 +429,11 @@ class Dataset(object):
             if isinstance(a, int):
                 args[i] = [a]
 
-        # if we get an slicing array for feature selection and it is *not* 1D
-        # try feeding it through the mapper (if there is any)
-        if isinstance(args[1], N.ndarray) and len(args[1].shape) > 1 and \
-                self.a.has_key('mapper'):
-                    args[1] = self.a.mapper.forward(args[1])
-
         # simultaneous slicing of numpy arrays only yields intended results
         # if at least one of the slicing args is an actual slice and not
         # and index list are selection mask vector
-        if N.any([isinstance(a, slice) for a in args]):
+        if isinstance(self.samples, N.ndarray) \
+           and N.any([isinstance(a, slice) for a in args]):
             samples = self.samples[args[0], args[1]]
         else:
             # in all other cases we have to do the selection sequentially
@@ -473,10 +481,6 @@ class Dataset(object):
             # assign to target collection
             a[attr.name] = newattr
 
-        # and adjusting the mapper (if any)
-        if a.has_key('mapper'):
-            a['mapper'].value.select_out(args[1])
-
         # and after a long way instantiate the new dataset of the same type
         return self.__class__(samples, sa=sa, fa=fa, a=a)
 
@@ -503,17 +507,24 @@ class Dataset(object):
 
 
     def __array__(self, dtype=None):
+        # another possibility would be converting .todense() for sparse data
+        # but that might easily kill the machine ;-)
+        if not hasattr(self.samples, '__array__'):
+            raise RuntimeError(
+                "This Dataset instance cannot be used like a Numpy array since "
+                "its data-container does not provide an '__array__' methods. "
+                "Container type is %s." % type(self.samples))
         return self.samples.__array__(dtype)
 
-    def get_nfeatures(self):
-        if hasattr(self.samples, 'shape'):
-            return self.samples.shape[1]
-        else:
-            return None
+
+    def __len__(self):
+        return self.shape[0]
 
     # shortcut properties
-    nsamples = property(fget=lambda self:len(self.samples))
-    nfeatures = property(fget=get_nfeatures)
+    nsamples = property(fget=lambda self:len(self))
+    nfeatures = property(fget=lambda self:self.shape[1])
+    shape = property(fget=lambda self:self.samples.shape)
+
 
 def datasetmethod(func):
     """Decorator to easily bind functions to a Dataset class
