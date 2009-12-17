@@ -48,16 +48,21 @@ class AttributeMap(object):
     >>> am.to_numeric(['eins', 'zwei', 'drei'])
     array([11, 22, 33])
     """
-    def __init__(self, map=None):
+    def __init__(self, map=None, mapnumeric=False):
         """
         Parameters
         ----------
         map : dict
           Custom dict with literal keys mapping to numerical values.
+        mapnumeric : bool
+          In some cases it is necessary to map numeric labels too, for
+          instance when target labels should be from a specific set,
+          e.g. (-1, +1).
 
         Please see the class documentation for more information.
         """
         self.clear()
+        self.mapnumeric = mapnumeric
         if not map is None:
             if not isinstance(map, dict):
                 raise ValueError("Custom map need to be a dict.")
@@ -66,9 +71,12 @@ class AttributeMap(object):
     def __repr__(self):
         """String representation of AttributeMap
         """
-        return "%s(%s)" % (self.__class__.__name__,
-                           {False: repr(self._nmap),
-                            True: ''}[self._nmap is None])
+        args = []
+        if self._nmap:
+            args.append(repr(self._nmap)),
+        if self.mapnumeric:
+            args.append('mapnumeric=True')
+        return "%s(%s)"  % (self.__class__.__name__, ', '.join(args))
 
     def __len__(self):
         if self._nmap is None:
@@ -123,7 +131,7 @@ class AttributeMap(object):
         attr = N.asanyarray(attr)
 
         # no mapping if already numeric
-        if not N.issubdtype(attr.dtype, 'c'):
+        if not N.issubdtype(attr.dtype, 'c') and not self.mapnumeric:
             return attr
 
         if self._nmap is None:

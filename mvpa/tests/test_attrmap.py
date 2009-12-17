@@ -63,3 +63,7 @@ def test_attrmap():
 
 def test_attrmap_repr():
     assert_equal(repr(AttributeMap()), "AttributeMap()")
+    assert_equal(repr(AttributeMap(dict(a=2, b=1))),
+                 "AttributeMap({'a': 2, 'b': 1})")
+    assert_equal(repr(AttributeMap(dict(a=2, b=1), mapnumeric=True)),
+                 "AttributeMap({'a': 2, 'b': 1}, mapnumeric=True)")
