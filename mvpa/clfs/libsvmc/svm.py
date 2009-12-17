@@ -161,15 +161,19 @@ class SVM(_SVM):
         if self.params.isKnown('C'):#svm_type in [_svm.svmc.C_SVC]:
             Cs = self._getCvec(dataset)
             if len(Cs)>1:
-                C0 = abs(C[0])
+                C0 = abs(Cs[0])
                 scale = 1.0/(C0)#*N.sqrt(C0))
                 # so we got 1 C per label
-                if len(Cs) != len(data.uniquelabels):
+                uls = self._attrmap.to_numeric(dataset.sa['labels'].unique)
+                if len(Cs) != len(uls):
                     raise ValueError, "SVM was parametrized with %d Cs but " \
                           "there are %d labels in the dataset" % \
-                          (len(Cs), len(data.uniquelabels))
+                          (len(Cs), len(dataset.uniquelabels))
                 weight = [ c*scale for c in Cs ]
+                # All 3 need to be set to take an effect
                 libsvm_param._setParameter('weight', weight)
+                libsvm_param._setParameter('nr_weight', len(weight))
+                libsvm_param._setParameter('weight_label', uls)
             libsvm_param._setParameter('C', Cs[0])
 
         self.__model = _svm.SVMModel(svmprob, libsvm_param)
