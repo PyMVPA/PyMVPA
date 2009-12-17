@@ -21,6 +21,7 @@ import mvpa.misc.neighborhood as ne
 from mvpa import pymvpa_dataroot
 
 def test_sphere():
+    # test sphere initialization
     s = ne.Sphere(3)
     assert_equal(len(s.coord_list), 7)
     target = array([array([-1,  0,  0]),
@@ -32,6 +33,7 @@ def test_sphere():
               array([1, 0, 0])])
     assert_array_equal(s.coord_list, target)
 
+    # test Sphere call
     target = [array([0, 1, 1]),
               array([1, 0, 1]),
               array([1, 1, 0]),
@@ -41,12 +43,22 @@ def test_sphere():
               array([2, 1, 1])]
     assert_array_equal(array(s((1,1,1))), target)
 
+    # test for larger diameter
     s = ne.Sphere(9)
     assert_equal(len(s.coord_list), 257)
 
+    # test extent keyword
     s = ne.Sphere(9,extent=(1,1,1))
     assert_array_equal(array(s((0,0,0))), array([[0,0,0]]))
 
+    # test Errors during initialisation and call
+    assert_raises(ValueError, ne.Sphere, 2)
+    assert_raises(ValueError, ne.Sphere, 1.0)
+    assert_raises(ValueError, ne.Sphere, 1, extent=(1))
+    assert_raises(ValueError, ne.Sphere, 1, extent=(1.0,1.0,1.0))
+    s = ne.Sphere(1)
+    assert_raises(ValueError, s, (1))
+    assert_raises(ValueError, s, (1.0,1.0,1.0))
 
 def test_query_enigne():
     # load example 4 d dataset
