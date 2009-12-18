@@ -514,6 +514,11 @@ class SVM(_SVM):
 
     def untrain(self):
         super(SVM, self).untrain()
+        # untrain/clean the kernel -- we might not allow to drag SWIG
+        # instance around BUT XXX -- make it work fine with
+        # CachedKernel -- we might not want to fully "untrain" in such
+        # case
+        self.params.kernel.cleanup()    # XXX unify naming
         if not self.params.retrainable:
             if __debug__:
                 debug("SG__", "Untraining %(clf)s and destroying sg's SVM",
