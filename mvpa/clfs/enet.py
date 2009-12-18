@@ -62,7 +62,7 @@ class ENET(Classifier):
 
     """
 
-    _clf_internals = [ 'enet', 'regression', 'linear', 'has_sensitivity',
+    __tags__ = [ 'enet', 'regression', 'linear', 'has_sensitivity',
                        'does_feature_selection'
                        ]
     def __init__(self, lm=1.0, trace=False, normalize=True,

@@ -71,7 +71,7 @@ class SVM(_SVM):
         }
 
     __default_kernel_class__ = LinearLSKernel
-    _clf_internals = _SVM._clf_internals + [ 'libsvm' ]
+    __tags__ = _SVM.__tags__ + [ 'libsvm' ]
 
     def __init__(self,
                  **kwargs):

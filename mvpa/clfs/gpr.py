@@ -63,7 +63,7 @@ class GPR(Classifier):
     log_marginal_likelihood_gradient = StateVariable(enabled=False,
         doc="Log Marginal Likelihood Gradient")
 
-    _clf_internals = [ 'gpr', 'regression', 'retrainable' ]
+    __tags__ = [ 'gpr', 'regression', 'retrainable' ]
 
 
     # NOTE XXX Parameters of the classifier. Values available as
@@ -116,15 +116,15 @@ class GPR(Classifier):
         self.__kernel = kernel
 
         # append proper clf_internal depending on the kernel
-        # TODO: add "_clf_internals" to kernels since the check
+        # TODO: add "__tags__" to kernels since the check
         #       below does not scale
         if isinstance(kernel, GeneralizedLinearKernel) or \
            isinstance(kernel, LinearKernel):
-            self._clf_internals += ['linear']
+            self.__tags__ += ['linear']
         else:
-            self._clf_internals += ['non-linear']
+            self.__tags__ += ['non-linear']
             if externals.exists('openopt'):
-                self._clf_internals += ['has_sensitivity']
+                self.__tags__ += ['has_sensitivity']
 
         # No need to initialize state variables. Unless they got set
         # they would raise an exception self.predicted_variances =
@@ -255,7 +255,7 @@ class GPR(Classifier):
             return GPRLinearWeights(self, **kwargs)
         elif flavor == 'model_select':
             # sanity check
-            if not ('has_sensitivity' in self._clf_internals):
+            if not ('has_sensitivity' in self.__tags__):
                 raise ValueError, \
                       "model_select flavor is not available probably " \
                       "due to not available 'openopt' module"

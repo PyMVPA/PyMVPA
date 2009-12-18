@@ -128,7 +128,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         #     ProxyClassifierSensitivityAnalyzer
         #     we don't have yet way to provide transformers thus internal call
         #     to getSensitivityAnalyzer in _call of them is not parametrized
-        if 'meta' in clf._clf_internals and len(map_.nonzero()[0])<2:
+        if 'meta' in clf.__tags__ and len(map_.nonzero()[0])<2:
             # Some meta classifiers (5% of ANOVA) are too harsh ;-)
             return
         for map__ in [map_]: # + sana.combined_analyzer.sensitivities:

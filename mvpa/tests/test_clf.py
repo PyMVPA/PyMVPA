@@ -136,7 +136,7 @@ class ClassifiersTests(unittest.TestCase):
         """Simple test if classifiers can generalize ok on simple data
         """
         te = CrossValidatedTransferError(TransferError(clf), NFoldSplitter())
-        nclasses = 2 * (1 + int('multiclass' in clf._clf_internals))
+        nclasses = 2 * (1 + int('multiclass' in clf.__tags__))
         if nclasses > 2 and 'on 5%(' in clf.descr:
             # skip those since they are barely applicable/testable here
             return
@@ -160,7 +160,7 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless('not yet trained' in summary1)
         # Need 2 different datasets for regressions/classifiers
         dsname = ('uni2small', 'sin_modulated')[
-            int('regression' in clf._clf_internals)]
+            int('regression' in clf.__tags__)]
         clf.train(datasets[dsname])
         summary = clf.summary()
         # It should get bigger ;)

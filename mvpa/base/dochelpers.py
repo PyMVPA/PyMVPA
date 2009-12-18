@@ -262,8 +262,8 @@ def enhancedDocString(item, *args, **kwargs):
         #     retrainable flag not available for those classes which
         #     can't actually do retraining. Although it is not
         #     actually that obvious for Meta Classifiers
-        if hasattr(item, '_clf_internals'):
-            clf_internals = item._clf_internals
+        if hasattr(item, '__tags__'):
+            clf_internals = item.__tags__
             skip_params.update([i for i in ('regression', 'retrainable')
                                 if not (i in clf_internals)])
 
