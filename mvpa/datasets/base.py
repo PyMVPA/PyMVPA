@@ -85,6 +85,13 @@ class Dataset(BaseDataset):
         # and adjusting the mapper (if any)
         if len(args) > 1 and 'mapper' in ds.a:
             # create matching mapper
+            # the mapper is just appended to the dataset. It could also be
+            # actually used to perform the slicing and prevent duplication of
+            # functionality between the Dataset.__getitem__ and the mapper.
+            # However, __getitem__ is sometimes more efficient, since it can
+            # slice samples and feature axis at the same time. Moreover, the
+            # mvpa.base.dataset.Dataset has no clue about mappers and should
+            # be fully functional without them.
             subsetmapper = FeatureSliceMapper(args[1],
                                               dshape=self.samples.shape[1:])
             ds._append_mapper(subsetmapper)
@@ -173,7 +180,8 @@ class Dataset(BaseDataset):
 
 
     @classmethod
-    def from_masked(cls, samples, labels=None, chunks=None, mask=None):
+    def from_masked(cls, samples, labels=None, chunks=None, mask=None,
+                    space=None):
         """
         """
         # need to have arrays
@@ -183,7 +191,7 @@ class Dataset(BaseDataset):
         if mask is None:
             mask = N.ones(samples.shape[1:], dtype='bool')
 
-        fm = FlattenMapper(shape=mask.shape)
+        fm = FlattenMapper(shape=mask.shape, inspace=space)
         flatmask = fm.forward1(mask)
         submapper = FeatureSliceMapper(flatmask, dshape=flatmask.shape)
         mapper = ChainMapper([fm, submapper])
