@@ -251,7 +251,7 @@ class SVM(_SVM):
             debug("SG_", "Creating labels instance")
 
         if 'regression' in self._clf_internals:
-            labels_ = N.asarray(dataset.sa['labels'], dtype='double')
+            labels_ = N.asarray(dataset.sa['labels'].value, dtype='double')
         else:
             la = dataset.sa['labels']
             ul = la.unique
@@ -266,11 +266,12 @@ class SVM(_SVM):
                 # can't use plain enumerate since we need them swapped
                 _labels_dict = dict([ (ul[i], i) for i in range(len(ul))])
 
-            self._label_map = AttributeMap(_labels_dict)
-            
+            # Create SG-customized attrmap to assure -1 / +1 if necessary
+            self._attrmap = AttributeMap(_labels_dict, mapnumeric=True)
+
             if __debug__:
                 debug("SG__", "Mapping labels using dict %s" % _labels_dict)
-            labels_ = self._label_map.to_numeric(la.value).astype(float)
+            labels_ = self._attrmap.to_numeric(la.value).astype(float)
 
         labels = shogun.Features.Labels(labels_)
         _setdebug(labels, 'Labels')
@@ -484,14 +485,14 @@ class SVM(_SVM):
         if ('regression' in self._clf_internals):
             predictions = values
         else:
-
-            if len(self._label_map.keys()) == 2:
+            if len(self._attrmap.keys()) == 2:
                 predictions = N.sign(values)
             else:
                 predictions = values
 
             # remap labels back adjusting their type
-            predictions = self._label_map.to_literal(predictions)
+            # XXX YOH: This is done by topclass now (needs RF)
+            #predictions = self._attrmap.to_literal(predictions)
 
             if __debug__:
                 debug("SG__", "Tuned predictions %s" % predictions)
