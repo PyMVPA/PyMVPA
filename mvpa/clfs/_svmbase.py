@@ -66,7 +66,7 @@ class _SVM(Classifier):
 
     # Placeholder: map kernel names to sensitivity classes, ie
     # 'linear':LinearSVMWeights, for each backend
-    _KNOWN_SENSITIVITIES={} 
+    _KNOWN_SENSITIVITIES={}
     kernel = Parameter(None, allowedtype=Kernel,
                        doc='Kernel object')
 
@@ -146,7 +146,7 @@ class _SVM(Classifier):
         k = kwargs.get('kernel', None)
         if k is None:
             kwargs['kernel'] = self.__default_kernel_class__()
-        if 'linear' in ('%s'%kwargs['kernel']).lower(): # not necessarily best
+        if 'linear' in ('%s'%kwargs['kernel']).lower(): # XXX not necessarily best
             self._clf_internals += [ 'linear', 'has_sensitivity' ]
         else:
             self._clf_internals += [ 'non-linear' ]
