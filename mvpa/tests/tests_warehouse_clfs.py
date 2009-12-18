@@ -21,6 +21,7 @@ from mvpa.clfs.knn import *
 
 from mvpa.clfs.warehouse import clfswh, regrswh
 from mvpa.base import externals
+from mvpa.base.types import accepts_dataset_as_samples
 
 # if have ANY svm implementation
 if externals.exists('libsvm') or externals.exists('shogun'):
@@ -41,6 +42,7 @@ class SameSignClassifier(Classifier):
         # we don't need that ;-)
         pass
 
+    @accepts_dataset_as_samples
     def _predict(self, data):
         data = N.asanyarray(data)
         datalen = len(data)

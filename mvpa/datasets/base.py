@@ -19,7 +19,7 @@ from mvpa.base.collections import SampleAttributesCollection, \
 from mvpa.base.dataset import Dataset as BaseDataset
 from mvpa.base.dataset import _expand_attribute
 from mvpa.misc.support import idhash as idhash_
-from mvpa.mappers.base import ChainMapper, FeatureSubsetMapper
+from mvpa.mappers.base import ChainMapper, FeatureSliceMapper
 from mvpa.mappers.flatten import FlattenMapper
 
 if __debug__:
@@ -55,7 +55,13 @@ class Dataset(BaseDataset):
             self.a.mapper = ChainMapper([pmapper])
 
         # is a chain mapper
-        self.a.mapper.append(mapper)
+        # merge slicer?
+        lastmapper = self.a.mapper[-1]
+        if isinstance(lastmapper, FeatureSliceMapper) \
+           and lastmapper.is_mergable(mapper):
+            lastmapper += mapper
+        else:
+            self.a.mapper.append(mapper)
 
 
     def __getitem__(self, args):
@@ -70,7 +76,7 @@ class Dataset(BaseDataset):
            and len(args[1].shape) > 1 \
            and self.a.has_key('mapper'):
             args = list(args)
-            args[1] = self.a.mapper.forward(args[1])
+            args[1] = self.a.mapper.forward1(args[1])
             args = tuple(args)
 
         # let the base do the work
@@ -78,7 +84,10 @@ class Dataset(BaseDataset):
 
         # and adjusting the mapper (if any)
         if len(args) > 1 and 'mapper' in ds.a:
-            ds.a.mapper.select_out(args[1])
+            # create matching mapper
+            subsetmapper = FeatureSliceMapper(args[1],
+                                              dshape=self.samples.shape[1:])
+            ds._append_mapper(subsetmapper)
 
         return ds
 
@@ -175,7 +184,8 @@ class Dataset(BaseDataset):
             mask = N.ones(samples.shape[1:], dtype='bool')
 
         fm = FlattenMapper(shape=mask.shape)
-        submapper = FeatureSubsetMapper(mask=fm.forward(mask))
+        flatmask = fm.forward1(mask)
+        submapper = FeatureSliceMapper(flatmask, dshape=flatmask.shape)
         mapper = ChainMapper([fm, submapper])
         return cls.from_basic(samples, labels=labels, chunks=chunks,
                               mapper=mapper)

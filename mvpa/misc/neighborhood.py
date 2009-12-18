@@ -13,6 +13,8 @@ from numpy import array
 import operator
 import sys
 
+from mvpa.clfs.distance import cartesianDistance
+
 class Sphere(object):
     """ 3 Dimensional sphere
 
@@ -34,32 +36,36 @@ class Sphere(object):
         Parameters
         ----------
         diameter : odd int
-            diameter of the sphere
-        extent :  int OR sequence of 3 ints
+            diameter of the sphere in voxels
+        extent :  sequence of 3 ints
             maximum index to consider
+            if this is not provided it will be the maximum value of an integer
 
         """
         self.extent = N.asanyarray(extent)
         if __debug__:
-            if diameter%2 != 1:
-                raise ValueError("Sphere diameter must be odd, but is: %d"
-                                % diameter)
-            if len(self.extent) != 3 \
+            if diameter%2 != 1 or type(diameter) is not int:
+                raise ValueError("Sphere diameter must be odd integer, but is: "+
+                                 str(diameter) + str(type(diameter)))
+            if self.extent.size != 3 \
                 or self.extent.dtype.char not in N.typecodes['AllInteger']:
-                raise ValueError("Sphere extent must be all integers, was: %s"
-                                % type(extent))
+                raise ValueError("Sphere extent must be 3 integers, was: %s"
+                                % str(extent))
         self.diameter = diameter
+        self.radius = diameter/2
         self.coord_list = self._create_template()
         self.dataset = None
 
     def _create_template(self):
         center = array((0,0,0))
-        radius = self.diameter/2
-        lr = range(-radius,radius+1) # linear range
+        lr = range(-self.radius,self.radius+1) # linear range
+        # TODO create additional distance metrics, for example manhatten
+        # TODO create a way to specify shape of quantised sphere i.e. < vs <=
         return array([array((i,j,k)) for i in lr
                               for j in lr
                               for k in lr
-                              if _euclid(array((i,j,k)),center) <= radius])
+                              if cartesianDistance(array((i,j,k)),center)
+                                 <= self.radius])
 
     def train(self, dataset):
         # XXX techincally this is not needed
@@ -72,11 +78,15 @@ class Sphere(object):
         ----------
         coordinate : sequence type of length 3 with integers
 
+        Returns
+        -------
+        list of tuples of size 3
+
         """
         # type checking
         coordinate = N.asanyarray(coordinate)
         if __debug__:
-            if len(coordinate) != 3 \
+            if coordinate.size != 3 \
             or coordinate.dtype.char not in N.typecodes['AllInteger']:
                 raise ValueError("Sphere must be called on a sequence of integers of "
                                  "length 3, you gave: "+ str(coordinate))
@@ -85,16 +95,17 @@ class Sphere(object):
             #                     "train(dataset) first. ")
         # function call
         coord_array = (coordinate + self.coord_list)
-        # now filter out illegal coordinates
-        coord_array = array([c for c in coord_array \
-                                     if (c >= 0).all()
-                                     and (c < self.extent).all()])
+        # now filter out illegal coordinates if they really are outside the
+        # bounds
+        if (coordinate - self.radius < 0).any() \
+        or (coordinate + self.radius >= self.extent).any():
+            coord_array = array([c for c in coord_array \
+                                   if (c >= 0).all()
+                                   and (c < self.extent).all()])
+
         coord_array = coord_array.transpose()
         return zip(coord_array[0], coord_array[1], coord_array[2])
 
-
-def _euclid(coord1, coord2):
-    return N.sqrt(N.sum((coord1-coord2)**2))
 
 class QueryEngine(object):
     """ XXX Please document me """
@@ -120,5 +131,9 @@ class QueryEngine(object):
             self.spaces_to_fcoord[space] = feature_coord
         # now that we have collected the coordinates for each space
         # do the siftig via the mapper
+
+        #XXX This needs a refactoring, since get_outids() is no longer part of
+        #mappers ( this is not a comment 
+        raise NotImplementedError
         return self.ds.mapper.get_outids([], **self.spaces_to_fcoord)
 

@@ -175,10 +175,11 @@ class ErrorsTests(unittest.TestCase):
         # check that the result is highly significant since we know that the
         # data has signal
         null_prob = terr.states.null_prob
-        self.failUnless(null_prob < 0.01,
-            msg="Failed to check that the result is highly significant "
-                "(got %f) since we know that the data has signal"
-                % null_prob)
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless(null_prob < 0.01,
+                msg="Failed to check that the result is highly significant "
+                    "(got %f) since we know that the data has signal"
+                    % null_prob)
 
 
     @sweepargs(l_clf=clfswh['linear', 'svm'])

@@ -24,10 +24,10 @@ from mvpa.suite import *
 
 # load PyMVPA example dataset
 attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
-dataset = nifti_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                        labels=attr.labels,
-                        chunks=attr.chunks,
-                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+                       labels=attr.labels,
+                       chunks=attr.chunks,
+                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 """As with classifiers it is easy to define a bunch of sensitivity
 analyzers. It is usually possible to simply call `getSensitivityAnalyzer()`
@@ -95,7 +95,7 @@ for s in keys:
     smap = sensanas[s](dataset)+0.00001
 
     # map sensitivity map into original dataspace
-    orig_smap = dataset.mapper.reverse(smap)
+    orig_smap = dataset.mapper.reverse1(smap)
     masked_orig_smap = N.ma.masked_array(orig_smap, mask=orig_smap == 0)
 
     # make a new subplot for each classifier
