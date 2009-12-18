@@ -277,19 +277,16 @@ class ClassifiersTests(unittest.TestCase):
 
 
     def testMappedClassifier(self):
-        samples = N.array([ [0,0,-1], [1,0,1], [-1,-1, 1], [-1,0,1], [1, -1, 1] ])
-        testdata3 = dataset(samples=samples, labels=1)
-        res110 = [1, 1, 1, -1, -1]
-        res101 = [-1, 1, -1, -1, 1]
-        res011 = [-1, 1, -1, 1, -1]
-
-        clf110 = MappedClassifier(clf=self.clf_sign, mapper=mask_mapper(N.array([1,1,0])))
-        clf101 = MappedClassifier(clf=self.clf_sign, mapper=mask_mapper(N.array([1,0,1])))
-        clf011 = MappedClassifier(clf=self.clf_sign, mapper=mask_mapper(N.array([0,1,1])))
-
-        self.failUnlessEqual(clf110.predict(samples), res110)
-        self.failUnlessEqual(clf101.predict(samples), res101)
-        self.failUnlessEqual(clf011.predict(samples), res011)
+        samples = N.array([ [ 0,  0, -1], [ 1, 0, 1],
+                            [-1, -1,  1], [-1, 0, 1],
+                            [ 1, -1,  1] ])
+        for mask, res in (([1, 1, 0], [ 1, 1,  1, -1, -1]),
+                          ([1, 0, 1], [-1, 1, -1, -1,  1]),
+                          ([0, 1, 1], [-1, 1, -1,  1, -1])):
+            clf = MappedClassifier(clf=self.clf_sign,
+                                   mapper=mask_mapper(N.array(mask,
+                                                              dtype=bool)))
+            self.failUnlessEqual(clf.predict(samples), res)
 
 
     def testFeatureSelectionClassifier(self):
