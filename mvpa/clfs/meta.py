@@ -348,8 +348,8 @@ class MaximalVote(PredictionsCombiner):
 
     predictions = StateVariable(enabled=True,
         doc="Voted predictions")
-    all_label_counts = StateVariable(enabled=False,
-        doc="Counts across classifiers for each label/sample")
+    values = StateVariable(enabled=False,
+        doc="Values keep counts across classifiers for each label/sample")
 
     def __init__(self):
         """XXX Might get a parameter to use raw decision values if
@@ -419,8 +419,9 @@ class MaximalVote(PredictionsCombiner):
                         "same maximal vote %d. XXX disambiguate" % maxv)
             predictions.append(maxk[0])
 
-        self.states.all_label_counts = all_label_counts
-        self.states.predictions = predictions
+        states = self.states
+        states.values = all_label_counts
+        states.predictions = predictions
         return predictions
 
 
@@ -575,16 +576,20 @@ class CombinedClassifier(BoostedClassifier):
     def _predict(self, dataset):
         """Predict using `CombinedClassifier`
         """
+        states = self.states
+        cstates = self.__combiner.states
         BoostedClassifier._predict(self, dataset)
+        if states.isEnabled("values"):
+            cstates.enable('values')
         # combiner will make use of state variables instead of only predictions
         # returned from _predict
         predictions = self.__combiner(self.clfs, dataset)
-        self.states.predictions = predictions
+        states.predictions = predictions
 
-        if self.states.isEnabled("values"):
-            if self.__combiner.states.isActive("values"):
+        if states.isEnabled("values"):
+            if cstates.isActive("values"):
                 # XXX or may be we could leave simply up to accessing .combiner?
-                self.states.values = self.__combiner.values
+                states.values = cstates.values
             else:
                 if __debug__:
                     warning("Boosted classifier %s has 'values' state enabled,"
