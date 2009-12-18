@@ -634,8 +634,8 @@ class ClassifiersTests(unittest.TestCase):
         clf_re.repredict(dstest.samples);
         self.failUnless(clf_re.states.repredicted)
         self.failUnlessRaises(RuntimeError, clf_re.repredict,
-                              dstest.samples, labels=True,
-             msg="for now retesting with anything changed makes no sense")
+                              dstest.samples, labels=True)
+        """for now retesting with anything changed makes no sense"""
         clf_re._setRetrainable(False)
 
 
