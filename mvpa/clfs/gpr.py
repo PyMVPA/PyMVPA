@@ -374,6 +374,7 @@ class GPR(Classifier):
         Predict the output for the provided data.
         """
         retrainable = self.params.retrainable
+        states = self.states
 
         if not retrainable or self._changedData['testdata'] \
                or self._km_train_test is None:
@@ -383,17 +384,17 @@ class GPR(Classifier):
             km_train_test = asarray(self.__kernel)
             if retrainable:
                 self._km_train_test = km_train_test
-                self.states.repredicted = False
+                states.repredicted = False
         else:
             if __debug__:
                 debug('GPR', "Not recomputing train test kernel matrix")
             km_train_test = self._km_train_test
-            self.states.repredicted = True
+            states.repredicted = True
 
 
         predictions = Ndot(km_train_test.transpose(), self._alpha)
 
-        if self.states.isEnabled('predicted_variances'):
+        if states.isEnabled('predicted_variances'):
             # do computation only if state variable was enabled
             if not retrainable or self._km_test_test is None \
                    or self._changedData['testdata']:
@@ -419,12 +420,13 @@ class GPR(Classifier):
             #     Ndiag(km_test_test - Ndot(v.T, v)) \
             #     + self.sigma_noise**2
             # Faster formula: N.diag(Ndot(v.T, v)) = (v**2).sum(0):
-            self.states.predicted_variances = Ndiag(km_test_test) - (v ** 2).sum(0) \
+            states.predicted_variances = Ndiag(km_test_test) - (v ** 2).sum(0) \
                                        + self.params.sigma_noise ** 2
             pass
 
         if __debug__:
             debug("GPR", "Done predicting")
+        states.values = predictions
         return predictions
 
 
