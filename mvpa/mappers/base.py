@@ -346,6 +346,22 @@ class FeatureSliceMapper(Mapper):
         return data[:, self._slicearg]
 
 
+    def _forward_dataset(self, dataset):
+        # XXX this should probably not affect the source dataset, but right now
+        # init_origid is not flexible enough
+        if self.get_inspace() is None:
+            dataset.init_origids('features', attr=self.get_inspace())
+        # invoke super class _forward_dataset, this calls, _forward_dataset
+        # and this calles _forward_data in this class
+        mds = super(FeatureSliceMapper, self)._forward_dataset(dataset)
+        # attribute collection needs to have a new length check
+        mds.fa.set_length_check(mds.nfeatures)
+        # now slice all feature attributes
+        for k in mds.fa:
+            mds.fa[k] = self.forward1(mds.fa[k].value)
+        return mds
+
+
     def _reverse_data(self, data):
         """Reverse map data from featurespace into the original dataspace.
 
@@ -369,6 +385,18 @@ class FeatureSliceMapper(Mapper):
         mapped.fill(0)
         mapped[:, self._slicearg] = data
         return mapped
+
+
+    def _reverse_dataset(self, dataset):
+        # invoke super class _reverse_dataset, this calls, _reverse_dataset
+        # and this calles _reverse_data in this class
+        mds = super(FeatureSliceMapper, self)._reverse_dataset(dataset)
+        # attribute collection needs to have a new length check
+        mds.fa.set_length_check(mds.nfeatures)
+        # now reverse all feature attributes
+        for k in mds.fa:
+            mds.fa[k] = self.reverse1(mds.fa[k].value)
+        return mds
 
 
     @accepts_dataset_as_samples
