@@ -220,7 +220,7 @@ if externals.exists('shogun'):
         'svrlight', # fails to 'generalize' as a binary classifier
                     # after 'binning'
         'krr', # fails to generalize
-        'libsvr'                        # XXX removing regressions as classifiers
+        'libsvr'                        # XXXregr removing regressions as classifiers
         ]
     if not externals.exists('sg_fixedcachesize'):
         # would fail with 'assertion Cache_Size > 2' if shogun < 0.6.3
@@ -339,9 +339,11 @@ clfswh += \
 if externals.exists('scipy'):
     from mvpa.clfs.gpr import GPR
 
-    clfswh += GPR(kernel=LinearKernel(), descr="GPR(kernel='linear')")
-    clfswh += GPR(kernel=SquaredExponentialKernel(),
-                  descr="GPR(kernel='sqexp')")
+    regrswh += GPR(kernel=LinearKernel(), descr="GPR(kernel='linear')", regression=True)
+    regrswh += GPR(kernel=SquaredExponentialKernel(),
+                  descr="GPR(kernel='sqexp')", regression=True)
+
+    #XXXregr -- add wrapped GPR as a classifier
 
 # BLR
 from mvpa.clfs.blr import BLR
