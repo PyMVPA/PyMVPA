@@ -433,6 +433,9 @@ class MeanPrediction(PredictionsCombiner):
     predictions = StateVariable(enabled=True,
         doc="Mean predictions")
 
+    values = StateVariable(enabled=True,
+        doc="Predictions from all classifiers are stored")
+
     def __call__(self, clfs, dataset):
         """Actuall callable - perform meaning
 
@@ -444,13 +447,17 @@ class MeanPrediction(PredictionsCombiner):
         for clf in clfs:
             # Lets check first if necessary state variable is enabled
             if not clf.states.isEnabled("predictions"):
-                raise ValueError, "MeanPrediction needs classifiers (such " \
+                raise ValueError, "MeanPrediction needs learners (such " \
                       " as %s) with state 'predictions' enabled" % clf
             all_predictions.append(clf.states.predictions)
 
         # compute mean
-        predictions = N.mean(N.asarray(all_predictions), axis=0)
-        self.states.predictions = predictions
+        all_predictions = N.asarray(all_predictions)
+        predictions = N.mean(all_predictions, axis=0)
+
+        states = self.states
+        states.values = all_predictions
+        states.predictions = predictions
         return predictions
 
 
