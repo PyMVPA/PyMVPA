@@ -45,11 +45,11 @@ def accepts_samples_as_dataset(fx):
     Little helper to allow methods to accept plain data whenever
     dataset is generally required.
     """
-    def wrap_samples(obj, data):
+    def wrap_samples(obj, data, *args, **kwargs):
         if is_datasetlike(data):
-            return fx(obj, data)
+            return fx(obj, data, *args, **kwargs)
         else:
-            return fx(obj, dataset(data))
+            return fx(obj, dataset(data), *args, **kwargs)
     return wrap_samples
 
 
