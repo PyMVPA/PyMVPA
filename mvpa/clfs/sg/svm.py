@@ -278,7 +278,14 @@ class SVM(_SVM):
 
 
         # KERNEL
-        if not retrainable or _changedData['traindata'] or _changedData['kernel_params']:
+
+        # XXX cruel fix for now... whole retraining business needs to
+        # be rethought
+        if retrainable:
+            _changedData['kernel_params'] = _changedData.get('kernel_params', False)
+
+        if not retrainable \
+               or _changedData['traindata'] or _changedData['kernel_params']:
             # If needed compute or just collect arguments for SVM and for
             # the kernel
 
