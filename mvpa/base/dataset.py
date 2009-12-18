@@ -24,16 +24,16 @@ if __debug__:
 class Dataset(object):
     """Generic storage class for all datasets in PyMVPA
 
-    A dataset consists of four pieces. The core is a two-dimensional
+    A dataset consists of four pieces.  The core is a two-dimensional
     array that has variables (so-called `features`) in its columns and
-    the associated observations (so-called `samples`) in the rows. In
+    the associated observations (so-called `samples`) in the rows.  In
     addition a dataset may have any number of attributes for features
-    and samples. Unsuprisingly, these are called 'feature attributes'
-    and 'sample attributes'. Each attribute is a vector of any datatype
+    and samples.  Unsurprisingly, these are called 'feature attributes'
+    and 'sample attributes'.  Each attribute is a vector of any datatype
     that contains a value per each item (feature or sample). Both types
     of attributes are organized in their respective collections --
     accessible via the `sa` (sample attribute) and `fa` (feature
-    attribute) attributes. Finally, a dataset itself may have any number
+    attribute) attributes.  Finally, a dataset itself may have any number
     of additional attributes (i.e. a mapper) that are stored in their
     own collection that is accessible via the `a` attribute (see
     examples below).
@@ -112,7 +112,7 @@ class Dataset(object):
 
     An alternative method to create datasets with arbitrary attributes
     is to provide the attribute collections to the constructor itself --
-    which would also test for an appropriate size of the givenm
+    which would also test for an appropriate size of the given
     attributes:
 
     >>> fancyds = Dataset(samples, sa={'labels': range(4),
@@ -192,7 +192,7 @@ class Dataset(object):
         Parameters
         ----------
         samples : ndarray
-          Data samples. This has to be a two-dimensional (samples x features)
+          Data samples.  This has to be a two-dimensional (samples x features)
           array. If the samples are not in that format, please consider one of
           the `Dataset.from_*` classmethods.
         sa : SampleAttributesCollection
@@ -245,7 +245,7 @@ class Dataset(object):
         """Initialize the dataset's 'origids' attribute.
 
         The purpose of origids is that they allow to track the identity of
-        a feature or a sample through the liftime of a dataset (i.e. subsequent
+        a feature or a sample through the lifetime of a dataset (i.e. subsequent
         feature selections).
 
         Calling this method will overwrite any potentially existing IDs (of the
@@ -255,11 +255,11 @@ class Dataset(object):
         ----------
         which : {'features', 'samples', 'both'}
           An attribute is generated for each feature, sample, or both that
-          represents a unique ID. This ID incorporates the dataset instance ID
+          represents a unique ID.  This ID incorporates the dataset instance ID
           and should allow merging multiple datasets without causing multiple
           identical ID and the resulting dataset.
         attr : str
-          Name of the attribute to store the generated IDs in. By convention
+          Name of the attribute to store the generated IDs in.  By convention
           this should be 'origids' (the default), but might be changed for
           specific purposes.
         """
@@ -293,15 +293,15 @@ class Dataset(object):
     def copy(self, deep=True, sa=None, fa=None, a=None, memo=None):
         """Create a copy of a dataset.
 
-        By default this is going to be a deep copy of the dataset, hence no
-        data is shared between the original dataset and its copy.
+        By default this is going to return a deep copy of the dataset, hence no
+        data would be shared between the original dataset and its copy.
 
         Parameters
         ----------
         deep : boolean
-          If False, a shallow copy of the dataset is return instead. The copy
+          If False, a shallow copy of the dataset is return instead.  The copy
           contains only views of the samples, sample attributes and feature
-          feature attributes, as well as shallow copies of all dataset
+          attributes, as well as shallow copies of all dataset
           attributes.
         sa : list, None
           List of attributes in the sample attributes collection to include in
@@ -363,7 +363,7 @@ class Dataset(object):
 
         Note
         ----
-        No dataset attributes, or feature attributes will be merged! These
+        No dataset attributes, or feature attributes will be merged!  These
         respective properties of the *other* dataset are neither checked for
         compatibility nor copied over to this dataset.
         """
@@ -383,7 +383,8 @@ class Dataset(object):
         self.sa.set_length_check(len(self.samples))
         # concat all samples attributes
         for k, v in other.sa.iteritems():
-            self.sa[k].value = N.concatenate((self.sa[k].value, v.value), axis=0)
+            self.sa[k].value = N.concatenate((self.sa[k].value, v.value),
+                                             axis=0)
 
         return self
 
