@@ -36,10 +36,10 @@ preprocessing steps on it."""
 # load PyMVPA example dataset
 #
 attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
-dataset = nifti_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                        labels=attr.labels,
-                        chunks=attr.chunks,
-                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+                       labels=attr.labels,
+                       chunks=attr.chunks,
+                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 #
 # preprocessing
