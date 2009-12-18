@@ -293,7 +293,7 @@ class Classifier(ClassWithCollections):
                 # classifiers have no chance but not to use
                 # training_confusion... sad
                 self.__changedData_isset = False
-            predictions = self.predict(dataset.samples)
+            predictions = self.predict(dataset)
             self.states._resetEnabledTemporarily()
             self.states.training_confusion = self._summaryClass(
                 targets=dataset.sa.labels,
