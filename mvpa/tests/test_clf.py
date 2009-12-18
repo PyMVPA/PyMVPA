@@ -487,6 +487,9 @@ class ClassifiersTests(unittest.TestCase):
         if oldC is not None:
             clf.params.C = oldC
 
+        # TODO: test combiners, e.g. MaximalVote and states they store
+
+
     # XXX meta should also work but TODO
     @sweepargs(clf=clfswh['svm', '!meta'])
     def testSVMs(self, clf):
