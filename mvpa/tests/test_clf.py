@@ -129,15 +129,26 @@ class ClassifiersTests(unittest.TestCase):
                         msg="BinaryClassifier should not alter labels")
 
 
-    @sweepargs(clf=clfswh['binary'])
+    # TODO: XXX finally just make regression/clf separation cleaner
+    @sweepargs(clf=clfswh[:])
     def testClassifierGeneralization(self, clf):
         """Simple test if classifiers can generalize ok on simple data
         """
         te = CrossValidatedTransferError(TransferError(clf), NFoldSplitter())
-        cve = te(datasets['uni2medium'])
+        nclasses = 2 * (1 + int('multiclass' in clf._clf_internals))
+        if nclasses > 2 and 'on 5%(' in clf.descr:
+            # skip those since they are barely applicable/testable here
+            return
+
+        ds = datasets['uni%dmedium' % nclasses]
+        try:
+            cve = te(ds)
+        except Exception, e:
+            self.fail("Failed with %s" % e)
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(cve < 0.25,
-                            msg="Got transfer error %g" % (cve))
+            self.failUnless(cve < 0.25, # TODO: use multinom distribution
+                            msg="Got transfer error %g on %s with %d labels"
+                            % (cve, ds, len(ds.UL)))
 
 
     @sweepargs(clf=clfswh[:] + regrswh[:])
