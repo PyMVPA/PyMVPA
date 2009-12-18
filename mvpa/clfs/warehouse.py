@@ -220,6 +220,7 @@ if externals.exists('shogun'):
         'svrlight', # fails to 'generalize' as a binary classifier
                     # after 'binning'
         'krr', # fails to generalize
+        'libsvr'                        # XXX removing regressions as classifiers
         ]
     if not externals.exists('sg_fixedcachesize'):
         # would fail with 'assertion Cache_Size > 2' if shogun < 0.6.3
