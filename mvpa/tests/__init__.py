@@ -47,7 +47,7 @@ def collectTestSuites():
         'test_meg',
         # Classifiers (longer tests)
         'test_kernel',
-## broken        'test_clf',
+        'test_clf',
         'test_regr',
         'test_knn',
         'test_gnb',
