@@ -177,7 +177,7 @@ class NiftiDataset(Dataset):
 
 
 def fmri_dataset(samples, labels=None, chunks=None, mask=None,
-                 sprefix='voxels', tprefix='time'):
+                 sprefix='voxel', tprefix='time'):
     # load the samples
     niftisamples = getNiftiFromAnySource(samples, ensure=True, enforce_dim=4)
     samples = niftisamples.data
