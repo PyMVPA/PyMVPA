@@ -176,7 +176,7 @@ for kind, spec in specs.iteritems():
     mask[0,0,0] = 0
     mask[1,3,2] = 0
     ds = Dataset.from_masked(samples=data, labels=labels, chunks=chunks,
-                             mask=mask)
+                             mask=mask, space='myspace')
     datasets['3d%s' % kind] = ds
 
 
