@@ -551,7 +551,7 @@ parameter (e.g. ``sigma_noise``) was changed. Another similar usecase: for
 :ref:`null-hypothesis statistical testing <example_permutation_test>` it might be
 needed to train classifier multiple times on a randomized set of labels.
 
-Only classifiers which have ``retrainable`` in their ``_clf_internals`` are
+Only classifiers which have ``retrainable`` in their ``__tags__`` are
 capable of efficient retraining. To enable retraining, just provide
 ``retrainable=True`` to the constructor of the classifier. Internally
 retrainable classifiers will try to deduce what was changed in the

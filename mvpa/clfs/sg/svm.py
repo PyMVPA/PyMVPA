@@ -126,7 +126,7 @@ class SVM(_SVM):
 
     _KNOWN_PARAMS = [ 'epsilon' ]
 
-    _clf_internals = _SVM._clf_internals + [ 'sg', 'retrainable' ]
+    __tags__ = _SVM.__tags__ + [ 'sg', 'retrainable' ]
 
     # Some words of wisdom from shogun author:
     # XXX remove after proper comments added to implementations
@@ -250,7 +250,7 @@ class SVM(_SVM):
         if __debug__:
             debug("SG_", "Creating labels instance")
 
-        if 'regression' in self._clf_internals:
+        if 'regression' in self.__tags__:
             labels_ = N.asarray(dataset.sa['labels'].value, dtype='double')
         else:
             la = dataset.sa['labels']
@@ -324,7 +324,7 @@ class SVM(_SVM):
 
                 # XXX do not jump over the head and leave it up to the user
                 #     ie do not rescale automagically by the number of samples
-                #if len(Cs) == 2 and not ('regression' in self._clf_internals) and len(ul) == 2:
+                #if len(Cs) == 2 and not ('regression' in self.__tags__) and len(ul) == 2:
                 #    # we were given two Cs
                 #    if N.max(C) < 0 and N.min(C) < 0:
                 #        # and both are requested to be 'scaled' TODO :
@@ -489,7 +489,7 @@ class SVM(_SVM):
         if __debug__:
             debug("SG__", "Got values %s" % values)
 
-        if ('regression' in self._clf_internals):
+        if ('regression' in self.__tags__):
             predictions = values
         else:
             if len(self._attrmap.keys()) == 2:
@@ -573,7 +573,7 @@ class SVM(_SVM):
 
 
     def __get_implementation(self, ul):
-        if 'regression' in self._clf_internals or len(ul) == 2:
+        if 'regression' in self.__tags__ or len(ul) == 2:
             svm_impl_class = SVM._KNOWN_IMPLEMENTATIONS[self._svm_impl][0]
         else:
             if self._svm_impl == 'libsvm':

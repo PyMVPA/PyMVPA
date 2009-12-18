@@ -65,7 +65,7 @@ class _GLMNET(Classifier):
 
     """
 
-    _clf_internals = [ 'glmnet', 'linear', 'has_sensitivity',
+    __tags__ = [ 'glmnet', 'linear', 'has_sensitivity',
                        'does_feature_selection'
                        ]
 
@@ -300,7 +300,7 @@ class GLMNET_R(_GLMNET):
 
     """
 
-    _clf_internals = _GLMNET._clf_internals + ['regression']
+    __tags__ = _GLMNET.__tags__ + ['regression']
 
     def __init__(self,  **kwargs):
         """
@@ -344,7 +344,7 @@ class GLMNET_C(_GLMNET):
 
     """
 
-    _clf_internals = _GLMNET._clf_internals + ['multiclass', 'binary']
+    __tags__ = _GLMNET.__tags__ + ['multiclass', 'binary']
 
     def __init__(self,  **kwargs):
         """

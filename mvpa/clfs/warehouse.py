@@ -96,7 +96,7 @@ class Warehouse(object):
             for arg in args:
                 # check for rejection first
                 if arg.startswith('!'):
-                    if (arg[1:] in item._clf_internals):
+                    if (arg[1:] in item.__tags__):
                         good = False
                         break
                     else:
@@ -104,7 +104,7 @@ class Warehouse(object):
                 # check for inclusion
                 found = False
                 for arg in [arg] + self.__matches.get(arg, []):
-                    if (arg in item._clf_internals):
+                    if (arg in item.__tags__):
                         found = True
                         break
                 good = found
@@ -119,13 +119,13 @@ class Warehouse(object):
             for item_ in item:
                 self.__iadd__(item_)
         else:
-            if not hasattr(item, '_clf_internals'):
+            if not hasattr(item, '__tags__'):
                 raise ValueError, "Cannot register %s " % item + \
-                      "which has no _clf_internals defined"
-            if len(item._clf_internals) == 0:
+                      "which has no __tags__ defined"
+            if len(item.__tags__) == 0:
                 raise ValueError, "Cannot register %s " % item + \
-                      "which has empty _clf_internals"
-            clf_internals = Set(item._clf_internals)
+                      "which has empty __tags__"
+            clf_internals = Set(item.__tags__)
             if clf_internals.issubset(self._known_tags):
                 self.__items.append(item)
                 self.__keys |= clf_internals
@@ -143,7 +143,7 @@ class Warehouse(object):
     def listing(self):
         """Listing (description + internals) of registered items
         """
-        return [(x.descr, x._clf_internals) for x in self.__items]
+        return [(x.descr, x.__tags__) for x in self.__items]
 
     @property
     def items(self):

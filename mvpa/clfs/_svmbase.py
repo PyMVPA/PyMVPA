@@ -106,7 +106,7 @@ class _SVM(Classifier):
     """Parameters which are specific to a given instantiation of SVM
     """
 
-    _clf_internals = [ 'svm', 'kernel-based' ]
+    __tags__ = [ 'svm', 'kernel-based' ]
 
     def __init__(self, **kwargs):
         """Init base class of SVMs. *Not to be publicly used*
@@ -135,21 +135,21 @@ class _SVM(Classifier):
                  self._KNOWN_PARAMS[:] + list(add_params)
 
         
-        # Assign per-instance _clf_internals
-        self._clf_internals = self._clf_internals[:]
+        # Assign per-instance __tags__
+        self.__tags__ = self.__tags__[:]
 
         # Add corresponding internals
         if add_internals is not None:
-            self._clf_internals += list(add_internals)
-        self._clf_internals.append(svm_impl)
+            self.__tags__ += list(add_internals)
+        self.__tags__.append(svm_impl)
 
         k = kwargs.get('kernel', None)
         if k is None:
             kwargs['kernel'] = self.__default_kernel_class__()
         if 'linear' in ('%s'%kwargs['kernel']).lower(): # XXX not necessarily best
-            self._clf_internals += [ 'linear', 'has_sensitivity' ]
+            self.__tags__ += [ 'linear', 'has_sensitivity' ]
         else:
-            self._clf_internals += [ 'non-linear' ]
+            self.__tags__ += [ 'non-linear' ]
 
         # pop out all args from **kwargs which are known to be SVM parameters
         _args = {}

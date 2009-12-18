@@ -134,7 +134,7 @@ class Classifier(ClassWithCollections):
     feature_ids = StateVariable(enabled=False,
         doc="Feature IDS which were used for the actual training.")
 
-    _clf_internals = []
+    __tags__ = []
     """Describes some specifics about the classifier -- is that it is
     doing regression for instance...."""
 
@@ -181,12 +181,12 @@ class Classifier(ClassWithCollections):
             self._summaryClass = RegressionStatistics
         else:
             self._summaryClass = ConfusionMatrix
-            clf_internals = self._clf_internals
+            clf_internals = self.__tags__
             if 'regression' in clf_internals and not ('binary' in clf_internals):
                 # regressions are used as binary classifiers if not
                 # asked to perform regression explicitly
                 # We need a copy of the list, so we don't override class-wide
-                self._clf_internals = clf_internals + ['binary']
+                self.__tags__ = clf_internals + ['binary']
 
         # deprecate
         #self.__trainedidhash = None
@@ -250,7 +250,7 @@ class Classifier(ClassWithCollections):
                     debug('CLF_', "Obtained _changedData is %s"
                           % (self._changedData))
 
-        if not params.regression and 'regression' in self._clf_internals \
+        if not params.regression and 'regression' in self.__tags__ \
            and not self.states.isEnabled('trained_labels'):
             # if classifier internally does regression we need to have
             # labels it was trained on
@@ -410,7 +410,7 @@ class Classifier(ClassWithCollections):
     def _prepredict(self, dataset):
         """Functionality prior prediction
         """
-        if not ('notrain2predict' in self._clf_internals):
+        if not ('notrain2predict' in self.__tags__):
             # check if classifier was trained if that is needed
             if not self.trained:
                 raise ValueError, \
@@ -476,7 +476,7 @@ class Classifier(ClassWithCollections):
         self._prepredict(dataset)
 
         if self.__trainednfeatures > 0 \
-               or 'notrain2predict' in self._clf_internals:
+               or 'notrain2predict' in self.__tags__:
             result = self._predict(dataset)
         else:
             warning("Trying to predict using classifier trained on no features")
@@ -488,7 +488,7 @@ class Classifier(ClassWithCollections):
 
         states.predicting_time = time.time() - t0
 
-        if 'regression' in self._clf_internals and not self.params.regression:
+        if 'regression' in self.__tags__ and not self.params.regression:
             # We need to convert regression values into labels
             # XXX unify may be labels -> internal_labels conversion.
             #if len(self.trained_labels) != 2:
@@ -599,10 +599,10 @@ class Classifier(ClassWithCollections):
         """
         pretrainable = self.params['retrainable']
         if (force or value != pretrainable.value) \
-               and 'retrainable' in self._clf_internals:
+               and 'retrainable' in self.__tags__:
             if __debug__:
                 debug("CLF_", "Setting retrainable to %s" % value)
-            if 'meta' in self._clf_internals:
+            if 'meta' in self.__tags__:
                 warning("Retrainability is not yet crafted/tested for "
                         "meta classifiers. Unpredictable behavior might occur")
             # assure that we don't drag anything behind
@@ -613,7 +613,7 @@ class Classifier(ClassWithCollections):
                 states.remove('retrained')
                 states.remove('repredicted')
             if value:
-                if not 'retrainable' in self._clf_internals:
+                if not 'retrainable' in self.__tags__:
                     warning("Setting of flag retrainable for %s has no effect"
                             " since classifier has no such capability. It would"
                             " just lead to resources consumption and slowdown"
@@ -639,7 +639,7 @@ class Classifier(ClassWithCollections):
                     self.__trained = self.__idhashes.copy() # just same Nones
                 self.__resetChangedData()
                 self.__invalidatedChangedData = {}
-            elif 'retrainable' in self._clf_internals:
+            elif 'retrainable' in self.__tags__:
                 #self.__resetChangedData()
                 self.__changedData_isset = False
                 self._changedData = None

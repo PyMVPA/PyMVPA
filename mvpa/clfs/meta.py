@@ -183,9 +183,9 @@ class BoostedClassifier(Classifier, Harvestable):
         # adhere to their capabilities + 'multiclass'
         # XXX do intersection across all classifiers!
         # TODO: this seems to be wrong since it can be regression etc
-        self._clf_internals = [ 'binary', 'multiclass', 'meta' ]
+        self.__tags__ = [ 'binary', 'multiclass', 'meta' ]
         if len(clfs)>0:
-            self._clf_internals += self.__clfs[0]._clf_internals
+            self.__tags__ += self.__clfs[0].__tags__
 
     def untrain(self):
         """Untrain `BoostedClassifier`
@@ -240,9 +240,9 @@ class ProxyClassifier(Classifier):
 
         # adhere to slave classifier capabilities
         # TODO: unittest
-        self._clf_internals = self._clf_internals[:] + ['meta']
+        self.__tags__ = self.__tags__[:] + ['meta']
         if clf is not None:
-            self._clf_internals += clf._clf_internals
+            self.__tags__ += clf.__tags__
 
 
     def __repr__(self, prefixes=[]):
@@ -1252,7 +1252,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
     we should expclitely use isTrained here if we want... need to think more
     """
 
-    _clf_internals = [ 'does_feature_selection', 'meta' ]
+    __tags__ = [ 'does_feature_selection', 'meta' ]
 
     def __init__(self, clf, feature_selection, testdataset=None, **kwargs):
         """Initialize the instance
