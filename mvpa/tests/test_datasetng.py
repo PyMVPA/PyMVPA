@@ -172,6 +172,13 @@ def test_from_masked():
                   N.random.standard_normal((4,2,3,4)), labels=[1, 2, 3, 4],
                   chunks=[2, 2, 2])
 
+    # no test one that is using from_masked
+    ds = datasets['3dlarge']
+    for a in ds.sa:
+        assert_equal(len(ds.sa[a].value), len(ds))
+    for a in ds.fa:
+        assert_equal(len(ds.fa[a].value), ds.nfeatures)
+
 
 def test_shape_conversion():
     ds = Dataset.from_masked(N.arange(24).reshape((2, 3, 4)).view(myarray),

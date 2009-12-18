@@ -44,9 +44,18 @@ class Sphere(object):
         """
         self.extent = N.asanyarray(extent)
         if __debug__:
-            if diameter%2 != 1 or type(diameter) is not int:
-                raise ValueError("Sphere diameter must be odd integer, but is: "+
-                                 str(diameter) + str(type(diameter)))
+            # XXX YOH: hm...  I had in mind a bit better situation: didn't we
+            #     scale with some dimension information? could not Sphere
+            #     neighborhood generator be provided with such to generate an
+            #     ellipsoid?
+            if diameter % 2 != 1 or type(diameter) is not int:
+                raise ValueError("Sphere diameter must be odd integer, but "
+                                 "got %s of type %s"
+                                 % (diameter, type(diameter)))
+            # XXX YOH: may be sphere could easily be extended to become a
+            #     hypersphere? ie generalize and be used for 2D, 3D, ... ND?
+            #     Sure thing - using utility would simply puke (with some
+            #     meaningful message) if dimensions mismatch
             if self.extent.size != 3 \
                 or self.extent.dtype.char not in N.typecodes['AllInteger']:
                 raise ValueError("Sphere extent must be 3 integers, was: %s"
@@ -57,22 +66,31 @@ class Sphere(object):
         self.dataset = None
 
     def _create_template(self):
-        center = array((0,0,0))
-        lr = range(-self.radius,self.radius+1) # linear range
+        center = array((0, 0, 0))
+        lr = range(-self.radius, self.radius+1) # linear range
         # TODO create additional distance metrics, for example manhatten
+        # XXX YOH: we have those elsewhere... I guess we need to unify access to them
         # TODO create a way to specify shape of quantised sphere i.e. < vs <=
-        return array([array((i,j,k)) for i in lr
+        return array([array((i, j, k)) for i in lr
                               for j in lr
                               for k in lr
-                              if cartesianDistance(array((i,j,k)),center)
+                              if cartesianDistance(array((i, j, k)),center)
                                  <= self.radius])
 
     def train(self, dataset):
-        # XXX techincally this is not needed
+        # XXX techinically this is not needed
+        # XXX YOH:  yeap -- BUT if you care about my note above on extracting
+        #     somehow sizes -- some dataset.a might come handy may be?
+        #     so actual template get constructed in train and _create_template
+        #     could go away and just be returned in some R/O property
         self.dataset = dataset
 
+    # XXX YOH: should it have this at all?  may be sphere should just generate the
+    #         "neighborhood template" -- all those offsets where to jump to get
+    #         tentative neighbor... Otherwise there are double checks... some here
+    #         some in the query engine... also imho Sphere should not even care about any extent
     def __call__(self, coordinate):
-        """  Get all coordinates within diameter
+        """Get all coordinates within diameter
 
         Parameters
         ----------
@@ -88,8 +106,9 @@ class Sphere(object):
         if __debug__:
             if coordinate.size != 3 \
             or coordinate.dtype.char not in N.typecodes['AllInteger']:
-                raise ValueError("Sphere must be called on a sequence of integers of "
-                                 "length 3, you gave: "+ str(coordinate))
+                raise ValueError("Sphere must be called on a sequence of "
+                                 "integers of length 3, you gave %s "
+                                 % coordinate)
             #if dataset is None:
             #    raise ValueError("Sphere object has not been trained yet, use "
             #                     "train(dataset) first. ")
@@ -108,6 +127,14 @@ class Sphere(object):
 
 
 class QueryEngine(object):
+    """Basic class defining interface for querying neighborhood in a dataset
+
+    Derived classes provide specific implementations possibly with trade-offs
+    between generality and performance
+
+    XXX
+    """
+
     def __init__(self, **kwargs):
         # XXX for example:
         # voxels=Sphere(diameter=3)
@@ -126,6 +153,8 @@ class QueryEngine(object):
 
 
     def query_byid(self, fid):
+        """Return feature ids of neighbors for a given feature id
+        """
         kwargs = {}
         for space in self._queryattrs:
             kwargs[space] = self._queryattrs[space][fid]
@@ -147,6 +176,7 @@ class QueryEngine(object):
 class IndexQueryEngine(QueryEngine):
     def __init__(self, **kwargs):
         QueryEngine.__init__(self, **kwargs)
+        self._spaceaxis = None
 
 
     def _train(self, dataset):
@@ -180,12 +210,15 @@ class IndexQueryEngine(QueryEngine):
         # now check whether we have sufficient information to put each feature
         # id into one unique search array element
         dims = N.array(dims) + 1
-        if not N.prod(dims) == dataset.nfeatures:
+        # we can deal with less features (e.g. masked dataset, but not more)
+        if N.prod(dims) < dataset.nfeatures:
             raise ValueError("IndexQueryEngine has insufficient information "
                              "about the dataset spaces. It is required to "
                              "specify an ROI generator for each feature space "
-                             "in the dataset (got: %s)."
-                             % str(self._spaceorder))
+                             "in the dataset (got: %s, #describale: %i, "
+                             "#actual features: %i)."
+                             % (str(self._spaceorder), N.prod(dims),
+                                   dataset.nfeatures))
         # now we can create the search array
         self._searcharray = N.zeros(dims, dtype='int')
         # and fill it with feature ids, but start from ONE to be different from
@@ -223,7 +256,8 @@ class IndexQueryEngine(QueryEngine):
                     for i in xrange(len(max_ind)):
                         slicer.append(roi[i])
             else:
-                slicer.extend([slice(None) for i in xrange(len(max_ind))])
+                # Provide ":" for all dimensions in a given space
+                slicer += [slice(None)]*len(max_ind)
         # only ids are of interest -> flatten
         # and we need to back-transfer them into dataset ids by substracting 1
         return self._searcharray[slicer].flatten() - 1
