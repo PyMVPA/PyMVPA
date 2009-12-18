@@ -108,32 +108,122 @@ class Sphere(object):
 
 
 class QueryEngine(object):
-    """ XXX Please document me """
     def __init__(self, **kwargs):
         # XXX for example:
-        # space=Sphere(diameter=3)
-        self.spaces_to_objects = kwargs
-        self.spaces_to_fcoord = {}
+        # voxels=Sphere(diameter=3)
+        self._queryobjs = kwargs
+        self._queryattrs = {}
+
 
     def train(self, dataset):
-        self.ds = dataset
+        # reset first
+        self._queryattrs.clear()
+        # store all relevant attributes
+        for space in self._queryobjs:
+            self._queryattrs[space] = dataset.fa[space].value
+        # execute subclass training
+        self._train(dataset)
 
-    def __call__(self, feature_id):
-        """ for a given feature id get the local neighborhood in all spaces"""
-        # XXX check for untrained
-        for space, neighborhood_object in self.spaces_to_objects.items():
-            # lookup the coordinate of the feature
-            coord = self.ds.fa[space].value[feature_id]
-            # obtain the coordinates in the neighborhood of the faeture
-            # using the neighborhood object for this space
-            feature_coord = neighborhood_object(coord)
-            # store the feature coordinates for later siftig
-            self.spaces_to_fcoord[space] = feature_coord
-        # now that we have collected the coordinates for each space
-        # do the siftig via the mapper
 
-        #XXX This needs a refactoring, since get_outids() is no longer part of
-        #mappers ( this is not a comment 
-        raise NotImplementedError
-        return self.ds.mapper.get_outids([], **self.spaces_to_fcoord)
+    def query_byid(self, fid):
+        kwargs = {}
+        for space in self._queryattrs:
+            kwargs[space] = self._queryattrs[space][fid]
+        return self.query(**kwargs)
 
+    #
+    # aliases
+    #
+
+    def __call__(self, **kwargs):
+        return self.query(**kwargs)
+
+
+    def __getitem__(self, fid):
+        return self.query_byid(fid)
+
+
+
+class IndexQueryEngine(QueryEngine):
+    def __init__(self, **kwargs):
+        QueryEngine.__init__(self, **kwargs)
+
+
+    def _train(self, dataset):
+        # local binding
+        qattrs = self._queryattrs
+        # in addition to the base class functionality we need to store the
+        # order of the query-spaces
+        self._spaceorder = qattrs.keys()
+        # type check and determine mask dimensions
+        max_ind = []
+        dims = []
+        selector = []
+        for space in self._spaceorder:
+            # local binding for the attribute
+            qattr = qattrs[space]
+            if not qattr.dtype.char in N.typecodes['AllInteger']:
+                raise ValueError("IndexQueryEngine can only operate on "
+                                 "feature attributes with integer indices "
+                                 "(got: %s)." % str(qattr.dtype))
+            # determine the dimensions of this space
+            # and charge the nonzero selector
+            dim = qattr.max(axis=0)
+            if N.isscalar(dim):
+                max_ind.append([dim])
+                dims.append(dim)
+                selector.append(qattr.T)
+            else:
+                max_ind.append(dim)
+                dims.extend(dim)
+                selector.extend(qattr.T)
+        # now check whether we have sufficient information to put each feature
+        # id into one unique search array element
+        dims = N.array(dims) + 1
+        if not N.prod(dims) == dataset.nfeatures:
+            raise ValueError("IndexQueryEngine has insufficient information "
+                             "about the dataset spaces. It is required to "
+                             "specify an ROI generator for each feature space "
+                             "in the dataset (got: %s)."
+                             % str(self._spaceorder))
+        # now we can create the search array
+        self._searcharray = N.zeros(dims, dtype='int')
+        # and fill it with feature ids, but start from ONE to be different from
+        # the zeros
+        self._searcharray[tuple(selector)] = N.arange(1, dataset.nfeatures + 1)
+        # store the dimensions, and hence number of axis per space
+        self._spaceaxis = zip(self._spaceorder, max_ind)
+
+
+    def query(self, **kwargs):
+        # construct the search array slicer
+        # need to obey axis order
+        slicer = []
+        for space, max_ind in self._spaceaxis:
+            # only generate ROI, if we have a generator
+            # otherwise consider all of the unspecified space
+            if space in kwargs:
+                # if no ROI generator is available, take argument as is
+                if self._queryobjs[space] is None:
+                    if N.isscalar(kwargs[space]):
+                        slicer.append(kwargs[space])
+                    else:
+                        slicer.extend(kwargs[space])
+                else:
+                    roi = self._queryobjs[space](kwargs[space])
+                    # filter the results for validity
+                    # XXX might be made conditional
+                    roi = [i for i in roi if (i <= max_ind).all() and i >= 0]
+                    # if no candidate is left, the whole thing does not match
+                    # regardless of the other spaces
+                    if not len(roi):
+                        return []
+                    # need to get access to per dim indices
+                    roi = N.transpose(roi)
+                    for i in xrange(len(max_ind)):
+                        slicer.append(roi[i])
+            else:
+                slicer.extend([slice(None) for i in xrange(len(max_ind))])
+        # only ids are of interest -> flatten
+        # and we need to back-transfer them into dataset ids by substracting 1
+        return self._searcharray[slicer].flatten() - 1

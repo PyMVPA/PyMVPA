@@ -51,3 +51,6 @@ Studies employing PyMVPA
 * :ref:`Sun et al. (2009) <SET+09>`: *Elucidating an MRI-Based Neuroanatomic
   Biomarker for Psychosis: Classification Analysis Using Probabilistic Brain
   Atlas and Machine Learning Algorithms.*
+
+* :ref:`Manelis et al. (2010) <MHH10>`: *Implicit memory for object
+  locations depends on reactivation of encoding-related brain regions*
