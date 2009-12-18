@@ -158,7 +158,10 @@ class ClassifiersTests(unittest.TestCase):
         """
         summary1 = clf.summary()
         self.failUnless('not yet trained' in summary1)
-        clf.train(datasets['uni2small'])
+        # Need 2 different datasets for regressions/classifiers
+        dsname = ('uni2small', 'sin_modulated')[
+            int('regression' in clf._clf_internals)]
+        clf.train(datasets[dsname])
         summary = clf.summary()
         # It should get bigger ;)
         self.failUnless(len(summary) > len(summary1))
