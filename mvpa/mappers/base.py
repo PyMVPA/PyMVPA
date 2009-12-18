@@ -349,7 +349,7 @@ class FeatureSliceMapper(Mapper):
     def _forward_dataset(self, dataset):
         # XXX this should probably not affect the source dataset, but right now
         # init_origid is not flexible enough
-        if self.get_inspace() is None:
+        if not self.get_inspace() is None:
             dataset.init_origids('features', attr=self.get_inspace())
         # invoke super class _forward_dataset, this calls, _forward_dataset
         # and this calles _forward_data in this class
@@ -381,7 +381,13 @@ class FeatureSliceMapper(Mapper):
         # let's do it a little awkward but pass subclasses through
         # suggestions for improvements welcome
         mapped = data.copy() # make sure we own the array data
-        mapped.resize(data.shape[:1] + self.__dshape, refcheck=False)
+        # "guess" the shape of the final array, the following only supports
+        # changes in the second axis -- the feature axis
+        # this madness is necessary to support mapping of multi-dimensional
+        # features
+        mapped.resize(data.shape[:1] + self.__dshape + data.shape[2:],
+                      refcheck=False)
+        print mapped.shape
         mapped.fill(0)
         mapped[:, self._slicearg] = data
         return mapped
