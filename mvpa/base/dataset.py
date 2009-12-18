@@ -68,6 +68,8 @@ class Dataset(object):
     >>> ds = Dataset(samples)
     >>> ds.nsamples
     4
+    >>> len(ds)
+    4
     >>> ds.nfeatures
     3
     >>> ds.samples
@@ -491,6 +493,8 @@ class Dataset(object):
         finally:
             return s
 
+    def __len__(self):
+        return len(self.samples)
 
     def __array__(self, dtype=None):
         return self.samples.__array__(dtype)
