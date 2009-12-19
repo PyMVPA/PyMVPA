@@ -178,6 +178,10 @@ class NiftiDataset(Dataset):
 
 def fmri_dataset(samples, labels=None, chunks=None, mask=None,
                  sprefix='voxel', tprefix='time'):
+    """Constructs a `Dataset` given 4D fMRI file
+
+    TODO: extend
+    """
     # load the samples
     niftisamples = getNiftiFromAnySource(samples, ensure=True, enforce_dim=4)
     samples = niftisamples.data
