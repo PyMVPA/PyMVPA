@@ -600,20 +600,8 @@ __known_chunking_methods = {
     }
 
 def labels2chunks(labels, method="alllabels", ignore_labels=None):
-    """Automagically decide on chunks based on labels
-
-    :Parameters:
-      labels
-        labels to base chunking on
-      method : basestring
-        codename for method to use. Known are %s
-      ignore_labels : list of basestring
-        depends on the method. If method ``alllabels``, then don't
-        seek for such labels in chunks. E.g. some 'reject' samples
-
-    :rtype: list
-    """ % __known_chunking_methods.keys()
-
+    """TOBE ASSIGNED BELOW
+    """
     chunks = []
     if ignore_labels is None:
         ignore_labels = []
@@ -642,3 +630,18 @@ def labels2chunks(labels, method="alllabels", ignore_labels=None):
             errmsg += "  %s : %s\n" % (method, descr)
         raise ValueError, errmsg
     return chunks
+
+labels2chunks.__doc__ = \
+ """Automagically decide on chunks based on labels
+
+    :Parameters:
+      labels
+        labels to base chunking on
+      method : basestring
+        codename for method to use. Known are %s
+      ignore_labels : list of basestring
+        depends on the method. If method ``alllabels``, then don't
+        seek for such labels in chunks. E.g. some 'reject' samples
+
+    :rtype: list
+    """ % __known_chunking_methods.keys()
