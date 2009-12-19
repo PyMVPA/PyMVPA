@@ -15,6 +15,7 @@ import numpy as N
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.mappers.base import Mapper
 from mvpa.misc.support import isInVolume
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 
 if __debug__:
     from mvpa.base import debug
@@ -47,6 +48,7 @@ class BoxcarMapper(Mapper):
             how to resolve the value
         """
         Mapper.__init__(self)
+        self._outshape = None
 
         startpoints = N.asanyarray(startpoints)
         if N.issubdtype(startpoints.dtype, 'i'):
@@ -72,8 +74,25 @@ class BoxcarMapper(Mapper):
                   " Valid are %s" % self._COLLISION_RESOLUTIONS
         self.__collision_resolution = collision_resolution
 
+        # build a list of list where each sublist contains the indexes of to be
+        # averaged data elements
+        self.__selectors = [ N.arange(i + offset, i + offset + boxlength) \
+                             for i in startpoints ]
 
-    __doc__ = enhancedDocString('BoxcarMapper', locals(), Mapper)
+
+    @accepts_dataset_as_samples
+    def _train(self, data):
+        startpoints = self.startpoints
+        boxlength = self.boxlength
+        if __debug__:
+            offset = self.offset
+            for sp in startpoints:
+                if ( sp + offset + boxlength - 1 > len(data)-1 ) \
+                   or ( sp + offset < 0 ):
+                    raise ValueError, \
+                          'Illegal box: start: %i, offset: %i, length: %i' \
+                          % (sp, offset, boxlength)
+        self._outshape = (len(startpoints), boxlength) + data.shape[1:]
 
 
     def __repr__(self):
@@ -95,121 +114,71 @@ class BoxcarMapper(Mapper):
         :Returns:
           array: (#startpoint, ...)
         """
-        # in case the mapper is already charged
-        if not self.__selectors is None:
-            # if we have a single 'raw' sample (not a boxcar)
-            # extend it to cover the full box -- useful if one
-            # wants to forward map a mask in raw dataspace (e.g.
-            # fMRI ROI or channel map) into an appropriate mask vector
-            if data.shape == self._outshape[2:]:
-                return N.asarray([data] * self.boxlength)
+        # if we have a single 'raw' sample (not a boxcar)
+        # extend it to cover the full box -- useful if one
+        # wants to forward map a mask in raw dataspace (e.g.
+        # fMRI ROI or channel map) into an appropriate mask vector
+        if self._outshape and data.shape == self._outshape[2:]:
+            return N.array([data] * self.boxlength)
 
-        self._inshape = data.shape
+        return N.asarray([data[box] for box in self.__selectors])
 
-        startpoints = self.startpoints
-        offset = self.offset
-        boxlength = self.boxlength
 
-        # check for illegal boxes
-        for sp in self.startpoints:
-            if ( sp + offset + boxlength - 1 > len(data)-1 ) \
-               or ( sp + offset < 0 ):
-                raise ValueError, \
-                      'Illegal box: start: %i, offset: %i, length: %i' \
-                      % (sp, offset, boxlength)
+    def reverse1(self, data):
+        if __debug__:
+            if not data.shape == self._outshape[1:]:
+                raise ValueError("BoxcarMapper has not been train to "
+                                 "reverse-map %s-shaped data, but %s."
+                                 % (data.shape, self._outshape[1:]))
 
-        # build a list of list where each sublist contains the indexes of to be
-        # averaged data elements
-        self.__selectors = [ N.arange(i + offset, i + offset + boxlength) \
-                             for i in startpoints ]
-        selected = N.asarray([ data[ box ] for box in self.__selectors ])
-        self._outshape = selected.shape
-
-        return selected
+        # reimplemented since it is really only that
+        return data
 
 
     def _reverse_data(self, data):
-        """Uncombine features back into original space.
+        if not data.shape[1:] == self._outshape[1:]:
+            raise ValueError("BoxcarMapper has not been train to "
+                             "reverse-map %s-shaped data, but %s."
+                             % (data.shape[1:], self._outshape[1:]))
+        # stack them all together -- this will cause overlapping boxcars to
+        # result in multiple identical samples
+        return N.vstack(data)
 
-        Samples which were not touched by forward will get value 0 assigned
-        """
-        if data.shape == self._outshape:
-            # reconstruct to full input space from the provided data
-            # done below
-            pass
-        elif data.shape == self._outshape[1:]:
-            # single sample was given, simple return it again.
-            # this is done because other mappers also work with 'single'
-            # samples
-            return data
-        else:
-            raise ValueError, "BoxcarMapper operates either on single samples" \
-                  " %s or on the full dataset in 'reverse()' which must have " \
-                  "shape %s. Got data of shape %s" \
-                  % (self._outshape[1:], self._outshape, data.shape)
-
-        # the rest of this method deals with reconstructing the full input
-        # space from the boxcar samples
-        assert(data.shape[0] == len(self.__selectors)) # am I right? :)
-
-        output = N.zeros(self._inshape, dtype=data.dtype)
-        output_counts = N.zeros((self._inshape[0],), dtype=int)
-
-        for i, selector in enumerate(self.__selectors):
-            output[selector, ...] += data[i, ...]
-            output_counts[selector] += 1
-
-        # scale output
-        if self.__collision_resolution == 'mean':
-            # which samples how multiple sources?
-            g1 = output_counts > 1
-            # average them
-            # doing complicated transposing to be able to process array with
-            # nd > 2
-            output_ = output[g1].T
-            output_ /= output_counts[g1]
-            output[g1] = output_.T
+#        if data.shape == self._outshape:
+#            # reconstruct to full input space from the provided data
+#            # done below
+#            pass
+#        elif data.shape == self._outshape[1:]:
+#            # single sample was given, simple return it again.
+#            # this is done because other mappers also work with 'single'
+#            # samples
+#            return data
+#        else:
+#            raise ValueError, "BoxcarMapper operates either on single samples" \
+#                  " %s or on the full dataset in 'reverse()' which must have " \
+#                  "shape %s. Got data of shape %s" \
+#                  % (self._outshape[1:], self._outshape, data.shape)
+#
+#        # the rest of this method deals with reconstructing the full input
+#        # space from the boxcar samples
+#        assert(data.shape[0] == len(self.__selectors)) # am I right? :)
+#
+#        output = N.zeros(self._inshape, dtype=data.dtype)
+#        output_counts = N.zeros((self._inshape[0],), dtype=int)
+#
+#        for i, selector in enumerate(self.__selectors):
+#            output[selector, ...] += data[i, ...]
+#            output_counts[selector] += 1
+#
+#        # scale output
+#        if self.__collision_resolution == 'mean':
+#            # which samples how multiple sources?
+#            g1 = output_counts > 1
+#            # average them
+#            # doing complicated transposing to be able to process array with
+#            # nd > 2
+#            output_ = output[g1].T
+#            output_ /= output_counts[g1]
+#            output[g1] = output_.T
 
         return output
-
-
-    def get_insize(self):
-        """Returns the number of original samples which were combined.
-        """
-
-        return self._inshape[0]
-
-    def is_valid_outid(self, outId):
-        """Validate if OutId is valid
-
-        """
-        try:
-            return isInVolume(outId, self._outshape[1:])
-        except:
-            return False
-
-    def is_valid_inid(self, inId):
-        """Validate if InId is valid
-
-        """
-        try:
-            return isInVolume(inId, self._inshape[1:])
-        except:
-            return False
-
-
-    def get_outsize(self):
-        """Returns the number of output samples.
-        """
-
-        return N.prod(self._outshape[1:])
-
-
-    def selectOut(self, outIds):
-        """Just complain for now"""
-        raise NotImplementedError, \
-            "For feature selection use MaskMapper on output of the %s mapper" \
-            % self.__class__.__name__
-
-
-
