@@ -176,6 +176,7 @@ class QueryEngine(object):
 class IndexQueryEngine(QueryEngine):
     def __init__(self, **kwargs):
         QueryEngine.__init__(self, **kwargs)
+        self._spaceaxis = None
 
 
     def _train(self, dataset):
@@ -209,12 +210,15 @@ class IndexQueryEngine(QueryEngine):
         # now check whether we have sufficient information to put each feature
         # id into one unique search array element
         dims = N.array(dims) + 1
-        if not N.prod(dims) == dataset.nfeatures:
+        # we can deal with less features (e.g. masked dataset, but not more)
+        if N.prod(dims) < dataset.nfeatures:
             raise ValueError("IndexQueryEngine has insufficient information "
                              "about the dataset spaces. It is required to "
                              "specify an ROI generator for each feature space "
-                             "in the dataset (got: %s)."
-                             % str(self._spaceorder))
+                             "in the dataset (got: %s, #describale: %i, "
+                             "#actual features: %i)."
+                             % (str(self._spaceorder), N.prod(dims),
+                                   dataset.nfeatures))
         # now we can create the search array
         self._searcharray = N.zeros(dims, dtype='int')
         # and fill it with feature ids, but start from ONE to be different from
