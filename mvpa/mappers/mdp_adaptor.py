@@ -152,6 +152,9 @@ class MDPNodeMapper(Mapper):
 
 
 class PCAMapper(MDPNodeMapper):
+    """Convenience wrapper to perform PCA using MDP's Mapper
+    """
+
     def __init__(self, alg='PCA', **kwargs):
         """
         Parameters
