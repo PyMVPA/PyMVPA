@@ -174,6 +174,11 @@ class QueryEngine(object):
 
 
 class IndexQueryEngine(QueryEngine):
+    """Provides efficient query engine for discrete spaces.
+
+    TODO: extend
+    """
+
     def __init__(self, **kwargs):
         QueryEngine.__init__(self, **kwargs)
         self._spaceaxis = None

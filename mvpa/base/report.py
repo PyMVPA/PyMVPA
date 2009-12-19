@@ -39,6 +39,8 @@ __all__ = [ 'rl', 'Report', 'escapeXML' ]
 
 
 def escapeXML(s):
+    """Replaces &<> symbols with corresponding XML tokens
+    """
     s = s.replace('&', '&amp;')
     s = s.replace('<', '&lt;')
     s = s.replace('>', '&gt;')
