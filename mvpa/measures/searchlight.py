@@ -13,77 +13,42 @@ __docformat__ = 'restructuredtext'
 if __debug__:
     from mvpa.base import debug
 
+import numpy as N
+
 from mvpa.measures.base import DatasetMeasure
 from mvpa.misc.state import StateVariable
-from mvpa.base.dochelpers import enhancedDocString
+from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
 
 
 class Searchlight(DatasetMeasure):
-    """Runs a scalar `DatasetMeasure` on all possible spheres of a certain size
-    within a dataset.
 
-    The idea for a searchlight algorithm stems from a paper by
-    :ref:`Kriegeskorte et al. (2006) <KGB06>`.
-    """
+    roisizes = StateVariable(enabled=False,
+        doc="Number of features in each ROI.")
 
-    spheresizes = StateVariable(enabled=False,
-        doc="Number of features in each sphere.")
-
-    def __init__(self, datameasure, radius=1.0, center_ids=None, **kwargs):
-        """
-        :Parameters:
-          datameasure: callable
-            Any object that takes a :class:`~mvpa.datasets.base.Dataset`
-            and returns some measure when called.
-          radius: float
-            All features within the radius around the center will be part
-            of a sphere. Provided dataset should have a metric assigned
-            (for NiftiDataset, voxel size is used to provide such a metric,
-            hence radius should be specified in mm).
-          center_ids: list(int)
-            List of feature ids (not coordinates) the shall serve as sphere
-            centers. By default all features will be used.
-          **kwargs
-            In additions this class supports all keyword arguments of its
-            base-class :class:`~mvpa.measures.base.DatasetMeasure`.
-
-        .. note::
-
-          If `Searchlight` is used as `SensitivityAnalyzer` one has to make
-          sure that the specified scalar `DatasetMeasure` returns large
-          (absolute) values for high sensitivities and small (absolute) values
-          for low sensitivities. Especially when using error functions usually
-          low values imply high performance and therefore high sensitivity.
-          This would in turn result in sensitivity maps that have low
-          (absolute) values indicating high sensitivites and this conflicts
-          with the intended behavior of a `SensitivityAnalyzer`.
-        """
+    def __init__(self, datameasure, queryengine, center_ids=None, **kwargs):
         DatasetMeasure.__init__(self, **(kwargs))
 
         self.__datameasure = datameasure
-        self.__radius = radius
+        self.__qe = queryengine
         self.__center_ids = center_ids
 
 
-    __doc__ = enhancedDocString('Searchlight', locals(), DatasetMeasure)
-
-
     def _call(self, dataset):
-        """Perform the spheresearch.
+        """Perform the ROI search.
         """
-        if not (dataset.a.has_key('mapper')):
-            raise ValueError, "Searchlight only works with MappedDatasets " \
-                              "that has metric assigned."
+        if self.states.isEnabled('roisizes'):
+            self.states.roisizes = []
 
-        if self.states.isEnabled('spheresizes'):
-            self.states.spheresizes = []
+        # train the queryengine
+        self.__qe.train(dataset)
 
+        # progress info stuff -- not critical
         if __debug__:
             if not self.__center_ids == None:
-                nspheres = len(self.__center_ids)
+                nrois = len(self.__center_ids)
             else:
-                nspheres = dataset.nfeatures
-            sphere_count = 0
+                nrois = dataset.nfeatures
+            roi_count = 0
 
         # collect the results in a list -- you never know what you get
         results = []
@@ -95,26 +60,30 @@ class Searchlight(DatasetMeasure):
         else:
             generator = xrange(dataset.nfeatures)
 
-        # put spheres around all features in the dataset and compute the
+        # put rois around all features in the dataset and compute the
         # measure within them
         for f in generator:
-            sphere = dataset[:, dataset.mapper.getNeighbors(f, self.__radius)]
+            # retrieve the feature ids of all features in the ROI from the query
+            # engine
+            roi_fids = self.__qe[f]
+            # slice the dataset
+            roi = dataset[:, roi_fids]
 
             # compute the datameasure and store in results
-            measure = self.__datameasure(sphere)
+            measure = self.__datameasure(roi)
             results.append(measure)
 
-            # store the size of the sphere dataset
-            if self.states.isEnabled('spheresizes'):
-                self.states.spheresizes.append(sphere.nfeatures)
+            # store the size of the roi dataset
+            if self.states.isEnabled('roisizes'):
+                self.states.roisizes.append(roi.nfeatures)
 
             if __debug__:
-                sphere_count += 1
-                debug('SLC', "Doing %i spheres: %i (%i features) [%i%%]" \
-                    % (nspheres,
-                       sphere_count,
-                       sphere.nfeatures,
-                       float(sphere_count)/nspheres*100,), cr=True)
+                roi_count += 1
+                debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
+                    % (nrois,
+                       roi_count,
+                       roi.nfeatures,
+                       float(roi_count)/nrois*100,), cr=True)
 
         if __debug__:
             debug('SLC', '')
@@ -126,6 +95,47 @@ class Searchlight(DatasetMeasure):
         return results
 
 
+
+def sphere_searchlight(datameasure, diameter=1, center_ids=None,
+                       space='voxel_indices', **kwargs):
+    """Runs a scalar `DatasetMeasure` on all possible spheres of a certain size
+    within a dataset.
+
+    The idea for a searchlight algorithm stems from a paper by
+    :ref:`Kriegeskorte et al. (2006) <KGB06>`.
+
+    Parameters
+    ----------
+    datameasure: callable
+      Any object that takes a :class:`~mvpa.datasets.base.Dataset`
+      and returns some measure when called.
+    diameter: int
+      All features within the diameteraround the center will be part
+      of a sphere.
+    center_ids: list(int)
+      List of feature ids (not coordinates) the shall serve as sphere
+      centers. By default all features will be used.
+    **kwargs
+      In additions this class supports all keyword arguments of its
+      base-class :class:`~mvpa.measures.base.DatasetMeasure`.
+
+    Notes
+    -----
+    If `Searchlight` is used as `SensitivityAnalyzer` one has to make
+    sure that the specified scalar `DatasetMeasure` returns large
+    (absolute) values for high sensitivities and small (absolute) values
+    for low sensitivities. Especially when using error functions usually
+    low values imply high performance and therefore high sensitivity.
+    This would in turn result in sensitivity maps that have low
+    (absolute) values indicating high sensitivites and this conflicts
+    with the intended behavior of a `SensitivityAnalyzer`.
+    """
+    # build a matching query engine from the arguments
+    # XXX right now Sphere wants an odd integer diameter
+    kwa = {space: Sphere(diameter)}
+    qe = IndexQueryEngine(**kwa)
+    # init the searchlight with the queryengine
+    return Searchlight(datameasure, qe, center_ids=center_ids, **kwargs)
 
 
 #class OptimalSearchlight( object ):
