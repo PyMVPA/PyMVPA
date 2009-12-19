@@ -27,6 +27,8 @@ import numpy as N
 from sets import Set
 
 from mvpa.misc.args import group_kwargs
+from mvpa.misc.param import Parameter
+
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.datasets.miscfx import get_samples_by_attr
 from mvpa.misc.state import StateVariable, ClassWithCollections, Harvestable
@@ -1376,3 +1378,40 @@ class FeatureSelectionClassifier(ProxyClassifier):
 
     testdataset = property(fget=lambda x:x.__testdataset,
                            fset=setTestDataset)
+
+
+class RegressionAsClassifier(ProxyClassifier):
+    """Allows to use arbitrary regression for classification.
+
+    Possible usecases:
+
+     Binary Classification
+      Any regression could easily be extended for binary
+      classification. For instance using labels -1 and +1, regression
+      results are quantized into labels depending on their signs
+     Multiclass Classification
+      Although most of the time classes are not ordered and do not
+      have a corresponding distance matrix among them it might often
+      be the case that there is a hypothesis that classes could be
+      well separated in a projection to single dimension (non-linear
+      manifold, or just linear projection).  For such use regression
+      might provide necessary means of classification
+    """
+
+    centroids = Parameter(None, allowedtype='None or ndarray',
+        doc="""Hypothesis or prior information on
+        location/distance of centroids for each category, provide them.
+        If None -- will use equidistant points starting from 0.0.
+        If ndarray -- 1st dimension to separate labels, 2nd dimension
+        (most of the time degenerate) - actual coordinates""")
+
+    distance_measure = Parameter(None, allowedtype='None or ndarray',
+        doc="Compatible distance function (e.g. from `mvpa.clfs.distance`)")
+
+
+    def _train(self, dataset):
+        print self.params
+        pass
+
+    def _predict(self, dataset):
+        pass
