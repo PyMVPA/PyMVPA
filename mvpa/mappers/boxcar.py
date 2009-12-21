@@ -12,10 +12,8 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.base.dochelpers import enhancedDocString
 from mvpa.mappers.base import Mapper
-from mvpa.misc.support import isInVolume
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa.clfs.base import accepts_dataset_as_samples
 
 if __debug__:
     from mvpa.base import debug
@@ -29,10 +27,7 @@ class BoxcarMapper(Mapper):
       of samples (ie the size of 0-th dimension).
     """
 
-    _COLLISION_RESOLUTIONS = ['mean']
-
-    def __init__(self, startpoints, boxlength, offset=0,
-                 collision_resolution='mean'):
+    def __init__(self, startpoints, boxlength, offset=0):
         """
         :Parameters:
           startpoints: sequence
@@ -43,9 +38,6 @@ class BoxcarMapper(Mapper):
           offset: int
             The offset between the provided starting point and the actual start
             of the boxcar.
-          collision_resolution : 'mean'
-            if a sample belonged to multiple output samples, then on reverse,
-            how to resolve the value
         """
         Mapper.__init__(self)
         self._outshape = None
@@ -68,11 +60,6 @@ class BoxcarMapper(Mapper):
         self.boxlength = int(boxlength)
         self.offset = offset
         self.__selectors = None
-
-        if not collision_resolution in self._COLLISION_RESOLUTIONS:
-            raise ValueError, "Unknown method to resolve the collision." \
-                  " Valid are %s" % self._COLLISION_RESOLUTIONS
-        self.__collision_resolution = collision_resolution
 
         # build a list of list where each sublist contains the indexes of to be
         # averaged data elements
@@ -97,10 +84,9 @@ class BoxcarMapper(Mapper):
 
     def __repr__(self):
         s = super(BoxcarMapper, self).__repr__()
-        return s.replace("(", "(boxlength=%d, offset=%d, startpoints=%s, "
-                         "collision_resolution='%s'" %
-                         (self.boxlength, self.offset, str(self.startpoints),
-                          str(self.__collision_resolution)), 1)
+        return s.replace("(", "(boxlength=%d, offset=%d, startpoints=%s" %
+                         (self.boxlength, self.offset, str(self.startpoints)),
+                         1)
 
 
     def _forward_data(self, data):
@@ -143,42 +129,3 @@ class BoxcarMapper(Mapper):
         # stack them all together -- this will cause overlapping boxcars to
         # result in multiple identical samples
         return N.vstack(data)
-
-#        if data.shape == self._outshape:
-#            # reconstruct to full input space from the provided data
-#            # done below
-#            pass
-#        elif data.shape == self._outshape[1:]:
-#            # single sample was given, simple return it again.
-#            # this is done because other mappers also work with 'single'
-#            # samples
-#            return data
-#        else:
-#            raise ValueError, "BoxcarMapper operates either on single samples" \
-#                  " %s or on the full dataset in 'reverse()' which must have " \
-#                  "shape %s. Got data of shape %s" \
-#                  % (self._outshape[1:], self._outshape, data.shape)
-#
-#        # the rest of this method deals with reconstructing the full input
-#        # space from the boxcar samples
-#        assert(data.shape[0] == len(self.__selectors)) # am I right? :)
-#
-#        output = N.zeros(self._inshape, dtype=data.dtype)
-#        output_counts = N.zeros((self._inshape[0],), dtype=int)
-#
-#        for i, selector in enumerate(self.__selectors):
-#            output[selector, ...] += data[i, ...]
-#            output_counts[selector] += 1
-#
-#        # scale output
-#        if self.__collision_resolution == 'mean':
-#            # which samples how multiple sources?
-#            g1 = output_counts > 1
-#            # average them
-#            # doing complicated transposing to be able to process array with
-#            # nd > 2
-#            output_ = output[g1].T
-#            output_ /= output_counts[g1]
-#            output[g1] = output_.T
-
-        return output
