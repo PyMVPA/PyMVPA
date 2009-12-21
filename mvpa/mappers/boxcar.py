@@ -95,6 +95,21 @@ class BoxcarMapper(Mapper):
                          1)
 
 
+    def forward1(self, data):
+        # if we have a single 'raw' sample (not a boxcar)
+        # extend it to cover the full box -- useful if one
+        # wants to forward map a mask in raw dataspace (e.g.
+        # fMRI ROI or channel map) into an appropriate mask vector
+        if not self._outshape:
+            return RuntimeError("BoxcarMapper needs to be trained before "
+                                ".forward1() can be used.")
+        if not data.shape == self._outshape[2:]:
+            return ValueError("Data shape %s does not match sample shape %s."
+                              % (data.shape, self._outshape[2:]))
+
+        return N.vstack([data[N.newaxis]] * self.boxlength)
+
+
     def _forward_data(self, data):
         """Project an ND matrix into N+1D matrix
 
@@ -106,13 +121,6 @@ class BoxcarMapper(Mapper):
         :Returns:
           array: (#startpoint, ...)
         """
-        # if we have a single 'raw' sample (not a boxcar)
-        # extend it to cover the full box -- useful if one
-        # wants to forward map a mask in raw dataspace (e.g.
-        # fMRI ROI or channel map) into an appropriate mask vector
-        if self._outshape and data.shape == self._outshape[2:]:
-            return N.vstack([data[N.newaxis]] * self.boxlength)
-
         return N.vstack([data[box][N.newaxis] for box in self.__selectors])
 
 
