@@ -73,23 +73,50 @@ def test_query_engine():
     # cannot train since the engine does not know about the second space
     assert_raises(ValueError, qe.train, ds)
     # now do it again with a full spec
-    ds = Dataset([data,data], fa={'s_ind': N.concatenate((ind, ind)),
-                                  't_ind': N.repeat([0,1], 27)})
+    ds = Dataset([data, data], fa={'s_ind': N.concatenate((ind, ind)),
+                                   't_ind': N.repeat([0,1], 27)})
     qe = ne.IndexQueryEngine(s_ind=sphere, t_ind=None)
     qe.train(ds)
     # internal representation check
-    assert_array_equal(qe._searcharray,
-                       N.arange(54).reshape(qe._searcharray.shape) + 1)
+    # YOH: invalid for new implementation with lookup tables (dictionaries)
+    #assert_array_equal(qe._searcharray,
+    #                   N.arange(54).reshape(qe._searcharray.shape) + 1)
     # should give us one corner, collapsing the 't_ind'
-    assert_array_equal(qe(s_ind=(0,0,0)), [0, 1, 3, 9, 27, 28, 30, 36])
+    assert_array_equal(qe(s_ind=(0, 0, 0)),
+                       [0, 1, 3, 9, 27, 28, 30, 36])
     # directly specifying an index for 't_ind' without having an ROI
     # generator, should give the same corner, but just once
-    assert_array_equal(qe(s_ind=(0,0,0), t_ind=0), [0, 1, 3, 9])
+    assert_array_equal(qe(s_ind=(0, 0, 0), t_ind=0), [0, 1, 3, 9])
     # just out of the mask -- no match
-    assert_array_equal(qe(s_ind=(3,3,3)), [])
+    assert_array_equal(qe(s_ind=(3, 3, 3)), [])
     # also out of the mask -- but single match
-    assert_array_equal(qe(s_ind=(2,2,3), t_ind=1), [53])
+    assert_array_equal(qe(s_ind=(2, 2, 3), t_ind=1), [53])
     # query by id
-    assert_array_equal(qe(s_ind=(0,0,0), t_ind=0), qe[0])
-    assert_array_equal(qe(s_ind=(0,0,0), t_ind=[0,1]),
-                       qe(s_ind=(0,0,0)))
+    assert_array_equal(qe(s_ind=(0, 0, 0), t_ind=0), qe[0])
+    assert_array_equal(qe(s_ind=(0, 0, 0), t_ind=[0, 1]),
+                       qe(s_ind=(0, 0, 0)))
+    # should not fail if t_ind is outside
+    assert_array_equal(qe(s_ind=(0, 0, 0), t_ind=[0, 1, 10]),
+                       qe(s_ind=(0, 0, 0)))
+
+    # should fail if asked about some unknown thing
+    assert_raises(ValueError, qe.__call__, s_ind=(0,0,0), buga=0)
+
+    # Test by using some literal feature atttribute
+    ds.fa['lit'] =  ['roi1', 'ro2', 'r3']*18
+    # should work as well as before
+    assert_array_equal(qe(s_ind=(0,0,0)), [0, 1, 3, 9, 27, 28, 30, 36])
+    # should fail if asked about some unknown (yet) thing
+    assert_raises(ValueError, qe.__call__, s_ind=(0,0,0), lit='roi1')
+
+    # Create qe which can query literals as well
+    qe_lit = ne.IndexQueryEngine(s_ind=sphere, t_ind=None, lit=None)
+    qe_lit.train(ds)
+    # should work as well as before
+    assert_array_equal(qe_lit(s_ind=(0, 0, 0)), [0, 1, 3, 9, 27, 28, 30, 36])
+    # and subselect nicely -- only /3 ones
+    assert_array_equal(qe_lit(s_ind=(0, 0, 0), lit='roi1'),
+                       [0, 3, 9, 27, 30, 36])
+    assert_array_equal(qe_lit(s_ind=(0, 0, 0), lit=['roi1', 'ro2']),
+                       [0, 1, 3, 9, 27, 28, 30, 36])
+
