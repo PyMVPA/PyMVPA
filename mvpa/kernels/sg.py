@@ -25,6 +25,14 @@ from mvpa.misc.param import Parameter
 if externals.exists('shogun', raiseException=True):
     import shogun.Kernel as sgk
     from shogun.Features import RealFeatures
+else:
+    # Just to please sphinx documentation
+    class Bogus(object):
+        pass
+    sgk = Bogus()
+    sgk.LinearKernel = None
+    sgk.GaussianKernel = None
+    sgk.PolyKernel = None
 
 
 class SGKernel(Kernel):
