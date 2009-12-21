@@ -78,8 +78,9 @@ def test_query_engine():
     qe = ne.IndexQueryEngine(s_ind=sphere, t_ind=None)
     qe.train(ds)
     # internal representation check
-    assert_array_equal(qe._searcharray,
-                       N.arange(54).reshape(qe._searcharray.shape) + 1)
+    # XXX YOH: invalid for new implementation with lookup tables (dictionaries)
+    #assert_array_equal(qe._searcharray,
+    #                   N.arange(54).reshape(qe._searcharray.shape) + 1)
     # should give us one corner, collapsing the 't_ind'
     assert_array_equal(qe(s_ind=(0,0,0)), [0, 1, 3, 9, 27, 28, 30, 36])
     # directly specifying an index for 't_ind' without having an ROI
