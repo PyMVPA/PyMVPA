@@ -87,5 +87,5 @@ def test_simpleboxcar():
     assert_raises(ValueError, m.reverse, singlesample[0])
 
     # check broadcasting of 'raw' samples into proper boxcars on forward()
-    bc = m.forward(N.arange(24).reshape(3, 4, 2))
+    bc = m.forward1(N.arange(24).reshape(3, 4, 2))
     assert_array_equal(bc, N.array(2 * [N.arange(24).reshape(3, 4, 2)]))
