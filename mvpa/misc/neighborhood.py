@@ -183,11 +183,15 @@ class IndexQueryEngine(QueryEngine):
     TODO:
     - extend documentation
     - repr
-    - RENAME -- Index... may be Discrete ? index might not imply
-                order/distance may be?
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, sorted=True, **kwargs):
+        """
+        Parameters
+        ----------
+        sorted : bool
+          Results of query get sorted
+        """
         QueryEngine.__init__(self, **kwargs)
         self._spaceorder = None
         """Order of the spaces"""
@@ -197,6 +201,8 @@ class IndexQueryEngine(QueryEngine):
         """Precrafted indexes to cover ':' situation within ix_"""
         self._searcharray = None
         """Actual searcharray"""
+        self.sorted = True
+        """Either to sort the query results"""
 
     def _train(self, dataset):
         # local binding
@@ -212,13 +218,14 @@ class IndexQueryEngine(QueryEngine):
         for space in self._spaceorder:
             # local binding for the attribute
             qattr = qattrs[space]
-            # XXX would probably work for ANY discrete attribute
-            if not qattr.dtype.char in N.typecodes['AllInteger']:
-                raise ValueError("IndexQueryEngine can only operate on "
-                                 "feature attributes with integer indices "
-                                 "(got: %s)." % str(qattr.dtype))
             # If it is >1D ndarray we need to transform to list of tuples,
             # since ndarray is not hashable
+            # XXX would probably work for ANY discrete attribute
+            if not qattr.dtype.char in N.typecodes['AllInteger']:
+                pass
+                #raise ValueError("IndexQueryEngine can only operate on "
+                #                 "feature attributes with integer indices "
+                #                 "(got: %s)." % str(qattr.dtype))
             if isinstance(qattr, N.ndarray) and len(qattr.shape) > 1:
                 qattr = [tuple(x) for x in qattr]
 
@@ -248,7 +255,7 @@ class IndexQueryEngine(QueryEngine):
             raise ValueError("IndexQueryEngine has insufficient information "
                              "about the dataset spaces. It is required to "
                              "specify an ROI generator for each feature space "
-                             "in the dataset (got: %s, #describale: %i, "
+                             "in the dataset (got: %s, #describable: %i, "
                              "#actual features: %i)."
                              % (str(self._spaceorder), N.prod(dims),
                                    dataset.nfeatures))
@@ -272,17 +279,18 @@ class IndexQueryEngine(QueryEngine):
         # construct the search array slicer
         # need to obey axis order
         slicer = []
-        for space_ind, space in enumerate(self._spaceorder):
+        for space in self._spaceorder:
             lookup = self._lookups[space]
             # only generate ROI, if we have a generator
             # otherwise consider all of the unspecified space
             if space in kwargs:
+                space_args = kwargs.pop(space)   # so we could check later on
                 # if no ROI generator is available, take provided indexes
                 # without any additional neighbors etc
                 if self._queryobjs[space] is None:
-                    roi = N.atleast_1d(kwargs[space])
+                    roi = N.atleast_1d(space_args)
                 else:
-                    roi = self._queryobjs[space](kwargs[space])
+                    roi = self._queryobjs[space](space_args)
                 # lookup and filter the results
                 roi_ind = [lookup[i] for i in roi if (i in lookup)]
                 # if no candidate is left, the whole thing does not match
@@ -291,8 +299,17 @@ class IndexQueryEngine(QueryEngine):
                     return []
                 slicer.append(roi_ind)
             else:
-                # Provide ":" for ... XXX
+                # Provide ":" if no specialization was provided
                 slicer.append(self._sliceall[space])
+        # check if query had only legal spaces specified
+        if len(kwargs):
+            raise ValueError, "Do not know how to treat space(s) %s given " \
+                  "in parameters of the query" % (kwargs.keys())
         # only ids are of interest -> flatten
         # and we need to back-transfer them into dataset ids by substracting 1
-        return self._searcharray[N.ix_(*slicer)].flatten() - 1
+        res = self._searcharray[N.ix_(*slicer)].flatten() - 1
+        res = res[res>=0]              # return only the known ones
+        if self.sorted:
+            return sorted(res)
+        else:
+            return res
