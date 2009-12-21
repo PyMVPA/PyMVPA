@@ -38,6 +38,7 @@ sys.path.append(os.path.abspath('sphinxext'))
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.todo',
               'sphinx.ext.autosummary',
+              'sphinx.ext.intersphinx',
               'numpydoc']
 
 # Add any paths that contain templates here, relative to this directory.
@@ -54,7 +55,7 @@ master_doc = 'contents'
 
 # General substitutions.
 project = 'PyMVPA'
-copyright = '2006-2009, Michael Hanke, Yaroslav Halchenko, Per B. Sederberg'
+copyright = '2006-2009, PyMVPA Authors'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -196,3 +197,13 @@ latex_preamble = """
 
 # If false, no module index is generated.
 #latex_use_modindex = True
+
+# -----------------------------------------------------------------------------
+# Intersphinx configuration
+# -----------------------------------------------------------------------------
+# to link to related projects
+intersphinx_mapping = {'http://docs.python.org/dev': None,
+                       'http://nipy.sourceforge.net/nipype': None,
+                       'http://nipy.sourceforge.net/nipy': None}
+
+

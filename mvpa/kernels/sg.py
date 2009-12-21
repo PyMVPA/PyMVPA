@@ -101,24 +101,25 @@ class CustomSGKernel(_BasicSGKernel):
             order.append(k)
         self.__kp_order__ = tuple(order)
         
-class LinearSGKernel(_BasicSGKernel):
-    """A basic linear kernel computed via Shogun: K(a,b) = a*b.T"""
-    __kernel_cls__ = sgk.LinearKernel
+if externals.exists('shogun', raiseException=True):
+    class LinearSGKernel(_BasicSGKernel):
+        """A basic linear kernel computed via Shogun: K(a,b) = a*b.T"""
+        __kernel_cls__ = sgk.LinearKernel
         
-class RbfSGKernel(_BasicSGKernel):
-    """Radial basis function: K(a,b) = exp(-||a-b||**2/sigma)"""
-    __kernel_cls__ = sgk.GaussianKernel
-    sigma = Parameter(1, doc="Width/division parameter for gaussian kernel")
-        
-class PolySGKernel(_BasicSGKernel):
-    """Polynomial kernel: K(a,b) = (a*b.T + c)**degree
-    c is 1 if and only if 'inhomogenous' is True
-    """
-    __kernel_cls__ = sgk.PolyKernel
-    __kp_order__ = ('degree', 'inhomogenous')
-    degree = Parameter(2, allowedtype=int, doc="Polynomial order of the kernel")
-    inhomogenous = Parameter(True, allowedtype=bool,
-                             doc="Whether +1 is added within the expression")
+    class RbfSGKernel(_BasicSGKernel):
+        """Radial basis function: K(a,b) = exp(-||a-b||**2/sigma)"""
+        __kernel_cls__ = sgk.GaussianKernel
+        sigma = Parameter(1, doc="Width/division parameter for gaussian kernel")
+            
+    class PolySGKernel(_BasicSGKernel):
+        """Polynomial kernel: K(a,b) = (a*b.T + c)**degree
+        c is 1 if and only if 'inhomogenous' is True
+        """
+        __kernel_cls__ = sgk.PolyKernel
+        __kp_order__ = ('degree', 'inhomogenous')
+        degree = Parameter(2, allowedtype=int, doc="Polynomial order of the kernel")
+        inhomogenous = Parameter(True, allowedtype=bool,
+                                 doc="Whether +1 is added within the expression")
     
 class PrecomputedSGKernel(SGKernel):
     """A kernel which is precomputed from a numpy array or Shogun kernel"""
