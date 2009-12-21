@@ -378,6 +378,9 @@ if __debug__:
         return base
 
     class TraceBack(object):
+        """Customized traceback to be included in debug messages
+        """
+
         def __init__(self, collide=False):
             """Initialize TrackBack metric
 
