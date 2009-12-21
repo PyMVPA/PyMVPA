@@ -7,7 +7,13 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""""""
+"""A little helper to profile python code: does profiling and visualization.
+
+Relies on hotshot profile profiling, hotshot2calltree to convert to
+kcachegrind format, and finally runs kcachegrind on it.
+
+TODO: redo -- script got aged too much.
+"""
 
 __docformat__ = 'restructuredtext'
 
@@ -34,6 +40,7 @@ if __name__ == "__main__":
     profilelines = True
     profilelevel = 10                   # how many most hungry to list in stats
     run = True                          # either to run profiling at all
+    run_main = False
 
     verbose = LevelLogger(handlers=[sys.stderr])
     verbose.level = 1    # do we need to know lots by default? :-)
@@ -51,6 +58,9 @@ if __name__ == "__main__":
     while sys.argv[0].startswith('-'):
         if sys.argv[0] in ["-v", "--verbose"]:
             verbose.level = int(sys.argv[1])
+            sys.argv.pop(0)
+        elif sys.argv[0] in ["-m", "--run-main"]:
+            run_main = True
             sys.argv.pop(0)
         elif sys.argv[0] in ["-l", "--level"]:
             profilelevel = int(sys.argv[1])
@@ -85,7 +95,7 @@ if __name__ == "__main__":
 
     cmdname = sys.argv[0]
     dirname = path.dirname(cmdname)
-    (root, ext) = path.splitext(path.basename(cmdname))
+    (cmdname_root, ext) = path.splitext(path.basename(cmdname))
 
     verbose(2, "Adding '%s' to sys.path " % dirname)
     sys.path.append(dirname)
@@ -99,28 +109,33 @@ if __name__ == "__main__":
         pfilename = cmdname + ".prof"
 
     if run:
-        verbose(1, "Importing %s " % root)
-        try:
-            exec "import %s as runnable" % root
-        except SystemExit:
-            pass
-
-        if not runnable.__dict__.has_key('main'):
-            verbose(0, "OOPS: file/module %s has no function main defined" \
-                       % cmdname)
-            sys.exit(1)
 
         verbose(2, "Creating profiler instance")
         prof = hotshot.Profile(pfilename, lineevents=profilelines)
 
-        try:
-            # actually return values are never setup
-            # since unittest.main sys.exit's
-            verbose(1, "Calling main() with a profiler")
-            results = prof.runcall( runnable.main )
-            verbose(4, "Results of profiler call are %s" % `results`)
-        except SystemExit:
-            pass
+        if run_main:
+            verbose(1, "Importing %s " % cmdname_root)
+            try:
+                exec "import %s as runnable" % cmdname_root
+            except SystemExit:
+                pass
+
+            if not runnable.__dict__.has_key('main'):
+                verbose(0, "OOPS: file/module %s has no function main defined" \
+                           % cmdname)
+                sys.exit(1)
+
+            try:
+                # actually return values are never setup
+                # since unittest.main sys.exit's
+                verbose(1, "Calling main() with a profiler")
+                results = prof.runcall( runnable.main )
+                verbose(4, "Results of profiler call are %s" % `results`)
+            except SystemExit:
+                pass
+        else:
+            prof.run('\n'.join(open(cmdname, 'r').readlines()))
+            verbose(1, "Running whole module/script with a profiler")
 
         verbose(1, "Saving profile data into %s" % pfilename)
         prof.close()
