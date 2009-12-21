@@ -19,10 +19,6 @@ from mvpa.datasets import Dataset
 
 
 def test_simpleboxcar():
-    """Just the same tests as for transformWithBoxcar.
-
-    Mention that BoxcarMapper doesn't apply function with each boxcar
-    """
     data = N.atleast_2d(N.arange(10)).T
     sp = N.arange(10)
 
@@ -83,9 +79,61 @@ def test_simpleboxcar():
     # test reverse of a single sample
     singlesample = N.arange(48).reshape(2, 3, 4, 2)
     assert_array_equal(singlesample, m.reverse1(singlesample))
-    # should not work for shape mismatch
-    assert_raises(ValueError, m.reverse, singlesample[0])
+    # should not work for shape mismatch, but it does work and is useful when
+    # reverse mapping sample attributes
+    #assert_raises(ValueError, m.reverse, singlesample[0])
 
     # check broadcasting of 'raw' samples into proper boxcars on forward()
     bc = m.forward1(N.arange(24).reshape(3, 4, 2))
     assert_array_equal(bc, N.array(2 * [N.arange(24).reshape(3, 4, 2)]))
+
+
+def test_datasetmapping():
+    # 6 samples, 4 features
+    data = N.arange(24).reshape(6,4)
+    ds = Dataset(data,
+                 sa={'timepoints': N.arange(6),
+                     'multidim': data.copy()},
+                 fa={'fid': N.arange(4)})
+    # with overlapping and non-overlapping boxcars
+    startpoints = [0, 1, 4]
+    boxlength = 2
+    bm = BoxcarMapper(startpoints, boxlength, inspace='boxy')
+    # train is critical
+    bm.train(ds)
+    mds = bm.forward(ds)
+    assert_equal(len(mds), len(startpoints))
+    assert_equal(mds.nfeatures, boxlength)
+    # all samples attributes remain, but the can rotated/compressed into
+    # multidimensional attributes
+    assert_equal(sorted(mds.sa.keys()), ['boxy_onsets'] + sorted(ds.sa.keys()))
+    assert_equal(mds.sa.multidim.shape,
+                 (len(startpoints), boxlength, ds.nfeatures))
+    assert_equal(mds.sa.timepoints.shape, (len(startpoints), boxlength))
+    assert_array_equal(mds.sa.timepoints.flatten(),
+                       N.array([(s, s+1) for s in startpoints]).flatten())
+    assert_array_equal(mds.sa.boxy_onsets, startpoints)
+    # feature attributes also get rotated and broadcasted
+    assert_array_equal(mds.fa.fid, [ds.fa.fid, ds.fa.fid])
+    # and finally there is a new one
+    assert_array_equal(mds.fa.boxy_offsets, N.arange(boxlength))
+
+    # now see how it works on reverse()
+    rds = bm.reverse(mds)
+    # we got at least something of all original attributes back
+    assert_equal(sorted(rds.sa.keys()), sorted(ds.sa.keys()))
+    assert_equal(sorted(rds.fa.keys()), sorted(ds.fa.keys()))
+    # it is not possible to reconstruct the full samples array
+    # some samples even might show up multiple times (when there are overlapping
+    # boxcars
+    assert_array_equal(rds.samples,
+                       N.array([[ 0,  1,  2,  3],
+                                [ 4,  5,  6,  7],
+                                [ 4,  5,  6,  7],
+                                [ 8,  9, 10, 11],
+                                [16, 17, 18, 19],
+                                [20, 21, 22, 23]]))
+    assert_array_equal(rds.sa.timepoints, [0, 1, 1, 2, 4, 5])
+    assert_array_equal(rds.sa.multidim, ds.sa.multidim[rds.sa.timepoints])
+    # but feature attributes should be fully recovered
+    assert_array_equal(rds.fa.fid, ds.fa.fid)
