@@ -26,7 +26,13 @@ class BoxcarMapper(Mapper):
       This mapper is somewhat unconventional since it doesn't preserve number
       of samples (ie the size of 0-th dimension).
     """
-
+    # TODO: extend with the possibility to provide real onset vectors and a
+    #       samples attribute that is used to determine the actual sample that
+    #       is matching a particular onset. The difference between target onset
+    #       and sample could be stored as an additional sample attribute. Some
+    #       utility functionality (outside BoxcarMapper) could be used to merge
+    #       arbitrary sample attributes into the samples matrix (with
+    #       appropriate mapper adjustment, e.g. CombinedMapper).
     def __init__(self, startpoints, boxlength, offset=0):
         """
         :Parameters:
