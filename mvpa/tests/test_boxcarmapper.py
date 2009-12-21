@@ -31,7 +31,6 @@ def test_simpleboxcar():
 
     # now do an identity transformation
     bcm = BoxcarMapper(sp, 1)
-    
     trans = bcm.forward(data)
     # ,0 is a feature below, so we get explicit 2D out of 1D
     assert_array_equal(trans[:,0], data)
