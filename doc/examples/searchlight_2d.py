@@ -36,10 +36,10 @@ preprocessing steps on it."""
 # load PyMVPA example dataset
 #
 attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
-dataset = nifti_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                        labels=attr.labels,
-                        chunks=attr.chunks,
-                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+                       labels=attr.labels,
+                       chunks=attr.chunks,
+                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 #
 # preprocessing
@@ -77,7 +77,7 @@ cv = CrossValidatedTransferError(TransferError(clf),
 """Finally, we run the searchlight analysis for three different radii, each
 time computing an error for each sphere. To achieve this, we simply use the
 :class:`~mvpa.measures.searchlight.Searchlight` class, which takes any
-:term:`processing object` and a radius as arguments. The :term:`processing
+:term:`processing object` and a diameter as arguments. The :term:`processing
 object` has to compute the intended measure, when called with a dataset. The
 :class:`~mvpa.measures.searchlight.Searchlight` object will do nothing more
 than generating small datasets for each sphere, feeding it to the processing
@@ -91,20 +91,18 @@ fig = 0
 P.figure(figsize=(12,4))
 
 
-for radius in [1,5,10]:
+for diameter in [1, 3, 7]:
     # tell which one we are doing
-    print "Running searchlight with radius: %i ..." % (radius)
+    print "Running searchlight with diameter: %i ..." % (diameter)
 
-    # setup Searchlight with a custom radius
-    # radius has to be in the same unit as the nifti file's pixdim
-    # property.
-    sl = Searchlight(cv, radius=radius)
+    # setup Searchlight with a custom diameter
+    sl = sphere_searchlight(cv, diameter=diameter, space='voxel_indices')
 
     # run searchlight on example dataset and retrieve error map
     sl_map = sl(dataset)
 
     # map sensitivity map into original dataspace
-    orig_sl_map = dataset.mapper.reverse(N.array(sl_map))
+    orig_sl_map = dataset.mapper.reverse1(N.array(sl_map))
     masked_orig_sl_map = N.ma.masked_array(orig_sl_map,
                                            mask=orig_sl_map == 0)
 
@@ -112,7 +110,7 @@ for radius in [1,5,10]:
     fig += 1
     P.subplot(1,3,fig)
 
-    P.title('Radius %i' % radius)
+    P.title('Diameter %i' % diameter)
 
     P.imshow(masked_orig_sl_map[0],
              interpolation='nearest',

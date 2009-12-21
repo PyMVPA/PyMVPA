@@ -154,3 +154,89 @@ if externals.exists("pylab"):
 
 if externals.exists("lxml") and externals.exists("nifti"):
     from mvpa.atlases import *
+
+def suite_stats():
+    """Return cruel dict of things which evil suite provides
+    """
+
+    glbls = globals()
+    import types
+
+    def _get_path(e):
+        """Figure out basic path for the beast... probably there is already smth which could do that for me
+        """
+        if str(e).endswith('(built-in)>'):
+            return "BUILTIN"
+        if hasattr(e, '__file__'):
+            return e.__file__
+        elif hasattr(e, '__path__'):
+            return e.__path__[0]
+        elif hasattr(e, '__module__'):
+            if isinstance(e.__module__, types.StringType):
+                return e.__module__
+            else:
+                return _get_path(e.__module__)
+        elif hasattr(e, '__class__'):
+            return _get_path(e.__class__)
+        else:
+            raise RuntimeError, "Could not figure out path for %s" % e
+
+
+    class EnvironmentStatistics(dict):
+        def __init__(self, d):
+            dict.__init__(self, foreign={})
+            # compute cruel stats
+            mvpa_str = '%smvpa' % os.path.sep
+            for k, e in d.iteritems():
+                found = False
+                for ty, tk, check_path in (
+                    (types.ListType, "lists", False),
+                    (types.StringType, "strings", False),
+                    (types.UnicodeType, "strings", False),
+                    (types.FileType, "files", False),
+                    (types.BuiltinFunctionType, None, True),
+                    (types.BuiltinMethodType, None, True),
+                    (types.ModuleType, "modules", True),
+                    (types.ClassType, "classes", True),
+                    (types.TypeType, "types", True),
+                    (types.LambdaType, "functions", True),
+                    (types.ObjectType, "objects", True),
+                    ):
+                    if isinstance(e, ty):
+                        found = True
+                        if tk is None:
+                            break
+                        if not tk in self:
+                            self[tk] = {}
+                        if check_path:
+                            mpath = _get_path(e)
+                            if mvpa_str in mpath or mpath.startswith('mvpa.'):
+                                self[tk][k] = e
+                            else:
+                                self['foreign'][k] = e
+                        else:
+                            self[tk][k] = e
+                        break
+                if not found:
+                    raise ValueError, \
+                          "Could not figure out placement for %s %s" % (k, e)
+
+        def __str__(self):
+            s = ""
+            for k in sorted(self.keys()):
+                s += "\n%s [%d entries]:" % (k, len(self[k]))
+                for i in sorted(self[k].keys()):
+                    s += "\n  %s" % i
+                    # Lets extract first line in doc
+                    try:
+                        doc = self[k][i].__doc__.strip()
+                        try:
+                            ind = doc.index('\n')
+                        except:
+                            ind = 1000
+                        s+= ": " + doc[:min(ind, 80)]
+                    except:
+                        pass
+            return s
+
+    return EnvironmentStatistics(globals())

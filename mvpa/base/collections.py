@@ -254,12 +254,15 @@ class ArrayCollectable(SequenceCollectable):
 
 
 class SampleAttribute(ArrayCollectable):
+    """Per sample attribute in a dataset"""
     pass
 
 class FeatureAttribute(ArrayCollectable):
+    """Per feature attribute in a dataset"""
     pass
 
 class DatasetAttribute(ArrayCollectable):
+    """Dataset attribute"""
     pass
 
 

@@ -12,7 +12,8 @@ import numpy as N
 import random
 
 from numpy.testing import assert_array_equal
-from nose.tools import ok_, assert_raises, assert_false, assert_equal
+from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
+        assert_true
 
 from mvpa.base.types import is_datasetlike
 from mvpa.base.dataset import DatasetError
@@ -39,6 +40,11 @@ def test_from_basic():
 
     ds = Dataset.from_basic(samples, labels, chunks)
     ds.init_origids('both')
+    first = ds.sa.origids
+    # now do again and check that they get regenerated
+    ds.init_origids('both')
+    assert_false(first is ds.sa.origids)
+    assert_array_equal(first, ds.sa.origids)
 
     ok_(is_datasetlike(ds))
     ok_(not is_datasetlike(labels))
@@ -62,6 +68,23 @@ def test_from_basic():
     assert_array_equal(ds.chunks, chunks)
 
     ok_(sorted(ds.sa.keys()) == ['chunks', 'labels', 'origids'])
+    ok_(sorted(ds.fa.keys()) == ['origids'])
+    # add some more
+    ds.a['random'] = 'blurb'
+
+    # check stripping attributes from a copy
+    cds = ds.copy() # full copy
+    ok_(sorted(cds.sa.keys()) == ['chunks', 'labels', 'origids'])
+    ok_(sorted(cds.fa.keys()) == ['origids'])
+    ok_(sorted(cds.a.keys()) == ['random'])
+    cds = ds.copy(sa=[], fa=[], a=[]) # plain copy
+    ok_(cds.sa.keys() == [])
+    ok_(cds.fa.keys() == [])
+    ok_(cds.a.keys() == [])
+    cds = ds.copy(sa=['labels'], fa=None, a=['random']) # partial copy
+    ok_(cds.sa.keys() == ['labels'])
+    ok_(cds.fa.keys() == ['origids'])
+    ok_(cds.a.keys() == ['random'])
 
     # there is not necessarily a mapper present
     ok_(not ds.a.has_key('mapper'))
@@ -149,6 +172,13 @@ def test_from_masked():
                   N.random.standard_normal((4,2,3,4)), labels=[1, 2, 3, 4],
                   chunks=[2, 2, 2])
 
+    # no test one that is using from_masked
+    ds = datasets['3dlarge']
+    for a in ds.sa:
+        assert_equal(len(ds.sa[a].value), len(ds))
+    for a in ds.fa:
+        assert_equal(len(ds.fa[a].value), ds.nfeatures)
+
 
 def test_shape_conversion():
     ds = Dataset.from_masked(N.arange(24).reshape((2, 3, 4)).view(myarray),
@@ -194,6 +224,11 @@ def test_multidim_attrs():
 def test_samples_shape():
     ds = Dataset.from_masked(N.ones((10, 2, 3, 4)), labels=1, chunks=1)
     ok_(ds.samples.shape == (10, 24))
+
+    # what happens to 1D samples
+    ds = Dataset(N.arange(5))
+    assert_equal(ds.shape, (5, 1))
+    assert_equal(ds.nfeatures, 1)
 
 
 def test_basic_datamapping():
@@ -253,7 +288,7 @@ def test_ds_deepcopy():
     ds = normalFeatureDataset()
     ds.samples = ds.samples.view(myarray)
     # Clone the beast
-    ds_ = copy.deepcopy(ds)
+    ds_ = ds.copy()
     # array subclass survives
     ok_(isinstance(ds_.samples, myarray))
 
@@ -443,49 +478,6 @@ def test_labelpermutation_randomsampling():
     assert_array_equal(ds.chunks, ods.chunks)
 
 
-def test_feature2coord():
-    origdata = N.random.standard_normal((10, 2, 4, 3, 5))
-    data = Dataset.from_masked(origdata, labels=2, chunks=2)
-
-    def random_coord(shape):
-        return [random.sample(range(size), 1)[0] for size in shape]
-
-    # check 100 random coord2feature transformations
-    for i in xrange(100):
-        # choose random coord
-        c = random_coord((2, 4, 3, 5))
-        # tranform to feature_id
-        id_ = data.a.mapper.get_outids([c])[0][0]
-
-        # compare data from orig array (selected by coord)
-        # and data from pattern array (selected by feature id)
-        orig = origdata[:, c[0], c[1], c[2], c[3]]
-        pat = data.samples[:, id_]
-
-        assert_array_equal(orig, pat)
-
-
-def test_coord2feature():
-    origdata = N.random.standard_normal((10, 2, 4, 3, 5))
-    data = Dataset.from_masked(origdata, labels=2, chunks=2)
-
-    def random_coord(shape):
-        return [random.sample(range(size), 1)[0] for size in shape]
-
-    #for id_ in xrange(data.nfeatures):
-        # transform to coordinate
-        # XXX put back when coord -> fattr is implemented
-        #c = data.a.mapper.getInId(id_)
-        #assert_equal(len(c), 4)
-
-        # compare data from orig array (selected by coord)
-        # and data from pattern array (selected by feature id)
-        #orig = origdata[:, c[0], c[1], c[2], c[3]]
-        #pat = data.samples[:, id_]
-
-        #assert_array_equal(orig, pat)
-
-
 def test_masked_featureselection():
     origdata = N.random.standard_normal((10, 2, 4, 3, 5)).view(myarray)
     data = Dataset.from_masked(origdata, labels=2, chunks=2)
@@ -496,7 +488,7 @@ def test_masked_featureselection():
 
     # default must be no mask
     ok_(data.nfeatures == 120)
-    ok_(data.a.mapper.get_outsize() == 120)
+    ok_(data.a.mapper.forward1(origdata[0]).shape == (120,))
 
     # check that full mask uses all features
     # this uses auto-mapping of selection arrays in __getitem__
@@ -514,7 +506,7 @@ def test_masked_featureselection():
 
     # check that feature selection does not change source data
     ok_(data.nfeatures == 120)
-    assert_equal(data.a.mapper.get_outsize(), 120)
+    ok_(data.a.mapper.forward1(origdata[0]).shape == (120,))
 
     # check selection with feature list
     sel = data[:, [0, 37, 119]]
@@ -545,10 +537,6 @@ def test_feature_masking():
 
     # check simple masking
     ok_(data.nfeatures == 2)
-    ok_(data.a.mapper.get_outids([(2, 1), (4, 0)])[0] == [0, 1])
-    assert_raises(ValueError, data.a.mapper.get_outids, [(2, 3)])
-    # XXX put back when coord -> fattr is implemented
-    #ok_(tuple(data.a.mapper.getInId(1)) == (4, 0))
 
     # selection should be idempotent
     ok_(data[:, mask].nfeatures == data.nfeatures)
@@ -556,10 +544,7 @@ def test_feature_masking():
     assert_array_equal(data[:, 1].samples[:, 0], [12, 27, 42, 57])
     # XXX put back when coord -> fattr is implemented
     #ok_(tuple(data[:, 1].a.mapper.getInId(0)) == (4, 0))
-    ok_(data[:, 1].a.mapper.get_outsize() == 1)
-
-    # previous selections should not affect the original mapper
-    ok_(data.a.mapper.get_outids([(2, 1), (4, 0)])[0] == [0, 1])
+    ok_(data[:, 1].a.mapper.forward1(mask).shape == (1,))
 
     # check sugarings
     # XXX put me back
@@ -637,8 +622,10 @@ def test_arrayattributes():
 
 
 def test_repr():
-    attr_repr = "SampleAttribute(name='TestAttr', doc='my own test', value=array([0, 1, 2, 3, 4]), length=None)"
-    sattr = SampleAttribute(name='TestAttr', doc='my own test', value=N.arange(5))
+    attr_repr = "SampleAttribute(name='TestAttr', doc='my own test', " \
+                                "value=array([0, 1, 2, 3, 4]), length=None)"
+    sattr = SampleAttribute(name='TestAttr', doc='my own test',
+                            value=N.arange(5))
     # check precise formal representation
     ok_(repr(sattr) == attr_repr)
     # check that it actually works as a Python expression
@@ -650,4 +637,96 @@ def test_repr():
     ds = datasets['uni2small']
     ds_repr = repr(ds)
     ok_(repr(eval(ds_repr)) == ds_repr)
+
+
+def test_other_samples_dtypes():
+    import scipy.sparse as sparse
+    dshape = (4, 3)
+    # test for ndarray, custom ndarray-subclass, matrix,
+    # and all sparse matrix types we know
+    stypes = [N.arange(N.prod(dshape)).reshape(dshape),
+              N.arange(N.prod(dshape)).reshape(dshape).view(myarray),
+              N.matrix(N.arange(N.prod(dshape)).reshape(dshape)),
+              sparse.csc_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
+              sparse.csr_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
+              # BSR cannot be sliced, but is more efficient for sparse
+              # arithmetic operations than CSC pr CSR
+              sparse.bsr_matrix(N.arange(N.prod(dshape)).reshape(dshape))]
+              # LIL and COO are best for constructing matrices, not for
+              # doing somthing with them
+              #sparse.lil_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
+              #sparse.coo_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
+              # DOK doesn't allow duplicates and is bad at array-like slicing
+              #sparse.dok_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
+              # DIA only has diagonal storage and cannot be sliced
+              #sparse.dia_matrix(N.arange(N.prod(dshape)).reshape(dshape))]
+
+    # it needs to have .shape (the only way to get len(sparse))
+    for s in stypes:
+        ds = Dataset(s)
+        # nothing happended to the original dtype
+        assert_equal(type(s), type(ds.samples))
+        # no shape change
+        assert_equal(ds.shape, dshape)
+        assert_equal(ds.nsamples, dshape[0])
+        assert_equal(ds.nfeatures, dshape[1])
+
+        # sparse doesn't work like an array
+        if sparse.isspmatrix(ds.samples):
+            assert_raises(RuntimeError, N.mean, ds)
+        else:
+            # need to convert results, since matrices return matrices
+            assert_array_equal(N.mean(ds, axis=0),
+                               N.array(N.mean(ds.samples, axis=0)).squeeze())
+
+        # select subset and see what happens
+        # bsr type doesn't support first axis slicing
+        if isinstance(s, sparse.bsr_matrix):
+            assert_raises(NotImplementedError, ds.__getitem__, [0])
+        else:
+            sel = ds[1:3]
+            assert_equal(sel.shape, (2, dshape[1]))
+            assert_equal(type(s), type(sel.samples))
+            if sparse.isspmatrix(sel.samples):
+                assert_array_equal(sel.samples[1].todense(),
+                                   ds.samples[2].todense())
+            else:
+                assert_array_equal(sel.samples[1],
+                                   ds.samples[2])
+
+       # feature selection
+        if isinstance(s, sparse.bsr_matrix):
+            assert_raises(NotImplementedError, ds.__getitem__, (slice(None), 0))
+        else:
+            sel = ds[:, 1:3]
+            assert_equal(sel.shape, (dshape[0], 2))
+            assert_equal(type(s), type(sel.samples))
+            if sparse.isspmatrix(sel.samples):
+                assert_array_equal(sel.samples[:,1].todense(),
+                        ds.samples[:,2].todense())
+            else:
+                assert_array_equal(sel.samples[:,1],
+                        ds.samples[:,2])
+
+
+        # what we don't do
+        class voodoo:
+            dtype = 'fancy'
+        # voodoo
+        assert_raises(ValueError, Dataset, voodoo())
+        # crippled
+        assert_raises(ValueError, Dataset, N.array(5))
+
+        # things that might behave in surprising ways
+        # lists -- first axis is samples, hence single feature
+        ds = Dataset(range(5))
+        assert_equal(ds.nfeatures, 1)
+        assert_equal(ds.shape, (5, 1))
+        # arrays of objects
+        data = N.array([{},{}])
+        ds = Dataset(data)
+        assert_equal(ds.shape, (2, 1))
+        assert_equal(ds.nsamples, 2)
+        # Nothing to index, hence no features
+        assert_equal(ds.nfeatures, 1)
 

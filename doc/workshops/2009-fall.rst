@@ -14,22 +14,22 @@
 PyMVPA Extravaganza -- Fall 2009
 ********************************
 
-This development workshop will take place at Dartmouth College (Nov 30th -- Dec
-4th).
+This development workshop took take place at Dartmouth College, Nov 30 -- Dec
+4, 2009.
 
 
 Goals
 =====
 
-The primary purpose of this first PyMVPA workshop is to gather all people
-involved in (or related to) the development of PyMVPA. Participants introduce
-their projects and we will discuss their integration into, or interoperation
-with the PyMVPA main line.
+The primary purpose of this first PyMVPA workshop was to gather all people
+involved in (or related to) the development of PyMVPA. Participants introduced
+their projects and discussed their integration into, or interoperation with the
+PyMVPA main line.
 
-In addition, we will discuss changes scheduled for the upcoming 0.5 release of
+In addition, we discussed changes scheduled for the upcoming 0.5 release of
 PyMVPA that are supposed to improve shortcomings of the original design, or
-missing features that have been identified over the past two years. This
-includes:
+missing features that have been identified over the past two years. These
+include:
 
 * More flexible data storage: A new dataset implementation.
 * Better integration of PyMVPA and MDP_.
@@ -43,30 +43,27 @@ includes:
 Participants
 ============
 
-(confirmed)
-
+* Satrajit Ghosh, MIT, USA (for the kick-off talks)
 * Scott Gorlin, MIT, USA
 * Valentin Haenel, BCCN, Germany
 * Yaroslav O. Halchenko, Dartmouth College, USA
 * Michael Hanke, Dartmouth College, USA
-* James M. Hughes, Dartmouth College, USA
 * Emanuele Olivetti, Fondazione Bruno Kessler, Italy
 * Per B. Sederberg, Princeton University, USA (virtual)
 * Tiziano Zito, BCCN, Germany
 
 
-Tentative Schedule
-==================
+Kick-off Talks
+==============
 
-The workshop will start on *Monday Nov 30th at 9:30* am with a series of talks
-covering the various aspects of the workshop:
+The workshop started on *Monday Nov 30th at 9:30am* with a series of talks
+covering the various aspects of the workshop (abstracts below).
 
 
 PyMVPA: Where we are now, and where we are going
 ------------------------------------------------
 
-Yaroslav O. Halchenko,
-Michael Hanke
+Yaroslav O. Halchenko, Michael Hanke
 
 This talk will give a brief summary of our original concept of PyMVPA that we
 had in mind when designing it two years ago, and how the project evolved since
@@ -95,6 +92,26 @@ scientific software design. I will discuss the criteria that inform the
 design of MDP and their specific implementation, and examine their
 advantages, limitations and possible alternatives. I will conclude with a
 summary of the current status and future plans for MDP development.
+
+
+Nipype - A Python framework for neuroimaging
+--------------------------------------------
+
+Satrajit Ghosh
+
+Nipype is a project under the umbrella of Nipy, an effort to develop
+open-source, community-developed neuroimaging tools in Python.  The goals of
+Nipype are two-fold: 1) to provide a uniform interface to existing
+neuroimaging software packages; and 2) to provide a pipelined environment
+for efficient batch-processing that can tie together different neuroimaging
+data analysis algorithms. By exposing a consistent interface to the external
+packages, researchers are able to explore a wide range of imaging algorithms
+and configure their own analysis pipeline which best fits their data and
+research objectives, and perform their analysis in a highly structured
+environment. The nipype framework is accessible to the wide range of
+programming expertise often found in neuroimaging, allowing for both
+easy-to-use high-level scripting and low-level algorithm development for
+unlimited customization.
 
 
 Profiling PyMVPA
@@ -155,17 +172,33 @@ greatly simplifying the underlying computations and accelerating many
 analytical technique implementations by several orders of magnitude.
 
 
-.. CUDA for world-domination (Per)
-
-
 
 Workshop Results
 ================
 
+The workshop has been a huge success. We worked on further integrating PyMVPA
+with other Python-based software packages, both to make use of them inside
+PyMVPA, but also to better expose PyMVPA's functionality to other packages.
+The kick-off talks were followed by four days of intensive coding. During these
+days we were able to integrate virtually all outstanding patches that have been
+offered over the last year, but could not be merged yet due to required changes
+in the codebase. Below is a list of projects that we have been working on
+during the workshop.  Moreover, we were able to continue the transition towards
+the new dataset implementation that had been started prior to the workshop. A
+significant number of additional unittest has been ported to the new code -- as
+usual identifying and fixing a number of bugs.
+
+.. figure:: ../pics/extravaganza-dc09.jpg
+
+  Workshop participants (from left to right and top to bottom): Emanuele
+  Olivetti, Scott Gorlin, Michael Hanke, Tiziano Zito, Yaroslav O.
+  Halchenko, Valentin Haenel
+
+
 Grand Kernel Unification
 ------------------------
 
-Yaroslav O. Halchenko, Scott Gorlin, and Emanuele Olivetti
+Scott Gorlin, Yaroslav O. Halchenko, and Emanuele Olivetti
 
 Many core MVPA algorithms rely on expensive kernel computations.  However,
 most of these algorithms have their own naming standards and backend 
@@ -183,11 +216,10 @@ immediate advantage of allowing custom kernels for any Shogun-based classifier
 GPR), or the automatic exchange of kernels for any implementation in the future.
 
 
-
 Cached Kernel Optimization
 --------------------------
 
-Yaroslav O. Halchenko, Scott Gorlin
+Scott Gorlin, Yaroslav O. Halchenko
 
 The main benefit of the kernel unification work is that new kernel classes can
 be specified in pure Python.  A new optimized kernel class we have implemented
@@ -224,30 +256,51 @@ procedures with arbitrary mixes of PyMVPA classifiers and measure and MDP nodes,
 and flows.
 
 
-
-Non-matrix Dataset and prototype mapper for tractography data (and everything!)
--------------------------------------------------------------------------------
+Non-matrix Dataset and prototype mapper for tractography data (and more!)
+-------------------------------------------------------------------------
 
 Emanuele Olivetti, Michael Hanke
 
-The vast majority of the algorithms available (and desirable) in PyMVPA
-requires data in a 2D matrix format. For this reason, until now, PyMVPA
-accepted only 2D matrices as samples in a Dataset. This is not the case, for
-example, of tractography data which consist of a set of streamlines, a
+The vast majority of algorithms available (and desirable) in PyMVPA requires
+data in a 2D matrix format. For this reason, until now, PyMVPA accepted only 2D
+matrices as samples in a Dataset. However, sometimes this causes problems, for
+example, with tractography data. That consists of a set of streamlines, a
 streamline being a polyline made of a non-constant number of points. In PyMVPA
-terms it means that the number of features of the corresponding dataset of
+terms it means that the number of features in the corresponding dataset of
 streamlines would be different across instances.
 
-The purpose of this set of patches is twofold: first to allow PyMVPA to accept
-also row-wise iterable collections as a Dataset independently of the content
-of each row and second to provide a mapper to transform these every kind of
-Dataset into 2D matrix Dataset. The mapper is prototype-based which means that
-each instance within the Dataset (e.g., each streamline) is mapped into a
-fixed size M-dimensional vector. The M values are computed by specifying a
-similarity (or kernel, or distance) function which evaluates the distance of
-that instance against a given set of other M instances (e.g., other M
-streamlines) called *prototypes*. An example of application is supervised
-tract segmentation from tractography data which now can be mapped into a
-standard binary classification problem over the usual 2D matrix class-labelled
-dataset. This approach is not limited to the tractography domain and can be
-immediately extended to any other kind of data.
+The purpose of a set of patches made during the workshop is twofold: first to
+allow PyMVPA to accept also row-wise iterable collections as a Dataset
+independently of the content of each row and second to provide a mapper to
+transform these every kind of Dataset into 2D matrix Dataset. The mapper is
+prototype-based which means that each instance within the Dataset (e.g., each
+streamline) is mapped into a fixed size M-dimensional vector. The M values are
+computed by specifying a similarity (or kernel, or distance) function which
+evaluates the distance of that instance against a given set of other M
+instances (e.g., other M streamlines) called *prototypes*. An example
+application is supervised tract segmentation from tractography data which now
+can be mapped into a standard binary classification problem over the usual 2D
+matrix class-labeled dataset. This approach to adress varying features-space
+sizes is flexible, and not limited to the tractography domain.
+
+
+Optimization and Generalization of Searchlight-analyses
+-------------------------------------------------------
+
+Valentin Haenel, Michael Hanke
+
+The searchlight analysis code has been ported to the new dataset/mapper
+framework, taking into account the result of a profiling analysis done by
+Valentin Haenel during the last year. The new code avoids significant
+look-up penalties of the previous implementation. Moreover, it has been
+generalized to support arbitrary look-up algorithms (e.g. kd-tree_) and is no
+longer limited to sphere-based spatial searchlights.
+
+.. _kd-tree: http://en.wikipedia.org/wiki/Kd-tree
+
+
+Acknowledgements
+================
+
+We are grateful to Prof. James Haxby for sponsoring this workshop and hosting
+it in his lab.

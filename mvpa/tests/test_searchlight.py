@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA searchlight algorithm"""
 
 from mvpa.base import externals
-from mvpa.measures.searchlight import Searchlight
+from mvpa.measures.searchlight import sphere_searchlight
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
@@ -21,17 +21,19 @@ class SearchlightTests(unittest.TestCase):
 
     def setUp(self):
         self.dataset = datasets['3dlarge']
+        # give the feature coord a more common name, matching the default of
+        # the searchlight
+        self.dataset.fa['voxel_indices'] = self.dataset.fa.myspace
 
 
-    def testSearchlight(self):
+    def testSpatialSearchlight(self):
         # compute N-1 cross-validation for each sphere
         transerror = TransferError(sample_clf_lin)
         cv = CrossValidatedTransferError(
                 transerror,
                 NFoldSplitter(cvtype=1))
-        # contruct radius 1 searchlight
-        sl = Searchlight(cv, radius=1.0, transformer=N.array,
-                         enable_states=['spheresizes', 'raw_results'])
+        sl = sphere_searchlight(cv, diameter=3, transformer=N.array,
+                         enable_states=['roisizes', 'raw_results'])
 
         # run searchlight
         results = sl(self.dataset)
@@ -43,9 +45,9 @@ class SearchlightTests(unittest.TestCase):
         self.failUnless(0.4 < results.mean() < 0.6)
 
         # check resonable sphere sizes
-        self.failUnless(len(sl.states.spheresizes) == 106)
-        self.failUnless(max(sl.states.spheresizes) == 7)
-        self.failUnless(min(sl.states.spheresizes) == 4)
+        self.failUnless(len(sl.states.roisizes) == 106)
+        self.failUnless(max(sl.states.roisizes) == 7)
+        self.failUnless(min(sl.states.roisizes) == 4)
 
         # check base-class state
         self.failUnlessEqual(len(sl.states.raw_results), 106)
@@ -58,8 +60,8 @@ class SearchlightTests(unittest.TestCase):
                 transerror,
                 NFoldSplitter(cvtype=1),
                 combiner=N.array)
-        # contruct radius 1 searchlight
-        sl = Searchlight(cv, radius=1.0, transformer=N.array,
+        # contruct diameter 1 searchlight
+        sl = sphere_searchlight(cv, diameter=1, transformer=N.array,
                          center_ids=[3,50])
 
         # run searchlight
@@ -87,8 +89,8 @@ class SearchlightTests(unittest.TestCase):
             cv(data)
             return chisquare(cv.states.confusion.matrix)[0]
 
-        # contruct radius 1 searchlight
-        sl = Searchlight(getconfusion, radius=1.0,
+        # contruct diameter 1 searchlight
+        sl = sphere_searchlight(getconfusion, diameter=1,
                          center_ids=[3,50])
 
         # run searchlight

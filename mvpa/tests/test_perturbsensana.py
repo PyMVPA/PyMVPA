@@ -25,7 +25,7 @@ class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
                                   N.repeat( 1, 50 ) ) )
         chunks = N.repeat( range(5), 10 )
         chunks = N.concatenate( (chunks, chunks) )
-        mask = N.ones( (3, 4, 2) )
+        mask = N.ones( (3, 4, 2), dtype='bool')
         mask[0,0,0] = 0
         mask[1,3,1] = 0
         self.dataset = Dataset.from_masked(samples=data, labels=labels,

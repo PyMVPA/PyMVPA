@@ -92,9 +92,11 @@ class DSMatrix(object):
                 # across columns
                 for j in range(num_exem):
                     if (not(flag_1d)):
-                        dsmatrix[i,j] = N.linalg.norm(data_vectors[i,:] - data_vectors[j,:])
+                        dsmatrix[i, j] = N.linalg.norm(
+                            data_vectors[i, :] - data_vectors[j, :])
                     else:
-                        dsmatrix[i,j] = N.linalg.norm(data_vectors[i] - data_vectors[j])
+                        dsmatrix[i, j] = N.linalg.norm(
+                            data_vectors[i] - data_vectors[j])
 
         elif (metric == 'spearman'):
             #print 'Using Spearman rank-correlation metric...'
@@ -102,7 +104,8 @@ class DSMatrix(object):
             for i in range(num_exem):
                 # across columns
                 for j in range(num_exem):
-                    dsmatrix[i,j] = 1 - stats.spearmanr(data_vectors[i,:],data_vectors[j,:])[0]
+                    dsmatrix[i, j] = 1 - stats.spearmanr(
+                        data_vectors[i,:], data_vectors[j,:])[0]
 
         elif (metric == 'pearson'):
             #print 'Using Pearson correlation metric...'
@@ -111,7 +114,7 @@ class DSMatrix(object):
                 # across columns
                 for j in range(num_exem):
                     dsmatrix[i, j] = 1 - stats.pearsonr(
-                        data_vectors[i,:],data_vectors[j,:])[0]
+                        data_vectors[i,:], data_vectors[j,:])[0]
 
         elif (metric == 'confusion'):
             #print 'Using confusion correlation metric...'
@@ -132,7 +135,7 @@ class DSMatrix(object):
 
     def getTriangle(self):
         # if we need to create the u_triangle representation, do so
-        if (self.u_triangle == None):
+        if (self.u_triangle is None):
             self.u_triangle = N.triu(self.full_matrix)
 
         return self.u_triangle
@@ -155,7 +158,7 @@ class DSMatrix(object):
     #      original value)
     #  5.  Cast to numpy array
     def getVectorForm(self):
-        if (not(self.vector_form == None)):
+        if (self.vector_form is not None):
             return self.vector_form
 
         orig_dsmatrix = copy.deepcopy(self.getFullMatrix())
@@ -164,12 +167,12 @@ class DSMatrix(object):
 
         orig_tri = N.triu(orig_dsmatrix)
 
-        self.vector_form = orig_tri[abs(orig_tri) > 0]
+        vector_form = orig_tri[abs(orig_tri) > 0]
 
-        self.vector_form[self.vector_form == -1] = 0
+        vector_form[vector_form == -1] = 0
 
-        self.vector_form = N.asarray(self.vector_form)
-        self.vector_form = self.vector_form[0]
+        vector_form = N.asarray(vector_form)
+        self.vector_form = vector_form[0]
 
         return self.vector_form
 
