@@ -172,17 +172,37 @@ class QueryEngine(object):
         return self.query_byid(fid)
 
 
-
 class IndexQueryEngine(QueryEngine):
     """Provides efficient query engine for discrete spaces.
 
-    TODO: extend
+    Uses dictionary lookups for elements indices and presence in
+    general.  Each space obtains a lookup dictionary which performs
+    translation from given index/coordinate into the index within an
+    index table (with a dimension per each space to search within).
+
+    TODO:
+    - extend documentation
+    - repr
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, sorted=True, **kwargs):
+        """
+        Parameters
+        ----------
+        sorted : bool
+          Results of query get sorted
+        """
         QueryEngine.__init__(self, **kwargs)
-        self._spaceaxis = None
-
+        self._spaceorder = None
+        """Order of the spaces"""
+        self._lookups = {}
+        """Dictionary of lookup dictionaries per each space"""
+        self._sliceall = {}
+        """Precrafted indexes to cover ':' situation within ix_"""
+        self._searcharray = None
+        """Actual searcharray"""
+        self.sorted = True
+        """Either to sort the query results"""
 
     def _train(self, dataset):
         # local binding
@@ -191,36 +211,51 @@ class IndexQueryEngine(QueryEngine):
         # order of the query-spaces
         self._spaceorder = qattrs.keys()
         # type check and determine mask dimensions
-        max_ind = []
-        dims = []
+        dims = []                       # dimensionality of each space
+        lookups = self._lookups = {}
+        sliceall = self._sliceall = {}
         selector = []
         for space in self._spaceorder:
             # local binding for the attribute
             qattr = qattrs[space]
+            # If it is >1D ndarray we need to transform to list of tuples,
+            # since ndarray is not hashable
+            # XXX would probably work for ANY discrete attribute
             if not qattr.dtype.char in N.typecodes['AllInteger']:
-                raise ValueError("IndexQueryEngine can only operate on "
-                                 "feature attributes with integer indices "
-                                 "(got: %s)." % str(qattr.dtype))
+                pass
+                #raise ValueError("IndexQueryEngine can only operate on "
+                #                 "feature attributes with integer indices "
+                #                 "(got: %s)." % str(qattr.dtype))
+            if isinstance(qattr, N.ndarray) and len(qattr.shape) > 1:
+                qattr = [tuple(x) for x in qattr]
+
             # determine the dimensions of this space
             # and charge the nonzero selector
-            dim = qattr.max(axis=0)
-            if N.isscalar(dim):
-                max_ind.append([dim])
-                dims.append(dim)
-                selector.append(qattr.T)
-            else:
-                max_ind.append(dim)
-                dims.extend(dim)
-                selector.extend(qattr.T)
+            uqattr = list(set(qattr))
+            dim = len(uqattr)
+            dims.append(dim)
+            # Lookup table for elements known to corresponding indices
+            # in searcharray
+            lookups[space] = lookup = \
+                             dict([(u, i) for i, u in enumerate(uqattr)])
+            # Precraft "slicing" for all elements for dummy numpy way
+            # to select things ;)
+            sliceall[space] = N.arange(dim)
+            # And fill out selector using current values from qattr
+            selector.append([lookup[x] for x in qattr])
+
         # now check whether we have sufficient information to put each feature
         # id into one unique search array element
-        dims = N.array(dims) + 1
+        dims = N.array(dims)
         # we can deal with less features (e.g. masked dataset, but not more)
+        # XXX (yoh): seems to be too weak of a check... pretty much you are trying
+        #            to check either 2 features do not collide in the target
+        #            "mask", right?
         if N.prod(dims) < dataset.nfeatures:
             raise ValueError("IndexQueryEngine has insufficient information "
                              "about the dataset spaces. It is required to "
                              "specify an ROI generator for each feature space "
-                             "in the dataset (got: %s, #describale: %i, "
+                             "in the dataset (got: %s, #describable: %i, "
                              "#actual features: %i)."
                              % (str(self._spaceorder), N.prod(dims),
                                    dataset.nfeatures))
@@ -229,42 +264,52 @@ class IndexQueryEngine(QueryEngine):
         # and fill it with feature ids, but start from ONE to be different from
         # the zeros
         self._searcharray[tuple(selector)] = N.arange(1, dataset.nfeatures + 1)
-        # store the dimensions, and hence number of axis per space
-        self._spaceaxis = zip(self._spaceorder, max_ind)
+        # Lets do additional check -- now we should have same # of
+        # non-zero elements as features
+        if len(self._searcharray.nonzero()[0]) != dataset.nfeatures:
+            # TODO:  Figure out how is the bad cow? sad there is no non-unique
+            #        function in numpy
+            raise ValueError("Multiple features carry the same set of "
+                             "attributes %s.  %s engine cannot handle such "
+                             "cases -- use another appropriate query engine"
+                             % (self._spaceorder, self))
 
 
     def query(self, **kwargs):
         # construct the search array slicer
         # need to obey axis order
         slicer = []
-        for space, max_ind in self._spaceaxis:
+        for space in self._spaceorder:
+            lookup = self._lookups[space]
             # only generate ROI, if we have a generator
             # otherwise consider all of the unspecified space
             if space in kwargs:
-                # if no ROI generator is available, take argument as is
+                space_args = kwargs.pop(space)   # so we could check later on
+                # if no ROI generator is available, take provided indexes
+                # without any additional neighbors etc
                 if self._queryobjs[space] is None:
-                    # XXX this is wrong, it should be imporant how many axis
-                    # that space covers and not if the slicing arg is scalar
-                    if N.isscalar(kwargs[space]):
-                        slicer.append(kwargs[space])
-                    else:
-                        slicer.extend(kwargs[space])
+                    roi = N.atleast_1d(space_args)
                 else:
-                    roi = self._queryobjs[space](kwargs[space])
-                    # filter the results for validity
-                    # XXX might be made conditional
-                    roi = [i for i in roi if (i <= max_ind).all() and i >= 0]
-                    # if no candidate is left, the whole thing does not match
-                    # regardless of the other spaces
-                    if not len(roi):
-                        return []
-                    # need to get access to per dim indices
-                    roi = N.transpose(roi)
-                    for i in xrange(len(max_ind)):
-                        slicer.append(roi[i])
+                    roi = self._queryobjs[space](space_args)
+                # lookup and filter the results
+                roi_ind = [lookup[i] for i in roi if (i in lookup)]
+                # if no candidate is left, the whole thing does not match
+                # regardless of the other spaces
+                if not len(roi_ind):
+                    return []
+                slicer.append(roi_ind)
             else:
-                # Provide ":" for all dimensions in a given space
-                slicer += [slice(None)]*len(max_ind)
+                # Provide ":" if no specialization was provided
+                slicer.append(self._sliceall[space])
+        # check if query had only legal spaces specified
+        if len(kwargs):
+            raise ValueError, "Do not know how to treat space(s) %s given " \
+                  "in parameters of the query" % (kwargs.keys())
         # only ids are of interest -> flatten
         # and we need to back-transfer them into dataset ids by substracting 1
-        return self._searcharray[slicer].flatten() - 1
+        res = self._searcharray[N.ix_(*slicer)].flatten() - 1
+        res = res[res>=0]              # return only the known ones
+        if self.sorted:
+            return sorted(res)
+        else:
+            return res

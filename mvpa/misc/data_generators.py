@@ -148,6 +148,8 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
     # two conditions
     regs = N.array(([0] * patterns) + ([1] * 2 * patterns) + ([0] * patterns))
 
+    if chunks is None:
+        chunks = range(len(data))
     return dataset(samples=data, labels=regs, chunks=chunks)
 
 
