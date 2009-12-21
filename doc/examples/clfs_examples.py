@@ -28,11 +28,11 @@ def main():
     # Load Haxby dataset example
     attrs = SampleAttributes(os.path.join(pymvpa_dataroot,
                                           'attributes_literal.txt'))
-    haxby8 = nifti_dataset(samples=os.path.join(pymvpa_dataroot,
+    haxby8 = fmri_dataset(samples=os.path.join(pymvpa_dataroot,
                                                'bold.nii.gz'),
-                           labels=attrs.labels,
-                           chunks=attrs.chunks,
-                           mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+                          labels=attrs.labels,
+                          chunks=attrs.chunks,
+                          mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
     haxby8.samples = haxby8.samples.astype(N.float32)
 
     # preprocess slightly
@@ -60,8 +60,9 @@ def main():
         ]:
         # XXX put back whenever there is summary() again
         #print "%s\n %s" % (datasetdescr, dataset.summary(idhash=False))
-        print " Classifier                               " \
-              "%corr  #features\t train predict  full"
+        print " Classifier on %s\n" \
+                "                                          :   %%corr   " \
+                "#features\t train  predict full" % datasetdescr
         for clf in clfs_:
             print "  %-40s: "  % clf.descr,
             # Lets do splits/train/predict explicitely so we could track
