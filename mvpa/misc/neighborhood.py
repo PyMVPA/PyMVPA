@@ -175,8 +175,10 @@ class QueryEngine(object):
 class IndexQueryEngine(QueryEngine):
     """Provides efficient query engine for discrete spaces.
 
-    Uses dictionary lookups for elements present/known to the
-    attributes.
+    Uses dictionary lookups for elements indices and presence in
+    general.  Each space obtains a lookup dictionary which performs
+    translation from given index/coordinate into the index within an
+    index table (with a dimension per each space to search within).
 
     TODO:
     - extend documentation
@@ -278,19 +280,16 @@ class IndexQueryEngine(QueryEngine):
                 # if no ROI generator is available, take provided indexes
                 # without any additional neighbors etc
                 if self._queryobjs[space] is None:
-                    slicer.append(N.atleast_1d(kwargs[space]))
+                    roi = N.atleast_1d(kwargs[space])
                 else:
                     roi = self._queryobjs[space](kwargs[space])
-                    # XXX -- convert to tuples
-                    #if roi.shape > 1:
-                    #    roi = [tuplex) for x in roi]
-                    # filter the results for validity
-                    roi_ind = [lookup[i] for i in roi if (i in lookup)]
-                    # if no candidate is left, the whole thing does not match
-                    # regardless of the other spaces
-                    if not len(roi_ind):
-                        return []
-                    slicer.append(roi_ind)
+                # lookup and filter the results
+                roi_ind = [lookup[i] for i in roi if (i in lookup)]
+                # if no candidate is left, the whole thing does not match
+                # regardless of the other spaces
+                if not len(roi_ind):
+                    return []
+                slicer.append(roi_ind)
             else:
                 # Provide ":" for ... XXX
                 slicer.append(self._sliceall[space])
