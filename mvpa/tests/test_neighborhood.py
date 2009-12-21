@@ -91,3 +91,5 @@ def test_query_engine():
     assert_array_equal(qe(s_ind=(2,2,3), t_ind=1), [53])
     # query by id
     assert_array_equal(qe(s_ind=(0,0,0), t_ind=0), qe[0])
+    assert_array_equal(qe(s_ind=(0,0,0), t_ind=[0,1]),
+                       qe(s_ind=(0,0,0)))

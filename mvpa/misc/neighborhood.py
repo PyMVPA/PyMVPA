@@ -243,6 +243,8 @@ class IndexQueryEngine(QueryEngine):
             if space in kwargs:
                 # if no ROI generator is available, take argument as is
                 if self._queryobjs[space] is None:
+                    # XXX this is wrong, it should be imporant how many axis
+                    # that space covers and not if the slicing arg is scalar
                     if N.isscalar(kwargs[space]):
                         slicer.append(kwargs[space])
                     else:
