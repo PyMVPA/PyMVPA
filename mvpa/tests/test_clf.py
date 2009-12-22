@@ -9,6 +9,7 @@
 """Unit tests for PyMVPA basic Classifiers"""
 
 from mvpa.support.copy import deepcopy
+from mvpa.base import externals
 
 from mvpa.datasets import Dataset
 from mvpa.mappers.mask import MaskMapper
@@ -16,7 +17,7 @@ from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
 
 from mvpa.misc.exceptions import UnknownStateError
 
-from mvpa.clfs.base import Classifier
+from mvpa.clfs.base import DegenerateInputError, FailedToTrainError
 from mvpa.clfs.meta import CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \
@@ -26,6 +27,15 @@ from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
+
+# What exceptions to allow while testing degenerate cases.
+# If it pukes -- it is ok -- user will notice that something
+# is wrong
+_degenerate_allowed_exceptions = [DegenerateInputError, FailedToTrainError]
+if externals.exists('rpy'):
+    import rpy
+    _degenerate_allowed_exceptions += [rpy.RPyRException]
+
 
 class ClassifiersTests(unittest.TestCase):
 
@@ -150,6 +160,47 @@ class ClassifiersTests(unittest.TestCase):
         # It should get bigger ;)
         self.failUnless(len(summary) > len(summary1))
         self.failUnless(not 'not yet trained' in summary)
+
+
+    @sweepargs(clf=clfswh[:] + regrswh[:])
+    def testDegenerateUsage(self, clf):
+        """Test how clf handles degenerate cases
+        """
+        # Whenever we have only 1 feature with only 0s in it
+        ds1 = datasets['uni2small'][:, [0]]
+        # XXX this very line breaks LARS in many other unittests --
+        # very interesting effect. but screw it -- for now it will be
+        # this way
+        ds1.samples[:] = 0.0             # all 0s
+
+        #ds2 = datasets['uni2small'][[0], :]
+        #ds2.samples[:] = 0.0             # all 0s
+
+        clf.states._changeTemporarily(
+            enable_states=['values', 'training_confusion'])
+
+        # Good pukes are good ;-)
+        # TODO XXX add
+        #  - ", ds2):" to test degenerate ds with 1 sample
+        #  - ds1 but without 0s -- just 1 feature... feature selections
+        #    might lead to 'surprises' due to magic in combiners etc
+        for ds in (ds1, ):
+            try:
+                clf.train(ds)                   # should not crash or stall
+                # could we still get those?
+                summary = clf.summary()
+                cm = clf.states.training_confusion
+                # If succeeded to train/predict (due to
+                # training_confusion) without error -- results better be
+                # at "chance"
+                continue
+                if 'ACC' in cm.stats:
+                    self.failUnlessEqual(cm.stats['ACC'], 0.5)
+                else:
+                    self.failUnless(N.isnan(cm.stats['CCe']))
+            except tuple(_degenerate_allowed_exceptions):
+                pass
+        clf.states._resetEnabledTemporarily()
 
 
     # TODO: validate for regressions as well!!!
