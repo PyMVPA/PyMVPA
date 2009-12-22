@@ -322,7 +322,7 @@ completed, you must ensure that your paths are set up correctly in order to
 access the programs and utilities installed by MacPorts. For exhaustive details
 on editing shell paths please see:
 
-  http://www.debian.org/doc/manuals/reference/ch-install.en.html#s-bashconf
+  http://www.debian.org/doc/manuals/reference/ch01.en.html#_customizing_bash
 
 A typical `.bash_profile` set up for MacPorts might look like::
 

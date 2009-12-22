@@ -58,6 +58,14 @@ experiments.
   URL: http://www.jmlr.org/papers/v3/guyon03a.html
 
 
+.. _HHH+10:
+
+**Hanke, M., Halchenko, Y. O., Haxby, J. V. & Pollmann, S.** (accepted). Statistical learning analysis in neuroscience: aiming for transparency. *Frontiers in Neuroscience*.
+  *Focused review article emphasizing the role of transparency to facilitate
+  adoption and evaluation of statistical learning techniques in neuroimaging
+  research.*
+
+
 .. _HHS+latest:
 
 **Hanke, M., Halchenko, Y. O., Sederberg, P. B. & Hughes, J. M.** The PyMVPA Manual. Available online at http://www.pymvpa.org/PyMVPA-Manual.pdf.
@@ -180,6 +188,12 @@ experiments.
   Keywords: :keyword:`SVM`
 
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2005.01.048
+
+
+.. _MHH10:
+
+**Manelis, A., Hanson, C. & Hanson, S. J.** (2010). Implicit memory for object locations depends on reactivation of encoding-related brain regions. *Human Brain Mapping*.
+  Keywords: :keyword:`PyMVPA`, :keyword:`implicit memory`, :keyword:`MRI`
 
 
 .. _MHN+04:
