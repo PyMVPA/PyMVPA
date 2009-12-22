@@ -185,12 +185,12 @@ def convert2SVMNode(x):
     # make two lists, one of indices, one of values
     # YYY Use isinstance  instead of type...is so we could
     #     easily use derived subclasses
-    if isinstance(x, dict):
-        iter_range = list(x).sort()
-        iter_values = N.ndarray(x.values())
-    elif isinstance(x, N.ndarray):
+    if isinstance(x, N.ndarray):
         iter_range = range(length)
         iter_values = x
+    elif isinstance(x, dict):
+        iter_range = list(x).sort()
+        iter_values = N.ndarray(x.values())
     elif operator.isSequenceType(x):
         iter_range = range(length)
         iter_values = N.asarray(x)
@@ -215,22 +215,26 @@ class SVMProblem:
         self.size = size = len(y)
 
         self.y_array = y_array = svmc.new_double(size)
-        for i in range(size):
+        for i in xrange(size):
             svmc.double_setitem(y_array, i, y[i])
 
         self.x_matrix = x_matrix = svmc.svm_node_matrix(size)
-        self.data = []
-        self.maxlen = 0
-        for i in range(size):
-            data = convert2SVMNode(x[i])
-            self.data.append(data)
-            svmc.svm_node_matrix_set(x_matrix, i, data)
-            if type(x[i]) == dict:
-                if (len(x[i]) > 0):
-                    self.maxlen = max(self.maxlen, max(x[i].keys()))
+        data = [None for i in xrange(size)]
+        maxlen = 0
+        for i in xrange(size):
+            x_i = x[i]
+            lx_i = len(x_i)
+            data[i] = d = convert2SVMNode(x_i)
+            svmc.svm_node_matrix_set(x_matrix, i, d)
+            if isinstance(x_i, dict):
+                if (lx_i > 0):
+                    maxlen = max(maxlen, max(x_i.keys()))
             else:
-                self.maxlen = max(self.maxlen, len(x[i]))
+                maxlen = max(maxlen, lx_i)
 
+        # bind to instance
+        self.data = data
+        self.maxlen = maxlen
         svmc.svm_problem_l_set(prob, size)
         svmc.svm_problem_y_set(prob, y_array)
         svmc.svm_problem_x_set(prob, x_matrix)
