@@ -225,16 +225,18 @@ class _SVM(Classifier):
               (self.__class__.__name__, self._kernel_type_literal,
                self._svm_impl)
         sep = ", "
+        # XXX TODO: we should have no kernel_params any longer
         for col in [self.params, self.kernel_params]:
             for k in col.names:
                 # list only params with not default values
                 if col[k].isDefault: continue
                 res += "%s%s=%s" % (sep, k, col[k].value)
                 #sep = ', '
+        states = self.states
         for name, invert in ( ('enable', False), ('disable', True) ):
-            states = self.states._getEnabled(nondefault=False, invert=invert)
-            if len(states):
-                res += sep + "%s_states=%s" % (name, str(states))
+            states_chosen = states._getEnabled(nondefault=False, invert=invert)
+            if len(states_chosen):
+                res += sep + "%s_states=%s" % (name, str(states_chosen))
 
         res += ")"
         return res

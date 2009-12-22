@@ -22,18 +22,7 @@ if __debug__:
     from mvpa.base import debug
 
 if externals.exists('nifti', raiseException=True):
-    if sys.version_info[:2] >= (2, 5):
-        # enforce absolute import
-        NiftiImage = __import__('nifti', globals(), locals(), [], 0).NiftiImage
-    else:
-        # little trick to be able to import 'nifti' package (which has same
-        # name)
-        oldname = __name__
-        # crazy name with close to zero possibility to cause whatever
-        __name__ = 'iaugf9zrkjsbdv89'
-        from nifti import NiftiImage
-        # restore old settings
-        __name__ = oldname
+    from nifti import NiftiImage
 
 from mvpa.datasets.base import Dataset
 from mvpa.mappers.base import CombinedMapper
