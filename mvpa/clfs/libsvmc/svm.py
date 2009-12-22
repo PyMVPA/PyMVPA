@@ -278,7 +278,7 @@ class SVM(_SVM):
     def untrain(self):
         """Untrain libsvm's SVM: forget the model
         """
-        if __debug__:
+        if __debug__ and "SVM" in debug.active:
             debug("SVM", "Untraining %s and destroying libsvm model" % self)
         super(SVM, self).untrain()
         del self.__model
