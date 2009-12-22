@@ -121,6 +121,9 @@ class DatasetMeasure(ClassWithCollections):
     def _postcall(self, dataset, result):
         """Some postprocessing on the result
         """
+        # Assure that we have some iterable (could be a scalar if it
+        # was just a single value)
+        result = N.atleast_1d(result)
         self.raw_result = result
         if not self.__transformer is None:
             if __debug__:
