@@ -82,10 +82,10 @@ Once downloaded and extracted (e.g. into a folder `data/`), the dataset can be
 easily loaded like this:
 
   >>> from mvpa.misc.io.base import SampleAttributes
-  >>> from mvpa.datasets.nifti import NiftiDataset
+  >>> from mvpa.datasets.mri import fmri_dataset
   >>> attrs = SampleAttributes('data/attributes_literal.txt',
   ...                          literallabels=True)
-  >>> ds = NiftiDataset(samples='data/bold.nii.gz',
+  >>> ds = fmri_dataset(samples='data/bold.nii.gz',
   ...                   labels=attrs.labels,
   ...                   chunks=attrs.chunks,
   ...                   labels_map=True,

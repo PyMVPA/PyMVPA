@@ -17,7 +17,7 @@ from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
 from mvpa import pymvpa_dataroot
-from mvpa.datasets.nifti import fmri_dataset
+from mvpa.datasets.mri import fmri_dataset
 from mvpa.misc.fsl import FslEV3
 from mvpa.misc.support import Event
 from mvpa.misc.io.base import SampleAttributes
