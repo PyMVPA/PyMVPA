@@ -23,9 +23,11 @@ if externals.exists('rpy', raiseException=True) and \
 
 
 # local imports
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
+     FailedToTrainError
 from mvpa.measures.base import Sensitivity
 
+from mvpa.base import warning
 if __debug__:
     from mvpa.base import debug
 
@@ -110,6 +112,7 @@ class LARS(Classifier):
         self.__use_Gram = use_Gram
 
         # pylint friendly initializations
+        self.__lowest_Cp_step = None
         self.__weights = None
         """The beta weights for each feature."""
         self.__trained_model = None
@@ -142,39 +145,54 @@ class LARS(Classifier):
         """
         if self.__max_steps is None:
             # train without specifying max_steps
-            self.__trained_model = rpy.r.lars(data.samples,
-                                              data.labels[:,N.newaxis],
-                                              type=self.__type,
-                                              normalize=self.__normalize,
-                                              intercept=self.__intercept,
-                                              trace=self.__trace,
-                                              use_Gram=self.__use_Gram)
+            trained_model = rpy.r.lars(data.samples,
+                                       data.labels[:,N.newaxis],
+                                       type=self.__type,
+                                       normalize=self.__normalize,
+                                       intercept=self.__intercept,
+                                       trace=self.__trace,
+                                       use_Gram=self.__use_Gram)
         else:
             # train with specifying max_steps
-            self.__trained_model = rpy.r.lars(data.samples,
-                                              data.labels[:,N.newaxis],
-                                              type=self.__type,
-                                              normalize=self.__normalize,
-                                              intercept=self.__intercept,
-                                              trace=self.__trace,
-                                              use_Gram=self.__use_Gram,
-                                              max_steps=self.__max_steps)
+            trained_model = rpy.r.lars(data.samples,
+                                       data.labels[:,N.newaxis],
+                                       type=self.__type,
+                                       normalize=self.__normalize,
+                                       intercept=self.__intercept,
+                                       trace=self.__trace,
+                                       use_Gram=self.__use_Gram,
+                                       max_steps=self.__max_steps)
 
         # find the step with the lowest Cp (risk)
         # it is often the last step if you set a max_steps
         # must first convert dictionary to array
-        Cp_vals = N.asarray([self.__trained_model['Cp'][str(x)]
-                             for x in range(len(self.__trained_model['Cp']))])
-        if N.isnan(Cp_vals[0]):
+        try:
+            Cp = trained_model['Cp']
+            if '0' in Cp:
+                # If there was any
+                Cp_vals = N.asarray([Cp[str(x)] for x in range(len(Cp))])
+            else:
+                Cp_vals = None
+        except TypeError, e:
+            raise FailedToTrainError, \
+                  "Failed to train %s on %s. Got '%s' while trying to access " \
+                  "trained model %s" % (self, data, e, trained_model)
+
+        if Cp_vals is None:
+            # if there were no any -- just choose 0th
+            lowest_Cp_step = 0
+        elif N.isnan(Cp_vals[0]):
             # sometimes may come back nan, so just pick the last one
-            self.__lowest_Cp_step = len(Cp_vals)-1
+            lowest_Cp_step = len(Cp_vals)-1
         else:
             # determine the lowest
-            self.__lowest_Cp_step = Cp_vals.argmin()
+            lowest_Cp_step = Cp_vals.argmin()
 
+        self.__lowest_Cp_step = lowest_Cp_step
         # set the weights to the lowest Cp step
-        self.__weights = self.__trained_model['beta'][self.__lowest_Cp_step,:]
+        self.__weights = trained_model['beta'][lowest_Cp_step, :]
 
+        self.__trained_model = trained_model # bind to an instance
 #         # set the weights to the final state
 #         self.__weights = self.__trained_model['beta'][-1,:]
 
@@ -186,16 +204,17 @@ class LARS(Classifier):
         """
         # predict with the final state (i.e., the last step)
         # predict with the lowest Cp step
-        res = rpy.r.predict_lars(self.__trained_model,
-                                 data,
-                                 mode='step',
-                                 s=self.__lowest_Cp_step)
+        try:
+            res = rpy.r.predict_lars(self.__trained_model,
+                                     data,
+                                     mode='step',
+                                     s=self.__lowest_Cp_step)
                                  #s=self.__trained_model['beta'].shape[0])
-
-        fit = N.asarray(res['fit'])
-        if len(fit.shape) == 0:
-            # if we just got 1 sample with a scalar
-            fit = fit.reshape( (1,) )
+            fit = N.atleast_1d(res['fit'])
+        except rpy.RPyRException, e:
+            warning("Failed to obtain predictions using %s on %s."
+                    "Re-raising exception." % (self, data))
+            raise
 
         self.states.values = fit
         return fit

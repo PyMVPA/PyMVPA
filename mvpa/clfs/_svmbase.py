@@ -250,7 +250,11 @@ class _SVM(Classifier):
 
         if self._kernel_type_literal == 'linear':
             datasetnorm = N.mean(N.sqrt(N.sum(data*data, axis=1)))
-            value = 1.0/(datasetnorm*datasetnorm)
+            if datasetnorm == 0:
+                warning("Obtained degenerate data with zero norm for training "
+                        "of %s.  Scaling of C cannot be done." % self)
+                return 1.0
+            value = 1.0/(datasetnorm**2)
             if __debug__:
                 debug("SVM", "Default C computed to be %f" % value)
         else:
