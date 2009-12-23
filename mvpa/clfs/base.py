@@ -37,7 +37,8 @@ if __debug__:
     from mvpa.base import debug
 
 __all__ = [ 'Classifier',
-            'accepts_dataset_as_samples', 'accepts_samples_as_dataset']
+            'accepts_dataset_as_samples', 'accepts_samples_as_dataset',
+            'DegenerateInputError', 'FailedToTrainError']
 
 def accepts_samples_as_dataset(fx):
     """Decorator to wrap samples into a Dataset.
@@ -51,6 +52,16 @@ def accepts_samples_as_dataset(fx):
         else:
             return fx(obj, dataset(data), *args, **kwargs)
     return wrap_samples
+
+class DegenerateInputError(Exception):
+    """Exception to be thrown by learners if input data is bogus, i.e. no
+    features or samples"""
+    pass
+
+class FailedToTrainError(Exception):
+    """Exception to be thrown whenever classifier fails to learn for
+    some reason"""
+    pass
 
 
 class Classifier(ClassWithCollections):
@@ -382,6 +393,9 @@ class Classifier(ClassWithCollections):
         Shouldn't be overridden in subclasses unless explicitly needed
         to do so
         """
+        if dataset.nfeatures == 0 or dataset.nsamples == 0:
+            raise DegenerateInputError, \
+                  "Cannot train classifier on degenerate data %s" % dataset
         if __debug__:
             debug("CLF", "Training classifier %(clf)s on dataset %(dataset)s",
                   msgargs={'clf':self, 'dataset':dataset})
