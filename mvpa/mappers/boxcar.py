@@ -90,7 +90,7 @@ class BoxcarMapper(Mapper):
 
     def __repr__(self):
         s = super(BoxcarMapper, self).__repr__()
-        return s.replace("(", "(boxlength=%d, offset=%d, startpoints=%s" %
+        return s.replace("(", "(boxlength=%d, offset=%d, startpoints=%s, " %
                          (self.boxlength, self.offset, str(self.startpoints)),
                          1)
 
@@ -103,9 +103,10 @@ class BoxcarMapper(Mapper):
         if not self._outshape:
             raise RuntimeError("BoxcarMapper needs to be trained before "
                                ".forward1() can be used.")
-        if not data.shape == self._outshape[2:]:
+        # first axes need to match
+        if not data.shape[0] == self._outshape[2]:
             raise ValueError("Data shape %s does not match sample shape %s."
-                             % (data.shape, self._outshape[2:]))
+                             % (data.shape[0], self._outshape[2]))
 
         return N.vstack([data[N.newaxis]] * self.boxlength)
 
@@ -147,8 +148,16 @@ class BoxcarMapper(Mapper):
             mds.sa[k] = self._forward_data(dataset.sa[k].value)
         # create the box offset attribute if space name is given
         if self.get_inspace():
-            mds.fa[self.get_inspace() + '_offsets'] = N.arange(mds.nfeatures, dtype='int')
-            mds.sa[self.get_inspace() + '_onsets'] = self.startpoints.copy()
+            if len(msamp.shape) > 2:
+                # each new feature attribute should have the shape of a single
+                # sample otherwise subsequent flattening wouldn't work
+                mds.fa[self.get_inspace() + '_offsetidx'] = \
+                        N.repeat(N.arange(mds.nfeatures, dtype='int'),
+                                 N.prod(msamp.shape[2:])).reshape(msamp[0].shape)
+            else:
+                mds.fa[self.get_inspace() + '_offsetidx'] = \
+                        N.arange(mds.nfeatures, dtype='int')
+            mds.sa[self.get_inspace() + '_onsetidx'] = self.startpoints.copy()
         return mds
 
 
@@ -166,7 +175,13 @@ class BoxcarMapper(Mapper):
     def _reverse_data(self, data):
         # stack them all together -- this will cause overlapping boxcars to
         # result in multiple identical samples
-        return N.concatenate(data)
+
+        # need to take care of the special case when the first axis is of length
+        # one, in that case it would be squashed away
+        if data.shape[0] == 1:
+            return N.concatenate(data)[N.newaxis]
+        else:
+            return N.concatenate(data)
 
 
     def _reverse_dataset(self, dataset):
@@ -179,12 +194,12 @@ class BoxcarMapper(Mapper):
         mds.fa.set_length_check(mds.nfeatures)
         # map old feature attributes -- which simply is taken the first one
         # and kill the inspace attribute, since it 
-        inspace = self.get_inspace() + '_offsets'
+        inspace = self.get_inspace() + '_offsetidx'
         for k in dataset.fa:
             if k != inspace:
                 mds.fa[k] = dataset.fa[k].value[0]
         # reverse-map old sample attributes
-        inspace = self.get_inspace() + '_onsets'
+        inspace = self.get_inspace() + '_onsetidx'
         for k in dataset.sa:
             if k != inspace:
                 mds.sa[k] = self._reverse_data(dataset.sa[k].value)
