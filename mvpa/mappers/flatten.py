@@ -118,7 +118,7 @@ class FlattenMapper(Mapper):
         # otherwise create the coordinates as feature attributes
         else:
             mds.fa[self.get_inspace()] = \
-                N.transpose(N.isfinite(dataset.samples[0]).nonzero())
+                list(N.ndindex(dataset.samples[0].shape))
             return mds
 
 
