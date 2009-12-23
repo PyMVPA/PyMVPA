@@ -22,8 +22,10 @@ from mvpa import pymvpa_dataroot
 
 def test_sphere():
     # test sphere initialization
-    s = ne.Sphere(3)
-    assert_equal(len(s.coord_list), 7)
+    s = ne.Sphere(1)
+    center0 = (0, 0, 0)
+    center1 = (1, 1, 1)
+    assert_equal(len(s(center0)), 7)
     target = array([array([-1,  0,  0]),
               array([ 0, -1,  0]),
               array([ 0,  0, -1]),
@@ -31,7 +33,13 @@ def test_sphere():
               array([0, 0, 1]),
               array([0, 1, 0]),
               array([1, 0, 0])])
-    assert_array_equal(s.coord_list, target)
+    # test of internals -- no recomputation of increments should be done
+    prev_increments = s._increments
+    assert_array_equal(s(center0), target)
+    ok_(prev_increments is s._increments)
+    # query lower dimensionality
+    _ = s((0, 0))
+    ok_(not prev_increments is s._increments)
 
     # test Sphere call
     target = [array([0, 1, 1]),
@@ -41,31 +49,35 @@ def test_sphere():
               array([1, 1, 2]),
               array([1, 2, 1]),
               array([2, 1, 1])]
-    assert_array_equal(array(s((1,1,1))), target)
+    assert_array_equal(array(s(center1)), target)
 
     # test for larger diameter
-    s = ne.Sphere(9)
-    assert_equal(len(s.coord_list), 257)
+    s = ne.Sphere(4)
+    assert_equal(len(s(center1)), 257)
 
     # test extent keyword
-    s = ne.Sphere(9,extent=(1,1,1))
-    assert_array_equal(array(s((0,0,0))), array([[0,0,0]]))
+    #s = ne.Sphere(4,extent=(1,1,1))
+    #assert_array_equal(array(s((0,0,0))), array([[0,0,0]]))
 
     # test Errors during initialisation and call
-    assert_raises(ValueError, ne.Sphere, 2)
-    assert_raises(ValueError, ne.Sphere, 1.0)
-    assert_raises(ValueError, ne.Sphere, 1, extent=(1))
-    assert_raises(ValueError, ne.Sphere, 1, extent=(1.0,1.0,1.0))
+    #assert_raises(ValueError, ne.Sphere, 2)
+    #assert_raises(ValueError, ne.Sphere, 1.0)
+
+    # no longer extent available
+    assert_raises(TypeError, ne.Sphere, 1, extent=(1))
+    assert_raises(TypeError, ne.Sphere, 1, extent=(1.0,1.0,1.0))
+
     s = ne.Sphere(1)
-    assert_raises(ValueError, s, (1))
-    assert_raises(ValueError, s, (1.0,1.0,1.0))
+    #assert_raises(ValueError, s, (1))
+    # No float coordinates allowed for now... XXX might like to change that ;)
+    assert_raises(ValueError, s, (1.0, 1.0, 1.0))
 
 def test_query_engine():
     data = N.arange(54)
     # indices in 3D
     ind = N.transpose((N.ones((3,3,3)).nonzero()))
     # sphere generator for 3 elements diameter
-    sphere = ne.Sphere(3)
+    sphere = ne.Sphere(1)
     # dataset with just one "space"
     ds = Dataset([data,data], fa={'s_ind': N.concatenate((ind, ind))})
     # and the query engine attaching the generator to the "index-space"

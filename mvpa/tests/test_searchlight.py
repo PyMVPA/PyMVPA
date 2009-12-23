@@ -32,7 +32,7 @@ class SearchlightTests(unittest.TestCase):
         cv = CrossValidatedTransferError(
                 transerror,
                 NFoldSplitter(cvtype=1))
-        sl = sphere_searchlight(cv, diameter=3, transformer=N.array,
+        sl = sphere_searchlight(cv, radius=1, transformer=N.array,
                          enable_states=['roisizes', 'raw_results'])
 
         # run searchlight
@@ -60,8 +60,8 @@ class SearchlightTests(unittest.TestCase):
                 transerror,
                 NFoldSplitter(cvtype=1),
                 combiner=N.array)
-        # contruct diameter 1 searchlight
-        sl = sphere_searchlight(cv, diameter=1, transformer=N.array,
+        # contruct diameter 1 (or just radius 0) searchlight
+        sl = sphere_searchlight(cv, radius=0, transformer=N.array,
                          center_ids=[3,50])
 
         # run searchlight
@@ -89,8 +89,7 @@ class SearchlightTests(unittest.TestCase):
             cv(data)
             return chisquare(cv.states.confusion.matrix)[0]
 
-        # contruct diameter 1 searchlight
-        sl = sphere_searchlight(getconfusion, diameter=1,
+        sl = sphere_searchlight(getconfusion, radius=0,
                          center_ids=[3,50])
 
         # run searchlight
