@@ -91,7 +91,7 @@ fig = 0
 P.figure(figsize=(12, 4))
 
 
-for radius in [1, 3, 7]:
+for radius in [0, 1, 3]:
     # tell which one we are doing
     print "Running searchlight with radius: %i ..." % (radius)
 
