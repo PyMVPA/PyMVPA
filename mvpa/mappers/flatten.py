@@ -104,7 +104,7 @@ class FlattenMapper(Mapper):
 
     def _forward_dataset(self, dataset):
         # invoke super class _forward_dataset, this calls, _forward_dataset
-        # and this calles _forward_data in this class
+        # and this calls _forward_data in this class
         mds = super(FlattenMapper, self)._forward_dataset(dataset)
         # attribute collection needs to have a new length check
         mds.fa.set_length_check(mds.nfeatures)
@@ -118,7 +118,7 @@ class FlattenMapper(Mapper):
         # otherwise create the coordinates as feature attributes
         else:
             mds.fa[self.get_inspace()] = \
-                N.transpose(N.isfinite(dataset.samples[0]).nonzero())
+                list(N.ndindex(dataset.samples[0].shape))
             return mds
 
 
