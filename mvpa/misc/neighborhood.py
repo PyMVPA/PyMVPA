@@ -68,24 +68,36 @@ class Sphere(object):
           Distance function to use (choose one from `mvpa.clfs.distance`).
           If None, cartesianDistance to be used.
         """
-        self.radius = radius
+        self._radius = radius
         # TODO: make ability to lookup in a dataset
-        self.element_sizes = element_sizes
+        self._element_sizes = element_sizes
         if distance_func is None:
             distance_func = cartesianDistance
-        self.distance_func = distance_func
+        self._distance_func = distance_func
 
         self._increments = None
         """Stored template of increments"""
         self._increments_ndim = None
         """Dimensionality of increments"""
 
+    # Properties to assure R/O behavior for now
+    @property
+    def radius(self):
+        return self._radius
+
+    @property
+    def element_sizes(self):
+        return self._element_sizes
+
+    @property
+    def distance_func(self):
+        return self._distance_func
 
     def _get_increments(self, ndim):
         """Creates a list of increments for a given dimensionality
         """
         # Set element_sizes
-        element_sizes = self.element_sizes
+        element_sizes = self._element_sizes
         if element_sizes is None:
             element_sizes = N.ones(ndim)
         else:
@@ -99,14 +111,14 @@ class Sphere(object):
 
         element_sizes = N.asanyarray(element_sizes)
         # What range for each dimension
-        erange = N.ceil(self.radius / element_sizes).astype(int)
+        erange = N.ceil(self._radius / element_sizes).astype(int)
 
         tentative_increments = N.array(list(N.ndindex(tuple(erange*2 + 1)))) \
                                - erange
         # Filter out the ones beyond the "sphere"
         return array([x for x in tentative_increments
-                      if self.distance_func(x * element_sizes, center)
-                      <= self.radius])
+                      if self._distance_func(x * element_sizes, center)
+                      <= self._radius])
 
     def train(self, dataset):
         # XXX YOH:  yeap -- BUT if you care about my note above on extracting
