@@ -121,9 +121,6 @@ class DatasetMeasure(ClassWithCollections):
     def _postcall(self, dataset, result):
         """Some postprocessing on the result
         """
-        # Assure that we have some iterable (could be a scalar if it
-        # was just a single value)
-        result = N.atleast_1d(result)
         self.raw_result = result
         if not self.__transformer is None:
             if __debug__:
@@ -287,7 +284,14 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
              here does not lead to an overall more complicated situation,
              without any real gain -- after all this one works ;-)
         """
+        # !!! This is not stupid -- it is intended -- some times we might get
+        #     scalars as input.
+        result = N.atleast_1d(result)
         result_sq = result.squeeze()
+        # Assure that we have some iterable (could be a scalar if it
+        # was just a single value in 1D array)
+        result_sq = N.atleast_1d(result_sq)
+
         if len(result_sq.shape)>1:
             n_base = result.shape[1]
             """Number of base sensitivities"""
