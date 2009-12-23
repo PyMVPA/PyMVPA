@@ -78,8 +78,10 @@ class FlattenMapper(Mapper):
 
 
     def _forward_data(self, data):
+        # this method always gets data where the first axis is the samples axis!
         # local binding
-        dshape = data.shape
+        nsamples = data.shape[0]
+        sshape = data.shape[1:]
         oshape = self.__origshape
         nfeatures = self.__nfeatures
 
@@ -87,16 +89,17 @@ class FlattenMapper(Mapper):
             raise RuntimeError("FlattenMapper needs to be trained before it "
                                "can be used.")
 
-        # if data is a single samples
-        if dshape == oshape:
-            return data.reshape(-1)
-        # multiple samples
-        elif dshape[1:] == oshape:
-            return data.reshape(dshape[0], -1)
+        # input matches the shape of a single sample
+        if sshape == oshape:
+            return data.reshape(nsamples, -1)
+        # the first part of the shape matches (e.g. some additional axes present)
+        elif sshape[:len(oshape)] == oshape:
+            # flatten the pieces the mapper knows about and preserve the rest
+            return data.reshape((nsamples, -1) + sshape[len(oshape):])
 
         raise ValueError("FlattenMapper has not been trained for data "
                          "shape '%s' (known only '%s')."
-                         % (str(dshape), str(oshape)))
+                         % (str(sshape), str(oshape)))
 
 
     def _forward_dataset(self, dataset):
@@ -120,14 +123,15 @@ class FlattenMapper(Mapper):
 
 
     def _reverse_data(self, data):
+        # this method always gets data where the first axis is the samples axis!
         # local binding
-        dshape = data.shape
+        nsamples = data.shape[0]
+        sshape = data.shape[1:]
         oshape = self.__origshape
         nfeatures = self.__nfeatures
+        return data.reshape((nsamples,) + sshape[:-1] + oshape)
 
-        if dshape[1:] == (nfeatures,):
-            return data.reshape((dshape[0],) + oshape)
-
+        # XXX anything we cannot reverse-map?
         raise ValueError("FlattenMapper has not been trained for data "
                          "with shape '%s', but '%s'."
                          % (str(dshape[1:]), (nfeatures,)))
