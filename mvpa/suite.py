@@ -63,7 +63,6 @@ from mvpa.datasets import *
 from mvpa.datasets.base import *
 from mvpa.datasets.miscfx import *
 from mvpa.datasets.channel import *
-from mvpa.datasets.event import *
 from mvpa.datasets.eep import *
 if externals.exists('nifti'):
     from mvpa.datasets.mri import *
