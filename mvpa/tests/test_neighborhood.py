@@ -18,7 +18,7 @@ from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
 
 from mvpa.datasets.base import Dataset
 import mvpa.misc.neighborhood as ne
-from mvpa import pymvpa_dataroot
+from mvpa.clfs.distance import manhattenDistance
 
 def test_sphere():
     # test sphere initialization
@@ -49,7 +49,10 @@ def test_sphere():
               array([1, 1, 2]),
               array([1, 2, 1]),
               array([2, 1, 1])]
-    assert_array_equal(array(s(center1)), target)
+    res = s(center1)
+    assert_array_equal(array(res), target)
+    # They all should be tuples
+    ok_(N.all([isinstance(x, tuple) for x in res]))
 
     # test for larger diameter
     s = ne.Sphere(4)
@@ -65,21 +68,71 @@ def test_sphere():
 
     # no longer extent available
     assert_raises(TypeError, ne.Sphere, 1, extent=(1))
-    assert_raises(TypeError, ne.Sphere, 1, extent=(1.0,1.0,1.0))
+    assert_raises(TypeError, ne.Sphere, 1, extent=(1.0, 1.0, 1.0))
 
     s = ne.Sphere(1)
     #assert_raises(ValueError, s, (1))
     # No float coordinates allowed for now... XXX might like to change that ;)
     assert_raises(ValueError, s, (1.0, 1.0, 1.0))
 
+
+def test_sphere_distance_func():
+    # Test some other distance
+    se = ne.Sphere(3)
+    sm = ne.Sphere(3, distance_func=manhattenDistance)
+    rese = se((10, 5))
+    resm = sm((10, 5))
+    for res in rese, resm:
+        # basic test for duplicates (I think we forgotten to test for them)
+        ok_(len(res) == len(set(res)))
+
+    # in manhatten distance we should all be no further than 3 "steps" away
+    ok_(N.all([N.sum(N.abs(N.array(x) - (10, 5))) <= 3 for x in resm]))
+    # in euclidean we are taking shortcuts ;)
+    ok_(N.any([N.sum(N.abs(N.array(x) - (10, 5))) > 3 for x in rese]))
+
+
+def test_sphere_scaled():
+    s1 = ne.Sphere(3)
+    s = ne.Sphere(3, element_sizes=(1, 1))
+
+    # Should give exactly the same results since element_sizes are 1s
+    for p in ((0, 0), (-23, 1)):
+        assert_array_equal(s1(p), s(p))
+        ok_(len(s(p)) == len(set(s(p))))
+
+    # Raise exception if query dimensionality does not match element_sizes
+    assert_raises(ValueError, s, (1,))
+
+    s = ne.Sphere(3, element_sizes=(1.5, 2))
+    assert_array_equal(s((0, 0)),
+                       [(-2, 0), (-1, -1), (-1, 0), (-1, 1),
+                        (0, -1), (0, 0), (0, 1),
+                        (1, -1), (1, 0), (1, 1), (2, 0)])
+
+    s = ne.Sphere(1.5, element_sizes=(1.5, 1.5, 1.5))
+    res = s((0, 0, 0))
+    ok_(N.all([N.sqrt(N.sum(N.array(x)**2)) <= 1.5 for x in res]))
+    ok_(len(res) == 7)
+
+    # all neighbors so no more than 1 voxel away -- just a cube, for
+    # some "sphere" effect radius had to be 3.0 ;)
+    td = N.sqrt(3*1.5**2)
+    s = ne.Sphere(td, element_sizes=(1.5, 1.5, 1.5))
+    res = s((0, 0, 0))
+    ok_(N.all([N.sqrt(N.sum(N.array(x)**2)) <= td for x in res]))
+    ok_(N.all([N.sum(N.abs(x) > 1) == 0 for x in res]))
+    ok_(len(res) == 27)
+
+
 def test_query_engine():
     data = N.arange(54)
     # indices in 3D
-    ind = N.transpose((N.ones((3,3,3)).nonzero()))
+    ind = N.transpose((N.ones((3, 3, 3)).nonzero()))
     # sphere generator for 3 elements diameter
     sphere = ne.Sphere(1)
     # dataset with just one "space"
-    ds = Dataset([data,data], fa={'s_ind': N.concatenate((ind, ind))})
+    ds = Dataset([data, data], fa={'s_ind': N.concatenate((ind, ind))})
     # and the query engine attaching the generator to the "index-space"
     qe = ne.IndexQueryEngine(s_ind=sphere)
     # cannot train since the engine does not know about the second space
@@ -112,12 +165,12 @@ def test_query_engine():
                        qe(s_ind=(0, 0, 0)))
 
     # should fail if asked about some unknown thing
-    assert_raises(ValueError, qe.__call__, s_ind=(0,0,0), buga=0)
+    assert_raises(ValueError, qe.__call__, s_ind=(0, 0, 0), buga=0)
 
     # Test by using some literal feature atttribute
     ds.fa['lit'] =  ['roi1', 'ro2', 'r3']*18
     # should work as well as before
-    assert_array_equal(qe(s_ind=(0,0,0)), [0, 1, 3, 9, 27, 28, 30, 36])
+    assert_array_equal(qe(s_ind=(0, 0, 0)), [0, 1, 3, 9, 27, 28, 30, 36])
     # should fail if asked about some unknown (yet) thing
     assert_raises(ValueError, qe.__call__, s_ind=(0,0,0), lit='roi1')
 
