@@ -387,7 +387,6 @@ class FeatureSliceMapper(Mapper):
         # features
         mapped.resize(data.shape[:1] + self.__dshape + data.shape[2:],
                       refcheck=False)
-        print mapped.shape
         mapped.fill(0)
         mapped[:, self._slicearg] = data
         return mapped
