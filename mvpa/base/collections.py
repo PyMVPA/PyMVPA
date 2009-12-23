@@ -418,7 +418,7 @@ class UniformLengthCollection(Collection):
         if self._uniform_length is None:
             self._uniform_length = len(value)
         elif not len(value.value) == self._uniform_length:
-            raise ValueError("Collectable '%s' with length [%i] does not match"
+            raise ValueError("Collectable '%s' with length [%i] does not match "
                              "the required length [%i] of collection '%s'."
                              % (key,
                                 len(value.value),
