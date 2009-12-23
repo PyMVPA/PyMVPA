@@ -98,9 +98,12 @@ for diameter in [1, 3, 7]:
     # setup Searchlight with a custom diameter
     sl = sphere_searchlight(cv, diameter=diameter, space='voxel_indices')
 
+    # to increase efficiency, we strip all unnecessary attributes from the
+    # dataset before we hand it over to the searchlight
+    ds = dataset.copy(deep=False,
+                      sa=['labels', 'chunks'], fa=['voxel_indices'], a=[])
     # run searchlight on example dataset and retrieve error map
-    sl_map = sl(dataset)
-
+    sl_map = sl(ds)
     # map sensitivity map into original dataspace
     orig_sl_map = dataset.mapper.reverse1(N.array(sl_map))
     masked_orig_sl_map = N.ma.masked_array(orig_sl_map,
