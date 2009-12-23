@@ -22,7 +22,7 @@ import os
 from mvpa import pymvpa_dataroot
 from mvpa.misc.plot import plotFeatureHist, plotSamplesDistance
 from mvpa import cfg
-from mvpa.datasets.nifti import fmri_dataset
+from mvpa.datasets.mri import fmri_dataset
 from mvpa.misc.io import SampleAttributes
 from mvpa.datasets.miscfx import zscore, detrend
 

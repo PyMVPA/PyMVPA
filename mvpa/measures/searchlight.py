@@ -71,7 +71,7 @@ class Searchlight(DatasetMeasure):
 
             # compute the datameasure and store in results
             measure = self.__datameasure(roi)
-            results.append(measure)
+            results.append(N.squeeze(measure))
 
             # store the size of the roi dataset
             if self.states.isEnabled('roisizes'):
