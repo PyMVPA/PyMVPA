@@ -106,17 +106,18 @@ def test_datasetmapping():
     assert_equal(mds.nfeatures, boxlength)
     # all samples attributes remain, but the can rotated/compressed into
     # multidimensional attributes
-    assert_equal(sorted(mds.sa.keys()), ['boxy_onsets'] + sorted(ds.sa.keys()))
+    assert_equal(sorted(mds.sa.keys()), ['boxy_onsetidx'] + sorted(ds.sa.keys()))
     assert_equal(mds.sa.multidim.shape,
                  (len(startpoints), boxlength, ds.nfeatures))
     assert_equal(mds.sa.timepoints.shape, (len(startpoints), boxlength))
     assert_array_equal(mds.sa.timepoints.flatten(),
                        N.array([(s, s+1) for s in startpoints]).flatten())
-    assert_array_equal(mds.sa.boxy_onsets, startpoints)
+    assert_array_equal(mds.sa.boxy_onsetidx, startpoints)
     # feature attributes also get rotated and broadcasted
     assert_array_equal(mds.fa.fid, [ds.fa.fid, ds.fa.fid])
     # and finally there is a new one
-    assert_array_equal(mds.fa.boxy_offsets, N.arange(boxlength))
+    assert_array_equal(mds.fa.boxy_offsetidx,
+                       N.repeat(N.arange(boxlength), 4).reshape(2,-1))
 
     # now see how it works on reverse()
     rds = bm.reverse(mds)
