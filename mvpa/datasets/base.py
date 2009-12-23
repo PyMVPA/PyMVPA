@@ -27,15 +27,7 @@ if __debug__:
 
 
 class Dataset(BaseDataset):
-    """Generic storage class for evolved datasets in PyMVPA
-
-    On top of basic dataset (`mvpa.base.dataset.Dataset`) this derived
-    class provides:
-
-     - semantics of having mapper assigned
-     - sugarings to access labels and chunks
-     - sub-dataset selection using []
-    """
+    __doc__ = BaseDataset.__doc__
 
     def get_mapped(self, mapper):
         """Feed this dataset through a mapper (forward).
@@ -224,6 +216,7 @@ class Dataset(BaseDataset):
     UC = property(fget=lambda self:self.sa['chunks'].unique)
     mapper = property(fget=lambda self:self.a.mapper)
     O = property(fget=lambda self:self.a.mapper.reverse(self.samples))
+
 
 
 # convenience alias
