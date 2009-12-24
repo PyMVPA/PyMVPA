@@ -178,7 +178,11 @@ class Sphere(object):
         ##                            if (c >= 0).all()
         ##                            and (c < self.extent).all()])
         ## coord_array = coord_array.transpose()
-        return [tuple(x) for x in coord_array]
+
+        # Note: converting first full array to list and then
+        # "tuppling" it seems to be faster than tuppling each
+        # sub-array
+        return [tuple(x) for x in coord_array.tolist()]
 
 
 class QueryEngine(object):
