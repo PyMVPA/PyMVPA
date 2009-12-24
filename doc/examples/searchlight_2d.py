@@ -77,7 +77,7 @@ cv = CrossValidatedTransferError(TransferError(clf),
 """Finally, we run the searchlight analysis for three different radii, each
 time computing an error for each sphere. To achieve this, we simply use the
 :class:`~mvpa.measures.searchlight.Searchlight` class, which takes any
-:term:`processing object` and a diameter as arguments. The :term:`processing
+:term:`processing object` and a radius as arguments. The :term:`processing
 object` has to compute the intended measure, when called with a dataset. The
 :class:`~mvpa.measures.searchlight.Searchlight` object will do nothing more
 than generating small datasets for each sphere, feeding it to the processing
@@ -88,15 +88,15 @@ mapped back into the original fMRI dataspace and plotted."""
 
 # setup plotting
 fig = 0
-P.figure(figsize=(12,4))
+P.figure(figsize=(12, 4))
 
 
-for diameter in [1, 3, 7]:
+for radius in [0, 1, 3]:
     # tell which one we are doing
-    print "Running searchlight with diameter: %i ..." % (diameter)
+    print "Running searchlight with radius: %i ..." % (radius)
 
-    # setup Searchlight with a custom diameter
-    sl = sphere_searchlight(cv, diameter=diameter, space='voxel_indices')
+    # setup Searchlight with a custom radius
+    sl = sphere_searchlight(cv, radius=radius, space='voxel_indices')
 
     # to increase efficiency, we strip all unnecessary attributes from the
     # dataset before we hand it over to the searchlight
@@ -113,7 +113,7 @@ for diameter in [1, 3, 7]:
     fig += 1
     P.subplot(1,3,fig)
 
-    P.title('Diameter %i' % diameter)
+    P.title('Radius %i' % radius)
 
     P.imshow(masked_orig_sl_map[0],
              interpolation='nearest',

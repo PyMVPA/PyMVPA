@@ -15,75 +15,119 @@ import sys
 
 from mvpa.clfs.distance import cartesianDistance
 
-class Sphere(object):
-    """ 3 Dimensional sphere
+if __debug__:
+    from mvpa.base import debug
 
-    Use this if you want to obtain all the neighbors within a given diameter of
-    a 3 dimensional coordiante.
+class Sphere(object):
+    """N-Dimensional sphere
+
+    Use this if you want to obtain all the neighbors within a given
+    radius from a point in a space with arbitrary number of dimensions
+    assuming that the space is discrete.
+
+    No validation of producing coordinates within any extent is done.
 
     Example
     -------
-    Create a Sphere of diamter 9 and obtain all coordinates within range for the
+    Create a Sphere of diameter 1 and obtain all coordinates within range for the
     coordinate (1,1,1).
 
-    >>> s = Sphere(9)
-    >>>coords = s((1,1,1))
+    >>> s = Sphere(1)
+    >>> s((2, 1))
+    [(1, 1), (2, 0), (2, 1), (2, 2), (3, 1)]
+    >>> s((1, ))
+    [(0,), (1,), (2,)]
+
+    If elements in discrete space have different sizes across
+    dimensions, it might be preferable to specify element_sizes
+    parameter.
+
+    >>> s = Sphere(2, element_sizes=(1.5, 2.5))
+    >>> s((2, 1))
+    [(1, 1), (2, 1), (3, 1)]
+
+    >>> s = Sphere(1, element_sizes=(1.5, 0.4))
+    >>> s((2, 1))
+    [(2, -1), (2, 0), (2, 1), (2, 2), (2, 3)]
 
     """
-    def __init__(self, diameter, extent=(sys.maxint, sys.maxint, sys.maxint)):
-        """ Initialise the Sphere
+
+    def __init__(self, radius, element_sizes=None, distance_func=None):
+        """ Initialize the Sphere
 
         Parameters
         ----------
-        diameter : odd int
-            diameter of the sphere in voxels
-        extent :  sequence of 3 ints
-            maximum index to consider
-            if this is not provided it will be the maximum value of an integer
-
+        radius : float
+          Radius of the 'sphere'.  If no `element_sizes` provided --
+          radius would be effectively in number of voxels (if
+          operating on MRI data).
+        element_sizes : None or iterable of floats
+          Sizes of elements in each dimension.  If None, it is equivalent
+          to 1s in all dimensions.
+        distance_func : None or lambda
+          Distance function to use (choose one from `mvpa.clfs.distance`).
+          If None, cartesianDistance to be used.
         """
-        self.extent = N.asanyarray(extent)
-        if __debug__:
-            # XXX YOH: hm...  I had in mind a bit better situation: didn't we
-            #     scale with some dimension information? could not Sphere
-            #     neighborhood generator be provided with such to generate an
-            #     ellipsoid?
-            if diameter % 2 != 1 or type(diameter) is not int:
-                raise ValueError("Sphere diameter must be odd integer, but "
-                                 "got %s of type %s"
-                                 % (diameter, type(diameter)))
-            # XXX YOH: may be sphere could easily be extended to become a
-            #     hypersphere? ie generalize and be used for 2D, 3D, ... ND?
-            #     Sure thing - using utility would simply puke (with some
-            #     meaningful message) if dimensions mismatch
-            if self.extent.size != 3 \
-                or self.extent.dtype.char not in N.typecodes['AllInteger']:
-                raise ValueError("Sphere extent must be 3 integers, was: %s"
-                                % str(extent))
-        self.diameter = diameter
-        self.radius = diameter/2
-        self.coord_list = self._create_template()
-        self.dataset = None
+        self._radius = radius
+        # TODO: make ability to lookup in a dataset
+        self._element_sizes = element_sizes
+        if distance_func is None:
+            distance_func = cartesianDistance
+        self._distance_func = distance_func
 
-    def _create_template(self):
-        center = array((0, 0, 0))
-        lr = range(-self.radius, self.radius+1) # linear range
-        # TODO create additional distance metrics, for example manhatten
-        # XXX YOH: we have those elsewhere... I guess we need to unify access to them
-        # TODO create a way to specify shape of quantised sphere i.e. < vs <=
-        return array([array((i, j, k)) for i in lr
-                              for j in lr
-                              for k in lr
-                              if cartesianDistance(array((i, j, k)),center)
-                                 <= self.radius])
+        self._increments = None
+        """Stored template of increments"""
+        self._increments_ndim = None
+        """Dimensionality of increments"""
+
+    # Properties to assure R/O behavior for now
+    @property
+    def radius(self):
+        return self._radius
+
+    @property
+    def element_sizes(self):
+        return self._element_sizes
+
+    @property
+    def distance_func(self):
+        return self._distance_func
+
+    def _get_increments(self, ndim):
+        """Creates a list of increments for a given dimensionality
+        """
+        # Set element_sizes
+        element_sizes = self._element_sizes
+        if element_sizes is None:
+            element_sizes = N.ones(ndim)
+        else:
+            if (ndim != len(element_sizes)):
+                raise ValueError, \
+                      "Dimensionality mismatch: element_sizes %s provided " \
+                      "to constructor had %i dimensions, whenever queried " \
+                      "coordinate had %i" \
+                      % (element_sizes, len(element_sizes), ndim)
+        center = N.zeros(ndim)
+
+        element_sizes = N.asanyarray(element_sizes)
+        # What range for each dimension
+        erange = N.ceil(self._radius / element_sizes).astype(int)
+
+        tentative_increments = N.array(list(N.ndindex(tuple(erange*2 + 1)))) \
+                               - erange
+        # Filter out the ones beyond the "sphere"
+        return array([x for x in tentative_increments
+                      if self._distance_func(x * element_sizes, center)
+                      <= self._radius])
 
     def train(self, dataset):
-        # XXX techinically this is not needed
         # XXX YOH:  yeap -- BUT if you care about my note above on extracting
         #     somehow sizes -- some dataset.a might come handy may be?
         #     so actual template get constructed in train and _create_template
         #     could go away and just be returned in some R/O property
-        self.dataset = dataset
+        #self.dataset = dataset
+        # TODO: extract element_sizes
+        pass
 
     # XXX YOH: should it have this at all?  may be sphere should just generate the
     #         "neighborhood template" -- all those offsets where to jump to get
@@ -103,27 +147,38 @@ class Sphere(object):
         """
         # type checking
         coordinate = N.asanyarray(coordinate)
+        # XXX This might go into _train ...
+        ndim = len(coordinate)
+        if self._increments is None  or self._increments_ndim != ndim:
+            if __debug__:
+                debug('NBH',
+                      "Recomputing neighborhood increments for %dD Sphere"
+                      % ndim)
+            self._increments = self._get_increments(ndim)
+            self._increments_ndim = ndim
+
         if __debug__:
-            if coordinate.size != 3 \
-            or coordinate.dtype.char not in N.typecodes['AllInteger']:
+            if coordinate.dtype.char not in N.typecodes['AllInteger']:
                 raise ValueError("Sphere must be called on a sequence of "
-                                 "integers of length 3, you gave %s "
-                                 % coordinate)
+                                 "integers of length %i, you gave %s "
+                                 % (ndim, coordinate))
             #if dataset is None:
             #    raise ValueError("Sphere object has not been trained yet, use "
             #                     "train(dataset) first. ")
-        # function call
-        coord_array = (coordinate + self.coord_list)
-        # now filter out illegal coordinates if they really are outside the
-        # bounds
-        if (coordinate - self.radius < 0).any() \
-        or (coordinate + self.radius >= self.extent).any():
-            coord_array = array([c for c in coord_array \
-                                   if (c >= 0).all()
-                                   and (c < self.extent).all()])
 
-        coord_array = coord_array.transpose()
-        return zip(coord_array[0], coord_array[1], coord_array[2])
+        # function call
+        coord_array = (coordinate + self._increments)
+
+        # XXX may be optionally provide extent checking?
+        ## # now filter out illegal coordinates if they really are outside the
+        ## # bounds
+        ## if (coordinate - self.radius < 0).any() \
+        ## or (coordinate + self.radius >= self.extent).any():
+        ##     coord_array = array([c for c in coord_array \
+        ##                            if (c >= 0).all()
+        ##                            and (c < self.extent).all()])
+        ## coord_array = coord_array.transpose()
+        return [tuple(x) for x in coord_array]
 
 
 class QueryEngine(object):

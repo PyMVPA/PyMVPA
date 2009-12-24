@@ -96,7 +96,7 @@ class Searchlight(DatasetMeasure):
 
 
 
-def sphere_searchlight(datameasure, diameter=1, center_ids=None,
+def sphere_searchlight(datameasure, radius=1, center_ids=None,
                        space='voxel_indices', **kwargs):
     """Runs a scalar `DatasetMeasure` on all possible spheres of a certain size
     within a dataset.
@@ -109,8 +109,8 @@ def sphere_searchlight(datameasure, diameter=1, center_ids=None,
     datameasure: callable
       Any object that takes a :class:`~mvpa.datasets.base.Dataset`
       and returns some measure when called.
-    diameter: int
-      All features within the diameteraround the center will be part
+    radius: float
+      All features within this radius around the center will be part
       of a sphere.
     center_ids: list(int)
       List of feature ids (not coordinates) the shall serve as sphere
@@ -131,8 +131,7 @@ def sphere_searchlight(datameasure, diameter=1, center_ids=None,
     with the intended behavior of a `SensitivityAnalyzer`.
     """
     # build a matching query engine from the arguments
-    # XXX right now Sphere wants an odd integer diameter
-    kwa = {space: Sphere(diameter)}
+    kwa = {space: Sphere(radius)}
     qe = IndexQueryEngine(**kwa)
     # init the searchlight with the queryengine
     return Searchlight(datameasure, qe, center_ids=center_ids, **kwargs)
