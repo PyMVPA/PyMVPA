@@ -15,27 +15,38 @@ if __debug__:
 
 import numpy as N
 
+from mvpa.base import externals
 from mvpa.measures.base import DatasetMeasure
 from mvpa.misc.state import StateVariable
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
-
 
 class Searchlight(DatasetMeasure):
 
     roisizes = StateVariable(enabled=False,
         doc="Number of features in each ROI.")
 
-    def __init__(self, datameasure, queryengine, center_ids=None, **kwargs):
+    def __init__(self, datameasure, queryengine, center_ids=None,
+                 nproc=1, **kwargs):
         DatasetMeasure.__init__(self, **(kwargs))
+
+        if nproc > 1 and not externals.exists('pprocess'):
+            raise RuntimeError("The 'pprocess' module is required for "
+                               "multiprocess searchlights. Please either "
+                               "install python-pprocess, or reduce `nproc` "
+                               "to 1 (got nproc=%i)" % nproc)
 
         self.__datameasure = datameasure
         self.__qe = queryengine
         self.__center_ids = center_ids
+        self.__nproc = nproc
 
 
     def _call(self, dataset):
         """Perform the ROI search.
         """
+        # local binding
+        nproc = self.__nproc
+
         if self.states.isEnabled('roisizes'):
             self.states.roisizes = []
 
@@ -50,8 +61,19 @@ class Searchlight(DatasetMeasure):
                 nrois = dataset.nfeatures
             roi_count = 0
 
-        # collect the results in a list -- you never know what you get
-        results = []
+        # result containers
+        if nproc > 1:
+            # setup result container for parallel computation
+            # it will utilize as many processes as requested, and reuse them
+            # for subsequent ROIs, instead of spawning a fresh one per ROI
+            import pprocess
+            results = pprocess.Map(limit=nproc, reuse=1)
+            datameasure = results.manage(
+                            pprocess.MakeReusable(self.__datameasure))
+        else:
+            # otherwise collect the results in a list
+            results = []
+            datameasure = self.__datameasure
 
         # decide whether to run on all possible center coords or just a provided
         # subset
@@ -70,8 +92,12 @@ class Searchlight(DatasetMeasure):
             roi = dataset[:, roi_fids]
 
             # compute the datameasure and store in results
-            measure = self.__datameasure(roi)
-            results.append(N.squeeze(measure))
+            if nproc > 1:
+                # the parallel map will handle storage too
+                datameasure(roi)
+            else:
+                measure = datameasure(roi)
+                results.append(measure)
 
             # store the size of the roi dataset
             if self.states.isEnabled('roisizes'):
@@ -87,6 +113,12 @@ class Searchlight(DatasetMeasure):
 
         if __debug__:
             debug('SLC', '')
+
+        # XXX post-proc results for shape-issue that will go away once we switch
+        # to datasets as return values
+        # but be careful: this call also serves as conversion from parallel maps
+        # to regular lists!
+        results = [r.squeeze() for r in results]
 
         # charge state
         self.states.raw_results = results
