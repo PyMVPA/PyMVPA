@@ -96,7 +96,10 @@ for radius in [0, 1, 3]:
     print "Running searchlight with radius: %i ..." % (radius)
 
     # setup Searchlight with a custom radius
-    sl = sphere_searchlight(cv, radius=radius, space='voxel_indices')
+    # on multi-core machines try increasing the `nproc` argument
+    # to utilize more than one core
+    sl = sphere_searchlight(cv, radius=radius, space='voxel_indices',
+                            nproc=1)
 
     # to increase efficiency, we strip all unnecessary attributes from the
     # dataset before we hand it over to the searchlight
