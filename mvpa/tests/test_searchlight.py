@@ -32,25 +32,32 @@ class SearchlightTests(unittest.TestCase):
         cv = CrossValidatedTransferError(
                 transerror,
                 NFoldSplitter(cvtype=1))
-        sl = sphere_searchlight(cv, radius=1, transformer=N.array,
-                         enable_states=['roisizes', 'raw_results'])
 
-        # run searchlight
-        results = sl(self.dataset)
+        sls = [sphere_searchlight(cv, radius=1, transformer=N.array,
+                         enable_states=['roisizes', 'raw_results'])]
 
-        # check for correct number of spheres
-        self.failUnless(len(results) == 106)
+        if externals.exists('pprocess'):
+            sls += [sphere_searchlight(cv, radius=1, transformer=N.array,
+                         nproc=2,
+                         enable_states=['roisizes', 'raw_results'])]
 
-        # check for chance-level performance across all spheres
-        self.failUnless(0.4 < results.mean() < 0.6)
+        for sl in sls:
+            # run searchlight
+            results = sl(self.dataset)
 
-        # check resonable sphere sizes
-        self.failUnless(len(sl.states.roisizes) == 106)
-        self.failUnless(max(sl.states.roisizes) == 7)
-        self.failUnless(min(sl.states.roisizes) == 4)
+            # check for correct number of spheres
+            self.failUnless(len(results) == 106)
 
-        # check base-class state
-        self.failUnlessEqual(len(sl.states.raw_results), 106)
+            # check for chance-level performance across all spheres
+            self.failUnless(0.4 < results.mean() < 0.6)
+
+            # check resonable sphere sizes
+            self.failUnless(len(sl.states.roisizes) == 106)
+            self.failUnless(max(sl.states.roisizes) == 7)
+            self.failUnless(min(sl.states.roisizes) == 4)
+
+            # check base-class state
+            self.failUnlessEqual(len(sl.states.raw_results), 106)
 
 
     def testPartialSearchlightWithFullReport(self):
