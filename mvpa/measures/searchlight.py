@@ -69,7 +69,7 @@ class Searchlight(DatasetMeasure):
         # compute
         if nproc > 1:
             # split all target ROIs centers into `nproc` equally sized chunks
-            roi_chunks = N.split(roi_ids, nproc)
+            roi_chunks = N.array_split(roi_ids, nproc)
 
             # the next block sets up the infrastructure for parallel computing
             # this can easily be changed into a ParallelPython loop, if we
