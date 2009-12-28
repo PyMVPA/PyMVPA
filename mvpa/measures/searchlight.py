@@ -15,6 +15,7 @@ if __debug__:
 
 import numpy as N
 
+import copy
 from mvpa.base import externals
 from mvpa.measures.base import DatasetMeasure
 from mvpa.misc.state import StateVariable
@@ -47,9 +48,6 @@ class Searchlight(DatasetMeasure):
         # local binding
         nproc = self.__nproc
 
-        if self.states.isEnabled('roisizes'):
-            self.states.roisizes = []
-
         # train the queryengine
         self.__qe.train(dataset)
 
@@ -61,55 +59,48 @@ class Searchlight(DatasetMeasure):
                 nrois = dataset.nfeatures
             roi_count = 0
 
-        # result containers
-        if nproc > 1:
-            # setup result container for parallel computation
-            # it will utilize as many processes as requested, and reuse them
-            # for subsequent ROIs, instead of spawning a fresh one per ROI
-            import pprocess
-            results = pprocess.Map(limit=nproc, reuse=1)
-            datameasure = results.manage(
-                            pprocess.MakeReusable(self.__datameasure))
-        else:
-            # otherwise collect the results in a list
-            results = []
-            datameasure = self.__datameasure
-
         # decide whether to run on all possible center coords or just a provided
         # subset
         if not self.__center_ids == None:
-            generator = self.__center_ids
+            roi_ids = self.__center_ids
         else:
-            generator = xrange(dataset.nfeatures)
+            roi_ids = N.arange(dataset.nfeatures)
 
-        # put rois around all features in the dataset and compute the
-        # measure within them
-        for f in generator:
-            # retrieve the feature ids of all features in the ROI from the query
-            # engine
-            roi_fids = self.__qe[f]
-            # slice the dataset
-            roi = dataset[:, roi_fids]
+        # compute
+        if nproc > 1:
+            # split all target ROIs centers into `nproc` equally sized chunks
+            roi_chunks = N.split(roi_ids, nproc)
 
-            # compute the datameasure and store in results
-            if nproc > 1:
-                # the parallel map will handle storage too
-                datameasure(roi)
-            else:
-                measure = datameasure(roi)
-                results.append(measure)
+            # the next block sets up the infrastructure for parallel computing
+            # this can easily be changed into a ParallelPython loop, if we
+            # decide to have a PP job server in PyMVPA
+            import pprocess
+            p_results = pprocess.Map(limit=nproc)
+            compute = p_results.manage(
+                        pprocess.MakeParallel(self._proc_chunk))
+            for chunk in roi_chunks:
+                # should we maybe deepcopy the measure to have a unique and
+                # independent one per process?
+                compute(chunk, dataset, copy.copy(self.__datameasure))
 
-            # store the size of the roi dataset
+            # collect results
+            results = []
             if self.states.isEnabled('roisizes'):
-                self.states.roisizes.append(roi.nfeatures)
+                roisizes = []
+            else:
+                roisizes = None
 
-            if __debug__:
-                roi_count += 1
-                debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
-                    % (nrois,
-                       roi_count,
-                       roi.nfeatures,
-                       float(roi_count)/nrois*100,), cr=True)
+            for r, rsizes in p_results:
+                results += r
+                if not roisizes is None:
+                    roisizes += rsizes
+        else:
+            # otherwise collect the results in a list
+            results, roisizes = \
+                    self._proc_chunk(roi_ids, dataset, self.__datameasure)
+
+        if not roisizes is None:
+            self.states.roisizes = roisizes
 
         if __debug__:
             debug('SLC', '')
@@ -126,6 +117,39 @@ class Searchlight(DatasetMeasure):
         # return raw results, base-class will take care of transformations
         return results
 
+
+    def _proc_chunk(self, chunk, ds, measure):
+        # little helper to capture the parts of the computation that can be
+        # parallelized
+        if self.states.isEnabled('roisizes'):
+            roisizes = []
+        else:
+            roisizes = None
+        results = []
+        # put rois around all features in the dataset and compute the
+        # measure within them
+        for f in chunk:
+            # retrieve the feature ids of all features in the ROI from the query
+            # engine
+            roi_fids = self.__qe[f]
+            # slice the dataset
+            roi = ds[:, roi_fids]
+
+            # compute the datameasure and store in results
+            results.append(measure(roi))
+
+            # store the size of the roi dataset
+            if not roisizes is None:
+                roisizes.append(roi.nfeatures)
+
+            if __debug__:
+                debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
+                    % (ds.nfeatures,
+                       f+1,
+                       roi.nfeatures,
+                       float(f+1)/ds.nfeatures*100,), cr=True)
+
+        return results, roisizes
 
 
 def sphere_searchlight(datameasure, radius=1, center_ids=None,
