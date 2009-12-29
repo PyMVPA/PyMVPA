@@ -471,7 +471,7 @@ class Dataset(object):
             # assign to target collection
             fa[attr.name] = newattr
 
-            # and finally dataset attributes: this time copying
+        # and finally dataset attributes: this time copying
         for attr in self.a.values():
             # preserve attribute type
             newattr = attr.__class__(name=attr.name, doc=attr.__doc__)

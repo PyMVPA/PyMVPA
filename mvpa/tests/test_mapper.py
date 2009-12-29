@@ -149,7 +149,6 @@ def test_subset():
     # all test subset result in equivalent masks, hence should do the same to
     # the mapper and result in identical behavior
     for st in sms:
-        print st
         for i, sub in enumerate(subsets):
             # shallow copy
             orig = copy(st)
@@ -157,9 +156,7 @@ def test_subset():
             # should do copy-on-write for all important stuff!!
             assert_true(orig.is_mergable(subsm))
             orig += subsm
-            print orig
             # test if selection did its job
-            print i
             if i == 3:
                 # special case of multiplying features
                 assert_array_equal(orig.forward1(data[0].copy()), subsets[i])

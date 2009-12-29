@@ -15,29 +15,62 @@ if __debug__:
 
 import numpy as N
 
+from mvpa.base import externals
+from mvpa.support import copy
 from mvpa.measures.base import DatasetMeasure
 from mvpa.misc.state import StateVariable
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
 
-
 class Searchlight(DatasetMeasure):
+    """An implementation of searchlight measure.
+
+    The idea for a searchlight algorithm stems from a paper by
+    :ref:`Kriegeskorte et al. (2006) <KGB06>`.
+    """
 
     roisizes = StateVariable(enabled=False,
         doc="Number of features in each ROI.")
 
-    def __init__(self, datameasure, queryengine, center_ids=None, **kwargs):
+    def __init__(self, datameasure, queryengine, center_ids=None,
+                 nproc=1, **kwargs):
+        """
+        Parameters
+        ----------
+        datameasure: callable
+          Any object that takes a :class:`~mvpa.datasets.base.Dataset`
+          and returns some measure when called.
+        queryengine: QueryEngine
+          Engine to use to discover the "neighborhood" of each feature.
+          See :class:`~mvpa.misc.neighborhood.QueryEngine`.
+        center_ids: list(int)
+          List of feature ids (not coordinates) the shall serve as sphere
+          centers. By default all features will be used.
+        nproc: int
+          How many processes to use for computation.  Requires `pprocess`
+          external module.
+        **kwargs
+          In addition this class supports all keyword arguments of its
+          base-class :class:`~mvpa.measures.base.DatasetMeasure`.
+      """
         DatasetMeasure.__init__(self, **(kwargs))
+
+        if nproc > 1 and not externals.exists('pprocess'):
+            raise RuntimeError("The 'pprocess' module is required for "
+                               "multiprocess searchlights. Please either "
+                               "install python-pprocess, or reduce `nproc` "
+                               "to 1 (got nproc=%i)" % nproc)
 
         self.__datameasure = datameasure
         self.__qe = queryengine
         self.__center_ids = center_ids
+        self.__nproc = nproc
 
 
     def _call(self, dataset):
         """Perform the ROI search.
         """
-        if self.states.isEnabled('roisizes'):
-            self.states.roisizes = []
+        # local binding
+        nproc = self.__nproc
 
         # train the queryengine
         self.__qe.train(dataset)
@@ -50,43 +83,57 @@ class Searchlight(DatasetMeasure):
                 nrois = dataset.nfeatures
             roi_count = 0
 
-        # collect the results in a list -- you never know what you get
-        results = []
-
         # decide whether to run on all possible center coords or just a provided
         # subset
         if not self.__center_ids == None:
-            generator = self.__center_ids
+            roi_ids = self.__center_ids
         else:
-            generator = xrange(dataset.nfeatures)
+            roi_ids = N.arange(dataset.nfeatures)
 
-        # put rois around all features in the dataset and compute the
-        # measure within them
-        for f in generator:
-            # retrieve the feature ids of all features in the ROI from the query
-            # engine
-            roi_fids = self.__qe[f]
-            # slice the dataset
-            roi = dataset[:, roi_fids]
+        # compute
+        if nproc > 1:
+            # split all target ROIs centers into `nproc` equally sized chunks
+            roi_chunks = N.array_split(roi_ids, nproc)
 
-            # compute the datameasure and store in results
-            measure = self.__datameasure(roi)
-            results.append(measure)
+            # the next block sets up the infrastructure for parallel computing
+            # this can easily be changed into a ParallelPython loop, if we
+            # decide to have a PP job server in PyMVPA
+            import pprocess
+            p_results = pprocess.Map(limit=nproc)
+            compute = p_results.manage(
+                        pprocess.MakeParallel(self._proc_chunk))
+            for chunk in roi_chunks:
+                # should we maybe deepcopy the measure to have a unique and
+                # independent one per process?
+                compute(chunk, dataset, copy.copy(self.__datameasure))
 
-            # store the size of the roi dataset
+            # collect results
+            results = []
             if self.states.isEnabled('roisizes'):
-                self.states.roisizes.append(roi.nfeatures)
+                roisizes = []
+            else:
+                roisizes = None
 
-            if __debug__:
-                roi_count += 1
-                debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
-                    % (nrois,
-                       roi_count,
-                       roi.nfeatures,
-                       float(roi_count)/nrois*100,), cr=True)
+            for r, rsizes in p_results:
+                results += r
+                if not roisizes is None:
+                    roisizes += rsizes
+        else:
+            # otherwise collect the results in a list
+            results, roisizes = \
+                    self._proc_chunk(roi_ids, dataset, self.__datameasure)
+
+        if not roisizes is None:
+            self.states.roisizes = roisizes
 
         if __debug__:
             debug('SLC', '')
+
+        # XXX post-proc results for shape-issue that will go away once we switch
+        # to datasets as return values
+        # but be careful: this call also serves as conversion from parallel maps
+        # to regular lists!
+        results = [r.squeeze() for r in results]
 
         # charge state
         self.states.raw_results = results
@@ -95,11 +142,45 @@ class Searchlight(DatasetMeasure):
         return results
 
 
+    def _proc_chunk(self, chunk, ds, measure):
+        """Little helper to capture the parts of the computation that can be
+        parallelized
+        """
+        if self.states.isEnabled('roisizes'):
+            roisizes = []
+        else:
+            roisizes = None
+        results = []
+        # put rois around all features in the dataset and compute the
+        # measure within them
+        for f in chunk:
+            # retrieve the feature ids of all features in the ROI from the query
+            # engine
+            roi_fids = self.__qe[f]
+            # slice the dataset
+            roi = ds[:, roi_fids]
 
-def sphere_searchlight(datameasure, diameter=1, center_ids=None,
+            # compute the datameasure and store in results
+            results.append(measure(roi))
+
+            # store the size of the roi dataset
+            if not roisizes is None:
+                roisizes.append(roi.nfeatures)
+
+            if __debug__:
+                debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
+                    % (ds.nfeatures,
+                       f+1,
+                       roi.nfeatures,
+                       float(f+1)/ds.nfeatures*100,), cr=True)
+
+        return results, roisizes
+
+
+def sphere_searchlight(datameasure, radius=1, center_ids=None,
                        space='voxel_indices', **kwargs):
-    """Runs a scalar `DatasetMeasure` on all possible spheres of a certain size
-    within a dataset.
+    """Creates a `Searchlight` to run a scalar `DatasetMeasure` on
+    all possible spheres of a certain size within a dataset.
 
     The idea for a searchlight algorithm stems from a paper by
     :ref:`Kriegeskorte et al. (2006) <KGB06>`.
@@ -109,14 +190,14 @@ def sphere_searchlight(datameasure, diameter=1, center_ids=None,
     datameasure: callable
       Any object that takes a :class:`~mvpa.datasets.base.Dataset`
       and returns some measure when called.
-    diameter: int
-      All features within the diameteraround the center will be part
+    radius: float
+      All features within this radius around the center will be part
       of a sphere.
     center_ids: list(int)
       List of feature ids (not coordinates) the shall serve as sphere
       centers. By default all features will be used.
     **kwargs
-      In additions this class supports all keyword arguments of its
+      In addition this class supports all keyword arguments of its
       base-class :class:`~mvpa.measures.base.DatasetMeasure`.
 
     Notes
@@ -127,12 +208,11 @@ def sphere_searchlight(datameasure, diameter=1, center_ids=None,
     for low sensitivities. Especially when using error functions usually
     low values imply high performance and therefore high sensitivity.
     This would in turn result in sensitivity maps that have low
-    (absolute) values indicating high sensitivites and this conflicts
+    (absolute) values indicating high sensitivities and this conflicts
     with the intended behavior of a `SensitivityAnalyzer`.
     """
     # build a matching query engine from the arguments
-    # XXX right now Sphere wants an odd integer diameter
-    kwa = {space: Sphere(diameter)}
+    kwa = {space: Sphere(radius)}
     qe = IndexQueryEngine(**kwa)
     # init the searchlight with the queryengine
     return Searchlight(datameasure, qe, center_ids=center_ids, **kwargs)

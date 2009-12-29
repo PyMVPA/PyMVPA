@@ -355,6 +355,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'running ipython env': "__check_in_ipython()",
           'reportlab': "__check_reportlab()",
           'nose': "import nose as __",
+          'pprocess': "import pprocess as __",
           }
 
 
