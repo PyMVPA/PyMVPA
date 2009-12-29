@@ -28,7 +28,7 @@ help:
 	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	-rm -rf $(BUILDDIR)/* source/generated
+	-rm -rf $(BUILDDIR)/* source/generated source/examples
 	-rm generate-stamp
 
 
