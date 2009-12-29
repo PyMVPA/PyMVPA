@@ -27,7 +27,7 @@ directly from PyMVPA root (e.g. `doc/examples/searchlight_2d.py`).
 Alternatively, one can download a full example dataset, which is explained in
 the next section.
 
-.. include:: misc/exampledata.readme
+.. include:: ../misc/exampledata.readme
 
 Preprocessing
 =============
