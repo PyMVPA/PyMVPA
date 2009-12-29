@@ -15,19 +15,43 @@ if __debug__:
 
 import numpy as N
 
-import copy
 from mvpa.base import externals
+from mvpa.support import copy
 from mvpa.measures.base import DatasetMeasure
 from mvpa.misc.state import StateVariable
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
 
 class Searchlight(DatasetMeasure):
+    """An implementation of searchlight measure.
+
+    The idea for a searchlight algorithm stems from a paper by
+    :ref:`Kriegeskorte et al. (2006) <KGB06>`.
+    """
 
     roisizes = StateVariable(enabled=False,
         doc="Number of features in each ROI.")
 
     def __init__(self, datameasure, queryengine, center_ids=None,
                  nproc=1, **kwargs):
+        """
+        Parameters
+        ----------
+        datameasure: callable
+          Any object that takes a :class:`~mvpa.datasets.base.Dataset`
+          and returns some measure when called.
+        queryengine: QueryEngine
+          Engine to use to discover the "neighborhood" of each feature.
+          See :class:`~mvpa.misc.neighborhood.QueryEngine`.
+        center_ids: list(int)
+          List of feature ids (not coordinates) the shall serve as sphere
+          centers. By default all features will be used.
+        nproc: int
+          How many processes to use for computation.  Requires `pprocess`
+          external module.
+        **kwargs
+          In addition this class supports all keyword arguments of its
+          base-class :class:`~mvpa.measures.base.DatasetMeasure`.
+      """
         DatasetMeasure.__init__(self, **(kwargs))
 
         if nproc > 1 and not externals.exists('pprocess'):
@@ -119,8 +143,9 @@ class Searchlight(DatasetMeasure):
 
 
     def _proc_chunk(self, chunk, ds, measure):
-        # little helper to capture the parts of the computation that can be
-        # parallelized
+        """Little helper to capture the parts of the computation that can be
+        parallelized
+        """
         if self.states.isEnabled('roisizes'):
             roisizes = []
         else:
@@ -154,8 +179,8 @@ class Searchlight(DatasetMeasure):
 
 def sphere_searchlight(datameasure, radius=1, center_ids=None,
                        space='voxel_indices', **kwargs):
-    """Runs a scalar `DatasetMeasure` on all possible spheres of a certain size
-    within a dataset.
+    """Creates a `Searchlight` to run a scalar `DatasetMeasure` on
+    all possible spheres of a certain size within a dataset.
 
     The idea for a searchlight algorithm stems from a paper by
     :ref:`Kriegeskorte et al. (2006) <KGB06>`.
@@ -172,7 +197,7 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
       List of feature ids (not coordinates) the shall serve as sphere
       centers. By default all features will be used.
     **kwargs
-      In additions this class supports all keyword arguments of its
+      In addition this class supports all keyword arguments of its
       base-class :class:`~mvpa.measures.base.DatasetMeasure`.
 
     Notes
@@ -183,7 +208,7 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
     for low sensitivities. Especially when using error functions usually
     low values imply high performance and therefore high sensitivity.
     This would in turn result in sensitivity maps that have low
-    (absolute) values indicating high sensitivites and this conflicts
+    (absolute) values indicating high sensitivities and this conflicts
     with the intended behavior of a `SensitivityAnalyzer`.
     """
     # build a matching query engine from the arguments
