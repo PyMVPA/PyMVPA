@@ -16,88 +16,181 @@ interface (API) that are of particular interest to users of this framework.
 Each module in the package is documented by a general summary of its
 purpose and the list of classes and functions it provides.
 
-For developers, more detailed (technical) information is available in the
-`API reference`_.
 
-.. _API Reference: api/index.html
+.. the rest of the modules are relative to the top-level
+.. currentmodule:: mvpa
 
 
-Global Facilities
+Basic Facilities
 =================
 
-.. toctree::
+.. autosummary::
+   :toctree:
 
-  modref/mvpa
+   base
+   base.collections
+   base.config
+   base.dochelpers
+   base.externals
+   base.info
+   base.report
+   base.types
+   base.verbosity
 
 
 Datasets: Input, Output, Storage and Preprocessing
 ==================================================
 
-.. toctree::
-  :glob:
+.. autosummary::
+   :toctree:
 
-  modref/mvpa.datasets*
+   base.dataset
+   datasets.base
+   datasets.mri
+   datasets.channel
+   datasets.eep
+   datasets.miscfx
+   datasets.miscfx_sp
+   datasets.splitters
 
 
 Mappers: Data Transformations
 =============================
 
-.. toctree::
-  :glob:
+.. autosummary::
+   :toctree:
 
-  modref/mvpa.mappers*
+   mappers.base
+   mappers.flatten
+   mappers.boxcar
+   mappers.mdp_adaptor
+   mappers.procrustean
+   mappers.prototype
+   mappers.samplegroup
+   mappers.som
+   mappers.wavelet
+   mappers.zscore
 
 
 Classifiers and Errors
 ======================
 
-.. toctree::
-  :glob:
+.. autosummary::
+   :toctree:
 
-  modref/mvpa.clfs*
+   clfs.base
+   clfs.meta
+   clfs.blr
+   clfs.enet
+   clfs.glmnet
+   clfs.gnb
+   clfs.gpr
+   clfs.knn
+   clfs.lars
+   clfs.plr
+   clfs.ridge
+   clfs.smlr
+   clfs.svm
+   clfs.distance
+   clfs.similarity
+   clfs.stats
+   clfs.transerror
+   clfs.warehouse
+
+
+Kernels
+-------
+
+.. autosummary::
+   :toctree:
+
+   kernels
+   kernels.base
+   kernels.libsvm
+   kernels.np
+   kernels.sg
 
 
 Measures: Searchlights and Sensitivties
 =======================================
 
-.. toctree::
-  :glob:
+.. autosummary::
+   :toctree:
 
-  modref/mvpa.measures*
+   measures.base
+   measures.anova
+   measures.corrcoef
+   measures.corrstability
+   measures.ds
+   measures.glm
+   measures.irelief
+   measures.noiseperturbation
+   measures.pls
+   measures.searchlight
+   measures.splitmeasure
 
 
 Feature Selection
 =================
 
-.. toctree::
-  :glob:
+.. autosummary::
+   :toctree:
 
-  modref/mvpa.featsel*
+   featsel.base
+   featsel.ifs
+   featsel.rfe
+   featsel.helpers
 
 
 Additional Algorithms
 =====================
 
-.. toctree::
-  :glob:
+.. autosummary::
+   :toctree:
 
-  modref/mvpa.algorithms*
-
-
-Common Facilities
-=================
-
-.. toctree::
-  :glob:
-
-  modref/mvpa.base*
+   algorithms.cvtranserror
+   algorithms.hyperalignment
 
 
 Miscellaneous
 =============
 
-.. toctree::
-  :glob:
+.. autosummary::
+   :toctree:
 
-  modref/mvpa.misc*
-  modref/mvpa.atlases*
+   misc.args
+   misc.attributes
+   misc.attrmap
+   misc.cmdline
+   misc.data_generators
+   misc.errorfx
+   misc.exceptions
+   misc.fx
+   misc.neighborhood
+   misc.param
+   misc.sampleslookup
+   misc.state
+   misc.stats
+   misc.support
+   misc.transformers
+   misc.vproperty
+
+
+3rd-party Interfaces
+--------------------
+
+.. autosummary::
+   :toctree:
+
+   misc.bv
+   misc.bv.base
+   misc.fsl
+   misc.fsl.base
+   misc.fsl.flobs
+   misc.fsl.melodic
+   misc.io
+   misc.io.base
+   misc.io.eepbin
+   misc.io.hamster
+   misc.io.meg
+
