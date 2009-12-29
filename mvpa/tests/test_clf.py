@@ -24,6 +24,7 @@ from mvpa.clfs.meta import CombinedClassifier, \
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.mappers.flatten import mask_mapper
+from mvpa.misc.attrmap import AttributeMap
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
@@ -190,7 +191,7 @@ class ClassifiersTests(unittest.TestCase):
         ds1.samples[:] = 0.0             # all 0s
         # For regression we need numbers
         if clf.params.regression:
-            ds1.labels = [{'L0':0, 'L1':1}[x] for x in ds1.labels]
+            ds1.labels = AttributeMap().to_numeric(ds1.labels)
         #ds2 = datasets['uni2small'][[0], :]
         #ds2.samples[:] = 0.0             # all 0s
 
