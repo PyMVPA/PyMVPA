@@ -88,7 +88,7 @@ def sweepargs(**kwargs):
 
                         failed_tests[eidstr].append(
                             # skip top-most tb in sweep_args
-                            (argname, repr(argvalue), tbm.tb_next, estr))
+                            (argname, repr(argvalue), tb.tb_next, estr))
 
                         if __debug__:
                             msg = "%s on %s=%r" % (estr, argname, argvalue)
