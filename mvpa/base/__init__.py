@@ -197,6 +197,7 @@ if __debug__:
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
     debug.register('LOOP', "Support's loop construct")
     debug.register('PLR',  "PLR call")
+    debug.register('NBH',  "Neighborhood estimations")
     debug.register('SLC',  "Searchlight call")
     debug.register('SA',   "Sensitivity analyzers")
     debug.register('SOM',  "Self-organizing-maps (SOM)")

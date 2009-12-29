@@ -563,31 +563,36 @@ class Event(dict):
                 raise ValueError, "Event must have '%s' defined." % k
 
 
-    def asDescreteTime(self, dt, storeoffset=False):
+    def asDescreteTime(self, dt, storeoffset=False, offsetattr='offset'):
         """Convert `onset` and `duration` information into descrete timepoints.
 
-        :Parameters:
-          dt: float
-            Temporal distance between two timepoints in the same unit as `onset`
-            and `duration`.
-          storeoffset: bool
-            If True, the temporal offset between original `onset` and
-            descretized `onset` is stored as an additional item in `features`.
+        Parameters
+        ----------
+        dt: float
+          Temporal distance between two timepoints in the same unit as `onset`
+          and `duration`.
+        storeoffset: bool
+          If True, the temporal offset between original `onset` and
+          descretized onset is stored as an additional item.
+        offsetattr: str
+          The name of the attribute that is used to store the computed offset
+          in case the `storeoffset` is enabled.
 
-        :Return:
-          A copy of the original `Event` with `onset` and optionally `duration`
-          replaced by their corresponding descrete timepoint. The new onset will
-          correspond to the timepoint just before or exactly at the original
-          onset. The new duration will be the number of timepoints covering the
-          event from the computed onset timepoint till the timepoint exactly at
-          the end, or just after the event.
+        Returns
+        -------
+        A copy of the original `Event` with `onset` and optionally `duration`
+        replaced by their corresponding descrete timepoint. The new onset will
+        correspond to the timepoint just before or exactly at the original
+        onset. The new duration will be the number of timepoints covering the
+        event from the computed onset timepoint till the timepoint exactly at
+        the end, or just after the event.
 
-          Note again, that the new values are expressed as #timepoint and not
-          in their original unit!
+        Note again, that the new values are expressed as #timepoint and not
+        in their original unit!
         """
         dt = float(dt)
         onset = self['onset']
-        out = deepcopy(self)
+        out = copy(self)
 
         # get the timepoint just prior the onset
         out['onset'] = int(N.floor(onset / dt))
@@ -595,11 +600,7 @@ class Event(dict):
         if storeoffset:
             # compute offset
             offset = onset - (out['onset'] * dt)
-
-            if out.has_key('features'):
-                out['features'].append(offset)
-            else:
-                out['features'] = [offset]
+            out[offsetattr] = offset
 
         if out.has_key('duration'):
             # how many timepoint cover the event (from computed onset

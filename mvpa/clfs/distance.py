@@ -290,8 +290,8 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
         data2 = data1
         pass
 
-    S1,F1 = data1.shape[:2]
-    S2,F2 = data2.shape[:2]
+    S1, F1 = data1.shape[:2]
+    S2, F2 = data2.shape[:2]
     # sanity check
     if not (F1==F2==weight.size):
         raise ValueError, \
@@ -317,8 +317,8 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
     if heuristic == 'features':
         #  Efficient implementation if the feature size is little.
         for NF in range(F1):
-            d += pf(N.abs(N.subtract.outer(data1[:,NF],
-                                           data2[:,NF]))*weight[NF])
+            d += pf(N.abs(N.subtract.outer(data1[:, NF],
+                                           data2[:, NF]))*weight[NF])
             pass
     elif heuristic == 'samples':
         #  Efficient implementation if the feature size is much larger
@@ -396,7 +396,7 @@ if externals.exists('weave'):
             d = d + N.triu(d).T # copy upper part to lower part
             return d**(1.0/p)
 
-        S2,F2 = data2.shape[:2]
+        S2, F2 = data2.shape[:2]
         if not (F1==F2==weight.size):
             raise ValueError, \
                   "Datasets should have same #columns == #weights. Got " \
