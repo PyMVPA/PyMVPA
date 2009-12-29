@@ -75,14 +75,6 @@ class Searchlight(DatasetMeasure):
         # train the queryengine
         self.__qe.train(dataset)
 
-        # progress info stuff -- not critical
-        if __debug__:
-            if not self.__center_ids == None:
-                nrois = len(self.__center_ids)
-            else:
-                nrois = dataset.nfeatures
-            roi_count = 0
-
         # decide whether to run on all possible center coords or just a provided
         # subset
         if not self.__center_ids == None:
