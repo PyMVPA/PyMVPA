@@ -188,7 +188,9 @@ class ClassifiersTests(unittest.TestCase):
         # very interesting effect. but screw it -- for now it will be
         # this way
         ds1.samples[:] = 0.0             # all 0s
-
+        # For regression we need numbers
+        if clf.params.regression:
+            ds1.labels = [{'L0':0, 'L1':1}[x] for x in ds1.labels]
         #ds2 = datasets['uni2small'][[0], :]
         #ds2.samples[:] = 0.0             # all 0s
 
@@ -202,7 +204,10 @@ class ClassifiersTests(unittest.TestCase):
         #    might lead to 'surprises' due to magic in combiners etc
         for ds in (ds1, ):
             try:
-                clf.train(ds)                   # should not crash or stall
+                try:
+                    clf.train(ds)                   # should not crash or stall
+                except (KeyError, ValueError), e:
+                    self.fail("Failed to train on degenerate data. Error was %r" % e)
                 # could we still get those?
                 summary = clf.summary()
                 cm = clf.states.training_confusion
