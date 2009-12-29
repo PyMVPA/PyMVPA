@@ -28,12 +28,13 @@ help:
 	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	-rm -rf $(BUILDDIR)/* source/generated source/examples
+	-rm -rf $(BUILDDIR) source/generated source/examples
 	-rm generate-stamp
 
 
 generate: generate-stamp
 generate-stamp:
+	mkdir -p $(BUILDDIR)
 	sphinx-autogen -o source/generated source/*.rst
 	@touch $@
 
