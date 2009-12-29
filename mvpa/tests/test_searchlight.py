@@ -13,6 +13,7 @@ from mvpa.measures.searchlight import sphere_searchlight
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
+from mvpa.clfs.gnb import GNB
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
@@ -28,7 +29,11 @@ class SearchlightTests(unittest.TestCase):
 
     def testSpatialSearchlight(self):
         # compute N-1 cross-validation for each sphere
-        transerror = TransferError(sample_clf_lin)
+        # YOH: unfortunately sample_clf_lin is not guaranteed
+        #      to provide exactly the same results due to inherent
+        #      iterative process.  Therefore lets use something quick
+        #      and pure Python
+        transerror = TransferError(GNB(common_variance=True))
         cv = CrossValidatedTransferError(
                 transerror,
                 NFoldSplitter(cvtype=1))
@@ -41,9 +46,11 @@ class SearchlightTests(unittest.TestCase):
                          nproc=2,
                          enable_states=['roisizes', 'raw_results'])]
 
+        all_results = []
         for sl in sls:
             # run searchlight
             results = sl(self.dataset)
+            all_results.append(results)
 
             # check for correct number of spheres
             self.failUnless(len(results) == 106)
@@ -59,6 +66,13 @@ class SearchlightTests(unittest.TestCase):
             # check base-class state
             self.failUnlessEqual(len(sl.states.raw_results), 106)
 
+        if len(all_results) > 1:
+            # if we had multiple searchlights, we can check either they all
+            # gave the same result (they should have)
+            aresults = N.array(all_results)
+            dresults = N.abs(aresults - aresults.mean(axis=0))
+            dmax = N.max(dresults)
+            self.failUnlessEqual(dmax, 0.0)
 
     def testPartialSearchlightWithFullReport(self):
         # compute N-1 cross-validation for each sphere
