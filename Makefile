@@ -2,7 +2,8 @@ PROFILE_FILE=$(CURDIR)/$(BUILDDIR)/main.pstats
 COVERAGE_REPORT=$(CURDIR)/$(BUILDDIR)/coverage
 BUILDDIR=$(CURDIR)/build
 HTML_DIR=$(BUILDDIR)/html
-DOCSRC_DIR=$(BUILDDIR)/doc
+DOCSRC_DIR=$(CURDIR)/doc
+DOCBUILD_DIR=$(BUILDDIR)/doc
 MAN_DIR=$(BUILDDIR)/man
 APIDOC_DIR=$(HTML_DIR)/api
 PDF_DIR=$(BUILDDIR)/pdf
@@ -81,6 +82,9 @@ clean:
      done
 # clean tools
 	$(MAKE) -C tools clean
+# clean docs
+	$(MAKE) -C doc clean
+	-@rm -f $(DOCSRC_DIR)/source/examples/*.rst
 # clean all bits and pieces
 	-@rm -f MANIFEST
 	-@rm -f mvpa/clfs/lib*/*.so \
@@ -128,26 +132,21 @@ manpages: mkdir-MAN_DIR
 	PYTHONPATH=. help2man -N -n 'query stereotaxic atlases' \
 		bin/atlaslabeler > $(MAN_DIR)/atlaslabeler.1
 
-prepare-docsrc: mkdir-BUILDDIR
-	@echo "I: Preparing sources for documentation build"
-	rsync --copy-unsafe-links -rvuhp doc/ $(BUILDDIR)/doc
-	rsync --copy-unsafe-links -rvhup doc/pics/ $(DOCSRC_DIR)/examples/pics
-
 references:
 	@echo "I: Generating references"
 	tools/bib2rst_ref.py
 
-htmldoc: modref-templates examples2rst build
+htmldoc: examples2rst build
 	@echo "I: Creating an HTML version of documentation"
-	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) html BUILDROOT=$(BUILDDIR)
-	cd $(HTML_DIR)/modref && ln -sf ../_static
+	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) html BUILDDIR=$(BUILDDIR)
+	cd $(HTML_DIR)/generated && ln -sf ../_static
 	cd $(HTML_DIR)/examples && ln -sf ../_static
 	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
 
-pdfdoc: modref-templates examples2rst build pdfdoc-stamp
+pdfdoc: examples2rst build pdfdoc-stamp
 pdfdoc-stamp:
 	@echo "I: Creating a PDF version of documentation"
-	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=../..:$(PYTHONPATH) $(MAKE) latex BUILDROOT=$(BUILDDIR)
+	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=../..:$(PYTHONPATH) $(MAKE) latex BUILDDIR=$(BUILDDIR)
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
 	touch $@
 
@@ -158,17 +157,11 @@ handbook: pdfdoc
 	build/tools/pdfbook -2 \
 	 $(LATEX_DIR)/PyMVPA-Manual.pdf $(LATEX_DIR)/PyMVPA-Manual-Handbook.pdf
 
-modref-templates: prepare-docsrc modref-templates-stamp
-modref-templates-stamp:
-	@echo "I: Creating modref templates"
-	PYTHONPATH=.:$(PYTHONPATH) tools/build_modref_templates.py
-	touch $@
-
-examples2rst: prepare-docsrc examples2rst-stamp
-examples2rst-stamp:
+examples2rst: examples2rst-stamp
+examples2rst-stamp: mkdir-DOCBUILD_DIR
 	tools/ex2rst \
 		--project PyMVPA \
-		--outdir $(DOCSRC_DIR)/examples \
+		--outdir $(DOCSRC_DIR)/source/examples \
 		--exclude doc/examples/searchlight.py \
 		doc/examples
 	touch $@
