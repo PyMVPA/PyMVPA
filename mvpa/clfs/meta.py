@@ -228,12 +228,13 @@ class ProxyClassifier(Classifier):
     """
 
     def __init__(self, clf, **kwargs):
-        """Initialize the instance
+        """Initialize the instance of ProxyClassifier
 
-        :Parameters:
-          clf : Classifier
-            classifier based on which mask classifiers is created
-          """
+        Parameters
+        ----------
+        clf : Classifier
+          Classifier to proxy, i.e. to use after decoration
+        """
 
         Classifier.__init__(self, regression=clf.params.regression, **kwargs)
 
@@ -1407,6 +1408,16 @@ class RegressionAsClassifier(ProxyClassifier):
 
     distance_measure = Parameter(None, allowedtype='None or ndarray',
         doc="Compatible distance function (e.g. from `mvpa.clfs.distance`)")
+
+
+    def __init__(self, regr, **kwargs):
+        """
+        Parameters
+        ----------
+        regr : Classifier XXX
+          Regression to be used as a classifier
+        """
+        super(self, RegressionAsClassifier).__init__(regr, **kwargs)
 
 
     def _train(self, dataset):
