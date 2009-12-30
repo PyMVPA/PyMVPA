@@ -38,7 +38,7 @@ if __debug__:
 
 __all__ = [ 'Classifier',
             'accepts_dataset_as_samples', 'accepts_samples_as_dataset',
-            'DegenerateInputError', 'FailedToTrainError']
+            'DegenerateInputError', 'FailedToTrainError', 'FailedToPredictError']
 
 def accepts_samples_as_dataset(fx):
     """Decorator to wrap samples into a Dataset.

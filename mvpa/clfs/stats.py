@@ -26,6 +26,12 @@ class Nonparametric(object):
     """
 
     def __init__(self, dist_samples):
+        """
+        Parameters
+        ----------
+        dist_samples : ndarray
+          Samples to be used to assess the distribution.
+        """
         self._dist_samples = N.ravel(dist_samples)
 
 
@@ -472,7 +478,23 @@ if externals.exists('scipy'):
         """
 
         def __init__(self, dist, loc=None, scale=None, args=None):
+            """
+            Parameters
+            ----------
+            dist : rv_generic
+              Distribution for which to freeze some of the parameters
+            loc : array-like, optional
+              Location parameter (default=0)
+            scale : array-like, optional
+              Scale parameter (default=1)
+            args : iterable, optional
+               Additional arguments to be passed to dist.
 
+            Raises
+            ------
+            ValueError
+              Arguments number mismatch
+            """
             self._dist = dist
             # loc and scale
             theta = (loc, scale)
