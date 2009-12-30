@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 from numpy.testing import assert_array_equal
-from nose.tools import assert_raises, ok_, assert_false
+from nose.tools import assert_raises, ok_, assert_false, assert_equal
 
 from mvpa.misc.attrmap import AttributeMap
 
@@ -60,3 +60,10 @@ def test_attrmap():
     am = AttributeMap()
 
     ok_([(k, v) for k, v in am.iteritems()] == [])
+
+def test_attrmap_repr():
+    assert_equal(repr(AttributeMap()), "AttributeMap()")
+    assert_equal(repr(AttributeMap(dict(a=2, b=1))),
+                 "AttributeMap({'a': 2, 'b': 1})")
+    assert_equal(repr(AttributeMap(dict(a=2, b=1), mapnumeric=True)),
+                 "AttributeMap({'a': 2, 'b': 1}, mapnumeric=True)")

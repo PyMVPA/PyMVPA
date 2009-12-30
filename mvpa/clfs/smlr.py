@@ -60,7 +60,7 @@ class SMLR(Classifier):
     that article if you use this classifier for your work.
     """
 
-    _clf_internals = [ 'smlr', 'linear', 'has_sensitivity', 'binary',
+    __tags__ = [ 'smlr', 'linear', 'has_sensitivity', 'binary',
                        'multiclass', 'does_feature_selection' ]
                      # XXX: later 'kernel-based'?
 

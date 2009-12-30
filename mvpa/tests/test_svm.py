@@ -89,52 +89,40 @@ class SVMTests(unittest.TestCase):
 
 
     # XXX for now works only with linear... think it through -- should
-    # work non-linear, shouldn't it?
-    # now all non-linear have C>0 thus skipped anyways
-
-    # TODO: For some reason libsvm's weight assignment has no effect
-    # as well -- need to be fixed :-/
-    @sweepargs(clf=clfswh['svm', 'sg', '!regression', '!gnpp', '!meta'])
+    #     work non-linear, shouldn't it?
+    @sweepargs(clf=clfswh['svm', 'linear', '!regression', '!gnpp', '!meta'])
     def testCperClass(self, clf):
         if not (clf.params.isKnown('C')):
             # skip those without C
             return
 
-#        if clf.params.C < -5:
-#            # too soft margin helps to fight disbalance, thus skip
-#            # it in testing
-#            return
-
-        #print clf
-        ds = datasets['uni2small'].copy()
-        ds__ = datasets['uni2small'].copy()
+        ds = datasets['uni2medium'].copy()
+        ds__ = datasets['uni2medium'].copy()
         #
         # ballanced set
         # Lets add a bit of noise to drive classifier nuts. same
         # should be done for disballanced set
-        ds__.samples = ds__.samples + 0.5 * N.random.normal(size=(ds__.samples.shape))
+        ds__.samples = ds__.samples + \
+                       0.5 * N.random.normal(size=(ds__.samples.shape))
         #
         # disballanced set
         # lets overpopulate label 0
-        times = 10
+        times = 20
         ds_ = ds[(range(ds.nsamples) + range(ds.nsamples/2) * times)]
-        ds_.samples = ds_.samples + 0.7 * N.random.normal(size=(ds_.samples.shape))
+        ds_.samples = ds_.samples + \
+                      0.5 * N.random.normal(size=(ds_.samples.shape))
         spl = get_nsamples_per_attr(ds_, 'labels') #_.samplesperlabel
         #print ds_.labels, ds_.chunks
 
         cve = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
                                           enable_states='confusion')
+        # on balanced
         e = cve(ds__)
-        if cfg.getboolean('tests', 'labile', default='yes'):
-            # without disballance we should already have some hits
-            self.failUnless(cve.states.confusion.stats["P'"][1] > 0)
+        tpr_1 = cve.states.confusion.stats["TPR"][1]
 
+        # on disbalanced
         e = cve(ds_)
-        if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(cve.states.confusion.stats["P'"][1] < 5,
-                            msg="With disballance we should have almost no "
-                            "hits. Got %f" % cve.states.confusion.stats["P'"][1])
-            #print "D:", cve.confusion.stats["P'"][1], cve.confusion.stats['MCC'][1]
+        tpr_2 =  cve.states.confusion.stats["TPR"][1]
 
         # Set '1 C per label'
         # recreate cvte since previous might have operated on copies
@@ -146,17 +134,30 @@ class SVMTests(unittest.TestCase):
         ratio = N.sqrt(float(spl[ds_.UL[0]])/spl[ds_.UL[1]])
         clf.params.C = (-1/ratio, -1*ratio)
         try:
+            # on disbalanced but with balanced C
             e_ = cve(ds_)
             # reassign C
             clf.params.C = oldC
         except:
             clf.params.C = oldC
             raise
-        #print "B:", cve.confusion.stats["P'"][1], cve.confusion.stats['MCC'][1]
+        tpr_3 = cve.states.confusion.stats["TPR"][1]
+
+        # Actual tests
         if cfg.getboolean('tests', 'labile', default='yes'):
-            # Finally test if we get any 'hit' for minor category. In the
-            # classifier, which has way to 'ballance' should be non-0
-            self.failUnless(cve.states.confusion.stats["P'"][1] > 0)
+            self.failUnless(tpr_1 > 0.25,
+                            msg="Without disballance we should have some "
+                            "hits, but got TPR=%.3f" % tpr_1)
+
+            self.failUnless(tpr_2 < 0.25,
+                            msg="With disballance we should have almost no "
+                            "hits for minor, but got TPR=%.3f" % tpr_2)
+
+            self.failUnless(tpr_3 > 0.25,
+                            msg="With disballanced data but ratio-based Cs "
+                            "we should have some hits for minor, but got "
+                            "TPR=%.3f" % tpr_3)
+
 
 
     def testSillyness(self):
@@ -164,7 +165,7 @@ class SVMTests(unittest.TestCase):
         """
 
         if externals.exists('libsvm') or externals.exists('shogun'):
-            self.failUnlessRaises(TypeError, SVM,  C=1.0, nu=2.3)
+            self.failUnlessRaises(TypeError, libsvm.SVM, C=1.0, nu=2.3)
 
         if externals.exists('libsvm'):
             self.failUnlessRaises(TypeError, libsvm.SVM,  C=1.0, nu=2.3)

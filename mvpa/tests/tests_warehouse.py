@@ -10,9 +10,8 @@
 
 __docformat__ = 'restructuredtext'
 
-from os import environ
-
-import unittest, traceback, sys
+import traceback as tbm
+import unittest, sys
 import numpy as N
 
 from mvpa import cfg
@@ -46,6 +45,8 @@ def sweepargs(**kwargs):
     """
     def unittest_method(method):
         def do_sweep(*args_, **kwargs_):
+            """Perform sweeping over provided keyword arguments
+            """
             def untrain_clf(argvalue):
                 """Little helper"""
                 if isinstance(argvalue, Classifier):
@@ -66,8 +67,8 @@ def sweepargs(**kwargs):
                     # do actual call
                     try:
                         if __debug__:
-                            debug('TEST', 'Running %s on args=%s and kwargs=%s' %
-                                  (method.__name__, `args_`, `kwargs_`))
+                            debug('TEST', 'Running %s on args=%r and kwargs=%r'
+                                  % (method.__name__, args_, kwargs_))
                         method(*args_, **kwargs_)
                     except AssertionError, e:
                         estr = str(e)
@@ -75,9 +76,11 @@ def sweepargs(**kwargs):
                         # literal representation of exception tb, so
                         # we could group them later on
                         eidstr = '  '.join(
-                            [l for l in traceback.format_exception(etype, value, tb)
-                             if not ('do_sweep' in l or 'unittest.py' in l
-                                     or 'AssertionError' in l or 'Traceback (most' in l)])
+                            [l for l in tbm.format_exception(etype, value, tb)
+                             if not ('do_sweep' in l
+                                     or 'unittest.py' in l
+                                     or 'AssertionError' in l
+                                     or 'Traceback (most' in l)])
 
                         # Store exception information for later on groupping
                         if not eidstr in failed_tests:
@@ -85,11 +88,12 @@ def sweepargs(**kwargs):
 
                         failed_tests[eidstr].append(
                             # skip top-most tb in sweep_args
-                            (argname, `argvalue`, tb.tb_next, estr))
+                            (argname, repr(argvalue), tb.tb_next, estr))
 
                         if __debug__:
-                            msg = "%s on %s=%s" % (estr, argname, `argvalue`)
-                            debug('TEST', 'Failed unittest: %s\n%s' % (eidstr, msg))
+                            msg = "%s on %s=%r" % (estr, argname, argvalue)
+                            debug('TEST', 'Failed unittest: %s\n%s'
+                                  % (eidstr, msg))
                     untrain_clf(argvalue)
                     # TODO: handle different levels of unittests properly
                     if cfg.getboolean('tests', 'quick', False):
@@ -99,26 +103,31 @@ def sweepargs(**kwargs):
                         break
 
             if len(failed_tests):
-                # Lets now create a single AssertionError exception which would nicely
-                # incorporate all failed exceptions
+                # Lets now create a single AssertionError exception
+                # which would nicely incorporate all failed exceptions
                 multiple = len(failed_tests) != 1 # is it unique?
                 # if so, we don't need to reinclude traceback since it
                 # would be spitted out anyways below
                 estr = ""
                 cestr = "lead to failures of unittest %s" % method.__name__
                 if multiple:
-                    estr += "\n Different scenarios %s (specific tracebacks are below):" % cestr
+                    estr += "\n Different scenarios %s "\
+                            "(specific tracebacks are below):" % cestr
                 else:
                     estr += "\n Single scenario %s:" % cestr
                 for ek, els in failed_tests.iteritems():
                     estr += '\n'
-                    if multiple: estr += ek
+                    if multiple:
+                        estr += ek
                     estr += "  on\n    %s" % ("    ".join(
-                            ["%s=%s%s\n" % (ea, eav,
-                                            # Why didn't I just do regular for loop? ;)
-                                            ":\n     ".join([x for x in [' ', es] if x != '']))
+                            ["%s=%s%s\n" %
+                             (ea, eav,
+                              # Why didn't I just do regular for loop? ;)
+                              ":\n     ".join([xx for xx in [' ', es]
+                                               if xx != '']))
                              for ea, eav, etb, es in els]))
-                    etb = els[0][2] # take first one... they all should be identical
+                    # take first one... they all should be identical
+                    etb = els[0][2]
                 raise AssertionError(estr), None, etb
 
         do_sweep.func_name = method.func_name
@@ -133,9 +142,12 @@ def sweepargs(**kwargs):
 #
 snr_scale = cfg.getAsDType('tests', 'snr scale', float, default=1.0)
 
-specs = {'large' : { 'perlabel': 99, 'nchunks': 11, 'nfeatures': 20, 'snr': 8 * snr_scale},
-         'medium' :{ 'perlabel': 24, 'nchunks': 6,  'nfeatures': 14, 'snr': 8 * snr_scale},
-         'small' : { 'perlabel': 12, 'nchunks': 4,  'nfeatures': 6, 'snr' : 14 * snr_scale} }
+specs = {'large' : { 'perlabel': 99, 'nchunks': 11,
+                     'nfeatures': 20, 'snr': 8 * snr_scale},
+         'medium' :{ 'perlabel': 24, 'nchunks': 6,
+                     'nfeatures': 14, 'snr': 8 * snr_scale},
+         'small' : { 'perlabel': 12, 'nchunks': 4,
+                     'nfeatures': 6, 'snr' : 14 * snr_scale} }
 nonbogus_pool = [0, 1, 3, 5]
 
 datasets = {}
@@ -144,9 +156,9 @@ for kind, spec in specs.iteritems():
     # set of univariate datasets
     for nlabels in [ 2, 3, 4 ]:
         basename = 'uni%d%s' % (nlabels, kind)
-        nonbogus_features=nonbogus_pool[:nlabels]
-        bogus_features = filter(lambda x:not x in nonbogus_features,
-                                range(spec['nfeatures']))
+        nonbogus_features = nonbogus_pool[:nlabels]
+        bogus_features = [x for x in range(spec['nfeatures'])
+                          if not x in nonbogus_features]
 
         dataset = normalFeatureDataset(
             nlabels=nlabels,
@@ -173,8 +185,8 @@ for kind, spec in specs.iteritems():
                               N.repeat( 1, spec['perlabel'] ) ) )
     chunks = N.asarray(range(nchunks)*(total/nchunks))
     mask = N.ones((3, 6, 6), dtype='bool')
-    mask[0,0,0] = 0
-    mask[1,3,2] = 0
+    mask[0, 0, 0] = 0
+    mask[1, 3, 2] = 0
     ds = Dataset.from_masked(samples=data, labels=labels, chunks=chunks,
                              mask=mask, space='myspace')
     datasets['3d%s' % kind] = ds

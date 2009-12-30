@@ -16,7 +16,8 @@ from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
 
 from mvpa.misc.exceptions import UnknownStateError
 
-from mvpa.clfs.base import DegenerateInputError, FailedToTrainError
+from mvpa.clfs.base import DegenerateInputError, FailedToTrainError, \
+     FailedToPredictError
 from mvpa.clfs.meta import CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \
@@ -24,6 +25,7 @@ from mvpa.clfs.meta import CombinedClassifier, \
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.mappers.flatten import mask_mapper
+from mvpa.misc.attrmap import AttributeMap
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
@@ -33,7 +35,8 @@ from numpy.testing import assert_array_equal
 # What exceptions to allow while testing degenerate cases.
 # If it pukes -- it is ok -- user will notice that something
 # is wrong
-_degenerate_allowed_exceptions = [DegenerateInputError, FailedToTrainError]
+_degenerate_allowed_exceptions = [
+    DegenerateInputError, FailedToTrainError, FailedToPredictError]
 if externals.exists('rpy'):
     import rpy
     _degenerate_allowed_exceptions += [rpy.RPyRException]
@@ -140,15 +143,26 @@ class ClassifiersTests(unittest.TestCase):
                         msg="BinaryClassifier should not alter labels")
 
 
-    @sweepargs(clf=clfswh['binary'])
+    # TODO: XXX finally just make regression/clf separation cleaner
+    @sweepargs(clf=clfswh[:])
     def testClassifierGeneralization(self, clf):
         """Simple test if classifiers can generalize ok on simple data
         """
         te = CrossValidatedTransferError(TransferError(clf), NFoldSplitter())
-        cve = te(datasets['uni2medium'])
+        nclasses = 2 * (1 + int('multiclass' in clf.__tags__))
+        if nclasses > 2 and 'on 5%(' in clf.descr:
+            # skip those since they are barely applicable/testable here
+            return
+
+        ds = datasets['uni%dmedium' % nclasses]
+        try:
+            cve = te(ds)
+        except Exception, e:
+            self.fail("Failed with %s" % e)
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(cve < 0.25,
-                            msg="Got transfer error %g" % (cve))
+            self.failUnless(cve < 0.25, # TODO: use multinom distribution
+                            msg="Got transfer error %g on %s with %d labels"
+                            % (cve, ds, len(ds.UL)))
 
 
     @sweepargs(clf=clfswh[:] + regrswh[:])
@@ -157,7 +171,10 @@ class ClassifiersTests(unittest.TestCase):
         """
         summary1 = clf.summary()
         self.failUnless('not yet trained' in summary1)
-        clf.train(datasets['uni2small'])
+        # Need 2 different datasets for regressions/classifiers
+        dsname = ('uni2small', 'sin_modulated')[
+            int('regression' in clf.__tags__)]
+        clf.train(datasets[dsname])
         summary = clf.summary()
         # It should get bigger ;)
         self.failUnless(len(summary) > len(summary1))
@@ -174,7 +191,9 @@ class ClassifiersTests(unittest.TestCase):
         # very interesting effect. but screw it -- for now it will be
         # this way
         ds1.samples[:] = 0.0             # all 0s
-
+        # For regression we need numbers
+        if clf.params.regression:
+            ds1.labels = AttributeMap().to_numeric(ds1.labels)
         #ds2 = datasets['uni2small'][[0], :]
         #ds2.samples[:] = 0.0             # all 0s
 
@@ -188,7 +207,10 @@ class ClassifiersTests(unittest.TestCase):
         #    might lead to 'surprises' due to magic in combiners etc
         for ds in (ds1, ):
             try:
-                clf.train(ds)                   # should not crash or stall
+                try:
+                    clf.train(ds)                   # should not crash or stall
+                except (ValueError), e:
+                    self.fail("Failed to train on degenerate data. Error was %r" % e)
                 # could we still get those?
                 summary = clf.summary()
                 cm = clf.states.training_confusion
@@ -314,19 +336,16 @@ class ClassifiersTests(unittest.TestCase):
 
 
     def testMappedClassifier(self):
-        samples = N.array([ [0,0,-1], [1,0,1], [-1,-1, 1], [-1,0,1], [1, -1, 1] ])
-        testdata3 = dataset(samples=samples, labels=1)
-        res110 = [1, 1, 1, -1, -1]
-        res101 = [-1, 1, -1, -1, 1]
-        res011 = [-1, 1, -1, 1, -1]
-
-        clf110 = MappedClassifier(clf=self.clf_sign, mapper=mask_mapper(N.array([1,1,0])))
-        clf101 = MappedClassifier(clf=self.clf_sign, mapper=mask_mapper(N.array([1,0,1])))
-        clf011 = MappedClassifier(clf=self.clf_sign, mapper=mask_mapper(N.array([0,1,1])))
-
-        self.failUnlessEqual(clf110.predict(samples), res110)
-        self.failUnlessEqual(clf101.predict(samples), res101)
-        self.failUnlessEqual(clf011.predict(samples), res011)
+        samples = N.array([ [ 0,  0, -1], [ 1, 0, 1],
+                            [-1, -1,  1], [-1, 0, 1],
+                            [ 1, -1,  1] ])
+        for mask, res in (([1, 1, 0], [ 1, 1,  1, -1, -1]),
+                          ([1, 0, 1], [-1, 1, -1, -1,  1]),
+                          ([0, 1, 1], [-1, 1, -1,  1, -1])):
+            clf = MappedClassifier(clf=self.clf_sign,
+                                   mapper=mask_mapper(N.array(mask,
+                                                              dtype=bool)))
+            self.failUnlessEqual(clf.predict(samples), res)
 
 
     def testFeatureSelectionClassifier(self):
@@ -527,6 +546,9 @@ class ClassifiersTests(unittest.TestCase):
         if oldC is not None:
             clf.params.C = oldC
 
+        # TODO: test combiners, e.g. MaximalVote and states they store
+
+
     # XXX meta should also work but TODO
     @sweepargs(clf=clfswh['svm', '!meta'])
     def testSVMs(self, clf):
@@ -674,8 +696,8 @@ class ClassifiersTests(unittest.TestCase):
         clf_re.repredict(dstest.samples);
         self.failUnless(clf_re.states.repredicted)
         self.failUnlessRaises(RuntimeError, clf_re.repredict,
-                              dstest.samples, labels=True,
-             msg="for now retesting with anything changed makes no sense")
+                              dstest.samples, labels=True)
+        """for now retesting with anything changed makes no sense"""
         clf_re._setRetrainable(False)
 
 
