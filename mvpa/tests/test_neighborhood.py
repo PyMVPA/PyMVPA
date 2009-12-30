@@ -18,7 +18,17 @@ from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
 
 from mvpa.datasets.base import Dataset
 import mvpa.misc.neighborhood as ne
-from mvpa.clfs.distance import manhattenDistance
+from mvpa.clfs.distance import *
+
+
+def testDistances():
+    a = N.array([3,8])
+    b = N.array([6,4])
+    # test distances or yarik recalls unit testing ;)
+    assert_equal(cartesianDistance(a, b), 5.0)
+    assert_equal(manhattenDistance(a, b), 7)
+    assert_equal(absminDistance(a, b), 4)
+
 
 def test_sphere():
     # test sphere initialization
