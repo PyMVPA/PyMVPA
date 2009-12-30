@@ -13,7 +13,7 @@ It was devised to provide conditional storage
 
 _DEV_DOC = """
 TODO:
-+ Use %r instead of %s in repr for ClasswithCollections
++ Use %r instead of %s in repr for ClassWithCollections
   Replaced few %s's... might be fixed
 + Check why __doc__ is not set in kernels
   Seems to be there now...
@@ -96,7 +96,7 @@ class Collection(object):
             items to initialize with
           owner : object
             an object to which collection belongs
-          name : basestring
+          name : str
             name of the collection (as seen in the owner, e.g. 'states')
         """
         # first set all stuff to nothing and later on charge it
@@ -254,7 +254,7 @@ class Collection(object):
         """If item (or any in the present or listed) was set
 
         :Parameters:
-          index : None or basestring or list of basestring
+          index : None or str or list of str
             What items to check if they were set in the collection
         """
         _items = self._items
@@ -538,7 +538,7 @@ class Collection(object):
          so ipython could easily complete it
 
          :Parameters:
-           index : basestring or list of basestring
+           index : str or list of str
              Name of the attribute. If None -- all known get registered
            register : bool
              Register if True or unregister if False
@@ -644,7 +644,7 @@ class StateCollection(Collection):
             dictionary of states
           owner : ClassWithCollections
             object which owns the collection
-          name : basestring
+          name : str
             literal description. Usually just attribute name for the
             collection, e.g. 'states'
         """
@@ -700,7 +700,7 @@ class StateCollection(Collection):
         :Parameters:
           fromstate : Collection or ClassWithCollections
             Source states to copy from
-          index : None or list of basestring
+          index : None or list of str
             If not to copy all set state variables, index provides
             selection of what to copy
           deep : bool
@@ -898,7 +898,16 @@ class AttributesCollector(type):
 
 
     def __init__(cls, name, bases, dict):
-
+        """
+        Parameters
+        ----------
+        name : str
+          Name of the class
+        bases : iterable
+          Base classes
+        dict : dict
+          Attributes.
+        """
         if __debug__:
             debug(
                 "COLR",
@@ -1011,10 +1020,10 @@ class AttributesCollector(type):
         # States doc
         statesdoc = ""
         if collections.has_key('states'):
-            paramsdoc += """  enable_states : None or list of basestring
+            paramsdoc += """  enable_states : None or list of str
     Names of the state variables which should be enabled additionally
     to default ones
-  disable_states : None or list of basestring
+  disable_states : None or list of str
     Names of the state variables which should be disabled
 """
             if len(collections['states']._items):
@@ -1051,11 +1060,7 @@ class ClassWithCollections(object):
     __metaclass__ = AttributesCollector
 
     def __new__(cls, *args, **kwargs):
-        """Initialize ClassWithCollections object
-
-        :Parameters:
-          descr : basestring
-            Description of the instance
+        """Instantiate ClassWithCollections object
         """
         self = super(ClassWithCollections, cls).__new__(cls)
 
@@ -1101,6 +1106,13 @@ class ClassWithCollections(object):
 
 
     def __init__(self, descr=None, **kwargs):
+        """Initialize ClassWithCollections object
+
+        Parameters
+        ----------
+        descr : str
+          Description of the instance
+        """
 
         if not self.__params_set:
             self.__descr = descr
@@ -1244,11 +1256,12 @@ class ClassWithCollections(object):
     def __repr__(self, prefixes=None, fullname=False):
         """String definition of the object of ClassWithCollections object
 
-        :Parameters:
-          fullname : bool
-            Either to include full name of the module
-          prefixes : list of strings
-            What other prefixes to prepend to list of arguments
+        Parameters
+        ----------
+        fullname : bool
+          Either to include full name of the module
+        prefixes : list of str
+          What other prefixes to prepend to list of arguments
         """
         if prefixes is None:
             prefixes = []
@@ -1311,14 +1324,14 @@ class Harvestable(ClassWithCollections):
     def __init__(self, harvest_attribs=None, copy_attribs='copy', **kwargs):
         """Initialize state of harvestable
 
-        :Parameters:
-          harvest_attribs : list of basestr or dicts
-            What attributes of call to store and return within
-            harvested state variable. If an item is a dictionary,
-            following keys are used ['name', 'copy']
-          copy_attribs : None or basestr
-            Default copying. If None -- no copying, 'copy'
-            - shallow copying, 'deepcopy' -- deepcopying
+        Parameters
+        harvest_attribs : list of (str or dict)
+          What attributes of call to store and return within
+          harvested state variable. If an item is a dictionary,
+          following keys are used ['name', 'copy'].
+        copy_attribs : None or str, optional
+          Default copying. If None -- no copying, 'copy'
+          - shallow copying, 'deepcopy' -- deepcopying.
 
         """
         ClassWithCollections.__init__(self, **kwargs)
