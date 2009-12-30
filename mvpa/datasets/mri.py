@@ -33,18 +33,26 @@ from mvpa.base import warning
 def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
     """Load/access NIfTI data from files or instances.
 
-    :Parameters:
-      src: str | NiftiImage
-        Filename of a NIfTI image or a `NiftiImage` instance.
-      ensure : bool
-        If True, throw ValueError exception if cannot be loaded.
-      enforce_dim : int or None
-        If not None, it is the dimensionality of the data to be enforced,
-        commonly 4D for the data, and 3D for the mask in case of fMRI.
+    Parameters
+    ----------
+    src : str or NiftiImage
+      Filename of a NIfTI image or a `NiftiImage` instance.
+    ensure : bool, optional
+      If True, throw ValueError exception if cannot be loaded.
+    enforce_dim : int or None
+      If not None, it is the dimensionality of the data to be enforced,
+      commonly 4D for the data, and 3D for the mask in case of fMRI.
 
-    :Returns:
-      NiftiImage | None
-        If the source is not supported None is returned.
+    Returns
+    -------
+    NiftiImage or None
+      If the source is not supported None is returned.
+
+    Raises
+    ------
+    ValueError
+      If there is a problem with data (variable dimensionality) or
+      failed to load data and ensure=True.
     """
     nifti = None
 
@@ -145,11 +153,12 @@ class NiftiDataset(Dataset):
         NiftiImage. The header data of this object is used to initialize
         the new NiftiImage.
 
-        :Parameters:
-          data : ndarray or Dataset
-            The data to be wrapped into NiftiImage. If None (default), it
-            would wrap samples of the current dataset. If it is a Dataset
-            instance -- takes its samples for mapping
+        Parameters
+        ----------
+        data : ndarray or Dataset, optional
+          The data to be wrapped into NiftiImage. If None (default), it
+          would wrap samples of the current dataset. If it is a Dataset
+          instance -- takes its samples for mapping.
         """
         if data is None:
             data = dataset.samples
@@ -197,7 +206,7 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
 
     Parameters
     ----------
-    tr: float
+    tr : float
       Temporal distance of two adjacent NIfTI volumes. This can be used
       to override the corresponding value in the NIfTI header.
 

@@ -16,6 +16,9 @@ class VProperty(object):
     """
 
     def __init__(self, fget=None, fset=None, fdel=None, doc=''):
+        """
+        Parameters are the same as of generic `property`.
+        """
         for attr in ('fget', 'fset'):
             func = locals()[attr]
             if callable(func):

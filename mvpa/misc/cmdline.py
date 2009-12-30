@@ -43,6 +43,12 @@ class OptionGroups(object):
     """
 
     def __init__(self, parser):
+        """
+        Parameters
+        ----------
+        parser : OptionParser
+          To which parser to add groups
+        """
         self._d = {}
         self._parser = parser
 
