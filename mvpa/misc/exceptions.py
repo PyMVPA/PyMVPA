@@ -16,24 +16,15 @@ class UnknownStateError(Exception):
     Classifiers and Algorithms classes might have properties, which
     are not defined prior to training or invocation has happened.
     """
-
-    def __init__(self, msg=""):
-        Exception.__init__(self)
-        self.__msg = msg
-
-    def __str__(self):
-        return "Exception: " + self.__msg
-
+    pass
 
 class ConvergenceError(Exception):
     """Thrown if some algorithm does not converge to a solution.
     """
-    def __init__(self):
-        Exception.__init__(self)
-
+    pass
 
 class InvalidHyperparameterError(Exception):
     """Generic exception to be raised when setting improper values
-    as hyperparameters."""
-    def __init__(self):
-        Exception.__init__(self)
+    as hyperparameters.
+    """
+    pass
