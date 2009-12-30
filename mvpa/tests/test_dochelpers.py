@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA dochelpers"""
 
-from mvpa.base.dochelpers import singleOrPlural
+from mvpa.base.dochelpers import single_or_plural
 
 import unittest
 import numpy as N
@@ -16,9 +16,9 @@ import numpy as N
 class DochelpersTests(unittest.TestCase):
 
     def testBasic(self):
-        self.failUnlessEqual(singleOrPlural('a', 'b', 1), 'a')
-        self.failUnlessEqual(singleOrPlural('a', 'b', 0), 'b')
-        self.failUnlessEqual(singleOrPlural('a', 'b', 123), 'b')
+        self.failUnlessEqual(single_or_plural('a', 'b', 1), 'a')
+        self.failUnlessEqual(single_or_plural('a', 'b', 0), 'b')
+        self.failUnlessEqual(single_or_plural('a', 'b', 123), 'b')
 
     # TODO: more unittests
 def suite():
