@@ -18,7 +18,7 @@ from mvpa.support.copy import deepcopy
 
 from mvpa.base import warning
 from mvpa.kernels.base import Kernel
-from mvpa.base.dochelpers import handleDocString, _rst, _rst_section, \
+from mvpa.base.dochelpers import handle_docstring, _rst, _rst_section, \
      _rst_indentstr
 
 from mvpa.clfs.base import Classifier
@@ -380,7 +380,7 @@ sensitivity.
              for k,v in cls._SVM_PARAMS.iteritems()
              if k in NOS.seen])
 
-        cls.__dict__['__init__'].__doc__ = handleDocString(idoc_old) + idoc
+        cls.__dict__['__init__'].__doc__ = handle_docstring(idoc_old) + idoc
 
 
 # populate names in parameters
