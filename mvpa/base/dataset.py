@@ -298,20 +298,20 @@ class Dataset(object):
 
         Parameters
         ----------
-        deep : boolean
+        deep : boolean, optional
           If False, a shallow copy of the dataset is return instead.  The copy
           contains only views of the samples, sample attributes and feature
           attributes, as well as shallow copies of all dataset
           attributes.
-        sa : list, None
+        sa : list or None
           List of attributes in the sample attributes collection to include in
           the copy of the dataset. If `None` all attributes are considered. If
           an empty list is given, all attributes are stripped from the copy.
-        fa : list, None
+        fa : list or None
           List of attributes in the feature attributes collection to include in
           the copy of the dataset. If `None` all attributes are considered If
           an empty list is given, all attributes are stripped from the copy..
-        a : list, None
+        a : list or None
           List of attributes in the dataset attributes collection to include in
           the copy of the dataset. If `None` all attributes are considered If
           an empty list is given, all attributes are stripped from the copy..
