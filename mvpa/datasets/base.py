@@ -130,9 +130,9 @@ class Dataset(BaseDataset):
         ----------
         samples : ndarray
           The two-dimensional samples matrix.
-        labels : ndarray
-        chunks : ndarray
-        mapper : Mapper instance
+        labels : ndarray, optional
+        chunks : ndarray, optional
+        mapper : Mapper instance, optional
           A (potentially trained) mapper instance that is used to forward-map
           the samples upon construction of the dataset. The mapper must
           have a simple feature space (samples x features) as output. Use
