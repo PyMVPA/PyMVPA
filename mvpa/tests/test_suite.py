@@ -52,10 +52,12 @@ class SuiteTest(unittest.TestCase):
 
                 if hasattr(i, '__init__') and not c in ['objects']:
                     si = i.__init__.__doc__
-                    k += '/__init__'
+                    k += '.__init__'
                     if si is None or si == "":
                         try:
-                            if inspect.getfile(i) == inspect.getfile(i.__init__):
+                            i_file = inspect.getfile(i)
+                            if i_file == inspect.getfile(i.__init__) \
+                               and 'mvpa' in i_file:
                                 # if __init__ wasn't simply taken from some parent
                                 # which is not within MVPA
                                 missing1.append(k)
