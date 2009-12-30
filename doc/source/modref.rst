@@ -25,7 +25,7 @@ Basic Facilities
 =================
 
 .. autosummary::
-   :toctree:
+   :toctree: generated
 
    base
    base.collections
@@ -42,7 +42,7 @@ Datasets: Input, Output, Storage and Preprocessing
 ==================================================
 
 .. autosummary::
-   :toctree:
+   :toctree: generated
 
    base.dataset
    datasets.base
@@ -58,7 +58,7 @@ Mappers: Data Transformations
 =============================
 
 .. autosummary::
-   :toctree:
+   :toctree: generated
 
    mappers.base
    mappers.flatten
@@ -76,7 +76,7 @@ Classifiers and Errors
 ======================
 
 .. autosummary::
-   :toctree:
+   :toctree: generated
 
    clfs.base
    clfs.meta
@@ -102,7 +102,7 @@ Kernels
 -------
 
 .. autosummary::
-   :toctree:
+   :toctree: generated
 
    kernels
    kernels.base
@@ -115,7 +115,7 @@ Measures: Searchlights and Sensitivties
 =======================================
 
 .. autosummary::
-   :toctree:
+   :toctree: generated
 
    measures.base
    measures.anova
@@ -134,7 +134,7 @@ Feature Selection
 =================
 
 .. autosummary::
-   :toctree:
+   :toctree: generated
 
    featsel.base
    featsel.ifs
@@ -146,7 +146,7 @@ Additional Algorithms
 =====================
 
 .. autosummary::
-   :toctree:
+   :toctree: generated
 
    algorithms.cvtranserror
    algorithms.hyperalignment
@@ -156,7 +156,7 @@ Miscellaneous
 =============
 
 .. autosummary::
-   :toctree:
+   :toctree: generated
 
    misc.args
    misc.attributes
@@ -180,7 +180,7 @@ Miscellaneous
 --------------------
 
 .. autosummary::
-   :toctree:
+   :toctree: generated
 
    misc.bv
    misc.bv.base
