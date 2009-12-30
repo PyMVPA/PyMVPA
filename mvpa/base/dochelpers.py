@@ -109,7 +109,7 @@ def _indent(text, istr=_rst_indentstr):
     return '\n'.join(istr + s for s in text.split('\n'))
 
 
-__parameters_str_re = re.compile("[\n^]\s*:?Parameters?:?\s*\n(:?\s*-+\s*\n)")
+__parameters_str_re = re.compile("[\n^]\s*:?Parameters?:?\s*\n(:?\s*-+\s*\n)?")
 """regexp to match :Parameter: and :Parameters: stand alone in a line
 or
 Parameters
