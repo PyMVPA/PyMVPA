@@ -63,6 +63,12 @@ class FailedToTrainError(Exception):
     some reason"""
     pass
 
+class FailedToPredictError(Exception):
+    """Exception to be thrown whenever classifier fails to provide predictions.
+    Usually happens if it was trained on degenerate data but without any complaints.
+    """
+    pass
+
 
 class Classifier(ClassWithCollections):
     """Abstract classifier class to be inherited by all classifiers
@@ -540,7 +546,12 @@ class Classifier(ClassWithCollections):
         # with a labels mapping in-place, we also need to go back to the
         # literal labels
         if self._attrmap:
-            result = self._attrmap.to_literal(result)
+            try:
+                result = self._attrmap.to_literal(result)
+            except KeyError, e:
+                raise FailedToPredictError, \
+                      "Failed to convert predictions from numeric into " \
+                      "literals: %s" % e
 
         self._postpredict(dataset, result)
         return result
