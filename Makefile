@@ -190,7 +190,7 @@ profile: build mvpa/tests/main.py
 #
 
 website: website-stamp
-website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
+website-stamp: mkdir-WWW_DIR htmldoc pdfdoc
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
 	cp $(LATEX_DIR)/*.pdf $(WWW_DIR)
 	tools/sitemap.sh > $(WWW_DIR)/sitemap.xml
@@ -327,11 +327,11 @@ testcfg: build
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no python mvpa/tests/main.py
 	-@rm -f pymvpa.cfg
 
-test: unittests testmanual testsuite testapiref testexamples testcfg
+test: unittests testmanual testsuite testexamples testcfg
 
 # Target to be called after some major refactoring
 # It skips some flavors of unittests
-testrefactor: unittest testmanual testsuite testapiref testexamples
+testrefactor: unittest testmanual testsuite testexamples
 
 coverage: $(COVERAGE_REPORT)
 $(COVERAGE_REPORT): build
