@@ -430,6 +430,12 @@ if __debug__:
         invocation"""
 
         def __init__(self, format="%3.3f sec"):
+            """
+            Parameters
+            ----------
+            format : str
+              String format to use for reporting time.
+            """
             self.__prev = None
             self.__format = format
 
