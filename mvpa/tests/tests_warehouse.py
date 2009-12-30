@@ -157,8 +157,8 @@ for kind, spec in specs.iteritems():
     for nlabels in [ 2, 3, 4 ]:
         basename = 'uni%d%s' % (nlabels, kind)
         nonbogus_features = nonbogus_pool[:nlabels]
-        bogus_features = [not x in nonbogus_features
-                          for x in range(spec['nfeatures'])]
+        bogus_features = [x for x in range(spec['nfeatures'])
+                          if not x in nonbogus_features]
 
         dataset = normalFeatureDataset(
             nlabels=nlabels,
