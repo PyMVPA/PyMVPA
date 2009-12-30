@@ -80,7 +80,6 @@ from mvpa import mappers
 #from mvpa.mappers import *
 from mvpa.mappers.base import *
 from mvpa.mappers.projection import *
-from mvpa.mappers.metric import *
 from mvpa.mappers.svd import *
 from mvpa.mappers.procrustean import *
 from mvpa.mappers.boxcar import *

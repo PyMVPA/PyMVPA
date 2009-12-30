@@ -28,7 +28,6 @@ def collectTestSuites():
         'test_base',
         'test_dochelpers',
         'test_som',
-        'test_neighbor',
         'test_splitter',
         'test_state',
         'test_params',
