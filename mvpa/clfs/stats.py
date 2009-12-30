@@ -26,6 +26,12 @@ class Nonparametric(object):
     """
 
     def __init__(self, dist_samples):
+        """
+        Parameters
+        ----------
+        dist_samples : ndarray
+          Samples to be used to assess the distribution.
+        """
         self._dist_samples = N.ravel(dist_samples)
 
 

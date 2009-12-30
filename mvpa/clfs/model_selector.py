@@ -49,6 +49,8 @@ class ModelSelector(object):
     """
 
     def __init__(self, parametric_model, dataset):
+        """TODO:
+        """
         self.parametric_model = parametric_model
         self.dataset = dataset
         self.hyperparameters_best = None
