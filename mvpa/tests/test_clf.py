@@ -16,7 +16,8 @@ from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
 
 from mvpa.misc.exceptions import UnknownStateError
 
-from mvpa.clfs.base import DegenerateInputError, FailedToTrainError
+from mvpa.clfs.base import DegenerateInputError, FailedToTrainError, \
+     FailedToPredictError
 from mvpa.clfs.meta import CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \
@@ -34,7 +35,8 @@ from numpy.testing import assert_array_equal
 # What exceptions to allow while testing degenerate cases.
 # If it pukes -- it is ok -- user will notice that something
 # is wrong
-_degenerate_allowed_exceptions = [DegenerateInputError, FailedToTrainError]
+_degenerate_allowed_exceptions = [
+    DegenerateInputError, FailedToTrainError, FailedToPredictError]
 if externals.exists('rpy'):
     import rpy
     _degenerate_allowed_exceptions += [rpy.RPyRException]
@@ -207,7 +209,7 @@ class ClassifiersTests(unittest.TestCase):
             try:
                 try:
                     clf.train(ds)                   # should not crash or stall
-                except (KeyError, ValueError), e:
+                except (ValueError), e:
                     self.fail("Failed to train on degenerate data. Error was %r" % e)
                 # could we still get those?
                 summary = clf.summary()
