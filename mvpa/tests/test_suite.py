@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit test for PyMVPA mvpa.suite() of being loading ok"""
 
+import inspect
+import re
 import unittest
 
 
@@ -30,9 +32,16 @@ class SuiteTest(unittest.TestCase):
 
         # all functions/classes/types should have some docstring
         missing = []
+        # We should not have both :Parameters: and new style Parameters
+        conflicting = []
+        con_re1 = re.compile(':Parameters?:')
+        con_re2 = re.compile('(?::Parameters?:.*Parameters?\s*\n\s*-------'
+                             '|Parameters?\s*\n\s*-------.*:Parameters?:)',
+                             flags=re.DOTALL)
         for c in ('classes', 'functions', 'modules', 'objects',
                   'types'):
             missing1 = []
+            conflicting1 = []
             for k, i in gs[c].iteritems():
                 try:
                     s = i.__doc__.strip()
@@ -40,11 +49,41 @@ class SuiteTest(unittest.TestCase):
                     s = ""
                 if s == "":
                     missing1.append(k)
+
+                if hasattr(i, '__init__') and not c in ['objects']:
+                    si = i.__init__.__doc__
+                    k += '/__init__'
+                    if si is None or si == "":
+                        try:
+                            if inspect.getfile(i) == inspect.getfile(i.__init__):
+                                # if __init__ wasn't simply taken from some parent
+                                # which is not within MVPA
+                                missing1.append(k)
+                        except TypeError:
+                            # for some things like 'debug' inspect can't figure path
+                            # just skip for now
+                            pass
+                else:
+                    si = s
+
+                if si is not None \
+                       and  con_re1.search(si) and con_re2.search(si):
+                    conflicting1.append(k)
             if len(missing1):
                 missing.append("%s: " % c + ', '.join(missing1))
+            if len(conflicting1):
+                conflicting.append("%s: " % c + ', '.join(conflicting1))
+
+        sfailures = []
         if len(missing):
-            self.fail("Some items have missing docstrings:\n "
-                      + '\n '.join(missing))
+            sfailures += ["Some items have missing docstrings:\n "
+                          + '\n '.join(missing)]
+        if len(conflicting):
+            sfailures += ["Some items have conflicting formats of docstrings:\n "
+                      + '\n '.join(conflicting)]
+        if len(sfailures):
+            self.fail('\n'.join(sfailures))
+
 
 def suite():
     return unittest.makeSuite(SuiteTest)

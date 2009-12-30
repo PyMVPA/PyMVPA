@@ -554,6 +554,12 @@ class Event(dict):
     _MUSTHAVE = ['onset']
 
     def __init__(self, **kwargs):
+        """
+        Parameters
+        ----------
+        **kwargs : dict
+          All keys to describe the Event to initialize its dict.
+        """
         # store everything
         dict.__init__(self, **kwargs)
 

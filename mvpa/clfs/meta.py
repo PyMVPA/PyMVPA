@@ -27,6 +27,8 @@ import numpy as N
 from sets import Set
 
 from mvpa.misc.args import group_kwargs
+from mvpa.misc.param import Parameter
+
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.datasets.miscfx import get_samples_by_attr
 from mvpa.misc.state import StateVariable, ClassWithCollections, Harvestable
@@ -183,9 +185,9 @@ class BoostedClassifier(Classifier, Harvestable):
         # adhere to their capabilities + 'multiclass'
         # XXX do intersection across all classifiers!
         # TODO: this seems to be wrong since it can be regression etc
-        self._clf_internals = [ 'binary', 'multiclass', 'meta' ]
+        self.__tags__ = [ 'binary', 'multiclass', 'meta' ]
         if len(clfs)>0:
-            self._clf_internals += self.__clfs[0]._clf_internals
+            self.__tags__ += self.__clfs[0].__tags__
 
     def untrain(self):
         """Untrain `BoostedClassifier`
@@ -226,12 +228,13 @@ class ProxyClassifier(Classifier):
     """
 
     def __init__(self, clf, **kwargs):
-        """Initialize the instance
+        """Initialize the instance of ProxyClassifier
 
-        :Parameters:
-          clf : Classifier
-            classifier based on which mask classifiers is created
-          """
+        Parameters
+        ----------
+        clf : Classifier
+          Classifier to proxy, i.e. to use after decoration
+        """
 
         Classifier.__init__(self, regression=clf.params.regression, **kwargs)
 
@@ -240,9 +243,9 @@ class ProxyClassifier(Classifier):
 
         # adhere to slave classifier capabilities
         # TODO: unittest
-        self._clf_internals = self._clf_internals[:] + ['meta']
+        self.__tags__ = self.__tags__[:] + ['meta']
         if clf is not None:
-            self._clf_internals += clf._clf_internals
+            self.__tags__ += clf.__tags__
 
 
     def __repr__(self, prefixes=[]):
@@ -348,8 +351,8 @@ class MaximalVote(PredictionsCombiner):
 
     predictions = StateVariable(enabled=True,
         doc="Voted predictions")
-    all_label_counts = StateVariable(enabled=False,
-        doc="Counts across classifiers for each label/sample")
+    values = StateVariable(enabled=False,
+        doc="Values keep counts across classifiers for each label/sample")
 
     def __init__(self):
         """XXX Might get a parameter to use raw decision values if
@@ -419,8 +422,9 @@ class MaximalVote(PredictionsCombiner):
                         "same maximal vote %d. XXX disambiguate" % maxv)
             predictions.append(maxk[0])
 
-        self.states.all_label_counts = all_label_counts
-        self.states.predictions = predictions
+        states = self.states
+        states.values = all_label_counts
+        states.predictions = predictions
         return predictions
 
 
@@ -431,6 +435,9 @@ class MeanPrediction(PredictionsCombiner):
 
     predictions = StateVariable(enabled=True,
         doc="Mean predictions")
+
+    values = StateVariable(enabled=True,
+        doc="Predictions from all classifiers are stored")
 
     def __call__(self, clfs, dataset):
         """Actuall callable - perform meaning
@@ -443,13 +450,17 @@ class MeanPrediction(PredictionsCombiner):
         for clf in clfs:
             # Lets check first if necessary state variable is enabled
             if not clf.states.isEnabled("predictions"):
-                raise ValueError, "MeanPrediction needs classifiers (such " \
+                raise ValueError, "MeanPrediction needs learners (such " \
                       " as %s) with state 'predictions' enabled" % clf
             all_predictions.append(clf.states.predictions)
 
         # compute mean
-        predictions = N.mean(N.asarray(all_predictions), axis=0)
-        self.states.predictions = predictions
+        all_predictions = N.asarray(all_predictions)
+        predictions = N.mean(all_predictions, axis=0)
+
+        states = self.states
+        states.values = all_predictions
+        states.predictions = predictions
         return predictions
 
 
@@ -575,16 +586,20 @@ class CombinedClassifier(BoostedClassifier):
     def _predict(self, dataset):
         """Predict using `CombinedClassifier`
         """
+        states = self.states
+        cstates = self.__combiner.states
         BoostedClassifier._predict(self, dataset)
+        if states.isEnabled("values"):
+            cstates.enable('values')
         # combiner will make use of state variables instead of only predictions
         # returned from _predict
         predictions = self.__combiner(self.clfs, dataset)
-        self.states.predictions = predictions
+        states.predictions = predictions
 
-        if self.states.isEnabled("values"):
-            if self.__combiner.states.isActive("values"):
+        if states.isEnabled("values"):
+            if cstates.isActive("values"):
                 # XXX or may be we could leave simply up to accessing .combiner?
-                self.states.values = self.__combiner.values
+                states.values = cstates.values
             else:
                 if __debug__:
                     warning("Boosted classifier %s has 'values' state enabled,"
@@ -1240,7 +1255,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
     we should expclitely use isTrained here if we want... need to think more
     """
 
-    _clf_internals = [ 'does_feature_selection', 'meta' ]
+    __tags__ = [ 'does_feature_selection', 'meta' ]
 
     def __init__(self, clf, feature_selection, testdataset=None, **kwargs):
         """Initialize the instance
@@ -1364,3 +1379,50 @@ class FeatureSelectionClassifier(ProxyClassifier):
 
     testdataset = property(fget=lambda x:x.__testdataset,
                            fset=setTestDataset)
+
+
+class RegressionAsClassifier(ProxyClassifier):
+    """Allows to use arbitrary regression for classification.
+
+    Possible usecases:
+
+     Binary Classification
+      Any regression could easily be extended for binary
+      classification. For instance using labels -1 and +1, regression
+      results are quantized into labels depending on their signs
+     Multiclass Classification
+      Although most of the time classes are not ordered and do not
+      have a corresponding distance matrix among them it might often
+      be the case that there is a hypothesis that classes could be
+      well separated in a projection to single dimension (non-linear
+      manifold, or just linear projection).  For such use regression
+      might provide necessary means of classification
+    """
+
+    centroids = Parameter(None, allowedtype='None or ndarray',
+        doc="""Hypothesis or prior information on
+        location/distance of centroids for each category, provide them.
+        If None -- will use equidistant points starting from 0.0.
+        If ndarray -- 1st dimension to separate labels, 2nd dimension
+        (most of the time degenerate) - actual coordinates""")
+
+    distance_measure = Parameter(None, allowedtype='None or ndarray',
+        doc="Compatible distance function (e.g. from `mvpa.clfs.distance`)")
+
+
+    def __init__(self, regr, **kwargs):
+        """
+        Parameters
+        ----------
+        regr : Classifier XXX
+          Regression to be used as a classifier
+        """
+        super(self, RegressionAsClassifier).__init__(regr, **kwargs)
+
+
+    def _train(self, dataset):
+        print self.params
+        pass
+
+    def _predict(self, dataset):
+        pass

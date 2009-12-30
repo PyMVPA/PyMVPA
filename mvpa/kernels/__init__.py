@@ -17,5 +17,9 @@ if __debug__:
     from mvpa.base import debug
     debug('INIT', 'mvpa.kernels')
 
+# Just base kernel implementations
+from mvpa.kernels.base import *
+
+
 if __debug__:
     debug('INIT', 'mvpa.kernels end')

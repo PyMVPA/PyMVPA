@@ -44,7 +44,7 @@ class kNN(Classifier):
 
     """
 
-    _clf_internals = ['knn', 'non-linear', 'binary', 'multiclass',
+    __tags__ = ['knn', 'non-linear', 'binary', 'multiclass',
                       'notrain2predict' ]
 
     def __init__(self, k=2, dfx=squared_euclidean_distance,

@@ -34,7 +34,7 @@ class SameSignClassifier(Classifier):
     """Dummy classifier which reports +1 class if both features have
     the same sign, -1 otherwise"""
 
-    _clf_internals = ['notrain2predict']
+    __tags__ = ['notrain2predict']
     def __init__(self, **kwargs):
         Classifier.__init__(self, **kwargs)
 
@@ -44,6 +44,7 @@ class SameSignClassifier(Classifier):
 
     @accepts_dataset_as_samples
     def _predict(self, data):
+        data = N.asanyarray(data)
         datalen = len(data)
         values = []
         for d in data:
