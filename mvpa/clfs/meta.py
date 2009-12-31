@@ -31,10 +31,12 @@ from mvpa.misc.param import Parameter
 
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.datasets.miscfx import get_samples_by_attr
+from mvpa.misc.attrmap import AttributeMap
 from mvpa.misc.state import StateVariable, ClassWithCollections, Harvestable
 from mvpa.mappers.base import FeatureSliceMapper
 
 from mvpa.clfs.base import Classifier
+from mvpa.clfs.distance import cartesianDistance
 from mvpa.misc.transformers import FirstAxisMean
 
 from mvpa.measures.base import \
@@ -1399,30 +1401,119 @@ class RegressionAsClassifier(ProxyClassifier):
       might provide necessary means of classification
     """
 
-    centroids = Parameter(None, allowedtype='None or ndarray',
-        doc="""Hypothesis or prior information on
-        location/distance of centroids for each category, provide them.
-        If None -- will use equidistant points starting from 0.0.
-        If ndarray -- 1st dimension to separate labels, 2nd dimension
-        (most of the time degenerate) - actual coordinates""")
-
-    distance_measure = Parameter(None, allowedtype='None or ndarray',
-        doc="Compatible distance function (e.g. from `mvpa.clfs.distance`)")
+    distances = StateVariable(enabled=False,
+        doc="Distances obtained during prediction")
 
 
-    def __init__(self, regr, **kwargs):
+    def __init__(self, clf, centroids=None, distance_measure=None, **kwargs):
         """
         Parameters
         ----------
-        regr : Classifier XXX
-          Regression to be used as a classifier
+        clf : Classifier XXX Should become learner
+          Regression to be used as a classifier.  Although it would
+          accept any Learner, only providing regressions would make
+          sense.
+        centroids : None or dict of (float or iterable)
+          Hypothesis or prior information on location/distance of
+          centroids for each category, provide them.  If None -- during
+          training it will choose equidistant points starting from 0.0.
+          If dict -- keys should be a superset of labels of dataset
+          obtained during training and each value should be numeric value
+          or iterable if centroids are multidimensional and regression
+          can do multidimensional regression.
+        distance_measure : function or None
+          What distance measure to use to find closest class label
+          from continuous estimates provided by regression.  If None,
+          will use Cartesian distance.
         """
-        super(self, RegressionAsClassifier).__init__(regr, **kwargs)
+        ProxyClassifier.__init__(self, clf, **kwargs)
+        self.centroids = centroids
+        self.distance_measure = distance_measure
+
+        # Adjust tags
+        if 'regression' in self.__tags__:
+            self.__tags__.pop(self.__tags__.index('regression'))
+        # We can do any number of classes, although in most of the scenarios
+        # multiclass performance would suck, unless there is a strong
+        # hypothesis
+        self.__tags__ += ['binary', 'multiclass']
+
+        # Pylint/user friendliness
+        #self._trained_ul = None
+        self._trained_attrmap = None
+        self._trained_centers = None
+
+
+    def __repr__(self, prefixes=[]):
+        if self.centroids is not None:
+            prefixes = prefixes + ['centroids=%r'
+                                   % self.centroids]
+        if self.distance_measure is not None:
+            prefixes = prefixes + ['distance_measure=%r'
+                                   % self.distance_measure]
+        return super(RegressionAsClassifier, self).__repr__(prefixes)
 
 
     def _train(self, dataset):
-        print self.params
-        pass
+        # May be it is an advanced one needing training.
+        if hasattr(self.distance_measure, 'train'):
+            self.distance_measure.train(dataset)
+
+        # Centroids
+        ul = dataset.sa['labels'].unique
+        if self.centroids is None:
+            # setup centroids -- equidistant points
+            # XXX we might preferred -1/+1 for binary...
+            centers = N.arange(len(ul), dtype=float)
+        else:
+            # verify centroids and assign
+            if not set(self.centroids.keys()).issuperset(ul):
+                raise ValueError, \
+                      "Provided centroids with keys %s do not cover all " \
+                      "labels provided during training: %s" \
+                      % (self.centroids.keys(), ul)
+            # override with superset
+            ul = self.centroids.keys()
+            centers = N.array([self.centroids[k] for k in ul])
+
+        #self._trained_ul = ul
+        # Map labels into indexes (not centers)
+        # since later on we would need to get back (see ??? below)
+        self._trained_attrmap = AttributeMap(
+            map=dict([(l, i) for i,l in enumerate(ul)]),
+            mapnumeric=True)
+        self._trained_centers = centers
+
+        # Create a shallow copy of dataset, and override labels
+        # TODO: we could just bind .a, .fa, and copy only .sa
+        dataset_relabeled = dataset.copy(deep=False)
+        # ???:  may be we could just craft a monster attrmap
+        #       which does min distance search upon to_literal ?
+        dataset_relabeled.sa['labels'].value = \
+            self._trained_attrmap.to_numeric(dataset.sa['labels'].value)
+
+        ProxyClassifier._train(self, dataset_relabeled)
+
 
     def _predict(self, dataset):
-        pass
+        # TODO: Probably we should forwardmap labels for target
+        #       dataset so slave has proper statistics attached
+        self.states.values = regr_predictions \
+                           = ProxyClassifier._predict(self, dataset)
+
+        # Local bindings
+        #ul = self._trained_ul
+        attrmap = self._trained_attrmap
+        centers = self._trained_centers
+        distance_measure = self.distance_measure
+        if distance_measure is None:
+            distance_measure = cartesianDistance
+
+        # Compute distances
+        self.states.distances = distances \
+            = N.array([[distance_measure(s, c) for c in centers]
+                       for s in regr_predictions])
+
+        predictions = attrmap.to_literal(N.argmin(distances, axis=1))
+
+        return predictions
