@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""GLM-Net (GLMNET) regression classifier."""
+"""GLM-Net (GLMNET) regression and classifier."""
 
 __docformat__ = 'restructuredtext'
 
@@ -317,15 +317,8 @@ class GLMNET_R(_GLMNET):
                     % (family, regr_family))
             family = regr_family
 
-        regression = kwargs.pop('regression', None)
-        if regression is None:
-            # enforce regression by default, but regression might be used as
-            # a binary classifier as well, so leave it as is if it was
-            # explicitly specified
-            regression = True
-
         # init base class first, forcing regression
-        _GLMNET.__init__(self, family=family, regression=regression, **kwargs)
+        _GLMNET.__init__(self, family=family, **kwargs)
 
 
 class GLMNET_C(_GLMNET):

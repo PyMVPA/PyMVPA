@@ -167,18 +167,6 @@ class BoostedClassifier(Classifier, Harvestable):
         """Classifiers to use"""
 
         if len(clfs):
-            for flag in ['regression']:
-                values = N.array([clf.params[flag].value for clf in clfs])
-                value = values.any()
-                if __debug__:
-                    debug("CLFBST", "Setting %(flag)s=%(value)s for classifiers "
-                          "%(clfs)s with %(values)s",
-                          msgargs={'flag' : flag, 'value' : value,
-                                   'clfs' : clfs,
-                                   'values' : values})
-                # set flag if it needs to be trained before predicting
-                self.params[flag].value = value
-
             # enable corresponding states in the slave-classifiers
             if self.__propagate_states:
                 for clf in self.__clfs:
@@ -238,7 +226,7 @@ class ProxyClassifier(Classifier):
           Classifier to proxy, i.e. to use after decoration
         """
 
-        Classifier.__init__(self, regression=clf.params.regression, **kwargs)
+        Classifier.__init__(self, **kwargs)
 
         self.__clf = clf
         """Store the classifier to use."""
@@ -541,10 +529,6 @@ class CombinedClassifier(BoostedClassifier):
 
         BoostedClassifier.__init__(self, clfs, **kwargs)
 
-        # assign default combiner
-        if combiner is None:
-            combiner = (MaximalVote,
-                        MeanPrediction)[int(self.params.regression)]()
         self.__combiner = combiner
         """Functor destined to combine results of multiple classifiers"""
 
@@ -554,6 +538,16 @@ class CombinedClassifier(BoostedClassifier):
         """
         return super(CombinedClassifier, self).__repr__(
             ["combiner=%s" % repr(self.__combiner)] + prefixes)
+
+    @property
+    def combiner(self):
+        # Decide either we are dealing with regressions
+        # by looking at 1st learner
+        if self.__combiner is None:
+            self.__combiner = (
+                MaximalVote,
+                MeanPrediction)[int(self.clfs[0].__is_regression__)]()
+        return self.__combiner
 
 
     def summary(self):
@@ -577,25 +571,27 @@ class CombinedClassifier(BoostedClassifier):
             pass
         super(CombinedClassifier, self).untrain()
 
+
     def _train(self, dataset):
         """Train `CombinedClassifier`
         """
         BoostedClassifier._train(self, dataset)
+
         # combiner might need to train as well
-        self.__combiner.train(self.clfs, dataset)
+        self.combiner.train(self.clfs, dataset)
 
 
     def _predict(self, dataset):
         """Predict using `CombinedClassifier`
         """
         states = self.states
-        cstates = self.__combiner.states
+        cstates = self.combiner.states
         BoostedClassifier._predict(self, dataset)
         if states.isEnabled("values"):
             cstates.enable('values')
         # combiner will make use of state variables instead of only predictions
         # returned from _predict
-        predictions = self.__combiner(self.clfs, dataset)
+        predictions = self.combiner(self.clfs, dataset)
         states.predictions = predictions
 
         if states.isEnabled("values"):
@@ -609,10 +605,6 @@ class CombinedClassifier(BoostedClassifier):
                             " .values cannot be provided directly, access .clfs"
                             % self)
         return predictions
-
-
-    combiner = property(fget=lambda x:x.__combiner,
-                        doc="Used combiner to derive a single result")
 
 
 
@@ -695,7 +687,6 @@ class TreeClassifier(ProxyClassifier):
 
         # Basic initialization
         ProxyClassifier.__init__(self, clf, **kwargs)
-        self._regressionIsBogus()
 
         # XXX RF: probably create internal structure with dictionary,
         # not just a tuple, and store all information in there
@@ -862,8 +853,6 @@ class BinaryClassifier(ProxyClassifier):
 
         ProxyClassifier.__init__(self, clf, **kwargs)
 
-        self._regressionIsBogus()
-
         # Handle labels
         sposlabels = Set(poslabels) # so to remove duplicates
         sneglabels = Set(neglabels) # so to remove duplicates
@@ -984,9 +973,6 @@ class MulticlassClassifier(CombinedClassifier):
             classifiers
           """
         CombinedClassifier.__init__(self, **kwargs)
-        self._regressionIsBogus()
-        if not clf is None:
-            clf._regressionIsBogus()
 
         self.__clf = clf
         """Store sample instance of basic classifier"""
@@ -1084,7 +1070,7 @@ class SplitClassifier(CombinedClassifier):
             `Splitter` to use to split the dataset prior training
           """
 
-        CombinedClassifier.__init__(self, regression=clf.params.regression, **kwargs)
+        CombinedClassifier.__init__(self, **kwargs)
         self.__clf = clf
         """Store sample instance of basic classifier"""
 
@@ -1107,10 +1093,10 @@ class SplitClassifier(CombinedClassifier):
 
         clf_template = self.__clf
         if states.isEnabled('confusion'):
-            states.confusion = clf_template._summaryClass()
+            states.confusion = clf_template.__summary_class__()
         if states.isEnabled('training_confusion'):
             clf_template.states.enable(['training_confusion'])
-            states.training_confusion = clf_template._summaryClass()
+            states.training_confusion = clf_template.__summary_class__()
 
         clf_hastestdataset = hasattr(clf_template, 'testdataset')
 
@@ -1430,13 +1416,14 @@ class RegressionAsClassifier(ProxyClassifier):
         self.centroids = centroids
         self.distance_measure = distance_measure
 
-        # Adjust tags
-        if 'regression' in self.__tags__:
+        # Adjust tags which were copied from slave learner
+        if self.__is_regression__:
             self.__tags__.pop(self.__tags__.index('regression'))
+
         # We can do any number of classes, although in most of the scenarios
         # multiclass performance would suck, unless there is a strong
         # hypothesis
-        self.__tags__ += ['binary', 'multiclass']
+        self.__tags__ += ['binary', 'multiclass', 'regression_based']
 
         # Pylint/user friendliness
         #self._trained_ul = None
@@ -1515,5 +1502,10 @@ class RegressionAsClassifier(ProxyClassifier):
                        for s in regr_predictions])
 
         predictions = attrmap.to_literal(N.argmin(distances, axis=1))
+        if __debug__:
+            debug("CLF_", "Converted regression distances %(distances)s "
+                  "into labels %(predictions)s for %(self_)s",
+                      msgargs={'distances':distances, 'predictions':predictions,
+                               'self_': self})
 
         return predictions

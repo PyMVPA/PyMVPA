@@ -1260,13 +1260,14 @@ class ClassifierError(ClassWithCollections):
                     self.states.training_confusion = self.__clf.states.training_confusion
                     self.__clf.states._resetEnabledTemporarily()
 
-        if self.__clf.states.isEnabled('trained_labels') and \
-               not testdataset is None:
+        if self.__clf.states.isEnabled('trained_labels') \
+               and not self.__clf.__is_regression__ \
+               and not testdataset is None:
             newlabels = Set(testdataset.sa['labels'].unique) \
                         - Set(self.__clf.states.trained_labels)
             if len(newlabels)>0:
                 warning("Classifier %s wasn't trained to classify labels %s" %
-                        (`self.__clf`, `newlabels`) +
+                        (self.__clf, newlabels) +
                         " present in testing dataset. Make sure that you have" +
                         " not mixed order/names of the arguments anywhere")
 
@@ -1416,7 +1417,7 @@ class TransferError(ClassifierError):
         #  bound to classifiers confusion matrix
         states = self.states
         if states.isEnabled('confusion'):
-            confusion = clf._summaryClass(
+            confusion = clf.__summary_class__(
                 #labels=self.labels,
                 targets=testdataset.sa.labels,
                 predictions=predictions,

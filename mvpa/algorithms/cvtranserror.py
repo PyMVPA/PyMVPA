@@ -138,7 +138,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
                 terr_enable += [state_var]
 
         # charge states with initial values
-        summaryClass = clf._summaryClass
+        summaryClass = clf.__summary_class__
         clf_hastestdataset = hasattr(clf, 'testdataset')
 
         self.states.confusion = summaryClass()

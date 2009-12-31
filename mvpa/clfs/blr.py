@@ -82,7 +82,7 @@ class BLR(Classifier):
         # log_marginal_likelihood = None
         # return log_marginal_likelihood
         raise NotImplementedError
-    
+
 
     def _train(self, data):
         """Train regression using `data` (`Dataset`).
@@ -123,11 +123,11 @@ class BLR(Classifier):
 
         data = N.hstack([data,N.ones((data.shape[0],1),dtype=data.dtype)])
         predictions = N.dot(data,self.w)
-        
+
         if self.states.isEnabled('predicted_variances'):
             # do computation only if state variable was enabled
             self.states.predicted_variances = N.dot(data, N.dot(self.A_inv, data.T)).diagonal()[:,N.newaxis]
-
+        self.states.values = predictions
         return predictions
 
 
@@ -165,7 +165,7 @@ if __name__ == "__main__":
     intercept = N.random.rand(1)
     print "True slope:",slope
     print "True intercept:",intercept
-    
+
     dataset_train = linear_awgn(train_size, intercept=intercept, slope=slope)
     # print dataset.labels
 
@@ -174,19 +174,24 @@ if __name__ == "__main__":
     regression = True
     logml = False
 
-    b = BLR(sigma_p=N.eye(F+1), sigma_noise=0.1, regression=True)
+    b = BLR(sigma_p=N.eye(F+1), sigma_noise=0.1)
     b.states.enable("predicted_variances")
     b.train(dataset_train)
     predictions = b.predict(dataset_test.samples)
     print "Predicted slope and intercept:",b.w
-    
+
     if F==1:
-        pylab.plot(dataset_train.samples,dataset_train.labels,"ro",label="train")
-        
-        pylab.plot(dataset_test.samples,predictions,"b-",label="prediction")
-        pylab.plot(dataset_test.samples,predictions+N.sqrt(b.predicted_variances),"b--",label="pred(+/-)std")
-        pylab.plot(dataset_test.samples,predictions-N.sqrt(b.predicted_variances),"b--",label=None)
-        # pylab.plot(dataset_test.samples,dataset_test.labels,"go")
+        pylab.plot(dataset_train.samples,
+                   dataset_train.labels, "ro", label="train")
+
+        pylab.plot(dataset_test.samples, predictions, "b-", label="prediction")
+        pylab.plot(dataset_test.samples,
+                   predictions+N.sqrt(b.states.predicted_variances),
+                   "b--", label="pred(+/-)std")
+        pylab.plot(dataset_test.samples,
+                   predictions-N.sqrt(b.states.predicted_variances),
+                   "b--", label=None)
+        # pylab.plot(dataset_test.samples, dataset_test.labels, "go")
         pylab.legend()
         pylab.xlabel("samples")
         pylab.ylabel("labels")
