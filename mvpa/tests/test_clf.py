@@ -21,7 +21,7 @@ from mvpa.clfs.base import DegenerateInputError, FailedToTrainError, \
 from mvpa.clfs.meta import CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \
-     TreeClassifier
+     TreeClassifier, RegressionAsClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.mappers.flatten import mask_mapper
@@ -758,6 +758,39 @@ class ClassifiersTests(unittest.TestCase):
                     "We must be able to predict sample %s using " % sample +
                     "classifier %s" % `clf`)
         clf.states._resetEnabledTemporarily()
+
+
+    @sweepargs(regr=regrswh[:])
+    def testRegressionAsClassifier(self, regr):
+        """Basic tests of metaclass for using regressions as classifiers
+        """
+        for dsname in 'uni2small', 'uni4small':
+            ds = datasets[dsname]
+
+            clf = RegressionAsClassifier(regr, enable_states=['distances'])
+            cv = CrossValidatedTransferError(
+                TransferError(clf),
+                OddEvenSplitter(),
+                enable_states=['confusion', 'training_confusion'])
+
+            error = cv(ds)
+
+            nlabels = len(ds.uniquelabels)
+            if nlabels == 2:
+                self.failUnless(error < 0.3)
+
+            # Check if does not puke on repr and str
+            self.failUnless(str(clf) != "")
+            self.failUnless(repr(clf) != "")
+
+            self.failUnlessEqual(clf.states.distances.shape,
+                                 (ds.nsamples / 2, nlabels))
+
+            #print "Using %s " % regr, error
+            # Just validate that everything is ok
+            #self.failUnless(str(cv.states.confusion) != "")
+
+
 
 def suite():
     return unittest.makeSuite(ClassifiersTests)
