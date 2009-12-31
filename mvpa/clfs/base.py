@@ -6,11 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Base class for all classifiers.
-
-At the moment, regressions are treated just as a special case of
-classifier (or vise verse), so the same base class `Classifier` is
-utilized for both kinds.
+"""Base class for all XXX learners: classifiers and regressions.
 """
 
 __docformat__ = 'restructuredtext'
@@ -155,11 +151,6 @@ class Classifier(ClassWithCollections):
     """Describes some specifics about the classifier -- is that it is
     doing regression for instance...."""
 
-    regression = Parameter(False, allowedtype='bool',
-        doc="""Either to use 'regression' as regression. By default any
-        Classifier-derived class serves as a classifier, so regression
-        does binary classification.""", index=1001)
-
     # TODO: make it available only for actually retrainable classifiers
     retrainable = Parameter(False, allowedtype='bool',
         doc="""Either to enable retraining for 'retrainable' classifier.""",
@@ -171,6 +162,7 @@ class Classifier(ClassWithCollections):
         """
         ClassWithCollections.__init__(self, **kwargs)
 
+        # XXX
         # the place to map literal to numerical labels (and back)
         # this needs to be in the base class, since some classifiers also
         # have this nasty 'regression' mode, and the code in this class
@@ -187,29 +179,21 @@ class Classifier(ClassWithCollections):
 
         self._setRetrainable(self.params.retrainable, force=True)
 
-        if self.params.regression:
-            for statevar in [ "trained_labels"]: #, "training_confusion" ]:
-                if self.states.isEnabled(statevar):
-                    if __debug__:
-                        debug("CLF",
-                              "Disabling state %s since doing regression, " %
-                              statevar + "not classification")
-                    self.states.disable(statevar)
-            self._summaryClass = RegressionStatistics
-        else:
-            self._summaryClass = ConfusionMatrix
-            clf_internals = self.__tags__
-            if 'regression' in clf_internals and not ('binary' in clf_internals):
-                # regressions are used as binary classifiers if not
-                # asked to perform regression explicitly
-                # We need a copy of the list, so we don't override class-wide
-                self.__tags__ = clf_internals + ['binary']
-
         # deprecate
         #self.__trainedidhash = None
         #"""Stores id of the dataset on which it was trained to signal
         #in trained() if it was trained already on the same dataset"""
 
+    @property
+    def __summary_class__(self):
+        if 'regression' in self.__tags__:
+            return RegressionStatistics
+        else:
+            return ConfusionMatrix
+
+    @property
+    def __is_regression__(self):
+        return 'regression' in self.__tags__
 
     def __str__(self):
         if __debug__ and 'CLF_' in debug.active:
@@ -267,14 +251,6 @@ class Classifier(ClassWithCollections):
                     debug('CLF_', "Obtained _changedData is %s"
                           % (self._changedData))
 
-        if not params.regression and 'regression' in self.__tags__ \
-           and not self.states.isEnabled('trained_labels'):
-            # if classifier internally does regression we need to have
-            # labels it was trained on
-            if __debug__:
-                debug("CLF", "Enabling trained_labels state since it is needed")
-            self.states.enable('trained_labels')
-
 
     def _posttrain(self, dataset):
         """Functionality post training
@@ -312,7 +288,7 @@ class Classifier(ClassWithCollections):
                 self.__changedData_isset = False
             predictions = self.predict(dataset)
             self.states._resetEnabledTemporarily()
-            self.states.training_confusion = self._summaryClass(
+            self.states.training_confusion = self.__summary_class__(
                 targets=dataset.sa.labels,
                 predictions=predictions)
 
@@ -508,41 +484,6 @@ class Classifier(ClassWithCollections):
 
         states.predicting_time = time.time() - t0
 
-        if 'regression' in self.__tags__ and not self.params.regression:
-            # We need to convert regression values into labels
-            # XXX unify may be labels -> internal_labels conversion.
-            #if len(self.trained_labels) != 2:
-            #    raise RuntimeError, "Ask developer to implement for " \
-            #        "multiclass mapping from regression into classification"
-
-            # must be N.array so we copy it to assign labels directly
-            # into labels, or should we just recreate "result"???
-            result_ = N.asanyarray(result)
-            if states.isEnabled('values'):
-                # values could be set by now so assigning 'result' would
-                # be misleading
-                if not states.isSet('values'):
-                    states.values = result_.copy()
-                else:
-                    # it might be the values are pointing to result at
-                    # the moment, so lets assure this silly way that
-                    # they do not overlap
-                    states.values = states.values.copy()
-
-            trained_labels = self.states.trained_labels
-            # if there is some labels mapping present, make sure we operate
-            # on numeric labels
-            if self._attrmap:
-                trained_labels = self._attrmap.to_numeric(trained_labels)
-            for i, value in enumerate(result):
-                dists = N.abs(value - trained_labels)
-                result[i] = trained_labels[N.argmin(dists)]
-            if __debug__:
-                debug("CLF_", "Converted regression result %(result_)s "
-                      "into labels %(result)s for %(self_)s",
-                      msgargs={'result_':result_, 'result':result,
-                               'self_': self})
-
         # with a labels mapping in-place, we also need to go back to the
         # literal labels
         if self._attrmap:
@@ -574,15 +515,6 @@ class Classifier(ClassWithCollections):
                           "Got result %b although comparing of idhash says %b" \
                           % (res, res2)
             return res
-
-
-    def _regressionIsBogus(self):
-        """Some classifiers like BinaryClassifier can't be used for
-        regression"""
-
-        if self.params.regression:
-            raise ValueError, "Regression mode is meaningless for %s" % \
-                  self.__class__.__name__ + " thus don't enable it"
 
 
     @property

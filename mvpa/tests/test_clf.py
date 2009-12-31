@@ -172,8 +172,7 @@ class ClassifiersTests(unittest.TestCase):
         summary1 = clf.summary()
         self.failUnless('not yet trained' in summary1)
         # Need 2 different datasets for regressions/classifiers
-        dsname = ('uni2small', 'sin_modulated')[
-            int('regression' in clf.__tags__)]
+        dsname = ('uni2small', 'sin_modulated')[int(clf.__is_regression__)]
         clf.train(datasets[dsname])
         summary = clf.summary()
         # It should get bigger ;)
@@ -192,7 +191,7 @@ class ClassifiersTests(unittest.TestCase):
         # this way
         ds1.samples[:] = 0.0             # all 0s
         # For regression we need numbers
-        if clf.params.regression:
+        if clf.__is_regression__:
             ds1.labels = AttributeMap().to_numeric(ds1.labels)
         #ds2 = datasets['uni2small'][[0], :]
         #ds2.samples[:] = 0.0             # all 0s

@@ -42,7 +42,7 @@ for x in sigma_noise_steps:
     j = 0
     for y in length_scale_steps:
         kse = SquaredExponentialKernel(length_scale=y)
-        g = GPR(kse, sigma_noise=x, regression=True)
+        g = GPR(kse, sigma_noise=x)
         g.states.enable("log_marginal_likelihood")
         g.train(dataset)
         lml[i, j] = g.states.log_marginal_likelihood

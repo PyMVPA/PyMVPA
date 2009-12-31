@@ -24,12 +24,12 @@ from tests_warehouse_clfs import *
 
 class RegressionsTests(unittest.TestCase):
 
-    @sweepargs(ml=clfswh['regression']+regrswh[:])
+    @sweepargs(ml=clfswh['regression_based'] + regrswh[:])
     def testNonRegressions(self, ml):
         """Test If binary regression-based  classifiers have proper tag
         """
-        self.failUnless(('binary' in ml.__tags__) != ml.params.regression,
-            msg="Inconsistent markin with binary and regression features"
+        self.failUnless(('binary' in ml.__tags__) != ml.__is_regression__,
+            msg="Inconsistent tagging with binary and regression features"
                 " detected in %s having %r" % (ml, ml.__tags__))
 
     @sweepargs(regr=regrswh['regression'])

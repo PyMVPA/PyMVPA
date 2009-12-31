@@ -250,7 +250,7 @@ class SVM(_SVM):
         if __debug__:
             debug("SG_", "Creating labels instance")
 
-        if 'regression' in self.__tags__:
+        if self.__is_regression__:
             labels_ = N.asarray(dataset.sa['labels'].value, dtype='double')
         else:
             la = dataset.sa['labels']
@@ -386,7 +386,7 @@ class SVM(_SVM):
 
         # Train
         if __debug__ and 'SG' in debug.active:
-            if not self.regression:
+            if not self.__is_regression__:
                 lstr = " with labels %s" % dataset.uniquelabels
             else:
                 lstr = ""
@@ -418,8 +418,8 @@ class SVM(_SVM):
         # XXX For now it can be done only for regressions since labels need to
         #     be remapped and that becomes even worse if we use regression
         #     as a classifier so mapping happens upstairs
-        if self.params.regression and self.states.isEnabled('training_confusion'):
-            self.states.training_confusion = self._summaryClass(
+        if self.__is_regression__ and self.states.isEnabled('training_confusion'):
+            self.states.training_confusion = self.__summary_class__(
                 targets=dataset.labels,
                 predictions=trained_labels)
 
@@ -490,7 +490,7 @@ class SVM(_SVM):
         if __debug__:
             debug("SG__", "Got values %s" % values)
 
-        if ('regression' in self.__tags__):
+        if (self.__is_regression__):
             predictions = values
         else:
             if len(self._attrmap.keys()) == 2:
@@ -574,7 +574,7 @@ class SVM(_SVM):
 
 
     def __get_implementation(self, ul):
-        if 'regression' in self.__tags__ or len(ul) == 2:
+        if self.__is_regression__ or len(ul) == 2:
             svm_impl_class = SVM._KNOWN_IMPLEMENTATIONS[self._svm_impl][0]
         else:
             if self._svm_impl == 'libsvm':
