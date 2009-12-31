@@ -245,6 +245,7 @@ if __debug__:
     #    "Report traceback in train/predict. Helps to resolve WTF calls it")
     debug.register('CLFBST', "BoostClassifier")
     #debug.register('CLFBST_TB', "BoostClassifier traceback")
+    debug.register('CLFPRX', "ProxyClassifier")
     debug.register('CLFBIN', "BinaryClassifier")
     debug.register('CLFTREE', "TreeClassifier")
     debug.register('CLFMC',  "MulticlassClassifier")
