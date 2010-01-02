@@ -29,6 +29,7 @@ from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.base import externals, warning
 from mvpa.clfs.stats import autoNullDist
+from mvpa.base.types import is_datasetlike
 
 if __debug__:
     from mvpa.base import debug
@@ -104,6 +105,13 @@ class DatasetMeasure(ClassWithCollections):
         """
         result = self._call(dataset)
         result = self._postcall(dataset, result)
+
+        # XXX Remove when "sensitivity-return-dataset" transition is done
+        if __debug__ \
+           and not is_datasetlike(result) and not len(result.shape) == 1:
+            warning("Postprocessing of '%s' doesn't return a Dataset, or "
+                    "1D-array (got: '%s')."
+                    % (self.__class__.__name__, result))
         return result
 
 
@@ -288,16 +296,16 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
              here does not lead to an overall more complicated situation,
              without any real gain -- after all this one works ;-)
         """
-        # !!! This is not stupid -- it is intended -- some times we might get
-        #     scalars as input.
-        result = N.atleast_1d(result)
-        result_sq = result.squeeze()
-        # Assure that we have some iterable (could be a scalar if it
-        # was just a single value in 1D array)
-        result_sq = N.atleast_1d(result_sq)
+        # This method get the 'result' either as a 1D array, or as a Dataset
+        # everything else is illegal
+        if __debug__ \
+           and not is_datasetlike(result) and not len(result.shape) == 1:
+               raise RuntimeError("FeaturewiseDatasetMeasures have to return "
+                                  "their results as 1D array, or as a Dataset "
+                                  "(got: '%s')." % str(result))
 
-        if len(result_sq.shape)>1:
-            n_base = result.shape[1]
+        if len(result.shape) > 1:
+            n_base = len(result)
             """Number of base sensitivities"""
             if self.states.isEnabled('base_sensitivities'):
                 b_sensitivities = []
@@ -320,7 +328,7 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
                     else:
                         bias = None
                     b_sensitivities = StaticDatasetMeasure(
-                        measure = result[:,i],
+                        measure = result[i],
                         bias = bias)
                 self.states.base_sensitivities = b_sensitivities
 
@@ -328,11 +336,13 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
             # we can apply combiner
             if self.__combiner is not None:
                 result = self.__combiner(result)
-        else:
-            # remove bogus dimensions
-            # XXX we might need to come up with smth better. May be some naive
-            # combiner? :-)
-            result = result_sq
+
+        # XXX Remove when "sensitivity-return-dataset" transition is done
+        if __debug__ \
+           and not is_datasetlike(result) and not len(result.shape) == 1:
+            warning("FeaturewiseDatasetMeasures-related post-processing "
+                    "of '%s' doesn't return a Dataset, or 1D-array."
+                    % self.__class__.__name__)
 
         # call base class postcall
         result = DatasetMeasure._postcall(self, dataset, result)
