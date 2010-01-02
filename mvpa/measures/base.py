@@ -25,7 +25,6 @@ import mvpa.support.copy as copy
 
 from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.args import group_kwargs
-from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.base import externals, warning
 from mvpa.clfs.stats import autoNullDist
@@ -67,21 +66,21 @@ class DatasetMeasure(ClassWithCollections):
     """Stores the t-score corresponding to null_prob under assumption
     of Normal distribution"""
 
-    def __init__(self, transformer=None, null_dist=None, **kwargs):
+    def __init__(self, mapper=None, null_dist=None, **kwargs):
         """Does nothing special.
 
         :Parameters:
-          transformer: Functor
-            This functor is called in `__call__()` to perform a final
-            processing step on the to be returned dataset measure. If None,
-            nothing is called
+          mapper: Mapper instance
+            This mapper is applied in `__call__()` to perform a final
+            processing step on the to be returned dataset measure.
+            If None, nothing is done.
           null_dist: instance of distribution estimator
             The estimated distribution is used to assign a probability for a
             certain value of the computed measure.
         """
         ClassWithCollections.__init__(self, **kwargs)
 
-        self.__transformer = transformer
+        self.__mapper = mapper
         """Functor to be called in return statement of all subclass __call__()
         methods."""
         null_dist_ = autoNullDist(null_dist)
@@ -101,7 +100,7 @@ class DatasetMeasure(ClassWithCollections):
         dataset.
 
         Returns the computed measure in some iterable (list-like)
-        container applying transformer if such is defined
+        container applying mapper if such is defined
         """
         result = self._call(dataset)
         result = self._postcall(dataset, result)
@@ -134,10 +133,10 @@ class DatasetMeasure(ClassWithCollections):
         result = N.atleast_1d(result)
         self.raw_result = result
         self.states.raw_results = result
-        if not self.__transformer is None:
+        if not self.__mapper is None:
             if __debug__:
-                debug("SA_", "Applying transformer %s" % self.__transformer)
-            result = self.__transformer(result)
+                debug("SA_", "Applying mapper %s" % self.__mapper)
+            result = self.__mapper(result)
 
         # estimate the NULL distribution when functor is given
         if not self.__null_dist is None:
@@ -198,8 +197,8 @@ class DatasetMeasure(ClassWithCollections):
         Includes only arguments which differ from default ones
         """
         prefixes = prefixes[:]
-        if self.__transformer is not None:
-            prefixes.append("transformer=%s" % self.__transformer)
+        if self.__mapper is not None:
+            prefixes.append("mapper=%s" % self.__mapper)
         if self.__null_dist is not None:
             prefixes.append("null_dist=%s" % self.__null_dist)
         return super(DatasetMeasure, self).__repr__(prefixes=prefixes)
@@ -218,9 +217,9 @@ class DatasetMeasure(ClassWithCollections):
         return self.__null_dist
 
     @property
-    def transformer(self):
-        """Return transformer"""
-        return self.__transformer
+    def mapper(self):
+        """Return mapper"""
+        return self.__mapper
 
 
 class FeaturewiseDatasetMeasure(DatasetMeasure):
@@ -229,41 +228,17 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
     Should behave like a DatasetMeasure.
     """
 
+    # MH: why isn't this piece in the Sensitivity class?
     base_sensitivities = StateVariable(enabled=False,
         doc="Stores basic sensitivities if the sensitivity " +
             "relies on combining multiple ones")
 
-    # XXX should we may be default to combiner=None to avoid
-    # unexpected results? Also rethink if we need combiner here at
-    # all... May be combiners should be 'adjoint' with transformer
-    # YYY in comparison to CombinedSensitivityAnalyzer here default
-    #     value for combiner is worse than anywhere. From now on,
-    #     default combiners should be provided "in place", ie
-    #     in SMLR it makes sense to have SecondAxisMaxOfAbs,
-    #     in SVM (pair-wise) only for not-binary should be
-    #     SecondAxisSumOfAbs, though could be Max as well... uff
-    #   YOH: started to do so, but still have issues... thus
-    #        reverting back for now
-    #   MH: Full ack -- voting for no default combiners!
-    def __init__(self, combiner=SecondAxisSumOfAbs, **kwargs): # SecondAxisSumOfAbs
-        """Initialize
-
-        :Parameters:
-          combiner : Functor
-            The combiner is only applied if the computed featurewise dataset
-            measure is more than one-dimensional. This is different from a
-            `transformer`, which is always applied. By default, the sum of
-            absolute values along the second axis is computed.
-        """
+    def __init__(self, **kwargs):
         DatasetMeasure.__init__(self, **kwargs)
-
-        self.__combiner = combiner
 
     def __repr__(self, prefixes=None):
         if prefixes is None:
             prefixes = []
-        if self.__combiner != SecondAxisSumOfAbs:
-            prefixes.append("combiner=%s" % self.__combiner)
         return \
             super(FeaturewiseDatasetMeasure, self).__repr__(prefixes=prefixes)
 
@@ -332,11 +307,6 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
                         bias = bias)
                 self.states.base_sensitivities = b_sensitivities
 
-            # After we stored each sensitivity separately,
-            # we can apply combiner
-            if self.__combiner is not None:
-                result = self.__combiner(result)
-
         # XXX Remove when "sensitivity-return-dataset" transition is done
         if __debug__ \
            and not is_datasetlike(result) and not len(result.shape) == 1:
@@ -348,11 +318,6 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         result = DatasetMeasure._postcall(self, dataset, result)
 
         return result
-
-    @property
-    def combiner(self):
-        """Return combiner"""
-        return self.__combiner
 
 
 
