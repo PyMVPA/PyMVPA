@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.datasets.base import Dataset
 
 # TODO: Extend with access to functionality from scipy.stats?
 # For binary:
@@ -115,7 +116,7 @@ class CompoundOneWayAnova(OneWayAnova):
             labels[orig_labels != ul] = 2
             results.append(OneWayAnova._call(self, dataset, labels))
 
-        # features x labels
-        return N.array(results).T
-
-
+        if len(results) == 1:
+            return N.array(results)
+        else:
+            return Dataset(results, sa={'labels': dataset.sa['labels'].unique})
