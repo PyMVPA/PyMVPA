@@ -102,7 +102,7 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
 
         while True:
             self.k = self.kernel(length_scale = self.kernel_width/self.w)
-            d_w_k = self.k.compute(samples)
+            d_w_k = self.k.computed(samples).as_raw_np()
             # set d_w_k to zero where distance=0 (i.e. kernel ==
             # 1.0), otherwise I-RELIEF could not converge.
             # XXX Note that kernel==1 for distance=0 only for
@@ -206,16 +206,16 @@ class IterativeReliefOnline_Devel(IterativeRelief_Devel):
                 n = random_sequence[t]
 
                 self.k = self.kernel(length_scale = self.kernel_width/self.w)
-                d_w_k_xn_Mn = self.k.compute(dataset.samples[None, n, :],
-                                dataset.samples[M[n], :]).squeeze()
+                d_w_k_xn_Mn = self.k.computed(dataset.samples[None, n, :],
+                                dataset.samples[M[n], :]).as_raw_np().squeeze()
                 d_w_k_xn_Mn_sum = d_w_k_xn_Mn.sum()
-                d_w_k_xn_x = self.k.compute(dataset.samples[None, n, :],
-                                dataset.samples).squeeze()
+                d_w_k_xn_x = self.k.computed(dataset.samples[None, n, :],
+                                dataset.samples).as_raw_np().squeeze()
                 gamma_n = 1.0 - d_w_k_xn_Mn_sum / d_w_k_xn_x.sum()
                 alpha_n = d_w_k_xn_Mn / d_w_k_xn_Mn_sum
 
-                d_w_k_xn_Hn = self.k.compute(dataset.samples[None, n, :],
-                                dataset.samples[H[n], :]).squeeze()
+                d_w_k_xn_Hn = self.k.computed(dataset.samples[None, n, :],
+                                dataset.samples[H[n], :]).as_raw_np().squeeze()
                 beta_n = d_w_k_xn_Hn / d_w_k_xn_Hn.sum()
 
                 m_n = (N.abs(dataset.samples[n, :] - dataset.samples[M[n], :]) \
