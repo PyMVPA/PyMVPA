@@ -188,18 +188,17 @@ How can I do :term:`block-averaging` of my block-design fMRI dataset?
   <Dataset / float64 100 x 4 uniq: 2 labels 5 chunks labels_mapped>
 
   Averaging all samples with the same label in each chunk individually is done
-  by applying a samples mapper to the dataset.
+  by applying a mapper to the dataset.
 
-  >>> from mvpa.mappers.samplegroup import SampleGroupMapper
-  >>> from mvpa.misc.transformers import FirstAxisMean
+  >>> from mvpa.mappers.fx import mean_group_sample
   >>>
-  >>> m = SampleGroupMapper(fx=FirstAxisMean)
-  >>> mapped_dataset = dataset.applyMapper(samplesmapper=m)
+  >>> m = mean_group_sample('labels', 'chunks'])
+  >>> mapped_dataset = dataset.get_mapped(m)
   >>> mapped_dataset
   <Dataset / float64 10 x 4 uniq: 2 labels 5 chunks labels_mapped>
 
-  `SampleGroupMapper` applies a function to every group of samples in each
-  chunk individually. Using `FirstAxisMean` as function, therefore yields
+  `mean_group_sample` creates an `FxMapper` that applies a function to
+  every group of samples in each chunk individually and therefore yields
   one sample of each label per chunk.
 
 
