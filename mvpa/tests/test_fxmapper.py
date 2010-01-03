@@ -85,5 +85,7 @@ def test_fxmapper():
     # it shouldn't mapper along with axis it is applied
     m_s = FxMapper('samples', N.absolute)
     m_f = FxMapper('features', N.absolute)
+    a_m = absolute_features()
     assert_array_equal(m_s.forward(ds), origdata)
+    assert_array_equal(a_m.forward(ds), origdata)
     assert_array_equal(m_s.forward(ds), m_f.forward(ds))

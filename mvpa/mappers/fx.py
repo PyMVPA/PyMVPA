@@ -37,6 +37,7 @@ class FxMapper(Mapper):
           the respective samples group. By default the unique value is
           determined. If the content of the attribute is not uniform for a
           samples group a unique string representation is created.
+          If `None`, attributes are not altered.
         """
         Mapper.__init__(self)
 
@@ -84,6 +85,12 @@ class FxMapper(Mapper):
 
         samples = N.atleast_2d(mdata)
 
+        # return early if there is no attribute treatment desired
+        if self.__attrfx is None:
+            out = ds.copy(deep=False)
+            out.samples = samples
+            return out
+
         # not copying the samples attributes, since they have to be modified
         # anyway
         if self.__axis == 'samples':
@@ -96,6 +103,7 @@ class FxMapper(Mapper):
             col.set_length_check(samples.shape[1])
         # assign samples to do COW
         out.samples = samples
+
         for attr in sattrs:
             a = sattrs[attr]
             # need to handle single literal attributes
@@ -138,11 +146,12 @@ class FxMapper(Mapper):
             fxed_samples = N.apply_along_axis(self.__fx, axis, samples,
                                               *self.__fxargs)
             mdata.append(fxed_samples)
-            # and now all samples attributes
-            fxed_attrs = [self.__attrfx(col[attr].value[selector])
-                                for attr in col]
-            for i, attr in enumerate(col):
-                attrs[attr].append(fxed_attrs[i])
+            if not self.__attrfx is None:
+                # and now all samples attributes
+                fxed_attrs = [self.__attrfx(col[attr].value[selector])
+                                    for attr in col]
+                for i, attr in enumerate(col):
+                    attrs[attr].append(fxed_attrs[i])
 
         if axis == 0:
             mdata = N.vstack(mdata)
@@ -154,6 +163,11 @@ class FxMapper(Mapper):
     def _forward_dataset_full(self, ds):
         # simply map the all of the data
         mdata = self._forward_data(ds.samples)
+
+        # if the attributes should not be handled, don't handle them
+        if self.__attrfx is None:
+            return mdata, None
+
         # and now all attributes
         if self.__axis == 'samples':
             attrs = dict(zip(ds.sa.keys(),
@@ -171,7 +185,7 @@ class FxMapper(Mapper):
 #
 
 def mean_sample(attrfx='merge'):
-    """Return a mapper that computes the mean sample of a dataset.
+    """Returns a mapper that computes the mean sample of a dataset.
 
     Parameters
     ----------
@@ -189,7 +203,7 @@ def mean_sample(attrfx='merge'):
 
 
 def mean_group_sample(attrs, attrfx='merge'):
-    """Return a mapper that computes the mean samples of unique sample groups.
+    """Returns a mapper that computes the mean samples of unique sample groups.
 
     The sample groups are identified by the unique combination of all values of
     a set of provided sample attributes.
@@ -213,7 +227,7 @@ def mean_group_sample(attrs, attrfx='merge'):
 
 
 def mean_group_feature(attrs, attrfx='merge'):
-    """Return a mapper that computes the mean features of unique feature groups.
+    """Returns a mapper that computes the mean features of unique feature groups.
 
     The feature groups are identified by the unique combination of all values of
     a set of provided feature attributes.
@@ -234,6 +248,19 @@ def mean_group_feature(attrs, attrfx='merge'):
     FxMapper instance.
     """
     return FxMapper('features', N.mean, uattrs=attrs, attrfx=attrfx)
+
+
+def absolute_features():
+    """Returns a mapper that converts features into absolute values.
+
+    This mapper does not alter any attributes.
+
+    Returns
+    -------
+    FxMapper instance.
+    """
+    return FxMapper('features', N.absolute, attrfx=None)
+
 
 #
 # Utility functions
