@@ -66,7 +66,7 @@ Mappers: Data Transformations
    mappers.mdp_adaptor
    mappers.procrustean
    mappers.prototype
-   mappers.samplegroup
+   mappers.fx
    mappers.som
    mappers.wavelet
    mappers.zscore

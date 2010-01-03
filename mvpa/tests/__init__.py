@@ -124,7 +124,7 @@ def collectNoseTests():
               'test_arraymapper',
               'test_boxcarmapper',
               'test_mapper',
-              'test_samplegroupmapper',
+              'test_fxmapper',
               'test_mdp',
               'test_neighborhood',
               ]
