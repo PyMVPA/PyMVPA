@@ -38,7 +38,7 @@ def multipleChunks(func, n_chunks, *args, **kwargs):
         if chunk == 0:
             dataset = dataset_
         else:
-            dataset += dataset_
+            dataset.append(dataset_)
 
     return dataset
 

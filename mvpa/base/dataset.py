@@ -358,14 +358,20 @@ class Dataset(object):
         return out
 
 
-    def __iadd__(self, other):
-        """Merge the samples of one Dataset object to another (in-place).
+    def append(self, other):
+        """Append the content of a Dataset.
+
+        Parameters
+        ----------
+        other : Dataset
+          The content of this dataset will be append.
 
         Note
         ----
         No dataset attributes, or feature attributes will be merged!  These
         respective properties of the *other* dataset are neither checked for
-        compatibility nor copied over to this dataset.
+        compatibility nor copied over to this dataset. However, all samples
+        attributes will be concatenated with the existing ones.
         """
         if not self.nfeatures == other.nfeatures:
             raise DatasetError("Cannot merge datasets, because the number of "
@@ -385,18 +391,6 @@ class Dataset(object):
         for k, v in other.sa.iteritems():
             self.sa[k].value = N.concatenate((self.sa[k].value, v.value),
                                              axis=0)
-
-        return self
-
-
-    def __add__(self, other):
-        """Merge the samples two datasets.
-        """
-        # shallow copies should be sufficient, since __iadd__ will concatenate
-        # most pieces anyway
-        merged = self.copy(deep=False)
-        merged += other
-        return merged
 
 
     def __getitem__(self, args):
