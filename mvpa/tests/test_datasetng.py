@@ -149,19 +149,19 @@ def test_from_masked():
     assert_array_equal(ds.chunks, [1])
 
     # now try adding pattern with wrong shape
-    assert_raises(DatasetError, ds.__iadd__,
+    assert_raises(DatasetError, ds.append,
                   Dataset.from_masked(N.ones((2,3)), labels=1, chunks=1))
 
     # now add two real patterns
-    ds += Dataset.from_masked(N.random.standard_normal((2, 5)),
-                              labels=2, chunks=2)
+    ds.append(Dataset.from_masked(N.random.standard_normal((2, 5)),
+                                  labels=2, chunks=2))
     assert_equal(ds.nsamples, 3)
     assert_array_equal(ds.labels, [1, 2, 2])
     assert_array_equal(ds.chunks, [1, 2, 2])
 
     # test unique class labels
-    ds += Dataset.from_masked(N.random.standard_normal((2, 5)),
-                              labels=3, chunks=5)
+    ds.append(Dataset.from_masked(N.random.standard_normal((2, 5)),
+                                  labels=3, chunks=5))
     assert_array_equal(ds.sa['labels'].unique, [1, 2, 3])
 
     # test wrong attributes length
@@ -325,9 +325,10 @@ def test_mergeds():
     data3 = Dataset.from_basic(N.ones((4, 5)), labels=2)
 
     # cannot merge if there are attributes missing in one of the datasets
-    assert_raises(DatasetError, data1.__iadd__, data0)
+    assert_raises(DatasetError, data1.append, data0)
 
-    merged = data1 + data2
+    merged = data1.copy()
+    merged.append(data2)
 
     ok_( merged.nfeatures == 5 )
     l12 = [1]*5 + [2]*3
@@ -335,14 +336,14 @@ def test_mergeds():
     ok_((merged.labels == l12).all())
     ok_((merged.chunks == l1).all())
 
-    data1 += data2
+    data1.append(data2)
 
     ok_(data1.nfeatures == 5)
     ok_((data1.labels == l12).all())
     ok_((data1.chunks == l1).all())
 
     # we need the same samples attributes in both datasets
-    assert_raises(DatasetError, data2.__iadd__, data3)
+    assert_raises(DatasetError, data2.append, data3)
 
 
 def test_mergeds2():
@@ -363,18 +364,18 @@ def test_mergeds2():
 
     # now try adding pattern with wrong shape
     assert_raises(DatasetError,
-                  data.__iadd__,
+                  data.append,
                   dataset(N.ones((2,3)), labels=1, chunks=1))
 
     # now add two real patterns
     dss = datasets['uni2large'].samples
-    data += dataset(dss[:2, :5], labels=2, chunks=2)
+    data.append(dataset(dss[:2, :5], labels=2, chunks=2))
     assert_equal(data.nfeatures, 5)
     assert_array_equal(data.labels, [1, 2, 2])
     assert_array_equal(data.chunks, [1, 2, 2])
 
     # test automatic origins
-    data += dataset(dss[3:5, :5], labels=3, chunks=[0, 1])
+    data.append(dataset(dss[3:5, :5], labels=3, chunks=[0, 1]))
     assert_array_equal(data.chunks, [1, 2, 2, 0, 1])
 
     # test unique class labels
@@ -441,10 +442,10 @@ def test_combined_samplesfeature_selection():
 
 def test_labelpermutation_randomsampling():
     ds  = Dataset.from_basic(N.ones((5, 1)),     labels=range(5), chunks=1)
-    ds += Dataset.from_basic(N.ones((5, 1)) + 1, labels=range(5), chunks=2)
-    ds += Dataset.from_basic(N.ones((5, 1)) + 2, labels=range(5), chunks=3)
-    ds += Dataset.from_basic(N.ones((5, 1)) + 3, labels=range(5), chunks=4)
-    ds += Dataset.from_basic(N.ones((5, 1)) + 4, labels=range(5), chunks=5)
+    ds.append(Dataset.from_basic(N.ones((5, 1)) + 1, labels=range(5), chunks=2))
+    ds.append(Dataset.from_basic(N.ones((5, 1)) + 2, labels=range(5), chunks=3))
+    ds.append(Dataset.from_basic(N.ones((5, 1)) + 3, labels=range(5), chunks=4))
+    ds.append(Dataset.from_basic(N.ones((5, 1)) + 4, labels=range(5), chunks=5))
     # use subclass for testing if it would survive
     ds.samples = ds.samples.view(myarray)
 

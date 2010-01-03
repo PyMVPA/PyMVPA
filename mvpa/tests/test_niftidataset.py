@@ -42,7 +42,8 @@ def testNiftiDataset():
     #self.failUnless(nb22.shape[0] == 7)
     #self.failUnless(nb20.shape[0] == 5)
 
-    merged = ds + ds
+    merged = ds.copy()
+    merged.append(ds)
     assert_equal(merged.nfeatures, 294912)
     assert_equal(merged.nsamples, 4)
 
