@@ -190,7 +190,7 @@ class SVM(_SVM):
         predictions = [ self.model.predict(p) for p in src ]
 
         if states.isEnabled("values"):
-            if self.params.regression:
+            if self.__is_regression__:
                 values = [ self.model.predictValuesRaw(p)[0] for p in src ]
             else:
                 # if 'trained_labels' are literal they have to be mapped

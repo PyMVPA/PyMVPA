@@ -97,11 +97,11 @@ class ParamsTests(unittest.TestCase):
 
     def testClassifier(self):
         clf  = ParametrizedClassifier()
-        self.failUnlessEqual(len(clf.params.items), 3) # + regression/retrainable
+        self.failUnlessEqual(len(clf.params.items), 2) # + retrainable
         self.failUnlessEqual(len(clf.kernel_params.items), 1)
 
         clfe  = ParametrizedClassifierExtended()
-        self.failUnlessEqual(len(clfe.params.items), 3)
+        self.failUnlessEqual(len(clfe.params.items), 2)
         self.failUnlessEqual(len(clfe.kernel_params.items), 2)
         self.failUnlessEqual(len(clfe.kernel_params.listing), 2)
 
