@@ -15,6 +15,7 @@ if __debug__:
 
 import numpy as N
 
+from mvpa.datasets import Dataset, hstack
 from mvpa.base import externals
 from mvpa.support import copy
 from mvpa.measures.base import DatasetMeasure
@@ -121,12 +122,10 @@ class Searchlight(DatasetMeasure):
         if __debug__:
             debug('SLC', '')
 
-        # XXX post-proc results for shape-issue that will go away once we switch
-        # to datasets as return values
         # but be careful: this call also serves as conversion from parallel maps
         # to regular lists!
-        results = [r.squeeze() for r in results]
-
+        # this uses the Dataset-hstack
+        results = hstack(results)
         # charge state
         self.states.raw_results = results
 
