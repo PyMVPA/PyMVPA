@@ -86,7 +86,7 @@ class StatsTests(unittest.TestCase):
         # simple OneWayAnova
         a, ac = m(ds), mc(ds)
 
-        self.failUnless(a.shape == (ds.nfeatures,))
+        self.failUnless(a.shape == (1, ds.nfeatures))
         self.failUnless(ac.shape == (len(ds.UL), ds.nfeatures))
 
         assert_array_equal(ac[0], ac[1])
@@ -94,11 +94,11 @@ class StatsTests(unittest.TestCase):
 
         ds = datasets['uni4large']
         ac = mc(ds)
-
         if cfg.getboolean('tests', 'labile', default='yes'):
             # All non-bogus features must be high for a corresponding feature
-            self.failUnless((ac[N.arange(4),
-                                N.array(ds.nonbogus_features)] >= 1).all())
+            self.failUnless((ac.samples[N.arange(4),
+                                        N.array(ds.nonbogus_features)] >= 1
+                                        ).all())
         # All features should have slightly but different CompoundAnova
         # values. I really doubt that there will be a case when this
         # test would fail just to being 'labile'
