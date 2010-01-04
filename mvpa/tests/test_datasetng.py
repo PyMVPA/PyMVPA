@@ -16,7 +16,7 @@ from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
 from mvpa.base.types import is_datasetlike
-from mvpa.base.dataset import DatasetError
+from mvpa.base.dataset import DatasetError, vstack, hstack
 from mvpa.mappers.flatten import mask_mapper
 from mvpa.datasets.base import dataset, Dataset
 from mvpa.misc.data_generators import normalFeatureDataset
@@ -320,9 +320,13 @@ def test_ds_deepcopy():
 
 def test_mergeds():
     data0 = Dataset.from_basic(N.ones((5, 5)), labels=1)
+    data0.fa['one'] = N.ones(5)
     data1 = Dataset.from_basic(N.ones((5, 5)), labels=1, chunks=1)
+    data1.fa['one'] = N.zeros(5)
     data2 = Dataset.from_basic(N.ones((3, 5)), labels=2, chunks=1)
     data3 = Dataset.from_basic(N.ones((4, 5)), labels=2)
+    data4 = Dataset.from_basic(N.ones((2, 5)), labels=3, chunks=2)
+    data4.fa['test'] = N.arange(5)
 
     # cannot merge if there are attributes missing in one of the datasets
     assert_raises(DatasetError, data1.append, data0)
@@ -336,14 +340,41 @@ def test_mergeds():
     ok_((merged.labels == l12).all())
     ok_((merged.chunks == l1).all())
 
-    data1.append(data2)
+    data_append = data1.copy()
+    data_append.append(data2)
 
-    ok_(data1.nfeatures == 5)
-    ok_((data1.labels == l12).all())
-    ok_((data1.chunks == l1).all())
+    ok_(data_append.nfeatures == 5)
+    ok_((data_append.labels == l12).all())
+    ok_((data_append.chunks == l1).all())
+
+    #
+    # appending
+    #
 
     # we need the same samples attributes in both datasets
     assert_raises(DatasetError, data2.append, data3)
+
+    #
+    # vstacking
+    #
+    assert_raises(ValueError, vstack, (data0, data1, data2, data3))
+    datasets = (data1, data2, data4)
+    merged = vstack(datasets)
+    assert_equal(merged.shape,
+                 (N.sum([len(ds) for ds in datasets]), data1.nfeatures))
+    assert_true('test' in merged.fa)
+    assert_array_equal(merged.sa.labels, [1]*5 + [2]*3 + [3]*2)
+
+    #
+    # hstacking
+    #
+    assert_raises(ValueError, hstack, datasets)
+    datasets = (data0, data1)
+    merged = hstack(datasets)
+    assert_equal(merged.shape,
+                 (len(data1), N.sum([ds.nfeatures for ds in datasets])))
+    assert_true('chunks' in merged.sa)
+    assert_array_equal(merged.fa.one, [1]*5 + [0]*5)
 
 
 def test_mergeds2():
