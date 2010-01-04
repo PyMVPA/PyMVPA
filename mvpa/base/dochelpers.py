@@ -269,7 +269,7 @@ def enhancedDocString(item, *args, **kwargs):
         #     actually that obvious for Meta Classifiers
         if hasattr(item, '__tags__'):
             clf_internals = item.__tags__
-            skip_params.update([i for i in ('regression', 'retrainable')
+            skip_params.update([i for i in ('retrainable',)
                                 if not (i in clf_internals)])
 
         known_params.update(skip_params)

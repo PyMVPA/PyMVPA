@@ -24,7 +24,7 @@ class LARSTests(unittest.TestCase):
         data = datasets['chirp_linear']
 
 
-        clf = LARS(regression=True)
+        clf = LARS()
 
         clf.train(data)
 

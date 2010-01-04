@@ -16,7 +16,7 @@ import operator
 
 # Define sets of classifiers
 from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
-     MulticlassClassifier
+     MulticlassClassifier, RegressionAsClassifier
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN
 from mvpa.clfs.gnb import GNB
@@ -39,7 +39,8 @@ from mvpa.kernels.libsvm import LinearLSKernel, RbfLSKernel, \
 _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'smlr', 'does_feature_selection', 'has_sensitivity',
         'multiclass', 'non-linear', 'kernel-based', 'lars',
-        'regression', 'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
+        'regression', 'regression_based',
+        'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
         'gnb']
 
@@ -195,10 +196,8 @@ if externals.exists('libsvm'):
 
     # regressions
     regrswh._known_tags.union_update(['EPSILON_SVR', 'NU_SVR'])
-    regrswh += [libsvm.SVM(svm_impl='EPSILON_SVR', descr='libsvm epsilon-SVR',
-                         regression=True),
-              libsvm.SVM(svm_impl='NU_SVR', descr='libsvm nu-SVR',
-                         regression=True)]
+    regrswh += [libsvm.SVM(svm_impl='EPSILON_SVR', descr='libsvm epsilon-SVR'),
+                libsvm.SVM(svm_impl='NU_SVR', descr='libsvm nu-SVR')]
 
 if externals.exists('shogun'):
     from mvpa.clfs import sg
@@ -252,11 +251,9 @@ if externals.exists('shogun'):
         # XXX svrlight sucks in SG -- dont' have time to figure it out
         #+ ([], ['svrlight'])['svrlight' in sg.SVM._KNOWN_IMPLEMENTATIONS]:
         regrswh._known_tags.union_update([impl])
-        regrswh += [ sg.SVM(svm_impl=impl, descr='sg.LinSVMR()/%s' % impl,
-                          regression=True),
+        regrswh += [ sg.SVM(svm_impl=impl, descr='sg.LinSVMR()/%s' % impl),
                    #sg.SVM(svm_impl=impl, kernel_type='RBF',
-                   #       descr='sg.RBFSVMR()/%s' % impl,
-                   #       regression=True),
+                   #       descr='sg.RBFSVMR()/%s' % impl),
                    ]
 
 if len(clfswh['svm', 'linear']) > 0:
@@ -273,8 +270,8 @@ if externals.exists('lars'):
         clfswh += lars_clf
 
         # is a regression, too
-        lars_regr = LARS(descr="_LARS(%s, regression=True)" % model,
-                         regression=True, model_type=model)
+        lars_regr = LARS(descr="_LARS(%s)" % model,
+                         model_type=model)
         regrswh += lars_regr
         # clfswh += MulticlassClassifier(lars,
         #             descr='Multiclass %s' % lars.descr)
@@ -284,8 +281,8 @@ if externals.exists('lars'):
 ## # enet from R via RPy
 ## if externals.exists('elasticnet'):
 ##     from mvpa.clfs.enet import ENET
-##     clfswh += ENET(descr="ENET()")
-##     regrswh += ENET(descr="ENET(regression=True)", regression=True)
+##     clfswh += ENET(descr="RegressionAsClassifier(ENET())")
+##     regrswh += ENET(descr="ENET()")
 
 # glmnet from R via RPy
 if externals.exists('glmnet'):
@@ -340,15 +337,18 @@ clfswh += \
 if externals.exists('scipy'):
     from mvpa.clfs.gpr import GPR
 
-    regrswh += GPR(kernel=LinearKernel(), descr="GPR(kernel='linear')", regression=True)
+    regrswh += GPR(kernel=LinearKernel(), descr="GPR(kernel='linear')")
     regrswh += GPR(kernel=SquaredExponentialKernel(),
-                  descr="GPR(kernel='sqexp')", regression=True)
+                   descr="GPR(kernel='sqexp')")
 
-    #XXXregr -- add wrapped GPR as a classifier
+    # Add wrapped GPR as a classifier
+    #clfswh += RegressionAsClassifier(
+    #    GPR(kernel=LinearKernel()), descr="GPRC(kernel='linear')")
 
 # BLR
 from mvpa.clfs.blr import BLR
-clfswh += BLR(descr="BLR()")
+clfswh += RegressionAsClassifier(BLR(descr="BLR()"),
+                                 descr="BLR Classifier")
 
 
 # SVM stuff

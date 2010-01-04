@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Least angle regression (LARS) classifier."""
+"""Least angle regression (LARS)."""
 
 __docformat__ = 'restructuredtext'
 
@@ -34,7 +34,7 @@ if __debug__:
 known_models = ('lasso', 'stepwise', 'lar', 'forward.stagewise')
 
 class LARS(Classifier):
-    """Least angle regression (LARS) `Classifier`.
+    """Least angle regression (LARS).
 
     LARS is the model selection algorithm from:
 
@@ -48,7 +48,7 @@ class LARS(Classifier):
     classification, but instead of starting with all features, it
     starts with none and adds them in, which is similar to boosting.
 
-    This classifier behaves more like a ridge regression in that it
+    This learner behaves more like a ridge regression in that it
     returns prediction values and it treats the training labels as
     continuous.
 
@@ -119,16 +119,12 @@ class LARS(Classifier):
         """The model object after training that will be used for
         predictions."""
 
-        # It does not make sense to calculate a confusion matrix for a
-        # regression
-        # YOH: we do have summary statistics for regressions
-        #self.states.enable('training_confusion', False)
 
     def __repr__(self):
         """String summary of the object
         """
         return "LARS(type='%s', normalize=%s, intercept=%s, trace=%s, " \
-               "max_steps=%s, use_Gram=%s, regression=%s, " \
+               "max_steps=%s, use_Gram=%s, " \
                "enable_states=%s)" % \
                (self.__type,
                 self.__normalize,
@@ -136,7 +132,6 @@ class LARS(Classifier):
                 self.__trace,
                 self.__max_steps,
                 self.__use_Gram,
-                self.params.regression,
                 str(self.states.enabled))
 
 
