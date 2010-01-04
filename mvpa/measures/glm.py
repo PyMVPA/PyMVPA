@@ -14,6 +14,7 @@ import numpy as N
 
 from mvpa.measures.base import FeaturewiseDatasetMeasure
 from mvpa.misc.state import StateVariable
+from mvpa.datasets.base import Dataset
 
 class GLM(FeaturewiseDatasetMeasure):
     """General linear model (GLM).
@@ -79,35 +80,34 @@ class GLM(FeaturewiseDatasetMeasure):
         self.states.pe = pe = betas.T.A
 
         # if betas and no z-stats are desired return them right away
-        if self._voi == 'pe' and not self.states.isEnabled('zstat'):
-            # return as (feature x beta)
-            return pe
+        if not self._voi == 'pe' or self.states.isEnabled('zstat'):
+            # compute residuals
+            residuals = X * betas
+            residuals -= dataset.samples
 
-        # compute residuals
-        residuals = X * betas
-        residuals -= dataset.samples
+            # estimates of the parameter variance and compute zstats
+            # assumption of mean(E) == 0 and equal variance
+            # XXX next lines ignore off-diagonal elements and hence covariance
+            # between regressors. The humble being writing these lines asks the
+            # god of statistics for forgives, because it knows not what it does
+            diag_ip = N.diag(self._inv_ip)
+            # (features x betas)
+            beta_vars = N.array([ r.var() * diag_ip for r in residuals.T ])
+            # (parameter x feature)
+            zstat = pe / N.sqrt(beta_vars)
 
-        # estimates of the parameter variance and compute zstats
-        # assumption of mean(E) == 0 and equal variance
-        # XXX next lines ignore off-diagonal elements and hence covariance
-        # between regressors. The humble being writing these lines asks the
-        # god of statistics for forgives, because it knows not what it does
-        diag_ip = N.diag(self._inv_ip)
-        # (features x betas)
-        beta_vars = N.array([ r.var() * diag_ip for r in residuals.T ])
-        # (parameter x feature)
-        zstat = pe / N.sqrt(beta_vars)
-
-        # charge state
-        self.states.zstat = zstat
+            # charge state
+            self.states.zstat = zstat
 
         if self._voi == 'pe':
-            # return as (feature x beta)
-            return pe
+            # return as (beta x feature)
+            result = Dataset(pe.T)
         elif self._voi == 'zstat':
-            # return as (feature x zstat)
-            return zstat
-
-        # we shall never get to this point
-        raise ValueError, \
-              "Unknown variable of interest '%s'" % str(self._voi)
+            # return as (zstat x feature)
+            result = Dataset(zstat.T)
+        else:
+            # we shall never get to this point
+            raise ValueError, \
+                  "Unknown variable of interest '%s'" % str(self._voi)
+        result.sa['regressor'] = N.arange(len(result))
+        return result
