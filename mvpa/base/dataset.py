@@ -534,6 +534,86 @@ def datasetmethod(func):
     return func
 
 
+def vstack(datasets):
+    """Stacks datasets vertically (appending samples).
+
+    Feature attribute collections are merged incrementally, attribute with
+    identical keys overwriting previous ones in the stacked dataset. All
+    datasets must have an identical set of sample attributes (matching keys,
+    not values), otherwise a ValueError will be raised.
+    No dataset attributes from any source dataset will be transferred into the
+    stacked dataset.
+
+    Parameters
+    ----------
+    datasets : tuple
+      Sequence of datasets to be stacked.
+
+    Returns
+    -------
+    Dataset
+    """
+    if __debug__:
+        target = sorted(datasets[0].sa.keys())
+        if not N.all([sorted(ds.sa.keys()) == target for ds in datasets]):
+            raise ValueError("Sample attributes collections of to be stacked "
+                             "datasets have varying attributes.")
+    # will puke if not equal number of features
+    stacked_samp = N.concatenate([ds.samples for ds in datasets], axis=0)
+
+    stacked_sa = {}
+    for attr in datasets[0].sa:
+        stacked_sa[attr] = N.concatenate([ds.sa[attr].value for ds in datasets],
+                                         axis=0)
+    # create the dataset
+    merged = Dataset(stacked_samp, sa=stacked_sa)
+
+    for ds in datasets:
+        merged.fa.update(ds.fa)
+
+    return merged
+
+
+def hstack(datasets):
+    """Stacks datasets horizontally (appending features).
+
+    Sample attribute collections are merged incrementally, attribute with
+    identical keys overwriting previous ones in the stacked dataset. All
+    datasets must have an identical set of feature attributes (matching keys,
+    not values), otherwise a ValueError will be raised.
+    No dataset attributes from any source dataset will be transferred into the
+    stacked dataset.
+
+    Parameters
+    ----------
+    datasets : tuple
+      Sequence of datasets to be stacked.
+
+    Returns
+    -------
+    Dataset
+    """
+    if __debug__:
+        target = sorted(datasets[0].fa.keys())
+        if not N.all([sorted(ds.fa.keys()) == target for ds in datasets]):
+            raise ValueError("Feature attributes collections of to be stacked "
+                             "datasets have varying attributes.")
+    # will puke if not equal number of samples
+    stacked_samp = N.concatenate([ds.samples for ds in datasets], axis=1)
+
+    stacked_fa = {}
+    for attr in datasets[0].fa:
+        stacked_fa[attr] = N.concatenate([ds.fa[attr].value for ds in datasets],
+                                         axis=1)
+    # create the dataset
+    merged = Dataset(stacked_samp, fa=stacked_fa)
+
+    for ds in datasets:
+        merged.sa.update(ds.sa)
+
+    return merged
+
+
 def _expand_attribute(attr, length, attr_name):
     """Helper function to expand attributes to a desired length.
 
