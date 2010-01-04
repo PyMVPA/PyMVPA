@@ -265,7 +265,10 @@ class MCNullDist(NullDist):
 
             # compute and store the measure of this permutation
             # assume it has `TransferError` interface
-            dist_samples.append(measure(*measure_args))
+            res = measure(*measure_args)
+            # XXX might need to check for non-Dataset results
+            res = res.samples
+            dist_samples.append(res)
 
         # store samples
         self.states.dist_samples = dist_samples = N.asarray(dist_samples)
