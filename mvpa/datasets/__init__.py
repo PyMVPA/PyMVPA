@@ -38,6 +38,7 @@ if __debug__:
 
 # nothing in here that works without the base class
 from mvpa.datasets.base import Dataset, dataset
+from mvpa.base.dataset import hstack, vstack
 
 if __debug__:
     debug('INIT', 'mvpa.datasets end')
