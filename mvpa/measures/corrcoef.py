@@ -19,6 +19,7 @@ if externals.exists('scipy', raiseException=True):
     from scipy.stats import pearsonr
 
 from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.datasets.base import Dataset
 
 class CorrCoef(FeaturewiseDatasetMeasure):
     """`FeaturewiseDatasetMeasure` that performs correlation with labels
@@ -71,4 +72,4 @@ class CorrCoef(FeaturewiseDatasetMeasure):
                     corrv = pvalue_index
             result[ifeature] = corrv
 
-        return result
+        return Dataset(result[N.newaxis])
