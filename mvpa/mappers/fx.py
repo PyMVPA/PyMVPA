@@ -262,6 +262,11 @@ def absolute_features():
     return FxMapper('features', N.absolute, attrfx=None)
 
 
+def sumofabs_sample():
+    return FxMapper('samples', lambda x: N.abs(x).sum())
+
+def maxofabs_sample():
+    return FxMapper('samples', lambda x: N.abs(x).max())
 #
 # Utility functions
 #
