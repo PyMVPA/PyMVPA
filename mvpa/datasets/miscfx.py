@@ -383,7 +383,7 @@ def get_nsamples_per_attr(dataset, attr):
 
 @datasetmethod
 def get_samples_by_attr(dataset, attr, values, sort=True):
-    """Return indecies of samples given a list of attributes
+    """Return indices of samples given a list of attributes
     """
 
     if not isSequenceType(values) \
