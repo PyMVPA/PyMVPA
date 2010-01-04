@@ -15,6 +15,7 @@ from numpy.testing import assert_array_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
+from mvpa.base.externals import versions
 from mvpa.base.types import is_datasetlike
 from mvpa.base.dataset import DatasetError
 from mvpa.mappers.flatten import mask_mapper
@@ -639,6 +640,13 @@ def test_repr():
     ok_(repr(eval(ds_repr)) == ds_repr)
 
 
+def is_bsr(x):
+    """Helper function to check if instance is bsr_matrix if such is
+    avail at all
+    """
+    import scipy.sparse as sparse
+    return hasattr(sparse, 'bsr_matrix') and isinstance(s, sparse.bsr_matrix)
+
 def test_other_samples_dtypes():
     import scipy.sparse as sparse
     dshape = (4, 3)
@@ -648,12 +656,14 @@ def test_other_samples_dtypes():
               N.arange(N.prod(dshape)).reshape(dshape).view(myarray),
               N.matrix(N.arange(N.prod(dshape)).reshape(dshape)),
               sparse.csc_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
-              sparse.csr_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
+              sparse.csr_matrix(N.arange(N.prod(dshape)).reshape(dshape))]
+    if hasattr(sparse, 'bsr_matrix'):
+        stypes += [
               # BSR cannot be sliced, but is more efficient for sparse
               # arithmetic operations than CSC pr CSR
               sparse.bsr_matrix(N.arange(N.prod(dshape)).reshape(dshape))]
               # LIL and COO are best for constructing matrices, not for
-              # doing somthing with them
+              # doing something with them
               #sparse.lil_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
               #sparse.coo_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
               # DOK doesn't allow duplicates and is bad at array-like slicing
@@ -681,8 +691,10 @@ def test_other_samples_dtypes():
 
         # select subset and see what happens
         # bsr type doesn't support first axis slicing
-        if isinstance(s, sparse.bsr_matrix):
+        if is_bsr(s):
             assert_raises(NotImplementedError, ds.__getitem__, [0])
+        elif versions['scipy'] <= '0.6.0' and sparse.isspmatrix(ds.samples):
+            assert_raises(IndexError, ds.__getitem__, [0])
         else:
             sel = ds[1:3]
             assert_equal(sel.shape, (2, dshape[1]))
@@ -694,9 +706,11 @@ def test_other_samples_dtypes():
                 assert_array_equal(sel.samples[1],
                                    ds.samples[2])
 
-       # feature selection
-        if isinstance(s, sparse.bsr_matrix):
+        # feature selection
+        if is_bsr(s):
             assert_raises(NotImplementedError, ds.__getitem__, (slice(None), 0))
+        elif versions['scipy'] <= '0.6.0' and sparse.isspmatrix(ds.samples):
+            assert_raises(IndexError, ds.__getitem__, (slice(None), 0))
         else:
             sel = ds[:, 1:3]
             assert_equal(sel.shape, (dshape[0], 2))
