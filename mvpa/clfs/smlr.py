@@ -19,6 +19,7 @@ from mvpa.misc.exceptions import ConvergenceError
 from mvpa.misc.param import Parameter
 from mvpa.misc.state import StateVariable
 from mvpa.misc.transformers import SecondAxisMaxOfAbs
+from mvpa.datasets.base import Dataset
 
 
 _DEFAULT_IMPLEMENTATION = "Python"
@@ -135,7 +136,7 @@ class SMLR(Classifier):
             self.implementation = 'Python'
 
         # pylint friendly initializations
-        self.__ulabels = None
+        self._ulabels = None
         """Unigue labels from the training set."""
         self.__weights_all = None
         """Contains all weights including bias values"""
@@ -294,10 +295,10 @@ class SMLR(Classifier):
         # Process the labels to turn into 1 of N encoding
         uniquelabels = dataset.sa['labels'].unique
         labels = _label2oneofm(dataset.sa.labels, uniquelabels)
-        self.__ulabels = uniquelabels.copy()
+        self._ulabels = uniquelabels.copy()
 
         Y = labels
-        M = len(self.__ulabels)
+        M = len(self._ulabels)
 
         # get the dataset information into easy vars
         X = dataset.samples
@@ -453,7 +454,7 @@ class SMLR(Classifier):
 
         debug('SMLR_', "Start nonzero: %d; Finish nonzero: %d" % \
               ((weights!=0).sum(), (new_weights!=0).sum()))
-        
+
         return new_weights
 
 
@@ -495,7 +496,7 @@ class SMLR(Classifier):
         self.states.values = values
 
         # generate predictions
-        predictions = N.asarray([self.__ulabels[N.argmax(vals)]
+        predictions = N.asarray([self._ulabels[N.argmax(vals)]
                                  for vals in values])
         # no need to assign state variable here -- would be done
         # in Classifier._postpredict anyway
@@ -506,7 +507,6 @@ class SMLR(Classifier):
 
     def getSensitivityAnalyzer(self, **kwargs):
         """Returns a sensitivity analyzer for SMLR."""
-        kwargs.setdefault('combiner', SecondAxisMaxOfAbs)
         return SMLRWeights(self, **kwargs)
 
 
@@ -537,19 +537,9 @@ class SMLRWeights(Sensitivity):
         SMLR always has weights available, so nothing has to be computed here.
         """
         clf = self.clf
-        weights = clf.weights
-        # XXX: MH: The following warning is inappropriate. In almost all cases
-        # SMLR will return more than one weight per feature. Even in the case of
-        # binary problem it will fit both weights by default. So unless you
-        # specify fit_all_weights=False manually this warning is always there.
-        # To much annoyance IMHO. I moved this information into the docstring,
-        # as there is no technical problem here, as FeaturewiseDatasetMeasure
-        # by default applies a combiner -- just that people should know...
-        # PLEASE ACKNOWLEDGE AND REMOVE
-        #if weights.shape[1] != 1:
-        #    warning("You are estimating sensitivity for SMLR %s with multiple"
-        #            " sensitivities available %s. Make sure that it is what you"
-        #            " intended to do" % (self, weights.shape) )
+        # transpose to have the number of features on the second axis
+        # (as usual)
+        weights = clf.weights.T
 
         if clf.params.has_bias:
             self.states.biases = clf.biases
@@ -557,9 +547,10 @@ class SMLRWeights(Sensitivity):
         if __debug__:
             debug('SMLR',
                   "Extracting weights for %d-class SMLR" %
-                  (weights.shape[1]+1) +
+                  (len(weights) + 1) +
                   "Result: min=%f max=%f" %\
                   (N.min(weights), N.max(weights)))
 
-        return weights
-
+        # limit the labels to the number of sensitivity sets, to deal
+        # with the case of `fit_all_weights=False`
+        return Dataset(weights, sa={'labels': clf._ulabels[:len(weights)]})
