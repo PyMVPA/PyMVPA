@@ -16,7 +16,7 @@ from mvpa.clfs.meta import SplitClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.misc.attrmap import AttributeMap
-
+from mvpa.mappers.fx import mean_sample
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
 from tests_warehouse import *
@@ -44,8 +44,9 @@ class RegressionsTests(unittest.TestCase):
         cve = CrossValidatedTransferError(
             TransferError(regr, CorrErrorFx()),
             splitter=NFoldSplitter(),
+            mapper=mean_sample(),
             enable_states=['training_confusion', 'confusion'])
-        corr = cve(ds)
+        corr = cve(ds).samples.squeeze()
 
         self.failUnless(corr == cve.states.confusion.stats['CCe'])
 

@@ -775,9 +775,10 @@ class ClassifiersTests(unittest.TestCase):
             cv = CrossValidatedTransferError(
                 TransferError(clf),
                 OddEvenSplitter(),
+                mapper=mean_sample(),
                 enable_states=['confusion', 'training_confusion'])
 
-            error = cv(ds)
+            error = cv(ds).samples.squeeze()
 
             nlabels = len(ds.uniquelabels)
             if nlabels == 2:
