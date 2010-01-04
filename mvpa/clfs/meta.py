@@ -1170,7 +1170,6 @@ class SplitClassifier(CombinedClassifier):
           combiner
             If not provided, FirstAxisMean is assumed
         """
-        kwargs.setdefault('combiner', FirstAxisMean)
         return BoostedClassifierSensitivityAnalyzer(
                 self,
                 analyzer=self.__clf.getSensitivityAnalyzer(**slave_kwargs),
