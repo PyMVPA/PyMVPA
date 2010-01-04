@@ -64,7 +64,6 @@ def collectTestSuites():
         'test_ifs',
 ## broken        'test_datameasure',
         'test_perturbsensana',
-        'test_splitsensana',
         # And the suite (all-in-1)
         'test_suite',
         ]

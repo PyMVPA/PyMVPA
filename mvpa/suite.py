@@ -100,7 +100,6 @@ from mvpa.measures.irelief import *
 from mvpa.measures.base import *
 from mvpa.measures.noiseperturbation import *
 from mvpa.measures.searchlight import *
-from mvpa.measures.splitmeasure import *
 from mvpa.measures.corrstability import *
 
 from mvpa.support.copy import *
