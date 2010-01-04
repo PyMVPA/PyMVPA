@@ -16,6 +16,7 @@ import copy
 from mvpa.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection, \
         SampleAttribute, FeatureAttribute, DatasetAttribute
+from mvpa.base.types import is_datasetlike
 
 if __debug__:
     from mvpa.base import debug
@@ -553,6 +554,10 @@ def vstack(datasets):
     -------
     Dataset
     """
+    # fall back to numpy if it is not a dataset
+    if not is_datasetlike(datasets[0]):
+        return Dataset(N.vstack(datasets))
+
     if __debug__:
         target = sorted(datasets[0].sa.keys())
         if not N.all([sorted(ds.sa.keys()) == target for ds in datasets]):
@@ -593,6 +598,12 @@ def hstack(datasets):
     -------
     Dataset
     """
+    # fall back to numpy if it is not a dataset
+    if not is_datasetlike(datasets[0]):
+        # we might get a list of 1Ds that would yield wrong results when
+        # turned into a dict (would run along samples-axis)
+        return Dataset(N.atleast_2d(N.hstack(datasets)))
+
     if __debug__:
         target = sorted(datasets[0].fa.keys())
         if not N.all([sorted(ds.fa.keys()) == target for ds in datasets]):
