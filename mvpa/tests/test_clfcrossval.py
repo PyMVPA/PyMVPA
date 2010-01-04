@@ -44,7 +44,7 @@ class CrossValidationTests(unittest.TestCase):
                                'samples_error'])
 
         results = cv(data)
-        self.failUnless( results < 0.2 and results >= 0.0 )
+        self.failUnless((results.samples < 0.2).all() and (results.samples >= 0.0).all())
 
         # TODO: test accessibility of {training_,}confusion{,s} of
         # CrossValidatedTransferError
@@ -68,9 +68,8 @@ class CrossValidationTests(unittest.TestCase):
 
         # must return a scalar value
         result = cv(data)
-
         # must be perfect
-        self.failUnless( result < 0.05 )
+        self.failUnless((result.samples < 0.05).all())
 
         # do crossval with permuted regressors
         cv = CrossValidatedTransferError(transerror,

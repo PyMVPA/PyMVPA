@@ -10,9 +10,12 @@
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N
+
 from mvpa.support.copy import deepcopy
 
 from mvpa.measures.base import DatasetMeasure
+from mvpa.datasets.base import Dataset
 from mvpa.datasets.splitters import NoneSplitter
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable, Harvestable
@@ -53,7 +56,6 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
     def __init__(self,
                  transerror,
                  splitter=None,
-                 combiner='mean',
                  expose_testdataset=False,
                  harvest_attribs=None,
                  copy_attribs='copy',
@@ -70,10 +72,6 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             dataset is used to generate predictions with the (trained)
             classifier. If `None` (default) an instance of
             :class:`~mvpa.datasets.splitters.NoneSplitter` is used.
-          combiner: Functor | 'mean'
-            Used to aggregate the error values of all cross-validation
-            folds. If 'mean' (default) the grand mean of the transfer
-            errors is computed.
           expose_testdataset: bool
            In the proper pipeline, classifier must not know anything
            about testing data, but in some cases it might lead only
@@ -95,11 +93,6 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             self.__splitter = NoneSplitter()
         else:
             self.__splitter = splitter
-
-        if combiner == 'mean':
-            self.__combiner = GrandMean
-        else:
-            self.__combiner = combiner
 
         self.__transerror = transerror
         self.__expose_testdataset = expose_testdataset
@@ -240,12 +233,11 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         except:
             pass
 
-        return self.__combiner(results)
+        results = Dataset(results, sa={'cv_fold': N.arange(len(results))})
+        return results
 
 
     splitter = property(fget=lambda self:self.__splitter,
                         doc="Access to the Splitter instance.")
     transerror = property(fget=lambda self:self.__transerror,
                         doc="Access to the TransferError instance.")
-    combiner = property(fget=lambda self:self.__combiner,
-                        doc="Access to the configured combiner.")
