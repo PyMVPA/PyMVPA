@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Helper to map literal attribute to numerical ones (and back)"""
 
+
+from operator import isSequenceType
 import numpy as N
 
 class AttributeMap(object):
@@ -172,4 +174,7 @@ class AttributeMap(object):
         if self._lmap is None:
             self._lmap = dict([(v, k) for k, v in self._nmap.iteritems()])
         lmap = self._lmap
-        return N.asanyarray([lmap[k] for k in attr])
+        if isSequenceType(attr) and not isinstance(attr, str):
+            return N.asanyarray([lmap[k] for k in attr])
+        else:
+            return lmap[attr]
