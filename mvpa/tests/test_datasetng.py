@@ -645,7 +645,7 @@ def is_bsr(x):
     avail at all
     """
     import scipy.sparse as sparse
-    return hasattr(sparse, 'bsr_matrix') and isinstance(s, sparse.bsr_matrix)
+    return hasattr(sparse, 'bsr_matrix') and isinstance(x, sparse.bsr_matrix)
 
 def test_other_samples_dtypes():
     import scipy.sparse as sparse
