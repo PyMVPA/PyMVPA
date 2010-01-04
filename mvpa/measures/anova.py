@@ -91,7 +91,7 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
         # without any sane backtrace
         f[N.isnan(f)] = 0
 
-        return f
+        return Dataset(f[N.newaxis])
 
         # XXX maybe also compute p-values?
         #prob = scipy.stats.fprob(dfbn, dfwn, f)
@@ -110,13 +110,15 @@ class CompoundOneWayAnova(OneWayAnova):
         orig_labels = dataset.labels
         labels = orig_labels.copy()
 
-        results = []
+        results = None
         for ul in dataset.sa['labels'].unique:
             labels[orig_labels == ul] = 1
             labels[orig_labels != ul] = 2
-            results.append(OneWayAnova._call(self, dataset, labels))
+            f_ds = OneWayAnova._call(self, dataset, labels)
+            if results is None:
+                results = f_ds
+            else:
+                results.append(f_ds)
 
-        if len(results) == 1:
-            return N.array(results)
-        else:
-            return Dataset(results, sa={'labels': dataset.sa['labels'].unique})
+        results.sa['labels'] = dataset.sa['labels'].unique
+        return results
