@@ -26,6 +26,7 @@ from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.mappers.flatten import mask_mapper
 from mvpa.misc.attrmap import AttributeMap
+from mvpa.mappers.fx import mean_sample
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
@@ -148,7 +149,8 @@ class ClassifiersTests(unittest.TestCase):
     def testClassifierGeneralization(self, clf):
         """Simple test if classifiers can generalize ok on simple data
         """
-        te = CrossValidatedTransferError(TransferError(clf), NFoldSplitter())
+        te = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
+                                         mapper=mean_sample())
         nclasses = 2 * (1 + int('multiclass' in clf.__tags__))
         if nclasses > 2 and 'on 5%(' in clf.descr:
             # skip those since they are barely applicable/testable here
@@ -156,7 +158,7 @@ class ClassifiersTests(unittest.TestCase):
 
         ds = datasets['uni%dmedium' % nclasses]
         try:
-            cve = te(ds)
+            cve = te(ds).samples.squeeze()
         except Exception, e:
             self.fail("Failed with %s" % e)
         if cfg.getboolean('tests', 'labile', default='yes'):
@@ -242,8 +244,9 @@ class ClassifiersTests(unittest.TestCase):
         cv = CrossValidatedTransferError(
             TransferError(clf2),
             NFoldSplitter(),
+            mapper=mean_sample(),
             enable_states=['confusion', 'training_confusion'])
-        cverror = cv(ds)
+        cverror = cv(ds).samples.squeeze()
         tr_cverror = cv.states.training_confusion.error
 
         self.failUnlessEqual(error, cverror,
@@ -295,8 +298,9 @@ class ClassifiersTests(unittest.TestCase):
         cv = CrossValidatedTransferError(
             TransferError(clf2),
             NFoldSplitter(),
+            mapper=mean_sample(),
             enable_states=['confusion', 'training_confusion'])
-        cverror = cv(ds)
+        cverror = cv(ds).samples.squeeze()
 
         self.failUnless(abs(error-cverror)<0.01,
                 msg="We should get the same error using split classifier as"
@@ -459,8 +463,9 @@ class ClassifiersTests(unittest.TestCase):
         cv = CrossValidatedTransferError(
             TransferError(tclf),
             OddEvenSplitter(),
+            mapper=mean_sample(),
             enable_states=['confusion', 'training_confusion'])
-        cverror = cv(ds)
+        cverror = cv(ds).samples.squeeze()
         try:
             rtclf = repr(tclf)
         except:
