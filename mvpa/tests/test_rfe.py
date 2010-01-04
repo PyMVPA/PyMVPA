@@ -13,7 +13,7 @@ from sets import Set
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.datasets.base import Dataset
-from mvpa.mappers.fx import maxofabs_sample
+from mvpa.mappers.fx import maxofabs_sample, mean_sample
 from mvpa.measures.base import FeaturewiseDatasetMeasure
 from mvpa.featsel.rfe import RFE
 from mvpa.featsel.base import \
@@ -386,11 +386,12 @@ class RFETests(unittest.TestCase):
         cv = CrossValidatedTransferError(
             TransferError(clf),
             NFoldSplitter(cvtype=1),
+            mapper=mean_sample(),
             enable_states=['confusion'],
             expose_testdataset=True)
         #cv = SplitClassifier(clf)
         try:
-            error = cv(dataset)
+            error = cv(dataset).samples.squeeze()
         except Exception, e:
             self.fail('CrossValidation cannot handle classifier with RFE '
                       'feature selection. Got exception: %s' % e)

@@ -15,6 +15,7 @@ set and include important features successively.
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N
 from mvpa.support.copy import copy
 
 from mvpa.featsel.base import FeatureSelection
@@ -62,7 +63,8 @@ class IFS(FeatureSelection):
 
         :Parameters:
             data_measure : DatasetMeasure
-                Computed for each candidate feature selection.
+                Computed for each candidate feature selection. The measure has
+                to compute a scalar value.
             transfer_error : TransferError
                 Compute against a test dataset for each incremental feature
                 set.
@@ -133,6 +135,7 @@ class IFS(FeatureSelection):
                 # compute data measure on this feature set
                 measures.append(self.__data_measure(tmp_dataset))
 
+            measures = [N.array(m) for m in measures]
             # Select promissing feature candidates (staging)
             # IDs are only applicable to the current set of feature candidates
             tmp_staging_ids = self.__feature_selector(measures)
