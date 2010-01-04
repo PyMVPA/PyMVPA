@@ -23,7 +23,6 @@ from mvpa.base.dochelpers import handle_docstring, _rst, _rst_section, \
 
 from mvpa.clfs.base import Classifier
 from mvpa.misc.param import Parameter
-from mvpa.misc.transformers import SecondAxisSumOfAbs
 
 if __debug__:
     from mvpa.base import debug
@@ -305,7 +304,6 @@ class _SVM(Classifier):
         sana = self._KNOWN_SENSITIVITIES.get(self.params.kernel.__kernel_name__,
                                              None)
         if sana:
-            kwargs.setdefault('combiner', SecondAxisSumOfAbs)
             return sana(self, **kwargs)
         else:
             raise NotImplementedError, \
