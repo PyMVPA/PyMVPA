@@ -76,7 +76,9 @@ class LinearSVMWeights(Sensitivity):
                                          (svcoef < 0, lambda x: x*-1)] ):
                 # convert to array, and just take the meaningful dimension
                 c_ = c.A[0]
-                senses[ds_labels.index(svm_labels[i])] = \
+                # NOTE svm_labels are numerical; ds_labels are literal
+                senses[ds_labels.index(
+                            self.clf._attrmap.to_literal(svm_labels[i]))] = \
                                 (l(svcoef[:, c_] * svs[c_, :])).A[0]
             weights = N.array(senses)
         else:
