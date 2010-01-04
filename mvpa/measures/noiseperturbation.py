@@ -100,11 +100,15 @@ class NoisePerturbationSensitivity(FeaturewiseDatasetMeasure):
             dataset.samples[:, feature] = current_feature
 
             # difference from original datameasure is sensitivity
-            sens_map.append(perturbed_measure - orig_measure)
+            sens_map.append(perturbed_measure.samples - orig_measure.samples)
 
         if __debug__:
             debug('PSA', '')
 
-        # transpose to have the feature axis second -- this only works of the
-        # data measure returns a scalar value.
-        return Dataset(N.transpose(sens_map))
+        # turn into an array and get rid of unnecessary axes -- ideally yielding
+        # 2D array
+        sens_map = N.array(sens_map).squeeze()
+        # swap first to axis: we have nfeatures on first but want it as second
+        # in a dataset
+        sens_map = N.swapaxes(sens_map, 0, 1)
+        return Dataset(sens_map)
