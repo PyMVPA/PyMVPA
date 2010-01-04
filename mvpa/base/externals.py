@@ -345,6 +345,8 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
            # 3318 corresponds to release 0.6.4
           'sg ge 0.6.4': "__check_shogun(3318)",
+           # 3377 corresponds to release 0.6.5
+          'sg ge 0.6.5': "__check_shogun(3377)",
           'hcluster': "import hcluster as __",
           'griddata': "__check_griddata()",
           'cPickle': "import cPickle as __",

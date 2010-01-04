@@ -18,11 +18,11 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.base import externals
+from mvpa.base.externals import exists
 from mvpa.kernels.base import Kernel
 from mvpa.misc.param import Parameter
 
-if externals.exists('shogun', raiseException=True):
+if exists('shogun', raiseException=True):
     import shogun.Kernel as sgk
     from shogun.Features import RealFeatures
 else:
@@ -73,12 +73,28 @@ class _BasicSGKernel(SGKernel):
     """
 
     __TODO__ = """
-
-    - normalizers: figure out destiny of normalizer -- might be a Parameter,
-      but then it must be a class, not instance -- what about parametrization?
-      So may be just a parameter to the constructor with parametrization arguments
-      if necessary, to be instantiated/applied upon _compute
+    - Think either normalizer_* should not become proper Parameter.
     """
+
+    def __init__(self, normalizer_cls=None, normalizer_args=None, **kwargs):
+        """
+        Parameters
+        ----------
+        normalizer_cls : sg.Kernel.CKernelNormalizer
+          Class to use as a normalizer for the kernel.  Will be instantiated
+          upon compute().  Only supported for shogun >= 0.6.5.
+        normalizer_args : None or list
+          If necessary, provide a list of arguments for the normalizer.
+        """
+        SGKernel.__init__(self, **kwargs)
+        if (normalizer_cls is not None) and (not exists('sg ge 0.6.5')):
+            raise ValueError, \
+               "Normalizer specification is supported only for sg >= 0.6.5. " \
+               "Please upgrade shogun python modular bindings."
+        self._normalizer_cls = normalizer_cls
+        if normalizer_args is None:
+            normalizer_args = []
+        self._normalizer_args = normalizer_args
 
     def _compute(self, d1, d2):
         d1 = SGKernel._data2features(d1)
@@ -89,15 +105,10 @@ class _BasicSGKernel(SGKernel):
             order = self.params._getNames()
         kvals = [self.params[kp].value for kp in order]
         self._k = self.__kernel_cls__(d1, d2, *kvals)
-        
-        # XXX: Not sure if this is always the best thing to do - some kernels
-        # by default normalize with specific methods automatically, which
-        # may cause issues in CV etc.  eg PolyKernel -- SG
-        # YOH XXX: So -- it should become a parameter.  Not sure but may be
-        #          we should expose normalizers in similar to kernels way and
-        #          make them also applicable to all kernels? (might not be
-        #          worth it?)
-        self._k.set_normalizer(sgk.IdentityKernelNormalizer())
+
+        if self._normalizer_cls:
+            self._k.set_normalizer(
+                self._normalizer_cls(*self._normalizer_args))
 
 
 class CustomSGKernel(_BasicSGKernel):
@@ -127,13 +138,23 @@ class LinearSGKernel(_BasicSGKernel):
     """A basic linear kernel computed via Shogun: K(a,b) = a*b.T"""
     __kernel_cls__ = sgk.LinearKernel
     __kernel_name__ = 'linear'
-        
+
+    def __init__(self, **kwargs):
+        # Necessary for proper docstring construction
+        _BasicSGKernel.__init__(self, **kwargs)
+
+
 class RbfSGKernel(_BasicSGKernel):
     """Radial basis function: K(a,b) = exp(-||a-b||**2/sigma)"""
     __kernel_cls__ = sgk.GaussianKernel
     __kernel_name__ = 'rbf'
     sigma = Parameter(1, doc="Width/division parameter for gaussian kernel")
-        
+
+    def __init__(self, **kwargs):
+        # Necessary for proper docstring construction
+        _BasicSGKernel.__init__(self, **kwargs)
+
+
 class PolySGKernel(_BasicSGKernel):
     """Polynomial kernel: K(a,b) = (a*b.T + c)**degree
     c is 1 if and only if 'inhomogenous' is True
@@ -144,7 +165,16 @@ class PolySGKernel(_BasicSGKernel):
     degree = Parameter(2, allowedtype=int, doc="Polynomial order of the kernel")
     inhomogenous = Parameter(True, allowedtype=bool,
                              doc="Whether +1 is added within the expression")
-    
+
+    if not exists('sg ge 0.6.5'):
+        use_normalization = Parameter(False, allowedtype=bool,
+                                      doc="Optional normalization")
+        __kp_order__ = __kp_order__ + ('use_normalization',)
+
+    def __init__(self, **kwargs):
+        # Necessary for proper docstring construction
+        _BasicSGKernel.__init__(self, **kwargs)
+
 class PrecomputedSGKernel(SGKernel):
     """A kernel which is precomputed from a numpy array or a Shogun kernel"""
     # This class can't be handled directly by BasicSGKernel because it never
@@ -172,7 +202,16 @@ class PrecomputedSGKernel(SGKernel):
 
         SGKernel.__init__(self, **kwargs)
 
-        self._k = sgk.CustomKernel(k)
+        if exists('sg ge 0.6.5'):
+            self._k = sgk.CustomKernel(k)
+        else:
+            raise RuntimeError, \
+                  "Cannot create PrecomputedSGKernel using current version" \
+                  " of shogun -- please upgrade"
+            # Following lines are not effective since we should have
+            # also provided data for CK in those earlier versions
+            #self._k = sgk.CustomKernel()
+            #self._k.set_full_kernel_matrix_from_full(k)
 
     def compute(self, *args, **kwargs):
         """'Compute' `PrecomputedSGKernel -- no actual "computation" is done

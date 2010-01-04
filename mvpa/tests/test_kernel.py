@@ -10,6 +10,7 @@
 
 import unittest
 import numpy as N
+from mvpa.base.externals import exists
 from mvpa.datasets import Dataset
 from mvpa.clfs.distance import squared_euclidean_distance, \
      pnorm_w, pnorm_w_python
@@ -120,12 +121,13 @@ class KernelTests(unittest.TestCase):
         def testSgConversions(self):
             nk = PrecomputedKernel(matrix=N.random.randn(50, 50))
             nk.compute()
-            sk = nk.as_sg()
-            sk.compute()
-            # CustomKernels interally store as float32 ??
-            self.failUnless((nk._k.astype('float32') == \
-                             sk.as_raw_np().astype('float32')).all(),
-                            'Failure converting arrays between NP as SG')
+            if exists('sg ge 0.6.5'):
+                sk = nk.as_sg()
+                sk.compute()
+                # CustomKernels interally store as float32 ??
+                self.failUnless((nk._k.astype('float32') == \
+                                 sk.as_raw_np().astype('float32')).all(),
+                                'Failure converting arrays between NP as SG')
             
         def testLinearSG(self):
             d1 = N.random.randn(105, 32)
@@ -173,9 +175,12 @@ class KernelTests(unittest.TestCase):
             lk = sgK.LinearSGKernel()
             cl = sgK.CustomSGKernel(sgK.sgk.LinearKernel)
             poly = sgK.PolySGKernel()
-            custom = sgK.CustomSGKernel(sgK.sgk.PolyKernel, 
-                                        kernel_params=[('order',2),
-                                                       ('inhomogenous', True)])
+            poly_params = [('order',2),
+                           ('inhomogenous', True)]
+            if not exists('sg ge 0.6.5'):
+                poly_params += [ ('use_normalization', False) ]
+            custom = sgK.CustomSGKernel(sgK.sgk.PolyKernel,
+                                        kernel_params=poly_params)
             d = N.random.randn(253, 52)
             lk.compute(d)
             cl.compute(d)
