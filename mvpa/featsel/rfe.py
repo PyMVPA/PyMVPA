@@ -219,6 +219,12 @@ class RFE(FeatureSelection):
             # Compute sensitivity map
             if self.__update_sensitivity or sensitivity == None:
                 sensitivity = self.__sensitivity_analyzer(wdataset)
+                if len(sensitivity) > 1:
+                    raise ValueError(
+                            "REF cannot handle multiple sensitivities at once. "
+                            "'%s' returned %i sensitivities."
+                            % (self.__sensitivity_analyzer.__class__.__name__,
+                               len(sensitivity)))
 
             if states.isEnabled("sensitivities"):
                 states.sensitivities.append(sensitivity)
