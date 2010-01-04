@@ -20,12 +20,14 @@ from mvpa.support.copy import deepcopy
 import numpy as N
 
 from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.datasets.base import Dataset
 
 
 class NoisePerturbationSensitivity(FeaturewiseDatasetMeasure):
-    """This is a `FeaturewiseDatasetMeasure` that uses a scalar
-    `DatasetMeasure` and selective noise perturbation to compute a sensitivity
-    map.
+    """Sensitivity based on the effect of noise perturbation on a measure.
+
+    This is a `FeaturewiseDatasetMeasure` that uses a scalar `DatasetMeasure`
+    and selective noise perturbation to compute a sensitivity map.
 
     First the scalar `DatasetMeasure` computed using the original dataset. Next
     the data measure is computed multiple times each with a single feature in
@@ -34,19 +36,22 @@ class NoisePerturbationSensitivity(FeaturewiseDatasetMeasure):
     perturbed feature. Large differences are treated as an indicator of a
     feature having great impact on the scalar `DatasetMeasure`.
 
+    Note
+    ----
     The computed sensitivity map might have positive and negative values!
     """
     def __init__(self, datameasure,
                  noise=N.random.normal):
-        """Cheap initialization.
-
+        """
         Parameters
-          datameasure: `Datameasure` that is used to quantify the effect of
-                         noise perturbation.
-          noise: Functor to generate noise. The noise generator has to return
-                 an 1d array of n values when called the `size=n` keyword
-                 argument. This is the default interface of the random number
-                 generators in NumPy's `random` module.
+        ----------
+        datameasure : `DatasetMeasure`
+          Used to quantify the effect of noise perturbation.
+        noise: Callable
+          Used to generate noise. The noise generator has to return an 1d array
+          of n values when called the `size=n` keyword argument. This is the
+          default interface of the random number generators in NumPy's
+          `random` module.
         """
         # init base classes first
         FeaturewiseDatasetMeasure.__init__(self)
@@ -56,19 +61,18 @@ class NoisePerturbationSensitivity(FeaturewiseDatasetMeasure):
 
 
     def _call(self, dataset):
-        """Compute the sensitivity map.
-
-        Returns a 1d array of sensitivities for all features in `dataset`.
-        """
         # first cast to floating point dtype, because noise is most likely
         # floating point as well and '+=' on int would not do the right thing
-        # XXX should we already deepcopy here to keep orig dtype?
         if not N.issubdtype(dataset.samples.dtype, N.float):
-            dataset.setSamplesDType('float32')
+            ds = dataset.copy(deep=False)
+            ds.samples = dataset.samples.astype('float32')
+            dataset = ds
 
         if __debug__:
             nfeatures = dataset.nfeatures
 
+        # using a list here, to be able to handle output of unknown
+        # dimensionality
         sens_map = []
 
         # compute the datameasure on the original dataset
@@ -83,14 +87,17 @@ class NoisePerturbationSensitivity(FeaturewiseDatasetMeasure):
                        feature+1,
                        float(feature+1)/nfeatures*100,), cr=True)
 
-            # make a copy of the dataset to preserve data integrity
-            wdata = deepcopy(dataset)
+            # store current feature to restore it later on
+            current_feature = dataset.samples[:, feature].copy()
 
             # add noise to current feature
-            wdata.samples[:, feature] += self.__noise(size=wdata.nsamples)
+            dataset.samples[:, feature] += self.__noise(size=len(dataset))
 
             # compute the datameasure on the perturbed dataset
-            perturbed_measure = self.__datameasure(wdata)
+            perturbed_measure = self.__datameasure(dataset)
+
+            # restore the current feature
+            dataset.samples[:, feature] = current_feature
 
             # difference from original datameasure is sensitivity
             sens_map.append(perturbed_measure - orig_measure)
@@ -98,5 +105,6 @@ class NoisePerturbationSensitivity(FeaturewiseDatasetMeasure):
         if __debug__:
             debug('PSA', '')
 
-        return N.array(sens_map)
-
+        # transpose to have the feature axis second -- this only works of the
+        # data measure returns a scalar value.
+        return Dataset(N.transpose(sens_map))
