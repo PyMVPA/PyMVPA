@@ -25,7 +25,7 @@ from mvpa.kernels.np import LinearKernel, SquaredExponentialKernel
 # Helpers
 from mvpa.base import externals, cfg
 from mvpa.measures.anova import OneWayAnova
-from mvpa.misc.transformers import Absolute
+from mvpa.mappers.fx import absolute_features, maxofabs_sample
 from mvpa.clfs.smlr import SMLRWeights
 from mvpa.featsel.helpers import FractionTailSelector, \
     FixedNElementTailSelector, RangeElementSelector
@@ -301,7 +301,8 @@ clfswh += \
     FeatureSelectionClassifier(
         kNN(),
         SensitivityBasedFeatureSelection(
-           SMLRWeights(SMLR(lm=1.0, implementation="C")),
+           SMLRWeights(SMLR(lm=1.0, implementation="C"),
+                       mapper=maxofabs_sample()),
            RangeElementSelector(mode='select')),
         descr="kNN on SMLR(lm=1) non-0")
 
@@ -363,7 +364,8 @@ if len(clfswh['linear', 'svm']) > 0:
          FeatureSelectionClassifier(
              linearSVMC.clone(),
              SensitivityBasedFeatureSelection(
-                SMLRWeights(SMLR(lm=0.1, implementation="C")),
+                SMLRWeights(SMLR(lm=0.1, implementation="C"),
+                            mapper=maxofabs_sample()),
                 RangeElementSelector(mode='select')),
              descr="LinSVM on SMLR(lm=0.1) non-0")
 
@@ -372,7 +374,8 @@ if len(clfswh['linear', 'svm']) > 0:
         FeatureSelectionClassifier(
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
-                SMLRWeights(SMLR(lm=1.0, implementation="C")),
+                SMLRWeights(SMLR(lm=1.0, implementation="C"),
+                            mapper=maxofabs_sample()),
                 RangeElementSelector(mode='select')),
             descr="LinSVM on SMLR(lm=1) non-0")
 
@@ -382,7 +385,8 @@ if len(clfswh['linear', 'svm']) > 0:
         FeatureSelectionClassifier(
             RbfCSVMC(),
             SensitivityBasedFeatureSelection(
-               SMLRWeights(SMLR(lm=1.0, implementation="C")),
+               SMLRWeights(SMLR(lm=1.0, implementation="C"),
+                           mapper=maxofabs_sample()),
                RangeElementSelector(mode='select')),
             descr="RbfSVM on SMLR(lm=1) non-0")
 
@@ -406,7 +410,7 @@ if len(clfswh['linear', 'svm']) > 0:
         FeatureSelectionClassifier(
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
-               linearSVMC.getSensitivityAnalyzer(transformer=Absolute),
+               linearSVMC.getSensitivityAnalyzer(mapper=maxofabs_sample()),
                FractionTailSelector(0.05, mode='select', tail='upper')),
             descr="LinSVM on 5%(SVM)")
 
@@ -414,7 +418,7 @@ if len(clfswh['linear', 'svm']) > 0:
         FeatureSelectionClassifier(
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
-               linearSVMC.getSensitivityAnalyzer(transformer=Absolute),
+               linearSVMC.getSensitivityAnalyzer(mapper=maxofabs_sample()),
                FixedNElementTailSelector(50, mode='select', tail='upper')),
             descr="LinSVM on 50(SVM)")
 
@@ -483,7 +487,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(),
     #    feature_selection = RFE(             # on features selected via RFE
     #        sensitivity_analyzer=\
-    #            rfesvm.getSensitivityAnalyzer(transformer=Absolute),
+    #            rfesvm.getSensitivityAnalyzer(mapper=absolute_features()),
     #        transfer_error=TransferError(rfesvm),
     #        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
     #        feature_selector=FractionTailSelector(
@@ -500,7 +504,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(),
     #    feature_selection = RFE(             # on features selected via RFE
     #        sensitivity_analyzer=\
-    #            rfesvm.getSensitivityAnalyzer(transformer=Absolute),
+    #            rfesvm.getSensitivityAnalyzer(mapper=absolute_features()),
     #        transfer_error=TransferError(rfesvm),
     #        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
     #        feature_selector=FractionTailSelector(
