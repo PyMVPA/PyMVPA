@@ -16,6 +16,7 @@ from mvpa.base import warning
 from mvpa.misc.state import StateVariable
 from mvpa.misc.param import Parameter
 from mvpa.measures.base import Sensitivity
+from mvpa.datasets.base import Dataset
 
 if __debug__:
     from mvpa.base import debug
@@ -88,7 +89,7 @@ class LinearSVMWeights(Sensitivity):
             # weighted impact of SVs on decision, then for each feature
             # take mean across SVs to get a single weight value
             # per feature
-            weights = svcoef * svs
+            weights = (svcoef * svs).A
 
         if __debug__:
             debug('SVM',
@@ -98,6 +99,11 @@ class LinearSVMWeights(Sensitivity):
                   (svcoef.shape, svs.shape, rhos) + \
                   " Result: min=%f max=%f" % (N.min(weights), N.max(weights)))
 
-        return N.asarray(weights.T)
+        # NOTE: `weights` is already and always 2D
+        ds = Dataset(weights)
+        # add labels if split weights were computed
+        if self.params.split_weights:
+            ds.sa['labels'] = dataset.sa['labels'].unique
+        return ds
 
     _customizeDocInherit = True
