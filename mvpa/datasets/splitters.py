@@ -172,9 +172,11 @@ class Splitter(object):
 
 
     def _getSplitConfig(self, uniqueattr):
-        """Each subclass has to implement this method. It gets a sequence with
-        the unique attribte ids of a dataset and has to return a list of lists
-        containing attribute ids to split into the second dataset.
+        """Return list with samples of 2nd dataset in a split.
+
+        Each subclass has to implement this method. It gets a sequence with
+        the unique attribute ids of a dataset and has to return a list of lists
+        containing sample ids to split into the second dataset.
         """
         raise NotImplementedError
 
@@ -401,8 +403,7 @@ class NoneSplitter(Splitter):
     _known_modes = ['first', 'second']
 
     def __init__(self, mode='second', **kwargs):
-        """Cheap init -- nothing special
-
+        """
         :Parameters:
           mode
             Either 'first' or 'second' (default) -- which output dataset
@@ -441,8 +442,7 @@ class OddEvenSplitter(Splitter):
     The splitter yields to splits: first (odd, even) and second (even, odd).
     """
     def __init__(self, usevalues=False, **kwargs):
-        """Cheap init.
-
+        """
         :Parameters:
           usevalues: bool
             If True the values of the attribute used for splitting will be
@@ -461,8 +461,11 @@ class OddEvenSplitter(Splitter):
 
 
     def _getSplitConfig(self, uniqueattrs):
-        """Huka chaka!
-           YOH: LOL XXX
+        """
+        Returns
+        -------
+        list of tuples (None, list of int)
+          2 items: odd samples into 1st split
         """
         if self.__usevalues:
             return [(None, uniqueattrs[(uniqueattrs % 2) == True]),
@@ -486,9 +489,8 @@ class HalfSplitter(Splitter):
     The splitter yields to splits: first (1st half, 2nd half) and second
     (2nd half, 1st half).
     """
+
     def __init__(self, **kwargs):
-        """Cheap init.
-        """
         Splitter.__init__(self, **(kwargs))
 
 
@@ -496,7 +498,11 @@ class HalfSplitter(Splitter):
 
 
     def _getSplitConfig(self, uniqueattrs):
-        """Huka chaka!
+        """
+        Returns
+        -------
+        list of tuples (None, list of int)
+          2 items: first half of samples into 1st split
         """
         return [(None, uniqueattrs[:len(uniqueattrs)/2]),
                 (None, uniqueattrs[len(uniqueattrs)/2:])]
@@ -534,7 +540,11 @@ class NGroupSplitter(Splitter):
 
 
     def _getSplitConfig(self, uniqueattrs):
-        """Huka chaka, wuka waka!
+        """
+        Returns
+        -------
+        list of tuples (None, list of int)
+          Indices for splitting
         """
 
         # make sure there are more of attributes than desired groups
@@ -650,7 +660,11 @@ class CustomSplitter(Splitter):
         CustomSplitter([(None, [0, 1, 2]), ([1,2], [3], [5, 6])])
     """
     def __init__(self, splitrule, **kwargs):
-        """Cheap init.
+        """
+        Parameters
+        ----------
+        splitrule : list of tuple
+          Custom splits to use
         """
         Splitter.__init__(self, **(kwargs))
 
@@ -661,7 +675,10 @@ class CustomSplitter(Splitter):
 
 
     def _getSplitConfig(self, uniqueattrs):
-        """Huka chaka!
+        """
+        Returns
+        -------
+        whatever was provided in splitrule argument
         """
         return self.__splitrule
 

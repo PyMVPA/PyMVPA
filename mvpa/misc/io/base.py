@@ -39,8 +39,6 @@ class DataReader(object):
     this information.
     """
     def __init__(self):
-        """Cheap init.
-        """
         self._props = {}
         self._data = None
 

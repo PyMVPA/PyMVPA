@@ -158,8 +158,6 @@ class Classifier(ClassWithCollections):
 
 
     def __init__(self, **kwargs):
-        """Cheap initialization.
-        """
         ClassWithCollections.__init__(self, **kwargs)
 
         # XXX

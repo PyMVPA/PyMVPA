@@ -116,8 +116,7 @@ class NullDist(ClassWithCollections):
     _ATTRIBUTE_COLLECTIONS = ['states']
 
     def __init__(self, tail='both', **kwargs):
-        """Cheap initialization.
-
+        """
         :Parameter:
           tail: str ('left', 'right', 'any', 'both')
             Which tail of the distribution to report. For 'any' and 'both'
