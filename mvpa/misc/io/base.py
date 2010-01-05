@@ -378,7 +378,7 @@ class SampleAttributes(ColumnData):
     """Read and write PyMVPA sample attribute definitions from and to text
     files.
     """
-    def __init__(self, source, literallabels=False, header=None):
+    def __init__(self, source, literallabels=True, header=None):
         """Read PyMVPA sample attributes from disk.
 
         :Parameters:
