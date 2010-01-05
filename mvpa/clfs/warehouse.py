@@ -342,8 +342,8 @@ if externals.exists('scipy'):
                    descr="GPR(kernel='sqexp')")
 
     # Add wrapped GPR as a classifier
-    #clfswh += RegressionAsClassifier(
-    #    GPR(kernel=LinearKernel()), descr="GPRC(kernel='linear')")
+    clfswh += RegressionAsClassifier(
+        GPR(kernel=LinearKernel()), descr="GPRC(kernel='linear')")
 
 # BLR
 from mvpa.clfs.blr import BLR

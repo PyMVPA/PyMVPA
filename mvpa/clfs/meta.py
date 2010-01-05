@@ -226,10 +226,12 @@ class ProxyClassifier(Classifier):
           Classifier to proxy, i.e. to use after decoration
         """
 
-        Classifier.__init__(self, **kwargs)
-
+        # Is done before parents __init__ since we need
+        # it for _setRetrainable called during __init__
         self.__clf = clf
         """Store the classifier to use."""
+
+        Classifier.__init__(self, **kwargs)
 
         # adhere to slave classifier capabilities
         # TODO: unittest
@@ -250,6 +252,17 @@ class ProxyClassifier(Classifier):
                  (self.__clf.summary().replace('\n', '\n |'))
         return s
 
+    def _setRetrainable(self, value, force=False):
+        # XXX Lazy implementation
+        self.clf._setRetrainable(value, force)
+        super(ProxyClassifier, self)._setRetrainable(value, force)
+        if value and not (self.states._items['retrained']
+                          is self.clf.states['retrained']):
+            if __debug__:
+                debug("CLFPRX",
+                      "Rebinding state variables from slave clf %s" % self.clf)
+            self.states._items['retrained'] = self.clf.states['retrained']
+            self.states._items['repredicted'] = self.clf.states['repredicted']
 
 
     def _train(self, dataset):
