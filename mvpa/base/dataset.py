@@ -492,7 +492,9 @@ class Dataset(object):
 
 
     def __str__(self):
-        return _str(self, "%dx%d" % self.shape, "%s" % self.samples.dtype)
+        return _str(self,
+                    'x'.join(["%s" % x for x in self.shape]),
+                    "%s" % self.samples.dtype)
 
 
     def __array__(self, dtype=None):
