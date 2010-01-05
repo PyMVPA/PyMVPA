@@ -234,6 +234,11 @@ def __check_rv_discrete_ppf():
 def __check_in_ipython():
     # figure out if ran within IPython
     if '__IPYTHON__' in globals()['__builtins__']:
+        try:
+            from IPython import Release
+            versions['ipython'] = SmartVersion(Release.version)
+        except:
+            pass
         return
     raise RuntimeError, "Not running in IPython session"
 
