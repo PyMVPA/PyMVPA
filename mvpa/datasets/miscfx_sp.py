@@ -28,7 +28,7 @@ if externals.exists('scipy', raiseException=True):
 
 
 @datasetmethod
-def detrend(dataset, perchunk=False, model='linear',
+def detrend(dataset, chunks=None, model='linear',
             polyord=None, opt_reg=None):
     """
     Given a dataset, detrend the data inplace either entirely
@@ -37,9 +37,12 @@ def detrend(dataset, perchunk=False, model='linear',
     :Parameters:
       dataset : Dataset
         dataset to operate on
-      perchunk : bool
-        either to operate on whole dataset at once or on each chunk
-        separately
+      chunks : str, None
+        If None, the whole dataset is detrended at once. Otherwise, the given
+        samples attribute (given by its name) is used to define chunks of the
+        dataset that are processed individually. In that case, all the samples
+        within a chunk should be in contiguous order and the chunks should be
+        sorted in order from low to high.
       model
         Type of detrending model to run.  If 'linear' or 'constant',
         scipy.signal.detrend is used to perform a linear or demeaning
@@ -51,7 +54,7 @@ def detrend(dataset, perchunk=False, model='linear',
         value.  For example, 3 will remove 0th, 1st, 2nd, and 3rd order
         polynomials from the data.  N.B.: The 0th polynomial is the
         baseline shift, the 1st is the linear trend.
-        If you specify a single int and perchunk is True, then this value
+        If you specify a single int and `chunks` is not None, then this value
         is used for each chunk.  You can also specify a different polyord
         value for each chunk by providing a list or ndarray of polyord
         values the length of the number of chunks.
@@ -59,7 +62,6 @@ def detrend(dataset, perchunk=False, model='linear',
         Optional ndarray of additional information to regress out from the
         dataset.  One example would be to regress out motion parameters.
         As with the data, time is on the first axis.
-
     """
     if polyord is not None or opt_reg is not None:
         model='regress'
@@ -68,9 +70,9 @@ def detrend(dataset, perchunk=False, model='linear',
         # perform scipy detrend
         bp = 0                              # no break points by default
 
-        if perchunk:
+        if not chunks is None:
             try:
-                bp = getBreakPoints(dataset.sa.chunks)
+                bp = getBreakPoints(dataset.sa[chunks].value)
             except ValueError, e:
                 raise ValueError, \
                       "Failed to assess break points between chunks. Often " \
@@ -79,10 +81,10 @@ def detrend(dataset, perchunk=False, model='linear',
                       "exception was: %s" % str(e)
 
         dataset.samples[:] = signal.detrend(dataset.samples, axis=0,
-                                         type=model, bp=bp)
+                                            type=model, bp=bp)
     elif model in ['regress']:
         # perform regression-based detrend
-        return __detrend_regress(dataset, perchunk=perchunk,
+        return __detrend_regress(dataset, chunks=chunks,
                                  polyord=polyord, opt_reg=opt_reg)
     else:
         # raise exception because not found
@@ -91,55 +93,32 @@ def detrend(dataset, perchunk=False, model='linear',
 
 
 
-def __detrend_regress(dataset, perchunk=True, polyord=None, opt_reg=None):
-    """
-    Given a dataset, perform a detrend inplace, regressing out polynomial
-    terms as well as optional regressors, such as motion parameters.
-
-    :Parameters:
-      dataset : Dataset
-        Dataset to operate on
-      perchunk : bool
-        Either to operate on whole dataset at once or on each chunk
-        separately.  If perchunk is True, all the samples within a
-        chunk should be contiguous and the chunks should be sorted in
-        order from low to high.
-      polyord : int
-        Order of the Legendre polynomial to remove from the data.  This
-        will remove every polynomial up to and including the provided
-        value.  For example, 3 will remove 0th, 1st, 2nd, and 3rd order
-        polynomials from the data.  N.B.: The 0th polynomial is the
-        baseline shift, the 1st is the linear trend.
-        If you specify a single int and perchunk is True, then this value
-        is used for each chunk.  You can also specify a different polyord
-        value for each chunk by providing a list or ndarray of polyord
-        values the length of the number of chunks.
-      opt_reg : ndarray
-        Optional ndarray of additional information to regress out from the
-        dataset.  One example would be to regress out motion parameters.
-        As with the data, time is on the first axis.
-    """
-    uniquechunks = dataset.sa['chunks'].unique
-    # Process the polyord to be a list with length of the number of chunks
-    if not polyord is None:
-        if not isSequenceType(polyord):
-            # repeat to be proper length
-            polyord = [polyord]*len(uniquechunks)
-        elif perchunk and len(polyord) != len(uniquechunks):
-            raise ValueError("If you specify a sequence of polyord values " + \
-                                 "they sequence length must match the " + \
-                                 "number of unique chunks in the dataset.")
+def __detrend_regress(dataset, chunks, polyord, opt_reg):
+    """The documentation is in the `detrend()` function."""
+    #
+    # Docum
+    #
 
     # loop over chunks if necessary
-    if perchunk:
+    if not chunks is None:
         # get the unique chunks
-        uchunks = uniquechunks
+        uchunks = dataset.sa[chunks].unique
+
+        # Process the polyord to be a list with length of the number of chunks
+        if not polyord is None:
+            if not isSequenceType(polyord):
+                # repeat to be proper length
+                polyord = [polyord]*len(uchunks)
+            elif not chunks is None and len(polyord) != len(uchunks):
+                raise ValueError("If you specify a sequence of polyord values "
+                                 "they sequence length must match the "
+                                 "number of unique chunks in the dataset.")
 
         # loop over each chunk
         reg = []
         for n, chunk in enumerate(uchunks):
             # get the indices for that chunk
-            cinds = dataset.chunks == chunk
+            cinds = dataset.sa[chunks].value == chunk
 
             # see if add in polyord values
             if not polyord is None:
@@ -147,7 +126,7 @@ def __detrend_regress(dataset, perchunk=True, polyord=None, opt_reg=None):
                 x = N.linspace(-1, 1, cinds.sum())
                 # create each polyord with the value for that chunk
                 for n in range(polyord[n] + 1):
-                    newreg = N.zeros((dataset.nsamples, 1))
+                    newreg = N.zeros((len(dataset), 1))
                     newreg[cinds, 0] = legendre(n)(x)
                     reg.append(newreg)
     else:
@@ -156,8 +135,8 @@ def __detrend_regress(dataset, perchunk=True, polyord=None, opt_reg=None):
         # see if add in polyord values
         if not polyord is None:
             # create the timespan
-            x = N.linspace(-1, 1, dataset.nsamples)
-            for n in range(polyord[0] + 1):
+            x = N.linspace(-1, 1, len(dataset))
+            for n in range(polyord + 1):
                 reg.append(legendre(n)(x)[:, N.newaxis])
 
     # see if add in optional regs
