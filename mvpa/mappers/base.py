@@ -35,6 +35,8 @@ class Mapper(object):
     def __init__(self, inspace=None):
         """
         :Parameters:
+          inspace : str, optional
+            Name of the input space
         """
         self.__inspace = None
         self.set_inspace(inspace)
