@@ -285,6 +285,12 @@ testmanual: build
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg \
 	 nosetests --with-doctest --doctest-extension .rst --doctest-tests doc/
 
+testtutorial: build
+	@echo "I: Testing code samples found in the tutorial"
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg \
+	 nosetests --with-doctest --doctest-extension .rst \
+	           --doctest-tests doc/source/tutorial*.rst
+
 # Check if everything (with few exclusions) is imported in unitests is
 # known to the mvpa.suite()
 testsuite:
