@@ -69,7 +69,7 @@ class KernelTests(unittest.TestCase):
 
     def testCachedKernel(self):
         nchunks = 5
-        n=50*nchunks
+        n = 50*nchunks
         d = Dataset(N.random.randn(n, 132))
         d.sa.chunks = N.random.randint(nchunks, size=n)
         
@@ -84,7 +84,7 @@ class KernelTests(unittest.TestCase):
                         'CachedKernel was not initially computed')
         
         # Try some splitting
-        for chunk in [d[d.sa.chunks==i] for i in range(nchunks)]:
+        for chunk in [d[d.sa.chunks == i] for i in range(nchunks)]:
             rk.compute(chunk)
             ck.compute(chunk)
             self.kernel_equiv(rk, ck, accuracy=1e-12)
@@ -136,7 +136,7 @@ class KernelTests(unittest.TestCase):
             nk = npK.LinearKernel()
             sk = sgK.LinearSGKernel()
             nk.compute(d1, d2)
-            sk.compute(d1,d2)
+            sk.compute(d1, d2)
             
             self.kernel_equiv(nk, sk)
             
@@ -147,8 +147,8 @@ class KernelTests(unittest.TestCase):
             nk = npK.PolyKernel(coef0=1)
             ordervals = [1, 2, 3, 5, 7]
             for p in ordervals:
-                sk.params.degree=p
-                nk.params.degree=p
+                sk.params.degree = p
+                nk.params.degree = p
                 sk.compute(d1, d2)
                 nk.compute(d1, d2)
                 
@@ -164,8 +164,8 @@ class KernelTests(unittest.TestCase):
             nk = npK.RbfKernel()
             sigmavals = N.logspace(-2, 5, num=10)
             for s in sigmavals:
-                sk.params.sigma=s
-                nk.params.sigma=s
+                sk.params.sigma = s
+                nk.params.sigma = s
                 sk.compute(d1, d2)
                 nk.compute(d1, d2)
                 
@@ -175,12 +175,18 @@ class KernelTests(unittest.TestCase):
             lk = sgK.LinearSGKernel()
             cl = sgK.CustomSGKernel(sgK.sgk.LinearKernel)
             poly = sgK.PolySGKernel()
-            poly_params = [('order',2),
+            poly_params = [('order', 2),
                            ('inhomogenous', True)]
             if not exists('sg ge 0.6.5'):
                 poly_params += [ ('use_normalization', False) ]
+                poly_kwargs = {}
+            else:
+                poly_kwargs = {
+                    'normalizer_cls' : sgK.sgk.IdentityKernelNormalizer}
+
             custom = sgK.CustomSGKernel(sgK.sgk.PolyKernel,
-                                        kernel_params=poly_params)
+                                        kernel_params=poly_params,
+                                        **poly_kwargs)
             d = N.random.randn(253, 52)
             lk.compute(d)
             cl.compute(d)
@@ -265,11 +271,11 @@ class KernelTests(unittest.TestCase):
                     [pnorm_w_python(**kwargs),
                      pnorm_w_python(use_sq_euclidean=True, **kwargs),
                      pnorm_w_python(heuristic='auto', **kwargs),
-                     pnorm_w_python(use_sq_euclidean=False, **kwargs),
-                     pnorm_w_python(heuristic='auto', use_sq_euclidean=False, **kwargs),
-                     pnorm_w_python(heuristic='samples', use_sq_euclidean=False, **kwargs),
-                     pnorm_w_python(heuristic='features', use_sq_euclidean=False, **kwargs),
-                     ]):
+                     pnorm_w_python(use_sq_euclidean=False, **kwargs)]
+                    +
+                    [pnorm_w_python(heuristic=h,
+                                    use_sq_euclidean=False, **kwargs)
+                     for h in ('auto', 'samples', 'features')]):
                     dnorm = N.linalg.norm(d2 - d, 'fro')
                     self.failUnless(dnorm/d0norm < 1e-7,
                         msg="Failed comparison of different implementations on "
