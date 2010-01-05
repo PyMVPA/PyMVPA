@@ -2,7 +2,8 @@ PROFILE_FILE=$(CURDIR)/$(BUILDDIR)/main.pstats
 COVERAGE_REPORT=$(CURDIR)/$(BUILDDIR)/coverage
 BUILDDIR=$(CURDIR)/build
 HTML_DIR=$(BUILDDIR)/html
-DOCSRC_DIR=$(CURDIR)/doc
+DOC_DIR=$(CURDIR)/doc
+DOCSRC_DIR=$(DOC_DIR)/source
 DOCBUILD_DIR=$(BUILDDIR)/doc
 MAN_DIR=$(BUILDDIR)/man
 APIDOC_DIR=$(HTML_DIR)/api
@@ -84,7 +85,7 @@ clean:
 	$(MAKE) -C tools clean
 # clean docs
 	$(MAKE) -C doc clean
-	-@rm -f $(DOCSRC_DIR)/source/examples/*.rst
+	-@rm -f $(DOCSRC_DIR)/examples/*.rst
 # clean all bits and pieces
 	-@rm -f MANIFEST
 	-@rm -f mvpa/clfs/lib*/*.so \
@@ -138,7 +139,7 @@ references:
 
 htmldoc: examples2rst build
 	@echo "I: Creating an HTML version of documentation"
-	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) html BUILDDIR=$(BUILDDIR)
+	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) html BUILDDIR=$(BUILDDIR)
 	cd $(HTML_DIR)/generated && ln -sf ../_static
 	cd $(HTML_DIR)/examples && ln -sf ../_static
 	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
@@ -146,7 +147,7 @@ htmldoc: examples2rst build
 pdfdoc: examples2rst build pdfdoc-stamp
 pdfdoc-stamp:
 	@echo "I: Creating a PDF version of documentation"
-	cd $(DOCSRC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=../..:$(PYTHONPATH) $(MAKE) latex BUILDDIR=$(BUILDDIR)
+	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=../..:$(PYTHONPATH) $(MAKE) latex BUILDDIR=$(BUILDDIR)
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
 	touch $@
 
@@ -161,7 +162,7 @@ examples2rst: examples2rst-stamp
 examples2rst-stamp: mkdir-DOCBUILD_DIR
 	tools/ex2rst \
 		--project PyMVPA \
-		--outdir $(DOCSRC_DIR)/source/examples \
+		--outdir $(DOCSRC_DIR)/examples \
 		--exclude doc/examples/searchlight.py \
 		doc/examples
 	touch $@
@@ -201,7 +202,7 @@ website-stamp: mkdir-WWW_DIR htmldoc pdfdoc
 # provide robots.txt to minimize unnecessary traffic
 	cp $(DOCSRC_DIR)/_static/robots.txt $(WWW_DIR)/
 # provide promised pylintrc
-	mkdir -p $(WWW_DIR)/misc && cp $(DOCSRC_DIR)/misc/pylintrc $(WWW_DIR)/misc
+	mkdir -p $(WWW_DIR)/misc && cp $(DOC_DIR)/misc/pylintrc $(WWW_DIR)/misc
 	touch $@
 
 upload-website: website
