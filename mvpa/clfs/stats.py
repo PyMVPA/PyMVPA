@@ -826,7 +826,9 @@ if externals.exists('scipy'):
                 If p is not None, the choise of tail for null-hypothesis
                 testing
 
-            :Returns: tuple(histogram, list of lines)
+            :Returns:
+              histogram
+              list of lines
             """
 
             hist = P.hist(data, nbins, normed=1, align='center')
@@ -961,21 +963,22 @@ def _chk_asarray(a, axis):
     return a, outaxis
 
 def nanmean(x, axis=0):
-    """Compute the mean over the given axis ignoring nans.
+    """Compute the mean over the given axis ignoring NaNs.
 
     :Parameters:
-        x : ndarray
-            input array
-        axis : int
-            axis along which the mean is computed.
+      x : ndarray
+        input array
+      axis : int
+        axis along which the mean is computed.
 
     :Results:
-        m : float
-            the mean."""
-    x, axis = _chk_asarray(x,axis)
+      m : float
+        the mean.
+    """
+    x, axis = _chk_asarray(x, axis)
     x = x.copy()
     Norig = x.shape[axis]
-    factor = 1.0-N.sum(N.isnan(x),axis)*1.0/Norig
+    factor = 1.0 - N.sum(N.isnan(x), axis)*1.0/Norig
 
     x[N.isnan(x)] = 0
-    return N.mean(x,axis)/factor
+    return N.mean(x, axis)/factor
