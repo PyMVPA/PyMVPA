@@ -319,19 +319,22 @@ def enhancedDocString(item, *args, **kwargs):
     # Add information about the states if available
     if lcl.has_key('_statesdoc') and len(item._statesdoc):
         # no indent is necessary since states list must be already indented
-        docs += [_rst('.. note::\n  ') + 'Available state variables:',
+        docs += [_rst_section('Notes') + '\nAvailable state variables:',
                      handle_docstring(item._statesdoc)]
 
-    if len(args):
+    # Deprecated -- but actually we might like to have it in ipython
+    # mode may be?
+    if False: #len(args):
         bc_intro = _rst('  ') + 'Please refer to the documentation of the ' \
                    'base %s for more information:' \
                    % (single_or_plural('class', 'classes', len(args)))
 
-        docs += [_rst('\n.. seealso::'),
+        docs += ['\n' + _rst_section('See Also'),
                  bc_intro,
-                 '  ' + ',\n  '.join(['%s%s.%s%s' % (_rst(':class:`~'),
+                 '  ' + ',\n  '.join(['%s%s.%s%s%s' % (_rst(':class:`~'),
                                                       i.__module__,
                                                       i.__name__,
+                                                     _rst('`'),
                                                       _rst_sep)
                                       for i in args])
                 ]
