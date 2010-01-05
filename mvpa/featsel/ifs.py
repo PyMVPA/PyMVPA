@@ -62,18 +62,18 @@ class IFS(FeatureSelection):
         """Initialize incremental feature search
 
         :Parameters:
-            data_measure : DatasetMeasure
-                Computed for each candidate feature selection. The measure has
-                to compute a scalar value.
-            transfer_error : TransferError
-                Compute against a test dataset for each incremental feature
-                set.
-            bestdetector : Functor
-                Given a list of error values it has to return a boolean that
-                signals whether the latest error value is the total minimum.
-            stopping_criterion : Functor
-                Given a list of error values it has to return whether the
-                criterion is fulfilled.
+          data_measure : DatasetMeasure
+            Computed for each candidate feature selection. The measure has
+            to compute a scalar value.
+          transfer_error : TransferError
+            Compute against a test dataset for each incremental feature
+            set.
+          bestdetector : Functor
+            Given a list of error values it has to return a boolean that
+            signals whether the latest error value is the total minimum.
+          stopping_criterion : Functor
+            Given a list of error values it has to return whether the
+            criterion is fulfilled.
          """
         # bases init first
         FeatureSelection.__init__(self, **kwargs)
@@ -90,17 +90,18 @@ class IFS(FeatureSelection):
         important ones.
 
         :Parameters:
-            `dataset`: `Dataset`
-                used to select features and train classifiers to determine the
-                transfer error.
-            `testdataset`: `Dataset`
-                used to test the trained classifer on a certain feature set
-                to determine the transfer error.
+          dataset : Dataset
+            used to select features and train classifiers to determine the
+            transfer error.
+          testdataset: Dataset
+            used to test the trained classifer on a certain feature set
+            to determine the transfer error.
 
-        Returns a tuple with the dataset containing the feature subset of
-        `dataset` that had the lowest transfer error of all tested sets until
-        the stopping criterion was reached. The tuple also contains a dataset
-        with the corrsponding features from the `testdataset`.
+        :Returns:
+          A tuple with the dataset containing the feature subset of
+          `dataset` that had the lowest transfer error of all tested sets until
+          the stopping criterion was reached. The tuple also contains a dataset
+          with the corrsponding features from the `testdataset`.
         """
         errors = []
         """Computed error for each tested features set."""
