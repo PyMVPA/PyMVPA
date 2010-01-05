@@ -18,6 +18,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from mvpa.datasets import Dataset
 from mvpa.measures.base import FeaturewiseDatasetMeasure
 from mvpa.kernels.np import ExponentialKernel
 from mvpa.clfs.distance import pnorm_w
@@ -137,7 +138,7 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
             if change < self.threshold:
                 break
 
-        return self.w
+        return Dataset(self.w[N.newaxis])
 
 
 class IterativeReliefOnline_Devel(IterativeRelief_Devel):
@@ -245,7 +246,7 @@ class IterativeReliefOnline_Devel(IterativeRelief_Devel):
 
             iteration += 1
 
-        return self.w
+        return Dataset(self.w[N.newaxis])
 
 
 
@@ -360,7 +361,7 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
                 break
 
         self.w = w
-        return w
+        return Dataset(self.w[N.newaxis])
 
 
 class IterativeReliefOnline(IterativeRelief):
@@ -457,5 +458,5 @@ class IterativeReliefOnline(IterativeRelief):
             iteration += 1
 
         self.w = w
-        return w
+        return Dataset(self.w[N.newaxis])
 
