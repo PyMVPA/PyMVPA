@@ -17,6 +17,7 @@ from mvpa.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection, \
         SampleAttribute, FeatureAttribute, DatasetAttribute
 from mvpa.base.types import is_datasetlike
+from mvpa.base.dochelpers import _str
 
 if __debug__:
     from mvpa.base import debug
@@ -491,15 +492,7 @@ class Dataset(object):
 
 
     def __str__(self):
-        """String summary of dataset
-        """
-        # XXX TODO very basic and ulgy __str__ for now
-        s = "Dataset %s %d x %d" % \
-            (self.samples.dtype, self.nsamples, self.nfeatures)
-        try:
-            s += " mapper: %s" % self.mapper
-        finally:
-            return s
+        return _str(self, "%dx%d" % self.shape, "%s" % self.samples.dtype)
 
 
     def __array__(self, dtype=None):
