@@ -30,9 +30,10 @@ class CorrStability(FeaturewiseDatasetMeasure):
     def __init__(self, attr='labels', **kwargs):
         """Initialize
 
-        :Parameters:
-          attr : basestring
-            Attribute to correlate across chunks.
+        Parameters
+        ----------
+        attr : str
+          Attribute to correlate across chunks.
         """
         # init base classes first
         FeaturewiseDatasetMeasure.__init__(self, **kwargs)

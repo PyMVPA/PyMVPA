@@ -94,10 +94,11 @@ class GPR(Classifier):
     def __init__(self, kernel=None, **kwargs):
         """Initialize a GPR regression analysis.
 
-        :Parameters:
-          kernel : Kernel
-            a kernel object defining the covariance between instances.
-            (Defaults to SquaredExponentialKernel if None in arguments)
+        Parameters
+        ----------
+        kernel : Kernel
+          a kernel object defining the covariance between instances.
+          (Defaults to SquaredExponentialKernel if None in arguments)
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
@@ -231,13 +232,14 @@ class GPR(Classifier):
     def getSensitivityAnalyzer(self, flavor='auto', **kwargs):
         """Returns a sensitivity analyzer for GPR.
 
-        :Parameters:
-          flavor : basestring
-            What sensitivity to provide. Valid values are
-            'linear', 'model_select', 'auto'.
-            In case of 'auto' selects 'linear' for linear kernel
-            and 'model_select' for the rest. 'linear' corresponds to
-            GPRLinearWeights and 'model_select' to GRPWeights
+        Parameters
+        ----------
+        flavor : str
+          What sensitivity to provide. Valid values are
+          'linear', 'model_select', 'auto'.
+          In case of 'auto' selects 'linear' for linear kernel
+          and 'model_select' for the rest. 'linear' corresponds to
+          GPRLinearWeights and 'model_select' to GRPWeights
         """
         # XXX The following two lines does not work since
         # self.__kernel is instance of LinearKernel and not

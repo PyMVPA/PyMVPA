@@ -124,12 +124,13 @@ class CustomSGKernel(_BasicSGKernel):
     def __init__(self, kernel_cls, kernel_params=[], **kwargs):
         """Initialize CustomSGKernel.
         
-        :Parameters:
-          kernel_cls : Shogun.Kernel
-            Class of a Kernel from Shogun
-          kernel_params: list
-            Each item in this list should be a tuple of (kernelparamname, value),
-            and the order is the explicit order required by the Shogun constructor
+        Parameters
+        ----------
+        kernel_cls : Shogun.Kernel
+          Class of a Kernel from Shogun
+        kernel_params: list
+          Each item in this list should be a tuple of (kernelparamname, value),
+          and the order is the explicit order required by the Shogun constructor
         """
         self.__kernel_cls__ = kernel_cls # These are normally static
         

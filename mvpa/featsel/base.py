@@ -33,11 +33,12 @@ class FeatureSelection(ClassWithCollections):
     def __call__(self, dataset, testdataset=None):
         """Invocation of the feature selection
 
-        :Parameters:
-          dataset : Dataset
-            dataset used to select features
-          testdataset : Dataset
-            dataset the might be used to compute a stopping criterion
+        Parameters
+        ----------
+        dataset : Dataset
+          dataset used to select features
+        testdataset : Dataset
+          dataset the might be used to compute a stopping criterion
 
         Returns a tuple with the dataset containing the selected features.
         If present the tuple also contains the selected features of the
@@ -75,12 +76,13 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
                  ):
         """Initialize feature selection
 
-        :Parameters:
-          sensitivity_analyzer : FeaturewiseDatasetMeasure
-            sensitivity analyzer to come up with sensitivity
-          feature_selector : Functor
-            Given a sensitivity map it has to return the ids of those
-            features that should be kept.
+        Parameters
+        ----------
+        sensitivity_analyzer : FeaturewiseDatasetMeasure
+          sensitivity analyzer to come up with sensitivity
+        feature_selector : Functor
+          Given a sensitivity map it has to return the ids of those
+          features that should be kept.
 
         """
 
@@ -103,11 +105,12 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
     def __call__(self, dataset, testdataset=None):
         """Select the most important features
 
-        :Parameters:
-          dataset : Dataset
-            used to compute sensitivity maps
-          testdataset: Dataset
-            optional dataset to select features on
+        Parameters
+        ----------
+        dataset : Dataset
+          used to compute sensitivity maps
+        testdataset: Dataset
+          optional dataset to select features on
 
         Returns a tuple of two new datasets with selected feature
         subset of `dataset`.
@@ -170,9 +173,10 @@ class FeatureSelectionPipeline(FeatureSelection):
                  ):
         """Initialize feature selection pipeline
 
-        :Parameters:
-          feature_selections : lisf of FeatureSelection
-            selections which to use. Order matters
+        Parameters
+        ----------
+        feature_selections : lisf of FeatureSelection
+          selections which to use. Order matters
         """
         # base init first
         FeatureSelection.__init__(self, **kwargs)
@@ -242,12 +246,13 @@ class CombinedFeatureSelection(FeatureSelection):
 
     def __init__(self, feature_selections, combiner, **kwargs):
         """
-        :Parameters:
-          feature_selections: list
-            FeatureSelection instances to run. Order is not important.
-          combiner: 'union', 'intersection'
-            which method to be used to combine the feature selection set of
-            all computed methods.
+        Parameters
+        ----------
+        feature_selections: list
+          FeatureSelection instances to run. Order is not important.
+        combiner: 'union', 'intersection'
+          which method to be used to combine the feature selection set of
+          all computed methods.
         """
         FeatureSelection.__init__(self, **kwargs)
 

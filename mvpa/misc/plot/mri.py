@@ -35,33 +35,34 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
     objects, or 3D ndarrays. if no mask provided, only non-0 elements
     are plotted
 
-    :Parameters:
-      do_stretch_colors : bool
-        Stratch color range to the data (not just to visible data)
-      vlim
-        2 element tuple of low/upper bounds of values to plot
-      vlim_type : None or 'symneg_z'
-        If not None, then vlim would be treated accordingly:
-         symneg_z
-           z-score values of symmetric normal around 0, estimated
-           by symmetrizing negative part of the distribution, which
-           often could be assumed when total distribution is a mixture of
-           by-chance performance normal around 0, and some other in the
-           positive tail
-      ncolumns : int or None
-        Explicit starting number of columns into which position the
-        slice renderings.
-        If None, square arrangement would be used
-      nrows : int or None
-        Explicit starting number of rows into which position the
-        slice renderings.
-        If None, square arrangement would be used
-      add_hist : bool or tuple (int, int)
-        If True, add histogram and position automagically.
-        If a tuple -- use as (row, column)
-      add_info : bool or tuple (int, int)
-        If True, add information and position automagically.
-        If a tuple -- use as (row, column).
+    Parameters
+    ----------
+    do_stretch_colors : bool
+      Stratch color range to the data (not just to visible data)
+    vlim
+      2 element tuple of low/upper bounds of values to plot
+    vlim_type : None or 'symneg_z'
+      If not None, then vlim would be treated accordingly:
+       symneg_z
+         z-score values of symmetric normal around 0, estimated
+         by symmetrizing negative part of the distribution, which
+         often could be assumed when total distribution is a mixture of
+         by-chance performance normal around 0, and some other in the
+         positive tail
+    ncolumns : int or None
+      Explicit starting number of columns into which position the
+      slice renderings.
+      If None, square arrangement would be used
+    nrows : int or None
+      Explicit starting number of rows into which position the
+      slice renderings.
+      If None, square arrangement would be used
+    add_hist : bool or tuple (int, int)
+      If True, add histogram and position automagically.
+      If a tuple -- use as (row, column)
+    add_info : bool or tuple (int, int)
+      If True, add information and position automagically.
+      If a tuple -- use as (row, column).
 
     Available colormaps are presented nicely on
       http://www.scipy.org/Cookbook/Matplotlib/Show_colormaps

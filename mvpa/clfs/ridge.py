@@ -32,10 +32,11 @@ class RidgeReg(Classifier):
         """
         Initialize a ridge regression analysis.
 
-        :Parameters:
-          lm : float
-            the penalty term lambda.
-            (Defaults to .05*nFeatures)
+        Parameters
+        ----------
+        lm : float
+          the penalty term lambda.
+          (Defaults to .05*nFeatures)
         """
         # init base class first
         Classifier.__init__(self, **kwargs)

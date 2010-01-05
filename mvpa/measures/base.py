@@ -52,10 +52,11 @@ class DatasetMeasure(ClassWithCollections):
     probabilities are automatically computed and stored in the `null_prob`
     state variable.
 
-    .. note::
-      For developers: All subclasses shall get all necessary parameters via
-      their constructor, so it is possible to get the same type of measure for
-      multiple datasets by passing them to the __call__() method successively.
+    Notes
+    -----
+    For developers: All subclasses shall get all necessary parameters via
+    their constructor, so it is possible to get the same type of measure for
+    multiple datasets by passing them to the __call__() method successively.
     """
 
     raw_results = StateVariable(enabled=False,
@@ -70,14 +71,15 @@ class DatasetMeasure(ClassWithCollections):
     def __init__(self, mapper=None, null_dist=None, **kwargs):
         """Does nothing special.
 
-        :Parameters:
-          mapper: Mapper instance
-            This mapper is applied in `__call__()` to perform a final
-            processing step on the to be returned dataset measure.
-            If None, nothing is done.
-          null_dist: instance of distribution estimator
-            The estimated distribution is used to assign a probability for a
-            certain value of the computed measure.
+        Parameters
+        ----------
+        mapper: Mapper instance
+          This mapper is applied in `__call__()` to perform a final
+          processing step on the to be returned dataset measure.
+          If None, nothing is done.
+        null_dist: instance of distribution estimator
+          The estimated distribution is used to assign a probability for a
+          certain value of the computed measure.
         """
         ClassWithCollections.__init__(self, **kwargs)
 
@@ -335,11 +337,12 @@ class StaticDatasetMeasure(DatasetMeasure):
     def __init__(self, measure=None, bias=None, *args, **kwargs):
         """Initialize.
 
-        :Parameters:
-          measure
-             actual sensitivity to be returned
-          bias
-             optionally available bias
+        Parameters
+        ----------
+        measure
+           actual sensitivity to be returned
+        bias
+           optionally available bias
         """
         DatasetMeasure.__init__(self, *args, **kwargs)
         if measure is None:
@@ -370,11 +373,12 @@ class Sensitivity(FeaturewiseDatasetMeasure):
     def __init__(self, clf, force_training=True, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
 
-        :Parameters:
-          clf : :class:`Classifier`
-            classifier to use.
-          force_training : Bool
-            if classifier was already trained -- do not retrain
+        Parameters
+        ----------
+        clf : :class:`Classifier`
+          classifier to use.
+        force_training : Bool
+          if classifier was already trained -- do not retrain
         """
 
         """Does nothing special."""
@@ -467,11 +471,12 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
                  **kwargs):
         """Initialize CombinedFeaturewiseDatasetMeasure
 
-        :Parameters:
-          analyzers : list or None
-            List of analyzers to be used. There is no logic to populate
-            such a list in __call__, so it must be either provided to
-            the constructor or assigned to .analyzers prior calling
+        Parameters
+        ----------
+        analyzers : list or None
+          List of analyzers to be used. There is no logic to populate
+          such a list in __call__, so it must be either provided to
+          the constructor or assigned to .analyzers prior calling
         """
         if analyzers is None:
             analyzers = []
@@ -557,15 +562,16 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
                  insplit_index=0, **kwargs):
         """Initialize SplitFeaturewiseDatasetMeasure
 
-        :Parameters:
-          splitter : Splitter
-            Splitter to use to split the dataset
-          analyzer : DatasetMeasure
-            Measure to be used. Could be analyzer as well (XXX)
-          insplit_index : int
-            splitter generates tuples of dataset on each iteration
-            (usually 0th for training, 1st for testing).
-            On what split index in that tuple to operate.
+        Parameters
+        ----------
+        splitter : Splitter
+          Splitter to use to split the dataset
+        analyzer : DatasetMeasure
+          Measure to be used. Could be analyzer as well (XXX)
+        insplit_index : int
+          splitter generates tuples of dataset on each iteration
+          (usually 0th for training, 1st for testing).
+          On what split index in that tuple to operate.
         """
 
         # XXX might want to extend insplit_index to handle 'all', so we store
@@ -632,13 +638,14 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
                  **kwargs):
         """Initialize Sensitivity Analyzer for `BoostedClassifier`
 
-        :Parameters:
-          clf : `BoostedClassifier`
-            Classifier to be used
-          analyzer : analyzer
-            Is used to populate combined_analyzer 
-          slave_*
-            Arguments to pass to created analyzer if analyzer is None
+        Parameters
+        ----------
+        clf : `BoostedClassifier`
+          Classifier to be used
+        analyzer : analyzer
+          Is used to populate combined_analyzer 
+        slave_*
+          Arguments to pass to created analyzer if analyzer is None
         """
         Sensitivity.__init__(self, clf, **kwargs)
         if combined_analyzer is None:

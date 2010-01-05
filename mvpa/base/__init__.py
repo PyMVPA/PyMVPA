@@ -79,11 +79,12 @@ verbose = __Singleton("verbose", LevelLogger(
 def error(msg, critical=True):
     """Helper function to output errors in a consistent way.
 
-    :Parameters:
-      msg : string
-        Actual error message (will be prefixed with ERROR:)
-      critical : bool
-        If critical error -- exit with
+    Parameters
+    ----------
+    msg : string
+      Actual error message (will be prefixed with ERROR:)
+    critical : bool
+      If critical error -- exit with
     """
     verbose(0, "ERROR: " + msg)
     if critical:

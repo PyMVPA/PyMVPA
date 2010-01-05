@@ -56,15 +56,16 @@ class Warehouse(object):
     def __init__(self, known_tags=None, matches=None):
         """Initialize warehouse
 
-        :Parameters:
-          known_tags : list of basestring
-            List of known tags
-          matches : dict
-            Optional dictionary of additional matches. E.g. since any
-            regression can be used as a binary classifier,
-            matches={'binary':['regression']}, would allow to provide
-            regressions also if 'binary' was requested
-            """
+        Parameters
+        ----------
+        known_tags : list of str
+          List of known tags
+        matches : dict
+          Optional dictionary of additional matches. E.g. since any
+          regression can be used as a binary classifier,
+          matches={'binary':['regression']}, would allow to provide
+          regressions also if 'binary' was requested
+          """
         self._known_tags = Set(known_tags)
         self.__items = []
         self.__keys = Set()

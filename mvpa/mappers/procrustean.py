@@ -32,23 +32,24 @@ class ProcrusteanMapper(ProjectionMapper):
                  oblique=False, oblique_rcond=-1, **kwargs):
         """Initialize the ProcrusteanMapper
 
-        :Parameters:
-          scaling: bool
-            Scale data for the transformation (no longer rigid body
-            transformation)
-          reflection: bool
-            Allow for the data to be reflected (so it might not be a rotation).
-            Effective only for non-oblique transformations
-          reduction: bool
-            If true, it is allowed to map into lower-dimensional
-            space. Forward transformation might be suboptimal then and reverse
-            transformation might not recover all original variance
-          oblique: bool
-            Either to allow non-orthogonal transformation -- might heavily overfit
-            the data if there is less samples than dimensions. Use `oblique_rcond`.
-          oblique_rcond: float
-            Cutoff for 'small' singular values to regularize the inverse. See
-            :class:`~numpy.linalg.lstsq` for more information.
+        Parameters
+        ----------
+        scaling: bool
+          Scale data for the transformation (no longer rigid body
+          transformation)
+        reflection: bool
+          Allow for the data to be reflected (so it might not be a rotation).
+          Effective only for non-oblique transformations
+        reduction: bool
+          If true, it is allowed to map into lower-dimensional
+          space. Forward transformation might be suboptimal then and reverse
+          transformation might not recover all original variance
+        oblique: bool
+          Either to allow non-orthogonal transformation -- might heavily overfit
+          the data if there is less samples than dimensions. Use `oblique_rcond`.
+        oblique_rcond: float
+          Cutoff for 'small' singular values to regularize the inverse. See
+          :class:`~numpy.linalg.lstsq` for more information.
         """
         ProjectionMapper.__init__(self, **kwargs)
 
@@ -81,12 +82,13 @@ class ProcrusteanMapper(ProjectionMapper):
     def _train(self, source, target=None):
         """Train Procrustean transformation
 
-        :Parameters:
-          source : dataset or ndarray
-            Source space for determining the transformation. If target
-            is None, then labels of 'source' dataset are taken as the target
-          target : dataset or ndarray or Null
-            Target space for determining the transformation
+        Parameters
+        ----------
+        source : dataset or ndarray
+          Source space for determining the transformation. If target
+          is None, then labels of 'source' dataset are taken as the target
+        target : dataset or ndarray or Null
+          Target space for determining the transformation
         """
 
         # Since it is unsupervised, we don't care about labels

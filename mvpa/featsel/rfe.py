@@ -74,36 +74,37 @@ class RFE(FeatureSelection):
         # anymore OR number of features less than threshold
         """Initialize recursive feature elimination
 
-        :Parameters:
-          sensitivity_analyzer : FeaturewiseDatasetMeasure object
-          transfer_error : TransferError object
-            used to compute the transfer error of a classifier based on a
-            certain feature set on the test dataset.
-            NOTE: If sensitivity analyzer is based on the same
-            classifier as transfer_error is using, make sure you
-            initialize transfer_error with train=False, otherwise
-            it would train classifier twice without any necessity.
-          feature_selector : Functor
-            Given a sensitivity map it has to return the ids of those
-            features that should be kept.
-          bestdetector : Functor
-            Given a list of error values it has to return a boolean that
-            signals whether the latest error value is the total minimum.
-          stopping_criterion : Functor
-            Given a list of error values it has to return whether the
-            criterion is fulfilled.
-          train_clf : bool
-            Flag whether the classifier in `transfer_error` should be
-            trained before computing the error. In general this is
-            required, but if the `sensitivity_analyzer` and
-            `transfer_error` share and make use of the same classifier it
-            can be switched off to save CPU cycles. Default `None` checks
-            if sensitivity_analyzer is based on a classifier and doesn't train
-            if so.
-          update_sensitivity : bool
-            If False the sensitivity map is only computed once and reused
-            for each iteration. Otherwise the senstitivities are
-            recomputed at each selection step.
+        Parameters
+        ----------
+        sensitivity_analyzer : FeaturewiseDatasetMeasure object
+        transfer_error : TransferError object
+          used to compute the transfer error of a classifier based on a
+          certain feature set on the test dataset.
+          NOTE: If sensitivity analyzer is based on the same
+          classifier as transfer_error is using, make sure you
+          initialize transfer_error with train=False, otherwise
+          it would train classifier twice without any necessity.
+        feature_selector : Functor
+          Given a sensitivity map it has to return the ids of those
+          features that should be kept.
+        bestdetector : Functor
+          Given a list of error values it has to return a boolean that
+          signals whether the latest error value is the total minimum.
+        stopping_criterion : Functor
+          Given a list of error values it has to return whether the
+          criterion is fulfilled.
+        train_clf : bool
+          Flag whether the classifier in `transfer_error` should be
+          trained before computing the error. In general this is
+          required, but if the `sensitivity_analyzer` and
+          `transfer_error` share and make use of the same classifier it
+          can be switched off to save CPU cycles. Default `None` checks
+          if sensitivity_analyzer is based on a classifier and doesn't train
+          if so.
+        update_sensitivity : bool
+          If False the sensitivity map is only computed once and reused
+          for each iteration. Otherwise the senstitivities are
+          recomputed at each selection step.
         """
 
         # base init first
@@ -147,13 +148,14 @@ class RFE(FeatureSelection):
         """Proceed and select the features recursively eliminating less
         important ones.
 
-        :Parameters:
-          dataset : Dataset
-            used to compute sensitivity maps and train a classifier
-            to determine the transfer error
-          testdataset : Dataset
-            used to test the trained classifer to determine the
-            transfer error
+        Parameters
+        ----------
+        dataset : Dataset
+          used to compute sensitivity maps and train a classifier
+          to determine the transfer error
+        testdataset : Dataset
+          used to test the trained classifer to determine the
+          transfer error
 
         Returns a tuple of two new datasets with the feature subset of
         `dataset` that had the lowest transfer error of all tested

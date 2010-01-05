@@ -67,12 +67,13 @@ if __debug__:
 
 def _setdebug(obj, partname):
     """Helper to set level of debugging output for SG
-    :Parameters:
-      obj
-        In SG debug output seems to be set per every object
-      partname : basestring
-        For what kind of object we are talking about... could be automated
-        later on (TODO)
+    Parameters
+    ----------
+    obj
+      In SG debug output seems to be set per every object
+    partname : str
+      For what kind of object we are talking about... could be automated
+      later on (TODO)
     """
     if _M_DEBUG is None:
         return

@@ -73,15 +73,16 @@ class SummaryStatistics(object):
         targets or predictions cannot be provided alone (ie targets
         without predictions)
 
-        :Parameters:
-         targets
-           Optional set of targets
-         predictions
-           Optional set of predictions
-         values
-           Optional set of values (which served for prediction)
-         sets
-           Optional list of sets
+        Parameters
+        ----------
+        targets
+         Optional set of targets
+        predictions
+         Optional set of predictions
+        values
+         Optional set of values (which served for prediction)
+        sets
+         Optional list of sets
         """
         self._computed = False
         """Flag either it was computed for a given set of data"""
@@ -144,16 +145,17 @@ class SummaryStatistics(object):
                  description=False):
         """'Pretty print' the matrix
 
-        :Parameters:
-          short : bool
-            if True, ignores the rest of the parameters and provides consise
-            1 line summary
-          header : bool
-            print header of the table
-          summary : bool
-            print summary (accuracy)
-          description : bool
-            print verbose description of presented statistics
+        Parameters
+        ----------
+        short : bool
+          if True, ignores the rest of the parameters and provides consise
+          1 line summary
+        header : bool
+          print header of the table
+        summary : bool
+          print summary (accuracy)
+        description : bool
+          print verbose description of presented statistics
         """
         raise NotImplementedError
 
@@ -240,12 +242,13 @@ class ROCCurve(object):
 
     def __init__(self, labels, sets=None):
         """
-        :Parameters:
-          labels : list
-            labels which were used (in order of values if multiclass,
-            or 1 per class for binary problems (e.g. in SMLR))
-          sets : list of tuples
-            list of sets for the analysis
+        Parameters
+        ----------
+        labels : list
+          labels which were used (in order of values if multiclass,
+          or 1 per class for binary problems (e.g. in SMLR))
+        sets : list of tuples
+          list of sets for the analysis
         """
         self._labels = labels
         self._sets = sets
@@ -448,17 +451,18 @@ class ConfusionMatrix(SummaryStatistics):
     def __init__(self, labels=None, labels_map=None, **kwargs):
         """Initialize ConfusionMatrix with optional list of `labels`
 
-        :Parameters:
-         labels : list
-           Optional set of labels to include in the matrix
-         labels_map : None or dict
-           Dictionary from original dataset to show mapping into
-           numerical labels
-         targets
-           Optional set of targets
-         predictions
-           Optional set of predictions
-           """
+        Parameters
+        ----------
+        labels : list
+         Optional set of labels to include in the matrix
+        labels_map : None or dict
+         Dictionary from original dataset to show mapping into
+         numerical labels
+        targets
+         Optional set of targets
+        predictions
+         Optional set of predictions
+         """
 
         SummaryStatistics.__init__(self, **kwargs)
 
@@ -618,16 +622,17 @@ class ConfusionMatrix(SummaryStatistics):
                  description=False):
         """'Pretty print' the matrix
 
-        :Parameters:
-          short : bool
-            if True, ignores the rest of the parameters and provides consise
-            1 line summary
-          header : bool
-            print header of the table
-          summary : bool
-            print summary (accuracy)
-          description : bool
-            print verbose description of presented statistics
+        Parameters
+        ----------
+        short : bool
+          if True, ignores the rest of the parameters and provides consise
+          1 line summary
+        header : bool
+          print header of the table
+        summary : bool
+          print summary (accuracy)
+        description : bool
+          print verbose description of presented statistics
         """
         if len(self.sets) == 0:
             return "Empty"
@@ -747,31 +752,33 @@ class ConfusionMatrix(SummaryStatistics):
              **kwargs):
         """Provide presentation of confusion matrix in image
 
-        :Parameters:
-          labels : list of int or basestring
-            Optionally provided labels guarantee the order of
-            presentation. Also value of None places empty column/row,
-            thus provides visual groupping of labels (Thanks Ingo)
-          numbers : bool
-            Place values inside of confusion matrix elements
-          numbers_alpha : None or float
-            Controls textual output of numbers. If None -- all numbers
-            are plotted in the same intensity. If some float -- it controls
-            alpha level -- higher value would give higher contrast. (good
-            value is 2)
-          origin : basestring
-            Which left corner diagonal should start
-          xlabels_vertical : bool
-            Either to plot xlabels vertical (benefitial if number of labels
-            is large)
-          numbers_kwargs : dict
-            Additional keyword parameters to be added to numbers (if numbers
-            is True)
-          **kwargs
-            Additional arguments given to imshow (\eg me cmap)
+        Parameters
+        ----------
+        labels : list of int or str
+          Optionally provided labels guarantee the order of
+          presentation. Also value of None places empty column/row,
+          thus provides visual groupping of labels (Thanks Ingo)
+        numbers : bool
+          Place values inside of confusion matrix elements
+        numbers_alpha : None or float
+          Controls textual output of numbers. If None -- all numbers
+          are plotted in the same intensity. If some float -- it controls
+          alpha level -- higher value would give higher contrast. (good
+          value is 2)
+        origin : str
+          Which left corner diagonal should start
+        xlabels_vertical : bool
+          Either to plot xlabels vertical (benefitial if number of labels
+          is large)
+        numbers_kwargs : dict
+          Additional keyword parameters to be added to numbers (if numbers
+          is True)
+        **kwargs
+          Additional arguments given to imshow (\eg me cmap)
 
-        :Returns:
-           (fig, im, cb) -- figure, imshow, colorbar
+        Returns
+        -------
+         (fig, im, cb) -- figure, imshow, colorbar
         """
 
         externals.exists("pylab", raiseException=True)
@@ -980,12 +987,13 @@ class RegressionStatistics(SummaryStatistics):
     def __init__(self, **kwargs):
         """Initialize RegressionStatistics
 
-        :Parameters:
-         targets
-           Optional set of targets
-         predictions
-           Optional set of predictions
-           """
+        Parameters
+        ----------
+        targets
+         Optional set of targets
+        predictions
+         Optional set of predictions
+         """
 
         SummaryStatistics.__init__(self, **kwargs)
 
@@ -1046,16 +1054,18 @@ class RegressionStatistics(SummaryStatistics):
              ):
         """Provide presentation of regression performance in image
 
-        :Parameters:
-          plot : bool
-            Plot regular plot of values (targets/predictions)
-          plot_stats : bool
-            Print basic statistics in the title
-          splot : bool
-            Plot scatter plot
+        Parameters
+        ----------
+        plot : bool
+          Plot regular plot of values (targets/predictions)
+        plot_stats : bool
+          Print basic statistics in the title
+        splot : bool
+          Plot scatter plot
 
-        :Returns:
-           (fig, im, cb) -- figure, imshow, colorbar
+        Returns
+        -------
+         (fig, im, cb) -- figure, imshow, colorbar
         """
         externals.exists("pylab", raiseException=True)
         import pylab as P
@@ -1206,15 +1216,16 @@ class ClassifierError(ClassWithCollections):
     def __init__(self, clf, labels=None, train=True, **kwargs):
         """Initialization.
 
-        :Parameters:
-          clf : Classifier
-            Either trained or untrained classifier
-          labels : list
-            if provided, should be a set of labels to add on top of the
-            ones present in testdata
-          train : bool
-            unless train=False, classifier gets trained if
-            trainingdata provided to __call__
+        Parameters
+        ----------
+        clf : Classifier
+          Either trained or untrained classifier
+        labels : list
+          if provided, should be a set of labels to add on top of the
+          ones present in testdata
+        train : bool
+          unless train=False, classifier gets trained if
+          trainingdata provided to __call__
         """
         ClassWithCollections.__init__(self, **kwargs)
         self.__clf = clf
@@ -1347,16 +1358,17 @@ class TransferError(ClassifierError):
                  null_dist=None, **kwargs):
         """Initialization.
 
-        :Parameters:
-          clf : Classifier
-            Either trained or untrained classifier
-          errorfx
-            Functor that computes a scalar error value from the vectors of
-            desired and predicted values (e.g. subclass of `ErrorFunction`)
-          labels : list
-            if provided, should be a set of labels to add on top of the
-            ones present in testdata
-          null_dist : instance of distribution estimator
+        Parameters
+        ----------
+        clf : Classifier
+          Either trained or untrained classifier
+        errorfx
+          Functor that computes a scalar error value from the vectors of
+          desired and predicted values (e.g. subclass of `ErrorFunction`)
+        labels : list
+          if provided, should be a set of labels to add on top of the
+          ones present in testdata
+        null_dist : instance of distribution estimator
         """
         ClassifierError.__init__(self, clf, labels, **kwargs)
         self.__errorfx = errorfx
@@ -1482,14 +1494,15 @@ class ConfusionBasedError(ClassifierError):
                  **kwargs):
         """Initialization.
 
-        :Parameters:
-          clf : Classifier
-            Either trained or untrained classifier
-          confusion_state
-            Id of the state variable which stores `ConfusionMatrix`
-          labels : list
-            if provided, should be a set of labels to add on top of the
-            ones present in testdata
+        Parameters
+        ----------
+        clf : Classifier
+          Either trained or untrained classifier
+        confusion_state
+          Id of the state variable which stores `ConfusionMatrix`
+        labels : list
+          if provided, should be a set of labels to add on top of the
+          ones present in testdata
         """
         ClassifierError.__init__(self, clf, labels, **kwargs)
 

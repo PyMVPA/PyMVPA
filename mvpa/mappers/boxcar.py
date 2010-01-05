@@ -21,10 +21,11 @@ if __debug__:
 class BoxcarMapper(Mapper):
     """Mapper to combine multiple samples into a single sample.
 
-    .. note::
+    Notes
+    -----
 
-      This mapper is somewhat unconventional since it doesn't preserve number
-      of samples (ie the size of 0-th dimension).
+    This mapper is somewhat unconventional since it doesn't preserve number
+    of samples (ie the size of 0-th dimension).
     """
     # TODO: extend with the possibility to provide real onset vectors and a
     #       samples attribute that is used to determine the actual sample that
@@ -35,15 +36,16 @@ class BoxcarMapper(Mapper):
     #       appropriate mapper adjustment, e.g. CombinedMapper).
     def __init__(self, startpoints, boxlength, offset=0, **kwargs):
         """
-        :Parameters:
-          startpoints: sequence
-            Index values along the first axis of 'data'.
-          boxlength: int
-            The number of elements after 'startpoint' along the first axis of
-            'data' to be considered for the boxcar.
-          offset: int
-            The offset between the provided starting point and the actual start
-            of the boxcar.
+        Parameters
+        ----------
+        startpoints: sequence
+          Index values along the first axis of 'data'.
+        boxlength: int
+          The number of elements after 'startpoint' along the first axis of
+          'data' to be considered for the boxcar.
+        offset: int
+          The offset between the provided starting point and the actual start
+          of the boxcar.
         """
         Mapper.__init__(self, **kwargs)
         self._outshape = None
@@ -119,8 +121,9 @@ class BoxcarMapper(Mapper):
         cover a full boxcar. This functionality is only availably after a full
         data array has been forward mapped once.
 
-        :Returns:
-          array: (#startpoint, ...)
+        Returns
+        -------
+        array: (#startpoint, ...)
         """
         # NOTE: _forward_dataset() relies on the assumption that the following
         # also works with 1D arrays and still yields sane results

@@ -48,15 +48,16 @@ def manhattenDistance(a, b):
 def mahalanobisDistance(x, y=None, w=None):
     """Calculate Mahalanobis distance of the pairs of points.
 
-    :Parameters:
-      `x`
-        first list of points. Rows are samples, columns are
-        features.
-      `y`
-        second list of points (optional)
-      `w` : N.ndarray
-        optional inverse covariance matrix between the points. It is
-        computed if not given
+    Parameters
+    ----------
+    `x`
+      first list of points. Rows are samples, columns are
+      features.
+    `y`
+      second list of points (optional)
+    `w` : N.ndarray
+      optional inverse covariance matrix between the points. It is
+      computed if not given
 
     Inverse covariance matrix can be calculated with the following
 
@@ -136,16 +137,17 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
     """Compute weighted euclidean distance matrix between two datasets.
 
 
-    :Parameters:
-      data1 : N.ndarray
-          first dataset
-      data2 : N.ndarray
-          second dataset. If None, compute the euclidean distance between
-          the first dataset versus itself.
-          (Defaults to None)
-      weight : N.ndarray
-          vector of weights, each one associated to each dimension of the
-          dataset (Defaults to None)
+    Parameters
+    ----------
+    data1 : N.ndarray
+        first dataset
+    data2 : N.ndarray
+        second dataset. If None, compute the euclidean distance between
+        the first dataset versus itself.
+        (Defaults to None)
+    weight : N.ndarray
+        vector of weights, each one associated to each dimension of the
+        dataset (Defaults to None)
     """
     if __debug__:
         # check if both datasets are floating point
@@ -220,9 +222,10 @@ def oneMinusCorrelation(X, Y):
 
     Both arrays need to have the same number of columns.
 
-    :Parameters:
-      X: 2D-array
-      Y: 2D-array
+    Parameters
+    ----------
+    X: 2D-array
+    Y: 2D-array
 
     Example:
 
@@ -259,24 +262,25 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
 
     ||x - x'||_w = (\sum_{i=1...N} (w_i*|x_i - x'_i|)**p)**(1/p)
 
-    :Parameters:
-      data1 : N.ndarray
-        First dataset
-      data2 : N.ndarray or None
-        Optional second dataset
-      weight : N.ndarray or None
-        Optional weights per 2nd dimension (features)
-      p
-        Power
-      heuristic : basestring
-        Which heuristic to use:
-         * 'samples' -- python sweep over 0th dim
-         * 'features' -- python sweep over 1st dim
-         * 'auto' decides automatically. If # of features (shape[1]) is much
-           larger than # of samples (shape[0]) -- use 'samples', and use
-           'features' otherwise
-      use_sq_euclidean : bool
-        Either to use squared_euclidean_distance_matrix for computation if p==2
+    Parameters
+    ----------
+    data1 : N.ndarray
+      First dataset
+    data2 : N.ndarray or None
+      Optional second dataset
+    weight : N.ndarray or None
+      Optional weights per 2nd dimension (features)
+    p
+      Power
+    heuristic : str
+      Which heuristic to use:
+       * 'samples' -- python sweep over 0th dim
+       * 'features' -- python sweep over 1st dim
+       * 'auto' decides automatically. If # of features (shape[1]) is much
+         larger than # of samples (shape[0]) -- use 'samples', and use
+         'features' otherwise
+    use_sq_euclidean : bool
+      Either to use squared_euclidean_distance_matrix for computation if p==2
     """
     if weight == None:
         weight = N.ones(data1.shape[1], 'd')
@@ -342,15 +346,16 @@ if externals.exists('weave'):
 
         ||x - x'||_w = (\sum_{i=1...N} (w_i*|x_i - x'_i|)**p)**(1/p)
 
-        :Parameters:
-          data1 : N.ndarray
-            First dataset
-          data2 : N.ndarray or None
-            Optional second dataset
-          weight : N.ndarray or None
-            Optional weights per 2nd dimension (features)
-          p
-            Power
+        Parameters
+        ----------
+        data1 : N.ndarray
+          First dataset
+        data2 : N.ndarray or None
+          Optional second dataset
+        weight : N.ndarray or None
+          Optional weights per 2nd dimension (features)
+        p
+          Power
         """
 
         if weight == None:

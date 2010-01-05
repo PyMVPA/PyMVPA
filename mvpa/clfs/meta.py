@@ -70,17 +70,18 @@ class BoostedClassifier(Classifier, Harvestable):
                  **kwargs):
         """Initialize the instance.
 
-        :Parameters:
-          clfs : list
-            list of classifier instances to use (slave classifiers)
-          propagate_states : bool
-            either to propagate enabled states into slave classifiers.
-            It is in effect only when slaves get assigned - so if state
-            is enabled not during construction, it would not necessarily
-            propagate into slaves
-          kwargs : dict
-            dict of keyworded arguments which might get used
-            by State or Classifier
+        Parameters
+        ----------
+        clfs : list
+          list of classifier instances to use (slave classifiers)
+        propagate_states : bool
+          either to propagate enabled states into slave classifiers.
+          It is in effect only when slaves get assigned - so if state
+          is enabled not during construction, it would not necessarily
+          propagate into slaves
+        kwargs : dict
+          dict of keyworded arguments which might get used
+          by State or Classifier
         """
         if clfs == None:
             clfs = []
@@ -325,13 +326,14 @@ class PredictionsCombiner(ClassWithCollections):
     def train(self, clfs, dataset):
         """PredictionsCombiner might need to be trained
 
-        :Parameters:
-          clfs : list of Classifier
-            List of classifiers to combine. Has to be classifiers (not
-            pure predictions), since combiner might use some other
-            state variables (value's) instead of pure prediction's
-          dataset : Dataset
-            training data in this case
+        Parameters
+        ----------
+        clfs : list of Classifier
+          List of classifiers to combine. Has to be classifiers (not
+          pure predictions), since combiner might use some other
+          state variables (value's) instead of pure prediction's
+        dataset : Dataset
+          training data in this case
         """
         pass
 
@@ -339,11 +341,12 @@ class PredictionsCombiner(ClassWithCollections):
     def __call__(self, clfs, dataset):
         """Call function
 
-        :Parameters:
-          clfs : list of Classifier
-            List of classifiers to combine. Has to be classifiers (not
-            pure predictions), since combiner might use some other
-            state variables (value's) instead of pure prediction's
+        Parameters
+        ----------
+        clfs : list of Classifier
+          List of classifiers to combine. Has to be classifiers (not
+          pure predictions), since combiner might use some other
+          state variables (value's) instead of pure prediction's
         """
         raise NotImplementedError
 
@@ -480,12 +483,13 @@ class ClassifierCombiner(PredictionsCombiner):
     def __init__(self, clf, variables=None):
         """Initialize `ClassifierCombiner`
 
-        :Parameters:
-          clf : Classifier
-            Classifier to train on the predictions
-          variables : list of basestring
-            List of state variables stored in 'combined' classifiers, which
-            to use as features for training this classifier
+        Parameters
+        ----------
+        clf : Classifier
+          Classifier to train on the predictions
+        variables : list of str
+          List of state variables stored in 'combined' classifiers, which
+          to use as features for training this classifier
         """
         PredictionsCombiner.__init__(self)
 
@@ -521,16 +525,17 @@ class CombinedClassifier(BoostedClassifier):
     def __init__(self, clfs=None, combiner=None, **kwargs):
         """Initialize the instance.
 
-        :Parameters:
-          clfs : list of Classifier
-            list of classifier instances to use
-          combiner : PredictionsCombiner
-            callable which takes care about combining multiple
-            results into a single one (e.g. maximal vote for
-            classification, MeanPrediction for regression))
-          kwargs : dict
-            dict of keyworded arguments which might get used
-            by State or Classifier
+        Parameters
+        ----------
+        clfs : list of Classifier
+          list of classifier instances to use
+        combiner : PredictionsCombiner
+          callable which takes care about combining multiple
+          results into a single one (e.g. maximal vote for
+          classification, MeanPrediction for regression))
+        kwargs : dict
+          dict of keyworded arguments which might get used
+          by State or Classifier
 
         NB: `combiner` might need to operate not on 'predictions' descrete
             labels but rather on raw 'class' values classifiers
@@ -690,12 +695,13 @@ class TreeClassifier(ProxyClassifier):
     def __init__(self, clf, groups, **kwargs):
         """Initialize TreeClassifier
 
-        :Parameters:
-          clf : Classifier
-            Classifier to separate between the groups
-          groups : dict of meta-label: tuple of (tuple of labels, classifier)
-            Defines the groups of labels and their classifiers.
-            See :class:`~mvpa.clfs.meta.TreeClassifier` for example
+        Parameters
+        ----------
+        clf : Classifier
+          Classifier to separate between the groups
+        groups : dict of meta-label: tuple of (tuple of labels, classifier)
+          Defines the groups of labels and their classifiers.
+          See :class:`~mvpa.clfs.meta.TreeClassifier` for example
         """
 
         # Basic initialization
@@ -855,13 +861,14 @@ class BinaryClassifier(ProxyClassifier):
 
     def __init__(self, clf, poslabels, neglabels, **kwargs):
         """
-        :Parameters:
-          clf : Classifier
-            classifier to use
-          poslabels : list
-            list of labels which are treated as +1 category
-          neglabels : list
-            list of labels which are treated as -1 category
+        Parameters
+        ----------
+        clf : Classifier
+          classifier to use
+        poslabels : list
+          list of labels which are treated as +1 category
+        neglabels : list
+          list of labels which are treated as -1 category
         """
 
         ProxyClassifier.__init__(self, clf, **kwargs)
@@ -977,14 +984,15 @@ class MulticlassClassifier(CombinedClassifier):
     def __init__(self, clf, bclf_type="1-vs-1", **kwargs):
         """Initialize the instance
 
-        :Parameters:
-          clf : Classifier
-            classifier based on which multiple classifiers are created
-            for multiclass
-          bclf_type
-            "1-vs-1" or "1-vs-all", determines the way to generate binary
-            classifiers
-          """
+        Parameters
+        ----------
+        clf : Classifier
+          classifier based on which multiple classifiers are created
+          for multiclass
+        bclf_type
+          "1-vs-1" or "1-vs-all", determines the way to generate binary
+          classifiers
+        """
         CombinedClassifier.__init__(self, **kwargs)
 
         self.__clf = clf
@@ -1075,13 +1083,14 @@ class SplitClassifier(CombinedClassifier):
     def __init__(self, clf, splitter=NFoldSplitter(cvtype=1), **kwargs):
         """Initialize the instance
 
-        :Parameters:
-          clf : Classifier
-            classifier based on which multiple classifiers are created
-            for multiclass
-          splitter : Splitter
-            `Splitter` to use to split the dataset prior training
-          """
+        Parameters
+        ----------
+        clf : Classifier
+          classifier based on which multiple classifiers are created
+          for multiclass
+        splitter : Splitter
+          `Splitter` to use to split the dataset prior training
+        """
 
         CombinedClassifier.__init__(self, **kwargs)
         self.__clf = clf
@@ -1167,9 +1176,10 @@ class SplitClassifier(CombinedClassifier):
     def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
         """Return an appropriate SensitivityAnalyzer for `SplitClassifier`
 
-        :Parameters:
-          combiner
-            If not provided, FirstAxisMean is assumed
+        Parameters
+        ----------
+        combiner
+          If not provided, FirstAxisMean is assumed
         """
         return BoostedClassifierSensitivityAnalyzer(
                 self,
@@ -1197,12 +1207,13 @@ class MappedClassifier(ProxyClassifier):
     def __init__(self, clf, mapper, **kwargs):
         """Initialize the instance
 
-        :Parameters:
-          clf : Classifier
-            classifier based on which mask classifiers is created
-          mapper
-            whatever `Mapper` comes handy
-          """
+        Parameters
+        ----------
+        clf : Classifier
+          classifier based on which mask classifiers is created
+        mapper
+          whatever `Mapper` comes handy
+        """
         ProxyClassifier.__init__(self, clf, **kwargs)
 
         self.__mapper = mapper
@@ -1260,14 +1271,15 @@ class FeatureSelectionClassifier(ProxyClassifier):
     def __init__(self, clf, feature_selection, testdataset=None, **kwargs):
         """Initialize the instance
 
-        :Parameters:
-          clf : Classifier
-            classifier based on which mask classifiers is created
-          feature_selection : FeatureSelection
-            whatever `FeatureSelection` comes handy
-          testdataset : Dataset
-            optional dataset which would be given on call to feature_selection
-          """
+        Parameters
+        ----------
+        clf : Classifier
+          classifier based on which mask classifiers is created
+        feature_selection : FeatureSelection
+          whatever `FeatureSelection` comes handy
+        testdataset : Dataset
+          optional dataset which would be given on call to feature_selection
+        """
         ProxyClassifier.__init__(self, clf, **kwargs)
 
         self.__maskclf = None

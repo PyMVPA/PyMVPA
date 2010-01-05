@@ -36,19 +36,20 @@ class ChannelDataset(Dataset):
                           t0=None, dt=None, channelids=None):
         """Initialize ChannelDataset.
 
-        :Parameters:
-          samples: ndarray
-            Three-dimensional array: (samples x channels x timepoints).
-          t0: float
-            Reference time of the first timepoint. Can be used to preserve
-            information about the onset of some stimulation. Preferably in
-            seconds.
-          dt: float
-            Temporal distance between two timepoints. Has to be given in
-            seconds. Otherwise `samplingrate` property will not return
-            `Hz`.
-          channelids: list
-            List of channel names.
+        Parameters
+        ----------
+        samples: ndarray
+          Three-dimensional array: (samples x channels x timepoints).
+        t0: float
+          Reference time of the first timepoint. Can be used to preserve
+          information about the onset of some stimulation. Preferably in
+          seconds.
+        dt: float
+          Temporal distance between two timepoints. Has to be given in
+          seconds. Otherwise `samplingrate` property will not return
+          `Hz`.
+        channelids: list
+          List of channel names.
         """
         # check samples
         if len(samples.shape) != 3:
@@ -79,15 +80,16 @@ class ChannelDataset(Dataset):
         The samples of the dataset are modified in-place and nothing is
         returned.
 
-        :Parameter:
-          t: int | float | None
-            If an integer, `t` denotes the number of timepoints in the from the
-            start of each sample to be used to compute the baseline signal.
-            If a floating point value, `t` is the duration of the baseline
-            window from the start of each sample in whatever unit
-            corresponding to the datasets `samplingrate`. Finally, if `None`
-            the `t0` property of the dataset is used to determine `t` as it
-            would have been specified as duration.
+        Parameters
+        ----------
+        t: int or float or None
+          If an integer, `t` denotes the number of timepoints in the from the
+          start of each sample to be used to compute the baseline signal.
+          If a floating point value, `t` is the duration of the baseline
+          window from the start of each sample in whatever unit
+          corresponding to the datasets `samplingrate`. Finally, if `None`
+          the `t0` property of the dataset is used to determine `t` as it
+          would have been specified as duration.
         """
         # if no baseline length is given, use t0
         if t is None:
@@ -124,19 +126,20 @@ class ChannelDataset(Dataset):
             Please note that this method only operates on
             `ChannelDataset` and always returns such.
 
-            :Parameters:
-              nt: int
-                Number of timepoints to resample to.
-              dt: float
-                Temporal distance of samples after resampling.
-              sr: float
-                Target sampling rate.
-              inplace : bool
-                If inplace=False, it would create and return a new dataset
-                with new samples
-              **kwargs:
-                All additional arguments are passed to resample() from
-                scipy.signal
+            Parameters
+            ----------
+            nt: int
+              Number of timepoints to resample to.
+            dt: float
+              Temporal distance of samples after resampling.
+            sr: float
+              Target sampling rate.
+            inplace : bool
+              If inplace=False, it would create and return a new dataset
+              with new samples
+            **kwargs:
+              All additional arguments are passed to resample() from
+              scipy.signal
 
             :Return:
               ChannelDataset

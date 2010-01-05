@@ -46,16 +46,17 @@ class ProjectionMapper(Mapper):
     def __init__(self, selector=None, demean=True):
         """Initialize the ProjectionMapper
 
-        :Parameters:
-          selector: None | list
-            Which components (i.e. columns of the projection matrix)
-            should be used for mapping. If `selector` is `None` all
-            components are used. If a list is provided, all list
-            elements are treated as component ids and the respective
-            components are selected (all others are discarded).
-          demean: bool
-            Either data should be demeaned while computing
-            projections and applied back while doing reverse()
+        Parameters
+        ----------
+        selector: None or list
+          Which components (i.e. columns of the projection matrix)
+          should be used for mapping. If `selector` is `None` all
+          components are used. If a list is provided, all list
+          elements are treated as component ids and the respective
+          components are selected (all others are discarded).
+        demean: bool
+          Either data should be demeaned while computing
+          projections and applied back while doing reverse()
         """
         Mapper.__init__(self)
 
@@ -79,9 +80,10 @@ class ProjectionMapper(Mapper):
     def _pretrain(self, samples):
         """Determine the projection matrix.
 
-        :Parameters:
-          dataset : Dataset
-            Dataset to operate on
+        Parameters
+        ----------
+        dataset : Dataset
+          Dataset to operate on
         """
         if self._demean:
             self._offset_in = samples.mean(axis=0)
@@ -110,14 +112,16 @@ class ProjectionMapper(Mapper):
     def forward(self, data, demean=None):
         """Perform forward projection.
 
-        :Parameters:
-          data: ndarray
-            Data array to map
-          demean: boolean | None
-            Override demean setting for this method call.
+        Parameters
+        ----------
+        data: ndarray
+          Data array to map
+        demean: boolean or None
+          Override demean setting for this method call.
 
-        :Returns:
-          NumPy array
+        Returns
+        -------
+        NumPy array
         """
         # let arg overwrite instance flag
         if demean is None:
@@ -145,8 +149,9 @@ class ProjectionMapper(Mapper):
     def reverse(self, data):
         """Reproject (reconstruct) data into the original feature space.
 
-        :Returns:
-          NumPy array
+        Returns
+        -------
+        NumPy array
         """
         if self._proj is None:
             raise RuntimeError, "Mapper needs to be trained before used."

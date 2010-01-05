@@ -32,21 +32,22 @@ class SimpleSOMMapper(Mapper):
     def __init__(self, kshape, niter, learning_rate=0.005,
                  iradius=None):
         """
-        :Parameters:
-          kshape: (int, int)
-            Shape of the internal Kohonen layer. Currently, only 2D Kohonen
-            layers are supported, although the length of an axis might be set
-            to 1.
-          niter: int
-            Number of iteration during network training.
-          learning_rate: float
-            Initial learning rate, which will continuously decreased during
-            network training.
-          iradius: float | None
-            Initial radius of the Gaussian neighborhood kernel radius, which
-            will continuously decreased during network training. If `None`
-            (default) the radius is set equal to the longest edge of the
-            Kohonen layer.
+        Parameters
+        ----------
+        kshape: (int, int)
+          Shape of the internal Kohonen layer. Currently, only 2D Kohonen
+          layers are supported, although the length of an axis might be set
+          to 1.
+        niter: int
+          Number of iteration during network training.
+        learning_rate: float
+          Initial learning rate, which will continuously decreased during
+          network training.
+        iradius: float or None
+          Initial radius of the Gaussian neighborhood kernel radius, which
+          will continuously decreased during network training. If `None`
+          (default) the radius is set equal to the longest edge of the
+          Kohonen layer.
         """
         # init base class
         Mapper.__init__(self)
@@ -139,12 +140,13 @@ class SimpleSOMMapper(Mapper):
     def _computeInfluenceKernel(self, iter, dqd):
         """Compute the neighborhood kernel for some iteration.
 
-        :Parameters:
-          iter: int
-            The iteration for which to compute the kernel.
-          dqd: array (nrows x ncolumns)
-            This is one quadrant of Euclidean distances between Kohonen unit
-            locations.
+        Parameters
+        ----------
+        iter: int
+          The iteration for which to compute the kernel.
+        dqd: array (nrows x ncolumns)
+          This is one quadrant of Euclidean distances between Kohonen unit
+          locations.
         """
         # compute radius decay for this iteration
         curr_max_radius = self.radius * N.exp(-1.0 * iter / self.iter_scale)
@@ -169,12 +171,14 @@ class SimpleSOMMapper(Mapper):
         'best' is determined as minimal squared Euclidean distance between
         any units weight vector and some given target `sample`
 
-        :Parameters:
-          sample: array
-            Target sample.
+        Parameters
+        ----------
+        sample: array
+          Target sample.
 
-        :Returns:
-          tuple: (row, column)
+        Returns
+        -------
+        tuple: (row, column)
         """
         # TODO expose distance function as parameter
         loc = N.argmin(((self.K - sample) ** 2).sum(axis=2))

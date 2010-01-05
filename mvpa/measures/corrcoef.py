@@ -30,12 +30,13 @@ class CorrCoef(FeaturewiseDatasetMeasure):
     def __init__(self, pvalue=False, attr='labels', **kwargs):
         """Initialize
 
-        :Parameters:
-          pvalue : bool
-            Either to report p-value of pearsons correlation coefficient
-            instead of pure correlation coefficient
-          attr : basestring
-            What attribut to correlate with
+        Parameters
+        ----------
+        pvalue : bool
+          Either to report p-value of pearsons correlation coefficient
+          instead of pure correlation coefficient
+        attr : str
+          What attribut to correlate with
         """
         # init base classes first
         FeaturewiseDatasetMeasure.__init__(self, **kwargs)

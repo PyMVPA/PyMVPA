@@ -37,13 +37,14 @@ class GLM(FeaturewiseDatasetMeasure):
 
     def __init__(self, design, voi='pe', **kwargs):
         """
-        :Parameters:
-          design: array(nsamples x nregressors)
-            GLM design matrix.
-          voi: 'pe' | 'zstat'
-            Variable of interest that should be reported as feature-wise
-            measure. 'beta' are the parameter estimates and 'zstat' returns
-            standardized parameter estimates.
+        Parameters
+        ----------
+        design: array(nsamples x nregressors)
+          GLM design matrix.
+        voi: 'pe' or 'zstat'
+          Variable of interest that should be reported as feature-wise
+          measure. 'beta' are the parameter estimates and 'zstat' returns
+          standardized parameter estimates.
         """
         FeaturewiseDatasetMeasure.__init__(self, **kwargs)
         # store the design matrix as a such (no copying if already array)

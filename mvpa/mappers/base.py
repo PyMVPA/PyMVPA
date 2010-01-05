@@ -34,9 +34,10 @@ class Mapper(object):
     """
     def __init__(self, inspace=None):
         """
-        :Parameters:
-          inspace : str, optional
-            Name of the input space
+        Parameters
+        ----------
+        inspace : str, optional
+          Name of the input space
         """
         self.__inspace = None
         self.set_inspace(inspace)
@@ -464,12 +465,13 @@ class CombinedMapper(Mapper):
     output of all mappers is finally stacked (horizontally or column or
     feature-wise) into a single large 2D matrix (nsamples x nfeatures).
 
-    .. note::
-      This mapper can only embbed mappers that transform data into a 2D
-      (nsamples x nfeatures) representation. For mappers not supporting this
-      transformation, consider wrapping them in a
-      :class:`~mvpa.mappers.base.ChainMapper` with an appropriate
-      post-processing mapper.
+    Notes
+    -----
+    This mapper can only embbed mappers that transform data into a 2D
+    (nsamples x nfeatures) representation. For mappers not supporting this
+    transformation, consider wrapping them in a
+    :class:`~mvpa.mappers.base.ChainMapper` with an appropriate
+    post-processing mapper.
 
     CombinedMapper fully supports forward and backward mapping, training,
     runtime selection of a feature subset (in output dataspace) and retrieval
@@ -477,13 +479,14 @@ class CombinedMapper(Mapper):
     """
     def __init__(self, mappers, **kwargs):
         """
-        :Parameters:
-          mappers: list of Mapper instances
-            The order of the mappers in the list is important, as it will define
-            the order in which data snippets have to be passed to
-            :meth:`~mvpa.mappers.base.CombinedMapper.forward`.
-          **kwargs
-            All additional arguments are passed to the base-class constructor.
+        Parameters
+        ----------
+        mappers: list of Mapper instances
+          The order of the mappers in the list is important, as it will define
+          the order in which data snippets have to be passed to
+          :meth:`~mvpa.mappers.base.CombinedMapper.forward`.
+        **kwargs
+          All additional arguments are passed to the base-class constructor.
         """
         Mapper.__init__(self, **kwargs)
 
@@ -497,17 +500,19 @@ class CombinedMapper(Mapper):
     def forward(self, data):
         """Map data from the IN spaces into to common OUT space.
 
-        :Parameter:
-          data: sequence
-            Each element in the `data` sequence is passed to the corresponding
-            embedded mapper and is mapped individually by it. The number of
-            elements in `data` has to match the number of embedded mappers. Each
-            element is `data` has to provide the same number of samples
-            (first dimension).
+        Parameters
+        ----------
+        data: sequence
+          Each element in the `data` sequence is passed to the corresponding
+          embedded mapper and is mapped individually by it. The number of
+          elements in `data` has to match the number of embedded mappers. Each
+          element is `data` has to provide the same number of samples
+          (first dimension).
 
-        :Returns:
-          array: nsamples x nfeatures
-            Horizontally stacked array of all embedded mapper outputs.
+        Returns
+        -------
+        array: nsamples x nfeatures
+          Horizontally stacked array of all embedded mapper outputs.
         """
         if not len(data) == len(self._mappers):
             raise ValueError, \
@@ -528,13 +533,15 @@ class CombinedMapper(Mapper):
     def reverse(self, data):
         """Reverse map data from OUT space into the IN spaces.
 
-        :Parameter:
-          data: array
-            Single data array to be reverse mapped into a sequence of data
-            snippets in their individual IN spaces.
+        Parameters
+        ----------
+        data: array
+          Single data array to be reverse mapped into a sequence of data
+          snippets in their individual IN spaces.
 
-        :Returns:
-          list
+        Returns
+        -------
+        list
         """
         # assure array and transpose
         # i.e. transpose of 1D does nothing, but of 2D puts features
@@ -565,10 +572,11 @@ class CombinedMapper(Mapper):
         corresponding pieces are passed to the
         :meth:`~mvpa.mappers.base.Mapper.train` method of each embedded mapper.
 
-        :Parameter:
-          dataset: :class:`~mvpa.datasets.base.Dataset` or subclass
-            A dataset with the number of features matching the `outSize` of the
-            `CombinedMapper`.
+        Parameters
+        ----------
+        dataset: :class:`~mvpa.datasets.base.Dataset` or subclass
+          A dataset with the number of features matching the `outSize` of the
+          `CombinedMapper`.
         """
         if dataset.nfeatures != self.get_outsize():
             raise ValueError, "Training dataset does not match the mapper " \
@@ -595,12 +603,14 @@ class CombinedMapper(Mapper):
     def selectOut(self, outIds):
         """Remove some elements and leave only ids in 'out'/feature space.
 
-        .. note::
-          The subset selection is done inplace
+        Notes
+        -----
+        The subset selection is done inplace
 
-        :Parameter:
-          outIds: sequence
-            All output feature ids to be selected/kept.
+        Parameters
+        ----------
+        outIds: sequence
+          All output feature ids to be selected/kept.
         """
         # determine which features belong to what mapper
         # and call its selectOut() accordingly
@@ -619,13 +629,14 @@ class CombinedMapper(Mapper):
     def getNeighbor(self, outId, *args, **kwargs):
         """Get the ids of the neighbors of a single feature in output dataspace.
 
-        :Parameters:
-          outId: int
-            Single id of a feature in output space, whos neighbors should be
-            determined.
-          *args, **kwargs
-            Additional arguments are passed to the metric of the embedded
-            mapper, that is responsible for the corresponding feature.
+        Parameters
+        ----------
+        outId: int
+          Single id of a feature in output space, whos neighbors should be
+          determined.
+        *args, **kwargs
+          Additional arguments are passed to the metric of the embedded
+          mapper, that is responsible for the corresponding feature.
 
         Returns a list of outIds
         """
@@ -657,10 +668,11 @@ class ChainMapper(Mapper):
     """
     def __init__(self, mappers, **kwargs):
         """
-        :Parameters:
-          mappers: list of Mapper instances
-          **kwargs
-            All additional arguments are passed to the base-class constructor.
+        Parameters
+        ----------
+        mappers: list of Mapper instances
+        **kwargs
+          All additional arguments are passed to the base-class constructor.
         """
         Mapper.__init__(self, **kwargs)
 

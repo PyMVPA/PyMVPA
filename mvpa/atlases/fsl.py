@@ -135,16 +135,17 @@ class FSLProbabilisticAtlas(FSLAtlas):
     def __init__(self, thr=0.0, strategy='all', sort=True, *args, **kwargs):
         """
 
-        :Parameters:
-          thr : float
-            Value to threshold at
-          strategy : basestring
-            Possible values
-              all - all entries above thr
-              max - entry with maximal value
-          sort : bool
-            Either to sort entries for 'all' strategy according to
-            probability
+        Parameters
+        ----------
+        thr : float
+          Value to threshold at
+        strategy : str
+          Possible values
+            all - all entries above thr
+            max - entry with maximal value
+        sort : bool
+          Either to sort entries for 'all' strategy according to
+          probability
         """
 
         FSLAtlas.__init__(self, *args, **kwargs)
@@ -157,9 +158,10 @@ class FSLProbabilisticAtlas(FSLAtlas):
     def labelVoxel(self, c, levels=None):
         """Return labels for the voxel
 
-        :Parameters:
-          - c : tuple of coordinates (xyz)
-          - levels : just for API consistency (heh heh). Must be 0 for FSL atlases
+        Parameters
+        ----------
+        - c : tuple of coordinates (xyz)
+        - levels : just for API consistency (heh heh). Must be 0 for FSL atlases
         """
 
         if levels is not None and not (levels in [0, [0], (0,)]):
@@ -209,14 +211,15 @@ class FSLProbabilisticAtlas(FSLAtlas):
     def getMap(self, target, strategy='unique'):
         """Return a probability map
 
-        :Parameters:
-          target : int or str or re._pattern_type
-            If int, map for given index is returned. Otherwise, .find is called
-            with unique=True to find matching area
-          strategy : str in ('unique', 'max')
-            If 'unique', then if multiple areas match, exception would be raised.
-            In case of 'max', each voxel would get maximal value of probabilities
-            from all matching areas
+        Parameters
+        ----------
+        target : int or str or re._pattern_type
+          If int, map for given index is returned. Otherwise, .find is called
+          with unique=True to find matching area
+        strategy : str in ('unique', 'max')
+          If 'unique', then if multiple areas match, exception would be raised.
+          In case of 'max', each voxel would get maximal value of probabilities
+          from all matching areas
         """
         if isinstance(target, int):
             return self._data[target]
@@ -231,9 +234,10 @@ class FSLProbabilisticAtlas(FSLAtlas):
     def getMaps(self, target):
         """Return a list of probability maps for the target
 
-        :Parameters:
-          target : str or re._pattern_type
-            .find is called with a target and unique=False to find all matches
+        Parameters
+        ----------
+        target : str or re._pattern_type
+          .find is called with a target and unique=False to find all matches
         """
         lev = self.levels_dict[0]       # we have just 1 here
         return [self.getMap(l.index) for l in lev.find(target, unique=False)]

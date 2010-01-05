@@ -159,9 +159,10 @@ class CollectableAttribute(object):
     def _setName(self, name):
         """Set the name of parameter
 
-        .. note::
-          Should not be called for an attribute which is already assigned
-          to a collection
+        Notes
+        -----
+        Should not be called for an attribute which is already assigned
+        to a collection
         """
         if name is not None:
             if isinstance(name, basestring):

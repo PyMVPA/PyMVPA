@@ -105,18 +105,19 @@ class Hamster(object):
     def dump(self, filename, compresslevel='auto'):
         """Bury the hamster into the file
 
-        :Parameter:
-          filename: str
-            Name of the target file. When writing to a compressed file the
-            filename gets a '.gz' extension if not already specified. This
-            is necessary as the constructor uses the extension to decide
-            whether it loads from a compressed or uncompressed file.
-          compresslevel: 'auto' or int
-            Compression level setting passed to gzip. When set to
-            'auto', if filename ends with '.gz' `compresslevel` is set
-            to 5, 0 otherwise.  However, when `compresslevel` is set to
-            0 gzip is bypassed completely and everything is written to
-            an uncompressed file.
+        Parameters
+        ----------
+        filename: str
+          Name of the target file. When writing to a compressed file the
+          filename gets a '.gz' extension if not already specified. This
+          is necessary as the constructor uses the extension to decide
+          whether it loads from a compressed or uncompressed file.
+        compresslevel: 'auto' or int
+          Compression level setting passed to gzip. When set to
+          'auto', if filename ends with '.gz' `compresslevel` is set
+          to 5, 0 otherwise.  However, when `compresslevel` is set to
+          0 gzip is bypassed completely and everything is written to
+          an uncompressed file.
         """
         if compresslevel == 'auto':
             compresslevel = (0, 5)[int(filename.endswith('.gz'))]

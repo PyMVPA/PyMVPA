@@ -76,28 +76,29 @@ class Report(object):
                  pagesize=None):
         """Initialize report
 
-        :Parameters:
-          name : string
-            Name of the report
-          title : string or None
-            Title to start the report, if None, name will be used
-          path : string
-            Top directory where named report will be stored. Has to be
-            set now to have correct path for storing image renderings.
-            Default: current directory
-          author : string or None
-            Optional author identity to be printed
-          style : string
-            Default Paragraph to be used. Must be the one of the known
-            to reportlab styles, e.g. Normal
-          fig_ext : string
-            What extension to use for figures by default. If None, a default
-            will be used. Since versions prior 2.2 of reportlab might do not
-            support pdf, 'png' is default for those, 'pdf' otherwise
-          font : string
-            Name of the font to use
-          pagesize : tuple of floats
-            Optional page size if not to be default
+        Parameters
+        ----------
+        name : string
+          Name of the report
+        title : string or None
+          Title to start the report, if None, name will be used
+        path : string
+          Top directory where named report will be stored. Has to be
+          set now to have correct path for storing image renderings.
+          Default: current directory
+        author : string or None
+          Optional author identity to be printed
+        style : string
+          Default Paragraph to be used. Must be the one of the known
+          to reportlab styles, e.g. Normal
+        fig_ext : string
+          What extension to use for figures by default. If None, a default
+          will be used. Since versions prior 2.2 of reportlab might do not
+          support pdf, 'png' is default for those, 'pdf' otherwise
+        font : string
+          Name of the font to use
+        pagesize : tuple of floats
+          Optional page size if not to be default
         """
 
         if pagesize is None:
@@ -181,17 +182,18 @@ class Report(object):
     def figure(self, fig=None, name=None, savefig_kwargs={}, **kwargs):
         """Add a figure to the report
 
-        :Parameters:
-          fig : None or string or `figure.Figure`
-            Figure to place into report
-              string : treat as a filename
-              Figure : stores it into a file under directory
-                       and embedds into the report
-              None :   takes the current figure
-          savefig_kwargs : dict
-            Additional keyword arguments to provide savefig with (e.g. dpi)
-          **kwargs
-            Passed to :class:`reportlab.platypus.Image` constructor
+        Parameters
+        ----------
+        fig : None or string or `figure.Figure`
+          Figure to place into report
+            string : treat as a filename
+            Figure : stores it into a file under directory
+                     and embedds into the report
+            None :   takes the current figure
+        savefig_kwargs : dict
+          Additional keyword arguments to provide savefig with (e.g. dpi)
+        **kwargs
+          Passed to :class:`reportlab.platypus.Image` constructor
         """
 
         if externals.exists('pylab', raiseException=True):
@@ -286,9 +288,10 @@ class Report(object):
     def save(self, add_preamble=True):
         """Saves PDF
 
-        :Parameters:
-          add_preamble : bool
-            Either to add preamble containing title/date/author information
+        Parameters
+        ----------
+        add_preamble : bool
+          Either to add preamble containing title/date/author information
         """
 
         if self.title is None:

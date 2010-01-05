@@ -71,8 +71,9 @@ class ConfigManager(SafeConfigParser):
     def __init__(self, filenames=None):
         """Initialization reads settings from config files and env. variables.
 
-        :Parameters:
-          filenames: list of filenames
+        Parameters
+        ----------
+        filenames: list of filenames
         """
         SafeConfigParser.__init__(self)
 

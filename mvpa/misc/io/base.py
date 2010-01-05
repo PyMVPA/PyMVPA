@@ -78,30 +78,31 @@ class ColumnData(dict):
                  dtype=float, skiplines=0):
         """Read data from file into a dictionary.
 
-        :Parameters:
-          source : basestring or dict
-            If values is given as a string all data is read from the
-            file and additonal keyword arguments can be sued to
-            customize the read procedure. If a dictionary is passed
-            a deepcopy is performed.
-          header : bool or list of basestring
-            Indicates whether the column names should be read from the
-            first line (`header=True`). If `header=False` unique
-            column names will be generated (see class docs). If
-            `header` is a python list, it's content is used as column
-            header names and its length has to match the number of
-            columns in the file.
-          sep : basestring or None
-            Separator string. The actual meaning depends on the output
-            format (see class docs).
-          headersep : basestring or None
-            Separator string used in the header. The actual meaning
-            depends on the output format (see class docs).
-          dtype : type or list(types)
-            Desired datatype(s). Datatype per column get be specified by
-            passing a list of types.
-          skiplines : int
-            Number of lines to skip at the beginning of the file.
+        Parameters
+        ----------
+        source : str or dict
+          If values is given as a string all data is read from the
+          file and additonal keyword arguments can be sued to
+          customize the read procedure. If a dictionary is passed
+          a deepcopy is performed.
+        header : bool or list of str
+          Indicates whether the column names should be read from the
+          first line (`header=True`). If `header=False` unique
+          column names will be generated (see class docs). If
+          `header` is a python list, it's content is used as column
+          header names and its length has to match the number of
+          columns in the file.
+        sep : str or None
+          Separator string. The actual meaning depends on the output
+          format (see class docs).
+        headersep : str or None
+          Separator string used in the header. The actual meaning
+          depends on the output format (see class docs).
+        dtype : type or list(types)
+          Desired datatype(s). Datatype per column get be specified by
+          passing a list of types.
+        skiplines : int
+          Number of lines to skip at the beginning of the file.
         """
         # init base class
         dict.__init__(self)
@@ -161,12 +162,14 @@ class ColumnData(dict):
 
         Is used for automatically added properties to the class.
 
-        :Raises:
-          ValueError:
-            If `key` is not known to given instance
+        Raises
+        ------
+        ValueError:
+          If `key` is not known to given instance
 
-        :Returns:
-          Value if `key` is known
+        Returns
+        -------
+        Value if `key` is known
         """
         if self.has_key(key):
             return self[key]
@@ -306,22 +309,23 @@ class ColumnData(dict):
     def tofile(self, filename, header=True, header_order=None, sep=' '):
         """Write column data to a text file.
 
-        :Parameters:
-          filename : basestring
-            Target filename
-          header : bool
-            If `True` a column header is written, using the column
-            keys. If `False` no header is written.
-          header_order : None or list of basestring
-            If it is a list of strings, they will be used instead
-            of simply asking for the dictionary keys. However
-            these strings must match the dictionary keys in number
-            and identity. This argument type can be used to
-            determine the order of the columns in the output file.
-            The default value is `None`. In this case the columns
-            will be in an arbitrary order.
-          sep : basestring
-            String that is written as a separator between to data columns.
+        Parameters
+        ----------
+        filename : str
+          Target filename
+        header : bool
+          If `True` a column header is written, using the column
+          keys. If `False` no header is written.
+        header_order : None or list of str
+          If it is a list of strings, they will be used instead
+          of simply asking for the dictionary keys. However
+          these strings must match the dictionary keys in number
+          and identity. This argument type can be used to
+          determine the order of the columns in the output file.
+          The default value is `None`. In this case the columns
+          will be in an arbitrary order.
+        sep : str
+          String that is written as a separator between to data columns.
         """
         # XXX do the try: except: dance
         file_ = open(filename, 'w')
@@ -379,14 +383,15 @@ class SampleAttributes(ColumnData):
     def __init__(self, source, literallabels=True, header=None):
         """Read PyMVPA sample attributes from disk.
 
-        :Parameters:
-          source: basestring
-            Filename of an atrribute file
-          literallabels: bool
-            Either labels are given as literal strings
-          header: None or bool or list of str
-            If None, ['labels', 'chunks'] is assumed. Otherwise the same
-            behavior as of `ColumnData`
+        Parameters
+        ----------
+        source: str
+          Filename of an atrribute file
+        literallabels: bool
+          Either labels are given as literal strings
+        header: None or bool or list of str
+          If None, ['labels', 'chunks'] is assumed. Otherwise the same
+          behavior as of `ColumnData`
         """
         if literallabels:
             dtypes = [str, float]
@@ -424,10 +429,11 @@ class SampleAttributes(ColumnData):
         sense of absolute timing, both `onset` and `duration` are determined and
         stored in #samples units.
 
-        :Parameters:
-          kwargs
-            Any keyword arugment provided would be replicated, through all
-            the entries.
+        Parameters
+        ----------
+        kwargs
+          Any keyword arugment provided would be replicated, through all
+          the entries.
         """
         events = []
         prev_onset = 0
@@ -489,8 +495,9 @@ class SensorLocations(ColumnData):
     def locations(self):
         """Get the sensor locations as an array.
 
-        :Returns:
-          (nchannels x 3) array with coordinates in (x, y, z)
+        Returns
+        -------
+        (nchannels x 3) array with coordinates in (x, y, z)
         """
         return N.array((self.pos_x, self.pos_y, self.pos_z)).T
 
@@ -510,8 +517,9 @@ class XAVRSensorLocations(SensorLocations):
     def __init__(self, source):
         """Read sensor locations from file.
 
-        :Parameter:
-          source : filename of an attribute file
+        Parameters
+        ----------
+        source : filename of an attribute file
         """
         SensorLocations.__init__(
             self, source,
@@ -538,8 +546,9 @@ class TuebingenMEGSensorLocations(SensorLocations):
     def __init__(self, source):
         """Read sensor locations from file.
 
-        :Parameter:
-          source : filename of an attribute file
+        Parameters
+        ----------
+        source : filename of an attribute file
         """
         SensorLocations.__init__(
             self, source,
@@ -556,14 +565,15 @@ def design2labels(columndata, baseline_label=0,
 
     TODO: fix description/naming
 
-    :Parameters:
-      columndata : ColumnData
-        Attributes where each known will be considered as a separate
-        explanatory variable (EV) in the design.
-      baseline_label
-        What label to assign for samples where none of EVs was given a value
-      func : functor
-        Function which decides either a value should be considered
+    Parameters
+    ----------
+    columndata : ColumnData
+      Attributes where each known will be considered as a separate
+      explanatory variable (EV) in the design.
+    baseline_label
+      What label to assign for samples where none of EVs was given a value
+    func : functor
+      Function which decides either a value should be considered
 
     :Output:
       list of labels which are taken from column names in
@@ -632,14 +642,15 @@ def labels2chunks(labels, method="alllabels", ignore_labels=None):
 labels2chunks.__doc__ = \
  """Automagically decide on chunks based on labels
 
-    :Parameters:
-      labels
-        labels to base chunking on
-      method : basestring
-        codename for method to use. Known are %s
-      ignore_labels : list of basestring
-        depends on the method. If method ``alllabels``, then don't
-        seek for such labels in chunks. E.g. some 'reject' samples
+    Parameters
+    ----------
+    labels
+      labels to base chunking on
+    method : str
+      codename for method to use. Known are %s
+    ignore_labels : list of str
+      depends on the method. If method `alllabels`, then don't
+      seek for such labels in chunks. E.g. some 'reject' samples
 
     :rtype: list
     """ % __known_chunking_methods.keys()
