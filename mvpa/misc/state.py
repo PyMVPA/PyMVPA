@@ -1404,13 +1404,13 @@ class Harvestable(ClassWithCollections):
         from the caller.
 
         :Parameters:
-            vars : dict
-                Dictionary of available data. Most often locals() could be
-                passed as `vars`. Mention that desired to be harvested
-                private attributes better be bound locally to some variable
+          vars : dict
+            Dictionary of available data. Most often locals() could be
+            passed as `vars`. Mention that desired to be harvested
+            private attributes better be bound locally to some variable
 
         :Returns:
-            nothing
+          nothing
         """
 
         if not self.states.isEnabled('harvested') or len(self.__attribs)==0:
