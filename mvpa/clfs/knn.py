@@ -16,8 +16,9 @@ import numpy as N
 from mvpa.base import warning
 from mvpa.misc.support import indentDoc
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
-from mvpa.base.dochelpers import enhancedDocString
 from mvpa.clfs.distance import squared_euclidean_distance
+
+__all__ = [ 'kNN' ]
 
 if __debug__:
     from mvpa.base import debug

@@ -28,6 +28,7 @@ from mvpa.misc.state import StateVariable
 if __debug__:
     from mvpa.base import debug
 
+__all__ = [ "GNB" ]
 
 class GNB(Classifier):
     """Gaussian Naive Bayes `Classifier`.
