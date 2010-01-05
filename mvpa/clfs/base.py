@@ -253,7 +253,8 @@ class Classifier(ClassWithCollections):
     def _posttrain(self, dataset):
         """Functionality post training
 
-        For instance -- computing confusion matrix
+        For instance -- computing confusion matrix.
+
         Parameters
         ----------
         dataset : Dataset
@@ -496,7 +497,7 @@ class Classifier(ClassWithCollections):
         self._postpredict(dataset, result)
         return result
 
-    # deprecate ???
+    # XXX deprecate ???
     def isTrained(self, dataset=None):
         """Either classifier was already trained.
 
