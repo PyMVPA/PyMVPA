@@ -18,8 +18,9 @@ from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import ConvergenceError
 from mvpa.misc.param import Parameter
 from mvpa.misc.state import StateVariable
-from mvpa.misc.transformers import SecondAxisMaxOfAbs
 from mvpa.datasets.base import Dataset
+
+__all__ = [ "SMLR", "SMLRWeights" ]
 
 
 _DEFAULT_IMPLEMENTATION = "Python"
