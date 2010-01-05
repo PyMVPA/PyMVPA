@@ -35,18 +35,18 @@ class MiscDatasetFxSpTests(unittest.TestCase):
 
 
         ds = dataset(samples.copy(), labels=chunks, chunks=chunks)
-        detrend(ds, perchunk=False)
+        detrend(ds)
 
         self.failUnless(linalg.norm(ds.samples - target_all) < thr,
                 msg="Detrend should have detrended all the samples at once")
 
 
         ds_bad = dataset(samples.copy(), labels=chunks, chunks=chunks_bad)
-        self.failUnlessRaises(ValueError, detrend, ds_bad, perchunk=True)
+        self.failUnlessRaises(ValueError, detrend, ds_bad, chunks='chunks')
 
 
         ds = dataset(samples.copy(), labels=chunks, chunks=chunks)
-        detrend(ds, perchunk=True)
+        detrend(ds, chunks='chunks')
 
         self.failUnless(linalg.norm(ds.samples) < thr,
                     msg="Detrend should have detrended each chunk separately")
@@ -58,18 +58,18 @@ class MiscDatasetFxSpTests(unittest.TestCase):
         # small additional test for break points
         ds = dataset(N.array([[1.0, 2, 3, 1, 2, 3]], ndmin=2).T,
                      labels=chunks, chunks=chunks)
-        detrend(ds, perchunk=True)
+        detrend(ds, chunks='chunks')
         self.failUnless(linalg.norm(ds.samples) < thr,
                         msg="Detrend should have removed all the signal")
 
         # tests of the regress version of detrend
         ds = dataset(samples=samples.copy(), labels=chunks, chunks=chunks)
-        detrend(ds, perchunk=False, model='regress', polyord=1)
+        detrend(ds, model='regress', polyord=1)
         self.failUnless(linalg.norm(ds.samples - target_all) < thr,
                 msg="Detrend should have detrended all the samples at once")
 
         ds = dataset(samples=samples.copy(), labels=chunks, chunks=chunks)
-        (res, reg) = detrend(ds, perchunk=True, model='regress', polyord=2)
+        (res, reg) = detrend(ds, chunks='chunks', model='regress', polyord=2)
         psamps = ds.samples.copy()
         self.failUnless(linalg.norm(ds.samples) < thr,
                 msg="Detrend should have detrended each chunk separately")
@@ -79,7 +79,7 @@ class MiscDatasetFxSpTests(unittest.TestCase):
 
         ods = dataset(samples=samples.copy(), labels=chunks, chunks=chunks)
         opt_reg = reg.copy()
-        (ores, oreg) = detrend(ods, perchunk=True, model='regress',
+        (ores, oreg) = detrend(ods, chunks='chunks', model='regress',
                                opt_reg=opt_reg)
         dsamples = (ods.samples - psamps).sum()
         self.failUnless(abs(dsamples) <= 1e-10,
@@ -96,19 +96,19 @@ class MiscDatasetFxSpTests(unittest.TestCase):
                                  [2.0, 0, -2, 0, 0, 0]], ndmin=2 ).T
 
         ds = dataset(samples.copy(), labels=chunks, chunks=chunks)
-        (res, reg) = detrend(ds, perchunk=True, model='regress', polyord=[0,1])
+        (res, reg) = detrend(ds, chunks='chunks', model='regress', polyord=[0,1])
         self.failUnless(linalg.norm(ds.samples - target_mixed) < thr,
             msg="Detrend should have baseline corrected the first chunk, " + \
                 "but baseline and linear detrended the second.")
 
         # test applying detrend in sequence
         ds = dataset(samples.copy(), labels=chunks, chunks=chunks)
-        (res, reg) = detrend(ds, perchunk=True, model='regress', polyord=1)
+        (res, reg) = detrend(ds, chunks='chunks', model='regress', polyord=1)
         opt_reg = reg[N.ix_(range(reg.shape[0]),[1,3])]
         final_samps = ds.samples.copy()
         ds = dataset(samples.copy(), labels=chunks, chunks=chunks)
-        (res, reg) = detrend(ds, perchunk=True, model='regress', polyord=0)
-        (res, reg) = detrend(ds, perchunk=True, model='regress',
+        (res, reg) = detrend(ds, chunks='chunks', model='regress', polyord=0)
+        (res, reg) = detrend(ds, chunks='chunks', model='regress',
                              opt_reg=opt_reg)
         self.failUnless(linalg.norm(ds.samples - final_samps) < thr,
                 msg="Detrend of polyord 1 should be same as detrend with " + \
