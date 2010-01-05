@@ -62,7 +62,7 @@ def collectTestSuites():
         'test_searchlight',
         'test_rfe',
         'test_ifs',
-## broken        'test_datameasure',
+        'test_datameasure',
         'test_perturbsensana',
         # And the suite (all-in-1)
         'test_suite',

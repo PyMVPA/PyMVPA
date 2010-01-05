@@ -64,9 +64,9 @@ class SensitivityAnalysersTests(unittest.TestCase):
         f = dsm(data)
         # check if nothing evil is done to dataset
         self.failUnless(N.all(data.samples == datass))
-        self.failUnless(f.shape == (data.nfeatures,))
-        self.failUnless(abs(f[1]) <= 1e-12, # some small value
-            msg="Failed test with value %g instead of != 0.0" % f[1])
+        self.failUnless(f.shape == (1, data.nfeatures))
+        self.failUnless(abs(f.samples[0,1]) <= 1e-12, # some small value
+            msg="Failed test with value %g instead of != 0.0" % f.samples[0, 1])
         self.failUnless(f[0] > 0.1)     # some reasonably large value
 
         # we should not have NaNs
@@ -94,7 +94,13 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         # and we get sensitivity analyzer which works on splits
         map_ = sana(self.dataset)
-        self.failUnlessEqual(len(map_), self.dataset.nfeatures)
+        if isinstance(clf, SMLR):
+            # SMLR returns per-class sensitivities, hence twice as many
+            self.failUnlessEqual(map_.shape, (2 * len(self.dataset.UC),
+                                              self.dataset.nfeatures))
+        else:
+            self.failUnlessEqual(map_.shape, (len(self.dataset.UC),
+                                              self.dataset.nfeatures))
 
         if cfg.getboolean('tests', 'labile', default='yes'):
             for conf_matrix in [sana.clf.states.training_confusion] \
@@ -109,24 +115,14 @@ class SensitivityAnalysersTests(unittest.TestCase):
         errors = [x.percentCorrect
                     for x in sana.clf.states.confusion.matrices]
 
-        # XXX
-        # That is too much to ask if the dataset is easy - thus
-        # disabled for now
-        #self.failUnless(N.min(errors) != N.max(errors),
-        #                msg="Splits should have slightly but different " \
-        #                    "generalization")
-
         # lets go through all sensitivities and see if we selected the right
         # features
-        # XXX yoh: disabled checking of each map separately since in
-        #     BoostedClassifierSensitivityAnalyzer and
-        #     ProxyClassifierSensitivityAnalyzer
-        #     we don't have yet way to provide transformers thus internal call
-        #     to getSensitivityAnalyzer in _call of them is not parametrized
-        if 'meta' in clf.__tags__ and len(map_.nonzero()[0])<2:
+        if 'meta' in clf.__tags__ and len(map_.samples[0].nonzero()[0])<2:
             # Some meta classifiers (5% of ANOVA) are too harsh ;-)
+            # if we get less than 2 features with on-zero sensitivities we
+            # cannot really test
             return
-        for map__ in [map_]: # + sana.combined_analyzer.sensitivities:
+        for map__ in map_.samples: # + sana.combined_analyzer.sensitivities:
             selected = FixedNElementTailSelector(
                 self.dataset.nfeatures -
                 len(self.dataset.nonbogus_features))(map__)
@@ -156,7 +152,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         dataset = datasets['uni2medium']
         # and we get sensitivity analyzer which works on splits
         map_ = sana(dataset)
-        self.failUnlessEqual(len(map_), dataset.nfeatures)
+        self.failUnlessEqual(map_.shape, (1, dataset.nfeatures))
 
 
 
@@ -255,32 +251,34 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         if not externals.exists('scipy'):
             return
+        # Let's disable this one for now until we are sure about the destiny of
+        # DistPValue -- read the docstring of it!
         # Most evil example
-        ds = datasets['uni2medium']
-        plain_sana = SVM().getSensitivityAnalyzer(
-               transformer=DistPValue())
-        boosted_sana = SplitFeaturewiseDatasetMeasure(
-            analyzer=SVM().getSensitivityAnalyzer(
-               transformer=DistPValue(fpp=0.05)),
-            splitter=NoneSplitter(nperlabel=0.8, mode='first', nrunspersplit=2),
-            enable_states=['splits', 'sensitivities'])
-        # lets create feature selector
-        fsel = RangeElementSelector(upper=0.05, lower=0.95, inclusive=True)
+        #ds = datasets['uni2medium']
+        #plain_sana = SVM().getSensitivityAnalyzer(
+        #       transformer=DistPValue())
+        #boosted_sana = SplitFeaturewiseDatasetMeasure(
+        #    analyzer=SVM().getSensitivityAnalyzer(
+        #       transformer=DistPValue(fpp=0.05)),
+        #    splitter=NoneSplitter(nperlabel=0.8, mode='first', nrunspersplit=2),
+        #    enable_states=['splits', 'sensitivities'])
+        ## lets create feature selector
+        #fsel = RangeElementSelector(upper=0.05, lower=0.95, inclusive=True)
 
-        sanas = dict(plain=plain_sana, boosted=boosted_sana)
-        for k,sana in sanas.iteritems():
-            clf = FeatureSelectionClassifier(SVM(),
-                        SensitivityBasedFeatureSelection(sana, fsel),
-                        descr='SVM on p=0.01(both tails) using %s' % k)
-            ce = CrossValidatedTransferError(TransferError(clf),
-                                             NFoldSplitter())
-            error = ce(ds)
+        #sanas = dict(plain=plain_sana, boosted=boosted_sana)
+        #for k,sana in sanas.iteritems():
+        #    clf = FeatureSelectionClassifier(SVM(),
+        #                SensitivityBasedFeatureSelection(sana, fsel),
+        #                descr='SVM on p=0.01(both tails) using %s' % k)
+        #    ce = CrossValidatedTransferError(TransferError(clf),
+        #                                     NFoldSplitter())
+        #    error = ce(ds)
 
-        sens = boosted_sana(ds)
-        sens_plain = plain_sana(ds)
+        #sens = boosted_sana(ds)
+        #sens_plain = plain_sana(ds)
 
-        # TODO: make a really unittest out of it -- not just runtime
-        #       bugs catcher
+        ## TODO: make a really unittest out of it -- not just runtime
+        ##       bugs catcher
 
     # TODO -- unittests for sensitivity analyzers which use combiners
     # (linsvmweights for multi-class SVMs and smlrweights for SMLR)
