@@ -394,7 +394,7 @@ class RFETests(unittest.TestCase):
             error = cv(dataset).samples.squeeze()
         except Exception, e:
             self.fail('CrossValidation cannot handle classifier with RFE '
-                      'feature selection. Got exception: %s' % e)
+                      'feature selection. Got exception: %s' % (e,))
         self.failUnless(error < 0.2)
 
 
