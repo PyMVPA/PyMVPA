@@ -167,13 +167,16 @@ class PolySGKernel(_BasicSGKernel):
                              doc="Whether +1 is added within the expression")
 
     if not exists('sg ge 0.6.5'):
-        use_normalization = Parameter(False, allowedtype=bool,
+        use_normalization = Parameter(True, allowedtype=bool,
                                       doc="Optional normalization")
         __kp_order__ = __kp_order__ + ('use_normalization',)
 
-    def __init__(self, **kwargs):
-        # Necessary for proper docstring construction
-        _BasicSGKernel.__init__(self, **kwargs)
+    def __init__(self, normalizer_cls=sgk.IdentityKernelNormalizer, **kwargs):
+        """
+        Unlike other kernels PolySGKernel uses `sgk.IdentityKernelNormalizer` by default
+        to match results of common definition as implemented in `np.PolyKernel`.
+        """
+        _BasicSGKernel.__init__(self, normalizer_cls=normalizer_cls, **kwargs)
 
 class PrecomputedSGKernel(SGKernel):
     """A kernel which is precomputed from a numpy array or a Shogun kernel"""
