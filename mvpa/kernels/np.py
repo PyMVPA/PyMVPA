@@ -75,12 +75,12 @@ class ConstantKernel(NumpyKernel):
     def _compute(self, data1, data2):
         """Compute kernel matrix.
 
-        :Parameters:
-          data1 : numpy.ndarray
-            data
-          data2 : numpy.ndarray
-            data
-            (Defaults to None)
+        Parameters
+        ----------
+        data1 : numpy.ndarray
+          lhs data
+        data2 : numpy.ndarray
+          rhs data
         """
         self._k = \
             (self.params.sigma_0 ** 2) * N.ones((data1.shape[0], data2.shape[0]))
@@ -249,7 +249,7 @@ class ExponentialKernel(NumpyKernel):
     ##     """Initialize an Exponential kernel instance.
 
     ##     :Parameters:
-    ##       length_scale : float OR numpy.ndarray
+    ##       length_scale : float or numpy.ndarray
     ##         the characteristic length-scale (or length-scales) of the
     ##         phenomenon under investigation.
     ##         (Defaults to 1.0)
@@ -272,12 +272,12 @@ class ExponentialKernel(NumpyKernel):
     def _compute(self, data1, data2):
         """Compute kernel matrix.
 
-        :Parameters:
-          data1 : numpy.ndarray
-            data
-          data2 : numpy.ndarray
-            data
-            (Defaults to None)
+        Parameters
+        ----------
+        data1 : numpy.ndarray
+          lhs data
+        data2 : numpy.ndarray
+          rhs data
         """
         params = self.params
         # XXX the following computation can be (maybe) made more
@@ -375,14 +375,15 @@ class SquaredExponentialKernel(NumpyKernel):
     def __init__(self, length_scale=1.0, sigma_f=1.0, **kwargs):
         """Initialize a Squared Exponential kernel instance.
 
-        :Parameters:
-          length_scale : float OR numpy.ndarray
-            the characteristic length-scale (or length-scales) of the
-            phenomenon under investigation.
-            (Defaults to 1.0)
-          sigma_f : float
-            Signal standard deviation.
-            (Defaults to 1.0)
+        Parameters
+        ----------
+        length_scale : float or numpy.ndarray, optional
+          the characteristic length-scale (or length-scales) of the
+          phenomenon under investigation.
+          (Defaults to 1.0)
+        sigma_f : float, optional
+          Signal standard deviation.
+          (Defaults to 1.0)
         """
         # init base class first
         NumpyKernel.__init__(self, **kwargs)
@@ -403,12 +404,13 @@ class SquaredExponentialKernel(NumpyKernel):
     def _compute(self, data1, data2):
         """Compute kernel matrix.
 
-        :Parameters:
-          data1 : numpy.ndarray
-            data
-          data2 : numpy.ndarray
-            data
-            (Defaults to None)
+        Parameters
+        ----------
+        data1 : numpy.ndarray
+          data
+        data2 : numpy.ndarray
+          data
+          (Defaults to None)
         """
         # weighted squared euclidean distance matrix:
         self.wdm2 = squared_euclidean_distance(data1, data2, weight=(self.length_scale**-2))
@@ -501,18 +503,19 @@ class Matern_3_2Kernel(NumpyKernel):
     def __init__(self, length_scale=1.0, sigma_f=1.0, numerator=3.0, **kwargs):
         """Initialize a Squared Exponential kernel instance.
 
-        :Parameters:
-          length_scale : float OR numpy.ndarray
-            the characteristic length-scale (or length-scales) of the
-            phenomenon under investigation.
-            (Defaults to 1.0)
-          sigma_f : float
-            Signal standard deviation.
-            (Defaults to 1.0)
-          numerator: float
-            the numerator of parameter ni of Matern covariance functions.
-            Currently only numerator=3.0 and numerator=5.0 are implemented.
-            (Defaults to 3.0)
+        Parameters
+        ----------
+        length_scale : float or numpy.ndarray, optional
+          the characteristic length-scale (or length-scales) of the
+          phenomenon under investigation.
+          (Defaults to 1.0)
+        sigma_f : float, optional
+          Signal standard deviation.
+          (Defaults to 1.0)
+        numerator: float, optional
+          the numerator of parameter ni of Matern covariance functions.
+          Currently only numerator=3.0 and numerator=5.0 are implemented.
+          (Defaults to 3.0)
         """
         # init base class first
         NumpyKernel.__init__(self, **kwargs)
@@ -531,12 +534,12 @@ class Matern_3_2Kernel(NumpyKernel):
     def _compute(self, data1, data2):
         """Compute kernel matrix.
 
-        :Parameters:
-          data1 : numpy.ndarray
-            data
-          data2 : numpy.ndarray
-            data
-            (Defaults to None)
+        Parameters
+        ----------
+        data1 : numpy.ndarray
+          lhs data
+        data2 : numpy.ndarray
+          rhs data
         """
         tmp = squared_euclidean_distance(
                 data1, data2, weight=0.5 / (self.length_scale ** 2))
@@ -584,11 +587,12 @@ class Matern_5_2Kernel(Matern_3_2Kernel):
     def __init__(self, **kwargs):
         """Initialize a Squared Exponential kernel instance.
 
-        :Parameters:
-          length_scale : float OR numpy.ndarray
-            the characteristic length-scale (or length-scales) of the
-            phenomenon under investigation.
-            (Defaults to 1.0)
+        Parameters
+        ----------
+        length_scale : float or numpy.ndarray
+          the characteristic length-scale (or length-scales) of the
+          phenomenon under investigation.
+          (Defaults to 1.0)
         """
         Matern_3_2Kernel.__init__(self, numerator=5.0, **kwargs)
         pass
@@ -604,17 +608,18 @@ class RationalQuadraticKernel(NumpyKernel):
     def __init__(self, length_scale=1.0, sigma_f=1.0, alpha=0.5, **kwargs):
         """Initialize a Squared Exponential kernel instance.
 
-        :Parameters:
-          length_scale : float OR numpy.ndarray
-            the characteristic length-scale (or length-scales) of the
-            phenomenon under investigation.
-            (Defaults to 1.0)
-          sigma_f : float
-            Signal standard deviation.
-            (Defaults to 1.0)
-          alpha: float
-            The parameter of the RQ functions family.
-            (Defaults to 2.0)
+        Parameters
+        ----------
+        length_scale : float or numpy.ndarray
+          the characteristic length-scale (or length-scales) of the
+          phenomenon under investigation.
+          (Defaults to 1.0)
+        sigma_f : float
+          Signal standard deviation.
+          (Defaults to 1.0)
+        alpha : float
+          The parameter of the RQ functions family.
+          (Defaults to 2.0)
         """
         # init base class first
         NumpyKernel.__init__(self, **kwargs)
@@ -630,12 +635,12 @@ class RationalQuadraticKernel(NumpyKernel):
     def _compute(self, data1, data2):
         """Compute kernel matrix.
 
-        :Parameters:
-          data1 : numpy.ndarray
-            data
-          data2 : numpy.ndarray
-            data
-            (Defaults to None)
+        Parameters
+        ----------
+        data1 : numpy.ndarray
+          lhs data
+        data2 : numpy.ndarray
+          rhs data
         """
         tmp = squared_euclidean_distance(
                 data1, data2, weight=1.0 / (self.length_scale ** 2))
