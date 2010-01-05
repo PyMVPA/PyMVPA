@@ -67,7 +67,7 @@ class _SVM(Classifier):
     # 'linear':LinearSVMWeights, for each backend
     _KNOWN_SENSITIVITIES={}
     kernel = Parameter(None, allowedtype=Kernel,
-                       doc='Kernel object')
+                       doc='Kernel object', index=-1)
 
     _SVM_PARAMS = {
         'C' : Parameter(-1.0,
@@ -206,6 +206,7 @@ class _SVM(Classifier):
                   (self, self.params.kernel))
 
 
+    # XXX RF
     @property
     def kernel_params(self):
         if self.params.kernel:
@@ -215,22 +216,21 @@ class _SVM(Classifier):
     def __repr__(self):
         """Definition of the object summary over the object
         """
-        res = "%s(kernel='%s', svm_impl='%s'" % \
-              (self.__class__.__name__, self.params.kernel,
-               self._svm_impl)
+        res = "%s(svm_impl=%r" % \
+              (self.__class__.__name__, self._svm_impl)
         sep = ", "
         # XXX TODO: we should have no kernel_params any longer
         for col in [self.params]:#, self.kernel_params]:
             for k in col.names:
                 # list only params with not default values
                 if col[k].isDefault: continue
-                res += "%s%s=%s" % (sep, k, col[k].value)
+                res += "%s%s=%r" % (sep, k, col[k].value)
                 #sep = ', '
         states = self.states
         for name, invert in ( ('enable', False), ('disable', True) ):
             states_chosen = states._getEnabled(nondefault=False, invert=invert)
             if len(states_chosen):
-                res += sep + "%s_states=%s" % (name, str(states_chosen))
+                res += sep + "%s_states=%r" % (name, states_chosen)
 
         res += ")"
         return res
@@ -326,9 +326,12 @@ Desired implementation is specified in `svm_impl` argument. Here
 is the list if implementations known to this class, along with
 specific to them parameters (described below among the rest of
 parameters), and what tasks it is capable to deal with
-(e.g. regression, binary and/or multiclass classification).
+(e.g. regression, binary and/or multiclass classification):
 
-%s""" % (_rst_section('Implementations'),)
+"""
+        # XXX Deprecate
+        # To not confuse sphinx -- lets avoid Implementations section
+        # %s""" % (_rst_section('Implementations'),)
 
 
         class NOSClass(object):
@@ -351,7 +354,7 @@ parameters), and what tasks it is capable to deal with
         idoc += ''.join(
             ['\n%s%s : %s' % (_rst_indentstr, k, v[3])
              + NOS(v[1], "\n" + _rst_indentstr + "  Parameters: %s")
-             + NOS(v[2], "\n%s" % _rst(('','\n')[int(len(v[1])>0)], '')
+             + NOS(v[2], "%s" % _rst(('','\n')[int(len(v[1])>0)], '')
                    + _rst_indentstr + "  Capabilities: %s")
              for k,v in cls._KNOWN_IMPLEMENTATIONS.iteritems()])
 
@@ -359,10 +362,12 @@ parameters), and what tasks it is capable to deal with
         idoc += """
 
 Kernel choice is specified as a kernel instance with kwargument 'kernel`.
-Some kernels might allow computation of per feature
+Some kernels (e.g. Linear) might allow computation of per feature
 sensitivity.
 
-%s""" % (_rst_section('Kernels'),)
+"""
+        # XXX Deprecate
+        # %s""" % (_rst_section('Kernels'),)
 
         #idoc += ''.join(
         #    ['\n%s%s' % (_rst_indentstr, k)
@@ -373,7 +378,7 @@ sensitivity.
         # Finally parameters
         NOS.seen += cls._KNOWN_PARAMS# + cls._KNOWN_KERNEL_PARAMS
 
-        idoc += '\n:Parameters:\n' + '\n'.join(
+        idoc += '\n' + _rst_section('Parameters') + '\n' + '\n'.join(
             [v.doc(indent='  ')
              for k,v in cls._SVM_PARAMS.iteritems()
              if k in NOS.seen])
