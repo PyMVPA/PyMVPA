@@ -37,10 +37,11 @@ class LinearSVMWeights(Sensitivity):
     def __init__(self, clf, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
 
-        :Parameters:
-          clf: LinearSVM
-            classifier to use. Only classifiers sub-classed from
-            `LinearSVM` may be used.
+        Parameters
+        ----------
+        clf: LinearSVM
+          classifier to use. Only classifiers sub-classed from
+          `LinearSVM` may be used.
         """
         # init base classes first
         Sensitivity.__init__(self, clf, **kwargs)

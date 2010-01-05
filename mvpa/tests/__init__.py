@@ -148,15 +148,16 @@ def runNoseTests():
 def run(limit=None, verbosity=None):
     """Runs the full or a subset of the PyMVPA unittest suite.
 
-    :Parameters:
-      limit: None | list
-        If None, the full test suite is run. Alternatively, a list with test IDs
-        can be provides. IDs are the base filenames of the test implementation,
-        e.g. the ID for the suite in 'mvpa/tests/test_niftidataset.py' is
-        'niftidataset'.
-      verbosity: None | int
-        Verbosity of unittests execution. If None, controlled by PyMVPA
-        configuration tests/verbosity
+    Parameters
+    ----------
+    limit: None or list
+      If None, the full test suite is run. Alternatively, a list with test IDs
+      can be provides. IDs are the base filenames of the test implementation,
+      e.g. the ID for the suite in 'mvpa/tests/test_niftidataset.py' is
+      'niftidataset'.
+    verbosity: None or int
+      Verbosity of unittests execution. If None, controlled by PyMVPA
+      configuration tests/verbosity
     """
     if __debug__:
         from mvpa.base import debug

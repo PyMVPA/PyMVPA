@@ -42,11 +42,12 @@ class ZScoreMapper(ProjectionMapper):
                  **kwargs):
         """Initialize ZScoreMapper
 
-        :Parameters:
-          baselinelabels : None or list of int or string
-            Used to compute mean and variance
-            TODO: not in effect now and need to be adherent to all
-            `ProjectionMapper`s
+        Parameters
+        ----------
+        baselinelabels : None or list of int or string
+          Used to compute mean and variance
+          TODO: not in effect now and need to be adherent to all
+          `ProjectionMapper`s
         """
 
         ProjectionMapper.__init__(self, **kwargs)

@@ -91,13 +91,14 @@ class Collection(object):
     def __init__(self, items=None, owner=None, name=None):
         """Initialize the Collection
 
-        :Parameters:
-          items : dict of CollectableAttribute's
-            items to initialize with
-          owner : object
-            an object to which collection belongs
-          name : str
-            name of the collection (as seen in the owner, e.g. 'states')
+        Parameters
+        ----------
+        items : dict of CollectableAttribute's
+          items to initialize with
+        owner : object
+          an object to which collection belongs
+        name : str
+          name of the collection (as seen in the owner, e.g. 'states')
         """
         # first set all stuff to nothing and later on charge it
         # this is important, since some of the stuff below relies in the
@@ -253,9 +254,10 @@ class Collection(object):
     def isSet(self, index=None):
         """If item (or any in the present or listed) was set
 
-        :Parameters:
-          index : None or str or list of str
-            What items to check if they were set in the collection
+        Parameters
+        ----------
+        index : None or str or list of str
+          What items to check if they were set in the collection
         """
         _items = self._items
         if not (index is None):
@@ -302,9 +304,10 @@ class Collection(object):
     def add_collectable(self, item):
         """Add a new CollectableAttribute to the collection
 
-        :Parameters:
-          item : CollectableAttribute
-            or of derived class. Must have 'name' assigned
+        Parameters
+        ----------
+        item : CollectableAttribute
+          or of derived class. Must have 'name' assigned
 
         TODO: we should make it stricter to don't add smth of
               wrong type into Collection since it might lead to problems
@@ -455,13 +458,14 @@ class Collection(object):
     def _action(self, index, func, missingok=False, **kwargs):
         """Run specific func either on a single item or on all of them
 
-        :Parameters:
-          index : basestr
-            Name of the state variable
-          func
-            Function (not bound) to call given an item, and **kwargs
-          missingok : bool
-            If True - do not complain about wrong index
+        Parameters
+        ----------
+        index : str
+          Name of the state variable
+        func
+          Function (not bound) to call given an item, and **kwargs
+        missingok : bool
+          If True - do not complain about wrong index
         """
         if isinstance(index, basestring):
             if index.upper() == 'ALL':
@@ -537,11 +541,12 @@ class Collection(object):
         """Define an entry within owner's __dict__
          so ipython could easily complete it
 
-         :Parameters:
-           index : str or list of str
-             Name of the attribute. If None -- all known get registered
-           register : bool
-             Register if True or unregister if False
+         Parameters
+         ----------
+         index : str or list of str
+           Name of the attribute. If None -- all known get registered
+         register : bool
+           Register if True or unregister if False
 
          XXX Needs refactoring since we duplicate the logic of expansion of
          index value
@@ -639,14 +644,15 @@ class StateCollection(Collection):
     def __init__(self, items=None, owner=None):
         """Initialize the state variables of a derived class
 
-        :Parameters:
-          items : dict
-            dictionary of states
-          owner : ClassWithCollections
-            object which owns the collection
-          name : str
-            literal description. Usually just attribute name for the
-            collection, e.g. 'states'
+        Parameters
+        ----------
+        items : dict
+          dictionary of states
+        owner : ClassWithCollections
+          object which owns the collection
+        name : str
+          literal description. Usually just attribute name for the
+          collection, e.g. 'states'
         """
         Collection.__init__(self, items=items, owner=owner)
 
@@ -697,14 +703,15 @@ class StateCollection(Collection):
     def _copy_states_(self, fromstate, index=None, deep=False):
         """Copy known here states from `fromstate` object into current object
 
-        :Parameters:
-          fromstate : Collection or ClassWithCollections
-            Source states to copy from
-          index : None or list of str
-            If not to copy all set state variables, index provides
-            selection of what to copy
-          deep : bool
-            Optional control over the way to copy
+        Parameters
+        ----------
+        fromstate : Collection or ClassWithCollections
+          Source states to copy from
+        index : None or list of str
+          If not to copy all set state variables, index provides
+          selection of what to copy
+        deep : bool
+          Optional control over the way to copy
 
         Crafted to overcome a problem mentioned above in the comment
         and is to be called from __copy__ of derived classes
@@ -816,11 +823,12 @@ class StateCollection(Collection):
     def _getEnabled(self, nondefault=True, invert=False):
         """Return list of enabled states
 
-        :Parameters:
-          nondefault : bool
-            Either to return also states which are enabled simply by default
-          invert : bool
-            Would invert the meaning, ie would return disabled states
+        Parameters
+        ----------
+        nondefault : bool
+          Either to return also states which are enabled simply by default
+        invert : bool
+          Would invert the meaning, ie would return disabled states
         """
         if invert:
             fmatch = lambda y: not self.isEnabled(y)
@@ -1403,14 +1411,16 @@ class Harvestable(ClassWithCollections):
         """The harvesting function: must obtain dictionary of variables
         from the caller.
 
-        :Parameters:
-          vars : dict
-            Dictionary of available data. Most often locals() could be
-            passed as `vars`. Mention that desired to be harvested
-            private attributes better be bound locally to some variable
+        Parameters
+        ----------
+        vars : dict
+          Dictionary of available data. Most often locals() could be
+          passed as `vars`. Mention that desired to be harvested
+          private attributes better be bound locally to some variable
 
-        :Returns:
-          nothing
+        Returns
+        -------
+        nothing
         """
 
         if not self.states.isEnabled('harvested') or len(self.__attribs)==0:

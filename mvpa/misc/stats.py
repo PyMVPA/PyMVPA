@@ -55,13 +55,14 @@ class DSMatrix(object):
     def __init__(self, data_vectors, metric='spearman'):
         """Initialize DSMatrix
 
-        :Parameters:
-          data_vectors : ndarray
-             m x n collection of vectors, where m is the number of exemplars
-             and n is the number of features per exemplar
-          metric : string
-             Distance metric to use (e.g., 'euclidean', 'spearman', 'pearson',
-             'confusion')
+        Parameters
+        ----------
+        data_vectors : ndarray
+           m x n collection of vectors, where m is the number of exemplars
+           and n is the number of features per exemplar
+        metric : string
+           Distance metric to use (e.g., 'euclidean', 'spearman', 'pearson',
+           'confusion')
         """
         # init members
         self.full_matrix = []

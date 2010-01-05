@@ -79,52 +79,53 @@ class Splitter(object):
                  reverse=False):
         """Initialize splitter base.
 
-        :Parameters:
-          nperlabel : int or str (or list of them) or float
-            Number of dataset samples per label to be included in each
-            split. If given as a float, it must be in [0,1] range and would
-            mean the ratio of selected samples per each label.
-            Two special strings are recognized: 'all' uses all available
-            samples (default) and 'equal' uses the maximum number of samples
-            the can be provided by all of the classes. This value might be
-            provided as a sequence whos length matches the number of datasets
-            per split and indicates the configuration for the respective dataset
-            in each split.
-          nrunspersplit: int
-            Number of times samples for each split are chosen. This
-            is mostly useful if a subset of the available samples
-            is used in each split and the subset is randomly
-            selected for each run (see the `nperlabel` argument).
-          permute : bool
-            If set to `True`, the labels of each generated dataset
-            will be permuted on a per-chunk basis.
-          count : None or int
-            Desired number of splits to be output. It is limited by the
-            number of splits possible for a given splitter
-            (e.g. `OddEvenSplitter` can have only up to 2 splits). If None,
-            all splits are output (default).
-          strategy : str
-            If `count` is not None, possible strategies are possible:
-             first
-              First `count` splits are chosen
-             random
-              Random (without replacement) `count` splits are chosen
-             equidistant
-              Splits which are equidistant from each other
-          discard_boundary : None or int or sequence of int
-            If not `None`, how many samples on the boundaries between
-            parts of the split to discard in the training part.
-            If int, then discarded in all parts.  If a sequence, numbers
-            to discard are given per part of the split.
-            E.g. if splitter splits only into (training, testing)
-            parts, then `discard_boundary`=(2,0) would instruct to discard
-            2 samples from training which are on the boundary with testing.
-          attr : str
-            Sample attribute used to determine splits.
-          reverse : bool
-            If True, the order of datasets in the split is reversed, e.g.
-            instead of (training, testing), (training, testing) will be spit
-            out
+        Parameters
+        ----------
+        nperlabel : int or str (or list of them) or float
+          Number of dataset samples per label to be included in each
+          split. If given as a float, it must be in [0,1] range and would
+          mean the ratio of selected samples per each label.
+          Two special strings are recognized: 'all' uses all available
+          samples (default) and 'equal' uses the maximum number of samples
+          the can be provided by all of the classes. This value might be
+          provided as a sequence whos length matches the number of datasets
+          per split and indicates the configuration for the respective dataset
+          in each split.
+        nrunspersplit: int
+          Number of times samples for each split are chosen. This
+          is mostly useful if a subset of the available samples
+          is used in each split and the subset is randomly
+          selected for each run (see the `nperlabel` argument).
+        permute : bool
+          If set to `True`, the labels of each generated dataset
+          will be permuted on a per-chunk basis.
+        count : None or int
+          Desired number of splits to be output. It is limited by the
+          number of splits possible for a given splitter
+          (e.g. `OddEvenSplitter` can have only up to 2 splits). If None,
+          all splits are output (default).
+        strategy : str
+          If `count` is not None, possible strategies are possible:
+           first
+            First `count` splits are chosen
+           random
+            Random (without replacement) `count` splits are chosen
+           equidistant
+            Splits which are equidistant from each other
+        discard_boundary : None or int or sequence of int
+          If not `None`, how many samples on the boundaries between
+          parts of the split to discard in the training part.
+          If int, then discarded in all parts.  If a sequence, numbers
+          to discard are given per part of the split.
+          E.g. if splitter splits only into (training, testing)
+          parts, then `discard_boundary`=(2,0) would instruct to discard
+          2 samples from training which are on the boundary with testing.
+        attr : str
+          Sample attribute used to determine splits.
+        reverse : bool
+          If True, the order of datasets in the split is reversed, e.g.
+          instead of (training, testing), (training, testing) will be spit
+          out
         """
         # pylint happyness block
         self.__nperlabel = None
@@ -303,12 +304,13 @@ class Splitter(object):
         """Split a dataset by separating the samples where the configured
         sample attribute matches an element of `specs`.
 
-        :Parameters:
-          dataset : Dataset
-            This is this source dataset.
-          specs : sequence of sequences
-            Contains ids of a sample attribute that shall be split into the
-            another dataset.
+        Parameters
+        ----------
+        dataset : Dataset
+          This is this source dataset.
+        specs : sequence of sequences
+          Contains ids of a sample attribute that shall be split into the
+          another dataset.
         :Returns: Tuple of splitted datasets.
         """
         # collect the sample ids for each resulting dataset
@@ -404,10 +406,11 @@ class NoneSplitter(Splitter):
 
     def __init__(self, mode='second', **kwargs):
         """
-        :Parameters:
-          mode
-            Either 'first' or 'second' (default) -- which output dataset
-            would actually contain the samples
+        Parameters
+        ----------
+        mode
+          Either 'first' or 'second' (default) -- which output dataset
+          would actually contain the samples
         """
         Splitter.__init__(self, **(kwargs))
 
@@ -443,14 +446,15 @@ class OddEvenSplitter(Splitter):
     """
     def __init__(self, usevalues=False, **kwargs):
         """
-        :Parameters:
-          usevalues: bool
-            If True the values of the attribute used for splitting will be
-            used to determine odd and even samples. If False odd and even
-            chunks are defined by the order of attribute values, i.e. first
-            unique attribute is odd, second is even, despite the
-            corresponding values might indicate the opposite (e.g. in case
-            of [2,3].
+        Parameters
+        ----------
+        usevalues: bool
+          If True the values of the attribute used for splitting will be
+          used to determine odd and even samples. If False odd and even
+          chunks are defined by the order of attribute values, i.e. first
+          unique attribute is odd, second is even, despite the
+          corresponding values might indicate the opposite (e.g. in case
+          of [2,3].
         """
         Splitter.__init__(self, **(kwargs))
 
@@ -526,11 +530,12 @@ class NGroupSplitter(Splitter):
     def __init__(self, ngroups=4, **kwargs):
         """Initialize the N-group splitter.
 
-        :Parameters:
-          ngroups: int
-            Number of groups to split the attribute into.
-          kwargs
-            Additional parameters are passed to the `Splitter` base class.
+        Parameters
+        ----------
+        ngroups: int
+          Number of groups to split the attribute into.
+        kwargs
+          Additional parameters are passed to the `Splitter` base class.
         """
         Splitter.__init__(self, **(kwargs))
 
@@ -604,11 +609,12 @@ class NFoldSplitter(Splitter):
                  **kwargs):
         """Initialize the N-fold splitter.
 
-        :Parameters:
-          cvtype: int
-            Type of cross-validation: N-(cvtype)
-          kwargs
-            Additional parameters are passed to the `Splitter` base class.
+        Parameters
+        ----------
+        cvtype: int
+          Type of cross-validation: N-(cvtype)
+        kwargs
+          Additional parameters are passed to the `Splitter` base class.
         """
         Splitter.__init__(self, **(kwargs))
 

@@ -34,34 +34,35 @@ def detrend(dataset, chunks=None, model='linear',
     Given a dataset, detrend the data inplace either entirely
     or per each chunk
 
-    :Parameters:
-      dataset : Dataset
-        dataset to operate on
-      chunks : str, None
-        If None, the whole dataset is detrended at once. Otherwise, the given
-        samples attribute (given by its name) is used to define chunks of the
-        dataset that are processed individually. In that case, all the samples
-        within a chunk should be in contiguous order and the chunks should be
-        sorted in order from low to high.
-      model
-        Type of detrending model to run.  If 'linear' or 'constant',
-        scipy.signal.detrend is used to perform a linear or demeaning
-        detrend. Polynomial detrending is activated when 'regress' is
-        used or when polyord or opt_reg are specified.
-      polyord : int or list
-        Order of the Legendre polynomial to remove from the data.  This
-        will remove every polynomial up to and including the provided
-        value.  For example, 3 will remove 0th, 1st, 2nd, and 3rd order
-        polynomials from the data.  N.B.: The 0th polynomial is the
-        baseline shift, the 1st is the linear trend.
-        If you specify a single int and `chunks` is not None, then this value
-        is used for each chunk.  You can also specify a different polyord
-        value for each chunk by providing a list or ndarray of polyord
-        values the length of the number of chunks.
-      opt_reg : ndarray
-        Optional ndarray of additional information to regress out from the
-        dataset.  One example would be to regress out motion parameters.
-        As with the data, time is on the first axis.
+    Parameters
+    ----------
+    dataset : Dataset
+      dataset to operate on
+    chunks : str, None
+      If None, the whole dataset is detrended at once. Otherwise, the given
+      samples attribute (given by its name) is used to define chunks of the
+      dataset that are processed individually. In that case, all the samples
+      within a chunk should be in contiguous order and the chunks should be
+      sorted in order from low to high.
+    model
+      Type of detrending model to run.  If 'linear' or 'constant',
+      scipy.signal.detrend is used to perform a linear or demeaning
+      detrend. Polynomial detrending is activated when 'regress' is
+      used or when polyord or opt_reg are specified.
+    polyord : int or list
+      Order of the Legendre polynomial to remove from the data.  This
+      will remove every polynomial up to and including the provided
+      value.  For example, 3 will remove 0th, 1st, 2nd, and 3rd order
+      polynomials from the data.  N.B.: The 0th polynomial is the
+      baseline shift, the 1st is the linear trend.
+      If you specify a single int and `chunks` is not None, then this value
+      is used for each chunk.  You can also specify a different polyord
+      value for each chunk by providing a list or ndarray of polyord
+      values the length of the number of chunks.
+    opt_reg : ndarray
+      Optional ndarray of additional information to regress out from the
+      dataset.  One example would be to regress out motion parameters.
+      As with the data, time is on the first axis.
     """
     if polyord is not None or opt_reg is not None:
         model='regress'

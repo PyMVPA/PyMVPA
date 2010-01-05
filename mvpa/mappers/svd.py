@@ -27,10 +27,11 @@ class SVDMapper(ProjectionMapper):
     def __init__(self, **kwargs):
         """Initialize the SVDMapper
 
-        :Parameters:
-          **kwargs:
-            All keyword arguments are passed to the ProjectionMapper
-            constructor.
+        Parameters
+        ----------
+        **kwargs:
+          All keyword arguments are passed to the ProjectionMapper
+          constructor.
 
             Note, that for the 'selector' argument this class also supports
             passing a `ElementSelector` instance, which will be used to

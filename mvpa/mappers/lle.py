@@ -43,25 +43,28 @@ class LLEMapper(Mapper):
     locally linear embedding techniques for high-dimensional data* by C. Grimes
     and D. Donoho, 2003.
 
-    .. note::
-      This mapper only provides forward-mapping functionality -- no reverse
-      mapping is available.
+    Notes
+    -----
+    This mapper only provides forward-mapping functionality -- no reverse
+    mapping is available.
 
-    .. seealso::
-      http://mdp-toolkit.sourceforge.net
+    See Also
+    --------
+    http://mdp-toolkit.sourceforge.net
     """
     def __init__(self, k, algorithm='lle', **kwargs):
         """
-        :Parameters:
-          k: int
-            Number of nearest neighbor to be used by the algorithm.
-          algorithm: 'lle' | 'hlle'
-            Either use the standard LLE algorithm or Hessian Linear Local
-            Embedding (HLLE).
-          **kwargs:
-            Additional arguments are passed to the underlying MDP node.
-            Most importantly this is the `output_dim` argument, that determines
-            the number of dimensions to mapper is using as output space.
+        Parameters
+        ----------
+        k: int
+          Number of nearest neighbor to be used by the algorithm.
+        algorithm: 'lle' or 'hlle'
+          Either use the standard LLE algorithm or Hessian Linear Local
+          Embedding (HLLE).
+        **kwargs:
+          Additional arguments are passed to the underlying MDP node.
+          Most importantly this is the `output_dim` argument, that determines
+          the number of dimensions to mapper is using as output space.
         """
         # no meaningful metric
         Mapper.__init__(self, metric=None)

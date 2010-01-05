@@ -242,11 +242,12 @@ class XMLBasedAtlas(BaseAtlas):
         Function takes care about first transforming the point into
         the voxel space
 
-        :Parameters:
-          coord : tuple
-            Coordinates of the point (xyz)
-          levels : None or list of int
-            At what levels to return the results
+        Parameters
+        ----------
+        coord : tuple
+          Coordinates of the point (xyz)
+        levels : None or list of int
+          At what levels to return the results
         """
         coord_ = N.asarray(coord)          # or we would alter what should be constant
         #if not isinstance(coord, N.numpy):

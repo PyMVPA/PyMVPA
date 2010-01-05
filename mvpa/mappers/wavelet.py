@@ -34,16 +34,17 @@ class _WaveletMapper(Mapper):
     def __init__(self, dim=1, wavelet='sym4', mode='per', maxlevel=None):
         """Initialize _WaveletMapper mapper
 
-        :Parameters:
-          dim : int or tuple of int
-            dimensions to work across (for now just scalar value, ie 1D
-            transformation) is supported
-          wavelet : basestring
-            one from the families available withing pywt package
-          mode : basestring
-            periodization mode
-          maxlevel : int or None
-            number of levels to use. If None - automatically selected by pywt
+        Parameters
+        ----------
+        dim : int or tuple of int
+          dimensions to work across (for now just scalar value, ie 1D
+          transformation) is supported
+        wavelet : str
+          one from the families available withing pywt package
+        mode : str
+          periodization mode
+        maxlevel : int or None
+          number of levels to use. If None - automatically selected by pywt
         """
         Mapper.__init__(self)
 
@@ -143,11 +144,12 @@ class WaveletPacketMapper(_WaveletMapper):
     def __init__(self, level=None, **kwargs):
         """Initialize WaveletPacketMapper mapper
 
-        :Parameters:
-          level : int or None
-            What level to decompose at. If 'None' data for all levels
-            is provided, but due to different sizes, they are placed
-            in 1D row.
+        Parameters
+        ----------
+        level : int or None
+          What level to decompose at. If 'None' data for all levels
+          is provided, but due to different sizes, they are placed
+          in 1D row.
         """
 
         _WaveletMapper.__init__(self,**kwargs)

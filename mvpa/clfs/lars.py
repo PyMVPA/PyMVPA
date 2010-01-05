@@ -78,23 +78,24 @@ class LARS(Classifier):
 
         See the help in R for further details on the following parameters:
 
-        :Parameters:
-          model_type : string
-            Type of LARS to run. Can be one of ('lasso', 'lar',
-            'forward.stagewise', 'stepwise').
-          trace : boolean
-            Whether to print progress in R as it works.
-          normalize : boolean
-            Whether to normalize the L2 Norm.
-          intercept : boolean
-            Whether to add a non-penalized intercept to the model.
-          max_steps : None or int
-            If not None, specify the total number of iterations to run. Each
-            iteration adds a feature, but leaving it none will add until
-            convergence.
-          use_Gram : boolean
-            Whether to compute the Gram matrix (this should be false if you
-            have more features than samples.)
+        Parameters
+        ----------
+        model_type : string
+          Type of LARS to run. Can be one of ('lasso', 'lar',
+          'forward.stagewise', 'stepwise').
+        trace : boolean
+          Whether to print progress in R as it works.
+        normalize : boolean
+          Whether to normalize the L2 Norm.
+        intercept : boolean
+          Whether to add a non-penalized intercept to the model.
+        max_steps : None or int
+          If not None, specify the total number of iterations to run. Each
+          iteration adds a feature, but leaving it none will add until
+          convergence.
+        use_Gram : boolean
+          Whether to compute the Gram matrix (this should be false if you
+          have more features than samples.)
         """
         # init base class first
         Classifier.__init__(self, **kwargs)

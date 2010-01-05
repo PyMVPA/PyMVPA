@@ -29,9 +29,10 @@ def reuseAbsolutePath(file1, file2, force=False):
     """Use path to file1 as the path to file2 is no absolute
     path is given for file2
 
-    :Parameters:
-      force : bool
-        if True, force it even if the file2 starts with /
+    Parameters
+    ----------
+    force : bool
+      if True, force it even if the file2 starts with /
     """
     if not file2.startswith(os.path.sep) or force:
         # lets reuse path to file1
@@ -137,11 +138,12 @@ def xuniqueCombinations(L, n):
     # XXX EO: I guess they are already sorted.
     # XXX EO: It seems to work well for n>20 :)
 
-    :Parameters:
-      L : list
-        list of unique ids
-      n : int
-        grouping size
+    Parameters
+    ----------
+    L : list
+      list of unique ids
+    n : int
+      grouping size
 
     Adopted from Li Daobing
     http://code.activestate.com/recipes/190465/
@@ -156,14 +158,15 @@ def xuniqueCombinations(L, n):
 def _getUniqueLengthNCombinations_binary(L, n=None, sort=True):
     """Find all subsets of data
 
-    :Parameters:
-      L : list
-        list of unique ids
-      n : None or int
-        If None, all possible subsets are returned. If n is specified (int),
-        then only the ones of the length n are returned
-      sort : bool
-        Either to sort the resultant sequence
+    Parameters
+    ----------
+    L : list
+      list of unique ids
+    n : None or int
+      If None, all possible subsets are returned. If n is specified (int),
+      then only the ones of the length n are returned
+    sort : bool
+      Either to sort the resultant sequence
 
     Adopted from Alex Martelli:
     http://mail.python.org/pipermail/python-list/2001-January/067815.html
@@ -189,12 +192,13 @@ def _getUniqueLengthNCombinations_binary(L, n=None, sort=True):
 def getUniqueLengthNCombinations(L, n=None, sort=True):
     """Find all subsets of data
 
-    :Parameters:
-      L : list
-        list of unique ids
-      n : None or int
-        If None, all possible subsets are returned. If n is specified (int),
-        then only the ones of the length n are returned
+    Parameters
+    ----------
+    L : list
+      list of unique ids
+    n : None or int
+      If None, all possible subsets are returned. If n is specified (int),
+      then only the ones of the length n are returned
 
     TODO: work out single stable implementation -- probably just by fixing
     _getUniqueLengthNCombinations_lt3
@@ -216,14 +220,15 @@ def getUniqueLengthNCombinations(L, n=None, sort=True):
 def _getUniqueLengthNCombinations_binary(L, n=None, sort=True):
     """Find all subsets of data
 
-    :Parameters:
-      L : list
-        list of unique ids
-      n : None or int
-        If None, all possible subsets are returned. If n is specified (int),
-        then only the ones of the length n are returned
-      sort : bool
-        Either to sort the resultant sequence
+    Parameters
+    ----------
+    L : list
+      list of unique ids
+    n : None or int
+      If None, all possible subsets are returned. If n is specified (int),
+      then only the ones of the length n are returned
+    sort : bool
+      Either to sort the resultant sequence
 
     Adopted from Alex Martelli:
     http://mail.python.org/pipermail/python-list/2001-January/067815.html
@@ -249,12 +254,13 @@ def _getUniqueLengthNCombinations_binary(L, n=None, sort=True):
 def getUniqueLengthNCombinations(L, n=None, sort=True):
     """Find all subsets of data
 
-    :Parameters:
-      L : list
-        list of unique ids
-      n : None or int
-        If None, all possible subsets are returned. If n is specified (int),
-        then only the ones of the length n are returned
+    Parameters
+    ----------
+    L : list
+      list of unique ids
+    n : None or int
+      If None, all possible subsets are returned. If n is specified (int),
+      then only the ones of the length n are returned
 
     TODO: work out single stable implementation -- probably just by fixing
     _getUniqueLengthNCombinations_lt3
@@ -293,8 +299,9 @@ def idhash(val):
 def isSorted(items):
     """Check if listed items are in sorted order.
 
-    :Parameters:
-        `items`: iterable container
+    Parameters
+    ----------
+      `items`: iterable container
 
     :return: `True` if were sorted. Otherwise `False` + Warning
     """
@@ -430,12 +437,13 @@ class SmartVersion(Version):
 def getBreakPoints(items, contiguous=True):
     """Return a list of break points.
 
-    :Parameters:
-      items : iterable
-        list of items, such as chunks
-      contiguous : bool
-        if `True` (default) then raise Value Error if items are not
-        contiguous, i.e. a label occur in multiple contiguous sets
+    Parameters
+    ----------
+    items : iterable
+      list of items, such as chunks
+    contiguous : bool
+      if `True` (default) then raise Value Error if items are not
+      contiguous, i.e. a label occur in multiple contiguous sets
 
     :raises: ValueError
 

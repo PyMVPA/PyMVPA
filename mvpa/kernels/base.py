@@ -244,7 +244,8 @@ class PrecomputedKernel(NumpyKernel):
     # self.params.matrix = self._k
     def __init__(self, matrix=None, *args, **kwargs):
         """
-        :Parameters:
+        Parameters
+        ----------
         matrix: Numpy array or convertable kernel, or other object type
         """
         NumpyKernel.__init__(self, *args, **kwargs)

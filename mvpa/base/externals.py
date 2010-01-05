@@ -79,10 +79,11 @@ def __check_numpy():
 def __check_pywt(features=None):
     """Check for available functionality within pywt
 
-    :Parameters:
-      features : list of basestring
-        List of known features to check such as 'wp reconstruct',
-        'wp reconstruct fixed'
+    Parameters
+    ----------
+    features : list of str
+      List of known features to check such as 'wp reconstruct',
+      'wp reconstruct fixed'
     """
     import pywt
     import numpy as N
@@ -123,12 +124,13 @@ def __check_shogun(bottom_version, custom_versions=[]):
     """Check if version of shogun is high enough (or custom known) to
     be enabled in the testsuite
 
-    :Parameters:
-      bottom_version : int
-        Bottom version which must be satisfied
-      custom_versions : list of int
-        Arbitrary list of versions which could got patched for
-        a specific issue
+    Parameters
+    ----------
+    bottom_version : int
+      Bottom version which must be satisfied
+    custom_versions : list of int
+      Arbitrary list of versions which could got patched for
+      a specific issue
     """
     import shogun.Classifier as __sc
     ver = __sc.Version_get_version_revision()
@@ -369,18 +371,19 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
     testing all known dependencies. It also ensures that we only test
     for a dependency once.
 
-    :Parameters:
-      dep : string or list of string
-        The dependency key(s) to test.
-      force : boolean
-        Whether to force the test even if it has already been
-        performed.
-      raiseException : boolean
-        Whether to raise RuntimeError if dependency is missing.
-      issueWarning : string or None or True
-        If string, warning with given message would be thrown.
-        If True, standard message would be used for the warning
-        text.
+    Parameters
+    ----------
+    dep : string or list of string
+      The dependency key(s) to test.
+    force : boolean
+      Whether to force the test even if it has already been
+      performed.
+    raiseException : boolean
+      Whether to raise RuntimeError if dependency is missing.
+    issueWarning : string or None or True
+      If string, warning with given message would be thrown.
+      If True, standard message would be used for the warning
+      text.
     """
     # if we are provided with a list of deps - go through all of them
     if isinstance(dep, list) or isinstance(dep, tuple):
@@ -477,10 +480,11 @@ def testAllDependencies(force=False):
     """
     Test for all known dependencies.
 
-    :Parameters:
-      force : boolean
-        Whether to force the test even if it has already been
-        performed.
+    Parameters
+    ----------
+    force : boolean
+      Whether to force the test even if it has already been
+      performed.
 
     """
     # loop over all known dependencies

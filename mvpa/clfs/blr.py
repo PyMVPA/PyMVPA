@@ -38,10 +38,11 @@ class BLR(Classifier):
     def __init__(self, sigma_p = None, sigma_noise=1.0, **kwargs):
         """Initialize a BLR regression analysis.
 
-        :Parameters:
-          sigma_noise : float
-            the standard deviation of the gaussian noise.
-            (Defaults to 0.1)
+        Parameters
+        ----------
+        sigma_noise : float
+          the standard deviation of the gaussian noise.
+          (Defaults to 0.1)
 
         """
         # init base class first

@@ -134,8 +134,9 @@ def aggregateFeatures(dataset, fx=N.mean):
     The functor given as `fx` has to honour an `axis` keyword argument in the
     way that NumPy used it (e.g. NumPy.mean, var).
 
-    :Returns:
-       a new `Dataset` object with the aggregated feature(s).
+    Returns
+    -------
+     a new `Dataset` object with the aggregated feature(s).
     """
     agg = fx(dataset.samples, axis=1)
 
@@ -157,12 +158,13 @@ def coarsenChunks(source, nchunks=4):
     sense if originally there were no strong groupping into chunks or
     each sample was independent, thus belonged to its own chunk
 
-    :Parameters:
-      source : Dataset or list of chunk ids
-        dataset or list of chunk ids to operate on. If Dataset, then its chunks
-        get modified
-      nchunks : int
-        desired number of chunks
+    Parameters
+    ----------
+    source : Dataset or list of chunk ids
+      dataset or list of chunk ids to operate on. If Dataset, then its chunks
+      get modified
+    nchunks : int
+      desired number of chunks
     """
 
     if isinstance(source, Dataset):
@@ -242,9 +244,10 @@ def getSamplesPerChunkLabel(dataset):
 
     Array shape is (chunks x labels).
 
-    :Parameters:
-      dataset: Dataset
-        Source dataset.
+    Parameters
+    ----------
+    dataset: Dataset
+      Source dataset.
     """
     ul = dataset.sa['labels'].unique
     uc = dataset.sa['chunks'].unique
@@ -418,9 +421,10 @@ class SequenceStats(dict):
     def __init__(self, seq, order=2):#, chunks=None, perchunk=False):
         """Initialize SequenceStats
 
-        :Parameters:
-          seq : list or ndarray
-            Actual sequence of labels
+        Parameters
+        ----------
+        seq : list or ndarray
+          Actual sequence of labels
 
         :Keywords:
           order : int

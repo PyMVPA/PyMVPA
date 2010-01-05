@@ -120,9 +120,10 @@ in multiple lines"""
 def _split_out_parameters(initdoc):
     """Split documentation into (header, parameters, suffix)
 
-    :Parameters:
-      initdoc : string
-        The documentation string
+    Parameters
+    ----------
+    initdoc : string
+      The documentation string
     """
 
     # TODO: bind it to the only word in the line
@@ -178,19 +179,20 @@ def _parse_parameters(paramdoc):
 def enhancedDocString(item, *args, **kwargs):
     """Generate enhanced doc strings for various items.
 
-    :Parameters:
-      item : basestring or class
-        What object requires enhancing of documentation
-      *args : list
-        Includes base classes to look for parameters, as well, first item
-        must be a dictionary of locals if item is given by a string
-      force_extend : bool
-        Either to force looking for the documentation in the parents.
-        By default force_extend = False, and lookup happens only if kwargs
-        is one of the arguments to the respective function (e.g. item.__init__)
-      skip_params : list of basestring
-        List of parameters (in addition to [kwargs]) which should not
-        be added to the documentation of the class.
+    Parameters
+    ----------
+    item : str or class
+      What object requires enhancing of documentation
+    *args : list
+      Includes base classes to look for parameters, as well, first item
+      must be a dictionary of locals if item is given by a string
+    force_extend : bool
+      Either to force looking for the documentation in the parents.
+      By default force_extend = False, and lookup happens only if kwargs
+      is one of the arguments to the respective function (e.g. item.__init__)
+    skip_params : list of str
+      List of parameters (in addition to [kwargs]) which should not
+      be added to the documentation of the class.
 
     It is to be used from a collector, ie whenever class is already created
     """
@@ -349,14 +351,16 @@ def enhancedDocString(item, *args, **kwargs):
 def table2string(table, out=None):
     """Given list of lists figure out their common widths and print to out
 
-    :Parameters:
-      table : list of lists of strings
-        What is aimed to be printed
-      out : None or stream
-        Where to print. If None -- will print and return string
+    Parameters
+    ----------
+    table : list of lists of strings
+      What is aimed to be printed
+    out : None or stream
+      Where to print. If None -- will print and return string
 
-    :Returns:
-      string if out was None
+    Returns
+    -------
+    string if out was None
     """
 
     print2string = out is None

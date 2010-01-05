@@ -254,9 +254,10 @@ class Classifier(ClassWithCollections):
         """Functionality post training
 
         For instance -- computing confusion matrix
-        :Parameters:
-          dataset : Dataset
-            Data which was used for training
+        Parameters
+        ----------
+        dataset : Dataset
+          Data which was used for training
         """
         states = self.states
         if states.isEnabled('trained_labels'):
@@ -695,11 +696,12 @@ class Classifier(ClassWithCollections):
         additional checks are enabled if debug id 'CHECK_RETRAIN' is
         enabled, to guard against obvious mistakes.
 
-        :Parameters:
-          kwargs
-            that is what _changedData gets updated with. So, smth like
-            ``(params=['C'], labels=True)`` if parameter C and labels
-            got changed
+        Parameters
+        ----------
+        kwargs
+          that is what _changedData gets updated with. So, smth like
+          `(params=['C'], labels=True)` if parameter C and labels
+          got changed
         """
         # Note that it also demolishes anything for repredicting,
         # which should be ok in most of the cases
@@ -765,13 +767,14 @@ class Classifier(ClassWithCollections):
         if debug id 'CHECK_RETRAIN' is enabled, to guard against
         obvious mistakes.
 
-        :Parameters:
-          dataset
-            dataset which is conventionally given to predict
-          kwargs
-            that is what _changedData gets updated with. So, smth like
-            ``(params=['C'], labels=True)`` if parameter C and labels
-            got changed
+        Parameters
+        ----------
+        dataset
+          dataset which is conventionally given to predict
+        kwargs
+          that is what _changedData gets updated with. So, smth like
+          `(params=['C'], labels=True)` if parameter C and labels
+          got changed
         """
         if len(kwargs)>0:
             raise RuntimeError, \

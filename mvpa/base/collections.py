@@ -101,9 +101,10 @@ class Collectable(object):
     def _setName(self, name):
         """Set the name of parameter
 
-        .. note::
-          Should not be called for an attribute which is already assigned
-          to a collection
+        Notes
+        -----
+        Should not be called for an attribute which is already assigned
+        to a collection
         """
         if name is not None:
             if isinstance(name, basestring):
@@ -408,9 +409,10 @@ class UniformLengthCollection(Collection):
     def __setitem__(self, key, value):
         """Add a new CollectableAttribute to the collection
 
-        :Parameters:
-          item : CollectableAttribute
-            or of derived class. Must have 'name' assigned.
+        Parameters
+        ----------
+        item : CollectableAttribute
+          or of derived class. Must have 'name' assigned.
         """
         if not isinstance(value, SequenceCollectable):
             # XXX should we check whether it is some other Collectable?

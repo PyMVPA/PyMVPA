@@ -29,12 +29,13 @@ class BestDetector(object):
     def __init__(self, func=min, lastminimum=False):
         """Initialize with number of steps
 
-        :Parameters:
-            fun : functor
-                Functor to select the best results. Defaults to min
-            lastminimum : bool
-                Toggle whether the latest or the earliest minimum is used as
-                optimal value to determine the stopping criterion.
+        Parameters
+        ----------
+          fun : functor
+              Functor to select the best results. Defaults to min
+          lastminimum : bool
+              Toggle whether the latest or the earliest minimum is used as
+              optimal value to determine the stopping criterion.
         """
         self.__func = func
         self.__lastminimum = lastminimum
@@ -98,13 +99,14 @@ class MultiStopCrit(StoppingCriterion):
     """
     def __init__(self, crits, mode='or'):
         """
-        :Parameters:
-            crits : list of StoppingCriterion instances
-                For each call to MultiStopCrit all of these criterions will
-                be evaluated.
-            mode : any of ('and', 'or')
-                Logical function to determine the multi criterion from the set
-                of base criteria.
+        Parameters
+        ----------
+          crits : list of StoppingCriterion instances
+              For each call to MultiStopCrit all of these criterions will
+              be evaluated.
+          mode : any of ('and', 'or')
+              Logical function to determine the multi criterion from the set
+              of base criteria.
         """
         if not mode in ('and', 'or'):
             raise ValueError, \
@@ -133,9 +135,10 @@ class FixedErrorThresholdStopCrit(StoppingCriterion):
     def __init__(self, threshold):
         """Initialize with threshold.
 
-        :Parameters:
-            threshold : float [0,1]
-                Error threshold.
+        Parameters
+        ----------
+          threshold : float [0,1]
+              Error threshold.
         """
         StoppingCriterion.__init__(self)
         if threshold > 1.0 or threshold < 0.0:
@@ -165,9 +168,10 @@ class NStepsStopCrit(StoppingCriterion):
     def __init__(self, steps):
         """Initialize with number of steps.
 
-        :Parameters:
-            steps : int
-                Number of steps after which to stop.
+        Parameters
+        ----------
+          steps : int
+              Number of steps after which to stop.
         """
         StoppingCriterion.__init__(self)
         if steps < 0:
@@ -196,11 +200,12 @@ class NBackHistoryStopCrit(StoppingCriterion):
     def __init__(self, bestdetector=BestDetector(), steps=10):
         """Initialize with number of steps
 
-        :Parameters:
-            bestdetector : BestDetector instance
-                used to determine where the best error is located.
-            steps : int
-                How many steps to check after optimal value.
+        Parameters
+        ----------
+          bestdetector : BestDetector instance
+              used to determine where the best error is located.
+          steps : int
+              How many steps to check after optimal value.
         """
         StoppingCriterion.__init__(self)
         if steps < 0:
@@ -240,9 +245,10 @@ class ElementSelector(ClassWithCollections):
 
     def __init__(self, mode='discard', **kwargs):
         """
-        :Parameters:
-           mode : ['discard', 'select']
-              Decides whether to `select` or to `discard` features.
+        Parameters
+        ----------
+         mode : ['discard', 'select']
+            Decides whether to `select` or to `discard` features.
         """
         ClassWithCollections.__init__(self, **kwargs)
 
@@ -276,19 +282,20 @@ class RangeElementSelector(ElementSelector):
                  mode='select', **kwargs):
         """Initialization `RangeElementSelector`
 
-        :Parameters:
-           lower
-             If not None -- select elements which are above of
-             specified value
-           upper
-             If not None -- select elements which are lower of
-             specified value
-           inclusive
-             Either to include end points
-           mode
-             overrides parent's default to be 'select' since it is more
-             native for RangeElementSelector
-             XXX TODO -- unify??
+        Parameters
+        ----------
+         lower
+           If not None -- select elements which are above of
+           specified value
+         upper
+           If not None -- select elements which are lower of
+           specified value
+         inclusive
+           Either to include end points
+         mode
+           overrides parent's default to be 'select' since it is more
+           native for RangeElementSelector
+           XXX TODO -- unify??
 
         `upper` could be lower than `lower` -- then selection is done
         on values <= lower or >=upper (ie tails). This would produce
@@ -360,12 +367,13 @@ class TailSelector(ElementSelector):
     def __init__(self, tail='lower', sort=True, **kwargs):
         """Initialize TailSelector
 
-        :Parameters:
-           tail : ['lower', 'upper']
-              Choose the tail to be processed.
-           sort : bool
-              Flag whether selected IDs will be sorted. Disable if not
-              necessary to save some CPU cycles.
+        Parameters
+        ----------
+         tail : ['lower', 'upper']
+            Choose the tail to be processed.
+         sort : bool
+            Flag whether selected IDs will be sorted. Disable if not
+            necessary to save some CPU cycles.
 
         """
         # init State before registering anything
@@ -435,9 +443,10 @@ class FixedNElementTailSelector(TailSelector):
 
     def __init__(self, nelements, **kwargs):
         """
-        :Parameters:
-          nelements : int
-            Number of elements to select/discard.
+        Parameters
+        ----------
+        nelements : int
+          Number of elements to select/discard.
         """
         TailSelector.__init__(self, **kwargs)
         self.__nelements = None
@@ -473,10 +482,11 @@ class FractionTailSelector(TailSelector):
 
     def __init__(self, felements, **kwargs):
         """
-        :Parameters:
-           felements : float (0,1.0]
-              Fraction of elements to select/discard. Note: Even when 0.0 is
-              specified at least one element will be selected.
+        Parameters
+        ----------
+         felements : float (0,1.0]
+            Fraction of elements to select/discard. Note: Even when 0.0 is
+            specified at least one element will be selected.
         """
         TailSelector.__init__(self, **kwargs)
         self._setFElements(felements)

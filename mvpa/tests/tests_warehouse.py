@@ -36,9 +36,10 @@ else:
 def sweepargs(**kwargs):
     """Decorator function to sweep over a given set of classifiers
 
-    :Parameters:
-      clfs : list of `Classifier`
-        List of classifiers to run method on
+    Parameters
+    ----------
+    clfs : list of `Classifier`
+      List of classifiers to run method on
 
     Often some unittest method can be ran on multiple classifiers.
     So this decorator aims to do that

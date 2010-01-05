@@ -390,10 +390,11 @@ if __debug__:
         def __init__(self, collide=False):
             """Initialize TrackBack metric
 
-            :Parameters:
-              collide : bool
-                if True then prefix common with previous invocation gets
-                replaced with ...
+            Parameters
+            ----------
+            collide : bool
+              if True then prefix common with previous invocation gets
+              replaced with ...
             """
             self.__prev = ""
             self.__collide = collide

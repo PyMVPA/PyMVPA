@@ -27,14 +27,15 @@ class PrototypeMapper(ProjectionMapper):
                  prototypes=None,
                  **kwargs):
         """
-        :Parameters:
-          similarities : list
-            A list of similarity functions.
-          prototypes : Dataset or list
-            A dataset or a list of instances (e.g., streamlines)?
-          **kwargs:
-            All keyword arguments are passed to the ProjectionMapper
-            constructor
+        Parameters
+        ----------
+        similarities : list
+          A list of similarity functions.
+        prototypes : Dataset or list
+          A dataset or a list of instances (e.g., streamlines)?
+        **kwargs:
+          All keyword arguments are passed to the ProjectionMapper
+          constructor
         """
         ProjectionMapper.__init__(self, **kwargs)
 

@@ -120,8 +120,9 @@ class Parameter(CollectableAttribute):
     def doc(self, indent="  ", width=70):
         """Docstring for the parameter to be used in lists of parameters
 
-        :Returns:
-          string or list of strings (if indent is None)
+        Returns
+        -------
+        string or list of strings (if indent is None)
         """
         paramsdoc = "  %s" % self.name
         if hasattr(paramsdoc, 'allowedtype'):

@@ -38,9 +38,10 @@ class kNN(Classifier):
     is performed as the training dataset is simply stored in the
     classifier. All computations are done during classifier prediction.
 
-    .. note::
-      If enabled, kNN stores the votes per class in the 'values' state after
-      calling predict().
+    Notes
+    -----
+    If enabled, kNN stores the votes per class in the 'values' state after
+    calling predict().
 
     """
 
@@ -50,19 +51,20 @@ class kNN(Classifier):
     def __init__(self, k=2, dfx=squared_euclidean_distance,
                  voting='weighted', **kwargs):
         """
-        :Parameters:
-          k: unsigned integer
-            Number of nearest neighbours to be used for voting.
-          dfx: functor
-            Function to compute the distances between training and test samples.
-            Default: squared euclidean distance
-          voting: str
-            Voting method used to derive predictions from the nearest neighbors.
-            Possible values are 'majority' (simple majority of classes
-            determines vote) and 'weighted' (votes are weighted according to the
-            relative frequencies of each class in the training data).
-          **kwargs:
-            Additonal arguments are passed to the base class.
+        Parameters
+        ----------
+        k: unsigned integer
+          Number of nearest neighbours to be used for voting.
+        dfx: functor
+          Function to compute the distances between training and test samples.
+          Default: squared euclidean distance
+        voting: str
+          Voting method used to derive predictions from the nearest neighbors.
+          Possible values are 'majority' (simple majority of classes
+          determines vote) and 'weighted' (votes are weighted according to the
+          relative frequencies of each class in the training data).
+        **kwargs:
+          Additonal arguments are passed to the base class.
         """
 
         # init base class first
