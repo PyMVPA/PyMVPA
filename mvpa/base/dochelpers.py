@@ -405,3 +405,43 @@ def table2string(table, out=None):
         out.close()
         return value
 
+
+def _str(obj, *args, **kwargs):
+    """Helper to get a structured __str__ for all objects.
+
+    If an object has a `descr` attribute, its content will be used instead of
+    an auto-generated description.
+
+    Optional additional information might be added under certain debugging
+    conditions (e.g. `id(obj)`).
+
+    Parameters
+    ----------
+    obj : object
+      This will typically be `self` of the to be documented object.
+    *args, **kwargs : str
+      An arbitrary number of additional items. All of them must be of type
+      `str`. All items will be appended comma separated to the class name.
+      Keyword arguments will be appended as `key`=`value.
+
+    Returns
+    -------
+    str
+    """
+    if hasattr(obj, 'descr'):
+        s = obj.descr
+    else:
+        s ='%s: ' % obj.__class__.__name__
+        s += ', '.join(list(args)
+                       + ["%s=%s" % (k, v) for k, v in kwargs.iteritems()])
+
+    if __debug__ and 'DS_ID' in debug.active:
+        # in case there was nothing but the class name
+        if s[-1]:
+            s += ', id=%i' % id(obj)
+        else:
+            s += ' id=%i' % id(obj)
+
+
+    # finally wrap in <> and return
+    return '<%s>' % s
