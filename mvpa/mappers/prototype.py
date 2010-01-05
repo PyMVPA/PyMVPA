@@ -10,7 +10,6 @@
 
 import numpy as N
 
-from mvpa.base import warning
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.mappers.base import accepts_dataset_as_samples
 from mvpa.mappers.projection import ProjectionMapper
@@ -27,15 +26,12 @@ class PrototypeMapper(ProjectionMapper):
                  similarities,
                  prototypes=None,
                  **kwargs):
-        """Initialize the ProjectionMapper
-
+        """
         :Parameters:
-
-          similarities : a list of similarity functions.
-        
-          prototypes : a dataset or a list of instances (e.g.,
-            streamlines)?
-
+          similarities : list
+            A list of similarity functions.
+          prototypes : Dataset or list
+            A dataset or a list of instances (e.g., streamlines)?
           **kwargs:
             All keyword arguments are passed to the ProjectionMapper
             constructor
@@ -51,18 +47,11 @@ class PrototypeMapper(ProjectionMapper):
 
     @accepts_dataset_as_samples
     def _train(self, samples):
-        """Compute similarities between instances in dataset and
-        prototypes using the provided similarity functions.
-        
-        :Parameters:
-
-          dataset : the Dataset to project over prototypes.
-
-          fraction : when prototypes are not explicitely given use a
-            random subset of dataset whose size is a fraction of it.
+        """Train PrototypeMapper
         """
-        
-        self._proj = N.hstack([similarity.compute(samples,self.prototypes) for similarity in self.similarities])
-        debug("MAP","projected data: "+str(self._proj))
-        debug("MAP","Projected data is"+str(self._proj.shape))
-        
+
+        self._proj = N.hstack([similarity.compute(samples, self.prototypes)
+                               for similarity in self.similarities])
+        debug("MAP", "projected data of shape %s: %s "
+              % (self._proj.shape, self._proj))
+
