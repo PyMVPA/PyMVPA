@@ -239,8 +239,7 @@ class ElementSelector(ClassWithCollections):
         doc="Store number of discarded elements.")
 
     def __init__(self, mode='discard', **kwargs):
-        """Cheap initialization.
-
+        """
         :Parameters:
            mode : ['discard', 'select']
               Decides whether to `select` or to `discard` features.
@@ -435,8 +434,7 @@ class FixedNElementTailSelector(TailSelector):
     """
 
     def __init__(self, nelements, **kwargs):
-        """Cheap initialization.
-
+        """
         :Parameters:
           nelements : int
             Number of elements to select/discard.
@@ -474,8 +472,7 @@ class FractionTailSelector(TailSelector):
     """
 
     def __init__(self, felements, **kwargs):
-        """Cheap initialization.
-
+        """
         :Parameters:
            felements : float (0,1.0]
               Fraction of elements to select/discard. Note: Even when 0.0 is
