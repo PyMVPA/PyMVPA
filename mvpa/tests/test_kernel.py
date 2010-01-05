@@ -179,20 +179,16 @@ class KernelTests(unittest.TestCase):
                            ('inhomogenous', True)]
             if not exists('sg ge 0.6.5'):
                 poly_params += [ ('use_normalization', False) ]
-                poly_kwargs = {}
-            else:
-                poly_kwargs = {
-                    'normalizer_cls' : sgK.sgk.IdentityKernelNormalizer}
 
             custom = sgK.CustomSGKernel(sgK.sgk.PolyKernel,
-                                        kernel_params=poly_params,
-                                        **poly_kwargs)
+                                        kernel_params=poly_params)
+
             d = N.random.randn(253, 52)
             lk.compute(d)
             cl.compute(d)
             poly.compute(d)
             custom.compute(d)
-            
+
             self.failUnless(N.all(lk.as_np()._k == cl.as_np()._k),
                             'CustomSGKernel does not agree with Linear')
             self.failUnless(N.all(poly.as_np()._k == custom.as_np()._k),
