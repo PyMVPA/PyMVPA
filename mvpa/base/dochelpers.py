@@ -18,20 +18,17 @@ from math import ceil
 from StringIO import StringIO
 from mvpa import cfg
 
-from mvpa.base import externals
+from mvpa.base.externals import versions, exists
 if __debug__:
     from mvpa.base import debug
 
 __add_init2doc = False
-__in_ipython = externals.exists('running ipython env')
+__in_ipython = exists('running ipython env')
 
 # if ran within IPython -- might need to add doc to init
 if __in_ipython:
     __rst_mode = False                       # either to do ReST links at all
-    from IPython import Release
-    # XXX figure out exact version when init doc started to be added to class
-    # description
-    if Release.version <= '0.8.1':
+    if versions['ipython'] <= '0.8.1':
         __add_init2doc = True
 else:
     __rst_mode = True
