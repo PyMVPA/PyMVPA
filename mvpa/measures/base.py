@@ -29,7 +29,7 @@ from mvpa.base.dochelpers import enhancedDocString
 from mvpa.base import externals, warning
 from mvpa.clfs.stats import autoNullDist
 from mvpa.base.types import is_datasetlike
-from mvpa.datasets.base import Dataset
+from mvpa.datasets import Dataset, vstack
 
 if __debug__:
     from mvpa.base import debug
@@ -612,7 +612,8 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
             if store_splits: splits.append(split)
 
         result = vstack(sensitivities)
-        result.sa['split'] = N.vstack([[i] * len(s) for i, s in sensitivities])
+        result.sa['split'] = N.concatenate([[i] * len(s)
+                                for i, s in enumerate(sensitivities)])
         self.states.sensitivities = sensitivities
         return result
 
