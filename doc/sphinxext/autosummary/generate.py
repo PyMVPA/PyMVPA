@@ -77,7 +77,7 @@ def generate_autosummary_docs(sources, output_dir=None, suffix='.rst',
         sources = [os.path.join(base_path, filename) for filename in sources]
 
     # create our own templating environment
-    template_dirs = [os.path.join(os.path.dirname(__file__), 'templates')]
+    template_dirs = [os.path.join(os.path.dirname(__file__), template_dir)]
     if builder is not None:
         # allow the user to override the templates
         template_loader = BuiltinTemplateLoader()
