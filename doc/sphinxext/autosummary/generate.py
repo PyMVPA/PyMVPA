@@ -60,6 +60,12 @@ def _simple_warn(msg):
 
 # -- Generating output ---------------------------------------------------------
 
+def _is_from_same_file(obj1, obj2):
+    try:
+        return inspect.getsourcefile(obj1) == inspect.getsourcefile(obj2)
+    except TypeError:
+        return False
+
 def generate_autosummary_docs(sources, output_dir=None, suffix='.rst',
                               warn=_simple_warn, info=_simple_info,
                               base_path=None, builder=None, template_dir=None):
@@ -137,8 +143,10 @@ def generate_autosummary_docs(sources, output_dir=None, suffix='.rst',
 
             def get_members(obj, typ, include_public=[]):
                 items = [
+                    # filter by file content !!!!
                     name for name in dir(obj)
-                    if get_documenter(getattr(obj, name)).objtype == typ
+                    if get_documenter(getattr(obj, name)).objtype == typ \
+                        and _is_from_same_file(getattr(obj, name), obj)
                 ]
                 public = [x for x in items
                           if x in include_public or not x.startswith('_')]
