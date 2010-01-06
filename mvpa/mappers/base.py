@@ -14,6 +14,7 @@ import numpy as N
 import copy
 
 from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
+from mvpa.base.dochelpers import _str
 from mvpa.misc.vproperty import VProperty
 
 
@@ -332,6 +333,10 @@ class FeatureSliceMapper(Mapper):
                          "(slicearg=%s, dshape=%s, "
                           % (repr(self._slicearg), repr(self.__dshape)),
                          1)
+
+
+    def __str__(self):
+        return _str(self)
 
 
     def _forward_data(self, data):
@@ -751,6 +756,12 @@ class ChainMapper(Mapper):
         s = Mapper.__repr__(self)
         m_repr = 'mappers=[%s]' % ', '.join([repr(m) for m in self])
         return s.replace("(", "(%s, " % m_repr, 1)
+
+
+    def __str__(self):
+        mapperlist = "%s" % "-".join([str(m) for m in self])
+        return _str(self,
+                    mapperlist.replace('Mapper', ''))
 
     #
     # Behave as a container

@@ -47,6 +47,10 @@ extensions = ['sphinx.ext.autodoc',
               # this also includes the docscrape* extensions
               'numpydoc']
 
+# the following doesn't work with sphinx < 1.0, but will make a separate
+# sphinx-autogen run obsolete in the future
+#autosummary_generate = True
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

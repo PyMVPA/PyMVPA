@@ -16,6 +16,7 @@ import copy
 import numpy as N
 from operator import isSequenceType
 
+from mvpa.base.dochelpers import _str
 
 if __debug__:
     # we could live without, but it would be nicer with it
@@ -373,6 +374,10 @@ class Collection(dict):
         return "%s(items=%s)" \
                   % (self.__class__.__name__,
                      repr(self.values()))
+
+
+    def __str__(self):
+        return _str(self, ','.join([str(k) for k in self.keys()]))
 
 
 

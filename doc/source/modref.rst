@@ -50,7 +50,6 @@ Datasets: Input, Output, Storage and Preprocessing
    datasets.channel
    datasets.eep
    datasets.miscfx
-   datasets.miscfx_sp
    datasets.splitters
 
 
@@ -127,7 +126,6 @@ Measures: Searchlights and Sensitivties
    measures.noiseperturbation
    measures.pls
    measures.searchlight
-   measures.splitmeasure
 
 
 Feature Selection
