@@ -45,7 +45,7 @@ def test_polydetrend():
     # using these precomputed regressors, we should get the same result as
     # before even if we do not generate a regressor for linear
     dm_optreg = PolyDetrendMapper(polyord=0,
-                                  opt_reg=['opt_reg_const', 'opt_reg_lin'])
+                                  opt_regs=['opt_reg_const', 'opt_reg_lin'])
     mds_optreg = dm_optreg(ds)
     assert_array_almost_equal(mds_optreg, N.zeros(mds.shape))
 
