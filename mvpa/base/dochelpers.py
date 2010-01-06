@@ -430,7 +430,9 @@ def _str(obj, *args, **kwargs):
     if hasattr(obj, 'descr'):
         s = obj.descr
     else:
-        s ='%s: ' % obj.__class__.__name__
+        s ='%s' % obj.__class__.__name__
+        if len(args) or len(kwargs):
+            s += ': '
         s += ', '.join(list(args)
                        + ["%s=%s" % (k, v) for k, v in kwargs.iteritems()])
 
