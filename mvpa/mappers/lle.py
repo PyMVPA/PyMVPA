@@ -56,12 +56,12 @@ class LLEMapper(Mapper):
         """
         Parameters
         ----------
-        k: int
+        k : int
           Number of nearest neighbor to be used by the algorithm.
-        algorithm: 'lle' or 'hlle'
+        algorithm : {'lle', 'hlle'}
           Either use the standard LLE algorithm or Hessian Linear Local
           Embedding (HLLE).
-        **kwargs:
+        **kwargs
           Additional arguments are passed to the underlying MDP node.
           Most importantly this is the `output_dim` argument, that determines
           the number of dimensions to mapper is using as output space.

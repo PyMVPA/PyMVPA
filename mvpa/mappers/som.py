@@ -34,16 +34,16 @@ class SimpleSOMMapper(Mapper):
         """
         Parameters
         ----------
-        kshape: (int, int)
+        kshape : (int, int)
           Shape of the internal Kohonen layer. Currently, only 2D Kohonen
           layers are supported, although the length of an axis might be set
           to 1.
-        niter: int
+        niter : int
           Number of iteration during network training.
-        learning_rate: float
+        learning_rate : float
           Initial learning rate, which will continuously decreased during
           network training.
-        iradius: float or None
+        iradius : float or None
           Initial radius of the Gaussian neighborhood kernel radius, which
           will continuously decreased during network training. If `None`
           (default) the radius is set equal to the longest edge of the
@@ -79,7 +79,7 @@ class SimpleSOMMapper(Mapper):
 
         Parameter
         ---------
-        samples: array-like
+        samples : array-like
           Used for unsupervised training of the SOM.
         """
         # XXX initialize with clever default, e.g. plain of first two PCA
@@ -142,9 +142,9 @@ class SimpleSOMMapper(Mapper):
 
         Parameters
         ----------
-        iter: int
+        iter : int
           The iteration for which to compute the kernel.
-        dqd: array (nrows x ncolumns)
+        dqd : array (nrows x ncolumns)
           This is one quadrant of Euclidean distances between Kohonen unit
           locations.
         """
@@ -173,7 +173,7 @@ class SimpleSOMMapper(Mapper):
 
         Parameters
         ----------
-        sample: array
+        sample : array
           Target sample.
 
         Returns

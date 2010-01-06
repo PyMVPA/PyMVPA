@@ -31,7 +31,7 @@ def Absolute(x):
 
     Parameters
     ----------
-    x: scalar or sequence
+    x : scalar or sequence
 
     """
     return N.absolute(x)

@@ -16,10 +16,6 @@ import copy
 from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
 from mvpa.misc.vproperty import VProperty
 
-if __debug__:
-    from mvpa.base import warning
-    from mvpa.base import debug
-
 
 class Mapper(object):
     """Interface to provide mapping between two spaces: IN and OUT.
@@ -54,7 +50,7 @@ class Mapper(object):
 
         Parameters
         ----------
-        data: Dataset-like, (at least 2D)-array-like
+        data : Dataset-like, (at least 2D)-array-like
           Typically this is a `Dataset`, but it might also be a plain data
           array, or even something completely different(TM) that is supported
           by a subclass' implementation. If such an object is Dataset-like it
@@ -126,7 +122,7 @@ class Mapper(object):
 
         Parameters
         ----------
-        data: Dataset-like, anything
+        data : Dataset-like, anything
           Typically this is a `Dataset`, but it might also be a plain data
           array, or even something completely different(TM) that is supported
           by a subclass' implementation. If such an object is Dataset-like it
@@ -222,12 +218,12 @@ class Mapper(object):
 
         Parameters
         ----------
-        dataset: Dataset-like, anything
+        dataset : Dataset-like, anything
           Typically this is a `Dataset`, but it might also be a plain data
           array, or even something completely different(TM) that is supported
           by a subclass' implementation.
 
-        Results
+        Returns
         -------
         whoknows
           Returns whatever is returned by the derived class.
@@ -253,7 +249,7 @@ class Mapper(object):
 
         Parameters
         ----------
-        dataset: Dataset-like, anything
+        dataset : Dataset-like, anything
           Typically this is a `Dataset`, but it might also be a plain data
           array, or even something completely different(TM) that is supported
           by a subclass' implementation.
@@ -269,7 +265,7 @@ class Mapper(object):
 
         Parameters
         ----------
-        dataset: Dataset-like, anything
+        dataset : Dataset-like, anything
           Typically this is a `Dataset`, but it might also be a plain data
           array, or even something completely different(TM) that is supported
           by a subclass' implementation.
@@ -426,7 +422,7 @@ class FeatureSliceMapper(Mapper):
         # copy-based slicing
         if isinstance(self._slicearg, slice) \
            and not self._slicearg == slice(None):
-               return False
+            return False
 
         return True
 
@@ -481,7 +477,7 @@ class CombinedMapper(Mapper):
         """
         Parameters
         ----------
-        mappers: list of Mapper instances
+        mappers : list of Mapper instances
           The order of the mappers in the list is important, as it will define
           the order in which data snippets have to be passed to
           :meth:`~mvpa.mappers.base.CombinedMapper.forward`.
@@ -502,7 +498,7 @@ class CombinedMapper(Mapper):
 
         Parameters
         ----------
-        data: sequence
+        data : sequence
           Each element in the `data` sequence is passed to the corresponding
           embedded mapper and is mapped individually by it. The number of
           elements in `data` has to match the number of embedded mappers. Each
@@ -511,7 +507,7 @@ class CombinedMapper(Mapper):
 
         Returns
         -------
-        array: nsamples x nfeatures
+        array : nsamples x nfeatures
           Horizontally stacked array of all embedded mapper outputs.
         """
         if not len(data) == len(self._mappers):
@@ -535,7 +531,7 @@ class CombinedMapper(Mapper):
 
         Parameters
         ----------
-        data: array
+        data : array
           Single data array to be reverse mapped into a sequence of data
           snippets in their individual IN spaces.
 
@@ -609,7 +605,7 @@ class CombinedMapper(Mapper):
 
         Parameters
         ----------
-        outIds: sequence
+        outIds : sequence
           All output feature ids to be selected/kept.
         """
         # determine which features belong to what mapper
@@ -631,7 +627,7 @@ class CombinedMapper(Mapper):
 
         Parameters
         ----------
-        outId: int
+        outId : int
           Single id of a feature in output space, whos neighbors should be
           determined.
         *args, **kwargs
@@ -670,7 +666,7 @@ class ChainMapper(Mapper):
         """
         Parameters
         ----------
-        mappers: list of Mapper instances
+        mappers : list of Mapper instances
         **kwargs
           All additional arguments are passed to the base-class constructor.
         """
@@ -792,7 +788,7 @@ class ChainMapper(Mapper):
         if isinstance(key, int):
             return self._mappers[key]
         else:
-         # operate on shallow copy of self
-         sliced = copy.copy(self)
-         sliced._mappers = self._mappers[key]
-         return sliced
+            # operate on shallow copy of self
+            sliced = copy.copy(self)
+            sliced._mappers = self._mappers[key]
+            return sliced

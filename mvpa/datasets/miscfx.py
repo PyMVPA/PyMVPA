@@ -243,7 +243,7 @@ def getSamplesPerChunkLabel(dataset):
 
     Parameters
     ----------
-    dataset: Dataset
+    dataset : Dataset
       Source dataset.
     """
     ul = dataset.sa['labels'].unique

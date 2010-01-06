@@ -36,7 +36,7 @@ class LinearSVMWeights(Sensitivity):
 
         Parameters
         ----------
-        clf: LinearSVM
+        clf : LinearSVM
           classifier to use. Only classifiers sub-classed from
           `LinearSVM` may be used.
         """
