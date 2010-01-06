@@ -75,7 +75,7 @@ class PolyDetrendMapper(Mapper):
         """
         Parameters
         ----------
-        polyord : int or list
+        polyord : int or list, optional
           Order of the Legendre polynomial to remove from the data.  This
           will remove every polynomial up to and including the provided
           value.  For example, 3 will remove 0th, 1st, 2nd, and 3rd order
@@ -85,7 +85,7 @@ class PolyDetrendMapper(Mapper):
           is used for each chunk.  You can also specify a different polyord
           value for each chunk by providing a list or ndarray of polyord
           values the length of the number of chunks.
-        chunks : str, None
+        chunks : str or None
           If None, the whole dataset is detrended at once. Otherwise, the given
           samples attribute (given by its name) is used to define chunks of the
           dataset that are processed individually. In that case, all the samples
@@ -93,7 +93,7 @@ class PolyDetrendMapper(Mapper):
           sorted in order from low to high -- unless the dataset provides
           information about the coordinate of each sample in the space that
           should be spanned be the polynomials (see `inspace` argument).
-        opt_regs : list, None
+        opt_regs : list or None
           Optional list of sample attribute names that should be used as
           additional regressors.  One example would be to regress out motion
           parameters.
@@ -101,7 +101,7 @@ class PolyDetrendMapper(Mapper):
           If not None, a samples attribute of the same name is added to the
           mapped dataset that stores the coordinates of each sample in the
           space that is spanned by the polynomials. If an attribute of that
-          name is already present in the input dataset its values are intepreted
+          name is already present in the input dataset its values are interpreted
           as sample coordinates in the space that should be spanned by the
           polynomials.
         """
@@ -215,8 +215,8 @@ class PolyDetrendMapper(Mapper):
             # if the dataset know about the inspace we can store the
             # polycoords right away
             if not inspace is None and inspace in ds.sa:
-                    self._polycoords = ds.sa[inspace].value
-                    update_polycoords = False
+                self._polycoords = ds.sa[inspace].value
+                update_polycoords = False
             else:
                 # otherwise we prepare and empty array that is going to be
                 # filled below -- we know that those polycoords are going to
