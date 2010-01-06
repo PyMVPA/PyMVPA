@@ -63,9 +63,9 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         """
         Parameters
         ----------
-        transerror: TransferError instance
+        transerror : TransferError instance
           Provides the classifier used for cross-validation.
-        splitter: Splitter or None
+        splitter : Splitter or None
           Used to split the dataset for cross-validation folds. By
           convention the first dataset in the tuple returned by the
           splitter is used to train the provided classifier. If the
@@ -73,17 +73,17 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
           dataset is used to generate predictions with the (trained)
           classifier. If `None` (default) an instance of
           :class:`~mvpa.datasets.splitters.NoneSplitter` is used.
-        expose_testdataset: bool
+        expose_testdataset : bool
          In the proper pipeline, classifier must not know anything
          about testing data, but in some cases it might lead only
          to marginal harm, thus migth wanted to be enabled (provide
          testdataset for RFE to determine stopping point).
-        harvest_attribs: list of str
+        harvest_attribs : list of str
           What attributes of call to store and return within
           harvested state variable
-        copy_attribs: None or str
+        copy_attribs : None or str
           Force copying values of attributes on harvesting
-        **kwargs:
+        **kwargs
           All additional arguments are passed to the
           :class:`~mvpa.measures.base.DatasetMeasure` base class.
         """

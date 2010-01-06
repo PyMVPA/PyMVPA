@@ -169,43 +169,48 @@ def plotERP(data, SR=500, onsets=None,
 
     Parameters
     ----------
-    data: 1D or 2D ndarray
+    data : 1D or 2D ndarray
       The data array can either be 1D (samples over time) or 2D
       (trials x samples). In the first case a boxcar mapper is used to
       extract the respective trial timecourses given a list of trial onsets.
       In the latter case, each row of the data array is taken as the EEG
       signal timecourse of a particular trial.
-    onsets: list(int)
+    onsets : list(int)
       List of onsets (in samples not in seconds).
-    SR: int
+    SR : int
       Sampling rate (1/s) of the signal.
-    pre: float
+    pre : float
       Duration (in seconds) to be plotted prior to onset.
     pre_onset : float or None
       If data is already in epochs (2D) then pre_onset provides information
       on how many seconds pre-stimulus were used to generate them. If None,
       then pre_onset = pre
-    post: float
+    post : float
       Duration (in seconds) to be plotted after the onset.
-    pre_mean: float
+    pre_mean : float
       Duration (in seconds) at the beginning of the window which is used
       for deriving the mean of the signal. If None, pre_mean = pre
-    errtype: None or 'ste' or 'std' or 'ci95' or list of previous three
+    errtype : None or 'ste' or 'std' or 'ci95' or list of previous three
       Type of error value to be computed per datapoint.
-        'ste': standard error of the mean
-        'std': standard deviation
-        'ci95': 95% confidence interval (1.96 * ste)
-        None: no error margin is plotted (default)
+
+        'ste'
+          standard error of the mean
+        'std'
+          standard deviation
+        'ci95'
+          95% confidence interval (1.96 * ste)
+         None
+          no error margin is plotted (default)
       Optionally, multiple error types can be specified in a list. In that
       case all of them will be plotted.
-    color: matplotlib color code
+    color : matplotlib color code
       Color to be used for plotting the mean signal timecourse.
-    errcolor: matplotlib color code
+    errcolor : matplotlib color code
       Color to be used for plotting the error margin. If None, use main color
       but with weak alpha level
-    ax:
+    ax :
       Target where to draw.
-    ymult: float
+    ymult : float
       Multiplier for the values. E.g. if negative-up ERP plot is needed:
       provide ymult=-1.0
     *args, **kwargs

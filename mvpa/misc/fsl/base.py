@@ -32,7 +32,8 @@ class FslEV3(ColumnData):
 
         Parameters
         ----------
-        source: filename of an EV3 file
+        source : str
+          Filename of an EV3 file
         """
         # init data from known format
         ColumnData.__init__(self, source,
@@ -98,8 +99,8 @@ class McFlirtParams(ColumnData):
 
         Parameters
         ----------
-          source: str
-              Filename of a parameter file.
+        source : str
+          Filename of a parameter file.
         """
         ColumnData.__init__(self, source,
                             header=McFlirtParams.header_def,
@@ -163,7 +164,7 @@ class FslGLMDesign(object):
         """
         Parameters
         ----------
-        source: filename
+        source : filename
           Compressed files will be read as well, if their filename ends with
           '.gz'.
         """

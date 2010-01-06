@@ -34,20 +34,20 @@ class ProcrusteanMapper(ProjectionMapper):
 
         Parameters
         ----------
-        scaling: bool
+        scaling : bool
           Scale data for the transformation (no longer rigid body
           transformation)
-        reflection: bool
+        reflection : bool
           Allow for the data to be reflected (so it might not be a rotation).
           Effective only for non-oblique transformations
-        reduction: bool
+        reduction : bool
           If true, it is allowed to map into lower-dimensional
           space. Forward transformation might be suboptimal then and reverse
           transformation might not recover all original variance
-        oblique: bool
+        oblique : bool
           Either to allow non-orthogonal transformation -- might heavily overfit
           the data if there is less samples than dimensions. Use `oblique_rcond`.
-        oblique_rcond: float
+        oblique_rcond : float
           Cutoff for 'small' singular values to regularize the inverse. See
           :class:`~numpy.linalg.lstsq` for more information.
         """

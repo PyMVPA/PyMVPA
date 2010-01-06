@@ -387,11 +387,11 @@ class SampleAttributes(ColumnData):
 
         Parameters
         ----------
-        source: str
+        source : str
           Filename of an atrribute file
-        literallabels: bool, optional
+        literallabels : bool, optional
           Either labels are given as literal strings
-        header: None or bool or list of str
+        header : None or bool or list of str
           If None, ['labels', 'chunks'] is assumed. Otherwise the same
           behavior as of `ColumnData`
         """
@@ -531,13 +531,13 @@ class XAVRSensorLocations(SensorLocations):
 class TuebingenMEGSensorLocations(SensorLocations):
     """Read sensor location definitions from a specific text file format.
 
-    File layout is assumed to be 7 columns:
+    File layout is assumed to be 7 columns::
 
       1:   sensor name
       2:   position on y-axis
       3:   position on x-axis
       4:   position on z-axis
-      5-7: same as 2-4, but for some outer surface thingie. 
+      5-7: same as 2-4, but for some outer surface thingie.
 
     Note that x and y seem to be swapped, ie. y as defined by SensorLocations
     conventions seems to be first axis and followed by x.

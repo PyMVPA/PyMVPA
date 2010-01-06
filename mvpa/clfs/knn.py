@@ -54,17 +54,17 @@ class kNN(Classifier):
         """
         Parameters
         ----------
-        k: unsigned integer
+        k : unsigned integer
           Number of nearest neighbours to be used for voting.
-        dfx: functor
+        dfx : functor
           Function to compute the distances between training and test samples.
           Default: squared euclidean distance
-        voting: str
+        voting : str
           Voting method used to derive predictions from the nearest neighbors.
           Possible values are 'majority' (simple majority of classes
           determines vote) and 'weighted' (votes are weighted according to the
           relative frequencies of each class in the training data).
-        **kwargs:
+        **kwargs
           Additonal arguments are passed to the base class.
         """
 

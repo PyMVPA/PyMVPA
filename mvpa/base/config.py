@@ -73,7 +73,7 @@ class ConfigManager(SafeConfigParser):
 
         Parameters
         ----------
-        filenames: list of filenames
+        filenames : list of filenames
         """
         SafeConfigParser.__init__(self)
 

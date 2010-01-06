@@ -109,7 +109,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         ----------
         dataset : Dataset
           used to compute sensitivity maps
-        testdataset: Dataset
+        testdataset : Dataset
           optional dataset to select features on
 
         Returns a tuple of two new datasets with selected feature
@@ -248,9 +248,9 @@ class CombinedFeatureSelection(FeatureSelection):
         """
         Parameters
         ----------
-        feature_selections: list
+        feature_selections : list
           FeatureSelection instances to run. Order is not important.
-        combiner: 'union', 'intersection'
+        combiner : 'union', 'intersection'
           which method to be used to combine the feature selection set of
           all computed methods.
         """

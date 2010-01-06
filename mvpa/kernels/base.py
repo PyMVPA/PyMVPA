@@ -217,7 +217,7 @@ class CustomKernel(NumpyKernel):
 
         Parameters
         ----------
-        kernelfunc: function
+        kernelfunc : function
           Any callable function which takes two numpy arrays and
           calculates a kernel function, treating the rows as samples and the
           columns as features. It is called from compute(d1, d2) -> func(d1,d2)
@@ -246,7 +246,7 @@ class PrecomputedKernel(NumpyKernel):
         """
         Parameters
         ----------
-        matrix: Numpy array or convertable kernel, or other object type
+        matrix : Numpy array or convertable kernel, or other object type
         """
         NumpyKernel.__init__(self, *args, **kwargs)
 

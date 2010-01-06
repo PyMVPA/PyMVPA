@@ -213,7 +213,7 @@ def mask_mapper(mask=None, shape=None, inspace=None):
       an array in the original dataspace and its nonzero elements are
       used to define the features included in the dataset. alternatively,
       the `shape` argument can be used to define the array dimensions.
-    shape: tuple
+    shape : tuple
       The shape of the array to be mapped. If `shape` is provided instead
       of `mask`, a full mask (all True) of the desired shape is
       constructed. If `shape` is specified in addition to `mask`, the
