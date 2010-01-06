@@ -115,6 +115,9 @@ class PolyDetrendMapper(Mapper):
         self._polycoords = None
         self._regs = None
 
+        # secret switch to perform in-place detrending
+        self._secret_inplace_detrend = False
+
 
     def __repr__(self):
         s = super(PolyDetrendMapper, self).__repr__()
@@ -127,9 +130,7 @@ class PolyDetrendMapper(Mapper):
 
 
     def __str__(self):
-        return _str(self,
-                    ord=self.__polyord)
-
+        return _str(self, ord=self.__polyord)
 
 
     def _scale_array(self, a):
@@ -254,8 +255,11 @@ class PolyDetrendMapper(Mapper):
         if self._regs is None:
             self.train(ds)
 
-        # shallow copy to put the new stuff in
-        mds = ds.copy(deep=False)
+        if self._secret_inplace_detrend:
+            mds = ds
+        else:
+            # shallow copy to put the new stuff in
+            mds = ds.copy(deep=False)
 
         # local binding
         regs = self._regs
@@ -302,8 +306,12 @@ class PolyDetrendMapper(Mapper):
         # res[0] is (nregr x nfeatures)
         y = fit[0]
         # remove all and keep only the residuals
-        # important to assign to ensure COW behavior
-        mds.samples = ds.samples - N.dot(regs, y)
+        if self._secret_inplace_detrend:
+            # if we are in evil mode do evil
+            mds.samples -= N.dot(regs, y)
+        else:
+            # important to assign to ensure COW behavior
+            mds.samples = ds.samples - N.dot(regs, y)
 
         return mds
 
@@ -317,3 +325,23 @@ class PolyDetrendMapper(Mapper):
     def _reverse_data(self, data):
         raise RuntimeError("%s cannot map plain data."
                            % self.__class__.__name__)
+
+
+def poly_detrend(ds, **kwargs):
+    """In-place polynomial detrending.
+
+    This function behaves identical to the PolyDetrendMapper. The only
+    difference is that the actual detrending is done in-place -- potentially
+    causing a significant reduction of the memory demands.
+
+    Parameters
+    ----------
+    ds : Dataset
+      The dataset that will be detrended in-place.
+    **kwargs
+      For all other arguments, please see the documentation of
+      PolyDetrendMapper.
+    """
+    dm = PolyDetrendMapper(**kwargs)
+    dm._secret_inplace_detrend = True
+    return dm(ds)
