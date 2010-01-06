@@ -439,8 +439,8 @@ class AdaptiveRDist(AdaptiveNullDist):
             # into account
             cdf_bad = cdf_[bad_values]
             x_bad = x[bad_values]
-            cdf_bad[x_bad<0] = 0.0
-            cdf_bad[x_bad>=0] = 1.0
+            cdf_bad[x_bad < 0] = 0.0
+            cdf_bad[x_bad >= 0] = 1.0
             cdf_[bad_values] = cdf_bad
         return cdf_
 
@@ -542,7 +542,7 @@ if externals.exists('scipy'):
 
                 args = theta[:i+1]
                 # adjust args if there were fixed
-                for i,a in zip(fargs_i, args):
+                for i, a in zip(fargs_i, args):
                     fargs[i] = a
                 args = fargs[:-2]
 
@@ -574,10 +574,13 @@ if externals.exists('scipy'):
                 x0 = tuple([args[i] for i in fargs_i])
             else:
                 x0 = args
-            if fargs[-2] is None: x0 = x0 + (loc0,)
-            if fargs[-1] is None: x0 = x0 + (scale0,)
+            if fargs[-2] is None:
+                x0 = x0 + (loc0,)
+            if fargs[-1] is None:
+                x0 = x0 + (scale0,)
 
-            opt_x = scipy.optimize.fmin(self.nnlf, x0, args=(N.ravel(data),), disp=0)
+            opt_x = scipy.optimize.fmin(
+                self.nnlf, x0, args=(N.ravel(data),), disp=0)
 
             # reconstruct back
             i = 0
@@ -649,11 +652,9 @@ if externals.exists('scipy'):
              choice is made by minimal reported distance after estimating
              parameters of the distribution. Parameter `p=0.05` sets
              threshold to reject null-hypothesis that distribution is the
-             same::
-
-              WARNING: older versions (e.g. 0.5.2 in etch) of scipy have
-                       incorrect kstest implementation and do not function
-                       properly
+             same.
+             **WARNING:** older versions (e.g. 0.5.2 in etch) of scipy have
+             incorrect kstest implementation and do not function properly.
         distributions : None or list of str or tuple(str, dict)
           Distributions to check. If None, all known in scipy.stats
           are tested. If distribution is specified as a tuple, then
@@ -703,7 +704,7 @@ if externals.exists('scipy'):
             if true_positives == 0:
                 raise ValueError, "Provided data has no elements in non-" \
                       "parametric distribution under p<=%.3f. Please " \
-                      "increase the size of data or value of p" % p
+                      "increase the size of data or value of p" % p_thr
             if __debug__:
                 debug('STAT_', 'Number of positives in non-parametric '
                       'distribution is %d' % true_positives)
@@ -745,7 +746,8 @@ if externals.exists('scipy'):
                 # specify distribution 'optimizer'. If loc or scale was provided,
                 # use home-brewed rv_semifrozen
                 if args_ is not None or loc_ is not None or scale_ is not None:
-                    dist_opt = rv_semifrozen(dist_gen_, loc=loc_, scale=scale_, args=args_)
+                    dist_opt = rv_semifrozen(dist_gen_,
+                                             loc=loc_, scale=scale_, args=args_)
                 else:
                     dist_opt = dist_gen_
                 dist_params = dist_opt.fit(data_selected)
@@ -758,11 +760,13 @@ if externals.exists('scipy'):
                     # We need to compare detection under given p
                     cdf_p = N.abs(_pvalue(data, cdf_func, tail, name=dist_gen))
                     cdf_p_thr = cdf_p <= p_thr
-                    D, p = N.sum(N.abs(data_p_thr - cdf_p_thr))*1.0/true_positives, 1
-                    if __debug__: res_sum = 'D=%.2f' % D
+                    D, p = (N.sum(N.abs(data_p_thr - cdf_p_thr))*1.0/true_positives, 1)
+                    if __debug__:
+                        res_sum = 'D=%.2f' % D
                 elif test == 'kstest':
                     D, p = kstest(data, d, args=dist_params)
-                    if __debug__: res_sum = 'D=%.3f p=%.3f' % (D, p)
+                    if __debug__:
+                        res_sum = 'D=%.3f p=%.3f' % (D, p)
             except (TypeError, ValueError, AttributeError,
                     NotImplementedError), e:#Exception, e:
                 if __debug__:
@@ -774,7 +778,8 @@ if externals.exists('scipy'):
             if p > p_thr and not N.isnan(D):
                 results += [ (D, dist_gen, dist_name, dist_params) ]
                 if __debug__:
-                    debug('STAT_', 'Testing for %s dist.: %s' % (dist_name, res_sum))
+                    debug('STAT_',
+                          'Testing for %s dist.: %s' % (dist_name, res_sum))
             else:
                 if __debug__:
                     debug('STAT__', 'Cannot consider %s dist. with %s'
@@ -787,8 +792,10 @@ if externals.exists('scipy'):
         if __debug__ and 'STAT' in debug.active:
             # find the best and report it
             nresults = len(results)
-            sresult = lambda r:'%s(%s)=%.2f' % (r[1], ', '.join(map(str, r[3])), r[0])
-            if nresults>0:
+            sresult = lambda r:'%s(%s)=%.2f' % (r[1],
+                                                ', '.join(map(str, r[3])),
+                                                r[0])
+            if nresults > 0:
                 nnextbest = min(2, nresults-1)
                 snextbest = ', '.join(map(sresult, results[1:1+nnextbest]))
                 debug('STAT', 'Best distribution %s. Next best: %s'
@@ -864,8 +871,8 @@ if externals.exists('scipy'):
             x_p = _pvalue(x, Nonparametric(data).cdf, tail)
             x_p_thr = N.abs(x_p) <= p_thr
             # color bars which pass thresholding in red
-            for thr, bar in zip(x_p_thr[expand_tails:], hist[2]):
-                bar.set_facecolor(('w','r')[int(thr)])
+            for thr, bar_ in zip(x_p_thr[expand_tails:], hist[2]):
+                bar_.set_facecolor(('w','r')[int(thr)])
 
             if not len(matches):
                 # no matches were provided
@@ -879,7 +886,8 @@ if externals.exists('scipy'):
                 dist = getattr(scipy.stats, dist_gen)(*params)
 
                 label = '%s' % (dist_name)
-                if legend > 1: label += '(D=%.2f)' % (D)
+                if legend > 1:
+                    label += '(D=%.2f)' % (D)
 
                 xcdf_p = N.abs(_pvalue(x, dist.cdf, tail))
                 xcdf_p_thr = (xcdf_p <= p_thr).ravel()
@@ -897,7 +905,7 @@ if externals.exists('scipy'):
                     fn = N.logical_and(~data_cdf_p_thr, data_p_thr)
 
                     label += ' tp/fp/fn=%d/%d/%d)' % \
-                            tuple(map(N.sum, [tp,fp,fn]))
+                            tuple(map(N.sum, [tp, fp, fn]))
 
                 pdf = dist.pdf(x)
                 line = P.plot(x, pdf, '-', linewidth=2, label=label)
