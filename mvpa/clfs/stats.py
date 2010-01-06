@@ -120,7 +120,7 @@ class NullDist(ClassWithCollections):
         """
         Parameters
         ----------
-        tail: str ('left', 'right', 'any', 'both')
+        tail : str ('left', 'right', 'any', 'both')
           Which tail of the distribution to report. For 'any' and 'both'
           it chooses the tail it belongs to based on the comparison to
           p=0.5. In the case of 'any' significance is taken like in a
@@ -204,12 +204,12 @@ class MCNullDist(NullDist):
 
         Parameters
         ----------
-        dist_class: class
+        dist_class : class
           This can be any class which provides parameters estimate
           using `fit()` method to initialize the instance, and
           provides `cdf(x)` method for estimating value of x in CDF.
           All distributions from SciPy's 'stats' module can be used.
-        permutations: int
+        permutations : int
           This many permutations of label will be performed to
           determine the distribution under the null hypothesis.
         """
@@ -362,7 +362,7 @@ class FixedNullDist(NullDist):
         """
         Parameters
         ----------
-        dist: distribution object
+        dist : distribution object
           This can be any object the has a `cdf()` method to report the
           cumulative distribition function values.
         """

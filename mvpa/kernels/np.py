@@ -512,7 +512,7 @@ class Matern_3_2Kernel(NumpyKernel):
         sigma_f : float, optional
           Signal standard deviation.
           (Defaults to 1.0)
-        numerator: float, optional
+        numerator : float, optional
           the numerator of parameter ni of Matern covariance functions.
           Currently only numerator=3.0 and numerator=5.0 are implemented.
           (Defaults to 3.0)

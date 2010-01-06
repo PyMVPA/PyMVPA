@@ -128,7 +128,7 @@ class CustomSGKernel(_BasicSGKernel):
         ----------
         kernel_cls : Shogun.Kernel
           Class of a Kernel from Shogun
-        kernel_params: list
+        kernel_params : list
           Each item in this list should be a tuple of (kernelparamname, value),
           and the order is the explicit order required by the Shogun constructor
         """

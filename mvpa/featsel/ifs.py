@@ -95,7 +95,7 @@ class IFS(FeatureSelection):
         dataset : Dataset
           used to select features and train classifiers to determine the
           transfer error.
-        testdataset: Dataset
+        testdataset : Dataset
           used to test the trained classifer on a certain feature set
           to determine the transfer error.
 

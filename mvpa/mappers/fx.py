@@ -28,11 +28,11 @@ class FxMapper(Mapper):
         axis : {'samples', 'features'}
         fx : callable
         fxargs : tuple
-        uattrs: list
+        uattrs : list
           List of atrribute names to consider. All possible combinations
           of unqiue elements of these attributes are used to determine the
           sample groups to operate on.
-        attrfx: callable
+        attrfx : callable
           Functor that is called with each sample attribute elements matching
           the respective samples group. By default the unique value is
           determined. If the content of the attribute is not uniform for a
@@ -279,7 +279,7 @@ def _uniquemerge2literal(attrs):
 
     Parameters
     ----------
-    attrs: sequence, arbitrary
+    attrs : sequence, arbitrary
 
     Returns
     -------

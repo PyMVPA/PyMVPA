@@ -91,7 +91,7 @@ class Splitter(object):
           provided as a sequence whos length matches the number of datasets
           per split and indicates the configuration for the respective dataset
           in each split.
-        nrunspersplit: int
+        nrunspersplit : int
           Number of times samples for each split are chosen. This
           is mostly useful if a subset of the available samples
           is used in each split and the subset is randomly
@@ -451,7 +451,7 @@ class OddEvenSplitter(Splitter):
         """
         Parameters
         ----------
-        usevalues: bool
+        usevalues : bool
           If True the values of the attribute used for splitting will be
           used to determine odd and even samples. If False odd and even
           chunks are defined by the order of attribute values, i.e. first
@@ -535,9 +535,9 @@ class NGroupSplitter(Splitter):
 
         Parameters
         ----------
-        ngroups: int
+        ngroups : int
           Number of groups to split the attribute into.
-        kwargs
+        **kwargs
           Additional parameters are passed to the `Splitter` base class.
         """
         Splitter.__init__(self, **(kwargs))
@@ -614,9 +614,9 @@ class NFoldSplitter(Splitter):
 
         Parameters
         ----------
-        cvtype: int
+        cvtype : int
           Type of cross-validation: N-(cvtype)
-        kwargs
+        **kwargs
           Additional parameters are passed to the `Splitter` base class.
         """
         Splitter.__init__(self, **(kwargs))

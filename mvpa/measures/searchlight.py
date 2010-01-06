@@ -37,16 +37,16 @@ class Searchlight(DatasetMeasure):
         """
         Parameters
         ----------
-        datameasure: callable
+        datameasure : callable
           Any object that takes a :class:`~mvpa.datasets.base.Dataset`
           and returns some measure when called.
-        queryengine: QueryEngine
+        queryengine : QueryEngine
           Engine to use to discover the "neighborhood" of each feature.
           See :class:`~mvpa.misc.neighborhood.QueryEngine`.
-        center_ids: list(int)
+        center_ids : list of int
           List of feature ids (not coordinates) the shall serve as sphere
           centers. By default all features will be used.
-        nproc: int
+        nproc : int
           How many processes to use for computation.  Requires `pprocess`
           external module.
         **kwargs
@@ -178,13 +178,13 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
 
     Parameters
     ----------
-    datameasure: callable
+    datameasure : callable
       Any object that takes a :class:`~mvpa.datasets.base.Dataset`
       and returns some measure when called.
-    radius: float
+    radius : float
       All features within this radius around the center will be part
       of a sphere.
-    center_ids: list(int)
+    center_ids : list of int
       List of feature ids (not coordinates) the shall serve as sphere
       centers. By default all features will be used.
     **kwargs
