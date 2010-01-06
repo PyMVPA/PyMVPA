@@ -4,11 +4,15 @@
 .. automodule:: {{ fullname }}
 
    {% block functions %}
-   {% if functions %}
+   {% if functions or methods %}
    .. rubric:: Functions
 
    .. autosummary::
+      :toctree:
    {% for item in functions %}
+      {{ item }}
+   {%- endfor %}
+   {% for item in methods %}
       {{ item }}
    {%- endfor %}
    {% endif %}
@@ -19,6 +23,7 @@
    .. rubric:: Classes
 
    .. autosummary::
+      :toctree:
    {% for item in classes %}
       {{ item }}
    {%- endfor %}
@@ -30,6 +35,7 @@
    .. rubric:: Exceptions
 
    .. autosummary::
+      :toctree:
    {% for item in classes %}
       {{ item }}
    {%- endfor %}
