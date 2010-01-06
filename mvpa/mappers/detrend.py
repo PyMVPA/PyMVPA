@@ -71,7 +71,7 @@ class PolyDetrendMapper(Mapper):
     >>> N.sum(N.abs(mds)) < 0.00001
     True
     """
-    def __init__(self, polyord=1, chunks=None, opt_reg=None, inspace=None):
+    def __init__(self, polyord=1, chunks=None, opt_regs=None, inspace=None):
         """
         Parameters
         ----------
@@ -93,7 +93,7 @@ class PolyDetrendMapper(Mapper):
           sorted in order from low to high -- unless the dataset provides
           information about the coordinate of each sample in the space that
           should be spanned be the polynomials (see `inspace` argument).
-        opt_reg : list, None
+        opt_regs : list, None
           Optional list of sample attribute names that should be used as
           additional regressors.  One example would be to regress out motion
           parameters.
@@ -109,11 +109,27 @@ class PolyDetrendMapper(Mapper):
 
         self.__chunks = chunks
         self.__polyord = polyord
-        self.__opt_reg = opt_reg
+        self.__opt_reg = opt_regs
 
         # things that come from train()
         self._polycoords = None
         self._regs = None
+
+
+    def __repr__(self):
+        s = super(PolyDetrendMapper, self).__repr__()
+        return s.replace("(",
+                         "(polyord=%i, chunks=%s, opt_regs=%s, "
+                          % (self.__polyord,
+                             repr(self.__chunks),
+                             repr(self.__opt_reg)),
+                         1)
+
+
+    def __str__(self):
+        return _str(self,
+                    ord=self.__polyord)
+
 
 
     def _scale_array(self, a):
