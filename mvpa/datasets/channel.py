@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from mvpa.base.dataset import DatasetError
 from mvpa.datasets.base import Dataset
 from mvpa.base.dochelpers import enhancedDocString
 
@@ -38,17 +39,17 @@ class ChannelDataset(Dataset):
 
         Parameters
         ----------
-        samples: ndarray
+        samples : ndarray
           Three-dimensional array: (samples x channels x timepoints).
-        t0: float
+        t0 : float
           Reference time of the first timepoint. Can be used to preserve
           information about the onset of some stimulation. Preferably in
           seconds.
-        dt: float
+        dt : float
           Temporal distance between two timepoints. Has to be given in
           seconds. Otherwise `samplingrate` property will not return
           `Hz`.
-        channelids: list
+        channelids : list
           List of channel names.
         """
         # check samples
@@ -82,7 +83,7 @@ class ChannelDataset(Dataset):
 
         Parameters
         ----------
-        t: int or float or None
+        t : int or float or None
           If an integer, `t` denotes the number of timepoints in the from the
           start of each sample to be used to compute the baseline signal.
           If a floating point value, `t` is the duration of the baseline
@@ -128,21 +129,22 @@ class ChannelDataset(Dataset):
 
             Parameters
             ----------
-            nt: int
+            nt : int
               Number of timepoints to resample to.
-            dt: float
+            dt : float
               Temporal distance of samples after resampling.
-            sr: float
+            sr : float
               Target sampling rate.
             inplace : bool
               If inplace=False, it would create and return a new dataset
               with new samples
-            **kwargs:
+            **kwargs
               All additional arguments are passed to resample() from
               scipy.signal
 
-            :Return:
-              ChannelDataset
+            Returns
+            -------
+            ChannelDataset
             """
             if nt is None and sr is None and dt is None:
                 raise ValueError, \
