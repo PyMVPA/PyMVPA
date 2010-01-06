@@ -16,10 +16,6 @@ import copy
 from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
 from mvpa.misc.vproperty import VProperty
 
-if __debug__:
-    from mvpa.base import warning
-    from mvpa.base import debug
-
 
 class Mapper(object):
     """Interface to provide mapping between two spaces: IN and OUT.
@@ -426,7 +422,7 @@ class FeatureSliceMapper(Mapper):
         # copy-based slicing
         if isinstance(self._slicearg, slice) \
            and not self._slicearg == slice(None):
-               return False
+            return False
 
         return True
 
@@ -792,7 +788,7 @@ class ChainMapper(Mapper):
         if isinstance(key, int):
             return self._mappers[key]
         else:
-         # operate on shallow copy of self
-         sliced = copy.copy(self)
-         sliced._mappers = self._mappers[key]
-         return sliced
+            # operate on shallow copy of self
+            sliced = copy.copy(self)
+            sliced._mappers = self._mappers[key]
+            return sliced
