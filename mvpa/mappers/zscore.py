@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.base import warning, externals
+from mvpa.base import externals
 
 import numpy as N
 from mvpa.base.dochelpers import enhancedDocString
