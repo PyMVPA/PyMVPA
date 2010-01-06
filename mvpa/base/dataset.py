@@ -492,9 +492,18 @@ class Dataset(object):
 
 
     def __str__(self):
-        return _str(self,
-                    'x'.join(["%s" % x for x in self.shape]),
-                    "%s" % self.samples.dtype)
+        samplesstr = 'x'.join(["%s" % x for x in self.shape])
+        samplesstr += '@%s' % self.samples.dtype
+        return _str(self, samplesstr)
+        # Yarik doesn't want to see that
+        # Dump of collections content is only available in repr
+        return _str(self, samplesstr,
+                    str(self.sa).replace(self.sa.__class__.__name__,
+                                         'sa'),
+                    str(self.fa).replace(self.fa.__class__.__name__,
+                                         'fa'),
+                    str(self.a).replace(self.a.__class__.__name__,
+                                         'a'))
 
 
     def __array__(self, dtype=None):
@@ -593,6 +602,10 @@ def hstack(datasets):
     -------
     Dataset
     """
+    #
+    # XXX Use CombinedMapper in here whenever it comes back
+    #
+
     # fall back to numpy if it is not a dataset
     if not is_datasetlike(datasets[0]):
         # we might get a list of 1Ds that would yield wrong results when

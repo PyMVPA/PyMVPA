@@ -12,6 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from mvpa.base.dochelpers import _str
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples, \
         ChainMapper, FeatureSliceMapper
 from mvpa.misc.support import isInVolume
@@ -51,6 +52,10 @@ class FlattenMapper(Mapper):
         s = Mapper.__repr__(self)
         m_repr = 'shape=%s' % repr(self.__origshape)
         return s.replace("(", "(%s, " % m_repr, 1)
+
+
+    def __repr__(self):
+        return _str(self)
 
 
     @accepts_dataset_as_samples

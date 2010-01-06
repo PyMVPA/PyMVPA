@@ -13,7 +13,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import assert_equal, assert_raises
 
 from mvpa.datasets import Dataset, dataset
-from mvpa.mappers.detrend import PolyDetrendMapper
+from mvpa.mappers.detrend import PolyDetrendMapper, poly_detrend
 
 def test_polydetrend():
     samples_forwhole = N.array( [[1.0, 2, 3, 4, 5, 6],
@@ -45,7 +45,7 @@ def test_polydetrend():
     # using these precomputed regressors, we should get the same result as
     # before even if we do not generate a regressor for linear
     dm_optreg = PolyDetrendMapper(polyord=0,
-                                  opt_reg=['opt_reg_const', 'opt_reg_lin'])
+                                  opt_regs=['opt_reg_const', 'opt_reg_lin'])
     mds_optreg = dm_optreg(ds)
     assert_array_almost_equal(mds_optreg, N.zeros(mds.shape))
 
@@ -112,5 +112,11 @@ def test_polydetrend():
                                   [-2.0, -6, -6, -4, -4, -2]], ndmin=2 ).T
     chunks = [0, 1, 0, 1, 0, 1]
     time = [4, 4, 12, 8, 8, 12]
-    ds = Dataset(samples_forchunks, sa={'chunks': chunks, 'time': time})
+    ds = Dataset(samples_forchunks.copy(), sa={'chunks': chunks, 'time': time})
     mds = PolyDetrendMapper(chunks='chunks', polyord=1, inspace='time')(ds)
+
+    # the whole thing must not affect the source data
+    assert_array_equal(ds, samples_forchunks)
+    # but if done inplace that is no longer true
+    poly_detrend(ds, chunks='chunks', polyord=1, inspace='time')
+    assert_array_equal(ds, mds)
