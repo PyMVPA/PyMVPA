@@ -35,8 +35,10 @@ clean:
 generate: generate-stamp
 generate-stamp:
 	mkdir -p $(BUILDDIR)
-	PYTHONPATH=$(CURDIR)/sphinxext:$(PYTHONPATH) python sphinxext/autosummary/generate.py \
-			-t $(CURDIR)/templates -o source/generated source/*.rst
+	@MVPA_EXTERNALS_RAISE_EXCEPTION=off \
+		PYTHONPATH=$(CURDIR)/sphinxext:$(CURDIR)/..:$(PYTHONPATH) \
+		python sphinxext/autosummary/generate.py \
+		-t $(CURDIR)/templates -o source/generated source/*.rst
 	@touch $@
 
 html: generate
