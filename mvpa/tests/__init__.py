@@ -82,7 +82,6 @@ def collectTestSuites():
 
     __optional_tests = [ ('scipy', 'ridge'),
                          ('scipy', 'stats_sp'),
-                         ('scipy', 'datasetfx_sp'),
                          (['lars','scipy'], 'lars'),
                          ('mdp', 'icamapper'),
                          ('scipy', 'zscoremapper'),
@@ -127,6 +126,8 @@ def collectNoseTests():
               'test_mdp',
               'test_neighborhood',
               ]
+    if externals.exists('scipy'):
+        tests += ['test_mapper_sp']
     return tests
 
 def runNoseTests():

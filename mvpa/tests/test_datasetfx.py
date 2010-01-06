@@ -69,8 +69,6 @@ class MiscDatasetFxTests(unittest.TestCase):
         self.failUnless(N.all(ds.samples == ds_data)) # sanity check
 
         funcs = ['zscore', 'coarsenChunks']
-        if externals.exists('scipy'):
-            funcs.append('detrend')
 
         for f in funcs:
             eval('ds.%s()' % f)
