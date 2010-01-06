@@ -223,7 +223,7 @@ class Mapper(object):
           array, or even something completely different(TM) that is supported
           by a subclass' implementation.
 
-        Results
+        Returns
         -------
         whoknows
           Returns whatever is returned by the derived class.
