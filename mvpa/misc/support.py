@@ -84,15 +84,19 @@ def _getUniqueLengthNCombinations_lt3(data, n):
     """Generates a list of lists containing all combinations of
     elements of data of length 'n' without repetitions.
 
-        data: list
-        n:    integer
+    Parameters
+    ----------
+    data : list
+    n : int
 
     This function is adapted from a Java version posted in some forum on
     the web as an answer to the question 'How can I generate all possible
     combinations of length n?'. Unfortunately I cannot remember which
     forum it was.
 
-    NOTE: implementation is broken for n>2
+    Notes
+    -----
+    Implementation is broken for n>2
     """
 
     if n > 2:
@@ -582,13 +586,13 @@ class Event(dict):
 
         Parameters
         ----------
-        dt: float
+        dt : float
           Temporal distance between two timepoints in the same unit as `onset`
           and `duration`.
-        storeoffset: bool
+        storeoffset : bool
           If True, the temporal offset between original `onset` and
           descretized onset is stored as an additional item.
-        offsetattr: str
+        offsetattr : str
           The name of the attribute that is used to store the computed offset
           in case the `storeoffset` is enabled.
 

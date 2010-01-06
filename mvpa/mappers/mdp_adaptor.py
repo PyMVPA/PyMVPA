@@ -53,16 +53,20 @@ class MDPNodeMapper(Mapper):
           Dictionary for additional arguments for all calls to the MDP
           node. The dictionary key's meaning is as follows:
 
-            'train': Arguments for calls to `Node.train()`
-            'stoptrain': Arguments for calls to `Node.stop_training()`
-            'exec': Arguments for calls to `Node.execute()`
-            'inv': Arguments for calls to `Node.inverse()`
+          'train'
+            Arguments for calls to `Node.train()`
+          'stoptrain'
+            Arguments for calls to `Node.stop_training()`
+          'exec'
+            Arguments for calls to `Node.execute()`
+          'inv'
+            Arguments for calls to `Node.inverse()`
 
-          The value for each item is always a 2-tuple, consiting of a
-          tuple (for the arguments), and a dictonary (for keyword
-          arguments), i.e.  ((), {}). Both, tuple and dictonary have to be
+          The value for each item is always a 2-tuple, consisting of a
+          tuple (for the arguments), and a dictionary (for keyword
+          arguments), i.e.  ((), {}). Both, tuple and dictionary have to be
           provided even if they are empty.
-        inspace: see base class
+        inspace : see base class
         """
         # TODO: starting from MDP2.5 this check should become:
         # TODO:   if node.has_multiple_training_phases():      
@@ -225,8 +229,8 @@ class MDPFlowMapper(Mapper):
           the flow. If a node does not require additional arguments, None
           can be provided instead. Keyword arguments are currently not
           supported by mdp.Flow.
-         inspace: see base class
-         """
+        inspace : see base class
+        """
         if not node_arguments is None and len(node_arguments) != len(flow):
             raise ValueError("Length of node_arguments (%i) does not match the "
                              "number of nodes in the flow (%i)."

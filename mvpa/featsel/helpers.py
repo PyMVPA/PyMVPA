@@ -31,11 +31,11 @@ class BestDetector(object):
 
         Parameters
         ----------
-          fun : functor
-              Functor to select the best results. Defaults to min
-          lastminimum : bool
-              Toggle whether the latest or the earliest minimum is used as
-              optimal value to determine the stopping criterion.
+        fun : functor
+          Functor to select the best results. Defaults to min
+        lastminimum : bool
+          Toggle whether the latest or the earliest minimum is used as
+          optimal value to determine the stopping criterion.
         """
         self.__func = func
         self.__lastminimum = lastminimum
@@ -101,16 +101,16 @@ class MultiStopCrit(StoppingCriterion):
         """
         Parameters
         ----------
-          crits : list of StoppingCriterion instances
-              For each call to MultiStopCrit all of these criterions will
-              be evaluated.
-          mode : any of ('and', 'or')
-              Logical function to determine the multi criterion from the set
-              of base criteria.
+        crits : list of StoppingCriterion instances
+          For each call to MultiStopCrit all of these criterions will
+          be evaluated.
+        mode : {'and', 'or'}
+          Logical function to determine the multi criterion from the set
+          of base criteria.
         """
         if not mode in ('and', 'or'):
             raise ValueError, \
-                  "A mode '%s' is not supported." % `mode`
+                  "A mode %r is not supported." % (mode, )
 
         self.__mode = mode
         self.__crits = crits
@@ -144,7 +144,7 @@ class FixedErrorThresholdStopCrit(StoppingCriterion):
         if threshold > 1.0 or threshold < 0.0:
             raise ValueError, \
                   "Threshold %f is out of a reasonable range [0,1]." \
-                    % `threshold`
+                    % threshold
         self.__threshold = threshold
 
 
@@ -170,14 +170,14 @@ class NStepsStopCrit(StoppingCriterion):
 
         Parameters
         ----------
-          steps : int
-              Number of steps after which to stop.
+        steps : int
+          Number of steps after which to stop.
         """
         StoppingCriterion.__init__(self)
         if steps < 0:
             raise ValueError, \
                   "Number of steps %i is out of a reasonable range." \
-                    % `steps`
+                    % steps
         self.__steps = steps
 
 
@@ -202,10 +202,10 @@ class NBackHistoryStopCrit(StoppingCriterion):
 
         Parameters
         ----------
-          bestdetector : BestDetector instance
-              used to determine where the best error is located.
-          steps : int
-              How many steps to check after optimal value.
+        bestdetector : BestDetector
+          used to determine where the best error is located.
+        steps : int
+          How many steps to check after optimal value.
         """
         StoppingCriterion.__init__(self)
         if steps < 0:
@@ -247,7 +247,7 @@ class ElementSelector(ClassWithCollections):
         """
         Parameters
         ----------
-         mode : ['discard', 'select']
+         mode : {'discard', 'select'}
             Decides whether to `select` or to `discard` features.
         """
         ClassWithCollections.__init__(self, **kwargs)

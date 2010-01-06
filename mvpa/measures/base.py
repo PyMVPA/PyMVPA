@@ -73,11 +73,11 @@ class DatasetMeasure(ClassWithCollections):
 
         Parameters
         ----------
-        mapper: Mapper instance
+        mapper : Mapper instance
           This mapper is applied in `__call__()` to perform a final
           processing step on the to be returned dataset measure.
           If None, nothing is done.
-        null_dist: instance of distribution estimator
+        null_dist : instance of distribution estimator
           The estimated distribution is used to assign a probability for a
           certain value of the computed measure.
         """

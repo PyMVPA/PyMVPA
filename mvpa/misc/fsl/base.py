@@ -32,18 +32,19 @@ class FslEV3(ColumnData):
 
         Parameters
         ----------
-        source: filename of an EV3 file
+        source : str
+          Filename of an EV3 file
         """
         # init data from known format
         ColumnData.__init__(self, source,
                             header=['onsets', 'durations', 'intensities'],
                             sep=None, dtype=float)
 
-
-    def getNEVs(self):
+    @property
+    def nevs(self):
         """Returns the number of EVs in the file.
         """
-        return self.getNRows()
+        return self.nrows
 
 
     def getEV(self, evid):
@@ -84,7 +85,6 @@ class FslEV3(ColumnData):
     onsets = property(fget=lambda self: self['onsets'])
     durations = property(fget=lambda self: self['durations'])
     intensities = property(fget=lambda self: self['intensities'])
-    nevs = property(fget=getNEVs)
 
 
 
@@ -99,8 +99,8 @@ class McFlirtParams(ColumnData):
 
         Parameters
         ----------
-          source: str
-              Filename of a parameter file.
+        source : str
+          Filename of a parameter file.
         """
         ColumnData.__init__(self, source,
                             header=McFlirtParams.header_def,
@@ -164,7 +164,7 @@ class FslGLMDesign(object):
         """
         Parameters
         ----------
-        source: filename
+        source : filename
           Compressed files will be read as well, if their filename ends with
           '.gz'.
         """

@@ -39,7 +39,8 @@ class BrainVoyagerRTC(ColumnData):
 
         Parameters
         ----------
-        source: filename of an RTC file
+        source : str
+          Filename of an RTC file
         """
         # init data from known format
         ColumnData.__init__(self, source, header=True,

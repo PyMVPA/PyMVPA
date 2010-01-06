@@ -107,12 +107,12 @@ class Hamster(object):
 
         Parameters
         ----------
-        filename: str
+        filename : str
           Name of the target file. When writing to a compressed file the
           filename gets a '.gz' extension if not already specified. This
           is necessary as the constructor uses the extension to decide
           whether it loads from a compressed or uncompressed file.
-        compresslevel: 'auto' or int
+        compresslevel : 'auto' or int
           Compression level setting passed to gzip. When set to
           'auto', if filename ends with '.gz' `compresslevel` is set
           to 5, 0 otherwise.  However, when `compresslevel` is set to

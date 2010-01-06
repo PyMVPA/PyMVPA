@@ -15,7 +15,7 @@ import numpy as N
 import mvpa.support.copy as copy
 from mvpa.base.dochelpers import enhancedDocString
 from sets import Set
-from re import sub as re_sub
+from re import sub
 from mvpa.base import warning
 
 from mvpa.misc.support import Event
@@ -23,6 +23,10 @@ from mvpa.misc.support import Event
 if __debug__:
     from mvpa.base import debug
 
+__all__ = ['DataReader', 'ColumnData', 'SampleAttributes',
+           'SensorLocations', 'XAVRSensorLocations',
+           'TuebingenMEGSensorLocations',
+           'labels2chunks', 'design2labels']
 
 class DataReader(object):
     """Base class for data readers.
@@ -39,24 +43,24 @@ class DataReader(object):
     this information.
     """
     def __init__(self):
+        """Initialize base class `DataReader` -- no parameters.
+        """
         self._props = {}
         self._data = None
 
 
-    def getPropsAsDict(self):
+    @property
+    def props(self):
         """Return the dictionary with the data properties.
         """
         return self._props
 
 
-    def getData(self):
+    @property
+    def data(self):
         """Return the data array.
         """
         return self._data
-
-
-    data  = property(fget=getData, doc="Data array")
-    props = property(fget=getPropsAsDict, doc="Property dict")
 
 
 
@@ -111,7 +115,7 @@ class ColumnData(dict):
         self._header_order = None
 
         if isinstance(source, str):
-            self._fromFile(source, header=header, sep=sep, headersep=headersep,
+            self._from_file(source, header=header, sep=sep, headersep=headersep,
                            dtype=dtype, skiplines=skiplines)
 
         elif isinstance(source, dict):
@@ -121,8 +125,8 @@ class ColumnData(dict):
             self._check()
 
         else:
-            raise ValueError, 'Unkown source for ColumnData [%s]' \
-                              % `type(source)`
+            raise ValueError, 'Unkown source for ColumnData [%r]' \
+                              % type(source)
 
         # generate missing properties for each item in the header
         classdict = self.__class__.__dict__
@@ -130,11 +134,11 @@ class ColumnData(dict):
             if not classdict.has_key(k):
                 getter = "lambda self: self._getAttrib('%s')" % (k)
                 # Sanitarize the key, substitute ' []' with '_'
-                k_ = re_sub('[[\] ]', '_', k)
+                k_ = sub('[[\] ]', '_', k)
                 # replace multipe _s
-                k_ = re_sub('__+', '_', k_)
+                k_ = sub('__+', '_', k_)
                 # remove quotes
-                k_ = re_sub('["\']', '', k_)
+                k_ = sub('["\']', '', k_)
                 if __debug__:
                     debug("IOH", "Registering property %s for ColumnData key %s"
                           % (k_, k))
@@ -174,15 +178,15 @@ class ColumnData(dict):
         if self.has_key(key):
             return self[key]
         else:
-            raise ValueError, "Instance %s has no data about %s" \
-                % (`self`, `key`)
+            raise ValueError, "Instance %r has no data about %r" \
+                % (self, key)
 
 
     def __str__(self):
         s = self.__class__.__name__
         if len(self.keys())>0:
             s += " %d rows, %d columns [" % \
-                 (self.getNRows(), self.getNColumns())
+                 (self.nrows, self.ncolumns)
             s += reduce(lambda x, y: x+" %s" % y, self.keys())
             s += "]"
         return s
@@ -200,8 +204,8 @@ class ColumnData(dict):
                                       "have equal length."
 
 
-    def _fromFile(self, filename, header, sep, headersep,
-                  dtype, skiplines):
+    def _from_file(self, filename, header, sep, headersep,
+                   dtype, skiplines):
         """Loads column data from file -- clears object first.
         """
         # make a clean table
@@ -218,7 +222,7 @@ class ColumnData(dict):
             # read first line and split by 'sep'
             hdr = file_.readline().split(headersep)
             # remove bogus empty header titles
-            hdr = filter(lambda x:len(x.strip()), hdr)
+            hdr = [ x for x in hdr if len(x.strip()) ]
             self._header_order = hdr
         elif isinstance(header, list):
             hdr = header
@@ -255,8 +259,8 @@ class ColumnData(dict):
                     try:
                         v = dtype[i](v)
                     except ValueError:
-                        warning("Can't convert %s to desired datatype %s." %
-                                (`v`, `dtype`) + " Leaving original type")
+                        warning("Can't convert %r to desired datatype %r." %
+                                (v, dtype) + " Leaving original type")
                 tbl[i].append(v)
 
         # check
@@ -275,10 +279,10 @@ class ColumnData(dict):
         # for all columns in the other object
         for k, v in other.iteritems():
             if not self.has_key(k):
-                raise ValueError, 'Unknown key [%s].' % `k`
+                raise ValueError, 'Unknown key [%r].' % (k,)
             if not isinstance(v, list):
-                raise ValueError, 'Can only merge list data, but got [%s].' \
-                                  % `type(v)`
+                raise ValueError, 'Can only merge list data, but got [%r].' \
+                                  % type(v)
             # now it seems to be ok
             # XXX check for datatype?
             self[k] += v
@@ -299,8 +303,8 @@ class ColumnData(dict):
         data._check()
         return data
 
-
-    def getNColumns(self):
+    @property
+    def ncolumns(self):
         """Returns the number of columns.
         """
         return len(self.keys())
@@ -313,7 +317,7 @@ class ColumnData(dict):
         ----------
         filename : str
           Target filename
-        header : bool
+        header : bool, optional
           If `True` a column header is written, using the column
           keys. If `False` no header is written.
         header_order : None or list of str
@@ -324,7 +328,7 @@ class ColumnData(dict):
           determine the order of the columns in the output file.
           The default value is `None`. In this case the columns
           will be in an arbitrary order.
-        sep : str
+        sep : str, optional
           String that is written as a separator between to data columns.
         """
         # XXX do the try: except: dance
@@ -340,19 +344,19 @@ class ColumnData(dict):
                           list(Set(self.keys()).difference(
                                                 Set(self._header_order)))
         else:
-            if not len(header_order) == self.getNColumns():
+            if not len(header_order) == self.ncolumns:
                 raise ValueError, 'Header list does not match number of ' \
                                   'columns.'
             for k in header_order:
                 if not self.has_key(k):
-                    raise ValueError, 'Unknown key [%s]' % `k`
+                    raise ValueError, 'Unknown key [%r]' % (k,)
             col_hdr = header_order
 
         if header == True:
             file_.write(sep.join(col_hdr) + '\n')
 
         # for all rows
-        for r in xrange(self.getNRows()):
+        for r in xrange(self.nrows):
             # get attributes for all keys
             l = [str(self[k][r]) for k in col_hdr]
             # write to file with proper separator
@@ -361,7 +365,8 @@ class ColumnData(dict):
         file_.close()
 
 
-    def getNRows(self):
+    @property
+    def nrows(self):
         """Returns the number of rows.
         """
         # no data no rows (after Bob Marley)
@@ -370,9 +375,6 @@ class ColumnData(dict):
         # otherwise first key is as good as any other
         else:
             return len(self[self.keys()[0]])
-
-    ncolumns = property(fget=getNColumns)
-    nrows = property(fget=getNRows)
 
 
 
@@ -385,11 +387,11 @@ class SampleAttributes(ColumnData):
 
         Parameters
         ----------
-        source: str
+        source : str
           Filename of an atrribute file
-        literallabels: bool
+        literallabels : bool, optional
           Either labels are given as literal strings
-        header: None or bool or list of str
+        header : None or bool or list of str
           If None, ['labels', 'chunks'] is assumed. Otherwise the same
           behavior as of `ColumnData`
         """
@@ -414,10 +416,11 @@ class SampleAttributes(ColumnData):
                           sep=' ')
 
 
-    def getNSamples(self):
+    @property
+    def nsamples(self):
         """Returns the number of samples in the file.
         """
-        return self.getNRows()
+        return self.nrows
 
 
     def toEvents(self, **kwargs):
@@ -431,7 +434,7 @@ class SampleAttributes(ColumnData):
 
         Parameters
         ----------
-        kwargs
+        **kwargs
           Any keyword arugment provided would be replicated, through all
           the entries.
         """
@@ -470,8 +473,6 @@ class SampleAttributes(ColumnData):
 
         return events
 
-
-    nsamples = property(fget=getNSamples)
 
 
 class SensorLocations(ColumnData):
@@ -530,13 +531,13 @@ class XAVRSensorLocations(SensorLocations):
 class TuebingenMEGSensorLocations(SensorLocations):
     """Read sensor location definitions from a specific text file format.
 
-    File layout is assumed to be 7 columns:
+    File layout is assumed to be 7 columns::
 
       1:   sensor name
       2:   position on y-axis
       3:   position on x-axis
       4:   position on z-axis
-      5-7: same as 2-4, but for some outer surface thingie. 
+      5-7: same as 2-4, but for some outer surface thingie.
 
     Note that x and y seem to be swapped, ie. y as defined by SensorLocations
     conventions seems to be first axis and followed by x.
@@ -575,9 +576,10 @@ def design2labels(columndata, baseline_label=0,
     func : functor
       Function which decides either a value should be considered
 
-    :Output:
-      list of labels which are taken from column names in
-      ColumnData and baseline_label
+    Returns
+    -------
+    list of labels which are taken from column names in ColumnData and
+    baseline_label
 
     """
     # doing it simple naive way but it should be of better control if
@@ -587,7 +589,7 @@ def design2labels(columndata, baseline_label=0,
     for row in xrange(columndata.nrows):
         entries = [ columndata[key][row] for key in keys ]
         # which entries get selected
-        selected = filter(lambda x: func(x[1]), zip(keys, entries))
+        selected = [ x for x in zip(keys, entries) if func(x[1]) ]
         nselected = len(selected)
 
         if nselected > 1:

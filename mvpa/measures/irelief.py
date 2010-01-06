@@ -31,7 +31,7 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
     """`FeaturewiseDatasetMeasure` that performs multivariate I-RELIEF
     algorithm. Batch version allowing various kernels.
 
-    UNDER DEVELOPEMNT.
+    UNDER DEVELOPMENT.
 
     Batch I-RELIEF-2 feature weighting algorithm. Works for binary or
     multiclass class-labels. Batch version with complexity O(T*N^2*I),
@@ -259,7 +259,9 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
     where T is the number of iterations, N the number of instances, I
     the number of features.
 
-    See: Y. Sun, Iterative RELIEF for Feature Weighting: Algorithms,
+    References
+    ----------
+    Y. Sun, Iterative RELIEF for Feature Weighting: Algorithms,
     Theories, and Applications, IEEE Trans. on Pattern Analysis and
     Machine Intelligence (TPAMI), vol. 29, no. 6, pp. 1035-1051, June
     2007. http://plaza.ufl.edu/sunyijun/Paper/PAMI_1.pdf

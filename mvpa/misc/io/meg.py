@@ -50,7 +50,7 @@ class TuebingenMEG(object):
 
         Parameters
         ----------
-        source: str or file-like
+        source : str or file-like
           Strings are assumed to be filenames (with `.gz` suffix
           compressed), while all other object types are treated as file-like
           objects.

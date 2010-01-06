@@ -48,13 +48,13 @@ class ProjectionMapper(Mapper):
 
         Parameters
         ----------
-        selector: None or list
+        selector : None or list
           Which components (i.e. columns of the projection matrix)
           should be used for mapping. If `selector` is `None` all
           components are used. If a list is provided, all list
           elements are treated as component ids and the respective
           components are selected (all others are discarded).
-        demean: bool
+        demean : bool
           Either data should be demeaned while computing
           projections and applied back while doing reverse()
         """
@@ -114,9 +114,9 @@ class ProjectionMapper(Mapper):
 
         Parameters
         ----------
-        data: ndarray
+        data : ndarray
           Data array to map
-        demean: boolean or None
+        demean : boolean or None
           Override demean setting for this method call.
 
         Returns

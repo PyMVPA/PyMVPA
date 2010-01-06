@@ -25,7 +25,10 @@ def chisquare(obs, exp=None):
     If no expected frequencies are supplied, the total N is assumed to be
     equally distributed across all cells.
 
-    Returns: chisquare-stats, associated p-value (upper tail)
+    Returns
+    -------
+    tuple
+     chisquare-stats, associated p-value (upper tail)
     """
     obs = N.array(obs)
 

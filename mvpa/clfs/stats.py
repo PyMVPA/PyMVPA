@@ -120,7 +120,7 @@ class NullDist(ClassWithCollections):
         """
         Parameters
         ----------
-        tail: str ('left', 'right', 'any', 'both')
+        tail : {'left', 'right', 'any', 'both'}
           Which tail of the distribution to report. For 'any' and 'both'
           it chooses the tail it belongs to based on the comparison to
           p=0.5. In the case of 'any' significance is taken like in a
@@ -204,12 +204,12 @@ class MCNullDist(NullDist):
 
         Parameters
         ----------
-        dist_class: class
+        dist_class : class
           This can be any class which provides parameters estimate
           using `fit()` method to initialize the instance, and
           provides `cdf(x)` method for estimating value of x in CDF.
           All distributions from SciPy's 'stats' module can be used.
-        permutations: int
+        permutations : int
           This many permutations of label will be performed to
           determine the distribution under the null hypothesis.
         """
@@ -362,7 +362,7 @@ class FixedNullDist(NullDist):
         """
         Parameters
         ----------
-        dist: distribution object
+        dist : distribution object
           This can be any object the has a `cdf()` method to report the
           cumulative distribition function values.
         """
@@ -641,16 +641,19 @@ if externals.exists('scipy'):
           Scale for the distribution (if known)
         test : str
           What kind of testing to do. Choices:
-           'p-roc' : detection power for a given ROC. Needs two
+           'p-roc'
+             detection power for a given ROC. Needs two
              parameters: `p=0.05` and `tail='both'`
-           'kstest' : 'full-body' distribution comparison. The best
+           'kstest'
+             'full-body' distribution comparison. The best
              choice is made by minimal reported distance after estimating
              parameters of the distribution. Parameter `p=0.05` sets
              threshold to reject null-hypothesis that distribution is the
-             same.
-             WARNING: older versions (e.g. 0.5.2 in etch) of scipy have
-                      incorrect kstest implementation and do not function
-                      properly
+             same::
+
+              WARNING: older versions (e.g. 0.5.2 in etch) of scipy have
+                       incorrect kstest implementation and do not function
+                       properly
         distributions : None or list of str or tuple(str, dict)
           Distributions to check. If None, all known in scipy.stats
           are tested. If distribution is specified as a tuple, then
@@ -663,14 +666,14 @@ if externals.exists('scipy'):
 
         Examples
         --------
-        data = N.random.normal(size=(1000,1));
-        matches = matchDistribution(
-          data,
-          distributions=['rdist',
-                         ('rdist', {'name':'rdist_fixed',
-                                    'loc': 0.0,
-                                    'args': (10,)})],
-          nsamples=30, test='p-roc', p=0.05)
+        >>> data = N.random.normal(size=(1000,1));
+        >>> matches = matchDistribution(
+              data,
+              distributions=['rdist',
+                             ('rdist', {'name':'rdist_fixed',
+                                        'loc': 0.0,
+                                        'args': (10,)})],
+              nsamples=30, test='p-roc', p=0.05)
         """
 
         # Handle parameters
@@ -981,9 +984,10 @@ def nanmean(x, axis=0):
     axis : int
       axis along which the mean is computed.
 
-    :Results:
-      m : float
-        the mean.
+    Returns
+    -------
+    m : float
+      the mean.
     """
     x, axis = _chk_asarray(x, axis)
     x = x.copy()

@@ -23,9 +23,9 @@ class ConfigManager(SafeConfigParser):
     data that it stores, i.e. not type checking is performed.
 
     Configuration files (INI syntax) in multiple location are passed when the
-    class is instanciated or whenever `Config.reload()` is called later on.
+    class is instantiated or whenever `Config.reload()` is called later on.
     By default it looks for a config file named `pymvpa.cfg` in the current
-    directory and `.pymvpa.cfg` in the user's home directory. Morever, the
+    directory and `.pymvpa.cfg` in the user's home directory. Moreover, the
     constructor takes an optional argument with a list of additional file names
     to parse.
 
@@ -47,7 +47,7 @@ class ConfigManager(SafeConfigParser):
         [verbose]
         output = stdout
 
-    Any lenght of variable name as allowed, e.g. MVPA_SEC1_LONG_VARIABLE_NAME=1
+    Any length of variable name as allowed, e.g. MVPA_SEC1_LONG_VARIABLE_NAME=1
     becomes::
 
         [sec1]
@@ -73,7 +73,7 @@ class ConfigManager(SafeConfigParser):
 
         Parameters
         ----------
-        filenames: list of filenames
+        filenames : list of filenames
         """
         SafeConfigParser.__init__(self)
 
@@ -104,7 +104,7 @@ class ConfigManager(SafeConfigParser):
         # read local and user-specific config
         files = self.read(filenames)
 
-        # no look for variables in the environment 
+        # no look for variables in the environment
         for var in [v for v in os.environ.keys() if v.startswith('MVPA_')]:
             # strip leading 'MVPA_' and lower case entries
             svar = var[5:].lower()

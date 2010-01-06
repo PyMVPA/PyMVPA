@@ -38,12 +38,12 @@ class BoxcarMapper(Mapper):
         """
         Parameters
         ----------
-        startpoints: sequence
+        startpoints : sequence
           Index values along the first axis of 'data'.
-        boxlength: int
+        boxlength : int
           The number of elements after 'startpoint' along the first axis of
           'data' to be considered for the boxcar.
-        offset: int
+        offset : int
           The offset between the provided starting point and the actual start
           of the boxcar.
         """
