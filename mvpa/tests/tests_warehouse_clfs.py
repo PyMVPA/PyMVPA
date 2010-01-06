@@ -10,8 +10,14 @@
 
 __docformat__ = 'restructuredtext'
 
+# Global modules
+import numpy as N
+
 # Some global imports useful through out unittests
 from mvpa.base import cfg
+
+# Base classes
+from mvpa.clfs.base import Classifier
 
 #
 # first deal with classifiers which do not have external deps
