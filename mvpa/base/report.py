@@ -38,7 +38,7 @@ if externals.exists('reportlab', raiseException=True):
 __all__ = [ 'rl', 'Report', 'escapeXML' ]
 
 
-def escapeXML(s):
+def escape_xml(s):
     """Replaces &<> symbols with corresponding XML tokens
     """
     s = s.replace('&', '&amp;')
@@ -54,18 +54,23 @@ class Report(object):
 
     You can attach report to the existing 'verbose' with
 
-      report = Report()
-      verbose.handlers += [report]
+    >>> report = Report()
+    >>> verbose.handlers += [report]
 
     and then all verbose messages present on the screen will also be recorded
     in the report.  Use
-      report.text("string")          to add arbitrary text
-      report.xml("<H1>skajdsf</H1>") to add XML snippet
-     or
-      report.figure()  to add the current figure to the report.
-      report.figures() to add existing figures to the report, but they
-        might not be properly interleaved with verbose messages if there were
-        any between the creations of the figures.
+
+    >>> report.text("string")          #  to add arbitrary text
+    >>> report.xml("<H1>skajdsf</H1>") # to add XML snippet
+
+    or
+
+    >>> report.figure()  # to add the current figure to the report.
+    >>> report.figures() # to add existing figures to the report
+
+    Note that in the later usecase, figures might not be properly
+    interleaved with verbose messages if there were any between the
+    creations of the figures.
 
     Inspired by Andy Connolly
     """
@@ -169,7 +174,7 @@ class Report(object):
             debug("REP_", "Adding text '%s'" % line.strip())
         # we need to convert some of the characters to make it
         # legal XML
-        line = escapeXML(line)
+        line = escape_xml(line)
         self.xml(line, **kwargs)
 
     write = text
@@ -184,12 +189,15 @@ class Report(object):
 
         Parameters
         ----------
-        fig : None or string or `figure.Figure`
-          Figure to place into report
-            string : treat as a filename
-            Figure : stores it into a file under directory
-                     and embedds into the report
-            None :   takes the current figure
+        fig : None or str or `figure.Figure`
+          Figure to place into report:
+            str
+             treat as a filename
+            Figure
+             stores it into a file under directory
+             and embeds into the report
+            None
+             takes the current figure
         savefig_kwargs : dict
           Additional keyword arguments to provide savefig with (e.g. dpi)
         **kwargs
