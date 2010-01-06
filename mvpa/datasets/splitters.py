@@ -311,7 +311,10 @@ class Splitter(object):
         specs : sequence of sequences
           Contains ids of a sample attribute that shall be split into the
           another dataset.
-        :Returns: Tuple of splitted datasets.
+        
+        Returns
+        -------
+        Tuple of splitted datasets.
         """
         # collect the sample ids for each resulting dataset
         filters = []

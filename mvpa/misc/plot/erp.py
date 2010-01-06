@@ -404,7 +404,10 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
                         ax=fig.add_subplot(1,1,1,frame_on=False), pre=0.2,
                         post=0.6, **kwargs)
 
-    :Returns: current fig handler
+    Returns
+    -------
+    h
+      current fig handler
     """
 
     if ax is None:

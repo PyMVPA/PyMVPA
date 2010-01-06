@@ -40,17 +40,13 @@ else:
 __rst_conventions = 'numpy'
 if __rst_conventions == 'epydoc':
     _rst_sep = "`"
-    #_rst_sep2 = ":"
     _rst_indentstr = "  "
-    #_rst_params = ":Parameters:"
     def _rst_section(section_name):
         """Provide section heading"""
         return ":%s:" % section_name
 elif __rst_conventions == 'numpy':
     _rst_sep = ""
-    #_rst_sep2 = ""
     _rst_indentstr = ""
-    #_rst_params = "Parameters\n----------"
     def _rst_section(section_name):
         """Provide section heading"""
         return "%s\n%s" % (section_name, '-'*len(section_name))
@@ -295,7 +291,6 @@ def enhancedDocString(item, *args, **kwargs):
         if len(params_list):
             params_ = '\n'.join([i[1].rstrip() for i in params_list
                                  if not i[0] in skip_params])
-            #initdoc += "\n\n%sParameters%s\n" % ( (_rst_sep2,)*2 ) \
             initdoc += "\n\n%s\n" \
                        % _rst_section('Parameters') + _indent(params_)
 
