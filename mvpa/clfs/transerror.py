@@ -1268,7 +1268,8 @@ class ClassifierError(ClassWithCollections):
                         enable_states=['training_confusion'])
                 self.__clf.train(trainingdataset)
                 if self.states.isEnabled('training_confusion'):
-                    self.states.training_confusion = self.__clf.states.training_confusion
+                    self.states.training_confusion = \
+                        self.__clf.states.training_confusion
                     self.__clf.states._resetEnabledTemporarily()
 
         if self.__clf.states.isEnabled('trained_labels') \
@@ -1321,7 +1322,7 @@ class ClassifierError(ClassWithCollections):
 
 
     def untrain(self):
-        """Untrain the *Error which relies on the classifier
+        """Untrain the `*Error` which relies on the classifier
         """
         self.clf.untrain()
 
@@ -1382,7 +1383,8 @@ class TransferError(ClassifierError):
         """Performs deepcopying of the classifier."""
         # TODO -- use ClassifierError.__copy__
         out = TransferError.__new__(TransferError)
-        TransferError.__init__(out, self.clf.clone(), self.errorfx, self._labels)
+        TransferError.__init__(out, self.clf.clone(),
+                               self.errorfx, self._labels)
 
         return out
 
@@ -1443,9 +1445,11 @@ class TransferError(ClassifierError):
         if states.isEnabled('samples_error'):
             samples_error = []
             for i, p in enumerate(predictions):
-                samples_error.append(self.__errorfx([p], testdataset.sa.labels[i:i+1]))
+                samples_error.append(
+                    self.__errorfx([p], testdataset.sa.labels[i:i+1]))
 
-            states.samples_error = dict(zip(testdataset.sa.origids, samples_error))
+            states.samples_error = dict(zip(testdataset.sa.origids,
+                                            samples_error))
 
         # compute error from desired and predicted values
         error = self.__errorfx(predictions, testdataset.sa.labels)
@@ -1473,10 +1477,12 @@ class TransferError(ClassifierError):
 
 
     @property
-    def errorfx(self): return self.__errorfx
+    def errorfx(self):
+        return self.__errorfx
 
     @property
-    def null_dist(self): return self.__null_dist
+    def null_dist(self):
+        return self.__null_dist
 
 
 
@@ -1511,12 +1517,12 @@ class ConfusionBasedError(ClassifierError):
 
         if not clf.states.isKnown(confusion_state):
             raise ValueError, \
-                  "State variable %s is not defined for classifier %s" % \
-                  (confusion_state, `clf`)
+                  "State variable %s is not defined for classifier %r" % \
+                  (confusion_state, clf)
         if not clf.states.isEnabled(confusion_state):
             if __debug__:
-                debug('CERR', "Forcing state %s to be enabled for %s" %
-                      (confusion_state, `clf`))
+                debug('CERR', "Forcing state %s to be enabled for %r" %
+                      (confusion_state, clf))
             clf.states.enable(confusion_state)
 
 
