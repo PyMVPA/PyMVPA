@@ -136,7 +136,7 @@ class IOHelperTests(unittest.TestCase):
         self.failUnless(d['durations'] == [2.0, 2.0, 2.0])
         self.failUnless(d['intensities'] == [1.0, 1.0, 0.5])
 
-        self.failUnless(d.getNEVs() == 3)
+        self.failUnless(d.nevs == 3)
         self.failUnless(d.getEV(1) == (13.89, 2.0, 1.0))
         # cleanup and ignore stupidity
         try:
