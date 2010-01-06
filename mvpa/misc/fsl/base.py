@@ -39,11 +39,11 @@ class FslEV3(ColumnData):
                             header=['onsets', 'durations', 'intensities'],
                             sep=None, dtype=float)
 
-
-    def getNEVs(self):
+    @property
+    def nevs(self):
         """Returns the number of EVs in the file.
         """
-        return self.getNRows()
+        return self.nrows
 
 
     def getEV(self, evid):
@@ -84,7 +84,6 @@ class FslEV3(ColumnData):
     onsets = property(fget=lambda self: self['onsets'])
     durations = property(fget=lambda self: self['durations'])
     intensities = property(fget=lambda self: self['intensities'])
-    nevs = property(fget=getNEVs)
 
 
 
