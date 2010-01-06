@@ -9,10 +9,11 @@
 """Unit tests for PyMVPA classifier cross-validation"""
 
 import unittest
+import numpy as N
+
 from mvpa.support.copy import copy
 
 from mvpa.base import externals, warning
-from mvpa.datasets import Dataset
 from mvpa.datasets.splitters import OddEvenSplitter
 
 from mvpa.clfs.meta import MulticlassClassifier
