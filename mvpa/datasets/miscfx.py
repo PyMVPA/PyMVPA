@@ -30,9 +30,6 @@ from mvpa.base import externals, warning
 if __debug__:
     from mvpa.base import debug
 
-if externals.exists('scipy'):
-    from mvpa.datasets.miscfx_sp import detrend
-
 
 @datasetmethod
 def zscore(dataset, mean=None, std=None,
