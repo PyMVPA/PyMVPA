@@ -146,7 +146,9 @@ class Collection(object):
         """Collection specific part of __repr__ for a class containing
         it, ie a part of __repr__ for the owner object
 
-        :Return:
+        Return
+        ------
+        list
           list of items to be appended within __repr__ after a .join()
         """
         # XXX For now we do not expect any pure non-specialized
@@ -158,7 +160,10 @@ class Collection(object):
         """Checks if index could be assigned within collection via
         _initialize
 
-        :Return: bool value for a given `index`
+        Return
+        ------
+        bool
+          value for a given `index`
 
         It is to facilitate dynamic assignment of collections' items
         within derived classes' __init__ depending on the present
@@ -605,9 +610,10 @@ class ParameterCollection(Collection):
 #    def __init__(self, items=None, owner=None, name=None):
 #        """Initialize the state variables of a derived class
 #
-#        :Parameters:
-#          items : dict
-#            dictionary of states
+#        Parameters
+#        ----------
+#        items : dict
+#          dictionary of states
 #        """
 #        Collection.__init__(self, items, owner, name)
 #
