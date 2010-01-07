@@ -99,6 +99,9 @@ exclude_trees = []
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
+#default_role = "autolink" # causes actual running of code and crashes
+default_role = "obj"	   # seems to be sufficient to provide basic hyperlinking
+
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 #add_function_parentheses = True
