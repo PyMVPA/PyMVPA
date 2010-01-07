@@ -54,7 +54,7 @@ class FlattenMapper(Mapper):
         return s.replace("(", "(%s, " % m_repr, 1)
 
 
-    def __repr__(self):
+    def __str__(self):
         return _str(self)
 
 
