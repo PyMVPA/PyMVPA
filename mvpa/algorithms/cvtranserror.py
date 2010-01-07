@@ -153,8 +153,19 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         if states.isEnabled("transerrors"):
             self.__transerror.untrain()
 
+        # collect sum info about the split that where made for the resulting
+        # dataset
+        splitinfo = []
+
         # splitter
         for split in self.__splitter(dataset):
+            splitinfo.append(
+                "%s->%s"
+                % (','.join([str(c)
+                    for c in split[0].sa[self.__splitter.splitattr].unique]),
+                   ','.join([str(c)
+                    for c in split[1].sa[self.__splitter.splitattr].unique])))
+
             # only train classifier if splitter provides something in first
             # element of tuple -- the is the behavior of TransferError
             if states.isEnabled("splits"):
@@ -234,7 +245,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         except:
             pass
 
-        results = Dataset(results, sa={'cv_fold': N.arange(len(results))})
+        results = Dataset(results, sa={'cv_fold': splitinfo})
         return results
 
 
