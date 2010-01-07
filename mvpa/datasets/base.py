@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Dataset container"""
+"""PyMVPA's common Dataset container."""
 
 __docformat__ = 'restructuredtext'
 
@@ -16,7 +16,7 @@ import copy
 from mvpa.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection, \
         SampleAttribute, FeatureAttribute, DatasetAttribute
-from mvpa.base.dataset import Dataset as BaseDataset
+from mvpa.base.dataset import AttrDataset
 from mvpa.base.dataset import _expand_attribute
 from mvpa.misc.support import idhash as idhash_
 from mvpa.mappers.base import ChainMapper, FeatureSliceMapper
@@ -26,8 +26,8 @@ if __debug__:
     from mvpa.base import debug
 
 
-class Dataset(BaseDataset):
-    __doc__ = BaseDataset.__doc__
+class Dataset(AttrDataset):
+    __doc__ = AttrDataset.__doc__
 
     def get_mapped(self, mapper):
         """Feed this dataset through a mapper (forward).
