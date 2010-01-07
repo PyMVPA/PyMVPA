@@ -35,7 +35,7 @@ if externals.exists('reportlab', raiseException=True):
         _fig_ext_default = 'png'
 
 
-__all__ = [ 'rl', 'Report', 'escapeXML' ]
+__all__ = [ 'rl', 'Report', 'escape_xml' ]
 
 
 def escape_xml(s):
