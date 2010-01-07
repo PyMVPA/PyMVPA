@@ -8,14 +8,14 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Common functions and options definitions for command line
 
-__docformat__ = 'restructuredtext'
-
 Conventions:
 Every option (instance of optparse.Option) has prefix "opt". Lists of options
 has prefix opts (e.g. `opts.common`).
 
 Option name should be camelbacked version of .dest for the option.
 """
+
+__docformat__ = 'restructuredtext'
 
 import mvpa
 
@@ -25,14 +25,8 @@ from optparse import OptionParser, Option, OptionGroup, OptionConflictError
 # needed for verboseCallback
 from mvpa.base import verbose, externals
 
-# we need to make copies of the options if we place them into the
-# groups, since otherwise it is impossible to use them without using
-# the whole group. May be we should make some late creation of the
-# groups -- ie only if user requests a group, options are added to it.
-from mvpa.support import copy
-
 class Options(object):
-    """Just a convinience placeholder for all available options
+    """Just a convenience placeholder for all available options
     """
     pass
 
@@ -61,7 +55,6 @@ class OptionGroups(object):
         except KeyError:
             raise ValueError, "No group with name %s" % name
         opts = OptionGroup(self._parser, doc)
-        #opts.add_options(copy.deepcopy(l)) # may be copy?
         try:
             opts.add_options(l)
         except OptionConflictError:
@@ -325,5 +318,6 @@ opt.chunkLimits = \
                 "and end volume number (including lower, excluding upper " \
                 "limit). Numbering starts with zero.")
 
-opts.add('chunk', [opt.chunk, opt.chunkLimits], "Chunk options AKA Sample attributes XXX")
+opts.add('chunk', [opt.chunk, opt.chunkLimits],
+         "Chunk options AKA Sample attributes XXX")
 
