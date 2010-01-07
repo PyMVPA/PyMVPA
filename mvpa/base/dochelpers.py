@@ -82,7 +82,7 @@ def handle_docstring(text, polite=True):
     """Take care of empty and non existing doc strings."""
     if text == None or not len(text):
         if polite:
-            return 'No documentation found. Sorry!'
+            return '' #No documentation found. Sorry!'
         else:
             return ''
     else:
