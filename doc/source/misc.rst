@@ -103,7 +103,7 @@ The source tarballs includes an example configuration file
 (`doc/examples/pymvpa.cfg`) with the comprehensive list of settings recognized
 by PyMVPA itself:
 
-.. literalinclude:: examples/pymvpa.cfg
+.. literalinclude:: ../examples/pymvpa.cfg
    :language: ini
 
 
