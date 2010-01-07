@@ -33,6 +33,9 @@ if externals.exists('shogun', raiseException=True):
     #import shogun.Kernel
     import shogun.Library
     from mvpa.kernels.sg import SGKernel, LinearSGKernel
+    # set the default kernel here, to be able to import this module
+    # when building the docs without SG
+    _default_kernel_class_ = LinearSGKernel
 
     # Figure out debug IDs once and for all
     if hasattr(shogun.Classifier, 'M_DEBUG'):
@@ -45,6 +48,11 @@ if externals.exists('shogun', raiseException=True):
         _M_DEBUG, _M_ERROR = None, None
         warning("Could not figure out debug IDs within shogun. "
                 "No control over shogun verbosity would be provided")
+else:
+    # set a fake default kernel here, to be able to import this module
+    # when building the docs without SG
+    _default_kernel_class_ = None
+
 
 import operator
 
@@ -120,7 +128,7 @@ class SVM(_SVM):
 
     This is a simple base interface
     """
-    __default_kernel_class__ = LinearSGKernel
+    __default_kernel_class__ = _default_kernel_class_
     num_threads = Parameter(1,
                             min=1,
                             doc='Number of threads to utilize')
