@@ -24,7 +24,11 @@ def multipleChunks(func, n_chunks, *args, **kwargs):
 
     Given some randomized (noisy) generator of a dataset with a single
     chunk call generator multiple times and place results into a
-    distinct chunks
+    distinct chunks.
+
+    Returns
+    -------
+    ds : `mvpa.datasets.base.Dataset`
     """
     for chunk in xrange(n_chunks):
         ds_ = func(*args, **kwargs)
@@ -70,6 +74,12 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
                          means=None, nonbogus_features=None, snr=3.0):
     """Generate a univariate dataset with normal noise and specified means.
 
+    Could be considered to be a generalization of
+    `pureMultivariateSignal` where means=[ [0,1], [1,0] ].
+
+    Specify either means or `nonbogus_features` so means get assigned
+    accordingly.
+
     Parameters
     ----------
     perlabel : int
@@ -88,12 +98,6 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
     snr : float
       Signal-to-noise ration assuming that signal has std 1.0 so we
       just divide random normal noise by snr
-
-    Could be considered to be a generalization of
-    pureMultivariateSignal where means=[ [0,1], [1,0] ]
-
-    Specify either means or nonbogus_features so means get assigned
-    accordingly.
     """
 
     data = N.random.standard_normal((perlabel*nlabels, nfeatures))/N.sqrt(snr)
