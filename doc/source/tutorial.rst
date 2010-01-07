@@ -23,10 +23,11 @@ helpers we are going to use in the tutorial.
 >>> from tutorial_lib import *
 
 As a first step we will load an fMRI dataset that is the first subject of the
-classic studie of :ref:`Haxby et al. (2001)`. For the sake of simplicity we are
-using a helper function that loads and pre-processes the data in a similar way
-as it was done in the original study. Later on we will get back to this point
-at look at what was done in more detail, but for now it is as simple as:
+classic studie of :ref:`Haxby et al. (2001) <HGF+01>`. For the sake of
+simplicity we are using a helper function that loads and pre-processes the data
+in a similar way as it was done in the original study. Later on we will get
+back to this point at look at what was done in more detail, but for now it is
+as simple as:
 
 >>> ds = get_haxby2001_data()
 
@@ -43,7 +44,7 @@ queried by:
 16
 
 Most datasets in PyMVPA represented as a two-dimensional array, where the first
-axis is the samples axis, and the second axis represents the features of the
+axis is the samples axis, and the second axis represents the :term:`feature`\s of the
 dataset. In the Haxby studie the authors used a region of interest (ROI) in the
 ventral temporal cortex. For subject 1 this ROI comprised of 577 voxels. Since
 the analysis was done on the voxel activation patterns, those voxels are the
@@ -52,7 +53,7 @@ actual features of this dataset, and hence we have 577 of them.
 >>> print ds.nfeatures
 577
 
-We can also access the information via the `shape` property of the dataset:
+We can also access the information via the `~mvpa.base.dataset.AttrDataset.shape` property of the dataset:
 
 >>> print ds.shape
 (16, 577)
@@ -76,3 +77,23 @@ We can also access the information via the `shape` property of the dataset:
 
 >>> print cv_results.sa.cv_fold
 ['odd->even' 'even->odd']
+
+
+References
+==========
+
+Literature
+----------
+* :ref:`Haxby et al (2001) <HGF+01>`
+
+
+API Documentation
+-----------------
+.. autosummary::
+   :toctree:
+
+   ~mvpa.datasets.base.Dataset
+   ~mvpa.clfs.knn.kNN
+
+
+.. _NumPy: http://numpy.scipy.org
