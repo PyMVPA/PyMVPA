@@ -12,9 +12,6 @@ Module Organization
 ===================
 mvpa.atlases module contains support for various atlases
 
-.. packagetree::
-   :style: UML
-
 :group Base Implementations: base
 :group Atlases from FSL: fsl
 :group Helpers: warehouse transformation

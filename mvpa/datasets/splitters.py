@@ -27,12 +27,6 @@ Brief Description of Available Splitters
 * `HalfSplitter` - 2 splits: (first half, second half) and (second, first)
 * `NFoldSplitter` - splits for N-Fold cross validation.
 
-Module Organization
-===================
-
-.. packagetree::
-   :style: UML
-
 """
 
 __docformat__ = 'restructuredtext'
