@@ -56,7 +56,7 @@ class Collectable(object):
         if not value is None:
             self._set(value)
         if __debug__ and __mvpadebug__:
-            debug("COL", "Initialized new collectable: %s" % `self`)
+            debug("COL", "Initialized %r" % self)
 
 
     def __copy__(self):
@@ -403,11 +403,11 @@ class UniformLengthCollection(Collection):
 
 
     def __setitem__(self, key, value):
-        """Add a new CollectableAttribute to the collection
+        """Add a new IndexedCollectable to the collection
 
         Parameters
         ----------
-        item : CollectableAttribute
+        item : IndexedCollectable
           or of derived class. Must have 'name' assigned.
         """
         if not isinstance(value, SequenceCollectable):

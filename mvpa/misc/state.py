@@ -44,7 +44,7 @@ import numpy as N
 
 from mvpa.misc.vproperty import VProperty
 from mvpa.misc.exceptions import UnknownStateError
-from mvpa.misc.attributes import CollectableAttribute, StateVariable
+from mvpa.misc.attributes import IndexedCollectable, StateVariable
 from mvpa.base.dochelpers import enhancedDocString
 
 from mvpa.base import externals
@@ -76,7 +76,7 @@ _object_setattr = object.__setattr__
 
 
 class Collection(object):
-    """Container of some CollectableAttributes.
+    """Container of some IndexedCollectables.
 
     :Groups:
      - `Public Access Functions`: `isKnown`
@@ -93,7 +93,7 @@ class Collection(object):
 
         Parameters
         ----------
-        items : dict of CollectableAttribute's
+        items : dict of IndexedCollectable's
           items to initialize with
         owner : object
           an object to which collection belongs
@@ -307,11 +307,11 @@ class Collection(object):
 
 
     def add_collectable(self, item):
-        """Add a new CollectableAttribute to the collection
+        """Add a new IndexedCollectable to the collection
 
         Parameters
         ----------
-        item : CollectableAttribute
+        item : IndexedCollectable
           or of derived class. Must have 'name' assigned
 
         TODO: we should make it stricter to don't add smth of
@@ -321,14 +321,14 @@ class Collection(object):
         """
         # local binding
         name = item.name
-        if not isinstance(item, CollectableAttribute):
+        if not isinstance(item, IndexedCollectable):
             raise ValueError, \
                   "Collection can add only instances of " + \
-                  "CollectableAttribute-derived classes. Got %s" % `item`
+                  "IndexedCollectable-derived classes. Got %s" % `item`
 
         if name is None:
             raise ValueError, \
-                  "CollectableAttribute to be added %s must have 'name' set" % \
+                  "IndexedCollectable to be added %s must have 'name' set" % \
                   item
         self._items[name] = item
 
@@ -775,7 +775,7 @@ class StateCollection(Collection):
 
 
     # TODO XXX think about some more generic way to grab temporary
-    # snapshot of CollectableAttributes to be restored later on...
+    # snapshot of IndexedCollectables to be restored later on...
     def _changeTemporarily(self, enable_states=None,
                            disable_states=None, other=None):
         """Temporarily enable/disable needed states for computation
@@ -932,7 +932,7 @@ class AttributesCollector(type):
 
         collections = {}
         for name, value in dict.iteritems():
-            if isinstance(value, CollectableAttribute):
+            if isinstance(value, IndexedCollectable):
                 baseclassname = value.__class__.__name__
                 col = _known_collections[baseclassname][0]
                 # XXX should we allow to throw exceptions here?

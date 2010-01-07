@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import re
 import textwrap
 import numpy as N
-from mvpa.misc.state import CollectableAttribute
+from mvpa.misc.state import IndexedCollectable
 
 if __debug__:
     from mvpa.base import debug
@@ -22,7 +22,7 @@ _whitespace_re = re.compile('\n\s+|^\s+')
 
 __all__ = [ 'Parameter', 'KernelParameter' ]
 
-class Parameter(CollectableAttribute):
+class Parameter(IndexedCollectable):
     """This class shall serve as a representation of a parameter.
 
     It might be useful if a little more information than the pure parameter
@@ -77,7 +77,7 @@ class Parameter(CollectableAttribute):
 
         # needs to come after kwargs processing, since some debug statements
         # rely on working repr()
-        CollectableAttribute.__init__(self, name=name, doc=doc, index=index,
+        IndexedCollectable.__init__(self, name=name, doc=doc, index=index,
                                       value=value)
         self._isset = False
         if self.value is None:
@@ -90,14 +90,14 @@ class Parameter(CollectableAttribute):
 
 
     def __str__(self):
-        res = CollectableAttribute.__str__(self)
+        res = IndexedCollectable.__str__(self)
         # it is enabled but no value is assigned yet
         res += '=%s' % (self.value,)
         return res
 
 
     def __repr__(self):
-        # cannot use CollectableAttribute's repr(), since the contructor
+        # cannot use IndexedCollectable's repr(), since the contructor
         # needs to handle the mandatory 'default' argument
         # TODO: so what? just tune it up ;)
         # TODO: think what to do with index parameter...
@@ -154,7 +154,7 @@ class Parameter(CollectableAttribute):
     #     ParameterCollection as well
     def resetvalue(self):
         """Reset value to the default"""
-        #CollectableAttribute.reset(self)
+        #IndexedCollectable.reset(self)
         if not self.isDefault and not self._ro:
             self._isset = True
             self.value = self.__default
