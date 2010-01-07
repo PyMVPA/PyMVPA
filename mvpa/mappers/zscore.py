@@ -40,14 +40,13 @@ class ZScoreMapper(ProjectionMapper):
     def __init__(self,
                  baselinelabels=None,
                  **kwargs):
-        """Initialize ZScoreMapper
-
+        """
         Parameters
         ----------
-        baselinelabels : None or list of int or string
-          Used to compute mean and variance
+        baselinelabels : None or list of (int or string)
+          Used to compute mean and variance.
           TODO: not in effect now and need to be adherent to all
-          `ProjectionMapper`s
+          classes derived from `ProjectionMapper`
         """
 
         ProjectionMapper.__init__(self, **kwargs)
