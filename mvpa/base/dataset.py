@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Dataset container"""
+"""Multi-purpose dataset container with support for attributes."""
 
 __docformat__ = 'restructuredtext'
 
@@ -23,8 +23,8 @@ if __debug__:
     from mvpa.base import debug
 
 
-class Dataset(object):
-    """Generic storage class for all datasets in PyMVPA
+class AttrDataset(object):
+    """Generic storage class for datasets with multiple attributes.
 
     A dataset consists of four pieces.  The core is a two-dimensional
     array that has variables (so-called `features`) in its columns and
@@ -67,7 +67,7 @@ class Dataset(object):
     >>> import numpy as N
     >>> from mvpa.datasets import *
     >>> samples = N.arange(12).reshape((4,3))
-    >>> ds = Dataset(samples)
+    >>> ds = AttrDataset(samples)
     >>> ds.nsamples
     4
     >>> ds.nfeatures
@@ -82,9 +82,9 @@ class Dataset(object):
     algorithms, since it doesn't have any labels associated with its
     samples. However, creating a labeled dataset is equally simple.
 
-    >>> ds_labeled = Dataset.from_basic(samples, labels=range(4))
+    >>> ds_labeled = AttrDataset.from_basic(samples, labels=range(4))
 
-    For convenience `Dataset.from_basic` is also available as `dataset`,
+    For convenience `AttrDataset.from_basic` is also available as `dataset`,
     so the above call is equivalent to:
 
     >>> ds_labeled = dataset(samples, labels=range(4))
@@ -117,7 +117,7 @@ class Dataset(object):
     which would also test for an appropriate size of the given
     attributes:
 
-    >>> fancyds = Dataset(samples, sa={'labels': range(4),
+    >>> fancyds = AttrDataset(samples, sa={'labels': range(4),
     ...                                'lovesme': [0,0,1,0]})
     >>> fancyds.sa.lovesme
     array([0, 0, 1, 0])
@@ -182,7 +182,7 @@ class Dataset(object):
            [7, 8]])
 
     Whereas the call: 'ds.samples[[0,1,2], [1,2]]' would not be
-    possible. In `Datasets` selection of samples and features is always
+    possible. In `AttrDatasets` selection of samples and features is always
     applied individually and independently to each axis.
     """
     def __init__(self, samples, sa=None, fa=None, a=None):
@@ -196,7 +196,7 @@ class Dataset(object):
         samples : ndarray
           Data samples.  This has to be a two-dimensional (samples x features)
           array. If the samples are not in that format, please consider one of
-          the `Dataset.from_*` classmethods.
+          the `AttrDataset.from_*` classmethods.
         sa : SampleAttributesCollection
           Samples attributes collection.
         fa : FeatureAttributesCollection
@@ -211,11 +211,11 @@ class Dataset(object):
         # Check all conditions we need to have for `samples` dtypes
         if not hasattr(samples, 'dtype'):
             raise ValueError(
-                "Dataset only supports dtypes as samples that have a `dtype` "
+                "AttrDataset only supports dtypes as samples that have a `dtype` "
                 "attribute that behaves similiar to the one of an array-like.")
         if not hasattr(samples, 'shape'):
             raise ValueError(
-                "Dataset only supports dtypes as samples that have a `shape` "
+                "AttrDataset only supports dtypes as samples that have a `shape` "
                 "attribute that behaves similiar to the one of an array-like.")
         if not len(samples.shape):
             raise ValueError("Only `samples` with at least one axis are "
@@ -365,7 +365,7 @@ class Dataset(object):
 
         Parameters
         ----------
-        other : Dataset
+        other : AttrDataset
           The content of this dataset will be append.
 
         Note
@@ -494,9 +494,6 @@ class Dataset(object):
     def __str__(self):
         samplesstr = 'x'.join(["%s" % x for x in self.shape])
         samplesstr += '@%s' % self.samples.dtype
-        return _str(self, samplesstr)
-        # Yarik doesn't want to see that
-        # Dump of collections content is only available in repr
         return _str(self, samplesstr,
                     str(self.sa).replace(self.sa.__class__.__name__,
                                          'sa'),
@@ -511,7 +508,7 @@ class Dataset(object):
         # but that might easily kill the machine ;-)
         if not hasattr(self.samples, '__array__'):
             raise RuntimeError(
-                "This Dataset instance cannot be used like a Numpy array since "
+                "This AttrDataset instance cannot be used like a Numpy array since "
                 "its data-container does not provide an '__array__' methods. "
                 "Container type is %s." % type(self.samples))
         return self.samples.__array__(dtype)
@@ -527,13 +524,13 @@ class Dataset(object):
 
 
 def datasetmethod(func):
-    """Decorator to easily bind functions to a Dataset class
+    """Decorator to easily bind functions to an AttrDataset class
     """
     if __debug__:
-        debug("DS_",  "Binding function %s to Dataset class" % func.func_name)
+        debug("DS_",  "Binding function %s to AttrDataset class" % func.func_name)
 
     # Bind the function
-    setattr(Dataset, func.func_name, func)
+    setattr(AttrDataset, func.func_name, func)
 
     # return the original one
     return func
@@ -556,11 +553,11 @@ def vstack(datasets):
 
     Returns
     -------
-    Dataset
+    AttrDataset (or respective subclass)
     """
     # fall back to numpy if it is not a dataset
     if not is_datasetlike(datasets[0]):
-        return Dataset(N.vstack(datasets))
+        return AttrDataset(N.vstack(datasets))
 
     if __debug__:
         target = sorted(datasets[0].sa.keys())
@@ -575,7 +572,7 @@ def vstack(datasets):
         stacked_sa[attr] = N.concatenate([ds.sa[attr].value for ds in datasets],
                                          axis=0)
     # create the dataset
-    merged = Dataset(stacked_samp, sa=stacked_sa)
+    merged = datasets[0].__class__(stacked_samp, sa=stacked_sa)
 
     for ds in datasets:
         merged.fa.update(ds.fa)
@@ -600,7 +597,7 @@ def hstack(datasets):
 
     Returns
     -------
-    Dataset
+    AttrDataset (or respective subclass)
     """
     #
     # XXX Use CombinedMapper in here whenever it comes back
@@ -610,7 +607,7 @@ def hstack(datasets):
     if not is_datasetlike(datasets[0]):
         # we might get a list of 1Ds that would yield wrong results when
         # turned into a dict (would run along samples-axis)
-        return Dataset(N.atleast_2d(N.hstack(datasets)))
+        return AttrDataset(N.atleast_2d(N.hstack(datasets)))
 
     if __debug__:
         target = sorted(datasets[0].fa.keys())
@@ -625,7 +622,7 @@ def hstack(datasets):
         stacked_fa[attr] = N.concatenate([ds.fa[attr].value for ds in datasets],
                                          axis=1)
     # create the dataset
-    merged = Dataset(stacked_samp, fa=stacked_fa)
+    merged = datasets[0].__class__(stacked_samp, fa=stacked_fa)
 
     for ds in datasets:
         merged.sa.update(ds.sa)
@@ -674,7 +671,7 @@ class DatasetAttributeExtractor(object):
 
     Examples
     --------
-    >>> ds = Dataset(N.arange(12).reshape((4,3)),
+    >>> ds = AttrDataset(N.arange(12).reshape((4,3)),
     ...              sa={'labels': range(4)},
     ...              fa={'foo': [0,0,1]})
     >>> ext = DAE('sa', 'labels')
@@ -701,7 +698,7 @@ class DatasetAttributeExtractor(object):
         """
         Parameters
         ----------
-        ds : Dataset
+        ds : AttrDataset
         """
         return ds.__dict__[self._col][self._key].value
 
