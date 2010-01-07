@@ -3,6 +3,9 @@
 
 .. automodule:: {{ fullname }}
 
+   .. inheritance-diagram:: {{ fullname }}
+      :parts: 1
+
    {% block functions %}
    {% if functions or methods %}
    .. rubric:: Functions
