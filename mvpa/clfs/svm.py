@@ -12,15 +12,15 @@ Multiple external libraries implementing Support Vector Machines
 (Classification) and Regressions are available: LIBSVM, and shogun.
 This module is just a helper to provide default implementation for SVM
 depending on the availability of external libraries. By default LIBSVM
-implementation is choosen by default, but in any case both libraries
-are available through importing from this module:
+implementation is chosen by default, but in any case both libraries
+are available through importing from this module::
 
-> from mvpa.clfs.svm import sg, libsvm
-> help(sg.SVM)
-> help(libsvm.SVM)
+ > from mvpa.clfs.svm import sg, libsvm
+ > help(sg.SVM)
+ > help(libsvm.SVM)
 
 Please refer to particular interface for more documentation about
-parametrization and available kernels and implementations.
+parameterization and available kernels and implementations.
 """
 
 __docformat__ = 'restructuredtext'
@@ -32,23 +32,23 @@ from _svmbase import _SVM
 if __debug__:
     from mvpa.base import debug
 
-# default SVM implementation
+# SVM implementation to be used "by default"
 SVM = None
 _NuSVM = None
 
 
 # TODO: handle choices within cfg
 _VALID_BACKENDS = ('libsvm', 'shogun', 'sg')
-default_backend = cfg.get('svm', 'backend', default='libsvm').lower()
-if default_backend == 'shogun':
-    default_backend = 'sg'
+_svm_backend = cfg.get('svm', 'backend', default='libsvm').lower()
+if _svm_backend == 'shogun':
+    _svm_backend = 'sg'
 
-if not default_backend in _VALID_BACKENDS:
+if not _svm_backend in _VALID_BACKENDS:
     raise ValueError, 'Configuration option svm.backend got invalid value %s.' \
-          ' Valid choices are %s' % (default_backend, _VALID_BACKENDS)
+          ' Valid choices are %s' % (_svm_backend, _VALID_BACKENDS)
 
 if __debug__:
-    debug('SVM', 'Default SVM backend is %s' % default_backend)
+    debug('SVM', 'SVM backend is %s' % _svm_backend)
 
 if externals.exists('shogun'):
     from mvpa.clfs import sg
@@ -67,11 +67,10 @@ if externals.exists('libsvm'):
     # By default for now we want simply to import all SVMs from libsvm
     from mvpa.clfs import libsvmc as libsvm
     _NuSVM = libsvm.SVM
-    if default_backend == 'libsvm' or SVM is None:
-        if __debug__ and default_backend != 'libsvm' and SVM is None:
-            debug('SVM',
-                  'Default SVM backend %s was not found, so using libsvm'
-                  % default_backend)
+    if _svm_backend == 'libsvm' or SVM is None:
+        if __debug__ and _svm_backend != 'libsvm' and SVM is None:
+            debug('SVM', 'SVM backend %s was not found, so using libsvm'
+                  % _svm_backend)
         SVM = libsvm.SVM
         from mvpa.kernels import libsvm as kls
         LinearSVMKernel = kls.LinearLSKernel
@@ -79,57 +78,44 @@ if externals.exists('libsvm'):
     #from mvpa.clfs.libsvm.svm import *
 
 if SVM is None:
-    warning("None of SVM implementions libraries was found")
+    warning("None of SVM implementation libraries was found")
 else:
     _defaultC = _SVM._SVM_PARAMS['C'].default
     _defaultNu = _SVM._SVM_PARAMS['nu'].default
 
-    # Define some convinience classes
+    _edocs = []
+    """List containing tuples of classes and docs to be extended"""
+
+    # Define some convenience classes
     class LinearCSVMC(SVM):
-        """C-SVM classifier using linear kernel.
-
-        See help for %s for more details
-        """ % SVM.__class__.__name__
-
         def __init__(self, C=_defaultC, **kwargs):
-            """
-            """
-            # init base class
             SVM.__init__(self, C=C, kernel=LinearSVMKernel(), **kwargs)
 
-
     class RbfCSVMC(SVM):
-        """C-SVM classifier using a radial basis function kernel.
-
-        See help for %s for more details
-        """ % SVM.__class__.__name__
-
         def __init__(self, C=_defaultC, **kwargs):
-            """
-            """
-            # init base class
             SVM.__init__(self, C=C, kernel=RbfSVMKernel(), **kwargs)
+
+    _edocs += [
+        (LinearCSVMC, SVM, "C-SVM classifier using linear kernel."),
+        (RbfCSVMC, SVM,
+         "C-SVM classifier using a radial basis function kernel")]
 
     if _NuSVM is not None:
         class LinearNuSVMC(_NuSVM):
-            """Nu-SVM classifier using linear kernel.
-
-            See help for %s for more details
-            """ % _NuSVM.__class__.__name__
-
             def __init__(self, nu=_defaultNu, **kwargs):
-                """
-                """
-                # init base class
                 _NuSVM.__init__(self, nu=nu, kernel=LinearSVMKernel(), **kwargs)
 
-        class RbfNuSVMC(SVM):
-            """Nu-SVM classifier using a radial basis function kernel.
-
-            See help for %s for more details
-            """ % SVM.__class__.__name__
-
+        class RbfNuSVMC(_NuSVM):
             def __init__(self, nu=_defaultNu, **kwargs):
-                # init base class
-                SVM.__init__(self, nu=nu, kernel=RbfSVMKernel(), **kwargs)
+                _NuSVM.__init__(self, nu=nu, kernel=RbfSVMKernel(), **kwargs)
+
+        _edocs += [
+            (LinearNuSVMC, _NuSVM, "Nu-SVM classifier using linear kernel."),
+            (RbfNuSVMC, _NuSVM,
+             "Nu-SVM classifier using a radial basis function kernel")]
+
+    for _c, _pc, _d in _edocs:
+        _c.__doc__ = \
+            "%s\n\nSee documentation of `%s` for more information" % \
+            (_d, _pc.__class__.__name__)
 
