@@ -427,6 +427,8 @@ def _str(obj, *args, **kwargs):
     -------
     str
     """
+    truncate = cfg.getAsDType('verbose', 'truncate str', int)
+
     if hasattr(obj, 'descr'):
         s = obj.descr
     else:
@@ -435,6 +437,11 @@ def _str(obj, *args, **kwargs):
             s += ': '
         s += ', '.join(list(args)
                        + ["%s=%s" % (k, v) for k, v in kwargs.iteritems()])
+
+    if not truncate is None and len(s) > truncate - 5:
+        # take <...> into account
+        truncate -= 5
+        s = "%s..." % s[:truncate]
 
     if __debug__ and 'DS_ID' in debug.active:
         # in case there was nothing but the class name
