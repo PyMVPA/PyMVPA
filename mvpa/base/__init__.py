@@ -255,6 +255,7 @@ if __debug__:
     debug.register('STAT',   "Statistics estimates")
     debug.register('STAT_',  "Statistics estimates (verbose)")
     debug.register('STAT__', "Statistics estimates (very verbose)")
+    debug.register('STATMC', "Progress in Monte-Carlo estimation")
 
     debug.register('FS',     "FeatureSelections")
     debug.register('FS_',    "FeatureSelections (verbose)")
