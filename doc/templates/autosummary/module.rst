@@ -3,8 +3,11 @@
 
 .. automodule:: {{ fullname }}
 
+   {% if classes %}
    .. inheritance-diagram:: {{ fullname }}
       :parts: 1
+
+   {% endif %}
 
    {% block functions %}
    {% if functions or methods %}
