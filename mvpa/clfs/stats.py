@@ -249,6 +249,10 @@ class MCNullDist(NullDist):
             # new permutation all the time
             # but only permute the training data and keep the testdata constant
             #
+            if __debug__:
+                debug('STATMC', "Doing %i permutations: %i" \
+                      % (self.__permutations, p+1), cr=True)
+
             # TODO this really needs to be more clever! If data samples are
             # shuffled within a class it really makes no difference for the
             # classifier, hence the number of permutations to estimate the
@@ -259,6 +263,9 @@ class MCNullDist(NullDist):
             # compute and store the measure of this permutation
             # assume it has `TransferError` interface
             dist_samples.append(measure(*measure_args))
+
+        if __debug__:
+            debug('STATMC', '')
 
         # restore original labels
         wdata.permuteLabels(False, perchunk=False)
