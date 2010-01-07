@@ -494,9 +494,6 @@ class Dataset(object):
     def __str__(self):
         samplesstr = 'x'.join(["%s" % x for x in self.shape])
         samplesstr += '@%s' % self.samples.dtype
-        return _str(self, samplesstr)
-        # Yarik doesn't want to see that
-        # Dump of collections content is only available in repr
         return _str(self, samplesstr,
                     str(self.sa).replace(self.sa.__class__.__name__,
                                          'sa'),
