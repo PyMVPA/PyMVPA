@@ -9,6 +9,11 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """
+Simple model selection: grid search for GPR
+===========================================
+
+.. index:: GPR, model selection
+
 Run simple model selection (grid search over hyperparameters' space) of
 Gaussian Process Regression (GPR) on a simple 1D example.
 """
