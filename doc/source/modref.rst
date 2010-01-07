@@ -90,6 +90,8 @@ Classifiers and Errors
    clfs.ridge
    clfs.smlr
    clfs.svm
+   clfs.sg
+   clfs.libsvmc
    clfs.distance
    clfs.similarity
    clfs.stats
