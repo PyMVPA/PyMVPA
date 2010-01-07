@@ -64,6 +64,7 @@ Mappers: Data Transformations
    mappers.boxcar
    mappers.mdp_adaptor
    mappers.procrustean
+   mappers.projection
    mappers.prototype
    mappers.fx
    mappers.som
