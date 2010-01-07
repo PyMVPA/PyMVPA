@@ -16,10 +16,17 @@ interface (API) that are of particular interest to users of this framework.
 Each module in the package is documented by a general summary of its
 purpose and the list of classes and functions it provides.
 
+Entry Point
+===========
+
+.. autosummary::
+   :toctree: generated
+
+   mvpa
+
 
 .. the rest of the modules are relative to the top-level
 .. currentmodule:: mvpa
-
 
 Basic Facilities
 =================
@@ -159,6 +166,7 @@ Miscellaneous
 .. autosummary::
    :toctree: generated
 
+   atlases
    misc.args
    misc.attributes
    misc.attrmap
