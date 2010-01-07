@@ -47,6 +47,7 @@ Analysis
    examples/smlr
    examples/clfs_examples
    examples/gpr
+   examples/gpr_model_selection0
    examples/searchlight_minimal
    examples/searchlight_2d
    examples/searchlight_dsm
@@ -55,6 +56,7 @@ Analysis
    examples/permutation_test
    examples/match_distribution
    examples/eventrelated
+   examples/mdp_mnist
 
 
 Visualization
