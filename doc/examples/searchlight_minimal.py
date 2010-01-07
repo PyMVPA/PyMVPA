@@ -67,5 +67,3 @@ shows a typical application of this algorithm.
 
 .. Mention the fact that it also is a special `SensitivityAnalyzer`
 """
-
-
