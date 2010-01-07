@@ -14,9 +14,6 @@ Module Organization
 mvpa.base module contains various modules which are used through out
 PyMVPA code, and are generic building blocks
 
-.. packagetree::
-   :style: UML
-
 :group Basic: externals, config, verbosity, dochelpers
 """
 

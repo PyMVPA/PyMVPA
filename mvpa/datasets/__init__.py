@@ -19,9 +19,6 @@ Module Organization
 
 The mvpa.datasets module contains the following modules:
 
-.. packagetree::
-   :style: UML
-
 :group Generic Datasets: base mapped masked meta
 :group Specialized Datasets: nifti channel eep event
 :group Splitters: splitter

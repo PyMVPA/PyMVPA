@@ -22,9 +22,6 @@ Module Organization
 
 The mvpa.mappers module contains the following modules:
 
-.. packagetree::
-   :style: UML
-
 :group Base: base mask metric
 :group Specialized: wavelet boxcar svd ica pca samplegroup
 
