@@ -26,7 +26,7 @@ Getting the data
 ================
 
 As a first step we will load an fMRI dataset that is the first subject of the
-classic studie of :ref:`Haxby et al. (2001) <HGF+01>`. For the sake of
+classic study of :ref:`Haxby et al. (2001) <HGF+01>`. For the sake of
 simplicity we are using a helper function that loads and pre-processes the data
 in a similar way as it was done in the original study. Later on we will get
 back to this point at look at what was done in more detail, but for now it is
@@ -46,9 +46,9 @@ queried by:
 >>> print len(ds)
 16
 
-Most datasets in PyMVPA represented as a two-dimensional array, where the first
+Most datasets in PyMVPA are represented as a two-dimensional array, where the first
 axis is the samples axis, and the second axis represents the :term:`feature`\s
-of the dataset. In the Haxby studie the authors used a region of interest (ROI)
+of the dataset. In the Haxby study the authors used a region of interest (ROI)
 in the ventral temporal cortex. For subject 1 this ROI comprised of 577 voxels.
 Since the analysis was done on the voxel activation patterns, those voxels are
 the actual features of this dataset, and hence we have 577 of them.
@@ -65,7 +65,7 @@ We can also access the information via the
 The most important information for a classification analysis, besides the data,
 are the so-called :term:`label`\s assigned to the samples, since they define
 the model that should be learned by a :term:`classifier`, and serve as target
-values to assess the prediction accuracy. The datasets stores these labels in
+values to assess the prediction accuracy. The dataset stores these labels in
 its collection of sample attributes, and they can be accessed by the attribute
 name, either through the collection, or via a shortcut.
 
@@ -93,7 +93,7 @@ Dealing With A Classifier
 
 All that we are missing for a first attempt of a classification analysis of
 this dataset is a :term:`classifier`. This time we will not use a magic
-function to help us, but create the classifier ourselves. The original study
+function to help us, but will create the classifier ourselves. The original study
 employed a so-called 1-nearest-neighbor classifier, using correlation as a
 distance measure. In PyMVPA this type of classifier is provided by the
 `~mvpa.clfs.knn.kNN` class, that makes is possible to specify the desired
@@ -103,10 +103,10 @@ parameters.
 
 A k-Nearest-Neighbor classifier performs classification based on the similarity
 of a sample with respect to each sample in a :term:`training dataset`.  The
-value of `k` specifies the number of neighbors to shall be used to derive a
+value of `k` specifies the number of neighbors to derive a
 prediction, `dfx` sets the distance measure that determines the neighbors, and
 `voting` selects a strategy to choose a single label from the set of labels
-assigned to these neighbors as the prediction.
+assigned to these neighbors.
 
 Now that we have a classifier instance it can easily be trained by passing the
 dataset to its `train()` method.
@@ -124,7 +124,7 @@ predictions to the target labels.
 We see that the classifier performs remarkably well on our dataset -- it
 doesn't make even a single prediction error. However, most of the time we would
 not be interested in the prediction accuracy of the classifier on this
-particular data, since it is the same dataset that I got trained with.
+particular data, since it is the same dataset that it got trained with.
 
 .. exercise::
 
@@ -133,7 +133,7 @@ particular data, since it is the same dataset that I got trained with.
   content. If the reason is not immediately obvious, take a look at chapter
   13.3 in :ref:`The Elements of Statistical Learning <HTF09>`.
 
-Instead, we are interested in the generalizability of the classifier model on
+Instead, we are interested in the generalizability of the classifier on
 new, unseen, and most importantly unlabeled data. Since we only have a single
 dataset it needs to be split into (at least) two parts to achieve this. In the
 original study Haxby and colleagues split the dataset into pattern of
@@ -159,8 +159,8 @@ of the `runtype` attribute is either the string 'even' or 'odd'.
 To conveniently assess the generalization performance of a trained classifier
 model on new data, PyMVPA provides the `~mvpa.clfs.transerror.TransferError`
 class. It actually doesn't measure the accuracy, but by default the
-classification **error** -- and more precisely the fraction of
-misclassifications. A `~mvpa.clfs.transerror.TransferError` object is created
+classification **error** (more precisely the fraction of
+misclassifications). A `~mvpa.clfs.transerror.TransferError` object is created
 by simply providing a classifier that shall be trained on one dataset and
 tested against another. In this case, we are going to reuse our kNN classifier
 instance. Once created, the generalization error can be computed by calling the
@@ -186,16 +186,16 @@ accuracy level comparable to the results reported in the original study.
 Cross-validation
 ================
 
-What we have just done manually, was splitting the dataset into all possible
+What we have just done manually, was splitting the dataset into
 combinations of training and test datasets, given a specific sample attribute
 -- in this case the information whether a *pattern of activation* or
-:term:`sample` came from *even* or *odd* runs.  We ran a classification
-analysis on each split combination to estimate the performance of the
+:term:`sample` came from *even* or *odd* runs.  We ran the classification
+analysis on each split to estimate the performance of the
 classifier model. In general, this approach is called :term:`cross-validation`,
 and involves splitting the dataset in multiple pairs of subsets, choosing
 sample groups by some criterion, and estimating the classifier performance by
-training it on the first dataset in the split and testing against the second
-dataset.
+training it on the first dataset in a split and testing against the second
+dataset from the same split.
 
 PyMVPA provides a class to allow complete cross-validation procedures to run
 automatically, without the need for manual splitting of a dataset. Using the
@@ -212,7 +212,7 @@ to determine which samples should form a dataset subset.
 
 >>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter(attr='runtype'))
 
-Once the `cvte` object is created, it can simply be called with a dataset and
+Once the `cvte` object is created, it can be called with a dataset and
 will internally perform all splitting, as well as training and testing on each
 split generated by the splitter. Finally it will return the results of all
 cross-validation folds.
@@ -232,8 +232,8 @@ array([[ 0.   ],
        [ 0.125]])
 
 The advantage of having a dataset as the return value (as opposed to a plain
-vector, or even a single number is that we can easily attach additional
-information). In this case the dataset also contains some information about
+vector, or even a single number) is that we can easily attach additional
+information. In this case the dataset also contains some information about
 which samples (indicated by the respective attribute values used by the
 splitter) formed the training and test datasets in each fold.
 
