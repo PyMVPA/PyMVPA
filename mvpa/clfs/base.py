@@ -34,7 +34,8 @@ if __debug__:
 
 __all__ = [ 'Classifier',
             'accepts_dataset_as_samples', 'accepts_samples_as_dataset',
-            'DegenerateInputError', 'FailedToTrainError', 'FailedToPredictError']
+            'DegenerateInputError', 'FailedToTrainError',
+            'FailedToPredictError']
 
 def accepts_samples_as_dataset(fx):
     """Decorator to wrap samples into a Dataset.
@@ -86,10 +87,10 @@ class Classifier(ClassWithCollections):
 
     Recommended behavior:
 
-    Derived classifiers should provide access to *values* -- i.e. that
+    Derived classifiers should provide access to *estimates* -- i.e. that
     information that is finally used to determine the predicted class label.
 
-    Michael: Maybe it works well if each classifier provides a 'values'
+    Michael: Maybe it works well if each classifier provides a 'estimates'
              state member. This variable is a list as long as and in same order
              as Dataset.uniquelabels (training data). Each item in the list
              corresponds to the likelyhood of a sample to belong to the
@@ -106,7 +107,7 @@ class Classifier(ClassWithCollections):
     Nomenclature
      * predictions  : corresponds to the quantized labels if classifier spits
                       out labels by .predict()
-     * values : might be different from predictions if a classifier's predict()
+     * estimates : might be different from predictions if a classifier's predict()
                    makes a decision based on some internal value such as
                    probability or a distance.
     """
@@ -134,8 +135,8 @@ class Classifier(ClassWithCollections):
     predictions = StateVariable(enabled=True,
         doc="Most recent set of predictions")
 
-    values = StateVariable(enabled=True,
-        doc="Internal classifier values the most recent " +
+    estimates = StateVariable(enabled=True,
+        doc="Internal classifier estimates the most recent " +
             "predictions are based on")
 
     training_time = StateVariable(enabled=True,
@@ -467,7 +468,7 @@ class Classifier(ClassWithCollections):
         states = self.states
         # to assure that those are reset (could be set due to testing
         # post-training)
-        states.reset(['values', 'predictions'])
+        states.reset(['estimates', 'predictions'])
 
         self._prepredict(dataset)
 
@@ -610,7 +611,7 @@ class Classifier(ClassWithCollections):
             debug('CLF_',
                   'Retrainable: resetting flags on either data was changed')
         keys = self.__idhashes.keys() + self._paramscols
-        # we might like to just reinit values to False???
+        # we might like to just reinit estimates to False???
         #_changedData = self._changedData
         #if isinstance(_changedData, dict):
         #    for key in _changedData.keys():
@@ -636,7 +637,7 @@ class Classifier(ClassWithCollections):
             if changed != changed2 and not changed:
                 raise RuntimeError, \
                   'idhash found to be weak for %s. Though hashid %s!=%s %s, '\
-                  'values %s!=%s %s' % \
+                  'estimates %s!=%s %s' % \
                   (key, idhash_, __idhashes[key], changed,
                    entry, __trained[key], changed2)
             if update:

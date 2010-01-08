@@ -31,13 +31,13 @@ class PLRTests(unittest.TestCase):
 
         clf.train(data)
 
-        clf.states.enable('values')
+        clf.states.enable('estimates')
         clf.states.enable('predictions')
 
         p = clf.predict(data.samples)
 
         self.failUnless((p == clf.states.predictions).all())
-        self.failUnless(N.array(clf.states.values).shape == N.array(p).shape)
+        self.failUnless(N.array(clf.states.estimates).shape == N.array(p).shape)
 
 
 def suite():

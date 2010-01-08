@@ -199,7 +199,7 @@ class ClassifiersTests(unittest.TestCase):
         #ds2.samples[:] = 0.0             # all 0s
 
         clf.states.change_temporarily(
-            enable_states=['values', 'training_confusion'])
+            enable_states=['estimates', 'training_confusion'])
 
         # Good pukes are good ;-)
         # TODO XXX add
@@ -384,12 +384,12 @@ class ClassifiersTests(unittest.TestCase):
         clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel,
                     enable_states=['feature_ids'])
 
-        self.clf_sign.states.change_temporarily(enable_states=['values'])
+        self.clf_sign.states.change_temporarily(enable_states=['estimates'])
         clf011.train(traindata)
 
         self.failUnlessEqual(clf011.predict(testdata3.samples), res011)
         # just silly test if we get values assigned in the 'ProxyClassifier'
-        self.failUnless(len(clf011.states.values) == len(res110),
+        self.failUnless(len(clf011.states.estimates) == len(res110),
                         msg="We need to pass values into ProxyClassifier")
         self.clf_sign.states.reset_changed_temporarily()
 
@@ -426,7 +426,7 @@ class ClassifiersTests(unittest.TestCase):
         clf_reg = FeatureSelectionClassifier(sample_clf_reg, feat_sel)
         clf_reg.train(dat)
         res = clf_reg.predict(dat.samples)
-        self.failIf((N.array(clf_reg.states.values)-clf_reg.states.predictions).sum()==0,
+        self.failIf((N.array(clf_reg.states.estimates)-clf_reg.states.predictions).sum()==0,
                     msg="Values were set to the predictions in %s." %
                     sample_clf_reg)
 
@@ -494,7 +494,7 @@ class ClassifiersTests(unittest.TestCase):
             # TODO: handle those values correctly
             return
         ds = datasets['uni2small']
-        clf.states.change_temporarily(enable_states = ['values'])
+        clf.states.change_temporarily(enable_states = ['estimates'])
         cv = CrossValidatedTransferError(
             TransferError(clf),
             OddEvenSplitter(),
@@ -502,7 +502,7 @@ class ClassifiersTests(unittest.TestCase):
         cverror = cv(ds)
         #print clf.descr, clf.values[0]
         # basic test either we get 1 set of values per each sample
-        self.failUnlessEqual(len(clf.states.values), ds.nsamples/2)
+        self.failUnlessEqual(len(clf.states.estimates), ds.nsamples/2)
 
         clf.states.reset_changed_temporarily()
 
@@ -557,7 +557,7 @@ class ClassifiersTests(unittest.TestCase):
     @sweepargs(clf=clfswh['svm', '!meta'])
     def testSVMs(self, clf):
         knows_probabilities = 'probabilities' in clf.states.names and clf.params.probability
-        enable_states = ['values']
+        enable_states = ['estimates']
         if knows_probabilities: enable_states += ['probabilities']
 
         clf.states.change_temporarily(enable_states = enable_states)
@@ -566,7 +566,7 @@ class ClassifiersTests(unittest.TestCase):
             clf.train(traindata)
             predicts = clf.predict(testdata.samples)
             # values should be different from predictions for SVMs we have
-            self.failUnless(N.any(predicts != clf.states.values))
+            self.failUnless(N.any(predicts != clf.states.estimates))
 
             if knows_probabilities and clf.states.is_set('probabilities'):
                 # XXX test more thoroughly what we are getting here ;-)
@@ -578,7 +578,7 @@ class ClassifiersTests(unittest.TestCase):
     def testRetrainables(self, clf):
         # we need a copy since will tune its internals later on
         clf = clf.clone()
-        clf.states.change_temporarily(enable_states = ['values'],
+        clf.states.change_temporarily(enable_states = ['estimates'],
                                       # ensure that it does do predictions
                                       # while training
                                       disable_states=['training_confusion'])
@@ -608,7 +608,7 @@ class ClassifiersTests(unittest.TestCase):
         err_1 = trerr(dstest, dstrain)
         self.failUnless(err_1<0.3,
             msg="We should test here on easy dataset. Got error of %s" % err_1)
-        values_1 = clf.states.values[:]
+        values_1 = clf.states.estimates[:]
         # some times retraining gets into deeper optimization ;-)
         eps = 0.05
         corrcoef_eps = 0.85             # just to get no failures... usually > 0.95
@@ -617,8 +617,8 @@ class ClassifiersTests(unittest.TestCase):
         def batch_test(retrain=True, retest=True, closer=True):
             err = trerr(dstest, dstrain)
             err_re = trerr_re(dstest, dstrain)
-            corr = N.corrcoef(clf.states.values, clf_re.states.values)[0,1]
-            corr_old = N.corrcoef(values_1, clf_re.states.values)[0,1]
+            corr = N.corrcoef(clf.states.estimates, clf_re.states.estimates)[0,1]
+            corr_old = N.corrcoef(values_1, clf_re.states.estimates)[0,1]
             if __debug__:
                 debug('TEST', "Retraining stats: errors %g %g corr %g "
                       "with old error %g corr %g" %

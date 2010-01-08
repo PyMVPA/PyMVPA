@@ -135,8 +135,8 @@ class SVM(_SVM):
         TRANSLATEDICT = {'epsilon': 'eps',
                          'tube_epsilon': 'p'}
         args = []
-        for paramname, param in self.params.items.items() \
-                + self.kernel_params.items.items():
+        for paramname, param in self.params.items() \
+                + self.kernel_params.items():
             if paramname in TRANSLATEDICT:
                 argname = TRANSLATEDICT[paramname]
             elif paramname in _svm.SVMParameter.default_parameters:
@@ -189,9 +189,9 @@ class SVM(_SVM):
 
         predictions = [ self.model.predict(p) for p in src ]
 
-        if states.is_enabled("values"):
+        if states.is_enabled('estimates'):
             if self.__is_regression__:
-                values = [ self.model.predictValuesRaw(p)[0] for p in src ]
+                estimates = [ self.model.predictValuesRaw(p)[0] for p in src ]
             else:
                 # if 'trained_labels' are literal they have to be mapped
                 if N.issubdtype(self.states.trained_labels.dtype, 'c'):
@@ -210,20 +210,20 @@ class SVM(_SVM):
                     # Apperently libsvm reorders labels so we need to
                     # track (1,0) values instead of (0,1) thus just
                     # lets take negative reverse
-                    values = [ self.model.predictValues(p)[(trained_labels[1],
+                    estimates = [ self.model.predictValues(p)[(trained_labels[1],
                                                             trained_labels[0])]
                                for p in src ]
-                    if len(values) > 0:
+                    if len(estimates) > 0:
                         if __debug__:
                             debug("SVM",
-                                  "Forcing values to be ndarray and reshaping"
+                                  "Forcing estimates to be ndarray and reshaping"
                                   " them into 1D vector")
-                        values = N.asarray(values).reshape(len(values))
+                        estimates = N.asarray(estimates).reshape(len(estimates))
                 else:
                     # In multiclass we return dictionary for all pairs
                     # of labels, since libsvm does 1-vs-1 pairs
-                    values = [ self.model.predictValues(p) for p in src ]
-            states.values = values
+                    estimates = [ self.model.predictValues(p) for p in src ]
+            states.estimates = estimates
 
         if states.is_enabled("probabilities"):
             # XXX Is this really necesssary? yoh don't think so since

@@ -517,7 +517,7 @@ class SVM(_SVM):
         # store state variable
         # TODO: extract values properly for multiclass SVMs --
         #       ie 1 value per label or pairs for all 1-vs-1 classifications
-        self.states.values = values
+        self.states.estimates = values
 
         ## to avoid leaks with not yet properly fixed shogun
         if not retrainable:

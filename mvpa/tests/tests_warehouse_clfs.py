@@ -53,23 +53,23 @@ class SameSignClassifier(Classifier):
     def _predict(self, data):
         data = N.asanyarray(data)
         datalen = len(data)
-        values = []
+        estimates = []
         for d in data:
-            values.append(2*int( (d[0]>=0) == (d[1]>=0) )-1)
-        self.states.predictions = values
-        self.states.values = values            # just for the sake of having values
-        return values
+            estimates.append(2*int( (d[0]>=0) == (d[1]>=0) )-1)
+        self.states.predictions = estimates
+        self.states.estimates = estimates            # just for the sake of having estimates
+        return estimates
 
 
 class Less1Classifier(SameSignClassifier):
     """Dummy classifier which reports +1 class if abs value of max less than 1"""
     def _predict(self, data):
         datalen = len(data)
-        values = []
+        estimates = []
         for d in data:
-            values.append(2*int(max(d)<=1)-1)
-        self.predictions = values
-        return values
+            estimates.append(2*int(max(d)<=1)-1)
+        self.predictions = estimates
+        return estimates
 
 # Sample universal classifiers (linear and non-linear) which should be
 # used whenever it doesn't matter what classifier it is for testing

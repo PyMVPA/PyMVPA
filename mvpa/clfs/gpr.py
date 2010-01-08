@@ -428,7 +428,7 @@ class GPR(Classifier):
 
         if __debug__:
             debug("GPR", "Done predicting")
-        states.values = predictions
+        states.estimates = predictions
         return predictions
 
 

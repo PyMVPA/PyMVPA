@@ -24,6 +24,7 @@ from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
      CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx, \
      AUCErrorFx
 from mvpa.base import warning
+from mvpa.base.collections import Collectable
 from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.base.dochelpers import enhancedDocString, table2string
 from mvpa.clfs.stats import autoNullDist
@@ -56,7 +57,7 @@ class SummaryStatistics(object):
     """Basic class to collect targets/predictions and report summary statistics
 
     It takes care about collecting the sets, which are just tuples
-    (targets, predictions, values). While 'computing' the matrix, all
+    (targets, predictions, estimates). While 'computing' the matrix, all
     sets are considered together.  Children of the class are
     responsible for computation and display.
     """
@@ -67,7 +68,7 @@ class SummaryStatistics(object):
          None), )
 
 
-    def __init__(self, targets=None, predictions=None, values=None, sets=None):
+    def __init__(self, targets=None, predictions=None, estimates=None, sets=None):
         """Initialize SummaryStatistics
 
         targets or predictions cannot be provided alone (ie targets
@@ -79,8 +80,8 @@ class SummaryStatistics(object):
          Optional set of targets
         predictions
          Optional set of predictions
-        values
-         Optional set of values (which served for prediction)
+        estimates
+         Optional set of estimates (which served for prediction)
         sets
          Optional list of sets
         """
@@ -96,13 +97,13 @@ class SummaryStatistics(object):
         if not targets is None or not predictions is None:
             if not targets is None and not predictions is None:
                 self.add(targets=targets, predictions=predictions,
-                         values=values)
+                         estimates=estimates)
             else:
                 raise ValueError, \
                       "Please provide none or both targets and predictions"
 
 
-    def add(self, targets, predictions, values=None):
+    def add(self, targets, predictions, estimates=None):
         """Add new results to the set of known results"""
         if len(targets) != len(predictions):
             raise ValueError, \
@@ -110,10 +111,14 @@ class SummaryStatistics(object):
                                                        len(predictions)) + \
                   " have different number of samples"
 
-        if values is not None and len(targets) != len(values):
+        # extract value if necessary
+        if isinstance(estimates, Collectable):
+            estimates = estimates.value
+
+        if estimates is not None and len(targets) != len(estimates):
             raise ValueError, \
-                  "Targets[%d] and values[%d]" % (len(targets),
-                                                  len(values)) + \
+                  "Targets[%d] and estimates[%d]" % (len(targets),
+                                                  len(estimates)) + \
                   " have different number of samples"
 
         # enforce labels in predictions to be of the same datatype as in
@@ -131,13 +136,13 @@ class SummaryStatistics(object):
                     predictions = list(predictions)
                 predictions[i] = t1(predictions[i])
 
-        if values is not None:
+        if estimates is not None:
             # assure that we have a copy, or otherwise further in-place
             # modifications might screw things up (some classifiers share
-            # values and spit out results)
-            values = copy.deepcopy(values)
+            # estimates and spit out results)
+            estimates = copy.deepcopy(estimates)
 
-        self.__sets.append( (targets, predictions, values) )
+        self.__sets.append( (targets, predictions, estimates) )
         self._computed = False
 
 
@@ -245,7 +250,7 @@ class ROCCurve(object):
         Parameters
         ----------
         labels : list
-          labels which were used (in order of values if multiclass,
+          labels which were used (in order of estimates if multiclass,
           or 1 per class for binary problems (e.g. in SMLR))
         sets : list of tuples
           list of sets for the analysis
@@ -305,18 +310,18 @@ class ROCCurve(object):
         #      NLabels == 1
         for iset,s in enumerate(sets_wv):
             # we will do inplace modification, thus go by index
-            values = s[2]
+            estimates = s[2]
             # we would need it to be a list to reassign element with a list
-            if isinstance(values, N.ndarray) and len(values.shape)==1:
+            if isinstance(estimates, N.ndarray) and len(estimates.shape)==1:
                 # XXX ??? so we are going away from inplace modifications?
-                values = list(values)
+                estimates = list(estimates)
             rangev = None
-            for i in xrange(len(values)):
-                v = values[i]
+            for i in xrange(len(estimates)):
+                v = estimates[i]
                 if N.isscalar(v):
                     if Nlabels == 1:
                         # ensure the right dimensionality
-                        values[i] = N.array(v, ndmin=2)
+                        estimates[i] = N.array(v, ndmin=2)
                     elif Nlabels == 2:
                         def last_el(x):
                             """Helper function. Returns x if x is scalar, and
@@ -324,25 +329,25 @@ class ROCCurve(object):
                             if N.isscalar(x): return x
                             else:             return x[-1]
                         if rangev is None:
-                            # we need to figure out min/max values
+                            # we need to figure out min/max estimates
                             # to invert for the 0th label
-                            values_ = [last_el(x) for x in values]
-                            rangev = N.min(values_) + N.max(values_)
-                        values[i] = [rangev - v, v]
+                            estimates_ = [last_el(x) for x in estimates]
+                            rangev = N.min(estimates_) + N.max(estimates_)
+                        estimates[i] = [rangev - v, v]
                     else:
                         raise ValueError, \
                               "Cannot have a single 'value' for multiclass" \
                               " classification. Got %s" % (v)
                 elif len(v) != Nlabels:
                     raise ValueError, \
-                          "Got %d values whenever there is %d labels" % \
+                          "Got %d estimates whenever there is %d labels" % \
                           (len(v), Nlabels)
-            # reassign possibly adjusted values
-            sets_wv[iset] = (s[0], s[1], N.asarray(values))
+            # reassign possibly adjusted estimates
+            sets_wv[iset] = (s[0], s[1], N.asarray(estimates))
 
 
         # we need to estimate ROC per each label
-        # XXX order of labels might not correspond to the one among 'values'
+        # XXX order of labels might not correspond to the one among 'estimates'
         #     which were used to make a decision... check
         ROCs, aucs = [], []             # 1 per label
         for i,label in enumerate(labels):
@@ -1021,7 +1026,7 @@ class RegressionStatistics(SummaryStatistics):
         for funcname, func in funcs.iteritems():
             funcname_all = funcname + '_all'
             stats[funcname_all] = []
-            for i, (targets, predictions, values) in enumerate(sets):
+            for i, (targets, predictions, estimates) in enumerate(sets):
                 stats[funcname_all] += [func(predictions, targets)]
             stats[funcname_all] = N.array(stats[funcname_all])
             stats[funcname] = N.mean(stats[funcname_all])
@@ -1033,7 +1038,7 @@ class RegressionStatistics(SummaryStatistics):
         # might be uncomputable if a set contains just a single number
         # (like in the case of correlation coefficient)
         targets, predictions = [], []
-        for i, (targets_, predictions_, values_) in enumerate(sets):
+        for i, (targets_, predictions_, estimates_) in enumerate(sets):
             targets += list(targets_)
             predictions += list(predictions_)
 
@@ -1432,10 +1437,10 @@ class TransferError(ClassifierError):
         states = self.states
         if states.is_enabled('confusion'):
             confusion = clf.__summary_class__(
-                #labels=self.labels,
-                targets=testdataset.sa.labels,
-                predictions=predictions,
-                values=clf.states.get('values', None))
+                #labels = self.labels,
+                targets = testdataset.sa.labels,
+                predictions = predictions,
+                estimates = clf.states.get('estimates', None))
             try:
                 confusion.labels_map = testdataset.labels_map
             except:

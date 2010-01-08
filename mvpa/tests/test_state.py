@@ -69,7 +69,8 @@ class StateTests(unittest.TestCase):
 
         self.failUnlessRaises(AttributeError, empty.__getattribute__, 'states')
 
-        self.failUnlessEqual(blank.states.items, {})
+        self.failUnlessEqual(blank.states.items(), [])
+        self.failUnlessEqual(len(blank.states), 0)
         self.failUnless(blank.states.enabled == [])
         self.failUnlessRaises(AttributeError, blank.__getattribute__, 'dummy')
         self.failUnlessRaises(AttributeError, blank.__getattribute__, '_')

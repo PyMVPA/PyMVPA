@@ -51,7 +51,7 @@ class ParamsTests(unittest.TestCase):
     def testSimple(self):
         simple  = SimpleClass()
 
-        self.failUnlessEqual(len(simple.params.items), 1)
+        self.failUnlessEqual(len(simple.params.items()), 1)
         self.failUnlessRaises(AttributeError, simple.__getattribute__, 'dummy')
         self.failUnlessRaises(AttributeError, simple.__getattribute__, '')
 
@@ -82,8 +82,8 @@ class ParamsTests(unittest.TestCase):
     def testMixed(self):
         mixed  = MixedClass()
 
-        self.failUnlessEqual(len(mixed.params.items), 2)
-        self.failUnlessEqual(len(mixed.states.items), 1)
+        self.failUnlessEqual(len(mixed.params.items()), 2)
+        self.failUnlessEqual(len(mixed.states.items()), 1)
         self.failUnlessRaises(AttributeError, mixed.__getattribute__, 'kernel_params')
 
         self.failUnlessEqual(mixed.params.C, 1.0)
@@ -98,12 +98,12 @@ class ParamsTests(unittest.TestCase):
 
     def testClassifier(self):
         clf  = ParametrizedClassifier()
-        self.failUnlessEqual(len(clf.params.items), 2) # + retrainable
-        self.failUnlessEqual(len(clf.kernel_params.items), 1)
+        self.failUnlessEqual(len(clf.params.items()), 2) # + retrainable
+        self.failUnlessEqual(len(clf.kernel_params.items()), 1)
 
         clfe  = ParametrizedClassifierExtended()
-        self.failUnlessEqual(len(clfe.params.items), 2)
-        self.failUnlessEqual(len(clfe.kernel_params.items), 2)
+        self.failUnlessEqual(len(clfe.params.items()), 2)
+        self.failUnlessEqual(len(clfe.kernel_params.items()), 2)
         self.failUnlessEqual(len(clfe.kernel_params.listing), 2)
 
         # check assignment once again

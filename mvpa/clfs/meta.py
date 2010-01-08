@@ -56,13 +56,13 @@ class BoostedClassifier(Classifier, Harvestable):
     Should rarely be used directly. Use one of its childs instead
     """
 
-    # should not be needed if we have prediction_values upstairs
+    # should not be needed if we have prediction_estimates upstairs
     # raw_predictions should be handled as Harvestable???
     raw_predictions = StateVariable(enabled=False,
         doc="Predictions obtained from each classifier")
 
-    raw_values = StateVariable(enabled=False,
-        doc="Values obtained from each classifier")
+    raw_estimates = StateVariable(enabled=False,
+        doc="Estimates obtained from each classifier")
 
 
     def __init__(self, clfs=None, propagate_states=True,
@@ -144,15 +144,15 @@ class BoostedClassifier(Classifier, Harvestable):
         raw_predictions = [ clf.predict(dataset) for clf in self.__clfs ]
         self.states.raw_predictions = raw_predictions
         assert(len(self.__clfs)>0)
-        if self.states.is_enabled("values"):
-            if N.array([x.states.is_enabled("values")
+        if self.states.is_enabled("estimates"):
+            if N.array([x.states.is_enabled("estimates")
                         for x in self.__clfs]).all():
-                values = [ clf.states.values for clf in self.__clfs ]
-                self.states.raw_values = values
+                estimates = [ clf.states.estimates for clf in self.__clfs ]
+                self.states.raw_estimates = estimates
             else:
-                warning("One or more classifiers in %s has no 'values' state" %
+                warning("One or more classifiers in %s has no 'estimates' state" %
                         self + "enabled, thus BoostedClassifier can't have" +
-                        " 'raw_values' state variable defined")
+                        " 'raw_estimates' state variable defined")
 
         return raw_predictions
 
@@ -257,13 +257,13 @@ class ProxyClassifier(Classifier):
         # XXX Lazy implementation
         self.clf._setRetrainable(value, force)
         super(ProxyClassifier, self)._setRetrainable(value, force)
-        if value and not (self.states._items['retrained']
+        if value and not (self.states['retrained']
                           is self.clf.states['retrained']):
             if __debug__:
                 debug("CLFPRX",
                       "Rebinding state variables from slave clf %s" % self.clf)
-            self.states._items['retrained'] = self.clf.states['retrained']
-            self.states._items['repredicted'] = self.clf.states['repredicted']
+            self.states['retrained'] = self.clf.states['retrained']
+            self.states['repredicted'] = self.clf.states['repredicted']
 
 
     def _train(self, dataset):
@@ -286,12 +286,12 @@ class ProxyClassifier(Classifier):
         """Predict using `ProxyClassifier`
         """
         clf = self.__clf
-        if self.states.is_enabled('values'):
-            clf.states.enable(['values'])
+        if self.states.is_enabled('estimates'):
+            clf.states.enable(['estimates'])
 
         result = clf.predict(dataset)
         # for the ease of access
-        self.states._copy_states_(self.__clf, ['values'], deep=False)
+        self.states._copy_states_(self.__clf, ['estimates'], deep=False)
         return result
 
 
@@ -357,11 +357,11 @@ class MaximalVote(PredictionsCombiner):
 
     predictions = StateVariable(enabled=True,
         doc="Voted predictions")
-    values = StateVariable(enabled=False,
-        doc="Values keep counts across classifiers for each label/sample")
+    estimates = StateVariable(enabled=False,
+        doc="Estimates keep counts across classifiers for each label/sample")
 
     def __init__(self):
-        """XXX Might get a parameter to use raw decision values if
+        """XXX Might get a parameter to use raw decision estimates if
         voting is not unambigous (ie two classes have equal number of
         votes
         """
@@ -429,7 +429,7 @@ class MaximalVote(PredictionsCombiner):
             predictions.append(maxk[0])
 
         states = self.states
-        states.values = all_label_counts
+        states.estimates = all_label_counts
         states.predictions = predictions
         return predictions
 
@@ -442,7 +442,7 @@ class MeanPrediction(PredictionsCombiner):
     predictions = StateVariable(enabled=True,
         doc="Mean predictions")
 
-    values = StateVariable(enabled=True,
+    estimates = StateVariable(enabled=True,
         doc="Predictions from all classifiers are stored")
 
     def __call__(self, clfs, dataset):
@@ -465,13 +465,13 @@ class MeanPrediction(PredictionsCombiner):
         predictions = N.mean(all_predictions, axis=0)
 
         states = self.states
-        states.values = all_predictions
+        states.estimates = all_predictions
         states.predictions = predictions
         return predictions
 
 
 class ClassifierCombiner(PredictionsCombiner):
-    """Provides a decision using training a classifier on predictions/values
+    """Provides a decision using training a classifier on predictions/estimates
 
     TODO: implement
     """
@@ -538,9 +538,9 @@ class CombinedClassifier(BoostedClassifier):
           by State or Classifier
 
         NB: `combiner` might need to operate not on 'predictions' descrete
-            labels but rather on raw 'class' values classifiers
+            labels but rather on raw 'class' estimates classifiers
             estimate (which is pretty much what is stored under
-            `values`
+            `estimates`
         """
         if clfs == None:
             clfs = []
@@ -605,22 +605,22 @@ class CombinedClassifier(BoostedClassifier):
         states = self.states
         cstates = self.combiner.states
         BoostedClassifier._predict(self, dataset)
-        if states.is_enabled("values"):
-            cstates.enable('values')
+        if states.is_enabled("estimates"):
+            cstates.enable('estimates')
         # combiner will make use of state variables instead of only predictions
         # returned from _predict
         predictions = self.combiner(self.clfs, dataset)
         states.predictions = predictions
 
-        if states.is_enabled("values"):
-            if cstates.is_active("values"):
+        if states.is_enabled("estimates"):
+            if cstates.is_active("estimates"):
                 # XXX or may be we could leave simply up to accessing .combiner?
-                states.values = cstates.values
+                states.estimates = cstates.estimates
             else:
                 if __debug__:
-                    warning("Boosted classifier %s has 'values' state enabled,"
-                            " but combiner doesn't have 'values' active, thus "
-                            " .values cannot be provided directly, access .clfs"
+                    warning("Boosted classifier %s has 'estimates' state enabled,"
+                            " but combiner doesn't have 'estimates' active, thus "
+                            " .estimates cannot be provided directly, access .clfs"
                             % self)
         return predictions
 
@@ -668,10 +668,10 @@ class TreeClassifier(ProxyClassifier):
 
      * What additional states to add, something like
         clf_labels  -- store remapped labels for the dataset
-        clf_values  ...
+        clf_estimates  ...
 
-     * What do we store into values ? just values from the clfs[]
-       for corresponding samples, or top level clf values as well?
+     * What do we store into estimates ? just estimates from the clfs[]
+       for corresponding samples, or top level clf estimates as well?
 
      * what should be SensitivityAnalyzer?  by default it would just
        use top slave classifier (i.e. animate/inanimate)
@@ -686,7 +686,7 @@ class TreeClassifier(ProxyClassifier):
         other groups
 
     Possible TODO:
-     *  Add ability to provide results of clf.values as features into
+     *  Add ability to provide results of clf.estimates as features into
         input of clfs[]. This way we could provide additional 'similarity'
         information to the "other" branch
 
@@ -965,7 +965,7 @@ class BinaryClassifier(ProxyClassifier):
         return not a list but just that single label.
         """
         binary_predictions = ProxyClassifier._predict(self, dataset)
-        self.states.values = binary_predictions
+        self.states.estimates = binary_predictions
         predictions = [ {-1: self.__predictneg,
                          +1: self.__predictpos}[x] for x in binary_predictions]
         self.states.predictions = predictions
@@ -1158,7 +1158,7 @@ class SplitClassifier(CombinedClassifier):
             if states.is_enabled("confusion"):
                 predictions = clf.predict(split[1])
                 self.states.confusion.add(split[1].labels, predictions,
-                                   clf.states.get('values', None))
+                                   clf.states.get('estimates', None))
                 if __debug__:
                     dact = debug.active
                     if 'CLFSPL_' in dact:
@@ -1359,12 +1359,12 @@ class FeatureSelectionClassifier(ProxyClassifier):
         """Predict using `FeatureSelectionClassifier`
         """
         clf = self.__maskclf
-        if self.states.is_enabled('values'):
-            clf.states.enable(['values'])
+        if self.states.is_enabled('estimates'):
+            clf.states.enable(['estimates'])
 
         result = clf._predict(dataset)
         # for the ease of access
-        self.states._copy_states_(clf, ['values'], deep=False)
+        self.states._copy_states_(clf, ['estimates'], deep=False)
         return result
 
     def setTestDataset(self, testdataset):
@@ -1509,7 +1509,7 @@ class RegressionAsClassifier(ProxyClassifier):
     def _predict(self, dataset):
         # TODO: Probably we should forwardmap labels for target
         #       dataset so slave has proper statistics attached
-        self.states.values = regr_predictions \
+        self.states.estimates = regr_predictions \
                            = ProxyClassifier._predict(self, dataset)
 
         # Local bindings
