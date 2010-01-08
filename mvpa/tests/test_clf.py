@@ -512,7 +512,7 @@ class ClassifiersTests(unittest.TestCase):
         # XXX somewhat ugly way to force non-dataspecific C value.
         # Otherwise multiclass libsvm builtin and our MultiClass would differ
         # in results
-        if clf.params.is_known('C') and clf.params.C<0:
+        if clf.params.has_key('C') and clf.params.C<0:
             oldC = clf.params.C
             clf.params.C = 1.0                 # reset C to be 1
 

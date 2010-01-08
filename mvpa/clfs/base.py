@@ -566,7 +566,7 @@ class Classifier(ClassWithCollections):
             if self.trained:
                 self.untrain()
             states = self.states
-            if not value and states.is_known('retrained'):
+            if not value and states.has_key('retrained'):
                 states.remove('retrained')
                 states.remove('repredicted')
             if value:
@@ -575,12 +575,10 @@ class Classifier(ClassWithCollections):
                             " since classifier has no such capability. It would"
                             " just lead to resources consumption and slowdown"
                             % self)
-                states.add_collectable(StateVariable(enabled=True,
-                        name='retrained',
-                        doc="Either retrainable classifier was retrained"))
-                states.add_collectable(StateVariable(enabled=True,
-                        name='repredicted',
-                        doc="Either retrainable classifier was repredicted"))
+                states['retrained'] = StateVariable(enabled=True,
+                        doc="Either retrainable classifier was retrained")
+                states['repredicted'] = StateVariable(enabled=True,
+                        doc="Either retrainable classifier was repredicted")
 
             pretrainable.value = value
 

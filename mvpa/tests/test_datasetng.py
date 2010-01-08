@@ -56,7 +56,7 @@ def test_from_basic():
     ## XXX stuff that needs thought:
 
     # ds.sa (empty) has this in the public namespace:
-    #   add, get, getvalue, is_known, is_set, items, listing, name, names
+    #   add, get, getvalue, has_key, is_set, items, listing, name, names
     #   owner, remove, reset, setvalue, which_set
     # maybe we need some form of leightweightCollection?
 

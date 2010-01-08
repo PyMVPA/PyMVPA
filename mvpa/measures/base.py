@@ -290,7 +290,7 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
             """Number of base sensitivities"""
             if self.states.is_enabled('base_sensitivities'):
                 b_sensitivities = []
-                if not self.states.is_known('biases'):
+                if not self.states.has_key('biases'):
                     biases = None
                 else:
                     biases = self.states.biases

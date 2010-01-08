@@ -176,18 +176,17 @@ class _SVM(Classifier):
                     raise ValueError, "Unknown parameter %s" % paramname + \
                           ". Known SVM params are: %s" % self._SVM_PARAMS.keys()
                 param = deepcopy(self._SVM_PARAMS[paramname])
-                param._set_name(paramname)
                 if paramname in _args:
                     param.value = _args[paramname]
                     # XXX might want to set default to it -- not just value
 
-                paramset.add_collectable(param)
+                paramset[paramname] = param
 
         # TODO: Below commented out because kernel_type has been removed.  
         # Find way to set default C as necessary
         
         # tune up C if it has one and non-linear classifier is used
-        #if self.params.is_known('C') and kernel_type != "linear" \
+        #if self.params.has_key('C') and kernel_type != "linear" \
                #and self.params['C'].is_default:
             #if __debug__:
                 #debug("SVM_", "Assigning default C value to be 1.0 for SVM "
@@ -195,7 +194,7 @@ class _SVM(Classifier):
             #self.params['C'].default = 1.0
 
         # Some postchecks
-        if self.params.is_known('weight') and self.params.is_known('weight_label'):
+        if self.params.has_key('weight') and self.params.has_key('weight_label'):
             if not len(self.params.weight_label) == len(self.params.weight):
                 raise ValueError, "Lenghts of 'weight' and 'weight_label' lists" \
                       "must be equal."
@@ -238,7 +237,7 @@ class _SVM(Classifier):
     def _getCvec(self, data):
         """Estimate default and return scaled by it negative user's C values
         """
-        if not self.params.is_known('C'):#svm_type in [_svm.svmc.C_SVC]:
+        if not self.params.has_key('C'):#svm_type in [_svm.svmc.C_SVC]:
             raise RuntimeError, \
                   "Requested estimation of default C whenever C was not set"
 
@@ -289,7 +288,7 @@ class _SVM(Classifier):
         #"""
 
         ## TODO: Check validity of this w/ new kernels (ie sg.Rbf has sigma)
-        #if self.kernel_params.is_known('gamma'):
+        #if self.kernel_params.has_key('gamma'):
             #value = 1.0 / len(dataset.uniquelabels)
             #if __debug__:
                 #debug("SVM", "Default Gamma is computed to be %f" % value)

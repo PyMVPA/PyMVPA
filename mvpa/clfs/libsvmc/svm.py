@@ -158,7 +158,7 @@ class SVM(_SVM):
         
         """Store SVM parameters in libSVM compatible format."""
 
-        if self.params.is_known('C'):#svm_type in [_svm.svmc.C_SVC]:
+        if self.params.has_key('C'):#svm_type in [_svm.svmc.C_SVC]:
             Cs = self._getCvec(dataset)
             if len(Cs)>1:
                 C0 = abs(Cs[0])

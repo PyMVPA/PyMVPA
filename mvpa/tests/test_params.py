@@ -26,7 +26,8 @@ class ParametrizedClassifier(SameSignClassifier):
 class ParametrizedClassifierExtended(ParametrizedClassifier):
     def __init__(self):
         ParametrizedClassifier.__init__(self)
-        self.kernel_params.add_collectable(KernelParameter(200.0, doc="Very useful param", name="kp2"))
+        self.kernel_params['kp2'] = \
+            KernelParameter(200.0, doc="Very useful param")
 
 class BlankClass(ClassWithCollections):
     pass
