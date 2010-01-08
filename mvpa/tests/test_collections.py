@@ -109,3 +109,6 @@ def test_collections():
     # auto-wrapped
     assert_true(isinstance(sa['test'], ArrayCollectable))
     assert_equal(len(sa), 1)
+
+    # names which are already present in dict interface
+    assert_raises(ValueError, sa.__setitem__, 'values', range(5))
