@@ -1515,7 +1515,7 @@ class ConfusionBasedError(ClassifierError):
         self.__confusion_state = confusion_state
         """What state to extract from"""
 
-        if not clf.states.is_known(confusion_state):
+        if not clf.states.has_key(confusion_state):
             raise ValueError, \
                   "State variable %s is not defined for classifier %r" % \
                   (confusion_state, clf)

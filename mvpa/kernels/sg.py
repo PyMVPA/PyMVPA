@@ -137,7 +137,7 @@ class CustomSGKernel(_BasicSGKernel):
         _BasicSGKernel.__init__(self, **kwargs)
         order = []
         for k, v in kernel_params:
-            self.params.add_collectable(Parameter(name=k, default=v))
+            self.params[k] = Parameter(default=v)
             order.append(k)
         self.__kp_order__ = tuple(order)
         
