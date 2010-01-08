@@ -22,6 +22,9 @@ helpers we are going to use in the tutorial.
 >>> import numpy as N
 >>> from tutorial_lib import *
 
+Getting the data
+================
+
 As a first step we will load an fMRI dataset that is the first subject of the
 classic studie of :ref:`Haxby et al. (2001) <HGF+01>`. For the sake of
 simplicity we are using a helper function that loads and pre-processes the data
@@ -44,11 +47,11 @@ queried by:
 16
 
 Most datasets in PyMVPA represented as a two-dimensional array, where the first
-axis is the samples axis, and the second axis represents the :term:`feature`\s of the
-dataset. In the Haxby studie the authors used a region of interest (ROI) in the
-ventral temporal cortex. For subject 1 this ROI comprised of 577 voxels. Since
-the analysis was done on the voxel activation patterns, those voxels are the
-actual features of this dataset, and hence we have 577 of them.
+axis is the samples axis, and the second axis represents the :term:`feature`\s
+of the dataset. In the Haxby studie the authors used a region of interest (ROI)
+in the ventral temporal cortex. For subject 1 this ROI comprised of 577 voxels.
+Since the analysis was done on the voxel activation patterns, those voxels are
+the actual features of this dataset, and hence we have 577 of them.
 
 >>> print ds.nfeatures
 577
@@ -61,9 +64,9 @@ We can also access the information via the
 
 The most important information for a classification analysis, besides the data,
 are the so-called :term:`label`\s assigned to the samples, since they define
-the model that should be learned by a classifier, and serve as target values to
-assess the prediction accuracy. The datasets stores these labels in its
-collection of sample attributes, and they can be accessed by the attribute
+the model that should be learned by a :term:`classifier`, and serve as target
+values to assess the prediction accuracy. The datasets stores these labels in
+its collection of sample attributes, and they can be accessed by the attribute
 name, either through the collection, or via a shortcut.
 
 >>> print ds.sa.labels
@@ -75,6 +78,18 @@ name, either through the collection, or via a shortcut.
 
 As it can be seen, PyMVPA can handle literal labels, and there is no need to
 recode them into numerical values.
+
+.. exercise::
+
+  Besides the collection of sample attributes `sa`, each dataset has two
+  additional collections: `fa` for feature attributes and `a` for general
+  dataset attributes. All these collections are actually instances of a Python
+  `dict`. Investigate what additional attributes are stored in this particular
+  dataset.
+
+
+Dealing With A Classifier
+=========================
 
 All that we are missing for a first attempt of a classification analysis of
 this dataset is a :term:`classifier`. This time we will not use a magic
@@ -93,7 +108,8 @@ prediction, `dfx` sets the distance measure that determines the neighbors, and
 `voting` selects a strategy to choose a single label from the set of labels
 assigned to these neighbors as the prediction.
 
-Now that we have a classifier instance it can easily be trained by passing the dataset to its `train()` method.
+Now that we have a classifier instance it can easily be trained by passing the
+dataset to its `train()` method.
 
 >>> clf.train(ds)
 
@@ -110,17 +126,18 @@ doesn't make even a single prediction error. However, most of the time we would
 not be interested in the prediction accuracy of the classifier on this
 particular data, since it is the same dataset that I got trained with.
 
-.. note::
+.. exercise::
 
   Think about why this particular classifier will always perform error-free
   classification of the training data -- regardless of the actual dataset
-  content.
+  content. If the reason is not immediately obvious, take a look at chapter
+  13.3 in :ref:`The Elements of Statistical Learning <HTF09>`.
 
-Instead, we are interested in the generalizabilty of the classifier model on
+Instead, we are interested in the generalizability of the classifier model on
 new, unseen, and most importantly unlabeled data. Since we only have a single
 dataset it needs to be split into (at least) two parts to achieve this. In the
 original study Haxby and colleagues split the dataset into pattern of
-activations from odd versus even-numbered run. Our dataset has this information
+activations from odd versus even-numbered runs. Our dataset has this information
 in the `runtype` sample attribute:
 
 >>> print ds.sa.runtype
@@ -128,7 +145,7 @@ in the `runtype` sample attribute:
  'odd' 'odd' 'odd' 'odd' 'odd']
 
 Using this attribute we can now easily split the dataset into two. PyMVPA
-dataset can be sliced in similar ways as NumPy_ or Matlab arrays. The following
+datasets can be sliced in similar ways as NumPy_'s `ndarrays`. The following
 calls select the subset of samples (i.e. rows in the datasets), where the value
 of the `runtype` attribute is either the string 'even' or 'odd'.
 
@@ -149,8 +166,8 @@ tested against another. In this case, we are going to reuse our kNN classifier
 instance. Once created, the generalization error can be computed by calling the
 `terr` object with two datasets: The first argument is the :term:`test dataset`
 and the second argument is the :term:`training dataset`. When training and
-testing are done, the fraction of misclassifications is return. Again, please
-note that these are now error, hence lower values represent more accurate
+testing are done, the fraction of misclassifications is returned. Again, please
+note that this is now an error, hence lower values represent more accurate
 classification.
 
 >>> terr = TransferError(clf)
@@ -166,32 +183,100 @@ arbitrary, hence we also estimate the transfer error after swapping the roles:
 We see that on average the classifier error is really low, and we achieve an
 accuracy level comparable to the results reported in the original study.
 
-CONTINUE WITH CVTE
+Cross-validation
+================
+
+What we have just done manually, was splitting the dataset into all possible
+combinations of training and test datasets, given a specific sample attribute
+-- in this case the information whether a *pattern of activation* or
+:term:`sample` came from *even* or *odd* runs.  We ran a classification
+analysis on each split combination to estimate the performance of the
+classifier model. In general, this approach is called :term:`cross-validation`,
+and involves splitting the dataset in multiple pairs of subsets, choosing
+sample groups by some criterion, and estimating the classifier performance by
+training it on the first dataset in the split and testing against the second
+dataset.
+
+PyMVPA provides a class to allow complete cross-validation procedures to run
+automatically, without the need for manual splitting of a dataset. Using the
+`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError` class a
+cross-validation is set up by specifying what measure should be computed on
+each dataset split, and how dataset splits shall be generated. The measure that
+is usually computed is the transfer error that we already looked at in the
+previous section. For dataset splitting PyMVPA provides various
+`~mvpa.datasets.splitters.Splitter` classes. To replicate our manual
+cross-validation, we can simply reuse the `terr` instance as our measure, and
+use a so-called `~mvpa.datasets.splitters.HalfSplitter` to generate the desired
+dataset splits. Note, that the splitter is instructed to use the `runtype` attribute
+to determine which samples should form a dataset subset.
 
 >>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter(attr='runtype'))
+
+Once the `cvte` object is created, it can simply be called with a dataset and
+will internally perform all splitting, as well as training and testing on each
+split generated by the splitter. Finally it will return the results of all
+cross-validation folds.
+
 >>> cv_results = cvte(ds)
 >>> N.mean(cv_results)
 0.0625
 
+Actually, the cross-validation results are returned as another dataset that has
+one sample per fold and a single feature with the computed transfer-error per
+fold.
+
+>>> len(cv_results)
+2
+>>> cv_results.samples
+array([[ 0.   ],
+       [ 0.125]])
+
+The advantage of having a dataset as the return value (as opposed to a plain
+vector, or even a single number is that we can easily attach additional
+information). In this case the dataset also contains some information about
+which samples (indicated by the respective attribute values used by the
+splitter) formed the training and test datasets in each fold.
+
 >>> print cv_results.sa.cv_fold
 ['odd->even' 'even->odd']
 
+This could be the end of a very simple introduction into cross-validation with
+PyMVPA. However, since we were cheating a bit in the beginning, we actually
+still don't know how to import data other than the single subject from the
+Haxby study.
+
+Datasets Revisited -- From Scratch
+----------------------------------
+
+SHOW HOW get_haxby2001_data() can be done manually
+
+.. todo::
+
+  TEST THE DIFFERENCE OF HALFSPLITTER vs. ODDEVEN SPLITTER on the full dataset later on
 
 References
 ==========
 
 Literature
 ----------
-* :ref:`Haxby et al (2001) <HGF+01>`
 
+:ref:`Haxby et al. (2001) <HGF+01>`
+  *Classic MVPA study. Its subject 1 serves as the example dataset in this
+  tutorial part.*
+
+:ref:`Hastie et al. (2009) <HTF09>`
+  *Comprehensive reference of statistical learning methods.*
 
 Related API Documentation
 -------------------------
 .. autosummary::
    :toctree:
 
+   ~mvpa.algorithms.cvtranserror.CrossValidatedTransferError
    ~mvpa.datasets.base.Dataset
    ~mvpa.clfs.knn.kNN
+   ~mvpa.datasets.splitter
+   ~mvpa.clfs.transerror.TransferError
 
 
 .. _NumPy: http://numpy.scipy.org
