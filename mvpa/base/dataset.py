@@ -212,11 +212,11 @@ class AttrDataset(object):
         if not hasattr(samples, 'dtype'):
             raise ValueError(
                 "AttrDataset only supports dtypes as samples that have a `dtype` "
-                "attribute that behaves similiar to the one of an array-like.")
+                "attribute that behaves similar to the one of an array-like.")
         if not hasattr(samples, 'shape'):
             raise ValueError(
                 "AttrDataset only supports dtypes as samples that have a `shape` "
-                "attribute that behaves similiar to the one of an array-like.")
+                "attribute that behaves similar to the one of an array-like.")
         if not len(samples.shape):
             raise ValueError("Only `samples` with at least one axis are "
                     "supported (got: %i)" % len(samples.shape))
@@ -323,11 +323,11 @@ class AttrDataset(object):
           `memo` in the Python documentation.
         """
         if deep:
-            copyvalues='deep'
+            copyvalues = 'deep'
             samples = copy.deepcopy(self.samples, memo)
         else:
             samples = self.samples.view()
-            copyvalues='shallow'
+            copyvalues = 'shallow'
 
         # first we create new collections of the right type for each of the
         # three essential collections of a dataset
