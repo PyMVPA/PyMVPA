@@ -263,6 +263,12 @@ div.seealso {
     border-bottom: 1px solid #fcbd00;
 }
 
+div.admonition-exercise {
+    background-color: #dcf1ff;
+    border-top: 1px solid #459cff;
+    border-bottom: 1px solid #459cff;
+}
+
 div.topic {
     background-color: #eee;
 }
