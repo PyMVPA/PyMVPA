@@ -95,7 +95,7 @@ class Collectable(object):
                                                   repr(value))
 
 
-    def _getName(self):
+    def _get_name(self):
         return self.__name
 
 
@@ -121,16 +121,16 @@ class Collectable(object):
 
 
     # Instead of going for VProperty lets make use of virtual method
-    def _getVirtual(self):
+    def _get_virtual(self):
         return self._get()
 
 
-    def _setVirtual(self, value):
+    def _set_virtual(self, value):
         return self._set(value)
 
 
-    value = property(_getVirtual, _setVirtual)
-    name = property(_getName, _set_name)
+    value = property(_get_virtual, _set_virtual)
+    name = property(_get_name, _set_name)
 
 
 class SequenceCollectable(Collectable):
@@ -164,7 +164,7 @@ class SequenceCollectable(Collectable):
                              % self.__class__.__name__)
         self._target_length = length
         Collectable.__init__(self, value=value, name=name, doc=doc)
-        self._resetUnique()
+        self._reset_unique()
 
 
     def __repr__(self):
@@ -191,24 +191,24 @@ class SequenceCollectable(Collectable):
                              % (len(val),
                                 self._target_length,
                                 str(self.name)))
-        self._resetUnique()
+        self._reset_unique()
         Collectable._set(self, val)
 
 
-    def _resetUnique(self):
-        self._uniqueValues = None
+    def _reset_unique(self):
+        self._unique_values = None
 
 
-    def _getUniqueValues(self):
+    def _get_unique_values(self):
         if self.value is None:
             return None
-        if self._uniqueValues is None:
+        if self._unique_values is None:
             # XXX we might better use Set, but yoh recalls that
             #     N.unique was more efficient. May be we should check
             #     on the the class and use Set only if we are not
             #     dealing with ndarray (or lists/tuples)
-            self._uniqueValues = N.unique(self.value)
-        return self._uniqueValues
+            self._unique_values = N.unique(self.value)
+        return self._unique_values
 
 
     def set_length_check(self, value):
@@ -224,7 +224,7 @@ class SequenceCollectable(Collectable):
         self._target_length = value
 
 
-    unique = property(fget=_getUniqueValues)
+    unique = property(fget=_get_unique_values)
 
 
 
