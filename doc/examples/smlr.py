@@ -41,19 +41,19 @@ samp2[:,:goodfeat] -= offset
 # create the pymvpa training dataset from the labeled features
 patternsPos = dataset(samples=samp1[:ntrain,:], labels=1)
 patternsNeg = dataset(samples=samp2[:ntrain,:], labels=0)
-trainpat = patternsPos + patternsNeg
+trainpat = vstack((patternsPos, patternsNeg))
 
 # create patters for the testing dataset
 patternsPos = dataset(samples=samp1[ntrain:,:], labels=1)
 patternsNeg = dataset(samples=samp2[ntrain:,:], labels=0)
-testpat = patternsPos + patternsNeg
+testpat = vstack((patternsPos, patternsNeg))
 
 # set up the SMLR classifier
 print "Evaluating SMLR classifier..."
 smlr = SMLR(fit_all_weights=True)
 
-# enable saving of the values used for the prediction
-smlr.states.enable('values')
+# enable saving of the estimates used for the prediction
+smlr.states.enable('estimates')
 
 # train with the known points
 smlr.train(trainpat)
@@ -70,8 +70,8 @@ smlr_confusion = ConfusionMatrix(
 print "Evaluating Linear SVM classifier..."
 lsvm = LinearNuSVMC(probability=1)
 
-# enable saving of the values used for the prediction
-lsvm.states.enable('values')
+# enable saving of the estimates used for the prediction
+lsvm.states.enable('estimates')
 
 # train with the known points
 lsvm.train(trainpat)
