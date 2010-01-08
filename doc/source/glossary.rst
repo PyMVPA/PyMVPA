@@ -35,6 +35,14 @@ terms found in the literature to the terminology used in this manual.
     respective classifier benefits more from few high-quality samples than
     from a larger set of lower-quality samples.
 
+  Classifier
+    A model that maps an arbitrary feature space into a discrete set of
+    labels.
+
+  Cross-validation
+    A technique to assess the :term:`generalization` of the constructed model
+    by the analysis of accuracy of the model predictions on presumably
+    independent dataset.
 
   Chunk
     A chunk is a group of samples. In PyMVPA chunks define *independent* groups
@@ -48,10 +56,8 @@ terms found in the literature to the terminology used in this manual.
     temporal forward contamination of the hemodynamic response whose correlate
     is measured by the MR scanner.
 
-
   Dataset
     In PyMVPA a dataset is the combination of samples, their ...
-
 
   Decoding
     This term is usually used to refer to the application of machine learning or
@@ -59,23 +65,30 @@ terms found in the literature to the terminology used in this manual.
     another term for :term:`MVPA`. Sometimes also 'brain-reading' is used as
     another alternative.
 
-
   Epoch
     Sometimes used to refer to a group of successively acquired samples, and,
     thus, related to a :term:`chunk`.
 
-
-  Example
+  Examplar
     Another term for :term:`sample`.
 
-
   Feature
-    This is a name for a variable in the :term:`dataset`.
+    A variable that represents a dimension in a :term:`dataset`. This might be
+    the output of a single sensor, such as a voxel, or a refined measure
+    reflecting specific aspect of data, such as a specific spectral
+    component.
 
+  Feature Selection
+    A technique that targets detection of features relevant to a given
+    problem, so that their selection improves generalization of the
+    constructed model.
 
   fMRI
     This abbrevation stands for *functional magnetic resonance imaging*.
 
+  Generalization
+    An ability of a model to perform reliably well on any novel data in
+    the given domain.
 
   Label
     A label associates each :term:`sample` in the :term:`dataset` with
@@ -84,6 +97,10 @@ terms found in the literature to the terminology used in this manual.
     that a classifier has to learn. The labels also provide the "true"
     model value when computing classifier errors.
 
+  Machine Learning
+    A field of Computer Science that aims at constructing methods, such
+    as classifiers, to integrate available knowledge extracted from
+    existing data.
 
   MVPA
     This term originally stems from the authors of the Matlab MVPA toolbox, and
@@ -93,6 +110,9 @@ terms found in the literature to the terminology used in this manual.
     'voxel' term is not appropriate and therefore MVPA in this context stands
     for the more general term *multivariate pattern analysis*.
 
+  Neural Data Modality
+    A reflection of neural activity collected using some available
+    instrumental method (\eg EEG, :term:`fMRI`).
 
   Processing object
    Most objects dealing with data are implemented as processing objects. Such
@@ -100,10 +120,8 @@ terms found in the literature to the terminology used in this manual.
    as desired. When created, they can be used multiple time by simply calling
    them with new data.
 
-
   Sample
     A sample a vector with observations for all :term:`feature` variables.
-
 
   Sensitivity
     The sensitivity is a score assigned to a particular :term:`feature` with
@@ -113,28 +131,27 @@ terms found in the literature to the terminology used in this manual.
     "importance" of a particular feature -- examples are a univariate
     :ref:`anova` score or a :ref:`noise_perturbation` measure.
 
-
-
   Sensitivity Map
     A vector of several sensitivity scores -- one for each feature in a
     dataset.
 
-
   Spatial Discrimination Map (SDM)
     This is another term for a :term:`sensitivity map`, used in e.g.
     :ref:`Wang et al. (2007) <WCW+07>`.
-
 
   Statistical Discrimination Map (SDM)
     This is another term for a :term:`sensitivity map`, used in e.g.
     :ref:`Sato et al. (2008) <SMM+08>`, where instead of raw sensitivity
     significance testing result is assigned.
 
+  Statistical Learning
+    A field of science related to :term:`machine learning` which aims at
+    exploiting statistical properties of data to construct robust models, and to
+    assess their convergence and :term:`generalization` performances.
 
   Time-compression
     This usually refers to the :term:`block-averaging` of samples from a
     block-design fMRI dataset.
-
 
   Weight Vector
     See :term:`sensitivity`.
