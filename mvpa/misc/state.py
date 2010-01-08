@@ -1009,6 +1009,9 @@ class ClassWithCollections(object):
         def __getattribute__(self, key):
             # return all private ones first since smth like __dict__ might be
             # queried by copy before instance is __init__ed
+            if key == '':
+                raise AttributeError, "Silly to request attribute ''"
+
             if key[0] == '_':
                 return _object_getattribute(self, key)
 
@@ -1033,6 +1036,9 @@ class ClassWithCollections(object):
 
 
         def __setattr__(self, key, value):
+            if key == '':
+                raise AttributeError, "Silly to set attribute ''"
+
             if key[0] == '_':
                 return _object_setattr(self, key, value)
 
