@@ -199,7 +199,8 @@ class SequenceCollectable(Collectable):
         self._unique_values = None
 
 
-    def _get_unique_values(self):
+    @property
+    def unique(self):
         if self.value is None:
             return None
         if self._unique_values is None:
@@ -222,9 +223,6 @@ class SequenceCollectable(Collectable):
           it is not modified, but a ValueError is raised.
         """
         self._target_length = value
-
-
-    unique = property(fget=_get_unique_values)
 
 
 
