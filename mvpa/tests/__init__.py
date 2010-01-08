@@ -49,6 +49,7 @@ def collectTestSuites():
         'test_regr',
         'test_knn',
         'test_gnb',
+        'test_gpr',
         'test_svm',
         'test_plr',
         'test_smlr',
