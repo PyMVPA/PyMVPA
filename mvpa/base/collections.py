@@ -31,6 +31,8 @@ _object_getattribute = dict.__getattribute__
 _object_setattr = dict.__setattr__
 _object_setitem = dict.__setitem__
 
+# To validate fresh
+_dict_api = set(dict.__dict__)
 
 class Collectable(object):
     """Collection element.
@@ -294,6 +296,13 @@ class Collection(dict):
           not an instance of `Collectable` or a subclass the value is
           automatically wrapped into it.
         """
+        # Check if given key is not trying to override anything in
+        # dict interface
+        if key in _dict_api:
+            raise ValueError, \
+                  "Cannot add a collectable %r to collection %s since an " \
+                  "attribute or a method with such a name is already present " \
+                  "in dict interface.  Choose some other name." % (key, self)
         if not isinstance(value, Collectable):
             value = Collectable(value)
         # overwrite the Collectable's name with the given one
