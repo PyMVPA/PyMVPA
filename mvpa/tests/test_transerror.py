@@ -207,7 +207,7 @@ class ErrorsTests(unittest.TestCase):
         if isinstance(clf, MulticlassClassifier):
             # TODO: handle those values correctly
             return
-        clf.states._changeTemporarily(enable_states = ['values'])
+        clf.states.change_temporarily(enable_states = ['values'])
         # uni2 dataset with reordered labels
         ds2 = datasets['uni2small'].copy()
         # revert labels
@@ -237,7 +237,7 @@ class ErrorsTests(unittest.TestCase):
                     self.failUnless(mauc > 0.55,
                          msg='All AUCs must be above chance. Got minimal '
                              'AUC=%.2g among %s' % (mauc, stats['AUC']))
-        clf.states._resetEnabledTemporarily()
+        clf.states.reset_changed_temporarily()
 
 
 

@@ -176,7 +176,7 @@ class _SVM(Classifier):
                     raise ValueError, "Unknown parameter %s" % paramname + \
                           ". Known SVM params are: %s" % self._SVM_PARAMS.keys()
                 param = deepcopy(self._SVM_PARAMS[paramname])
-                param._setName(paramname)
+                param._set_name(paramname)
                 if paramname in _args:
                     param.value = _args[paramname]
                     # XXX might want to set default to it -- not just value
@@ -187,15 +187,15 @@ class _SVM(Classifier):
         # Find way to set default C as necessary
         
         # tune up C if it has one and non-linear classifier is used
-        #if self.params.isKnown('C') and kernel_type != "linear" \
-               #and self.params['C'].isDefault:
+        #if self.params.is_known('C') and kernel_type != "linear" \
+               #and self.params['C'].is_default:
             #if __debug__:
                 #debug("SVM_", "Assigning default C value to be 1.0 for SVM "
                       #"%s with non-linear kernel" % self)
             #self.params['C'].default = 1.0
 
         # Some postchecks
-        if self.params.isKnown('weight') and self.params.isKnown('weight_label'):
+        if self.params.is_known('weight') and self.params.is_known('weight_label'):
             if not len(self.params.weight_label) == len(self.params.weight):
                 raise ValueError, "Lenghts of 'weight' and 'weight_label' lists" \
                       "must be equal."
@@ -223,12 +223,12 @@ class _SVM(Classifier):
         for col in [self.params]:#, self.kernel_params]:
             for k in col.names:
                 # list only params with not default values
-                if col[k].isDefault: continue
+                if col[k].is_default: continue
                 res += "%s%s=%r" % (sep, k, col[k].value)
                 #sep = ', '
         states = self.states
         for name, invert in ( ('enable', False), ('disable', True) ):
-            states_chosen = states._getEnabled(nondefault=False, invert=invert)
+            states_chosen = states._get_enabled(nondefault=False, invert=invert)
             if len(states_chosen):
                 res += sep + "%s_states=%r" % (name, states_chosen)
 
@@ -238,7 +238,7 @@ class _SVM(Classifier):
     def _getCvec(self, data):
         """Estimate default and return scaled by it negative user's C values
         """
-        if not self.params.isKnown('C'):#svm_type in [_svm.svmc.C_SVC]:
+        if not self.params.is_known('C'):#svm_type in [_svm.svmc.C_SVC]:
             raise RuntimeError, \
                   "Requested estimation of default C whenever C was not set"
 
@@ -289,7 +289,7 @@ class _SVM(Classifier):
         #"""
 
         ## TODO: Check validity of this w/ new kernels (ie sg.Rbf has sigma)
-        #if self.kernel_params.isKnown('gamma'):
+        #if self.kernel_params.is_known('gamma'):
             #value = 1.0 / len(dataset.uniquelabels)
             #if __debug__:
                 #debug("SVM", "Default Gamma is computed to be %f" % value)
@@ -388,5 +388,5 @@ sensitivity.
 
 # populate names in parameters
 for k, v in _SVM._SVM_PARAMS.iteritems():
-    v._setName(k)
+    v._set_name(k)
 

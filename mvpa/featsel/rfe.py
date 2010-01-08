@@ -227,7 +227,7 @@ class RFE(FeatureSelection):
                             % (self.__sensitivity_analyzer.__class__.__name__,
                                len(sensitivity)))
 
-            if states.isEnabled("sensitivities"):
+            if states.is_enabled("sensitivities"):
                 states.sensitivities.append(sensitivity)
 
             # do not retrain clf if not necessary
@@ -246,7 +246,7 @@ class RFE(FeatureSelection):
 
             nfeatures = wdataset.nfeatures
 
-            if states.isEnabled("nfeatures"):
+            if states.is_enabled("nfeatures"):
                 states.nfeatures.append(wdataset.nfeatures)
 
             # store result
@@ -294,8 +294,8 @@ class RFE(FeatureSelection):
 
             # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
             selected_ids.sort()
-            if self.states.isEnabled("history") \
-                   or self.states.isEnabled('selected_ids'):
+            if self.states.is_enabled("history") \
+                   or self.states.is_enabled('selected_ids'):
                 orig_feature_ids = orig_feature_ids[selected_ids]
 
 

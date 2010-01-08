@@ -102,7 +102,7 @@ class Searchlight(DatasetMeasure):
 
             # collect results
             results = []
-            if self.states.isEnabled('roisizes'):
+            if self.states.is_enabled('roisizes'):
                 roisizes = []
             else:
                 roisizes = None
@@ -137,7 +137,7 @@ class Searchlight(DatasetMeasure):
         """Little helper to capture the parts of the computation that can be
         parallelized
         """
-        if self.states.isEnabled('roisizes'):
+        if self.states.is_enabled('roisizes'):
             roisizes = []
         else:
             roisizes = None

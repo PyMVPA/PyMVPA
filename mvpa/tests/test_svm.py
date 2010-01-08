@@ -92,7 +92,7 @@ class SVMTests(unittest.TestCase):
     #     work non-linear, shouldn't it?
     @sweepargs(clf=clfswh['svm', 'linear', '!regression', '!gnpp', '!meta'])
     def testCperClass(self, clf):
-        if not (clf.params.isKnown('C')):
+        if not (clf.params.is_known('C')):
             # skip those without C
             return
 

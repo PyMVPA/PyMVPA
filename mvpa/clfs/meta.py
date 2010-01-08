@@ -121,7 +121,7 @@ class BoostedClassifier(Classifier, Harvestable):
         Harvest over the trained classifiers if it was asked to so
         """
         Classifier._posttrain(self, dataset)
-        if self.states.isEnabled('harvested'):
+        if self.states.is_enabled('harvested'):
             for clf in self.__clfs:
                 self._harvest(locals())
         if self.params.retrainable:
@@ -144,8 +144,8 @@ class BoostedClassifier(Classifier, Harvestable):
         raw_predictions = [ clf.predict(dataset) for clf in self.__clfs ]
         self.states.raw_predictions = raw_predictions
         assert(len(self.__clfs)>0)
-        if self.states.isEnabled("values"):
-            if N.array([x.states.isEnabled("values")
+        if self.states.is_enabled("values"):
+            if N.array([x.states.is_enabled("values")
                         for x in self.__clfs]).all():
                 values = [ clf.states.values for clf in self.__clfs ]
                 self.states.raw_values = values
@@ -286,7 +286,7 @@ class ProxyClassifier(Classifier):
         """Predict using `ProxyClassifier`
         """
         clf = self.__clf
-        if self.states.isEnabled('values'):
+        if self.states.is_enabled('values'):
             clf.states.enable(['values'])
 
         result = clf.predict(dataset)
@@ -383,7 +383,7 @@ class MaximalVote(PredictionsCombiner):
         all_label_counts = None
         for clf in clfs:
             # Lets check first if necessary state variable is enabled
-            if not clf.states.isEnabled("predictions"):
+            if not clf.states.is_enabled("predictions"):
                 raise ValueError, "MaximalVote needs classifiers (such as " + \
                       "%s) with state 'predictions' enabled" % clf
             predictions = clf.states.predictions
@@ -455,7 +455,7 @@ class MeanPrediction(PredictionsCombiner):
         all_predictions = []
         for clf in clfs:
             # Lets check first if necessary state variable is enabled
-            if not clf.states.isEnabled("predictions"):
+            if not clf.states.is_enabled("predictions"):
                 raise ValueError, "MeanPrediction needs learners (such " \
                       " as %s) with state 'predictions' enabled" % clf
             all_predictions.append(clf.states.predictions)
@@ -605,15 +605,15 @@ class CombinedClassifier(BoostedClassifier):
         states = self.states
         cstates = self.combiner.states
         BoostedClassifier._predict(self, dataset)
-        if states.isEnabled("values"):
+        if states.is_enabled("values"):
             cstates.enable('values')
         # combiner will make use of state variables instead of only predictions
         # returned from _predict
         predictions = self.combiner(self.clfs, dataset)
         states.predictions = predictions
 
-        if states.isEnabled("values"):
-            if cstates.isActive("values"):
+        if states.is_enabled("values"):
+            if cstates.is_active("values"):
                 # XXX or may be we could leave simply up to accessing .combiner?
                 states.values = cstates.values
             else:
@@ -1114,9 +1114,9 @@ class SplitClassifier(CombinedClassifier):
         states = self.states
 
         clf_template = self.__clf
-        if states.isEnabled('confusion'):
+        if states.is_enabled('confusion'):
             states.confusion = clf_template.__summary_class__()
-        if states.isEnabled('training_confusion'):
+        if states.is_enabled('training_confusion'):
             clf_template.states.enable(['training_confusion'])
             states.training_confusion = clf_template.__summary_class__()
 
@@ -1140,7 +1140,7 @@ class SplitClassifier(CombinedClassifier):
             if __debug__:
                 debug("CLFSPL", "Training classifier for split %d" % (i))
 
-            if states.isEnabled("splits"):
+            if states.is_enabled("splits"):
                 self.states.splits.append(split)
 
             clf = self.clfs[i]
@@ -1155,7 +1155,7 @@ class SplitClassifier(CombinedClassifier):
             if clf_hastestdataset:
                 clf.testdataset = None
 
-            if states.isEnabled("confusion"):
+            if states.is_enabled("confusion"):
                 predictions = clf.predict(split[1])
                 self.states.confusion.add(split[1].labels, predictions,
                                    clf.states.get('values', None))
@@ -1167,7 +1167,7 @@ class SplitClassifier(CombinedClassifier):
                         debug('CLFSPL', 'Split %d error %.2f%%'
                               % (i, self.states.confusion.summaries[-1].error))
 
-            if states.isEnabled("training_confusion"):
+            if states.is_enabled("training_confusion"):
                 # XXX this is broken, as it cannot deal with not yet set states
                 states.training_confusion += clf.states.training_confusion
 
@@ -1310,7 +1310,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         """Train `FeatureSelectionClassifier`
         """
         # temporarily enable selected_ids
-        self.__feature_selection.states._changeTemporarily(
+        self.__feature_selection.states.change_temporarily(
             enable_states=["selected_ids"])
 
         if __debug__:
@@ -1337,7 +1337,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         mappermask[self.__feature_selection.states.selected_ids] = True
         mapper = FeatureSliceMapper(mappermask, dshape=mappermask.shape)
 
-        self.__feature_selection.states._resetEnabledTemporarily()
+        self.__feature_selection.states.reset_changed_temporarily()
 
         # create and assign `MappedClassifier`
         self.__maskclf = MappedClassifier(self.clf, mapper)
@@ -1359,7 +1359,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
         """Predict using `FeatureSelectionClassifier`
         """
         clf = self.__maskclf
-        if self.states.isEnabled('values'):
+        if self.states.is_enabled('values'):
             clf.states.enable(['values'])
 
         result = clf._predict(dataset)

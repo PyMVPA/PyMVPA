@@ -104,18 +104,18 @@ class ClassifiersTests(unittest.TestCase):
                                   enable_states=['feature_ids'])
 
         # check states enabling propagation
-        self.failUnlessEqual(self.clf_sign.states.isEnabled('feature_ids'),
+        self.failUnlessEqual(self.clf_sign.states.is_enabled('feature_ids'),
                              _all_states_enabled)
-        self.failUnlessEqual(bclf.clfs[0].states.isEnabled('feature_ids'), True)
+        self.failUnlessEqual(bclf.clfs[0].states.is_enabled('feature_ids'), True)
 
         bclf2 = CombinedClassifier(clfs=[self.clf_sign.clone(),
                                          self.clf_sign.clone()],
                                   propagate_states=False,
                                   enable_states=['feature_ids'])
 
-        self.failUnlessEqual(self.clf_sign.states.isEnabled('feature_ids'),
+        self.failUnlessEqual(self.clf_sign.states.is_enabled('feature_ids'),
                              _all_states_enabled)
-        self.failUnlessEqual(bclf2.clfs[0].states.isEnabled('feature_ids'),
+        self.failUnlessEqual(bclf2.clfs[0].states.is_enabled('feature_ids'),
                              _all_states_enabled)
 
 
@@ -198,7 +198,7 @@ class ClassifiersTests(unittest.TestCase):
         #ds2 = datasets['uni2small'][[0], :]
         #ds2.samples[:] = 0.0             # all 0s
 
-        clf.states._changeTemporarily(
+        clf.states.change_temporarily(
             enable_states=['values', 'training_confusion'])
 
         # Good pukes are good ;-)
@@ -225,7 +225,7 @@ class ClassifiersTests(unittest.TestCase):
                     self.failUnless(N.isnan(cm.stats['CCe']))
             except tuple(_degenerate_allowed_exceptions):
                 pass
-        clf.states._resetEnabledTemporarily()
+        clf.states.reset_changed_temporarily()
 
 
     # TODO: validate for regressions as well!!!
@@ -384,14 +384,14 @@ class ClassifiersTests(unittest.TestCase):
         clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel,
                     enable_states=['feature_ids'])
 
-        self.clf_sign.states._changeTemporarily(enable_states=['values'])
+        self.clf_sign.states.change_temporarily(enable_states=['values'])
         clf011.train(traindata)
 
         self.failUnlessEqual(clf011.predict(testdata3.samples), res011)
         # just silly test if we get values assigned in the 'ProxyClassifier'
         self.failUnless(len(clf011.states.values) == len(res110),
                         msg="We need to pass values into ProxyClassifier")
-        self.clf_sign.states._resetEnabledTemporarily()
+        self.clf_sign.states.reset_changed_temporarily()
 
         self.failUnlessEqual(len(clf011.states.feature_ids), 2)
         "Feature selection classifier had to be trained on 2 features"
@@ -494,7 +494,7 @@ class ClassifiersTests(unittest.TestCase):
             # TODO: handle those values correctly
             return
         ds = datasets['uni2small']
-        clf.states._changeTemporarily(enable_states = ['values'])
+        clf.states.change_temporarily(enable_states = ['values'])
         cv = CrossValidatedTransferError(
             TransferError(clf),
             OddEvenSplitter(),
@@ -504,7 +504,7 @@ class ClassifiersTests(unittest.TestCase):
         # basic test either we get 1 set of values per each sample
         self.failUnlessEqual(len(clf.states.values), ds.nsamples/2)
 
-        clf.states._resetEnabledTemporarily()
+        clf.states.reset_changed_temporarily()
 
     @sweepargs(clf=clfswh['linear', 'svm', 'libsvm', '!meta'])
     def testMulticlassClassifier(self, clf):
@@ -512,7 +512,7 @@ class ClassifiersTests(unittest.TestCase):
         # XXX somewhat ugly way to force non-dataspecific C value.
         # Otherwise multiclass libsvm builtin and our MultiClass would differ
         # in results
-        if clf.params.isKnown('C') and clf.params.C<0:
+        if clf.params.is_known('C') and clf.params.C<0:
             oldC = clf.params.C
             clf.params.C = 1.0                 # reset C to be 1
 
@@ -560,7 +560,7 @@ class ClassifiersTests(unittest.TestCase):
         enable_states = ['values']
         if knows_probabilities: enable_states += ['probabilities']
 
-        clf.states._changeTemporarily(enable_states = enable_states)
+        clf.states.change_temporarily(enable_states = enable_states)
         for traindata, testdata in [
             (datasets['uni2small_train'], datasets['uni2small_test']) ]:
             clf.train(traindata)
@@ -568,17 +568,17 @@ class ClassifiersTests(unittest.TestCase):
             # values should be different from predictions for SVMs we have
             self.failUnless(N.any(predicts != clf.states.values))
 
-            if knows_probabilities and clf.states.isSet('probabilities'):
+            if knows_probabilities and clf.states.is_set('probabilities'):
                 # XXX test more thoroughly what we are getting here ;-)
                 self.failUnlessEqual( len(clf.states.probabilities), len(testdata.samples)  )
-        clf.states._resetEnabledTemporarily()
+        clf.states.reset_changed_temporarily()
 
 
     @sweepargs(clf=clfswh['retrainable'])
     def testRetrainables(self, clf):
         # we need a copy since will tune its internals later on
         clf = clf.clone()
-        clf.states._changeTemporarily(enable_states = ['values'],
+        clf.states.change_temporarily(enable_states = ['values'],
                                       # ensure that it does do predictions
                                       # while training
                                       disable_states=['training_confusion'])
@@ -688,7 +688,7 @@ class ClassifiersTests(unittest.TestCase):
             dstrain.samples[:] += dstrain.samples*0.05
             self.failUnless((oldsamples != dstrain.samples).any())
             batch_test(retest=False)
-        clf.states._resetEnabledTemporarily()
+        clf.states.reset_changed_temporarily()
 
         # test retrain()
         # TODO XXX  -- check validity
@@ -747,7 +747,7 @@ class ClassifiersTests(unittest.TestCase):
             dataset(samples=N.array([ [0, 0.0],
                                       [1, 1] ]), labels=[-1, 1])]
 
-        clf.states._changeTemporarily(enable_states = ['training_confusion'])
+        clf.states.change_temporarily(enable_states = ['training_confusion'])
         for traindata in traindatas:
             clf.train(traindata)
             self.failUnlessEqual(clf.states.training_confusion.percentCorrect, 100.0,
@@ -761,7 +761,7 @@ class ClassifiersTests(unittest.TestCase):
                 self.failUnlessEqual([predicted], traindata.labels[i],
                     "We must be able to predict sample %s using " % sample +
                     "classifier %s" % `clf`)
-        clf.states._resetEnabledTemporarily()
+        clf.states.reset_changed_temporarily()
 
 
     @sweepargs(regr=regrswh[:])

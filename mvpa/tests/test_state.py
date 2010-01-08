@@ -82,7 +82,7 @@ class StateTests(unittest.TestCase):
         blank._registerState('state1', False)
         self.failUnless(blank.states == ['state1'])
 
-        self.failUnless(blank.states.isEnabled('state1') == False)
+        self.failUnless(blank.states.is_enabled('state1') == False)
         self.failUnless(blank.states.enabled == [])
         self.failUnlessRaises(UnknownStateError, blank.__getattribute__, 'state1')
 
@@ -202,19 +202,19 @@ class StateTests(unittest.TestCase):
             return
 
         self.failUnlessEqual(proper.states.enabled, ["state2"])
-        proper.states._changeTemporarily(
+        proper.states.change_temporarily(
             enable_states=["state1"], other=properch)
         self.failUnlessEqual(Set(proper.states.enabled),
                              Set(["state1", "state2"]))
-        proper.states._resetEnabledTemporarily()
+        proper.states.reset_changed_temporarily()
         self.failUnlessEqual(proper.states.enabled, ["state2"])
 
         # allow to enable disable without other instance
-        proper.states._changeTemporarily(
+        proper.states.change_temporarily(
             enable_states=["state1", "state2"])
         self.failUnlessEqual(Set(proper.states.enabled),
                              Set(["state1", "state2"]))
-        proper.states._resetEnabledTemporarily()
+        proper.states.reset_changed_temporarily()
         self.failUnlessEqual(proper.states.enabled, ["state2"])
 
 
@@ -249,7 +249,7 @@ class StateTests(unittest.TestCase):
 
         s1, s2, s1_, s1__, s12 = S1(), S2(), S1_(), S1__(), S12()
 
-        self.failUnlessEqual(s1.states.isEnabled("v1"), True)
+        self.failUnlessEqual(s1.states.is_enabled("v1"), True)
         s1.states.v1 = 12
         s12.states.v1 = 120
         s2.states.v2 = 100

@@ -76,7 +76,7 @@ Supported state%s:
             doc = v.__doc__
             if not doc.endswith('.'): doc += '.'
             doc = wrap(doc, 46)
-            k, e = k[:], ['Disabled', 'Enabled'][v.isEnabled]
+            k, e = k[:], ['Disabled', 'Enabled'][v.enabled]
             for d in doc:
                 new_line = "%-19s %-46s   %s" % \
                            (k, d, e)

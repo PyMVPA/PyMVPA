@@ -99,7 +99,7 @@ class Collectable(object):
         return self.__name
 
 
-    def _setName(self, name):
+    def _set_name(self, name):
         """Set the name of parameter
 
         Notes
@@ -130,7 +130,7 @@ class Collectable(object):
 
 
     value = property(_getVirtual, _setVirtual)
-    name = property(_getName, _setName)
+    name = property(_getName, _set_name)
 
 
 class SequenceCollectable(Collectable):

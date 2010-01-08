@@ -356,7 +356,7 @@ class GPR(Classifier):
         self._alpha = SLcho_solve(self._LL, train_labels)
 
         # compute only if the state is enabled
-        if self.states.isEnabled('log_marginal_likelihood'):
+        if self.states.is_enabled('log_marginal_likelihood'):
             self.compute_log_marginal_likelihood()
             pass
 
@@ -396,7 +396,7 @@ class GPR(Classifier):
 
         predictions = Ndot(km_train_test.transpose(), self._alpha)
 
-        if states.isEnabled('predicted_variances'):
+        if states.is_enabled('predicted_variances'):
             # do computation only if state variable was enabled
             if not retrainable or self._km_test_test is None \
                    or self._changedData['testdata']:
@@ -496,7 +496,7 @@ class GPRLinearWeights(Sensitivity):
         weights = Ndot(kernel.Sigma_p,
                         Ndot(train_fv.T, clf._alpha))
 
-        if self.states.isEnabled('variances'):
+        if self.states.is_enabled('variances'):
             # super ugly formulas that can be quite surely improved:
             tmp = N.linalg.inv(self._L)
             Kyinv = Ndot(tmp.T, tmp)

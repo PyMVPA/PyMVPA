@@ -125,7 +125,7 @@ class BLR(Classifier):
         data = N.hstack([data,N.ones((data.shape[0],1),dtype=data.dtype)])
         predictions = N.dot(data,self.w)
 
-        if self.states.isEnabled('predicted_variances'):
+        if self.states.is_enabled('predicted_variances'):
             # do computation only if state variable was enabled
             self.states.predicted_variances = N.dot(data, N.dot(self.A_inv, data.T)).diagonal()[:,N.newaxis]
         self.states.values = predictions

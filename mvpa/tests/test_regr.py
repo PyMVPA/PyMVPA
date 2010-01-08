@@ -102,7 +102,7 @@ class RegressionsTests(unittest.TestCase):
         """Simple tests on regressions being used as classifiers
         """
         # check if we get values set correctly
-        clf.states._changeTemporarily(enable_states=['values'])
+        clf.states.change_temporarily(enable_states=['values'])
         self.failUnlessRaises(UnknownStateError, clf.states['values']._get)
         cv = CrossValidatedTransferError(
             TransferError(clf),
@@ -115,7 +115,7 @@ class RegressionsTests(unittest.TestCase):
         cverror = cv(ds)
 
         self.failUnless(len(clf.states.values) == ds[ds.chunks == 1].nsamples)
-        clf.states._resetEnabledTemporarily()
+        clf.states.reset_changed_temporarily()
 
 
 
