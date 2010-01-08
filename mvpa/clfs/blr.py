@@ -128,7 +128,7 @@ class BLR(Classifier):
         if self.states.is_enabled('predicted_variances'):
             # do computation only if state variable was enabled
             self.states.predicted_variances = N.dot(data, N.dot(self.A_inv, data.T)).diagonal()[:,N.newaxis]
-        self.states.values = predictions
+        self.states.estimates = predictions
         return predictions
 
 

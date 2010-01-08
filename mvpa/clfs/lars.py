@@ -212,7 +212,7 @@ class LARS(Classifier):
                     "Re-raising exception." % (self, data))
             raise
 
-        self.states.values = fit
+        self.states.estimates = fit
         return fit
 
 

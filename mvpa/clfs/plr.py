@@ -155,7 +155,7 @@ class PLR(Classifier):
         # save the state if desired, relying on State._setitem_ to
         # decide if we will actually save the values
         self.states.predictions = predictions
-        self.states.values = values
+        self.states.estimates = values
 
         return predictions
 

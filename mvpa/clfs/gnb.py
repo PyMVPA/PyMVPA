@@ -254,7 +254,7 @@ class GNB(Classifier):
         predictions = [self.ulabels[c] for c in winners]
 
         # set to the probabilities per class
-        self.states.values = prob_cs_cp.T
+        self.states.estimates = prob_cs_cp.T
 
         if __debug__ and 'GNB' in debug.active:
             debug('GNB', "predict on data.shape=%s min:max(data)=%f:%f " %

@@ -32,7 +32,7 @@ class GNBTests(unittest.TestCase):
                                         # result in the same predictions
             for n in bools:             # normalized?
               for ls in bools:          # logspace?
-                for es in ((), ('values')):
+                for es in ((), ('estimates')):
                     gnb_ = GNB(common_variance=cv,
                                prior=prior,
                                normalize=n,
@@ -45,9 +45,9 @@ class GNBTests(unittest.TestCase):
                     self.failUnless((predictions == tp),
                                     msg="%s failed to reproduce predictions" %
                                     gnb_)
-                    # if normalized -- check if values are such
-                    if n and 'values' in es:
-                        v = gnb_.states.values
+                    # if normalized -- check if estimates are such
+                    if n and 'estimates' in es:
+                        v = gnb_.states.estimates
                         if ls:          # in log space -- take exp ;)
                             v = N.exp(v)
                         d1 = N.sum(v, axis=1) - 1.0
