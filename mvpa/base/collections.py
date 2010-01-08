@@ -348,25 +348,16 @@ class Collection(dict):
 
 
     def __getattribute__(self, key):
-        #return all private and protected ones first since we will not have
-        # collectable's with _ (we should not have!)
-        if key[0] == '_':
-            return _object_getattribute(self, key)
-        # bypass the Collectable and return value
-        if key in self:
+        try:
             return self[key].value
-        # fallback
-        return _object_getattribute(self, key)
+        except KeyError:
+            return _object_getattribute(self, key)
 
 
     def __setattr__(self, key, value):
-        # don't mess with private stuff
-        if key[0] == '_':
-            return _object_setattr(self, key, value)
-        # directly assign the value for Collectables
-        if key in self:
+        try:
             self[key].value = value
-        else:
+        except KeyError:
             _object_setattr(self, key, value)
 
 
