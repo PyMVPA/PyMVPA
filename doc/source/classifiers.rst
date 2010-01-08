@@ -132,10 +132,10 @@ out through the `states` attribute.
 
   >>> print clf.states
   states{trained_dataset predicting_time*+ training_confusion predictions*+...}
-  >>> clf.states.enable('values')
+  >>> clf.states.enable('estimates')
   >>> print clf.states
   states{trained_dataset predicting_time*+ training_confusion predictions*+...}
-  >>> clf.states.disable('values')
+  >>> clf.states.disable('estimates')
 
 A string representation of the state collection mentioned above lists
 all state variables present accompanied with 2 markers: '+' for an
@@ -145,19 +145,20 @@ enabled state variable, and '*' for a variable that stores some value
 
 .. TODO: Refactor
 
-By default all classifiers provide state variables `values`,
+By default all classifiers provide state variables `estimates`,
 `predictions`. The latter is simply the set of predictions that was returned
 by the last call to the objects :meth:`~mvpa.clfs.base.Classifier.predict`
 method. The former is heavily
-classifier-specific. By convention the `values` key provides access to the
-raw values that a classifier prediction is based on. Depending on the
+classifier-specific. By convention the `estimates` key provides access to the
+raw values that a classifier prediction is based on (e.g. votes or
+probabilities per each label).  Depending on the
 classifier, this information might required significant resources when stored.
 Therefore all states can be disabled or enabled (`states.disable()`,
 `states.enable()`) and their current status can be queried like this:
 
   >>> clf.states.is_active('predictions')
   True
-  >>> clf.states.is_active('values')
+  >>> clf.states.is_active('estimates')
   False
 
 States can be enabled or disabled during stateful object construction, if
