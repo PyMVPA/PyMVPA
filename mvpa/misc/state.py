@@ -80,14 +80,13 @@ _object_setattr = object.__setattr__
 class Collection(BaseCollection):
     """Container of some IndexedCollectables.
 
-    :Groups:
-     - `Access Implementors`: `listing`, `names`
-     - `Mutators`: `__init__`
-     - `R/O Properties`: `listing`, `names`, `items`
-
      XXX Seems to be not used and duplicating functionality: `listing`
      (thus `listing` property)
     """
+
+    # XXX Necessary so __owner is available while deepcopying
+    #     is to be defined per instance within the class
+    __owner = None
 
     def __init__(self, items=None, owner=None, name=None):
         """Initialize the Collection
@@ -139,8 +138,8 @@ class Collection(BaseCollection):
         res += "}"
         if __debug__:
             if "ST" in debug.active:
-                res += " owner:%s#%s" % (self.owner.__class__.__name__,
-                                         id(self.owner))
+                res += " owner:%s#%s" % (self.__owner.__class__.__name__,
+                                         id(self.__owner))
         return res
 
 
@@ -212,8 +211,8 @@ class Collection(BaseCollection):
                 pass
         if items_s != "":
             s += "items={%s}" % items_s
-        if self.owner is not None:
-            s += "%sowner=%r" % (sep, self.owner)
+        if self.__owner is not None:
+            s += "%sowner=%r" % (sep, self.__owner)
         s += ")"
         return s
 
@@ -253,8 +252,8 @@ class Collection(BaseCollection):
     # XXX RF to be removed if ownership feature is removed
     def __setitem__(self, key, value):
         super(Collection, self).__setitem__(key, value)
-        if not self.owner is None:
-            self._update_owner(name)
+        if not self.__owner is None:
+            self._update_owner(key)
 
 
     # XXX RF to become pop?
@@ -307,7 +306,7 @@ class Collection(BaseCollection):
         else:
             keys = self.names
 
-        if len(self.items):
+        if len(self):
             for key in keys:
                 # XXX Check if that works as desired
                 self._action(key, self.values()[0].__class__.reset,
@@ -385,10 +384,10 @@ class Collection(BaseCollection):
         """Return a list of registered states along with the documentation"""
 
         # lets assure consistent litsting order
-        items = self.items()
-        items.sort()
+        items_ = self.items()
+        items_.sort()
         return [ "%s%s%s: %s" % (_def_sep, str(x[1]), _def_sep, x[1].__doc__)
-                 for x in items ]
+                 for x in items_ ]
 
     # XXX RF: do we need those names?  use keys()
     @property
