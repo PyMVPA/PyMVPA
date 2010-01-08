@@ -81,7 +81,7 @@ class GLM(FeaturewiseDatasetMeasure):
         self.states.pe = pe = betas.T.A
 
         # if betas and no z-stats are desired return them right away
-        if not self._voi == 'pe' or self.states.isEnabled('zstat'):
+        if not self._voi == 'pe' or self.states.is_enabled('zstat'):
             # compute residuals
             residuals = X * betas
             residuals -= dataset.samples

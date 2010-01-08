@@ -113,7 +113,7 @@ class SVM(_SVM):
         if 'nu' in self._KNOWN_PARAMS and 'epsilon' in self._KNOWN_PARAMS:
             # overwrite eps param with new default value (information
             # taken from libSVM docs
-            self.params['epsilon'].setDefault(0.001)
+            self.params['epsilon']._set_default(0.001)
 
         self.__model = None
         """Holds the trained SVM."""
@@ -158,7 +158,7 @@ class SVM(_SVM):
         
         """Store SVM parameters in libSVM compatible format."""
 
-        if self.params.isKnown('C'):#svm_type in [_svm.svmc.C_SVC]:
+        if self.params.is_known('C'):#svm_type in [_svm.svmc.C_SVC]:
             Cs = self._getCvec(dataset)
             if len(Cs)>1:
                 C0 = abs(Cs[0])
@@ -189,7 +189,7 @@ class SVM(_SVM):
 
         predictions = [ self.model.predict(p) for p in src ]
 
-        if states.isEnabled("values"):
+        if states.is_enabled("values"):
             if self.__is_regression__:
                 values = [ self.model.predictValuesRaw(p)[0] for p in src ]
             else:
@@ -225,7 +225,7 @@ class SVM(_SVM):
                     values = [ self.model.predictValues(p) for p in src ]
             states.values = values
 
-        if states.isEnabled("probabilities"):
+        if states.is_enabled("probabilities"):
             # XXX Is this really necesssary? yoh don't think so since
             # assignment to states is doing the same
             #self.probabilities = [ self.model.predictProbability(p)

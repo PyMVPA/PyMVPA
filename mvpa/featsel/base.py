@@ -206,9 +206,9 @@ class FeatureSelectionPipeline(FeatureSelection):
         for fs in self.__feature_selections:
 
             # enable selected_ids state if it was requested from this class
-            fs.states._changeTemporarily(
+            fs.states.change_temporarily(
                 enable_states=["selected_ids"], other=self)
-            if self.states.isEnabled("nfeatures"):
+            if self.states.is_enabled("nfeatures"):
                 self.states.nfeatures.append(wdataset.nfeatures)
 
             if __debug__:
@@ -216,13 +216,13 @@ class FeatureSelectionPipeline(FeatureSelection):
                       (fs, wdataset, wtestdataset))
             wdataset, wtestdataset = fs(wdataset, wtestdataset, **kwargs)
 
-            if self.states.isEnabled("selected_ids"):
+            if self.states.is_enabled("selected_ids"):
                 if self.states.selected_ids == None:
                     self.states.selected_ids = fs.states.selected_ids
                 else:
                     self.states.selected_ids = self.states.selected_ids[fs.states.selected_ids]
 
-            fs.states._resetEnabledTemporarily()
+            fs.states.reset_changed_temporarily()
 
         return (wdataset, wtestdataset)
 
@@ -278,7 +278,7 @@ class CombinedFeatureSelection(FeatureSelection):
         for fs in self.__feature_selections:
             # we need the feature ids that were selection by each method,
             # so enable them temporarily
-            fs.states._changeTemporarily(
+            fs.states.change_temporarily(
                 enable_states=["selected_ids"], other=self)
 
             # compute feature selection, but ignore return datasets
@@ -299,7 +299,7 @@ class CombinedFeatureSelection(FeatureSelection):
             self.states.selections_ids.append(fs.states.selected_ids)
 
             # restore states to previous settings
-            fs.states._resetEnabledTemporarily()
+            fs.states.reset_changed_temporarily()
 
         # finally apply feature set union selection to original datasets
         selected_ids = sorted(list(selected_ids))

@@ -155,9 +155,9 @@ classifier, this information might required significant resources when stored.
 Therefore all states can be disabled or enabled (`states.disable()`,
 `states.enable()`) and their current status can be queried like this:
 
-  >>> clf.states.isActive('predictions')
+  >>> clf.states.is_active('predictions')
   True
-  >>> clf.states.isActive('values')
+  >>> clf.states.is_active('values')
   False
 
 States can be enabled or disabled during stateful object construction, if

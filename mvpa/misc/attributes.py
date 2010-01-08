@@ -100,7 +100,7 @@ class IndexedCollectable(Collectable):
 
 
     @property
-    def isSet(self):
+    def is_set(self):
         return self._isset
 
 
@@ -114,7 +114,7 @@ class IndexedCollectable(Collectable):
     # TODO XXX unify all bloody __str__
     def __str__(self):
         res = "%s" % (self.name)
-        if self.isSet:
+        if self.is_set:
             res += '*'          # so we have the value already
         return res
 
@@ -151,18 +151,25 @@ class StateVariable(IndexedCollectable):
         if __debug__ and 'ENFORCE_STATES_ENABLED' in debug.active:
             enabled = True
         IndexedCollectable.__init__(self, **kwargs)
-        self._isenabled = enabled
+        self.__enabled = enabled
         self._defaultenabled = enabled
 
 
+    def __str__(self):
+        res = IndexedCollectable.__str__(self)
+        if self.__enabled:
+            res += '+'          # it is enabled but no value is assigned yet
+        return res
+
+
     def _get(self):
-        if not self.isSet:
+        if not self.is_set:
             raise UnknownStateError("Unknown yet value of %s" % (self.name))
         return IndexedCollectable._get(self)
 
 
     def _set(self, val, init=False):
-        if self.isEnabled:
+        if self.__enabled:
             # XXX may be should have left simple assignment
             # self._value = val
             IndexedCollectable._set(self, val)
@@ -178,24 +185,19 @@ class StateVariable(IndexedCollectable):
         self._value = None
 
 
-    @property
-    def isEnabled(self):
-        return self._isenabled
+    def _get_enabled(self):
+        return self.__enabled
 
 
-    def enable(self, value=False):
-        if self._isenabled == value:
+    def _set_enabled(self, value=False):
+        if self.__enabled == value:
             # Do nothing since it is already in proper state
             return
         if __debug__:
             debug("STV", "%s %s" %
                   ({True: 'Enabling', False: 'Disabling'}[value],
                    self))
-        self._isenabled = value
+        self.__enabled = value
 
 
-    def __str__(self):
-        res = IndexedCollectable.__str__(self)
-        if self.isEnabled:
-            res += '+'          # it is enabled but no value is assigned yet
-        return res
+    enabled = property(fget=_get_enabled, fset=_set_enabled)

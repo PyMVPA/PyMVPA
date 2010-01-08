@@ -157,7 +157,7 @@ class DatasetMeasure(ClassWithCollections):
             measure.__null_dist = None
             self.__null_dist.fit(measure, dataset)
 
-            if self.states.isEnabled('null_t'):
+            if self.states.is_enabled('null_t'):
                 # get probability under NULL hyp, but also request
                 # either it belong to the right tail
                 null_prob, null_right_tail = \
@@ -288,9 +288,9 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         if len(result.shape) > 1:
             n_base = len(result)
             """Number of base sensitivities"""
-            if self.states.isEnabled('base_sensitivities'):
+            if self.states.is_enabled('base_sensitivities'):
                 b_sensitivities = []
-                if not self.states.isKnown('biases'):
+                if not self.states.is_known('biases'):
                     biases = None
                 else:
                     biases = self.states.biases
@@ -606,7 +606,7 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
 
         sensitivities = []
         self.states.splits = splits = []
-        store_splits = self.states.isEnabled("splits")
+        store_splits = self.states.is_enabled("splits")
 
         for ind,split in enumerate(self.__splitter(dataset)):
             ds = split[insplit_index]

@@ -111,7 +111,7 @@ class Parameter(IndexedCollectable):
             s += ', ' + ', '.join(plist)
         if self._ro:
             s += ', ro=True'
-        if not self.isDefault:
+        if not self.is_default:
             s += ', value=%r' % self.value
         s += ')'
         return s
@@ -152,10 +152,10 @@ class Parameter(IndexedCollectable):
 
     # XXX should be named reset2default? correspondingly in
     #     ParameterCollection as well
-    def resetvalue(self):
+    def reset_value(self):
         """Reset value to the default"""
         #IndexedCollectable.reset(self)
-        if not self.isDefault and not self._ro:
+        if not self.is_default and not self._ro:
             self._isset = True
             self.value = self.__default
 
@@ -192,20 +192,20 @@ class Parameter(IndexedCollectable):
                   % (str(self)))
 
     @property
-    def isDefault(self):
+    def is_default(self):
         """Returns True if current value is bound to default one"""
         return self._value is self.default
 
     @property
-    def equalDefault(self):
+    def equal_default(self):
         """Returns True if current value is equal to default one"""
         return self._value == self.__default
 
-    def setDefault(self, value):
-        wasdefault = self.isDefault
+    def _set_default(self, value):
+        wasdefault = self.is_default
         self.__default = value
         if wasdefault:
-            self.resetvalue()
+            self.reset_value()
             self._isset = False
 
     # incorrect behavior
@@ -213,7 +213,7 @@ class Parameter(IndexedCollectable):
     #    """Override reset so we don't clean the flag"""
     #    pass
 
-    default = property(fget=lambda x:x.__default, fset=setDefault)
+    default = property(fget=lambda x:x.__default, fset=_set_default)
     value = property(fget=lambda x:x._value, fset=_set)
 
 class KernelParameter(Parameter):

@@ -332,7 +332,7 @@ class CachedKernel(NumpyKernel):
         # TODO: figure out if data were modified...
         # params_modified = True
         changedData = False
-        if len(self.params.whichSet()) or changedData \
+        if len(self.params.which_set()) or changedData \
            or self._lhsids is None:
             self._cache(ds1, ds2)# hopefully this will never reset values, just
             # changed status

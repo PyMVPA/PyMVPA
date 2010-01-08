@@ -239,7 +239,7 @@ class Classifier(ClassWithCollections):
 
                 # Look at the parameters
                 for col in self._paramscols:
-                    changedParams = self._collections[col].whichSet()
+                    changedParams = self._collections[col].which_set()
                     if len(changedParams):
                         _changedData[col] = changedParams
 
@@ -261,7 +261,7 @@ class Classifier(ClassWithCollections):
           Data which was used for training
         """
         states = self.states
-        if states.isEnabled('trained_labels'):
+        if states.is_enabled('trained_labels'):
             states.trained_labels = dataset.sa['labels'].unique
 
         states.trained_dataset = dataset
@@ -273,11 +273,11 @@ class Classifier(ClassWithCollections):
         if __debug__ and 'CHECK_TRAINED' in debug.active:
             self.__trainedidhash = dataset.idhash
 
-        if self.states.isEnabled('training_confusion') and \
-               not self.states.isSet('training_confusion'):
+        if self.states.is_enabled('training_confusion') and \
+               not self.states.is_set('training_confusion'):
             # we should not store predictions for training data,
             # it is confusing imho (yoh)
-            self.states._changeTemporarily(
+            self.states.change_temporarily(
                 disable_states=["predictions"])
             if self.params.retrainable:
                 # we would need to recheck if data is the same,
@@ -287,12 +287,12 @@ class Classifier(ClassWithCollections):
                 # training_confusion... sad
                 self.__changedData_isset = False
             predictions = self.predict(dataset)
-            self.states._resetEnabledTemporarily()
+            self.states.reset_changed_temporarily()
             self.states.training_confusion = self.__summary_class__(
                 targets=dataset.sa.labels,
                 predictions=predictions)
 
-        if self.states.isEnabled('feature_ids'):
+        if self.states.is_enabled('feature_ids'):
             self.states.feature_ids = self._getFeatureIds()
 
 
@@ -315,16 +315,16 @@ class Classifier(ClassWithCollections):
 
         if self.trained:
             s += "\n trained"
-            if states.isSet('training_time'):
+            if states.is_set('training_time'):
                 s += ' in %.3g sec' % states.training_time
             s += ' on data with'
-            if states.isSet('trained_labels'):
+            if states.is_set('trained_labels'):
                 s += ' labels:%s' % list(states.trained_labels)
 
             nsamples, nchunks = None, None
-            if states.isSet('trained_nsamples'):
+            if states.is_set('trained_nsamples'):
                 nsamples = states.trained_nsamples
-            if states.isSet('trained_dataset'):
+            if states.is_set('trained_dataset'):
                 td = states.trained_dataset
                 nsamples, nchunks = td.nsamples, len(td.sa['chunks'].unique)
             if nsamples is not None:
@@ -333,9 +333,9 @@ class Classifier(ClassWithCollections):
                 s += ' #chunks:%d' % nchunks
 
             s += " #features:%d" % self.__trainednfeatures
-            if states.isSet('feature_ids'):
+            if states.is_set('feature_ids'):
                 s += ", used #features:%d" % len(states.feature_ids)
-            if states.isSet('training_confusion'):
+            if states.is_set('training_confusion'):
                 s += ", training error:%.3g" % states.training_confusion.error
         else:
             s += "\n not yet trained"
@@ -566,7 +566,7 @@ class Classifier(ClassWithCollections):
             if self.trained:
                 self.untrain()
             states = self.states
-            if not value and states.isKnown('retrained'):
+            if not value and states.is_known('retrained'):
                 states.remove('retrained')
                 states.remove('repredicted')
             if value:

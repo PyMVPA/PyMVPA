@@ -329,7 +329,7 @@ class SVM(_SVM):
         Cs = None
         if not retrainable or self.__svm is None or _changedData['params']:
             # SVM
-            if self.params.isKnown('C'):
+            if self.params.is_known('C'):
                 Cs = self._getCvec(dataset)
 
                 # XXX do not jump over the head and leave it up to the user
@@ -374,7 +374,7 @@ class SVM(_SVM):
             newsvm = True
             _setdebug(self.__svm, 'SVM')
             # Set optimization parameters
-            if self.params.isKnown('tube_epsilon') and \
+            if self.params.is_known('tube_epsilon') and \
                    hasattr(self.__svm, 'set_tube_epsilon'):
                 self.__svm.set_tube_epsilon(self.params.tube_epsilon)
             self.__svm.parallel.set_num_threads(self.params.num_threads)
@@ -410,7 +410,7 @@ class SVM(_SVM):
 
         # Report on training
         if (__debug__ and 'SG__' in debug.active) or \
-           self.states.isEnabled('training_confusion'):
+           self.states.is_enabled('training_confusion'):
             trained_labels = self.__svm.classify().get_labels()
         else:
             trained_labels = None
@@ -427,7 +427,7 @@ class SVM(_SVM):
         # XXX For now it can be done only for regressions since labels need to
         #     be remapped and that becomes even worse if we use regression
         #     as a classifier so mapping happens upstairs
-        if self.__is_regression__ and self.states.isEnabled('training_confusion'):
+        if self.__is_regression__ and self.states.is_enabled('training_confusion'):
             self.states.training_confusion = self.__summary_class__(
                 targets=dataset.labels,
                 predictions=trained_labels)

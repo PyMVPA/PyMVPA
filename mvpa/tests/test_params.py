@@ -55,26 +55,26 @@ class ParamsTests(unittest.TestCase):
         self.failUnlessRaises(AttributeError, simple.__getattribute__, '')
 
         self.failUnlessEqual(simple.params.C, 1.0)
-        self.failUnlessEqual(simple.params.isSet("C"), False)
-        self.failUnlessEqual(simple.params.isSet(), False)
-        self.failUnlessEqual(simple.params["C"].isDefault, True)
-        self.failUnlessEqual(simple.params["C"].equalDefault, True)
+        self.failUnlessEqual(simple.params.is_set("C"), False)
+        self.failUnlessEqual(simple.params.is_set(), False)
+        self.failUnlessEqual(simple.params["C"].is_default, True)
+        self.failUnlessEqual(simple.params["C"].equal_default, True)
 
         simple.params.C = 1.0
         # we are not actually setting the value if == default
-        self.failUnlessEqual(simple.params["C"].isDefault, True)
-        self.failUnlessEqual(simple.params["C"].equalDefault, True)
+        self.failUnlessEqual(simple.params["C"].is_default, True)
+        self.failUnlessEqual(simple.params["C"].equal_default, True)
 
         simple.params.C = 10.0
-        self.failUnlessEqual(simple.params.isSet("C"), True)
-        self.failUnlessEqual(simple.params.isSet(), True)
-        self.failUnlessEqual(simple.params["C"].isDefault, False)
-        self.failUnlessEqual(simple.params["C"].equalDefault, False)
+        self.failUnlessEqual(simple.params.is_set("C"), True)
+        self.failUnlessEqual(simple.params.is_set(), True)
+        self.failUnlessEqual(simple.params["C"].is_default, False)
+        self.failUnlessEqual(simple.params["C"].equal_default, False)
 
         self.failUnlessEqual(simple.params.C, 10.0)
-        simple.params["C"].resetvalue()
-        self.failUnlessEqual(simple.params.isSet("C"), True)
-        # TODO: Test if we 'train' a classifier f we get isSet to false
+        simple.params["C"].reset_value()
+        self.failUnlessEqual(simple.params.is_set("C"), True)
+        # TODO: Test if we 'train' a classifier f we get is_set to false
         self.failUnlessEqual(simple.params.C, 1.0)
         self.failUnlessRaises(AttributeError, simple.params.__getattribute__, 'B')
 
@@ -86,12 +86,12 @@ class ParamsTests(unittest.TestCase):
         self.failUnlessRaises(AttributeError, mixed.__getattribute__, 'kernel_params')
 
         self.failUnlessEqual(mixed.params.C, 1.0)
-        self.failUnlessEqual(mixed.params.isSet("C"), False)
-        self.failUnlessEqual(mixed.params.isSet(), False)
+        self.failUnlessEqual(mixed.params.is_set("C"), False)
+        self.failUnlessEqual(mixed.params.is_set(), False)
         mixed.params.C = 10.0
-        self.failUnlessEqual(mixed.params.isSet("C"), True)
-        self.failUnlessEqual(mixed.params.isSet("D"), False)
-        self.failUnlessEqual(mixed.params.isSet(), True)
+        self.failUnlessEqual(mixed.params.is_set("C"), True)
+        self.failUnlessEqual(mixed.params.is_set("D"), False)
+        self.failUnlessEqual(mixed.params.is_set(), True)
         self.failUnlessEqual(mixed.params.D, 3.0)
 
 
@@ -109,11 +109,11 @@ class ParamsTests(unittest.TestCase):
         self.failUnlessEqual(clfe.kernel_params.kp2, 200.0)
         clfe.kernel_params.kp2 = 201.0
         self.failUnlessEqual(clfe.kernel_params.kp2, 201.0)
-        self.failUnlessEqual(clfe.kernel_params.isSet("kp2"), True)
+        self.failUnlessEqual(clfe.kernel_params.is_set("kp2"), True)
         clfe.train(dataset(samples=[[0,0]], labels=[1], chunks=[1]))
-        self.failUnlessEqual(clfe.kernel_params.isSet("kp2"), False)
-        self.failUnlessEqual(clfe.kernel_params.isSet(), False)
-        self.failUnlessEqual(clfe.params.isSet(), False)
+        self.failUnlessEqual(clfe.kernel_params.is_set("kp2"), False)
+        self.failUnlessEqual(clfe.kernel_params.is_set(), False)
+        self.failUnlessEqual(clfe.params.is_set(), False)
 
 def suite():
     return unittest.makeSuite(ParamsTests)
