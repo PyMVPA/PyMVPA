@@ -175,7 +175,7 @@ Is there an easy way to remove invariant features from a dataset?
   `removeInvariantFeatures()` that strips such features from a dataset.
 
 
-.. index:: block-averaging
+.. index:: Block-averaging
 
 How can I do :term:`block-averaging` of my block-design fMRI dataset?
 ---------------------------------------------------------------------
