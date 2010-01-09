@@ -35,7 +35,8 @@ preprocessing steps on it."""
 #
 # load PyMVPA example dataset
 #
-attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
+attr = SampleAttributes(os.path.join(pymvpa_dataroot,
+                        'attributes_literal.txt'))
 dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                        labels=attr.labels,
                        chunks=attr.chunks,
@@ -46,16 +47,17 @@ dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
 #
 
 # do chunkswise linear detrending on dataset
-detrend(dataset, perchunk=True, model='linear')
+poly_detrend(dataset, polyord=1, chunks='chunks')
 
 # only use 'rest', 'house' and 'scrambled' samples from dataset
-dataset = dataset[N.array([l in [0,2,6] for l in dataset.labels], dtype='bool')]
+dataset = dataset[N.array([l in ['rest', 'house', 'scrambledpix']
+                           for l in dataset.labels], dtype='bool')]
 
 # zscore dataset relative to baseline ('rest') mean
-zscore(dataset, perchunk=True, baselinelabels=[0], targetdtype='float32')
+zscore(dataset, perchunk=True, baselinelabels=['rest'], targetdtype='float32')
 
 # remove baseline samples from dataset for final analysis
-dataset = dataset[N.array([l != 0 for l in dataset.labels], dtype='bool')]
+dataset = dataset[dataset.sa.labels != 'rest']
 
 """But now for the interesting part: Next we define the measure that shall be
 computed for each sphere. Theoretically, this can be anything, but here we
@@ -99,7 +101,7 @@ for radius in [0, 1, 3]:
     # on multi-core machines try increasing the `nproc` argument
     # to utilize more than one core
     sl = sphere_searchlight(cv, radius=radius, space='voxel_indices',
-                            nproc=1)
+                            nproc=1, mapper=mean_sample())
 
     # to increase efficiency, we strip all unnecessary attributes from the
     # dataset before we hand it over to the searchlight
@@ -108,7 +110,7 @@ for radius in [0, 1, 3]:
     # run searchlight on example dataset and retrieve error map
     sl_map = sl(ds)
     # map sensitivity map into original dataspace
-    orig_sl_map = dataset.mapper.reverse1(N.array(sl_map))
+    orig_sl_map = dataset.mapper.reverse(sl_map)
     masked_orig_sl_map = N.ma.masked_array(orig_sl_map,
                                            mask=orig_sl_map == 0)
 
@@ -117,12 +119,12 @@ for radius in [0, 1, 3]:
     P.subplot(1,3,fig)
 
     P.title('Radius %i' % radius)
-
-    P.imshow(masked_orig_sl_map[0],
+    # plot 1-results, since we get errors
+    P.imshow(1 - masked_orig_sl_map.squeeze(),
              interpolation='nearest',
              aspect=1.25,
              cmap=P.cm.autumn)
-    P.clim(0.5, 0.65)
+    P.clim(0.5, 1.0)
     P.colorbar(shrink=0.6)
 
 

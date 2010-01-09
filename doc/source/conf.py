@@ -46,7 +46,9 @@ extensions = ['sphinx.ext.autodoc',
               'autosummary',
               # we have a local copy of the extension, imported from NumPy 1.3
               # this also includes the docscrape* extensions
-              'numpydoc']
+              'numpydoc',
+              # finally our own little thingie to display tasks
+              'exercise_directive']
 
 # the following doesn't work with sphinx < 1.0, but will make a separate
 # sphinx-autogen run obsolete in the future

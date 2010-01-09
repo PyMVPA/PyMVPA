@@ -303,7 +303,7 @@ class Splitter(object):
         specs : sequence of sequences
           Contains ids of a sample attribute that shall be split into the
           another dataset.
-        
+
         Returns
         -------
         Tuple of splitted datasets.
@@ -387,6 +387,8 @@ class Splitter(object):
 
     strategy = property(fget=lambda self:self.__strategy,
                         fset=_setStrategy)
+    splitattr = property(fget=lambda self:self.__splitattr)
+
 
 
 class NoneSplitter(Splitter):

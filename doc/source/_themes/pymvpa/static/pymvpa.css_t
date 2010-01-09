@@ -263,6 +263,12 @@ div.seealso {
     border-bottom: 1px solid #fcbd00;
 }
 
+div.admonition-exercise {
+    background-color: #dcf1ff;
+    border-top: 1px solid #459cff;
+    border-bottom: 1px solid #459cff;
+}
+
 div.topic {
     background-color: #eee;
 }
@@ -281,7 +287,7 @@ p.admonition-title:after {
 }
 
 pre {
-    padding: 5px;
+    padding: 10px;
     background-color: {{ theme_codebgcolor }};
     color: {{ theme_codetextcolor }};
     line-height: 120%;
@@ -295,3 +301,8 @@ tt {
     padding: 0 1px 0 1px;
     font-size: 0.95em;
 }
+
+tt.xref {
+    font-size: 16px;
+}
+

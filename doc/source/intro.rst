@@ -37,8 +37,8 @@ What this Manual is NOT
 This manual does not make an attempt to be a comprehensive introduction into
 machine learning *theory*. There is a wealth of high-quality text books about
 this field available.  Two very good examples are: `Pattern Recognition and Machine
-Learning`_ by `Christopher M. Bishop`_, and `The Elements of Statistical Learning:
-Data Mining, Inference, and Prediction`_ by `Trevor Hastie`_, `Robert
+Learning`_ by `Christopher M. Bishop`_, and :ref:`The Elements of Statistical Learning:
+Data Mining, Inference, and Prediction <HTF09>` by `Trevor Hastie`_, `Robert
 Tibshirani`_, and `Jerome Friedman`_ (PDF was generously made available online_
 free of charge).
 
