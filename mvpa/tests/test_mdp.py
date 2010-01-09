@@ -15,7 +15,8 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
-from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper, PCAMapper
+from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper, PCAMapper, \
+        ICAMapper
 from mvpa.datasets.base import Dataset
 from mvpa.base.dataset import DAE
 from mvpa.misc.data_generators import normalFeatureDataset
@@ -130,5 +131,22 @@ def test_pcamapper():
     # now project data into PCA space
     p = pm.forward(ndlin.samples)
     assert_equal(p.shape, (40, 20))
+    # check that the mapped data can be fully recovered by 'reverse()'
+    assert_array_almost_equal(pm.reverse(p), ndlin)
+
+
+def test_icamapper():
+    # data: 40 sample feature line in 2d space (40x2; samples x features)
+    samples = N.vstack([N.arange(40.) for i in range(2)]).T
+    samples -= samples.mean()
+    samples +=  N.random.normal(size=samples.shape, scale=0.1)
+    ndlin = Dataset(samples)
+
+    pm = ICAMapper()
+    pm.train(ndlin.copy())
+    assert_equal(pm.proj.shape, (2, 2))
+
+    p = pm.forward(ndlin.copy())
+    assert_equal(p.shape, (40, 2))
     # check that the mapped data can be fully recovered by 'reverse()'
     assert_array_almost_equal(pm.reverse(p), ndlin)
