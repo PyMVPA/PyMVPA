@@ -19,21 +19,21 @@ with no fancy additions whatsoever.
 from mvpa.suite import *
 
 # load PyMVPA example dataset
-attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
+attr = SampleAttributes(os.path.join(pymvpa_dataroot,
+                        'attributes_literal.txt'))
 dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                       labels=attr.labels,
-                       chunks=attr.chunks,
+                       labels=attr.labels, chunks=attr.chunks,
                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 # do chunkswise linear detrending on dataset
-detrend(dataset, perchunk=True, model='linear')
+poly_detrend(dataset, polyord=1, chunks='chunks')
 
 # zscore dataset relative to baseline ('rest') mean
-zscore(dataset, perchunk=True, baselinelabels=[0])
+zscore(dataset, perchunk=True, baselinelabels=['rest'])
 
-# select class 1 and 2 for this demo analysis
+# select class face and house for this demo analysis
 # would work with full datasets (just a little slower)
-dataset = dataset[N.array([l in [1, 2] for l in dataset.sa.labels],
+dataset = dataset[N.array([l in ['face', 'house'] for l in dataset.sa.labels],
                           dtype='bool')]
 
 # setup cross validation procedure, using SMLR classifier
@@ -41,7 +41,7 @@ cv = CrossValidatedTransferError(
             TransferError(SMLR()),
             OddEvenSplitter())
 # and run it
-error = cv(dataset)
+error = N.mean(cv(dataset))
 
 # UC: unique chunks, UL: unique labels
 print "Error for %i-fold cross-validation on %i-class problem: %f" \
