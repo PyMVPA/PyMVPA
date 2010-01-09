@@ -53,7 +53,7 @@ from mvpa.suite import *
 # create the pymvpa dataset from the labeled features
 patternsPos = dataset(samples=feat_pos.T, labels=1)
 patternsNeg = dataset(samples=feat_neg.T, labels=0)
-ds_lin = patternsPos + patternsNeg
+ds_lin = vstack((patternsPos, patternsNeg))
 
 """Let's add another dataset: XOR. This problem is not linear separable
 and therefore need a non-linear classifier to be solved. The dataset is

@@ -105,6 +105,16 @@ experiments.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2004.05.020
 
 
+.. _HTF09:
+
+**Hastie, T., Tibshirani, R. & Friedman, J. H.** (2009). The Elements of Statistical Learning: Data Mining, Inference, and Prediction. Springer: New York.
+  *Excellent summary of virtually all techniques relevant to the field. A free PDF
+  version of this book is available from the authors' website at
+  http://www-stat.stanford.edu/ tibs/ElemStatLearn/*
+
+  DOI: http://dx.doi.org/10.1007/b94608
+
+
 .. _HGF+01:
 
 **Haxby, J. V., Gobbini, M. I., Furey, M. L., Ishai, A., Schouten, J. L. & Pietrini, P.** (2001). Distributed and overlapping representations of faces and objects in ventral temporal cortex. *Science*, *293*, 2425–2430.
