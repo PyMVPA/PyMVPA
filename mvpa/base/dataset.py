@@ -243,7 +243,7 @@ class AttrDataset(object):
             self.a.update(a)
 
 
-    def init_origids(self, which, attr='origids'):
+    def init_origids(self, which, attr='origids', mode='new'):
         """Initialize the dataset's 'origids' attribute.
 
         The purpose of origids is that they allow to track the identity of
@@ -264,11 +264,28 @@ class AttrDataset(object):
           Name of the attribute to store the generated IDs in.  By convention
           this should be 'origids' (the default), but might be changed for
           specific purposes.
+        mode : {'existing', 'new', 'raise'}, optional
+          Action if `attr` is already present in the collection.
+          Default behavior is 'new' whenever new ids are generated and
+          replace existing values if such are present.  With 'existing' it would
+          not alter existing content.  With 'raise' it would raise
+          `RuntimeError`.
+
+        Raises
+        ------
+        `RuntimeError`
+          If `mode` == 'raise' and `attr` is already defined
         """
         # now do evil to ensure unique ids across multiple datasets
         # so that they could be merged together
         thisid = str(id(self))
         if which == 'samples' or which == 'both':
+            if attr in self.sa:
+                if mode == 'existing':
+                    return
+                elif mode == 'raise':
+                    raise RuntimeError, \
+                          "Attribute %r already known to %s" % (attr, self.sa)
             ids = N.array(['%s-%i' % (thisid, i)
                                 for i in xrange(self.samples.shape[0])])
             if self.sa.has_key(attr):
@@ -276,6 +293,12 @@ class AttrDataset(object):
             else:
                 self.sa[attr] = ids
         if which == 'features' or which == 'both':
+            if attr in self.sa:
+                if mode == 'existing':
+                    return
+                elif mode == 'raise':
+                    raise RuntimeError, \
+                          "Attribute %r already known to %s" % (attr, self.fa)
             ids = N.array(['%s-%i' % (thisid, i)
                                 for i in xrange(self.samples.shape[1])])
             if self.fa.has_key(attr):
