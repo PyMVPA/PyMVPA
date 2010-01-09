@@ -41,12 +41,12 @@ samp2[:,:goodfeat] -= offset
 # create the pymvpa training dataset from the labeled features
 patternsPos = dataset(samples=samp1[:ntrain,:], labels=1)
 patternsNeg = dataset(samples=samp2[:ntrain,:], labels=0)
-trainpat = patternsPos + patternsNeg
+trainpat = vstack((patternsPos, patternsNeg))
 
 # create patters for the testing dataset
 patternsPos = dataset(samples=samp1[ntrain:,:], labels=1)
 patternsNeg = dataset(samples=samp2[ntrain:,:], labels=0)
-testpat = patternsPos + patternsNeg
+testpat = vstack((patternsPos, patternsNeg))
 
 # set up the SMLR classifier
 print "Evaluating SMLR classifier..."
