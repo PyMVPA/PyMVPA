@@ -541,12 +541,12 @@ class StateCollection(Collection):
             # copy all set ones
             for name in fromstate.which_set():#self.names:
                 #if fromstate.has_key(name):
-                self[name] = operation(fromstate[name])
+                self[name].value = operation(fromstate[name].value)
         else:
             has_key = fromstate.has_key
             for name in key:
                 if has_key(name):
-                    self[name] = operation(fromstate[name])
+                    self[name].value = operation(fromstate[name].value)
 
 
     def is_enabled(self, key):
