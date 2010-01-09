@@ -159,23 +159,26 @@ class PCAMapper(MDPNodeMapper):
     """Convenience wrapper to perform PCA using MDP's Mapper
     """
 
-    def __init__(self, alg='PCA', **kwargs):
+    def __init__(self, alg='PCA', nodeargs=None, **kwargs):
         """
         Parameters
         ----------
         alg : {'PCA', 'NIPALS'}
           Which MDP implementation of a PCA to use.
+        nodeargs : None or dict
+          Arguments passed to the MDP node in various stages of its lifetime.
+          See the baseclass for more details.
         **kwargs
-          See the base class for information about additional arguments.
+          Additional constructor arguments for the MDP node.
         """
         if alg == 'PCA':
-            node = mdp.nodes.PCANode()
+            node = mdp.nodes.PCANode(**kwargs)
         elif alg == 'NIPALS':
-            node = mdp.nodes.NIPALSNode()
+            node = mdp.nodes.NIPALSNode(**kwargs)
         else:
             raise ValueError("Unkown algorithm '%s' for PCAMapper."
                              % alg)
-        MDPNodeMapper.__init__(self, node, nodeargs=kwargs)
+        MDPNodeMapper.__init__(self, node, nodeargs=nodeargs)
 
 
     proj = property(fget=lambda self: self.node.get_projmatrix(),
@@ -190,32 +193,32 @@ class PCAMapper(MDPNodeMapper):
 class ICAMapper(MDPNodeMapper):
     """Convenience wrapper to perform ICA using MDP nodes.
     """
-    def __init__(self, alg='FastICA', **kwargs):
+    def __init__(self, alg='FastICA', nodeargs=None, **kwargs):
         """
         Parameters
         ----------
         alg : {'FastICA', 'CuBICA'}
           Which MDP implementation of an ICA to use.
+        nodeargs : None or dict
+          Arguments passed to the MDP node in various stages of its lifetime.
+          See the baseclass for more details.
         **kwargs
-          See the base class for information about additional arguments.
+          Additional constructor arguments for the MDP node.
         """
         if alg == 'FastICA':
-            node = mdp.nodes.FastICANode()
+            node = mdp.nodes.FastICANode(**kwargs)
         elif alg == 'CuBICA':
-            node = mdp.nodes.CuBICANode()
+            node = mdp.nodes.CuBICANode(*kwargs)
         else:
             raise ValueError("Unkown algorithm '%s' for ICAMapper."
                              % alg)
-        MDPNodeMapper.__init__(self, node, nodeargs=kwargs)
+        MDPNodeMapper.__init__(self, node, nodeargs=nodeargs)
 
 
     proj = property(fget=lambda self: self.node.get_projmatrix(),
                     doc="Projection matrix (as an array)")
     recon = property(fget=lambda self: self.node.get_projmatrix(),
                      doc="Backprojection matrix (as an array)")
-    var = property(fget=lambda self: self.node.d, doc="Variances per component")
-    centroid = property(fget=lambda self: self.node.avg,
-                        doc="Mean of the traiing data")
 
 
 
