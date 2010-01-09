@@ -270,6 +270,14 @@ class ROCCurve(object):
         Nlabels = len(labels)
         sets = self._sets
 
+        # Handle degenerate cases politely
+        if Nlabels < 2:
+            warning("ROC was asked to be evaluated on data with %i"
+                    " labels which is a degenerate case.")
+            self._ROCs = []
+            self._aucs = []
+            return
+
         # take sets which have values in the shape we can handle
         def _checkValues(set_):
             """Check if values are 'acceptable'"""
@@ -1397,7 +1405,7 @@ class TransferError(ClassifierError):
 
         return out
 
-
+    # XXX: TODO: unify naming? test/train or with ing both
     def _call(self, testdataset, trainingdataset=None):
         """Compute the transfer error for a certain test dataset.
 
