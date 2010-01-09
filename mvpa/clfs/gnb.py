@@ -85,9 +85,10 @@ class GNB(Classifier):
              exponentiation and loose precision.
              If set, logprobs are stored in `values`""")
     normalize = Parameter(False, allowedtype='bool',
-             doc="""Normalize (log)prob by P(data).  Requires probabilities thus for
-             logprob case would require exponentiation of 'logprob's, thus
-             disabled by default since does not impact classification per se.""")
+             doc="""Normalize (log)prob by P(data).  Requires probabilities thus
+             for `logprob` case would require exponentiation of 'logprob's, thus
+             disabled by default since does not impact classification output.
+             """)
 
     def __init__(self, **kwargs):
         """Initialize an GNB classifier.
@@ -106,6 +107,9 @@ class GNB(Classifier):
         self.priors = None
         """Class probabilities"""
 
+        # Define internal state of classifier
+        self._norm_weight = None
+
     def _train(self, dataset):
         """Train the classifier using `dataset` (`Dataset`).
         """
@@ -117,7 +121,7 @@ class GNB(Classifier):
         self.ulabels = ulabels = dataset.uniquelabels
         nlabels = len(ulabels)
         #params = self.params        # for quicker access
-        label2index = dict((l, il) for il,l in enumerate(ulabels))
+        label2index = dict((l, il) for il, l in enumerate(ulabels))
 
         # set the feature dimensions
         nsamples = len(X)
@@ -160,11 +164,13 @@ class GNB(Classifier):
         if prior == 'uniform':
             self.priors = N.ones((nlabels,))/nlabels
         elif prior == 'laplacian_smoothing':
-            self.priors = (1+N.squeeze(nsamples_per_class)) / (float(nsamples) + nlabels)
+            self.priors = (1+N.squeeze(nsamples_per_class)) \
+                          / (float(nsamples) + nlabels)
         elif prior == 'ratio':
             self.priors = N.squeeze(nsamples_per_class) / float(nsamples)
         else:
-            raise "No idea on how to handle '%s' way to compute priors" % params.prior
+            raise "No idea on how to handle '%s' way to compute priors" \
+                  % params.prior
 
         # Precompute and store weighting coefficient for Gaussian
         if params.logprob:
@@ -174,10 +180,8 @@ class GNB(Classifier):
             self._norm_weight = 1.0/N.sqrt(2*N.pi*variances)
 
         if __debug__ and 'GNB' in debug.active:
-            debug('GNB', "training finished on data.shape=%s " %
-                  (X.shape, ) +
-                  "min:max(data)=%f:%f, got min:max(w)=%f:%f" %
-                  (N.min(X), N.max(X), N.min(b_mean), N.max(b_mean)))
+            debug('GNB', "training finished on data.shape=%s " % (X.shape, )
+                  + "min:max(data)=%f:%f" % (N.min(X), N.max(X)))
 
 
     def untrain(self):
@@ -258,7 +262,7 @@ class GNB(Classifier):
 
         if __debug__ and 'GNB' in debug.active:
             debug('GNB', "predict on data.shape=%s min:max(data)=%f:%f " %
-                  (`data.shape`, N.min(data), N.max(data)))
+                  (data.shape, N.min(data), N.max(data)))
 
         return predictions
 
