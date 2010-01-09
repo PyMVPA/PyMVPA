@@ -568,8 +568,8 @@ class Classifier(ClassWithCollections):
                 self.untrain()
             states = self.states
             if not value and states.has_key('retrained'):
-                states.remove('retrained')
-                states.remove('repredicted')
+                states.pop('retrained')
+                states.pop('repredicted')
             if value:
                 if not 'retrainable' in self.__tags__:
                     warning("Setting of flag retrainable for %s has no effect"
