@@ -600,6 +600,25 @@ def test_origid_handling():
     subds = ds[selector]
     assert_array_equal(subds.sa.origids, ds.sa.origids[selector])
 
+    # Now if we request new origids if they are present we could
+    # expect different behavior
+    assert_raises(ValueError, subds.init_origids, 'both', mode='raises')
+    sa_origids = subds.sa.origids.copy()
+    fa_origids = subds.fa.origids.copy()
+    for s in ('both', 'samples', 'features'):
+        assert_raises(RuntimeError, subds.init_origids, s, mode='raise')
+        subds.init_origids(s, mode='existing')
+        # we should have the same origids as before
+        assert_array_equal(subds.sa.origids, sa_origids)
+        assert_array_equal(subds.fa.origids, fa_origids)
+
+    # Lets now change, which should be default behavior
+    subds.init_origids('both')
+    assert_equal(len(sa_origids), len(subds.sa.origids))
+    assert_equal(len(fa_origids), len(subds.fa.origids))
+    # values should change though
+    ok_((sa_origids != subds.sa.origids).any())
+    ok_((fa_origids != subds.fa.origids).any())
 
 def test_idhash():
     ds = dataset(N.arange(12).reshape((4, 3)),

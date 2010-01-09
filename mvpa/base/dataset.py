@@ -279,7 +279,11 @@ class AttrDataset(object):
         # now do evil to ensure unique ids across multiple datasets
         # so that they could be merged together
         thisid = str(id(self))
-        if which == 'samples' or which == 'both':
+        legal_modes = ('raise', 'existing', 'new')
+        if not mode in legal_modes:
+            raise ValueError, "Incorrect mode %r. Known are %s." % \
+                  (mode, legal_modes)
+        if which in ('samples', 'both'):
             if attr in self.sa:
                 if mode == 'existing':
                     return
@@ -292,7 +296,7 @@ class AttrDataset(object):
                 self.sa[attr].value = ids
             else:
                 self.sa[attr] = ids
-        if which == 'features' or which == 'both':
+        if which in ('features', 'both'):
             if attr in self.sa:
                 if mode == 'existing':
                     return
