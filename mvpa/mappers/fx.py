@@ -57,6 +57,22 @@ class FxMapper(Mapper):
             self.__attrfx = attrfx
 
 
+    # TODO YOH: think about convenience functions/args or use magic
+    #           of ClassWithCollections + Parameter?
+    #      as for convenient (but pylint/conventsion unfriendly way)
+    #      see meta-clfs
+    def __repr__(self):
+        s = super(FxMapper, self).__repr__()
+        sargs = ["axis=%r, fx=%r" % (self.__axis, self.__fx)]
+        if self.__fxargs != ():
+            sargs += ['fxargs=%r' % (self.__fxargs,)]
+        if self.__uattrs is not None:
+            sargs += ['uattrs=%r' % (self.__uattrs,)]
+        if self.__attrfx != 'merge':    # if not default
+            sargs += ['attrfx=%r' % (self.__attrfx,)]
+        return s.replace("(", '(%s, ' % ', '.join(sargs), 1)
+
+
     def _train(self, ds):
         # right now it needs no training
         pass
