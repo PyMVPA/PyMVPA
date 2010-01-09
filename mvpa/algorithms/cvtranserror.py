@@ -59,6 +59,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
                  expose_testdataset=False,
                  harvest_attribs=None,
                  copy_attribs='copy',
+                 samples_idattr='origids',
                  **kwargs):
         """
         Parameters
@@ -73,16 +74,19 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
           dataset is used to generate predictions with the (trained)
           classifier. If `None` (default) an instance of
           :class:`~mvpa.datasets.splitters.NoneSplitter` is used.
-        expose_testdataset : bool
-         In the proper pipeline, classifier must not know anything
-         about testing data, but in some cases it might lead only
-         to marginal harm, thus migth wanted to be enabled (provide
-         testdataset for RFE to determine stopping point).
+        expose_testdataset : bool, optional
+          In the proper pipeline, classifier must not know anything
+          about testing data, but in some cases it might lead only
+          to marginal harm, thus migth wanted to be enabled (provide
+          testdataset for RFE to determine stopping point).
         harvest_attribs : list of str
           What attributes of call to store and return within
           harvested state variable
-        copy_attribs : None or str
+        copy_attribs : None or str, optional
           Force copying values of attributes on harvesting
+        samples_idattr : str, optional
+          What samples attribute to use to identify and store samples_errors
+          state variable
         **kwargs
           All additional arguments are passed to the
           :class:`~mvpa.measures.base.DatasetMeasure` base class.
@@ -97,6 +101,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
 
         self.__transerror = transerror
         self.__expose_testdataset = expose_testdataset
+        self.__samples_idattr = samples_idattr
 
 # TODO: put back in ASAP
 #    def __repr__(self):
@@ -139,8 +144,10 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         self.states.training_confusion = summaryClass()
         self.states.transerrors = []
         if states.is_enabled('samples_error'):
-            self.states.samples_error = dict([(id, [])
-                                               for id in dataset.sa.origids])
+            dataset.init_origids('samples',
+                                 attr=self.__samples_idattr, mode='existing')
+            self.states.samples_error = dict(
+                [(id_, []) for id_ in dataset.sa[self.__samples_idattr].value])
 
         # enable requested states in child TransferError instance (restored
         # again below)

@@ -1361,24 +1361,28 @@ class TransferError(ClassifierError):
                             "samples origid as key.")
 
     def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None,
-                 null_dist=None, **kwargs):
+                 null_dist=None, samples_idattr='origids', **kwargs):
         """Initialization.
 
         Parameters
         ----------
         clf : Classifier
           Either trained or untrained classifier
-        errorfx
+        errorfx: func, optional
           Functor that computes a scalar error value from the vectors of
           desired and predicted values (e.g. subclass of `ErrorFunction`)
-        labels : list
-          if provided, should be a set of labels to add on top of the
+        labels : list, optional
+          If provided, should be a set of labels to add on top of the
           ones present in testdata
-        null_dist : instance of distribution estimator
+        null_dist : instance of distribution estimator, optional
+        samples_idattr : str, optional
+          What samples attribute to use to identify and store samples_errors
+          state variable
         """
         ClassifierError.__init__(self, clf, labels, **kwargs)
         self.__errorfx = errorfx
         self.__null_dist = autoNullDist(null_dist)
+        self.__samples_idattr = samples_idattr
 
 
     __doc__ = enhancedDocString('TransferError', locals(), ClassifierError)
@@ -1452,9 +1456,11 @@ class TransferError(ClassifierError):
             for i, p in enumerate(predictions):
                 samples_error.append(
                     self.__errorfx([p], testdataset.sa.labels[i:i+1]))
-
-            states.samples_error = dict(zip(testdataset.sa.origids,
-                                            samples_error))
+            testdataset.init_origids(
+                'samples', attr=self.__samples_idattr, mode='existing')
+            states.samples_error = dict(
+                zip(testdataset.sa[self.__samples_idattr].value,
+                    samples_error))
 
         # compute error from desired and predicted values
         error = self.__errorfx(predictions, testdataset.sa.labels)
