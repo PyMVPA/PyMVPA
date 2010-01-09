@@ -304,7 +304,7 @@ class Collection(BaseCollection):
         if not key is None:
             keys = [ key ]
         else:
-            keys = self.names
+            keys = self.keys()
 
         if len(self):
             for key in keys:
@@ -352,7 +352,7 @@ class Collection(BaseCollection):
                       "Attribute %s is not known to %s" % (key, self)
             keys = [ key ]
         else:
-            keys = self.names
+            keys = self.keys()
 
         ownerdict = self.owner.__dict__
         selfdict = self.__dict__
@@ -389,12 +389,6 @@ class Collection(BaseCollection):
         return [ "%s%s%s: %s" % (_def_sep, str(x[1]), _def_sep, x[1].__doc__)
                  for x in items_ ]
 
-    # XXX RF: do we need those names?  use keys()
-    @property
-    def names(self):
-        """Return ids for all registered state variables"""
-        return self.keys()
-
 
     # Properties
     owner = property(fget=lambda x:x.__owner, fset=_set_owner)
@@ -420,7 +414,7 @@ class ParameterCollection(Collection):
         """Part of __repr__ for the owner object
         """
         prefixes = []
-        for k in self.names:
+        for k in self.keys():
             # list only params with not default values
             if self[k].is_default:
                 continue
@@ -539,7 +533,7 @@ class StateCollection(Collection):
 
         if key is None:
             # copy all set ones
-            for name in fromstate.which_set():#self.names:
+            for name in fromstate.which_set():#self.keys():
                 #if fromstate.has_key(name):
                 self[name].value = operation(fromstate[name].value)
         else:
@@ -596,7 +590,7 @@ class StateCollection(Collection):
             # lets take states which are enabled in other but not in
             # self
             add_enable_states = list(Set(other.enabled).difference(
-                 Set(enable_states)).intersection(self.names))
+                 Set(enable_states)).intersection(self.keys()))
             if len(add_enable_states)>0:
                 if __debug__:
                     debug("ST",
@@ -647,7 +641,7 @@ class StateCollection(Collection):
         else:
             ffunc = lambda y: fmatch(y) and \
                         self[y]._defaultenabled != self.is_enabled(y)
-        return [n for n in self.names if ffunc(n)]
+        return [n for n in self.keys() if ffunc(n)]
 
 
     def _set_enabled(self, keys):

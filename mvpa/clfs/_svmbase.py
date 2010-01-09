@@ -220,7 +220,7 @@ class _SVM(Classifier):
         sep = ", "
         # XXX TODO: we should have no kernel_params any longer
         for col in [self.params]:#, self.kernel_params]:
-            for k in col.names:
+            for k in col.keys():
                 # list only params with not default values
                 if col[k].is_default: continue
                 res += "%s%s=%r" % (sep, k, col[k].value)

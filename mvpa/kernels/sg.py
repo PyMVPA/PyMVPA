@@ -108,7 +108,8 @@ class _BasicSGKernel(SGKernel):
         try:
             order = self.__kp_order__
         except AttributeError:
-            order = self.params.names
+            # XXX may be we could use param.index to have them sorted?
+            order = self.params.keys()
         kvals = [self.params[kp].value for kp in order]
         self._k = self.__kernel_cls__(d1, d2, *kvals)
 

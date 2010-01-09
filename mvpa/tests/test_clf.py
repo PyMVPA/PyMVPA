@@ -556,7 +556,7 @@ class ClassifiersTests(unittest.TestCase):
     # XXX meta should also work but TODO
     @sweepargs(clf=clfswh['svm', '!meta'])
     def testSVMs(self, clf):
-        knows_probabilities = 'probabilities' in clf.states.names and clf.params.probability
+        knows_probabilities = 'probabilities' in clf.states.keys() and clf.params.probability
         enable_states = ['estimates']
         if knows_probabilities: enable_states += ['probabilities']
 
@@ -646,11 +646,11 @@ class ClassifiersTests(unittest.TestCase):
             batch_test(retrain=flag, retest=flag, closer=False)
 
         # should retrain nicely if we change a parameter
-        if 'C' in clf.params.names:
+        if 'C' in clf.params:
             clf.params.C *= 0.1
             clf_re.params.C *= 0.1
             batch_test()
-        elif 'sigma_noise' in clf.params.names:
+        elif 'sigma_noise' in clf.params:
             clf.params.sigma_noise *= 100
             clf_re.params.sigma_noise *= 100
             batch_test()
@@ -660,12 +660,12 @@ class ClassifiersTests(unittest.TestCase):
                   'params for clf %s' % clf
 
         # should retrain nicely if we change kernel parameter
-        if hasattr(clf, 'kernel_params') and len(clf.kernel_params.names):
+        if hasattr(clf, 'kernel_params') and len(clf.kernel_params):
             clf.kernel_params.gamma = 0.1
             clf_re.kernel_params.gamma = 0.1
             # retest is false since kernel got recomputed thus
             # can't expect to use the same kernel
-            batch_test(retest=not('gamma' in clf.kernel_params.names))
+            batch_test(retest=not('gamma' in clf.kernel_params))
 
         # should retrain nicely if we change labels
         oldlabels = dstrain.labels[:]
