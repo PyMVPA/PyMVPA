@@ -18,13 +18,13 @@ from mvpa.base import externals
 
 import numpy as N
 
-from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
+from mvpa.mappers.mdp_adaptor import MDPNodeMapper
 
 if externals.exists('mdp ge 2.4', raiseException=True):
-    from mdp.nodes import LLENode, HLLENode
+    import mdp
 
 
-class LLEMapper(Mapper):
+class LLEMapper(MDPNodeMapper):
     """Locally linear embbeding Mapper.
 
     This mapper performs dimensionality reduction. It wraps two algorithms
@@ -52,74 +52,26 @@ class LLEMapper(Mapper):
     --------
     http://mdp-toolkit.sourceforge.net
     """
-    def __init__(self, k, algorithm='lle', **kwargs):
+    def __init__(self, k, alg='LLE', nodeargs=None, **kwargs):
         """
         Parameters
         ----------
         k : int
-          Number of nearest neighbor to be used by the algorithm.
-        algorithm : {'lle', 'hlle'}
+          Number of nearest neighbors to be used by the algorithm.
+        algorithm : {'LLE', 'HLLE'}
           Either use the standard LLE algorithm or Hessian Linear Local
           Embedding (HLLE).
+        nodeargs : None or dict
+          Arguments passed to the MDP node in various stages of its lifetime.
+          See the baseclass for more details.
         **kwargs
-          Additional arguments are passed to the underlying MDP node.
-          Most importantly this is the `output_dim` argument, that determines
-          the number of dimensions to mapper is using as output space.
+          Additional constructor arguments for the MDP node.
         """
-        # no meaningful metric
-        Mapper.__init__(self, metric=None)
-
-        self._algorithm = algorithm
-        self._node_kwargs = kwargs
-        self._k = k
-        self._node = None
-
-
-    @accepts_dataset_as_samples
-    def _train(self, samples):
-        """Train the mapper.
-        """
-        if self._algorithm == 'lle':
-            self._node = LLENode(self._k, dtype=samples.dtype,
-                                 **self._node_kwargs)
-        elif self._algorithm == 'hlle':
-            self._node = HLLENode(self._k, dtype=samples.dtype,
-                                  **self._node_kwargs)
+        if alg == 'LLE':
+            node = mdp.nodes.LLENode(k, **kwargs)
+        elif alg == 'HLLE':
+            node = mdp.nodes.HLLENode(k, **kwargs)
         else:
-            raise NotImplementedError
+            raise ValueError("Unkown algorithm '%s' for LLEMapper.")
 
-        self._node.train(samples)
-        self._node.stop_training()
-
-
-    def _forward_data(self, data):
-        """Map data from the IN dataspace into OUT space.
-        """
-        # experience the beauty of MDP -- just call the beast and be done ;-)
-        return self.node(data)
-
-
-    def get_insize(self):
-        """Returns the size of the entity in input space"""
-        return self.node.input_dim
-
-
-    def get_outsize(self):
-        """Returns the size of the entity in output space"""
-        return self.node.output_dim
-
-
-    def _accessNode(self):
-        """Provide access to the underlying MDP processing node.
-
-        With some care.
-        """
-        if self._node is None:
-            raise RuntimeError, \
-                  'The LLEMapper needs to be trained before access to the ' \
-                  'processing node is possible.'
-
-        return self._node
-
-
-    node = property(fget=_accessNode)
+        MDPNodeMapper.__init__(self, node, nodeargs=nodeargs)
