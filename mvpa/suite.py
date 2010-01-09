@@ -87,7 +87,7 @@ from mvpa.mappers.fx import *
 from mvpa.mappers.som import *
 if externals.exists('scipy'):
     from mvpa.mappers.zscore import ZScoreMapper
-    from mvpa.mappers.detrend import PolyDetrendMapper
+    from mvpa.mappers.detrend import *
 if externals.exists('mdp'):
     from mvpa.mappers.mdp_adaptor import *
     from mvpa.mappers.ica import *
