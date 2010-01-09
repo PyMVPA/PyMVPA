@@ -132,7 +132,7 @@ class StateTests(unittest.TestCase):
 
 
         proper.states.enable(['state2'])
-        self.failUnlessEqual(Set(proper.states.names), Set(['state1', 'state2']))
+        self.failUnlessEqual(Set(proper.states.keys()), Set(['state1', 'state2']))
         if __debug__ and 'ENFORCE_STATES_ENABLED' in debug.active:
             # skip testing since all states are on now
             return
@@ -224,7 +224,7 @@ class StateTests(unittest.TestCase):
         Simple test if child gets state variables from the parent as well
         """
         proper = TestClassProperChild()
-        self.failUnlessEqual(Set(proper.states.names),
+        self.failUnlessEqual(Set(proper.states.keys()),
                              Set(['state1', 'state2', 'state4']))
 
 
