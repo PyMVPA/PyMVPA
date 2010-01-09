@@ -256,15 +256,11 @@ class Collection(BaseCollection):
             self._update_owner(key)
 
 
-    # XXX RF to become pop?
-    def remove(self, key):
-        """Remove item from the collection
+    def pop(self, key):
+        """Pop (remove and return) item from the collection
         """
-        if not key in self:
-            raise ValueError, "Key %s isn't known to collection %s" \
-                  % (key, self)
+        _ = super(Collection, self).pop(key)
         self._update_owner(key, register=False)
-        _ = self.pop(key)
 
 
     def _action(self, key, func, missingok=False, **kwargs):
