@@ -157,7 +157,7 @@ class FlattenMapper(Mapper):
                 mds.fa[k] = self.reverse1(mds.fa[k].value)
         # wipe out the inspace attribute -- needs to be done after the loop to
         # not change the size of the dict
-        if inspace:
+        if inspace and inspace in mds.fa:
             del mds.fa[inspace]
         return mds
 
