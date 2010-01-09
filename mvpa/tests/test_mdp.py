@@ -15,8 +15,10 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
+from mvpa.base import externals
 from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper, PCAMapper, \
         ICAMapper
+from mvpa.mappers.lle import LLEMapper
 from mvpa.datasets.base import Dataset
 from mvpa.base.dataset import DAE
 from mvpa.misc.data_generators import normalFeatureDataset
@@ -150,3 +152,16 @@ def test_icamapper():
     assert_equal(p.shape, (40, 2))
     # check that the mapped data can be fully recovered by 'reverse()'
     assert_array_almost_equal(pm.reverse(p), ndlin)
+
+
+def test_llemapper():
+    if not externals.exists('mdp ge 2.4'):
+        return
+
+    ds = Dataset(N.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
+                          [1., 0., 0.], [0., 1., 1.], [1., 0., 1.],
+                          [1., 1., 0.], [1., 1., 1.]]))
+    pm = LLEMapper(3, output_dim=2)
+    pm.train(ds)
+    fmapped = pm(ds)
+    assert_equal(fmapped.shape, (8, 2))
