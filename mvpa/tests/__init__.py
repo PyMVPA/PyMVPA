@@ -84,7 +84,6 @@ def collectTestSuites():
     __optional_tests = [ ('scipy', 'ridge'),
                          ('scipy', 'stats_sp'),
                          (['lars','scipy'], 'lars'),
-                         ('mdp', 'icamapper'),
                          ('scipy', 'zscoremapper'),
                          ('pywt', 'waveletmapper'),
                          (['cPickle', 'gzip'], 'hamster'),

@@ -13,9 +13,8 @@ Visualization of Data Projection Methods
 """
 
 from mvpa.misc.data_generators import noisy_2d_fx
-from mvpa.mappers.mdp_adaptor import PCAMapper
 from mvpa.mappers.svd import SVDMapper
-from mvpa.mappers.ica import ICAMapper
+from mvpa.mappers.mdp_adaptor import ICAMapper, PCAMapper
 from mvpa import cfg
 
 import pylab as P
@@ -23,26 +22,24 @@ import numpy as N
 center = [10, 20]
 axis_range = 7
 
-def plotProjDir(mproj):
-    p = mproj + N.array(center).T
-
-    P.plot([center[0], p[0,0]], [center[1], p[0,1]], hold=True)
-    P.plot([center[0], p[1,0]], [center[1], p[1,1]], hold=True)
-
-
+def plotProjDir(p):
+    P.plot([0, p[0,0]], [0, p[0,1]],
+           linewidth=3, hold=True, color='y')
+    P.plot([0, p[1,0]], [0, p[1,1]],
+           linewidth=3, hold=True, color='k')
 
 mappers = {
             'PCA': PCAMapper(),
             'SVD': SVDMapper(),
-            'ICA': ICAMapper(),
+            'ICA': ICAMapper(alg='CuBICA'),
           }
 datasets = [
     noisy_2d_fx(100, lambda x: x, [lambda x: x],
-                center, noise_std=.5),
+                center, noise_std=0.5),
     noisy_2d_fx(50, lambda x: x, [lambda x: x, lambda x: -x],
-                center, noise_std=.5),
+                center, noise_std=0.5),
     noisy_2d_fx(50, lambda x: x, [lambda x: x, lambda x: 0],
-                center, noise_std=.5),
+                center, noise_std=0.5),
    ]
 
 ndatasets = len(datasets)
@@ -57,15 +54,13 @@ for ds in datasets:
 
         dproj = mapper.forward(ds.samples)
         mproj = mapper.proj
-        print mproj
-
         P.subplot(ndatasets, nmappers, fig)
         if fig <= 3:
             P.title(mname)
         P.axis('equal')
 
-        P.scatter(ds.samples[:, 0],
-                  ds.samples[:, 1],
+        P.scatter(ds.samples[:, 0] - center[0],
+                  ds.samples[:, 1] - center[1],
                   s=30, c=(ds.sa.labels) * 200)
         plotProjDir(mproj)
         fig += 1
