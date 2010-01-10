@@ -430,7 +430,7 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
         # Exceptions which are silently caught while running tests for externals
         _caught_exceptions = [ImportError, AttributeError, RuntimeError]
 
-        # check whether RPy is involved and catch its excpetions as well.
+        # check whether RPy is involved and catch its exceptions as well.
         # however, try to determine whether this is really necessary, as
         # importing RPy also involved starting a full-blown R session, which can
         # take seconds and therefore is quite nasty...
@@ -442,13 +442,10 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
                     if exists('rpy'):
                         # otherwise no need to add anything -- test
                         # would fail since rpy isn't available
-                        #from rpy import RException
-                        rpy = __load_rpy()
-                        RException = rpy.RException
+                        from rpy import RException
                         _caught_exceptions += [RException]
             except:
                 pass
-
 
         estr = ''
         try:
