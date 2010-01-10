@@ -9,21 +9,21 @@
 """Unit tests for PyMVPA least angle regression (ENET) classifier"""
 
 from mvpa import cfg
-from mvpa.clfs.enet import ENET
+from mvpa.clfs.glmnet import GLMNET_R,GLMNET_C
 from scipy.stats import pearsonr
 from tests_warehouse import *
 from mvpa.misc.data_generators import normalFeatureDataset
 
-class ENETTests(unittest.TestCase):
+class GLMNETTests(unittest.TestCase):
 
-    def testENET(self):
+    def testGLMNET_R(self):
         # not the perfect dataset with which to test, but
         # it will do for now.
         #data = datasets['dumb2']
         # for some reason the R code fails with the dumb data
         data = datasets['chirp_linear']
 
-        clf = ENET()
+        clf = GLMNET_R()
 
         clf.train(data)
 
@@ -34,12 +34,27 @@ class ENETTests(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless(cor[0] > .8)
 
-    def testENETState(self):
+    def testGLMNET_C(self):
+        # define binary prob
+        data = datasets['dumb2']
+        
+        # use GLMNET on binary problem
+        clf = GLMNET_C()
+        clf.states.enable('values')
+
+        clf.train(data)
+
+        # test predictions
+        pre = clf.predict(data.samples)
+        
+        self.failUnless((pre == data.labels).all())
+
+    def testGLMNETState(self):
         #data = datasets['dumb2']
         # for some reason the R code fails with the dumb data
         data = datasets['chirp_linear']
 
-        clf = ENET()
+        clf = GLMNET_R()
 
         clf.train(data)
 
@@ -50,11 +65,25 @@ class ENETTests(unittest.TestCase):
         self.failUnless((p == clf.states.predictions).all())
 
 
-    def testENETSensitivities(self):
+    def testGLMNET_CSensitivities(self):
+        data = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+
+        # use GLMNET on binary problem
+        clf = GLMNET_C()
+        clf.train(data)
+
+        # now ask for the sensitivities WITHOUT having to pass the dataset
+        # again
+        sens = clf.getSensitivityAnalyzer(force_training=False)()
+
+        #self.failUnless(sens.shape == (data.nfeatures,))
+        self.failUnless(sens.shape == (len(data.UL), data.nfeatures))
+
+    def testGLMNET_RSensitivities(self):
         data = datasets['chirp_linear']
 
-        # use ENET on binary problem
-        clf = ENET()
+        clf = GLMNET_R()
+
         clf.train(data)
 
         # now ask for the sensitivities WITHOUT having to pass the dataset
