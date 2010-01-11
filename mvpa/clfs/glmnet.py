@@ -16,8 +16,7 @@ import numpy as N
 import mvpa.base.externals as externals
 
 # do conditional to be able to build module reference
-if externals.exists('rpy2', raiseException=True) and \
-   externals.exists('glmnet', raiseException=True):
+if externals.exists('glmnet', raiseException=True):
     import rpy2.robjects
     import rpy2.robjects.numpy2ri
     r = rpy2.robjects.r

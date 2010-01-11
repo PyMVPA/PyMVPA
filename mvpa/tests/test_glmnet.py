@@ -37,16 +37,16 @@ class GLMNETTests(unittest.TestCase):
     def testGLMNET_C(self):
         # define binary prob
         data = datasets['dumb2']
-        
+
         # use GLMNET on binary problem
         clf = GLMNET_C()
-        clf.states.enable('values')
+        clf.states.enable('estimates')
 
         clf.train(data)
 
         # test predictions
         pre = clf.predict(data.samples)
-        
+
         self.failUnless((pre == data.labels).all())
 
     def testGLMNETState(self):
