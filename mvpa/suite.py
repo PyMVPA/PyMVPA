@@ -90,7 +90,6 @@ if externals.exists('scipy'):
     from mvpa.mappers.detrend import *
 if externals.exists('mdp'):
     from mvpa.mappers.mdp_adaptor import *
-    from mvpa.mappers.ica import *
 if externals.exists('mdp ge 2.4'):
     from mvpa.mappers.lle import *
 

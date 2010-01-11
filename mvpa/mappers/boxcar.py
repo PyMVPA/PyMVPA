@@ -207,5 +207,3 @@ class BoxcarMapper(Mapper):
             if k != inspace:
                 mds.sa[k] = self._reverse_data(dataset.sa[k].value)
         return mds
-
-

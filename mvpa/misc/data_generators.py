@@ -355,8 +355,8 @@ def linear_awgn(size=10, intercept=0.0, slope=0.4, noise_std=0.01, flat=False):
 def noisy_2d_fx(size_per_fx, dfx, sfx, center, noise_std=1):
     """Yet another generator of random dataset
 
-    TODO: deprecate (not used anywhere) or extend documentation
     """
+    # used in projection example
     x = []
     y = []
     labels = []

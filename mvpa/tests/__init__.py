@@ -84,7 +84,6 @@ def collectTestSuites():
     __optional_tests = [ ('scipy', 'ridge'),
                          ('scipy', 'stats_sp'),
                          (['lars','scipy'], 'lars'),
-                         ('mdp', 'icamapper'),
                          ('scipy', 'zscoremapper'),
                          ('pywt', 'waveletmapper'),
                          (['cPickle', 'gzip'], 'hamster'),
@@ -129,6 +128,9 @@ def collectNoseTests():
               ]
     if externals.exists('scipy'):
         tests += ['test_mapper_sp']
+    if externals.exists('glmnet'):
+        tests += ['test_glmnet']
+
     return tests
 
 def runNoseTests():

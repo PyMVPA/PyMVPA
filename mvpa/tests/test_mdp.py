@@ -15,7 +15,10 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
-from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper, PCAMapper
+from mvpa.base import externals
+from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper, PCAMapper, \
+        ICAMapper
+from mvpa.mappers.lle import LLEMapper
 from mvpa.datasets.base import Dataset
 from mvpa.base.dataset import DAE
 from mvpa.misc.data_generators import normalFeatureDataset
@@ -29,16 +32,11 @@ def test_mdpnodemapper():
 
     mm.train(ds)
 
-    assert_equal(mm.get_insize(), 4)
-    assert_true(N.all([mm.is_valid_inid(i) for i in range(4)]))
-    assert_equal(mm.get_outsize(), 4)
-
     fds = mm.forward(ds)
     assert_true(hasattr(mm.node, 'cov_mtx'))
 
     assert_true(isinstance(fds, Dataset))
     assert_equal(fds.samples.shape, ds.samples.shape)
-    assert_equal(mm.get_outsize(), ds.nfeatures)
 
     # set projection onto first 2 components
     mm.nodeargs['exec'] = ((), {'n': 2})
@@ -61,7 +59,6 @@ def test_mdpnodemapper():
     # internally
     dsbig = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=10)
     mm.train(dsbig)
-    assert_equal(mm.get_outsize(), 10)
 
 
 def test_mdpflowmapper():
@@ -70,16 +67,12 @@ def test_mdpflowmapper():
     ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
 
     fm.train(ds)
-    assert_equal(fm.get_insize(), 4)
-    assert_true(N.all([fm.is_valid_inid(i) for i in range(4)]))
-    assert_equal(fm.get_outsize(), 4)
     assert_false(fm.flow[0].is_training())
     assert_false(fm.flow[1].is_training())
 
     fds = fm.forward(ds)
     assert_true(isinstance(fds, Dataset))
     assert_equal(fds.samples.shape, ds.samples.shape)
-    assert_equal(fm.get_outsize(), ds.nfeatures)
 
 
 def test_mdpflow_additional_arguments():
@@ -132,3 +125,33 @@ def test_pcamapper():
     assert_equal(p.shape, (40, 20))
     # check that the mapped data can be fully recovered by 'reverse()'
     assert_array_almost_equal(pm.reverse(p), ndlin)
+
+
+def test_icamapper():
+    # data: 40 sample feature line in 2d space (40x2; samples x features)
+    samples = N.vstack([N.arange(40.) for i in range(2)]).T
+    samples -= samples.mean()
+    samples +=  N.random.normal(size=samples.shape, scale=0.1)
+    ndlin = Dataset(samples)
+
+    pm = ICAMapper()
+    pm.train(ndlin.copy())
+    assert_equal(pm.proj.shape, (2, 2))
+
+    p = pm.forward(ndlin.copy())
+    assert_equal(p.shape, (40, 2))
+    # check that the mapped data can be fully recovered by 'reverse()'
+    assert_array_almost_equal(pm.reverse(p), ndlin)
+
+
+def test_llemapper():
+    if not externals.exists('mdp ge 2.4'):
+        return
+
+    ds = Dataset(N.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
+                          [1., 0., 0.], [0., 1., 1.], [1., 0., 1.],
+                          [1., 1., 0.], [1., 1., 1.]]))
+    pm = LLEMapper(3, output_dim=2)
+    pm.train(ds)
+    fmapped = pm(ds)
+    assert_equal(fmapped.shape, (8, 2))

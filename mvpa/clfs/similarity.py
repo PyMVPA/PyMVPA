@@ -27,7 +27,7 @@ class Similarity(object):
     def __repr__(self):
         return "Similarity()"
 
-    def compute(self, data1, data2=None):
+    def computed(self, data1, data2=None):
         raise NotImplementedError
 
 
@@ -38,11 +38,11 @@ class SingleDimensionSimilarity(Similarity):
         Similarity.__init__(self, **kwargs)
         self.d = d
 
-    def compute(self, data1, data2=None):
+    def computed(self, data1, data2=None):
         if data2 == None: data2 = data1
         self.similarity_matrix = N.exp(-N.abs(data1[:,self.d],data2[:,self.d]))
         return self.similarity_matrix
-    
+
 
 class StreamlineSimilarity(Similarity):
     """Compute similarity between two streamlines.
@@ -52,19 +52,36 @@ class StreamlineSimilarity(Similarity):
         Similarity.__init__(self)
         self.distance = distance
         self.gamma = gamma
-        
-    
-    def compute(self, data1, data2=None):
-        if data2 == None: data2 = data1
+
+
+    def computed(self, data1, data2=None):
+        if data2 == None:
+            data2 = data1
         self.distance_matrix = N.zeros((len(data1), len(data2)))
-        ## debug("MAP",str(len(data1))+" - "+str(len(data2)))
-        ## debug("MAP","data1:"+str(data1))
-        ## debug("MAP","data2:"+str(data2))
-        for i in range(len(data1)):
-            for j in range(len(data2)):
-                self.distance_matrix[i,j] = self.distance(data1[i],data2[j])
-                ## debug("MAP","data1_"+str(i)+":"+str(data1[i])+" - data2_"+str(j)+":"+str(data2[j])+" - distance="+str(self.distance_matrix[i,j]))
-                pass
-            pass
+
+        # setup helpers to pull out content of object-type arrays
+        if isinstance(data1, N.ndarray) and N.issubdtype(data1.dtype, N.object):
+            d1extract = _pass_obj_content
+        else:
+            d1extract = lambda x: x
+
+        if isinstance(data2, N.ndarray) and N.issubdtype(data2.dtype, N.object):
+            d2extract = _pass_obj_content
+        else:
+            d2extract = lambda x: x
+
+        # TODO: use N.fromfunction
+        for i, d1 in enumerate(data1):
+            for j, d2 in enumerate(data2):
+                self.distance_matrix[i,j] = self.distance(d1extract(data1[i]),
+                                                          d2extract(data2[j]))
+
         self.similarity_matrix = N.exp(-self.gamma*self.distance_matrix)
         return self.similarity_matrix
+
+
+def _pass_obj_content(data):
+    """Helper that can be used to return the content of a single-element
+    array of type 'object' to access its real content.
+    """
+    return data[0]
