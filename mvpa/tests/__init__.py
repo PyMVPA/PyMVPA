@@ -128,6 +128,9 @@ def collectNoseTests():
               ]
     if externals.exists('scipy'):
         tests += ['test_mapper_sp']
+    if externals.exists('glmnet'):
+        tests += ['test_glmnet']
+
     return tests
 
 def runNoseTests():
