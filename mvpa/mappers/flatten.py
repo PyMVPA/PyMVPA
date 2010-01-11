@@ -162,53 +162,6 @@ class FlattenMapper(Mapper):
         return mds
 
 
-    def is_valid_outid(self, id):
-        """Checks for a valid output id for this (trained) mapper).
-
-        If the mapper is not trained any id is invalid.
-        """
-        # untrained -- all is invalid
-        if self.__nfeatures is None:
-            return False
-        return id >= 0 and id < self.__nfeatures
-
-
-    def is_valid_inid(self, id):
-        """Checks for a valid output id for this (trained) mapper).
-
-        If the mapper is not trained any id is invalid.
-        """
-        # untrained -- all is invalid
-        if self.__nfeatures is None:
-            return False
-        # check for proper coordinate (also handle the case of 1d coords given
-        # as scalars
-        if N.isscalar(id):
-            # scalar id but multiple dimensions -> wrong
-            if len(self.__origshape) > 1:
-                return False
-            # scalar id and scalar data -> id must be 0
-            elif not len(self.__origshape):
-                return id == 0
-            # otherwise no flattening is done and inid == outid
-            else:
-                return self.is_valid_outid(id)
-        if len(id) == len(self.__origshape):
-            return isInVolume(id, self.__origshape)
-
-        return False
-
-
-    def get_insize(self):
-        """Return the (flattened) size of input space vectors."""
-        return self.__nfeatures
-
-
-    def get_outsize(self):
-        """Return the size of output space vectors."""
-        return self.__nfeatures
-
-
 
 def mask_mapper(mask=None, shape=None, inspace=None):
     """

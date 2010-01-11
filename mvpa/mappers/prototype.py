@@ -10,7 +10,6 @@
 
 import numpy as N
 
-from mvpa.base.dochelpers import enhancedDocString
 from mvpa.mappers.base import accepts_dataset_as_samples
 from mvpa.mappers.projection import ProjectionMapper
 
@@ -43,9 +42,6 @@ class PrototypeMapper(ProjectionMapper):
         self.prototypes = prototypes
 
 
-    __doc__ = enhancedDocString('PrototypeMapper', locals(), ProjectionMapper)
-
-
     @accepts_dataset_as_samples
     def _train(self, samples):
         """Train PrototypeMapper
@@ -55,4 +51,3 @@ class PrototypeMapper(ProjectionMapper):
                                for similarity in self.similarities])
         debug("MAP", "projected data of shape %s: %s "
               % (self._proj.shape, self._proj))
-

@@ -12,7 +12,6 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.base.dochelpers import enhancedDocString
 from mvpa.mappers.projection import ProjectionMapper
 from mvpa.datasets import Dataset
 from mvpa.featsel.helpers import ElementSelector
@@ -63,7 +62,6 @@ class ProcrusteanMapper(ProjectionMapper):
         self._scale = None
         """Estimated scale"""
 
-    __doc__ = enhancedDocString('ProcrusteanMapper', locals(), ProjectionMapper)
 
     # XXX we should just use beautiful ClassWithCollections everywhere... makes
     # life so easier... for now -- manual
@@ -211,5 +209,3 @@ class ProcrusteanMapper(ProjectionMapper):
             d_r = N.linalg.norm(odatas[0] - res_r)/N.linalg.norm(odatas[0])
             debug('MAP_', "%s, residuals are forward: %g,"
                   " reverse: %g" % (repr(self), d_f, d_r))
-
-
