@@ -75,20 +75,20 @@ class _GLMNET(Classifier):
 
     To make use of GLMNET, you must have R and RPy2 installed as well
     as the glmnet contributed package. You can install the R and RPy2
-    with the following command on Debian-based machines:
+    with the following command on Debian-based machines::
 
-    sudo aptitude install python-rpy2 r-base-dev
+      sudo aptitude install python-rpy2 r-base-dev
 
     You can then install the glmnet package by running R
-    as root and calling:
+    as root and calling::
 
-    install.packages()
+      install.packages()
 
     """
 
     __tags__ = [ 'glmnet', 'linear', 'has_sensitivity',
-                       'does_feature_selection'
-                       ]
+                 'does_feature_selection'
+                 ]
 
     family = Parameter('gaussian',
                        allowedtype='basestring',
@@ -233,7 +233,7 @@ class _GLMNET(Classifier):
         classes = None
         if self.params.family == 'multinomial':
             # remove last dimension of values
-            values = values[:,:,0]
+            values = values[:, :, 0]
 
             # get the classes too (they are 1-indexed)
             class_ind = N.array(r.predict(self.__trained_model,
@@ -253,7 +253,7 @@ class _GLMNET(Classifier):
             classes = self._ulabels[class_ind].squeeze()
         else:
             # is gaussian, so just remove last dim of values
-            values = values[:,0]
+            values = values[:, 0]
 
         # values need to be set anyways if values state is enabled
         self.states.estimates = values
