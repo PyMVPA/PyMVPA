@@ -279,9 +279,13 @@ def absolute_features():
 
 
 def sumofabs_sample():
+    """Returns a mapper that returns the sum of absolute values of all samples.
+    """
     return FxMapper('samples', lambda x: N.abs(x).sum())
 
 def maxofabs_sample():
+    """Returns a mapper that finds max of absolute values of all samples.
+    """
     return FxMapper('samples', lambda x: N.abs(x).max())
 #
 # Utility functions
