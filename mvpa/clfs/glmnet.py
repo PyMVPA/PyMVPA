@@ -237,7 +237,12 @@ class _GLMNET(Classifier):
             class_ind = (class_ind-1).astype('int')
 
             # convert to actual labels
-            classes = self._ulabels[class_ind][:,0]
+            # XXX If just one sample is predicted, the converted predictions
+            # array is just 1D, hence it yields an IndexError on [:,0]
+            # Modified to .squeeze() which should do the same.
+            # Please acknowledge and remove this comment.
+            #classes = self._ulabels[class_ind][:,0]
+            classes = self._ulabels[class_ind].squeeze()
         else:
             # is gaussian, so just remove last dim of values
             values = values[:,0]
