@@ -185,40 +185,7 @@ class Splitter(object):
 
         # for each split
         cfgs = self.splitcfg(dataset)
-
-        # Select just some splits if desired
-        count, Ncfgs = self.count, len(cfgs)
-
-        # further makes sense only iff count < Ncfgs,
-        # otherwise all strategies are equivalent
-        if count is not None and count < Ncfgs:
-            if count < 1:
-                # we can only wish a good luck
-                return
-            strategy = self.strategy
-            if strategy == 'first':
-                cfgs = cfgs[:count]
-            elif strategy in ['equidistant', 'random']:
-                if strategy == 'equidistant':
-                    # figure out what step is needed to
-                    # acommodate the `count` number
-                    step = float(Ncfgs) / count
-                    assert(step >= 1.0)
-                    indexes = [int(round(step * i)) for i in xrange(count)]
-                elif strategy == 'random':
-                    indexes = N.random.permutation(range(Ncfgs))[:count]
-                    # doesn't matter much but lets keep them in the original
-                    # order at least
-                    indexes.sort()
-                else:
-                    # who said that I am paranoid?
-                    raise RuntimeError, "Really should not happen"
-                if __debug__:
-                    debug("SPL", "For %s strategy selected %s splits "
-                          "from %d total" % (strategy, indexes, Ncfgs))
-                cfgs = [cfgs[i] for i in indexes]
-            # update Ncfgs
-            Ncfgs = len(cfgs)
+        n_cfgs = len(cfgs)
 
         # Finally split the data
         for isplit, split in enumerate(cfgs):
@@ -246,7 +213,7 @@ class Splitter(object):
                     #     thread-safety etc
                     if ds is not None:
                         ds_a = ds.a
-                        lastsplit = (isplit == Ncfgs-1)
+                        lastsplit = (isplit == n_cfgs-1)
                         if not ds_a.has_key('lastsplit'):
                             # if not yet known -- add one
                             ds_a['lastsplit'] = lastsplit
@@ -382,7 +349,41 @@ class Splitter(object):
 
     def splitcfg(self, dataset):
         """Return splitcfg for a given dataset"""
-        return self._getSplitConfig(dataset.sa[self.__splitattr].unique)
+        cfgs = self._getSplitConfig(dataset.sa[self.__splitattr].unique)
+
+        # Select just some splits if desired
+        count, n_cfgs = self.count, len(cfgs)
+
+        # further makes sense only iff count < n_cfgs,
+        # otherwise all strategies are equivalent
+        if count is not None and count < n_cfgs:
+            if count < 1:
+                # we can only wish a good luck
+                return []
+            strategy = self.strategy
+            if strategy == 'first':
+                cfgs = cfgs[:count]
+            elif strategy in ['equidistant', 'random']:
+                if strategy == 'equidistant':
+                    # figure out what step is needed to
+                    # accommodate the `count` number
+                    step = float(n_cfgs) / count
+                    assert(step >= 1.0)
+                    indexes = [int(round(step * i)) for i in xrange(count)]
+                elif strategy == 'random':
+                    indexes = N.random.permutation(range(n_cfgs))[:count]
+                    # doesn't matter much but lets keep them in the original
+                    # order at least
+                    indexes.sort()
+                else:
+                    # who said that I am paranoid?
+                    raise RuntimeError, "Really should not happen"
+                if __debug__:
+                    debug("SPL", "For %s strategy selected %s splits "
+                          "from %d total" % (strategy, indexes, n_cfgs))
+                cfgs = [cfgs[i] for i in indexes]
+
+        return cfgs
 
 
     strategy = property(fget=lambda self:self.__strategy,

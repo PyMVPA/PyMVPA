@@ -299,6 +299,10 @@ class SplitterTests(unittest.TestCase):
                 self.failUnless(len(splits) == target)
                 chosenchunks = [int(s[1].uniquechunks) for s in splits]
 
+                # Test if configuration matches as well
+                nsplits_cfg = len(nfs.splitcfg(self.data))
+                self.failUnlessEqual(nsplits_cfg, target)
+
                 # Check if "lastsplit" dsattr was assigned appropriately
                 nsplits = len(splits)
                 if nsplits > 0:
