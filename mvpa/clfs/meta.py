@@ -256,7 +256,7 @@ class ProxyClassifier(Classifier):
 
     def _setRetrainable(self, value, force=False):
         # XXX Lazy implementation
-        self.clf._setRetrainable(value, force)
+        self.clf._setRetrainable(value, force=force)
         super(ProxyClassifier, self)._setRetrainable(value, force)
         if value and not (self.states['retrained']
                           is self.clf.states['retrained']):
@@ -1450,6 +1450,10 @@ class RegressionAsClassifier(ProxyClassifier):
         # hypothesis
         self.__tags__ += ['binary', 'multiclass', 'regression_based']
 
+        # XXX No support for retrainable in RegressionAsClassifier yet
+        if 'retrainable' in self.__tags__:
+            self.__tags__.remove('retrainable')
+
         # Pylint/user friendliness
         #self._trained_ul = None
         self._trained_attrmap = None
@@ -1544,3 +1548,9 @@ class RegressionAsClassifier(ProxyClassifier):
                 self,
                 analyzer=self.clf.getSensitivityAnalyzer(**slave_kwargs),
                 **kwargs)
+
+    def _setRetrainable(self, value, **kwargs):
+        if value:
+            raise NotImplementedError, \
+                  "RegressionAsClassifier wrappers are not yet retrainable"
+        ProxyClassifier._setRetrainable(self, value, **kwargs)
