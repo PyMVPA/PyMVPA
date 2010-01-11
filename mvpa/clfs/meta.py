@@ -42,7 +42,8 @@ from mvpa.misc.transformers import FirstAxisMean
 from mvpa.measures.base import \
     BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer, \
     MappedClassifierSensitivityAnalyzer, \
-    FeatureSelectionClassifierSensitivityAnalyzer
+    FeatureSelectionClassifierSensitivityAnalyzer, \
+    RegressionAsClassifierSensitivityAnalyzer
 
 from mvpa.base import warning
 
@@ -1533,3 +1534,13 @@ class RegressionAsClassifier(ProxyClassifier):
                                'self_': self})
 
         return predictions
+
+    @group_kwargs(prefixes=['slave_'], passthrough=True)
+    def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
+        """Return an appropriate SensitivityAnalyzer
+
+        """
+        return RegressionAsClassifierSensitivityAnalyzer(
+                self,
+                analyzer=self.clf.getSensitivityAnalyzer(**slave_kwargs),
+                **kwargs)
