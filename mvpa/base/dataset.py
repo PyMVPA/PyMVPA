@@ -684,12 +684,7 @@ class DatasetError(Exception):
     """
     # A ValueError exception is too generic to be used for any needed case,
     # thus this one is created
-    def __init__(self, msg=""):
-        Exception.__init__(self)
-        self.__msg = msg
-
-    def __str__(self):
-        return "Dataset handling exception: " + self.__msg
+    pass
 
 
 class DatasetAttributeExtractor(object):
