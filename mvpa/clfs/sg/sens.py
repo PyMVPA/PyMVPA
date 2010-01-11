@@ -18,6 +18,7 @@ if externals.exists('shogun', raiseException=True):
 
 from mvpa.misc.state import StateVariable
 from mvpa.measures.base import Sensitivity
+from mvpa.datasets.base import Dataset
 
 if __debug__:
     from mvpa.base import debug
@@ -65,5 +66,8 @@ class LinearSVMWeights(Sensitivity):
                 sens.append(self.__sg_helper(svm.get_svm(i)))
         else:
             sens = self.__sg_helper(svm)
-        return N.asarray(sens)
 
+        ds = Dataset(N.atleast_2d(sens))
+        # TODO: handle binary(1)/multiclass(pairs) correctly
+        #       and assign labels
+        return ds
