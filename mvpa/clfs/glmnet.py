@@ -19,11 +19,14 @@ import mvpa.base.externals as externals
 if externals.exists('glmnet', raiseException=True):
     import rpy2.robjects
     import rpy2.robjects.numpy2ri
+    RRuntimeError = rpy2.robjects.rinterface.RRuntimeError
     r = rpy2.robjects.r
     r.library('glmnet')
 
 # local imports
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa.base import warning
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
+     FailedToTrainError
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.param import Parameter
 from mvpa.datasets.base import Dataset
@@ -183,16 +186,21 @@ class _GLMNET(Classifier):
             pmax = self.params.pmax
 
         # train with specifying max_steps
-        self.__trained_model = r.glmnet(dataset.samples,
-                                        labels,
-                                        family=self.params.family,
-                                        alpha=self.params.alpha,
-                                        nlambda=self.params.nlambda,
-                                        standardize=self.params.standardize,
-                                        thresh=self.params.thresh,
-                                        pmax=pmax,
-                                        maxit=self.params.maxit,
-                                        type=self.params.model_type)
+        try:
+            self.__trained_model = r.glmnet(dataset.samples,
+                                            labels,
+                                            family=self.params.family,
+                                            alpha=self.params.alpha,
+                                            nlambda=self.params.nlambda,
+                                            standardize=self.params.standardize,
+                                            thresh=self.params.thresh,
+                                            pmax=pmax,
+                                            maxit=self.params.maxit,
+                                            type=self.params.model_type)
+        except RRuntimeError, e:
+            raise FailedToTrainError, \
+                  "Failed to train %s on %s. Got '%s' during call r.glmnet()." \
+                  % (self, dataset, e)
 
         # get the field names of the model
         fnames = N.array(self.__trained_model.getnames())
