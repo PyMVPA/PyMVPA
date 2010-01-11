@@ -89,10 +89,10 @@ def sweepargs(**kwargs):
 
                         failed_tests[eidstr].append(
                             # skip top-most tb in sweep_args
-                            (argname, repr(argvalue), tb.tb_next, estr))
+                            (argname, str(argvalue), tb.tb_next, estr))
 
                         if __debug__:
-                            msg = "%s on %s=%r" % (estr, argname, argvalue)
+                            msg = "%s on %s=%s" % (estr, argname, argvalue)
                             debug('TEST', 'Failed unittest: %s\n%s'
                                   % (eidstr, msg))
                     untrain_clf(argvalue)
@@ -135,7 +135,10 @@ def sweepargs(**kwargs):
         return do_sweep
 
     if len(kwargs) > 1:
-        raise NotImplementedError
+        raise NotImplementedError, \
+              "No sweeping over multiple arguments in sweepargs. Meanwhile " \
+              "use two @sweepargs decorators for the test."
+
     return unittest_method
 
 # Define datasets to be used all over. Split-half later on is used to
