@@ -23,7 +23,7 @@ from mvpa.kernels.np import SquaredExponentialKernel, GeneralizedLinearKernel, \
      LinearKernel
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import InvalidHyperparameterError
-from mvpa.datasets import dataset
+from mvpa.datasets import Dataset
 
 if externals.exists("scipy", raiseException=True):
     from scipy.linalg import cho_solve as SLcho_solve
@@ -248,7 +248,9 @@ class GPR(Classifier):
         #     kernel.LinearKernel so everything shoudl be ok
         if flavor == 'auto':
             flavor = ('model_select', 'linear')\
-                     [int(isinstance(self.__kernel, GeneralizedLinearKernel))]
+                     [int(isinstance(self.__kernel, GeneralizedLinearKernel)
+                          or
+                          isinstance(self.__kernel, LinearKernel))]
             if __debug__:
                 debug("GPR", "Returning '%s' sensitivity analyzer" % flavor)
 
@@ -492,8 +494,11 @@ class GPRLinearWeights(Sensitivity):
         clf = self.clf
         kernel = clf.kernel
         train_fv = clf._train_fv
-
-        weights = Ndot(kernel.Sigma_p,
+        if isinstance(kernel, LinearKernel):
+            Sigma_p = 1.0
+        else:
+            Sigma_p = kernel.Sigma_p
+        weights = Ndot(Sigma_p,
                         Ndot(train_fv.T, clf._alpha))
 
         if self.states.is_enabled('variances'):
@@ -503,12 +508,12 @@ class GPRLinearWeights(Sensitivity):
             # XXX in such lengthy matrix manipulations you might better off
             #     using N.matrix where * is a matrix product
             self.states.variances = Ndiag(
-                kernel.Sigma_p -
-                Ndot(kernel.Sigma_p,
+                Sigma_p -
+                Ndot(Sigma_p,
                       Ndot(train_fv.T,
                             Ndot(Kyinv,
-                                  Ndot(train_fv, kernel.Sigma_p)))))
-        return weights
+                                  Ndot(train_fv, Sigma_p)))))
+        return Dataset(N.atleast_2d(weights))
 
 
 if externals.exists('openopt'):
