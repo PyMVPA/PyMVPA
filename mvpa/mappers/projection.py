@@ -186,23 +186,5 @@ class ProjectionMapper(Mapper):
         return recon
 
 
-    def get_insize(self):
-        """Returns the number of original features."""
-        return self._proj.shape[0]
-
-
-    def get_outsize(self):
-        """Returns the number of components to project on."""
-        return self._proj.shape[1]
-
-
-    def selectOut(self, outIds):
-        """Choose a subset of components (and remove all others)."""
-        self._proj = self._proj[:, outIds]
-        if self._offset_out is not None:
-            self._offset_out = self._offset_out[outIds]
-        # invalidate reconstruction matrix
-        self._recon = None
-
     proj  = property(fget=lambda self: self._proj, doc="Projection matrix")
     recon = property(fget=_getRecon, doc="Backprojection matrix")
