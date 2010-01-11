@@ -27,12 +27,14 @@ class LinearSVMWeights(Sensitivity):
 
     _ATTRIBUTE_COLLECTIONS = ['params']
 
+    # XXX TODO: should become just as sa may be?
     biases = StateVariable(enabled=True,
-                           doc="Offsets of separating hyperplanes")
+                           doc="Offsets of separating hyper-planes")
 
     split_weights = Parameter(False, allowedtype='bool',
                   doc="If binary classification either to sum SVs per each "
-                      "class separately")
+                      "class separately.  Note: be careful with interpretation"
+                      " of the values")
 
     def __init__(self, clf, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
@@ -49,13 +51,21 @@ class LinearSVMWeights(Sensitivity):
 
     def _call(self, dataset, callables=[]):
         # local bindings
-        model = self.clf.model
+        clf = self.clf
+        model = clf.model
         nr_class = model.nr_class
+        svm_labels = model.labels
 
-        if nr_class != 2:
-            warning("You are estimating sensitivity for SVM %s trained on %d" %
-                    (str(self.clf), self.clf.model.nr_class) +
-                    " classes. Make sure that it is what you intended to do" )
+        # Labels for sensitivities to be returned
+        sens_labels = None
+
+        # No need to warn since now we by default we do not do
+        # anything evil and provide labels -- so it is up for a user
+        # to decide either he wants to do something silly
+        #if nr_class != 2:
+        #    warning("You are estimating sensitivity for SVM %s trained on %d" %
+        #            (str(clf), nr_class) +
+        #            " classes. Make sure that it is what you intended to do" )
 
         svcoef = N.matrix(model.getSVCoef())
         svs = N.matrix(model.getSV())
@@ -69,7 +79,6 @@ class LinearSVMWeights(Sensitivity):
                       " non-binary classification task"
             # libsvm might have different idea on the ordering
             # of labels, so we would need to map them back explicitely
-            svm_labels = model.getLabels() # labels as assigned by libsvm
             ds_labels = list(dataset.sa['labels'].unique) # labels in the dataset
             senses = [None for i in ds_labels]
             # first label is given positive value
@@ -79,9 +88,10 @@ class LinearSVMWeights(Sensitivity):
                 c_ = c.A[0]
                 # NOTE svm_labels are numerical; ds_labels are literal
                 senses[ds_labels.index(
-                            self.clf._attrmap.to_literal(svm_labels[i]))] = \
+                            clf._attrmap.to_literal(svm_labels[i]))] = \
                                 (l(svcoef[:, c_] * svs[c_, :])).A[0]
             weights = N.array(senses)
+            sens_labels = svm_labels
         else:
             # XXX yoh: .mean() is effectively
             # averages across "sensitivities" of all paired classifiers (I
@@ -92,7 +102,40 @@ class LinearSVMWeights(Sensitivity):
             # weighted impact of SVs on decision, then for each feature
             # take mean across SVs to get a single weight value
             # per feature
-            weights = (svcoef * svs).A
+            if nr_class <= 2:
+                # as simple as this
+                weights = (svcoef * svs).A
+                sens_labels = [tuple(svm_labels)]
+            else:
+                # we need to compose correctly per each pair of classifiers.
+                # See docstring for getSVCoef for more details on internal
+                # structure of bloody storage
+
+                # total # of pairs
+                npairs = nr_class * (nr_class-1)/2
+                # # of SVs in each class
+                NSVs_perclass = model.getNSV()
+                # indices where each class starts in each row of SVs
+                # name is after similar variable in libsvm internals
+                nz_start = N.cumsum([0] + NSVs_perclass[:-1])
+                nz_end = nz_start + NSVs_perclass
+                # reserve storage
+                weights = N.zeros((npairs, svs.shape[1]))
+                ipair = 0               # index of the pair
+                """
+                // classifier (i,j): coefficients with
+				// i are in sv_coef[j-1][nz_start[i]...],
+				// j are in sv_coef[i][nz_start[j]...]
+                """
+                sens_labels = []
+                for i in xrange(nr_class):
+                    for j in xrange(i+1, nr_class):
+                        weights[ipair, :] = N.asarray(
+                            svcoef[j-1, nz_start[i]:nz_end[i]]
+                            * svs[nz_start[i]:nz_end[i]])
+                        sens_labels += [(svm_labels[i], svm_labels[j])]
+                        ipair += 1      # go to the next pair
+                assert(ipair == npairs)
 
         if __debug__:
             debug('SVM',
@@ -102,11 +145,12 @@ class LinearSVMWeights(Sensitivity):
                   (svcoef.shape, svs.shape, rhos) + \
                   " Result: min=%f max=%f" % (N.min(weights), N.max(weights)))
 
+        # and we should have prepared the labels
+        assert(sens_labels is not None)
+
         # NOTE: `weights` is already and always 2D
-        ds = Dataset(weights)
-        # add labels if split weights were computed
-        if self.params.split_weights:
-            ds.sa['labels'] = dataset.sa['labels'].unique
-        return ds
+        weights_ds = Dataset(weights, sa={'labels': sens_labels})
+
+        return weights_ds
 
     _customizeDocInherit = True
