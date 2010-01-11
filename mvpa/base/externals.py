@@ -298,7 +298,6 @@ def __check_reportlab():
     import reportlab as rl
     versions['reportlab'] = SmartVersion(rl.Version)
 
-
 def __check_rpy():
     """Check either rpy is available and also set it for the sane execution
     """
@@ -340,9 +339,11 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
           'rpy': "__check_rpy()",
+          'rpy2': "import rpy2 as __",
           'lars': "exists('rpy', raiseException=True); import rpy; rpy.r.library('lars')",
           'elasticnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('elasticnet')",
-          'glmnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('glmnet')",
+          # 'glmnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('glmnet')",
+          'glmnet': "exists('rpy2', raiseException=True); import rpy2.robjects; rpy2.robjects.r.library('glmnet')",
           'matplotlib': "__check_matplotlib()",
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
@@ -429,7 +430,7 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
         # Exceptions which are silently caught while running tests for externals
         _caught_exceptions = [ImportError, AttributeError, RuntimeError]
 
-        # check whether RPy is involved and catch its excpetions as well.
+        # check whether RPy is involved and catch its exceptions as well.
         # however, try to determine whether this is really necessary, as
         # importing RPy also involved starting a full-blown R session, which can
         # take seconds and therefore is quite nasty...
@@ -445,7 +446,6 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
                         _caught_exceptions += [RException]
             except:
                 pass
-
 
         estr = ''
         try:

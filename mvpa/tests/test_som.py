@@ -27,18 +27,11 @@ class SOMMapperTests(unittest.TestCase):
 
         # no acces when nothing is there
         self.failUnlessRaises(RuntimeError, som._accessKohonen)
-        self.failUnlessRaises(RuntimeError, som.get_insize)
-        self.failUnlessRaises(RuntimeError, som.get_outsize)
 
         som.train(colors)
 
-        self.failUnless(som.get_insize() == 3)
-        self.failUnless(som.get_outsize() == (10,5))
-
         fmapped = som(colors)
         self.failUnless(fmapped.shape == (8, 2))
-        for fm in fmapped:
-            self.failUnless(som.is_valid_outid(fm))
 
         # reverse mapping
         rmapped = som.reverse(fmapped)

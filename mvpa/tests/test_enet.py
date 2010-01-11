@@ -51,7 +51,7 @@ class ENETTests(unittest.TestCase):
 
 
     def testENETSensitivities(self):
-        data = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+        data = datasets['chirp_linear']
 
         # use ENET on binary problem
         clf = ENET()

@@ -144,38 +144,31 @@ class MDPNodeMapper(Mapper):
         return self.node.inverse(N.atleast_2d(data), *args, **kwargs).squeeze()
 
 
-    def get_insize(self):
-        """Returns the node's input dim."""
-        return self.node.input_dim
-
-
-    def get_outsize(self):
-        """Returns the node's output dim."""
-        return self.node.output_dim
-
-
 
 class PCAMapper(MDPNodeMapper):
     """Convenience wrapper to perform PCA using MDP's Mapper
     """
 
-    def __init__(self, alg='PCA', **kwargs):
+    def __init__(self, alg='PCA', nodeargs=None, **kwargs):
         """
         Parameters
         ----------
         alg : {'PCA', 'NIPALS'}
           Which MDP implementation of a PCA to use.
+        nodeargs : None or dict
+          Arguments passed to the MDP node in various stages of its lifetime.
+          See the baseclass for more details.
         **kwargs
-          See the base class for information about additional arguments.
+          Additional constructor arguments for the MDP node.
         """
         if alg == 'PCA':
-            node = mdp.nodes.PCANode()
+            node = mdp.nodes.PCANode(**kwargs)
         elif alg == 'NIPALS':
-            node = mdp.nodes.NIPALSNode()
+            node = mdp.nodes.NIPALSNode(**kwargs)
         else:
             raise ValueError("Unkown algorithm '%s' for PCAMapper."
                              % alg)
-        MDPNodeMapper.__init__(self, node, **kwargs)
+        MDPNodeMapper.__init__(self, node, nodeargs=nodeargs)
 
 
     proj = property(fget=lambda self: self.node.get_projmatrix(),
@@ -185,6 +178,37 @@ class PCAMapper(MDPNodeMapper):
     var = property(fget=lambda self: self.node.d, doc="Variances per component")
     centroid = property(fget=lambda self: self.node.avg,
                         doc="Mean of the traiing data")
+
+
+class ICAMapper(MDPNodeMapper):
+    """Convenience wrapper to perform ICA using MDP nodes.
+    """
+    def __init__(self, alg='FastICA', nodeargs=None, **kwargs):
+        """
+        Parameters
+        ----------
+        alg : {'FastICA', 'CuBICA'}
+          Which MDP implementation of an ICA to use.
+        nodeargs : None or dict
+          Arguments passed to the MDP node in various stages of its lifetime.
+          See the baseclass for more details.
+        **kwargs
+          Additional constructor arguments for the MDP node.
+        """
+        if alg == 'FastICA':
+            node = mdp.nodes.FastICANode(**kwargs)
+        elif alg == 'CuBICA':
+            node = mdp.nodes.CuBICANode(*kwargs)
+        else:
+            raise ValueError("Unkown algorithm '%s' for ICAMapper."
+                             % alg)
+        MDPNodeMapper.__init__(self, node, nodeargs=nodeargs)
+
+
+    proj = property(fget=lambda self: self.node.get_projmatrix(),
+                    doc="Projection matrix (as an array)")
+    recon = property(fget=lambda self: self.node.get_projmatrix(),
+                     doc="Backprojection matrix (as an array)")
 
 
 
@@ -292,31 +316,3 @@ class MDPFlowMapper(Mapper):
 
     def _reverse_data(self, data):
         return self.flow.inverse(N.atleast_2d(data)).squeeze()
-
-
-    def is_valid_outid(self, id):
-        # untrained -- all is invalid
-        outdim = self.get_outsize()
-        if outdim is None:
-            kwargs[k] = skwargs[k](ds)
-        else:
-            kwargs[k] = skwargs[k]
-        return args, kwargs
-
-
-    def is_valid_inid(self, id):
-        # untrained -- all is invalid
-        indim = self.get_insize()
-        if indim is None:
-            return False
-        return id >= 0 and id < indim
-
-
-    def get_insize(self):
-        """Return the (flattened) size of input space vectors."""
-        return self.flow[0].input_dim
-
-
-    def get_outsize(self):
-        """Return the size of output space vectors."""
-        return self.flow[-1].output_dim

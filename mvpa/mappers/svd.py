@@ -12,7 +12,6 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.base.dochelpers import enhancedDocString
 from mvpa.mappers.base import accepts_dataset_as_samples
 from mvpa.mappers.projection import ProjectionMapper
 from mvpa.featsel.helpers import ElementSelector
@@ -43,8 +42,6 @@ class SVDMapper(ProjectionMapper):
         self._sv = None
         """Singular values of the training matrix."""
 
-    __doc__ = enhancedDocString('SVDMapper', locals(), ProjectionMapper)
-
 
     @accepts_dataset_as_samples
     def _train(self, samples):
@@ -74,18 +71,6 @@ class SVDMapper(ProjectionMapper):
                 debug("MAP_", "Mixing matrix has %s shape and norm=%f" %
                       (self._proj.shape, N.linalg.norm(self._proj)))
 
-
-    def selectOut(self, outIds):
-        """Choose a subset of SVD components (and remove all others)."""
-        # handle ElementSelector operating on SV (base class has no idea about)
-        # XXX think about more generic interface, where some 'measure' is assigned
-        # per each projection dimension, like in _sv in case of SVD.
-        # May be selector could be parametrized with an instance + attribute as literal
-        # so later on it could extract necessary values?
-        if isinstance(self._selector, ElementSelector):
-            ProjectionMapper.selectOut(self, self._selector(self._sv))
-        else:
-            ProjectionMapper.selectOut(self, outIds)
 
     def _computeRecon(self):
         """Since singular vectors are orthonormal, sufficient to take hermitian
