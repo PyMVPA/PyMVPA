@@ -32,16 +32,11 @@ def test_mdpnodemapper():
 
     mm.train(ds)
 
-    assert_equal(mm.get_insize(), 4)
-    assert_true(N.all([mm.is_valid_inid(i) for i in range(4)]))
-    assert_equal(mm.get_outsize(), 4)
-
     fds = mm.forward(ds)
     assert_true(hasattr(mm.node, 'cov_mtx'))
 
     assert_true(isinstance(fds, Dataset))
     assert_equal(fds.samples.shape, ds.samples.shape)
-    assert_equal(mm.get_outsize(), ds.nfeatures)
 
     # set projection onto first 2 components
     mm.nodeargs['exec'] = ((), {'n': 2})
@@ -64,7 +59,6 @@ def test_mdpnodemapper():
     # internally
     dsbig = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=10)
     mm.train(dsbig)
-    assert_equal(mm.get_outsize(), 10)
 
 
 def test_mdpflowmapper():
@@ -73,16 +67,12 @@ def test_mdpflowmapper():
     ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
 
     fm.train(ds)
-    assert_equal(fm.get_insize(), 4)
-    assert_true(N.all([fm.is_valid_inid(i) for i in range(4)]))
-    assert_equal(fm.get_outsize(), 4)
     assert_false(fm.flow[0].is_training())
     assert_false(fm.flow[1].is_training())
 
     fds = fm.forward(ds)
     assert_true(isinstance(fds, Dataset))
     assert_equal(fds.samples.shape, ds.samples.shape)
-    assert_equal(fm.get_outsize(), ds.nfeatures)
 
 
 def test_mdpflow_additional_arguments():

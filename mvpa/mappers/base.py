@@ -15,7 +15,6 @@ import copy
 
 from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
 from mvpa.base.dochelpers import _str
-from mvpa.misc.vproperty import VProperty
 
 
 class Mapper(object):
@@ -179,37 +178,10 @@ class Mapper(object):
         mds.samples = msamples
         return mds
 
-
-    def get_insize(self):
-        """Returns the size of the entity in input space"""
-        raise NotImplementedError
-
-
-    def get_outsize(self):
-        """Returns the size of the entity in output space"""
-        raise NotImplementedError
-
-
     #
     # The following methods are candidates for reimplementation in derived
     # classes, in cases where the provided default behavior is not appropriate.
     #
-    def is_valid_outid(self, outid):
-        """Validate feature id in OUT space.
-
-        Override if OUT space is not simly a 1D vector
-        """
-        return(outid >= 0 and outid < self.get_outsize())
-
-
-    def is_valid_inid(self, inid):
-        """Validate id in IN space.
-
-        Override if IN space is not simly a 1D vector
-        """
-        return(inid >= 0 and inid < self.get_insize())
-
-
     def train(self, dataset):
         """Perform training of the mapper.
 
@@ -300,9 +272,6 @@ class Mapper(object):
         """
         """
         self.__inspace = name
-
-
-    nfeatures = VProperty(fget=get_outsize)
 
 
 
@@ -730,26 +699,6 @@ class ChainMapper(Mapper):
             # forward through all but the last mapper
             if i < nmappers:
                 tdata = mapper.forward(tdata)
-
-
-    def get_insize(self):
-        """Returns the size of the entity in input space"""
-        return self[0].get_insize()
-
-
-    def get_outsize(self):
-        """Returns the size of the entity in output space"""
-        return self[-1].get_outsize()
-
-
-    def is_valid_inid(self, id):
-        """Queries the first mapper in the chain for this information."""
-        return self[0].is_valid_inid(id)
-
-
-    def is_valid_outid(self, id):
-        """Queries the last mapper in the chain for this information."""
-        return self[-1].is_valid_outid(id)
 
 
     def __repr__(self):

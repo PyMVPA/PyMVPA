@@ -19,7 +19,6 @@ import numpy as N
 
 from mvpa.base import warning
 from mvpa.mappers.base import Mapper
-from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
     from mvpa.base import debug
@@ -90,25 +89,6 @@ class _WaveletMapper(Mapper):
     def _wm_reverse(self, *args):
         raise NotImplementedError
 
-
-    def get_insize(self):
-        """Returns the number of original features."""
-        return self._inshape[1:]
-
-
-    def get_outsize(self):
-        """Returns the number of wavelet components."""
-        return self._outshape[1:]
-
-
-    def selectOut(self, outIds):
-        """Choose a subset of components...
-
-        just use MaskMapper on top?"""
-        raise NotImplementedError, "Please use in conjunction with MaskMapper"
-
-
-    __doc__ = enhancedDocString('_WaveletMapper', locals(), Mapper)
 
 
 def _getIndexes(shape, dim):
@@ -276,7 +256,7 @@ class WaveletPacketMapper(_WaveletMapper):
             mode=self._mode, maxlevel=self.__level)
 
         # prepare storage
-        signal_shape = wp.shape[:1] + self.get_insize()
+        signal_shape = wp.shape[:1] + self._inshape[1:]
         signal = N.zeros(signal_shape)
         Ntime_points = self._intimepoints
         for indexes in _getIndexes(signal_shape,
@@ -304,11 +284,12 @@ class WaveletPacketMapper(_WaveletMapper):
                       "Reconstruction for a single level for versions of " \
                       "pywt < 0.1.7 (revision 103) is not supported"
             if not externals.exists('pywt wp reconstruct fixed'):
-                warning("Reconstruction using available version of pywt might "
-                        "result in incorrect data in the tails of the signal")
+                warning("%s: Reverse mapping with this version of 'pywt' might "
+                        "result in incorrect data in the tails of the signal. "
+                        "Please check for an update of 'pywt', or be careful "
+                        "when interpreting the edges of the reverse mapped "
+                        "data." % self.__class__.__name__)
             return self.__reverseSingleLevel(data)
-
-
 
 
 
@@ -388,5 +369,3 @@ class WaveletTransformationMapper(_WaveletMapper):
             debug('MAP_', "")
             debug('MAP', "Done iDWT. Total size %s" % (signal.shape, ))
         return signal
-
-

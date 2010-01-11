@@ -204,40 +204,6 @@ class SimpleSOMMapper(Mapper):
         return self.K[tuple(N.transpose(data))]
 
 
-    def get_insize(self):
-        """Returns the size of the entity in input space"""
-        return self.K.shape[-1]
-
-
-    def get_outsize(self):
-        """Returns the size of the entity in output space"""
-        return self.K.shape[:-1]
-
-
-    def selectOut(self, outIds):
-        """Limit the OUT space to a certain set of features.
-
-        This is currently not implemented. Moreover, although it is technically
-        possible to implement this functionality, it is unsure whether it is
-        meaningful in the context of SOMs.
-        """
-        raise NotImplementedError
-
-
-    def getInId(self, outId):
-        """Translate a feature id into a coordinate/index in input space.
-
-        This is not meaningful in the context of SOMs.
-        """
-        raise NotImplementedError
-
-
-    def is_valid_outid(self, outId):
-        """Validate feature id in OUT space.
-        """
-        return (outId >= 0).all() and (outId < self.kshape).all()
-
-
     def __repr__(self):
         s = Mapper.__repr__(self).rstrip(' )')
         # beautify

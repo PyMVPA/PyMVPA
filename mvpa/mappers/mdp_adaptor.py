@@ -144,16 +144,6 @@ class MDPNodeMapper(Mapper):
         return self.node.inverse(N.atleast_2d(data), *args, **kwargs).squeeze()
 
 
-    def get_insize(self):
-        """Returns the node's input dim."""
-        return self.node.input_dim
-
-
-    def get_outsize(self):
-        """Returns the node's output dim."""
-        return self.node.output_dim
-
-
 
 class PCAMapper(MDPNodeMapper):
     """Convenience wrapper to perform PCA using MDP's Mapper
@@ -326,31 +316,3 @@ class MDPFlowMapper(Mapper):
 
     def _reverse_data(self, data):
         return self.flow.inverse(N.atleast_2d(data)).squeeze()
-
-
-    def is_valid_outid(self, id):
-        # untrained -- all is invalid
-        outdim = self.get_outsize()
-        if outdim is None:
-            kwargs[k] = skwargs[k](ds)
-        else:
-            kwargs[k] = skwargs[k]
-        return args, kwargs
-
-
-    def is_valid_inid(self, id):
-        # untrained -- all is invalid
-        indim = self.get_insize()
-        if indim is None:
-            return False
-        return id >= 0 and id < indim
-
-
-    def get_insize(self):
-        """Return the (flattened) size of input space vectors."""
-        return self.flow[0].input_dim
-
-
-    def get_outsize(self):
-        """Return the size of output space vectors."""
-        return self.flow[-1].output_dim
