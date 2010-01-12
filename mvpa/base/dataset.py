@@ -570,7 +570,12 @@ def vstack(datasets):
     datasets must have an identical set of sample attributes (matching keys,
     not values), otherwise a ValueError will be raised.
     No dataset attributes from any source dataset will be transferred into the
-    stacked dataset.
+    stacked dataset. If all input dataset have common dataset attributes that
+    are also valid for the stacked dataset, they can be moved into the output
+    dataset like this::
+
+      ds_merged = vstack((ds1, ds2, ds3))
+      ds_merged.a.update(ds1.a)
 
     Parameters
     ----------
