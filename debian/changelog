@@ -1,3 +1,20 @@
+pymvpa (0.4.3-1.1) unstable; urgency=low
+
+  * Non-maintainer upload, to drop Python 2.4; thanks to Luca Falavigna for the
+    report and to Jakub Wilk for the patch; Closes: #562482
+    - debian/control
+      + bump b-d on python-all-dev to '>= 2.5'
+      + drop python-ctypes
+      + drop explicit Depends on python: we use ${python:Depends}
+    - debian/pyversions
+      + bump it to '+2.5-'
+  * debian/control
+    - bump b-d on python-epydoc to '>= 3.0.1-4': this version works correctly
+      with python-docutils 0.6, hence fixing the FTBFS; thanks to Lucas Nussbaum
+      for the report; Closes: #560606
+
+ -- Sandro Tosi <morph@debian.org>  Tue, 12 Jan 2010 22:10:09 +0100
+
 pymvpa (0.4.3-1) unstable; urgency=low
 
   * New upstream release.

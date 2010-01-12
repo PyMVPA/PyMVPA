@@ -3,7 +3,7 @@ Section: python
 Priority: optional
 Maintainer: Experimental Psychology Maintainers <pkg-exppsy-maintainers@lists.alioth.debian.org>
 Uploaders: Michael Hanke <michael.hanke@gmail.com>, Yaroslav Halchenko <debian@onerussian.com>
-Build-Depends: cdbs, debhelper (>= 5.0.38), swig, python-all-dev (>= 2.4), python-support (>= 0.6), python-numpy-ext, libsvm-dev (>= 2.84.0), python-epydoc (>> 2.99), python-sphinx, python-ctypes (>= 1.0.1), texlive, texlive-latex-extra, help2man, rsync, graphviz, python-lxml, python-nifti, python-nose
+Build-Depends: cdbs, debhelper (>= 5.0.38), swig, python-all-dev (>= 2.5), python-support (>= 0.6), python-numpy-ext, libsvm-dev (>= 2.84.0), python-epydoc (>= 3.0.1-4), python-sphinx, texlive, texlive-latex-extra, help2man, rsync, graphviz, python-lxml, python-nifti, python-nose
 Standards-Version: 3.8.3
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
@@ -12,7 +12,7 @@ XS-DM-Upload-Allowed: yes
 
 Package: python-mvpa
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}, python, python-numpy, python-mvpa-lib(>= ${source:Version})
+Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-mvpa-lib(>= ${source:Version})
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Recommends: python-nifti, python-psyco, python-mdp, python-scipy, shogun-python-modular, python-pywt, python-matplotlib, python-reportlab
@@ -47,7 +47,7 @@ Description: documention and examples for PyMVPA
 
 Package: python-mvpa-lib
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}, python-numpy, python-ctypes (>= 1.0.1) | python (>= 2.5)
+Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}, python-numpy
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Description: low-level implementations and bindings for PyMVPA
