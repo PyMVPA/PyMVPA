@@ -15,8 +15,12 @@
 Separating hyperplane tutorial
 ==============================
 
-This is a tutorial on the basic structure of using a planar decision boundary
-to divide a collection of data-points into two classes.
+This is a very introductory tutorial, showing how a classification task (in
+this case, deciding whether people are sumo wrestlers or basketball players,
+based on their height and weight) can be viewed as drawing a decision boundary
+in a feature space. It shows how to plot the data, calculate the weights of a
+simple linear classifier, and see how the resulting classifier carves up the
+feature space into two categories.
 
 .. note::
 
