@@ -11,19 +11,11 @@
 .. index:: dataset, sample attribute, dataset attribute
 .. _chap_datasets:
 
-********
-Datasets
-********
+*************************************
+Data containers and utility functions
+*************************************
 
-The first step of any analysis in PyMVPA involves reading the data and putting
-it into the necessary shape for the intended analysis. But even after the
-initial setup, many algorithms have to modify datasets, e.g. by selecting a
-subset of it, or simple transformations of the data (e.g. z-scoring), or more
-complex things like projections into alternative representations/spaces.
-
-This section introduces the basic concepts of a dataset in PyMVPA and shows
-useful operations typically performed on datasets.
-
+.. automodule:: mvpa.datasets
 
 The Basic Concepts
 ==================
@@ -348,3 +340,15 @@ are instantiated by passing all relevant parameters to the constructor.
 Processing objects can then be called multiple times with different datasets
 to perform their algorithm on the respective dataset. This design applies to
 the majority of the algorithms implemented in PyMVPA.
+
+
+Related API documentation
+-------------------------
+
+.. autosummary::
+   :toctree: generated
+
+   mvpa.base.dataset
+   mvpa.datasets.base
+   mvpa.datasets.miscfx
+   mvpa.datasets.splitters
