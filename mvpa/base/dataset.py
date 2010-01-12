@@ -395,8 +395,8 @@ class AttrDataset(object):
         other : AttrDataset
           The content of this dataset will be append.
 
-        Note
-        ----
+        Notes
+        -----
         No dataset attributes, or feature attributes will be merged!  These
         respective properties of the *other* dataset are neither checked for
         compatibility nor copied over to this dataset. However, all samples

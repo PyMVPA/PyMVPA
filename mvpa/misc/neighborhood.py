@@ -27,8 +27,8 @@ class Sphere(object):
 
     No validation of producing coordinates within any extent is done.
 
-    Example
-    -------
+    Examples
+    --------
     Create a Sphere of diameter 1 and obtain all coordinates within range for the
     coordinate (1,1,1).
 
