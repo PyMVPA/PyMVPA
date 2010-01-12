@@ -49,6 +49,8 @@ class ModelSelector(object):
     """
 
     def __init__(self, parametric_model, dataset):
+        """TODO:
+        """
         self.parametric_model = parametric_model
         self.dataset = dataset
         self.hyperparameters_best = None
@@ -63,33 +65,31 @@ class ModelSelector(object):
         Set up the optimization problem in order to maximize
         the log_marginal_likelihood.
 
-        :Parameters:
+        Parameters
+        ----------
+        parametric_model : Classifier
+          the actual parameteric model to be optimized.
+        hyp_initial_guess : numpy.ndarray
+          set of hyperparameters' initial values where to start
+          optimization.
+        optimization_algorithm : string
+          actual name of the optimization algorithm. See
+          http://scipy.org/scipy/scikits/wiki/NLP
+          for a comprehensive/updated list of available NLP solvers.
+          (Defaults to 'ralg')
+        ftol : float
+          threshold for the stopping criterion of the solver,
+          which is mapped in OpenOpt NLP.ftol
+          (Defaults to 1.0e-3)
+        fixedHypers : numpy.ndarray (boolean array)
+          boolean vector of the same size of hyp_initial_guess;
+          'False' means that the corresponding hyperparameter must
+          be kept fixed (so not optimized).
+          (Defaults to None, which during means all True)
 
-          parametric_model : Classifier
-            the actual parameteric model to be optimized.
-
-          hyp_initial_guess : numpy.ndarray
-            set of hyperparameters' initial values where to start
-            optimization.
-
-          optimization_algorithm : string
-            actual name of the optimization algorithm. See
-            http://scipy.org/scipy/scikits/wiki/NLP
-            for a comprehensive/updated list of available NLP solvers.
-            (Defaults to 'ralg')
-
-          ftol : float
-            threshold for the stopping criterion of the solver,
-            which is mapped in OpenOpt NLP.ftol
-            (Defaults to 1.0e-3)
-
-          fixedHypers : numpy.ndarray (boolean array)
-            boolean vector of the same size of hyp_initial_guess;
-            'False' means that the corresponding hyperparameter must
-            be kept fixed (so not optimized).
-            (Defaults to None, which during means all True)
-
-        NOTE: the maximization of log_marginal_likelihood is a non-linear
+        Notes
+        -----
+        The maximization of log_marginal_likelihood is a non-linear
         optimization problem (NLP). This fact is confirmed by Dmitrey,
         author of OpenOpt.
         """

@@ -12,9 +12,6 @@ Module Organization
 ===================
 mvpa.clfs module contains various classifiers
 
-.. packagetree::
-   :style: UML
-
 :group Base: base
 :group Meta Classifiers: meta
 :group Specific Implementations: knn svm _svmbase plr ridge smlr libsmlrc gpr blr

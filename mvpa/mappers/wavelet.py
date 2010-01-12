@@ -19,7 +19,6 @@ import numpy as N
 
 from mvpa.base import warning
 from mvpa.mappers.base import Mapper
-from mvpa.base.dochelpers import enhancedDocString
 
 if __debug__:
     from mvpa.base import debug
@@ -34,16 +33,17 @@ class _WaveletMapper(Mapper):
     def __init__(self, dim=1, wavelet='sym4', mode='per', maxlevel=None):
         """Initialize _WaveletMapper mapper
 
-        :Parameters:
-          dim : int or tuple of int
-            dimensions to work across (for now just scalar value, ie 1D
-            transformation) is supported
-          wavelet : basestring
-            one from the families available withing pywt package
-          mode : basestring
-            periodization mode
-          maxlevel : int or None
-            number of levels to use. If None - automatically selected by pywt
+        Parameters
+        ----------
+        dim : int or tuple of int
+          dimensions to work across (for now just scalar value, ie 1D
+          transformation) is supported
+        wavelet : str
+          one from the families available withing pywt package
+        mode : str
+          periodization mode
+        maxlevel : int or None
+          number of levels to use. If None - automatically selected by pywt
         """
         Mapper.__init__(self)
 
@@ -90,25 +90,6 @@ class _WaveletMapper(Mapper):
         raise NotImplementedError
 
 
-    def get_insize(self):
-        """Returns the number of original features."""
-        return self._inshape[1:]
-
-
-    def get_outsize(self):
-        """Returns the number of wavelet components."""
-        return self._outshape[1:]
-
-
-    def selectOut(self, outIds):
-        """Choose a subset of components...
-
-        just use MaskMapper on top?"""
-        raise NotImplementedError, "Please use in conjunction with MaskMapper"
-
-
-    __doc__ = enhancedDocString('_WaveletMapper', locals(), Mapper)
-
 
 def _getIndexes(shape, dim):
     """Generator for coordinate tuples providing slice for all in `dim`
@@ -143,11 +124,12 @@ class WaveletPacketMapper(_WaveletMapper):
     def __init__(self, level=None, **kwargs):
         """Initialize WaveletPacketMapper mapper
 
-        :Parameters:
-          level : int or None
-            What level to decompose at. If 'None' data for all levels
-            is provided, but due to different sizes, they are placed
-            in 1D row.
+        Parameters
+        ----------
+        level : int or None
+          What level to decompose at. If 'None' data for all levels
+          is provided, but due to different sizes, they are placed
+          in 1D row.
         """
 
         _WaveletMapper.__init__(self,**kwargs)
@@ -274,7 +256,7 @@ class WaveletPacketMapper(_WaveletMapper):
             mode=self._mode, maxlevel=self.__level)
 
         # prepare storage
-        signal_shape = wp.shape[:1] + self.get_insize()
+        signal_shape = wp.shape[:1] + self._inshape[1:]
         signal = N.zeros(signal_shape)
         Ntime_points = self._intimepoints
         for indexes in _getIndexes(signal_shape,
@@ -302,11 +284,12 @@ class WaveletPacketMapper(_WaveletMapper):
                       "Reconstruction for a single level for versions of " \
                       "pywt < 0.1.7 (revision 103) is not supported"
             if not externals.exists('pywt wp reconstruct fixed'):
-                warning("Reconstruction using available version of pywt might "
-                        "result in incorrect data in the tails of the signal")
+                warning("%s: Reverse mapping with this version of 'pywt' might "
+                        "result in incorrect data in the tails of the signal. "
+                        "Please check for an update of 'pywt', or be careful "
+                        "when interpreting the edges of the reverse mapped "
+                        "data." % self.__class__.__name__)
             return self.__reverseSingleLevel(data)
-
-
 
 
 
@@ -386,5 +369,3 @@ class WaveletTransformationMapper(_WaveletMapper):
             debug('MAP_', "")
             debug('MAP', "Done iDWT. Total size %s" % (signal.shape, ))
         return signal
-
-

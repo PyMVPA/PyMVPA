@@ -28,7 +28,6 @@ def collectTestSuites():
         'test_base',
         'test_dochelpers',
         'test_som',
-        'test_neighbor',
         'test_splitter',
         'test_state',
         'test_params',
@@ -46,10 +45,11 @@ def collectTestSuites():
         'test_meg',
         # Classifiers (longer tests)
         'test_kernel',
-## broken        'test_clf',
+        'test_clf',
         'test_regr',
         'test_knn',
         'test_gnb',
+        'test_gpr',
         'test_svm',
         'test_plr',
         'test_smlr',
@@ -63,9 +63,8 @@ def collectTestSuites():
         'test_searchlight',
         'test_rfe',
         'test_ifs',
-## broken        'test_datameasure',
+        'test_datameasure',
         'test_perturbsensana',
-        'test_splitsensana',
         # And the suite (all-in-1)
         'test_suite',
         ]
@@ -84,9 +83,7 @@ def collectTestSuites():
 
     __optional_tests = [ ('scipy', 'ridge'),
                          ('scipy', 'stats_sp'),
-                         ('scipy', 'datasetfx_sp'),
                          (['lars','scipy'], 'lars'),
-                         ('mdp', 'icamapper'),
                          ('scipy', 'zscoremapper'),
                          ('pywt', 'waveletmapper'),
                          (['cPickle', 'gzip'], 'hamster'),
@@ -125,10 +122,15 @@ def collectNoseTests():
               'test_arraymapper',
               'test_boxcarmapper',
               'test_mapper',
-              'test_samplegroupmapper',
+              'test_fxmapper',
               'test_mdp',
               'test_neighborhood',
               ]
+    if externals.exists('scipy'):
+        tests += ['test_mapper_sp']
+    if externals.exists('glmnet'):
+        tests += ['test_glmnet']
+
     return tests
 
 def runNoseTests():
@@ -150,15 +152,16 @@ def runNoseTests():
 def run(limit=None, verbosity=None):
     """Runs the full or a subset of the PyMVPA unittest suite.
 
-    :Parameters:
-      limit: None | list
-        If None, the full test suite is run. Alternatively, a list with test IDs
-        can be provides. IDs are the base filenames of the test implementation,
-        e.g. the ID for the suite in 'mvpa/tests/test_niftidataset.py' is
-        'niftidataset'.
-      verbosity: None | int
-        Verbosity of unittests execution. If None, controlled by PyMVPA
-        configuration tests/verbosity
+    Parameters
+    ----------
+    limit : None or list
+      If None, the full test suite is run. Alternatively, a list with test IDs
+      can be provides. IDs are the base filenames of the test implementation,
+      e.g. the ID for the suite in 'mvpa/tests/test_niftidataset.py' is
+      'niftidataset'.
+    verbosity : None or int
+      Verbosity of unittests execution. If None, controlled by PyMVPA
+      configuration tests/verbosity
     """
     if __debug__:
         from mvpa.base import debug

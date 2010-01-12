@@ -32,21 +32,22 @@ class SimpleSOMMapper(Mapper):
     def __init__(self, kshape, niter, learning_rate=0.005,
                  iradius=None):
         """
-        :Parameters:
-          kshape: (int, int)
-            Shape of the internal Kohonen layer. Currently, only 2D Kohonen
-            layers are supported, although the length of an axis might be set
-            to 1.
-          niter: int
-            Number of iteration during network training.
-          learning_rate: float
-            Initial learning rate, which will continuously decreased during
-            network training.
-          iradius: float | None
-            Initial radius of the Gaussian neighborhood kernel radius, which
-            will continuously decreased during network training. If `None`
-            (default) the radius is set equal to the longest edge of the
-            Kohonen layer.
+        Parameters
+        ----------
+        kshape : (int, int)
+          Shape of the internal Kohonen layer. Currently, only 2D Kohonen
+          layers are supported, although the length of an axis might be set
+          to 1.
+        niter : int
+          Number of iteration during network training.
+        learning_rate : float
+          Initial learning rate, which will continuously decreased during
+          network training.
+        iradius : float or None
+          Initial radius of the Gaussian neighborhood kernel radius, which
+          will continuously decreased during network training. If `None`
+          (default) the radius is set equal to the longest edge of the
+          Kohonen layer.
         """
         # init base class
         Mapper.__init__(self)
@@ -78,7 +79,7 @@ class SimpleSOMMapper(Mapper):
 
         Parameter
         ---------
-        samples: array-like
+        samples : array-like
           Used for unsupervised training of the SOM.
         """
         # XXX initialize with clever default, e.g. plain of first two PCA
@@ -139,12 +140,13 @@ class SimpleSOMMapper(Mapper):
     def _computeInfluenceKernel(self, iter, dqd):
         """Compute the neighborhood kernel for some iteration.
 
-        :Parameters:
-          iter: int
-            The iteration for which to compute the kernel.
-          dqd: array (nrows x ncolumns)
-            This is one quadrant of Euclidean distances between Kohonen unit
-            locations.
+        Parameters
+        ----------
+        iter : int
+          The iteration for which to compute the kernel.
+        dqd : array (nrows x ncolumns)
+          This is one quadrant of Euclidean distances between Kohonen unit
+          locations.
         """
         # compute radius decay for this iteration
         curr_max_radius = self.radius * N.exp(-1.0 * iter / self.iter_scale)
@@ -169,12 +171,14 @@ class SimpleSOMMapper(Mapper):
         'best' is determined as minimal squared Euclidean distance between
         any units weight vector and some given target `sample`
 
-        :Parameters:
-          sample: array
-            Target sample.
+        Parameters
+        ----------
+        sample : array
+          Target sample.
 
-        :Returns:
-          tuple: (row, column)
+        Returns
+        -------
+        tuple: (row, column)
         """
         # TODO expose distance function as parameter
         loc = N.argmin(((self.K - sample) ** 2).sum(axis=2))
@@ -198,40 +202,6 @@ class SimpleSOMMapper(Mapper):
         # simple transform into appropriate array slicing and
         # return the associated Kohonen unit weights
         return self.K[tuple(N.transpose(data))]
-
-
-    def get_insize(self):
-        """Returns the size of the entity in input space"""
-        return self.K.shape[-1]
-
-
-    def get_outsize(self):
-        """Returns the size of the entity in output space"""
-        return self.K.shape[:-1]
-
-
-    def selectOut(self, outIds):
-        """Limit the OUT space to a certain set of features.
-
-        This is currently not implemented. Moreover, although it is technically
-        possible to implement this functionality, it is unsure whether it is
-        meaningful in the context of SOMs.
-        """
-        raise NotImplementedError
-
-
-    def getInId(self, outId):
-        """Translate a feature id into a coordinate/index in input space.
-
-        This is not meaningful in the context of SOMs.
-        """
-        raise NotImplementedError
-
-
-    def is_valid_outid(self, outId):
-        """Validate feature id in OUT space.
-        """
-        return (outId >= 0).all() and (outId < self.kshape).all()
 
 
     def __repr__(self):

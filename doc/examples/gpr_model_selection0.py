@@ -9,6 +9,11 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """
+Simple model selection: grid search for GPR
+===========================================
+
+.. index:: GPR, model selection
+
 Run simple model selection (grid search over hyperparameters' space) of
 Gaussian Process Regression (GPR) on a simple 1D example.
 """
@@ -42,7 +47,7 @@ for x in sigma_noise_steps:
     j = 0
     for y in length_scale_steps:
         kse = SquaredExponentialKernel(length_scale=y)
-        g = GPR(kse, sigma_noise=x, regression=True)
+        g = GPR(kse, sigma_noise=x)
         g.states.enable("log_marginal_likelihood")
         g.train(dataset)
         lml[i, j] = g.states.log_marginal_likelihood

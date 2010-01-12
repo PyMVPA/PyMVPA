@@ -80,7 +80,9 @@ for i in range(rows*columns):
     sigma_f, length_scale, sigma_noise = hyperparameters[i, :]
     kse = SquaredExponentialKernel(length_scale=length_scale,
                                    sigma_f=sigma_f)
-    g = GPR(kse, sigma_noise=sigma_noise, regression=regression)
+    g = GPR(kse, sigma_noise=sigma_noise)
+    if not regression:
+        g = RegressionAsClassifier(g)
     print g
 
     if regression:

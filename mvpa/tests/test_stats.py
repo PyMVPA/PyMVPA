@@ -16,7 +16,7 @@ from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa.misc.fx import doubleGammaHRF, singleGammaHRF
 from tests_warehouse import *
 from mvpa import cfg
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
@@ -79,26 +79,26 @@ class StatsTests(unittest.TestCase):
         """
 
         m = OneWayAnova()               # default must be not compound ?
-        mc = CompoundOneWayAnova(combiner=None)
+        mc = CompoundOneWayAnova()
         ds = datasets['uni2medium']
 
         # For 2 labels it must be identical for both and equal to
         # simple OneWayAnova
         a, ac = m(ds), mc(ds)
 
-        self.failUnless(a.shape == (ds.nfeatures,))
-        self.failUnless(ac.shape == (ds.nfeatures, len(ds.UL)))
+        self.failUnless(a.shape == (1, ds.nfeatures))
+        self.failUnless(ac.shape == (len(ds.UL), ds.nfeatures))
 
-        self.failUnless((ac[:, 0] == ac[:, 1]).all())
-        self.failUnless((a == ac[:, 1]).all())
+        assert_array_equal(ac[0], ac[1])
+        assert_array_equal(a, ac[1])
 
         ds = datasets['uni4large']
         ac = mc(ds)
-
         if cfg.getboolean('tests', 'labile', default='yes'):
             # All non-bogus features must be high for a corresponding feature
-            self.failUnless((ac[(N.array(ds.nonbogus_features),
-                                 N.arange(4))] >= 1).all())
+            self.failUnless((ac.samples[N.arange(4),
+                                        N.array(ds.nonbogus_features)] >= 1
+                                        ).all())
         # All features should have slightly but different CompoundAnova
         # values. I really doubt that there will be a case when this
         # test would fail just to being 'labile'

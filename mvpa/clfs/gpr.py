@@ -23,7 +23,7 @@ from mvpa.kernels.np import SquaredExponentialKernel, GeneralizedLinearKernel, \
      LinearKernel
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import InvalidHyperparameterError
-from mvpa.datasets import dataset
+from mvpa.datasets import Dataset
 
 if externals.exists("scipy", raiseException=True):
     from scipy.linalg import cho_solve as SLcho_solve
@@ -63,7 +63,7 @@ class GPR(Classifier):
     log_marginal_likelihood_gradient = StateVariable(enabled=False,
         doc="Log Marginal Likelihood Gradient")
 
-    _clf_internals = [ 'gpr', 'regression', 'retrainable' ]
+    __tags__ = [ 'gpr', 'regression', 'retrainable' ]
 
 
     # NOTE XXX Parameters of the classifier. Values available as
@@ -94,10 +94,11 @@ class GPR(Classifier):
     def __init__(self, kernel=None, **kwargs):
         """Initialize a GPR regression analysis.
 
-        :Parameters:
-          kernel : Kernel
-            a kernel object defining the covariance between instances.
-            (Defaults to SquaredExponentialKernel if None in arguments)
+        Parameters
+        ----------
+        kernel : Kernel
+          a kernel object defining the covariance between instances.
+          (Defaults to SquaredExponentialKernel if None in arguments)
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
@@ -116,15 +117,15 @@ class GPR(Classifier):
         self.__kernel = kernel
 
         # append proper clf_internal depending on the kernel
-        # TODO: add "_clf_internals" to kernels since the check
+        # TODO: add "__tags__" to kernels since the check
         #       below does not scale
         if isinstance(kernel, GeneralizedLinearKernel) or \
            isinstance(kernel, LinearKernel):
-            self._clf_internals += ['linear']
+            self.__tags__ += ['linear']
         else:
-            self._clf_internals += ['non-linear']
+            self.__tags__ += ['non-linear']
             if externals.exists('openopt'):
-                self._clf_internals += ['has_sensitivity']
+                self.__tags__ += ['has_sensitivity']
 
         # No need to initialize state variables. Unless they got set
         # they would raise an exception self.predicted_variances =
@@ -231,13 +232,14 @@ class GPR(Classifier):
     def getSensitivityAnalyzer(self, flavor='auto', **kwargs):
         """Returns a sensitivity analyzer for GPR.
 
-        :Parameters:
-          flavor : basestring
-            What sensitivity to provide. Valid values are
-            'linear', 'model_select', 'auto'.
-            In case of 'auto' selects 'linear' for linear kernel
-            and 'model_select' for the rest. 'linear' corresponds to
-            GPRLinearWeights and 'model_select' to GRPWeights
+        Parameters
+        ----------
+        flavor : str
+          What sensitivity to provide. Valid values are
+          'linear', 'model_select', 'auto'.
+          In case of 'auto' selects 'linear' for linear kernel
+          and 'model_select' for the rest. 'linear' corresponds to
+          GPRLinearWeights and 'model_select' to GRPWeights
         """
         # XXX The following two lines does not work since
         # self.__kernel is instance of LinearKernel and not
@@ -246,7 +248,9 @@ class GPR(Classifier):
         #     kernel.LinearKernel so everything shoudl be ok
         if flavor == 'auto':
             flavor = ('model_select', 'linear')\
-                     [int(isinstance(self.__kernel, GeneralizedLinearKernel))]
+                     [int(isinstance(self.__kernel, GeneralizedLinearKernel)
+                          or
+                          isinstance(self.__kernel, LinearKernel))]
             if __debug__:
                 debug("GPR", "Returning '%s' sensitivity analyzer" % flavor)
 
@@ -255,7 +259,7 @@ class GPR(Classifier):
             return GPRLinearWeights(self, **kwargs)
         elif flavor == 'model_select':
             # sanity check
-            if not ('has_sensitivity' in self._clf_internals):
+            if not ('has_sensitivity' in self.__tags__):
                 raise ValueError, \
                       "model_select flavor is not available probably " \
                       "due to not available 'openopt' module"
@@ -354,7 +358,7 @@ class GPR(Classifier):
         self._alpha = SLcho_solve(self._LL, train_labels)
 
         # compute only if the state is enabled
-        if self.states.isEnabled('log_marginal_likelihood'):
+        if self.states.is_enabled('log_marginal_likelihood'):
             self.compute_log_marginal_likelihood()
             pass
 
@@ -374,6 +378,7 @@ class GPR(Classifier):
         Predict the output for the provided data.
         """
         retrainable = self.params.retrainable
+        states = self.states
 
         if not retrainable or self._changedData['testdata'] \
                or self._km_train_test is None:
@@ -383,17 +388,17 @@ class GPR(Classifier):
             km_train_test = asarray(self.__kernel)
             if retrainable:
                 self._km_train_test = km_train_test
-                self.states.repredicted = False
+                states.repredicted = False
         else:
             if __debug__:
                 debug('GPR', "Not recomputing train test kernel matrix")
             km_train_test = self._km_train_test
-            self.states.repredicted = True
+            states.repredicted = True
 
 
         predictions = Ndot(km_train_test.transpose(), self._alpha)
 
-        if self.states.isEnabled('predicted_variances'):
+        if states.is_enabled('predicted_variances'):
             # do computation only if state variable was enabled
             if not retrainable or self._km_test_test is None \
                    or self._changedData['testdata']:
@@ -419,12 +424,13 @@ class GPR(Classifier):
             #     Ndiag(km_test_test - Ndot(v.T, v)) \
             #     + self.sigma_noise**2
             # Faster formula: N.diag(Ndot(v.T, v)) = (v**2).sum(0):
-            self.states.predicted_variances = Ndiag(km_test_test) - (v ** 2).sum(0) \
+            states.predicted_variances = Ndiag(km_test_test) - (v ** 2).sum(0) \
                                        + self.params.sigma_noise ** 2
             pass
 
         if __debug__:
             debug("GPR", "Done predicting")
+        states.estimates = predictions
         return predictions
 
 
@@ -488,23 +494,26 @@ class GPRLinearWeights(Sensitivity):
         clf = self.clf
         kernel = clf.kernel
         train_fv = clf._train_fv
-
-        weights = Ndot(kernel.Sigma_p,
+        if isinstance(kernel, LinearKernel):
+            Sigma_p = 1.0
+        else:
+            Sigma_p = kernel.Sigma_p
+        weights = Ndot(Sigma_p,
                         Ndot(train_fv.T, clf._alpha))
 
-        if self.states.isEnabled('variances'):
+        if self.states.is_enabled('variances'):
             # super ugly formulas that can be quite surely improved:
             tmp = N.linalg.inv(self._L)
             Kyinv = Ndot(tmp.T, tmp)
             # XXX in such lengthy matrix manipulations you might better off
             #     using N.matrix where * is a matrix product
             self.states.variances = Ndiag(
-                kernel.Sigma_p -
-                Ndot(kernel.Sigma_p,
+                Sigma_p -
+                Ndot(Sigma_p,
                       Ndot(train_fv.T,
                             Ndot(Kyinv,
-                                  Ndot(train_fv, kernel.Sigma_p)))))
-        return weights
+                                  Ndot(train_fv, Sigma_p)))))
+        return Dataset(N.atleast_2d(weights))
 
 
 if externals.exists('openopt'):

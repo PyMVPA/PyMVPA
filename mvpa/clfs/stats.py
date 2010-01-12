@@ -26,6 +26,12 @@ class Nonparametric(object):
     """
 
     def __init__(self, dist_samples):
+        """
+        Parameters
+        ----------
+        dist_samples : ndarray
+          Samples to be used to assess the distribution.
+        """
         self._dist_samples = N.ravel(dist_samples)
 
 
@@ -43,18 +49,19 @@ class Nonparametric(object):
 def _pvalue(x, cdf_func, tail, return_tails=False, name=None):
     """Helper function to return p-value(x) given cdf and tail
 
-    :Parameters:
-      cdf_func : callable
-        Function to be used to derive cdf values for x
-      tail : str ('left', 'right', 'any', 'both')
-        Which tail of the distribution to report. For 'any' and 'both'
-        it chooses the tail it belongs to based on the comparison to
-        p=0.5. In the case of 'any' significance is taken like in a
-        one-tailed test.
-      return_tails : bool
-        If True, a tuple return (pvalues, tails), where tails contain
-        1s if value was from the right tail, and 0 if the value was
-        from the left tail.
+    Parameters
+    ----------
+    cdf_func : callable
+      Function to be used to derive cdf values for x
+    tail : str ('left', 'right', 'any', 'both')
+      Which tail of the distribution to report. For 'any' and 'both'
+      it chooses the tail it belongs to based on the comparison to
+      p=0.5. In the case of 'any' significance is taken like in a
+      one-tailed test.
+    return_tails : bool
+      If True, a tuple return (pvalues, tails), where tails contain
+      1s if value was from the right tail, and 0 if the value was
+      from the left tail.
     """
     is_scalar = N.isscalar(x)
     if is_scalar:
@@ -110,14 +117,14 @@ class NullDist(ClassWithCollections):
     _ATTRIBUTE_COLLECTIONS = ['states']
 
     def __init__(self, tail='both', **kwargs):
-        """Cheap initialization.
-
-        :Parameter:
-          tail: str ('left', 'right', 'any', 'both')
-            Which tail of the distribution to report. For 'any' and 'both'
-            it chooses the tail it belongs to based on the comparison to
-            p=0.5. In the case of 'any' significance is taken like in a
-            one-tailed test.
+        """
+        Parameters
+        ----------
+        tail : {'left', 'right', 'any', 'both'}
+          Which tail of the distribution to report. For 'any' and 'both'
+          it chooses the tail it belongs to based on the comparison to
+          p=0.5. In the case of 'any' significance is taken like in a
+          one-tailed test.
         """
         ClassWithCollections.__init__(self, **kwargs)
 
@@ -195,15 +202,16 @@ class MCNullDist(NullDist):
     def __init__(self, dist_class=Nonparametric, permutations=100, **kwargs):
         """Initialize Monte-Carlo Permutation Null-hypothesis testing
 
-        :Parameters:
-          dist_class: class
-            This can be any class which provides parameters estimate
-            using `fit()` method to initialize the instance, and
-            provides `cdf(x)` method for estimating value of x in CDF.
-            All distributions from SciPy's 'stats' module can be used.
-          permutations: int
-            This many permutations of label will be performed to
-            determine the distribution under the null hypothesis.
+        Parameters
+        ----------
+        dist_class : class
+          This can be any class which provides parameters estimate
+          using `fit()` method to initialize the instance, and
+          provides `cdf(x)` method for estimating value of x in CDF.
+          All distributions from SciPy's 'stats' module can be used.
+        permutations : int
+          This many permutations of label will be performed to
+          determine the distribution under the null hypothesis.
         """
         NullDist.__init__(self, **kwargs)
 
@@ -226,14 +234,15 @@ class MCNullDist(NullDist):
         """Fit the distribution by performing multiple cycles which repeatedly
         permuted labels in the training dataset.
 
-        :Parameters:
-          measure: (`Featurewise`)`DatasetMeasure` | `TransferError`
-            TransferError instance used to compute all errors.
-          wdata: `Dataset` which gets permuted and used to compute the
-            measure/transfer error multiple times.
-          vdata: `Dataset` used for validation.
-            If provided measure is assumed to be a `TransferError` and
-            working and validation dataset are passed onto it.
+        Parameters
+        ----------
+        measure: (`Featurewise`)`DatasetMeasure` or `TransferError`
+          TransferError instance used to compute all errors.
+        wdata: `Dataset` which gets permuted and used to compute the
+          measure/transfer error multiple times.
+        vdata: `Dataset` used for validation.
+          If provided measure is assumed to be a `TransferError` and
+          working and validation dataset are passed onto it.
         """
         dist_samples = []
         """Holds the values for randomized labels."""
@@ -259,7 +268,9 @@ class MCNullDist(NullDist):
 
             # compute and store the measure of this permutation
             # assume it has `TransferError` interface
-            dist_samples.append(measure(*measure_args))
+            res = measure(*measure_args)
+            res = N.asanyarray(res)
+            dist_samples.append(res)
 
         # store samples
         self.states.dist_samples = dist_samples = N.asarray(dist_samples)
@@ -349,10 +360,11 @@ class FixedNullDist(NullDist):
     """
     def __init__(self, dist, **kwargs):
         """
-        :Parameter:
-          dist: distribution object
-            This can be any object the has a `cdf()` method to report the
-            cumulative distribition function values.
+        Parameters
+        ----------
+        dist : distribution object
+          This can be any object the has a `cdf()` method to report the
+          cumulative distribition function values.
         """
         NullDist.__init__(self, **kwargs)
 
@@ -427,8 +439,8 @@ class AdaptiveRDist(AdaptiveNullDist):
             # into account
             cdf_bad = cdf_[bad_values]
             x_bad = x[bad_values]
-            cdf_bad[x_bad<0] = 0.0
-            cdf_bad[x_bad>=0] = 1.0
+            cdf_bad[x_bad < 0] = 0.0
+            cdf_bad[x_bad >= 0] = 1.0
             cdf_[bad_values] = cdf_bad
         return cdf_
 
@@ -472,7 +484,23 @@ if externals.exists('scipy'):
         """
 
         def __init__(self, dist, loc=None, scale=None, args=None):
+            """
+            Parameters
+            ----------
+            dist : rv_generic
+              Distribution for which to freeze some of the parameters
+            loc : array-like, optional
+              Location parameter (default=0)
+            scale : array-like, optional
+              Scale parameter (default=1)
+            args : iterable, optional
+               Additional arguments to be passed to dist.
 
+            Raises
+            ------
+            ValueError
+              Arguments number mismatch
+            """
             self._dist = dist
             # loc and scale
             theta = (loc, scale)
@@ -514,7 +542,7 @@ if externals.exists('scipy'):
 
                 args = theta[:i+1]
                 # adjust args if there were fixed
-                for i,a in zip(fargs_i, args):
+                for i, a in zip(fargs_i, args):
                     fargs[i] = a
                 args = fargs[:-2]
 
@@ -546,10 +574,13 @@ if externals.exists('scipy'):
                 x0 = tuple([args[i] for i in fargs_i])
             else:
                 x0 = args
-            if fargs[-2] is None: x0 = x0 + (loc0,)
-            if fargs[-1] is None: x0 = x0 + (scale0,)
+            if fargs[-2] is None:
+                x0 = x0 + (loc0,)
+            if fargs[-1] is None:
+                x0 = x0 + (scale0,)
 
-            opt_x = scipy.optimize.fmin(self.nnlf, x0, args=(N.ravel(data),), disp=0)
+            opt_x = scipy.optimize.fmin(
+                self.nnlf, x0, args=(N.ravel(data),), disp=0)
 
             # reconstruct back
             i = 0
@@ -598,49 +629,52 @@ if externals.exists('scipy'):
 
         WiP: use with caution, API might change
 
-        :Parameters:
-          data : N.ndarray
-            Array of the data for which to deduce the distribution. It has
-            to be sufficiently large to make a reliable conclusion
-          nsamples : int or None
-            If None -- use all samples in data to estimate parametric
-            distribution. Otherwise use only specified number randomly selected
-            from data.
-          loc : float or None
-            Loc for the distribution (if known)
-          scale : float or None
-            Scale for the distribution (if known)
-          test : basestring
-            What kind of testing to do. Choices:
-             'p-roc' : detection power for a given ROC. Needs two
-               parameters: `p=0.05` and `tail='both'`
-             'kstest' : 'full-body' distribution comparison. The best
-               choice is made by minimal reported distance after estimating
-               parameters of the distribution. Parameter `p=0.05` sets
-               threshold to reject null-hypothesis that distribution is the
-               same.
-               WARNING: older versions (e.g. 0.5.2 in etch) of scipy have
-                        incorrect kstest implementation and do not function
-                        properly
-          distributions : None or list of basestring or tuple(basestring, dict)
-            Distributions to check. If None, all known in scipy.stats
-            are tested. If distribution is specified as a tuple, then
-            it must contain name and additional parameters (name, loc,
-            scale, args) in the dictionary. Entry 'scipy' adds all known
-            in scipy.stats.
-          **kwargs
-            Additional arguments which are needed for each particular test
-            (see above)
+        Parameters
+        ----------
+        data : N.ndarray
+          Array of the data for which to deduce the distribution. It has
+          to be sufficiently large to make a reliable conclusion
+        nsamples : int or None
+          If None -- use all samples in data to estimate parametric
+          distribution. Otherwise use only specified number randomly selected
+          from data.
+        loc : float or None
+          Loc for the distribution (if known)
+        scale : float or None
+          Scale for the distribution (if known)
+        test : str
+          What kind of testing to do. Choices:
+           'p-roc'
+             detection power for a given ROC. Needs two
+             parameters: `p=0.05` and `tail='both'`
+           'kstest'
+             'full-body' distribution comparison. The best
+             choice is made by minimal reported distance after estimating
+             parameters of the distribution. Parameter `p=0.05` sets
+             threshold to reject null-hypothesis that distribution is the
+             same.
+             **WARNING:** older versions (e.g. 0.5.2 in etch) of scipy have
+             incorrect kstest implementation and do not function properly.
+        distributions : None or list of str or tuple(str, dict)
+          Distributions to check. If None, all known in scipy.stats
+          are tested. If distribution is specified as a tuple, then
+          it must contain name and additional parameters (name, loc,
+          scale, args) in the dictionary. Entry 'scipy' adds all known
+          in scipy.stats.
+        **kwargs
+          Additional arguments which are needed for each particular test
+          (see above)
 
-        :Example:
-          data = N.random.normal(size=(1000,1));
-          matches = matchDistribution(
-            data,
-            distributions=['rdist',
-                           ('rdist', {'name':'rdist_fixed',
-                                      'loc': 0.0,
-                                      'args': (10,)})],
-            nsamples=30, test='p-roc', p=0.05)
+        Examples
+        --------
+        >>> data = N.random.normal(size=(1000,1));
+        >>> matches = matchDistribution(
+              data,
+              distributions=['rdist',
+                             ('rdist', {'name':'rdist_fixed',
+                                        'loc': 0.0,
+                                        'args': (10,)})],
+              nsamples=30, test='p-roc', p=0.05)
         """
 
         # Handle parameters
@@ -670,7 +704,7 @@ if externals.exists('scipy'):
             if true_positives == 0:
                 raise ValueError, "Provided data has no elements in non-" \
                       "parametric distribution under p<=%.3f. Please " \
-                      "increase the size of data or value of p" % p
+                      "increase the size of data or value of p" % p_thr
             if __debug__:
                 debug('STAT_', 'Number of positives in non-parametric '
                       'distribution is %d' % true_positives)
@@ -712,7 +746,8 @@ if externals.exists('scipy'):
                 # specify distribution 'optimizer'. If loc or scale was provided,
                 # use home-brewed rv_semifrozen
                 if args_ is not None or loc_ is not None or scale_ is not None:
-                    dist_opt = rv_semifrozen(dist_gen_, loc=loc_, scale=scale_, args=args_)
+                    dist_opt = rv_semifrozen(dist_gen_,
+                                             loc=loc_, scale=scale_, args=args_)
                 else:
                     dist_opt = dist_gen_
                 dist_params = dist_opt.fit(data_selected)
@@ -725,11 +760,13 @@ if externals.exists('scipy'):
                     # We need to compare detection under given p
                     cdf_p = N.abs(_pvalue(data, cdf_func, tail, name=dist_gen))
                     cdf_p_thr = cdf_p <= p_thr
-                    D, p = N.sum(N.abs(data_p_thr - cdf_p_thr))*1.0/true_positives, 1
-                    if __debug__: res_sum = 'D=%.2f' % D
+                    D, p = (N.sum(N.abs(data_p_thr - cdf_p_thr))*1.0/true_positives, 1)
+                    if __debug__:
+                        res_sum = 'D=%.2f' % D
                 elif test == 'kstest':
                     D, p = kstest(data, d, args=dist_params)
-                    if __debug__: res_sum = 'D=%.3f p=%.3f' % (D, p)
+                    if __debug__:
+                        res_sum = 'D=%.3f p=%.3f' % (D, p)
             except (TypeError, ValueError, AttributeError,
                     NotImplementedError), e:#Exception, e:
                 if __debug__:
@@ -741,7 +778,8 @@ if externals.exists('scipy'):
             if p > p_thr and not N.isnan(D):
                 results += [ (D, dist_gen, dist_name, dist_params) ]
                 if __debug__:
-                    debug('STAT_', 'Testing for %s dist.: %s' % (dist_name, res_sum))
+                    debug('STAT_',
+                          'Testing for %s dist.: %s' % (dist_name, res_sum))
             else:
                 if __debug__:
                     debug('STAT__', 'Cannot consider %s dist. with %s'
@@ -754,8 +792,10 @@ if externals.exists('scipy'):
         if __debug__ and 'STAT' in debug.active:
             # find the best and report it
             nresults = len(results)
-            sresult = lambda r:'%s(%s)=%.2f' % (r[1], ', '.join(map(str, r[3])), r[0])
-            if nresults>0:
+            sresult = lambda r:'%s(%s)=%.2f' % (r[1],
+                                                ', '.join(map(str, r[3])),
+                                                r[0])
+            if nresults > 0:
                 nnextbest = min(2, nresults-1)
                 snextbest = ', '.join(map(sresult, results[1:1+nnextbest]))
                 debug('STAT', 'Best distribution %s. Next best: %s'
@@ -775,35 +815,39 @@ if externals.exists('scipy'):
                                     p=None, tail='both'):
             """Plot best matching distributions
 
-            :Parameters:
-              data : N.ndarray
-                Data which was used to obtain the matches
-              matches : list of tuples
-                Sorted matches as provided by matchDistribution
-              nbins : int
-                Number of bins in the histogram
-              nbest : int
-                Number of top matches to plot
-              expand_tails : int
-                How many bins away to add to parametrized distributions
-                plots
-              legend : int
-                Either to provide legend and statistics in the legend.
-                1 -- just lists distributions.
-                2 -- adds distance measure
-                3 -- tp/fp/fn in the case if p is provided
-              plot_cdf : bool
-                Either to plot cdf for data using non-parametric distribution
-              p : float or None
-                If not None, visualize null-hypothesis testing (given p).
-                Bars in the histogram which fall under given p are colored
-                in red. False positives and false negatives are marked as
-                triangle up and down symbols correspondingly
-              tail : ('left', 'right', 'any', 'both')
-                If p is not None, the choise of tail for null-hypothesis
-                testing
+            Parameters
+            ----------
+            data : N.ndarray
+              Data which was used to obtain the matches
+            matches : list of tuples
+              Sorted matches as provided by matchDistribution
+            nbins : int
+              Number of bins in the histogram
+            nbest : int
+              Number of top matches to plot
+            expand_tails : int
+              How many bins away to add to parametrized distributions
+              plots
+            legend : int
+              Either to provide legend and statistics in the legend.
+              1 -- just lists distributions.
+              2 -- adds distance measure
+              3 -- tp/fp/fn in the case if p is provided
+            plot_cdf : bool
+              Either to plot cdf for data using non-parametric distribution
+            p : float or None
+              If not None, visualize null-hypothesis testing (given p).
+              Bars in the histogram which fall under given p are colored
+              in red. False positives and false negatives are marked as
+              triangle up and down symbols correspondingly
+            tail : ('left', 'right', 'any', 'both')
+              If p is not None, the choise of tail for null-hypothesis
+              testing
 
-            :Returns: tuple(histogram, list of lines)
+            Returns
+            -------
+            histogram
+            list of lines
             """
 
             hist = P.hist(data, nbins, normed=1, align='center')
@@ -827,8 +871,8 @@ if externals.exists('scipy'):
             x_p = _pvalue(x, Nonparametric(data).cdf, tail)
             x_p_thr = N.abs(x_p) <= p_thr
             # color bars which pass thresholding in red
-            for thr, bar in zip(x_p_thr[expand_tails:], hist[2]):
-                bar.set_facecolor(('w','r')[int(thr)])
+            for thr, bar_ in zip(x_p_thr[expand_tails:], hist[2]):
+                bar_.set_facecolor(('w','r')[int(thr)])
 
             if not len(matches):
                 # no matches were provided
@@ -842,7 +886,8 @@ if externals.exists('scipy'):
                 dist = getattr(scipy.stats, dist_gen)(*params)
 
                 label = '%s' % (dist_name)
-                if legend > 1: label += '(D=%.2f)' % (D)
+                if legend > 1:
+                    label += '(D=%.2f)' % (D)
 
                 xcdf_p = N.abs(_pvalue(x, dist.cdf, tail))
                 xcdf_p_thr = (xcdf_p <= p_thr).ravel()
@@ -860,7 +905,7 @@ if externals.exists('scipy'):
                     fn = N.logical_and(~data_cdf_p_thr, data_p_thr)
 
                     label += ' tp/fp/fn=%d/%d/%d)' % \
-                            tuple(map(N.sum, [tp,fp,fn]))
+                            tuple(map(N.sum, [tp, fp, fn]))
 
                 pdf = dist.pdf(x)
                 line = P.plot(x, pdf, '-', linewidth=2, label=label)
@@ -938,21 +983,24 @@ def _chk_asarray(a, axis):
     return a, outaxis
 
 def nanmean(x, axis=0):
-    """Compute the mean over the given axis ignoring nans.
+    """Compute the mean over the given axis ignoring NaNs.
 
-    :Parameters:
-        x : ndarray
-            input array
-        axis : int
-            axis along which the mean is computed.
+    Parameters
+    ----------
+    x : ndarray
+      input array
+    axis : int
+      axis along which the mean is computed.
 
-    :Results:
-        m : float
-            the mean."""
-    x, axis = _chk_asarray(x,axis)
+    Returns
+    -------
+    m : float
+      the mean.
+    """
+    x, axis = _chk_asarray(x, axis)
     x = x.copy()
     Norig = x.shape[axis]
-    factor = 1.0-N.sum(N.isnan(x),axis)*1.0/Norig
+    factor = 1.0 - N.sum(N.isnan(x), axis)*1.0/Norig
 
     x[N.isnan(x)] = 0
-    return N.mean(x,axis)/factor
+    return N.mean(x, axis)/factor

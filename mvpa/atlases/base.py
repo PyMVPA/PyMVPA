@@ -17,9 +17,6 @@ Module Organization
 ===================
 mvpa.atlases.base module contains support for various atlases
 
-.. packagetree::
-   :style: UML
-
 :group Base: BaseAtlas XMLBasedAtlas Label Level LabelsLevel
 :group Talairach: PyMVPAAtlas LabelsAtlas ReferencesAtlas
 :group Exceptions: XMLAtlasException
@@ -45,7 +42,7 @@ if externals.exists('nifti', raiseException=True):
 
 from mvpa.base import warning
 if __debug__:
-	from mvpa.base import debug
+    from mvpa.base import debug
 
 
 def checkRange(coord, range):
@@ -53,14 +50,14 @@ def checkRange(coord, range):
     Check if coordinates are within range (0,0,0) - (range)
     Return True on success
     """
-	# TODO: optimize
+    # TODO: optimize
     if len(coord) != len(range):
-        raise ValueError("Provided coordinate %s and given range %s" % \
-                         (`coord`, `range`) + \
+        raise ValueError("Provided coordinate %r and given range %r" % \
+                         (coord, range) + \
                          " have different dimensionality"
                          )
-    for c,r in zip(coord, range):
-        if c<0 or c>=r:
+    for c, r in zip(coord, range):
+        if c < 0 or c >= r:
             return False
     return True
 
@@ -77,13 +74,9 @@ class BaseAtlas(object):
 
 
 class XMLAtlasException(Exception):
-    """ Exception to be thrown if smth goes wrong dealing with XML based atlas
+    """Exception to be thrown if smth goes wrong dealing with XML based atlas
     """
-    def __init__(self, msg=""):
-        self.__msg = msg
-    def __repr__(self):
-        return self.__msg
-
+    pass
 
 class XMLBasedAtlas(BaseAtlas):
 
@@ -92,23 +85,24 @@ class XMLBasedAtlas(BaseAtlas):
                  query_voxel=False,
                  coordT=None, levels=None):
         """
-        :Parameters:
-          filename : string
-            Filename for the xml definition of the atlas
-          resolution : None or float
-            Some atlases link to multiple images at different
-            resolutions. if None -- best resolution is selected
-            using 0th dimension resolution
-          image_file : None or str
-            If None, overrides filename for the used imagefile, so
-            it could load a custom (re-registered) atlas maps
-          query_voxel : bool
-            By default [x,y,z] assumes coordinates in space, but if
-            query_voxel is True, they are assumed to be voxel coordinates
-          coordT
-            Optional transformation to apply first
-          levels : None or slice or list of int
-            What levels by default to operate on
+        Parameters
+        ----------
+        filename : str
+          Filename for the xml definition of the atlas
+        resolution : None or float
+          Some atlases link to multiple images at different
+          resolutions. if None -- best resolution is selected
+          using 0th dimension resolution
+        image_file : None or str
+          If None, overrides filename for the used imagefile, so
+          it could load a custom (re-registered) atlas maps
+        query_voxel : bool, optional
+          By default [x,y,z] assumes coordinates in space, but if
+          query_voxel is True, they are assumed to be voxel coordinates
+        coordT
+          Optional transformation to apply first
+        levels : None or slice or list of int
+          What levels by default to operate on
         """
         BaseAtlas.__init__(self)
         self.__version = None
@@ -245,11 +239,12 @@ class XMLBasedAtlas(BaseAtlas):
         Function takes care about first transforming the point into
         the voxel space
 
-        :Parameters:
-          coord : tuple
-            Coordinates of the point (xyz)
-          levels : None or list of int
-            At what levels to return the results
+        Parameters
+        ----------
+        coord : tuple
+          Coordinates of the point (xyz)
+        levels : None or list of int
+          At what levels to return the results
         """
         coord_ = N.asarray(coord)          # or we would alter what should be constant
         #if not isinstance(coord, N.numpy):
@@ -375,19 +370,19 @@ class XMLBasedAtlas(BaseAtlas):
 class Label(object):
     """Represents a label. Just to bring all relevant information together
     """
-    def __init__ (self, text, abbr=None, coord=(None, None,None),
+    def __init__ (self, text, abbr=None, coord=(None, None, None),
                   count=0, index=0):
         """
-        :Parameters:
-          text : basestring
-            fullname of the label
-          abbr : basestring
-            abbreviated name (optional)
-          coord : tuple of float
-            coordinates (optional)
-          count : int
-            count of those labels in the atlas (optional)
-
+        Parameters
+        ----------
+        text : str
+          Fullname of the label
+        abbr : str, optional
+          Abbreviated name.
+        coord : tuple of float, optional
+          Coordinates.
+        count : int, optional
+          Count of those labels in the atlas
         """
         self.__text = text.strip()
         if abbr is not None:
@@ -455,8 +450,7 @@ class Level(object):
 
     @staticmethod
     def generateFromXML(Elevel, levelType=None):
-        """
-        Simple factory of levels
+        """Simple factory of levels
         """
         if levelType is None:
             if not Elevel.attrib.has_key("type"):
@@ -522,13 +516,14 @@ class LabelsLevel(Level):
     def find(self, target, unique=True):
         """Return labels descr of which matches the string
 
-        :Parameters:
-          target : str or re._pattern_type
-            Substring in abbreviation to be searched for, or compiled
-            regular expression to be searched or matched if anchored.
-          unique : bool
-            If True, raise exception if none or more than 1 was found. Return
-            just a single item if found (not list).
+        Parameters
+        ----------
+        target : str or re._pattern_type
+          Substring in abbreviation to be searched for, or compiled
+          regular expression to be searched or matched if anchored.
+        unique : bool, optional
+          If True, raise exception if none or more than 1 was found. Return
+          just a single item if found (not list).
         """
         if isinstance(target, re._pattern_type):
             res = [l for l in self.__labels if target.search(l.abbr)]
@@ -618,9 +613,10 @@ class PyMVPAAtlas(XMLBasedAtlas):
         try:
             self._image  = NiftiImage(imagefilename)
         except RuntimeError, e:
-            raise RuntimeError, " Cannot open file %s due to %s" % (imagefilename, e)
+            raise RuntimeError, \
+                  " Cannot open file %s due to %s" % (imagefilename, e)
 
-        self._data   = self._image.data
+        self._data = self._image.data
 
         # remove bogus dimensions on top of 4th
         if len(self._data.shape[0:-4]) > 0:
@@ -669,7 +665,7 @@ class PyMVPAAtlas(XMLBasedAtlas):
 
     @staticmethod
     def _checkVersion(version):
-		# For compatibility lets support "RUMBA" atlases
+        # For compatibility lets support "RUMBA" atlases
         return version.startswith("pymvpa-") or version.startswith("rumba-")
 
 
@@ -764,15 +760,16 @@ class ReferencesAtlas(PyMVPAAtlas):
         if self._levels_dict.has_key(level):
             self.__referenceLevel = self._levels_dict[level]
         else:
-            raise IndexError("Unknown reference level " + `level` +
-                             ". Known are " + `self._levels_dict.keys()`)
+            raise IndexError, \
+                  "Unknown reference level %r. " % level + \
+                  "Known are %r" % (self._levels_dict.keys(), )
 
 
     def labelVoxel(self, c, levels = None):
 
         if self.__referenceLevel is None:
             warning("You did not provide what level to use "
-					"for reference. Assigning 0th level -- '%s'"
+                    "for reference. Assigning 0th level -- '%s'"
                     % (self._levels_dict[0],))
             self.setReferenceLevel(0)
             # return self.__referenceAtlas.labelVoxel(c, levels)
@@ -783,8 +780,8 @@ class ReferencesAtlas(PyMVPAAtlas):
         cref = self._data[ self.__referenceLevel.indexes, c[2], c[1], c[0] ]
         dist = norm( (cref - c) * self.voxdim )
         if __debug__:
-            debug('ATL__', "Closest referenced point for %s is "
-                  "%s at distance %3.2f" % (`c`, `cref`, dist))
+            debug('ATL__', "Closest referenced point for %r is "
+                  "%r at distance %3.2f" % (c, cref, dist))
         if (self.distance - dist) >= 1e-3: # neglect everything smaller
             result = self.__referenceAtlas.labelVoxel(cref, levels)
             result['voxel_referenced'] = c
@@ -806,8 +803,7 @@ class ReferencesAtlas(PyMVPAAtlas):
         return self.__referenceAtlas.levels_dict
 
     def setDistance(self, distance):
-        """
-        Set desired maximal distance for the reference
+        """Set desired maximal distance for the reference
         """
         if distance < 0:
             raise ValueError("Distance should not be negative. "

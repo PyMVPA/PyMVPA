@@ -30,9 +30,6 @@ from mvpa.base import externals, warning
 if __debug__:
     from mvpa.base import debug
 
-if externals.exists('scipy'):
-    from mvpa.datasets.miscfx_sp import detrend
-
 
 @datasetmethod
 def zscore(dataset, mean=None, std=None,
@@ -55,9 +52,11 @@ def zscore(dataset, mean=None, std=None,
     """
 
     if __debug__ and perchunk \
-      and N.array(get_nsamples_per_attr(dataset, 'chunks').values()).min() < 2:
-        warning("Z-scoring chunk-wise and one chunk with less than two " \
-                "samples will set features in these samples to zero.")
+      and N.array(get_nsamples_per_attr(dataset, 'chunks').values()).min() <= 2:
+        warning("Z-scoring chunk-wise and one chunk with less than three "
+                "samples will set features in these samples to either zero "
+                "(with 1 sample in a chunk) "
+                "or -1/+1 (with 2 samples in a chunk).")
 
     # cast the data to float, since in-place operations below to not upcast!
     if N.issubdtype(dataset.samples.dtype, N.integer):
@@ -132,8 +131,9 @@ def aggregateFeatures(dataset, fx=N.mean):
     The functor given as `fx` has to honour an `axis` keyword argument in the
     way that NumPy used it (e.g. NumPy.mean, var).
 
-    :Returns:
-       a new `Dataset` object with the aggregated feature(s).
+    Returns
+    -------
+     a new `Dataset` object with the aggregated feature(s).
     """
     agg = fx(dataset.samples, axis=1)
 
@@ -155,12 +155,13 @@ def coarsenChunks(source, nchunks=4):
     sense if originally there were no strong groupping into chunks or
     each sample was independent, thus belonged to its own chunk
 
-    :Parameters:
-      source : Dataset or list of chunk ids
-        dataset or list of chunk ids to operate on. If Dataset, then its chunks
-        get modified
-      nchunks : int
-        desired number of chunks
+    Parameters
+    ----------
+    source : Dataset or list of chunk ids
+      dataset or list of chunk ids to operate on. If Dataset, then its chunks
+      get modified
+    nchunks : int
+      desired number of chunks
     """
 
     if isinstance(source, Dataset):
@@ -240,9 +241,10 @@ def getSamplesPerChunkLabel(dataset):
 
     Array shape is (chunks x labels).
 
-    :Parameters:
-      dataset: Dataset
-        Source dataset.
+    Parameters
+    ----------
+    dataset : Dataset
+      Source dataset.
     """
     ul = dataset.sa['labels'].unique
     uc = dataset.sa['chunks'].unique
@@ -381,7 +383,7 @@ def get_nsamples_per_attr(dataset, attr):
 
 @datasetmethod
 def get_samples_by_attr(dataset, attr, values, sort=True):
-    """Return indecies of samples given a list of attributes
+    """Return indices of samples given a list of attributes
     """
 
     if not isSequenceType(values) \
@@ -416,9 +418,10 @@ class SequenceStats(dict):
     def __init__(self, seq, order=2):#, chunks=None, perchunk=False):
         """Initialize SequenceStats
 
-        :Parameters:
-          seq : list or ndarray
-            Actual sequence of labels
+        Parameters
+        ----------
+        seq : list or ndarray
+          Actual sequence of labels
 
         :Keywords:
           order : int

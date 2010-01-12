@@ -37,32 +37,33 @@ def plotHeadTopography(topography, sensorlocations, plotsensors=False,
     The sensor locations are first projected onto the best fitting sphere and
     finally projected onto a circle (by simply ignoring the z-axis).
 
-    :Parameters:
-      topography: array
-        A vector of some values corresponding to each sensor.
-      sensorlocations: (nsensors x 3) array
-        3D coordinates of each sensor. The order of the sensors has to match
-        with the `topography` vector.
-      plotsensors: bool
-        If True, sensor will be plotted on their projected coordinates.
-        No sensor are shown otherwise.
-      plothead: bool
-        If True, a head outline is plotted.
-      plothead_kwargs: dict
-        Additional keyword arguments passed to `plotHeadOutline()`.
-      resolution: int
-        Number of surface samples along both x and y-axis.
-      masked: bool
-        If True, all surface sample extending to head outline will be
-        masked.
-      **kwargs:
-        All additional arguments will be passed to `pylab.imshow()`.
+    Parameters
+    ----------
+    topography : array
+      A vector of some values corresponding to each sensor.
+    sensorlocations : (nsensors x 3) array
+      3D coordinates of each sensor. The order of the sensors has to match
+      with the `topography` vector.
+    plotsensors : bool
+      If True, sensor will be plotted on their projected coordinates.
+      No sensor are shown otherwise.
+    plothead : bool
+      If True, a head outline is plotted.
+    plothead_kwargs : dict
+      Additional keyword arguments passed to `plotHeadOutline()`.
+    resolution : int
+      Number of surface samples along both x and y-axis.
+    masked : bool
+      If True, all surface sample extending to head outline will be
+      masked.
+    **kwargs
+      All additional arguments will be passed to `pylab.imshow()`.
 
-
-    :Returns:
-      (map, head, sensors)
-        The corresponding matplotlib objects are returned if plotted, ie.
-        if plothead is set to `False`, `head` will be `None`.
+    Returns
+    -------
+    (map, head, sensors)
+      The corresponding matplotlib objects are returned if plotted, ie.
+      if plothead is set to `False`, `head` will be `None`.
 
           map
             The colormap that makes the actual plot, a
@@ -148,21 +149,23 @@ def plotHeadOutline(scale=1, shift=(0, 0), color='k', linewidth='5', **kwargs):
     size of the head is basically a unit circle for nose and ears attached
     to it.
 
-    :Parameters:
-      scale: float
-        Factor to scale the size of the head.
-      shift: 2-tuple of floats
-        Shift the center of the head circle by these values.
-      color: matplotlib color spec
-        The color the outline should be plotted in.
-      linewidth: int
-        Linewidth of the head outline.
-      **kwargs:
-        All additional arguments are passed to `pylab.plot()`.
+    Parameters
+    ----------
+    scale : float
+      Factor to scale the size of the head.
+    shift : 2-tuple of floats
+      Shift the center of the head circle by these values.
+    color : matplotlib color spec
+      The color the outline should be plotted in.
+    linewidth : int
+      Linewidth of the head outline.
+    **kwargs
+      All additional arguments are passed to `pylab.plot()`.
 
-    :Returns:
-      Matplotlib lines2D object
-        can be used to tweak the look of the head outline.
+    Returns
+    -------
+    Matplotlib lines2D object
+      can be used to tweak the look of the head outline.
     """
 
     rmax = 0.5

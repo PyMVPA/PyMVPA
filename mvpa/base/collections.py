@@ -16,6 +16,7 @@ import copy
 import numpy as N
 from operator import isSequenceType
 
+from mvpa.base.dochelpers import _str
 
 if __debug__:
     # we could live without, but it would be nicer with it
@@ -30,6 +31,8 @@ _object_getattribute = dict.__getattribute__
 _object_setattr = dict.__setattr__
 _object_setitem = dict.__setitem__
 
+# To validate fresh
+_dict_api = set(dict.__dict__)
 
 class Collectable(object):
     """Collection element.
@@ -55,7 +58,7 @@ class Collectable(object):
         if not value is None:
             self._set(value)
         if __debug__ and __mvpadebug__:
-            debug("COL", "Initialized new collectable: %s" % `self`)
+            debug("COL", "Initialized %r" % self)
 
 
     def __copy__(self):
@@ -94,16 +97,17 @@ class Collectable(object):
                                                   repr(value))
 
 
-    def _getName(self):
+    def _get_name(self):
         return self.__name
 
 
-    def _setName(self, name):
+    def _set_name(self, name):
         """Set the name of parameter
 
-        .. note::
-          Should not be called for an attribute which is already assigned
-          to a collection
+        Notes
+        -----
+        Should not be called for an attribute which is already assigned
+        to a collection
         """
         if name is not None:
             if isinstance(name, basestring):
@@ -119,16 +123,16 @@ class Collectable(object):
 
 
     # Instead of going for VProperty lets make use of virtual method
-    def _getVirtual(self):
+    def _get_virtual(self):
         return self._get()
 
 
-    def _setVirtual(self, value):
+    def _set_virtual(self, value):
         return self._set(value)
 
 
-    value = property(_getVirtual, _setVirtual)
-    name = property(_getName, _setName)
+    value = property(_get_virtual, _set_virtual)
+    name = property(_get_name, _set_name)
 
 
 class SequenceCollectable(Collectable):
@@ -162,7 +166,7 @@ class SequenceCollectable(Collectable):
                              % self.__class__.__name__)
         self._target_length = length
         Collectable.__init__(self, value=value, name=name, doc=doc)
-        self._resetUnique()
+        self._reset_unique()
 
 
     def __repr__(self):
@@ -189,24 +193,25 @@ class SequenceCollectable(Collectable):
                              % (len(val),
                                 self._target_length,
                                 str(self.name)))
-        self._resetUnique()
+        self._reset_unique()
         Collectable._set(self, val)
 
 
-    def _resetUnique(self):
-        self._uniqueValues = None
+    def _reset_unique(self):
+        self._unique_values = None
 
 
-    def _getUniqueValues(self):
+    @property
+    def unique(self):
         if self.value is None:
             return None
-        if self._uniqueValues is None:
+        if self._unique_values is None:
             # XXX we might better use Set, but yoh recalls that
             #     N.unique was more efficient. May be we should check
             #     on the the class and use Set only if we are not
             #     dealing with ndarray (or lists/tuples)
-            self._uniqueValues = N.unique(self.value)
-        return self._uniqueValues
+            self._unique_values = N.unique(self.value)
+        return self._unique_values
 
 
     def set_length_check(self, value):
@@ -220,9 +225,6 @@ class SequenceCollectable(Collectable):
           it is not modified, but a ValueError is raised.
         """
         self._target_length = value
-
-
-    unique = property(fget=_getUniqueValues)
 
 
 
@@ -294,6 +296,13 @@ class Collection(dict):
           not an instance of `Collectable` or a subclass the value is
           automatically wrapped into it.
         """
+        # Check if given key is not trying to override anything in
+        # dict interface
+        if key in _dict_api:
+            raise ValueError, \
+                  "Cannot add a collectable %r to collection %s since an " \
+                  "attribute or a method with such a name is already present " \
+                  "in dict interface.  Choose some other name." % (key, self)
         if not isinstance(value, Collectable):
             value = Collectable(value)
         # overwrite the Collectable's name with the given one
@@ -346,25 +355,16 @@ class Collection(dict):
 
 
     def __getattribute__(self, key):
-        #return all private and protected ones first since we will not have
-        # collectable's with _ (we should not have!)
-        if key[0] == '_':
-            return _object_getattribute(self, key)
-        # bypass the Collectable and return value
-        if key in self:
+        try:
             return self[key].value
-        # fallback
-        return _object_getattribute(self, key)
+        except KeyError:
+            return _object_getattribute(self, key)
 
 
     def __setattr__(self, key, value):
-        # don't mess with private stuff
-        if key[0] == '_':
-            return _object_setattr(self, key, value)
-        # directly assign the value for Collectables
-        if key in self:
+        try:
             self[key].value = value
-        else:
+        except KeyError:
             _object_setattr(self, key, value)
 
 
@@ -372,6 +372,10 @@ class Collection(dict):
         return "%s(items=%s)" \
                   % (self.__class__.__name__,
                      repr(self.values()))
+
+
+    def __str__(self):
+        return _str(self, ','.join([str(k) for k in self.keys()]))
 
 
 
@@ -406,11 +410,12 @@ class UniformLengthCollection(Collection):
 
 
     def __setitem__(self, key, value):
-        """Add a new CollectableAttribute to the collection
+        """Add a new IndexedCollectable to the collection
 
-        :Parameters:
-          item : CollectableAttribute
-            or of derived class. Must have 'name' assigned.
+        Parameters
+        ----------
+        item : IndexedCollectable
+          or of derived class. Must have 'name' assigned.
         """
         if not isinstance(value, SequenceCollectable):
             # XXX should we check whether it is some other Collectable?
@@ -418,9 +423,10 @@ class UniformLengthCollection(Collection):
         if self._uniform_length is None:
             self._uniform_length = len(value)
         elif not len(value.value) == self._uniform_length:
-            raise ValueError("Collectable '%s' does not match the required "
-                             "length [%i] of collection '%s'."
+            raise ValueError("Collectable '%s' with length [%i] does not match "
+                             "the required length [%i] of collection '%s'."
                              % (key,
+                                len(value.value),
                                 self._uniform_length,
                                 str(self)))
         # tell the attribute to maintain the desired length

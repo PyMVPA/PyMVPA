@@ -23,41 +23,46 @@ def plotErrLine(data, x=None, errtype='ste', curves=None, linestyle='--',
                 fmt='o', perc_sigchg=False, baseline=None):
     """Make a line plot with errorbars on the data points.
 
-    :Parameters:
-      data: sequence of sequences
-        First axis separates samples and second axis will appear as
-        x-axis in the plot.
-      x: sequence
-        Value to be used as 'x-values' corresponding to the elements of
-        the 2nd axis id `data`. If `None`, a sequence of ascending integers
-        will be generated.
-      errtype: 'ste' | 'std'
-        Type of error value to be computed per datapoint.
-          'ste': standard error of the mean
-          'std': standard deviation
-      curves: None | list of tuple(x, y)
-        Each tuple represents an additional curve, with x and y coordinates of
-        each point on the curve.
-      linestyle: str
-        matplotlib linestyle argument. Applied to either the additional
-        curve or a the line connecting the datapoints. Set to 'None' to
-        disable the line completely.
-      fmt: str
-        matplotlib plot style argument to be applied to the data points
-        and errorbars.
-      perc_sigchg: bool
-        If `True` the plot will show percent signal changes relative to a
-        baseline.
-      baseline: float | None
-        Baseline used for converting values into percent signal changes.
-        If `None` and `perc_sigchg` is `True`, the absolute of the mean of the
-        first feature (i.e. [:,0]) will be used as a baseline.
+    Parameters
+    ----------
+    data : sequence of sequences
+      First axis separates samples and second axis will appear as
+      x-axis in the plot.
+    x : sequence
+      Value to be used as 'x-values' corresponding to the elements of
+      the 2nd axis id `data`. If `None`, a sequence of ascending integers
+      will be generated.
+    errtype : 'ste' or 'std'
+      Type of error value to be computed per datapoint:
+
+        'ste'
+          standard error of the mean
+        'std'
+          standard deviation
+    curves : None or list of tuple(x, y)
+      Each tuple represents an additional curve, with x and y coordinates of
+      each point on the curve.
+    linestyle : str
+      matplotlib linestyle argument. Applied to either the additional
+      curve or a the line connecting the datapoints. Set to 'None' to
+      disable the line completely.
+    fmt : str
+      matplotlib plot style argument to be applied to the data points
+      and errorbars.
+    perc_sigchg : bool
+      If `True` the plot will show percent signal changes relative to a
+      baseline.
+    baseline : float or None
+      Baseline used for converting values into percent signal changes.
+      If `None` and `perc_sigchg` is `True`, the absolute of the mean of the
+      first feature (i.e. [:,0]) will be used as a baseline.
 
 
-    :Example:
+    Examples
+    --------
 
-      Make dataset with 20 samples from a full sinus wave period,
-      computed 100 times with individual noise pattern.
+    Make dataset with 20 samples from a full sinus wave period,
+    computed 100 times with individual noise pattern.
 
         >>> x = N.linspace(0, N.pi * 2, 20)
         >>> data = N.vstack([N.sin(x)] * 30)
@@ -123,18 +128,19 @@ def plotFeatureHist(dataset, xlim=None, noticks=True, perchunk=False,
                     **kwargs):
     """Plot histograms of feature values for each labels.
 
-    :Parameters:
-      dataset: Dataset
-      xlim: None | 2-tuple
-        Common x-axis limits for all histograms.
-      noticks: boolean
-        If True, no axis ticks will be plotted. This is useful to save
-        space in large plots.
-      perchunk: boolean
-        If True, one histogramm will be plotted per each label and each
-        chunk, resulting is a histogram grid (labels x chunks).
-      **kwargs:
-        Any additional arguments are passed to matplotlib's hist().
+    Parameters
+    ----------
+    dataset : Dataset
+    xlim : None or 2-tuple
+      Common x-axis limits for all histograms.
+    noticks : bool
+      If True, no axis ticks will be plotted. This is useful to save
+      space in large plots.
+    perchunk : bool
+      If True, one histogramm will be plotted per each label and each
+      chunk, resulting is a histogram grid (labels x chunks).
+    **kwargs
+      Any additional arguments are passed to matplotlib's hist().
     """
     lsplit = NFoldSplitter(1, attr='labels')
     csplit = NFoldSplitter(1, attr='chunks')
@@ -180,15 +186,16 @@ def plotFeatureHist(dataset, xlim=None, noticks=True, perchunk=False,
 def plotSamplesDistance(dataset, sortbyattr=None):
     """Plot the euclidean distances between all samples of a dataset.
 
-    :Parameters:
-      dataset: Dataset
-        Providing the samples.
-      sortbyattr: None | str
-        If None, the samples distances will be in the same order as their
-        appearance in the dataset. Alternatively, the name of a samples
-        attribute can be given, which wil then be used to sort/group the
-        samples, e.g. to investigate the similarity samples by label or by
-        chunks.
+    Parameters
+    ----------
+    dataset : Dataset
+      Providing the samples.
+    sortbyattr : None or str
+      If None, the samples distances will be in the same order as their
+      appearance in the dataset. Alternatively, the name of a samples
+      attribute can be given, which wil then be used to sort/group the
+      samples, e.g. to investigate the similarity samples by label or by
+      chunks.
     """
     if sortbyattr is not None:
         slicer = []
@@ -214,34 +221,35 @@ def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
     by calling this function multiple time with appropriatly modified
     `offset` argument.
 
-    :Parameters:
-      data: array (nbars x nobservations) | other sequence type
-        Source data for the barplot. Error measure is computed along the
-        second axis.
-      labels: list | None
-        If not None, a label from this list is placed on each bar.
-      title: str
-        An optional title of the barplot.
-      ylim: 2-tuple
-        Y-axis range.
-      ylabel: str
-        An optional label for the y-axis.
-      width: float
-        Width of a bar. The value should be in a reasonable relation to
-        `distance`.
-      offset: float
-        Constant offset of all bar along the x-axis. Can be used to create
-        candlestick plots.
-      color: matplotlib color spec
-        Color of the bars.
-      distance: float
-        Distance of two adjacent bars.
-      yerr: 'ste' | 'std' | None
-        Type of error for the errorbars. If `None` no errorbars are plotted.
-      xloc: sequence
-        Locations of the bars on the x axis.
-      **kwargs:
-        Any additional arguments are passed to matplotlib's `bar()` function.
+    Parameters
+    ----------
+    data : array (nbars x nobservations) or other sequence type
+      Source data for the barplot. Error measure is computed along the
+      second axis.
+    labels : list or None
+      If not None, a label from this list is placed on each bar.
+    title : str
+      An optional title of the barplot.
+    ylim : 2-tuple
+      Y-axis range.
+    ylabel : str
+      An optional label for the y-axis.
+    width : float
+      Width of a bar. The value should be in a reasonable relation to
+      `distance`.
+    offset : float
+      Constant offset of all bar along the x-axis. Can be used to create
+      candlestick plots.
+    color : matplotlib color spec
+      Color of the bars.
+    distance : float
+      Distance of two adjacent bars.
+    yerr : {'ste', 'std', None}
+      Type of error for the errorbars. If `None` no errorbars are plotted.
+    xloc : sequence
+      Locations of the bars on the x axis.
+    **kwargs
+      Any additional arguments are passed to matplotlib's `bar()` function.
     """
     # determine location of bars
     if xloc is None:

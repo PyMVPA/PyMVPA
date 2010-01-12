@@ -6,27 +6,13 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""PyMVPA datasets and helper classes such as splitters
+"""The module `mvpa.datasets` offers data storage and handling functionality.
 
-Module Description
-==================
-
-`Dataset` and derived classes are dedicated to contain the data and
-associated information (such as labels, chunk(session) identifiers.
-
-Module Organization
-===================
-
-The mvpa.datasets module contains the following modules:
-
-.. packagetree::
-   :style: UML
-
-:group Generic Datasets: base mapped masked meta
-:group Specialized Datasets: nifti channel eep event
-:group Splitters: splitter
-:group Miscellaneous: miscfx miscfx_sp
-
+Virtually any processing done with PyMVPA involves datasets -- the primary form
+of data representation in PyMVPA. Datasets serve as containers for input data,
+as well as the return datatype of more complex PyMVPA algorithms. The following
+sections introduce some basic concepts of datasets and offers an overview of
+typical procedures perform with them.
 
 """
 
@@ -38,6 +24,7 @@ if __debug__:
 
 # nothing in here that works without the base class
 from mvpa.datasets.base import Dataset, dataset
+from mvpa.base.dataset import hstack, vstack
 
 if __debug__:
     debug('INIT', 'mvpa.datasets end')

@@ -18,6 +18,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from mvpa.datasets import Dataset
 from mvpa.measures.base import FeaturewiseDatasetMeasure
 from mvpa.kernels.np import ExponentialKernel
 from mvpa.clfs.distance import pnorm_w
@@ -30,7 +31,7 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
     """`FeaturewiseDatasetMeasure` that performs multivariate I-RELIEF
     algorithm. Batch version allowing various kernels.
 
-    UNDER DEVELOPEMNT.
+    UNDER DEVELOPMENT.
 
     Batch I-RELIEF-2 feature weighting algorithm. Works for binary or
     multiclass class-labels. Batch version with complexity O(T*N^2*I),
@@ -102,7 +103,7 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
 
         while True:
             self.k = self.kernel(length_scale = self.kernel_width/self.w)
-            d_w_k = self.k.compute(samples)
+            d_w_k = self.k.computed(samples).as_raw_np()
             # set d_w_k to zero where distance=0 (i.e. kernel ==
             # 1.0), otherwise I-RELIEF could not converge.
             # XXX Note that kernel==1 for distance=0 only for
@@ -137,7 +138,7 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
             if change < self.threshold:
                 break
 
-        return self.w
+        return Dataset(self.w[N.newaxis])
 
 
 class IterativeReliefOnline_Devel(IterativeRelief_Devel):
@@ -206,16 +207,16 @@ class IterativeReliefOnline_Devel(IterativeRelief_Devel):
                 n = random_sequence[t]
 
                 self.k = self.kernel(length_scale = self.kernel_width/self.w)
-                d_w_k_xn_Mn = self.k.compute(dataset.samples[None, n, :],
-                                dataset.samples[M[n], :]).squeeze()
+                d_w_k_xn_Mn = self.k.computed(dataset.samples[None, n, :],
+                                dataset.samples[M[n], :]).as_raw_np().squeeze()
                 d_w_k_xn_Mn_sum = d_w_k_xn_Mn.sum()
-                d_w_k_xn_x = self.k.compute(dataset.samples[None, n, :],
-                                dataset.samples).squeeze()
+                d_w_k_xn_x = self.k.computed(dataset.samples[None, n, :],
+                                dataset.samples).as_raw_np().squeeze()
                 gamma_n = 1.0 - d_w_k_xn_Mn_sum / d_w_k_xn_x.sum()
                 alpha_n = d_w_k_xn_Mn / d_w_k_xn_Mn_sum
 
-                d_w_k_xn_Hn = self.k.compute(dataset.samples[None, n, :],
-                                dataset.samples[H[n], :]).squeeze()
+                d_w_k_xn_Hn = self.k.computed(dataset.samples[None, n, :],
+                                dataset.samples[H[n], :]).as_raw_np().squeeze()
                 beta_n = d_w_k_xn_Hn / d_w_k_xn_Hn.sum()
 
                 m_n = (N.abs(dataset.samples[n, :] - dataset.samples[M[n], :]) \
@@ -245,7 +246,7 @@ class IterativeReliefOnline_Devel(IterativeRelief_Devel):
 
             iteration += 1
 
-        return self.w
+        return Dataset(self.w[N.newaxis])
 
 
 
@@ -258,7 +259,9 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
     where T is the number of iterations, N the number of instances, I
     the number of features.
 
-    See: Y. Sun, Iterative RELIEF for Feature Weighting: Algorithms,
+    References
+    ----------
+    Y. Sun, Iterative RELIEF for Feature Weighting: Algorithms,
     Theories, and Applications, IEEE Trans. on Pattern Analysis and
     Machine Intelligence (TPAMI), vol. 29, no. 6, pp. 1035-1051, June
     2007. http://plaza.ufl.edu/sunyijun/Paper/PAMI_1.pdf
@@ -360,7 +363,7 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
                 break
 
         self.w = w
-        return w
+        return Dataset(self.w[N.newaxis])
 
 
 class IterativeReliefOnline(IterativeRelief):
@@ -457,5 +460,5 @@ class IterativeReliefOnline(IterativeRelief):
             iteration += 1
 
         self.w = w
-        return w
+        return Dataset(self.w[N.newaxis])
 

@@ -63,7 +63,6 @@ from mvpa.datasets import *
 from mvpa.datasets.base import *
 from mvpa.datasets.miscfx import *
 from mvpa.datasets.channel import *
-from mvpa.datasets.event import *
 from mvpa.datasets.eep import *
 if externals.exists('nifti'):
     from mvpa.datasets.mri import *
@@ -81,17 +80,16 @@ from mvpa import mappers
 #from mvpa.mappers import *
 from mvpa.mappers.base import *
 from mvpa.mappers.projection import *
-from mvpa.mappers.metric import *
 from mvpa.mappers.svd import *
 from mvpa.mappers.procrustean import *
 from mvpa.mappers.boxcar import *
-from mvpa.mappers.samplegroup import *
+from mvpa.mappers.fx import *
 from mvpa.mappers.som import *
 if externals.exists('scipy'):
     from mvpa.mappers.zscore import ZScoreMapper
+    from mvpa.mappers.detrend import *
 if externals.exists('mdp'):
     from mvpa.mappers.mdp_adaptor import *
-    from mvpa.mappers.ica import *
 if externals.exists('mdp ge 2.4'):
     from mvpa.mappers.lle import *
 
@@ -102,7 +100,6 @@ from mvpa.measures.irelief import *
 from mvpa.measures.base import *
 from mvpa.measures.noiseperturbation import *
 from mvpa.measures.searchlight import *
-from mvpa.measures.splitmeasure import *
 from mvpa.measures.corrstability import *
 
 from mvpa.support.copy import *

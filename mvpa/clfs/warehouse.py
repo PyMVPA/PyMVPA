@@ -16,7 +16,7 @@ import operator
 
 # Define sets of classifiers
 from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
-     MulticlassClassifier
+     MulticlassClassifier, RegressionAsClassifier
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN
 from mvpa.clfs.gnb import GNB
@@ -25,17 +25,22 @@ from mvpa.kernels.np import LinearKernel, SquaredExponentialKernel
 # Helpers
 from mvpa.base import externals, cfg
 from mvpa.measures.anova import OneWayAnova
-from mvpa.misc.transformers import Absolute
+from mvpa.mappers.fx import absolute_features, maxofabs_sample
 from mvpa.clfs.smlr import SMLRWeights
 from mvpa.featsel.helpers import FractionTailSelector, \
     FixedNElementTailSelector, RangeElementSelector
 
 from mvpa.featsel.base import SensitivityBasedFeatureSelection
 
+# Kernels
+from mvpa.kernels.libsvm import LinearLSKernel, RbfLSKernel, \
+     PolyLSKernel, SigmoidLSKernel
+
 _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'smlr', 'does_feature_selection', 'has_sensitivity',
         'multiclass', 'non-linear', 'kernel-based', 'lars',
-        'regression', 'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
+        'regression', 'regression_based',
+        'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
         'gnb']
 
@@ -51,15 +56,16 @@ class Warehouse(object):
     def __init__(self, known_tags=None, matches=None):
         """Initialize warehouse
 
-        :Parameters:
-          known_tags : list of basestring
-            List of known tags
-          matches : dict
-            Optional dictionary of additional matches. E.g. since any
-            regression can be used as a binary classifier,
-            matches={'binary':['regression']}, would allow to provide
-            regressions also if 'binary' was requested
-            """
+        Parameters
+        ----------
+        known_tags : list of str
+          List of known tags
+        matches : dict
+          Optional dictionary of additional matches. E.g. since any
+          regression can be used as a binary classifier,
+          matches={'binary':['regression']}, would allow to provide
+          regressions also if 'binary' was requested
+          """
         self._known_tags = Set(known_tags)
         self.__items = []
         self.__keys = Set()
@@ -92,7 +98,7 @@ class Warehouse(object):
             for arg in args:
                 # check for rejection first
                 if arg.startswith('!'):
-                    if (arg[1:] in item._clf_internals):
+                    if (arg[1:] in item.__tags__):
                         good = False
                         break
                     else:
@@ -100,7 +106,7 @@ class Warehouse(object):
                 # check for inclusion
                 found = False
                 for arg in [arg] + self.__matches.get(arg, []):
-                    if (arg in item._clf_internals):
+                    if (arg in item.__tags__):
                         found = True
                         break
                 good = found
@@ -115,13 +121,13 @@ class Warehouse(object):
             for item_ in item:
                 self.__iadd__(item_)
         else:
-            if not hasattr(item, '_clf_internals'):
+            if not hasattr(item, '__tags__'):
                 raise ValueError, "Cannot register %s " % item + \
-                      "which has no _clf_internals defined"
-            if len(item._clf_internals) == 0:
+                      "which has no __tags__ defined"
+            if len(item.__tags__) == 0:
                 raise ValueError, "Cannot register %s " % item + \
-                      "which has empty _clf_internals"
-            clf_internals = Set(item._clf_internals)
+                      "which has empty __tags__"
+            clf_internals = Set(item.__tags__)
             if clf_internals.issubset(self._known_tags):
                 self.__items.append(item)
                 self.__keys |= clf_internals
@@ -139,7 +145,7 @@ class Warehouse(object):
     def listing(self):
         """Listing (description + internals) of registered items
         """
-        return [(x.descr, x._clf_internals) for x in self.__items]
+        return [(x.descr, x.__tags__) for x in self.__items]
 
     @property
     def items(self):
@@ -179,25 +185,25 @@ if externals.exists('libsvm'):
              libsvm.SVM(svm_impl='NU_SVC',
                         descr="libsvm.LinNuSVM(nu=def)", probability=1)
              ]
-    clfswh += [libsvm.SVM(kernel_type='RBF', descr="libsvm.RbfSVM()"),
-             libsvm.SVM(kernel_type='RBF', svm_impl='NU_SVC',
+    clfswh += [libsvm.SVM(kernel=RbfLSKernel(), descr="libsvm.RbfSVM()"),
+             libsvm.SVM(kernel=RbfLSKernel(), svm_impl='NU_SVC',
                         descr="libsvm.RbfNuSVM(nu=def)"),
-             libsvm.SVM(kernel_type='poly',
+             libsvm.SVM(kernel=PolyLSKernel(),
                         descr='libsvm.PolySVM()', probability=1),
-             #libsvm.svm.SVM(kernel_type='sigmoid',
+             #libsvm.svm.SVM(kernel=SigmoidLSKernel(),
              #               svm_impl='C_SVC',
              #               descr='libsvm.SigmoidSVM()'),
              ]
 
     # regressions
     regrswh._known_tags.union_update(['EPSILON_SVR', 'NU_SVR'])
-    regrswh += [libsvm.SVM(svm_impl='EPSILON_SVR', descr='libsvm epsilon-SVR',
-                         regression=True),
-              libsvm.SVM(svm_impl='NU_SVR', descr='libsvm nu-SVR',
-                         regression=True)]
+    regrswh += [libsvm.SVM(svm_impl='EPSILON_SVR', descr='libsvm epsilon-SVR'),
+                libsvm.SVM(svm_impl='NU_SVR', descr='libsvm nu-SVR')]
 
 if externals.exists('shogun'):
     from mvpa.clfs import sg
+    
+    from mvpa.kernels.sg import LinearSGKernel, PolySGKernel, RbfSGKernel
     clfswh._known_tags.union_update(sg.SVM._KNOWN_IMPLEMENTATIONS)
 
     # some classifiers are not yet ready to be used out-of-the-box in
@@ -214,6 +220,7 @@ if externals.exists('shogun'):
         'svrlight', # fails to 'generalize' as a binary classifier
                     # after 'binning'
         'krr', # fails to generalize
+        'libsvr'                        # XXXregr removing regressions as classifiers
         ]
     if not externals.exists('sg_fixedcachesize'):
         # would fail with 'assertion Cache_Size > 2' if shogun < 0.6.3
@@ -232,24 +239,22 @@ if externals.exists('shogun'):
                 C=1.0, descr="sg.LinSVM(C=1)/%s" % impl, svm_impl=impl),
             ]
         clfswh += [
-            sg.SVM(kernel_type='RBF',
+            sg.SVM(kernel=RbfSGKernel(),
                    descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
-#            sg.SVM(kernel_type='RBF',
+#            sg.SVM(kernel=RbfSGKernel(),
 #                   descr="sg.RbfSVM(gamma=0.1)/%s"
 #                    % impl, svm_impl=impl, gamma=0.1),
 #           sg.SVM(descr="sg.SigmoidSVM()/%s"
-#                   % impl, svm_impl=impl, kernel_type="sigmoid"),
+#                   % impl, svm_impl=impl, kernel=SigmoidSGKernel(),),
             ]
 
     for impl in ['libsvr', 'krr']:# \
         # XXX svrlight sucks in SG -- dont' have time to figure it out
         #+ ([], ['svrlight'])['svrlight' in sg.SVM._KNOWN_IMPLEMENTATIONS]:
         regrswh._known_tags.union_update([impl])
-        regrswh += [ sg.SVM(svm_impl=impl, descr='sg.LinSVMR()/%s' % impl,
-                          regression=True),
+        regrswh += [ sg.SVM(svm_impl=impl, descr='sg.LinSVMR()/%s' % impl),
                    #sg.SVM(svm_impl=impl, kernel_type='RBF',
-                   #       descr='sg.RBFSVMR()/%s' % impl,
-                   #       regression=True),
+                   #       descr='sg.RBFSVMR()/%s' % impl),
                    ]
 
 if len(clfswh['svm', 'linear']) > 0:
@@ -266,8 +271,8 @@ if externals.exists('lars'):
         clfswh += lars_clf
 
         # is a regression, too
-        lars_regr = LARS(descr="_LARS(%s, regression=True)" % model,
-                         regression=True, model_type=model)
+        lars_regr = LARS(descr="_LARS(%s)" % model,
+                         model_type=model)
         regrswh += lars_regr
         # clfswh += MulticlassClassifier(lars,
         #             descr='Multiclass %s' % lars.descr)
@@ -277,8 +282,8 @@ if externals.exists('lars'):
 ## # enet from R via RPy
 ## if externals.exists('elasticnet'):
 ##     from mvpa.clfs.enet import ENET
-##     clfswh += ENET(descr="ENET()")
-##     regrswh += ENET(descr="ENET(regression=True)", regression=True)
+##     clfswh += ENET(descr="RegressionAsClassifier(ENET())")
+##     regrswh += ENET(descr="ENET()")
 
 # glmnet from R via RPy
 if externals.exists('glmnet'):
@@ -294,7 +299,8 @@ clfswh += \
     FeatureSelectionClassifier(
         kNN(),
         SensitivityBasedFeatureSelection(
-           SMLRWeights(SMLR(lm=1.0, implementation="C")),
+           SMLRWeights(SMLR(lm=1.0, implementation="C"),
+                       mapper=maxofabs_sample()),
            RangeElementSelector(mode='select')),
         descr="kNN on SMLR(lm=1) non-0")
 
@@ -332,13 +338,18 @@ clfswh += \
 if externals.exists('scipy'):
     from mvpa.clfs.gpr import GPR
 
-    clfswh += GPR(kernel=LinearKernel(), descr="GPR(kernel='linear')")
-    clfswh += GPR(kernel=SquaredExponentialKernel(),
-                  descr="GPR(kernel='sqexp')")
+    regrswh += GPR(kernel=LinearKernel(), descr="GPR(kernel='linear')")
+    regrswh += GPR(kernel=SquaredExponentialKernel(),
+                   descr="GPR(kernel='sqexp')")
+
+    # Add wrapped GPR as a classifier
+    clfswh += RegressionAsClassifier(
+        GPR(kernel=LinearKernel()), descr="GPRC(kernel='linear')")
 
 # BLR
 from mvpa.clfs.blr import BLR
-clfswh += BLR(descr="BLR()")
+clfswh += RegressionAsClassifier(BLR(descr="BLR()"),
+                                 descr="BLR Classifier")
 
 
 # SVM stuff
@@ -354,7 +365,8 @@ if len(clfswh['linear', 'svm']) > 0:
          FeatureSelectionClassifier(
              linearSVMC.clone(),
              SensitivityBasedFeatureSelection(
-                SMLRWeights(SMLR(lm=0.1, implementation="C")),
+                SMLRWeights(SMLR(lm=0.1, implementation="C"),
+                            mapper=maxofabs_sample()),
                 RangeElementSelector(mode='select')),
              descr="LinSVM on SMLR(lm=0.1) non-0")
 
@@ -363,7 +375,8 @@ if len(clfswh['linear', 'svm']) > 0:
         FeatureSelectionClassifier(
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
-                SMLRWeights(SMLR(lm=1.0, implementation="C")),
+                SMLRWeights(SMLR(lm=1.0, implementation="C"),
+                            mapper=maxofabs_sample()),
                 RangeElementSelector(mode='select')),
             descr="LinSVM on SMLR(lm=1) non-0")
 
@@ -373,7 +386,8 @@ if len(clfswh['linear', 'svm']) > 0:
         FeatureSelectionClassifier(
             RbfCSVMC(),
             SensitivityBasedFeatureSelection(
-               SMLRWeights(SMLR(lm=1.0, implementation="C")),
+               SMLRWeights(SMLR(lm=1.0, implementation="C"),
+                           mapper=maxofabs_sample()),
                RangeElementSelector(mode='select')),
             descr="RbfSVM on SMLR(lm=1) non-0")
 
@@ -397,7 +411,7 @@ if len(clfswh['linear', 'svm']) > 0:
         FeatureSelectionClassifier(
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
-               linearSVMC.getSensitivityAnalyzer(transformer=Absolute),
+               linearSVMC.getSensitivityAnalyzer(mapper=maxofabs_sample()),
                FractionTailSelector(0.05, mode='select', tail='upper')),
             descr="LinSVM on 5%(SVM)")
 
@@ -405,7 +419,7 @@ if len(clfswh['linear', 'svm']) > 0:
         FeatureSelectionClassifier(
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
-               linearSVMC.getSensitivityAnalyzer(transformer=Absolute),
+               linearSVMC.getSensitivityAnalyzer(mapper=maxofabs_sample()),
                FixedNElementTailSelector(50, mode='select', tail='upper')),
             descr="LinSVM on 50(SVM)")
 
@@ -474,7 +488,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(),
     #    feature_selection = RFE(             # on features selected via RFE
     #        sensitivity_analyzer=\
-    #            rfesvm.getSensitivityAnalyzer(transformer=Absolute),
+    #            rfesvm.getSensitivityAnalyzer(mapper=absolute_features()),
     #        transfer_error=TransferError(rfesvm),
     #        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
     #        feature_selector=FractionTailSelector(
@@ -491,7 +505,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(),
     #    feature_selection = RFE(             # on features selected via RFE
     #        sensitivity_analyzer=\
-    #            rfesvm.getSensitivityAnalyzer(transformer=Absolute),
+    #            rfesvm.getSensitivityAnalyzer(mapper=absolute_features()),
     #        transfer_error=TransferError(rfesvm),
     #        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
     #        feature_selector=FractionTailSelector(

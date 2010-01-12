@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import re
 import textwrap
 import numpy as N
-from mvpa.misc.state import CollectableAttribute
+from mvpa.misc.state import IndexedCollectable
 
 if __debug__:
     from mvpa.base import debug
@@ -22,7 +22,7 @@ _whitespace_re = re.compile('\n\s+|^\s+')
 
 __all__ = [ 'Parameter', 'KernelParameter' ]
 
-class Parameter(CollectableAttribute):
+class Parameter(IndexedCollectable):
     """This class shall serve as a representation of a parameter.
 
     It might be useful if a little more information than the pure parameter
@@ -77,7 +77,7 @@ class Parameter(CollectableAttribute):
 
         # needs to come after kwargs processing, since some debug statements
         # rely on working repr()
-        CollectableAttribute.__init__(self, name=name, doc=doc, index=index,
+        IndexedCollectable.__init__(self, name=name, doc=doc, index=index,
                                       value=value)
         self._isset = False
         if self.value is None:
@@ -90,14 +90,14 @@ class Parameter(CollectableAttribute):
 
 
     def __str__(self):
-        res = CollectableAttribute.__str__(self)
+        res = IndexedCollectable.__str__(self)
         # it is enabled but no value is assigned yet
         res += '=%s' % (self.value,)
         return res
 
 
     def __repr__(self):
-        # cannot use CollectableAttribute's repr(), since the contructor
+        # cannot use IndexedCollectable's repr(), since the contructor
         # needs to handle the mandatory 'default' argument
         # TODO: so what? just tune it up ;)
         # TODO: think what to do with index parameter...
@@ -111,7 +111,7 @@ class Parameter(CollectableAttribute):
             s += ', ' + ', '.join(plist)
         if self._ro:
             s += ', ro=True'
-        if not self.isDefault:
+        if not self.is_default:
             s += ', value=%r' % self.value
         s += ')'
         return s
@@ -120,8 +120,9 @@ class Parameter(CollectableAttribute):
     def doc(self, indent="  ", width=70):
         """Docstring for the parameter to be used in lists of parameters
 
-        :Returns:
-          string or list of strings (if indent is None)
+        Returns
+        -------
+        string or list of strings (if indent is None)
         """
         paramsdoc = "  %s" % self.name
         if hasattr(paramsdoc, 'allowedtype'):
@@ -151,10 +152,10 @@ class Parameter(CollectableAttribute):
 
     # XXX should be named reset2default? correspondingly in
     #     ParameterCollection as well
-    def resetvalue(self):
+    def reset_value(self):
         """Reset value to the default"""
-        #CollectableAttribute.reset(self)
-        if not self.isDefault and not self._ro:
+        #IndexedCollectable.reset(self)
+        if not self.is_default and not self._ro:
             self._isset = True
             self.value = self.__default
 
@@ -191,20 +192,20 @@ class Parameter(CollectableAttribute):
                   % (str(self)))
 
     @property
-    def isDefault(self):
+    def is_default(self):
         """Returns True if current value is bound to default one"""
         return self._value is self.default
 
     @property
-    def equalDefault(self):
+    def equal_default(self):
         """Returns True if current value is equal to default one"""
         return self._value == self.__default
 
-    def setDefault(self, value):
-        wasdefault = self.isDefault
+    def _set_default(self, value):
+        wasdefault = self.is_default
         self.__default = value
         if wasdefault:
-            self.resetvalue()
+            self.reset_value()
             self._isset = False
 
     # incorrect behavior
@@ -212,7 +213,7 @@ class Parameter(CollectableAttribute):
     #    """Override reset so we don't clean the flag"""
     #    pass
 
-    default = property(fget=lambda x:x.__default, fset=setDefault)
+    default = property(fget=lambda x:x.__default, fset=_set_default)
     value = property(fget=lambda x:x._value, fset=_set)
 
 class KernelParameter(Parameter):

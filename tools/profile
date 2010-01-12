@@ -61,7 +61,6 @@ if __name__ == "__main__":
             sys.argv.pop(0)
         elif sys.argv[0] in ["-m", "--run-main"]:
             run_main = True
-            sys.argv.pop(0)
         elif sys.argv[0] in ["-l", "--level"]:
             profilelevel = int(sys.argv[1])
             sys.argv.pop(0)

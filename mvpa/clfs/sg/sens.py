@@ -18,6 +18,7 @@ if externals.exists('shogun', raiseException=True):
 
 from mvpa.misc.state import StateVariable
 from mvpa.measures.base import Sensitivity
+from mvpa.datasets.base import Dataset
 
 if __debug__:
     from mvpa.base import debug
@@ -34,10 +35,11 @@ class LinearSVMWeights(Sensitivity):
     def __init__(self, clf, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
 
-        :Parameters:
-          clf: LinearSVM
-            classifier to use. Only classifiers sub-classed from
-            `LinearSVM` may be used.
+        Parameters
+        ----------
+        clf : LinearSVM
+          classifier to use. Only classifiers sub-classed from
+          `LinearSVM` may be used.
         """
         # init base classes first
         Sensitivity.__init__(self, clf, **kwargs)
@@ -64,5 +66,8 @@ class LinearSVMWeights(Sensitivity):
                 sens.append(self.__sg_helper(svm.get_svm(i)))
         else:
             sens = self.__sg_helper(svm)
-        return N.asarray(sens)
 
+        ds = Dataset(N.atleast_2d(sens))
+        # TODO: handle binary(1)/multiclass(pairs) correctly
+        #       and assign labels
+        return ds

@@ -52,7 +52,7 @@ def test_basic_collectable():
     assert_false(d.value.base is c.value)
 
     # names starting with _ are not allowed
-    assert_raises(ValueError, c._setName, "_underscore")
+    assert_raises(ValueError, c._set_name, "_underscore")
 
 
 def test_array_collectable():
@@ -96,7 +96,7 @@ def test_array_collectable():
     assert_true(d.value.base is c.value)
 
     # names starting with _ are not allowed
-    assert_raises(ValueError, c._setName, "_underscore")
+    assert_raises(ValueError, c._set_name, "_underscore")
 
 
 def test_collections():
@@ -109,3 +109,6 @@ def test_collections():
     # auto-wrapped
     assert_true(isinstance(sa['test'], ArrayCollectable))
     assert_equal(len(sa), 1)
+
+    # names which are already present in dict interface
+    assert_raises(ValueError, sa.__setitem__, 'values', range(5))

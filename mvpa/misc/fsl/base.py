@@ -30,19 +30,21 @@ class FslEV3(ColumnData):
     def __init__(self, source):
         """Read and write FSL EV3 files.
 
-        :Parameter:
-          source: filename of an EV3 file
+        Parameters
+        ----------
+        source : str
+          Filename of an EV3 file
         """
         # init data from known format
         ColumnData.__init__(self, source,
                             header=['onsets', 'durations', 'intensities'],
                             sep=None, dtype=float)
 
-
-    def getNEVs(self):
+    @property
+    def nevs(self):
         """Returns the number of EVs in the file.
         """
-        return self.getNRows()
+        return self.nrows
 
 
     def getEV(self, evid):
@@ -66,10 +68,11 @@ class FslEV3(ColumnData):
     def toEvents(self, **kwargs):
         """Convert into a list of `Event` instances.
 
-        :Parameters:
-          kwargs
-            Any keyword arugment provided would be replicated, through all
-            the entries. Useful to specify label or even a chunk
+        Parameters
+        ----------
+        kwargs
+          Any keyword arugment provided would be replicated, through all
+          the entries. Useful to specify label or even a chunk
         """
         return \
             [Event(onset=self['onsets'][i],
@@ -82,7 +85,6 @@ class FslEV3(ColumnData):
     onsets = property(fget=lambda self: self['onsets'])
     durations = property(fget=lambda self: self['durations'])
     intensities = property(fget=lambda self: self['intensities'])
-    nevs = property(fget=getNEVs)
 
 
 
@@ -95,9 +97,10 @@ class McFlirtParams(ColumnData):
     def __init__(self, source):
         """Initialize McFlirtParams
 
-        :Parameter:
-            source: str
-                Filename of a parameter file.
+        Parameters
+        ----------
+        source : str
+          Filename of a parameter file.
         """
         ColumnData.__init__(self, source,
                             header=McFlirtParams.header_def,
@@ -159,10 +162,11 @@ class FslGLMDesign(object):
     """
     def __init__(self, source):
         """
-        :Parameter:
-          source: filename
-            Compressed files will be read as well, if their filename ends with
-            '.gz'.
+        Parameters
+        ----------
+        source : filename
+          Compressed files will be read as well, if their filename ends with
+          '.gz'.
         """
         # XXX maybe load from array as well
         self._loadFile(source)
@@ -207,12 +211,13 @@ class FslGLMDesign(object):
     def plot(self, style='lines', **kwargs):
         """Visualize the design matrix.
 
-        :Parameters:
-          style: 'lines', 'matrix'
-          **kwargs:
-            Additional arguments will be passed to the corresponding matplotlib
-            plotting functions 'plot()' and 'pcolor()' for 'lines' and 'matrix'
-            plots respectively.
+        Parameters
+        ----------
+        style: 'lines', 'matrix'
+        **kwargs:
+          Additional arguments will be passed to the corresponding matplotlib
+          plotting functions 'plot()' and 'pcolor()' for 'lines' and 'matrix'
+          plots respectively.
         """
         # import internally as it takes some time and might not be needed most
         # of the time

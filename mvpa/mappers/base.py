@@ -14,18 +14,13 @@ import numpy as N
 import copy
 
 from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
-from mvpa.misc.vproperty import VProperty
-
-if __debug__:
-    from mvpa.base import warning
-    from mvpa.base import debug
+from mvpa.base.dochelpers import _str
 
 
 class Mapper(object):
     """Interface to provide mapping between two spaces: IN and OUT.
-    Methods are prefixed correspondingly. forward/reverse operate
-    on the entire dataset. get(In|Out)Id[s] operate per element::
 
+    ::
               forward
              --------->
          IN              OUT
@@ -34,7 +29,10 @@ class Mapper(object):
     """
     def __init__(self, inspace=None):
         """
-        :Parameters:
+        Parameters
+        ----------
+        inspace : str, optional
+          Name of the input space
         """
         self.__inspace = None
         self.set_inspace(inspace)
@@ -45,13 +43,146 @@ class Mapper(object):
     # the docstrings of the respective methods for details about what they
     # should do.
     #
+    def _train(self, dataset):
+        """Worker method. Needs to be implemented by subclass."""
+        raise NotImplementedError
+
+
+    def _forward_data(self, data):
+        """Forward-map some data.
+
+        This is a private method that has to be implemented in derived
+        classes.
+
+        Parameters
+        ----------
+        data : anything (supported the derived class)
+        """
+        raise NotImplementedError
+
+
+    def _reverse_data(self, data):
+        """Reverse-map some data.
+
+        This is a private method that has to be implemented in derived
+        classes.
+
+        Parameters
+        ----------
+        data : anything (supported the derived class)
+        """
+        raise NotImplementedError
+
+
+    #
+    # The following methods are candidates for reimplementation in derived
+    # classes, in cases where the provided default behavior is not appropriate.
+    #
+    def _forward_dataset(self, dataset):
+        """Forward-map a dataset.
+
+        This is a private method that can be reimplemented in derived
+        classes. The default implementation forward-maps the dataset samples
+        and returns a new dataset that is a shallow copy of the input with
+        the mapped samples.
+
+        Parameters
+        ----------
+        dataset : Dataset-like
+        """
+        msamples = self._forward_data(dataset.samples)
+        mds = dataset.copy(deep=False)
+        mds.samples = msamples
+        return mds
+
+
+    def _reverse_dataset(self, dataset):
+        """Reverse-map a dataset.
+
+        This is a private method that can be reimplemented in derived
+        classes. The default implementation reverse-maps the dataset samples
+        and returns a new dataset that is a shallow copy of the input with
+        the mapped samples.
+
+        Parameters
+        ----------
+        dataset : Dataset-like
+        """
+        msamples = self._reverse_data(dataset.samples)
+        mds = dataset.copy(deep=False)
+        mds.samples = msamples
+        return mds
+
+
+    def _pretrain(self, dataset):
+        """Preprocessing before actual mapper training.
+
+        This method can be reimplemented in derived classes. By default it does
+        nothing.
+
+        Parameters
+        ----------
+        dataset : Dataset-like, anything
+          Typically this is a `Dataset`, but it might also be a plain data
+          array, or even something completely different(TM) that is supported
+          by a subclass' implementation.
+        """
+        pass
+
+
+    def _posttrain(self, dataset):
+        """Postprocessing after actual mapper training.
+
+        This method can be reimplemented in derived classes. By default it does
+        nothing.
+
+        Parameters
+        ----------
+        dataset : Dataset-like, anything
+          Typically this is a `Dataset`, but it might also be a plain data
+          array, or even something completely different(TM) that is supported
+          by a subclass' implementation.
+        """
+        pass
+
+
+    #
+    # The following methods provide common functionality for all mappers
+    # and there should be no immediate need to reimplement them
+    #
+    def train(self, dataset):
+        """Perform training of the mapper.
+
+        This method is called to put the mapper in a state that allows it to
+        perform the intended mapping. It takes care of running pre- and
+        postprocessing that is potentially implemented in derived classes.
+
+        Parameters
+        ----------
+        dataset : Dataset-like, anything
+          Typically this is a `Dataset`, but it might also be a plain data
+          array, or even something completely different(TM) that is supported
+          by a subclass' implementation.
+
+        Returns
+        -------
+        whoknows
+          Returns whatever is returned by the derived class.
+        """
+        # this mimics Classifier.train() -- we might merge them all at some
+        # point
+        self._pretrain(dataset)
+        result = self._train(dataset)
+        self._posttrain(dataset)
+        return result
+
 
     def forward(self, data):
         """Map data from input to output space.
 
         Parameters
         ----------
-        data: Dataset-like, (at least 2D)-array-like
+        data : Dataset-like, (at least 2D)-array-like
           Typically this is a `Dataset`, but it might also be a plain data
           array, or even something completely different(TM) that is supported
           by a subclass' implementation. If such an object is Dataset-like it
@@ -87,43 +218,13 @@ class Mapper(object):
             return self.forward(N.array([data]))[0]
 
 
-    def _forward_data(self, data):
-        """Forward-map some data.
-
-        This is a private method that has to be implemented in derived
-        classes.
-
-        Parameters
-        ----------
-        data : anything (supported the derived class)
-        """
-        raise NotImplementedError
-
-
-    def _forward_dataset(self, dataset):
-        """Forward-map a dataset.
-
-        This is a private method that can be reimplemented in derived
-        classes. The default implementation forward-maps the dataset samples
-        and returns a new dataset that is a shallow copy of the input with
-        the mapped samples.
-
-        Parameters
-        ----------
-        dataset : Dataset-like
-        """
-        msamples = self._forward_data(dataset.samples)
-        mds = dataset.copy(deep=False)
-        mds.samples = msamples
-        return mds
-
 
     def reverse(self, data):
         """Reverse-map data from output back into input space.
 
         Parameters
         ----------
-        data: Dataset-like, anything
+        data : Dataset-like, anything
           Typically this is a `Dataset`, but it might also be a plain data
           array, or even something completely different(TM) that is supported
           by a subclass' implementation. If such an object is Dataset-like it
@@ -149,135 +250,6 @@ class Mapper(object):
             return self.reverse(N.array([data]))[0]
 
 
-    def _reverse_data(self, data):
-        """Reverse-map some data.
-
-        This is a private method that has to be implemented in derived
-        classes.
-
-        Parameters
-        ----------
-        data : anything (supported the derived class)
-        """
-        raise NotImplementedError
-
-
-    def _reverse_dataset(self, dataset):
-        """Reverse-map a dataset.
-
-        This is a private method that can be reimplemented in derived
-        classes. The default implementation reverse-maps the dataset samples
-        and returns a new dataset that is a shallow copy of the input with
-        the mapped samples.
-
-        Parameters
-        ----------
-        dataset : Dataset-like
-        """
-        msamples = self._reverse_data(dataset.samples)
-        mds = dataset.copy(deep=False)
-        mds.samples = msamples
-        return mds
-
-
-    def get_insize(self):
-        """Returns the size of the entity in input space"""
-        raise NotImplementedError
-
-
-    def get_outsize(self):
-        """Returns the size of the entity in output space"""
-        raise NotImplementedError
-
-
-    #
-    # The following methods are candidates for reimplementation in derived
-    # classes, in cases where the provided default behavior is not appropriate.
-    #
-    def is_valid_outid(self, outid):
-        """Validate feature id in OUT space.
-
-        Override if OUT space is not simly a 1D vector
-        """
-        return(outid >= 0 and outid < self.get_outsize())
-
-
-    def is_valid_inid(self, inid):
-        """Validate id in IN space.
-
-        Override if IN space is not simly a 1D vector
-        """
-        return(inid >= 0 and inid < self.get_insize())
-
-
-    def train(self, dataset):
-        """Perform training of the mapper.
-
-        This method is called to put the mapper in a state that allows it to
-        perform the intended mapping. It takes care of running pre- and
-        postprocessing that is potentially implemented in derived classes.
-
-        Parameters
-        ----------
-        dataset: Dataset-like, anything
-          Typically this is a `Dataset`, but it might also be a plain data
-          array, or even something completely different(TM) that is supported
-          by a subclass' implementation.
-
-        Results
-        -------
-        whoknows
-          Returns whatever is returned by the derived class.
-        """
-        # this mimics Classifier.train() -- we might merge them all at some
-        # point
-        self._pretrain(dataset)
-        result = self._train(dataset)
-        self._posttrain(dataset)
-        return result
-
-
-    def _train(self, dataset):
-        """Worker method. Needs to be implemented by subclass."""
-        raise NotImplementedError
-
-
-    def _pretrain(self, dataset):
-        """Preprocessing before actual mapper training.
-
-        This method can be reimplemented in derived classes. By default it does
-        nothing.
-
-        Parameters
-        ----------
-        dataset: Dataset-like, anything
-          Typically this is a `Dataset`, but it might also be a plain data
-          array, or even something completely different(TM) that is supported
-          by a subclass' implementation.
-        """
-        pass
-
-
-    def _posttrain(self, dataset):
-        """Postprocessing after actual mapper training.
-
-        This method can be reimplemented in derived classes. By default it does
-        nothing.
-
-        Parameters
-        ----------
-        dataset: Dataset-like, anything
-          Typically this is a `Dataset`, but it might also be a plain data
-          array, or even something completely different(TM) that is supported
-          by a subclass' implementation.
-        """
-        pass
-
-
-    #
-    # The following methods provide common functionality for all mappers
-    # and there should be no immediate need to reimplement them
-    #
     def __repr__(self):
         return "%s(inspace=%s)" \
                 % (self.__class__.__name__,
@@ -300,9 +272,6 @@ class Mapper(object):
         """
         """
         self.__inspace = name
-
-
-    nfeatures = VProperty(fget=get_outsize)
 
 
 
@@ -333,6 +302,10 @@ class FeatureSliceMapper(Mapper):
                          "(slicearg=%s, dshape=%s, "
                           % (repr(self._slicearg), repr(self.__dshape)),
                          1)
+
+
+    def __str__(self):
+        return _str(self)
 
 
     def _forward_data(self, data):
@@ -387,7 +360,6 @@ class FeatureSliceMapper(Mapper):
         # features
         mapped.resize(data.shape[:1] + self.__dshape + data.shape[2:],
                       refcheck=False)
-        print mapped.shape
         mapped.fill(0)
         mapped[:, self._slicearg] = data
         return mapped
@@ -424,7 +396,7 @@ class FeatureSliceMapper(Mapper):
         # copy-based slicing
         if isinstance(self._slicearg, slice) \
            and not self._slicearg == slice(None):
-               return False
+            return False
 
         return True
 
@@ -463,12 +435,13 @@ class CombinedMapper(Mapper):
     output of all mappers is finally stacked (horizontally or column or
     feature-wise) into a single large 2D matrix (nsamples x nfeatures).
 
-    .. note::
-      This mapper can only embbed mappers that transform data into a 2D
-      (nsamples x nfeatures) representation. For mappers not supporting this
-      transformation, consider wrapping them in a
-      :class:`~mvpa.mappers.base.ChainMapper` with an appropriate
-      post-processing mapper.
+    Notes
+    -----
+    This mapper can only embbed mappers that transform data into a 2D
+    (nsamples x nfeatures) representation. For mappers not supporting this
+    transformation, consider wrapping them in a
+    :class:`~mvpa.mappers.base.ChainMapper` with an appropriate
+    post-processing mapper.
 
     CombinedMapper fully supports forward and backward mapping, training,
     runtime selection of a feature subset (in output dataspace) and retrieval
@@ -476,13 +449,14 @@ class CombinedMapper(Mapper):
     """
     def __init__(self, mappers, **kwargs):
         """
-        :Parameters:
-          mappers: list of Mapper instances
-            The order of the mappers in the list is important, as it will define
-            the order in which data snippets have to be passed to
-            :meth:`~mvpa.mappers.base.CombinedMapper.forward`.
-          **kwargs
-            All additional arguments are passed to the base-class constructor.
+        Parameters
+        ----------
+        mappers : list of Mapper instances
+          The order of the mappers in the list is important, as it will define
+          the order in which data snippets have to be passed to
+          :meth:`~mvpa.mappers.base.CombinedMapper.forward`.
+        **kwargs
+          All additional arguments are passed to the base-class constructor.
         """
         Mapper.__init__(self, **kwargs)
 
@@ -496,17 +470,19 @@ class CombinedMapper(Mapper):
     def forward(self, data):
         """Map data from the IN spaces into to common OUT space.
 
-        :Parameter:
-          data: sequence
-            Each element in the `data` sequence is passed to the corresponding
-            embedded mapper and is mapped individually by it. The number of
-            elements in `data` has to match the number of embedded mappers. Each
-            element is `data` has to provide the same number of samples
-            (first dimension).
+        Parameters
+        ----------
+        data : sequence
+          Each element in the `data` sequence is passed to the corresponding
+          embedded mapper and is mapped individually by it. The number of
+          elements in `data` has to match the number of embedded mappers. Each
+          element is `data` has to provide the same number of samples
+          (first dimension).
 
-        :Returns:
-          array: nsamples x nfeatures
-            Horizontally stacked array of all embedded mapper outputs.
+        Returns
+        -------
+        array : nsamples x nfeatures
+          Horizontally stacked array of all embedded mapper outputs.
         """
         if not len(data) == len(self._mappers):
             raise ValueError, \
@@ -527,13 +503,15 @@ class CombinedMapper(Mapper):
     def reverse(self, data):
         """Reverse map data from OUT space into the IN spaces.
 
-        :Parameter:
-          data: array
-            Single data array to be reverse mapped into a sequence of data
-            snippets in their individual IN spaces.
+        Parameters
+        ----------
+        data : array
+          Single data array to be reverse mapped into a sequence of data
+          snippets in their individual IN spaces.
 
-        :Returns:
-          list
+        Returns
+        -------
+        list
         """
         # assure array and transpose
         # i.e. transpose of 1D does nothing, but of 2D puts features
@@ -564,10 +542,11 @@ class CombinedMapper(Mapper):
         corresponding pieces are passed to the
         :meth:`~mvpa.mappers.base.Mapper.train` method of each embedded mapper.
 
-        :Parameter:
-          dataset: :class:`~mvpa.datasets.base.Dataset` or subclass
-            A dataset with the number of features matching the `outSize` of the
-            `CombinedMapper`.
+        Parameters
+        ----------
+        dataset: :class:`~mvpa.datasets.base.Dataset` or subclass
+          A dataset with the number of features matching the `outSize` of the
+          `CombinedMapper`.
         """
         if dataset.nfeatures != self.get_outsize():
             raise ValueError, "Training dataset does not match the mapper " \
@@ -594,12 +573,14 @@ class CombinedMapper(Mapper):
     def selectOut(self, outIds):
         """Remove some elements and leave only ids in 'out'/feature space.
 
-        .. note::
-          The subset selection is done inplace
+        Notes
+        -----
+        The subset selection is done inplace
 
-        :Parameter:
-          outIds: sequence
-            All output feature ids to be selected/kept.
+        Parameters
+        ----------
+        outIds : sequence
+          All output feature ids to be selected/kept.
         """
         # determine which features belong to what mapper
         # and call its selectOut() accordingly
@@ -618,13 +599,14 @@ class CombinedMapper(Mapper):
     def getNeighbor(self, outId, *args, **kwargs):
         """Get the ids of the neighbors of a single feature in output dataspace.
 
-        :Parameters:
-          outId: int
-            Single id of a feature in output space, whos neighbors should be
-            determined.
-          *args, **kwargs
-            Additional arguments are passed to the metric of the embedded
-            mapper, that is responsible for the corresponding feature.
+        Parameters
+        ----------
+        outId : int
+          Single id of a feature in output space, whos neighbors should be
+          determined.
+        *args, **kwargs
+          Additional arguments are passed to the metric of the embedded
+          mapper, that is responsible for the corresponding feature.
 
         Returns a list of outIds
         """
@@ -656,10 +638,11 @@ class ChainMapper(Mapper):
     """
     def __init__(self, mappers, **kwargs):
         """
-        :Parameters:
-          mappers: list of Mapper instances
-          **kwargs
-            All additional arguments are passed to the base-class constructor.
+        Parameters
+        ----------
+        mappers : list of Mapper instances
+        **kwargs
+          All additional arguments are passed to the base-class constructor.
         """
         Mapper.__init__(self, **kwargs)
 
@@ -718,30 +701,16 @@ class ChainMapper(Mapper):
                 tdata = mapper.forward(tdata)
 
 
-    def get_insize(self):
-        """Returns the size of the entity in input space"""
-        return self[0].get_insize()
-
-
-    def get_outsize(self):
-        """Returns the size of the entity in output space"""
-        return self[-1].get_outsize()
-
-
-    def is_valid_inid(self, id):
-        """Queries the first mapper in the chain for this information."""
-        return self[0].is_valid_inid(id)
-
-
-    def is_valid_outid(self, id):
-        """Queries the last mapper in the chain for this information."""
-        return self[-1].is_valid_outid(id)
-
-
     def __repr__(self):
         s = Mapper.__repr__(self)
         m_repr = 'mappers=[%s]' % ', '.join([repr(m) for m in self])
         return s.replace("(", "(%s, " % m_repr, 1)
+
+
+    def __str__(self):
+        mapperlist = "%s" % "-".join([str(m) for m in self])
+        return _str(self,
+                    mapperlist.replace('Mapper', ''))
 
     #
     # Behave as a container
@@ -779,7 +748,7 @@ class ChainMapper(Mapper):
         if isinstance(key, int):
             return self._mappers[key]
         else:
-         # operate on shallow copy of self
-         sliced = copy.copy(self)
-         sliced._mappers = self._mappers[key]
-         return sliced
+            # operate on shallow copy of self
+            sliced = copy.copy(self)
+            sliced._mappers = self._mappers[key]
+            return sliced

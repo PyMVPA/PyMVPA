@@ -79,10 +79,11 @@ def __check_numpy():
 def __check_pywt(features=None):
     """Check for available functionality within pywt
 
-    :Parameters:
-      features : list of basestring
-        List of known features to check such as 'wp reconstruct',
-        'wp reconstruct fixed'
+    Parameters
+    ----------
+    features : list of str
+      List of known features to check such as 'wp reconstruct',
+      'wp reconstruct fixed'
     """
     import pywt
     import numpy as N
@@ -123,12 +124,13 @@ def __check_shogun(bottom_version, custom_versions=[]):
     """Check if version of shogun is high enough (or custom known) to
     be enabled in the testsuite
 
-    :Parameters:
-      bottom_version : int
-        Bottom version which must be satisfied
-      custom_versions : list of int
-        Arbitrary list of versions which could got patched for
-        a specific issue
+    Parameters
+    ----------
+    bottom_version : int
+      Bottom version which must be satisfied
+    custom_versions : list of int
+      Arbitrary list of versions which could got patched for
+      a specific issue
     """
     import shogun.Classifier as __sc
     ver = __sc.Version_get_version_revision()
@@ -232,6 +234,11 @@ def __check_rv_discrete_ppf():
 def __check_in_ipython():
     # figure out if ran within IPython
     if '__IPYTHON__' in globals()['__builtins__']:
+        try:
+            from IPython import Release
+            versions['ipython'] = SmartVersion(Release.version)
+        except:
+            pass
         return
     raise RuntimeError, "Not running in IPython session"
 
@@ -291,7 +298,6 @@ def __check_reportlab():
     import reportlab as rl
     versions['reportlab'] = SmartVersion(rl.Version)
 
-
 def __check_rpy():
     """Check either rpy is available and also set it for the sane execution
     """
@@ -311,6 +317,13 @@ def __check_rpy():
             debug('EXT_', "RPy: providing dummy callback for input to return '1'")
         def input1(*args): return "1"      # which is "1: abort (with core dump, if enabled)"
         rpy.set_rpy_input(input1)
+
+def __check_rpy2():
+    """Check either rpy2 is available and also set it for the sane execution
+    """
+    import rpy2.robjects
+    r = rpy2.robjects.r
+    r.options(warn=cfg.get('rpy', 'warn', default=-1))
 
 
 # contains list of available (optional) external classifier extensions
@@ -333,9 +346,11 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
           'rpy': "__check_rpy()",
+          'rpy2': "__check_rpy2()",
           'lars': "exists('rpy', raiseException=True); import rpy; rpy.r.library('lars')",
           'elasticnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('elasticnet')",
-          'glmnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('glmnet')",
+          # 'glmnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('glmnet')",
+          'glmnet': "exists('rpy2', raiseException=True); import rpy2.robjects; rpy2.robjects.r.library('glmnet')",
           'matplotlib': "__check_matplotlib()",
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
@@ -345,6 +360,8 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
            # 3318 corresponds to release 0.6.4
           'sg ge 0.6.4': "__check_shogun(3318)",
+           # 3377 corresponds to release 0.6.5
+          'sg ge 0.6.5': "__check_shogun(3377)",
           'hcluster': "import hcluster as __",
           'griddata': "__check_griddata()",
           'cPickle': "import cPickle as __",
@@ -355,6 +372,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'running ipython env': "__check_in_ipython()",
           'reportlab': "__check_reportlab()",
           'nose': "import nose as __",
+          'pprocess': "import pprocess as __",
           }
 
 
@@ -366,18 +384,19 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
     testing all known dependencies. It also ensures that we only test
     for a dependency once.
 
-    :Parameters:
-      dep : string or list of string
-        The dependency key(s) to test.
-      force : boolean
-        Whether to force the test even if it has already been
-        performed.
-      raiseException : boolean
-        Whether to raise RuntimeError if dependency is missing.
-      issueWarning : string or None or True
-        If string, warning with given message would be thrown.
-        If True, standard message would be used for the warning
-        text.
+    Parameters
+    ----------
+    dep : string or list of string
+      The dependency key(s) to test.
+    force : boolean
+      Whether to force the test even if it has already been
+      performed.
+    raiseException : boolean
+      Whether to raise RuntimeError if dependency is missing.
+    issueWarning : string or None or True
+      If string, warning with given message would be thrown.
+      If True, standard message would be used for the warning
+      text.
     """
     # if we are provided with a list of deps - go through all of them
     if isinstance(dep, list) or isinstance(dep, tuple):
@@ -418,7 +437,7 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
         # Exceptions which are silently caught while running tests for externals
         _caught_exceptions = [ImportError, AttributeError, RuntimeError]
 
-        # check whether RPy is involved and catch its excpetions as well.
+        # check whether RPy is involved and catch its exceptions as well.
         # however, try to determine whether this is really necessary, as
         # importing RPy also involved starting a full-blown R session, which can
         # take seconds and therefore is quite nasty...
@@ -434,7 +453,6 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
                         _caught_exceptions += [RException]
             except:
                 pass
-
 
         estr = ''
         try:
@@ -474,10 +492,11 @@ def testAllDependencies(force=False):
     """
     Test for all known dependencies.
 
-    :Parameters:
-      force : boolean
-        Whether to force the test even if it has already been
-        performed.
+    Parameters
+    ----------
+    force : boolean
+      Whether to force the test even if it has already been
+      performed.
 
     """
     # loop over all known dependencies

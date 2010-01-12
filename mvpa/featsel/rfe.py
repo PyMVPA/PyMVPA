@@ -38,6 +38,8 @@ class RFE(FeatureSelection):
     testdatset is computed. This procedure is repeated until a given
     `StoppingCriterion` is reached.
 
+    References
+    ----------
     Such strategy after
       Guyon, I., Weston, J., Barnhill, S., & Vapnik, V. (2002). Gene
       selection for cancer classification using support vector
@@ -49,17 +51,14 @@ class RFE(FeatureSelection):
       486--503.
     """
 
-    # TODO: remove
-    # doesn't work nicely -- if FeatureSelection defines its states via
-    #                        _register_states, they would simply be ignored
-    #_register_states = {'errors':True,
-    #                    'nfeatures':True,
-    #                    'history':True}
-
-    errors = StateVariable()
-    nfeatures = StateVariable()
-    history = StateVariable()
-    sensitivities = StateVariable(enabled=False)
+    errors = StateVariable(
+        doc="History of errors through RFE")
+    nfeatures = StateVariable(
+        doc="History of # of features left")
+    history = StateVariable(
+        doc="Last step # when each feature was still present")
+    sensitivities = StateVariable(enabled=False,
+        doc="History of sensitivities (might consume too much memory")
 
     def __init__(self,
                  sensitivity_analyzer,
@@ -75,36 +74,37 @@ class RFE(FeatureSelection):
         # anymore OR number of features less than threshold
         """Initialize recursive feature elimination
 
-        :Parameters:
-            sensitivity_analyzer : FeaturewiseDatasetMeasure object
-            transfer_error : TransferError object
-                used to compute the transfer error of a classifier based on a
-                certain feature set on the test dataset.
-                NOTE: If sensitivity analyzer is based on the same
-                classifier as transfer_error is using, make sure you
-                initialize transfer_error with train=False, otherwise
-                it would train classifier twice without any necessity.
-            feature_selector : Functor
-                Given a sensitivity map it has to return the ids of those
-                features that should be kept.
-            bestdetector : Functor
-                Given a list of error values it has to return a boolean that
-                signals whether the latest error value is the total minimum.
-            stopping_criterion : Functor
-                Given a list of error values it has to return whether the
-                criterion is fulfilled.
-            train_clf : bool
-                Flag whether the classifier in `transfer_error` should be
-                trained before computing the error. In general this is
-                required, but if the `sensitivity_analyzer` and
-                `transfer_error` share and make use of the same classifier it
-                can be switched off to save CPU cycles. Default `None` checks
-                if sensitivity_analyzer is based on a classifier and doesn't train
-                if so.
-            update_sensitivity : bool
-                If False the sensitivity map is only computed once and reused
-                for each iteration. Otherwise the senstitivities are
-                recomputed at each selection step.
+        Parameters
+        ----------
+        sensitivity_analyzer : FeaturewiseDatasetMeasure object
+        transfer_error : TransferError object
+          used to compute the transfer error of a classifier based on a
+          certain feature set on the test dataset.
+          NOTE: If sensitivity analyzer is based on the same
+          classifier as transfer_error is using, make sure you
+          initialize transfer_error with train=False, otherwise
+          it would train classifier twice without any necessity.
+        feature_selector : Functor
+          Given a sensitivity map it has to return the ids of those
+          features that should be kept.
+        bestdetector : Functor
+          Given a list of error values it has to return a boolean that
+          signals whether the latest error value is the total minimum.
+        stopping_criterion : Functor
+          Given a list of error values it has to return whether the
+          criterion is fulfilled.
+        train_clf : bool
+          Flag whether the classifier in `transfer_error` should be
+          trained before computing the error. In general this is
+          required, but if the `sensitivity_analyzer` and
+          `transfer_error` share and make use of the same classifier it
+          can be switched off to save CPU cycles. Default `None` checks
+          if sensitivity_analyzer is based on a classifier and doesn't train
+          if so.
+        update_sensitivity : bool
+          If False the sensitivity map is only computed once and reused
+          for each iteration. Otherwise the senstitivities are
+          recomputed at each selection step.
         """
 
         # base init first
@@ -148,13 +148,14 @@ class RFE(FeatureSelection):
         """Proceed and select the features recursively eliminating less
         important ones.
 
-        :Parameters:
-          dataset : Dataset
-            used to compute sensitivity maps and train a classifier
-            to determine the transfer error
-          testdataset : Dataset
-            used to test the trained classifer to determine the
-            transfer error
+        Parameters
+        ----------
+        dataset : Dataset
+          used to compute sensitivity maps and train a classifier
+          to determine the transfer error
+        testdataset : Dataset
+          used to test the trained classifer to determine the
+          transfer error
 
         Returns a tuple of two new datasets with the feature subset of
         `dataset` that had the lowest transfer error of all tested
@@ -219,8 +220,14 @@ class RFE(FeatureSelection):
             # Compute sensitivity map
             if self.__update_sensitivity or sensitivity == None:
                 sensitivity = self.__sensitivity_analyzer(wdataset)
+                if len(sensitivity) > 1:
+                    raise ValueError(
+                            "REF cannot handle multiple sensitivities at once. "
+                            "'%s' returned %i sensitivities."
+                            % (self.__sensitivity_analyzer.__class__.__name__,
+                               len(sensitivity)))
 
-            if states.isEnabled("sensitivities"):
+            if states.is_enabled("sensitivities"):
                 states.sensitivities.append(sensitivity)
 
             # do not retrain clf if not necessary
@@ -239,7 +246,7 @@ class RFE(FeatureSelection):
 
             nfeatures = wdataset.nfeatures
 
-            if states.isEnabled("nfeatures"):
+            if states.is_enabled("nfeatures"):
                 states.nfeatures.append(wdataset.nfeatures)
 
             # store result
@@ -287,7 +294,8 @@ class RFE(FeatureSelection):
 
             # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
             selected_ids.sort()
-            if self.states.isEnabled("history") or self.states.isEnabled('selected_ids'):
+            if self.states.is_enabled("history") \
+                   or self.states.is_enabled('selected_ids'):
                 orig_feature_ids = orig_feature_ids[selected_ids]
 
 

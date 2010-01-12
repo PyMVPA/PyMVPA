@@ -35,10 +35,10 @@ if externals.exists('reportlab', raiseException=True):
         _fig_ext_default = 'png'
 
 
-__all__ = [ 'rl', 'Report', 'escapeXML' ]
+__all__ = [ 'rl', 'Report', 'escape_xml' ]
 
 
-def escapeXML(s):
+def escape_xml(s):
     """Replaces &<> symbols with corresponding XML tokens
     """
     s = s.replace('&', '&amp;')
@@ -54,18 +54,23 @@ class Report(object):
 
     You can attach report to the existing 'verbose' with
 
-      report = Report()
-      verbose.handlers += [report]
+    >>> report = Report()
+    >>> verbose.handlers += [report]
 
     and then all verbose messages present on the screen will also be recorded
     in the report.  Use
-      report.text("string")          to add arbitrary text
-      report.xml("<H1>skajdsf</H1>") to add XML snippet
-     or
-      report.figure()  to add the current figure to the report.
-      report.figures() to add existing figures to the report, but they
-        might not be properly interleaved with verbose messages if there were
-        any between the creations of the figures.
+
+    >>> report.text("string")          #  to add arbitrary text
+    >>> report.xml("<H1>skajdsf</H1>") # to add XML snippet
+
+    or
+
+    >>> report.figure()  # to add the current figure to the report.
+    >>> report.figures() # to add existing figures to the report
+
+    Note that in the later usecase, figures might not be properly
+    interleaved with verbose messages if there were any between the
+    creations of the figures.
 
     Inspired by Andy Connolly
     """
@@ -76,28 +81,29 @@ class Report(object):
                  pagesize=None):
         """Initialize report
 
-        :Parameters:
-          name : string
-            Name of the report
-          title : string or None
-            Title to start the report, if None, name will be used
-          path : string
-            Top directory where named report will be stored. Has to be
-            set now to have correct path for storing image renderings.
-            Default: current directory
-          author : string or None
-            Optional author identity to be printed
-          style : string
-            Default Paragraph to be used. Must be the one of the known
-            to reportlab styles, e.g. Normal
-          fig_ext : string
-            What extension to use for figures by default. If None, a default
-            will be used. Since versions prior 2.2 of reportlab might do not
-            support pdf, 'png' is default for those, 'pdf' otherwise
-          font : string
-            Name of the font to use
-          pagesize : tuple of floats
-            Optional page size if not to be default
+        Parameters
+        ----------
+        name : string
+          Name of the report
+        title : string or None
+          Title to start the report, if None, name will be used
+        path : string
+          Top directory where named report will be stored. Has to be
+          set now to have correct path for storing image renderings.
+          Default: current directory
+        author : string or None
+          Optional author identity to be printed
+        style : string
+          Default Paragraph to be used. Must be the one of the known
+          to reportlab styles, e.g. Normal
+        fig_ext : string
+          What extension to use for figures by default. If None, a default
+          will be used. Since versions prior 2.2 of reportlab might do not
+          support pdf, 'png' is default for those, 'pdf' otherwise
+        font : string
+          Name of the font to use
+        pagesize : tuple of floats
+          Optional page size if not to be default
         """
 
         if pagesize is None:
@@ -168,7 +174,7 @@ class Report(object):
             debug("REP_", "Adding text '%s'" % line.strip())
         # we need to convert some of the characters to make it
         # legal XML
-        line = escapeXML(line)
+        line = escape_xml(line)
         self.xml(line, **kwargs)
 
     write = text
@@ -181,17 +187,21 @@ class Report(object):
     def figure(self, fig=None, name=None, savefig_kwargs={}, **kwargs):
         """Add a figure to the report
 
-        :Parameters:
-          fig : None or string or `figure.Figure`
-            Figure to place into report
-              string : treat as a filename
-              Figure : stores it into a file under directory
-                       and embedds into the report
-              None :   takes the current figure
-          savefig_kwargs : dict
-            Additional keyword arguments to provide savefig with (e.g. dpi)
-          **kwargs
-            Passed to :class:`reportlab.platypus.Image` constructor
+        Parameters
+        ----------
+        fig : None or str or `figure.Figure`
+          Figure to place into report:
+            str
+             treat as a filename
+            Figure
+             stores it into a file under directory
+             and embeds into the report
+            None
+             takes the current figure
+        savefig_kwargs : dict
+          Additional keyword arguments to provide savefig with (e.g. dpi)
+        **kwargs
+          Passed to :class:`reportlab.platypus.Image` constructor
         """
 
         if externals.exists('pylab', raiseException=True):
@@ -286,9 +296,10 @@ class Report(object):
     def save(self, add_preamble=True):
         """Saves PDF
 
-        :Parameters:
-          add_preamble : bool
-            Either to add preamble containing title/date/author information
+        Parameters
+        ----------
+        add_preamble : bool
+          Either to add preamble containing title/date/author information
         """
 
         if self.title is None:

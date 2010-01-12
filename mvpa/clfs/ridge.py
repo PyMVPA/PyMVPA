@@ -26,16 +26,17 @@ class RidgeReg(Classifier):
     have to be zero-centered.
     """
 
-    _clf_internals = ['ridge', 'regression', 'linear']
+    __tags__ = ['ridge', 'regression', 'linear']
 
     def __init__(self, lm=None, **kwargs):
         """
         Initialize a ridge regression analysis.
 
-        :Parameters:
-          lm : float
-            the penalty term lambda.
-            (Defaults to .05*nFeatures)
+        Parameters
+        ----------
+        lm : float
+          the penalty term lambda.
+          (Defaults to .05*nFeatures)
         """
         # init base class first
         Classifier.__init__(self, **kwargs)

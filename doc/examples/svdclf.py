@@ -25,10 +25,10 @@ if __debug__:
 #
 # load PyMVPA example dataset
 #
-attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
+attr = SampleAttributes(os.path.join(pymvpa_dataroot,
+                        'attributes_literal.txt'))
 dataset = fmri_dataset(os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                       labels=attr.labels,
-                       chunks=attr.chunks,
+                       labels=attr.labels, chunks=attr.chunks,
                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 #
@@ -36,17 +36,17 @@ dataset = fmri_dataset(os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
 #
 
 # do chunkswise linear detrending on dataset
-detrend(dataset, perchunk=True, model='linear')
+poly_detrend(dataset, polyord=1, chunks='chunks')
 
 # only use 'rest', 'cats' and 'scissors' samples from dataset
-dataset = dataset[N.array([ l in [0,4,5] for l in dataset.labels],
-                  dtype='bool')]
+dataset = dataset[N.array([ l in ['rest', 'cat', 'scissors']
+                    for l in dataset.labels], dtype='bool')]
 
 # zscore dataset relative to baseline ('rest') mean
-zscore(dataset, perchunk=True, baselinelabels=[0], targetdtype='float32')
+zscore(dataset, perchunk=True, baselinelabels=['rest'], targetdtype='float32')
 
 # remove baseline samples from dataset for final analysis
-dataset = dataset[N.array([l != 0 for l in dataset.labels], dtype='bool')]
+dataset = dataset[dataset.sa.labels != 'rest']
 
 # Specify the base classifier to be used
 # To parametrize the classifier to be used

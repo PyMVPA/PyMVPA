@@ -27,12 +27,6 @@ Brief Description of Available Splitters
 * `HalfSplitter` - 2 splits: (first half, second half) and (second, first)
 * `NFoldSplitter` - splits for N-Fold cross validation.
 
-Module Organization
-===================
-
-.. packagetree::
-   :style: UML
-
 """
 
 __docformat__ = 'restructuredtext'
@@ -79,52 +73,50 @@ class Splitter(object):
                  reverse=False):
         """Initialize splitter base.
 
-        :Parameters:
-          nperlabel : int or str (or list of them) or float
-            Number of dataset samples per label to be included in each
-            split. If given as a float, it must be in [0,1] range and would
-            mean the ratio of selected samples per each label.
-            Two special strings are recognized: 'all' uses all available
-            samples (default) and 'equal' uses the maximum number of samples
-            the can be provided by all of the classes. This value might be
-            provided as a sequence whos length matches the number of datasets
-            per split and indicates the configuration for the respective dataset
-            in each split.
-          nrunspersplit: int
-            Number of times samples for each split are chosen. This
-            is mostly useful if a subset of the available samples
-            is used in each split and the subset is randomly
-            selected for each run (see the `nperlabel` argument).
-          permute : bool
-            If set to `True`, the labels of each generated dataset
-            will be permuted on a per-chunk basis.
-          count : None or int
-            Desired number of splits to be output. It is limited by the
-            number of splits possible for a given splitter
-            (e.g. `OddEvenSplitter` can have only up to 2 splits). If None,
-            all splits are output (default).
-          strategy : str
-            If `count` is not None, possible strategies are possible:
-             first
-              First `count` splits are chosen
-             random
-              Random (without replacement) `count` splits are chosen
-             equidistant
-              Splits which are equidistant from each other
-          discard_boundary : None or int or sequence of int
-            If not `None`, how many samples on the boundaries between
-            parts of the split to discard in the training part.
-            If int, then discarded in all parts.  If a sequence, numbers
-            to discard are given per part of the split.
-            E.g. if splitter splits only into (training, testing)
-            parts, then `discard_boundary`=(2,0) would instruct to discard
-            2 samples from training which are on the boundary with testing.
-          attr : str
-            Sample attribute used to determine splits.
-          reverse : bool
-            If True, the order of datasets in the split is reversed, e.g.
-            instead of (training, testing), (training, testing) will be spit
-            out
+        Parameters
+        ----------
+        nperlabel : int or str (or list of them) or float
+          Number of dataset samples per label to be included in each
+          split. If given as a float, it must be in [0,1] range and would
+          mean the ratio of selected samples per each label.
+          Two special strings are recognized: 'all' uses all available
+          samples (default) and 'equal' uses the maximum number of samples
+          the can be provided by all of the classes. This value might be
+          provided as a sequence whos length matches the number of datasets
+          per split and indicates the configuration for the respective dataset
+          in each split.
+        nrunspersplit : int
+          Number of times samples for each split are chosen. This
+          is mostly useful if a subset of the available samples
+          is used in each split and the subset is randomly
+          selected for each run (see the `nperlabel` argument).
+        permute : bool
+          If set to `True`, the labels of each generated dataset
+          will be permuted on a per-chunk basis.
+        count : None or int
+          Desired number of splits to be output. It is limited by the
+          number of splits possible for a given splitter
+          (e.g. `OddEvenSplitter` can have only up to 2 splits). If None,
+          all splits are output (default).
+        strategy : str
+          If `count` is not None, possible strategies are possible:
+          'first': First `count` splits are chosen;
+          'random': Random (without replacement) `count` splits are chosen;
+          'equidistant': Splits which are equidistant from each other.
+        discard_boundary : None or int or sequence of int
+          If not `None`, how many samples on the boundaries between
+          parts of the split to discard in the training part.
+          If int, then discarded in all parts.  If a sequence, numbers
+          to discard are given per part of the split.
+          E.g. if splitter splits only into (training, testing)
+          parts, then `discard_boundary=(2,0)` would instruct to discard
+          2 samples from training which are on the boundary with testing.
+        attr : str
+          Sample attribute used to determine splits.
+        reverse : bool
+          If True, the order of datasets in the split is reversed, e.g.
+          instead of (training, testing), (training, testing) will be spit
+          out
         """
         # pylint happyness block
         self.__nperlabel = None
@@ -167,14 +159,17 @@ class Splitter(object):
         if isinstance(value, basestring):
             if not value in self._NPERLABEL_STR:
                 raise ValueError, "Unsupported value '%s' for nperlabel." \
-                      " Supported ones are %s or float or int" % (value, self._NPERLABEL_STR)
+                      " Supported ones are %s or float or int" \
+                      % (value, self._NPERLABEL_STR)
         self.__nperlabel = value
 
 
     def _getSplitConfig(self, uniqueattr):
-        """Each subclass has to implement this method. It gets a sequence with
-        the unique attribte ids of a dataset and has to return a list of lists
-        containing attribute ids to split into the second dataset.
+        """Return list with samples of 2nd dataset in a split.
+
+        Each subclass has to implement this method. It gets a sequence with
+        the unique attribute ids of a dataset and has to return a list of lists
+        containing sample ids to split into the second dataset.
         """
         raise NotImplementedError
 
@@ -190,40 +185,7 @@ class Splitter(object):
 
         # for each split
         cfgs = self.splitcfg(dataset)
-
-        # Select just some splits if desired
-        count, Ncfgs = self.count, len(cfgs)
-
-        # further makes sense only iff count < Ncfgs,
-        # otherwise all strategies are equivalent
-        if count is not None and count < Ncfgs:
-            if count < 1:
-                # we can only wish a good luck
-                return
-            strategy = self.strategy
-            if strategy == 'first':
-                cfgs = cfgs[:count]
-            elif strategy in ['equidistant', 'random']:
-                if strategy == 'equidistant':
-                    # figure out what step is needed to
-                    # acommodate the `count` number
-                    step = float(Ncfgs) / count
-                    assert(step >= 1.0)
-                    indexes = [int(round(step * i)) for i in xrange(count)]
-                elif strategy == 'random':
-                    indexes = N.random.permutation(range(Ncfgs))[:count]
-                    # doesn't matter much but lets keep them in the original
-                    # order at least
-                    indexes.sort()
-                else:
-                    # who said that I am paranoid?
-                    raise RuntimeError, "Really should not happen"
-                if __debug__:
-                    debug("SPL", "For %s strategy selected %s splits "
-                          "from %d total" % (strategy, indexes, Ncfgs))
-                cfgs = [cfgs[i] for i in indexes]
-            # update Ncfgs
-            Ncfgs = len(cfgs)
+        n_cfgs = len(cfgs)
 
         # Finally split the data
         for isplit, split in enumerate(cfgs):
@@ -251,7 +213,7 @@ class Splitter(object):
                     #     thread-safety etc
                     if ds is not None:
                         ds_a = ds.a
-                        lastsplit = (isplit == Ncfgs-1)
+                        lastsplit = (isplit == n_cfgs-1)
                         if not ds_a.has_key('lastsplit'):
                             # if not yet known -- add one
                             ds_a['lastsplit'] = lastsplit
@@ -301,13 +263,17 @@ class Splitter(object):
         """Split a dataset by separating the samples where the configured
         sample attribute matches an element of `specs`.
 
-        :Parameters:
-          dataset : Dataset
-            This is this source dataset.
-          specs : sequence of sequences
-            Contains ids of a sample attribute that shall be split into the
-            another dataset.
-        :Returns: Tuple of splitted datasets.
+        Parameters
+        ----------
+        dataset : Dataset
+          This is this source dataset.
+        specs : sequence of sequences
+          Contains ids of a sample attribute that shall be split into the
+          another dataset.
+
+        Returns
+        -------
+        Tuple of splitted datasets.
         """
         # collect the sample ids for each resulting dataset
         filters = []
@@ -383,11 +349,47 @@ class Splitter(object):
 
     def splitcfg(self, dataset):
         """Return splitcfg for a given dataset"""
-        return self._getSplitConfig(dataset.sa[self.__splitattr].unique)
+        cfgs = self._getSplitConfig(dataset.sa[self.__splitattr].unique)
+
+        # Select just some splits if desired
+        count, n_cfgs = self.count, len(cfgs)
+
+        # further makes sense only iff count < n_cfgs,
+        # otherwise all strategies are equivalent
+        if count is not None and count < n_cfgs:
+            if count < 1:
+                # we can only wish a good luck
+                return []
+            strategy = self.strategy
+            if strategy == 'first':
+                cfgs = cfgs[:count]
+            elif strategy in ['equidistant', 'random']:
+                if strategy == 'equidistant':
+                    # figure out what step is needed to
+                    # accommodate the `count` number
+                    step = float(n_cfgs) / count
+                    assert(step >= 1.0)
+                    indexes = [int(round(step * i)) for i in xrange(count)]
+                elif strategy == 'random':
+                    indexes = N.random.permutation(range(n_cfgs))[:count]
+                    # doesn't matter much but lets keep them in the original
+                    # order at least
+                    indexes.sort()
+                else:
+                    # who said that I am paranoid?
+                    raise RuntimeError, "Really should not happen"
+                if __debug__:
+                    debug("SPL", "For %s strategy selected %s splits "
+                          "from %d total" % (strategy, indexes, n_cfgs))
+                cfgs = [cfgs[i] for i in indexes]
+
+        return cfgs
 
 
     strategy = property(fget=lambda self:self.__strategy,
                         fset=_setStrategy)
+    splitattr = property(fget=lambda self:self.__splitattr)
+
 
 
 class NoneSplitter(Splitter):
@@ -401,12 +403,12 @@ class NoneSplitter(Splitter):
     _known_modes = ['first', 'second']
 
     def __init__(self, mode='second', **kwargs):
-        """Cheap init -- nothing special
-
-        :Parameters:
-          mode
-            Either 'first' or 'second' (default) -- which output dataset
-            would actually contain the samples
+        """
+        Parameters
+        ----------
+        mode
+          Either 'first' or 'second' (default) -- which output dataset
+          would actually contain the samples
         """
         Splitter.__init__(self, **(kwargs))
 
@@ -441,16 +443,16 @@ class OddEvenSplitter(Splitter):
     The splitter yields to splits: first (odd, even) and second (even, odd).
     """
     def __init__(self, usevalues=False, **kwargs):
-        """Cheap init.
-
-        :Parameters:
-          usevalues: bool
-            If True the values of the attribute used for splitting will be
-            used to determine odd and even samples. If False odd and even
-            chunks are defined by the order of attribute values, i.e. first
-            unique attribute is odd, second is even, despite the
-            corresponding values might indicate the opposite (e.g. in case
-            of [2,3].
+        """
+        Parameters
+        ----------
+        usevalues : bool
+          If True the values of the attribute used for splitting will be
+          used to determine odd and even samples. If False odd and even
+          chunks are defined by the order of attribute values, i.e. first
+          unique attribute is odd, second is even, despite the
+          corresponding values might indicate the opposite (e.g. in case
+          of [2,3].
         """
         Splitter.__init__(self, **(kwargs))
 
@@ -461,8 +463,11 @@ class OddEvenSplitter(Splitter):
 
 
     def _getSplitConfig(self, uniqueattrs):
-        """Huka chaka!
-           YOH: LOL XXX
+        """
+        Returns
+        -------
+        list of tuples (None, list of int)
+          2 items: odd samples into 1st split
         """
         if self.__usevalues:
             return [(None, uniqueattrs[(uniqueattrs % 2) == True]),
@@ -486,9 +491,8 @@ class HalfSplitter(Splitter):
     The splitter yields to splits: first (1st half, 2nd half) and second
     (2nd half, 1st half).
     """
+
     def __init__(self, **kwargs):
-        """Cheap init.
-        """
         Splitter.__init__(self, **(kwargs))
 
 
@@ -496,7 +500,11 @@ class HalfSplitter(Splitter):
 
 
     def _getSplitConfig(self, uniqueattrs):
-        """Huka chaka!
+        """
+        Returns
+        -------
+        list of tuples (None, list of int)
+          2 items: first half of samples into 1st split
         """
         return [(None, uniqueattrs[:len(uniqueattrs)/2]),
                 (None, uniqueattrs[len(uniqueattrs)/2:])]
@@ -520,11 +528,12 @@ class NGroupSplitter(Splitter):
     def __init__(self, ngroups=4, **kwargs):
         """Initialize the N-group splitter.
 
-        :Parameters:
-          ngroups: int
-            Number of groups to split the attribute into.
-          kwargs
-            Additional parameters are passed to the `Splitter` base class.
+        Parameters
+        ----------
+        ngroups : int
+          Number of groups to split the attribute into.
+        **kwargs
+          Additional parameters are passed to the `Splitter` base class.
         """
         Splitter.__init__(self, **(kwargs))
 
@@ -534,7 +543,11 @@ class NGroupSplitter(Splitter):
 
 
     def _getSplitConfig(self, uniqueattrs):
-        """Huka chaka, wuka waka!
+        """
+        Returns
+        -------
+        list of tuples (None, list of int)
+          Indices for splitting
         """
 
         # make sure there are more of attributes than desired groups
@@ -569,7 +582,7 @@ class NFoldSplitter(Splitter):
     cvtype=1 (which is default), it would generate N splits, where
     each chunk sequentially is taken out (with replacement) for
     cross-validation.  Example, if there is 4 chunks, splits for
-    cvtype=1 are:
+    cvtype=1 are::
 
         [[1, 2, 3], [0]]
         [[0, 2, 3], [1]]
@@ -578,7 +591,7 @@ class NFoldSplitter(Splitter):
 
     If cvtype>1, then all possible combinations of cvtype number of
     chunks are taken out for testing, so for cvtype=2 in previous
-    example:
+    example::
 
         [[2, 3], [0, 1]]
         [[1, 3], [0, 2]]
@@ -594,11 +607,12 @@ class NFoldSplitter(Splitter):
                  **kwargs):
         """Initialize the N-fold splitter.
 
-        :Parameters:
-          cvtype: int
-            Type of cross-validation: N-(cvtype)
-          kwargs
-            Additional parameters are passed to the `Splitter` base class.
+        Parameters
+        ----------
+        cvtype : int
+          Type of cross-validation: N-(cvtype)
+        **kwargs
+          Additional parameters are passed to the `Splitter` base class.
         """
         Splitter.__init__(self, **(kwargs))
 
@@ -635,22 +649,26 @@ class CustomSplitter(Splitter):
     sequences of sample ids for each dataset that shall be generated in the
     split.
 
-    Example:
+    Examples
+    --------
+    Generate two splits. In the first split the *second* dataset
+    contains all samples with sample attributes corresponding to
+    either 0, 1 or 2. The *first* dataset of the first split contains
+    all samples which are not split into the second dataset.
 
-      * Generate two splits. In the first split the *second* dataset
-        contains all samples with sample attributes corresponding to
-        either 0, 1 or 2. The *first* dataset of the first split contains
-        all samples which are not split into the second dataset.
+    The second split yields three datasets. The first with all samples
+    corresponding to sample attributes 1 and 2, the second dataset
+    contains only samples with attrbiute 3 and the last dataset
+    contains the samples with attribute 5 and 6.
 
-        The second split yields three datasets. The first with all samples
-        corresponding to sample attributes 1 and 2, the second dataset
-        contains only samples with attrbiute 3 and the last dataset
-        contains the samples with attribute 5 and 6.
-
-        CustomSplitter([(None, [0, 1, 2]), ([1,2], [3], [5, 6])])
+    >>> CustomSplitter([(None, [0, 1, 2]), ([1,2], [3], [5, 6])])
     """
     def __init__(self, splitrule, **kwargs):
-        """Cheap init.
+        """
+        Parameters
+        ----------
+        splitrule : list of tuple
+          Custom splits to use
         """
         Splitter.__init__(self, **(kwargs))
 
@@ -661,7 +679,10 @@ class CustomSplitter(Splitter):
 
 
     def _getSplitConfig(self, uniqueattrs):
-        """Huka chaka!
+        """
+        Returns
+        -------
+        whatever was provided in splitrule argument
         """
         return self.__splitrule
 

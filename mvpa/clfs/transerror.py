@@ -24,6 +24,7 @@ from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
      CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx, \
      AUCErrorFx
 from mvpa.base import warning
+from mvpa.base.collections import Collectable
 from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.base.dochelpers import enhancedDocString, table2string
 from mvpa.clfs.stats import autoNullDist
@@ -56,7 +57,7 @@ class SummaryStatistics(object):
     """Basic class to collect targets/predictions and report summary statistics
 
     It takes care about collecting the sets, which are just tuples
-    (targets, predictions, values). While 'computing' the matrix, all
+    (targets, predictions, estimates). While 'computing' the matrix, all
     sets are considered together.  Children of the class are
     responsible for computation and display.
     """
@@ -67,21 +68,22 @@ class SummaryStatistics(object):
          None), )
 
 
-    def __init__(self, targets=None, predictions=None, values=None, sets=None):
+    def __init__(self, targets=None, predictions=None, estimates=None, sets=None):
         """Initialize SummaryStatistics
 
         targets or predictions cannot be provided alone (ie targets
         without predictions)
 
-        :Parameters:
-         targets
-           Optional set of targets
-         predictions
-           Optional set of predictions
-         values
-           Optional set of values (which served for prediction)
-         sets
-           Optional list of sets
+        Parameters
+        ----------
+        targets
+         Optional set of targets
+        predictions
+         Optional set of predictions
+        estimates
+         Optional set of estimates (which served for prediction)
+        sets
+         Optional list of sets
         """
         self._computed = False
         """Flag either it was computed for a given set of data"""
@@ -95,13 +97,13 @@ class SummaryStatistics(object):
         if not targets is None or not predictions is None:
             if not targets is None and not predictions is None:
                 self.add(targets=targets, predictions=predictions,
-                         values=values)
+                         estimates=estimates)
             else:
                 raise ValueError, \
                       "Please provide none or both targets and predictions"
 
 
-    def add(self, targets, predictions, values=None):
+    def add(self, targets, predictions, estimates=None):
         """Add new results to the set of known results"""
         if len(targets) != len(predictions):
             raise ValueError, \
@@ -109,10 +111,14 @@ class SummaryStatistics(object):
                                                        len(predictions)) + \
                   " have different number of samples"
 
-        if values is not None and len(targets) != len(values):
+        # extract value if necessary
+        if isinstance(estimates, Collectable):
+            estimates = estimates.value
+
+        if estimates is not None and len(targets) != len(estimates):
             raise ValueError, \
-                  "Targets[%d] and values[%d]" % (len(targets),
-                                                  len(values)) + \
+                  "Targets[%d] and estimates[%d]" % (len(targets),
+                                                  len(estimates)) + \
                   " have different number of samples"
 
         # enforce labels in predictions to be of the same datatype as in
@@ -130,13 +136,13 @@ class SummaryStatistics(object):
                     predictions = list(predictions)
                 predictions[i] = t1(predictions[i])
 
-        if values is not None:
+        if estimates is not None:
             # assure that we have a copy, or otherwise further in-place
             # modifications might screw things up (some classifiers share
-            # values and spit out results)
-            values = copy.deepcopy(values)
+            # estimates and spit out results)
+            estimates = copy.deepcopy(estimates)
 
-        self.__sets.append( (targets, predictions, values) )
+        self.__sets.append( (targets, predictions, estimates) )
         self._computed = False
 
 
@@ -144,16 +150,17 @@ class SummaryStatistics(object):
                  description=False):
         """'Pretty print' the matrix
 
-        :Parameters:
-          short : bool
-            if True, ignores the rest of the parameters and provides consise
-            1 line summary
-          header : bool
-            print header of the table
-          summary : bool
-            print summary (accuracy)
-          description : bool
-            print verbose description of presented statistics
+        Parameters
+        ----------
+        short : bool
+          if True, ignores the rest of the parameters and provides consise
+          1 line summary
+        header : bool
+          print header of the table
+        summary : bool
+          print summary (accuracy)
+        description : bool
+          print verbose description of presented statistics
         """
         raise NotImplementedError
 
@@ -240,12 +247,13 @@ class ROCCurve(object):
 
     def __init__(self, labels, sets=None):
         """
-        :Parameters:
-          labels : list
-            labels which were used (in order of values if multiclass,
-            or 1 per class for binary problems (e.g. in SMLR))
-          sets : list of tuples
-            list of sets for the analysis
+        Parameters
+        ----------
+        labels : list
+          labels which were used (in order of estimates if multiclass,
+          or 1 per class for binary problems (e.g. in SMLR))
+        sets : list of tuples
+          list of sets for the analysis
         """
         self._labels = labels
         self._sets = sets
@@ -261,6 +269,14 @@ class ROCCurve(object):
         labels = self._labels
         Nlabels = len(labels)
         sets = self._sets
+
+        # Handle degenerate cases politely
+        if Nlabels < 2:
+            warning("ROC was asked to be evaluated on data with %i"
+                    " labels which is a degenerate case.")
+            self._ROCs = []
+            self._aucs = []
+            return
 
         # take sets which have values in the shape we can handle
         def _checkValues(set_):
@@ -302,18 +318,18 @@ class ROCCurve(object):
         #      NLabels == 1
         for iset,s in enumerate(sets_wv):
             # we will do inplace modification, thus go by index
-            values = s[2]
+            estimates = s[2]
             # we would need it to be a list to reassign element with a list
-            if isinstance(values, N.ndarray) and len(values.shape)==1:
+            if isinstance(estimates, N.ndarray) and len(estimates.shape)==1:
                 # XXX ??? so we are going away from inplace modifications?
-                values = list(values)
+                estimates = list(estimates)
             rangev = None
-            for i in xrange(len(values)):
-                v = values[i]
+            for i in xrange(len(estimates)):
+                v = estimates[i]
                 if N.isscalar(v):
                     if Nlabels == 1:
                         # ensure the right dimensionality
-                        values[i] = N.array(v, ndmin=2)
+                        estimates[i] = N.array(v, ndmin=2)
                     elif Nlabels == 2:
                         def last_el(x):
                             """Helper function. Returns x if x is scalar, and
@@ -321,25 +337,25 @@ class ROCCurve(object):
                             if N.isscalar(x): return x
                             else:             return x[-1]
                         if rangev is None:
-                            # we need to figure out min/max values
+                            # we need to figure out min/max estimates
                             # to invert for the 0th label
-                            values_ = [last_el(x) for x in values]
-                            rangev = N.min(values_) + N.max(values_)
-                        values[i] = [rangev - v, v]
+                            estimates_ = [last_el(x) for x in estimates]
+                            rangev = N.min(estimates_) + N.max(estimates_)
+                        estimates[i] = [rangev - v, v]
                     else:
                         raise ValueError, \
                               "Cannot have a single 'value' for multiclass" \
                               " classification. Got %s" % (v)
                 elif len(v) != Nlabels:
                     raise ValueError, \
-                          "Got %d values whenever there is %d labels" % \
+                          "Got %d estimates whenever there is %d labels" % \
                           (len(v), Nlabels)
-            # reassign possibly adjusted values
-            sets_wv[iset] = (s[0], s[1], N.asarray(values))
+            # reassign possibly adjusted estimates
+            sets_wv[iset] = (s[0], s[1], N.asarray(estimates))
 
 
         # we need to estimate ROC per each label
-        # XXX order of labels might not correspond to the one among 'values'
+        # XXX order of labels might not correspond to the one among 'estimates'
         #     which were used to make a decision... check
         ROCs, aucs = [], []             # 1 per label
         for i,label in enumerate(labels):
@@ -448,17 +464,18 @@ class ConfusionMatrix(SummaryStatistics):
     def __init__(self, labels=None, labels_map=None, **kwargs):
         """Initialize ConfusionMatrix with optional list of `labels`
 
-        :Parameters:
-         labels : list
-           Optional set of labels to include in the matrix
-         labels_map : None or dict
-           Dictionary from original dataset to show mapping into
-           numerical labels
-         targets
-           Optional set of targets
-         predictions
-           Optional set of predictions
-           """
+        Parameters
+        ----------
+        labels : list
+         Optional set of labels to include in the matrix
+        labels_map : None or dict
+         Dictionary from original dataset to show mapping into
+         numerical labels
+        targets
+         Optional set of targets
+        predictions
+         Optional set of predictions
+         """
 
         SummaryStatistics.__init__(self, **kwargs)
 
@@ -618,16 +635,17 @@ class ConfusionMatrix(SummaryStatistics):
                  description=False):
         """'Pretty print' the matrix
 
-        :Parameters:
-          short : bool
-            if True, ignores the rest of the parameters and provides consise
-            1 line summary
-          header : bool
-            print header of the table
-          summary : bool
-            print summary (accuracy)
-          description : bool
-            print verbose description of presented statistics
+        Parameters
+        ----------
+        short : bool
+          if True, ignores the rest of the parameters and provides consise
+          1 line summary
+        header : bool
+          print header of the table
+        summary : bool
+          print summary (accuracy)
+        description : bool
+          print verbose description of presented statistics
         """
         if len(self.sets) == 0:
             return "Empty"
@@ -747,31 +765,33 @@ class ConfusionMatrix(SummaryStatistics):
              **kwargs):
         """Provide presentation of confusion matrix in image
 
-        :Parameters:
-          labels : list of int or basestring
-            Optionally provided labels guarantee the order of
-            presentation. Also value of None places empty column/row,
-            thus provides visual groupping of labels (Thanks Ingo)
-          numbers : bool
-            Place values inside of confusion matrix elements
-          numbers_alpha : None or float
-            Controls textual output of numbers. If None -- all numbers
-            are plotted in the same intensity. If some float -- it controls
-            alpha level -- higher value would give higher contrast. (good
-            value is 2)
-          origin : basestring
-            Which left corner diagonal should start
-          xlabels_vertical : bool
-            Either to plot xlabels vertical (benefitial if number of labels
-            is large)
-          numbers_kwargs : dict
-            Additional keyword parameters to be added to numbers (if numbers
-            is True)
-          **kwargs
-            Additional arguments given to imshow (\eg me cmap)
+        Parameters
+        ----------
+        labels : list of int or str
+          Optionally provided labels guarantee the order of
+          presentation. Also value of None places empty column/row,
+          thus provides visual groupping of labels (Thanks Ingo)
+        numbers : bool
+          Place values inside of confusion matrix elements
+        numbers_alpha : None or float
+          Controls textual output of numbers. If None -- all numbers
+          are plotted in the same intensity. If some float -- it controls
+          alpha level -- higher value would give higher contrast. (good
+          value is 2)
+        origin : str
+          Which left corner diagonal should start
+        xlabels_vertical : bool
+          Either to plot xlabels vertical (benefitial if number of labels
+          is large)
+        numbers_kwargs : dict
+          Additional keyword parameters to be added to numbers (if numbers
+          is True)
+        **kwargs
+          Additional arguments given to imshow (\eg me cmap)
 
-        :Returns:
-           (fig, im, cb) -- figure, imshow, colorbar
+        Returns
+        -------
+         (fig, im, cb) -- figure, imshow, colorbar
         """
 
         externals.exists("pylab", raiseException=True)
@@ -980,12 +1000,13 @@ class RegressionStatistics(SummaryStatistics):
     def __init__(self, **kwargs):
         """Initialize RegressionStatistics
 
-        :Parameters:
-         targets
-           Optional set of targets
-         predictions
-           Optional set of predictions
-           """
+        Parameters
+        ----------
+        targets
+         Optional set of targets
+        predictions
+         Optional set of predictions
+         """
 
         SummaryStatistics.__init__(self, **kwargs)
 
@@ -1013,7 +1034,7 @@ class RegressionStatistics(SummaryStatistics):
         for funcname, func in funcs.iteritems():
             funcname_all = funcname + '_all'
             stats[funcname_all] = []
-            for i, (targets, predictions, values) in enumerate(sets):
+            for i, (targets, predictions, estimates) in enumerate(sets):
                 stats[funcname_all] += [func(predictions, targets)]
             stats[funcname_all] = N.array(stats[funcname_all])
             stats[funcname] = N.mean(stats[funcname_all])
@@ -1025,7 +1046,7 @@ class RegressionStatistics(SummaryStatistics):
         # might be uncomputable if a set contains just a single number
         # (like in the case of correlation coefficient)
         targets, predictions = [], []
-        for i, (targets_, predictions_, values_) in enumerate(sets):
+        for i, (targets_, predictions_, estimates_) in enumerate(sets):
             targets += list(targets_)
             predictions += list(predictions_)
 
@@ -1046,16 +1067,18 @@ class RegressionStatistics(SummaryStatistics):
              ):
         """Provide presentation of regression performance in image
 
-        :Parameters:
-          plot : bool
-            Plot regular plot of values (targets/predictions)
-          plot_stats : bool
-            Print basic statistics in the title
-          splot : bool
-            Plot scatter plot
+        Parameters
+        ----------
+        plot : bool
+          Plot regular plot of values (targets/predictions)
+        plot_stats : bool
+          Print basic statistics in the title
+        splot : bool
+          Plot scatter plot
 
-        :Returns:
-           (fig, im, cb) -- figure, imshow, colorbar
+        Returns
+        -------
+         (fig, im, cb) -- figure, imshow, colorbar
         """
         externals.exists("pylab", raiseException=True)
         import pylab as P
@@ -1206,15 +1229,16 @@ class ClassifierError(ClassWithCollections):
     def __init__(self, clf, labels=None, train=True, **kwargs):
         """Initialization.
 
-        :Parameters:
-          clf : Classifier
-            Either trained or untrained classifier
-          labels : list
-            if provided, should be a set of labels to add on top of the
-            ones present in testdata
-          train : bool
-            unless train=False, classifier gets trained if
-            trainingdata provided to __call__
+        Parameters
+        ----------
+        clf : Classifier
+          Either trained or untrained classifier
+        labels : list
+          if provided, should be a set of labels to add on top of the
+          ones present in testdata
+        train : bool
+          unless train=False, classifier gets trained if
+          trainingdata provided to __call__
         """
         ClassWithCollections.__init__(self, **kwargs)
         self.__clf = clf
@@ -1252,21 +1276,23 @@ class ClassifierError(ClassWithCollections):
                 #    warning('It seems that classifier %s was already trained' %
                 #            self.__clf + ' on dataset %s. Please inspect' \
                 #                % trainingdataset)
-                if self.states.isEnabled('training_confusion'):
-                    self.__clf.states._changeTemporarily(
+                if self.states.is_enabled('training_confusion'):
+                    self.__clf.states.change_temporarily(
                         enable_states=['training_confusion'])
                 self.__clf.train(trainingdataset)
-                if self.states.isEnabled('training_confusion'):
-                    self.states.training_confusion = self.__clf.states.training_confusion
-                    self.__clf.states._resetEnabledTemporarily()
+                if self.states.is_enabled('training_confusion'):
+                    self.states.training_confusion = \
+                        self.__clf.states.training_confusion
+                    self.__clf.states.reset_changed_temporarily()
 
-        if self.__clf.states.isEnabled('trained_labels') and \
-               not testdataset is None:
+        if self.__clf.states.is_enabled('trained_labels') \
+               and not self.__clf.__is_regression__ \
+               and not testdataset is None:
             newlabels = Set(testdataset.sa['labels'].unique) \
                         - Set(self.__clf.states.trained_labels)
             if len(newlabels)>0:
                 warning("Classifier %s wasn't trained to classify labels %s" %
-                        (`self.__clf`, `newlabels`) +
+                        (self.__clf, newlabels) +
                         " present in testing dataset. Make sure that you have" +
                         " not mixed order/names of the arguments anywhere")
 
@@ -1309,7 +1335,7 @@ class ClassifierError(ClassWithCollections):
 
 
     def untrain(self):
-        """Untrain the *Error which relies on the classifier
+        """Untrain the `*Error` which relies on the classifier
         """
         self.clf.untrain()
 
@@ -1343,23 +1369,28 @@ class TransferError(ClassifierError):
                             "samples origid as key.")
 
     def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None,
-                 null_dist=None, **kwargs):
+                 null_dist=None, samples_idattr='origids', **kwargs):
         """Initialization.
 
-        :Parameters:
-          clf : Classifier
-            Either trained or untrained classifier
-          errorfx
-            Functor that computes a scalar error value from the vectors of
-            desired and predicted values (e.g. subclass of `ErrorFunction`)
-          labels : list
-            if provided, should be a set of labels to add on top of the
-            ones present in testdata
-          null_dist : instance of distribution estimator
+        Parameters
+        ----------
+        clf : Classifier
+          Either trained or untrained classifier
+        errorfx: func, optional
+          Functor that computes a scalar error value from the vectors of
+          desired and predicted values (e.g. subclass of `ErrorFunction`)
+        labels : list, optional
+          If provided, should be a set of labels to add on top of the
+          ones present in testdata
+        null_dist : instance of distribution estimator, optional
+        samples_idattr : str, optional
+          What samples attribute to use to identify and store samples_errors
+          state variable
         """
         ClassifierError.__init__(self, clf, labels, **kwargs)
         self.__errorfx = errorfx
         self.__null_dist = autoNullDist(null_dist)
+        self.__samples_idattr = samples_idattr
 
 
     __doc__ = enhancedDocString('TransferError', locals(), ClassifierError)
@@ -1369,11 +1400,12 @@ class TransferError(ClassifierError):
         """Performs deepcopying of the classifier."""
         # TODO -- use ClassifierError.__copy__
         out = TransferError.__new__(TransferError)
-        TransferError.__init__(out, self.clf.clone(), self.errorfx, self._labels)
+        TransferError.__init__(out, self.clf.clone(),
+                               self.errorfx, self._labels)
 
         return out
 
-
+    # XXX: TODO: unify naming? test/train or with ing both
     def _call(self, testdataset, trainingdataset=None):
         """Compute the transfer error for a certain test dataset.
 
@@ -1406,7 +1438,8 @@ class TransferError(ClassifierError):
                       " parameter expose_testdataset=True"
             raise ValueError, "Transfer error call obtained None " \
                   "as a dataset for testing.%s" % msg
-        predictions = clf.predict(testdataset.samples)
+        #clf should handle dataset or samples
+        predictions = clf.predict(testdataset)
         # compute confusion matrix
         # Should it migrate into ClassifierError.__postcall?
         # -> Probably not because other childs could estimate it
@@ -1414,24 +1447,28 @@ class TransferError(ClassifierError):
         #  `ConfusionBasedError`, wherestates. confusion is simply
         #  bound to classifiers confusion matrix
         states = self.states
-        if states.isEnabled('confusion'):
-            confusion = clf._summaryClass(
-                #labels=self.labels,
-                targets=testdataset.sa.labels,
-                predictions=predictions,
-                values=clf.states.get('values', None))
+        if states.is_enabled('confusion'):
+            confusion = clf.__summary_class__(
+                #labels = self.labels,
+                targets = testdataset.sa.labels,
+                predictions = predictions,
+                estimates = clf.states.get('estimates', None))
             try:
                 confusion.labels_map = testdataset.labels_map
             except:
                 pass
             states.confusion = confusion
 
-        if states.isEnabled('samples_error'):
+        if states.is_enabled('samples_error'):
             samples_error = []
             for i, p in enumerate(predictions):
-                samples_error.append(self.__errorfx([p], testdataset.sa.labels[i:i+1]))
-
-            states.samples_error = dict(zip(testdataset.sa.origids, samples_error))
+                samples_error.append(
+                    self.__errorfx([p], testdataset.sa.labels[i:i+1]))
+            testdataset.init_origids(
+                'samples', attr=self.__samples_idattr, mode='existing')
+            states.samples_error = dict(
+                zip(testdataset.sa[self.__samples_idattr].value,
+                    samples_error))
 
         # compute error from desired and predicted values
         error = self.__errorfx(predictions, testdataset.sa.labels)
@@ -1459,10 +1496,12 @@ class TransferError(ClassifierError):
 
 
     @property
-    def errorfx(self): return self.__errorfx
+    def errorfx(self):
+        return self.__errorfx
 
     @property
-    def null_dist(self): return self.__null_dist
+    def null_dist(self):
+        return self.__null_dist
 
 
 
@@ -1480,28 +1519,29 @@ class ConfusionBasedError(ClassifierError):
                  **kwargs):
         """Initialization.
 
-        :Parameters:
-          clf : Classifier
-            Either trained or untrained classifier
-          confusion_state
-            Id of the state variable which stores `ConfusionMatrix`
-          labels : list
-            if provided, should be a set of labels to add on top of the
-            ones present in testdata
+        Parameters
+        ----------
+        clf : Classifier
+          Either trained or untrained classifier
+        confusion_state
+          Id of the state variable which stores `ConfusionMatrix`
+        labels : list
+          if provided, should be a set of labels to add on top of the
+          ones present in testdata
         """
         ClassifierError.__init__(self, clf, labels, **kwargs)
 
         self.__confusion_state = confusion_state
         """What state to extract from"""
 
-        if not clf.states.isKnown(confusion_state):
+        if not clf.states.has_key(confusion_state):
             raise ValueError, \
-                  "State variable %s is not defined for classifier %s" % \
-                  (confusion_state, `clf`)
-        if not clf.states.isEnabled(confusion_state):
+                  "State variable %s is not defined for classifier %r" % \
+                  (confusion_state, clf)
+        if not clf.states.is_enabled(confusion_state):
             if __debug__:
-                debug('CERR', "Forcing state %s to be enabled for %s" %
-                      (confusion_state, `clf`))
+                debug('CERR', "Forcing state %s to be enabled for %r" %
+                      (confusion_state, clf))
             clf.states.enable(confusion_state)
 
 

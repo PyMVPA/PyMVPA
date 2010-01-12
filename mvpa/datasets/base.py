@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Dataset container"""
+"""PyMVPA's common Dataset container."""
 
 __docformat__ = 'restructuredtext'
 
@@ -16,7 +16,7 @@ import copy
 from mvpa.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection, \
         SampleAttribute, FeatureAttribute, DatasetAttribute
-from mvpa.base.dataset import Dataset as BaseDataset
+from mvpa.base.dataset import AttrDataset
 from mvpa.base.dataset import _expand_attribute
 from mvpa.misc.support import idhash as idhash_
 from mvpa.mappers.base import ChainMapper, FeatureSliceMapper
@@ -26,16 +26,8 @@ if __debug__:
     from mvpa.base import debug
 
 
-class Dataset(BaseDataset):
-    """Generic storage class for evolved datasets in PyMVPA
-
-    On top of basic dataset (`mvpa.base.dataset.Dataset`) this derived
-    class provides:
-
-     - semantics of having mapper assigned
-     - sugarings to access labels and chunks
-     - sub-dataset selection using []
-    """
+class Dataset(AttrDataset):
+    __doc__ = AttrDataset.__doc__
 
     def get_mapped(self, mapper):
         """Feed this dataset through a mapper (forward).
@@ -138,9 +130,9 @@ class Dataset(BaseDataset):
         ----------
         samples : ndarray
           The two-dimensional samples matrix.
-        labels : ndarray
-        chunks : ndarray
-        mapper : Mapper instance
+        labels : ndarray, optional
+        chunks : ndarray, optional
+        mapper : Mapper instance, optional
           A (potentially trained) mapper instance that is used to forward-map
           the samples upon construction of the dataset. The mapper must
           have a simple feature space (samples x features) as output. Use
@@ -224,6 +216,7 @@ class Dataset(BaseDataset):
     UC = property(fget=lambda self:self.sa['chunks'].unique)
     mapper = property(fget=lambda self:self.a.mapper)
     O = property(fget=lambda self:self.a.mapper.reverse(self.samples))
+
 
 
 # convenience alias

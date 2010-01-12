@@ -13,11 +13,12 @@ __docformat__ = 'restructuredtext'
 def split_kwargs(kwargs, prefixes=[]):
     """Helper to separate kwargs into multiple groups
 
-    :Parameters:
-      prefixes : list of basestrings
-        Each entry sets a prefix which puts entry with key starting
-        with it into a separate group.
-        Group '' corresponds to 'leftovers'
+    Parameters
+    ----------
+    prefixes : list of strs
+      Each entry sets a prefix which puts entry with key starting
+      with it into a separate group.
+      Group '' corresponds to 'leftovers'
 
     :Output:
       dictionary with keys == `prefixes`
@@ -37,16 +38,17 @@ def split_kwargs(kwargs, prefixes=[]):
 def group_kwargs(prefixes, assign=False, passthrough=False):
     """Decorator function to join parts of kwargs together
 
-    :Parameters:
-      prefixes : list of basestrings
-        Prefixes to split based on. See `split_kwargs`
-      assign : bool
-        Flag to assign the obtained arguments to self._<prefix>_kwargs
-      passthrough : bool
-        Flag to pass joined arguments as <prefix>_kwargs argument.
-        Usually it is sufficient to have either assign or passthrough.
-        If none of those is True, decorator simply filters out mentioned
-        groups from being passed to the method
+    Parameters
+    ----------
+    prefixes : list of strs
+      Prefixes to split based on. See `split_kwargs`
+    assign : bool
+      Flag to assign the obtained arguments to self._<prefix>_kwargs
+    passthrough : bool
+      Flag to pass joined arguments as <prefix>_kwargs argument.
+      Usually it is sufficient to have either assign or passthrough.
+      If none of those is True, decorator simply filters out mentioned
+      groups from being passed to the method
 
     Example: if needed to join all args which start with 'slave<underscore>'
     together under slave_kwargs parameter

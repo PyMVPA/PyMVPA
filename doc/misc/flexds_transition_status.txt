@@ -38,10 +38,10 @@ test_atlases.py             pass
 test_base.py                pass
 test_boxcarmapper.py        pass
 test_clfcrossval.py         pass
-test_clf.py                 broken (SG cannot handle literal labels, TreeClassifier relies on labels_map)
+test_clf.py                 pass (SG cannot handle literal labels, TreeClassifier relies on labels_map)
 test_cmdline.py             pass
 test_config.py              pass
-test_datameasure.py         broken (sg literal labels)
+test_datameasure.py         pass (sg literal labels)
 test_datasetfx.py           pass
 test_datasetfx_sp.py        pass
 test_datasetng.py           pass
@@ -81,7 +81,7 @@ test_suite.py               pass
 test_support.py             pass
 test_svdmapper.py           pass
 test_svm.py                 pass
-test_transerror.py          broken (sg literal labels, testAUC)
+test_transerror.py          pass (sg literal labels, testAUC)
 test_transformers.py        pass
 test_verbosity.py           pass
 test_waveletmapper.py       pass

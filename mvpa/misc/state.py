@@ -13,7 +13,7 @@ It was devised to provide conditional storage
 
 _DEV_DOC = """
 TODO:
-+ Use %r instead of %s in repr for ClasswithCollections
++ Use %r instead of %s in repr for ClassWithCollections
   Replaced few %s's... might be fixed
 + Check why __doc__ is not set in kernels
   Seems to be there now...
@@ -33,6 +33,8 @@ TODO:
 #          to a position in a container (i.e. list access). However, in this
 #          file it is mostly used in the context of a `key` for dictionary
 #          access. Can we refactor that?
+# YOH: good point -- doing so... also we need to document somewhere that
+#      names of Collectables are actually the keys in Collections
 __docformat__ = 'restructuredtext'
 
 import operator
@@ -40,14 +42,14 @@ import mvpa.support.copy as copy
 from sets import Set
 from textwrap import TextWrapper
 
-import numpy as N
-
-from mvpa.misc.vproperty import VProperty
+# Although not used here -- included into interface
 from mvpa.misc.exceptions import UnknownStateError
-from mvpa.misc.attributes import CollectableAttribute, StateVariable
+from mvpa.misc.attributes import IndexedCollectable, StateVariable
 from mvpa.base.dochelpers import enhancedDocString
 
 from mvpa.base import externals
+# XXX local rename is due but later on
+from mvpa.base.collections import Collection as BaseCollection
 
 if __debug__:
     from mvpa.base import debug
@@ -75,49 +77,49 @@ _object_setattr = object.__setattr__
 #  - minimize interface
 
 
-class Collection(object):
-    """Container of some CollectableAttributes.
+class Collection(BaseCollection):
+    """Container of some IndexedCollectables.
 
-    :Groups:
-     - `Public Access Functions`: `isKnown`
-     - `Access Implementors`: `_getListing`, `_getNames`
-     - `Mutators`: `__init__`
-     - `R/O Properties`: `listing`, `names`, `items`
-
-     XXX Seems to be not used and duplicating functionality: `_getListing`
+     XXX Seems to be not used and duplicating functionality: `listing`
      (thus `listing` property)
     """
+
+    # XXX Necessary so __owner is available while deepcopying
+    #     is to be defined per instance within the class
+    __owner = None
 
     def __init__(self, items=None, owner=None, name=None):
         """Initialize the Collection
 
-        :Parameters:
-          items : dict of CollectableAttribute's
-            items to initialize with
-          owner : object
-            an object to which collection belongs
-          name : basestring
-            name of the collection (as seen in the owner, e.g. 'states')
+        Parameters
+        ----------
+        items : dict of IndexedCollectable's
+          items to initialize with
+        owner : object
+          an object to which collection belongs
+        name : str
+          name of the collection (as seen in the owner, e.g. 'states')
         """
         # first set all stuff to nothing and later on charge it
         # this is important, since some of the stuff below relies in the
         # defaults
         self.__name = None
         self.__owner = None
-        self._items = {}
+
+        super(Collection, self).__init__(items)
+
         if not owner is None:
-            self._setOwner(owner)
+            self._set_owner(owner)
         if not name is None:
-            self._setName(name)
-        if not items is None:
-            self.update(items)
+            self._set_name(name)
 
 
-    def _setName(self, name):
+
+    def _set_name(self, name):
         self.__name = name
 
     def __str__(self):
-        num = len(self._items)
+        num = len(self)
         if __debug__ and "ST" in debug.active:
             maxnumber = 1000            # I guess all
         else:
@@ -130,14 +132,14 @@ class Collection(object):
         for i in xrange(min(num, maxnumber)):
             if i > 0:
                 res += " "
-            res += "%s" % str(self._items.values()[i])
-        if len(self._items) > maxnumber:
+            res += "%s" % str(self.values()[i])
+        if len(self) > maxnumber:
             res += "..."
         res += "}"
         if __debug__:
             if "ST" in debug.active:
-                res += " owner:%s#%s" % (self.owner.__class__.__name__,
-                                         id(self.owner))
+                res += " owner:%s#%s" % (self.__owner.__class__.__name__,
+                                         id(self.__owner))
         return res
 
 
@@ -145,7 +147,9 @@ class Collection(object):
         """Collection specific part of __repr__ for a class containing
         it, ie a part of __repr__ for the owner object
 
-        :Return:
+        Returns
+        -------
+        list
           list of items to be appended within __repr__ after a .join()
         """
         # XXX For now we do not expect any pure non-specialized
@@ -153,11 +157,14 @@ class Collection(object):
         raise NotImplementedError, "Class %s should override _cls_repr" \
               % self.__class__.__name__
 
-    def _is_initializable(self, index):
-        """Checks if index could be assigned within collection via
+    def _is_initializable(self, key):
+        """Checks if key could be assigned within collection via
         _initialize
 
-        :Return: bool value for a given `index`
+        Returns
+        -------
+        bool
+          value for a given `key`
 
         It is to facilitate dynamic assignment of collections' items
         within derived classes' __init__ depending on the present
@@ -172,14 +179,14 @@ class Collection(object):
         #      % self.__class__.__name__
 
         # YYY lets just check if it is in the keys
-        return index in self._items.keys()
+        return key in self.keys()
 
 
-    def _initialize(self, index, value):
-        """Initialize `index` (no check performed) with `value`
+    def _initialize(self, key, value):
+        """Initialize `key` (no check performed) with `value`
         """
         # by default we just set corresponding value
-        self[index]._set(value, init=True)
+        self[key]._set(value, init=True)
 
 
     def __repr__(self):
@@ -188,14 +195,14 @@ class Collection(object):
         # into the repr() of the ClassWithCollections instance
         return "%s(items=%s, name=%s)" \
                   % (self.__class__.__name__,
-                     repr(self._items.values()),
+                     repr(self.values()),
                      repr(self.name))
 
         items_s = ""
         sep = ""
-        for item in self._items:
+        for item in self:
             try:
-                itemvalue = "%s" % `self._items[item].value`
+                itemvalue = "%r" % (self[item].value,)
                 if len(itemvalue)>50:
                     itemvalue = itemvalue[:10] + '...' + itemvalue[-10:]
                 items_s += "%s'%s':%s" % (sep, item, itemvalue)
@@ -204,320 +211,105 @@ class Collection(object):
                 pass
         if items_s != "":
             s += "items={%s}" % items_s
-        if self.owner is not None:
-            s += "%sowner=%s" % (sep, `self.owner`)
+        if self.__owner is not None:
+            s += "%sowner=%r" % (sep, self.__owner)
         s += ")"
         return s
 
 
-    #
-    # XXX TODO: figure out if there is a way to define proper
-    #           __copy__'s for a hierarchy of classes. Probably we had
-    #           to define __getinitargs__, etc... read more...
-    #
-    #def __copy__(self):
-# TODO Remove or refactor?
-#    def _copy_states_(self, fromstate, deep=False):
-#        """Copy known here states from `fromstate` object into current object
-#
-#        Crafted to overcome a problem mentioned above in the comment
-#        and is to be called from __copy__ of derived classes
-#
-#        Probably sooner than later will get proper __getstate__,
-#        __setstate__
-#        """
-#        # Bad check... doesn't generalize well...
-#        # if not issubclass(fromstate.__class__, self.__class__):
-#        #     raise ValueError, \
-#        #           "Class  %s is not subclass of %s, " % \
-#        #           (fromstate.__class__, self.__class__) + \
-#        #           "thus not eligible for _copy_states_"
-#        # TODO: FOR NOW NO TEST! But this beast needs to be fixed...
-#        operation = { True: copy.deepcopy,
-#                      False: copy.copy }[deep]
-#
-#        if isinstance(fromstate, ClassWithCollections):
-#            fromstate = fromstate.states
-#
-#        self.enabled = fromstate.enabled
-#        for name in self.names:
-#            if fromstate.isKnown(name):
-#                self._items[name] = operation(fromstate._items[name])
-
-
-    def isKnown(self, index):
-        """Returns `True` if state `index` is known at all"""
-        return self._items.has_key(index)
-
-
-    def isSet(self, index=None):
+    def is_set(self, key=None):
         """If item (or any in the present or listed) was set
 
-        :Parameters:
-          index : None or basestring or list of basestring
-            What items to check if they were set in the collection
+        Parameters
+        ----------
+        key : None or str or list of str
+          What items to check if they were set in the collection
         """
-        _items = self._items
-        if not (index is None):
-            if isinstance(index, basestring):
-                 self._checkIndex(index) # process just that single index
-                 return _items[index].isSet
+        if not (key is None):
+            if isinstance(key, basestring):
+                return self[key].is_set
             else:
-                items = index           # assume that we got some list
+                items = key           # assume that we got some list
         else:
-            items = self._items         # go through all the items
+            items = self         # go through all the items
 
-        for index in items:
-            self._checkIndex(index)
-            if _items[index].isSet:
+        for key in items:
+            if self[key].is_set:
                 return True
         return False
 
 
-    def whichSet(self):
-        """Return list of indexes which were set"""
+    def which_set(self):
+        """Return list of keys which were set"""
         result = []
-        # go through all members and if any isSet -- return True
-        for index,v in self._items.iteritems():
-            if v.isSet:
-                result.append(index)
+        # go through all members and if any is_set -- return True
+        for key, v in self.iteritems():
+            if v.is_set:
+                result.append(key)
         return result
 
 
-    def _checkIndex(self, index):
-        """Verify that given `index` is a known/registered state.
+    # XXX RF to be removed if ownership feature is removed
+    def __setitem__(self, key, value):
+        super(Collection, self).__setitem__(key, value)
+        if not self.__owner is None:
+            self._update_owner(key)
 
-        :Raise `KeyError`: if given `index` is not known
+
+    def pop(self, key):
+        """Pop (remove and return) item from the collection
         """
-        # OPT: lets not reuse isKnown, to don't incure 1 more function
-        #      call
-        if not self._items.has_key(index):
-            raise KeyError, \
-                  "%s of %s has no key '%s' registered" \
-                  % (self.__class__.__name__,
-                     self.__owner.__class__.__name__,
-                     index)
+        _ = super(Collection, self).pop(key)
+        self._update_owner(key, register=False)
 
 
-    def add_collectable(self, item):
-        """Add a new CollectableAttribute to the collection
-
-        :Parameters:
-          item : CollectableAttribute
-            or of derived class. Must have 'name' assigned
-
-        TODO: we should make it stricter to don't add smth of
-              wrong type into Collection since it might lead to problems
-
-              Also we might convert to __setitem__
-        """
-        # local binding
-        name = item.name
-        if not isinstance(item, CollectableAttribute):
-            raise ValueError, \
-                  "Collection can add only instances of " + \
-                  "CollectableAttribute-derived classes. Got %s" % `item`
-
-        if name is None:
-            raise ValueError, \
-                  "CollectableAttribute to be added %s must have 'name' set" % \
-                  item
-        self._items[name] = item
-
-        if not self.owner is None:
-            self._updateOwner(name)
-
-
-    def add(self, name, value, doc=None):
-        """Convenience method to add an attributes to the collection.
-
-        The method has to be implemented in derived collections to
-        instantiate Collectable Attributes of the desired type and add
-        than to the collection via add_collectable().
-        """
-        raise NotImplementedError
-
-
-    def update(self, source, copyvalues=None):
-        """
-        Parameters
-        ----------
-        source : dict, Collection
-        copyvalues : None, shallow, deep
-        """
-        if isinstance(source, Collection) or isinstance(source, list):
-            if isinstance(source, Collection):
-                attrs = source._items.values()
-            else:
-                attrs = source
-            for a in attrs:
-                if copyvalues is None:
-                    self.add_collectable(a)
-                elif copyvalues is 'shallow':
-                    self.add_collectable(copy.copy(a))
-                elif copyvalues is 'deep':
-                    self.add_collectable(copy.deepcopy(a))
-                else:
-                    raise ValueError("Unknown value ('%s') for copy argument."
-                                     % copy)
-        elif isinstance(source, dict):
-            for k, v in source.iteritems():
-                # expand value and docs
-                if isinstance(v, tuple):
-                    value = v[0]
-                    doc = v[1]
-                else:
-                    value = v
-                    doc = None
-
-                # add the attribute with optional docs
-                if copyvalues is None:
-                    self.add(k, v, doc=doc)
-                elif copyvalues is 'shallow':
-                    self.add(k, copy.copy(v), doc=doc)
-                elif copyvalues is 'deep':
-                    self.add(k, copy.deepcopy(v), doc=doc)
-                else:
-                    raise ValueError("Unknown value ('%s') for copy argument."
-                                     % copy)
-        else:
-            raise ValueError("Collection.upate() can only handle Collections "
-                             "dictionarie as arguments.")
-
-
-    def remove(self, index):
-        """Remove item from the collection
-        """
-        self._checkIndex(index)
-        self._updateOwner(index, register=False)
-        discard = self._items.pop(index)
-
-
-    def __getattribute__(self, index):
-        """
-        """
-        #return all private and protected ones first since we will not have
-        # collectable's with _ (we should not have!)
-        if index[0] == '_':
-            return _object_getattribute(self, index)
-        _items = _object_getattribute(self, '_items')
-        if index in _items:
-            return _items[index].value
-        return _object_getattribute(self, index)
-
-
-    def __setattr__(self, index, value):
-        if index[0] == '_':
-            return _object_setattr(self, index, value)
-        _items = _object_getattribute(self, '_items')
-        if index in _items:
-            _items[index].value = value
-        else:
-            _object_setattr(self, index, value)
-
-
-    def __getitem__(self, index):
-        _items = _object_getattribute(self, '_items')
-        if index in _items:
-            self._checkIndex(index)
-            return _items[index]
-        else:
-            raise AttributeError("State collection %s has no %s attribute" 
-                                 % (self, index))
-
-
-    # Probably not needed -- enable if need arises
-    #
-    #def __setattr__(self, index, value):
-    #    if self._items.has_key(index):
-    #        self._updateOwner(index, register=False)
-    #        self._items[index] = value
-    #        self._updateOwner(index, register=True)
-    #
-    #    _object_setattr(self, index, value)
-
-
-    def get(self, index, default):
-        """Access the value by a given index.
-
-        Mimiquing regular dictionary behavior, if value cannot be obtained
-        (i.e. if any exception is caught) return default value.
-        """
-        try:
-            return self[index].value
-        except Exception, e:
-            #if default is not None:
-            return default
-            #else:
-            #    raise e
-
-
-    def _action(self, index, func, missingok=False, **kwargs):
+    def _action(self, key, func, missingok=False, **kwargs):
         """Run specific func either on a single item or on all of them
 
-        :Parameters:
-          index : basestr
-            Name of the state variable
-          func
-            Function (not bound) to call given an item, and **kwargs
-          missingok : bool
-            If True - do not complain about wrong index
+        Parameters
+        ----------
+        key : str
+          Name of the state variable
+        func
+          Function (not bound) to call given an item, and **kwargs
+        missingok : bool
+          If True - do not complain about wrong key
         """
-        if isinstance(index, basestring):
-            if index.upper() == 'ALL':
-                for index_ in self._items:
-                    self._action(index_, func, missingok=missingok, **kwargs)
+        if isinstance(key, basestring):
+            if key.upper() == 'ALL':
+                for key_ in self:
+                    self._action(key_, func, missingok=missingok, **kwargs)
             else:
                 try:
-                    self._checkIndex(index)
-                    func(self._items[index], **kwargs)
+                    func(self[key], **kwargs)
                 except:
                     if missingok:
                         return
                     raise
-        elif operator.isSequenceType(index):
-            for item in index:
+        elif operator.isSequenceType(key):
+            for item in key:
                 self._action(item, func, missingok=missingok, **kwargs)
         else:
             raise ValueError, \
-                  "Don't know how to handle  variable given by %s" % index
+                  "Don't know how to handle  variable given by %s" % key
 
 
-    def reset(self, index=None):
-        """Reset the state variable defined by `index`"""
+    def reset(self, key=None):
+        """Reset the state variable defined by `key`"""
 
-        if not index is None:
-            indexes = [ index ]
+        if not key is None:
+            keys = [ key ]
         else:
-            indexes = self.names
+            keys = self.keys()
 
-        if len(self.items):
-            for index in indexes:
+        if len(self):
+            for key in keys:
                 # XXX Check if that works as desired
-                self._action(index, self._items.values()[0].__class__.reset,
+                self._action(key, self.values()[0].__class__.reset,
                              missingok=False)
 
 
-    def _getListing(self):
-        """Return a list of registered states along with the documentation"""
-
-        # lets assure consistent litsting order
-        items = self._items.items()
-        items.sort()
-        return [ "%s%s%s: %s" % (_def_sep, str(x[1]), _def_sep, x[1].__doc__)
-                 for x in items ]
-
-
-    def _getNames(self):
-        """Return ids for all registered state variables"""
-        return self._items.keys()
-
-
-    def _getOwner(self):
-        return self.__owner
-
-
-    def _setOwner(self, owner):
+    def _set_owner(self, owner):
         if not isinstance(owner, ClassWithCollections):
             raise ValueError, \
                   "Owner of the StateCollection must be ClassWithCollections object"
@@ -527,70 +319,76 @@ class Collection(object):
             debug("ST", "Setting owner for %s to be %s" % (self, strowner))
         if not self.__owner is None:
             # Remove attributes which were registered to that owner previousely
-            self._updateOwner(register=False)
+            self._update_owner(register=False)
         self.__owner = owner
         if not self.__owner is None:
-            self._updateOwner(register=True)
+            self._update_owner(register=True)
 
 
-    def _updateOwner(self, index=None, register=True):
+    def _update_owner(self, key=None, register=True):
         """Define an entry within owner's __dict__
          so ipython could easily complete it
 
-         :Parameters:
-           index : basestring or list of basestring
-             Name of the attribute. If None -- all known get registered
-           register : bool
-             Register if True or unregister if False
+         Parameters
+         ----------
+         key : str or list of str
+           Name of the attribute. If None -- all known get registered
+         register : bool
+           Register if True or unregister if False
 
          XXX Needs refactoring since we duplicate the logic of expansion of
-         index value
+         key value
         """
         # Yarik standing behind me, forcing me to do this -- I have no clue....
         if not (__debug__ and _debug_references):
             return
-        if not index is None:
-            if not index in self._items:
+        if not key is None:
+            if not key in self:
                 raise ValueError, \
-                      "Attribute %s is not known to %s" % (index, self)
-            indexes = [ index ]
+                      "Attribute %s is not known to %s" % (key, self)
+            keys = [ key ]
         else:
-            indexes = self.names
+            keys = self.keys()
 
         ownerdict = self.owner.__dict__
         selfdict = self.__dict__
         owner_known = ownerdict['_known_attribs']
-        for index_ in indexes:
+        for key_ in keys:
             if register:
-                if index_ in ownerdict:
+                if key_ in ownerdict:
                     raise RuntimeError, \
                           "Cannot register attribute %s within %s " % \
-                          (index_, self.owner) + "since it has one already"
-                ownerdict[index_] = self._items[index_]
-                if index_ in selfdict:
+                          (key_, self.owner) + "since it has one already"
+                ownerdict[key_] = self[key_]
+                if key_ in selfdict:
                     raise RuntimeError, \
                           "Cannot register attribute %s within %s " % \
-                          (index_, self) + "since it has one already"
-                selfdict[index_] = self._items[index_]
-                owner_known[index_] = self.__name
+                          (key_, self) + "since it has one already"
+                selfdict[key_] = self[key_]
+                owner_known[key_] = self.__name
             else:
-                if index_ in ownerdict:
+                if key_ in ownerdict:
                     # yoh doesn't think that we need to complain if False
-                    ownerdict.pop(index_)
-                    owner_known.pop(index_)
-                if index_ in selfdict:
-                    selfdict.pop(index_)
+                    ownerdict.pop(key_)
+                    owner_known.pop(key_)
+                if key_ in selfdict:
+                    selfdict.pop(key_)
+
+    # XXX RF: not used anywhere / myself -- hence not worth it?
+    @property
+    def listing(self):
+        """Return a list of registered states along with the documentation"""
+
+        # lets assure consistent litsting order
+        items_ = self.items()
+        items_.sort()
+        return [ "%s%s%s: %s" % (_def_sep, str(x[1]), _def_sep, x[1].__doc__)
+                 for x in items_ ]
 
 
     # Properties
-    names = property(fget=_getNames)
-    items = property(fget=lambda x:x._items)
-    owner = property(fget=_getOwner, fset=_setOwner)
-    name = property(fget=lambda x:x.__name, fset=_setName)
-
-    # Virtual properties
-    listing = VProperty(fget=_getListing)
-
+    owner = property(fget=lambda x:x.__owner, fset=_set_owner)
+    name = property(fget=lambda x:x.__name, fset=_set_name)
 
 
 class ParameterCollection(Collection):
@@ -600,9 +398,10 @@ class ParameterCollection(Collection):
 #    def __init__(self, items=None, owner=None, name=None):
 #        """Initialize the state variables of a derived class
 #
-#        :Parameters:
-#          items : dict
-#            dictionary of states
+#        Parameters
+#        ----------
+#        items : dict
+#          dictionary of states
 #        """
 #        Collection.__init__(self, items, owner, name)
 #
@@ -611,27 +410,27 @@ class ParameterCollection(Collection):
         """Part of __repr__ for the owner object
         """
         prefixes = []
-        for k in self.names:
+        for k in self.keys():
             # list only params with not default values
-            if self[k].isDefault:
+            if self[k].is_default:
                 continue
             prefixes.append("%s=%s" % (k, self[k].value))
         return prefixes
 
 
-    def resetvalue(self, index, missingok=False):
+    def reset_value(self, key, missingok=False):
         """Reset all parameters to default values"""
         from param import Parameter
-        self._action(index, Parameter.resetvalue, missingok=False)
+        self._action(key, Parameter.reset_value, missingok=False)
 
 
 class StateCollection(Collection):
     """Container of StateVariables for a stateful object.
 
     :Groups:
-     - `Public Access Functions`: `isKnown`, `isEnabled`, `isActive`
-     - `Access Implementors`: `_getListing`, `_getNames`, `_getEnabled`
-     - `Mutators`: `__init__`, `enable`, `disable`, `_setEnabled`
+     - `Public Access Functions`: `has_key`, `is_enabled`, `is_active`
+     - `Access Implementors`: `listing`, `names`, `_get_enabled`
+     - `Mutators`: `__init__`, `enable`, `disable`, `_set_enabled`
      - `R/O Properties`: `listing`, `names`, `items`
      - `R/W Properties`: `enabled`
     """
@@ -639,14 +438,15 @@ class StateCollection(Collection):
     def __init__(self, items=None, owner=None):
         """Initialize the state variables of a derived class
 
-        :Parameters:
-          items : dict
-            dictionary of states
-          owner : ClassWithCollections
-            object which owns the collection
-          name : basestring
-            literal description. Usually just attribute name for the
-            collection, e.g. 'states'
+        Parameters
+        ----------
+        items : dict
+          dictionary of states
+        owner : ClassWithCollections
+          object which owns the collection
+        name : str
+          literal description. Usually just attribute name for the
+          collection, e.g. 'states'
         """
         Collection.__init__(self, items=items, owner=owner)
 
@@ -667,44 +467,46 @@ class StateCollection(Collection):
         """
         prefixes = []
         for name, invert in ( ('enable', False), ('disable', True) ):
-            states = self._getEnabled(nondefault=False,
-                                      invert=invert)
+            states = self._get_enabled(nondefault=False,
+                                       invert=invert)
             if len(states):
                 prefixes.append("%s_states=%s" % (name, str(states)))
         return prefixes
 
 
-    def _is_initializable(self, index):
-        """Checks if index could be assigned within collection via
+    def _is_initializable(self, key):
+        """Checks if key could be assigned within collection via
         setvalue
         """
-        return index in ['enable_states', 'disable_states']
+        return key in ['enable_states', 'disable_states']
 
 
-    def _initialize(self, index, value):
+    def _initialize(self, key, value):
         if value is None:
             value = []
-        if index == 'enable_states':
+        if key == 'enable_states':
             self.enable(value, missingok=True)
-        elif index == 'disable_states':
+        elif key == 'disable_states':
             self.disable(value)
         else:
             raise ValueError, "StateCollection can accept only enable_states " \
                   "and disable_states arguments for the initialization. " \
-                  "Got %s" % index
+                  "Got %s" % key
 
-
-    def _copy_states_(self, fromstate, index=None, deep=False):
+    # XXX RF: used only in meta -- those should become a bit tighter coupled
+    #         and .copy / .update should only be used
+    def _copy_states_(self, fromstate, key=None, deep=False):
         """Copy known here states from `fromstate` object into current object
 
-        :Parameters:
-          fromstate : Collection or ClassWithCollections
-            Source states to copy from
-          index : None or list of basestring
-            If not to copy all set state variables, index provides
-            selection of what to copy
-          deep : bool
-            Optional control over the way to copy
+        Parameters
+        ----------
+        fromstate : Collection or ClassWithCollections
+          Source states to copy from
+        key : None or list of str
+          If not to copy all set state variables, key provides
+          selection of what to copy
+        deep : bool
+          Optional control over the way to copy
 
         Crafted to overcome a problem mentioned above in the comment
         and is to be called from __copy__ of derived classes
@@ -725,50 +527,48 @@ class StateCollection(Collection):
         if isinstance(fromstate, ClassWithCollections):
             fromstate = fromstate.states
 
-        #self.enabled = fromstate.enabled
-        _items, from_items = self._items, fromstate._items
-        if index is None:
+        if key is None:
             # copy all set ones
-            for name in fromstate.whichSet():#self.names:
-                #if fromstate.isKnown(name):
-                _items[name] = operation(from_items[name])
+            for name in fromstate.which_set():#self.keys():
+                #if fromstate.has_key(name):
+                self[name].value = operation(fromstate[name].value)
         else:
-            isKnown = fromstate.isKnown
-            for name in index:
-                if isKnown(name):
-                    _items[name] = operation(from_items[name])
+            has_key = fromstate.has_key
+            for name in key:
+                if has_key(name):
+                    self[name].value = operation(fromstate[name].value)
 
 
-    def isEnabled(self, index):
-        """Returns `True` if state `index` is enabled"""
-        self._checkIndex(index)
-        return self._items[index].isEnabled
+    def is_enabled(self, key):
+        """Returns `True` if state `key` is enabled"""
+        return self[key].enabled
 
 
-    def isActive(self, index):
-        """Returns `True` if state `index` is known and is enabled"""
-        return self.isKnown(index) and self.isEnabled(index)
+    def is_active(self, key):
+        """Returns `True` if state `key` is known and is enabled"""
+        return self.has_key(key) and self.is_enabled(key)
 
 
-    def enable(self, index, value=True, missingok=False):
-        """Enable  state variable given in `index`"""
-        self._action(index, StateVariable.enable, missingok=missingok,
+    def enable(self, key, value=True, missingok=False):
+        """Enable  state variable given in `key`"""
+        self._action(key, StateVariable._set_enabled, missingok=missingok,
                      value=value)
 
 
-    def disable(self, index):
-        """Disable state variable defined by `index` id"""
-        self._action(index, StateVariable.enable, missingok=False, value=False)
+    def disable(self, key):
+        """Disable state variable defined by `key` id"""
+        self._action(key,
+                     StateVariable._set_enabled, missingok=False, value=False)
 
 
     # TODO XXX think about some more generic way to grab temporary
-    # snapshot of CollectableAttributes to be restored later on...
-    def _changeTemporarily(self, enable_states=None,
+    # snapshot of IndexedCollectables to be restored later on...
+    def change_temporarily(self, enable_states=None,
                            disable_states=None, other=None):
         """Temporarily enable/disable needed states for computation
 
         Enable or disable states which are enabled in `other` and listed in
-        `enable _states`. Use `resetEnabledTemporarily` to reset
+        `enable _states`. Use `reset_enabled_temporarily` to reset
         to previous state of enabled.
 
         `other` can be a ClassWithCollections object or StateCollection
@@ -786,7 +586,7 @@ class StateCollection(Collection):
             # lets take states which are enabled in other but not in
             # self
             add_enable_states = list(Set(other.enabled).difference(
-                 Set(enable_states)).intersection(self.names))
+                 Set(enable_states)).intersection(self.keys()))
             if len(add_enable_states)>0:
                 if __debug__:
                     debug("ST",
@@ -802,7 +602,7 @@ class StateCollection(Collection):
         self.disable(disable_states)
 
 
-    def _resetEnabledTemporarily(self):
+    def reset_changed_temporarily(self):
         """Reset to previousely stored set of enabled states"""
         if __debug__:
             debug("ST", "Resetting to previous set of enabled states")
@@ -813,30 +613,35 @@ class StateCollection(Collection):
                              "states")
 
 
-    def _getEnabled(self, nondefault=True, invert=False):
+    # XXX probably nondefault logic could be done at places?
+    #     =False is used in __repr__ and _svmbase
+    # XXX also may be we need enabled to return a subcollection
+    #        with binds to StateVariables found to be enabled?
+    def _get_enabled(self, nondefault=True, invert=False):
         """Return list of enabled states
 
-        :Parameters:
-          nondefault : bool
-            Either to return also states which are enabled simply by default
-          invert : bool
-            Would invert the meaning, ie would return disabled states
+        Parameters
+        ----------
+        nondefault : bool
+          Either to return also states which are enabled simply by default
+        invert : bool
+          Would invert the meaning, ie would return disabled states
         """
         if invert:
-            fmatch = lambda y: not self.isEnabled(y)
+            fmatch = lambda y: not self.is_enabled(y)
         else:
-            fmatch = lambda y: self.isEnabled(y)
+            fmatch = self.is_enabled
 
         if nondefault:
             ffunc = fmatch
         else:
             ffunc = lambda y: fmatch(y) and \
-                        self._items[y]._defaultenabled != self.isEnabled(y)
-        return filter(ffunc, self.names)
+                        self[y]._defaultenabled != self.is_enabled(y)
+        return [n for n in self.keys() if ffunc(n)]
 
 
-    def _setEnabled(self, indexlist):
-        """Given `indexlist` make only those in the list enabled
+    def _set_enabled(self, keys):
+        """Given `keys` make only those in the list enabled
 
         It might be handy to store set of enabled states and then to restore
         it later on. It can be easily accomplished now::
@@ -850,12 +655,12 @@ class StateCollection(Collection):
         >>> blah.states.enabled = ['bleh']
         >>> blah.states.enabled = states_enabled
         """
-        for index in self._items.keys():
-            self.enable(index, index in indexlist)
+        for key in self.keys():
+            self.enable(key, key in keys)
 
 
     # Properties
-    enabled = property(fget=_getEnabled, fset=_setEnabled)
+    enabled = property(fget=_get_enabled, fset=_set_enabled)
 
 
 ##################################################################
@@ -898,7 +703,16 @@ class AttributesCollector(type):
 
 
     def __init__(cls, name, bases, dict):
-
+        """
+        Parameters
+        ----------
+        name : str
+          Name of the class
+        bases : iterable
+          Base classes
+        dict : dict
+          Attributes.
+        """
         if __debug__:
             debug(
                 "COLR",
@@ -909,7 +723,7 @@ class AttributesCollector(type):
 
         collections = {}
         for name, value in dict.iteritems():
-            if isinstance(value, CollectableAttribute):
+            if isinstance(value, IndexedCollectable):
                 baseclassname = value.__class__.__name__
                 col = _known_collections[baseclassname][0]
                 # XXX should we allow to throw exceptions here?
@@ -918,7 +732,7 @@ class AttributesCollector(type):
                 collections[col][name] = value
                 # and assign name if not yet was set
                 if value.name is None:
-                    value._setName(name)
+                    value._set_name(name)
                 # !!! We do not keep copy of this attribute static in the class.
                 #     Due to below traversal of base classes, we should be
                 #     able to construct proper collections even in derived classes
@@ -936,16 +750,15 @@ class AttributesCollector(type):
                 newcollections = base._collections_template
                 if len(newcollections) == 0:
                     continue
-                if __debug__:
+                if __debug__: # XXX RF:  and "COLR" in debug.active:
                     debug("COLR",
                           "Collect collections %s for %s from %s" %
                           (newcollections, cls, base))
                 for col, collection in newcollections.iteritems():
-                    newitems = collection.items
                     if collections.has_key(col):
-                        collections[col].update(newitems)
+                        collections[col].update(collection)
                     else:
-                        collections[col] = newitems
+                        collections[col] = collection
 
 
         if __debug__:
@@ -997,12 +810,13 @@ class AttributesCollector(type):
             if collections.has_key(col):
                 paramscols.append(col)
                 # lets at least sort the parameters for consistent output
-                col_items = collections[col].items
-                params = [(v._instance_index, k) for k,v in col_items.iteritems()]
-                params.sort()
+                col_items = collections[col]
+                iparams = [(v._instance_index, k)
+                           for k,v in col_items.iteritems()]
+                iparams.sort()
                 paramsdoc += '\n'.join(
-                    [col_items[param].doc(indent='  ')
-                     for index,param in params]) + '\n'
+                    [col_items[iparam[1]].doc(indent='  ')
+                     for iparam in iparams]) + '\n'
 
         # Parameters collection could be taked hash of to decide if
         # any were changed? XXX may be not needed at all?
@@ -1011,15 +825,16 @@ class AttributesCollector(type):
         # States doc
         statesdoc = ""
         if collections.has_key('states'):
-            paramsdoc += """  enable_states : None or list of basestring
+            paramsdoc += """  enable_states : None or list of str
     Names of the state variables which should be enabled additionally
     to default ones
-  disable_states : None or list of basestring
+  disable_states : None or list of str
     Names of the state variables which should be disabled
 """
-            if len(collections['states']._items):
-                statesdoc += '\n'.join(['  * ' + x for x in collections['states'].listing])
-                statesdoc += "\n\n(States enabled by default are listed with `+`)"
+            if len(collections['states']):
+                statesdoc += '\n'.join(['  * ' + x
+                                        for x in collections['states'].listing])
+                statesdoc += "\n\n(States enabled by default suffixed with `+`)"
             if __debug__:
                 debug("COLR", "Assigning __statesdoc to be %s" % statesdoc)
             setattr(cls, "_statesdoc", statesdoc)
@@ -1051,11 +866,7 @@ class ClassWithCollections(object):
     __metaclass__ = AttributesCollector
 
     def __new__(cls, *args, **kwargs):
-        """Initialize ClassWithCollections object
-
-        :Parameters:
-          descr : basestring
-            Description of the instance
+        """Instantiate ClassWithCollections object
         """
         self = super(ClassWithCollections, cls).__new__(cls)
 
@@ -1067,7 +878,8 @@ class ClassWithCollections(object):
         self.__params_set = False
 
         # need to check to avoid override of enabled states in the case
-        # of multiple inheritance, like both ClassWithCollectionsl and Harvestable
+        # of multiple inheritance, like both ClassWithCollectionsl and
+        # Harvestable
         if not s__dict__.has_key('_collections'):
             s__class__ = self.__class__
 
@@ -1101,7 +913,14 @@ class ClassWithCollections(object):
 
 
     def __init__(self, descr=None, **kwargs):
+        """Initialize ClassWithCollections object
 
+        Parameters
+        ----------
+        descr : str
+          Description of the instance
+        """
+        # Note: __params_set was initialized in __new__
         if not self.__params_set:
             self.__descr = descr
             """Set humane description for the object"""
@@ -1124,7 +943,7 @@ class ClassWithCollections(object):
                 else:
                     known_params = reduce(
                        lambda x,y:x+y,
-                       [x.items.keys() for x in collections.itervalues()], [])
+                       [x.keys() for x in collections.itervalues()], [])
                     raise TypeError, \
                           "Unexpected keyword argument %s=%s for %s." \
                            % (arg, argument, self) \
@@ -1141,7 +960,7 @@ class ClassWithCollections(object):
             #else:
             #    if len(kwargs)>0:
             #        known_params = reduce(lambda x, y: x + y, \
-            #                            [x.items.keys() for x in collections],
+            #                            [x.keys() for x in collections],
             #                            [])
             #        raise TypeError, \
             #              "Unknown parameters %s for %s." % (kwargs.keys(),
@@ -1156,60 +975,66 @@ class ClassWithCollections(object):
     #__doc__ = enhancedDocString('ClassWithCollections', locals())
 
     if __debug__ and _debug_references:
-        def __debug_references_call(self, method, index):
+        def __debug_references_call(self, method, key):
             """Helper for debugging location of the call
             """
             s_dict = _object_getattribute(self, '__dict__')
             known_attribs = s_dict['_known_attribs']
-            if index in known_attribs:
+            if key in known_attribs:
                 clsstr = str(self.__class__)
                 # Skip some False positives
                 if 'mvpa.datasets' in clsstr and 'Dataset' in clsstr and \
-                       (index in ['labels', 'chunks', 'samples', 'mapper']):
+                       (key in ['labels', 'chunks', 'samples', 'mapper']):
                     return
-                colname = known_attribs[index]
+                colname = known_attribs[key]
                 # figure out and report invocation location
                 ftb = traceback.extract_stack(limit=4)[-3]
                 shit = '\n%s:%d:[%s %s.%s]: %s\n' % \
-                       (ftb[:2] + (method, colname, index) + (ftb[3],))
+                       (ftb[:2] + (method, colname, key) + (ftb[3],))
                 if not (shit in _debug_shits):
                     _debug_shits.append(shit)
                     sys.stderr.write(shit)
 
 
-        def __getattribute__(self, index):
+        def __getattribute__(self, key):
             # return all private ones first since smth like __dict__ might be
             # queried by copy before instance is __init__ed
-            if index[0] == '_':
-                return _object_getattribute(self, index)
+            if key == '':
+                raise AttributeError, "Silly to request attribute ''"
+
+            if key[0] == '_':
+                return _object_getattribute(self, key)
 
             s_dict = _object_getattribute(self, '__dict__')
             # check if it is a known collection
             collections = s_dict['_collections']
-            if index in collections:
-                return collections[index]
+            if key in collections:
+                return collections[key]
 
             # MH: No implicite outbreak of collection items into the namespace of
             #     the parent class
             ## check if it is a part of any collection
             #known_attribs = s_dict['_known_attribs']
-            #if index in known_attribs:
-            #    return collections[known_attribs[index]].getvalue(index)
+            #if key in known_attribs:
+            #    return collections[known_attribs[key]].getvalue(key)
 
             # Report the invocation location if applicable
-            self.__debug_references_call('get', index)
+            self.__debug_references_call('get', key)
 
             # just a generic return
-            return _object_getattribute(self, index)
+            return _object_getattribute(self, key)
 
 
-        def __setattr__(self, index, value):
-            if index[0] == '_':
-                return _object_setattr(self, index, value)
+        def __setattr__(self, key, value):
+            if key == '':
+                raise AttributeError, "Silly to set attribute ''"
+
+            if key[0] == '_':
+                return _object_setattr(self, key, value)
 
             if __debug__ and _debug_references:
                 # Report the invocation location if applicable
-                self.__debug_references_call('set', index)
+                self.__debug_references_call('set', key)
 
             ## YOH: if we are to disable access at instance level -- do it in
             ##      set as well ;)
@@ -1217,12 +1042,12 @@ class ClassWithCollections(object):
             ## # Check if a part of a collection, and set appropriately
             ## s_dict = _object_getattribute(self, '__dict__')
             ## known_attribs = s_dict['_known_attribs']
-            ## if index in known_attribs:
+            ## if key in known_attribs:
             ##     collections = s_dict['_collections']
-            ##     return collections[known_attribs[index]].setvalue(index, value)
+            ##     return collections[known_attribs[key]].setvalue(key, value)
 
             # Generic setattr
-            return _object_setattr(self, index, value)
+            return _object_setattr(self, key, value)
 
 
     # XXX not sure if we shouldn't implement anything else...
@@ -1237,18 +1062,19 @@ class ClassWithCollections(object):
             s += "/%s " % self.__descr
         if hasattr(self, "_collections"):
             for col, collection in self._collections.iteritems():
-                s += " %d %s:%s" % (len(collection.items), col, str(collection))
+                s += " %d %s:%s" % (len(collection), col, str(collection))
         return s
 
 
     def __repr__(self, prefixes=None, fullname=False):
         """String definition of the object of ClassWithCollections object
 
-        :Parameters:
-          fullname : bool
-            Either to include full name of the module
-          prefixes : list of strings
-            What other prefixes to prepend to list of arguments
+        Parameters
+        ----------
+        fullname : bool
+          Either to include full name of the module
+        prefixes : list of str
+          What other prefixes to prepend to list of arguments
         """
         if prefixes is None:
             prefixes = []
@@ -1311,25 +1137,25 @@ class Harvestable(ClassWithCollections):
     def __init__(self, harvest_attribs=None, copy_attribs='copy', **kwargs):
         """Initialize state of harvestable
 
-        :Parameters:
-          harvest_attribs : list of basestr or dicts
-            What attributes of call to store and return within
-            harvested state variable. If an item is a dictionary,
-            following keys are used ['name', 'copy']
-          copy_attribs : None or basestr
-            Default copying. If None -- no copying, 'copy'
-            - shallow copying, 'deepcopy' -- deepcopying
+        Parameters
+        harvest_attribs : list of (str or dict)
+          What attributes of call to store and return within
+          harvested state variable. If an item is a dictionary,
+          following keys are used ['name', 'copy'].
+        copy_attribs : None or str, optional
+          Default copying. If None -- no copying, 'copy'
+          - shallow copying, 'deepcopy' -- deepcopying.
 
         """
         ClassWithCollections.__init__(self, **kwargs)
 
-        self.__atribs = harvest_attribs
+        self.__attribs = harvest_attribs
         self.__copy_attribs = copy_attribs
 
-        self._setAttribs(harvest_attribs)
+        self._set_attribs(harvest_attribs)
 
 
-    def _setAttribs(self, attribs):
+    def _set_attribs(self, attribs):
         """Set attributes to harvest
 
         Each attribute in self.__attribs must have following fields
@@ -1390,20 +1216,22 @@ class Harvestable(ClassWithCollections):
         """The harvesting function: must obtain dictionary of variables
         from the caller.
 
-        :Parameters:
-            vars : dict
-                Dictionary of available data. Most often locals() could be
-                passed as `vars`. Mention that desired to be harvested
-                private attributes better be bound locally to some variable
+        Parameters
+        ----------
+        vars : dict
+          Dictionary of available data. Most often locals() could be
+          passed as `vars`. Mention that desired to be harvested
+          private attributes better be bound locally to some variable
 
-        :Returns:
-            nothing
+        Returns
+        -------
+        nothing
         """
 
-        if not self.states.isEnabled('harvested') or len(self.__attribs)==0:
+        if not self.states.is_enabled('harvested') or len(self.__attribs)==0:
             return
 
-        if not self.states.isSet('harvested'):
+        if not self.states.is_set('harvested'):
             self.states.harvested = dict([(a['name'], [])
                                         for a in self.__attribs])
 
@@ -1423,7 +1251,7 @@ class Harvestable(ClassWithCollections):
 
 
     harvest_attribs = property(fget=lambda self:self.__attribs,
-                               fset=_setAttribs)
+                               fset=_set_attribs)
 
 
 

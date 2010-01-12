@@ -15,6 +15,7 @@ set and include important features successively.
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N
 from mvpa.support.copy import copy
 
 from mvpa.featsel.base import FeatureSelection
@@ -60,19 +61,21 @@ class IFS(FeatureSelection):
                  ):
         """Initialize incremental feature search
 
-        :Parameters:
-            data_measure : DatasetMeasure
-                Computed for each candidate feature selection.
-            transfer_error : TransferError
-                Compute against a test dataset for each incremental feature
-                set.
-            bestdetector : Functor
-                Given a list of error values it has to return a boolean that
-                signals whether the latest error value is the total minimum.
-            stopping_criterion : Functor
-                Given a list of error values it has to return whether the
-                criterion is fulfilled.
-         """
+        Parameters
+        ----------
+        data_measure : DatasetMeasure
+          Computed for each candidate feature selection. The measure has
+          to compute a scalar value.
+        transfer_error : TransferError
+          Compute against a test dataset for each incremental feature
+          set.
+        bestdetector : Functor
+          Given a list of error values it has to return a boolean that
+          signals whether the latest error value is the total minimum.
+        stopping_criterion : Functor
+          Given a list of error values it has to return whether the
+          criterion is fulfilled.
+        """
         # bases init first
         FeatureSelection.__init__(self, **kwargs)
 
@@ -87,15 +90,18 @@ class IFS(FeatureSelection):
         """Proceed and select the features recursively eliminating less
         important ones.
 
-        :Parameters:
-            `dataset`: `Dataset`
-                used to select features and train classifiers to determine the
-                transfer error.
-            `testdataset`: `Dataset`
-                used to test the trained classifer on a certain feature set
-                to determine the transfer error.
+        Parameters
+        ----------
+        dataset : Dataset
+          used to select features and train classifiers to determine the
+          transfer error.
+        testdataset : Dataset
+          used to test the trained classifer on a certain feature set
+          to determine the transfer error.
 
-        Returns a tuple with the dataset containing the feature subset of
+        Returns
+        -------
+        A tuple with the dataset containing the feature subset of
         `dataset` that had the lowest transfer error of all tested sets until
         the stopping criterion was reached. The tuple also contains a dataset
         with the corrsponding features from the `testdataset`.
@@ -133,6 +139,7 @@ class IFS(FeatureSelection):
                 # compute data measure on this feature set
                 measures.append(self.__data_measure(tmp_dataset))
 
+            measures = [N.array(m) for m in measures]
             # Select promissing feature candidates (staging)
             # IDs are only applicable to the current set of feature candidates
             tmp_staging_ids = self.__feature_selector(measures)

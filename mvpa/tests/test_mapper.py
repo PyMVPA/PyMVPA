@@ -131,10 +131,6 @@ def test_subset():
     # or multi-samples
     assert_array_equal(sm.reverse(data.copy()), data)
 
-    ## test basic properties
-    #assert_equal(sm.get_outsize(), 16)
-    #assert_array_equal(sm.get_mask(), N.arange(16))
-
     # identical mappers
     sm_none = FeatureSliceMapper(slice(None))
     sm_int = FeatureSliceMapper(N.arange(16))
@@ -149,7 +145,6 @@ def test_subset():
     # all test subset result in equivalent masks, hence should do the same to
     # the mapper and result in identical behavior
     for st in sms:
-        print st
         for i, sub in enumerate(subsets):
             # shallow copy
             orig = copy(st)
@@ -157,9 +152,7 @@ def test_subset():
             # should do copy-on-write for all important stuff!!
             assert_true(orig.is_mergable(subsm))
             orig += subsm
-            print orig
             # test if selection did its job
-            print i
             if i == 3:
                 # special case of multiplying features
                 assert_array_equal(orig.forward1(data[0].copy()), subsets[i])
@@ -213,9 +206,7 @@ def test_chainmapper():
     target = N.array(target)
 
     # if it is not trained it knows nothing
-    assert_equal(cm.get_outsize(), None)
     cm.train(data)
-    assert_equal(cm.get_outsize(), 16)
 
     # a new mapper should appear when doing feature selection
     cm.append(FeatureSliceMapper(range(1,16)))
@@ -225,10 +216,6 @@ def test_chainmapper():
     cm.append(FeatureSliceMapper([9,14]))
     assert_equal(cm.forward1(data[0]).shape, (2,))
     assert_equal(len(cm), 3)
-
-    # we cannot add a mapper with the wrong size
-    #EXCEPTION HAS BEEN REMOVED, to get rid of get_outsize()
-    #assert_raises(ValueError, cm.append, FeatureSubsetMapper(16))
 
     # check reproduction
     cm_clone = eval(repr(cm))
