@@ -29,8 +29,8 @@ class FxMapper(Mapper):
         fx : callable
         fxargs : tuple
         uattrs : list
-          List of atrribute names to consider. All possible combinations
-          of unqiue elements of these attributes are used to determine the
+          List of attribute names to consider. All possible combinations
+          of unique elements of these attributes are used to determine the
           sample groups to operate on.
         attrfx : callable
           Functor that is called with each sample attribute elements matching
@@ -59,7 +59,7 @@ class FxMapper(Mapper):
 
     # TODO YOH: think about convenience functions/args or use magic
     #           of ClassWithCollections + Parameter?
-    #      as for convenient (but pylint/conventsion unfriendly way)
+    #      as for convenient (but pylint/convention unfriendly way)
     #      see meta-clfs
     def __repr__(self):
         s = super(FxMapper, self).__repr__()
@@ -157,7 +157,7 @@ class FxMapper(Mapper):
             if axis == 0:
                 samples = ds.samples[selector]
             else:
-                samples = ds.samples[:,selector]
+                samples = ds.samples[:, selector]
 
             fxed_samples = N.apply_along_axis(self.__fx, axis, samples,
                                               *self.__fxargs)
@@ -279,9 +279,13 @@ def absolute_features():
 
 
 def sumofabs_sample():
+    """Returns a mapper that returns the sum of absolute values of all samples.
+    """
     return FxMapper('samples', lambda x: N.abs(x).sum())
 
 def maxofabs_sample():
+    """Returns a mapper that finds max of absolute values of all samples.
+    """
     return FxMapper('samples', lambda x: N.abs(x).max())
 #
 # Utility functions

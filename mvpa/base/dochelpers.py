@@ -433,10 +433,10 @@ def _str(obj, *args, **kwargs):
         s = obj.descr
     else:
         s ='%s' % obj.__class__.__name__
-        if len(args) or len(kwargs):
-            s += ': '
-        s += ', '.join(list(args)
+        auto_descr = ', '.join(list(args)
                        + ["%s=%s" % (k, v) for k, v in kwargs.iteritems()])
+        if len(auto_descr):
+            s += ': %s' % auto_descr
 
     if not truncate is None and len(s) > truncate - 5:
         # take <...> into account

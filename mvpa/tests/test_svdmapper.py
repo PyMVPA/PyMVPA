@@ -84,28 +84,8 @@ class SVDMapperTests(unittest.TestCase):
         self.failUnlessEqual(rp.shape, self.largefeat.shape)
         self.failUnless((N.round(rp) == self.largefeat).all())
 
-        self.failUnlessEqual(pm.get_insize(), 40)
-        self.failUnlessEqual(pm.get_outsize(), 10)
-
         # copy mapper
         pm2 = deepcopy(pm)
-
-        # now remove all but the first 2 components from the mapper
-        pm2.selectOut([0,1])
-
-        # sanity check
-        self.failUnlessEqual(pm2.get_insize(), 40)
-        self.failUnlessEqual(pm2.get_outsize(), 2)
-
-        # but orginal mapper must be left intact
-        self.failUnlessEqual(pm.get_insize(), 40)
-        self.failUnlessEqual(pm.get_outsize(), 10)
-
-        # data should still be fully recoverable by 'reverse()'
-        rp2 = pm2.reverse(p[:,[0,1]])
-        self.failUnlessEqual(rp2.shape, self.largefeat.shape)
-        self.failUnless(N.abs(rp2 - self.largefeat).sum() < 0.0001)
-
 
         # now make new random data and do forward->reverse check
         data = N.random.normal(size=(98,40))

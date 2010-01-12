@@ -11,8 +11,6 @@
 from mvpa.base import externals
 from mvpa.featsel.base import FeatureSelectionPipeline, \
      SensitivityBasedFeatureSelection, CombinedFeatureSelection
-from mvpa.clfs.transerror import TransferError
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.featsel.helpers import FixedNElementTailSelector, \
                                  FractionTailSelector, RangeElementSelector
 
@@ -21,10 +19,10 @@ from mvpa.featsel.rfe import RFE
 from mvpa.clfs.meta import SplitClassifier, MulticlassClassifier, \
      FeatureSelectionClassifier
 from mvpa.clfs.smlr import SMLR, SMLRWeights
-from mvpa.mappers.fx import sumofabs_sample, absolute_features
+from mvpa.mappers.fx import sumofabs_sample, absolute_features, FxMapper
 from mvpa.datasets.splitters import NFoldSplitter, NoneSplitter
 
-from mvpa.misc.transformers import Absolute, FirstAxisMean, \
+from mvpa.misc.transformers import Absolute, \
      SecondAxisSumOfAbs, DistPValue
 
 from mvpa.measures.base import SplitFeaturewiseDatasetMeasure
@@ -65,7 +63,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # check if nothing evil is done to dataset
         self.failUnless(N.all(data.samples == datass))
         self.failUnless(f.shape == (1, data.nfeatures))
-        self.failUnless(abs(f.samples[0,1]) <= 1e-12, # some small value
+        self.failUnless(abs(f.samples[0, 1]) <= 1e-12, # some small value
             msg="Failed test with value %g instead of != 0.0" % f.samples[0, 1])
         self.failUnless(f[0] > 0.1)     # some reasonably large value
 
@@ -73,63 +71,97 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.failUnless(not N.any(N.isnan(f)))
 
 
-    # XXX meta should work too but doesn't
-    # XXX also look below -- lars with stepwise segfaults if all states are enabled,
-    #     disabled for now -- do not have enough juice to debug lars code
-    @sweepargs(clf=clfswh['has_sensitivity'])
-    def testAnalyzerWithSplitClassifier(self, clf):
+
+    # NOTE: lars with stepwise used to segfault if all states are enabled
+    @sweepargs(clfds=
+               [(c, datasets['uni2large'])
+                for c in clfswh['has_sensitivity', 'binary']] +
+               [(c, datasets['uni4large'])
+                for c in clfswh['has_sensitivity', 'multiclass']])
+    def testAnalyzerWithSplitClassifier(self, clfds):
         """Test analyzers in split classifier
         """
+        clf, ds = clfds             # unroll the tuple
         # We need to skip some LARSes here
         _sclf = str(clf)
         if 'LARS(' in _sclf and "type='stepwise'" in _sclf:
             return
 
-        # assumming many defaults it is as simple as
+        # To don't waste too much time testing lets limit to 3 splits
+        nsplits = 3
+        splitter = NFoldSplitter(count=nsplits)
         mclf = SplitClassifier(clf=clf,
+                               splitter=splitter,
                                enable_states=['training_confusion',
                                               'confusion'])
         sana = mclf.getSensitivityAnalyzer(mapper=absolute_features(),
                                            enable_states=["sensitivities"])
 
-        # and we get sensitivity analyzer which works on splits
-        map_ = sana(self.dataset)
-        if isinstance(clf, SMLR):
-            # SMLR returns per-class sensitivities, hence twice as many
-            self.failUnlessEqual(map_.shape, (2 * len(self.dataset.UC),
-                                              self.dataset.nfeatures))
-        else:
-            self.failUnlessEqual(map_.shape, (len(self.dataset.UC),
-                                              self.dataset.nfeatures))
+        nlabels = len(ds.uniquelabels)
+        # Can't rely on splitcfg since count-limit is done in __call__
+        assert(nsplits == len(list(splitter(ds))))
+        sens = sana(ds)
 
-        if cfg.getboolean('tests', 'labile', default='yes'):
-            for conf_matrix in [sana.clf.states.training_confusion] \
-                              + sana.clf.states.confusion.matrices:
-                self.failUnless(
-                    conf_matrix.percentCorrect>75,
-                    msg="We must have trained on each one more or " \
-                    "less correctly. Got %f%% correct on %d labels" %
-                    (conf_matrix.percentCorrect,
-                     len(self.dataset.uniquelabels)))
+        # It should return either ...
+        #  nlabels * nsplits
+        req_nsamples = [ nlabels * nsplits ]
+        if nlabels == 2:
+            # A single sensitivity in case of binary
+            req_nsamples += [ nsplits ]
+        else:
+            # and for pairs in case of multiclass
+            req_nsamples += [ (nlabels * (nlabels-1) / 2) * nsplits ]
+            # Also for regression_based -- they can do multiclass
+            # but only 1 sensitivity is provided
+            if 'regression_based' in clf.__tags__:
+                req_nsamples += [ nsplits ]
+
+        # # of features should correspond
+        self.failUnlessEqual(sens.shape[1], ds.nfeatures)
+        # # of samples/sensitivities should also be reasonable
+        self.failUnless(sens.shape[0] in req_nsamples)
+
+        # Check if labels are present
+        self.failUnless('splits' in sens.sa)
+        self.failUnless('labels' in sens.sa)
 
         errors = [x.percentCorrect
                     for x in sana.clf.states.confusion.matrices]
 
         # lets go through all sensitivities and see if we selected the right
         # features
-        if 'meta' in clf.__tags__ and len(map_.samples[0].nonzero()[0])<2:
+        #if 'meta' in clf.__tags__ and len(sens.samples[0].nonzero()[0])<2:
+        if '5%' in clf.descr \
+               or (nlabels > 2 and 'regression_based' in clf.__tags__):
             # Some meta classifiers (5% of ANOVA) are too harsh ;-)
             # if we get less than 2 features with on-zero sensitivities we
             # cannot really test
+            # Also -- regression based classifiers performance for multiclass
+            # is expected to suck in general
             return
-        for map__ in map_.samples: # + sana.combined_analyzer.sensitivities:
+
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            for conf_matrix in [sana.clf.states.training_confusion] \
+                              + sana.clf.states.confusion.matrices:
+                self.failUnless(
+                    conf_matrix.percentCorrect>=70,
+                    msg="We must have trained on each one more or " \
+                    "less correctly. Got %f%% correct on %d labels" %
+                    (conf_matrix.percentCorrect,
+                     nlabels))
+
+
+        # Since  now we have per split and possibly per label -- lets just find
+        # mean per each feature per split
+        sensm = FxMapper('samples', lambda x: N.abs(x).sum(),
+                         uattrs=['splits'])(sens)
+        for sens_ in sensm.samples: # + sana.combined_analyzer.sensitivities:
             selected = FixedNElementTailSelector(
-                self.dataset.nfeatures -
-                len(self.dataset.nonbogus_features))(map__)
+                ds.nfeatures - len(ds.nonbogus_features))(sens_)
             if cfg.getboolean('tests', 'labile', default='yes'):
                 self.failUnlessEqual(
                     list(selected),
-                    list(self.dataset.nonbogus_features),
+                    list(ds.nonbogus_features),
                     msg="At the end we should have selected the right features")
 
 
@@ -151,8 +183,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         dataset = datasets['uni2medium']
         # and we get sensitivity analyzer which works on splits
-        map_ = sana(dataset)
-        self.failUnlessEqual(map_.shape, (1, dataset.nfeatures))
+        sens = sana(dataset)
+        self.failUnlessEqual(sens.shape, (1, dataset.nfeatures))
 
 
 
@@ -161,7 +193,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # assumming many defaults it is as simple as
         sana = svm.getSensitivityAnalyzer(enable_states=["sensitivities"] )
         # and lets look at all sensitivities
-        map_ = sana(self.dataset)
+        sens = sana(self.dataset)
         # for now we can do only linear SVM, so lets check if we raise
         # a concern
         svmnl = clfswh['non-linear', 'svm'][0]
@@ -172,6 +204,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
     # XXX doesn't work easily with meta since it would need
     #     to be explicitely passed to the slave classifier's
     #     getSengetSensitivityAnalyzer
+    # Note: only libsvm interface supports split_weights
     @sweepargs(svm=clfswh['linear', 'svm', 'libsvm', '!sg', '!meta'])
     def testLinearSVMWeightsPerClass(self, svm):
         # assumming many defaults it is as simple as
@@ -186,19 +219,19 @@ class SensitivityAnalysersTests(unittest.TestCase):
         ds2.zscore(baselinelabels = ['L2', 'L3'])
         ds2 = ds2[N.logical_or(ds2.sa.labels == 'L0', ds2.sa.labels == 'L1')]
 
-        map_split = sana_split(ds2)
-        map_full = sana_full(ds2)
+        senssplit = sana_split(ds2)
+        sensfull = sana_full(ds2)
 
-        self.failUnlessEqual(map_split.shape, (2, ds2.nfeatures))
-        self.failUnlessEqual(map_full.shape,  (1, ds2.nfeatures))
+        self.failUnlessEqual(senssplit.shape, (2, ds2.nfeatures))
+        self.failUnlessEqual(sensfull.shape,  (1, ds2.nfeatures))
 
         # just to verify that we split properly and if we reconstruct
         # manually we obtain the same
-        dmap = (-1 * map_split.samples[1]  + map_split.samples[0]) \
-               - map_full.samples
+        dmap = (-1 * senssplit.samples[1]  + senssplit.samples[0]) \
+               - sensfull.samples
         self.failUnless((N.abs(dmap) <= 1e-10).all())
         #print "____"
-        #print map_split
+        #print senssplit
         #print SMLR().getSensitivityAnalyzer(combiner=None)(ds2)
 
         # for now we can do split weights for binary tasks only, so

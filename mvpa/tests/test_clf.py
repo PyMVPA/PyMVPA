@@ -64,8 +64,8 @@ class ClassifiersTests(unittest.TestCase):
         state should be explicitely disabled"""
 
         if not _all_states_enabled:
-            self.failUnlessRaises(UnknownStateError, clf.states.__getattribute__,
-                                  "trained_dataset")
+            self.failUnlessRaises(UnknownStateError,
+                clf.states.__getattribute__, "trained_dataset")
 
         self.failUnlessEqual(clf.states.training_confusion.percentCorrect,
                              100,
@@ -73,7 +73,8 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnlessEqual(clf.predict(self.data_bin_1.samples),
                              list(self.data_bin_1.labels))
 
-        self.failUnlessEqual(len(clf.states.predictions), self.data_bin_1.nsamples,
+        self.failUnlessEqual(len(clf.states.predictions),
+            self.data_bin_1.nsamples,
             msg="Trained classifier stores predictions by default")
 
         clf = SameSignClassifier(enable_states=['trained_dataset'])
@@ -213,7 +214,7 @@ class ClassifiersTests(unittest.TestCase):
                 except (ValueError), e:
                     self.fail("Failed to train on degenerate data. Error was %r" % e)
                 # could we still get those?
-                summary = clf.summary()
+                _ = clf.summary()
                 cm = clf.states.training_confusion
                 # If succeeded to train/predict (due to
                 # training_confusion) without error -- results better be
@@ -332,8 +333,8 @@ class ClassifiersTests(unittest.TestCase):
                 descr="DESCR")
         clf.train(ds)                   # train the beast
         # Number of harvested items should be equal to number of chunks
-        self.failUnlessEqual(len(clf.states.harvested['clf.states.feature_ids']),
-                             len(ds.UC))
+        self.failUnlessEqual(
+            len(clf.states.harvested['clf.states.feature_ids']), len(ds.UC))
         # if we can blame multiple inheritance and ClassWithCollections.__init__
         self.failUnlessEqual(clf.descr, "DESCR")
 
@@ -370,11 +371,13 @@ class ClassifiersTests(unittest.TestCase):
         feat_sel_rev = SensitivityBasedFeatureSelection(sens_ana_rev,
             FixedNElementTailSelector(1))
 
-        samples = N.array([ [0,0,-1], [1,0,1], [-1,-1, 1], [-1,0,1], [1, -1, 1] ])
+        samples = N.array([ [0, 0, -1], [1, 0, 1], [-1, -1, 1],
+                            [-1, 0, 1], [1, -1, 1] ])
 
         testdata3 = dataset(samples=samples, labels=1)
         # dummy train data so proper mapper gets created
-        traindata = dataset(samples=N.array([ [0, 0,-1], [1,0,1] ]), labels=[1,2])
+        traindata = dataset(samples=N.array([ [0, 0, -1], [1, 0, 1] ]),
+                            labels=[1, 2])
 
         # targets
         res110 = [1, 1, 1, -1, -1]
@@ -422,11 +425,13 @@ class ClassifiersTests(unittest.TestCase):
         # then setting the values from the results, which the second
         # time is set to predictions.  The final outcome is that the
         # values are actually predictions...
-        dat = dataset(samples=N.random.randn(4,10),labels=[-1,-1,1,1])
+        dat = dataset(samples=N.random.randn(4, 10),
+                      labels=[-1, -1, 1, 1])
         clf_reg = FeatureSelectionClassifier(sample_clf_reg, feat_sel)
         clf_reg.train(dat)
-        res = clf_reg.predict(dat.samples)
-        self.failIf((N.array(clf_reg.states.estimates)-clf_reg.states.predictions).sum()==0,
+        _ = clf_reg.predict(dat.samples)
+        self.failIf((N.array(clf_reg.states.estimates)
+                     - clf_reg.states.predictions).sum()==0,
                     msg="Values were set to the predictions in %s." %
                     sample_clf_reg)
 
@@ -499,7 +504,7 @@ class ClassifiersTests(unittest.TestCase):
             TransferError(clf),
             OddEvenSplitter(),
             enable_states=['confusion', 'training_confusion'])
-        cverror = cv(ds)
+        _ = cv(ds)
         #print clf.descr, clf.values[0]
         # basic test either we get 1 set of values per each sample
         self.failUnlessEqual(len(clf.states.estimates), ds.nsamples/2)
@@ -556,9 +561,11 @@ class ClassifiersTests(unittest.TestCase):
     # XXX meta should also work but TODO
     @sweepargs(clf=clfswh['svm', '!meta'])
     def testSVMs(self, clf):
-        knows_probabilities = 'probabilities' in clf.states.keys() and clf.params.probability
+        knows_probabilities = \
+            'probabilities' in clf.states.keys() and clf.params.probability
         enable_states = ['estimates']
-        if knows_probabilities: enable_states += ['probabilities']
+        if knows_probabilities:
+            enable_states += ['probabilities']
 
         clf.states.change_temporarily(enable_states = enable_states)
         for traindata, testdata in [
@@ -570,7 +577,8 @@ class ClassifiersTests(unittest.TestCase):
 
             if knows_probabilities and clf.states.is_set('probabilities'):
                 # XXX test more thoroughly what we are getting here ;-)
-                self.failUnlessEqual( len(clf.states.probabilities), len(testdata.samples)  )
+                self.failUnlessEqual( len(clf.states.probabilities),
+                                      len(testdata.samples)  )
         clf.states.reset_changed_temporarily()
 
 
@@ -602,7 +610,8 @@ class ClassifiersTests(unittest.TestCase):
         clf.untrain()
         clf_re.untrain()
         trerr, trerr_re = TransferError(clf), \
-                          TransferError(clf_re, disable_states=['training_confusion'])
+                          TransferError(clf_re,
+                                        disable_states=['training_confusion'])
 
         # Just check for correctness of retraining
         err_1 = trerr(dstest, dstrain)
@@ -611,14 +620,15 @@ class ClassifiersTests(unittest.TestCase):
         values_1 = clf.states.estimates[:]
         # some times retraining gets into deeper optimization ;-)
         eps = 0.05
-        corrcoef_eps = 0.85             # just to get no failures... usually > 0.95
+        corrcoef_eps = 0.85        # just to get no failures... usually > 0.95
 
 
         def batch_test(retrain=True, retest=True, closer=True):
             err = trerr(dstest, dstrain)
             err_re = trerr_re(dstest, dstrain)
-            corr = N.corrcoef(clf.states.estimates, clf_re.states.estimates)[0,1]
-            corr_old = N.corrcoef(values_1, clf_re.states.estimates)[0,1]
+            corr = N.corrcoef(
+                clf.states.estimates, clf_re.states.estimates)[0, 1]
+            corr_old = N.corrcoef(values_1, clf_re.states.estimates)[0, 1]
             if __debug__:
                 debug('TEST', "Retraining stats: errors %g %g corr %g "
                       "with old error %g corr %g" %
@@ -633,9 +643,10 @@ class ClassifiersTests(unittest.TestCase):
               msg="Result must be close to the one without retraining."
                   " Got corrcoef=%s" % (corr))
             if closer:
-                self.failUnless(corr >= corr_old,
-                                msg="Result must be closer to current without retraining"
-                                " than to old one. Got corrcoef=%s" % (corr_old))
+                self.failUnless(
+                    corr >= corr_old,
+                    msg="Result must be closer to current without retraining"
+                    " than to old one. Got corrcoef=%s" % (corr_old))
 
         # Check sequential retraining/retesting
         for i in xrange(3):
@@ -692,9 +703,12 @@ class ClassifiersTests(unittest.TestCase):
 
         # test retrain()
         # TODO XXX  -- check validity
-        clf_re.retrain(dstrain); self.failUnless(clf_re.states.retrained)
-        clf_re.retrain(dstrain, labels=True);  self.failUnless(clf_re.states.retrained)
-        clf_re.retrain(dstrain, traindataset=True);  self.failUnless(clf_re.states.retrained)
+        clf_re.retrain(dstrain);
+        self.failUnless(clf_re.states.retrained)
+        clf_re.retrain(dstrain, labels=True);
+        self.failUnless(clf_re.states.retrained)
+        clf_re.retrain(dstrain, traindataset=True);
+        self.failUnless(clf_re.states.retrained)
 
         # test repredict()
         clf_re.repredict(dstest.samples);

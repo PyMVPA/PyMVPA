@@ -19,9 +19,8 @@ from mvpa.base.dochelpers import _str
 
 class Mapper(object):
     """Interface to provide mapping between two spaces: IN and OUT.
-    Methods are prefixed correspondingly. forward/reverse operate
-    on the entire dataset. get(In|Out)Id[s] operate per element::
 
+    ::
               forward
              --------->
          IN              OUT
@@ -44,6 +43,139 @@ class Mapper(object):
     # the docstrings of the respective methods for details about what they
     # should do.
     #
+    def _train(self, dataset):
+        """Worker method. Needs to be implemented by subclass."""
+        raise NotImplementedError
+
+
+    def _forward_data(self, data):
+        """Forward-map some data.
+
+        This is a private method that has to be implemented in derived
+        classes.
+
+        Parameters
+        ----------
+        data : anything (supported the derived class)
+        """
+        raise NotImplementedError
+
+
+    def _reverse_data(self, data):
+        """Reverse-map some data.
+
+        This is a private method that has to be implemented in derived
+        classes.
+
+        Parameters
+        ----------
+        data : anything (supported the derived class)
+        """
+        raise NotImplementedError
+
+
+    #
+    # The following methods are candidates for reimplementation in derived
+    # classes, in cases where the provided default behavior is not appropriate.
+    #
+    def _forward_dataset(self, dataset):
+        """Forward-map a dataset.
+
+        This is a private method that can be reimplemented in derived
+        classes. The default implementation forward-maps the dataset samples
+        and returns a new dataset that is a shallow copy of the input with
+        the mapped samples.
+
+        Parameters
+        ----------
+        dataset : Dataset-like
+        """
+        msamples = self._forward_data(dataset.samples)
+        mds = dataset.copy(deep=False)
+        mds.samples = msamples
+        return mds
+
+
+    def _reverse_dataset(self, dataset):
+        """Reverse-map a dataset.
+
+        This is a private method that can be reimplemented in derived
+        classes. The default implementation reverse-maps the dataset samples
+        and returns a new dataset that is a shallow copy of the input with
+        the mapped samples.
+
+        Parameters
+        ----------
+        dataset : Dataset-like
+        """
+        msamples = self._reverse_data(dataset.samples)
+        mds = dataset.copy(deep=False)
+        mds.samples = msamples
+        return mds
+
+
+    def _pretrain(self, dataset):
+        """Preprocessing before actual mapper training.
+
+        This method can be reimplemented in derived classes. By default it does
+        nothing.
+
+        Parameters
+        ----------
+        dataset : Dataset-like, anything
+          Typically this is a `Dataset`, but it might also be a plain data
+          array, or even something completely different(TM) that is supported
+          by a subclass' implementation.
+        """
+        pass
+
+
+    def _posttrain(self, dataset):
+        """Postprocessing after actual mapper training.
+
+        This method can be reimplemented in derived classes. By default it does
+        nothing.
+
+        Parameters
+        ----------
+        dataset : Dataset-like, anything
+          Typically this is a `Dataset`, but it might also be a plain data
+          array, or even something completely different(TM) that is supported
+          by a subclass' implementation.
+        """
+        pass
+
+
+    #
+    # The following methods provide common functionality for all mappers
+    # and there should be no immediate need to reimplement them
+    #
+    def train(self, dataset):
+        """Perform training of the mapper.
+
+        This method is called to put the mapper in a state that allows it to
+        perform the intended mapping. It takes care of running pre- and
+        postprocessing that is potentially implemented in derived classes.
+
+        Parameters
+        ----------
+        dataset : Dataset-like, anything
+          Typically this is a `Dataset`, but it might also be a plain data
+          array, or even something completely different(TM) that is supported
+          by a subclass' implementation.
+
+        Returns
+        -------
+        whoknows
+          Returns whatever is returned by the derived class.
+        """
+        # this mimics Classifier.train() -- we might merge them all at some
+        # point
+        self._pretrain(dataset)
+        result = self._train(dataset)
+        self._posttrain(dataset)
+        return result
+
 
     def forward(self, data):
         """Map data from input to output space.
@@ -86,36 +218,6 @@ class Mapper(object):
             return self.forward(N.array([data]))[0]
 
 
-    def _forward_data(self, data):
-        """Forward-map some data.
-
-        This is a private method that has to be implemented in derived
-        classes.
-
-        Parameters
-        ----------
-        data : anything (supported the derived class)
-        """
-        raise NotImplementedError
-
-
-    def _forward_dataset(self, dataset):
-        """Forward-map a dataset.
-
-        This is a private method that can be reimplemented in derived
-        classes. The default implementation forward-maps the dataset samples
-        and returns a new dataset that is a shallow copy of the input with
-        the mapped samples.
-
-        Parameters
-        ----------
-        dataset : Dataset-like
-        """
-        msamples = self._forward_data(dataset.samples)
-        mds = dataset.copy(deep=False)
-        mds.samples = msamples
-        return mds
-
 
     def reverse(self, data):
         """Reverse-map data from output back into input space.
@@ -148,108 +250,6 @@ class Mapper(object):
             return self.reverse(N.array([data]))[0]
 
 
-    def _reverse_data(self, data):
-        """Reverse-map some data.
-
-        This is a private method that has to be implemented in derived
-        classes.
-
-        Parameters
-        ----------
-        data : anything (supported the derived class)
-        """
-        raise NotImplementedError
-
-
-    def _reverse_dataset(self, dataset):
-        """Reverse-map a dataset.
-
-        This is a private method that can be reimplemented in derived
-        classes. The default implementation reverse-maps the dataset samples
-        and returns a new dataset that is a shallow copy of the input with
-        the mapped samples.
-
-        Parameters
-        ----------
-        dataset : Dataset-like
-        """
-        msamples = self._reverse_data(dataset.samples)
-        mds = dataset.copy(deep=False)
-        mds.samples = msamples
-        return mds
-
-    #
-    # The following methods are candidates for reimplementation in derived
-    # classes, in cases where the provided default behavior is not appropriate.
-    #
-    def train(self, dataset):
-        """Perform training of the mapper.
-
-        This method is called to put the mapper in a state that allows it to
-        perform the intended mapping. It takes care of running pre- and
-        postprocessing that is potentially implemented in derived classes.
-
-        Parameters
-        ----------
-        dataset : Dataset-like, anything
-          Typically this is a `Dataset`, but it might also be a plain data
-          array, or even something completely different(TM) that is supported
-          by a subclass' implementation.
-
-        Returns
-        -------
-        whoknows
-          Returns whatever is returned by the derived class.
-        """
-        # this mimics Classifier.train() -- we might merge them all at some
-        # point
-        self._pretrain(dataset)
-        result = self._train(dataset)
-        self._posttrain(dataset)
-        return result
-
-
-    def _train(self, dataset):
-        """Worker method. Needs to be implemented by subclass."""
-        raise NotImplementedError
-
-
-    def _pretrain(self, dataset):
-        """Preprocessing before actual mapper training.
-
-        This method can be reimplemented in derived classes. By default it does
-        nothing.
-
-        Parameters
-        ----------
-        dataset : Dataset-like, anything
-          Typically this is a `Dataset`, but it might also be a plain data
-          array, or even something completely different(TM) that is supported
-          by a subclass' implementation.
-        """
-        pass
-
-
-    def _posttrain(self, dataset):
-        """Postprocessing after actual mapper training.
-
-        This method can be reimplemented in derived classes. By default it does
-        nothing.
-
-        Parameters
-        ----------
-        dataset : Dataset-like, anything
-          Typically this is a `Dataset`, but it might also be a plain data
-          array, or even something completely different(TM) that is supported
-          by a subclass' implementation.
-        """
-        pass
-
-
-    #
-    # The following methods provide common functionality for all mappers
-    # and there should be no immediate need to reimplement them
-    #
     def __repr__(self):
         return "%s(inspace=%s)" \
                 % (self.__class__.__name__,

@@ -318,6 +318,13 @@ def __check_rpy():
         def input1(*args): return "1"      # which is "1: abort (with core dump, if enabled)"
         rpy.set_rpy_input(input1)
 
+def __check_rpy2():
+    """Check either rpy2 is available and also set it for the sane execution
+    """
+    import rpy2.robjects
+    r = rpy2.robjects.r
+    r.options(warn=cfg.get('rpy', 'warn', default=-1))
+
 
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
@@ -339,7 +346,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
           'rpy': "__check_rpy()",
-          'rpy2': "import rpy2 as __",
+          'rpy2': "__check_rpy2()",
           'lars': "exists('rpy', raiseException=True); import rpy; rpy.r.library('lars')",
           'elasticnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('elasticnet')",
           # 'glmnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('glmnet')",
