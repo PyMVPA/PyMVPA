@@ -87,9 +87,14 @@ def sweepargs(**kwargs):
                         if not eidstr in failed_tests:
                             failed_tests[eidstr] = []
 
+                        sargvalue = str(argvalue)
+                        if not (__debug__ and 'TEST' in debug.active):
+                            # by default lets make it of sane length
+                            if len(sargvalue) > 100:
+                                sargvalue = sargvalue[:95] + ' ...'
                         failed_tests[eidstr].append(
                             # skip top-most tb in sweep_args
-                            (argname, str(argvalue), tb.tb_next, estr))
+                            (argname, sargvalue, tb.tb_next, estr))
 
                         if __debug__:
                             msg = "%s on %s=%s" % (estr, argname, argvalue)
