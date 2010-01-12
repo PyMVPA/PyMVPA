@@ -156,13 +156,16 @@ class AttributeMap(object):
             num[attr == k] = v
         return num
 
-    def to_literal(self, attr):
+    def to_literal(self, attr, recurse=False):
         """Map numerical value back to literal ones.
 
         Parameters
         ----------
         attr : sequence
           Numerical values to be mapped.
+        recurse : bool
+          Either to recursively change items within the sequence
+          if those are iterable as well
 
         Please see the class documentation for more information.
         """
@@ -174,7 +177,23 @@ class AttributeMap(object):
         if self._lmap is None:
             self._lmap = dict([(v, k) for k, v in self._nmap.iteritems()])
         lmap = self._lmap
+
         if isSequenceType(attr) and not isinstance(attr, str):
-            return N.asanyarray([lmap[k] for k in attr])
+            if recurse:
+                lookupfx = self.to_literal
+            else:
+                # just dictionary lookup
+                lookupfx = lambda x:lmap[x]
+            # perform lookup
+            target_constr = attr.__class__
+            # ndarrays are special since array is just a factory, and ndarray takes
+            # shape as the first argument
+            if issubclass(target_constr, N.ndarray):
+                target_constr = N.array
+            res = target_constr([lookupfx(k) for k in attr])
+            if target_constr is N.array and not (attr.__class__ is N.ndarray):
+                # to accommodate subclasses of ndarray
+                res = res.view(attr.__class__)
+            return res
         else:
             return lmap[attr]
