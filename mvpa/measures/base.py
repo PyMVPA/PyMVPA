@@ -792,8 +792,12 @@ class RegressionAsClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyz
         # We can have only a single sensitivity out of regression
         assert(sens.shape[0] == 1)
         if 'labels' not in sens.sa:
+            clf = self.clf
             # We just assign a tuple of all labels sorted
-            sens.sa['labels'] = [tuple(sorted(self.clf._trained_attrmap.values()))]
+            labels = tuple(sorted(clf._trained_attrmap.values()))
+            if len(clf._trained_attrmap):
+                labels = clf._trained_attrmap.to_literal(labels, recurse=True)
+            sens.sa['labels'] = [labels]
         return sens
 
 

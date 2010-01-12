@@ -61,27 +61,29 @@ class LinearSVMWeights(Sensitivity):
         # functions for svm
         clf = self.clf
         sgsvm = clf.svm
-        labels = None
+        sens_labels = None
         if isinstance(sgsvm, shogun.Classifier.MultiClassSVM):
             sens = []
             nsvms = sgsvm.get_num_svms()
             clabels = sorted(clf._attrmap.values())
             nclabels = len(clabels)
-            labels = []
+            sens_labels = []
             for i in xrange(nclabels):
                 for j in xrange(i+1, nclabels):
                     sens.append(self.__sg_helper(sgsvm.get_svm(i)))
-                    labels += [(clabels[i], clabels[j])]
+                    sens_labels += [(clabels[i], clabels[j])]
             assert(len(sens) == nsvms)
         else:
             sens = N.atleast_2d(self.__sg_helper(sgsvm))
             if not clf.__is_regression__:
                 assert(set(clf._attrmap.values()) == set([-1.0, 1.0]))
                 assert(sens.shape[0] == 1)
-                labels = [(-1.0, 1.0)]
+                sens_labels = [(-1.0, 1.0)]
 
         ds = Dataset(N.atleast_2d(sens))
-        if labels is not None:
-            ds.sa['labels'] = labels
+        if sens_labels is not None:
+            if len(clf._attrmap):
+                sens_labels = clf._attrmap.to_literal(sens_labels, recurse=True)
+            ds.sa['labels'] = sens_labels
 
         return ds

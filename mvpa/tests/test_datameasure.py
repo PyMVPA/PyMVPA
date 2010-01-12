@@ -34,6 +34,7 @@ from tests_warehouse import *
 from tests_warehouse_clfs import *
 
 from nose.tools import assert_equal
+from numpy.testing import assert_array_equal
 
 _MEASURES_2_SWEEP = [ OneWayAnova(),
                       CompoundOneWayAnova(mapper=sumofabs_sample()),
@@ -124,6 +125,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # Check if labels are present
         self.failUnless('splits' in sens.sa)
         self.failUnless('labels' in sens.sa)
+
+        assert_array_equal(sens.sa['labels'].unique, ds.sa['labels'].unique)
 
         errors = [x.percentCorrect
                     for x in sana.clf.states.confusion.matrices]
