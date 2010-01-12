@@ -144,6 +144,8 @@ class _GLMNET(Classifier):
         self.__trained_model = None
         """The model object after training that will be used for
         predictions."""
+        self.__last_lambda = None
+        """Lambda obtained on the last step"""
 
 #     def __repr__(self):
 #         """String summary of the object
@@ -215,7 +217,7 @@ class _GLMNET(Classifier):
             self.__weights = N.hstack([N.array(r['as.matrix'](weights[i]))[1:]
                                        for i in range(len(weights))])
         elif self.params.family == 'gaussian':
-            self.__weights = N.array(r['as.matrix'](weights))[1:,0]
+            self.__weights = N.array(r['as.matrix'](weights))[1:, 0]
 
 
     @accepts_dataset_as_samples
