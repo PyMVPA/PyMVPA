@@ -63,7 +63,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # check if nothing evil is done to dataset
         self.failUnless(N.all(data.samples == datass))
         self.failUnless(f.shape == (1, data.nfeatures))
-        self.failUnless(abs(f.samples[0,1]) <= 1e-12, # some small value
+        self.failUnless(abs(f.samples[0, 1]) <= 1e-12, # some small value
             msg="Failed test with value %g instead of != 0.0" % f.samples[0, 1])
         self.failUnless(f[0] > 0.1)     # some reasonably large value
 
@@ -72,12 +72,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
 
 
-    # XXX meta should work too but doesn't
-    # XXX also look below -- lars with stepwise segfaults if all states are enabled,
-    #     disabled for now -- do not have enough juice to debug lars code
+    # NOTE: lars with stepwise used to segfault if all states are enabled
     @sweepargs(clfds=
                [(c, datasets['uni2large'])
-                for c in clfswh['gpr', 'has_sensitivity', 'binary']] +
+                for c in clfswh['has_sensitivity', 'binary']] +
                [(c, datasets['uni4large'])
                 for c in clfswh['has_sensitivity', 'multiclass']])
     def testAnalyzerWithSplitClassifier(self, clfds):
@@ -102,7 +100,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         nlabels = len(ds.uniquelabels)
         # Can't rely on splitcfg since count-limit is done in __call__
         assert(nsplits == len(list(splitter(ds))))
-        map_ = sana(ds)
+        sens = sana(ds)
 
         # It should return either ...
         #  nlabels * nsplits
@@ -110,7 +108,6 @@ class SensitivityAnalysersTests(unittest.TestCase):
         if nlabels == 2:
             # A single sensitivity in case of binary
             req_nsamples += [ nsplits ]
-            # TODO: check that labels are tuples
         else:
             # and for pairs in case of multiclass
             req_nsamples += [ (nlabels * (nlabels-1) / 2) * nsplits ]
@@ -118,20 +115,22 @@ class SensitivityAnalysersTests(unittest.TestCase):
             # but only 1 sensitivity is provided
             if 'regression_based' in clf.__tags__:
                 req_nsamples += [ nsplits ]
-            # TODO: Check that labels are pairs
 
         # # of features should correspond
-        self.failUnlessEqual(map_.shape[1], ds.nfeatures)
+        self.failUnlessEqual(sens.shape[1], ds.nfeatures)
         # # of samples/sensitivities should also be reasonable
-        self.failUnless(map_.shape[0] in req_nsamples)
+        self.failUnless(sens.shape[0] in req_nsamples)
 
+        # Check if labels are present
+        self.failUnless('splits' in sens.sa)
+        self.failUnless('labels' in sens.sa)
 
         errors = [x.percentCorrect
                     for x in sana.clf.states.confusion.matrices]
 
         # lets go through all sensitivities and see if we selected the right
         # features
-        #if 'meta' in clf.__tags__ and len(map_.samples[0].nonzero()[0])<2:
+        #if 'meta' in clf.__tags__ and len(sens.samples[0].nonzero()[0])<2:
         if '5%' in clf.descr \
                or (nlabels > 2 and 'regression_based' in clf.__tags__):
             # Some meta classifiers (5% of ANOVA) are too harsh ;-)
@@ -154,11 +153,11 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         # Since  now we have per split and possibly per label -- lets just find
         # mean per each feature per split
-        map_m = FxMapper('samples', lambda x: N.abs(x).sum(),
-                         uattrs=['split'])(map_)
-        for map__ in map_m.samples: # + sana.combined_analyzer.sensitivities:
+        sensm = FxMapper('samples', lambda x: N.abs(x).sum(),
+                         uattrs=['splits'])(sens)
+        for sens_ in sensm.samples: # + sana.combined_analyzer.sensitivities:
             selected = FixedNElementTailSelector(
-                ds.nfeatures - len(ds.nonbogus_features))(map__)
+                ds.nfeatures - len(ds.nonbogus_features))(sens_)
             if cfg.getboolean('tests', 'labile', default='yes'):
                 self.failUnlessEqual(
                     list(selected),
@@ -184,8 +183,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         dataset = datasets['uni2medium']
         # and we get sensitivity analyzer which works on splits
-        map_ = sana(dataset)
-        self.failUnlessEqual(map_.shape, (1, dataset.nfeatures))
+        sens = sana(dataset)
+        self.failUnlessEqual(sens.shape, (1, dataset.nfeatures))
 
 
 
@@ -194,7 +193,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # assumming many defaults it is as simple as
         sana = svm.getSensitivityAnalyzer(enable_states=["sensitivities"] )
         # and lets look at all sensitivities
-        map_ = sana(self.dataset)
+        sens = sana(self.dataset)
         # for now we can do only linear SVM, so lets check if we raise
         # a concern
         svmnl = clfswh['non-linear', 'svm'][0]
@@ -220,19 +219,19 @@ class SensitivityAnalysersTests(unittest.TestCase):
         ds2.zscore(baselinelabels = ['L2', 'L3'])
         ds2 = ds2[N.logical_or(ds2.sa.labels == 'L0', ds2.sa.labels == 'L1')]
 
-        map_split = sana_split(ds2)
-        map_full = sana_full(ds2)
+        senssplit = sana_split(ds2)
+        sensfull = sana_full(ds2)
 
-        self.failUnlessEqual(map_split.shape, (2, ds2.nfeatures))
-        self.failUnlessEqual(map_full.shape,  (1, ds2.nfeatures))
+        self.failUnlessEqual(senssplit.shape, (2, ds2.nfeatures))
+        self.failUnlessEqual(sensfull.shape,  (1, ds2.nfeatures))
 
         # just to verify that we split properly and if we reconstruct
         # manually we obtain the same
-        dmap = (-1 * map_split.samples[1]  + map_split.samples[0]) \
-               - map_full.samples
+        dmap = (-1 * senssplit.samples[1]  + senssplit.samples[0]) \
+               - sensfull.samples
         self.failUnless((N.abs(dmap) <= 1e-10).all())
         #print "____"
-        #print map_split
+        #print senssplit
         #print SMLR().getSensitivityAnalyzer(combiner=None)(ds2)
 
         # for now we can do split weights for binary tasks only, so
