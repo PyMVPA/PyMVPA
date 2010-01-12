@@ -510,7 +510,7 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
             if is_datasetlike(sensitivities[0]):
                 smerged = None
                 for i, s in enumerate(sensitivities):
-                    s.sa['split'] = N.repeat(i, len(s))
+                    s.sa['splits'] = N.repeat(i, len(s))
                     if smerged is None:
                         smerged = s
                     else:
@@ -519,7 +519,7 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
             else:
                 sensitivities = \
                     Dataset(sensitivities,
-                            sa={'split': N.arange(len(sensitivities))})
+                            sa={'splits': N.arange(len(sensitivities))})
         self.states.sensitivities = sensitivities
         return sensitivities
 
@@ -618,7 +618,7 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
             if store_splits: splits.append(split)
 
         result = vstack(sensitivities)
-        result.sa['split'] = N.concatenate([[i] * len(s)
+        result.sa['splits'] = N.concatenate([[i] * len(s)
                                 for i, s in enumerate(sensitivities)])
         self.states.sensitivities = sensitivities
         return result
