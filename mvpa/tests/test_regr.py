@@ -76,8 +76,8 @@ class RegressionsTests(unittest.TestCase):
                 self.failUnless(len(s) > 10,
                                 msg="We should get some string representation "
                                 "of regression summary. Got %s" % s)
-
-            self.failUnless(error < 0.2,
+            if cfg.getboolean('tests', 'labile', default='yes'):
+                self.failUnless(error < 0.2,
                             msg="Regressions should perform well on a simple "
                             "dataset. Got correlation error of %s " % error)
 

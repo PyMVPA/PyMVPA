@@ -426,9 +426,9 @@ class Sensitivity(FeaturewiseDatasetMeasure):
                       "a dataset."
             if __debug__:
                 debug("SA", "Training classifier %s %s" %
-                      (`clf`,
+                      (repr(clf),
                        {False: "since it wasn't yet trained",
-                        True:  "although it was trained previousely"}
+                        True:  "although it was trained previously"}
                        [clf.trained]))
             clf.train(dataset)
 
@@ -510,7 +510,7 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
             if is_datasetlike(sensitivities[0]):
                 smerged = None
                 for i, s in enumerate(sensitivities):
-                    s.sa['split'] = N.repeat(i, len(s))
+                    s.sa['splits'] = N.repeat(i, len(s))
                     if smerged is None:
                         smerged = s
                     else:
@@ -519,7 +519,7 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
             else:
                 sensitivities = \
                     Dataset(sensitivities,
-                            sa={'split': N.arange(len(sensitivities))})
+                            sa={'splits': N.arange(len(sensitivities))})
         self.states.sensitivities = sensitivities
         return sensitivities
 
@@ -618,7 +618,7 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
             if store_splits: splits.append(split)
 
         result = vstack(sensitivities)
-        result.sa['split'] = N.concatenate([[i] * len(s)
+        result.sa['splits'] = N.concatenate([[i] * len(s)
                                 for i, s in enumerate(sensitivities)])
         self.states.sensitivities = sensitivities
         return result
@@ -781,6 +781,18 @@ class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
         # devguide's TODO lists this point to 'disguss'
         sens_mapped = self.clf.mapper.reverse(sens.T)
         return sens_mapped.T
+
+
+class RegressionAsClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
+    """Set sensitivity analyzer output to have proper labels"""
+
+    def _call(self, dataset):
+        sens = super(RegressionAsClassifierSensitivityAnalyzer,
+                     self)._call(dataset)
+        if 'labels' in sens.sa:
+            # TODO : handle tuple labels case
+            sens.labels[:] = [self._trained_attrmap[l] for l in sens.sa.labels]
+        return sens
 
 
 class FeatureSelectionClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):

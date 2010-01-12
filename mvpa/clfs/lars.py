@@ -26,6 +26,7 @@ if externals.exists('rpy', raiseException=True) and \
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
      FailedToTrainError
 from mvpa.measures.base import Sensitivity
+from mvpa.datasets.base import Dataset
 
 from mvpa.base import warning
 if __debug__:
@@ -252,5 +253,5 @@ class LARSWeights(Sensitivity):
                   "Result: min=%f max=%f" %\
                   (N.min(weights), N.max(weights)))
 
-        return weights
+        return Dataset(N.atleast_2d(weights))
 

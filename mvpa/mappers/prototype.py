@@ -47,7 +47,7 @@ class PrototypeMapper(ProjectionMapper):
         """Train PrototypeMapper
         """
 
-        self._proj = N.hstack([similarity.compute(samples, self.prototypes)
+        self._proj = N.hstack([similarity.computed(samples, self.prototypes)
                                for similarity in self.similarities])
         debug("MAP", "projected data of shape %s: %s "
-              % (self._proj.shape, self._proj))
+                % (self._proj.shape, self._proj))

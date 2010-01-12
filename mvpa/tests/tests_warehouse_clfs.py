@@ -86,6 +86,6 @@ sample_clf_lin = SMLR(lm=0.1)#sg.svm.LinearCSVMC(svm_impl='libsvm')
 sample_clf_nl = kNN(k=5)
 
 # and also a regression-based classifier
-r = clfswh['linear', 'regression', 'has_sensitivity']
+r = clfswh['linear', 'regression_based', 'has_sensitivity']
 if len(r) > 0: sample_clf_reg = r[0]
 else: sample_clf_reg = None

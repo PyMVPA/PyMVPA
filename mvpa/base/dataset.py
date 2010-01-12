@@ -521,13 +521,12 @@ class AttrDataset(object):
     def __str__(self):
         samplesstr = 'x'.join(["%s" % x for x in self.shape])
         samplesstr += '@%s' % self.samples.dtype
-        return _str(self, samplesstr,
-                    str(self.sa).replace(self.sa.__class__.__name__,
-                                         'sa'),
-                    str(self.fa).replace(self.fa.__class__.__name__,
-                                         'fa'),
-                    str(self.a).replace(self.a.__class__.__name__,
-                                         'a'))
+        cols = [str(col).replace(col.__class__.__name__, label)
+                    for col, label in [(self.sa, 'sa'),
+                                       (self.fa, 'fa'),
+                                       (self.a, 'a')] if len(col)]
+        # include only collections that have content
+        return _str(self, samplesstr, *cols)
 
 
     def __array__(self, dtype=None):
@@ -685,12 +684,7 @@ class DatasetError(Exception):
     """
     # A ValueError exception is too generic to be used for any needed case,
     # thus this one is created
-    def __init__(self, msg=""):
-        Exception.__init__(self)
-        self.__msg = msg
-
-    def __str__(self):
-        return "Dataset handling exception: " + self.__msg
+    pass
 
 
 class DatasetAttributeExtractor(object):
