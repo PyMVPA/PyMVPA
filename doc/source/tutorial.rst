@@ -131,7 +131,8 @@ particular data, since it is the same dataset that it got trained with.
   Think about why this particular classifier will always perform error-free
   classification of the training data -- regardless of the actual dataset
   content. If the reason is not immediately obvious, take a look at chapter
-  13.3 in :ref:`The Elements of Statistical Learning <HTF09>`.
+  13.3 in :ref:`The Elements of Statistical Learning <HTF09>`. Investigate how
+  the accuracy varies with different values of `k`. Why is that?
 
 Instead, we are interested in the generalizability of the classifier on
 new, unseen, and most importantly unlabeled data. Since we only have a single
@@ -275,7 +276,7 @@ Related API Documentation
    ~mvpa.algorithms.cvtranserror.CrossValidatedTransferError
    ~mvpa.datasets.base.Dataset
    ~mvpa.clfs.knn.kNN
-   ~mvpa.datasets.splitter
+   mvpa.datasets.splitters
    ~mvpa.clfs.transerror.TransferError
 
 
