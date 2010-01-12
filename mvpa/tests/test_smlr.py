@@ -42,13 +42,13 @@ class SMLRTests(unittest.TestCase):
 
         clf.train(data)
 
-        clf.states.enable('values')
+        clf.states.enable('estimates')
         clf.states.enable('predictions')
 
         p = N.asarray(clf.predict(data.samples))
 
         self.failUnless((p == clf.states.predictions).all())
-        self.failUnless(N.array(clf.states.values).shape[0] == N.array(p).shape[0])
+        self.failUnless(N.array(clf.states.estimates).shape[0] == N.array(p).shape[0])
 
 
     def testSMLRSensitivities(self):
@@ -61,8 +61,7 @@ class SMLRTests(unittest.TestCase):
         # now ask for the sensitivities WITHOUT having to pass the dataset
         # again
         sens = clf.getSensitivityAnalyzer(force_training=False)()
-
-        self.failUnless(sens.shape == (data.nfeatures,))
+        self.failUnless(sens.shape == (len(data.UL) - 1, data.nfeatures))
 
 
 def suite():

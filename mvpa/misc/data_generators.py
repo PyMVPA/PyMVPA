@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Miscelaneous data generators for unittests and demos"""
+"""Miscellaneous data generators for unittests and demos"""
 
 __docformat__ = 'restructuredtext'
 
@@ -15,8 +15,6 @@ import numpy as N
 from sets import Set
 
 from mvpa.datasets.base import dataset, Dataset
-from mvpa.base.collections import DatasetAttribute
-
 
 if __debug__:
     from mvpa.base import debug
@@ -26,21 +24,25 @@ def multipleChunks(func, n_chunks, *args, **kwargs):
 
     Given some randomized (noisy) generator of a dataset with a single
     chunk call generator multiple times and place results into a
-    distinct chunks
+    distinct chunks.
+
+    Returns
+    -------
+    ds : `mvpa.datasets.base.Dataset`
     """
     for chunk in xrange(n_chunks):
-        dataset_ = func(*args, **kwargs)
+        ds_ = func(*args, **kwargs)
         # might not have chunks at all
-        if not dataset_.sa.has_key('chunks'):
-            dataset_.sa['chunks'] = N.repeat(chunk + 1, dataset_.nsamples)
+        if not ds_.sa.has_key('chunks'):
+            ds_.sa['chunks'] = N.repeat(chunk + 1, ds_.nsamples)
         else:
-            dataset_.sa.chunks[:] = chunk + 1
+            ds_.sa.chunks[:] = chunk + 1
         if chunk == 0:
-            dataset = dataset_
+            ds = ds_
         else:
-            dataset += dataset_
+            ds.append(ds_)
 
-    return dataset
+    return ds
 
 
 def dumbFeatureDataset():
@@ -72,29 +74,30 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
                          means=None, nonbogus_features=None, snr=3.0):
     """Generate a univariate dataset with normal noise and specified means.
 
-    :Keywords:
-      perlabel : int
-         Number of samples per each label
-      nlabels : int
-         Number of labels in the dataset
-      nfeatures : int
-         Total number of features (including bogus features which carry
-         no label-related signal)
-      nchunks : int
-         Number of chunks (perlabel should be multiple of nchunks)
-      means : None or list of float or ndarray
-         Specified means for each of features among nfeatures.
-      nonbogus_features : None or list of int
-         Indexes of non-bogus features (1 per label)
-      snr : float
-         Signal-to-noise ration assuming that signal has std 1.0 so we
-         just divide random normal noise by snr
+    Could be considered to be a generalization of
+    `pureMultivariateSignal` where means=[ [0,1], [1,0] ].
 
-    Probably it is a generalization of pureMultivariateSignal where
-    means=[ [0,1], [1,0] ]
+    Specify either means or `nonbogus_features` so means get assigned
+    accordingly.
 
-    Specify either means or nonbogus_features so means get assigned
-    accordingly
+    Parameters
+    ----------
+    perlabel : int
+      Number of samples per each label
+    nlabels : int
+      Number of labels in the dataset
+    nfeatures : int
+      Total number of features (including bogus features which carry
+      no label-related signal)
+    nchunks : int
+      Number of chunks (perlabel should be multiple of nchunks)
+    means : None or list of float or ndarray
+      Specified means for each of features among nfeatures.
+    nonbogus_features : None or list of int
+      Indexes of non-bogus features (1 per label)
+    snr : float
+      Signal-to-noise ration assuming that signal has std 1.0 so we
+      just divide random normal noise by snr
     """
 
     data = N.random.standard_normal((perlabel*nlabels, nfeatures))/N.sqrt(snr)
@@ -153,9 +156,9 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
     return dataset(samples=data, labels=regs, chunks=chunks)
 
 
-def normalFeatureDataset__(dataset=None, labels=None, nchunks=None,
-                           perlabel=50, activation_probability_steps=1,
-                           randomseed=None, randomvoxels=False):
+def _normalFeatureDataset__(dataset=None, labels=None, nchunks=None,
+                            perlabel=50, activation_probability_steps=1,
+                            randomseed=None, randomvoxels=False):
     """ NOT FINISHED """
     raise NotImplementedError
 
@@ -352,8 +355,8 @@ def linear_awgn(size=10, intercept=0.0, slope=0.4, noise_std=0.01, flat=False):
 def noisy_2d_fx(size_per_fx, dfx, sfx, center, noise_std=1):
     """Yet another generator of random dataset
 
-    TODO: deprecate (not used anywhere) or extend documentation
     """
+    # used in projection example
     x = []
     y = []
     labels = []
@@ -378,7 +381,7 @@ def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
                             x_min=-2.0, x_max=3.0, sigma=0.2):
     """A straight line with some Gaussian noise.
     """
-    x = N.linspace(start=x_min, stop=x_max, num=size)[:,None]
+    x = N.linspace(start=x_min, stop=x_max, num=size)
     noise = N.random.randn(size)*sigma
     y = x * slope + intercept + noise
-    return dataset(samples=x, labels=y)
+    return dataset(samples=x[:, None], labels=y)

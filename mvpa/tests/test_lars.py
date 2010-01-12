@@ -24,7 +24,7 @@ class LARSTests(unittest.TestCase):
         data = datasets['chirp_linear']
 
 
-        clf = LARS(regression=True)
+        clf = LARS()
 
         clf.train(data)
 
@@ -63,7 +63,7 @@ class LARSTests(unittest.TestCase):
         # again
         sens = clf.getSensitivityAnalyzer(force_training=False)()
 
-        self.failUnless(sens.shape == (data.nfeatures,))
+        self.failUnless(sens.shape == (1, data.nfeatures))
 
 
 def suite():

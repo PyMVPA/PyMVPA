@@ -23,7 +23,7 @@ We start by loading PyMVPA and the example fMRI dataset.
 from mvpa.suite import *
 
 # load PyMVPA example dataset
-attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
+attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes_literal.txt'))
 dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                        labels=attr.labels,
                        chunks=attr.chunks,
@@ -37,26 +37,28 @@ that uses this particular classifier to compute and extract sensitivity scores.
 
 # define sensitivity analyzer
 sensanas = {
-    'a) ANOVA': OneWayAnova(transformer=N.abs),
+    'a) ANOVA': OneWayAnova(mapper=absolute_features()),
     'b) Linear SVM weights': LinearNuSVMC().getSensitivityAnalyzer(
-                                               transformer=N.abs),
-    'c) I-RELIEF': IterativeRelief(transformer=N.abs),
+                                               mapper=absolute_features()),
+    'c) I-RELIEF': IterativeRelief(mapper=absolute_features()),
     'd) Splitting ANOVA (odd-even)':
-        SplitFeaturewiseMeasure(OneWayAnova(transformer=N.abs),
-                                     OddEvenSplitter()),
+        SplitFeaturewiseDatasetMeasure(
+            OddEvenSplitter(),
+            OneWayAnova(mapper=absolute_features())),
     'e) Splitting SVM (odd-even)':
-        SplitFeaturewiseMeasure(
-            LinearNuSVMC().getSensitivityAnalyzer(transformer=N.abs),
-                             OddEvenSplitter()),
+        SplitFeaturewiseDatasetMeasure(
+            OddEvenSplitter(),
+            LinearNuSVMC().getSensitivityAnalyzer(mapper=absolute_features())),
     'f) I-RELIEF Online':
-        IterativeReliefOnline(transformer=N.abs),
+        IterativeReliefOnline(mapper=absolute_features()),
     'g) Splitting ANOVA (nfold)':
-        SplitFeaturewiseMeasure(OneWayAnova(transformer=N.abs),
-                                     NFoldSplitter()),
+        SplitFeaturewiseDatasetMeasure(
+            NFoldSplitter(),
+            OneWayAnova(mapper=absolute_features())),
     'h) Splitting SVM (nfold)':
-        SplitFeaturewiseMeasure(
-            LinearNuSVMC().getSensitivityAnalyzer(transformer=N.abs),
-                             NFoldSplitter()),
+        SplitFeaturewiseDatasetMeasure(
+            NFoldSplitter(),
+            LinearNuSVMC().getSensitivityAnalyzer(mapper=absolute_features()))
            }
 
 """Now, we are performing some a more or less standard preprocessing steps:
@@ -64,16 +66,17 @@ detrending, selecting a subset of the experimental conditions, normalization
 of each feature to a standard mean and variance."""
 
 # do chunkswise linear detrending on dataset
-detrend(dataset, perchunk=True, model='linear')
+poly_detrend(dataset, polyord=1, chunks='chunks')
 
 # only use 'rest', 'shoe' and 'bottle' samples from dataset
-dataset = dataset[N.array([l in [0,3,7] for l in dataset.labels], dtype='bool')]
+dataset = dataset[N.array([l in ['rest', 'shoe', 'bottle']
+                    for l in dataset.sa.labels], dtype='bool')]
 
 # zscore dataset relative to baseline ('rest') mean
-zscore(dataset, perchunk=True, baselinelabels=[0], targetdtype='float32')
+zscore(dataset, perchunk=True, baselinelabels=['rest'], targetdtype='float32')
 
 # remove baseline samples from dataset for final analysis
-dataset = dataset[N.array([l != 0 for l in dataset.labels], dtype='bool')]
+dataset = dataset[dataset.sa.labels != 'rest']
 
 """Finally, we will loop over all defined analyzers and let them compute
 the sensitivity scores. The resulting vectors are then mapped back into the
@@ -89,10 +92,12 @@ for s in keys:
     # tell which one we are doing
     print "Running %s ..." % (s)
 
+    sana = sensanas[s]
     # compute sensitivies
+    sens = sana(dataset)
     # I-RELIEF assigns zeros, which corrupts voxel masking for pylab's
     # imshow, so adding some epsilon :)
-    smap = sensanas[s](dataset)+0.00001
+    smap = sens.samples[0] + 0.00001
 
     # map sensitivity map into original dataspace
     orig_smap = dataset.mapper.reverse1(smap)

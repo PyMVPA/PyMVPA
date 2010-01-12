@@ -9,10 +9,11 @@
 """Unit tests for PyMVPA classifier cross-validation"""
 
 import unittest
+import numpy as N
+
 from mvpa.support.copy import copy
 
 from mvpa.base import externals, warning
-from mvpa.datasets import Dataset
 from mvpa.datasets.splitters import OddEvenSplitter
 
 from mvpa.clfs.meta import MulticlassClassifier
@@ -102,7 +103,7 @@ class ErrorsTests(unittest.TestCase):
         # have just a single target label
 
         for orig in ([1], [1, 1], [0], [0, 0]):
-            cm = ConfusionMatrix(targets=orig, predictions=orig, values=orig)
+            cm = ConfusionMatrix(targets=orig, predictions=orig, estimates=orig)
 
             scm = str(cm)
             self.failUnless(cm.stats['ACC%'] == 100)
@@ -206,7 +207,7 @@ class ErrorsTests(unittest.TestCase):
         if isinstance(clf, MulticlassClassifier):
             # TODO: handle those values correctly
             return
-        clf.states._changeTemporarily(enable_states = ['values'])
+        clf.states.change_temporarily(enable_states = ['estimates'])
         # uni2 dataset with reordered labels
         ds2 = datasets['uni2small'].copy()
         # revert labels
@@ -236,7 +237,7 @@ class ErrorsTests(unittest.TestCase):
                     self.failUnless(mauc > 0.55,
                          msg='All AUCs must be above chance. Got minimal '
                              'AUC=%.2g among %s' % (mauc, stats['AUC']))
-        clf.states._resetEnabledTemporarily()
+        clf.states.reset_changed_temporarily()
 
 
 

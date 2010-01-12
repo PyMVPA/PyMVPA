@@ -46,16 +46,17 @@ class ProjectionMapper(Mapper):
     def __init__(self, selector=None, demean=True):
         """Initialize the ProjectionMapper
 
-        :Parameters:
-          selector: None | list
-            Which components (i.e. columns of the projection matrix)
-            should be used for mapping. If `selector` is `None` all
-            components are used. If a list is provided, all list
-            elements are treated as component ids and the respective
-            components are selected (all others are discarded).
-          demean: bool
-            Either data should be demeaned while computing
-            projections and applied back while doing reverse()
+        Parameters
+        ----------
+        selector : None or list
+          Which components (i.e. columns of the projection matrix)
+          should be used for mapping. If `selector` is `None` all
+          components are used. If a list is provided, all list
+          elements are treated as component ids and the respective
+          components are selected (all others are discarded).
+        demean : bool
+          Either data should be demeaned while computing
+          projections and applied back while doing reverse()
         """
         Mapper.__init__(self)
 
@@ -79,9 +80,10 @@ class ProjectionMapper(Mapper):
     def _pretrain(self, samples):
         """Determine the projection matrix.
 
-        :Parameters:
-          dataset : Dataset
-            Dataset to operate on
+        Parameters
+        ----------
+        dataset : Dataset
+          Dataset to operate on
         """
         if self._demean:
             self._offset_in = samples.mean(axis=0)
@@ -107,24 +109,12 @@ class ProjectionMapper(Mapper):
         return data
 
 
-    def forward(self, data, demean=None):
-        """Perform forward projection.
-
-        :Parameters:
-          data: ndarray
-            Data array to map
-          demean: boolean | None
-            Override demean setting for this method call.
-
-        :Returns:
-          NumPy array
-        """
-        # let arg overwrite instance flag
-        if demean is None:
-            demean = self._demean
-
+    def _forward_data(self, data):
         if self._proj is None:
             raise RuntimeError, "Mapper needs to be train before used."
+
+        # local binding
+        demean = self._demean
 
         d = N.asmatrix(data)
 
@@ -142,12 +132,7 @@ class ProjectionMapper(Mapper):
         return res
 
 
-    def reverse(self, data):
-        """Reproject (reconstruct) data into the original feature space.
-
-        :Returns:
-          NumPy array
-        """
+    def _reverse_data(self, data):
         if self._proj is None:
             raise RuntimeError, "Mapper needs to be trained before used."
         d = N.asmatrix(data)
@@ -164,12 +149,14 @@ class ProjectionMapper(Mapper):
 
         return res
 
+
     def _computeRecon(self):
         """Given that a projection is present -- compute reconstruction matrix.
         By default -- pseudoinverse of projection matrix.  Might be overridden
         in derived classes for efficiency.
         """
         return N.linalg.pinv(self._proj)
+
 
     def _getRecon(self):
         """Compute (if necessary) and return reconstruction matrix
@@ -180,24 +167,6 @@ class ProjectionMapper(Mapper):
             self._recon = recon = self._computeRecon()
         return recon
 
-
-    def get_insize(self):
-        """Returns the number of original features."""
-        return self._proj.shape[0]
-
-
-    def get_outsize(self):
-        """Returns the number of components to project on."""
-        return self._proj.shape[1]
-
-
-    def selectOut(self, outIds):
-        """Choose a subset of components (and remove all others)."""
-        self._proj = self._proj[:, outIds]
-        if self._offset_out is not None:
-            self._offset_out = self._offset_out[outIds]
-        # invalidate reconstruction matrix
-        self._recon = None
 
     proj  = property(fget=lambda self: self._proj, doc="Projection matrix")
     recon = property(fget=_getRecon, doc="Backprojection matrix")

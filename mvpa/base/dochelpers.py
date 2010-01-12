@@ -18,20 +18,17 @@ from math import ceil
 from StringIO import StringIO
 from mvpa import cfg
 
-from mvpa.base import externals
+from mvpa.base.externals import versions, exists
 if __debug__:
     from mvpa.base import debug
 
 __add_init2doc = False
-__in_ipython = externals.exists('running ipython env')
+__in_ipython = exists('running ipython env')
 
 # if ran within IPython -- might need to add doc to init
 if __in_ipython:
-    __rst_mode = False                           # either to do ReST links at all
-    from IPython import Release
-    # XXX figure out exact version when init doc started to be added to class
-    # description
-    if Release.version <= '0.8.1':
+    __rst_mode = False                       # either to do ReST links at all
+    if versions['ipython'] <= '0.8.1':
         __add_init2doc = True
 else:
     __rst_mode = True
@@ -43,17 +40,15 @@ else:
 __rst_conventions = 'numpy'
 if __rst_conventions == 'epydoc':
     _rst_sep = "`"
-    #_rst_sep2 = ":"
     _rst_indentstr = "  "
-    #_rst_params = ":Parameters:"
     def _rst_section(section_name):
+        """Provide section heading"""
         return ":%s:" % section_name
 elif __rst_conventions == 'numpy':
     _rst_sep = ""
-    #_rst_sep2 = ""
     _rst_indentstr = ""
-    #_rst_params = "Parameters\n----------"
     def _rst_section(section_name):
+        """Provide section heading"""
         return "%s\n%s" % (section_name, '-'*len(section_name))
 else:
     raise ValueError, "Unknown convention %s for RST" % __rst_conventions
@@ -66,13 +61,13 @@ def _rst(s, snotrst=''):
     else:
         return snotrst
 
-def rstUnderline(text, markup):
+def _rst_underline(text, markup):
     """Add and underline RsT string matching the length of the given string.
     """
     return text + '\n' + markup * len(text)
 
 
-def singleOrPlural(single, plural, n):
+def single_or_plural(single, plural, n):
     """Little helper to spit out single or plural version of a word.
     """
     ni = int(n)
@@ -83,11 +78,11 @@ def singleOrPlural(single, plural, n):
         return single
 
 
-def handleDocString(text, polite=True):
+def handle_docstring(text, polite=True):
     """Take care of empty and non existing doc strings."""
     if text == None or not len(text):
         if polite:
-            return 'No documentation found. Sorry!'
+            return '' #No documentation found. Sorry!'
         else:
             return ''
     else:
@@ -107,7 +102,7 @@ def _indent(text, istr=_rst_indentstr):
     return '\n'.join(istr + s for s in text.split('\n'))
 
 
-__parameters_str_re = re.compile("[\n^]\s*:?Parameters?:?\s*\n(:?\s*-+\s*\n)")
+__parameters_str_re = re.compile("[\n^]\s*:?Parameters?:?\s*\n(:?\s*-+\s*\n)?")
 """regexp to match :Parameter: and :Parameters: stand alone in a line
 or
 Parameters
@@ -115,12 +110,13 @@ Parameters
 in multiple lines"""
 
 
-def _splitOutParametersStr(initdoc):
+def _split_out_parameters(initdoc):
     """Split documentation into (header, parameters, suffix)
 
-    :Parameters:
-      initdoc : string
-        The documentation string
+    Parameters
+    ----------
+    initdoc : string
+      The documentation string
     """
 
     # TODO: bind it to the only word in the line
@@ -146,15 +142,15 @@ def _splitOutParametersStr(initdoc):
         result = initdoc[:ph_i].rstrip('\n '), \
                  initdoc[pb_i:pe_i], initdoc[pe_i:]
 
-    # XXX a bit of duplication of effort since handleDocString might
+    # XXX a bit of duplication of effort since handle_docstring might
     # do splitting internally
-    return [handleDocString(x, polite=False).strip('\n') for x in result]
+    return [handle_docstring(x, polite=False).strip('\n') for x in result]
 
 
 __re_params = re.compile('(?:\n\S.*?)+$')
 __re_spliter1 = re.compile('(?:\n|\A)(?=\S)')
 __re_spliter2 = re.compile('[\n:]')
-def _parseParameters(paramdoc):
+def _parse_parameters(paramdoc):
     """Parse parameters and return list of (name, full_doc_string)
 
     It is needed to remove multiple entries for the same parameter
@@ -162,7 +158,7 @@ def _parseParameters(paramdoc):
 
     It assumes that previousely parameters were unwrapped, so their
     documentation starts at the begining of the string, like what
-    should it be after _splitOutParametersStr
+    should it be after _split_out_parameters
     """
     entries = __re_spliter1.split(paramdoc)
     result = [(__re_spliter2.split(e)[0].strip(), e)
@@ -176,19 +172,20 @@ def _parseParameters(paramdoc):
 def enhancedDocString(item, *args, **kwargs):
     """Generate enhanced doc strings for various items.
 
-    :Parameters:
-      item : basestring or class
-        What object requires enhancing of documentation
-      *args : list
-        Includes base classes to look for parameters, as well, first item
-        must be a dictionary of locals if item is given by a string
-      force_extend : bool
-        Either to force looking for the documentation in the parents.
-        By default force_extend = False, and lookup happens only if kwargs
-        is one of the arguments to the respective function (e.g. item.__init__)
-      skip_params : list of basestring
-        List of parameters (in addition to [kwargs]) which should not
-        be added to the documentation of the class.
+    Parameters
+    ----------
+    item : str or class
+      What object requires enhancing of documentation
+    *args : list
+      Includes base classes to look for parameters, as well, first item
+      must be a dictionary of locals if item is given by a string
+    force_extend : bool
+      Either to force looking for the documentation in the parents.
+      By default force_extend = False, and lookup happens only if kwargs
+      is one of the arguments to the respective function (e.g. item.__init__)
+    skip_params : list of str
+      List of parameters (in addition to [kwargs]) which should not
+      be added to the documentation of the class.
 
     It is to be used from a collector, ie whenever class is already created
     """
@@ -222,6 +219,9 @@ def enhancedDocString(item, *args, **kwargs):
     if not cfg.getboolean('doc', 'pimp docstrings', True):
         return  lcl['__doc__']
 
+    if __debug__:
+        debug('DOCH', 'Processing docstrings of %s' % name)
+
     #return lcl['__doc__']
     rst_lvlmarkup = ["=", "-", "_"]
 
@@ -242,17 +242,17 @@ def enhancedDocString(item, *args, **kwargs):
                                    func.func_code.co_varnames)
 
         if __debug__ and not extend_args:
-            debug('DOCH', 'Not extending parameters for %s' % name)
+            debug('DOCH', 'Not extending parameters for __init__ of  %s' % name)
 
         if initdoc is None:
             initdoc = "Initialize instance of %s" % name
 
-        initdoc, params, suffix = _splitOutParametersStr(initdoc)
+        initdoc, params, suffix = _split_out_parameters(initdoc)
 
         if lcl.has_key('_paramsdoc'):
-            params += '\n' + handleDocString(lcl['_paramsdoc'])
+            params += '\n' + handle_docstring(lcl['_paramsdoc'])
 
-        params_list = _parseParameters(params)
+        params_list = _parse_parameters(params)
         known_params = set([i[0] for i in params_list])
         # no need for placeholders
         skip_params = set(skip_params + ['kwargs', '**kwargs'])
@@ -262,9 +262,9 @@ def enhancedDocString(item, *args, **kwargs):
         #     retrainable flag not available for those classes which
         #     can't actually do retraining. Although it is not
         #     actually that obvious for Meta Classifiers
-        if hasattr(item, '_clf_internals'):
-            clf_internals = item._clf_internals
-            skip_params.update([i for i in ('regression', 'retrainable')
+        if hasattr(item, '__tags__'):
+            clf_internals = item.__tags__
+            skip_params.update([i for i in ('retrainable',)
                                 if not (i in clf_internals)])
 
         known_params.update(skip_params)
@@ -277,9 +277,9 @@ def enhancedDocString(item, *args, **kwargs):
                     initdoc_ = i.__init__.__doc__
                     if initdoc_ is None:
                         continue
-                    splits_ = _splitOutParametersStr(initdoc_)
+                    splits_ = _split_out_parameters(initdoc_)
                     params_ = splits_[1]
-                    parent_params_list += _parseParameters(params_.lstrip())
+                    parent_params_list += _parse_parameters(params_.lstrip())
 
             # extend with ones which are not known to current init
             for i, v in parent_params_list:
@@ -291,41 +291,44 @@ def enhancedDocString(item, *args, **kwargs):
         if len(params_list):
             params_ = '\n'.join([i[1].rstrip() for i in params_list
                                  if not i[0] in skip_params])
-            #initdoc += "\n\n%sParameters%s\n" % ( (_rst_sep2,)*2 ) \
-            initdoc += "\n\n%s\n" % _rst_section('Parameters') + _indent(params_)
+            initdoc += "\n\n%s\n" \
+                       % _rst_section('Parameters') + _indent(params_)
 
         if suffix != "":
             initdoc += "\n\n" + suffix
 
-        initdoc = handleDocString(initdoc)
+        initdoc = handle_docstring(initdoc)
 
         # Finally assign generated doc to the constructor
         lcl['__init__'].__doc__ = initdoc
 
-    docs = [ handleDocString(lcl['__doc__']) ]
+    docs = [ handle_docstring(lcl['__doc__']) ]
 
     # Optionally populate the class documentation with it
     if __add_init2doc and initdoc != "":
-        docs += [ rstUnderline('Constructor information for `%s` class' % name,
-                               rst_lvlmarkup[2]),
+        docs += [ _rst_underline('Constructor information for `%s` class'
+                                 % name, rst_lvlmarkup[2]),
                   initdoc ]
 
     # Add information about the states if available
     if lcl.has_key('_statesdoc') and len(item._statesdoc):
         # no indent is necessary since states list must be already indented
-        docs += [_rst('.. note::\n  ') + 'Available state variables:',
-                     handleDocString(item._statesdoc)]
+        docs += [_rst_section('Notes') + '\nAvailable state variables:',
+                     handle_docstring(item._statesdoc)]
 
-    if len(args):
+    # Deprecated -- but actually we might like to have it in ipython
+    # mode may be?
+    if False: #len(args):
         bc_intro = _rst('  ') + 'Please refer to the documentation of the ' \
                    'base %s for more information:' \
-                   % (singleOrPlural('class', 'classes', len(args)))
+                   % (single_or_plural('class', 'classes', len(args)))
 
-        docs += [_rst('\n.. seealso::'),
+        docs += ['\n' + _rst_section('See Also'),
                  bc_intro,
-                 '  ' + ',\n  '.join(['%s%s.%s%s' % (_rst(':class:`~'),
+                 '  ' + ',\n  '.join(['%s%s.%s%s%s' % (_rst(':class:`~'),
                                                       i.__module__,
                                                       i.__name__,
+                                                     _rst('`'),
                                                       _rst_sep)
                                       for i in args])
                 ]
@@ -340,14 +343,16 @@ def enhancedDocString(item, *args, **kwargs):
 def table2string(table, out=None):
     """Given list of lists figure out their common widths and print to out
 
-    :Parameters:
-      table : list of lists of strings
-        What is aimed to be printed
-      out : None or stream
-        Where to print. If None -- will print and return string
+    Parameters
+    ----------
+    table : list of lists of strings
+      What is aimed to be printed
+    out : None or stream
+      Where to print. If None -- will print and return string
 
-    :Returns:
-      string if out was None
+    Returns
+    -------
+    string if out was None
     """
 
     print2string = out is None
@@ -399,3 +404,52 @@ def table2string(table, out=None):
         out.close()
         return value
 
+
+def _str(obj, *args, **kwargs):
+    """Helper to get a structured __str__ for all objects.
+
+    If an object has a `descr` attribute, its content will be used instead of
+    an auto-generated description.
+
+    Optional additional information might be added under certain debugging
+    conditions (e.g. `id(obj)`).
+
+    Parameters
+    ----------
+    obj : object
+      This will typically be `self` of the to be documented object.
+    *args, **kwargs : str
+      An arbitrary number of additional items. All of them must be of type
+      `str`. All items will be appended comma separated to the class name.
+      Keyword arguments will be appended as `key`=`value.
+
+    Returns
+    -------
+    str
+    """
+    truncate = cfg.getAsDType('verbose', 'truncate str', int)
+
+    if hasattr(obj, 'descr'):
+        s = obj.descr
+    else:
+        s ='%s' % obj.__class__.__name__
+        auto_descr = ', '.join(list(args)
+                       + ["%s=%s" % (k, v) for k, v in kwargs.iteritems()])
+        if len(auto_descr):
+            s += ': %s' % auto_descr
+
+    if not truncate is None and len(s) > truncate - 5:
+        # take <...> into account
+        truncate -= 5
+        s = "%s..." % s[:truncate]
+
+    if __debug__ and 'DS_ID' in debug.active:
+        # in case there was nothing but the class name
+        if s[-1]:
+            s += ', id=%i' % id(obj)
+        else:
+            s += ' id=%i' % id(obj)
+
+
+    # finally wrap in <> and return
+    return '<%s>' % s

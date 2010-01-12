@@ -10,9 +10,12 @@
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N
+
 from mvpa.support.copy import deepcopy
 
 from mvpa.measures.base import DatasetMeasure
+from mvpa.datasets.base import Dataset
 from mvpa.datasets.splitters import NoneSplitter
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable, Harvestable
@@ -53,40 +56,40 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
     def __init__(self,
                  transerror,
                  splitter=None,
-                 combiner='mean',
                  expose_testdataset=False,
                  harvest_attribs=None,
                  copy_attribs='copy',
+                 samples_idattr='origids',
                  **kwargs):
         """
-        :Parameters:
-          transerror: TransferError instance
-            Provides the classifier used for cross-validation.
-          splitter: Splitter | None
-            Used to split the dataset for cross-validation folds. By
-            convention the first dataset in the tuple returned by the
-            splitter is used to train the provided classifier. If the
-            first element is 'None' no training is performed. The second
-            dataset is used to generate predictions with the (trained)
-            classifier. If `None` (default) an instance of
-            :class:`~mvpa.datasets.splitters.NoneSplitter` is used.
-          combiner: Functor | 'mean'
-            Used to aggregate the error values of all cross-validation
-            folds. If 'mean' (default) the grand mean of the transfer
-            errors is computed.
-          expose_testdataset: bool
-           In the proper pipeline, classifier must not know anything
-           about testing data, but in some cases it might lead only
-           to marginal harm, thus migth wanted to be enabled (provide
-           testdataset for RFE to determine stopping point).
-          harvest_attribs: list of basestr
-            What attributes of call to store and return within
-            harvested state variable
-          copy_attribs: None | basestr
-            Force copying values of attributes on harvesting
-          **kwargs:
-            All additional arguments are passed to the
-            :class:`~mvpa.measures.base.DatasetMeasure` base class.
+        Parameters
+        ----------
+        transerror : TransferError instance
+          Provides the classifier used for cross-validation.
+        splitter : Splitter or None
+          Used to split the dataset for cross-validation folds. By
+          convention the first dataset in the tuple returned by the
+          splitter is used to train the provided classifier. If the
+          first element is 'None' no training is performed. The second
+          dataset is used to generate predictions with the (trained)
+          classifier. If `None` (default) an instance of
+          :class:`~mvpa.datasets.splitters.NoneSplitter` is used.
+        expose_testdataset : bool, optional
+          In the proper pipeline, classifier must not know anything
+          about testing data, but in some cases it might lead only
+          to marginal harm, thus migth wanted to be enabled (provide
+          testdataset for RFE to determine stopping point).
+        harvest_attribs : list of str
+          What attributes of call to store and return within
+          harvested state variable
+        copy_attribs : None or str, optional
+          Force copying values of attributes on harvesting
+        samples_idattr : str, optional
+          What samples attribute to use to identify and store samples_errors
+          state variable
+        **kwargs
+          All additional arguments are passed to the
+          :class:`~mvpa.measures.base.DatasetMeasure` base class.
         """
         DatasetMeasure.__init__(self, **kwargs)
         Harvestable.__init__(self, harvest_attribs, copy_attribs)
@@ -96,13 +99,9 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         else:
             self.__splitter = splitter
 
-        if combiner == 'mean':
-            self.__combiner = GrandMean
-        else:
-            self.__combiner = combiner
-
         self.__transerror = transerror
         self.__expose_testdataset = expose_testdataset
+        self.__samples_idattr = samples_idattr
 
 # TODO: put back in ASAP
 #    def __repr__(self):
@@ -134,39 +133,52 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         # what states to enable in terr
         terr_enable = []
         for state_var in ['confusion', 'training_confusion', 'samples_error']:
-            if states.isEnabled(state_var):
+            if states.is_enabled(state_var):
                 terr_enable += [state_var]
 
         # charge states with initial values
-        summaryClass = clf._summaryClass
+        summaryClass = clf.__summary_class__
         clf_hastestdataset = hasattr(clf, 'testdataset')
 
         self.states.confusion = summaryClass()
         self.states.training_confusion = summaryClass()
         self.states.transerrors = []
-        if states.isEnabled('samples_error'):
-            self.states.samples_error = dict([(id, [])
-                                               for id in dataset.sa.origids])
+        if states.is_enabled('samples_error'):
+            dataset.init_origids('samples',
+                                 attr=self.__samples_idattr, mode='existing')
+            self.states.samples_error = dict(
+                [(id_, []) for id_ in dataset.sa[self.__samples_idattr].value])
 
         # enable requested states in child TransferError instance (restored
         # again below)
         if len(terr_enable):
-            self.__transerror.states._changeTemporarily(
+            self.__transerror.states.change_temporarily(
                 enable_states=terr_enable)
 
         # We better ensure that underlying classifier is not trained if we
         # are going to deepcopy transerror
-        if states.isEnabled("transerrors"):
+        if states.is_enabled("transerrors"):
             self.__transerror.untrain()
+
+        # collect sum info about the split that where made for the resulting
+        # dataset
+        splitinfo = []
 
         # splitter
         for split in self.__splitter(dataset):
+            splitinfo.append(
+                "%s->%s"
+                % (','.join([str(c)
+                    for c in split[0].sa[self.__splitter.splitattr].unique]),
+                   ','.join([str(c)
+                    for c in split[1].sa[self.__splitter.splitattr].unique])))
+
             # only train classifier if splitter provides something in first
             # element of tuple -- the is the behavior of TransferError
-            if states.isEnabled("splits"):
+            if states.is_enabled("splits"):
                 self.states.splits.append(split)
 
-            if states.isEnabled("transerrors"):
+            if states.is_enabled("transerrors"):
                 # copy first and then train, as some classifiers cannot be copied
                 # when already trained, e.g. SWIG'ed stuff
                 lastsplit = None
@@ -200,19 +212,19 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
 
             # XXX Look below -- may be we should have not auto added .?
             #     then transerrors also could be deprecated
-            if states.isEnabled("transerrors"):
+            if states.is_enabled("transerrors"):
                 self.states.transerrors.append(transerror)
 
             # XXX: could be merged with next for loop using a utility class
             # that can add dict elements into a list
-            if states.isEnabled("samples_error"):
+            if states.is_enabled("samples_error"):
                 for k, v in \
                   transerror.states.samples_error.iteritems():
                     self.states.samples_error[k].append(v)
 
             # pull in child states
             for state_var in ['confusion', 'training_confusion']:
-                if states.isEnabled(state_var):
+                if states.is_enabled(state_var):
                     states[state_var].value.__iadd__(
                         transerror.states[state_var].value)
 
@@ -226,26 +238,25 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
 
         # put states of child TransferError back into original config
         if len(terr_enable):
-            self.__transerror.states._resetEnabledTemporarily()
+            self.__transerror.states.reset_changed_temporarily()
 
         self.states.results = results
         """Store state variable if it is enabled"""
 
         # Provide those labels_map if appropriate
         try:
-            if states.isEnabled("confusion"):
+            if states.is_enabled("confusion"):
                 states.confusion.labels_map = dataset.labels_map
-            if states.isEnabled("training_confusion"):
+            if states.is_enabled("training_confusion"):
                 states.training_confusion.labels_map = dataset.labels_map
         except:
             pass
 
-        return self.__combiner(results)
+        results = Dataset(results, sa={'cv_fold': splitinfo})
+        return results
 
 
     splitter = property(fget=lambda self:self.__splitter,
                         doc="Access to the Splitter instance.")
     transerror = property(fget=lambda self:self.__transerror,
                         doc="Access to the TransferError instance.")
-    combiner = property(fget=lambda self:self.__combiner,
-                        doc="Access to the configured combiner.")

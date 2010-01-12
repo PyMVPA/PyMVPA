@@ -75,13 +75,14 @@ class StatsTestsScipy(unittest.TestCase):
         m = OneWayAnova(null_dist=nd, enable_states=['null_t'])
         score = m(ds)
 
-        score_nonbogus = N.mean(score[ds.nonbogus_features])
-        score_bogus = N.mean(score[ds.bogus_features])
+        score_nonbogus = N.mean(score.samples[:,ds.nonbogus_features])
+        score_bogus = N.mean(score.samples[:,ds.bogus_features])
         # plausability check
         self.failUnless(score_bogus < score_nonbogus)
 
-        null_prob_nonbogus = m.states.null_prob[ds.nonbogus_features]
-        null_prob_bogus = m.states.null_prob[ds.bogus_features]
+        # [0] because the first axis is len == 0
+        null_prob_nonbogus = m.states.null_prob[0][ds.nonbogus_features]
+        null_prob_bogus = m.states.null_prob[0][ds.bogus_features]
 
         self.failUnless((null_prob_nonbogus < 0.05).all(),
             msg="Nonbogus features should have a very unlikely value. Got %s"
@@ -98,18 +99,18 @@ class StatsTestsScipy(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             # Failed on c94ec26eb593687f25d8c27e5cfdc5917e352a69
             # with MVPA_SEED=833393575
-            self.failUnless((N.abs(m.states.null_t[ds.nonbogus_features]) >= 5).all(),
+            self.failUnless((N.abs(m.states.null_t[0][ds.nonbogus_features]) >= 5).all(),
                 msg="Nonbogus features should have high t-score. Got %s"
-                    % (m.states.null_t[ds.nonbogus_features]))
+                % (m.states.null_t[0][ds.nonbogus_features]))
 
-            bogus_min = min(N.abs(m.states.null_t[ds.bogus_features]))
+            bogus_min = min(N.abs(m.states.null_t[0][ds.bogus_features]))
             self.failUnless(bogus_min < 4,
                 msg="Some bogus features should have low t-score of %g."
                     "Got (t,p,sens):%s"
                     % (bogus_min,
-                       zip(m.states.null_t[ds.bogus_features],
-                       m.states.null_prob[ds.bogus_features],
-                       score[ds.bogus_features])))
+                        zip(m.states.null_t[0][ds.bogus_features],
+                            m.states.null_prob[0][ds.bogus_features],
+                            score.samples[0][ds.bogus_features])))
 
 
     def testNegativeT(self):
@@ -235,7 +236,7 @@ class StatsTestsScipy(unittest.TestCase):
                         ds[ds.labels == 'L0'].samples)
 
         # SciPy needs to compute the same F-scores
-        assert_array_almost_equal(f, f_sp[0])
+        assert_array_almost_equal(f, f_sp[0:1])
 
 
 
@@ -276,34 +277,34 @@ class StatsTestsScipy(unittest.TestCase):
         data = dataset(samples=N.array((wsignal, nsignal, nsignal)).T, labels=1)
 
         # check GLM betas
-        glm = GLM(X, combiner=None)
+        glm = GLM(X)
         betas = glm(data)
 
         # betas for each feature and each regressor
-        self.failUnless(betas.shape == (data.nfeatures, X.shape[1]))
+        self.failUnless(betas.shape == (X.shape[1], data.nfeatures))
 
-        self.failUnless(N.absolute(betas[:, 1] - baseline < 10).all(),
+        self.failUnless(N.absolute(betas.samples[1] - baseline < 10).all(),
             msg="baseline betas should be huge and around 800")
 
-        self.failUnless(betas[0][0] > betas[1, 0],
+        self.failUnless(betas.samples[0,0] > betas[0,1],
             msg="feature (with signal) beta should be larger than for noise")
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(N.absolute(betas[1, 0]) < 0.5)
-            self.failUnless(N.absolute(betas[0, 0]) > 1.0)
+            self.failUnless(N.absolute(betas[0,1]) < 0.5)
+            self.failUnless(N.absolute(betas[0,0]) > 1.0)
 
 
         # check GLM zscores
-        glm = GLM(X, voi='zstat', combiner=None)
+        glm = GLM(X, voi='zstat')
         zstats = glm(data)
 
         self.failUnless(zstats.shape == betas.shape)
 
-        self.failUnless((zstats[:, 1] > 1000).all(),
+        self.failUnless((zstats.samples[1] > 1000).all(),
                 msg='constant zstats should be huge')
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(N.absolute(betas[0, 0]) > betas[1][0],
+            self.failUnless(N.absolute(betas[0,0]) > betas[0,1],
                 msg='with signal should have higher zstats')
 
 

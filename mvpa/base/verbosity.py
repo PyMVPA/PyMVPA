@@ -28,8 +28,7 @@ from sets import Set
 #    give verbose description about registered debugset items
 
 class Logger(object):
-    """
-    Base class to provide logging
+    """Base class to provide logging
     """
 
     def __init__(self, handlers=None):
@@ -85,8 +84,7 @@ class Logger(object):
 
 
     def __call__(self, msg, lf=True, cr=False, *args, **kwargs):
-        """
-        Write msg to each of the handlers.
+        """Write msg to each of the handlers.
 
         It can append a newline (lf = Line Feed) or return
         to the beginning before output and to take care about
@@ -136,17 +134,17 @@ class Logger(object):
 
 
 class LevelLogger(Logger):
-    """
-    Logger which prints based on level -- ie everything which is smaller
-    than specified level
+    """Logger not to log anything with a level smaller than specified.
     """
 
     def __init__(self, level=0, indent=" ", *args, **kwargs):
-        """Define level logger.
-
-        It is defined by
-          `level`, int: to which messages are reported
-          `indent`, string: symbol used to indent
+        """
+        Parameters
+        ----------
+        level : int, optional
+          Level to consider be active.
+        indent : str, optional
+          String to use for indentation.
         """
         Logger.__init__(self, *args, **kwargs)
         self.__level = level            # damn pylint ;-)
@@ -171,10 +169,9 @@ class LevelLogger(Logger):
 
 
     def __call__(self, level, msg, *args, **kwargs):
-        """
-        Write msg and indent using self.indent it if it was requested
+        """Write msg and indent using self.indent it if it was requested.
 
-        it appends a newline since most commonly each call is a separate
+        It appends a newline since most commonly each call is a separate
         message
         """
         if level <= self.level:
@@ -188,11 +185,10 @@ class LevelLogger(Logger):
 
 
 class OnceLogger(Logger):
-    """
-    Logger which prints a message for a given ID just once.
+    """Logger which prints a message for a given ID just once.
 
     It could be used for one-time warning to don't overfill the output
-    with useless repeatative messages
+    with useless repeatative messages.
     """
 
     def __init__(self, *args, **kwargs):
@@ -203,8 +199,7 @@ class OnceLogger(Logger):
 
 
     def __call__(self, ident, msg, count=1, *args, **kwargs):
-        """
-        Write `msg` if `ident` occured less than `count` times by now.
+        """Write `msg` if `ident` occured less than `count` times by now.
         """
         if not self._known.has_key(ident):
             self._known[ident] = 0
@@ -215,13 +210,24 @@ class OnceLogger(Logger):
 
 
 class SetLogger(Logger):
-    """
-    Logger which prints based on defined sets identified by Id.
+    """Logger which prints based on defined sets identified by Id.
     """
 
     def __init__(self, register=None, active=None, printsetid=True,
                  *args, **kwargs):
-        if register == None:
+        """
+        Parameters
+        ----------
+        register : dict or None
+          What Ids are to be known. Each item dictionary contains consists
+          of concise key and a description as the value.
+        active : iterable
+          What Ids to consider active upon initialization.
+        printsetid : bool, optional
+          Either to prefix each line with the target Id of a set in which
+          the line was printed to (default behavior).
+        """
+        if register is None:
             register = {}
         if active == None:
             active = []
@@ -384,10 +390,11 @@ if __debug__:
         def __init__(self, collide=False):
             """Initialize TrackBack metric
 
-            :Parameters:
-              collide : bool
-                if True then prefix common with previous invocation gets
-                replaced with ...
+            Parameters
+            ----------
+            collide : bool
+              if True then prefix common with previous invocation gets
+              replaced with ...
             """
             self.__prev = ""
             self.__collide = collide
@@ -424,6 +431,12 @@ if __debug__:
         invocation"""
 
         def __init__(self, format="%3.3f sec"):
+            """
+            Parameters
+            ----------
+            format : str
+              String format to use for reporting time.
+            """
             self.__prev = None
             self.__format = format
 
@@ -454,6 +467,18 @@ if __debug__:
 
 
         def __init__(self, metrics=None, offsetbydepth=True, *args, **kwargs):
+            """
+            Parameters
+            ----------
+            metrics : iterable of (func or str) or None
+              What metrics (functions) to be reported.  If item is a string,
+              it is matched against `_known_metrics` keys.
+            offsetbydepth : bool, optional
+              Either to offset lines depending on backtrace depth (default
+              behavior).
+            *args, **kwargs
+              Passed to SetLogger initialization  XXX
+            """
             if metrics == None:
                 metrics = []
             SetLogger.__init__(self, *args, **kwargs)

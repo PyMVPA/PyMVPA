@@ -53,7 +53,7 @@ from mvpa.suite import *
 # create the pymvpa dataset from the labeled features
 patternsPos = dataset(samples=feat_pos.T, labels=1)
 patternsNeg = dataset(samples=feat_neg.T, labels=0)
-ds_lin = patternsPos + patternsNeg
+ds_lin = vstack((patternsPos, patternsNeg))
 
 """Let's add another dataset: XOR. This problem is not linear separable
 and therefore need a non-linear classifier to be solved. The dataset is
@@ -116,8 +116,8 @@ for id, ds in datasets.iteritems():
         # select the clasifier
         clf = clfs[c]
 
-        # enable saving of the values used for the prediction
-        clf.states.enable('values')
+        # enable saving of the estimates used for the prediction
+        clf.states.enable('estimates')
 
         # train with the known points
         clf.train(ds)
@@ -131,13 +131,13 @@ for id, ds in datasets.iteritems():
             res = N.asarray(pre)
         elif c == 'Logistic Regression':
             # get out the values used for the prediction
-            res = N.asarray(clf.states.values)
+            res = N.asarray(clf.states.estimates)
         elif c in ['SMLR']:
-            res = N.asarray(clf.states.values[:, 1])
+            res = N.asarray(clf.states.estimates[:, 1])
         elif c.startswith('GNB'):
             # Since probabilities are raw: for visualization lets
             # operate on logprobs and in comparison one to another
-            res = clf.states.values[:, 1] - clf.states.values[:, 0]
+            res = clf.states.estimates[:, 1] - clf.states.estimates[:, 0]
             # Scale and position around 0.5
             res = 0.5 + res/max(N.abs(res))
         else:

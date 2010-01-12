@@ -62,7 +62,7 @@ class ENET(Classifier):
 
     """
 
-    _clf_internals = [ 'enet', 'regression', 'linear', 'has_sensitivity',
+    __tags__ = [ 'enet', 'regression', 'linear', 'has_sensitivity',
                        'does_feature_selection'
                        ]
     def __init__(self, lm=1.0, trace=False, normalize=True,
@@ -72,20 +72,21 @@ class ENET(Classifier):
 
         See the help in R for further details on the following parameters:
 
-        :Parameters:
-          lm : float
-            Penalty parameter.  0 will perform LARS with no ridge regression.
-            Default is 1.0.
-          trace : boolean
-            Whether to print progress in R as it works.
-          normalize : boolean
-            Whether to normalize the L2 Norm.
-          intercept : boolean
-            Whether to add a non-penalized intercept to the model.
-          max_steps : None or int
-            If not None, specify the total number of iterations to run. Each
-            iteration adds a feature, but leaving it none will add until
-            convergence.
+        Parameters
+        ----------
+        lm : float
+          Penalty parameter.  0 will perform LARS with no ridge regression.
+          Default is 1.0.
+        trace : boolean
+          Whether to print progress in R as it works.
+        normalize : boolean
+          Whether to normalize the L2 Norm.
+        intercept : boolean
+          Whether to add a non-penalized intercept to the model.
+        max_steps : None or int
+          If not None, specify the total number of iterations to run. Each
+          iteration adds a feature, but leaving it none will add until
+          convergence.
         """
         # init base class first
         Classifier.__init__(self, **kwargs)

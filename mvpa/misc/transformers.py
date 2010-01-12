@@ -29,8 +29,9 @@ def Absolute(x):
     """
     Returns the elementwise absolute of any argument.
 
-    :Parameter:
-      x: scalar | sequence
+    Parameters
+    ----------
+    x : scalar or sequence
 
     """
     return N.absolute(x)
@@ -132,12 +133,13 @@ class OverAxis(object):
     def __init__(self, transformer, axis=None):
         """Initialize transformer wrapper with an axis.
 
-        :Parameters:
-          transformer
-            A callable to be used
-          axis : None or int
-            If None -- apply transformer across all the data. If some
-            int -- over that axis
+        Parameters
+        ----------
+        transformer
+          A callable to be used
+        axis : None or int
+          If None -- apply transformer across all the data. If some
+          int -- over that axis
         """
         self.transformer = transformer
         # sanity check
@@ -208,18 +210,19 @@ class DistPValue(ClassWithCollections):
     def __init__(self, sd=0, distribution='rdist', fpp=None, nbins=400, **kwargs):
         """L2-Norm the values, convert them to p-values of a given distribution.
 
-        :Parameters:
-          sd : int
-            Samples dimension (if len(x.shape)>1) on which to operate
-          distribution : string
-            Which distribution to use. Known are: 'rdist' (later normal should
-            be there as well)
-          fpp : float
-            At what p-value (both tails) if not None, to control for false
-            positives. It would iteratively prune the tails (tentative real positives)
-            until empirical p-value becomes less or equal to numerical.
-          nbins : int
-            Number of bins for the iterative pruning of positives
+        Parameters
+        ----------
+        sd : int
+          Samples dimension (if len(x.shape)>1) on which to operate
+        distribution : string
+          Which distribution to use. Known are: 'rdist' (later normal should
+          be there as well)
+        fpp : float
+          At what p-value (both tails) if not None, to control for false
+          positives. It would iteratively prune the tails (tentative real positives)
+          until empirical p-value becomes less or equal to numerical.
+        nbins : int
+          Number of bins for the iterative pruning of positives
 
         WARNING: Highly experimental/slow/etc: no theoretical grounds have been
         presented in any paper, nor proven

@@ -17,7 +17,7 @@ from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
 from mvpa import pymvpa_dataroot
-from mvpa.datasets.mri import fmri_dataset
+from mvpa.datasets.mri import fmri_dataset, getNiftiFromAnySource
 from mvpa.misc.fsl import FslEV3
 from mvpa.misc.support import Event
 from mvpa.misc.io.base import SampleAttributes
@@ -42,7 +42,8 @@ def testNiftiDataset():
     #self.failUnless(nb22.shape[0] == 7)
     #self.failUnless(nb20.shape[0] == 5)
 
-    merged = ds + ds
+    merged = ds.copy()
+    merged.append(ds)
     assert_equal(merged.nfeatures, 294912)
     assert_equal(merged.nsamples, 4)
 
@@ -135,57 +136,65 @@ def testMultipleCalls():
     assert_array_equal(data.a.abc_eldim, data2.a.abc_eldim)
 
 
-#def testERNiftiDataset(self):
-#    """Basic testing of ERNiftiDataset
-#    """
-#    self.failUnlessRaises(DatasetError, ERNiftiDataset)
-#
-#    # setup data sources
-#    tssrc = os.path.join(pymvpa_dataroot, 'bold')
-#    evsrc = os.path.join(pymvpa_dataroot, 'fslev3.txt')
-#    # masrc = os.path.join(pymvpa_dataroot, 'mask')
-#    evs = FslEV3(evsrc).toEvents()
-#
-#    # more failure ;-)
-#    # no label!
-#    self.failUnlessRaises(ValueError, ERNiftiDataset,
-#                          samples=tssrc, events=evs)
-#
-#    # set some label for each ev
-#    for ev in evs:
-#        ev['label'] = 1
-#
-#    # for real!
-#    # using TR from nifti header
-#    ds = ERNiftiDataset(samples=tssrc, events=evs)
-#
-#    # 40x20 volume, 9 volumes per sample + 1 intensity score = 7201 features
-#    self.failUnless(ds.nfeatures == 7201)
-#    self.failUnless(ds.nsamples == len(evs))
-#
-#    # check samples
-#    origsamples = getNiftiFromAnySource(tssrc).data
-#    for i, ev in enumerate(evs):
-#        self.failUnless((ds.samples[i][:-1] \
-#            == origsamples[ev['onset']:ev['onset'] + ev['duration']].ravel()
-#                        ).all())
-#
-#    # do again -- with conversion
-#    ds = ERNiftiDataset(samples=tssrc, events=evs, evconv=True,
-#                        storeoffset=True)
-#    self.failUnless(ds.nsamples == len(evs))
-#    # TR=2.5, 40x20 volume, 9 second per sample (4volumes), 1 intensity
-#    # score + 1 offset = 3202 features
-#    self.failUnless(ds.nfeatures == 3202)
-#
-#    # map back into voxel space, should ignore addtional features
-#    nim = ds.map2Nifti()
-#    self.failUnless(nim.data.shape == origsamples.shape)
-#    # check shape of a single sample
-#    nim = ds.map2Nifti(ds.samples[0])
-#    self.failUnless(nim.data.shape == (4, 1, 20, 40))
-#
-#
+def testERNiftiDataset():
+    # setup data sources
+    tssrc = os.path.join(pymvpa_dataroot, 'bold')
+    evsrc = os.path.join(pymvpa_dataroot, 'fslev3.txt')
+    masrc = os.path.join(pymvpa_dataroot, 'mask')
+    evs = FslEV3(evsrc).toEvents()
+    # using TR from nifti header
+    ds = fmri_dataset(tssrc, events=evs)
+
+    # we ask for boxcars of 9s length, and the tr in the file header says 2.5s
+    # hence we should get round(9.0/2.4) * N.prod((1,20,40) == 3200 features
+    assert_equal(ds.nfeatures, 3200)
+    assert_equal(len(ds), len(evs))
+    # the voxel indices are reflattened after boxcaring , but still 3D
+    assert_equal(ds.fa.voxel_indices.shape, (ds.nfeatures, 3))
+    # and they have been broadcasted through all boxcars
+    assert_array_equal(ds.fa.voxel_indices[:800], ds.fa.voxel_indices[800:1600])
+    # each feature got an event offset value
+    assert_array_equal(ds.fa.event_offsetidx, N.repeat([0,1,2,3], 800))
+    # check for all event attributes
+    assert_true('event_attrs_onset' in ds.sa)
+    assert_true('event_attrs_duration' in ds.sa)
+    assert_true('event_attrs_features' in ds.sa)
+    # check samples
+    origsamples = getNiftiFromAnySource(tssrc).data
+    for i, onset in enumerate(N.round(N.array([e['onset'] for e in evs]) / 2.5)):
+        assert_array_equal(ds.samples[i], origsamples[onset:onset+4].ravel())
+        assert_array_equal(ds.sa.time_indices[i], N.arange(onset, onset + 4))
+        assert_array_equal(ds.sa.time_coords[i],
+                           N.arange(onset, onset + 4) * 2.5)
+        for evattr in [a for a in ds.sa
+                        if a.count("event_attrs")
+                           and not a == 'event_attrs_offset']:
+            assert_array_equal(evs[i][evattr.split('_')[2]],
+                               ds.sa[evattr].value[i])
+    # check offset: only the last one exactly matches the tr
+    assert_array_equal(ds.sa.event_attrs_offset, [1, 1, 0])
+
+    # map back into voxel space, should ignore addtional features
+    nim = ds.map2nifti()
+    assert_equal(nim.data.shape, (len(ds) * 4,) + origsamples.shape[1:])
+    # check shape of a single sample
+    nim = ds.map2nifti(ds.samples[0])
+    assert_equal(nim.data.shape, (4, 1, 20, 40))
+
+    # and now with masking
+    ds = fmri_dataset(tssrc, events=evs, mask=masrc)
+    nnonzero = len(getNiftiFromAnySource(masrc).data.nonzero()[0])
+    assert_equal(nnonzero, 530)
+    # we ask for boxcars of 9s length, and the tr in the file header says 2.5s
+    # hence we should get round(9.0/2.4) * N.prod((1,20,40) == 3200 features
+    assert_equal(ds.nfeatures, 4 * 530)
+    assert_equal(len(ds), len(evs))
+    # and they have been broadcasted through all boxcars
+    assert_array_equal(ds.fa.voxel_indices[:nnonzero],
+                       ds.fa.voxel_indices[nnonzero:2*nnonzero])
+
+
+
 #def testERNiftiDatasetMapping(self):
 #    """Some mapping testing -- more tests is better
 #    """

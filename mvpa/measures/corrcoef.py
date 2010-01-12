@@ -19,6 +19,7 @@ if externals.exists('scipy', raiseException=True):
     from scipy.stats import pearsonr
 
 from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.datasets.base import Dataset
 
 class CorrCoef(FeaturewiseDatasetMeasure):
     """`FeaturewiseDatasetMeasure` that performs correlation with labels
@@ -29,12 +30,13 @@ class CorrCoef(FeaturewiseDatasetMeasure):
     def __init__(self, pvalue=False, attr='labels', **kwargs):
         """Initialize
 
-        :Parameters:
-          pvalue : bool
-            Either to report p-value of pearsons correlation coefficient
-            instead of pure correlation coefficient
-          attr : basestring
-            What attribut to correlate with
+        Parameters
+        ----------
+        pvalue : bool
+          Either to report p-value of pearsons correlation coefficient
+          instead of pure correlation coefficient
+        attr : str
+          What attribut to correlate with
         """
         # init base classes first
         FeaturewiseDatasetMeasure.__init__(self, **kwargs)
@@ -71,4 +73,4 @@ class CorrCoef(FeaturewiseDatasetMeasure):
                     corrv = pvalue_index
             result[ifeature] = corrv
 
-        return result
+        return Dataset(result[N.newaxis])

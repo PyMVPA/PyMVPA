@@ -10,12 +10,19 @@
 
 __docformat__ = 'restructuredtext'
 
+# Global modules
+import numpy as N
+
 # Some global imports useful through out unittests
 from mvpa.base import cfg
+
+# Base classes
+from mvpa.clfs.base import Classifier
 
 #
 # first deal with classifiers which do not have external deps
 #
+from mvpa.clfs.base import Classifier
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import *
 
@@ -34,7 +41,7 @@ class SameSignClassifier(Classifier):
     """Dummy classifier which reports +1 class if both features have
     the same sign, -1 otherwise"""
 
-    _clf_internals = ['notrain2predict']
+    __tags__ = ['notrain2predict']
     def __init__(self, **kwargs):
         Classifier.__init__(self, **kwargs)
 
@@ -44,24 +51,25 @@ class SameSignClassifier(Classifier):
 
     @accepts_dataset_as_samples
     def _predict(self, data):
+        data = N.asanyarray(data)
         datalen = len(data)
-        values = []
+        estimates = []
         for d in data:
-            values.append(2*int( (d[0]>=0) == (d[1]>=0) )-1)
-        self.states.predictions = values
-        self.states.values = values            # just for the sake of having values
-        return values
+            estimates.append(2*int( (d[0]>=0) == (d[1]>=0) )-1)
+        self.states.predictions = estimates
+        self.states.estimates = estimates            # just for the sake of having estimates
+        return estimates
 
 
 class Less1Classifier(SameSignClassifier):
     """Dummy classifier which reports +1 class if abs value of max less than 1"""
     def _predict(self, data):
         datalen = len(data)
-        values = []
+        estimates = []
         for d in data:
-            values.append(2*int(max(d)<=1)-1)
-        self.predictions = values
-        return values
+            estimates.append(2*int(max(d)<=1)-1)
+        self.predictions = estimates
+        return estimates
 
 # Sample universal classifiers (linear and non-linear) which should be
 # used whenever it doesn't matter what classifier it is for testing
@@ -78,6 +86,6 @@ sample_clf_lin = SMLR(lm=0.1)#sg.svm.LinearCSVMC(svm_impl='libsvm')
 sample_clf_nl = kNN(k=5)
 
 # and also a regression-based classifier
-r = clfswh['linear', 'regression', 'has_sensitivity']
+r = clfswh['linear', 'regression_based', 'has_sensitivity']
 if len(r) > 0: sample_clf_reg = r[0]
 else: sample_clf_reg = None

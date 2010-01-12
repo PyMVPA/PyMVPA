@@ -16,8 +16,9 @@ import numpy as N
 from mvpa.base import warning
 from mvpa.misc.support import indentDoc
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
-from mvpa.base.dochelpers import enhancedDocString
 from mvpa.clfs.distance import squared_euclidean_distance
+
+__all__ = [ 'kNN' ]
 
 if __debug__:
     from mvpa.base import debug
@@ -38,31 +39,33 @@ class kNN(Classifier):
     is performed as the training dataset is simply stored in the
     classifier. All computations are done during classifier prediction.
 
-    .. note::
-      If enabled, kNN stores the votes per class in the 'values' state after
-      calling predict().
+    Notes
+    -----
+    If enabled, kNN stores the votes per class in the 'values' state after
+    calling predict().
 
     """
 
-    _clf_internals = ['knn', 'non-linear', 'binary', 'multiclass',
+    __tags__ = ['knn', 'non-linear', 'binary', 'multiclass',
                       'notrain2predict' ]
 
     def __init__(self, k=2, dfx=squared_euclidean_distance,
                  voting='weighted', **kwargs):
         """
-        :Parameters:
-          k: unsigned integer
-            Number of nearest neighbours to be used for voting.
-          dfx: functor
-            Function to compute the distances between training and test samples.
-            Default: squared euclidean distance
-          voting: str
-            Voting method used to derive predictions from the nearest neighbors.
-            Possible values are 'majority' (simple majority of classes
-            determines vote) and 'weighted' (votes are weighted according to the
-            relative frequencies of each class in the training data).
-          **kwargs:
-            Additonal arguments are passed to the base class.
+        Parameters
+        ----------
+        k : unsigned integer
+          Number of nearest neighbours to be used for voting.
+        dfx : functor
+          Function to compute the distances between training and test samples.
+          Default: squared euclidean distance
+        voting : str
+          Voting method used to derive predictions from the nearest neighbors.
+          Possible values are 'majority' (simple majority of classes
+          determines vote) and 'weighted' (votes are weighted according to the
+          relative frequencies of each class in the training data).
+        **kwargs
+          Additonal arguments are passed to the base class.
         """
 
         # init base class first
@@ -155,7 +158,7 @@ class kNN(Classifier):
         # store the predictions in the state. Relies on State._setitem to do
         # nothing if the relevant state member is not enabled
         self.states.predictions = predicted
-        self.states.values = [r[1] for r in results]
+        self.states.estimates = [r[1] for r in results]
 
         return predicted
 

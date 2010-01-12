@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Least angle regression (LARS) classifier."""
+"""Least angle regression (LARS)."""
 
 __docformat__ = 'restructuredtext'
 
@@ -23,16 +23,19 @@ if externals.exists('rpy', raiseException=True) and \
 
 
 # local imports
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
+     FailedToTrainError
 from mvpa.measures.base import Sensitivity
+from mvpa.datasets.base import Dataset
 
+from mvpa.base import warning
 if __debug__:
     from mvpa.base import debug
 
 known_models = ('lasso', 'stepwise', 'lar', 'forward.stagewise')
 
 class LARS(Classifier):
-    """Least angle regression (LARS) `Classifier`.
+    """Least angle regression (LARS).
 
     LARS is the model selection algorithm from:
 
@@ -46,7 +49,7 @@ class LARS(Classifier):
     classification, but instead of starting with all features, it
     starts with none and adds them in, which is similar to boosting.
 
-    This classifier behaves more like a ridge regression in that it
+    This learner behaves more like a ridge regression in that it
     returns prediction values and it treats the training labels as
     continuous.
 
@@ -66,7 +69,7 @@ class LARS(Classifier):
     """
 
     # XXX from yoh: it is linear, isn't it?
-    _clf_internals = [ 'lars', 'regression', 'linear', 'has_sensitivity',
+    __tags__ = [ 'lars', 'regression', 'linear', 'has_sensitivity',
                        'does_feature_selection',
                        ]
     def __init__(self, model_type="lasso", trace=False, normalize=True,
@@ -76,23 +79,24 @@ class LARS(Classifier):
 
         See the help in R for further details on the following parameters:
 
-        :Parameters:
-          model_type : string
-            Type of LARS to run. Can be one of ('lasso', 'lar',
-            'forward.stagewise', 'stepwise').
-          trace : boolean
-            Whether to print progress in R as it works.
-          normalize : boolean
-            Whether to normalize the L2 Norm.
-          intercept : boolean
-            Whether to add a non-penalized intercept to the model.
-          max_steps : None or int
-            If not None, specify the total number of iterations to run. Each
-            iteration adds a feature, but leaving it none will add until
-            convergence.
-          use_Gram : boolean
-            Whether to compute the Gram matrix (this should be false if you
-            have more features than samples.)
+        Parameters
+        ----------
+        model_type : string
+          Type of LARS to run. Can be one of ('lasso', 'lar',
+          'forward.stagewise', 'stepwise').
+        trace : boolean
+          Whether to print progress in R as it works.
+        normalize : boolean
+          Whether to normalize the L2 Norm.
+        intercept : boolean
+          Whether to add a non-penalized intercept to the model.
+        max_steps : None or int
+          If not None, specify the total number of iterations to run. Each
+          iteration adds a feature, but leaving it none will add until
+          convergence.
+        use_Gram : boolean
+          Whether to compute the Gram matrix (this should be false if you
+          have more features than samples.)
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
@@ -110,22 +114,19 @@ class LARS(Classifier):
         self.__use_Gram = use_Gram
 
         # pylint friendly initializations
+        self.__lowest_Cp_step = None
         self.__weights = None
         """The beta weights for each feature."""
         self.__trained_model = None
         """The model object after training that will be used for
         predictions."""
 
-        # It does not make sense to calculate a confusion matrix for a
-        # regression
-        # YOH: we do have summary statistics for regressions
-        #self.states.enable('training_confusion', False)
 
     def __repr__(self):
         """String summary of the object
         """
         return "LARS(type='%s', normalize=%s, intercept=%s, trace=%s, " \
-               "max_steps=%s, use_Gram=%s, regression=%s, " \
+               "max_steps=%s, use_Gram=%s, " \
                "enable_states=%s)" % \
                (self.__type,
                 self.__normalize,
@@ -133,7 +134,6 @@ class LARS(Classifier):
                 self.__trace,
                 self.__max_steps,
                 self.__use_Gram,
-                self.params.regression,
                 str(self.states.enabled))
 
 
@@ -142,39 +142,54 @@ class LARS(Classifier):
         """
         if self.__max_steps is None:
             # train without specifying max_steps
-            self.__trained_model = rpy.r.lars(data.samples,
-                                              data.labels[:,N.newaxis],
-                                              type=self.__type,
-                                              normalize=self.__normalize,
-                                              intercept=self.__intercept,
-                                              trace=self.__trace,
-                                              use_Gram=self.__use_Gram)
+            trained_model = rpy.r.lars(data.samples,
+                                       data.labels[:,N.newaxis],
+                                       type=self.__type,
+                                       normalize=self.__normalize,
+                                       intercept=self.__intercept,
+                                       trace=self.__trace,
+                                       use_Gram=self.__use_Gram)
         else:
             # train with specifying max_steps
-            self.__trained_model = rpy.r.lars(data.samples,
-                                              data.labels[:,N.newaxis],
-                                              type=self.__type,
-                                              normalize=self.__normalize,
-                                              intercept=self.__intercept,
-                                              trace=self.__trace,
-                                              use_Gram=self.__use_Gram,
-                                              max_steps=self.__max_steps)
+            trained_model = rpy.r.lars(data.samples,
+                                       data.labels[:,N.newaxis],
+                                       type=self.__type,
+                                       normalize=self.__normalize,
+                                       intercept=self.__intercept,
+                                       trace=self.__trace,
+                                       use_Gram=self.__use_Gram,
+                                       max_steps=self.__max_steps)
 
         # find the step with the lowest Cp (risk)
         # it is often the last step if you set a max_steps
         # must first convert dictionary to array
-        Cp_vals = N.asarray([self.__trained_model['Cp'][str(x)]
-                             for x in range(len(self.__trained_model['Cp']))])
-        if N.isnan(Cp_vals[0]):
+        try:
+            Cp = trained_model['Cp']
+            if '0' in Cp:
+                # If there was any
+                Cp_vals = N.asarray([Cp[str(x)] for x in range(len(Cp))])
+            else:
+                Cp_vals = None
+        except TypeError, e:
+            raise FailedToTrainError, \
+                  "Failed to train %s on %s. Got '%s' while trying to access " \
+                  "trained model %s" % (self, data, e, trained_model)
+
+        if Cp_vals is None:
+            # if there were no any -- just choose 0th
+            lowest_Cp_step = 0
+        elif N.isnan(Cp_vals[0]):
             # sometimes may come back nan, so just pick the last one
-            self.__lowest_Cp_step = len(Cp_vals)-1
+            lowest_Cp_step = len(Cp_vals)-1
         else:
             # determine the lowest
-            self.__lowest_Cp_step = Cp_vals.argmin()
+            lowest_Cp_step = Cp_vals.argmin()
 
+        self.__lowest_Cp_step = lowest_Cp_step
         # set the weights to the lowest Cp step
-        self.__weights = self.__trained_model['beta'][self.__lowest_Cp_step,:]
+        self.__weights = trained_model['beta'][lowest_Cp_step, :]
 
+        self.__trained_model = trained_model # bind to an instance
 #         # set the weights to the final state
 #         self.__weights = self.__trained_model['beta'][-1,:]
 
@@ -186,18 +201,19 @@ class LARS(Classifier):
         """
         # predict with the final state (i.e., the last step)
         # predict with the lowest Cp step
-        res = rpy.r.predict_lars(self.__trained_model,
-                                 data,
-                                 mode='step',
-                                 s=self.__lowest_Cp_step)
+        try:
+            res = rpy.r.predict_lars(self.__trained_model,
+                                     data,
+                                     mode='step',
+                                     s=self.__lowest_Cp_step)
                                  #s=self.__trained_model['beta'].shape[0])
+            fit = N.atleast_1d(res['fit'])
+        except rpy.RPyRException, e:
+            warning("Failed to obtain predictions using %s on %s."
+                    "Re-raising exception." % (self, data))
+            raise
 
-        fit = N.asarray(res['fit'])
-        if len(fit.shape) == 0:
-            # if we just got 1 sample with a scalar
-            fit = fit.reshape( (1,) )
-
-        self.states.values = fit
+        self.states.estimates = fit
         return fit
 
 
@@ -237,5 +253,5 @@ class LARSWeights(Sensitivity):
                   "Result: min=%f max=%f" %\
                   (N.min(weights), N.max(weights)))
 
-        return weights
+        return Dataset(N.atleast_2d(weights))
 

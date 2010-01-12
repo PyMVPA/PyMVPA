@@ -29,11 +29,12 @@ class ReportTest(unittest.TestCase):
     """Just basic testing of reports -- pretty much that nothing fails
     """
 
-    @sweepargs(rc=_test_classes)
-    def testBasic(self, rc):
-        """Test all available reports, real or dummy for just working
-        """
-        dirname = mktemp('mvpa', 'test_report')
+    def auxBasic(self, dirname, rc):
+        """Helper function -- to assure that all filehandlers
+           get closed so we could remove trash directory.
+
+           Otherwise -- .nfs* files on NFS-mounted drives cause problems
+           """
         report = rc('UnitTest report',
                     title="Sample report for testing",
                     path=dirname)
@@ -95,6 +96,16 @@ class ReportTest(unittest.TestCase):
             P.close('all')
             P.ion()
 
+        verbose.handlers = ohandlers
+        pass
+
+
+    @sweepargs(rc=_test_classes)
+    def testBasic(self, rc):
+        """Test all available reports, real or dummy for just working
+        """
+        dirname = mktemp('mvpa', 'test_report')
+        self.auxBasic(dirname, rc)
         # cleanup
         if os.path.exists(dirname):
             # poor man recursive remove
@@ -107,7 +118,6 @@ class ReportTest(unittest.TestCase):
                         os.remove(os.path.join(dirname, f, f2))
                     os.rmdir(os.path.join(dirname, f))
             os.rmdir(dirname)
-        verbose.handlers = ohandlers
 
 
 def suite():

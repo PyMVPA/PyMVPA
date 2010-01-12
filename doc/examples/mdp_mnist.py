@@ -70,6 +70,16 @@ Doing it the PyMVPA way
 import pylab as P
 from mvpa.suite import *
 
+"""
+
+Following  MNIST_ dataset is not distributed along with
+PyMVPA due to its size.  Please download it into directory from which
+you are running this example first.
+
+.. _MNIST: http://www.pymvpa.org/files/data/mnist.pickle.gz
+
+"""
+
 data = cPickle.load(gzip.open('mnist.pickle.gz'))
 ds = Dataset.from_basic(
         data['traindata'],
@@ -85,15 +95,16 @@ testds.init_origids('samples')
 
 examples = [0, 25024, 50000, 59000]
 
-P.figure(figsize=(6,6))
+P.figure(figsize=(6, 6))
 
-for i, id in enumerate(examples):
+for i, id_ in enumerate(examples):
     ax = P.subplot(2, 2, i+1)
     ax.axison = False
-    P.imshow(data['traindata'][id].T, cmap=P.cm.gist_yarg,
+    P.imshow(data['traindata'][id_].T, cmap=P.cm.gist_yarg,
              interpolation='nearest', aspect='equal')
 
-P.subplots_adjust(left=0,right=1,bottom=0,top=1,wspace=0.05,hspace=0.05)
+P.subplots_adjust(left=0, right=1, bottom=0, top=1,
+                  wspace=0.05, hspace=0.05)
 P.show()
 
 
@@ -102,7 +113,8 @@ fdaflow = (mdp.nodes.WhiteningNode(output_dim=10, dtype='d') +
            mdp.nodes.FDANode(output_dim=9))
 fdaflow.verbose = True
 
-mapper = MDPFlowMapper(fdaflow, ([], [], [DatasetAttributeExtractor('sa', 'labels')]))
+mapper = MDPFlowMapper(fdaflow,
+                       ([], [], [DatasetAttributeExtractor('sa', 'labels')]))
 
 terr = TransferError(MappedClassifier(SMLR(), mapper),
                      enable_states=['confusion',
@@ -112,18 +124,18 @@ print 'Test error:', err
 try:
     from enthought.mayavi.mlab import points3d
     P3D = True
-except:
+except ImportError:
     print 'Sorry, no 3D plots!'
     P3D = False
-    
+
 fmts = ['bo', 'ro', 'ko', 'mo']
 pts = []
 for i, ex in enumerate(examples):
-    pts.append(mapper.forward(ds.samples[ex:ex+100])[:,:3])
+    pts.append(mapper.forward(ds.samples[ex:ex+100])[:, :3])
 
 if P3D:
     for p in pts:
-        points3d(p[:,0],p[:,1],p[:,2])
+        points3d(p[:, 0], p[:, 1], p[:, 2])
 
 #if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures

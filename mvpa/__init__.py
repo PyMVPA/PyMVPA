@@ -13,9 +13,6 @@ Package Organization
 ====================
 The mvpa package contains the following subpackages and modules:
 
-.. packagetree::
-   :style: UML
-
 :group Algorithms: algorithms
 :group Anatomical Atlases: atlases
 :group Basic Data Structures: datasets

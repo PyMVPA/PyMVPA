@@ -13,6 +13,7 @@ from mvpa.measures.searchlight import sphere_searchlight
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
+from mvpa.clfs.gnb import GNB
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
@@ -28,47 +29,68 @@ class SearchlightTests(unittest.TestCase):
 
     def testSpatialSearchlight(self):
         # compute N-1 cross-validation for each sphere
-        transerror = TransferError(sample_clf_lin)
+        # YOH: unfortunately sample_clf_lin is not guaranteed
+        #      to provide exactly the same results due to inherent
+        #      iterative process.  Therefore lets use something quick
+        #      and pure Python
+        transerror = TransferError(GNB(common_variance=True))
         cv = CrossValidatedTransferError(
                 transerror,
                 NFoldSplitter(cvtype=1))
-        sl = sphere_searchlight(cv, diameter=3, transformer=N.array,
-                         enable_states=['roisizes', 'raw_results'])
 
-        # run searchlight
-        results = sl(self.dataset)
+        sls = [sphere_searchlight(cv, radius=1,
+                         enable_states=['roisizes', 'raw_results'])]
 
-        # check for correct number of spheres
-        self.failUnless(len(results) == 106)
+        if externals.exists('pprocess'):
+            sls += [sphere_searchlight(cv, radius=1,
+                         nproc=2,
+                         enable_states=['roisizes', 'raw_results'])]
 
-        # check for chance-level performance across all spheres
-        self.failUnless(0.4 < results.mean() < 0.6)
+        all_results = []
+        for sl in sls:
+            # run searchlight
+            results = sl(self.dataset)
+            all_results.append(results)
 
-        # check resonable sphere sizes
-        self.failUnless(len(sl.states.roisizes) == 106)
-        self.failUnless(max(sl.states.roisizes) == 7)
-        self.failUnless(min(sl.states.roisizes) == 4)
+            # check for correct number of spheres
+            self.failUnless(results.nfeatures == 106)
+            # and measures (one per xfold)
+            self.failUnless(len(results) == len(self.dataset.UC))
 
-        # check base-class state
-        self.failUnlessEqual(len(sl.states.raw_results), 106)
+            # check for chance-level performance across all spheres
+            self.failUnless(0.4 < results.samples.mean() < 0.6)
 
+            # check resonable sphere sizes
+            self.failUnless(len(sl.states.roisizes) == 106)
+            self.failUnless(max(sl.states.roisizes) == 7)
+            self.failUnless(min(sl.states.roisizes) == 4)
+
+            # check base-class state
+            self.failUnlessEqual(sl.states.raw_results.nfeatures, 106)
+
+        if len(all_results) > 1:
+            # if we had multiple searchlights, we can check either they all
+            # gave the same result (they should have)
+            aresults = N.array([a.samples for a in all_results])
+            dresults = N.abs(aresults - aresults.mean(axis=0))
+            dmax = N.max(dresults)
+            self.failUnlessEqual(dmax, 0.0)
 
     def testPartialSearchlightWithFullReport(self):
         # compute N-1 cross-validation for each sphere
         transerror = TransferError(sample_clf_lin)
         cv = CrossValidatedTransferError(
                 transerror,
-                NFoldSplitter(cvtype=1),
-                combiner=N.array)
-        # contruct diameter 1 searchlight
-        sl = sphere_searchlight(cv, diameter=1, transformer=N.array,
+                NFoldSplitter(cvtype=1))
+        # contruct diameter 1 (or just radius 0) searchlight
+        sl = sphere_searchlight(cv, radius=0,
                          center_ids=[3,50])
 
         # run searchlight
         results = sl(self.dataset)
 
         # only two spheres but error for all CV-folds
-        self.failUnlessEqual(results.shape, (2, len(self.dataset.UC)))
+        self.failUnlessEqual(results.shape, (len(self.dataset.UC), 2))
 
 
     def testChiSquareSearchlight(self):
@@ -89,14 +111,12 @@ class SearchlightTests(unittest.TestCase):
             cv(data)
             return chisquare(cv.states.confusion.matrix)[0]
 
-        # contruct diameter 1 searchlight
-        sl = sphere_searchlight(getconfusion, diameter=1,
+        sl = sphere_searchlight(getconfusion, radius=0,
                          center_ids=[3,50])
 
         # run searchlight
         results = sl(self.dataset)
-
-        self.failUnless(len(results) == 2)
+        self.failUnless(results.nfeatures == 2)
 
 
 

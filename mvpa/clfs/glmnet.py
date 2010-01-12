@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""GLM-Net (GLMNET) regression classifier."""
+"""GLM-Net (GLMNET) regression and classifier."""
 
 __docformat__ = 'restructuredtext'
 
@@ -16,15 +16,20 @@ import numpy as N
 import mvpa.base.externals as externals
 
 # do conditional to be able to build module reference
-if externals.exists('rpy', raiseException=True) and \
-   externals.exists('glmnet', raiseException=True):
-    import rpy
-    rpy.r.library('glmnet')
+if externals.exists('glmnet', raiseException=True):
+    import rpy2.robjects
+    import rpy2.robjects.numpy2ri
+    RRuntimeError = rpy2.robjects.rinterface.RRuntimeError
+    r = rpy2.robjects.r
+    r.library('glmnet')
 
 # local imports
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa.base import warning
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
+     FailedToTrainError
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.param import Parameter
+from mvpa.datasets.base import Dataset
 
 if __debug__:
     from mvpa.base import debug
@@ -43,6 +48,22 @@ def _label2indlist(labels, ulabels):
     return [str(l) for l in new_labels.tolist()]
 
 
+def _label2oneofm(labels, ulabels):
+    """Convert labels to one-of-M form.
+
+    TODO: Might be useful elsewhere so could migrate into misc/
+    """
+
+    # allocate for the new one-of-M labels
+    new_labels = N.zeros((len(labels), len(ulabels)))
+
+    # loop and convert to one-of-M
+    for i, c in enumerate(ulabels):
+        new_labels[labels == c, i] = 1
+
+    return new_labels
+
+
 class _GLMNET(Classifier):
     """GLM-Net regression (GLMNET) `Classifier`.
 
@@ -52,22 +73,22 @@ class _GLMNET(Classifier):
     Paths for Generalized Linear Models via Coordinate
     Descent. http://www-stat.stanford.edu/~hastie/Papers/glmnet.pdf
 
-    To make use of GLMNET, you must have R and RPy installed as well
-    as both the glmnet contributed package. You can install the R and
-    RPy with the following command on Debian-based machines:
+    To make use of GLMNET, you must have R and RPy2 installed as well
+    as the glmnet contributed package. You can install the R and RPy2
+    with the following command on Debian-based machines::
 
-    sudo aptitude install python-rpy python-rpy-doc r-base-dev
+      sudo aptitude install python-rpy2 r-base-dev
 
     You can then install the glmnet package by running R
-    as root and calling:
+    as root and calling::
 
-    install.packages()
+      install.packages()
 
     """
 
-    _clf_internals = [ 'glmnet', 'linear', 'has_sensitivity',
-                       'does_feature_selection'
-                       ]
+    __tags__ = [ 'glmnet', 'linear', 'has_sensitivity',
+                 'does_feature_selection'
+                 ]
 
     family = Parameter('gaussian',
                        allowedtype='basestring',
@@ -123,19 +144,8 @@ class _GLMNET(Classifier):
         self.__trained_model = None
         """The model object after training that will be used for
         predictions."""
-        self.__trained_model_dict = None
-        """The model object in dict form after training that will be
-        used for predictions."""
-
-        # It does not make sense to calculate a confusion matrix for a
-        # regression
-        # YOH: sorry for not clear semantics... pyvmpa is evolving,
-        #      regressions will store RegressionStatistics within the
-        #      confusion, so it is ok to have training_confusion
-        #      enabled, but .regression parameter needs to be set to true,
-        #      therefor above conditioning and tuneup of kwargs in _R
-        #if self.params.family == 'gaussian':
-        #    self.states.enable('training_confusion', False)
+        self.__last_lambda = None
+        """Lambda obtained on the last step"""
 
 #     def __repr__(self):
 #         """String summary of the object
@@ -155,13 +165,19 @@ class _GLMNET(Classifier):
         # process the labels based on the model family
         if self.params.family == 'gaussian':
             # do nothing, just save the labels as a list
-            labels = dataset.labels.tolist()
+            #labels = dataset.labels.tolist()
+            labels = dataset.labels
             pass
         elif self.params.family == 'multinomial':
             # turn lables into list of range values starting at 1
-            labels = _label2indlist(dataset.labels,
+            #labels = _label2indlist(dataset.labels,
+            #                        dataset.uniquelabels)
+            labels = _label2oneofm(dataset.labels,
                                     dataset.uniquelabels)
-        self.__ulabels = dataset.uniquelabels.copy()
+
+        # save some properties of the data/classification
+        self._family = self.params.family
+        self._ulabels = dataset.uniquelabels.copy()
 
         # process the pmax
         if self.params.pmax is None:
@@ -172,9 +188,8 @@ class _GLMNET(Classifier):
             pmax = self.params.pmax
 
         # train with specifying max_steps
-        # must not convert trained model to dict or we'll get segfault
-        rpy.set_default_mode(rpy.NO_CONVERSION)
-        self.__trained_model = rpy.r.glmnet(dataset.samples,
+        try:
+            self.__trained_model = r.glmnet(dataset.samples,
                                             labels,
                                             family=self.params.family,
                                             alpha=self.params.alpha,
@@ -184,21 +199,25 @@ class _GLMNET(Classifier):
                                             pmax=pmax,
                                             maxit=self.params.maxit,
                                             type=self.params.model_type)
-        rpy.set_default_mode(rpy.NO_DEFAULT)
+        except RRuntimeError, e:
+            raise FailedToTrainError, \
+                  "Failed to train %s on %s. Got '%s' during call r.glmnet()." \
+                  % (self, dataset, e)
 
-        # get a dict version of the model
-        self.__trained_model_dict = rpy.r.as_list(self.__trained_model)
+        # get the field names of the model
+        fnames = N.array(self.__trained_model.getnames())
 
         # save the lambda of last step
-        self.__last_lambda = self.__trained_model_dict['lambda'][-1]
+        ind = N.nonzero(fnames=='lambda')[0]
+        self.__last_lambda = N.array(self.__trained_model[ind])[-1]
 
         # set the weights to the last step
-        weights = rpy.r.coef(self.__trained_model, s=self.__last_lambda)
+        weights = r.coef(self.__trained_model, s=self.__last_lambda)
         if self.params.family == 'multinomial':
-            self.__weights = N.hstack([rpy.r.as_matrix(weights[str(i)])[1:]
-                                       for i in range(1,len(self.__ulabels)+1)])
+            self.__weights = N.hstack([N.array(r['as.matrix'](weights[i]))[1:]
+                                       for i in range(len(weights))])
         elif self.params.family == 'gaussian':
-            self.__weights = rpy.r.as_matrix(weights)[1:]
+            self.__weights = N.array(r['as.matrix'](weights))[1:, 0]
 
 
     @accepts_dataset_as_samples
@@ -207,37 +226,39 @@ class _GLMNET(Classifier):
         Predict the output for the provided data.
         """
         # predict with standard method
-        values = rpy.r.predict(self.__trained_model,
-                               newx=data,
-                               type='link',
-                               s=self.__last_lambda)
+        values = N.array(r.predict(self.__trained_model,
+                                   newx=data,
+                                   type='link',
+                                   s=self.__last_lambda))
 
         # predict with the final state (i.e., the last step)
         classes = None
         if self.params.family == 'multinomial':
             # remove last dimension of values
-            values = values[:,:,0]
+            values = values[:, :, 0]
 
             # get the classes too (they are 1-indexed)
-            rpy.set_default_mode(rpy.NO_CONVERSION)
-            class_ind = rpy.r.predict(self.__trained_model,
-                                      newx=data,
-                                      type='class',
-                                      s=self.__last_lambda)
-            rpy.set_default_mode(rpy.NO_DEFAULT)
-            class_ind = rpy.r.as_vector(class_ind)
+            class_ind = N.array(r.predict(self.__trained_model,
+                                          newx=data,
+                                          type='class',
+                                          s=self.__last_lambda))
 
-            # convert the strings to ints and subtract 1
-            class_ind = N.array([int(float(c))-1 for c in class_ind])
+            # convert to 0-based ints
+            class_ind = (class_ind-1).astype('int')
 
             # convert to actual labels
-            classes = self.__ulabels[class_ind]
+            # XXX If just one sample is predicted, the converted predictions
+            # array is just 1D, hence it yields an IndexError on [:,0]
+            # Modified to .squeeze() which should do the same.
+            # Please acknowledge and remove this comment.
+            #classes = self._ulabels[class_ind][:,0]
+            classes = self._ulabels[class_ind].squeeze()
         else:
             # is gaussian, so just remove last dim of values
-            values = values[:,0]
+            values = values[:, 0]
 
         # values need to be set anyways if values state is enabled
-        self.states.values = values
+        self.states.estimates = values
         if classes is not None:
             # set the values and return none
             return classes
@@ -250,7 +271,6 @@ class _GLMNET(Classifier):
         """Return ids of the used features
         """
         return N.where(N.abs(self.__weights)>0)[0]
-
 
 
     def getSensitivityAnalyzer(self, **kwargs):
@@ -282,7 +302,11 @@ class GLMNETWeights(Sensitivity):
                   "Result: min=%f max=%f" %\
                   (N.min(weights), N.max(weights)))
 
-        return weights
+        #return weights
+        if clf._family == 'multinomial':
+            return Dataset(weights.T, sa={'labels': clf._ulabels})
+        else:
+            return weights
 
 class GLMNET_R(_GLMNET):
     """
@@ -300,7 +324,7 @@ class GLMNET_R(_GLMNET):
 
     """
 
-    _clf_internals = _GLMNET._clf_internals + ['regression']
+    __tags__ = _GLMNET.__tags__ + ['regression']
 
     def __init__(self,  **kwargs):
         """
@@ -317,15 +341,8 @@ class GLMNET_R(_GLMNET):
                     % (family, regr_family))
             family = regr_family
 
-        regression = kwargs.pop('regression', None)
-        if regression is None:
-            # enforce regression by default, but regression might be used as
-            # a binary classifier as well, so leave it as is if it was
-            # explicitly specified
-            regression = True
-
         # init base class first, forcing regression
-        _GLMNET.__init__(self, family=family, regression=regression, **kwargs)
+        _GLMNET.__init__(self, family=family, **kwargs)
 
 
 class GLMNET_C(_GLMNET):
@@ -344,7 +361,7 @@ class GLMNET_C(_GLMNET):
 
     """
 
-    _clf_internals = _GLMNET._clf_internals + ['multiclass', 'binary']
+    __tags__ = _GLMNET.__tags__ + ['multiclass', 'binary']
 
     def __init__(self,  **kwargs):
         """

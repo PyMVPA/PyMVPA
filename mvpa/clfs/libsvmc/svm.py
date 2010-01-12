@@ -17,10 +17,12 @@ import operator
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable
 
-from mvpa.clfs.base import accepts_dataset_as_samples
+from mvpa.clfs.base import accepts_dataset_as_samples, \
+     accepts_samples_as_dataset
 from mvpa.clfs._svmbase import _SVM
 
-from mvpa.clfs.libsvmc import _svm as svm
+from mvpa.clfs.libsvmc import _svm
+from mvpa.kernels.libsvm import LinearLSKernel
 from sens import LinearSVMWeights
 
 if __debug__:
@@ -33,6 +35,8 @@ from mvpa.clfs.libsvmc._svmc import \
      NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
      PRECOMPUTED, ONE_CLASS
 
+def _data2ls(data):
+    return N.asarray(data).astype(float)
 
 class SVM(_SVM):
     """Support Vector Machine Classifier.
@@ -45,36 +49,31 @@ class SVM(_SVM):
     probabilities = StateVariable(enabled=False,
         doc="Estimates of samples probabilities as provided by LibSVM")
 
-    _KERNELS = { "linear":  (svm.svmc.LINEAR, None, LinearSVMWeights),
-                 "rbf" :    (svm.svmc.RBF, ('gamma',), None),
-                 "poly":    (svm.svmc.POLY, ('gamma', 'degree', 'coef0'), None),
-                 "sigmoid": (svm.svmc.SIGMOID, ('gamma', 'coef0'), None),
-                 }
-    # TODO: Complete the list ;-)
-
     # TODO p is specific for SVR
     _KNOWN_PARAMS = [ 'epsilon', 'probability', 'shrinking',
                       'weight_label', 'weight']
 
-    _KNOWN_KERNEL_PARAMS = [ 'cache_size' ]
+    #_KNOWN_KERNEL_PARAMS = [ 'cache_size' ]
 
+    _KNOWN_SENSITIVITIES = {'linear':LinearSVMWeights,
+                            }
     _KNOWN_IMPLEMENTATIONS = {
-        'C_SVC' : (svm.svmc.C_SVC, ('C',),
+        'C_SVC' : (_svm.svmc.C_SVC, ('C',),
                    ('binary', 'multiclass'), 'C-SVM classification'),
-        'NU_SVC' : (svm.svmc.NU_SVC, ('nu',),
+        'NU_SVC' : (_svm.svmc.NU_SVC, ('nu',),
                     ('binary', 'multiclass'), 'nu-SVM classification'),
-        'ONE_CLASS' : (svm.svmc.ONE_CLASS, (),
+        'ONE_CLASS' : (_svm.svmc.ONE_CLASS, (),
                        ('oneclass',), 'one-class-SVM'),
-        'EPSILON_SVR' : (svm.svmc.EPSILON_SVR, ('C', 'tube_epsilon'),
+        'EPSILON_SVR' : (_svm.svmc.EPSILON_SVR, ('C', 'tube_epsilon'),
                          ('regression',), 'epsilon-SVM regression'),
-        'NU_SVR' : (svm.svmc.NU_SVR, ('nu', 'tube_epsilon'),
+        'NU_SVR' : (_svm.svmc.NU_SVR, ('nu', 'tube_epsilon'),
                     ('regression',), 'nu-SVM regression')
         }
 
-    _clf_internals = _SVM._clf_internals + [ 'libsvm' ]
+    __default_kernel_class__ = LinearLSKernel
+    __tags__ = _SVM.__tags__ + [ 'libsvm' ]
 
     def __init__(self,
-                 kernel_type='linear',
                  **kwargs):
         # XXX Determine which parameters depend on each other and implement
         # safety/simplifying logic around them
@@ -85,6 +84,7 @@ class SVM(_SVM):
         Default implementation (C/nu/epsilon SVM) is chosen depending
         on the given parameters (C/nu/tube_epsilon).
         """
+    
         svm_impl = kwargs.get('svm_impl', None)
         # Depending on given arguments, figure out desired SVM
         # implementation
@@ -106,14 +106,14 @@ class SVM(_SVM):
         kwargs['svm_impl'] = svm_impl
 
         # init base class
-        _SVM.__init__(self, kernel_type, **kwargs)
+        _SVM.__init__(self, **kwargs)
 
         self._svm_type = self._KNOWN_IMPLEMENTATIONS[svm_impl][0]
 
         if 'nu' in self._KNOWN_PARAMS and 'epsilon' in self._KNOWN_PARAMS:
             # overwrite eps param with new default value (information
             # taken from libSVM docs
-            self.params['epsilon'].setDefault(0.001)
+            self.params['epsilon']._set_default(0.001)
 
         self.__model = None
         """Holds the trained SVM."""
@@ -124,26 +124,22 @@ class SVM(_SVM):
         """Train SVM
         """
         # libsvm needs doubles
-        if dataset.samples.dtype == 'float64':
-            src = dataset.samples
-        else:
-            src = dataset.samples.astype('double')
+        src = _data2ls(dataset)
 
         # libsvm cannot handle literal labels
         labels = self._attrmap.to_numeric(dataset.sa.labels).tolist()
 
-        svmprob = svm.SVMProblem(labels, src )
-
+        svmprob = _svm.SVMProblem(labels, src )
 
         # Translate few params
         TRANSLATEDICT = {'epsilon': 'eps',
                          'tube_epsilon': 'p'}
         args = []
-        for paramname, param in self.params.items.items() \
-                + self.kernel_params.items.items():
+        for paramname, param in self.params.items() \
+                + self.kernel_params.items():
             if paramname in TRANSLATEDICT:
                 argname = TRANSLATEDICT[paramname]
-            elif paramname in svm.SVMParameter.default_parameters:
+            elif paramname in _svm.SVMParameter.default_parameters:
                 argname = paramname
             else:
                 if __debug__:
@@ -155,58 +151,47 @@ class SVM(_SVM):
         # ??? All those parameters should be fetched if present from
         # **kwargs and create appropriate parameters within .params or
         # .kernel_params
-        libsvm_param = svm.SVMParameter(
-            kernel_type=self._kernel_type,
+        libsvm_param = _svm.SVMParameter(
+            kernel_type=self.params.kernel.as_raw_ls(),# Just an integer ID
             svm_type=self._svm_type,
             **dict(args))
+        
         """Store SVM parameters in libSVM compatible format."""
 
-        if self.params.isKnown('C'):#svm_type in [svm.svmc.C_SVC]:
-            C = self.params.C
-            if not operator.isSequenceType(C):
-                # we were not given a tuple for balancing between classes
-                C = [C]
-
-            Cs = list(C[:])               # copy
-            for i in xrange(len(Cs)):
-                if Cs[i] < 0:
-                    Cs[i] = self._getDefaultC(dataset.samples)*abs(Cs[i])
-                    if __debug__:
-                        debug("SVM", "Default C for %s was computed to be %s" %
-                              (C[i], Cs[i]))
-
-            libsvm_param._setParameter('C', Cs[0])
-
+        if self.params.has_key('C'):#svm_type in [_svm.svmc.C_SVC]:
+            Cs = self._getCvec(dataset)
             if len(Cs)>1:
-                C0 = abs(C[0])
+                C0 = abs(Cs[0])
                 scale = 1.0/(C0)#*N.sqrt(C0))
                 # so we got 1 C per label
-                if len(Cs) != len(dataset.uniquelabels):
+                uls = self._attrmap.to_numeric(dataset.sa['labels'].unique)
+                if len(Cs) != len(uls):
                     raise ValueError, "SVM was parametrized with %d Cs but " \
                           "there are %d labels in the dataset" % \
                           (len(Cs), len(dataset.uniquelabels))
                 weight = [ c*scale for c in Cs ]
+                # All 3 need to be set to take an effect
                 libsvm_param._setParameter('weight', weight)
+                libsvm_param._setParameter('nr_weight', len(weight))
+                libsvm_param._setParameter('weight_label', uls)
+            libsvm_param._setParameter('C', Cs[0])
 
-        self.__model = svm.SVMModel(svmprob, libsvm_param)
+        self.__model = _svm.SVMModel(svmprob, libsvm_param)
 
 
-    @accepts_dataset_as_samples
+    @accepts_samples_as_dataset
     def _predict(self, data):
         """Predict values for the data
         """
         # libsvm needs doubles
-        if data.dtype == 'float64':
-            src = data
-        else:
-            src = data.astype('double')
+        src = _data2ls(data)
         states = self.states
 
         predictions = [ self.model.predict(p) for p in src ]
 
-        if states.isEnabled("values"):
-            if self.params.regression:
-                values = [ self.model.predictValuesRaw(p)[0] for p in src ]
+        if states.is_enabled('estimates'):
+            if self.__is_regression__:
+                estimates = [ self.model.predictValuesRaw(p)[0] for p in src ]
             else:
                 # if 'trained_labels' are literal they have to be mapped
                 if N.issubdtype(self.states.trained_labels.dtype, 'c'):
@@ -225,22 +210,22 @@ class SVM(_SVM):
                     # Apperently libsvm reorders labels so we need to
                     # track (1,0) values instead of (0,1) thus just
                     # lets take negative reverse
-                    values = [ self.model.predictValues(p)[(trained_labels[1],
+                    estimates = [ self.model.predictValues(p)[(trained_labels[1],
                                                             trained_labels[0])]
                                for p in src ]
-                    if len(values) > 0:
+                    if len(estimates) > 0:
                         if __debug__:
                             debug("SVM",
-                                  "Forcing values to be ndarray and reshaping"
+                                  "Forcing estimates to be ndarray and reshaping"
                                   " them into 1D vector")
-                        values = N.asarray(values).reshape(len(values))
+                        estimates = N.asarray(estimates).reshape(len(estimates))
                 else:
                     # In multiclass we return dictionary for all pairs
                     # of labels, since libsvm does 1-vs-1 pairs
-                    values = [ self.model.predictValues(p) for p in src ]
-            states.values = values
+                    estimates = [ self.model.predictValues(p) for p in src ]
+            states.estimates = estimates
 
-        if states.isEnabled("probabilities"):
+        if states.is_enabled("probabilities"):
             # XXX Is this really necesssary? yoh don't think so since
             # assignment to states is doing the same
             #self.probabilities = [ self.model.predictProbability(p)
@@ -260,14 +245,14 @@ class SVM(_SVM):
         if self.trained:
             s += '\n # of SVs: %d' % self.__model.getTotalNSV()
             try:
-                prm = svm.svmc.svm_model_param_get(self.__model.model)
-                C = svm.svmc.svm_parameter_C_get(prm)
+                prm = _svm.svmc.svm_model_param_get(self.__model.model)
+                C = _svm.svmc.svm_parameter_C_get(prm)
                 # extract information of how many SVs sit inside the margin,
                 # i.e. so called 'bounded SVs'
                 inside_margin = N.sum(
                     # take 0.99 to avoid rounding issues
                     N.abs(self.__model.getSVCoef())
-                          >= 0.99*svm.svmc.svm_parameter_C_get(prm))
+                          >= 0.99*_svm.svmc.svm_parameter_C_get(prm))
                 s += ' #bounded SVs:%d' % inside_margin
                 s += ' used C:%5g' % C
             except:
@@ -288,83 +273,15 @@ class SVM(_SVM):
     """Access to the SVM model."""
 
 
-
-#class LinearSVM(SVM):
-#    """Base class of all linear SVM classifiers that make use of the libSVM
-#    package. Still not meant to be used directly.
-#    """
-#
-#    def __init__(self, svm_impl, **kwargs):
-#        """The constructor arguments are virtually identical to the ones of
-#        the SVM class, except that 'kernel_type' is set to LINEAR.
-#        """
-#        # init base class
-#        SVM.__init__(self, kernel_type='linear',
-#                         svm_impl=svm_impl, **kwargs)
-#
-#
-#    def getSensitivityAnalyzer(self, **kwargs):
-#        """Returns an appropriate SensitivityAnalyzer."""
-#        return LibSVMLinearSVMWeights(self, **kwargs)
-#
-#
-
-#class LinearNuSVMC(LinearSVM):
-#    """Classifier for linear Nu-SVM classification.
-#    """
-#
-#    def __init__(self, **kwargs):
-#        """
-#        """
-#        # init base class
-#        LinearSVM.__init__(self, svm_impl='NU_SVC', **kwargs)
-#
-#
-#class LinearCSVMC(LinearSVM):
-#    """Classifier for linear C-SVM classification.
-#    """
-#
-#    def __init__(self, **kwargs):
-#        """
-#        """
-#        # init base class
-#        LinearSVM.__init__(self, svm_impl='C_SVC', **kwargs)
-#
-#
-#
-#class RbfNuSVMC(SVM):
-#    """Nu-SVM classifier using a radial basis function kernel.
-#    """
-#
-#    def __init__(self, **kwargs):
-#        """
-#        """
-#        # init base class
-#        SVM.__init__(self, kernel_type='rbf',
-#                     svm_impl='NU_SVC', **kwargs)
-#
-#
-#class RbfCSVMC(SVM):
-#    """C-SVM classifier using a radial basis function kernel.
-#    """
-#
-#    def __init__(self, **kwargs):
-#        """
-#        """
-#        # init base class
-#        SVM.__init__(self, kernel_type='rbf',
-#                     svm_impl='C_SVC', **kwargs)
-#
-
 # try to configure libsvm 'noise reduction'. Due to circular imports,
 # we can't check externals here since it would not work.
 try:
     # if externals.exists('libsvm verbosity control'):
     if __debug__ and "LIBSVM" in debug.active:
         debug("LIBSVM", "Setting verbosity for libsvm to 255")
-        svm.svmc.svm_set_verbosity(255)
+        _svm.svmc.svm_set_verbosity(255)
     else:
-        svm.svmc.svm_set_verbosity(0)
+        _svm.svmc.svm_set_verbosity(0)
 except AttributeError:
     warning("Available LIBSVM has no way to control verbosity of the output")
 

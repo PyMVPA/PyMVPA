@@ -29,9 +29,10 @@ def reuseAbsolutePath(file1, file2, force=False):
     """Use path to file1 as the path to file2 is no absolute
     path is given for file2
 
-    :Parameters:
-      force : bool
-        if True, force it even if the file2 starts with /
+    Parameters
+    ----------
+    force : bool
+      if True, force it even if the file2 starts with /
     """
     if not file2.startswith(os.path.sep) or force:
         # lets reuse path to file1
@@ -83,15 +84,19 @@ def _getUniqueLengthNCombinations_lt3(data, n):
     """Generates a list of lists containing all combinations of
     elements of data of length 'n' without repetitions.
 
-        data: list
-        n:    integer
+    Parameters
+    ----------
+    data : list
+    n : int
 
     This function is adapted from a Java version posted in some forum on
     the web as an answer to the question 'How can I generate all possible
     combinations of length n?'. Unfortunately I cannot remember which
     forum it was.
 
-    NOTE: implementation is broken for n>2
+    Notes
+    -----
+    Implementation is broken for n>2
     """
 
     if n > 2:
@@ -137,11 +142,12 @@ def xuniqueCombinations(L, n):
     # XXX EO: I guess they are already sorted.
     # XXX EO: It seems to work well for n>20 :)
 
-    :Parameters:
-      L : list
-        list of unique ids
-      n : int
-        grouping size
+    Parameters
+    ----------
+    L : list
+      list of unique ids
+    n : int
+      grouping size
 
     Adopted from Li Daobing
     http://code.activestate.com/recipes/190465/
@@ -156,14 +162,15 @@ def xuniqueCombinations(L, n):
 def _getUniqueLengthNCombinations_binary(L, n=None, sort=True):
     """Find all subsets of data
 
-    :Parameters:
-      L : list
-        list of unique ids
-      n : None or int
-        If None, all possible subsets are returned. If n is specified (int),
-        then only the ones of the length n are returned
-      sort : bool
-        Either to sort the resultant sequence
+    Parameters
+    ----------
+    L : list
+      list of unique ids
+    n : None or int
+      If None, all possible subsets are returned. If n is specified (int),
+      then only the ones of the length n are returned
+    sort : bool
+      Either to sort the resultant sequence
 
     Adopted from Alex Martelli:
     http://mail.python.org/pipermail/python-list/2001-January/067815.html
@@ -189,12 +196,13 @@ def _getUniqueLengthNCombinations_binary(L, n=None, sort=True):
 def getUniqueLengthNCombinations(L, n=None, sort=True):
     """Find all subsets of data
 
-    :Parameters:
-      L : list
-        list of unique ids
-      n : None or int
-        If None, all possible subsets are returned. If n is specified (int),
-        then only the ones of the length n are returned
+    Parameters
+    ----------
+    L : list
+      list of unique ids
+    n : None or int
+      If None, all possible subsets are returned. If n is specified (int),
+      then only the ones of the length n are returned
 
     TODO: work out single stable implementation -- probably just by fixing
     _getUniqueLengthNCombinations_lt3
@@ -216,14 +224,15 @@ def getUniqueLengthNCombinations(L, n=None, sort=True):
 def _getUniqueLengthNCombinations_binary(L, n=None, sort=True):
     """Find all subsets of data
 
-    :Parameters:
-      L : list
-        list of unique ids
-      n : None or int
-        If None, all possible subsets are returned. If n is specified (int),
-        then only the ones of the length n are returned
-      sort : bool
-        Either to sort the resultant sequence
+    Parameters
+    ----------
+    L : list
+      list of unique ids
+    n : None or int
+      If None, all possible subsets are returned. If n is specified (int),
+      then only the ones of the length n are returned
+    sort : bool
+      Either to sort the resultant sequence
 
     Adopted from Alex Martelli:
     http://mail.python.org/pipermail/python-list/2001-January/067815.html
@@ -249,12 +258,13 @@ def _getUniqueLengthNCombinations_binary(L, n=None, sort=True):
 def getUniqueLengthNCombinations(L, n=None, sort=True):
     """Find all subsets of data
 
-    :Parameters:
-      L : list
-        list of unique ids
-      n : None or int
-        If None, all possible subsets are returned. If n is specified (int),
-        then only the ones of the length n are returned
+    Parameters
+    ----------
+    L : list
+      list of unique ids
+    n : None or int
+      If None, all possible subsets are returned. If n is specified (int),
+      then only the ones of the length n are returned
 
     TODO: work out single stable implementation -- probably just by fixing
     _getUniqueLengthNCombinations_lt3
@@ -293,8 +303,9 @@ def idhash(val):
 def isSorted(items):
     """Check if listed items are in sorted order.
 
-    :Parameters:
-        `items`: iterable container
+    Parameters
+    ----------
+      `items`: iterable container
 
     :return: `True` if were sorted. Otherwise `False` + Warning
     """
@@ -430,12 +441,13 @@ class SmartVersion(Version):
 def getBreakPoints(items, contiguous=True):
     """Return a list of break points.
 
-    :Parameters:
-      items : iterable
-        list of items, such as chunks
-      contiguous : bool
-        if `True` (default) then raise Value Error if items are not
-        contiguous, i.e. a label occur in multiple contiguous sets
+    Parameters
+    ----------
+    items : iterable
+      list of items, such as chunks
+    contiguous : bool
+      if `True` (default) then raise Value Error if items are not
+      contiguous, i.e. a label occur in multiple contiguous sets
 
     :raises: ValueError
 
@@ -554,6 +566,12 @@ class Event(dict):
     _MUSTHAVE = ['onset']
 
     def __init__(self, **kwargs):
+        """
+        Parameters
+        ----------
+        **kwargs : dict
+          All keys to describe the Event to initialize its dict.
+        """
         # store everything
         dict.__init__(self, **kwargs)
 
@@ -563,31 +581,36 @@ class Event(dict):
                 raise ValueError, "Event must have '%s' defined." % k
 
 
-    def asDescreteTime(self, dt, storeoffset=False):
+    def asDescreteTime(self, dt, storeoffset=False, offsetattr='offset'):
         """Convert `onset` and `duration` information into descrete timepoints.
 
-        :Parameters:
-          dt: float
-            Temporal distance between two timepoints in the same unit as `onset`
-            and `duration`.
-          storeoffset: bool
-            If True, the temporal offset between original `onset` and
-            descretized `onset` is stored as an additional item in `features`.
+        Parameters
+        ----------
+        dt : float
+          Temporal distance between two timepoints in the same unit as `onset`
+          and `duration`.
+        storeoffset : bool
+          If True, the temporal offset between original `onset` and
+          descretized onset is stored as an additional item.
+        offsetattr : str
+          The name of the attribute that is used to store the computed offset
+          in case the `storeoffset` is enabled.
 
-        :Return:
-          A copy of the original `Event` with `onset` and optionally `duration`
-          replaced by their corresponding descrete timepoint. The new onset will
-          correspond to the timepoint just before or exactly at the original
-          onset. The new duration will be the number of timepoints covering the
-          event from the computed onset timepoint till the timepoint exactly at
-          the end, or just after the event.
+        Returns
+        -------
+        A copy of the original `Event` with `onset` and optionally `duration`
+        replaced by their corresponding descrete timepoint. The new onset will
+        correspond to the timepoint just before or exactly at the original
+        onset. The new duration will be the number of timepoints covering the
+        event from the computed onset timepoint till the timepoint exactly at
+        the end, or just after the event.
 
-          Note again, that the new values are expressed as #timepoint and not
-          in their original unit!
+        Note again, that the new values are expressed as #timepoint and not
+        in their original unit!
         """
         dt = float(dt)
         onset = self['onset']
-        out = deepcopy(self)
+        out = copy(self)
 
         # get the timepoint just prior the onset
         out['onset'] = int(N.floor(onset / dt))
@@ -595,11 +618,7 @@ class Event(dict):
         if storeoffset:
             # compute offset
             offset = onset - (out['onset'] * dt)
-
-            if out.has_key('features'):
-                out['features'].append(offset)
-            else:
-                out['features'] = [offset]
+            out[offsetattr] = offset
 
         if out.has_key('duration'):
             # how many timepoint cover the event (from computed onset

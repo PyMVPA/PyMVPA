@@ -48,11 +48,12 @@ class TuebingenMEG(object):
     def __init__(self, source):
         """Reader MEG data from texfiles or file-like objects.
 
-        :Parameters:
-          source: str | file-like
-            Strings are assumed to be filenames (with `.gz` suffix
-            compressed), while all other object types are treated as file-like
-            objects.
+        Parameters
+        ----------
+        source : str or file-like
+          Strings are assumed to be filenames (with `.gz` suffix
+          compressed), while all other object types are treated as file-like
+          objects.
         """
         self.ntimepoints = None
         self.timepoints = None

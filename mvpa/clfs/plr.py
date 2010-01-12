@@ -28,20 +28,21 @@ class PLR(Classifier):
         """
         Initialize a penalized logistic regression analysis
 
-        :Parameters:
-          lm : int
-            the penalty term lambda.
-          criterion : int
-            the criterion applied to judge convergence.
-          reduced : Bool
-            if not False, the rank of the data is reduced before
-            performing the calculations. In that case, reduce is taken
-            as the fraction of the first singular value, at which a
-            dimension is not considered significant anymore. A
-            reasonable criterion is reduced=0.01
-          maxiter : int
-            maximum number of iterations. If no convergence occurs
-            after this number of iterations, an exception is raised.
+        Parameters
+        ----------
+        lm : int
+          the penalty term lambda.
+        criterion : int
+          the criterion applied to judge convergence.
+        reduced : Bool
+          if not False, the rank of the data is reduced before
+          performing the calculations. In that case, reduce is taken
+          as the fraction of the first singular value, at which a
+          dimension is not considered significant anymore. A
+          reasonable criterion is reduced=0.01
+        maxiter : int
+          maximum number of iterations. If no convergence occurs
+          after this number of iterations, an exception is raised.
 
         """
         # init base class first
@@ -154,7 +155,7 @@ class PLR(Classifier):
         # save the state if desired, relying on State._setitem_ to
         # decide if we will actually save the values
         self.states.predictions = predictions
-        self.states.values = values
+        self.states.estimates = values
 
         return predictions
 

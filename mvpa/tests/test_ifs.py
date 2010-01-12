@@ -14,6 +14,7 @@ from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.featsel.helpers import FixedNElementTailSelector
+from mvpa.mappers.fx import mean_sample
 
 from tests_warehouse import *
 from tests_warehouse_clfs import *
@@ -39,7 +40,8 @@ class IFSTests(unittest.TestCase):
         # data measure and transfer error quantifier use the SAME clf!
         trans_error = TransferError(svm)
         data_measure = CrossValidatedTransferError(trans_error,
-                                                   NFoldSplitter(1))
+                                                   NFoldSplitter(1),
+                                                   mapper=mean_sample())
 
         ifs = IFS(data_measure,
                   trans_error,

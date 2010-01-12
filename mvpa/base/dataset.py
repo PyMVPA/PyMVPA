@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Dataset container"""
+"""Multi-purpose dataset container with support for attributes."""
 
 __docformat__ = 'restructuredtext'
 
@@ -16,13 +16,15 @@ import copy
 from mvpa.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection, \
         SampleAttribute, FeatureAttribute, DatasetAttribute
+from mvpa.base.types import is_datasetlike
+from mvpa.base.dochelpers import _str
 
 if __debug__:
     from mvpa.base import debug
 
 
-class Dataset(object):
-    """Generic storage class for all datasets in PyMVPA
+class AttrDataset(object):
+    """Generic storage class for datasets with multiple attributes.
 
     A dataset consists of four pieces.  The core is a two-dimensional
     array that has variables (so-called `features`) in its columns and
@@ -65,7 +67,7 @@ class Dataset(object):
     >>> import numpy as N
     >>> from mvpa.datasets import *
     >>> samples = N.arange(12).reshape((4,3))
-    >>> ds = Dataset(samples)
+    >>> ds = AttrDataset(samples)
     >>> ds.nsamples
     4
     >>> ds.nfeatures
@@ -80,9 +82,9 @@ class Dataset(object):
     algorithms, since it doesn't have any labels associated with its
     samples. However, creating a labeled dataset is equally simple.
 
-    >>> ds_labeled = Dataset.from_basic(samples, labels=range(4))
+    >>> ds_labeled = AttrDataset.from_basic(samples, labels=range(4))
 
-    For convenience `Dataset.from_basic` is also available as `dataset`,
+    For convenience `AttrDataset.from_basic` is also available as `dataset`,
     so the above call is equivalent to:
 
     >>> ds_labeled = dataset(samples, labels=range(4))
@@ -115,7 +117,7 @@ class Dataset(object):
     which would also test for an appropriate size of the given
     attributes:
 
-    >>> fancyds = Dataset(samples, sa={'labels': range(4),
+    >>> fancyds = AttrDataset(samples, sa={'labels': range(4),
     ...                                'lovesme': [0,0,1,0]})
     >>> fancyds.sa.lovesme
     array([0, 0, 1, 0])
@@ -180,7 +182,7 @@ class Dataset(object):
            [7, 8]])
 
     Whereas the call: 'ds.samples[[0,1,2], [1,2]]' would not be
-    possible. In `Datasets` selection of samples and features is always
+    possible. In `AttrDatasets` selection of samples and features is always
     applied individually and independently to each axis.
     """
     def __init__(self, samples, sa=None, fa=None, a=None):
@@ -194,7 +196,7 @@ class Dataset(object):
         samples : ndarray
           Data samples.  This has to be a two-dimensional (samples x features)
           array. If the samples are not in that format, please consider one of
-          the `Dataset.from_*` classmethods.
+          the `AttrDataset.from_*` classmethods.
         sa : SampleAttributesCollection
           Samples attributes collection.
         fa : FeatureAttributesCollection
@@ -209,12 +211,12 @@ class Dataset(object):
         # Check all conditions we need to have for `samples` dtypes
         if not hasattr(samples, 'dtype'):
             raise ValueError(
-                "Dataset only supports dtypes as samples that have a `dtype` "
-                "attribute that behaves similiar to the one of an array-like.")
+                "AttrDataset only supports dtypes as samples that have a `dtype` "
+                "attribute that behaves similar to the one of an array-like.")
         if not hasattr(samples, 'shape'):
             raise ValueError(
-                "Dataset only supports dtypes as samples that have a `shape` "
-                "attribute that behaves similiar to the one of an array-like.")
+                "AttrDataset only supports dtypes as samples that have a `shape` "
+                "attribute that behaves similar to the one of an array-like.")
         if not len(samples.shape):
             raise ValueError("Only `samples` with at least one axis are "
                     "supported (got: %i)" % len(samples.shape))
@@ -241,7 +243,7 @@ class Dataset(object):
             self.a.update(a)
 
 
-    def init_origids(self, which, attr='origids'):
+    def init_origids(self, which, attr='origids', mode='new'):
         """Initialize the dataset's 'origids' attribute.
 
         The purpose of origids is that they allow to track the identity of
@@ -262,18 +264,45 @@ class Dataset(object):
           Name of the attribute to store the generated IDs in.  By convention
           this should be 'origids' (the default), but might be changed for
           specific purposes.
+        mode : {'existing', 'new', 'raise'}, optional
+          Action if `attr` is already present in the collection.
+          Default behavior is 'new' whenever new ids are generated and
+          replace existing values if such are present.  With 'existing' it would
+          not alter existing content.  With 'raise' it would raise
+          `RuntimeError`.
+
+        Raises
+        ------
+        `RuntimeError`
+          If `mode` == 'raise' and `attr` is already defined
         """
         # now do evil to ensure unique ids across multiple datasets
         # so that they could be merged together
         thisid = str(id(self))
-        if which == 'samples' or which == 'both':
+        legal_modes = ('raise', 'existing', 'new')
+        if not mode in legal_modes:
+            raise ValueError, "Incorrect mode %r. Known are %s." % \
+                  (mode, legal_modes)
+        if which in ('samples', 'both'):
+            if attr in self.sa:
+                if mode == 'existing':
+                    return
+                elif mode == 'raise':
+                    raise RuntimeError, \
+                          "Attribute %r already known to %s" % (attr, self.sa)
             ids = N.array(['%s-%i' % (thisid, i)
                                 for i in xrange(self.samples.shape[0])])
             if self.sa.has_key(attr):
                 self.sa[attr].value = ids
             else:
                 self.sa[attr] = ids
-        if which == 'features' or which == 'both':
+        if which in ('features', 'both'):
+            if attr in self.sa:
+                if mode == 'existing':
+                    return
+                elif mode == 'raise':
+                    raise RuntimeError, \
+                          "Attribute %r already known to %s" % (attr, self.fa)
             ids = N.array(['%s-%i' % (thisid, i)
                                 for i in xrange(self.samples.shape[1])])
             if self.fa.has_key(attr):
@@ -298,20 +327,20 @@ class Dataset(object):
 
         Parameters
         ----------
-        deep : boolean
+        deep : boolean, optional
           If False, a shallow copy of the dataset is return instead.  The copy
           contains only views of the samples, sample attributes and feature
           attributes, as well as shallow copies of all dataset
           attributes.
-        sa : list, None
+        sa : list or None
           List of attributes in the sample attributes collection to include in
           the copy of the dataset. If `None` all attributes are considered. If
           an empty list is given, all attributes are stripped from the copy.
-        fa : list, None
+        fa : list or None
           List of attributes in the feature attributes collection to include in
           the copy of the dataset. If `None` all attributes are considered If
           an empty list is given, all attributes are stripped from the copy..
-        a : list, None
+        a : list or None
           List of attributes in the dataset attributes collection to include in
           the copy of the dataset. If `None` all attributes are considered If
           an empty list is given, all attributes are stripped from the copy..
@@ -321,11 +350,11 @@ class Dataset(object):
           `memo` in the Python documentation.
         """
         if deep:
-            copyvalues='deep'
+            copyvalues = 'deep'
             samples = copy.deepcopy(self.samples, memo)
         else:
             samples = self.samples.view()
-            copyvalues='shallow'
+            copyvalues = 'shallow'
 
         # first we create new collections of the right type for each of the
         # three essential collections of a dataset
@@ -358,14 +387,20 @@ class Dataset(object):
         return out
 
 
-    def __iadd__(self, other):
-        """Merge the samples of one Dataset object to another (in-place).
+    def append(self, other):
+        """Append the content of a Dataset.
 
-        Note
-        ----
+        Parameters
+        ----------
+        other : AttrDataset
+          The content of this dataset will be append.
+
+        Notes
+        -----
         No dataset attributes, or feature attributes will be merged!  These
         respective properties of the *other* dataset are neither checked for
-        compatibility nor copied over to this dataset.
+        compatibility nor copied over to this dataset. However, all samples
+        attributes will be concatenated with the existing ones.
         """
         if not self.nfeatures == other.nfeatures:
             raise DatasetError("Cannot merge datasets, because the number of "
@@ -385,18 +420,6 @@ class Dataset(object):
         for k, v in other.sa.iteritems():
             self.sa[k].value = N.concatenate((self.sa[k].value, v.value),
                                              axis=0)
-
-        return self
-
-
-    def __add__(self, other):
-        """Merge the samples two datasets.
-        """
-        # shallow copies should be sufficient, since __iadd__ will concatenate
-        # most pieces anyway
-        merged = self.copy(deep=False)
-        merged += other
-        return merged
 
 
     def __getitem__(self, args):
@@ -471,7 +494,7 @@ class Dataset(object):
             # assign to target collection
             fa[attr.name] = newattr
 
-            # and finally dataset attributes: this time copying
+        # and finally dataset attributes: this time copying
         for attr in self.a.values():
             # preserve attribute type
             newattr = attr.__class__(name=attr.name, doc=attr.__doc__)
@@ -496,15 +519,14 @@ class Dataset(object):
 
 
     def __str__(self):
-        """String summary of dataset
-        """
-        # XXX TODO very basic and ulgy __str__ for now
-        s = "Dataset %s %d x %d" % \
-            (self.samples.dtype, self.nsamples, self.nfeatures)
-        try:
-            s += " mapper: %s" % self.mapper
-        finally:
-            return s
+        samplesstr = 'x'.join(["%s" % x for x in self.shape])
+        samplesstr += '@%s' % self.samples.dtype
+        cols = [str(col).replace(col.__class__.__name__, label)
+                    for col, label in [(self.sa, 'sa'),
+                                       (self.fa, 'fa'),
+                                       (self.a, 'a')] if len(col)]
+        # include only collections that have content
+        return _str(self, samplesstr, *cols)
 
 
     def __array__(self, dtype=None):
@@ -512,7 +534,7 @@ class Dataset(object):
         # but that might easily kill the machine ;-)
         if not hasattr(self.samples, '__array__'):
             raise RuntimeError(
-                "This Dataset instance cannot be used like a Numpy array since "
+                "This AttrDataset instance cannot be used like a Numpy array since "
                 "its data-container does not provide an '__array__' methods. "
                 "Container type is %s." % type(self.samples))
         return self.samples.__array__(dtype)
@@ -528,16 +550,110 @@ class Dataset(object):
 
 
 def datasetmethod(func):
-    """Decorator to easily bind functions to a Dataset class
+    """Decorator to easily bind functions to an AttrDataset class
     """
     if __debug__:
-        debug("DS_",  "Binding function %s to Dataset class" % func.func_name)
+        debug("DS_",  "Binding function %s to AttrDataset class" % func.func_name)
 
     # Bind the function
-    setattr(Dataset, func.func_name, func)
+    setattr(AttrDataset, func.func_name, func)
 
     # return the original one
     return func
+
+
+def vstack(datasets):
+    """Stacks datasets vertically (appending samples).
+
+    Feature attribute collections are merged incrementally, attribute with
+    identical keys overwriting previous ones in the stacked dataset. All
+    datasets must have an identical set of sample attributes (matching keys,
+    not values), otherwise a ValueError will be raised.
+    No dataset attributes from any source dataset will be transferred into the
+    stacked dataset.
+
+    Parameters
+    ----------
+    datasets : tuple
+      Sequence of datasets to be stacked.
+
+    Returns
+    -------
+    AttrDataset (or respective subclass)
+    """
+    # fall back to numpy if it is not a dataset
+    if not is_datasetlike(datasets[0]):
+        return AttrDataset(N.vstack(datasets))
+
+    if __debug__:
+        target = sorted(datasets[0].sa.keys())
+        if not N.all([sorted(ds.sa.keys()) == target for ds in datasets]):
+            raise ValueError("Sample attributes collections of to be stacked "
+                             "datasets have varying attributes.")
+    # will puke if not equal number of features
+    stacked_samp = N.concatenate([ds.samples for ds in datasets], axis=0)
+
+    stacked_sa = {}
+    for attr in datasets[0].sa:
+        stacked_sa[attr] = N.concatenate([ds.sa[attr].value for ds in datasets],
+                                         axis=0)
+    # create the dataset
+    merged = datasets[0].__class__(stacked_samp, sa=stacked_sa)
+
+    for ds in datasets:
+        merged.fa.update(ds.fa)
+
+    return merged
+
+
+def hstack(datasets):
+    """Stacks datasets horizontally (appending features).
+
+    Sample attribute collections are merged incrementally, attribute with
+    identical keys overwriting previous ones in the stacked dataset. All
+    datasets must have an identical set of feature attributes (matching keys,
+    not values), otherwise a ValueError will be raised.
+    No dataset attributes from any source dataset will be transferred into the
+    stacked dataset.
+
+    Parameters
+    ----------
+    datasets : tuple
+      Sequence of datasets to be stacked.
+
+    Returns
+    -------
+    AttrDataset (or respective subclass)
+    """
+    #
+    # XXX Use CombinedMapper in here whenever it comes back
+    #
+
+    # fall back to numpy if it is not a dataset
+    if not is_datasetlike(datasets[0]):
+        # we might get a list of 1Ds that would yield wrong results when
+        # turned into a dict (would run along samples-axis)
+        return AttrDataset(N.atleast_2d(N.hstack(datasets)))
+
+    if __debug__:
+        target = sorted(datasets[0].fa.keys())
+        if not N.all([sorted(ds.fa.keys()) == target for ds in datasets]):
+            raise ValueError("Feature attributes collections of to be stacked "
+                             "datasets have varying attributes.")
+    # will puke if not equal number of samples
+    stacked_samp = N.concatenate([ds.samples for ds in datasets], axis=1)
+
+    stacked_fa = {}
+    for attr in datasets[0].fa:
+        stacked_fa[attr] = N.concatenate([ds.fa[attr].value for ds in datasets],
+                                         axis=1)
+    # create the dataset
+    merged = datasets[0].__class__(stacked_samp, fa=stacked_fa)
+
+    for ds in datasets:
+        merged.sa.update(ds.sa)
+
+    return merged
 
 
 def _expand_attribute(attr, length, attr_name):
@@ -568,12 +684,7 @@ class DatasetError(Exception):
     """
     # A ValueError exception is too generic to be used for any needed case,
     # thus this one is created
-    def __init__(self, msg=""):
-        Exception.__init__(self)
-        self.__msg = msg
-
-    def __str__(self):
-        return "Dataset handling exception: " + self.__msg
+    pass
 
 
 class DatasetAttributeExtractor(object):
@@ -581,7 +692,7 @@ class DatasetAttributeExtractor(object):
 
     Examples
     --------
-    >>> ds = Dataset(N.arange(12).reshape((4,3)),
+    >>> ds = AttrDataset(N.arange(12).reshape((4,3)),
     ...              sa={'labels': range(4)},
     ...              fa={'foo': [0,0,1]})
     >>> ext = DAE('sa', 'labels')
@@ -608,7 +719,7 @@ class DatasetAttributeExtractor(object):
         """
         Parameters
         ----------
-        ds : Dataset
+        ds : AttrDataset
         """
         return ds.__dict__[self._col][self._key].value
 

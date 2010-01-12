@@ -15,8 +15,9 @@ from numpy.testing import assert_array_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
+from mvpa.base.externals import versions
 from mvpa.base.types import is_datasetlike
-from mvpa.base.dataset import DatasetError
+from mvpa.base.dataset import DatasetError, vstack, hstack
 from mvpa.mappers.flatten import mask_mapper
 from mvpa.datasets.base import dataset, Dataset
 from mvpa.misc.data_generators import normalFeatureDataset
@@ -55,8 +56,8 @@ def test_from_basic():
     ## XXX stuff that needs thought:
 
     # ds.sa (empty) has this in the public namespace:
-    #   add, get, getvalue, isKnown, isSet, items, listing, name, names
-    #   owner, remove, reset, setvalue, whichSet
+    #   add, get, getvalue, has_key, is_set, items, listing, name, names
+    #   owner, remove, reset, setvalue, which_set
     # maybe we need some form of leightweightCollection?
 
     assert_array_equal(ds.samples, samples)
@@ -149,19 +150,19 @@ def test_from_masked():
     assert_array_equal(ds.chunks, [1])
 
     # now try adding pattern with wrong shape
-    assert_raises(DatasetError, ds.__iadd__,
+    assert_raises(DatasetError, ds.append,
                   Dataset.from_masked(N.ones((2,3)), labels=1, chunks=1))
 
     # now add two real patterns
-    ds += Dataset.from_masked(N.random.standard_normal((2, 5)),
-                              labels=2, chunks=2)
+    ds.append(Dataset.from_masked(N.random.standard_normal((2, 5)),
+                                  labels=2, chunks=2))
     assert_equal(ds.nsamples, 3)
     assert_array_equal(ds.labels, [1, 2, 2])
     assert_array_equal(ds.chunks, [1, 2, 2])
 
     # test unique class labels
-    ds += Dataset.from_masked(N.random.standard_normal((2, 5)),
-                              labels=3, chunks=5)
+    ds.append(Dataset.from_masked(N.random.standard_normal((2, 5)),
+                                  labels=3, chunks=5))
     assert_array_equal(ds.sa['labels'].unique, [1, 2, 3])
 
     # test wrong attributes length
@@ -320,14 +321,19 @@ def test_ds_deepcopy():
 
 def test_mergeds():
     data0 = Dataset.from_basic(N.ones((5, 5)), labels=1)
+    data0.fa['one'] = N.ones(5)
     data1 = Dataset.from_basic(N.ones((5, 5)), labels=1, chunks=1)
+    data1.fa['one'] = N.zeros(5)
     data2 = Dataset.from_basic(N.ones((3, 5)), labels=2, chunks=1)
     data3 = Dataset.from_basic(N.ones((4, 5)), labels=2)
+    data4 = Dataset.from_basic(N.ones((2, 5)), labels=3, chunks=2)
+    data4.fa['test'] = N.arange(5)
 
     # cannot merge if there are attributes missing in one of the datasets
-    assert_raises(DatasetError, data1.__iadd__, data0)
+    assert_raises(DatasetError, data1.append, data0)
 
-    merged = data1 + data2
+    merged = data1.copy()
+    merged.append(data2)
 
     ok_( merged.nfeatures == 5 )
     l12 = [1]*5 + [2]*3
@@ -335,14 +341,41 @@ def test_mergeds():
     ok_((merged.labels == l12).all())
     ok_((merged.chunks == l1).all())
 
-    data1 += data2
+    data_append = data1.copy()
+    data_append.append(data2)
 
-    ok_(data1.nfeatures == 5)
-    ok_((data1.labels == l12).all())
-    ok_((data1.chunks == l1).all())
+    ok_(data_append.nfeatures == 5)
+    ok_((data_append.labels == l12).all())
+    ok_((data_append.chunks == l1).all())
+
+    #
+    # appending
+    #
 
     # we need the same samples attributes in both datasets
-    assert_raises(DatasetError, data2.__iadd__, data3)
+    assert_raises(DatasetError, data2.append, data3)
+
+    #
+    # vstacking
+    #
+    assert_raises(ValueError, vstack, (data0, data1, data2, data3))
+    datasets = (data1, data2, data4)
+    merged = vstack(datasets)
+    assert_equal(merged.shape,
+                 (N.sum([len(ds) for ds in datasets]), data1.nfeatures))
+    assert_true('test' in merged.fa)
+    assert_array_equal(merged.sa.labels, [1]*5 + [2]*3 + [3]*2)
+
+    #
+    # hstacking
+    #
+    assert_raises(ValueError, hstack, datasets)
+    datasets = (data0, data1)
+    merged = hstack(datasets)
+    assert_equal(merged.shape,
+                 (len(data1), N.sum([ds.nfeatures for ds in datasets])))
+    assert_true('chunks' in merged.sa)
+    assert_array_equal(merged.fa.one, [1]*5 + [0]*5)
 
 
 def test_mergeds2():
@@ -363,18 +396,18 @@ def test_mergeds2():
 
     # now try adding pattern with wrong shape
     assert_raises(DatasetError,
-                  data.__iadd__,
+                  data.append,
                   dataset(N.ones((2,3)), labels=1, chunks=1))
 
     # now add two real patterns
     dss = datasets['uni2large'].samples
-    data += dataset(dss[:2, :5], labels=2, chunks=2)
+    data.append(dataset(dss[:2, :5], labels=2, chunks=2))
     assert_equal(data.nfeatures, 5)
     assert_array_equal(data.labels, [1, 2, 2])
     assert_array_equal(data.chunks, [1, 2, 2])
 
     # test automatic origins
-    data += dataset(dss[3:5, :5], labels=3, chunks=[0, 1])
+    data.append(dataset(dss[3:5, :5], labels=3, chunks=[0, 1]))
     assert_array_equal(data.chunks, [1, 2, 2, 0, 1])
 
     # test unique class labels
@@ -441,10 +474,10 @@ def test_combined_samplesfeature_selection():
 
 def test_labelpermutation_randomsampling():
     ds  = Dataset.from_basic(N.ones((5, 1)),     labels=range(5), chunks=1)
-    ds += Dataset.from_basic(N.ones((5, 1)) + 1, labels=range(5), chunks=2)
-    ds += Dataset.from_basic(N.ones((5, 1)) + 2, labels=range(5), chunks=3)
-    ds += Dataset.from_basic(N.ones((5, 1)) + 3, labels=range(5), chunks=4)
-    ds += Dataset.from_basic(N.ones((5, 1)) + 4, labels=range(5), chunks=5)
+    ds.append(Dataset.from_basic(N.ones((5, 1)) + 1, labels=range(5), chunks=2))
+    ds.append(Dataset.from_basic(N.ones((5, 1)) + 2, labels=range(5), chunks=3))
+    ds.append(Dataset.from_basic(N.ones((5, 1)) + 3, labels=range(5), chunks=4))
+    ds.append(Dataset.from_basic(N.ones((5, 1)) + 4, labels=range(5), chunks=5))
     # use subclass for testing if it would survive
     ds.samples = ds.samples.view(myarray)
 
@@ -567,6 +600,25 @@ def test_origid_handling():
     subds = ds[selector]
     assert_array_equal(subds.sa.origids, ds.sa.origids[selector])
 
+    # Now if we request new origids if they are present we could
+    # expect different behavior
+    assert_raises(ValueError, subds.init_origids, 'both', mode='raises')
+    sa_origids = subds.sa.origids.copy()
+    fa_origids = subds.fa.origids.copy()
+    for s in ('both', 'samples', 'features'):
+        assert_raises(RuntimeError, subds.init_origids, s, mode='raise')
+        subds.init_origids(s, mode='existing')
+        # we should have the same origids as before
+        assert_array_equal(subds.sa.origids, sa_origids)
+        assert_array_equal(subds.fa.origids, fa_origids)
+
+    # Lets now change, which should be default behavior
+    subds.init_origids('both')
+    assert_equal(len(sa_origids), len(subds.sa.origids))
+    assert_equal(len(fa_origids), len(subds.fa.origids))
+    # values should change though
+    ok_((sa_origids != subds.sa.origids).any())
+    ok_((fa_origids != subds.fa.origids).any())
 
 def test_idhash():
     ds = dataset(N.arange(12).reshape((4, 3)),
@@ -639,6 +691,13 @@ def test_repr():
     ok_(repr(eval(ds_repr)) == ds_repr)
 
 
+def is_bsr(x):
+    """Helper function to check if instance is bsr_matrix if such is
+    avail at all
+    """
+    import scipy.sparse as sparse
+    return hasattr(sparse, 'bsr_matrix') and isinstance(x, sparse.bsr_matrix)
+
 def test_other_samples_dtypes():
     import scipy.sparse as sparse
     dshape = (4, 3)
@@ -648,12 +707,14 @@ def test_other_samples_dtypes():
               N.arange(N.prod(dshape)).reshape(dshape).view(myarray),
               N.matrix(N.arange(N.prod(dshape)).reshape(dshape)),
               sparse.csc_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
-              sparse.csr_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
+              sparse.csr_matrix(N.arange(N.prod(dshape)).reshape(dshape))]
+    if hasattr(sparse, 'bsr_matrix'):
+        stypes += [
               # BSR cannot be sliced, but is more efficient for sparse
               # arithmetic operations than CSC pr CSR
               sparse.bsr_matrix(N.arange(N.prod(dshape)).reshape(dshape))]
               # LIL and COO are best for constructing matrices, not for
-              # doing somthing with them
+              # doing something with them
               #sparse.lil_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
               #sparse.coo_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
               # DOK doesn't allow duplicates and is bad at array-like slicing
@@ -681,8 +742,10 @@ def test_other_samples_dtypes():
 
         # select subset and see what happens
         # bsr type doesn't support first axis slicing
-        if isinstance(s, sparse.bsr_matrix):
+        if is_bsr(s):
             assert_raises(NotImplementedError, ds.__getitem__, [0])
+        elif versions['scipy'] <= '0.6.0' and sparse.isspmatrix(ds.samples):
+            assert_raises(IndexError, ds.__getitem__, [0])
         else:
             sel = ds[1:3]
             assert_equal(sel.shape, (2, dshape[1]))
@@ -694,9 +757,11 @@ def test_other_samples_dtypes():
                 assert_array_equal(sel.samples[1],
                                    ds.samples[2])
 
-       # feature selection
-        if isinstance(s, sparse.bsr_matrix):
+        # feature selection
+        if is_bsr(s):
             assert_raises(NotImplementedError, ds.__getitem__, (slice(None), 0))
+        elif versions['scipy'] <= '0.6.0' and sparse.isspmatrix(ds.samples):
+            assert_raises(IndexError, ds.__getitem__, (slice(None), 0))
         else:
             sel = ds[:, 1:3]
             assert_equal(sel.shape, (dshape[0], 2))

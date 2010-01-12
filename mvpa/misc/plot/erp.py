@@ -25,11 +25,12 @@ import matplotlib.transforms as mlt
 def _offset(ax, x, y):
     """Provide offset in pixels
 
-    :Parameters:
-      x : int
-        Offset in pixels for x
-      y : int
-        Offset in pixels for y
+    Parameters
+    ----------
+    x : int
+      Offset in pixels for x
+    y : int
+      Offset in pixels for y
 
     Idea borrowed from
      http://www.scipy.org/Cookbook/Matplotlib/Transformations
@@ -61,23 +62,24 @@ def _make_centeredaxis(ax, loc, offset=5, ai=0, mult=1.0,
                        format='%4g', label=None, **props):
     """Plot an axis which is centered at loc (e.g. 0)
 
-    :Parameters:
-     ax
-       Axes from the figure
-     loc
-       Value to center at
-     offset
-       Relative offset (in pixels) for the labels
-     ai : int
-       Axis index: 0 for x, 1 for y
-     mult
-       Multiplier for the axis labels. ERPs for instance need to be
-       inverted, thus labels too manually here since there is no easy
-       way in matplotlib to invert an axis
-     label : basestring or None
-       If not -- put a label outside of the axis
-     **props
-       Given to underlying plotting functions
+    Parameters
+    ----------
+    ax
+     Axes from the figure
+    loc
+     Value to center at
+    offset
+     Relative offset (in pixels) for the labels
+    ai : int
+     Axis index: 0 for x, 1 for y
+    mult
+     Multiplier for the axis labels. ERPs for instance need to be
+     inverted, thus labels too manually here since there is no easy
+     way in matplotlib to invert an axis
+    label : str or None
+     If not -- put a label outside of the axis
+    **props
+     Given to underlying plotting functions
 
     Idea borrowed from
       http://www.mail-archive.com/matplotlib-users@lists.sourceforge.net \
@@ -165,52 +167,59 @@ def plotERP(data, SR=500, onsets=None,
             ymult=1.0, *args, **kwargs):
     """Plot single ERP on existing canvas
 
-    :Parameters:
-      data: 1D or 2D ndarray
-        The data array can either be 1D (samples over time) or 2D
-        (trials x samples). In the first case a boxcar mapper is used to
-        extract the respective trial timecourses given a list of trial onsets.
-        In the latter case, each row of the data array is taken as the EEG
-        signal timecourse of a particular trial.
-      onsets: list(int)
-        List of onsets (in samples not in seconds).
-      SR: int
-        Sampling rate (1/s) of the signal.
-      pre: float
-        Duration (in seconds) to be plotted prior to onset.
-      pre_onset : float or None
-        If data is already in epochs (2D) then pre_onset provides information
-        on how many seconds pre-stimulus were used to generate them. If None,
-        then pre_onset = pre
-      post: float
-        Duration (in seconds) to be plotted after the onset.
-      pre_mean: float
-        Duration (in seconds) at the beginning of the window which is used
-        for deriving the mean of the signal. If None, pre_mean = pre
-      errtype: None | 'ste' | 'std' | 'ci95' | list of previous three
-        Type of error value to be computed per datapoint.
-          'ste': standard error of the mean
-          'std': standard deviation
-          'ci95': 95% confidence interval (1.96 * ste)
-          None: no error margin is plotted (default)
-        Optionally, multiple error types can be specified in a list. In that
-        case all of them will be plotted.
-      color: matplotlib color code
-        Color to be used for plotting the mean signal timecourse.
-      errcolor: matplotlib color code
-        Color to be used for plotting the error margin. If None, use main color
-        but with weak alpha level
-      ax:
-        Target where to draw.
-      ymult: float
-        Multiplier for the values. E.g. if negative-up ERP plot is needed:
-        provide ymult=-1.0
-      *args, **kwargs
-        Additional arguments to plot().
+    Parameters
+    ----------
+    data : 1D or 2D ndarray
+      The data array can either be 1D (samples over time) or 2D
+      (trials x samples). In the first case a boxcar mapper is used to
+      extract the respective trial timecourses given a list of trial onsets.
+      In the latter case, each row of the data array is taken as the EEG
+      signal timecourse of a particular trial.
+    onsets : list(int)
+      List of onsets (in samples not in seconds).
+    SR : int
+      Sampling rate (1/s) of the signal.
+    pre : float
+      Duration (in seconds) to be plotted prior to onset.
+    pre_onset : float or None
+      If data is already in epochs (2D) then pre_onset provides information
+      on how many seconds pre-stimulus were used to generate them. If None,
+      then pre_onset = pre
+    post : float
+      Duration (in seconds) to be plotted after the onset.
+    pre_mean : float
+      Duration (in seconds) at the beginning of the window which is used
+      for deriving the mean of the signal. If None, pre_mean = pre
+    errtype : None or 'ste' or 'std' or 'ci95' or list of previous three
+      Type of error value to be computed per datapoint.
 
-    :Returns:
-      array
-        Mean ERP timeseries.
+        'ste'
+          standard error of the mean
+        'std'
+          standard deviation
+        'ci95'
+          95% confidence interval (1.96 * ste)
+         None
+          no error margin is plotted (default)
+      Optionally, multiple error types can be specified in a list. In that
+      case all of them will be plotted.
+    color : matplotlib color code
+      Color to be used for plotting the mean signal timecourse.
+    errcolor : matplotlib color code
+      Color to be used for plotting the error margin. If None, use main color
+      but with weak alpha level
+    ax :
+      Target where to draw.
+    ymult : float
+      Multiplier for the values. E.g. if negative-up ERP plot is needed:
+      provide ymult=-1.0
+    *args, **kwargs
+      Additional arguments to plot().
+
+    Returns
+    -------
+    array
+      Mean ERP timeseries.
     """
     if pre_mean is None:
         pre_mean = pre
@@ -339,54 +348,56 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
              **kwargs):
     """Plot multiple ERPs on a new figure.
 
-    :Parameters:
-      erps : list of tuples
-        List of definitions of ERPs. Each tuple should consist of
-        (label, color, onsets) or a dictionary which defines,
-        label, color, onsets, data. Data provided in dictionary overrides
-        'common' data provided in the next argument ``data``
-      data
-        Data for ERPs to be derived from 1D (samples)
-      ax
-        Where to draw (e.g. subplot instance). If None, new figure is
-        created
-      pre : float
-        Duration (seconds) to be plotted prior to onset
-      pre_onset : float or None
-        If data is already in epochs (2D) then pre_onset provides information
-        on how many seconds pre-stimulus were used to generate them. If None,
-        then pre_onset = pre
-      post : float or None
-        Duration (seconds) to be plotted after the onset. If any data is
-        provided with onsets, it can't be None. If None -- plots all time
-        points after onsets
-      ymult : float
-        Multiplier for the values. E.g. if negative-up ERP plot is needed:
-        provide ymult=-1.0
-      xlformat : basestring
-        Format of the x ticks
-      ylformat : basestring
-        Format of the y ticks
-      legend : basestring or None
-        If not None, legend will be plotted with position argument
-        provided in this argument
-      loffset : int
-        Offset in voxels for axes and tick labels. Different
-        matplotlib frontends might have different opinions, thus
-        offset value might need to be tuned specifically per frontend
-      alinewidth : int
-        Axis and ticks line width
-      **kwargs
-        Additional arguments provided to plotERP()
+    Parameters
+    ----------
+    erps : list of tuples
+      List of definitions of ERPs. Each tuple should consist of
+      (label, color, onsets) or a dictionary which defines,
+      label, color, onsets, data. Data provided in dictionary overrides
+      'common' data provided in the next argument `data`
+    data
+      Data for ERPs to be derived from 1D (samples)
+    ax
+      Where to draw (e.g. subplot instance). If None, new figure is
+      created
+    pre : float
+      Duration (seconds) to be plotted prior to onset
+    pre_onset : float or None
+      If data is already in epochs (2D) then pre_onset provides information
+      on how many seconds pre-stimulus were used to generate them. If None,
+      then pre_onset = pre
+    post : float or None
+      Duration (seconds) to be plotted after the onset. If any data is
+      provided with onsets, it can't be None. If None -- plots all time
+      points after onsets
+    ymult : float
+      Multiplier for the values. E.g. if negative-up ERP plot is needed:
+      provide ymult=-1.0
+    xlformat : str
+      Format of the x ticks
+    ylformat : str
+      Format of the y ticks
+    legend : str or None
+      If not None, legend will be plotted with position argument
+      provided in this argument
+    loffset : int
+      Offset in voxels for axes and tick labels. Different
+      matplotlib frontends might have different opinions, thus
+      offset value might need to be tuned specifically per frontend
+    alinewidth : int
+      Axis and ticks line width
+    **kwargs
+      Additional arguments provided to plotERP()
 
 
-    :Examples:
-        kwargs  = {'SR' : eeg.SR, 'pre_mean' : 0.2}
-        fig = plotERPs((('60db', 'b', eeg.erp_onsets['60db']),
-                         ('80db', 'r', eeg.erp_onsets['80db'])),
-                        data[:, eeg.sensor_mapping['Cz']],
-                        ax=fig.add_subplot(1,1,1,frame_on=False), pre=0.2,
-                        post=0.6, **kwargs)
+    Examples
+    --------
+      kwargs  = {'SR' : eeg.SR, 'pre_mean' : 0.2}
+      fig = plotERPs((('60db', 'b', eeg.erp_onsets['60db']),
+                       ('80db', 'r', eeg.erp_onsets['80db'])),
+                      data[:, eeg.sensor_mapping['Cz']],
+                      ax=fig.add_subplot(1,1,1,frame_on=False), pre=0.2,
+                      post=0.6, **kwargs)
 
         or
         fig = plotERPs((('60db', 'b', eeg.erp_onsets['60db']),
@@ -398,7 +409,10 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
                         ax=fig.add_subplot(1,1,1,frame_on=False), pre=0.2,
                         post=0.6, **kwargs)
 
-    :Returns: current fig handler
+    Returns
+    -------
+    h
+      current fig handler
     """
 
     if ax is None:

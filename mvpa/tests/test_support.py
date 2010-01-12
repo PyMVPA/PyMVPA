@@ -67,8 +67,8 @@ class SupportFxTests(unittest.TestCase):
         # conversion
         self.failUnless(ev.asDescreteTime(dt=2).items() == [('onset', 1)])
         evc = ev.asDescreteTime(dt=2, storeoffset=True)
-        self.failUnless(evc.has_key('features'))
-        self.failUnless(evc['features'] == [0.5])
+        self.failUnless(evc.has_key('offset'))
+        self.failUnless(evc['offset'] == 0.5)
 
         # same with duration included
         evc = Event(onset=2.5, duration=3.55).asDescreteTime(dt=2)

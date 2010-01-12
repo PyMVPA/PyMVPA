@@ -14,9 +14,6 @@ Module Organization
 mvpa.base module contains various modules which are used through out
 PyMVPA code, and are generic building blocks
 
-.. packagetree::
-   :style: UML
-
 :group Basic: externals, config, verbosity, dochelpers
 """
 
@@ -79,11 +76,12 @@ verbose = __Singleton("verbose", LevelLogger(
 def error(msg, critical=True):
     """Helper function to output errors in a consistent way.
 
-    :Parameters:
-      msg : string
-        Actual error message (will be prefixed with ERROR:)
-      critical : bool
-        If critical error -- exit with
+    Parameters
+    ----------
+    msg : string
+      Actual error message (will be prefixed with ERROR:)
+    critical : bool
+      If critical error -- exit with
     """
     verbose(0, "ERROR: " + msg)
     if critical:
@@ -197,6 +195,7 @@ if __debug__:
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
     debug.register('LOOP', "Support's loop construct")
     debug.register('PLR',  "PLR call")
+    debug.register('NBH',  "Neighborhood estimations")
     debug.register('SLC',  "Searchlight call")
     debug.register('SA',   "Sensitivity analyzers")
     debug.register('SOM',  "Self-organizing-maps (SOM)")
@@ -244,6 +243,7 @@ if __debug__:
     #    "Report traceback in train/predict. Helps to resolve WTF calls it")
     debug.register('CLFBST', "BoostClassifier")
     #debug.register('CLFBST_TB', "BoostClassifier traceback")
+    debug.register('CLFPRX', "ProxyClassifier")
     debug.register('CLFBIN', "BinaryClassifier")
     debug.register('CLFTREE', "TreeClassifier")
     debug.register('CLFMC',  "MulticlassClassifier")

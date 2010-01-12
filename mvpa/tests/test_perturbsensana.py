@@ -44,10 +44,10 @@ class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
         map = pa(self.dataset)
 
         # check for correct size of map
-        self.failUnless(len(map) == 22)
+        self.failUnless(map.nfeatures == self.dataset.nfeatures)
 
         # dataset is noise -> mean sensitivity should be zero
-        self.failUnless(-0.2 < map.mean() < 0.2)
+        self.failUnless(-0.2 < N.mean(map) < 0.2)
 
 
 def suite():

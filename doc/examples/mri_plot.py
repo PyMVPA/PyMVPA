@@ -45,6 +45,7 @@ sens = sensana(dataset)
 It might be convinient to pre-define common arguments for multiple calls to
 plotMRI
 """
+
 mri_args = {
     'background' : nianat,              # could be a filename
     'background_mask' : os.path.join(pymvpa_dataroot, 'mask.nii.gz'),

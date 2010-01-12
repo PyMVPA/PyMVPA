@@ -33,11 +33,12 @@ class FeatureSelection(ClassWithCollections):
     def __call__(self, dataset, testdataset=None):
         """Invocation of the feature selection
 
-        :Parameters:
-          dataset : Dataset
-            dataset used to select features
-          testdataset : Dataset
-            dataset the might be used to compute a stopping criterion
+        Parameters
+        ----------
+        dataset : Dataset
+          dataset used to select features
+        testdataset : Dataset
+          dataset the might be used to compute a stopping criterion
 
         Returns a tuple with the dataset containing the selected features.
         If present the tuple also contains the selected features of the
@@ -75,12 +76,13 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
                  ):
         """Initialize feature selection
 
-        :Parameters:
-          sensitivity_analyzer : FeaturewiseDatasetMeasure
-            sensitivity analyzer to come up with sensitivity
-          feature_selector : Functor
-            Given a sensitivity map it has to return the ids of those
-            features that should be kept.
+        Parameters
+        ----------
+        sensitivity_analyzer : FeaturewiseDatasetMeasure
+          sensitivity analyzer to come up with sensitivity
+        feature_selector : Functor
+          Given a sensitivity map it has to return the ids of those
+          features that should be kept.
 
         """
 
@@ -103,11 +105,12 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
     def __call__(self, dataset, testdataset=None):
         """Select the most important features
 
-        :Parameters:
-          dataset : Dataset
-            used to compute sensitivity maps
-          testdataset: Dataset
-            optional dataset to select features on
+        Parameters
+        ----------
+        dataset : Dataset
+          used to compute sensitivity maps
+        testdataset : Dataset
+          optional dataset to select features on
 
         Returns a tuple of two new datasets with selected feature
         subset of `dataset`.
@@ -116,10 +119,16 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         sensitivity = self.__sensitivity_analyzer(dataset)
         """Compute the sensitivity map."""
 
+        if len(sensitivity) > 1:
+            raise ValueError("Feature selectors cannot handle multiple "
+                             "sensitivities at once. '%s' returned %i "
+                             "sensitivities."
+                             % (self.__sensitivity_analyzer.__class__.__name__,
+                                len(sensitivity)))
         self.states.sensitivity = sensitivity
 
         # Select features to preserve
-        selected_ids = self.__feature_selector(sensitivity)
+        selected_ids = self.__feature_selector(sensitivity.samples[0])
 
         if __debug__:
             debug("FS_", "Sensitivity: %s Selected ids: %s" %
@@ -164,9 +173,10 @@ class FeatureSelectionPipeline(FeatureSelection):
                  ):
         """Initialize feature selection pipeline
 
-        :Parameters:
-          feature_selections : lisf of FeatureSelection
-            selections which to use. Order matters
+        Parameters
+        ----------
+        feature_selections : lisf of FeatureSelection
+          selections which to use. Order matters
         """
         # base init first
         FeatureSelection.__init__(self, **kwargs)
@@ -196,9 +206,9 @@ class FeatureSelectionPipeline(FeatureSelection):
         for fs in self.__feature_selections:
 
             # enable selected_ids state if it was requested from this class
-            fs.states._changeTemporarily(
+            fs.states.change_temporarily(
                 enable_states=["selected_ids"], other=self)
-            if self.states.isEnabled("nfeatures"):
+            if self.states.is_enabled("nfeatures"):
                 self.states.nfeatures.append(wdataset.nfeatures)
 
             if __debug__:
@@ -206,13 +216,13 @@ class FeatureSelectionPipeline(FeatureSelection):
                       (fs, wdataset, wtestdataset))
             wdataset, wtestdataset = fs(wdataset, wtestdataset, **kwargs)
 
-            if self.states.isEnabled("selected_ids"):
+            if self.states.is_enabled("selected_ids"):
                 if self.states.selected_ids == None:
                     self.states.selected_ids = fs.states.selected_ids
                 else:
                     self.states.selected_ids = self.states.selected_ids[fs.states.selected_ids]
 
-            fs.states._resetEnabledTemporarily()
+            fs.states.reset_changed_temporarily()
 
         return (wdataset, wtestdataset)
 
@@ -236,12 +246,13 @@ class CombinedFeatureSelection(FeatureSelection):
 
     def __init__(self, feature_selections, combiner, **kwargs):
         """
-        :Parameters:
-          feature_selections: list
-            FeatureSelection instances to run. Order is not important.
-          combiner: 'union', 'intersection'
-            which method to be used to combine the feature selection set of
-            all computed methods.
+        Parameters
+        ----------
+        feature_selections : list
+          FeatureSelection instances to run. Order is not important.
+        combiner : 'union', 'intersection'
+          which method to be used to combine the feature selection set of
+          all computed methods.
         """
         FeatureSelection.__init__(self, **kwargs)
 
@@ -267,7 +278,7 @@ class CombinedFeatureSelection(FeatureSelection):
         for fs in self.__feature_selections:
             # we need the feature ids that were selection by each method,
             # so enable them temporarily
-            fs.states._changeTemporarily(
+            fs.states.change_temporarily(
                 enable_states=["selected_ids"], other=self)
 
             # compute feature selection, but ignore return datasets
@@ -288,7 +299,7 @@ class CombinedFeatureSelection(FeatureSelection):
             self.states.selections_ids.append(fs.states.selected_ids)
 
             # restore states to previous settings
-            fs.states._resetEnabledTemporarily()
+            fs.states.reset_changed_temporarily()
 
         # finally apply feature set union selection to original datasets
         selected_ids = sorted(list(selected_ids))

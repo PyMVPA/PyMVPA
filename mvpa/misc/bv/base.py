@@ -37,8 +37,10 @@ class BrainVoyagerRTC(ColumnData):
     def __init__(self, source):
         """Read and write BrainVoyager RTC files.
 
-        :Parameter:
-          source: filename of an RTC file
+        Parameters
+        ----------
+        source : str
+          Filename of an RTC file
         """
         # init data from known format
         ColumnData.__init__(self, source, header=True,

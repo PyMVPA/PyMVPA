@@ -227,7 +227,7 @@ Name of the project that contains the examples. This name is used in the
         print('Ignoring duplicate parse targets.')
 
     if not os.path.exists(opts.outdir):
-        os.mkdir(outdir)
+        os.mkdir(opts.outdir)
 
     # finally process all examples
     for t in toparse:
