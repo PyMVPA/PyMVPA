@@ -41,6 +41,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.ifconfig',
               'sphinx.ext.inheritance_diagram',
+              'sphinx.ext.pngmath',
               # we have a local copy of autosummary from the unreleased sphinx
               # 1.0 -- reason: the 0.6 extension creates half-empty summaries
               'autosummary',
