@@ -142,17 +142,6 @@ class _GLMNET(Classifier):
         """The model object after training that will be used for
         predictions."""
 
-#     def __repr__(self):
-#         """String summary of the object
-#         """
-#         return """ENET(lm=%s, normalize=%s, intercept=%s, trace=%s, max_steps=%s, enable_states=%s)""" % \
-#                (self.__lm,
-#                 self.__normalize,
-#                 self.__intercept,
-#                 self.__trace,
-#                 self.__max_steps,
-#                 str(self.states.enabled))
-
 
     def _train(self, dataset):
         """Train the classifier using `data` (`Dataset`).
@@ -237,11 +226,6 @@ class _GLMNET(Classifier):
             class_ind = (class_ind-1).astype('int')
 
             # convert to actual labels
-            # XXX If just one sample is predicted, the converted predictions
-            # array is just 1D, hence it yields an IndexError on [:,0]
-            # Modified to .squeeze() which should do the same.
-            # Please acknowledge and remove this comment.
-            #classes = self._ulabels[class_ind][:,0]
             classes = self._ulabels[class_ind].squeeze()
         else:
             # is gaussian, so just remove last dim of values
