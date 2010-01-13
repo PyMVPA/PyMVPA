@@ -322,6 +322,14 @@ class AttrDataset(object):
         return self.copy(deep=True, memo=memo)
 
 
+    def __reduce__(self):
+        return (self.__class__,
+                    (self.samples,
+                     dict(self.sa),
+                     dict(self.fa),
+                     dict(self.a)))
+
+
     def copy(self, deep=True, sa=None, fa=None, a=None, memo=None):
         """Create a copy of a dataset.
 
