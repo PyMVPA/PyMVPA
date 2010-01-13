@@ -29,17 +29,17 @@ def hdf2obj(hdf):
             return value
     else:
         # check if we have a class instance definition here
-        if not ('__class__' in hdf.attrs or '__reconstructor__' in hdf.attrs):
+        if not ('class' in hdf.attrs or 'recon' in hdf.attrs):
             raise RuntimeError("Found hdf group without class instance "
                     "information (group: %s). This is a conceptual bug in the "
                     "parser or the hdf writer. Please report." % hdf.name)
 
-        if '__reconstructor__' in hdf.attrs:
+        if 'recon' in hdf.attrs:
             # we found something that has some special idea about how it wants
             # to be reconstructed
             # look for arguments for that reconstructor
-            recon = hdf.attrs['__reconstructor__']
-            mod = hdf.attrs['__reconstructor_module__']
+            recon = hdf.attrs['recon']
+            mod = hdf.attrs['module']
             if mod == '__builtin__':
                 raise NotImplementedError(
                         "Built-in reconstructors are not supported (yet). "
@@ -49,8 +49,8 @@ def hdf2obj(hdf):
             mod = __import__(mod, fromlist=[recon])
             recon = mod.__dict__[recon]
 
-            if '__reconstructor_args__' in hdf:
-                recon_args = _hdf_tupleitems_to_obj(hdf['__reconstructor_args__'])
+            if 'rcargs' in hdf:
+                recon_args = _hdf_tupleitems_to_obj(hdf['rcargs'])
             else:
                 recon_args = ()
 
@@ -60,8 +60,8 @@ def hdf2obj(hdf):
             # TODO Handle potentially avialable state settings
             return obj
 
-        cls = hdf.attrs['__class__']
-        mod = hdf.attrs['__module__']
+        cls = hdf.attrs['class']
+        mod = hdf.attrs['module']
         if not mod == '__builtin__':
             # some custom class is desired
             # import the module and the class
@@ -71,18 +71,26 @@ def hdf2obj(hdf):
 
             # create the object
             if issubclass(cls, dict):
+                # use specialized __new__ if necessary or beneficial
                 obj = dict.__new__(cls)
-                # insert the state of the object
-                obj.__dict__.update(
-                        _hdf_dictitems_to_obj(hdf, skip=['__items__']))
-                # charge the dict itself
-                obj.update(_hdf_dictitems_to_obj(hdf['__items__']))
-                return obj
             else:
                 obj = object.__new__(cls)
+
+            if 'state' in hdf:
                 # insert the state of the object
-                obj.__dict__.update(_hdf_dictitems_to_obj(hdf))
-                return obj
+                obj.__dict__.update(
+                        _hdf_dictitems_to_obj(hdf['state']))
+
+            # do we process a container?
+            if 'items' in hdf:
+                if issubclass(cls, dict):
+                    # charge a dict itself
+                    obj.update(_hdf_dictitems_to_obj(hdf['items']))
+                else:
+                    raise NotImplementedError(
+                            "Unhandled conatiner typ (got: '%s')." % cls)
+
+            return obj
 
         else:
             # built in type (there should be only 'list', 'dict' and 'None'
@@ -90,11 +98,11 @@ def hdf2obj(hdf):
             if cls == 'NoneType':
                 return None
             elif cls == 'tuple':
-                return _hdf_tupleitems_to_obj(hdf['__items__'])
+                return _hdf_tupleitems_to_obj(hdf['items'])
             elif cls == 'list':
-                return _hdf_listitems_to_obj(hdf['__items__'])
+                return _hdf_listitems_to_obj(hdf['items'])
             elif cls == 'dict':
-                return _hdf_dictitems_to_obj(hdf['__items__'])
+                return _hdf_dictitems_to_obj(hdf['items'])
             else:
                 raise RuntimeError("Found hdf group with a builtin type "
                         "that is not handled by the parser (group: %s). This "
@@ -141,30 +149,31 @@ def obj2hdf(hdf, obj, name, **kwargs):
     # or it was the default implementation
     if pieces is None or pieces[0].__name__ == '_reconstructor':
         # store class info (fully-qualified)
-        grp.attrs.create('__class__', obj.__class__.__name__)
-        grp.attrs.create('__module__', obj.__class__.__module__)
+        grp.attrs.create('class', obj.__class__.__name__)
+        grp.attrs.create('module', obj.__class__.__module__)
         if isinstance(obj, list) or isinstance(obj, tuple):
-            items = grp.create_group('__items__')
+            items = grp.create_group('items')
             for i, item in enumerate(obj):
                 obj2hdf(items, item, str(i), **kwargs)
         elif isinstance(obj, dict):
-            items = grp.create_group('__items__')
+            items = grp.create_group('items')
             for key in obj:
                 obj2hdf(items, obj[key], key, **kwargs)
         # pull all remaining data from the default __reduce__
         if not pieces is None and len(pieces) > 2:
+            stategrp = grp.create_group('state')
             # there is something in the state
             state = pieces[2]
             # loop over all attributes and store them
             for attr in state:
-                obj2hdf(grp, state[attr], attr, **kwargs)
+                obj2hdf(stategrp, state[attr], attr, **kwargs)
         # for the default __reduce__ there is nothin else to do
         return
     else:
         # XXX handle custom reduce
-        grp.attrs.create('__reconstructor__', pieces[0].__name__)
-        grp.attrs.create('__reconstructor_module__', pieces[0].__module__)
-        args = grp.create_group('__reconstructor_args__')
+        grp.attrs.create('recon', pieces[0].__name__)
+        grp.attrs.create('module', pieces[0].__module__)
+        args = grp.create_group('rcargs')
         for i, arg in enumerate(pieces[1]):
             obj2hdf(args, arg, str(i), **kwargs)
         return
