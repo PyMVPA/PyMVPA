@@ -568,7 +568,9 @@ class AttrDataset(object):
 
         # acces the group that should contain the dataset
         dsgrp = hdf[name]
-        samples = dsgrp['samples']
+        hdf_samples = dsgrp['samples']
+        samples = N.empty(hdf_samples.shape, hdf_samples.dtype)
+        hdf_samples.read_direct(samples)
         sa = _hdf2col(dsgrp, 'sa')
         fa = _hdf2col(dsgrp, 'fa')
         ds = cls(samples, sa=sa, fa=fa)
