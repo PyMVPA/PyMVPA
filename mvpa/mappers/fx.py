@@ -96,8 +96,16 @@ class FxMapper(Mapper):
     def _forward_dataset(self, ds):
         if self.__uattrs is None:
             mdata, sattrs = self._forward_dataset_full(ds)
+            single_attr = True
+            # yoh: Had another tentative solution but nope...  I guess
+            #      logic of wrapping into list should go into _full
+            #      and _grouped
+            #(len(mdata.shape) != len(ds.shape) \
+            #or
+            #(mdata.shape != ds.shape and mdata.shape[0] == 1))
         else:
             mdata, sattrs = self._forward_dataset_grouped(ds)
+            single_attr = False
 
         samples = N.atleast_2d(mdata)
 
@@ -123,7 +131,7 @@ class FxMapper(Mapper):
         for attr in sattrs:
             a = sattrs[attr]
             # need to handle single literal attributes
-            if isinstance(a, str):
+            if single_attr:
                 col[attr] = [a]
             else:
                 col[attr] = N.atleast_1d(a)
