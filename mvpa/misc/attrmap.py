@@ -189,7 +189,11 @@ class AttributeMap(object):
             # ndarrays are special since array is just a factory, and ndarray takes
             # shape as the first argument
             if issubclass(target_constr, N.ndarray):
-                target_constr = N.array
+                if attr.dtype is N.dtype('object'):
+                    target_constr = lambda x: N.array(x, dtype=object)
+                else:
+                    # Otherwise no special handling
+                    target_constr = N.array
             res = target_constr([lookupfx(k) for k in attr])
             if target_constr is N.array and not (attr.__class__ is N.ndarray):
                 # to accommodate subclasses of ndarray
