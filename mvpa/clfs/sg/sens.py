@@ -17,6 +17,7 @@ if externals.exists('shogun', raiseException=True):
     import shogun.Classifier
 
 from mvpa.misc.state import StateVariable
+from mvpa.misc.support import asobjarray
 from mvpa.measures.base import Sensitivity
 from mvpa.datasets.base import Dataset
 
@@ -82,6 +83,10 @@ class LinearSVMWeights(Sensitivity):
 
         ds = Dataset(N.atleast_2d(sens))
         if sens_labels is not None:
+            if isinstance(sens_labels[0], tuple):
+                # Need to have them in array of dtype object
+                sens_labels = asobjarray(sens_labels)
+
             if len(clf._attrmap):
                 sens_labels = clf._attrmap.to_literal(sens_labels, recurse=True)
             ds.sa['labels'] = sens_labels
