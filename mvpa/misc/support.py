@@ -318,22 +318,6 @@ def isSorted(items):
     return equality
 
 
-def asobjarray(x):
-    """Generates numpy.ndarray with dtype object from an iterable
-
-    Is needed to assure object dtype, so first empty array of
-    dtype=object needs to be constructed and then only items to be
-    assigned.
-
-    Parameters
-    ----------
-    x : list or tuple or ndarray
-    """
-    res = N.empty(len(x), dtype=object)
-    res[:] = x
-    return res
-
-
 def isInVolume(coord, shape):
     """For given coord check if it is within a specified volume size.
 
