@@ -14,7 +14,7 @@ import numpy as N
 import operator
 
 from mvpa.mappers.base import Mapper
-
+from mvpa.misc.support import array_whereequal
 
 class FxMapper(Mapper):
     """Apply a custom transformation to (groups of) samples or features.
@@ -151,8 +151,8 @@ class FxMapper(Mapper):
         # let it generate all combinations of unique elements in any attr
         for comb in _orthogonal_permutations(self.__attrcombs):
             selector = reduce(N.multiply,
-                                [col[attr].value == value
-                                    for attr, value in comb.iteritems()])
+                                [array_whereequal(col[attr].value, value)
+                                 for attr, value in comb.iteritems()])
             # process the samples
             if axis == 0:
                 samples = ds.samples[selector]
