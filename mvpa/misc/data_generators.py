@@ -131,6 +131,9 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
         ds.fa['labels'] = N.array([None]*nfeatures)
         ds.fa.labels[nonbogus_features] = ['L%d' % i for i in range(nlabels)]
         ds.a['nonbogus_features'] = nonbogus_features
+        ds.a['bogus_features'] = [x for x in range(nfeatures)
+                                  if not x in nonbogus_features]
+
 
     return ds
 
