@@ -497,13 +497,14 @@ class GPRLinearWeights(Sensitivity):
         if isinstance(kernel, LinearKernel):
             Sigma_p = 1.0
         else:
-            Sigma_p = kernel.Sigma_p
+            Sigma_p = kernel.params.Sigma_p
+
         weights = Ndot(Sigma_p,
                         Ndot(train_fv.T, clf._alpha))
 
         if self.states.is_enabled('variances'):
             # super ugly formulas that can be quite surely improved:
-            tmp = N.linalg.inv(self._L)
+            tmp = N.linalg.inv(clf._L)
             Kyinv = Ndot(tmp.T, tmp)
             # XXX in such lengthy matrix manipulations you might better off
             #     using N.matrix where * is a matrix product

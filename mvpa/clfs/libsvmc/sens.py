@@ -148,6 +148,9 @@ class LinearSVMWeights(Sensitivity):
         # and we should have prepared the labels
         assert(sens_labels is not None)
 
+        if len(clf._attrmap):
+            sens_labels = clf._attrmap.to_literal(sens_labels, recurse=True)
+
         # NOTE: `weights` is already and always 2D
         weights_ds = Dataset(weights, sa={'labels': sens_labels})
 

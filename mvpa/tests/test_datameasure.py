@@ -19,7 +19,8 @@ from mvpa.featsel.rfe import RFE
 from mvpa.clfs.meta import SplitClassifier, MulticlassClassifier, \
      FeatureSelectionClassifier
 from mvpa.clfs.smlr import SMLR, SMLRWeights
-from mvpa.mappers.fx import sumofabs_sample, absolute_features, FxMapper
+from mvpa.mappers.fx import sumofabs_sample, absolute_features, FxMapper, \
+     maxofabs_sample
 from mvpa.datasets.splitters import NFoldSplitter, NoneSplitter
 
 from mvpa.misc.transformers import Absolute, \
@@ -34,6 +35,7 @@ from tests_warehouse import *
 from tests_warehouse_clfs import *
 
 from nose.tools import assert_equal
+from numpy.testing import assert_array_equal
 
 _MEASURES_2_SWEEP = [ OneWayAnova(),
                       CompoundOneWayAnova(mapper=sumofabs_sample()),
@@ -125,6 +127,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.failUnless('splits' in sens.sa)
         self.failUnless('labels' in sens.sa)
 
+        assert_array_equal(sens.sa['labels'].unique, ds.sa['labels'].unique)
+
         errors = [x.percentCorrect
                     for x in sana.clf.states.confusion.matrices]
 
@@ -155,14 +159,21 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # mean per each feature per split
         sensm = FxMapper('samples', lambda x: N.abs(x).sum(),
                          uattrs=['splits'])(sens)
-        for sens_ in sensm.samples: # + sana.combined_analyzer.sensitivities:
-            selected = FixedNElementTailSelector(
-                ds.nfeatures - len(ds.nonbogus_features))(sens_)
-            if cfg.getboolean('tests', 'labile', default='yes'):
-                self.failUnlessEqual(
-                    list(selected),
-                    list(ds.nonbogus_features),
-                    msg="At the end we should have selected the right features")
+        sensgm = maxofabs_sample()(sensm)    # global max of abs of means
+
+        assert_equal(sensgm.shape[0], 1)
+        selected = FixedNElementTailSelector(
+            len(ds.a.bogus_features))(sensgm.samples[0])
+
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnlessEqual(
+                set(selected), set(ds.a.nonbogus_features),
+                msg="At the end we should have selected the right features. "
+                "Chose %s whenever nonbogus are %s"
+                % (selected, ds.a.nonbogus_features))
+
+        # Now test each one per label -- for a given sensitivity we cannot guarantee
+        # TODO
 
 
     @sweepargs(clf=clfswh['has_sensitivity'])

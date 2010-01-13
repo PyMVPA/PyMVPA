@@ -27,7 +27,7 @@ from mvpa.misc.data_generators import normalFeatureDataset
 import mvpa.support.copy as copy
 from mvpa.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection, \
-        ArrayCollectable, SampleAttribute
+        ArrayCollectable, SampleAttribute, Collectable
 
 from tests_warehouse import *
 
@@ -689,7 +689,14 @@ def test_repr():
     ok_(repr(eattr), attr_repr)
 
     # should also work for a simple dataset
-    ds = datasets['uni2small']
+    # Does not work due to bug in numpy:
+    #  python -c "from numpy import *; print __version__; r=repr(array(['s', None])); print r; eval(r)"
+    # would give "array([s, None], dtype=object)" without '' around s
+    #ds = datasets['uni2small']
+    ds = Dataset([[0, 1]],
+                 a={'dsa1': 'v1'},
+                 sa={'labels': [0]},
+                 fa={'labels': ['b', 'n']})
     ds_repr = repr(ds)
     ok_(repr(eval(ds_repr)) == ds_repr)
 

@@ -7,6 +7,8 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
+import numpy as N
+
 from numpy.testing import assert_array_equal
 from nose.tools import assert_raises, ok_, assert_false, assert_equal
 
@@ -29,6 +31,23 @@ def test_attrmap():
     assert_array_equal(am.to_literal(num_default), literal)
     ok_(am)
     ok_(len(am) == 3)
+
+    # recursive mapping + preserving datatype
+    class myarray(N.ndarray):
+        pass
+
+    assert_raises(KeyError, am.to_literal, [(1, 2), 2, 0])
+    res = am.to_literal([(1, 2),
+                         2,
+                         N.array([0, 1]).view(myarray)], recurse=True)
+    assert_equal(res[0], ('sieben', 'zwei'))
+    assert_equal(res[1], 'zwei')
+    assert_array_equal(res[2], ['eins', 'sieben'])
+
+    # types of sequences should be preserved
+    ok_(isinstance(res, list))
+    ok_(isinstance(res[0], tuple))
+    ok_(isinstance(res[2], myarray))
 
     # with custom mapping
     am = AttributeMap(map=map_custom)
@@ -60,6 +79,7 @@ def test_attrmap():
     am = AttributeMap()
 
     ok_([(k, v) for k, v in am.iteritems()] == [])
+
 
 def test_attrmap_repr():
     assert_equal(repr(AttributeMap()), "AttributeMap()")
