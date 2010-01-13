@@ -10,9 +10,6 @@
 
 import numpy as N
 import random
-import shutil
-import tempfile
-import os
 import h5py
 
 from numpy.testing import assert_array_equal
@@ -25,19 +22,8 @@ from tests_warehouse import *
 
 
 def test_h5py_datasets():
-    tempdir = tempfile.mkdtemp()
-
-    # store the whole datasets warehouse in one hdf5 file
-    hdf = h5py.File(os.path.join(tempdir, 'myhdf5.hdf5'), 'w')
-    for d in datasets:
-        obj2hdf(hdf, datasets[d], d)
-    hdf.close()
-
-    hdf = h5py.File(os.path.join(tempdir, 'myhdf5.hdf5'), 'r')
-    rc_ds = {}
-    for d in hdf:
-        rc_ds[d] = hdf2obj(hdf[d])
-    hdf.close()
+    # this one stores and reloads all datasets in the warehouse
+    rc_ds = saveload_warehouse()
 
     # global checks
     assert_equal(len(datasets), len(rc_ds))
@@ -58,6 +44,3 @@ def test_h5py_datasets():
         if 'mapper' in ds.a:
             # since we have no __equal__ do at least some comparison
             assert_equal(repr(ds.a.mapper), repr(ds2.a.mapper))
-
-    #cleanup temp dir
-    shutil.rmtree(tempdir, ignore_errors=True)
