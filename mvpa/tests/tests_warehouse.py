@@ -10,18 +10,22 @@
 
 __docformat__ = 'restructuredtext'
 
+import tempfile
+import shutil
+import os
 import traceback as tbm
 import unittest, sys
 import numpy as N
 
-from mvpa import cfg
+from mvpa import cfg, externals
 from mvpa.datasets import Dataset
 from mvpa.datasets.splitters import OddEvenSplitter
 from mvpa.clfs.base import Classifier
 from mvpa.misc.state import ClassWithCollections
 from mvpa.misc.data_generators import *
 
-__all__ = [ 'datasets', 'sweepargs', 'N', 'unittest', '_all_states_enabled' ]
+__all__ = [ 'datasets', 'sweepargs', 'N', 'unittest', '_all_states_enabled',
+            'saveload_warehouse']
 
 if __debug__:
     from mvpa.base import debug
@@ -221,3 +225,40 @@ datasets['chirp_linear_test'] = chirpLinear(20, 5, 2, 0.4, 0.1)
 
 datasets['wr1996'] = multipleChunks(wr1996, 4, 50)
 datasets['wr1996_test'] = wr1996(50)
+
+
+def saveload_warehouse():
+    """Store all warehouse datasets into HDF5 and reload them.
+    """
+    import h5py
+    from mvpa.base.hdf5 import obj2hdf, hdf2obj
+
+    tempdir = tempfile.mkdtemp()
+
+    # store the whole datasets warehouse in one hdf5 file
+    hdf = h5py.File(os.path.join(tempdir, 'myhdf5.hdf5'), 'w')
+    for d in datasets:
+        obj2hdf(hdf, datasets[d], d)
+    hdf.close()
+
+    hdf = h5py.File(os.path.join(tempdir, 'myhdf5.hdf5'), 'r')
+    rc_ds = {}
+    for d in hdf:
+        rc_ds[d] = hdf2obj(hdf[d])
+    hdf.close()
+
+    #cleanup temp dir
+    shutil.rmtree(tempdir, ignore_errors=True)
+
+    # return the reconstructed datasets (for use in datasets warehouse)
+    return rc_ds
+
+
+if cfg.getboolean('tests', 'use hdf datasets', False):
+    if not externals.exists('h5py'):
+        raise RuntimeError(
+            "Cannot perform HDF5 dump of all datasets in the warehouse, "
+            "because 'h5py' is not available")
+
+    datasets = saveload_warehouse()
+    print "Replaced all dataset warehouse for HDF5 loaded alternative."
