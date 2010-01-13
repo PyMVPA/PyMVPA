@@ -59,15 +59,31 @@ class LinearSVMWeights(Sensitivity):
         # XXX Hm... it might make sense to unify access functions
         # naming across our swig libsvm wrapper and sg access
         # functions for svm
-        svm = self.clf.svm
-        if isinstance(svm, shogun.Classifier.MultiClassSVM):
+        clf = self.clf
+        sgsvm = clf.svm
+        sens_labels = None
+        if isinstance(sgsvm, shogun.Classifier.MultiClassSVM):
             sens = []
-            for i in xrange(svm.get_num_svms()):
-                sens.append(self.__sg_helper(svm.get_svm(i)))
+            nsvms = sgsvm.get_num_svms()
+            clabels = sorted(clf._attrmap.values())
+            nclabels = len(clabels)
+            sens_labels = []
+            for i in xrange(nclabels):
+                for j in xrange(i+1, nclabels):
+                    sens.append(self.__sg_helper(sgsvm.get_svm(i)))
+                    sens_labels += [(clabels[i], clabels[j])]
+            assert(len(sens) == nsvms)
         else:
-            sens = self.__sg_helper(svm)
+            sens = N.atleast_2d(self.__sg_helper(sgsvm))
+            if not clf.__is_regression__:
+                assert(set(clf._attrmap.values()) == set([-1.0, 1.0]))
+                assert(sens.shape[0] == 1)
+                sens_labels = [(-1.0, 1.0)]
 
         ds = Dataset(N.atleast_2d(sens))
-        # TODO: handle binary(1)/multiclass(pairs) correctly
-        #       and assign labels
+        if sens_labels is not None:
+            if len(clf._attrmap):
+                sens_labels = clf._attrmap.to_literal(sens_labels, recurse=True)
+            ds.sa['labels'] = sens_labels
+
         return ds

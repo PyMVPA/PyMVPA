@@ -20,7 +20,8 @@ from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN
 from mvpa.clfs.gnb import GNB
-from mvpa.kernels.np import LinearKernel, SquaredExponentialKernel
+from mvpa.kernels.np import LinearKernel, SquaredExponentialKernel, \
+     GeneralizedLinearKernel
 
 # Helpers
 from mvpa.base import externals, cfg
@@ -344,7 +345,7 @@ if externals.exists('scipy'):
 
     # Add wrapped GPR as a classifier
     clfswh += RegressionAsClassifier(
-        GPR(kernel=LinearKernel()), descr="GPRC(kernel='linear')")
+        GPR(kernel=GeneralizedLinearKernel()), descr="GPRC(kernel='linear')")
 
 # BLR
 from mvpa.clfs.blr import BLR

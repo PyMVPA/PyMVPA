@@ -97,7 +97,7 @@ class StatsTests(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             # All non-bogus features must be high for a corresponding feature
             self.failUnless((ac.samples[N.arange(4),
-                                        N.array(ds.nonbogus_features)] >= 1
+                                        N.array(ds.a.nonbogus_features)] >= 1
                                         ).all())
         # All features should have slightly but different CompoundAnova
         # values. I really doubt that there will be a case when this
