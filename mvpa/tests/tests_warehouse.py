@@ -166,21 +166,16 @@ for kind, spec in specs.iteritems():
     for nlabels in [ 2, 3, 4 ]:
         basename = 'uni%d%s' % (nlabels, kind)
         nonbogus_features = nonbogus_pool[:nlabels]
-        bogus_features = [x for x in range(spec['nfeatures'])
-                          if not x in nonbogus_features]
 
         dataset = normalFeatureDataset(
             nlabels=nlabels,
             nonbogus_features=nonbogus_features,
             **spec)
-        dataset.nonbogus_features = nonbogus_features
-        dataset.bogus_features = bogus_features
+
         oes = OddEvenSplitter()
         splits = [(train, test) for (train, test) in oes(dataset)]
         for i, replication in enumerate( ['test', 'train'] ):
             dataset_ = splits[0][i]
-            dataset_.nonbogus_features = nonbogus_features
-            dataset_.bogus_features = bogus_features
             datasets["%s_%s" % (basename, replication)] = dataset_
 
         # full dataset

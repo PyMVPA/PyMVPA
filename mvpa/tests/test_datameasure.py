@@ -160,11 +160,11 @@ class SensitivityAnalysersTests(unittest.TestCase):
                          uattrs=['splits'])(sens)
         for sens_ in sensm.samples: # + sana.combined_analyzer.sensitivities:
             selected = FixedNElementTailSelector(
-                ds.nfeatures - len(ds.nonbogus_features))(sens_)
+                ds.nfeatures - len(ds.a.nonbogus_features))(sens_)
             if cfg.getboolean('tests', 'labile', default='yes'):
                 self.failUnlessEqual(
                     list(selected),
-                    list(ds.nonbogus_features),
+                    list(ds.a.nonbogus_features),
                     msg="At the end we should have selected the right features")
 
 
