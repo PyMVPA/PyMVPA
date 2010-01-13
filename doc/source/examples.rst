@@ -43,6 +43,7 @@ Analysis
 
 .. toctree::
 
+   examples/hyperplane_demo
    examples/start_easy
    examples/smlr
    examples/clfs_examples
