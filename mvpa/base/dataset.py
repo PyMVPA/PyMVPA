@@ -553,6 +553,7 @@ class AttrDataset(object):
             raise RuntimeError("Missing 'h5py' package -- saving is not possible.")
 
         import h5py
+        from mvpa.base.hdf5 import hdf2obj
 
         # look if we got an hdf file instance already
         if isinstance(source, h5py.highlevel.File):
@@ -568,13 +569,7 @@ class AttrDataset(object):
 
         # acces the group that should contain the dataset
         dsgrp = hdf[name]
-        hdf_samples = dsgrp['samples']
-        samples = N.empty(hdf_samples.shape, hdf_samples.dtype)
-        hdf_samples.read_direct(samples)
-        sa = _hdf2col(dsgrp, 'sa')
-        fa = _hdf2col(dsgrp, 'fa')
-        ds = cls(samples, sa=sa, fa=fa)
-        return ds
+        return hdf2obj(dsgrp)
 
 
     # shortcut properties
@@ -778,6 +773,7 @@ def save(dataset, to, name='dataset', compression=None):
         raise RuntimeError("Missing 'h5py' package -- saving is not possible.")
 
     import h5py
+    from mvpa.base.hdf5 import obj2hdf
 
     # look if we got an hdf file instance already
     if isinstance(to, h5py.highlevel.File):
@@ -787,80 +783,9 @@ def save(dataset, to, name='dataset', compression=None):
         own_file = True
         hdf = h5py.File(to, 'w')
 
-    # first create a group of the desired name for this dataset
-    # this call will fail in case there is already a group of that name
-    dsgrp = hdf.create_group(name)
-
-    # local binding
-    samples = dataset.samples
-
-    # store the samples in an hdf-dataset
-    dsgrp.create_dataset('samples', None, None, samples,
-                         compression=compression)
-
-    # store samples attributes collection
-    _col2hdf(dsgrp, dataset.sa, 'sa', compression=compression)
-    # store feature attributes collection
-    _col2hdf(dsgrp, dataset.fa, 'fa', compression=compression)
-    # store dataset attributes collection (this is special)
-    # TODO
+    obj2hdf(hdf, dataset, name, compression=compression)
 
     # if we opened the file ourselves we close it now
     if own_file:
         hdf.close()
-
-
-def _col2hdf(hdf, col, name, **kwargs):
-    """Helper to store a collection into an HDF5 group.
-
-    Parameters
-    ----------
-    hdf : HDF group
-      This group will contain a new group with the content of the collection.
-    col : Collection
-      Collection to store
-    name : str
-      Name of the HDF group to hold the collection content
-    **kwargs
-      All additional arguments are pass to the `create_dataset()` call for each
-      collection attribute.
-    """
-    # nothing to do if no elements
-    if not len(col):
-        return
-
-    colgrp = hdf.create_group(name)
-    not_stored = []
-    for attr in col:
-        try:
-            colgrp.create_dataset(attr, None, None, col[attr].value, **kwargs)
-        except TypeError:
-            not_stored.append(attr)
-    if len(not_stored):
-        warning("Could not store all attributes into HDF file '%s' -- "
-                "probably unsupported dtype (not stored: %s)"
-                % (to, not_stored))
-
-
-def _hdf2col(hdf, name):
-    """Helper to load a collection from an HDF5 group.
-
-    Parameters
-    ----------
-    hdf : HDF group
-      This group will contain a new group with the content of the collection.
-    name : str
-      Name of the HDF group to hold the collection content
-
-    Returns
-    -------
-    dict
-      All attributes of the collection as (name: value) pairs.
-    """
-    if not name in hdf:
-        raise ValueError("Cannot find '%s' group in HDF file."
-                         % name)
-
-    colgrp = hdf[name]
-    col = dict([(attr, value) for attr, value in colgrp.iteritems()])
-    return col
+    return
