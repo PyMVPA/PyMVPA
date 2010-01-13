@@ -57,6 +57,12 @@ def test_attrmap():
         ok_(isinstance(res[2], list))
         ok_(isinstance(res[3], myarray))
 
+    # yet another example
+    a = N.empty(1, dtype=object)
+    a[0] = (0, 1)
+    res = am.to_literal(a, recurse=True)
+    ok_(isinstance(res[0], tuple))
+
     #
     # with custom mapping
     am = AttributeMap(map=map_custom)
