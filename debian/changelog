@@ -9,13 +9,18 @@ pymvpa (0.4.3-2) unstable; urgency=low
       + drop explicit Depends on python: we use ${python:Depends}
     - debian/pyversions
       + bump it to '+2.5-'
-  * debian/control
-    - bump b-d on python-epydoc to '>= 3.0.1-4': this version works correctly
-      with python-docutils 0.6, hence fixing the FTBFS; thanks to Lucas Nussbaum
-      for the report (Closes: #560606)
 
   [ Yaroslav Halchenko ]
   * Added python-mvpa-doc to suggests.
+  * debian/control
+    - Thanks Sandro Tosi for NMU attempt to fix #560606.
+    - Build-Conflict on python-epydoc=3.0.1-4: this version works
+    incorrectly with python-docutils 0.6 (thanks to Lucas Nussbaum for the
+    report).  Also Build-Depends on python-docutils (<< 0.6) |
+    python-docutils (>= 0.6-3~) which would assure that we still can build
+    on lenny or with fresh docutils which pull in fresh epydoc (thanks to
+    Jakub Wilk for suggestion).  Those 2 steps fix the FTBFS (Closes:
+    #560606)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 12 Jan 2010 17:55:55 -0500
 
