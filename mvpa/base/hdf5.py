@@ -12,6 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 import h5py
+from mvpa.base.types import asobjarray
 
 #
 # TODO: check for recursions!!!
@@ -100,7 +101,12 @@ def hdf2obj(hdf):
             elif cls == 'tuple':
                 return _hdf_tupleitems_to_obj(hdf['items'])
             elif cls == 'list':
-                return _hdf_listitems_to_obj(hdf['items'])
+                l = _hdf_listitems_to_obj(hdf['items'])
+                if 'is_objarray' in hdf.attrs:
+                    # need to handle special case of arrays of objects
+                    return asobjarray(l)
+                else:
+                    return l
             elif cls == 'dict':
                 return _hdf_dictitems_to_obj(hdf['items'])
             else:
@@ -131,12 +137,19 @@ def _hdf_tupleitems_to_obj(hdf):
 def obj2hdf(hdf, obj, name, **kwargs):
     # if it is somthing that can go directly into HDF5, put it there
     # right away
-    if N.isscalar(obj) or isinstance(obj, N.ndarray):
+    if N.isscalar(obj) \
+       or (isinstance(obj, N.ndarray) and not obj.dtype == N.object):
         hdf.create_dataset(name, None, None, obj, **kwargs)
         return
 
     # complex objects
     grp = hdf.create_group(name)
+
+    # special case of array of type object -- we turn them into lists and
+    # process as usual, but set a flag to trigger appropriate reconstruction
+    if isinstance(obj, N.ndarray) and obj.dtype == N.object:
+        obj = list(obj)
+        grp.attrs.create('is_objarray', True)
 
     # try disassembling the object
     try:
