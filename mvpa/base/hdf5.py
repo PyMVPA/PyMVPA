@@ -6,7 +6,33 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Converter for PyMVPA object to HDF5 format."""
+"""HDF5-based file IO for PyMVPA objects.
+
+Based on the `h5py` package, this module provides two functions (`obj2hdf()` and
+`hdf2obj()`) to store (in principle) arbitrary Python objects into HDF5 groups,
+and using HDF5 as input, convert them back into Python object instances.
+
+Similar to `pickle` a Python object is disassembled into its pieces, but instead
+of serializing it into a byte-stream it is stored in chunks whos type can be
+natively stored in HDF5. That means basically everything that can be stored in
+a NumPy array.
+
+If an object is not readily storable, its `__reduce__()` method is called to
+disassemble it into more basic pieces. The default implementation of
+`object.__reduce__()` is typically sufficient. Hence, for any new-style Python
+class there is, in general, no need to implement `__reduce__()`. However, custom
+implementations might allow for leaner HDF5 representations and leaner files.
+Basic types, such as `list`, and `dict`, whos `__reduce__()` method does not do
+help with disassembling are also handled.
+
+.. warning::
+
+  Although, in principle, storage and reconstruction of arbitrary object types
+  is possible, it might not be implemented yet. The current focus lies on
+  storage of PyMVPA datasets and their attributes (e.g. Mappers).  Especially,
+  objects with recursive references will cause problems with the current
+  implementation.
+"""
 
 __docformat__ = 'restructuredtext'
 
@@ -14,10 +40,35 @@ import numpy as N
 import h5py
 from mvpa.base.types import asobjarray
 
+
 #
 # TODO: check for recursions!!!
 #
 def hdf2obj(hdf):
+    """Convert an HDF5 group definition into an object instance.
+
+    Obviously, this function assumes the conventions implemented in the
+    `obj2hdf()` function. Those conventions will eventually be documented in
+    the module docstring, whenever they are sufficiantly stable.
+
+    Parameters
+    ----------
+    hdf : HDF5 group instance
+      HDF5 group instance. this could also be an HDF5 file instance.
+
+    Notes
+    -----
+    Although, this function uses a way to reconstruct object instances that is
+    similar to unpickling, it should be *relatively* safe to open HDF files
+    from untrusted sources. Only basic datatypes are stored in HDF files, and
+    there is no foreign code that is executed during reconstructing. For that
+    reason, any type that shall be reconstructed needs to be importable
+    (importing is done be fully-qualified module names).
+
+    Returns
+    -------
+    object instance
+    """
     # already at the level of real data
     if isinstance(hdf, h5py.Dataset):
         if not len(hdf.shape):
@@ -135,6 +186,28 @@ def _hdf_tupleitems_to_obj(hdf):
 # TODO: check for recursions!!!
 #
 def obj2hdf(hdf, obj, name, **kwargs):
+    """Store an object instance in an HDF5 group.
+
+    A given object instance is (recursively) disassembled into pieces that are
+    storable in HDF5. In general, any pickable object should be storable, but
+    since the parser is not complete, it might not be possible (yet).
+
+    .. warning::
+
+      Currently, the parser does not track recursions. If an object contains
+      recursive references all bets are off. Here be dragons...
+
+    Parameters
+    ----------
+    hdf : HDF5 group instance
+      HDF5 group instance. this could also be an HDF5 file instance.
+    obj : object instance
+      Object instance that shall be stored.
+    name : str
+      Name of the new HDF5 group that should contain the object.
+    **kwargs
+      All additional arguments will be passed to `h5py.Group.create_dataset()`
+    """
     # if it is somthing that can go directly into HDF5, put it there
     # right away
     if N.isscalar(obj) \
