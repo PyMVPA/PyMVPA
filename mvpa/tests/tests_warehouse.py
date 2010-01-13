@@ -157,7 +157,10 @@ specs = {'large' : { 'perlabel': 99, 'nchunks': 11,
                      'nfeatures': 14, 'snr': 8 * snr_scale},
          'small' : { 'perlabel': 12, 'nchunks': 4,
                      'nfeatures': 6, 'snr' : 14 * snr_scale} }
-nonbogus_pool = [0, 1, 3, 5]
+
+# Lets permute upon each invocation of test, so we could possibly
+# trigger some funny cases
+nonbogus_pool = N.random.permutation([0, 1, 3, 5])
 
 datasets = {}
 
