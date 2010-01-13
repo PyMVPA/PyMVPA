@@ -11,7 +11,6 @@ pymvpa (0.4.3-2) unstable; urgency=low
       + bump it to '+2.5-'
 
   [ Yaroslav Halchenko ]
-  * Added python-mvpa-doc to suggests.
   * debian/control
     - Thanks Sandro Tosi for NMU attempt to fix #560606.
     - Build-Conflict on python-epydoc=3.0.1-4: this version works
@@ -21,6 +20,9 @@ pymvpa (0.4.3-2) unstable; urgency=low
     on lenny or with fresh docutils which pull in fresh epydoc (thanks to
     Jakub Wilk for suggestion).  Those 2 steps fix the FTBFS (Closes:
     #560606)
+    - Added python-mvpa-doc to suggests.
+  * Cherry pick 2 commits from maint/0.4 branch to be compatible with recent
+    versions of shogun-python-modular present in sid/squeeze.
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 12 Jan 2010 17:55:55 -0500
 
