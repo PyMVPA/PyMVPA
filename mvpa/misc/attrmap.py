@@ -179,25 +179,46 @@ class AttributeMap(object):
         lmap = self._lmap
 
         if isSequenceType(attr) and not isinstance(attr, str):
+            # Choose lookup function
             if recurse:
-                lookupfx = self.to_literal
+                lookupfx = lambda x: self.to_literal(x, recurse=True)
             else:
                 # just dictionary lookup
                 lookupfx = lambda x:lmap[x]
-            # perform lookup
+
+            # To assure the preserving the container type
             target_constr = attr.__class__
-            # ndarrays are special since array is just a factory, and ndarray takes
-            # shape as the first argument
-            if issubclass(target_constr, N.ndarray):
+            # ndarrays are special since array is just a factory, and
+            # ndarray takes shape as the first argument
+            isarray = issubclass(target_constr, N.ndarray)
+            if isarray:
                 if attr.dtype is N.dtype('object'):
                     target_constr = lambda x: N.array(x, dtype=object)
                 else:
                     # Otherwise no special handling
                     target_constr = N.array
-            res = target_constr([lookupfx(k) for k in attr])
-            if target_constr is N.array and not (attr.__class__ is N.ndarray):
-                # to accommodate subclasses of ndarray
-                res = res.view(attr.__class__)
+
+            # Perform lookup and store to the list
+            resl = [lookupfx(k) for k in attr]
+
+            # If necessary assure derived ndarray class type
+            if isarray:
+                if attr.dtype is N.dtype('object'):
+                    # we need first to create empty one and then
+                    # assign items -- god bless numpy
+                    resa = N.empty(len(resl), dtype=attr.dtype)
+                    resa[:] = resl
+                else:
+                    resa = target_constr(resl)
+
+                if not (attr.__class__ is N.ndarray):
+                    # to accommodate subclasses of ndarray
+                    res = resa.view(attr.__class__)
+                else:
+                    res = resa
+            else:
+                res = target_constr(resl)
+
             return res
         else:
             return lmap[attr]
