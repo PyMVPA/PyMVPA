@@ -29,10 +29,37 @@ def hdf2obj(hdf):
             return value
     else:
         # check if we have a class instance definition here
-        if not '__class__' in hdf.attrs:
+        if not ('__class__' in hdf.attrs or '__reconstructor__' in hdf.attrs):
             raise RuntimeError("Found hdf group without class instance "
                     "information (group: %s). This is a conceptual bug in the "
                     "parser or the hdf writer. Please report." % hdf.name)
+
+        if '__reconstructor__' in hdf.attrs:
+            # we found something that has some special idea about how it wants
+            # to be reconstructed
+            # look for arguments for that reconstructor
+            recon = hdf.attrs['__reconstructor__']
+            mod = hdf.attrs['__reconstructor_module__']
+            if mod == '__builtin__':
+                raise NotImplementedError(
+                        "Built-in reconstructors are not supported (yet). "
+                        "Got: '%s'." % recon)
+
+            # turn names into definitions
+            mod = __import__(mod, fromlist=[recon])
+            recon = mod.__dict__[recon]
+
+            if '__reconstructor_args__' in hdf:
+                recon_args = _hdf_tupleitems_to_obj(hdf['__reconstructor_args__'])
+            else:
+                recon_args = ()
+
+            # reconstruct
+            obj = recon(*recon_args)
+
+            # TODO Handle potentially avialable state settings
+            return obj
+
         cls = hdf.attrs['__class__']
         mod = hdf.attrs['__module__']
         if not mod == '__builtin__':
@@ -102,9 +129,6 @@ def obj2hdf(hdf, obj, name, **kwargs):
 
     # complex objects
     grp = hdf.create_group(name)
-    # store class info (fully-qualified)
-    grp.attrs.create('__class__', obj.__class__.__name__)
-    grp.attrs.create('__module__', obj.__class__.__module__)
 
     # try disassembling the object
     try:
@@ -116,6 +140,9 @@ def obj2hdf(hdf, obj, name, **kwargs):
     # common container handling, either __reduce__ was not possible
     # or it was the default implementation
     if pieces is None or pieces[0].__name__ == '_reconstructor':
+        # store class info (fully-qualified)
+        grp.attrs.create('__class__', obj.__class__.__name__)
+        grp.attrs.create('__module__', obj.__class__.__module__)
         if isinstance(obj, list) or isinstance(obj, tuple):
             items = grp.create_group('__items__')
             for i, item in enumerate(obj):
