@@ -816,6 +816,9 @@ def test_h5py_io():
         assert_array_equal(ds.sa[attr].value, ds2.sa[attr].value)
     for attr in ds.fa:
         assert_array_equal(ds.fa[attr].value, ds2.fa[attr].value)
+    assert_true(len(ds.a.mapper), 2)
+    # since we have no __equal__ do at least some comparison
+    assert_equal(repr(ds.a.mapper), repr(ds2.a.mapper))
 
     #cleanup temp dir
     shutil.rmtree(tempdir, ignore_errors=True)
