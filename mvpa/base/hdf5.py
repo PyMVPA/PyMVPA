@@ -185,7 +185,7 @@ def _hdf_tupleitems_to_obj(hdf):
 #
 # TODO: check for recursions!!!
 #
-def obj2hdf(hdf, obj, name, **kwargs):
+def obj2hdf(hdf, obj, name=None, **kwargs):
     """Store an object instance in an HDF5 group.
 
     A given object instance is (recursively) disassembled into pieces that are
@@ -203,20 +203,25 @@ def obj2hdf(hdf, obj, name, **kwargs):
       HDF5 group instance. this could also be an HDF5 file instance.
     obj : object instance
       Object instance that shall be stored.
-    name : str
-      Name of the new HDF5 group that should contain the object.
+    name : str or None
+      Name of the object. In case of a complex object that cannot be stored
+      natively without disassembling them, this is going to be a new group,
+      Otherwise the name of the dataset. If None, no new group is created.
     **kwargs
       All additional arguments will be passed to `h5py.Group.create_dataset()`
     """
-    # if it is somthing that can go directly into HDF5, put it there
+    # if it is something that can go directly into HDF5, put it there
     # right away
     if N.isscalar(obj) \
        or (isinstance(obj, N.ndarray) and not obj.dtype == N.object):
         hdf.create_dataset(name, None, None, obj, **kwargs)
         return
 
-    # complex objects
-    grp = hdf.create_group(name)
+    if not name is None:
+        # complex objects
+        grp = hdf.create_group(name)
+    else:
+        grp = hdf
 
     # special case of array of type object -- we turn them into lists and
     # process as usual, but set a flag to trigger appropriate reconstruction
@@ -263,3 +268,61 @@ def obj2hdf(hdf, obj, name, **kwargs):
         for i, arg in enumerate(pieces[1]):
             obj2hdf(args, arg, str(i), **kwargs)
         return
+
+
+def save(filename, data, name=None, mode='w', **kwargs):
+    """Stores arbitray data in an HDF5 file.
+
+    This is a convenience wrapper around `obj2hdf()`. Please see its
+    documentation for more details -- especially the warnings!!
+
+    Parameters
+    ----------
+    filename : str
+      Name of the file the data shall be stored in.
+    data : arbitrary
+      Instance of an object that shall be stored in the file.
+    name : str or None
+      Name of the object. In case of a complex object that cannot be stored
+      natively without disassembling them, this is going to be a new group,
+      otherwise the name of the dataset. If None, no new group is created.
+    mode : {'r', 'r+', 'w', 'w-', 'a'}
+      IO mode of the HDF5 file. See `h5py.File` documentation for more
+      information.
+    **kwargs
+      All additional arguments will be passed to `h5py.Group.create_dataset`.
+      This could, for example, be `compression='gzip'.
+    """
+    hdf = h5py.File(filename, mode)
+    obj2hdf(hdf, data, name, **kwargs)
+    hdf.close()
+
+
+def load(filename, name=None):
+    """Loads the content of an HDF5 file that has been stored by `save()`.
+
+    This is a convenience wrapper around `hdf2obj()`. Please see its
+    documentation for more details.
+
+    Parameters
+    ----------
+    filename : str
+      Name of the file to open and load its content.
+    name : str
+      Name of a specific object to load from the file.
+
+    Returns
+    -------
+    instance
+      An object of whatever has been stored in the file.
+    """
+    hdf = h5py.File(filename, 'r')
+    if not name is None:
+        if not name in hdf:
+            raise ValueError("No object of name '%s' in file '%s'."
+                             % (name, filename))
+        obj = hdf2obj(hdf[name])
+    else:
+        obj = hdf2obj(hdf)
+    hdf.close()
+    return obj
