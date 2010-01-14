@@ -82,7 +82,9 @@ def test_attrmap():
 
     # map mismatch
     am = AttributeMap(map=map_custom)
-    assert_raises(KeyError, am.to_numeric, literal_nonmatching)
+    if __debug__:
+        # checked only in __debug__
+        assert_raises(KeyError, am.to_numeric, literal_nonmatching)
     # needs reset and should work afterwards
     am.clear()
     assert_array_equal(am.to_numeric(literal_nonmatching), [2, 0, 1])
