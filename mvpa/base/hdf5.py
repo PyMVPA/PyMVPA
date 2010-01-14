@@ -8,8 +8,9 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """HDF5-based file IO for PyMVPA objects.
 
-Based on the `h5py` package, this module provides two functions (`obj2hdf()` and
-`hdf2obj()`) to store (in principle) arbitrary Python objects into HDF5 groups,
+Based on the `h5py` package, this module provides two functions (`obj2hdf()`
+and `hdf2obj()`, as well as the convenience functions `h5save()` and
+`h5load()`) to store (in principle) arbitrary Python objects into HDF5 groups,
 and using HDF5 as input, convert them back into Python object instances.
 
 Similar to `pickle` a Python object is disassembled into its pieces, but instead
@@ -270,7 +271,7 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
         return
 
 
-def save(filename, data, name=None, mode='w', **kwargs):
+def h5save(filename, data, name=None, mode='w', **kwargs):
     """Stores arbitray data in an HDF5 file.
 
     This is a convenience wrapper around `obj2hdf()`. Please see its
@@ -298,8 +299,8 @@ def save(filename, data, name=None, mode='w', **kwargs):
     hdf.close()
 
 
-def load(filename, name=None):
-    """Loads the content of an HDF5 file that has been stored by `save()`.
+def h5load(filename, name=None):
+    """Loads the content of an HDF5 file that has been stored by `h5save()`.
 
     This is a convenience wrapper around `hdf2obj()`. Please see its
     documentation for more details.
