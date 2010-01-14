@@ -8,15 +8,17 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for HDF5 converter'''
 
-import numpy as N
-import random
-import h5py
+from mvpa.base.externals import exists
+if exists('h5py', raiseException=True):
+    import h5py
+else:
+    raise RuntimeError, "Don't run me if no h5py is present"
+
 
 from numpy.testing import assert_array_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
-from mvpa.base.externals import exists
 from mvpa.base.hdf5 import obj2hdf, hdf2obj
 from tests_warehouse import *
 
