@@ -25,6 +25,8 @@ import mvpa.support.copy as copy
 
 from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.args import group_kwargs
+from mvpa.misc.support import asobjarray
+
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.base import externals, warning
 from mvpa.clfs.stats import autoNullDist
@@ -797,7 +799,7 @@ class RegressionAsClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyz
             labels = tuple(sorted(clf._trained_attrmap.values()))
             if len(clf._trained_attrmap):
                 labels = clf._trained_attrmap.to_literal(labels, recurse=True)
-            sens.sa['labels'] = [labels]
+            sens.sa['labels'] = asobjarray([labels])
         return sens
 
 
