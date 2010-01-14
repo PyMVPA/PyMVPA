@@ -56,7 +56,9 @@ from mvpa.base.info import wtf
 
 # locate data root -- data might not be installed, but if it is, it should be at
 # this location
-pymvpa_dataroot = os.path.join(os.path.dirname(__file__), 'data')
+pymvpa_dataroot = \
+        cfg.get('data', 'root',
+                default=os.path.join(os.path.dirname(__file__), 'data'))
 
 if not __debug__:
     try:
