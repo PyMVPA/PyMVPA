@@ -166,7 +166,9 @@ def test_subset():
     # no 3D input
     #assert_raises(IndexError, sm.forward, N.ones((3,2,1)))
     # no input of wrong length
-    assert_raises(ValueError, sm.forward, N.ones(4))
+    if __debug__:
+        # checked only in __debug__
+        assert_raises(ValueError, sm.forward, N.ones(4))
     # same on reverse
     #assert_raises(ValueError, sm.reverse, N.ones(16))
     # invalid ids

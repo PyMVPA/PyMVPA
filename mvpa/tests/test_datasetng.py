@@ -358,7 +358,9 @@ def test_mergeds():
     #
     # vstacking
     #
-    assert_raises(ValueError, vstack, (data0, data1, data2, data3))
+    if __debug__:
+        # tested only in __debug__
+        assert_raises(ValueError, vstack, (data0, data1, data2, data3))
     datasets = (data1, data2, data4)
     merged = vstack(datasets)
     assert_equal(merged.shape,
