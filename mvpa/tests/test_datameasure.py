@@ -99,7 +99,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         sana = mclf.getSensitivityAnalyzer(mapper=absolute_features(),
                                            enable_states=["sensitivities"])
 
-        nlabels = len(ds.uniquelabels)
+        ulabels = ds.uniquelabels
+        nlabels = len(ulabels)
         # Can't rely on splitcfg since count-limit is done in __call__
         assert(nsplits == len(list(splitter(ds))))
         sens = sana(ds)
@@ -126,8 +127,17 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # Check if labels are present
         self.failUnless('splits' in sens.sa)
         self.failUnless('labels' in sens.sa)
+        # should be 1D -- otherwise dtype object
+        self.failUnless(sens.sa.labels.ndim == 1)
 
-        assert_array_equal(sens.sa['labels'].unique, ds.sa['labels'].unique)
+        sens_ulabels = sens.sa['labels'].unique
+        # Some labels might be pairs(tuples) so ndarray would be of
+        # dtype object and we would need to get them all
+        if sens_ulabels.dtype is N.dtype('object'):
+            sens_ulabels = N.unique(
+                reduce(lambda x,y: x+y, [list(x) for x in sens_ulabels]))
+
+        assert_array_equal(sens_ulabels, ds.sa['labels'].unique)
 
         errors = [x.percentCorrect
                     for x in sana.clf.states.confusion.matrices]
@@ -156,24 +166,56 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
 
         # Since  now we have per split and possibly per label -- lets just find
-        # mean per each feature per split
+        # mean per each feature per label across splits
         sensm = FxMapper('samples', lambda x: N.abs(x).sum(),
-                         uattrs=['splits'])(sens)
+                         uattrs=['labels'])(sens)
         sensgm = maxofabs_sample()(sensm)    # global max of abs of means
 
         assert_equal(sensgm.shape[0], 1)
+        assert_equal(sensgm.shape[1], ds.nfeatures)
+
         selected = FixedNElementTailSelector(
             len(ds.a.bogus_features))(sensgm.samples[0])
 
         if cfg.getboolean('tests', 'labile', default='yes'):
+
             self.failUnlessEqual(
                 set(selected), set(ds.a.nonbogus_features),
                 msg="At the end we should have selected the right features. "
                 "Chose %s whenever nonbogus are %s"
                 % (selected, ds.a.nonbogus_features))
 
-        # Now test each one per label -- for a given sensitivity we cannot guarantee
-        # TODO
+            # Now test each one per label
+            # TODO: collect all failures and spit them out at once -- that would
+            #       make it easy to see if the sensitivity just has incorrect order
+            #       of labels assigned
+            for sens1 in sensm:
+                labels1 = sens1.labels
+                lndim = labels1.ndim
+                if lndim == 1: # just a single label
+                    label = labels1[0]
+                    self.failUnless(label in ulabels)
+
+                    ilabel_all = N.where(ds.fa.labels == label)[0]
+                    # should have just 1 feature for the label
+                    self.failUnlessEqual(len(ilabel_all), 1)
+                    ilabel = ilabel_all[0]
+
+                    maxsensi = N.argmax(sens1) # index of max sensitivity
+                    self.failUnlessEqual(maxsensi, ilabel,
+                        "Maximal sensitivity was found in %i whenever original"
+                        " feature was %i" % (maxsensi, ilabel))
+                elif lndim == 2 and labels1.shape[1] == 2: # pair of labels
+                    # we should have highest coefficients in those two labels
+                    self.failUnlessEqual(
+                        set(N.argsort(sens1)[0][-2:]),
+                        set([N.where(ds.fa.labels == l)[0][0]
+                             for l in labels1[0]]))
+                else:
+                    # yoh could be wrong at this assumption... time will show
+                    self.fail("Got unknown number labels per sensitivity: %s."
+                              " Should be either a single label or a pair"
+                              % labels1)
 
 
     @sweepargs(clf=clfswh['has_sensitivity'])
