@@ -17,7 +17,7 @@ if externals.exists('shogun', raiseException=True):
     import shogun.Classifier
 
 from mvpa.misc.state import StateVariable
-from mvpa.misc.support import asobjarray
+from mvpa.base.types import asobjarray
 from mvpa.measures.base import Sensitivity
 from mvpa.datasets.base import Dataset
 
