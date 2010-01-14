@@ -21,5 +21,6 @@ Available Datasets
 ==================
 
 .. toctree::
+   :maxdepth: 1
 
    datadb/mnist

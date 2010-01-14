@@ -1,5 +1,6 @@
+****************************************
 The MNIST Database Of Handwritten Digits
-----------------------------------------
+****************************************
 
 .. note::
 
@@ -22,7 +23,7 @@ See http://yann.lecun.com/exdb/mnist for more information.
 
 
 Requirements
-------------
+============
 
 * HDF5 access utilizes the H5PY_ package.
 * *PyMVPA 0.5* (or later) provides the `h5load()` function.
@@ -31,7 +32,7 @@ Requirements
 
 
 Instructions
-------------
+============
 
   >>> from mvpa.suite import *
   >>> filepath = os.path.join(pymvpa_dataroot, 'mnist', "mnist.hdf5")
@@ -45,8 +46,8 @@ Instructions
 
 
 References
-----------
+==========
 
-Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner. "Gradient-based learning
-applied to document recognition." Proceedings of the IEEE, 86: 2278-2324,
-November 1998.
+LeCun, Y., Bottou, L., Bengio, Y., and Haffner, P. (1998). Gradient-based
+learning applied to document recognition. *Proceedings of the IEEE, 86*,
+2278--2324.
