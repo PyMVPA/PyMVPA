@@ -15,7 +15,7 @@ from numpy.testing import assert_array_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
-from mvpa.base.externals import versions
+from mvpa.base.externals import versions, exists
 from mvpa.base.types import is_datasetlike
 from mvpa.base.dataset import DatasetError, vstack, hstack
 from mvpa.mappers.flatten import mask_mapper
@@ -706,6 +706,11 @@ def is_bsr(x):
     return hasattr(sparse, 'bsr_matrix') and isinstance(x, sparse.bsr_matrix)
 
 def test_other_samples_dtypes():
+    if not exists('scipy'):
+        # yoh: theoretically we should still test for non-sparse types below
+        #      but checks are too much interleaved -- so lets just don't test
+        #      if scipy is not there
+        return
     import scipy.sparse as sparse
     dshape = (4, 3)
     # test for ndarray, custom ndarray-subclass, matrix,
