@@ -131,10 +131,10 @@ class SMLR(Classifier):
         # init base class first
         Classifier.__init__(self, **kwargs)
 
-        if _cStepwiseRegression is None and self.implementation == 'C':
+        if _cStepwiseRegression is None and self.params.implementation == 'C':
             warning('SMLR: C implementation is not available.'
                     ' Using pure Python one')
-            self.implementation = 'Python'
+            self.params.implementation = 'Python'
 
         # pylint friendly initializations
         self._ulabels = None
