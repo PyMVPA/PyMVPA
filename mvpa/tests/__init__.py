@@ -132,6 +132,8 @@ def collectNoseTests():
         tests += ['test_niftidataset']
     if externals.exists('mdp'):
         tests += ['test_mdp']
+    if externals.exists('h5py'):
+        tests += ['test_hdf5']
 
     return tests
 
