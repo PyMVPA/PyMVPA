@@ -25,7 +25,7 @@ import mvpa.support.copy as copy
 
 from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.args import group_kwargs
-from mvpa.misc.support import asobjarray
+from mvpa.base.types import asobjarray
 
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.base import externals, warning
