@@ -244,4 +244,5 @@ latex_preamble = """
 # to link to related projects
 intersphinx_mapping = {'http://docs.python.org/': None,
                        'http://nipy.sourceforge.net/nipype': None,
-                       'http://nipy.sourceforge.net/nipy': None}
+                       'http://nipy.sourceforge.net/nipy': None,
+                       'http://h5py.alfven.org/docs': None}

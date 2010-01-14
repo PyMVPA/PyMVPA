@@ -89,6 +89,11 @@ class Collectable(object):
         return res
 
 
+    def __reduce__(self):
+        return (self.__class__,
+                    (self.value, self.name, self.__doc__))
+
+
     def __repr__(self):
         value = self.value
         return "%s(name=%s, doc=%s, value=%s)" % (self.__class__.__name__,
@@ -167,6 +172,11 @@ class SequenceCollectable(Collectable):
         self._target_length = length
         Collectable.__init__(self, value=value, name=name, doc=doc)
         self._reset_unique()
+
+
+    def __reduce__(self):
+        return (self.__class__,
+                    (self.value, self.name, self.__doc__, self._target_length))
 
 
     def __repr__(self):
