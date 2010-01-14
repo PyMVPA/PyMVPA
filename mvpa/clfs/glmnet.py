@@ -93,6 +93,7 @@ class _GLMNET(Classifier):
     family = Parameter('gaussian',
                        allowedtype='basestring',
                        choices=["gaussian", "multinomial"],
+                       ro=True,
                        doc="""Response type of your labels (either 'gaussian'
                        for regression or 'multinomial' for classification).""")
 
@@ -176,7 +177,6 @@ class _GLMNET(Classifier):
                                     dataset.uniquelabels)
 
         # save some properties of the data/classification
-        self._family = self.params.family
         self._ulabels = dataset.uniquelabels.copy()
 
         # process the pmax
@@ -218,7 +218,10 @@ class _GLMNET(Classifier):
                                        for i in range(len(weights))])
         elif self.params.family == 'gaussian':
             self.__weights = N.array(r['as.matrix'](weights))[1:, 0]
-
+        else:
+            raise NotImplementedError, \
+                  "Somehow managed to get here with family %s." % \
+                  (self.params.family,)
 
     @accepts_dataset_as_samples
     def _predict(self, data):
@@ -303,7 +306,7 @@ class GLMNETWeights(Sensitivity):
                   (N.min(weights), N.max(weights)))
 
         #return weights
-        if clf._family == 'multinomial':
+        if clf.params.family == 'multinomial':
             return Dataset(weights.T, sa={'labels': clf._ulabels})
         else:
             return weights
