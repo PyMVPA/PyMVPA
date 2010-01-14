@@ -143,6 +143,7 @@ htmldoc: examples2rst build
 	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) html BUILDDIR=$(BUILDDIR)
 	cd $(HTML_DIR)/generated && ln -sf ../_static
 	cd $(HTML_DIR)/examples && ln -sf ../_static
+	cd $(HTML_DIR)/datadb && ln -sf ../_static
 	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
 
 pdfdoc: examples2rst build pdfdoc-stamp
