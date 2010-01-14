@@ -10,6 +10,9 @@
 
 import numpy as N
 import random
+import shutil
+import tempfile
+import os
 
 from numpy.testing import assert_array_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
@@ -809,3 +812,27 @@ def test_other_samples_dtypes():
         # Nothing to index, hence no features
         assert_equal(ds.nfeatures, 1)
 
+
+def test_h5py_io():
+    if not exists('h5py'):
+        return
+
+    tempdir = tempfile.mkdtemp()
+
+    # store random dataset to file
+    ds = datasets['3dlarge']
+    ds.save(os.path.join(tempdir, 'plain.hdf5'))
+
+    # reload and check for identity
+    ds2 = Dataset.from_hdf5(os.path.join(tempdir, 'plain.hdf5'))
+    assert_array_equal(ds.samples, ds2.samples)
+    for attr in ds.sa:
+        assert_array_equal(ds.sa[attr].value, ds2.sa[attr].value)
+    for attr in ds.fa:
+        assert_array_equal(ds.fa[attr].value, ds2.fa[attr].value)
+    assert_true(len(ds.a.mapper), 2)
+    # since we have no __equal__ do at least some comparison
+    assert_equal(repr(ds.a.mapper), repr(ds2.a.mapper))
+
+    #cleanup temp dir
+    shutil.rmtree(tempdir, ignore_errors=True)

@@ -29,6 +29,9 @@ from mvpa.base.config import *
 from mvpa.base.verbosity import *
 from mvpa.base.info import *
 
+if externals.exists('h5py'):
+    from mvpa.base.hdf5 import *
+
 if externals.exists('reportlab'):
     from mvpa.base.report import *
 else:
