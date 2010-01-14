@@ -69,11 +69,21 @@ class LinearSVMWeights(Sensitivity):
             clabels = sorted(clf._attrmap.values())
             nclabels = len(clabels)
             sens_labels = []
+            isvm = 0                    # index for svm among known
             for i in xrange(nclabels):
                 for j in xrange(i+1, nclabels):
-                    sens.append(self.__sg_helper(sgsvm.get_svm(i)))
-                    sens_labels += [(clabels[i], clabels[j])]
-            assert(len(sens) == nsvms)
+                    sgsvmi = sgsvm.get_svm(isvm)
+                    labels_tuple = (clabels[i], clabels[j])
+                    # Since we gave the labels in incremental order,
+                    # we always should be right - but it does not
+                    # hurt to check if set of labels is the same
+                    assert(set([sgsvmi.get_label(int(x))
+                                for x in sgsvmi.get_support_vectors()])
+                           == set(labels_tuple))
+                    sens.append(self.__sg_helper(sgsvmi))
+                    sens_labels += [labels_tuple]
+                    isvm += 1
+            assert(len(sens) == nsvms)  # we should have  covered all
         else:
             sens = N.atleast_2d(self.__sg_helper(sgsvm))
             if not clf.__is_regression__:
