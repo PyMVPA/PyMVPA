@@ -23,5 +23,6 @@ Available Datasets
 .. toctree::
    :maxdepth: 1
 
+   datadb/demo_blockfmri
    datadb/haxby2001
    datadb/mnist
