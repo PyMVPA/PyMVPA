@@ -205,7 +205,6 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             add_hist = self._locals['add_hist']
             slices = self._locals['slices']
             slice_title = self._locals['slice_title']
-            #print locals()
             if N.isscalar(vlim): vlim = (vlim, None)
             if vlim[0] is None: vlim = (N.min(func), vlim[1])
             if vlim[1] is None: vlim = (vlim[0], N.max(func))
@@ -215,7 +214,10 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 print "Not yet fully supported"
 
             # adjust lower bound if it is too low
-            if vlim[0] < N.min(func[func_mask]):
+            # and there are still multiple values ;)
+            func_masked = func[func_mask]
+            if vlim[0] < N.min(func_masked) and \
+                   N.min(func_masked) != N.max(func_masked):
                 vlim = list(vlim)
                 vlim[0] = N.min(func[func_mask])
                 vlim = tuple(vlim)
@@ -234,7 +236,6 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
 
             func_cmap = eval("P.cm.%s" % cmap_)
             bg_cmap = eval("P.cm.%s" % cmap_bg)
-
 
             if do_stretch_colors:
                 clim = (N.min(func), N.max(func))#vlim
@@ -257,6 +258,12 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 slices = range(func.shape[0])
             nslices = len(slices)
 
+            # more or less square alignment ;-)
+            if ncolumns is None:
+                ncolumns = int(N.sqrt(nslices))
+            ndcolumns = ncolumns
+            nrows = max(nrows, int(N.ceil(nslices*1.0/ncolumns)))
+
             # Check if additional column/row information was provided
             # and extend nrows/ncolumns
             for v in (add_hist, add_info):
@@ -264,11 +271,6 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                     ncolumns = max(ncolumns, v[1]+1)
                     nrows = max(nrows, v[0]+1)
 
-            # more or less square alignment ;-)
-            if ncolumns is None:
-                ncolumns = int(N.sqrt(nslices))
-            ndcolumns = ncolumns
-            nrows = max(nrows, int(N.ceil(nslices*1.0/ncolumns)))
 
 
             # Decide either we need more cells where to add hist and/or info
@@ -358,10 +360,10 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 im.set_clim(*clim)
                 if slice_title:
                     P.title(slice_title % locals())
-                if islice == 0:
+                if islice == slices[0]:
                     im0 = im
 
-            func_masked = func[func_mask]
+            # func_masked = func[func_mask]
 
             #
             # Add summary information
@@ -492,31 +494,34 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
 
 if __name__ == "__main__":
     # for easy debugging
-    impath = '/home/research/fusion/herrman/be37/fMRI'
+    import os
+    from mvpa.base import cfg
+    impath = os.path.join('datadb', 'haxby2001', 'subj1')
     plot_lightbox(
-        background = NiftiImage('%s/anat_slices_brain_inbold.nii.gz' % impath),
+        #background = NiftiImage('%s/anat.nii.gz' % impath),
+        background = NiftiImage('%s/bold.nii.gz' % impath).data.squeeze()[0],
         background_mask = None,
-        overlay = NiftiImage('/home/research/fusion/herrman/code/CCe-1.nii.gz'),
-        overlay_mask = NiftiImage('%s/masks/example_func_brain_mask.nii.gz' % impath),
+        overlay = NiftiImage('%s/mask4_vt.nii.gz' % impath),
+        #overlay_mask = NiftiImage('%s/masks/example_func_brain_mask.nii.gz' % impath),
         #
         do_stretch_colors = False,
         add_colorbar = True,
         cmap_bg = 'gray',
-        cmap_overlay = 'hot', # YlOrRd_r # P.cm.autumn
+        cmap_overlay = 'Set3', #'hot', # YlOrRd_r # P.cm.autumn
         #
         fig = None,
         # vlim describes value limits
         # clim color limits (same by default)
-        vlim = [2.3, None],
-        vlim_type = 'symneg_z',
+        vlim = [0, 1],
+        #vlim_type = 'symneg_z',
         interactive = True,
         #
-        nrows = 2,
-        ncolumns = 3,
+        #nrows = 2,
+        #ncolumns = 3,
         add_info = (1, 2),
         add_hist = (0, 2),
         #
-        slices = [0, 3]
+        slices = [20, 23, 26, 29, 32, 35]
         )
 
     P.show()
