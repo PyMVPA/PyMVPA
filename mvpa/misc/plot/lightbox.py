@@ -81,33 +81,6 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
       * allow multiple overlays... or just unify for them all to be just a list of entries
       * handle cases properly when there is only one - background/overlay
     """
-    #
-    if False:                           # for easy debugging
-        impath = '/home/research/fusion/herrman/be37/fMRI'
-        background = NiftiImage('%s/anat_slices_brain_inbold.nii.gz' % impath)
-        background_mask = None
-        overlay = NiftiImage('/home/research/fusion/herrman/code/CCe-1.nii.gz')
-        overlay_mask = NiftiImage('%s/masks/example_func_brain_mask.nii.gz' % impath)
-
-        do_stretch_colors = False
-        add_colorbar = True
-        cmap_bg = 'gray'
-        cmap_overlay = 'hot' # YlOrRd_r # P.cm.autumn
-
-        fig = None
-        # vlim describes value limits
-        # clim color limits (same by default)
-        vlim = [2.3, None]
-        vlim_type = 'symneg_z'
-        interactive = False
-
-        nrows = 2
-        ncolumns = 3
-        add_info = (1, 2)
-        add_hist = (0, 2)
-
-    #
-    # process data arguments
 
     def handle_arg(arg):
         """Helper which would read in NiftiImage if necessary
@@ -127,8 +100,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
     if isinstance(bg, NiftiImage):
         # figure out aspect
         fov = (N.array(bg.header['pixdim']) * bg.header['dim'])[3:0:-1]
-        # XXX might be vise-verse ;-)
-        aspect = fov[2]/fov[1]
+        aspect = fov[1]/fov[2]
 
         bg = bg.data[..., ::-1, ::-1] # XXX custom for now
     else:
@@ -345,14 +317,14 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                                 mask=N.logical_or(out_thresh,
                                                   N.logical_not(func_mask[si])))
 
-                kwargs = dict(aspect=aspect, origin='lower')
+                kwargs = dict(aspect=aspect, origin='lower',
+                              extent=(0, slice_bg.shape[0],
+                                      0, slice_bg.shape[1]))
 
                 # paste a blank white background first, since otherwise
                 # recent matplotlib screws up those masked imshows
                 im = ax.imshow(N.ones(slice_sl_.shape),
                                cmap=bg_cmap,
-                               extent=(0, slice_bg.shape[0],
-                                       0, slice_bg.shape[1]),
                                **kwargs)
                 im.set_clim((0,1))
 
@@ -366,8 +338,6 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                                interpolation='nearest',
                                cmap=func_cmap,
                                alpha=0.8,
-                               extent=(0, slice_bg.shape[0],
-                                       0, slice_bg.shape[1]),
                                **kwargs)
                 im.set_clim(*clim)
 
@@ -501,3 +471,33 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
 
     plotter.fig.plotter = plotter
     return plotter.fig
+
+
+if __name__ == "__main__":
+    # for easy debugging
+    impath = '/home/research/fusion/herrman/be37/fMRI'
+    plot_lightbox(
+        background = NiftiImage('%s/anat_slices_brain_inbold.nii.gz' % impath),
+        background_mask = None,
+        overlay = NiftiImage('/home/research/fusion/herrman/code/CCe-1.nii.gz'),
+        overlay_mask = NiftiImage('%s/masks/example_func_brain_mask.nii.gz' % impath),
+        #
+        do_stretch_colors = False,
+        add_colorbar = True,
+        cmap_bg = 'gray',
+        cmap_overlay = 'hot', # YlOrRd_r # P.cm.autumn
+        #
+        fig = None,
+        # vlim describes value limits
+        # clim color limits (same by default)
+        vlim = [2.3, None],
+        vlim_type = 'symneg_z',
+        interactive = True,
+        #
+        nrows = 2,
+        ncolumns = 3,
+        add_info = (1, 2),
+        add_hist = (0, 2)
+        )
+
+    P.show()
