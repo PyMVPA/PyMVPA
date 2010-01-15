@@ -21,7 +21,7 @@ if externals.exists('nifti', raiseException=True):
 
 _interactive_backends = ['GTKAgg', 'TkAgg']
 
-def plotMRI(background=None, background_mask=None, cmap_bg='gray',
+def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             overlay=None, overlay_mask=None, cmap_overlay='autumn',
             vlim=(0.0, None), vlim_type=None,
             do_stretch_colors=False,

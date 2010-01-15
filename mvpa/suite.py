@@ -135,7 +135,7 @@ if externals.exists("pylab"):
     if externals.exists(['griddata', 'scipy']):
         from mvpa.misc.plot.topo import *
     if externals.exists('nifti'):
-        from mvpa.misc.plot.mri import plotMRI
+        from mvpa.misc.plot.mri import plot_lightbox
 
 if externals.exists("scipy"):
     from mvpa.support.stats import scipy
