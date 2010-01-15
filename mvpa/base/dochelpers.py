@@ -477,3 +477,4 @@ def borrowdoc(cls, methodname=None):
         if hasattr(other_method, '__doc__'):
             method.__doc__ = other_method.__doc__
         return method
+    return _borrowdoc
