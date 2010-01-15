@@ -35,15 +35,15 @@ dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
 nianat = NiftiImage(dataset.O[0], header=dataset.a.imghdr)
 
 # do chunkswise linear detrending on dataset
-detrend(dataset, perchunk=True, model='linear')
+poly_detrend(dataset, chunks='chunks')
 
 # define sensitivity analyzer
-sensana = OneWayAnova(transformer=N.abs)
+sensana = OneWayAnova(mapper=absolute_features())
 sens = sensana(dataset)
 
 """
 It might be convinient to pre-define common arguments for multiple calls to
-plotMRI
+plot_lightbox
 """
 
 mri_args = {
@@ -57,7 +57,7 @@ mri_args = {
     'interactive' : cfg.getboolean('examples', 'interactive', True),
     }
 
-fig = plotMRI(overlay=dataset.map2nifti(sens),
+fig = plot_lightbox(overlay=dataset.map2nifti(sens),
               vlim=(0.5, None),
               #vlim_type="symneg_z",
               **mri_args)
@@ -66,7 +66,7 @@ fig = plotMRI(overlay=dataset.map2nifti(sens),
 """
 Output of the example analysis:
 
-.. image:: ../pics/ex_plotMRI.*
+.. image:: ../pics/ex_plot_lightbox.*
    :align: center
    :alt: Simple plotting facility for (f)MRI
 
