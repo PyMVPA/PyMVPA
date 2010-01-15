@@ -18,7 +18,7 @@ DATA_URI=data.pymvpa.org::datadb
 SWARMTOOL_DIR=tools/codeswarm
 SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
 RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g
-RSYNC_OPTS_UP=-rzlhvp --delete --chmod=Dg+s,g+rw
+RSYNC_OPTS_UP=-rzlhvp --delete --chmod=Dg+s,g+rw,o+rX
 
 #
 # Details on the Python/system
