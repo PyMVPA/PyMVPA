@@ -302,7 +302,7 @@ testtutorial: build
 		nosetests --with-doctest --doctest-extension .rst \
 		          --doctest-tests doc/source/tutorial*.rst
 
-testdatadb: build fetch-data
+testdatadb: build
 	@echo "I: Testing code samples on the dataset DB website"
 	@PYTHONPATH=.:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
