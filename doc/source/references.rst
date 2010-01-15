@@ -200,6 +200,17 @@ experiments.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2005.01.048
 
 
+.. _LBB+98:
+
+**Lecun, Y., Bottou, L., Bengio, Y. & Haffner, P.** (1998). Gradient-based learning applied to document recognition. *Proceedings of the IEEE*, *86*, 2278–2324.
+  *Paper introducing Modified NIST (MNIST) dataset for performance comparisons of
+  character recognition performance across a variety of classifiers.*
+
+  Keywords: :keyword:`handwritten character recognition`, :keyword:`multilayer neural networks`, :keyword:`MNIST`
+
+  DOI: http://dx.doi.org/10.1109/5.726791
+
+
 .. _MHH10:
 
 **Manelis, A., Hanson, C. & Hanson, S. J.** (2010). Implicit memory for object locations depends on reactivation of encoding-related brain regions. *Human Brain Mapping*.
