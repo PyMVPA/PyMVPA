@@ -111,8 +111,10 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
     bg = handle_arg(background)
     if isinstance(bg, NiftiImage):
         # figure out aspect
-        fov = (N.array(bg.header['pixdim']) * bg.header['dim'])[3:0:-1]
-        aspect = fov[1]/fov[2]
+        # fov = (N.array(bg.header['pixdim']) * bg.header['dim'])[3:0:-1]
+        # aspect = fov[1]/fov[2]
+        # just scale by voxel-size ratio (extent is disabled)
+        aspect = bg.header['pixdim'][2] / bg.header['pixdim'][1]
 
         bg = bg.data #[..., ::-1, ::-1] # XXX custom for now
     else:
@@ -335,9 +337,9 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                                 mask=N.logical_or(out_thresh,
                                                   N.logical_not(func_mask[islice])))
 
-                kwargs = dict(aspect=aspect, origin='upper',
-                              extent=(0, slice_bg.shape[0],
-                                      0, slice_bg.shape[1]))
+                kwargs = dict(aspect=aspect, origin='upper')
+                              #extent=(0, slice_bg.shape[0],
+                              #        0, slice_bg.shape[1]))
 
                 # paste a blank white background first, since otherwise
                 # recent matplotlib screws up those masked imshows
@@ -496,23 +498,23 @@ if __name__ == "__main__":
     # for easy debugging
     import os
     from mvpa.base import cfg
-    impath = os.path.join('datadb', 'haxby2001', 'subj1')
+    impath = os.path.join('datadb', 'demo_blockfmri')
     plot_lightbox(
         #background = NiftiImage('%s/anat.nii.gz' % impath),
-        background = NiftiImage('%s/bold.nii.gz' % impath).data.squeeze()[0],
+        background = '%s/anat.nii.gz' % impath,
         background_mask = None,
-        overlay = NiftiImage('%s/mask4_vt.nii.gz' % impath),
-        #overlay_mask = NiftiImage('%s/masks/example_func_brain_mask.nii.gz' % impath),
+        overlay = NiftiImage('%s/bold.nii.gz' % impath).data.squeeze()[0],
+        overlay_mask = '%s/mask_brain.nii.gz' % impath,
         #
         do_stretch_colors = False,
         add_colorbar = True,
         cmap_bg = 'gray',
-        cmap_overlay = 'Set3', #'hot', # YlOrRd_r # P.cm.autumn
+        cmap_overlay = 'hot', # YlOrRd_r # P.cm.autumn
         #
         fig = None,
         # vlim describes value limits
         # clim color limits (same by default)
-        vlim = [0, 1],
+        vlim = [100, None],
         #vlim_type = 'symneg_z',
         interactive = True,
         #
