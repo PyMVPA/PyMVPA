@@ -13,7 +13,7 @@ WWW_DIR=$(BUILDDIR)/website
 SWARM_DIR=$(BUILDDIR)/swarm
 WWW_UPLOAD_URI=www.pymvpa.org:/home/www/www.pymvpa.org/pymvpa
 WWW_UPLOAD_URI_DEV=dev.pymvpa.org:/home/www/dev.pymvpa.org/pymvpa
-DATA_UPLOAD_URI=data.pymvpa.org:/home/www/data.pymvpa.org/www/db
+DATA_UPLOAD_URI=data.pymvpa.org:/home/www/data.pymvpa.org/www/datasets
 DATA_URI=data.pymvpa.org::datadb
 SWARMTOOL_DIR=tools/codeswarm
 SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
@@ -432,7 +432,13 @@ bdist_mpkg: 3rd
 #
 
 fetch-data:
-	rsync $(RSYNC_OPTS) $(DATA_URI) datadb
+	rsync $(RSYNC_OPTS) $(DATA_URI)/demo_blockfmri $(DATA_URI)/mnist datadb
+	for ds in datadb/*; do \
+		cd $(CURDIR)/$${ds} && \
+		md5sum -c MD5SUMS && \
+		[ -f *.tar.gz ] && \
+		[ ! -d $$(basename $${ds}) ] && tar xzf *.tar.gz || : ;\
+	done
 
 # Various other data which might be sensitive and not distribu
 fetch-data-nonfree: fetch-data-nonfree-stamp
