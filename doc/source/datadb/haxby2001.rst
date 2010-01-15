@@ -1,3 +1,5 @@
+.. _datadb_haxby2001:
+
 *****************************************************************
 Haxby et al. (2001): Faces and Objects in Ventral Temporal Cortex
 *****************************************************************
@@ -36,8 +38,8 @@ Subject-tarball content
 =======================
 
 anat.nii.gz
-    High resolution anatomical image.  For the *subj6* there is no
-    anatomical image available.
+    High resolution anatomical image. For *subject 6* there is no anatomical
+    image available.
 
 bold.nii.gz
     4D fMRI timeseries image. (1452 volumes with 40 x 64 x 64 voxels,
