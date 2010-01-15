@@ -36,13 +36,20 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             do_stretch_colors=False,
             add_info=True, add_hist=True, add_colorbar=True,
             fig=None, interactive=None,
-            nrows=None, ncolumns=None
+            nrows=None, ncolumns=None,
+            slices=None, slice_title="k=%(islice)s"
             ):
     """Very basic plotting of 3D data with interactive thresholding.
 
-    Background/overlay could be nifti files names or `NiftiImage`
-    objects, or 3D `ndarrays`. If no mask provided, only non-0 elements
-    are plotted
+    `background`/`overlay` and corresponding masks could be nifti
+    files names or `NiftiImage` objects, or 3D `ndarrays`. If no mask
+    is provided, only non-0 elements are plotted.
+
+    Notes
+    -----
+    No care is taken to deduce the orientation (e.g. Left-to-Right,
+    Posterior-to-Anterior) of fMRI volumes.  Therefore all input
+    volumes should be in the same orientation.
 
     Parameters
     ----------
@@ -72,6 +79,11 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
     add_info : bool or tuple (int, int)
       If True, add information and position automagically.
       If a tuple -- use as (row, column).
+    slices : None or list of int
+      If not to plot whole volume, what slices to plot.
+    slice_title : None or str
+      Desired title of slices.  Use string comprehension and assume
+      `islice` variable present with current slice index.
 
     Available colormaps are presented nicely on
       http://www.scipy.org/Cookbook/Matplotlib/Show_colormaps
@@ -102,14 +114,14 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
         fov = (N.array(bg.header['pixdim']) * bg.header['dim'])[3:0:-1]
         aspect = fov[1]/fov[2]
 
-        bg = bg.data[..., ::-1, ::-1] # XXX custom for now
+        bg = bg.data #[..., ::-1, ::-1] # XXX custom for now
     else:
         aspect = 1.0
 
     if bg is not None:
         bg_mask = handle_arg(background_mask)
         if isinstance(bg_mask, NiftiImage):
-            bg_mask = bg_mask.data[..., ::-1, ::-1] # XXX
+            bg_mask = bg_mask.data #[..., ::-1, ::-1] # XXX
         if bg_mask is not None:
             bg_mask = bg_mask != 0
         else:
@@ -119,11 +131,11 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
 
     if func is not None:
         if isinstance(func, NiftiImage):
-            func = func.data[..., ::-1, :] # XXX
+            func = func.data #[..., ::-1, :] # XXX
 
         func_mask = handle_arg(overlay_mask)
         if isinstance(func_mask, NiftiImage):
-            func_mask = func_mask.data[..., ::-1, :] # XXX
+            func_mask = func_mask.data #[..., ::-1, :] # XXX
         if func_mask is not None:
             func_mask = func_mask != 0
         else:
@@ -191,6 +203,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             nrows = self._locals['nrows']
             add_info = self._locals['add_info']
             add_hist = self._locals['add_hist']
+            slices = self._locals['slices']
+            slice_title = self._locals['slice_title']
             #print locals()
             if N.isscalar(vlim): vlim = (vlim, None)
             if vlim[0] is None: vlim = (N.min(func), vlim[1])
@@ -239,7 +253,9 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             #
             # Figure out subplots
             dshape = func.shape
-            nslices = func.shape[0]
+            if slices is None:
+                slices = range(func.shape[0])
+            nslices = len(slices)
 
             # Check if additional column/row information was provided
             # and extend nrows/ncolumns
@@ -269,7 +285,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                     locs[ncolumns*v[0] + v[1]] = vl
 
             # Fill in slices
-            for islice in xrange(nslices):
+            for islice in slices:
                 locs[locs.index('')] = islice
 
             # Fill the last available if necessary
@@ -297,27 +313,27 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
 
             #
             # Draw all slices
-            self.slices = []
-            for si in range(nslices)[::-1]:
+            self.slices_ax = []
+            for islice in slices[::-1]: #range(nslices)[::-1]:
                 ax = fig.add_subplot(nrows, ncolumns,
-                                     locs.index(si) + 1,
+                                     locs.index(islice) + 1,
                                      frame_on=False)
-                self.slices.append(ax)
+                self.slices_ax.append(ax)
                 ax.axison = False
-                slice_bg = bg[si]
+                slice_bg = bg[islice]
                 slice_bg_ = N.ma.masked_array(slice_bg,
-                                              mask=N.logical_not(bg_mask[si]))
+                                              mask=N.logical_not(bg_mask[islice]))
                                               #slice_bg<=0)
 
-                slice_sl  = func[si]
+                slice_sl  = func[islice]
 
                 in_thresh = thresholder(slice_sl)
                 out_thresh = N.logical_not(in_thresh)
                 slice_sl_ = N.ma.masked_array(slice_sl,
                                 mask=N.logical_or(out_thresh,
-                                                  N.logical_not(func_mask[si])))
+                                                  N.logical_not(func_mask[islice])))
 
-                kwargs = dict(aspect=aspect, origin='lower',
+                kwargs = dict(aspect=aspect, origin='upper',
                               extent=(0, slice_bg.shape[0],
                                       0, slice_bg.shape[1]))
 
@@ -340,8 +356,9 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                                alpha=0.8,
                                **kwargs)
                 im.set_clim(*clim)
-
-                if si == 0:
+                if slice_title:
+                    P.title(slice_title % locals())
+                if islice == 0:
                     im0 = im
 
             func_masked = func[func_mask]
@@ -350,9 +367,9 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             # Add summary information
             func_thr = func[N.logical_and(func_mask, thresholder(func))]
             if add_info and len(func_thr):
-                self.info = ax = fig.add_subplot(nrows, ncolumns,
-                                     locs.index('info')+1,
-                                     frame_on=False)
+                self.info_ax = ax = fig.add_subplot(nrows, ncolumns,
+                                                    locs.index('info')+1,
+                                                    frame_on=False)
                 #    cb = P.colorbar(shrink=0.8)
                 #    #cb.set_clim(clim[0], clim[1])
                 ax.axison = False
@@ -396,16 +413,16 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             if add_colorbar:
                 kwargs_cb = {}
                 #if add_hist:
-                #    kwargs_cb['cax'] = self.hist
-                self.cb = cb = P.colorbar(
-                    im0, #self.hist,
+                #    kwargs_cb['cax'] = self.hist_ax
+                self.cb_ax = cb = P.colorbar(
+                    im0, #self.hist_ax,
                     shrink=0.8, pad=0.0, drawedges=False,
                     extend=extend, cmap=func_cmap, **kwargs_cb)
                 cb.set_clim(*clim)
 
             # Add histogram
             if add_hist:
-                self.hist = fig.add_subplot(nrows, ncolumns,
+                self.hist_ax = fig.add_subplot(nrows, ncolumns,
                                                locs.index('hist') + 1,
                                                frame_on=True)
 
@@ -445,7 +462,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
         def on_click(self, event):
             """Actions to perform on click
             """
-            if id(event.inaxes) != id(plotter.hist):
+            if id(event.inaxes) != id(plotter.hist_ax):
                 return
             xdata, ydata, button = event.xdata, event.ydata, event.button
             vlim = self._locals['vlim']
@@ -497,7 +514,9 @@ if __name__ == "__main__":
         nrows = 2,
         ncolumns = 3,
         add_info = (1, 2),
-        add_hist = (0, 2)
+        add_hist = (0, 2),
+        #
+        slices = [0, 3]
         )
 
     P.show()
