@@ -36,7 +36,8 @@ Subject-tarball content
 =======================
 
 anat.nii.gz
-    Highres anatomical image
+    Highres anatomical image. For the *subj6* there is no anatomical image
+    available.
 
 bold.nii.gz
     4D fMRI timeseries image. (1452 volumes with 40 x 64 x 64 voxels,
@@ -46,7 +47,7 @@ bold.nii.gz
     signal is *not* detrended.
 
 mask*.nii.gz
-    Various masks in functional space provided by the original authors. `vt`
+    Various masks in functional space provided by the original authors. "vt"
     refers to "ventral temporal", "face" and "house" masks are GLM contrast
     based localizer maps.
 
@@ -61,11 +62,13 @@ Instructions
 
   >>> from mvpa.suite import *
   >>> subjpath = os.path.join(pymvpa_dataroot, 'haxby2001', 'subj1')
-  >>> attrs = SampleAttributes(os.path.join(subjpath, 'labels.txt'))
+  >>> attrs = SampleAttributes(os.path.join(subjpath, 'labels.txt'),
+  ...                          header=True)
   >>> ds = fmri_dataset(samples=os.path.join(subjpath, 'bold.nii.gz'),
   ...                   labels=attrs.labels, chunks=attrs.chunks,
-  ...                   mask=os.path.join(subjpath, 'mask.nii.gz'))
+  ...                   mask=os.path.join(subjpath, 'mask4_vt.nii.gz'))
   >>> print ds
+  <NiftiDataset: 1452x577@int16, <sa: chunks,time_indices,labels,time_coords>, <fa: voxel_indices>, <a: mapper,voxel_eldim,voxel_dim,imghdr>>
 
 
 References
