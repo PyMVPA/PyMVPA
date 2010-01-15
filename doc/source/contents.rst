@@ -16,6 +16,7 @@ PyMVPA Documentation Contents
    measures
    featsel
    misc
+   datadb
    examples
    matlab
    faq

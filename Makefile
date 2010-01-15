@@ -12,7 +12,8 @@ LATEX_DIR=$(BUILDDIR)/latex
 WWW_DIR=$(BUILDDIR)/website
 SWARM_DIR=$(BUILDDIR)/swarm
 WWW_UPLOAD_URI=www.pymvpa.org:/home/www/www.pymvpa.org/pymvpa
-DATA_URI=apsy.gse.uni-magdeburg.de:/home/hanke/public_html/software/pymvpa/data
+DATA_UPLOAD_URI=www.pymvpa.org:/home/www/data.pymvpa.org/www/db
+DATA_URI=pymvpa::datadb
 SWARMTOOL_DIR=tools/codeswarm
 SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
 RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g
@@ -142,6 +143,7 @@ htmldoc: examples2rst build
 	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) html BUILDDIR=$(BUILDDIR)
 	cd $(HTML_DIR)/generated && ln -sf ../_static
 	cd $(HTML_DIR)/examples && ln -sf ../_static
+	cd $(HTML_DIR)/datadb && ln -sf ../_static
 	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
 
 pdfdoc: examples2rst build pdfdoc-stamp
@@ -211,6 +213,13 @@ upload-website: website
 upload-htmldoc: htmldoc
 	rsync -rzlhvp --delete --chmod=Dg+s,g+rw $(HTML_DIR)/* $(WWW_UPLOAD_URI)/
 
+# upload plain .rst files as descriptions to data.pympa.org as descriptions of
+# each dataset
+upload-datadb-descriptions:
+	for ds in doc/source/datadb/*; do \
+		ds=$$(basename $${ds}); ds=$${ds%*.rst}; \
+		scp doc/source/datadb/$${ds}.rst $(DATA_UPLOAD_URI)/$${ds}/README.rst; \
+	done
 
 #
 # Tests (unittests, docs, examples)
@@ -292,6 +301,14 @@ testtutorial: build
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		nosetests --with-doctest --doctest-extension .rst \
 		          --doctest-tests doc/source/tutorial*.rst
+
+testdatadb: build
+	@echo "I: Testing code samples on the dataset DB website"
+	@PYTHONPATH=.:$(PYTHONPATH) \
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		MVPA_DATA_ROOT=datadb \
+		nosetests --with-doctest --doctest-extension .rst \
+		          --doctest-tests doc/source/datadb/*.rst
 
 # Check if everything (with few exclusions) is imported in unitests is
 # known to the mvpa.suite()
@@ -406,7 +423,7 @@ bdist_mpkg: 3rd
 #
 
 fetch-data:
-	rsync $(RSYNC_OPTS) $(DATA_URI) .
+	rsync $(RSYNC_OPTS) $(DATA_URI) datadb
 
 # Various other data which might be sensitive and not distribu
 fetch-data-nonfree: fetch-data-nonfree-stamp
