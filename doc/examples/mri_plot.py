@@ -24,15 +24,12 @@ plotting.
 from mvpa.suite import *
 
 # load PyMVPA example dataset
-attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes_literal.txt'),
-                        literallabels=True)
-dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+datapath = os.path.join(pymvpa_dataroot, 'demo_blockfmri', 'demo_blockfmri')
+attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
+dataset = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
                        labels=attr.labels,
                        chunks=attr.chunks,
-                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
-
-# since we don't have a proper anatomical -- lets overlay on BOLD
-nianat = NiftiImage(dataset.O[0], header=dataset.a.imghdr)
+                       mask=os.path.join(datapath, 'mask_brain.nii.gz'))
 
 # do chunkswise linear detrending on dataset
 poly_detrend(dataset, chunks='chunks')
@@ -42,14 +39,14 @@ sensana = OneWayAnova(mapper=absolute_features())
 sens = sensana(dataset)
 
 """
-It might be convinient to pre-define common arguments for multiple calls to
+It might be convenient to pre-define common arguments for multiple calls to
 plot_lightbox
 """
 
 mri_args = {
-    'background' : nianat,              # could be a filename
-    'background_mask' : os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
-    'overlay_mask' : os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
+    'background' : os.path.join(datapath, 'anat.nii.gz'),
+    'background_mask' : os.path.join(datapath, 'mask_brain.nii.gz'),
+    'overlay_mask' : os.path.join(datapath, 'mask_brain.nii.gz'),
     'do_stretch_colors' : False,
     'cmap_bg' : 'gray',
     'cmap_overlay' : 'autumn', # YlOrRd_r # P.cm.autumn
