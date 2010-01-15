@@ -14,7 +14,7 @@ import pylab as P
 import numpy as N
 import matplotlib as mpl
 
-from mvpa.base import warning, externals
+from mvpa.base import warning, externals, debug
 
 if externals.exists('nifti'):
     from nifti import NiftiImage
@@ -210,6 +210,9 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             if N.isscalar(vlim): vlim = (vlim, None)
             if vlim[0] is None: vlim = (N.min(func), vlim[1])
             if vlim[1] is None: vlim = (vlim[0], N.max(func))
+            if __debug__ and 'PLLB' in debug.active:
+                debug('PLLB', "Maximum %g at %s, vlim is %s" %
+                      (N.max(func), N.where(func==N.max(func)), str(vlim)))
             invert = vlim[1] < vlim[0]
             if invert:
                 vlim = (vlim[1], vlim[0])
@@ -318,6 +321,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             #
             # Draw all slices
             self.slices_ax = []
+            im0 = None
             for islice in slices[::-1]: #range(nslices)[::-1]:
                 ax = fig.add_subplot(nrows, ncolumns,
                                      locs.index(islice) + 1,
@@ -325,9 +329,14 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 self.slices_ax.append(ax)
                 ax.axison = False
                 slice_bg = bg[islice]
+
                 slice_bg_ = N.ma.masked_array(slice_bg,
                                               mask=N.logical_not(bg_mask[islice]))
                                               #slice_bg<=0)
+                slice_bg_nvoxels = len(slice_bg_.nonzero()[0])
+                if __debug__:
+                    debug('PLLB', "Plotting %i background elements in slice %i"
+                          % (slice_bg_nvoxels, islice))
 
                 slice_sl  = func[islice]
 
@@ -336,6 +345,11 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 slice_sl_ = N.ma.masked_array(slice_sl,
                                 mask=N.logical_or(out_thresh,
                                                   N.logical_not(func_mask[islice])))
+
+                slice_func_nvoxels = len(slice_sl_.nonzero()[0])
+                if __debug__:
+                    debug('PLLB', "Plotting %i foreground elements in slice %i"
+                          % (slice_func_nvoxels, islice))
 
                 kwargs = dict(aspect=aspect, origin='upper')
                               #extent=(0, slice_bg.shape[0],
@@ -349,21 +363,23 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 im.set_clim((0,1))
 
                 # ax.clim((0,1))
-                ax.imshow(slice_bg_,
-                         interpolation='bilinear',
-                         cmap=bg_cmap,
-                         **kwargs)
+                if slice_bg_nvoxels:
+                    ax.imshow(slice_bg_,
+                             interpolation='bilinear',
+                             cmap=bg_cmap,
+                             **kwargs)
 
-                im = ax.imshow(slice_sl_,
-                               interpolation='nearest',
-                               cmap=func_cmap,
-                               alpha=0.8,
-                               **kwargs)
-                im.set_clim(*clim)
+                if slice_func_nvoxels:
+                    im = ax.imshow(slice_sl_,
+                                   interpolation='nearest',
+                                   cmap=func_cmap,
+                                   alpha=0.8,
+                                   **kwargs)
+                    im.set_clim(*clim)
+                    im0 = im
+
                 if slice_title:
                     P.title(slice_title % locals())
-                if islice == slices[0]:
-                    im0 = im
 
             # func_masked = func[func_mask]
 
@@ -414,7 +430,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                     transform = ax.transAxes,
                     fontsize=14)
 
-            if add_colorbar:
+            cb = None
+            if add_colorbar and im0 is not None:
                 kwargs_cb = {}
                 #if add_hist:
                 #    kwargs_cb['cax'] = self.hist_ax
@@ -442,7 +459,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 for a, kwparams in add_dist2hist:
                     dbin = (H[1][1] - H[1][0])
                     P.plot(H2[1], [a(x) * dbin for x in H2[1]], **kwparams)
-                if add_colorbar:
+                if add_colorbar and cb:
                     cbrgba = cb.to_rgba(H2[1])
                     for face, facecolor, value in zip(H2[2], cbrgba, H2[1]):
                         if not thresholder(value):

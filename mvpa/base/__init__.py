@@ -306,6 +306,8 @@ if __debug__:
     debug.register('ATL_',   "Atlases (verbose)")
     debug.register('ATL__',  "Atlases (very verbose)")
 
+    debug.register('PLLB',   "plot_lightbox")
+
     debug.register('REP',    "Reports")
     debug.register('REP_',   "Reports (verbose)")
 
