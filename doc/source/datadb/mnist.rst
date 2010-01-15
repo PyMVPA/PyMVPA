@@ -2,16 +2,6 @@
 The MNIST Database Of Handwritten Digits
 ****************************************
 
-.. note::
-
-  This dataset is courtesy of Yann LeCun (Courant Institute, NYU) and
-  Corinna Cortes (Google Labs, New York), who distribute it through their
-  website at: http://yann.lecun.com/exdb/mnist/
-
-  The version that is offered here is identical to the four files distributed
-  there, but has been converted into a single HDF5 file than can easily be read
-  by PyMVPA.
-
 The MNIST database of handwritten digits, available from this page, has a
 training set of 60,000 examples, and a test set of 10,000 examples. It is a
 subset of a larger set available from NIST. The digits have been
@@ -21,12 +11,40 @@ real-world data while spending minimal efforts on preprocessing and formatting.
 
 See http://yann.lecun.com/exdb/mnist for more information.
 
+.. note::
+
+  The version that is offered here is identical to the four files distributed
+  there, but has been converted into a single HDF5 file than can easily be read
+  by PyMVPA.
+
+
+Terms Of Use
+============
+
+`Yann LeCun`_ (Courant Institute, NYU) and `Corinna Cortes`_ (Google
+Labs, New York) hold the copyright of MNIST dataset, which is a
+derivative work from original NIST datasets.  MNIST dataset is made
+available under the terms of the `Creative Commons Attribution-Share
+Alike 3.0`_ license.
+
+.. _Creative Commons Attribution-Share Alike 3.0: http://creativecommons.org/licenses/by-sa/3.0/
+.. _Yann LeCun: http://yann.lecun.com/
+.. _Corinna Cortes: http://web.me.com/corinnacortes/work/Home.html
+
+
+Download
+========
+
+A single hdf5 file containing entire MNIST dataset is available from
+
+  http://data.pymvpa.org/datasets/mnist/
+
 
 Requirements
 ============
 
-* HDF5 access utilizes the H5PY_ package.
-* *PyMVPA 0.5* (or later) provides the `h5load()` function.
+* HDF5 access facility.
+* *PyMVPA 0.5* (or later) provides the `h5load()` function (utilizes H5PY_ package).
 
 .. _H5PY: http://h5py.alfven.org/
 
@@ -48,6 +66,6 @@ Instructions
 References
 ==========
 
-LeCun, Y., Bottou, L., Bengio, Y., and Haffner, P. (1998). Gradient-based
-learning applied to document recognition. *Proceedings of the IEEE, 86*,
-2278--2324.
+:ref:`LeCun, Y., Bottou, L., Bengio, Y., and Haffner, P. (1998) <LBB+98>`.
+Gradient-based learning applied to document recognition.
+Proceedings of the IEEE, 86, 2278--2324.
