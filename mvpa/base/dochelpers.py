@@ -453,3 +453,27 @@ def _str(obj, *args, **kwargs):
 
     # finally wrap in <> and return
     return '<%s>' % s
+
+
+def borrowdoc(cls, methodname=None):
+    """Return a decorator to borrow docstring from another `cls`.`methodname`
+
+    Parameters
+    ----------
+    cls
+      Usually a parent class
+    methodname : None or str
+      Name of the method from which to borrow.  If None, would use
+      the same name as of the decorated method
+    """
+
+    def _borrowdoc(method):
+        """Decorator which assigns to the `method` docstring from another
+        """
+        if methodname is None:
+            other_method = getattr(cls, method.__name__)
+        else:
+            other_method = getattr(cls, methodname)
+        if hasattr(other_method, '__doc__'):
+            method.__doc__ = other_method.__doc__
+        return method
