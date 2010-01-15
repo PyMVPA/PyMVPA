@@ -12,12 +12,13 @@ LATEX_DIR=$(BUILDDIR)/latex
 WWW_DIR=$(BUILDDIR)/website
 SWARM_DIR=$(BUILDDIR)/swarm
 WWW_UPLOAD_URI=www.pymvpa.org:/home/www/www.pymvpa.org/pymvpa
+WWW_UPLOAD_URI_DEV=dev.pymvpa.org:/home/www/dev.pymvpa.org/pymvpa
 DATA_UPLOAD_URI=data.pymvpa.org:/home/www/data.pymvpa.org/www/db
 DATA_URI=data.pymvpa.org::datadb
 SWARMTOOL_DIR=tools/codeswarm
 SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
 RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g
-
+RSYNC_OPTS_UP=-rzlhvp --delete --chmod=Dg+s,g+rw
 
 #
 # Details on the Python/system
@@ -208,10 +209,18 @@ website-stamp: mkdir-WWW_DIR htmldoc pdfdoc
 	touch $@
 
 upload-website: website
-	rsync -rzlhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* $(WWW_UPLOAD_URI)/
+	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI)/
 
 upload-htmldoc: htmldoc
-	rsync -rzlhvp --delete --chmod=Dg+s,g+rw $(HTML_DIR)/* $(WWW_UPLOAD_URI)/
+	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI)/
+
+
+upload-website-dev: website
+	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI_DEV)/
+
+upload-htmldoc-dev: htmldoc
+	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI_DEV)/
+
 
 # upload plain .rst files as descriptions to data.pympa.org as descriptions of
 # each dataset
