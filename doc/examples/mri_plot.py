@@ -35,10 +35,10 @@ dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
 nianat = NiftiImage(dataset.O[0], header=dataset.a.imghdr)
 
 # do chunkswise linear detrending on dataset
-detrend(dataset, perchunk=True, model='linear')
+poly_detrend(dataset, chunks='chunks')
 
 # define sensitivity analyzer
-sensana = OneWayAnova(transformer=N.abs)
+sensana = OneWayAnova(mapper=absolute_features())
 sens = sensana(dataset)
 
 """

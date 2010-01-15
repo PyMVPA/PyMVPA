@@ -31,15 +31,15 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
             ):
     """Very basic plotting of 3D data with interactive thresholding.
 
-    Background/overlay could be nifti files names or NiftiImage
-    objects, or 3D ndarrays. if no mask provided, only non-0 elements
+    Background/overlay could be nifti files names or `NiftiImage`
+    objects, or 3D `ndarrays`. If no mask provided, only non-0 elements
     are plotted
 
     Parameters
     ----------
-    do_stretch_colors : bool
+    do_stretch_colors : bool, optional
       Stratch color range to the data (not just to visible data)
-    vlim
+    vlim : tuple, optional
       2 element tuple of low/upper bounds of values to plot
     vlim_type : None or 'symneg_z'
       If not None, then vlim would be treated accordingly:
@@ -74,15 +74,13 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
     """
     #
     if False:                           # for easy debugging
-        impath = '/research/fusion/herrman/be37/fMRI'
+        impath = '/home/research/fusion/herrman/be37/fMRI'
         background = NiftiImage('%s/anat_slices_brain_inbold.nii.gz' % impath)
         background_mask = None
-        overlay = NiftiImage('/research/fusion/herrman/code/CCe-1.nii.gz')
+        overlay = NiftiImage('/home/research/fusion/herrman/code/CCe-1.nii.gz')
         overlay_mask = NiftiImage('%s/masks/example_func_brain_mask.nii.gz' % impath)
 
         do_stretch_colors = False
-        add_info = True
-        add_hist = True
         add_colorbar = True
         cmap_bg = 'gray'
         cmap_overlay = 'hot' # YlOrRd_r # P.cm.autumn
@@ -93,6 +91,11 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
         vlim = [2.3, None]
         vlim_type = 'symneg_z'
         interactive = False
+
+        nrows = 2
+        ncolumns = 3
+        add_info = (1, 2)
+        add_hist = (0, 2)
 
     #
     # process data arguments
@@ -145,6 +148,18 @@ def plotMRI(background=None, background_mask=None, cmap_bg='gray',
         else:
             func_mask = func != 0
 
+    # Lets assure that that we are dealing with <= 3D
+    for v in (bg, bg_mask, func, func_mask):
+        if v is not None:
+            if v.ndim > 3:
+                # we could squeeze out first bogus dimensions
+                if N.all(N.array(v.shape[:v.ndim-3]) == 1):
+                    v.shape = v.shape[v.ndim-3:]
+                else:
+                    raise ValueError, \
+                          "Original shape of some data is %s whenever we " \
+                          "can accept only 3D images (or ND with degenerate " \
+                          "first dimensions)" % (v.shape,)
 
     # process vlim
     vlim = list(vlim)
