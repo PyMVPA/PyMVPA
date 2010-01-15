@@ -16,8 +16,17 @@ import matplotlib as mpl
 
 from mvpa.base import warning, externals
 
-if externals.exists('nifti', raiseException=True):
+if externals.exists('nifti'):
     from nifti import NiftiImage
+else:
+    class NiftiImage(object):
+        """Just a helper to allow plot_lightbox be used even if no
+        nifti module available for plotting regular 2D/3D images
+        (ndarrays)"""
+        def __init__(self, filename):
+            raise ValueError, "plot_lightbox was provided a filename %s.  " \
+                  "By now we only support loading data from Nifti/Analyze " \
+                  "files, but nifti module is not available" % filename
 
 _interactive_backends = ['GTKAgg', 'TkAgg']
 
@@ -121,14 +130,14 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
         # XXX might be vise-verse ;-)
         aspect = fov[2]/fov[1]
 
-        bg = bg.data[...,::-1,::-1] # XXX custom for now
+        bg = bg.data[..., ::-1, ::-1] # XXX custom for now
     else:
         aspect = 1.0
 
     if bg is not None:
         bg_mask = handle_arg(background_mask)
         if isinstance(bg_mask, NiftiImage):
-            bg_mask = bg_mask.data[...,::-1,::-1] # XXX
+            bg_mask = bg_mask.data[..., ::-1, ::-1] # XXX
         if bg_mask is not None:
             bg_mask = bg_mask != 0
         else:
@@ -180,7 +189,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 if v is not None:
                     vlim[i] = std * v
             # add a plot to histogram
-            add_dist2hist = [(lambda x: nfsym/(N.sqrt(2*N.pi)*std)*N.exp(-(x**2)/(2*std**2)),
+            add_dist2hist = [(lambda x: nfsym/(N.sqrt(2*N.pi)*std) \
+                                        *N.exp(-(x**2)/(2*std**2)),
                               {})]
         else:
             raise ValueError, 'Unknown specification of vlim=%s' % vlim + \
@@ -259,7 +269,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             dshape = func.shape
             nslices = func.shape[0]
 
-            # Check if additional column/row information was provided and extend nrows/ncolumns
+            # Check if additional column/row information was provided
+            # and extend nrows/ncolumns
             for v in (add_hist, add_info):
                 if v and not isinstance(v, bool):
                     ncolumns = max(ncolumns, v[1]+1)
@@ -300,7 +311,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 P.ioff()
 
             if self.fig is None:
-                self.fig = P.figure(facecolor='white', figsize=(4*ncolumns, 4*nrows))
+                self.fig = P.figure(facecolor='white',
+                                    figsize=(4*ncolumns, 4*nrows))
             else:
                 self.fig.clf()
             fig = self.fig
@@ -308,7 +320,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
 
             #
             # how to threshold images
-            thresholder = lambda x: N.logical_and(x>=vlim[0], x<=vlim[1]) ^ invert
+            thresholder = lambda x: N.logical_and(x>=vlim[0],
+                                                  x<=vlim[1]) ^ invert
 
             #
             # Draw all slices
@@ -321,7 +334,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 ax.axison = False
                 slice_bg = bg[si]
                 slice_bg_ = N.ma.masked_array(slice_bg,
-                                              mask=N.logical_not(bg_mask[si]))#slice_bg<=0)
+                                              mask=N.logical_not(bg_mask[si]))
+                                              #slice_bg<=0)
 
                 slice_sl  = func[si]
 
@@ -447,7 +461,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                         face.set_facecolor(color)
 
 
-            fig.subplots_adjust(left=0.01, right=0.95, hspace=0.01) # , bottom=0.01
+            fig.subplots_adjust(left=0.01, right=0.95, hspace=0.01)
+            # , bottom=0.01
             if ncolumns - int(bool(add_info) or bool(add_hist)) < 2:
                 fig.subplots_adjust(wspace=0.4)
             else:
