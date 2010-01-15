@@ -16,8 +16,17 @@ import matplotlib as mpl
 
 from mvpa.base import warning, externals
 
-if externals.exists('nifti', raiseException=True):
+if externals.exists('nifti'):
     from nifti import NiftiImage
+else:
+    class NiftiImage(object):
+        """Just a helper to allow plot_lightbox be used even if no
+        nifti module available for plotting regular 2D/3D images
+        (ndarrays)"""
+        def __init__(self, filename):
+            raise ValueError, "plot_lightbox was provided a filename %s.  " \
+                  "By now we only support loading data from Nifti/Analyze " \
+                  "files, but nifti module is not available" % filename
 
 _interactive_backends = ['GTKAgg', 'TkAgg']
 
@@ -72,33 +81,6 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
       * allow multiple overlays... or just unify for them all to be just a list of entries
       * handle cases properly when there is only one - background/overlay
     """
-    #
-    if False:                           # for easy debugging
-        impath = '/home/research/fusion/herrman/be37/fMRI'
-        background = NiftiImage('%s/anat_slices_brain_inbold.nii.gz' % impath)
-        background_mask = None
-        overlay = NiftiImage('/home/research/fusion/herrman/code/CCe-1.nii.gz')
-        overlay_mask = NiftiImage('%s/masks/example_func_brain_mask.nii.gz' % impath)
-
-        do_stretch_colors = False
-        add_colorbar = True
-        cmap_bg = 'gray'
-        cmap_overlay = 'hot' # YlOrRd_r # P.cm.autumn
-
-        fig = None
-        # vlim describes value limits
-        # clim color limits (same by default)
-        vlim = [2.3, None]
-        vlim_type = 'symneg_z'
-        interactive = False
-
-        nrows = 2
-        ncolumns = 3
-        add_info = (1, 2)
-        add_hist = (0, 2)
-
-    #
-    # process data arguments
 
     def handle_arg(arg):
         """Helper which would read in NiftiImage if necessary
@@ -118,17 +100,16 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
     if isinstance(bg, NiftiImage):
         # figure out aspect
         fov = (N.array(bg.header['pixdim']) * bg.header['dim'])[3:0:-1]
-        # XXX might be vise-verse ;-)
-        aspect = fov[2]/fov[1]
+        aspect = fov[1]/fov[2]
 
-        bg = bg.data[...,::-1,::-1] # XXX custom for now
+        bg = bg.data[..., ::-1, ::-1] # XXX custom for now
     else:
         aspect = 1.0
 
     if bg is not None:
         bg_mask = handle_arg(background_mask)
         if isinstance(bg_mask, NiftiImage):
-            bg_mask = bg_mask.data[...,::-1,::-1] # XXX
+            bg_mask = bg_mask.data[..., ::-1, ::-1] # XXX
         if bg_mask is not None:
             bg_mask = bg_mask != 0
         else:
@@ -180,7 +161,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 if v is not None:
                     vlim[i] = std * v
             # add a plot to histogram
-            add_dist2hist = [(lambda x: nfsym/(N.sqrt(2*N.pi)*std)*N.exp(-(x**2)/(2*std**2)),
+            add_dist2hist = [(lambda x: nfsym/(N.sqrt(2*N.pi)*std) \
+                                        *N.exp(-(x**2)/(2*std**2)),
                               {})]
         else:
             raise ValueError, 'Unknown specification of vlim=%s' % vlim + \
@@ -259,7 +241,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             dshape = func.shape
             nslices = func.shape[0]
 
-            # Check if additional column/row information was provided and extend nrows/ncolumns
+            # Check if additional column/row information was provided
+            # and extend nrows/ncolumns
             for v in (add_hist, add_info):
                 if v and not isinstance(v, bool):
                     ncolumns = max(ncolumns, v[1]+1)
@@ -300,7 +283,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 P.ioff()
 
             if self.fig is None:
-                self.fig = P.figure(facecolor='white', figsize=(4*ncolumns, 4*nrows))
+                self.fig = P.figure(facecolor='white',
+                                    figsize=(4*ncolumns, 4*nrows))
             else:
                 self.fig.clf()
             fig = self.fig
@@ -308,7 +292,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
 
             #
             # how to threshold images
-            thresholder = lambda x: N.logical_and(x>=vlim[0], x<=vlim[1]) ^ invert
+            thresholder = lambda x: N.logical_and(x>=vlim[0],
+                                                  x<=vlim[1]) ^ invert
 
             #
             # Draw all slices
@@ -321,7 +306,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 ax.axison = False
                 slice_bg = bg[si]
                 slice_bg_ = N.ma.masked_array(slice_bg,
-                                              mask=N.logical_not(bg_mask[si]))#slice_bg<=0)
+                                              mask=N.logical_not(bg_mask[si]))
+                                              #slice_bg<=0)
 
                 slice_sl  = func[si]
 
@@ -331,14 +317,14 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                                 mask=N.logical_or(out_thresh,
                                                   N.logical_not(func_mask[si])))
 
-                kwargs = dict(aspect=aspect, origin='lower')
+                kwargs = dict(aspect=aspect, origin='lower',
+                              extent=(0, slice_bg.shape[0],
+                                      0, slice_bg.shape[1]))
 
                 # paste a blank white background first, since otherwise
                 # recent matplotlib screws up those masked imshows
                 im = ax.imshow(N.ones(slice_sl_.shape),
                                cmap=bg_cmap,
-                               extent=(0, slice_bg.shape[0],
-                                       0, slice_bg.shape[1]),
                                **kwargs)
                 im.set_clim((0,1))
 
@@ -352,8 +338,6 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                                interpolation='nearest',
                                cmap=func_cmap,
                                alpha=0.8,
-                               extent=(0, slice_bg.shape[0],
-                                       0, slice_bg.shape[1]),
                                **kwargs)
                 im.set_clim(*clim)
 
@@ -447,7 +431,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                         face.set_facecolor(color)
 
 
-            fig.subplots_adjust(left=0.01, right=0.95, hspace=0.01) # , bottom=0.01
+            fig.subplots_adjust(left=0.01, right=0.95, hspace=0.01)
+            # , bottom=0.01
             if ncolumns - int(bool(add_info) or bool(add_hist)) < 2:
                 fig.subplots_adjust(wspace=0.4)
             else:
@@ -486,3 +471,33 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
 
     plotter.fig.plotter = plotter
     return plotter.fig
+
+
+if __name__ == "__main__":
+    # for easy debugging
+    impath = '/home/research/fusion/herrman/be37/fMRI'
+    plot_lightbox(
+        background = NiftiImage('%s/anat_slices_brain_inbold.nii.gz' % impath),
+        background_mask = None,
+        overlay = NiftiImage('/home/research/fusion/herrman/code/CCe-1.nii.gz'),
+        overlay_mask = NiftiImage('%s/masks/example_func_brain_mask.nii.gz' % impath),
+        #
+        do_stretch_colors = False,
+        add_colorbar = True,
+        cmap_bg = 'gray',
+        cmap_overlay = 'hot', # YlOrRd_r # P.cm.autumn
+        #
+        fig = None,
+        # vlim describes value limits
+        # clim color limits (same by default)
+        vlim = [2.3, None],
+        vlim_type = 'symneg_z',
+        interactive = True,
+        #
+        nrows = 2,
+        ncolumns = 3,
+        add_info = (1, 2),
+        add_hist = (0, 2)
+        )
+
+    P.show()
