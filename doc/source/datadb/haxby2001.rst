@@ -19,7 +19,7 @@ previously obtained results see the references_ below.
 Terms Of Use
 ============
 
-The orginal authors of :ref:`Haxby et al. (2001) <HGF+01>` hold the copyright
+The original authors of :ref:`Haxby et al. (2001) <HGF+01>` hold the copyright
 of this dataset and made it available under the terms of the `Creative Commons
 Attribution-Share Alike 3.0`_ license.
 
@@ -31,15 +31,15 @@ Download
 
 Separate tarballs for each subject are available at:
 
-  http://data.pymvpa.org/db/haxby2001
+  http://data.pymvpa.org/datasets/haxby2001
 
 
 Subject-tarball content
 =======================
 
 anat.nii.gz
-    Highres anatomical image. For *subject 6* there is no anatomical image
-    available.
+    High resolution anatomical image. For *subject 6* there is no anatomical
+    image available.
 
 bold.nii.gz
     4D fMRI timeseries image. (1452 volumes with 40 x 64 x 64 voxels,

@@ -69,7 +69,7 @@ master_doc = 'contents'
 
 # General substitutions.
 project = 'PyMVPA'
-copyright = '2006-2009, PyMVPA Authors'
+copyright = '2006-2010, PyMVPA Authors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
