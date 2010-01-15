@@ -1,10 +1,10 @@
-****************************************
-The MNIST Database Of Handwritten Digits
-****************************************
+***************************************
+The MNIST Dataset Of Handwritten Digits
+***************************************
 
-The MNIST database of handwritten digits, available from this page, has a
+The MNIST_ dataset of handwritten digits, available from this page, has a
 training set of 60,000 examples, and a test set of 10,000 examples. It is a
-subset of a larger set available from NIST. The digits have been
+subset of a larger set available from NIST.  The digits have been
 size-normalized and centered in a fixed-size image.  It is a good database for
 people who want to try learning techniques and pattern recognition methods on
 real-world data while spending minimal efforts on preprocessing and formatting.
@@ -22,11 +22,12 @@ Terms Of Use
 ============
 
 `Yann LeCun`_ (Courant Institute, NYU) and `Corinna Cortes`_ (Google
-Labs, New York) hold the copyright of MNIST dataset, which is a
-derivative work from original NIST datasets.  MNIST dataset is made
+Labs, New York) hold the copyright of MNIST_ dataset, which is a
+derivative work from original NIST datasets.  MNIST_ dataset is made
 available under the terms of the `Creative Commons Attribution-Share
 Alike 3.0`_ license.
 
+.. _MNIST: http://yann.lecun.com/exdb/mnist
 .. _Creative Commons Attribution-Share Alike 3.0: http://creativecommons.org/licenses/by-sa/3.0/
 .. _Yann LeCun: http://yann.lecun.com/
 .. _Corinna Cortes: http://web.me.com/corinnacortes/work/Home.html
@@ -35,7 +36,7 @@ Alike 3.0`_ license.
 Download
 ========
 
-A single hdf5 file containing entire MNIST dataset is available from
+A single hdf5 file containing entire MNIST_ dataset is available from
 
   http://data.pymvpa.org/datasets/mnist/
 
