@@ -776,7 +776,17 @@ DAE = DatasetAttributeExtractor
 
 
 @datasetmethod
-def save(dataset, to, name='dataset', compression=None):
+def save(dataset, destination, name='dataset', compression=None):
+    """Save Dataset into HDF5 file
+
+    Parameters
+    ----------
+    dataset : `Dataset`
+    destination : `h5py.highlevel.File` or str
+    name : str, optional
+    compression : None or int or {'gzip', 'szip', 'lzf'}, optional
+      Level of compression for gzip, or another compression strategy.
+    """
     if not externals.exists('h5py'):
         raise RuntimeError("Missing 'h5py' package -- saving is not possible.")
 
@@ -784,12 +794,12 @@ def save(dataset, to, name='dataset', compression=None):
     from mvpa.base.hdf5 import obj2hdf
 
     # look if we got an hdf file instance already
-    if isinstance(to, h5py.highlevel.File):
+    if isinstance(destination, h5py.highlevel.File):
         own_file = False
-        hdf = to
+        hdf = destination
     else:
         own_file = True
-        hdf = h5py.File(to, 'w')
+        hdf = h5py.File(destination, 'w')
 
     obj2hdf(hdf, dataset, name, compression=compression)
 
