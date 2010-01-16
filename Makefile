@@ -325,6 +325,7 @@ testsuite:
 	@echo "I: Running full testsuite"
 	@tfile=`mktemp -u testsuiteXXXXXXX`; \
 	 git grep -h '^\W*from mvpa.*import' mvpa/tests | \
+	 grep -v '^\W*#' | \
 	 sed -e 's/^.*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
 	 sort | uniq | \
 	 grep -v -e 'mvpa\.base\.dochelpers' \
