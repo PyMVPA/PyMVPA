@@ -1,8 +1,8 @@
 .. _datadb_haxby2001:
 
-*****************************************************************
-Haxby et al. (2001): Faces and Objects in Ventral Temporal Cortex
-*****************************************************************
+************************************************************************
+Haxby et al. (2001): Faces and Objects in Ventral Temporal Cortex (fMRI)
+************************************************************************
 
 This is a block-design fMRI dataset from a study on face and object
 representation in human ventral temporal cortex.  It consists of 6 subjects
