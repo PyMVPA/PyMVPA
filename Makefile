@@ -339,11 +339,13 @@ testsuite:
 	 [ -f "$$tfile" ] && { rm -f "$$tfile"; exit 1; } || :
 
 # Check if links to api/ within documentation are broken.
-testapiref: apidoc
-	@for tf in doc/*.rst; do \
-	 out=$$(for f in `grep api/mvpa $$tf | sed -e 's|.*\(api/mvpa.*html\).*|\1|g' `; do \
-	  ff=build/html/$$f; [ ! -f $$ff ] && echo "E: $$f missing!"; done; ); \
-	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
+testapiref:
+	@echo "I: epydoc support is depricated -- so, nothing to test"
+# testapiref: apidoc
+# 	@for tf in doc/*.rst; do \
+# 	 out=$$(for f in `grep api/mvpa $$tf | sed -e 's|.*\(api/mvpa.*html\).*|\1|g' `; do \
+# 	  ff=build/html/$$f; [ ! -f $$ff ] && echo "E: $$f missing!"; done; ); \
+# 	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
 
 # Check if there is no WARNINGs from sphinx
 testsphinx: htmldoc
