@@ -6,13 +6,18 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Unit tests for PyMVPA dataset handling"""
+"""Unit tests for PyMVPA dataset handling
+
+Deprecated unittest battery -- left for historic reasons? ;)
+
+TODO: remove if all unittests propagated into datasetng
+"""
 
 import unittest
 import numpy as N
 from sets import Set
 from mvpa.datasets import Dataset
-from mvpa.mappers.mask import MaskMapper
+# from mvpa.mappers.mask import MaskMapper
 from mvpa.support import copy
 
 from tests_warehouse import datasets

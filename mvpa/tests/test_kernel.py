@@ -23,8 +23,6 @@ try:
 except RuntimeError:
     _has_sg = False
 
-# from mvpa.clfs.kernel import Kernel
-
 from tests_warehouse import datasets
 
 class KernelTests(unittest.TestCase):
