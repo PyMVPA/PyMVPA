@@ -14,7 +14,10 @@ import pylab as P
 import numpy as N
 import matplotlib as mpl
 
-from mvpa.base import warning, externals, debug
+from mvpa.base import warning, externals
+
+if __debug__:
+    from mvpa.base import debug
 
 if externals.exists('nifti'):
     from nifti import NiftiImage
