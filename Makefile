@@ -323,16 +323,19 @@ testdatadb: build
 # known to the mvpa.suite()
 testsuite:
 	@echo "I: Running full testsuite"
-	@git grep -h '^\W*from mvpa.*import' mvpa/tests | \
+	@tfile=`mktemp -u testsuiteXXXXXXX`; \
+	 git grep -h '^\W*from mvpa.*import' mvpa/tests | \
 	 sed -e 's/^.*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
 	 sort | uniq | \
 	 grep -v -e 'mvpa\.base\.dochelpers' \
 			 -e 'mvpa\.\(tests\|support\)' \
-			 -e 'mvpa\.misc\.args' | \
-	while read i; do \
+			 -e 'mvpa\.misc\.args' \
+			 -e 'mvpa\.clfs\.\(libsvmc\|sg\)' \
+	| while read i; do \
 	 grep -q "^ *$$i" mvpa/suite.py || \
-	 { echo "E: '$$i' is missing from mvpa.suite()"; exit 1; }; \
-	 done
+	 { echo "E: '$$i' is missing from mvpa.suite()"; touch "$$tfile"; }; \
+	 done; \
+	 [ -f "$$tfile" ] && { rm -f "$$tfile"; exit 1; } || :
 
 # Check if links to api/ within documentation are broken.
 testapiref: apidoc
