@@ -17,6 +17,7 @@ from mvpa.misc.fx import doubleGammaHRF, singleGammaHRF
 from tests_warehouse import *
 from mvpa import cfg
 from numpy.testing import assert_array_almost_equal, assert_array_equal
+from nose.tools import assert_true, assert_equal
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
@@ -91,6 +92,11 @@ class StatsTests(unittest.TestCase):
 
         assert_array_equal(ac[0], ac[1])
         assert_array_equal(a, ac[1])
+
+        # check for p-value attrs
+        if externals.exists('scipy'):
+            assert_true('fprob' in a.fa.keys())
+            assert_equal(len(ac.fa), len(ac))
 
         ds = datasets['uni4large']
         ac = mc(ds)
