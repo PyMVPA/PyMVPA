@@ -29,13 +29,19 @@ attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
 dataset = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
                        labels=attr.labels,
                        chunks=attr.chunks,
-                       mask=os.path.join(datapath, 'mask_brain.nii.gz'))
+                       mask=os.path.join(datapath, 'mask_vt.nii.gz'))
 
 # do chunkswise linear detrending on dataset
 poly_detrend(dataset, chunks='chunks')
 
-# define sensitivity analyzer
-sensana = OneWayAnova(mapper=absolute_features())
+# exclude the rest conditions from the dataset, since that should be
+# quite different from the 'active' conditions, and make the computation
+# below pointless
+dataset = dataset[dataset.sa.labels != 'rest']
+
+# define sensitivity analyzer to compute ANOVA F-scores on the remaining
+# samples
+sensana = OneWayAnova()
 sens = sensana(dataset)
 
 """
@@ -46,7 +52,7 @@ plot_lightbox
 mri_args = {
     'background' : os.path.join(datapath, 'anat.nii.gz'),
     'background_mask' : os.path.join(datapath, 'mask_brain.nii.gz'),
-    'overlay_mask' : os.path.join(datapath, 'mask_brain.nii.gz'),
+    'overlay_mask' : os.path.join(datapath, 'mask_vt.nii.gz'),
     'do_stretch_colors' : False,
     'cmap_bg' : 'gray',
     'cmap_overlay' : 'autumn', # YlOrRd_r # P.cm.autumn
@@ -55,7 +61,7 @@ mri_args = {
     }
 
 fig = plot_lightbox(overlay=dataset.map2nifti(sens),
-              vlim=(0.5, None),
+              vlim=(0.5, None), slices=range(23,31),
               #vlim_type="symneg_z",
               **mri_args)
 
