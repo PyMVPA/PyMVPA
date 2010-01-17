@@ -368,7 +368,9 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 # ax.clim((0,1))
                 if slice_bg_nvoxels:
                     ax.imshow(slice_bg_,
-                             interpolation='bilinear',
+                             # let's stay close to the ugly truth ;-)
+                             #interpolation='bilinear',
+                             interpolation='nearest',
                              cmap=bg_cmap,
                              **kwargs)
 
