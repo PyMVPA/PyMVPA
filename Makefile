@@ -491,6 +491,7 @@ $(SWARM_DIR)/git.log: Makefile
      sed -e 's,Yaroslav.*Halchenko,Yaroslav O. Halchenko,g' \
          -e 's,gorlins,Scott,g' -e 's,Scott Gorlin,Scott,g' -e 's,Scott,Scott Gorlin,g' \
          -e 's,hanke,Michael Hanke,g' \
+		 -e 's,swaroop,Swaroop Guntupalli,g' \
          -e 's,Per.*Sederberg,Per B. Sederberg,g' \
          -e 's,Neukom Institute,James M. Hughes,g' >| $@
 
