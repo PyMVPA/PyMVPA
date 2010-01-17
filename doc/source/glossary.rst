@@ -91,11 +91,8 @@ terms found in the literature to the terminology used in this manual.
     the given domain.
 
   Label
-    A label associates each :term:`sample` in the :term:`dataset` with
-    a certain category, experimental condition or, in case of a regression
-    problem, with some metric variable. The label therefore defines the model
-    that a classifier has to learn. The labels also provide the "true"
-    model value when computing classifier errors.
+    A label is a special case of a :term:`target` for specifying descrete
+    categories of :term:`samples` in a classification analyses.
 
   Machine Learning
     A field of Computer Science that aims at constructing methods, such
@@ -148,6 +145,13 @@ terms found in the literature to the terminology used in this manual.
     A field of science related to :term:`machine learning` which aims at
     exploiting statistical properties of data to construct robust models, and to
     assess their convergence and :term:`generalization` performances.
+
+  Target
+    A target associates each :term:`sample` in the :term:`dataset` with
+    a certain category, experimental condition or, in case of a regression
+    problem, with some metric variable. The target defines the model
+    for a supervised learning algorithm. The targets also provide the "ground
+    truth" for assessing the model's generalization performance.
 
   Time-compression
     This usually refers to the :term:`block-averaging` of samples from a
