@@ -67,6 +67,8 @@ class Hyperalignment(ClassWithCollections):
         if self.params.alignment == None:
             self.params.alignment = ProcrusteanMapper()
 
+        raise NotImlementedError, "WiP!  Use development branch of version >= 0.5.0"
+
 
     def __call__(self, data):
         """Estimate mappers for each data(set)

@@ -36,6 +36,7 @@ else:
 
 
 from mvpa.algorithms.cvtranserror import *
+from mvpa.algorithms.hyperalignment import *
 
 from mvpa import clfs
 from mvpa.clfs.distance import *
