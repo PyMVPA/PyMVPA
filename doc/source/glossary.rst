@@ -59,6 +59,9 @@ terms found in the literature to the terminology used in this manual.
   Dataset
     In PyMVPA a dataset is the combination of samples, their ...
 
+  Dataset attribute
+    An arbitrary auxiliary information that is stored in a dataset.
+
   Decoding
     This term is usually used to refer to the application of machine learning or
     pattern recognition techniques to brainimaging datasets, and therefore is
@@ -77,6 +80,10 @@ terms found in the literature to the terminology used in this manual.
     the output of a single sensor, such as a voxel, or a refined measure
     reflecting specific aspect of data, such as a specific spectral
     component.
+
+  Feature attribute
+    Analogous to a :term:`sample attribute`, this is a per-feature vector of
+    auxiliary information that is stored in a dataset.
 
   Feature Selection
     A technique that targets detection of features relevant to a given
@@ -119,6 +126,11 @@ terms found in the literature to the terminology used in this manual.
 
   Sample
     A sample a vector with observations for all :term:`feature` variables.
+
+  Sample attribute
+    A per-sample vector of auxiliary information that is stored in a
+    dataset. This could, for example, be a vector identifying specific
+    :term:`chunk`\ s of samples.
 
   Sensitivity
     The sensitivity is a score assigned to a particular :term:`feature` with

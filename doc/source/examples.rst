@@ -67,6 +67,7 @@ Visualization
    examples/pylab_2d
    examples/topo_plot
    examples/som
+   examples/mri_plot
 
 
 Miscellaneous

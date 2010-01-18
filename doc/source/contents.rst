@@ -9,7 +9,8 @@ PyMVPA Documentation Contents
 
    intro
    installation
-   tutorial
+   tutorial1_start
+   tutorial2_datasets
    datasets
    mappers
    classifiers

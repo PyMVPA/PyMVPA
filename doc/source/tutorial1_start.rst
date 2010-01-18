@@ -8,16 +8,17 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 .. _chap_tutorial1:
-.. index:: Basic dataset handling
+.. index:: Tutorial, Cross-validation
 
-********************************************************
-Tutorial Part 1: Datasets, Classifiers, Cross-Validation
-********************************************************
+*******************************
+Tutorial Part 1: A Gentle Start
+*******************************
 
-COME UP WITH SOME INTRO
-
-Import NumPy_ since it is really useful, and also import a number of little
-helpers we are going to use in the tutorial.
+Virtually every Python script starts with some `import` statements that load
+functionality provided elsewhere. We start this tutorial by importinig NumPy_,
+Python's foundation for scientific computing.  Furthermore, we  also import
+some little helpers we are going to use in the tutorial, and whos purpose we
+are going to see shortly.
 
 >>> import numpy as N
 >>> from tutorial_lib import *
@@ -49,7 +50,7 @@ queried by:
 Most datasets in PyMVPA are represented as a two-dimensional array, where the first
 axis is the samples axis, and the second axis represents the :term:`feature`\s
 of the dataset. In the Haxby study the authors used a region of interest (ROI)
-in the ventral temporal cortex. For subject 1 this ROI comprised of 577 voxels.
+in the ventral temporal cortex. For subject 1 this ROI comprises 577 voxels.
 Since the analysis was done on the voxel activation patterns, those voxels are
 the actual features of this dataset, and hence we have 577 of them.
 
@@ -244,12 +245,7 @@ splitter) formed the training and test datasets in each fold.
 This could be the end of a very simple introduction into cross-validation with
 PyMVPA. However, since we were cheating a bit in the beginning, we actually
 still don't know how to import data other than the single subject from the
-Haxby study.
-
-Datasets Revisited -- From Scratch
-----------------------------------
-
-SHOW HOW get_haxby2001_data() can be done manually
+Haxby study. This is the topic of the :ref:`next chapter <chap_tutorial2>`.
 
 .. todo::
 
