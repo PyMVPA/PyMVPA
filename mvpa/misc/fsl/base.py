@@ -247,9 +247,8 @@ class FslGLMDesign(object):
 def read_fsl_design(fsf_file):
     """Reads an FSL FEAT design.fsf file and return the content as a dictionary.
 
-    Parameters
-    ----------
-    fsf_file : filename, file-like
+    :Parameters:
+      fsf_file : filename, file-like
     """
     # This function was originally contributed by Russell Poldrack
 
