@@ -167,6 +167,7 @@ examples2rst-stamp: mkdir-DOCBUILD_DIR
 		--project PyMVPA \
 		--outdir $(DOCSRC_DIR)/examples \
 		--exclude doc/examples/searchlight.py \
+		--exclude doc/examples/tutorial_lib.py \
 		doc/examples
 	touch $@
 
