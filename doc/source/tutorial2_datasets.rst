@@ -111,15 +111,15 @@ dataset (unless it was a list that got converted into an array):
 Attributes
 ==========
 
-What we have seen so far does not really warrant the use of a dataset over
-a plain array or matrix with samples. However, in the MVPA context we often
-need to know more about each samples than just the value of its features.
-In the previous tutorial part we have already seen that :term:`target`
+What we have seen so far does not really warrant the use of a dataset over a
+plain array or matrix with samples. However, in the MVPA context we often need
+to know more about each samples than just the value of its features.  In the
+previous tutorial part we have already seen that per-sample :term:`target`
 values are required for supervised-learning algorithms, and that a dataset
-often has to be split based on the origin of specific groups of samples.
-For this type of auxiliary information a dataset can also contain three
-types of :term:`attribute`\ s: :term:`sample attribute`, :term:`feature
-attribute`, and :term:`dataset attribute`.
+often has to be split based on the origin of specific groups of samples.  For
+this type of auxiliary information a dataset can also contain three types of
+:term:`attribute`\ s: :term:`sample attribute`, :term:`feature attribute`, and
+:term:`dataset attribute`.
 
 For Samples
 -----------
@@ -128,7 +128,7 @@ In a dataset each :term:`sample` can have an arbitrary number of additional
 attributes. They are stored as vectors of length of the number of samples
 in a collection that is accessible via the `sa` attribute. A collection is
 implemented as a standard Python `dict`, and hence adding sample attributes
-work identical to adding elements to a dictionary:
+works identical to adding elements to a dictionary:
 
   >>> ds.sa['some_attr'] = [ 0, 1, 1, 3 ]
   >>> ds.sa.keys()
@@ -145,22 +145,22 @@ turn embeds a NumPy array with the actual attribute:
 
 This "complication" is done to be able to extend attributes with additional
 functionality that is often needed and can offer significant speed-up of
-processing. For example, sample attributes carry a list of there unique
-values, that is only computed once (when first requested) and can subsequently
-be directly accessed without repeated and expensive searches:
+processing. For example, sample attributes carry a list of there unique values.
+This list is only computed once (when first requested) and can subsequently be
+accessed directly without repeated and expensive searches:
 
   >>> ds.sa['some_attr'].unique
   array([0, 1, 3])
 
-However, for most interactive use of PyMVPA this type of attribute access
-is relatively complicated (a lot to type), therefore collections offer
-direct attribute access by name:
+However, for most interactive use of PyMVPA this type of attribute access is
+relatively complicated (too much typing), therefore collections offer direct
+attribute access by name:
 
   >>> ds.sa.some_attr
   array([0, 1, 1, 3])
 
-The sample attribute collection also aims to preserve data integrity, by
-disallowing improper attributes:
+Another purpose of the sample attribute collection is to preserve data
+integrity, by disallowing improper attributes:
 
 .. code-block:: python
 
@@ -170,24 +170,56 @@ disallowing improper attributes:
   ValueError: Collectable 'invalid' with length [6] does not match the required
   length [4] of collection '<SampleAttributesCollection: some_attr>'.
 
-But, as long as the length of the attribute vector matches the number of
-samples in the dataset, and the attributes values can be stored in a NumPy
-array, any value is allowed. For example, it is perfectly possible and
-supported to store literal attributes.
+But other than basic plausibility checks no further constraints on values of
+samples attributes exist. As long as the length of the attribute vector matches
+the number of samples in the dataset, and the attributes values can be stored
+in a NumPy array, any value is allowed. For example, it is perfectly possible
+and supported to store literal attributes. It should also be noted that each
+attribute may have its own individual data type, hence it is possible to have
+literal and numeric attributes in the same dataset.
 
   >>> ds.sa['literal'] = ['one', 'two', 'three', 'four']
+  >>> sorted(ds.sa.keys())
+  ['literal', 'some_attr']
+  >>> for attr in ds.sa:
+  ...    print "%s: %s" % (attr, ds.sa[attr].value.dtype.name)
+  literal: string40
+  some_attr: int32
+
+
 
 For Features
 ------------
 
+:term:`Feature attribute`\ s are almost identical to :term:`sample attribute`\
+s the **only** difference is that instead of having one attribute value per
+sample, feature attributes have one value per (guess what? ...) *feature*.
+Moreover, they are stored in a separate collection in the datasets that is
+called `fa`:
+
+  >>> ds.nfeatures
+  3
+  >>> ds.fa['my_fav'] = [0, 1, 0]
+  >>> ds.fa['responsible'] = ['me', 'you', 'nobody']
+  >>> sorted(ds.fa.keys())
+  ['my_fav', 'responsible']
+
+
 For The Dataset
 ---------------
+
+
 
 Slicing
 =======
 
 Loading fMRI
 ============
+
+
+Storage
+=======
+
 
 References
 ==========
