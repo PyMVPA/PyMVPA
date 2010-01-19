@@ -219,6 +219,9 @@ class ProxyClassifier(Classifier):
 
     """
 
+    __sa_class__ = ProxyClassifierSensitivityAnalyzer
+    """Sensitivity analyzer to use for a generic ProxyClassifier"""
+
     def __init__(self, clf, **kwargs):
         """Initialize the instance of ProxyClassifier
 
@@ -307,7 +310,7 @@ class ProxyClassifier(Classifier):
     @group_kwargs(prefixes=['slave_'], passthrough=True)
     def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
         """Return an appropriate SensitivityAnalyzer"""
-        return ProxyClassifierSensitivityAnalyzer(
+        return self.__sa_class__(
                 self,
                 analyzer=self.__clf.getSensitivityAnalyzer(**slave_kwargs),
                 **kwargs)
@@ -1205,6 +1208,8 @@ class MappedClassifier(ProxyClassifier):
     final decision across the set of classifiers.
     """
 
+    __sa_class__ = MappedClassifierSensitivityAnalyzer
+
     def __init__(self, clf, mapper, **kwargs):
         """Initialize the instance
 
@@ -1241,15 +1246,6 @@ class MappedClassifier(ProxyClassifier):
         return ProxyClassifier._predict(self, self.__mapper.forward(dataset))
 
 
-    @group_kwargs(prefixes=['slave_'], passthrough=True)
-    def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
-        """Return an appropriate SensitivityAnalyzer"""
-        return MappedClassifierSensitivityAnalyzer(
-                self,
-                analyzer=self.clf.getSensitivityAnalyzer(**slave_kwargs),
-                **kwargs)
-
-
     mapper = property(lambda x:x.__mapper, doc="Used mapper")
 
 
@@ -1268,6 +1264,8 @@ class FeatureSelectionClassifier(ProxyClassifier):
     """
 
     __tags__ = [ 'does_feature_selection', 'meta' ]
+
+    __sa_class__ = FeatureSelectionClassifierSensitivityAnalyzer
 
     def __init__(self, clf, feature_selection, testdataset=None, **kwargs):
         """Initialize the instance
@@ -1377,19 +1375,6 @@ class FeatureSelectionClassifier(ProxyClassifier):
     feature_selection = property(lambda x:x.__feature_selection,
                                  doc="Used `FeatureSelection`")
 
-    @group_kwargs(prefixes=['slave_'], passthrough=True)
-    def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
-        """Return an appropriate SensitivityAnalyzer
-
-        had to clone from mapped classifier???
-        """
-        return FeatureSelectionClassifierSensitivityAnalyzer(
-                self,
-                analyzer=self.clf.getSensitivityAnalyzer(**slave_kwargs),
-                **kwargs)
-
-
-
     testdataset = property(fget=lambda x:x.__testdataset,
                            fset=setTestDataset)
 
@@ -1415,6 +1400,7 @@ class RegressionAsClassifier(ProxyClassifier):
     distances = StateVariable(enabled=False,
         doc="Distances obtained during prediction")
 
+    __sa_class__ = RegressionAsClassifierSensitivityAnalyzer
 
     def __init__(self, clf, centroids=None, distance_measure=None, **kwargs):
         """
@@ -1539,15 +1525,6 @@ class RegressionAsClassifier(ProxyClassifier):
 
         return predictions
 
-    @group_kwargs(prefixes=['slave_'], passthrough=True)
-    def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
-        """Return an appropriate SensitivityAnalyzer
-
-        """
-        return RegressionAsClassifierSensitivityAnalyzer(
-                self,
-                analyzer=self.clf.getSensitivityAnalyzer(**slave_kwargs),
-                **kwargs)
 
     def _setRetrainable(self, value, **kwargs):
         if value:

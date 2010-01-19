@@ -27,8 +27,6 @@ directly from PyMVPA root (e.g. `doc/examples/searchlight_2d.py`).
 Alternatively, one can download a full example dataset, which is explained in
 the next section.
 
-.. include:: ../misc/exampledata.readme
-
 Preprocessing
 =============
 
@@ -69,6 +67,7 @@ Visualization
    examples/pylab_2d
    examples/topo_plot
    examples/som
+   examples/mri_plot
 
 
 Miscellaneous

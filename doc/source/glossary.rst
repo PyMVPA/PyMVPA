@@ -59,6 +59,9 @@ terms found in the literature to the terminology used in this manual.
   Dataset
     In PyMVPA a dataset is the combination of samples, their ...
 
+  Dataset attribute
+    An arbitrary auxiliary information that is stored in a dataset.
+
   Decoding
     This term is usually used to refer to the application of machine learning or
     pattern recognition techniques to brainimaging datasets, and therefore is
@@ -78,6 +81,10 @@ terms found in the literature to the terminology used in this manual.
     reflecting specific aspect of data, such as a specific spectral
     component.
 
+  Feature attribute
+    Analogous to a :term:`sample attribute`, this is a per-feature vector of
+    auxiliary information that is stored in a dataset.
+
   Feature Selection
     A technique that targets detection of features relevant to a given
     problem, so that their selection improves generalization of the
@@ -91,11 +98,8 @@ terms found in the literature to the terminology used in this manual.
     the given domain.
 
   Label
-    A label associates each :term:`sample` in the :term:`dataset` with
-    a certain category, experimental condition or, in case of a regression
-    problem, with some metric variable. The label therefore defines the model
-    that a classifier has to learn. The labels also provide the "true"
-    model value when computing classifier errors.
+    A label is a special case of a :term:`target` for specifying descrete
+    categories of :term:`samples` in a classification analyses.
 
   Machine Learning
     A field of Computer Science that aims at constructing methods, such
@@ -123,6 +127,11 @@ terms found in the literature to the terminology used in this manual.
   Sample
     A sample a vector with observations for all :term:`feature` variables.
 
+  Sample attribute
+    A per-sample vector of auxiliary information that is stored in a
+    dataset. This could, for example, be a vector identifying specific
+    :term:`chunk`\ s of samples.
+
   Sensitivity
     The sensitivity is a score assigned to a particular :term:`feature` with
     respect to its impact on a classifier's decision. The sensitivity is
@@ -148,6 +157,13 @@ terms found in the literature to the terminology used in this manual.
     A field of science related to :term:`machine learning` which aims at
     exploiting statistical properties of data to construct robust models, and to
     assess their convergence and :term:`generalization` performances.
+
+  Target
+    A target associates each :term:`sample` in the :term:`dataset` with
+    a certain category, experimental condition or, in case of a regression
+    problem, with some metric variable. The target defines the model
+    for a supervised learning algorithm. The targets also provide the "ground
+    truth" for assessing the model's generalization performance.
 
   Time-compression
     This usually refers to the :term:`block-averaging` of samples from a

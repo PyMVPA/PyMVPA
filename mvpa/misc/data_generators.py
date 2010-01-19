@@ -71,33 +71,37 @@ def dumbFeatureBinaryDataset():
 
 
 def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
-                         means=None, nonbogus_features=None, snr=3.0):
+                         means=None, nonbogus_features=None, snr=3.0,
+                         normalize=True):
     """Generate a univariate dataset with normal noise and specified means.
 
     Could be considered to be a generalization of
     `pureMultivariateSignal` where means=[ [0,1], [1,0] ].
 
     Specify either means or `nonbogus_features` so means get assigned
-    accordingly.
+    accordingly.  If neither `means` nor `nonbogus_features` are
+    provided, data will be pure noise and no per-label information.
 
     Parameters
     ----------
-    perlabel : int
+    perlabel : int, optional
       Number of samples per each label
-    nlabels : int
+    nlabels : int, optional
       Number of labels in the dataset
-    nfeatures : int
+    nfeatures : int, optional
       Total number of features (including bogus features which carry
       no label-related signal)
-    nchunks : int
+    nchunks : int, optional
       Number of chunks (perlabel should be multiple of nchunks)
-    means : None or list of float or ndarray
-      Specified means for each of features among nfeatures.
+    means : None or ndarray of (nlabels, nfeatures) shape
+      Specified means for each of features (columns) for all labels (rows).
     nonbogus_features : None or list of int
-      Indexes of non-bogus features (1 per label)
-    snr : float
+      Indexes of non-bogus features (1 per label).
+    snr : float, optional
       Signal-to-noise ration assuming that signal has std 1.0 so we
       just divide random normal noise by snr
+    normalize : bool, optional
+      Divide by max(abs()) value to bring data into [-1, 1] range.
     """
 
     data = N.random.standard_normal((perlabel*nlabels, nfeatures))/N.sqrt(snr)
@@ -112,15 +116,25 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
     if not means is None:
         # add mean
         data += N.repeat(N.array(means, ndmin=2), perlabel, axis=0)
-    # bring it 'under 1', since otherwise some classifiers have difficulties
-    # during optimization
-    data = 1.0/(N.max(N.abs(data))) * data
+    if normalize:
+        # bring it 'under 1', since otherwise some classifiers have difficulties
+        # during optimization
+        data = 1.0/(N.max(N.abs(data))) * data
     labels = N.concatenate([N.repeat('L%d' % i, perlabel)
                                 for i in range(nlabels)])
     chunks = N.concatenate([N.repeat(range(nchunks),
                                      perlabel/nchunks) for i in range(nlabels)])
     ds = Dataset.from_basic(data, labels=labels, chunks=chunks)
-    ds.nonbogus_features = nonbogus_features
+
+    # If nonbogus was provided -- assign .a and .fa accordingly
+    if nonbogus_features is not None:
+        ds.fa['labels'] = N.array([None]*nfeatures)
+        ds.fa.labels[nonbogus_features] = ['L%d' % i for i in range(nlabels)]
+        ds.a['nonbogus_features'] = nonbogus_features
+        ds.a['bogus_features'] = [x for x in range(nfeatures)
+                                  if not x in nonbogus_features]
+
+
     return ds
 
 def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):

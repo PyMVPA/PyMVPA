@@ -156,13 +156,16 @@ class AttributeMap(object):
             num[attr == k] = v
         return num
 
-    def to_literal(self, attr):
+    def to_literal(self, attr, recurse=False):
         """Map numerical value back to literal ones.
 
         Parameters
         ----------
         attr : sequence
           Numerical values to be mapped.
+        recurse : bool
+          Either to recursively change items within the sequence
+          if those are iterable as well
 
         Please see the class documentation for more information.
         """
@@ -174,7 +177,48 @@ class AttributeMap(object):
         if self._lmap is None:
             self._lmap = dict([(v, k) for k, v in self._nmap.iteritems()])
         lmap = self._lmap
+
         if isSequenceType(attr) and not isinstance(attr, str):
-            return N.asanyarray([lmap[k] for k in attr])
+            # Choose lookup function
+            if recurse:
+                lookupfx = lambda x: self.to_literal(x, recurse=True)
+            else:
+                # just dictionary lookup
+                lookupfx = lambda x:lmap[x]
+
+            # To assure the preserving the container type
+            target_constr = attr.__class__
+            # ndarrays are special since array is just a factory, and
+            # ndarray takes shape as the first argument
+            isarray = issubclass(target_constr, N.ndarray)
+            if isarray:
+                if attr.dtype is N.dtype('object'):
+                    target_constr = lambda x: N.array(x, dtype=object)
+                else:
+                    # Otherwise no special handling
+                    target_constr = N.array
+
+            # Perform lookup and store to the list
+            resl = [lookupfx(k) for k in attr]
+
+            # If necessary assure derived ndarray class type
+            if isarray:
+                if attr.dtype is N.dtype('object'):
+                    # we need first to create empty one and then
+                    # assign items -- god bless numpy
+                    resa = N.empty(len(resl), dtype=attr.dtype)
+                    resa[:] = resl
+                else:
+                    resa = target_constr(resl)
+
+                if not (attr.__class__ is N.ndarray):
+                    # to accommodate subclasses of ndarray
+                    res = resa.view(attr.__class__)
+                else:
+                    res = resa
+            else:
+                res = target_constr(resl)
+
+            return res
         else:
             return lmap[attr]

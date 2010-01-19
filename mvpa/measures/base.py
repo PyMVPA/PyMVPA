@@ -25,6 +25,8 @@ import mvpa.support.copy as copy
 
 from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.args import group_kwargs
+from mvpa.base.types import asobjarray
+
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.base import externals, warning
 from mvpa.clfs.stats import autoNullDist
@@ -789,9 +791,15 @@ class RegressionAsClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyz
     def _call(self, dataset):
         sens = super(RegressionAsClassifierSensitivityAnalyzer,
                      self)._call(dataset)
-        if 'labels' in sens.sa:
-            # TODO : handle tuple labels case
-            sens.labels[:] = [self._trained_attrmap[l] for l in sens.sa.labels]
+        # We can have only a single sensitivity out of regression
+        assert(sens.shape[0] == 1)
+        if 'labels' not in sens.sa:
+            clf = self.clf
+            # We just assign a tuple of all labels sorted
+            labels = tuple(sorted(clf._trained_attrmap.values()))
+            if len(clf._trained_attrmap):
+                labels = clf._trained_attrmap.to_literal(labels, recurse=True)
+            sens.sa['labels'] = asobjarray([labels])
         return sens
 
 

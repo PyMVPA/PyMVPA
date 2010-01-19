@@ -39,6 +39,7 @@ Basic Facilities
    base.config
    base.dochelpers
    base.externals
+   base.hdf5
    base.info
    base.report
    base.types

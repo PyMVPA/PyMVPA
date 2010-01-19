@@ -9,6 +9,7 @@
 """Unit tests for PyMVPA serial feature inclusion algorithm"""
 
 from mvpa.misc.support import *
+from mvpa.base.types import asobjarray
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.clfs.transerror import TransferError
 from tests_warehouse import *
@@ -142,6 +143,14 @@ class SupportFxTests(unittest.TestCase):
         a = a[2:]; a_3 = idhash(a)
         self.failUnless(a_2 != a_3, msg="Idhash must change after slicing")
 
+
+    def test_asobjarray(self):
+        for i in ([1, 2, 3], ['a', 2, '3'],
+                  ('asd')):
+            i_con = asobjarray(i)
+            self.failUnless(i_con.dtype is N.dtype('object'))
+            self.failUnlessEqual(len(i), len(i_con))
+            self.failUnless(N.all(i == i_con))
 
     def testCorrelation(self):
         # data: 20 samples, 80 features
