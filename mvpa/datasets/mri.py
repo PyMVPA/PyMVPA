@@ -265,7 +265,8 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
     if sprefix is not None:
         ds.a[sprefix + '_dim'] = samples.shape[1:]
         # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
-        ds.a[sprefix + '_eldim'] = [i for i in reversed(niftisamples.voxdim)]
+        ds.a[sprefix + '_eldim'] = \
+                tuple([i for i in reversed(niftisamples.voxdim)])
         # TODO extend with the unit
     if tprefix is not None:
         ds.sa[tprefix + '_indices'] = N.arange(len(ds), dtype='int')

@@ -81,6 +81,11 @@ class IndexedCollectable(Collectable):
     #    copied.value = copy.copy(self.value)
     #    return copied
 
+    def __reduce__(self):
+        # let it call the default reduce methods to not suffer from
+        # limitations of the Collectable base class implementation that
+        # might not scale nicely for this class and its children
+        return object.__reduce__(self)
 
     # XXX had to override due to _isset, init=
     def _set(self, val, init=False):

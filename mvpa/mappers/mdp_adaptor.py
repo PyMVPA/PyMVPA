@@ -36,8 +36,8 @@ class MDPNodeMapper(Mapper):
     actual processing. Upon subsequent training attempts a new copy of the
     original node is made and replaces the previous one.
 
-    Note
-    ----
+    Notes
+    -----
     MDP nodes requiring multiple training phases are not supported. Use a
     MDPFlowWrapper for that. Moreover, it is not possible to perform
     incremental training of a node.
@@ -236,8 +236,8 @@ class MDPFlowMapper(Mapper):
     ...                        node_arguments=(None, None,
     ...                        [DAE('sa', 'labels')]))
 
-    Note
-    ----
+    Notes
+    -----
     It is not possible to perform incremental training of the MDP flow. 
     """
     def __init__(self, flow, node_arguments=None, inspace=None):

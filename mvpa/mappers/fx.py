@@ -14,7 +14,8 @@ import numpy as N
 import operator
 
 from mvpa.mappers.base import Mapper
-
+from mvpa.misc.support import array_whereequal
+from mvpa.base.dochelpers import borrowdoc
 
 class FxMapper(Mapper):
     """Apply a custom transformation to (groups of) samples or features.
@@ -61,6 +62,7 @@ class FxMapper(Mapper):
     #           of ClassWithCollections + Parameter?
     #      as for convenient (but pylint/convention unfriendly way)
     #      see meta-clfs
+    @borrowdoc(Mapper)
     def __repr__(self):
         s = super(FxMapper, self).__repr__()
         sargs = ["axis=%r, fx=%r" % (self.__axis, self.__fx)]
@@ -78,6 +80,7 @@ class FxMapper(Mapper):
         pass
 
 
+    @borrowdoc(Mapper)
     def _forward_data(self, data):
         if not self.__uattrs is None:
             raise RuntimeError("%s does not support forward-mapping of plain "
@@ -92,12 +95,20 @@ class FxMapper(Mapper):
             mdata = N.apply_along_axis(self.__fx, 1, data, *self.__fxargs)
         return N.atleast_2d(mdata)
 
-
+    @borrowdoc(Mapper)
     def _forward_dataset(self, ds):
         if self.__uattrs is None:
             mdata, sattrs = self._forward_dataset_full(ds)
+            single_attr = True
+            # yoh: Had another tentative solution but nope...  I guess
+            #      logic of wrapping into list should go into _full
+            #      and _grouped
+            #(len(mdata.shape) != len(ds.shape) \
+            #or
+            #(mdata.shape != ds.shape and mdata.shape[0] == 1))
         else:
             mdata, sattrs = self._forward_dataset_grouped(ds)
+            single_attr = False
 
         samples = N.atleast_2d(mdata)
 
@@ -123,7 +134,7 @@ class FxMapper(Mapper):
         for attr in sattrs:
             a = sattrs[attr]
             # need to handle single literal attributes
-            if isinstance(a, str):
+            if single_attr:
                 col[attr] = [a]
             else:
                 col[attr] = N.atleast_1d(a)
@@ -151,8 +162,8 @@ class FxMapper(Mapper):
         # let it generate all combinations of unique elements in any attr
         for comb in _orthogonal_permutations(self.__attrcombs):
             selector = reduce(N.multiply,
-                                [col[attr].value == value
-                                    for attr, value in comb.iteritems()])
+                                [array_whereequal(col[attr].value, value)
+                                 for attr, value in comb.iteritems()])
             # process the samples
             if axis == 0:
                 samples = ds.samples[selector]

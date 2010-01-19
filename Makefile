@@ -12,11 +12,13 @@ LATEX_DIR=$(BUILDDIR)/latex
 WWW_DIR=$(BUILDDIR)/website
 SWARM_DIR=$(BUILDDIR)/swarm
 WWW_UPLOAD_URI=www.pymvpa.org:/home/www/www.pymvpa.org/pymvpa
-DATA_URI=apsy.gse.uni-magdeburg.de:/home/hanke/public_html/software/pymvpa/data
+WWW_UPLOAD_URI_DEV=dev.pymvpa.org:/home/www/dev.pymvpa.org/pymvpa
+DATA_UPLOAD_URI=data.pymvpa.org:/home/www/data.pymvpa.org/www/datasets
+DATA_URI=data.pymvpa.org::datadb
 SWARMTOOL_DIR=tools/codeswarm
 SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
 RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g
-
+RSYNC_OPTS_UP=-rzlhvp --delete --chmod=Dg+s,g+rw,o+rX
 
 #
 # Details on the Python/system
@@ -142,6 +144,7 @@ htmldoc: examples2rst build
 	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) html BUILDDIR=$(BUILDDIR)
 	cd $(HTML_DIR)/generated && ln -sf ../_static
 	cd $(HTML_DIR)/examples && ln -sf ../_static
+	cd $(HTML_DIR)/datadb && ln -sf ../_static
 	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
 
 pdfdoc: examples2rst build pdfdoc-stamp
@@ -164,6 +167,7 @@ examples2rst-stamp: mkdir-DOCBUILD_DIR
 		--project PyMVPA \
 		--outdir $(DOCSRC_DIR)/examples \
 		--exclude doc/examples/searchlight.py \
+		--exclude doc/examples/tutorial_lib.py \
 		doc/examples
 	touch $@
 
@@ -206,11 +210,26 @@ website-stamp: mkdir-WWW_DIR htmldoc pdfdoc
 	touch $@
 
 upload-website: website
-	rsync -rzlhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* $(WWW_UPLOAD_URI)/
+	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI)/
 
 upload-htmldoc: htmldoc
-	rsync -rzlhvp --delete --chmod=Dg+s,g+rw $(HTML_DIR)/* $(WWW_UPLOAD_URI)/
+	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI)/
 
+
+upload-website-dev: website
+	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI_DEV)/
+
+upload-htmldoc-dev: htmldoc
+	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI_DEV)/
+
+
+# upload plain .rst files as descriptions to data.pympa.org as descriptions of
+# each dataset
+upload-datadb-descriptions:
+	for ds in doc/source/datadb/*; do \
+		ds=$$(basename $${ds}); ds=$${ds%*.rst}; \
+		scp doc/source/datadb/$${ds}.rst $(DATA_UPLOAD_URI)/$${ds}/README.rst; \
+	done
 
 #
 # Tests (unittests, docs, examples)
@@ -293,27 +312,41 @@ testtutorial: build
 		nosetests --with-doctest --doctest-extension .rst \
 		          --doctest-tests doc/source/tutorial*.rst
 
+testdatadb: build
+	@echo "I: Testing code samples on the dataset DB website"
+	@PYTHONPATH=.:$(PYTHONPATH) \
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		MVPA_DATA_ROOT=datadb \
+		nosetests --with-doctest --doctest-extension .rst \
+		          --doctest-tests doc/source/datadb/*.rst
+
 # Check if everything (with few exclusions) is imported in unitests is
 # known to the mvpa.suite()
 testsuite:
 	@echo "I: Running full testsuite"
-	@git grep -h '^\W*from mvpa.*import' mvpa/tests | \
+	@tfile=`mktemp -u testsuiteXXXXXXX`; \
+	 git grep -h '^\W*from mvpa.*import' mvpa/tests | \
+	 grep -v '^\W*#' | \
 	 sed -e 's/^.*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
 	 sort | uniq | \
 	 grep -v -e 'mvpa\.base\.dochelpers' \
 			 -e 'mvpa\.\(tests\|support\)' \
-			 -e 'mvpa\.misc\.args' | \
-	while read i; do \
+			 -e 'mvpa\.misc\.args' \
+			 -e 'mvpa\.clfs\.\(libsvmc\|sg\)' \
+	| while read i; do \
 	 grep -q "^ *$$i" mvpa/suite.py || \
-	 { echo "E: '$$i' is missing from mvpa.suite()"; exit 1; }; \
-	 done
+	 { echo "E: '$$i' is missing from mvpa.suite()"; touch "$$tfile"; }; \
+	 done; \
+	 [ -f "$$tfile" ] && { rm -f "$$tfile"; exit 1; } || :
 
 # Check if links to api/ within documentation are broken.
-testapiref: apidoc
-	@for tf in doc/*.rst; do \
-	 out=$$(for f in `grep api/mvpa $$tf | sed -e 's|.*\(api/mvpa.*html\).*|\1|g' `; do \
-	  ff=build/html/$$f; [ ! -f $$ff ] && echo "E: $$f missing!"; done; ); \
-	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
+testapiref:
+	@echo "I: epydoc support is depricated -- so, nothing to test"
+# testapiref: apidoc
+# 	@for tf in doc/*.rst; do \
+# 	 out=$$(for f in `grep api/mvpa $$tf | sed -e 's|.*\(api/mvpa.*html\).*|\1|g' `; do \
+# 	  ff=build/html/$$f; [ ! -f $$ff ] && echo "E: $$f missing!"; done; ); \
+# 	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
 
 # Check if there is no WARNINGs from sphinx
 testsphinx: htmldoc
@@ -406,7 +439,13 @@ bdist_mpkg: 3rd
 #
 
 fetch-data:
-	rsync $(RSYNC_OPTS) $(DATA_URI) .
+	rsync $(RSYNC_OPTS) $(DATA_URI)/demo_blockfmri $(DATA_URI)/mnist datadb
+	for ds in datadb/*; do \
+		cd $(CURDIR)/$${ds} && \
+		md5sum -c MD5SUMS && \
+		[ -f *.tar.gz ] && \
+		[ ! -d $$(basename $${ds}) ] && tar xzf *.tar.gz || : ;\
+	done
 
 # Various other data which might be sensitive and not distribu
 fetch-data-nonfree: fetch-data-nonfree-stamp

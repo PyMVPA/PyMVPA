@@ -75,14 +75,14 @@ class StatsTestsScipy(unittest.TestCase):
         m = OneWayAnova(null_dist=nd, enable_states=['null_t'])
         score = m(ds)
 
-        score_nonbogus = N.mean(score.samples[:,ds.nonbogus_features])
-        score_bogus = N.mean(score.samples[:,ds.bogus_features])
+        score_nonbogus = N.mean(score.samples[:,ds.a.nonbogus_features])
+        score_bogus = N.mean(score.samples[:,ds.a.bogus_features])
         # plausability check
         self.failUnless(score_bogus < score_nonbogus)
 
         # [0] because the first axis is len == 0
-        null_prob_nonbogus = m.states.null_prob[0][ds.nonbogus_features]
-        null_prob_bogus = m.states.null_prob[0][ds.bogus_features]
+        null_prob_nonbogus = m.states.null_prob[0][ds.a.nonbogus_features]
+        null_prob_bogus = m.states.null_prob[0][ds.a.bogus_features]
 
         self.failUnless((null_prob_nonbogus < 0.05).all(),
             msg="Nonbogus features should have a very unlikely value. Got %s"
@@ -99,18 +99,18 @@ class StatsTestsScipy(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             # Failed on c94ec26eb593687f25d8c27e5cfdc5917e352a69
             # with MVPA_SEED=833393575
-            self.failUnless((N.abs(m.states.null_t[0][ds.nonbogus_features]) >= 5).all(),
+            self.failUnless((N.abs(m.states.null_t[0][ds.a.nonbogus_features]) >= 5).all(),
                 msg="Nonbogus features should have high t-score. Got %s"
-                % (m.states.null_t[0][ds.nonbogus_features]))
+                % (m.states.null_t[0][ds.a.nonbogus_features]))
 
-            bogus_min = min(N.abs(m.states.null_t[0][ds.bogus_features]))
+            bogus_min = min(N.abs(m.states.null_t[0][ds.a.bogus_features]))
             self.failUnless(bogus_min < 4,
                 msg="Some bogus features should have low t-score of %g."
                     "Got (t,p,sens):%s"
                     % (bogus_min,
-                        zip(m.states.null_t[0][ds.bogus_features],
-                            m.states.null_prob[0][ds.bogus_features],
-                            score.samples[0][ds.bogus_features])))
+                        zip(m.states.null_t[0][ds.a.bogus_features],
+                            m.states.null_prob[0][ds.a.bogus_features],
+                            score.samples[0][ds.a.bogus_features])))
 
 
     def testNegativeT(self):
@@ -145,7 +145,7 @@ class StatsTestsScipy(unittest.TestCase):
         from mvpa.clfs.stats import matchDistribution, rv_semifrozen
 
         ds = datasets['uni2medium']      # large to get stable stats
-        data = ds.samples[:, ds.bogus_features[0]]
+        data = ds.samples[:, ds.a.bogus_features[0]]
         # choose bogus feature, which
         # should have close to normal distribution
 

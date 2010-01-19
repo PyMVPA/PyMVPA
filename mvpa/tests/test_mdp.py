@@ -9,13 +9,17 @@
 '''Tests for basic mappers'''
 
 import numpy as N
-import mdp
+
+from mvpa.base import externals
+if externals.exists('mdp', raiseException=True):
+    import mdp
+else:
+    raise RuntimeError, "Don't run me if no mdp is present"
 
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
-from mvpa.base import externals
 from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper, PCAMapper, \
         ICAMapper
 from mvpa.mappers.lle import LLEMapper

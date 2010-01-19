@@ -373,6 +373,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'reportlab': "__check_reportlab()",
           'nose': "import nose as __",
           'pprocess': "import pprocess as __",
+          'h5py': "import h5py as __",
           }
 
 

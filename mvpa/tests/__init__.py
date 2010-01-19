@@ -49,7 +49,6 @@ def collectTestSuites():
         'test_regr',
         'test_knn',
         'test_gnb',
-        'test_gpr',
         'test_svm',
         'test_plr',
         'test_smlr',
@@ -83,6 +82,7 @@ def collectTestSuites():
 
     __optional_tests = [ ('scipy', 'ridge'),
                          ('scipy', 'stats_sp'),
+                         ('scipy', 'gpr'),
                          (['lars','scipy'], 'lars'),
                          ('scipy', 'zscoremapper'),
                          ('pywt', 'waveletmapper'),
@@ -117,19 +117,23 @@ def collectNoseTests():
     """
     tests = [ 'test_collections',
               'test_datasetng',
-              'test_niftidataset',
               'test_attrmap',
               'test_arraymapper',
               'test_boxcarmapper',
               'test_mapper',
               'test_fxmapper',
-              'test_mdp',
               'test_neighborhood',
               ]
     if externals.exists('scipy'):
         tests += ['test_mapper_sp']
     if externals.exists('glmnet'):
         tests += ['test_glmnet']
+    if externals.exists('nifti'):
+        tests += ['test_niftidataset']
+    if externals.exists('mdp'):
+        tests += ['test_mdp']
+    if externals.exists('h5py'):
+        tests += ['test_hdf5']
 
     return tests
 

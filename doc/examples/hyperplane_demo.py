@@ -205,7 +205,7 @@ P.title('Decision output')
 P.legend()
 
 
-
+from mvpa.base import cfg
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
     P.show()

@@ -10,7 +10,12 @@
 
 import os.path
 import numpy as N
-from nifti import NiftiImage
+
+from mvpa.base import externals
+if externals.exists('nifti', raiseException=True):
+    from nifti import NiftiImage
+else:
+    raise RuntimeError, "Don't run me if no nifti is present"
 
 from numpy.testing import assert_array_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
