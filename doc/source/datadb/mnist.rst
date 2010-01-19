@@ -1,6 +1,8 @@
-***************************************
-The MNIST Dataset Of Handwritten Digits
-***************************************
+.. _datadb_mnist:
+
+*********************************************************************
+LeCun et al. (1999): The MNIST Dataset Of Handwritten Digits (Images)
+*********************************************************************
 
 The MNIST_ dataset of handwritten digits, available from this page, has a
 training set of 60,000 examples, and a test set of 10,000 examples. It is a
