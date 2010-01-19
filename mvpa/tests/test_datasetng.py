@@ -10,12 +10,15 @@
 
 import numpy as N
 import random
+import shutil
+import tempfile
+import os
 
 from numpy.testing import assert_array_equal
 from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
-from mvpa.base.externals import versions
+from mvpa.base.externals import versions, exists
 from mvpa.base.types import is_datasetlike
 from mvpa.base.dataset import DatasetError, vstack, hstack
 from mvpa.mappers.flatten import mask_mapper
@@ -24,7 +27,7 @@ from mvpa.misc.data_generators import normalFeatureDataset
 import mvpa.support.copy as copy
 from mvpa.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection, \
-        ArrayCollectable, SampleAttribute
+        ArrayCollectable, SampleAttribute, Collectable
 
 from tests_warehouse import *
 
@@ -358,7 +361,9 @@ def test_mergeds():
     #
     # vstacking
     #
-    assert_raises(ValueError, vstack, (data0, data1, data2, data3))
+    if __debug__:
+        # tested only in __debug__
+        assert_raises(ValueError, vstack, (data0, data1, data2, data3))
     datasets = (data1, data2, data4)
     merged = vstack(datasets)
     assert_equal(merged.shape,
@@ -686,7 +691,14 @@ def test_repr():
     ok_(repr(eattr), attr_repr)
 
     # should also work for a simple dataset
-    ds = datasets['uni2small']
+    # Does not work due to bug in numpy:
+    #  python -c "from numpy import *; print __version__; r=repr(array(['s', None])); print r; eval(r)"
+    # would give "array([s, None], dtype=object)" without '' around s
+    #ds = datasets['uni2small']
+    ds = Dataset([[0, 1]],
+                 a={'dsa1': 'v1'},
+                 sa={'labels': [0]},
+                 fa={'labels': ['b', 'n']})
     ds_repr = repr(ds)
     ok_(repr(eval(ds_repr)) == ds_repr)
 
@@ -699,6 +711,11 @@ def is_bsr(x):
     return hasattr(sparse, 'bsr_matrix') and isinstance(x, sparse.bsr_matrix)
 
 def test_other_samples_dtypes():
+    if not exists('scipy'):
+        # yoh: theoretically we should still test for non-sparse types below
+        #      but checks are too much interleaved -- so lets just don't test
+        #      if scipy is not there
+        return
     import scipy.sparse as sparse
     dshape = (4, 3)
     # test for ndarray, custom ndarray-subclass, matrix,
@@ -795,3 +812,27 @@ def test_other_samples_dtypes():
         # Nothing to index, hence no features
         assert_equal(ds.nfeatures, 1)
 
+
+def test_h5py_io():
+    if not exists('h5py'):
+        return
+
+    tempdir = tempfile.mkdtemp()
+
+    # store random dataset to file
+    ds = datasets['3dlarge']
+    ds.save(os.path.join(tempdir, 'plain.hdf5'))
+
+    # reload and check for identity
+    ds2 = Dataset.from_hdf5(os.path.join(tempdir, 'plain.hdf5'))
+    assert_array_equal(ds.samples, ds2.samples)
+    for attr in ds.sa:
+        assert_array_equal(ds.sa[attr].value, ds2.sa[attr].value)
+    for attr in ds.fa:
+        assert_array_equal(ds.fa[attr].value, ds2.fa[attr].value)
+    assert_true(len(ds.a.mapper), 2)
+    # since we have no __equal__ do at least some comparison
+    assert_equal(repr(ds.a.mapper), repr(ds2.a.mapper))
+
+    #cleanup temp dir
+    shutil.rmtree(tempdir, ignore_errors=True)

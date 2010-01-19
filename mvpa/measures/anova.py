@@ -12,7 +12,9 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
+from mvpa.base import externals
 from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.base.dataset import vstack
 from mvpa.datasets.base import Dataset
 
 # TODO: Extend with access to functionality from scipy.stats?
@@ -36,6 +38,10 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
     No statistical testing is performed, but raw F-scores are returned as a
     sensitivity map. As usual F-scores have a range of [0,inf] with greater
     values indicating higher sensitivity.
+
+    The sensitivity map is returned as a single-sample dataset. If SciPy is
+    available the associated p-values will also be computed and are avialable
+    from the 'fprob' feature attribute.
     """
 
     def _call(self, dataset, labels=None):
@@ -91,17 +97,24 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
         # without any sane backtrace
         f[N.isnan(f)] = 0
 
-        return Dataset(f[N.newaxis])
-
-        # XXX maybe also compute p-values?
-        #prob = scipy.stats.fprob(dfbn, dfwn, f)
-        #return prob
+        if externals.exists('scipy'):
+            from scipy.stats import fprob
+            return Dataset(f[N.newaxis], fa={'fprob': fprob(dfbn, dfwn, f)})
+        else:
+            return Dataset(f[N.newaxis])
 
 
 class CompoundOneWayAnova(OneWayAnova):
     """Compound comparisons via univariate ANOVA.
 
-    Provides F-scores per each label if compared to the other labels.
+    This measure compute an ANOVA F-score per each feature, for each
+    one-vs-rest comparision for all unique labels in a dataset. Each F-score
+    vector for each comparision is included in the return datasets as a separate
+    samples. Corresponding p-values are avialable in feature attributes named
+    'fprob_X', where `X` is the name of the actual comparision label. Note that
+    p-values are only available, if SciPy is installed. The comparison labels
+    for each F-vectore are also stored as 'labels' sample attribute in the
+    returned dataset.
     """
 
     def _call(self, dataset):
@@ -110,15 +123,17 @@ class CompoundOneWayAnova(OneWayAnova):
         orig_labels = dataset.labels
         labels = orig_labels.copy()
 
-        results = None
+        results = []
         for ul in dataset.sa['labels'].unique:
             labels[orig_labels == ul] = 1
             labels[orig_labels != ul] = 2
             f_ds = OneWayAnova._call(self, dataset, labels)
-            if results is None:
-                results = f_ds
-            else:
-                results.append(f_ds)
+            # rename the fprob attribute to something label specific
+            # to survive final aggregation stage
+            f_ds.fa['fprob_' + str(ul)] = f_ds.fa.fprob
+            del f_ds.fa['fprob']
+            results.append(f_ds)
 
+        results = vstack(results)
         results.sa['labels'] = dataset.sa['labels'].unique
         return results

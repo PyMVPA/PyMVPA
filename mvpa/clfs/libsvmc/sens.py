@@ -15,6 +15,7 @@ import numpy as N
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable
 from mvpa.misc.param import Parameter
+from mvpa.base.types import asobjarray
 from mvpa.measures.base import Sensitivity
 from mvpa.datasets.base import Dataset
 
@@ -148,9 +149,13 @@ class LinearSVMWeights(Sensitivity):
         # and we should have prepared the labels
         assert(sens_labels is not None)
 
+        if len(clf._attrmap):
+            if isinstance(sens_labels[0], tuple):
+                sens_labels = asobjarray(sens_labels)
+            sens_labels = clf._attrmap.to_literal(sens_labels, recurse=True)
+
         # NOTE: `weights` is already and always 2D
         weights_ds = Dataset(weights, sa={'labels': sens_labels})
-
         return weights_ds
 
     _customizeDocInherit = True

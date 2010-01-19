@@ -41,6 +41,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.ifconfig',
               'sphinx.ext.inheritance_diagram',
+              'sphinx.ext.pngmath',
               # we have a local copy of autosummary from the unreleased sphinx
               # 1.0 -- reason: the 0.6 extension creates half-empty summaries
               'autosummary',
@@ -68,7 +69,7 @@ master_doc = 'contents'
 
 # General substitutions.
 project = 'PyMVPA'
-copyright = '2006-2009, PyMVPA Authors'
+copyright = '2006-2010, PyMVPA Authors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -243,4 +244,5 @@ latex_preamble = """
 # to link to related projects
 intersphinx_mapping = {'http://docs.python.org/': None,
                        'http://nipy.sourceforge.net/nipype': None,
-                       'http://nipy.sourceforge.net/nipy': None}
+                       'http://nipy.sourceforge.net/nipy': None,
+                       'http://h5py.alfven.org/docs': None}

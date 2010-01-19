@@ -28,8 +28,8 @@ class FlattenMapper(Mapper):
     the mapper is transforming into 1D vector samples. The setting remains in
     place until the mapper is retrained.
 
-    Note
-    ----
+    Notes
+    -----
     At present this mapper is only designed (and tested) to work with C-ordered
     arrays.
     """

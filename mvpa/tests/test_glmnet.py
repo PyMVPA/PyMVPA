@@ -13,7 +13,10 @@ from numpy.testing import assert_array_equal
 
 from mvpa import cfg
 from mvpa.clfs.glmnet import GLMNET_R,GLMNET_C
-from scipy.stats import pearsonr
+
+#from scipy.stats import pearsonr
+# Lets use our CorrErrorFx which would be available even without scipy
+from mvpa.misc.errorfx import CorrErrorFx
 from tests_warehouse import *
 from mvpa.misc.data_generators import normalFeatureDataset
 
@@ -31,9 +34,9 @@ def testGLMNET_R():
     # prediction has to be almost perfect
     # test with a correlation
     pre = clf.predict(data.samples)
-    cor = pearsonr(pre, data.labels)
+    corerr = CorrErrorFx()(pre, data.labels)
     if cfg.getboolean('tests', 'labile', default='yes'):
-        assert_true(cor[0] > .8)
+        assert_true(corerr < .2)
 
 def testGLMNET_C():
     # define binary prob

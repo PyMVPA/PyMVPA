@@ -10,6 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
+import sys
+# not worthy of externals checking
+_dict_has_key = sys.version_info >= (2, 5)
 
 import numpy as N
 
@@ -178,7 +181,14 @@ class kNN(Classifier):
 
         # find the class with most votes
         # return votes as well to store them in the state
-        return max(votes.iteritems(), key=lambda x:x[1])[0], \
+        if _dict_has_key:
+            # approx 5% faster implementation than below
+            maxvotes = max(votes.iteritems(), key=lambda x:x[1])[0]
+        else:
+            # no key keyword for max in elderly versions
+            maxvotes = max([(v, k) for k, v in votes.iteritems()])[1]
+
+        return maxvotes, \
                 [votes[ul] for ul in uniquelabels] # transform into lists
 
 

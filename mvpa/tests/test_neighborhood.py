@@ -82,8 +82,11 @@ def test_sphere():
 
     s = ne.Sphere(1)
     #assert_raises(ValueError, s, (1))
-    # No float coordinates allowed for now... XXX might like to change that ;)
-    assert_raises(ValueError, s, (1.0, 1.0, 1.0))
+    if __debug__:
+        # No float coordinates allowed for now...
+        # XXX might like to change that ;)
+        # 
+        assert_raises(ValueError, s, (1.0, 1.0, 1.0))
 
 
 def test_sphere_distance_func():
