@@ -208,10 +208,66 @@ called `fa`:
 For The Dataset
 ---------------
 
+Finally, there can also be attributes, not per each sample, or each
+feature, but for the dataset as a whole: so called :term:`dataset
+attributes`. Assinging such attributes an accessing them later on work in
+exactly the same way as for the other two types, except that dataset
+attributes are stored in their own collection which is accessible via the
+`a` property of the dataset.  However, in contrast to sample and feature
+attribute no constraints on the type or size exist -- anything can be
+stored. Let's store a list with all files in the current directory, just
+because we can:
+
+  >>> from glob import glob
+  >>> ds.a['pointless'] = glob("*")
+  >>> 'setup.py' in ds.a.pointless
+  True
 
 
-Slicing
-=======
+Slicing, resampling, feature selection
+======================================
+
+At this point we can already construct a dataset from simple arrays and
+enrich it with an arbitrary number of additional attributes. But just
+having a dataset isn't enough. From part one of this tutorial we already
+know that we need to be able to select subsets of a dataset for further
+processing, and we also know that this is possible with PyMVPA's datasets.
+Now it is time to have a closer look on how it works.
+
+Slicing a dataset (i.e. selecting specific subsets) is very similar to
+slicing a NumPy array. It actually works *almost* identical. A dataset
+supports Python's `slice` syntax, but also selection by boolean masks, and
+indices. The following three slicing operations are all equivalent and
+result in the same output dataset, by always selecting every other samples
+in the dataset:
+
+  >>> # original
+  >>> ds.samples
+  array([[ 1,  1, -1],
+         [ 2,  0,  0],
+         [ 3,  1,  1],
+         [ 4,  0, -1]])
+  >>>
+  >>> # Python-style slicing
+  >>> ds[::2].samples
+  array([[ 1,  1, -1],
+         [ 3,  1,  1]])
+  >>>
+  >>> # Boolean mask array
+  >>> mask = N.array([True, False, True, False])
+  >>> ds[mask].samples
+  array([[ 1,  1, -1],
+         [ 3,  1,  1]])
+  >>>
+  >>> # Slicing by index -- Python indexing start with 0 !!
+  >>> ds[[0, 2]].samples
+  array([[ 1,  1, -1],
+         [ 3,  1,  1]])
+
+
+
+
+
 
 Loading fMRI
 ============
