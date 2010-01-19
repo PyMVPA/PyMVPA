@@ -207,7 +207,7 @@ class GeneralizedLinearKernel(NumpyKernel):
         do_gl = self.states.is_enabled('gradientslog')
         if do_g or do_gl:
             if N.isscalar(Sigma_p):
-                g_Sigma_p = N.dot(data1.T, data2)
+                g_Sigma_p = N.dot(data1, data2.T)
                 gl_Sigma_p = Sigma_p * g_Sigma_p
             else:
                 nfeat = len(Sigma_p)

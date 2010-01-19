@@ -101,7 +101,7 @@ experiments.
 
 .. _HMH04:
 
-**Hanson, S. J., Matsuka, T. & Haxby, J. V.** (2004). Combinatorial codes in ventral temporal lobe for object recognition: Haxby (2001) revisited: is there a "face" area?. *Neuroimage*, *23*, 156–166.
+**Hanson, S. J., Matsuka, T. & Haxby, J. V.** (2004). Combinatorial codes in ventral temporal lobe for object recognition: Haxby (2001) revisited: is there a "face" area?. *NeuroImage*, *23*, 156–166.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2004.05.020
 
 
@@ -191,7 +191,7 @@ experiments.
 
 .. _LSC+05:
 
-**LaConte, S., Strother, S., Cherkassky, V., Anderson, J. & Hu, X.** (2005). Support vector machines for temporal classification of block design fMRI data. *Neuroimage*, *26*, 317–329.
+**LaConte, S., Strother, S., Cherkassky, V., Anderson, J. & Hu, X.** (2005). Support vector machines for temporal classification of block design fMRI data. *NeuroImage*, *26*, 317–329.
   *Comprehensive evaluation of preprocessing options with respect to
   SVM-classifier (and others) performance on block-design fMRI data.*
 
@@ -258,7 +258,7 @@ experiments.
 
 .. _PMB+IP:
 
-**Pereira, F., Mitchell, T. & Botvinick, M.** (in press). Machine learning classifiers and fMRI: A tutorial overview. *Neuroimage*.
+**Pereira, F., Mitchell, T. & Botvinick, M.** (in press). Machine learning classifiers and fMRI: A tutorial overview. *NeuroImage*.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2008.11.007
 
 
@@ -301,7 +301,7 @@ experiments.
 
 .. _WCW+07:
 
-**Wang, Z., Childress, A. R., Wang, J. & Detre, J. A.** (2007). Support vector machine learning-based fMRI data group analysis. *Neuroimage*, *36*, 1139–51.
+**Wang, Z., Childress, A. R., Wang, J. & Detre, J. A.** (2007). Support vector machine learning-based fMRI data group analysis. *NeuroImage*, *36*, 1139–51.
   Keywords: :keyword:`support vector machine`, :keyword:`SVM`, :keyword:`group analysis`
 
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2007.03.072

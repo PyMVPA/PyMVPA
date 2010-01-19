@@ -1,8 +1,8 @@
 .. _datadb_haxby2001:
 
-*****************************************************************
-Haxby et al. (2001): Faces and Objects in Ventral Temporal Cortex
-*****************************************************************
+************************************************************************
+Haxby et al. (2001): Faces and Objects in Ventral Temporal Cortex (fMRI)
+************************************************************************
 
 This is a block-design fMRI dataset from a study on face and object
 representation in human ventral temporal cortex.  It consists of 6 subjects
@@ -82,7 +82,7 @@ objects in ventral temporal cortex. Science 293, 2425–2430.
 
 :ref:`Hanson, S., Matsuka, T., and Haxby, J. (2004) <HMH04>`. Combinatorial
 codes in ventral temporal lobe for object recognition: Haxby (2001). revisited:
-is there a “face” area? Neuroimage 23, 156–166.
+is there a “face” area? NeuroImage 23, 156–166.
 
 :ref:`O’Toole, A. J., Jiang, F., Abdi, H., & Haxby, J. V. (2005) <OJA+05>`.
 Partially distributed representations of objects and faces in ventral temporal

@@ -49,6 +49,12 @@ http://docs.python.org/tutorial/
 Scientific Computing In Python
 ------------------------------
 
+Python itself is a generic programming language.  To employ Python for
+scientific computing, where usual analysis deals with vast amounts of
+numerical data, NumPy module was developed.  PyMVPA makes extensive use of
+NumPy data structures and functions, therefore we recommend you to get
+familiar with it.
+
 http://www.scipy.org/Tentative_NumPy_Tutorial
 
   Useful for a first glimpse at NumPy -- the basis for scientific computing in
@@ -65,3 +71,29 @@ http://www.tramy.us/numpybook.pdf
 
   This is *the* comprehensive reference manual of the NumPy package. It gives
   answers to questions, yet to be asked.
+
+
+Interactive Python Shell
+------------------------
+
+Being a scripting programming language, `python` itself provides a basic
+interface for interactive scripting.  To make interactive use of Python more
+enjoyable and productive, we suggest to explore an enhanced interactive
+environment for Python -- IPython.
+
+http://fperez.org/papers/ipython07_pe-gr_cise.pdf
+
+  An article from IPython author in the Computing in Science and Engineering
+  journal describing goals and basic features of IPython
+
+http://showmedo.com/videotutorials/series?name=CnluURUTV
+
+  Video tutorials from Jeff Rush walking you through basic and advanced
+  features of IPython.  While doing that he also exposes basic constructs of
+  Python, so you might like to watch this video whenever you already have
+  basic programming experience with any programming language.
+
+http://ipython.scipy.org/moin/Documentation
+
+  IPython documentation page which references additional materials, such as
+  the main IPython documentation which extensively covers features of IPython.
