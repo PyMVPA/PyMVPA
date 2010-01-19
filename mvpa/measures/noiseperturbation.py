@@ -36,8 +36,8 @@ class NoisePerturbationSensitivity(FeaturewiseDatasetMeasure):
     perturbed feature. Large differences are treated as an indicator of a
     feature having great impact on the scalar `DatasetMeasure`.
 
-    Note
-    ----
+    Notes
+    -----
     The computed sensitivity map might have positive and negative values!
     """
     def __init__(self, datameasure,

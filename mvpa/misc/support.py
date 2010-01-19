@@ -331,6 +331,24 @@ def isInVolume(coord, shape):
     return True
 
 
+def array_whereequal(a, x):
+    """Reliable comparison for numpy.array
+
+    numpy.array (as of 1.5.0.dev) fails to compare tuples in array of
+    dtype object, e.g.::
+
+    >>> import numpy as N; a=N.array([1, (0,1)], dtype=object); print a == (0,1),  a[1] == (0,1)
+    [False False] True
+
+    This function checks if dtype is object and just does list
+    comprehension in that case
+    """
+    if a.dtype is N.dtype('object'):
+        return N.array([i==x for i in a], dtype=bool)
+    else:
+        return a == x
+
+
 def version_to_tuple(v):
     """Convert literal string into a tuple, if possible of ints
 

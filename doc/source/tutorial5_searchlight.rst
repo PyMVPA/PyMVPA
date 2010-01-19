@@ -7,9 +7,20 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-.. _chap_refman:
-.. index:: reference manual
+.. _chap_tutorial5:
+.. index:: Tutorial
 
-****************
-Reference Manual
-****************
+***************************************
+Tutorial Part 5: The Mighty Searchlight
+***************************************
+
+
+Literature
+----------
+
+Related API Documentation
+-------------------------
+.. autosummary::
+   :toctree:
+
+   ~mvpa.measures.searchlight.Searchlight

@@ -13,10 +13,12 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.datasets.channel import ChannelDataset
-from mvpa.misc.io.eepbin import EEPBin
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.base import warning
+from mvpa.base.dataset import DatasetError
+
+from mvpa.datasets.channel import ChannelDataset
+from mvpa.misc.io.eepbin import EEPBin
 
 def eep_dataset(samples, labels=None, chunks=None):
     """Create a dataset using an EEP binary file as source.

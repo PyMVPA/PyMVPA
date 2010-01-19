@@ -9,7 +9,6 @@
 """Unit tests for PyMVPA ..."""
 
 # See other tests and test_procrust.py for some example on what to do ;)
-
 from mvpa.algorithms.hyperalignment import Hyperalignment
 
 # Somewhat slow but provides all needed ;)
@@ -27,6 +26,12 @@ class HyperAlignmentTests(unittest.TestCase):
 
     def testPossibleInputs(self):
         # get a dataset with a very high SNR
+        pass
+
+
+    def _testOnSwaroopData(self):
+        #
+        print "Running swaroops test on data we don't have"
         pass
 
 

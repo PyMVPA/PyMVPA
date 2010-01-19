@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import copy
 
+from mvpa.base import externals
 from mvpa.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection, \
         SampleAttribute, FeatureAttribute, DatasetAttribute
@@ -21,6 +22,8 @@ from mvpa.base.dochelpers import _str
 
 if __debug__:
     from mvpa.base import debug
+from mvpa.base import warning
+
 
 
 class AttrDataset(object):
@@ -319,6 +322,14 @@ class AttrDataset(object):
         return self.copy(deep=True, memo=memo)
 
 
+    def __reduce__(self):
+        return (self.__class__,
+                    (self.samples,
+                     dict(self.sa),
+                     dict(self.fa),
+                     dict(self.a)))
+
+
     def copy(self, deep=True, sa=None, fa=None, a=None, memo=None):
         """Create a copy of a dataset.
 
@@ -395,8 +406,8 @@ class AttrDataset(object):
         other : AttrDataset
           The content of this dataset will be append.
 
-        Note
-        ----
+        Notes
+        -----
         No dataset attributes, or feature attributes will be merged!  These
         respective properties of the *other* dataset are neither checked for
         compatibility nor copied over to this dataset. However, all samples
@@ -543,6 +554,32 @@ class AttrDataset(object):
     def __len__(self):
         return self.shape[0]
 
+
+    @classmethod
+    def from_hdf5(cls, source, name='dataset'):
+        if not externals.exists('h5py'):
+            raise RuntimeError("Missing 'h5py' package -- saving is not possible.")
+
+        import h5py
+        from mvpa.base.hdf5 import hdf2obj
+
+        # look if we got an hdf file instance already
+        if isinstance(source, h5py.highlevel.File):
+            own_file = False
+            hdf = source
+        else:
+            own_file = True
+            hdf = h5py.File(source, 'r')
+
+        if not name in hdf:
+            raise ValueError("Cannot find '%s' group in HDF file."
+                             % name)
+
+        # acces the group that should contain the dataset
+        dsgrp = hdf[name]
+        return hdf2obj(dsgrp)
+
+
     # shortcut properties
     nsamples = property(fget=lambda self:len(self))
     nfeatures = property(fget=lambda self:self.shape[1])
@@ -570,7 +607,12 @@ def vstack(datasets):
     datasets must have an identical set of sample attributes (matching keys,
     not values), otherwise a ValueError will be raised.
     No dataset attributes from any source dataset will be transferred into the
-    stacked dataset.
+    stacked dataset. If all input dataset have common dataset attributes that
+    are also valid for the stacked dataset, they can be moved into the output
+    dataset like this::
+
+      ds_merged = vstack((ds1, ds2, ds3))
+      ds_merged.a.update(ds1.a)
 
     Parameters
     ----------
@@ -732,3 +774,36 @@ class DatasetAttributeExtractor(object):
 # attribute extraction
 DAE = DatasetAttributeExtractor
 
+
+@datasetmethod
+def save(dataset, destination, name='dataset', compression=None):
+    """Save Dataset into HDF5 file
+
+    Parameters
+    ----------
+    dataset : `Dataset`
+    destination : `h5py.highlevel.File` or str
+    name : str, optional
+    compression : None or int or {'gzip', 'szip', 'lzf'}, optional
+      Level of compression for gzip, or another compression strategy.
+    """
+    if not externals.exists('h5py'):
+        raise RuntimeError("Missing 'h5py' package -- saving is not possible.")
+
+    import h5py
+    from mvpa.base.hdf5 import obj2hdf
+
+    # look if we got an hdf file instance already
+    if isinstance(destination, h5py.highlevel.File):
+        own_file = False
+        hdf = destination
+    else:
+        own_file = True
+        hdf = h5py.File(destination, 'w')
+
+    obj2hdf(hdf, dataset, name, compression=compression)
+
+    # if we opened the file ourselves we close it now
+    if own_file:
+        hdf.close()
+    return

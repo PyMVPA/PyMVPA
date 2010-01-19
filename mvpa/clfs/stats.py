@@ -252,6 +252,10 @@ class MCNullDist(NullDist):
             # new permutation all the time
             # but only permute the training data and keep the testdata constant
             #
+            if __debug__:
+                debug('STATMC', "Doing %i permutations: %i" \
+                      % (self.__permutations, p+1), cr=True)
+
             # TODO this really needs to be more clever! If data samples are
             # shuffled within a class it really makes no difference for the
             # classifier, hence the number of permutations to estimate the
@@ -271,6 +275,10 @@ class MCNullDist(NullDist):
             res = measure(*measure_args)
             res = N.asanyarray(res)
             dist_samples.append(res)
+
+        if __debug__:
+            debug('STATMC', '')
+
 
         # store samples
         self.states.dist_samples = dist_samples = N.asarray(dist_samples)

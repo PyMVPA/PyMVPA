@@ -19,7 +19,8 @@ from mvpa.featsel.rfe import RFE
 from mvpa.clfs.meta import SplitClassifier, MulticlassClassifier, \
      FeatureSelectionClassifier
 from mvpa.clfs.smlr import SMLR, SMLRWeights
-from mvpa.mappers.fx import sumofabs_sample, absolute_features, FxMapper
+from mvpa.mappers.fx import sumofabs_sample, absolute_features, FxMapper, \
+     maxofabs_sample
 from mvpa.datasets.splitters import NFoldSplitter, NoneSplitter
 
 from mvpa.misc.transformers import Absolute, \
@@ -34,6 +35,7 @@ from tests_warehouse import *
 from tests_warehouse_clfs import *
 
 from nose.tools import assert_equal
+from numpy.testing import assert_array_equal
 
 _MEASURES_2_SWEEP = [ OneWayAnova(),
                       CompoundOneWayAnova(mapper=sumofabs_sample()),
@@ -77,7 +79,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
                [(c, datasets['uni2large'])
                 for c in clfswh['has_sensitivity', 'binary']] +
                [(c, datasets['uni4large'])
-                for c in clfswh['has_sensitivity', 'multiclass']])
+                for c in clfswh['has_sensitivity', 'multiclass']]
+               )
     def testAnalyzerWithSplitClassifier(self, clfds):
         """Test analyzers in split classifier
         """
@@ -94,10 +97,11 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                splitter=splitter,
                                enable_states=['training_confusion',
                                               'confusion'])
-        sana = mclf.getSensitivityAnalyzer(mapper=absolute_features(),
+        sana = mclf.getSensitivityAnalyzer(# mapper=absolute_features(),
                                            enable_states=["sensitivities"])
 
-        nlabels = len(ds.uniquelabels)
+        ulabels = ds.uniquelabels
+        nlabels = len(ulabels)
         # Can't rely on splitcfg since count-limit is done in __call__
         assert(nsplits == len(list(splitter(ds))))
         sens = sana(ds)
@@ -124,6 +128,17 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # Check if labels are present
         self.failUnless('splits' in sens.sa)
         self.failUnless('labels' in sens.sa)
+        # should be 1D -- otherwise dtype object
+        self.failUnless(sens.sa.labels.ndim == 1)
+
+        sens_ulabels = sens.sa['labels'].unique
+        # Some labels might be pairs(tuples) so ndarray would be of
+        # dtype object and we would need to get them all
+        if sens_ulabels.dtype is N.dtype('object'):
+            sens_ulabels = N.unique(
+                reduce(lambda x,y: x+y, [list(x) for x in sens_ulabels]))
+
+        assert_array_equal(sens_ulabels, ds.sa['labels'].unique)
 
         errors = [x.percentCorrect
                     for x in sana.clf.states.confusion.matrices]
@@ -152,17 +167,81 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
 
         # Since  now we have per split and possibly per label -- lets just find
-        # mean per each feature per split
-        sensm = FxMapper('samples', lambda x: N.abs(x).sum(),
-                         uattrs=['splits'])(sens)
-        for sens_ in sensm.samples: # + sana.combined_analyzer.sensitivities:
-            selected = FixedNElementTailSelector(
-                ds.nfeatures - len(ds.nonbogus_features))(sens_)
-            if cfg.getboolean('tests', 'labile', default='yes'):
-                self.failUnlessEqual(
-                    list(selected),
-                    list(ds.nonbogus_features),
-                    msg="At the end we should have selected the right features")
+        # mean per each feature per label across splits
+        sensm = FxMapper('samples', lambda x: N.sum(x),
+                         uattrs=['labels'])(sens)
+        sensgm = maxofabs_sample()(sensm)    # global max of abs of means
+
+        assert_equal(sensgm.shape[0], 1)
+        assert_equal(sensgm.shape[1], ds.nfeatures)
+
+        selected = FixedNElementTailSelector(
+            len(ds.a.bogus_features))(sensgm.samples[0])
+
+        if cfg.getboolean('tests', 'labile', default='yes'):
+
+            self.failUnlessEqual(
+                set(selected), set(ds.a.nonbogus_features),
+                msg="At the end we should have selected the right features. "
+                "Chose %s whenever nonbogus are %s"
+                % (selected, ds.a.nonbogus_features))
+
+            # Now test each one per label
+            # TODO: collect all failures and spit them out at once --
+            #       that would make it easy to see if the sensitivity
+            #       just has incorrect order of labels assigned
+            for sens1 in sensm:
+                labels1 = sens1.labels  # labels (1) for this sensitivity
+                lndim = labels1.ndim
+                label = labels1[0]      # current label
+
+                # XXX whole lndim comparison should be gone after
+                #     things get fixed and we arrive here with a tuple!
+                if lndim == 1: # just a single label
+                    self.failUnless(label in ulabels)
+
+                    ilabel_all = N.where(ds.fa.labels == label)[0]
+                    # should have just 1 feature for the label
+                    self.failUnlessEqual(len(ilabel_all), 1)
+                    ilabel = ilabel_all[0]
+
+                    maxsensi = N.argmax(sens1) # index of max sensitivity
+                    self.failUnlessEqual(maxsensi, ilabel,
+                        "Maximal sensitivity for %s was found in %i whenever"
+                        " original feature was %i for nonbogus features %s"
+                        % (labels1, maxsensi, ilabel, ds.a.nonbogus_features))
+                elif lndim == 2 and labels1.shape[1] == 2: # pair of labels
+                    # we should have highest (in abs) coefficients in
+                    # those two labels
+                    maxsensi2 = N.argsort(N.abs(sens1))[0][-2:]
+                    ilabel2 = [N.where(ds.fa.labels == l)[0][0]
+                                    for l in label]
+                    self.failUnlessEqual(
+                        set(maxsensi2), set(ilabel2),
+                        "Maximal sensitivity for %s was found in %s whenever"
+                        " original features were %s for nonbogus features %s"
+                        % (labels1, maxsensi2, ilabel2, ds.a.nonbogus_features))
+                    """
+                    XXX in progress
+                    # Now test for the sign of each one in pair ;) in
+                    # all binary problems L1 (-1) -> L2(+1), then
+                    # weights for L2 should be positive.  to test for
+                    # L1 -- invert the sign
+                    # We already know (if we haven't failed in previous test),
+                    # that those 2 were the strongest -- so check only signs
+                    self.failUnless(
+                        sens1.samples[0, ilabel2[0]]<0,
+                        "With %i classes in pair %s got feature %i for %r >= 0"
+                        % (nlabels, label, ilabel2[0], label[0]))
+                    self.failUnless(sens1.samples[0, ilabel2[1]]>0,
+                        "With %i classes in pair %s got feature %i for %r <= 0"
+                        % (nlabels, label, ilabel2[1], label[1]))
+                        """
+                else:
+                    # yoh could be wrong at this assumption... time will show
+                    self.fail("Got unknown number labels per sensitivity: %s."
+                              " Should be either a single label or a pair"
+                              % labels1)
 
 
     @sweepargs(clf=clfswh['has_sensitivity'])
