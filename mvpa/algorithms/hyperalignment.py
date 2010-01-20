@@ -25,6 +25,7 @@ from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.param import Parameter
 from mvpa.misc.transformers import GrandMean
 from mvpa.mappers.procrustean import ProcrusteanMapper
+from mvpa.datasets import dataset
 
 if __debug__:
     from mvpa.base import debug
@@ -96,15 +97,18 @@ class Hyperalignment(ClassWithCollections):
 
         # Level 1 (first)
         commonspace = N.asanyarray(datasets[ref_ds])
+        zscore(commonspace, perchunk=False)
         data_mapped = [N.asanyarray(ds) for ds in datasets]
         for i, (m, data) in enumerate(zip(mappers, data_mapped)):
             if i == ref_ds:
                 continue
-
-            # XXX For now lets just call this way:
-            m.train(data, commonspace)
-            data_mapped[i] = m.forward(data)
-
+            zscore(data, perchunk=False)
+            ds = dataset(samples=data, labels=commonspace)
+            zscore(ds, perchunk=False)
+            m.train(ds)
+            data_temp = m.forward(data)
+            zscore(data_temp, perchunk=False)
+            data_mapped[i] = data_temp
             ## if ds_mapped == []:
             ##     ds_mapped = [zscore(m.forward(d), perchunk=False)]
             ## else:
@@ -113,24 +117,35 @@ class Hyperalignment(ClassWithCollections):
             # zscore before adding
             # TODO: make just a function so we dont' waste space
             commonspace = params.combiner1(data_mapped[i], commonspace)
-
+            zscore(commonspace, perchunk=False)
         # update commonspace to mean of ds_mapped
         commonspace = params.combiner2(data_mapped)
-
+        zscore(commonspace, perchunk=False)
         # Level 2 -- might iterate multiple times
         for loop in xrange(params.levels - 2):
             for i, (m, ds) in enumerate(zip(mappers, datasets)):
                 ## ds_temp = zscore( (commonspace*nelements - ds_mapped[i])/(nelements-1), perchunk=False )
-                m.train(ds, commonspace) # ds_temp)
+                ds_new = ds.copy()
+                zscore(ds_new, perchunk=False)
+                ds_temp = (commonspace*nelements - ds_mapped[i])/(nelements-1)
+		zscore(ds_temp, perchunk=False)
+		ds_new.labels = ds_temp#commonspace
+		m.train(ds_new) # ds_temp)
                 data_mapped[i] = m.forward(N.asanyarray(ds))
                 #ds_mapped[i] = zscore( m.forward(ds_temp), perchunk=False)
 
             commonspace = params.combiner2(data_mapped)
-
+            zscore(commonspace, perchunk=False)
+        
         # Level 3 (last) to params.levels
         for i, (m, ds) in enumerate(zip(mappers, datasets)):
             ## ds_temp = zscore( (commonspace*nelements - ds_mapped[i])/(nelements-1), perchunk=False )
-            m.train(ds, commonspace) #ds_temp)
+	    ds_new = ds.copy()
+            zscore(ds_new, perchunk=False)
+            ds_temp = (commonspace*nelements - ds_mapped[i])/(nelements-1)
+	    zscore(ds_temp, perchunk=False)
+	    ds_new.labels = ds_temp#commonspace
+            m.train(ds_new) #ds_temp)
 
         return mappers
 
