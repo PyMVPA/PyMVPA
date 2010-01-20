@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 from math import floor
 import numpy as N
 
-from mvpa.base.types import is_datasetlike
+from mvpa.base.dataset import AttrDataset
 from mvpa.misc.state import ClassWithCollections, StateVariable
 
 if __debug__:
@@ -275,7 +275,7 @@ class ElementSelector(ClassWithCollections):
            Sequence based on values of which to perform the selection.
            If `Dataset`, then only 1st sample is taken.
         """
-        if is_datasetlike(seq):
+        if isinstance(seq, AttrDataset):
             if len(seq)>1:
                 raise ValueError(
                     "Feature selectors cannot handle multiple "
