@@ -39,17 +39,20 @@ class HyperAlignmentTests(unittest.TestCase):
             ds_.samples = N.dot(ds_orig.samples, R)
             dss_rotated.append(ds_)
 
+        ref_ds = 0                      # by default should be this one
         ha = Hyperalignment()
         mappers = ha(dss_rotated)
         # Map data back
         dss_back = [m.forward(ds_) for m, ds_ in zip(mappers, dss_rotated)]
+
         ds_orig_norm = N.linalg.norm(ds_orig.samples)
         nddss = []
+        ds_orig_Rref = N.dot(ds_orig.samples, Rs[ref_ds])
         for ds_back in dss_back:
-            dds = ds_back.samples - ds_orig.samples
+            dds = ds_back.samples - ds_orig_Rref
             ndds = N.linalg.norm(dds) / ds_orig_norm
             nddss += [ndds]
-        self.failUnless(N.all(ndds <= 1e-5),
+        self.failUnless(N.all(ndds <= 1e-10),
             msg="Should have reconstructed original dataset more or less."
                 " Got normed differences %s" % nddss)
         pass
