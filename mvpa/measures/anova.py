@@ -128,10 +128,11 @@ class CompoundOneWayAnova(OneWayAnova):
             labels[orig_labels == ul] = 1
             labels[orig_labels != ul] = 2
             f_ds = OneWayAnova._call(self, dataset, labels)
-            # rename the fprob attribute to something label specific
-            # to survive final aggregation stage
-            f_ds.fa['fprob_' + str(ul)] = f_ds.fa.fprob
-            del f_ds.fa['fprob']
+            if 'fprob' in f_ds.fa:
+                # rename the fprob attribute to something label specific
+                # to survive final aggregation stage
+                f_ds.fa['fprob_' + str(ul)] = f_ds.fa.fprob
+                del f_ds.fa['fprob']
             results.append(f_ds)
 
         results = vstack(results)
