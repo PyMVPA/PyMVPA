@@ -11,6 +11,7 @@
 import unittest
 import numpy as N
 
+from mvpa.base import cfg
 # See other tests and test_procrust.py for some example on what to do ;)
 from mvpa.algorithms.hyperalignment import Hyperalignment
 
@@ -73,10 +74,11 @@ class HyperAlignmentTests(unittest.TestCase):
                 dds = ds_back.samples - ds_orig_Rref
                 ndds = N.linalg.norm(dds) / ds_norm
                 nddss += [ndds]
-            self.failUnless(N.all(ndds <= (1e-10, 1e-2)[int(noisy)]),
-                msg="Should have reconstructed original dataset more or less."
-                    " Got normed differences %s in %s case."
-                    % (nddss, ('clean', 'noisy')[int(noisy)]))
+            if not noisy or cfg.getboolean('tests', 'labile', default='yes'):
+                self.failUnless(N.all(ndds <= (1e-10, 1e-2)[int(noisy)]),
+                    msg="Should have reconstructed original dataset more or"
+                        "less. Got normed differences %s in %s case."
+                        % (nddss, ('clean', 'noisy')[int(noisy)]))
 
         # Lets see how well we do if asked to compute residuals
         ha = Hyperalignment(ref_ds=ref_ds, level2_niter=2,
