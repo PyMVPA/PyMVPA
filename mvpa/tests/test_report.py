@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA simple report facility"""
 
-import unittest, os
+import unittest, os, shutil
 from tempfile import mktemp
 
 from mvpa.base import verbose, externals
@@ -107,17 +107,7 @@ class ReportTest(unittest.TestCase):
         dirname = mktemp('mvpa', 'test_report')
         self.auxBasic(dirname, rc)
         # cleanup
-        if os.path.exists(dirname):
-            # poor man recursive remove
-            for f in os.listdir(dirname):
-                try:
-                    os.remove(os.path.join(dirname, f))
-                except:
-                    # could be a directory... but no deeper ones expected
-                    for f2 in os.listdir(os.path.join(dirname, f)):
-                        os.remove(os.path.join(dirname, f, f2))
-                    os.rmdir(os.path.join(dirname, f))
-            os.rmdir(dirname)
+        shutil.rmtree(dirname, ignore_errors=True)
 
 
 def suite():
