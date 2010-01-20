@@ -103,6 +103,8 @@ exclude_trees = []
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
 #default_role = "autolink" # causes actual running of code and crashes
+# the problem with this setting is that is also confused things
+# `Dataset` might lead to a link to the h5py.Dataset` docs
 default_role = "obj"	   # seems to be sufficient to provide basic hyperlinking
 
 
@@ -165,7 +167,7 @@ html_static_path = ['_static']
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
-#html_use_smartypants = True
+html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {'index': 'indexsidebar.html'}
