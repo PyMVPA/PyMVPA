@@ -20,12 +20,12 @@ from mvpa.support.copy import deepcopy
 
 import numpy as N
 
-from mvpa.base import warning
 from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.param import Parameter
 from mvpa.misc.transformers import GrandMean
 from mvpa.mappers.procrustean import ProcrusteanMapper
 from mvpa.datasets import dataset
+from mvpa.datasets.miscfx import zscore
 
 if __debug__:
     from mvpa.base import debug
@@ -38,9 +38,8 @@ class Hyperalignment(ClassWithCollections):
     features into a common space
     """
 
-    # May be something we might store optionally upon user request
-    who_knows_maybe_something_to_store_optionally = \
-       StateVariable(enabled=False, doc= """....""")
+    residual_errors = StateVariable(enabled=False,
+            doc="""Residual error per each dataset at each level.""")
 
     # Lets use built-in facilities to specify parameters which
     # constructor should accept
@@ -49,12 +48,16 @@ class Hyperalignment(ClassWithCollections):
             :class:`~mvpa.mappers.procrustean.ProcrusteanMapper` is
             used.""")
 
-    levels = Parameter(3, allowedtype='int', min=2,
-            doc="Number of levels ....XXX ")
+    level2_niter = Parameter(1, allowedtype='int', min=0,
+            doc="Number of 2nd level iterations.")
 
     ref_ds = Parameter(None, allowedtype='int', min=0,
             doc="""Index of a dataset to use as a reference.  If `None`, then
             dataset with maximal number of features is used.""")
+
+    zscore_common = Parameter(False, allowedtype='bool',
+            doc="""Z-score common space after each adjustment.  Might prove
+            to be useful.  !!WiP!!""")
 
     combiner1 = Parameter(lambda x,y: 0.5*(x+y), #
             doc="How to update common space in the 1st loop")
@@ -78,17 +81,21 @@ class Hyperalignment(ClassWithCollections):
         A list of trained Mappers of the same length as datasets
         """
         params = self.params            # for quicker access ;)
-        nelements = len(datasets)
-        nfeatures = [datasets[i].shape[1] for i in xrange(nelements)]
+        ndatasets = len(datasets)
+        nfeatures = [datasets[i].shape[1] for i in xrange(ndatasets)]
+
+        if __debug__:
+            debug('HPAL', "Hyperalignment %s for %i datasets"
+                  % (self, ndatasets))
 
         if params.ref_ds is None:
             ref_ds = N.argmax(nfeatures)
         else:
             ref_ds = params.ref_ds
-            if ref_ds < 0 and ref_ds >= nelements:
+            if ref_ds < 0 and ref_ds >= ndatasets:
                 raise ValueError, "Requested reference dataset %i is out of " \
                       "bounds. We have only %i datasets provided" \
-                      % (ref_ds, nelements)
+                      % (ref_ds, ndatasets)
 
         # might prefer some other way to initialize... later
         mappers = [deepcopy(params.alignment) for ds in datasets]
@@ -97,17 +104,20 @@ class Hyperalignment(ClassWithCollections):
 
         # Level 1 (first)
         commonspace = N.asanyarray(datasets[ref_ds])
-        zscore(commonspace, perchunk=False)
+        if params.zscore_common:
+            zscore(commonspace, perchunk=False)
         data_mapped = [N.asanyarray(ds) for ds in datasets]
         for i, (m, data) in enumerate(zip(mappers, data_mapped)):
+            if __debug__:
+                debug('HPAL_', "Level 1: ds #%i" % i)
             if i == ref_ds:
                 continue
-            zscore(data, perchunk=False)
+            #ZSC zscore(data, perchunk=False)
             ds = dataset(samples=data, labels=commonspace)
-            zscore(ds, perchunk=False)
+            #ZSC zscore(ds, perchunk=False)
             m.train(ds)
             data_temp = m.forward(data)
-            zscore(data_temp, perchunk=False)
+            #ZSC zscore(data_temp, perchunk=False)
             data_mapped[i] = data_temp
             ## if ds_mapped == []:
             ##     ds_mapped = [zscore(m.forward(d), perchunk=False)]
@@ -117,34 +127,47 @@ class Hyperalignment(ClassWithCollections):
             # zscore before adding
             # TODO: make just a function so we dont' waste space
             commonspace = params.combiner1(data_mapped[i], commonspace)
-            zscore(commonspace, perchunk=False)
+            if params.zscore_common:
+                zscore(commonspace, perchunk=False)
+
         # update commonspace to mean of ds_mapped
         commonspace = params.combiner2(data_mapped)
-        zscore(commonspace, perchunk=False)
+        if params.zscore_common:
+            zscore(commonspace, perchunk=False)
+
         # Level 2 -- might iterate multiple times
-        for loop in xrange(params.levels - 2):
+        for loop in xrange(params.level2_niter):
             for i, (m, ds) in enumerate(zip(mappers, datasets)):
-                ## ds_temp = zscore( (commonspace*nelements - ds_mapped[i])/(nelements-1), perchunk=False )
+                if __debug__:
+                    debug('HPAL_', "Level 2 (%i-th iteration): ds #%i" % (loop, i))
+
+                ## ds_temp = zscore( (commonspace*ndatasets - ds_mapped[i])
+                ##                   /(ndatasets-1), perchunk=False )
                 ds_new = ds.copy()
-                zscore(ds_new, perchunk=False)
-                ds_temp = (commonspace*nelements - ds_mapped[i])/(nelements-1)
-		zscore(ds_temp, perchunk=False)
-		ds_new.labels = ds_temp#commonspace
-		m.train(ds_new) # ds_temp)
+                #ZSC zscore(ds_new, perchunk=False)
+                #PRJ ds_temp = (commonspace*ndatasets - ds_mapped[i])/(ndatasets-1)
+                #ZSC zscore(ds_temp, perchunk=False)
+                ds_new.labels = commonspace #PRJ ds_temp
+                m.train(ds_new) # ds_temp)
                 data_mapped[i] = m.forward(N.asanyarray(ds))
                 #ds_mapped[i] = zscore( m.forward(ds_temp), perchunk=False)
 
             commonspace = params.combiner2(data_mapped)
-            zscore(commonspace, perchunk=False)
-        
+            if params.zscore_common:
+                zscore(commonspace, perchunk=False)
+
         # Level 3 (last) to params.levels
         for i, (m, ds) in enumerate(zip(mappers, datasets)):
-            ## ds_temp = zscore( (commonspace*nelements - ds_mapped[i])/(nelements-1), perchunk=False )
-	    ds_new = ds.copy()
-            zscore(ds_new, perchunk=False)
-            ds_temp = (commonspace*nelements - ds_mapped[i])/(nelements-1)
-	    zscore(ds_temp, perchunk=False)
-	    ds_new.labels = ds_temp#commonspace
+            if __debug__:
+                debug('HPAL_', "Level 3: ds #%i" % i)
+
+            ## ds_temp = zscore( (commonspace*ndatasets - ds_mapped[i])
+            ##                   /(ndatasets-1), perchunk=False )
+            ds_new = ds.copy()     # shallow copy so we could assign new labels
+            #ZSC zscore(ds_new, perchunk=False)
+            #PRJ ds_temp = (commonspace*ndatasets - ds_mapped[i])/(ndatasets-1)
+            #ZSC zscore(ds_temp, perchunk=False)
+            ds_new.labels = commonspace #PRJ ds_temp#
             m.train(ds_new) #ds_temp)
 
         return mappers
