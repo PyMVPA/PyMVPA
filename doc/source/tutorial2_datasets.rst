@@ -264,9 +264,81 @@ in the dataset:
   array([[ 1,  1, -1],
          [ 3,  1,  1]])
 
+.. exercise::
+
+  Search the `NumPy documentation`_ for the difference between "basic slicing"
+  and "advanced indexing". Especially the aspect of memory consumption
+  applies to dataset slicing as well, and being aware of this fact might
+  help to write more efficient analysis scripts. Which of the three slicing
+  approaches above is the most memory-efficient?
+
+.. _NumPy documentation: http://docs.scipy.org/doc/
 
 
+All three slicing-styles equally apply to the selection of feature subsets
+within a dataset. Remember, the feature are represented on the second axis
+of a dataset.
 
+  >>> ds[:, [1,2]].samples
+  array([[ 1, -1],
+         [ 0,  0],
+         [ 1,  1],
+         [ 0, -1]])
+
+By applying a selection by indices to the second axis, we can easily get
+the last two features of our example dataset. Please note the `:` supplied
+as first axis slicing. This is the Python way to indicate *take everything
+along this axis*, hence take all samples.
+
+As you can guess, it is also possible to select subsets of samples and
+features at the same time.
+
+  >>> subds = ds[[0,1], [0,2]]
+  >>> subds.samples
+  array([[ 1, -1],
+         [ 2,  0]])
+
+If you have prior experience with NumPy you might be confused now. What you
+might have expected is this:
+
+  >>> ds.samples[[0,1], [0,2]]
+  array([1, 0])
+
+The above code applies the same slicing directly to the NumPy array with
+the samples, and the result is fundamentally different. For NumPy arrays
+the style of slicing allows to select specific elements by there indices on
+each axis of an array. For PyMVPA's datasets this mode is not very useful,
+instead we typically want to select rows and columns, i.e. samples and
+features given by their indices, hence **samples and features slicing is
+always applied sequentially**, even if ran simultaneously.
+
+
+.. exercise::
+
+  Try to select samples [0,1] and features [0,2,3] simultaneously using
+  dataset slicing. now apply the same slicing to the samples array itself
+  (`ds.samples`) -- make sure that the result doesn't surprise you.
+
+
+One last interesting thing to look at, in the context of dataset slicing
+are the attributes. What happens to them when sample are feature subset are
+chosen? Our original dataset had both samples and feature attributes:
+
+  >>> print ds.sa.some_attr
+  [0 1 1 3]
+  >>> print ds.fa.responsible
+  ['me' 'you' 'nobody']
+
+Now let's look at what they became in the subset-dataset we previously
+created:
+
+  >>> print subds.sa.some_attr
+  [0 1]
+  >>> print subds.fa.responsible
+  ['me' 'nobody']
+
+We see that both attributes are still there and, moreover, also here the
+appropriate subsets have been selected.
 
 
 Loading fMRI
