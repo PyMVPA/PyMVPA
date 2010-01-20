@@ -15,7 +15,7 @@ import numpy as N
 from mvpa.algorithms.hyperalignment import Hyperalignment
 
 # Somewhat slow but provides all needed ;)
-from tests_warehouse import datasets, get_random_rotation
+from tests_warehouse import datasets, get_random_rotation, sweepargs
 
 # if you need some classifiers
 #from tests_warehouse_clfs import *
@@ -23,7 +23,8 @@ from tests_warehouse import datasets, get_random_rotation
 class HyperAlignmentTests(unittest.TestCase):
 
 
-    def testBasicFunctioning(self):
+    @sweepargs(ref_ds=(None, 3))
+    def testBasicFunctioning(self, ref_ds):
         # get a dataset with some prominent trends in it
         ds4l = datasets['uni4large']
         # lets select for now only meaningful features
@@ -49,13 +50,15 @@ class HyperAlignmentTests(unittest.TestCase):
             ds_.samples = ds_.samples + 0.1 * random_noise
             dss_rotated.append(ds_)
 
-        ref_ds = 0                      # by default should be this one
-        ha = Hyperalignment()
+        ha = Hyperalignment(ref_ds=ref_ds)
+        if ref_ds is None:
+            ref_ds = 0                      # by default should be this one
         # Lets test two scenarios -- in one with no noise -- we should get
         # close to perfect reconstruction.  If noise was added -- not so good
         for noisy, dss in ((False, dss_rotated_clean),
                            (True, dss_rotated)):
             mappers = ha(dss)
+            self.failUnlessEqual(ref_ds, ha.states.choosen_ref_ds)
             # Map data back
 
             dss_clean_back = [m.forward(ds_)
@@ -74,6 +77,17 @@ class HyperAlignmentTests(unittest.TestCase):
                 msg="Should have reconstructed original dataset more or less."
                     " Got normed differences %s in %s case."
                     % (nddss, ('clean', 'noisy')[int(noisy)]))
+
+        # Lets see how well we do if asked to compute residuals
+        ha = Hyperalignment(ref_ds=ref_ds, level2_niter=2,
+                            enable_states=['residual_errors'])
+        mappers = ha(dss_rotated_clean)
+        self.failUnless(N.all(ha.states.residual_errors.sa.levels ==
+                              ['1', '2:0', '2:1', '3']))
+        rerrors = ha.states.residual_errors.samples
+        # just basic tests:
+        self.failUnlessEqual(rerrors[0, ref_ds], 0)
+        self.failUnlessEqual(rerrors.shape, (4, n))
         pass
 
 

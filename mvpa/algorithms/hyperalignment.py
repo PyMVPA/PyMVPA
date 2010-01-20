@@ -24,7 +24,7 @@ from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.param import Parameter
 from mvpa.misc.transformers import GrandMean
 from mvpa.mappers.procrustean import ProcrusteanMapper
-from mvpa.datasets import dataset
+from mvpa.datasets import dataset, Dataset
 from mvpa.datasets.miscfx import zscore
 
 if __debug__:
@@ -40,6 +40,9 @@ class Hyperalignment(ClassWithCollections):
 
     residual_errors = StateVariable(enabled=False,
             doc="""Residual error per each dataset at each level.""")
+
+    choosen_ref_ds = StateVariable(enabled=True,
+            doc="""If ref_ds wasn't provided, it gets choosen.""")
 
     # Lets use built-in facilities to specify parameters which
     # constructor should accept
@@ -81,8 +84,19 @@ class Hyperalignment(ClassWithCollections):
         A list of trained Mappers of the same length as datasets
         """
         params = self.params            # for quicker access ;)
+        states = self.states
         ndatasets = len(datasets)
-        nfeatures = [datasets[i].shape[1] for i in xrange(ndatasets)]
+        nfeatures = [ds.nfeatures for ds in datasets]
+
+        residuals = None
+        if states['residual_errors'].enabled:
+            residuals = N.zeros((2 + params.level2_niter, ndatasets))
+            states.residual_errors = Dataset(
+                samples = residuals,
+                sa = {'levels' :
+                       ['1'] +
+                       ['2:%i' % i for i in xrange(params.level2_niter)] +
+                       ['3']})
 
         if __debug__:
             debug('HPAL', "Hyperalignment %s for %i datasets"
@@ -96,7 +110,7 @@ class Hyperalignment(ClassWithCollections):
                 raise ValueError, "Requested reference dataset %i is out of " \
                       "bounds. We have only %i datasets provided" \
                       % (ref_ds, ndatasets)
-
+        states.choosen_ref_ds = ref_ds
         # might prefer some other way to initialize... later
         mappers = [deepcopy(params.alignment) for ds in datasets]
         # zscore all data sets
@@ -119,6 +133,10 @@ class Hyperalignment(ClassWithCollections):
             data_temp = m.forward(data)
             #ZSC zscore(data_temp, perchunk=False)
             data_mapped[i] = data_temp
+
+            if residuals is not None:
+                residuals[0, i] = N.linalg.norm(data_temp - commonspace)
+
             ## if ds_mapped == []:
             ##     ds_mapped = [zscore(m.forward(d), perchunk=False)]
             ## else:
@@ -150,6 +168,9 @@ class Hyperalignment(ClassWithCollections):
                 ds_new.labels = commonspace #PRJ ds_temp
                 m.train(ds_new) # ds_temp)
                 data_mapped[i] = m.forward(N.asanyarray(ds))
+                if residuals is not None:
+                    residuals[1+loop, i] = N.linalg.norm(data_mapped - commonspace)
+
                 #ds_mapped[i] = zscore( m.forward(ds_temp), perchunk=False)
 
             commonspace = params.combiner2(data_mapped)
@@ -169,6 +190,10 @@ class Hyperalignment(ClassWithCollections):
             #ZSC zscore(ds_temp, perchunk=False)
             ds_new.labels = commonspace #PRJ ds_temp#
             m.train(ds_new) #ds_temp)
+
+            if residuals is not None:
+                data_mapped = m.forward(ds_new)
+                residuals[-1, i] = N.linalg.norm(data_mapped - commonspace)
 
         return mappers
 
