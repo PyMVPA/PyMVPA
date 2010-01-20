@@ -117,6 +117,8 @@ sweep()
 		done
 		if [ "x$branch_has_problems" != x ]; then
 			branches_with_problems+="\n  $branch: $branch_has_problems"
+            echo " D: Reporting WTF due to errors:"
+            python -c 'import mvpa; print mvpa.wtf()'
 		fi
     done
 	echo "I: Succeeded $succeeded actions, failed $failed actions."
