@@ -9,10 +9,8 @@ PyMVPA Documentation Contents
 
    intro
    installation
-   tutorial1_start
-   tutorial2_datasets
+   tutorial
    datasets
-   mappers
    classifiers
    measures
    featsel

@@ -14,6 +14,18 @@
 Tutorial Introduction to PyMVPA
 *******************************
 
+
+Things to be aware of
+=====================
+
+* What is a *list comprehension*?
+* What is the difference between a *deep* copy and a *shallow* copy?
+* What is the difference between a Python list and a tuple?
+* What is the difference between a Python list and a Numpy `ndarray`?
+* What is the difference between an *iterable* and a generator in Python?
+* What is a *callable*?
+
+
 Recommended Reading and Viewing
 ===============================
 
@@ -97,3 +109,14 @@ http://ipython.scipy.org/moin/Documentation
 
   IPython documentation page which references additional materials, such as
   the main IPython documentation which extensively covers features of IPython.
+
+
+
+Tutorial Parts
+==============
+
+.. toctree::
+   :maxdepth: 2
+
+   tutorial1_start
+   tutorial2_datasets
