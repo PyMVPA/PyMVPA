@@ -264,13 +264,190 @@ in the dataset:
   array([[ 1,  1, -1],
          [ 3,  1,  1]])
 
+.. exercise::
+
+  Search the `NumPy documentation`_ for the difference between "basic slicing"
+  and "advanced indexing". Especially the aspect of memory consumption
+  applies to dataset slicing as well, and being aware of this fact might
+  help to write more efficient analysis scripts. Which of the three slicing
+  approaches above is the most memory-efficient?
+
+.. _NumPy documentation: http://docs.scipy.org/doc/
 
 
+All three slicing-styles equally apply to the selection of feature subsets
+within a dataset. Remember, the feature are represented on the second axis
+of a dataset.
 
+  >>> ds[:, [1,2]].samples
+  array([[ 1, -1],
+         [ 0,  0],
+         [ 1,  1],
+         [ 0, -1]])
+
+By applying a selection by indices to the second axis, we can easily get
+the last two features of our example dataset. Please note the `:` supplied
+as first axis slicing. This is the Python way to indicate *take everything
+along this axis*, hence take all samples.
+
+As you can guess, it is also possible to select subsets of samples and
+features at the same time.
+
+  >>> subds = ds[[0,1], [0,2]]
+  >>> subds.samples
+  array([[ 1, -1],
+         [ 2,  0]])
+
+If you have prior experience with NumPy you might be confused now. What you
+might have expected is this:
+
+  >>> ds.samples[[0,1], [0,2]]
+  array([1, 0])
+
+The above code applies the same slicing directly to the NumPy array with
+the samples, and the result is fundamentally different. For NumPy arrays
+the style of slicing allows to select specific elements by there indices on
+each axis of an array. For PyMVPA's datasets this mode is not very useful,
+instead we typically want to select rows and columns, i.e. samples and
+features given by their indices, hence **samples and features slicing is
+always applied sequentially**, even if ran simultaneously.
+
+
+.. exercise::
+
+  Try to select samples [0,1] and features [0,2,3] simultaneously using
+  dataset slicing. now apply the same slicing to the samples array itself
+  (`ds.samples`) -- make sure that the result doesn't surprise you.
+
+
+One last interesting thing to look at, in the context of dataset slicing
+are the attributes. What happens to them when sample are feature subset are
+chosen? Our original dataset had both samples and feature attributes:
+
+  >>> print ds.sa.some_attr
+  [0 1 1 3]
+  >>> print ds.fa.responsible
+  ['me' 'you' 'nobody']
+
+Now let's look at what they became in the subset-dataset we previously
+created:
+
+  >>> print subds.sa.some_attr
+  [0 1]
+  >>> print subds.fa.responsible
+  ['me' 'nobody']
+
+We see that both attributes are still there and, moreover, also here the
+appropriate subsets have been selected.
 
 
 Loading fMRI
 ============
+
+Enough of theoretical foreplay -- let's look at a concrete example of an
+fmri dataset. PyMVPA has several helper functions to load data from
+specialized formats, and the one for fMRI data is
+`~mvpa.datasets.mri.fmri_dataset()`. The example dataset we are going to
+look at is the single subject from Haxby et al.  (2001) that we already
+loaded in part one of this tutorial. For more convenience, and less typing
+we first specify the path of the directory with the fMRI data.
+
+  >>> # 'pymvpa_dataroot' is set by PyMVPA and points to the global data
+  >>> # storage
+  >>> path=os.path.join(pymvpa_dataroot, 'demo_blockfmri', 'demo_blockfmri')
+
+In the simplest case, we now let `fmri_dataset` do its job, by just
+pointing it to the fMRI data file. The data is stored as a NIfTI file that has
+all runs of the experiment concatenated into a single file.
+
+  >>> ds = fmri_dataset(os.path.join(path, 'bold.nii.gz'))
+  >>> len(ds)
+  1452
+  >>> ds.nfeatures
+  163840
+  >>> ds.shape
+  (1452, 163840)
+
+We can notice two things. First, it worked! Second, we get a
+two-dimensional dataset with 1452 samples (these are volumes in the NIfTI
+file), and over 160k features (these are voxels in the volume). The voxels
+are represented as a one-dimensional vector, and it seems that they have
+lost their associated with the 3D-voxelspace. However, this is not the
+case, as we will see in the next chapter, but PyMVPA simply represents the
+data in this simple format to make it compatible witha vast range of generic
+algorithms that expect data as a simple matrix.
+
+We just loaded all data from that NIfTI file, but usually we would be
+interested in a subset only, i.e. voxels intersecting with the brain.
+`fmri_dataset` is capable of performing this masking. We just need to
+specify a mask image. Such mask image is generated in pretty much any fMRI
+analysis pipeline -- may it be a full-brain mask computed during
+skull-stripping, or an activation map based on a GLM-contrast. We are going
+to use the original GLM-based localizer mask of ventral temporal cortex
+from Haxby et al. (2001). We already know that it comprises 577 voxels.
+let's reload the dataset:
+
+  >>> ds = fmri_dataset(os.path.join(path, 'bold.nii.gz'),
+  ...                   mask=os.path.join(path, 'mask_vt.nii.gz'))
+  >>> len(ds)
+  1452
+  >>> ds.nfeatures
+  577
+
+As expected, we get the same number of samples and also only 577 features
+-- voxels corresponding to non-zero elements in the mask image. Now, let's
+explore this dataset as little further.
+
+Besides samples the dataset offer a number of attributes that enhance the
+data with information that is present in the image header. Each samples has
+information about its volume id in the timseries and the actual acquisition
+time (relative to the beginning of the file). Moreover, the original voxel
+index (sometimes referred to as `ijk`) for each feature is avialable too.
+And finally, the dataset also stored information about the dimensionality
+of the input volumes, the voxel size, and it also include a dump of the
+full NIfTI image header.
+
+  >>> ds.sa.time_indices[:5]
+  array([0, 1, 2, 3, 4])
+  >>> ds.sa.time_coords[:5]
+  array([  0. ,   2.5,   5. ,   7.5,  10. ])
+  >>> ds.fa.voxel_indices[:5]
+  array([[22, 20, 31],
+         [22, 20, 32],
+         [22, 25,  8],
+         [22, 26,  8],
+         [23, 18, 10]])
+  >>> ds.a.voxel_eldim
+  (3.75, 3.75, 3.5)
+  >>> ds.a.voxel_dim
+  (64, 64, 40)
+  >>> 'imghdr' in ds.a
+  True
+
+In addition to all this information, the dataset also carries a key
+attribute: the *mapper*. A mapper is an important concept in PyMVPA, and
+hence worth devoting the whole :ref:`next tutorial chapter
+<chap_tutorial3>` to it.
+
+  >>> print ds.a.mapper
+  <ChainMapper: <Flatten>-<FeatureSlice>>
+
+Having all these attributes being part of a dataset is often a useful thing
+to have, but in some cases (e.g. when it come to efficiency, and/or very
+large datasets) one might want to have a leaner dataset with just the
+information that is really necessary. One way to achieve this, is stripping
+all unwanted attributes. The Dataset class' `~mvpa.base.dataset,copy()`
+method can help with that.
+
+  >>> stripped = ds.copy(deep=False, sa=['time_coords'], fa=[], a=[])
+  >>> print stripped
+  <NiftiDataset: 1452x577@int16, <sa: time_coords>>
+
+We can see that all attributes besides `time_coords` have been filtered
+out. Setting the `deep` to `False` causes the copy function to reuse the
+data from the source dataset to generate the new stripped one, without
+duplicating all data in memory -- meaning both datasets do now share the
+sample data and any change done to `ds` will also affect `stripped`.
 
 
 Storage
