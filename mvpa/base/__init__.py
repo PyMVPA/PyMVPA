@@ -302,6 +302,8 @@ if __debug__:
     debug.register('CROSSC', "Cross-validation call")
     debug.register('CERR', "Various ClassifierErrors")
 
+    debug.register('HPAL',   "Hyperalignment")
+    debug.register('HPAL_',  "Hyperalignment (verbose)")
     debug.register('ATL',    "Atlases")
     debug.register('ATL_',   "Atlases (verbose)")
     debug.register('ATL__',  "Atlases (very verbose)")

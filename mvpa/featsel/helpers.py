@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 from math import floor
 import numpy as N
 
+from mvpa.base.dataset import AttrDataset
 from mvpa.misc.state import ClassWithCollections, StateVariable
 
 if __debug__:
@@ -267,6 +268,24 @@ class ElementSelector(ClassWithCollections):
 
 
     def __call__(self, seq):
+        """
+        Parameters
+        ----------
+        seq
+           Sequence based on values of which to perform the selection.
+           If `Dataset`, then only 1st sample is taken.
+        """
+        if isinstance(seq, AttrDataset):
+            if len(seq)>1:
+                raise ValueError(
+                    "Feature selectors cannot handle multiple "
+                    "sequences in a Dataset at once.  We got dataset %s "
+                    "as input."
+                    % (seq,))
+            seq = seq.samples[0]
+        return self._call(seq)
+
+    def _call(self, seq):
         """Implementations in derived classed have to return a list of selected
         element IDs based on the given sequence.
         """
@@ -318,7 +337,7 @@ class RangeElementSelector(ElementSelector):
 
         self.__inclusive = inclusive
 
-    def __call__(self, seq):
+    def _call(self, seq):
         """Returns selected IDs.
         """
         lower, upper = self.__range
@@ -401,7 +420,7 @@ class TailSelector(ElementSelector):
         raise NotImplementedError
 
 
-    def __call__(self, seq):
+    def _call(self, seq):
         """Returns selected IDs.
         """
         # TODO: Think about selecting features which have equal values but
