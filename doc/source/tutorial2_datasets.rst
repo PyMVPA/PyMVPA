@@ -436,8 +436,8 @@ Having all these attributes being part of a dataset is often a useful thing
 to have, but in some cases (e.g. when it come to efficiency, and/or very
 large datasets) one might want to have a leaner dataset with just the
 information that is really necessary. One way to achieve this, is stripping
-all unwanted attributes. The Dataset class' `~mvpa.base.dataset,copy()`
-method can help with that.
+all unwanted attributes. The Dataset class'
+:meth:`~mvpa.base.dataset.AttrDataset.copy()` method can help with that.
 
   >>> stripped = ds.copy(deep=False, sa=['time_coords'], fa=[], a=[])
   >>> print stripped

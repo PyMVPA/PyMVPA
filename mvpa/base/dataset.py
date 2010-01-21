@@ -357,7 +357,7 @@ class AttrDataset(object):
           an empty list is given, all attributes are stripped from the copy..
         memo : dict
           Developers only: This argument is only useful if copy() is called
-          inside the __deepcopy__() method and refers to the dict-arhument
+          inside the __deepcopy__() method and refers to the dict-argument
           `memo` in the Python documentation.
         """
         if deep:
