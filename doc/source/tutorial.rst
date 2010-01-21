@@ -22,8 +22,14 @@ Things to be aware of
 * What is the difference between a *deep* copy and a *shallow* copy?
 * What is the difference between a Python list and a tuple?
 * What is the difference between a Python list and a Numpy `ndarray`?
-* What is the difference between an *iterable* and a generator in Python?
+* What is the difference between an *iterable* and a *generator* in Python?
+* What is the difference between `import numpy` and `from numpy import *`?
 * What is a *callable*?
+* What is a *derived class*?
+* What `*args` and `**kwargs` are usually used for?
+* Are you using *spaces* or *tabs* for indentation?  Why do we bother asking?
+* When would you use *?* or *??* in IPython?
+* Is it always a problem whenever a Python *exception* is raised?
 
 
 Recommended Reading and Viewing
