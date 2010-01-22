@@ -212,11 +212,13 @@ latex_paper_size = 'a4'
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('manual', 'PyMVPA-Manual.tex', 'PyMVPA Manual',
-   'Michael~Hanke, Yaroslav~O.~Halchenko, Per~B.~Sederberg, '
-   'James M. Hughes',
+   'PyMVPA Authors',
    'manual'),
   ('devguide', 'PyMVPA-DevGuide.tex', 'PyMVPA Developer Guidelines',
-   'Michael~Hanke, Yaroslav~O.~Halchenko, Per~B.~Sederberg',
+   'PyMVPA Authors',
+   'manual'),
+  ('modref', 'PyMVPA-Reference.tex', 'PyMVPA Reference',
+   'PyMVPA Authors',
    'manual'),
 ]
 
