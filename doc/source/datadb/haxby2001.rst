@@ -70,7 +70,7 @@ Instructions
   ...                   labels=attrs.labels, chunks=attrs.chunks,
   ...                   mask=os.path.join(subjpath, 'mask4_vt.nii.gz'))
   >>> print ds
-  <NiftiDataset: 1452x577@int16, <sa: chunks,time_indices,labels,time_coords>, <fa: voxel_indices>, <a: mapper,voxel_eldim,voxel_dim,imghdr>>
+  <Dataset: 1452x577@int16, <sa: chunks,time_indices,labels,time_coords>, <fa: voxel_indices>, <a: mapper,voxel_eldim,voxel_dim,imghdr>>
 
 
 References

@@ -6,7 +6,24 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Dataset that gets its samples from a NIfTI file"""
+"""Dataset that gets its samples from a NIfTI file
+
+Samples can be loaded from a NiftiImage instance or directly from a NIfTI
+file. This class stores all relevant information from the NIfTI file header
+and provides information about the metrics and neighborhood information of
+all voxels.
+
+Most importantly it allows to map data back into the original data space
+and format via :meth:`~mvpa.datasets.mri.map2nifti`.
+
+This class allows for convenient pre-selection of features by providing a
+mask to the constructor. Only non-zero elements from this mask will be
+considered as features.
+
+NIfTI files are accessed via PyNIfTI. See
+http://niftilib.sourceforge.net/pynifti/ for more information about
+pynifti.
+"""
 
 __docformat__ = 'restructuredtext'
 
@@ -62,7 +79,7 @@ def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
         try:
             nifti = NiftiImage(src)
         except RuntimeError, e:
-            warning("ERROR: NiftiDatasets: Cannot open NIfTI file %s" \
+            warning("ERROR: Cannot open NIfTI file %s" \
                     % src)
             raise e
     elif isinstance(src, NiftiImage):
@@ -129,48 +146,31 @@ def getNiftiData(nim):
         return nim.asarray()
 
 
-class NiftiDataset(Dataset):
-    """Dataset loading its samples from a NIfTI image or file.
+def map2nifti(dataset, data=None):
+    """Maps a data vector into the dataspace and wraps it with a
+    NiftiImage. The header data of this object is used to initialize
+    the new NiftiImage.
 
-    Samples can be loaded from a NiftiImage instance or directly from a NIfTI
-    file. This class stores all relevant information from the NIfTI file header
-    and provides information about the metrics and neighborhood information of
-    all voxels.
-
-    Most importantly it allows to map data back into the original data space
-    and format via :meth:`~mvpa.datasets.nifti.NiftiDataset.map2Nifti`.
-
-    This class allows for convenient pre-selection of features by providing a
-    mask to the constructor. Only non-zero elements from this mask will be
-    considered as features.
-
-    NIfTI files are accessed via PyNIfTI. See
-    http://niftilib.sourceforge.net/pynifti/ for more information about
-    pynifti.
+    Parameters
+    ----------
+    dataset : Dataset
+      The mapper of this dataset is used to perform the reverse-mapping.
+    data : ndarray or Dataset, optional
+      The data to be wrapped into NiftiImage. If None (default), it
+      would wrap samples of the current dataset. If it is a Dataset
+      instance -- takes its samples for mapping.
     """
-    def map2nifti(dataset, data=None):
-        """Maps a data vector into the dataspace and wraps it with a
-        NiftiImage. The header data of this object is used to initialize
-        the new NiftiImage.
-
-        Parameters
-        ----------
-        data : ndarray or Dataset, optional
-          The data to be wrapped into NiftiImage. If None (default), it
-          would wrap samples of the current dataset. If it is a Dataset
-          instance -- takes its samples for mapping.
-        """
-        if data is None:
-            data = dataset.samples
-        elif isinstance(data, Dataset):
-            # ease users life
-            data = data.samples
-        # call the appropriate function to map single samples or multiples
-        if len(data.shape) > 1:
-            dsarray = dataset.a.mapper.reverse(data)
-        else:
-            dsarray = dataset.a.mapper.reverse1(data)
-        return NiftiImage(dsarray, dataset.a.imghdr)
+    if data is None:
+        data = dataset.samples
+    elif isinstance(data, Dataset):
+        # ease users life
+        data = data.samples
+    # call the appropriate function to map single samples or multiples
+    if len(data.shape) > 1:
+        dsarray = dataset.a.mapper.reverse(data)
+    else:
+        dsarray = dataset.a.mapper.reverse1(data)
+    return NiftiImage(dsarray, dataset.a.imghdr)
 
 
 def fmri_dataset(samples, labels=None, chunks=None, mask=None,
@@ -238,7 +238,7 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
         sa['chunks'] = _expand_attribute(chunks, samples.shape[0], 'chunks')
 
     # create a dataset
-    ds = NiftiDataset(samples, sa=sa)
+    ds = Dataset(samples, sa=sa)
     if sprefix is None:
         inspace = None
     else:
