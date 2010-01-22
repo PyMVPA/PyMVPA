@@ -167,7 +167,7 @@ class StateVariable(IndexedCollectable):
 
     def __reduce__(self):
         icr = IndexedCollectable.__reduce__(self)
-        icr[2].update({'__enabled' : self.__enabled})
+        icr[2].update({'_StateVariable__enabled' : self.__enabled})
         res = (icr[0], (self._defaultenabled,) + icr[1], icr[2])
         #if __debug__ and 'COL_RED' in debug.active:
         #    debug('COL_RED', 'Returning %s for %s' % (res, self))
