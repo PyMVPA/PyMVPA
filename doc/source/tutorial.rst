@@ -186,11 +186,15 @@ http://ipython.scipy.org/moin/Documentation
 
 
 
-The PyMVPA Tutorial -- Table Of Contents
-========================================
+Tutorial Parts
+==============
 
 .. toctree::
    :maxdepth: 2
 
    tutorial1_start
    tutorial2_datasets
+   tutorial3_mappers
+   tutorial4_classifiers
+   tutorial5_searchlight
+

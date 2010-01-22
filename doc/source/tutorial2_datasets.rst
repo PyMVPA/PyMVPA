@@ -10,9 +10,9 @@
 .. _chap_tutorial2:
 .. index:: Tutorial, Dataset concepts
 
-********************************************
-Tutorial Part 2: Dataset Basics and Concepts
-********************************************
+***********************************
+Part 2: Dataset Basics and Concepts
+***********************************
 
 A `~mvpa.datasets.base.Dataset` is the basic data container in PyMVPA. It
 serves as the primary form of input data storage, but also as container for

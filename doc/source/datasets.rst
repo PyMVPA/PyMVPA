@@ -17,6 +17,23 @@ Data containers and utility functions
 
 .. automodule:: mvpa.datasets
 
+
+
+Related API documentation
+=========================
+
+.. autosummary::
+   :toctree: generated
+
+   base.dataset
+   datasets.base
+   datasets.mri
+   datasets.channel
+   datasets.eep
+   datasets.miscfx
+   datasets.splitters
+
+
 The Basic Concepts
 ==================
 
