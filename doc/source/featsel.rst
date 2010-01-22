@@ -15,6 +15,22 @@
 Feature Selection
 *****************
 
+.. automodule:: mvpa.measures
+
+
+Related API documentation
+=========================
+
+.. autosummary::
+   :toctree: generated
+
+   featsel.base
+   featsel.ifs
+   featsel.rfe
+   featsel.helpers
+
+
+
   *This section has been contributed by James M. Hughes.*
 
 It is often the case in machine learning problems that we wish to reduce a

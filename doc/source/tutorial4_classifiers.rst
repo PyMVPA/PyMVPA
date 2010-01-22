@@ -10,9 +10,9 @@
 .. _chap_tutorial4:
 .. index:: Tutorial
 
-*******************************************************
-Tutorial Part 4: Classifier -- All Alike, Yet Different
-*******************************************************
+**********************************************
+Part 4: Classifier -- All Alike, Yet Different
+**********************************************
 
 What is
 
