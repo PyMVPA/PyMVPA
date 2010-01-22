@@ -17,7 +17,6 @@ PyMVPA Documentation Contents
    misc
    datadb
    examples
-   matlab
    faq
    glossary
    references
