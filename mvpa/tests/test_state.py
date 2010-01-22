@@ -8,7 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA State parent class"""
 
-import unittest, copy
+import unittest
+import mvpa.support.copy as copy
 
 import numpy as N
 from sets import Set
@@ -314,6 +315,16 @@ class StateTests(unittest.TestCase):
     def testValueInConstructor(self):
         param = Parameter(0, value=True)
         self.failUnless(param.value)
+
+    def testDeepCopyingStateVariable(self):
+        for v in (True, False):
+            sv = StateVariable(enabled=v,
+                               doc="Testing")
+            sv.enabled = not v
+            sv_dc = copy.deepcopy(sv)
+            self.failUnlessEqual(sv.enabled, sv_dc.enabled)
+            self.failUnlessEqual(sv.name, sv_dc.name)
+            self.failUnlessEqual(sv._instance_index, sv_dc._instance_index)
 
 def suite():
     return unittest.makeSuite(StateTests)
