@@ -443,22 +443,58 @@ all unwanted attributes. The Dataset class'
   >>> print stripped
   <Dataset: 1452x577@int16, <sa: time_coords>>
 
-We can see that all attributes besides `time_coords` have been filtered
-out. Setting the `deep` to `False` causes the copy function to reuse the
+We can see that all attributes besides `time_coords` have been filtered out.
+Setting the `deep` arguments to `False` causes the copy function to reuse the
 data from the source dataset to generate the new stripped one, without
-duplicating all data in memory -- meaning both datasets do now share the
-sample data and any change done to `ds` will also affect `stripped`.
+duplicating all data in memory -- meaning both datasets do now share the sample
+data and any change done to `ds` will also affect `stripped`.
 
 
 Storage
 =======
 
+Some data preprocessing can take a long time, and one would rather prevent
+doing it over and over again, but instead store the readily processed data
+in a file for subsequent analyses. PyMVPA offers functionality to store a
+large variety of objects, including datasets, into HDF5_ files. A variant
+of this format is also used by Matlab to store data.
+
+.. _HDF5: http://en.wikipedia.org/wiki/Hierarchical_Data_Format
+.. _h5py: http://h5py.alfven.org
+
+For HDF5 support PyMVPA depends on the h5py_ package. If it is available,
+dataset can be saved to a file by simply calling
+`~mvpa.base.dataset.AttrDataset.save()` with the desired filename.
+
+  >>> import tempfile, shutil
+  >>> # create a temporary directory
+  >>> tempdir = tempfile.mkdtemp()
+  >>> ds.save(os.path.join(tempdir, 'mydataset.hdf5'))
+
+HDF5 is a flexible format that also supports, for example, data
+compression. To enable it, you can simply pass additional arguments to
+`~mvpa.base.dataset.AttrDataset.save()` that are supported by
+`Group.create_dataset()`. Instead of using
+`~mvpa.base.dataset.AttrDataset.save()` one can also use the `h5save()`
+function in a similar way. Saving the same dataset with maximum
+gzip-compression looks like this:
+
+  >>> ds.save(os.path.join(tempdir, 'mydataset.gzipped.hdf5'), compression=9)
+  >>> h5save(os.path.join(tempdir, 'mydataset.gzipped.hdf5'), ds, compression=9)
+
+Loading datasets from a file is easy too. `h5load()` takes a filename as
+argument and returns the stored dataset. Compressed data will be handled
+transparently.
+
+  >>> loaded = h5load(os.path.join(tempdir, 'mydataset.hdf5'))
+  >>> N.all(ds.samples == loaded.samples)
+  True
+  >>> # cleanup the temporary directory, and everything it includes
+  >>> shutil.rmtree(tempdir, ignore_errors=True)
+
 
 References
 ==========
-
-Literature
-----------
 
 Related API Documentation
 -------------------------
@@ -466,4 +502,7 @@ Related API Documentation
    :toctree:
 
    ~mvpa.datasets.base.Dataset
-   mvpa.datasets.splitters
+   ~mvpa.datasets.mri.fmri_dataset
+   ~mvpa.base.collections.ArrayCollectable
+   ~mvpa.base.hdf5.h5save
+   ~mvpa.base.hdf5.h5load
