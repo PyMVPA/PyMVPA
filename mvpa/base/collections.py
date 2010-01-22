@@ -91,7 +91,7 @@ class Collectable(object):
 
     def __reduce__(self):
         return (self.__class__,
-                    (self.value, self.name, self.__doc__))
+                    (self._value, self.name, self.__doc__))
 
 
     def __repr__(self):
