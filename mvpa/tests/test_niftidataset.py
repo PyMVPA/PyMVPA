@@ -76,24 +76,30 @@ def testNiftiDataset():
 
 def test_fmridataset():
     # full-blown fmri dataset testing
+    maskimg = NiftiImage(os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+    # assign some values we can check later on
+    maskimg.data[maskimg.data>0] = N.arange(1, N.sum(maskimg.data) + 1)
     attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
     ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'bold'),
                       labels=attr.labels, chunks=attr.chunks,
-                      mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
-                      sprefix='subj1')
+                      mask=maskimg,
+                      sprefix='subj1',
+                      mattr='myintmask')
     # content
     assert_equal(len(ds), 1452)
     assert_true(ds.nfeatures, 530)
     assert_array_equal(sorted(ds.sa.keys()),
             ['chunks', 'labels', 'time_coords', 'time_indices'])
     assert_array_equal(sorted(ds.fa.keys()),
-            ['subj1_indices'])
+            ['myintmask', 'subj1_indices'])
     assert_array_equal(sorted(ds.a.keys()),
             ['imghdr', 'mapper', 'subj1_dim', 'subj1_eldim'])
     # vol extent
     assert_equal(ds.a.subj1_dim, (1, 20, 40))
     # check time
     assert_equal(ds.sa.time_coords[-1], 3627.5)
+    # non-zero mask values
+    assert_array_equal(ds.fa.myintmask, N.arange(1, ds.nfeatures + 1))
 
 
 
