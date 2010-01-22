@@ -22,7 +22,7 @@ from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
 from mvpa import pymvpa_dataroot
-from mvpa.datasets.mri import fmri_dataset, getNiftiFromAnySource
+from mvpa.datasets.mri import fmri_dataset, getNiftiFromAnySource, map2nifti
 from mvpa.misc.fsl import FslEV3
 from mvpa.misc.support import Event
 from mvpa.misc.io.base import SampleAttributes
@@ -103,12 +103,12 @@ def testNiftiMapper():
                         labels=[1,2])
 
     # test mapping of ndarray
-    vol = data.map2nifti(N.ones((294912,), dtype='int16'))
+    vol = map2nifti(data, N.ones((294912,), dtype='int16'))
     assert_equal(vol.data.shape, (24, 96, 128))
     assert_true((vol.data == 1).all())
 
     # test mapping of the dataset
-    vol = data.map2nifti(data)
+    vol = map2nifti(data)
     assert_equal(vol.data.shape, (2, 24, 96, 128))
 
 
@@ -121,13 +121,13 @@ def testNiftiSelfMapper():
                          labels=[1,2])
 
     # Map read data to itself
-    vol = data.map2nifti()
+    vol = map2nifti(data)
 
     assert_equal(vol.data.shape, example.data.shape)
     assert_array_equal(vol.data, example.data)
 
     data.samples[:] = 1
-    vol = data.map2nifti()
+    vol = map2nifti(data)
     assert_true((vol.data == 1).all())
 
 
@@ -180,10 +180,10 @@ def testERNiftiDataset():
     assert_array_equal(ds.sa.event_attrs_offset, [1, 1, 0])
 
     # map back into voxel space, should ignore addtional features
-    nim = ds.map2nifti()
+    nim = map2nifti(ds)
     assert_equal(nim.data.shape, (len(ds) * 4,) + origsamples.shape[1:])
     # check shape of a single sample
-    nim = ds.map2nifti(ds.samples[0])
+    nim = map2nifti(ds, ds.samples[0])
     assert_equal(nim.data.shape, (4, 1, 20, 40))
 
     # and now with masking

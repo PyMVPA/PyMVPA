@@ -441,7 +441,7 @@ all unwanted attributes. The Dataset class'
 
   >>> stripped = ds.copy(deep=False, sa=['time_coords'], fa=[], a=[])
   >>> print stripped
-  <NiftiDataset: 1452x577@int16, <sa: time_coords>>
+  <Dataset: 1452x577@int16, <sa: time_coords>>
 
 We can see that all attributes besides `time_coords` have been filtered
 out. Setting the `deep` to `False` causes the copy function to reuse the
