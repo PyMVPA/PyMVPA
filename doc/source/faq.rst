@@ -51,47 +51,47 @@ therefore also aids the migration of developers from Matlab to the new
 It is sloooooow. What can I do?
 -------------------------------
 
-  Have you tried running the Python interpreter with `-O`? PyMVPA provides
-  lots of debug messages with information that is computed in addition to the
-  work that really has to be done. However, if Python is running in
-  *optimized* mode, PyMVPA will not waste time on this and really tries to be
-  fast.
+Have you tried running the Python interpreter with `-O`? PyMVPA provides
+lots of debug messages with information that is computed in addition to the
+work that really has to be done. However, if Python is running in
+*optimized* mode, PyMVPA will not waste time on this and really tries to be
+fast.
 
-  If you are already running it optimized, then maybe you are doing something
-  really demanding...
+If you are already running it optimized, then maybe you are doing something
+really demanding...
 
 
 I am tired of writing these endless import blocks. Any alternative?
 -------------------------------------------------------------------
 
-  Sure. Instead of individually importing all pieces that are required
-  by a script, you can import them all at once. A simple:
+Sure. Instead of individually importing all pieces that are required
+by a script, you can import them all at once. A simple:
 
-    >>> import mvpa.suite as mvpa
+  >>> import mvpa.suite as mvpa
 
-  makes everything directly accessible through the mvpa namespace, e.g.
-  `mvpa.datasets.base.Dataset` becomes `mvpa.Dataset`. Really lazy people
-  can even do:
+makes everything directly accessible through the mvpa namespace, e.g.
+`mvpa.datasets.base.Dataset` becomes `mvpa.Dataset`. Really lazy people
+can even do:
 
-    >>> from mvpa.suite import *
+  >>> from mvpa.suite import *
 
-  However, as always there is a price to pay for this convenience. In contrast
-  to the individual imports there is some initial performance and memory cost. In
-  the worst case you'll get all external dependencies loaded (e.g. a full R
-  session), just because you have them installed. Therefore, it might be better
-  to limit this use to case where individual key presses matter and use
-  individual imports for production scripts.
+However, as always there is a price to pay for this convenience. In contrast
+to the individual imports there is some initial performance and memory cost. In
+the worst case you'll get all external dependencies loaded (e.g. a full R
+session), just because you have them installed. Therefore, it might be better
+to limit this use to case where individual key presses matter and use
+individual imports for production scripts.
 
 
 I feel like I want to contribute something, do you mind?
 --------------------------------------------------------
 
-  Not at all! If you think there is something that is not well explained in
-  the documentation, send us an improvement. If you implemented a new algorithm
-  using PyMVPA that you want to share, please share. If you have an idea for
-  some other improvement (e.g. speed, functionality), but you have no
-  time/cannot/do not want to implement it yourself, please post your idea to
-  the PyMVPA mailing list.
+Not at all! If you think there is something that is not well explained in
+the documentation, send us an improvement. If you implemented a new algorithm
+using PyMVPA that you want to share, please share. If you have an idea for
+some other improvement (e.g. speed, functionality), but you have no
+time/cannot/do not want to implement it yourself, please post your idea to
+the PyMVPA mailing list.
 
 
 .. index:: Git, development
@@ -99,69 +99,69 @@ I feel like I want to contribute something, do you mind?
 I want to develop a new feature for PyMVPA. How can I do it efficiently?
 ------------------------------------------------------------------------
 
-  The best way is to use Git for both, getting the latest code from the
-  repository and preparing the patch. Here is a quick sketch of the workflow.
+The best way is to use Git for both, getting the latest code from the
+repository and preparing the patch. Here is a quick sketch of the workflow.
 
-  First get the latest code::
+First get the latest code::
 
-    git clone git://git.debian.org/git/pkg-exppsy/pymvpa.git
+  git clone git://git.debian.org/git/pkg-exppsy/pymvpa.git
 
-  This will create a new `pymvpa` subdirectory, that contains the complete
-  repository. Enter this directory and run `gitk --all` to browse the full
-  history and *all* branches that have ever been published.
+This will create a new `pymvpa` subdirectory, that contains the complete
+repository. Enter this directory and run `gitk --all` to browse the full
+history and *all* branches that have ever been published.
 
-  You can run::
+You can run::
 
-    git fetch origin
+  git fetch origin
 
-  in this directory at any time to get the latest changes from the main
-  repository.
+in this directory at any time to get the latest changes from the main
+repository.
 
-  Next, you have to decide what you want to base your new feature on. In the
-  simplest case this is the `master` branch (the one that contains the code that
-  will become the next release). Creating a local branch based on the (remote)
-  `master` branch is::
+Next, you have to decide what you want to base your new feature on. In the
+simplest case this is the `master` branch (the one that contains the code that
+will become the next release). Creating a local branch based on the (remote)
+`master` branch is::
 
-    git checkout -b my_hack origin/master
+  git checkout -b my_hack origin/master
 
-  Now you are ready to start hacking. You are free to use all powers of Git
-  (and yours, of course). You can do multiple commits, fetch new stuff from the
-  repository, and merge it into your local branch, ... To get a feeling what can
-  be done, take a look `very short description of Git`_ or `a more
-  comprehensive Git tutorial`_.
+Now you are ready to start hacking. You are free to use all powers of Git
+(and yours, of course). You can do multiple commits, fetch new stuff from the
+repository, and merge it into your local branch, ... To get a feeling what can
+be done, take a look `very short description of Git`_ or `a more
+comprehensive Git tutorial`_.
 
 .. _very short description of Git: http://sysmonblog.co.uk/misc/git_by_example/
 .. _a more comprehensive Git tutorial: http://www-cs-students.stanford.edu/~blynn/gitmagic/
 
-  When you are done with the new feature, you can prepare the patch for
-  inclusion into PyMVPA. If you have done multiple commits you might want to
-  squash them into a single patch containing the new feature. You can do this
-  with `git-rebase`. In recent version `git-rebase` has an option
-  `--interactive`, which allows you to easily pick, squash or even further edit
-  any of the previous commits you have made. Rebase your local branch against
-  the remote branch you started hacking on (`origin/master` in this example)::
+When you are done with the new feature, you can prepare the patch for
+inclusion into PyMVPA. If you have done multiple commits you might want to
+squash them into a single patch containing the new feature. You can do this
+with `git-rebase`. In recent version `git-rebase` has an option
+`--interactive`, which allows you to easily pick, squash or even further edit
+any of the previous commits you have made. Rebase your local branch against
+the remote branch you started hacking on (`origin/master` in this example)::
 
-    git rebase --interactive origin/master
+  git rebase --interactive origin/master
 
-  When you are done, you can generate the final patch file::
+When you are done, you can generate the final patch file::
 
-     git-format-patch origin/master
+  git-format-patch origin/master
 
-  Above command will generate a file for each commit in you local branch that is
-  not yet part of `origin/master`. The patch files can then be easily emailed.
+Above command will generate a file for each commit in you local branch that is
+not yet part of `origin/master`. The patch files can then be easily emailed.
 
 
 The manual is quite insufficient. When will you improve it?
 -----------------------------------------------------------
 
-  Writing a manual can be a tricky task if you already know the details and
-  have to imagine what might be the most interesting information for someone
-  who is just starting. If you feel that something is missing which has cost
-  you some time to figure out, please drop us a note and we will add it as
-  soon as possible. If you have developed some code snippets to demonstrate
-  some feature or non-trivial behavior (maybe even trivial ones, which are
-  not as obvious as they should be), please consider sharing this snippet with
-  us and we will put it into the example collection or the manual. Thanks!
+Writing a manual can be a tricky task if you already know the details and
+have to imagine what might be the most interesting information for someone
+who is just starting. If you feel that something is missing which has cost
+you some time to figure out, please drop us a note and we will add it as
+soon as possible. If you have developed some code snippets to demonstrate
+some feature or non-trivial behavior (maybe even trivial ones, which are
+not as obvious as they should be), please consider sharing this snippet with
+us and we will put it into the example collection or the manual. Thanks!
 
 
 Data import, export and storage
@@ -192,14 +192,14 @@ Data preprocessing
 Is there an easy way to remove invariant features from a dataset?
 -----------------------------------------------------------------
 
-  You might have to deal with invariant features in case like an fMRI dataset,
-  where the *brain mask* is slightly larger than the thresholded fMRI
-  timeseries image. Such invariant features (i.e. features with zero variance)
-  are sometime a problem, e.g. they will lead to numerical difficulties when
-  z-scoring the features of a dataset (i.e. division by zero).
+You might have to deal with invariant features in case like an fMRI dataset,
+where the *brain mask* is slightly larger than the thresholded fMRI
+timeseries image. Such invariant features (i.e. features with zero variance)
+are sometime a problem, e.g. they will lead to numerical difficulties when
+z-scoring the features of a dataset (i.e. division by zero).
 
-  The `mvpa.datasets.miscfx` module provides a convenience function
-  `removeInvariantFeatures()` that strips such features from a dataset.
+The `mvpa.datasets.miscfx` module provides a convenience function
+`removeInvariantFeatures()` that strips such features from a dataset.
 
 
 .. index:: Block-averaging
@@ -207,15 +207,15 @@ Is there an easy way to remove invariant features from a dataset?
 How can I do :term:`block-averaging` of my block-design fMRI dataset?
 ---------------------------------------------------------------------
 
-  The easiest way is to use a mapper to transform/average the respective
-  samples. Suppose you have a dataset:
+The easiest way is to use a mapper to transform/average the respective
+samples. Suppose you have a dataset:
 
   >>> dataset = normalFeatureDataset()
   >>> dataset
   <Dataset / float64 100 x 4 uniq: 2 labels 5 chunks labels_mapped>
 
-  Averaging all samples with the same label in each chunk individually is done
-  by applying a mapper to the dataset.
+Averaging all samples with the same label in each chunk individually is done
+by applying a mapper to the dataset.
 
   >>> from mvpa.mappers.fx import mean_group_sample
   >>>
@@ -224,9 +224,9 @@ How can I do :term:`block-averaging` of my block-design fMRI dataset?
   >>> mapped_dataset
   <Dataset / float64 10 x 4 uniq: 2 labels 5 chunks labels_mapped>
 
-  `mean_group_sample` creates an `FxMapper` that applies a function to
-  every group of samples in each chunk individually and therefore yields
-  one sample of each label per chunk.
+`mean_group_sample` creates an `FxMapper` that applies a function to
+every group of samples in each chunk individually and therefore yields
+one sample of each label per chunk.
 
 
 
