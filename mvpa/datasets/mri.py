@@ -134,18 +134,6 @@ def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
     return nifti
 
 
-def getNiftiData(nim):
-    """Convenience function to extract the data array from a NiftiImage
-
-    This function will make use of advanced features of PyNIfTI to prevent
-    unnecessary copying if a sufficent version is available.
-    """
-    if externals.exists('nifti ge 0.20090205.1'):
-        return nim.data
-    else:
-        return nim.asarray()
-
-
 def map2nifti(dataset, data=None):
     """Maps a data vector into the dataspace and wraps it with a
     NiftiImage. The header data of this object is used to initialize
@@ -228,7 +216,7 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
     elif isinstance(niftimask, N.ndarray):
         mask = niftimask
     else:
-        mask = getNiftiData(niftimask)
+        mask = _get_nifti_data(niftimask)
 
     # compile the samples attributes
     sa = {}
@@ -329,3 +317,18 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
         else:
             ds.sa[eprefix + '_attrs_' + a] = evvars[a]
     return ds
+
+
+def _get_nifti_data(nim):
+    """Convenience function to extract the data array from a NiftiImage
+
+    This function will make use of advanced features of PyNIfTI to prevent
+    unnecessary copying if a sufficent version is available.
+    """
+    if externals.exists('nifti ge 0.20090205.1'):
+        return nim.data
+    else:
+        return nim.asarray()
+
+
+
