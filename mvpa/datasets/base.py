@@ -101,6 +101,16 @@ class Dataset(AttrDataset):
         return ds
 
 
+    def item(self):
+        """Provide the first element of samples array.
+
+        Notes
+        -----
+        Introduced to provide compatibility with `numpy.asscalar`.
+        See `numpy.ndarray.item` for more information.
+        """
+        return self.samples.item()
+
 
     @property
     def idhash(self):
