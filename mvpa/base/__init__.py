@@ -231,6 +231,7 @@ if __debug__:
     debug.register('MAP_',  "*Mapper (verbose)")
 
     debug.register('COL',  "Generic Collectable")
+    debug.register('COL_RED',  "__reduce__ of collectables")
     debug.register('UATTR', "Attributes with unique")
     debug.register('ST',   "State")
     debug.register('STV',  "State Variable")
