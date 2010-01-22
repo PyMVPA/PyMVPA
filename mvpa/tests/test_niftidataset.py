@@ -22,7 +22,8 @@ from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 
 from mvpa import pymvpa_dataroot
-from mvpa.datasets.mri import fmri_dataset, getNiftiFromAnySource, map2nifti
+from mvpa.datasets.mri import fmri_dataset, getNiftiFromAnySource, map2nifti, \
+        extract_events
 from mvpa.misc.fsl import FslEV3
 from mvpa.misc.support import Event
 from mvpa.misc.io.base import SampleAttributes
@@ -148,7 +149,8 @@ def testERNiftiDataset():
     masrc = os.path.join(pymvpa_dataroot, 'mask')
     evs = FslEV3(evsrc).toEvents()
     # using TR from nifti header
-    ds = fmri_dataset(tssrc, events=evs)
+    ds = fmri_dataset(tssrc)
+    ds = extract_events(ds, evs)
 
     # we ask for boxcars of 9s length, and the tr in the file header says 2.5s
     # hence we should get round(9.0/2.4) * N.prod((1,20,40) == 3200 features
@@ -187,7 +189,8 @@ def testERNiftiDataset():
     assert_equal(nim.data.shape, (4, 1, 20, 40))
 
     # and now with masking
-    ds = fmri_dataset(tssrc, events=evs, mask=masrc)
+    ds = fmri_dataset(tssrc, mask=masrc)
+    ds = extract_events(ds, evs)
     nnonzero = len(getNiftiFromAnySource(masrc).data.nonzero()[0])
     assert_equal(nnonzero, 530)
     # we ask for boxcars of 9s length, and the tr in the file header says 2.5s

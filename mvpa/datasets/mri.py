@@ -162,8 +162,7 @@ def map2nifti(dataset, data=None):
 
 
 def fmri_dataset(samples, labels=None, chunks=None, mask=None,
-                 events=None, tr=None,
-                 sprefix='voxel', tprefix='time', eprefix='event'):
+                 sprefix='voxel', tprefix='time'):
     """Constructs a `Dataset` given 4D fMRI file
 
 
@@ -262,17 +261,17 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
                                      * niftisamples.header['pixdim'][4]
         # TODO extend with the unit
 
-    # exit here if there are no events specified
-    if events is None:
-        return ds
+    return ds
 
-    #
-    # Post-processing for event handling
-    #
-    # determine TR, take from NIfTI header by default
-    dt = niftisamples.header['pixdim'][4]
+
+def extract_events(ds, events, tr=None, eprefix='event'):
+    """XXX All docs need to be rewritten.
+    """
+    if tr is None:
+        # determine TR, take from NIfTI header by default
+        dt = ds.a.imghdr['pixdim'][4]
+    else:
     # override if necessary
-    if not tr is None:
         dt = tr
     # convert all onsets into descrete integer values representing volume ids
     # but storing any possible offset to the real event onset as an additional
