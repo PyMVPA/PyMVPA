@@ -162,11 +162,18 @@ def map2nifti(dataset, data=None):
 
 
 def fmri_dataset(samples, labels=None, chunks=None, mask=None,
-                 sprefix='voxel', tprefix='time'):
-    """Constructs a `Dataset` given 4D fMRI file
+                 sprefix='voxel', tprefix='time', mattr=None):
+    """Create a dataset from an fMRI timeseries.
 
-
-    ALSO
+    Parameters
+    ----------
+    samples : str or NiftiImage or list
+    labels : scalar or sequence
+    chunks : scalar or sequence
+    mask : str or NiftiImage
+    sprefix : str or None
+    tprefix : str or None
+    mattr : str or None
 
 
     Dataset with event-defined samples from a NIfTI timeseries image.
@@ -190,13 +197,6 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
     resolution needs a mask with shape (3, 24, 64, 64). In the former case the
     mask volume is automatically expanded to be identical in a volumes of the
     boxcar.
-
-    Parameters
-    ----------
-    tr : float
-      Temporal distance of two adjacent NIfTI volumes. This can be used
-      to override the corresponding value in the NIfTI header.
-
 
     TODO: extend
     """
@@ -234,12 +234,18 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
 
     # now apply the mask if any
     if not mask is None:
-        flatmask = ds.a.mapper.forward1(mask != 0)
+        flatmask = ds.a.mapper.forward1(mask)
         # direct slicing is possible, and it is potentially more efficient,
         # so let's use it
         #mapper = FeatureSliceMapper(flatmask)
         #ds = ds.get_mapped(FeatureSliceMapper(flatmask))
-        ds = ds[:, flatmask]
+        ds = ds[:, flatmask != 0]
+
+        # store the masked mask if desired
+        if not mattr is None:
+            # the last mapper in the chain is a slicer (just been created above)
+            # and can be used to filter out the non-zero mask elements as well
+            ds.fa[mattr] = ds.a.mapper[-1].forward1(flatmask)
 
     # store interesting props in the dataset
     # do not put the whole NiftiImage in the dict as this will most
@@ -266,6 +272,15 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
 
 def extract_events(ds, events, tr=None, eprefix='event'):
     """XXX All docs need to be rewritten.
+
+    Parameters
+    ----------
+    ds : Dataset
+    events : list
+    tr : float or None
+      Temporal distance of two adjacent NIfTI volumes. This can be used
+      to override the corresponding value in the NIfTI header.
+    eprefix : str or None
     """
     if tr is None:
         # determine TR, take from NIfTI header by default
