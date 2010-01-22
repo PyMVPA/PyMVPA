@@ -54,7 +54,8 @@ def __check_scipy():
         and numpy_ver > "1.1.0":
         import warnings
         if not __debug__ or (__debug__ and not 'PY' in debug.active):
-            debug('EXT', "Setting up filters for numpy DeprecationWarnings")
+            if __debug__:
+                debug('EXT', "Setting up filters for numpy DeprecationWarnings")
             filter_lines = [
                 ('NumpyTest will be removed in the next release.*',
                  DeprecationWarning),
