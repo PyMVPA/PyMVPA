@@ -15,13 +15,13 @@
 Miscellaneous
 *************
 
-
 .. automodule:: mvpa.misc
 
 
 Related API documentation
 =========================
 
+.. currentmodule:: mvpa
 .. autosummary::
    :toctree: generated
 

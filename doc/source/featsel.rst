@@ -21,6 +21,7 @@ Feature Selection
 Related API documentation
 =========================
 
+.. currentmodule:: mvpa
 .. autosummary::
    :toctree: generated
 
@@ -31,7 +32,7 @@ Related API documentation
 
 
 
-  *This section has been contributed by James M. Hughes.*
+*This section has been contributed by James M. Hughes.*
 
 It is often the case in machine learning problems that we wish to reduce a
 feature space of high dimensionality into something more manageable by
