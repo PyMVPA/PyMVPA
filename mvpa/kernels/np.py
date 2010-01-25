@@ -133,6 +133,10 @@ class GeneralizedLinearKernel(NumpyKernel):
     gradientslog = StateVariable(enabled=False,
         doc="Dictionary of gradients per a parameter in logspace")
 
+    def __init__(self, *args, **kwargs):
+        # for docstring holder
+        NumpyKernel.__init__(self, *args, **kwargs)
+
     ## def __init__(self, Sigma_p=None, sigma_0=1.0, **kwargs):
     ##     """Initialize the linear kernel instance.
 
@@ -244,6 +248,9 @@ class ExponentialKernel(NumpyKernel):
     sigma_f = Parameter(1.0, allowedtype='float',
         doc="""Signal standard deviation.""")
 
+    def __init__(self, *args, **kwargs):
+        # for docstring holder
+        NumpyKernel.__init__(self, *args, **kwargs)
 
     ## def __init__(self, length_scale=1.0, sigma_f = 1.0, **kwargs):
     ##     """Initialize an Exponential kernel instance.
