@@ -18,6 +18,7 @@ import numpy as N
 from mvpa.datasets import Dataset, hstack
 from mvpa.base import externals
 from mvpa.support import copy
+from mvpa.mappers.base import FeatureSliceMapper
 from mvpa.measures.base import DatasetMeasure
 from mvpa.misc.state import StateVariable
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
@@ -126,6 +127,20 @@ class Searchlight(DatasetMeasure):
         # to regular lists!
         # this uses the Dataset-hstack
         results = hstack(results)
+
+        if 'mapper' in dataset.a:
+            # since we know the space we can stick the original mapper into the
+            # results as well
+            if self.__center_ids is None:
+                results.a['mapper'] = copy.copy(dataset.a.mapper)
+            else:
+                # there is an additional selection step that needs to be
+                # expressed by another mapper
+                mapper = copy.copy(dataset.a.mapper)
+                mapper.append(FeatureSliceMapper(self.__center_ids,
+                                                 dshape=dataset.shape[1:]))
+                results.a['mapper'] = mapper
+
         # charge state
         self.states.raw_results = results
 
@@ -144,7 +159,7 @@ class Searchlight(DatasetMeasure):
         results = []
         # put rois around all features in the dataset and compute the
         # measure within them
-        for f in chunk:
+        for i, f in enumerate(chunk):
             # retrieve the feature ids of all features in the ROI from the query
             # engine
             roi_fids = self.__qe[f]
@@ -160,10 +175,10 @@ class Searchlight(DatasetMeasure):
 
             if __debug__:
                 debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
-                    % (ds.nfeatures,
+                    % (len(chunk),
                        f+1,
                        roi.nfeatures,
-                       float(f+1)/ds.nfeatures*100,), cr=True)
+                       float(i+1)/len(chunk)*100,), cr=True)
 
         return results, roisizes
 
