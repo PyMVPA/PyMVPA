@@ -23,7 +23,7 @@ here.
 
 Some examples need to access a sample dataset available in the `data/`
 directory within the root of the PyMVPA hierarchy, and thus have to be invoked
-directly from PyMVPA root (e.g. `doc/examples/searchlight_2d.py`).
+directly from PyMVPA root (e.g. `doc/examples/searchlight.py`).
 Alternatively, one can download a full example dataset, which is explained in
 the next section.
 
@@ -48,7 +48,7 @@ Analysis
    examples/gpr
    examples/gpr_model_selection0
    examples/searchlight_minimal
-   examples/searchlight_2d
+   examples/searchlight
    examples/searchlight_dsm
    examples/sensanas
    examples/svdclf
