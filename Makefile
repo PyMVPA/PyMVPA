@@ -144,7 +144,7 @@ references:
 	@echo "I: Generating references"
 	tools/bib2rst_ref.py
 
-htmldoc: examples2rst build
+htmldoc: examples2rst build pics
 	@echo "I: Creating an HTML version of documentation"
 	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) html BUILDDIR=$(BUILDDIR)
 	cd $(HTML_DIR)/generated && ln -sf ../_static
@@ -152,7 +152,7 @@ htmldoc: examples2rst build
 	cd $(HTML_DIR)/datadb && ln -sf ../_static
 	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
 
-pdfdoc: examples2rst build pdfdoc-stamp
+pdfdoc: examples2rst build pdfdoc-stamp pics
 pdfdoc-stamp:
 	@echo "I: Creating a PDF version of documentation"
 	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=../..:$(PYTHONPATH) $(MAKE) latex BUILDDIR=$(BUILDDIR)

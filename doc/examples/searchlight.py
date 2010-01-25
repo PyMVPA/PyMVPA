@@ -35,18 +35,24 @@ preprocessing steps on it."""
 #
 # load PyMVPA example dataset
 #
-attr = SampleAttributes(os.path.join(pymvpa_dataroot,
-                        'attributes_literal.txt'))
-dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                       labels=attr.labels,
-                       chunks=attr.chunks,
-                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+# data path
+datapath = os.path.join(pymvpa_dataroot, 'demo_blockfmri', 'demo_blockfmri')
+attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
+# later on we want to perform the searchlight analysis in some ROI only
+# we add the ROI mask to the dataset as a feature attribute
+dataset = fmri_dataset(
+                samples=os.path.join(datapath, 'bold.nii.gz'),
+                labels=attr.labels,
+                chunks=attr.chunks,
+                mask=os.path.join(datapath, 'mask_brain.nii.gz'),
+                add_fa={'vt_thr_glm': os.path.join(datapath, 'mask_vt.nii.gz')})
 
 #
 # preprocessing
 #
 
 # do chunkswise linear detrending on dataset
+# it is important to do this before selecting subsets of the timeseries!
 poly_detrend(dataset, polyord=1, chunks='chunks')
 
 # only use 'rest', 'house' and 'scrambled' samples from dataset
@@ -89,9 +95,19 @@ After the errors are computed for all spheres, the resulting vector is then
 mapped back into the original fMRI dataspace and plotted."""
 
 # setup plotting
-fig = 0
-P.figure(figsize=(12, 4))
 
+plot_args = {
+    'background' : os.path.join(datapath, 'anat.nii.gz'),
+    'background_mask' : os.path.join(datapath, 'mask_brain.nii.gz'),
+    'overlay_mask' : os.path.join(datapath, 'mask_vt.nii.gz'),
+    'do_stretch_colors' : False,
+    'cmap_bg' : 'gray',
+    'cmap_overlay' : 'autumn', # YlOrRd_r # P.cm.autumn
+    'interactive' : cfg.getboolean('examples', 'interactive', True),
+    }
+
+# get ids of features that have a nonzero value
+center_ids = dataset.fa.vt_thr_glm.nonzero()[0]
 
 for radius in [0, 1, 3]:
     # tell which one we are doing
@@ -101,33 +117,60 @@ for radius in [0, 1, 3]:
     # on multi-core machines try increasing the `nproc` argument
     # to utilize more than one core
     sl = sphere_searchlight(cv, radius=radius, space='voxel_indices',
-                            nproc=1, mapper=mean_sample())
+                            center_ids=center_ids,
+                            nproc=2, mapper=mean_sample())
 
     # to increase efficiency, we strip all unnecessary attributes from the
     # dataset before we hand it over to the searchlight
     ds = dataset.copy(deep=False,
-                      sa=['labels', 'chunks'], fa=['voxel_indices'], a=[])
+                      sa=['labels', 'chunks'], fa=['voxel_indices'], a=['mapper'])
     # run searchlight on example dataset and retrieve error map
     sl_map = sl(ds)
-    # map sensitivity map into original dataspace
-    orig_sl_map = dataset.mapper.reverse(sl_map)
-    masked_orig_sl_map = N.ma.masked_array(orig_sl_map,
-                                           mask=orig_sl_map == 0)
+    # let's plot accuracy
+    sl_map.samples *= -1
+    sl_map.samples += 1
 
-    # make a new subplot for each classifier
-    fig += 1
-    P.subplot(1,3,fig)
+    # results back in fMRI space
+    niftiresults = map2nifti(sl_map, imghdr=dataset.a.imghdr)
 
-    P.title('Radius %i' % radius)
-    # plot 1-results, since we get errors
-    P.imshow(1 - masked_orig_sl_map.squeeze(),
-             interpolation='nearest',
-             aspect=1.25,
-             cmap=P.cm.autumn)
-    P.clim(0.5, 1.0)
-    P.colorbar(shrink=0.6)
+    fig = P.figure(figsize=(12, 4), facecolor='white')
+    subfig = plot_lightbox(overlay=niftiresults,
+                           vlim=(0.5, None), slices=range(23,31),
+                           fig=fig, **plot_args)
+    P.title('Accuracy distribution for radius %i' % radius)
 
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
     P.show()
+
+"""
+The following figures show the resulting accuracy maps for the slices covered
+by the ventral temporal cortex mask. Note that each voxel value represents the
+accuracy of a sphere centered around this voxel.
+
+.. figure:: ../pics/ex_searchlight_vt_r0.*
+   :align: center
+
+   Searchlight (single element; univariate) accuracy maps for binary
+   classification *house* vs. *scrambledpix*.
+
+.. figure:: ../pics/ex_searchlight_vt_r1.*
+   :align: center
+
+   Searchlight (sphere of neighboring voxels; 9 elements) accuracy maps for
+   binary classification *house* vs.  *scrambledpix*.
+
+.. figure:: ../pics/ex_searchlight_vt_r3.*
+   :align: center
+
+   Searchlight (radius 3 elements; 123 voxels) accuracy maps for binary
+   classification *house* vs.  *scrambledpix*.
+
+With radius 0 (only the center voxel is part of the part the sphere) there is a
+clear distinction between two distributions. The *chance distribution*,
+relatively symetric and centered around the expected chance-performance at 50%.
+The second distribution, presumambly of voxels with univariate signal, is nicely
+segregated from that. Increasing the searchlight size significantly blurrs the
+accuracy map, but also lead to an increase in classification accuracy.
+"""
