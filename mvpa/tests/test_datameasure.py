@@ -222,13 +222,13 @@ class SensitivityAnalysersTests(unittest.TestCase):
                         " original features were %s for nonbogus features %s"
                         % (labels1, maxsensi2, ilabel2, ds.a.nonbogus_features))
                     """
-                    XXX in progress
                     # Now test for the sign of each one in pair ;) in
                     # all binary problems L1 (-1) -> L2(+1), then
                     # weights for L2 should be positive.  to test for
                     # L1 -- invert the sign
                     # We already know (if we haven't failed in previous test),
                     # that those 2 were the strongest -- so check only signs
+                    """
                     self.failUnless(
                         sens1.samples[0, ilabel2[0]]<0,
                         "With %i classes in pair %s got feature %i for %r >= 0"
@@ -236,7 +236,6 @@ class SensitivityAnalysersTests(unittest.TestCase):
                     self.failUnless(sens1.samples[0, ilabel2[1]]>0,
                         "With %i classes in pair %s got feature %i for %r <= 0"
                         % (nlabels, label, ilabel2[1], label[1]))
-                        """
                 else:
                     # yoh could be wrong at this assumption... time will show
                     self.fail("Got unknown number labels per sensitivity: %s."
