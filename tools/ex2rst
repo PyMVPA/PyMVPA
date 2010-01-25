@@ -33,6 +33,7 @@ def exfile2rst(filename):
     indocs = False
     doc2code = False
     code2doc = False
+    interactiveblock = False
     # an empty line found in the example enables the check for a potentially
     # indented docstring starting on the next line (as an attempt to exclude
     # function or class docstrings)
@@ -80,6 +81,7 @@ def exfile2rst(filename):
                     proc_line = cleanline[3:-3]
                 else:
                     # must be start of multiline block
+                    interactiveblock = False
                     indocs = True
                     code2doc = True
                     # rescue what is left on the line
@@ -111,12 +113,18 @@ def exfile2rst(filename):
                 s += proc_line.rstrip() + '\n'
 
         else:
-            if doc2code:
-                doc2code = False
-                s += '\n::\n'
+            # we are in a code block
+            if line.startswith("if cfg.getboolean('examples', 'interactive'"):
+                interactiveblock = True
+            elif not interactiveblock:
+                # we exclude the code that is used to disable the interactive
+                # plots.
+                if doc2code:
+                    doc2code = False
+                    s += '\n::\n'
 
-            # has to be code
-            s += '  %s' % line
+                # has to be code
+                s += '  %s' % line
 
     xfile.close()
 

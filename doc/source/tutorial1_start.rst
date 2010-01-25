@@ -267,7 +267,7 @@ Literature
 Related API Documentation
 -------------------------
 .. autosummary::
-   :toctree:
+   :toctree: generated
 
    ~mvpa.algorithms.cvtranserror.CrossValidatedTransferError
    ~mvpa.datasets.base.Dataset

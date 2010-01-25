@@ -499,7 +499,7 @@ References
 Related API Documentation
 -------------------------
 .. autosummary::
-   :toctree:
+   :toctree: generated
 
    ~mvpa.datasets.base.Dataset
    ~mvpa.datasets.mri.fmri_dataset

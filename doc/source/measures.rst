@@ -21,6 +21,7 @@ Measures
 Related API documentation
 =========================
 
+.. currentmodule:: mvpa
 .. autosummary::
    :toctree: generated
 
