@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# emacs: -*- coding: utf-8; mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
+
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -121,7 +122,10 @@ def exfile2rst(filename):
                 # plots.
                 if doc2code:
                     doc2code = False
-                    s += '\n::\n'
+                    # the spaces at the end are crucial to get intentation of
+                    # indented code block -- otherwise sphinx removes common
+                    # whitespace
+                    s += '\n::\n\n  ⃕⃕'
 
                 # has to be code
                 s += '  %s' % line
