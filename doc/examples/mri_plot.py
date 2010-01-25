@@ -60,7 +60,7 @@ mri_args = {
     'interactive' : cfg.getboolean('examples', 'interactive', True),
     }
 
-fig = plot_lightbox(overlay=dataset.map2nifti(sens),
+fig = plot_lightbox(overlay=map2nifti(dataset, sens),
               vlim=(0.5, None), slices=range(23,31),
               #vlim_type="symneg_z",
               **mri_args)
