@@ -76,7 +76,10 @@ Mappers: Data Transformations
    mappers.prototype
    mappers.fx
    mappers.som
+   mappers.lle
+   mappers.svd
    mappers.wavelet
+   mappers.detrend
    mappers.zscore
 
 
