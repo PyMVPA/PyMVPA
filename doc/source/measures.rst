@@ -33,7 +33,6 @@ Related API documentation
    measures.glm
    measures.irelief
    measures.noiseperturbation
-   measures.pls
    measures.searchlight
 
 
