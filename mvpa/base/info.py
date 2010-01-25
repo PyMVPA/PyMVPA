@@ -18,6 +18,7 @@ from StringIO import StringIO
 
 import mvpa
 from mvpa.base import externals, cfg
+from mvpa.base.dochelpers import borrowkwargs
 
 def _t2s(t):
     res = []
@@ -34,7 +35,8 @@ __all__ = ['wtf', 'get_pymvpa_gitversion']
 
 
 def get_pymvpa_gitversion():
-    """
+    """PyMVPA version as reported by git.
+
     Returns
     -------
     None or str
@@ -249,6 +251,7 @@ class WTF(object):
     __str__ = __repr__
 
 
+@borrowkwargs(WTF, '__init__')
 def wtf(filename=None, **kwargs):
     """Report summary about PyMVPA and the system
 
@@ -263,7 +266,7 @@ def wtf(filename=None, **kwargs):
 
     info = WTF(**kwargs)
     if filename is not None:
-        out = file(filename, 'w').write(str(info))
+        _ = file(filename, 'w').write(str(info))
     else:
         return info
 
