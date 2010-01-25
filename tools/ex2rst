@@ -125,7 +125,7 @@ def exfile2rst(filename):
                     # the spaces at the end are crucial to get intentation of
                     # indented code block -- otherwise sphinx removes common
                     # whitespace
-                    s += '\n::\n\n  ⃕⃕'
+                    s += '\n::\n\n  »\n'
 
                 # has to be code
                 s += '  %s' % line
