@@ -312,9 +312,16 @@ def enhancedDocString(item, *args, **kwargs):
 
     # Add information about the states if available
     if lcl.has_key('_statesdoc') and len(item._statesdoc):
+        # to don't conflict with Notes section if such was already
+        # present
+        lcldoc = lcl['__doc__'] or ''
+        if not 'Notes' in lcldoc:
+            section_name = _rst_section('Notes')
+        else:
+            section_name = '\n'         # just an additional newline
         # no indent is necessary since states list must be already indented
-        docs += [_rst_section('Notes') + '\nAvailable state variables:',
-                     handle_docstring(item._statesdoc)]
+        docs += ['%s\nAvailable state variables:' % section_name,
+                 handle_docstring(item._statesdoc)]
 
     # Deprecated -- but actually we might like to have it in ipython
     # mode may be?
@@ -489,11 +496,11 @@ def borrowdoc(cls, methodname=None):
 
 
 def borrowkwargs(cls, methodname=None, exclude=None):
-    """Return  a decorator which would borrow docstring for **kwargs
+    """Return  a decorator which would borrow docstring for ``**kwargs``
 
     Notes
     -----
-    TODO: take care about *args in  a clever way if those are also present
+    TODO: take care about ``*args`` in  a clever way if those are also present
 
     Examples
     --------
@@ -509,12 +516,12 @@ def borrowkwargs(cls, methodname=None, exclude=None):
       Name of the method from which to borrow.  If None, would use
       the same name as of the decorated method
     exclude : None or list of arguments to exclude
-      If function does not pass all **kwargs, you would need to list
+      If function does not pass all ``**kwargs``, you would need to list
       those here to be excluded from borrowed docstring
     """
 
     def _borrowkwargs(method):
-        """Decorator which borrows docstrings for **kwargs for the `method`
+        """Decorator which borrows docstrings for ``**kwargs`` for the `method`
         """
         if methodname is None:
             other_method = getattr(cls, method.__name__)
