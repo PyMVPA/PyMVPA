@@ -134,10 +134,8 @@ def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
     return nifti
 
 
-def map2nifti(dataset, data=None):
-    """Maps a data vector into the dataspace and wraps it with a
-    NiftiImage. The header data of this object is used to initialize
-    the new NiftiImage.
+def map2nifti(dataset, data=None, imghdr=None):
+    """Maps a data vector into the dataspace and wraps it in a NiftiImage.
 
     Parameters
     ----------
@@ -147,6 +145,8 @@ def map2nifti(dataset, data=None):
       The data to be wrapped into NiftiImage. If None (default), it
       would wrap samples of the current dataset. If it is a Dataset
       instance -- takes its samples for mapping.
+    imghdr : dict
+      Image header data. If None, the header is taken from `dataset`.
     """
     if data is None:
         data = dataset.samples
@@ -158,11 +158,15 @@ def map2nifti(dataset, data=None):
         dsarray = dataset.a.mapper.reverse(data)
     else:
         dsarray = dataset.a.mapper.reverse1(data)
-    return NiftiImage(dsarray, dataset.a.imghdr)
+
+    if imghdr is None:
+        imghdr = dataset.a.imghdr
+
+    return NiftiImage(dsarray, imghdr)
 
 
 def fmri_dataset(samples, labels=None, chunks=None, mask=None,
-                 sprefix='voxel', tprefix='time', mattr=None):
+                 sprefix='voxel', tprefix='time', add_fa=None,):
     """Create a dataset from an fMRI timeseries.
 
     Parameters
@@ -173,7 +177,7 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
     mask : str or NiftiImage
     sprefix : str or None
     tprefix : str or None
-    mattr : str or None
+    add_fa : dict or None
 
 
     Dataset with event-defined samples from a NIfTI timeseries image.
@@ -241,11 +245,11 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
         #ds = ds.get_mapped(FeatureSliceMapper(flatmask))
         ds = ds[:, flatmask != 0]
 
-        # store the masked mask if desired
-        if not mattr is None:
-            # the last mapper in the chain is a slicer (just been created above)
-            # and can be used to filter out the non-zero mask elements as well
-            ds.fa[mattr] = ds.a.mapper[-1].forward1(flatmask)
+    # load and store additional feature attributes
+    if not add_fa is None:
+        for fattr in add_fa:
+            value = _get_nifti_data(getNiftiFromAnySource(add_fa[fattr]))
+            ds.fa[fattr] = ds.a.mapper.forward1(value)
 
     # store interesting props in the dataset
     # do not put the whole NiftiImage in the dict as this will most
