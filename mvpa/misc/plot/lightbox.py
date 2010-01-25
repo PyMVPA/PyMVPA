@@ -311,10 +311,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             if self.fig is None:
                 self.fig = P.figure(facecolor='white',
                                     figsize=(4*ncolumns, 4*nrows))
-            else:
-                self.fig.clf()
             fig = self.fig
-            # fig.clf()
 
             #
             # how to threshold images
