@@ -22,6 +22,7 @@ Data containers and utility functions
 Related API documentation
 =========================
 
+.. currentmodule:: mvpa
 .. autosummary::
    :toctree: generated
 

@@ -21,6 +21,6 @@ Literature
 Related API Documentation
 -------------------------
 .. autosummary::
-   :toctree:
+   :toctree: generated
 
    ~mvpa.measures.searchlight.Searchlight

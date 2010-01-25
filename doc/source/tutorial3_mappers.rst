@@ -25,6 +25,6 @@ Literature
 Related API Documentation
 -------------------------
 .. autosummary::
-   :toctree:
+   :toctree: generated
 
    ~mvpa.mappers.base.Mapper
