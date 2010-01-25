@@ -106,7 +106,8 @@ class LinearSVMWeights(Sensitivity):
             if nr_class <= 2:
                 # as simple as this
                 weights = (svcoef * svs).A
-                sens_labels = [tuple(svm_labels)]
+                # ??? First label seems corresponds to positive
+                sens_labels = [tuple(svm_labels[::-1])]
             else:
                 # we need to compose correctly per each pair of classifiers.
                 # See docstring for getSVCoef for more details on internal
@@ -133,8 +134,14 @@ class LinearSVMWeights(Sensitivity):
                     for j in xrange(i+1, nr_class):
                         weights[ipair, :] = N.asarray(
                             svcoef[j-1, nz_start[i]:nz_end[i]]
-                            * svs[nz_start[i]:nz_end[i]])
-                        sens_labels += [(svm_labels[i], svm_labels[j])]
+                            * svs[nz_start[i]:nz_end[i]]
+                            +
+                            svcoef[i, nz_start[j]:nz_end[j]]
+                            * svs[nz_start[j]:nz_end[j]]
+                            )
+                        # ??? First label corresponds to positive
+                        # that is why [j], [i]
+                        sens_labels += [(svm_labels[j], svm_labels[i])]
                         ipair += 1      # go to the next pair
                 assert(ipair == npairs)
 
