@@ -85,6 +85,8 @@ clean:
      done
 # clean tools
 	$(MAKE) -C tools clean
+# clean pics
+	$(MAKE) -C doc/pics clean
 # clean docs
 	$(MAKE) -C doc clean
 	-@rm -f $(DOCSRC_DIR)/examples/*.rst
@@ -128,6 +130,9 @@ debian-clean:
 
 doc: website manpages
 
+pics:
+	$(MAKE) -C doc/pics
+
 manpages: mkdir-MAN_DIR
 	@echo "I: Creating manpages"
 	PYTHONPATH=.:$(PYTHONPATH) help2man -N -n 'preprocess fMRI data for PyMVPA' \
@@ -166,7 +171,7 @@ examples2rst-stamp: mkdir-DOCBUILD_DIR
 	tools/ex2rst \
 		--project PyMVPA \
 		--outdir $(DOCSRC_DIR)/examples \
-		--exclude doc/examples/searchlight.py \
+		--exclude doc/examples/searchlight_app.py \
 		--exclude doc/examples/tutorial_lib.py \
 		doc/examples
 	touch $@
