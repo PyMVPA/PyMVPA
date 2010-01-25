@@ -8,10 +8,17 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """
-Searchlight Analysis on an fMRI Dataset
-=======================================
+Parameterizable Python Scripting: Searchlight Example.
+======================================================
 
-Example demonstrating a searchlight analysis on an fMRI dataset.
+Example demonstrating composition of analysis script with optional
+command line parameters and arguments to make the computation easily
+parameterizable.  That would allow you to process multiple datasets
+and vary classifiers and/or parameters of the algorithm within some
+batch system scheduler.  Searchlight analysis on an fMRI dataset is
+taken for the example of actual computation to be done.  Run
+`searchlight.py --help` to see the list of available command line
+options.
 """
 
 from mvpa.suite import *
@@ -64,7 +71,7 @@ def main():
     attrs = SampleAttributes(cfile, literallabels=True)
 
     verbose(2, "Loading volume file %s" % dfile)
-    data = nifti_dataset(dfile,
+    data = fmri_dataset(dfile,
                          labels=attrs.labels,
                          chunks=attrs.chunks,
                          mask=mfile)
@@ -100,7 +107,7 @@ def main():
     # contruct searchlight with 5mm radius
     # this assumes that the spatial pixdim values in the source NIfTI file
     # are specified in mm
-    sl = Searchlight(cv, radius=options.radius)
+    sl = sphere_searchlight(cv, radius=options.radius)
 
     # run searchlight
     verbose(3, "Running searchlight on loaded data")
@@ -108,7 +115,7 @@ def main():
 
     if not ofile is None:
         # map the result vector back into a nifti image
-        rimg = data.map2Nifti(results)
+        rimg = map2nifti(data, results)
 
         # save to file
         rimg.save(ofile)
