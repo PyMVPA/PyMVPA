@@ -23,7 +23,7 @@ from mvpa.kernels.np import SquaredExponentialKernel, GeneralizedLinearKernel, \
      LinearKernel
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import InvalidHyperparameterError
-from mvpa.datasets import Dataset
+from mvpa.datasets import Dataset, dataset_wizard
 
 if externals.exists("scipy", raiseException=True):
     from scipy.linalg import cho_solve as SLcho_solve
