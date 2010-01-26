@@ -11,7 +11,7 @@
 from mvpa.support.copy import deepcopy
 from mvpa.base import externals
 
-from mvpa.datasets.base import dataset
+from mvpa.datasets.base import dataset_wizard
 from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
 
 from mvpa.misc.exceptions import UnknownStateError
@@ -50,7 +50,7 @@ class ClassifiersTests(unittest.TestCase):
         self.clf_less1 = Less1Classifier()
 
         # simple binary dataset
-        self.data_bin_1 = dataset(
+        self.data_bin_1 = dataset_wizard(
             samples=[[0,0],[-10,-1],[1,0.1],[1,-1],[-1,1]],
             labels=[1, 1, 1, -1, -1], # labels
             chunks=[0, 1, 2,  2, 3])  # chunks
@@ -122,7 +122,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     def testBinaryDecorator(self):
-        ds = dataset(samples=[ [0,0], [0,1], [1,100], [-1,0], [-1,-3], [ 0,-10] ],
+        ds = dataset_wizard(samples=[ [0,0], [0,1], [1,100], [-1,0], [-1,-3], [ 0,-10] ],
                      labels=[ 'sp', 'sp', 'sp', 'dn', 'sn', 'dp'])
         testdata = [ [0,0], [10,10], [-10, -1], [0.1, -0.1], [-0.2, 0.2] ]
         # labels [s]ame/[d]ifferent (sign), and [p]ositive/[n]egative first element
@@ -374,9 +374,9 @@ class ClassifiersTests(unittest.TestCase):
         samples = N.array([ [0, 0, -1], [1, 0, 1], [-1, -1, 1],
                             [-1, 0, 1], [1, -1, 1] ])
 
-        testdata3 = dataset(samples=samples, labels=1)
+        testdata3 = dataset_wizard(samples=samples, labels=1)
         # dummy train data so proper mapper gets created
-        traindata = dataset(samples=N.array([ [0, 0, -1], [1, 0, 1] ]),
+        traindata = dataset_wizard(samples=N.array([ [0, 0, -1], [1, 0, 1] ]),
                             labels=[1, 2])
 
         # targets
@@ -425,7 +425,7 @@ class ClassifiersTests(unittest.TestCase):
         # then setting the values from the results, which the second
         # time is set to predictions.  The final outcome is that the
         # values are actually predictions...
-        dat = dataset(samples=N.random.randn(4, 10),
+        dat = dataset_wizard(samples=N.random.randn(4, 10),
                       labels=[-1, -1, 1, 1])
         clf_reg = FeatureSelectionClassifier(sample_clf_reg, feat_sel)
         clf_reg.train(dat)
@@ -756,9 +756,9 @@ class ClassifiersTests(unittest.TestCase):
         # the same storage, problem becomes unseparable. Like in this case
         # incorrect order of dimensions lead to equal samples [0, 1, 0]
         traindatas = [
-            dataset(samples=N.array([ [0, 0, 1.0],
+            dataset_wizard(samples=N.array([ [0, 0, 1.0],
                                         [1, 0, 0] ]), labels=[-1, 1]),
-            dataset(samples=N.array([ [0, 0.0],
+            dataset_wizard(samples=N.array([ [0, 0.0],
                                       [1, 1] ]), labels=[-1, 1])]
 
         clf.states.change_temporarily(enable_states = ['training_confusion'])

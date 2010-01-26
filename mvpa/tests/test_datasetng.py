@@ -22,7 +22,7 @@ from mvpa.base.externals import versions, exists
 from mvpa.base.types import is_datasetlike
 from mvpa.base.dataset import DatasetError, vstack, hstack
 from mvpa.mappers.flatten import mask_mapper
-from mvpa.datasets.base import dataset, Dataset
+from mvpa.datasets.base import dataset_wizard, Dataset
 from mvpa.misc.data_generators import normalFeatureDataset
 import mvpa.support.copy as copy
 from mvpa.base.collections import SampleAttributesCollection, \
@@ -37,12 +37,12 @@ class myarray(N.ndarray):
 
 # TODO Urgently need test to ensure that multidimensional samples and feature
 #      attributes work and adjust docs to mention that we support such
-def test_from_basic():
+def test_from_wizard():
     samples = N.arange(12).reshape((4, 3)).view(myarray)
     labels = range(4)
     chunks = [1, 1, 2, 2]
 
-    ds = Dataset.from_basic(samples, labels, chunks)
+    ds = Dataset(samples, sa={'labels': labels, 'chunks': chunks})
     ds.init_origids('both')
     first = ds.sa.origids
     # now do again and check that they get regenerated
@@ -94,7 +94,7 @@ def test_from_basic():
     ok_(not ds.a.has_key('mapper'))
 
     # has to complain about misshaped samples attributes
-    assert_raises(ValueError, Dataset.from_basic, samples, labels + labels)
+    assert_raises(ValueError, Dataset.from_wizard, samples, labels + labels)
 
     # check that we actually have attributes of the expected type
     ok_(isinstance(ds.sa['labels'], ArrayCollectable))
@@ -116,7 +116,7 @@ def test_labelschunks_access():
     samples = N.arange(12).reshape((4, 3)).view(myarray)
     labels = range(4)
     chunks = [1, 1, 2, 2]
-    ds = Dataset.from_basic(samples, labels, chunks)
+    ds = Dataset.from_wizard(samples, labels, chunks)
 
     # array subclass survives
     ok_(isinstance(ds.samples, myarray))
@@ -137,8 +137,8 @@ def test_labelschunks_access():
     ok_(ds.labels is ds.sa['labels'].value)
 
 
-def test_from_masked():
-    ds = Dataset.from_masked(samples=N.atleast_2d(N.arange(5)).view(myarray),
+def test_ex_from_masked():
+    ds = Dataset.from_wizard(samples=N.atleast_2d(N.arange(5)).view(myarray),
                              labels=1, chunks=1)
     # simple sequence has to be a single pattern
     assert_equal(ds.nsamples, 1)
@@ -154,25 +154,25 @@ def test_from_masked():
 
     # now try adding pattern with wrong shape
     assert_raises(DatasetError, ds.append,
-                  Dataset.from_masked(N.ones((2,3)), labels=1, chunks=1))
+                  Dataset.from_wizard(N.ones((2,3)), labels=1, chunks=1))
 
     # now add two real patterns
-    ds.append(Dataset.from_masked(N.random.standard_normal((2, 5)),
+    ds.append(Dataset.from_wizard(N.random.standard_normal((2, 5)),
                                   labels=2, chunks=2))
     assert_equal(ds.nsamples, 3)
     assert_array_equal(ds.labels, [1, 2, 2])
     assert_array_equal(ds.chunks, [1, 2, 2])
 
     # test unique class labels
-    ds.append(Dataset.from_masked(N.random.standard_normal((2, 5)),
+    ds.append(Dataset.from_wizard(N.random.standard_normal((2, 5)),
                                   labels=3, chunks=5))
     assert_array_equal(ds.sa['labels'].unique, [1, 2, 3])
 
     # test wrong attributes length
-    assert_raises(ValueError, Dataset.from_masked,
+    assert_raises(ValueError, Dataset.from_wizard,
                   N.random.standard_normal((4,2,3,4)), labels=[1, 2, 3],
                   chunks=2)
-    assert_raises(ValueError, Dataset.from_masked,
+    assert_raises(ValueError, Dataset.from_wizard,
                   N.random.standard_normal((4,2,3,4)), labels=[1, 2, 3, 4],
                   chunks=[2, 2, 2])
 
@@ -185,7 +185,7 @@ def test_from_masked():
 
 
 def test_shape_conversion():
-    ds = Dataset.from_masked(N.arange(24).reshape((2, 3, 4)).view(myarray),
+    ds = Dataset.from_wizard(N.arange(24).reshape((2, 3, 4)).view(myarray),
                              labels=1, chunks=1)
     # array subclass survives
     ok_(isinstance(ds.samples, myarray))
@@ -199,7 +199,7 @@ def test_multidim_attrs():
     samples = N.arange(24).reshape(2, 3, 4)
     # have a dataset with two samples -- mapped from 2d into 1d
     # but have 2d labels and 3d chunks -- whatever that is
-    ds = Dataset.from_masked(samples.copy(),
+    ds = Dataset.from_wizard(samples.copy(),
                              labels=samples.copy(),
                              chunks=N.random.normal(size=(2,10,4,2)))
     assert_equal(ds.nsamples, 2)
@@ -226,7 +226,7 @@ def test_multidim_attrs():
 
 
 def test_samples_shape():
-    ds = Dataset.from_masked(N.ones((10, 2, 3, 4)), labels=1, chunks=1)
+    ds = Dataset.from_wizard(N.ones((10, 2, 3, 4)), labels=1, chunks=1)
     ok_(ds.samples.shape == (10, 24))
 
     # what happens to 1D samples
@@ -238,8 +238,7 @@ def test_samples_shape():
 def test_basic_datamapping():
     samples = N.arange(24).reshape((4, 3, 2)).view(myarray)
 
-    ds = Dataset.from_basic(samples,
-            mapper=mask_mapper(shape=samples.shape[1:]))
+    ds = Dataset.from_wizard(samples)
 
     # array subclass survives
     ok_(isinstance(ds.samples, myarray))
@@ -323,13 +322,13 @@ def test_ds_deepcopy():
 
 
 def test_mergeds():
-    data0 = Dataset.from_basic(N.ones((5, 5)), labels=1)
+    data0 = Dataset.from_wizard(N.ones((5, 5)), labels=1)
     data0.fa['one'] = N.ones(5)
-    data1 = Dataset.from_basic(N.ones((5, 5)), labels=1, chunks=1)
+    data1 = Dataset.from_wizard(N.ones((5, 5)), labels=1, chunks=1)
     data1.fa['one'] = N.zeros(5)
-    data2 = Dataset.from_basic(N.ones((3, 5)), labels=2, chunks=1)
-    data3 = Dataset.from_basic(N.ones((4, 5)), labels=2)
-    data4 = Dataset.from_basic(N.ones((2, 5)), labels=3, chunks=2)
+    data2 = Dataset.from_wizard(N.ones((3, 5)), labels=2, chunks=1)
+    data3 = Dataset.from_wizard(N.ones((4, 5)), labels=2)
+    data4 = Dataset.from_wizard(N.ones((2, 5)), labels=3, chunks=2)
     data4.fa['test'] = N.arange(5)
 
     # cannot merge if there are attributes missing in one of the datasets
@@ -386,7 +385,7 @@ def test_mergeds():
 def test_mergeds2():
     """Test composition of new datasets by addition of existing ones
     """
-    data = dataset([range(5)], labels=1, chunks=1)
+    data = dataset_wizard([range(5)], labels=1, chunks=1)
 
     assert_array_equal(data.UL, [1])
 
@@ -402,33 +401,33 @@ def test_mergeds2():
     # now try adding pattern with wrong shape
     assert_raises(DatasetError,
                   data.append,
-                  dataset(N.ones((2,3)), labels=1, chunks=1))
+                  dataset_wizard(N.ones((2,3)), labels=1, chunks=1))
 
     # now add two real patterns
     dss = datasets['uni2large'].samples
-    data.append(dataset(dss[:2, :5], labels=2, chunks=2))
+    data.append(dataset_wizard(dss[:2, :5], labels=2, chunks=2))
     assert_equal(data.nfeatures, 5)
     assert_array_equal(data.labels, [1, 2, 2])
     assert_array_equal(data.chunks, [1, 2, 2])
 
     # test automatic origins
-    data.append(dataset(dss[3:5, :5], labels=3, chunks=[0, 1]))
+    data.append(dataset_wizard(dss[3:5, :5], labels=3, chunks=[0, 1]))
     assert_array_equal(data.chunks, [1, 2, 2, 0, 1])
 
     # test unique class labels
     assert_array_equal(data.UL, [1, 2, 3])
 
     # test wrong label length
-    assert_raises(ValueError, dataset, dss[:4, :5], labels=[ 1, 2, 3 ],
+    assert_raises(ValueError, dataset_wizard, dss[:4, :5], labels=[ 1, 2, 3 ],
                                          chunks=2)
 
     # test wrong origin length
-    assert_raises(ValueError, dataset, dss[:4, :5], labels=[ 1, 2, 3, 4 ],
+    assert_raises(ValueError, dataset_wizard, dss[:4, :5], labels=[ 1, 2, 3, 4 ],
                                          chunks=[ 2, 2, 2 ])
 
 
 def test_combined_samplesfeature_selection():
-    data = dataset(N.arange(20).reshape((4, 5)).view(myarray),
+    data = dataset_wizard(N.arange(20).reshape((4, 5)).view(myarray),
                    labels=[1,2,3,4],
                    chunks=[5,6,7,8])
 
@@ -478,11 +477,11 @@ def test_combined_samplesfeature_selection():
 
 
 def test_labelpermutation_randomsampling():
-    ds  = Dataset.from_basic(N.ones((5, 1)),     labels=range(5), chunks=1)
-    ds.append(Dataset.from_basic(N.ones((5, 1)) + 1, labels=range(5), chunks=2))
-    ds.append(Dataset.from_basic(N.ones((5, 1)) + 2, labels=range(5), chunks=3))
-    ds.append(Dataset.from_basic(N.ones((5, 1)) + 3, labels=range(5), chunks=4))
-    ds.append(Dataset.from_basic(N.ones((5, 1)) + 4, labels=range(5), chunks=5))
+    ds  = Dataset.from_wizard(N.ones((5, 1)),     labels=range(5), chunks=1)
+    ds.append(Dataset.from_wizard(N.ones((5, 1)) + 1, labels=range(5), chunks=2))
+    ds.append(Dataset.from_wizard(N.ones((5, 1)) + 2, labels=range(5), chunks=3))
+    ds.append(Dataset.from_wizard(N.ones((5, 1)) + 3, labels=range(5), chunks=4))
+    ds.append(Dataset.from_wizard(N.ones((5, 1)) + 4, labels=range(5), chunks=5))
     # use subclass for testing if it would survive
     ds.samples = ds.samples.view(myarray)
 
@@ -518,7 +517,7 @@ def test_labelpermutation_randomsampling():
 
 def test_masked_featureselection():
     origdata = N.random.standard_normal((10, 2, 4, 3, 5)).view(myarray)
-    data = Dataset.from_masked(origdata, labels=2, chunks=2)
+    data = Dataset.from_wizard(origdata, labels=2, chunks=2)
 
     unmasked = data.samples.copy()
     # array subclass survives
@@ -559,7 +558,7 @@ def test_masked_featureselection():
 
 def test_origmask_extraction():
     origdata = N.random.standard_normal((10, 2, 4, 3))
-    data = Dataset.from_masked(origdata, labels=2, chunks=2)
+    data = Dataset.from_wizard(origdata, labels=2, chunks=2)
 
     # check with custom mask
     sel = data[:, 5]
@@ -570,7 +569,7 @@ def test_feature_masking():
     mask = N.zeros((5, 3), dtype='bool')
     mask[2, 1] = True
     mask[4, 0] = True
-    data = Dataset.from_masked(N.arange(60).reshape((4, 5, 3)),
+    data = Dataset.from_wizard(N.arange(60).reshape((4, 5, 3)),
                                labels=1, chunks=1, mask=mask)
 
     # check simple masking
@@ -596,7 +595,7 @@ def test_feature_masking():
 
 
 def test_origid_handling():
-    ds = dataset(N.atleast_2d(N.arange(35)).T)
+    ds = dataset_wizard(N.atleast_2d(N.arange(35)).T)
     ds.init_origids('both')
     ok_(ds.nsamples == 35)
     assert_equal(len(N.unique(ds.sa.origids)), 35)
@@ -626,7 +625,7 @@ def test_origid_handling():
     ok_((fa_origids != subds.fa.origids).any())
 
 def test_idhash():
-    ds = dataset(N.arange(12).reshape((4, 3)),
+    ds = dataset_wizard(N.arange(12).reshape((4, 3)),
                  labels=1, chunks=1)
     origid = ds.idhash
     #XXX BUG -- no assurance that labels would become an array... for now -- do manually
@@ -666,7 +665,7 @@ def test_arrayattributes():
     samples = N.arange(12).reshape((4, 3))
     labels = range(4)
     chunks = [1, 1, 2, 2]
-    ds = dataset(samples, labels, chunks)
+    ds = dataset_wizard(samples, labels, chunks)
 
     for a in (ds.samples, ds.labels, ds.chunks):
         ok_(isinstance(a, N.ndarray))

@@ -19,7 +19,7 @@ import time
 
 from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
 
-from mvpa.datasets.base import dataset
+from mvpa.datasets.base import Dataset
 from mvpa.misc.support import idhash
 from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.param import Parameter
@@ -47,7 +47,7 @@ def accepts_samples_as_dataset(fx):
         if is_datasetlike(data):
             return fx(obj, data, *args, **kwargs)
         else:
-            return fx(obj, dataset(data), *args, **kwargs)
+            return fx(obj, Dataset(data), *args, **kwargs)
     return wrap_samples
 
 class DegenerateInputError(Exception):
