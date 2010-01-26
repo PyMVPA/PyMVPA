@@ -60,7 +60,7 @@ print 'Best performing sphere error:', max(sl_map)
 """
 If this analysis is done on a fMRI dataset using `NiftiDataset` the resulting
 searchlight map (`sl_map`) can be mapped back into the original dataspace and
-viewed as a brain overlay. :ref:`Another example <example_searchlight_2d>`
+viewed as a brain overlay. :ref:`Another example <example_searchlight>`
 shows a typical application of this algorithm.
 
 .. Mention the fact that it also is a special `SensitivityAnalyzer`

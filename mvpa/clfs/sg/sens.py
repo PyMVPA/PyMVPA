@@ -48,12 +48,12 @@ class LinearSVMWeights(Sensitivity):
 
     def __sg_helper(self, svm):
         """Helper function to compute sensitivity for a single given SVM"""
-        self.offsets = svm.get_bias()
+        bias = svm.get_bias()
         svcoef = N.matrix(svm.get_alphas())
         svnums = svm.get_support_vectors()
         svs = self.clf.traindataset.samples[svnums,:]
         res = (svcoef * svs).mean(axis=0).A1
-        return res
+        return res, bias
 
 
     def _call(self, dataset):
@@ -64,7 +64,7 @@ class LinearSVMWeights(Sensitivity):
         sgsvm = clf.svm
         sens_labels = None
         if isinstance(sgsvm, shogun.Classifier.MultiClassSVM):
-            sens = []
+            sens, biases = [], []
             nsvms = sgsvm.get_num_svms()
             clabels = sorted(clf._attrmap.values())
             nclabels = len(clabels)
@@ -80,12 +80,16 @@ class LinearSVMWeights(Sensitivity):
                     assert(set([sgsvmi.get_label(int(x))
                                 for x in sgsvmi.get_support_vectors()])
                            == set(labels_tuple))
-                    sens.append(self.__sg_helper(sgsvmi))
-                    sens_labels += [labels_tuple]
+                    sens1, bias = self.__sg_helper(sgsvmi)
+                    sens.append(sens1)
+                    biases.append(bias)
+                    sens_labels += [labels_tuple[::-1]] # ??? positive first
                     isvm += 1
             assert(len(sens) == nsvms)  # we should have  covered all
         else:
-            sens = N.atleast_2d(self.__sg_helper(sgsvm))
+            sens1, bias = self.__sg_helper(sgsvm)
+            biases = N.atleast_1d(bias)
+            sens = N.atleast_2d(sens1)
             if not clf.__is_regression__:
                 assert(set(clf._attrmap.values()) == set([-1.0, 1.0]))
                 assert(sens.shape[0] == 1)
@@ -100,5 +104,6 @@ class LinearSVMWeights(Sensitivity):
             if len(clf._attrmap):
                 sens_labels = clf._attrmap.to_literal(sens_labels, recurse=True)
             ds.sa['labels'] = sens_labels
+        self.states.biases = biases
 
         return ds

@@ -6,7 +6,24 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Dataset that gets its samples from a NIfTI file"""
+"""Dataset that gets its samples from a NIfTI file
+
+Samples can be loaded from a NiftiImage instance or directly from a NIfTI
+file. This class stores all relevant information from the NIfTI file header
+and provides information about the metrics and neighborhood information of
+all voxels.
+
+Most importantly it allows to map data back into the original data space
+and format via :meth:`~mvpa.datasets.mri.map2nifti`.
+
+This class allows for convenient pre-selection of features by providing a
+mask to the constructor. Only non-zero elements from this mask will be
+considered as features.
+
+NIfTI files are accessed via PyNIfTI. See
+http://niftilib.sourceforge.net/pynifti/ for more information about
+pynifti.
+"""
 
 __docformat__ = 'restructuredtext'
 
@@ -62,7 +79,7 @@ def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
         try:
             nifti = NiftiImage(src)
         except RuntimeError, e:
-            warning("ERROR: NiftiDatasets: Cannot open NIfTI file %s" \
+            warning("ERROR: Cannot open NIfTI file %s" \
                     % src)
             raise e
     elif isinstance(src, NiftiImage):
@@ -117,69 +134,50 @@ def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
     return nifti
 
 
-def getNiftiData(nim):
-    """Convenience function to extract the data array from a NiftiImage
+def map2nifti(dataset, data=None, imghdr=None):
+    """Maps a data vector into the dataspace and wraps it in a NiftiImage.
 
-    This function will make use of advanced features of PyNIfTI to prevent
-    unnecessary copying if a sufficent version is available.
+    Parameters
+    ----------
+    dataset : Dataset
+      The mapper of this dataset is used to perform the reverse-mapping.
+    data : ndarray or Dataset, optional
+      The data to be wrapped into NiftiImage. If None (default), it
+      would wrap samples of the current dataset. If it is a Dataset
+      instance -- takes its samples for mapping.
+    imghdr : dict
+      Image header data. If None, the header is taken from `dataset`.
     """
-    if externals.exists('nifti ge 0.20090205.1'):
-        return nim.data
+    if data is None:
+        data = dataset.samples
+    elif isinstance(data, Dataset):
+        # ease users life
+        data = data.samples
+    # call the appropriate function to map single samples or multiples
+    if len(data.shape) > 1:
+        dsarray = dataset.a.mapper.reverse(data)
     else:
-        return nim.asarray()
+        dsarray = dataset.a.mapper.reverse1(data)
 
+    if imghdr is None:
+        imghdr = dataset.a.imghdr
 
-class NiftiDataset(Dataset):
-    """Dataset loading its samples from a NIfTI image or file.
-
-    Samples can be loaded from a NiftiImage instance or directly from a NIfTI
-    file. This class stores all relevant information from the NIfTI file header
-    and provides information about the metrics and neighborhood information of
-    all voxels.
-
-    Most importantly it allows to map data back into the original data space
-    and format via :meth:`~mvpa.datasets.nifti.NiftiDataset.map2Nifti`.
-
-    This class allows for convenient pre-selection of features by providing a
-    mask to the constructor. Only non-zero elements from this mask will be
-    considered as features.
-
-    NIfTI files are accessed via PyNIfTI. See
-    http://niftilib.sourceforge.net/pynifti/ for more information about
-    pynifti.
-    """
-    def map2nifti(dataset, data=None):
-        """Maps a data vector into the dataspace and wraps it with a
-        NiftiImage. The header data of this object is used to initialize
-        the new NiftiImage.
-
-        Parameters
-        ----------
-        data : ndarray or Dataset, optional
-          The data to be wrapped into NiftiImage. If None (default), it
-          would wrap samples of the current dataset. If it is a Dataset
-          instance -- takes its samples for mapping.
-        """
-        if data is None:
-            data = dataset.samples
-        elif isinstance(data, Dataset):
-            # ease users life
-            data = data.samples
-        # call the appropriate function to map single samples or multiples
-        if len(data.shape) > 1:
-            dsarray = dataset.a.mapper.reverse(data)
-        else:
-            dsarray = dataset.a.mapper.reverse1(data)
-        return NiftiImage(dsarray, dataset.a.imghdr)
+    return NiftiImage(dsarray, imghdr)
 
 
 def fmri_dataset(samples, labels=None, chunks=None, mask=None,
-                 events=None, tr=None,
-                 sprefix='voxel', tprefix='time', eprefix='event'):
-    """Constructs a `Dataset` given 4D fMRI file
+                 sprefix='voxel', tprefix='time', add_fa=None,):
+    """Create a dataset from an fMRI timeseries.
 
-
-    ALSO
+    Parameters
+    ----------
+    samples : str or NiftiImage or list
+    labels : scalar or sequence
+    chunks : scalar or sequence
+    mask : str or NiftiImage
+    sprefix : str or None
+    tprefix : str or None
+    add_fa : dict or None
 
 
     Dataset with event-defined samples from a NIfTI timeseries image.
@@ -204,13 +202,6 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
     mask volume is automatically expanded to be identical in a volumes of the
     boxcar.
 
-    Parameters
-    ----------
-    tr : float
-      Temporal distance of two adjacent NIfTI volumes. This can be used
-      to override the corresponding value in the NIfTI header.
-
-
     TODO: extend
     """
     # TODO: Create detrending mapper and allow a mapper to be applied before
@@ -228,7 +219,7 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
     elif isinstance(niftimask, N.ndarray):
         mask = niftimask
     else:
-        mask = getNiftiData(niftimask)
+        mask = _get_nifti_data(niftimask)
 
     # compile the samples attributes
     sa = {}
@@ -238,7 +229,7 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
         sa['chunks'] = _expand_attribute(chunks, samples.shape[0], 'chunks')
 
     # create a dataset
-    ds = NiftiDataset(samples, sa=sa)
+    ds = Dataset(samples, sa=sa)
     if sprefix is None:
         inspace = None
     else:
@@ -247,12 +238,18 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
 
     # now apply the mask if any
     if not mask is None:
-        flatmask = ds.a.mapper.forward1(mask != 0)
+        flatmask = ds.a.mapper.forward1(mask)
         # direct slicing is possible, and it is potentially more efficient,
         # so let's use it
         #mapper = FeatureSliceMapper(flatmask)
         #ds = ds.get_mapped(FeatureSliceMapper(flatmask))
-        ds = ds[:, flatmask]
+        ds = ds[:, flatmask != 0]
+
+    # load and store additional feature attributes
+    if not add_fa is None:
+        for fattr in add_fa:
+            value = _get_nifti_data(getNiftiFromAnySource(add_fa[fattr]))
+            ds.fa[fattr] = ds.a.mapper.forward1(value)
 
     # store interesting props in the dataset
     # do not put the whole NiftiImage in the dict as this will most
@@ -274,17 +271,26 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
                                      * niftisamples.header['pixdim'][4]
         # TODO extend with the unit
 
-    # exit here if there are no events specified
-    if events is None:
-        return ds
+    return ds
 
-    #
-    # Post-processing for event handling
-    #
-    # determine TR, take from NIfTI header by default
-    dt = niftisamples.header['pixdim'][4]
+
+def extract_events(ds, events, tr=None, eprefix='event'):
+    """XXX All docs need to be rewritten.
+
+    Parameters
+    ----------
+    ds : Dataset
+    events : list
+    tr : float or None
+      Temporal distance of two adjacent NIfTI volumes. This can be used
+      to override the corresponding value in the NIfTI header.
+    eprefix : str or None
+    """
+    if tr is None:
+        # determine TR, take from NIfTI header by default
+        dt = ds.a.imghdr['pixdim'][4]
+    else:
     # override if necessary
-    if not tr is None:
         dt = tr
     # convert all onsets into descrete integer values representing volume ids
     # but storing any possible offset to the real event onset as an additional
@@ -329,3 +335,18 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
         else:
             ds.sa[eprefix + '_attrs_' + a] = evvars[a]
     return ds
+
+
+def _get_nifti_data(nim):
+    """Convenience function to extract the data array from a NiftiImage
+
+    This function will make use of advanced features of PyNIfTI to prevent
+    unnecessary copying if a sufficent version is available.
+    """
+    if externals.exists('nifti ge 0.20090205.1'):
+        return nim.data
+    else:
+        return nim.asarray()
+
+
+

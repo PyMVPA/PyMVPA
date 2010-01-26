@@ -18,7 +18,7 @@ if externals.exists('scipy', raiseException=True):
     # if we construct the polynomials ourselves, we wouldn't need scipy here
     from scipy.special import legendre
 
-from mvpa.base.dochelpers import _str
+from mvpa.base.dochelpers import _str, borrowkwargs
 from mvpa.mappers.base import Mapper
 
 
@@ -64,10 +64,10 @@ class PolyDetrendMapper(Mapper):
     >>> ds = dataset(samples, chunks=chunks)
     >>> dm = PolyDetrendMapper(chunks='chunks', polyord=1)
 
-    # the mapper will be auto-trained upon first use
+    >>> # the mapper will be auto-trained upon first use
     >>> mds = dm.forward(ds)
 
-    # total removal all all (chunk-wise) linear trends
+    >>> # total removal all all (chunk-wise) linear trends
     >>> N.sum(N.abs(mds)) < 0.00001
     True
     """
@@ -327,10 +327,11 @@ class PolyDetrendMapper(Mapper):
                            % self.__class__.__name__)
 
 
+@borrowkwargs(PolyDetrendMapper, '__init__')
 def poly_detrend(ds, **kwargs):
     """In-place polynomial detrending.
 
-    This function behaves identical to the PolyDetrendMapper. The only
+    This function behaves identical to the `PolyDetrendMapper`. The only
     difference is that the actual detrending is done in-place -- potentially
     causing a significant reduction of the memory demands.
 

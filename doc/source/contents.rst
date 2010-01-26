@@ -9,17 +9,14 @@ PyMVPA Documentation Contents
 
    intro
    installation
-   tutorial1_start
-   tutorial2_datasets
+   tutorial
    datasets
-   mappers
    classifiers
    measures
    featsel
    misc
    datadb
    examples
-   matlab
    faq
    glossary
    references

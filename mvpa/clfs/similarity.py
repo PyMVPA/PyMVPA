@@ -29,7 +29,10 @@ class Similarity(object):
 
 
 class SingleDimensionSimilarity(Similarity):
-    """exp(-|data1_j-data2_j|_2)
+    """TODO
+
+    math:: e^{(-|data1_j-data2_j|_2)}``
+
     """
     def __init__(self, d=0, **kwargs):
         """

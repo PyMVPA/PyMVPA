@@ -14,7 +14,7 @@
 set -e
 
 # what branches to test
-BRANCHES='master yoh/master mh/master' # maint/0.4'
+BRANCHES='master maint/0.4 yoh/0.4 yoh/master mh/master' # maint/0.4'
 # where to send reports
 EMAILS='yoh@onerussian.com,michael.hanke@gmail.com'
 
@@ -117,6 +117,8 @@ sweep()
 		done
 		if [ "x$branch_has_problems" != x ]; then
 			branches_with_problems+="\n  $branch: $branch_has_problems"
+            echo " D: Reporting WTF due to errors:"
+            python -c 'import mvpa; print mvpa.wtf()'
 		fi
     done
 	echo "I: Succeeded $succeeded actions, failed $failed actions."

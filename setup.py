@@ -82,7 +82,7 @@ if have_libsvm:
 
 # define the setup
 setup(name         = 'pymvpa',
-      version      = '0.4.3',
+      version      = '0.5.0.dev',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
@@ -107,6 +107,7 @@ setup(name         = 'pymvpa',
                        'mvpa.clfs.sg',
                        'mvpa.datasets',
                        'mvpa.featsel',
+                       'mvpa.kernels',
                        'mvpa.mappers',
                        'mvpa.measures',
                        'mvpa.misc',
