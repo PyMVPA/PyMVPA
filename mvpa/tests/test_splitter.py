@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA pattern handling"""
 
-from mvpa.datasets.base import dataset
+from mvpa.datasets.base import dataset_wizard
 from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter, \
                                    NoneSplitter, HalfSplitter, \
                                    CustomSplitter, NGroupSplitter
@@ -21,7 +21,7 @@ import numpy as N
 class SplitterTests(unittest.TestCase):
 
     def setUp(self):
-        self.data = dataset(N.random.normal(size=(100,10)),
+        self.data = dataset_wizard(N.random.normal(size=(100,10)),
                             labels=[ i%4 for i in range(100) ],
                             chunks=[ i/10 for i in range(100)])
 

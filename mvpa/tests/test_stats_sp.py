@@ -14,7 +14,7 @@ externals.exists('scipy', raiseException=True)
 from scipy import signal
 from mvpa.misc.stats import chisquare
 from mvpa.misc.attrmap import AttributeMap
-from mvpa.datasets.base import dataset
+from mvpa.datasets.base import dataset_wizard
 
 from nose.tools import assert_raises
 
@@ -274,7 +274,7 @@ class StatsTestsScipy(unittest.TestCase):
         X = N.array([model_lr, N.repeat(1, len(model_lr))]).T
 
         # two 'voxel' dataset
-        data = dataset(samples=N.array((wsignal, nsignal, nsignal)).T, labels=1)
+        data = dataset_wizard(samples=N.array((wsignal, nsignal, nsignal)).T, labels=1)
 
         # check GLM betas
         glm = GLM(X)

@@ -56,7 +56,7 @@ class ChannelDataset(Dataset):
         if len(samples.shape) != 3:
             raise DatasetError("ChannelDataset takes 3D array as samples.")
 
-        ds = cls.from_masked(samples, labels=labels, chunks=chunks)
+        ds = cls.from_wizard(samples, labels=labels, chunks=chunks)
 
         # charge dataset properties
         # but only if some value

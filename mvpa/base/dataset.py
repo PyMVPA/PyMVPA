@@ -90,7 +90,7 @@ class AttrDataset(object):
     For convenience `AttrDataset.from_basic` is also available as `dataset`,
     so the above call is equivalent to:
 
-    >>> ds_labeled = dataset(samples, labels=range(4))
+    >>> ds_labeled = dataset_wizard(samples, labels=range(4))
 
     Both the labeled and the unlabeled dataset share the same samples
     array. No copying is performed.
