@@ -20,7 +20,7 @@ from mvpa.base.dataset import AttrDataset
 from mvpa.base.dataset import _expand_attribute
 from mvpa.misc.support import idhash as idhash_
 from mvpa.mappers.base import ChainMapper, FeatureSliceMapper
-from mvpa.mappers.flatten import FlattenMapper
+from mvpa.mappers.flatten import mask_mapper
 
 if __debug__:
     from mvpa.base import debug
@@ -133,38 +133,45 @@ class Dataset(AttrDataset):
 
 
     @classmethod
-    def from_basic(cls, samples, labels=None, chunks=None, mapper=None):
-        """Create a Dataset from samples and elementary attributes.
+    def from_wizard(cls, samples, labels=None, chunks=None, mask=None,
+                    mapper=None, space=None):
+        """Convenience method to create dataset.
+
+        Datasets can be created from N-dimensional samples. Data arrays with
+        more than two dimensions are going to be flattened, while preserving
+        the first axis (separating the samples) and concatenating all other as
+        the second axis. Optionally, it is possible to specific labels and
+        chunk attributes for all samples, and masking of the input data (only
+        selecting elements corresponding to non-zero mask elements
 
         Parameters
         ----------
         samples : ndarray
-          The two-dimensional samples matrix.
-        labels : ndarray, optional
-        chunks : ndarray, optional
+          N-dimensional samples array. The first axis separates individual
+          samples.
+        labels : scalar or ndarray, optional
+          Labels for all samples. If a scalar is provided its values is assigned
+          as label to all samples.
+        chunks : scalar or ndarray, optional
+          Chunks definition for all samples. If a scalar is provided its values
+          is assigned as chunk of all samples.
+        mask : ndarray, optional
+          The shape of the array has to correspond to the shape of a single
+          sample (shape(samples)[1:] == shape(mask)). Its non-zero elements
+          are used to mask the input data.
+        space : str, optional
+          If provided it is assigned to the mapper instance that performs the
+          initial flattening of the data.
         mapper : Mapper instance, optional
           A (potentially trained) mapper instance that is used to forward-map
-          the samples upon construction of the dataset. The mapper must
-          have a simple feature space (samples x features) as output. Use
-          chained mappers to achieve that, if necessary.
+          the already flattened and masked samples upon construction of the
+          dataset. The mapper must have a simple feature space (samples x
+          features) as output. Use a `ChainMapper` to achieve that, if
+          necessary.
 
         Returns
         -------
         instance : Dataset
-
-        Notes
-        -----
-        blah blah
-
-        it needs to be a little longer to be able to pick it up
-
-        See Also
-        --------
-        blah blah
-
-        Examples
-        --------
-        blah blah
         """
         # for all non-ndarray samples you need to go with the constructor
         samples = N.asanyarray(samples)
@@ -186,29 +193,16 @@ class Dataset(AttrDataset):
 
         # common checks should go into __init__
         ds = cls(samples, sa=sa_items)
+        # apply mask through mapper
+        if mask is None:
+            mask = N.ones(samples.shape[1:], dtype='bool')
+        mmapper = mask_mapper(mask, inspace=space)
+        ds = ds.get_mapped(mmapper)
+
+        # apply generic mapper
         if not mapper is None:
             ds = ds.get_mapped(mapper)
         return ds
-
-
-    @classmethod
-    def from_masked(cls, samples, labels=None, chunks=None, mask=None,
-                    space=None):
-        """
-        """
-        # need to have arrays
-        samples = N.asanyarray(samples)
-
-        # use full mask if none is provided
-        if mask is None:
-            mask = N.ones(samples.shape[1:], dtype='bool')
-
-        fm = FlattenMapper(shape=mask.shape, inspace=space)
-        flatmask = fm.forward1(mask)
-        submapper = FeatureSliceMapper(flatmask, dshape=flatmask.shape)
-        mapper = ChainMapper([fm, submapper])
-        return cls.from_basic(samples, labels=labels, chunks=chunks,
-                              mapper=mapper)
 
 
     # shortcut properties
@@ -228,6 +222,6 @@ class Dataset(AttrDataset):
     O = property(fget=lambda self:self.a.mapper.reverse(self.samples))
 
 
-
 # convenience alias
-dataset = Dataset.from_basic
+dataset_wizard = Dataset.from_wizard
+

@@ -28,7 +28,7 @@ class IFSTests(unittest.TestCase):
                                   N.repeat( 1, 50 ) ) )
         chunks = N.repeat( range(5), 10 )
         chunks = N.concatenate( (chunks, chunks) )
-        return Dataset.from_masked(samples=data, labels=labels, chunks=chunks)
+        return Dataset.from_wizard(samples=data, labels=labels, chunks=chunks)
 
 
     # XXX just testing based on a single classifier. Not sure if
