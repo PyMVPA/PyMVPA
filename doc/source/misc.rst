@@ -15,8 +15,38 @@
 Miscellaneous
 *************
 
-.. index:: settings, configuration, cfg
+.. automodule:: mvpa.misc
 
+
+Related API documentation
+=========================
+
+.. currentmodule:: mvpa
+.. autosummary::
+   :toctree: generated
+
+   atlases
+   misc.args
+   misc.attributes
+   misc.attrmap
+   misc.cmdline
+   misc.data_generators
+   misc.errorfx
+   misc.exceptions
+   misc.fx
+   misc.neighborhood
+   misc.param
+   misc.sampleslookup
+   misc.state
+   misc.stats
+   misc.support
+   misc.transformers
+   misc.vproperty
+
+
+
+
+.. index:: settings, configuration, cfg
 
 Managing (Custom) Configurations
 ================================

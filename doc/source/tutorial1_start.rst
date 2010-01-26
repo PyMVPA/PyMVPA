@@ -10,9 +10,9 @@
 .. _chap_tutorial1:
 .. index:: Tutorial, Cross-validation
 
-*******************************
-Tutorial Part 1: A Gentle Start
-*******************************
+**********************
+Part 1: A Gentle Start
+**********************
 
 Virtually every Python script starts with some `import` statements that load
 functionality provided elsewhere. We start this tutorial by importinig NumPy_,
@@ -267,7 +267,7 @@ Literature
 Related API Documentation
 -------------------------
 .. autosummary::
-   :toctree:
+   :toctree: generated
 
    ~mvpa.algorithms.cvtranserror.CrossValidatedTransferError
    ~mvpa.datasets.base.Dataset

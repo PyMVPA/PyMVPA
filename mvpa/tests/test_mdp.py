@@ -37,7 +37,8 @@ def test_mdpnodemapper():
     mm.train(ds)
 
     fds = mm.forward(ds)
-    assert_true(hasattr(mm.node, 'cov_mtx'))
+    if externals.versions['mdp'] >= '2.5':
+        assert_true(hasattr(mm.node, 'cov_mtx'))
 
     assert_true(isinstance(fds, Dataset))
     assert_equal(fds.samples.shape, ds.samples.shape)
@@ -80,6 +81,9 @@ def test_mdpflowmapper():
 
 
 def test_mdpflow_additional_arguments():
+    if externals.versions['mdp'] < '2.5':
+        # we have no IdentityNode yet... is there analog?
+        return
     ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
     flow = mdp.nodes.PCANode() + mdp.nodes.IdentityNode() + mdp.nodes.FDANode()
     # this is what it would look like in MDP itself
@@ -94,6 +98,9 @@ def test_mdpflow_additional_arguments():
     assert_array_almost_equal(ds.samples, rds.samples)
 
 def test_mdpflow_additional_arguments_Nones():
+    if externals.versions['mdp'] < '2.5':
+        # we have no IdentityNode yet... is there analog?
+        return
     ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
     flow = mdp.nodes.PCANode() + mdp.nodes.IdentityNode() + mdp.nodes.FDANode()
     # this is what it would look like in MDP itself
@@ -149,7 +156,7 @@ def test_icamapper():
 
 
 def test_llemapper():
-    if not externals.exists('mdp ge 2.4'):
+    if externals.versions['mdp'] < '2.4':
         return
 
     ds = Dataset(N.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],

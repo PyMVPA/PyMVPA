@@ -14,16 +14,16 @@ and `hdf2obj()`, as well as the convenience functions `h5save()` and
 and using HDF5 as input, convert them back into Python object instances.
 
 Similar to `pickle` a Python object is disassembled into its pieces, but instead
-of serializing it into a byte-stream it is stored in chunks whos type can be
+of serializing it into a byte-stream it is stored in chunks which type can be
 natively stored in HDF5. That means basically everything that can be stored in
 a NumPy array.
 
 If an object is not readily storable, its `__reduce__()` method is called to
-disassemble it into more basic pieces. The default implementation of
+disassemble it into basic pieces.  The default implementation of
 `object.__reduce__()` is typically sufficient. Hence, for any new-style Python
 class there is, in general, no need to implement `__reduce__()`. However, custom
 implementations might allow for leaner HDF5 representations and leaner files.
-Basic types, such as `list`, and `dict`, whos `__reduce__()` method does not do
+Basic types, such as `list`, and `dict`, which `__reduce__()` method does not do
 help with disassembling are also handled.
 
 .. warning::
@@ -50,7 +50,7 @@ def hdf2obj(hdf):
 
     Obviously, this function assumes the conventions implemented in the
     `obj2hdf()` function. Those conventions will eventually be documented in
-    the module docstring, whenever they are sufficiantly stable.
+    the module docstring, whenever they are sufficiently stable.
 
     Parameters
     ----------
@@ -292,11 +292,13 @@ def h5save(filename, data, name=None, mode='w', **kwargs):
       information.
     **kwargs
       All additional arguments will be passed to `h5py.Group.create_dataset`.
-      This could, for example, be `compression='gzip'.
+      This could, for example, be `compression='gzip'`.
     """
     hdf = h5py.File(filename, mode)
-    obj2hdf(hdf, data, name, **kwargs)
-    hdf.close()
+    try:
+        obj2hdf(hdf, data, name, **kwargs)
+    finally:
+        hdf.close()
 
 
 def h5load(filename, name=None):
@@ -318,12 +320,14 @@ def h5load(filename, name=None):
       An object of whatever has been stored in the file.
     """
     hdf = h5py.File(filename, 'r')
-    if not name is None:
-        if not name in hdf:
-            raise ValueError("No object of name '%s' in file '%s'."
-                             % (name, filename))
-        obj = hdf2obj(hdf[name])
-    else:
-        obj = hdf2obj(hdf)
-    hdf.close()
+    try:
+        if not name is None:
+            if not name in hdf:
+                raise ValueError("No object of name '%s' in file '%s'."
+                                 % (name, filename))
+            obj = hdf2obj(hdf[name])
+        else:
+            obj = hdf2obj(hdf)
+    finally:
+        hdf.close()
     return obj

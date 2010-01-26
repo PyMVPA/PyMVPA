@@ -231,6 +231,7 @@ if __debug__:
     debug.register('MAP_',  "*Mapper (verbose)")
 
     debug.register('COL',  "Generic Collectable")
+    debug.register('COL_RED',  "__reduce__ of collectables")
     debug.register('UATTR', "Attributes with unique")
     debug.register('ST',   "State")
     debug.register('STV',  "State Variable")
@@ -302,6 +303,8 @@ if __debug__:
     debug.register('CROSSC', "Cross-validation call")
     debug.register('CERR', "Various ClassifierErrors")
 
+    debug.register('HPAL',   "Hyperalignment")
+    debug.register('HPAL_',  "Hyperalignment (verbose)")
     debug.register('ATL',    "Atlases")
     debug.register('ATL_',   "Atlases (verbose)")
     debug.register('ATL__',  "Atlases (very verbose)")

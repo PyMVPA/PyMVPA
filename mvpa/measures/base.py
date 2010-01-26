@@ -6,8 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Base class for data measures: algorithms that quantify properties of
-datasets.
+"""Base classes for measures: algorithms that quantify properties of datasets.
 
 Besides the `DatasetMeasure` base class this module also provides the
 (abstract) `FeaturewiseDatasetMeasure` class. The difference between a general
@@ -30,7 +29,7 @@ from mvpa.base.types import asobjarray
 from mvpa.base.dochelpers import enhancedDocString
 from mvpa.base import externals, warning
 from mvpa.clfs.stats import autoNullDist
-from mvpa.base.types import is_datasetlike
+from mvpa.base.dataset import AttrDataset
 from mvpa.datasets import Dataset, vstack
 
 if __debug__:
@@ -59,6 +58,7 @@ class DatasetMeasure(ClassWithCollections):
     For developers: All subclasses shall get all necessary parameters via
     their constructor, so it is possible to get the same type of measure for
     multiple datasets by passing them to the __call__() method successively.
+
     """
 
     raw_results = StateVariable(enabled=False,
@@ -112,7 +112,8 @@ class DatasetMeasure(ClassWithCollections):
 
         # XXX Remove when "sensitivity-return-dataset" transition is done
         if __debug__ \
-           and not is_datasetlike(result) and not len(result.shape) == 1:
+           and not isinstance(result, AttrDataset) \
+           and not len(result.shape) == 1:
             warning("Postprocessing of '%s' doesn't return a Dataset, or "
                     "1D-array (got: '%s')."
                     % (self.__class__.__name__, result))
@@ -133,7 +134,7 @@ class DatasetMeasure(ClassWithCollections):
     def _postcall(self, dataset, result):
         """Some postprocessing on the result
         """
-        if not is_datasetlike(result):
+        if not isinstance(result, AttrDataset):
             # Unless we got the results in a dataset, ensure that we have some
             # iterable (could be a scalar if it was just a single value)
             result = N.atleast_1d(result)
@@ -282,7 +283,8 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         # This method get the 'result' either as a 1D array, or as a Dataset
         # everything else is illegal
         if __debug__ \
-           and not is_datasetlike(result) and not len(result.shape) == 1:
+           and not isinstance(result, AttrDataset) \
+           and not len(result.shape) == 1:
                raise RuntimeError("FeaturewiseDatasetMeasures have to return "
                                   "their results as 1D array, or as a Dataset "
                                   "(error made by: '%s')." % repr(self))
@@ -317,7 +319,7 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
 
         # XXX Remove when "sensitivity-return-dataset" transition is done
         if __debug__ \
-           and not is_datasetlike(result) and not len(result.shape) == 1:
+           and not isinstance(result, AttrDataset) and not len(result.shape) == 1:
             warning("FeaturewiseDatasetMeasures-related post-processing "
                     "of '%s' doesn't return a Dataset, or 1D-array."
                     % self.__class__.__name__)
@@ -366,6 +368,9 @@ class StaticDatasetMeasure(DatasetMeasure):
 # Flavored implementations of FeaturewiseDatasetMeasures
 
 class Sensitivity(FeaturewiseDatasetMeasure):
+    """Sensitivities of features for a given Classifier.
+
+    """
 
     _LEGAL_CLFS = []
     """If Sensitivity is classifier specific, classes of classifiers
@@ -377,9 +382,9 @@ class Sensitivity(FeaturewiseDatasetMeasure):
 
         Parameters
         ----------
-        clf : :class:`Classifier`
+        clf : `Classifier`
           classifier to use.
-        force_training : Bool
+        force_training : bool
           if classifier was already trained -- do not retrain
         """
 
@@ -509,7 +514,7 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
         if len(sensitivities) == 1:
             sensitivities = N.asanyarray(sensitivities[0])
         else:
-            if is_datasetlike(sensitivities[0]):
+            if isinstance(sensitivities[0], AttrDataset):
                 smerged = None
                 for i, s in enumerate(sensitivities):
                     s.sa['splits'] = N.repeat(i, len(s))
@@ -803,14 +808,16 @@ class RegressionAsClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyz
         return sens
 
 
-class FeatureSelectionClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
+class FeatureSelectionClassifierSensitivityAnalyzer(
+    ProxyClassifierSensitivityAnalyzer):
     """Set sensitivity analyzer output be reverse mapped using mapper of the
     slave classifier"""
 
     def _call(self, dataset):
-        sens = super(FeatureSelectionClassifierSensitivityAnalyzer, self)._call(dataset)
+        sens = super(FeatureSelectionClassifierSensitivityAnalyzer,
+                     self)._call(dataset)
         # `sens` is either 1D array, or Dataset
-        if is_datasetlike(sens):
+        if isinstance(sens, AttrDataset):
             return self.clf.maskclf.mapper.reverse(sens)
         else:
             return self.clf.maskclf.mapper.reverse1(sens)

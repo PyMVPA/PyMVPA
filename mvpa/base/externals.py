@@ -54,7 +54,8 @@ def __check_scipy():
         and numpy_ver > "1.1.0":
         import warnings
         if not __debug__ or (__debug__ and not 'PY' in debug.active):
-            debug('EXT', "Setting up filters for numpy DeprecationWarnings")
+            if __debug__:
+                debug('EXT', "Setting up filters for numpy DeprecationWarnings")
             filter_lines = [
                 ('NumpyTest will be removed in the next release.*',
                  DeprecationWarning),
@@ -74,6 +75,19 @@ def __check_numpy():
     """
     import numpy as N
     versions['numpy'] = SmartVersion(N.__version__)
+
+
+def __check_mdp():
+    """Check if mdp is present (it must be) an if it is -- store its version
+    """
+    import mdp
+    ver = mdp.__version__
+    if SmartVersion(ver) == "2.5" and not hasattr(mdp.nodes, 'IdentityNode'):
+        # Thanks to Yarik's shipment of svn snapshots into Debian we
+        # can't be sure if that was already released version, since
+        # mdp guys didn't use -dev suffix
+        ver += '-dev'
+    versions['mdp'] = SmartVersion(ver)
 
 
 def __check_pywt(features=None):
@@ -355,7 +369,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
           'openopt': "__check_openopt()",
-          'mdp': "import mdp as __",
+          'mdp': "__check_mdp()",
           'mdp ge 2.4': "from mdp.nodes import LLENode as __",
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
            # 3318 corresponds to release 0.6.4

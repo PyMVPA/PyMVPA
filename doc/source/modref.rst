@@ -76,7 +76,10 @@ Mappers: Data Transformations
    mappers.prototype
    mappers.fx
    mappers.som
+   mappers.lle
+   mappers.svd
    mappers.wavelet
+   mappers.detrend
    mappers.zscore
 
 
@@ -135,7 +138,6 @@ Measures: Searchlights and Sensitivties
    measures.glm
    measures.irelief
    measures.noiseperturbation
-   measures.pls
    measures.searchlight
 
 

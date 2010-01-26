@@ -10,9 +10,9 @@
 .. _chap_tutorial3:
 .. index:: Tutorial
 
-**********************************************
-Tutorial Part 3: Mappers, The Swiss Army Knife
-**********************************************
+*************************************
+Part 3: Mappers, The Swiss Army Knife
+*************************************
 
 what for ...
 
@@ -25,6 +25,6 @@ Literature
 Related API Documentation
 -------------------------
 .. autosummary::
-   :toctree:
+   :toctree: generated
 
    ~mvpa.mappers.base.Mapper

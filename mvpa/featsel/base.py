@@ -119,16 +119,10 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         sensitivity = self.__sensitivity_analyzer(dataset)
         """Compute the sensitivity map."""
 
-        if len(sensitivity) > 1:
-            raise ValueError("Feature selectors cannot handle multiple "
-                             "sensitivities at once. '%s' returned %i "
-                             "sensitivities."
-                             % (self.__sensitivity_analyzer.__class__.__name__,
-                                len(sensitivity)))
         self.states.sensitivity = sensitivity
 
         # Select features to preserve
-        selected_ids = self.__feature_selector(sensitivity.samples[0])
+        selected_ids = self.__feature_selector(sensitivity)
 
         if __debug__:
             debug("FS_", "Sensitivity: %s Selected ids: %s" %
