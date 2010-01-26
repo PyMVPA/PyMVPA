@@ -20,7 +20,7 @@ from mvpa.base.dataset import AttrDataset
 from mvpa.base.dataset import _expand_attribute
 from mvpa.misc.support import idhash as idhash_
 from mvpa.mappers.base import ChainMapper, FeatureSliceMapper
-from mvpa.mappers.flatten import mask_mapper
+from mvpa.mappers.flatten import mask_mapper, FlattenMapper
 
 if __debug__:
     from mvpa.base import debug
@@ -195,9 +195,13 @@ class Dataset(AttrDataset):
         ds = cls(samples, sa=sa_items)
         # apply mask through mapper
         if mask is None:
-            mask = N.ones(samples.shape[1:], dtype='bool')
-        mmapper = mask_mapper(mask, inspace=space)
-        ds = ds.get_mapped(mmapper)
+            if len(samples.shape) > 2:
+                # if we have multi-dim data
+                fm = FlattenMapper(shape=samples.shape[1:], inspace=space)
+                ds = ds.get_mapped(fm)
+        else:
+            mm = mask_mapper(mask, inspace=space)
+            ds = ds.get_mapped(mm)
 
         # apply generic mapper
         if not mapper is None:
