@@ -39,13 +39,13 @@ samp2 = N.random.randn(nsamp,nfeat)
 samp2[:,:goodfeat] -= offset
 
 # create the pymvpa training dataset from the labeled features
-patternsPos = dataset(samples=samp1[:ntrain,:], labels=1)
-patternsNeg = dataset(samples=samp2[:ntrain,:], labels=0)
+patternsPos = dataset_wizard(samples=samp1[:ntrain,:], labels=1)
+patternsNeg = dataset_wizard(samples=samp2[:ntrain,:], labels=0)
 trainpat = vstack((patternsPos, patternsNeg))
 
 # create patters for the testing dataset
-patternsPos = dataset(samples=samp1[ntrain:,:], labels=1)
-patternsNeg = dataset(samples=samp2[ntrain:,:], labels=0)
+patternsPos = dataset_wizard(samples=samp1[ntrain:,:], labels=1)
+patternsNeg = dataset_wizard(samples=samp2[ntrain:,:], labels=0)
 testpat = vstack((patternsPos, patternsNeg))
 
 # set up the SMLR classifier

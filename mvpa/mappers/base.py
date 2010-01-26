@@ -412,6 +412,9 @@ class FeatureSliceMapper(Mapper):
         if isinstance(self._slicearg, slice) and self._slicearg == slice(None):
             self._slicearg = other._slicearg
             return self
+        if isinstance(self._slicearg, list):
+            # simply convert it into an array and proceed from there
+            self._slicearg = N.asanyarray(self._slicearg)
         if self._slicearg.dtype.type is N.bool_:
             # simply convert it into an index array --prevents us from copying a
             # lot and allows for sliceargs such as [3,3,4,4,5,5]

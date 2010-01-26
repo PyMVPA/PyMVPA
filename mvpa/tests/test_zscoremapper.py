@@ -18,7 +18,7 @@ from mvpa.support.copy import deepcopy
 import numpy as N
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
-from mvpa.datasets.base import dataset
+from mvpa.datasets.base import dataset_wizard
 from mvpa.mappers.zscore import ZScoreMapper
 from mvpa.datasets.miscfx import zscore
 
@@ -33,7 +33,7 @@ class ZScoreMapperTests(unittest.TestCase):
         """
         # data: 40 sample feature line in 20d space (40x20; samples x features)
         self.dss = [
-            dataset(N.concatenate(
+            dataset_wizard(N.concatenate(
                 [N.arange(40) for i in range(20)]).reshape(20,-1).T,
                     labels=1, chunks=1),
             ] + datasets.values()

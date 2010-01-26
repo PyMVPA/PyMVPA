@@ -28,7 +28,7 @@ class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
         mask = N.ones( (3, 4, 2), dtype='bool')
         mask[0,0,0] = 0
         mask[1,3,1] = 0
-        self.dataset = Dataset.from_masked(samples=data, labels=labels,
+        self.dataset = Dataset.from_wizard(samples=data, labels=labels,
                                            chunks=chunks, mask=mask)
 
 

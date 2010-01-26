@@ -84,7 +84,7 @@ def test_fmridataset():
                       labels=attr.labels, chunks=attr.chunks,
                       mask=maskimg,
                       sprefix='subj1',
-                      mattr='myintmask')
+                      add_fa={'myintmask': maskimg})
     # content
     assert_equal(len(ds), 1452)
     assert_true(ds.nfeatures, 530)
