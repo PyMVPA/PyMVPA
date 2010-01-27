@@ -25,7 +25,7 @@ from mvpa.mappers.base import Mapper
 class PolyDetrendMapper(Mapper):
     """Mapper for regression-based removal of polynomial trends.
 
-    Noteworthy feature are the possibility for chunk-wise detrending, optional
+    Noteworthy features are the possibility for chunk-wise detrending, optional
     regressors, and the ability to use positional information about the samples
     from the dataset.
 
@@ -341,4 +341,8 @@ def poly_detrend(ds, **kwargs):
     """
     dm = PolyDetrendMapper(**kwargs)
     dm._secret_inplace_detrend = True
-    return dm(ds)
+    # map
+    mapped = dm(ds)
+    # and append the mapper to the dataset
+    mapped._append_mapper(dm)
+    return mapped
