@@ -11,7 +11,7 @@
 
 import numpy as N
 from numpy.testing import assert_array_equal
-from nose.tools import assert_equal, assert_raises
+from mvpa.testing.tools import assert_equal, assert_raises
 from mvpa.mappers.fx import *
 from mvpa.datasets.base import dataset_wizard, Dataset
 

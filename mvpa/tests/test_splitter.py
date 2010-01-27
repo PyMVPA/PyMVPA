@@ -14,7 +14,7 @@ from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter, \
                                    CustomSplitter, NGroupSplitter
 import unittest
 from numpy.testing import assert_array_equal
-from nose.tools import ok_
+from mvpa.testing.tools import ok_
 import numpy as N
 
 
