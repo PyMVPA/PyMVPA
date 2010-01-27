@@ -29,7 +29,6 @@ Related API documentation
    base.dataset
    datasets.base
    datasets.mri
-   datasets.channel
    datasets.eep
    datasets.miscfx
    datasets.splitters
