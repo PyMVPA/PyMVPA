@@ -80,7 +80,7 @@ def single_or_plural(single, plural, n):
 
 def handle_docstring(text, polite=True):
     """Take care of empty and non existing doc strings."""
-    if text == None or not len(text):
+    if text is None or not len(text):
         if polite:
             return '' #No documentation found. Sorry!'
         else:
@@ -122,7 +122,7 @@ def _split_out_parameters(initdoc):
     # TODO: bind it to the only word in the line
     p_res = __parameters_str_re.search(initdoc)
     if p_res is None:
-        result = initdoc, "", ""
+        return initdoc, "", ""
     else:
         # Could have been accomplished also via re.match
 
@@ -144,7 +144,9 @@ def _split_out_parameters(initdoc):
 
     # XXX a bit of duplication of effort since handle_docstring might
     # do splitting internally
-    return [handle_docstring(x, polite=False).strip('\n') for x in result]
+    return handle_docstring(result[0], polite=False).strip('\n'), \
+           textwrap.dedent(result[1]).strip('\n'), \
+           textwrap.dedent(result[2]).strip('\n')
 
 
 __re_params = re.compile('(?:\n\S.*?)+$')
@@ -156,7 +158,7 @@ def _parse_parameters(paramdoc):
     It is needed to remove multiple entries for the same parameter
     like it could be with adding parameters from the parent class
 
-    It assumes that previousely parameters were unwrapped, so their
+    It assumes that previously parameters were unwrapped, so their
     documentation starts at the begining of the string, like what
     should it be after _split_out_parameters
     """
@@ -312,9 +314,16 @@ def enhancedDocString(item, *args, **kwargs):
 
     # Add information about the states if available
     if lcl.has_key('_statesdoc') and len(item._statesdoc):
+        # to don't conflict with Notes section if such was already
+        # present
+        lcldoc = lcl['__doc__'] or ''
+        if not 'Notes' in lcldoc:
+            section_name = _rst_section('Notes')
+        else:
+            section_name = '\n'         # just an additional newline
         # no indent is necessary since states list must be already indented
-        docs += [_rst_section('Notes') + '\nAvailable state variables:',
-                     handle_docstring(item._statesdoc)]
+        docs += ['%s\nAvailable state variables:' % section_name,
+                 handle_docstring(item._statesdoc)]
 
     # Deprecated -- but actually we might like to have it in ipython
     # mode may be?
@@ -458,6 +467,14 @@ def _str(obj, *args, **kwargs):
 def borrowdoc(cls, methodname=None):
     """Return a decorator to borrow docstring from another `cls`.`methodname`
 
+    Examples
+    --------
+    To borrow `__repr__` docstring from parent class `Mapper`, do::
+
+       @borrowdoc(Mapper)
+       def __repr__(self):
+           ...
+
     Parameters
     ----------
     cls
@@ -478,3 +495,73 @@ def borrowdoc(cls, methodname=None):
             method.__doc__ = other_method.__doc__
         return method
     return _borrowdoc
+
+
+def borrowkwargs(cls, methodname=None, exclude=None):
+    """Return  a decorator which would borrow docstring for ``**kwargs``
+
+    Notes
+    -----
+    TODO: take care about ``*args`` in  a clever way if those are also present
+
+    Examples
+    --------
+    In the simplest scenario -- just grab all arguments from parent class::
+
+           @borrowkwargs(A)
+           def met1(self, bu, **kwargs):
+               pass
+
+    Parameters
+    ----------
+    methodname : None or str
+      Name of the method from which to borrow.  If None, would use
+      the same name as of the decorated method
+    exclude : None or list of arguments to exclude
+      If function does not pass all ``**kwargs``, you would need to list
+      those here to be excluded from borrowed docstring
+    """
+
+    def _borrowkwargs(method):
+        """Decorator which borrows docstrings for ``**kwargs`` for the `method`
+        """
+        if methodname is None:
+            other_method = getattr(cls, method.__name__)
+        else:
+            other_method = getattr(cls, methodname)
+        # TODO:
+        # method.__doc__ = enhanced_from(other_method.__doc__)
+
+        mdoc, odoc = method.__doc__, other_method.__doc__
+        if mdoc is None:
+            mdoc = ''
+
+        mpreamble, mparams, msuffix = _split_out_parameters(mdoc)
+        opreamble, oparams, osuffix = _split_out_parameters(odoc)
+        mplist = _parse_parameters(mparams)
+        oplist = _parse_parameters(oparams)
+        known_params = set([i[0] for i in mplist])
+
+        # !!! has to not rebind exclude variable
+        skip_params = exclude or []         # handle None
+        skip_params = set(['kwargs', '**kwargs'] + skip_params)
+
+        # combine two and filter out items to skip
+        aplist = [i for i in mplist + oplist
+                  if not i[0] in skip_params]
+
+        docstring = mpreamble
+        if len(aplist):
+            params_ = '\n'.join([i[1].rstrip() for i in aplist])
+            docstring += "\n\n%s\n" \
+                         % _rst_section('Parameters') + _indent(params_)
+
+        if msuffix != "":
+            docstring += "\n\n" + msuffix
+
+        docstring = handle_docstring(docstring)
+
+        # Finally assign generated doc to the method
+        method.__doc__ = docstring
+        return method
+    return _borrowkwargs

@@ -31,7 +31,6 @@ def collectTestSuites():
         'test_splitter',
         'test_state',
         'test_params',
-        'test_eepdataset',
         # Misc supporting utilities
         'test_config',
         'test_stats',
@@ -123,6 +122,7 @@ def collectNoseTests():
               'test_mapper',
               'test_fxmapper',
               'test_neighborhood',
+              'test_eepdataset',
               ]
     if externals.exists('scipy'):
         tests += ['test_mapper_sp']

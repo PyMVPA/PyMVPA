@@ -12,7 +12,7 @@
 import unittest
 import numpy as N
 from numpy.linalg import norm
-from mvpa.datasets.base import dataset
+from mvpa.datasets.base import dataset_wizard
 from tests_warehouse import datasets, sweepargs, get_random_rotation
 from mvpa.mappers.procrustean import ProcrusteanMapper
 
@@ -20,7 +20,7 @@ from mvpa.mappers.procrustean import ProcrusteanMapper
 class ProcrusteanMapperTests(unittest.TestCase):
 
     @sweepargs(oblique=(False,True))
-    def testSimple(self, oblique):
+    def test_simple(self, oblique):
         d_orig = datasets['uni2large'].samples
         d_orig2 = datasets['uni4large'].samples
         for sdim, nf_s, nf_t, full_test \
@@ -51,7 +51,7 @@ class ProcrusteanMapperTests(unittest.TestCase):
                 d_t = N.dot(s * d, R) + t2
 
                 # train bloody mapper(s)
-                ds = dataset(samples=d_s, labels=d_t)
+                ds = dataset_wizard(samples=d_s, labels=d_t)
                 pm.train(ds)
                 ## not possible with new interface
                 #pm2.train(d_s, d_t)

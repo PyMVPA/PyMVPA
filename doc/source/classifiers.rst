@@ -15,6 +15,44 @@
 Classifiers
 ***********
 
+.. automodule:: mvpa.clfs
+
+
+Related API documentation
+=========================
+
+.. currentmodule:: mvpa
+.. autosummary::
+   :toctree: generated
+
+   clfs.base
+   clfs.meta
+   clfs.blr
+   clfs.enet
+   clfs.glmnet
+   clfs.gnb
+   clfs.gpr
+   clfs.knn
+   clfs.lars
+   clfs.plr
+   clfs.ridge
+   clfs.smlr
+   clfs.svm
+   clfs.sg
+   clfs.libsvmc
+   clfs.distance
+   clfs.similarity
+   clfs.stats
+   clfs.transerror
+   clfs.warehouse
+
+
+
+
+
+
+
+
 PyMVPA includes a number of ready-to-use classifiers, which are described in
 the following sections. All classifiers implement the same, very simple
 interface. Each classifier object takes all relevant parameters as arguments to

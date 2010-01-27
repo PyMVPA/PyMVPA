@@ -17,7 +17,7 @@ from mvpa.misc.io.hamster import *
 
 class HamsterHelperTests(unittest.TestCase):
 
-    def testSpecification(self):
+    def test_specification(self):
 
         # more than 1 positional
         self.failUnlessRaises(ValueError, Hamster, "1", 2)
@@ -35,7 +35,7 @@ class HamsterHelperTests(unittest.TestCase):
         self.failUnless(`hh` == "Hamster(fuga='123', h1=123, z=[123])")
 
 
-    def testSimpleStorage(self):
+    def test_simple_storage(self):
         ex1 = """eins zwei drei
         0 1 2
         3 4 5
@@ -99,7 +99,7 @@ class HamsterHelperTests(unittest.TestCase):
         os.remove(filename_gz)
         os.remove(filename_bogusgz)
 
-    def testAssignment(self):
+    def test_assignment(self):
         ex1 = """eins zwei drei
         0 1 2
         3 4 5

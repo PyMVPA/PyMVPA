@@ -283,6 +283,14 @@ class ElementSelector(ClassWithCollections):
                     "as input."
                     % (seq,))
             seq = seq.samples[0]
+        elif hasattr(seq, 'shape'):
+            shape = seq.shape
+            if len(shape) > 1:
+                raise ValueError(
+                    "Feature selectors cannot handle multidimensional "
+                    "inputs (such as ndarrays with more than a single "
+                    "dimension.  We got %s with shape %s "
+                    "as input." % (seq.__class__, shape))
         return self._call(seq)
 
     def _call(self, seq):

@@ -24,7 +24,7 @@ from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.param import Parameter
 from mvpa.misc.transformers import GrandMean
 from mvpa.mappers.procrustean import ProcrusteanMapper
-from mvpa.datasets import dataset, Dataset
+from mvpa.datasets import dataset_wizard, Dataset
 from mvpa.datasets.miscfx import zscore
 
 if __debug__:
@@ -127,7 +127,7 @@ class Hyperalignment(ClassWithCollections):
             if i == ref_ds:
                 continue
             #ZSC zscore(data, perchunk=False)
-            ds = dataset(samples=data, labels=commonspace)
+            ds = dataset_wizard(samples=data, labels=commonspace)
             #ZSC zscore(ds, perchunk=False)
             m.train(ds)
             data_temp = m.forward(data)

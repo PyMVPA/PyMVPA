@@ -198,7 +198,7 @@ for kind, spec in specs.iteritems():
     mask = N.ones((3, 6, 6), dtype='bool')
     mask[0, 0, 0] = 0
     mask[1, 3, 2] = 0
-    ds = Dataset.from_masked(samples=data, labels=labels, chunks=chunks,
+    ds = Dataset.from_wizard(samples=data, labels=labels, chunks=chunks,
                              mask=mask, space='myspace')
     datasets['3d%s' % kind] = ds
 

@@ -81,14 +81,12 @@ you are running this example first.
 """
 
 data = cPickle.load(gzip.open('mnist.pickle.gz'))
-ds = Dataset.from_basic(
+ds = dataset_wizard(
         data['traindata'],
-        labels=data['trainlabels'],
-        mapper=FlattenMapper((28, 28)))
-testds = Dataset.from_basic(
+        labels=data['trainlabels'])
+testds = dataset_wizard(
         data['testdata'],
-        labels=data['testlabels'],
-        mapper=ds.a.mapper)
+        labels=data['testlabels'])
 
 ds.init_origids('samples')
 testds.init_origids('samples')

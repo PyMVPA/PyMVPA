@@ -34,8 +34,7 @@ from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
-from nose.tools import assert_equal
-from numpy.testing import assert_array_equal
+from mvpa.testing.tools import assert_equal, assert_array_equal
 
 _MEASURES_2_SWEEP = [ OneWayAnova(),
                       CompoundOneWayAnova(mapper=sumofabs_sample()),
@@ -56,7 +55,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
 
     @sweepargs(dsm=_MEASURES_2_SWEEP)
-    def testBasic(self, dsm):
+    def test_basic(self, dsm):
         data = datasets['dumbinv']
         datass = data.samples.copy()
 
@@ -81,7 +80,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                [(c, datasets['uni4large'])
                 for c in clfswh['has_sensitivity', 'multiclass']]
                )
-    def testAnalyzerWithSplitClassifier(self, clfds):
+    def test_analyzer_with_split_classifier(self, clfds):
         """Test analyzers in split classifier
         """
         clf, ds = clfds             # unroll the tuple
@@ -222,13 +221,13 @@ class SensitivityAnalysersTests(unittest.TestCase):
                         " original features were %s for nonbogus features %s"
                         % (labels1, maxsensi2, ilabel2, ds.a.nonbogus_features))
                     """
-                    XXX in progress
                     # Now test for the sign of each one in pair ;) in
                     # all binary problems L1 (-1) -> L2(+1), then
                     # weights for L2 should be positive.  to test for
                     # L1 -- invert the sign
                     # We already know (if we haven't failed in previous test),
                     # that those 2 were the strongest -- so check only signs
+                    """
                     self.failUnless(
                         sens1.samples[0, ilabel2[0]]<0,
                         "With %i classes in pair %s got feature %i for %r >= 0"
@@ -236,7 +235,6 @@ class SensitivityAnalysersTests(unittest.TestCase):
                     self.failUnless(sens1.samples[0, ilabel2[1]]>0,
                         "With %i classes in pair %s got feature %i for %r <= 0"
                         % (nlabels, label, ilabel2[1], label[1]))
-                        """
                 else:
                     # yoh could be wrong at this assumption... time will show
                     self.fail("Got unknown number labels per sensitivity: %s."
@@ -245,7 +243,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
 
     @sweepargs(clf=clfswh['has_sensitivity'])
-    def testMappedClassifierSensitivityAnalyzer(self, clf):
+    def test_mapped_classifier_sensitivity_analyzer(self, clf):
         """Test sensitivity of the mapped classifier
         """
         # Assuming many defaults it is as simple as
@@ -268,7 +266,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
 
     @sweepargs(svm=clfswh['linear', 'svm'])
-    def testLinearSVMWeights(self, svm):
+    def test_linear_svm_weights(self, svm):
         # assumming many defaults it is as simple as
         sana = svm.getSensitivityAnalyzer(enable_states=["sensitivities"] )
         # and lets look at all sensitivities
@@ -285,7 +283,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
     #     getSengetSensitivityAnalyzer
     # Note: only libsvm interface supports split_weights
     @sweepargs(svm=clfswh['linear', 'svm', 'libsvm', '!sg', '!meta'])
-    def testLinearSVMWeightsPerClass(self, svm):
+    def test_linear_svm_weights_per_class(self, svm):
         # assumming many defaults it is as simple as
         kwargs = dict(enable_states=["sensitivities"])
         sana_split = svm.getSensitivityAnalyzer(
@@ -325,7 +323,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         warning.handlers = handlers
 
 
-    def testSplitFeaturewiseDatasetMeasure(self):
+    def test_split_featurewise_dataset_measure(self):
         ds = datasets['uni3small']
         sana = SplitFeaturewiseDatasetMeasure(
             analyzer=SMLR(
@@ -420,7 +418,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # sensitivity
         selected_features = rfe(self.dataset)
 
-    def testUnionFeatureSelection(self):
+    def test_union_feature_selection(self):
         # two methods: 5% highes F-scores, non-zero SMLR weights
         fss = [SensitivityBasedFeatureSelection(
                     OneWayAnova(),

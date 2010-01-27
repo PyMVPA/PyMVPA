@@ -6,8 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Base class for data measures: algorithms that quantify properties of
-datasets.
+"""Base classes for measures: algorithms that quantify properties of datasets.
 
 Besides the `DatasetMeasure` base class this module also provides the
 (abstract) `FeaturewiseDatasetMeasure` class. The difference between a general
@@ -59,6 +58,7 @@ class DatasetMeasure(ClassWithCollections):
     For developers: All subclasses shall get all necessary parameters via
     their constructor, so it is possible to get the same type of measure for
     multiple datasets by passing them to the __call__() method successively.
+
     """
 
     raw_results = StateVariable(enabled=False,
@@ -368,6 +368,9 @@ class StaticDatasetMeasure(DatasetMeasure):
 # Flavored implementations of FeaturewiseDatasetMeasures
 
 class Sensitivity(FeaturewiseDatasetMeasure):
+    """Sensitivities of features for a given Classifier.
+
+    """
 
     _LEGAL_CLFS = []
     """If Sensitivity is classifier specific, classes of classifiers
@@ -379,9 +382,9 @@ class Sensitivity(FeaturewiseDatasetMeasure):
 
         Parameters
         ----------
-        clf : :class:`Classifier`
+        clf : `Classifier`
           classifier to use.
-        force_training : Bool
+        force_training : bool
           if classifier was already trained -- do not retrain
         """
 

@@ -18,6 +18,7 @@ from StringIO import StringIO
 
 import mvpa
 from mvpa.base import externals, cfg
+from mvpa.base.dochelpers import borrowkwargs
 
 def _t2s(t):
     res = []
@@ -30,7 +31,38 @@ def _t2s(t):
             res += [e]
     return '/'.join(res)
 
-__all__ = ['wtf']
+__all__ = ['wtf', 'get_pymvpa_gitversion']
+
+
+def get_pymvpa_gitversion():
+    """PyMVPA version as reported by git.
+
+    Returns
+    -------
+    None or str
+      Version of PyMVPA according to git.
+    """
+    gitpath = os.path.join(os.path.dirname(mvpa.__file__), os.path.pardir)
+    gitpathgit = os.path.join(gitpath, '.git')
+    if not os.path.exists(gitpathgit):
+        return None
+    ver = None
+    try:
+        (tmpd, tmpn) = mkstemp('mvpa', 'git')
+        retcode = subprocess.call(['git',
+                                   '--git-dir=%s' % gitpathgit,
+                                   '--work-tree=%s' % gitpath,
+                                   'describe', '--abbrev=4', 'HEAD'
+                                   ],
+                                  stdout=tmpd,
+                                  stderr=subprocess.STDOUT)
+        outline = open(tmpn, 'r').readlines()[0].strip()
+        if outline.startswith('upstream/'):
+            ver = outline.replace('upstream/', '')
+    finally:
+        os.remove(tmpn)
+    return ver
+
 
 class WTF(object):
     """Convenience class to contain information about PyMVPA and OS
@@ -219,6 +251,7 @@ class WTF(object):
     __str__ = __repr__
 
 
+@borrowkwargs(WTF, '__init__')
 def wtf(filename=None, **kwargs):
     """Report summary about PyMVPA and the system
 
@@ -233,7 +266,7 @@ def wtf(filename=None, **kwargs):
 
     info = WTF(**kwargs)
     if filename is not None:
-        out = file(filename, 'w').write(str(info))
+        _ = file(filename, 'w').write(str(info))
     else:
         return info
 
