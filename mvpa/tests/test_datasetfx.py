@@ -10,7 +10,7 @@
 
 import unittest
 from numpy.testing import assert_array_equal
-from nose.tools import ok_, assert_equal
+from mvpa.testing.tools import ok_, assert_equal
 
 import numpy as N
 

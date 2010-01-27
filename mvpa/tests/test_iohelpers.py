@@ -13,7 +13,7 @@ import unittest
 from tempfile import mkstemp
 import numpy as N
 
-from nose.tools import ok_
+from mvpa.testing.tools import ok_
 
 from mvpa import pymvpa_dataroot
 from mvpa.misc.io import *

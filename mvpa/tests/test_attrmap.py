@@ -10,7 +10,7 @@
 import numpy as N
 
 from numpy.testing import assert_array_equal
-from nose.tools import assert_raises, ok_, assert_false, assert_equal
+from mvpa.testing.tools import assert_raises, ok_, assert_false, assert_equal
 
 from mvpa.misc.attrmap import AttributeMap
 

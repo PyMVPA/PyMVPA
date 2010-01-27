@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA least angle regression (ENET) classifier"""
 
-from nose.tools import assert_true, assert_equal
+from mvpa.testing.tools import assert_true, assert_equal
 from numpy.testing import assert_array_equal
 
 from mvpa import cfg

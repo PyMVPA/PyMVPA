@@ -16,7 +16,7 @@ from mvpa.misc.stats import chisquare
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.datasets.base import dataset_wizard
 
-from nose.tools import assert_raises
+from mvpa.testing.tools import assert_raises
 
 class StatsTestsScipy(unittest.TestCase):
     """Unittests for various statistics which use scipy"""
