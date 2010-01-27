@@ -16,7 +16,7 @@ from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa.misc.fx import doubleGammaHRF, singleGammaHRF
 from tests_warehouse import *
 from mvpa import cfg
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+from mvpa.testing.tools import assert_array_almost_equal, assert_array_equal
 from mvpa.testing.tools import assert_true, assert_equal
 
 # Prepare few distributions to test

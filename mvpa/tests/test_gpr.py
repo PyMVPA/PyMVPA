@@ -13,7 +13,7 @@ from mvpa.misc import data_generators
 from mvpa.kernels.np import GeneralizedLinearKernel
 from mvpa.clfs.gpr import GPR
 
-from numpy.testing import assert_array_equal, assert_array_almost_equal
+from mvpa.testing.tools import assert_array_equal, assert_array_almost_equal
 
 if __debug__:
     from mvpa.base import debug

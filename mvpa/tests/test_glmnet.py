@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA least angle regression (ENET) classifier"""
 
 from mvpa.testing.tools import assert_true, assert_equal
-from numpy.testing import assert_array_equal
+from mvpa.testing.tools import assert_array_equal
 
 from mvpa import cfg
 from mvpa.clfs.glmnet import GLMNET_R,GLMNET_C
