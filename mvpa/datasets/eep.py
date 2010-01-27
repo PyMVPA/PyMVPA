@@ -10,14 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-
-import numpy as N
-
-from mvpa.base.dochelpers import enhancedDocString
-from mvpa.base import warning
-from mvpa.base.dataset import DatasetError
-
-from mvpa.datasets.channel import ChannelDataset
+from mvpa.datasets import Dataset
 from mvpa.misc.io.eepbin import EEPBin
 
 def eep_dataset(samples, labels=None, chunks=None):
@@ -28,34 +21,36 @@ def eep_dataset(samples, labels=None, chunks=None):
     Cognitive Neuroscience in Leipzig, Germany.
 
       http://www.ant-neuro.com/products/eeprobe
-    """
-    # dataset props defaults
-    dt = t0 = channelids = None
 
-    # default way to use the constructor: with filename
+    Parameters
+    ----------
+    samples : str or EEPBin instance
+      This is either a filename of an EEP file, or an EEPBin instance, providing
+      the samples data in EEP format.
+    labels, chunks : sequence or scalar or None
+      Values are pass through to `Dataset.from_wizard()`. See its documentation
+      for more information.
+
+    Returns
+    -------
+    Dataset
+      Besides is usual attributes (e.g. labels, chunks, and a mapper). The
+      returned dataset also includes feature attributes associating each same
+      with a channel (by id), and a specific timepoint -- based on information
+      read from the EEP data.
+    """
     if isinstance(samples, str):
         # open the eep file
-        try:
-            eb = EEPBin(samples)
-        except RuntimeError, e:
-            warning("ERROR: EEPDatasets: Cannot open samples file %s" \
-                    % samples) # should we make also error?
-            raise e
+        eb = EEPBin(samples)
     elif isinstance(samples, EEPBin):
         # nothing special
         eb = samples
     else:
-        raise DatasetError(
-              "EEPDataset constructor takes the filename of an "
+        raise ValueError("eep_dataset takes the filename of an "
               "EEP file or a EEPBin object as 'samples' argument.")
 
-    samples = eb.data
-    dt = eb.dt
-    channelids = eb.channels
-    t0 = eb.t0
-
     # init dataset
-    ds = ChannelDataset.from_temporaldata(
+    ds = Dataset.from_channeltimeseries(
             eb.data, labels=labels, chunks=chunks, t0=eb.t0, dt=eb.dt,
             channelids=eb.channels)
     return ds

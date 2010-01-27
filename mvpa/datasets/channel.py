@@ -10,6 +10,15 @@
 
 __docformat__ = 'restructuredtext'
 
+#
+#
+# THIS CODE IS OBSOLETE!
+#
+# PLEASE PORT substractBaseline() AND resample() TO WORK WITH ANY DATASET.
+#
+
+raise DeprecationWarning("ChannelDataset is obsolete and might vanish any "
+                         "second.")
 
 import numpy as N
 

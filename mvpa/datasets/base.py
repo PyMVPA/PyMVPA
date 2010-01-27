@@ -209,6 +209,63 @@ class Dataset(AttrDataset):
         return ds
 
 
+    @classmethod
+    def from_channeltimeseries(cls, samples, labels=None, chunks=None,
+                               t0=None, dt=None, channelids=None):
+        """Create a dataset from segmented, per-channel timeseries.
+
+        Channels are assumes to contain multiple, equally spaced acquisition
+        timepoints. The dataset will contain additional feature attributes
+        associating each feature with a specific `channel` and `timepoint`.
+
+        Parameters
+        ----------
+        samples : ndarray
+          Three-dimensional array: (samples x channels x timepoints).
+        t0 : float
+          Reference time of the first timepoint. Can be used to preserve
+          information about the onset of some stimulation. Preferably in
+          seconds.
+        dt : float
+          Temporal distance between two timepoints. Preferably in seconds.
+        channelids : list
+          List of channel names.
+        labels, chunks
+          See `Dataset.from_wizard` for documentation about these arguments.
+        """
+        # check samples
+        if len(samples.shape) != 3:
+            raise ValueError(
+                "Input data should be (samples x channels x timepoints. Got: %s"
+                % samples.shape)
+
+        if not t0 is None and not dt is None:
+            timepoints = N.arange(t0, t0 + samples.shape[2] * dt, dt)
+            # broadcast over all channels
+            timepoints = N.vstack([timepoints] * samples.shape[1])
+        else:
+            timepoints = None
+
+        if not channelids is None:
+            if len(channelids) != samples.shape[1]:
+                raise ValueError(
+                    "Number of channel ids does not match channels in the "
+                    "sample data. Expected %i, but got %i"
+                    % (samples.shape[1], len(channelids)))
+            # broadcast over all timepoints
+            channelids = N.dstack([channelids] * samples.shape[2])[0]
+
+        ds = cls.from_wizard(samples, labels=labels, chunks=chunks)
+
+        # add additional attributes
+        if not timepoints is None:
+            ds.fa['timepoints'] = ds.a.mapper.forward1(timepoints)
+        if not channelids is None:
+            ds.fa['channels'] = ds.a.mapper.forward1(channelids)
+
+        return ds
+
+
     # shortcut properties
     S = property(fget=lambda self:self.samples)
     labels = property(fget=lambda self:self.sa.labels,
