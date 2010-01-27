@@ -9,8 +9,7 @@
 """Unit tests for PyMVPA miscelaneouse functions operating on datasets"""
 
 import unittest
-from mvpa.testing.tools import assert_array_equal
-from mvpa.testing.tools import ok_, assert_equal
+from mvpa.testing.tools import ok_, assert_equal, assert_array_equal
 
 import numpy as N
 

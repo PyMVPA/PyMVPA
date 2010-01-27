@@ -12,14 +12,12 @@ import os
 import numpy as N
 from numpy import array
 
-from mvpa.testing.tools import assert_array_equal
-from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true
-
 from mvpa.datasets.base import Dataset
 import mvpa.misc.neighborhood as ne
 from mvpa.clfs.distance import *
 
+from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
+        assert_array_equal
 
 def test_distances():
     a = N.array([3,8])

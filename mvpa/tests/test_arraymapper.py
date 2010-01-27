@@ -11,8 +11,9 @@
 
 from mvpa.mappers.flatten import mask_mapper
 from mvpa.mappers.base import FeatureSliceMapper
-from mvpa.testing.tools import assert_array_equal
-from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal
+
+from mvpa.testing.tools import assert_raises, assert_equal, assert_array_equal
+
 import numpy as N
 
 def test_forward_dense_array_mapper():

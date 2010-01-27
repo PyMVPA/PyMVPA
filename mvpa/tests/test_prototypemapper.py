@@ -14,11 +14,11 @@ import numpy as N
 from mvpa.mappers.prototype import PrototypeMapper
 from mvpa.kernels.np import ExponentialKernel, SquaredExponentialKernel
 
-from mvpa.testing.tools import assert_array_equal, assert_array_almost_equal
-
 from mvpa.datasets import Dataset
 from mvpa.clfs.similarity import StreamlineSimilarity
 from mvpa.clfs.distance import corouge
+
+from mvpa.testing.tools import assert_array_equal, assert_array_almost_equal
 
 import random
 

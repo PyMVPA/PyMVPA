@@ -8,9 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA least angle regression (ENET) classifier"""
 
-from mvpa.testing.tools import assert_true, assert_equal
-from mvpa.testing.tools import assert_array_equal
-
 from mvpa import cfg
 from mvpa.clfs.glmnet import GLMNET_R,GLMNET_C
 
@@ -19,6 +16,8 @@ from mvpa.clfs.glmnet import GLMNET_R,GLMNET_C
 from mvpa.misc.errorfx import CorrErrorFx
 from tests_warehouse import *
 from mvpa.misc.data_generators import normalFeatureDataset
+
+from mvpa.testing.tools import assert_true, assert_equal, assert_array_equal
 
 def test_glmnet_r():
     # not the perfect dataset with which to test, but

@@ -34,8 +34,7 @@ from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
-from mvpa.testing.tools import assert_equal
-from mvpa.testing.tools import assert_array_equal
+from mvpa.testing.tools import assert_equal, assert_array_equal
 
 _MEASURES_2_SWEEP = [ OneWayAnova(),
                       CompoundOneWayAnova(mapper=sumofabs_sample()),

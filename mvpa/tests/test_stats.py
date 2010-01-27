@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA stats helpers"""
 
+from mvpa import cfg
 from mvpa.base import externals
 from mvpa.clfs.stats import MCNullDist, FixedNullDist, NullDist
 from mvpa.datasets import Dataset
@@ -15,9 +16,8 @@ from mvpa.measures.glm import GLM
 from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa.misc.fx import doubleGammaHRF, singleGammaHRF
 from tests_warehouse import *
-from mvpa import cfg
-from mvpa.testing.tools import assert_array_almost_equal, assert_array_equal
-from mvpa.testing.tools import assert_true, assert_equal
+from mvpa.testing.tools import assert_array_almost_equal, assert_array_equal, \
+assert_true, assert_equal
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
