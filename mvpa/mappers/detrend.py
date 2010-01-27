@@ -322,10 +322,6 @@ class PolyDetrendMapper(Mapper):
                            % self.__class__.__name__)
 
 
-    def _reverse_data(self, data):
-        raise RuntimeError("%s cannot map plain data."
-                           % self.__class__.__name__)
-
 
 @borrowkwargs(PolyDetrendMapper, '__init__')
 def poly_detrend(ds, **kwargs):
