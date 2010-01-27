@@ -16,6 +16,9 @@ import copy
 from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
 from mvpa.base.dochelpers import _str
 
+if __debug__:
+    from mvpa.base import debug
+
 
 class Mapper(object):
     """Interface to provide mapping between two spaces: IN and OUT.
@@ -679,7 +682,16 @@ class ChainMapper(Mapper):
         """
         mp = data
         for m in reversed(self):
-            mp = m.reverse(mp)
+            # we ignore mapper that do not have reverse mapping implemented
+            # (e.g. detrending). That might cause problems if ignoring the
+            # mapper make the data incompatible input for the next mapper in
+            # the chain. If that pops up, we have to think about a proper
+            # solution.
+            try:
+                mp = m.reverse(mp)
+            except NotImplementedError:
+                if __debug__:
+                    debug('MAP', "Ignoring %s on reverse mapping." % m)
         return mp
 
 
