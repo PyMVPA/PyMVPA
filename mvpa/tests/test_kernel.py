@@ -47,7 +47,7 @@ class KernelTests(unittest.TestCase):
                               k2m.astype('float32')),
                         '\n%s\nand\n%s\nare unequal as float32'%(k1, k2))
             
-    def testLinearKernel(self):
+    def test_linear_kernel(self):
         """Simplistic testing of linear kernel"""
         d1 = Dataset(N.asarray([range(5)]*10, dtype=float))
         lk = npK.LinearKernel()
@@ -57,7 +57,7 @@ class KernelTests(unittest.TestCase):
         self.failUnless((lk._k == 30).all(),
                         "Failure computing LinearKernel")
 
-    def testPrecomputedKernel(self):
+    def test_precomputed_kernel(self):
         """Statistic Kernels"""
         d = N.random.randn(50, 50)
         nk = PrecomputedKernel(matrix=d)
@@ -65,7 +65,7 @@ class KernelTests(unittest.TestCase):
         self.failUnless((d == nk._k).all(),
                         'Failure setting and retrieving PrecomputedKernel data')
 
-    def testCachedKernel(self):
+    def test_cached_kernel(self):
         nchunks = 5
         n = 50*nchunks
         d = Dataset(N.random.randn(n, 132))
@@ -116,7 +116,7 @@ class KernelTests(unittest.TestCase):
         # remaining innaccuracies in others, but this might be due to other
         # sources of noise.  In all cases float32 should be identical
             
-        def testSgConversions(self):
+        def test_sg_conversions(self):
             nk = PrecomputedKernel(matrix=N.random.randn(50, 50))
             nk.compute()
             if exists('sg ge 0.6.5'):
@@ -127,7 +127,7 @@ class KernelTests(unittest.TestCase):
                                  sk.as_raw_np().astype('float32')).all(),
                                 'Failure converting arrays between NP as SG')
             
-        def testLinearSG(self):
+        def test_linear_sg(self):
             d1 = N.random.randn(105, 32)
             d2 = N.random.randn(41, 32)
             
@@ -138,7 +138,7 @@ class KernelTests(unittest.TestCase):
             
             self.kernel_equiv(nk, sk)
             
-        def testPolySG(self):
+        def test_poly_sg(self):
             d1 = N.random.randn(105, 32)
             d2 = N.random.randn(41, 32)
             sk = sgK.PolySGKernel()
@@ -155,7 +155,7 @@ class KernelTests(unittest.TestCase):
                 # think this is a huge issue --SG
                 self.kernel_equiv(nk, sk, accuracy = 10.**(p-12))
                 
-        def testRbfSG(self):
+        def test_rbf_sg(self):
             d1 = N.random.randn(105, 32)
             d2 = N.random.randn(41, 32)
             sk = sgK.RbfSGKernel()
@@ -169,7 +169,7 @@ class KernelTests(unittest.TestCase):
                 
                 self.kernel_equiv(nk, sk)
                 
-        def testCustomSG(self):
+        def test_custom_sg(self):
             lk = sgK.LinearSGKernel()
             cl = sgK.CustomSGKernel(sgK.sgk.LinearKernel)
             poly = sgK.PolySGKernel()
@@ -193,7 +193,7 @@ class KernelTests(unittest.TestCase):
                             'CustomSGKernel does not agree with Poly')
 
     # Older kernel stuff (ie not mvpa.kernel) - perhaps refactor?
-    def testEuclidDist(self):
+    def test_euclid_dist(self):
         """Euclidean distance kernel testing"""
 
         # select some block of data from already generated
@@ -222,7 +222,7 @@ class KernelTests(unittest.TestCase):
         self.failUnless((ed - ed_manual).sum() < 0.0000001)
 
 
-    def testPNorm_w(self):
+    def test_pnorm_w(self):
         data0 = datasets['uni4large'].samples.T
         weight = N.abs(data0[11, :60])
 

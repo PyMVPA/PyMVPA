@@ -27,7 +27,7 @@ class SearchlightTests(unittest.TestCase):
         self.dataset.fa['voxel_indices'] = self.dataset.fa.myspace
 
 
-    def testSpatialSearchlight(self):
+    def test_spatial_searchlight(self):
         # compute N-1 cross-validation for each sphere
         # YOH: unfortunately sample_clf_lin is not guaranteed
         #      to provide exactly the same results due to inherent
@@ -76,7 +76,7 @@ class SearchlightTests(unittest.TestCase):
             dmax = N.max(dresults)
             self.failUnlessEqual(dmax, 0.0)
 
-    def testPartialSearchlightWithFullReport(self):
+    def test_partial_searchlight_with_full_report(self):
         # compute N-1 cross-validation for each sphere
         transerror = TransferError(sample_clf_lin)
         cv = CrossValidatedTransferError(
@@ -93,7 +93,7 @@ class SearchlightTests(unittest.TestCase):
         self.failUnlessEqual(results.shape, (len(self.dataset.UC), 2))
 
 
-    def testChiSquareSearchlight(self):
+    def test_chi_square_searchlight(self):
         # only do partial to save time
         if not externals.exists('scipy'):
             return

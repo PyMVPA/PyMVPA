@@ -24,7 +24,7 @@ from mvpa.misc.data_generators import normalFeatureDataset
 
 class MiscDatasetFxTests(unittest.TestCase):
 
-    def testAggregation(self):
+    def test_aggregation(self):
         data = dataset_wizard(N.arange( 20 ).reshape((4, 5)), labels=1, chunks=1)
 
         ag_data = aggregateFeatures(data, N.mean)
@@ -34,7 +34,7 @@ class MiscDatasetFxTests(unittest.TestCase):
         assert_array_equal(ag_data.samples[:, 0], [2, 7, 12, 17])
 
 
-    def testInvarFeaturesRemoval(self):
+    def test_invar_features_removal(self):
         r = N.random.normal(size=(3,1))
         ds = dataset_wizard(samples=N.hstack((N.zeros((3,2)), r)),
                      labels=1)
@@ -47,7 +47,7 @@ class MiscDatasetFxTests(unittest.TestCase):
         self.failUnless((dsc.samples == r).all())
 
 
-    def testCoarsenChunks(self):
+    def test_coarsen_chunks(self):
         """Just basic testing for now"""
         chunks = [1,1,2,2,3,3,4,4]
         ds = dataset_wizard(samples=N.arange(len(chunks)).reshape(
@@ -62,7 +62,7 @@ class MiscDatasetFxTests(unittest.TestCase):
         coarsenChunks(ds2, nchunks=2)
         self.failUnless((chunks1 == ds.chunks).all())
 
-    def testBinds(self):
+    def test_binds(self):
         ds = normalFeatureDataset()
         ds_data = ds.samples.copy()
         ds_chunks = ds.chunks.copy()
@@ -87,7 +87,7 @@ class MiscDatasetFxTests(unittest.TestCase):
             self.failUnless(N.all(ds.samples == ds_data),
                 msg="Function %s should have not modified original dataset" % f)
 
-    def testSequenceStat(self):
+    def test_sequence_stat(self):
         """Test sequence statistics
         """
         order = 3

@@ -17,7 +17,7 @@ from mvpa.misc.io.meg import TuebingenMEG
 
 class MEGTests(unittest.TestCase):
 
-    def testTuebingenMEG(self):
+    def test_tuebingen_meg(self):
         if not externals.exists('gzip'):
             return
         meg = TuebingenMEG(os.path.join(pymvpa_dataroot, 'tueb_meg.dat.gz'))

@@ -21,7 +21,7 @@ from nose.tools import assert_raises
 class StatsTestsScipy(unittest.TestCase):
     """Unittests for various statistics which use scipy"""
 
-    def testChiSquare(self):
+    def test_chi_square(self):
         """Test chi-square distribution"""
         # test equal distribution
         tbl = N.array([[5, 5], [5, 5]])
@@ -36,7 +36,7 @@ class StatsTestsScipy(unittest.TestCase):
         self.failUnless(p < 0.05)
 
 
-    def testNullDistProbAny(self):
+    def test_null_dist_prob_any(self):
         """Test 'any' tail statistics estimation"""
         if not externals.exists('scipy'):
             return
@@ -64,7 +64,7 @@ class StatsTestsScipy(unittest.TestCase):
 
 
     @sweepargs(nd=nulldist_sweep)
-    def testDatasetMeasureProb(self, nd):
+    def test_dataset_measure_prob(self, nd):
         """Test estimation of measures statistics"""
         if not externals.exists('scipy'):
             # due to null_t requirement
@@ -113,7 +113,7 @@ class StatsTestsScipy(unittest.TestCase):
                             score.samples[0][ds.a.bogus_features])))
 
 
-    def testNegativeT(self):
+    def test_negative_t(self):
         """Basic testing of the sign in p and t scores
         """
         from mvpa.measures.base import FeaturewiseDatasetMeasure
@@ -139,7 +139,7 @@ class StatsTestsScipy(unittest.TestCase):
         self.failUnless((t[2:4] < 0).all())
 
 
-    def testMatchDistribution(self):
+    def test_match_distribution(self):
         """Some really basic testing for matchDistribution
         """
         from mvpa.clfs.stats import matchDistribution, rv_semifrozen
@@ -187,7 +187,7 @@ class StatsTestsScipy(unittest.TestCase):
                         # 30 best matching ;-)
                         self.failUnless(inorm <= 30)
 
-    def testRDistStability(self):
+    def test_r_dist_stability(self):
         """Test either rdist distribution performs nicely
         """
         try:
@@ -227,7 +227,7 @@ class StatsTestsScipy(unittest.TestCase):
         self.failUnless(v>=0, v<=1)
 
 
-    def testAnovaCompliance(self):
+    def test_anova_compliance(self):
         ds = datasets['uni2large']
 
         fwm = OneWayAnova()
@@ -240,7 +240,7 @@ class StatsTestsScipy(unittest.TestCase):
 
 
 
-    def testGLM(self):
+    def test_glm(self):
         """Test GLM
         """
         # play fmri
@@ -308,7 +308,7 @@ class StatsTestsScipy(unittest.TestCase):
                 msg='with signal should have higher zstats')
 
 
-    def testBinomdistPPF(self):
+    def test_binomdist_ppf(self):
         """Test if binomial distribution works ok
 
         after possibly a monkey patch

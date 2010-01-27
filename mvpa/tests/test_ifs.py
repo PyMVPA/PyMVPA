@@ -35,7 +35,7 @@ class IFSTests(unittest.TestCase):
     # should test for every known classifier since we are simply
     # testing IFS algorithm - not sensitivities
     @sweepargs(svm=clfswh['has_sensitivity', '!meta'][:1])
-    def testIFS(self, svm):
+    def test_ifs(self, svm):
 
         # data measure and transfer error quantifier use the SAME clf!
         trans_error = TransferError(svm)

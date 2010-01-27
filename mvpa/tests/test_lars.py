@@ -16,7 +16,7 @@ from mvpa.misc.data_generators import normalFeatureDataset
 
 class LARSTests(unittest.TestCase):
 
-    def testLARS(self):
+    def test_lars(self):
         # not the perfect dataset with which to test, but
         # it will do for now.
         #data = datasets['dumb2']
@@ -35,7 +35,7 @@ class LARSTests(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless(cor[0] > .8)
 
-    def testLARSState(self):
+    def test_lars_state(self):
         #data = datasets['dumb2']
         # for some reason the R code fails with the dumb data
         data = datasets['chirp_linear']
@@ -52,7 +52,7 @@ class LARSTests(unittest.TestCase):
         self.failUnless((p == clf.states.predictions).all())
 
 
-    def testLARSSensitivities(self):
+    def test_lars_sensitivities(self):
         data = datasets['chirp_linear']
 
         # use LARS on binary problem

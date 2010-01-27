@@ -43,7 +43,7 @@ class StatsTests(unittest.TestCase):
 
 
     @sweepargs(null=nulldist_sweep[1:])
-    def testNullDistProb(self, null):
+    def test_null_dist_prob(self, null):
         """Testing null dist probability"""
         if not isinstance(null, NullDist):
             return
@@ -73,7 +73,7 @@ class StatsTests(unittest.TestCase):
             self.failUnlessRaises(ValueError, null.p, [5, 3, 4])
 
 
-    def testAnova(self):
+    def test_anova(self):
         """Do some extended testing of OneWayAnova
 
         in particular -- compound estimation

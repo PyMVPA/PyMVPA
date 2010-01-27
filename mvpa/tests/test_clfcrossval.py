@@ -22,7 +22,7 @@ from tests_warehouse_clfs import *
 class CrossValidationTests(unittest.TestCase):
 
 
-    def testSimpleNMinusOneCV(self):
+    def test_simple_n_minus_one_cv(self):
         data = getMVPattern(3)
         data.init_origids('samples')
 
@@ -58,7 +58,7 @@ class CrossValidationTests(unittest.TestCase):
             self.failUnless(len(v) == 1)
 
 
-    def testNoiseClassification(self):
+    def test_noise_classification(self):
         # get a dataset with a very high SNR
         data = getMVPattern(10)
 
@@ -81,7 +81,7 @@ class CrossValidationTests(unittest.TestCase):
         self.failUnless( pmean < 0.58 and pmean > 0.42 )
 
 
-    def testHarvesting(self):
+    def test_harvesting(self):
         # get a dataset with a very high SNR
         data = getMVPattern(10)
         # do crossval with default errorfx and 'mean' combiner

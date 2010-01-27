@@ -16,7 +16,7 @@ if __debug__:
 
 class CmdlineHelpersTest(unittest.TestCase):
 
-    def testBasic(self):
+    def test_basic(self):
         """Test if we are not missing basic parts"""
         globals_ = globals()
         for member in  [#'_verboseCallback',

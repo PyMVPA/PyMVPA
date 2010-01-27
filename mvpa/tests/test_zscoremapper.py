@@ -39,7 +39,7 @@ class ZScoreMapperTests(unittest.TestCase):
             ] + datasets.values()
 
 
-    def testCompareToZscore(self):
+    def test_compare_to_zscore(self):
         """Test by comparing to results of elderly z-score function
         """
         for ds in self.dss:

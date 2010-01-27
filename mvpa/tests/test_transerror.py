@@ -30,7 +30,7 @@ from tests_warehouse_clfs import *
 
 class ErrorsTests(unittest.TestCase):
 
-    def testConfusionMatrix(self):
+    def test_confusion_matrix(self):
         data = N.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
         reg = [1,1,1,2,2,2,3,3,3]
         regl = [1,2,1,2,2,2,3,2,1]
@@ -98,7 +98,7 @@ class ErrorsTests(unittest.TestCase):
                              msg="Test if we get proper error value")
 
 
-    def testDegenerateConfusion(self):
+    def test_degenerate_confusion(self):
         # We must not just puke -- some testing splits might
         # have just a single target label
 
@@ -109,14 +109,14 @@ class ErrorsTests(unittest.TestCase):
             self.failUnless(cm.stats['ACC%'] == 100)
 
 
-    def testConfusionMatrixACC(self):
+    def test_confusion_matrix_acc(self):
         reg  = [0,0,1,1]
         regl = [1,0,1,0]
         cm = ConfusionMatrix(targets=reg, predictions=regl)
         self.failUnless('ACC%         50' in str(cm))
 
 
-    def testConfusionMatrixWithMappings(self):
+    def test_confusion_matrix_with_mappings(self):
         data = N.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
         reg = [1,1,1,2,2,2,3,3,3]
         regl = [1,2,1,2,2,2,3,2,1]
@@ -134,7 +134,7 @@ class ErrorsTests(unittest.TestCase):
 
 
     @sweepargs(l_clf=clfswh['linear', 'svm'])
-    def testConfusionBasedError(self, l_clf):
+    def test_confusion_based_error(self, l_clf):
         train = datasets['uni2medium_train']
         # to check if we fail to classify for 3 labels
         test3 = datasets['uni3medium_train']
@@ -159,7 +159,7 @@ class ErrorsTests(unittest.TestCase):
 
 
     @sweepargs(l_clf=clfswh['linear', 'svm'])
-    def testNullDistProb(self, l_clf):
+    def test_null_dist_prob(self, l_clf):
         train = datasets['uni2medium']
 
         # define class to estimate NULL distribution of errors
@@ -184,7 +184,7 @@ class ErrorsTests(unittest.TestCase):
 
 
     @sweepargs(l_clf=clfswh['linear', 'svm'])
-    def testPerSampleError(self, l_clf):
+    def test_per_sample_error(self, l_clf):
         train = datasets['uni2medium']
         train.init_origids('samples')
         terr = TransferError(clf=l_clf, enable_states=['samples_error'])
@@ -201,7 +201,7 @@ class ErrorsTests(unittest.TestCase):
 
 
     @sweepargs(clf=clfswh['multiclass'])
-    def testAUC(self, clf):
+    def test_auc(self, clf):
         """Test AUC computation
         """
         if isinstance(clf, MulticlassClassifier):
@@ -242,7 +242,7 @@ class ErrorsTests(unittest.TestCase):
 
 
 
-    def testConfusionPlot(self):
+    def test_confusion_plot(self):
         """Based on existing cell dataset results.
 
         Let in for possible future testing, but is not a part of the
@@ -502,7 +502,7 @@ class ErrorsTests(unittest.TestCase):
             P.close(fig)
             # P.show()
 
-    def testConfusionPlot2(self):
+    def test_confusion_plot2(self):
         """Based on a sample confusion which plots incorrectly
 
         """

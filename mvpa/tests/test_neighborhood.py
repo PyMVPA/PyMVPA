@@ -21,7 +21,7 @@ import mvpa.misc.neighborhood as ne
 from mvpa.clfs.distance import *
 
 
-def testDistances():
+def test_distances():
     a = N.array([3,8])
     b = N.array([6,4])
     # test distances or yarik recalls unit testing ;)
