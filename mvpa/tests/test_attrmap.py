@@ -9,8 +9,8 @@
 
 import numpy as N
 
-from mvpa.testing.tools import assert_array_equal
-from mvpa.testing.tools import assert_raises, ok_, assert_false, assert_equal
+from mvpa.testing.tools import assert_raises, ok_, assert_false, assert_equal, \
+     assert_array_equal
 
 from mvpa.misc.attrmap import AttributeMap
 

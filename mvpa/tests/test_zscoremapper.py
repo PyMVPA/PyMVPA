@@ -16,11 +16,11 @@ externals.exists('scipy', raiseException=True)
 
 from mvpa.support.copy import deepcopy
 import numpy as N
-from mvpa.testing.tools import assert_array_almost_equal, assert_array_equal
 
 from mvpa.datasets.base import dataset_wizard
 from mvpa.mappers.zscore import ZScoreMapper
 from mvpa.datasets.miscfx import zscore
+from mvpa.testing.tools import assert_array_almost_equal, assert_array_equal
 
 from tests_warehouse import datasets
 

@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA EEP dataset"""
 
-from mvpa.testing.tools import assert_equal, assert_true
-from mvpa.testing.tools import assert_array_equal, assert_array_almost_equal
 import os.path
 import numpy as N
 
@@ -18,6 +16,8 @@ from mvpa.base import externals
 from mvpa.datasets.eep import eep_dataset
 from mvpa.misc.io.eepbin import EEPBin
 
+from mvpa.testing.tools import assert_equal, assert_true, \
+     assert_array_almost_equal
 
 def test_eep_load():
     eb = EEPBin(os.path.join(pymvpa_dataroot, 'eep.bin'))

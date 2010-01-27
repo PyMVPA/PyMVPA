@@ -12,9 +12,8 @@ import numpy as N
 # for repr
 from numpy import array
 
-from mvpa.testing.tools import assert_array_equal
 from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true
+        assert_true, assert_array_equal
 
 from mvpa.mappers.flatten import FlattenMapper
 from mvpa.mappers.base import FeatureSliceMapper, ChainMapper

@@ -11,9 +11,8 @@
 import numpy as N
 import copy
 
-from mvpa.testing.tools import assert_array_equal, assert_array_almost_equal
-from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
-    assert_true
+from mvpa.testing.tools import assert_raises, assert_false, assert_equal, \
+    assert_true,  assert_array_equal, assert_array_almost_equal
 
 from mvpa.base.collections import Collectable, ArrayCollectable, \
         SampleAttributesCollection

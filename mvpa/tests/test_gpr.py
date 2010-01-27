@@ -8,11 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA GPR."""
 
-from tests_warehouse import *
 from mvpa.misc import data_generators
 from mvpa.kernels.np import GeneralizedLinearKernel
 from mvpa.clfs.gpr import GPR
 
+from tests_warehouse import *
 from mvpa.testing.tools import assert_array_equal, assert_array_almost_equal
 
 if __debug__:

@@ -8,15 +8,15 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA pattern handling"""
 
+import unittest
+import numpy as N
+
 from mvpa.datasets.base import dataset_wizard
 from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter, \
                                    NoneSplitter, HalfSplitter, \
                                    CustomSplitter, NGroupSplitter
-import unittest
-from mvpa.testing.tools import assert_array_equal
-from mvpa.testing.tools import ok_
-import numpy as N
 
+from mvpa.testing.tools import ok_, assert_array_equal
 
 class SplitterTests(unittest.TestCase):
 

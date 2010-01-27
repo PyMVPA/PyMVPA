@@ -16,10 +16,6 @@ if externals.exists('mdp', raiseException=True):
 else:
     raise RuntimeError, "Don't run me if no mdp is present"
 
-from mvpa.testing.tools import assert_array_equal, assert_array_almost_equal
-from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true
-
 from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper, PCAMapper, \
         ICAMapper
 from mvpa.mappers.lle import LLEMapper
@@ -27,6 +23,8 @@ from mvpa.datasets.base import Dataset
 from mvpa.base.dataset import DAE
 from mvpa.misc.data_generators import normalFeatureDataset
 
+from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
+        assert_true,  assert_array_equal, assert_array_almost_equal
 
 def test_mdpnodemapper():
     ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)

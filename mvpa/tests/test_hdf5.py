@@ -17,9 +17,8 @@ else:
 import os
 from tempfile import mkstemp
 
-from mvpa.testing.tools import assert_array_equal
 from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true
+        assert_array_equal
 
 from mvpa.base.dataset import AttrDataset
 from mvpa.base.hdf5 import h5save, obj2hdf

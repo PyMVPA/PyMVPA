@@ -10,10 +10,10 @@
 
 
 import numpy as N
-from mvpa.testing.tools import assert_array_equal
-from mvpa.testing.tools import assert_equal, assert_raises
 from mvpa.mappers.fx import *
 from mvpa.datasets.base import dataset_wizard, Dataset
+
+from mvpa.testing.tools import assert_equal, assert_raises,  assert_array_equal
 
 def test_samplesgroup_mapper():
     data = N.arange(24).reshape(8,3)

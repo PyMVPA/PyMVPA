@@ -14,9 +14,8 @@ import shutil
 import tempfile
 import os
 
-from mvpa.testing.tools import assert_array_equal
 from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true
+        assert_true, assert_array_equal
 
 from mvpa.base.externals import versions, exists
 from mvpa.base.types import is_datasetlike

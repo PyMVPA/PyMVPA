@@ -9,11 +9,12 @@
 """Unit tests for detrending mapper (requiring SciPy)."""
 
 import numpy as N
-from mvpa.testing.tools import assert_array_equal, assert_array_almost_equal
-from mvpa.testing.tools import assert_equal, assert_raises
 
 from mvpa.datasets import Dataset, dataset_wizard
 from mvpa.mappers.detrend import PolyDetrendMapper, poly_detrend
+
+from mvpa.testing.tools import assert_equal, assert_raises, \
+      assert_array_equal, assert_array_almost_equal
 
 def test_polydetrend():
     samples_forwhole = N.array( [[1.0, 2, 3, 4, 5, 6],
