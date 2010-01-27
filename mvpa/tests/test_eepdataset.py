@@ -13,8 +13,7 @@ import numpy as N
 
 from mvpa import pymvpa_dataroot
 from mvpa.base import externals
-from mvpa.datasets.eep import eep_dataset
-from mvpa.misc.io.eepbin import EEPBin
+from mvpa.datasets.eep import eep_dataset, EEPBin
 
 from mvpa.testing.tools import assert_equal, assert_true, \
      assert_array_almost_equal

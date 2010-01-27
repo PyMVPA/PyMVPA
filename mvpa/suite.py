@@ -130,7 +130,6 @@ from mvpa.misc.exceptions import *
 from mvpa.misc import *
 from mvpa.misc.io import *
 from mvpa.misc.io.base import *
-from mvpa.misc.io.eepbin import *
 from mvpa.misc.io.meg import *
 if externals.exists('cPickle') and externals.exists('gzip'):
     from mvpa.misc.io.hamster import *
