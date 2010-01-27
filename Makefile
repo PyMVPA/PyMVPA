@@ -308,7 +308,7 @@ tm-%: build
 testmanual: build
 	@echo "I: Testing code samples found in documentation"
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg \
-	 nosetests --with-doctest --doctest-extension .rst --doctest-tests doc/
+	 nosetests --with-doctest --doctest-extension .rst --doctest-tests doc/source
 
 testtutorial: build
 	@echo "I: Testing code samples found in the tutorial"

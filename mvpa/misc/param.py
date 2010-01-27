@@ -149,7 +149,7 @@ class Parameter(IndexedCollectable):
             paramsdoc += " : %s" % self.allowedtype
         paramsdoc = [paramsdoc]
         try:
-            doc = self.__doc__
+            doc = self.__doc__.strip()
             if not doc.endswith('.'): doc += '.'
             try:
                 doc += " (Default: %s)" % self.default
