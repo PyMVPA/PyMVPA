@@ -14,7 +14,7 @@ from tests_warehouse import *
 
 class PLRTests(unittest.TestCase):
 
-    def testPLR(self):
+    def test_plr(self):
         data = datasets['dumb2']
 
         clf = PLR()
@@ -24,7 +24,7 @@ class PLRTests(unittest.TestCase):
         # prediction has to be perfect
         self.failUnless((clf.predict(data.samples) == data.labels).all())
 
-    def testPLRState(self):
+    def test_plr_state(self):
         data = datasets['dumb2']
 
         clf = PLR()

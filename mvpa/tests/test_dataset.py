@@ -25,7 +25,7 @@ from tests_warehouse import datasets
 class DatasetTests(unittest.TestCase):
     """Basic dataset unitests"""
 
-    def testFeatureSelection(self):
+    def test_feature_selection(self):
         """Testing feature selection: sorted/not sorted, feature groups
         """
         origdata = datasets['uni2large'].samples[:10, :20]
@@ -75,7 +75,7 @@ class DatasetTests(unittest.TestCase):
         self.failUnless(set(gsel._dsattr['featuregroups']) == set([2, 3]))
 
 
-    def testSampleSelection(self):
+    def test_sample_selection(self):
         origdata = datasets['uni2large'].samples[:100, :10].T
         data = Dataset(samples=origdata, labels=2, chunks=2 )
 
@@ -148,7 +148,7 @@ class DatasetTests(unittest.TestCase):
         self.failUnless((sel.origids == [0, 1, 2, 3, 4, 5, 6, 8, 9]).all())
 
 
-    def testEvilSelects(self):
+    def test_evil_selects(self):
         """Test some obscure selections of samples via select() or __getitem__
         """
         origdata = datasets['uni2large'].samples[:100, :10].T
@@ -210,7 +210,7 @@ class DatasetTests(unittest.TestCase):
         self.failUnless(data.where(labels=[123]) == [])
 
 
-    def testApplyMapper(self):
+    def test_apply_mapper(self):
         """Test creation of new dataset by applying a mapper"""
         mapper = MaskMapper(N.array([1, 0, 1]))
         dataset = Dataset(samples=N.arange(12).reshape( (4, 3) ),
@@ -234,7 +234,7 @@ class DatasetTests(unittest.TestCase):
 #        if we get one -- remove this check and place a test"""
 
 
-    def testId(self):
+    def test_id(self):
         """Test Dataset.idhash() if it gets changed if any of the
         labels/chunks changes
         """
@@ -276,7 +276,7 @@ class DatasetTests(unittest.TestCase):
                         "permuteLabels(False)")
 
 
-    def testFeatureMaskConversion(self):
+    def test_feature_mask_conversion(self):
         dataset = Dataset(samples=N.arange(12).reshape((4, 3)),
                           labels=1,
                           chunks=1)
@@ -294,7 +294,7 @@ class DatasetTests(unittest.TestCase):
             (dataset.convertFeatureMask2FeatureIds(mask) == [0, 2]).all())
 
 
-    def testSummary(self):
+    def test_summary(self):
         """Dummy test"""
         ds = datasets['uni2large']
         ds = ds[N.random.permutation(range(ds.nsamples))[:20]]
@@ -302,7 +302,7 @@ class DatasetTests(unittest.TestCase):
         self.failUnless(len(summary)>40)
 
 
-    def testLabelsMapping(self):
+    def test_labels_mapping(self):
         """Test mapping of the labels from strings to numericals
         """
         od = {'apple':0, 'orange':1}
@@ -354,7 +354,7 @@ class DatasetTests(unittest.TestCase):
         self.failUnlessEqual(ds.labels_map, new_map)
 
 
-    def testLabelsMappingAddDataset(self):
+    def test_labels_mapping_add_dataset(self):
         """Adding datasets needs special care whenever labels mapping
         is used."""
         samples = [[3], [2], [3]]
@@ -391,7 +391,7 @@ class DatasetTests(unittest.TestCase):
         self.failUnlessRaises(ValueError, ds1.__iadd__, ds0)
 
 
-    def testIdsonboundaries(self):
+    def test_idsonboundaries(self):
         """Test detection of transition points
 
         Shame on Yarik -- he didn't create unittests right away... damn me

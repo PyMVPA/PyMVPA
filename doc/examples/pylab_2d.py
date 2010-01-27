@@ -51,8 +51,8 @@ feat_test = N.array((N.ravel(x), N.ravel(y)))
 from mvpa.suite import *
 
 # create the pymvpa dataset from the labeled features
-patternsPos = dataset(samples=feat_pos.T, labels=1)
-patternsNeg = dataset(samples=feat_neg.T, labels=0)
+patternsPos = dataset_wizard(samples=feat_pos.T, labels=1)
+patternsNeg = dataset_wizard(samples=feat_neg.T, labels=0)
 ds_lin = vstack((patternsPos, patternsNeg))
 
 """Let's add another dataset: XOR. This problem is not linear separable

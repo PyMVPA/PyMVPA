@@ -9,11 +9,12 @@
 """Unit tests for detrending mapper (requiring SciPy)."""
 
 import numpy as N
-from numpy.testing import assert_array_equal, assert_array_almost_equal
-from nose.tools import assert_equal, assert_raises
 
-from mvpa.datasets import Dataset, dataset
+from mvpa.datasets import Dataset, dataset_wizard
 from mvpa.mappers.detrend import PolyDetrendMapper, poly_detrend
+
+from mvpa.testing.tools import assert_equal, assert_raises, \
+      assert_array_equal, assert_array_almost_equal
 
 def test_polydetrend():
     samples_forwhole = N.array( [[1.0, 2, 3, 4, 5, 6],
@@ -62,7 +63,7 @@ def test_polydetrend():
     assert_array_almost_equal(mds, mds2)
 
     # chunk-wise detrending
-    ds = dataset(samples_forchunks, chunks=chunks)
+    ds = dataset_wizard(samples_forchunks, chunks=chunks)
     dm = PolyDetrendMapper(chunks='chunks', polyord=1, inspace='police')
     mds = dm(ds)
     # features are chunkswise linear trends, so detrending should remove all
@@ -86,7 +87,7 @@ def test_polydetrend():
 
     # small additional test for break points
     # although they are no longer there
-    ds = dataset(N.array([[1.0, 2, 3, 1, 2, 3]], ndmin=2).T,
+    ds = dataset_wizard(N.array([[1.0, 2, 3, 1, 2, 3]], ndmin=2).T,
                  labels=chunks, chunks=chunks)
     mds = PolyDetrendMapper(chunks='chunks', polyord=1)(ds)
     assert_array_almost_equal(mds.samples, N.zeros(mds.shape))
@@ -94,7 +95,7 @@ def test_polydetrend():
     # test of different polyord on each chunk
     target_mixed = N.array( [[-1.0, 0, 1, 0, 0, 0],
                              [2.0, 0, -2, 0, 0, 0]], ndmin=2 ).T
-    ds = dataset(samples_forchunks.copy(), labels=chunks, chunks=chunks)
+    ds = dataset_wizard(samples_forchunks.copy(), labels=chunks, chunks=chunks)
     mds = PolyDetrendMapper(chunks='chunks', polyord=[0,1])(ds)
     assert_array_almost_equal(mds, target_mixed)
 

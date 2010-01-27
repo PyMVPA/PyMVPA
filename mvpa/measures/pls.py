@@ -6,8 +6,10 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-
+"""PLS is not yet implemented
+"""
 __docformat__ = 'restructuredtext'
+
 
 import numpy as N
 
@@ -19,6 +21,8 @@ if __debug__:
 
 class PLS(FeaturewiseDatasetMeasure):
     def __init__(self, num_permutations=200, num_bootstraps=100, **kwargs):
+        raise NotImplemented, 'PLS was not yet implemented fully'
+
         # init base classes first
         FeaturewiseDatasetMeasure.__init__(self, **kwargs)
 

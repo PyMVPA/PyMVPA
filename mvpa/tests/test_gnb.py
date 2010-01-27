@@ -13,7 +13,7 @@ from tests_warehouse import *
 
 class GNBTests(unittest.TestCase):
 
-    def testGNB(self):
+    def test_gnb(self):
         gnb = GNB()
         gnb_nc = GNB(common_variance=False)
         gnb_n = GNB(normalize=True)

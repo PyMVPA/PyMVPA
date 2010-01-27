@@ -101,7 +101,7 @@ class ReportTest(unittest.TestCase):
 
 
     @sweepargs(rc=_test_classes)
-    def testBasic(self, rc):
+    def test_basic(self, rc):
         """Test all available reports, real or dummy for just working
         """
         dirname = mktemp('mvpa', 'test_report')

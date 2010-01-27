@@ -28,7 +28,6 @@ The PDF version of the manual is available for download_.
    featsel
    misc
    examples
-   matlab
    faq
    glossary
    references

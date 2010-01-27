@@ -10,9 +10,9 @@
 .. _chap_tutorial5:
 .. index:: Tutorial
 
-***************************************
-Tutorial Part 5: The Mighty Searchlight
-***************************************
+******************************
+Part 5: The Mighty Searchlight
+******************************
 
 
 Literature
@@ -21,6 +21,6 @@ Literature
 Related API Documentation
 -------------------------
 .. autosummary::
-   :toctree:
+   :toctree: generated
 
    ~mvpa.measures.searchlight.Searchlight

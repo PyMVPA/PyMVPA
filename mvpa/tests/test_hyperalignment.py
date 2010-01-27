@@ -25,7 +25,7 @@ class HyperAlignmentTests(unittest.TestCase):
 
 
     @sweepargs(ref_ds=(None, 3))
-    def testBasicFunctioning(self, ref_ds):
+    def test_basic_functioning(self, ref_ds):
         # get a dataset with some prominent trends in it
         ds4l = datasets['uni4large']
         # lets select for now only meaningful features

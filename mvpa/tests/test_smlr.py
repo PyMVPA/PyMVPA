@@ -15,7 +15,7 @@ from mvpa.misc.data_generators import normalFeatureDataset
 
 class SMLRTests(unittest.TestCase):
 
-    def testSMLR(self):
+    def test_smlr(self):
         data = datasets['dumb']
 
         clf = SMLR()
@@ -35,7 +35,7 @@ class SMLRTests(unittest.TestCase):
         self.failUnless((predictions == data.labels).all())
 
 
-    def testSMLRState(self):
+    def test_smlr_state(self):
         data = datasets['dumb']
 
         clf = SMLR()
@@ -51,7 +51,7 @@ class SMLRTests(unittest.TestCase):
         self.failUnless(N.array(clf.states.estimates).shape[0] == N.array(p).shape[0])
 
 
-    def testSMLRSensitivities(self):
+    def test_smlr_sensitivities(self):
         data = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
 
         # use SMLR on binary problem, but not fitting all weights

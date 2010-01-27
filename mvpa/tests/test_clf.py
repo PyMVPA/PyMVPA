@@ -11,7 +11,7 @@
 from mvpa.support.copy import deepcopy
 from mvpa.base import externals
 
-from mvpa.datasets.base import dataset
+from mvpa.datasets.base import dataset_wizard
 from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
 
 from mvpa.misc.exceptions import UnknownStateError
@@ -31,7 +31,7 @@ from mvpa.mappers.fx import mean_sample
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
-from numpy.testing import assert_array_equal
+from mvpa.testing.tools import assert_array_equal
 
 # What exceptions to allow while testing degenerate cases.
 # If it pukes -- it is ok -- user will notice that something
@@ -50,12 +50,12 @@ class ClassifiersTests(unittest.TestCase):
         self.clf_less1 = Less1Classifier()
 
         # simple binary dataset
-        self.data_bin_1 = dataset(
+        self.data_bin_1 = dataset_wizard(
             samples=[[0,0],[-10,-1],[1,0.1],[1,-1],[-1,1]],
             labels=[1, 1, 1, -1, -1], # labels
             chunks=[0, 1, 2,  2, 3])  # chunks
 
-    def testDummy(self):
+    def test_dummy(self):
         clf = SameSignClassifier(enable_states=['training_confusion'])
         clf.train(self.data_bin_1)
         self.failUnlessRaises(UnknownStateError, clf.states.__getattribute__,
@@ -85,7 +85,7 @@ class ClassifiersTests(unittest.TestCase):
                            self.data_bin_1.labels)
 
 
-    def testBoosted(self):
+    def test_boosted(self):
         # XXXXXXX
         # silly test if we get the same result with boosted as with a single one
         bclf = CombinedClassifier(clfs=[self.clf_sign.clone(),
@@ -99,7 +99,7 @@ class ClassifiersTests(unittest.TestCase):
                              msg="Boosted classifier should have the same as regular")
 
 
-    def testBoostedStatePropagation(self):
+    def test_boosted_state_propagation(self):
         bclf = CombinedClassifier(clfs=[self.clf_sign.clone(),
                                         self.clf_sign.clone()],
                                   enable_states=['feature_ids'])
@@ -121,8 +121,8 @@ class ClassifiersTests(unittest.TestCase):
 
 
 
-    def testBinaryDecorator(self):
-        ds = dataset(samples=[ [0,0], [0,1], [1,100], [-1,0], [-1,-3], [ 0,-10] ],
+    def test_binary_decorator(self):
+        ds = dataset_wizard(samples=[ [0,0], [0,1], [1,100], [-1,0], [-1,-3], [ 0,-10] ],
                      labels=[ 'sp', 'sp', 'sp', 'dn', 'sn', 'dp'])
         testdata = [ [0,0], [10,10], [-10, -1], [0.1, -0.1], [-0.2, 0.2] ]
         # labels [s]ame/[d]ifferent (sign), and [p]ositive/[n]egative first element
@@ -147,7 +147,7 @@ class ClassifiersTests(unittest.TestCase):
 
     # TODO: XXX finally just make regression/clf separation cleaner
     @sweepargs(clf=clfswh[:])
-    def testClassifierGeneralization(self, clf):
+    def test_classifier_generalization(self, clf):
         """Simple test if classifiers can generalize ok on simple data
         """
         te = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
@@ -169,7 +169,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     @sweepargs(clf=clfswh[:] + regrswh[:])
-    def testSummary(self, clf):
+    def test_summary(self, clf):
         """Basic testing of the clf summary
         """
         summary1 = clf.summary()
@@ -184,7 +184,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     @sweepargs(clf=clfswh[:] + regrswh[:])
-    def testDegenerateUsage(self, clf):
+    def test_degenerate_usage(self, clf):
         """Test how clf handles degenerate cases
         """
         # Whenever we have only 1 feature with only 0s in it
@@ -230,7 +230,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     # TODO: validate for regressions as well!!!
-    def testSplitClassifier(self):
+    def test_split_classifier(self):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
                 splitter=NFoldSplitter(1),
@@ -286,7 +286,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     @sweepargs(clf_=clfswh['binary', '!meta'])
-    def testSplitClassifierExtended(self, clf_):
+    def test_split_classifier_extended(self, clf_):
         clf2 = clf_.clone()
         ds = datasets['uni2medium']#self.data_bin_1
         clf = SplitClassifier(clf=clf_, #SameSignClassifier(),
@@ -320,7 +320,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
 
-    def testHarvesting(self):
+    def test_harvesting(self):
         """Basic testing of harvesting based on SplitClassifier
         """
         ds = self.data_bin_1
@@ -339,7 +339,7 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnlessEqual(clf.descr, "DESCR")
 
 
-    def testMappedClassifier(self):
+    def test_mapped_classifier(self):
         samples = N.array([ [ 0,  0, -1], [ 1, 0, 1],
                             [-1, -1,  1], [-1, 0, 1],
                             [ 1, -1,  1] ])
@@ -352,7 +352,7 @@ class ClassifiersTests(unittest.TestCase):
             self.failUnlessEqual(clf.predict(samples), res)
 
 
-    def testFeatureSelectionClassifier(self):
+    def test_feature_selection_classifier(self):
         from test_rfe import SillySensitivityAnalyzer
         from mvpa.featsel.base import \
              SensitivityBasedFeatureSelection
@@ -374,9 +374,9 @@ class ClassifiersTests(unittest.TestCase):
         samples = N.array([ [0, 0, -1], [1, 0, 1], [-1, -1, 1],
                             [-1, 0, 1], [1, -1, 1] ])
 
-        testdata3 = dataset(samples=samples, labels=1)
+        testdata3 = dataset_wizard(samples=samples, labels=1)
         # dummy train data so proper mapper gets created
-        traindata = dataset(samples=N.array([ [0, 0, -1], [1, 0, 1] ]),
+        traindata = dataset_wizard(samples=N.array([ [0, 0, -1], [1, 0, 1] ]),
                             labels=[1, 2])
 
         # targets
@@ -404,7 +404,7 @@ class ClassifiersTests(unittest.TestCase):
         clf011.train(traindata)
         self.failUnlessEqual(clf011.predict(testdata3.samples), res110)
 
-    def testFeatureSelectionClassifierWithRegression(self):
+    def test_feature_selection_classifier_with_regression(self):
         from test_rfe import SillySensitivityAnalyzer
         from mvpa.featsel.base import \
              SensitivityBasedFeatureSelection
@@ -425,7 +425,7 @@ class ClassifiersTests(unittest.TestCase):
         # then setting the values from the results, which the second
         # time is set to predictions.  The final outcome is that the
         # values are actually predictions...
-        dat = dataset(samples=N.random.randn(4, 10),
+        dat = dataset_wizard(samples=N.random.randn(4, 10),
                       labels=[-1, -1, 1, 1])
         clf_reg = FeatureSelectionClassifier(sample_clf_reg, feat_sel)
         clf_reg.train(dat)
@@ -436,7 +436,7 @@ class ClassifiersTests(unittest.TestCase):
                     sample_clf_reg)
 
 
-    def testTreeClassifier(self):
+    def test_tree_classifier(self):
         """Basic tests for TreeClassifier
         """
         ds = datasets['uni4small']
@@ -494,7 +494,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     @sweepargs(clf=clfswh[:])
-    def testValues(self, clf):
+    def test_values(self, clf):
         if isinstance(clf, MulticlassClassifier):
             # TODO: handle those values correctly
             return
@@ -512,7 +512,7 @@ class ClassifiersTests(unittest.TestCase):
         clf.states.reset_changed_temporarily()
 
     @sweepargs(clf=clfswh['linear', 'svm', 'libsvm', '!meta'])
-    def testMulticlassClassifier(self, clf):
+    def test_multiclass_classifier(self, clf):
         oldC = None
         # XXX somewhat ugly way to force non-dataspecific C value.
         # Otherwise multiclass libsvm builtin and our MultiClass would differ
@@ -560,7 +560,7 @@ class ClassifiersTests(unittest.TestCase):
 
     # XXX meta should also work but TODO
     @sweepargs(clf=clfswh['svm', '!meta'])
-    def testSVMs(self, clf):
+    def test_svms(self, clf):
         knows_probabilities = \
             'probabilities' in clf.states.keys() and clf.params.probability
         enable_states = ['estimates']
@@ -583,7 +583,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     @sweepargs(clf=clfswh['retrainable'])
-    def testRetrainables(self, clf):
+    def test_retrainables(self, clf):
         # we need a copy since will tune its internals later on
         clf = clf.clone()
         clf.states.change_temporarily(enable_states = ['estimates'],
@@ -719,7 +719,7 @@ class ClassifiersTests(unittest.TestCase):
         clf_re._setRetrainable(False)
 
 
-    def testGenericTests(self):
+    def test_generic_tests(self):
         """Test all classifiers for conformant behavior
         """
         for clf_, traindata in \
@@ -746,7 +746,7 @@ class ClassifiersTests(unittest.TestCase):
     #     they fail to train
     #    GNB -- cannot train since 1 sample isn't sufficient to assess variance
     @sweepargs(clf=clfswh['!smlr', '!knn', '!gnb', '!lars', '!meta', '!ridge'])
-    def testCorrectDimensionsOrder(self, clf):
+    def test_correct_dimensions_order(self, clf):
         """To check if known/present Classifiers are working properly
         with samples being first dimension. Started to worry about
         possible problems while looking at sg where samples are 2nd
@@ -756,9 +756,9 @@ class ClassifiersTests(unittest.TestCase):
         # the same storage, problem becomes unseparable. Like in this case
         # incorrect order of dimensions lead to equal samples [0, 1, 0]
         traindatas = [
-            dataset(samples=N.array([ [0, 0, 1.0],
+            dataset_wizard(samples=N.array([ [0, 0, 1.0],
                                         [1, 0, 0] ]), labels=[-1, 1]),
-            dataset(samples=N.array([ [0, 0.0],
+            dataset_wizard(samples=N.array([ [0, 0.0],
                                       [1, 1] ]), labels=[-1, 1])]
 
         clf.states.change_temporarily(enable_states = ['training_confusion'])
@@ -779,7 +779,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     @sweepargs(regr=regrswh[:])
-    def testRegressionAsClassifier(self, regr):
+    def test_regression_as_classifier(self, regr):
         """Basic tests of metaclass for using regressions as classifiers
         """
         for dsname in 'uni2small', 'uni4small':

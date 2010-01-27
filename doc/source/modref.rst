@@ -55,7 +55,6 @@ Datasets: Input, Output, Storage and Preprocessing
    base.dataset
    datasets.base
    datasets.mri
-   datasets.channel
    datasets.eep
    datasets.miscfx
    datasets.splitters
@@ -76,7 +75,10 @@ Mappers: Data Transformations
    mappers.prototype
    mappers.fx
    mappers.som
+   mappers.lle
+   mappers.svd
    mappers.wavelet
+   mappers.detrend
    mappers.zscore
 
 
@@ -135,7 +137,6 @@ Measures: Searchlights and Sensitivties
    measures.glm
    measures.irelief
    measures.noiseperturbation
-   measures.pls
    measures.searchlight
 
 
@@ -200,7 +201,6 @@ Miscellaneous
    misc.fsl.melodic
    misc.io
    misc.io.base
-   misc.io.eepbin
    misc.io.hamster
    misc.io.meg
 

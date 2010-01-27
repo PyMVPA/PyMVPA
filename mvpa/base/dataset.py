@@ -90,7 +90,7 @@ class AttrDataset(object):
     For convenience `AttrDataset.from_basic` is also available as `dataset`,
     so the above call is equivalent to:
 
-    >>> ds_labeled = dataset(samples, labels=range(4))
+    >>> ds_labeled = dataset_wizard(samples, labels=range(4))
 
     Both the labeled and the unlabeled dataset share the same samples
     array. No copying is performed.
@@ -357,7 +357,7 @@ class AttrDataset(object):
           an empty list is given, all attributes are stripped from the copy..
         memo : dict
           Developers only: This argument is only useful if copy() is called
-          inside the __deepcopy__() method and refers to the dict-arhument
+          inside the __deepcopy__() method and refers to the dict-argument
           `memo` in the Python documentation.
         """
         if deep:
@@ -556,7 +556,7 @@ class AttrDataset(object):
 
 
     @classmethod
-    def from_hdf5(cls, source, name='dataset'):
+    def from_hdf5(cls, source, name=None):
         if not externals.exists('h5py'):
             raise RuntimeError("Missing 'h5py' package -- saving is not possible.")
 
@@ -571,13 +571,33 @@ class AttrDataset(object):
             own_file = True
             hdf = h5py.File(source, 'r')
 
-        if not name in hdf:
-            raise ValueError("Cannot find '%s' group in HDF file."
-                             % name)
+        if not name is None:
+            # some HDF5 subset is requested
+            if not name in hdf:
+                raise ValueError("Cannot find '%s' group in HDF file %s.  "
+                                 "File contains groups: %s"
+                                 % (name, source, hdf.keys()))
 
-        # acces the group that should contain the dataset
-        dsgrp = hdf[name]
-        return hdf2obj(dsgrp)
+            # access the group that should contain the dataset
+            dsgrp = hdf[name]
+            res = hdf2obj(dsgrp)
+            if not isinstance(res, AttrDataset):
+                # TODO: unittest before committing
+                raise ValueError, "%r in %s contains %s not a dataset.  " \
+                      "File contains groups: %s." \
+                      % (name, source, type(res), hdf.keys())
+            return res
+        else:
+            # just consider the whole file
+            res = hdf2obj(hdf)
+            if not isinstance(res, AttrDataset):
+                # TODO: unittest before committing
+                raise ValueError, "Failed to load a dataset from %s.  " \
+                      "Loaded %s instead." \
+                      % (source, type(res))
+            return res
+
+            raise V
 
 
     # shortcut properties
@@ -776,7 +796,7 @@ DAE = DatasetAttributeExtractor
 
 
 @datasetmethod
-def save(dataset, destination, name='dataset', compression=None):
+def save(dataset, destination, name=None, compression=None):
     """Save Dataset into HDF5 file
 
     Parameters

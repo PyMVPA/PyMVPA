@@ -10,10 +10,10 @@
 
 
 import numpy as N
-from numpy.testing import assert_array_equal
-from nose.tools import assert_equal, assert_raises
 from mvpa.mappers.fx import *
-from mvpa.datasets.base import dataset, Dataset
+from mvpa.datasets.base import dataset_wizard, Dataset
+
+from mvpa.testing.tools import assert_equal, assert_raises,  assert_array_equal
 
 def test_samplesgroup_mapper():
     data = N.arange(24).reshape(8,3)
@@ -25,7 +25,7 @@ def test_samplesgroup_mapper():
     clabels = [0, 1, 0, 1]
     cchunks = [0, 0, 1, 1]
 
-    ds = dataset(samples=data, labels=labels, chunks=chunks)
+    ds = dataset_wizard(samples=data, labels=labels, chunks=chunks)
     # add some feature attribute -- just to check
     ds.fa['checker'] = N.arange(3)
     ds.init_origids('samples')

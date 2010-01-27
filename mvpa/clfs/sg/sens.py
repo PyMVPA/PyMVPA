@@ -83,7 +83,7 @@ class LinearSVMWeights(Sensitivity):
                     sens1, bias = self.__sg_helper(sgsvmi)
                     sens.append(sens1)
                     biases.append(bias)
-                    sens_labels += [labels_tuple]
+                    sens_labels += [labels_tuple[::-1]] # ??? positive first
                     isvm += 1
             assert(len(sens) == nsvms)  # we should have  covered all
         else:

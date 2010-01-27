@@ -14,7 +14,7 @@
 PyMVPA Extravaganza -- Fall 2009
 ********************************
 
-This development workshop took take place at Dartmouth College, Nov 30 -- Dec
+This development workshop took place at Dartmouth College, Nov 30 -- Dec
 4, 2009.
 
 

@@ -15,6 +15,27 @@
 Measures
 ********
 
+.. automodule:: mvpa.measures
+
+
+Related API documentation
+=========================
+
+.. currentmodule:: mvpa
+.. autosummary::
+   :toctree: generated
+
+   measures.base
+   measures.anova
+   measures.corrcoef
+   measures.corrstability
+   measures.ds
+   measures.glm
+   measures.irelief
+   measures.noiseperturbation
+   measures.searchlight
+
+
 
 PyMVPA provides a number of useful measures. The vast majority of
 them are dedicated to feature selection. To increase analysis

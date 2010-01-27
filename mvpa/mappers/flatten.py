@@ -164,18 +164,21 @@ class FlattenMapper(Mapper):
 
 
 def mask_mapper(mask=None, shape=None, inspace=None):
-    """
+    """Factory method to create a chain of Flatten+FeatureSlice Mappers
+
     Parameters
     ----------
-    mask : array
+    mask : None or array
       an array in the original dataspace and its nonzero elements are
-      used to define the features included in the dataset. alternatively,
+      used to define the features included in the dataset. Alternatively,
       the `shape` argument can be used to define the array dimensions.
-    shape : tuple
+    shape : None or tuple
       The shape of the array to be mapped. If `shape` is provided instead
       of `mask`, a full mask (all True) of the desired shape is
       constructed. If `shape` is specified in addition to `mask`, the
       provided mask is extended to have the same number of dimensions.
+    inspace
+      Provided to `FlattenMapper`
     """
     if mask is None:
         if shape is None:
@@ -189,7 +192,7 @@ def mask_mapper(mask=None, shape=None, inspace=None):
             # expand mask to span all dimensions but first one
             # necessary e.g. if only one slice from timeseries of volumes is
             # requested.
-            mask = N.asanyarray(mask, ndmin=len(shape))
+            mask = N.array(mask, copy=False, subok=True, ndmin=len(shape))
             # check for compatibility
             if not shape == mask.shape:
                 raise ValueError, \

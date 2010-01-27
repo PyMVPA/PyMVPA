@@ -85,6 +85,8 @@ clean:
      done
 # clean tools
 	$(MAKE) -C tools clean
+# clean pics
+	$(MAKE) -C doc/pics clean
 # clean docs
 	$(MAKE) -C doc clean
 	-@rm -f $(DOCSRC_DIR)/examples/*.rst
@@ -128,6 +130,9 @@ debian-clean:
 
 doc: website manpages
 
+pics:
+	$(MAKE) -C doc/pics
+
 manpages: mkdir-MAN_DIR
 	@echo "I: Creating manpages"
 	PYTHONPATH=.:$(PYTHONPATH) help2man -N -n 'preprocess fMRI data for PyMVPA' \
@@ -139,7 +144,7 @@ references:
 	@echo "I: Generating references"
 	tools/bib2rst_ref.py
 
-htmldoc: examples2rst build
+htmldoc: examples2rst build pics
 	@echo "I: Creating an HTML version of documentation"
 	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) html BUILDDIR=$(BUILDDIR)
 	cd $(HTML_DIR)/generated && ln -sf ../_static
@@ -147,7 +152,7 @@ htmldoc: examples2rst build
 	cd $(HTML_DIR)/datadb && ln -sf ../_static
 	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
 
-pdfdoc: examples2rst build pdfdoc-stamp
+pdfdoc: examples2rst build pdfdoc-stamp pics
 pdfdoc-stamp:
 	@echo "I: Creating a PDF version of documentation"
 	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=../..:$(PYTHONPATH) $(MAKE) latex BUILDDIR=$(BUILDDIR)
@@ -166,7 +171,7 @@ examples2rst-stamp: mkdir-DOCBUILD_DIR
 	tools/ex2rst \
 		--project PyMVPA \
 		--outdir $(DOCSRC_DIR)/examples \
-		--exclude doc/examples/searchlight.py \
+		--exclude doc/examples/searchlight_app.py \
 		--exclude doc/examples/tutorial_lib.py \
 		doc/examples
 	touch $@
@@ -290,7 +295,7 @@ te-%: build
 	 && echo "passed" || { echo "failed:"; cat temp-$@.log; }
 	@rm -f temp-$@.log
 
-testexamples: te-svdclf te-smlr te-searchlight_2d te-sensanas te-pylab_2d \
+testexamples: te-svdclf te-smlr te-searchlight te-sensanas te-pylab_2d \
               te-curvefitting te-projections te-kerneldemo te-clfs_examples \
               te-erp_plot te-match_distribution te-permutation_test \
               te-searchlight_minimal te-smlr te-start_easy te-topo_plot \
@@ -303,14 +308,15 @@ tm-%: build
 testmanual: build
 	@echo "I: Testing code samples found in documentation"
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg \
-	 nosetests --with-doctest --doctest-extension .rst --doctest-tests doc/
+	 nosetests --with-doctest --doctest-extension .rst --doctest-tests doc/source
 
-testtutorial: build
-	@echo "I: Testing code samples found in the tutorial"
+testtutorial-%: build
+	@echo "I: Testing code samples found in tutorial part $*"
 	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
+		MVPA_DATA_ROOT=datadb \
 		nosetests --with-doctest --doctest-extension .rst \
-		          --doctest-tests doc/source/tutorial*.rst
+		          --doctest-tests doc/source/tutorial$**.rst
 
 testdatadb: build
 	@echo "I: Testing code samples on the dataset DB website"

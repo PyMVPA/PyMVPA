@@ -15,7 +15,24 @@
 Feature Selection
 *****************
 
-  *This section has been contributed by James M. Hughes.*
+.. automodule:: mvpa.measures
+
+
+Related API documentation
+=========================
+
+.. currentmodule:: mvpa
+.. autosummary::
+   :toctree: generated
+
+   featsel.base
+   featsel.ifs
+   featsel.rfe
+   featsel.helpers
+
+
+
+*This section has been contributed by James M. Hughes.*
 
 It is often the case in machine learning problems that we wish to reduce a
 feature space of high dimensionality into something more manageable by
