@@ -31,7 +31,7 @@ from mvpa.mappers.fx import mean_sample
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
-from numpy.testing import assert_array_equal
+from mvpa.testing.tools import assert_array_equal
 
 # What exceptions to allow while testing degenerate cases.
 # If it pukes -- it is ok -- user will notice that something

@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA classifier cross-validation"""
 
 from mvpa.testing.tools import assert_equal, ok_
-from numpy.testing import assert_array_equal
+from mvpa.testing.tools import assert_array_equal
 
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError

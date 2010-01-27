@@ -12,7 +12,7 @@ import os
 import numpy as N
 from numpy import array
 
-from numpy.testing import assert_array_equal
+from mvpa.testing.tools import assert_array_equal
 from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true
 

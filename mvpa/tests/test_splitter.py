@@ -13,7 +13,7 @@ from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter, \
                                    NoneSplitter, HalfSplitter, \
                                    CustomSplitter, NGroupSplitter
 import unittest
-from numpy.testing import assert_array_equal
+from mvpa.testing.tools import assert_array_equal
 from mvpa.testing.tools import ok_
 import numpy as N
 

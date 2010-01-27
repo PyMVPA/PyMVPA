@@ -16,8 +16,7 @@ from mvpa.base import externals
 
 externals.exists('nose', raiseException=True)
 
-# We use nose now, and we can't simply rely on numpy.testing since it
-# isn't present in 1.1 available on lenny.  May be later
+# We use nose now
 from nose.tools import (
     ok_, eq_,
     # Asserting (pep8-ed from unittest)
@@ -25,3 +24,9 @@ from nose.tools import (
     assert_equal, assert_equals, assert_not_equal, assert_not_equals,
     # Decorators
     timed, with_setup, raises, istest, nottest, make_decorator )
+
+# But some pieces are useful from numpy.testing
+from numpy.testing import (
+    assert_almost_equal, assert_approx_equal,
+    assert_array_almost_equal, assert_array_equal, assert_array_less,
+    assert_string_equal)
