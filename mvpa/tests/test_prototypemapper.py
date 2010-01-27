@@ -46,14 +46,14 @@ class PrototypeMapperTests(unittest.TestCase):
         self.pm.train(self.samples)
 
 
-    def testSize(self):
+    def test_size(self):
         self.buildVectorBasedPM()
         assert_array_equal(self.pm.proj.shape,
                            (self.samples.shape[0],
                             self.prototypes.shape[0] * len(self.similarities)))
 
 
-    def testSymmetry(self):
+    def test_symmetry(self):
         self.buildVectorBasedPM()
         assert_array_almost_equal(self.pm.proj[:,self.samples.shape[0]],
                                   self.pm.proj.T[self.samples.shape[0],:])
@@ -61,7 +61,7 @@ class PrototypeMapperTests(unittest.TestCase):
                            self.pm.proj.T[self.samples.shape[0],:])
 
 
-    def testSizeRandomPrototypes(self):
+    def test_size_random_prototypes(self):
         self.buildVectorBasedPM()
         fraction = 0.5
         prototype_number = max(int(len(self.samples)*fraction),1)
@@ -88,7 +88,7 @@ class PrototypeMapperTests(unittest.TestCase):
         self.similarities = [StreamlineSimilarity(distance=corouge)]
 
 
-    def testStreamlineEqualMapper(self):
+    def test_streamline_equal_mapper(self):
         self.buildStreamlineThings()
 
         self.prototypes_equal = self.dataset.samples
@@ -103,7 +103,7 @@ class PrototypeMapperTests(unittest.TestCase):
         assert_array_almost_equal(self.pm.proj, self.pm.proj.T)
 
 
-    def testStreamlineRandomMapper(self):
+    def test_streamline_random_mapper(self):
         self.buildStreamlineThings()
 
         # Adding one more similarity to test multiple similarities in the streamline case:

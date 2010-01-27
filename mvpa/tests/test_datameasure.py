@@ -56,7 +56,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
 
     @sweepargs(dsm=_MEASURES_2_SWEEP)
-    def testBasic(self, dsm):
+    def test_basic(self, dsm):
         data = datasets['dumbinv']
         datass = data.samples.copy()
 
@@ -81,7 +81,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                [(c, datasets['uni4large'])
                 for c in clfswh['has_sensitivity', 'multiclass']]
                )
-    def testAnalyzerWithSplitClassifier(self, clfds):
+    def test_analyzer_with_split_classifier(self, clfds):
         """Test analyzers in split classifier
         """
         clf, ds = clfds             # unroll the tuple
@@ -244,7 +244,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
 
     @sweepargs(clf=clfswh['has_sensitivity'])
-    def testMappedClassifierSensitivityAnalyzer(self, clf):
+    def test_mapped_classifier_sensitivity_analyzer(self, clf):
         """Test sensitivity of the mapped classifier
         """
         # Assuming many defaults it is as simple as
@@ -267,7 +267,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
 
     @sweepargs(svm=clfswh['linear', 'svm'])
-    def testLinearSVMWeights(self, svm):
+    def test_linear_svm_weights(self, svm):
         # assumming many defaults it is as simple as
         sana = svm.getSensitivityAnalyzer(enable_states=["sensitivities"] )
         # and lets look at all sensitivities
@@ -284,7 +284,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
     #     getSengetSensitivityAnalyzer
     # Note: only libsvm interface supports split_weights
     @sweepargs(svm=clfswh['linear', 'svm', 'libsvm', '!sg', '!meta'])
-    def testLinearSVMWeightsPerClass(self, svm):
+    def test_linear_svm_weights_per_class(self, svm):
         # assumming many defaults it is as simple as
         kwargs = dict(enable_states=["sensitivities"])
         sana_split = svm.getSensitivityAnalyzer(
@@ -324,7 +324,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         warning.handlers = handlers
 
 
-    def testSplitFeaturewiseDatasetMeasure(self):
+    def test_split_featurewise_dataset_measure(self):
         ds = datasets['uni3small']
         sana = SplitFeaturewiseDatasetMeasure(
             analyzer=SMLR(
@@ -419,7 +419,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # sensitivity
         selected_features = rfe(self.dataset)
 
-    def testUnionFeatureSelection(self):
+    def test_union_feature_selection(self):
         # two methods: 5% highes F-scores, non-zero SMLR weights
         fss = [SensitivityBasedFeatureSelection(
                     OneWayAnova(),

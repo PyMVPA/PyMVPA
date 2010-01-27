@@ -14,7 +14,7 @@ from tests_warehouse import *
 
 class RidgeRegTests(unittest.TestCase):
 
-    def testRidgeReg(self):
+    def test_ridge_reg(self):
         # not the perfect dataset with which to test, but
         # it will do for now.
         data = datasets['dumb']
@@ -39,7 +39,7 @@ class RidgeRegTests(unittest.TestCase):
 
 
 
-    def testRidgeRegState(self):
+    def test_ridge_reg_state(self):
         data = datasets['dumb']
 
         clf = RidgeReg()

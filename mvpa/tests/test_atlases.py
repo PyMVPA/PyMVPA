@@ -25,11 +25,11 @@ class AtlasesTests(unittest.TestCase):
     """Basic tests for support of atlases such as the ones
     shipped with FSL
     """
-    def testTransformations(self):
+    def test_transformations(self):
         """TODO"""
         pass
 
-    def testAtlases(self):
+    def test_atlases(self):
         """Basic testing of atlases"""
 
         tested = 0
@@ -74,7 +74,7 @@ class AtlasesTests(unittest.TestCase):
         if not tested:
             warning("No atlases were found -- thus no testing was done")
 
-    def testFind(self):
+    def test_find(self):
         if not externals.exists('atlas_fsl'): return
         tshape = (182, 218, 182)        # target shape of fsl atlas chosen by default
         atl = Atlas(name='HarvardOxford-Cortical')

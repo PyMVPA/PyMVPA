@@ -20,7 +20,7 @@ from mvpa.mappers.procrustean import ProcrusteanMapper
 class ProcrusteanMapperTests(unittest.TestCase):
 
     @sweepargs(oblique=(False,True))
-    def testSimple(self, oblique):
+    def test_simple(self, oblique):
         d_orig = datasets['uni2large'].samples
         d_orig2 = datasets['uni4large'].samples
         for sdim, nf_s, nf_t, full_test \

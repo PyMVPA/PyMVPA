@@ -97,7 +97,7 @@ def test_mdpflow_additional_arguments():
     rds = fm.reverse(fds)
     assert_array_almost_equal(ds.samples, rds.samples)
 
-def test_mdpflow_additional_arguments_Nones():
+def test_mdpflow_additional_arguments_nones():
     if externals.versions['mdp'] < '2.5':
         # we have no IdentityNode yet... is there analog?
         return

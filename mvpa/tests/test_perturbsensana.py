@@ -32,7 +32,7 @@ class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
                                            chunks=chunks, mask=mask)
 
 
-    def testPerturbationSensitivityAnalyzer(self):
+    def test_perturbation_sensitivity_analyzer(self):
         # compute N-1 cross-validation as datameasure
         cv = CrossValidatedTransferError(
                 TransferError(sample_clf_lin),

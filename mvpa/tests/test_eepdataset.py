@@ -33,7 +33,7 @@ def test_eep_load():
                                   d.a.mapper.reverse1(d.fa.timepoints))
 
 
-def testEEPBin():
+def test_eep_bin():
     eb = EEPBin(os.path.join(pymvpa_dataroot, 'eep.bin'))
 
     assert_equal(eb.nchannels, 32)
@@ -45,7 +45,7 @@ def testEEPBin():
 
 
     # XXX put me back whenever there is a proper resamples()
-#     def testResampling(self):
+#     def test_resampling(self):
 #         ds = eep_dataset(os.path.join(pymvpa_dataroot, 'eep.bin'),
 #                          labels=[1, 2])
 #         channelids = N.array(ds.a.channelids).copy()

@@ -21,7 +21,7 @@ if __debug__:
 
 class GPRTests(unittest.TestCase):
 
-    def testBasic(self):
+    def test_basic(self):
         dataset = data_generators.linear1d_gaussian_noise()
         k = GeneralizedLinearKernel()
         clf = GPR(k)
@@ -29,7 +29,7 @@ class GPRTests(unittest.TestCase):
         y = clf.predict(dataset.samples)
         assert_array_equal(y.shape, dataset.labels.shape)
 
-    def testLinear(self):
+    def test_linear(self):
         pass
 
 

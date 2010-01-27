@@ -42,13 +42,13 @@ class MixedClass(ClassWithCollections):
 
 class ParamsTests(unittest.TestCase):
 
-    def testBlank(self):
+    def test_blank(self):
         blank  = BlankClass()
 
         self.failUnlessRaises(AttributeError, blank.__getattribute__, 'states')
         self.failUnlessRaises(AttributeError, blank.__getattribute__, '')
 
-    def testSimple(self):
+    def test_simple(self):
         simple  = SimpleClass()
 
         self.failUnlessEqual(len(simple.params.items()), 1)
@@ -79,7 +79,7 @@ class ParamsTests(unittest.TestCase):
         self.failUnlessEqual(simple.params.C, 1.0)
         self.failUnlessRaises(AttributeError, simple.params.__getattribute__, 'B')
 
-    def testMixed(self):
+    def test_mixed(self):
         mixed  = MixedClass()
 
         self.failUnlessEqual(len(mixed.params.items()), 2)
@@ -96,7 +96,7 @@ class ParamsTests(unittest.TestCase):
         self.failUnlessEqual(mixed.params.D, 3.0)
 
 
-    def testClassifier(self):
+    def test_classifier(self):
         clf  = ParametrizedClassifier()
         self.failUnlessEqual(len(clf.params.items()), 2) # + retrainable
         self.failUnlessEqual(len(clf.kernel_params.items()), 1)

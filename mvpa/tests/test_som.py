@@ -17,7 +17,7 @@ from mvpa.datasets.base import dataset_wizard
 
 class SOMMapperTests(unittest.TestCase):
 
-    def testSimpleSOM(self):
+    def test_simple_som(self):
         colors = N.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
                           [1., 0., 0.], [0., 1., 1.], [1., 0., 1.],
                           [1., 1., 0.], [1., 1., 1.]])

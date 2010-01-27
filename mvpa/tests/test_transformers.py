@@ -27,19 +27,19 @@ class TransformerTests(unittest.TestCase):
         self.d1 = N.array([ 1,  0, -1, -2, -3])
         self.d2 = N.array([ 2.3,  0, -1, 2, -30, 1])
 
-    def testAbsolute(self):
+    def test_absolute(self):
         # generate 100 values (gaussian noise mean -1000 -> all negative)
         out = Absolute(N.random.normal(-1000, size=100))
 
         self.failUnless(out.min() >= 0)
         self.failUnless(len(out) == 100)
 
-    def testAbsolute2(self):
+    def test_absolute2(self):
         target = self.d1
         out = OneMinus(N.arange(5))
         self.failUnless((out == target).all())
 
-    def testFirstAxisSumNotZero(self):
+    def test_first_axis_sum_not_zero(self):
         src = [[ 1, -22.9, 6.8, 0],
                [ -.8, 7, 0, 0.0],
                [88, 0, 0.0, 0],
@@ -48,7 +48,7 @@ class TransformerTests(unittest.TestCase):
         out = FirstAxisSumNotZero(src)
         self.failUnless((out == target).all())
         
-    def testRankOrder(self):
+    def test_rank_order(self):
         nelements = len(self.d2)
         out = RankOrder(self.d2)
         outr = ReverseRankOrder(self.d2)
@@ -61,16 +61,16 @@ class TransformerTests(unittest.TestCase):
         self.failUnless((out+outr+1 == nelements).all())
         self.failUnless((out == [ 0,  3,  4,  1,  5,  2]).all())
 
-    def testL2Norm(self):
+    def test_l2_norm(self):
         out = L2Normed(self.d2)
         self.failUnless(N.abs(N.sum(out*out)-1.0) < 1e-10)
 
-    def testL1Norm(self):
+    def test_l1_norm(self):
         out = L1Normed(self.d2)
         self.failUnless(N.abs(N.sum(N.abs(out))-1.0) < 1e-10)
 
 
-    def testOverAxis(self):
+    def test_over_axis(self):
         data = datasets['uni4large'].samples[:120,0].reshape((2,3,4,5))
         # Simple transformer/combiner which collapses across given
         # dimension, e.g. sum
@@ -92,7 +92,7 @@ class TransformerTests(unittest.TestCase):
             self.failUnless(N.abs(N.linalg.norm(d) - 1.0)<0.00001)
 
 
-    def testDistPValue(self):
+    def test_dist_p_value(self):
         """Basic testing of DistPValue"""
         if not externals.exists('scipy'):
             return

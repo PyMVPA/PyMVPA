@@ -25,7 +25,7 @@ from tests_warehouse_clfs import *
 class RegressionsTests(unittest.TestCase):
 
     @sweepargs(ml=clfswh['regression_based'] + regrswh[:])
-    def testNonRegressions(self, ml):
+    def test_non_regressions(self, ml):
         """Test If binary regression-based  classifiers have proper tag
         """
         self.failUnless(('binary' in ml.__tags__) != ml.__is_regression__,
@@ -33,7 +33,7 @@ class RegressionsTests(unittest.TestCase):
                 " detected in %s having %r" % (ml, ml.__tags__))
 
     @sweepargs(regr=regrswh['regression'])
-    def testRegressions(self, regr):
+    def test_regressions(self, regr):
         """Simple tests on regressions
         """
         ds = datasets['chirp_linear']
@@ -98,7 +98,7 @@ class RegressionsTests(unittest.TestCase):
         #P.show()
 
     @sweepargs(clf=clfswh['regression'])
-    def testRegressionsClassifiers(self, clf):
+    def test_regressions_classifiers(self, clf):
         """Simple tests on regressions being used as classifiers
         """
         # check if we get values set correctly

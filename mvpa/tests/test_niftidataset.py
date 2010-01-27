@@ -29,7 +29,7 @@ from mvpa.misc.support import Event
 from mvpa.misc.io.base import SampleAttributes
 
 
-def testNiftiDataset():
+def test_nifti_dataset():
     """Basic testing of NiftiDataset
     """
     ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
@@ -103,7 +103,7 @@ def test_fmridataset():
 
 
 
-def testNiftiMapper():
+def test_nifti_mapper():
     """Basic testing of map2Nifti
     """
     data = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
@@ -119,7 +119,7 @@ def testNiftiMapper():
     assert_equal(vol.data.shape, (2, 24, 96, 128))
 
 
-def testNiftiSelfMapper():
+def test_nifti_self_mapper():
     """Test map2Nifti facility ran without arguments
     """
     example_path = os.path.join(pymvpa_dataroot, 'example4d')
@@ -138,7 +138,7 @@ def testNiftiSelfMapper():
     assert_true((vol.data == 1).all())
 
 
-def testMultipleCalls():
+def test_multiple_calls():
     """Test if doing exactly the same operation twice yields the same result
     """
     data = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
@@ -148,7 +148,7 @@ def testMultipleCalls():
     assert_array_equal(data.a.abc_eldim, data2.a.abc_eldim)
 
 
-def testERNiftiDataset():
+def test_er_nifti_dataset():
     # setup data sources
     tssrc = os.path.join(pymvpa_dataroot, 'bold')
     evsrc = os.path.join(pymvpa_dataroot, 'fslev3.txt')
@@ -209,7 +209,7 @@ def testERNiftiDataset():
 
 
 
-#def testERNiftiDatasetMapping(self):
+#def test_er_nifti_dataset_mapping(self):
 #    """Some mapping testing -- more tests is better
 #    """
 #    sample_size = (4, 3, 2)
@@ -248,7 +248,7 @@ def testERNiftiDataset():
 #                    "correctly. Got %s" % ds_sel.samples[:, :-2])
 
 
-def testNiftiDatasetFrom3D():
+def test_nifti_dataset_from3_d():
     """Test NiftiDataset based on 3D volume(s)
     """
     tssrc = os.path.join(pymvpa_dataroot, 'bold')
@@ -285,7 +285,7 @@ def testNiftiDatasetFrom3D():
     assert_array_equal(ds2.labels, labels)
 
 
-#def testNiftiDatasetROIMaskNeighbors(self):
+#def test_nifti_dataset_roi_mask_neighbors(self):
 #    """Test if we could request neighbors within spherical ROI whenever
 #       center is outside of the mask
 #       """
