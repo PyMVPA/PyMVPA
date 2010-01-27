@@ -310,13 +310,13 @@ testmanual: build
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg \
 	 nosetests --with-doctest --doctest-extension .rst --doctest-tests doc/source
 
-testtutorial: build
-	@echo "I: Testing code samples found in the tutorial"
+testtutorial-%: build
+	@echo "I: Testing code samples found in tutorial part $*"
 	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_DATA_ROOT=datadb \
 		nosetests --with-doctest --doctest-extension .rst \
-		          --doctest-tests doc/source/tutorial2*.rst
+		          --doctest-tests doc/source/tutorial$**.rst
 
 testdatadb: build
 	@echo "I: Testing code samples on the dataset DB website"
