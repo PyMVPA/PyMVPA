@@ -17,7 +17,7 @@ import numpy as N
 from mvpa.datasets.base import dataset_wizard
 from mvpa.mappers.zscore import ZScoreMapper, zscore
 from mvpa.testing.tools import assert_array_almost_equal, assert_array_equal, \
-        assert_equal, assert_raises
+        assert_equal, assert_raises, ok_
 
 from tests_warehouse import datasets
 
@@ -44,6 +44,13 @@ def test_mapper_vs_zscore():
         assert_array_almost_equal(ds1z, ds2.samples)
         assert_array_equal(ds1.samples, ds.samples)
 
+def test_zcore_repr():
+    # Just basic test if everything is sane... no proper comparison
+    for m in (ZScoreMapper(chunks=None),
+              ZScoreMapper(params=(3, 1)),
+              ZScoreMapper()):
+        mr = eval(repr(m))
+        ok_(isinstance(mr, ZScoreMapper))
 
 def test_zscore():
     """Test z-scoring transformation
