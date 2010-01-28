@@ -57,7 +57,7 @@ trap "rm -fr $logdir/pymvpa $logdir/tmp.log;" EXIT
 mkdir -p "$logdir"
 
 indent() {
-	sed -e 's/^/  /g'
+    sed -e 's/^/  /g'
 }
 
 do_checkout() {
@@ -75,7 +75,7 @@ do_build() {
 }
 
 do_clean() {
-	# verify that cleaning works as desired
+    # verify that cleaning works as desired
     $precmd make clean
     $precmd git clean -n | grep -q . \
         && { git clean -n; return 1; } \
@@ -114,34 +114,34 @@ sweep()
     #
     # Sweep through the branches and actionsto test
     #
-	branches_with_problems=
+    branches_with_problems=
     for branch in $BRANCHES; do
-		branch_has_problems=
-		echo
-		echo "I: ---------------{ Branch $branch }--------------"
-		for action in $ACTIONS ${TESTS_BRANCHES["$branch"]}; do
-			echo -n "I: $action "
-			cmd="do_$action"
-			if $cmd >| $tmpfile 2>&1 ; then
-				echo " ok"
-				succeeded=$(($succeeded+1))
-			else
-				branch_has_problems+=" $action"
-				failed=$(($failed+1))
-				echo " ! FAILED ! Output was:"
-				cat $tmpfile | indent
-			fi
-		done
-		if [ "x$branch_has_problems" != x ]; then
-			branches_with_problems+="\n  $branch: $branch_has_problems"
+        branch_has_problems=
+        echo
+        echo "I: ---------------{ Branch $branch }--------------"
+        for action in $ACTIONS ${TESTS_BRANCHES["$branch"]}; do
+            echo -n "I: $action "
+            cmd="do_$action"
+            if $cmd >| $tmpfile 2>&1 ; then
+                echo " ok"
+                succeeded=$(($succeeded+1))
+            else
+                branch_has_problems+=" $action"
+                failed=$(($failed+1))
+                echo " ! FAILED ! Output was:"
+                cat $tmpfile | indent
+            fi
+        done
+        if [ "x$branch_has_problems" != x ]; then
+            branches_with_problems+="\n  $branch: $branch_has_problems"
             echo " D: Reporting WTF due to errors:"
             $precmd python -c 'import mvpa; print mvpa.wtf()'
-		fi
+        fi
     done
-	echo "I: Succeeded $succeeded actions, failed $failed actions."
-	if [ "x$branches_with_problems" != x ]; then
-		echo -e "I: Branches which experienced problems: $branches_with_problems"
-	fi
+    echo "I: Succeeded $succeeded actions, failed $failed actions."
+    if [ "x$branches_with_problems" != x ]; then
+        echo -e "I: Branches which experienced problems: $branches_with_problems"
+    fi
 
     echo
     echo "I:" $(date)
