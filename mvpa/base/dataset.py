@@ -90,7 +90,7 @@ class AttrDataset(object):
     For convenience `AttrDataset.from_basic` is also available as `dataset`,
     so the above call is equivalent to:
 
-    >>> ds_labeled = dataset(samples, labels=range(4))
+    >>> ds_labeled = dataset_wizard(samples, labels=range(4))
 
     Both the labeled and the unlabeled dataset share the same samples
     array. No copying is performed.
@@ -574,15 +574,30 @@ class AttrDataset(object):
         if not name is None:
             # some HDF5 subset is requested
             if not name in hdf:
-                raise ValueError("Cannot find '%s' group in HDF file."
-                                 % name)
+                raise ValueError("Cannot find '%s' group in HDF file %s.  "
+                                 "File contains groups: %s"
+                                 % (name, source, hdf.keys()))
 
-            # acces the group that should contain the dataset
+            # access the group that should contain the dataset
             dsgrp = hdf[name]
-            return hdf2obj(dsgrp)
+            res = hdf2obj(dsgrp)
+            if not isinstance(res, AttrDataset):
+                # TODO: unittest before committing
+                raise ValueError, "%r in %s contains %s not a dataset.  " \
+                      "File contains groups: %s." \
+                      % (name, source, type(res), hdf.keys())
+            return res
         else:
             # just consider the whole file
-            return hdf2obj(hdf)
+            res = hdf2obj(hdf)
+            if not isinstance(res, AttrDataset):
+                # TODO: unittest before committing
+                raise ValueError, "Failed to load a dataset from %s.  " \
+                      "Loaded %s instead." \
+                      % (source, type(res))
+            return res
+
+            raise V
 
 
     # shortcut properties

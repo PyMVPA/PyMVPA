@@ -16,7 +16,7 @@ from mvpa.misc.data_generators import normalFeatureDataset
 
 class ENETTests(unittest.TestCase):
 
-    def testENET(self):
+    def test_enet(self):
         # not the perfect dataset with which to test, but
         # it will do for now.
         #data = datasets['dumb2']
@@ -34,7 +34,7 @@ class ENETTests(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless(cor[0] > .8)
 
-    def testENETState(self):
+    def test_enet_state(self):
         #data = datasets['dumb2']
         # for some reason the R code fails with the dumb data
         data = datasets['chirp_linear']
@@ -50,7 +50,7 @@ class ENETTests(unittest.TestCase):
         self.failUnless((p == clf.states.predictions).all())
 
 
-    def testENETSensitivities(self):
+    def test_enet_sensitivities(self):
         data = datasets['chirp_linear']
 
         # use ENET on binary problem

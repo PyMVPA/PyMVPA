@@ -15,7 +15,7 @@ from mvpa.clfs.distance import oneMinusCorrelation
 
 class KNNTests(unittest.TestCase):
 
-    def testMultivariate(self):
+    def test_multivariate(self):
 
         mv_perf = []
         uv_perf = []
@@ -39,7 +39,7 @@ class KNNTests(unittest.TestCase):
         self.failUnless( mean_uv_perf < mean_mv_perf )
 
 
-    def testKNNState(self):
+    def test_knn_state(self):
         train = pureMultivariateSignal( 20, 3 )
         test = pureMultivariateSignal( 20, 3 )
 

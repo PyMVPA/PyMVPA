@@ -16,7 +16,7 @@ from mvpa.base.info import wtf
 
 class TestBases(unittest.TestCase):
 
-    def testWtf(self):
+    def test_wtf(self):
         """Very basic testing -- just to see if it doesn't crash"""
 
         sinfo = str(wtf())

@@ -55,7 +55,6 @@ Datasets: Input, Output, Storage and Preprocessing
    base.dataset
    datasets.base
    datasets.mri
-   datasets.channel
    datasets.eep
    datasets.miscfx
    datasets.splitters
@@ -202,7 +201,6 @@ Miscellaneous
    misc.fsl.melodic
    misc.io
    misc.io.base
-   misc.io.eepbin
    misc.io.hamster
    misc.io.meg
 

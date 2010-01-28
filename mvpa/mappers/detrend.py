@@ -25,7 +25,7 @@ from mvpa.mappers.base import Mapper
 class PolyDetrendMapper(Mapper):
     """Mapper for regression-based removal of polynomial trends.
 
-    Noteworthy feature are the possibility for chunk-wise detrending, optional
+    Noteworthy features are the possibility for chunk-wise detrending, optional
     regressors, and the ability to use positional information about the samples
     from the dataset.
 
@@ -56,12 +56,12 @@ class PolyDetrendMapper(Mapper):
 
     Examples
     --------
-    >>> from mvpa.datasets import dataset
+    >>> from mvpa.datasets import dataset_wizard
     >>> from mvpa.mappers.detrend import PolyDetrendMapper
     >>> samples = N.array([[1.0, 2, 3, 3, 2, 1],
     ...                    [-2.0, -4, -6, -6, -4, -2]]).T
     >>> chunks = [0, 0, 0, 1, 1, 1]
-    >>> ds = dataset(samples, chunks=chunks)
+    >>> ds = dataset_wizard(samples, chunks=chunks)
     >>> dm = PolyDetrendMapper(chunks='chunks', polyord=1)
 
     >>> # the mapper will be auto-trained upon first use
@@ -322,10 +322,6 @@ class PolyDetrendMapper(Mapper):
                            % self.__class__.__name__)
 
 
-    def _reverse_data(self, data):
-        raise RuntimeError("%s cannot map plain data."
-                           % self.__class__.__name__)
-
 
 @borrowkwargs(PolyDetrendMapper, '__init__')
 def poly_detrend(ds, **kwargs):
@@ -345,4 +341,8 @@ def poly_detrend(ds, **kwargs):
     """
     dm = PolyDetrendMapper(**kwargs)
     dm._secret_inplace_detrend = True
-    return dm(ds)
+    # map
+    mapped = dm(ds)
+    # and append the mapper to the dataset
+    mapped._append_mapper(dm)
+    return mapped

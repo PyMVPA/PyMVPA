@@ -23,7 +23,7 @@ from tests_warehouse import datasets
 
 class WaveletMappersTests(unittest.TestCase):
 
-    def testSimpleWDM(self):
+    def test_simple_wdm(self):
         """
         """
         ds = datasets['uni2medium']
@@ -77,7 +77,7 @@ class WaveletMappersTests(unittest.TestCase):
                 self.failUnless(diff/ornorm < 1e-10)
 
 
-    def testSimpleWP1Level(self):
+    def test_simple_wp1_level(self):
         """
         """
 

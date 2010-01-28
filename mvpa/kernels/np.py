@@ -114,17 +114,17 @@ class GeneralizedLinearKernel(NumpyKernel):
                         doc="""
        A simple constant squared value which is broadcasted across
        kernel. In the case of GPR -- standard deviation of the Gaussian
-       prior probability N(0,sigma_0**2) of the intercept of the
+       prior probability Normal(0, sigma_0**2) of the intercept of the
        linear regression.""")
 
     Sigma_p = Parameter(1.0,
-                        doc="""
+                        doc=r"""
        A generic scalar or vector, or diagonal matrix to scale all
        dimensions or associate different scaling to each dimensions
        while computing te kernel matrix:
-       math::     k(x_A,x_B) = x_A^\top \Sigma_p x_B + \sigma_0^2
+       :math:`k(x_A,x_B) = x_A^\top \Sigma_p x_B + \sigma_0^2`.
        In the case of GPR -- a scalar or a diagonal of covariance matrix
-       of the Gaussian prior probability N(0,Sigma_p) on the weights
+       of the Gaussian prior probability Normal(0, Sigma_p) on the weights
        of the linear regression.""")
 
     gradients = StateVariable(enabled=False,

@@ -59,7 +59,7 @@ class RFETests(unittest.TestCase):
         return datasets['uni2medium_test']
 
 
-    def testBestDetector(self):
+    def test_best_detector(self):
         bd = BestDetector()
 
         # for empty history -- no best
@@ -82,7 +82,7 @@ class RFETests(unittest.TestCase):
         self.failUnless(bd([3, 2, 1, 1, 1, 2, 1]) == False)
 
 
-    def testNBackHistoryStopCrit(self):
+    def test_n_back_history_stop_crit(self):
         """Test stopping criterion"""
         stopcrit = NBackHistoryStopCrit()
         # for empty history -- no best but just go
@@ -106,7 +106,7 @@ class RFETests(unittest.TestCase):
         self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == True)
 
 
-    def testFixedErrorThresholdStopCrit(self):
+    def test_fixed_error_threshold_stop_crit(self):
         """Test stopping criterion"""
         stopcrit = FixedErrorThresholdStopCrit(0.5)
 
@@ -117,7 +117,7 @@ class RFETests(unittest.TestCase):
         self.failUnless(stopcrit([0.8, 0.4, 0.6]) == False)
 
 
-    def testNStepsStopCrit(self):
+    def test_n_steps_stop_crit(self):
         """Test stopping criterion"""
         stopcrit = NStepsStopCrit(2)
 
@@ -126,7 +126,7 @@ class RFETests(unittest.TestCase):
         self.failUnless(stopcrit([0.8]) == False)
 
 
-    def testMultiStopCrit(self):
+    def test_multi_stop_crit(self):
         """Test multiple stop criteria"""
         stopcrit = MultiStopCrit([FixedErrorThresholdStopCrit(0.5),
                                   NBackHistoryStopCrit(steps=4)])
@@ -149,7 +149,7 @@ class RFETests(unittest.TestCase):
         self.failUnless(stopcrit([1, 0.9, 0.4]+[0.4]*4) == True)
 
 
-    def testFeatureSelector(self):
+    def test_feature_selector(self):
         """Test feature selector"""
         # remove 10% weekest
         selector = FractionTailSelector(0.1)
@@ -222,7 +222,7 @@ class RFETests(unittest.TestCase):
 
     # XXX put GPR back in after it gets fixed up
     @sweepargs(clf=clfswh['has_sensitivity', '!meta', '!gpr'])
-    def testSensitivityBasedFeatureSelection(self, clf):
+    def test_sensitivity_based_feature_selection(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
         sens_ana = clf.getSensitivityAnalyzer(mapper=maxofabs_sample())
@@ -268,7 +268,7 @@ class RFETests(unittest.TestCase):
             msg="# of selected features must be equal the one in the result dataset")
 
 
-    def testFeatureSelectionPipeline(self):
+    def test_feature_selection_pipeline(self):
         sens_ana = SillySensitivityAnalyzer()
 
         wdata = self.getData()
@@ -313,7 +313,7 @@ class RFETests(unittest.TestCase):
 
     # TODO: should later on work for any clfs_with_sens
     @sweepargs(clf=clfswh['has_sensitivity', '!meta'][:1])
-    def testRFE(self, clf):
+    def test_rfe(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
         sens_ana = clf.getSensitivityAnalyzer(mapper=maxofabs_sample())
@@ -364,7 +364,7 @@ class RFETests(unittest.TestCase):
         # use the same classifier
 
 
-    def testJamesProblem(self):
+    def test_james_problem(self):
         percent = 80
         dataset = datasets['uni2small']
         rfesvm_split = LinearCSVMC()

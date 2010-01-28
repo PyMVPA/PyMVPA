@@ -63,7 +63,7 @@ class TestClassParametrized(TestClassProper, ClassWithCollections):
 
 class StateTests(unittest.TestCase):
 
-    def testBlankState(self):
+    def test_blank_state(self):
         empty  = TestClassEmpty()
         blank  = TestClassBlank()
         blank2 = TestClassBlank()
@@ -104,7 +104,7 @@ class StateTests(unittest.TestCase):
         self.failUnlessRaises(AttributeError, blank2.__getattribute__, 'state1')
 
 
-    def testProperState(self):
+    def test_proper_state(self):
         proper   = TestClassProper()
         proper2  = TestClassProper(enable_states=['state1'], disable_states=['state2'])
 
@@ -171,7 +171,7 @@ class StateTests(unittest.TestCase):
         self.failUnlessRaises(UnknownStateError, proper2.states.__getattribute__, 'state2')
 
 
-    def testGetSaveEnabled(self):
+    def test_get_save_enabled(self):
         """Check if we can store/restore set of enabled states"""
 
         if __debug__ and 'ENFORCE_STATES_ENABLED' in debug.active:
@@ -195,7 +195,7 @@ class StateTests(unittest.TestCase):
 
     # TODO: make test for _copy_states_ or whatever comes as an alternative
 
-    def testStoredTemporarily(self):
+    def test_stored_temporarily(self):
         proper   = TestClassProper()
         properch = TestClassProperChild(enable_states=["state1"])
 
@@ -220,7 +220,7 @@ class StateTests(unittest.TestCase):
         self.failUnlessEqual(proper.states.enabled, ["state2"])
 
 
-    def testProperStateChild(self):
+    def test_proper_state_child(self):
         """
         Simple test if child gets state variables from the parent as well
         """
@@ -229,7 +229,7 @@ class StateTests(unittest.TestCase):
                              Set(['state1', 'state2', 'state4']))
 
 
-    def testStateVariables(self):
+    def test_state_variables(self):
         """To test new states"""
 
         class S1(ClassWithCollections):
@@ -266,7 +266,7 @@ class StateTests(unittest.TestCase):
             pass
 
 
-    def testParametrized(self):
+    def test_parametrized(self):
 
         self.failUnlessRaises(TypeError, TestClassParametrized,
             p2=34, enable_states=['state1'],
@@ -304,7 +304,7 @@ class StateTests(unittest.TestCase):
             self.fail(msg="Failed to generate an instance out of "
                       "representation  %s of params. Got exception: %s" % (aparams_str, e))
 
-    def testReadOnly(self):
+    def test_read_only(self):
         # Should be able to assign in constructor
         cro = TestClassReadOnlyParameter(paramro=12)
         # but not run time
@@ -312,11 +312,11 @@ class StateTests(unittest.TestCase):
         # Test if value wasn't actually changed
         self.failUnlessEqual(cro.params.paramro, 12)
 
-    def testValueInConstructor(self):
+    def test_value_in_constructor(self):
         param = Parameter(0, value=True)
         self.failUnless(param.value)
 
-    def testDeepCopyingStateVariable(self):
+    def test_deep_copying_state_variable(self):
         for v in (True, False):
             sv = StateVariable(enabled=v,
                                doc="Testing")

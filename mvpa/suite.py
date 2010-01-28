@@ -79,7 +79,6 @@ from mvpa.datasets import *
 # just to make testsuite happy
 from mvpa.datasets.base import *
 from mvpa.datasets.miscfx import *
-from mvpa.datasets.channel import *
 from mvpa.datasets.eep import *
 if externals.exists('nifti'):
     from mvpa.datasets.mri import *
@@ -104,8 +103,8 @@ from mvpa.mappers.procrustean import *
 from mvpa.mappers.boxcar import *
 from mvpa.mappers.fx import *
 from mvpa.mappers.som import *
+from mvpa.mappers.zscore import *
 if externals.exists('scipy'):
-    from mvpa.mappers.zscore import ZScoreMapper
     from mvpa.mappers.detrend import *
 if externals.exists('mdp'):
     from mvpa.mappers.mdp_adaptor import *
@@ -131,7 +130,6 @@ from mvpa.misc.exceptions import *
 from mvpa.misc import *
 from mvpa.misc.io import *
 from mvpa.misc.io.base import *
-from mvpa.misc.io.eepbin import *
 from mvpa.misc.io.meg import *
 if externals.exists('cPickle') and externals.exists('gzip'):
     from mvpa.misc.io.hamster import *

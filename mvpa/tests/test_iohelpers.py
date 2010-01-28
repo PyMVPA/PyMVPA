@@ -13,7 +13,7 @@ import unittest
 from tempfile import mkstemp
 import numpy as N
 
-from nose.tools import ok_
+from mvpa.testing.tools import ok_
 
 from mvpa import pymvpa_dataroot
 from mvpa.misc.io import *
@@ -23,7 +23,7 @@ from mvpa.misc.bv import BrainVoyagerRTC
 
 class IOHelperTests(unittest.TestCase):
 
-    def testColumnDataFromFile(self):
+    def test_column_data_from_file(self):
         ex1 = """eins zwei drei
         0 1 2
         3 4 5
@@ -93,7 +93,7 @@ class IOHelperTests(unittest.TestCase):
             pass
 
 
-    def testSamplesAttributes(self):
+    def test_samples_attributes(self):
         sa = SampleAttributes(os.path.join(pymvpa_dataroot,
                                            'attributes_literal.txt'),
                               literallabels=True)
@@ -115,7 +115,7 @@ class IOHelperTests(unittest.TestCase):
             msg='Something is wrong with the timiing of the events')
 
 
-    def testFslEV(self):
+    def test_fsl_ev(self):
         ex1 = """0.0 2.0 1
         13.89 2 1
         16 2.0 0.5
@@ -162,7 +162,7 @@ class IOHelperTests(unittest.TestCase):
         self.failUnless([e['crap'] for e in ev] == [True]*3)
 
 
-    def testFslEV2(self):
+    def test_fsl_ev2(self):
         attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'smpl_attr.txt'))
 
         # check header (sort because order in dict is unpredictable)
@@ -171,7 +171,7 @@ class IOHelperTests(unittest.TestCase):
 
         self.failUnless(attr.nsamples == 3)
 
-    def testBVRTC(self):
+    def test_bv_rtc(self):
         """Simple testing of reading RTC files from BrainVoyager"""
 
         attr = BrainVoyagerRTC(os.path.join(pymvpa_dataroot, 'bv', 'smpl_model.rtc'))
@@ -218,14 +218,14 @@ class IOHelperTests(unittest.TestCase):
         self.failUnless((N.unique(chunks) == range(4)).all())
 
 
-    def testSensorLocations(self):
+    def test_sensor_locations(self):
         sl = XAVRSensorLocations(os.path.join(pymvpa_dataroot, 'xavr1010.dat'))
 
         for var in ['names', 'pos_x', 'pos_y', 'pos_z']:
             self.failUnless(len(eval('sl.' + var)) == 31)
 
 
-    def testFslGLMDesign(self):
+    def test_fsl_glm_design(self):
         glm = FslGLMDesign(os.path.join(pymvpa_dataroot, 'glm.mat'))
 
         self.failUnless(glm.mat.shape == (850, 6))

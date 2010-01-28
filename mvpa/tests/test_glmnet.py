@@ -8,9 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA least angle regression (ENET) classifier"""
 
-from nose.tools import assert_true, assert_equal
-from numpy.testing import assert_array_equal
-
 from mvpa import cfg
 from mvpa.clfs.glmnet import GLMNET_R,GLMNET_C
 
@@ -20,7 +17,9 @@ from mvpa.misc.errorfx import CorrErrorFx
 from tests_warehouse import *
 from mvpa.misc.data_generators import normalFeatureDataset
 
-def testGLMNET_R():
+from mvpa.testing.tools import assert_true, assert_equal, assert_array_equal
+
+def test_glmnet_r():
     # not the perfect dataset with which to test, but
     # it will do for now.
     #data = datasets['dumb2']
@@ -38,7 +37,7 @@ def testGLMNET_R():
     if cfg.getboolean('tests', 'labile', default='yes'):
         assert_true(corerr < .2)
 
-def testGLMNET_C():
+def test_glmnet_c():
     # define binary prob
     data = datasets['dumb2']
 
@@ -53,7 +52,7 @@ def testGLMNET_C():
 
     assert_array_equal(pre, data.labels)
 
-def testGLMNETState():
+def test_glmnet_state():
     #data = datasets['dumb2']
     # for some reason the R code fails with the dumb data
     data = datasets['chirp_linear']
@@ -69,7 +68,7 @@ def testGLMNETState():
     assert_array_equal(p, clf.states.predictions)
 
 
-def testGLMNET_CSensitivities():
+def test_glmnet_c_sensitivities():
     data = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
 
     # use GLMNET on binary problem
@@ -83,7 +82,7 @@ def testGLMNET_CSensitivities():
     #failUnless(sens.shape == (data.nfeatures,))
     assert_equal(sens.shape, (len(data.UL), data.nfeatures))
 
-def testGLMNET_RSensitivities():
+def test_glmnet_r_sensitivities():
     data = datasets['chirp_linear']
 
     clf = GLMNET_R()

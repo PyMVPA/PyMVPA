@@ -14,12 +14,15 @@ if exists('h5py', raiseException=True):
 else:
     raise RuntimeError, "Don't run me if no h5py is present"
 
+import os
+from tempfile import mkstemp
 
-from numpy.testing import assert_array_equal
-from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true
+from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
+        assert_array_equal
 
-from mvpa.base.hdf5 import obj2hdf, hdf2obj
+from mvpa.base.dataset import AttrDataset
+from mvpa.base.hdf5 import h5save, obj2hdf
+
 from tests_warehouse import *
 
 
@@ -46,3 +49,27 @@ def test_h5py_datasets():
         if 'mapper' in ds.a:
             # since we have no __equal__ do at least some comparison
             assert_equal(repr(ds.a.mapper), repr(ds2.a.mapper))
+
+def test_h5py_dataset_typecheck():
+    ds = datasets['uni2small']
+
+    _, fpath = mkstemp('mvpa', 'test')
+
+    h5save(fpath, [[1, 2, 3]])
+    assert_raises(ValueError, AttrDataset.from_hdf5, fpath)
+    # this one just catches if there is such a group
+    assert_raises(ValueError, AttrDataset.from_hdf5, fpath, name='bogus')
+
+    hdf = h5py.File(fpath, 'w')
+    ds = AttrDataset([1, 2, 3])
+    obj2hdf(hdf, ds, name='non-bogus')
+    obj2hdf(hdf, [1, 2, 3], name='bogus')
+    hdf.close()
+
+    assert_raises(ValueError, AttrDataset.from_hdf5, fpath, name='bogus')
+    ds_loaded = AttrDataset.from_hdf5(fpath, name='non-bogus')
+    assert_array_equal(ds, ds_loaded)   # just to do smth useful with ds ;)
+
+    # cleanup and ignore stupidity
+    os.remove(fpath)
+

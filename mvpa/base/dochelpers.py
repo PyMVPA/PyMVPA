@@ -80,7 +80,7 @@ def single_or_plural(single, plural, n):
 
 def handle_docstring(text, polite=True):
     """Take care of empty and non existing doc strings."""
-    if text == None or not len(text):
+    if text is None or not len(text):
         if polite:
             return '' #No documentation found. Sorry!'
         else:
@@ -122,7 +122,7 @@ def _split_out_parameters(initdoc):
     # TODO: bind it to the only word in the line
     p_res = __parameters_str_re.search(initdoc)
     if p_res is None:
-        result = initdoc, "", ""
+        return initdoc, "", ""
     else:
         # Could have been accomplished also via re.match
 
@@ -144,7 +144,9 @@ def _split_out_parameters(initdoc):
 
     # XXX a bit of duplication of effort since handle_docstring might
     # do splitting internally
-    return [handle_docstring(x, polite=False).strip('\n') for x in result]
+    return handle_docstring(result[0], polite=False).strip('\n'), \
+           textwrap.dedent(result[1]).strip('\n'), \
+           textwrap.dedent(result[2]).strip('\n')
 
 
 __re_params = re.compile('(?:\n\S.*?)+$')
@@ -156,7 +158,7 @@ def _parse_parameters(paramdoc):
     It is needed to remove multiple entries for the same parameter
     like it could be with adding parameters from the parent class
 
-    It assumes that previousely parameters were unwrapped, so their
+    It assumes that previously parameters were unwrapped, so their
     documentation starts at the begining of the string, like what
     should it be after _split_out_parameters
     """
