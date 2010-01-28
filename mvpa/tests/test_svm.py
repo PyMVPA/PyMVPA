@@ -24,7 +24,7 @@ class SVMTests(unittest.TestCase):
 
 #    @sweepargs(nl_clf=clfswh['non-linear', 'svm'] )
 #    @sweepargs(nl_clf=clfswh['non-linear', 'svm'] )
-    def testMultivariate(self):
+    def test_multivariate(self):
         mv_perf = []
         mv_lin_perf = []
         uv_perf = []
@@ -91,7 +91,7 @@ class SVMTests(unittest.TestCase):
     # XXX for now works only with linear... think it through -- should
     #     work non-linear, shouldn't it?
     @sweepargs(clf=clfswh['svm', 'linear', '!regression', '!gnpp', '!meta'])
-    def testCperClass(self, clf):
+    def test_cper_class(self, clf):
         if not (clf.params.has_key('C')):
             # skip those without C
             return
@@ -160,7 +160,7 @@ class SVMTests(unittest.TestCase):
 
 
 
-    def testSillyness(self):
+    def test_sillyness(self):
         """Test if we raise exceptions on incorrect specifications
         """
 

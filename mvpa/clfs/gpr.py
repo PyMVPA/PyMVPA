@@ -23,7 +23,7 @@ from mvpa.kernels.np import SquaredExponentialKernel, GeneralizedLinearKernel, \
      LinearKernel
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import InvalidHyperparameterError
-from mvpa.datasets import Dataset
+from mvpa.datasets import Dataset, dataset_wizard
 
 if externals.exists("scipy", raiseException=True):
     from scipy.linalg import cho_solve as SLcho_solve
@@ -542,7 +542,7 @@ if externals.exists('openopt'):
                                 / clf._train_labels.std()
             # clf._train_fv = (clf._train_fv-clf._train_fv.mean(0)) \
             #                  /clf._train_fv.std(0)
-            ds = dataset(samples=clf._train_fv, labels=clf._train_labels)
+            ds = dataset_wizard(samples=clf._train_fv, labels=clf._train_labels)
             clf.states.enable("log_marginal_likelihood")
             ms = ModelSelector(clf, ds)
             # Note that some kernels does not have gradient yet!

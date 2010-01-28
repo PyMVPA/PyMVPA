@@ -12,16 +12,14 @@ import os
 import numpy as N
 from numpy import array
 
-from numpy.testing import assert_array_equal
-from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true
-
 from mvpa.datasets.base import Dataset
 import mvpa.misc.neighborhood as ne
 from mvpa.clfs.distance import *
 
+from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
+        assert_array_equal
 
-def testDistances():
+def test_distances():
     a = N.array([3,8])
     b = N.array([6,4])
     # test distances or yarik recalls unit testing ;)

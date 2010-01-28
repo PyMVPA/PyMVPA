@@ -19,13 +19,13 @@ from tests_warehouse import datasets, sweepargs
 class SVMKernelTests(unittest.TestCase):
     
     @sweepargs(clf=[lsSVM(), sgSVM()])
-    def testBasicClfTrainPredict(self, clf):
+    def test_basic_clf_train_predict(self, clf):
         d = datasets['uni4medium']
         clf.train(d)
         clf.predict(d)
         pass
 
-    def testCacheSpeedup(self):
+    def test_cache_speedup(self):
         from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
         from mvpa.datasets.splitters import NFoldSplitter
         from time import time

@@ -14,7 +14,7 @@ import numpy as N
 
 from sets import Set
 
-from mvpa.datasets.base import dataset, Dataset
+from mvpa.datasets.base import dataset_wizard, Dataset
 
 if __debug__:
     from mvpa.base import debug
@@ -54,7 +54,7 @@ def dumbFeatureDataset():
             [12, 1]]
     regs = ([1] * 8) + ([2] * 8) + ([3] * 8)
 
-    return dataset(samples=N.array(data), labels=regs, chunks=range(len(regs)))
+    return dataset_wizard(samples=N.array(data), labels=regs, chunks=range(len(regs)))
 
 
 def dumbFeatureBinaryDataset():
@@ -66,7 +66,7 @@ def dumbFeatureBinaryDataset():
             [12, 1]]
     regs = ([0] * 12) + ([1] * 12)
 
-    return dataset(samples=N.array(data), labels=regs, chunks=range(len(regs)))
+    return dataset_wizard(samples=N.array(data), labels=regs, chunks=range(len(regs)))
 
 
 
@@ -124,7 +124,7 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
                                 for i in range(nlabels)])
     chunks = N.concatenate([N.repeat(range(nchunks),
                                      perlabel/nchunks) for i in range(nlabels)])
-    ds = Dataset.from_basic(data, labels=labels, chunks=chunks)
+    ds = dataset_wizard(data, labels=labels, chunks=chunks)
 
     # If nonbogus was provided -- assign .a and .fa accordingly
     if nonbogus_features is not None:
@@ -167,7 +167,7 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
 
     if chunks is None:
         chunks = range(len(data))
-    return dataset(samples=data, labels=regs, chunks=chunks)
+    return dataset_wizard(samples=data, labels=regs, chunks=chunks)
 
 
 def getMVPattern(s2n):
@@ -215,7 +215,7 @@ def wr1996(size=200):
     x34 = x + N.random.randn(size, 2)*0.02
     x56 = N.random.randn(size, 2)
     x = N.hstack([x, x34, x56])
-    return dataset(samples=x, labels=y)
+    return dataset_wizard(samples=x, labels=y)
 
 
 def sinModulated(n_instances, n_features,
@@ -232,7 +232,7 @@ def sinModulated(n_instances, n_features,
         data = N.random.rand(n_instances, n_features)*N.pi
     label = N.sin((data**2).sum(1)).round()
     label += N.random.rand(label.size)*noise
-    return dataset(samples=data, labels=label)
+    return dataset_wizard(samples=data, labels=label)
 
 def chirpLinear(n_instances, n_features=4, n_nonbogus_features=2,
                 data_noise=0.4, noise=0.1):
@@ -251,7 +251,7 @@ def chirpLinear(n_instances, n_features=4, n_nonbogus_features=2,
 
     labels = y + N.random.normal(size=(n_instances,))*noise
 
-    return dataset(samples=data, labels=labels)
+    return dataset_wizard(samples=data, labels=labels)
 
 
 def linear_awgn(size=10, intercept=0.0, slope=0.4, noise_std=0.01, flat=False):
@@ -274,7 +274,7 @@ def linear_awgn(size=10, intercept=0.0, slope=0.4, noise_std=0.01, flat=False):
     y = N.dot(x, slope)[:, N.newaxis] \
         + (N.random.randn(*(x.shape[0], 1)) * noise_std) + intercept
 
-    return dataset(samples=x, labels=y)
+    return dataset_wizard(samples=x, labels=y)
 
 
 def noisy_2d_fx(size_per_fx, dfx, sfx, center, noise_std=1):
@@ -299,7 +299,7 @@ def noisy_2d_fx(size_per_fx, dfx, sfx, center, noise_std=1):
 
     samples += N.array(center)
 
-    return dataset(samples=samples, labels=labels)
+    return dataset_wizard(samples=samples, labels=labels)
 
 
 def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
@@ -309,4 +309,4 @@ def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
     x = N.linspace(start=x_min, stop=x_max, num=size)
     noise = N.random.randn(size)*sigma
     y = x * slope + intercept + noise
-    return dataset(samples=x[:, None], labels=y)
+    return dataset_wizard(samples=x[:, None], labels=y)

@@ -16,10 +16,6 @@ if externals.exists('mdp', raiseException=True):
 else:
     raise RuntimeError, "Don't run me if no mdp is present"
 
-from numpy.testing import assert_array_equal, assert_array_almost_equal
-from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true
-
 from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper, PCAMapper, \
         ICAMapper
 from mvpa.mappers.lle import LLEMapper
@@ -27,6 +23,8 @@ from mvpa.datasets.base import Dataset
 from mvpa.base.dataset import DAE
 from mvpa.misc.data_generators import normalFeatureDataset
 
+from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
+        assert_true,  assert_array_equal, assert_array_almost_equal
 
 def test_mdpnodemapper():
     ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
@@ -97,7 +95,7 @@ def test_mdpflow_additional_arguments():
     rds = fm.reverse(fds)
     assert_array_almost_equal(ds.samples, rds.samples)
 
-def test_mdpflow_additional_arguments_Nones():
+def test_mdpflow_additional_arguments_nones():
     if externals.versions['mdp'] < '2.5':
         # we have no IdentityNode yet... is there analog?
         return

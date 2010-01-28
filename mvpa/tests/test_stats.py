@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA stats helpers"""
 
+from mvpa import cfg
 from mvpa.base import externals
 from mvpa.clfs.stats import MCNullDist, FixedNullDist, NullDist
 from mvpa.datasets import Dataset
@@ -15,9 +16,8 @@ from mvpa.measures.glm import GLM
 from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa.misc.fx import doubleGammaHRF, singleGammaHRF
 from tests_warehouse import *
-from mvpa import cfg
-from numpy.testing import assert_array_almost_equal, assert_array_equal
-from nose.tools import assert_true, assert_equal
+from mvpa.testing.tools import assert_array_almost_equal, assert_array_equal, \
+assert_true, assert_equal
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
@@ -43,7 +43,7 @@ class StatsTests(unittest.TestCase):
 
 
     @sweepargs(null=nulldist_sweep[1:])
-    def testNullDistProb(self, null):
+    def test_null_dist_prob(self, null):
         """Testing null dist probability"""
         if not isinstance(null, NullDist):
             return
@@ -73,7 +73,7 @@ class StatsTests(unittest.TestCase):
             self.failUnlessRaises(ValueError, null.p, [5, 3, 4])
 
 
-    def testAnova(self):
+    def test_anova(self):
         """Do some extended testing of OneWayAnova
 
         in particular -- compound estimation

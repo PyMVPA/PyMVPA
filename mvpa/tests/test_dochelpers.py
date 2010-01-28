@@ -14,12 +14,12 @@ import unittest
 
 class DochelpersTests(unittest.TestCase):
 
-    def testBasic(self):
+    def test_basic(self):
         self.failUnlessEqual(single_or_plural('a', 'b', 1), 'a')
         self.failUnlessEqual(single_or_plural('a', 'b', 0), 'b')
         self.failUnlessEqual(single_or_plural('a', 'b', 123), 'b')
 
-    def testBorrowDoc(self):
+    def test_borrow_doc(self):
 
         class A(object):
             def met1(self):
@@ -41,7 +41,7 @@ class DochelpersTests(unittest.TestCase):
         self.failUnlessEqual(B.met2.__doc__, A.met1.__doc__)
 
 
-    def testBorrowKwargs(self):
+    def test_borrow_kwargs(self):
 
         class A(object):
             def met1(self, kp1=None, kp2=1):

@@ -6,23 +6,14 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Dataset that gets its samples from a NIfTI file
+"""Dataset for magnetic resonance imaging (MRI) data.
 
-Samples can be loaded from a NiftiImage instance or directly from a NIfTI
-file. This class stores all relevant information from the NIfTI file header
-and provides information about the metrics and neighborhood information of
-all voxels.
+This module offers functions to import MRI data in the NIfTI format into
+PyMVPA, and export PyMVPA datasets back into NIfTI files.
 
-Most importantly it allows to map data back into the original data space
-and format via :meth:`~mvpa.datasets.mri.map2nifti`.
+Currently NIfTI file access is based on PyNIfTI_.
 
-This class allows for convenient pre-selection of features by providing a
-mask to the constructor. Only non-zero elements from this mask will be
-considered as features.
-
-NIfTI files are accessed via PyNIfTI. See
-http://niftilib.sourceforge.net/pynifti/ for more information about
-pynifti.
+.. _PyNIfTI: http://niftilib.sourceforge.net/pynifti
 """
 
 __docformat__ = 'restructuredtext'
@@ -47,95 +38,8 @@ from mvpa.mappers.boxcar import BoxcarMapper
 from mvpa.base import warning
 
 
-def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
-    """Load/access NIfTI data from files or instances.
-
-    Parameters
-    ----------
-    src : str or NiftiImage
-      Filename of a NIfTI image or a `NiftiImage` instance.
-    ensure : bool, optional
-      If True, throw ValueError exception if cannot be loaded.
-    enforce_dim : int or None
-      If not None, it is the dimensionality of the data to be enforced,
-      commonly 4D for the data, and 3D for the mask in case of fMRI.
-
-    Returns
-    -------
-    NiftiImage or None
-      If the source is not supported None is returned.
-
-    Raises
-    ------
-    ValueError
-      If there is a problem with data (variable dimensionality) or
-      failed to load data and ensure=True.
-    """
-    nifti = None
-
-    # figure out what type
-    if isinstance(src, str):
-        # open the nifti file
-        try:
-            nifti = NiftiImage(src)
-        except RuntimeError, e:
-            warning("ERROR: Cannot open NIfTI file %s" \
-                    % src)
-            raise e
-    elif isinstance(src, NiftiImage):
-        # nothing special
-        nifti = src
-    elif (isinstance(src, list) or isinstance(src, tuple)) \
-        and len(src)>0 \
-        and (isinstance(src[0], str) or isinstance(src[0], NiftiImage)):
-        # load from a list of given entries
-        if enforce_dim is not None: enforce_dim_ = enforce_dim - 1
-        else:                       enforce_dim_ = None
-        srcs = [getNiftiFromAnySource(s, ensure=ensure,
-                                      enforce_dim=enforce_dim_)
-                for s in src]
-        if __debug__:
-            # lets check if they all have the same dimensionality
-            shapes = [s.data.shape for s in srcs]
-            if not N.all([s == shapes[0] for s in shapes]):
-                raise ValueError, \
-                      "Input volumes contain variable number of dimensions:" \
-                      " %s" % (shapes,)
-        # Combine them all into a single beast
-        nifti = NiftiImage(N.array([s.asarray() for s in srcs]),
-                           srcs[0].header)
-    elif ensure:
-        raise ValueError, "Cannot load NIfTI from %s" % (src,)
-
-    if nifti is not None and enforce_dim is not None:
-        shape, new_shape = nifti.data.shape, None
-        lshape = len(shape)
-
-        # check if we need to tune up shape
-        if lshape < enforce_dim:
-            # if we are missing required dimension(s)
-            new_shape = (1,)*(enforce_dim-lshape) + shape
-        elif lshape > enforce_dim:
-            # if there are bogus dimensions at the beginning
-            bogus_dims = lshape - enforce_dim
-            if shape[:bogus_dims] != (1,)*bogus_dims:
-                raise ValueError, \
-                      "Cannot enforce %dD on data with shape %s" \
-                      % (enforce_dim, shape)
-            new_shape = shape[bogus_dims:]
-
-        # tune up shape if needed
-        if new_shape is not None:
-            if __debug__:
-                debug('DS_NIFTI', 'Enforcing shape %s for %s data from %s' %
-                      (new_shape, shape, src))
-            nifti.data.shape = new_shape
-
-    return nifti
-
-
 def map2nifti(dataset, data=None, imghdr=None):
-    """Maps a data vector into the dataspace and wraps it in a NiftiImage.
+    """Maps data(sets) into the original dataspace and wraps it in a NiftiImage.
 
     Parameters
     ----------
@@ -147,6 +51,10 @@ def map2nifti(dataset, data=None, imghdr=None):
       instance -- takes its samples for mapping.
     imghdr : dict
       Image header data. If None, the header is taken from `dataset`.
+
+    Returns
+    -------
+    NiftiImage
     """
     if data is None:
         data = dataset.samples
@@ -167,53 +75,74 @@ def map2nifti(dataset, data=None, imghdr=None):
 
 def fmri_dataset(samples, labels=None, chunks=None, mask=None,
                  sprefix='voxel', tprefix='time', add_fa=None,):
-    """Create a dataset from an fMRI timeseries.
+    """Create a dataset from an fMRI timeseries image.
+
+    The timeseries image serves as the samples data, with each volume becoming
+    a sample. All 3D volume samples are flattened into one-dimensional feature
+    vectors, optionally being masked (i.e. subset of voxels corresponding to
+    non-zero elements in a mask image).
+
+    In addition to (optional) samples attributes for labels and chunks the
+    returned dataset contains a number of additional attributes:
+
+    Samples attributes (per each volume):
+
+      * volume index (time_indices)
+      * volume acquisition time (time_coord)
+
+    Feature attributes (per each voxel):
+
+      * voxel indices (voxel_indices), sometimes referred to as ijk
+
+    Dataset attributes:
+
+      * dump of the NIfTI image header data (imghdr)
+      * volume extent (voxel_dim)
+      * voxel extent (voxel_eldim)
+
+    The default attribute name is listed in parenthesis, but may be altered by
+    the corresponding prefix arguments. The validity of the attribute values
+    relies on correct settings in the NIfTI image header.
 
     Parameters
     ----------
     samples : str or NiftiImage or list
+      fMRI timeseries, specified either as a filename (single file 4D image),
+      an image instance (4D image), or a list of filenames or image instances
+      (each list item corresponding to a 3D volume).
     labels : scalar or sequence
+      Label attribute for each volume in the timeseries, or a scalar value that
+      is assigned to all samples.
     chunks : scalar or sequence
+      Chunk attribute for each volume in the timeseries, or a scalar value that
+      is assigned to all samples.
     mask : str or NiftiImage
+      Filename or image instance of a 3D volume mask. Voxels corresponding to
+      non-zero elements in the mask will be selected. The mask has to be in the
+      same space (orientation and dimensions) as the timeseries image
     sprefix : str or None
+      Prefix for attribute names describing spatial properties of the
+      timeseries. If None, no such attributes are stored in the dataset.
     tprefix : str or None
+      Prefix for attribute names describing temporal properties of the
+      timeseries. If None, no such attributes are stored in the dataset.
     add_fa : dict or None
+      Optional dictionary with additional volumetric data that shall be stored
+      as feature attributes in the dataset. The dictionary key serves as the
+      feature attribute name. Each value might be of any type supported by the
+      'mask' argument of this function.
 
-
-    Dataset with event-defined samples from a NIfTI timeseries image.
-
-    This is a convenience dataset to facilitate the analysis of event-related
-    fMRI datasets. Boxcar-shaped samples are automatically extracted from the
-    full timeseries using :class:`~mvpa.misc.support.Event` definition lists.
-    For each event all volumes covering that particular event in time
-    (including partial coverage) are used to form the corresponding sample.
-
-    The class supports the conversion of events defined in 'realtime' into the
-    descrete temporal space defined by the NIfTI image. Moreover, potentially
-    varying offsets between true event onset and timepoint of the first selected
-    volume can be stored as an additional feature in the dataset.
-
-    Additionally, the dataset supports masking. This is done similar to the
-    masking capabilities of :class:`~mvpa.datasets.nifti.NiftiDataset`. However,
-    the mask can either be of the same shape as a single NIfTI volume, or
-    can be of the same shape as the generated boxcar samples, i.e.
-    a samples consisting of three volumes with 24 slices and 64x64 inplane
-    resolution needs a mask with shape (3, 24, 64, 64). In the former case the
-    mask volume is automatically expanded to be identical in a volumes of the
-    boxcar.
-
-    TODO: extend
+    Returns
+    -------
+    Dataset
     """
-    # TODO: Create detrending mapper and allow a mapper to be applied before
-    # boxcaring -- we can only resonably detrend before boxcaring...
-
     # load the samples
-    niftisamples = getNiftiFromAnySource(samples, ensure=True, enforce_dim=4)
+    niftisamples = _load_anynifti(samples, ensure=True, enforce_dim=4)
     samples = niftisamples.data
 
     # figure out what the mask is, but onyl handle known cases, the rest
     # goes directly into the mapper which maybe knows more
-    niftimask = getNiftiFromAnySource(mask)
+    niftimask = _load_anynifti(mask)
     if niftimask is None:
         pass
     elif isinstance(niftimask, N.ndarray):
@@ -248,7 +177,7 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
     # load and store additional feature attributes
     if not add_fa is None:
         for fattr in add_fa:
-            value = _get_nifti_data(getNiftiFromAnySource(add_fa[fattr]))
+            value = _get_nifti_data(_load_anynifti(add_fa[fattr]))
             ds.fa[fattr] = ds.a.mapper.forward1(value)
 
     # store interesting props in the dataset
@@ -277,6 +206,28 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
 def extract_events(ds, events, tr=None, eprefix='event'):
     """XXX All docs need to be rewritten.
 
+    Dataset with event-defined samples from a NIfTI timeseries image.
+
+    This is a convenience dataset to facilitate the analysis of event-related
+    fMRI datasets. Boxcar-shaped samples are automatically extracted from the
+    full timeseries using :class:`~mvpa.misc.support.Event` definition lists.
+    For each event all volumes covering that particular event in time
+    (including partial coverage) are used to form the corresponding sample.
+
+    The class supports the conversion of events defined in 'realtime' into the
+    descrete temporal space defined by the NIfTI image. Moreover, potentially
+    varying offsets between true event onset and timepoint of the first selected
+    volume can be stored as an additional feature in the dataset.
+
+    Additionally, the dataset supports masking. This is done similar to the
+    masking capabilities of :class:`~mvpa.datasets.nifti.NiftiDataset`. However,
+    the mask can either be of the same shape as a single NIfTI volume, or
+    can be of the same shape as the generated boxcar samples, i.e.
+    a samples consisting of three volumes with 24 slices and 64x64 inplane
+    resolution needs a mask with shape (3, 24, 64, 64). In the former case the
+    mask volume is automatically expanded to be identical in a volumes of the
+    boxcar.
+
     Parameters
     ----------
     ds : Dataset
@@ -285,6 +236,7 @@ def extract_events(ds, events, tr=None, eprefix='event'):
       Temporal distance of two adjacent NIfTI volumes. This can be used
       to override the corresponding value in the NIfTI header.
     eprefix : str or None
+
     """
     if tr is None:
         # determine TR, take from NIfTI header by default
@@ -347,6 +299,93 @@ def _get_nifti_data(nim):
         return nim.data
     else:
         return nim.asarray()
+
+
+def _load_anynifti(src, ensure=False, enforce_dim=None):
+    """Load/access NIfTI data from files or instances.
+
+    Parameters
+    ----------
+    src : str or NiftiImage
+      Filename of a NIfTI image or a `NiftiImage` instance.
+    ensure : bool, optional
+      If True, throw ValueError exception if cannot be loaded.
+    enforce_dim : int or None
+      If not None, it is the dimensionality of the data to be enforced,
+      commonly 4D for the data, and 3D for the mask in case of fMRI.
+
+    Returns
+    -------
+    NiftiImage or None
+      If the source is not supported None is returned.
+
+    Raises
+    ------
+    ValueError
+      If there is a problem with data (variable dimensionality) or
+      failed to load data and ensure=True.
+    """
+    nifti = None
+
+    # figure out what type
+    if isinstance(src, str):
+        # open the nifti file
+        try:
+            nifti = NiftiImage(src)
+        except RuntimeError, e:
+            warning("ERROR: Cannot open NIfTI file %s" \
+                    % src)
+            raise e
+    elif isinstance(src, NiftiImage):
+        # nothing special
+        nifti = src
+    elif (isinstance(src, list) or isinstance(src, tuple)) \
+        and len(src)>0 \
+        and (isinstance(src[0], str) or isinstance(src[0], NiftiImage)):
+        # load from a list of given entries
+        if enforce_dim is not None: enforce_dim_ = enforce_dim - 1
+        else:                       enforce_dim_ = None
+        srcs = [_load_anynifti(s, ensure=ensure,
+                                      enforce_dim=enforce_dim_)
+                for s in src]
+        if __debug__:
+            # lets check if they all have the same dimensionality
+            shapes = [s.data.shape for s in srcs]
+            if not N.all([s == shapes[0] for s in shapes]):
+                raise ValueError, \
+                      "Input volumes contain variable number of dimensions:" \
+                      " %s" % (shapes,)
+        # Combine them all into a single beast
+        nifti = NiftiImage(N.array([s.asarray() for s in srcs]),
+                           srcs[0].header)
+    elif ensure:
+        raise ValueError, "Cannot load NIfTI from %s" % (src,)
+
+    if nifti is not None and enforce_dim is not None:
+        shape, new_shape = nifti.data.shape, None
+        lshape = len(shape)
+
+        # check if we need to tune up shape
+        if lshape < enforce_dim:
+            # if we are missing required dimension(s)
+            new_shape = (1,)*(enforce_dim-lshape) + shape
+        elif lshape > enforce_dim:
+            # if there are bogus dimensions at the beginning
+            bogus_dims = lshape - enforce_dim
+            if shape[:bogus_dims] != (1,)*bogus_dims:
+                raise ValueError, \
+                      "Cannot enforce %dD on data with shape %s" \
+                      % (enforce_dim, shape)
+            new_shape = shape[bogus_dims:]
+
+        # tune up shape if needed
+        if new_shape is not None:
+            if __debug__:
+                debug('DS_NIFTI', 'Enforcing shape %s for %s data from %s' %
+                      (new_shape, shape, src))
+            nifti.data.shape = new_shape
+
+    return nifti
 
 
 

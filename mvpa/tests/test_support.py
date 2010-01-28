@@ -21,7 +21,7 @@ from mvpa.support.copy import deepcopy
 
 class SupportFxTests(unittest.TestCase):
 
-    def testTransformWithBoxcar(self):
+    def test_transform_with_boxcar(self):
         data = N.arange(10)
         sp = N.arange(10)
 
@@ -58,7 +58,7 @@ class SupportFxTests(unittest.TestCase):
 
 
 
-    def testEvent(self):
+    def test_event(self):
         self.failUnlessRaises(ValueError, Event)
         ev = Event(onset=2.5)
 
@@ -76,7 +76,7 @@ class SupportFxTests(unittest.TestCase):
         self.failUnless(evc['duration'] == 3)
 
 
-    def testMofNCombinations(self):
+    def test_mof_n_combinations(self):
         self.failUnlessEqual(
             getUniqueLengthNCombinations( range(3), 1 ), [[0],[1],[2]] )
         self.failUnlessEqual(
@@ -90,7 +90,7 @@ class SupportFxTests(unittest.TestCase):
                         [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]] )
 
 
-    def testBreakPoints(self):
+    def test_break_points(self):
         items_cont = [0, 0, 0, 1, 1, 1, 3, 3, 2]
         items_noncont = [0, 0, 1, 1, 0, 3, 2]
         self.failUnlessRaises(ValueError, getBreakPoints, items_noncont)
@@ -101,7 +101,7 @@ class SupportFxTests(unittest.TestCase):
                              [0, 3, 6, 8])
 
 
-    def testMapOverlap(self):
+    def test_map_overlap(self):
         mo = MapOverlap()
 
         maps = [[1,0,1,0],
@@ -126,7 +126,7 @@ class SupportFxTests(unittest.TestCase):
     @sweepargs(pair=[(N.random.normal(size=(10,20)), N.random.normal(size=(10,20))),
                      ([1,2,3,0], [1,3,2,0]),
                      ((1,2,3,1), (1,3,2,1))])
-    def testIdHash(self, pair):
+    def test_id_hash(self, pair):
         a, b = pair
         a1 = deepcopy(a)
         a_1 = idhash(a)
@@ -152,7 +152,7 @@ class SupportFxTests(unittest.TestCase):
             self.failUnlessEqual(len(i), len(i_con))
             self.failUnless(N.all(i == i_con))
 
-    def testCorrelation(self):
+    def test_correlation(self):
         # data: 20 samples, 80 features
         X = N.random.rand(20,80)
 
@@ -179,7 +179,7 @@ class SupportFxTests(unittest.TestCase):
         self.failUnless(version_to_tuple('0.7.1rc3') == (0, 7, 1, 'rc', 3))
 
 
-    def testSmartVersion(self):
+    def test_smart_version(self):
         """Test our ad-hoc SmartVersion
         """
         SV = SmartVersion

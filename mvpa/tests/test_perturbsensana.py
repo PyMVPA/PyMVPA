@@ -28,11 +28,11 @@ class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
         mask = N.ones( (3, 4, 2), dtype='bool')
         mask[0,0,0] = 0
         mask[1,3,1] = 0
-        self.dataset = Dataset.from_masked(samples=data, labels=labels,
+        self.dataset = Dataset.from_wizard(samples=data, labels=labels,
                                            chunks=chunks, mask=mask)
 
 
-    def testPerturbationSensitivityAnalyzer(self):
+    def test_perturbation_sensitivity_analyzer(self):
         # compute N-1 cross-validation as datameasure
         cv = CrossValidatedTransferError(
                 TransferError(sample_clf_lin),
