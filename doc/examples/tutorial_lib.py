@@ -24,8 +24,7 @@ def get_haxby2001_data(path=os.path.join(pymvpa_dataroot,
                       mask=os.path.join(path, 'mask_vt.nii.gz'))
 
     # do chunkswise linear detrending on dataset
-    ds = ds.get_mapped(PolyDetrendMapper(polyord=1, chunks='chunks',
-                                    inspace='time_coords'))
+    poly_detrend(ds, polyord=1, chunks='chunks', inspace='time_coords')
 
     # mark the odd and even runs
     rnames = {0: 'even', 1: 'odd'}
@@ -36,8 +35,7 @@ def get_haxby2001_data(path=os.path.join(pymvpa_dataroot,
     ds = ds.get_mapped(mean_group_sample(['labels', 'runtype']))
 
     # zscore dataset relative to baseline ('rest') mean
-    # XXX needs fixing: perchunk -> chunks, + attr for labels
-    zscore(ds, perchunk=True, baselinelabels=['rest'])
+    zscore(ds, param_est=('labels', ['rest']))
 
     # exclude the rest condition from the dataset
     ds = ds[ds.sa.labels != 'rest']
