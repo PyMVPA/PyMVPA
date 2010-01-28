@@ -16,7 +16,7 @@ import numpy as N
 from mvpa.base import externals
 from mvpa.datasets.base import dataset_wizard
 from mvpa.datasets.miscfx import removeInvariantFeatures, coarsenChunks, \
-        aggregateFeatures, zscore, SequenceStats
+        aggregateFeatures, SequenceStats
 
 
 from mvpa.misc.data_generators import normalFeatureDataset
@@ -67,7 +67,7 @@ class MiscDatasetFxTests(unittest.TestCase):
         ds_chunks = ds.chunks.copy()
         self.failUnless(N.all(ds.samples == ds_data)) # sanity check
 
-        funcs = ['zscore', 'coarsenChunks']
+        funcs = ['coarsenChunks']
 
         for f in funcs:
             eval('ds.%s()' % f)
@@ -121,44 +121,6 @@ class MiscDatasetFxTests(unittest.TestCase):
             # Check if str works fine
             sr = str(r)
             # TODO: check the content
-
-def test_zscoring():
-    """Test z-scoring transformation
-    """
-    # dataset: mean=2, std=1
-    samples = N.array((0, 1, 3, 4, 2, 2, 3, 1, 1, 3, 3, 1, 2, 2, 2, 2)).\
-        reshape((16, 1))
-    data = dataset_wizard(samples.copy(), labels=range(16), chunks=[0] * 16)
-    assert_equal(data.samples.mean(), 2.0)
-    assert_equal(data.samples.std(), 1.0)
-    zscore(data, perchunk=True)
-
-    # check z-scoring
-    check = N.array([-2, -1, 1, 2, 0, 0, 1, -1, -1, 1, 1, -1, 0, 0, 0, 0],
-                    dtype='float64').reshape(16, 1)
-    assert_array_equal(data.samples, check)
-
-    data = dataset_wizard(samples.copy(), labels=range(16), chunks=[0] * 16)
-    zscore(data, perchunk=False)
-    assert_array_equal(data.samples, check)
-
-    # check z-scoring taking set of labels as a baseline
-    data = dataset_wizard(samples.copy(),
-                   labels=[0, 2, 2, 2, 1] + [2] * 11,
-                   chunks=[0] * 16)
-    zscore(data, baselinelabels=[0, 1])
-    assert_array_equal(samples, data.samples + 1.0)
-
-    # check that zscore modifies in-place; only guaranteed if no upcasting is
-    # necessary
-    samples = samples.astype('float')
-    data = dataset_wizard(samples,
-                   labels=[0, 2, 2, 2, 1] + [2] * 11,
-                   chunks=[0] * 16)
-    zscore(data, baselinelabels=[0, 1])
-    assert_array_equal(samples, data.samples)
-
-
 
 
 

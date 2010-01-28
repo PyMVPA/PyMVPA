@@ -125,10 +125,10 @@ class HyperAlignmentTests(unittest.TestCase):
         '''
         for i, sd in enumerate(ds):
             ds_temp = sd.copy()
-            zscore(ds_temp, perchunk=False)
+            zscore(ds_temp, chunks=None)
             for j, sd2 in enumerate(ds[i+1:]):
                 ds_temp2 = sd2.copy()
-                zscore(ds_temp2, perchunk=False)
+                zscore(ds_temp2, chunks=None)
                 corr_temp = N.dot(ds_temp.samples.T, ds_temp2.samples)
                 feature_scores[i] = feature_scores[i] + \
                                     N.max(corr_temp, axis = 1)
@@ -161,7 +161,7 @@ class HyperAlignmentTests(unittest.TestCase):
 
         mkdg_ds = [ds_.get_mapped(m) for ds_ in mkdg_ds]
         mkdg_ds = [ds_[ds_.sa.labels != -1] for ds_ in mkdg_ds]
-        [ds_.zscore(baselinelabels=0) for ds_ in mkdg_ds]
+        [zscore(ds_, param_est=('labels', [0])) for ds_ in mkdg_ds]
         mkdg_ds = [ds_[ds_.sa.labels != 0] for ds_ in mkdg_ds]
 
         for i, sd in enumerate(mkdg_ds):
