@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Data mapper"""
+"""Basic, general purpose and meta mappers."""
 
 __docformat__ = 'restructuredtext'
 
