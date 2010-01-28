@@ -17,34 +17,35 @@ Classifiers
 
 .. automodule:: mvpa.clfs
 
+.. only:: html
 
-Related API documentation
-=========================
+   Related API documentation
+   =========================
 
-.. currentmodule:: mvpa
-.. autosummary::
-   :toctree: generated
+   .. currentmodule:: mvpa
+   .. autosummary::
+      :toctree: generated
 
-   clfs.base
-   clfs.meta
-   clfs.blr
-   clfs.enet
-   clfs.glmnet
-   clfs.gnb
-   clfs.gpr
-   clfs.knn
-   clfs.lars
-   clfs.plr
-   clfs.ridge
-   clfs.smlr
-   clfs.svm
-   clfs.sg
-   clfs.libsvmc
-   clfs.distance
-   clfs.similarity
-   clfs.stats
-   clfs.transerror
-   clfs.warehouse
+      clfs.base
+      clfs.meta
+      clfs.blr
+      clfs.enet
+      clfs.glmnet
+      clfs.gnb
+      clfs.gpr
+      clfs.knn
+      clfs.lars
+      clfs.plr
+      clfs.ridge
+      clfs.smlr
+      clfs.svm
+      clfs.sg
+      clfs.libsvmc
+      clfs.distance
+      clfs.similarity
+      clfs.stats
+      clfs.transerror
+      clfs.warehouse
 
 
 

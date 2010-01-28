@@ -7,20 +7,20 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-.. _chap_tutorial5:
 .. index:: Tutorial
+.. _chap_tutorial5:
 
 ******************************
 Part 5: The Mighty Searchlight
 ******************************
 
 
-Literature
-----------
+.. only:: html
 
-Related API Documentation
--------------------------
-.. autosummary::
-   :toctree: generated
+  References
+  ==========
 
-   ~mvpa.measures.searchlight.Searchlight
+  .. autosummary::
+     :toctree: generated
+
+     ~mvpa.measures.searchlight.Searchlight

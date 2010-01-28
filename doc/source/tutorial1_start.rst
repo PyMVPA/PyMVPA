@@ -7,8 +7,8 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-.. _chap_tutorial1:
 .. index:: Tutorial, Cross-validation
+.. _chap_tutorial1:
 
 **********************
 Part 1: A Gentle Start
@@ -247,15 +247,14 @@ PyMVPA. However, since we were cheating a bit in the beginning, we actually
 still don't know how to import data other than the single subject from the
 Haxby study. This is the topic of the :ref:`next chapter <chap_tutorial2>`.
 
+.. _NumPy: http://numpy.scipy.org
+
 .. todo::
 
   TEST THE DIFFERENCE OF HALFSPLITTER vs. ODDEVEN SPLITTER on the full dataset later on
 
 References
 ==========
-
-Literature
-----------
 
 :ref:`Haxby et al. (2001) <HGF+01>`
   *Classic MVPA study. Its subject 1 serves as the example dataset in this
@@ -264,16 +263,16 @@ Literature
 :ref:`Hastie et al. (2009) <HTF09>`
   *Comprehensive reference of statistical learning methods.*
 
-Related API Documentation
--------------------------
-.. autosummary::
-   :toctree: generated
 
-   ~mvpa.algorithms.cvtranserror.CrossValidatedTransferError
-   ~mvpa.datasets.base.Dataset
-   ~mvpa.clfs.knn.kNN
-   mvpa.datasets.splitters
-   ~mvpa.clfs.transerror.TransferError
+.. only:: html
+
+   .. autosummary::
+      :toctree: generated
+
+      ~mvpa.algorithms.cvtranserror.CrossValidatedTransferError
+      ~mvpa.datasets.base.Dataset
+      ~mvpa.clfs.knn.kNN
+      mvpa.datasets.splitters
+      ~mvpa.clfs.transerror.TransferError
 
 
-.. _NumPy: http://numpy.scipy.org

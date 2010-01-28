@@ -11,6 +11,7 @@ PyMVPA Documentation Contents
    installation
    tutorial
    datasets
+   mappers
    classifiers
    measures
    featsel
