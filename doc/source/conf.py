@@ -232,8 +232,32 @@ latex_documents = [
 
 # Additional stuff for the LaTeX preamble.
 latex_preamble = """
-\usepackage{enumitem}
-\setdescription{style=nextline,font=\\normalfont}
+\\usepackage{enumitem}
+\\setdescription{style=nextline,font=\\normalfont}
+
+
+% Have gray background for notes and exercises
+\\definecolor{MyGray}{rgb}{0.80,0.80,0.80}
+
+\\makeatletter\\newenvironment{graybox}{%
+   \\begin{lrbox}{\\@tempboxa}\\begin{minipage}{\\columnwidth}}{\\end{minipage}\\end{lrbox}%
+   \\colorbox{MyGray}{\\usebox{\\@tempboxa}}
+}\\makeatother
+
+\\makeatletter
+\\renewenvironment{notice}[2]{
+  \\begin{graybox}
+  \\bf\\it
+  \\def\\py@noticetype{#1}
+  \\par\\strong{#2}
+  \\csname py@noticestart@#1\\endcsname
+}
+{
+  \\csname py@noticeend@\\py@noticetype\\endcsname
+  \\end{graybox}
+}
+\\makeatother
+
 """
 
 # Documents to append as an appendix to all manuals.
