@@ -86,6 +86,23 @@ class ZScoreMapper(Mapper):
         self._secret_inplace_zscore = False
 
 
+    def __repr__(self):
+        s = super(ZScoreMapper, self).__repr__()
+        add_args = []
+        if self.__params is not None:
+            add_args += ['params=%s' % repr(self.__params)]
+        if self.__param_est is not None:
+            add_args += ['param_est=%s' % repr(self.__param_est)]
+        if self.__chunks != 'chunks':
+            add_args += ['chunks=%s' % repr(self.__chunks)]
+        if self.__dtype != 'float64':
+            add_args += ['dtype=%s' % repr(self.__dtype)]
+        if add_args:
+            return s.replace("(", '(%s, ' % ", ".join(add_args))
+        else:
+            return s
+
+
     def _train(self, ds):
         # local binding
         chunks = self.__chunks
