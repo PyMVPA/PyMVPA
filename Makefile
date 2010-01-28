@@ -152,10 +152,10 @@ htmldoc: examples2rst build pics
 	cd $(HTML_DIR)/datadb && ln -sf ../_static
 	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
 
-pdfdoc: examples2rst build pdfdoc-stamp pics
+pdfdoc: examples2rst build pics pdfdoc-stamp
 pdfdoc-stamp:
 	@echo "I: Creating a PDF version of documentation"
-	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=../..:$(PYTHONPATH) $(MAKE) latex BUILDDIR=$(BUILDDIR)
+	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) latex BUILDDIR=$(BUILDDIR)
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
 	touch $@
 
@@ -528,4 +528,4 @@ upload-codeswarm: codeswarm
         unittest unittest-debug unittest-optimization unittest-nonlabile \
         unittest-badexternals unittests \
         distclean debian-clean \
-        handbook codeswarm upload-codeswarm coverage
+        handbook codeswarm upload-codeswarm coverage pics
