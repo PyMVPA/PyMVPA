@@ -18,17 +18,19 @@ Feature Selection
 .. automodule:: mvpa.measures
 
 
-Related API documentation
-=========================
+.. only:: html
 
-.. currentmodule:: mvpa
-.. autosummary::
-   :toctree: generated
+   Related API documentation
+   =========================
 
-   featsel.base
-   featsel.ifs
-   featsel.rfe
-   featsel.helpers
+   .. currentmodule:: mvpa
+   .. autosummary::
+      :toctree: generated
+
+      featsel.base
+      featsel.ifs
+      featsel.rfe
+      featsel.helpers
 
 
 

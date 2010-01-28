@@ -11,27 +11,30 @@
 .. index:: dataset, sample attribute, dataset attribute
 .. _chap_datasets:
 
-*************************************
-Data containers and utility functions
-*************************************
+********
+Datasets
+********
 
 .. automodule:: mvpa.datasets
 
 
+.. only:: html
 
-Related API documentation
-=========================
+  Related API documentation
+  =========================
 
-.. currentmodule:: mvpa
-.. autosummary::
-   :toctree: generated
+  .. currentmodule:: mvpa
+  .. autosummary::
+     :toctree: generated
 
-   base.dataset
-   datasets.base
-   datasets.mri
-   datasets.eep
-   datasets.miscfx
-   datasets.splitters
+     base.dataset
+     datasets.base
+     datasets.mri
+     datasets.eep
+     datasets.miscfx
+     datasets.splitters
+
+
 
 
 The Basic Concepts
@@ -357,15 +360,3 @@ are instantiated by passing all relevant parameters to the constructor.
 Processing objects can then be called multiple times with different datasets
 to perform their algorithm on the respective dataset. This design applies to
 the majority of the algorithms implemented in PyMVPA.
-
-
-Related API documentation
--------------------------
-
-.. autosummary::
-   :toctree: generated
-
-   mvpa.base.dataset
-   mvpa.datasets.base
-   mvpa.datasets.miscfx
-   mvpa.datasets.splitters

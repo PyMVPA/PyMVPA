@@ -18,22 +18,24 @@ Measures
 .. automodule:: mvpa.measures
 
 
-Related API documentation
-=========================
+.. only:: html
 
-.. currentmodule:: mvpa
-.. autosummary::
-   :toctree: generated
+   Related API documentation
+   =========================
 
-   measures.base
-   measures.anova
-   measures.corrcoef
-   measures.corrstability
-   measures.ds
-   measures.glm
-   measures.irelief
-   measures.noiseperturbation
-   measures.searchlight
+   .. currentmodule:: mvpa
+   .. autosummary::
+      :toctree: generated
+
+      measures.base
+      measures.anova
+      measures.corrcoef
+      measures.corrstability
+      measures.ds
+      measures.glm
+      measures.irelief
+      measures.noiseperturbation
+      measures.searchlight
 
 
 

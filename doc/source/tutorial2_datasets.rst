@@ -7,8 +7,8 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-.. _chap_tutorial2:
 .. index:: Tutorial, Dataset concepts
+.. _chap_tutorial2:
 
 ***********************************
 Part 2: Dataset Basics and Concepts
@@ -493,16 +493,16 @@ transparently.
   >>> shutil.rmtree(tempdir, ignore_errors=True)
 
 
-References
-==========
+.. only:: html
 
-Related API Documentation
--------------------------
-.. autosummary::
-   :toctree: generated
+  References
+  ==========
 
-   ~mvpa.datasets.base.Dataset
-   ~mvpa.datasets.mri.fmri_dataset
-   ~mvpa.base.collections.ArrayCollectable
-   ~mvpa.base.hdf5.h5save
-   ~mvpa.base.hdf5.h5load
+  .. autosummary::
+     :toctree: generated
+
+     ~mvpa.datasets.base.Dataset
+     ~mvpa.datasets.mri.fmri_dataset
+     ~mvpa.base.collections.ArrayCollectable
+     ~mvpa.base.hdf5.h5save
+     ~mvpa.base.hdf5.h5load

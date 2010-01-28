@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""The module `mvpa.datasets` offers data storage and handling functionality.
+"""Data containers and utility functions
 
 Virtually any processing done with PyMVPA involves datasets -- the primary form
 of data representation in PyMVPA. Datasets serve as containers for input data,

@@ -7,8 +7,8 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-.. _chap_tutorial3:
 .. index:: Tutorial
+.. _chap_tutorial3:
 
 *************************************
 Part 3: Mappers, The Swiss Army Knife
@@ -23,9 +23,9 @@ As a matter of fact, even in the :ref:`first tutorial part
 In general, a mapper is an algorithm that transforms data of some kind.
 This transformation can be as simple as selecting a subset of data, or as
 complex as a multi-stage preprocessing pipeline. Some transformations are
-reversible, other are not. Some are simple one-step computations, other
+reversible, others are not. Some are simple one-step computations, others
 are iterative algorithms that have to be trained on data before they can be
-used. In PyMVPA, all these transformations are *mappers*.
+used. In PyMVPA, all these transformations are :mod:`~mvpa.mappers`.
 
 Let's create a dummy dataset (5 samples, 12 features). This time we will use a
 new method to create the dataset, the `dataset_wizard`. Here it is fully
@@ -92,12 +92,13 @@ original 3D shape.
 Doing get_haxby2001_data() From Scratch
 =======================================
 
-Literature
-----------
+.. only:: html
 
-Related API Documentation
--------------------------
-.. autosummary::
-   :toctree: generated
+  References
+  ==========
 
-   ~mvpa.mappers.base.Mapper
+  .. autosummary::
+     :toctree: generated
+
+     ~mvpa.mappers
+     ~mvpa.mappers.base.Mapper

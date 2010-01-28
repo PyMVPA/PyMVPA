@@ -7,8 +7,8 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-.. _chap_tutorial4:
 .. index:: Tutorial
+.. _chap_tutorial4:
 
 **********************************************
 Part 4: Classifier -- All Alike, Yet Different
@@ -21,12 +21,13 @@ What is
 * states, parameters
 * meta classifiers...
 
-Literature
-----------
 
-Related API Documentation
--------------------------
-.. autosummary::
-   :toctree: generated
+.. only:: html
 
-   ~mvpa.clfs.base.Classifier
+  References
+  ==========
+
+  .. autosummary::
+     :toctree: generated
+
+     ~mvpa.clfs.base.Classifier

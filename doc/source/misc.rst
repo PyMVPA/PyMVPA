@@ -17,32 +17,32 @@ Miscellaneous
 
 .. automodule:: mvpa.misc
 
+.. only:: html
 
-Related API documentation
-=========================
+   Related API documentation
+   =========================
 
-.. currentmodule:: mvpa
-.. autosummary::
-   :toctree: generated
+   .. currentmodule:: mvpa
+   .. autosummary::
+      :toctree: generated
 
-   atlases
-   misc.args
-   misc.attributes
-   misc.attrmap
-   misc.cmdline
-   misc.data_generators
-   misc.errorfx
-   misc.exceptions
-   misc.fx
-   misc.neighborhood
-   misc.param
-   misc.sampleslookup
-   misc.state
-   misc.stats
-   misc.support
-   misc.transformers
-   misc.vproperty
-
+      atlases
+      misc.args
+      misc.attributes
+      misc.attrmap
+      misc.cmdline
+      misc.data_generators
+      misc.errorfx
+      misc.exceptions
+      misc.fx
+      misc.neighborhood
+      misc.param
+      misc.sampleslookup
+      misc.state
+      misc.stats
+      misc.support
+      misc.transformers
+      misc.vproperty
 
 
 
