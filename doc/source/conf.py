@@ -231,32 +231,32 @@ latex_documents = [
 #latex_use_parts = False
 
 # Additional stuff for the LaTeX preamble.
-latex_preamble = """
-\\usepackage{enumitem}
-\\setdescription{style=nextline,font=\\normalfont}
+latex_preamble = r"""
+\usepackage{enumitem}
+\setdescription{style=nextline,font=\normalfont}
 
 
 % Have gray background for notes and exercises
-\\definecolor{MyGray}{rgb}{0.80,0.80,0.80}
+\definecolor{MyGray}{rgb}{0.80,0.80,0.80}
 
-\\makeatletter\\newenvironment{graybox}{%
-   \\begin{lrbox}{\\@tempboxa}\\begin{minipage}{\\columnwidth}}{\\end{minipage}\\end{lrbox}%
-   \\colorbox{MyGray}{\\usebox{\\@tempboxa}}
-}\\makeatother
+\makeatletter\newenvironment{graybox}{%
+   \begin{lrbox}{\@tempboxa}\begin{minipage}{\columnwidth}}{\end{minipage}\end{lrbox}%
+   \colorbox{MyGray}{\usebox{\@tempboxa}}
+}\makeatother
 
-\\makeatletter
-\\renewenvironment{notice}[2]{
-  \\begin{graybox}
-  \\bf\\it
-  \\def\\py@noticetype{#1}
-  \\par\\strong{#2}
-  \\csname py@noticestart@#1\\endcsname
+\makeatletter
+\renewenvironment{notice}[2]{
+  \begin{graybox}
+  \bf\it
+  \def\py@noticetype{#1}
+  \par\strong{#2}
+  \csname py@noticestart@#1\endcsname
 }
 {
-  \\csname py@noticeend@\\py@noticetype\\endcsname
-  \\end{graybox}
+  \csname py@noticeend@\py@noticetype\endcsname
+  \end{graybox}
 }
-\\makeatother
+\makeatother
 
 """
 
