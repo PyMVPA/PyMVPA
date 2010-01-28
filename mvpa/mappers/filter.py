@@ -58,45 +58,45 @@ class FFTResamplemapper(Mapper):
         Parameters
         ----------
         nt : int
-        Number of timepoints to resample to.
+          Number of timepoints to resample to.
         dt : float
-        Temporal distance of samples after resampling.
+          Temporal distance of samples after resampling.
         sr : float
-        Target sampling rate.
+          Target sampling rate.
         inplace : bool
-        If inplace=False, it would create and return a new dataset
-        with new samples
+          If inplace=False, it would create and return a new dataset
+          with new samples
         **kwargs
-        All additional arguments are passed to resample() from
-        scipy.signal
+          All additional arguments are passed to resample() from
+          scipy.signal
 
         Returns
         -------
         ChannelDataset
         """
         if nt is None and sr is None and dt is None:
-        raise ValueError, \
-         "Required argument missing. Either needs ntimepoints, sr or dt."
+            raise ValueError, \
+             "Required argument missing. Either needs ntimepoints, sr or dt."
 
         # get data in original shape
         orig_data = self.O
 
         if len(orig_data.shape) != 3:
-        raise ValueError, "resample() only works with data from ChannelDataset."
+            raise ValueError, "resample() only works with data from ChannelDataset."
 
         orig_nt = orig_data.shape[2]
         orig_length = self.dt * orig_nt
 
         if nt is None:
-        # translate dt or sr into nt
-        if not dt is None:
-        nt = orig_nt * float(self.dt) / dt
-        elif not sr is None:
-        nt = orig_nt * float(sr) / self.samplingrate
+            # translate dt or sr into nt
+            if not dt is None:
+                nt = orig_nt * float(self.dt) / dt
+            elif not sr is None:
+                nt = orig_nt * float(sr) / self.samplingrate
+            else:
+                raise RuntimeError, 'This should not happen!'
         else:
-        raise RuntimeError, 'This should not happen!'
-        else:
-        raise RuntimeError, 'This should not happen!'
+            raise RuntimeError, 'This should not happen!'
 
 
         nt = N.round(nt)
@@ -107,32 +107,32 @@ class FFTResamplemapper(Mapper):
 
         # would be needed for not inplace generation
         if inplace:
-        self.a['dt'].value = new_dt
-        # XXX We could have resampled range(nsamples) and
-        #     rounded  it. and adjust then mapper's mask
-        #     accordingly instead of creating a new one.
-        #     It would give us opportunity to assess what
-        #     resampling did...
-        mapper = MaskMapper(N.ones(data.shape[1:], dtype='bool'))
-        # reassign a new mapper.
-        # XXX this is very evil -- who knows what mapper it is replacing
-        self.a['mapper'].value = mapper
-        self.samples = mapper.forward(data)
-        return self
+            self.a['dt'].value = new_dt
+            # XXX We could have resampled range(nsamples) and
+            #     rounded  it. and adjust then mapper's mask
+            #     accordingly instead of creating a new one.
+            #     It would give us opportunity to assess what
+            #     resampling did...
+            mapper = MaskMapper(N.ones(data.shape[1:], dtype='bool'))
+            # reassign a new mapper.
+            # XXX this is very evil -- who knows what mapper it is replacing
+            self.a['mapper'].value = mapper
+            self.samples = mapper.forward(data)
+            return self
         else:
-        # we have to pass dsattr inside to don't loose
-        # some additional attributes such as
-        # labels_map
-        dsattr = copy.deepcopy(dsattr)
-        return ChannelDataset.from_temporaldata(
-           data=self._data,
-                         dsattr=dsattr,
-                         samples=data,
-                         t0=self.t0,
-                         dt=new_dt,
-                         channelids=self.channelids,
-                         copy_data=True,
-                         copy_dsattr=False)
+            # we have to pass dsattr inside to don't loose
+            # some additional attributes such as
+            # labels_map
+            dsattr = copy.deepcopy(dsattr)
+            return ChannelDataset.from_temporaldata(
+               data=self._data,
+                             dsattr=dsattr,
+                             samples=data,
+                             t0=self.t0,
+                             dt=new_dt,
+                             channelids=self.channelids,
+                             copy_data=True,
+                             copy_dsattr=False)
 
 
 
