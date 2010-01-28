@@ -14,7 +14,6 @@ first argument since they are bound to Dataset class in the trailer.
 
 __docformat__ = 'restructuredtext'
 
-from sets import Set
 from operator import isSequenceType
 import random
 
@@ -29,99 +28,6 @@ from mvpa.base import externals, warning
 
 if __debug__:
     from mvpa.base import debug
-
-
-@datasetmethod
-def zscore(dataset, mean=None, std=None,
-           perchunk=True, baselinelabels=None,
-           pervoxel=True, targetdtype='float64'):
-    """Z-Score the samples of a `Dataset` (in-place).
-
-    `mean` and `std` can be used to pass custom values to the z-scoring.
-    Both may be scalars or arrays.
-
-    All computations are done *in place*. Data upcasting is done
-    automatically if necessary into `targetdtype`
-
-    If `baselinelabels` provided, and `mean` or `std` aren't provided, it would
-    compute the corresponding measure based only on labels in `baselinelabels`
-
-    If `perchunk` is True samples within the same chunk are z-scored independent
-    of samples from other chunks, e.i. mean and standard deviation are
-    calculated individually.
-    """
-
-    if __debug__ and perchunk \
-      and N.array(get_nsamples_per_attr(dataset, 'chunks').values()).min() <= 2:
-        warning("Z-scoring chunk-wise and one chunk with less than three "
-                "samples will set features in these samples to either zero "
-                "(with 1 sample in a chunk) "
-                "or -1/+1 (with 2 samples in a chunk).")
-
-    # cast the data to float, since in-place operations below to not upcast!
-    if N.issubdtype(dataset.samples.dtype, N.integer):
-        dataset.samples = dataset.samples.astype(targetdtype)
-
-    def doit(samples, mean, std, statsamples=None):
-        """Internal method."""
-
-        if statsamples is None:
-            # if nothing provided  -- mean/std on all samples
-            statsamples = samples
-
-        if pervoxel:
-            axisarg = {'axis':0}
-        else:
-            axisarg = {}
-
-        # calculate mean if necessary
-        if mean is None:
-            mean = statsamples.mean(**axisarg)
-
-        # de-mean
-        samples -= mean
-
-
-        # calculate std-deviation if necessary
-        # XXX YOH: would that be actually what we want?
-        #          may be we want actually estimate of deviation from the mean,
-        #          which per se might be not statsamples.mean (see above)?
-        #          if logic to be changed -- adjust ZScoreMapper as well
-        if std is None:
-            std = statsamples.std(**axisarg)
-
-        # do the z-scoring
-        if pervoxel:
-            samples[:, std != 0] /= std[std != 0]
-        else:
-            samples /= std
-
-        return samples
-
-    if baselinelabels is None:
-        statids = None
-    else:
-        statids = Set(get_samples_by_attr(dataset, 'labels', baselinelabels))
-
-    # for the sake of speed yoh didn't simply create a list
-    # [True]*dataset.nsamples to provide easy selection of everything
-    if perchunk:
-        for c in dataset.sa['chunks'].unique:
-            slicer = N.where(dataset.sa.chunks == c)[0]
-            if not statids is None:
-                statslicer = list(statids.intersection(Set(slicer)))
-                dataset.samples[slicer] = doit(dataset.samples[slicer],
-                                               mean, std,
-                                               dataset.samples[statslicer])
-            else:
-                slicedsamples = dataset.samples[slicer]
-                dataset.samples[slicer] = doit(slicedsamples,
-                                               mean, std,
-                                               slicedsamples)
-    elif statids is None:
-        doit(dataset.samples, mean, std, dataset.samples)
-    else:
-        doit(dataset.samples, mean, std, dataset.samples[list(statids)])
 
 
 @datasetmethod

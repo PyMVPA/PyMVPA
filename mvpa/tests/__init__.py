@@ -83,7 +83,6 @@ def collectTestSuites():
                          ('scipy', 'stats_sp'),
                          ('scipy', 'gpr'),
                          (['lars','scipy'], 'lars'),
-                         ('scipy', 'zscoremapper'),
                          ('pywt', 'waveletmapper'),
                          (['cPickle', 'gzip'], 'hamster'),
                        ]
@@ -123,6 +122,7 @@ def collectNoseTests():
               'test_fxmapper',
               'test_neighborhood',
               'test_eepdataset',
+              'test_zscoremapper',
               ]
     if externals.exists('scipy'):
         tests += ['test_mapper_sp']

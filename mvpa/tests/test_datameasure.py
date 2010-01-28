@@ -19,6 +19,7 @@ from mvpa.featsel.rfe import RFE
 from mvpa.clfs.meta import SplitClassifier, MulticlassClassifier, \
      FeatureSelectionClassifier
 from mvpa.clfs.smlr import SMLR, SMLRWeights
+from mvpa.mappers.zscore import zscore
 from mvpa.mappers.fx import sumofabs_sample, absolute_features, FxMapper, \
      maxofabs_sample
 from mvpa.datasets.splitters import NFoldSplitter, NoneSplitter
@@ -293,7 +294,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         # and lets look at all sensitivities
         ds2 = datasets['uni4large'].copy()
-        ds2.zscore(baselinelabels = ['L2', 'L3'])
+        zscore(ds2, param_est=('labels', ['L2', 'L3']))
         ds2 = ds2[N.logical_or(ds2.sa.labels == 'L0', ds2.sa.labels == 'L1')]
 
         senssplit = sana_split(ds2)
