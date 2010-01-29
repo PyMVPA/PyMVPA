@@ -235,6 +235,8 @@ latex_preamble = r"""
 \usepackage{enumitem}
 \setdescription{style=nextline,font=\normalfont}
 
+% more table of contents
+\setcounter{tocdepth}{3}
 
 % Have gray background for notes and exercises
 \definecolor{MyBluishGray}{rgb}{0.90,0.90,1.00}
