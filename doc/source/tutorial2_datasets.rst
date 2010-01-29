@@ -305,8 +305,8 @@ We see that both attributes are still there and, moreover, also here the
 appropriate subsets have been selected.
 
 
-Loading fMRI
-============
+Loading fMRI data
+=================
 
 Enough of theoretical foreplay -- let's look at a concrete example of an
 fmri dataset. PyMVPA has several helper functions to load data from
@@ -456,13 +456,6 @@ transparently.
   >>> # cleanup the temporary directory, and everything it includes
   >>> shutil.rmtree(tempdir, ignore_errors=True)
 
-
-.. todo::
-
-  * Part in "Dataset Basics and Concepts" about alternative containers is imho
-  out of place -- it breaks the "incremental complexity flow" -- may be just
-  move it into manual section on datasets and replace with a summary sentence
-  linking to manual
 
 .. only:: html
 

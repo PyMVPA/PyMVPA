@@ -171,21 +171,75 @@ the dataset we already used at beginning. That is:
   associated :term:`sample attribute`\ s that are necessary to perform a
   cross-validated classification analysis of the data.
 
+We have already seen how fMRI data can be loaded from NIfTI images, but this
+time we need more than just the EPI images. For a classification analysis we
+also need to associate each sample with a corresponding experimental condition,
+i.e. a class label, also sometimes called :term:`target` value.  Moreover, for
+a cross-validation procedure we also need to partition the full dataset into,
+presumably, independent :term:`chunk`\ s. Independence is critical to achieve an
+unbiased estimate of the generalization performance of a classifier, i.e. its
+accuracy in predicting the correct class label for new data, unseen during
+training. So, where do we get this information from?
+
+Both, target values and chunks are defined by the design of the experiment.
+In the simplest case the target value for an fMRI volume sample is the
+experiment condition that has been present/active while the volume has been
+acquired. However, there are more complicated scenarios which we will look
+at later on. Chunks of independent data correspond to what fMRI volumes are
+assumed to be independent. The properties of the MRI acquisition process
+cause subsequently acquired volumes to be *very* similar, hence they cannot
+be considered as independent. Ideally, the experiment is split into several
+acquisition sessions, where the sessions define the corresponding data
+chunks.
+
+There are many ways to import this information into PyMVPA. The most simple
+one is to create a two-column text file that has the target value in the
+first column, and the chunk identifier in the second, with one line per
+volume in the NIfTI image.
+
+  >>> # directory that contains the data files
+  >>> datapath = os.path.join(pymvpa_dataroot,
+  ...                         'demo_blockfmri', 'demo_blockfmri')
+  >>> attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
+  >>> len(attr.labels)
+  1452
+  >>> print N.unique(attr.labels)
+  ['bottle' 'cat' 'chair' 'face' 'house' 'rest' 'scissors' 'scrambledpix'
+   'shoe']
+  >>> len(attr.chunks)
+  1452
+  >>> print N.unique(attr.chunks)
+  [  0.   1.   2.   3.   4.   5.   6.   7.   8.   9.  10.  11.]
+
+`SampleAttributes` allows us to load this type of file, and access its
+content. We got 1452 label and chunk values, one for each volume. Moreover,
+we see that there are nine different conditions and 12 different chunks.
+
+Now we can load the fMRI data, as we have done before -- only loading
+voxels corresponding to a mask of ventral temporal cortex, and assign the
+samples attributes to the dataset. `fmri_dataset()` allows us to pass them
+directly:
+
+  >>> ds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
+  ...                   labels=attr.labels, chunks=attr.chunks,
+  ...                   mask=os.path.join(datapath, 'mask_vt.nii.gz'))
+  >>> ds.shape
+  (1452, 577)
+  >>> print ds.sa
+  <SampleAttributesCollection: chunks,time_indices,labels,time_coords>
+
+We got the dataset that we already know from the last part, but this time
+is also has information about chunks and labels.
+
 .. todo::
 
    Might be handy to describe get_mapped before this section.
    Not sure about poly_detrend and zscore -- those could be introduced here I guess.
 
+
+:ref:`
 DISCOVER THE CODE STEP BY STEP
 ::
-
-   def get_haxby2001_data(path=os.path.join(pymvpa_dataroot,
-                                         'demo_blockfmri',
-                                         'demo_blockfmri')):
-    attr = SampleAttributes(os.path.join(path, 'attributes.txt'))
-    ds = fmri_dataset(samples=os.path.join(path, 'bold.nii.gz'),
-                      labels=attr.labels, chunks=attr.chunks,
-                      mask=os.path.join(path, 'mask_vt.nii.gz'))
 
      do chunkswise linear detrending on dataset
     poly_detrend(ds, polyord=1, chunks='chunks', inspace='time_coords')
