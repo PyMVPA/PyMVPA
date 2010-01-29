@@ -34,7 +34,7 @@ class Searchlight(DatasetMeasure):
         doc="Number of features in each ROI.")
 
     def __init__(self, datameasure, queryengine, center_ids=None,
-                 nproc=1, **kwargs):
+                 nproc=None, **kwargs):
         """
         Parameters
         ----------
@@ -47,9 +47,9 @@ class Searchlight(DatasetMeasure):
         center_ids : list of int
           List of feature ids (not coordinates) the shall serve as sphere
           centers. By default all features will be used.
-        nproc : int
+        nproc : None or int
           How many processes to use for computation.  Requires `pprocess`
-          external module.
+          external module.  If None -- all available cores will be used.
         **kwargs
           In addition this class supports all keyword arguments of its
           base-class :class:`~mvpa.measures.base.DatasetMeasure`.
@@ -73,6 +73,10 @@ class Searchlight(DatasetMeasure):
         """
         # local binding
         nproc = self.__nproc
+
+        if nproc is None and externals.exists('pprocess'):
+            import pprocess
+            nproc = pprocess.get_number_of_cores() or 1
 
         # train the queryengine
         self.__qe.train(dataset)
