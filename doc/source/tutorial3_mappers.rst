@@ -20,7 +20,7 @@ powerful concept in PyMVPA, and there is little one would do without them.
 As a matter of fact, even in the :ref:`first tutorial part
 <chap_tutorial1>` we have used them already, without even seeing them.
 
-In general, a mapper is an algorithm that transforms data of some kind.
+In general, a mapper is an algorithm that transforms data.
 This transformation can be as simple as selecting a subset of data, or as
 complex as a multi-stage preprocessing pipeline. Some transformations are
 reversible, others are not. Some are simple one-step computations, others
@@ -37,7 +37,7 @@ but we will shortly see some nice convenience aspects
   >>> ds.shape
   (5, 12)
 
-A mapper is a :term:`dataset attribute`, hence is stored in the
+A mapper is a :term:`dataset attribute`, hence it is stored in the
 corresponding attribute collection. However, not every dataset actually has
 a mapper. For example, the simple one we have just created doesn't have any:
 
@@ -45,7 +45,7 @@ a mapper. For example, the simple one we have just created doesn't have any:
   False
 
 Now let's look at a very similar dataset that only differs in a tiny but
-very important detail:
+a very important detail:
 
   >>> ds = dataset_wizard(N.ones((5, 4, 3)))
   >>> ds.shape
@@ -55,10 +55,10 @@ very important detail:
   >>> print ds.a.mapper
   <FlattenMapper>
 
-We see that the resulting dataset is identical to the one above, but this time
+We see that the resulting dataset looks identical to the one above, but this time
 it got created from a 3D samples array (i.e. five samples, where each is a 4x3
 matrix). Somehow this 3D array got transformed into a 2D samples array in the
-dataset. This magic behavior is unveiled by looking that the dataset's mapper
+dataset. This magic behavior is unveiled by looking at the dataset's mapper
 -- a `~mvpa.mappers.flatten.FlattenMapper`.
 
 The purpose of this mapper is precisely what we have just observed: reshaping
@@ -76,7 +76,7 @@ original 3D shape.
 
 
 #We have learned that mappers transform a dataset, so let's transform it and
-#look what happens. A very simple trasnformation is choosing a subset of the
+#look what happens. A very simple transformation is choosing a subset of the
 #features (i.e. slicing):
 #
 #  >>> myids = [1, 2, 8, 10]
