@@ -149,7 +149,7 @@ html_theme_path = ['_themes']
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-#html_logo = None
+html_logo = 'pics/pymvpa_logo.jpg'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -224,7 +224,7 @@ latex_documents = [
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-#latex_logo = None
+latex_logo = 'pics/pymvpa_logo.pdf'
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
