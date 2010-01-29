@@ -237,11 +237,11 @@ latex_preamble = r"""
 
 
 % Have gray background for notes and exercises
-\definecolor{MyGray}{rgb}{0.80,0.80,0.80}
+\definecolor{MyBluishGray}{rgb}{0.90,0.90,1.00}
 
 \makeatletter\newenvironment{graybox}{%
    \begin{lrbox}{\@tempboxa}\begin{minipage}{\columnwidth}}{\end{minipage}\end{lrbox}%
-   \colorbox{MyGray}{\usebox{\@tempboxa}}
+   \colorbox{MyBluishGray}{\usebox{\@tempboxa}}
 }\makeatother
 
 \makeatletter
