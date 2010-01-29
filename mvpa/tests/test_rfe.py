@@ -28,6 +28,7 @@ from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.transformers import Absolute
 from mvpa.misc.attrmap import AttributeMap
+from mvpa.clfs.stats import MCNullDist
 
 from mvpa.misc.state import UnknownStateError
 
@@ -398,7 +399,37 @@ class RFETests(unittest.TestCase):
         self.failUnless(error < 0.2)
 
 
+    def __testMatthiasQuestion(self):
+        rfe_clf = LinearCSVMC(C=1)
 
+        rfesvm_split = SplitClassifier(rfe_clf)
+        clf = \
+            FeatureSelectionClassifier(
+            clf = LinearCSVMC(C=1),
+            feature_selection = RFE(
+                sensitivity_analyzer = rfesvm_split.getSensitivityAnalyzer(
+                    combiner=FirstAxisMean,
+                    transformer=N.abs),
+                transfer_error=ConfusionBasedError(
+                    rfesvm_split,
+                    confusion_state="confusion"),
+                stopping_criterion=FixedErrorThresholdStopCrit(0.20),
+                feature_selector=FractionTailSelector(
+                    0.2, mode='discard', tail='lower'),
+                update_sensitivity=True))
+
+        splitter = NFoldSplitter(cvtype=1)
+        no_permutations = 1000
+
+        cv = CrossValidatedTransferError(
+            TransferError(clf),
+            splitter,
+            null_dist=MCNullDist(permutations=no_permutations,
+                                 tail='left'),
+            enable_states=['confusion'])
+        error = cv(datasets['uni2small'])
+        self.failUnless(error < 0.4)
+        self.failUnless(cv.states.null_prob < 0.05)
 
 def suite():
     return unittest.makeSuite(RFETests)

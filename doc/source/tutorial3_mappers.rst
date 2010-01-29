@@ -20,7 +20,7 @@ powerful concept in PyMVPA, and there is little one would do without them.
 As a matter of fact, even in the :ref:`first tutorial part
 <chap_tutorial1>` we have used them already, without even seeing them.
 
-In general, a mapper is an algorithm that transforms data of some kind.
+In general, a mapper is an algorithm that transforms data.
 This transformation can be as simple as selecting a subset of data, or as
 complex as a multi-stage preprocessing pipeline. Some transformations are
 reversible, others are not. Some are simple one-step computations, others
@@ -37,7 +37,7 @@ but we will shortly see some nice convenience aspects.
   >>> ds.shape
   (5, 12)
 
-A mapper is a :term:`dataset attribute`, hence is stored in the
+A mapper is a :term:`dataset attribute`, hence it is stored in the
 corresponding attribute collection. However, not every dataset actually has
 a mapper. For example, the simple one we have just created doesn't have any:
 
@@ -45,7 +45,7 @@ a mapper. For example, the simple one we have just created doesn't have any:
   False
 
 Now let's look at a very similar dataset that only differs in a tiny but
-very important detail:
+a very important detail:
 
   >>> ds = dataset_wizard(N.ones((5, 4, 3)))
   >>> ds.shape
@@ -55,11 +55,11 @@ very important detail:
   >>> print ds.a.mapper
   <FlattenMapper>
 
-We see that the resulting dataset is identical to the one above, but this time
+We see that the resulting dataset looks identical to the one above, but this time
 it got created from a 3D samples array (i.e. five samples, where each is a 4x3
 matrix). Somehow this 3D array got transformed into a 2D samples array in the
-dataset. This magic behavior is unveiled by looking that the dataset's mapper
--- it is a `~mvpa.mappers.flatten.FlattenMapper`.
+dataset. This magic behavior is unveiled by observing that the dataset's mapper
+is a `~mvpa.mappers.flatten.FlattenMapper`.
 
 The purpose of this mapper is precisely what we have just observed: reshaping
 data arrays into 2D. It does it by preserving the first axis (in PyMVPA datasets
@@ -83,7 +83,7 @@ less there is a little shortcut that does exactly the same:
   (5, 4, 3)
 
 Since mappers represent particular transformations they can also be seen as a
-protocol of what has been done. If we look at the dataset, we nkow that it had
+protocol of what has been done. If we look at the dataset, we know that it had
 been flattened on the way from its origin to a samples array in a dataset. This
 feature can become really useful, if the processing become more complex. Let's
 look at a possible next step -- selecting a subset of interesting features:
@@ -99,19 +99,19 @@ look at a possible next step -- selecting a subset of interesting features:
 
 Now the situation has changed: *two* new mappers appeared in the dataset -- a
 `~mvpa.mappers.base.ChainMapper` and a `~mvpa.mappers.base.FeatureSliceMapper`.
-The latter described (and actually performs) the slicing operation we just made,
+The latter describes (and actually performs) the slicing operation we just made,
 while the former encapsulates the two mappers into a processing pipeline.
 We can see that the mapper chain represents the processing history of the
 dataset like a breadcrumb track.
 
 It is important to realize that the `~mvpa.mappers.base.ChainMapper` is a fully
-features mapper that can also be used as such.
+featured mapper that can also be used as such:
 
   >>> ds.O.shape
   (5, 4, 3)
 
-As it has been mentioned, mappers can not only transform a single dataset, but
-can be feed with other data (as long as it is compatible with the mapper. Let's
+As it has been mentioned, mappers  not only can transform a single dataset, but
+can be feed with other data (as long as it is compatible with the mapper). Let's
 look at a reverse-mapping of the chain first.
 
   >>> subds.nfeatures
@@ -163,13 +163,18 @@ load fMRI data from timeseries images, we know how to add and access
 attributes in a dataset, we know how to slice datasets, and we know that
 we can manipulate datasets with mappers.
 
-Our goal is now to combine all these little pieces into code that produces
+Our goal now is to combine all these little pieces into the code that produces
 the dataset we already used at beginning. That is:
 
   A *pattern of activation* for each stimulus category in each half of the
   data (split by odd vs. even runs; i.e. 16 samples), including the
   associated :term:`sample attribute`\ s that are necessary to perform a
   cross-validated classification analysis of the data.
+
+.. todo::
+
+   Might be handy to describe get_mapped before this section.
+   Not sure about poly_detrend and zscore -- those could be introduced here I guess.
 
 DISCOVER THE CODE STEP BY STEP
 ::

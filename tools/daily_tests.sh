@@ -86,9 +86,6 @@ for c in $TESTS_ALL; do
     eval "do_$c() { $precmd make $c; }"
 done
 
-# What actions/tests to run per each branch
-ACTIONS="checkout build clean"
-
 # Counters
 failed=0
 succeeded=0
@@ -119,7 +116,7 @@ sweep()
         branch_has_problems=
         echo
         echo "I: ---------------{ Branch $branch }--------------"
-        for action in $ACTIONS ${TESTS_BRANCHES["$branch"]}; do
+        for action in checkout build ${TESTS_BRANCHES["$branch"]} clean; do
             echo -n "I: $action "
             cmd="do_$action"
             if $cmd >| $tmpfile 2>&1 ; then

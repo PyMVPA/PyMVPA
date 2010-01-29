@@ -529,6 +529,12 @@ if externals.exists('scipy'):
             """Arguments which should get some fixed value"""
 
 
+        def __call__(self, *args, **kwargs):
+            """Upon call mimic call to get actual rv_frozen distribution
+            """
+            return self._dist(*args, **kwargs)
+
+
         def nnlf(self, theta, x):
             # - sum (log pdf(x, theta),axis=0)
             #   where theta are the parameters (including loc and scale)
