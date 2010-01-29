@@ -22,7 +22,7 @@ Please note that this tutorial is only concerned with aspects directly related
 to PyMVPA.  It does **not** teach basic Python_ programming. If you are new to
 Python, it is recommend that you take a look at the
 :ref:`chap_tutorial_prerequisites` for information about what you should know
-and how to to obtain that knowledge.
+and how to obtain that knowledge.
 
 .. _Python: http://www.python.org
 
