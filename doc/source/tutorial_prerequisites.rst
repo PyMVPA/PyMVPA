@@ -46,14 +46,14 @@ Python programs after a weekend of training.
 What Do I Need To Get Python Running
 ------------------------------------
 
-Python is avialable for any machine that might be used for PyMVPA-based
+Any machine which has Python available can be used for PyMVPA-based
 processing. Any GNU/Linux distribution already comes with Python by
 default. The Python website offers `installers for Windows and MacOS X`_.
 
 .. _installers for Windows and MacOS X: http://www.python.org/download
 
 However, PyMVPA can make use of many additional software packages to
-enhance its functionality. Therefore it is preferrable to use a Python
+enhance its functionality. Therefore it is preferable to use a Python
 distribution that offers are large variety of scientific Python packages.
 For Windows, `Python(x,y)`_ matches these requirements.  For MacOS X, the
 MacPorts_ project offers a large variety of Python packages (including
@@ -62,7 +62,7 @@ PyMVPA).
 .. _Python(x,y): http://www.pythonxy.com
 .. _MacPorts: http://www.macports.org
 
-The ideal enviroment is, however, the Debian_ operating system. Debian
+The ideal environment is, however, the Debian_ operating system. Debian
 offers the largest selection of free and open-source software in the world,
 and runs on almost any machine. Moreover, the NeuroDebian_ project provides
 Debian packages for a number of popular neuroscience software package, such
@@ -86,7 +86,7 @@ neuroscience software (including AFNI_ and FSL_).
 Recommended Reading and Viewing
 -------------------------------
 
-This section contains a commented list of useful resources, ranging from
+This section contains a recommended list of useful resources, ranging from
 basic Python programming to efficient scientific computing with Python.
 
 
@@ -163,7 +163,7 @@ to explore an enhanced interactive environment for Python -- IPython_.
 http://fperez.org/papers/ipython07_pe-gr_cise.pdf
 
   An article from the author of IPython in the Computing in Science and Engineering
-  journal, describing goals and basic features of IPython
+  journal, describing goals and basic features of IPython.
 
 http://showmedo.com/videotutorials/series?name=CnluURUTV
 

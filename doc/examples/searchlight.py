@@ -78,10 +78,10 @@ for many classification algorithm. it scales all features (voxels)
 approximately into the same range and removed the mean. In this example, we
 perform a chunk-wise normalization and compute standard deviation and mean for
 z-scoring based on the volumes corresponding to rest periods in the experiment.
-The resulting features could be interpreted as being voxel activation relative
+The resulting features could be interpreted as being voxel salience relative
 to 'rest'."""
 
-zscore(dataset, perchunk=True, baselinelabels=['rest'], targetdtype='float32')
+zscore(dataset, chunks='chunks', param_est=('labels', ['rest']), dtype='float32')
 
 """After normalization is completed, we no longer need the 'rest'-samples and
 remove them."""
@@ -146,12 +146,13 @@ for radius in [0, 1, 3]:
     compute an error value per each fold, but here we are only interested in
     the mean error across all folds. Finally, on multi-core machines `nproc`
     can be used to enabled parallelization by setting it to the number of
-    processes utilized by the searchlight.
+    processes utilized by the searchlight (default value of `nproc`=`None` utilizes
+    all available local cores).
     """
 
     sl = sphere_searchlight(cv, radius=radius, space='voxel_indices',
                             center_ids=center_ids,
-                            nproc=2, mapper=mean_sample())
+                            mapper=mean_sample())
 
     """
     Since we care about efficiency, we are stripping all attributes from the
