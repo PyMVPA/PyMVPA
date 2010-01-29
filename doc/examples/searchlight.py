@@ -78,10 +78,10 @@ for many classification algorithm. it scales all features (voxels)
 approximately into the same range and removed the mean. In this example, we
 perform a chunk-wise normalization and compute standard deviation and mean for
 z-scoring based on the volumes corresponding to rest periods in the experiment.
-The resulting features could be interpreted as being voxel activation relative
+The resulting features could be interpreted as being voxel salience relative
 to 'rest'."""
 
-zscore(dataset, perchunk=True, baselinelabels=['rest'], targetdtype='float32')
+zscore(dataset, chunks='chunks', param_est=('labels', ['rest']), dtype='float32')
 
 """After normalization is completed, we no longer need the 'rest'-samples and
 remove them."""
