@@ -21,7 +21,7 @@ if __debug__:
 
 
 class Mapper(object):
-    """Interface to provide mapping between two spaces: IN and OUT.
+    """Basic mapper interface definition.
 
     ::
               forward
