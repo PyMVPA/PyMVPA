@@ -40,7 +40,7 @@ ignore-%:
 #
 %.pdf: %.svg ignore-%.pdf
 	@echo "Rendering $@"
-	@inkscape -z -f "$<" -A "$@"
+	@inkscape -z -f "$<" -A "$@" --export-dpi=300
 	@cp "$@" $(TARGETDIR)
 
 %.png: %.svg ignore-%.png

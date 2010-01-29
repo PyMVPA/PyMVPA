@@ -10,8 +10,8 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="177.83186"
-   height="58.167866"
+   width="353.83188"
+   height="115.73654"
    id="svg2"
    sodipodi:version="0.32"
    inkscape:version="0.47pre4 r22446"
@@ -20,54 +20,6 @@
    inkscape:output_extension="org.inkscape.output.svg.inkscape">
   <defs
      id="defs4">
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient3761"
-       id="linearGradient5785"
-       gradientUnits="userSpaceOnUse"
-       x1="522.15778"
-       y1="666.27789"
-       x2="485.92032"
-       y2="760.29028" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient3761"
-       id="linearGradient5152"
-       gradientUnits="userSpaceOnUse"
-       x1="522.15778"
-       y1="666.27789"
-       x2="485.92032"
-       y2="760.29028" />
-    <linearGradient
-       inkscape:collect="always"
-       id="linearGradient3761">
-      <stop
-         style="stop-color:#000000;stop-opacity:1;"
-         offset="0"
-         id="stop3763" />
-      <stop
-         style="stop-color:#000000;stop-opacity:0;"
-         offset="1"
-         id="stop3765" />
-    </linearGradient>
-    <filter
-       inkscape:collect="always"
-       id="filter3692"
-       color-interpolation-filters="sRGB">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="1.4337774"
-         id="feGaussianBlur3694" />
-    </filter>
-    <filter
-       inkscape:collect="always"
-       id="filter3994"
-       color-interpolation-filters="sRGB">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="1.5739198"
-         id="feGaussianBlur3996" />
-    </filter>
     <mask
        maskUnits="userSpaceOnUse"
        id="mask4589">
@@ -76,96 +28,6 @@
          d="m 805.95547,732.31695 -73.44626,0.19081 c -37.68126,-58.02657 -65.87828,-55.03044 -62.62623,-34.16314 0,1.63611 7.84809,32.52708 7.62883,33.62321 l 21.04325,0 -56.98275,78.48387 -57.23732,-78.48387 20.47358,0 c 0.54001,-3.53608 4.60005,-28.46726 11.12049,-45.27884 28.19702,-57.21464 123.33606,-1.28291 190.02641,45.62796 z"
          id="path4591" />
     </mask>
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient3761"
-       id="linearGradient3767"
-       x1="522.15778"
-       y1="666.27789"
-       x2="485.92032"
-       y2="760.29028"
-       gradientUnits="userSpaceOnUse" />
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient58866"
-       id="radialGradient59760"
-       cx="560.38379"
-       cy="378.07346"
-       fx="562.09247"
-       fy="376.32272"
-       r="91.609962"
-       gradientTransform="matrix(0.6588512,-3.1626875e-7,1.7239497e-7,0.3591333,261.27056,-1497.7615)"
-       gradientUnits="userSpaceOnUse" />
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient58866"
-       id="radialGradient59764"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(1.6489932,0,-3.6494083e-8,0.3158592,-1528.0975,-1469.788)"
-       cx="487.96182"
-       cy="341.30707"
-       fx="487.29575"
-       fy="343.58426"
-       r="91.609962" />
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient58866"
-       id="radialGradient59827"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(0.6588512,-3.1626875e-7,1.7239497e-7,0.3591333,261.27056,-1497.7615)"
-       cx="560.38379"
-       cy="378.07346"
-       fx="562.09247"
-       fy="376.32272"
-       r="91.609962" />
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient58866"
-       id="radialGradient59829"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(1.6489932,0,-3.6494083e-8,0.3158592,-1528.0975,-1469.788)"
-       cx="487.96182"
-       cy="341.30707"
-       fx="487.29575"
-       fy="343.58426"
-       r="91.609962" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient3761"
-       id="linearGradient4649"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(2.1912916,0,0,2.1912916,-517.99526,-1231.4009)"
-       x1="522.15778"
-       y1="666.27789"
-       x2="485.92032"
-       y2="760.29028" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient3761"
-       id="linearGradient2883"
-       gradientUnits="userSpaceOnUse"
-       x1="522.15778"
-       y1="666.27789"
-       x2="485.92032"
-       y2="760.29028" />
-    <filter
-       color-interpolation-filters="sRGB"
-       inkscape:collect="always"
-       id="filter3692-4">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="1.4337774"
-         id="feGaussianBlur3694-9" />
-    </filter>
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient3761"
-       id="linearGradient3421"
-       gradientUnits="userSpaceOnUse"
-       x1="522.15778"
-       y1="666.27789"
-       x2="485.92032"
-       y2="760.29028" />
     <filter
        color-interpolation-filters="sRGB"
        inkscape:collect="always"
@@ -251,23 +113,23 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.0657627"
-     inkscape:cx="88.915935"
-     inkscape:cy="29.083964"
+     inkscape:zoom="1"
+     inkscape:cx="88.915934"
+     inkscape:cy="29.083869"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      showguides="false"
      inkscape:guide-bbox="true"
-     inkscape:window-width="1377"
-     inkscape:window-height="879"
+     inkscape:window-width="927"
+     inkscape:window-height="1179"
      inkscape:window-x="61"
      inkscape:window-y="19"
-     units="mm"
+     units="cm"
      inkscape:window-maximized="0">
     <sodipodi:guide
        orientation="0,1"
-       position="19.407067,132.154"
+       position="19.407066,132.15391"
        id="guide4607" />
   </sodipodi:namedview>
   <metadata
@@ -278,7 +140,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -286,9 +148,9 @@
      inkscape:label="Ebene 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-107.05406,-1069.12)">
+     transform="translate(-107.05406,-1011.5513)">
     <g
-       transform="translate(-4.8470874,66.688413)"
+       transform="matrix(1.9896989,0,0,1.9896989,-115.59553,-982.98564)"
        id="g3431">
       <g
          id="g3374">
