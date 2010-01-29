@@ -58,8 +58,8 @@ a very important detail:
 We see that the resulting dataset looks identical to the one above, but this time
 it got created from a 3D samples array (i.e. five samples, where each is a 4x3
 matrix). Somehow this 3D array got transformed into a 2D samples array in the
-dataset. This magic behavior is unveiled by looking at the dataset's mapper
--- a `~mvpa.mappers.flatten.FlattenMapper`.
+dataset. This magic behavior is unveiled by observing that the dataset's mapper
+is a `~mvpa.mappers.flatten.FlattenMapper`.
 
 The purpose of this mapper is precisely what we have just observed: reshaping
 data arrays into 2D. It does it by preserving the first axis (in PyMVPA datasets
