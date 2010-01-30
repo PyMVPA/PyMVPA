@@ -10,7 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
+import os
 import numpy as N
+
 
 from sets import Set
 
@@ -310,3 +312,17 @@ def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
     noise = N.random.randn(size)*sigma
     y = x * slope + intercept + noise
     return dataset_wizard(samples=x[:, None], labels=y)
+
+
+def load_example_fmri_dataset():
+    """Load minimal fMRI dataset that is shipped with PyMVPA."""
+    from mvpa.datasets.mri import fmri_dataset
+    from mvpa.misc.io import SampleAttributes
+    from mvpa import pymvpa_dataroot
+
+    attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
+    ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+                      labels=attr.labels, chunks=attr.chunks,
+                      mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+
+    return ds
