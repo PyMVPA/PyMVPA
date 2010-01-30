@@ -12,7 +12,7 @@
     margin: 0px;
     padding: 0 15px 5px 0;
     background-color: #fff;
-    background-image: url(logo_white.jpg);
+    background-image: url(pymvpa_logo.jpg);
     background-repeat: no-repeat;
     border-bottom: 5px solid #822;
   }
