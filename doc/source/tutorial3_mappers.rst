@@ -231,18 +231,107 @@ directly:
 We got the dataset that we already know from the last part, but this time
 is also has information about chunks and labels.
 
-.. todo::
+The next step is to extract the *patterns of activation* that we are
+interested in from the dataset. But wait! We know that fMRI data is
+typically contaminated with a lot of noise, or actually *information* that
+we are not interested in. For example, there are temporal drifts in the
+data (the signal tends to increase when the scanner is warming up). We
+also know that the signal is not fully homogeneous throughout the brain.
 
-   Might be handy to describe get_mapped before this section.
-   Not sure about poly_detrend and zscore -- those could be introduced here I guess.
+All these artifacts carry a lot of variance that is (hopefully) unrelated
+to the experiment design, and we should try to remove it to present the
+classifier with the cleanest signal possible. There are countless ways to
+preprocess the data to try to achieve this goal. Some keywords are:
+high/low/band-pass filtering, de-spiking, motion-correcting, intensity
+normalization, and so on. In this tutorial, we keep it simple. The data we
+have just loaded is already motion corrected. For every experiment that is
+longer than a few minutes, as in this case, temporal trend removal, or
+:term:`detrending` is crucial.
+
+PyMVPA provides functionality to remove polynomial trends from the data,
+meaning that polynomials are fitted to the timeseries and only what is not
+explained by them remains in the dataset. In the case of linear
+detrending, this means fitting a straight line to the timeseries via linear
+regression and taking the residuals as the new feature values. Detrending
+can be seen as a type of data transformation, hence it is implemented as a
+mapper in PyMVPA.
+
+  >>> detrender = PolyDetrendMapper(polyord=1, chunks='chunks')
+
+What we have just created is a mapper that will perform chunk-wise linear
+(1st-order polynomial) detrending. Chunk-wise detrending is desirable,
+since our data stems from 12 different runs, and the assumption of a
+continous linear trend across all runs is not appropriate. The mapper is
+going to use the ``chunks`` attribute to identify the chunks in the
+dataset.
+
+We have seen that we could simply forward-map our dataset with this mapper.
+However, if we want to have the mapper present in the datasets processing
+history breadcrumb track, we can use its
+`~mvpa.datasets.base.Dataset.get_mapped()` method. This method will cause
+the dataset to map a shallow copy of itself with the given mapper, and
+return it. Let's try:
+
+  >>> detrended_ds = ds.get_mapped(detrender)
+  >>> print detrended_ds.a.mapper
+  <ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>>
+
+``detrended_ds`` is easily identifiable as a dataset that has been
+flattened, sliced, and linearily detrended.
+
+While this will hopefully have solved the problem of temporal drifts in the
+data, we still have inhomogeneous voxel intensities. For this problem there
+are also many approaches to fix it. For this tutorial we are again
+following a simple approach, and perform a feature-wise, chunk-wise
+Z-scoring of the data. This has many advantages. First it is going to scale
+all featurus into approximately the same range, and also remove their mean.
+The latter is quite important, since some classifiers cannot deal with not
+demeaned data. However, we are not going to perform a very simple Z-scoring
+removing the global mean, but use the *rest* condition samples of the data
+to estimate mean and standard deviation. Scaling features using these
+parameters yields a score in how far a voxel intensity different from
+*rest*, for a particular condition, and timepoint.
+
+This type of data :term:`normalization` is, you guessed it, also
+implemented as a mapper:
+
+  >>> zscorer = ZScoreMapper(param_est=('labels', ['rest']))
+
+This configures to perform a chunk-wise (the default) Z-scoring, while
+estimating mean and standard deviation from samples labels with 'rest' in
+the respective chunk of data.
+
+Remember, all mappers return new dataset that only have copies of what has
+been modified. However, both detrending and Z-scoring have or will modify
+the samples themselves. That means that the memory consumption will triple!
+We will have the original data, the detrended data, and the Z-scored data,
+but typically we are only interested in the final processing stage. The
+reduce the memory footprint, both mappers have siblings that perform the
+same processing, but without copying the data. For
+`~mvpa.mappers.detrend.PolyDetrendMapper` this is
+`~mvpa.mapper.detrend.poly_detrend()`, and for
+`~mvpa.mappers.zscore.ZScoreMapper` this is
+`~mvpa.mappers.zscore.zscore()`. The following call will do the same as the
+mapper we have created above, but using less memory:
+
+  >>> ds = zscore(detrended_ds, param_est=('labels', ['rest']))
+  >>> print ds.a.mapper
+  <ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>-<ZScore>>
+
+.. exercise::
+
+   Look at the :ref:`example_smellit` example. Using the techniques from
+   this example, explore the dataset we have just created and look at the
+   effect of detrending and Z-scoring.
 
 
-:ref:`
-DISCOVER THE CODE STEP BY STEP
+.. exercise::
+
+   MOVE THIS INTO CLASSIFIER PART. Try doing the Z-Scoring beforce
+   computing the mean samples per category. What happens to the
+   generalization performance of the classifier? ANSWER: It becomes 100%!
+
 ::
-
-     do chunkswise linear detrending on dataset
-    poly_detrend(ds, polyord=1, chunks='chunks', inspace='time_coords')
 
     # mark the odd and even runs
     rnames = {0: 'even', 1: 'odd'}
