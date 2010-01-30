@@ -1,4 +1,4 @@
-.. -*- mode: rst; fill-column: 78 -*-
+.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
   #
   # THIS IS A GENERATED FILE -- DO NOT EDIT!
   #
