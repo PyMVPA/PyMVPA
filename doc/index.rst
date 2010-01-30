@@ -27,7 +27,7 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 News
 ====
 
-PyMVPA Extravaganza 2009 at Dartmotuh College [30th Nov -- 4th Dec]
+PyMVPA Extravaganza 2009 at Dartmouth College [30th Nov -- 4th Dec]
   :ref:`Read more <chap_workshop_2009fall>` about the topics and achievements.
 
 PyMVPA 0.4.3 is out [5 Sep 2009]
