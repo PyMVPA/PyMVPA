@@ -59,6 +59,7 @@ def exfile2rst(filename):
             cleanline = line[:line.find('#')].lstrip()
             indent_level = len(line) - len(cleanline) - 1
             cleanline = cleanline.rstrip()
+            interactiveblock = False
         else:
             cleanline = line[:line.find('#')].rstrip()
 

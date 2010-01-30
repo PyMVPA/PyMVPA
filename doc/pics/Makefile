@@ -1,4 +1,4 @@
-all:: pics
+all:: pics pymvpa_logo.jpg
 
 # where the rendered images should go
 TARGETDIR = ../source/pics
@@ -21,10 +21,12 @@ clean::
 	for p in *.svg; do \
 		rm -f $(TARGETDIR)/$${p%*.svg}.pdf; \
 		rm -f $(TARGETDIR)/$${p%*.svg}.png; \
+		rm -f $(TARGETDIR)/$${p%*.svg}.jpg; \
 	done
 	for p in *.svg; do \
 		rm -f $${p%*.svg}.pdf; \
 		rm -f $${p%*.svg}.png; \
+		rm -f $${p%*.svg}.jpg; \
 	done
 
 .PHONY: ignore-%
@@ -36,16 +38,21 @@ ignore-%:
 #
 # Inkscape rendered figures
 #
-.PHONY: %.pdf
 %.pdf: %.svg ignore-%.pdf
 	@echo "Rendering $@"
-	@inkscape -z -f "$<" -A "$@"
+	@inkscape -z -f "$<" -A "$@" --export-dpi=300
 	@cp "$@" $(TARGETDIR)
 
 %.png: %.svg ignore-%.png
 	@echo "Rendering $@"
 	@inkscape -z -f "$<" -e "$@" --export-width=500
 	@cp "$@" $(TARGETDIR)
+
+pymvpa_logo.jpg: pymvpa_logo.png ignore-pymvpa_logo.jpg
+	@echo "Converting logo to JPG"
+	@convert -flatten -resize x130 pymvpa_logo.png pymvpa_logo.jpg
+	@cp pymvpa_logo.jpg $(TARGETDIR)
+
 
 
 .PHONY: all pics

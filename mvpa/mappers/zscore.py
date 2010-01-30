@@ -103,6 +103,10 @@ class ZScoreMapper(Mapper):
             return s
 
 
+    def __str__(self):
+        return _str(self)
+
+
     def _train(self, ds):
         # local binding
         chunks = self.__chunks

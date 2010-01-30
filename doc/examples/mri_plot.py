@@ -13,12 +13,25 @@ Basic (f)MRI plotting
 
 .. index:: plotting
 
-Estimate basic univariate sensitivity (ANOVA) an plot it overlayed on top
-of the anatomical.
+When running an fMRI data analysis it is often necessary to visualize results
+in their original dataspace, typically as an overlay on some anatomical brain
+image. PyMVPA has the ability to export results into the NIfTI format, and via
+this data format it is compatible with virtually any MRI visualization software.
 
-We start with basic steps: loading PyMVPA and the example fMRI
-dataset, basic preprocessing, estimation of the ANOVA scores and
-plotting.
+However, sometimes having a scriptable plotting facility within Python is
+desired. There are a number of candidate tools for this purpose (e.g. Mayavi_),
+but also PyMVPA itself offers some basic MRI plotting.
+
+.. _Mayavi: http://mayavi.sourceforge.net
+
+In this example, we are showing a quick-and-dirty plot of a voxel-wise
+ANOVA measure, overlaid on the respective brain anatomy. Note that the plotting
+is not specific to ANOVAs. Any feature-wise measure can be plotted this way.
+
+We start with basic steps: loading PyMVPA and the example fMRI dataset, only
+select voxels that correspond to some pre-computed gray matter mask, do basic
+preprocessing, and estimate ANOVA scores. This has already been described
+elsewhere, hence we only provide the code here for the sake of completeness.
 """
 
 from mvpa.suite import *
@@ -29,7 +42,7 @@ attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
 dataset = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
                        labels=attr.labels,
                        chunks=attr.chunks,
-                       mask=os.path.join(datapath, 'mask_vt.nii.gz'))
+                       mask=os.path.join(datapath, 'mask_gray.nii.gz'))
 
 # do chunkswise linear detrending on dataset
 poly_detrend(dataset, chunks='chunks')
@@ -45,32 +58,48 @@ sensana = OneWayAnova()
 sens = sensana(dataset)
 
 """
-It might be convenient to pre-define common arguments for multiple calls to
-plot_lightbox
+The measure is computed, and we can look at the actual plotting. Typically, it
+is useful to pre-define some common plotting arguments, for example to ensure
+consistency throughout multiple figures. This following sets up which backround
+image to use (``background``), which portions of the image to plot
+(``background_mask``), and which portions of the overlay images to plot
+(``overlay_mask``). All these arguments are actually NIfTI images of the same
+dimensions and orientation as the to be plotted F-scores image. the remaining
+settings configure the colormaps to be used for plotting and trigger
+interactive plotting.
 """
 
 mri_args = {
     'background' : os.path.join(datapath, 'anat.nii.gz'),
     'background_mask' : os.path.join(datapath, 'mask_brain.nii.gz'),
-    'overlay_mask' : os.path.join(datapath, 'mask_vt.nii.gz'),
-    'do_stretch_colors' : False,
+    'overlay_mask' : os.path.join(datapath, 'mask_gray.nii.gz'),
     'cmap_bg' : 'gray',
     'cmap_overlay' : 'autumn', # YlOrRd_r # P.cm.autumn
-    'fig' : None,              # create new figure
     'interactive' : cfg.getboolean('examples', 'interactive', True),
     }
 
-fig = plot_lightbox(overlay=map2nifti(dataset, sens),
-              vlim=(0.5, None), slices=range(23,31),
-              #vlim_type="symneg_z",
-              **mri_args)
+"""
+All that remains to do is a single call to `plot_lightbox()`. We pass it the
+F-score vector. `map2nifti` uses the mapper in our original dataset to project
+it back into the functional MRI volume space. We treshold the data with the
+interval [0, +inf] (i.e. all possible values and F-Score can have), and select
+a subset of slices to be plotted. That's it.
+"""
 
+
+fig = plot_lightbox(overlay=map2nifti(dataset, sens),
+              vlim=(0, None), slices=range(25,29), **mri_args)
 
 """
-Output of the example analysis:
+The resulting figure would look like this:
 
 .. image:: ../pics/ex_plot_lightbox.*
    :align: center
-   :alt: Simple plotting facility for (f)MRI
+   :alt: Simple plotting facility for (f)MRI. F-scores
 
+In interactive mode it is possible to click on the histogram to adjust the
+thresholding of the overlay volumes. Left-click sets the value corresponding
+to the lowest value in the colormap, and right-click set the value for the upper
+end of the colormap. Try right-clicking somewhere at the beginning of the x-axis
+and left on the end of the x-axis.
 """
