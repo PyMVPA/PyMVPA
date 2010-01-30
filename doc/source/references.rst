@@ -36,6 +36,16 @@ experiments.
   DOI: http://dx.doi.org/10.1002/hbm.20243
 
 
+.. _Coh94:
+
+**Cohen, J.** (1994). The earth is round (p< 0.05). *American Psychologist*, *49*, 997–1003.
+  *Classical critic of null hypothesis significance testing*
+
+  Keywords: :keyword:`hypothesis testing`
+
+  URL: http://www.citeulike.org/user/mdreid/article/2643653
+
+
 .. _Dem06:
 
 **Demšar, J.** (2006). Statistical Comparisons of Classifiers over Multiple Data Sets. *Journal of Machine Learning Research*, *7*, 1–30.
