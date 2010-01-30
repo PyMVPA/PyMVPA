@@ -1,0 +1,108 @@
+pymvpa (0.4.3-1) unstable; urgency=low
+
+  * New upstream release.
+  * Bump Standards-Version to 3.8.3 -- no changes necessary.
+  * Maintainer field points to ExpPsy Maintainers now.
+  * Recommend python-reportlab.
+  * Added python-nose, python-nifti, python-lxml to Build-depends.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 04 Sep 2009 16:18:54 -0400
+
+pymvpa (0.4.2-1) unstable; urgency=low
+
+  [ Michael Hanke ]
+  * New upstream release.
+  * Removing the circular dependency between python-mvpa and python-mvpa-lib
+    (Closes: #519129).
+  * Improve long description of python-mvpa-lib and turn it into complete
+    sentences, as recommended by the developers reference 6.2.3
+    (Closes: #521332).
+  * Bump Standards-Version to 3.8.1 -- no changes necessary.
+  * Added dependency on python to the python-mvpa package to satisfy lintian.
+  * Added rsync as build-dependency, which is required for building the docs.
+  * The package now honors 'nodoc' in DEB_BUILD_OPTIONS. This is intended to
+    help backporting to releases with insufficient python-sphinx versions.
+  * Added 'graphviz' as a build-dependency (necessary for Sphinx' inheritance
+    graphs).
+
+  [ Yaroslav Halchenko ]
+  * Compatible with cdbs >= 0.4.54 (use of DEB_PYTHON_MODULE_PACKAGES) and
+    recent pysupport (>=0.9).
+  * Run unittests for each supported python version during build.
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Mon, 25 May 2009 11:21:39 +0200
+
+pymvpa (0.4.1-1) unstable; urgency=low
+
+  [ Michael Hanke ]
+  * New upstream release.
+  * Added missing ${misc:Depends} to debian/control.
+  * The package now honors 'nocheck' in DEB_BUILD_OPTIONS.
+  * Speed-up of package build process by preventing the docs from being built
+    twice.
+  * Added 'DM-Upload-Allowed: yes' to enable DM upload.
+  * Install new manpages and add build-dep. to help2man.
+  * Updated debian/copyright.
+  * Imported various bugfixes from the upstream VCS that were pushed into the
+    0.4 maintenance branch since the release of 0.4.1.
+
+  [ Yaroslav Halchenko ]
+  * Adjusted long descriptions.
+  * Split libraries (low-level SMLR implementation and LIBSVM custom
+    Python bindings) into a separate python-mvpa-lib package. That allows
+    python-mvpa package to become architecture independent.
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Sat, 21 Feb 2009 14:07:55 +0100
+
+pymvpa (0.4.0-1) unstable; urgency=low
+
+  * New upstream release.
+  * Running a subset of the unittests during package build (only tests not
+    requiring a huge amount of cpu-time or memory.
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Wed, 19 Nov 2008 03:30:53 +0100
+
+pymvpa (0.3.1-1) unstable; urgency=low
+
+  * New upstream release.
+  * Added dependency to ctypes for python 2.4.
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Sun, 14 Sep 2008 13:53:31 +0200
+
+pymvpa (0.3.0-1) unstable; urgency=low
+
+  * New upstream release.
+  * Added python-pywt as recommended package.
+  * Using jquery.js from corresponding Debian package.
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Sun, 17 Aug 2008 20:56:26 +0200
+
+pymvpa (0.2.2-1) unstable; urgency=low
+
+  * New upstream maintenance release (missed 0.2.1). This release contains
+    a minimal copy of LIBSVM. The Debian package does not build it, but makes
+    use of the corresponding Debian package.
+  * Shrink Debian diff and move the enabling of LIBSVM into debian/rules.
+  * Convert debian/copyright into machine readable format.
+  * Bump Standards-Version to 3.8.0 -- no changes necessary.
+  * Adjusted list of recommended and suggested packages to the new
+    capabilities of PyMVPA, i.e. add SciPy, MDP, Shogun and Matplotlib.
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Thu, 03 Jul 2008 10:04:40 +0200
+
+pymvpa (0.2.0-1) unstable; urgency=low
+
+  * New upstream release.
+  * Added build-dependency to python-ctypes for a new classifier extension.
+  * Added watch file.
+  * Move from python-docutils to python-sphinx for building the package docs.
+  * Disable libsvm setting check and add setup.cfg to permanently enable
+    building the libsvm wrapper for Debian.
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Thu, 29 May 2008 08:13:14 +0200
+
+pymvpa (0.1.0-1) unstable; urgency=low
+
+  * Initial release (Closes: #466556).
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Tue, 19 Feb 2008 16:10:05 +0100

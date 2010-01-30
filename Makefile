@@ -57,7 +57,10 @@ debian-build:
 
 
 build: build-stamp
-build-stamp: 3rd
+# Do not build 3rd party software for Debian, but use corresponding Debian
+# packages instead
+#build-stamp: 3rd
+build-stamp:
 	@echo "I: Building PyMVPA and symlinking dynamic libraries inplace"
 	python setup.py config --noisy --with-libsvm
 	python setup.py build --with-libsvm
