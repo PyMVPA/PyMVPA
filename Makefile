@@ -433,7 +433,7 @@ orig-src: distclean debian-clean
 	python setup.py sdist --formats=gztar --with-libsvm
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
-	file=$$(ls -1 dist); ver=$${file%*.tar.gz}; ver=$${ver#pymvpa-*}; mv dist/$$file ../pymvpa_$$ver.orig.tar.gz
+	mv dist/$$(ls -1 dist) ../pymvpa-snapshot_$$(dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1).orig.tar.gz
 	# clean leftover
 	rm MANIFEST
 
