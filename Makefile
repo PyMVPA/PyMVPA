@@ -21,6 +21,10 @@ RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g
 RSYNC_OPTS_UP=-rzlhvp --delete --chmod=Dg+s,g+rw,o+rX
 
 #
+# Helpers for version handling.
+# Note: can't be ':='-ed since location of invocation might vary
+DEBCHANGELOG_VERSION = $(shell dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)
+#
 # Automatic development version
 #
 #yields: LastTagName_CommitsSinceThat_AbbrvHash
@@ -416,14 +420,15 @@ orig-src: distclean debian-clean
 	-rm -rf dist
 	# change upstream version
 	sed -i -e "s/$$(python setup.py -V)/$(DEVVERSION)/g" setup.py
-	# new debian changelog item, if not yet up to date
-	if [ ! "$$(dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)" = $(DEVVERSION) ]; then \
-		dch --newversion $(DEVVERSION)-1 --package pymvpa-snapshot --allow-lower-version \
-			"PyMVPA development snapshot." ; \
-	fi
-	# sanity check
+	# sanity check and new version in debchangelog
 	if [ -f debian/changelog ]; then \
-		if [ ! "$$(dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)" = "$$(python setup.py -V)" ]; then \
+		if [ ! "$(DEBCHANGELOG_VERSION)" = $(DEVVERSION) ]; then \
+			dch --newversion $(DEVVERSION)-1 --package pymvpa-snapshot --allow-lower-version \
+				"PyMVPA development snapshot." ; \
+		fi \
+	fi
+	if [ -f debian/changelog ]; then \
+		if [ ! "$(DEBCHANGELOG_VERSION)" = "$$(python setup.py -V)" ]; then \
 				printf "WARNING: Changelog version does not match tarball version!\n" ;\
 				exit 1; \
 		fi \
@@ -433,7 +438,7 @@ orig-src: distclean debian-clean
 	python setup.py sdist --formats=gztar --with-libsvm
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
-	mv dist/$$(ls -1 dist) ../pymvpa-snapshot_$$(dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1).orig.tar.gz
+	mv dist/$$(ls -1 dist) ../pymvpa-snapshot_$(DEBCHANGELOG_VERSION).orig.tar.gz
 	# clean leftover
 	rm MANIFEST
 
