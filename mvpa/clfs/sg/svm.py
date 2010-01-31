@@ -54,6 +54,18 @@ else:
     _default_kernel_class_ = None
 
 
+    # Figure out debug IDs once and for all
+    if hasattr(shogun.Kernel, 'M_DEBUG'):
+        _M_DEBUG = shogun.Kernel.M_DEBUG
+        _M_ERROR = shogun.Kernel.M_ERROR
+    elif hasattr(shogun.Kernel, 'MSG_DEBUG'):
+        _M_DEBUG = shogun.Kernel.MSG_DEBUG
+        _M_ERROR = shogun.Kernel.MSG_ERROR
+    else:
+        _M_DEBUG, _M_ERROR = None, None
+        warning("Could not figure out debug IDs within shogun. "
+                "No control over shogun verbosity would be provided")
+
 import operator
 
 from mvpa.misc.param import Parameter
