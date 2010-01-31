@@ -24,7 +24,7 @@ RSYNC_OPTS_UP=-rzlhvp --delete --chmod=Dg+s,g+rw,o+rX
 # Automatic development version
 #
 #yields: LastTagName_CommitsSinceThat_AbbrvHash
-DEVVERSION := $(shell git describe --abbrev=4 HEAD |sed -e 's/.dev/~dev/' -e 's/-/_/g' |cut -d '/' -f 2,2)
+DEVVERSION := $(shell git describe --abbrev=4 HEAD |sed -e 's/.dev/~dev/' -e 's/-/+/g' |cut -d '/' -f 2,2)
 
 #
 # Details on the Python/system
@@ -414,13 +414,13 @@ orig-src: distclean debian-clean
 	# change upstream version
 	sed -i -e "s/$$(python setup.py -V)/$(DEVVERSION)/g" setup.py
 	# new debian changelog item, if not yet up to date
-	if [ ! "$$(dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)" == $(DEVVERSION) ]; then \
+	if [ ! "$$(dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)" = $(DEVVERSION) ]; then \
 		dch --newversion $(DEVVERSION)-1 --package pymvpa-snapshot --allow-lower-version \
 			"PyMVPA development snapshot." ; \
 	fi
 	# sanity check
 	if [ -f debian/changelog ]; then \
-		if [ ! "$$(dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)" == "$$(python setup.py -V)" ]; then \
+		if [ ! "$$(dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)" = "$$(python setup.py -V)" ]; then \
 				printf "WARNING: Changelog version does not match tarball version!\n" ;\
 				exit 1; \
 		fi \
