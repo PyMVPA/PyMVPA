@@ -1,4 +1,4 @@
-Source: pymvpa
+Source: pymvpa-snapshot
 Section: python
 Priority: optional
 Maintainer: Experimental Psychology Maintainers <pkg-exppsy-maintainers@lists.alioth.debian.org>
@@ -10,9 +10,9 @@ Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
 Vcs-Git: git://git.debian.org/git/pkg-exppsy/pymvpa.git
 XS-DM-Upload-Allowed: yes
 
-Package: python-mvpa
+Package: python-mvpa-snapshot
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}, python, python-numpy, python-mvpa-lib(>= ${source:Version})
+Depends: ${misc:Depends}, ${python:Depends}, python, python-numpy, python-mvpa-snapshot-lib(>= ${source:Version})
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Recommends: python-nifti, python-psyco, python-mdp, python-scipy, shogun-python-modular, python-pywt, python-matplotlib, python-reportlab
@@ -28,6 +28,9 @@ Description: multivariate pattern analysis with Python
  .
  While it is not limited to neuroimaging data (e.g. fMRI, or EEG) it
  is eminently suited for such datasets.
+ .
+ This is a package of a development snaphot. The latest released version is
+ provided by the python-mvpa package.
 
 
 Package: python-mvpa-doc
@@ -45,7 +48,7 @@ Description: documention and examples for PyMVPA
  included.
 
 
-Package: python-mvpa-lib
+Package: python-mvpa-snapshot-lib
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}, python-numpy, python-ctypes (>= 1.0.1) | python (>= 2.5)
 Provides: ${python:Provides}
@@ -54,3 +57,6 @@ Description: low-level implementations and bindings for PyMVPA
  This is an add-on package for the PyMVPA framework. It provides a low-level
  implementation of an SMLR classifier and custom Python bindings for the LIBSVM
  library.
+ .
+ This is a package of a development snaphot. The latest released version is
+ provided by the python-mvpa-lib package.
