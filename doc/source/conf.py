@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+# emacs: -*- coding: utf-8; mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 #
 # PyMVPA documentation build configuration file, created by
 # sphinx-quickstart on Tue Dec 29 10:32:00 2009.
@@ -275,4 +276,7 @@ latex_preamble = r"""
 intersphinx_mapping = {'http://docs.python.org/': None,
                        'http://nipy.sourceforge.net/nipype': None,
                        'http://nipy.sourceforge.net/nipy': None,
-                       'http://h5py.alfven.org/docs': None}
+                       'http://h5py.alfven.org/docs': None,
+                       'http://docs.scipy.org/doc/scipy/reference': None,
+                       'http://docs.scipy.org/doc/numpy/objects.inv': None,
+                       }
