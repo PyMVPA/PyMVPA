@@ -81,7 +81,7 @@ if have_libsvm:
 # Version scheme is: major.minor.patch<suffix>
 
 # define the setup
-setup(name         = 'pymvpa',
+setup(name         = 'pymvpa-snapshot',
       version      = '0.5.0.dev',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
