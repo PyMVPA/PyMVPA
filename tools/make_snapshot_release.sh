@@ -14,6 +14,11 @@ if [ ! "x$(git diff)" = "x" ]; then
 	exit 1
 fi
 
+# clone repository locally so we don't drag any possible trash along
+
+git clone -l . dist/pymvpa-snapshot
+cd dist/pymvpa-snapshot
+
 # create the tarball, and set fresh versions
 make orig-src
 
@@ -29,6 +34,7 @@ if [ ! "$cwd" = "$(pwd)" ]; then
 	exit 1
 fi
 
-# safe to do, since we checked for no diff in the beginning
-# this will only wipe out temporary version changes
-git reset --hard
+cd ..
+
+# Wipe out the distribution clone
+rm -rf dist/pymvpa-snapshot
