@@ -13,13 +13,6 @@ include /usr/share/cdbs/1/class/python-distutils.mk
 DEB_PYTHON_BUILD_ARGS += --with-libsvm
 DEB_PYTHON_INSTALL_ARGS_ALL += --with-libsvm
 
-doc: doc-stamp
-doc-stamp:
-ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
-	$(MAKE) doc
-	touch $@
-endif
-
 clean::
 	$(MAKE) distclean
 
@@ -36,13 +29,6 @@ ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 		rm mvpa/data; \
     done
 endif
-
-build/python-mvpa-doc:: doc
-
-# use jquery from Debian package
-# symlinked by debhelper
-install/python-mvpa-doc::
-	-rm build/html/_static/jquery.js
 
 install/python-mvpa-snapshot-lib::
 	# move libraries into the python-mvpa-snapshot-lib package
@@ -67,12 +53,3 @@ binary-install/python-mvpa-snapshot-lib::
 
 # install directly into package directory (despite multiple packages)
 DEB_DESTDIR = $(CURDIR)/debian/python-mvpa-snapshot
-# immediately useable documentation
-# and exemplar data (they are small excerpts anyways)
-DEB_COMPRESS_EXCLUDE := .py .pdf .html .css .jpg .txt .js .json .rtc .par .bin
-# -doc package contents
-ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
-DEB_INSTALL_DOCS_python-mvpa-doc := build/html build/latex/PyMVPA*.pdf
-DEB_INSTALL_EXAMPLES_python-mvpa-doc := doc/examples/*
-endif
-
