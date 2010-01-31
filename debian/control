@@ -17,6 +17,7 @@ Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Recommends: python-nifti, python-psyco, python-mdp, python-scipy, shogun-python-modular, python-pywt, python-matplotlib, python-reportlab
 Suggests: fslview, fsl, python-nose, python-lxml, python-scikits-openopt, python-rpy, python-mvpa-doc
+Conflicts: python-mvpa
 Description: multivariate pattern analysis with Python
  Python module to ease pattern classification analyses of large
  datasets. It provides high-level abstraction of typical processing
@@ -38,6 +39,7 @@ Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}, python-numpy
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
+Conflicts: python-mvpa-lib
 Description: low-level implementations and bindings for PyMVPA
  This is an add-on package for the PyMVPA framework. It provides a low-level
  implementation of an SMLR classifier and custom Python bindings for the LIBSVM
