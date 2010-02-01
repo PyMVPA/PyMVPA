@@ -113,10 +113,10 @@ Binary packages are available for:
 
 * RPM-based GNU/Linux distributions (:ref:`installation instructions <install_rpm>`)
     RPM packages are provided through the `OpenSUSE Build Service`_. The
-    currently supported distributions include: CentOS 5, Fedora 9-10, Mandriva
-    2007-2008, RedHat Enterprise Linux 5, SUSE Linux Enterprise 10, OpenSUSE
-    10.2 up to 11.0. The build service supports RPM-package repositories (`Suse
-    and Mandriva-related`_ and `Fedora, Redhat and CentOS-related`_) and
+    currently supported distributions include: CentOS 5, Fedora 9-12,
+    RedHat Enterprise Linux 5, OpenSUSE 11.0 up to 11.2 (but also OpenSUSE
+    Factory). The build service supports RPM-package repositories
+    (`SUSE-related`_ and `Fedora, Redhat and CentOS-related`_) and
     `1-click-installations`_.
 
 * MacOS X (:ref:`installation instructions <install_macos>`)
@@ -132,8 +132,8 @@ platform, you need to compile your own. The manual contains :ref:`instructions
 .. _MacPorts: http://www.macports.org
 .. _official Debian package: http://packages.debian.org/python-mvpa
 .. _package repository instructions: http://neuro.debian.net/#how-to-use-this-repository
-.. _Suse and Mandriva-related: http://download.opensuse.org/repositories/home:/hankem/
-.. _Fedora, Redhat and CentOS-related: http://download.opensuse.org/repositories/home://hankem://rh5/
+.. _SUSE-related: http://download.opensuse.org/repositories/home:/hankem:/suse/
+.. _Fedora, Redhat and CentOS-related: http://download.opensuse.org/repositories/home:/hankem:/rh5/
 .. _1-click-installations: http://software.opensuse.org/search?baseproject=ALL&p=1&q=python-mvpa
 .. _OpenSUSE Build Service: https://build.opensuse.org/
 
