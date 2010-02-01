@@ -195,8 +195,6 @@ class SVM(_SVM):
             "libsvr": (shogun.Regression.LibSVR, ('C', 'tube_epsilon',),
                       ('regression',),
                        "LIBSVM's epsilon-SVR"),
-            "krr": (shogun.Regression.KRR, ('tau',), ('regression',),
-                    "Kernel Ridge Regression"),
             }
 
 
@@ -660,7 +658,10 @@ for name, item, params, descr in \
          ('lightsvm', "shogun.Classifier.SVMLight", "('C',), ('binary',)",
           "SVMLight classification http://svmlight.joachims.org/"),
          ('svrlight', "shogun.Regression.SVRLight", "('C','tube_epsilon',), ('regression',)",
-          "SVMLight regression http://svmlight.joachims.org/")]:
+          "SVMLight regression http://svmlight.joachims.org/"),
+         ('krr', "shogun.Regression.KRR", "('tau',), ('regression',)",
+          "Kernel Ridge Regression"),
+         ]:
     if externals.exists('shogun.%s' % name):
         exec "SVM._KNOWN_IMPLEMENTATIONS[\"%s\"] = (%s, %s, \"%s\")" % (name, item, params, descr)
 
