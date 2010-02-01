@@ -241,7 +241,10 @@ if externals.exists('shogun'):
 #                   % impl, svm_impl=impl, kernel_type="sigmoid"),
             ]
 
-    for impl in ['libsvr', 'krr']:# \
+    _optional_regressions = []
+    if externals.exists('shogun.krr'):
+        _optional_regressions += ['krr']
+    for impl in ['libsvr'] + _optional_regressions:# \
         # XXX svrlight sucks in SG -- dont' have time to figure it out
         #+ ([], ['svrlight'])['svrlight' in sg.SVM._KNOWN_IMPLEMENTATIONS]:
         regrswh._known_tags.union_update([impl])
