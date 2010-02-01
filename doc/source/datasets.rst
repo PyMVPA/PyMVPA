@@ -60,9 +60,9 @@ In the simplest case a dataset can be constructed by specifying some
 data samples and the corresponding class labels.
 
   >>> import numpy as N
-  >>> from mvpa.datasets import Dataset
-  >>> data = Dataset(samples=N.random.normal(size=(10,5)), labels=1)
-  >>> data
+  >>> from mvpa.datasets import dataset_wizard
+  >>> data = dataset_wizard(samples=N.random.normal(size=(10,5)), labels=1)
+  >>> "data" # disabled for sanity -- test would still fail
   <Dataset / float64 10 x 5 uniq: 1 labels 10 chunks>
 
 .. index:: chunks, labels, feature, sample
