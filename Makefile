@@ -470,7 +470,7 @@ devel-dsc: check-nodirty check-debian
 	git clone -l . dist/pymvpa-snapshot
 	#RELEASE_CODE=-snapshot
 	RELEASE_VERSION=$(DEV_VERSION) \
-	  $(MAKE) -C dist/pymvpa-snapshot -f ../../Makefile deb-mergedev deb-dev-autochangelog orig-src deb-src
+	  $(MAKE) -C dist/pymvpa-snapshot -f ../../Makefile orig-src deb-mergedev deb-dev-autochangelog deb-src
 	mv dist/*.gz dist/*dsc ..
 	rm -rf dist
 
