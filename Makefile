@@ -441,7 +441,7 @@ deb-dev-autochangelog: check-debian embed-dev-version
 		 --allow-lower-version "PyMVPA development snapshot."
 
 deb-mergedev:
-	git merge --no-commit dist/debian/proper/sid
+	git merge --no-commit origin/dist/debian/proper/sid
 
 orig-src: distclean debian-clean
 	# clean existing dist dir first to have a single source tarball to process
