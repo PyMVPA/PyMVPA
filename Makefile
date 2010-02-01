@@ -459,7 +459,7 @@ devel-src: check-nodirty
 	-rm -rf dist
 	git clone -l . dist/pymvpa-snapshot
 	RELEASE_CODE=_snapshot RELEASE_VERSION=$(DEV_VERSION) \
-	  $(MAKE) -C dist/pymvpa-snapshot -f ../../Makefile embed-dev-version orig-src debsrc
+	  $(MAKE) -C dist/pymvpa-snapshot -f ../../Makefile embed-dev-version orig-src
 	mv dist/*tar.gz ..
 	rm -rf dist
 
@@ -468,8 +468,8 @@ devel-dsc: check-nodirty check-debian
 	git clone -l . dist/pymvpa-snapshot
 	RELEASE_CODE=_snapshot RELEASE_VERSION=$(DEV_VERSION) \
 	  $(MAKE) -C dist/pymvpa-snapshot -f ../../Makefile deb-mergedev deb-dev-autochangelog orig-src deb-src
-	#mv dist/*tar.gz ..
-	#rm -rf dist
+	mv dist/*.gz dist/*dsc ..
+	rm -rf dist
 
 # make Debian source package
 # # DO NOT depend on orig-src here as it would generate a source tarball in a
@@ -572,7 +572,7 @@ upload-codeswarm: codeswarm
 # Trailer
 #
 
-.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual \
+.PHONY: fetch-data deb-src orig-src pylint apidoc pdfdoc htmldoc doc manual \
         all profile website fetch-data-misc upload-website \
         test testsuite testmanual testapiref testexamples testrefactor \
         unittest unittest-debug unittest-optimization unittest-nonlabile \
