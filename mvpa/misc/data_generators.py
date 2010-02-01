@@ -63,11 +63,26 @@ def dumbFeatureBinaryDataset():
 
 
 def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
-                         means=None, nonbogus_features=None, snr=1.0):
-    """Generate a dataset where each label is some normally
-    distributed beastie around specified mean (0 if None).
+                         means=None, nonbogus_features=None, snr=3.0):
+    """Generate a univariate dataset with normal noise and specified means.
 
-    snr is assuming that signal has std 1.0 so we just divide noise by snr
+    :Keywords:
+      perlabel : int
+         Number of samples per each label
+      nlabels : int
+         Number of labels in the dataset
+      nfeatures : int
+         Total number of features (including bogus features which carry
+         no label-related signal)
+      nchunks : int
+         Number of chunks (perlabel should be multiple of nchunks)
+      means : None or list of float or ndarray
+         Specified means for each of features among nfeatures.
+      nonbogus_features : None or list of int
+         Indexes of non-bogus features (1 per label)
+      snr : float
+         Signal-to-noise ration assuming that signal has std 1.0 so we
+         just divide random normal noise by snr
 
     Probably it is a generalization of pureMultivariateSignal where
     means=[ [0,1], [1,0] ]
@@ -303,11 +318,12 @@ def chirpLinear(n_instances, n_features=4, n_nonbogus_features=2,
 
 
 def linear_awgn(size=10, intercept=0.0, slope=0.4, noise_std=0.01, flat=False):
-    """
-    Generate a dataset from a linear function with Added White
-    Gaussian Noise (AWGN).  It can be multidimensional if 'slope' is a
-    vector. If flat is True (in 1 dimesion) generate equally spaces
-    samples instead of random ones. This is useful for the test phase.
+    """Generate a dataset from a linear function with AWGN
+    (Added White Gaussian Noise).
+
+    It can be multidimensional if 'slope' is a vector. If flat is True
+    (in 1 dimesion) generate equally spaces samples instead of random
+    ones. This is useful for the test phase.
     """
     dimensions = 1
     if isinstance(slope, N.ndarray):

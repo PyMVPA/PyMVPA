@@ -1308,6 +1308,12 @@ class ClassifierError(ClassWithCollections):
         return error
 
 
+    def untrain(self):
+        """Untrain the *Error which relies on the classifier
+        """
+        self.clf.untrain()
+
+
     @property
     def clf(self):
         return self.__clf
@@ -1424,7 +1430,7 @@ class TransferError(ClassifierError):
         if states.isEnabled('samples_error'):
             samples_error = []
             for i, p in enumerate(predictions):
-                samples_error.append(self.__errorfx(p, testdataset.labels[i]))
+                samples_error.append(self.__errorfx([p], testdataset.labels[i:i+1]))
 
             states.samples_error = dict(zip(testdataset.origids, samples_error))
 
@@ -1507,6 +1513,6 @@ class ConfusionBasedError(ClassifierError):
     def _call(self, testdata, trainingdata=None):
         """Extract transfer error. Nor testdata, neither trainingdata is used
         """
-        confusion = self.clf.states.getvalue(self.__confusion_state)
+        confusion = self.clf.states[self.__confusion_state].value
         self.confusion = confusion
         return confusion.error

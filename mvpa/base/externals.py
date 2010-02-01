@@ -54,7 +54,8 @@ def __check_scipy():
         and numpy_ver > "1.1.0":
         import warnings
         if not __debug__ or (__debug__ and not 'PY' in debug.active):
-            debug('EXT', "Setting up filters for numpy DeprecationWarnings")
+            if __debug__:
+                debug('EXT', "Setting up filters for numpy DeprecationWarnings")
             filter_lines = [
                 ('NumpyTest will be removed in the next release.*',
                  DeprecationWarning),
@@ -313,6 +314,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
                 'from nifti.clib import detachDataFromImage as __',
           'ctypes':'import ctypes as __',
           'shogun':'import shogun as __',
+          'shogun.krr': 'import shogun.Regression as __; x=__.KRR',
           'shogun.mpd': 'import shogun.Classifier as __; x=__.MPDSVM',
           'shogun.lightsvm': 'import shogun.Classifier as __; x=__.SVMLight',
           'shogun.svrlight': 'from shogun.Regression import SVRLight as __',
@@ -346,6 +348,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'atlas_fsl': "__check_atlas_family('fsl')",
           'running ipython env': "__check_in_ipython()",
           'reportlab': "__check_reportlab()",
+          'nose': "import nose as __",
           }
 
 

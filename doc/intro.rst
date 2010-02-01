@@ -36,8 +36,11 @@ What this Manual is NOT
 
 This manual does not make an attempt to be a comprehensive introduction into
 machine learning *theory*. There is a wealth of high-quality text books about
-this field available. A very good example is: `Pattern Recognition and Machine
-Learning`_ by `Christopher M. Bishop`_.
+this field available.  Two very good examples are: `Pattern Recognition and Machine
+Learning`_ by `Christopher M. Bishop`_, and `The Elements of Statistical Learning:
+Data Mining, Inference, and Prediction`_ by `Trevor Hastie`_, `Robert
+Tibshirani`_, and `Jerome Friedman`_ (PDF was generously made available online_
+free of charge).
 
 There is a growing number of introductory papers about the application of
 machine learning algorithms to (f)MRI data. A very high-level overview about
@@ -66,6 +69,11 @@ or even the unit test battery, also part of the source distribution (in the
 .. _Christopher M. Bishop: http://research.microsoft.com/~cmbishop/
 .. _Pattern Recognition and Machine Learning: http://research.microsoft.com/~cmbishop/PRML
 
+.. _online:
+.. _The Elements of Statistical Learning\: Data Mining, Inference, and Prediction: http://www-stat.stanford.edu/~tibs/ElemStatLearn/
+.. _Trevor Hastie: http://www-stat.stanford.edu/~hastie/
+.. _Robert Tibshirani: http://www-stat.stanford.edu/~tibs/
+.. _Jerome Friedman: http://www-stat.stanford.edu/~jhf/
 
 .. _history:
 

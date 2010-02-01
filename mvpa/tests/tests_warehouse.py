@@ -23,11 +23,16 @@ from mvpa.clfs.base import Classifier
 from mvpa.misc.state import ClassWithCollections
 from mvpa.misc.data_generators import *
 
-__all__ = [ 'datasets', 'sweepargs', 'N', 'unittest' ]
+__all__ = [ 'datasets', 'sweepargs', 'N', 'unittest', '_all_states_enabled' ]
 
 if __debug__:
     from mvpa.base import debug
     __all__.append('debug')
+
+    _all_states_enabled = 'ENFORCE_STATES_ENABLED' in debug.active
+else:
+    _all_states_enabled = False
+
 
 
 def sweepargs(**kwargs):

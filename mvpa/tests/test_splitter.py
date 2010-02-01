@@ -282,6 +282,19 @@ class SplitterTests(unittest.TestCase):
                 splits = [ (train, test) for (train,test) in nfs(self.data) ]
                 self.failUnless(len(splits) == target)
                 chosenchunks = [int(s[1].uniquechunks) for s in splits]
+
+                # Check if "lastsplit" dsattr was assigned appropriately
+                nsplits = len(splits)
+                if nsplits > 0:
+                    # dummy-proof testing of last split
+                    for ds_ in splits[-1]:
+                        self.failUnless(ds_._dsattr['lastsplit'])
+                    # test all now
+                    for isplit,split in enumerate(splits):
+                        for ds_ in split:
+                            ds_._dsattr['lastsplit'] == isplit==nsplits-1
+
+                # Check results of different strategies
                 if strategy == 'first':
                     self.failUnlessEqual(chosenchunks, range(target))
                 elif strategy == 'equidistant':

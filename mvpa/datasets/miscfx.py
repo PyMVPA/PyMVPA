@@ -20,6 +20,7 @@ from operator import isSequenceType
 import numpy as N
 
 from mvpa.datasets.base import Dataset, datasetmethod
+from mvpa.base.dochelpers import table2string
 from mvpa.misc.support import getBreakPoints
 
 from mvpa.base import externals, warning
@@ -52,9 +53,11 @@ def zscore(dataset, mean=None, std=None,
     """
 
     if __debug__ and perchunk \
-      and N.array(dataset.samplesperchunk.values()).min() < 2:
-        warning("Z-scoring chunk-wise and one chunk with less than two " \
-                "samples will set features in these samples to zero.")
+      and N.array(dataset.samplesperchunk.values()).min() <= 2:
+        warning("Z-scoring chunk-wise and one chunk with less than three "
+                "samples will set features in these samples to either zero "
+                "(with 1 sample in a chunk) "
+                "or -1/+1 (with 2 samples in a chunk).")
 
     # cast to floating point datatype if necessary
     if str(dataset.samples.dtype).startswith('uint') \
@@ -253,3 +256,125 @@ def getSamplesPerChunkLabel(dataset):
                                                 dataset.chunks == c))
 
     return count
+
+
+class SequenceStats(dict):
+    """Simple helper to provide representation of sequence statistics
+
+    Matlab analog:
+    http://cfn.upenn.edu/aguirre/code/matlablib/mseq/mtest.m
+
+    WARNING: Experimental -- API might change without warning!
+    Current implementation is ugly!
+    """
+
+    def __init__(self, seq, order=2):#, chunks=None, perchunk=False):
+        """Initialize SequenceStats
+
+        :Parameters:
+          seq : list or ndarray
+            Actual sequence of labels
+
+        :Keywords:
+          order : int
+            Maximal order of counter-balancing check. For perfect
+            counterbalancing all matrices should be identical
+        """
+        """
+          chunks : None or list or ndarray
+            Chunks to use if `perchunk`=True
+          perchunk .... TODO
+          """
+        dict.__init__(self)
+        self.order = order
+        self._seq = seq
+        self.stats = None
+        self._str_stats = None
+        self.__compute()
+
+
+    def __repr__(self):
+        """Representation of SequenceStats
+        """
+        return "SequenceStats(%s, order=%d)" % (repr(self._seq), self.order)
+
+    def __str__(self):
+        return self._str_stats
+
+    def __compute(self):
+        """Compute stats and string representation
+        """
+        # Do actual computation
+        order = self.order
+        seq = list(self._seq)               # assure list
+        nsamples = len(seq)                 # # of samples/labels
+        ulabels = sorted(list(set(seq)))    # unique labels
+        nlabels = len(ulabels)              # # of labels
+
+        # mapping for labels
+        labels_map = dict([(l, i) for i,l in enumerate(ulabels)])
+
+        # map sequence first
+        seqm = [labels_map[i] for i in seq]
+        nperlabel = N.bincount(seqm)
+
+        res = dict(ulabels=ulabels)
+        # Estimate counter-balance
+        cbcounts = N.zeros((order, nlabels, nlabels), dtype=int)
+        for cb in xrange(order):
+            for i,j in zip(seqm[:-(cb+1)], seqm[cb+1:]):
+                cbcounts[cb, i, j] += 1
+        res['cbcounts'] = cbcounts
+
+        """
+        Lets compute relative counter-balancing
+        Ideally, nperlabel[i]/nlabels should precede each label
+        """
+        # Autocorrelation
+        corr = []
+        # for all possible shifts:
+        for shift in xrange(1, nsamples):
+            shifted = seqm[shift:] + seqm[:shift]
+            # ??? User pearsonsr with p may be?
+            corr += [N.corrcoef(seqm, shifted)[0, 1]]
+            # ??? report high (anti)correlations?
+        res['corrcoef'] = corr = N.array(corr)
+        res['sumabscorr'] = sumabscorr = N.sum(N.abs(corr))
+        self.update(res)
+
+        # Assign textual summary
+        # XXX move into a helper function and do on demand
+        t = [ [""] * (1 + self.order*(nlabels+1)) for i in xrange(nlabels+1) ]
+        t[0][0] = "Labels/Order"
+        for i, l  in enumerate(ulabels):
+            t[i+1][0] = '%s:' % l
+        for cb in xrange(order):
+            t[0][1+cb*(nlabels+1)] = "O%d" % (cb+1)
+            for i  in xrange(nlabels+1):
+                t[i][(cb+1)*(nlabels+1)] = " | "
+            m = cbcounts[cb]
+            # ??? there should be better way to get indexes
+            ind = N.where(~N.isnan(m))
+            for i, j in zip(*ind):
+                t[1+i][1+cb*(nlabels+1)+j] = '%d' % m[i, j]
+
+        sout = "Original sequence had %d entries from set %s\n" \
+               % (len(seq), ulabels) + \
+               "Counter-balance table for orders up to %d:\n" % order \
+               + table2string(t)
+        sout += "Correlations: min=%.2g max=%.2g mean=%.2g sum(abs)=%.2g" \
+                % (min(corr), max(corr), N.mean(corr), sumabscorr)
+        self._str_stats = sout
+
+
+    def plot(self):
+        """Plot correlation coefficients
+        """
+        externals.exists('pylab', raiseException=True)
+        import pylab as P
+        P.plot(self['corrcoef'])
+        P.title('Auto-correlation of the sequence')
+        P.xlabel('Offset')
+        P.ylabel('Correlation Coefficient')
+        P.show()
+
