@@ -232,7 +232,12 @@ class SVM(_SVM):
         #     but then krr gets confused, and svrlight needs it to provide
         #     meaningful results even without 'retraining'
         if self._svm_impl in ['svrlight', 'lightsvm']:
-            kernel.set_precompute_matrix(True, True)
+            try:
+                kernel.set_precompute_matrix(True, True)
+            except Exception, e:
+                # N/A in shogun 0.9.1... TODO: RF
+                debug('SG_', "Failed call to set_precompute_matrix for %s: %s"
+                             % (self, e))
 
 
     def _train(self, dataset):
