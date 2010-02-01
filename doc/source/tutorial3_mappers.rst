@@ -163,7 +163,7 @@ load fMRI data from timeseries images, we know how to add and access
 attributes in a dataset, we know how to slice datasets, and we know that
 we can manipulate datasets with mappers.
 
-Our goal now is to combine all these little pieces into the code that produces
+Now our goal is to combine all these little pieces into the code that produces
 the dataset we already used at beginning. That is:
 
   A *pattern of activation* for each stimulus category in each half of the
@@ -248,13 +248,15 @@ have just loaded is already motion corrected. For every experiment that is
 longer than a few minutes, as in this case, temporal trend removal, or
 :term:`detrending` is crucial.
 
+Detrending
+----------
 PyMVPA provides functionality to remove polynomial trends from the data,
 meaning that polynomials are fitted to the timeseries and only what is not
-explained by them remains in the dataset. In the case of linear
-detrending, this means fitting a straight line to the timeseries via linear
-regression and taking the residuals as the new feature values. Detrending
-can be seen as a type of data transformation, hence it is implemented as a
-mapper in PyMVPA.
+explained by them remains in the dataset. In the case of linear detrending,
+this means fitting a straight line to the timeseries of each voxel via linear
+regression and taking the residuals as the new feature values. Detrending can
+be seen as a type of data transformation, hence in PyMVPA it is implemented as
+a mapper.
 
   >>> detrender = PolyDetrendMapper(polyord=1, chunks='chunks')
 
@@ -279,18 +281,21 @@ return it. Let's try:
 ``detrended_ds`` is easily identifiable as a dataset that has been
 flattened, sliced, and linearily detrended.
 
+
+Normalization
+-------------
+
 While this will hopefully have solved the problem of temporal drifts in the
-data, we still have inhomogeneous voxel intensities. For this problem there
-are also many approaches to fix it. For this tutorial we are again
-following a simple approach, and perform a feature-wise, chunk-wise
-Z-scoring of the data. This has many advantages. First it is going to scale
-all featurus into approximately the same range, and also remove their mean.
-The latter is quite important, since some classifiers cannot deal with not
-demeaned data. However, we are not going to perform a very simple Z-scoring
-removing the global mean, but use the *rest* condition samples of the data
-to estimate mean and standard deviation. Scaling features using these
-parameters yields a score in how far a voxel intensity different from
-*rest*, for a particular condition, and timepoint.
+data, we still have inhomogeneous voxel intensities, but there are many
+possible approaches to fix it. For this tutorial we are again following a
+simple one, and perform a feature-wise, chunk-wise Z-scoring of the data.  This
+has many advantages. First it is going to scale all features into approximately
+the same range, and also remove their mean.  The latter is quite important,
+since some classifiers cannot deal with not demeaned data. However, we are not
+going to perform a very simple Z-scoring removing the global mean, but use the
+*rest* condition samples of the data to estimate mean and standard deviation.
+Scaling features using these parameters yields a score corresponding to the
+per-timepoint voxel intensity difference from the *rest* average.
 
 This type of data :term:`normalization` is, you guessed it, also
 implemented as a mapper:
@@ -301,7 +306,7 @@ This configures to perform a chunk-wise (the default) Z-scoring, while
 estimating mean and standard deviation from samples labels with 'rest' in
 the respective chunk of data.
 
-Remember, all mappers return new dataset that only have copies of what has
+Remember, all mappers return new datasets that only have copies of what has
 been modified. However, both detrending and Z-scoring have or will modify
 the samples themselves. That means that the memory consumption will triple!
 We will have the original data, the detrended data, and the Z-scored data,
@@ -309,7 +314,7 @@ but typically we are only interested in the final processing stage. The
 reduce the memory footprint, both mappers have siblings that perform the
 same processing, but without copying the data. For
 `~mvpa.mappers.detrend.PolyDetrendMapper` this is
-`~mvpa.mapper.detrend.poly_detrend()`, and for
+`~mvpa.mappers.detrend.poly_detrend()`, and for
 `~mvpa.mappers.zscore.ZScoreMapper` this is
 `~mvpa.mappers.zscore.zscore()`. The following call will do the same as the
 mapper we have created above, but using less memory:
@@ -324,31 +329,57 @@ mapper we have created above, but using less memory:
    this example, explore the dataset we have just created and look at the
    effect of detrending and Z-scoring.
 
+The resulting dataset is now both detrended and normalized. The information
+is nicely presented in the mapper. From this point on we have no use for
+the samples of the *rest* category anymore, hence we remove them from the
+dataset:
 
-.. exercise::
+  >>> ds = ds[ds.sa.labels != 'rest']
+  >>> print ds.shape
+  (864, 577)
 
-   MOVE THIS INTO CLASSIFIER PART. Try doing the Z-Scoring beforce
-   computing the mean samples per category. What happens to the
-   generalization performance of the classifier? ANSWER: It becomes 100%!
 
-::
+Computing *Patterns Of Activiation*
+-----------------------------------
 
-    # mark the odd and even runs
-    rnames = {0: 'even', 1: 'odd'}
-    ds.sa['runtype'] = [rnames[c % 2] for c in ds.sa.chunks]
+The last preprocessing step, we need to replicate, is computing the
+actual *patterns of activation*. In the original study Haxby and colleagues
+performed a GLM-analysis of odd vs. even runs of the data respectively and
+used the corresponding contrast statistics (stimulus category vs. rest) as
+classifier input. In this tutorial, we will use a much simpler shortcut and
+just compute *mean* samples per condition for both odd and even
+independently.
 
-    # compute the mean sample per condition and odd vs. even runs
-    # aka "constructive interference"
-    ds = ds.get_mapped(mean_group_sample(['labels', 'runtype']))
+To achieve this, we first add a new sample attribute to assign a
+corresponding label to each sample in the dataset, indication to which of
+both run-types is belongs to:
 
-    # zscore dataset relative to baseline ('rest') mean
-    zscore(ds, param_est=('labels', ['rest']))
+  >>> rnames = {0: 'even', 1: 'odd'}
+  >>> ds.sa['runtype'] = [rnames[c % 2] for c in ds.sa.chunks]
 
-    # exclude the rest condition from the dataset
-    ds = ds[ds.sa.labels != 'rest']
+The rest is trivial. For cases like this -- applying a function (i.e. mean)
+to a set of groups of samples (all combinations of stimulus category and
+run-type) -- PyMVPA has `~mvpa.mappers.fx.FxMapper`. it comes with a number
+of convenience functions. The one we need here is
+`~mvpa.mappers.fx.mean_group_sample()`. It takes a list of sample attributes,
+determines all possible combinations of its unique values, selects dataset
+samples corresponding to these combinations, and averages them. Finally,
+since this is also a mapper, a new dataset with mean samples is returned:
 
-    return ds
+  >>> averager = mean_group_sample(['labels', 'runtype'])
+  >>> type(averager)
+  <class 'mvpa.mappers.fx.FxMapper'>
+  >>> ds = ds.get_mapped(averager)
+  >>> ds.shape
+  (16, 577)
+  >>> print ds.sa.labels
+  ['bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe'
+   'bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe']
 
+Here we go! We now have a fully-preprocessed dataset: detrended,
+normalized, with one sample per stimulus condition that is an average
+for odd and even runs respectively. Now it is time for some serious
+classification -- in :ref:`part four of the tutorial <chap_tutorial4>`.
 
 .. only:: html
 
