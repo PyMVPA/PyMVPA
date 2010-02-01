@@ -74,7 +74,6 @@ debian-build:
 
 build: build-stamp
 build-stamp: 3rd
-	@echo "I: Building PyMVPA and symlinking dynamic libraries inplace"
 	python setup.py config --noisy --with-libsvm
 	python setup.py build --with-libsvm
 # to overcome the issue of not-installed svmc.so
