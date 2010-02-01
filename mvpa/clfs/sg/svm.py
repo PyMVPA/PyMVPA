@@ -236,8 +236,9 @@ class SVM(_SVM):
                 kernel.set_precompute_matrix(True, True)
             except Exception, e:
                 # N/A in shogun 0.9.1... TODO: RF
-                debug('SG_', "Failed call to set_precompute_matrix for %s: %s"
-                             % (self, e))
+                if __debug__:
+                    debug('SG_', "Failed call to set_precompute_matrix for %s: %s"
+                          % (self, e))
 
 
     def _train(self, dataset):
