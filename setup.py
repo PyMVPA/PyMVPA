@@ -82,7 +82,7 @@ if have_libsvm:
 
 # define the setup
 setup(name         = 'pymvpa',
-      version      = '0.4.3',
+      version      = '0.4.4',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
