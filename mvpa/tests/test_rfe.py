@@ -24,8 +24,9 @@ from mvpa.featsel.helpers import \
      FixedNElementTailSelector, BestDetector, RangeElementSelector
 
 from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier
-from mvpa.clfs.transerror import TransferError
-from mvpa.misc.transformers import Absolute
+from mvpa.clfs.transerror import TransferError, ConfusionBasedError
+from mvpa.clfs.stats import MCNullDist
+from mvpa.misc.transformers import Absolute, FirstAxisMean
 
 from mvpa.misc.state import UnknownStateError
 
@@ -358,7 +359,7 @@ class RFETests(unittest.TestCase):
         percent = 80
         dataset = datasets['uni2small']
         rfesvm_split = LinearCSVMC()
-        FeatureSelection = \
+        fs = \
             RFE(sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
                 transfer_error=TransferError(rfesvm_split),
                 feature_selector=FractionTailSelector(
@@ -368,7 +369,7 @@ class RFETests(unittest.TestCase):
         clf = FeatureSelectionClassifier(
             clf = LinearCSVMC(),
             # on features selected via RFE
-            feature_selection = FeatureSelection)
+            feature_selection = fs)
              # update sensitivity at each step (since we're not using the
              # same CLF as sensitivity analyzer)
         clf.states.enable('feature_ids')
@@ -381,13 +382,43 @@ class RFETests(unittest.TestCase):
         #cv = SplitClassifier(clf)
         try:
             error = cv(dataset)
-            self.failUnless(error < 0.2)
-        except:
+        except Exception, e:
             self.fail('CrossValidation cannot handle classifier with RFE '
-                      'feature selection')
+                      'feature selection. Got exception: %s' % e)
+        self.failUnless(error < 0.2)
 
 
+    def __testMatthiasQuestion(self):
+        rfe_clf = LinearCSVMC(C=1)
 
+        rfesvm_split = SplitClassifier(rfe_clf)
+        clf = \
+            FeatureSelectionClassifier(
+            clf = LinearCSVMC(C=1),
+            feature_selection = RFE(
+                sensitivity_analyzer = rfesvm_split.getSensitivityAnalyzer(
+                    combiner=FirstAxisMean,
+                    transformer=N.abs),
+                transfer_error=ConfusionBasedError(
+                    rfesvm_split,
+                    confusion_state="confusion"),
+                stopping_criterion=FixedErrorThresholdStopCrit(0.20),
+                feature_selector=FractionTailSelector(
+                    0.2, mode='discard', tail='lower'),
+                update_sensitivity=True))
+
+        splitter = NFoldSplitter(cvtype=1)
+        no_permutations = 1000
+
+        cv = CrossValidatedTransferError(
+            TransferError(clf),
+            splitter,
+            null_dist=MCNullDist(permutations=no_permutations,
+                                 tail='left'),
+            enable_states=['confusion'])
+        error = cv(datasets['uni2small'])
+        self.failUnless(error < 0.4)
+        self.failUnless(cv.states.null_prob < 0.05)
 
 def suite():
     return unittest.makeSuite(RFETests)

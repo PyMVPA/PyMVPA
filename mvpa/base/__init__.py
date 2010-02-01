@@ -226,6 +226,7 @@ if __debug__:
                    "Checking in checking if clf was trained on given dataset")
     debug.register('CHECK_RETRAIN', "Checking in retraining/retesting")
     debug.register('CHECK_STABILITY', "Checking for numerical stability")
+    debug.register('ENFORCE_STATES_ENABLED', "Forcing all states to be enabled")
 
     debug.register('MAP',   "*Mapper")
     debug.register('MAP_',  "*Mapper (verbose)")
@@ -254,6 +255,7 @@ if __debug__:
     debug.register('STAT',   "Statistics estimates")
     debug.register('STAT_',  "Statistics estimates (verbose)")
     debug.register('STAT__', "Statistics estimates (very verbose)")
+    debug.register('STATMC', "Progress in Monte-Carlo estimation")
 
     debug.register('FS',     "FeatureSelections")
     debug.register('FS_',    "FeatureSelections (verbose)")
@@ -274,6 +276,8 @@ if __debug__:
 
     debug.register('GLMNET',    "GLMNET")
     debug.register('GLMNET_',   "GLMNET (verbose)")
+
+    debug.register('GNB',     "GNB - Gaussian Naive Bayes")
 
     debug.register('GPR',     "GPR")
     debug.register('GPR_WEIGHTS', "Track progress of GPRWeights computation")

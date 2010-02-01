@@ -116,7 +116,7 @@ class _SVM(Classifier):
             String must be a valid key for cls._KERNELS
 
         TODO: handling of parameters might migrate to be generic for
-        all classifiers. SVMs are choosen to be testbase for that
+        all classifiers. SVMs are chosen to be testbase for that
         functionality to see how well it would fit.
         """
 
@@ -190,7 +190,7 @@ class _SVM(Classifier):
                     raise ValueError, "Unknown parameter %s" % paramname + \
                           ". Known SVM params are: %s" % self._SVM_PARAMS.keys()
                 param = deepcopy(self._SVM_PARAMS[paramname])
-                param.name = paramname
+                param._setName(paramname)
                 if paramname in _args:
                     param.value = _args[paramname]
                     # XXX might want to set default to it -- not just value
@@ -247,7 +247,11 @@ class _SVM(Classifier):
 
         if self._kernel_type_literal == 'linear':
             datasetnorm = N.mean(N.sqrt(N.sum(data*data, axis=1)))
-            value = 1.0/(datasetnorm*datasetnorm)
+            if datasetnorm == 0:
+                warning("Obtained degenerate data with zero norm for training "
+                        "of %s.  Scaling of C cannot be done." % self)
+                return 1.0
+            value = 1.0/(datasetnorm**2)
             if __debug__:
                 debug("SVM", "Default C computed to be %f" % value)
         else:
@@ -359,5 +363,5 @@ sensitivity.
 
 # populate names in parameters
 for k,v in _SVM._SVM_PARAMS.iteritems():
-    v.name = k
+    v._setName(k)
 

@@ -231,6 +231,11 @@ unittest-nonlabile: build
 	@echo "I: Running only non labile unittests. None of them should ever fail."
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no python mvpa/tests/main.py
 
+# test if no errors would result if we force enabling of all states
+unittest-states: build
+	@echo "I: Running unittests with all states enabled."
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=ENFORCE_STATES_ENABLED python mvpa/tests/main.py
+
 # Run unittests with optimization on -- helps to catch unconditional
 # debug calls
 unittest-optimization: build
@@ -252,7 +257,7 @@ unittest-debug: build
 #  Run with 'make -k' if you like to sweep through all of them, so
 #  failure in one of them does not stop the full sweep
 unittests: unittest-nonlabile unittest unittest-badexternals \
-           unittest-optimization unittest-debug
+           unittest-optimization unittest-states unittest-debug
 
 te-%: build
 	@echo -n "I: Testing example $*: "
@@ -264,7 +269,8 @@ te-%: build
 testexamples: te-svdclf te-smlr te-searchlight_2d te-sensanas te-pylab_2d \
               te-curvefitting te-projections te-kerneldemo te-clfs_examples \
               te-erp_plot te-match_distribution te-permutation_test \
-              te-searchlight_minimal te-smlr te-start_easy te-topo_plot
+              te-searchlight_minimal te-smlr te-start_easy te-topo_plot \
+              te-gpr te-gpr_model_selection0
 
 tm-%: build
 	PYTHONPATH=.:$(PYTHONPATH) nosetests --with-doctest --doctest-extension .rst \
@@ -279,16 +285,20 @@ testmanual: build
 # known to the mvpa.suite()
 testsuite:
 	@echo "I: Running full testsuite"
-	@git grep -h '^\W*from mvpa.*import' mvpa/tests | \
+	@tfile=`mktemp -u testsuiteXXXXXXX`; \
+	 git grep -h '^\W*from mvpa.*import' mvpa/tests | \
+	 grep -v '^\W*#' | \
 	 sed -e 's/^.*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
 	 sort | uniq | \
 	 grep -v -e 'mvpa\.base\.dochelpers' \
 			 -e 'mvpa\.\(tests\|support\)' \
-			 -e 'mvpa\.misc\.args' | \
-	while read i; do \
+			 -e 'mvpa\.misc\.args' \
+			 -e 'mvpa\.clfs\.\(libsvmc\|sg\)' \
+	| while read i; do \
 	 grep -q "^ *$$i" mvpa/suite.py || \
-	 { echo "E: '$$i' is missing from mvpa.suite()"; exit 1; }; \
-	 done
+	 { echo "E: '$$i' is missing from mvpa.suite()"; touch "$$tfile"; }; \
+	 done; \
+	 [ -f "$$tfile" ] && { rm -f "$$tfile"; exit 1; } || :
 
 # Check if links to api/ within documentation are broken.
 testapiref: apidoc
@@ -424,12 +434,12 @@ $(SWARM_DIR)/pymvpa-codeswarm.flv: $(SWARM_DIR)/frames $(AUDIO_TRACK)
      ffmpeg -r $$(echo "scale=2; $$(ls -1 frames/ |wc -l) / 154" | bc) -f image2 \
       -i frames/code_swarm-%05d.png -r 15 -b 250k \
       -i ../../$(AUDIO_TRACK) -ar 22050 -ab 128k -acodec libmp3lame \
-      -ac 2 pymvpa-codeswarm.flv
+      -y -ac 2 pymvpa-codeswarm.flv
 
-$(SWARM_DIR)/git.log:
+$(SWARM_DIR)/git.log: Makefile
 	@echo "I: Dumping git log in codeswarm preferred format"
 	@mkdir -p $(SWARM_DIR)
-	@git log --name-status \
+	@git log --name-status --branches \
      --pretty=format:'%n------------------------------------------------------------------------%nr%h | %ae | %ai (%aD) | x lines%nChanged paths:' | \
      sed -e 's,[a-z]*@onerussian.com,Yarik,g' \
          -e 's,\(michael\.*hanke@\(gmail.com\|mvpa1.dartmouth.edu\)\|neukom-data@neukom-data-desktop\.(none)\),Michael,g' \
@@ -437,19 +447,20 @@ $(SWARM_DIR)/git.log:
          -e 's,emanuele@relativita.com,Emanuele,g' \
          -e 's,jhughes@austin.cs.dartmouth.edu,James,g' \
          -e 's,valentin.haenel@gmx.de,Valentin,g' \
+         -e 's,gorlins@mit.edu,Scott,g' \
          -e 's,Ingo.Fruend@gmail.com,Ingo,g' >| $@
 
-$(SWARM_DIR)/git.xml: $(SWARMTOOL_DIR) $(SWARM_DIR)/git.log
+$(SWARM_DIR)/git.xml: $(SWARMTOOL_DIR)/run.sh $(SWARM_DIR)/git.log
 	@python $(SWARMTOOL_DIR)/convert_logs/convert_logs.py \
 	 -g $(SWARM_DIR)/git.log -o $(SWARM_DIR)/git.xml
 
-$(SWARMTOOL_DIR):
+$(SWARMTOOL_DIR)/run.sh:
 	@echo "I: Checking out codeswarm tool source code"
 	@svn checkout http://codeswarm.googlecode.com/svn/trunk/ $(SWARMTOOL_DIR)
 
 
 upload-codeswarm: codeswarm
-	rsync -rzhvp --delete --chmod=Dg+s,g+rw $(SWARM_DIR)/*.flv $(WWW_UPLOAD_URI)/files/
+	rsync -rzhvp --delete --chmod=Dg+s,g+rw,o+r $(SWARM_DIR)/*.flv $(WWW_UPLOAD_URI)/files/
 
 
 #

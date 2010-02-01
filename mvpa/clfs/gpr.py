@@ -436,7 +436,7 @@ class GPR(Classifier):
         other kernel's hyperparameters values follow in the exact
         order the kernel expect them to be.
         """
-        if hyperparameter[0] < GPR.sigma_noise.min:
+        if hyperparameter[0] < self.params['sigma_noise'].min:
             raise InvalidHyperparameterError()
         self.sigma_noise = hyperparameter[0]
         if hyperparameter.size > 1:
@@ -516,6 +516,8 @@ if externals.exists('openopt'):
             clf.states.enable("log_marginal_likelihood")
             ms = ModelSelector(clf, dataset)
             # Note that some kernels does not have gradient yet!
+            # XXX Make it initialize to clf's current hyperparameter values
+            #     or may be add ability to specify starting points in the constructor
             sigma_noise_initial = 1.0e-5
             sigma_f_initial = 1.0
             length_scale_initial = N.ones(dataset.nfeatures)*1.0e4

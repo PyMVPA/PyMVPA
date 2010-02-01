@@ -27,7 +27,7 @@ from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.args import group_kwargs
 from mvpa.misc.transformers import FirstAxisMean, SecondAxisSumOfAbs
 from mvpa.base.dochelpers import enhancedDocString
-from mvpa.base import externals
+from mvpa.base import externals, warning
 from mvpa.clfs.stats import autoNullDist
 
 if __debug__:
@@ -41,7 +41,7 @@ class DatasetMeasure(ClassWithCollections):
     after it has been computed. Transformation are done by processing the
     measure with a functor that is specified via the `transformer` keyword
     argument of the constructor. Upon request, the raw measure (before
-    transformations are applied) is stored in the `raw_result` state variable.
+    transformations are applied) is stored in the `raw_results` state variable.
 
     Additionally all dataset measures support the estimation of the
     probabilit(y,ies) of a measure under some distribution. Typically this will
@@ -57,7 +57,7 @@ class DatasetMeasure(ClassWithCollections):
       multiple datasets by passing them to the __call__() method successively.
     """
 
-    raw_result = StateVariable(enabled=False,
+    raw_results = StateVariable(enabled=False,
         doc="Computed results before applying any " +
             "transformation algorithm")
     null_prob = StateVariable(enabled=True)
@@ -121,7 +121,11 @@ class DatasetMeasure(ClassWithCollections):
     def _postcall(self, dataset, result):
         """Some postprocessing on the result
         """
+        # Assure that we have some iterable (could be a scalar if it
+        # was just a single value)
+        result = N.atleast_1d(result)
         self.raw_result = result
+        self.states.raw_results = result
         if not self.__transformer is None:
             if __debug__:
                 debug("SA_", "Applying transformer %s" % self.__transformer)
@@ -145,7 +149,7 @@ class DatasetMeasure(ClassWithCollections):
                 # either it belong to the right tail
                 null_prob, null_right_tail = \
                            self.__null_dist.p(result, return_tails=True)
-                self.null_prob = null_prob
+                self.states.null_prob = null_prob
 
                 externals.exists('scipy', raiseException=True)
                 from scipy.stats import norm
@@ -171,7 +175,7 @@ class DatasetMeasure(ClassWithCollections):
                 clip = 1e-16
                 null_t = norm.ppf(N.clip(acdf, clip, 1.0 - clip))
                 null_t[~null_right_tail] *= -1.0 # revert sign for negatives
-                self.null_t = null_t                 # store
+                self.states.null_t = null_t                 # store
             else:
                 # get probability of result under NULL hypothesis if available
                 # and don't request tail information
@@ -284,7 +288,14 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
              here does not lead to an overall more complicated situation,
              without any real gain -- after all this one works ;-)
         """
+        # !!! This is not stupid -- it is intended -- some times we might get
+        #     scalars as input.
+        result = N.atleast_1d(result)
         result_sq = result.squeeze()
+        # Assure that we have some iterable (could be a scalar if it
+        # was just a single value in 1D array)
+        result_sq = N.atleast_1d(result_sq)
+
         if len(result_sq.shape)>1:
             n_base = result.shape[1]
             """Number of base sensitivities"""
@@ -293,21 +304,25 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
                 if not self.states.isKnown('biases'):
                     biases = None
                 else:
-                    biases = self.biases
-                    if len(self.biases) != n_base:
-                        raise ValueError, \
-                          "Number of biases %d is " % len(self.biases) \
-                          + "different from number of base sensitivities" \
-                          + "%d" % n_base
+                    biases = self.states.biases
+                    if len(self.states.biases) != n_base:
+                        warning("Number of biases %d differs from number "
+                                "of base sensitivities %d which could happen "
+                                "when measure is collided across labels."
+                                % (len(self.states.biases), n_base))
                 for i in xrange(n_base):
                     if not biases is None:
-                        bias = biases[i]
+                        if n_base > 1 and len(biases) == 1:
+                            # The same bias for all bases
+                            bias = biases[0]
+                        else:
+                            bias = biases[i]
                     else:
                         bias = None
                     b_sensitivities = StaticDatasetMeasure(
                         measure = result[:,i],
                         bias = bias)
-                self.base_sensitivities = b_sensitivities
+                self.states.base_sensitivities = b_sensitivities
 
             # After we stored each sensitivity separately,
             # we can apply combiner
@@ -499,7 +514,7 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
             sensitivity = analyzer(dataset)
             sensitivities.append(sensitivity)
 
-        self.sensitivities = sensitivities
+        self.states.sensitivities = sensitivities
         if __debug__:
             debug("SA",
                   "Returning combined using %s sensitivity across %d items" %
@@ -596,7 +611,7 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
         insplit_index = self.__insplit_index
 
         sensitivities = []
-        self.splits = splits = []
+        self.states.splits = splits = []
         store_splits = self.states.isEnabled("splits")
 
         for ind,split in enumerate(self.__splitter(dataset)):
@@ -608,7 +623,7 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
             sensitivities.append(sensitivity)
             if store_splits: splits.append(split)
 
-        self.sensitivities = sensitivities
+        self.states.sensitivities = sensitivities
         if __debug__:
             debug("SA",
                   "Returning sensitivities combined using %s across %d items "
@@ -760,7 +775,7 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
             analyzer._force_training = False
 
         result = analyzer._call(dataset)
-        self.clf_sensitivities = result
+        self.states.clf_sensitivities = result
 
         return result
 

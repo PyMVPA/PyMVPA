@@ -40,7 +40,7 @@ class NoisePerturbationSensitivity(FeaturewiseDatasetMeasure):
                  noise=N.random.normal):
         """Cheap initialization.
 
-        Parameters
+        :Parameters:
           datameasure: `Datameasure` that is used to quantify the effect of
                          noise perturbation.
           noise: Functor to generate noise. The noise generator has to return

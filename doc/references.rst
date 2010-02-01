@@ -190,6 +190,12 @@ experiments.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2005.01.048
 
 
+.. _MHH10:
+
+**Manelis, A., Hanson, C. & Hanson, S. J.** (2010). Implicit memory for object locations depends on reactivation of encoding-related brain regions. *Human Brain Mapping*.
+  Keywords: :keyword:`PyMVPA`, :keyword:`implicit memory`, :keyword:`MRI`
+
+
 .. _MHN+04:
 
 **Mitchell, T., Hutchinson, R., Niculescu, R. S., Pereira, F., Wang, X., Just, M. & Newman, S.** (2004). Learning to Decode Cognitive States from Brain Images. *Machine Learning*, *57*, 145–175.

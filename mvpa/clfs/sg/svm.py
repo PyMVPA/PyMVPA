@@ -50,6 +50,7 @@ import operator
 from mvpa.misc.param import Parameter
 from mvpa.base import warning
 
+from mvpa.clfs.base import FailedToTrainError
 from mvpa.clfs.meta import MulticlassClassifier
 from mvpa.clfs._svmbase import _SVM
 from mvpa.misc.state import StateVariable
@@ -194,8 +195,6 @@ class SVM(_SVM):
             "libsvr": (shogun.Regression.LibSVR, ('C', 'tube_epsilon',),
                       ('regression',),
                        "LIBSVM's epsilon-SVR"),
-            "krr": (shogun.Regression.KRR, ('tau',), ('regression',),
-                    "Kernel Ridge Regression"),
             }
 
 
@@ -233,7 +232,13 @@ class SVM(_SVM):
         #     but then krr gets confused, and svrlight needs it to provide
         #     meaningful results even without 'retraining'
         if self._svm_impl in ['svrlight', 'lightsvm']:
-            kernel.set_precompute_matrix(True, True)
+            try:
+                kernel.set_precompute_matrix(True, True)
+            except Exception, e:
+                # N/A in shogun 0.9.1... TODO: RF
+                if __debug__:
+                    debug('SG_', "Failed call to set_precompute_matrix for %s: %s"
+                          % (self, e))
 
 
     def _train(self, dataset):
@@ -270,7 +275,8 @@ class SVM(_SVM):
                 # assure that we have -1/+1
                 _labels_dict = {ul[0]:-1.0, ul[1]:+1.0}
             elif len(ul) < 2:
-                raise ValueError, "we do not have 1-class SVM brought into SG yet"
+                raise FailedToTrainError, \
+                      "We do not have 1-class SVM brought into SG yet"
             else:
                 # can't use plain enumerate since we need them swapped
                 _labels_dict = dict([ (ul[i], i) for i in range(len(ul))])
@@ -658,7 +664,10 @@ for name, item, params, descr in \
          ('lightsvm', "shogun.Classifier.SVMLight", "('C',), ('binary',)",
           "SVMLight classification http://svmlight.joachims.org/"),
          ('svrlight', "shogun.Regression.SVRLight", "('C','tube_epsilon',), ('regression',)",
-          "SVMLight regression http://svmlight.joachims.org/")]:
+          "SVMLight regression http://svmlight.joachims.org/"),
+         ('krr', "shogun.Regression.KRR", "('tau',), ('regression',)",
+          "Kernel Ridge Regression"),
+         ]:
     if externals.exists('shogun.%s' % name):
         exec "SVM._KNOWN_IMPLEMENTATIONS[\"%s\"] = (%s, %s, \"%s\")" % (name, item, params, descr)
 

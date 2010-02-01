@@ -19,6 +19,7 @@ from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
      MulticlassClassifier
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN
+from mvpa.clfs.gnb import GNB
 from mvpa.clfs.kernel import KernelLinear, KernelSquaredExponential
 
 # Helpers
@@ -35,7 +36,8 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'smlr', 'does_feature_selection', 'has_sensitivity',
         'multiclass', 'non-linear', 'kernel-based', 'lars',
         'regression', 'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
-        'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet']
+        'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
+        'gnb']
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
@@ -239,7 +241,10 @@ if externals.exists('shogun'):
 #                   % impl, svm_impl=impl, kernel_type="sigmoid"),
             ]
 
-    for impl in ['libsvr', 'krr']:# \
+    _optional_regressions = []
+    if externals.exists('shogun.krr'):
+        _optional_regressions += ['krr']
+    for impl in ['libsvr'] + _optional_regressions:# \
         # XXX svrlight sucks in SG -- dont' have time to figure it out
         #+ ([], ['svrlight'])['svrlight' in sg.SVM._KNOWN_IMPLEMENTATIONS]:
         regrswh._known_tags.union_update([impl])
@@ -311,6 +316,19 @@ clfswh += \
            OneWayAnova(),
            FixedNElementTailSelector(50, mode='select', tail='upper')),
         descr="kNN on 50(ANOVA)")
+
+
+# GNB
+clfswh += GNB(descr="GNB()")
+clfswh += GNB(common_variance=True, descr="GNB(common_variance=True)")
+clfswh += GNB(prior='uniform', descr="GNB(prior='uniform')")
+clfswh += \
+    FeatureSelectionClassifier(
+        GNB(),
+        SensitivityBasedFeatureSelection(
+           OneWayAnova(),
+           FractionTailSelector(0.05, mode='select', tail='upper')),
+        descr="GNB on 5%(ANOVA)")
 
 
 # GPR

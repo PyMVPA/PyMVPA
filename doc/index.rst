@@ -27,16 +27,17 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 News
 ====
 
-PyMVPA Extravaganza 2009 at Dartmouth College [30th Nov -- 4th Dec]
-  :ref:`Read more <chap_workshop_2009fall>` about the topics and achievements.
-
-PyMVPA 0.4.3 is out [5 Sep 2009]
-  This release brings some new stuff,  lots of fixes for old stuff and some speed
-  improvements. See the :ref:`changelog <chap_changelog>` for details.
+PyMVPA 0.4.4 is out [1 Feb 2010]
+  This release brings a set of bug fixes, few new features. See the
+  :ref:`changelog <chap_changelog>` for details.
 
 .. raw:: html
 
    <dt></dt><dd><script type="text/javascript" src="http://www.ohloh.net/p/16363/widgets/project_users_logo.js"></script></dd>
+
+PyMVPA Extravaganza 2009 at Dartmouth College [30th Nov -- 4th Dec]
+  :ref:`Read more <chap_workshop_2009fall>` about the topics and achievements.
+
 
 First publication from outside the PyMVPA team employing PyMVPA [19 Jul 2009]
   :ref:`Sun et al. (2009) <SET+09>`: *Elucidating an MRI-Based Neuroanatomic
