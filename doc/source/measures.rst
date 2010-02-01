@@ -131,27 +131,34 @@ types of *linear* support vector machines and report those weights.
 In contrast to the F-scores computed by an ANOVA, the weights can be positive
 or negative, with both extremes indicating higher sensitivities. To deal with
 this property all subclasses of :class:`~mvpa.measures.base.DatasetMeasure`
-support a `transformer` arguments in the constructor. A transformer is a functor
-that is finally called with the computed sensitivity map. PyMVPA already comes
-with some convenience functors which can be used for this purpose (see
-:mod:`~mvpa.misc.transformers`).
+support a `mapper` arguments in the constructor.  A mapper is just some
+:class:`~mvpa.mappers.base.Mapper`, `forward_dataset()` method of which is
+called with the resultant sensitivity map as the argument.  In most of the
+cases you would like just to apply some simple transformation function (taking absolution values
+etc) or a bit more advanced where you would like to combine some sensitivities
+(e.g. per class) into a single measure.  For that purpose
+:class:`mvpa.mappers.fx.FxMapper` was created and some convenience factory
+methods where provided for most common operations.  So in the example below we
+will use `maxofabs_sample()` which will return a mapper giving maximal absolute value among
+multiple sensitivities (in our case it is just a single one for binary
+classification).
 
  >>> from mvpa.misc.data_generators import normalFeatureDataset
  >>> from mvpa.clfs.svm import LinearCSVMC
- >>> from mvpa.misc.transformers import Absolute
+ >>> from mvpa.mappers.fx import maxofabs_sample
  >>>
  >>> ds = normalFeatureDataset()
- >>> ds
+ >>> "ds"
  <Dataset / float64 100 x 4 uniq: 2 labels 5 chunks labels_mapped>
  >>>
  >>> clf = LinearCSVMC()
  >>> sensana = clf.getSensitivityAnalyzer()
  >>> sens = sensana(ds)
  >>> sens.shape
- (4,)
- >>> (sens < 0).any()
+ (1, 4)
+ >>> (sens.samples < 0).any()
  True
- >>> sensana_abs = clf.getSensitivityAnalyzer(transformer=Absolute)
+ >>> sensana_abs = clf.getSensitivityAnalyzer(mapper=maxofabs_sample())
  >>> (sensana_abs(ds) < 0).any()
  False
 
