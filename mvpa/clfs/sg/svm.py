@@ -193,8 +193,6 @@ class SVM(_SVM):
             "libsvr": (shogun.Regression.LibSVR, ('C', 'tube_epsilon',),
                       ('regression',),
                        "LIBSVM's epsilon-SVR"),
-            "krr": (shogun.Regression.KRR, ('tau',), ('regression',),
-                    "Kernel Ridge Regression"),
             }
 
 
@@ -232,7 +230,13 @@ class SVM(_SVM):
         ##     but then krr gets confused, and svrlight needs it to provide
         ##     meaningful results even without 'retraining'
         #if self._svm_impl in ['svrlight', 'lightsvm']:
-            #kernel.set_precompute_matrix(True, True)
+            #try:
+                #kernel.set_precompute_matrix(True, True)
+            #except Exception, e:
+                ## N/A in shogun 0.9.1... TODO: RF
+                #if __debug__:
+                    #debug('SG_', "Failed call to set_precompute_matrix for %s: %s"
+                          #% (self, e))
 
 
     def _train(self, dataset):
@@ -620,7 +624,10 @@ for name, item, params, descr in \
          ('lightsvm', "shogun.Classifier.SVMLight", "('C',), ('binary',)",
           "SVMLight classification http://svmlight.joachims.org/"),
          ('svrlight', "shogun.Regression.SVRLight", "('C','tube_epsilon',), ('regression',)",
-          "SVMLight regression http://svmlight.joachims.org/")]:
+          "SVMLight regression http://svmlight.joachims.org/"),
+         ('krr', "shogun.Regression.KRR", "('tau',), ('regression',)",
+          "Kernel Ridge Regression"),
+         ]:
     if externals.exists('shogun.%s' % name):
         exec "SVM._KNOWN_IMPLEMENTATIONS[\"%s\"] = (%s, %s, \"%s\")" % (name, item, params, descr)
 
