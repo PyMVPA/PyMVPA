@@ -436,8 +436,9 @@ embed-dev-version: check-nodirty
 	sed -i -e "s/$(SETUPPY_VERSION)/$(DEV_VERSION)/g" setup.py mvpa/__init__.py
 
 deb-dev-autochangelog: check-debian embed-dev-version
+	# removed -snapshot from pkg name for now
 	$(MAKE) check-debian-version || \
-		dch --newversion $(DEV_VERSION)-1 --package pymvpa-snapshot \
+		dch --newversion $(DEV_VERSION)-1 --package pymvpa \
 		 --allow-lower-version "PyMVPA development snapshot."
 
 deb-mergedev:
@@ -458,7 +459,8 @@ orig-src: distclean debian-clean
 devel-src: check-nodirty
 	-rm -rf dist
 	git clone -l . dist/pymvpa-snapshot
-	RELEASE_CODE=_snapshot RELEASE_VERSION=$(DEV_VERSION) \
+	#RELEASE_CODE=-snapshot
+	RELEASE_VERSION=$(DEV_VERSION) \
 	  $(MAKE) -C dist/pymvpa-snapshot -f ../../Makefile embed-dev-version orig-src
 	mv dist/*tar.gz ..
 	rm -rf dist
@@ -466,7 +468,8 @@ devel-src: check-nodirty
 devel-dsc: check-nodirty check-debian
 	-rm -rf dist
 	git clone -l . dist/pymvpa-snapshot
-	RELEASE_CODE=_snapshot RELEASE_VERSION=$(DEV_VERSION) \
+	#RELEASE_CODE=-snapshot
+	RELEASE_VERSION=$(DEV_VERSION) \
 	  $(MAKE) -C dist/pymvpa-snapshot -f ../../Makefile deb-mergedev deb-dev-autochangelog orig-src deb-src
 	mv dist/*.gz dist/*dsc ..
 	rm -rf dist
