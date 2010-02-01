@@ -15,6 +15,7 @@ set and include important features successively.
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N
 from mvpa.support.copy import copy
 
 from mvpa.featsel.base import FeatureSelection
