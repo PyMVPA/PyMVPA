@@ -35,12 +35,45 @@ Unreleased changes
 Releases
 ========
 
-* 0.?.? (???, ? ??? 20??) (Total: ? commits)
+* 0.4.4 (Mon, Feb 1 2010) (Total: 144 commits)
 
-  * New functionality (25 NF commits):
+  Primarily a bugfix release, probably the last in 0.4 series since
+  development for 0.5 release is leaping forward.
+
+  * New functionality (19 NF commits):
 
     - :class:`~mvpa.clfs.gnb.GNB` implements Gaussian Naïve Bayes
       Classifier.
+	- :func:`~mvpa.misc.fsl.base.read_fsl_design` to read FSL FEAT design.fsf
+	  files.
+	- :class:`~mvpa.datasets.miscfx.SequenceStats` to provide basic
+      statistics on labels sequence (counter-balancing,
+      autocorrelation).
+	- New exceptions :class:`~mvpa.clfs.base.DegenerateInputError` and
+      :class:`~mvpa.clfs.base.FailedToTrainError` to be thrown by
+      classifiers primarily during training/testing.
+    - Debug target `STATMC` to report on progress of Monte-Carlo
+      sampling (during permutation testing).
+
+  * Refactored (15 RF commits):
+
+    - To get users prepared to 0.5 release, internally and in some
+      examples/documentation, access to states and
+      parameters is done via corresponding collections, not from the
+      top level object (e.g. `clf.states.predictions` instead of
+      soon-to-be-deprecated `clf.predictions`).  That should lead also
+      to improved performance.
+	- Adopted copy.py from python2.6 (support Ellipsis as well).
+
+  * Fixed (38 BF commits):
+
+    - Support recent shogun releases, e.g. 0.9.3 (API for debug
+      messages control was changed)
+    - GLM output does not depend on the enabled states any more.
+    - Variety of docstrings fixed and/or improved.
+	- Do not derive NaN scaling for SVM's C whenever data is
+	  degenerate (lead to never finishing SVM training).
+    - kNN supports elderly Python 2.4 now.
 
 
 * 0.4.3 (Sat, 5 Sep 2009) (Total: 165 commits)
