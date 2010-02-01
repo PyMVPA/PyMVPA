@@ -72,13 +72,14 @@ This examples demonstrates the typical daily life of a classifier.
 
   >>> import numpy as N
   >>> from mvpa.clfs.knn import kNN
-  >>> from mvpa.datasets import Dataset
-  >>> training = Dataset(samples=N.array(
-  ...                                N.arange(100),ndmin=2, dtype='float').T,
-  ...                    labels=[0] * 50 + [1] * 50)
+  >>> from mvpa.datasets import dataset_wizard
+  >>> training = dataset_wizard(
+  ...                samples=N.array(N.arange(100),ndmin=2, dtype='float').T,
+  ...                                labels=[0] * 50 + [1] * 50)
   >>> rand100 = N.random.rand(10)*100
-  >>> validation = Dataset(samples=N.array(rand100, ndmin=2, dtype='float').T,
-  ...                      labels=[ int(i>50) for i in rand100 ])
+  >>> validation = dataset_wizard(
+  ...                samples=N.array(rand100, ndmin=2, dtype='float').T,
+  ...                                labels=[ int(i>50) for i in rand100 ])
   >>> clf = kNN(k=10)
   >>> clf.train(training)
   >>> N.mean(clf.predict(training.samples) == training.labels)
@@ -143,7 +144,7 @@ information only for a trained classifier, attempt to access
  >>> from mvpa.misc.exceptions import UnknownStateError
  >>> try:
  ...     untrained_clf = kNN()
- ...     labels = untrained_clf.trained_labels
+ ...     labels = untrained_clf.states.trained_labels
  ... except UnknownStateError:
  ...     "Does not work"
  'Does not work'
@@ -159,21 +160,20 @@ stateful object, can be asked to report existing state-related attributes:
   >>> list_with_verbose_explanations = clf.states.listing
 
 'clf.states' is an instance of :class:`~mvpa.misc.state.StateCollection` class
-which is a container for all state variables of the given class. Although
-values can be queried or set (if state is enabled) operating directly on the
-stateful object
+which is a container for all state variables of the given class. To access (query
+the value or set the value if state is enabled), and enable or disable you
+should operate on `states` collection (which is different from version prior
+'0.5.0' where you could query values directly from the object, i.e. `clf` in
+this example)
 
-  >>> clf.trained_labels
+  >>> clf.states.trained_labels
   array([0, 1])
 
-any other operation on the state (e.g. enabling, disabling) has to be carried
-out through the `states` attribute.
-
   >>> print clf.states
-  states{trained_dataset predicting_time*+ training_confusion predictions*+...}
+  states{trained_dataset predicting_time*+ training_confusion estimates*+...}
   >>> clf.states.enable('estimates')
   >>> print clf.states
-  states{trained_dataset predicting_time*+ training_confusion predictions*+...}
+  states{trained_dataset predicting_time*+ training_confusion estimates*+...}
   >>> clf.states.disable('estimates')
 
 A string representation of the state collection mentioned above lists
@@ -184,7 +184,7 @@ enabled state variable, and '*' for a variable that stores some value
 
 .. TODO: Refactor
 
-By default all classifiers provide state variables `estimates`,
+By default all classifiers provide state variables `estimates` and
 `predictions`. The latter is simply the set of predictions that was returned
 by the last call to the objects :meth:`~mvpa.clfs.base.Classifier.predict`
 method. The former is heavily
