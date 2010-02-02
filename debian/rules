@@ -16,7 +16,7 @@ DEB_PYTHON_INSTALL_ARGS_ALL += --with-libsvm
 doc: doc-stamp
 doc-stamp:
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
-	$(MAKE) doc
+	$(MAKE) manpages apidoc htmldoc
 	touch $@
 endif
 
@@ -72,7 +72,7 @@ DEB_DESTDIR = $(CURDIR)/debian/python-mvpa
 DEB_COMPRESS_EXCLUDE := .py .pdf .html .css .jpg .txt .js .json .rtc .par .bin
 # -doc package contents
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
-DEB_INSTALL_DOCS_python-mvpa-doc := build/html build/latex/PyMVPA*.pdf
+DEB_INSTALL_DOCS_python-mvpa-doc := build/html
 DEB_INSTALL_EXAMPLES_python-mvpa-doc := doc/examples/*
 endif
 
