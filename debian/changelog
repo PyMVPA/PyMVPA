@@ -5,6 +5,8 @@ pymvpa (0.4.4-1) unstable; urgency=low
     versions of documents gets shipped within -doc.  That lightens
     -doc package and quickens package building (unneeded
     build-depends got dropped: texlive, texlive-latex-extra)
+  * Adding shogun-python-modular into Build-Depends since it is needed
+    for documentation inheritance_diagram extension.
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 01 Feb 2010 20:51:42 -0500
 
