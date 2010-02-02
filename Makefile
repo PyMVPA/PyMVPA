@@ -30,7 +30,7 @@ SETUPPY_VERSION = $(shell python setup.py -V)
 # Automatic development version
 #
 #yields: LastTagName_CommitsSinceThat_AbbrvHash
-DEV_VERSION := $(shell git describe --abbrev=4 HEAD |sed -e 's/.dev/~dev/' -e 's/-/+/g' |cut -d '/' -f 2,2)
+DEV_VERSION := $(shell git describe --abbrev=4 HEAD |sed -e 's/-/+/g' |cut -d '/' -f 2,2)
 
 # By default we are releasing with setup.py version
 RELEASE_VERSION ?= $(SETUPPY_VERSION)
