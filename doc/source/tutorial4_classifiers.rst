@@ -21,6 +21,12 @@ What is
 * states, parameters
 * meta classifiers...
 
+.. exercise::
+
+   Try doing the Z-Scoring beforce computing the mean samples per category.
+   What happens to the generalization performance of the classifier?
+   ANSWER: It becomes 100%!
+
 
 .. only:: html
 
