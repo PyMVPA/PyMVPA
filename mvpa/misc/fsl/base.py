@@ -242,3 +242,56 @@ class FslGLMDesign(object):
         P.ylabel('Samples (top to bottom)')
         P.xlabel('Regressors')
         P.ylim(self.mat.shape[0],0)
+
+
+def read_fsl_design(fsf_file):
+    """Reads an FSL FEAT design.fsf file and return the content as a dictionary.
+
+    :Parameters:
+      fsf_file : filename, file-like
+    """
+    # This function was originally contributed by Russell Poldrack
+
+    if isinstance(fsf_file, basestring):
+        infile = open(fsf_file, 'r')
+    else:
+        infile = fsf_file
+
+    # target dict
+    fsl = {}
+
+    # loop over all lines
+    for line in infile:
+        line = line.strip()
+        # if there is nothing on the line, do nothing
+        if not line or line[0] == '#':
+            continue
+
+        # strip leading TCL 'set'
+        key, value = line.split()[1:]
+
+        # fixup the 'y-' thing
+        if value == 'y-':
+            value = "y"
+
+        # special case of variable keyword
+        if line.count('_files('):
+            # e.g. feat_files(1) -> feat_files
+            key = key.split('(')[0]
+
+        # decide which type we have for the value
+        # int?
+        if value.isdigit():
+            fsl[key] = int(value)
+        else:
+            # float?
+            try:
+                fsl[key] = float(value)
+            except ValueError:
+                # must be string then, but...
+                # sometimes there are quotes, sometimes not, but if the value
+                # should be a string we remove them, since the value is already
+                # of this type
+                fsl[key] = value.strip('"')
+
+    return fsl

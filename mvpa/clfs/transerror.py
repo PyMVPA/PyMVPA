@@ -262,6 +262,14 @@ class ROCCurve(object):
         Nlabels = len(labels)
         sets = self._sets
 
+        # Handle degenerate cases politely
+        if Nlabels < 2:
+            warning("ROC was asked to be evaluated on data with %i"
+                    " labels which is a degenerate case.")
+            self._ROCs = []
+            self._aucs = []
+            return
+
         # take sets which have values in the shape we can handle
         def _checkValues(set_):
             """Check if values are 'acceptable'"""
@@ -1308,6 +1316,12 @@ class ClassifierError(ClassWithCollections):
         return error
 
 
+    def untrain(self):
+        """Untrain the *Error which relies on the classifier
+        """
+        self.clf.untrain()
+
+
     @property
     def clf(self):
         return self.__clf
@@ -1367,7 +1381,7 @@ class TransferError(ClassifierError):
 
         return out
 
-
+    # XXX: TODO: unify naming? test/train or with ing both
     def _call(self, testdataset, trainingdataset=None):
         """Compute the transfer error for a certain test dataset.
 
@@ -1424,7 +1438,7 @@ class TransferError(ClassifierError):
         if states.isEnabled('samples_error'):
             samples_error = []
             for i, p in enumerate(predictions):
-                samples_error.append(self.__errorfx(p, testdataset.labels[i]))
+                samples_error.append(self.__errorfx([p], testdataset.labels[i:i+1]))
 
             states.samples_error = dict(zip(testdataset.origids, samples_error))
 
@@ -1507,6 +1521,6 @@ class ConfusionBasedError(ClassifierError):
     def _call(self, testdata, trainingdata=None):
         """Extract transfer error. Nor testdata, neither trainingdata is used
         """
-        confusion = self.clf.states.getvalue(self.__confusion_state)
+        confusion = self.clf.states[self.__confusion_state].value
         self.confusion = confusion
         return confusion.error

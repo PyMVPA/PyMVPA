@@ -279,12 +279,15 @@ templates_path = ['_templates']
 # The suffix of source filenames.
 source_suffix = '.rst'
 
+# The encoding of source files.
+source_encoding = 'utf-8'
+
 # The master toctree document.
 master_doc = 'contents'
 
 # General substitutions.
 project = 'PyMVPA'
-copyright = '2006-2008, Michael Hanke, Yaroslav Halchenko, Per B. Sederberg'
+copyright = '2006-2009, Michael Hanke, Yaroslav Halchenko, Per B. Sederberg'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -361,7 +364,10 @@ html_sidebars = {'index': 'indexsidebar.html'}
 html_use_modindex = False
 
 # If true, the reST sources are included in the HTML build as _sources/<name>.
-#html_copy_source = True
+html_copy_source = False
+
+# If true, links to the reST sources are added to the pages.
+html_show_sourcelink = False
 
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.

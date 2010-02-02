@@ -719,11 +719,19 @@ class Dataset(object):
     def __str__(self):
         """String summary over the object
         """
-        return self.summary(uniq=True,
-                            idhash=__debug__ and ('DS_ID' in debug.active),
-                            stats=__debug__ and ('DS_STATS' in debug.active),
-                            lstats=__debug__ and ('DS_STATS' in debug.active),
-                            )
+        try:
+            ssummary = self.summary(uniq=True,
+                         idhash=__debug__ and ('DS_ID' in debug.active),
+                         stats=__debug__ and ('DS_STATS' in debug.active),
+                         lstats=__debug__ and ('DS_STATS' in debug.active),
+                         )
+        except (AttributeError, KeyError), e:
+            # __str__ or __repr__ could have been requested before actual
+            # instance is populated, e.g. by tracebacks of pdb/pydb.
+            # ??? this case might be generic enough to allow for common
+            # decorator around plentiful of __str__ and __repr__s
+            ssummary = str(e)
+        return ssummary
 
 
     def __repr__(self):
@@ -785,9 +793,12 @@ class Dataset(object):
             # TODO -- avg per chunk?
             # XXX We might like to use scipy.stats.describe to get
             # quick summary statistics (mean/range/skewness/kurtosis)
-            s += "%sstats: mean=%g std=%g var=%g min=%g max=%g\n" % \
-                 (ssep, N.mean(samples), N.std(samples),
-                  N.var(samples), N.min(samples), N.max(samples))
+            if self.nfeatures:
+                s += "%sstats: mean=%g std=%g var=%g min=%g max=%g\n" % \
+                     (ssep, N.mean(samples), N.std(samples),
+                      N.var(samples), N.min(samples), N.max(samples))
+            else:
+                s += "%sstats: dataset has no features\n" % ssep
 
         if lstats:
             s += self.summary_labels(maxc=maxc, maxl=maxl)

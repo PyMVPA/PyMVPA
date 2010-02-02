@@ -86,20 +86,18 @@ if not externals.exists('good scipy.stats.rv_discrete.ppf'):
         """
         Percent point function (inverse of cdf) at q of the given RV
 
-        Parameters
-        ----------
-        q : array-like
-            lower tail probability
-        arg1, arg2, arg3,... : array-like
-            The shape parameter(s) for the distribution (see docstring of the
-            instance object for more information)
-        loc : array-like, optional
-            location parameter (default=0)
+        :Parameters:
+          q : array-like
+              lower tail probability
+          arg1, arg2, arg3,... : array-like
+              The shape parameter(s) for the distribution (see docstring of the
+              instance object for more information)
+          loc : array-like, optional
+              location parameter (default=0)
 
-        Returns
-        -------
-        k : array-like
-            quantile corresponding to the lower tail probability, q.
+        :Returns:
+          k : array-like
+              quantile corresponding to the lower tail probability, q.
 
         """
         loc = kwds.get('loc')

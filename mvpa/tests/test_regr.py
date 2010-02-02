@@ -109,6 +109,7 @@ class RegressionsTests(unittest.TestCase):
             enable_states=['confusion', 'training_confusion'])
         ds = datasets['uni2small']
         cverror = cv(ds)
+
         self.failUnless(len(clf.values) == ds['chunks', 1].nsamples)
         clf.states._resetEnabledTemporarily()
 
