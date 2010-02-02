@@ -445,7 +445,7 @@ embed-dev-version: check-nodirty
 	# change package name
 	sed -i -e "s/= 'pymvpa',/= 'pymvpa-snapshot',/g" setup.py
 
-deb-dev-autochangelog: check-debian embed-dev-version
+deb-dev-autochangelog: check-debian
 	# removed -snapshot from pkg name for now
 	$(MAKE) check-debian-version || \
 		dch --newversion $(DEV_VERSION)-1 --package pymvpa-snapshot \
@@ -462,7 +462,7 @@ orig-src: distclean debian-clean
 	python setup.py sdist --formats=gztar --with-libsvm
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
-	tbname=$$(basename $$(ls -1 dist/*tar.gz)) ; ln -s $${tbname} ../$${tbname%*.tar.gz}.orig.tar.gz
+	tbname=$$(basename $$(ls -1 dist/*tar.gz)) ; ln -s $${tbname} ../pymvpa-snapshot_$(DEV_VERSION).orig.tar.gz
 	mv dist/*tar.gz ..
 	# clean leftover
 	rm MANIFEST
@@ -481,7 +481,9 @@ devel-dsc: check-nodirty
 	git clone -l . dist/pymvpa-snapshot
 	#RELEASE_CODE=-snapshot
 	RELEASE_VERSION=$(DEV_VERSION) \
-	  $(MAKE) -C dist/pymvpa-snapshot -f ../../Makefile embed-dev-version orig-src deb-mergedev deb-dev-autochangelog deb-src
+	  $(MAKE) -C dist/pymvpa-snapshot -f ../../Makefile embed-dev-version orig-src deb-mergedev deb-dev-autochangelog
+	# create the dsc -- NOT using deb-src since it would clean the hell first
+	cd dist && dpkg-source -i'\.(gbp.conf|git\.*)' -b pymvpa-snapshot
 	mv dist/*.gz dist/*dsc ..
 	rm -rf dist
 
