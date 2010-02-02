@@ -795,7 +795,8 @@ class ClassifiersTests(unittest.TestCase):
             error = cv(ds).samples.squeeze()
 
             nlabels = len(ds.uniquelabels)
-            if nlabels == 2:
+            if nlabels == 2 \
+               and cfg.getboolean('tests', 'labile', default='yes'):
                 self.failUnless(error < 0.3)
 
             # Check if does not puke on repr and str

@@ -21,6 +21,30 @@ RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g
 RSYNC_OPTS_UP=-rzlhvp --delete --chmod=Dg+s,g+rw,o+rX
 
 #
+# Helpers for version handling.
+# Note: can't be ':='-ed since location of invocation might vary
+DEBCHANGELOG_VERSION = $(shell dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)
+SETUPPY_VERSION = $(shell python setup.py -V)
+
+#
+# Automatic development version
+#
+#yields: LastTagName_CommitsSinceThat_AbbrvHash
+DEV_VERSION := $(shell git describe --abbrev=4 HEAD |sed -e 's/.dev/~dev/' -e 's/-/+/g' |cut -d '/' -f 2,2)
+
+# By default we are releasing with setup.py version
+RELEASE_VERSION ?= $(SETUPPY_VERSION)
+RELEASE_CODE ?=
+
+# Conditional depends regulated from outside
+#
+ifdef PYMVPA_NO_3RD
+	build_depends :=
+else
+	build_depends := 3rd
+endif
+
+#
 # Details on the Python/system
 #
 
@@ -57,8 +81,7 @@ debian-build:
 
 
 build: build-stamp
-build-stamp: 3rd
-	@echo "I: Building PyMVPA and symlinking dynamic libraries inplace"
+build-stamp: $(build_depends)
 	python setup.py config --noisy --with-libsvm
 	python setup.py build --with-libsvm
 # to overcome the issue of not-installed svmc.so
@@ -402,29 +425,72 @@ pylint:
 # Generate new source distribution
 # (not to be run by users, depends on debian environment)
 
-orig-src: distclean debian-clean 
+# Check either everything was committed
+check-nodirty:
+	# Need to run in clean tree. If fails: commit or clean first
+	[ "x$$(git diff)" = "x" ]
+# || $(error "")
+
+check-debian:
+	# Need to run in a Debian packaging branch
+	[ -d debian ]
+
+check-debian-version: check-debian
+	# Does debian version correspond to setup.py version?
+	[ "$(DEBCHANGELOG_VERSION)" = "$(SETUPPY_VERSION)" ]
+
+embed-dev-version: check-nodirty
+	# change upstream version
+	sed -i -e "s/$(SETUPPY_VERSION)/$(DEV_VERSION)/g" setup.py mvpa/__init__.py
+	# change package name
+	sed -i -e "s/= 'pymvpa',/= 'pymvpa-snapshot',/g" setup.py
+
+deb-dev-autochangelog: check-debian
+	# removed -snapshot from pkg name for now
+	$(MAKE) check-debian-version || \
+		dch --newversion $(DEV_VERSION)-1 --package pymvpa-snapshot \
+		 --allow-lower-version "PyMVPA development snapshot."
+
+deb-mergedev:
+	git merge --no-commit origin/dist/debian/dev
+
+orig-src: distclean debian-clean
 	# clean existing dist dir first to have a single source tarball to process
 	-rm -rf dist
-
-	if [ -f debian/changelog ]; then \
-		if [ ! "$$(dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)" == "$$(python setup.py -V)" ]; then \
-				printf "WARNING: Changelog version does not match tarball version!\n" ;\
-				exit 1; \
-		fi \
-	fi
 	# let python create the source tarball
 	# enable libsvm to get all sources!
 	python setup.py sdist --formats=gztar --with-libsvm
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
-	file=$$(ls -1 dist); ver=$${file%*.tar.gz}; ver=$${ver#pymvpa-*}; mv dist/$$file ../pymvpa_$$ver.orig.tar.gz
+	tbname=$$(basename $$(ls -1 dist/*tar.gz)) ; ln -s $${tbname} ../pymvpa-snapshot_$(DEV_VERSION).orig.tar.gz
+	mv dist/*tar.gz ..
 	# clean leftover
 	rm MANIFEST
+
+devel-src: check-nodirty
+	-rm -rf dist
+	git clone -l . dist/pymvpa-snapshot
+	#RELEASE_CODE=-snapshot
+	RELEASE_VERSION=$(DEV_VERSION) \
+	  $(MAKE) -C dist/pymvpa-snapshot -f ../../Makefile embed-dev-version orig-src
+	mv dist/*tar.gz ..
+	rm -rf dist
+
+devel-dsc: check-nodirty
+	-rm -rf dist
+	git clone -l . dist/pymvpa-snapshot
+	#RELEASE_CODE=-snapshot
+	RELEASE_VERSION=$(DEV_VERSION) \
+	  $(MAKE) -C dist/pymvpa-snapshot -f ../../Makefile embed-dev-version orig-src deb-mergedev deb-dev-autochangelog
+	# create the dsc -- NOT using deb-src since it would clean the hell first
+	cd dist && dpkg-source -i'\.(gbp.conf|git\.*)' -b pymvpa-snapshot
+	mv dist/*.gz dist/*dsc ..
+	rm -rf dist
 
 # make Debian source package
 # # DO NOT depend on orig-src here as it would generate a source tarball in a
 # Debian branch and might miss patches!
-debsrc:
+deb-src: check-debian distclean
 	cd .. && dpkg-source -i'\.(gbp.conf|git\.*)' -b $(CURDIR)
 
 
@@ -522,10 +588,10 @@ upload-codeswarm: codeswarm
 # Trailer
 #
 
-.PHONY: fetch-data debsrc orig-src pylint apidoc pdfdoc htmldoc doc manual \
+.PHONY: fetch-data deb-src orig-src pylint apidoc pdfdoc htmldoc doc manual \
         all profile website fetch-data-misc upload-website \
         test testsuite testmanual testapiref testexamples testrefactor \
         unittest unittest-debug unittest-optimization unittest-nonlabile \
         unittest-badexternals unittests \
-        distclean debian-clean \
+        distclean debian-clean check-nodirty check-debian check-debian-version \
         handbook codeswarm upload-codeswarm coverage pics
