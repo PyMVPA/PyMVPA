@@ -475,7 +475,7 @@ devel-src: check-nodirty
 	mv dist/*tar.gz ..
 	rm -rf dist
 
-devel-dsc: check-nodirty check-debian
+devel-dsc: check-nodirty
 	-rm -rf dist
 	git clone -l . dist/pymvpa-snapshot
 	#RELEASE_CODE=-snapshot
