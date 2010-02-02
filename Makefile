@@ -462,7 +462,7 @@ orig-src: distclean debian-clean
 	python setup.py sdist --formats=gztar --with-libsvm
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
-	mv dist/$$(ls -1 dist) ../pymvpa$(RELEASE_CODE)_$(RELEASE_VERSION).orig.tar.gz
+	mv dist/*tar.gz ..
 	# clean leftover
 	rm MANIFEST
 
@@ -480,7 +480,7 @@ devel-dsc: check-nodirty
 	git clone -l . dist/pymvpa-snapshot
 	#RELEASE_CODE=-snapshot
 	RELEASE_VERSION=$(DEV_VERSION) \
-	  $(MAKE) -C dist/pymvpa-snapshot -f ../../Makefile orig-src deb-mergedev deb-dev-autochangelog deb-src
+	  $(MAKE) -C dist/pymvpa-snapshot -f ../../Makefile embed-dev-version orig-src deb-mergedev deb-dev-autochangelog deb-src
 	mv dist/*.gz dist/*dsc ..
 	rm -rf dist
 
