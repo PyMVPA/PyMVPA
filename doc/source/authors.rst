@@ -22,14 +22,24 @@ valuable advice, code or documentation to PyMVPA:
 * `Ingo Fründ`_, TU Berlin, Germany
 * `Scott Gorlin`_, MIT, USA
 * `Valentin Haenel`_, TU Berlin, Germany
+* `Stephen José Hanson`_, Rutgers University, USA
+* `James V. Haxby`_, Dartmouth College, USA
 * `James M. Hughes`_, Dartmouth College, USA
 * `James Kyle`_, UCLA, USA
+* `Russell Poldrack`_, University of Texas, USA
+* `Stefan Pollmann`_, University of Magdeburg, Germany
+* `Rajeev Raizada`_, Dartmouth College, USA
 * `Tiziano Zito`_, BCCN, Germany
 
-.. _Greg Detre: http://www.princeton.edu/~gdetre/
-.. _James M. Hughes: http://www.cs.dartmouth.edu/~hughes/index.html
-.. _Ingo Fründ: http://www.cognition.tu-berlin.de/menue/members/ingo_fruend/
-.. _James Kyle: http://www.ccn.ucla.edu/users/jkyle
+.. _Greg Detre: http://www.princeton.edu/~gdetre
+.. _Ingo Fründ: http://www.cognition.tu-berlin.de/menue/members/ingo_fruend
 .. _Scott Gorlin: http://www.scottgorlin.com
-.. _Valentin Haenel: http://www.cognition.tu-berlin.de/menue/members/valentin_haenel/
-.. _Tiziano Zito: http://itb.biologie.hu-berlin.de/~zito/
+.. _Valentin Haenel: http://www.cognition.tu-berlin.de/menue/members/valentin_haenel
+.. _Stephen José Hanson: http://psychology.rutgers.edu/~jose
+.. _James V. Haxby: http://dbic.dartmouth.edu/haxby
+.. _James M. Hughes: http://www.cs.dartmouth.edu/~hughes/index.html
+.. _James Kyle: http://www.ccn.ucla.edu/users/jkyle
+.. _Russell Poldrack: http://www.poldracklab.org
+.. _Stefan Pollmann: http://apsy.gse.uni-magdeburg.de/pollmann
+.. _Rajeev Raizada: http://www.dartmouth.edu/~raj
+.. _Tiziano Zito: http://itb.biologie.hu-berlin.de/~zito
