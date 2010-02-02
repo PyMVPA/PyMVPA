@@ -442,6 +442,8 @@ check-debian-version: check-debian
 embed-dev-version: check-nodirty
 	# change upstream version
 	sed -i -e "s/$(SETUPPY_VERSION)/$(DEV_VERSION)/g" setup.py mvpa/__init__.py
+	# change package name
+	sed -i -e "s/= 'pymvpa',/= 'pymvpa-snapshot',/g" setup.py
 
 deb-dev-autochangelog: check-debian embed-dev-version
 	# removed -snapshot from pkg name for now
@@ -450,7 +452,7 @@ deb-dev-autochangelog: check-debian embed-dev-version
 		 --allow-lower-version "PyMVPA development snapshot."
 
 deb-mergedev:
-	git merge --no-commit origin/dist/debian/proper/sid
+	git merge --no-commit origin/dist/debian/dev
 
 orig-src: distclean debian-clean
 	# clean existing dist dir first to have a single source tarball to process
