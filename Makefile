@@ -462,6 +462,7 @@ orig-src: distclean debian-clean
 	python setup.py sdist --formats=gztar --with-libsvm
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
+	tbname=$$(basename $$(ls -1 dist/*tar.gz)) ; ln -s $${tbname} ../$${tbname%*.tar.gz}.orig.tar.gz
 	mv dist/*tar.gz ..
 	# clean leftover
 	rm MANIFEST
