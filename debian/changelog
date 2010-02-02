@@ -10,6 +10,8 @@ pymvpa (0.4.4-1) unstable; urgency=low
   * Bump Standards-Version to 3.8.4 -- no changes necessary.
   * Updated suggests for new naming of openopt package, fixed spelling
     error in short description of -doc package.
+  * Dropped patching of upstream Makefile to don't build 3rd party code,
+    now control is done via variable PYMVPA_NO_3RD.
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 01 Feb 2010 20:51:42 -0500
 

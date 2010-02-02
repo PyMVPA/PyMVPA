@@ -9,7 +9,8 @@ DEB_PYTHON_MODULE_PACKAGE = python-mvpa
 DEB_PYTHON_MODULE_PACKAGES = python-mvpa python-mvpa-lib
 include /usr/share/cdbs/1/class/python-distutils.mk
 
-# enable the LIBSVM wrapper
+# enable the LIBSVM wrapper and disable building provided copy
+export PYMVPA_NO_3RD=1
 DEB_PYTHON_BUILD_ARGS += --with-libsvm
 DEB_PYTHON_INSTALL_ARGS_ALL += --with-libsvm
 
