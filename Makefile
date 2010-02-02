@@ -15,6 +15,15 @@ SWARMTOOL_DIR=tools/codeswarm
 SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
 RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g
 
+#
+# Conditional depends regulated from outside
+#
+ifdef PYMVPA_NO_3RD
+	build_depends :=
+else
+	build_depends := 3rd
+endif
+
 
 #
 # Details on the Python/system
@@ -53,7 +62,7 @@ debian-build:
 
 
 build: build-stamp
-build-stamp: 3rd
+build-stamp: $(build_depends)
 	python setup.py config --noisy --with-libsvm
 	python setup.py build --with-libsvm
 # to overcome the issue of not-installed svmc.so
