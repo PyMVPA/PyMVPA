@@ -448,7 +448,7 @@ embed-dev-version: check-nodirty
 deb-dev-autochangelog: check-debian embed-dev-version
 	# removed -snapshot from pkg name for now
 	$(MAKE) check-debian-version || \
-		dch --newversion $(DEV_VERSION)-1 --package pymvpa \
+		dch --newversion $(DEV_VERSION)-1 --package pymvpa-snapshot \
 		 --allow-lower-version "PyMVPA development snapshot."
 
 deb-mergedev:
