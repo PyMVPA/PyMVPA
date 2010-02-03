@@ -19,7 +19,7 @@ set -e
 #MAKE_TESTS="unittests testmanual testsuite testapiref testdatadb testsphinx testexamples testcfg"
 
 # Unittests to run in all branches
-TESTS_COMMON="unittests testmanual testsuite testsphinx testexamples testcfg"
+TESTS_COMMON="unittests testmanual testsuite testsphinx testexamples testcfg testourcfg"
 
 # Associative array with tests lists per branch
 declare -A TESTS_BRANCHES
