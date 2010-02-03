@@ -47,7 +47,7 @@ RELEASE_CODE ?=
 ifdef PYMVPA_NO_3RD
 	build_depends :=
 else
-	build_depends := 3rd
+	build_depends :=
 endif
 
 #
@@ -88,8 +88,8 @@ debian-build:
 
 build: build-stamp
 build-stamp: $(build_depends)
-	$(PYTHON) setup.py config --noisy --with-libsvm
-	$(PYTHON) setup.py build --with-libsvm
+	$(PYTHON) setup.py config --noisy
+	$(PYTHON) setup.py build
 # to overcome the issue of not-installed svmc.so
 	for ext in _svmc smlrc; do \
 		ln -sf ../../../build/lib.$(DISTUTILS_PLATFORM)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
@@ -465,7 +465,7 @@ orig-src: distclean debian-clean
 	-rm -rf dist
 	# let python create the source tarball
 	# enable libsvm to get all sources!
-	$(PYTHON) setup.py sdist --formats=gztar --with-libsvm
+	$(PYTHON) setup.py sdist --formats=gztar
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
 	tbname=$$(basename $$(ls -1 dist/*tar.gz)) ; ln -s $${tbname} ../pymvpa-snapshot_$(DEV_VERSION).orig.tar.gz
@@ -501,7 +501,7 @@ deb-src: check-debian distclean
 
 
 bdist_rpm: 3rd
-	$(PYTHON) setup.py bdist_rpm --with-libsvm \
+	$(PYTHON) setup.py bdist_rpm \
 	  --doc-files "doc data" \
 	  --packager "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>" \
 	  --vendor "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>"
