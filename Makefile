@@ -403,7 +403,12 @@ testcfg: build
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
 	-@rm -f pymvpa.cfg
 
-test: unittests testmanual testsuite testexamples testcfg
+testourcfg: build
+	@echo "+I: Run non-labile testing to verify safety of shipped configuration"
+	@PYTHONPATH=.:$(PYTHONPATH) MVPACONFIG=doc/examples/pymvpa.cfg MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
+
+
+test: unittests testmanual testsuite testexamples testcfg testourcfg
 
 # Target to be called after some major refactoring
 # It skips some flavors of unittests
@@ -597,6 +602,7 @@ upload-codeswarm: codeswarm
 .PHONY: fetch-data deb-src orig-src pylint apidoc pdfdoc htmldoc doc manual \
         all profile website fetch-data-misc upload-website \
         test testsuite testmanual testapiref testexamples testrefactor \
+        testcfg testourcfg \
         unittest unittest-debug unittest-optimization unittest-nonlabile \
         unittest-badexternals unittests \
         distclean debian-clean check-nodirty check-debian check-debian-version \
