@@ -72,12 +72,13 @@ This examples demonstrates the typical daily life of a classifier.
 
   >>> import numpy as N
   >>> from mvpa.clfs.knn import kNN
-  >>> from mvpa.datasets import Dataset
-  >>> training = Dataset(samples=N.array(
+  >>> from mvpa.datasets import dataset_wizard
+  >>> training = dataset_wizard(samples=N.array(
   ...                                N.arange(100),ndmin=2, dtype='float').T,
   ...                    labels=[0] * 50 + [1] * 50)
   >>> rand100 = N.random.rand(10)*100
-  >>> validation = Dataset(samples=N.array(rand100, ndmin=2, dtype='float').T,
+  >>> validation = dataset_wizard(samples=N.array(
+  ...                                rand100, ndmin=2, dtype='float').T,
   ...                      labels=[ int(i>50) for i in rand100 ])
   >>> clf = kNN(k=10)
   >>> clf.train(training)
@@ -138,12 +139,12 @@ For instance, the :class:`~mvpa.clfs.base.Classifier` class defines the
 `trained_labels` state variable, which just stores the unique labels for which
 the classifier was trained. Since `trained_labels` stores meaningful
 information only for a trained classifier, attempt to access
-'clf.trained_labels' before training would result in an error,
+'clf.states.trained_labels' before training would result in an error,
 
  >>> from mvpa.misc.exceptions import UnknownStateError
  >>> try:
  ...     untrained_clf = kNN()
- ...     labels = untrained_clf.trained_labels
+ ...     labels = untrained_clf.states.trained_labels
  ... except UnknownStateError:
  ...     "Does not work"
  'Does not work'
@@ -163,17 +164,17 @@ which is a container for all state variables of the given class. Although
 values can be queried or set (if state is enabled) operating directly on the
 stateful object
 
-  >>> clf.trained_labels
+  >>> clf.states.trained_labels
   array([0, 1])
 
 any other operation on the state (e.g. enabling, disabling) has to be carried
 out through the `states` attribute.
 
   >>> print clf.states
-  states{trained_dataset predicting_time*+ training_confusion predictions*+...}
+  states{trained_dataset predicting_time*+ training_confusion estimates*+...}
   >>> clf.states.enable('estimates')
   >>> print clf.states
-  states{trained_dataset predicting_time*+ training_confusion predictions*+...}
+  states{trained_dataset predicting_time*+ training_confusion estimates*+...}
   >>> clf.states.disable('estimates')
 
 A string representation of the state collection mentioned above lists
