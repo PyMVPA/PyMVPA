@@ -21,7 +21,7 @@ RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g
 ifdef PYMVPA_NO_3RD
 	build_depends :=
 else
-	build_depends := 3rd
+	build_depends :=
 endif
 
 
