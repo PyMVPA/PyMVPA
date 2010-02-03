@@ -29,7 +29,7 @@ def intArray(seq):
     array = svmc.new_int(size)
     i = 0
     for item in seq:
-        svmc.int_setitem(array, i, item)
+        svmc.int_setitem(array, i, int(item))
         i = i + 1
     return array
 
