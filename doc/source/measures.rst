@@ -143,13 +143,11 @@ will use `maxofabs_sample()` which will return a mapper giving maximal absolute 
 multiple sensitivities (in our case it is just a single one for binary
 classification).
 
- >>> from mvpa.misc.data_generators import normalFeatureDataset
- >>> from mvpa.clfs.svm import LinearCSVMC
- >>> from mvpa.mappers.fx import maxofabs_sample
+ >>> from mvpa.suite import *
  >>>
  >>> ds = normalFeatureDataset()
- >>> "ds"
- <Dataset / float64 100 x 4 uniq: 2 labels 5 chunks labels_mapped>
+ >>> print ds
+ <Dataset: 100x4@float64, <sa: chunks,labels>>
  >>>
  >>> clf = LinearCSVMC()
  >>> sensana = clf.getSensitivityAnalyzer()
@@ -158,8 +156,8 @@ classification).
  (1, 4)
  >>> (sens.samples < 0).any()
  True
- >>> sensana_abs = clf.getSensitivityAnalyzer(mapper=maxofabs_sample())
- >>> (sensana_abs(ds) < 0).any()
+ >>> sensana_abs = clf.getSensitivityAnalyzer(mapper=absolute_features())
+ >>> (sensana_abs(ds).samples < 0).any()
  False
 
 Above example shows how to use an existing classifier instance to report

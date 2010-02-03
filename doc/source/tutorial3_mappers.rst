@@ -198,7 +198,7 @@ first column, and the chunk identifier in the second, with one line per
 volume in the NIfTI image.
 
   >>> # directory that contains the data files
-  >>> datapath = os.path.join(pymvpa_dataroot,
+  >>> datapath = os.path.join(pymvpa_datadbroot,
   ...                         'demo_blockfmri', 'demo_blockfmri')
   >>> attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
   >>> len(attr.labels)
