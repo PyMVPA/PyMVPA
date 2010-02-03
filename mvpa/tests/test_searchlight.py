@@ -92,6 +92,9 @@ class SearchlightTests(unittest.TestCase):
         # only two spheres but error for all CV-folds
         self.failUnlessEqual(results.shape, (len(self.dataset.UC), 2))
 
+        # test if we graciously puke if center_ids are out of bounds
+        dataset0 = self.dataset[:, :50] # so we have no 50th feature
+        self.failUnlessRaises(ValueError, sl, dataset0)
 
     def test_chi_square_searchlight(self):
         # only do partial to save time
