@@ -436,7 +436,7 @@ def _str(obj, *args, **kwargs):
     -------
     str
     """
-    truncate = cfg.getAsDType('verbose', 'truncate str', int, default=70)
+    truncate = cfg.getAsDType('verbose', 'truncate str', int, default=200)
 
     if hasattr(obj, 'descr'):
         s = obj.descr
