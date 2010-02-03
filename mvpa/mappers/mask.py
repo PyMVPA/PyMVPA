@@ -159,6 +159,14 @@ class MaskMapper(Mapper):
             mapped = N.zeros(self.__mask.shape, dtype=data.dtype)
             mapped[self.__mask] = data
         elif datadim == 2:
+            # Verify that we are trying to reverse data of proper dimension.
+            # In 2D case numpy we should have matching # of features
+            if __debug__ and  self.nfeatures != data.shape[1]:
+                raise ValueError, \
+                      "Cannot reverse map data of shape %s, whenever " \
+                      "mask knows only %d features" \
+                      % (data.shape, self.nfeatures)
+
             mapped = N.zeros(data.shape[:1] + self.__mask.shape,
                              dtype=data.dtype)
             mapped[:, self.__mask] = data
