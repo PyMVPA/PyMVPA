@@ -21,10 +21,16 @@ RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g
 RSYNC_OPTS_UP=-rzlhvp --delete --chmod=Dg+s,g+rw,o+rX
 
 #
+# The Python executable to be used
+#
+PYTHON = python
+NOSETESTS = $(PYTHON) $(shell which nosetests)
+
+#
 # Helpers for version handling.
 # Note: can't be ':='-ed since location of invocation might vary
 DEBCHANGELOG_VERSION = $(shell dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)
-SETUPPY_VERSION = $(shell python setup.py -V)
+SETUPPY_VERSION = $(shell $(PYTHON) setup.py -V)
 
 #
 # Automatic development version
@@ -48,8 +54,8 @@ endif
 # Details on the Python/system
 #
 
-PYVER := $(shell python -V 2>&1 | cut -d ' ' -f 2,2 | cut -d '.' -f 1,2)
-DISTUTILS_PLATFORM := $(shell python -c "import distutils.util; print distutils.util.get_platform()")
+PYVER := $(shell $(PYTHON) -V 2>&1 | cut -d ' ' -f 2,2 | cut -d '.' -f 1,2)
+DISTUTILS_PLATFORM := $(shell $(PYTHON) -c "import distutils.util; print distutils.util.get_platform()")
 
 #
 # Little helpers
@@ -82,8 +88,8 @@ debian-build:
 
 build: build-stamp
 build-stamp: $(build_depends)
-	python setup.py config --noisy --with-libsvm
-	python setup.py build --with-libsvm
+	$(PYTHON) setup.py config --noisy --with-libsvm
+	$(PYTHON) setup.py build --with-libsvm
 # to overcome the issue of not-installed svmc.so
 	for ext in _svmc smlrc; do \
 		ln -sf ../../../build/lib.$(DISTUTILS_PLATFORM)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
@@ -264,35 +270,35 @@ upload-datadb-descriptions:
 #
 
 ut-%: build
-	@PYTHONPATH=.:$(PYTHONPATH) nosetests --nocapture mvpa/tests/test_$*.py
+	@PYTHONPATH=.:$(PYTHONPATH) $(NOSETESTS) --nocapture mvpa/tests/test_$*.py
 
 unittest: build
 	@echo "I: Running unittests (without optimization nor debug output)"
-	PYTHONPATH=.:$(PYTHONPATH) python mvpa/tests/main.py
+	PYTHONPATH=.:$(PYTHONPATH) $(PYTHON) mvpa/tests/main.py
 
 
 # test if PyMVPA is working if optional externals are missing
 unittest-badexternals: build
 	@echo "I: Running unittests under assumption of missing optional externals."
-	@PYTHONPATH=mvpa/tests/badexternals:.:$(PYTHONPATH) python mvpa/tests/main.py 2>&1 \
+	@PYTHONPATH=mvpa/tests/badexternals:.:$(PYTHONPATH) $(PYTHON) mvpa/tests/main.py 2>&1 \
 	| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
               -e 'WARNING:.*SMLR.* implementation'
 
 # only non-labile tests
 unittest-nonlabile: build
 	@echo "I: Running only non labile unittests. None of them should ever fail."
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no python mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
 
 # test if no errors would result if we force enabling of all states
 unittest-states: build
 	@echo "I: Running unittests with all states enabled."
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=ENFORCE_STATES_ENABLED python mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=ENFORCE_STATES_ENABLED $(PYTHON) mvpa/tests/main.py
 
 # Run unittests with optimization on -- helps to catch unconditional
 # debug calls
 unittest-optimization: build
-	@echo "I: Running unittests with python -O."
-	@PYTHONPATH=.:$(PYTHONPATH) python -O mvpa/tests/main.py
+	@echo "I: Running unittests with $(PYTHON) -O."
+	@PYTHONPATH=.:$(PYTHONPATH) $(PYTHON) -O mvpa/tests/main.py
 
 # Run unittests with all debug ids and some metrics (crossplatform ones) on.
 #   That does:
@@ -301,7 +307,7 @@ unittest-optimization: build
 unittest-debug: build
 	@echo "I: Running unittests with debug output. No progress output."
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
-       python mvpa/tests/main.py 2>&1 \
+       $(PYTHON) mvpa/tests/main.py 2>&1 \
        |  sed -n -e '/^[=-]\{60,\}$$/,/^\(MVPA_SEED=\|OK\)/p'
 
 
@@ -314,7 +320,7 @@ unittests: unittest-nonlabile unittest unittest-badexternals \
 te-%: build
 	@echo -n "I: Testing example $*: "
 	@MVPA_EXAMPLES_INTERACTIVE=no PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg \
-	 python doc/examples/$*.py >| temp-$@.log 2>&1 \
+	 $(PYTHON) doc/examples/$*.py >| temp-$@.log 2>&1 \
 	 && echo "passed" || { echo "failed:"; cat temp-$@.log; }
 	@rm -f temp-$@.log
 
@@ -325,20 +331,20 @@ testexamples: te-svdclf te-smlr te-searchlight te-sensanas te-pylab_2d \
               te-gpr te-gpr_model_selection0
 
 tm-%: build
-	PYTHONPATH=.:$(PYTHONPATH) nosetests --with-doctest --doctest-extension .rst \
+	PYTHONPATH=.:$(PYTHONPATH) $(NOSETESTS) --with-doctest --doctest-extension .rst \
 	                       --doctest-tests doc/$*.rst
 
 testmanual: build
 	@echo "I: Testing code samples found in documentation"
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg \
-	 nosetests --with-doctest --doctest-extension .rst --doctest-tests doc/source
+	 $(NOSETESTS) --with-doctest --doctest-extension .rst --doctest-tests doc/source
 
 testtutorial-%: build
 	@echo "I: Testing code samples found in tutorial part $*"
 	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_DATA_ROOT=datadb \
-		nosetests --with-doctest --doctest-extension .rst \
+		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 		          --doctest-tests doc/source/tutorial$**.rst
 
 testdatadb: build
@@ -346,7 +352,7 @@ testdatadb: build
 	@PYTHONPATH=.:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_DATA_ROOT=datadb \
-		nosetests --with-doctest --doctest-extension .rst \
+		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 		          --doctest-tests doc/source/datadb/*.rst
 
 # Check if everything (with few exclusions) is imported in unitests is
@@ -386,15 +392,15 @@ testsphinx: htmldoc
 testcfg: build
 	@echo "I: Running test to check that stored configuration is acceptable."
 	-@rm -f pymvpa.cfg
-	@PYTHONPATH=.:$(PYTHONPATH)	python -c 'from mvpa.suite import *; cfg.save("pymvpa.cfg");'
-	@PYTHONPATH=.:$(PYTHONPATH)	python -c 'from mvpa.suite import *;'
+	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c 'from mvpa.suite import *; cfg.save("pymvpa.cfg");'
+	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c 'from mvpa.suite import *;'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no python mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
 	@echo "+I: Check all known dependencies and store them"
-	@PYTHONPATH=.:$(PYTHONPATH)	python -c \
+	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c \
 	  'from mvpa.suite import *; mvpa.base.externals.testAllDependencies(force=False); cfg.save("pymvpa.cfg");'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no python mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
 	-@rm -f pymvpa.cfg
 
 test: unittests testmanual testsuite testexamples testcfg
@@ -459,7 +465,7 @@ orig-src: distclean debian-clean
 	-rm -rf dist
 	# let python create the source tarball
 	# enable libsvm to get all sources!
-	python setup.py sdist --formats=gztar --with-libsvm
+	$(PYTHON) setup.py sdist --formats=gztar --with-libsvm
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
 	tbname=$$(basename $$(ls -1 dist/*tar.gz)) ; ln -s $${tbname} ../pymvpa-snapshot_$(DEV_VERSION).orig.tar.gz
@@ -495,15 +501,15 @@ deb-src: check-debian distclean
 
 
 bdist_rpm: 3rd
-	python setup.py bdist_rpm --with-libsvm \
+	$(PYTHON) setup.py bdist_rpm --with-libsvm \
 	  --doc-files "doc data" \
 	  --packager "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>" \
 	  --vendor "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>"
 
 # build MacOS installer -- depends on patched bdist_mpkg for Leopard
 bdist_mpkg: 3rd
-	python tools/mpkg_wrapper.py setup.py build_ext
-	python tools/mpkg_wrapper.py setup.py install
+	$(PYTHON) tools/mpkg_wrapper.py setup.py build_ext
+	$(PYTHON) tools/mpkg_wrapper.py setup.py install
 
 
 #
@@ -572,7 +578,7 @@ $(SWARM_DIR)/git.log: Makefile
 
 
 $(SWARM_DIR)/git.xml: $(SWARMTOOL_DIR)/run.sh $(SWARM_DIR)/git.log
-	@python $(SWARMTOOL_DIR)/convert_logs/convert_logs.py \
+	@$(PYTHON) $(SWARMTOOL_DIR)/convert_logs/convert_logs.py \
 	 -g $(SWARM_DIR)/git.log -o $(SWARM_DIR)/git.xml
 
 $(SWARMTOOL_DIR)/run.sh:
