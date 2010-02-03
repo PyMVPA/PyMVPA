@@ -700,6 +700,13 @@ def test_repr():
     ds_repr = repr(ds)
     ok_(repr(eval(ds_repr)) == ds_repr)
 
+def test_str():
+    args = ( N.arange(12).reshape((4, 3)), range(4), [1, 1, 2, 2])
+    for iargs in range(1, len(args)):
+        ds = dataset_wizard(*(args[:iargs]))
+        ds_s = str(ds)
+        ok_(ds_s.startswith('<Dataset: 4x3@int64'))
+        ok_(ds_s.endswith('>'))
 
 def is_bsr(x):
     """Helper function to check if instance is bsr_matrix if such is
