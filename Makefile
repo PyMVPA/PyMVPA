@@ -63,8 +63,8 @@ debian-build:
 
 build: build-stamp
 build-stamp: $(build_depends)
-	python setup.py config --noisy --with-libsvm
-	python setup.py build --with-libsvm
+	python setup.py config --noisy
+	python setup.py build
 # to overcome the issue of not-installed svmc.so
 	for ext in _svmc smlrc; do \
 		ln -sf ../../../build/lib.$(DISTUTILS_PLATFORM)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
@@ -376,7 +376,7 @@ orig-src: distclean debian-clean
 	fi
 	# let python create the source tarball
 	# enable libsvm to get all sources!
-	python setup.py sdist --formats=gztar --with-libsvm
+	python setup.py sdist --formats=gztar
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
 	file=$$(ls -1 dist); ver=$${file%*.tar.gz}; ver=$${ver#pymvpa-*}; mv dist/$$file ../pymvpa_$$ver.orig.tar.gz
@@ -391,7 +391,7 @@ debsrc:
 
 
 bdist_rpm: 3rd
-	python setup.py bdist_rpm --with-libsvm \
+	python setup.py bdist_rpm \
 	  --doc-files "doc data" \
 	  --packager "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>" \
 	  --vendor "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>"
