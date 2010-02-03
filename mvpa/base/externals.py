@@ -453,29 +453,20 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
         # Exceptions which are silently caught while running tests for externals
         _caught_exceptions = [ImportError, AttributeError, RuntimeError]
 
-        # check whether RPy is involved and catch its exceptions as well.
-        # however, try to determine whether this is really necessary, as
-        # importing RPy also involved starting a full-blown R session, which can
-        # take seconds and therefore is quite nasty...
-        if dep.count('rpy') or _KNOWN[dep].count('rpy'):
-            try:
-                if dep == 'rpy':
-                    __check_rpy()          # needed to be run to adjust options first
-                else:
-                    if exists('rpy'):
-                        # otherwise no need to add anything -- test
-                        # would fail since rpy isn't available
-                        from rpy import RException
-                        _caught_exceptions += [RException]
-            except:
-                pass
-
         estr = ''
         try:
             exec _KNOWN[dep]
             result = True
         except tuple(_caught_exceptions), e:
             estr = ". Caught exception was: " + str(e)
+        except e:
+            # Add known ones by their names so we don't need to
+            # actually import anything manually to get those classes
+            if e.__class__.__name__ in ['RPy_Exception', 'RRuntimeError']:
+                _caught_exceptions += [e.__class__]
+                estr = ". Caught exception was: " + str(e)
+            else:
+                raise
 
         if __debug__:
             debug('EXT', "Presence of %s is%s verified%s" %
