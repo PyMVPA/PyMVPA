@@ -21,6 +21,7 @@ valuable advice, code or documentation to PyMVPA:
 * `Greg Detre`_, Princeton University, USA
 * `Ingo Fründ`_, TU Berlin, Germany
 * `Scott Gorlin`_, MIT, USA
+* `Jyothi Swaroop Guntupalli`_, Dartmouth College, USA
 * `Valentin Haenel`_, TU Berlin, Germany
 * `Stephen José Hanson`_, Rutgers University, USA
 * `James V. Haxby`_, Dartmouth College, USA
@@ -34,6 +35,7 @@ valuable advice, code or documentation to PyMVPA:
 .. _Greg Detre: http://www.princeton.edu/~gdetre
 .. _Ingo Fründ: http://www.cognition.tu-berlin.de/menue/members/ingo_fruend
 .. _Scott Gorlin: http://www.scottgorlin.com
+.. _Jyothi Swaroop Guntupalli: http://www.dartmouth.edu/~swaroop/
 .. _Valentin Haenel: http://www.cognition.tu-berlin.de/menue/members/valentin_haenel
 .. _Stephen José Hanson: http://psychology.rutgers.edu/~jose
 .. _James V. Haxby: http://dbic.dartmouth.edu/haxby
