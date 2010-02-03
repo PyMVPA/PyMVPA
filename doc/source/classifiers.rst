@@ -73,13 +73,13 @@ This examples demonstrates the typical daily life of a classifier.
   >>> import numpy as N
   >>> from mvpa.clfs.knn import kNN
   >>> from mvpa.datasets import dataset_wizard
-  >>> training = dataset_wizard(
-  ...                samples=N.array(N.arange(100),ndmin=2, dtype='float').T,
-  ...                                labels=[0] * 50 + [1] * 50)
+  >>> training = dataset_wizard(samples=N.array(
+  ...                                N.arange(100),ndmin=2, dtype='float').T,
+  ...                    labels=[0] * 50 + [1] * 50)
   >>> rand100 = N.random.rand(10)*100
-  >>> validation = dataset_wizard(
-  ...                samples=N.array(rand100, ndmin=2, dtype='float').T,
-  ...                                labels=[ int(i>50) for i in rand100 ])
+  >>> validation = dataset_wizard(samples=N.array(
+  ...                                rand100, ndmin=2, dtype='float').T,
+  ...                      labels=[ int(i>50) for i in rand100 ])
   >>> clf = kNN(k=10)
   >>> clf.train(training)
   >>> N.mean(clf.predict(training.samples) == training.labels)
@@ -139,7 +139,7 @@ For instance, the :class:`~mvpa.clfs.base.Classifier` class defines the
 `trained_labels` state variable, which just stores the unique labels for which
 the classifier was trained. Since `trained_labels` stores meaningful
 information only for a trained classifier, attempt to access
-'clf.trained_labels' before training would result in an error,
+'clf.states.trained_labels' before training would result in an error,
 
  >>> from mvpa.misc.exceptions import UnknownStateError
  >>> try:

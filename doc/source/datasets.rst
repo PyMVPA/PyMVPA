@@ -62,8 +62,8 @@ data samples and the corresponding class labels.
   >>> import numpy as N
   >>> from mvpa.datasets import dataset_wizard
   >>> data = dataset_wizard(samples=N.random.normal(size=(10,5)), labels=1)
-  >>> "data" # disabled for sanity -- test would still fail
-  <Dataset / float64 10 x 5 uniq: 1 labels 10 chunks>
+  >>> print data
+  <Dataset: 10x5@float64, <sa: labels>>
 
 .. index:: chunks, labels, feature, sample
 
@@ -83,17 +83,14 @@ attributes are stored in sequence-type containers consisting of one value per
 sample. These containers can be accessed by properties with the same as the
 attribute:
 
-  >>> data.labels
-  array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
-  >>> data.chunks
-  array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-
 The *data samples* themselves are stored as a two-dimensional matrix
 where each row vector is a `sample` and each column vector contains
 the values of a `feature` across all `samples`. The :class:`~mvpa.datasets.base.Dataset` class
 provides access to the samples matrix via the `samples` property.
 
   >>> data.samples.shape
+  (10, 5)
+  >>> data.shape
   (10, 5)
 
 The :class:`~mvpa.datasets.base.Dataset` class itself can only deal with 2d sample matrices. However,
@@ -143,12 +140,6 @@ almost exactly like the basic :class:`~mvpa.datasets.base.Dataset` class, except
 additional methods and is more flexible with respect to the format of the
 sample data. A masked dataset can be created just like a normal dataset.
 
-  >>> from mvpa.datasets.masked import MaskedDataset
-  >>> mdata = MaskedDataset(samples=N.random.normal(size=(5,3,4)),
-  ...                       labels=[1,2,3,4,5])
-  >>> mdata
-  <Dataset / float64 5 x 12 uniq: 5 chunks 5 labels>
-
 However, unlike :class:`~mvpa.datasets.base.Dataset` the :class:`~mvpa.datasets.masked.MaskedDataset` class can deal with sample
 data arrays with more than two dimensions. More precisely it handles arrays of
 any dimensionality. The only assumption that is made is that the first axis
@@ -167,11 +158,6 @@ the original dataspace is not lost, but kept inside the mapper used by
 additional data from dataspace into the feature space and the latter performs
 the same in the opposite direction.
 
-  >>> mdata.mapForward(N.arange(12).reshape(3,4)).shape
-  (12,)
-  >>> mdata.mapReverse(N.array([1]*mdata.nfeatures)).shape
-  (3, 4)
-
 Especially reverse mapping can be very useful when visualizing classification
 results and information maps on the original dataspace.
 
@@ -184,18 +170,6 @@ To make use of the neuro-imaging example again: The most convenient way to
 access this kind of information would be a map of the selected features that
 can be overlayed over some anatomical image. This is trivial with PyMVPA,
 because the mapping is automatically updated upon feature selection.
-
-  >>> mdata.mapReverse(N.arange(1,mdata.nfeatures+1))
-  array([[ 1,  2,  3,  4],
-         [ 5,  6,  7,  8],
-         [ 9, 10, 11, 12]])
-  >>> sdata = mdata.selectFeatures([2,7,9,10])
-  >>> sdata
-  <Dataset / float64 5 x 4 uniq: 5 chunks 5 labels>
-  >>> sdata.mapReverse(N.arange(1,sdata.nfeatures+1))
-  array([[0, 0, 1, 0],
-         [0, 0, 0, 2],
-         [0, 3, 4, 0]])
 
 .. index:: feature selection
 
@@ -317,6 +291,8 @@ and M is any non-negative integer smaller than N. Doing a leave-one-out split
 of our example dataset looks like this:
 
   >>> from mvpa.datasets.splitters import NFoldSplitter
+  >>> data = dataset_wizard(samples=N.random.normal(size=(10,5)),
+  ...                       labels=1, chunks=range(10))
   >>> splitter = NFoldSplitter(cvtype=1)   # Do N-1
   >>> for wdata, vdata in splitter(data):
   ...     pass
@@ -328,8 +304,8 @@ intended:
   >>> split = [ i for i in splitter(data)][0]
   >>> for s in split:
   ...     print s
-  Dataset / float64 9 x 5 uniq: 1 labels 9 chunks
-  Dataset / float64 1 x 5 uniq: 1 labels 1 chunks
+  <Dataset: 9x5@float64, <sa: chunks,labels>, <a: lastsplit>>
+  <Dataset: 1x5@float64, <sa: chunks,labels>, <a: lastsplit>>
   >>> split[0].uniquechunks
   array([1, 2, 3, 4, 5, 6, 7, 8, 9])
   >>> split[1].uniquechunks

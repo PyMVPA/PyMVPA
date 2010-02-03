@@ -15,7 +15,7 @@ import numpy as N
 from mvpa.suite import *
 
 
-def get_raw_haxby2001_data(path=os.path.join(pymvpa_dataroot,
+def get_raw_haxby2001_data(path=os.path.join(pymvpa_datadbroot,
                                             'demo_blockfmri',
                                             'demo_blockfmri')):
     attr = SampleAttributes(os.path.join(path, 'attributes.txt'))
