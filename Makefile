@@ -331,29 +331,35 @@ testexamples: te-svdclf te-smlr te-searchlight te-sensanas te-pylab_2d \
               te-gpr te-gpr_model_selection0
 
 tm-%: build
-	PYTHONPATH=.:$(PYTHONPATH) $(NOSETESTS) --with-doctest --doctest-extension .rst \
-	                       --doctest-tests doc/$*.rst
+	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		MVPA_DATADB_ROOT=datadb \
+		$(NOSETESTS) --with-doctest --doctest-extension .rst \
+	                 --doctest-tests doc/source/$*.rst
 
 testmanual: build
 	@echo "I: Testing code samples found in documentation"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg \
-	 $(NOSETESTS) --with-doctest --doctest-extension .rst --doctest-tests doc/source
+	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		MVPA_DATADB_ROOT=datadb \
+		$(NOSETESTS) --with-doctest --doctest-extension .rst \
+		             --doctest-tests doc/source
 
 testtutorial-%: build
 	@echo "I: Testing code samples found in tutorial part $*"
 	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
-		MVPA_DATA_ROOT=datadb \
+		MVPA_DATADB_ROOT=datadb \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
-		          --doctest-tests doc/source/tutorial$**.rst
+		             --doctest-tests doc/source/tutorial$**.rst
 
 testdatadb: build
 	@echo "I: Testing code samples on the dataset DB website"
 	@PYTHONPATH=.:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
-		MVPA_DATA_ROOT=datadb \
+		MVPA_DATADB_ROOT=datadb \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
-		          --doctest-tests doc/source/datadb/*.rst
+		             --doctest-tests doc/source/datadb/*.rst
 
 # Check if everything (with few exclusions) is imported in unitests is
 # known to the mvpa.suite()

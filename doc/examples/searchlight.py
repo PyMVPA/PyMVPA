@@ -44,7 +44,7 @@ arguments. In this case we are loading a thresholded zstat-map of a category
 selectivity contrast for voxels ventral temporal cortex."""
 
 # data path
-datapath = os.path.join(pymvpa_dataroot, 'demo_blockfmri', 'demo_blockfmri')
+datapath = os.path.join(pymvpa_datadbroot, 'demo_blockfmri', 'demo_blockfmri')
 # source of class labels and chunks definitions
 attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
 

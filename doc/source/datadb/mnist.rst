@@ -56,7 +56,7 @@ Instructions
 ============
 
   >>> from mvpa.suite import *
-  >>> filepath = os.path.join(pymvpa_dataroot, 'mnist', "mnist.hdf5")
+  >>> filepath = os.path.join(pymvpa_datadbroot, 'mnist', "mnist.hdf5")
   >>> datasets = h5load(filepath)
   >>> train = datasets['train']
   >>> test = datasets['test']

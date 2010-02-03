@@ -76,7 +76,7 @@ Instructions
 ============
 
   >>> from mvpa.suite import *
-  >>> datapath = os.path.join(pymvpa_dataroot, 'demo_blockfmri',
+  >>> datapath = os.path.join(pymvpa_datadbroot, 'demo_blockfmri',
   ...                         'demo_blockfmri')
   >>> attrs = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
   >>> ds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
