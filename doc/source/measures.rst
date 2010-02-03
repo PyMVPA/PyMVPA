@@ -136,23 +136,21 @@ that is finally called with the computed sensitivity map. PyMVPA already comes
 with some convenience functors which can be used for this purpose (see
 :mod:`~mvpa.misc.transformers`).
 
- >>> from mvpa.misc.data_generators import normalFeatureDataset
- >>> from mvpa.clfs.svm import LinearCSVMC
- >>> from mvpa.misc.transformers import Absolute
+ >>> from mvpa.suite import *
  >>>
  >>> ds = normalFeatureDataset()
- >>> ds
- <Dataset / float64 100 x 4 uniq: 2 labels 5 chunks labels_mapped>
+ >>> print ds
+ <Dataset: 100x4@float64, <sa: chunks,labels>>
  >>>
  >>> clf = LinearCSVMC()
  >>> sensana = clf.getSensitivityAnalyzer()
  >>> sens = sensana(ds)
  >>> sens.shape
- (4,)
- >>> (sens < 0).any()
+ (1, 4)
+ >>> (sens.samples < 0).any()
  True
- >>> sensana_abs = clf.getSensitivityAnalyzer(transformer=Absolute)
- >>> (sensana_abs(ds) < 0).any()
+ >>> sensana_abs = clf.getSensitivityAnalyzer(mapper=absolute_features())
+ >>> (sensana_abs(ds).samples < 0).any()
  False
 
 Above example shows how to use an existing classifier instance to report

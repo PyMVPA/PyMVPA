@@ -211,18 +211,18 @@ The easiest way is to use a mapper to transform/average the respective
 samples. Suppose you have a dataset:
 
   >>> dataset = normalFeatureDataset()
-  >>> dataset
-  <Dataset / float64 100 x 4 uniq: 2 labels 5 chunks labels_mapped>
+  >>> print dataset
+  <Dataset: 100x4@float64, <sa: chunks,labels>>
 
 Averaging all samples with the same label in each chunk individually is done
 by applying a mapper to the dataset.
 
   >>> from mvpa.mappers.fx import mean_group_sample
   >>>
-  >>> m = mean_group_sample('labels', 'chunks'])
+  >>> m = mean_group_sample(['labels', 'chunks'])
   >>> mapped_dataset = dataset.get_mapped(m)
-  >>> mapped_dataset
-  <Dataset / float64 10 x 4 uniq: 2 labels 5 chunks labels_mapped>
+  >>> print mapped_dataset
+  <Dataset: 10x4@float64, <sa: chunks,labels>, <a: mapper>>
 
 `mean_group_sample` creates an `FxMapper` that applies a function to
 every group of samples in each chunk individually and therefore yields
@@ -245,23 +245,24 @@ the classifier.
   >>> clf = FeatureSelectionClassifier(
   ...           kNN(k=5),
   ...           SensitivityBasedFeatureSelection(
-  ...               SMLRWeights(SMLR(lm=1.0), transformer=Absolute),
+  ...               SMLRWeights(SMLR(lm=1.0), mapper=maxofabs_sample()),
   ...               FixedNElementTailSelector(1, tail='upper', mode='select')),
   ...           enable_states = ['feature_ids'])
   >>> clf.train(dataset)
-  >>> final_dataset = dataset.selectFeatures(clf.feature_ids)
-  >>> final_dataset
-  <Dataset / float64 100 x 1 uniq: 2 labels 5 chunks labels_mapped>
+  >>> final_dataset = dataset[:, clf.states.feature_ids]
+  >>> print final_dataset
+  <Dataset: 100x1@float64, <sa: chunks,labels>>
 
 In the above code snippet a kNN classifier is defined, that performs a feature
-selection step prior training. Features are selected according to the absolute
-magnitude of the weights of a SMLR classifier trained on the data (same training
-data that will also go into kNN). Absolute SMLR weights are used for feature
-selection as large negative values also indicate important information. Finally,
-the classifier is configured to select the single most important feature (given
-the SMLR weights). After enabling the `feature_ids` state, the classifier
-provides the desired information, that can e.g. be applied to generate a
-stripped dataset for an analysis of the similarity structure.
+selection step prior training. Features are selected according to the maximum
+absolute magnitude of the weights of a SMLR classifier trained on the data
+(same training data that will also go into kNN). Absolute SMLR weights are used
+for feature selection as large negative values also indicate important
+information. Finally, the classifier is configured to select the single most
+important feature (given the SMLR weights). After enabling the `feature_ids`
+state, the classifier provides the desired information, that can e.g. be
+applied to generate a stripped dataset for an analysis of the similarity
+structure.
 
 
 .. index:: sensitivity, cross-validation
@@ -285,20 +286,23 @@ them again) looks like this:
   ...       harvest_attribs=\
   ...        ['transerror.clf.getSensitivityAnalyzer(force_training=False)()'])
   >>> merror = cv(dataset)
-  >>> sensitivities = cv.harvested.values()[0]
-  >>> N.array(sensitivities).shape == (2, dataset.nfeatures)
+  >>> sensitivities = cv.states.harvested.values()[0]
+  >>> len(sensitivities)
+  2
+  >>> sensitivities[0].shape == (len(dataset.uniquelabels), dataset.nfeatures)
   True
 
 First, we define an instance of
 :class:`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError` that uses an
-SMLR_ classifier to perform the cross-validation on odd-even splits of a
-dataset.  The important piece is the definition of the `harvest_attribs`.  It
-takes a list of code snippets that will be executed in the local context of the
-cross-validation function. The :class:`~mvpa.clfs.transerror.TransferError`
-instance used to train and test the classifier on each split is available via
-`transerror`. The rest is easy: :class:`~mvpa.clfs.transerror.TransferError`
-provides access to its classifier and any classifier can in turn generate an
-appropriate :class:`~mvpa.measures.base.Sensitivity` instance via
+`~mvpa.clfs.smlr.SMLR` classifier to perform the cross-validation on odd-even
+splits of a dataset.  The important piece is the definition of the
+`harvest_attribs`.  It takes a list of code snippets that will be executed in
+the local context of the cross-validation function. The
+:class:`~mvpa.clfs.transerror.TransferError` instance used to train and test
+the classifier on each split is available via `transerror`. The rest is easy:
+:class:`~mvpa.clfs.transerror.TransferError` provides access to its classifier
+and any classifier can in turn generate an appropriate
+:class:`~mvpa.measures.base.Sensitivity` instance via
 `getSensitivityAnalyzer()`.  This generator method takes additional arguments
 to the constructor of the :class:`mvpa.measures.base.Sensitivity` class. In
 this case we want to prevent retraining the classifiers, as they will be
@@ -309,72 +313,15 @@ The return values of all code snippets defined in `harvest_attribs` are
 available in the `harvested` state variable. `harvested` is a dictionary where
 the keys are the code snippets used to compute the value. As the key in this
 case is pretty long, we simply take the first (and only) value from the
-dictionary.  The value is actually a list of sensitivity vectors, one per
-split. 
+dictionary.  The value is actually a list of sensitivity datasets, one per
+split. In each dataset we have, in this case, a per class sensitivity vector.
 
-.. _SMLR : api/mvpa.clfs.smlr.SMLR-class.html
 
 .. _faq_literal_labels:
 
 Can PyMVPA deal with literal class labels?
 ------------------------------------------
 
-Yes and no. In general the classifiers wrapped or implemented in PyMVPA are not
-capable of handling literal labels, some even might require binary labels.
-However, PyMVPA datasets provide functionality to map any set of literal labels
-to a corresponding set of numerical labels. Let's take a look:
-
-  >>> # invent some samples (arbitrary in this example)
-  >>> samples = N.random.randn(3).reshape(3,1)
-
-First we will construct a Dataset the usual way (3 samples with unique numerical
-labels, all in one chunk:
-
-  >>> Dataset(samples=samples, labels=range(3), chunks=1)
-  <Dataset / float64 3 x 1 uniq: 3 labels 1 chunks>
-
-Now, we are trying to create the same dataset using literal labels:
-
-  >>> # now create the same dataset using literal labels
-  >>> ds = Dataset(samples=samples,
-  ...              labels=['one', 'two', 'three'],
-  ...              chunks=1)
-  >>> ds.labels[0]
-  'one'
-
-This approach simply stored the literal labels in the dataset and will most
-likely lead to unpredictable behavior of classifiers that cannot handle them.
-A more flexible approach is to let the dataset map the literal labels to
-numerical ones:
-
-  >>> ds = Dataset(samples=samples,
-  ...              labels=['one', 'two', 'three'],
-  ...              chunks=1,
-  ...              labels_map=True)
-  >>> ds
-  <Dataset / float64 3 x 1 uniq: 3 labels 1 chunks labels_mapped>
-  >>> ds.labels[0]
-  0
-  >>> for k in sorted(ds.labels_map.keys()):
-  ...     print k, ds.labels_map[k]
-  one 0
-  three 1
-  two 2
-
-With this approach the labels stored in the dataset are now numerical. However,
-the mapping between literal and numerical labels is somewhat arbitrary. If a
-fixed mapping is possible or intended (e.g. same mapping for multiple dataset),
-the mapping can be set explicitly:
-
-  >>> ds = Dataset(samples=samples,
-  ...              labels=['one', 'two', 'three'],
-  ...              chunks=1,
-  ...              labels_map={'one': 1, 'two': 2, 'three': 3})
-  >>> for k in sorted(ds.labels_map.keys()):
-  ...     print k, ds.labels_map[k]
-  one 1
-  three 3
-  two 2
-
-PyMVPA will use the labels mapping to display literal instead of numerical
-labels e.g. in confusion matrices.
+Yes. For all external machine learning libraries that do not support literal
+labels, PyMVPA will transparently convert them to numerical ones, and also
+revert this transformation for all output values.
