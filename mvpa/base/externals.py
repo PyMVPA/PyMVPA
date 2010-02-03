@@ -459,7 +459,7 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
             result = True
         except tuple(_caught_exceptions), e:
             estr = ". Caught exception was: " + str(e)
-        except e:
+        except Exception, e:
             # Add known ones by their names so we don't need to
             # actually import anything manually to get those classes
             if e.__class__.__name__ in ['RPy_Exception', 'RRuntimeError']:
