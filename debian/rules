@@ -20,14 +20,14 @@ clean::
 # reason
 install/python-mvpa-snapshot::
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	for buildver in $(cdbs_python_build_versions); do \
+	for buildver in $(shell pyversions -vr); do \
 		echo "I: Running PyMVPA unittests using python$$buildver"; \
-        cd $(CURDIR) && cd $(DEB_SRCDIR)/build/lib.*-$$buildver && \
+		cd $(CURDIR) && cd $(DEB_SRCDIR)/build/lib.*-$$buildver && \
 		ln -s $(CURDIR)/mvpa/data mvpa/ && \
 		MVPA_TESTS_LOWMEM=yes MVPA_TESTS_QUICK=yes MVPA_TESTS_LABILE=no PYTHONPATH=. \
-         $(call cdbs_python_binary,python$$buildver) mvpa/tests/main.py && \
-		rm mvpa/data; \
-    done
+		$(call cdbs_python_binary,python$$buildver) mvpa/tests/main.py \
+		|| exit 1 ; [ -d mvpa/data ] && rm mvpa/data; \
+	done
 endif
 
 install/python-mvpa-snapshot-lib::
