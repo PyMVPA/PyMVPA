@@ -1,5 +1,6 @@
-all:: pics pymvpa_logo.jpg download_icon.jpg tutorial_icon.jpg \
-      documentation_icon.jpg support_icon.jpg movie_icon.jpg
+all:: pymvpa_logo.jpg download_icon.jpg tutorial_icon.jpg \
+      documentation_icon.jpg support_icon.jpg movie_icon.jpg \
+      pics
 
 # where the rendered images should go
 TARGETDIR = ../source/pics
@@ -7,8 +8,8 @@ STATICDIR = ../source/_static
 
 # special case of icon svg
 ICON_SVG_BASE = pymvpa_icons
-ICON_HEIGHT = $(shell inkscape -f $(ICON_SVG_BASE).svg -H)
-ICON_WIDTH = $(shell inkscape -f $(ICON_SVG_BASE).svg -W)
+ICON_HEIGHT = $(shell inkscape -z -f $(ICON_SVG_BASE).svg -H)
+ICON_WIDTH = $(shell inkscape -z -f $(ICON_SVG_BASE).svg -W)
 ICON_NUMBER = 5
 
 # PICS_IGNORE must contain a rule for grep
@@ -66,25 +67,29 @@ ignore-%:
 
 
 # special cases
-download_icon.png: $(ICON_SVG_BASE).svg ignore-download_icon.png
-	inkscape -z -f $(ICON_SVG_BASE).svg \
-		--export-area=$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 0" | bc):0:$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 1" | bc):$(ICON_HEIGHT) -e $@
+download_icon.png: $(ICON_SVG_BASE).svg
+	inkscape -z -f $(ICON_SVG_BASE).svg -e $@ \
+		--export-area=$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 0" | bc):0:$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 1" | bc):$(ICON_HEIGHT)
+	$(MAKE) ignore-$@
 
-tutorial_icon.png: $(ICON_SVG_BASE).svg ignore-tutorial_icon.png
-	inkscape -z -f $(ICON_SVG_BASE).svg \
-		--export-area=$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 1" | bc):0:$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 2" | bc):$(ICON_HEIGHT) -e $@
+tutorial_icon.png: $(ICON_SVG_BASE).svg
+	inkscape -z -f $(ICON_SVG_BASE).svg -e $@ \
+		--export-area=$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 1" | bc):0:$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 2" | bc):$(ICON_HEIGHT)
+	$(MAKE) ignore-$@
 
-documentation_icon.png: $(ICON_SVG_BASE).svg ignore-documentation_icon.png
-	inkscape -z -f $(ICON_SVG_BASE).svg \
-		--export-area=$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 2" | bc):0:$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 3" | bc):$(ICON_HEIGHT) -e $@
+documentation_icon.png: $(ICON_SVG_BASE).svg
+	inkscape -z -f $(ICON_SVG_BASE).svg -e $@ \
+		--export-area=$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 2" | bc):0:$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 3" | bc):$(ICON_HEIGHT)
+	$(MAKE) ignore-$@
 
-support_icon.png: $(ICON_SVG_BASE).svg ignore-support_icon.png
-	inkscape -z -f $(ICON_SVG_BASE).svg \
-		--export-area=$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 3" | bc):0:$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 4" | bc):$(ICON_HEIGHT) -e $@
+support_icon.png: $(ICON_SVG_BASE).svg
+	inkscape -z -f $(ICON_SVG_BASE).svg -e $@ \
+		--export-area=$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 3" | bc):0:$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 4" | bc):$(ICON_HEIGHT)
+	$(MAKE) ignore-$@
 
-movie_icon.png: $(ICON_SVG_BASE).svg ignore-movie_icon.png
-	inkscape -z -f $(ICON_SVG_BASE).svg \
-		--export-area=$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 4" | bc):0:$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 5" | bc):$(ICON_HEIGHT) -e $@
-
+movie_icon.png: $(ICON_SVG_BASE).svg
+	inkscape -z -f $(ICON_SVG_BASE).svg -e $@ \
+		--export-area=$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 4" | bc):0:$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 5" | bc):$(ICON_HEIGHT)
+	$(MAKE) ignore-$@
 
 .PHONY: all pics
