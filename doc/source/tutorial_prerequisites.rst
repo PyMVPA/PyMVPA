@@ -46,7 +46,12 @@ Python programs after a weekend of training.
 What Do I Need To Get Python Running
 ------------------------------------
 
-Any machine which has Python available can be used for PyMVPA-based
+PyMVPA code is compatible with Python 2.X series (more precisely >= 2.4).
+Python 3.x is not yet supported. For most stable performance we recommend
+Python 2.5 since that is the version we are using for the development, but,
+once again, 2.4 or 2.6 should be fine.
+
+Any machine which has Python 2.X available can be used for PyMVPA-based
 processing. Any GNU/Linux distribution already comes with Python by
 default. The Python website offers `installers for Windows and MacOS X`_.
 
