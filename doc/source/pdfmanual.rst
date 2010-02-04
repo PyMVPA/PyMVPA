@@ -7,19 +7,30 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-.. index:: Dataset Database
+**********************************
+ PDF version of the PyMVPA Manual
+**********************************
 
-.. _chap_datadb:
+The PDF version of the manual is available for download_.
 
-****************
-Dataset Database
-****************
+.. _download: PyMVPA-Manual.pdf
 
-Blurb about intentions.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 3
 
-   datadb/demo_blockfmri
-   datadb/haxby2001
-   datadb/mnist
+   intro
+   installation
+   tutorial
+   overview
+   datasets
+   classifiers
+   measures
+   featsel
+   misc
+   examples
+   faq
+   glossary
+   references
+   legal
+   changelog

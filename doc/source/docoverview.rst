@@ -18,7 +18,7 @@ Documentation Overview
 For users
 =========
 
-* :ref:`User Documentation <contents>` [PDF-manual_] (**the** documentation).
+* :ref:`User Manual <manual>` [PDF-manual_] (**the** documentation).
 * :ref:`Installation Instructions <chap_installation>`
 * :ref:`FAQ <chap_faq>` (short answers to common problems)
 * :ref:`Module Reference <chap_modref>` (user-oriented reference)
@@ -27,9 +27,6 @@ For users
   <chap_code_swarm>`] (see what has changed)
 
 .. _PDF-manual: PyMVPA-Manual.pdf
-
-* :ref:`exampledata` (single subject dataset from :ref:`Haxby et al., 2001
-  <HGF+01>`)
 
 .. comment to separate the two lists
 
@@ -42,11 +39,5 @@ For developers
 
 * :ref:`Developer Guidelines <chap_devguide>` [PDF-guide_] (information for people
   contributing code)
-* `API Reference`_ (comprehensive and up-to-date information about the details
-  of the implementation)
 
 .. _PDF-guide: PyMVPA-DevGuide.pdf
-.. _API Reference: api/index.html
-
-
-

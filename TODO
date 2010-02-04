@@ -11,15 +11,11 @@
 
 .. index:: todo
 
-****
-TODO
-****
+*********
+ToDo-List
+*********
 
-  * OptimizedClassifier: to automatically select the model in an easy and
-    non-biased(i.e. non-cheating) way, so it could become a part of any
-    more advanced pipeline as a regular classifier
-  * Add ability to add/modify custom attributes to a dataset instance
-  * IPython mode
-  * Possibly make NiftiDataset default to float32 when it sees that the data are
-    ints
-  * Along with ICA mapper, we should add a PLS mapper
+* OptimizedClassifier: to automatically select the model in an easy and
+  non-biased(i.e. non-cheating) way, so it could become a part of any
+  more advanced pipeline as a regular classifier
+* IPython mode

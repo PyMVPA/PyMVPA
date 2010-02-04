@@ -27,10 +27,10 @@ PyMVPA Users
 
 * Department of Psychological and Brain Sciences, **Dartmouth College**, USA
 * Department of Psychology & Neuroscience, **Duke University**, USA
-* Department of Neurology, **Max Planck Insititute for Neurological Research**,
-  Cologne, Germany
 * Department of Brain and Cognitive Sciences, **Massachusetts Institute of
   Technology**, USA
+* Department of Neurology, **Max Planck Insititute for Neurological Research**,
+  Cologne, Germany
 * **MRC Cognition and Brain Sciences Unit**, Cambridge, UK
 * Department of Experimental Psychology, **Otto-von-Guericke-University
   Magdeburg**, Germany

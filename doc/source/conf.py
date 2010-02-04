@@ -66,7 +66,7 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8'
 
 # The master toctree document.
-master_doc = 'contents'
+master_doc = 'sitemap'
 
 # General substitutions.
 project = 'PyMVPA'
@@ -124,7 +124,7 @@ default_role = "obj"	   # seems to be sufficient to provide basic hyperlinking
 pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
-#modindex_common_prefix = []
+modindex_common_prefix = []
 
 
 # -- Options for HTML output ---------------------------------------------------
@@ -212,7 +212,7 @@ latex_paper_size = 'a4'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('manual', 'PyMVPA-Manual.tex', 'PyMVPA Manual',
+  ('pdfmanual', 'PyMVPA-Manual.tex', 'PyMVPA Manual',
    'PyMVPA Authors',
    'manual'),
   ('devguide', 'PyMVPA-DevGuide.tex', 'PyMVPA Developer Guidelines',

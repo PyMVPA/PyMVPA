@@ -1,36 +1,17 @@
-.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
-  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-  #
-  #   See COPYING file distributed along with the PyMVPA package for the
-  #   copyright and license terms.
-  #
-  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+.. _manual:
 
-**********************************
- PDF version of the PyMVPA Manual
-**********************************
-
-The PDF version of the manual is available for download_.
-
-.. _download: PyMVPA-Manual.pdf
-
+******************
+PyMVPA User Manual
+******************
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    intro
    installation
-   tutorial
-   overview
    datasets
+   mappers
    classifiers
    measures
    featsel
    misc
-   examples
-   faq
-   glossary
-   references
-   legal
-   changelog
