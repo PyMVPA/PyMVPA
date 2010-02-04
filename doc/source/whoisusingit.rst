@@ -1,52 +1,46 @@
-.. -*- mode: rst -*-
+.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
-
-Below is a list of all publications about PyMVPA that have been published so
-far (in chronological order). If you use PyMVPA in your research please cite
-the one that matches best. In addition there is also a list of studies done by
-other groups employing PyMVPA somewhere in the analysis.
-
-Peer-reviewed publications
---------------------------
-
-Hanke, M., Halchenko, Y. O., Haxby, J. V., and Pollmann, S. (accepted) *Statistical learning analysis in neuroscience: aiming for transparency*. Frontiers in Neuroscience.
-  Focused review article emphasizing the role of transparency to facilitate
-  adoption and evaluation of statistical learning techniques in neuroimaging
-  research.
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+  #
+  #   See COPYING file distributed along with the PyMVPA package for the
+  #   copyright and license terms.
+  #
+  ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 
-Hanke, M., Halchenko, Y. O., Sederberg, P. B., Olivetti, E., Fründ, I., Rieger, J. W., Herrmann, C. S., Haxby, J. V., Hanson, S. J. and Pollmann, S. (2009) `PyMVPA\: a unifying approach to the analysis of neuroscientific data`_. Frontiers in Neuroinformatics, 3:3.
-  Demonstration of PyMVPA capabilities concerning multi-modal or
-  modality-agnostic data analysis.
+.. index:: Who is using it?, Publications
+.. _chap_whoisusingit:
 
-.. _PyMVPA\: a unifying approach to the analysis of neuroscientific data: http://dx.doi.org/10.3389/neuro.11.003.2009
-
-
-Hanke, M., Halchenko, Y. O., Sederberg, P. B., Hanson, S. J., Haxby, J. V. & Pollmann, S. (2009). `PyMVPA: A Python toolbox for multivariate pattern analysis of fMRI data`_. Neuroinformatics, 7, 37-53.
-  First paper introducing fMRI data analysis with PyMVPA.
-
-.. _PyMVPA\: A Python toolbox for multivariate pattern analysis of fMRI data: http://dx.doi.org/10.1007/s12021-008-9041-y
+****************
+Who Is Using It?
+****************
 
 
-Posters
--------
+.. only:: html
 
-Hanke, M., Halchenko, Y. O., Sederberg, P. B., Hanson, S. J., Haxby, J. V. & Pollmann, S. (2008). `PyMVPA: A Python toolbox for machine-learning based data analysis.`_
-  Poster emphasizing PyMVPA's capabilities concerning multi-modal data analysis
-  at the annual meeting of the Society for Neuroscience, Washington, 2008.
+  If you are using PyMVPA or have published a study employing it, please leave a
+  comment at the bottom of this page, if you want to be listed here as well.
 
-Hanke, M., Halchenko, Y. O., Sederberg, P. B., Hanson, S. J., Haxby, J. V. & Pollmann, S. (2008). `PyMVPA: A Python toolbox for classifier-based data analysis.`_
-  First presentation of PyMVPA at the conference *Psychologie und Gehirn*
-  [Psychology and Brain], Magdeburg_, 2008. This poster received the poster
-  prize of the *German Society for Psychophysiology and its Application*.
 
-.. _PyMVPA\: A Python toolbox for classifier-based data analysis.: http://www.pymvpa.org/files/PyMVPA_PuG2008.pdf
-.. _PyMVPA\: A Python toolbox for machine-learning based data analysis.: http://www.pymvpa.org/files/PyMVPA_SfN2008.pdf
-.. _Magdeburg: http://www.magdeburg.de/
+PyMVPA Users
+============
+
+* Department of Psychological and Brain Sciences, **Dartmouth College**, USA
+* Department of Psychology & Neuroscience, **Duke University**, USA
+* Department of Neurology, **Max Planck Insititute for Neurological Research**,
+  Cologne, Germany
+* Department of Brain and Cognitive Sciences, **Massachusetts Institute of
+  Technology**, USA
+* **MRC Cognition and Brain Sciences Unit**, Cambridge, UK
+* Department of Experimental Psychology, **Otto-von-Guericke-University
+  Magdeburg**, Germany
+* Department of Psychology, **University of California at Los Angeles**, USA
+* Imaging Research Center, **University of Texis at Austin**, USA
+
 
 
 Studies employing PyMVPA
-------------------------
+========================
 
 * :ref:`Sun et al. (2009) <SET+09>`: *Elucidating an MRI-Based Neuroanatomic
   Biomarker for Psychosis: Classification Analysis Using Probabilistic Brain
