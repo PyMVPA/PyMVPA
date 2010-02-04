@@ -70,22 +70,22 @@ class DatasetMeasure(ClassWithCollections):
     """Stores the t-score corresponding to null_prob under assumption
     of Normal distribution"""
 
-    def __init__(self, mapper=None, null_dist=None, **kwargs):
+    def __init__(self, postproc=None, null_dist=None, **kwargs):
         """Does nothing special.
 
         Parameters
         ----------
-        mapper : Mapper instance
-          This mapper is applied in `__call__()` to perform a final
-          processing step on the to be returned dataset measure.
-          If None, nothing is done.
+        postproc : Mapper instance
+          Mapper to perform post-processing of results. This mapper is applied
+          in `__call__()` to perform a final processing step on the to be
+          returned dataset measure. If None, nothing is done.
         null_dist : instance of distribution estimator
           The estimated distribution is used to assign a probability for a
           certain value of the computed measure.
         """
         ClassWithCollections.__init__(self, **kwargs)
 
-        self.__mapper = mapper
+        self.__postproc = postproc
         """Functor to be called in return statement of all subclass __call__()
         methods."""
         null_dist_ = autoNullDist(null_dist)
@@ -105,7 +105,7 @@ class DatasetMeasure(ClassWithCollections):
         dataset.
 
         Returns the computed measure in some iterable (list-like)
-        container applying mapper if such is defined
+        container applying a post-processing mapper if such is defined.
         """
         result = self._call(dataset)
         result = self._postcall(dataset, result)
@@ -137,10 +137,10 @@ class DatasetMeasure(ClassWithCollections):
         self.states.raw_results = result
 
         # post-processing
-        if not self.__mapper is None:
+        if not self.__postproc is None:
             if __debug__:
-                debug("SA_", "Applying mapper %s" % self.__mapper)
-            result = self.__mapper.forward(result)
+                debug("SA_", "Applying mapper %s" % self.__postproc)
+            result = self.__postproc.forward(result)
 
         # estimate the NULL distribution when functor is given
         if not self.__null_dist is None:
@@ -201,8 +201,8 @@ class DatasetMeasure(ClassWithCollections):
         Includes only arguments which differ from default ones
         """
         prefixes = prefixes[:]
-        if self.__mapper is not None:
-            prefixes.append("mapper=%s" % self.__mapper)
+        if self.__postproc is not None:
+            prefixes.append("postproc=%s" % self.__postproc)
         if self.__null_dist is not None:
             prefixes.append("null_dist=%s" % self.__null_dist)
         return super(DatasetMeasure, self).__repr__(prefixes=prefixes)
@@ -221,9 +221,9 @@ class DatasetMeasure(ClassWithCollections):
         return self.__null_dist
 
     @property
-    def mapper(self):
+    def postproc(self):
         """Return mapper"""
-        return self.__mapper
+        return self.__postproc
 
 
 class FeaturewiseDatasetMeasure(DatasetMeasure):
@@ -583,7 +583,7 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
 
         # Here we provide mapper None since the postprocessing should be done
         # at the toplevel and just once
-        FeaturewiseDatasetMeasure.__init__(self, mapper=None, **kwargs)
+        FeaturewiseDatasetMeasure.__init__(self, postproc=None, **kwargs)
 
         self.__analyzer = analyzer
         """Analyzer to use per split"""

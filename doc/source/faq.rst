@@ -245,7 +245,7 @@ the classifier.
   >>> clf = FeatureSelectionClassifier(
   ...           kNN(k=5),
   ...           SensitivityBasedFeatureSelection(
-  ...               SMLRWeights(SMLR(lm=1.0), mapper=maxofabs_sample()),
+  ...               SMLRWeights(SMLR(lm=1.0), postproc=maxofabs_sample()),
   ...               FixedNElementTailSelector(1, tail='upper', mode='select')),
   ...           enable_states = ['feature_ids'])
   >>> clf.train(dataset)

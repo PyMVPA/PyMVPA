@@ -152,7 +152,7 @@ for radius in [0, 1, 3]:
 
     sl = sphere_searchlight(cv, radius=radius, space='voxel_indices',
                             center_ids=center_ids,
-                            mapper=mean_sample())
+                            postproc=mean_sample())
 
     """
     Since we care about efficiency, we are stripping all attributes from the

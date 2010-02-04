@@ -156,7 +156,7 @@ classification).
  (1, 4)
  >>> (sens.samples < 0).any()
  True
- >>> sensana_abs = clf.getSensitivityAnalyzer(mapper=absolute_features())
+ >>> sensana_abs = clf.getSensitivityAnalyzer(postproc=absolute_features())
  >>> (sensana_abs(ds).samples < 0).any()
  False
 

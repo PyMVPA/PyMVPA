@@ -41,7 +41,7 @@ class IFSTests(unittest.TestCase):
         trans_error = TransferError(svm)
         data_measure = CrossValidatedTransferError(trans_error,
                                                    NFoldSplitter(1),
-                                                   mapper=mean_sample())
+                                                   postproc=mean_sample())
 
         ifs = IFS(data_measure,
                   trans_error,

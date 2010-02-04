@@ -98,7 +98,7 @@ train the selected features as we used to select them:
   ...  FeatureSelectionClassifier(
   ...      sample_linear_svm,
   ...      SensitivityBasedFeatureSelection(
-  ...         sample_linear_svm.getSensitivityAnalyzer(mapper=maxofabs_sample()),
+  ...         sample_linear_svm.getSensitivityAnalyzer(postproc=maxofabs_sample()),
   ...         FractionTailSelector(0.05, mode='select', tail='upper')),
   ...      descr="LinSVM on 5%(SVM)")
 
