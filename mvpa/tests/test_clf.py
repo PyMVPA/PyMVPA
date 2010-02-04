@@ -151,7 +151,7 @@ class ClassifiersTests(unittest.TestCase):
         """Simple test if classifiers can generalize ok on simple data
         """
         te = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
-                                         mapper=mean_sample())
+                                         postproc=mean_sample())
         nclasses = 2 * (1 + int('multiclass' in clf.__tags__))
         if nclasses > 2 and 'on 5%(' in clf.descr:
             # skip those since they are barely applicable/testable here
@@ -244,7 +244,7 @@ class ClassifiersTests(unittest.TestCase):
         cv = CrossValidatedTransferError(
             TransferError(clf2),
             NFoldSplitter(),
-            mapper=mean_sample(),
+            postproc=mean_sample(),
             enable_states=['confusion', 'training_confusion'])
         cverror = cv(ds).samples.squeeze()
         tr_cverror = cv.states.training_confusion.error
@@ -298,7 +298,7 @@ class ClassifiersTests(unittest.TestCase):
         cv = CrossValidatedTransferError(
             TransferError(clf2),
             NFoldSplitter(),
-            mapper=mean_sample(),
+            postproc=mean_sample(),
             enable_states=['confusion', 'training_confusion'])
         cverror = cv(ds).samples.squeeze()
 
@@ -467,7 +467,7 @@ class ClassifiersTests(unittest.TestCase):
         cv = CrossValidatedTransferError(
             TransferError(tclf),
             OddEvenSplitter(),
-            mapper=mean_sample(),
+            postproc=mean_sample(),
             enable_states=['confusion', 'training_confusion'])
         cverror = cv(ds).samples.squeeze()
         try:
@@ -789,7 +789,7 @@ class ClassifiersTests(unittest.TestCase):
             cv = CrossValidatedTransferError(
                 TransferError(clf),
                 OddEvenSplitter(),
-                mapper=mean_sample(),
+                postproc=mean_sample(),
                 enable_states=['confusion', 'training_confusion'])
 
             error = cv(ds).samples.squeeze()

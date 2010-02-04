@@ -37,28 +37,28 @@ that uses this particular classifier to compute and extract sensitivity scores.
 
 # define sensitivity analyzer
 sensanas = {
-    'a) ANOVA': OneWayAnova(mapper=absolute_features()),
+    'a) ANOVA': OneWayAnova(postproc=absolute_features()),
     'b) Linear SVM weights': LinearNuSVMC().getSensitivityAnalyzer(
-                                               mapper=absolute_features()),
-    'c) I-RELIEF': IterativeRelief(mapper=absolute_features()),
+                                               postproc=absolute_features()),
+    'c) I-RELIEF': IterativeRelief(postproc=absolute_features()),
     'd) Splitting ANOVA (odd-even)':
         SplitFeaturewiseDatasetMeasure(
             OddEvenSplitter(),
-            OneWayAnova(mapper=absolute_features())),
+            OneWayAnova(postproc=absolute_features())),
     'e) Splitting SVM (odd-even)':
         SplitFeaturewiseDatasetMeasure(
             OddEvenSplitter(),
-            LinearNuSVMC().getSensitivityAnalyzer(mapper=absolute_features())),
+            LinearNuSVMC().getSensitivityAnalyzer(postproc=absolute_features())),
     'f) I-RELIEF Online':
-        IterativeReliefOnline(mapper=absolute_features()),
+        IterativeReliefOnline(postproc=absolute_features()),
     'g) Splitting ANOVA (nfold)':
         SplitFeaturewiseDatasetMeasure(
             NFoldSplitter(),
-            OneWayAnova(mapper=absolute_features())),
+            OneWayAnova(postproc=absolute_features())),
     'h) Splitting SVM (nfold)':
         SplitFeaturewiseDatasetMeasure(
             NFoldSplitter(),
-            LinearNuSVMC().getSensitivityAnalyzer(mapper=absolute_features()))
+            LinearNuSVMC().getSensitivityAnalyzer(postproc=absolute_features()))
            }
 
 """Now, we are performing some a more or less standard preprocessing steps:

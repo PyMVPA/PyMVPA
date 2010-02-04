@@ -44,7 +44,7 @@ class RegressionsTests(unittest.TestCase):
         cve = CrossValidatedTransferError(
             TransferError(regr, CorrErrorFx()),
             splitter=NFoldSplitter(),
-            mapper=mean_sample(),
+            postproc=mean_sample(),
             enable_states=['training_confusion', 'confusion'])
         corr = cve(ds).samples.squeeze()
 

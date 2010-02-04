@@ -226,7 +226,7 @@ class RFETests(unittest.TestCase):
     def test_sensitivity_based_feature_selection(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = clf.getSensitivityAnalyzer(mapper=maxofabs_sample())
+        sens_ana = clf.getSensitivityAnalyzer(postproc=maxofabs_sample())
 
         # of features to remove
         Nremove = 2
@@ -317,7 +317,7 @@ class RFETests(unittest.TestCase):
     def test_rfe(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = clf.getSensitivityAnalyzer(mapper=maxofabs_sample())
+        sens_ana = clf.getSensitivityAnalyzer(postproc=maxofabs_sample())
         trans_error = TransferError(clf)
         # because the clf is already trained when computing the sensitivity
         # map, prevent retraining for transfer error calculation
@@ -387,7 +387,7 @@ class RFETests(unittest.TestCase):
         cv = CrossValidatedTransferError(
             TransferError(clf),
             NFoldSplitter(cvtype=1),
-            mapper=mean_sample(),
+            postproc=mean_sample(),
             enable_states=['confusion'],
             expose_testdataset=True)
         #cv = SplitClassifier(clf)

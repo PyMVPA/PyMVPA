@@ -38,7 +38,7 @@ from tests_warehouse_clfs import *
 from mvpa.testing.tools import assert_equal, assert_array_equal
 
 _MEASURES_2_SWEEP = [ OneWayAnova(),
-                      CompoundOneWayAnova(mapper=sumofabs_sample()),
+                      CompoundOneWayAnova(postproc=sumofabs_sample()),
                       IterativeRelief(), IterativeReliefOnline(),
                       IterativeRelief_Devel(), IterativeReliefOnline_Devel()
                       ]
@@ -97,7 +97,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                splitter=splitter,
                                enable_states=['training_confusion',
                                               'confusion'])
-        sana = mclf.getSensitivityAnalyzer(# mapper=absolute_features(),
+        sana = mclf.getSensitivityAnalyzer(# postproc=absolute_features(),
                                            enable_states=["sensitivities"])
 
         ulabels = ds.uniquelabels
@@ -255,7 +255,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 FractionTailSelector(0.5, mode='select', tail='upper')),
             enable_states=['training_confusion'])
 
-        sana = mclf.getSensitivityAnalyzer(mapper=sumofabs_sample(),
+        sana = mclf.getSensitivityAnalyzer(postproc=sumofabs_sample(),
                                            enable_states=["sensitivities"])
         # and lets look at all sensitivities
 
@@ -426,7 +426,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                     FractionTailSelector(0.05, mode='select', tail='upper')),
                SensitivityBasedFeatureSelection(
                     SMLRWeights(SMLR(lm=1, implementation="C"),
-                                mapper=sumofabs_sample()),
+                                postproc=sumofabs_sample()),
                     RangeElementSelector(mode='select'))]
 
         fs = CombinedFeatureSelection(fss, combiner='union',
