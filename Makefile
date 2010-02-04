@@ -256,11 +256,11 @@ upload-htmldoc:
 	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI)/
 
 
-upload-website-dev: website
+upload-website-dev:
 	$(MAKE) website SPHINXOPTS='-D html_theme=pymvpa_online'
 	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI_DEV)/
 
-upload-htmldoc-dev: htmldoc
+upload-htmldoc-dev:
 	$(MAKE) htmldoc SPHINXOPTS='-D html_theme=pymvpa_online'
 	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI_DEV)/
 
