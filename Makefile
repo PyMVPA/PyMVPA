@@ -175,7 +175,9 @@ references:
 
 htmldoc: examples2rst build pics
 	@echo "I: Creating an HTML version of documentation"
-	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) html BUILDDIR=$(BUILDDIR)
+	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off \
+		PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
+		$(MAKE) html BUILDDIR=$(BUILDDIR) SPHINXOPTS="$(SPHINXOPTS)"
 	cd $(HTML_DIR)/generated && ln -sf ../_static
 	cd $(HTML_DIR)/examples && ln -sf ../_static
 	cd $(HTML_DIR)/datadb && ln -sf ../_static
@@ -184,7 +186,9 @@ htmldoc: examples2rst build pics
 pdfdoc: examples2rst build pics pdfdoc-stamp
 pdfdoc-stamp:
 	@echo "I: Creating a PDF version of documentation"
-	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) latex BUILDDIR=$(BUILDDIR)
+	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off \
+		PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
+		$(MAKE) latex BUILDDIR=$(BUILDDIR) SPHINXOPTS="$(SPHINXOPTS)"
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
 	touch $@
 
@@ -243,17 +247,29 @@ website-stamp: mkdir-WWW_DIR htmldoc pdfdoc
 	mkdir -p $(WWW_DIR)/misc && cp $(DOC_DIR)/misc/pylintrc $(WWW_DIR)/misc
 	touch $@
 
-upload-website: website
+upload-website:
+	$(MAKE) website SPHINXOPTS='-D html_theme=pymvpa_online'
 	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI)/
 
-upload-htmldoc: htmldoc
+upload-htmldoc:
+	$(MAKE) htmldoc SPHINXOPTS='-D html_theme=pymvpa_online'
 	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI)/
 
 
-upload-website-dev: website
+upload-website-dev:
+	sed -i -e "s,http://disqus.com/forums/pymvpa/,http://disqus.com/forums/pymvpa-dev/,g" \
+		doc/source/_themes/pymvpa_online/page.html
+	$(MAKE) website SPHINXOPTS='-D html_theme=pymvpa_online'
+	sed -i -e "s,http://disqus.com/forums/pymvpa-dev/,http://disqus.com/forums/pymvpa/,g" \
+		doc/source/_themes/pymvpa_online/page.html
 	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI_DEV)/
 
-upload-htmldoc-dev: htmldoc
+upload-htmldoc-dev:
+	sed -i -e "s,http://disqus.com/forums/pymvpa/,http://disqus.com/forums/pymvpa-dev/,g" \
+		doc/source/_themes/pymvpa_online/page.html
+	$(MAKE) htmldoc SPHINXOPTS='-D html_theme=pymvpa_online'
+	sed -i -e "s,http://disqus.com/forums/pymvpa-dev/,http://disqus.com/forums/pymvpa/,g" \
+		doc/source/_themes/pymvpa_online/page.html
 	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI_DEV)/
 
 
