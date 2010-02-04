@@ -247,17 +247,21 @@ website-stamp: mkdir-WWW_DIR htmldoc pdfdoc
 	mkdir -p $(WWW_DIR)/misc && cp $(DOC_DIR)/misc/pylintrc $(WWW_DIR)/misc
 	touch $@
 
-upload-website: website
+upload-website:
+	$(MAKE) website SPHINXOPTS='-D html_theme=pymvpa_online'
 	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI)/
 
-upload-htmldoc: htmldoc
+upload-htmldoc:
+	$(MAKE) htmldoc SPHINXOPTS='-D html_theme=pymvpa_online'
 	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI)/
 
 
 upload-website-dev: website
+	$(MAKE) website SPHINXOPTS='-D html_theme=pymvpa_online'
 	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI_DEV)/
 
 upload-htmldoc-dev: htmldoc
+	$(MAKE) htmldoc SPHINXOPTS='-D html_theme=pymvpa_online'
 	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI_DEV)/
 
 
