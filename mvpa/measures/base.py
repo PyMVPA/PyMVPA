@@ -134,11 +134,6 @@ class DatasetMeasure(ClassWithCollections):
     def _postcall(self, dataset, result):
         """Some postprocessing on the result
         """
-        if not isinstance(result, AttrDataset):
-            # Unless we got the results in a dataset, ensure that we have some
-            # iterable (could be a scalar if it was just a single value)
-            result = N.atleast_1d(result)
-        self.raw_result = result
         self.states.raw_results = result
 
         # post-processing

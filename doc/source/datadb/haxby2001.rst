@@ -63,7 +63,7 @@ Instructions
 ============
 
   >>> from mvpa.suite import *
-  >>> subjpath = os.path.join(pymvpa_dataroot, 'haxby2001', 'subj1')
+  >>> subjpath = os.path.join(pymvpa_datadbroot, 'haxby2001', 'subj1')
   >>> attrs = SampleAttributes(os.path.join(subjpath, 'labels.txt'),
   ...                          header=True)
   >>> ds = fmri_dataset(samples=os.path.join(subjpath, 'bold.nii.gz'),

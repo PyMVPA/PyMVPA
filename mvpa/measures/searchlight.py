@@ -44,7 +44,7 @@ class Searchlight(DatasetMeasure):
         queryengine : QueryEngine
           Engine to use to discover the "neighborhood" of each feature.
           See :class:`~mvpa.misc.neighborhood.QueryEngine`.
-        center_ids : list of int
+        center_ids : None or list of int
           List of feature ids (not coordinates) the shall serve as sphere
           centers. By default all features will be used.
         nproc : None or int
@@ -64,6 +64,9 @@ class Searchlight(DatasetMeasure):
 
         self.__datameasure = datameasure
         self.__qe = queryengine
+        if center_ids is not None and not len(center_ids):
+            raise ValueError, \
+                  "Cannot run searchlight on an empty list of center_ids"
         self.__center_ids = center_ids
         self.__nproc = nproc
 
@@ -83,8 +86,15 @@ class Searchlight(DatasetMeasure):
 
         # decide whether to run on all possible center coords or just a provided
         # subset
-        if not self.__center_ids == None:
+        if self.__center_ids is not None:
             roi_ids = self.__center_ids
+            # safeguard against stupidity
+            if __debug__:
+                if max(roi_ids) >= dataset.nfeatures:
+                    raise ValueError, \
+                          "Maximal center_id found is %s whenever given " \
+                          "dataset has only %d features" \
+                          % (max(roi_ids), dataset.nfeatures)
         else:
             roi_ids = N.arange(dataset.nfeatures)
 

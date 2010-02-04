@@ -21,16 +21,22 @@ RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g
 RSYNC_OPTS_UP=-rzlhvp --delete --chmod=Dg+s,g+rw,o+rX
 
 #
+# The Python executable to be used
+#
+PYTHON = python
+NOSETESTS = $(PYTHON) $(shell which nosetests)
+
+#
 # Helpers for version handling.
 # Note: can't be ':='-ed since location of invocation might vary
 DEBCHANGELOG_VERSION = $(shell dpkg-parsechangelog | egrep ^Version | cut -d ' ' -f 2,2 | cut -d '-' -f 1,1)
-SETUPPY_VERSION = $(shell python setup.py -V)
+SETUPPY_VERSION = $(shell $(PYTHON) setup.py -V)
 
 #
 # Automatic development version
 #
 #yields: LastTagName_CommitsSinceThat_AbbrvHash
-DEV_VERSION := $(shell git describe --abbrev=4 HEAD |sed -e 's/.dev/~dev/' -e 's/-/+/g' |cut -d '/' -f 2,2)
+DEV_VERSION := $(shell git describe --abbrev=4 HEAD |sed -e 's/-/+/g' |cut -d '/' -f 2,2)
 
 # By default we are releasing with setup.py version
 RELEASE_VERSION ?= $(SETUPPY_VERSION)
@@ -41,15 +47,15 @@ RELEASE_CODE ?=
 ifdef PYMVPA_NO_3RD
 	build_depends :=
 else
-	build_depends := 3rd
+	build_depends :=
 endif
 
 #
 # Details on the Python/system
 #
 
-PYVER := $(shell python -V 2>&1 | cut -d ' ' -f 2,2 | cut -d '.' -f 1,2)
-DISTUTILS_PLATFORM := $(shell python -c "import distutils.util; print distutils.util.get_platform()")
+PYVER := $(shell $(PYTHON) -V 2>&1 | cut -d ' ' -f 2,2 | cut -d '.' -f 1,2)
+DISTUTILS_PLATFORM := $(shell $(PYTHON) -c "import distutils.util; print distutils.util.get_platform()")
 
 #
 # Little helpers
@@ -82,8 +88,8 @@ debian-build:
 
 build: build-stamp
 build-stamp: $(build_depends)
-	python setup.py config --noisy --with-libsvm
-	python setup.py build --with-libsvm
+	$(PYTHON) setup.py config --noisy
+	$(PYTHON) setup.py build
 # to overcome the issue of not-installed svmc.so
 	for ext in _svmc smlrc; do \
 		ln -sf ../../../build/lib.$(DISTUTILS_PLATFORM)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
@@ -169,7 +175,9 @@ references:
 
 htmldoc: examples2rst build pics
 	@echo "I: Creating an HTML version of documentation"
-	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) html BUILDDIR=$(BUILDDIR)
+	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off \
+		PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
+		$(MAKE) html BUILDDIR=$(BUILDDIR) SPHINXOPTS="$(SPHINXOPTS)"
 	cd $(HTML_DIR)/generated && ln -sf ../_static
 	cd $(HTML_DIR)/examples && ln -sf ../_static
 	cd $(HTML_DIR)/datadb && ln -sf ../_static
@@ -178,7 +186,9 @@ htmldoc: examples2rst build pics
 pdfdoc: examples2rst build pics pdfdoc-stamp
 pdfdoc-stamp:
 	@echo "I: Creating a PDF version of documentation"
-	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) latex BUILDDIR=$(BUILDDIR)
+	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off \
+		PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
+		$(MAKE) latex BUILDDIR=$(BUILDDIR) SPHINXOPTS="$(SPHINXOPTS)"
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
 	touch $@
 
@@ -237,17 +247,29 @@ website-stamp: mkdir-WWW_DIR htmldoc pdfdoc
 	mkdir -p $(WWW_DIR)/misc && cp $(DOC_DIR)/misc/pylintrc $(WWW_DIR)/misc
 	touch $@
 
-upload-website: website
+upload-website:
+	$(MAKE) website SPHINXOPTS='-D html_theme=pymvpa_online'
 	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI)/
 
-upload-htmldoc: htmldoc
+upload-htmldoc:
+	$(MAKE) htmldoc SPHINXOPTS='-D html_theme=pymvpa_online'
 	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI)/
 
 
-upload-website-dev: website
+upload-website-dev:
+	sed -i -e "s,http://disqus.com/forums/pymvpa/,http://disqus.com/forums/pymvpa-dev/,g" \
+		doc/source/_themes/pymvpa_online/page.html
+	$(MAKE) website SPHINXOPTS='-D html_theme=pymvpa_online'
+	sed -i -e "s,http://disqus.com/forums/pymvpa-dev/,http://disqus.com/forums/pymvpa/,g" \
+		doc/source/_themes/pymvpa_online/page.html
 	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI_DEV)/
 
-upload-htmldoc-dev: htmldoc
+upload-htmldoc-dev:
+	sed -i -e "s,http://disqus.com/forums/pymvpa/,http://disqus.com/forums/pymvpa-dev/,g" \
+		doc/source/_themes/pymvpa_online/page.html
+	$(MAKE) htmldoc SPHINXOPTS='-D html_theme=pymvpa_online'
+	sed -i -e "s,http://disqus.com/forums/pymvpa-dev/,http://disqus.com/forums/pymvpa/,g" \
+		doc/source/_themes/pymvpa_online/page.html
 	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI_DEV)/
 
 
@@ -264,35 +286,35 @@ upload-datadb-descriptions:
 #
 
 ut-%: build
-	@PYTHONPATH=.:$(PYTHONPATH) nosetests --nocapture mvpa/tests/test_$*.py
+	@PYTHONPATH=.:$(PYTHONPATH) $(NOSETESTS) --nocapture mvpa/tests/test_$*.py
 
 unittest: build
 	@echo "I: Running unittests (without optimization nor debug output)"
-	PYTHONPATH=.:$(PYTHONPATH) python mvpa/tests/main.py
+	PYTHONPATH=.:$(PYTHONPATH) $(PYTHON) mvpa/tests/main.py
 
 
 # test if PyMVPA is working if optional externals are missing
 unittest-badexternals: build
 	@echo "I: Running unittests under assumption of missing optional externals."
-	@PYTHONPATH=mvpa/tests/badexternals:.:$(PYTHONPATH) python mvpa/tests/main.py 2>&1 \
+	@PYTHONPATH=mvpa/tests/badexternals:.:$(PYTHONPATH) $(PYTHON) mvpa/tests/main.py 2>&1 \
 	| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
               -e 'WARNING:.*SMLR.* implementation'
 
 # only non-labile tests
 unittest-nonlabile: build
 	@echo "I: Running only non labile unittests. None of them should ever fail."
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no python mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
 
 # test if no errors would result if we force enabling of all states
 unittest-states: build
 	@echo "I: Running unittests with all states enabled."
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=ENFORCE_STATES_ENABLED python mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=ENFORCE_STATES_ENABLED $(PYTHON) mvpa/tests/main.py
 
 # Run unittests with optimization on -- helps to catch unconditional
 # debug calls
 unittest-optimization: build
-	@echo "I: Running unittests with python -O."
-	@PYTHONPATH=.:$(PYTHONPATH) python -O mvpa/tests/main.py
+	@echo "I: Running unittests with $(PYTHON) -O."
+	@PYTHONPATH=.:$(PYTHONPATH) $(PYTHON) -O mvpa/tests/main.py
 
 # Run unittests with all debug ids and some metrics (crossplatform ones) on.
 #   That does:
@@ -301,7 +323,7 @@ unittest-optimization: build
 unittest-debug: build
 	@echo "I: Running unittests with debug output. No progress output."
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
-       python mvpa/tests/main.py 2>&1 \
+       $(PYTHON) mvpa/tests/main.py 2>&1 \
        |  sed -n -e '/^[=-]\{60,\}$$/,/^\(MVPA_SEED=\|OK\)/p'
 
 
@@ -314,7 +336,7 @@ unittests: unittest-nonlabile unittest unittest-badexternals \
 te-%: build
 	@echo -n "I: Testing example $*: "
 	@MVPA_EXAMPLES_INTERACTIVE=no PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg \
-	 python doc/examples/$*.py >| temp-$@.log 2>&1 \
+	 $(PYTHON) doc/examples/$*.py >| temp-$@.log 2>&1 \
 	 && echo "passed" || { echo "failed:"; cat temp-$@.log; }
 	@rm -f temp-$@.log
 
@@ -325,29 +347,35 @@ testexamples: te-svdclf te-smlr te-searchlight te-sensanas te-pylab_2d \
               te-gpr te-gpr_model_selection0
 
 tm-%: build
-	PYTHONPATH=.:$(PYTHONPATH) nosetests --with-doctest --doctest-extension .rst \
-	                       --doctest-tests doc/$*.rst
+	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		MVPA_DATADB_ROOT=datadb \
+		$(NOSETESTS) --with-doctest --doctest-extension .rst \
+	                 --doctest-tests doc/source/$*.rst
 
 testmanual: build
 	@echo "I: Testing code samples found in documentation"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg \
-	 nosetests --with-doctest --doctest-extension .rst --doctest-tests doc/source
+	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		MVPA_DATADB_ROOT=datadb \
+		$(NOSETESTS) --with-doctest --doctest-extension .rst \
+		             --doctest-tests doc/source
 
 testtutorial-%: build
 	@echo "I: Testing code samples found in tutorial part $*"
 	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
-		MVPA_DATA_ROOT=datadb \
-		nosetests --with-doctest --doctest-extension .rst \
-		          --doctest-tests doc/source/tutorial$**.rst
+		MVPA_DATADB_ROOT=datadb \
+		$(NOSETESTS) --with-doctest --doctest-extension .rst \
+		             --doctest-tests doc/source/tutorial$**.rst
 
 testdatadb: build
 	@echo "I: Testing code samples on the dataset DB website"
 	@PYTHONPATH=.:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
-		MVPA_DATA_ROOT=datadb \
-		nosetests --with-doctest --doctest-extension .rst \
-		          --doctest-tests doc/source/datadb/*.rst
+		MVPA_DATADB_ROOT=datadb \
+		$(NOSETESTS) --with-doctest --doctest-extension .rst \
+		             --doctest-tests doc/source/datadb/*.rst
 
 # Check if everything (with few exclusions) is imported in unitests is
 # known to the mvpa.suite()
@@ -386,18 +414,23 @@ testsphinx: htmldoc
 testcfg: build
 	@echo "I: Running test to check that stored configuration is acceptable."
 	-@rm -f pymvpa.cfg
-	@PYTHONPATH=.:$(PYTHONPATH)	python -c 'from mvpa.suite import *; cfg.save("pymvpa.cfg");'
-	@PYTHONPATH=.:$(PYTHONPATH)	python -c 'from mvpa.suite import *;'
+	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c 'from mvpa.suite import *; cfg.save("pymvpa.cfg");'
+	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c 'from mvpa.suite import *;'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no python mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
 	@echo "+I: Check all known dependencies and store them"
-	@PYTHONPATH=.:$(PYTHONPATH)	python -c \
+	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c \
 	  'from mvpa.suite import *; mvpa.base.externals.testAllDependencies(force=False); cfg.save("pymvpa.cfg");'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no python mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
 	-@rm -f pymvpa.cfg
 
-test: unittests testmanual testsuite testexamples testcfg
+testourcfg: build
+	@echo "+I: Run non-labile testing to verify safety of shipped configuration"
+	@PYTHONPATH=.:$(PYTHONPATH) MVPACONFIG=doc/examples/pymvpa.cfg MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
+
+
+test: unittests testmanual testsuite testexamples testcfg testourcfg
 
 # Target to be called after some major refactoring
 # It skips some flavors of unittests
@@ -442,25 +475,28 @@ check-debian-version: check-debian
 embed-dev-version: check-nodirty
 	# change upstream version
 	sed -i -e "s/$(SETUPPY_VERSION)/$(DEV_VERSION)/g" setup.py mvpa/__init__.py
+	# change package name
+	sed -i -e "s/= 'pymvpa',/= 'pymvpa-snapshot',/g" setup.py
 
-deb-dev-autochangelog: check-debian embed-dev-version
+deb-dev-autochangelog: check-debian
 	# removed -snapshot from pkg name for now
 	$(MAKE) check-debian-version || \
-		dch --newversion $(DEV_VERSION)-1 --package pymvpa \
+		dch --newversion $(DEV_VERSION)-1 --package pymvpa-snapshot \
 		 --allow-lower-version "PyMVPA development snapshot."
 
 deb-mergedev:
-	git merge --no-commit origin/dist/debian/proper/sid
+	git merge --no-commit origin/dist/debian/dev
 
 orig-src: distclean debian-clean
 	# clean existing dist dir first to have a single source tarball to process
 	-rm -rf dist
 	# let python create the source tarball
 	# enable libsvm to get all sources!
-	python setup.py sdist --formats=gztar --with-libsvm
+	$(PYTHON) setup.py sdist --formats=gztar
 	# rename to proper Debian orig source tarball and move upwards
 	# to keep it out of the Debian diff
-	mv dist/$$(ls -1 dist) ../pymvpa$(RELEASE_CODE)_$(RELEASE_VERSION).orig.tar.gz
+	tbname=$$(basename $$(ls -1 dist/*tar.gz)) ; ln -s $${tbname} ../pymvpa-snapshot_$(DEV_VERSION).orig.tar.gz
+	mv dist/*tar.gz ..
 	# clean leftover
 	rm MANIFEST
 
@@ -473,32 +509,34 @@ devel-src: check-nodirty
 	mv dist/*tar.gz ..
 	rm -rf dist
 
-devel-dsc: check-nodirty check-debian
+devel-dsc: check-nodirty
 	-rm -rf dist
 	git clone -l . dist/pymvpa-snapshot
 	#RELEASE_CODE=-snapshot
 	RELEASE_VERSION=$(DEV_VERSION) \
-	  $(MAKE) -C dist/pymvpa-snapshot -f ../../Makefile orig-src deb-mergedev deb-dev-autochangelog deb-src
+	  $(MAKE) -C dist/pymvpa-snapshot -f ../../Makefile embed-dev-version orig-src deb-mergedev deb-dev-autochangelog
+	# create the dsc -- NOT using deb-src since it would clean the hell first
+	cd dist && dpkg-source -i'\.(gbp.conf|git\.*)' -b pymvpa-snapshot
 	mv dist/*.gz dist/*dsc ..
 	rm -rf dist
 
 # make Debian source package
 # # DO NOT depend on orig-src here as it would generate a source tarball in a
 # Debian branch and might miss patches!
-deb-src:
+deb-src: check-debian distclean
 	cd .. && dpkg-source -i'\.(gbp.conf|git\.*)' -b $(CURDIR)
 
 
 bdist_rpm: 3rd
-	python setup.py bdist_rpm --with-libsvm \
+	$(PYTHON) setup.py bdist_rpm \
 	  --doc-files "doc data" \
 	  --packager "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>" \
 	  --vendor "PyMVPA Authors <pkg-exppsy-pymvpa@lists.alioth.debian.org>"
 
 # build MacOS installer -- depends on patched bdist_mpkg for Leopard
 bdist_mpkg: 3rd
-	python tools/mpkg_wrapper.py setup.py build_ext
-	python tools/mpkg_wrapper.py setup.py install
+	$(PYTHON) tools/mpkg_wrapper.py setup.py build_ext
+	$(PYTHON) tools/mpkg_wrapper.py setup.py install
 
 
 #
@@ -567,7 +605,7 @@ $(SWARM_DIR)/git.log: Makefile
 
 
 $(SWARM_DIR)/git.xml: $(SWARMTOOL_DIR)/run.sh $(SWARM_DIR)/git.log
-	@python $(SWARMTOOL_DIR)/convert_logs/convert_logs.py \
+	@$(PYTHON) $(SWARMTOOL_DIR)/convert_logs/convert_logs.py \
 	 -g $(SWARM_DIR)/git.log -o $(SWARM_DIR)/git.xml
 
 $(SWARMTOOL_DIR)/run.sh:
@@ -586,6 +624,7 @@ upload-codeswarm: codeswarm
 .PHONY: fetch-data deb-src orig-src pylint apidoc pdfdoc htmldoc doc manual \
         all profile website fetch-data-misc upload-website \
         test testsuite testmanual testapiref testexamples testrefactor \
+        testcfg testourcfg \
         unittest unittest-debug unittest-optimization unittest-nonlabile \
         unittest-badexternals unittests \
         distclean debian-clean check-nodirty check-debian check-debian-version \
