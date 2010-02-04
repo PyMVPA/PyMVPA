@@ -61,7 +61,8 @@ The following software packages are required or PyMVPA will not work at all.
   Python_ 2.4 with ctypes_ 1.0.1 or a later Python 2.X release
     With some modifications PyMVPA could probably work with Python 2.3, but as
     it is quite old already and Python 2.4 is widely available there should be
-    no need to do this.
+    no need to do this.  Python 2.5 is preferable release since that is the
+    version we use for PyMVPA development.  Python 3.X is not yet supported.
   NumPy_
     PyMVPA makes extensive use of NumPy to store and handle data. There is no
     way around it.
