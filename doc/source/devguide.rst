@@ -9,9 +9,9 @@
 
 .. _chap_devguide:
 
-***************************
-PyMVPA Developer Guidelines
-***************************
+********************
+Developer Guidelines
+********************
 
 
 Documentation
