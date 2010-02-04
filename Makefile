@@ -175,7 +175,9 @@ references:
 
 htmldoc: examples2rst build pics
 	@echo "I: Creating an HTML version of documentation"
-	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) html BUILDDIR=$(BUILDDIR)
+	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off \
+		PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
+		$(MAKE) html BUILDDIR=$(BUILDDIR) SPHINXOPTS="$(SPHINXOPTS)"
 	cd $(HTML_DIR)/generated && ln -sf ../_static
 	cd $(HTML_DIR)/examples && ln -sf ../_static
 	cd $(HTML_DIR)/datadb && ln -sf ../_static
@@ -184,7 +186,9 @@ htmldoc: examples2rst build pics
 pdfdoc: examples2rst build pics pdfdoc-stamp
 pdfdoc-stamp:
 	@echo "I: Creating a PDF version of documentation"
-	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off PYTHONPATH=$(CURDIR):$(PYTHONPATH) $(MAKE) latex BUILDDIR=$(BUILDDIR)
+	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off \
+		PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
+		$(MAKE) latex BUILDDIR=$(BUILDDIR) SPHINXOPTS="$(SPHINXOPTS)"
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
 	touch $@
 
