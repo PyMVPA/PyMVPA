@@ -257,11 +257,19 @@ upload-htmldoc:
 
 
 upload-website-dev:
+	sed -i -e "s,http://disqus.com/forums/pymvpa/,http://disqus.com/forums/pymvpa-dev/,g" \
+		doc/source/_themes/pymvpa_online/page.html
 	$(MAKE) website SPHINXOPTS='-D html_theme=pymvpa_online'
+	sed -i -e "s,http://disqus.com/forums/pymvpa-dev/,http://disqus.com/forums/pymvpa/,g" \
+		doc/source/_themes/pymvpa_online/page.html
 	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI_DEV)/
 
 upload-htmldoc-dev:
+	sed -i -e "s,http://disqus.com/forums/pymvpa/,http://disqus.com/forums/pymvpa-dev/,g" \
+		doc/source/_themes/pymvpa_online/page.html
 	$(MAKE) htmldoc SPHINXOPTS='-D html_theme=pymvpa_online'
+	sed -i -e "s,http://disqus.com/forums/pymvpa-dev/,http://disqus.com/forums/pymvpa/,g" \
+		doc/source/_themes/pymvpa_online/page.html
 	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI_DEV)/
 
 
