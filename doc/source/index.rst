@@ -2,26 +2,17 @@
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
 
 
-PyMVPA is a Python_ module intended to ease pattern classification analyses of
-large datasets. In the neuroimaging contexts such analysis techniques are also
-known as :term:`decoding` or :term:`MVPA` analysis. PyMVPA provides high-level
-abstraction of typical processing steps and a number of implementations of some
-popular algorithms.  While it is not limited to the neuroimaging domain, it is
-eminently suited for such datasets.  PyMVPA is truly free software (in every
-respect) and additionally requires nothing but free-software to run.
-
-.. _Python: http://www.python.org
+PyMVPA is a Python_ package intended to ease statistical learning analyses of
+large datasets. PyMVPA offers a high-level interface to a broad range of
+algorithms for classification, regression, feature selection, data import
+and export. While it is not limited to the neuroimaging domain, it is eminently
+suited for such datasets. PyMVPA is truly free software (in every respect) and
+additionally requires nothing but free-software to run.
 
 PyMVPA stands for **M**\ ulti\ **V**\ ariate **P**\ attern **A**\ nalysis
 (:term:`MVPA`) in **Py**\ thon.
 
-PyMVPA is developed inside the `Debian Experimental Psychology Project`_. This
-website, the source code repository and download services are hosted on 
-Alioth_, a service that is kindly provided by the `Debian project`_.
-
-.. _Debian Experimental Psychology Project: http://pkg-exppsy.alioth.debian.org
-.. _Alioth: http://alioth.debian.org
-.. _Debian project: http://www.debian.org
+.. _Python: http://www.python.org
 
 
 
@@ -64,11 +55,9 @@ News
 
 PyMVPA 0.4.4 is out [2 Feb 2010]
   This release brings a set of bug fixes, few new features. See the
-  :ref:`changelog <chap_changelog>` for details.
+  :ref:`changelog <chap_changelog>` for details. Are you :ref:`using it
+  <chap_whoisusingit>` already?
 
-.. raw:: html
-
-   <dt></dt><dd><script type="text/javascript" src="http://www.ohloh.net/p/16363/widgets/project_users_logo.js"></script></dd>
 
 PyMVPA Extravaganza 2009 at Dartmouth College [30th Nov -- 4th Dec]
   :ref:`Read more <chap_workshop_2009fall>` about the topics and achievements.
@@ -94,13 +83,6 @@ full text of the license.
 .. _MIT License: http://www.opensource.org/licenses/mit-license.php
 .. _appendix of the manual: manual.html#license
 
-
-
-
-Publications
-============
-
-.. include:: publications.rst
 
 
 Authors & Contributors
@@ -142,6 +124,8 @@ here.
 * Orange_: Powerful general-purpose data mining software. Orange also has Python
   bindings.
 
+* PROBID_: Matlab-based GUI pattern recognition toolbox for MRI data.
+
 * `PyMGH/PyFSIO`_: Python IO library to for FreeSurfer's `.mgh` data format.
 
 * PyML_: PyML is an interactive object oriented framework for machine learning
@@ -164,6 +148,7 @@ here.
 .. _MDP: http://mdp-toolkit.sourceforge.net
 .. _MVPA Toolbox: http://www.csbmb.princeton.edu/mvpa/
 .. _NiPy: http://neuroimaging.scipy.org
+.. _PROBID: http://www.brainmap.co.uk/probid.htm
 .. _PyMGH/PyFSIO: http://code.google.com/p/pyfsio
 .. _PyNIfTI: http://niftilib.sourceforge.net/pynifti
 .. _OpenMEEG: http://www-sop.inria.fr/odyssee/software/OpenMEEG
