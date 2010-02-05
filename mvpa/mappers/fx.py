@@ -85,7 +85,7 @@ class FxMapper(Mapper):
         if not self.__uattrs is None:
             raise RuntimeError("%s does not support forward-mapping of plain "
                                "data when data grouping based on attributes "
-                               "is requested" 
+                               "is requested"
                                % self.__class__.__name__)
         # apply fx along samples axis for each feature
         if self.__axis == 'samples':
@@ -238,7 +238,7 @@ def mean_group_sample(attrs, attrfx='merge'):
     Parameters
     ----------
     attrs : list
-      List of sample attributes whos unique values will be used to identify the
+      List of sample attributes whose unique values will be used to identify the
       samples groups.
     attrfx : 'merge' or callable
       Callable that is used to determine the sample attributes of the computed
