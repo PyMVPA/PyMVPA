@@ -35,7 +35,7 @@ PyMVPA Users
 * Department of Experimental Psychology, **Otto-von-Guericke-University
   Magdeburg**, Germany
 * Department of Psychology, **University of California at Los Angeles**, USA
-* Imaging Research Center, **University of Texis at Austin**, USA
+* Imaging Research Center, **University of Texas at Austin**, USA
 
 
 
