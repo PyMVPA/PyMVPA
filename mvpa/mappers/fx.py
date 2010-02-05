@@ -216,7 +216,7 @@ def mean_sample(attrfx='merge'):
 
     Parameters
     ----------
-    attrfx : 'merge' or callable
+    attrfx : 'merge' or callable, optional
       Callable that is used to determine the sample attributes of the computed
       mean samples. By default this will be a string representation of all
       unique value of a particular attribute in any sample group. If there is
@@ -240,7 +240,7 @@ def mean_group_sample(attrs, attrfx='merge'):
     attrs : list
       List of sample attributes whose unique values will be used to identify the
       samples groups.
-    attrfx : 'merge' or callable
+    attrfx : 'merge' or callable, optional
       Callable that is used to determine the sample attributes of the computed
       mean samples. By default this will be a string representation of all
       unique value of a particular attribute in any sample group. If there is
@@ -264,7 +264,7 @@ def mean_group_feature(attrs, attrfx='merge'):
     attrs : list
       List of feature attributes whos unique values will be used to identify the
       feature groups.
-    attrfx : 'merge' or callable
+    attrfx : 'merge' or callable, optional
       Callable that is used to determine the feature attributes of the computed
       mean features. By default this will be a string representation of all
       unique value of a particular attribute in any feature group. If there is
