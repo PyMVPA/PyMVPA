@@ -73,7 +73,7 @@ def map2nifti(dataset, data=None, imghdr=None):
     return NiftiImage(dsarray, imghdr)
 
 
-def fmri_dataset(samples, labels=None, chunks=None, mask=None,
+def fmri_dataset(samples, targets=None, chunks=None, mask=None,
                  sprefix='voxel', tprefix='time', add_fa=None,):
     """Create a dataset from an fMRI timeseries image.
 
@@ -82,7 +82,7 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
     vectors, optionally being masked (i.e. subset of voxels corresponding to
     non-zero elements in a mask image).
 
-    In addition to (optional) samples attributes for labels and chunks the
+    In addition to (optional) samples attributes for targets and chunks the
     returned dataset contains a number of additional attributes:
 
     Samples attributes (per each volume):
@@ -110,7 +110,7 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
       fMRI timeseries, specified either as a filename (single file 4D image),
       an image instance (4D image), or a list of filenames or image instances
       (each list item corresponding to a 3D volume).
-    labels : scalar or sequence
+    targets : scalar or sequence
       Label attribute for each volume in the timeseries, or a scalar value that
       is assigned to all samples.
     chunks : scalar or sequence
@@ -152,8 +152,8 @@ def fmri_dataset(samples, labels=None, chunks=None, mask=None,
 
     # compile the samples attributes
     sa = {}
-    if not labels is None:
-        sa['labels'] = _expand_attribute(labels, samples.shape[0], 'labels')
+    if not targets is None:
+        sa['targets'] = _expand_attribute(targets, samples.shape[0], 'targets')
     if not chunks is None:
         sa['chunks'] = _expand_attribute(chunks, samples.shape[0], 'chunks')
 

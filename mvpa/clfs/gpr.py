@@ -160,7 +160,7 @@ class GPR(Classifier):
 
     def compute_log_marginal_likelihood(self):
         """
-        Compute log marginal likelihood using self.train_fv and self.labels.
+        Compute log marginal likelihood using self.train_fv and self.targets.
         """
         if __debug__:
             debug("GPR", "Computing log_marginal_likelihood")
@@ -281,7 +281,7 @@ class GPR(Classifier):
 
         self._train_fv = train_fv = data.samples
         # GRP relies on numerical labels
-        train_labels = self._attrmap.to_numeric(data.sa.labels)
+        train_labels = self._attrmap.to_numeric(data.sa.targets)
         self._train_labels = train_labels
 
         if not retrainable or _changedData['traindata'] \
@@ -348,7 +348,7 @@ class GPR(Classifier):
             L = self._L                 # reuse
 
         # XXX we leave _alpha being recomputed, although we could check
-        #   if newL or _changedData['labels']
+        #   if newL or _changedData['targets']
         #
         if __debug__:
             debug("GPR", "Computing alpha")

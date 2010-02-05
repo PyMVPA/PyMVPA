@@ -193,8 +193,6 @@ class SVM(_SVM):
             "libsvr": (shogun.Regression.LibSVR, ('C', 'tube_epsilon',),
                       ('regression',),
                        "LIBSVM's epsilon-SVR"),
-            "krr": (shogun.Regression.KRR, ('tau',), ('regression',),
-                    "Kernel Ridge Regression"),
             }
 
 
@@ -232,7 +230,13 @@ class SVM(_SVM):
         ##     but then krr gets confused, and svrlight needs it to provide
         ##     meaningful results even without 'retraining'
         #if self._svm_impl in ['svrlight', 'lightsvm']:
-            #kernel.set_precompute_matrix(True, True)
+            #try:
+                #kernel.set_precompute_matrix(True, True)
+            #except Exception, e:
+                ## N/A in shogun 0.9.1... TODO: RF
+                #if __debug__:
+                    #debug('SG_', "Failed call to set_precompute_matrix for %s: %s"
+                          #% (self, e))
 
 
     def _train(self, dataset):
@@ -260,9 +264,9 @@ class SVM(_SVM):
             debug("SG_", "Creating labels instance")
 
         if self.__is_regression__:
-            labels_ = N.asarray(dataset.sa['labels'].value, dtype='double')
+            labels_ = N.asarray(dataset.sa['targets'].value, dtype='double')
         else:
-            la = dataset.sa['labels']
+            la = dataset.sa['targets']
             ul = la.unique
             ul.sort()
 
@@ -381,7 +385,7 @@ class SVM(_SVM):
         else:
             if __debug__:
                 debug("SG_", "SVM instance is not re-created")
-            if _changedData['labels']:          # labels were changed
+            if _changedData['targets']:          # labels were changed
                 if __debug__: debug("SG__", "Assigning new labels")
                 self.__svm.set_labels(labels)
             if newkernel:               # kernel was replaced
@@ -396,7 +400,7 @@ class SVM(_SVM):
         # Train
         if __debug__ and 'SG' in debug.active:
             if not self.__is_regression__:
-                lstr = " with labels %s" % dataset.uniquelabels
+                lstr = " with labels %s" % dataset.uniquetargets
             else:
                 lstr = ""
             debug("SG", "%sTraining %s on data%s" %
@@ -411,17 +415,17 @@ class SVM(_SVM):
         # Report on training
         if (__debug__ and 'SG__' in debug.active) or \
            self.states.is_enabled('training_confusion'):
-            trained_labels = self.__svm.classify().get_labels()
+            trained_targets = self.__svm.classify().get_labels()
         else:
-            trained_labels = None
+            trained_targets = None
 
         if __debug__ and "SG__" in debug.active:
                 debug("SG__", "Original labels: %s, Trained labels: %s" %
-                              (dataset.labels, trained_labels))
+                              (dataset.targets, trained_targets))
 
         # Assign training confusion right away here since we are ready
         # to do so.
-        # XXX TODO use some other state variable like 'trained_labels' and
+        # XXX TODO use some other state variable like 'trained_targets' and
         #     use it within base Classifier._posttrain to assign predictions
         #     instead of duplicating code here
         # XXX For now it can be done only for regressions since labels need to
@@ -429,8 +433,8 @@ class SVM(_SVM):
         #     as a classifier so mapping happens upstairs
         if self.__is_regression__ and self.states.is_enabled('training_confusion'):
             self.states.training_confusion = self.__summary_class__(
-                targets=dataset.labels,
-                predictions=trained_labels)
+                targets=dataset.targets,
+                predictions=trained_targets)
 
 
     # XXX actually this is the beast which started this evil conversion
@@ -594,7 +598,7 @@ class SVM(_SVM):
                 raise RuntimeError, \
                       "Shogun: Implementation %s doesn't handle multiclass " \
                       "data. Got labels %s. Use some other classifier" % \
-                      (self._svm_impl, self.__traindataset.uniquelabels)
+                      (self._svm_impl, self.__traindataset.uniquetargets)
             if __debug__:
                 debug("SG_", "Using %s for multiclass data of %s" %
                       (svm_impl_class, self._svm_impl))
@@ -620,7 +624,10 @@ for name, item, params, descr in \
          ('lightsvm', "shogun.Classifier.SVMLight", "('C',), ('binary',)",
           "SVMLight classification http://svmlight.joachims.org/"),
          ('svrlight', "shogun.Regression.SVRLight", "('C','tube_epsilon',), ('regression',)",
-          "SVMLight regression http://svmlight.joachims.org/")]:
+          "SVMLight regression http://svmlight.joachims.org/"),
+         ('krr', "shogun.Regression.KRR", "('tau',), ('regression',)",
+          "Kernel Ridge Regression"),
+         ]:
     if externals.exists('shogun.%s' % name):
         exec "SVM._KNOWN_IMPLEMENTATIONS[\"%s\"] = (%s, %s, \"%s\")" % (name, item, params, descr)
 

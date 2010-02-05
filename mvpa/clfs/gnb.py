@@ -117,8 +117,8 @@ class GNB(Classifier):
 
         # get the dataset information into easy vars
         X = dataset.samples
-        labels = dataset.labels
-        self.ulabels = ulabels = dataset.uniquelabels
+        labels = dataset.targets
+        self.ulabels = ulabels = dataset.uniquetargets
         nlabels = len(ulabels)
         #params = self.params        # for quicker access
         label2index = dict((l, il) for il, l in enumerate(ulabels))

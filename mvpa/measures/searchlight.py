@@ -34,7 +34,7 @@ class Searchlight(DatasetMeasure):
         doc="Number of features in each ROI.")
 
     def __init__(self, datameasure, queryengine, center_ids=None,
-                 nproc=1, **kwargs):
+                 nproc=None, **kwargs):
         """
         Parameters
         ----------
@@ -44,12 +44,12 @@ class Searchlight(DatasetMeasure):
         queryengine : QueryEngine
           Engine to use to discover the "neighborhood" of each feature.
           See :class:`~mvpa.misc.neighborhood.QueryEngine`.
-        center_ids : list of int
+        center_ids : None or list of int
           List of feature ids (not coordinates) the shall serve as sphere
           centers. By default all features will be used.
-        nproc : int
+        nproc : None or int
           How many processes to use for computation.  Requires `pprocess`
-          external module.
+          external module.  If None -- all available cores will be used.
         **kwargs
           In addition this class supports all keyword arguments of its
           base-class :class:`~mvpa.measures.base.DatasetMeasure`.
@@ -64,6 +64,9 @@ class Searchlight(DatasetMeasure):
 
         self.__datameasure = datameasure
         self.__qe = queryengine
+        if center_ids is not None and not len(center_ids):
+            raise ValueError, \
+                  "Cannot run searchlight on an empty list of center_ids"
         self.__center_ids = center_ids
         self.__nproc = nproc
 
@@ -74,13 +77,24 @@ class Searchlight(DatasetMeasure):
         # local binding
         nproc = self.__nproc
 
+        if nproc is None and externals.exists('pprocess'):
+            import pprocess
+            nproc = pprocess.get_number_of_cores() or 1
+
         # train the queryengine
         self.__qe.train(dataset)
 
         # decide whether to run on all possible center coords or just a provided
         # subset
-        if not self.__center_ids == None:
+        if self.__center_ids is not None:
             roi_ids = self.__center_ids
+            # safeguard against stupidity
+            if __debug__:
+                if max(roi_ids) >= dataset.nfeatures:
+                    raise ValueError, \
+                          "Maximal center_id found is %s whenever given " \
+                          "dataset has only %d features" \
+                          % (max(roi_ids), dataset.nfeatures)
         else:
             roi_ids = N.arange(dataset.nfeatures)
 

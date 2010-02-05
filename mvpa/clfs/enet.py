@@ -127,7 +127,7 @@ class ENET(Classifier):
         if self.__max_steps is None:
             # train without specifying max_steps
             self.__trained_model = rpy.r.enet(data.samples,
-                                              data.labels[:,N.newaxis],
+                                              data.targets[:,N.newaxis],
                                               self.__lm,
                                               normalize=self.__normalize,
                                               intercept=self.__intercept,
@@ -135,7 +135,7 @@ class ENET(Classifier):
         else:
             # train with specifying max_steps
             self.__trained_model = rpy.r.enet(data.samples,
-                                              data.labels[:,N.newaxis],
+                                              data.targets[:,N.newaxis],
                                               self.__lm,
                                               normalize=self.__normalize,
                                               intercept=self.__intercept,

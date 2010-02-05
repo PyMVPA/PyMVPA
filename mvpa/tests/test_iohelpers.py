@@ -167,7 +167,7 @@ class IOHelperTests(unittest.TestCase):
 
         # check header (sort because order in dict is unpredictable)
         self.failUnless(sorted(attr.keys()) == \
-            ['chunks','labels'])
+            ['chunks','targets'])
 
         self.failUnless(attr.nsamples == 3)
 

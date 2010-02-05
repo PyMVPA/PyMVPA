@@ -103,8 +103,8 @@ from mvpa.mappers.procrustean import *
 from mvpa.mappers.boxcar import *
 from mvpa.mappers.fx import *
 from mvpa.mappers.som import *
+from mvpa.mappers.zscore import *
 if externals.exists('scipy'):
-    from mvpa.mappers.zscore import ZScoreMapper
     from mvpa.mappers.detrend import *
 if externals.exists('mdp'):
     from mvpa.mappers.mdp_adaptor import *

@@ -1,4 +1,4 @@
-.. -*- mode: rst; fill-column: 78 -*-
+.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
@@ -7,20 +7,20 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-.. _chap_tutorial5:
 .. index:: Tutorial
+.. _chap_tutorial5:
 
 ******************************
 Part 5: The Mighty Searchlight
 ******************************
 
 
-Literature
-----------
+.. only:: html
 
-Related API Documentation
--------------------------
-.. autosummary::
-   :toctree: generated
+  References
+  ==========
 
-   ~mvpa.measures.searchlight.Searchlight
+  .. autosummary::
+     :toctree: generated
+
+     ~mvpa.measures.searchlight.Searchlight

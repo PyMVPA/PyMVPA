@@ -28,7 +28,7 @@ class CrossValidationTests(unittest.TestCase):
         self.failUnless( data.nsamples == 120 )
         self.failUnless( data.nfeatures == 2 )
         self.failUnless(
-            (data.sa.labels == \
+            (data.sa.targets == \
                 [0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0] * 6).all())
         self.failUnless(
             (data.sa.chunks == \

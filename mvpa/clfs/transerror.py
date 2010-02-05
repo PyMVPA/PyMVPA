@@ -1285,11 +1285,11 @@ class ClassifierError(ClassWithCollections):
                         self.__clf.states.training_confusion
                     self.__clf.states.reset_changed_temporarily()
 
-        if self.__clf.states.is_enabled('trained_labels') \
+        if self.__clf.states.is_enabled('trained_targets') \
                and not self.__clf.__is_regression__ \
                and not testdataset is None:
-            newlabels = Set(testdataset.sa['labels'].unique) \
-                        - Set(self.__clf.states.trained_labels)
+            newlabels = Set(testdataset.sa['targets'].unique) \
+                        - Set(self.__clf.states.trained_targets)
             if len(newlabels)>0:
                 warning("Classifier %s wasn't trained to classify labels %s" %
                         (self.__clf, newlabels) +
@@ -1449,12 +1449,12 @@ class TransferError(ClassifierError):
         states = self.states
         if states.is_enabled('confusion'):
             confusion = clf.__summary_class__(
-                #labels = self.labels,
-                targets = testdataset.sa.labels,
+                #labels = self.targets,
+                targets = testdataset.sa.targets,
                 predictions = predictions,
                 estimates = clf.states.get('estimates', None))
             try:
-                confusion.labels_map = testdataset.labels_map
+                confusion.targets_map = testdataset.targets_map
             except:
                 pass
             states.confusion = confusion
@@ -1463,7 +1463,7 @@ class TransferError(ClassifierError):
             samples_error = []
             for i, p in enumerate(predictions):
                 samples_error.append(
-                    self.__errorfx([p], testdataset.sa.labels[i:i+1]))
+                    self.__errorfx([p], testdataset.sa.targets[i:i+1]))
             testdataset.init_origids(
                 'samples', attr=self.__samples_idattr, mode='existing')
             states.samples_error = dict(
@@ -1471,7 +1471,7 @@ class TransferError(ClassifierError):
                     samples_error))
 
         # compute error from desired and predicted values
-        error = self.__errorfx(predictions, testdataset.sa.labels)
+        error = self.__errorfx(predictions, testdataset.sa.targets)
 
         return error
 

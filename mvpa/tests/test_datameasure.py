@@ -19,6 +19,7 @@ from mvpa.featsel.rfe import RFE
 from mvpa.clfs.meta import SplitClassifier, MulticlassClassifier, \
      FeatureSelectionClassifier
 from mvpa.clfs.smlr import SMLR, SMLRWeights
+from mvpa.mappers.zscore import zscore
 from mvpa.mappers.fx import sumofabs_sample, absolute_features, FxMapper, \
      maxofabs_sample
 from mvpa.datasets.splitters import NFoldSplitter, NoneSplitter
@@ -37,7 +38,7 @@ from tests_warehouse_clfs import *
 from mvpa.testing.tools import assert_equal, assert_array_equal
 
 _MEASURES_2_SWEEP = [ OneWayAnova(),
-                      CompoundOneWayAnova(mapper=sumofabs_sample()),
+                      CompoundOneWayAnova(postproc=sumofabs_sample()),
                       IterativeRelief(), IterativeReliefOnline(),
                       IterativeRelief_Devel(), IterativeReliefOnline_Devel()
                       ]
@@ -96,10 +97,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                splitter=splitter,
                                enable_states=['training_confusion',
                                               'confusion'])
-        sana = mclf.getSensitivityAnalyzer(# mapper=absolute_features(),
+        sana = mclf.getSensitivityAnalyzer(# postproc=absolute_features(),
                                            enable_states=["sensitivities"])
 
-        ulabels = ds.uniquelabels
+        ulabels = ds.uniquetargets
         nlabels = len(ulabels)
         # Can't rely on splitcfg since count-limit is done in __call__
         assert(nsplits == len(list(splitter(ds))))
@@ -126,18 +127,18 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         # Check if labels are present
         self.failUnless('splits' in sens.sa)
-        self.failUnless('labels' in sens.sa)
+        self.failUnless('targets' in sens.sa)
         # should be 1D -- otherwise dtype object
-        self.failUnless(sens.sa.labels.ndim == 1)
+        self.failUnless(sens.sa.targets.ndim == 1)
 
-        sens_ulabels = sens.sa['labels'].unique
+        sens_ulabels = sens.sa['targets'].unique
         # Some labels might be pairs(tuples) so ndarray would be of
         # dtype object and we would need to get them all
         if sens_ulabels.dtype is N.dtype('object'):
             sens_ulabels = N.unique(
                 reduce(lambda x,y: x+y, [list(x) for x in sens_ulabels]))
 
-        assert_array_equal(sens_ulabels, ds.sa['labels'].unique)
+        assert_array_equal(sens_ulabels, ds.sa['targets'].unique)
 
         errors = [x.percentCorrect
                     for x in sana.clf.states.confusion.matrices]
@@ -168,7 +169,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # Since  now we have per split and possibly per label -- lets just find
         # mean per each feature per label across splits
         sensm = FxMapper('samples', lambda x: N.sum(x),
-                         uattrs=['labels'])(sens)
+                         uattrs=['targets'])(sens)
         sensgm = maxofabs_sample()(sensm)    # global max of abs of means
 
         assert_equal(sensgm.shape[0], 1)
@@ -190,7 +191,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
             #       that would make it easy to see if the sensitivity
             #       just has incorrect order of labels assigned
             for sens1 in sensm:
-                labels1 = sens1.labels  # labels (1) for this sensitivity
+                labels1 = sens1.targets  # labels (1) for this sensitivity
                 lndim = labels1.ndim
                 label = labels1[0]      # current label
 
@@ -199,7 +200,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 if lndim == 1: # just a single label
                     self.failUnless(label in ulabels)
 
-                    ilabel_all = N.where(ds.fa.labels == label)[0]
+                    ilabel_all = N.where(ds.fa.targets == label)[0]
                     # should have just 1 feature for the label
                     self.failUnlessEqual(len(ilabel_all), 1)
                     ilabel = ilabel_all[0]
@@ -213,7 +214,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                     # we should have highest (in abs) coefficients in
                     # those two labels
                     maxsensi2 = N.argsort(N.abs(sens1))[0][-2:]
-                    ilabel2 = [N.where(ds.fa.labels == l)[0][0]
+                    ilabel2 = [N.where(ds.fa.targets == l)[0][0]
                                     for l in label]
                     self.failUnlessEqual(
                         set(maxsensi2), set(ilabel2),
@@ -254,7 +255,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 FractionTailSelector(0.5, mode='select', tail='upper')),
             enable_states=['training_confusion'])
 
-        sana = mclf.getSensitivityAnalyzer(mapper=sumofabs_sample(),
+        sana = mclf.getSensitivityAnalyzer(postproc=sumofabs_sample(),
                                            enable_states=["sensitivities"])
         # and lets look at all sensitivities
 
@@ -293,8 +294,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         # and lets look at all sensitivities
         ds2 = datasets['uni4large'].copy()
-        ds2.zscore(baselinelabels = ['L2', 'L3'])
-        ds2 = ds2[N.logical_or(ds2.sa.labels == 'L0', ds2.sa.labels == 'L1')]
+        zscore(ds2, param_est=('targets', ['L2', 'L3']))
+        ds2 = ds2[N.logical_or(ds2.sa.targets == 'L0', ds2.sa.targets == 'L1')]
 
         senssplit = sana_split(ds2)
         sensfull = sana_full(ds2)
@@ -334,7 +335,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         sens = sana(ds)
         # a sensitivity for each chunk and each label combination
         assert_equal(sens.shape,
-                     (len(ds.sa['chunks'].unique) * len(ds.sa['labels'].unique),
+                     (len(ds.sa['chunks'].unique) * len(ds.sa['targets'].unique),
                       ds.nfeatures))
 
         # Lets try more complex example with 'boosting'
@@ -348,7 +349,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
             enable_states=['splits', 'sensitivities'])
         sens = sana(ds)
 
-        assert_equal(sens.shape, (2 * len(ds.sa['labels'].unique),
+        assert_equal(sens.shape, (2 * len(ds.sa['targets'].unique),
                                   ds.nfeatures))
         splits = sana.states.splits
         self.failUnlessEqual(len(splits), 2)
@@ -425,7 +426,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                     FractionTailSelector(0.05, mode='select', tail='upper')),
                SensitivityBasedFeatureSelection(
                     SMLRWeights(SMLR(lm=1, implementation="C"),
-                                mapper=sumofabs_sample()),
+                                postproc=sumofabs_sample()),
                     RangeElementSelector(mode='select'))]
 
         fs = CombinedFeatureSelection(fss, combiner='union',
