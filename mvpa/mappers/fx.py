@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import operator
 
+from mvpa.base.dochelpers import _str
 from mvpa.mappers.base import Mapper
 from mvpa.misc.support import array_whereequal
 from mvpa.base.dochelpers import borrowdoc
@@ -73,6 +74,10 @@ class FxMapper(Mapper):
         if self.__attrfx != 'merge':    # if not default
             sargs += ['attrfx=%r' % (self.__attrfx,)]
         return s.replace("(", '(%s, ' % ', '.join(sargs), 1)
+
+
+    def __str__(self):
+        return _str(self, fx=self.__fx.__name__)
 
 
     def _train(self, ds):
