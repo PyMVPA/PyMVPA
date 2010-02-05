@@ -52,7 +52,7 @@ class ClassifiersTests(unittest.TestCase):
         # simple binary dataset
         self.data_bin_1 = dataset_wizard(
             samples=[[0,0],[-10,-1],[1,0.1],[1,-1],[-1,1]],
-            labels=[1, 1, 1, -1, -1], # labels
+            targets=[1, 1, 1, -1, -1], # labels
             chunks=[0, 1, 2,  2, 3])  # chunks
 
     def test_dummy(self):
@@ -71,7 +71,7 @@ class ClassifiersTests(unittest.TestCase):
                              100,
                              msg="Dummy clf should train perfectly")
         self.failUnlessEqual(clf.predict(self.data_bin_1.samples),
-                             list(self.data_bin_1.labels))
+                             list(self.data_bin_1.targets))
 
         self.failUnlessEqual(len(clf.states.predictions),
             self.data_bin_1.nsamples,
@@ -81,8 +81,8 @@ class ClassifiersTests(unittest.TestCase):
         clf.train(self.data_bin_1)
         assert_array_equal(clf.states.trained_dataset.samples,
                            self.data_bin_1.samples)
-        assert_array_equal(clf.states.trained_dataset.labels,
-                           self.data_bin_1.labels)
+        assert_array_equal(clf.states.trained_dataset.targets,
+                           self.data_bin_1.targets)
 
 
     def test_boosted(self):
@@ -92,7 +92,7 @@ class ClassifiersTests(unittest.TestCase):
                                         self.clf_sign.clone()])
 
         self.failUnlessEqual(list(bclf.predict(self.data_bin_1.samples)),
-                             list(self.data_bin_1.labels),
+                             list(self.data_bin_1.targets),
                              msg="Boosted classifier should work")
         self.failUnlessEqual(bclf.predict(self.data_bin_1.samples),
                              self.clf_sign.predict(self.data_bin_1.samples),
@@ -123,7 +123,7 @@ class ClassifiersTests(unittest.TestCase):
 
     def test_binary_decorator(self):
         ds = dataset_wizard(samples=[ [0,0], [0,1], [1,100], [-1,0], [-1,-3], [ 0,-10] ],
-                     labels=[ 'sp', 'sp', 'sp', 'dn', 'sn', 'dp'])
+                     targets=[ 'sp', 'sp', 'sp', 'dn', 'sn', 'dp'])
         testdata = [ [0,0], [10,10], [-10, -1], [0.1, -0.1], [-0.2, 0.2] ]
         # labels [s]ame/[d]ifferent (sign), and [p]ositive/[n]egative first element
 
@@ -134,14 +134,14 @@ class ClassifiersTests(unittest.TestCase):
                                  poslabels=['sp', 'sn'],
                                  neglabels=['dp', 'dn'])
 
-        orig_labels = ds.labels[:]
+        orig_labels = ds.targets[:]
         bclf1.train(ds)
 
         self.failUnless(bclf1.predict(testdata) ==
                         [['sp', 'sn'], ['sp', 'sn'], ['sp', 'sn'],
                          ['dn', 'dp'], ['dn', 'dp']])
 
-        self.failUnless((ds.labels == orig_labels).all(),
+        self.failUnless((ds.targets == orig_labels).all(),
                         msg="BinaryClassifier should not alter labels")
 
 
@@ -165,7 +165,7 @@ class ClassifiersTests(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless(cve < 0.25, # TODO: use multinom distribution
                             msg="Got transfer error %g on %s with %d labels"
-                            % (cve, ds, len(ds.UL)))
+                            % (cve, ds, len(ds.UT)))
 
 
     @sweepargs(clf=clfswh[:] + regrswh[:])
@@ -195,7 +195,7 @@ class ClassifiersTests(unittest.TestCase):
         ds1.samples[:] = 0.0             # all 0s
         # For regression we need numbers
         if clf.__is_regression__:
-            ds1.labels = AttributeMap().to_numeric(ds1.labels)
+            ds1.targets = AttributeMap().to_numeric(ds1.targets)
         #ds2 = datasets['uni2small'][[0], :]
         #ds2.samples[:] = 0.0             # all 0s
 
@@ -267,7 +267,7 @@ class ClassifiersTests(unittest.TestCase):
                              msg="Should have 1 confusion per each split")
         self.failUnlessEqual(len(clf.clfs), len(ds.UC),
                              msg="Should have number of classifiers equal # of epochs")
-        self.failUnlessEqual(clf.predict(ds.samples), list(ds.labels),
+        self.failUnlessEqual(clf.predict(ds.samples), list(ds.targets),
                              msg="Should classify correctly")
 
         # feature_ids must be list of lists, and since it is not
@@ -315,7 +315,7 @@ class ClassifiersTests(unittest.TestCase):
             msg="Should have 1 confusion per each split")
         self.failUnlessEqual(len(clf.clfs), len(ds.UC),
             msg="Should have number of classifiers equal # of epochs")
-        #self.failUnlessEqual(clf.predict(ds.samples), list(ds.labels),
+        #self.failUnlessEqual(clf.predict(ds.samples), list(ds.targets),
         #                     msg="Should classify correctly")
 
 
@@ -374,10 +374,10 @@ class ClassifiersTests(unittest.TestCase):
         samples = N.array([ [0, 0, -1], [1, 0, 1], [-1, -1, 1],
                             [-1, 0, 1], [1, -1, 1] ])
 
-        testdata3 = dataset_wizard(samples=samples, labels=1)
+        testdata3 = dataset_wizard(samples=samples, targets=1)
         # dummy train data so proper mapper gets created
         traindata = dataset_wizard(samples=N.array([ [0, 0, -1], [1, 0, 1] ]),
-                            labels=[1, 2])
+                            targets=[1, 2])
 
         # targets
         res110 = [1, 1, 1, -1, -1]
@@ -426,7 +426,7 @@ class ClassifiersTests(unittest.TestCase):
         # time is set to predictions.  The final outcome is that the
         # values are actually predictions...
         dat = dataset_wizard(samples=N.random.randn(4, 10),
-                      labels=[-1, -1, 1, 1])
+                      targets=[-1, -1, 1, 1])
         clf_reg = FeatureSelectionClassifier(sample_clf_reg, feat_sel)
         clf_reg.train(dat)
         _ = clf_reg.predict(dat.samples)
@@ -679,17 +679,17 @@ class ClassifiersTests(unittest.TestCase):
             batch_test(retest=not('gamma' in clf.kernel_params))
 
         # should retrain nicely if we change labels
-        oldlabels = dstrain.labels[:]
-        dstrain.permute_labels(assure_permute=True)
-        self.failUnless((oldlabels != dstrain.labels).any(),
-            msg="We should succeed at permutting -- now got the same labels")
+        oldlabels = dstrain.targets[:]
+        dstrain.permute_targets(assure_permute=True)
+        self.failUnless((oldlabels != dstrain.targets).any(),
+            msg="We should succeed at permutting -- now got the same targets")
         batch_test()
 
         # Change labels in testing
-        oldlabels = dstest.labels[:]
-        dstest.permute_labels(assure_permute=True)
-        self.failUnless((oldlabels != dstest.labels).any(),
-            msg="We should succeed at permutting -- now got the same labels")
+        oldlabels = dstest.targets[:]
+        dstest.permute_targets(assure_permute=True)
+        self.failUnless((oldlabels != dstest.targets).any(),
+            msg="We should succeed at permutting -- now got the same targets")
         batch_test()
 
         # should re-train if we change data
@@ -757,9 +757,9 @@ class ClassifiersTests(unittest.TestCase):
         # incorrect order of dimensions lead to equal samples [0, 1, 0]
         traindatas = [
             dataset_wizard(samples=N.array([ [0, 0, 1.0],
-                                        [1, 0, 0] ]), labels=[-1, 1]),
+                                        [1, 0, 0] ]), targets=[-1, 1]),
             dataset_wizard(samples=N.array([ [0, 0.0],
-                                      [1, 1] ]), labels=[-1, 1])]
+                                      [1, 1] ]), targets=[-1, 1])]
 
         clf.states.change_temporarily(enable_states = ['training_confusion'])
         for traindata in traindatas:
@@ -772,7 +772,7 @@ class ClassifiersTests(unittest.TestCase):
             for i in xrange(traindata.nsamples):
                 sample = traindata.samples[i,:]
                 predicted = clf.predict([sample])
-                self.failUnlessEqual([predicted], traindata.labels[i],
+                self.failUnlessEqual([predicted], traindata.targets[i],
                     "We must be able to predict sample %s using " % sample +
                     "classifier %s" % `clf`)
         clf.states.reset_changed_temporarily()
@@ -794,7 +794,7 @@ class ClassifiersTests(unittest.TestCase):
 
             error = cv(ds).samples.squeeze()
 
-            nlabels = len(ds.uniquelabels)
+            nlabels = len(ds.uniquetargets)
             if nlabels == 2 \
                and cfg.getboolean('tests', 'labile', default='yes'):
                 self.failUnless(error < 0.3)

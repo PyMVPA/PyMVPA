@@ -294,8 +294,8 @@ class SMLR(Classifier):
         """Train the classifier using `dataset` (`Dataset`).
         """
         # Process the labels to turn into 1 of N encoding
-        uniquelabels = dataset.sa['labels'].unique
-        labels = _label2oneofm(dataset.sa.labels, uniquelabels)
+        uniquelabels = dataset.sa['targets'].unique
+        labels = _label2oneofm(dataset.sa.targets, uniquelabels)
         self._ulabels = uniquelabels.copy()
 
         Y = labels
@@ -554,4 +554,4 @@ class SMLRWeights(Sensitivity):
 
         # limit the labels to the number of sensitivity sets, to deal
         # with the case of `fit_all_weights=False`
-        return Dataset(weights, sa={'labels': clf._ulabels[:len(weights)]})
+        return Dataset(weights, sa={'targets': clf._ulabels[:len(weights)]})

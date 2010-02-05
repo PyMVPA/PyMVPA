@@ -234,7 +234,7 @@ class MDPFlowMapper(Mapper):
     ...         mdp.nodes.FDANode())
     >>> mapper = MDPFlowMapper(flow,
     ...                        node_arguments=(None, None,
-    ...                        [DAE('sa', 'labels')]))
+    ...                        [DAE('sa', 'targets')]))
 
     Notes
     -----

@@ -36,7 +36,7 @@ if __debug__:
     debug.active += ["SLC"]
 
 """The next few calls load an fMRI dataset, while assigning associated class
-labels and chunks (experiment runs) to each volume in the 4D timeseries.  One
+targets and chunks (experiment runs) to each volume in the 4D timeseries.  One
 aspect is worth mentioning. When loading the fMRI data with
 :func:`~mvpa.datasets.mri.fmri_dataset()` additional feature attributes can be
 added, by providing a dictionary with names and source pairs to the `add_fa`
@@ -45,12 +45,12 @@ selectivity contrast for voxels ventral temporal cortex."""
 
 # data path
 datapath = os.path.join(pymvpa_datadbroot, 'demo_blockfmri', 'demo_blockfmri')
-# source of class labels and chunks definitions
+# source of class targets and chunks definitions
 attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
 
 dataset = fmri_dataset(
                 samples=os.path.join(datapath, 'bold.nii.gz'),
-                labels=attr.labels,
+                targets=attr.targets,
                 chunks=attr.chunks,
                 mask=os.path.join(datapath, 'mask_brain.nii.gz'),
                 add_fa={'vt_thr_glm': os.path.join(datapath, 'mask_vt.nii.gz')})
@@ -71,7 +71,7 @@ this selection, as otherwise the equal spacing of fMRI volumes is no longer
 guaranteed."""
 
 dataset = dataset[N.array([l in ['rest', 'house', 'scrambledpix']
-                           for l in dataset.labels], dtype='bool')]
+                           for l in dataset.targets], dtype='bool')]
 
 """The final preprocessing step is data-normalization. This is a required step
 for many classification algorithm. it scales all features (voxels)
@@ -81,12 +81,12 @@ z-scoring based on the volumes corresponding to rest periods in the experiment.
 The resulting features could be interpreted as being voxel salience relative
 to 'rest'."""
 
-zscore(dataset, chunks='chunks', param_est=('labels', ['rest']), dtype='float32')
+zscore(dataset, chunks='chunks', param_est=('targets', ['rest']), dtype='float32')
 
 """After normalization is completed, we no longer need the 'rest'-samples and
 remove them."""
 
-dataset = dataset[dataset.sa.labels != 'rest']
+dataset = dataset[dataset.sa.targets != 'rest']
 
 """But now for the interesting part: Next we define the measure that shall be
 computed for each sphere. Theoretically, this can be anything, but here we
@@ -161,7 +161,7 @@ for radius in [0, 1, 3]:
     """
 
     ds = dataset.copy(deep=False,
-                      sa=['labels', 'chunks'],
+                      sa=['targets', 'chunks'],
                       fa=['voxel_indices'],
                       a=['mapper'])
 

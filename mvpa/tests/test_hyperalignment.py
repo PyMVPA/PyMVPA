@@ -157,12 +157,12 @@ class HyperAlignmentTests(unittest.TestCase):
                 samples=sub+'_mkdg.nii.gz', labels=md_labels,
                 chunks=N.repeat(range(8), 192), mask=sub+'_mask_vt.nii.gz'))
 
-        m=mean_group_sample(['labels', 'chunks'])
+        m=mean_group_sample(['targets', 'chunks'])
 
         mkdg_ds = [ds_.get_mapped(m) for ds_ in mkdg_ds]
-        mkdg_ds = [ds_[ds_.sa.labels != -1] for ds_ in mkdg_ds]
-        [zscore(ds_, param_est=('labels', [0])) for ds_ in mkdg_ds]
-        mkdg_ds = [ds_[ds_.sa.labels != 0] for ds_ in mkdg_ds]
+        mkdg_ds = [ds_[ds_.sa.targets != -1] for ds_ in mkdg_ds]
+        [zscore(ds_, param_est=('targets', [0])) for ds_ in mkdg_ds]
+        mkdg_ds = [ds_[ds_.sa.targets != 0] for ds_ in mkdg_ds]
 
         for i, sd in enumerate(mkdg_ds):
             sd.fa['bsc_scores'] = feature_scores[i]

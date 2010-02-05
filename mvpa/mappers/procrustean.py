@@ -100,7 +100,7 @@ class ProcrusteanMapper(ProjectionMapper):
         assess_residuals = __debug__ and 'MAP_' in debug.active
 
         if target is None:
-            target = source.labels
+            target = source.targets
 
         for i, ds in enumerate((source, target)):
             if isinstance(ds, Dataset):

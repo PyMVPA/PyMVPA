@@ -39,7 +39,7 @@ class RegressionsTests(unittest.TestCase):
         ds = datasets['chirp_linear']
         # we want numeric labels to maintain the previous behavior, especially
         # since we deal with regressions here
-        ds.sa.labels = AttributeMap().to_numeric(ds.labels)
+        ds.sa.targets = AttributeMap().to_numeric(ds.targets)
 
         cve = CrossValidatedTransferError(
             TransferError(regr, CorrErrorFx()),
@@ -111,7 +111,7 @@ class RegressionsTests(unittest.TestCase):
         ds = datasets['uni2small'].copy()
         # we want numeric labels to maintain the previous behavior, especially
         # since we deal with regressions here
-        ds.sa.labels = AttributeMap().to_numeric(ds.labels)
+        ds.sa.targets = AttributeMap().to_numeric(ds.targets)
         cverror = cv(ds)
 
         self.failUnless(len(clf.states.estimates) == ds[ds.chunks == 1].nsamples)

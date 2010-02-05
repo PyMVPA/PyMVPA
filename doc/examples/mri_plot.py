@@ -40,7 +40,7 @@ from mvpa.suite import *
 datapath = os.path.join(pymvpa_datadbroot, 'demo_blockfmri', 'demo_blockfmri')
 attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
 dataset = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
-                       labels=attr.labels,
+                       targets=attr.targets,
                        chunks=attr.chunks,
                        mask=os.path.join(datapath, 'mask_gray.nii.gz'))
 
@@ -50,7 +50,7 @@ poly_detrend(dataset, chunks='chunks')
 # exclude the rest conditions from the dataset, since that should be
 # quite different from the 'active' conditions, and make the computation
 # below pointless
-dataset = dataset[dataset.sa.labels != 'rest']
+dataset = dataset[dataset.sa.targets != 'rest']
 
 # define sensitivity analyzer to compute ANOVA F-scores on the remaining
 # samples

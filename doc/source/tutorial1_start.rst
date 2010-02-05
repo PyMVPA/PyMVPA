@@ -66,15 +66,15 @@ We can also access the information via the
 The most important information for a classification analysis, besides the data,
 are the so-called :term:`label`\s assigned to the samples, since they define
 the model that should be learned by a :term:`classifier`, and serve as target
-values to assess the prediction accuracy. The dataset stores these labels in
+values to assess the prediction accuracy. The dataset stores these targets in
 its collection of **s**\ample **a**\ttributes (hence collection name `sa`), and
 they can be accessed by the attribute name, either through the collection, or
 via a shortcut.
 
->>> print ds.sa.labels
+>>> print ds.sa.targets
 ['bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe'
  'bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe']
->>> print ds.labels
+>>> print ds.targets
 ['bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe'
  'bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe']
 
@@ -107,7 +107,7 @@ A k-Nearest-Neighbor classifier performs classification based on the similarity
 of a sample with respect to each sample in a :term:`training dataset`.  The
 value of `k` specifies the number of neighbors to derive a
 prediction, `dfx` sets the distance measure that determines the neighbors, and
-`voting` selects a strategy to choose a single label from the set of labels
+`voting` selects a strategy to choose a single label from the set of targets
 assigned to these neighbors.
 
 Now that we have a classifier instance it can easily be trained by passing the
@@ -120,7 +120,7 @@ unlabeled samples. The classification can be assessed by comparing these
 predictions to the target labels.
 
 >>> predictions = clf.predict(ds.samples)
->>> N.mean(predictions == ds.sa.labels)
+>>> N.mean(predictions == ds.sa.targets)
 1.0
 
 We see that the classifier performs remarkably well on our dataset -- it

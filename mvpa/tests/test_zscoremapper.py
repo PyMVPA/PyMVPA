@@ -28,7 +28,7 @@ def test_mapper_vs_zscore():
     dss = [
         dataset_wizard(N.concatenate(
             [N.arange(40) for i in range(20)]).reshape(20,-1).T,
-                labels=1, chunks=1),
+                targets=1, chunks=1),
         ] + datasets.values()
 
     for ds in dss:
@@ -58,7 +58,7 @@ def test_zscore():
     # dataset: mean=2, std=1
     samples = N.array((0, 1, 3, 4, 2, 2, 3, 1, 1, 3, 3, 1, 2, 2, 2, 2)).\
         reshape((16, 1))
-    data = dataset_wizard(samples.copy(), labels=range(16), chunks=[0] * 16)
+    data = dataset_wizard(samples.copy(), targets=range(16), chunks=[0] * 16)
     assert_equal(data.samples.mean(), 2.0)
     assert_equal(data.samples.std(), 1.0)
     zscore(data, chunks='chunks')
@@ -68,24 +68,24 @@ def test_zscore():
                     dtype='float64').reshape(16, 1)
     assert_array_equal(data.samples, check)
 
-    data = dataset_wizard(samples.copy(), labels=range(16), chunks=[0] * 16)
+    data = dataset_wizard(samples.copy(), targets=range(16), chunks=[0] * 16)
     zscore(data, chunks=None)
     assert_array_equal(data.samples, check)
 
     # check z-scoring taking set of labels as a baseline
     data = dataset_wizard(samples.copy(),
-                   labels=[0, 2, 2, 2, 1] + [2] * 11,
+                   targets=[0, 2, 2, 2, 1] + [2] * 11,
                    chunks=[0] * 16)
-    zscore(data, param_est=('labels', [0, 1]))
+    zscore(data, param_est=('targets', [0, 1]))
     assert_array_equal(samples, data.samples + 1.0)
 
     # check that zscore modifies in-place; only guaranteed if no upcasting is
     # necessary
     samples = samples.astype('float')
     data = dataset_wizard(samples,
-                   labels=[0, 2, 2, 2, 1] + [2] * 11,
+                   targets=[0, 2, 2, 2, 1] + [2] * 11,
                    chunks=[0] * 16)
-    zscore(data, param_est=('labels', [0, 1]))
+    zscore(data, param_est=('targets', [0, 1]))
     assert_array_equal(samples, data.samples)
 
     # these might be duplicating code above -- but twice is better than nothing
@@ -97,8 +97,8 @@ def test_zscore():
     # zscore target
     check = [-2, -1, 1, 2, 0, 0, 1, -1, -1, 1, 1, -1, 0, 0, 0, 0]
 
-    ds = dataset_wizard(raw.copy(), labels=range(16), chunks=[0] * 16)
-    pristine = dataset_wizard(raw.copy(), labels=range(16), chunks=[0] * 16)
+    ds = dataset_wizard(raw.copy(), targets=range(16), chunks=[0] * 16)
+    pristine = dataset_wizard(raw.copy(), targets=range(16), chunks=[0] * 16)
 
     zm = ZScoreMapper()
     # should do global zscore by default
@@ -113,7 +113,7 @@ def test_zscore():
 
     # let's look at chunk-wise z-scoring
     ds = dataset_wizard(N.hstack((raw.copy(), raw2.copy())),
-                        labels=range(32),
+                        targets=range(32),
                         chunks=[0] * 16 + [1] * 16)
     # by default chunk-wise
     zm = ZScoreMapper()

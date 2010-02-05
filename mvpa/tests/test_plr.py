@@ -22,7 +22,7 @@ class PLRTests(unittest.TestCase):
         clf.train(data)
 
         # prediction has to be perfect
-        self.failUnless((clf.predict(data.samples) == data.labels).all())
+        self.failUnless((clf.predict(data.samples) == data.targets).all())
 
     def test_plr_state(self):
         data = datasets['dumb2']

@@ -25,7 +25,7 @@ from mvpa.suite import *
 # load PyMVPA example dataset
 attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes_literal.txt'))
 dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                       labels=attr.labels,
+                       targets=attr.targets,
                        chunks=attr.chunks,
                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
@@ -70,13 +70,13 @@ poly_detrend(dataset, polyord=1, chunks='chunks')
 
 # only use 'rest', 'shoe' and 'bottle' samples from dataset
 dataset = dataset[N.array([l in ['rest', 'shoe', 'bottle']
-                    for l in dataset.sa.labels], dtype='bool')]
+                    for l in dataset.sa.targets], dtype='bool')]
 
 # zscore dataset relative to baseline ('rest') mean
-zscore(dataset, perchunk=True, baselinelabels=['rest'], targetdtype='float32')
+zscore(dataset, perchunk=True, baselinetargets=['rest'], targetdtype='float32')
 
 # remove baseline samples from dataset for final analysis
-dataset = dataset[dataset.sa.labels != 'rest']
+dataset = dataset[dataset.sa.targets != 'rest']
 
 """Finally, we will loop over all defined analyzers and let them compute
 the sensitivity scores. The resulting vectors are then mapped back into the

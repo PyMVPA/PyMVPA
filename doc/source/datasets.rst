@@ -50,7 +50,7 @@ from all other data chunks.
 
 The foundation of PyMVPA's data handling is the :class:`~mvpa.datasets.base.Dataset` class. Basically, this
 class stores data samples, sample attributes and dataset attributes.  By
-definition, sample attributes assign a value to each data sample (e.g. labels,
+definition, sample attributes assign a value to each data sample (e.g. targets,
 or chunks) and dataset attributes are additional information or functionality
 that apply to the whole dataset.
 
@@ -61,16 +61,16 @@ data samples and the corresponding class labels.
 
   >>> import numpy as N
   >>> from mvpa.datasets import dataset_wizard
-  >>> data = dataset_wizard(samples=N.random.normal(size=(10,5)), labels=1)
+  >>> data = dataset_wizard(samples=N.random.normal(size=(10,5)), targets=1)
   >>> print data
-  <Dataset: 10x5@float64, <sa: labels>>
+  <Dataset: 10x5@float64, <sa: targets>>
 
-.. index:: chunks, labels, feature, sample
+.. index:: chunks, targets, feature, sample
 
 The above example creates a dataset with 10 samples and 5 features each. The
 values of all features stem from normally distributed random noise. The class
-label '1' is assigned to all samples. Instead of a single scalar value `labels`
-can also be a sequence with individual labels for each data sample. In this
+label '1' is assigned to all samples. Instead of a single scalar value `targets`
+can also be a sequence with individual targets for each data sample. In this
 case the length of this sequence has to match the number of samples.
 
 Interestingly, the dataset object tells us about 10 `chunks`. In PyMVPA chunks
@@ -78,7 +78,7 @@ are used to group subsets of data samples. However, if no grouping information
 is provided all data samples are assumed to be in their own group, hence no
 sample grouping is performed.
 
-Both `labels` and `chunks` are so called *sample attributes*. All sample
+Both `targets` and `chunks` are so called *sample attributes*. All sample
 attributes are stored in sequence-type containers consisting of one value per
 sample. These containers can be accessed by properties with the same as the
 attribute:
@@ -188,7 +188,7 @@ are precisely mapped back onto their original locations in the data space.
 Data Access Sugaring
 ====================
 
-Complementary to self-descriptive attribute names (e.g. `labels`, `samples`)
+Complementary to self-descriptive attribute names (e.g. `targets`, `samples`)
 datasets have a few concise shortcuts to get quick access to some attributes
 or perform some common action
 
@@ -196,8 +196,8 @@ or perform some common action
 Attribute        Abbreviation Definition class
 ---------------- ------------ ----------------
 samples          S            :class:`~mvpa.datasets.base.Dataset`
-labels           L            :class:`~mvpa.datasets.base.Dataset`
-uniquelabels     UL           :class:`~mvpa.datasets.base.Dataset`
+targets          T            :class:`~mvpa.datasets.base.Dataset`
+uniquetargets    UT           :class:`~mvpa.datasets.base.Dataset`
 chunks           C            :class:`~mvpa.datasets.base.Dataset`
 uniquechunks     UC           :class:`~mvpa.datasets.base.Dataset`
 origids          I            :class:`~mvpa.datasets.base.Dataset`
@@ -222,7 +222,7 @@ look at the subclasses of :class:`~mvpa.datasets.base.Dataset`):
 
   PyMVPA builds its dataset facilities on NumPy arrays. Basically, anything
   that can be converted into a NumPy array can also be converted into a
-  dataset. Together with the corresponding labels, NumPy arrays can simply be
+  dataset. Together with the corresponding targets, NumPy arrays can simply be
   passed to the :class:`~mvpa.datasets.base.Dataset` constructor to create a dataset. With arrays it is
   possible to use the classes :class:`~mvpa.datasets.base.Dataset`, :class:`~mvpa.datasets.mapped.MappedDataset` (to combine the samples
   with any custom mapping algorithm) or :class:`~mvpa.datasets.masked.MaskedDataset` (readily provides a
@@ -292,7 +292,7 @@ of our example dataset looks like this:
 
   >>> from mvpa.datasets.splitters import NFoldSplitter
   >>> data = dataset_wizard(samples=N.random.normal(size=(10,5)),
-  ...                       labels=1, chunks=range(10))
+  ...                       targets=1, chunks=range(10))
   >>> splitter = NFoldSplitter(cvtype=1)   # Do N-1
   >>> for wdata, vdata in splitter(data):
   ...     pass
@@ -304,8 +304,8 @@ intended:
   >>> split = [ i for i in splitter(data)][0]
   >>> for s in split:
   ...     print s
-  <Dataset: 9x5@float64, <sa: chunks,labels>, <a: lastsplit>>
-  <Dataset: 1x5@float64, <sa: chunks,labels>, <a: lastsplit>>
+  <Dataset: 9x5@float64, <sa: chunks,targets>, <a: lastsplit>>
+  <Dataset: 1x5@float64, <sa: chunks,targets>, <a: lastsplit>>
   >>> split[0].uniquechunks
   array([1, 2, 3, 4, 5, 6, 7, 8, 9])
   >>> split[1].uniquechunks

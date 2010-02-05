@@ -110,7 +110,7 @@ The :class:`~mvpa.measures.anova.OneWayAnova` class provides a simple (and fast)
 univariate measure, that can be used for feature selection, although it is not
 a proper sensitivity measure. For each feature an individual F-score is
 computed as the fraction of between and within group variances. Groups are
-defined by samples with unique labels.
+defined by samples with unique targets.
 
 Higher F-scores indicate higher sensitivities, as with all other sensitivity
 analyzers.
@@ -147,7 +147,7 @@ classification).
  >>>
  >>> ds = normalFeatureDataset()
  >>> print ds
- <Dataset: 100x4@float64, <sa: chunks,labels>>
+ <Dataset: 100x4@float64, <sa: chunks,targets>>
  >>>
  >>> clf = LinearCSVMC()
  >>> sensana = clf.getSensitivityAnalyzer()

@@ -53,7 +53,7 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
 
         # number of groups
         if labels is None:
-            labels = dataset.labels
+            labels = dataset.targets
 
         ul = N.unique(labels)
 
@@ -113,18 +113,18 @@ class CompoundOneWayAnova(OneWayAnova):
     samples. Corresponding p-values are avialable in feature attributes named
     'fprob_X', where `X` is the name of the actual comparision label. Note that
     p-values are only available, if SciPy is installed. The comparison labels
-    for each F-vectore are also stored as 'labels' sample attribute in the
+    for each F-vectore are also stored as 'targets' sample attribute in the
     returned dataset.
     """
 
     def _call(self, dataset):
         """Computes featurewise f-scores using compound comparisons."""
 
-        orig_labels = dataset.labels
+        orig_labels = dataset.targets
         labels = orig_labels.copy()
 
         results = []
-        for ul in dataset.sa['labels'].unique:
+        for ul in dataset.sa['targets'].unique:
             labels[orig_labels == ul] = 1
             labels[orig_labels != ul] = 2
             f_ds = OneWayAnova._call(self, dataset, labels)
@@ -136,5 +136,5 @@ class CompoundOneWayAnova(OneWayAnova):
             results.append(f_ds)
 
         results = vstack(results)
-        results.sa['labels'] = dataset.sa['labels'].unique
+        results.sa['targets'] = dataset.sa['targets'].unique
         return results

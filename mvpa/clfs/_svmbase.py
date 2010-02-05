@@ -289,7 +289,7 @@ class _SVM(Classifier):
 
         ## TODO: Check validity of this w/ new kernels (ie sg.Rbf has sigma)
         #if self.kernel_params.has_key('gamma'):
-            #value = 1.0 / len(dataset.uniquelabels)
+            #value = 1.0 / len(dataset.uniquetargets)
             #if __debug__:
                 #debug("SVM", "Default Gamma is computed to be %f" % value)
         #else:

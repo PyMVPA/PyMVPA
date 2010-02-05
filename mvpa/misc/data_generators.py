@@ -56,7 +56,7 @@ def dumbFeatureDataset():
             [12, 1]]
     regs = ([1] * 8) + ([2] * 8) + ([3] * 8)
 
-    return dataset_wizard(samples=N.array(data), labels=regs, chunks=range(len(regs)))
+    return dataset_wizard(samples=N.array(data), targets=regs, chunks=range(len(regs)))
 
 
 def dumbFeatureBinaryDataset():
@@ -68,7 +68,7 @@ def dumbFeatureBinaryDataset():
             [12, 1]]
     regs = ([0] * 12) + ([1] * 12)
 
-    return dataset_wizard(samples=N.array(data), labels=regs, chunks=range(len(regs)))
+    return dataset_wizard(samples=N.array(data), targets=regs, chunks=range(len(regs)))
 
 
 
@@ -126,12 +126,12 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
                                 for i in range(nlabels)])
     chunks = N.concatenate([N.repeat(range(nchunks),
                                      perlabel/nchunks) for i in range(nlabels)])
-    ds = dataset_wizard(data, labels=labels, chunks=chunks)
+    ds = dataset_wizard(data, targets=labels, chunks=chunks)
 
     # If nonbogus was provided -- assign .a and .fa accordingly
     if nonbogus_features is not None:
-        ds.fa['labels'] = N.array([None]*nfeatures)
-        ds.fa.labels[nonbogus_features] = ['L%d' % i for i in range(nlabels)]
+        ds.fa['targets'] = N.array([None]*nfeatures)
+        ds.fa.targets[nonbogus_features] = ['L%d' % i for i in range(nlabels)]
         ds.a['nonbogus_features'] = nonbogus_features
         ds.a['bogus_features'] = [x for x in range(nfeatures)
                                   if not x in nonbogus_features]
@@ -169,7 +169,7 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
 
     if chunks is None:
         chunks = range(len(data))
-    return dataset_wizard(samples=data, labels=regs, chunks=chunks)
+    return dataset_wizard(samples=data, targets=regs, chunks=chunks)
 
 
 def getMVPattern(s2n):
@@ -217,7 +217,7 @@ def wr1996(size=200):
     x34 = x + N.random.randn(size, 2)*0.02
     x56 = N.random.randn(size, 2)
     x = N.hstack([x, x34, x56])
-    return dataset_wizard(samples=x, labels=y)
+    return dataset_wizard(samples=x, targets=y)
 
 
 def sinModulated(n_instances, n_features,
@@ -234,7 +234,7 @@ def sinModulated(n_instances, n_features,
         data = N.random.rand(n_instances, n_features)*N.pi
     label = N.sin((data**2).sum(1)).round()
     label += N.random.rand(label.size)*noise
-    return dataset_wizard(samples=data, labels=label)
+    return dataset_wizard(samples=data, targets=label)
 
 def chirpLinear(n_instances, n_features=4, n_nonbogus_features=2,
                 data_noise=0.4, noise=0.1):
@@ -253,7 +253,7 @@ def chirpLinear(n_instances, n_features=4, n_nonbogus_features=2,
 
     labels = y + N.random.normal(size=(n_instances,))*noise
 
-    return dataset_wizard(samples=data, labels=labels)
+    return dataset_wizard(samples=data, targets=labels)
 
 
 def linear_awgn(size=10, intercept=0.0, slope=0.4, noise_std=0.01, flat=False):
@@ -276,7 +276,7 @@ def linear_awgn(size=10, intercept=0.0, slope=0.4, noise_std=0.01, flat=False):
     y = N.dot(x, slope)[:, N.newaxis] \
         + (N.random.randn(*(x.shape[0], 1)) * noise_std) + intercept
 
-    return dataset_wizard(samples=x, labels=y)
+    return dataset_wizard(samples=x, targets=y)
 
 
 def noisy_2d_fx(size_per_fx, dfx, sfx, center, noise_std=1):
@@ -301,7 +301,7 @@ def noisy_2d_fx(size_per_fx, dfx, sfx, center, noise_std=1):
 
     samples += N.array(center)
 
-    return dataset_wizard(samples=samples, labels=labels)
+    return dataset_wizard(samples=samples, targets=labels)
 
 
 def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
@@ -311,7 +311,7 @@ def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
     x = N.linspace(start=x_min, stop=x_max, num=size)
     noise = N.random.randn(size)*sigma
     y = x * slope + intercept + noise
-    return dataset_wizard(samples=x[:, None], labels=y)
+    return dataset_wizard(samples=x[:, None], targets=y)
 
 
 def load_example_fmri_dataset():
@@ -322,7 +322,7 @@ def load_example_fmri_dataset():
 
     attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
     ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                      labels=attr.labels, chunks=attr.chunks,
+                      targets=attr.targets, chunks=attr.chunks,
                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
     return ds

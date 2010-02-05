@@ -40,13 +40,13 @@ plotSamplesDistance(ds, sortbyattr='chunks')
 P.title('Sample distances (sorted by chunks)')
 
 # similar distance plot, but now samples sorted by their
-# respective labels, i.e. samples with same labels are plotted
+# respective targets, i.e. samples with same targets are plotted
 # in adjacent columns/rows.
 # Note, that the first and largest group corresponds to the
 # 'rest' condition in the dataset
 P.subplot(122)
-plotSamplesDistance(ds, sortbyattr='labels')
-P.title('Sample distances (sorted by labels)')
+plotSamplesDistance(ds, sortbyattr='targets')
+P.title('Sample distances (sorted by targets)')
 
 # z-score features individually per chunk
 print 'Detrending data'
@@ -59,8 +59,8 @@ P.subplot(121)
 plotSamplesDistance(ds, sortbyattr='chunks')
 P.title('Distances: z-scored, detrended (sorted by chunks)')
 P.subplot(122)
-plotSamplesDistance(ds, sortbyattr='labels')
-P.title('Distances: z-scored, detrended (sorted by labels)')
+plotSamplesDistance(ds, sortbyattr='targets')
+P.title('Distances: z-scored, detrended (sorted by targets)')
 if cfg.getboolean('examples', 'interactive', True):
     P.show()
 

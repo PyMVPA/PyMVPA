@@ -51,8 +51,8 @@ feat_test = N.array((N.ravel(x), N.ravel(y)))
 from mvpa.suite import *
 
 # create the pymvpa dataset from the labeled features
-patternsPos = dataset_wizard(samples=feat_pos.T, labels=1)
-patternsNeg = dataset_wizard(samples=feat_neg.T, labels=0)
+patternsPos = dataset_wizard(samples=feat_pos.T, targets=1)
+patternsNeg = dataset_wizard(samples=feat_neg.T, targets=0)
 ds_lin = vstack((patternsPos, patternsNeg))
 
 """Let's add another dataset: XOR. This problem is not linear separable
@@ -106,11 +106,11 @@ for id, ds in datasets.iteritems():
         P.subplot(3, 3, fig)
 
         # plot the training points
-        P.plot(ds.samples[ds.labels == 1, 0],
-               ds.samples[ds.labels == 1, 1],
+        P.plot(ds.samples[ds.targets == 1, 0],
+               ds.samples[ds.targets == 1, 1],
                "r.")
-        P.plot(ds.samples[ds.labels == 0, 0],
-               ds.samples[ds.labels == 0, 1],
+        P.plot(ds.samples[ds.targets == 0, 0],
+               ds.samples[ds.targets == 0, 1],
                "b.")
 
         # select the clasifier

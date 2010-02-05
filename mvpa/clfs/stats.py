@@ -262,7 +262,7 @@ class MCNullDist(NullDist):
             # null-distribution of transfer errors can be reduced dramatically
             # when the *right* permutations (the ones that matter) are done.
             permuted_wdata = wdata.copy('shallow')
-            permuted_wdata.permute_labels(perchunk=False)
+            permuted_wdata.permute_targets(perchunk=False)
 
             # decide on the arguments to measure
             if not vdata is None:

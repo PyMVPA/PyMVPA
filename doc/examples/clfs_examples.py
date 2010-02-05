@@ -30,16 +30,16 @@ def main():
                                           'attributes_literal.txt'))
     haxby8 = fmri_dataset(samples=os.path.join(pymvpa_dataroot,
                                                'bold.nii.gz'),
-                          labels=attrs.labels,
+                          targets=attrs.targets,
                           chunks=attrs.chunks,
                           mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
     haxby8.samples = haxby8.samples.astype(N.float32)
 
     # preprocess slightly
     detrend(haxby8, perchunk=True, model='linear')
-    zscore(haxby8, perchunk=True, baselinelabels=['rest'],
+    zscore(haxby8, perchunk=True, baselinetargets=['rest'],
            targetdtype='float32')
-    haxby8_no0 = haxby8[haxby8.labels != 'rest']
+    haxby8_no0 = haxby8[haxby8.targets != 'rest']
 
     dummy2 = normalFeatureDataset(perlabel=30, nlabels=2,
                                   nfeatures=100,
@@ -75,7 +75,7 @@ def main():
             #print cv.confusion
 
             # to report transfer error
-            confusion = ConfusionMatrix()#labels_map=dataset.labels_map)
+            confusion = ConfusionMatrix()#labels_map=dataset.targets_map)
             times = []
             nf = []
             t0 = time.time()
@@ -87,7 +87,7 @@ def main():
                 if nf[-1] == 0:
                     break
                 predictions = clf.predict(validation_ds.samples)
-                confusion.add(validation_ds.labels, predictions)
+                confusion.add(validation_ds.targets, predictions)
                 times.append([clf.states.training_time, clf.states.predicting_time])
             if nf[-1] == 0:
                 print "no features were selected. skipped"
