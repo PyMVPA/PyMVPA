@@ -82,15 +82,15 @@ class AttrDataset(object):
            [ 9, 10, 11]])
 
     The above dataset can only be used for unsupervised machine-learning
-    algorithms, since it doesn't have any labels associated with its
+    algorithms, since it doesn't have any targets associated with its
     samples. However, creating a labeled dataset is equally simple.
 
-    >>> ds_labeled = AttrDataset.from_basic(samples, labels=range(4))
+    >>> ds_labeled = AttrDataset.from_basic(samples, targets=range(4))
 
     For convenience `AttrDataset.from_basic` is also available as `dataset`,
     so the above call is equivalent to:
 
-    >>> ds_labeled = dataset_wizard(samples, labels=range(4))
+    >>> ds_labeled = dataset_wizard(samples, targets=range(4))
 
     Both the labeled and the unlabeled dataset share the same samples
     array. No copying is performed.
@@ -101,8 +101,8 @@ class AttrDataset(object):
     If the data should not be shared the samples array has to be copied
     beforehand.
 
-    The labels are available from the samples attributes collection, but
-    also via the convenience property `labels`.
+    The targets are available from the samples attributes collection, but
+    also via the convenience property `targets`.
 
     >>> ds_labeled.sa.targets is ds_labeled.targets
     True
