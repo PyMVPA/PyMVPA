@@ -29,9 +29,9 @@ def main():
     """
 
     parser.usage = """\
-    %s [options] <NIfTI samples> <labels+blocks> <NIfTI mask> [<output>]
+    %s [options] <NIfTI samples> <targets+blocks> <NIfTI mask> [<output>]
 
-    where labels+blocks is a text file that lists the class label and the
+    where targets+blocks is a text file that lists the class label and the
     associated block of each data sample/volume as a tuple of two integer
     values (separated by a single space). -- one tuple per line.""" \
     % sys.argv[0]
@@ -54,7 +54,7 @@ def main():
 
     # data filename
     dfile = files[0]
-    # text file with labels and block definitions (chunks)
+    # text file with targets and block definitions (chunks)
     cfile = files[1]
     # mask volume filename
     mfile = files[2]
@@ -72,7 +72,7 @@ def main():
 
     verbose(2, "Loading volume file %s" % dfile)
     data = fmri_dataset(dfile,
-                         labels=attrs.labels,
+                         targets=attrs.targets,
                          chunks=attrs.chunks,
                          mask=mfile)
 
@@ -80,7 +80,7 @@ def main():
     # XXX this is only valid for our haxby8 example dataset and should
     # probably be turned into a proper --baselinelabel option that can
     # be used for zscoring as well.
-    data = data[data.labels != 'rest']
+    data = data[data.targets != 'rest']
 
     if options.zscore:
         verbose(1, "Zscoring data samples")

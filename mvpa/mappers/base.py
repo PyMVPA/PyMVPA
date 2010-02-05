@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Data mapper"""
+"""Basic, general purpose and meta mappers."""
 
 __docformat__ = 'restructuredtext'
 
@@ -21,7 +21,7 @@ if __debug__:
 
 
 class Mapper(object):
-    """Interface to provide mapping between two spaces: IN and OUT.
+    """Basic mapper interface definition.
 
     ::
               forward

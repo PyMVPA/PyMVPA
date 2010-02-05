@@ -9,9 +9,9 @@
 
 .. _chap_devguide:
 
-***************************
-PyMVPA Developer Guidelines
-***************************
+********************
+Developer Guidelines
+********************
 
 
 Documentation
@@ -226,7 +226,7 @@ predicting_time     Time (in seconds) which took classifier to       Enabled
                     predict.
 predictions         Most recent set of predictions.                  Enabled
 trained_dataset     The dataset it has been trained on.              Disabled
-trained_labels      Set of unique labels it has been trained on.     Enabled
+trained_targets     Set of unique labels it has been trained on.     Enabled
 training_confusion  Confusion matrix of learning performance.        Disabled
 training_time       Time (in seconds) which took classifier to       Enabled
                     train.

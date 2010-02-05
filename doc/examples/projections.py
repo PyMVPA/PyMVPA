@@ -61,7 +61,7 @@ for ds in datasets:
 
         P.scatter(ds.samples[:, 0] - center[0],
                   ds.samples[:, 1] - center[1],
-                  s=30, c=(ds.sa.labels) * 200)
+                  s=30, c=(ds.sa.targets) * 200)
         plotProjDir(mproj)
         fig += 1
 

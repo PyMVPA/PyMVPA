@@ -26,11 +26,11 @@ class KNNTests(unittest.TestCase):
             test = pureMultivariateSignal( 20, 3 )
             clf.train(train)
             p_mv = clf.predict( test.samples )
-            mv_perf.append( N.mean(p_mv==test.labels) )
+            mv_perf.append( N.mean(p_mv==test.targets) )
 
             clf.train(train[:, 0])
             p_uv = clf.predict(test[:, 0].samples)
-            uv_perf.append( N.mean(p_uv==test.labels) )
+            uv_perf.append( N.mean(p_uv==test.targets) )
 
         mean_mv_perf = N.mean(mv_perf)
         mean_uv_perf = N.mean(uv_perf)

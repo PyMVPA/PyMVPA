@@ -21,7 +21,7 @@ from mvpa.testing.tools import assert_equal, assert_true, \
 def test_eep_load():
     eb = EEPBin(os.path.join(pymvpa_dataroot, 'eep.bin'))
 
-    ds = [ eep_dataset(source, labels=[1, 2]) for source in
+    ds = [ eep_dataset(source, targets=[1, 2]) for source in
             (eb, os.path.join(pymvpa_dataroot, 'eep.bin')) ]
 
     for d in ds:
@@ -46,7 +46,7 @@ def test_eep_bin():
     # XXX put me back whenever there is a proper resamples()
 #     def test_resampling(self):
 #         ds = eep_dataset(os.path.join(pymvpa_dataroot, 'eep.bin'),
-#                          labels=[1, 2])
+#                          targets=[1, 2])
 #         channelids = N.array(ds.a.channelids).copy()
 #         self.failUnless(N.round(ds.samplingrate) == 500.0)
 # 

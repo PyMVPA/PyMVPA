@@ -1,4 +1,4 @@
-.. -*- mode: rst; fill-column: 78 -*-
+.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
@@ -18,17 +18,19 @@ Feature Selection
 .. automodule:: mvpa.measures
 
 
-Related API documentation
-=========================
+.. only:: html
 
-.. currentmodule:: mvpa
-.. autosummary::
-   :toctree: generated
+   Related API documentation
+   =========================
 
-   featsel.base
-   featsel.ifs
-   featsel.rfe
-   featsel.helpers
+   .. currentmodule:: mvpa
+   .. autosummary::
+      :toctree: generated
+
+      featsel.base
+      featsel.ifs
+      featsel.rfe
+      featsel.helpers
 
 
 
@@ -96,7 +98,7 @@ train the selected features as we used to select them:
   ...  FeatureSelectionClassifier(
   ...      sample_linear_svm,
   ...      SensitivityBasedFeatureSelection(
-  ...         sample_linear_svm.getSensitivityAnalyzer(transformer=Absolute),
+  ...         sample_linear_svm.getSensitivityAnalyzer(postproc=maxofabs_sample()),
   ...         FractionTailSelector(0.05, mode='select', tail='upper')),
   ...      descr="LinSVM on 5%(SVM)")
 

@@ -246,9 +246,9 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         # Provide those labels_map if appropriate
         try:
             if states.is_enabled("confusion"):
-                states.confusion.labels_map = dataset.labels_map
+                states.confusion.targets_map = dataset.targets_map
             if states.is_enabled("training_confusion"):
-                states.training_confusion.labels_map = dataset.labels_map
+                states.training_confusion.targets_map = dataset.targets_map
         except:
             pass
 

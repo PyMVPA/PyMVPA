@@ -25,7 +25,7 @@ from mvpa.misc.param import Parameter
 from mvpa.misc.transformers import GrandMean
 from mvpa.mappers.procrustean import ProcrusteanMapper
 from mvpa.datasets import dataset_wizard, Dataset
-from mvpa.datasets.miscfx import zscore
+from mvpa.mappers.zscore import zscore
 
 if __debug__:
     from mvpa.base import debug
@@ -119,7 +119,7 @@ class Hyperalignment(ClassWithCollections):
         # Level 1 (first)
         commonspace = N.asanyarray(datasets[ref_ds])
         if params.zscore_common:
-            zscore(commonspace, perchunk=False)
+            zscore(commonspace, chunks=None)
         data_mapped = [N.asanyarray(ds) for ds in datasets]
         for i, (m, data) in enumerate(zip(mappers, data_mapped)):
             if __debug__:
@@ -127,7 +127,7 @@ class Hyperalignment(ClassWithCollections):
             if i == ref_ds:
                 continue
             #ZSC zscore(data, perchunk=False)
-            ds = dataset_wizard(samples=data, labels=commonspace)
+            ds = dataset_wizard(samples=data, targets=commonspace)
             #ZSC zscore(ds, perchunk=False)
             m.train(ds)
             data_temp = m.forward(data)
@@ -146,12 +146,12 @@ class Hyperalignment(ClassWithCollections):
             # TODO: make just a function so we dont' waste space
             commonspace = params.combiner1(data_mapped[i], commonspace)
             if params.zscore_common:
-                zscore(commonspace, perchunk=False)
+                zscore(commonspace, chunks=None)
 
         # update commonspace to mean of ds_mapped
         commonspace = params.combiner2(data_mapped)
         if params.zscore_common:
-            zscore(commonspace, perchunk=False)
+            zscore(commonspace, chunks=None)
 
         # Level 2 -- might iterate multiple times
         for loop in xrange(params.level2_niter):
@@ -165,7 +165,7 @@ class Hyperalignment(ClassWithCollections):
                 #ZSC zscore(ds_new, perchunk=False)
                 #PRJ ds_temp = (commonspace*ndatasets - ds_mapped[i])/(ndatasets-1)
                 #ZSC zscore(ds_temp, perchunk=False)
-                ds_new.labels = commonspace #PRJ ds_temp
+                ds_new.targets = commonspace #PRJ ds_temp
                 m.train(ds_new) # ds_temp)
                 data_mapped[i] = m.forward(N.asanyarray(ds))
                 if residuals is not None:
@@ -175,7 +175,7 @@ class Hyperalignment(ClassWithCollections):
 
             commonspace = params.combiner2(data_mapped)
             if params.zscore_common:
-                zscore(commonspace, perchunk=False)
+                zscore(commonspace, chunks=None)
 
         # Level 3 (last) to params.levels
         for i, (m, ds) in enumerate(zip(mappers, datasets)):
@@ -188,7 +188,7 @@ class Hyperalignment(ClassWithCollections):
             #ZSC zscore(ds_new, perchunk=False)
             #PRJ ds_temp = (commonspace*ndatasets - ds_mapped[i])/(ndatasets-1)
             #ZSC zscore(ds_temp, perchunk=False)
-            ds_new.labels = commonspace #PRJ ds_temp#
+            ds_new.targets = commonspace #PRJ ds_temp#
             m.train(ds_new) #ds_temp)
 
             if residuals is not None:

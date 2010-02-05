@@ -104,7 +104,7 @@ class AttrDataset(object):
     The labels are available from the samples attributes collection, but
     also via the convenience property `labels`.
 
-    >>> ds_labeled.sa.labels is ds_labeled.labels
+    >>> ds_labeled.sa.targets is ds_labeled.targets
     True
 
     If desired, it is possible to add an arbitrary amount of additional
@@ -120,7 +120,7 @@ class AttrDataset(object):
     which would also test for an appropriate size of the given
     attributes:
 
-    >>> fancyds = AttrDataset(samples, sa={'labels': range(4),
+    >>> fancyds = AttrDataset(samples, sa={'targets': range(4),
     ...                                'lovesme': [0,0,1,0]})
     >>> fancyds.sa.lovesme
     array([0, 0, 1, 0])
@@ -755,9 +755,9 @@ class DatasetAttributeExtractor(object):
     Examples
     --------
     >>> ds = AttrDataset(N.arange(12).reshape((4,3)),
-    ...              sa={'labels': range(4)},
+    ...              sa={'targets': range(4)},
     ...              fa={'foo': [0,0,1]})
-    >>> ext = DAE('sa', 'labels')
+    >>> ext = DAE('sa', 'targets')
     >>> ext(ds)
     array([0, 1, 2, 3])
 

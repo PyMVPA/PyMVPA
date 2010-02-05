@@ -127,7 +127,7 @@ class SVM(_SVM):
         src = _data2ls(dataset)
 
         # libsvm cannot handle literal labels
-        labels = self._attrmap.to_numeric(dataset.sa.labels).tolist()
+        labels = self._attrmap.to_numeric(dataset.sa.targets).tolist()
 
         svmprob = _svm.SVMProblem(labels, src )
 
@@ -164,11 +164,11 @@ class SVM(_SVM):
                 C0 = abs(Cs[0])
                 scale = 1.0/(C0)#*N.sqrt(C0))
                 # so we got 1 C per label
-                uls = self._attrmap.to_numeric(dataset.sa['labels'].unique)
+                uls = self._attrmap.to_numeric(dataset.sa['targets'].unique)
                 if len(Cs) != len(uls):
                     raise ValueError, "SVM was parametrized with %d Cs but " \
                           "there are %d labels in the dataset" % \
-                          (len(Cs), len(dataset.uniquelabels))
+                          (len(Cs), len(dataset.uniquetargets))
                 weight = [ c*scale for c in Cs ]
                 # All 3 need to be set to take an effect
                 libsvm_param._setParameter('weight', weight)
@@ -193,13 +193,13 @@ class SVM(_SVM):
             if self.__is_regression__:
                 estimates = [ self.model.predictValuesRaw(p)[0] for p in src ]
             else:
-                # if 'trained_labels' are literal they have to be mapped
-                if N.issubdtype(self.states.trained_labels.dtype, 'c'):
-                    trained_labels = self._attrmap.to_numeric(
-                            self.states.trained_labels)
+                # if 'trained_targets' are literal they have to be mapped
+                if N.issubdtype(self.states.trained_targets.dtype, 'c'):
+                    trained_targets = self._attrmap.to_numeric(
+                            self.states.trained_targets)
                 else:
-                    trained_labels = self.states.trained_labels
-                nlabels = len(trained_labels)
+                    trained_targets = self.states.trained_targets
+                nlabels = len(trained_targets)
                 # XXX We do duplicate work. model.predict calls
                 # predictValuesRaw internally and then does voting or
                 # thresholding. So if speed becomes a factor we might
@@ -210,8 +210,8 @@ class SVM(_SVM):
                     # Apperently libsvm reorders labels so we need to
                     # track (1,0) values instead of (0,1) thus just
                     # lets take negative reverse
-                    estimates = [ self.model.predictValues(p)[(trained_labels[1],
-                                                            trained_labels[0])]
+                    estimates = [ self.model.predictValues(p)[(trained_targets[1],
+                                                            trained_targets[0])]
                                for p in src ]
                     if len(estimates) > 0:
                         if __debug__:

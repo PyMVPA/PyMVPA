@@ -1,4 +1,4 @@
-.. -*- mode: rst; fill-column: 78 -*-
+.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
@@ -7,8 +7,8 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-.. _chap_tutorial2:
 .. index:: Tutorial, Dataset concepts
+.. _chap_tutorial2:
 
 ***********************************
 Part 2: Dataset Basics and Concepts
@@ -69,65 +69,27 @@ feature is a 2x3 matrix. In case somebody is wondering now, why not simply each
 value in the data array is considered as its own feature (yielding 24 features)
 -- stay tuned, as this is going to be of importance later on.
 
-Most of the time a dataset will hold its samples in a NumPy array. However,
-we have already seens that not only arrays can be used to create a dataset
-(e.g.  the first example passed the samples as a nested list).  Actually,
-the dataset implementation supports multiple samples container type
-(benfitting from Python being a dynamically typed programming language). It
-follows a simple rule to decide what can be stored:
-
-* If the samples are passed as a list, it is converted into a NumPy array.
-* All other objects are tested whether they comply with two criteria:
-
-   a. It must have a `dtype` attribute that reports the datatype
-      of the samples in a way that is compatible with the NumPy
-      array interface.
-   b. It must have a `shape` attribute that behave similar to that of NumPy
-      arrays *and* the reported shape must indicate at least one present axis
-      (i.e. so-called zero-dim arrays are not supported).
-
-If the above conditions are verified, one-dimensional data is converted into a
-two-dimensional array, by considering all data as multiple multiple samples
-with a single feature. Otherwise all datatypes that fulfill these conditions
-can serve as a samples container inside a dataset. However, some useful
-functionality provided by a dataset might add additional requirements, and
-hence, will be unavailable with incompatible containers. Most popular
-alternatives to plain NumPy arrays are NumPy matrices, SciPy's sparse matrices,
-and custom ndarray subclasses. All of these examples should work with a
-dataset. It should be noted that the samples container is stored *as-is* in the
-dataset (unless it was a list that got converted into an array):
-
-  >>> import scipy.sparse as sparse
-  >>> mat = sparse.csc_matrix((10000, 20000))
-  >>> sparse_ds = Dataset(mat)
-  >>> type(sparse_ds.samples)
-  <class 'scipy.sparse.csc.csc_matrix'>
-  >>> len(sparse_ds)
-  10000
-  >>> sparse_ds.nfeatures
-  20000
-
 
 Attributes
 ==========
 
 What we have seen so far does not really warrant the use of a dataset over a
-plain array or matrix with samples. However, in the MVPA context we often need
+plain array or a matrix with samples. However, in the MVPA context we often need
 to know more about each samples than just the value of its features.  In the
 previous tutorial part we have already seen that per-sample :term:`target`
 values are required for supervised-learning algorithms, and that a dataset
 often has to be split based on the origin of specific groups of samples.  For
-this type of auxiliary information a dataset can also contain three types of
-:term:`attribute`\ s: :term:`sample attribute`, :term:`feature attribute`, and
+this type of auxiliary information a dataset can also contain collections of
+three types of :term:`attribute`\ s: :term:`sample attribute`, :term:`feature attribute`, and
 :term:`dataset attribute`.
 
 For Samples
 -----------
 
 In a dataset each :term:`sample` can have an arbitrary number of additional
-attributes. They are stored as vectors of length of the number of samples
-in a collection that is accessible via the `sa` attribute. A collection is
-implemented as a standard Python `dict`, and hence adding sample attributes
+attributes. They are stored as vectors of the same length as the number of samples
+in a collection, and are accessible via the `sa` attribute. A collection is
+derived from a standard Python `dict`, and hence adding sample attributes
 works identical to adding elements to a dictionary:
 
   >>> ds.sa['some_attr'] = [ 0, 1, 1, 3 ]
@@ -146,14 +108,14 @@ turn embeds a NumPy array with the actual attribute:
 This "complication" is done to be able to extend attributes with additional
 functionality that is often needed and can offer significant speed-up of
 processing. For example, sample attributes carry a list of there unique values.
-This list is only computed once (when first requested) and can subsequently be
+This list is only computed once (upon first request) and can subsequently be
 accessed directly without repeated and expensive searches:
 
   >>> ds.sa['some_attr'].unique
   array([0, 1, 3])
 
-However, for most interactive use of PyMVPA this type of attribute access is
-relatively complicated (too much typing), therefore collections offer direct
+However, for most interactive uses of PyMVPA this type of access to attribute's
+`.value` is relatively cumbersome (too much typing), therefore collections offer direct
 attribute access by name:
 
   >>> ds.sa.some_attr
@@ -210,11 +172,11 @@ For The Dataset
 
 Finally, there can also be attributes, not per each sample, or each
 feature, but for the dataset as a whole: so called :term:`dataset
-attributes`. Assinging such attributes an accessing them later on work in
-exactly the same way as for the other two types, except that dataset
+attributes`. Assigning such attributes and accessing them later on work in
+exactly the same way as for the other two types of attributes, except that dataset
 attributes are stored in their own collection which is accessible via the
 `a` property of the dataset.  However, in contrast to sample and feature
-attribute no constraints on the type or size exist -- anything can be
+attribute no constraints on the type or size are imposed -- anything can be
 stored. Let's store a list with all files in the current directory, just
 because we can:
 
@@ -237,8 +199,8 @@ Now it is time to have a closer look on how it works.
 Slicing a dataset (i.e. selecting specific subsets) is very similar to
 slicing a NumPy array. It actually works *almost* identical. A dataset
 supports Python's `slice` syntax, but also selection by boolean masks, and
-indices. The following three slicing operations are all equivalent and
-result in the same output dataset, by always selecting every other samples
+indices. The following three slicing operations
+result in equivalent output datasets, by always selecting every other samples
 in the dataset:
 
   >>> # original
@@ -270,13 +232,15 @@ in the dataset:
   and "advanced indexing". Especially the aspect of memory consumption
   applies to dataset slicing as well, and being aware of this fact might
   help to write more efficient analysis scripts. Which of the three slicing
-  approaches above is the most memory-efficient?
+  approaches above is the most memory-efficient?  Which of the three slicing
+  approaches above might lead to unexpected side-effects if output dataset
+  gets modified?
 
 .. _NumPy documentation: http://docs.scipy.org/doc/
 
 
-All three slicing-styles equally apply to the selection of feature subsets
-within a dataset. Remember, the feature are represented on the second axis
+All three slicing-styles equally applicable to the selection of feature subsets
+within a dataset. Remember, features are represented on the second axis
 of a dataset.
 
   >>> ds[:, [1,2]].samples
@@ -306,7 +270,7 @@ might have expected is this:
 
 The above code applies the same slicing directly to the NumPy array with
 the samples, and the result is fundamentally different. For NumPy arrays
-the style of slicing allows to select specific elements by there indices on
+the style of slicing allows to select specific elements by their indices on
 each axis of an array. For PyMVPA's datasets this mode is not very useful,
 instead we typically want to select rows and columns, i.e. samples and
 features given by their indices, hence **samples and features slicing is
@@ -316,13 +280,13 @@ always applied sequentially**, even if ran simultaneously.
 .. exercise::
 
   Try to select samples [0,1] and features [0,2,3] simultaneously using
-  dataset slicing. now apply the same slicing to the samples array itself
+  dataset slicing.  Now apply the same slicing to the samples array itself
   (`ds.samples`) -- make sure that the result doesn't surprise you.
 
 
 One last interesting thing to look at, in the context of dataset slicing
-are the attributes. What happens to them when sample are feature subset are
-chosen? Our original dataset had both samples and feature attributes:
+are the attributes. What happens to them when a subset of samples and/or
+features is chosen? Our original dataset had both samples and feature attributes:
 
   >>> print ds.sa.some_attr
   [0 1 1 3]
@@ -341,20 +305,20 @@ We see that both attributes are still there and, moreover, also here the
 appropriate subsets have been selected.
 
 
-Loading fMRI
-============
+Loading fMRI data
+=================
 
 Enough of theoretical foreplay -- let's look at a concrete example of an
 fmri dataset. PyMVPA has several helper functions to load data from
 specialized formats, and the one for fMRI data is
 `~mvpa.datasets.mri.fmri_dataset()`. The example dataset we are going to
-look at is the single subject from Haxby et al.  (2001) that we already
+look at is a single subject from Haxby et al. (2001) that we already
 loaded in part one of this tutorial. For more convenience, and less typing
 we first specify the path of the directory with the fMRI data.
 
-  >>> # 'pymvpa_dataroot' is set by PyMVPA and points to the global data
-  >>> # storage
-  >>> path=os.path.join(pymvpa_dataroot, 'demo_blockfmri', 'demo_blockfmri')
+  >>> # 'pymvpa_datadbroot' is set by PyMVPA and points to the global data
+  >>> # database (downloadable from http://data.pymvpa.org)
+  >>> path=os.path.join(pymvpa_datadbroot, 'demo_blockfmri', 'demo_blockfmri')
 
 In the simplest case, we now let `fmri_dataset` do its job, by just
 pointing it to the fMRI data file. The data is stored as a NIfTI file that has
@@ -372,20 +336,20 @@ We can notice two things. First, it worked! Second, we get a
 two-dimensional dataset with 1452 samples (these are volumes in the NIfTI
 file), and over 160k features (these are voxels in the volume). The voxels
 are represented as a one-dimensional vector, and it seems that they have
-lost their associated with the 3D-voxelspace. However, this is not the
-case, as we will see in the next chapter, but PyMVPA simply represents the
-data in this simple format to make it compatible witha vast range of generic
-algorithms that expect data as a simple matrix.
+lost their association with the 3D-voxelspace. However, this is not the
+case, as we will see in the next chapter.  PyMVPA represents
+data in this simple format to make it compatible with a vast range of generic
+algorithms that expect data to be a simple matrix.
 
 We just loaded all data from that NIfTI file, but usually we would be
-interested in a subset only, i.e. voxels intersecting with the brain.
-`fmri_dataset` is capable of performing this masking. We just need to
+interested in a subset only, i.e. "brain voxels".
+`fmri_dataset` is capable of performing data masking. We just need to
 specify a mask image. Such mask image is generated in pretty much any fMRI
 analysis pipeline -- may it be a full-brain mask computed during
-skull-stripping, or an activation map based on a GLM-contrast. We are going
+skull-stripping, or an activation map from a functional localizer. We are going
 to use the original GLM-based localizer mask of ventral temporal cortex
 from Haxby et al. (2001). We already know that it comprises 577 voxels.
-let's reload the dataset:
+Let's reload the dataset:
 
   >>> ds = fmri_dataset(os.path.join(path, 'bold.nii.gz'),
   ...                   mask=os.path.join(path, 'mask_vt.nii.gz'))
@@ -396,16 +360,16 @@ let's reload the dataset:
 
 As expected, we get the same number of samples and also only 577 features
 -- voxels corresponding to non-zero elements in the mask image. Now, let's
-explore this dataset as little further.
+explore this dataset a little further.
 
-Besides samples the dataset offer a number of attributes that enhance the
-data with information that is present in the image header. Each samples has
-information about its volume id in the timseries and the actual acquisition
+Besides samples the dataset offers number of attributes that enhance the
+data with information that is present in the NIfTI image header in the file. Each sample has
+information about its volume id in the timeseries and the actual acquisition
 time (relative to the beginning of the file). Moreover, the original voxel
-index (sometimes referred to as `ijk`) for each feature is avialable too.
-And finally, the dataset also stored information about the dimensionality
-of the input volumes, the voxel size, and it also include a dump of the
-full NIfTI image header.
+index (sometimes referred to as `ijk`) for each feature is available too.
+Finally, the dataset also contains information about the dimensionality
+of the input volumes, voxel size, and any other NIfTI-specific information
+since it also includes a dump of the full NIfTI image header.
 
   >>> ds.sa.time_indices[:5]
   array([0, 1, 2, 3, 4])
@@ -433,9 +397,9 @@ hence worth devoting the whole :ref:`next tutorial chapter
   <ChainMapper: <Flatten>-<FeatureSlice>>
 
 Having all these attributes being part of a dataset is often a useful thing
-to have, but in some cases (e.g. when it come to efficiency, and/or very
+to have, but in some cases (e.g. when it comes to efficiency, and/or very
 large datasets) one might want to have a leaner dataset with just the
-information that is really necessary. One way to achieve this, is stripping
+information that is really necessary. One way to achieve this, is to strip
 all unwanted attributes. The Dataset class'
 :meth:`~mvpa.base.dataset.AttrDataset.copy()` method can help with that.
 
@@ -446,24 +410,24 @@ all unwanted attributes. The Dataset class'
 We can see that all attributes besides `time_coords` have been filtered out.
 Setting the `deep` arguments to `False` causes the copy function to reuse the
 data from the source dataset to generate the new stripped one, without
-duplicating all data in memory -- meaning both datasets do now share the sample
+duplicating all data in memory -- meaning both datasets now share the sample
 data and any change done to `ds` will also affect `stripped`.
 
 
 Storage
 =======
 
-Some data preprocessing can take a long time, and one would rather prevent
-doing it over and over again, but instead store the readily processed data
-in a file for subsequent analyses. PyMVPA offers functionality to store a
+Some data preprocessing can take a long time.  One would rather prevent
+doing it over and over again, and instead just store the preprocessed data
+into a file for subsequent analyses. PyMVPA offers functionality to store a
 large variety of objects, including datasets, into HDF5_ files. A variant
-of this format is also used by Matlab to store data.
+of this format is also used by recent versions of Matlab to store data.
 
 .. _HDF5: http://en.wikipedia.org/wiki/Hierarchical_Data_Format
 .. _h5py: http://h5py.alfven.org
 
 For HDF5 support PyMVPA depends on the h5py_ package. If it is available,
-dataset can be saved to a file by simply calling
+any dataset can be saved to a file by simply calling
 `~mvpa.base.dataset.AttrDataset.save()` with the desired filename.
 
   >>> import tempfile, shutil
@@ -472,7 +436,7 @@ dataset can be saved to a file by simply calling
   >>> ds.save(os.path.join(tempdir, 'mydataset.hdf5'))
 
 HDF5 is a flexible format that also supports, for example, data
-compression. To enable it, you can simply pass additional arguments to
+compression. To enable it, you can pass additional arguments to
 `~mvpa.base.dataset.AttrDataset.save()` that are supported by
 `Group.create_dataset()`. Instead of using
 `~mvpa.base.dataset.AttrDataset.save()` one can also use the `h5save()`
@@ -483,7 +447,7 @@ gzip-compression looks like this:
   >>> h5save(os.path.join(tempdir, 'mydataset.gzipped.hdf5'), ds, compression=9)
 
 Loading datasets from a file is easy too. `h5load()` takes a filename as
-argument and returns the stored dataset. Compressed data will be handled
+an argument and returns the stored dataset. Compressed data will be handled
 transparently.
 
   >>> loaded = h5load(os.path.join(tempdir, 'mydataset.hdf5'))
@@ -493,16 +457,16 @@ transparently.
   >>> shutil.rmtree(tempdir, ignore_errors=True)
 
 
-References
-==========
+.. only:: html
 
-Related API Documentation
--------------------------
-.. autosummary::
-   :toctree: generated
+  References
+  ==========
 
-   ~mvpa.datasets.base.Dataset
-   ~mvpa.datasets.mri.fmri_dataset
-   ~mvpa.base.collections.ArrayCollectable
-   ~mvpa.base.hdf5.h5save
-   ~mvpa.base.hdf5.h5load
+  .. autosummary::
+     :toctree: generated
+
+     ~mvpa.datasets.base.Dataset
+     ~mvpa.datasets.mri.fmri_dataset
+     ~mvpa.base.collections.ArrayCollectable
+     ~mvpa.base.hdf5.h5save
+     ~mvpa.base.hdf5.h5load

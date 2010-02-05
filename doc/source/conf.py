@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+# emacs: -*- coding: utf-8; mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 #
 # PyMVPA documentation build configuration file, created by
 # sphinx-quickstart on Tue Dec 29 10:32:00 2009.
@@ -65,7 +66,7 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8'
 
 # The master toctree document.
-master_doc = 'contents'
+master_doc = 'sitemap'
 
 # General substitutions.
 project = 'PyMVPA'
@@ -123,14 +124,14 @@ default_role = "obj"	   # seems to be sufficient to provide basic hyperlinking
 pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
-#modindex_common_prefix = []
+modindex_common_prefix = []
 
 
 # -- Options for HTML output ---------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-html_theme = 'pymvpa'
+html_theme = 'pymvpa_offline'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -149,7 +150,7 @@ html_theme_path = ['_themes']
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-#html_logo = None
+#html_logo = 'pics/pymvpa_logo.jpg'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -211,7 +212,7 @@ latex_paper_size = 'a4'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('manual', 'PyMVPA-Manual.tex', 'PyMVPA Manual',
+  ('pdfmanual', 'PyMVPA-Manual.tex', 'PyMVPA Manual',
    'PyMVPA Authors',
    'manual'),
   ('devguide', 'PyMVPA-DevGuide.tex', 'PyMVPA Developer Guidelines',
@@ -224,16 +225,42 @@ latex_documents = [
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-#latex_logo = None
+latex_logo = 'pics/pymvpa_logo.pdf'
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
 #latex_use_parts = False
 
 # Additional stuff for the LaTeX preamble.
-latex_preamble = """
+latex_preamble = r"""
 \usepackage{enumitem}
-\setdescription{style=nextline,font=\\normalfont}
+\setdescription{style=nextline,font=\normalfont}
+
+% more table of contents
+\setcounter{tocdepth}{3}
+
+% Have gray background for notes and exercises
+\definecolor{MyBluishGray}{rgb}{0.90,0.90,1.00}
+
+\makeatletter\newenvironment{graybox}{%
+   \begin{lrbox}{\@tempboxa}\begin{minipage}{\columnwidth}}{\end{minipage}\end{lrbox}%
+   \colorbox{MyBluishGray}{\usebox{\@tempboxa}}
+}\makeatother
+
+\makeatletter
+\renewenvironment{notice}[2]{
+  \begin{graybox}
+  \bf\it
+  \def\py@noticetype{#1}
+  \par\strong{#2}
+  \csname py@noticestart@#1\endcsname
+}
+{
+  \csname py@noticeend@\py@noticetype\endcsname
+  \end{graybox}
+}
+\makeatother
+
 """
 
 # Documents to append as an appendix to all manuals.
@@ -249,4 +276,7 @@ latex_preamble = """
 intersphinx_mapping = {'http://docs.python.org/': None,
                        'http://nipy.sourceforge.net/nipype': None,
                        'http://nipy.sourceforge.net/nipy': None,
-                       'http://h5py.alfven.org/docs': None}
+                       'http://h5py.alfven.org/docs': None,
+                       'http://docs.scipy.org/doc/scipy/reference': None,
+                       'http://docs.scipy.org/doc/numpy/objects.inv': None,
+                       }

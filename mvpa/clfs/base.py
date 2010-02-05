@@ -92,7 +92,7 @@ class Classifier(ClassWithCollections):
 
     Michael: Maybe it works well if each classifier provides a 'estimates'
              state member. This variable is a list as long as and in same order
-             as Dataset.uniquelabels (training data). Each item in the list
+             as Dataset.uniquetargets (training data). Each item in the list
              corresponds to the likelyhood of a sample to belong to the
              respective class. However the semantics might differ between
              classifiers, e.g. kNN would probably store distances to class-
@@ -120,7 +120,7 @@ class Classifier(ClassWithCollections):
     # minimal iteration stepsize, ...), therefore the value to each key should
     # also be a dict or we should use mvpa.misc.param.Parameter'...
 
-    trained_labels = StateVariable(enabled=True,
+    trained_targets = StateVariable(enabled=True,
         doc="Set of unique labels it has been trained on")
 
     trained_nsamples = StateVariable(enabled=True,
@@ -228,7 +228,7 @@ class Classifier(ClassWithCollections):
 
                 # Look at the data if any was changed
                 for key, data_ in (('traindata', dataset.samples),
-                                   ('labels', dataset.labels)):
+                                   ('targets', dataset.targets)):
                     _changedData[key] = self.__wasDataChanged(key, data_)
                     # if those idhashes were invalidated by retraining
                     # we need to adjust _changedData accordingly
@@ -262,8 +262,8 @@ class Classifier(ClassWithCollections):
           Data which was used for training
         """
         states = self.states
-        if states.is_enabled('trained_labels'):
-            states.trained_labels = dataset.sa['labels'].unique
+        if states.is_enabled('trained_targets'):
+            states.trained_targets = dataset.sa['targets'].unique
 
         states.trained_dataset = dataset
         states.trained_nsamples = dataset.nsamples
@@ -290,7 +290,7 @@ class Classifier(ClassWithCollections):
             predictions = self.predict(dataset)
             self.states.reset_changed_temporarily()
             self.states.training_confusion = self.__summary_class__(
-                targets=dataset.sa.labels,
+                targets=dataset.sa.targets,
                 predictions=predictions)
 
         if self.states.is_enabled('feature_ids'):
@@ -319,8 +319,8 @@ class Classifier(ClassWithCollections):
             if states.is_set('training_time'):
                 s += ' in %.3g sec' % states.training_time
             s += ' on data with'
-            if states.is_set('trained_labels'):
-                s += ' labels:%s' % list(states.trained_labels)
+            if states.is_set('trained_targets'):
+                s += ' labels:%s' % list(states.trained_targets)
 
             nsamples, nchunks = None, None
             if states.is_set('trained_nsamples'):
@@ -533,7 +533,7 @@ class Classifier(ClassWithCollections):
         # or should be???
         #if self.params.retrainable:
         #    # ??? don't duplicate the code ;-)
-        #    self.__idhashes = {'traindata': None, 'labels': None,
+        #    self.__idhashes = {'traindata': None, 'targets': None,
         #                       'testdata': None, 'testtraindata': None}
         super(Classifier, self).reset()
 
@@ -585,7 +585,7 @@ class Classifier(ClassWithCollections):
 
             # if retrainable we need to keep track of things
             if value:
-                self.__idhashes = {'traindata': None, 'labels': None,
+                self.__idhashes = {'traindata': None, 'targets': None,
                                    'testdata': None} #, 'testtraindata': None}
                 if __debug__ and 'CHECK_RETRAIN' in debug.active:
                     # ??? it is not clear though if idhash is faster than
@@ -732,7 +732,7 @@ class Classifier(ClassWithCollections):
         # To check if we are not fooled
         if __debug__ and 'CHECK_RETRAIN' in debug.active:
             for key, data_ in (('traindata', dataset.samples),
-                               ('labels', dataset.labels)):
+                               ('targets', dataset.targets)):
                 # so it wasn't told to be invalid
                 if not chd[key] and not ichd.get(key, False):
                     if self.__wasDataChanged(key, data_, update=False):

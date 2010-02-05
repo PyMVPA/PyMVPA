@@ -28,6 +28,7 @@ from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.transformers import Absolute
 from mvpa.misc.attrmap import AttributeMap
+from mvpa.clfs.stats import MCNullDist
 
 from mvpa.misc.state import UnknownStateError
 
@@ -225,7 +226,7 @@ class RFETests(unittest.TestCase):
     def test_sensitivity_based_feature_selection(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = clf.getSensitivityAnalyzer(mapper=maxofabs_sample())
+        sens_ana = clf.getSensitivityAnalyzer(postproc=maxofabs_sample())
 
         # of features to remove
         Nremove = 2
@@ -242,8 +243,8 @@ class RFETests(unittest.TestCase):
         # XXX for now convert to numeric labels, but should better be taken
         # care of during clf refactoring
         am = AttributeMap()
-        wdata.labels = am.to_numeric(wdata.labels)
-        tdata.labels = am.to_numeric(tdata.labels)
+        wdata.targets = am.to_numeric(wdata.targets)
+        tdata.targets = am.to_numeric(tdata.targets)
 
         wdata_nfeatures = wdata.nfeatures
         tdata_nfeatures = tdata.nfeatures
@@ -316,7 +317,7 @@ class RFETests(unittest.TestCase):
     def test_rfe(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = clf.getSensitivityAnalyzer(mapper=maxofabs_sample())
+        sens_ana = clf.getSensitivityAnalyzer(postproc=maxofabs_sample())
         trans_error = TransferError(clf)
         # because the clf is already trained when computing the sensitivity
         # map, prevent retraining for transfer error calculation
@@ -386,7 +387,7 @@ class RFETests(unittest.TestCase):
         cv = CrossValidatedTransferError(
             TransferError(clf),
             NFoldSplitter(cvtype=1),
-            mapper=mean_sample(),
+            postproc=mean_sample(),
             enable_states=['confusion'],
             expose_testdataset=True)
         #cv = SplitClassifier(clf)
@@ -398,7 +399,37 @@ class RFETests(unittest.TestCase):
         self.failUnless(error < 0.2)
 
 
+    def __testMatthiasQuestion(self):
+        rfe_clf = LinearCSVMC(C=1)
 
+        rfesvm_split = SplitClassifier(rfe_clf)
+        clf = \
+            FeatureSelectionClassifier(
+            clf = LinearCSVMC(C=1),
+            feature_selection = RFE(
+                sensitivity_analyzer = rfesvm_split.getSensitivityAnalyzer(
+                    combiner=FirstAxisMean,
+                    transformer=N.abs),
+                transfer_error=ConfusionBasedError(
+                    rfesvm_split,
+                    confusion_state="confusion"),
+                stopping_criterion=FixedErrorThresholdStopCrit(0.20),
+                feature_selector=FractionTailSelector(
+                    0.2, mode='discard', tail='lower'),
+                update_sensitivity=True))
+
+        splitter = NFoldSplitter(cvtype=1)
+        no_permutations = 1000
+
+        cv = CrossValidatedTransferError(
+            TransferError(clf),
+            splitter,
+            null_dist=MCNullDist(permutations=no_permutations,
+                                 tail='left'),
+            enable_states=['confusion'])
+        error = cv(datasets['uni2small'])
+        self.failUnless(error < 0.4)
+        self.failUnless(cv.states.null_prob < 0.05)
 
 def suite():
     return unittest.makeSuite(RFETests)

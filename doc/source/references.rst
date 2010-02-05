@@ -1,4 +1,4 @@
-.. -*- mode: rst; fill-column: 78 -*-
+.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
   #
   # THIS IS A GENERATED FILE -- DO NOT EDIT!
   #
@@ -34,6 +34,16 @@ experiments.
   Keywords: :keyword:`feature selection stability`
 
   DOI: http://dx.doi.org/10.1002/hbm.20243
+
+
+.. _Coh94:
+
+**Cohen, J.** (1994). The earth is round (p< 0.05). *American Psychologist*, *49*, 997–1003.
+  *Classical critic of null hypothesis significance testing*
+
+  Keywords: :keyword:`hypothesis testing`
+
+  URL: http://www.citeulike.org/user/mdreid/article/2643653
 
 
 .. _Dem06:

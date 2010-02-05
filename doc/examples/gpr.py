@@ -67,9 +67,9 @@ for i in range(rows*columns):
     logml = True
 
     data_train = dataset.samples
-    label_train = dataset.sa.labels
+    label_train = dataset.sa.targets
     data_test = dataset_test.samples
-    label_test = dataset_test.sa.labels
+    label_test = dataset_test.sa.targets
 
     """
     The next lines configure a squared exponential kernel with the set of

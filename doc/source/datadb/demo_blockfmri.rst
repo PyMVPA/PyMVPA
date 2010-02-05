@@ -76,11 +76,11 @@ Instructions
 ============
 
   >>> from mvpa.suite import *
-  >>> datapath = os.path.join(pymvpa_dataroot, 'demo_blockfmri',
+  >>> datapath = os.path.join(pymvpa_datadbroot, 'demo_blockfmri',
   ...                         'demo_blockfmri')
   >>> attrs = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
   >>> ds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
-  ...                   labels=attrs.labels, chunks=attrs.chunks,
+  ...                   labels=attrs.targets, chunks=attrs.chunks,
   ...                   mask=os.path.join(datapath, 'mask_brain.nii.gz'))
   >>> print ds.shape
   (1452, 39912)
@@ -90,7 +90,7 @@ Instructions
   (3.75, 3.75, 3.5)
   >>> print ds.a.mapper
   <ChainMapper: <Flatten>-<FeatureSlice>>
-  >>> print ds.uniquelabels
+  >>> print ds.uniquetargets
   ['bottle' 'cat' 'chair' 'face' 'house' 'rest' 'scissors' 'scrambledpix'
    'shoe']
 

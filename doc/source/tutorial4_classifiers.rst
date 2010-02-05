@@ -1,4 +1,4 @@
-.. -*- mode: rst; fill-column: 78 -*-
+.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
@@ -7,8 +7,8 @@
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-.. _chap_tutorial4:
 .. index:: Tutorial
+.. _chap_tutorial4:
 
 **********************************************
 Part 4: Classifier -- All Alike, Yet Different
@@ -21,12 +21,19 @@ What is
 * states, parameters
 * meta classifiers...
 
-Literature
-----------
+.. exercise::
 
-Related API Documentation
--------------------------
-.. autosummary::
-   :toctree: generated
+   Try doing the Z-Scoring beforce computing the mean samples per category.
+   What happens to the generalization performance of the classifier?
+   ANSWER: It becomes 100%!
 
-   ~mvpa.clfs.base.Classifier
+
+.. only:: html
+
+  References
+  ==========
+
+  .. autosummary::
+     :toctree: generated
+
+     ~mvpa.clfs.base.Classifier

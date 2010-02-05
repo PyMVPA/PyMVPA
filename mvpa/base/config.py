@@ -161,7 +161,13 @@ class ConfigManager(SafeConfigParser):
         if not self.has_option(section, option):
             return default
 
-        return SafeConfigParser.get(self, section, option, **kwargs)
+        try:
+            return SafeConfigParser.get(self, section, option, **kwargs)
+        except ValueError, e:
+            # provide somewhat descriptive error
+            raise ValueError, \
+                  "Failed to obtain value from configuration for %s.%s. " \
+                  "Original exception was: %s" % (section, option, e)
 
 
     def getboolean(self, section, option, default=None):
@@ -193,5 +199,10 @@ class ConfigManager(SafeConfigParser):
         """
         if not self.has_option(section, option):
             return default
-
-        return SafeConfigParser._get(self, section, dtype, option)
+        try:
+            return SafeConfigParser._get(self, section, dtype, option)
+        except ValueError, e:
+            # provide somewhat descriptive error
+            raise ValueError, \
+                  "Failed to obtain value from configuration for %s.%s. " \
+                  "Original exception was: %s" % (section, option, e)

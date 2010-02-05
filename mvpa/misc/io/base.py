@@ -392,7 +392,7 @@ class SampleAttributes(ColumnData):
         literallabels : bool, optional
           Either labels are given as literal strings
         header : None or bool or list of str
-          If None, ['labels', 'chunks'] is assumed. Otherwise the same
+          If None, ['targets', 'chunks'] is assumed. Otherwise the same
           behavior as of `ColumnData`
         """
         if literallabels:
@@ -401,7 +401,7 @@ class SampleAttributes(ColumnData):
             dtypes = float
 
         if header is None:
-            header = ['labels', 'chunks']
+            header = ['targets', 'chunks']
         ColumnData.__init__(self, source,
                             header=header,
                             sep=None, dtype=dtypes)
@@ -412,7 +412,7 @@ class SampleAttributes(ColumnData):
         """
         ColumnData.tofile(self, filename,
                           header=False,
-                          header_order=['labels', 'chunks'],
+                          header_order=['targets', 'chunks'],
                           sep=' ')
 
 
@@ -445,7 +445,7 @@ class SampleAttributes(ColumnData):
         # over all samples
         for r in xrange(self.nrows):
             # the label-chunk combination
-            comb = (self.labels[r], self.chunks[r])
+            comb = (self.targets[r], self.chunks[r])
 
             # check if things changed
             if not comb == old_comb:

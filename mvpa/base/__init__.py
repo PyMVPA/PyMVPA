@@ -20,7 +20,7 @@ PyMVPA code, and are generic building blocks
 __docformat__ = 'restructuredtext'
 
 
-import sys
+import sys, os
 from mvpa.base.config import ConfigManager
 from mvpa.base.verbosity import LevelLogger, OnceLogger
 
@@ -56,7 +56,11 @@ class __Singleton:
 # As the very first step: Setup configuration registry instance and
 # read all configuration settings from files and env variables
 #
-cfg = __Singleton('cfg', ConfigManager())
+_cfgfile = os.environ.get('MVPACONFIG', None)
+if _cfgfile:
+    # We have to provide a list
+    _cfgfile = [_cfgfile]
+cfg = __Singleton('cfg', ConfigManager(_cfgfile))
 
 verbose = __Singleton("verbose", LevelLogger(
     handlers = cfg.get('verbose', 'output', default='stdout').split(',')))

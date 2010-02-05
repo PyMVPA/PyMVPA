@@ -133,14 +133,14 @@ class Dataset(AttrDataset):
 
 
     @classmethod
-    def from_wizard(cls, samples, labels=None, chunks=None, mask=None,
+    def from_wizard(cls, samples, targets=None, chunks=None, mask=None,
                     mapper=None, space=None):
         """Convenience method to create dataset.
 
         Datasets can be created from N-dimensional samples. Data arrays with
         more than two dimensions are going to be flattened, while preserving
         the first axis (separating the samples) and concatenating all other as
-        the second axis. Optionally, it is possible to specific labels and
+        the second axis. Optionally, it is possible to specify targets and
         chunk attributes for all samples, and masking of the input data (only
         selecting elements corresponding to non-zero mask elements
 
@@ -149,7 +149,7 @@ class Dataset(AttrDataset):
         samples : ndarray
           N-dimensional samples array. The first axis separates individual
           samples.
-        labels : scalar or ndarray, optional
+        targets : scalar or ndarray, optional
           Labels for all samples. If a scalar is provided its values is assigned
           as label to all samples.
         chunks : scalar or ndarray, optional
@@ -179,10 +179,10 @@ class Dataset(AttrDataset):
         # compile the necessary samples attributes collection
         sa_items = {}
 
-        if not labels is None:
-            sa_items['labels'] = _expand_attribute(labels,
+        if not targets is None:
+            sa_items['targets'] = _expand_attribute(targets,
                                                    samples.shape[0],
-                                                  'labels')
+                                                  'targets')
 
         if not chunks is None:
             # unlike previous implementation, we do not do magic to do chunks
@@ -210,7 +210,7 @@ class Dataset(AttrDataset):
 
 
     @classmethod
-    def from_channeltimeseries(cls, samples, labels=None, chunks=None,
+    def from_channeltimeseries(cls, samples, targets=None, chunks=None,
                                t0=None, dt=None, channelids=None):
         """Create a dataset from segmented, per-channel timeseries.
 
@@ -230,7 +230,7 @@ class Dataset(AttrDataset):
           Temporal distance between two timepoints. Preferably in seconds.
         channelids : list
           List of channel names.
-        labels, chunks
+        targets, chunks
           See `Dataset.from_wizard` for documentation about these arguments.
         """
         # check samples
@@ -255,7 +255,7 @@ class Dataset(AttrDataset):
             # broadcast over all timepoints
             channelids = N.dstack([channelids] * samples.shape[2])[0]
 
-        ds = cls.from_wizard(samples, labels=labels, chunks=chunks)
+        ds = cls.from_wizard(samples, targets=targets, chunks=chunks)
 
         # add additional attributes
         if not timepoints is None:
@@ -268,12 +268,12 @@ class Dataset(AttrDataset):
 
     # shortcut properties
     S = property(fget=lambda self:self.samples)
-    labels = property(fget=lambda self:self.sa.labels,
-                      fset=lambda self, v:self.sa.__setattr__('labels', v))
-    uniquelabels = property(fget=lambda self:self.sa['labels'].unique)
+    targets = property(fget=lambda self:self.sa.targets,
+                      fset=lambda self, v:self.sa.__setattr__('targets', v))
+    uniquetargets = property(fget=lambda self:self.sa['targets'].unique)
 
-    L = labels
-    UL = property(fget=lambda self:self.sa['labels'].unique)
+    T = targets
+    UT = property(fget=lambda self:self.sa['targets'].unique)
     chunks = property(fget=lambda self:self.sa.chunks,
                       fset=lambda self, v:self.sa.__setattr__('chunks', v))
     uniquechunks = property(fget=lambda self:self.sa['chunks'].unique)

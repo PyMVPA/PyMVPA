@@ -249,7 +249,10 @@ if externals.exists('shogun'):
 #                   % impl, svm_impl=impl, kernel=SigmoidSGKernel(),),
             ]
 
-    for impl in ['libsvr', 'krr']:# \
+    _optional_regressions = []
+    if externals.exists('shogun.krr'):
+        _optional_regressions += ['krr']
+    for impl in ['libsvr'] + _optional_regressions:# \
         # XXX svrlight sucks in SG -- dont' have time to figure it out
         #+ ([], ['svrlight'])['svrlight' in sg.SVM._KNOWN_IMPLEMENTATIONS]:
         regrswh._known_tags.union_update([impl])
@@ -301,7 +304,7 @@ clfswh += \
         kNN(),
         SensitivityBasedFeatureSelection(
            SMLRWeights(SMLR(lm=1.0, implementation="C"),
-                       mapper=maxofabs_sample()),
+                       postproc=maxofabs_sample()),
            RangeElementSelector(mode='select')),
         descr="kNN on SMLR(lm=1) non-0")
 
@@ -367,7 +370,7 @@ if len(clfswh['linear', 'svm']) > 0:
              linearSVMC.clone(),
              SensitivityBasedFeatureSelection(
                 SMLRWeights(SMLR(lm=0.1, implementation="C"),
-                            mapper=maxofabs_sample()),
+                            postproc=maxofabs_sample()),
                 RangeElementSelector(mode='select')),
              descr="LinSVM on SMLR(lm=0.1) non-0")
 
@@ -377,7 +380,7 @@ if len(clfswh['linear', 'svm']) > 0:
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
                 SMLRWeights(SMLR(lm=1.0, implementation="C"),
-                            mapper=maxofabs_sample()),
+                            postproc=maxofabs_sample()),
                 RangeElementSelector(mode='select')),
             descr="LinSVM on SMLR(lm=1) non-0")
 
@@ -388,7 +391,7 @@ if len(clfswh['linear', 'svm']) > 0:
             RbfCSVMC(),
             SensitivityBasedFeatureSelection(
                SMLRWeights(SMLR(lm=1.0, implementation="C"),
-                           mapper=maxofabs_sample()),
+                           postproc=maxofabs_sample()),
                RangeElementSelector(mode='select')),
             descr="RbfSVM on SMLR(lm=1) non-0")
 
@@ -412,7 +415,7 @@ if len(clfswh['linear', 'svm']) > 0:
         FeatureSelectionClassifier(
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
-               linearSVMC.getSensitivityAnalyzer(mapper=maxofabs_sample()),
+               linearSVMC.getSensitivityAnalyzer(postproc=maxofabs_sample()),
                FractionTailSelector(0.05, mode='select', tail='upper')),
             descr="LinSVM on 5%(SVM)")
 
@@ -420,7 +423,7 @@ if len(clfswh['linear', 'svm']) > 0:
         FeatureSelectionClassifier(
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
-               linearSVMC.getSensitivityAnalyzer(mapper=maxofabs_sample()),
+               linearSVMC.getSensitivityAnalyzer(postproc=maxofabs_sample()),
                FixedNElementTailSelector(50, mode='select', tail='upper')),
             descr="LinSVM on 50(SVM)")
 
@@ -489,7 +492,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(),
     #    feature_selection = RFE(             # on features selected via RFE
     #        sensitivity_analyzer=\
-    #            rfesvm.getSensitivityAnalyzer(mapper=absolute_features()),
+    #            rfesvm.getSensitivityAnalyzer(postproc=absolute_features()),
     #        transfer_error=TransferError(rfesvm),
     #        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
     #        feature_selector=FractionTailSelector(
@@ -506,7 +509,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(),
     #    feature_selection = RFE(             # on features selected via RFE
     #        sensitivity_analyzer=\
-    #            rfesvm.getSensitivityAnalyzer(mapper=absolute_features()),
+    #            rfesvm.getSensitivityAnalyzer(postproc=absolute_features()),
     #        transfer_error=TransferError(rfesvm),
     #        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
     #        feature_selector=FractionTailSelector(

@@ -27,10 +27,13 @@ nulldist_sweep = [ MCNullDist(permutations=30, tail='any'),
 if externals.exists('scipy'):
     from mvpa.support.stats import scipy
     from scipy.stats import f_oneway
+    from mvpa.clfs.stats import rv_semifrozen
     nulldist_sweep += [ MCNullDist(scipy.stats.norm, permutations=30,
                                    tail='any'),
                         MCNullDist(scipy.stats.norm, permutations=30,
                                    tail='right'),
+                        MCNullDist(rv_semifrozen(scipy.stats.norm, loc=0),
+                                   permutations=30, tail='right'),
                         MCNullDist(scipy.stats.expon, permutations=30,
                                    tail='right'),
                         FixedNullDist(scipy.stats.norm(0, 10.0), tail='any'),
@@ -88,7 +91,7 @@ class StatsTests(unittest.TestCase):
         a, ac = m(ds), mc(ds)
 
         self.failUnless(a.shape == (1, ds.nfeatures))
-        self.failUnless(ac.shape == (len(ds.UL), ds.nfeatures))
+        self.failUnless(ac.shape == (len(ds.UT), ds.nfeatures))
 
         assert_array_equal(ac[0], ac[1])
         assert_array_equal(a, ac[1])

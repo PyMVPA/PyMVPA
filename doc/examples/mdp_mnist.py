@@ -28,13 +28,13 @@ import numpy as N
 class DigitsIterator:
     def __init__(self, digits, labels):
         self.digits = digits
-        self.labels = labels
+        self.targets = labels
     def __iter__(self):
         frac = 10
-        ll = len(self.labels)
+        ll = len(self.targets)
         for i in xrange(frac):
             yield self.digits[i*ll/frac:(i+1)*ll/frac], \
-                  self.labels[i*ll/frac:(i+1)*ll/frac]
+                  self.targets[i*ll/frac:(i+1)*ll/frac]
 
 data = cPickle.load(gzip.open('mnist.pickle.gz'))
 for k in ['traindata', 'testdata']:
@@ -83,10 +83,10 @@ you are running this example first.
 data = cPickle.load(gzip.open('mnist.pickle.gz'))
 ds = dataset_wizard(
         data['traindata'],
-        labels=data['trainlabels'])
+        targets=data['trainlabels'])
 testds = dataset_wizard(
         data['testdata'],
-        labels=data['testlabels'])
+        targets=data['testlabels'])
 
 ds.init_origids('samples')
 testds.init_origids('samples')
@@ -112,7 +112,7 @@ fdaflow = (mdp.nodes.WhiteningNode(output_dim=10, dtype='d') +
 fdaflow.verbose = True
 
 mapper = MDPFlowMapper(fdaflow,
-                       ([], [], [DatasetAttributeExtractor('sa', 'labels')]))
+                       ([], [], [DatasetAttributeExtractor('sa', 'targets')]))
 
 terr = TransferError(MappedClassifier(SMLR(), mapper),
                      enable_states=['confusion',

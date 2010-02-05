@@ -33,7 +33,7 @@ def test_glmnet_r():
     # prediction has to be almost perfect
     # test with a correlation
     pre = clf.predict(data.samples)
-    corerr = CorrErrorFx()(pre, data.labels)
+    corerr = CorrErrorFx()(pre, data.targets)
     if cfg.getboolean('tests', 'labile', default='yes'):
         assert_true(corerr < .2)
 
@@ -50,7 +50,7 @@ def test_glmnet_c():
     # test predictions
     pre = clf.predict(data.samples)
 
-    assert_array_equal(pre, data.labels)
+    assert_array_equal(pre, data.targets)
 
 def test_glmnet_state():
     #data = datasets['dumb2']
@@ -80,7 +80,7 @@ def test_glmnet_c_sensitivities():
     sens = clf.getSensitivityAnalyzer(force_training=False)()
 
     #failUnless(sens.shape == (data.nfeatures,))
-    assert_equal(sens.shape, (len(data.UL), data.nfeatures))
+    assert_equal(sens.shape, (len(data.UT), data.nfeatures))
 
 def test_glmnet_r_sensitivities():
     data = datasets['chirp_linear']

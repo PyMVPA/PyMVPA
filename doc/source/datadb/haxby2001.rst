@@ -63,11 +63,11 @@ Instructions
 ============
 
   >>> from mvpa.suite import *
-  >>> subjpath = os.path.join(pymvpa_dataroot, 'haxby2001', 'subj1')
+  >>> subjpath = os.path.join(pymvpa_datadbroot, 'haxby2001', 'subj1')
   >>> attrs = SampleAttributes(os.path.join(subjpath, 'labels.txt'),
   ...                          header=True)
   >>> ds = fmri_dataset(samples=os.path.join(subjpath, 'bold.nii.gz'),
-  ...                   labels=attrs.labels, chunks=attrs.chunks,
+  ...                   labels=attrs.targets, chunks=attrs.chunks,
   ...                   mask=os.path.join(subjpath, 'mask4_vt.nii.gz'))
   >>> print ds
   <Dataset: 1452x577@int16, <sa: chunks,time_indices,labels,time_coords>, <fa: voxel_indices>, <a: mapper,voxel_eldim,voxel_dim,imghdr>>
