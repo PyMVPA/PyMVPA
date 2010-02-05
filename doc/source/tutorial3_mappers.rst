@@ -32,28 +32,28 @@ new method to create the dataset, the `dataset_wizard`. Here it is fully
 equivalent to a regular constructor call (i.e.  `~mvpa.datasets.base.Dataset`),
 but we will shortly see some nice convenience aspects.
 
-  >>> from mvpa.suite import *
-  >>> ds = dataset_wizard(N.ones((5, 12)))
-  >>> ds.shape
-  (5, 12)
+>>> from mvpa.suite import *
+>>> ds = dataset_wizard(N.ones((5, 12)))
+>>> ds.shape
+(5, 12)
 
 A mapper is a :term:`dataset attribute`, hence it is stored in the
 corresponding attribute collection. However, not every dataset actually has
 a mapper. For example, the simple one we have just created doesn't have any:
 
-  >>> 'mapper' in ds.a
-  False
+>>> 'mapper' in ds.a
+False
 
 Now let's look at a very similar dataset that only differs in a tiny but
 a very important detail:
 
-  >>> ds = dataset_wizard(N.ones((5, 4, 3)))
-  >>> ds.shape
-  (5, 12)
-  >>> 'mapper' in ds.a
-  True
-  >>> print ds.a.mapper
-  <FlattenMapper>
+>>> ds = dataset_wizard(N.ones((5, 4, 3)))
+>>> ds.shape
+(5, 12)
+>>> 'mapper' in ds.a
+True
+>>> print ds.a.mapper
+<FlattenMapper>
 
 We see that the resulting dataset looks identical to the one above, but this time
 it got created from a 3D samples array (i.e. five samples, where each is a 4x3
@@ -72,14 +72,14 @@ been flattened on the way from its origin to a samples array in a dataset. This
 feature can become really useful, if the processing become more complex. Let's
 look at a possible next step -- selecting a subset of interesting features:
 
-  >>> myfavs = [1, 2, 8, 10]
-  >>> subds = ds[:, myfavs]
-  >>> subds.shape
-  (5, 4)
-  >>> 'mapper' in subds.a
-  True
-  >>> print subds.a.mapper
-  <ChainMapper: <Flatten>-<FeatureSlice>>
+>>> myfavs = [1, 2, 8, 10]
+>>> subds = ds[:, myfavs]
+>>> subds.shape
+(5, 4)
+>>> 'mapper' in subds.a
+True
+>>> print subds.a.mapper
+<ChainMapper: <Flatten>-<FeatureSlice>>
 
 Now the situation has changed: *two* new mappers appeared in the dataset -- a
 `~mvpa.mappers.base.ChainMapper` and a `~mvpa.mappers.base.FeatureSliceMapper`.
@@ -91,17 +91,17 @@ dataset like a breadcrumb track.
 As it has been mentioned, mappers  not only can transform a single dataset, but
 can be feed with other data (as long as it is compatible with the mapper).
 
-  >>> fwdtest = N.arange(12).reshape(4,3)
-  >>> print fwdtest
-  [[ 0  1  2]
-   [ 3  4  5]
-   [ 6  7  8]
-   [ 9 10 11]]
-  >>> fmapped = subds.a.mapper.forward1(fwdtest)
-  >>> fmapped.shape
-  (4,)
-  >>> print fmapped
-  [ 1  2  8 10]
+>>> fwdtest = N.arange(12).reshape(4,3)
+>>> print fwdtest
+[[ 0  1  2]
+[ 3  4  5]
+[ 6  7  8]
+[ 9 10 11]]
+>>> fmapped = subds.a.mapper.forward1(fwdtest)
+>>> fmapped.shape
+(4,)
+>>> print fmapped
+[ 1  2  8 10]
 
 Although `subds` has less features than our input data, forward mapping applies
 the same transformation that had been done to the dataset itself also to our
@@ -155,19 +155,19 @@ one is to create a two-column text file that has the target value in the
 first column, and the chunk identifier in the second, with one line per
 volume in the NIfTI image.
 
-  >>> # directory that contains the data files
-  >>> datapath = os.path.join(pymvpa_datadbroot,
-  ...                         'demo_blockfmri', 'demo_blockfmri')
-  >>> attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
-  >>> len(attr.targets)
-  1452
-  >>> print N.unique(attr.targets)
-  ['bottle' 'cat' 'chair' 'face' 'house' 'rest' 'scissors' 'scrambledpix'
-   'shoe']
-  >>> len(attr.chunks)
-  1452
-  >>> print N.unique(attr.chunks)
-  [  0.   1.   2.   3.   4.   5.   6.   7.   8.   9.  10.  11.]
+>>> # directory that contains the data files
+>>> datapath = os.path.join(pymvpa_datadbroot,
+...                         'demo_blockfmri', 'demo_blockfmri')
+>>> attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
+>>> len(attr.targets)
+1452
+>>> print N.unique(attr.targets)
+['bottle' 'cat' 'chair' 'face' 'house' 'rest' 'scissors' 'scrambledpix'
+'shoe']
+>>> len(attr.chunks)
+1452
+>>> print N.unique(attr.chunks)
+[  0.   1.   2.   3.   4.   5.   6.   7.   8.   9.  10.  11.]
 
 `SampleAttributes` allows us to load this type of file, and access its
 content. We got 1452 label and chunk values, one for each volume. Moreover,
@@ -178,13 +178,13 @@ voxels corresponding to a mask of ventral temporal cortex, and assign the
 samples attributes to the dataset. `fmri_dataset()` allows us to pass them
 directly:
 
-  >>> fds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
-  ...                    targets=attr.targets, chunks=attr.chunks,
-  ...                    mask=os.path.join(datapath, 'mask_vt.nii.gz'))
-  >>> fds.shape
-  (1452, 577)
-  >>> print fds.sa
-  <SampleAttributesCollection: chunks,time_indices,targets,time_coords>
+>>> fds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
+...                    targets=attr.targets, chunks=attr.chunks,
+...                    mask=os.path.join(datapath, 'mask_vt.nii.gz'))
+>>> fds.shape
+(1452, 577)
+>>> print fds.sa
+<SampleAttributesCollection: chunks,time_indices,targets,time_coords>
 
 We got the dataset that we already know from the last part, but this time
 is also has information about chunks and targets.
@@ -216,7 +216,7 @@ regression and taking the residuals as the new feature values. Detrending can
 be seen as a type of data transformation, hence in PyMVPA it is implemented as
 a mapper.
 
-  >>> detrender = PolyDetrendMapper(polyord=1, chunks='chunks')
+>>> detrender = PolyDetrendMapper(polyord=1, chunks='chunks')
 
 What we have just created is a mapper that will perform chunk-wise linear
 (1st-order polynomial) detrending. Chunk-wise detrending is desirable,
@@ -232,9 +232,9 @@ history breadcrumb track, we can use its
 the dataset to map a shallow copy of itself with the given mapper, and
 return it. Let's try:
 
-  >>> detrended_fds = fds.get_mapped(detrender)
-  >>> print detrended_fds.a.mapper
-  <ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>>
+>>> detrended_fds = fds.get_mapped(detrender)
+>>> print detrended_fds.a.mapper
+<ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>>
 
 ``detrended_fds`` is easily identifiable as a dataset that has been
 flattened, sliced, and linearily detrended.
@@ -258,7 +258,7 @@ per-timepoint voxel intensity difference from the *rest* average.
 This type of data :term:`normalization` is, you guessed it, also
 implemented as a mapper:
 
-  >>> zscorer = ZScoreMapper(param_est=('targets', ['rest']))
+>>> zscorer = ZScoreMapper(param_est=('targets', ['rest']))
 
 This configures to perform a chunk-wise (the default) Z-scoring, while
 estimating mean and standard deviation from samples targets with 'rest' in
@@ -277,9 +277,9 @@ same processing, but without copying the data. For
 `~mvpa.mappers.zscore.zscore()`. The following call will do the same as the
 mapper we have created above, but using less memory:
 
-  >>> fds = zscore(detrended_fds, param_est=('targets', ['rest']))
-  >>> print fds.a.mapper
-  <ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>-<ZScore>>
+>>> fds = zscore(detrended_fds, param_est=('targets', ['rest']))
+>>> print fds.a.mapper
+<ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>-<ZScore>>
 
 .. exercise::
 
@@ -292,9 +292,9 @@ is nicely presented in the mapper. From this point on we have no use for
 the samples of the *rest* category anymore, hence we remove them from the
 dataset:
 
-  >>> fds = fds[fds.sa.targets != 'rest']
-  >>> print fds.shape
-  (864, 577)
+>>> fds = fds[fds.sa.targets != 'rest']
+>>> print fds.shape
+(864, 577)
 
 
 Computing *Patterns Of Activiation*
@@ -312,8 +312,8 @@ To achieve this, we first add a new sample attribute to assign a
 corresponding label to each sample in the dataset, indication to which of
 both run-types is belongs to:
 
-  >>> rnames = {0: 'even', 1: 'odd'}
-  >>> fds.sa['runtype'] = [rnames[c % 2] for c in fds.sa.chunks]
+>>> rnames = {0: 'even', 1: 'odd'}
+>>> fds.sa['runtype'] = [rnames[c % 2] for c in fds.sa.chunks]
 
 The rest is trivial. For cases like this -- applying a function (i.e. mean)
 to a set of groups of samples (all combinations of stimulus category and
@@ -324,15 +324,15 @@ determines all possible combinations of its unique values, selects dataset
 samples corresponding to these combinations, and averages them. Finally,
 since this is also a mapper, a new dataset with mean samples is returned:
 
-  >>> averager = mean_group_sample(['targets', 'runtype'])
-  >>> type(averager)
-  <class 'mvpa.mappers.fx.FxMapper'>
-  >>> fds = fds.get_mapped(averager)
-  >>> fds.shape
-  (16, 577)
-  >>> print fds.sa.targets
-  ['bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe'
-   'bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe']
+>>> averager = mean_group_sample(['targets', 'runtype'])
+>>> type(averager)
+<class 'mvpa.mappers.fx.FxMapper'>
+>>> fds = fds.get_mapped(averager)
+>>> fds.shape
+(16, 577)
+>>> print fds.sa.targets
+['bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe'
+ 'bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe']
 
 Here we go! We now have a fully-preprocessed dataset: detrended, normalized,
 with one sample per stimulus condition that is an average for odd and even runs
@@ -347,49 +347,49 @@ There and back again -- a Mapper's tale
 Let's take a look back at the simple datasets from the start of the tutorial
 part.
 
-  >>> print ds
-  <Dataset: 5x12@float64, <a: mapper>>
-  >>> print ds.a.mapper
-  <FlattenMapper>
+>>> print ds
+<Dataset: 5x12@float64, <a: mapper>>
+>>> print ds.a.mapper
+<FlattenMapper>
 
 A very important feature of mappers is that they allow to reverse a
 transformation, if that is possible. In case of the simple dataset we can
 ask the mapper to undo the flattening and to put our samples back into the
 original 3D shape.
 
-  >>> orig_data = ds.a.mapper.reverse(ds.samples)
-  >>> orig_data.shape
-  (5, 4, 3)
+>>> orig_data = ds.a.mapper.reverse(ds.samples)
+>>> orig_data.shape
+(5, 4, 3)
 
 In interactive scripting sessions this is would be a relatively bulky command to
 type, although it might be quite frequently used. To make ones fingers suffer
 less there is a little shortcut that does exactly the same:
 
-  >>> orig_data = ds.O
-  >>> orig_data.shape
-  (5, 4, 3)
+>>> orig_data = ds.O
+>>> orig_data.shape
+(5, 4, 3)
 
 It is important to realize that reverse-mapping not only works with a single
 mapper, but also with a `~mvpa.mappers.base.ChainMapper`. Going back to our demo
 dataset from the beginning we can see how it works:
 
-  >>> print subds
-  <Dataset: 5x4@float64, <a: mapper>>
-  >>> print subds.a.mapper
-  <ChainMapper: <Flatten>-<FeatureSlice>>
-  >>> subds.nfeatures
-  4
-  >>> revtest = N.arange(subds.nfeatures) + 10
-  >>> print revtest
-  [10 11 12 13]
-  >>> rmapped = subds.a.mapper.reverse1(revtest)
-  >>> rmapped.shape
-  (4, 3)
-  >>> print rmapped
-  [[ 0 10 11]
-   [ 0  0  0]
-   [ 0  0 12]
-   [ 0 13  0]]
+>>> print subds
+<Dataset: 5x4@float64, <a: mapper>>
+>>> print subds.a.mapper
+<ChainMapper: <Flatten>-<FeatureSlice>>
+>>> subds.nfeatures
+4
+>>> revtest = N.arange(subds.nfeatures) + 10
+>>> print revtest
+[10 11 12 13]
+>>> rmapped = subds.a.mapper.reverse1(revtest)
+>>> rmapped.shape
+(4, 3)
+>>> print rmapped
+[[ 0 10 11]
+ [ 0  0  0]
+ [ 0  0 12]
+ [ 0 13  0]]
 
 Reverse mapping of a single sample (one-dimensional feature vector) through the
 mapper chain created a 4x3 array that corresponds to the dimensions of a sample
@@ -400,18 +400,18 @@ in the previous dataset slicing operation.
 But now let's look at our fMRI dataset again. Here the mapper chain is a little
 more complex:
 
-  >>> print fds.a.mapper
-  <ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>-<ZScore>-<Fx: fx=mean>>
+>>> print fds.a.mapper
+<ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>-<ZScore>-<Fx: fx=mean>>
 
 Initial flattening followed by mask, detrending, Z-scoring and finally
 averaging. We would reverse mapping do in this case? Let's test:
 
-  >>> fds.nfeatures
-  577
-  >>> revtest = N.arange(100, 100 + fds.nfeatures)
-  >>> rmapped = fds.a.mapper.reverse1(revtest)
-  >>> rmapped.shape
-  (64, 64, 40)
+>>> fds.nfeatures
+577
+>>> revtest = N.arange(100, 100 + fds.nfeatures)
+>>> rmapped = fds.a.mapper.reverse1(revtest)
+>>> rmapped.shape
+(64, 64, 40)
 
 What happens is excatly what we expect: The initial one-dimensional vector
 is passed backwards through the mapper chain. Reverting a group-based
@@ -423,9 +423,9 @@ then reshaped into the original dimensionality -- the brain volume.
 We can check that this is really the case by only reverse-mapping through
 the first two mappers in the chain and compare the result:
 
-  >>> rmapped_partial = fds.a.mapper[:2].reverse1(revtest)
-  >>> (rmapped == rmapped_partial).all()
-  True
+>>> rmapped_partial = fds.a.mapper[:2].reverse1(revtest)
+>>> (rmapped == rmapped_partial).all()
+True
 
 In case you are wondering: The `~mvpa.mappers.base.ChainMapper` behaves
 like a regular Python list. We have just selected the first two mappers in
@@ -443,13 +443,13 @@ vector into a NIfTI brain volume image. This is possible because the mapper
 can put it back into 3D space, and because the dataset also stores
 information about the original source NIfTI image.
 
-  >>> 'imghdr' in fds.a
-  True
+>>> 'imghdr' in fds.a
+True
 
 PyMVPA offers `~mvpa.datasets.mri.map2nifti()`, a function to combine these
 two thing and convert any vector into the corresponding NIfTI image:
 
-  >>> nimg = map2nifti(fds, revtest)
+>>> nimg = map2nifti(fds, revtest)
 
 This image can now be safed to a file (e.g. ``nimg.save('mytest.nii.gz')``).
 In this format it is now compatible with the vast majority of neuroimaging
