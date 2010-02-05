@@ -66,22 +66,6 @@ data arrays into 2D. It does it by preserving the first axis (in PyMVPA datasets
 this is the axis that separates the samples) and concatenates all other axis
 into the second one.
 
-A very important feature of this mapper is that this transformation is
-reversible. We can simply ask the mapper to put our samples back into the
-original 3D shape.
-
-  >>> orig_data = ds.a.mapper.reverse(ds.samples)
-  >>> orig_data.shape
-  (5, 4, 3)
-
-In interactive scripting sessions this is would be a relatively bulky command to
-type, although it might be quite frequently used. To make ones fingers suffer
-less there is a little shortcut that does exactly the same:
-
-  >>> orig_data = ds.O
-  >>> orig_data.shape
-  (5, 4, 3)
-
 Since mappers represent particular transformations they can also be seen as a
 protocol of what has been done. If we look at the dataset, we know that it had
 been flattened on the way from its origin to a samples array in a dataset. This
@@ -104,35 +88,8 @@ while the former encapsulates the two mappers into a processing pipeline.
 We can see that the mapper chain represents the processing history of the
 dataset like a breadcrumb track.
 
-It is important to realize that the `~mvpa.mappers.base.ChainMapper` is a fully
-featured mapper that can also be used as such:
-
-  >>> ds.O.shape
-  (5, 4, 3)
-
 As it has been mentioned, mappers  not only can transform a single dataset, but
-can be feed with other data (as long as it is compatible with the mapper). Let's
-look at a reverse-mapping of the chain first.
-
-  >>> subds.nfeatures
-  4
-  >>> revtest = N.arange(subds.nfeatures) + 10
-  >>> print revtest
-  [10 11 12 13]
-  >>> rmapped = subds.a.mapper.reverse1(revtest)
-  >>> rmapped.shape
-  (4, 3)
-  >>> print rmapped
-  [[ 0 10 11]
-   [ 0  0  0]
-   [ 0  0 12]
-   [ 0 13  0]]
-
-Reverse mapping of a single sample (one-dimensional feature vector) through the
-mapper chain created a 4x3 array that corresponds to the dimensions of a sample
-in our original data space. Moreover, we see that each feature value is
-precisely placed into the position that corresponds to the features selected
-in the previous dataset slicing operation. And now for the forward mapping:
+can be feed with other data (as long as it is compatible with the mapper).
 
   >>> fwdtest = N.arange(12).reshape(4,3)
   >>> print fwdtest
@@ -151,6 +108,7 @@ the same transformation that had been done to the dataset itself also to our
 test 4x3 array. The procedure yields a feature vector of the same shape as the
 one in `subds`. By looking at the forward-mapped data, we can verify that the
 correct features have been chosen.
+
 
 Doing ``get_haxby2001_data()`` From Scratch
 ===========================================
@@ -220,12 +178,12 @@ voxels corresponding to a mask of ventral temporal cortex, and assign the
 samples attributes to the dataset. `fmri_dataset()` allows us to pass them
 directly:
 
-  >>> ds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
-  ...                   targets=attr.targets, chunks=attr.chunks,
-  ...                   mask=os.path.join(datapath, 'mask_vt.nii.gz'))
-  >>> ds.shape
+  >>> fds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
+  ...                    targets=attr.targets, chunks=attr.chunks,
+  ...                    mask=os.path.join(datapath, 'mask_vt.nii.gz'))
+  >>> fds.shape
   (1452, 577)
-  >>> print ds.sa
+  >>> print fds.sa
   <SampleAttributesCollection: chunks,time_indices,targets,time_coords>
 
 We got the dataset that we already know from the last part, but this time
@@ -274,11 +232,11 @@ history breadcrumb track, we can use its
 the dataset to map a shallow copy of itself with the given mapper, and
 return it. Let's try:
 
-  >>> detrended_ds = ds.get_mapped(detrender)
-  >>> print detrended_ds.a.mapper
+  >>> detrended_fds = fds.get_mapped(detrender)
+  >>> print detrended_fds.a.mapper
   <ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>>
 
-``detrended_ds`` is easily identifiable as a dataset that has been
+``detrended_fds`` is easily identifiable as a dataset that has been
 flattened, sliced, and linearily detrended.
 
 
@@ -319,8 +277,8 @@ same processing, but without copying the data. For
 `~mvpa.mappers.zscore.zscore()`. The following call will do the same as the
 mapper we have created above, but using less memory:
 
-  >>> ds = zscore(detrended_ds, param_est=('targets', ['rest']))
-  >>> print ds.a.mapper
+  >>> fds = zscore(detrended_fds, param_est=('targets', ['rest']))
+  >>> print fds.a.mapper
   <ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>-<ZScore>>
 
 .. exercise::
@@ -334,8 +292,8 @@ is nicely presented in the mapper. From this point on we have no use for
 the samples of the *rest* category anymore, hence we remove them from the
 dataset:
 
-  >>> ds = ds[ds.sa.targets != 'rest']
-  >>> print ds.shape
+  >>> fds = fds[fds.sa.targets != 'rest']
+  >>> print fds.shape
   (864, 577)
 
 
@@ -355,7 +313,7 @@ corresponding label to each sample in the dataset, indication to which of
 both run-types is belongs to:
 
   >>> rnames = {0: 'even', 1: 'odd'}
-  >>> ds.sa['runtype'] = [rnames[c % 2] for c in ds.sa.chunks]
+  >>> fds.sa['runtype'] = [rnames[c % 2] for c in fds.sa.chunks]
 
 The rest is trivial. For cases like this -- applying a function (i.e. mean)
 to a set of groups of samples (all combinations of stimulus category and
@@ -369,17 +327,149 @@ since this is also a mapper, a new dataset with mean samples is returned:
   >>> averager = mean_group_sample(['targets', 'runtype'])
   >>> type(averager)
   <class 'mvpa.mappers.fx.FxMapper'>
-  >>> ds = ds.get_mapped(averager)
-  >>> ds.shape
+  >>> fds = fds.get_mapped(averager)
+  >>> fds.shape
   (16, 577)
-  >>> print ds.sa.targets
+  >>> print fds.sa.targets
   ['bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe'
    'bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe']
 
-Here we go! We now have a fully-preprocessed dataset: detrended,
-normalized, with one sample per stimulus condition that is an average
-for odd and even runs respectively. Now it is time for some serious
-classification -- in :ref:`part four of the tutorial <chap_tutorial4>`.
+Here we go! We now have a fully-preprocessed dataset: detrended, normalized,
+with one sample per stimulus condition that is an average for odd and even runs
+respectively. Now we could do some serious classification, and we will do it
+:ref:`part four of the tutorial <chap_tutorial4>`, but there is still an
+important aspect of mappers we have to look at first.
+
+
+There and back again -- a Mapper's tale
+=======================================
+
+Let's take a look back at the simple datasets from the start of the tutorial
+part.
+
+  >>> print ds
+  <Dataset: 5x12@float64, <a: mapper>>
+  >>> print ds.a.mapper
+  <FlattenMapper>
+
+A very important feature of mappers is that they allow to reverse a
+transformation, if that is possible. In case of the simple dataset we can
+ask the mapper to undo the flattening and to put our samples back into the
+original 3D shape.
+
+  >>> orig_data = ds.a.mapper.reverse(ds.samples)
+  >>> orig_data.shape
+  (5, 4, 3)
+
+In interactive scripting sessions this is would be a relatively bulky command to
+type, although it might be quite frequently used. To make ones fingers suffer
+less there is a little shortcut that does exactly the same:
+
+  >>> orig_data = ds.O
+  >>> orig_data.shape
+  (5, 4, 3)
+
+It is important to realize that reverse-mapping not only works with a single
+mapper, but also with a `~mvpa.mappers.base.ChainMapper`. Going back to our demo
+dataset from the beginning we can see how it works:
+
+  >>> print subds
+  <Dataset: 5x4@float64, <a: mapper>>
+  >>> print subds.a.mapper
+  <ChainMapper: <Flatten>-<FeatureSlice>>
+  >>> subds.nfeatures
+  4
+  >>> revtest = N.arange(subds.nfeatures) + 10
+  >>> print revtest
+  [10 11 12 13]
+  >>> rmapped = subds.a.mapper.reverse1(revtest)
+  >>> rmapped.shape
+  (4, 3)
+  >>> print rmapped
+  [[ 0 10 11]
+   [ 0  0  0]
+   [ 0  0 12]
+   [ 0 13  0]]
+
+Reverse mapping of a single sample (one-dimensional feature vector) through the
+mapper chain created a 4x3 array that corresponds to the dimensions of a sample
+in our original data space. Moreover, we see that each feature value is
+precisely placed into the position that corresponds to the features selected
+in the previous dataset slicing operation.
+
+But now let's look at our fMRI dataset again. Here the mapper chain is a little
+more complex:
+
+  >>> print fds.a.mapper
+  <ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>-<ZScore>-<Fx: fx=mean>>
+
+Initial flattening followed by mask, detrending, Z-scoring and finally
+averaging. We would reverse mapping do in this case? Let's test:
+
+  >>> fds.nfeatures
+  577
+  >>> revtest = N.arange(100, 100 + fds.nfeatures)
+  >>> rmapped = fds.a.mapper.reverse1(revtest)
+  >>> rmapped.shape
+  (64, 64, 40)
+
+What happens is excatly what we expect: The initial one-dimensional vector
+is passed backwards through the mapper chain. Reverting a group-based
+averaging doesn't make much sense for a single vector, hence it is ignored.
+Same happens for Z-Scoring and temporal detrending. However, for all
+remaining mappers the transformations are reverse. First un-masked, and
+then reshaped into the original dimensionality -- the brain volume.
+
+We can check that this is really the case by only reverse-mapping through
+the first two mappers in the chain and compare the result:
+
+  >>> rmapped_partial = fds.a.mapper[:2].reverse1(revtest)
+  >>> (rmapped == rmapped_partial).all()
+  True
+
+In case you are wondering: The `~mvpa.mappers.base.ChainMapper` behaves
+like a regular Python list. We have just selected the first two mappers in
+the list as another `~mvpa.mappers.base.ChainMapper` and used that one for
+reverse-mapping.
+
+
+Back To NIfTI
+-------------
+
+One last interesting aspect in the context of reverse mapping: Whenever it
+is necessary to export data from PyMVPA, such as results, dataset mappers
+also play a critical role. For example we can easily export the ``revtest``
+vector into a NIfTI brain volume image. This is possible because the mapper
+can put it back into 3D space, and because the dataset also stores
+information about the original source NIfTI image.
+
+  >>> 'imghdr' in fds.a
+  True
+
+PyMVPA offers `~mvpa.datasets.mri.map2nifti()`, a function to combine these
+two thing and convert any vector into the corresponding NIfTI image:
+
+  >>> nimg = map2nifti(fds, revtest)
+
+This image can now be safed to a file (e.g. ``nimg.save('mytest.nii.gz')``).
+In this format it is now compatible with the vast majority of neuroimaging
+software.
+
+.. exercise::
+
+   Save the NIfTI image to some file, and use an MRI viewer to overlay it
+   on top of the anatomical image in the demo dataset. Does it match our
+   original mask image of ventral temporal cortex?
+
+There are much more mappers in PyMVPA than we could cover in the tutorial
+part. Some more will be used in other parts, but even more can be found the
+:mod:`~mvpa.mappers` module. Even though the all implement different
+transformations, they can all be used in the same way, and can all be
+combined into a chain.
+
+Now we are really ready for :ref:`part four of the tutorial <chap_tutorial4>`.
+
+
 
 .. only:: html
 
