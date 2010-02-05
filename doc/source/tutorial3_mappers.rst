@@ -201,9 +201,9 @@ volume in the NIfTI image.
   >>> datapath = os.path.join(pymvpa_datadbroot,
   ...                         'demo_blockfmri', 'demo_blockfmri')
   >>> attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
-  >>> len(attr.labels)
+  >>> len(attr.targets)
   1452
-  >>> print N.unique(attr.labels)
+  >>> print N.unique(attr.targets)
   ['bottle' 'cat' 'chair' 'face' 'house' 'rest' 'scissors' 'scrambledpix'
    'shoe']
   >>> len(attr.chunks)
@@ -221,15 +221,15 @@ samples attributes to the dataset. `fmri_dataset()` allows us to pass them
 directly:
 
   >>> ds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
-  ...                   labels=attr.labels, chunks=attr.chunks,
+  ...                   targets=attr.targets, chunks=attr.chunks,
   ...                   mask=os.path.join(datapath, 'mask_vt.nii.gz'))
   >>> ds.shape
   (1452, 577)
   >>> print ds.sa
-  <SampleAttributesCollection: chunks,time_indices,labels,time_coords>
+  <SampleAttributesCollection: chunks,time_indices,targets,time_coords>
 
 We got the dataset that we already know from the last part, but this time
-is also has information about chunks and labels.
+is also has information about chunks and targets.
 
 The next step is to extract the *patterns of activation* that we are
 interested in from the dataset. But wait! We know that fMRI data is
@@ -300,10 +300,10 @@ per-timepoint voxel intensity difference from the *rest* average.
 This type of data :term:`normalization` is, you guessed it, also
 implemented as a mapper:
 
-  >>> zscorer = ZScoreMapper(param_est=('labels', ['rest']))
+  >>> zscorer = ZScoreMapper(param_est=('targets', ['rest']))
 
 This configures to perform a chunk-wise (the default) Z-scoring, while
-estimating mean and standard deviation from samples labels with 'rest' in
+estimating mean and standard deviation from samples targets with 'rest' in
 the respective chunk of data.
 
 Remember, all mappers return new datasets that only have copies of what has
@@ -319,7 +319,7 @@ same processing, but without copying the data. For
 `~mvpa.mappers.zscore.zscore()`. The following call will do the same as the
 mapper we have created above, but using less memory:
 
-  >>> ds = zscore(detrended_ds, param_est=('labels', ['rest']))
+  >>> ds = zscore(detrended_ds, param_est=('targets', ['rest']))
   >>> print ds.a.mapper
   <ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>-<ZScore>>
 
@@ -334,7 +334,7 @@ is nicely presented in the mapper. From this point on we have no use for
 the samples of the *rest* category anymore, hence we remove them from the
 dataset:
 
-  >>> ds = ds[ds.sa.labels != 'rest']
+  >>> ds = ds[ds.sa.targets != 'rest']
   >>> print ds.shape
   (864, 577)
 
@@ -366,13 +366,13 @@ determines all possible combinations of its unique values, selects dataset
 samples corresponding to these combinations, and averages them. Finally,
 since this is also a mapper, a new dataset with mean samples is returned:
 
-  >>> averager = mean_group_sample(['labels', 'runtype'])
+  >>> averager = mean_group_sample(['targets', 'runtype'])
   >>> type(averager)
   <class 'mvpa.mappers.fx.FxMapper'>
   >>> ds = ds.get_mapped(averager)
   >>> ds.shape
   (16, 577)
-  >>> print ds.sa.labels
+  >>> print ds.sa.targets
   ['bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe'
    'bottle' 'cat' 'chair' 'face' 'house' 'scissors' 'scrambledpix' 'shoe']
 

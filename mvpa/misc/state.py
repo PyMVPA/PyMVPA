@@ -984,7 +984,7 @@ class ClassWithCollections(object):
                 clsstr = str(self.__class__)
                 # Skip some False positives
                 if 'mvpa.datasets' in clsstr and 'Dataset' in clsstr and \
-                       (key in ['labels', 'chunks', 'samples', 'mapper']):
+                       (key in ['targets', 'chunks', 'samples', 'mapper']):
                     return
                 colname = known_attribs[key]
                 # figure out and report invocation location

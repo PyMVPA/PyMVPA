@@ -243,8 +243,8 @@ class RFETests(unittest.TestCase):
         # XXX for now convert to numeric labels, but should better be taken
         # care of during clf refactoring
         am = AttributeMap()
-        wdata.labels = am.to_numeric(wdata.labels)
-        tdata.labels = am.to_numeric(tdata.labels)
+        wdata.targets = am.to_numeric(wdata.targets)
+        tdata.targets = am.to_numeric(tdata.targets)
 
         wdata_nfeatures = wdata.nfeatures
         tdata_nfeatures = tdata.nfeatures

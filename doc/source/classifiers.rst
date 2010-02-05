@@ -75,16 +75,16 @@ This examples demonstrates the typical daily life of a classifier.
   >>> from mvpa.datasets import dataset_wizard
   >>> training = dataset_wizard(samples=N.array(
   ...                                N.arange(100),ndmin=2, dtype='float').T,
-  ...                    labels=[0] * 50 + [1] * 50)
+  ...                    targets=[0] * 50 + [1] * 50)
   >>> rand100 = N.random.rand(10)*100
   >>> validation = dataset_wizard(samples=N.array(
   ...                                rand100, ndmin=2, dtype='float').T,
-  ...                      labels=[ int(i>50) for i in rand100 ])
+  ...                      targets=[ int(i>50) for i in rand100 ])
   >>> clf = kNN(k=10)
   >>> clf.train(training)
-  >>> N.mean(clf.predict(training.samples) == training.labels)
+  >>> N.mean(clf.predict(training.samples) == training.targets)
   1.0
-  >>> N.mean(clf.predict(validation.samples) == validation.labels)
+  >>> N.mean(clf.predict(validation.samples) == validation.targets)
   1.0
 
 Two datasets with 100 and 10 samples each are generated. Both datasets only
@@ -136,22 +136,22 @@ interest might consume a lot of memory or needs intensive computation, and not
 needed in most (or in some) of the use cases.
 
 For instance, the :class:`~mvpa.clfs.base.Classifier` class defines the
-`trained_labels` state variable, which just stores the unique labels for which
-the classifier was trained. Since `trained_labels` stores meaningful
+`trained_targets` state variable, which just stores the unique targets for which
+the classifier was trained. Since `trained_targets` stores meaningful
 information only for a trained classifier, attempt to access
-'clf.states.trained_labels' before training would result in an error,
+'clf.states.trained_targets' before training would result in an error,
 
  >>> from mvpa.misc.exceptions import UnknownStateError
  >>> try:
  ...     untrained_clf = kNN()
- ...     labels = untrained_clf.states.trained_labels
+ ...     targets = untrained_clf.states.trained_targets
  ... except UnknownStateError:
  ...     "Does not work"
  'Does not work'
 
 since the classifier has not seen the data yet and, thus, does not know the
-labels. In other words, it is not yet in the state to know anything about the
-labels. Any state variable can be enabled or disabled on per instance basis at
+targets. In other words, it is not yet in the state to know anything about the
+targets. Any state variable can be enabled or disabled on per instance basis at
 any time of the execution (see :class:`~mvpa.misc.state.ClassWithCollections`).
 
 To continue the last example, each classifier, or more precisely every
@@ -166,7 +166,7 @@ should operate on `states` collection (which is different from version prior
 '0.5.0' where you could query values directly from the object, i.e. `clf` in
 this example)
 
-  >>> clf.states.trained_labels
+  >>> clf.states.trained_targets
   array([0, 1])
 
   >>> print clf.states
@@ -285,7 +285,7 @@ generalization performance of a cross-validated classifier. Such
 summary is provided by instances of a
 :class:`~mvpa.clfs.transerror.ConfusionMatrix` class, and is
 accompanied by various performance metrics.  For example, the 8-fold
-cross-validation of the dataset with 8 labels with the SMLR classifier produced
+cross-validation of the dataset with 8 targets with the SMLR classifier produced
 the following confusion matrix::
 
   >>> # Simple 'print cvterr.confusion' provides the same output
@@ -381,7 +381,7 @@ k-Nearest-Neighbour
 -------------------
 
 The :class:`~mvpa.clfs.knn.kNN` classifier makes predictions based on the
-labels of nearby samples.  It currently uses Euclidean distance to determine
+targets of nearby samples.  It currently uses Euclidean distance to determine
 the nearest neighbours, but future enhancements may include support for other
 kernels.
 
@@ -493,7 +493,7 @@ package, beneath which there are several specific options:
     typically uses multiple classifiers internally
 
 :class:`~mvpa.clfs.meta.ProxyClassifier`
-    typically performs some action on the data/labels before classification
+    typically performs some action on the data/targets before classification
     is performed
 
 Within these more general categories, specific classifiers are implemented.
@@ -519,7 +519,7 @@ Furthermore, there are also several :class:`~mvpa.clfs.meta.ProxyClassifier`
 subclasses:
 
 :class:`~mvpa.clfs.meta.BinaryClassifier`
-    maps a set of labels into two categories (+1 and -1)
+    maps a set of targets into two categories (+1 and -1)
 
 :class:`~mvpa.clfs.meta.MappedClassifier`
     uses a mapper on input data prior to training/testing
@@ -589,7 +589,7 @@ specification got changed. For instance, for kernel-based classifier (e.g. GPR)
 it makes no sense to recompute kernel matrix, if only a classifier (not kernel)
 parameter (e.g. ``sigma_noise``) was changed. Another similar usecase: for
 :ref:`null-hypothesis statistical testing <example_permutation_test>` it might be
-needed to train classifier multiple times on a randomized set of labels.
+needed to train classifier multiple times on a randomized set of targets.
 
 Only classifiers which have ``retrainable`` in their ``__tags__`` are
 capable of efficient retraining. To enable retraining, just provide

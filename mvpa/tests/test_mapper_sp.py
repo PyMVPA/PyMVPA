@@ -88,14 +88,14 @@ def test_polydetrend():
     # small additional test for break points
     # although they are no longer there
     ds = dataset_wizard(N.array([[1.0, 2, 3, 1, 2, 3]], ndmin=2).T,
-                 labels=chunks, chunks=chunks)
+                 targets=chunks, chunks=chunks)
     mds = PolyDetrendMapper(chunks='chunks', polyord=1)(ds)
     assert_array_almost_equal(mds.samples, N.zeros(mds.shape))
 
     # test of different polyord on each chunk
     target_mixed = N.array( [[-1.0, 0, 1, 0, 0, 0],
                              [2.0, 0, -2, 0, 0, 0]], ndmin=2 ).T
-    ds = dataset_wizard(samples_forchunks.copy(), labels=chunks, chunks=chunks)
+    ds = dataset_wizard(samples_forchunks.copy(), targets=chunks, chunks=chunks)
     mds = PolyDetrendMapper(chunks='chunks', polyord=[0,1])(ds)
     assert_array_almost_equal(mds, target_mixed)
 

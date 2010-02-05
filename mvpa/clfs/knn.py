@@ -110,7 +110,7 @@ class kNN(Classifier):
         self.__weights = None
 
         # create dictionary with an item for each condition
-        uniquelabels = data.sa['labels'].unique
+        uniquelabels = data.sa['targets'].unique
         self.__votes_init = dict(zip(uniquelabels,
                                      [0] * len(uniquelabels)))
 
@@ -171,8 +171,8 @@ class kNN(Classifier):
         """
         # local bindings
         _data = self.__data
-        labels = _data.labels
-        uniquelabels = _data.sa['labels'].unique
+        labels = _data.targets
+        uniquelabels = _data.sa['targets'].unique
 
         # number of occerences for each unique class in kNNs
         votes = self.__votes_init.copy()
@@ -197,7 +197,7 @@ class kNN(Classifier):
         """
         # local bindings
         _data = self.__data
-        uniquelabels = _data.sa['labels'].unique
+        uniquelabels = _data.sa['targets'].unique
 
         # Lazy evaluation
         if self.__weights is None:
@@ -205,7 +205,7 @@ class kNN(Classifier):
             # It seemed to Yarik that this has to be evaluated just once per
             # training dataset.
             #
-            self.__labels = labels = self.__data.sa.labels
+            self.__labels = labels = self.__data.sa.targets
             Nlabels = len(labels)
             Nuniquelabels = len(uniquelabels)
 

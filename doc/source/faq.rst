@@ -212,17 +212,17 @@ samples. Suppose you have a dataset:
 
   >>> dataset = normalFeatureDataset()
   >>> print dataset
-  <Dataset: 100x4@float64, <sa: chunks,labels>>
+  <Dataset: 100x4@float64, <sa: chunks,targets>>
 
 Averaging all samples with the same label in each chunk individually is done
 by applying a mapper to the dataset.
 
   >>> from mvpa.mappers.fx import mean_group_sample
   >>>
-  >>> m = mean_group_sample(['labels', 'chunks'])
+  >>> m = mean_group_sample(['targets', 'chunks'])
   >>> mapped_dataset = dataset.get_mapped(m)
   >>> print mapped_dataset
-  <Dataset: 10x4@float64, <sa: chunks,labels>, <a: mapper>>
+  <Dataset: 10x4@float64, <sa: chunks,targets>, <a: mapper>>
 
 `mean_group_sample` creates an `FxMapper` that applies a function to
 every group of samples in each chunk individually and therefore yields
@@ -251,7 +251,7 @@ the classifier.
   >>> clf.train(dataset)
   >>> final_dataset = dataset[:, clf.states.feature_ids]
   >>> print final_dataset
-  <Dataset: 100x1@float64, <sa: chunks,labels>>
+  <Dataset: 100x1@float64, <sa: chunks,targets>>
 
 In the above code snippet a kNN classifier is defined, that performs a feature
 selection step prior training. Features are selected according to the maximum
@@ -289,7 +289,7 @@ them again) looks like this:
   >>> sensitivities = cv.states.harvested.values()[0]
   >>> len(sensitivities)
   2
-  >>> sensitivities[0].shape == (len(dataset.uniquelabels), dataset.nfeatures)
+  >>> sensitivities[0].shape == (len(dataset.uniquetargets), dataset.nfeatures)
   True
 
 First, we define an instance of

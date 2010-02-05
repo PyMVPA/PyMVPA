@@ -24,7 +24,7 @@ from mvpa.misc.data_generators import normalFeatureDataset
 class MiscDatasetFxTests(unittest.TestCase):
 
     def test_aggregation(self):
-        data = dataset_wizard(N.arange( 20 ).reshape((4, 5)), labels=1, chunks=1)
+        data = dataset_wizard(N.arange( 20 ).reshape((4, 5)), targets=1, chunks=1)
 
         ag_data = aggregateFeatures(data, N.mean)
 
@@ -36,7 +36,7 @@ class MiscDatasetFxTests(unittest.TestCase):
     def test_invar_features_removal(self):
         r = N.random.normal(size=(3,1))
         ds = dataset_wizard(samples=N.hstack((N.zeros((3,2)), r)),
-                     labels=1)
+                     targets=1)
 
         self.failUnless(ds.nfeatures == 3)
 
@@ -50,14 +50,14 @@ class MiscDatasetFxTests(unittest.TestCase):
         """Just basic testing for now"""
         chunks = [1,1,2,2,3,3,4,4]
         ds = dataset_wizard(samples=N.arange(len(chunks)).reshape(
-            (len(chunks),1)), labels=[1]*8, chunks=chunks)
+            (len(chunks),1)), targets=[1]*8, chunks=chunks)
         coarsenChunks(ds, nchunks=2)
         chunks1 = coarsenChunks(chunks, nchunks=2)
         self.failUnless((chunks1 == ds.chunks).all())
         self.failUnless((chunks1 == N.asarray([0,0,0,0,1,1,1,1])).all())
 
         ds2 = dataset_wizard(samples=N.arange(len(chunks)).reshape(
-            (len(chunks),1)), labels=[1]*8, chunks=range(len(chunks)))
+            (len(chunks),1)), targets=[1]*8, chunks=range(len(chunks)))
         coarsenChunks(ds2, nchunks=2)
         self.failUnless((chunks1 == ds.chunks).all())
 
@@ -102,7 +102,7 @@ class MiscDatasetFxTests(unittest.TestCase):
         sb = (N.random.random_sample((1000,)) >= 0.5)
         rb = SequenceStats(sb, order=order)
 
-        # Now lets do multiclass with literal labels
+        # Now lets do multiclass with literal targets
         s5 = N.random.permutation(['f', 'bu', 'd', 0, 'zz']*200)
         r5 = SequenceStats(s5, order=order)
 

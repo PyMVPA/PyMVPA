@@ -211,14 +211,14 @@ class ErrorsTests(unittest.TestCase):
         # uni2 dataset with reordered labels
         ds2 = datasets['uni2small'].copy()
         # revert labels
-        ds2.sa['labels'].value = ds2.labels[::-1].copy()
+        ds2.sa['targets'].value = ds2.targets[::-1].copy()
         # same with uni3
         ds3 = datasets['uni3small'].copy()
-        ul = ds3.sa['labels'].unique
-        nl = ds3.labels.copy()
+        ul = ds3.sa['targets'].unique
+        nl = ds3.targets.copy()
         for l in xrange(3):
-            nl[ds3.labels == ul[l]] = ul[(l+1)%3]
-        ds3.sa.labels = nl
+            nl[ds3.targets == ul[l]] = ul[(l+1)%3]
+        ds3.sa.targets = nl
         for ds in [datasets['uni2small'], ds2,
                    datasets['uni3small'], ds3]:
             cv = CrossValidatedTransferError(
@@ -227,7 +227,7 @@ class ErrorsTests(unittest.TestCase):
                 enable_states=['confusion', 'training_confusion'])
             cverror = cv(ds)
             stats = cv.states.confusion.stats
-            Nlabels = len(ds.uniquelabels)
+            Nlabels = len(ds.uniquetargets)
             # so we at least do slightly above chance
             self.failUnless(stats['ACC'] > 1.2 / Nlabels)
             auc = stats['AUC']

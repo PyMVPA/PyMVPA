@@ -127,7 +127,7 @@ class Hyperalignment(ClassWithCollections):
             if i == ref_ds:
                 continue
             #ZSC zscore(data, perchunk=False)
-            ds = dataset_wizard(samples=data, labels=commonspace)
+            ds = dataset_wizard(samples=data, targets=commonspace)
             #ZSC zscore(ds, perchunk=False)
             m.train(ds)
             data_temp = m.forward(data)
@@ -165,7 +165,7 @@ class Hyperalignment(ClassWithCollections):
                 #ZSC zscore(ds_new, perchunk=False)
                 #PRJ ds_temp = (commonspace*ndatasets - ds_mapped[i])/(ndatasets-1)
                 #ZSC zscore(ds_temp, perchunk=False)
-                ds_new.labels = commonspace #PRJ ds_temp
+                ds_new.targets = commonspace #PRJ ds_temp
                 m.train(ds_new) # ds_temp)
                 data_mapped[i] = m.forward(N.asanyarray(ds))
                 if residuals is not None:
@@ -188,7 +188,7 @@ class Hyperalignment(ClassWithCollections):
             #ZSC zscore(ds_new, perchunk=False)
             #PRJ ds_temp = (commonspace*ndatasets - ds_mapped[i])/(ndatasets-1)
             #ZSC zscore(ds_temp, perchunk=False)
-            ds_new.labels = commonspace #PRJ ds_temp#
+            ds_new.targets = commonspace #PRJ ds_temp#
             m.train(ds_new) #ds_temp)
 
             if residuals is not None:

@@ -49,7 +49,7 @@ class StatsTestsScipy(unittest.TestCase):
 
         assert_raises(ValueError, null.fit, CorrCoef(), ds)
         # cheat and map to numeric for this test
-        ds.sa.labels = AttributeMap().to_numeric(ds.labels)
+        ds.sa.targets = AttributeMap().to_numeric(ds.targets)
         null.fit(CorrCoef(), ds)
 
         # 100 and -100 should both have zero probability on their respective
@@ -232,8 +232,8 @@ class StatsTestsScipy(unittest.TestCase):
 
         fwm = OneWayAnova()
         f = fwm(ds)
-        f_sp = f_oneway(ds[ds.labels == 'L1'].samples,
-                        ds[ds.labels == 'L0'].samples)
+        f_sp = f_oneway(ds[ds.targets == 'L1'].samples,
+                        ds[ds.targets == 'L0'].samples)
 
         # SciPy needs to compute the same F-scores
         assert_array_almost_equal(f, f_sp[0:1])
@@ -274,7 +274,7 @@ class StatsTestsScipy(unittest.TestCase):
         X = N.array([model_lr, N.repeat(1, len(model_lr))]).T
 
         # two 'voxel' dataset
-        data = dataset_wizard(samples=N.array((wsignal, nsignal, nsignal)).T, labels=1)
+        data = dataset_wizard(samples=N.array((wsignal, nsignal, nsignal)).T, targets=1)
 
         # check GLM betas
         glm = GLM(X)

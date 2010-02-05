@@ -37,7 +37,7 @@ import numpy as N
 
 import mvpa.misc.support as support
 from mvpa.base.dochelpers import enhancedDocString
-from mvpa.datasets.miscfx import coarsenChunks, permute_labels, random_samples, \
+from mvpa.datasets.miscfx import coarsenChunks, permute_targets, random_samples, \
                                  get_nsamples_per_attr
 
 if __debug__:
@@ -222,7 +222,7 @@ class Splitter(object):
                             ds_a.lastsplit = lastsplit
                     # permute the labels
                     if self.__permute:
-                        permute_labels(ds, perchunk=True)
+                        permute_targets(ds, perchunk=True)
 
                     # select subset of samples if requested
                     if nperlabel == 'all' or ds is None:
@@ -236,7 +236,7 @@ class Splitter(object):
                         if nperlabel == 'equal':
                             # determine the min number of samples per class
                             npl = N.array(get_nsamples_per_attr(
-                                ds, 'labels').values()).min()
+                                ds, 'targets').values()).min()
                         elif isinstance(nperlabel, float) or (
                             operator.isSequenceType(nperlabel) and
                             len(nperlabel) > 0 and
@@ -244,7 +244,7 @@ class Splitter(object):
                             # determine number of samples per class and take
                             # a ratio
                             counts = N.array(get_nsamples_per_attr(
-                                ds, 'labels').values())
+                                ds, 'targets').values())
                             npl = (counts * nperlabel).round().astype(int)
                         else:
                             npl = nperlabel

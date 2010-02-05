@@ -27,7 +27,7 @@ class GPRTests(unittest.TestCase):
         clf = GPR(k)
         clf.train(dataset)
         y = clf.predict(dataset.samples)
-        assert_array_equal(y.shape, dataset.labels.shape)
+        assert_array_equal(y.shape, dataset.targets.shape)
 
     def test_linear(self):
         pass

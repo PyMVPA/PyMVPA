@@ -29,16 +29,16 @@ from mvpa.suite import *
 ds = normalFeatureDataset(perlabel=10, nlabels=2, nchunks=2,
                           nfeatures=10, nonbogus_features=[3, 7],
                           snr=5.0)
-dataset = dataset_wizard(samples=ds.samples, labels=ds.labels,
+dataset = dataset_wizard(samples=ds.samples, targets=ds.targets,
                          chunks=ds.chunks)
 
-"""Create a dissimilarity matrix based on the labels of the data points
+"""Create a dissimilarity matrix based on the targets of the data points
 in our test dataset.  This will allow us to see if there is a correlation
 between any given searchlight sphere and the experimental conditions."""
 
 # create dissimilarity matrix using the 'confusion' distance
 # metric
-dsm = DSMatrix(dataset.labels, 'confusion')
+dsm = DSMatrix(dataset.targets, 'confusion')
 
 """Now it only takes three lines for a searchlight analysis."""
 
