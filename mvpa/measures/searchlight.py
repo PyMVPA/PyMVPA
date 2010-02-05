@@ -15,8 +15,10 @@ if __debug__:
 
 import numpy as N
 
-from mvpa.datasets import Dataset, hstack
 from mvpa.base import externals
+from mvpa.base.dochelpers import borrowkwargs
+
+from mvpa.datasets import Dataset, hstack
 from mvpa.support import copy
 from mvpa.mappers.base import FeatureSliceMapper
 from mvpa.measures.base import DatasetMeasure
@@ -197,6 +199,7 @@ class Searchlight(DatasetMeasure):
         return results, roisizes
 
 
+@borrowkwargs(Searchlight, '__init__')
 def sphere_searchlight(datameasure, radius=1, center_ids=None,
                        space='voxel_indices', **kwargs):
     """Creates a `Searchlight` to run a scalar `DatasetMeasure` on
