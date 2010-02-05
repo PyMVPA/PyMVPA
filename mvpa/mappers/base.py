@@ -608,13 +608,15 @@ class CombinedMapper(Mapper):
         Parameters
         ----------
         outId : int
-          Single id of a feature in output space, whos neighbors should be
+          Single id of a feature in output space, whose neighbors should be
           determined.
         *args, **kwargs
           Additional arguments are passed to the metric of the embedded
           mapper, that is responsible for the corresponding feature.
 
-        Returns a list of outIds
+        Returns
+        -------
+        list of outIds
         """
         fsum = 0
         for m in self._mappers:

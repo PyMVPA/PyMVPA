@@ -11,7 +11,7 @@
 Module Description
 ==================
 
-Splitters are destined to split the provided dataset varous ways to
+Splitters are destined to split the provided dataset various ways to
 simplify cross-validation analysis, implement boosting of the
 estimates, or sample null-space via permutation testing.
 
@@ -82,7 +82,7 @@ class Splitter(object):
           Two special strings are recognized: 'all' uses all available
           samples (default) and 'equal' uses the maximum number of samples
           the can be provided by all of the classes. This value might be
-          provided as a sequence whos length matches the number of datasets
+          provided as a sequence length of which matches the number of datasets
           per split and indicates the configuration for the respective dataset
           in each split.
         nrunspersplit : int
