@@ -94,7 +94,7 @@ class _GLMNET(Classifier):
                        allowedtype='basestring',
                        choices=["gaussian", "multinomial"],
                        ro=True,
-                       doc="""Response type of your labels (either 'gaussian'
+                       doc="""Response type of your targets (either 'gaussian'
                        for regression or 'multinomial' for classification).""")
 
     alpha = Parameter(1.0, min=0.01, max=1.0, allowedtype='float',
@@ -165,19 +165,20 @@ class _GLMNET(Classifier):
         """
         # process the labels based on the model family
         if self.params.family == 'gaussian':
-            # do nothing, just save the labels as a list
-            #labels = dataset.targets.tolist()
-            labels = dataset.targets
+            # do nothing, just save the targets as a list
+            #targets = dataset.targets.tolist()
+            targets = dataset.targets
+            self._utargets = None
             pass
         elif self.params.family == 'multinomial':
             # turn lables into list of range values starting at 1
-            #labels = _label2indlist(dataset.targets,
+            #targets = _label2indlist(dataset.targets,
             #                        dataset.uniquetargets)
-            labels = _label2oneofm(dataset.targets,
+            targets = _label2oneofm(dataset.targets,
                                     dataset.uniquetargets)
 
-        # save some properties of the data/classification
-        self._ulabels = dataset.uniquetargets.copy()
+            # save some properties of the data/classification
+            self._utargets = dataset.uniquetargets.copy()
 
         # process the pmax
         if self.params.pmax is None:
@@ -190,7 +191,7 @@ class _GLMNET(Classifier):
         # train with specifying max_steps
         try:
             self.__trained_model = r.glmnet(dataset.samples,
-                                            labels,
+                                            targets,
                                             family=self.params.family,
                                             alpha=self.params.alpha,
                                             nlambda=self.params.nlambda,
@@ -249,13 +250,13 @@ class _GLMNET(Classifier):
             # convert to 0-based ints
             class_ind = (class_ind-1).astype('int')
 
-            # convert to actual labels
+            # convert to actual targets
             # XXX If just one sample is predicted, the converted predictions
             # array is just 1D, hence it yields an IndexError on [:,0]
             # Modified to .squeeze() which should do the same.
             # Please acknowledge and remove this comment.
-            #classes = self._ulabels[class_ind][:,0]
-            classes = self._ulabels[class_ind].squeeze()
+            #classes = self._utargets[class_ind][:,0]
+            classes = self._utargets[class_ind].squeeze()
         else:
             # is gaussian, so just remove last dim of values
             values = values[:, 0]
@@ -307,7 +308,7 @@ class GLMNETWeights(Sensitivity):
 
         #return weights
         if clf.params.family == 'multinomial':
-            return Dataset(weights.T, sa={'targets': clf._ulabels})
+            return Dataset(weights.T, sa={'targets': clf._utargets})
         else:
             return weights
 
