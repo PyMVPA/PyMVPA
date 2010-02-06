@@ -154,7 +154,7 @@ class HyperAlignmentTests(unittest.TestCase):
         mkdg_ds = []
         for sub in subj:
             mkdg_ds.append(fmri_dataset(
-                samples=sub+'_mkdg.nii.gz', labels=md_labels,
+                samples=sub+'_mkdg.nii.gz', targets=md_labels,
                 chunks=N.repeat(range(8), 192), mask=sub+'_mask_vt.nii.gz'))
 
         m=mean_group_sample(['targets', 'chunks'])
