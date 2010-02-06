@@ -547,8 +547,9 @@ def borrowkwargs(cls, methodname=None, exclude=None):
         skip_params = set(['kwargs', '**kwargs'] + skip_params)
 
         # combine two and filter out items to skip
-        aplist = [i for i in mplist + oplist
-                  if not i[0] in skip_params]
+        aplist = [i for i in mplist if not i[0] in skip_params]
+        aplist += [i for i in oplist
+                   if not i[0] in skip_params.union(known_params)]
 
         docstring = mpreamble
         if len(aplist):
