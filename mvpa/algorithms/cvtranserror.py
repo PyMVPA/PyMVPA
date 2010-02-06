@@ -242,16 +242,6 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
 
         self.states.results = results
         """Store state variable if it is enabled"""
-
-        # Provide those labels_map if appropriate
-        try:
-            if states.is_enabled("confusion"):
-                states.confusion.targets_map = dataset.targets_map
-            if states.is_enabled("training_confusion"):
-                states.training_confusion.targets_map = dataset.targets_map
-        except:
-            pass
-
         results = Dataset(results, sa={'cv_fold': splitinfo})
         return results
 

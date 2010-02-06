@@ -1454,10 +1454,6 @@ class TransferError(ClassifierError):
                 targets = testtargets,
                 predictions = predictions,
                 estimates = clf.states.get('estimates', None))
-            try:
-                confusion.targets_map = testdataset.targets_map
-            except:
-                pass
             states.confusion = confusion
 
         if states.is_enabled('samples_error'):
