@@ -18,6 +18,7 @@ if __debug__:
     from mvpa.base import debug
     debug('INIT', 'mvpa.testing')
 
+from mvpa.testing.tools import *
 
 if __debug__:
     debug('INIT', 'mvpa.testing end')
