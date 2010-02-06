@@ -1288,7 +1288,7 @@ class ClassifierError(ClassWithCollections):
         if self.__clf.states.is_enabled('trained_targets') \
                and not self.__clf.__is_regression__ \
                and not testdataset is None:
-            newlabels = Set(testdataset.sa['targets'].unique) \
+            newlabels = Set(testdataset.sa[self.clf.params.targets].unique) \
                         - Set(self.__clf.states.trained_targets)
             if len(newlabels)>0:
                 warning("Classifier %s wasn't trained to classify labels %s" %
@@ -1416,6 +1416,7 @@ class TransferError(ClassifierError):
 
         Returns a scalar value of the transfer error.
         """
+        testtargets = testdataset.sa[self.clf.params.targets].value
         # OPT: local binding
         clf = self.clf
         if testdataset is None:
@@ -1450,7 +1451,7 @@ class TransferError(ClassifierError):
         if states.is_enabled('confusion'):
             confusion = clf.__summary_class__(
                 #labels = self.targets,
-                targets = testdataset.sa.targets,
+                targets = testtargets,
                 predictions = predictions,
                 estimates = clf.states.get('estimates', None))
             try:
@@ -1463,7 +1464,7 @@ class TransferError(ClassifierError):
             samples_error = []
             for i, p in enumerate(predictions):
                 samples_error.append(
-                    self.__errorfx([p], testdataset.sa.targets[i:i+1]))
+                    self.__errorfx([p], testtargets[i:i+1]))
             testdataset.init_origids(
                 'samples', attr=self.__samples_idattr, mode='existing')
             states.samples_error = dict(
@@ -1471,7 +1472,7 @@ class TransferError(ClassifierError):
                     samples_error))
 
         # compute error from desired and predicted values
-        error = self.__errorfx(predictions, testdataset.sa.targets)
+        error = self.__errorfx(predictions, testtargets)
 
         return error
 

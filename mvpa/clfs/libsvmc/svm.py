@@ -123,11 +123,14 @@ class SVM(_SVM):
     def _train(self, dataset):
         """Train SVM
         """
+        targets_sa_name = self.params.targets    # name of targets sa
+        targets_sa = dataset.sa[targets_sa_name] # actual targets sa
+
         # libsvm needs doubles
         src = _data2ls(dataset)
 
         # libsvm cannot handle literal labels
-        labels = self._attrmap.to_numeric(dataset.sa.targets).tolist()
+        labels = self._attrmap.to_numeric(targets_sa.value).tolist()
 
         svmprob = _svm.SVMProblem(labels, src )
 
@@ -164,11 +167,11 @@ class SVM(_SVM):
                 C0 = abs(Cs[0])
                 scale = 1.0/(C0)#*N.sqrt(C0))
                 # so we got 1 C per label
-                uls = self._attrmap.to_numeric(dataset.sa['targets'].unique)
+                uls = self._attrmap.to_numeric(targets_sa.unique)
                 if len(Cs) != len(uls):
-                    raise ValueError, "SVM was parametrized with %d Cs but " \
+                    raise ValueError, "SVM was parameterized with %d Cs but " \
                           "there are %d labels in the dataset" % \
-                          (len(Cs), len(dataset.uniquetargets))
+                          (len(Cs), len(targets_sa.unique))
                 weight = [ c*scale for c in Cs ]
                 # All 3 need to be set to take an effect
                 libsvm_param._setParameter('weight', weight)
