@@ -756,6 +756,8 @@ class TreeClassifier(ProxyClassifier):
         on a corresponding subset of samples.
         """
         # Local bindings
+        targets_sa_name = self.params.targets    # name of targets sa
+        targets_sa = dataset.sa[targets_sa_name] # actual targets sa
         clf, clfs, index2group = self.clf, self.clfs, self._index2group
 
         # Handle groups of labels
@@ -779,7 +781,7 @@ class TreeClassifier(ProxyClassifier):
         #  yoh: actually above should catch it
 
         # Check if none of the labels is missing from known groups
-        dsul = set(dataset.sa['targets'].unique)
+        dsul = set(targets_sa.unique)
         if known.intersection(dsul) != dsul:
             raise ValueError, \
                   "Dataset %s had some labels not defined in groups: %s. " \
@@ -795,7 +797,8 @@ class TreeClassifier(ProxyClassifier):
         #      dataset and provide it with new labels
         ds_group = dataset.copy(deep=False)
         # assign new labels group samples into groups of labels
-        ds_group.targets = [label2index[l] for l in dataset.targets]
+        ds_group.sa[targets_sa_name].value = [label2index[l]
+                                              for l in targets_sa.value]
 
         # train primary classifier
         if __debug__:
@@ -815,7 +818,7 @@ class TreeClassifier(ProxyClassifier):
         #     might be not a bad thing altogether...)
         for gk in groups.iterkeys():
             # select samples per each group
-            ids = get_samples_by_attr(dataset, 'targets', groups_labels[gk])
+            ids = get_samples_by_attr(dataset, targets_sa_name, groups_labels[gk])
             ds_group = dataset[ids]
             if __debug__:
                 debug('CLFTREE', "Training %(clf)s for group %(gk)s on %(ds)s",
@@ -850,11 +853,13 @@ class TreeClassifier(ProxyClassifier):
             clf_ = clfs[gk]
             group_indexes = (clf_predictions == pred_group)
             if __debug__:
-                debug('CLFTREE', 'Predicting for group %s using %s on %d samples' %
+                debug('CLFTREE',
+                      'Predicting for group %s using %s on %d samples' %
                       (gk, clf_, N.sum(group_indexes)))
             p = clf_.predict(dataset[group_indexes])
             if predictions is None:
-                predictions = N.zeros((len(dataset),), dtype=N.asanyarray(p).dtype)
+                predictions = N.zeros((len(dataset),),
+                                      dtype=N.asanyarray(p).dtype)
             predictions[group_indexes] = p
         return predictions
 
@@ -918,9 +923,10 @@ class BinaryClassifier(ProxyClassifier):
     def _train(self, dataset):
         """Train `BinaryClassifier`
         """
-        idlabels = [(x, +1) for x in get_samples_by_attr(dataset, 'targets',
+        targets_sa_name = self.params.targets
+        idlabels = [(x, +1) for x in get_samples_by_attr(dataset, targets_sa_name,
                                                          self.__poslabels)] + \
-                    [(x, -1) for x in get_samples_by_attr(dataset, 'targets',
+                    [(x, -1) for x in get_samples_by_attr(dataset, targets_sa_name,
                                                           self.__neglabels)]
         # XXX we have to sort ids since at the moment Dataset.selectSamples
         #     doesn't take care about order
@@ -951,11 +957,11 @@ class BinaryClassifier(ProxyClassifier):
                       ". Selected %s" % datasetselected)
 
         # adjust the labels
-        datasetselected.sa['targets'].value = [ x[1] for x in idlabels ]
+        datasetselected.sa[targets_sa_name].value = [ x[1] for x in idlabels ]
 
         # now we got a dataset with only 2 labels
         if __debug__:
-            assert((datasetselected.sa['targets'].unique == [-1, 1]).all())
+            assert((datasetselected.sa[targets_sa_name].unique == [-1, 1]).all())
 
         self.clf.train(datasetselected)
 
@@ -1024,8 +1030,10 @@ class MulticlassClassifier(CombinedClassifier):
     def _train(self, dataset):
         """Train classifier
         """
+        targets_sa_name = self.params.targets
+
         # construct binary classifiers
-        ulabels = dataset.sa['targets'].unique
+        ulabels = dataset.sa[targets_sa_name].unique
         if self.__bclf_type == "1-vs-1":
             # generate pairs and corresponding classifiers
             biclfs = []
@@ -1111,6 +1119,8 @@ class SplitClassifier(CombinedClassifier):
     def _train(self, dataset):
         """Train `SplitClassifier`
         """
+        targets_sa_name = self.params.targets
+
         # generate pairs and corresponding classifiers
         bclfs = []
 
@@ -1161,8 +1171,9 @@ class SplitClassifier(CombinedClassifier):
 
             if states.is_enabled("confusion"):
                 predictions = clf.predict(split[1])
-                self.states.confusion.add(split[1].targets, predictions,
-                                   clf.states.get('estimates', None))
+                self.states.confusion.add(split[1].sa[targets_sa_name].value,
+                                          predictions,
+                                          clf.states.get('estimates', None))
                 if __debug__:
                     dact = debug.active
                     if 'CLFSPL_' in dact:
@@ -1457,12 +1468,15 @@ class RegressionAsClassifier(ProxyClassifier):
 
 
     def _train(self, dataset):
+        targets_sa_name = self.params.targets
+        targets_sa = dataset.sa[targets_sa_name]
+
         # May be it is an advanced one needing training.
         if hasattr(self.distance_measure, 'train'):
             self.distance_measure.train(dataset)
 
         # Centroids
-        ul = dataset.sa['targets'].unique
+        ul = dataset.sa[targets_sa_name].unique
         if self.centroids is None:
             # setup centroids -- equidistant points
             # XXX we might preferred -1/+1 for binary...
@@ -1491,8 +1505,8 @@ class RegressionAsClassifier(ProxyClassifier):
         dataset_relabeled = dataset.copy(deep=False)
         # ???:  may be we could just craft a monster attrmap
         #       which does min distance search upon to_literal ?
-        dataset_relabeled.sa['targets'].value = \
-            self._trained_attrmap.to_numeric(dataset.sa['targets'].value)
+        dataset_relabeled.sa[targets_sa_name].value = \
+            self._trained_attrmap.to_numeric(targets_sa.value)
 
         ProxyClassifier._train(self, dataset_relabeled)
 

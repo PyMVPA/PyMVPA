@@ -105,8 +105,7 @@ class Classifier(ClassWithCollections):
              demanding its collection should be switchable and off be default.
 
     Nomenclature
-     * predictions  : corresponds to the quantized labels if classifier spits
-                      out labels by .predict()
+     * predictions  : result of the last call to .predict()
      * estimates : might be different from predictions if a classifier's predict()
                    makes a decision based on some internal value such as
                    probability or a distance.
@@ -121,7 +120,7 @@ class Classifier(ClassWithCollections):
     # also be a dict or we should use mvpa.misc.param.Parameter'...
 
     trained_targets = StateVariable(enabled=True,
-        doc="Set of unique labels it has been trained on")
+        doc="Set of unique targets it has been trained on")
 
     trained_nsamples = StateVariable(enabled=True,
         doc="Number of samples it has been trained on")
@@ -153,6 +152,12 @@ class Classifier(ClassWithCollections):
     doing regression for instance...."""
 
     # TODO: make it available only for actually retrainable classifiers
+    targets = Parameter('targets', allowedtype='bool',# ro=True,
+        doc="""What samples attribute to use as targets.""",
+        index=999)
+
+
+    # TODO: make it available only for actually retrainable classifiers
     retrainable = Parameter(False, allowedtype='bool',
         doc="""Either to enable retraining for 'retrainable' classifier.""",
         index=1002)
@@ -170,7 +175,6 @@ class Classifier(ClassWithCollections):
         # however, preferably the mapping should be kept in the respective
         # low-level implementations that need it
         self._attrmap = AttributeMap()
-
 
         self.__trainednfeatures = None
         """Stores number of features for which classifier was trained.
@@ -228,7 +232,7 @@ class Classifier(ClassWithCollections):
 
                 # Look at the data if any was changed
                 for key, data_ in (('traindata', dataset.samples),
-                                   ('targets', dataset.targets)):
+                                   ('targets', dataset.sa[params.targets].value)):
                     _changedData[key] = self.__wasDataChanged(key, data_)
                     # if those idhashes were invalidated by retraining
                     # we need to adjust _changedData accordingly
@@ -263,7 +267,7 @@ class Classifier(ClassWithCollections):
         """
         states = self.states
         if states.is_enabled('trained_targets'):
-            states.trained_targets = dataset.sa['targets'].unique
+            states.trained_targets = dataset.sa[self.params.targets].unique
 
         states.trained_dataset = dataset
         states.trained_nsamples = dataset.nsamples
@@ -290,7 +294,7 @@ class Classifier(ClassWithCollections):
             predictions = self.predict(dataset)
             self.states.reset_changed_temporarily()
             self.states.training_confusion = self.__summary_class__(
-                targets=dataset.sa.targets,
+                targets=dataset.sa[self.params.targets].value,
                 predictions=predictions)
 
         if self.states.is_enabled('feature_ids'):
@@ -320,7 +324,7 @@ class Classifier(ClassWithCollections):
                 s += ' in %.3g sec' % states.training_time
             s += ' on data with'
             if states.is_set('trained_targets'):
-                s += ' labels:%s' % list(states.trained_targets)
+                s += ' targets:%s' % list(states.trained_targets)
 
             nsamples, nchunks = None, None
             if states.is_set('trained_nsamples'):
@@ -485,7 +489,7 @@ class Classifier(ClassWithCollections):
 
         states.predicting_time = time.time() - t0
 
-        # with a labels mapping in-place, we also need to go back to the
+        # with labels mapping in-place, we also need to go back to the
         # literal labels
         if self._attrmap:
             try:
@@ -700,7 +704,7 @@ class Classifier(ClassWithCollections):
         ----------
         kwargs
           that is what _changedData gets updated with. So, smth like
-          `(params=['C'], labels=True)` if parameter C and labels
+          `(params=['C'], targets=True)` if parameter C and targets
           got changed
         """
         # Note that it also demolishes anything for repredicting,
@@ -732,7 +736,7 @@ class Classifier(ClassWithCollections):
         # To check if we are not fooled
         if __debug__ and 'CHECK_RETRAIN' in debug.active:
             for key, data_ in (('traindata', dataset.samples),
-                               ('targets', dataset.targets)):
+                               ('targets', dataset.sa[self.params.targets].value)):
                 # so it wasn't told to be invalid
                 if not chd[key] and not ichd.get(key, False):
                     if self.__wasDataChanged(key, data_, update=False):
@@ -773,7 +777,7 @@ class Classifier(ClassWithCollections):
           dataset which is conventionally given to predict
         kwargs
           that is what _changedData gets updated with. So, smth like
-          `(params=['C'], labels=True)` if parameter C and labels
+          `(params=['C'], targets=True)` if parameter C and targets
           got changed
         """
         if len(kwargs)>0:
