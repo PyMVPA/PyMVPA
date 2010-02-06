@@ -242,11 +242,16 @@ class SVM(_SVM):
     def _train(self, dataset):
         """Train SVM
         """
+
         # XXX watchout
         # self.untrain()
         newkernel, newsvm = False, False
         # local bindings for faster lookup
+        params = self.params
         retrainable = self.params.retrainable
+
+        targets_sa_name = params.targets    # name of targets sa
+        targets_sa = dataset.sa[targets_sa_name] # actual targets sa
 
         if retrainable:
             _changedData = self._changedData
@@ -264,11 +269,10 @@ class SVM(_SVM):
             debug("SG_", "Creating labels instance")
 
         if self.__is_regression__:
-            labels_ = N.asarray(dataset.sa['targets'].value, dtype='double')
+            labels_ = N.asarray(targets_sa.value, dtype='double')
         else:
-            la = dataset.sa['targets']
-            ul = la.unique
-            ul.sort()
+            ul = targets_sa.unique
+            # ul.sort()
 
             if len(ul) == 2:
                 # assure that we have -1/+1
@@ -285,7 +289,7 @@ class SVM(_SVM):
 
             if __debug__:
                 debug("SG__", "Mapping labels using dict %s" % _labels_dict)
-            labels_ = self._attrmap.to_numeric(la.value).astype(float)
+            labels_ = self._attrmap.to_numeric(targets_sa.value).astype(float)
 
         labels = shogun.Features.Labels(labels_)
         _setdebug(labels, 'Labels')
@@ -400,7 +404,7 @@ class SVM(_SVM):
         # Train
         if __debug__ and 'SG' in debug.active:
             if not self.__is_regression__:
-                lstr = " with labels %s" % dataset.uniquetargets
+                lstr = " with labels %s" % targets_sa.unique
             else:
                 lstr = ""
             debug("SG", "%sTraining %s on data%s" %
@@ -421,7 +425,7 @@ class SVM(_SVM):
 
         if __debug__ and "SG__" in debug.active:
                 debug("SG__", "Original labels: %s, Trained labels: %s" %
-                              (dataset.targets, trained_targets))
+                              (targets_sa.value, trained_targets))
 
         # Assign training confusion right away here since we are ready
         # to do so.
@@ -433,7 +437,7 @@ class SVM(_SVM):
         #     as a classifier so mapping happens upstairs
         if self.__is_regression__ and self.states.is_enabled('training_confusion'):
             self.states.training_confusion = self.__summary_class__(
-                targets=dataset.targets,
+                targets=targets_sa.value,
                 predictions=trained_targets)
 
 
@@ -598,7 +602,8 @@ class SVM(_SVM):
                 raise RuntimeError, \
                       "Shogun: Implementation %s doesn't handle multiclass " \
                       "data. Got labels %s. Use some other classifier" % \
-                      (self._svm_impl, self.__traindataset.uniquetargets)
+                      (self._svm_impl,
+                       self.__traindataset.sa[self.params.targets].unique)
             if __debug__:
                 debug("SG_", "Using %s for multiclass data of %s" %
                       (svm_impl_class, self._svm_impl))

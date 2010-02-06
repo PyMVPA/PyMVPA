@@ -281,7 +281,9 @@ class GPR(Classifier):
 
         self._train_fv = train_fv = data.samples
         # GRP relies on numerical labels
-        train_labels = self._attrmap.to_numeric(data.sa.targets)
+        # yoh: yeah -- GPR now is purely regression so no conversion
+        #      is necessary
+        train_labels = data.sa[self.params.targets].value
         self._train_labels = train_labels
 
         if not retrainable or _changedData['traindata'] \
@@ -542,7 +544,7 @@ if externals.exists('openopt'):
                                 / clf._train_labels.std()
             # clf._train_fv = (clf._train_fv-clf._train_fv.mean(0)) \
             #                  /clf._train_fv.std(0)
-            ds = dataset_wizard(samples=clf._train_fv, labels=clf._train_labels)
+            ds = dataset_wizard(samples=clf._train_fv, targets=clf._train_labels)
             clf.states.enable("log_marginal_likelihood")
             ms = ModelSelector(clf, ds)
             # Note that some kernels does not have gradient yet!

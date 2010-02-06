@@ -163,22 +163,21 @@ class _GLMNET(Classifier):
     def _train(self, dataset):
         """Train the classifier using `data` (`Dataset`).
         """
-        # process the labels based on the model family
+        # process targets based on the model family
+        targets = dataset.sa[self.params.targets].value
         if self.params.family == 'gaussian':
             # do nothing, just save the targets as a list
-            #targets = dataset.targets.tolist()
-            targets = dataset.targets
+            #targets = targets.tolist()
             self._utargets = None
-            pass
         elif self.params.family == 'multinomial':
             # turn lables into list of range values starting at 1
             #targets = _label2indlist(dataset.targets,
             #                        dataset.uniquetargets)
-            targets = _label2oneofm(dataset.targets,
-                                    dataset.uniquetargets)
+            targets_unique = dataset.sa[self.params.targets].unique
+            targets = _label2oneofm(targets, targets_unique)
 
             # save some properties of the data/classification
-            self._utargets = dataset.uniquetargets.copy()
+            self._utargets = targets_unique.copy()
 
         # process the pmax
         if self.params.pmax is None:
@@ -308,9 +307,10 @@ class GLMNETWeights(Sensitivity):
 
         #return weights
         if clf.params.family == 'multinomial':
-            return Dataset(weights.T, sa={'targets': clf._utargets})
+            return Dataset(weights.T, sa={clf.params.targets: clf._utargets})
         else:
-            return weights
+            return Dataset(weights[N.newaxis])
+
 
 class GLMNET_R(_GLMNET):
     """
