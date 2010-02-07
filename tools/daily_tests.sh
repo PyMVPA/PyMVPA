@@ -19,7 +19,7 @@ set -e
 #MAKE_TESTS="unittests testmanual testsuite testapiref testdatadb testsphinx testexamples testcfg"
 
 # Unittests to run in all branches
-TESTS_COMMON="unittests testmanual testsuite testsphinx testexamples testcfg testourcfg"
+TESTS_COMMON="unittests testmanual testsuite testsphinx testexamples testcfg"
 
 # Associative array with tests lists per branch
 declare -A TESTS_BRANCHES
@@ -30,7 +30,7 @@ for b in maint/0.4 yoh/0.4; do
 done
 # development branches
 for b in master yoh/master mh/master; do
-    TESTS_BRANCHES["$b"]="$TESTS_COMMON testdatadb"
+    TESTS_BRANCHES["$b"]="$TESTS_COMMON testdatadb testourcfg"
 done
 # all known tests
 TESTS_ALL=`echo "${TESTS_BRANCHES[*]}" | tr ' ' '\n' | sort | uniq`

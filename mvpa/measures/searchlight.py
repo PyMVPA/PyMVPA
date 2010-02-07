@@ -94,7 +94,7 @@ class Searchlight(DatasetMeasure):
             # safeguard against stupidity
             if __debug__:
                 if max(roi_ids) >= dataset.nfeatures:
-                    raise ValueError, \
+                    raise IndexError, \
                           "Maximal center_id found is %s whenever given " \
                           "dataset has only %d features" \
                           % (max(roi_ids), dataset.nfeatures)
