@@ -21,18 +21,19 @@ Binary packages
 Binary packages are available for:
 
 * Debian and Ubuntu (:ref:`installation instructions <install_debian>`)
-    PyMVPA is an `official Debian package`_ (`python-mvpa`).
-    Additionally, backports for some Debian and Ubuntu releases are also
-    available. Please read the `package repository instructions`_ to learn
-    about how to obtain them.
+    PyMVPA is an `official Debian package`_ (``python-mvpa``).
+    Backports for Debian and Ubuntu releases are available from the
+    `NeuroDebian project`_.
 
 * RPM-based GNU/Linux distributions (:ref:`installation instructions <install_rpm>`)
-    RPM packages are provided through the `OpenSUSE Build Service`_. The
-    currently supported distributions include: CentOS 5, Fedora 9-12,
-    RedHat Enterprise Linux 5, OpenSUSE 11.0 up to 11.2 (but also OpenSUSE
-    Factory). The build service supports RPM-package repositories
-    (`SUSE-related`_ and `Fedora, Redhat and CentOS-related`_) and
-    `1-click-installations`_.
+    RPM packages are provided through the `OpenSUSE Build Service`_. It offers
+    package repositories and `1-click-installations`_. Currently, we offer RPMs
+    for:
+
+    * CentOS_ 5
+    * Fedora_ 9 (and later releases)
+    * OpenSUSE_ 11.0 (and later releases)
+    * RedHat_ Enterprise Linux 5
 
 * MacOS X (:ref:`installation instructions <install_macos>`)
     PyMVPA is available from the MacPorts_ framework.
@@ -44,11 +45,13 @@ If there are no binary packages for your particular operating system or
 platform, you need to compile your own. The manual contains :ref:`instructions
 <buildfromsource>` to build PyMVPA in various environments.
 
-.. _MacPorts: http://www.macports.org
+.. _MacPorts: http://www.macports.org/ports.php?by=name&substr=pymvpa
 .. _official Debian package: http://packages.debian.org/python-mvpa
-.. _package repository instructions: http://neuro.debian.net/#how-to-use-this-repository
-.. _SUSE-related: http://download.opensuse.org/repositories/home:/hankem:/suse/
-.. _Fedora, Redhat and CentOS-related: http://download.opensuse.org/repositories/home:/hankem:/rh5/
+.. _NeuroDebian project: http://neuro.debian.net
+.. _OpenSUSE: http://download.opensuse.org/repositories/home:/hankem:/suse/
+.. _CentOS: http://download.opensuse.org/repositories/home:/hankem:/rh5/
+.. _Fedora: http://download.opensuse.org/repositories/home:/hankem:/rh5/
+.. _Redhat: http://download.opensuse.org/repositories/home:/hankem:/rh5/
 .. _1-click-installations: http://software.opensuse.org/search?baseproject=ALL&p=1&q=python-mvpa
 .. _OpenSUSE Build Service: https://build.opensuse.org/
 
@@ -72,7 +75,7 @@ To clone (aka checkout) the PyMVPA repository simply do:
 
   git clone git://git.debian.org/git/pkg-exppsy/pymvpa.git
 
-After a short while you will have a `pymvpa` directory below your current
+After a short while you will have a ``pymvpa`` directory below your current
 working directory, that contains the PyMVPA repository.
 
 More detailed instructions on :ref:`installation requirements <requirements>`
