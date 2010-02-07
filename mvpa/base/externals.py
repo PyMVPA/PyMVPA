@@ -466,7 +466,8 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
         except Exception, e:
             # Add known ones by their names so we don't need to
             # actually import anything manually to get those classes
-            if e.__class__.__name__ in ['RPy_Exception', 'RRuntimeError']:
+            if e.__class__.__name__ in ['RPy_Exception', 'RRuntimeError',
+                                        'RPy_RException']:
                 _caught_exceptions += [e.__class__]
                 estr = ". Caught exception was: " + str(e)
             else:
