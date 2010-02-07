@@ -32,3 +32,20 @@ PyMVPA home page.
 
 .. _subscription: http://lists.alioth.debian.org/mailman/listinfo/pkg-exppsy-pymvpa
 .. _archive: http://lists.alioth.debian.org/pipermail/pkg-exppsy-pymvpa/
+
+
+Reporting A Bug
+---------------
+
+If you think you have discovered a bug, please report it. Only known bugs can
+be fixed. If you have a GitHub_ account, the easiest way to report a bug is via
+the `issue tracker`_ -- just click the "Create Issue" button, describe
+your problem, and submit.  If your are using a Debian package of PyMVPA, you
+can alternatively use the :command:`reportbug` command.
+
+If you don't like either way, please post to the user mailing list (see above).
+
+.. _GitHub: http://github.com
+.. _issue tracker: http://github.com/hanke/PyMVPA/issues
+
+

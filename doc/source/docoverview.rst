@@ -18,10 +18,13 @@ Documentation Overview
 For users
 =========
 
-* :ref:`User Manual <manual>` [PDF-manual_] (**the** documentation).
-* :ref:`Installation Instructions <chap_installation>`
+* :ref:`Installation Instructions <chap_installation>` (where to obtain it, and
+  how to get it running)
+* :ref:`Tutorial <manual>` (hands-on introduction).
+* :ref:`User Manual <manual>` [PDF-manual_]
 * :ref:`FAQ <chap_faq>` (short answers to common problems)
-* :ref:`Module Reference <chap_modref>` (user-oriented reference)
+* :ref:`chap_examples` (batteries included)
+* :ref:`Module Reference <chap_modref>` (comprehensive reference)
 * :ref:`Bibliography <chap_references>` (references to interesting literature)
 * :ref:`Development Changelog <chap_changelog>` [:ref:`Movie version
   <chap_code_swarm>`] (see what has changed)

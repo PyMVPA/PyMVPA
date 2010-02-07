@@ -11,9 +11,9 @@
 
 .. _chap_examples:
 
-****************
-Examples Scripts
-****************
+****************************
+Example Analyses and Scripts
+****************************
 
 Each of the examples in this section is a stand-alone script containing all
 necessary code to run some analysis. All examples are shipped with PyMVPA and
