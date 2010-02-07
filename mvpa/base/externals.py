@@ -339,6 +339,10 @@ def __check_rpy2():
     r = rpy2.robjects.r
     r.options(warn=cfg.get('rpy', 'warn', default=-1))
 
+    # To shut R up while it is importing libraries to do not ruin out
+    # doctests
+    r.library = lambda libname: \
+                r("suppressPackageStartupMessages(library(%r))" % libname)
 
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',

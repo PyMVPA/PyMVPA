@@ -103,7 +103,7 @@ class LinearSVMWeights(Sensitivity):
 
             if len(clf._attrmap):
                 sens_labels = clf._attrmap.to_literal(sens_labels, recurse=True)
-            ds.sa['targets'] = sens_labels
+            ds.sa[clf.params.targets] = sens_labels
         self.states.biases = biases
 
         return ds

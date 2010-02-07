@@ -140,10 +140,12 @@ class LARS(Classifier):
     def _train(self, data):
         """Train the classifier using `data` (`Dataset`).
         """
+        targets = data.sa[self.params.targets].value[:, N.newaxis]
+
         if self.__max_steps is None:
             # train without specifying max_steps
             trained_model = rpy.r.lars(data.samples,
-                                       data.targets[:,N.newaxis],
+                                       targets,
                                        type=self.__type,
                                        normalize=self.__normalize,
                                        intercept=self.__intercept,
@@ -152,7 +154,7 @@ class LARS(Classifier):
         else:
             # train with specifying max_steps
             trained_model = rpy.r.lars(data.samples,
-                                       data.targets[:,N.newaxis],
+                                       targets,
                                        type=self.__type,
                                        normalize=self.__normalize,
                                        intercept=self.__intercept,

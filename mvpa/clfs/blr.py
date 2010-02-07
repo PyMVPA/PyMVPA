@@ -89,7 +89,7 @@ class BLR(Classifier):
         """Train regression using `data` (`Dataset`).
         """
         # BLR relies on numerical labels
-        train_labels = self._attrmap.to_numeric(data.sa.targets)
+        train_labels = self._attrmap.to_numeric(data.sa[self.params.targets].value)
         # provide a basic (i.e. identity matrix) and correct prior
         # sigma_p, if not provided before or not compliant to 'data':
         if self.sigma_p == None: # case: not provided
@@ -168,7 +168,6 @@ if __name__ == "__main__":
     print "True intercept:",intercept
 
     dataset_train = linear_awgn(train_size, intercept=intercept, slope=slope)
-    # print dataset.targets
 
     dataset_test = linear_awgn(test_size, intercept=intercept, slope=slope, flat=True)
 
@@ -183,7 +182,8 @@ if __name__ == "__main__":
 
     if F==1:
         pylab.plot(dataset_train.samples,
-                   dataset_train.targets, "ro", label="train")
+                   dataset_train.sa[b.params.targets].value,
+                   "ro", label="train")
 
         pylab.plot(dataset_test.samples, predictions, "b-", label="prediction")
         pylab.plot(dataset_test.samples,
@@ -192,7 +192,6 @@ if __name__ == "__main__":
         pylab.plot(dataset_test.samples,
                    predictions-N.sqrt(b.states.predicted_variances),
                    "b--", label=None)
-        # pylab.plot(dataset_test.samples, dataset_test.targets, "go")
         pylab.legend()
         pylab.xlabel("samples")
         pylab.ylabel("labels")

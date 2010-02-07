@@ -84,7 +84,8 @@ class RidgeReg(Classifier):
             a = N.concatenate( \
                 (N.concatenate((data.samples, N.ones((data.nsamples, 1))), 1),
                     N.concatenate((Lambda, N.zeros((data.nfeatures, 1))), 1)))
-            b = N.concatenate((data.targets, N.zeros(data.nfeatures)))
+            b = N.concatenate((data.sa[self.params.targets].value,
+                               N.zeros(data.nfeatures)))
 
             # perform the least sq regression and save the weights
             self.w = lstsq(a, b)[0]

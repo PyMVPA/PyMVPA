@@ -75,7 +75,7 @@ def main():
             #print cv.confusion
 
             # to report transfer error
-            confusion = ConfusionMatrix()#labels_map=dataset.targets_map)
+            confusion = ConfusionMatrix()
             times = []
             nf = []
             t0 = time.time()

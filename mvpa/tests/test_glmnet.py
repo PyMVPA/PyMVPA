@@ -93,4 +93,4 @@ def test_glmnet_r_sensitivities():
     # again
     sens = clf.getSensitivityAnalyzer(force_training=False)()
 
-    assert_equal(sens.shape, (data.nfeatures,))
+    assert_equal(sens.shape, (1, data.nfeatures))
