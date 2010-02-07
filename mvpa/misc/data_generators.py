@@ -326,3 +326,60 @@ def load_example_fmri_dataset():
                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
     return ds
+
+
+def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None):
+    """Generate a dataset with samples being temporally autocorrelated noise.
+
+    Parameters
+    ----------
+    ds : Dataset
+      Source dataset whose mean samples serves as the pedestal of the new noise
+      samples. All attributes of this dataset will also go into the generated
+      one.
+    sr : float
+      Sampling rate (in Hz) of the samples in the dataset.
+    cutoff : float
+      Cutoff frequency of the low-pass butterworth filter.
+    bord : int
+      Order of the butterworth filter that is applied for low-pass
+      filtering.
+    lfnl : float
+      Low frequency noise level in percent signal (per feature).
+    hfnl : float or None
+      High frequency noise level in percent signal (per feature). If None, no
+      HF noise is added.
+    """
+    from scipy.signal import butter, lfilter
+
+    # something to play with
+    fds = ds.copy(deep=False)
+
+    # compute the pedestal
+    msample = fds.samples.mean(axis=0)
+
+    # noise/signal amplitude relative to each feature mean signal
+    noise_amps = msample * (lfnl / 100.)
+
+    # generate gaussian noise for the full dataset
+    nsamples = N.random.standard_normal(fds.samples.shape)
+    # scale per each feature
+    nsamples *= noise_amps
+
+    # nyquist frequency
+    nf = sr / 2.0
+
+    # along samples low-pass filtering
+    fb, fa = butter(bord, cutoff / nf)
+    nsamples = lfilter(fb, fa, nsamples, axis=0)
+
+    # add the pedestal
+    nsamples += msample
+
+    # HF noise
+    if not hfnl is None:
+        noise_amps = msample * (hfnl / 100.)
+        nsamples += N.random.standard_normal(nsamples.shape) * noise_amps
+
+    fds.samples = nsamples
+    return fds

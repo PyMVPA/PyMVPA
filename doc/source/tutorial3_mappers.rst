@@ -94,9 +94,9 @@ can be feed with other data (as long as it is compatible with the mapper).
 >>> fwdtest = N.arange(12).reshape(4,3)
 >>> print fwdtest
 [[ 0  1  2]
-[ 3  4  5]
-[ 6  7  8]
-[ 9 10 11]]
+ [ 3  4  5]
+ [ 6  7  8]
+ [ 9 10 11]]
 >>> fmapped = subds.a.mapper.forward1(fwdtest)
 >>> fmapped.shape
 (4,)
@@ -163,7 +163,7 @@ volume in the NIfTI image.
 1452
 >>> print N.unique(attr.targets)
 ['bottle' 'cat' 'chair' 'face' 'house' 'rest' 'scissors' 'scrambledpix'
-'shoe']
+ 'shoe']
 >>> len(attr.chunks)
 1452
 >>> print N.unique(attr.chunks)

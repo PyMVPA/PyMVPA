@@ -24,6 +24,7 @@ from mvpa.mappers.base import FeatureSliceMapper
 from mvpa.measures.base import DatasetMeasure
 from mvpa.misc.state import StateVariable
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
+from mvpa.base.dochelpers import _str, borrowkwargs
 
 class Searchlight(DatasetMeasure):
     """An implementation of searchlight measure.
