@@ -67,7 +67,7 @@ class PLR(Classifier):
         """
         # Set up the environment for fitting the data
         X = data.samples.T
-        d = data.targets
+        d = data.sa[self.params.targets].value
         if not list(set(d)) == [0, 1]:
             raise ValueError, \
                   "Regressors for logistic regression should be [0,1]"

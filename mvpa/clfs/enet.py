@@ -124,10 +124,11 @@ class ENET(Classifier):
     def _train(self, data):
         """Train the classifier using `data` (`Dataset`).
         """
+        targets = data.sa[self.params.targets].value[:, N.newaxis]
         if self.__max_steps is None:
             # train without specifying max_steps
             self.__trained_model = rpy.r.enet(data.samples,
-                                              data.targets[:,N.newaxis],
+                                              targets,
                                               self.__lm,
                                               normalize=self.__normalize,
                                               intercept=self.__intercept,
@@ -135,7 +136,7 @@ class ENET(Classifier):
         else:
             # train with specifying max_steps
             self.__trained_model = rpy.r.enet(data.samples,
-                                              data.targets[:,N.newaxis],
+                                              targets,
                                               self.__lm,
                                               normalize=self.__normalize,
                                               intercept=self.__intercept,
@@ -150,7 +151,8 @@ class ENET(Classifier):
 #         self.__lowest_Cp_step = Cp_vals.argmin()
 
         # set the weights to the last step
-        self.__weights = N.zeros(data.nfeatures,dtype=self.__trained_model['beta.pure'].dtype)
+        self.__weights = N.zeros(data.nfeatures,
+                                 dtype=self.__trained_model['beta.pure'].dtype)
         ind = N.asarray(self.__trained_model['allset'])-1
         self.__weights[ind] = self.__trained_model['beta.pure'][-1,:]
 

@@ -31,7 +31,7 @@ from mvpa.mappers.fx import mean_sample
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
-from mvpa.testing.tools import assert_array_equal
+from mvpa.testing.tools import assert_array_equal, assert_array_almost_equal
 
 # What exceptions to allow while testing degenerate cases.
 # If it pukes -- it is ok -- user will notice that something
@@ -153,19 +153,79 @@ class ClassifiersTests(unittest.TestCase):
         te = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
                                          postproc=mean_sample())
         nclasses = 2 * (1 + int('multiclass' in clf.__tags__))
-        if nclasses > 2 and 'on 5%(' in clf.descr:
-            # skip those since they are barely applicable/testable here
-            return
 
         ds = datasets['uni%dmedium' % nclasses]
         try:
             cve = te(ds).samples.squeeze()
         except Exception, e:
             self.fail("Failed with %s" % e)
+
+        if nclasses > 2 and \
+               ('on 5%(' in clf.descr or 'regression_based' in clf.__tags__):
+            # skip those since they are barely applicable/testable here
+            return
+
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless(cve < 0.25, # TODO: use multinom distribution
                             msg="Got transfer error %g on %s with %d labels"
                             % (cve, ds, len(ds.UT)))
+
+
+    @sweepargs(lrn=clfswh['!meta']+regrswh['!meta'])
+    def test_custom_targets(self, lrn):
+        """Simple test if a learner could cope with custom sa not targets
+        """
+        lrn_ = lrn.clone()
+        lrn_.params.targets = 'custom'
+
+        te = CrossValidatedTransferError(TransferError(lrn),
+                                         NFoldSplitter())
+
+        te_ = CrossValidatedTransferError(TransferError(lrn_),
+                                         NFoldSplitter())
+        nclasses = 2 * (1 + int('multiclass' in lrn.__tags__))
+        dsname = ('uni%dsmall' % nclasses,
+                  'sin_modulated')[int(lrn.__is_regression__)]
+        ds = datasets[dsname]
+        ds_ = ds.copy()
+        ds_.sa['custom'] = ds_.sa['targets']
+        ds_.sa.pop('targets')
+        self.failUnless('targets' in ds.sa,
+                        msg="'targets' should remain in original ds")
+
+        try:
+            cve = te(ds)
+            cve_ = te_(ds_)
+        except Exception, e:
+            self.fail("Failed with %r" % e)
+
+        assert_array_almost_equal(cve, cve_)
+        "We should have got very similar errors while operating on "
+        "'targets' and on 'custom'. Got %r and %r." % (cve, cve_)
+
+        # TODO: sg/libsvm segfaults
+        #       GPR  -- non-linear sensitivities
+        if ('has_sensitivity' in lrn.__tags__
+            and not 'sg' in lrn.__tags__
+            and not 'libsvm' in lrn.__tags__
+            and not ('gpr' in lrn.__tags__
+                     and 'non-linear' in lrn.__tags__)
+            ):
+            ## if str(lrn) == "SVM(svm_impl='EPSILON_SVR', kernel=LinearLSKernel())":
+            ##     # TODO investigate segfault
+            ##     import pydb
+            ##     pydb.debugger()
+
+            s = lrn.getSensitivityAnalyzer()(ds)
+            s_ = lrn_.getSensitivityAnalyzer()(ds_)
+            isreg = lrn.__is_regression__
+            # ^ is XOR so we shouldn't get get those sa's in
+            # regressions at all
+            self.failUnless(('custom' in s_.sa) ^ isreg)
+            self.failUnless(('targets' in s.sa) ^ isreg)
+            self.failUnless(not 'targets' in s_.sa)
+            self.failUnless(not 'custom' in s.sa)
+            assert_array_almost_equal(s.samples, s_.samples)
 
 
     @sweepargs(clf=clfswh[:] + regrswh[:])
@@ -816,5 +876,5 @@ def suite():
     return unittest.makeSuite(ClassifiersTests)
 
 
-if __name__ == '__main__':
-    import runner
+#if __name__ == '__main__':
+#    import runner
