@@ -621,7 +621,7 @@ Long and medium term TODOs (aka stuff that has been here forever)
  * Renaming of the modules
    transerror.py -> errors.py
 
- * SVM: getSV and getSVCoef return very 'packed' presentation
+ * SVM: get_sv and get_sv_coef return very 'packed' presentation
     whenever classifier is multiclass. Thus they have to be unpacked
     before proper use (unless it is simply a binary classifier).
 

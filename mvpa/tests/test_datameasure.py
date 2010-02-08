@@ -97,7 +97,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                splitter=splitter,
                                enable_ca=['training_confusion',
                                               'confusion'])
-        sana = mclf.getSensitivityAnalyzer(# postproc=absolute_features(),
+        sana = mclf.get_sensitivity_analyzer(# postproc=absolute_features(),
                                            enable_ca=["sensitivities"])
 
         ulabels = ds.uniquetargets
@@ -255,7 +255,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 FractionTailSelector(0.5, mode='select', tail='upper')),
             enable_ca=['training_confusion'])
 
-        sana = mclf.getSensitivityAnalyzer(postproc=sumofabs_sample(),
+        sana = mclf.get_sensitivity_analyzer(postproc=sumofabs_sample(),
                                            enable_ca=["sensitivities"])
         # and lets look at all sensitivities
 
@@ -269,14 +269,14 @@ class SensitivityAnalysersTests(unittest.TestCase):
     @sweepargs(svm=clfswh['linear', 'svm'])
     def test_linear_svm_weights(self, svm):
         # assumming many defaults it is as simple as
-        sana = svm.getSensitivityAnalyzer(enable_ca=["sensitivities"] )
+        sana = svm.get_sensitivity_analyzer(enable_ca=["sensitivities"] )
         # and lets look at all sensitivities
         sens = sana(self.dataset)
         # for now we can do only linear SVM, so lets check if we raise
         # a concern
         svmnl = clfswh['non-linear', 'svm'][0]
         self.failUnlessRaises(NotImplementedError,
-                              svmnl.getSensitivityAnalyzer)
+                              svmnl.get_sensitivity_analyzer)
 
 
     # XXX doesn't work easily with meta since it would need
@@ -287,9 +287,9 @@ class SensitivityAnalysersTests(unittest.TestCase):
     def test_linear_svm_weights_per_class(self, svm):
         # assumming many defaults it is as simple as
         kwargs = dict(enable_ca=["sensitivities"])
-        sana_split = svm.getSensitivityAnalyzer(
+        sana_split = svm.get_sensitivity_analyzer(
             split_weights=True, **kwargs)
-        sana_full = svm.getSensitivityAnalyzer(
+        sana_full = svm.get_sensitivity_analyzer(
             force_training=False, **kwargs)
 
         # and lets look at all sensitivities
@@ -310,7 +310,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.failUnless((N.abs(dmap) <= 1e-10).all())
         #print "____"
         #print senssplit
-        #print SMLR().getSensitivityAnalyzer(combiner=None)(ds2)
+        #print SMLR().get_sensitivity_analyzer(combiner=None)(ds2)
 
         # for now we can do split weights for binary tasks only, so
         # lets check if we raise a concern
@@ -328,7 +328,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         ds = datasets['uni3small']
         sana = SplitFeaturewiseDatasetMeasure(
             analyzer=SMLR(
-              fit_all_weights=True).getSensitivityAnalyzer(),
+              fit_all_weights=True).get_sensitivity_analyzer(),
             splitter=NFoldSplitter(),
             )
 
@@ -343,7 +343,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         ds.init_origids('samples')
         sana = SplitFeaturewiseDatasetMeasure(
             analyzer=SMLR(
-              fit_all_weights=True).getSensitivityAnalyzer(),
+              fit_all_weights=True).get_sensitivity_analyzer(),
             splitter=NoneSplitter(nperlabel=0.25, mode='first',
                                   nrunspersplit=2),
             enable_ca=['splits', 'sensitivities'])
@@ -366,10 +366,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # DistPValue -- read the docstring of it!
         # Most evil example
         #ds = datasets['uni2medium']
-        #plain_sana = SVM().getSensitivityAnalyzer(
+        #plain_sana = SVM().get_sensitivity_analyzer(
         #       transformer=DistPValue())
         #boosted_sana = SplitFeaturewiseDatasetMeasure(
-        #    analyzer=SVM().getSensitivityAnalyzer(
+        #    analyzer=SVM().get_sensitivity_analyzer(
         #       transformer=DistPValue(fpp=0.05)),
         #    splitter=NoneSplitter(nperlabel=0.8, mode='first', nrunspersplit=2),
         #    enable_ca=['splits', 'sensitivities'])
@@ -407,7 +407,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # of split classifier itself
         sclf = SplitClassifier(clf=basic_clf)
         rfe = RFE(sensitivity_analyzer=
-                    sclf.getSensitivityAnalyzer(
+                    sclf.get_sensitivity_analyzer(
                         enable_ca=["sensitivities"]),
                   transfer_error=trans_error,
                   feature_selector=FeatureSelectionPipeline(

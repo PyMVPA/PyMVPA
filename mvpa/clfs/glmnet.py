@@ -267,13 +267,15 @@ class _GLMNET(Classifier):
             return values
 
 
-    def _getFeatureIds(self):
+    ##REF: Name was automagically refactored
+    def _get_feature_ids(self):
         """Return ids of the used features
         """
         return N.where(N.abs(self.__weights)>0)[0]
 
 
-    def getSensitivityAnalyzer(self, **kwargs):
+    ##REF: Name was automagically refactored
+    def get_sensitivity_analyzer(self, **kwargs):
         """Returns a sensitivity analyzer for GLMNET."""
         return GLMNETWeights(self, **kwargs)
 

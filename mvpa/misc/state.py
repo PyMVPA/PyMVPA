@@ -45,7 +45,7 @@ from textwrap import TextWrapper
 # Although not used here -- included into interface
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.misc.attributes import IndexedCollectable, StateVariable
-from mvpa.base.dochelpers import enhancedDocString
+from mvpa.base.dochelpers import enhanced_doc_string
 
 from mvpa.base import externals
 # XXX local rename is due but later on
@@ -845,7 +845,7 @@ class AttributesCollector(type):
             setattr(cls, "_paramsdoc", paramsdoc)
 
         if paramsdoc + cadoc != "":
-            cls.__doc__ = enhancedDocString(cls, *bases)
+            cls.__doc__ = enhanced_doc_string(cls, *bases)
 
 
 
@@ -972,7 +972,7 @@ class ClassWithCollections(object):
                   % (self.__class__.__name__, id(self), descr))
 
 
-    #__doc__ = enhancedDocString('ClassWithCollections', locals())
+    #__doc__ = enhanced_doc_string('ClassWithCollections', locals())
 
     if __debug__ and _debug_references:
         def __debug_references_call(self, method, key):

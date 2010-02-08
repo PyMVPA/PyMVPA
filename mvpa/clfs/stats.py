@@ -967,7 +967,8 @@ if externals.exists('scipy'):
     #                                        p=0.05, legend=4, nbest=5)
 
 
-def autoNullDist(dist):
+##REF: Name was automagically refactored
+def auto_null_dist(dist):
     """Cheater for human beings -- wraps `dist` if needed with some
     NullDist
 

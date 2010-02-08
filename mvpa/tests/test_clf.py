@@ -216,8 +216,8 @@ class ClassifiersTests(unittest.TestCase):
             ##     import pydb
             ##     pydb.debugger()
 
-            s = lrn.getSensitivityAnalyzer()(ds)
-            s_ = lrn_.getSensitivityAnalyzer()(ds_)
+            s = lrn.get_sensitivity_analyzer()(ds)
+            s_ = lrn_.get_sensitivity_analyzer()(ds_)
             isreg = lrn.__is_regression__
             # ^ is XOR so we shouldn't get get those sa's in
             # regressions at all

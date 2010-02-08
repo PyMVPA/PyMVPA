@@ -162,7 +162,7 @@ class SVM(_SVM):
         """Store SVM parameters in libSVM compatible format."""
 
         if self.params.has_key('C'):#svm_type in [_svm.svmc.C_SVC]:
-            Cs = self._getCvec(dataset)
+            Cs = self._get_cvec(dataset)
             if len(Cs)>1:
                 C0 = abs(Cs[0])
                 scale = 1.0/(C0)#*N.sqrt(C0))
@@ -246,7 +246,7 @@ class SVM(_SVM):
         """Provide quick summary over the SVM classifier"""
         s = super(SVM, self).summary()
         if self.trained:
-            s += '\n # of SVs: %d' % self.__model.getTotalNSV()
+            s += '\n # of SVs: %d' % self.__model.get_total_n_sv()
             try:
                 prm = _svm.svmc.svm_model_param_get(self.__model.model)
                 C = _svm.svmc.svm_parameter_C_get(prm)
@@ -254,7 +254,7 @@ class SVM(_SVM):
                 # i.e. so called 'bounded SVs'
                 inside_margin = N.sum(
                     # take 0.99 to avoid rounding issues
-                    N.abs(self.__model.getSVCoef())
+                    N.abs(self.__model.get_sv_coef())
                           >= 0.99*_svm.svmc.svm_parameter_C_get(prm))
                 s += ' #bounded SVs:%d' % inside_margin
                 s += ' used C:%5g' % C

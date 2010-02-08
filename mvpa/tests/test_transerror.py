@@ -76,12 +76,12 @@ class ErrorsTests(unittest.TestCase):
 
         # check pretty print
         # just a silly test to make sure that printing works
-        self.failUnless(len(cm.asstring(
+        self.failUnless(len(cm.as_string(
             header=True, summary=True,
             description=True))>100)
         self.failUnless(len(str(cm))>100)
         # and that it knows some parameters for printing
-        self.failUnless(len(cm.asstring(summary=True,
+        self.failUnless(len(cm.as_string(summary=True,
                                        header=False))>100)
 
         # lets check iadd -- just itself to itself
@@ -482,7 +482,7 @@ class ErrorsTests(unittest.TestCase):
             cm = ConfusionMatrix(sets=sets, labels_map=labels_map)
         except:
             self.fail()
-        self.failUnless('3kHz / 38' in cm.asstring())
+        self.failUnless('3kHz / 38' in cm.as_string())
 
         if externals.exists("pylab plottable"):
             import pylab as P

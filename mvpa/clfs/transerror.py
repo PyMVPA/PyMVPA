@@ -26,8 +26,8 @@ from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
 from mvpa.base import warning
 from mvpa.base.collections import Collectable
 from mvpa.misc.state import StateVariable, ClassWithCollections
-from mvpa.base.dochelpers import enhancedDocString, table2string
-from mvpa.clfs.stats import autoNullDist
+from mvpa.base.dochelpers import enhanced_doc_string, table2string
+from mvpa.clfs.stats import auto_null_dist
 
 if __debug__:
     from mvpa.base import debug
@@ -146,7 +146,8 @@ class SummaryStatistics(object):
         self._computed = False
 
 
-    def asstring(self, short=False, header=True, summary=True,
+    ##REF: Name was automagically refactored
+    def as_string(self, short=False, header=True, summary=True,
                  description=False):
         """'Pretty print' the matrix
 
@@ -175,7 +176,7 @@ class SummaryStatistics(object):
             description = ('CM' in debug.active)
         else:
             description = False
-        return self.asstring(short=False, header=True, summary=True,
+        return self.as_string(short=False, header=True, summary=True,
                              description=description)
 
 
@@ -279,7 +280,8 @@ class ROCCurve(object):
             return
 
         # take sets which have values in the shape we can handle
-        def _checkValues(set_):
+        ##REF: Name was automagically refactored
+        def _check_values(set_):
             """Check if values are 'acceptable'"""
             if len(set_)<3: return False
             x = set_[2]
@@ -302,7 +304,7 @@ class ROCCurve(object):
                     return False
             return True
 
-        sets_wv = filter(_checkValues, sets)
+        sets_wv = filter(_check_values, sets)
         # check if all had values, if not -- complain
         Nsets_wv = len(sets_wv)
         if Nsets_wv > 0 and len(sets) != Nsets_wv:
@@ -434,7 +436,7 @@ class ConfusionMatrix(SummaryStatistics):
     the constructor.
 
     Confusion matrix provides a set of performance statistics (use
-    asstring(description=True) for the description of abbreviations),
+    as_string(description=True) for the description of abbreviations),
     as well ROC curve (http://en.wikipedia.org/wiki/ROC_curve)
     plotting and analysis (AUC) in the limited set of problems:
     binary, multiclass 1-vs-all.
@@ -631,7 +633,8 @@ class ConfusionMatrix(SummaryStatistics):
         self._stats.update(stats)
 
 
-    def asstring(self, short=False, header=True, summary=True,
+    ##REF: Name was automagically refactored
+    def as_string(self, short=False, header=True, summary=True,
                  description=False):
         """'Pretty print' the matrix
 
@@ -953,7 +956,8 @@ class ConfusionMatrix(SummaryStatistics):
         return self.__labels
 
 
-    def getLabels_map(self):
+    ##REF: Name was automagically refactored
+    def get_labels_map(self):
         return self.__labels_map
 
 
@@ -978,7 +982,7 @@ class ConfusionMatrix(SummaryStatistics):
         self.compute()
         return 100.0*self.__Ncorrect/sum(self.__Nsamples)
 
-    labels_map = property(fget=getLabels_map, fset=setLabels_map)
+    labels_map = property(fget=get_labels_map, fset=setLabels_map)
 
 
 class RegressionStatistics(SummaryStatistics):
@@ -1113,7 +1117,7 @@ class RegressionStatistics(SummaryStatistics):
             if len(lines)>1:
                 P.legend(lines[:2], ('Target', 'Prediction'))
             if plot_stats:
-                P.title(self.asstring(short='very'))
+                P.title(self.as_string(short='very'))
 
         if splot:
             nplot += 1
@@ -1130,7 +1134,8 @@ class RegressionStatistics(SummaryStatistics):
 
         return fig, sps
 
-    def asstring(self, short=False, header=True,  summary=True,
+    ##REF: Name was automagically refactored
+    def as_string(self, short=False, header=True,  summary=True,
                  description=False):
         """'Pretty print' the statistics"""
 
@@ -1250,7 +1255,7 @@ class ClassifierError(ClassWithCollections):
         """Either to train classifier if trainingdata is provided"""
 
 
-    __doc__ = enhancedDocString('ClassifierError', locals(), ClassWithCollections)
+    __doc__ = enhanced_doc_string('ClassifierError', locals(), ClassWithCollections)
 
 
     def __copy__(self):
@@ -1268,11 +1273,11 @@ class ClassifierError(ClassWithCollections):
                 # XXX can be pretty annoying if triggered inside an algorithm
                 # where it cannot be switched of, but retraining might be
                 # intended or at least not avoidable.
-                # Additonally isTrained docs say:
+                # Additonally is_trained docs say:
                 #   MUST BE USED WITH CARE IF EVER
                 #
                 # switching it off for now
-                #if self.__clf.isTrained(trainingdataset):
+                #if self.__clf.is_trained(trainingdataset):
                 #    warning('It seems that classifier %s was already trained' %
                 #            self.__clf + ' on dataset %s. Please inspect' \
                 #                % trainingdataset)
@@ -1299,7 +1304,7 @@ class ClassifierError(ClassWithCollections):
         ### Here checking for if it was trained... might be a cause of trouble
         # XXX disabled since it is unreliable.. just rely on explicit
         # self.__train
-        #    if  not self.__clf.isTrained(trainingdataset):
+        #    if  not self.__clf.is_trained(trainingdataset):
         #        self.__clf.train(trainingdataset)
         #    elif __debug__:
         #        debug('CERR',
@@ -1389,11 +1394,11 @@ class TransferError(ClassifierError):
         """
         ClassifierError.__init__(self, clf, labels, **kwargs)
         self.__errorfx = errorfx
-        self.__null_dist = autoNullDist(null_dist)
+        self.__null_dist = auto_null_dist(null_dist)
         self.__samples_idattr = samples_idattr
 
 
-    __doc__ = enhancedDocString('TransferError', locals(), ClassifierError)
+    __doc__ = enhanced_doc_string('TransferError', locals(), ClassifierError)
 
 
     def __copy__(self):
@@ -1542,7 +1547,7 @@ class ConfusionBasedError(ClassifierError):
             clf.ca.enable(confusion_state)
 
 
-    __doc__ = enhancedDocString('ConfusionBasedError', locals(),
+    __doc__ = enhanced_doc_string('ConfusionBasedError', locals(),
                                 ClassifierError)
 
 

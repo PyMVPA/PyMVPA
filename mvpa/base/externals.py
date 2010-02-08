@@ -348,7 +348,7 @@ def __check_rpy2():
                 r("suppressPackageStartupMessages(library(%r))" % libname)
 
 # contains list of available (optional) external classifier extensions
-_KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
+_KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
           'nifti':'from nifti import NiftiImage as __',
           'nifti ge 0.20090205.1':

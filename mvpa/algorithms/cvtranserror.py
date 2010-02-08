@@ -19,7 +19,7 @@ from mvpa.datasets.base import Dataset
 from mvpa.datasets.splitters import NoneSplitter
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable, Harvestable
-from mvpa.misc.transformers import GrandMean
+from mvpa.misc.transformers import grand_mean
 
 if __debug__:
     from mvpa.base import debug
@@ -111,8 +111,8 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
 # splitter: %s
 # classifier: %s
 # errorfx: %s
-# combiner: %s""" % (indentDoc(self.__splitter), indentDoc(self.__clf),
-#                      indentDoc(self.__errorfx), indentDoc(self.__combiner))
+# combiner: %s""" % (indent_doc(self.__splitter), indent_doc(self.__clf),
+#                      indent_doc(self.__errorfx), indent_doc(self.__combiner))
 
 
     def _call(self, dataset):

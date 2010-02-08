@@ -69,8 +69,8 @@ class RegressionsTests(unittest.TestCase):
                 self.failUnless(stats['CCe'] < 0.5)
                 self.failUnlessEqual(stats['CCe'], stats['Summary CCe'])
 
-            s0 = confusion.asstring(short=True)
-            s1 = confusion.asstring(short=False)
+            s0 = confusion.as_string(short=True)
+            s1 = confusion.as_string(short=False)
 
             for s in [s0, s1]:
                 self.failUnless(len(s) > 10,

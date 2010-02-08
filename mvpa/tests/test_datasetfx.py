@@ -15,8 +15,8 @@ import numpy as N
 
 from mvpa.base import externals
 from mvpa.datasets.base import dataset_wizard
-from mvpa.datasets.miscfx import removeInvariantFeatures, coarsenChunks, \
-        aggregateFeatures, SequenceStats
+from mvpa.datasets.miscfx import removeInvariantFeatures, coarsen_chunks, \
+        aggregate_features, SequenceStats
 
 
 from mvpa.misc.data_generators import normalFeatureDataset
@@ -26,7 +26,7 @@ class MiscDatasetFxTests(unittest.TestCase):
     def test_aggregation(self):
         data = dataset_wizard(N.arange( 20 ).reshape((4, 5)), targets=1, chunks=1)
 
-        ag_data = aggregateFeatures(data, N.mean)
+        ag_data = aggregate_features(data, N.mean)
 
         ok_(ag_data.nsamples == 4)
         ok_(ag_data.nfeatures == 1)
@@ -51,14 +51,14 @@ class MiscDatasetFxTests(unittest.TestCase):
         chunks = [1,1,2,2,3,3,4,4]
         ds = dataset_wizard(samples=N.arange(len(chunks)).reshape(
             (len(chunks),1)), targets=[1]*8, chunks=chunks)
-        coarsenChunks(ds, nchunks=2)
-        chunks1 = coarsenChunks(chunks, nchunks=2)
+        coarsen_chunks(ds, nchunks=2)
+        chunks1 = coarsen_chunks(chunks, nchunks=2)
         self.failUnless((chunks1 == ds.chunks).all())
         self.failUnless((chunks1 == N.asarray([0,0,0,0,1,1,1,1])).all())
 
         ds2 = dataset_wizard(samples=N.arange(len(chunks)).reshape(
             (len(chunks),1)), targets=[1]*8, chunks=range(len(chunks)))
-        coarsenChunks(ds2, nchunks=2)
+        coarsen_chunks(ds2, nchunks=2)
         self.failUnless((chunks1 == ds.chunks).all())
 
     def test_binds(self):
@@ -67,7 +67,7 @@ class MiscDatasetFxTests(unittest.TestCase):
         ds_chunks = ds.chunks.copy()
         self.failUnless(N.all(ds.samples == ds_data)) # sanity check
 
-        funcs = ['coarsenChunks']
+        funcs = ['coarsen_chunks']
 
         for f in funcs:
             eval('ds.%s()' % f)
@@ -78,8 +78,8 @@ class MiscDatasetFxTests(unittest.TestCase):
             ds.sa['chunks'].value = ds_chunks.copy()
 
         # and some which should just return results
-        for f in ['aggregateFeatures', 'removeInvariantFeatures',
-                  'getSamplesPerChunkLabel']:
+        for f in ['aggregate_features', 'removeInvariantFeatures',
+                  'get_samples_per_chunk_label']:
             res = eval('ds.%s()' % f)
             self.failUnless(res is not None,
                 msg='We should have got result from function %s' % f)

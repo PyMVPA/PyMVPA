@@ -49,7 +49,7 @@ def Atlas(filename=None, name=None, *args, **kwargs):
         version = tempAtlas.version
         atlas_source = None
         for cls in [PyMVPAAtlas, FSLAtlas]:
-            if cls._checkVersion(version):
+            if cls._check_version(version):
                 atlas_source = cls.source
                 break
         if atlas_source is None:
@@ -89,11 +89,11 @@ if __name__ == '__main__':
         atlas = Atlas(name)
         #print isinstance(atlas.atlas, objectify.ObjectifiedElement)
         #print atlas.header.images.imagefile.get('offset')
-        #print atlas.labelVoxel( (0, -7, 20) )
+        #print atlas.label_voxel( (0, -7, 20) )
         #print atlas[ 0, 0, 0 ]
         print atlas[ -63, -12, 22 ]
         #print atlas[ 0, -7, 20, [1,2,3] ]
         #print atlas[ (0, -7, 20), 1:2 ]
         #print atlas[ (0, -7, 20) ]
         #print atlas[ (0, -7, 20), : ]
-        #   print atlas.getLabels(0)
+        #   print atlas.get_labels(0)

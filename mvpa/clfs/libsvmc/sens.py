@@ -68,9 +68,9 @@ class LinearSVMWeights(Sensitivity):
         #            (str(clf), nr_class) +
         #            " classes. Make sure that it is what you intended to do" )
 
-        svcoef = N.matrix(model.getSVCoef())
-        svs = N.matrix(model.getSV())
-        rhos = N.asarray(model.getRho())
+        svcoef = N.matrix(model.get_sv_coef())
+        svs = N.matrix(model.get_sv())
+        rhos = N.asarray(model.get_rho())
 
         self.ca.biases = rhos
         if self.params.split_weights:
@@ -110,13 +110,13 @@ class LinearSVMWeights(Sensitivity):
                 sens_labels = [tuple(svm_labels[::-1])]
             else:
                 # we need to compose correctly per each pair of classifiers.
-                # See docstring for getSVCoef for more details on internal
+                # See docstring for get_sv_coef for more details on internal
                 # structure of bloody storage
 
                 # total # of pairs
                 npairs = nr_class * (nr_class-1)/2
                 # # of SVs in each class
-                NSVs_perclass = model.getNSV()
+                NSVs_perclass = model.get_n_sv()
                 # indices where each class starts in each row of SVs
                 # name is after similar variable in libsvm internals
                 nz_start = N.cumsum([0] + NSVs_perclass[:-1])
@@ -148,7 +148,7 @@ class LinearSVMWeights(Sensitivity):
         if __debug__:
             debug('SVM',
                   "Extracting weights for %d-class SVM: #SVs=%s, " % \
-                  (nr_class, str(model.getNSV())) + \
+                  (nr_class, str(model.get_n_sv())) + \
                   " SVcoefshape=%s SVs.shape=%s Rhos=%s." % \
                   (svcoef.shape, svs.shape, rhos) + \
                   " Result: min=%f max=%f" % (N.min(weights), N.max(weights)))

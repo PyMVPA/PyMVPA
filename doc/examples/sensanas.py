@@ -30,7 +30,7 @@ dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 """As with classifiers it is easy to define a bunch of sensitivity
-analyzers. It is usually possible to simply call `getSensitivityAnalyzer()`
+analyzers. It is usually possible to simply call `get_sensitivity_analyzer()`
 on any classifier to get an instance of an appropriate sensitivity analyzer
 that uses this particular classifier to compute and extract sensitivity scores.
 """
@@ -38,7 +38,7 @@ that uses this particular classifier to compute and extract sensitivity scores.
 # define sensitivity analyzer
 sensanas = {
     'a) ANOVA': OneWayAnova(postproc=absolute_features()),
-    'b) Linear SVM weights': LinearNuSVMC().getSensitivityAnalyzer(
+    'b) Linear SVM weights': LinearNuSVMC().get_sensitivity_analyzer(
                                                postproc=absolute_features()),
     'c) I-RELIEF': IterativeRelief(postproc=absolute_features()),
     'd) Splitting ANOVA (odd-even)':
@@ -48,7 +48,7 @@ sensanas = {
     'e) Splitting SVM (odd-even)':
         SplitFeaturewiseDatasetMeasure(
             OddEvenSplitter(),
-            LinearNuSVMC().getSensitivityAnalyzer(postproc=absolute_features())),
+            LinearNuSVMC().get_sensitivity_analyzer(postproc=absolute_features())),
     'f) I-RELIEF Online':
         IterativeReliefOnline(postproc=absolute_features()),
     'g) Splitting ANOVA (nfold)':
@@ -58,7 +58,7 @@ sensanas = {
     'h) Splitting SVM (nfold)':
         SplitFeaturewiseDatasetMeasure(
             NFoldSplitter(),
-            LinearNuSVMC().getSensitivityAnalyzer(postproc=absolute_features()))
+            LinearNuSVMC().get_sensitivity_analyzer(postproc=absolute_features()))
            }
 
 """Now, we are performing some a more or less standard preprocessing steps:

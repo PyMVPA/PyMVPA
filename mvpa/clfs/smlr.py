@@ -462,7 +462,8 @@ class SMLR(Classifier):
         return new_weights
 
 
-    def _getFeatureIds(self):
+    ##REF: Name was automagically refactored
+    def _get_feature_ids(self):
         """Return ids of the used features
         """
         return N.where(N.max(N.abs(self.__weights), axis=1)>0)[0]
@@ -509,7 +510,8 @@ class SMLR(Classifier):
         return predictions
 
 
-    def getSensitivityAnalyzer(self, **kwargs):
+    ##REF: Name was automagically refactored
+    def get_sensitivity_analyzer(self, **kwargs):
         """Returns a sensitivity analyzer for SMLR."""
         return SMLRWeights(self, **kwargs)
 

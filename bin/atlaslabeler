@@ -500,7 +500,7 @@ if options.levels is None:
     options.levels = range(atlas.Nlevels)
 elif isinstance(options.levels, basestring):
     if options.levels == 'list':
-        print "Known levels and their indicies:\n" + atlas.levelsListing()
+        print "Known levels and their indicies:\n" + atlas.levels_listing()
         sys.exit(0)
     slevels = options.levels.split(',')
     options.levels = []
@@ -514,7 +514,7 @@ elif isinstance(options.levels, basestring):
                 raise RuntimeError(
                     "Unknown level '%s'. " % level +
                     "Known levels and their indicies:\n"
-                    + atlas.levelsListing())
+                    + atlas.levels_listing())
         options.levels += [int_level]
 else:
     raise ValueError("Don't know how to handle list of levels %s."
@@ -656,7 +656,8 @@ def statistics(values):
     return N_, mean, std, minv, maxv, ssummary
 
 
-def generateSummary(summary, output):
+##REF: Name was automagically refactored
+def get_summary(summary, output):
     """Output the summary
     """
     # Sort either by the name (then ascending) or by the number of
@@ -714,7 +715,7 @@ if options.createSummary:
     if numVoxels == 0:
         verbose(1, "No matching voxels were found.")
     else:
-        generateSummary(summary, output)
+        get_summary(summary, output)
 
 if options.outputFile:
     output.close()

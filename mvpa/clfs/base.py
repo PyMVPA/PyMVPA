@@ -298,10 +298,11 @@ class Classifier(ClassWithCollections):
                 predictions=predictions)
 
         if self.ca.is_enabled('feature_ids'):
-            self.ca.feature_ids = self._getFeatureIds()
+            self.ca.feature_ids = self._get_feature_ids()
 
 
-    def _getFeatureIds(self):
+    ##REF: Name was automagically refactored
+    def _get_feature_ids(self):
         """Virtual method to return feature_ids used while training
 
         Is not intended to be called anywhere but from _posttrain,
@@ -503,7 +504,8 @@ class Classifier(ClassWithCollections):
         return result
 
     # XXX deprecate ???
-    def isTrained(self, dataset=None):
+    ##REF: Name was automagically refactored
+    def is_trained(self, dataset=None):
         """Either classifier was already trained.
 
         MUST BE USED WITH CARE IF EVER"""
@@ -516,7 +518,7 @@ class Classifier(ClassWithCollections):
                 res2 = (self.__trainedidhash == dataset.idhash)
                 if res2 != res:
                     raise RuntimeError, \
-                          "isTrained is weak and shouldn't be relied upon. " \
+                          "is_trained is weak and shouldn't be relied upon. " \
                           "Got result %b although comparing of idhash says %b" \
                           % (res, res2)
             return res
@@ -525,7 +527,7 @@ class Classifier(ClassWithCollections):
     @property
     def trained(self):
         """Either classifier was already trained"""
-        return self.isTrained()
+        return self.is_trained()
 
     def untrain(self):
         """Reset trained state"""
@@ -542,7 +544,8 @@ class Classifier(ClassWithCollections):
         super(Classifier, self).reset()
 
 
-    def getSensitivityAnalyzer(self, **kwargs):
+    ##REF: Name was automagically refactored
+    def get_sensitivity_analyzer(self, **kwargs):
         """Factory method to return an appropriate sensitivity analyzer for
         the respective classifier."""
         raise NotImplementedError

@@ -416,7 +416,7 @@ if len(clfswh['linear', 'svm']) > 0:
         FeatureSelectionClassifier(
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
-               linearSVMC.getSensitivityAnalyzer(postproc=maxofabs_sample()),
+               linearSVMC.get_sensitivity_analyzer(postproc=maxofabs_sample()),
                FractionTailSelector(0.05, mode='select', tail='upper')),
             descr="LinSVM on 5%(SVM)")
 
@@ -424,7 +424,7 @@ if len(clfswh['linear', 'svm']) > 0:
         FeatureSelectionClassifier(
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
-               linearSVMC.getSensitivityAnalyzer(postproc=maxofabs_sample()),
+               linearSVMC.get_sensitivity_analyzer(postproc=maxofabs_sample()),
                FixedNElementTailSelector(50, mode='select', tail='upper')),
             descr="LinSVM on 50(SVM)")
 
@@ -453,7 +453,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(), #clfswh['LinearSVMC'][0],         # we train LinearSVM
     #    feature_selection = RFE(             # on features selected via RFE
     #        # based on sensitivity of a clf which does splitting internally
-    #        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
+    #        sensitivity_analyzer=rfesvm_split.get_sensitivity_analyzer(),
     #        transfer_error=ConfusionBasedError(
     #           rfesvm_split,
     #           confusion_state="confusion"),
@@ -470,7 +470,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(),                 # we train LinearSVM
     #    feature_selection = RFE(             # on features selected via RFE
     #        # based on sensitivity of a clf which does splitting internally
-    #        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
+    #        sensitivity_analyzer=rfesvm_split.get_sensitivity_analyzer(),
     #        transfer_error=ConfusionBasedError(
     #           rfesvm_split,
     #           confusion_state="confusion"),
@@ -493,7 +493,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(),
     #    feature_selection = RFE(             # on features selected via RFE
     #        sensitivity_analyzer=\
-    #            rfesvm.getSensitivityAnalyzer(postproc=absolute_features()),
+    #            rfesvm.get_sensitivity_analyzer(postproc=absolute_features()),
     #        transfer_error=TransferError(rfesvm),
     #        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
     #        feature_selector=FractionTailSelector(
@@ -510,7 +510,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(),
     #    feature_selection = RFE(             # on features selected via RFE
     #        sensitivity_analyzer=\
-    #            rfesvm.getSensitivityAnalyzer(postproc=absolute_features()),
+    #            rfesvm.get_sensitivity_analyzer(postproc=absolute_features()),
     #        transfer_error=TransferError(rfesvm),
     #        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
     #        feature_selector=FractionTailSelector(

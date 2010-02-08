@@ -171,7 +171,8 @@ def _parse_parameters(paramdoc):
     return result
 
 
-def enhancedDocString(item, *args, **kwargs):
+##REF: Name was automagically refactored
+def enhanced_doc_string(item, *args, **kwargs):
     """Generate enhanced doc strings for various items.
 
     Parameters
@@ -195,7 +196,7 @@ def enhancedDocString(item, *args, **kwargs):
     if len(kwargs):
         if set(kwargs.keys()).issubset(set(['force_extend'])):
             raise ValueError, "Got unknown keyword arguments (smth among %s)" \
-                  " in enhancedDocString." % kwargs
+                  " in enhanced_doc_string." % kwargs
     force_extend = kwargs.get('force_extend', False)
     skip_params = kwargs.get('skip_params', [])
 
@@ -203,14 +204,14 @@ def enhancedDocString(item, *args, **kwargs):
     if isinstance(item, basestring):
         if len(args)<1 or not isinstance(args[0], dict):
             raise ValueError, \
-                  "Please provide locals for enhancedDocString of %s" % item
+                  "Please provide locals for enhanced_doc_string of %s" % item
         name = item
         lcl = args[0]
         args = args[1:]
     elif hasattr(item, "im_class"):
         # bound method
         raise NotImplementedError, \
-              "enhancedDocString is not yet implemented for methods"
+              "enhanced_doc_string is not yet implemented for methods"
     elif hasattr(item, "__name__"):
         name = item.__name__
         lcl = item.__dict__
@@ -228,8 +229,8 @@ def enhancedDocString(item, *args, **kwargs):
     rst_lvlmarkup = ["=", "-", "_"]
 
     # would then be called for any child... ok - ad hoc for SVM???
-    if hasattr(item, '_customizeDoc') and name=='SVM':
-        item._customizeDoc()
+    if hasattr(item, '_customize_doc') and name=='SVM':
+        item._customize_doc()
 
     initdoc = ""
     if lcl.has_key('__init__'):
@@ -436,7 +437,7 @@ def _str(obj, *args, **kwargs):
     -------
     str
     """
-    truncate = cfg.getAsDType('verbose', 'truncate str', int, default=200)
+    truncate = cfg.get_as_dtype('verbose', 'truncate str', int, default=200)
 
     if hasattr(obj, 'descr'):
         s = obj.descr

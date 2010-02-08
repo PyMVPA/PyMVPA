@@ -421,7 +421,8 @@ class TailSelector(ElementSelector):
         self.__tail = tail
 
 
-    def _getNElements(self, seq):
+    ##REF: Name was automagically refactored
+    def _get_n_elements(self, seq):
         """In derived classes has to return the number of elements to be
         processed given a sequence values forming the distribution.
         """
@@ -435,7 +436,7 @@ class TailSelector(ElementSelector):
         #       some are selected and some are not
         len_seq = len(seq)
         # how many to select (cannot select more than available)
-        nelements = min(self._getNElements(seq), len_seq)
+        nelements = min(self._get_n_elements(seq), len_seq)
 
         # make sure that data is ndarray and compute a sequence rank matrix
         # lowest value is first
@@ -485,7 +486,8 @@ class FixedNElementTailSelector(TailSelector):
             TailSelector.__repr__(self), self.nelements)
 
 
-    def _getNElements(self, seq):
+    ##REF: Name was automagically refactored
+    def _get_n_elements(self, seq):
         return self.__nelements
 
 
@@ -524,7 +526,8 @@ class FractionTailSelector(TailSelector):
             TailSelector.__repr__(self), self.__felements)
 
 
-    def _getNElements(self, seq):
+    ##REF: Name was automagically refactored
+    def _get_n_elements(self, seq):
         num = int(floor(self.__felements * len(seq)))
         num = max(1, num)               # remove at least 1
         # no need for checks as base class will do anyway
