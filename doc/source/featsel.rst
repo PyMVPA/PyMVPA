@@ -98,7 +98,7 @@ train the selected features as we used to select them:
   ...  FeatureSelectionClassifier(
   ...      sample_linear_svm,
   ...      SensitivityBasedFeatureSelection(
-  ...         sample_linear_svm.getSensitivityAnalyzer(postproc=maxofabs_sample()),
+  ...         sample_linear_svm.get_sensitivity_analyzer(postproc=maxofabs_sample()),
   ...         FractionTailSelector(0.05, mode='select', tail='upper')),
   ...      descr="LinSVM on 5%(SVM)")
 
@@ -171,7 +171,7 @@ perform such an analysis:
   ...   # on features selected via RFE
   ...   feature_selection = RFE(
   ...       # based on sensitivity of a clf which does splitting internally
-  ...       sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
+  ...       sensitivity_analyzer=rfesvm_split.get_sensitivity_analyzer(),
   ...       transfer_error=ConfusionBasedError(
   ...          rfesvm_split,
   ...          confusion_state="confusion"),

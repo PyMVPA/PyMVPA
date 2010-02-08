@@ -22,7 +22,7 @@ import numpy as N
 from mvpa.base.dataset import datasetmethod
 from mvpa.datasets.base import Dataset
 from mvpa.base.dochelpers import table2string
-from mvpa.misc.support import getBreakPoints
+from mvpa.misc.support import get_break_points
 
 from mvpa.base import externals, warning
 
@@ -31,7 +31,8 @@ if __debug__:
 
 
 @datasetmethod
-def aggregateFeatures(dataset, fx=N.mean):
+##REF: Name was automagically refactored
+def aggregate_features(dataset, fx=N.mean):
     """Apply a function to each row of the samples matrix of a dataset.
 
     The functor given as `fx` has to honour an `axis` keyword argument in the
@@ -54,7 +55,8 @@ def removeInvariantFeatures(dataset):
 
 
 @datasetmethod
-def coarsenChunks(source, nchunks=4):
+##REF: Name was automagically refactored
+def coarsen_chunks(source, nchunks=4):
     """Change chunking of the dataset
 
     Group chunks into groups to match desired number of chunks. Makes
@@ -142,7 +144,8 @@ def coarsenChunks(source, nchunks=4):
 
 
 @datasetmethod
-def getSamplesPerChunkLabel(dataset):
+##REF: Name was automagically refactored
+def get_samples_per_chunk_label(dataset):
     """Returns an array with the number of samples per label in each chunk.
 
     Array shape is (chunks x targets).

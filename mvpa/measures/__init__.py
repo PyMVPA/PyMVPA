@@ -20,7 +20,7 @@ Provide some measures given a dataset. Most of the time, derivatives of
 * `NoisePerturbationSensitivity`
 
 Also many classifiers natively provide sensitivity estimators via the call to
-`getSensitivityAnalyzer` method
+`get_sensitivity_analyzer` method
 """
 
 __docformat__ = 'restructuredtext'

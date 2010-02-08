@@ -338,7 +338,7 @@ class SVM(_SVM):
         if not retrainable or self.__svm is None or _changedData['params']:
             # SVM
             if self.params.has_key('C'):
-                Cs = self._getCvec(dataset)
+                Cs = self._get_cvec(dataset)
 
                 # XXX do not jump over the head and leave it up to the user
                 #     ie do not rescale automagically by the number of samples

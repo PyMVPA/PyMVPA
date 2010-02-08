@@ -26,9 +26,9 @@ from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.args import group_kwargs
 from mvpa.base.types import asobjarray
 
-from mvpa.base.dochelpers import enhancedDocString
+from mvpa.base.dochelpers import enhanced_doc_string
 from mvpa.base import externals, warning
-from mvpa.clfs.stats import autoNullDist
+from mvpa.clfs.stats import auto_null_dist
 from mvpa.base.dataset import AttrDataset
 from mvpa.datasets import Dataset, vstack
 
@@ -88,14 +88,14 @@ class DatasetMeasure(ClassWithCollections):
         self.__postproc = postproc
         """Functor to be called in return statement of all subclass __call__()
         methods."""
-        null_dist_ = autoNullDist(null_dist)
+        null_dist_ = auto_null_dist(null_dist)
         if __debug__:
             debug('SA', 'Assigning null_dist %s whenever original given was %s'
                   % (null_dist_, null_dist))
         self.__null_dist = null_dist_
 
 
-    __doc__ = enhancedDocString('DatasetMeasure', locals(), ClassWithCollections)
+    __doc__ = enhanced_doc_string('DatasetMeasure', locals(), ClassWithCollections)
 
 
     def __call__(self, dataset):
@@ -451,7 +451,7 @@ class Sensitivity(FeaturewiseDatasetMeasure):
     def feature_ids(self):
         """Return feature_ids used by the underlying classifier
         """
-        return self.__clf._getFeatureIds()
+        return self.__clf._get_feature_ids()
 
 
     clf = property(fget=lambda self:self.__clf,
@@ -469,7 +469,7 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
     #     well as in the parent -- FeaturewiseDatasetMeasure
     # YYY because we don't use parent's _call. Needs RF
     def __init__(self, analyzers=None,  # XXX should become actually 'measures'
-                 combiner=None, #FirstAxisMean,
+                 combiner=None, #first_axis_mean,
                  **kwargs):
         """Initialize CombinedFeaturewiseDatasetMeasure
 
@@ -677,7 +677,7 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         # create analyzers
         for clf in self.clf.clfs:
             if self.__analyzer is None:
-                analyzer = clf.getSensitivityAnalyzer(**(self._slave_kwargs))
+                analyzer = clf.get_sensitivity_analyzer(**(self._slave_kwargs))
                 if analyzer is None:
                     raise ValueError, \
                           "Wasn't able to figure basic analyzer for clf %s" % \
@@ -743,7 +743,7 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
         analyzer = self.__analyzer
 
         if analyzer is None:
-            analyzer = clfclf.getSensitivityAnalyzer(
+            analyzer = clfclf.get_sensitivity_analyzer(
                 **(self._slave_kwargs))
             if analyzer is None:
                 raise ValueError, \

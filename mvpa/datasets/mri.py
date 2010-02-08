@@ -248,7 +248,7 @@ def extract_events(ds, events, tr=None, eprefix='event'):
     # but storing any possible offset to the real event onset as an additional
     # feature of that event -- these features will be stored as sample
     # attributes
-    descr_events = [ev.asDescreteTime(dt, storeoffset=True) for ev in events]
+    descr_events = [ev.as_descrete_time(dt, storeoffset=True) for ev in events]
 
     # convert the event specs into the format expected by BoxcarMapper
     # take the first event as an example of contained keys

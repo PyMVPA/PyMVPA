@@ -13,7 +13,8 @@ from mvpa import _random_seed, cfg
 from mvpa.base import externals, warning
 
 
-def collectTestSuites():
+##REF: Name was automagically refactored
+def collect_test_suites():
     """Runs over all tests it knows and composes a dictionary with test suite
     instances as values and IDs as keys. IDs are the filenames of the unittest
     without '.py' extension and 'test_' prefix.
@@ -110,7 +111,8 @@ def collectTestSuites():
     return dict([(t[5:], eval(t + '.suite()')) for t in tests ])
 
 
-def collectNoseTests():
+##REF: Name was automagically refactored
+def collect_nose_tests():
     """Return list of tests which are pure nose-based
     """
     tests = [ 'test_collections',
@@ -143,7 +145,7 @@ def runNoseTests():
     TODO: just switch to using numpy.testing framework, for that
           unittests need to be cleaned and unified first
     """
-    nosetests = collectNoseTests()
+    nosetests = collect_nose_tests()
     if not externals.exists('nose'):
         warning("You do not have python-nose installed -- no tests %s were ran"
                 % (', '.join(nosetests)))
@@ -173,7 +175,7 @@ def run(limit=None, verbosity=None):
         debug.active += ['CHECK_.*']
 
     # collect all tests
-    suites = collectTestSuites()
+    suites = collect_test_suites()
 
     if limit is None:
         # make global test suite (use them all)

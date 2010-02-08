@@ -47,7 +47,8 @@ def multipleChunks(func, n_chunks, *args, **kwargs):
     return ds
 
 
-def dumbFeatureDataset():
+##REF: Name was automagically refactored
+def dumb_feature_dataset():
     """Create a very simple dataset with 2 features and 3 labels
     """
     data = [[1, 0], [1, 1], [2, 0], [2, 1], [3, 0], [3, 1], [4, 0], [4, 1],
@@ -59,7 +60,8 @@ def dumbFeatureDataset():
     return dataset_wizard(samples=N.array(data), targets=regs, chunks=range(len(regs)))
 
 
-def dumbFeatureBinaryDataset():
+##REF: Name was automagically refactored
+def dumb_feature_binary_dataset():
     """Very simple binary (2 labels) dataset
     """
     data = [[1, 0], [1, 1], [2, 0], [2, 1], [3, 0], [3, 1], [4, 0], [4, 1],
@@ -172,7 +174,8 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
     return dataset_wizard(samples=data, targets=regs, chunks=chunks)
 
 
-def getMVPattern(s2n):
+##REF: Name was automagically refactored
+def get_mv_pattern(s2n):
     """Simple multivariate dataset"""
     return multipleChunks(pureMultivariateSignal, 6,
                           5, s2n, 1)
@@ -236,7 +239,8 @@ def sinModulated(n_instances, n_features,
     label += N.random.rand(label.size)*noise
     return dataset_wizard(samples=data, targets=label)
 
-def chirpLinear(n_instances, n_features=4, n_nonbogus_features=2,
+##REF: Name was automagically refactored
+def chirp_linear(n_instances, n_features=4, n_nonbogus_features=2,
                 data_noise=0.4, noise=0.1):
     """ Generates simple dataset for linear regressions
 

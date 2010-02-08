@@ -22,7 +22,7 @@ import numpy as N
 
 from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.param import Parameter
-from mvpa.misc.transformers import GrandMean
+from mvpa.misc.transformers import grand_mean
 from mvpa.mappers.procrustean import ProcrusteanMapper
 from mvpa.datasets import dataset_wizard, Dataset
 from mvpa.mappers.zscore import zscore

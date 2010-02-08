@@ -136,7 +136,7 @@ sclf = SplitClassifier(clf, NFoldSplitter(),
 
 # Compute sensitivity, which in turn trains the sclf
 sensitivities = \
-    sclf.getSensitivityAnalyzer(combiner=None,
+    sclf.get_sensitivity_analyzer(combiner=None,
                                 slave_combiner=None)(ds)
 
 """

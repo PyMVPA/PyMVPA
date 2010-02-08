@@ -53,10 +53,12 @@ class SillySensitivityAnalyzer(FeaturewiseDatasetMeasure):
 
 class RFETests(unittest.TestCase):
 
-    def getData(self):
+    ##REF: Name was automagically refactored
+    def get_data(self):
         return datasets['uni2medium_train']
 
-    def getDataT(self):
+    ##REF: Name was automagically refactored
+    def get_data_t(self):
         return datasets['uni2medium_test']
 
 
@@ -226,7 +228,7 @@ class RFETests(unittest.TestCase):
     def test_sensitivity_based_feature_selection(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = clf.getSensitivityAnalyzer(postproc=maxofabs_sample())
+        sens_ana = clf.get_sensitivity_analyzer(postproc=maxofabs_sample())
 
         # of features to remove
         Nremove = 2
@@ -238,8 +240,8 @@ class RFETests(unittest.TestCase):
                 feature_selector=FixedNElementTailSelector(2),
                 enable_ca=["sensitivity", "selected_ids"])
 
-        wdata = self.getData()
-        tdata = self.getDataT()
+        wdata = self.get_data()
+        tdata = self.get_data_t()
         # XXX for now convert to numeric labels, but should better be taken
         # care of during clf refactoring
         am = AttributeMap()
@@ -272,9 +274,9 @@ class RFETests(unittest.TestCase):
     def test_feature_selection_pipeline(self):
         sens_ana = SillySensitivityAnalyzer()
 
-        wdata = self.getData()
+        wdata = self.get_data()
         wdata_nfeatures = wdata.nfeatures
-        tdata = self.getDataT()
+        tdata = self.get_data_t()
         tdata_nfeatures = tdata.nfeatures
 
         # test silly one first ;-)
@@ -317,7 +319,7 @@ class RFETests(unittest.TestCase):
     def test_rfe(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = clf.getSensitivityAnalyzer(postproc=maxofabs_sample())
+        sens_ana = clf.get_sensitivity_analyzer(postproc=maxofabs_sample())
         trans_error = TransferError(clf)
         # because the clf is already trained when computing the sensitivity
         # map, prevent retraining for transfer error calculation
@@ -327,9 +329,9 @@ class RFETests(unittest.TestCase):
                   feature_selector=FixedNElementTailSelector(1),
                   train_clf=False)
 
-        wdata = self.getData()
+        wdata = self.get_data()
         wdata_nfeatures = wdata.nfeatures
-        tdata = self.getDataT()
+        tdata = self.get_data_t()
         tdata_nfeatures = tdata.nfeatures
 
         sdata, stdata = rfe(wdata, tdata)
@@ -370,7 +372,7 @@ class RFETests(unittest.TestCase):
         dataset = datasets['uni2small']
         rfesvm_split = LinearCSVMC()
         fs = \
-            RFE(sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
+            RFE(sensitivity_analyzer=rfesvm_split.get_sensitivity_analyzer(),
                 transfer_error=TransferError(rfesvm_split),
                 feature_selector=FractionTailSelector(
                     percent / 100.0,
@@ -407,8 +409,8 @@ class RFETests(unittest.TestCase):
             FeatureSelectionClassifier(
             clf = LinearCSVMC(C=1),
             feature_selection = RFE(
-                sensitivity_analyzer = rfesvm_split.getSensitivityAnalyzer(
-                    combiner=FirstAxisMean,
+                sensitivity_analyzer = rfesvm_split.get_sensitivity_analyzer(
+                    combiner=first_axis_mean,
                     transformer=N.abs),
                 transfer_error=ConfusionBasedError(
                     rfesvm_split,

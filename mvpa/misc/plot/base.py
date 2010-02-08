@@ -289,7 +289,8 @@ def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
     return plot
 
 
-def inverseCmap(cmap_name):
+##REF: Name was automagically refactored
+def inverse_cmap(cmap_name):
     """Create a new colormap from the named colormap, where it got reversed
 
     """

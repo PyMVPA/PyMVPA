@@ -36,8 +36,8 @@ from mvpa.misc.state import StateVariable, ClassWithCollections, Harvestable
 from mvpa.mappers.base import FeatureSliceMapper
 
 from mvpa.clfs.base import Classifier
-from mvpa.clfs.distance import cartesianDistance
-from mvpa.misc.transformers import FirstAxisMean
+from mvpa.clfs.distance import cartesian_distance
+from mvpa.misc.transformers import first_axis_mean
 
 from mvpa.measures.base import \
     BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer, \
@@ -129,8 +129,9 @@ class BoostedClassifier(Classifier, Harvestable):
             self.__changedData_isset = False
 
 
-    def _getFeatureIds(self):
-        """Custom _getFeatureIds for `BoostedClassifier`
+    ##REF: Name was automagically refactored
+    def _get_feature_ids(self):
+        """Custom _get_feature_ids for `BoostedClassifier`
         """
         # return union of all used features by slave classifiers
         feature_ids = Set([])
@@ -192,7 +193,8 @@ class BoostedClassifier(Classifier, Harvestable):
             clf.untrain()
         super(BoostedClassifier, self).untrain()
 
-    def getSensitivityAnalyzer(self, **kwargs):
+    ##REF: Name was automagically refactored
+    def get_sensitivity_analyzer(self, **kwargs):
         """Return an appropriate SensitivityAnalyzer"""
         return BoostedClassifierSensitivityAnalyzer(
                 self,
@@ -308,11 +310,12 @@ class ProxyClassifier(Classifier):
 
 
     @group_kwargs(prefixes=['slave_'], passthrough=True)
-    def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
+    ##REF: Name was automagically refactored
+    def get_sensitivity_analyzer(self, slave_kwargs, **kwargs):
         """Return an appropriate SensitivityAnalyzer"""
         return self.__sa_class__(
                 self,
-                analyzer=self.__clf.getSensitivityAnalyzer(**slave_kwargs),
+                analyzer=self.__clf.get_sensitivity_analyzer(**slave_kwargs),
                 **kwargs)
 
 
@@ -1188,17 +1191,18 @@ class SplitClassifier(CombinedClassifier):
 
 
     @group_kwargs(prefixes=['slave_'], passthrough=True)
-    def getSensitivityAnalyzer(self, slave_kwargs, **kwargs):
+    ##REF: Name was automagically refactored
+    def get_sensitivity_analyzer(self, slave_kwargs, **kwargs):
         """Return an appropriate SensitivityAnalyzer for `SplitClassifier`
 
         Parameters
         ----------
         combiner
-          If not provided, FirstAxisMean is assumed
+          If not provided, first_axis_mean is assumed
         """
         return BoostedClassifierSensitivityAnalyzer(
                 self,
-                analyzer=self.__clf.getSensitivityAnalyzer(**slave_kwargs),
+                analyzer=self.__clf.get_sensitivity_analyzer(**slave_kwargs),
                 **kwargs)
 
     splitter = property(fget=lambda x:x.__splitter,
@@ -1271,7 +1275,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
     TODO: think about removing overhead of retraining the same classifier if
     feature selection was carried out with the same classifier already. It
     has been addressed by adding .trained property to classifier, but now
-    we should expclitely use isTrained here if we want... need to think more
+    we should expclitely use is_trained here if we want... need to think more
     """
 
     __tags__ = [ 'does_feature_selection', 'meta' ]
@@ -1359,7 +1363,8 @@ class FeatureSelectionClassifier(ProxyClassifier):
         # TODO see for ProxyClassifier
         #self.ca._copy_ca_(self.__maskclf, deep=False)
 
-    def _getFeatureIds(self):
+    ##REF: Name was automagically refactored
+    def _get_feature_ids(self):
         """Return used feature ids for `FeatureSelectionClassifier`
 
         """
@@ -1523,7 +1528,7 @@ class RegressionAsClassifier(ProxyClassifier):
         centers = self._trained_centers
         distance_measure = self.distance_measure
         if distance_measure is None:
-            distance_measure = cartesianDistance
+            distance_measure = cartesian_distance
 
         # Compute distances
         self.ca.distances = distances \

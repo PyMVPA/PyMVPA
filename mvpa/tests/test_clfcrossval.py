@@ -15,14 +15,14 @@ from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
 
 from tests_warehouse import *
-from tests_warehouse import pureMultivariateSignal, getMVPattern
+from tests_warehouse import pureMultivariateSignal, get_mv_pattern
 from tests_warehouse_clfs import *
 
 class CrossValidationTests(unittest.TestCase):
 
 
     def test_simple_n_minus_one_cv(self):
-        data = getMVPattern(3)
+        data = get_mv_pattern(3)
         data.init_origids('samples')
 
         self.failUnless( data.nsamples == 120 )
@@ -59,7 +59,7 @@ class CrossValidationTests(unittest.TestCase):
 
     def test_noise_classification(self):
         # get a dataset with a very high SNR
-        data = getMVPattern(10)
+        data = get_mv_pattern(10)
 
         # do crossval with default errorfx and 'mean' combiner
         transerror = TransferError(sample_clf_nl)
@@ -82,7 +82,7 @@ class CrossValidationTests(unittest.TestCase):
 
     def test_harvesting(self):
         # get a dataset with a very high SNR
-        data = getMVPattern(10)
+        data = get_mv_pattern(10)
         # do crossval with default errorfx and 'mean' combiner
         transerror = TransferError(clfswh['linear'][0])
         cv = CrossValidatedTransferError(

@@ -246,7 +246,7 @@ class StatsTestsScipy(unittest.TestCase):
         # play fmri
         # full-blown HRF with initial dip and undershoot ;-)
         hrf_x = N.linspace(0, 25, 250)
-        hrf = doubleGammaHRF(hrf_x) - singleGammaHRF(hrf_x, 0.8, 1, 0.05)
+        hrf = double_gamma_hrf(hrf_x) - singleGammaHRF(hrf_x, 0.8, 1, 0.05)
 
         # come up with an experimental design
         samples = 1800

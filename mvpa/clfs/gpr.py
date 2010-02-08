@@ -229,7 +229,8 @@ class GPR(Classifier):
         return lml_gradient
 
 
-    def getSensitivityAnalyzer(self, flavor='auto', **kwargs):
+    ##REF: Name was automagically refactored
+    def get_sensitivity_analyzer(self, flavor='auto', **kwargs):
         """Returns a sensitivity analyzer for GPR.
 
         Parameters

@@ -602,7 +602,8 @@ class CombinedMapper(Mapper):
             m.selectOut(selected)
 
 
-    def getNeighbor(self, outId, *args, **kwargs):
+    ##REF: Name was automagically refactored
+    def get_neighbor(self, outId, *args, **kwargs):
         """Get the ids of the neighbors of a single feature in output dataspace.
 
         Parameters
@@ -622,10 +623,10 @@ class CombinedMapper(Mapper):
         for m in self._mappers:
             fsum_new = fsum + m.get_outsize()
             if outId >= fsum and outId < fsum_new:
-                return m.getNeighbor(outId - fsum, *args, **kwargs)
+                return m.get_neighbor(outId - fsum, *args, **kwargs)
             fsum = fsum_new
 
-        raise ValueError, "Invalid outId passed to CombinedMapper.getNeighbor()"
+        raise ValueError, "Invalid outId passed to CombinedMapper.get_neighbor()"
 
 
     def __repr__(self):

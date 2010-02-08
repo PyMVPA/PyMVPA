@@ -290,7 +290,7 @@ the following confusion matrix::
 
   >>> # Simple 'print cvterr.confusion' provides the same output
   >>> # without the description of abbreviations
-  >>> print cvterr.confusion.asstring(description=True) \
+  >>> print cvterr.confusion.as_string(description=True) \
   ... # doctest: +SKIP
   --------.        3kHz  7kHz  12kHz 20kHz 30kHz song1 song2 song3 song4 song5
   predict.\targets 38    39    40    41    42    43    44    45    46    47
@@ -558,7 +558,7 @@ method calls).  Consider the following code, which can be found in
   ...   feature_selection = RFE(
   ...       # based on sensitivity of a clf which does
   ...       # splitting internally
-  ...       sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
+  ...       sensitivity_analyzer=rfesvm_split.get_sensitivity_analyzer(),
   ...       transfer_error=ConfusionBasedError(
   ...          rfesvm_split,
   ...          confusion_state="confusion"),

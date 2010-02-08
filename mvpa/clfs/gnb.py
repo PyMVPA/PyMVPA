@@ -272,7 +272,7 @@ class GNB(Classifier):
     # XXX Later come up with some
     #     could be a simple t-test maps using distributions
     #     per each class
-    #def getSensitivityAnalyzer(self, **kwargs):
+    #def get_sensitivity_analyzer(self, **kwargs):
     #    """Returns a sensitivity analyzer for GNB."""
     #    return GNBWeights(self, **kwargs)
 
