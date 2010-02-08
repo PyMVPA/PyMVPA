@@ -185,7 +185,7 @@ class ENET(Classifier):
         if len(fit.shape) == 0:
             # if we just got 1 sample with a scalar
             fit = fit.reshape( (1,) )
-        self.states.estimates = fit     # change states
+        self.ca.estimates = fit     # charge conditional attribute
         return fit
 
 
