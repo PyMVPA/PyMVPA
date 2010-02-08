@@ -151,13 +151,13 @@ class _GLMNET(Classifier):
 #     def __repr__(self):
 #         """String summary of the object
 #         """
-#         return """ENET(lm=%s, normalize=%s, intercept=%s, trace=%s, max_steps=%s, enable_states=%s)""" % \
+#         return """ENET(lm=%s, normalize=%s, intercept=%s, trace=%s, max_steps=%s, enable_ca=%s)""" % \
 #                (self.__lm,
 #                 self.__normalize,
 #                 self.__intercept,
 #                 self.__trace,
 #                 self.__max_steps,
-#                 str(self.states.enabled))
+#                 str(self.ca.enabled))
 
 
     def _train(self, dataset):
@@ -261,7 +261,7 @@ class _GLMNET(Classifier):
             values = values[:, 0]
 
         # values need to be set anyways if values state is enabled
-        self.states.estimates = values
+        self.ca.estimates = values
         if classes is not None:
             # set the values and return none
             return classes

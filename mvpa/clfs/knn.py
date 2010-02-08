@@ -160,8 +160,8 @@ class kNN(Classifier):
 
         # store the predictions in the state. Relies on State._setitem to do
         # nothing if the relevant state member is not enabled
-        self.states.predictions = predicted
-        self.states.estimates = [r[1] for r in results]
+        self.ca.predictions = predicted
+        self.ca.estimates = [r[1] for r in results]
 
         return predicted
 

@@ -1276,20 +1276,20 @@ class ClassifierError(ClassWithCollections):
                 #    warning('It seems that classifier %s was already trained' %
                 #            self.__clf + ' on dataset %s. Please inspect' \
                 #                % trainingdataset)
-                if self.states.is_enabled('training_confusion'):
-                    self.__clf.states.change_temporarily(
-                        enable_states=['training_confusion'])
+                if self.ca.is_enabled('training_confusion'):
+                    self.__clf.ca.change_temporarily(
+                        enable_ca=['training_confusion'])
                 self.__clf.train(trainingdataset)
-                if self.states.is_enabled('training_confusion'):
-                    self.states.training_confusion = \
-                        self.__clf.states.training_confusion
-                    self.__clf.states.reset_changed_temporarily()
+                if self.ca.is_enabled('training_confusion'):
+                    self.ca.training_confusion = \
+                        self.__clf.ca.training_confusion
+                    self.__clf.ca.reset_changed_temporarily()
 
-        if self.__clf.states.is_enabled('trained_targets') \
+        if self.__clf.ca.is_enabled('trained_targets') \
                and not self.__clf.__is_regression__ \
                and not testdataset is None:
             newlabels = Set(testdataset.sa[self.clf.params.targets].unique) \
-                        - Set(self.__clf.states.trained_targets)
+                        - Set(self.__clf.ca.trained_targets)
             if len(newlabels)>0:
                 warning("Classifier %s wasn't trained to classify labels %s" %
                         (self.__clf, newlabels) +
@@ -1445,25 +1445,25 @@ class TransferError(ClassifierError):
         # Should it migrate into ClassifierError.__postcall?
         # -> Probably not because other childs could estimate it
         #  not from test/train datasets explicitely, see
-        #  `ConfusionBasedError`, wherestates. confusion is simply
+        #  `ConfusionBasedError`, whereca. confusion is simply
         #  bound to classifiers confusion matrix
-        states = self.states
-        if states.is_enabled('confusion'):
+        ca = self.ca
+        if ca.is_enabled('confusion'):
             confusion = clf.__summary_class__(
                 #labels = self.targets,
                 targets = testtargets,
                 predictions = predictions,
-                estimates = clf.states.get('estimates', None))
-            states.confusion = confusion
+                estimates = clf.ca.get('estimates', None))
+            ca.confusion = confusion
 
-        if states.is_enabled('samples_error'):
+        if ca.is_enabled('samples_error'):
             samples_error = []
             for i, p in enumerate(predictions):
                 samples_error.append(
                     self.__errorfx([p], testtargets[i:i+1]))
             testdataset.init_origids(
                 'samples', attr=self.__samples_idattr, mode='existing')
-            states.samples_error = dict(
+            ca.samples_error = dict(
                 zip(testdataset.sa[self.__samples_idattr].value,
                     samples_error))
 
@@ -1489,7 +1489,7 @@ class TransferError(ClassifierError):
 
         # get probability of error under NULL hypothesis if available
         if not error is None and not self.__null_dist is None:
-            self.states.null_prob = self.__null_dist.p(error)
+            self.ca.null_prob = self.__null_dist.p(error)
 
 
     @property
@@ -1531,15 +1531,15 @@ class ConfusionBasedError(ClassifierError):
         self.__confusion_state = confusion_state
         """What state to extract from"""
 
-        if not clf.states.has_key(confusion_state):
+        if not clf.ca.has_key(confusion_state):
             raise ValueError, \
                   "State variable %s is not defined for classifier %r" % \
                   (confusion_state, clf)
-        if not clf.states.is_enabled(confusion_state):
+        if not clf.ca.is_enabled(confusion_state):
             if __debug__:
                 debug('CERR', "Forcing state %s to be enabled for %r" %
                       (confusion_state, clf))
-            clf.states.enable(confusion_state)
+            clf.ca.enable(confusion_state)
 
 
     __doc__ = enhancedDocString('ConfusionBasedError', locals(),
@@ -1549,6 +1549,6 @@ class ConfusionBasedError(ClassifierError):
     def _call(self, testdata, trainingdata=None):
         """Extract transfer error. Nor testdata, neither trainingdata is used
         """
-        confusion = self.clf.states[self.__confusion_state].value
-        self.states.confusion = confusion
+        confusion = self.clf.ca[self.__confusion_state].value
+        self.ca.confusion = confusion
         return confusion.error

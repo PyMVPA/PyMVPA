@@ -110,11 +110,11 @@ class NullDist(ClassWithCollections):
 
     """
 
-    # Although base class is not benefiting from states, derived
+    # Although base class is not benefiting from ca, derived
     # classes do (MCNullDist). For the sake of avoiding multiple
     # inheritance and associated headache -- let them all be ClassWithCollections,
     # performance hit should be negligible in most of the scenarios
-    _ATTRIBUTE_COLLECTIONS = ['states']
+    _ATTRIBUTE_COLLECTIONS = ['ca']
 
     def __init__(self, tail='both', **kwargs):
         """
@@ -281,7 +281,7 @@ class MCNullDist(NullDist):
 
 
         # store samples
-        self.states.dist_samples = dist_samples = N.asarray(dist_samples)
+        self.ca.dist_samples = dist_samples = N.asarray(dist_samples)
 
         # fit distribution per each element
 

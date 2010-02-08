@@ -120,7 +120,7 @@ class Searchlight(DatasetMeasure):
 
             # collect results
             results = []
-            if self.states.is_enabled('roisizes'):
+            if self.ca.is_enabled('roisizes'):
                 roisizes = []
             else:
                 roisizes = None
@@ -135,7 +135,7 @@ class Searchlight(DatasetMeasure):
                     self._proc_chunk(roi_ids, dataset, self.__datameasure)
 
         if not roisizes is None:
-            self.states.roisizes = roisizes
+            self.ca.roisizes = roisizes
 
         if __debug__:
             debug('SLC', '')
@@ -159,7 +159,7 @@ class Searchlight(DatasetMeasure):
                 results.a['mapper'] = mapper
 
         # charge state
-        self.states.raw_results = results
+        self.ca.raw_results = results
 
         # return raw results, base-class will take care of transformations
         return results
@@ -169,7 +169,7 @@ class Searchlight(DatasetMeasure):
         """Little helper to capture the parts of the computation that can be
         parallelized
         """
-        if self.states.is_enabled('roisizes'):
+        if self.ca.is_enabled('roisizes'):
             roisizes = []
         else:
             roisizes = None

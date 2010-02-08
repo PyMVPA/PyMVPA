@@ -57,9 +57,9 @@ class PLR(Classifier):
     def __repr__(self):
         """String summary over the object
         """
-        return """PLR(lm=%f, criterion=%d, reduced=%s, maxiter=%d, enable_states=%s)""" % \
+        return """PLR(lm=%f, criterion=%d, reduced=%s, maxiter=%d, enable_ca=%s)""" % \
                (self.__lm, self.__criterion, self.__reduced, self.__maxiter,
-                str(self.states.enabled))
+                str(self.ca.enabled))
 
 
     def _train(self, data):
@@ -154,8 +154,8 @@ class PLR(Classifier):
 
         # save the state if desired, relying on State._setitem_ to
         # decide if we will actually save the values
-        self.states.predictions = predictions
-        self.states.estimates = values
+        self.ca.predictions = predictions
+        self.ca.estimates = values
 
         return predictions
 

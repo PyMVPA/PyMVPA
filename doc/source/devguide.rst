@@ -215,7 +215,7 @@ in state variables.
 
 .. IncludeStates: clfs.base Classifier
 
-Supported states:
+Supported ca:
 
 ================== ==============================================   =========
     State Name      Description                                      Default
@@ -263,7 +263,7 @@ Source code files of all classifier implementations go into `mvpa/clfs/`.
 
 Outstanding Questions:
 
-    * when states and when properties?
+    * when ca and when properties?
 
 
 Adding a new DatasetMeasure
@@ -298,7 +298,7 @@ has to return a vector of featurewise sensitivity scores.
 
 .. IncludeStates: measures.base DatasetMeasure
 
-Supported states:
+Supported ca:
 
 ================== ==============================================   =========
     State Name      Description                                      Default
@@ -329,7 +329,7 @@ embedded classifier object is provided via the `clf` property.
 
 .. IncludeStates: measures.base Sensitivity
 
-Supported states:
+Supported ca:
 
 ================== ==============================================   =========
     State Name      Description                                      Default
@@ -571,7 +571,7 @@ Things to implement for the next release (Release goals)
   For binary:       1 value
       multiclass:   1 value, or N values
 
-* In a related issue, the predictions and values states of the classifiers need to have
+* In a related issue, the predictions and values ca of the classifiers need to have
   a consitent format.  Currently, SVM returns a list of dictionaries for values and SMLR
   returns a numpy ndarray.
 

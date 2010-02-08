@@ -24,16 +24,16 @@ from mvpa.clfs.base import Classifier
 from mvpa.misc.state import ClassWithCollections
 from mvpa.misc.data_generators import *
 
-__all__ = [ 'datasets', 'sweepargs', 'N', 'unittest', '_all_states_enabled',
+__all__ = [ 'datasets', 'sweepargs', 'N', 'unittest', '_all_ca_enabled',
             'saveload_warehouse']
 
 if __debug__:
     from mvpa.base import debug
     __all__.append('debug')
 
-    _all_states_enabled = 'ENFORCE_STATES_ENABLED' in debug.active
+    _all_ca_enabled = 'ENFORCE_STATES_ENABLED' in debug.active
 else:
-    _all_states_enabled = False
+    _all_ca_enabled = False
 
 
 
@@ -66,7 +66,7 @@ def sweepargs(**kwargs):
                         # clear classifier before its use
                         argvalue.untrain()
                     if isinstance(argvalue, ClassWithCollections):
-                        argvalue.states.reset()
+                        argvalue.ca.reset()
                     # update kwargs_
                     kwargs_[argname] = argvalue
                     # do actual call

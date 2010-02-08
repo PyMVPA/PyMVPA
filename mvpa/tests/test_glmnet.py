@@ -43,7 +43,7 @@ def test_glmnet_c():
 
     # use GLMNET on binary problem
     clf = GLMNET_C()
-    clf.states.enable('estimates')
+    clf.ca.enable('estimates')
 
     clf.train(data)
 
@@ -61,11 +61,11 @@ def test_glmnet_state():
 
     clf.train(data)
 
-    clf.states.enable('predictions')
+    clf.ca.enable('predictions')
 
     p = clf.predict(data.samples)
 
-    assert_array_equal(p, clf.states.predictions)
+    assert_array_equal(p, clf.ca.predictions)
 
 
 def test_glmnet_c_sensitivities():
