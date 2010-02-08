@@ -371,9 +371,10 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'rpy2': "__check_rpy2()",
           'lars': "exists('rpy2', raiseException=True);" \
                   "import rpy2.robjects; rpy2.robjects.r.library('lars')",
-          'elasticnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('elasticnet')",
-          # 'glmnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('glmnet')",
-          'glmnet': "exists('rpy2', raiseException=True); import rpy2.robjects; rpy2.robjects.r.library('glmnet')",
+          'elasticnet': "exists('rpy2', raiseException=True); "\
+                  "import rpy2.robjects; rpy2.robjects.r.library('elasticnet')",
+          'glmnet': "exists('rpy2', raiseException=True); " \
+                  "import rpy2.robjects; rpy2.robjects.r.library('glmnet')",
           'matplotlib': "__check_matplotlib()",
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",

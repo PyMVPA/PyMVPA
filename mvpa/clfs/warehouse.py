@@ -282,12 +282,12 @@ if externals.exists('lars'):
         # clfswh += MulticlassClassifier(lars,
         #             descr='Multiclass %s' % lars.descr)
 
-## PBS: enet has some weird issue that causes it to fail.  GLMNET is
-## better anyway, so just use that instead
-## # enet from R via RPy
+## Still fails unittests battery although overhauled otherwise.
+## # enet from R via RPy2
 ## if externals.exists('elasticnet'):
 ##     from mvpa.clfs.enet import ENET
-##     clfswh += ENET(descr="RegressionAsClassifier(ENET())")
+##     clfswh += RegressionAsClassifier(ENET(),
+##                                      descr="RegressionAsClassifier(ENET())")
 ##     regrswh += ENET(descr="ENET()")
 
 # glmnet from R via RPy
