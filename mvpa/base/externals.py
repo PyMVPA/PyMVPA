@@ -335,6 +335,9 @@ def __check_rpy():
 def __check_rpy2():
     """Check either rpy2 is available and also set it for the sane execution
     """
+    import rpy2
+    versions['rpy2'] = rpy2.__version__
+
     import rpy2.robjects
     r = rpy2.robjects.r
     r.options(warn=cfg.get('rpy', 'warn', default=-1))
