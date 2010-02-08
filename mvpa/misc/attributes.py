@@ -95,7 +95,7 @@ class IndexedCollectable(Collectable):
     # XXX had to override due to _isset, init=
     def _set(self, val, init=False):
         """4Developers: Override this method in derived classes if you desire
-           some logic (drop value in case of states, or not allow to set value
+           some logic (drop value in case of ca, or not allow to set value
            for read-only Parameters unless called with init=1) etc)
         """
         if __debug__: # Since this call is quite often, don't convert

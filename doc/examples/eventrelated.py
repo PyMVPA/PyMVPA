@@ -55,7 +55,7 @@ verbose(1, "Load data for preprocessing")
 pre_ds = NiftiImage(fmri_src)
 
 # actual labels are not important here, could be 'labels=1'
-pre_ds = NiftiDataset(samples=fmri_src, labels=attr.labels,
+pre_ds = NiftiDataset(samples=fmri_src, labels=attr.targets,
                       chunks=attr.chunks, mask=mask)
 
 # convert to floats
@@ -132,11 +132,11 @@ zscore(ds, perchunk=True)
 
 clf = LinearCSVMC()
 sclf = SplitClassifier(clf, NFoldSplitter(),
-       enable_states=['confusion', 'training_confusion'])
+       enable_ca=['confusion', 'training_confusion'])
 
 # Compute sensitivity, which in turn trains the sclf
 sensitivities = \
-    sclf.getSensitivityAnalyzer(combiner=None,
+    sclf.get_sensitivity_analyzer(combiner=None,
                                 slave_combiner=None)(ds)
 
 """
@@ -179,10 +179,10 @@ Now, we plot the orginal signal after initial detrending,
 
 P.subplot(311)
 P.title('Voxel zyx%s\nblock-onset@1, block-offset@8' % `v`)
-for l in ds.uniquelabels:
+for l in ds.uniquetargets:
     P.plot(
         ds.mapReverse(
-            orig_ds.samples[ds.labels==l].mean(axis=0)
+            orig_ds.samples[ds.targets==l].mean(axis=0)
                 )[:,v[0],v[1],v[2]])
 P.ylabel('Signal after detrending')
 P.axhline(linestyle='--', color='0.6')
@@ -194,10 +194,10 @@ the peristimulus timecourse after Z-scoring,
 """
 
 P.subplot(312)
-for l in ds.uniquelabels:
+for l in ds.uniquetargets:
     P.plot(
         ds.mapReverse(
-            ds.samples[ds.labels==l].mean(axis=0)
+            ds.samples[ds.targets==l].mean(axis=0)
                 )[:,v[0],v[1],v[2]])
 P.ylabel('Signal after normalization')
 P.axhline(linestyle='--', color='0.6')

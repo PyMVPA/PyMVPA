@@ -86,9 +86,9 @@ def test_mdpflow_additional_arguments():
     flow = mdp.nodes.PCANode() + mdp.nodes.IdentityNode() + mdp.nodes.FDANode()
     # this is what it would look like in MDP itself
     #flow.train([[ds.samples],
-    #            [[ds.samples, ds.sa.labels]]])
+    #            [[ds.samples, ds.sa.targets]]])
     assert_raises(ValueError, MDPFlowMapper, flow, node_arguments=[[],[]])
-    fm = MDPFlowMapper(flow, node_arguments = ([], [], [DAE('sa', 'labels')]))
+    fm = MDPFlowMapper(flow, node_arguments = ([], [], [DAE('sa', 'targets')]))
     fm.train(ds)
     fds = fm.forward(ds)
     assert_equal(ds.samples.shape, fds.samples.shape)
@@ -103,9 +103,9 @@ def test_mdpflow_additional_arguments_nones():
     flow = mdp.nodes.PCANode() + mdp.nodes.IdentityNode() + mdp.nodes.FDANode()
     # this is what it would look like in MDP itself
     #flow.train([[ds.samples],
-    #            [[ds.samples, ds.sa.labels]]])
+    #            [[ds.samples, ds.sa.targets]]])
     assert_raises(ValueError, MDPFlowMapper, flow, node_arguments=[[],[]])
-    fm = MDPFlowMapper(flow, node_arguments = (None, None, [ds.sa.labels]))
+    fm = MDPFlowMapper(flow, node_arguments = (None, None, [ds.sa.targets]))
     fm.train(ds)
     fds = fm.forward(ds)
     assert_equal(ds.samples.shape, fds.samples.shape)

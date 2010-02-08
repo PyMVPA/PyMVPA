@@ -64,17 +64,17 @@ class SVMTests(unittest.TestCase):
             # use non-linear CLF on 2d data
             nl_clf.train(train)
             p_mv = nl_clf.predict(test.samples)
-            mv_perf.append(N.mean(p_mv==test.labels))
+            mv_perf.append(N.mean(p_mv==test.targets))
 
             # use linear CLF on 2d data
             l_clf.train(train)
             p_lin_mv = l_clf.predict(test.samples)
-            mv_lin_perf.append(N.mean(p_lin_mv==test.labels))
+            mv_lin_perf.append(N.mean(p_lin_mv==test.targets))
 
             # use non-linear CLF on 1d data
             nl_clf.train(train[:, 0])
             p_uv = nl_clf.predict(test[:, 0].samples)
-            uv_perf.append(N.mean(p_uv==test.labels))
+            uv_perf.append(N.mean(p_uv==test.targets))
 
         mean_mv_perf = N.mean(mv_perf)
         mean_mv_lin_perf = N.mean(mv_lin_perf)
@@ -111,27 +111,27 @@ class SVMTests(unittest.TestCase):
         ds_ = ds[(range(ds.nsamples) + range(ds.nsamples/2) * times)]
         ds_.samples = ds_.samples + \
                       0.5 * N.random.normal(size=(ds_.samples.shape))
-        spl = get_nsamples_per_attr(ds_, 'labels') #_.samplesperlabel
-        #print ds_.labels, ds_.chunks
+        spl = get_nsamples_per_attr(ds_, 'targets') #_.samplesperlabel
+        #print ds_.targets, ds_.chunks
 
         cve = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
-                                          enable_states='confusion')
+                                          enable_ca='confusion')
         # on balanced
         e = cve(ds__)
-        tpr_1 = cve.states.confusion.stats["TPR"][1]
+        tpr_1 = cve.ca.confusion.stats["TPR"][1]
 
         # on disbalanced
         e = cve(ds_)
-        tpr_2 =  cve.states.confusion.stats["TPR"][1]
+        tpr_2 =  cve.ca.confusion.stats["TPR"][1]
 
         # Set '1 C per label'
         # recreate cvte since previous might have operated on copies
         cve = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
-                                          enable_states='confusion')
+                                          enable_ca='confusion')
         oldC = clf.params.C
         # TODO: provide clf.params.C not with a tuple but dictionary
         #       with C per label (now order is deduced in a cruel way)
-        ratio = N.sqrt(float(spl[ds_.UL[0]])/spl[ds_.UL[1]])
+        ratio = N.sqrt(float(spl[ds_.UT[0]])/spl[ds_.UT[1]])
         clf.params.C = (-1/ratio, -1*ratio)
         try:
             # on disbalanced but with balanced C
@@ -141,7 +141,7 @@ class SVMTests(unittest.TestCase):
         except:
             clf.params.C = oldC
             raise
-        tpr_3 = cve.states.confusion.stats["TPR"][1]
+        tpr_3 = cve.ca.confusion.stats["TPR"][1]
 
         # Actual tests
         if cfg.getboolean('tests', 'labile', default='yes'):

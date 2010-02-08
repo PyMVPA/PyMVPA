@@ -30,7 +30,8 @@ class PrototypeMapperTests(unittest.TestCase):
     def setUp(self):
         pass
 
-    def buildVectorBasedPM(self):
+    ##REF: Name was automagically refactored
+    def build_vector_based_pm(self):
         # samples: 40 samples in 20d space (40x20; samples x features)
         self.samples = N.random.rand(40,20)
 
@@ -47,14 +48,14 @@ class PrototypeMapperTests(unittest.TestCase):
 
 
     def test_size(self):
-        self.buildVectorBasedPM()
+        self.build_vector_based_pm()
         assert_array_equal(self.pm.proj.shape,
                            (self.samples.shape[0],
                             self.prototypes.shape[0] * len(self.similarities)))
 
 
     def test_symmetry(self):
-        self.buildVectorBasedPM()
+        self.build_vector_based_pm()
         assert_array_almost_equal(self.pm.proj[:,self.samples.shape[0]],
                                   self.pm.proj.T[self.samples.shape[0],:])
         assert_array_equal(self.pm.proj[:,self.samples.shape[0]],
@@ -62,7 +63,7 @@ class PrototypeMapperTests(unittest.TestCase):
 
 
     def test_size_random_prototypes(self):
-        self.buildVectorBasedPM()
+        self.build_vector_based_pm()
         fraction = 0.5
         prototype_number = max(int(len(self.samples)*fraction),1)
         ## debug("MAP","Generating "+str(prototype_number)+" random prototypes.")
@@ -71,7 +72,8 @@ class PrototypeMapperTests(unittest.TestCase):
         self.pm2.train(self.samples)
         assert_array_equal(self.pm2.proj.shape, (self.samples.shape[0], self.pm2.prototypes.shape[0]*len(self.similarities)))
 
-    def buildStreamlineThings(self):
+    ##REF: Name was automagically refactored
+    def build_streamline_things(self):
         # Build a dataset having samples of different lengths. This is
         # trying to mimic a possible interface for streamlines
         # datasets, i.e., an iterable container of Mx3 points, where M
@@ -89,7 +91,7 @@ class PrototypeMapperTests(unittest.TestCase):
 
 
     def test_streamline_equal_mapper(self):
-        self.buildStreamlineThings()
+        self.build_streamline_things()
 
         self.prototypes_equal = self.dataset.samples
         self.pm = PrototypeMapper(similarities=self.similarities,
@@ -104,7 +106,7 @@ class PrototypeMapperTests(unittest.TestCase):
 
 
     def test_streamline_random_mapper(self):
-        self.buildStreamlineThings()
+        self.build_streamline_things()
 
         # Adding one more similarity to test multiple similarities in the streamline case:
         self.similarities.append(StreamlineSimilarity(distance=corouge))

@@ -20,7 +20,7 @@ PyMVPA code, and are generic building blocks
 __docformat__ = 'restructuredtext'
 
 
-import sys
+import sys, os
 from mvpa.base.config import ConfigManager
 from mvpa.base.verbosity import LevelLogger, OnceLogger
 
@@ -56,7 +56,11 @@ class __Singleton:
 # As the very first step: Setup configuration registry instance and
 # read all configuration settings from files and env variables
 #
-cfg = __Singleton('cfg', ConfigManager())
+_cfgfile = os.environ.get('MVPACONFIG', None)
+if _cfgfile:
+    # We have to provide a list
+    _cfgfile = [_cfgfile]
+cfg = __Singleton('cfg', ConfigManager(_cfgfile))
 
 verbose = __Singleton("verbose", LevelLogger(
     handlers = cfg.get('verbose', 'output', default='stdout').split(',')))
@@ -225,7 +229,7 @@ if __debug__:
                    "Checking in checking if clf was trained on given dataset")
     debug.register('CHECK_RETRAIN', "Checking in retraining/retesting")
     debug.register('CHECK_STABILITY', "Checking for numerical stability")
-    debug.register('ENFORCE_STATES_ENABLED', "Forcing all states to be enabled")
+    debug.register('ENFORCE_STATES_ENABLED', "Forcing all ca to be enabled")
 
     debug.register('MAP',   "*Mapper")
     debug.register('MAP_',  "*Mapper (verbose)")
@@ -235,7 +239,7 @@ if __debug__:
     debug.register('UATTR', "Attributes with unique")
     debug.register('ST',   "State")
     debug.register('STV',  "State Variable")
-    debug.register('COLR', "Collector for states and classifier parameters")
+    debug.register('COLR', "Collector for ca and classifier parameters")
     debug.register('ES',   "Element selectors")
 
     debug.register('CLF',    "Base Classifiers")

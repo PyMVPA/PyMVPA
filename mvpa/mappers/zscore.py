@@ -10,9 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
-from sets import Set
 import numpy as N
 
+from mvpa.base import warning
 from mvpa.base.dochelpers import _str, borrowkwargs
 from mvpa.mappers.base import accepts_dataset_as_samples, Mapper
 from mvpa.datasets.miscfx import get_nsamples_per_attr, get_samples_by_attr
@@ -23,13 +23,14 @@ class ZScoreMapper(Mapper):
 
     Z-scoring can be done chunk-wise (with independent mean and standard
     deviation per chunk) or on the full data. It is possible to specify
-    an sample attribute, whos unique value are used to determine the chunks.
+    a sample attribute, unique value of which would then be used to determine
+    the chunks.
 
-    By default, the Z-scoring parameters mean and standard deviation are
+    By default, Z-scoring parameters (mean and standard deviation) are
     estimated from the data (either chunk-wise or globally). However, it is
     also possible to define fixed parameters (again a global setting or
-    per-chunk definitions), or select a specific subset of samples from which
-    these parameters should be estimated.
+    per-chunk definitions), or to select a specific subset of samples from
+    which these parameters should be estimated.
 
     If necessary, data is upcasted into a configurable datatype to prevent
     information loss.
@@ -37,8 +38,8 @@ class ZScoreMapper(Mapper):
     Notes
     -----
 
-    It should be mentioned that the mapper can be used for
-    forward-mapping of datasets without prior train (it will auto-train itself
+    It should be mentioned that the mapper can be used for forward-mapping
+    of datasets without prior training (it will auto-train itself
     upon first use). It is, however, not possible to map plain data arrays
     without prior training. Also, for obvious reasons, it is also not possible
     to perform chunk-wise Z-scoring of plain data arrays.
@@ -50,25 +51,25 @@ class ZScoreMapper(Mapper):
         """
         Parameters
         ----------
-        params : tuple(mean, std) or dict or None
-          Fixed Z-Scoring parameters (mean, standard deviation). If provided
+        params : None or tuple(mean, std) or dict
+          Fixed Z-Scoring parameters (mean, standard deviation). If provided,
           no parameters are estimated from the data. It is possible to specify
           individual parameters for each chunk by passing a dictionary with the
           chunk ids as keys and the parameter tuples as values. If None,
           parameters will be estimated from the training data.
-        param_est : tuple(attrname, attrvalues) or None
-          Limited the samples used for automatic parameter estimation to a
-          specific subset identified by a set of value of a given sample
-          attribute. The to be passed tuple has the name of that sample
-          attribute as the first element, and a sequence of atrribute values
+        param_est : None or tuple(attrname, attrvalues)
+          Limits the choice of samples used for automatic parameter estimation
+          to a specific subset identified by a set of a given sample attribute
+          values.  The tuple should have the name of that sample
+          attribute as the first element, and a sequence of attribute values
           as the second element. If None, all samples will be used for parameter
-          estimation
+          estimation.
         chunks : str or None
           If provided, it specifies the name of a samples attribute in the
-          training data, whos unique values will be sued to identify chunks of
-          samples, and perform individual Z-scoring on them.
-        dtype : Numpy dtype
-          Target dtype that is used for upcasting, in case integer data is
+          training data, unique values of which will be used to identify chunks of
+          samples, and to perform individual Z-scoring within them.
+        dtype : Numpy dtype, optional
+          Target dtype that is used for upcasting, in case integer data is to be
           Z-scored.
         inspace : None
           Currently, this argument has no effect.
@@ -76,13 +77,34 @@ class ZScoreMapper(Mapper):
         Mapper.__init__(self, inspace=inspace)
 
         self.__chunks = chunks
-        self.__params= params
+        self.__params = params
         self.__param_est = param_est
         self.__params_dict = None
         self.__dtype = dtype
 
-        # secret switch to perform in-place detrending
-        self._secret_inplace_detrend = False
+        # secret switch to perform in-place z-scoring
+        self._secret_inplace_zscore = False
+
+
+    def __repr__(self):
+        s = super(ZScoreMapper, self).__repr__()
+        add_args = []
+        if self.__params is not None:
+            add_args += ['params=%s' % repr(self.__params)]
+        if self.__param_est is not None:
+            add_args += ['param_est=%s' % repr(self.__param_est)]
+        if self.__chunks != 'chunks':
+            add_args += ['chunks=%s' % repr(self.__chunks)]
+        if self.__dtype != 'float64':
+            add_args += ['dtype=%s' % repr(self.__dtype)]
+        if add_args:
+            return s.replace("(", '(%s, ' % ", ".join(add_args))
+        else:
+            return s
+
+
+    def __str__(self):
+        return _str(self)
 
 
     def _train(self, ds):
@@ -104,7 +126,7 @@ class ZScoreMapper(Mapper):
             if not param_est is None:
                 est_attr, est_attr_values = param_est
                 # which samples to use for estimation
-                est_ids = Set(get_samples_by_attr(ds, est_attr,
+                est_ids = set(get_samples_by_attr(ds, est_attr,
                                                   est_attr_values))
             else:
                 est_ids = slice(None)
@@ -116,7 +138,7 @@ class ZScoreMapper(Mapper):
                 for c in ds.sa[chunks].unique:
                     slicer = N.where(ds.sa[chunks].value == c)[0]
                     if not isinstance(est_ids, slice):
-                        slicer = list(est_ids.intersection(Set(slicer)))
+                        slicer = list(est_ids.intersection(set(slicer)))
                     params[c] = self._compute_params(ds.samples[slicer])
             else:
                 # global estimate
@@ -133,7 +155,7 @@ class ZScoreMapper(Mapper):
 
         if __debug__ and not chunks is None \
           and N.array(get_nsamples_per_attr(ds, chunks).values()).min() <= 2:
-            warning("Z-scoring chunk-wise and one chunk with less than three "
+            warning("Z-scoring chunk-wise having a chunk with less than three "
                     "samples will set features in these samples to either zero "
                     "(with 1 sample in a chunk) "
                     "or -1/+1 (with 2 samples in a chunk).")
@@ -143,7 +165,7 @@ class ZScoreMapper(Mapper):
             self.train(ds)
         params = self.__params_dict
 
-        if self._secret_inplace_detrend:
+        if self._secret_inplace_zscore:
             mds = ds
         else:
             # shallow copy to put the new stuff in
@@ -174,13 +196,13 @@ class ZScoreMapper(Mapper):
     def _forward_data(self, data):
         if not self.__chunks is None:
             raise RuntimeError("%s cannot do chunk-wise Z-scoring of plain "
-                               "data." % self.__class__.__name__)
+                               "data since it was parameterized with chunks."
+                               % self)
 
         params = self.__params_dict
 
         if params is None:
-            raise RuntimeError("%s needs to be trained before use."
-                               % self.__class__.__name__)
+            raise RuntimeError("%s needs to be trained before use." % self)
 
         # mappers should not modify the input data
         # cast the data to float, since in-place operations below to not upcast!
@@ -202,7 +224,8 @@ class ZScoreMapper(Mapper):
         if N.isscalar(mean) or samples.shape[1] == len(mean):
             samples -= mean
         else:
-            raise RuntimeError("mean should be a per-feature vector. Got: %s")
+            raise RuntimeError("mean should be a per-feature vector. Got: %r"
+                               % (mean,))
 
         # scale
         if N.isscalar(std):
@@ -215,7 +238,8 @@ class ZScoreMapper(Mapper):
                 raise RuntimeError("std should be a per-feature vector.")
             else:
                 # check for invariant features
-                samples[:, std != 0] /= std[std != 0]
+                std_nz = std != 0
+                samples[:, std_nz] /= N.asanyarray(std)[std_nz]
         return samples
 
 
@@ -226,7 +250,7 @@ def zscore(ds, **kwargs):
 
     This function behaves identical to `ZScoreMapper`. The only difference is
     that the actual Z-scoring is done in-place -- potentially causing a
-    significant reduction of the memory demands.
+    significant reduction of memory demands.
 
     Parameters
     ----------
@@ -236,9 +260,8 @@ def zscore(ds, **kwargs):
       For all other arguments, please see the documentation of `ZScoreMapper`.
     """
     zm = ZScoreMapper(**kwargs)
-    zm._secret_inplace_detrend = True
+    zm._secret_inplace_zscore = True
     # map
     mapped = zm(ds)
     # and append the mapper to the dataset
     mapped._append_mapper(zm)
-    return mapped

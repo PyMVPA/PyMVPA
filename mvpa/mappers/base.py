@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Data mapper"""
+"""Basic, general purpose and meta mappers."""
 
 __docformat__ = 'restructuredtext'
 
@@ -21,7 +21,7 @@ if __debug__:
 
 
 class Mapper(object):
-    """Interface to provide mapping between two spaces: IN and OUT.
+    """Basic mapper interface definition.
 
     ::
               forward
@@ -602,28 +602,31 @@ class CombinedMapper(Mapper):
             m.selectOut(selected)
 
 
-    def getNeighbor(self, outId, *args, **kwargs):
+    ##REF: Name was automagically refactored
+    def get_neighbor(self, outId, *args, **kwargs):
         """Get the ids of the neighbors of a single feature in output dataspace.
 
         Parameters
         ----------
         outId : int
-          Single id of a feature in output space, whos neighbors should be
+          Single id of a feature in output space, whose neighbors should be
           determined.
         *args, **kwargs
           Additional arguments are passed to the metric of the embedded
           mapper, that is responsible for the corresponding feature.
 
-        Returns a list of outIds
+        Returns
+        -------
+        list of outIds
         """
         fsum = 0
         for m in self._mappers:
             fsum_new = fsum + m.get_outsize()
             if outId >= fsum and outId < fsum_new:
-                return m.getNeighbor(outId - fsum, *args, **kwargs)
+                return m.get_neighbor(outId - fsum, *args, **kwargs)
             fsum = fsum_new
 
-        raise ValueError, "Invalid outId passed to CombinedMapper.getNeighbor()"
+        raise ValueError, "Invalid outId passed to CombinedMapper.get_neighbor()"
 
 
     def __repr__(self):

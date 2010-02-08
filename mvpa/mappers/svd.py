@@ -49,7 +49,7 @@ class SVDMapper(ProjectionMapper):
         a 2D samples x feature data matrix.
         """
         X = N.asmatrix(samples)
-        X = self._demeanData(X)
+        X = self._demean_data(X)
 
         # singular value decomposition
         U, SV, Vh = N.linalg.svd(X, full_matrices=0)
@@ -72,9 +72,29 @@ class SVDMapper(ProjectionMapper):
                       (self._proj.shape, N.linalg.norm(self._proj)))
 
 
-    def _computeRecon(self):
+    ##REF: Name was automagically refactored
+    def _compute_recon(self):
         """Since singular vectors are orthonormal, sufficient to take hermitian
         """
         return self._proj.H
+
+
+    def _forward_dataset(self, dataset):
+        msamples = self._forward_data(dataset.samples)
+        # wipe out feature attributes, since they don't mean anything for the
+        # new features
+        mds = dataset.copy(deep=False, fa=[])
+        mds.samples = msamples
+        return mds
+
+
+    def _reverse_dataset(self, dataset):
+        msamples = self._reverse_data(dataset.samples)
+        # wipe out feature attributes, since they don't mean anything for the
+        # new features
+        mds = dataset.copy(deep=False, fa=[])
+        mds.samples = msamples
+        return mds
+
 
     sv = property(fget=lambda self: self._sv, doc="Singular values")

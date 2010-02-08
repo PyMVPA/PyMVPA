@@ -29,7 +29,8 @@ class ReportTest(unittest.TestCase):
     """Just basic testing of reports -- pretty much that nothing fails
     """
 
-    def auxBasic(self, dirname, rc):
+    ##REF: Name was automagically refactored
+    def aux_basic(self, dirname, rc):
         """Helper function -- to assure that all filehandlers
            get closed so we could remove trash directory.
 
@@ -105,7 +106,7 @@ class ReportTest(unittest.TestCase):
         """Test all available reports, real or dummy for just working
         """
         dirname = mktemp('mvpa', 'test_report')
-        self.auxBasic(dirname, rc)
+        self.aux_basic(dirname, rc)
         # cleanup
         shutil.rmtree(dirname, ignore_errors=True)
 

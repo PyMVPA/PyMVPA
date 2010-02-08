@@ -19,7 +19,7 @@ import os, re
 import numpy as N
 
 from mvpa.misc.support import reuseAbsolutePath
-from mvpa.base.dochelpers import enhancedDocString
+from mvpa.base.dochelpers import enhanced_doc_string
 
 from mvpa.atlases.base import XMLBasedAtlas, LabelsLevel
 
@@ -44,7 +44,7 @@ class FSLAtlas(XMLBasedAtlas):
         self.space = 'MNI'
 
 
-    __doc__ = enhancedDocString('FSLAtlas', locals(), XMLBasedAtlas)
+    __doc__ = enhanced_doc_string('FSLAtlas', locals(), XMLBasedAtlas)
 
 
     def _loadImages(self):
@@ -105,13 +105,13 @@ class FSLAtlas(XMLBasedAtlas):
         self._levels_dict = {}
         # preprocess labels for different levels
         self.Nlevels = 1
-        #level = Level.generateFromXML(self.data, levelType='label')
-        level = LabelsLevel.generateFromXML(self.data)#, levelType='label')
+        #level = Level.from_xml(self.data, levelType='label')
+        level = LabelsLevel.from_xml(self.data)#, levelType='label')
         level.description = self.header.name.text
         self._levels_dict = {0: level}
         #for index, child in enumerate(self.data.getchildren()):
         #   if child.tag == 'level':
-        #       level = Level.generateFromXML(child)
+        #       level = Level.from_xml(child)
         #       self._levels_dict[level.description] = level
         #       try:
         #           self._levels_dict[level.index] = level
@@ -124,7 +124,8 @@ class FSLAtlas(XMLBasedAtlas):
 
 
     @staticmethod
-    def _checkVersion(version):
+    ##REF: Name was automagically refactored
+    def _check_version(version):
         return re.search('^[0-9]+\.[0-9]', version) is not None
 
 
@@ -153,9 +154,10 @@ class FSLProbabilisticAtlas(FSLAtlas):
         self.strategy = strategy
         self.sort = sort
 
-    __doc__ = enhancedDocString('FSLProbabilisticAtlas', locals(), FSLAtlas)
+    __doc__ = enhanced_doc_string('FSLProbabilisticAtlas', locals(), FSLAtlas)
 
-    def labelVoxel(self, c, levels=None):
+    ##REF: Name was automagically refactored
+    def label_voxel(self, c, levels=None):
         """Return labels for the voxel
 
         Parameters
@@ -169,7 +171,7 @@ class FSLProbabilisticAtlas(FSLAtlas):
                   "I guess we don't support levels other than 0 in FSL atlas"
 
         # check range
-        c = self._checkRange(c)
+        c = self._check_range(c)
 
         # XXX think -- may be we should better assign each map to a
         # different level
@@ -208,7 +210,8 @@ class FSLProbabilisticAtlas(FSLAtlas):
         """
         return self.levels_dict[0].find(*args, **kwargs)
 
-    def getMap(self, target, strategy='unique'):
+    ##REF: Name was automagically refactored
+    def get_map(self, target, strategy='unique'):
         """Return a probability map
 
         Parameters
@@ -226,12 +229,13 @@ class FSLProbabilisticAtlas(FSLAtlas):
         else:
             lev = self.levels_dict[0]       # we have just 1 here
             if strategy == 'unique':
-                return self.getMap(lev.find(target, unique=True).index)
+                return self.get_map(lev.find(target, unique=True).index)
             else:
-                maps = N.array(self.getMaps(target))
+                maps = N.array(self.get_maps(target))
                 return N.max(maps, axis=0)
 
-    def getMaps(self, target):
+    ##REF: Name was automagically refactored
+    def get_maps(self, target):
         """Return a list of probability maps for the target
 
         Parameters
@@ -240,7 +244,7 @@ class FSLProbabilisticAtlas(FSLAtlas):
           .find is called with a target and unique=False to find all matches
         """
         lev = self.levels_dict[0]       # we have just 1 here
-        return [self.getMap(l.index) for l in lev.find(target, unique=False)]
+        return [self.get_map(l.index) for l in lev.find(target, unique=False)]
 
 
 class FSLLabelsAtlas(XMLBasedAtlas):

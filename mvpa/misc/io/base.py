@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 import mvpa.support.copy as copy
-from mvpa.base.dochelpers import enhancedDocString
+from mvpa.base.dochelpers import enhanced_doc_string
 from sets import Set
 from re import sub
 from mvpa.base import warning
@@ -132,7 +132,7 @@ class ColumnData(dict):
         classdict = self.__class__.__dict__
         for k in self.keys():
             if not classdict.has_key(k):
-                getter = "lambda self: self._getAttrib('%s')" % (k)
+                getter = "lambda self: self._get_attrib('%s')" % (k)
                 # Sanitarize the key, substitute ' []' with '_'
                 k_ = sub('[[\] ]', '_', k)
                 # replace multipe _s
@@ -154,14 +154,15 @@ class ColumnData(dict):
                 #         some local space would override it????
                 #setattr(self.__class__,
                 #        k,
-                #        property(fget=lambda x: x._getAttrib("%s" % k)))
+                #        property(fget=lambda x: x._get_attrib("%s" % k)))
                 # it seems to be error-prone due to continuation...
 
 
-    __doc__ = enhancedDocString('ColumnData', locals())
+    __doc__ = enhanced_doc_string('ColumnData', locals())
 
 
-    def _getAttrib(self, key):
+    ##REF: Name was automagically refactored
+    def _get_attrib(self, key):
         """Return corresponding value if given key is known to current instance
 
         Is used for automatically added properties to the class.
@@ -392,7 +393,7 @@ class SampleAttributes(ColumnData):
         literallabels : bool, optional
           Either labels are given as literal strings
         header : None or bool or list of str
-          If None, ['labels', 'chunks'] is assumed. Otherwise the same
+          If None, ['targets', 'chunks'] is assumed. Otherwise the same
           behavior as of `ColumnData`
         """
         if literallabels:
@@ -401,7 +402,7 @@ class SampleAttributes(ColumnData):
             dtypes = float
 
         if header is None:
-            header = ['labels', 'chunks']
+            header = ['targets', 'chunks']
         ColumnData.__init__(self, source,
                             header=header,
                             sep=None, dtype=dtypes)
@@ -412,7 +413,7 @@ class SampleAttributes(ColumnData):
         """
         ColumnData.tofile(self, filename,
                           header=False,
-                          header_order=['labels', 'chunks'],
+                          header_order=['targets', 'chunks'],
                           sep=' ')
 
 
@@ -445,7 +446,7 @@ class SampleAttributes(ColumnData):
         # over all samples
         for r in xrange(self.nrows):
             # the label-chunk combination
-            comb = (self.labels[r], self.chunks[r])
+            comb = (self.targets[r], self.chunks[r])
 
             # check if things changed
             if not comb == old_comb:

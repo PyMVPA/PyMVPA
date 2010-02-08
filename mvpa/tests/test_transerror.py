@@ -76,12 +76,12 @@ class ErrorsTests(unittest.TestCase):
 
         # check pretty print
         # just a silly test to make sure that printing works
-        self.failUnless(len(cm.asstring(
+        self.failUnless(len(cm.as_string(
             header=True, summary=True,
             description=True))>100)
         self.failUnless(len(str(cm))>100)
         # and that it knows some parameters for printing
-        self.failUnless(len(cm.asstring(summary=True,
+        self.failUnless(len(cm.as_string(summary=True,
                                        header=False))>100)
 
         # lets check iadd -- just itself to itself
@@ -175,7 +175,7 @@ class ErrorsTests(unittest.TestCase):
 
         # check that the result is highly significant since we know that the
         # data has signal
-        null_prob = terr.states.null_prob
+        null_prob = terr.ca.null_prob
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless(null_prob < 0.01,
                 msg="Failed to check that the result is highly significant "
@@ -187,9 +187,9 @@ class ErrorsTests(unittest.TestCase):
     def test_per_sample_error(self, l_clf):
         train = datasets['uni2medium']
         train.init_origids('samples')
-        terr = TransferError(clf=l_clf, enable_states=['samples_error'])
+        terr = TransferError(clf=l_clf, enable_ca=['samples_error'])
         err = terr(train, train)
-        se = terr.states.samples_error
+        se = terr.ca.samples_error
 
         # one error per sample
         self.failUnless(len(se) == train.nsamples)
@@ -207,27 +207,27 @@ class ErrorsTests(unittest.TestCase):
         if isinstance(clf, MulticlassClassifier):
             # TODO: handle those values correctly
             return
-        clf.states.change_temporarily(enable_states = ['estimates'])
+        clf.ca.change_temporarily(enable_ca = ['estimates'])
         # uni2 dataset with reordered labels
         ds2 = datasets['uni2small'].copy()
         # revert labels
-        ds2.sa['labels'].value = ds2.labels[::-1].copy()
+        ds2.sa['targets'].value = ds2.targets[::-1].copy()
         # same with uni3
         ds3 = datasets['uni3small'].copy()
-        ul = ds3.sa['labels'].unique
-        nl = ds3.labels.copy()
+        ul = ds3.sa['targets'].unique
+        nl = ds3.targets.copy()
         for l in xrange(3):
-            nl[ds3.labels == ul[l]] = ul[(l+1)%3]
-        ds3.sa.labels = nl
+            nl[ds3.targets == ul[l]] = ul[(l+1)%3]
+        ds3.sa.targets = nl
         for ds in [datasets['uni2small'], ds2,
                    datasets['uni3small'], ds3]:
             cv = CrossValidatedTransferError(
                 TransferError(clf),
                 OddEvenSplitter(),
-                enable_states=['confusion', 'training_confusion'])
+                enable_ca=['confusion', 'training_confusion'])
             cverror = cv(ds)
-            stats = cv.states.confusion.stats
-            Nlabels = len(ds.uniquelabels)
+            stats = cv.ca.confusion.stats
+            Nlabels = len(ds.uniquetargets)
             # so we at least do slightly above chance
             self.failUnless(stats['ACC'] > 1.2 / Nlabels)
             auc = stats['AUC']
@@ -237,7 +237,7 @@ class ErrorsTests(unittest.TestCase):
                     self.failUnless(mauc > 0.55,
                          msg='All AUCs must be above chance. Got minimal '
                              'AUC=%.2g among %s' % (mauc, stats['AUC']))
-        clf.states.reset_changed_temporarily()
+        clf.ca.reset_changed_temporarily()
 
 
 
@@ -482,7 +482,7 @@ class ErrorsTests(unittest.TestCase):
             cm = ConfusionMatrix(sets=sets, labels_map=labels_map)
         except:
             self.fail()
-        self.failUnless('3kHz / 38' in cm.asstring())
+        self.failUnless('3kHz / 38' in cm.as_string())
 
         if externals.exists("pylab plottable"):
             import pylab as P

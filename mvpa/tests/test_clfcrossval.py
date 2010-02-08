@@ -15,20 +15,20 @@ from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
 
 from tests_warehouse import *
-from tests_warehouse import pureMultivariateSignal, getMVPattern
+from tests_warehouse import pureMultivariateSignal, get_mv_pattern
 from tests_warehouse_clfs import *
 
 class CrossValidationTests(unittest.TestCase):
 
 
     def test_simple_n_minus_one_cv(self):
-        data = getMVPattern(3)
+        data = get_mv_pattern(3)
         data.init_origids('samples')
 
         self.failUnless( data.nsamples == 120 )
         self.failUnless( data.nfeatures == 2 )
         self.failUnless(
-            (data.sa.labels == \
+            (data.sa.targets == \
                 [0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0] * 6).all())
         self.failUnless(
             (data.sa.chunks == \
@@ -39,7 +39,7 @@ class CrossValidationTests(unittest.TestCase):
         cv = CrossValidatedTransferError(
                 transerror,
                 NFoldSplitter(cvtype=1),
-                enable_states=['confusion', 'training_confusion',
+                enable_ca=['confusion', 'training_confusion',
                                'samples_error'])
 
         results = cv(data)
@@ -48,18 +48,18 @@ class CrossValidationTests(unittest.TestCase):
         # TODO: test accessibility of {training_,}confusion{,s} of
         # CrossValidatedTransferError
 
-        self.failUnless(isinstance(cv.states.samples_error, dict))
-        self.failUnless(len(cv.states.samples_error) == data.nsamples)
+        self.failUnless(isinstance(cv.ca.samples_error, dict))
+        self.failUnless(len(cv.ca.samples_error) == data.nsamples)
         # one value for each origid
-        assert_array_equal(sorted(cv.states.samples_error.keys()),
+        assert_array_equal(sorted(cv.ca.samples_error.keys()),
                            sorted(data.sa.origids))
-        for k, v in cv.states.samples_error.iteritems():
+        for k, v in cv.ca.samples_error.iteritems():
             self.failUnless(len(v) == 1)
 
 
     def test_noise_classification(self):
         # get a dataset with a very high SNR
-        data = getMVPattern(10)
+        data = get_mv_pattern(10)
 
         # do crossval with default errorfx and 'mean' combiner
         transerror = TransferError(sample_clf_nl)
@@ -82,16 +82,16 @@ class CrossValidationTests(unittest.TestCase):
 
     def test_harvesting(self):
         # get a dataset with a very high SNR
-        data = getMVPattern(10)
+        data = get_mv_pattern(10)
         # do crossval with default errorfx and 'mean' combiner
         transerror = TransferError(clfswh['linear'][0])
         cv = CrossValidatedTransferError(
                 transerror,
                 NFoldSplitter(cvtype=1),
-                harvest_attribs=['transerror.clf.states.training_time'])
+                harvest_attribs=['transerror.clf.ca.training_time'])
         result = cv(data)
-        ok_(cv.states.harvested.has_key('transerror.clf.states.training_time'))
-        assert_equal(len(cv.states.harvested['transerror.clf.states.training_time']),
+        ok_(cv.ca.harvested.has_key('transerror.clf.ca.training_time'))
+        assert_equal(len(cv.ca.harvested['transerror.clf.ca.training_time']),
                      len(data.UC))
 
 

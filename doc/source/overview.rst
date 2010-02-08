@@ -1,4 +1,4 @@
-.. -*- mode: rst; fill-column: 78 -*-
+.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
@@ -28,24 +28,25 @@ Now, load the dataset from a NIfTI file. An additional 2-column textfile
 has the label and associated experimental run of each volume in the dataset
 (one volume per line). Finally, a mask is loaded to exclude non-brain voxels.
 
- >>> attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
- >>> dataset = NiftiDataset(
+ >>> attr = SampleAttributes(os.path.join(pymvpa_dataroot,
+ ...                                      'attributes_literal.txt'))
+ >>> dataset = fmri_dataset(
  ...                samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
- ...                labels=attr.labels,
+ ...                targets=attr.targets,
  ...                chunks=attr.chunks,
  ...                mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 Perform linear detrending and afterwards zscore the timeseries of each voxel
 using the mean and standard deviation determined from *rest* volumes
-(all done for each experimental run individually).
+(all done for each experiment run individually).
 
- >>> detrend(dataset, perchunk=True, model='linear')
- >>> zscore(dataset, perchunk=True, baselinelabels=[0],
- ...        targetdtype='float32')
+ >>> poly_detrend(dataset, polyord=1, chunks='chunks')
+ >>> zscore(dataset, param_est=('targets', ['rest']), dtype='float32')
 
 Select a subset of two stimulation conditions from the whole dataset.
 
- >>> dataset = dataset['labels', [1,2]]
+ >>> interesting = N.array([i in ['face', 'house'] for i in dataset.sa.targets])
+ >>> dataset = dataset[interesting]
 
 Finally, setup the cross-validation procedure using an odd-even split of the
 dataset and a *SMLR* classifier -- and run it.

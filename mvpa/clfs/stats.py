@@ -110,11 +110,11 @@ class NullDist(ClassWithCollections):
 
     """
 
-    # Although base class is not benefiting from states, derived
+    # Although base class is not benefiting from ca, derived
     # classes do (MCNullDist). For the sake of avoiding multiple
     # inheritance and associated headache -- let them all be ClassWithCollections,
     # performance hit should be negligible in most of the scenarios
-    _ATTRIBUTE_COLLECTIONS = ['states']
+    _ATTRIBUTE_COLLECTIONS = ['ca']
 
     def __init__(self, tail='both', **kwargs):
         """
@@ -262,7 +262,7 @@ class MCNullDist(NullDist):
             # null-distribution of transfer errors can be reduced dramatically
             # when the *right* permutations (the ones that matter) are done.
             permuted_wdata = wdata.copy('shallow')
-            permuted_wdata.permute_labels(perchunk=False)
+            permuted_wdata.permute_targets(perchunk=False)
 
             # decide on the arguments to measure
             if not vdata is None:
@@ -281,7 +281,7 @@ class MCNullDist(NullDist):
 
 
         # store samples
-        self.states.dist_samples = dist_samples = N.asarray(dist_samples)
+        self.ca.dist_samples = dist_samples = N.asarray(dist_samples)
 
         # fit distribution per each element
 
@@ -527,6 +527,12 @@ if externals.exists('scipy'):
             args_i = [i for i,v in enumerate(args) if v is None]
             self._fargs = (list(args+theta), args_i)
             """Arguments which should get some fixed value"""
+
+
+        def __call__(self, *args, **kwargs):
+            """Upon call mimic call to get actual rv_frozen distribution
+            """
+            return self._dist(*args, **kwargs)
 
 
         def nnlf(self, theta, x):
@@ -961,7 +967,8 @@ if externals.exists('scipy'):
     #                                        p=0.05, legend=4, nbest=5)
 
 
-def autoNullDist(dist):
+##REF: Name was automagically refactored
+def auto_null_dist(dist):
     """Cheater for human beings -- wraps `dist` if needed with some
     NullDist
 

@@ -31,7 +31,7 @@ def test_nifti_dataset():
     """Basic testing of NiftiDataset
     """
     ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
-                       labels=[1,2], sprefix='voxel')
+                       targets=[1,2], sprefix='voxel')
     assert_equal(ds.nfeatures, 294912)
     assert_equal(ds.nsamples, 2)
 
@@ -63,7 +63,7 @@ def test_nifti_dataset():
     mask = N.zeros((24, 96, 128), dtype='bool')
     mask[12, 20, 40] = True
     nddata = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
-                          labels=[1,2],
+                          targets=[1,2],
                           mask=mask)
     assert_equal(nddata.nfeatures, 1)
     rmap = nddata.a.mapper.reverse1(N.array([44]))
@@ -79,7 +79,7 @@ def test_fmridataset():
     maskimg.data[maskimg.data>0] = N.arange(1, N.sum(maskimg.data) + 1)
     attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
     ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'bold'),
-                      labels=attr.labels, chunks=attr.chunks,
+                      targets=attr.targets, chunks=attr.chunks,
                       mask=maskimg,
                       sprefix='subj1',
                       add_fa={'myintmask': maskimg})
@@ -87,7 +87,7 @@ def test_fmridataset():
     assert_equal(len(ds), 1452)
     assert_true(ds.nfeatures, 530)
     assert_array_equal(sorted(ds.sa.keys()),
-            ['chunks', 'labels', 'time_coords', 'time_indices'])
+            ['chunks', 'targets', 'time_coords', 'time_indices'])
     assert_array_equal(sorted(ds.fa.keys()),
             ['myintmask', 'subj1_indices'])
     assert_array_equal(sorted(ds.a.keys()),
@@ -105,7 +105,7 @@ def test_nifti_mapper():
     """Basic testing of map2Nifti
     """
     data = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
-                        labels=[1,2])
+                        targets=[1,2])
 
     # test mapping of ndarray
     vol = map2nifti(data, N.ones((294912,), dtype='int16'))
@@ -123,7 +123,7 @@ def test_nifti_self_mapper():
     example_path = os.path.join(pymvpa_dataroot, 'example4d')
     example = NiftiImage(example_path)
     data = fmri_dataset(samples=example_path,
-                         labels=[1,2])
+                         targets=[1,2])
 
     # Map read data to itself
     vol = map2nifti(data)
@@ -140,9 +140,9 @@ def test_multiple_calls():
     """Test if doing exactly the same operation twice yields the same result
     """
     data = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
-                        labels=1, sprefix='abc')
+                        targets=1, sprefix='abc')
     data2 = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
-                         labels=1, sprefix='abc')
+                         targets=1, sprefix='abc')
     assert_array_equal(data.a.abc_eldim, data2.a.abc_eldim)
 
 
@@ -254,7 +254,7 @@ def test_nifti_dataset_from3_d():
 
     # Test loading of 3D volumes
     # by default we are enforcing 4D, testing here with the demo 3d mask
-    ds = fmri_dataset(masrc, mask=masrc, labels=1)
+    ds = fmri_dataset(masrc, mask=masrc, targets=1)
     assert_equal(len(ds), 1)
     plain_data = NiftiImage(masrc).data
     # Lets check if mapping back works as well
@@ -265,10 +265,10 @@ def test_nifti_dataset_from3_d():
 
     # for now we should fail if trying to load a mix of 4D and 3D volumes
     assert_raises(ValueError, fmri_dataset, (masrc, tssrc),
-                  mask=masrc, labels=1)
+                  mask=masrc, targets=1)
 
     # Lets prepare some custom NiftiImage
-    dsfull = fmri_dataset(tssrc, mask=masrc, labels=1)
+    dsfull = fmri_dataset(tssrc, mask=masrc, targets=1)
     ds_selected = dsfull[3]
     nifti_selected = map2nifti(ds_selected)
 
@@ -276,11 +276,11 @@ def test_nifti_dataset_from3_d():
     # (given by filenames and NiftiImages)
     labels = [123, 2, 123]
     ds2 = fmri_dataset((masrc, masrc, nifti_selected),
-                       mask=masrc, labels=labels)
+                       mask=masrc, targets=labels)
     assert_equal(ds2.nsamples, 3)
     assert_array_equal(ds2.samples[0], ds2.samples[1])
     assert_array_equal(ds2.samples[2], dsfull.samples[3])
-    assert_array_equal(ds2.labels, labels)
+    assert_array_equal(ds2.targets, labels)
 
 
 #def test_nifti_dataset_roi_mask_neighbors(self):
@@ -293,9 +293,9 @@ def test_nifti_dataset_from3_d():
 #    mask_roi[12, 20, 38:42] = True
 #    mask_roi[23, 20, 38:42] = True  # far away
 #    ds_full = nifti_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
-#                           labels=[1,2])
+#                           targets=[1,2])
 #    ds_roi = nifti_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
-#                           labels=[1,2], mask=mask_roi)
+#                           targets=[1,2], mask=mask_roi)
 #    # Should just work since we are in the mask
 #    ids_roi = ds_roi.a.mapper.getNeighbors(
 #                    ds_roi.a.mapper.getOutId((12, 20, 40)),

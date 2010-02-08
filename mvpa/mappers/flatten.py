@@ -15,7 +15,7 @@ import numpy as N
 from mvpa.base.dochelpers import _str
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples, \
         ChainMapper, FeatureSliceMapper
-from mvpa.misc.support import isInVolume
+from mvpa.misc.support import is_in_volume
 
 
 class FlattenMapper(Mapper):

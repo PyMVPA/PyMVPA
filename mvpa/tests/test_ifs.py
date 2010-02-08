@@ -22,13 +22,14 @@ from tests_warehouse_clfs import *
 
 class IFSTests(unittest.TestCase):
 
-    def getData(self):
+    ##REF: Name was automagically refactored
+    def get_data(self):
         data = N.random.standard_normal(( 100, 2, 2, 2 ))
         labels = N.concatenate( ( N.repeat( 0, 50 ),
                                   N.repeat( 1, 50 ) ) )
         chunks = N.repeat( range(5), 10 )
         chunks = N.concatenate( (chunks, chunks) )
-        return Dataset.from_wizard(samples=data, labels=labels, chunks=chunks)
+        return Dataset.from_wizard(samples=data, targets=labels, chunks=chunks)
 
 
     # XXX just testing based on a single classifier. Not sure if
@@ -41,7 +42,7 @@ class IFSTests(unittest.TestCase):
         trans_error = TransferError(svm)
         data_measure = CrossValidatedTransferError(trans_error,
                                                    NFoldSplitter(1),
-                                                   mapper=mean_sample())
+                                                   postproc=mean_sample())
 
         ifs = IFS(data_measure,
                   trans_error,
@@ -50,9 +51,9 @@ class IFSTests(unittest.TestCase):
                     # errors -> low is good
                     FixedNElementTailSelector(1, tail='lower', mode='select'),
                   )
-        wdata = self.getData()
+        wdata = self.get_data()
         wdata_nfeatures = wdata.nfeatures
-        tdata = self.getData()
+        tdata = self.get_data()
         tdata_nfeatures = tdata.nfeatures
 
         sdata, stdata = ifs(wdata, tdata)
@@ -62,8 +63,8 @@ class IFSTests(unittest.TestCase):
         self.failUnless(tdata.nfeatures == tdata_nfeatures)
 
         # check that the features set with the least error is selected
-        self.failUnless(len(ifs.states.errors))
-        e = N.array(ifs.states.errors)
+        self.failUnless(len(ifs.ca.errors))
+        e = N.array(ifs.ca.errors)
         self.failUnless(sdata.nfeatures == e.argmin() + 1)
 
 

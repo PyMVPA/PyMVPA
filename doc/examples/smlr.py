@@ -39,13 +39,13 @@ samp2 = N.random.randn(nsamp,nfeat)
 samp2[:,:goodfeat] -= offset
 
 # create the pymvpa training dataset from the labeled features
-patternsPos = dataset_wizard(samples=samp1[:ntrain,:], labels=1)
-patternsNeg = dataset_wizard(samples=samp2[:ntrain,:], labels=0)
+patternsPos = dataset_wizard(samples=samp1[:ntrain,:], targets=1)
+patternsNeg = dataset_wizard(samples=samp2[:ntrain,:], targets=0)
 trainpat = vstack((patternsPos, patternsNeg))
 
 # create patters for the testing dataset
-patternsPos = dataset_wizard(samples=samp1[ntrain:,:], labels=1)
-patternsNeg = dataset_wizard(samples=samp2[ntrain:,:], labels=0)
+patternsPos = dataset_wizard(samples=samp1[ntrain:,:], targets=1)
+patternsNeg = dataset_wizard(samples=samp2[ntrain:,:], targets=0)
 testpat = vstack((patternsPos, patternsNeg))
 
 # set up the SMLR classifier
@@ -53,7 +53,7 @@ print "Evaluating SMLR classifier..."
 smlr = SMLR(fit_all_weights=True)
 
 # enable saving of the estimates used for the prediction
-smlr.states.enable('estimates')
+smlr.ca.enable('estimates')
 
 # train with the known points
 smlr.train(trainpat)
@@ -63,7 +63,7 @@ pre = smlr.predict(testpat.samples)
 
 # calculate the confusion matrix
 smlr_confusion = ConfusionMatrix(
-    labels=trainpat.UL, targets=testpat.labels,
+    labels=trainpat.UT, targets=testpat.targets,
     predictions=pre)
 
 # now do the same for a linear SVM
@@ -71,7 +71,7 @@ print "Evaluating Linear SVM classifier..."
 lsvm = LinearNuSVMC(probability=1)
 
 # enable saving of the estimates used for the prediction
-lsvm.states.enable('estimates')
+lsvm.ca.enable('estimates')
 
 # train with the known points
 lsvm.train(trainpat)
@@ -81,7 +81,7 @@ pre = lsvm.predict(testpat.samples)
 
 # calculate the confusion matrix
 lsvm_confusion = ConfusionMatrix(
-    labels=trainpat.UL, targets=testpat.labels,
+    labels=trainpat.UT, targets=testpat.targets,
     predictions=pre)
 
 # now train SVM with selected features
@@ -99,7 +99,7 @@ pre = lsvm.predict(newtestpat.samples)
 
 # calculate the confusion matrix
 lsvm_confusion_sparse = ConfusionMatrix(
-    labels=newtrainpat.UL, targets=newtestpat.labels,
+    labels=newtrainpat.UT, targets=newtestpat.targets,
     predictions=pre)
 
 

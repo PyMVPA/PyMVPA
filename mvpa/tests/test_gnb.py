@@ -37,7 +37,7 @@ class GNBTests(unittest.TestCase):
                                prior=prior,
                                normalize=n,
                                logprob=ls,
-                               enable_states=es)
+                               enable_ca=es)
                     gnb_.train(ds_tr)
                     predictions = gnb_.predict(ds_te.samples)
                     if tp is None:
@@ -47,7 +47,7 @@ class GNBTests(unittest.TestCase):
                                     gnb_)
                     # if normalized -- check if estimates are such
                     if n and 'estimates' in es:
-                        v = gnb_.states.estimates
+                        v = gnb_.ca.estimates
                         if ls:          # in log space -- take exp ;)
                             v = N.exp(v)
                         d1 = N.sum(v, axis=1) - 1.0

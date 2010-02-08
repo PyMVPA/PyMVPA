@@ -225,16 +225,17 @@ class _SVM(Classifier):
                 if col[k].is_default: continue
                 res += "%s%s=%r" % (sep, k, col[k].value)
                 #sep = ', '
-        states = self.states
+        ca = self.ca
         for name, invert in ( ('enable', False), ('disable', True) ):
-            states_chosen = states._get_enabled(nondefault=False, invert=invert)
-            if len(states_chosen):
-                res += sep + "%s_states=%r" % (name, states_chosen)
+            ca_chosen = ca._get_enabled(nondefault=False, invert=invert)
+            if len(ca_chosen):
+                res += sep + "%s_ca=%r" % (name, ca_chosen)
 
         res += ")"
         return res
 
-    def _getCvec(self, data):
+    ##REF: Name was automagically refactored
+    def _get_cvec(self, data):
         """Estimate default and return scaled by it negative user's C values
         """
         if not self.params.has_key('C'):#svm_type in [_svm.svmc.C_SVC]:
@@ -249,14 +250,15 @@ class _SVM(Classifier):
         Cs = list(C[:])               # copy
         for i in xrange(len(Cs)):
             if Cs[i] < 0:
-                Cs[i] = self._getDefaultC(data.samples)*abs(Cs[i])
+                Cs[i] = self._get_default_c(data.samples)*abs(Cs[i])
                 if __debug__:
                     debug("SVM", "Default C for %s was computed to be %s" %
                           (C[i], Cs[i]))
 
         return Cs
 
-    def _getDefaultC(self, data):
+    ##REF: Name was automagically refactored
+    def _get_default_c(self, data):
         """Compute default C
 
         TODO: for non-linear SVMs
@@ -289,7 +291,7 @@ class _SVM(Classifier):
 
         ## TODO: Check validity of this w/ new kernels (ie sg.Rbf has sigma)
         #if self.kernel_params.has_key('gamma'):
-            #value = 1.0 / len(dataset.uniquelabels)
+            #value = 1.0 / len(dataset.uniquetargets)
             #if __debug__:
                 #debug("SVM", "Default Gamma is computed to be %f" % value)
         #else:
@@ -297,7 +299,8 @@ class _SVM(Classifier):
 
         #return value
 
-    def getSensitivityAnalyzer(self, **kwargs):
+    ##REF: Name was automagically refactored
+    def get_sensitivity_analyzer(self, **kwargs):
         """Returns an appropriate SensitivityAnalyzer."""
 
         sana = self._KNOWN_SENSITIVITIES.get(self.params.kernel.__kernel_name__,
@@ -311,7 +314,8 @@ class _SVM(Classifier):
 
 
     @classmethod
-    def _customizeDoc(cls):
+    ##REF: Name was automagically refactored
+    def _customize_doc(cls):
         #cdoc_old = cls.__doc__
         # Need to append documentation to __init__ method
         idoc_old = cls.__init__.__doc__

@@ -171,7 +171,8 @@ def _parse_parameters(paramdoc):
     return result
 
 
-def enhancedDocString(item, *args, **kwargs):
+##REF: Name was automagically refactored
+def enhanced_doc_string(item, *args, **kwargs):
     """Generate enhanced doc strings for various items.
 
     Parameters
@@ -195,7 +196,7 @@ def enhancedDocString(item, *args, **kwargs):
     if len(kwargs):
         if set(kwargs.keys()).issubset(set(['force_extend'])):
             raise ValueError, "Got unknown keyword arguments (smth among %s)" \
-                  " in enhancedDocString." % kwargs
+                  " in enhanced_doc_string." % kwargs
     force_extend = kwargs.get('force_extend', False)
     skip_params = kwargs.get('skip_params', [])
 
@@ -203,14 +204,14 @@ def enhancedDocString(item, *args, **kwargs):
     if isinstance(item, basestring):
         if len(args)<1 or not isinstance(args[0], dict):
             raise ValueError, \
-                  "Please provide locals for enhancedDocString of %s" % item
+                  "Please provide locals for enhanced_doc_string of %s" % item
         name = item
         lcl = args[0]
         args = args[1:]
     elif hasattr(item, "im_class"):
         # bound method
         raise NotImplementedError, \
-              "enhancedDocString is not yet implemented for methods"
+              "enhanced_doc_string is not yet implemented for methods"
     elif hasattr(item, "__name__"):
         name = item.__name__
         lcl = item.__dict__
@@ -228,8 +229,8 @@ def enhancedDocString(item, *args, **kwargs):
     rst_lvlmarkup = ["=", "-", "_"]
 
     # would then be called for any child... ok - ad hoc for SVM???
-    if hasattr(item, '_customizeDoc') and name=='SVM':
-        item._customizeDoc()
+    if hasattr(item, '_customize_doc') and name=='SVM':
+        item._customize_doc()
 
     initdoc = ""
     if lcl.has_key('__init__'):
@@ -312,8 +313,8 @@ def enhancedDocString(item, *args, **kwargs):
                                  % name, rst_lvlmarkup[2]),
                   initdoc ]
 
-    # Add information about the states if available
-    if lcl.has_key('_statesdoc') and len(item._statesdoc):
+    # Add information about the ca if available
+    if lcl.has_key('_cadoc') and len(item._cadoc):
         # to don't conflict with Notes section if such was already
         # present
         lcldoc = lcl['__doc__'] or ''
@@ -321,9 +322,9 @@ def enhancedDocString(item, *args, **kwargs):
             section_name = _rst_section('Notes')
         else:
             section_name = '\n'         # just an additional newline
-        # no indent is necessary since states list must be already indented
+        # no indent is necessary since ca list must be already indented
         docs += ['%s\nAvailable state variables:' % section_name,
-                 handle_docstring(item._statesdoc)]
+                 handle_docstring(item._cadoc)]
 
     # Deprecated -- but actually we might like to have it in ipython
     # mode may be?
@@ -436,7 +437,7 @@ def _str(obj, *args, **kwargs):
     -------
     str
     """
-    truncate = cfg.getAsDType('verbose', 'truncate str', int)
+    truncate = cfg.get_as_dtype('verbose', 'truncate str', int, default=200)
 
     if hasattr(obj, 'descr'):
         s = obj.descr
@@ -547,8 +548,9 @@ def borrowkwargs(cls, methodname=None, exclude=None):
         skip_params = set(['kwargs', '**kwargs'] + skip_params)
 
         # combine two and filter out items to skip
-        aplist = [i for i in mplist + oplist
-                  if not i[0] in skip_params]
+        aplist = [i for i in mplist if not i[0] in skip_params]
+        aplist += [i for i in oplist
+                   if not i[0] in skip_params.union(known_params)]
 
         docstring = mpreamble
         if len(aplist):

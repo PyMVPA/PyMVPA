@@ -11,7 +11,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from mvpa.base.dochelpers import enhancedDocString
+from mvpa.base.dochelpers import enhanced_doc_string
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
 
 
@@ -73,7 +73,7 @@ class ProjectionMapper(Mapper):
         self._offset_out = None
         """Offset (most often just mean) in the output space"""
 
-    __doc__ = enhancedDocString('ProjectionMapper', locals(), Mapper)
+    __doc__ = enhanced_doc_string('ProjectionMapper', locals(), Mapper)
 
 
     @accepts_dataset_as_samples
@@ -95,7 +95,8 @@ class ProjectionMapper(Mapper):
             self.selectOut(self._selector)
 
 
-    def _demeanData(self, data):
+    ##REF: Name was automagically refactored
+    def _demean_data(self, data):
         """Helper which optionally demeans
         """
         if self._demean:
@@ -150,7 +151,8 @@ class ProjectionMapper(Mapper):
         return res
 
 
-    def _computeRecon(self):
+    ##REF: Name was automagically refactored
+    def _compute_recon(self):
         """Given that a projection is present -- compute reconstruction matrix.
         By default -- pseudoinverse of projection matrix.  Might be overridden
         in derived classes for efficiency.
@@ -158,15 +160,16 @@ class ProjectionMapper(Mapper):
         return N.linalg.pinv(self._proj)
 
 
-    def _getRecon(self):
+    ##REF: Name was automagically refactored
+    def _get_recon(self):
         """Compute (if necessary) and return reconstruction matrix
         """
         # (re)build reconstruction matrix
         recon = self._recon
         if recon is None:
-            self._recon = recon = self._computeRecon()
+            self._recon = recon = self._compute_recon()
         return recon
 
 
     proj  = property(fget=lambda self: self._proj, doc="Projection matrix")
-    recon = property(fget=_getRecon, doc="Backprojection matrix")
+    recon = property(fget=_get_recon, doc="Backprojection matrix")

@@ -59,7 +59,7 @@ class HyperAlignmentTests(unittest.TestCase):
         for noisy, dss in ((False, dss_rotated_clean),
                            (True, dss_rotated)):
             mappers = ha(dss)
-            self.failUnlessEqual(ref_ds, ha.states.choosen_ref_ds)
+            self.failUnlessEqual(ref_ds, ha.ca.choosen_ref_ds)
             # Map data back
 
             dss_clean_back = [m.forward(ds_)
@@ -82,11 +82,11 @@ class HyperAlignmentTests(unittest.TestCase):
 
         # Lets see how well we do if asked to compute residuals
         ha = Hyperalignment(ref_ds=ref_ds, level2_niter=2,
-                            enable_states=['residual_errors'])
+                            enable_ca=['residual_errors'])
         mappers = ha(dss_rotated_clean)
-        self.failUnless(N.all(ha.states.residual_errors.sa.levels ==
+        self.failUnless(N.all(ha.ca.residual_errors.sa.levels ==
                               ['1', '2:0', '2:1', '3']))
-        rerrors = ha.states.residual_errors.samples
+        rerrors = ha.ca.residual_errors.samples
         # just basic tests:
         self.failUnlessEqual(rerrors[0, ref_ds], 0)
         self.failUnlessEqual(rerrors.shape, (4, n))
@@ -154,15 +154,15 @@ class HyperAlignmentTests(unittest.TestCase):
         mkdg_ds = []
         for sub in subj:
             mkdg_ds.append(fmri_dataset(
-                samples=sub+'_mkdg.nii.gz', labels=md_labels,
+                samples=sub+'_mkdg.nii.gz', targets=md_labels,
                 chunks=N.repeat(range(8), 192), mask=sub+'_mask_vt.nii.gz'))
 
-        m=mean_group_sample(['labels', 'chunks'])
+        m=mean_group_sample(['targets', 'chunks'])
 
         mkdg_ds = [ds_.get_mapped(m) for ds_ in mkdg_ds]
-        mkdg_ds = [ds_[ds_.sa.labels != -1] for ds_ in mkdg_ds]
-        [zscore(ds_, param_est=('labels', [0])) for ds_ in mkdg_ds]
-        mkdg_ds = [ds_[ds_.sa.labels != 0] for ds_ in mkdg_ds]
+        mkdg_ds = [ds_[ds_.sa.targets != -1] for ds_ in mkdg_ds]
+        [zscore(ds_, param_est=('targets', [0])) for ds_ in mkdg_ds]
+        mkdg_ds = [ds_[ds_.sa.targets != 0] for ds_ in mkdg_ds]
 
         for i, sd in enumerate(mkdg_ds):
             sd.fa['bsc_scores'] = feature_scores[i]
@@ -176,7 +176,7 @@ class HyperAlignmentTests(unittest.TestCase):
         clf = clfswh['multiclass', 'linear', 'NU_SVC'][0]
         cvterr = CrossValidatedTransferError(
             TransferError(clf),
-            splitter=NFoldSplitter(), enable_states=['confusion'])
+            splitter=NFoldSplitter(), enable_ca=['confusion'])
         for sd in mkdg_ds_fs:
             wsc = cvterr(sd)
             within_acc.append(1-N.mean(wsc))

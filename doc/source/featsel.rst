@@ -1,4 +1,4 @@
-.. -*- mode: rst; fill-column: 78 -*-
+.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
@@ -18,17 +18,19 @@ Feature Selection
 .. automodule:: mvpa.measures
 
 
-Related API documentation
-=========================
+.. only:: html
 
-.. currentmodule:: mvpa
-.. autosummary::
-   :toctree: generated
+   Related API documentation
+   =========================
 
-   featsel.base
-   featsel.ifs
-   featsel.rfe
-   featsel.helpers
+   .. currentmodule:: mvpa
+   .. autosummary::
+      :toctree: generated
+
+      featsel.base
+      featsel.ifs
+      featsel.rfe
+      featsel.helpers
 
 
 
@@ -96,7 +98,7 @@ train the selected features as we used to select them:
   ...  FeatureSelectionClassifier(
   ...      sample_linear_svm,
   ...      SensitivityBasedFeatureSelection(
-  ...         sample_linear_svm.getSensitivityAnalyzer(transformer=Absolute),
+  ...         sample_linear_svm.get_sensitivity_analyzer(postproc=maxofabs_sample()),
   ...         FractionTailSelector(0.05, mode='select', tail='upper')),
   ...      descr="LinSVM on 5%(SVM)")
 
@@ -169,7 +171,7 @@ perform such an analysis:
   ...   # on features selected via RFE
   ...   feature_selection = RFE(
   ...       # based on sensitivity of a clf which does splitting internally
-  ...       sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
+  ...       sensitivity_analyzer=rfesvm_split.get_sensitivity_analyzer(),
   ...       transfer_error=ConfusionBasedError(
   ...          rfesvm_split,
   ...          confusion_state="confusion"),

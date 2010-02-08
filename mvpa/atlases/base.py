@@ -28,7 +28,7 @@ from mvpa.base import externals
 if externals.exists('lxml', raiseException=True):
     from lxml import etree, objectify
 
-from mvpa.base.dochelpers import enhancedDocString
+from mvpa.base.dochelpers import enhanced_doc_string
 
 import os, re
 import numpy as N
@@ -45,7 +45,8 @@ if __debug__:
     from mvpa.base import debug
 
 
-def checkRange(coord, range):
+##REF: Name was automagically refactored
+def check_range(coord, range):
     """
     Check if coordinates are within range (0,0,0) - (range)
     Return True on success
@@ -119,7 +120,7 @@ class XMLBasedAtlas(BaseAtlas):
             self.loadAtlas(filename)
 
         # common sanity checks
-        if not self._checkVersion(self.version):
+        if not self._check_version(self.version):
             raise IOError("Version %s is not recognized to be native to class %s" % \
                           (self.version, self.__name__))
 
@@ -145,12 +146,13 @@ class XMLBasedAtlas(BaseAtlas):
         self._loadData()
 
 
-    def _checkRange(self, c):
+    ##REF: Name was automagically refactored
+    def _check_range(self, c):
         """ check and adjust the voxel coordinates"""
         # check range
         # list(c) for consistent appearance... some times c might be ndarray
         if __debug__: debug('ATL__', "Querying for voxel %s" % `list(c)`)
-        if not checkRange(c, self.extent):
+        if not check_range(c, self.extent):
             msg = "Coordinates %s are not within the extent %s." \
                   "Reset to (0,0,0)" % ( `c`, `self.extent` )
             if __debug__: debug('ATL_', msg)
@@ -160,7 +162,8 @@ class XMLBasedAtlas(BaseAtlas):
 
 
     @staticmethod
-    def _checkVersion(version):
+    ##REF: Name was automagically refactored
+    def _check_version(version):
         """To be overriden in the derived classes. By default anything is good"""
         return True
 
@@ -233,7 +236,8 @@ class XMLBasedAtlas(BaseAtlas):
             )
 
 
-    def labelPoint(self, coord, levels=None):
+    ##REF: Name was automagically refactored
+    def label_point(self, coord, levels=None):
         """Return labels for the given spatial point at specified levels
 
         Function takes care about first transforming the point into
@@ -257,20 +261,22 @@ class XMLBasedAtlas(BaseAtlas):
 
         c = self.spaceT(coord_)
 
-        result = self.labelVoxel(c, levels)
+        result = self.label_voxel(c, levels)
         result['coord_queried'] = coord
         #result['coord_trans'] = coord_t
         result['voxel_atlas'] = c
         return result
 
 
-    def levelsListing(self):
+    ##REF: Name was automagically refactored
+    def levels_listing(self):
         lkeys = range(self.Nlevels)
         return '\n'.join(['%d: ' % k + str(self._levels_dict[k])
                           for k in lkeys])
 
 
-    def _getLevels(self, levels=None):
+    ##REF: Name was automagically refactored
+    def _get_levels(self, levels=None):
         """Helper to provide list of levels to operate on
 
         Depends on given `levels` as well as self.levels
@@ -306,7 +312,7 @@ class XMLBasedAtlas(BaseAtlas):
             if not level in levels_dict:
                 raise ValueError, \
                       "Levels %s is not known (out of range?). Known levels are:\n%s" \
-                      % (level, self.levelsListing())
+                      % (level, self.levels_listing())
 
         return levels
 
@@ -327,7 +333,7 @@ class XMLBasedAtlas(BaseAtlas):
             else:
                 levels_slice = self.levels
 
-        levels = self._getLevels(levels=levels_slice)
+        levels = self._get_levels(levels=levels_slice)
 
         if len(index) in [3, 4]:
             # we got coordinates 1 by 1 + may be a level
@@ -345,19 +351,21 @@ class XMLBasedAtlas(BaseAtlas):
             raise TypeError("Unknown shape of parameters `%s`" % `index`)
 
         if self.query_voxel:
-            return self.labelVoxel(coord, levels)
+            return self.label_voxel(coord, levels)
         else:
-            return self.labelPoint(coord, levels)
+            return self.label_point(coord, levels)
 
 
     # REDO in some sane fashion so referenceatlas returns levels for the base
-    def _getLevelsDict(self):
-        return self._getLevelsDict_virtual()
+    ##REF: Name was automagically refactored
+    def _get_levels_dict(self):
+        return self._get_levels_dict_virtual()
 
-    def _getLevelsDict_virtual(self):
+    ##REF: Name was automagically refactored
+    def _get_levels_dict_virtual(self):
         return self._levels_dict
 
-    levels_dict = property(fget=_getLevelsDict)
+    levels_dict = property(fget=_get_levels_dict)
 
 
     origin = property(fget=lambda self:self._origin)
@@ -407,7 +415,8 @@ class Label(object):
         return self.__text
 
     @staticmethod
-    def generateFromXML(Elabel):
+    ##REF: Name was automagically refactored
+    def from_xml(Elabel):
         kwargs = {}
         if Elabel.attrib.has_key('x'):
             kwargs['coord'] = ( Elabel.attrib.get('x'),
@@ -449,7 +458,8 @@ class Level(object):
         return self.description
 
     @staticmethod
-    def generateFromXML(Elevel, levelType=None):
+    ##REF: Name was automagically refactored
+    def from_xml(Elevel, levelType=None):
         """Simple factory of levels
         """
         if levelType is None:
@@ -461,7 +471,7 @@ class Level(object):
                        'reference': ReferencesLevel }
 
         if levelTypes.has_key(levelType):
-            return levelTypes[levelType].generateFromXML(Elevel)
+            return levelTypes[levelType].from_xml(Elevel)
         else:
             raise XMLAtlasException("Unknown level type " + levelType)
 
@@ -484,7 +494,8 @@ class LabelsLevel(Level):
                (self.__index)
 
     @staticmethod
-    def generateFromXML(Elevel, levelIndex=[0]):
+    ##REF: Name was automagically refactored
+    def from_xml(Elevel, levelIndex=[0]):
         # XXX this is just for label type of level. For distance we need to ...
         # we need to assure the right indexing
 
@@ -496,7 +507,7 @@ class LabelsLevel(Level):
                         for i in Elevel.label[:]])
         labels = [ None for i in xrange(maxindex+1) ]
         for label in Elevel.label[:]:
-            labels[ int(label.get('index')) ] = Label.generateFromXML(label)
+            labels[ int(label.get('index')) ] = Label.from_xml(label)
 
         levelIndex[0] = max(levelIndex[0], index) + 1 # assign next one
 
@@ -548,7 +559,8 @@ class ReferencesLevel(Level):
         self._type = "References"
 
     @staticmethod
-    def generateFromXML(Elevel):
+    ##REF: Name was automagically refactored
+    def from_xml(Elevel):
         # XXX should probably do the same for the others?
         requiredAttrs = ['x', 'y', 'z', 'type', 'description']
         if not set(requiredAttrs) == set(Elevel.attrib.keys()):
@@ -587,7 +599,7 @@ class PyMVPAAtlas(XMLBasedAtlas):
         self.__spaceFlavor = header['space-flavor'].text
 
 
-    __doc__ = enhancedDocString('PyMVPAAtlas', locals(), XMLBasedAtlas)
+    __doc__ = enhanced_doc_string('PyMVPAAtlas', locals(), XMLBasedAtlas)
 
 
     def _loadImages(self):
@@ -640,7 +652,7 @@ class PyMVPAAtlas(XMLBasedAtlas):
         index_incr = 0
         for index, child in enumerate(self.data.getchildren()):
             if child.tag == 'level':
-                level = Level.generateFromXML(child)
+                level = Level.from_xml(child)
                 self._levels_dict[level.description] = level
                 if hasattr(level, 'index'):
                     index = level.index
@@ -657,21 +669,24 @@ class PyMVPAAtlas(XMLBasedAtlas):
             self._Nlevels += 1
 
 
-    def _getNLevelsVirtual(self):
+    ##REF: Name was automagically refactored
+    def _get_n_levels_virtual(self):
         return self._Nlevels
 
-    def _getNLevels(self):
-        return self._getNLevelsVirtual()
+    ##REF: Name was automagically refactored
+    def _get_n_levels(self):
+        return self._get_n_levels_virtual()
 
     @staticmethod
-    def _checkVersion(version):
+    ##REF: Name was automagically refactored
+    def _check_version(version):
         # For compatibility lets support "RUMBA" atlases
         return version.startswith("pymvpa-") or version.startswith("rumba-")
 
 
     space = property(fget=lambda self:self.__space)
     spaceFlavor = property(fget=lambda self:self.__spaceFlavor)
-    Nlevels = property(fget=_getNLevels)
+    Nlevels = property(fget=_get_n_levels)
 
 
 class LabelsAtlas(PyMVPAAtlas):
@@ -679,16 +694,17 @@ class LabelsAtlas(PyMVPAAtlas):
     Atlas which provides labels for the given coordinate
     """
 
-    def labelVoxel(self, c, levels=None):
+    ##REF: Name was automagically refactored
+    def label_voxel(self, c, levels=None):
         """
         Return labels for the given voxel at specified levels specified by index
         """
-        levels = self._getLevels(levels=levels)
+        levels = self._get_levels(levels=levels)
 
         result = {'voxel_queried' : c}
 
         # check range
-        c = self._checkRange(c)
+        c = self._check_range(c)
 
         resultLevels = []
         for level in levels:
@@ -708,7 +724,7 @@ class LabelsAtlas(PyMVPAAtlas):
         result['labels'] = resultLevels
         return result
 
-    __doc__ = enhancedDocString('LabelsAtlas', locals(), PyMVPAAtlas)
+    __doc__ = enhanced_doc_string('LabelsAtlas', locals(), PyMVPAAtlas)
 
 
 
@@ -744,12 +760,13 @@ class ReferencesAtlas(PyMVPAAtlas):
         self.__referenceLevel = None
         self.setDistance(distance)
 
-    __doc__ = enhancedDocString('ReferencesAtlas', locals(), PyMVPAAtlas)
+    __doc__ = enhanced_doc_string('ReferencesAtlas', locals(), PyMVPAAtlas)
 
     # number of levels must be of the referenced atlas due to
     # handling of that in __getitem__
     #Nlevels = property(fget=lambda self:self.__referenceAtlas.Nlevels)
-    def _getNLevelsVirtual(self):
+    ##REF: Name was automagically refactored
+    def _get_n_levels_virtual(self):
         return self.__referenceAtlas.Nlevels
 
 
@@ -765,16 +782,17 @@ class ReferencesAtlas(PyMVPAAtlas):
                   "Known are %r" % (self._levels_dict.keys(), )
 
 
-    def labelVoxel(self, c, levels = None):
+    ##REF: Name was automagically refactored
+    def label_voxel(self, c, levels = None):
 
         if self.__referenceLevel is None:
             warning("You did not provide what level to use "
                     "for reference. Assigning 0th level -- '%s'"
                     % (self._levels_dict[0],))
             self.setReferenceLevel(0)
-            # return self.__referenceAtlas.labelVoxel(c, levels)
+            # return self.__referenceAtlas.label_voxel(c, levels)
 
-        c = self._checkRange(c)
+        c = self._check_range(c)
 
         # obtain coordinates of the closest voxel
         cref = self._data[ self.__referenceLevel.indexes, c[2], c[1], c[0] ]
@@ -783,11 +801,11 @@ class ReferencesAtlas(PyMVPAAtlas):
             debug('ATL__', "Closest referenced point for %r is "
                   "%r at distance %3.2f" % (c, cref, dist))
         if (self.distance - dist) >= 1e-3: # neglect everything smaller
-            result = self.__referenceAtlas.labelVoxel(cref, levels)
+            result = self.__referenceAtlas.label_voxel(cref, levels)
             result['voxel_referenced'] = c
             result['distance'] = dist
         else:
-            result = self.__referenceAtlas.labelVoxel(c, levels)
+            result = self.__referenceAtlas.label_voxel(c, levels)
             if __debug__:
                 debug('ATL__', "Closest referenced point is "
                       "further than desired distance %.2f" % self.distance)
@@ -796,10 +814,12 @@ class ReferencesAtlas(PyMVPAAtlas):
         return result
 
 
-    def levelsListing(self):
-        return self.__referenceAtlas.levelsListing()
+    ##REF: Name was automagically refactored
+    def levels_listing(self):
+        return self.__referenceAtlas.levels_listing()
 
-    def _getLevelsDict_virtual(self):
+    ##REF: Name was automagically refactored
+    def _get_levels_dict_virtual(self):
         return self.__referenceAtlas.levels_dict
 
     def setDistance(self, distance):
