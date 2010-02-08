@@ -37,7 +37,7 @@ Institutions Where PyMVPA Is Used
   Magdeburg**, Germany
 * Department of Psychology, **University of California at Los Angeles**, USA
 * Imaging Research Center, **University of Texas at Austin**, USA
-
+* Department of Psychology, **Yale University**, USA
 
 
 Studies employing PyMVPA

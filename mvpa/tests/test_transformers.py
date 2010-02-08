@@ -122,10 +122,10 @@ class TransformerTests(unittest.TestCase):
             self.failUnless((result<=1).all)
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(distPValue.states.positives_recovered[0] > 10)
-            self.failUnless((N.array(distPValue.states.positives_recovered) +
-                             N.array(distPValue.states.nulldist_number) == ndb + ndu).all())
-            self.failUnless(distPValue.states.positives_recovered[1] == 0)
+            self.failUnless(distPValue.ca.positives_recovered[0] > 10)
+            self.failUnless((N.array(distPValue.ca.positives_recovered) +
+                             N.array(distPValue.ca.nulldist_number) == ndb + ndu).all())
+            self.failUnless(distPValue.ca.positives_recovered[1] == 0)
 
 
 def suite():

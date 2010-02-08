@@ -179,7 +179,7 @@ class IFS(FeatureSelection):
                 break
 
         # charge state
-        self.states.errors = errors
+        self.ca.errors = errors
 
         # best dataset ever is returned
         return dataset[:, results], testdataset[:, results]
