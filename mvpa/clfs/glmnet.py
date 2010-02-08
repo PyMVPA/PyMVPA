@@ -22,6 +22,7 @@ if externals.exists('glmnet', raiseException=True):
     RRuntimeError = rpy2.robjects.rinterface.RRuntimeError
     r = rpy2.robjects.r
     r.library('glmnet')
+    from mvpa.support.rpy2_addons import Rrx2
 
 # local imports
 from mvpa.base import warning
@@ -187,32 +188,28 @@ class _GLMNET(Classifier):
             # use the value
             pmax = self.params.pmax
 
-        # train with specifying max_steps
         try:
-            self.__trained_model = r.glmnet(dataset.samples,
-                                            targets,
-                                            family=self.params.family,
-                                            alpha=self.params.alpha,
-                                            nlambda=self.params.nlambda,
-                                            standardize=self.params.standardize,
-                                            thresh=self.params.thresh,
-                                            pmax=pmax,
-                                            maxit=self.params.maxit,
-                                            type=self.params.model_type)
+            self.__trained_model = trained_model = \
+                r.glmnet(dataset.samples,
+                         targets,
+                         family=self.params.family,
+                         alpha=self.params.alpha,
+                         nlambda=self.params.nlambda,
+                         standardize=self.params.standardize,
+                         thresh=self.params.thresh,
+                         pmax=pmax,
+                         maxit=self.params.maxit,
+                         type=self.params.model_type)
         except RRuntimeError, e:
             raise FailedToTrainError, \
                   "Failed to train %s on %s. Got '%s' during call r.glmnet()." \
                   % (self, dataset, e)
 
-        # get the field names of the model
-        fnames = N.array(self.__trained_model.getnames())
-
-        # save the lambda of last step
-        ind = N.nonzero(fnames=='lambda')[0]
-        self.__last_lambda = N.array(self.__trained_model[ind])[-1]
+        self.__last_lambda = last_lambda = \
+                             N.asanyarray(Rrx2(trained_model, 'lambda'))[-1]
 
         # set the weights to the last step
-        weights = r.coef(self.__trained_model, s=self.__last_lambda)
+        weights = r.coef(trained_model, s=last_lambda)
         if self.params.family == 'multinomial':
             self.__weights = N.hstack([N.array(r['as.matrix'](weights[i]))[1:]
                                        for i in range(len(weights))])
