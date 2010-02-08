@@ -53,7 +53,7 @@ print "Evaluating SMLR classifier..."
 smlr = SMLR(fit_all_weights=True)
 
 # enable saving of the estimates used for the prediction
-smlr.states.enable('estimates')
+smlr.ca.enable('estimates')
 
 # train with the known points
 smlr.train(trainpat)
@@ -71,7 +71,7 @@ print "Evaluating Linear SVM classifier..."
 lsvm = LinearNuSVMC(probability=1)
 
 # enable saving of the estimates used for the prediction
-lsvm.states.enable('estimates')
+lsvm.ca.enable('estimates')
 
 # train with the known points
 lsvm.train(trainpat)

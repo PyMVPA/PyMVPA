@@ -120,7 +120,7 @@ these figure can be found in the `pylab_2d.py` example in the
 :ref:`example_pylab_2d` section.
 
 
-.. index:: states
+.. index:: ca
 
 Stateful objects
 ================
@@ -139,12 +139,12 @@ For instance, the :class:`~mvpa.clfs.base.Classifier` class defines the
 `trained_targets` state variable, which just stores the unique targets for which
 the classifier was trained. Since `trained_targets` stores meaningful
 information only for a trained classifier, attempt to access
-'clf.states.trained_targets' before training would result in an error,
+'clf.ca.trained_targets' before training would result in an error,
 
  >>> from mvpa.misc.exceptions import UnknownStateError
  >>> try:
  ...     untrained_clf = kNN()
- ...     targets = untrained_clf.states.trained_targets
+ ...     targets = untrained_clf.ca.trained_targets
  ... except UnknownStateError:
  ...     "Does not work"
  'Does not work'
@@ -157,24 +157,24 @@ any time of the execution (see :class:`~mvpa.misc.state.ClassWithCollections`).
 To continue the last example, each classifier, or more precisely every
 stateful object, can be asked to report existing state-related attributes:
 
-  >>> list_with_verbose_explanations = clf.states.listing
+  >>> list_with_verbose_explanations = clf.ca.listing
 
-'clf.states' is an instance of :class:`~mvpa.misc.state.StateCollection` class
+'clf.ca' is an instance of :class:`~mvpa.misc.state.StateCollection` class
 which is a container for all state variables of the given class. To access (query
 the value or set the value if state is enabled), and enable or disable you
-should operate on `states` collection (which is different from version prior
+should operate on `ca` collection (which is different from version prior
 '0.5.0' where you could query values directly from the object, i.e. `clf` in
 this example)
 
-  >>> clf.states.trained_targets
+  >>> clf.ca.trained_targets
   array([0, 1])
 
-  >>> print clf.states
-  states{trained_dataset predicting_time*+ training_confusion estimates*+...}
-  >>> clf.states.enable('estimates')
-  >>> print clf.states
-  states{trained_dataset predicting_time*+ training_confusion estimates*+...}
-  >>> clf.states.disable('estimates')
+  >>> print clf.ca
+  ca{trained_dataset predicting_time*+ training_confusion estimates*+...}
+  >>> clf.ca.enable('estimates')
+  >>> print clf.ca
+  ca{trained_dataset predicting_time*+ training_confusion estimates*+...}
+  >>> clf.ca.disable('estimates')
 
 A string representation of the state collection mentioned above lists
 all state variables present accompanied with 2 markers: '+' for an
@@ -192,18 +192,18 @@ classifier-specific. By convention the `estimates` key provides access to the
 raw values that a classifier prediction is based on (e.g. votes or
 probabilities per each label).  Depending on the
 classifier, this information might required significant resources when stored.
-Therefore all states can be disabled or enabled (`states.disable()`,
-`states.enable()`) and their current status can be queried like this:
+Therefore all ca can be disabled or enabled (`ca.disable()`,
+`ca.enable()`) and their current status can be queried like this:
 
-  >>> clf.states.is_active('predictions')
+  >>> clf.ca.is_active('predictions')
   True
-  >>> clf.states.is_active('estimates')
+  >>> clf.ca.is_active('estimates')
   False
 
 States can be enabled or disabled during stateful object construction, if
-`enable_states` or `disable_states` (or both) arguments, which store the list
+`enable_ca` or `disable_ca` (or both) arguments, which store the list
 of desired state variables names, passed to the object constructor. Keyword
-'all' can be used to select all known states for that stateful object.
+'all' can be used to select all known ca for that stateful object.
 
 
 .. index:: error, classifier error, transfer error
@@ -273,7 +273,7 @@ and some :class:`~mvpa.datasets.base.Dataset` `data`.
   >>> from mvpa.datasets.splitters import NFoldSplitter
   >>> cvterr = CrossValidatedTransferError(terr,
   ...                                      NFoldSplitter(cvtype=1),
-  ...                                      enable_states=['confusion'])
+  ...                                      enable_ca=['confusion'])
   >>> error = cvterr(data)
 
 

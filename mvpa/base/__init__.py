@@ -229,7 +229,7 @@ if __debug__:
                    "Checking in checking if clf was trained on given dataset")
     debug.register('CHECK_RETRAIN', "Checking in retraining/retesting")
     debug.register('CHECK_STABILITY', "Checking for numerical stability")
-    debug.register('ENFORCE_STATES_ENABLED', "Forcing all states to be enabled")
+    debug.register('ENFORCE_STATES_ENABLED', "Forcing all ca to be enabled")
 
     debug.register('MAP',   "*Mapper")
     debug.register('MAP_',  "*Mapper (verbose)")
@@ -239,7 +239,7 @@ if __debug__:
     debug.register('UATTR', "Attributes with unique")
     debug.register('ST',   "State")
     debug.register('STV',  "State Variable")
-    debug.register('COLR', "Collector for states and classifier parameters")
+    debug.register('COLR', "Collector for ca and classifier parameters")
     debug.register('ES',   "Element selectors")
 
     debug.register('CLF',    "Base Classifiers")

@@ -188,20 +188,20 @@ class SVM(_SVM):
         """
         # libsvm needs doubles
         src = _data2ls(data)
-        states = self.states
+        ca = self.ca
 
         predictions = [ self.model.predict(p) for p in src ]
 
-        if states.is_enabled('estimates'):
+        if ca.is_enabled('estimates'):
             if self.__is_regression__:
                 estimates = [ self.model.predictValuesRaw(p)[0] for p in src ]
             else:
                 # if 'trained_targets' are literal they have to be mapped
-                if N.issubdtype(self.states.trained_targets.dtype, 'c'):
+                if N.issubdtype(self.ca.trained_targets.dtype, 'c'):
                     trained_targets = self._attrmap.to_numeric(
-                            self.states.trained_targets)
+                            self.ca.trained_targets)
                 else:
-                    trained_targets = self.states.trained_targets
+                    trained_targets = self.ca.trained_targets
                 nlabels = len(trained_targets)
                 # XXX We do duplicate work. model.predict calls
                 # predictValuesRaw internally and then does voting or
@@ -226,15 +226,15 @@ class SVM(_SVM):
                     # In multiclass we return dictionary for all pairs
                     # of labels, since libsvm does 1-vs-1 pairs
                     estimates = [ self.model.predictValues(p) for p in src ]
-            states.estimates = estimates
+            ca.estimates = estimates
 
-        if states.is_enabled("probabilities"):
+        if ca.is_enabled("probabilities"):
             # XXX Is this really necesssary? yoh don't think so since
-            # assignment to states is doing the same
+            # assignment to ca is doing the same
             #self.probabilities = [ self.model.predictProbability(p)
             #                       for p in src ]
             try:
-                states.probabilities = [ self.model.predictProbability(p)
+                ca.probabilities = [ self.model.predictProbability(p)
                                          for p in src ]
             except TypeError:
                 warning("Current SVM %s doesn't support probability " %

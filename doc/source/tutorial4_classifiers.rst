@@ -98,7 +98,7 @@ DATASET HAS ONLY ODD AND EVEN LEFT
 
 * prediction
 * estimate
-* states, parameters
+* ca, parameters
 * meta classifiers...
 
 .. exercise::

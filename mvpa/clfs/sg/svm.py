@@ -399,7 +399,7 @@ class SVM(_SVM):
 
         if retrainable:
             # we must assign it only if it is retrainable
-            self.states.retrained = not newsvm or not newkernel
+            self.ca.retrained = not newsvm or not newkernel
 
         # Train
         if __debug__ and 'SG' in debug.active:
@@ -408,7 +408,7 @@ class SVM(_SVM):
             else:
                 lstr = ""
             debug("SG", "%sTraining %s on data%s" %
-                  (("","Re-")[retrainable and self.states.retrained],
+                  (("","Re-")[retrainable and self.ca.retrained],
                    self, lstr))
 
         self.__svm.train()
@@ -418,7 +418,7 @@ class SVM(_SVM):
 
         # Report on training
         if (__debug__ and 'SG__' in debug.active) or \
-           self.states.is_enabled('training_confusion'):
+           self.ca.is_enabled('training_confusion'):
             trained_targets = self.__svm.classify().get_labels()
         else:
             trained_targets = None
@@ -435,8 +435,8 @@ class SVM(_SVM):
         # XXX For now it can be done only for regressions since labels need to
         #     be remapped and that becomes even worse if we use regression
         #     as a classifier so mapping happens upstairs
-        if self.__is_regression__ and self.states.is_enabled('training_confusion'):
-            self.states.training_confusion = self.__summary_class__(
+        if self.__is_regression__ and self.ca.is_enabled('training_confusion'):
+            self.ca.training_confusion = self.__summary_class__(
                 targets=targets_sa.value,
                 predictions=trained_targets)
 
@@ -497,7 +497,7 @@ class SVM(_SVM):
 
         if retrainable:
             # we must assign it only if it is retrainable
-            self.states.repredicted = repredicted = not changed_testdata
+            self.ca.repredicted = repredicted = not changed_testdata
             if __debug__:
                 debug("SG__", "Re-assigning learing kernel. Repredicted is %s"
                       % repredicted)
@@ -525,7 +525,7 @@ class SVM(_SVM):
         # store state variable
         # TODO: extract values properly for multiclass SVMs --
         #       ie 1 value per label or pairs for all 1-vs-1 classifications
-        self.states.estimates = values
+        self.ca.estimates = values
 
         ## to avoid leaks with not yet properly fixed shogun
         if not retrainable:

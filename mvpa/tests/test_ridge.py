@@ -46,11 +46,11 @@ class RidgeRegTests(unittest.TestCase):
 
         clf.train(data)
 
-        clf.states.enable('predictions')
+        clf.ca.enable('predictions')
 
         p = clf.predict(data.samples)
 
-        self.failUnless((p == clf.states.predictions).all())
+        self.failUnless((p == clf.ca.predictions).all())
 
 
 def suite():

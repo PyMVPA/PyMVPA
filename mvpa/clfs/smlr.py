@@ -399,8 +399,8 @@ class SMLR(Classifier):
         self.__weights_all = w
         self.__weights = w[:dataset.nfeatures, :]
 
-        if self.states.is_enabled('feature_ids'):
-            self.states.feature_ids = N.where(N.max(N.abs(w[:dataset.nfeatures, :]),
+        if self.ca.is_enabled('feature_ids'):
+            self.ca.feature_ids = N.where(N.max(N.abs(w[:dataset.nfeatures, :]),
                                              axis=1)>0)[0]
 
         # and a bias
@@ -497,7 +497,7 @@ class SMLR(Classifier):
                    N.min(E), N.max(E)))
 
         values = E / S[:, N.newaxis].repeat(E.shape[1], axis=1)
-        self.states.estimates = values
+        self.ca.estimates = values
 
         # generate predictions
         predictions = N.asarray([self._ulabels[N.argmax(vals)]
@@ -546,7 +546,7 @@ class SMLRWeights(Sensitivity):
         weights = clf.weights.T
 
         if clf.params.has_bias:
-            self.states.biases = clf.biases
+            self.ca.biases = clf.biases
 
         if __debug__:
             debug('SMLR',
