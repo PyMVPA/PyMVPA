@@ -17,7 +17,7 @@ _dict_has_key = sys.version_info >= (2, 5)
 import numpy as N
 
 from mvpa.base import warning
-from mvpa.misc.support import indentDoc
+from mvpa.misc.support import indent_doc
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.clfs.distance import squared_euclidean_distance
 
@@ -91,7 +91,7 @@ class kNN(Classifier):
 
     def __str__(self):
         return "%s\n data: %s" % \
-            (Classifier.__str__(self), indentDoc(self.__data))
+            (Classifier.__str__(self), indent_doc(self.__data))
 
 
     def _train(self, data):
@@ -110,7 +110,7 @@ class kNN(Classifier):
         self.__weights = None
 
         # create dictionary with an item for each condition
-        uniquelabels = data.sa['labels'].unique
+        uniquelabels = data.sa[self.params.targets].unique
         self.__votes_init = dict(zip(uniquelabels,
                                      [0] * len(uniquelabels)))
 
@@ -145,9 +145,9 @@ class kNN(Classifier):
         predicted = []
 
         if self.__voting == 'majority':
-            vfx = self.getMajorityVote
+            vfx = self.get_majority_vote
         elif self.__voting == 'weighted':
-            vfx = self.getWeightedVote
+            vfx = self.get_weighted_vote
         else:
             raise ValueError, "kNN told to perform unknown voting '%s'." \
                   % self.__voting
@@ -160,19 +160,24 @@ class kNN(Classifier):
 
         # store the predictions in the state. Relies on State._setitem to do
         # nothing if the relevant state member is not enabled
-        self.states.predictions = predicted
-        self.states.estimates = [r[1] for r in results]
+        self.ca.predictions = predicted
+        self.ca.estimates = [r[1] for r in results]
 
         return predicted
 
 
-    def getMajorityVote(self, knn_ids):
+    ##REF: Name was automagically refactored
+    def get_majority_vote(self, knn_ids):
         """Simple voting by choosing the majority of class neighbors.
         """
         # local bindings
         _data = self.__data
-        labels = _data.labels
-        uniquelabels = _data.sa['labels'].unique
+
+        targets_sa_name = self.params.targets
+        targets_sa = _data.sa[targets_sa_name]
+
+        labels = targets_sa.value
+        uniquelabels = targets_sa.unique
 
         # number of occerences for each unique class in kNNs
         votes = self.__votes_init.copy()
@@ -192,12 +197,16 @@ class kNN(Classifier):
                 [votes[ul] for ul in uniquelabels] # transform into lists
 
 
-    def getWeightedVote(self, knn_ids):
+    ##REF: Name was automagically refactored
+    def get_weighted_vote(self, knn_ids):
         """Vote with classes weighted by the number of samples per class.
         """
         # local bindings
         _data = self.__data
-        uniquelabels = _data.sa['labels'].unique
+        targets_sa_name = self.params.targets
+        targets_sa = _data.sa[targets_sa_name]
+
+        uniquelabels = targets_sa.unique
 
         # Lazy evaluation
         if self.__weights is None:
@@ -205,7 +214,7 @@ class kNN(Classifier):
             # It seemed to Yarik that this has to be evaluated just once per
             # training dataset.
             #
-            self.__labels = labels = self.__data.sa.labels
+            self.__labels = labels = targets_sa.value
             Nlabels = len(labels)
             Nuniquelabels = len(uniquelabels)
 

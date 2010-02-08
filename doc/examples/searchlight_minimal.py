@@ -40,7 +40,7 @@ from mvpa.misc.data_generators import normalFeatureDataset
 ds = normalFeatureDataset(perlabel=10, nlabels=2, nchunks=2,
                           nfeatures=10, nonbogus_features=[3, 7],
                           snr=5.0)
-dataset = dataset_wizard(samples=ds.samples, labels=ds.labels,
+dataset = dataset_wizard(samples=ds.samples, targets=ds.targets,
                   chunks=ds.chunks)
 
 """Now it only takes three lines for a searchlight analysis."""

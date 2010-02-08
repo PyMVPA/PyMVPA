@@ -22,7 +22,7 @@ import numpy as N
 
 from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.param import Parameter
-from mvpa.misc.transformers import GrandMean
+from mvpa.misc.transformers import grand_mean
 from mvpa.mappers.procrustean import ProcrusteanMapper
 from mvpa.datasets import dataset_wizard, Dataset
 from mvpa.mappers.zscore import zscore
@@ -84,14 +84,14 @@ class Hyperalignment(ClassWithCollections):
         A list of trained Mappers of the same length as datasets
         """
         params = self.params            # for quicker access ;)
-        states = self.states
+        ca = self.ca
         ndatasets = len(datasets)
         nfeatures = [ds.nfeatures for ds in datasets]
 
         residuals = None
-        if states['residual_errors'].enabled:
+        if ca['residual_errors'].enabled:
             residuals = N.zeros((2 + params.level2_niter, ndatasets))
-            states.residual_errors = Dataset(
+            ca.residual_errors = Dataset(
                 samples = residuals,
                 sa = {'levels' :
                        ['1'] +
@@ -110,7 +110,7 @@ class Hyperalignment(ClassWithCollections):
                 raise ValueError, "Requested reference dataset %i is out of " \
                       "bounds. We have only %i datasets provided" \
                       % (ref_ds, ndatasets)
-        states.choosen_ref_ds = ref_ds
+        ca.choosen_ref_ds = ref_ds
         # might prefer some other way to initialize... later
         mappers = [deepcopy(params.alignment) for ds in datasets]
         # zscore all data sets
@@ -127,7 +127,7 @@ class Hyperalignment(ClassWithCollections):
             if i == ref_ds:
                 continue
             #ZSC zscore(data, perchunk=False)
-            ds = dataset_wizard(samples=data, labels=commonspace)
+            ds = dataset_wizard(samples=data, targets=commonspace)
             #ZSC zscore(ds, perchunk=False)
             m.train(ds)
             data_temp = m.forward(data)
@@ -165,7 +165,7 @@ class Hyperalignment(ClassWithCollections):
                 #ZSC zscore(ds_new, perchunk=False)
                 #PRJ ds_temp = (commonspace*ndatasets - ds_mapped[i])/(ndatasets-1)
                 #ZSC zscore(ds_temp, perchunk=False)
-                ds_new.labels = commonspace #PRJ ds_temp
+                ds_new.targets = commonspace #PRJ ds_temp
                 m.train(ds_new) # ds_temp)
                 data_mapped[i] = m.forward(N.asanyarray(ds))
                 if residuals is not None:
@@ -188,7 +188,7 @@ class Hyperalignment(ClassWithCollections):
             #ZSC zscore(ds_new, perchunk=False)
             #PRJ ds_temp = (commonspace*ndatasets - ds_mapped[i])/(ndatasets-1)
             #ZSC zscore(ds_temp, perchunk=False)
-            ds_new.labels = commonspace #PRJ ds_temp#
+            ds_new.targets = commonspace #PRJ ds_temp#
             m.train(ds_new) #ds_temp)
 
             if residuals is not None:

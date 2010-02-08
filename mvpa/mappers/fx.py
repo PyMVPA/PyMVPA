@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import operator
 
+from mvpa.base.dochelpers import _str
 from mvpa.mappers.base import Mapper
 from mvpa.misc.support import array_whereequal
 from mvpa.base.dochelpers import borrowdoc
@@ -75,6 +76,10 @@ class FxMapper(Mapper):
         return s.replace("(", '(%s, ' % ', '.join(sargs), 1)
 
 
+    def __str__(self):
+        return _str(self, fx=self.__fx.__name__)
+
+
     def _train(self, ds):
         # right now it needs no training
         pass
@@ -85,7 +90,7 @@ class FxMapper(Mapper):
         if not self.__uattrs is None:
             raise RuntimeError("%s does not support forward-mapping of plain "
                                "data when data grouping based on attributes "
-                               "is requested" 
+                               "is requested"
                                % self.__class__.__name__)
         # apply fx along samples axis for each feature
         if self.__axis == 'samples':
@@ -216,7 +221,7 @@ def mean_sample(attrfx='merge'):
 
     Parameters
     ----------
-    attrfx : 'merge' or callable
+    attrfx : 'merge' or callable, optional
       Callable that is used to determine the sample attributes of the computed
       mean samples. By default this will be a string representation of all
       unique value of a particular attribute in any sample group. If there is
@@ -238,9 +243,9 @@ def mean_group_sample(attrs, attrfx='merge'):
     Parameters
     ----------
     attrs : list
-      List of sample attributes whos unique values will be used to identify the
+      List of sample attributes whose unique values will be used to identify the
       samples groups.
-    attrfx : 'merge' or callable
+    attrfx : 'merge' or callable, optional
       Callable that is used to determine the sample attributes of the computed
       mean samples. By default this will be a string representation of all
       unique value of a particular attribute in any sample group. If there is
@@ -264,7 +269,7 @@ def mean_group_feature(attrs, attrfx='merge'):
     attrs : list
       List of feature attributes whos unique values will be used to identify the
       feature groups.
-    attrfx : 'merge' or callable
+    attrfx : 'merge' or callable, optional
       Callable that is used to determine the feature attributes of the computed
       mean features. By default this will be a string representation of all
       unique value of a particular attribute in any feature group. If there is

@@ -1,4 +1,4 @@
-.. -*- mode: rst; fill-column: 78 -*-
+.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
@@ -16,9 +16,6 @@ Dataset Database
 ****************
 
 Blurb about intentions.
-
-Available Datasets
-==================
 
 .. toctree::
    :maxdepth: 1

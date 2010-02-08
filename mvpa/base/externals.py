@@ -335,19 +335,27 @@ def __check_rpy():
 def __check_rpy2():
     """Check either rpy2 is available and also set it for the sane execution
     """
+    import rpy2
+    versions['rpy2'] = rpy2.__version__
+
     import rpy2.robjects
     r = rpy2.robjects.r
     r.options(warn=cfg.get('rpy', 'warn', default=-1))
 
+    # To shut R up while it is importing libraries to do not ruin out
+    # doctests
+    r.library = lambda libname: \
+                r("suppressPackageStartupMessages(library(%r))" % libname)
 
 # contains list of available (optional) external classifier extensions
-_KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
+_KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
           'nifti':'from nifti import NiftiImage as __',
           'nifti ge 0.20090205.1':
                 'from nifti.clib import detachDataFromImage as __',
           'ctypes':'import ctypes as __',
           'shogun':'import shogun as __',
+          'shogun.krr': 'import shogun.Regression as __; x=__.KRR',
           'shogun.mpd': 'import shogun.Classifier as __; x=__.MPDSVM',
           'shogun.lightsvm': 'import shogun.Classifier as __; x=__.SVMLight',
           'shogun.svrlight': 'from shogun.Regression import SVRLight as __',
@@ -361,10 +369,12 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
           'rpy': "__check_rpy()",
           'rpy2': "__check_rpy2()",
-          'lars': "exists('rpy', raiseException=True); import rpy; rpy.r.library('lars')",
-          'elasticnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('elasticnet')",
-          # 'glmnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('glmnet')",
-          'glmnet': "exists('rpy2', raiseException=True); import rpy2.robjects; rpy2.robjects.r.library('glmnet')",
+          'lars': "exists('rpy2', raiseException=True);" \
+                  "import rpy2.robjects; rpy2.robjects.r.library('lars')",
+          'elasticnet': "exists('rpy2', raiseException=True); "\
+                  "import rpy2.robjects; rpy2.robjects.r.library('elasticnet')",
+          'glmnet': "exists('rpy2', raiseException=True); " \
+                  "import rpy2.robjects; rpy2.robjects.r.library('glmnet')",
           'matplotlib': "__check_matplotlib()",
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
@@ -452,29 +462,21 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
         # Exceptions which are silently caught while running tests for externals
         _caught_exceptions = [ImportError, AttributeError, RuntimeError]
 
-        # check whether RPy is involved and catch its exceptions as well.
-        # however, try to determine whether this is really necessary, as
-        # importing RPy also involved starting a full-blown R session, which can
-        # take seconds and therefore is quite nasty...
-        if dep.count('rpy') or _KNOWN[dep].count('rpy'):
-            try:
-                if dep == 'rpy':
-                    __check_rpy()          # needed to be run to adjust options first
-                else:
-                    if exists('rpy'):
-                        # otherwise no need to add anything -- test
-                        # would fail since rpy isn't available
-                        from rpy import RException
-                        _caught_exceptions += [RException]
-            except:
-                pass
-
         estr = ''
         try:
             exec _KNOWN[dep]
             result = True
         except tuple(_caught_exceptions), e:
             estr = ". Caught exception was: " + str(e)
+        except Exception, e:
+            # Add known ones by their names so we don't need to
+            # actually import anything manually to get those classes
+            if e.__class__.__name__ in ['RPy_Exception', 'RRuntimeError',
+                                        'RPy_RException']:
+                _caught_exceptions += [e.__class__]
+                estr = ". Caught exception was: " + str(e)
+            else:
+                raise
 
         if __debug__:
             debug('EXT', "Presence of %s is%s verified%s" %

@@ -137,7 +137,7 @@ class IOHelperTests(unittest.TestCase):
         self.failUnless(d['intensities'] == [1.0, 1.0, 0.5])
 
         self.failUnless(d.nevs == 3)
-        self.failUnless(d.getEV(1) == (13.89, 2.0, 1.0))
+        self.failUnless(d.get_ev(1) == (13.89, 2.0, 1.0))
         # cleanup and ignore stupidity
         try:
             os.remove(fpath)
@@ -167,7 +167,7 @@ class IOHelperTests(unittest.TestCase):
 
         # check header (sort because order in dict is unpredictable)
         self.failUnless(sorted(attr.keys()) == \
-            ['chunks','labels'])
+            ['chunks','targets'])
 
         self.failUnless(attr.nsamples == 3)
 

@@ -142,10 +142,10 @@ def plotFeatureHist(dataset, xlim=None, noticks=True, perchunk=False,
     **kwargs
       Any additional arguments are passed to matplotlib's hist().
     """
-    lsplit = NFoldSplitter(1, attr='labels')
+    lsplit = NFoldSplitter(1, attr='targets')
     csplit = NFoldSplitter(1, attr='chunks')
 
-    nrows = len(dataset.sa['labels'].unique)
+    nrows = len(dataset.sa['targets'].unique)
     ncols = len(dataset.sa['chunks'].unique)
 
     def doplot(data):
@@ -171,14 +171,14 @@ def plotFeatureHist(dataset, xlim=None, noticks=True, perchunk=False,
                 if row == 0:
                     P.title('C:' + str(d.sa['chunks'].unique[0]))
                 if col == 0:
-                    P.ylabel('L:' + str(d.sa['labels'].unique[0]))
+                    P.ylabel('L:' + str(d.sa['targets'].unique[0]))
 
                 fig += 1
         else:
             P.subplot(1, nrows, fig)
             doplot(ds.samples)
 
-            P.title('L:' + str(ds.sa['labels'].unique[0]))
+            P.title('L:' + str(ds.sa['targets'].unique[0]))
 
             fig += 1
 
@@ -289,7 +289,8 @@ def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
     return plot
 
 
-def inverseCmap(cmap_name):
+##REF: Name was automagically refactored
+def inverse_cmap(cmap_name):
     """Create a new colormap from the named colormap, where it got reversed
 
     """
@@ -319,7 +320,7 @@ def plotDatasetChunks(ds, clf_labels=None):
     if clf_labels is not None and len(clf_labels) != ds.nsamples:
         clf_labels = None
     colors = ('b', 'g', 'r', 'c', 'm', 'y', 'k', 'w')
-    labels = ds.uniquelabels
+    labels = ds.uniquetargets
     labels_map = dict(zip(labels, colors[:len(labels)]))
     for chunk in ds.uniquechunks:
         chunk_text = str(chunk)
@@ -327,10 +328,10 @@ def plotDatasetChunks(ds, clf_labels=None):
         ds_chunk = ds[ids]
         for i in xrange(ds_chunk.nsamples):
             s = ds_chunk.samples[i]
-            l = ds_chunk.labels[i]
+            l = ds_chunk.targets[i]
             format = ''
             if clf_labels != None:
-                if clf_labels[i] != ds_chunk.labels[i]:
+                if clf_labels[i] != ds_chunk.targets[i]:
                     P.plot([s[0]], [s[1]], 'x' + labels_map[l])
             P.text(s[0], s[1], chunk_text, color=labels_map[l],
                    horizontalalignment='center',

@@ -101,12 +101,12 @@ class SimpleSOMMapper(Mapper):
         for it in xrange(1, self.niter + 1):
             # compute the neighborhood impact kernel for this iteration
             # has to be recomputed since kernel shrinks over time
-            k = self._computeInfluenceKernel(it, dqd)
+            k = self._compute_influence_kernel(it, dqd)
 
             # for all training vectors
             for s in samples:
                 # determine closest unit (as element coordinate)
-                b = self._getBMU(s)
+                b = self._get_bmu(s)
 
                 # train all units at once by unfolding the kernel (from the
                 # single quadrant that is precomputed), cutting it to the
@@ -137,7 +137,8 @@ class SimpleSOMMapper(Mapper):
             unit_deltas.fill(0.)
 
 
-    def _computeInfluenceKernel(self, iter, dqd):
+    ##REF: Name was automagically refactored
+    def _compute_influence_kernel(self, iter, dqd):
         """Compute the neighborhood kernel for some iteration.
 
         Parameters
@@ -165,7 +166,8 @@ class SimpleSOMMapper(Mapper):
         return infl
 
 
-    def _getBMU(self, sample):
+    ##REF: Name was automagically refactored
+    def _get_bmu(self, sample):
         """Returns the ID of the best matching unit.
 
         'best' is determined as minimal squared Euclidean distance between
@@ -193,7 +195,7 @@ class SimpleSOMMapper(Mapper):
         Mapping is performs by simple determining the best matching Kohonen
         unit for each data sample.
         """
-        return N.array([self._getBMU(d) for d in data])
+        return N.array([self._get_bmu(d) for d in data])
 
 
     def _reverse_data(self, data):
@@ -215,7 +217,8 @@ class SimpleSOMMapper(Mapper):
         return s
 
 
-    def _accessKohonen(self):
+    ##REF: Name was automagically refactored
+    def _access_kohonen(self):
         """Provide access to the Kohonen layer.
 
         With some care.
@@ -228,4 +231,4 @@ class SimpleSOMMapper(Mapper):
         return self._K
 
 
-    K = property(fget=_accessKohonen)
+    K = property(fget=_access_kohonen)

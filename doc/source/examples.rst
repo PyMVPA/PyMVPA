@@ -1,4 +1,4 @@
-.. -*- mode: rst; fill-column: 78 -*-
+.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
@@ -11,9 +11,9 @@
 
 .. _chap_examples:
 
-****************
-Examples Scripts
-****************
+****************************
+Example Analyses and Scripts
+****************************
 
 Each of the examples in this section is a stand-alone script containing all
 necessary code to run some analysis. All examples are shipped with PyMVPA and

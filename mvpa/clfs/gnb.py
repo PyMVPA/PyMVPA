@@ -114,11 +114,13 @@ class GNB(Classifier):
         """Train the classifier using `dataset` (`Dataset`).
         """
         params = self.params
+        targets_sa_name = params.targets
+        targets_sa = dataset.sa[targets_sa_name]
 
         # get the dataset information into easy vars
         X = dataset.samples
-        labels = dataset.labels
-        self.ulabels = ulabels = dataset.uniquelabels
+        labels = targets_sa.value
+        self.ulabels = ulabels = targets_sa.unique
         nlabels = len(ulabels)
         #params = self.params        # for quicker access
         label2index = dict((l, il) for il, l in enumerate(ulabels))
@@ -258,7 +260,7 @@ class GNB(Classifier):
         predictions = [self.ulabels[c] for c in winners]
 
         # set to the probabilities per class
-        self.states.estimates = prob_cs_cp.T
+        self.ca.estimates = prob_cs_cp.T
 
         if __debug__ and 'GNB' in debug.active:
             debug('GNB', "predict on data.shape=%s min:max(data)=%f:%f " %
@@ -270,7 +272,7 @@ class GNB(Classifier):
     # XXX Later come up with some
     #     could be a simple t-test maps using distributions
     #     per each class
-    #def getSensitivityAnalyzer(self, **kwargs):
+    #def get_sensitivity_analyzer(self, **kwargs):
     #    """Returns a sensitivity analyzer for GNB."""
     #    return GNBWeights(self, **kwargs)
 

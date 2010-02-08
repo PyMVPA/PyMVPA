@@ -33,7 +33,7 @@ def test_glmnet_r():
     # prediction has to be almost perfect
     # test with a correlation
     pre = clf.predict(data.samples)
-    corerr = CorrErrorFx()(pre, data.labels)
+    corerr = CorrErrorFx()(pre, data.targets)
     if cfg.getboolean('tests', 'labile', default='yes'):
         assert_true(corerr < .2)
 
@@ -43,14 +43,14 @@ def test_glmnet_c():
 
     # use GLMNET on binary problem
     clf = GLMNET_C()
-    clf.states.enable('estimates')
+    clf.ca.enable('estimates')
 
     clf.train(data)
 
     # test predictions
     pre = clf.predict(data.samples)
 
-    assert_array_equal(pre, data.labels)
+    assert_array_equal(pre, data.targets)
 
 def test_glmnet_state():
     #data = datasets['dumb2']
@@ -61,11 +61,11 @@ def test_glmnet_state():
 
     clf.train(data)
 
-    clf.states.enable('predictions')
+    clf.ca.enable('predictions')
 
     p = clf.predict(data.samples)
 
-    assert_array_equal(p, clf.states.predictions)
+    assert_array_equal(p, clf.ca.predictions)
 
 
 def test_glmnet_c_sensitivities():
@@ -77,10 +77,10 @@ def test_glmnet_c_sensitivities():
 
     # now ask for the sensitivities WITHOUT having to pass the dataset
     # again
-    sens = clf.getSensitivityAnalyzer(force_training=False)()
+    sens = clf.get_sensitivity_analyzer(force_training=False)()
 
     #failUnless(sens.shape == (data.nfeatures,))
-    assert_equal(sens.shape, (len(data.UL), data.nfeatures))
+    assert_equal(sens.shape, (len(data.UT), data.nfeatures))
 
 def test_glmnet_r_sensitivities():
     data = datasets['chirp_linear']
@@ -91,6 +91,6 @@ def test_glmnet_r_sensitivities():
 
     # now ask for the sensitivities WITHOUT having to pass the dataset
     # again
-    sens = clf.getSensitivityAnalyzer(force_training=False)()
+    sens = clf.get_sensitivity_analyzer(force_training=False)()
 
-    assert_equal(sens.shape, (data.nfeatures,))
+    assert_equal(sens.shape, (1, data.nfeatures))

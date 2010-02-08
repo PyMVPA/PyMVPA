@@ -39,28 +39,28 @@ class RegressionsTests(unittest.TestCase):
         ds = datasets['chirp_linear']
         # we want numeric labels to maintain the previous behavior, especially
         # since we deal with regressions here
-        ds.sa.labels = AttributeMap().to_numeric(ds.labels)
+        ds.sa.targets = AttributeMap().to_numeric(ds.targets)
 
         cve = CrossValidatedTransferError(
             TransferError(regr, CorrErrorFx()),
             splitter=NFoldSplitter(),
-            mapper=mean_sample(),
-            enable_states=['training_confusion', 'confusion'])
+            postproc=mean_sample(),
+            enable_ca=['training_confusion', 'confusion'])
         corr = cve(ds).samples.squeeze()
 
-        self.failUnless(corr == cve.states.confusion.stats['CCe'])
+        self.failUnless(corr == cve.ca.confusion.stats['CCe'])
 
         splitregr = SplitClassifier(
             regr, splitter=OddEvenSplitter(),
-            enable_states=['training_confusion', 'confusion'])
+            enable_ca=['training_confusion', 'confusion'])
         splitregr.train(ds)
-        split_corr = splitregr.states.confusion.stats['CCe']
-        split_corr_tr = splitregr.states.training_confusion.stats['CCe']
+        split_corr = splitregr.ca.confusion.stats['CCe']
+        split_corr_tr = splitregr.ca.training_confusion.stats['CCe']
 
         for confusion, error in (
-            (cve.states.confusion, corr),
-            (splitregr.states.confusion, split_corr),
-            (splitregr.states.training_confusion, split_corr_tr),
+            (cve.ca.confusion, corr),
+            (splitregr.ca.confusion, split_corr),
+            (splitregr.ca.training_confusion, split_corr_tr),
             ):
             #TODO: test confusion statistics
             # Part of it for now -- CCe
@@ -69,8 +69,8 @@ class RegressionsTests(unittest.TestCase):
                 self.failUnless(stats['CCe'] < 0.5)
                 self.failUnlessEqual(stats['CCe'], stats['Summary CCe'])
 
-            s0 = confusion.asstring(short=True)
-            s1 = confusion.asstring(short=False)
+            s0 = confusion.as_string(short=True)
+            s1 = confusion.as_string(short=False)
 
             for s in [s0, s1]:
                 self.failUnless(len(s) > 10,
@@ -102,20 +102,20 @@ class RegressionsTests(unittest.TestCase):
         """Simple tests on regressions being used as classifiers
         """
         # check if we get values set correctly
-        clf.states.change_temporarily(enable_states=['estimates'])
-        self.failUnlessRaises(UnknownStateError, clf.states['estimates']._get)
+        clf.ca.change_temporarily(enable_ca=['estimates'])
+        self.failUnlessRaises(UnknownStateError, clf.ca['estimates']._get)
         cv = CrossValidatedTransferError(
             TransferError(clf),
             NFoldSplitter(),
-            enable_states=['confusion', 'training_confusion'])
+            enable_ca=['confusion', 'training_confusion'])
         ds = datasets['uni2small'].copy()
         # we want numeric labels to maintain the previous behavior, especially
         # since we deal with regressions here
-        ds.sa.labels = AttributeMap().to_numeric(ds.labels)
+        ds.sa.targets = AttributeMap().to_numeric(ds.targets)
         cverror = cv(ds)
 
-        self.failUnless(len(clf.states.estimates) == ds[ds.chunks == 1].nsamples)
-        clf.states.reset_changed_temporarily()
+        self.failUnless(len(clf.ca.estimates) == ds[ds.chunks == 1].nsamples)
+        clf.ca.reset_changed_temporarily()
 
 
 

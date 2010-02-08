@@ -13,7 +13,7 @@ from mvpa.base.types import asobjarray
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.clfs.transerror import TransferError
 from tests_warehouse import *
-from tests_warehouse import getMVPattern
+from tests_warehouse import get_mv_pattern
 from tests_warehouse_clfs import *
 from mvpa.clfs.distance import oneMinusCorrelation
 
@@ -66,26 +66,26 @@ class SupportFxTests(unittest.TestCase):
         self.failUnless(ev.items() == [('onset', 2.5)])
 
         # conversion
-        self.failUnless(ev.asDescreteTime(dt=2).items() == [('onset', 1)])
-        evc = ev.asDescreteTime(dt=2, storeoffset=True)
+        self.failUnless(ev.as_descrete_time(dt=2).items() == [('onset', 1)])
+        evc = ev.as_descrete_time(dt=2, storeoffset=True)
         self.failUnless(evc.has_key('offset'))
         self.failUnless(evc['offset'] == 0.5)
 
         # same with duration included
-        evc = Event(onset=2.5, duration=3.55).asDescreteTime(dt=2)
+        evc = Event(onset=2.5, duration=3.55).as_descrete_time(dt=2)
         self.failUnless(evc['duration'] == 3)
 
 
     def test_mof_n_combinations(self):
         self.failUnlessEqual(
-            getUniqueLengthNCombinations( range(3), 1 ), [[0],[1],[2]] )
+            get_unique_length_n_combinations( range(3), 1 ), [[0],[1],[2]] )
         self.failUnlessEqual(
-            getUniqueLengthNCombinations(
+            get_unique_length_n_combinations(
                         range(4), 2 ),
                         [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]
                         )
         self.failUnlessEqual(
-            getUniqueLengthNCombinations(
+            get_unique_length_n_combinations(
                         range(4), 3 ),
                         [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]] )
 
@@ -93,11 +93,11 @@ class SupportFxTests(unittest.TestCase):
     def test_break_points(self):
         items_cont = [0, 0, 0, 1, 1, 1, 3, 3, 2]
         items_noncont = [0, 0, 1, 1, 0, 3, 2]
-        self.failUnlessRaises(ValueError, getBreakPoints, items_noncont)
-        self.failUnlessEqual(getBreakPoints(items_noncont, contiguous=False),
+        self.failUnlessRaises(ValueError, get_break_points, items_noncont)
+        self.failUnlessEqual(get_break_points(items_noncont, contiguous=False),
                              [0, 2, 4, 5, 6])
-        self.failUnlessEqual(getBreakPoints(items_cont), [0, 3, 6, 8])
-        self.failUnlessEqual(getBreakPoints(items_cont, contiguous=False),
+        self.failUnlessEqual(get_break_points(items_cont), [0, 3, 6, 8])
+        self.failUnlessEqual(get_break_points(items_cont, contiguous=False),
                              [0, 3, 6, 8])
 
 

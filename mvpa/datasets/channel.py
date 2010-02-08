@@ -20,6 +20,7 @@ __docformat__ = 'restructuredtext'
 raise DeprecationWarning("ChannelDataset is obsolete and might vanish any "
                          "second.")
 
+if False:           # just to please Python so it could parse the file
     def substractBaseline(self, t=None):
         """Substract mean baseline signal from the each timepoint.
 

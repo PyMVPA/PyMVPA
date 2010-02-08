@@ -22,7 +22,7 @@ class SplitterTests(unittest.TestCase):
 
     def setUp(self):
         self.data = dataset_wizard(N.random.normal(size=(100,10)),
-                            labels=[ i%4 for i in range(100) ],
+                            targets=[ i%4 for i in range(100) ],
                             chunks=[ i/10 for i in range(100)])
 
 
@@ -210,26 +210,26 @@ class SplitterTests(unittest.TestCase):
         csall = CustomSplitter([([0,3,4],[5,9],[2])],
                                nrunspersplit=3)
         # lets craft simpler dataset
-        #ds = Dataset(samples=N.arange(12), labels=[1]*6+[2]*6, chunks=1)
+        #ds = Dataset(samples=N.arange(12), targets=[1]*6+[2]*6, chunks=1)
         splits = list(cs(self.data))
         splitsall = list(csall(self.data))
 
         self.failUnless(len(splits) == 3)
-        ul = self.data.sa['labels'].unique
+        ul = self.data.sa['targets'].unique
 
         assert_array_equal(
-            (N.array(splitsall[0][0].get_nsamples_per_attr('labels').values())
+            (N.array(splitsall[0][0].get_nsamples_per_attr('targets').values())
                 *[0.3, 0.6, 1.0, 0.5]).round().astype(int),
-            N.array(splits[0][0].get_nsamples_per_attr('labels').values()))
+            N.array(splits[0][0].get_nsamples_per_attr('targets').values()))
 
         assert_array_equal(
-            (N.array(splitsall[0][1].get_nsamples_per_attr('labels').values())
+            (N.array(splitsall[0][1].get_nsamples_per_attr('targets').values())
                 * 0.5).round().astype(int),
-            N.array(splits[0][1].get_nsamples_per_attr('labels').values()))
+            N.array(splits[0][1].get_nsamples_per_attr('targets').values()))
 
         assert_array_equal(
-            N.array(splitsall[0][2].get_nsamples_per_attr('labels').values()),
-            N.array(splits[0][2].get_nsamples_per_attr('labels').values()))
+            N.array(splitsall[0][2].get_nsamples_per_attr('targets').values()),
+            N.array(splits[0][2].get_nsamples_per_attr('targets').values()))
 
 
     def test_none_splitter(self):
@@ -256,7 +256,7 @@ class SplitterTests(unittest.TestCase):
         for split in splits:
             self.failUnless(split[0] == None)
             self.failUnless(split[1].nsamples == 40)
-            ok_(split[1].get_nsamples_per_attr('labels').values() ==
+            ok_(split[1].get_nsamples_per_attr('targets').values() ==
                 [10,10,10,10])
 
         # auto-determined
@@ -268,19 +268,19 @@ class SplitterTests(unittest.TestCase):
         for split in splits:
             self.failUnless(split[0] == None)
             self.failUnless(split[1].nsamples == 100)
-            ok_(split[1].get_nsamples_per_attr('labels').values() ==
+            ok_(split[1].get_nsamples_per_attr('targets').values() ==
                 [25,25,25,25])
 
 
     def test_label_splitter(self):
-        oes = OddEvenSplitter(attr='labels')
+        oes = OddEvenSplitter(attr='targets')
 
         splits = [ (first, second) for (first, second) in oes(self.data) ]
 
-        assert_array_equal(splits[0][0].sa['labels'].unique, [0,2])
-        assert_array_equal(splits[0][1].sa['labels'].unique, [1,3])
-        assert_array_equal(splits[1][0].sa['labels'].unique, [1,3])
-        assert_array_equal(splits[1][1].sa['labels'].unique, [0,2])
+        assert_array_equal(splits[0][0].sa['targets'].unique, [0,2])
+        assert_array_equal(splits[0][1].sa['targets'].unique, [1,3])
+        assert_array_equal(splits[1][0].sa['targets'].unique, [1,3])
+        assert_array_equal(splits[1][1].sa['targets'].unique, [0,2])
 
 
     def test_counted_splitting(self):

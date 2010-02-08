@@ -51,7 +51,7 @@ class ProcrusteanMapperTests(unittest.TestCase):
                 d_t = N.dot(s * d, R) + t2
 
                 # train bloody mapper(s)
-                ds = dataset_wizard(samples=d_s, labels=d_t)
+                ds = dataset_wizard(samples=d_s, targets=d_t)
                 pm.train(ds)
                 ## not possible with new interface
                 #pm2.train(d_s, d_t)

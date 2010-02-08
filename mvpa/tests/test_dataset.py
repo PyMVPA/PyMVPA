@@ -101,7 +101,7 @@ class DatasetTests(unittest.TestCase):
             self.failUnless( sel.nsamples == 2 )
             self.failUnless( (sel.samples[0] == data.samples[5]).all() )
             self.failUnless( (sel.samples[0] == sel.samples[1]).all() )
-            self.failUnless( len(sel.labels) == 2 )
+            self.failUnless( len(sel.targets) == 2 )
             self.failUnless( len(sel.chunks) == 2 )
             self.failUnless((sel.origids == [5, 5]).all())
 
@@ -139,12 +139,12 @@ class DatasetTests(unittest.TestCase):
             self.failUnless(N.all(sel.origids == [ 3.,  4.,  5.,  7.]))
 
         # lets cause it to compute unique labels
-        self.failUnless( (data.uniquelabels == [2, 3, 4, 8, 9]).all() );
+        self.failUnless( (data.uniquetargets == [2, 3, 4, 8, 9]).all() );
 
 
         # select some samples removing some labels completely
         sel = data.selectSamples(data.idsbylabels([3, 4, 8, 9]))
-        self.failUnlessEqual(Set(sel.uniquelabels), Set([3, 4, 8, 9]))
+        self.failUnlessEqual(Set(sel.uniquetargets), Set([3, 4, 8, 9]))
         self.failUnless((sel.origids == [0, 1, 2, 3, 4, 5, 6, 8, 9]).all())
 
 
@@ -243,13 +243,13 @@ class DatasetTests(unittest.TestCase):
                           labels=1,
                           chunks=1)
         origid = dataset.idhash
-        dataset.labels = [3, 1, 2, 3]           # change all labels
+        dataset.targets = [3, 1, 2, 3]           # change all labels
         self.failUnless(origid != dataset.idhash,
                         msg="Changing all labels should alter dataset's idhash")
 
         origid = dataset.idhash
 
-        z = dataset.labels[1]
+        z = dataset.targets[1]
         self.failUnlessEqual(origid, dataset.idhash,
                              msg="Accessing shouldn't change idhash")
         z = dataset.chunks
@@ -311,16 +311,16 @@ class DatasetTests(unittest.TestCase):
 
         # test broadcasting of the label
         ds = Dataset(samples=samples, labels='orange')
-        self.failUnless(N.all(ds.labels == ['orange']*3))
+        self.failUnless(N.all(ds.targets == ['orange']*3))
 
         # Test basic mapping of litteral labels
         for ds in [Dataset(samples=samples, labels=labels_l, labels_map=od),
                    # Figure out mapping
                    Dataset(samples=samples, labels=labels_l, labels_map=True)]:
-            self.failUnless(N.all(ds.labels == [0, 1, 0]))
-            self.failUnless(ds.labels_map == od)
+            self.failUnless(N.all(ds.targets == [0, 1, 0]))
+            self.failUnless(ds.targets_map == od)
             ds_ = ds[1]
-            self.failUnless(ds_.labels_map == od,
+            self.failUnless(ds_.targets_map == od,
                 msg='selectSamples should provide full mapping preserved')
 
         # We should complaint about insufficient mapping
@@ -330,17 +330,17 @@ class DatasetTests(unittest.TestCase):
         # Conformance to older behavior -- if labels are given in
         # strings, no mapping occur by default
         ds2 = Dataset(samples=samples, labels=labels_l)
-        self.failUnlessEqual(ds2.labels_map, None)
+        self.failUnlessEqual(ds2.targets_map, None)
 
         # We should label numerical labels if it was requested:
         od3 = {1:100, 2:101, 3:100}
         ds3 = Dataset(samples=samples, labels=[1, 2, 3],
                       labels_map=od3)
-        self.failUnlessEqual(ds3.labels_map, od3)
-        self.failUnless(N.all(ds3.labels == [100, 101, 100]))
+        self.failUnlessEqual(ds3.targets_map, od3)
+        self.failUnless(N.all(ds3.targets == [100, 101, 100]))
 
         ds3_ = ds3[1]
-        self.failUnlessEqual(ds3.labels_map, od3)
+        self.failUnlessEqual(ds3.targets_map, od3)
 
         ds4 = Dataset(samples=samples, labels=labels_l)
 
@@ -350,8 +350,8 @@ class DatasetTests(unittest.TestCase):
         self.failUnlessRaises(ValueError, ds.setLabelsMap,
                               {'orange': 1, 'nonorange': 3})
         new_map = {'tasty':0, 'crappy':1}
-        ds.labels_map = new_map.copy()
-        self.failUnlessEqual(ds.labels_map, new_map)
+        ds.targets_map = new_map.copy()
+        self.failUnlessEqual(ds.targets_map, new_map)
 
 
     def test_labels_mapping_add_dataset(self):
@@ -369,21 +369,21 @@ class DatasetTests(unittest.TestCase):
         ds0 = Dataset(samples=samples, labels=l2)
 
         # original mappings
-        lm1 = ds1.labels_map.copy()
-        lm2 = ds2.labels_map.copy()
+        lm1 = ds1.targets_map.copy()
+        lm2 = ds2.targets_map.copy()
 
         ds3 = ds1 + ds2
-        self.failUnless(N.all(ds3.labels ==
-                              N.hstack((ds1.labels, [2, 1, 5]))))
-        self.failUnless(ds1.labels_map == lm1)
-        self.failUnless(ds2.labels_map == lm2)
+        self.failUnless(N.all(ds3.targets ==
+                              N.hstack((ds1.targets, [2, 1, 5]))))
+        self.failUnless(ds1.targets_map == lm1)
+        self.failUnless(ds2.targets_map == lm2)
 
         # check iadd
         ds1 += ds2
-        self.failUnless(N.all(ds1.labels == ds3.labels))
+        self.failUnless(N.all(ds1.targets == ds3.targets))
 
         # it should be deterministic
-        self.failUnless(N.all(ds1.labels_map == ds3.labels_map))
+        self.failUnless(N.all(ds1.targets_map == ds3.targets_map))
 
         # don't allow to add datasets where one of them doesn't have a labels_map
         # whenever the other one does

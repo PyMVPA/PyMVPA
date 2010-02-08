@@ -26,7 +26,7 @@ class SOMMapperTests(unittest.TestCase):
         som = SimpleSOMMapper((10, 5), 200, learning_rate=0.05)
 
         # no acces when nothing is there
-        self.failUnlessRaises(RuntimeError, som._accessKohonen)
+        self.failUnlessRaises(RuntimeError, som._access_kohonen)
 
         som.train(colors)
 

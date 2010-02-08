@@ -26,14 +26,14 @@ class RidgeRegTests(unittest.TestCase):
         # prediction has to be almost perfect
         # test with a correlation
         pre = clf.predict(data.samples)
-        cor = pearsonr(pre,data.labels)
+        cor = pearsonr(pre,data.targets)
         self.failUnless(cor[0] > .8)
 
         # do again for fortran implementation
         # DISABLE for now, at it is known to be broken
 #        clf = RidgeReg(implementation='gradient')
 #        clf.train(data)
-#        cor = pearsonr(clf.predict(data.samples), data.labels)
+#        cor = pearsonr(clf.predict(data.samples), data.targets)
 #        print cor
 #        self.failUnless(cor[0] > .8)
 
@@ -46,11 +46,11 @@ class RidgeRegTests(unittest.TestCase):
 
         clf.train(data)
 
-        clf.states.enable('predictions')
+        clf.ca.enable('predictions')
 
         p = clf.predict(data.samples)
 
-        self.failUnless((p == clf.states.predictions).all())
+        self.failUnless((p == clf.ca.predictions).all())
 
 
 def suite():

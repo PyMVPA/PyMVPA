@@ -19,7 +19,7 @@ from mvpa.datasets.base import Dataset
 from mvpa.datasets.splitters import NoneSplitter
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable, Harvestable
-from mvpa.misc.transformers import GrandMean
+from mvpa.misc.transformers import grand_mean
 
 if __debug__:
     from mvpa.base import debug
@@ -111,8 +111,8 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
 # splitter: %s
 # classifier: %s
 # errorfx: %s
-# combiner: %s""" % (indentDoc(self.__splitter), indentDoc(self.__clf),
-#                      indentDoc(self.__errorfx), indentDoc(self.__combiner))
+# combiner: %s""" % (indent_doc(self.__splitter), indent_doc(self.__clf),
+#                      indent_doc(self.__errorfx), indent_doc(self.__combiner))
 
 
     def _call(self, dataset):
@@ -123,41 +123,41 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         """
         # store the results of the splitprocessor
         results = []
-        self.states.splits = []
+        self.ca.splits = []
 
         # local bindings
-        states = self.states
+        ca = self.ca
         clf = self.__transerror.clf
         expose_testdataset = self.__expose_testdataset
 
-        # what states to enable in terr
+        # what ca to enable in terr
         terr_enable = []
         for state_var in ['confusion', 'training_confusion', 'samples_error']:
-            if states.is_enabled(state_var):
+            if ca.is_enabled(state_var):
                 terr_enable += [state_var]
 
-        # charge states with initial values
+        # charge ca with initial values
         summaryClass = clf.__summary_class__
         clf_hastestdataset = hasattr(clf, 'testdataset')
 
-        self.states.confusion = summaryClass()
-        self.states.training_confusion = summaryClass()
-        self.states.transerrors = []
-        if states.is_enabled('samples_error'):
+        self.ca.confusion = summaryClass()
+        self.ca.training_confusion = summaryClass()
+        self.ca.transerrors = []
+        if ca.is_enabled('samples_error'):
             dataset.init_origids('samples',
                                  attr=self.__samples_idattr, mode='existing')
-            self.states.samples_error = dict(
+            self.ca.samples_error = dict(
                 [(id_, []) for id_ in dataset.sa[self.__samples_idattr].value])
 
-        # enable requested states in child TransferError instance (restored
+        # enable requested ca in child TransferError instance (restored
         # again below)
         if len(terr_enable):
-            self.__transerror.states.change_temporarily(
-                enable_states=terr_enable)
+            self.__transerror.ca.change_temporarily(
+                enable_ca=terr_enable)
 
         # We better ensure that underlying classifier is not trained if we
         # are going to deepcopy transerror
-        if states.is_enabled("transerrors"):
+        if ca.is_enabled("transerrors"):
             self.__transerror.untrain()
 
         # collect sum info about the split that where made for the resulting
@@ -175,10 +175,10 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
 
             # only train classifier if splitter provides something in first
             # element of tuple -- the is the behavior of TransferError
-            if states.is_enabled("splits"):
-                self.states.splits.append(split)
+            if ca.is_enabled("splits"):
+                self.ca.splits.append(split)
 
-            if states.is_enabled("transerrors"):
+            if ca.is_enabled("transerrors"):
                 # copy first and then train, as some classifiers cannot be copied
                 # when already trained, e.g. SWIG'ed stuff
                 lastsplit = None
@@ -212,21 +212,21 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
 
             # XXX Look below -- may be we should have not auto added .?
             #     then transerrors also could be deprecated
-            if states.is_enabled("transerrors"):
-                self.states.transerrors.append(transerror)
+            if ca.is_enabled("transerrors"):
+                self.ca.transerrors.append(transerror)
 
             # XXX: could be merged with next for loop using a utility class
             # that can add dict elements into a list
-            if states.is_enabled("samples_error"):
+            if ca.is_enabled("samples_error"):
                 for k, v in \
-                  transerror.states.samples_error.iteritems():
-                    self.states.samples_error[k].append(v)
+                  transerror.ca.samples_error.iteritems():
+                    self.ca.samples_error[k].append(v)
 
-            # pull in child states
+            # pull in child ca
             for state_var in ['confusion', 'training_confusion']:
-                if states.is_enabled(state_var):
-                    states[state_var].value.__iadd__(
-                        transerror.states[state_var].value)
+                if ca.is_enabled(state_var):
+                    ca[state_var].value.__iadd__(
+                        transerror.ca[state_var].value)
 
             if __debug__:
                 debug("CROSSC", "Split #%d: result %s" \
@@ -236,22 +236,12 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
         # Since we could have operated with a copy -- bind the last used one back
         self.__transerror = transerror
 
-        # put states of child TransferError back into original config
+        # put ca of child TransferError back into original config
         if len(terr_enable):
-            self.__transerror.states.reset_changed_temporarily()
+            self.__transerror.ca.reset_changed_temporarily()
 
-        self.states.results = results
+        self.ca.results = results
         """Store state variable if it is enabled"""
-
-        # Provide those labels_map if appropriate
-        try:
-            if states.is_enabled("confusion"):
-                states.confusion.labels_map = dataset.labels_map
-            if states.is_enabled("training_confusion"):
-                states.training_confusion.labels_map = dataset.labels_map
-        except:
-            pass
-
         results = Dataset(results, sa={'cv_fold': splitinfo})
         return results
 
