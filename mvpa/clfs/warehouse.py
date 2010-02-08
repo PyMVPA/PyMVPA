@@ -271,7 +271,8 @@ if externals.exists('lars'):
     from mvpa.clfs.lars import LARS
     for model in lars.known_models:
         # XXX create proper repository of classifiers!
-        lars_clf = LARS(descr="LARS(%s)" % model, model_type=model)
+        lars_clf = RegressionAsClassifier(LARS(descr="LARS(%s)" % model, model_type=model),
+                                          descr='LARS(model_type=%r) classifier' % model)
         clfswh += lars_clf
 
         # is a regression, too
