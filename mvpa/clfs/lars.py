@@ -22,7 +22,7 @@ if externals.exists('lars', raiseException=True):
     RRuntimeError = rpy2.robjects.rinterface.RRuntimeError
     r = rpy2.robjects.r
     r.library('lars')
-
+    from mvpa.support.rpy2_addons import Rrx2
 
 # local imports
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
@@ -163,8 +163,7 @@ class LARS(Classifier):
         # must first convert dictionary to array
         Cp_vals = None
         try:
-            Cp = trained_model.subset('Cp')#['Cp']
-            Cp_vals = N.asanyarray(Cp)[0]
+            Cp_vals = N.asanyarray(Rrx2(trained_model, 'Cp'))
         except TypeError, e:
             raise FailedToTrainError, \
                   "Failed to train %s on %s. Got '%s' while trying to access " \
@@ -183,7 +182,7 @@ class LARS(Classifier):
         self.__lowest_Cp_step = lowest_Cp_step
         # set the weights to the lowest Cp step
         self.__weights = N.asanyarray(
-            trained_model.subset('beta')[0])[lowest_Cp_step, :]
+            Rrx2(trained_model, 'beta'))[lowest_Cp_step]
 
         self.__trained_model = trained_model # bind to an instance
 #         # set the weights to the final state
@@ -203,7 +202,7 @@ class LARS(Classifier):
                             mode='step',
                             s=self.__lowest_Cp_step)
                             #s=self.__trained_model['beta'].shape[0])
-            fit = N.atleast_1d(res.subset('fit')[0])
+            fit = N.atleast_1d(Rrx2(res, 'fit'))
         except RRuntimeError, e:
             raise FailedToPredictError, \
                   "Failed to predict on %s using %s. Exceptions was: %s" \
