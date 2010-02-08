@@ -265,4 +265,3 @@ def zscore(ds, **kwargs):
     mapped = zm(ds)
     # and append the mapper to the dataset
     mapped._append_mapper(zm)
-    return mapped

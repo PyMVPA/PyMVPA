@@ -345,4 +345,3 @@ def poly_detrend(ds, **kwargs):
     mapped = dm(ds)
     # and append the mapper to the dataset
     mapped._append_mapper(dm)
-    return mapped

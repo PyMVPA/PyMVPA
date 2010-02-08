@@ -111,18 +111,18 @@ class ENET(Classifier):
 
         # It does not make sense to calculate a confusion matrix for a
         # regression
-        self.states.enable('training_confusion', False)
+        self.ca.enable('training_confusion', False)
 
     def __repr__(self):
         """String summary of the object
         """
-        return """ENET(lm=%s, normalize=%s, intercept=%s, trace=%s, max_steps=%s, enable_states=%s)""" % \
+        return """ENET(lm=%s, normalize=%s, intercept=%s, trace=%s, max_steps=%s, enable_ca=%s)""" % \
                (self.__lm,
                 self.__normalize,
                 self.__intercept,
                 self.__trace,
                 self.__max_steps,
-                str(self.states.enabled))
+                str(self.ca.enabled))
 
 
     def _train(self, data):

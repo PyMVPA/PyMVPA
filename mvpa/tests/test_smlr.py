@@ -42,13 +42,13 @@ class SMLRTests(unittest.TestCase):
 
         clf.train(data)
 
-        clf.states.enable('estimates')
-        clf.states.enable('predictions')
+        clf.ca.enable('estimates')
+        clf.ca.enable('predictions')
 
         p = N.asarray(clf.predict(data.samples))
 
-        self.failUnless((p == clf.states.predictions).all())
-        self.failUnless(N.array(clf.states.estimates).shape[0] == N.array(p).shape[0])
+        self.failUnless((p == clf.ca.predictions).all())
+        self.failUnless(N.array(clf.ca.estimates).shape[0] == N.array(p).shape[0])
 
 
     def test_smlr_sensitivities(self):

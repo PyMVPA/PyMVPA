@@ -53,7 +53,7 @@ class BLR(Classifier):
 
         # It does not make sense to calculate a confusion matrix for a
         # BLR:
-        self.states.enable('training_confusion', False)
+        self.ca.enable('training_confusion', False)
 
         # set the prior on w: N(0,sigma_p) , specifying the covariance
         # sigma_p on w:
@@ -62,8 +62,8 @@ class BLR(Classifier):
         # set noise level:
         self.sigma_noise = sigma_noise
 
-        self.states.predicted_variances = None
-        self.states.log_marginal_likelihood = None
+        self.ca.predicted_variances = None
+        self.ca.log_marginal_likelihood = None
         # Yarik: what was those about??? just for future in
         #        compute_log_marginal_likelihood ?
         # self.targets = None
@@ -72,8 +72,8 @@ class BLR(Classifier):
     def __repr__(self):
         """String summary of the object
         """
-        return """BLR(w=%s, sigma_p=%s, sigma_noise=%f, enable_states=%s)""" % \
-               (self.w, self.sigma_p, self.sigma_noise, str(self.states.enabled))
+        return """BLR(w=%s, sigma_p=%s, sigma_noise=%f, enable_ca=%s)""" % \
+               (self.w, self.sigma_p, self.sigma_noise, str(self.ca.enabled))
 
 
     def compute_log_marginal_likelihood(self):
@@ -125,10 +125,10 @@ class BLR(Classifier):
         data = N.hstack([data,N.ones((data.shape[0],1),dtype=data.dtype)])
         predictions = N.dot(data,self.w)
 
-        if self.states.is_enabled('predicted_variances'):
+        if self.ca.is_enabled('predicted_variances'):
             # do computation only if state variable was enabled
-            self.states.predicted_variances = N.dot(data, N.dot(self.A_inv, data.T)).diagonal()[:,N.newaxis]
-        self.states.estimates = predictions
+            self.ca.predicted_variances = N.dot(data, N.dot(self.A_inv, data.T)).diagonal()[:,N.newaxis]
+        self.ca.estimates = predictions
         return predictions
 
 
@@ -175,7 +175,7 @@ if __name__ == "__main__":
     logml = False
 
     b = BLR(sigma_p=N.eye(F+1), sigma_noise=0.1)
-    b.states.enable("predicted_variances")
+    b.ca.enable("predicted_variances")
     b.train(dataset_train)
     predictions = b.predict(dataset_test.samples)
     print "Predicted slope and intercept:",b.w
@@ -187,10 +187,10 @@ if __name__ == "__main__":
 
         pylab.plot(dataset_test.samples, predictions, "b-", label="prediction")
         pylab.plot(dataset_test.samples,
-                   predictions+N.sqrt(b.states.predicted_variances),
+                   predictions+N.sqrt(b.ca.predicted_variances),
                    "b--", label="pred(+/-)std")
         pylab.plot(dataset_test.samples,
-                   predictions-N.sqrt(b.states.predicted_variances),
+                   predictions-N.sqrt(b.ca.predicted_variances),
                    "b--", label=None)
         pylab.legend()
         pylab.xlabel("samples")

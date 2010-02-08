@@ -134,7 +134,7 @@ class DatasetMeasure(ClassWithCollections):
     def _postcall(self, dataset, result):
         """Some postprocessing on the result
         """
-        self.states.raw_results = result
+        self.ca.raw_results = result
 
         # post-processing
         if not self.__postproc is None:
@@ -155,12 +155,12 @@ class DatasetMeasure(ClassWithCollections):
             measure.__null_dist = None
             self.__null_dist.fit(measure, dataset)
 
-            if self.states.is_enabled('null_t'):
+            if self.ca.is_enabled('null_t'):
                 # get probability under NULL hyp, but also request
                 # either it belong to the right tail
                 null_prob, null_right_tail = \
                            self.__null_dist.p(result, return_tails=True)
-                self.states.null_prob = null_prob
+                self.ca.null_prob = null_prob
 
                 externals.exists('scipy', raiseException=True)
                 from scipy.stats import norm
@@ -186,7 +186,7 @@ class DatasetMeasure(ClassWithCollections):
                 clip = 1e-16
                 null_t = norm.ppf(N.clip(acdf, clip, 1.0 - clip))
                 null_t[~null_right_tail] *= -1.0 # revert sign for negatives
-                self.states.null_t = null_t                 # store
+                self.ca.null_t = null_t                 # store
             else:
                 # get probability of result under NULL hypothesis if available
                 # and don't request tail information
@@ -287,17 +287,17 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         if len(result.shape) > 1:
             n_base = len(result)
             """Number of base sensitivities"""
-            if self.states.is_enabled('base_sensitivities'):
+            if self.ca.is_enabled('base_sensitivities'):
                 b_sensitivities = []
-                if not self.states.has_key('biases'):
+                if not self.ca.has_key('biases'):
                     biases = None
                 else:
-                    biases = self.states.biases
-                    if len(self.states.biases) != n_base:
+                    biases = self.ca.biases
+                    if len(self.ca.biases) != n_base:
                         warning("Number of biases %d differs from number "
                                 "of base sensitivities %d which could happen "
                                 "when measure is collided across labels."
-                                % (len(self.states.biases), n_base))
+                                % (len(self.ca.biases), n_base))
                 for i in xrange(n_base):
                     if not biases is None:
                         if n_base > 1 and len(biases) == 1:
@@ -310,7 +310,7 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
                     b_sensitivities = StaticDatasetMeasure(
                         measure = result[i],
                         bias = bias)
-                self.states.base_sensitivities = b_sensitivities
+                self.ca.base_sensitivities = b_sensitivities
 
         # XXX Remove when "sensitivity-return-dataset" transition is done
         if __debug__ \
@@ -522,7 +522,7 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
                 sensitivities = \
                     Dataset(sensitivities,
                             sa={'splits': N.arange(len(sensitivities))})
-        self.states.sensitivities = sensitivities
+        self.ca.sensitivities = sensitivities
         return sensitivities
 
 
@@ -607,8 +607,8 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
         insplit_index = self.__insplit_index
 
         sensitivities = []
-        self.states.splits = splits = []
-        store_splits = self.states.is_enabled("splits")
+        self.ca.splits = splits = []
+        store_splits = self.ca.is_enabled("splits")
 
         for ind,split in enumerate(self.__splitter(dataset)):
             ds = split[insplit_index]
@@ -622,7 +622,7 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
         result = vstack(sensitivities)
         result.sa['splits'] = N.concatenate([[i] * len(s)
                                 for i, s in enumerate(sensitivities)])
-        self.states.sensitivities = sensitivities
+        self.ca.sensitivities = sensitivities
         return result
 
 
@@ -764,7 +764,7 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
             analyzer._force_training = False
 
         result = analyzer._call(dataset)
-        self.states.clf_sensitivities = result
+        self.ca.clf_sensitivities = result
 
         return result
 

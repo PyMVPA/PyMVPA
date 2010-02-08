@@ -46,13 +46,13 @@ class KNNTests(unittest.TestCase):
         clf = kNN(k=10)
         clf.train(train)
 
-        clf.states.enable('estimates')
-        clf.states.enable('predictions')
+        clf.ca.enable('estimates')
+        clf.ca.enable('predictions')
 
         p = clf.predict(test.samples)
 
-        self.failUnless(p == clf.states.predictions)
-        self.failUnless(N.array(clf.states.estimates).shape == (80,2))
+        self.failUnless(p == clf.ca.predictions)
+        self.failUnless(N.array(clf.ca.estimates).shape == (80,2))
 
 
 def suite():

@@ -312,8 +312,8 @@ def enhancedDocString(item, *args, **kwargs):
                                  % name, rst_lvlmarkup[2]),
                   initdoc ]
 
-    # Add information about the states if available
-    if lcl.has_key('_statesdoc') and len(item._statesdoc):
+    # Add information about the ca if available
+    if lcl.has_key('_cadoc') and len(item._cadoc):
         # to don't conflict with Notes section if such was already
         # present
         lcldoc = lcl['__doc__'] or ''
@@ -321,9 +321,9 @@ def enhancedDocString(item, *args, **kwargs):
             section_name = _rst_section('Notes')
         else:
             section_name = '\n'         # just an additional newline
-        # no indent is necessary since states list must be already indented
+        # no indent is necessary since ca list must be already indented
         docs += ['%s\nAvailable state variables:' % section_name,
-                 handle_docstring(item._statesdoc)]
+                 handle_docstring(item._cadoc)]
 
     # Deprecated -- but actually we might like to have it in ipython
     # mode may be?

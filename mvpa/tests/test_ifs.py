@@ -62,8 +62,8 @@ class IFSTests(unittest.TestCase):
         self.failUnless(tdata.nfeatures == tdata_nfeatures)
 
         # check that the features set with the least error is selected
-        self.failUnless(len(ifs.states.errors))
-        e = N.array(ifs.states.errors)
+        self.failUnless(len(ifs.ca.errors))
+        e = N.array(ifs.ca.errors)
         self.failUnless(sdata.nfeatures == e.argmin() + 1)
 
 

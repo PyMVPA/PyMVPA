@@ -277,7 +277,8 @@ same processing, but without copying the data. For
 `~mvpa.mappers.zscore.zscore()`. The following call will do the same as the
 mapper we have created above, but using less memory:
 
->>> fds = zscore(detrended_fds, param_est=('targets', ['rest']))
+>>> zscore(detrended_fds, param_est=('targets', ['rest']))
+>>> fds = detrended_fds
 >>> print fds.a.mapper
 <ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>-<ZScore>>
 

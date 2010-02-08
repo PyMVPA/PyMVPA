@@ -45,7 +45,7 @@ class ParamsTests(unittest.TestCase):
     def test_blank(self):
         blank  = BlankClass()
 
-        self.failUnlessRaises(AttributeError, blank.__getattribute__, 'states')
+        self.failUnlessRaises(AttributeError, blank.__getattribute__, 'ca')
         self.failUnlessRaises(AttributeError, blank.__getattribute__, '')
 
     def test_simple(self):
@@ -83,7 +83,7 @@ class ParamsTests(unittest.TestCase):
         mixed  = MixedClass()
 
         self.failUnlessEqual(len(mixed.params.items()), 2)
-        self.failUnlessEqual(len(mixed.states.items()), 1)
+        self.failUnlessEqual(len(mixed.ca.items()), 1)
         self.failUnlessRaises(AttributeError, mixed.__getattribute__, 'kernel_params')
 
         self.failUnlessEqual(mixed.params.C, 1.0)

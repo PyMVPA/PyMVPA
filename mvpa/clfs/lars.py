@@ -129,14 +129,14 @@ class LARS(Classifier):
         """
         return "LARS(type='%s', normalize=%s, intercept=%s, trace=%s, " \
                "max_steps=%s, use_Gram=%s, " \
-               "enable_states=%s)" % \
+               "enable_ca=%s)" % \
                (self.__type,
                 self.__normalize,
                 self.__intercept,
                 self.__trace,
                 self.__max_steps,
                 self.__use_Gram,
-                str(self.states.enabled))
+                str(self.ca.enabled))
 
 
     def _train(self, data):
@@ -208,7 +208,7 @@ class LARS(Classifier):
                   "Failed to predict on %s using %s. Exceptions was: %s" \
                   % (data, self, e)
 
-        self.states.estimates = fit
+        self.ca.estimates = fit
         return fit
 
 

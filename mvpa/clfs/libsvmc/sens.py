@@ -72,7 +72,7 @@ class LinearSVMWeights(Sensitivity):
         svs = N.matrix(model.getSV())
         rhos = N.asarray(model.getRho())
 
-        self.states.biases = rhos
+        self.ca.biases = rhos
         if self.params.split_weights:
             if nr_class != 2:
                 raise NotImplementedError, \

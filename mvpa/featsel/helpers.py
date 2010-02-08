@@ -443,16 +443,16 @@ class TailSelector(ElementSelector):
 
         if self.mode == 'discard' and self.__tail == 'upper':
             good_ids = seqrank[:-1*nelements]
-            self.states.ndiscarded = nelements
+            self.ca.ndiscarded = nelements
         elif self.mode == 'discard' and self.__tail == 'lower':
             good_ids = seqrank[nelements:]
-            self.states.ndiscarded = nelements
+            self.ca.ndiscarded = nelements
         elif self.mode == 'select' and self.__tail == 'upper':
             good_ids = seqrank[-1*nelements:]
-            self.states.ndiscarded = len_seq - nelements
+            self.ca.ndiscarded = len_seq - nelements
         else: # select lower tail
             good_ids = seqrank[:nelements]
-            self.states.ndiscarded = len_seq - nelements
+            self.ca.ndiscarded = len_seq - nelements
 
         # sort ids to keep order
         # XXX should we do here are leave to other place
