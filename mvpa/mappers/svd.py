@@ -78,4 +78,23 @@ class SVDMapper(ProjectionMapper):
         """
         return self._proj.H
 
+
+    def _forward_dataset(self, dataset):
+        msamples = self._forward_data(dataset.samples)
+        # wipe out feature attributes, since they don't mean anything for the
+        # new features
+        mds = dataset.copy(deep=False, fa=[])
+        mds.samples = msamples
+        return mds
+
+
+    def _reverse_dataset(self, dataset):
+        msamples = self._reverse_data(dataset.samples)
+        # wipe out feature attributes, since they don't mean anything for the
+        # new features
+        mds = dataset.copy(deep=False, fa=[])
+        mds.samples = msamples
+        return mds
+
+
     sv = property(fget=lambda self: self._sv, doc="Singular values")
