@@ -13,6 +13,7 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.base import externals
+from mvpa import pymvpa_dataroot
 
 if __debug__:
     from mvpa.base import debug

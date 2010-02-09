@@ -17,11 +17,9 @@ else:
 import os
 from tempfile import mkstemp
 
-from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_array_equal
-
+from mvpa.testing import *
 from mvpa.base.dataset import AttrDataset
-from mvpa.base.hdf5 import h5save, obj2hdf
+from mvpa.base.hdf5 import h5save, h5load, obj2hdf
 
 from tests_warehouse import *
 
@@ -73,3 +71,10 @@ def test_h5py_dataset_typecheck():
     # cleanup and ignore stupidity
     os.remove(fpath)
 
+
+def test_matfile_v73_compat():
+    mat = h5load(os.path.join(pymvpa_dataroot, 'v73.mat'))
+    assert_equal(len(mat), 2)
+    assert_equal(sorted(mat.keys()), ['x', 'y'])
+    assert_array_equal(mat['x'], N.arange(6)[None].T)
+    assert_array_equal(mat['y'], N.array([(1,0,1)], dtype='uint8').T)
