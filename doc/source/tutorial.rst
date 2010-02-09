@@ -30,11 +30,11 @@ and how to obtain that knowledge.
    :maxdepth: 2
 
    tutorial_prerequisites
-   tutorial1_start
-   tutorial2_datasets
-   tutorial3_mappers
-   tutorial4_classifiers
-   tutorial5_searchlight
-   tutorial6_sensitivity
-   tutorial7_eventrelated
-   tutorial8_significance
+   tutorial_start
+   tutorial_datasets
+   tutorial_mappers
+   tutorial_classifiers
+   tutorial_searchlight
+   tutorial_sensitivity
+   tutorial_eventrelated
+   tutorial_significance

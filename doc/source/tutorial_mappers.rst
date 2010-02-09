@@ -8,17 +8,17 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 .. index:: Tutorial
-.. _chap_tutorial3:
+.. _chap_tutorial_mappers:
 
 ***************************************
 Part 3: Mappers -- The Swiss Army Knife
 ***************************************
 
-In the :ref:`previous tutorial part <chap_tutorial2>` we have discovered a
+In the :ref:`previous tutorial part <chap_tutorial_datasets>` we have discovered a
 magic ingredient of datasets: a mapper. Mappers are probably the most
 powerful concept in PyMVPA, and there is little one would do without them.
 As a matter of fact, even in the :ref:`first tutorial part
-<chap_tutorial1>` we have used them already, without even seeing them.
+<chap_tutorial_start>` we have used them already, without even seeing them.
 
 In general, a mapper is an algorithm that transforms data.
 This transformation can be as simple as selecting a subset of data, or as
@@ -115,7 +115,7 @@ Doing ``get_haxby2001_data()`` From Scratch
 
 Now we have pretty much all the pieces that we need to perform a full
 cross-validation analysis. Remember, in :ref:`part one of the tutorial
-<chap_tutorial1>` we cheated a bit, by using a magic function to load the
+<chap_tutorial_start>` we cheated a bit, by using a magic function to load the
 preprocessed fMRI data. This time we are more prepared. We know how to
 load fMRI data from timeseries images, we know how to add and access
 attributes in a dataset, we know how to slice datasets, and we know that
@@ -338,7 +338,7 @@ since this is also a mapper, a new dataset with mean samples is returned:
 Here we go! We now have a fully-preprocessed dataset: detrended, normalized,
 with one sample per stimulus condition that is an average for odd and even runs
 respectively. Now we could do some serious classification, and we will do it
-:ref:`part four of the tutorial <chap_tutorial4>`, but there is still an
+:ref:`part four of the tutorial <chap_tutorial_classifiers>`, but there is still an
 important aspect of mappers we have to look at first.
 
 
@@ -468,7 +468,7 @@ part. Some more will be used in other parts, but even more can be found the
 transformations, they can all be used in the same way, and can all be
 combined into a chain.
 
-Now we are really ready for :ref:`part four of the tutorial <chap_tutorial4>`.
+Now we are really ready for :ref:`part four of the tutorial <chap_tutorial_classifiers>`.
 
 
 

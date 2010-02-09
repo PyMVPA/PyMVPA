@@ -8,7 +8,7 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 .. index:: Tutorial, Cross-validation
-.. _chap_tutorial1:
+.. _chap_tutorial_start:
 
 **********************
 Part 1: A Gentle Start
@@ -247,7 +247,7 @@ splitter) formed the training and test datasets in each fold.
 This could be the end of a very simple introduction into cross-validation with
 PyMVPA. However, since we were cheating a bit in the beginning, we actually
 still don't know how to import data other than the single subject from the
-Haxby study. This is the topic of the :ref:`next chapter <chap_tutorial2>`.
+Haxby study. This is the topic of the :ref:`next chapter <chap_tutorial_datasets>`.
 
 .. _NumPy: http://numpy.scipy.org
 

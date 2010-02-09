@@ -8,7 +8,7 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 .. index:: Tutorial
-.. _chap_tutorial7:
+.. _chap_tutorial_eventrelated:
 
 *********************************************************
 Part 7: When Is The Signal -- Event-related Data Analysis
