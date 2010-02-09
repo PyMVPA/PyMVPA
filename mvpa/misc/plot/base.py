@@ -212,83 +212,98 @@ def plotSamplesDistance(dataset, sortbyattr=None):
     P.colorbar()
 
 
-def plotDecisionBoundary2D(dset, clf, res=50, vals=[-1,0,1],
-                           dataCallback=None):
-    """Plots a scatter of a classifier's decision boundary and data points
-    
+def plotDecisionBoundary2D(dataset, clf, res=50, vals=[-1, 0, 1],
+                           data_callback=None):
+    """Plot a scatter of a classifier's decision boundary and data points
+
     Assumes data is 2d (no way to visualize otherwise!!)
-    
-    :Parameters:
-      dset: a dataset (i.e. the trained data, or any novel data)
-      clf: a trained clf
-      res: Number of points in each direction to evaluate
-        Points are between axis limits, which are set automatically by 
-        matplotlib.  Higher number will yield smoother decision lines but come
-        at the cost of O^2 classifying time/memory
-      vals: Where to draw the contour lines
-      dataCallback: Optional callable object to preprocess the new data points
-        Classified points of the form samples = dataCallback(xysamples)
-        Ie this can be a function to normalize them, or cache them (eg, a 
-        CachedSVM) before they are classified.
+
+    Parameters
+    ----------
+    dataset: `Dataset`
+      Data points to visualize (might be the data `clf` was train on, or
+      any novel data).
+    clf: `Classifier`
+      Trained classifier
+    res: int, optional
+      Number of points in each direction to evaluate.
+      Points are between axis limits, which are set automatically by
+      matplotlib.  Higher number will yield smoother decision lines but come
+      at the cost of O^2 classifying time/memory.
+    vals: ???, optional
+      Where to draw the contour lines
+    data_callback: callable, optional
+      Callable object to preprocess the new data points.
+      Classified points of the form samples = data_callback(xysamples).
+      I.e. this can be a function to normalize them, or cache them
+      before they are classified.
     """
     try:
-        assert dset.nfeatures == 2
+        # TODO: allow quick&dirty argument for which features to plot
+        #       from dataset
+        assert dataset.nfeatures == 2
     except AssertionError:
-        RuntimeError('Can only plot a decision boundary in 2d')
-    von = clf.states.isEnabled('values')
-    clf.states.enable('values')
-    
+        RuntimeError('Can only plot a decision boundary in 2D')
+    von = clf.ca.is_enabled('estimates')
+    clf.ca.enable('estimates')
+
     # Init figure
     f = P.figure()
     a = f.add_subplot(1,1,1)
-    vmin = min(dset.uniquelabels)
-    vmax = max(dset.uniquelabels)
+    targets_sa_name = clf.params.targets
+    targets = dataset.sa[targets_sa_name].value
+    utargets = dataset.sa[targets_sa_name].unique
+    # XXX literal?
+    vmin = min(utargets)
+    vmax = max(utargets)
     cmap = P.cm.RdYlGn
-    
+
     # Scatter points
-    for l in dset.uniquelabels:
-        s = dset.selectSamples((dset.labels==l).nonzero()[0])
-        c = [cmap((l-vmin)/float(vmax-vmin))]*s.nsamples
-        a.scatter(s.samples[:,0], s.samples[:,1], label='%s'%l, 
+    for l in utargets:
+        s = dataset[targets==l]
+        c = [cmap((l-vmin)/float(vmax-vmin))] * len(s)
+        a.scatter(s.samples[:, 0], s.samples[:, 1], label='%s' % l,
                   c=c, zorder=10+(l-vmin))
     (xmin, xmax) = a.get_xlim()
     (ymin, ymax) = a.get_ylim()
     extent = (xmin, xmax, ymin, ymax)
-    
+
     # Create grid to evaluate, predict it
     (x,y) = N.mgrid[xmin:xmax:N.complex(0, res), ymin:ymax:N.complex(0,res)]
     news = N.vstack((x.ravel(), y.ravel())).T
     try:
-        news = dataCallback(news)
+        news = data_callback(news)
     except TypeError: # Not a callable object
         pass
+
     clf.predict(news)
-    
+
     # Contour and show predictions
-    if len(clf.trained_labels)==2:
-        linestyles=[]
+    trained_labels = clf.ca.trained_labels
+    if len(trained_labels)==2:
+        linestyles = []
         for v in vals:
             if v == 0:
                 linestyles.append('solid')
             else:
                 linestyles.append('dashed')
-        vmin=-3
-        vmax=3 # Gives a nice tonal range ;)
+        vmin, vmax = -3, 3 # Gives a nice tonal range ;)
     else:
-        vals = (clf.trained_labels[:-1]+clf.trained_labels[1:])/2.
-        linestyles=['solid']*len(vals)
-        
-    a.imshow(N.flipud(clf.values.reshape(x.shape).T),zorder=1, aspect='auto',
-             interpolation='bilinear', alpha=1, cmap=cmap, 
+        vals = (trained_labels[:-1] + trained_labels[1:])/2.
+        linestyles = ['solid'] * len(vals)
+
+    a.imshow(N.flipud(clf.ca.estimates.reshape(x.shape).T), zorder=1,
+             aspect='auto',
+             interpolation='bilinear', alpha=1, cmap=cmap,
              vmin=vmin, vmax=vmax,
              extent=extent,)# extends map beyond -1,1 for aesthetics
 
-    CS = a.contour(x, y, clf.values.reshape(x.shape), vals, zorder=6,
+    CS = a.contour(x, y, clf.ca.estimates.reshape(x.shape), vals, zorder=6,
                    linestyles=linestyles, extent=extent, colors='k')
 
     P.legend()
     if not von:
-        clf.states.disable('values')
+        clf.ca.disable('estimates')
 
 
 def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
