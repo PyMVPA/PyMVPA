@@ -40,20 +40,25 @@ class KNNTests(unittest.TestCase):
 
 
     def test_knn_state(self):
-        train = pureMultivariateSignal( 20, 3 )
+        train = pureMultivariateSignal( 40, 3 )
         test = pureMultivariateSignal( 20, 3 )
 
         clf = kNN(k=10)
         clf.train(train)
 
-        clf.ca.enable('estimates')
-        clf.ca.enable('predictions')
+        clf.ca.enable(['estimates', 'predictions', 'distances'])
 
         p = clf.predict(test.samples)
 
         self.failUnless(p == clf.ca.predictions)
         self.failUnless(N.array(clf.ca.estimates).shape == (80,2))
+        self.failUnless(clf.ca.distances.shape == (80,160))
 
+        self.failUnless(not clf.ca.distances.fa is train.sa)
+        # XXX if we revert to deepcopy for that state following test
+        # should fail
+        self.failUnless(clf.ca.distances.fa['chunks'] is train.sa['chunks'])
+        self.failUnless(clf.ca.distances.fa.chunks is train.sa.chunks)
 
 def suite():
     return unittest.makeSuite(KNNTests)

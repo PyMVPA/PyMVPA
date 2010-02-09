@@ -39,6 +39,13 @@ class Mapper(object):
         """
         self.__inspace = None
         self.set_inspace(inspace)
+        # internal settings that influence what should be done to the dataset
+        # attributes in the default forward() and reverse() implementations.
+        # they are passed to the Dataset.copy() method
+        self._sa_filter = None
+        self._fa_filter = None
+        self._a_filter = None
+
 
     #
     # The following methods are abstract and merely define the intended
@@ -94,7 +101,10 @@ class Mapper(object):
         dataset : Dataset-like
         """
         msamples = self._forward_data(dataset.samples)
-        mds = dataset.copy(deep=False)
+        mds = dataset.copy(deep=False,
+                           sa=self._sa_filter,
+                           fa=self._fa_filter,
+                           a=self._a_filter)
         mds.samples = msamples
         return mds
 
@@ -112,7 +122,10 @@ class Mapper(object):
         dataset : Dataset-like
         """
         msamples = self._reverse_data(dataset.samples)
-        mds = dataset.copy(deep=False)
+        mds = dataset.copy(deep=False,
+                           sa=self._sa_filter,
+                           fa=self._fa_filter,
+                           a=self._a_filter)
         mds.samples = msamples
         return mds
 

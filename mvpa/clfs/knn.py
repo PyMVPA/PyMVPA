@@ -17,7 +17,10 @@ _dict_has_key = sys.version_info >= (2, 5)
 import numpy as N
 
 from mvpa.base import warning
+from mvpa.datasets.base import Dataset
 from mvpa.misc.support import indent_doc
+from mvpa.misc.state import StateVariable
+
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.clfs.distance import squared_euclidean_distance
 
@@ -48,6 +51,10 @@ class kNN(Classifier):
     calling predict().
 
     """
+
+    distances = StateVariable(enabled=False,
+        doc="Distances computed for each sample")
+
 
     __tags__ = ['knn', 'non-linear', 'binary', 'multiclass',
                       'notrain2predict' ]
@@ -137,6 +144,10 @@ class kNN(Classifier):
         # distances stored row-wise, ie. distances between test sample [0]
         # and all training samples will end up in row 0
         dists = self.__dfx(self.__data.samples, data).T
+        if self.ca.is_enabled('distances'):
+            # TODO: theoretically we should have used deepcopy for sa
+            #       here
+            self.ca.distances = Dataset(dists, fa=self.__data.sa.copy())
 
         # determine the k nearest neighbors per test sample
         knns = dists.argsort(axis=1)[:, :self.__k]
