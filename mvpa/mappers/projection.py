@@ -60,6 +60,9 @@ class ProjectionMapper(Mapper):
         """
         Mapper.__init__(self)
 
+        # by default we want to wipe the feature attributes out during mapping
+        self._fa_filter = []
+
         self._selector = selector
         self._proj = None
         """Forward projection matrix."""
