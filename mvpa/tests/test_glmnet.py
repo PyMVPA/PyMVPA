@@ -43,7 +43,7 @@ def test_glmnet_c():
 
     # use GLMNET on binary problem
     clf = GLMNET_C()
-    clf.states.enable('estimates')
+    clf.ca.enable('estimates')
 
     clf.train(data)
 
@@ -61,11 +61,11 @@ def test_glmnet_state():
 
     clf.train(data)
 
-    clf.states.enable('predictions')
+    clf.ca.enable('predictions')
 
     p = clf.predict(data.samples)
 
-    assert_array_equal(p, clf.states.predictions)
+    assert_array_equal(p, clf.ca.predictions)
 
 
 def test_glmnet_c_sensitivities():
@@ -77,7 +77,7 @@ def test_glmnet_c_sensitivities():
 
     # now ask for the sensitivities WITHOUT having to pass the dataset
     # again
-    sens = clf.getSensitivityAnalyzer(force_training=False)()
+    sens = clf.get_sensitivity_analyzer(force_training=False)()
 
     #failUnless(sens.shape == (data.nfeatures,))
     assert_equal(sens.shape, (len(data.UT), data.nfeatures))
@@ -91,6 +91,6 @@ def test_glmnet_r_sensitivities():
 
     # now ask for the sensitivities WITHOUT having to pass the dataset
     # again
-    sens = clf.getSensitivityAnalyzer(force_training=False)()
+    sens = clf.get_sensitivity_analyzer(force_training=False)()
 
-    assert_equal(sens.shape, (data.nfeatures,))
+    assert_equal(sens.shape, (1, data.nfeatures))

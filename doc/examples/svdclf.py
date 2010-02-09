@@ -77,10 +77,10 @@ for desc, clf in clfs:
     cv = CrossValidatedTransferError(
             TransferError(clf),
             NFoldSplitter(),
-            enable_states=['results'])
+            enable_ca=['results'])
     cv(dataset)
 
-    results.append(cv.states.results)
+    results.append(cv.ca.results)
     labels.append(desc)
 
 plotBars(results, labels=labels,

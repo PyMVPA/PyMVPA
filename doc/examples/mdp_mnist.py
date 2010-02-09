@@ -115,7 +115,7 @@ mapper = MDPFlowMapper(fdaflow,
                        ([], [], [DatasetAttributeExtractor('sa', 'targets')]))
 
 terr = TransferError(MappedClassifier(SMLR(), mapper),
-                     enable_states=['confusion',
+                     enable_ca=['confusion',
                                     'samples_error'])
 err = terr(testds, ds)
 print 'Test error:', err

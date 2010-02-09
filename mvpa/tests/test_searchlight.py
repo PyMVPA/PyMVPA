@@ -39,12 +39,12 @@ class SearchlightTests(unittest.TestCase):
                 NFoldSplitter(cvtype=1))
 
         sls = [sphere_searchlight(cv, radius=1,
-                         enable_states=['roisizes', 'raw_results'])]
+                         enable_ca=['roisizes', 'raw_results'])]
 
         if externals.exists('pprocess'):
             sls += [sphere_searchlight(cv, radius=1,
                          nproc=2,
-                         enable_states=['roisizes', 'raw_results'])]
+                         enable_ca=['roisizes', 'raw_results'])]
 
         all_results = []
         for sl in sls:
@@ -61,12 +61,12 @@ class SearchlightTests(unittest.TestCase):
             self.failUnless(0.4 < results.samples.mean() < 0.6)
 
             # check resonable sphere sizes
-            self.failUnless(len(sl.states.roisizes) == 106)
-            self.failUnless(max(sl.states.roisizes) == 7)
-            self.failUnless(min(sl.states.roisizes) == 4)
+            self.failUnless(len(sl.ca.roisizes) == 106)
+            self.failUnless(max(sl.ca.roisizes) == 7)
+            self.failUnless(min(sl.ca.roisizes) == 4)
 
             # check base-class state
-            self.failUnlessEqual(sl.states.raw_results.nfeatures, 106)
+            self.failUnlessEqual(sl.ca.raw_results.nfeatures, 106)
 
         if len(all_results) > 1:
             # if we had multiple searchlights, we can check either they all
@@ -94,7 +94,7 @@ class SearchlightTests(unittest.TestCase):
 
         # test if we graciously puke if center_ids are out of bounds
         dataset0 = self.dataset[:, :50] # so we have no 50th feature
-        self.failUnlessRaises(ValueError, sl, dataset0)
+        self.failUnlessRaises(IndexError, sl, dataset0)
 
     def test_chi_square_searchlight(self):
         # only do partial to save time
@@ -107,12 +107,12 @@ class SearchlightTests(unittest.TestCase):
         cv = CrossValidatedTransferError(
                 transerror,
                 NFoldSplitter(cvtype=1),
-                enable_states=['confusion'])
+                enable_ca=['confusion'])
 
 
         def getconfusion(data):
             cv(data)
-            return chisquare(cv.states.confusion.matrix)[0]
+            return chisquare(cv.ca.confusion.matrix)[0]
 
         sl = sphere_searchlight(getconfusion, radius=0,
                          center_ids=[3,50])

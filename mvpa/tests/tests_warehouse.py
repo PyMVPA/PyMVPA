@@ -24,16 +24,16 @@ from mvpa.clfs.base import Classifier
 from mvpa.misc.state import ClassWithCollections
 from mvpa.misc.data_generators import *
 
-__all__ = [ 'datasets', 'sweepargs', 'N', 'unittest', '_all_states_enabled',
+__all__ = [ 'datasets', 'sweepargs', 'N', 'unittest', '_all_ca_enabled',
             'saveload_warehouse']
 
 if __debug__:
     from mvpa.base import debug
     __all__.append('debug')
 
-    _all_states_enabled = 'ENFORCE_STATES_ENABLED' in debug.active
+    _all_ca_enabled = 'ENFORCE_STATES_ENABLED' in debug.active
 else:
-    _all_states_enabled = False
+    _all_ca_enabled = False
 
 
 
@@ -66,7 +66,7 @@ def sweepargs(**kwargs):
                         # clear classifier before its use
                         argvalue.untrain()
                     if isinstance(argvalue, ClassWithCollections):
-                        argvalue.states.reset()
+                        argvalue.ca.reset()
                     # update kwargs_
                     kwargs_[argname] = argvalue
                     # do actual call
@@ -153,7 +153,7 @@ def sweepargs(**kwargs):
 # Define datasets to be used all over. Split-half later on is used to
 # split into training/testing
 #
-snr_scale = cfg.getAsDType('tests', 'snr scale', float, default=1.0)
+snr_scale = cfg.get_as_dtype('tests', 'snr scale', float, default=1.0)
 
 specs = {'large' : { 'perlabel': 99, 'nchunks': 11,
                      'nfeatures': 20, 'snr': 8 * snr_scale},
@@ -204,10 +204,10 @@ for kind, spec in specs.iteritems():
 
 
 # some additional datasets
-datasets['dumb2'] = dumbFeatureBinaryDataset()
-datasets['dumb'] = dumbFeatureDataset()
+datasets['dumb2'] = dumb_feature_binary_dataset()
+datasets['dumb'] = dumb_feature_dataset()
 # dataset with few invariant features
-_dsinv = dumbFeatureDataset()
+_dsinv = dumb_feature_dataset()
 _dsinv.samples = N.hstack((_dsinv.samples,
                            N.zeros((_dsinv.nsamples, 1)),
                            N.ones((_dsinv.nsamples, 1))))
@@ -218,8 +218,8 @@ datasets['sin_modulated'] = multipleChunks(sinModulated, 4, 30, 1)
 datasets['sin_modulated_test'] = sinModulated(30, 1, flat=True)
 
 # simple signal for linear regressors
-datasets['chirp_linear'] = multipleChunks(chirpLinear, 6, 50, 10, 2, 0.3, 0.1)
-datasets['chirp_linear_test'] = chirpLinear(20, 5, 2, 0.4, 0.1)
+datasets['chirp_linear'] = multipleChunks(chirp_linear, 6, 50, 10, 2, 0.3, 0.1)
+datasets['chirp_linear_test'] = chirp_linear(20, 5, 2, 0.4, 0.1)
 
 datasets['wr1996'] = multipleChunks(wr1996, 4, 50)
 datasets['wr1996_test'] = wr1996(50)

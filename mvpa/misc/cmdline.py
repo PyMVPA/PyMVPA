@@ -49,7 +49,8 @@ class OptionGroups(object):
     def add(self, name, l, doc):
         self._d[name] = (doc, l)
 
-    def _getGroup(self, name):
+    ##REF: Name was automagically refactored
+    def _get_group(self, name):
         try:
             doc, l = self._d[name]
         except KeyError:
@@ -67,7 +68,7 @@ class OptionGroups(object):
         if index[0] == '_':
             return object.__getattribute__(self, index)
         if self._d.has_key(index):
-            return self._getGroup(index)
+            return self._get_group(index)
         return object.__getattribute__(self, index)
 
 
@@ -119,7 +120,8 @@ commonopts_list = [opt.verbose, opt.help]
 if __debug__:
     from mvpa.base import debug
 
-    def _debugCallback(option, optstr, value, parser):
+    ##REF: Name was automagically refactored
+    def _debug_callback(option, optstr, value, parser):
         """Callback for -d|--debug cmdline option
         """
         if value == "list":
@@ -140,7 +142,7 @@ if __debug__:
 
 
     optDebug = Option("-d", "--debug",
-                      action="callback", callback=_debugCallback,
+                      action="callback", callback=_debug_callback,
                       nargs=1,
                       type="string", dest="debug", default="",
                       help="Debug entries to report. " +

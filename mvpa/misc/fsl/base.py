@@ -47,7 +47,8 @@ class FslEV3(ColumnData):
         return self.nrows
 
 
-    def getEV(self, evid):
+    ##REF: Name was automagically refactored
+    def get_ev(self, evid):
         """Returns a tuple of (onset time, simulus duration, intensity) for a
         certain EV.
         """

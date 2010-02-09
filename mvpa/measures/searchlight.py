@@ -15,13 +15,16 @@ if __debug__:
 
 import numpy as N
 
-from mvpa.datasets import Dataset, hstack
 from mvpa.base import externals
+from mvpa.base.dochelpers import borrowkwargs
+
+from mvpa.datasets import Dataset, hstack
 from mvpa.support import copy
 from mvpa.mappers.base import FeatureSliceMapper
 from mvpa.measures.base import DatasetMeasure
 from mvpa.misc.state import StateVariable
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
+from mvpa.base.dochelpers import _str, borrowkwargs
 
 class Searchlight(DatasetMeasure):
     """An implementation of searchlight measure.
@@ -91,7 +94,7 @@ class Searchlight(DatasetMeasure):
             # safeguard against stupidity
             if __debug__:
                 if max(roi_ids) >= dataset.nfeatures:
-                    raise ValueError, \
+                    raise IndexError, \
                           "Maximal center_id found is %s whenever given " \
                           "dataset has only %d features" \
                           % (max(roi_ids), dataset.nfeatures)
@@ -117,7 +120,7 @@ class Searchlight(DatasetMeasure):
 
             # collect results
             results = []
-            if self.states.is_enabled('roisizes'):
+            if self.ca.is_enabled('roisizes'):
                 roisizes = []
             else:
                 roisizes = None
@@ -132,7 +135,7 @@ class Searchlight(DatasetMeasure):
                     self._proc_chunk(roi_ids, dataset, self.__datameasure)
 
         if not roisizes is None:
-            self.states.roisizes = roisizes
+            self.ca.roisizes = roisizes
 
         if __debug__:
             debug('SLC', '')
@@ -156,7 +159,7 @@ class Searchlight(DatasetMeasure):
                 results.a['mapper'] = mapper
 
         # charge state
-        self.states.raw_results = results
+        self.ca.raw_results = results
 
         # return raw results, base-class will take care of transformations
         return results
@@ -166,7 +169,7 @@ class Searchlight(DatasetMeasure):
         """Little helper to capture the parts of the computation that can be
         parallelized
         """
-        if self.states.is_enabled('roisizes'):
+        if self.ca.is_enabled('roisizes'):
             roisizes = []
         else:
             roisizes = None
@@ -197,6 +200,7 @@ class Searchlight(DatasetMeasure):
         return results, roisizes
 
 
+@borrowkwargs(Searchlight, '__init__')
 def sphere_searchlight(datameasure, radius=1, center_ids=None,
                        space='voxel_indices', **kwargs):
     """Creates a `Searchlight` to run a scalar `DatasetMeasure` on

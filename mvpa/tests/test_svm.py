@@ -115,19 +115,19 @@ class SVMTests(unittest.TestCase):
         #print ds_.targets, ds_.chunks
 
         cve = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
-                                          enable_states='confusion')
+                                          enable_ca='confusion')
         # on balanced
         e = cve(ds__)
-        tpr_1 = cve.states.confusion.stats["TPR"][1]
+        tpr_1 = cve.ca.confusion.stats["TPR"][1]
 
         # on disbalanced
         e = cve(ds_)
-        tpr_2 =  cve.states.confusion.stats["TPR"][1]
+        tpr_2 =  cve.ca.confusion.stats["TPR"][1]
 
         # Set '1 C per label'
         # recreate cvte since previous might have operated on copies
         cve = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
-                                          enable_states='confusion')
+                                          enable_ca='confusion')
         oldC = clf.params.C
         # TODO: provide clf.params.C not with a tuple but dictionary
         #       with C per label (now order is deduced in a cruel way)
@@ -141,7 +141,7 @@ class SVMTests(unittest.TestCase):
         except:
             clf.params.C = oldC
             raise
-        tpr_3 = cve.states.confusion.stats["TPR"][1]
+        tpr_3 = cve.ca.confusion.stats["TPR"][1]
 
         # Actual tests
         if cfg.getboolean('tests', 'labile', default='yes'):

@@ -123,11 +123,14 @@ class SVM(_SVM):
     def _train(self, dataset):
         """Train SVM
         """
+        targets_sa_name = self.params.targets    # name of targets sa
+        targets_sa = dataset.sa[targets_sa_name] # actual targets sa
+
         # libsvm needs doubles
         src = _data2ls(dataset)
 
         # libsvm cannot handle literal labels
-        labels = self._attrmap.to_numeric(dataset.sa.targets).tolist()
+        labels = self._attrmap.to_numeric(targets_sa.value).tolist()
 
         svmprob = _svm.SVMProblem(labels, src )
 
@@ -159,16 +162,16 @@ class SVM(_SVM):
         """Store SVM parameters in libSVM compatible format."""
 
         if self.params.has_key('C'):#svm_type in [_svm.svmc.C_SVC]:
-            Cs = self._getCvec(dataset)
+            Cs = self._get_cvec(dataset)
             if len(Cs)>1:
                 C0 = abs(Cs[0])
                 scale = 1.0/(C0)#*N.sqrt(C0))
                 # so we got 1 C per label
-                uls = self._attrmap.to_numeric(dataset.sa['targets'].unique)
+                uls = self._attrmap.to_numeric(targets_sa.unique)
                 if len(Cs) != len(uls):
-                    raise ValueError, "SVM was parametrized with %d Cs but " \
+                    raise ValueError, "SVM was parameterized with %d Cs but " \
                           "there are %d labels in the dataset" % \
-                          (len(Cs), len(dataset.uniquetargets))
+                          (len(Cs), len(targets_sa.unique))
                 weight = [ c*scale for c in Cs ]
                 # All 3 need to be set to take an effect
                 libsvm_param._setParameter('weight', weight)
@@ -185,20 +188,20 @@ class SVM(_SVM):
         """
         # libsvm needs doubles
         src = _data2ls(data)
-        states = self.states
+        ca = self.ca
 
         predictions = [ self.model.predict(p) for p in src ]
 
-        if states.is_enabled('estimates'):
+        if ca.is_enabled('estimates'):
             if self.__is_regression__:
                 estimates = [ self.model.predictValuesRaw(p)[0] for p in src ]
             else:
                 # if 'trained_targets' are literal they have to be mapped
-                if N.issubdtype(self.states.trained_targets.dtype, 'c'):
+                if N.issubdtype(self.ca.trained_targets.dtype, 'c'):
                     trained_targets = self._attrmap.to_numeric(
-                            self.states.trained_targets)
+                            self.ca.trained_targets)
                 else:
-                    trained_targets = self.states.trained_targets
+                    trained_targets = self.ca.trained_targets
                 nlabels = len(trained_targets)
                 # XXX We do duplicate work. model.predict calls
                 # predictValuesRaw internally and then does voting or
@@ -223,15 +226,15 @@ class SVM(_SVM):
                     # In multiclass we return dictionary for all pairs
                     # of labels, since libsvm does 1-vs-1 pairs
                     estimates = [ self.model.predictValues(p) for p in src ]
-            states.estimates = estimates
+            ca.estimates = estimates
 
-        if states.is_enabled("probabilities"):
+        if ca.is_enabled("probabilities"):
             # XXX Is this really necesssary? yoh don't think so since
-            # assignment to states is doing the same
+            # assignment to ca is doing the same
             #self.probabilities = [ self.model.predictProbability(p)
             #                       for p in src ]
             try:
-                states.probabilities = [ self.model.predictProbability(p)
+                ca.probabilities = [ self.model.predictProbability(p)
                                          for p in src ]
             except TypeError:
                 warning("Current SVM %s doesn't support probability " %
@@ -243,7 +246,7 @@ class SVM(_SVM):
         """Provide quick summary over the SVM classifier"""
         s = super(SVM, self).summary()
         if self.trained:
-            s += '\n # of SVs: %d' % self.__model.getTotalNSV()
+            s += '\n # of SVs: %d' % self.__model.get_total_n_sv()
             try:
                 prm = _svm.svmc.svm_model_param_get(self.__model.model)
                 C = _svm.svmc.svm_parameter_C_get(prm)
@@ -251,7 +254,7 @@ class SVM(_SVM):
                 # i.e. so called 'bounded SVs'
                 inside_margin = N.sum(
                     # take 0.99 to avoid rounding issues
-                    N.abs(self.__model.getSVCoef())
+                    N.abs(self.__model.get_sv_coef())
                           >= 0.99*_svm.svmc.svm_parameter_C_get(prm))
                 s += ' #bounded SVs:%d' % inside_margin
                 s += ' used C:%5g' % C

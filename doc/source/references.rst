@@ -135,7 +135,7 @@ experiments.
 
 .. _HR06:
 
-**Haynes, J. & Rees, G.** (2006). Decoding mental states from brain activity in humans. *Nature Reviews Neuroscience*, *7*, 523–534.
+**Haynes, J. & Rees, G.** (2006). Decoding mental ca from brain activity in humans. *Nature Reviews Neuroscience*, *7*, 523–534.
   *Review of decoding studies, emphasizing the importance of ethical issues
   concerning the privacy of personal thought.*
 

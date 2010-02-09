@@ -23,6 +23,29 @@ For The Impatient
   or whole datasets. There is some inital support for other datatypes than
   NumPy's `ndarrays`, e.g. sparse matrices.
 
+
+Critical API Changes
+====================
+
+* `.states` -> `.ca` (for conditional attributes).  All attributes stored in
+  collections (parameters for Classifiers in `.params`, states in `.ca`)
+  should be accessed not at top level of the object but through a collection.
+
+* Dataset: behaves more like a NumPy array.  No specialized Dataset classes,
+  but constructors
+  - MaskedDataset -> `dataset_wizard`
+  - NiftiDataset -> `fmri_dataset`
+  - ERNiftiDataset -> `fmri_dataset` + call to `.extract_events`
+
+* Masks (`mask_mapper`)
+ - now [1,1,0] is not the same as [True, True, False]
+
+* We have weird (but consistent) conventions now
+  - classes are CamelCased
+  - factory functions (even for whatever might have been before a class)
+    are in pythonic_style
+
+
 General Changes
 ===============
 
@@ -31,8 +54,6 @@ Datasets
 
 Interface changes
 -----------------
-
-Behaves more like a NumPy array.
 
 
 Sparse data support

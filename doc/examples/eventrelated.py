@@ -132,11 +132,11 @@ zscore(ds, perchunk=True)
 
 clf = LinearCSVMC()
 sclf = SplitClassifier(clf, NFoldSplitter(),
-       enable_states=['confusion', 'training_confusion'])
+       enable_ca=['confusion', 'training_confusion'])
 
 # Compute sensitivity, which in turn trains the sclf
 sensitivities = \
-    sclf.getSensitivityAnalyzer(combiner=None,
+    sclf.get_sensitivity_analyzer(combiner=None,
                                 slave_combiner=None)(ds)
 
 """

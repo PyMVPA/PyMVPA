@@ -22,11 +22,12 @@ Who Is Using It?
   comment at the bottom of this page, if you want to be listed here as well.
 
 
-PyMVPA Users
-============
+Institutions Where PyMVPA Is Used
+=================================
 
 * Department of Psychological and Brain Sciences, **Dartmouth College**, USA
 * Department of Psychology & Neuroscience, **Duke University**, USA
+* **Fondazione Bruno Kessler**, Italy
 * Department of Brain and Cognitive Sciences, **Massachusetts Institute of
   Technology**, USA
 * Department of Neurology, **Max Planck Insititute for Neurological Research**,
@@ -36,15 +37,15 @@ PyMVPA Users
   Magdeburg**, Germany
 * Department of Psychology, **University of California at Los Angeles**, USA
 * Imaging Research Center, **University of Texas at Austin**, USA
-
+* Department of Psychology, **Yale University**, USA
 
 
 Studies employing PyMVPA
 ========================
 
+* :ref:`Manelis et al. (2010) <MHH10>`: *Implicit memory for object
+  locations depends on reactivation of encoding-related brain regions*
+
 * :ref:`Sun et al. (2009) <SET+09>`: *Elucidating an MRI-Based Neuroanatomic
   Biomarker for Psychosis: Classification Analysis Using Probabilistic Brain
   Atlas and Machine Learning Algorithms.*
-
-* :ref:`Manelis et al. (2010) <MHH10>`: *Implicit memory for object
-  locations depends on reactivation of encoding-related brain regions*

@@ -43,11 +43,11 @@ class ENETTests(unittest.TestCase):
 
         clf.train(data)
 
-        clf.states.enable('predictions')
+        clf.ca.enable('predictions')
 
         p = clf.predict(data.samples)
 
-        self.failUnless((p == clf.states.predictions).all())
+        self.failUnless((p == clf.ca.predictions).all())
 
 
     def test_enet_sensitivities(self):
@@ -59,7 +59,7 @@ class ENETTests(unittest.TestCase):
 
         # now ask for the sensitivities WITHOUT having to pass the dataset
         # again
-        sens = clf.getSensitivityAnalyzer(force_training=False)()
+        sens = clf.get_sensitivity_analyzer(force_training=False)()
 
         self.failUnless(sens.shape == (data.nfeatures,))
 

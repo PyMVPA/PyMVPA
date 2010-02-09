@@ -70,25 +70,25 @@ def main():
             #cv = CrossValidatedTransferError(
             #         TransferError(clf),
             #         NFoldSplitter(),
-            #         enable_states=['confusion'])
+            #         enable_ca=['confusion'])
             #error = cv(dataset)
             #print cv.confusion
 
             # to report transfer error
-            confusion = ConfusionMatrix()#labels_map=dataset.targets_map)
+            confusion = ConfusionMatrix()
             times = []
             nf = []
             t0 = time.time()
-            clf.states.enable('feature_ids')
+            clf.ca.enable('feature_ids')
             for nfold, (training_ds, validation_ds) in \
                     enumerate(NFoldSplitter()(dataset)):
                 clf.train(training_ds)
-                nf.append(len(clf.states.feature_ids))
+                nf.append(len(clf.ca.feature_ids))
                 if nf[-1] == 0:
                     break
                 predictions = clf.predict(validation_ds.samples)
                 confusion.add(validation_ds.targets, predictions)
-                times.append([clf.states.training_time, clf.states.predicting_time])
+                times.append([clf.ca.training_time, clf.ca.predicting_time])
             if nf[-1] == 0:
                 print "no features were selected. skipped"
                 continue

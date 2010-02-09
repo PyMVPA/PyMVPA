@@ -105,8 +105,7 @@ class Classifier(ClassWithCollections):
              demanding its collection should be switchable and off be default.
 
     Nomenclature
-     * predictions  : corresponds to the quantized labels if classifier spits
-                      out labels by .predict()
+     * predictions  : result of the last call to .predict()
      * estimates : might be different from predictions if a classifier's predict()
                    makes a decision based on some internal value such as
                    probability or a distance.
@@ -121,7 +120,7 @@ class Classifier(ClassWithCollections):
     # also be a dict or we should use mvpa.misc.param.Parameter'...
 
     trained_targets = StateVariable(enabled=True,
-        doc="Set of unique labels it has been trained on")
+        doc="Set of unique targets it has been trained on")
 
     trained_nsamples = StateVariable(enabled=True,
         doc="Number of samples it has been trained on")
@@ -153,6 +152,12 @@ class Classifier(ClassWithCollections):
     doing regression for instance...."""
 
     # TODO: make it available only for actually retrainable classifiers
+    targets = Parameter('targets', allowedtype='bool',# ro=True,
+        doc="""What samples attribute to use as targets.""",
+        index=999)
+
+
+    # TODO: make it available only for actually retrainable classifiers
     retrainable = Parameter(False, allowedtype='bool',
         doc="""Either to enable retraining for 'retrainable' classifier.""",
         index=1002)
@@ -170,7 +175,6 @@ class Classifier(ClassWithCollections):
         # however, preferably the mapping should be kept in the respective
         # low-level implementations that need it
         self._attrmap = AttributeMap()
-
 
         self.__trainednfeatures = None
         """Stores number of features for which classifier was trained.
@@ -213,8 +217,8 @@ class Classifier(ClassWithCollections):
         if not params.retrainable:
             self.untrain()
         else:
-            # just reset the states, do not untrain
-            self.states.reset()
+            # just reset the ca, do not untrain
+            self.ca.reset()
             if not self.__changedData_isset:
                 self.__resetChangedData()
                 _changedData = self._changedData
@@ -228,7 +232,7 @@ class Classifier(ClassWithCollections):
 
                 # Look at the data if any was changed
                 for key, data_ in (('traindata', dataset.samples),
-                                   ('targets', dataset.targets)):
+                                   ('targets', dataset.sa[params.targets].value)):
                     _changedData[key] = self.__wasDataChanged(key, data_)
                     # if those idhashes were invalidated by retraining
                     # we need to adjust _changedData accordingly
@@ -261,12 +265,12 @@ class Classifier(ClassWithCollections):
         dataset : Dataset
           Data which was used for training
         """
-        states = self.states
-        if states.is_enabled('trained_targets'):
-            states.trained_targets = dataset.sa['targets'].unique
+        ca = self.ca
+        if ca.is_enabled('trained_targets'):
+            ca.trained_targets = dataset.sa[self.params.targets].unique
 
-        states.trained_dataset = dataset
-        states.trained_nsamples = dataset.nsamples
+        ca.trained_dataset = dataset
+        ca.trained_nsamples = dataset.nsamples
 
         # needs to be assigned first since below we use predict
         self.__trainednfeatures = dataset.nfeatures
@@ -274,12 +278,12 @@ class Classifier(ClassWithCollections):
         if __debug__ and 'CHECK_TRAINED' in debug.active:
             self.__trainedidhash = dataset.idhash
 
-        if self.states.is_enabled('training_confusion') and \
-               not self.states.is_set('training_confusion'):
+        if self.ca.is_enabled('training_confusion') and \
+               not self.ca.is_set('training_confusion'):
             # we should not store predictions for training data,
             # it is confusing imho (yoh)
-            self.states.change_temporarily(
-                disable_states=["predictions"])
+            self.ca.change_temporarily(
+                disable_ca=["predictions"])
             if self.params.retrainable:
                 # we would need to recheck if data is the same,
                 # XXX think if there is a way to make this all
@@ -288,16 +292,17 @@ class Classifier(ClassWithCollections):
                 # training_confusion... sad
                 self.__changedData_isset = False
             predictions = self.predict(dataset)
-            self.states.reset_changed_temporarily()
-            self.states.training_confusion = self.__summary_class__(
-                targets=dataset.sa.targets,
+            self.ca.reset_changed_temporarily()
+            self.ca.training_confusion = self.__summary_class__(
+                targets=dataset.sa[self.params.targets].value,
                 predictions=predictions)
 
-        if self.states.is_enabled('feature_ids'):
-            self.states.feature_ids = self._getFeatureIds()
+        if self.ca.is_enabled('feature_ids'):
+            self.ca.feature_ids = self._get_feature_ids()
 
 
-    def _getFeatureIds(self):
+    ##REF: Name was automagically refactored
+    def _get_feature_ids(self):
         """Virtual method to return feature_ids used while training
 
         Is not intended to be called anywhere but from _posttrain,
@@ -311,22 +316,22 @@ class Classifier(ClassWithCollections):
         """Providing summary over the classifier"""
 
         s = "Classifier %s" % self
-        states = self.states
-        states_enabled = states.enabled
+        ca = self.ca
+        ca_enabled = ca.enabled
 
         if self.trained:
             s += "\n trained"
-            if states.is_set('training_time'):
-                s += ' in %.3g sec' % states.training_time
+            if ca.is_set('training_time'):
+                s += ' in %.3g sec' % ca.training_time
             s += ' on data with'
-            if states.is_set('trained_targets'):
-                s += ' labels:%s' % list(states.trained_targets)
+            if ca.is_set('trained_targets'):
+                s += ' targets:%s' % list(ca.trained_targets)
 
             nsamples, nchunks = None, None
-            if states.is_set('trained_nsamples'):
-                nsamples = states.trained_nsamples
-            if states.is_set('trained_dataset'):
-                td = states.trained_dataset
+            if ca.is_set('trained_nsamples'):
+                nsamples = ca.trained_nsamples
+            if ca.is_set('trained_dataset'):
+                td = ca.trained_dataset
                 nsamples, nchunks = td.nsamples, len(td.sa['chunks'].unique)
             if nsamples is not None:
                 s += ' #samples:%d' % nsamples
@@ -334,16 +339,16 @@ class Classifier(ClassWithCollections):
                 s += ' #chunks:%d' % nchunks
 
             s += " #features:%d" % self.__trainednfeatures
-            if states.is_set('feature_ids'):
-                s += ", used #features:%d" % len(states.feature_ids)
-            if states.is_set('training_confusion'):
-                s += ", training error:%.3g" % states.training_confusion.error
+            if ca.is_set('feature_ids'):
+                s += ", used #features:%d" % len(ca.feature_ids)
+            if ca.is_set('training_confusion'):
+                s += ", training error:%.3g" % ca.training_confusion.error
         else:
             s += "\n not yet trained"
 
-        if len(states_enabled):
-            s += "\n enabled states:%s" % ', '.join([str(states[x])
-                                                     for x in states_enabled])
+        if len(ca_enabled):
+            s += "\n enabled ca:%s" % ', '.join([str(ca[x])
+                                                     for x in ca_enabled])
         return s
 
 
@@ -399,7 +404,7 @@ class Classifier(ClassWithCollections):
                       "is called")
             result = None
 
-        self.states.training_time = time.time() - t0
+        self.ca.training_time = time.time() - t0
         self._posttrain(dataset)
         return result
 
@@ -438,7 +443,7 @@ class Classifier(ClassWithCollections):
     def _postpredict(self, dataset, result):
         """Functionality after prediction is computed
         """
-        self.states.predictions = result
+        self.ca.predictions = result
         if self.params.retrainable:
             self.__changedData_isset = False
 
@@ -465,10 +470,10 @@ class Classifier(ClassWithCollections):
         # remember the time when started computing predictions
         t0 = time.time()
 
-        states = self.states
+        ca = self.ca
         # to assure that those are reset (could be set due to testing
         # post-training)
-        states.reset(['estimates', 'predictions'])
+        ca.reset(['estimates', 'predictions'])
 
         self._prepredict(dataset)
 
@@ -483,9 +488,9 @@ class Classifier(ClassWithCollections):
                       "bogus")
             result = [None]*data.shape[0]
 
-        states.predicting_time = time.time() - t0
+        ca.predicting_time = time.time() - t0
 
-        # with a labels mapping in-place, we also need to go back to the
+        # with labels mapping in-place, we also need to go back to the
         # literal labels
         if self._attrmap:
             try:
@@ -499,7 +504,8 @@ class Classifier(ClassWithCollections):
         return result
 
     # XXX deprecate ???
-    def isTrained(self, dataset=None):
+    ##REF: Name was automagically refactored
+    def is_trained(self, dataset=None):
         """Either classifier was already trained.
 
         MUST BE USED WITH CARE IF EVER"""
@@ -512,7 +518,7 @@ class Classifier(ClassWithCollections):
                 res2 = (self.__trainedidhash == dataset.idhash)
                 if res2 != res:
                     raise RuntimeError, \
-                          "isTrained is weak and shouldn't be relied upon. " \
+                          "is_trained is weak and shouldn't be relied upon. " \
                           "Got result %b although comparing of idhash says %b" \
                           % (res, res2)
             return res
@@ -521,7 +527,7 @@ class Classifier(ClassWithCollections):
     @property
     def trained(self):
         """Either classifier was already trained"""
-        return self.isTrained()
+        return self.is_trained()
 
     def untrain(self):
         """Reset trained state"""
@@ -538,7 +544,8 @@ class Classifier(ClassWithCollections):
         super(Classifier, self).reset()
 
 
-    def getSensitivityAnalyzer(self, **kwargs):
+    ##REF: Name was automagically refactored
+    def get_sensitivity_analyzer(self, **kwargs):
         """Factory method to return an appropriate sensitivity analyzer for
         the respective classifier."""
         raise NotImplementedError
@@ -566,19 +573,19 @@ class Classifier(ClassWithCollections):
             # assure that we don't drag anything behind
             if self.trained:
                 self.untrain()
-            states = self.states
-            if not value and states.has_key('retrained'):
-                states.pop('retrained')
-                states.pop('repredicted')
+            ca = self.ca
+            if not value and ca.has_key('retrained'):
+                ca.pop('retrained')
+                ca.pop('repredicted')
             if value:
                 if not 'retrainable' in self.__tags__:
                     warning("Setting of flag retrainable for %s has no effect"
                             " since classifier has no such capability. It would"
                             " just lead to resources consumption and slowdown"
                             % self)
-                states['retrained'] = StateVariable(enabled=True,
+                ca['retrained'] = StateVariable(enabled=True,
                         doc="Either retrainable classifier was retrained")
-                states['repredicted'] = StateVariable(enabled=True,
+                ca['repredicted'] = StateVariable(enabled=True,
                         doc="Either retrainable classifier was repredicted")
 
             pretrainable.value = value
@@ -700,7 +707,7 @@ class Classifier(ClassWithCollections):
         ----------
         kwargs
           that is what _changedData gets updated with. So, smth like
-          `(params=['C'], labels=True)` if parameter C and labels
+          `(params=['C'], targets=True)` if parameter C and targets
           got changed
         """
         # Note that it also demolishes anything for repredicting,
@@ -732,7 +739,7 @@ class Classifier(ClassWithCollections):
         # To check if we are not fooled
         if __debug__ and 'CHECK_RETRAIN' in debug.active:
             for key, data_ in (('traindata', dataset.samples),
-                               ('targets', dataset.targets)):
+                               ('targets', dataset.sa[self.params.targets].value)):
                 # so it wasn't told to be invalid
                 if not chd[key] and not ichd.get(key, False):
                     if self.__wasDataChanged(key, data_, update=False):
@@ -773,7 +780,7 @@ class Classifier(ClassWithCollections):
           dataset which is conventionally given to predict
         kwargs
           that is what _changedData gets updated with. So, smth like
-          `(params=['C'], labels=True)` if parameter C and labels
+          `(params=['C'], targets=True)` if parameter C and targets
           got changed
         """
         if len(kwargs)>0:

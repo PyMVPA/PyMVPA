@@ -39,6 +39,13 @@ class Mapper(object):
         """
         self.__inspace = None
         self.set_inspace(inspace)
+        # internal settings that influence what should be done to the dataset
+        # attributes in the default forward() and reverse() implementations.
+        # they are passed to the Dataset.copy() method
+        self._sa_filter = None
+        self._fa_filter = None
+        self._a_filter = None
+
 
     #
     # The following methods are abstract and merely define the intended
@@ -94,7 +101,10 @@ class Mapper(object):
         dataset : Dataset-like
         """
         msamples = self._forward_data(dataset.samples)
-        mds = dataset.copy(deep=False)
+        mds = dataset.copy(deep=False,
+                           sa=self._sa_filter,
+                           fa=self._fa_filter,
+                           a=self._a_filter)
         mds.samples = msamples
         return mds
 
@@ -112,7 +122,10 @@ class Mapper(object):
         dataset : Dataset-like
         """
         msamples = self._reverse_data(dataset.samples)
-        mds = dataset.copy(deep=False)
+        mds = dataset.copy(deep=False,
+                           sa=self._sa_filter,
+                           fa=self._fa_filter,
+                           a=self._a_filter)
         mds.samples = msamples
         return mds
 
@@ -602,28 +615,31 @@ class CombinedMapper(Mapper):
             m.selectOut(selected)
 
 
-    def getNeighbor(self, outId, *args, **kwargs):
+    ##REF: Name was automagically refactored
+    def get_neighbor(self, outId, *args, **kwargs):
         """Get the ids of the neighbors of a single feature in output dataspace.
 
         Parameters
         ----------
         outId : int
-          Single id of a feature in output space, whos neighbors should be
+          Single id of a feature in output space, whose neighbors should be
           determined.
         *args, **kwargs
           Additional arguments are passed to the metric of the embedded
           mapper, that is responsible for the corresponding feature.
 
-        Returns a list of outIds
+        Returns
+        -------
+        list of outIds
         """
         fsum = 0
         for m in self._mappers:
             fsum_new = fsum + m.get_outsize()
             if outId >= fsum and outId < fsum_new:
-                return m.getNeighbor(outId - fsum, *args, **kwargs)
+                return m.get_neighbor(outId - fsum, *args, **kwargs)
             fsum = fsum_new
 
-        raise ValueError, "Invalid outId passed to CombinedMapper.getNeighbor()"
+        raise ValueError, "Invalid outId passed to CombinedMapper.get_neighbor()"
 
 
     def __repr__(self):

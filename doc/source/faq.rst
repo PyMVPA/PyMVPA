@@ -247,9 +247,9 @@ the classifier.
   ...           SensitivityBasedFeatureSelection(
   ...               SMLRWeights(SMLR(lm=1.0), postproc=maxofabs_sample()),
   ...               FixedNElementTailSelector(1, tail='upper', mode='select')),
-  ...           enable_states = ['feature_ids'])
+  ...           enable_ca = ['feature_ids'])
   >>> clf.train(dataset)
-  >>> final_dataset = dataset[:, clf.states.feature_ids]
+  >>> final_dataset = dataset[:, clf.ca.feature_ids]
   >>> print final_dataset
   <Dataset: 100x1@float64, <sa: chunks,targets>>
 
@@ -284,9 +284,9 @@ them again) looks like this:
   ...       TransferError(SMLR()),
   ...       OddEvenSplitter(),
   ...       harvest_attribs=\
-  ...        ['transerror.clf.getSensitivityAnalyzer(force_training=False)()'])
+  ...        ['transerror.clf.get_sensitivity_analyzer(force_training=False)()'])
   >>> merror = cv(dataset)
-  >>> sensitivities = cv.states.harvested.values()[0]
+  >>> sensitivities = cv.ca.harvested.values()[0]
   >>> len(sensitivities)
   2
   >>> sensitivities[0].shape == (len(dataset.uniquetargets), dataset.nfeatures)
@@ -303,7 +303,7 @@ the classifier on each split is available via `transerror`. The rest is easy:
 :class:`~mvpa.clfs.transerror.TransferError` provides access to its classifier
 and any classifier can in turn generate an appropriate
 :class:`~mvpa.measures.base.Sensitivity` instance via
-`getSensitivityAnalyzer()`.  This generator method takes additional arguments
+`get_sensitivity_analyzer()`.  This generator method takes additional arguments
 to the constructor of the :class:`mvpa.measures.base.Sensitivity` class. In
 this case we want to prevent retraining the classifiers, as they will be
 trained anyway by the :class:`~mvpa.clfs.transerror.TransferError` instance
