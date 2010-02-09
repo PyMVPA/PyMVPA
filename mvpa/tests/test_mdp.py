@@ -21,13 +21,13 @@ from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper, PCAMapper, \
 from mvpa.mappers.lle import LLEMapper
 from mvpa.datasets.base import Dataset
 from mvpa.base.dataset import DAE
-from mvpa.misc.data_generators import normalFeatureDataset
+from mvpa.misc.data_generators import normal_feature_dataset
 
 from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true,  assert_array_equal, assert_array_almost_equal
 
 def test_mdpnodemapper():
-    ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+    ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
 
     node = mdp.nodes.PCANode()
     mm = MDPNodeMapper(node, nodeargs={'stoptrain': ((), {'debug': True})})
@@ -60,14 +60,14 @@ def test_mdpnodemapper():
 
     # retraining has to work on a new dataset too, since we copy the node
     # internally
-    dsbig = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=10)
+    dsbig = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=10)
     mm.train(dsbig)
 
 
 def test_mdpflowmapper():
     flow = mdp.nodes.PCANode() + mdp.nodes.SFANode()
     fm = MDPFlowMapper(flow)
-    ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+    ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
 
     fm.train(ds)
     assert_false(fm.flow[0].is_training())
@@ -82,7 +82,7 @@ def test_mdpflow_additional_arguments():
     if externals.versions['mdp'] < '2.5':
         # we have no IdentityNode yet... is there analog?
         return
-    ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+    ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
     flow = mdp.nodes.PCANode() + mdp.nodes.IdentityNode() + mdp.nodes.FDANode()
     # this is what it would look like in MDP itself
     #flow.train([[ds.samples],
@@ -99,7 +99,7 @@ def test_mdpflow_additional_arguments_nones():
     if externals.versions['mdp'] < '2.5':
         # we have no IdentityNode yet... is there analog?
         return
-    ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+    ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
     flow = mdp.nodes.PCANode() + mdp.nodes.IdentityNode() + mdp.nodes.FDANode()
     # this is what it would look like in MDP itself
     #flow.train([[ds.samples],

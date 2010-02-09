@@ -14,14 +14,15 @@ __docformat__ = 'restructuredtext'
 #
 # THIS CODE IS OBSOLETE!
 #
-# PLEASE PORT substractBaseline() AND resample() TO WORK WITH ANY DATASET.
+# PLEASE PORT substract_baseline() AND resample() TO WORK WITH ANY DATASET.
 #
 
 raise DeprecationWarning("ChannelDataset is obsolete and might vanish any "
                          "second.")
 
 if False:           # just to please Python so it could parse the file
-    def substractBaseline(self, t=None):
+    ##REF: Name was automagically refactored
+    def substract_baseline(self, t=None):
         """Substract mean baseline signal from the each timepoint.
 
         The baseline is determined by computing the mean over all timepoints

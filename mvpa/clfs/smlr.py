@@ -147,7 +147,8 @@ class SMLR(Classifier):
         """The biases, will remain none if has_bias is False"""
 
 
-    def _pythonStepwiseRegression(self, w, X, XY, Xw, E,
+    ##REF: Name was automagically refactored
+    def _python_stepwise_regression(self, w, X, XY, Xw, E,
                                   auto_corr,
                                   lambda_over_2_auto_corr,
                                   S,
@@ -334,7 +335,7 @@ class SMLR(Classifier):
 
         # set the feature dimensions
         elif self.params.implementation.upper() == 'PYTHON':
-            _stepwise_regression = self._pythonStepwiseRegression
+            _stepwise_regression = self._python_stepwise_regression
         else:
             raise ValueError, \
                   "Unknown implementation %s of stepwise_regression" % \

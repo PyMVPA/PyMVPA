@@ -40,15 +40,15 @@ data = N.random.normal(size=(1000, 1))
 test = 'p-roc'
 figsize = (15, 10)
 verbose(1, "Find matching datasets")
-matches = matchDistribution(data, test=test, p=0.05)
+matches = match_distribution(data, test=test, p=0.05)
 
 P.figure(figsize=figsize)
 P.subplot(2, 1, 1)
-plotDistributionMatches(data, matches, legend=1, nbest=5)
+plot_distribution_matches(data, matches, legend=1, nbest=5)
 P.title('Normal: 5 best distributions')
 
 P.subplot(2, 1, 2)
-plotDistributionMatches(data, matches, nbest=5, p=0.05,
+plot_distribution_matches(data, matches, nbest=5, p=0.05,
                         tail='any', legend=4)
 P.title('Accept regions for two-tailed test')
 
@@ -75,15 +75,15 @@ zscore(dataset, perchunk=True, baselinetargets=[0],
 # on all voxels at once, just for the sake of visualization
 data = dataset.samples.ravel()
 verbose(2, "Find matching distribution")
-matches = matchDistribution(data, test=test, p=0.05)
+matches = match_distribution(data, test=test, p=0.05)
 
 P.figure(figsize=figsize)
 P.subplot(2, 1, 1)
-plotDistributionMatches(data, matches, legend=1, nbest=5)
+plot_distribution_matches(data, matches, legend=1, nbest=5)
 P.title('Random voxel: 5 best distributions')
 
 P.subplot(2, 1, 2)
-plotDistributionMatches(data, matches, nbest=5, p=0.05,
+plot_distribution_matches(data, matches, nbest=5, p=0.05,
                         tail='any', legend=4)
 P.title('Accept regions for two-tailed test')
 report.figure()

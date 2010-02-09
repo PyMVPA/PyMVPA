@@ -75,9 +75,9 @@ class SpaceTransformation(TransformationBase):
     """
     To perform transformation from Voxel into Real Space.
     Simple one -- would subtract the origin and multiply by voxelSize.
-    if toRealSpace is True then on call/getitem converts to RealSpace
+    if to_real_space is True then on call/getitem converts to RealSpace
     """
-    def __init__(self, voxelSize=None, origin=None, toRealSpace=True,
+    def __init__(self, voxelSize=None, origin=None, to_real_space=True,
                  *args, **kwargs):
 
         TransformationBase.__init__(self, *args, **kwargs)
@@ -88,19 +88,21 @@ class SpaceTransformation(TransformationBase):
         if not origin is None: self.origin = N.asarray(origin)
         else: self.origin = 0
 
-        if toRealSpace:
-            self.apply = self.toRealSpace
+        if to_real_space:
+            self.apply = self.to_real_space
         else:
-            self.apply = self.toVoxelSpace
+            self.apply = self.to_voxel_space
 
-    def toRealSpace(self, coord):
+    ##REF: Name was automagically refactored
+    def to_real_space(self, coord):
         #speed if not self.origin is None:
         coord -= self.origin
         #speed if not self.voxelSize is None:
         coord *= self.voxelSize
         return coord
 
-    def toVoxelSpace(self, coord):
+    ##REF: Name was automagically refactored
+    def to_voxel_space(self, coord):
         #speed if not self.voxelSize is None:
         coord /= self.voxelSize
         #speed if not self.origin is None:
@@ -161,7 +163,7 @@ class MNI2Tal_MatthewBrett(TransformationBase):
                 False: self.__lower}[coord[2]>=0][coord]
 
 
-def MNI2Tal_MeyerLindenberg98 (*args, **kwargs):
+def mni_to_tal_meyer_lindenberg98 (*args, **kwargs):
     """
     Due to Andreas Meyer-Lindenberg
     Taken from
@@ -175,7 +177,7 @@ def MNI2Tal_MeyerLindenberg98 (*args, **kwargs):
         [    0.00000,   0.00000,   0.00000,   1.00000] ]), *args, **kwargs )
 
 
-def MNI2Tal_YOHflirt (*args, **kwargs):
+def mni_to_tal_yohflirt (*args, **kwargs):
     """Transformations obtained using flirt from Talairach to Standard
 
     Transformations were obtained by registration of
@@ -203,8 +205,8 @@ def MNI2Tal_YOHflirt (*args, **kwargs):
                    , *args, **kwargs )
 
 
-def Tal2MNI_YOHflirt (*args, **kwargs):
-    """See MNI2Tal_YOHflirt doc
+def tal_to_mni_yohflirt (*args, **kwargs):
+    """See mni_to_tal_yohflirt doc
     """
     return Linear( N.array([
         [    1.00452,    0.00441281,  -0.011011,  -0.943886],
@@ -214,7 +216,7 @@ def Tal2MNI_YOHflirt (*args, **kwargs):
 
 
 
-def MNI2Tal_Lancaster07FSL (*args, **kwargs):
+def mni_to_tal_lancaster07_fsl (*args, **kwargs):
     return Linear( N.array([
         [  0.9464, 0.0034, -0.0026, -1.0680],
         [ -0.0083, 0.9479, -0.0580, -1.0239],
@@ -222,7 +224,7 @@ def MNI2Tal_Lancaster07FSL (*args, **kwargs):
         [  0.0000, 0.0000,  0.0000,  1.0000] ]), *args, **kwargs )
 
 
-def Tal2MNI_Lancaster07FSL (*args, **kwargs):
+def tal_to_mni_lancaster07_fsl (*args, **kwargs):
     return Linear( N.array([
         [ 1.056585, -0.003972,  0.002793,  1.115461],
         [ 0.008834,  1.050528,  0.067651,  0.869379],
@@ -230,7 +232,7 @@ def Tal2MNI_Lancaster07FSL (*args, **kwargs):
         [ 0.      ,  0.      ,  0.      ,  1.      ]]), *args, **kwargs )
 
 
-def MNI2Tal_Lancaster07pooled (*args, **kwargs):
+def mni_to_tal_lancaster07pooled (*args, **kwargs):
     return Linear( N.array([
         [    0.93570,   0.00290,  -0.00720,  -1.04230],
         [   -0.00650,   0.93960,  -0.07260,  -1.39400],
@@ -238,7 +240,7 @@ def MNI2Tal_Lancaster07pooled (*args, **kwargs):
         [    0.00000,   0.00000,   0.00000,   1.00000] ]), *args, **kwargs )
 
 
-def Tal2MNI_Lancaster07pooled (*args, **kwargs):
+def tal_to_mni_lancaster07pooled (*args, **kwargs):
     return Linear( N.array([
         [  1.06860,  -0.00396,   0.00826,   1.07816],
         [  0.00640,   1.05741,   0.08566,   1.16824],
@@ -248,9 +250,9 @@ def Tal2MNI_Lancaster07pooled (*args, **kwargs):
 
 if __name__ == '__main__':
     #t = Tal2Mni
-    tl = Tal2MNI_Lancaster07FSL()
-    tli = MNI2Tal_Lancaster07FSL()
-    tml = MNI2Tal_MeyerLindenberg98()
+    tl = tal_to_mni_lancaster07_fsl()
+    tli = mni_to_tal_lancaster07_fsl()
+    tml = mni_to_tal_meyer_lindenberg98()
     #print t[1,3,2]
     print tl[(1,3,2)]
     print tli[[1,3,2]]

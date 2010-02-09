@@ -66,7 +66,8 @@ class FslEV3(ColumnData):
                           sep=' ')
 
 
-    def toEvents(self, **kwargs):
+    ##REF: Name was automagically refactored
+    def to_events(self, **kwargs):
         """Convert into a list of `Event` instances.
 
         Parameters
@@ -170,10 +171,11 @@ class FslGLMDesign(object):
           '.gz'.
         """
         # XXX maybe load from array as well
-        self._loadFile(source)
+        self._load_file(source)
 
 
-    def _loadFile(self, fname):
+    ##REF: Name was automagically refactored
+    def _load_file(self, fname):
         """Helper function to load GLM definition from a file.
         """
         # header info

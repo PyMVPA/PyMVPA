@@ -253,11 +253,12 @@ class ElementSelector(ClassWithCollections):
         """
         ClassWithCollections.__init__(self, **kwargs)
 
-        self._setMode(mode)
+        self._set_mode(mode)
         """Flag whether to select or to discard elements."""
 
 
-    def _setMode(self, mode):
+    ##REF: Name was automagically refactored
+    def _set_mode(self, mode):
         """Choose `select` or `discard` mode."""
 
         if not mode in ['discard', 'select']:
@@ -299,7 +300,7 @@ class ElementSelector(ClassWithCollections):
         """
         raise NotImplementedError
 
-    mode = property(fget=lambda self:self.__mode, fset=_setMode)
+    mode = property(fget=lambda self:self.__mode, fset=_set_mode)
 
 
 class RangeElementSelector(ElementSelector):
@@ -406,13 +407,14 @@ class TailSelector(ElementSelector):
         # init State before registering anything
         ElementSelector.__init__(self, **kwargs)
 
-        self._setTail(tail)
+        self._set_tail(tail)
         """Know which tail to select."""
 
         self.__sort = sort
 
 
-    def _setTail(self, tail):
+    ##REF: Name was automagically refactored
+    def _set_tail(self, tail):
         """Set the tail to be processed."""
         if not tail in ['lower', 'upper']:
             raise ValueError, "Unkown tail argument [%s]. Can only be one " \
@@ -478,7 +480,7 @@ class FixedNElementTailSelector(TailSelector):
         """
         TailSelector.__init__(self, **kwargs)
         self.__nelements = None
-        self._setNElements(nelements)
+        self._set_n_elements(nelements)
 
 
     def __repr__(self):
@@ -491,7 +493,8 @@ class FixedNElementTailSelector(TailSelector):
         return self.__nelements
 
 
-    def _setNElements(self, nelements):
+    ##REF: Name was automagically refactored
+    def _set_n_elements(self, nelements):
         if __debug__:
             if nelements <= 0:
                 raise ValueError, "Number of elements less or equal to zero " \
@@ -501,7 +504,7 @@ class FixedNElementTailSelector(TailSelector):
 
 
     nelements = property(fget=lambda x:x.__nelements,
-                         fset=_setNElements)
+                         fset=_set_n_elements)
 
 
 
@@ -518,7 +521,7 @@ class FractionTailSelector(TailSelector):
             specified at least one element will be selected.
         """
         TailSelector.__init__(self, **kwargs)
-        self._setFElements(felements)
+        self._set_f_elements(felements)
 
 
     def __repr__(self):
@@ -535,7 +538,8 @@ class FractionTailSelector(TailSelector):
         return num
 
 
-    def _setFElements(self, felements):
+    ##REF: Name was automagically refactored
+    def _set_f_elements(self, felements):
         """What fraction to discard"""
         if felements > 1.0 or felements < 0.0:
             raise ValueError, \
@@ -546,7 +550,7 @@ class FractionTailSelector(TailSelector):
 
 
     felements = property(fget=lambda x:x.__felements,
-                         fset=_setFElements)
+                         fset=_set_f_elements)
 
 
 

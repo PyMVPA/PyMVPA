@@ -14,7 +14,7 @@ from mvpa.clfs.stats import MCNullDist, FixedNullDist, NullDist
 from mvpa.datasets import Dataset
 from mvpa.measures.glm import GLM
 from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
-from mvpa.misc.fx import double_gamma_hrf, singleGammaHRF
+from mvpa.misc.fx import double_gamma_hrf, single_gamma_hrf
 from tests_warehouse import *
 from mvpa.testing.tools import assert_array_almost_equal, assert_array_equal, \
 assert_true, assert_equal

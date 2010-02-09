@@ -48,7 +48,8 @@ def aggregate_features(dataset, fx=N.mean):
 
 
 @datasetmethod
-def removeInvariantFeatures(dataset):
+##REF: Name was automagically refactored
+def remove_invariant_features(dataset):
     """Returns a new dataset with all invariant features removed.
     """
     return dataset[:, dataset.samples.std(axis=0).nonzero()[0]]

@@ -128,14 +128,15 @@ class NullDist(ClassWithCollections):
         """
         ClassWithCollections.__init__(self, **kwargs)
 
-        self._setTail(tail)
+        self._set_tail(tail)
 
     def __repr__(self, prefixes=[]):
         return super(NullDist, self).__repr__(
             prefixes=["tail=%s" % `self.__tail`] + prefixes)
 
 
-    def _setTail(self, tail):
+    ##REF: Name was automagically refactored
+    def _set_tail(self, tail):
         # sanity check
         if tail not in ('left', 'right', 'any', 'both'):
             raise ValueError, 'Unknown value "%s" to `tail` argument.' \
@@ -167,7 +168,7 @@ class NullDist(ClassWithCollections):
         return _pvalue(x, self.cdf, self.__tail, **kwargs)
 
 
-    tail = property(fget=lambda x:x.__tail, fset=_setTail)
+    tail = property(fget=lambda x:x.__tail, fset=_set_tail)
 
 
 class MCNullDist(NullDist):
@@ -639,7 +640,8 @@ if externals.exists('scipy'):
 
 
 
-    def matchDistribution(data, nsamples=None, loc=None, scale=None,
+    ##REF: Name was automagically refactored
+    def match_distribution(data, nsamples=None, loc=None, scale=None,
                           args=None, test='kstest', distributions=None,
                           **kwargs):
         """Determine best matching distribution.
@@ -689,7 +691,7 @@ if externals.exists('scipy'):
         Examples
         --------
         >>> data = N.random.normal(size=(1000,1));
-        >>> matches = matchDistribution(
+        >>> matches = match_distribution(
               data,
               distributions=['rdist',
                              ('rdist', {'name':'rdist_fixed',
@@ -831,7 +833,8 @@ if externals.exists('scipy'):
     if externals.exists('pylab'):
         import pylab as P
 
-        def plotDistributionMatches(data, matches, nbins=31, nbest=5,
+        ##REF: Name was automagically refactored
+        def plot_distribution_matches(data, matches, nbins=31, nbest=5,
                                     expand_tails=8, legend=2, plot_cdf=True,
                                     p=None, tail='both'):
             """Plot best matching distributions
@@ -841,7 +844,7 @@ if externals.exists('scipy'):
             data : N.ndarray
               Data which was used to obtain the matches
             matches : list of tuples
-              Sorted matches as provided by matchDistribution
+              Sorted matches as provided by match_distribution
             nbins : int
               Number of bins in the histogram
             nbest : int
@@ -963,14 +966,14 @@ if externals.exists('scipy'):
 
     #if True:
     #    data = N.random.normal(size=(1000,1));
-    #    matches = matchDistribution(
+    #    matches = match_distribution(
     #        data,
     #        distributions=['scipy',
     #                       ('norm', {'name':'norm_known',
     #                                 'scale': 1.0,
     #                                 'loc': 0.0})],
     #        nsamples=30, test='p-roc', p=0.05)
-    #    P.figure(); plotDistributionMatches(data, matches, nbins=101,
+    #    P.figure(); plot_distribution_matches(data, matches, nbins=101,
     #                                        p=0.05, legend=4, nbest=5)
 
 

@@ -22,7 +22,7 @@ from mvpa.base.types import is_datasetlike
 from mvpa.base.dataset import DatasetError, vstack, hstack
 from mvpa.mappers.flatten import mask_mapper
 from mvpa.datasets.base import dataset_wizard, Dataset
-from mvpa.misc.data_generators import normalFeatureDataset
+from mvpa.misc.data_generators import normal_feature_dataset
 import mvpa.support.copy as copy
 from mvpa.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection, \
@@ -252,7 +252,7 @@ def test_basic_datamapping():
 
 def test_ds_shallowcopy():
     # lets use some instance of somewhat evolved dataset
-    ds = normalFeatureDataset()
+    ds = normal_feature_dataset()
     ds.samples = ds.samples.view(myarray)
 
     # SHALLOW copy the beast
@@ -287,7 +287,7 @@ def test_ds_shallowcopy():
 
 def test_ds_deepcopy():
     # lets use some instance of somewhat evolved dataset
-    ds = normalFeatureDataset()
+    ds = normal_feature_dataset()
     ds.samples = ds.samples.view(myarray)
     # Clone the beast
     ds_ = ds.copy()

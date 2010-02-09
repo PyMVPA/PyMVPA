@@ -18,7 +18,8 @@ DATA_URI=data.pymvpa.org::datadb
 SWARMTOOL_DIR=tools/codeswarm
 SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
 RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g
-RSYNC_OPTS_UP=-rzlhvp --delete --chmod=Dg+s,g+rw,o+rX
+RSYNC_OPTS_UP=-rzlhv --delete
+# -p --chmod=Dg+s,g+rw,o+rX
 
 #
 # The Python executable to be used
@@ -235,7 +236,7 @@ profile: build mvpa/tests/main.py
 website: website-stamp
 website-stamp: mkdir-WWW_DIR htmldoc pdfdoc
 	cp -r $(HTML_DIR)/* $(WWW_DIR)
-	cp $(LATEX_DIR)/*.pdf $(WWW_DIR)
+	cp $(LATEX_DIR)/PyMVPA-*.pdf $(WWW_DIR)
 	tools/sitemap.sh > $(WWW_DIR)/sitemap.xml
 # main icon of the website
 	cp $(DOCSRC_DIR)/pics/favicon.png $(WWW_DIR)/_images/
@@ -253,6 +254,7 @@ upload-website:
 
 upload-htmldoc:
 	$(MAKE) htmldoc SPHINXOPTS='-D html_theme=pymvpa_online'
+	chmod a+rX -R $(HTML_DIR)
 	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI)/
 
 
@@ -262,6 +264,8 @@ upload-website-dev:
 	$(MAKE) website SPHINXOPTS='-D html_theme=pymvpa_online'
 	sed -i -e "s,http://disqus.com/forums/pymvpa-dev/,http://disqus.com/forums/pymvpa/,g" \
 		doc/source/_themes/pymvpa_online/page.html
+	sed -i -e "s,www.pymvpa.org,dev.pymvpa.org,g" $(WWW_DIR)/sitemap.xml
+	chmod a+rX -R $(WWW_DIR)
 	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI_DEV)/
 
 upload-htmldoc-dev:
@@ -367,7 +371,7 @@ testtutorial-%: build
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_DATADB_ROOT=datadb \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
-		             --doctest-tests doc/source/tutorial$**.rst
+		             --doctest-tests doc/source/tutorial_$**.rst
 
 testdatadb: build
 	@echo "I: Testing code samples on the dataset DB website"
@@ -420,7 +424,7 @@ testcfg: build
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
 	@echo "+I: Check all known dependencies and store them"
 	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c \
-	  'from mvpa.suite import *; mvpa.base.externals.testAllDependencies(force=False); cfg.save("pymvpa.cfg");'
+	  'from mvpa.suite import *; mvpa.base.externals.test_all_dependencies(force=False); cfg.save("pymvpa.cfg");'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
 	-@rm -f pymvpa.cfg

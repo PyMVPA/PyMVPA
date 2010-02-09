@@ -37,7 +37,8 @@ def Absolute(x):
     return N.absolute(x)
 
 
-def OneMinus(x):
+##REF: Name was automagically refactored
+def one_minus(x):
     """Returns elementwise '1 - x' of any argument."""
     return 1 - x
 
@@ -59,7 +60,8 @@ def first_axis_sum_not_zero(x):
     return (N.asarray(x)!=0).sum(axis=0)
 
 
-def SecondAxisMean(x):
+##REF: Name was automagically refactored
+def second_axis_mean(x):
     """Mean across 2nd axis
 
     Use cases:
@@ -69,7 +71,8 @@ def SecondAxisMean(x):
     return N.mean(x, axis=1)
 
 
-def SecondAxisSumOfAbs(x):
+##REF: Name was automagically refactored
+def _second_axis_sum_of_abs(x):
     """Sum of absolute values along the 2nd axis
 
     Use cases:
@@ -79,7 +82,8 @@ def SecondAxisSumOfAbs(x):
     return N.abs(x).sum(axis=1)
 
 
-def SecondAxisMaxOfAbs(x):
+##REF: Name was automagically refactored
+def second_axis_max_of_abs(x):
     """Max of absolute values along the 2nd axis
     """
     return N.abs(x).max(axis=1)
@@ -108,7 +112,8 @@ def l1_normed(x, norm=1.0, reverse=False):
     return x * (norm/xnorm)
 
 
-def RankOrder(x, reverse=False):
+##REF: Name was automagically refactored
+def rank_order(x, reverse=False):
     """Rank-order by value. Highest gets 0"""
 
     # XXX was Yarik on drugs? please simplify this beast
@@ -126,9 +131,10 @@ def RankOrder(x, reverse=False):
     return rankorder
 
 
-def ReverseRankOrder(x):
+##REF: Name was automagically refactored
+def reverse_rank_order(x):
     """Convinience functor"""
-    return RankOrder(x, reverse=True)
+    return rank_order(x, reverse=True)
 
 
 class OverAxis(object):

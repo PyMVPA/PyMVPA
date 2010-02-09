@@ -26,7 +26,7 @@ from mvpa.suite import *
 """Create a small artificial dataset."""
 
 # overcomplicated way to generate an example dataset
-ds = normalFeatureDataset(perlabel=10, nlabels=2, nchunks=2,
+ds = normal_feature_dataset(perlabel=10, nlabels=2, nchunks=2,
                           nfeatures=10, nonbogus_features=[3, 7],
                           snr=5.0)
 dataset = dataset_wizard(samples=ds.samples, targets=ds.targets,

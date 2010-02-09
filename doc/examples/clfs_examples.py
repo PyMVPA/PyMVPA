@@ -41,7 +41,7 @@ def main():
            targetdtype='float32')
     haxby8_no0 = haxby8[haxby8.targets != 'rest']
 
-    dummy2 = normalFeatureDataset(perlabel=30, nlabels=2,
+    dummy2 = normal_feature_dataset(perlabel=30, nlabels=2,
                                   nfeatures=100,
                                   nchunks=6, nonbogus_features=[11, 10],
                                   snr=3.0)
@@ -51,7 +51,7 @@ def main():
         ((dummy2,
           "Dummy 2-class univariate with 2 useful features out of 100"),
           clfswh[:]),
-        ((pureMultivariateSignal(8, 3),
+        ((pure_multivariate_signal(8, 3),
           "Dummy XOR-pattern"),
           clfswh['non-linear']),
         ((haxby8_no0,
@@ -97,7 +97,7 @@ def main():
             nf = N.mean(nf)
             # print "\n", confusion
             print "%5.1f%%   %-4d\t %.2fs  %.2fs   %.2fs" % \
-                  (confusion.percentCorrect, nf, times[0], times[1], tfull)
+                  (confusion.percent_correct, nf, times[0], times[1], tfull)
 
 
 if __name__ == "__main__":

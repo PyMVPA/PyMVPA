@@ -8,11 +8,13 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 .. index:: Tutorial
-.. _chap_tutorial6:
+.. _chap_tutorial_sensitivity:
 
 *********************************************************
 Part 6: Looking Without Searching -- Sensitivity Analysis
 *********************************************************
+
+* post-processing with mappers
 
 
 .. only:: html

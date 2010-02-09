@@ -145,7 +145,7 @@ classification).
 
  >>> from mvpa.suite import *
  >>>
- >>> ds = normalFeatureDataset()
+ >>> ds = normal_feature_dataset()
  >>> print ds
  <Dataset: 100x4@float64, <sa: chunks,targets>>
  >>>

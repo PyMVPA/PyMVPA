@@ -13,8 +13,8 @@ import numpy as N
 
 from mvpa.base import externals
 
-from mvpa.misc.transformers import Absolute, OneMinus, RankOrder, \
-     ReverseRankOrder, l1_normed, l2_normed, OverAxis, \
+from mvpa.misc.transformers import Absolute, one_minus, rank_order, \
+     reverse_rank_order, l1_normed, l2_normed, OverAxis, \
      DistPValue, first_axis_sum_not_zero
 
 from tests_warehouse import sweepargs, datasets
@@ -36,7 +36,7 @@ class TransformerTests(unittest.TestCase):
 
     def test_absolute2(self):
         target = self.d1
-        out = OneMinus(N.arange(5))
+        out = one_minus(N.arange(5))
         self.failUnless((out == target).all())
 
     def test_first_axis_sum_not_zero(self):
@@ -50,8 +50,8 @@ class TransformerTests(unittest.TestCase):
         
     def test_rank_order(self):
         nelements = len(self.d2)
-        out = RankOrder(self.d2)
-        outr = ReverseRankOrder(self.d2)
+        out = rank_order(self.d2)
+        outr = reverse_rank_order(self.d2)
         uout = N.unique(out)
         uoutr = N.unique(outr)
         self.failUnless((uout == N.arange(nelements)).all(),

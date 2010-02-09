@@ -308,7 +308,7 @@ def bib2rst_references(bib):
         if prop.has_key('year'):
             cit += ' (' + prop['year'] + ').'
         if prop.has_key('title'):
-            cit += ' ' + smoothRsT(prop['title'])
+            cit += ' ' + smooth_rst(prop['title'])
             if not prop['title'].endswith('.'):
                 cit += '.'
 
@@ -366,7 +366,8 @@ def bib2rst_references(bib):
     return rst.encode('utf-8')
 
 
-def smoothRsT(s):
+##REF: Name was automagically refactored
+def smooth_rst(s):
     """Replace problematic stuff with less problematic stuff."""
     s = re.sub("``", '"', s)
     # assuming that empty strings to not occur in a bib file

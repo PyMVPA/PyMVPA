@@ -19,7 +19,8 @@ from mvpa.datasets.miscfx import get_samples_by_attr
 
 
 
-def plotErrLine(data, x=None, errtype='ste', curves=None, linestyle='--',
+##REF: Name was automagically refactored
+def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
                 fmt='o', perc_sigchg=False, baseline=None):
     """Make a line plot with errorbars on the data points.
 
@@ -33,12 +34,8 @@ def plotErrLine(data, x=None, errtype='ste', curves=None, linestyle='--',
       the 2nd axis id `data`. If `None`, a sequence of ascending integers
       will be generated.
     errtype : 'ste' or 'std'
-      Type of error value to be computed per datapoint:
-
-        'ste'
-          standard error of the mean
-        'std'
-          standard deviation
+      Type of error value to be computed per datapoint: 'ste' --
+      standard error of the mean, 'std' -- standard deviation.
     curves : None or list of tuple(x, y)
       Each tuple represents an additional curve, with x and y coordinates of
       each point on the curve.
@@ -72,7 +69,7 @@ def plotErrLine(data, x=None, errtype='ste', curves=None, linestyle='--',
       version of the original sinus wave.
 
         >>> x = N.linspace(0, N.pi * 2, 200)
-        >>> plotErrLine(data, curves=[(x, N.sin(x))])
+        >>> plot_err_line(data, curves=[(x, N.sin(x))])
         >>> #P.show()
     """
     data = N.asanyarray(data)
@@ -124,7 +121,8 @@ def plotErrLine(data, x=None, errtype='ste', curves=None, linestyle='--',
     P.errorbar(x, md, err, fmt=fmt, linestyle=linestyle)
 
 
-def plotFeatureHist(dataset, xlim=None, noticks=True, perchunk=False,
+##REF: Name was automagically refactored
+def plot_feature_hist(dataset, xlim=None, noticks=True, perchunk=False,
                     **kwargs):
     """Plot histograms of feature values for each labels.
 
@@ -183,7 +181,8 @@ def plotFeatureHist(dataset, xlim=None, noticks=True, perchunk=False,
             fig += 1
 
 
-def plotSamplesDistance(dataset, sortbyattr=None):
+##REF: Name was automagically refactored
+def plot_samples_distance(dataset, sortbyattr=None):
     """Plot the euclidean distances between all samples of a dataset.
 
     Parameters
@@ -212,7 +211,8 @@ def plotSamplesDistance(dataset, sortbyattr=None):
     P.colorbar()
 
 
-def plotDecisionBoundary2D(dataset, clf, res=50, vals=[-1, 0, 1],
+##REF: Name was automagically refactored
+def plot_decision_boundary_2d(dataset, clf, res=50, vals=[-1, 0, 1],
                            data_callback=None):
     """Plot a scatter of a classifier's decision boundary and data points
 
@@ -306,7 +306,8 @@ def plotDecisionBoundary2D(dataset, clf, res=50, vals=[-1, 0, 1],
         clf.ca.disable('estimates')
 
 
-def plotBars(data, labels=None, title=None, ylim=None, ylabel=None,
+##REF: Name was automagically refactored
+def plot_bars(data, labels=None, title=None, ylim=None, ylabel=None,
                width=0.2, offset=0.2, color='0.6', distance=1.0,
                yerr='ste', xloc=None, **kwargs):
     """Make bar plots with automatically computed error bars.
@@ -401,7 +402,8 @@ def inverse_cmap(cmap_name):
                                               new_data, _cm.LUTSIZE)
 
 
-def plotDatasetChunks(ds, clf_labels=None):
+##REF: Name was automagically refactored
+def plot_dataset_chunks(ds, clf_labels=None):
     """Quick plot to see chunk sctructure in dataset with 2 features
 
     if clf_labels is provided for the predicted labels, then

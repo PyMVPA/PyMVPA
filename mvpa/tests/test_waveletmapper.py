@@ -121,7 +121,8 @@ class WaveletMappersTests(unittest.TestCase):
             self.failUnlessRaises(NotImplementedError, wdm.reverse, d3d_wd)
 
 
-    def _testCompareToOld(self):
+    ##REF: Name was automagically refactored
+    def _test_compare_to_old(self):
         """Good just to compare if I didn't screw up anything... treat
         it as a regression test
         """

@@ -248,7 +248,8 @@ class WaveletPacketMapper(_WaveletMapper):
     #
     # Reverse mapping
     #
-    def __reverseSingleLevel(self, wp):
+    ##REF: Name was automagically refactored
+    def __reverse_single_level(self, wp):
 
         # local bindings
         level_paths = self.__level_paths
@@ -292,7 +293,7 @@ class WaveletPacketMapper(_WaveletMapper):
                         "Please check for an update of 'pywt', or be careful "
                         "when interpreting the edges of the reverse mapped "
                         "data." % self.__class__.__name__)
-            return self.__reverseSingleLevel(data)
+            return self.__reverse_single_level(data)
 
 
 
@@ -350,7 +351,7 @@ class WaveletTransformationMapper(_WaveletMapper):
             debug('MAP', "Performing iDWT")
         signal = None
         wd_offsets = [0] + list(N.cumsum(self.lengths))
-        Nlevels = len(self.lengths)
+        n_levels = len(self.lengths)
         Ntime_points = self._intimepoints #len(time_points)
         # unfortunately sometimes due to padding iDWT would return longer
         # sequences, thus we just limit to the right ones
@@ -359,7 +360,7 @@ class WaveletTransformationMapper(_WaveletMapper):
             if __debug__:
                 debug('MAP_', " %s" % (indexes,), lf=False, cr=True)
             wd_sample = wd[indexes]
-            wd_coeffs = [wd_sample[wd_offsets[i]:wd_offsets[i+1]] for i in xrange(Nlevels)]
+            wd_coeffs = [wd_sample[wd_offsets[i]:wd_offsets[i+1]] for i in xrange(n_levels)]
             # need to compose original list
             time_points = pywt.waverec(
                 wd_coeffs, wavelet=self._wavelet, mode=self._mode)

@@ -199,7 +199,7 @@ are sometime a problem, e.g. they will lead to numerical difficulties when
 z-scoring the features of a dataset (i.e. division by zero).
 
 The `mvpa.datasets.miscfx` module provides a convenience function
-`removeInvariantFeatures()` that strips such features from a dataset.
+`remove_invariant_features()` that strips such features from a dataset.
 
 
 .. index:: Block-averaging
@@ -210,7 +210,7 @@ How can I do :term:`block-averaging` of my block-design fMRI dataset?
 The easiest way is to use a mapper to transform/average the respective
 samples. Suppose you have a dataset:
 
-  >>> dataset = normalFeatureDataset()
+  >>> dataset = normal_feature_dataset()
   >>> print dataset
   <Dataset: 100x4@float64, <sa: chunks,targets>>
 

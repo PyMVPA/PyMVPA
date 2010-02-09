@@ -19,7 +19,7 @@ class CmdlineHelpersTest(unittest.TestCase):
     def test_basic(self):
         """Test if we are not missing basic parts"""
         globals_ = globals()
-        for member in  [#'_verboseCallback',
+        for member in  [#'_verbose_callback',
                         'parser', 'opt', 'opts']:
             self.failUnless(globals_.has_key(member),
                 msg="We must have imported %s from mvpa.misc.cmdline!" % member)

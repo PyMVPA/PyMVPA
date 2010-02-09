@@ -83,7 +83,7 @@ for desc, clf in clfs:
     results.append(cv.ca.results)
     labels.append(desc)
 
-plotBars(results, labels=labels,
+plot_bars(results, labels=labels,
          title='Linear C-SVM classification (cats vs. scissors)',
          ylabel='Mean classification error (N-1 cross-validation, 12-fold)',
          distance=0.5)

@@ -589,7 +589,8 @@ class CombinedMapper(Mapper):
         return N.sum(m.get_outsize() for m in self._mappers)
 
 
-    def selectOut(self, outIds):
+    ##REF: Name was automagically refactored
+    def select_out(self, outIds):
         """Remove some elements and leave only ids in 'out'/feature space.
 
         Notes
@@ -602,7 +603,7 @@ class CombinedMapper(Mapper):
           All output feature ids to be selected/kept.
         """
         # determine which features belong to what mapper
-        # and call its selectOut() accordingly
+        # and call its select_out() accordingly
         ids = N.asanyarray(outIds)
         fsum = 0
         for m in self._mappers:
@@ -612,7 +613,7 @@ class CombinedMapper(Mapper):
             selected = ids[selector] - fsum
             fsum += m.get_outsize()
             # finally apply to mapper
-            m.selectOut(selected)
+            m.select_out(selected)
 
 
     ##REF: Name was automagically refactored

@@ -15,7 +15,7 @@ from mvpa.clfs.transerror import TransferError
 from tests_warehouse import *
 from tests_warehouse import get_mv_pattern
 from tests_warehouse_clfs import *
-from mvpa.clfs.distance import oneMinusCorrelation
+from mvpa.clfs.distance import one_minus_correlation
 
 from mvpa.support.copy import deepcopy
 
@@ -27,25 +27,25 @@ class SupportFxTests(unittest.TestCase):
 
         # check if stupid thing don't work
         self.failUnlessRaises(ValueError,
-                              transformWithBoxcar,
+                              transform_with_boxcar,
                               data,
                               sp,
                               0 )
 
         # now do an identity transformation
-        trans = transformWithBoxcar(data, sp, 1)
+        trans = transform_with_boxcar(data, sp, 1)
         self.failUnless( (trans == data).all() )
 
         # now check for illegal boxes
         self.failUnlessRaises(ValueError,
-                              transformWithBoxcar,
+                              transform_with_boxcar,
                               data,
                               sp,
                               2)
 
         # now something that should work
         sp = N.arange(9)
-        trans = transformWithBoxcar( data, sp, 2)
+        trans = transform_with_boxcar( data, sp, 2)
         self.failUnless( ( trans == \
                            [0.5,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5] ).all() )
 
@@ -53,7 +53,7 @@ class SupportFxTests(unittest.TestCase):
         # now test for proper data shape
         data = N.ones((10,3,4,2))
         sp = [ 2, 4, 3, 5 ]
-        trans = transformWithBoxcar( data, sp, 4)
+        trans = transform_with_boxcar( data, sp, 4)
         self.failUnless( trans.shape == (4,3,4,2) )
 
 
@@ -156,7 +156,7 @@ class SupportFxTests(unittest.TestCase):
         # data: 20 samples, 80 features
         X = N.random.rand(20,80)
 
-        C = 1 - oneMinusCorrelation(X, X)
+        C = 1 - one_minus_correlation(X, X)
 
         # get nsample x nssample correlation matrix
         self.failUnless(C.shape == (20, 20))
@@ -165,7 +165,7 @@ class SupportFxTests(unittest.TestCase):
 
         # now two different
         Y = N.random.rand(5,80)
-        C2 = 1 - oneMinusCorrelation(X, Y)
+        C2 = 1 - one_minus_correlation(X, Y)
         # get nsample x nssample correlation matrix
         self.failUnless(C2.shape == (20, 5))
         # external validity check -- we are dealing with correlations

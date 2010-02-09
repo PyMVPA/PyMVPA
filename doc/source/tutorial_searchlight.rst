@@ -8,11 +8,20 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 .. index:: Tutorial
-.. _chap_tutorial5:
+.. _chap_tutorial_searchlight:
 
 ******************************
 Part 5: The Mighty Searchlight
 ******************************
+
+
+ds = get_haxby2001_data_alternative(roi=0)
+clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
+terr = TransferError(clf)
+cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter(attr='runtype'))
+sl = sphere_searchlight(cvte, postproc=mean_sample())
+res=sl(ds)
+map2nifti(ds, 1 - res.samples).save('sl.nii.gz')
 
 
 .. only:: html

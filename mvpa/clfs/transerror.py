@@ -20,7 +20,7 @@ from math import log10, ceil
 
 from mvpa.base import externals
 
-from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
+from mvpa.misc.errorfx import mean_power_fx, root_mean_power_fx, RMSErrorFx, \
      CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx, \
      AUCErrorFx
 from mvpa.base import warning
@@ -359,7 +359,7 @@ class ROCCurve(object):
         # we need to estimate ROC per each label
         # XXX order of labels might not correspond to the one among 'estimates'
         #     which were used to make a decision... check
-        ROCs, aucs = [], []             # 1 per label
+        rocs, aucs = [], []             # 1 per label
         for i,label in enumerate(labels):
             aucs_pl = []
             ROCs_pl = []
@@ -370,12 +370,12 @@ class ROCCurve(object):
                 aucs_pl += [ROC([N.asanyarray(x)[i] for x in s[2]], targets_pl)]
                 ROCs_pl.append(ROC)
             if len(aucs_pl)>0:
-                ROCs += [ROCs_pl]
+                rocs += [ROCs_pl]
                 aucs += [nanmean(aucs_pl)]
                 #aucs += [N.mean(aucs_pl)]
 
         # store results within the object
-        self._ROCs =  ROCs
+        self._ROCs =  rocs
         self._aucs = aucs
         self.__computed = True
 
@@ -389,7 +389,8 @@ class ROCCurve(object):
 
 
     @property
-    def ROCs(self):
+    ##REF: Name was automagically refactored
+    def rocs(self):
         self._compute()
         return self._ROCs
 
@@ -406,15 +407,15 @@ class ROCCurve(object):
         self._compute()
 
         labels = self._labels
-        # select only ROCs for the given label
-        ROCs = self.ROCs[label_index]
+        # select only rocs for the given label
+        rocs = self.rocs[label_index]
 
         fig = P.gcf()
         ax = P.gca()
 
         P.plot([0, 1], [0, 1], 'k:')
 
-        for ROC in ROCs:
+        for ROC in rocs:
             P.plot(ROC.fp, ROC.tp, linewidth=1)
 
         P.axis((0.0, 1.0, 0.0, 1.0))
@@ -961,7 +962,8 @@ class ConfusionMatrix(SummaryStatistics):
         return self.__labels_map
 
 
-    def setLabels_map(self, val):
+    ##REF: Name was automagically refactored
+    def set_labels_map(self, val):
         if val is None or isinstance(val, dict):
             self.__labels_map = val
         else:
@@ -978,11 +980,12 @@ class ConfusionMatrix(SummaryStatistics):
 
 
     @property
-    def percentCorrect(self):
+    ##REF: Name was automagically refactored
+    def percent_correct(self):
         self.compute()
         return 100.0*self.__Ncorrect/sum(self.__Nsamples)
 
-    labels_map = property(fget=get_labels_map, fset=setLabels_map)
+    labels_map = property(fget=get_labels_map, fset=set_labels_map)
 
 
 class RegressionStatistics(SummaryStatistics):
@@ -1025,9 +1028,9 @@ class RegressionStatistics(SummaryStatistics):
         stats = {}
 
         funcs = {
-            'RMP_t': lambda p,t:rootMeanPowerFx(t),
+            'RMP_t': lambda p,t:root_mean_power_fx(t),
             'STD_t': lambda p,t:N.std(t),
-            'RMP_p': lambda p,t:rootMeanPowerFx(p),
+            'RMP_p': lambda p,t:root_mean_power_fx(p),
             'STD_p': lambda p,t:N.std(p),
             'CCe': CorrErrorFx(),
             'CCp': CorrErrorPFx(),
