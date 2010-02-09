@@ -37,7 +37,7 @@ a cross-validated classification analysis.
 5. Inspect results
 
 Our previous choice of the classifier was guided by the intention to
-replicated the :ref:`Haxby et al. (2001) <HGF+01>`, but what if we want to
+replicate the :ref:`Haxby et al. (2001) <HGF+01>`, but what if we want to
 try a different algorithm? In this case a nice feature of PyMVPA comes into
 play. All classifiers implement a common interface that makes them easily
 exchangeable without the need to adapt any other part of the analysis code.
@@ -52,15 +52,15 @@ If, for example, we want to try the popular :term:`support vector machine`
 0.1875
 
 Instead of k-nearest-neighbor, we create a linear SVM classifier,
-internally using the popular LIBSVM library (note the PyMVPA provides
+internally using popular LIBSVM library (note that PyMVPA provides
 additional SVM implementations). The rest of the code remains identical.
 SVM with its default settings seems to perform slightly worse than the
 simple kNN-classifier. We'll get back to the classifiers shortly. Let's
 first look at the remaining part of this analysis.
 
 We already know that `~mvpa.clfs.transerror.TransferError` is used to compute
-the error function. So far we have only used the mean mismatch between actual
-targets and classifier predictions as error function (which is the default).
+the error function. So far we have used only the mean mismatch between actual
+targets and classifier predictions as the error function (which is the default).
 However, PyMVPA offers a number of alternative functions in the
 :mod:`mvpa.misc.errorfx` module, but it is also trivial to specify custom ones.
 For example, if we do not want to have error reported, but instead accuracy, we
@@ -72,7 +72,7 @@ can do that:
 >>> N.mean(cv_results)
 0.8125
 
-This example reused the SVM classifier we have create before, and
+This example reuses the SVM classifier we have create before, and
 yields exactly what we expect from the previous result.
 
 The details of the cross-validation procedure are also heavily
@@ -80,9 +80,9 @@ customizable. We have seen that a `~mvpa.datasets.splitters.Splitter` is
 used to generate training and testing dataset for each cross-validation
 fold. So far we have only used `~mvpa.datasets.splitters.HalfSplitter` to
 divide the dataset into odd and even runs (based on our custom sample
-attribute ``runtype``. However, in general it is more common to perform so
+attribute ``runtype``). However, in general it is more common to perform so
 called leave-one-out cross-validation, where *one* independent part of a
-dataset is selected as testing dataset, while all other remain as the
+dataset is selected as testing dataset, while the other parts constitute the
 training dataset. This procedure is repeated till all parts have served as
 the testing dataset once. In case of our dataset we could consider each of
 the 12 runs as independent measurements (fMRI data doesn't allow us to
@@ -98,7 +98,7 @@ following code snippet should be plausible:
 >>> # directory that contains the data files
 >>> datapath = os.path.join(pymvpa_datadbroot,
 ...                         'demo_blockfmri', 'demo_blockfmri')
->>> # laod the raw data
+>>> # load the raw data
 >>> attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
 >>> ds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
 ...                   targets=attr.targets, chunks=attr.chunks,
@@ -113,7 +113,7 @@ following code snippet should be plausible:
 >>> ds.shape
 (96, 577)
 
-Instead of two sample per category in the whole dataset, we now have one
+Instead of two samples per category in the whole dataset, now we have one
 sample per category, per experiment run, hence 96 samples in the whole
 dataset. To set up a 12-fold leave-one-run-out cross-validation, we can
 make use of `~mvpa.datasets.splitters.NFoldSplitter`. By default it is
@@ -130,7 +130,7 @@ a lot more samples that were each was computed from just a few fMRI volumes
 (about nine each).
 
 So far we have just looked at the mean accuracy or error. Let's investigate
-the results of the cross-validation analysis a bit further>
+the results of the cross-validation analysis a bit further.
 
 >>> type(cv_results)
 <class 'mvpa.datasets.base.Dataset'>
@@ -148,7 +148,7 @@ the results of the cross-validation analysis a bit further>
  [ 1.   ]
  [ 0.625]]
 
-What is returned is actually a `~mvpa.datasets.base.Dataset` with the
+Returned value is actually a `~mvpa.datasets.base.Dataset` with the
 results for all cross-validation folds. Since our error function computes
 only a single scalar value for each fold the dataset only contain a single
 feature (in this case the accuracy), and a sample per each fold. Moreover,
@@ -173,12 +173,12 @@ of chunks formed the training and testing set per fold.
 We Need To Take A Closer Look
 =============================
 
-By know we have already done a few cross-validation analyses using two
+By now we have already done a few cross-validation analyses using two
 different classifiers and different pre-processing strategies. In all these
 cases we have just looked at the generalization performance or error.
-However, an error rates hides a lot of interesting information that is very
-important for an interpretation of results. In our case we analyse a
-dataset with each different categories. An average misclassification rate
+However, error rates hide a lot of interesting information that is very
+important for an interpretation of results. In our case we analyze a
+dataset with eight different categories. An average misclassification rate
 doesn't tell us much about the contribution of each category to the
 prediction error. It could be that *half of the samples of each category*
 get misclassified, but the same average error might be due to *all samples
@@ -188,9 +188,9 @@ These two results would have to be interpreted in totally different ways,
 despite the same average error rate.
 
 In psychological research this type of results is usually presented as a
-`contingency table`_ or `cross tabulation`_ of expected vs. emprical
+`contingency table`_ or `cross tabulation`_ of expected vs. empirical
 results. `Signal detection theory`_ offers a whole range of techniques to
-characterize a classifier's performance based on that. From this angle a
+characterize classifier's performance based on that. From this angle a
 classification analysis is hardly any different from a psychological
 experiment where a human observer performs a detection task, hence the same
 analysis procedures can be applied here as well.
@@ -200,7 +200,7 @@ analysis procedures can be applied here as well.
 .. _signal detection theory: http://en.wikipedia.org/wiki/Detection_theory
 
 PyMVPA provides convenient access to :term:`confusion matrices`, i.e.
-contingency tables of targets vs actual predictions.  However, to prevent
+contingency tables of targets vs. actual predictions.  However, to prevent
 wasting CPU-time and memory they are not computed by default, but instead
 have to be enabled explicitly. Optional analysis results like this are
 available in a dedicated collection of :term:`conditional attribute`\ s --
@@ -214,10 +214,10 @@ how it works:
 
 Via the ``enable_ca`` argument we triggered computing confusion tables for
 all cross-validation folds, but otherwise there is no change in the code.
-Afterwards the aggregated confusions for the whole cross-validation
+Afterwards the aggregated confusion for the whole cross-validation
 procedure is available in the ``ca`` collection. Let's take a look (note
 that in the printed manual the output is truncated due to page width
-contraints -- please refer to the HTML-based version full the full matrix).
+constraints -- please refer to the HTML-based version full the full matrix).
 
 >>> print cvte.ca.confusion.as_string(description=True)
 ----------.
@@ -274,9 +274,9 @@ there are also a number of useful summary statistics readily available --
 including average accuracy.
 
 Especially for multi-class datasets the matrix quickly becomes
-incomprehendable. For these cases the confusion matrix can also be plotted
+incomprehensible. For these cases the confusion matrix can also be plotted
 via its `~mvpa.clfs.transerror.ConfusionMatrix.plot()` method. If the
-confusions shall be sued as input for further processing they can also be
+confusions shall be used as input for further processing they can also be
 accessed in pure matrix format:
 
 >>> print cvte.ca.confusion.matrix
@@ -305,7 +305,7 @@ can still get a fair amount of information about the performed analysis.
 However, what happens if we want to do some further processing of the data
 **within** the cross-validation analysis. That seems to be difficult, since
 we feed a whole dataset into the analysis, and only internally it get split
-into the respective pieces. 
+into the respective pieces.
 
 Of course there is a solution to this problem -- a :term:`meta-classifier`.
 This is a classifier that doesn't implement a classification algorithm on
@@ -318,8 +318,8 @@ Its purpose is simple: Apply a mapper to both training and testing data
 before it is passed on to the internal base-classifier. With this technique
 it is possible to implement arbitrary pre-processing within a
 cross-validation analysis. Suppose we want to perform the classification
-not on the voxel intensities themselves, but on the samples projected onto
-the singular vectors of the data, it would look like this:
+not on voxel intensities themselves, but on the same samples in the space
+spanned by the singular vectors of the training data, it would look like this:
 
 >>> baseclf = LinearCSVMC()
 >>> metaclf = MappedClassifier(baseclf, SVDMapper())
@@ -337,8 +337,8 @@ implements `singular value decomposition`_ as a mapper.
 
 .. exercise::
 
-   What might be reasons why the error decreases in comparision to the dataset
-   with voxel intensities?
+   What might be the reasons for the error decrease in comparison to the
+   results on the dataset with voxel intensities?
 
 .. _singular value decomposition: http://en.wikipedia.org/wiki/Singular_value_decomposition
 
@@ -346,7 +346,7 @@ We know that mappers can be combined into complex processing pipelines, and
 since `~mvpa.clfs.meta.MappedClassifier` takes any mapper as argument, we
 can implement arbitrary preprocessing steps within the cross-validation
 procedure. Let's say we have heard rumors that only the first two dimensions
-of the space spanned by the SVD vectors covers the "interesting" variance
+of the space spanned by the SVD vectors cover the "interesting" variance
 and the rest is noise. We can easily check that with an appropriate mapper:
 
 >>> mapper = ChainMapper([SVDMapper(), FeatureSliceMapper(slice(None, 2))])
@@ -381,7 +381,7 @@ the data to figure out what is happening here.
    information is represented in the first two SVD components and what is not?
    Plot the samples of the full dataset after they have been mapped onto the
    first two SVD components. Why does the kNN classifier perform so bad in
-   comparision to the SVM?
+   comparison to the SVM?
 
 In this tutorial part we took a look at classifiers. We have seen that
 regardless of the actual algorithm all classifiers are implementing the same
@@ -390,14 +390,14 @@ having to change any other part of the analysis code. Moreover, we have seen
 that it is possible to enable and access optional information that is offered
 by particular parts of the processing pipeline.
 
-However, we still have done little to adress one of the major questions in
+However, we still have done little to address one of the major questions in
 neuroscience research, that is: Where does the information come from? One
-possible apporach to this question is the topic of the :ref:`next tutorial part
+possible approach to this question is the topic of the :ref:`next tutorial part
 <chap_tutorial5>`.
 
 .. Think about adding a demo of the classifiers warehouse.
   .. exercise::
-     Try doing the Z-Scoring beforce computing the mean samples per category.
+     Try doing the Z-Scoring before computing the mean samples per category.
      What happens to the generalization performance of the classifier?
      ANSWER: It becomes 100%!
 
