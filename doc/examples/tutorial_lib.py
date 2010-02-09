@@ -79,6 +79,6 @@ def get_haxby2001_data_alternative(path=None):
 
 
 def get_haxby2001_clf():
-    clf = kNN(k=1, dfx=oneMinusCorrelation, voting='majority')
+    clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
     return clf
 

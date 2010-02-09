@@ -180,7 +180,7 @@ class Classifier(ClassWithCollections):
         """Stores number of features for which classifier was trained.
         If None -- it wasn't trained at all"""
 
-        self._setRetrainable(self.params.retrainable, force=True)
+        self._set_retrainable(self.params.retrainable, force=True)
 
         # deprecate
         #self.__trainedidhash = None
@@ -220,7 +220,7 @@ class Classifier(ClassWithCollections):
             # just reset the ca, do not untrain
             self.ca.reset()
             if not self.__changedData_isset:
-                self.__resetChangedData()
+                self.__reset_changed_data()
                 _changedData = self._changedData
                 __idhashes = self.__idhashes
                 __invalidatedChangedData = self.__invalidatedChangedData
@@ -233,7 +233,7 @@ class Classifier(ClassWithCollections):
                 # Look at the data if any was changed
                 for key, data_ in (('traindata', dataset.samples),
                                    ('targets', dataset.sa[params.targets].value)):
-                    _changedData[key] = self.__wasDataChanged(key, data_)
+                    _changedData[key] = self.__was_data_changed(key, data_)
                     # if those idhashes were invalidated by retraining
                     # we need to adjust _changedData accordingly
                     if __invalidatedChangedData.get(key, False):
@@ -430,11 +430,11 @@ class Classifier(ClassWithCollections):
 
         if self.params.retrainable:
             if not self.__changedData_isset:
-                self.__resetChangedData()
+                self.__reset_changed_data()
                 _changedData = self._changedData
                 data = N.asanyarray(dataset.samples)
                 _changedData['testdata'] = \
-                                        self.__wasDataChanged('testdata', data)
+                                        self.__was_data_changed('testdata', data)
                 if __debug__:
                     debug('CLF_', "prepredict: Obtained _changedData is %s"
                           % (_changedData))
@@ -554,7 +554,8 @@ class Classifier(ClassWithCollections):
     #
     # Methods which are needed for retrainable classifiers
     #
-    def _setRetrainable(self, value, force=False):
+    ##REF: Name was automagically refactored
+    def _set_retrainable(self, value, force=False):
         """Assign value of retrainable parameter
 
         If retrainable flag is to be changed, classifier has to be
@@ -600,17 +601,18 @@ class Classifier(ClassWithCollections):
                     # but if we like to get rid of __traineddataset then we
                     # should use idhash anyways
                     self.__trained = self.__idhashes.copy() # just same Nones
-                self.__resetChangedData()
+                self.__reset_changed_data()
                 self.__invalidatedChangedData = {}
             elif 'retrainable' in self.__tags__:
-                #self.__resetChangedData()
+                #self.__reset_changed_data()
                 self.__changedData_isset = False
                 self._changedData = None
                 self.__idhashes = None
                 if __debug__ and 'CHECK_RETRAIN' in debug.active:
                     self.__trained = None
 
-    def __resetChangedData(self):
+    ##REF: Name was automagically refactored
+    def __reset_changed_data(self):
         """For retrainable classifier we keep track of what was changed
         This function resets that dictionary
         """
@@ -627,7 +629,8 @@ class Classifier(ClassWithCollections):
         self.__changedData_isset = False
 
 
-    def __wasDataChanged(self, key, entry, update=True):
+    ##REF: Name was automagically refactored
+    def __was_data_changed(self, key, entry, update=True):
         """Check if given entry was changed from what known prior.
 
         If so -- store only the ones needed for retrainable beastie
@@ -672,7 +675,7 @@ class Classifier(ClassWithCollections):
     #
     #     # we need to updated idhashes
     #     if chd[key] or check_retrain:
-    #         keychanged = self.__wasDataChanged(key, data)
+    #         keychanged = self.__was_data_changed(key, data)
     #     if check_retrain and keychanged and not chd[key]:
     #         raise RuntimeError, \
     #               "Data %s found changed although wasn't " \
@@ -722,7 +725,7 @@ class Classifier(ClassWithCollections):
                 raise ValueError, \
                       "Retraining for changed params not working yet"
 
-        self.__resetChangedData()
+        self.__reset_changed_data()
 
         # local bindings
         chd = self._changedData
@@ -742,7 +745,7 @@ class Classifier(ClassWithCollections):
                                ('targets', dataset.sa[self.params.targets].value)):
                 # so it wasn't told to be invalid
                 if not chd[key] and not ichd.get(key, False):
-                    if self.__wasDataChanged(key, data_, update=False):
+                    if self.__was_data_changed(key, data_, update=False):
                         raise RuntimeError, \
                               "Data %s found changed although wasn't " \
                               "labeled as such" % key
@@ -791,7 +794,7 @@ class Classifier(ClassWithCollections):
             raise RuntimeError, \
                   "Do not use retrain/repredict on non-retrainable classifiers"
 
-        self.__resetChangedData()
+        self.__reset_changed_data()
         chd = self._changedData
         chd.update(**kwargs)
         self.__changedData_isset = True
@@ -802,7 +805,7 @@ class Classifier(ClassWithCollections):
             for key, data_ in (('testdata', dataset.samples),):
                 # so it wasn't told to be invalid
                 #if not chd[key]:# and not ichd.get(key, False):
-                if self.__wasDataChanged(key, data_, update=False):
+                if self.__was_data_changed(key, data_, update=False):
                     raise RuntimeError, \
                           "Data %s found changed although wasn't " \
                           "labeled as such" % key
@@ -820,5 +823,5 @@ class Classifier(ClassWithCollections):
 
 
     # TODO: callback into retrainable parameter
-    #retrainable = property(fget=_getRetrainable, fset=_setRetrainable,
+    #retrainable = property(fget=_getRetrainable, fset=_set_retrainable,
     #                  doc="Specifies either classifier should be retrainable")

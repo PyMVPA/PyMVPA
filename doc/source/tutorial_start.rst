@@ -101,7 +101,7 @@ distance measure. In PyMVPA this type of classifier is provided by the
 `~mvpa.clfs.knn.kNN` class, that makes is possible to specify the desired
 parameters.
 
->>> clf = kNN(k=1, dfx=oneMinusCorrelation, voting='majority')
+>>> clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
 
 A k-Nearest-Neighbor classifier performs classification based on the similarity
 of a sample with respect to each sample in a :term:`training dataset`.  The

@@ -13,7 +13,8 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 
-def singleGammaHRF(t, A=5.4, W=5.2, K=1.0):
+##REF: Name was automagically refactored
+def single_gamma_hrf(t, A=5.4, W=5.2, K=1.0):
     """Hemodynamic response function model.
 
     The version consists of a single gamma function (also see
@@ -41,7 +42,7 @@ def singleGammaHRF(t, A=5.4, W=5.2, K=1.0):
 def double_gamma_hrf(t, A1=5.4, W1=5.2, K1=1.0, A2=10.8, W2=7.35, K2=0.35):
     """Hemodynamic response function model.
 
-    The version is using two gamma functions (also see singleGammaHRF()).
+    The version is using two gamma functions (also see single_gamma_hrf()).
 
     Parameters
     ----------
@@ -63,7 +64,7 @@ def double_gamma_hrf(t, A1=5.4, W1=5.2, K1=1.0, A2=10.8, W2=7.35, K2=0.35):
     A2 = float(A2)
     W2 = float(W2)
     K2 = float(K2)
-    return singleGammaHRF(t, A1, W1, K1) - singleGammaHRF(t, A2, W2, K2)
+    return single_gamma_hrf(t, A1, W1, K1) - single_gamma_hrf(t, A2, W2, K2)
 
 
 ##REF: Name was automagically refactored

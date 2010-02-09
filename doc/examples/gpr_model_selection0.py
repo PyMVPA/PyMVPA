@@ -28,8 +28,8 @@ import pylab as P
 train_size = 40
 test_size = 100
 F = 1
-dataset = data_generators.sinModulated(train_size, F)
-dataset_test = data_generators.sinModulated(test_size, F, flat=True)
+dataset = data_generators.sin_modulated(train_size, F)
+dataset_test = data_generators.sin_modulated(test_size, F, flat=True)
 
 print "Looking for better hyperparameters: grid search"
 

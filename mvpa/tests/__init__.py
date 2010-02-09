@@ -77,7 +77,7 @@ def collect_test_suites():
     # So we could see all warnings about missing dependencies
     warning.maxcount = 1000
     # fully test of externals
-    externals.testAllDependencies()
+    externals.test_all_dependencies()
 
 
     __optional_tests = [ ('scipy', 'ridge'),
@@ -139,7 +139,8 @@ def collect_nose_tests():
 
     return tests
 
-def runNoseTests():
+##REF: Name was automagically refactored
+def run_nose_tests():
     """Run nose-based tests -- really really silly way, just to get started
 
     TODO: just switch to using numpy.testing framework, for that
@@ -207,7 +208,7 @@ def run(limit=None, verbosity=None):
     TextTestRunnerPyMVPA(verbosity=verbosity).run(ts)
 
     # and nose tests
-    runNoseTests()
+    run_nose_tests()
 
     # restore warning handlers
     warning.handlers = handler_backup

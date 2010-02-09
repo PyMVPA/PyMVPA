@@ -45,7 +45,7 @@ class ErrorsTests(unittest.TestCase):
 
         # Do a bit more thorough checking
         cm = ConfusionMatrix()
-        self.failUnlessRaises(ZeroDivisionError, lambda x:x.percentCorrect, cm)
+        self.failUnlessRaises(ZeroDivisionError, lambda x:x.percent_correct, cm)
         """No samples -- raise exception"""
 
         cm.add(reg, regl)
@@ -91,10 +91,10 @@ class ErrorsTests(unittest.TestCase):
         # lets check add -- just itself to itself
         cm2 = cm + cm
         self.failUnlessEqual(len(cm2.matrices), 8, msg="Must be 8 sets now")
-        self.failUnlessEqual(cm2.percentCorrect, cm.percentCorrect,
+        self.failUnlessEqual(cm2.percent_correct, cm.percent_correct,
                              msg="Percent of corrrect should remain the same ;-)")
 
-        self.failUnlessEqual(cm2.error, 1.0-cm.percentCorrect/100.0,
+        self.failUnlessEqual(cm2.error, 1.0-cm.percent_correct/100.0,
                              msg="Test if we get proper error value")
 
 

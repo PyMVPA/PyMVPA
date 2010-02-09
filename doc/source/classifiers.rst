@@ -264,8 +264,8 @@ cross-validation reusing the transfer error object from the previous example
 and some :class:`~mvpa.datasets.base.Dataset` `data`.
 
   >>> # create some dataset
-  >>> from mvpa.misc.data_generators import normalFeatureDataset
-  >>> data = normalFeatureDataset(perlabel=50, nlabels=2,
+  >>> from mvpa.misc.data_generators import normal_feature_dataset
+  >>> data = normal_feature_dataset(perlabel=50, nlabels=2,
   ...                             nfeatures=20, nonbogus_features=[3, 7],
   ...                             snr=3.0)
   >>> # now cross-validation

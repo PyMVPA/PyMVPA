@@ -36,11 +36,11 @@ generators.
 # Generate dataset for training:
 train_size = 40
 F = 1
-dataset = data_generators.sinModulated(train_size, F)
+dataset = data_generators.sin_modulated(train_size, F)
 
 # Generate dataset for testing:
 test_size = 100
-dataset_test = data_generators.sinModulated(test_size, F, flat=True)
+dataset_test = data_generators.sin_modulated(test_size, F, flat=True)
 
 """
 The last configuration step is the definition of four sets of

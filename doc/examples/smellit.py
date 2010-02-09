@@ -25,7 +25,7 @@ ds = ds[ds.chunks < 5]
 
 # take a look at the distribution of the feature values in all
 # sample categories and chunks
-plotFeatureHist(ds, perchunk=True, bins=20, normed=True,
+plot_feature_hist(ds, perchunk=True, bins=20, normed=True,
                 xlim=(0, ds.samples.max()))
 
 # next only works with floating point data
@@ -36,7 +36,7 @@ ds.samples = ds.samples.astype('float')
 # of the samples
 P.figure()
 P.subplot(121)
-plotSamplesDistance(ds, sortbyattr='chunks')
+plot_samples_distance(ds, sortbyattr='chunks')
 P.title('Sample distances (sorted by chunks)')
 
 # similar distance plot, but now samples sorted by their
@@ -45,7 +45,7 @@ P.title('Sample distances (sorted by chunks)')
 # Note, that the first and largest group corresponds to the
 # 'rest' condition in the dataset
 P.subplot(122)
-plotSamplesDistance(ds, sortbyattr='targets')
+plot_samples_distance(ds, sortbyattr='targets')
 P.title('Sample distances (sorted by targets)')
 
 # z-score features individually per chunk
@@ -56,10 +56,10 @@ zscore(ds)
 
 P.figure()
 P.subplot(121)
-plotSamplesDistance(ds, sortbyattr='chunks')
+plot_samples_distance(ds, sortbyattr='chunks')
 P.title('Distances: z-scored, detrended (sorted by chunks)')
 P.subplot(122)
-plotSamplesDistance(ds, sortbyattr='targets')
+plot_samples_distance(ds, sortbyattr='targets')
 P.title('Distances: z-scored, detrended (sorted by targets)')
 if cfg.getboolean('examples', 'interactive', True):
     P.show()
