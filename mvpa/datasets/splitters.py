@@ -132,15 +132,16 @@ class Splitter(object):
         self.count = count
         """Number (max) of splits to output on call"""
 
-        self._setStrategy(strategy)
+        self._set_strategy(strategy)
 
         # pattern sampling status vars
-        self.setNPerLabel(nperlabel)
+        self.set_n_per_label(nperlabel)
 
 
     __doc__ = enhanced_doc_string('Splitter', locals())
 
-    def _setStrategy(self, strategy):
+    ##REF: Name was automagically refactored
+    def _set_strategy(self, strategy):
         """Set strategy to select splits out from available
         """
         strategy = strategy.lower()
@@ -149,7 +150,8 @@ class Splitter(object):
                   % str(self._STRATEGIES)
         self.__strategy = strategy
 
-    def setNPerLabel(self, value):
+    ##REF: Name was automagically refactored
+    def set_n_per_label(self, value):
         """Set the number of samples per label in the split datasets.
 
         'equal' sets sample size to highest possible number of samples that
@@ -199,7 +201,7 @@ class Splitter(object):
                 nperlabelsplit = self.__nperlabel
 
             # get splitted datasets
-            split_ds = self.splitDataset(dataset, split)
+            split_ds = self.split_dataset(dataset, split)
 
             # do multiple post-processing runs for this split
             for run in xrange(self.__runspersplit):
@@ -260,7 +262,8 @@ class Splitter(object):
                     yield finalized_datasets
 
 
-    def splitDataset(self, dataset, specs):
+    ##REF: Name was automagically refactored
+    def split_dataset(self, dataset, specs):
         """Split a dataset by separating the samples where the configured
         sample attribute matches an element of `specs`.
 
@@ -388,7 +391,7 @@ class Splitter(object):
 
 
     strategy = property(fget=lambda self:self.__strategy,
-                        fset=_setStrategy)
+                        fset=_set_strategy)
     splitattr = property(fget=lambda self:self.__splitattr)
 
 

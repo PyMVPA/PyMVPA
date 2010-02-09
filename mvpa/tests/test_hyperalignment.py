@@ -93,7 +93,8 @@ class HyperAlignmentTests(unittest.TestCase):
         pass
 
 
-    def _testOnSwaroopData(self):
+    ##REF: Name was automagically refactored
+    def _test_on_swaroop_data(self):
         #
         print "Running swaroops test on data we don't have"
         #from mvpa.datasets.miscfx import zscore

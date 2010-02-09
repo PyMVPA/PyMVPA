@@ -69,7 +69,7 @@ class IOHelperTests(unittest.TestCase):
         d.tofile(fpath, header_order=header_order)
 
         # test sample selection
-        dsel = d.selectSamples([0, 2])
+        dsel = d.select_samples([0, 2])
         self.failUnlessEqual(dsel['eins'], [0, 0])
         self.failUnlessEqual(dsel['zwei'], [1, 1])
         self.failUnlessEqual(dsel['drei'], [2, 2])
@@ -101,7 +101,7 @@ class IOHelperTests(unittest.TestCase):
         ok_(sa.nrows == 1452, msg='There should be 1452 samples')
 
         # convert to event list, with some custom attr
-        ev = sa.toEvents(funky='yeah')
+        ev = sa.to_events(funky='yeah')
         ok_(len(ev) == 17 * (max(sa.chunks) + 1),
             msg='Not all events got detected.')
 
@@ -145,13 +145,13 @@ class IOHelperTests(unittest.TestCase):
             pass
 
         d = FslEV3(os.path.join(pymvpa_dataroot, 'fslev3.txt'))
-        ev = d.toEvents()
+        ev = d.to_events()
         self.failUnless(len(ev) == 3)
         self.failUnless([e['duration'] for e in ev] == [9] * 3)
         self.failUnless([e['onset'] for e in ev] == [6, 21, 35])
         self.failUnless([e['features'] for e in ev] == [[1],[1],[1]])
 
-        ev = d.toEvents(label='face', chunk=0, crap=True)
+        ev = d.to_events(label='face', chunk=0, crap=True)
         ev[0]['label'] = 'house'
         self.failUnless(len(ev) == 3)
         self.failUnless([e['duration'] for e in ev] == [9] * 3)

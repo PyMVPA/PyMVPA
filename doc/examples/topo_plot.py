@@ -32,7 +32,7 @@ topo[sensors.names.index('O1')] = 1
 topo[sensors.names.index('F4')] = 1
 
 # plot with sensor locations shown
-plotHeadTopography(topo, sensors.locations(), plotsensors=True)
+plot_head_topography(topo, sensors.locations(), plotsensors=True)
 
 
 # MEG example plot
@@ -46,7 +46,7 @@ sensors=TuebingenMEGSensorLocations(
 topo = N.random.randn(len(sensors.names))
 
 # plot without additional interpolation
-plotHeadTopography(topo, sensors.locations(),
+plot_head_topography(topo, sensors.locations(),
                    interpolation='nearest')
 
 

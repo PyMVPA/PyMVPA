@@ -140,9 +140,9 @@ class StatsTestsScipy(unittest.TestCase):
 
 
     def test_match_distribution(self):
-        """Some really basic testing for matchDistribution
+        """Some really basic testing for match_distribution
         """
-        from mvpa.clfs.stats import matchDistribution, rv_semifrozen
+        from mvpa.clfs.stats import match_distribution, rv_semifrozen
 
         ds = datasets['uni2medium']      # large to get stable stats
         data = ds.samples[:, ds.a.bogus_features[0]]
@@ -167,7 +167,7 @@ class StatsTestsScipy(unittest.TestCase):
         for loc in [None, data_mean]:
             for test in ['p-roc', 'kstest']:
                 # some really basic testing
-                matched = matchDistribution(
+                matched = match_distribution(
                     data=data,
                     distributions = ['scipy',
                                      ('norm',
@@ -246,7 +246,7 @@ class StatsTestsScipy(unittest.TestCase):
         # play fmri
         # full-blown HRF with initial dip and undershoot ;-)
         hrf_x = N.linspace(0, 25, 250)
-        hrf = double_gamma_hrf(hrf_x) - singleGammaHRF(hrf_x, 0.8, 1, 0.05)
+        hrf = double_gamma_hrf(hrf_x) - single_gamma_hrf(hrf_x, 0.8, 1, 0.05)
 
         # come up with an experimental design
         samples = 1800

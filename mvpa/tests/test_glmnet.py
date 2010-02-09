@@ -15,7 +15,7 @@ from mvpa.clfs.glmnet import GLMNET_R,GLMNET_C
 # Lets use our CorrErrorFx which would be available even without scipy
 from mvpa.misc.errorfx import CorrErrorFx
 from tests_warehouse import *
-from mvpa.misc.data_generators import normalFeatureDataset
+from mvpa.misc.data_generators import normal_feature_dataset
 
 from mvpa.testing.tools import assert_true, assert_equal, assert_array_equal
 
@@ -69,7 +69,7 @@ def test_glmnet_state():
 
 
 def test_glmnet_c_sensitivities():
-    data = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+    data = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
 
     # use GLMNET on binary problem
     clf = GLMNET_C()

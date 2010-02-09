@@ -61,7 +61,7 @@ provided by the PyMVPA dataset warehouse.
 """
 
 # 30 samples per condition, SNR 3
-ds_nl = pureMultivariateSignal(30,3)
+ds_nl = pure_multivariate_signal(30,3)
 
 datasets = {'linear': ds_lin, 'non-linear': ds_nl}
 
