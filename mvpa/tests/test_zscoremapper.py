@@ -102,12 +102,14 @@ def test_zscore():
 
     zm = ZScoreMapper()
     # should do global zscore by default
+    zm.train(ds)                        # train
     assert_array_almost_equal(zm.forward(ds), N.transpose([check]))
     # should not modify the source
     assert_array_equal(pristine, ds)
 
     # if we tell it a different mean it should obey the order
     zm = ZScoreMapper(params=(3,1))
+    zm.train(ds)
     assert_array_almost_equal(zm.forward(ds), N.transpose([check]) - 1 )
     assert_array_equal(pristine, ds)
 
@@ -117,7 +119,9 @@ def test_zscore():
                         chunks=[0] * 16 + [1] * 16)
     # by default chunk-wise
     zm = ZScoreMapper()
+    zm.train(ds)                        # train
     assert_array_almost_equal(zm.forward(ds), N.transpose([check + check]))
     # we should be able to do that same manually
     zm = ZScoreMapper(params={0: (2,1), 1: (12,1)})
+    zm.train(ds)                        # train
     assert_array_almost_equal(zm.forward(ds), N.transpose([check + check]))

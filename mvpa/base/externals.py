@@ -505,7 +505,8 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
     return result
 
 
-def testAllDependencies(force=False):
+##REF: Name was automagically refactored
+def test_all_dependencies(force=False):
     """
     Test for all known dependencies.
 

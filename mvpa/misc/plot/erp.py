@@ -161,7 +161,8 @@ def _make_centeredaxis(ax, loc, offset=5, ai=0, mult=1.0,
             transform=transl)
 
 
-def plotERP(data, SR=500, onsets=None,
+##REF: Name was automagically refactored
+def plot_erp(data, SR=500, onsets=None,
             pre=0.2, pre_onset=None, post=None, pre_mean=None,
             color='r', errcolor=None, errtype=None, ax=P,
             ymult=1.0, *args, **kwargs):
@@ -268,7 +269,7 @@ def plotERP(data, SR=500, onsets=None,
     # validity check -- we should have 2D matrix (trials x samples)
     if len(erp_data.shape) != 2:
         raise RuntimeError, \
-              "plotERP() supports either 1D data with onsets, or 2D data " \
+              "plot_erp() supports either 1D data with onsets, or 2D data " \
               "(trials x sample_points). Shape of the data at the point " \
               "is %s" % erp_data.shape
 
@@ -339,7 +340,8 @@ def plotERP(data, SR=500, onsets=None,
     return erp_mean
 
 
-def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
+##REF: Name was automagically refactored
+def plot_erps(erps, data=None, ax=None, pre=0.2, post=None,
              pre_onset=None,
              xlabel='time (s)', ylabel='$\mu V$',
              ylim=None, ymult=1.0, legend=None,
@@ -387,20 +389,20 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
     alinewidth : int
       Axis and ticks line width
     **kwargs
-      Additional arguments provided to plotERP()
+      Additional arguments provided to plot_erp()
 
 
     Examples
     --------
       kwargs  = {'SR' : eeg.SR, 'pre_mean' : 0.2}
-      fig = plotERPs((('60db', 'b', eeg.erp_onsets['60db']),
+      fig = plot_erps((('60db', 'b', eeg.erp_onsets['60db']),
                        ('80db', 'r', eeg.erp_onsets['80db'])),
                       data[:, eeg.sensor_mapping['Cz']],
                       ax=fig.add_subplot(1,1,1,frame_on=False), pre=0.2,
                       post=0.6, **kwargs)
 
         or
-        fig = plotERPs((('60db', 'b', eeg.erp_onsets['60db']),
+        fig = plot_erps((('60db', 'b', eeg.erp_onsets['60db']),
                           {'color': 'r',
                            'onsets': eeg.erp_onsets['80db'],
                            'data' : data[:, eeg.sensor_mapping['Cz']]}
@@ -450,7 +452,7 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
                   % params.get('label', 'UNKNOWN')
 
 
-        plotERP(plot_data, pre=pre, pre_onset=pre_onset, post=post, ax=ax,
+        plot_erp(plot_data, pre=pre, pre_onset=pre_onset, post=post, ax=ax,
                 **params)
         #             plot_kwargs={'label':label})
 

@@ -174,7 +174,7 @@ for kind, spec in specs.iteritems():
         basename = 'uni%d%s' % (nlabels, kind)
         nonbogus_features = nonbogus_pool[:nlabels]
 
-        dataset = normalFeatureDataset(
+        dataset = normal_feature_dataset(
             nlabels=nlabels,
             nonbogus_features=nonbogus_features,
             **spec)
@@ -214,14 +214,14 @@ _dsinv.samples = N.hstack((_dsinv.samples,
 datasets['dumbinv'] = _dsinv
 
 # Datasets for regressions testing
-datasets['sin_modulated'] = multipleChunks(sinModulated, 4, 30, 1)
-datasets['sin_modulated_test'] = sinModulated(30, 1, flat=True)
+datasets['sin_modulated'] = multiple_chunks(sin_modulated, 4, 30, 1)
+datasets['sin_modulated_test'] = sin_modulated(30, 1, flat=True)
 
 # simple signal for linear regressors
-datasets['chirp_linear'] = multipleChunks(chirp_linear, 6, 50, 10, 2, 0.3, 0.1)
+datasets['chirp_linear'] = multiple_chunks(chirp_linear, 6, 50, 10, 2, 0.3, 0.1)
 datasets['chirp_linear_test'] = chirp_linear(20, 5, 2, 0.4, 0.1)
 
-datasets['wr1996'] = multipleChunks(wr1996, 4, 50)
+datasets['wr1996'] = multiple_chunks(wr1996, 4, 50)
 datasets['wr1996_test'] = wr1996(50)
 
 

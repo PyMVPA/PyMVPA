@@ -15,6 +15,7 @@ import numpy as N
 from mvpa.base import warning
 from mvpa.base.dochelpers import _str, borrowkwargs
 from mvpa.mappers.base import accepts_dataset_as_samples, Mapper
+from mvpa.datasets.base import Dataset
 from mvpa.datasets.miscfx import get_nsamples_per_attr, get_samples_by_attr
 
 
@@ -160,10 +161,10 @@ class ZScoreMapper(Mapper):
                     "(with 1 sample in a chunk) "
                     "or -1/+1 (with 2 samples in a chunk).")
 
-        # auto-train the mapper if not yet done
-        if self.__params_dict is None:
-            self.train(ds)
         params = self.__params_dict
+        if params is None:
+            raise RuntimeError, \
+                  "ZScoreMapper needs to be trained before call to forward"
 
         if self._secret_inplace_zscore:
             mds = ds
@@ -194,15 +195,19 @@ class ZScoreMapper(Mapper):
 
 
     def _forward_data(self, data):
-        if not self.__chunks is None:
+        if self.__chunks is not None:
             raise RuntimeError("%s cannot do chunk-wise Z-scoring of plain "
-                               "data since it was parameterized with chunks."
+                               "data since it has to be parameterized with chunks."
                                % self)
+        if self.__param_est is not None:
+            raise RuntimeError("%s cannot do Z-scoring with estimating "
+                               "parameters on some attributes of plain"
+                               "data." % self)
 
         params = self.__params_dict
-
         if params is None:
-            raise RuntimeError("%s needs to be trained before use." % self)
+            raise RuntimeError, \
+                  "ZScoreMapper needs to be trained before call to forward"
 
         # mappers should not modify the input data
         # cast the data to float, since in-place operations below to not upcast!
@@ -246,7 +251,7 @@ class ZScoreMapper(Mapper):
 
 @borrowkwargs(ZScoreMapper, '__init__')
 def zscore(ds, **kwargs):
-    """In-place Z-scoring of a `Dataset`.
+    """In-place Z-scoring of a `Dataset` or `ndarray`.
 
     This function behaves identical to `ZScoreMapper`. The only difference is
     that the actual Z-scoring is done in-place -- potentially causing a
@@ -254,14 +259,20 @@ def zscore(ds, **kwargs):
 
     Parameters
     ----------
-    ds : Dataset
-      The dataset that will be Z-scored in-place.
+    ds : Dataset or ndarray
+      The data that will be Z-scored in-place.
     **kwargs
       For all other arguments, please see the documentation of `ZScoreMapper`.
     """
     zm = ZScoreMapper(**kwargs)
     zm._secret_inplace_zscore = True
+    # train
+    if isinstance(ds, Dataset):
+        zm.train(ds)
+    else:
+        zm.train(Dataset(ds))
     # map
     mapped = zm(ds)
     # and append the mapper to the dataset
-    mapped._append_mapper(zm)
+    if isinstance(mapped, Dataset):
+        mapped._append_mapper(zm)

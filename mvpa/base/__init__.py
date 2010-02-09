@@ -142,11 +142,12 @@ class WarningLog(OnceLogger):
         OnceLogger.__call__(self, msgid, fullmsg, self.__maxcount)
 
 
-    def _setMaxCount(self, value):
+    ##REF: Name was automagically refactored
+    def _set_max_count(self, value):
         """Set maxcount for the warning"""
         self.__maxcount = value
 
-    maxcount = property(fget=lambda x:x.__maxcount, fset=_setMaxCount)
+    maxcount = property(fget=lambda x:x.__maxcount, fset=_set_max_count)
 
 # XXX what is 'bt'? Maybe more verbose name?
 if cfg.has_option('warnings', 'bt'):
@@ -180,7 +181,7 @@ if __debug__:
         handlers=cfg.get('debug', 'output', default='stdout').split(',')))
 
     # set some debugging matricses to report
-    # debug.registerMetric('vmem')
+    # debug.register_metric('vmem')
 
     # List agreed sets for debug
     debug.register('PY',   "No suppression of various warnings (numpy, scipy) etc.")
@@ -233,6 +234,7 @@ if __debug__:
 
     debug.register('MAP',   "*Mapper")
     debug.register('MAP_',  "*Mapper (verbose)")
+    debug.register('ZSCM',  "ZScoreMapper")
 
     debug.register('COL',  "Generic Collectable")
     debug.register('COL_RED',  "__reduce__ of collectables")
@@ -323,11 +325,11 @@ if __debug__:
 
     # Lets check if environment can tell us smth
     if cfg.has_option('general', 'debug'):
-        debug.setActiveFromString(cfg.get('general', 'debug'))
+        debug.set_active_from_string(cfg.get('general', 'debug'))
 
     # Lets check if environment can tell us smth
     if cfg.has_option('debug', 'metrics'):
-        debug.registerMetric(cfg.get('debug', 'metrics').split(","))
+        debug.register_metric(cfg.get('debug', 'metrics').split(","))
 
 
 
