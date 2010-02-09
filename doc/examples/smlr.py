@@ -104,9 +104,9 @@ lsvm_confusion_sparse = ConfusionMatrix(
 
 
 print "SMLR Percent Correct:\t%g%% (Retained %d/%d features)" % \
-    (smlr_confusion.percentCorrect,
+    (smlr_confusion.percent_correct,
      (smlr.weights!=0).sum(), N.prod(smlr.weights.shape))
 print "linear-SVM Percent Correct:\t%g%%" % \
-    (lsvm_confusion.percentCorrect)
+    (lsvm_confusion.percent_correct)
 print "linear-SVM Percent Correct (with %d features from SMLR):\t%g%%" % \
-    (keepInd.sum(), lsvm_confusion_sparse.percentCorrect)
+    (keepInd.sum(), lsvm_confusion_sparse.percent_correct)

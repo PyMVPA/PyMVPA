@@ -166,7 +166,8 @@ class SVMParameter(object):
             debug('CLF_', 'Destroying libsvm.SVMParameter %s' % str(self))
         self._clear_svmc_params()
 
-    def _setParameter(self, key, value):
+    ##REF: Name was automagically refactored
+    def _set_parameter(self, key, value):
         """Not exactly proper one -- if lists are svmc_recompute, would fail anyways"""
         self.__svmc_recompute = True
         self._params[key] = value
@@ -177,7 +178,7 @@ class SVMParameter(object):
             exec "%s.%s = property(fget=%s, fset=%s)"  % \
                  (cls.__name__, key,
                   "lambda self:self._params['%s']" % key,
-                  "lambda self,val:self._setParameter('%s', val)" % key)
+                  "lambda self,val:self._set_parameter('%s', val)" % key)
 
 
 SVMParameter._register_properties()
@@ -333,7 +334,8 @@ class SVMModel:
     #                svmc_parameter=svmc.svm_model_param_get(self.model))
 
 
-    def predictValuesRaw(self, x):
+    ##REF: Name was automagically refactored
+    def predict_values_raw(self, x):
         #convert x into SVMNode, allocate a double array for return
         n = self.nr_class*(self.nr_class-1)//2
         data = seq_to_svm_node(x)
@@ -345,8 +347,9 @@ class SVMModel:
         return ret
 
 
-    def predictValues(self, x):
-        v = self.predictValuesRaw(x)
+    ##REF: Name was automagically refactored
+    def predict_values(self, x):
+        v = self.predict_values_raw(x)
         if self.svm_type == NU_SVR \
            or self.svm_type == EPSILON_SVR \
            or self.svm_type == ONE_CLASS:
@@ -362,7 +365,8 @@ class SVMModel:
             return  d
 
 
-    def predictProbability(self, x):
+    ##REF: Name was automagically refactored
+    def predict_probability(self, x):
         #c code will do nothing on wrong type, so we have to check ourself
         if self.svm_type == NU_SVR or self.svm_type == EPSILON_SVR:
             raise TypeError, "call get_svr_probability or get_svr_pdf " \

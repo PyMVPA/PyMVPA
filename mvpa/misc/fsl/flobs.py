@@ -16,7 +16,8 @@ import shutil
 import numpy as N
 import math
 
-def makeFlobs(pre=0, rise=5, fall=5, undershoot=5, undershootamp=0.3, 
+##REF: Name was automagically refactored
+def make_flobs(pre=0, rise=5, fall=5, undershoot=5, undershootamp=0.3, 
               nsamples=1, resolution=0.05, nsecs=-1, nbasisfns=2):
     """Wrapper around the FSL tool halfcosbasis.
 

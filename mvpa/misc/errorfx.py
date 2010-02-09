@@ -21,19 +21,21 @@ from numpy import trapz
 from mvpa.base import externals
 
 # Various helper functions
-def meanPowerFx(data):
+##REF: Name was automagically refactored
+def mean_power_fx(data):
     """Returns mean power
 
     Similar to var but without demeaning
     """
     return N.mean(N.asanyarray(data)**2)
 
-def rootMeanPowerFx(data):
+##REF: Name was automagically refactored
+def root_mean_power_fx(data):
     """Returns root mean power
 
     to be comparable against RMSE
     """
-    return N.sqrt(meanPowerFx(data))
+    return N.sqrt(mean_power_fx(data))
 
 
 class _ErrorFx(object):
@@ -166,7 +168,7 @@ class RelativeRMSErrorFx(_ErrorFx):
     and target might lead to completely different answers
     """
     def __call__(self, predicted, target):
-        return RMSErrorFx()(predicted, target) / rootMeanPowerFx(target)
+        return RMSErrorFx()(predicted, target) / root_mean_power_fx(target)
 
 
 class Variance1SVFx(_ErrorFx):
