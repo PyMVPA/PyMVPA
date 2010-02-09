@@ -437,10 +437,11 @@ class GPR(Classifier):
         return predictions
 
 
-    def _setRetrainable(self, value, force=False):
+    ##REF: Name was automagically refactored
+    def _set_retrainable(self, value, force=False):
         """Internal function : need to set _km_test_test
         """
-        super(GPR, self)._setRetrainable(value, force)
+        super(GPR, self)._set_retrainable(value, force)
         if force or (value and value != self.params.retrainable):
             self._km_test_test = None
 

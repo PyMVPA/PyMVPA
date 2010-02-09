@@ -10,7 +10,7 @@
 
 from mvpa.clfs.smlr import SMLR
 from tests_warehouse import *
-from mvpa.misc.data_generators import normalFeatureDataset
+from mvpa.misc.data_generators import normal_feature_dataset
 
 
 class SMLRTests(unittest.TestCase):
@@ -52,7 +52,7 @@ class SMLRTests(unittest.TestCase):
 
 
     def test_smlr_sensitivities(self):
-        data = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+        data = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
 
         # use SMLR on binary problem, but not fitting all weights
         clf = SMLR(fit_all_weights=False)

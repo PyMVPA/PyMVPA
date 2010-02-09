@@ -20,7 +20,7 @@ part <chap_tutorial1>`:
 
 >>> from tutorial_lib import *
 >>> ds = get_haxby2001_data()
->>> clf = kNN(k=1, dfx=oneMinusCorrelation, voting='majority')
+>>> clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
 >>> terr = TransferError(clf)
 >>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter(attr='runtype'))
 >>> cv_results = cvte(ds)
@@ -363,7 +363,7 @@ the data. Since nothing in this code is specific to the actual classification
 algorithm we can easily go back to the kNN classifier that has served us well
 in the past.
 
->>> baseclf = kNN(k=1, dfx=oneMinusCorrelation, voting='majority')
+>>> baseclf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
 >>> mapper = ChainMapper([SVDMapper(), FeatureSliceMapper(slice(None, 2))])
 >>> metaclf = MappedClassifier(baseclf, mapper)
 >>> terr = TransferError(metaclf)

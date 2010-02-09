@@ -15,11 +15,11 @@ import numpy as N
 
 from mvpa.base import externals
 from mvpa.datasets.base import dataset_wizard
-from mvpa.datasets.miscfx import removeInvariantFeatures, coarsen_chunks, \
+from mvpa.datasets.miscfx import remove_invariant_features, coarsen_chunks, \
         aggregate_features, SequenceStats
 
 
-from mvpa.misc.data_generators import normalFeatureDataset
+from mvpa.misc.data_generators import normal_feature_dataset
 
 class MiscDatasetFxTests(unittest.TestCase):
 
@@ -40,7 +40,7 @@ class MiscDatasetFxTests(unittest.TestCase):
 
         self.failUnless(ds.nfeatures == 3)
 
-        dsc = removeInvariantFeatures(ds)
+        dsc = remove_invariant_features(ds)
 
         self.failUnless(dsc.nfeatures == 1)
         self.failUnless((dsc.samples == r).all())
@@ -62,7 +62,7 @@ class MiscDatasetFxTests(unittest.TestCase):
         self.failUnless((chunks1 == ds.chunks).all())
 
     def test_binds(self):
-        ds = normalFeatureDataset()
+        ds = normal_feature_dataset()
         ds_data = ds.samples.copy()
         ds_chunks = ds.chunks.copy()
         self.failUnless(N.all(ds.samples == ds_data)) # sanity check
@@ -78,7 +78,7 @@ class MiscDatasetFxTests(unittest.TestCase):
             ds.sa['chunks'].value = ds_chunks.copy()
 
         # and some which should just return results
-        for f in ['aggregate_features', 'removeInvariantFeatures',
+        for f in ['aggregate_features', 'remove_invariant_features',
                   'get_samples_per_chunk_label']:
             res = eval('ds.%s()' % f)
             self.failUnless(res is not None,

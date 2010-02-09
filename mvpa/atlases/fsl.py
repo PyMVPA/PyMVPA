@@ -18,7 +18,7 @@ if externals.exists('nifti', raiseException=True):
 import os, re
 import numpy as N
 
-from mvpa.misc.support import reuseAbsolutePath
+from mvpa.misc.support import reuse_absolute_path
 from mvpa.base.dochelpers import enhanced_doc_string
 
 from mvpa.atlases.base import XMLBasedAtlas, LabelsLevel
@@ -47,7 +47,8 @@ class FSLAtlas(XMLBasedAtlas):
     __doc__ = enhanced_doc_string('FSLAtlas', locals(), XMLBasedAtlas)
 
 
-    def _loadImages(self):
+    ##REF: Name was automagically refactored
+    def _load_images(self):
         resolution = self._resolution
         header = self.header
         images = header.images
@@ -58,7 +59,7 @@ class FSLAtlas(XMLBasedAtlas):
         resolutions = []
         if self._force_image_file is None:
             imagefile_candidates = [
-                reuseAbsolutePath(self._filename, i.imagefile.text, force=True)
+                reuse_absolute_path(self._filename, i.imagefile.text, force=True)
                 for i in images]
         else:
             imagefile_candidates = [self._force_image_file]
@@ -99,14 +100,15 @@ class FSLAtlas(XMLBasedAtlas):
         self._data   = self._image.data
 
 
-    def _loadData(self):
+    ##REF: Name was automagically refactored
+    def _load_data(self):
         """   """
         # Load levels
         self._levels_dict = {}
         # preprocess labels for different levels
-        self.Nlevels = 1
-        #level = Level.from_xml(self.data, levelType='label')
-        level = LabelsLevel.from_xml(self.data)#, levelType='label')
+        self.n_levels = 1
+        #level = Level.from_xml(self.data, level_type='label')
+        level = LabelsLevel.from_xml(self.data)#, level_type='label')
         level.description = self.header.name.text
         self._levels_dict = {0: level}
         #for index, child in enumerate(self.data.getchildren()):
@@ -119,7 +121,7 @@ class FSLAtlas(XMLBasedAtlas):
         #           pass
         #   else:
         #       raise XMLAtlasException("Unknown child '%s' within data" % child.tag)
-        #   self.Nlevels += 1
+        #   self.n_levels += 1
         #pass
 
 
