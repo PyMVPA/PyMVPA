@@ -151,7 +151,7 @@ def test_er_nifti_dataset():
     tssrc = os.path.join(pymvpa_dataroot, 'bold')
     evsrc = os.path.join(pymvpa_dataroot, 'fslev3.txt')
     masrc = os.path.join(pymvpa_dataroot, 'mask')
-    evs = FslEV3(evsrc).toEvents()
+    evs = FslEV3(evsrc).to_events()
     # using TR from nifti header
     ds = fmri_dataset(tssrc)
     ds = extract_events(ds, evs)

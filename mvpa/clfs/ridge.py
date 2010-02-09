@@ -100,6 +100,9 @@ class RidgeReg(Classifier):
         Predict the output for the provided data.
         """
         # predict using the trained weights
-        return N.dot(N.concatenate((data, N.ones((len(data), 1))), 1),
+        pred = N.dot(N.concatenate((data, N.ones((len(data), 1))), 1),
                      self.w)
+        # estimates equal predictions in this case
+        self.ca.estimates = pred
+        return pred
 

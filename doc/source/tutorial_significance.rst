@@ -8,7 +8,7 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 .. index:: Tutorial
-.. _chap_tutorial8:
+.. _chap_tutorial_significance:
 
 **************************************************
 Part 8: The Earth Is Round -- Significance Testing

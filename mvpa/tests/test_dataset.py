@@ -82,7 +82,7 @@ class DatasetTests(unittest.TestCase):
         self.failUnless( data.nsamples == 10 )
 
         # set single pattern to enabled
-        for sel in [ data.selectSamples(5),
+        for sel in [ data.select_samples(5),
                      data.select(5),
                      data.select(slice(5, 6)),
                      ]:
@@ -91,7 +91,7 @@ class DatasetTests(unittest.TestCase):
             self.failUnless( sel.origids == [5] )
 
         # check duplicate selections
-        for sel in [ data.selectSamples([5, 5]),
+        for sel in [ data.select_samples([5, 5]),
                      # Following ones would fail since select removes
                      # repetitions (XXX)
                      #data.select([5,5]),
@@ -108,7 +108,7 @@ class DatasetTests(unittest.TestCase):
             self.failUnless( sel.samples.shape == (2, 100) )
 
         # check selection by labels
-        for sel in [ data.selectSamples(data.idsbylabels(2)),
+        for sel in [ data.select_samples(data.idsbylabels(2)),
                      data.select(labels=2),
                      data.select('labels', 2),
                      data.select('labels', [2]),
@@ -119,7 +119,7 @@ class DatasetTests(unittest.TestCase):
             self.failUnless( sel.nsamples == data.nsamples )
             self.failUnless( N.all(sel.samples == data.samples) )
         # not present label
-        for sel in [ data.selectSamples(data.idsbylabels(3)),
+        for sel in [ data.select_samples(data.idsbylabels(3)),
                      data.select(labels=3),
                      data.select('labels', 3),
                      data.select('labels', [3]),
@@ -129,7 +129,7 @@ class DatasetTests(unittest.TestCase):
         data = Dataset(samples=origdata,
                        labels=[8, 9, 4, 3, 3, 3, 4, 2, 8, 9],
                        chunks=2)
-        for sel in [ data.selectSamples(data.idsbylabels([2, 3])),
+        for sel in [ data.select_samples(data.idsbylabels([2, 3])),
                      data.select('labels', [2, 3]),
                      data.select('labels', [2, 3], labels=[1, 2, 3, 4]),
                      data.select('labels', [2, 3], chunks=[1, 2, 3, 4]),
@@ -143,7 +143,7 @@ class DatasetTests(unittest.TestCase):
 
 
         # select some samples removing some labels completely
-        sel = data.selectSamples(data.idsbylabels([3, 4, 8, 9]))
+        sel = data.select_samples(data.idsbylabels([3, 4, 8, 9]))
         self.failUnlessEqual(Set(sel.uniquetargets), Set([3, 4, 8, 9]))
         self.failUnless((sel.origids == [0, 1, 2, 3, 4, 5, 6, 8, 9]).all())
 
@@ -321,7 +321,7 @@ class DatasetTests(unittest.TestCase):
             self.failUnless(ds.targets_map == od)
             ds_ = ds[1]
             self.failUnless(ds_.targets_map == od,
-                msg='selectSamples should provide full mapping preserved')
+                msg='select_samples should provide full mapping preserved')
 
         # We should complaint about insufficient mapping
         self.failUnlessRaises(ValueError, Dataset, samples=samples,

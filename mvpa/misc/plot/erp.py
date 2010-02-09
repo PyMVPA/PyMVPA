@@ -161,7 +161,8 @@ def _make_centeredaxis(ax, loc, offset=5, ai=0, mult=1.0,
             transform=transl)
 
 
-def plotERP(data, SR=500, onsets=None,
+##REF: Name was automagically refactored
+def plot_erp(data, SR=500, onsets=None,
             pre=0.2, pre_onset=None, post=None, pre_mean=None,
             color='r', errcolor=None, errtype=None, ax=P,
             ymult=1.0, *args, **kwargs):
@@ -177,9 +178,9 @@ def plotERP(data, SR=500, onsets=None,
       signal timecourse of a particular trial.
     onsets : list(int)
       List of onsets (in samples not in seconds).
-    SR : int
+    SR : int, optional
       Sampling rate (1/s) of the signal.
-    pre : float
+    pre : float, optional
       Duration (in seconds) to be plotted prior to onset.
     pre_onset : float or None
       If data is already in epochs (2D) then pre_onset provides information
@@ -191,30 +192,24 @@ def plotERP(data, SR=500, onsets=None,
       Duration (in seconds) at the beginning of the window which is used
       for deriving the mean of the signal. If None, pre_mean = pre
     errtype : None or 'ste' or 'std' or 'ci95' or list of previous three
-      Type of error value to be computed per datapoint.
-
-        'ste'
-          standard error of the mean
-        'std'
-          standard deviation
-        'ci95'
-          95% confidence interval (1.96 * ste)
-         None
-          no error margin is plotted (default)
+      Type of error value to be computed per datapoint.  'ste' --
+      standard error of the mean, 'std' -- standard deviation 'ci95'
+      -- 95% confidence interval (1.96 * ste), None -- no error margin
+      is plotted (default)
       Optionally, multiple error types can be specified in a list. In that
       case all of them will be plotted.
-    color : matplotlib color code
+    color : matplotlib color code, optional
       Color to be used for plotting the mean signal timecourse.
     errcolor : matplotlib color code
       Color to be used for plotting the error margin. If None, use main color
       but with weak alpha level
     ax :
       Target where to draw.
-    ymult : float
+    ymult : float, optional
       Multiplier for the values. E.g. if negative-up ERP plot is needed:
       provide ymult=-1.0
     *args, **kwargs
-      Additional arguments to plot().
+      Additional arguments to `pylab.plot`.
 
     Returns
     -------
@@ -268,7 +263,7 @@ def plotERP(data, SR=500, onsets=None,
     # validity check -- we should have 2D matrix (trials x samples)
     if len(erp_data.shape) != 2:
         raise RuntimeError, \
-              "plotERP() supports either 1D data with onsets, or 2D data " \
+              "plot_erp() supports either 1D data with onsets, or 2D data " \
               "(trials x sample_points). Shape of the data at the point " \
               "is %s" % erp_data.shape
 
@@ -339,7 +334,8 @@ def plotERP(data, SR=500, onsets=None,
     return erp_mean
 
 
-def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
+##REF: Name was automagically refactored
+def plot_erps(erps, data=None, ax=None, pre=0.2, post=None,
              pre_onset=None,
              xlabel='time (s)', ylabel='$\mu V$',
              ylim=None, ymult=1.0, legend=None,
@@ -360,47 +356,48 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
     ax
       Where to draw (e.g. subplot instance). If None, new figure is
       created
-    pre : float
+    pre : float, optional
       Duration (seconds) to be plotted prior to onset
-    pre_onset : float or None
+    pre_onset : None or float
       If data is already in epochs (2D) then pre_onset provides information
       on how many seconds pre-stimulus were used to generate them. If None,
       then pre_onset = pre
-    post : float or None
+    post : None or float
       Duration (seconds) to be plotted after the onset. If any data is
       provided with onsets, it can't be None. If None -- plots all time
       points after onsets
-    ymult : float
+    ymult : float, optional
       Multiplier for the values. E.g. if negative-up ERP plot is needed:
       provide ymult=-1.0
-    xlformat : str
+    xlformat : str, optional
       Format of the x ticks
-    ylformat : str
+    ylformat : str, optional
       Format of the y ticks
-    legend : str or None
+    legend : None or string
       If not None, legend will be plotted with position argument
       provided in this argument
-    loffset : int
+    loffset : int, optional
       Offset in voxels for axes and tick labels. Different
       matplotlib frontends might have different opinions, thus
       offset value might need to be tuned specifically per frontend
-    alinewidth : int
+    alinewidth : int, optional
       Axis and ticks line width
     **kwargs
-      Additional arguments provided to plotERP()
+      Additional arguments provided to plot_erp()
 
 
     Examples
     --------
+
       kwargs  = {'SR' : eeg.SR, 'pre_mean' : 0.2}
-      fig = plotERPs((('60db', 'b', eeg.erp_onsets['60db']),
+      fig = plot_erps((('60db', 'b', eeg.erp_onsets['60db']),
                        ('80db', 'r', eeg.erp_onsets['80db'])),
                       data[:, eeg.sensor_mapping['Cz']],
                       ax=fig.add_subplot(1,1,1,frame_on=False), pre=0.2,
                       post=0.6, **kwargs)
 
         or
-        fig = plotERPs((('60db', 'b', eeg.erp_onsets['60db']),
+        fig = plot_erps((('60db', 'b', eeg.erp_onsets['60db']),
                           {'color': 'r',
                            'onsets': eeg.erp_onsets['80db'],
                            'data' : data[:, eeg.sensor_mapping['Cz']]}
@@ -450,7 +447,7 @@ def plotERPs(erps, data=None, ax=None, pre=0.2, post=None,
                   % params.get('label', 'UNKNOWN')
 
 
-        plotERP(plot_data, pre=pre, pre_onset=pre_onset, post=post, ax=ax,
+        plot_erp(plot_data, pre=pre, pre_onset=pre_onset, post=post, ax=ax,
                 **params)
         #             plot_kwargs={'label':label})
 

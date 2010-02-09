@@ -309,7 +309,8 @@ class Report(object):
 
         pageinfo = self.name + " data"
 
-        def myFirstPage(canvas, doc):
+        ##REF: Name was automagically refactored
+        def my_first_page(canvas, doc):
             canvas.saveState()
             canvas.setFont(self.font, 16)
             canvas.drawCentredString(self.pagesize[0]/2.0,
@@ -319,7 +320,8 @@ class Report(object):
                               "First Page / %s" % pageinfo)
             canvas.restoreState()
 
-        def myLaterPages(canvas, doc):
+        ##REF: Name was automagically refactored
+        def my_later_pages(canvas, doc):
             canvas.saveState()
             canvas.setFont(self.font, 9)
             canvas.drawString(inch, 0.75 * inch,
@@ -337,6 +339,6 @@ class Report(object):
             debug("REP", "Saving the report into %s" % filename)
 
         doc.build(story,
-                  onFirstPage=myFirstPage,
-                  onLaterPages=myLaterPages)
+                  onFirstPage=my_first_page,
+                  onLaterPages=my_later_pages)
 

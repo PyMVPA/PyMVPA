@@ -401,7 +401,8 @@ class RFETests(unittest.TestCase):
         self.failUnless(error < 0.2)
 
 
-    def __testMatthiasQuestion(self):
+    ##REF: Name was automagically refactored
+    def __test_matthias_question(self):
         rfe_clf = LinearCSVMC(C=1)
 
         rfesvm_split = SplitClassifier(rfe_clf)

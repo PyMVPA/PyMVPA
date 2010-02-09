@@ -294,7 +294,8 @@ class ColumnData(dict):
         return self
 
 
-    def selectSamples(self, selection):
+    ##REF: Name was automagically refactored
+    def select_samples(self, selection):
         """Return new ColumnData with selected samples"""
 
         data = copy.deepcopy(self)
@@ -424,7 +425,8 @@ class SampleAttributes(ColumnData):
         return self.nrows
 
 
-    def toEvents(self, **kwargs):
+    ##REF: Name was automagically refactored
+    def to_events(self, **kwargs):
         """Convert into a list of `Event` instances.
 
         Each change in the label or chunks value is taken as a new event onset.

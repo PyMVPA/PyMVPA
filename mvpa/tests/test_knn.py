@@ -10,8 +10,8 @@
 
 from mvpa.clfs.knn import kNN
 from tests_warehouse import *
-from tests_warehouse import pureMultivariateSignal
-from mvpa.clfs.distance import oneMinusCorrelation
+from tests_warehouse import pure_multivariate_signal
+from mvpa.clfs.distance import one_minus_correlation
 
 class KNNTests(unittest.TestCase):
 
@@ -22,8 +22,8 @@ class KNNTests(unittest.TestCase):
 
         clf = kNN(k=10)
         for i in xrange(20):
-            train = pureMultivariateSignal( 20, 3 )
-            test = pureMultivariateSignal( 20, 3 )
+            train = pure_multivariate_signal( 20, 3 )
+            test = pure_multivariate_signal( 20, 3 )
             clf.train(train)
             p_mv = clf.predict( test.samples )
             mv_perf.append( N.mean(p_mv==test.targets) )
@@ -40,8 +40,8 @@ class KNNTests(unittest.TestCase):
 
 
     def test_knn_state(self):
-        train = pureMultivariateSignal( 40, 3 )
-        test = pureMultivariateSignal( 20, 3 )
+        train = pure_multivariate_signal( 40, 3 )
+        test = pure_multivariate_signal( 20, 3 )
 
         clf = kNN(k=10)
         clf.train(train)

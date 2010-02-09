@@ -29,7 +29,8 @@ if externals.exists("scipy", raiseException=True):
 
 
 # TODO : add optional plotting labels for the sensors
-def plotHeadTopography(topography, sensorlocations, plotsensors=False,
+##REF: Name was automagically refactored
+def plot_head_topography(topography, sensorlocations, plotsensors=False,
                        resolution=51, masked=True, plothead=True,
                        plothead_kwargs=None, **kwargs):
     """Plot distribution to a head surface, derived from some sensor locations.
@@ -50,7 +51,7 @@ def plotHeadTopography(topography, sensorlocations, plotsensors=False,
     plothead : bool
       If True, a head outline is plotted.
     plothead_kwargs : dict
-      Additional keyword arguments passed to `plotHeadOutline()`.
+      Additional keyword arguments passed to `plot_head_outline()`.
     resolution : int
       Number of surface samples along both x and y-axis.
     masked : bool
@@ -69,7 +70,7 @@ def plotHeadTopography(topography, sensorlocations, plotsensors=False,
             The colormap that makes the actual plot, a
             matplotlib.image.AxesImage instance.
           head
-            What is returned by `plotHeadOutline()`.
+            What is returned by `plot_head_outline()`.
           sensors
             The dots marking the electrodes, a matplotlib.lines.Line2d
             instance.
@@ -123,7 +124,7 @@ def plotHeadTopography(topography, sensorlocations, plotsensors=False,
 
     if plothead:
         # plot scaled head outline
-        head = plotHeadOutline(scale=r, shift=(cx/2.0, cy/2.0), **plothead_kwargs)
+        head = plot_head_outline(scale=r, shift=(cx/2.0, cy/2.0), **plothead_kwargs)
     else:
         head = None
 
@@ -142,7 +143,8 @@ def plotHeadTopography(topography, sensorlocations, plotsensors=False,
     return map, head, sensors
 
 
-def plotHeadOutline(scale=1, shift=(0, 0), color='k', linewidth='5', **kwargs):
+##REF: Name was automagically refactored
+def plot_head_outline(scale=1, shift=(0, 0), color='k', linewidth='5', **kwargs):
     """Plots a simple outline of a head viewed from the top.
 
     The plot contains schematic representations of the nose and ears. The

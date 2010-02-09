@@ -93,7 +93,7 @@ class VerboseOutputTest(unittest.TestCase):
     def test_verbose_negative(self):
         """Test if chokes on negative level"""
         self.failUnlessRaises( ValueError,
-                               verbose._setLevel, -10 )
+                               verbose._set_level, -10 )
 
     def test_no_lf(self):
         """Test if it works fine with no newline (LF) symbol"""

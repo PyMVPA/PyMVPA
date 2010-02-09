@@ -8,7 +8,7 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 .. index:: Tutorial, Dataset concepts
-.. _chap_tutorial2:
+.. _chap_tutorial_datasets:
 
 ***********************************
 Part 2: Dataset Basics and Concepts
@@ -92,7 +92,7 @@ in a collection, and are accessible via the `sa` attribute. A collection is
 derived from a standard Python `dict`, and hence adding sample attributes
 works identical to adding elements to a dictionary:
 
->>> ds.sa['some_attr'] = [ 0, 1, 1, 3 ]
+>>> ds.sa['some_attr'] = [ 0., 1, 1, 3 ]
 >>> ds.sa.keys()
 ['some_attr']
 
@@ -103,7 +103,7 @@ turn embeds a NumPy array with the actual attribute:
 >>> type(ds.sa['some_attr'])
 <class 'mvpa.base.collections.ArrayCollectable'>
 >>> ds.sa['some_attr'].value
-array([0, 1, 1, 3])
+array([ 0.,  1.,  1.,  3.])
 
 This "complication" is done to be able to extend attributes with additional
 functionality that is often needed and can offer significant speed-up of
@@ -112,14 +112,14 @@ This list is only computed once (upon first request) and can subsequently be
 accessed directly without repeated and expensive searches:
 
 >>> ds.sa['some_attr'].unique
-array([0, 1, 3])
+array([ 0.,  1.,  3.])
 
 However, for most interactive uses of PyMVPA this type of access to attribute's
 `.value` is relatively cumbersome (too much typing), therefore collections offer direct
 attribute access by name:
 
 >>> ds.sa.some_attr
-array([0, 1, 1, 3])
+array([ 0.,  1.,  1.,  3.])
 
 Another purpose of the sample attribute collection is to preserve data
 integrity, by disallowing improper attributes:
@@ -146,7 +146,7 @@ literal and numeric attributes in the same dataset.
 >>> for attr in ds.sa:
 ...    print "%s: %s" % (attr, ds.sa[attr].value.dtype.name)
 literal: string40
-some_attr: int32
+some_attr: float64
 
 
 
@@ -289,7 +289,7 @@ are the attributes. What happens to them when a subset of samples and/or
 features is chosen? Our original dataset had both samples and feature attributes:
 
 >>> print ds.sa.some_attr
-[0 1 1 3]
+[ 0.  1.  1.  3.]
 >>> print ds.fa.responsible
 ['me' 'you' 'nobody']
 
@@ -297,7 +297,7 @@ Now let's look at what they became in the subset-dataset we previously
 created:
 
 >>> print subds.sa.some_attr
-[0 1]
+[ 0.  1.]
 >>> print subds.fa.responsible
 ['me' 'nobody']
 
@@ -391,7 +391,7 @@ True
 In addition to all this information, the dataset also carries a key
 attribute: the *mapper*. A mapper is an important concept in PyMVPA, and
 hence worth devoting the whole :ref:`next tutorial chapter
-<chap_tutorial3>` to it.
+<chap_tutorial_mappers>` to it.
 
 >>> print ds.a.mapper
 <ChainMapper: <Flatten>-<FeatureSlice>>

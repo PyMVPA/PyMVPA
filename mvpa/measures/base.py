@@ -437,7 +437,8 @@ class Sensitivity(FeaturewiseDatasetMeasure):
         return FeaturewiseDatasetMeasure.__call__(self, dataset)
 
 
-    def _setClassifier(self, clf):
+    ##REF: Name was automagically refactored
+    def _set_classifier(self, clf):
         self.__clf = clf
 
 
@@ -455,7 +456,7 @@ class Sensitivity(FeaturewiseDatasetMeasure):
 
 
     clf = property(fget=lambda self:self.__clf,
-                   fset=_setClassifier)
+                   fset=_set_classifier)
 
 
 
@@ -533,14 +534,15 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
             for anal in self.__analyzers:
                 anal.untrain()
 
-    def _setAnalyzers(self, analyzers):
+    ##REF: Name was automagically refactored
+    def _set_analyzers(self, analyzers):
         """Set the analyzers
         """
         self.__analyzers = analyzers
         """Analyzers to use"""
 
     analyzers = property(fget=lambda x:x.__analyzers,
-                         fset=_setAnalyzers,
+                         fset=_set_analyzers,
                          doc="Used analyzers")
 
 

@@ -96,7 +96,7 @@ class BoostedClassifier(Classifier, Harvestable):
         self.__propagate_ca = propagate_ca
         """Enable current enabled ca in slave classifiers"""
 
-        self._setClassifiers(clfs)
+        self._set_classifiers(clfs)
         """Store the list of classifiers"""
 
 
@@ -159,7 +159,8 @@ class BoostedClassifier(Classifier, Harvestable):
         return raw_predictions
 
 
-    def _setClassifiers(self, clfs):
+    ##REF: Name was automagically refactored
+    def _set_classifiers(self, clfs):
         """Set the classifiers used by the boosted classifier
 
         We have to allow to set list of classifiers after the object
@@ -202,7 +203,7 @@ class BoostedClassifier(Classifier, Harvestable):
 
 
     clfs = property(fget=lambda x:x.__clfs,
-                    fset=_setClassifiers,
+                    fset=_set_classifiers,
                     doc="Used classifiers")
 
 
@@ -234,7 +235,7 @@ class ProxyClassifier(Classifier):
         """
 
         # Is done before parents __init__ since we need
-        # it for _setRetrainable called during __init__
+        # it for _set_retrainable called during __init__
         self.__clf = clf
         """Store the classifier to use."""
 
@@ -259,10 +260,11 @@ class ProxyClassifier(Classifier):
                  (self.__clf.summary().replace('\n', '\n |'))
         return s
 
-    def _setRetrainable(self, value, force=False):
+    ##REF: Name was automagically refactored
+    def _set_retrainable(self, value, force=False):
         # XXX Lazy implementation
-        self.clf._setRetrainable(value, force=force)
-        super(ProxyClassifier, self)._setRetrainable(value, force)
+        self.clf._set_retrainable(value, force=force)
+        super(ProxyClassifier, self)._set_retrainable(value, force)
         if value and not (self.ca['retrained']
                           is self.clf.ca['retrained']):
             if __debug__:
@@ -931,13 +933,13 @@ class BinaryClassifier(ProxyClassifier):
                                                          self.__poslabels)] + \
                     [(x, -1) for x in get_samples_by_attr(dataset, targets_sa_name,
                                                           self.__neglabels)]
-        # XXX we have to sort ids since at the moment Dataset.selectSamples
+        # XXX we have to sort ids since at the moment Dataset.select_samples
         #     doesn't take care about order
         idlabels.sort()
 
         # If we need all samples, why simply not perform on original
         # data, an just store/restore labels. But it really should be done
-        # within Dataset.selectSamples
+        # within Dataset.select_samples
         if len(idlabels) == dataset.nsamples \
             and [x[0] for x in idlabels] == range(dataset.nsamples):
             # the last condition is not even necessary... just overly
@@ -1382,7 +1384,8 @@ class FeatureSelectionClassifier(ProxyClassifier):
         self.ca._copy_ca_(clf, ['estimates'], deep=False)
         return result
 
-    def setTestDataset(self, testdataset):
+    ##REF: Name was automagically refactored
+    def set_test_dataset(self, testdataset):
         """Set testing dataset to be used for feature selection
         """
         self.__testdataset = testdataset
@@ -1392,7 +1395,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
                                  doc="Used `FeatureSelection`")
 
     testdataset = property(fget=lambda x:x.__testdataset,
-                           fset=setTestDataset)
+                           fset=set_test_dataset)
 
 
 class RegressionAsClassifier(ProxyClassifier):
@@ -1545,8 +1548,9 @@ class RegressionAsClassifier(ProxyClassifier):
         return predictions
 
 
-    def _setRetrainable(self, value, **kwargs):
+    ##REF: Name was automagically refactored
+    def _set_retrainable(self, value, **kwargs):
         if value:
             raise NotImplementedError, \
                   "RegressionAsClassifier wrappers are not yet retrainable"
-        ProxyClassifier._setRetrainable(self, value, **kwargs)
+        ProxyClassifier._set_retrainable(self, value, **kwargs)

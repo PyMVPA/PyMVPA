@@ -16,7 +16,7 @@ from mvpa.clfs.meta import ProxyClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
-from tests_warehouse import pureMultivariateSignal
+from tests_warehouse import pure_multivariate_signal
 from tests_warehouse import *
 from tests_warehouse_clfs import *
 
@@ -58,8 +58,8 @@ class SVMTests(unittest.TestCase):
             self.fail(msg="Failed to deepcopy not-yet trained SVM %s" % nl_clf)
 
         for i in xrange(20):
-            train = pureMultivariateSignal( 20, 3 )
-            test = pureMultivariateSignal( 20, 3 )
+            train = pure_multivariate_signal( 20, 3 )
+            test = pure_multivariate_signal( 20, 3 )
 
             # use non-linear CLF on 2d data
             nl_clf.train(train)

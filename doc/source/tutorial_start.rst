@@ -8,7 +8,7 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 .. index:: Tutorial, Cross-validation
-.. _chap_tutorial1:
+.. _chap_tutorial_start:
 
 **********************
 Part 1: A Gentle Start
@@ -101,7 +101,7 @@ distance measure. In PyMVPA this type of classifier is provided by the
 `~mvpa.clfs.knn.kNN` class, that makes is possible to specify the desired
 parameters.
 
->>> clf = kNN(k=1, dfx=oneMinusCorrelation, voting='majority')
+>>> clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
 
 A k-Nearest-Neighbor classifier performs classification based on the similarity
 of a sample with respect to each sample in a :term:`training dataset`.  The
@@ -247,7 +247,7 @@ splitter) formed the training and test datasets in each fold.
 This could be the end of a very simple introduction into cross-validation with
 PyMVPA. However, since we were cheating a bit in the beginning, we actually
 still don't know how to import data other than the single subject from the
-Haxby study. This is the topic of the :ref:`next chapter <chap_tutorial2>`.
+Haxby study. This is the topic of the :ref:`next chapter <chap_tutorial_datasets>`.
 
 .. _NumPy: http://numpy.scipy.org
 

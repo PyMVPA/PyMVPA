@@ -40,7 +40,8 @@ except:
     pass
 
 
-def selectVoxelsFromVolumeIteratorNumPY(volFileName, lt=None, ut=None):
+##REF: Name was automagically refactored
+def select_from_volume_iterator(volFileName, lt=None, ut=None):
     """
     Generator which returns value + coordinates with values of non-0 entries
     from the `volFileName`
@@ -78,7 +79,8 @@ def selectVoxelsFromVolumeIteratorNumPY(volFileName, lt=None, ut=None):
         yield (value, voxel[0], voxel[1], voxel[2], 0) #voxel[-4])
 
 
-def parsedCoordinatesIterator(
+##REF: Name was automagically refactored
+def parsed_coordinates_iterator(
     parseString="^\s*(?P<x>\S+)[ \t,](?P<y>\S+)[ \t,](?P<z>\S+)\s*$",
     inputStream=sys.stdin):
     """Iterator to provide coordinates/values parsed from the string stream,
@@ -102,7 +104,8 @@ def parsedCoordinatesIterator(
 
 
 # XXX helper to process labels... move me
-def presentLabels(labels):
+##REF: Name was automagically refactored
+def present_labels(labels):
     if isinstance(labels, list):
         res = []
         for label in labels:
@@ -326,11 +329,11 @@ niftiInput = None
 # compatibility with older talairachlabel
 if options.inputCoordFile:
     fileIn = file(options.inputCoordFile)
-    coordsIterator = parsedCoordinatesIterator(options.inputLineFormat,
+    coordsIterator = parsed_coordinates_iterator(options.inputLineFormat,
                                                fileIn)
 # input is stdin
 elif len(infiles)==0:
-    coordsIterator = parsedCoordinatesIterator(options.inputLineFormat)
+    coordsIterator = parsed_coordinates_iterator(options.inputLineFormat)
 else:
     if len(infiles)>1:
         print "Just a single file should be provided at the command line"
@@ -345,7 +348,7 @@ else:
             debug('ATL', "Yes it is")
         # if we got here -- it is a proper volume
         # XXX ask Michael to remove nasty warning message
-        coordsIterator = selectVoxelsFromVolumeIteratorNumPY(
+        coordsIterator = select_from_volume_iterator(
             infile, options.lowerThreshold, options.upperThreshold)
         assert(coordT is None)
         coordT = Linear(niftiInput.qform)
@@ -355,7 +358,7 @@ else:
         if __debug__:
             debug('ATL', "No it is not")
         fileIn = file(infile)
-        coordsIterator = parsedCoordinatesIterator(
+        coordsIterator = parsed_coordinates_iterator(
             options.inputLineFormat, fileIn)
 
 
@@ -399,7 +402,7 @@ else:
 
 if isinstance(atlas, ReferencesAtlas):
     options.referenceLevel = options.referenceLevel.replace('/', ' ')
-    atlas.setReferenceLevel(options.referenceLevel)
+    atlas.set_reference_level(options.referenceLevel)
     atlas.distance = options.maxDistance
 else:
     options.showReferencedCoordinates = False
@@ -466,7 +469,7 @@ else:
 
         coordT = SpaceTransformation(origin=voxelOriginOriginal,
                                      voxelSize=voxelSizeOriginal,
-                                     toRealSpace=True, previous=coordT)
+                                     to_real_space=True, previous=coordT)
 
     # besides adjusting for different origin we need to transform into
     # Talairach space
@@ -475,10 +478,10 @@ else:
                    options.MNI2TalTransformation)
         # What transformation to use
         coordT = {"matthewbrett": MNI2Tal_MatthewBrett,
-                  "lancaster07fsl":  MNI2Tal_Lancaster07FSL,
-                  "lancaster07pooled":  MNI2Tal_Lancaster07pooled,
-                  "meyerlindenberg98":  MNI2Tal_MeyerLindenberg98,
-                  "yohflirt": MNI2Tal_YOHflirt
+                  "lancaster07fsl":  mni_to_tal_lancaster07_fsl,
+                  "lancaster07pooled":  mni_to_tal_lancaster07pooled,
+                  "meyerlindenberg98":  mni_to_tal_meyer_lindenberg98,
+                  "yohflirt": mni_to_tal_yohflirt
                   }\
                   [options.MNI2TalTransformation](previous=coordT)
 
@@ -490,14 +493,14 @@ else:
 
     # To be closer to what original talairachlabel did -- add 0.5 to each coord
     coordT = SpaceTransformation(origin=originCorrection, voxelSize=None,
-                                     toRealSpace=False, previous = coordT)
+                                     to_real_space=False, previous = coordT)
 
 if options.createSummary:
     summary = {}
     if options.levels is None:
-        options.levels = str(min(4, atlas.Nlevels-1))
+        options.levels = str(min(4, atlas.n_levels-1))
 if options.levels is None:
-    options.levels = range(atlas.Nlevels)
+    options.levels = range(atlas.n_levels)
 elif isinstance(options.levels, basestring):
     if options.levels == 'list':
         print "Known levels and their indicies:\n" + atlas.levels_listing()
@@ -576,7 +579,7 @@ for c in coordsIterator:
         voxel_labels = voxel["labels"]
         for i,ind in enumerate(options.levels):
             voxel_label = voxel_labels[i]
-            text = presentLabels(voxel_label)
+            text = present_labels(voxel_label)
             #if len(voxel_label):
             #   assert(voxel_label['index'] == ind)
             summaryIndex += text + " / "
@@ -614,7 +617,7 @@ for c in coordsIterator:
         if options.levels is None:
             options.levels = range(len(voxel['labels']))
 
-        labels = [presentLabels(voxel['labels'][i]) for i in options.levels]
+        labels = [present_labels(voxel['labels'][i]) for i in options.levels]
         out += ','.join(labels)
         #if options.abbreviatedLabels:
         #   out += ','.join([l.abbr for l in labels])

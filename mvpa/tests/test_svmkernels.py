@@ -32,7 +32,7 @@ class SVMKernelTests(unittest.TestCase):
         from mvpa.clfs.transerror import TransferError
         from mvpa.kernels.base import CachedKernel
         from mvpa.kernels.sg import RbfSGKernel
-        from mvpa.misc.data_generators import normalFeatureDataset
+        from mvpa.misc.data_generators import normal_feature_dataset
         
         ck = sgSVM(kernel=CachedKernel(kernel=RbfSGKernel(sigma=2)), C=1)
         sk = sgSVM(kernel=RbfSGKernel(sigma=2), C=1)
@@ -44,7 +44,7 @@ class SVMKernelTests(unittest.TestCase):
         
         #data = datasets['uni4large']
         P = 5000
-        data = normalFeatureDataset(snr=2, perlabel=200, nchunks=10, 
+        data = normal_feature_dataset(snr=2, perlabel=200, nchunks=10, 
                                     means=N.random.randn(2, P), nfeatures=P)
         
         t0 = time()

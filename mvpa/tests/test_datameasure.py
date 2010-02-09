@@ -25,7 +25,7 @@ from mvpa.mappers.fx import sumofabs_sample, absolute_features, FxMapper, \
 from mvpa.datasets.splitters import NFoldSplitter, NoneSplitter
 
 from mvpa.misc.transformers import Absolute, \
-     SecondAxisSumOfAbs, DistPValue
+     _second_axis_sum_of_abs, DistPValue
 
 from mvpa.measures.base import SplitFeaturewiseDatasetMeasure
 from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
@@ -140,7 +140,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         assert_array_equal(sens_ulabels, ds.sa['targets'].unique)
 
-        errors = [x.percentCorrect
+        errors = [x.percent_correct
                     for x in sana.clf.ca.confusion.matrices]
 
         # lets go through all sensitivities and see if we selected the right
@@ -159,10 +159,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
             for conf_matrix in [sana.clf.ca.training_confusion] \
                               + sana.clf.ca.confusion.matrices:
                 self.failUnless(
-                    conf_matrix.percentCorrect>=70,
+                    conf_matrix.percent_correct>=70,
                     msg="We must have trained on each one more or " \
                     "less correctly. Got %f%% correct on %d labels" %
-                    (conf_matrix.percentCorrect,
+                    (conf_matrix.percent_correct,
                      nlabels))
 
 
@@ -396,7 +396,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
 
     @sweepargs(basic_clf=clfswh['has_sensitivity'])
-    def __testFSPipelineWithAnalyzerWithSplitClassifier(self, basic_clf):
+    ##REF: Name was automagically refactored
+    def __test_fspipeline_with_split_classifier(self, basic_clf):
         #basic_clf = LinearNuSVMC()
         multi_clf = MulticlassClassifier(clf=basic_clf)
         #svm_weigths = LinearSVMWeights(svm)
