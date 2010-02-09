@@ -170,10 +170,10 @@ this example)
   array([0, 1])
 
   >>> print clf.ca
-  ca{trained_dataset predicting_time*+ training_confusion estimates*+...}
+  ca{distances training_time*+ predicting_time*+ training_confusion...}
   >>> clf.ca.enable('estimates')
   >>> print clf.ca
-  ca{trained_dataset predicting_time*+ training_confusion estimates*+...}
+  ca{distances training_time*+ predicting_time*+ training_confusion...}
   >>> clf.ca.disable('estimates')
 
 A string representation of the state collection mentioned above lists
