@@ -4,7 +4,7 @@ files=$*
 
 if [ -z "$files" ]; then
 	echo "No file names were provided, trying all non-binary files under git control"
-	files=$(git grep -l . | grep -v Binary)
+	files=$(git grep -l . | grep -v -e Binary -e refactor_ -e Changelog)
 	if [ -z "$files" ]; then
 		echo "No files were found under git, exiting"
 		exit 1
@@ -143,6 +143,7 @@ parseStatus	parse_status
 percentCorrect	percent_correct
 plotBars	plot_bars
 plotDatasetChunks	plot_dataset_chunks
+plotDecisionBoundary2D	plot_decision_boundary_2d
 plotDistributionMatches	plot_distribution_matches
 plotERP	plot_erp
 plotERPs	plot_erps
@@ -227,7 +228,7 @@ xuniqueCombinations	xunique_combinations"  | \
 while read old new; do
 	echo -en "$old:\t"
 	# def definition
-	grep -l "def *$old" $files | xargs sed -i -e "s,^\( *\)\(def  *$old*\)(,\1##REF: Name was automagically refactored\n\1def $new(,g"
+	grep -l "def *$old" $files | xargs -r sed -i -e "s,^\( *\)\(def  *$old*\)(,\1##REF: Name was automagically refactored\n\1def $new(,g"
 	# occurances
-	grep -l "\<$old\>" $files | xargs sed -i -e "s,\<$old\>,$new,g" && echo "" || :
+	grep -l "\<$old\>" $files | xargs -r sed -i -e "s,\<$old\>,$new,g" && echo "" || :
 done
