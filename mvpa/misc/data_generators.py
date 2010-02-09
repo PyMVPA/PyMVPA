@@ -21,7 +21,8 @@ from mvpa.datasets.base import dataset_wizard, Dataset
 if __debug__:
     from mvpa.base import debug
 
-def multipleChunks(func, n_chunks, *args, **kwargs):
+##REF: Name was automagically refactored
+def multiple_chunks(func, n_chunks, *args, **kwargs):
     """Replicate datasets multiple times raising different chunks
 
     Given some randomized (noisy) generator of a dataset with a single
@@ -74,13 +75,14 @@ def dumb_feature_binary_dataset():
 
 
 
-def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
+##REF: Name was automagically refactored
+def normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
                          means=None, nonbogus_features=None, snr=3.0,
                          normalize=True):
     """Generate a univariate dataset with normal noise and specified means.
 
     Could be considered to be a generalization of
-    `pureMultivariateSignal` where means=[ [0,1], [1,0] ].
+    `pure_multivariate_signal` where means=[ [0,1], [1,0] ].
 
     Specify either means or `nonbogus_features` so means get assigned
     accordingly.  If neither `means` nor `nonbogus_features` are
@@ -141,7 +143,8 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
 
     return ds
 
-def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
+##REF: Name was automagically refactored
+def pure_multivariate_signal(patterns, signal2noise = 1.5, chunks=None):
     """ Create a 2d dataset with a clear multivariate signal, but no
     univariate information.
 
@@ -177,7 +180,7 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
 ##REF: Name was automagically refactored
 def get_mv_pattern(s2n):
     """Simple multivariate dataset"""
-    return multipleChunks(pureMultivariateSignal, 6,
+    return multiple_chunks(pure_multivariate_signal, 6,
                           5, s2n, 1)
 
 
@@ -223,7 +226,8 @@ def wr1996(size=200):
     return dataset_wizard(samples=x, targets=y)
 
 
-def sinModulated(n_instances, n_features,
+##REF: Name was automagically refactored
+def sin_modulated(n_instances, n_features,
                   flat=False, noise=0.4):
     """ Generate a (quite) complex multidimensional non-linear dataset
 

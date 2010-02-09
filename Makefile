@@ -420,7 +420,7 @@ testcfg: build
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
 	@echo "+I: Check all known dependencies and store them"
 	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c \
-	  'from mvpa.suite import *; mvpa.base.externals.testAllDependencies(force=False); cfg.save("pymvpa.cfg");'
+	  'from mvpa.suite import *; mvpa.base.externals.test_all_dependencies(force=False); cfg.save("pymvpa.cfg");'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
 	-@rm -f pymvpa.cfg

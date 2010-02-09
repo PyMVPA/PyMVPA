@@ -95,7 +95,7 @@ class ProjectionMapper(Mapper):
     def _posttrain(self, dataset):
         # perform component selection
         if self._selector is not None:
-            self.selectOut(self._selector)
+            self.select_out(self._selector)
 
 
     ##REF: Name was automagically refactored

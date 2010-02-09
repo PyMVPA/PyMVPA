@@ -41,7 +41,8 @@ _EXFUNC_CONV_DICT = {'last' :  lambda x: x-1,
                      'middle': lambda x: int(x/2)}
 """Dictionary to get exemplar volume given a literal string"""
 
-def prepParser(parser):
+##REF: Name was automagically refactored
+def prep_parser(parser):
     # use module docstring for help output
     parser.usage = "%s [OPTIONS] <fmri-data>\n\n" % sys.argv[0] + __doc__
     parser.version = "%prog " + mvpa.__version__
@@ -82,7 +83,7 @@ def prepParser(parser):
 def main():
     """
     """
-    prepParser(parser)
+    prep_parser(parser)
     (options, infiles) = parser.parse_args()
 
     # late import of pynifti to be able to get help output without a big

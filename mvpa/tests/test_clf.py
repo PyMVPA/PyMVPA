@@ -67,7 +67,7 @@ class ClassifiersTests(unittest.TestCase):
             self.failUnlessRaises(UnknownStateError,
                 clf.ca.__getattribute__, "trained_dataset")
 
-        self.failUnlessEqual(clf.ca.training_confusion.percentCorrect,
+        self.failUnlessEqual(clf.ca.training_confusion.percent_correct,
                              100,
                              msg="Dummy clf should train perfectly")
         self.failUnlessEqual(clf.predict(self.data_bin_1.samples),
@@ -319,7 +319,7 @@ class ClassifiersTests(unittest.TestCase):
                     " using CrossValidatedTransferError. Got %s and %s"
                     % (tr_error, tr_cverror))
 
-        self.failUnlessEqual(clf.ca.confusion.percentCorrect,
+        self.failUnlessEqual(clf.ca.confusion.percent_correct,
                              100,
                              msg="Dummy clf should train perfectly")
         self.failUnlessEqual(len(clf.ca.confusion.sets),
@@ -652,8 +652,8 @@ class ClassifiersTests(unittest.TestCase):
                                       disable_ca=['training_confusion'])
         clf_re = clf.clone()
         # TODO: .retrainable must have a callback to call smth like
-        # _setRetrainable
-        clf_re._setRetrainable(True)
+        # _set_retrainable
+        clf_re._set_retrainable(True)
 
         # need to have high snr so we don't 'cope' with problematic
         # datasets since otherwise unittests would fail.
@@ -776,7 +776,7 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnlessRaises(RuntimeError, clf_re.repredict,
                               dstest.samples, labels=True)
         """for now retesting with anything changed makes no sense"""
-        clf_re._setRetrainable(False)
+        clf_re._set_retrainable(False)
 
 
     def test_generic_tests(self):
@@ -824,9 +824,9 @@ class ClassifiersTests(unittest.TestCase):
         clf.ca.change_temporarily(enable_ca = ['training_confusion'])
         for traindata in traindatas:
             clf.train(traindata)
-            self.failUnlessEqual(clf.ca.training_confusion.percentCorrect, 100.0,
+            self.failUnlessEqual(clf.ca.training_confusion.percent_correct, 100.0,
                 "Classifier %s must have 100%% correct learning on %s. Has %f" %
-                (`clf`, traindata.samples, clf.ca.training_confusion.percentCorrect))
+                (`clf`, traindata.samples, clf.ca.training_confusion.percent_correct))
 
             # and we must be able to predict every original sample thus
             for i in xrange(traindata.nsamples):
