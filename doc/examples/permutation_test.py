@@ -75,7 +75,7 @@ if __debug__:
     debug.active += ["STATMC"]
 
 # some example data with signal
-train = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=3,
+train = normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=3,
                              nonbogus_features=[0,1], snr=0.3, nchunks=1)
 
 # define class to estimate NULL distribution of errors

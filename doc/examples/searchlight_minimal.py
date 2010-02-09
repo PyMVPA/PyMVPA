@@ -32,12 +32,12 @@ from mvpa.clfs.svm import LinearCSVMC
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.measures.searchlight import Searchlight
-from mvpa.misc.data_generators import normalFeatureDataset
+from mvpa.misc.data_generators import normal_feature_dataset
 
 """For the sake of simplicity, let's use a small artificial dataset."""
 
 # overcomplicated way to generate an example dataset
-ds = normalFeatureDataset(perlabel=10, nlabels=2, nchunks=2,
+ds = normal_feature_dataset(perlabel=10, nlabels=2, nchunks=2,
                           nfeatures=10, nonbogus_features=[3, 7],
                           snr=5.0)
 dataset = dataset_wizard(samples=ds.samples, targets=ds.targets,

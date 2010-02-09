@@ -367,7 +367,7 @@ testtutorial-%: build
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_DATADB_ROOT=datadb \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
-		             --doctest-tests doc/source/tutorial$**.rst
+		             --doctest-tests doc/source/tutorial_$**.rst
 
 testdatadb: build
 	@echo "I: Testing code samples on the dataset DB website"
@@ -420,7 +420,7 @@ testcfg: build
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
 	@echo "+I: Check all known dependencies and store them"
 	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c \
-	  'from mvpa.suite import *; mvpa.base.externals.testAllDependencies(force=False); cfg.save("pymvpa.cfg");'
+	  'from mvpa.suite import *; mvpa.base.externals.test_all_dependencies(force=False); cfg.save("pymvpa.cfg");'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
 	-@rm -f pymvpa.cfg

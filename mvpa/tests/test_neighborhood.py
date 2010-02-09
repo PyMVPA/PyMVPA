@@ -24,7 +24,7 @@ def test_distances():
     b = N.array([6,4])
     # test distances or yarik recalls unit testing ;)
     assert_equal(cartesian_distance(a, b), 5.0)
-    assert_equal(manhattenDistance(a, b), 7)
+    assert_equal(manhatten_distance(a, b), 7)
     assert_equal(absmin_distance(a, b), 4)
 
 
@@ -90,7 +90,7 @@ def test_sphere():
 def test_sphere_distance_func():
     # Test some other distance
     se = ne.Sphere(3)
-    sm = ne.Sphere(3, distance_func=manhattenDistance)
+    sm = ne.Sphere(3, distance_func=manhatten_distance)
     rese = se((10, 5))
     resm = sm((10, 5))
     for res in rese, resm:

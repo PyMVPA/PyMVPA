@@ -8,7 +8,7 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 .. index:: Tutorial
-.. _chap_tutorial4:
+.. _chap_tutorial_classifiers:
 
 ***********************************************
 Part 4: Classifiers -- All Alike, Yet Different
@@ -16,11 +16,11 @@ Part 4: Classifiers -- All Alike, Yet Different
 
 This is already the second time that we will engage in a classification
 analysis, so let's first recap what we did before in the :ref:`first tutorial
-part <chap_tutorial1>`:
+part <chap_tutorial_start>`:
 
 >>> from tutorial_lib import *
 >>> ds = get_haxby2001_data()
->>> clf = kNN(k=1, dfx=oneMinusCorrelation, voting='majority')
+>>> clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
 >>> terr = TransferError(clf)
 >>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter(attr='runtype'))
 >>> cv_results = cvte(ds)
@@ -92,7 +92,7 @@ To run such an analysis we first need to redo our dataset preprocessing,
 since in the current one we only have one sample per stimulus category for
 both odd and even runs. To get a dataset with one sample per stimulus
 category for each run, we need to modify the averaging step. Using what we
-have learned from the :ref:`last tutorial part <chap_tutorial3>` the
+have learned from the :ref:`last tutorial part <chap_tutorial_mappers>` the
 following code snippet should be plausible:
 
 >>> # directory that contains the data files
@@ -354,8 +354,9 @@ and the rest is noise. We can easily check that with an appropriate mapper:
 >>> terr = TransferError(metaclf)
 >>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
 >>> cv_results = cvte(ds)
->>> print N.mean(cv_results)
-0.572916666667
+>>> svm_err = N.mean(cv_results)
+>>> print round(svm_err, 2)
+0.57
 
 Well, obviously the discarded components cannot only be noise, since the error
 is substantially increased. But maybe it is the classifier that cannot deal with
@@ -363,17 +364,17 @@ the data. Since nothing in this code is specific to the actual classification
 algorithm we can easily go back to the kNN classifier that has served us well
 in the past.
 
->>> baseclf = kNN(k=1, dfx=oneMinusCorrelation, voting='majority')
+>>> baseclf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
 >>> mapper = ChainMapper([SVDMapper(), FeatureSliceMapper(slice(None, 2))])
 >>> metaclf = MappedClassifier(baseclf, mapper)
 >>> terr = TransferError(metaclf)
 >>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
 >>> cv_results = cvte(ds)
->>> print N.mean(cv_results)
-0.833333333333
+>>> N.mean(cv_results) < svm_err
+False
 
-Oh, that was even worse (i.e. guessing). We would have to take a closer look at
-the data to figure out what is happening here.
+Oh, that was even worse. We would have to take a closer look at the data to
+figure out what is happening here.
 
 .. exercise::
 
@@ -381,7 +382,7 @@ the data to figure out what is happening here.
    information is represented in the first two SVD components and what is not?
    Plot the samples of the full dataset after they have been mapped onto the
    first two SVD components. Why does the kNN classifier perform so bad in
-   comparison to the SVM?
+   comparison to the SVM (hint: think about the distance function)?
 
 In this tutorial part we took a look at classifiers. We have seen that
 regardless of the actual algorithm all classifiers are implementing the same
@@ -393,7 +394,7 @@ by particular parts of the processing pipeline.
 However, we still have done little to address one of the major questions in
 neuroscience research, that is: Where does the information come from? One
 possible approach to this question is the topic of the :ref:`next tutorial part
-<chap_tutorial5>`.
+<chap_tutorial_searchlight>`.
 
 .. Think about adding a demo of the classifiers warehouse.
   .. exercise::

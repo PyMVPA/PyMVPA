@@ -12,7 +12,7 @@ from mvpa import cfg
 from mvpa.clfs.enet import ENET
 from scipy.stats import pearsonr
 from tests_warehouse import *
-from mvpa.misc.data_generators import normalFeatureDataset
+from mvpa.misc.data_generators import normal_feature_dataset
 
 class ENETTests(unittest.TestCase):
 

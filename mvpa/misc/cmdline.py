@@ -94,7 +94,8 @@ opts = OptionGroups(parser)
 #
 # Verbosity options
 #
-def _verboseCallback(option, optstr, value, parser):
+##REF: Name was automagically refactored
+def _verbose_callback(option, optstr, value, parser):
     """Callback for -v|--verbose cmdline option
     """
     if __debug__:
@@ -110,7 +111,7 @@ opt.help = \
 
 opt.verbose = \
     Option("-v", "--verbose", "--verbosity",
-           action="callback", callback=_verboseCallback, nargs=1,
+           action="callback", callback=_verbose_callback, nargs=1,
            type="int", dest="verbose", default=0,
            help="Verbosity level of output")
 """Pre-cooked `optparse`'s option to specify verbose level"""
@@ -136,7 +137,7 @@ if __debug__:
             raise SystemExit, 0
 
         optstr = optstr                     # pylint shut up
-        debug.setActiveFromString(value)
+        debug.set_active_from_string(value)
 
         setattr(parser.values, option.dest, value)
 
@@ -236,7 +237,8 @@ opts.add('preproc', [opt.zscore, opt.tr, opt.detrend], "Preprocessing options")
 # Wavelets options
 if externals.exists('pywt'):
     import pywt
-    def _waveletFamilyCallback(option, optstr, value, parser):
+    ##REF: Name was automagically refactored
+    def _wavelet_family_callback(option, optstr, value, parser):
         """Callback for -w|--wavelet-family cmdline option
         """
         wl_list = pywt.wavelist()
@@ -274,7 +276,7 @@ if externals.exists('pywt'):
 
 
     opt.wavelet_family = \
-            Option("-w", "--wavelet-family", callback=_waveletFamilyCallback,
+            Option("-w", "--wavelet-family", callback=_wavelet_family_callback,
                    action="callback", type="string", dest="wavelet_family",
                    default='-1',
                    help="Wavelet family: string or index among the available. " +

@@ -24,8 +24,9 @@ from tests_warehouse import datasets, get_random_rotation, sweepargs
 class HyperAlignmentTests(unittest.TestCase):
 
 
+    @sweepargs(zscore_common=(False, True))
     @sweepargs(ref_ds=(None, 3))
-    def test_basic_functioning(self, ref_ds):
+    def test_basic_functioning(self, ref_ds, zscore_common):
         # get a dataset with some prominent trends in it
         ds4l = datasets['uni4large']
         # lets select for now only meaningful features
@@ -51,7 +52,7 @@ class HyperAlignmentTests(unittest.TestCase):
             ds_.samples = ds_.samples + 0.1 * random_noise
             dss_rotated.append(ds_)
 
-        ha = Hyperalignment(ref_ds=ref_ds)
+        ha = Hyperalignment(ref_ds=ref_ds, zscore_common=zscore_common)
         if ref_ds is None:
             ref_ds = 0                      # by default should be this one
         # Lets test two scenarios -- in one with no noise -- we should get
@@ -93,7 +94,8 @@ class HyperAlignmentTests(unittest.TestCase):
         pass
 
 
-    def _testOnSwaroopData(self):
+    ##REF: Name was automagically refactored
+    def _test_on_swaroop_data(self):
         #
         print "Running swaroops test on data we don't have"
         #from mvpa.datasets.miscfx import zscore

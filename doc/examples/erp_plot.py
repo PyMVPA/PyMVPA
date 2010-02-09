@@ -22,7 +22,7 @@ from mvpa.suite import *
 meg = TuebingenMEG(os.path.join(pymvpa_dataroot, 'tueb_meg.dat.gz'))
 
 
-# Define plots for easy feeding into plotERP
+# Define plots for easy feeding into plot_erp
 plots = []
 colors = ['r', 'b', 'g']
 
@@ -59,18 +59,18 @@ fig = P.figure(figsize=(12, 8))
 # Plot MEG sensors
 
 # frame_on=False guarantees abent outside rectangular axis with
-# labels. plotERP recreates its own axes centered at (0,0)
+# labels. plot_erp recreates its own axes centered at (0,0)
 ax = fig.add_subplot(2, 1, 1, frame_on=False)
-plotERPs(plots[:2], ylabel='$pT$', ymult=-1e12, ax=ax, **cargs)
+plot_erps(plots[:2], ylabel='$pT$', ymult=-1e12, ax=ax, **cargs)
 
 # Plot EEG sensor
 ax = fig.add_subplot(2, 1, 2, frame_on=False)
-plotERPs(plots[2:3], ax=ax, ymult=-1e6, **cargs)
+plot_erps(plots[2:3], ax=ax, ymult=-1e6, **cargs)
 
 # Additional example: plotting a single ERP on an existing plot
 # without drawing axis:
 #
-# plotERP(data=meg.data[:, 0, :], SR=meg.samplingrate, pre=pre,
+# plot_erp(data=meg.data[:, 0, :], SR=meg.samplingrate, pre=pre,
 #         pre_mean=pre, errtype=errtype, ymult=-1.0)
 
 if cfg.getboolean('examples', 'interactive', True):

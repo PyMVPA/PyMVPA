@@ -22,7 +22,7 @@ from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.misc.param import Parameter
 from mvpa.misc.state import StateVariable
 #from mvpa.measures.base import Sensitivity
-#from mvpa.misc.transformers import SecondAxisMaxOfAbs # XXX ?
+#from mvpa.misc.transformers import second_axis_max_of_abs # XXX ?
 
 
 if __debug__:
