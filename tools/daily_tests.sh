@@ -19,7 +19,7 @@ set -e
 #MAKE_TESTS="unittests testmanual testsuite testapiref testdatadb testsphinx testexamples testcfg"
 
 # Unittests to run in all branches
-TESTS_COMMON="unittests testmanual testsuite testsphinx testexamples testcfg testourcfg"
+TESTS_COMMON="unittests testmanual testsuite testsphinx testexamples testcfg"
 
 # Associative array with tests lists per branch
 declare -A TESTS_BRANCHES
@@ -30,7 +30,7 @@ for b in maint/0.4 yoh/0.4; do
 done
 # development branches
 for b in master yoh/master mh/master; do
-    TESTS_BRANCHES["$b"]="$TESTS_COMMON testdatadb"
+    TESTS_BRANCHES["$b"]="$TESTS_COMMON testdatadb testourcfg"
 done
 # all known tests
 TESTS_ALL=`echo "${TESTS_BRANCHES[*]}" | tr ' ' '\n' | sort | uniq`
@@ -47,6 +47,7 @@ repo="git://git.debian.org/git/pkg-exppsy/pymvpa.git"
 
 ds=`date +"20%y%m%d_%H%M%S"`
 topdir=$HOME/proj/pymvpa
+datadbdir=$topdir/pymvpa/datadb
 logdir="$topdir/logs/daily/pymvpa_tests-$ds"
 tmpfile="$logdir/tmp.log"
 logfile="$logdir/all.log"
@@ -106,6 +107,7 @@ sweep()
     echo "I: Cloning repository"
     $precmd git clone -q $repo 2>&1 | indent
     $precmd cd pymvpa
+    $precmd ln -s "$datadbdir" .
     # no need to check here since checkout would fail below otherwise
 
     #

@@ -111,3 +111,7 @@ def test_collections():
 
     # names which are already present in dict interface
     assert_raises(ValueError, sa.__setitem__, 'values', range(5))
+
+    sa_c = copy.deepcopy(sa)
+    assert_equal(len(sa), len(sa_c))
+    assert_array_equal(sa.test, sa_c.test)

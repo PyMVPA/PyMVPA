@@ -72,7 +72,7 @@ class StatsTestsScipy(unittest.TestCase):
 
         ds = datasets['uni2medium']
 
-        m = OneWayAnova(null_dist=nd, enable_states=['null_t'])
+        m = OneWayAnova(null_dist=nd, enable_ca=['null_t'])
         score = m(ds)
 
         score_nonbogus = N.mean(score.samples[:,ds.a.nonbogus_features])
@@ -81,8 +81,8 @@ class StatsTestsScipy(unittest.TestCase):
         self.failUnless(score_bogus < score_nonbogus)
 
         # [0] because the first axis is len == 0
-        null_prob_nonbogus = m.states.null_prob[0][ds.a.nonbogus_features]
-        null_prob_bogus = m.states.null_prob[0][ds.a.bogus_features]
+        null_prob_nonbogus = m.ca.null_prob[0][ds.a.nonbogus_features]
+        null_prob_bogus = m.ca.null_prob[0][ds.a.bogus_features]
 
         self.failUnless((null_prob_nonbogus < 0.05).all(),
             msg="Nonbogus features should have a very unlikely value. Got %s"
@@ -99,17 +99,17 @@ class StatsTestsScipy(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             # Failed on c94ec26eb593687f25d8c27e5cfdc5917e352a69
             # with MVPA_SEED=833393575
-            self.failUnless((N.abs(m.states.null_t[0][ds.a.nonbogus_features]) >= 5).all(),
+            self.failUnless((N.abs(m.ca.null_t[0][ds.a.nonbogus_features]) >= 5).all(),
                 msg="Nonbogus features should have high t-score. Got %s"
-                % (m.states.null_t[0][ds.a.nonbogus_features]))
+                % (m.ca.null_t[0][ds.a.nonbogus_features]))
 
-            bogus_min = min(N.abs(m.states.null_t[0][ds.a.bogus_features]))
+            bogus_min = min(N.abs(m.ca.null_t[0][ds.a.bogus_features]))
             self.failUnless(bogus_min < 4,
                 msg="Some bogus features should have low t-score of %g."
                     "Got (t,p,sens):%s"
                     % (bogus_min,
-                        zip(m.states.null_t[0][ds.a.bogus_features],
-                            m.states.null_prob[0][ds.a.bogus_features],
+                        zip(m.ca.null_t[0][ds.a.bogus_features],
+                            m.ca.null_prob[0][ds.a.bogus_features],
                             score.samples[0][ds.a.bogus_features])))
 
 
@@ -130,10 +130,10 @@ class StatsTestsScipy(unittest.TestCase):
                 return res
 
         nd = FixedNullDist(scipy.stats.norm(0, 0.1), tail='any')
-        m = BogusMeasure(null_dist=nd, enable_states=['null_t'])
+        m = BogusMeasure(null_dist=nd, enable_ca=['null_t'])
         ds = datasets['uni2small']
         score = m(ds)
-        t, p = m.states.null_t, m.states.null_prob
+        t, p = m.ca.null_t, m.ca.null_prob
         self.failUnless((p>=0).all())
         self.failUnless((t[:2] > 0).all())
         self.failUnless((t[2:4] < 0).all())
@@ -246,7 +246,7 @@ class StatsTestsScipy(unittest.TestCase):
         # play fmri
         # full-blown HRF with initial dip and undershoot ;-)
         hrf_x = N.linspace(0, 25, 250)
-        hrf = doubleGammaHRF(hrf_x) - singleGammaHRF(hrf_x, 0.8, 1, 0.05)
+        hrf = double_gamma_hrf(hrf_x) - singleGammaHRF(hrf_x, 0.8, 1, 0.05)
 
         # come up with an experimental design
         samples = 1800

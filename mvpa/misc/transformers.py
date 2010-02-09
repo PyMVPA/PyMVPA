@@ -47,11 +47,13 @@ def Identity(x):
     return x
 
 
-def FirstAxisMean(x):
+##REF: Name was automagically refactored
+def first_axis_mean(x):
     """Mean computed along the first axis."""
     return N.mean(x, axis=0)
 
-def FirstAxisSumNotZero(x):
+##REF: Name was automagically refactored
+def first_axis_sum_not_zero(x):
     """Sum computed over first axis of whether the values are not
     equal to zero."""
     return (N.asarray(x)!=0).sum(axis=0)
@@ -83,12 +85,14 @@ def SecondAxisMaxOfAbs(x):
     return N.abs(x).max(axis=1)
 
 
-def GrandMean(x):
+##REF: Name was automagically refactored
+def grand_mean(x):
     """Just what the name suggests."""
     return N.mean(x)
 
 
-def L2Normed(x, norm=1.0, reverse=False):
+##REF: Name was automagically refactored
+def l2_normed(x, norm=1.0, reverse=False):
     """Norm the values so that regular vector norm becomes `norm`
 
     More verbose: Norm that the sum of the squared elements of the
@@ -97,7 +101,8 @@ def L2Normed(x, norm=1.0, reverse=False):
     xnorm = N.linalg.norm(x)
     return x * (norm/xnorm)
 
-def L1Normed(x, norm=1.0, reverse=False):
+##REF: Name was automagically refactored
+def l1_normed(x, norm=1.0, reverse=False):
     """Norm the values so that L_1 norm (sum|x|) becomes `norm`"""
     xnorm = N.sum(N.abs(x))
     return x * (norm/xnorm)
@@ -375,8 +380,8 @@ class DistPValue(ClassWithCollections):
 
         # charge state variables
         # XXX might want to populate them for non-adaptive handling as well
-        self.states.nulldist_number = nulldist_number
-        self.states.positives_recovered = positives_recovered
+        self.ca.nulldist_number = nulldist_number
+        self.ca.positives_recovered = positives_recovered
 
         # transpose if needed
         if sd == 0:

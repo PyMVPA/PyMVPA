@@ -45,7 +45,7 @@ class Logger(object):
         self.__crprev = 0               # number of symbols in previous cr-ed
 
     def __del__(self):
-        self._closeOpenedHandlers()
+        self._close_opened_handlers()
 
     def _setHandlers(self, handlers):
         """Set list of handlers for the log.
@@ -54,7 +54,7 @@ class Logger(object):
         will be considered a filename to be opened for writing
         """
         handlers_ = []
-        self._closeOpenedHandlers()
+        self._close_opened_handlers()
         for handler in handlers:
             if isinstance(handler, basestring):
                 try:
@@ -71,13 +71,15 @@ class Logger(object):
             handlers_.append(handler)
         self.__handlers = handlers_
 
-    def _closeOpenedHandlers(self):
+    ##REF: Name was automagically refactored
+    def _close_opened_handlers(self):
         """Close opened handlers (such as opened logfiles
         """
         for handler in self.__close_handlers:
             handler.close()
 
-    def _getHandlers(self):
+    ##REF: Name was automagically refactored
+    def _get_handlers(self):
         """Return active handlers
         """
         return self.__handlers
@@ -128,7 +130,7 @@ class Logger(object):
 
         self.__lfprev = lf
 
-    handlers = property(fget=_getHandlers, fset=_setHandlers)
+    handlers = property(fget=_get_handlers, fset=_setHandlers)
     lfprev = property(fget=lambda self:self.__lfprev)
 
 

@@ -22,23 +22,23 @@ take a look at what a dataset consists of, and how it works.
 In the simplest case, a dataset only contains *data* that is a matrix of
 numerical values.
 
-  >>> from mvpa.suite import *
-  >>> data = [[  1,  1, -1],
-  ...         [  2,  0,  0],
-  ...         [  3,  1,  1],
-  ...         [  4,  0, -1]]
-  >>> ds = Dataset(data)
-  >>> ds.shape
-  (4, 3)
-  >>> len(ds)
-  4
-  >>> ds.nfeatures
-  3
-  >>> ds.samples
-  array([[ 1,  1, -1],
-         [ 2,  0,  0],
-         [ 3,  1,  1],
-         [ 4,  0, -1]])
+>>> from mvpa.suite import *
+>>> data = [[  1,  1, -1],
+...         [  2,  0,  0],
+...         [  3,  1,  1],
+...         [  4,  0, -1]]
+>>> ds = Dataset(data)
+>>> ds.shape
+(4, 3)
+>>> len(ds)
+4
+>>> ds.nfeatures
+3
+>>> ds.samples
+array([[ 1,  1, -1],
+       [ 2,  0,  0],
+       [ 3,  1,  1],
+       [ 4,  0, -1]])
 
 In the above example, every row vector in the `data` matrix becomes an
 observation or :term:`sample` in the dataset, and every column vector
@@ -49,20 +49,20 @@ The dataset assumes the first axis of the data to be the samples separating
 dimension. If the dataset is created using a one-dimensional vector it will
 therefore have as many samples as elements in the vector, and only one feature.
 
-  >>> one_d = [ 0, 1, 2, 3 ]
-  >>> one_ds = Dataset(one_d)
-  >>> one_ds.shape
-  (4, 1)
+>>> one_d = [ 0, 1, 2, 3 ]
+>>> one_ds = Dataset(one_d)
+>>> one_ds.shape
+(4, 1)
 
 On the other hand, if a dataset is created from multi-dimensional data, only its
 second axis represent the features
 
-  >>> import numpy as N
-  >>> m_ds = Dataset(N.random.random((3, 4, 2, 3)))
-  >>> m_ds.shape
-  (3, 4, 2, 3)
-  >>> m_ds.nfeatures
-  4
+>>> import numpy as N
+>>> m_ds = Dataset(N.random.random((3, 4, 2, 3)))
+>>> m_ds.shape
+(3, 4, 2, 3)
+>>> m_ds.nfeatures
+4
 
 In this case we have a dataset with three samples and four features, where each
 feature is a 2x3 matrix. In case somebody is wondering now, why not simply each
@@ -92,18 +92,18 @@ in a collection, and are accessible via the `sa` attribute. A collection is
 derived from a standard Python `dict`, and hence adding sample attributes
 works identical to adding elements to a dictionary:
 
-  >>> ds.sa['some_attr'] = [ 0, 1, 1, 3 ]
-  >>> ds.sa.keys()
-  ['some_attr']
+>>> ds.sa['some_attr'] = [ 0, 1, 1, 3 ]
+>>> ds.sa.keys()
+['some_attr']
 
 However, sample attributes are not directly stored as plain data, but for
 various reasons as a so-called `~mvpa.base.collections.Collectable` that in
 turn embeds a NumPy array with the actual attribute:
 
-  >>> type(ds.sa['some_attr'])
-  <class 'mvpa.base.collections.ArrayCollectable'>
-  >>> ds.sa['some_attr'].value
-  array([0, 1, 1, 3])
+>>> type(ds.sa['some_attr'])
+<class 'mvpa.base.collections.ArrayCollectable'>
+>>> ds.sa['some_attr'].value
+array([0, 1, 1, 3])
 
 This "complication" is done to be able to extend attributes with additional
 functionality that is often needed and can offer significant speed-up of
@@ -111,15 +111,15 @@ processing. For example, sample attributes carry a list of there unique values.
 This list is only computed once (upon first request) and can subsequently be
 accessed directly without repeated and expensive searches:
 
-  >>> ds.sa['some_attr'].unique
-  array([0, 1, 3])
+>>> ds.sa['some_attr'].unique
+array([0, 1, 3])
 
 However, for most interactive uses of PyMVPA this type of access to attribute's
 `.value` is relatively cumbersome (too much typing), therefore collections offer direct
 attribute access by name:
 
-  >>> ds.sa.some_attr
-  array([0, 1, 1, 3])
+>>> ds.sa.some_attr
+array([0, 1, 1, 3])
 
 Another purpose of the sample attribute collection is to preserve data
 integrity, by disallowing improper attributes:
@@ -140,13 +140,13 @@ and supported to store literal attributes. It should also be noted that each
 attribute may have its own individual data type, hence it is possible to have
 literal and numeric attributes in the same dataset.
 
-  >>> ds.sa['literal'] = ['one', 'two', 'three', 'four']
-  >>> sorted(ds.sa.keys())
-  ['literal', 'some_attr']
-  >>> for attr in ds.sa:
-  ...    print "%s: %s" % (attr, ds.sa[attr].value.dtype.name)
-  literal: string40
-  some_attr: int32
+>>> ds.sa['literal'] = ['one', 'two', 'three', 'four']
+>>> sorted(ds.sa.keys())
+['literal', 'some_attr']
+>>> for attr in ds.sa:
+...    print "%s: %s" % (attr, ds.sa[attr].value.dtype.name)
+literal: string40
+some_attr: int32
 
 
 
@@ -159,12 +159,12 @@ sample, feature attributes have one value per (guess what? ...) *feature*.
 Moreover, they are stored in a separate collection in the datasets that is
 called `fa`:
 
-  >>> ds.nfeatures
-  3
-  >>> ds.fa['my_fav'] = [0, 1, 0]
-  >>> ds.fa['responsible'] = ['me', 'you', 'nobody']
-  >>> sorted(ds.fa.keys())
-  ['my_fav', 'responsible']
+>>> ds.nfeatures
+3
+>>> ds.fa['my_fav'] = [0, 1, 0]
+>>> ds.fa['responsible'] = ['me', 'you', 'nobody']
+>>> sorted(ds.fa.keys())
+['my_fav', 'responsible']
 
 
 For The Dataset
@@ -180,10 +180,10 @@ attribute no constraints on the type or size are imposed -- anything can be
 stored. Let's store a list with all files in the current directory, just
 because we can:
 
-  >>> from glob import glob
-  >>> ds.a['pointless'] = glob("*")
-  >>> 'setup.py' in ds.a.pointless
-  True
+>>> from glob import glob
+>>> ds.a['pointless'] = glob("*")
+>>> 'setup.py' in ds.a.pointless
+True
 
 
 Slicing, resampling, feature selection
@@ -203,28 +203,28 @@ indices. The following three slicing operations
 result in equivalent output datasets, by always selecting every other samples
 in the dataset:
 
-  >>> # original
-  >>> ds.samples
-  array([[ 1,  1, -1],
-         [ 2,  0,  0],
-         [ 3,  1,  1],
-         [ 4,  0, -1]])
-  >>>
-  >>> # Python-style slicing
-  >>> ds[::2].samples
-  array([[ 1,  1, -1],
-         [ 3,  1,  1]])
-  >>>
-  >>> # Boolean mask array
-  >>> mask = N.array([True, False, True, False])
-  >>> ds[mask].samples
-  array([[ 1,  1, -1],
-         [ 3,  1,  1]])
-  >>>
-  >>> # Slicing by index -- Python indexing start with 0 !!
-  >>> ds[[0, 2]].samples
-  array([[ 1,  1, -1],
-         [ 3,  1,  1]])
+>>> # original
+>>> ds.samples
+array([[ 1,  1, -1],
+       [ 2,  0,  0],
+       [ 3,  1,  1],
+       [ 4,  0, -1]])
+>>>
+>>> # Python-style slicing
+>>> ds[::2].samples
+array([[ 1,  1, -1],
+       [ 3,  1,  1]])
+>>>
+>>> # Boolean mask array
+>>> mask = N.array([True, False, True, False])
+>>> ds[mask].samples
+array([[ 1,  1, -1],
+       [ 3,  1,  1]])
+>>>
+>>> # Slicing by index -- Python indexing start with 0 !!
+>>> ds[[0, 2]].samples
+array([[ 1,  1, -1],
+       [ 3,  1,  1]])
 
 .. exercise::
 
@@ -243,11 +243,11 @@ All three slicing-styles equally applicable to the selection of feature subsets
 within a dataset. Remember, features are represented on the second axis
 of a dataset.
 
-  >>> ds[:, [1,2]].samples
-  array([[ 1, -1],
-         [ 0,  0],
-         [ 1,  1],
-         [ 0, -1]])
+>>> ds[:, [1,2]].samples
+array([[ 1, -1],
+       [ 0,  0],
+       [ 1,  1],
+       [ 0, -1]])
 
 By applying a selection by indices to the second axis, we can easily get
 the last two features of our example dataset. Please note the `:` supplied
@@ -257,16 +257,16 @@ along this axis*, hence take all samples.
 As you can guess, it is also possible to select subsets of samples and
 features at the same time.
 
-  >>> subds = ds[[0,1], [0,2]]
-  >>> subds.samples
-  array([[ 1, -1],
-         [ 2,  0]])
+>>> subds = ds[[0,1], [0,2]]
+>>> subds.samples
+array([[ 1, -1],
+       [ 2,  0]])
 
 If you have prior experience with NumPy you might be confused now. What you
 might have expected is this:
 
-  >>> ds.samples[[0,1], [0,2]]
-  array([1, 0])
+>>> ds.samples[[0,1], [0,2]]
+array([1, 0])
 
 The above code applies the same slicing directly to the NumPy array with
 the samples, and the result is fundamentally different. For NumPy arrays
@@ -288,18 +288,18 @@ One last interesting thing to look at, in the context of dataset slicing
 are the attributes. What happens to them when a subset of samples and/or
 features is chosen? Our original dataset had both samples and feature attributes:
 
-  >>> print ds.sa.some_attr
-  [0 1 1 3]
-  >>> print ds.fa.responsible
-  ['me' 'you' 'nobody']
+>>> print ds.sa.some_attr
+[0 1 1 3]
+>>> print ds.fa.responsible
+['me' 'you' 'nobody']
 
 Now let's look at what they became in the subset-dataset we previously
 created:
 
-  >>> print subds.sa.some_attr
-  [0 1]
-  >>> print subds.fa.responsible
-  ['me' 'nobody']
+>>> print subds.sa.some_attr
+[0 1]
+>>> print subds.fa.responsible
+['me' 'nobody']
 
 We see that both attributes are still there and, moreover, also here the
 appropriate subsets have been selected.
@@ -316,21 +316,21 @@ look at is a single subject from Haxby et al. (2001) that we already
 loaded in part one of this tutorial. For more convenience, and less typing
 we first specify the path of the directory with the fMRI data.
 
-  >>> # 'pymvpa_datadbroot' is set by PyMVPA and points to the global data
-  >>> # database (downloadable from http://data.pymvpa.org)
-  >>> path=os.path.join(pymvpa_datadbroot, 'demo_blockfmri', 'demo_blockfmri')
+>>> # 'pymvpa_datadbroot' is set by PyMVPA and points to the global data
+>>> # database (downloadable from http://data.pymvpa.org)
+>>> path=os.path.join(pymvpa_datadbroot, 'demo_blockfmri', 'demo_blockfmri')
 
 In the simplest case, we now let `fmri_dataset` do its job, by just
 pointing it to the fMRI data file. The data is stored as a NIfTI file that has
 all runs of the experiment concatenated into a single file.
 
-  >>> ds = fmri_dataset(os.path.join(path, 'bold.nii.gz'))
-  >>> len(ds)
-  1452
-  >>> ds.nfeatures
-  163840
-  >>> ds.shape
-  (1452, 163840)
+>>> ds = fmri_dataset(os.path.join(path, 'bold.nii.gz'))
+>>> len(ds)
+1452
+>>> ds.nfeatures
+163840
+>>> ds.shape
+(1452, 163840)
 
 We can notice two things. First, it worked! Second, we get a
 two-dimensional dataset with 1452 samples (these are volumes in the NIfTI
@@ -351,12 +351,12 @@ to use the original GLM-based localizer mask of ventral temporal cortex
 from Haxby et al. (2001). We already know that it comprises 577 voxels.
 Let's reload the dataset:
 
-  >>> ds = fmri_dataset(os.path.join(path, 'bold.nii.gz'),
-  ...                   mask=os.path.join(path, 'mask_vt.nii.gz'))
-  >>> len(ds)
-  1452
-  >>> ds.nfeatures
-  577
+>>> ds = fmri_dataset(os.path.join(path, 'bold.nii.gz'),
+...                   mask=os.path.join(path, 'mask_vt.nii.gz'))
+>>> len(ds)
+1452
+>>> ds.nfeatures
+577
 
 As expected, we get the same number of samples and also only 577 features
 -- voxels corresponding to non-zero elements in the mask image. Now, let's
@@ -371,30 +371,30 @@ Finally, the dataset also contains information about the dimensionality
 of the input volumes, voxel size, and any other NIfTI-specific information
 since it also includes a dump of the full NIfTI image header.
 
-  >>> ds.sa.time_indices[:5]
-  array([0, 1, 2, 3, 4])
-  >>> ds.sa.time_coords[:5]
-  array([  0. ,   2.5,   5. ,   7.5,  10. ])
-  >>> ds.fa.voxel_indices[:5]
-  array([[22, 20, 31],
-         [22, 20, 32],
-         [22, 25,  8],
-         [22, 26,  8],
-         [23, 18, 10]])
-  >>> ds.a.voxel_eldim
-  (3.75, 3.75, 3.5)
-  >>> ds.a.voxel_dim
-  (64, 64, 40)
-  >>> 'imghdr' in ds.a
-  True
+>>> ds.sa.time_indices[:5]
+array([0, 1, 2, 3, 4])
+>>> ds.sa.time_coords[:5]
+array([  0. ,   2.5,   5. ,   7.5,  10. ])
+>>> ds.fa.voxel_indices[:5]
+array([[22, 20, 31],
+       [22, 20, 32],
+       [22, 25,  8],
+       [22, 26,  8],
+       [23, 18, 10]])
+>>> ds.a.voxel_eldim
+(3.75, 3.75, 3.5)
+>>> ds.a.voxel_dim
+(64, 64, 40)
+>>> 'imghdr' in ds.a
+True
 
 In addition to all this information, the dataset also carries a key
 attribute: the *mapper*. A mapper is an important concept in PyMVPA, and
 hence worth devoting the whole :ref:`next tutorial chapter
 <chap_tutorial3>` to it.
 
-  >>> print ds.a.mapper
-  <ChainMapper: <Flatten>-<FeatureSlice>>
+>>> print ds.a.mapper
+<ChainMapper: <Flatten>-<FeatureSlice>>
 
 Having all these attributes being part of a dataset is often a useful thing
 to have, but in some cases (e.g. when it comes to efficiency, and/or very
@@ -403,9 +403,9 @@ information that is really necessary. One way to achieve this, is to strip
 all unwanted attributes. The Dataset class'
 :meth:`~mvpa.base.dataset.AttrDataset.copy()` method can help with that.
 
-  >>> stripped = ds.copy(deep=False, sa=['time_coords'], fa=[], a=[])
-  >>> print stripped
-  <Dataset: 1452x577@int16, <sa: time_coords>>
+>>> stripped = ds.copy(deep=False, sa=['time_coords'], fa=[], a=[])
+>>> print stripped
+<Dataset: 1452x577@int16, <sa: time_coords>>
 
 We can see that all attributes besides `time_coords` have been filtered out.
 Setting the `deep` arguments to `False` causes the copy function to reuse the
@@ -430,10 +430,10 @@ For HDF5 support PyMVPA depends on the h5py_ package. If it is available,
 any dataset can be saved to a file by simply calling
 `~mvpa.base.dataset.AttrDataset.save()` with the desired filename.
 
-  >>> import tempfile, shutil
-  >>> # create a temporary directory
-  >>> tempdir = tempfile.mkdtemp()
-  >>> ds.save(os.path.join(tempdir, 'mydataset.hdf5'))
+>>> import tempfile, shutil
+>>> # create a temporary directory
+>>> tempdir = tempfile.mkdtemp()
+>>> ds.save(os.path.join(tempdir, 'mydataset.hdf5'))
 
 HDF5 is a flexible format that also supports, for example, data
 compression. To enable it, you can pass additional arguments to
@@ -443,18 +443,18 @@ compression. To enable it, you can pass additional arguments to
 function in a similar way. Saving the same dataset with maximum
 gzip-compression looks like this:
 
-  >>> ds.save(os.path.join(tempdir, 'mydataset.gzipped.hdf5'), compression=9)
-  >>> h5save(os.path.join(tempdir, 'mydataset.gzipped.hdf5'), ds, compression=9)
+>>> ds.save(os.path.join(tempdir, 'mydataset.gzipped.hdf5'), compression=9)
+>>> h5save(os.path.join(tempdir, 'mydataset.gzipped.hdf5'), ds, compression=9)
 
 Loading datasets from a file is easy too. `h5load()` takes a filename as
 an argument and returns the stored dataset. Compressed data will be handled
 transparently.
 
-  >>> loaded = h5load(os.path.join(tempdir, 'mydataset.hdf5'))
-  >>> N.all(ds.samples == loaded.samples)
-  True
-  >>> # cleanup the temporary directory, and everything it includes
-  >>> shutil.rmtree(tempdir, ignore_errors=True)
+>>> loaded = h5load(os.path.join(tempdir, 'mydataset.hdf5'))
+>>> N.all(ds.samples == loaded.samples)
+True
+>>> # cleanup the temporary directory, and everything it includes
+>>> shutil.rmtree(tempdir, ignore_errors=True)
 
 
 .. only:: html

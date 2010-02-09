@@ -21,7 +21,7 @@ import numpy as N
 import pylab as P
 
 from mvpa.misc.plot import plotErrLine
-from mvpa.misc.fx import singleGammaHRF, leastSqFit
+from mvpa.misc.fx import singleGammaHRF, least_sq_fit
 from mvpa import cfg
 
 """
@@ -38,7 +38,7 @@ Fitting a gamma function to this data is easy (using resonable seeds for the
 parameter search (5s time-to-peak, 5s FWHM, and no scaling):
 """
 
-fpar, succ = leastSqFit(singleGammaHRF, [5,5,1], a)
+fpar, succ = least_sq_fit(singleGammaHRF, [5,5,1], a)
 
 """
 Generate high-resultion curves for the 'true' time course and the fitted one

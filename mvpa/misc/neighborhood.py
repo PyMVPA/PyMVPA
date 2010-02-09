@@ -13,7 +13,7 @@ from numpy import array
 import operator
 import sys
 
-from mvpa.clfs.distance import cartesianDistance
+from mvpa.clfs.distance import cartesian_distance
 
 if __debug__:
     from mvpa.base import debug
@@ -66,13 +66,13 @@ class Sphere(object):
           to 1s in all dimensions.
         distance_func : None or lambda
           Distance function to use (choose one from `mvpa.clfs.distance`).
-          If None, cartesianDistance to be used.
+          If None, cartesian_distance to be used.
         """
         self._radius = radius
         # TODO: make ability to lookup in a dataset
         self._element_sizes = element_sizes
         if distance_func is None:
-            distance_func = cartesianDistance
+            distance_func = cartesian_distance
         self._distance_func = distance_func
 
         self._increments = None

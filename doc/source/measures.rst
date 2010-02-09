@@ -150,13 +150,13 @@ classification).
  <Dataset: 100x4@float64, <sa: chunks,targets>>
  >>>
  >>> clf = LinearCSVMC()
- >>> sensana = clf.getSensitivityAnalyzer()
+ >>> sensana = clf.get_sensitivity_analyzer()
  >>> sens = sensana(ds)
  >>> sens.shape
  (1, 4)
  >>> (sens.samples < 0).any()
  True
- >>> sensana_abs = clf.getSensitivityAnalyzer(postproc=absolute_features())
+ >>> sensana_abs = clf.get_sensitivity_analyzer(postproc=absolute_features())
  >>> (sensana_abs(ds).samples < 0).any()
  False
 
@@ -179,7 +179,7 @@ Other linear Classifier Weights
 
 Any linear classifier in PyMVPA can report its weights. The procedure is
 identical for all of them. As outlined in the example using linear SVM weights,
-simply call :meth:`~mvpa.clfs.base.Classifier.getSensitivityAnalyzer` on a
+simply call :meth:`~mvpa.clfs.base.Classifier.get_sensitivity_analyzer` on a
 classifier instance and you'll get an appropriate
 :class:`~mvpa.measures.base.Sensitivity` object. Additionally, it is possible
 to force (re)training of the underlying classifier or simply report the weights

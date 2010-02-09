@@ -242,11 +242,16 @@ class SVM(_SVM):
     def _train(self, dataset):
         """Train SVM
         """
+
         # XXX watchout
         # self.untrain()
         newkernel, newsvm = False, False
         # local bindings for faster lookup
+        params = self.params
         retrainable = self.params.retrainable
+
+        targets_sa_name = params.targets    # name of targets sa
+        targets_sa = dataset.sa[targets_sa_name] # actual targets sa
 
         if retrainable:
             _changedData = self._changedData
@@ -264,11 +269,10 @@ class SVM(_SVM):
             debug("SG_", "Creating labels instance")
 
         if self.__is_regression__:
-            labels_ = N.asarray(dataset.sa['targets'].value, dtype='double')
+            labels_ = N.asarray(targets_sa.value, dtype='double')
         else:
-            la = dataset.sa['targets']
-            ul = la.unique
-            ul.sort()
+            ul = targets_sa.unique
+            # ul.sort()
 
             if len(ul) == 2:
                 # assure that we have -1/+1
@@ -285,7 +289,7 @@ class SVM(_SVM):
 
             if __debug__:
                 debug("SG__", "Mapping labels using dict %s" % _labels_dict)
-            labels_ = self._attrmap.to_numeric(la.value).astype(float)
+            labels_ = self._attrmap.to_numeric(targets_sa.value).astype(float)
 
         labels = shogun.Features.Labels(labels_)
         _setdebug(labels, 'Labels')
@@ -334,7 +338,7 @@ class SVM(_SVM):
         if not retrainable or self.__svm is None or _changedData['params']:
             # SVM
             if self.params.has_key('C'):
-                Cs = self._getCvec(dataset)
+                Cs = self._get_cvec(dataset)
 
                 # XXX do not jump over the head and leave it up to the user
                 #     ie do not rescale automagically by the number of samples
@@ -395,16 +399,16 @@ class SVM(_SVM):
 
         if retrainable:
             # we must assign it only if it is retrainable
-            self.states.retrained = not newsvm or not newkernel
+            self.ca.retrained = not newsvm or not newkernel
 
         # Train
         if __debug__ and 'SG' in debug.active:
             if not self.__is_regression__:
-                lstr = " with labels %s" % dataset.uniquetargets
+                lstr = " with labels %s" % targets_sa.unique
             else:
                 lstr = ""
             debug("SG", "%sTraining %s on data%s" %
-                  (("","Re-")[retrainable and self.states.retrained],
+                  (("","Re-")[retrainable and self.ca.retrained],
                    self, lstr))
 
         self.__svm.train()
@@ -414,14 +418,14 @@ class SVM(_SVM):
 
         # Report on training
         if (__debug__ and 'SG__' in debug.active) or \
-           self.states.is_enabled('training_confusion'):
+           self.ca.is_enabled('training_confusion'):
             trained_targets = self.__svm.classify().get_labels()
         else:
             trained_targets = None
 
         if __debug__ and "SG__" in debug.active:
                 debug("SG__", "Original labels: %s, Trained labels: %s" %
-                              (dataset.targets, trained_targets))
+                              (targets_sa.value, trained_targets))
 
         # Assign training confusion right away here since we are ready
         # to do so.
@@ -431,9 +435,9 @@ class SVM(_SVM):
         # XXX For now it can be done only for regressions since labels need to
         #     be remapped and that becomes even worse if we use regression
         #     as a classifier so mapping happens upstairs
-        if self.__is_regression__ and self.states.is_enabled('training_confusion'):
-            self.states.training_confusion = self.__summary_class__(
-                targets=dataset.targets,
+        if self.__is_regression__ and self.ca.is_enabled('training_confusion'):
+            self.ca.training_confusion = self.__summary_class__(
+                targets=targets_sa.value,
                 predictions=trained_targets)
 
 
@@ -493,7 +497,7 @@ class SVM(_SVM):
 
         if retrainable:
             # we must assign it only if it is retrainable
-            self.states.repredicted = repredicted = not changed_testdata
+            self.ca.repredicted = repredicted = not changed_testdata
             if __debug__:
                 debug("SG__", "Re-assigning learing kernel. Repredicted is %s"
                       % repredicted)
@@ -521,7 +525,7 @@ class SVM(_SVM):
         # store state variable
         # TODO: extract values properly for multiclass SVMs --
         #       ie 1 value per label or pairs for all 1-vs-1 classifications
-        self.states.estimates = values
+        self.ca.estimates = values
 
         ## to avoid leaks with not yet properly fixed shogun
         if not retrainable:
@@ -598,7 +602,8 @@ class SVM(_SVM):
                 raise RuntimeError, \
                       "Shogun: Implementation %s doesn't handle multiclass " \
                       "data. Got labels %s. Use some other classifier" % \
-                      (self._svm_impl, self.__traindataset.uniquetargets)
+                      (self._svm_impl,
+                       self.__traindataset.sa[self.params.targets].unique)
             if __debug__:
                 debug("SG_", "Using %s for multiclass data of %s" %
                       (svm_impl_class, self._svm_impl))

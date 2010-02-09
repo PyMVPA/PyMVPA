@@ -47,7 +47,8 @@ def multipleChunks(func, n_chunks, *args, **kwargs):
     return ds
 
 
-def dumbFeatureDataset():
+##REF: Name was automagically refactored
+def dumb_feature_dataset():
     """Create a very simple dataset with 2 features and 3 labels
     """
     data = [[1, 0], [1, 1], [2, 0], [2, 1], [3, 0], [3, 1], [4, 0], [4, 1],
@@ -59,7 +60,8 @@ def dumbFeatureDataset():
     return dataset_wizard(samples=N.array(data), targets=regs, chunks=range(len(regs)))
 
 
-def dumbFeatureBinaryDataset():
+##REF: Name was automagically refactored
+def dumb_feature_binary_dataset():
     """Very simple binary (2 labels) dataset
     """
     data = [[1, 0], [1, 1], [2, 0], [2, 1], [3, 0], [3, 1], [4, 0], [4, 1],
@@ -172,7 +174,8 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
     return dataset_wizard(samples=data, targets=regs, chunks=chunks)
 
 
-def getMVPattern(s2n):
+##REF: Name was automagically refactored
+def get_mv_pattern(s2n):
     """Simple multivariate dataset"""
     return multipleChunks(pureMultivariateSignal, 6,
                           5, s2n, 1)
@@ -236,7 +239,8 @@ def sinModulated(n_instances, n_features,
     label += N.random.rand(label.size)*noise
     return dataset_wizard(samples=data, targets=label)
 
-def chirpLinear(n_instances, n_features=4, n_nonbogus_features=2,
+##REF: Name was automagically refactored
+def chirp_linear(n_instances, n_features=4, n_nonbogus_features=2,
                 data_noise=0.4, noise=0.1):
     """ Generates simple dataset for linear regressions
 
@@ -326,3 +330,60 @@ def load_example_fmri_dataset():
                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
     return ds
+
+
+def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None):
+    """Generate a dataset with samples being temporally autocorrelated noise.
+
+    Parameters
+    ----------
+    ds : Dataset
+      Source dataset whose mean samples serves as the pedestal of the new noise
+      samples. All attributes of this dataset will also go into the generated
+      one.
+    sr : float
+      Sampling rate (in Hz) of the samples in the dataset.
+    cutoff : float
+      Cutoff frequency of the low-pass butterworth filter.
+    bord : int
+      Order of the butterworth filter that is applied for low-pass
+      filtering.
+    lfnl : float
+      Low frequency noise level in percent signal (per feature).
+    hfnl : float or None
+      High frequency noise level in percent signal (per feature). If None, no
+      HF noise is added.
+    """
+    from scipy.signal import butter, lfilter
+
+    # something to play with
+    fds = ds.copy(deep=False)
+
+    # compute the pedestal
+    msample = fds.samples.mean(axis=0)
+
+    # noise/signal amplitude relative to each feature mean signal
+    noise_amps = msample * (lfnl / 100.)
+
+    # generate gaussian noise for the full dataset
+    nsamples = N.random.standard_normal(fds.samples.shape)
+    # scale per each feature
+    nsamples *= noise_amps
+
+    # nyquist frequency
+    nf = sr / 2.0
+
+    # along samples low-pass filtering
+    fb, fa = butter(bord, cutoff / nf)
+    nsamples = lfilter(fb, fa, nsamples, axis=0)
+
+    # add the pedestal
+    nsamples += msample
+
+    # HF noise
+    if not hfnl is None:
+        noise_amps = msample * (hfnl / 100.)
+        nsamples += N.random.standard_normal(nsamples.shape) * noise_amps
+
+    fds.samples = nsamples
+    return fds

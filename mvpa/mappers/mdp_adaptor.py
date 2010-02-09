@@ -19,7 +19,7 @@ import mdp
 
 from mvpa.base.dataset import DatasetAttributeExtractor
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
-from mvpa.misc.support import isInVolume
+from mvpa.misc.support import is_in_volume
 
 
 class MDPNodeMapper(Mapper):

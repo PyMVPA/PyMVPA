@@ -106,7 +106,7 @@ class GPR(Classifier):
         # It does not make sense to calculate a confusion matrix for a GPR
         # XXX it does ;) it will be a RegressionStatistics actually ;-)
         # So if someone desires -- let him have it
-        # self.states.enable('training_confusion', False)
+        # self.ca.enable('training_confusion', False)
 
         # set kernel:
         if kernel is None:
@@ -164,11 +164,11 @@ class GPR(Classifier):
         """
         if __debug__:
             debug("GPR", "Computing log_marginal_likelihood")
-        self.states.log_marginal_likelihood = \
+        self.ca.log_marginal_likelihood = \
                                  -0.5*Ndot(self._train_labels, self._alpha) - \
                                   Nlog(self._L.diagonal()).sum() - \
                                   self._km_train_train.shape[0] * _halflog2pi
-        return self.states.log_marginal_likelihood
+        return self.ca.log_marginal_likelihood
 
 
     def compute_gradient_log_marginal_likelihood(self):
@@ -229,7 +229,8 @@ class GPR(Classifier):
         return lml_gradient
 
 
-    def getSensitivityAnalyzer(self, flavor='auto', **kwargs):
+    ##REF: Name was automagically refactored
+    def get_sensitivity_analyzer(self, flavor='auto', **kwargs):
         """Returns a sensitivity analyzer for GPR.
 
         Parameters
@@ -281,7 +282,9 @@ class GPR(Classifier):
 
         self._train_fv = train_fv = data.samples
         # GRP relies on numerical labels
-        train_labels = self._attrmap.to_numeric(data.sa.targets)
+        # yoh: yeah -- GPR now is purely regression so no conversion
+        #      is necessary
+        train_labels = data.sa[self.params.targets].value
         self._train_labels = train_labels
 
         if not retrainable or _changedData['traindata'] \
@@ -358,13 +361,13 @@ class GPR(Classifier):
         self._alpha = SLcho_solve(self._LL, train_labels)
 
         # compute only if the state is enabled
-        if self.states.is_enabled('log_marginal_likelihood'):
+        if self.ca.is_enabled('log_marginal_likelihood'):
             self.compute_log_marginal_likelihood()
             pass
 
         if retrainable:
             # we must assign it only if it is retrainable
-            self.states.retrained = not newkernel or not newL
+            self.ca.retrained = not newkernel or not newL
 
         if __debug__:
             debug("GPR", "Done training")
@@ -378,7 +381,7 @@ class GPR(Classifier):
         Predict the output for the provided data.
         """
         retrainable = self.params.retrainable
-        states = self.states
+        ca = self.ca
 
         if not retrainable or self._changedData['testdata'] \
                or self._km_train_test is None:
@@ -388,17 +391,17 @@ class GPR(Classifier):
             km_train_test = asarray(self.__kernel)
             if retrainable:
                 self._km_train_test = km_train_test
-                states.repredicted = False
+                ca.repredicted = False
         else:
             if __debug__:
                 debug('GPR', "Not recomputing train test kernel matrix")
             km_train_test = self._km_train_test
-            states.repredicted = True
+            ca.repredicted = True
 
 
         predictions = Ndot(km_train_test.transpose(), self._alpha)
 
-        if states.is_enabled('predicted_variances'):
+        if ca.is_enabled('predicted_variances'):
             # do computation only if state variable was enabled
             if not retrainable or self._km_test_test is None \
                    or self._changedData['testdata']:
@@ -424,13 +427,13 @@ class GPR(Classifier):
             #     Ndiag(km_test_test - Ndot(v.T, v)) \
             #     + self.sigma_noise**2
             # Faster formula: N.diag(Ndot(v.T, v)) = (v**2).sum(0):
-            states.predicted_variances = Ndiag(km_test_test) - (v ** 2).sum(0) \
+            ca.predicted_variances = Ndiag(km_test_test) - (v ** 2).sum(0) \
                                        + self.params.sigma_noise ** 2
             pass
 
         if __debug__:
             debug("GPR", "Done predicting")
-        states.estimates = predictions
+        ca.estimates = predictions
         return predictions
 
 
@@ -502,13 +505,13 @@ class GPRLinearWeights(Sensitivity):
         weights = Ndot(Sigma_p,
                         Ndot(train_fv.T, clf._alpha))
 
-        if self.states.is_enabled('variances'):
+        if self.ca.is_enabled('variances'):
             # super ugly formulas that can be quite surely improved:
             tmp = N.linalg.inv(clf._L)
             Kyinv = Ndot(tmp.T, tmp)
             # XXX in such lengthy matrix manipulations you might better off
             #     using N.matrix where * is a matrix product
-            self.states.variances = Ndiag(
+            self.ca.variances = Ndiag(
                 Sigma_p -
                 Ndot(Sigma_p,
                       Ndot(train_fv.T,
@@ -542,8 +545,8 @@ if externals.exists('openopt'):
                                 / clf._train_labels.std()
             # clf._train_fv = (clf._train_fv-clf._train_fv.mean(0)) \
             #                  /clf._train_fv.std(0)
-            ds = dataset_wizard(samples=clf._train_fv, labels=clf._train_labels)
-            clf.states.enable("log_marginal_likelihood")
+            ds = dataset_wizard(samples=clf._train_fv, targets=clf._train_labels)
+            clf.ca.enable("log_marginal_likelihood")
             ms = ModelSelector(clf, ds)
             # Note that some kernels does not have gradient yet!
             # XXX Make it initialize to clf's current hyperparameter values

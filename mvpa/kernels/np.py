@@ -207,8 +207,8 @@ class GeneralizedLinearKernel(NumpyKernel):
         self._k = k = N.dot(data1, data2_sc) + sigma_0 ** 2
 
         # Compute gradients if any was requested
-        do_g  = self.states.is_enabled('gradients')
-        do_gl = self.states.is_enabled('gradientslog')
+        do_g  = self.ca.is_enabled('gradients')
+        do_gl = self.ca.is_enabled('gradientslog')
         if do_g or do_gl:
             if N.isscalar(Sigma_p):
                 g_Sigma_p = N.dot(data1, data2.T)
@@ -223,11 +223,11 @@ class GeneralizedLinearKernel(NumpyKernel):
                     if do_g:  g_Sigma_p[:, :, i] = outer
                     if do_gl: gl_Sigma_p = Sigma_p[i] * outer
             if do_g:
-                self.states.gradients = dict(
+                self.ca.gradients = dict(
                     sigma_0=2*sigma_0,
                     Sigma_p=g_Sigma_p)
             if do_gl:
-                self.states.gradientslog = dict(
+                self.ca.gradientslog = dict(
                     sigma_0=2*sigma_0**2,
                     Sigma_p=gl_Sigma_p)
     pass

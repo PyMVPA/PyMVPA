@@ -346,7 +346,7 @@ Releases
   * Make website stylesheet compatible with sphinx 0.4.
   * Several minor improvements of the compatibility with MacOS.
   * Extended FAQ section of the manual.
-  * Bugfix: doubleGammaHRF() ignoring K2 argument.
+  * Bugfix: double_gamma_hrf() ignoring K2 argument.
 
 
 * 0.2.2 (Tue, 17 Jun 2008)

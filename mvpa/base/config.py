@@ -188,7 +188,8 @@ class ConfigManager(SafeConfigParser):
         return SafeConfigParser.getboolean(self, section, option)
 
 
-    def getAsDType(self, section, option, dtype, default=None):
+    ##REF: Name was automagically refactored
+    def get_as_dtype(self, section, option, dtype, default=None):
         """Convenience method to query options with a custom default and type
 
         This method simply wraps the base class method, but adds a `default`

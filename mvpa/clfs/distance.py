@@ -23,13 +23,15 @@ if __debug__:
     from mvpa.base import debug, warning
 
 
-def cartesianDistance(a, b):
+##REF: Name was automagically refactored
+def cartesian_distance(a, b):
     """Return Cartesian distance between a and b
     """
     return N.linalg.norm(a-b)
 
 
-def absminDistance(a, b):
+##REF: Name was automagically refactored
+def absmin_distance(a, b):
     """Returns dinstance max(\|a-b\|)
     XXX There must be better name!
     XXX Actually, why is it absmin not absmax?

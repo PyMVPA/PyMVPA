@@ -56,8 +56,8 @@ class SameSignClassifier(Classifier):
         estimates = []
         for d in data:
             estimates.append(2*int( (d[0]>=0) == (d[1]>=0) )-1)
-        self.states.predictions = estimates
-        self.states.estimates = estimates            # just for the sake of having estimates
+        self.ca.predictions = estimates
+        self.ca.estimates = estimates            # just for the sake of having estimates
         return estimates
 
 

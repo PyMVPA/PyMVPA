@@ -13,7 +13,7 @@ import sys
 
 from mvpa import _random_seed, cfg
 from mvpa.base import externals, warning
-from mvpa.tests import collectTestSuites, runNoseTests
+from mvpa.tests import collect_test_suites, runNoseTests
 
 
 def main():
@@ -25,7 +25,7 @@ def main():
         # instance, since for CHECK_RETRAIN it has to be set before object
         # gets created, ie while importing clfs.warehouse
 
-    suites = collectTestSuites()
+    suites = collect_test_suites()
 
     # and make global test suite
     ts = unittest.TestSuite(suites.values())

@@ -74,7 +74,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
 
 
-    # NOTE: lars with stepwise used to segfault if all states are enabled
+    # NOTE: lars with stepwise used to segfault if all ca are enabled
     @sweepargs(clfds=
                [(c, datasets['uni2large'])
                 for c in clfswh['has_sensitivity', 'binary']] +
@@ -95,10 +95,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
         splitter = NFoldSplitter(count=nsplits)
         mclf = SplitClassifier(clf=clf,
                                splitter=splitter,
-                               enable_states=['training_confusion',
+                               enable_ca=['training_confusion',
                                               'confusion'])
-        sana = mclf.getSensitivityAnalyzer(# postproc=absolute_features(),
-                                           enable_states=["sensitivities"])
+        sana = mclf.get_sensitivity_analyzer(# postproc=absolute_features(),
+                                           enable_ca=["sensitivities"])
 
         ulabels = ds.uniquetargets
         nlabels = len(ulabels)
@@ -141,7 +141,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         assert_array_equal(sens_ulabels, ds.sa['targets'].unique)
 
         errors = [x.percentCorrect
-                    for x in sana.clf.states.confusion.matrices]
+                    for x in sana.clf.ca.confusion.matrices]
 
         # lets go through all sensitivities and see if we selected the right
         # features
@@ -156,8 +156,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
             return
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            for conf_matrix in [sana.clf.states.training_confusion] \
-                              + sana.clf.states.confusion.matrices:
+            for conf_matrix in [sana.clf.ca.training_confusion] \
+                              + sana.clf.ca.confusion.matrices:
                 self.failUnless(
                     conf_matrix.percentCorrect>=70,
                     msg="We must have trained on each one more or " \
@@ -253,10 +253,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
             SensitivityBasedFeatureSelection(
                 OneWayAnova(),
                 FractionTailSelector(0.5, mode='select', tail='upper')),
-            enable_states=['training_confusion'])
+            enable_ca=['training_confusion'])
 
-        sana = mclf.getSensitivityAnalyzer(postproc=sumofabs_sample(),
-                                           enable_states=["sensitivities"])
+        sana = mclf.get_sensitivity_analyzer(postproc=sumofabs_sample(),
+                                           enable_ca=["sensitivities"])
         # and lets look at all sensitivities
 
         dataset = datasets['uni2medium']
@@ -269,14 +269,14 @@ class SensitivityAnalysersTests(unittest.TestCase):
     @sweepargs(svm=clfswh['linear', 'svm'])
     def test_linear_svm_weights(self, svm):
         # assumming many defaults it is as simple as
-        sana = svm.getSensitivityAnalyzer(enable_states=["sensitivities"] )
+        sana = svm.get_sensitivity_analyzer(enable_ca=["sensitivities"] )
         # and lets look at all sensitivities
         sens = sana(self.dataset)
         # for now we can do only linear SVM, so lets check if we raise
         # a concern
         svmnl = clfswh['non-linear', 'svm'][0]
         self.failUnlessRaises(NotImplementedError,
-                              svmnl.getSensitivityAnalyzer)
+                              svmnl.get_sensitivity_analyzer)
 
 
     # XXX doesn't work easily with meta since it would need
@@ -286,10 +286,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
     @sweepargs(svm=clfswh['linear', 'svm', 'libsvm', '!sg', '!meta'])
     def test_linear_svm_weights_per_class(self, svm):
         # assumming many defaults it is as simple as
-        kwargs = dict(enable_states=["sensitivities"])
-        sana_split = svm.getSensitivityAnalyzer(
+        kwargs = dict(enable_ca=["sensitivities"])
+        sana_split = svm.get_sensitivity_analyzer(
             split_weights=True, **kwargs)
-        sana_full = svm.getSensitivityAnalyzer(
+        sana_full = svm.get_sensitivity_analyzer(
             force_training=False, **kwargs)
 
         # and lets look at all sensitivities
@@ -310,7 +310,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.failUnless((N.abs(dmap) <= 1e-10).all())
         #print "____"
         #print senssplit
-        #print SMLR().getSensitivityAnalyzer(combiner=None)(ds2)
+        #print SMLR().get_sensitivity_analyzer(combiner=None)(ds2)
 
         # for now we can do split weights for binary tasks only, so
         # lets check if we raise a concern
@@ -328,7 +328,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         ds = datasets['uni3small']
         sana = SplitFeaturewiseDatasetMeasure(
             analyzer=SMLR(
-              fit_all_weights=True).getSensitivityAnalyzer(),
+              fit_all_weights=True).get_sensitivity_analyzer(),
             splitter=NFoldSplitter(),
             )
 
@@ -343,15 +343,15 @@ class SensitivityAnalysersTests(unittest.TestCase):
         ds.init_origids('samples')
         sana = SplitFeaturewiseDatasetMeasure(
             analyzer=SMLR(
-              fit_all_weights=True).getSensitivityAnalyzer(),
+              fit_all_weights=True).get_sensitivity_analyzer(),
             splitter=NoneSplitter(nperlabel=0.25, mode='first',
                                   nrunspersplit=2),
-            enable_states=['splits', 'sensitivities'])
+            enable_ca=['splits', 'sensitivities'])
         sens = sana(ds)
 
         assert_equal(sens.shape, (2 * len(ds.sa['targets'].unique),
                                   ds.nfeatures))
-        splits = sana.states.splits
+        splits = sana.ca.splits
         self.failUnlessEqual(len(splits), 2)
         self.failUnless(N.all([s[0].nsamples == ds.nsamples/4 for s in splits]))
         # should have used different samples
@@ -366,13 +366,13 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # DistPValue -- read the docstring of it!
         # Most evil example
         #ds = datasets['uni2medium']
-        #plain_sana = SVM().getSensitivityAnalyzer(
+        #plain_sana = SVM().get_sensitivity_analyzer(
         #       transformer=DistPValue())
         #boosted_sana = SplitFeaturewiseDatasetMeasure(
-        #    analyzer=SVM().getSensitivityAnalyzer(
+        #    analyzer=SVM().get_sensitivity_analyzer(
         #       transformer=DistPValue(fpp=0.05)),
         #    splitter=NoneSplitter(nperlabel=0.8, mode='first', nrunspersplit=2),
-        #    enable_states=['splits', 'sensitivities'])
+        #    enable_ca=['splits', 'sensitivities'])
         ## lets create feature selector
         #fsel = RangeElementSelector(upper=0.05, lower=0.95, inclusive=True)
 
@@ -407,8 +407,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # of split classifier itself
         sclf = SplitClassifier(clf=basic_clf)
         rfe = RFE(sensitivity_analyzer=
-                    sclf.getSensitivityAnalyzer(
-                        enable_states=["sensitivities"]),
+                    sclf.get_sensitivity_analyzer(
+                        enable_ca=["sensitivities"]),
                   transfer_error=trans_error,
                   feature_selector=FeatureSelectionPipeline(
                       [FractionTailSelector(0.5),
@@ -430,28 +430,28 @@ class SensitivityAnalysersTests(unittest.TestCase):
                     RangeElementSelector(mode='select'))]
 
         fs = CombinedFeatureSelection(fss, combiner='union',
-                                      enable_states=['selected_ids',
+                                      enable_ca=['selected_ids',
                                                      'selections_ids'])
 
         od, otd = fs(self.dataset)
 
         self.failUnless(fs.combiner == 'union')
-        self.failUnless(len(fs.states.selections_ids))
-        self.failUnless(len(fs.states.selections_ids) <= self.dataset.nfeatures)
+        self.failUnless(len(fs.ca.selections_ids))
+        self.failUnless(len(fs.ca.selections_ids) <= self.dataset.nfeatures)
         # should store one set per methods
-        self.failUnless(len(fs.states.selections_ids) == len(fss))
+        self.failUnless(len(fs.ca.selections_ids) == len(fss))
         # no individual can be larger than union
-        for s in fs.states.selections_ids:
-            self.failUnless(len(s) <= len(fs.states.selected_ids))
+        for s in fs.ca.selections_ids:
+            self.failUnless(len(s) <= len(fs.ca.selected_ids))
         # check output dataset
-        self.failUnless(od.nfeatures == len(fs.states.selected_ids))
-        for i, id in enumerate(fs.states.selected_ids):
+        self.failUnless(od.nfeatures == len(fs.ca.selected_ids))
+        for i, id in enumerate(fs.ca.selected_ids):
             self.failUnless((od.samples[:,i]
                              == self.dataset.samples[:,id]).all())
 
         # again for intersection
         fs = CombinedFeatureSelection(fss, combiner='intersection',
-                                      enable_states=['selected_ids',
+                                      enable_ca=['selected_ids',
                                                      'selections_ids'])
         # simply run it for now -- can't think of additional tests
         od, otd = fs(self.dataset)

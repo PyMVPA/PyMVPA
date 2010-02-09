@@ -80,7 +80,7 @@ Instructions
   ...                         'demo_blockfmri')
   >>> attrs = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
   >>> ds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
-  ...                   labels=attrs.targets, chunks=attrs.chunks,
+  ...                   targets=attrs.targets, chunks=attrs.chunks,
   ...                   mask=os.path.join(datapath, 'mask_brain.nii.gz'))
   >>> print ds.shape
   (1452, 39912)
