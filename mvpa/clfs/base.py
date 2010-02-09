@@ -491,7 +491,7 @@ class Classifier(ClassWithCollections):
                     # it might be the values are pointing to result at
                     # the moment, so lets assure this silly way that
                     # they do not overlap
-                    states.values = states.values.copy()
+                    states.values = N.array(states.values, copy=True)
 
             trained_labels = self.trained_labels
             for i, value in enumerate(result):
