@@ -187,6 +187,19 @@ Miscellaneous
    misc.vproperty
 
 
+Basic Plotting Utilities
+------------------------
+
+.. autosummary::
+   :toctree: generated
+
+   misc.plot
+   misc.plot.base
+   misc.plot.erp
+   misc.plot.lightbox
+   misc.plot.topo
+
+
 3rd-party Interfaces
 --------------------
 
