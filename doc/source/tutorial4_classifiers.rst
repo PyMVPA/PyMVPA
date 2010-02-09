@@ -354,8 +354,9 @@ and the rest is noise. We can easily check that with an appropriate mapper:
 >>> terr = TransferError(metaclf)
 >>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
 >>> cv_results = cvte(ds)
->>> print N.mean(cv_results)
-0.572916666667
+>>> svm_err = N.mean(cv_results)
+>>> print round(svm_err, 2)
+0.57
 
 Well, obviously the discarded components cannot only be noise, since the error
 is substantially increased. But maybe it is the classifier that cannot deal with
@@ -369,11 +370,11 @@ in the past.
 >>> terr = TransferError(metaclf)
 >>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
 >>> cv_results = cvte(ds)
->>> print N.mean(cv_results)
-0.833333333333
+>>> N.mean(cv_results) < svm_err
+False
 
-Oh, that was even worse (i.e. guessing). We would have to take a closer look at
-the data to figure out what is happening here.
+Oh, that was even worse. We would have to take a closer look at the data to
+figure out what is happening here.
 
 .. exercise::
 
@@ -381,7 +382,7 @@ the data to figure out what is happening here.
    information is represented in the first two SVD components and what is not?
    Plot the samples of the full dataset after they have been mapped onto the
    first two SVD components. Why does the kNN classifier perform so bad in
-   comparison to the SVM?
+   comparison to the SVM (hint: think about the distance function)?
 
 In this tutorial part we took a look at classifiers. We have seen that
 regardless of the actual algorithm all classifiers are implementing the same
