@@ -367,7 +367,7 @@ testtutorial-%: build
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_DATADB_ROOT=datadb \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
-		             --doctest-tests doc/source/tutorial$**.rst
+		             --doctest-tests doc/source/tutorial_$**.rst
 
 testdatadb: build
 	@echo "I: Testing code samples on the dataset DB website"

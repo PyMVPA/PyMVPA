@@ -8,7 +8,7 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 .. index:: Tutorial, Dataset concepts
-.. _chap_tutorial2:
+.. _chap_tutorial_datasets:
 
 ***********************************
 Part 2: Dataset Basics and Concepts
@@ -391,7 +391,7 @@ True
 In addition to all this information, the dataset also carries a key
 attribute: the *mapper*. A mapper is an important concept in PyMVPA, and
 hence worth devoting the whole :ref:`next tutorial chapter
-<chap_tutorial3>` to it.
+<chap_tutorial_mappers>` to it.
 
 >>> print ds.a.mapper
 <ChainMapper: <Flatten>-<FeatureSlice>>

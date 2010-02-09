@@ -8,13 +8,11 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 .. index:: Tutorial
-.. _chap_tutorial6:
+.. _chap_tutorial_searchlight:
 
-*********************************************************
-Part 6: Looking Without Searching -- Sensitivity Analysis
-*********************************************************
-
-* post-processing with mappers
+******************************
+Part 5: The Mighty Searchlight
+******************************
 
 
 .. only:: html
@@ -25,4 +23,4 @@ Part 6: Looking Without Searching -- Sensitivity Analysis
   .. autosummary::
      :toctree: generated
 
-     ~mvpa.measures.base.Sensitivity
+     ~mvpa.measures.searchlight.Searchlight

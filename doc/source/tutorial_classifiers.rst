@@ -8,7 +8,7 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 .. index:: Tutorial
-.. _chap_tutorial4:
+.. _chap_tutorial_classifiers:
 
 ***********************************************
 Part 4: Classifiers -- All Alike, Yet Different
@@ -16,7 +16,7 @@ Part 4: Classifiers -- All Alike, Yet Different
 
 This is already the second time that we will engage in a classification
 analysis, so let's first recap what we did before in the :ref:`first tutorial
-part <chap_tutorial1>`:
+part <chap_tutorial_start>`:
 
 >>> from tutorial_lib import *
 >>> ds = get_haxby2001_data()
@@ -92,7 +92,7 @@ To run such an analysis we first need to redo our dataset preprocessing,
 since in the current one we only have one sample per stimulus category for
 both odd and even runs. To get a dataset with one sample per stimulus
 category for each run, we need to modify the averaging step. Using what we
-have learned from the :ref:`last tutorial part <chap_tutorial3>` the
+have learned from the :ref:`last tutorial part <chap_tutorial_mappers>` the
 following code snippet should be plausible:
 
 >>> # directory that contains the data files
@@ -394,7 +394,7 @@ by particular parts of the processing pipeline.
 However, we still have done little to address one of the major questions in
 neuroscience research, that is: Where does the information come from? One
 possible approach to this question is the topic of the :ref:`next tutorial part
-<chap_tutorial5>`.
+<chap_tutorial_searchlight>`.
 
 .. Think about adding a demo of the classifiers warehouse.
   .. exercise::
