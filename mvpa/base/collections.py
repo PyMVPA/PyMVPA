@@ -329,12 +329,21 @@ class Collection(dict):
         """
         if isinstance(source, list):
             for a in source:
+                if isinstance(a, tuple):
+                    #list of tuples, e.g. from dict.items()
+                    name = a[0]
+                    value = a[1]
+                else:
+                    # list of collectables
+                    name = a.name
+                    value = a
+
                 if copyvalues is None:
-                    self[a.name] = a
+                    self[name] = value
                 elif copyvalues is 'shallow':
-                    self[a.name] = copy.copy(a)
+                    self[name] = copy.copy(value)
                 elif copyvalues is 'deep':
-                    self[a.name] = copy.deepcopy(a)
+                    self[name] = copy.deepcopy(value)
                 else:
                     raise ValueError("Unknown value ('%s') for copy argument."
                                      % copy)
@@ -404,6 +413,11 @@ class UniformLengthCollection(Collection):
         # before its __init__ is called.
         self._uniform_length = length
         Collection.__init__(self, items)
+
+
+    def __reduce__(self):
+        return (self.__class__,
+                    (self.items(), self._uniform_length))
 
 
     def set_length_check(self, value):
