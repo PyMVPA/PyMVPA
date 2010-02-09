@@ -34,12 +34,8 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
       the 2nd axis id `data`. If `None`, a sequence of ascending integers
       will be generated.
     errtype : 'ste' or 'std'
-      Type of error value to be computed per datapoint:
-
-        'ste'
-          standard error of the mean
-        'std'
-          standard deviation
+      Type of error value to be computed per datapoint: 'ste' --
+      standard error of the mean, 'std' -- standard deviation.
     curves : None or list of tuple(x, y)
       Each tuple represents an additional curve, with x and y coordinates of
       each point on the curve.
