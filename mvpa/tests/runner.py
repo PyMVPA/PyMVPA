@@ -55,11 +55,12 @@ if environ.has_key('PROFILELEVEL'):
 
 # Extend TestProgram to print out the seed which was used
 class TestProgramPyMVPA(unittest.TestProgram):
-    def runTests(self):
+    ##REF: Name was automagically refactored
+    def run_tests(self):
         if self.verbosity:
             print "MVPA_SEED=%s:" % _random_seed,
             sys.stdout.flush()
-        super(TestProgramPyMVPA, self).runTests()
+        super(TestProgramPyMVPA, self).run_tests()
 
 if profilelevel is None:
     TestProgramPyMVPA()

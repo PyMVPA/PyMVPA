@@ -174,10 +174,10 @@ class SVM(_SVM):
                           (len(Cs), len(targets_sa.unique))
                 weight = [ c*scale for c in Cs ]
                 # All 3 need to be set to take an effect
-                libsvm_param._setParameter('weight', weight)
-                libsvm_param._setParameter('nr_weight', len(weight))
-                libsvm_param._setParameter('weight_label', uls)
-            libsvm_param._setParameter('C', Cs[0])
+                libsvm_param._set_parameter('weight', weight)
+                libsvm_param._set_parameter('nr_weight', len(weight))
+                libsvm_param._set_parameter('weight_label', uls)
+            libsvm_param._set_parameter('C', Cs[0])
 
         self.__model = _svm.SVMModel(svmprob, libsvm_param)
 
@@ -194,7 +194,7 @@ class SVM(_SVM):
 
         if ca.is_enabled('estimates'):
             if self.__is_regression__:
-                estimates = [ self.model.predictValuesRaw(p)[0] for p in src ]
+                estimates = [ self.model.predict_values_raw(p)[0] for p in src ]
             else:
                 # if 'trained_targets' are literal they have to be mapped
                 if N.issubdtype(self.ca.trained_targets.dtype, 'c'):
@@ -204,7 +204,7 @@ class SVM(_SVM):
                     trained_targets = self.ca.trained_targets
                 nlabels = len(trained_targets)
                 # XXX We do duplicate work. model.predict calls
-                # predictValuesRaw internally and then does voting or
+                # predict_values_raw internally and then does voting or
                 # thresholding. So if speed becomes a factor we might
                 # want to move out logic from libsvm over here to base
                 # predictions on obtined values, or adjust libsvm to
@@ -213,7 +213,7 @@ class SVM(_SVM):
                     # Apperently libsvm reorders labels so we need to
                     # track (1,0) values instead of (0,1) thus just
                     # lets take negative reverse
-                    estimates = [ self.model.predictValues(p)[(trained_targets[1],
+                    estimates = [ self.model.predict_values(p)[(trained_targets[1],
                                                             trained_targets[0])]
                                for p in src ]
                     if len(estimates) > 0:
@@ -225,16 +225,16 @@ class SVM(_SVM):
                 else:
                     # In multiclass we return dictionary for all pairs
                     # of labels, since libsvm does 1-vs-1 pairs
-                    estimates = [ self.model.predictValues(p) for p in src ]
+                    estimates = [ self.model.predict_values(p) for p in src ]
             ca.estimates = estimates
 
         if ca.is_enabled("probabilities"):
             # XXX Is this really necesssary? yoh don't think so since
             # assignment to ca is doing the same
-            #self.probabilities = [ self.model.predictProbability(p)
+            #self.probabilities = [ self.model.predict_probability(p)
             #                       for p in src ]
             try:
-                ca.probabilities = [ self.model.predictProbability(p)
+                ca.probabilities = [ self.model.predict_probability(p)
                                          for p in src ]
             except TypeError:
                 warning("Current SVM %s doesn't support probability " %

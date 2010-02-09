@@ -60,6 +60,9 @@ class ProjectionMapper(Mapper):
         """
         Mapper.__init__(self)
 
+        # by default we want to wipe the feature attributes out during mapping
+        self._fa_filter = []
+
         self._selector = selector
         self._proj = None
         """Forward projection matrix."""
@@ -92,7 +95,7 @@ class ProjectionMapper(Mapper):
     def _posttrain(self, dataset):
         # perform component selection
         if self._selector is not None:
-            self.selectOut(self._selector)
+            self.select_out(self._selector)
 
 
     ##REF: Name was automagically refactored

@@ -39,6 +39,13 @@ class Mapper(object):
         """
         self.__inspace = None
         self.set_inspace(inspace)
+        # internal settings that influence what should be done to the dataset
+        # attributes in the default forward() and reverse() implementations.
+        # they are passed to the Dataset.copy() method
+        self._sa_filter = None
+        self._fa_filter = None
+        self._a_filter = None
+
 
     #
     # The following methods are abstract and merely define the intended
@@ -94,7 +101,10 @@ class Mapper(object):
         dataset : Dataset-like
         """
         msamples = self._forward_data(dataset.samples)
-        mds = dataset.copy(deep=False)
+        mds = dataset.copy(deep=False,
+                           sa=self._sa_filter,
+                           fa=self._fa_filter,
+                           a=self._a_filter)
         mds.samples = msamples
         return mds
 
@@ -112,7 +122,10 @@ class Mapper(object):
         dataset : Dataset-like
         """
         msamples = self._reverse_data(dataset.samples)
-        mds = dataset.copy(deep=False)
+        mds = dataset.copy(deep=False,
+                           sa=self._sa_filter,
+                           fa=self._fa_filter,
+                           a=self._a_filter)
         mds.samples = msamples
         return mds
 
@@ -576,7 +589,8 @@ class CombinedMapper(Mapper):
         return N.sum(m.get_outsize() for m in self._mappers)
 
 
-    def selectOut(self, outIds):
+    ##REF: Name was automagically refactored
+    def select_out(self, outIds):
         """Remove some elements and leave only ids in 'out'/feature space.
 
         Notes
@@ -589,7 +603,7 @@ class CombinedMapper(Mapper):
           All output feature ids to be selected/kept.
         """
         # determine which features belong to what mapper
-        # and call its selectOut() accordingly
+        # and call its select_out() accordingly
         ids = N.asanyarray(outIds)
         fsum = 0
         for m in self._mappers:
@@ -599,7 +613,7 @@ class CombinedMapper(Mapper):
             selected = ids[selector] - fsum
             fsum += m.get_outsize()
             # finally apply to mapper
-            m.selectOut(selected)
+            m.select_out(selected)
 
 
     ##REF: Name was automagically refactored

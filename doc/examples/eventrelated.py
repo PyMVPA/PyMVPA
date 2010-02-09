@@ -76,7 +76,7 @@ interested in `face` or `house` blocks.
 
 """
 
-evs = [ev for ev in attr.toEvents()
+evs = [ev for ev in attr.to_events()
             if ev['label'] in ['face', 'house']]
 
 """
@@ -210,7 +210,7 @@ timepoint of the voxel.
 """
 
 P.subplot(313)
-plotErrLine(smap)
+plot_err_line(smap)
 P.ylabel('Sensitivity')
 P.xlabel('Peristimulus volumes')
 P.axhline(linestyle='--', color='0.6')
