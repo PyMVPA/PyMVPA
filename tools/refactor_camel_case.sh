@@ -150,6 +150,7 @@ plotErrLine	plot_err_line
 plotFeatureHist	plot_feature_hist
 plotHeadOutline	plot_head_outline
 plotHeadTopography	plot_head_topography
+plotMRI	plot_lightbox
 plotProjDir	plot_proj_dir
 plotSamplesDistance	plot_samples_distance
 predictProbability	predict_probability
