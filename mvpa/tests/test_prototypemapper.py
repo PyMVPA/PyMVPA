@@ -114,7 +114,7 @@ class PrototypeMapperTests(unittest.TestCase):
         fraction = 0.5
         prototype_number = max(int(len(self.dataset.samples)*fraction),1)
         ## debug("MAP","Generating "+str(prototype_number)+" random prototypes.")
-        self.prototypes_random = random.sample(self.dataset.samples, prototype_number)
+        self.prototypes_random = self.dataset.samples[N.random.permutation(self.dataset.samples.size)][:prototype_number]
         ## debug("MAP","prototypes: "+str(self.prototypes_random))
 
         self.pm = PrototypeMapper(similarities=self.similarities, prototypes=self.prototypes_random, demean=False)
