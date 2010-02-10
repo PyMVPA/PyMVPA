@@ -83,9 +83,9 @@ def hdf2obj(hdf):
     else:
         # check if we have a class instance definition here
         if not ('class' in hdf.attrs or 'recon' in hdf.attrs):
-            raise RuntimeError("Found hdf group without class instance "
-                    "information (group: %s). This is a conceptual bug in the "
-                    "parser or the hdf writer. Please report." % hdf.name)
+            raise LookupError("Found hdf group without class instance "
+                    "information (group: %s). Cannot convert it into an object "
+                    % hdf.name)
 
         if 'recon' in hdf.attrs:
             # we found something that has some special idea about how it wants
@@ -327,7 +327,18 @@ def h5load(filename, name=None):
                                  % (name, filename))
             obj = hdf2obj(hdf[name])
         else:
-            obj = hdf2obj(hdf)
+            if len(hdf) == 0:
+                # there is nothing
+                obj = None
+            else:
+                try:
+                    obj = hdf2obj(hdf)
+                except LookupError:
+                    # no object into at the top-level, but maybe in the next one
+                    # this would happen for plain mat files with arrays
+                    obj = {}
+                    for k in hdf:
+                        obj[k] = hdf2obj(hdf[k])
     finally:
         hdf.close()
     return obj
