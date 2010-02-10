@@ -15,6 +15,7 @@ import numpy as N
 import matplotlib as mpl
 
 from mvpa.base import warning, externals
+from mvpa.misc.plot.tools import Pion, Pioff, mpl_backend_isinteractive
 
 if __debug__:
     from mvpa.base import debug
@@ -31,7 +32,6 @@ else:
                   "By now we only support loading data from Nifti/Analyze " \
                   "files, but nifti module is not available" % filename
 
-_interactive_backends = ['GTKAgg', 'TkAgg']
 
 def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             overlay=None, overlay_mask=None, cmap_overlay='autumn',
@@ -304,9 +304,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             if add_info and isinstance(add_info, bool):
                 locs[locs.index('')] = 'info'
 
-            # should compare by backend?
-            if P.matplotlib.get_backend() in _interactive_backends:
-                P.ioff()
+            Pioff()
 
             if self.fig is None:
                 self.fig = P.figure(facecolor='white',
@@ -478,9 +476,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             else:
                 fig.subplots_adjust(wspace=0.1)
 
-            if P.matplotlib.get_backend() in _interactive_backends:
-                P.draw()
-                P.ion()
+            Pion()
 
         def on_click(self, event):
             """Actions to perform on click
@@ -501,7 +497,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
     plotter.do_plot()
 
     if interactive is None:
-        interactive = P.matplotlib.get_backend() in _interactive_backends
+        interactive = mpl_backend_isinteractive
 
     # Global adjustments
     if interactive:
