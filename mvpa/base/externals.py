@@ -271,6 +271,11 @@ def __check_matplotlib():
     backend = cfg.get('matplotlib', 'backend')
     if backend:
         matplotlib.use(backend)
+        import warnings
+        # And disable useless warning from matplotlib in the future
+        warnings.filterwarnings(
+            'ignore', 'This call to matplotlib.use() has no effect.*',
+            UserWarning)
 
 def __check_pylab():
     """Check if matplotlib is there and then pylab"""

@@ -18,6 +18,11 @@ import mvpa
 
 try:
     import matplotlib
+    # Disable warning from matplotlib
+    import warnings
+    warnings.filterwarnings(
+        'ignore', 'This call to matplotlib.use() has no effect.*',
+        UserWarning)
     matplotlib.use('svg')
 except:
     pass
