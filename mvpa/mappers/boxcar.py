@@ -75,6 +75,20 @@ class BoxcarMapper(Mapper):
                              for i in startpoints ]
 
 
+    def __reduce__(self):
+        # python < 2.6 cannot copy slices, we will use the constructor the get
+        # them back and additionally reapply the stae of the object (except for
+        # the bad bad slices)
+        state = self.__dict__.copy()
+        badguy = '_%s__selectors' % self.__class__.__name__
+        if badguy in state:
+            del state[badguy]
+        print state
+        return (self.__class__,
+                    (self.startpoints, self.boxlength, self.offset),
+                    state)
+
+
     @accepts_dataset_as_samples
     def _train(self, data):
         startpoints = self.startpoints
