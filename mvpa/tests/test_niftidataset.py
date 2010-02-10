@@ -18,10 +18,10 @@ else:
     raise RuntimeError, "Don't run me if no nifti is present"
 
 from mvpa import pymvpa_dataroot
-from mvpa.datasets.mri import fmri_dataset, _load_anynifti, map2nifti, \
-        extract_events
+from mvpa.datasets.mri import fmri_dataset, _load_anynifti, map2nifti
+from mvpa.datasets.eventrelated import eventrelated_dataset
 from mvpa.misc.fsl import FslEV3
-from mvpa.misc.support import Event
+from mvpa.misc.support import Event, value2idx
 from mvpa.misc.io.base import SampleAttributes
 
 from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
@@ -153,8 +153,8 @@ def test_er_nifti_dataset():
     masrc = os.path.join(pymvpa_dataroot, 'mask')
     evs = FslEV3(evsrc).to_events()
     # using TR from nifti header
-    ds = fmri_dataset(tssrc)
-    ds = extract_events(ds, evs)
+    ds_orig = fmri_dataset(tssrc)
+    ds = eventrelated_dataset(ds_orig, evs, time_attr='time_coords')
 
     # we ask for boxcars of 9s length, and the tr in the file header says 2.5s
     # hence we should get round(9.0/2.4) * N.prod((1,20,40) == 3200 features
@@ -172,18 +172,20 @@ def test_er_nifti_dataset():
     assert_true('event_attrs_features' in ds.sa)
     # check samples
     origsamples = _load_anynifti(tssrc).data
-    for i, onset in enumerate(N.round(N.array([e['onset'] for e in evs]) / 2.5)):
+    for i, onset in \
+        enumerate([value2idx(e['onset'], ds_orig.sa.time_coords, 'floor')
+                        for e in evs]):
         assert_array_equal(ds.samples[i], origsamples[onset:onset+4].ravel())
         assert_array_equal(ds.sa.time_indices[i], N.arange(onset, onset + 4))
         assert_array_equal(ds.sa.time_coords[i],
                            N.arange(onset, onset + 4) * 2.5)
         for evattr in [a for a in ds.sa
                         if a.count("event_attrs")
-                           and not a == 'event_attrs_offset']:
-            assert_array_equal(evs[i][evattr.split('_')[2]],
+                           and not a.count('event_attrs_event')]:
+            assert_array_equal(evs[i]['_'.join(evattr.split('_')[2:])],
                                ds.sa[evattr].value[i])
     # check offset: only the last one exactly matches the tr
-    assert_array_equal(ds.sa.event_attrs_offset, [1, 1, 0])
+    assert_array_equal(ds.sa.event_attrs_event_offset, [1, 1, 0])
 
     # map back into voxel space, should ignore addtional features
     nim = map2nifti(ds)
@@ -194,7 +196,7 @@ def test_er_nifti_dataset():
 
     # and now with masking
     ds = fmri_dataset(tssrc, mask=masrc)
-    ds = extract_events(ds, evs)
+    ds = eventrelated_dataset(ds, evs, time_attr='time_coords')
     nnonzero = len(_load_anynifti(masrc).data.nonzero()[0])
     assert_equal(nnonzero, 530)
     # we ask for boxcars of 9s length, and the tr in the file header says 2.5s
