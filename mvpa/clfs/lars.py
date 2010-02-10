@@ -142,7 +142,7 @@ class LARS(Classifier):
     def _train(self, data):
         """Train the classifier using `data` (`Dataset`).
         """
-        targets = data.sa[self.params.targets].value[:, N.newaxis]
+        targets = data.sa[self.params.targets_attr].value[:, N.newaxis]
         # some non-Python friendly R-lars arguments
         lars_kwargs = {'use.Gram': self.__use_Gram}
         if self.__max_steps is not None:

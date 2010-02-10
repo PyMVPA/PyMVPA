@@ -284,7 +284,7 @@ class GPR(Classifier):
         # GRP relies on numerical labels
         # yoh: yeah -- GPR now is purely regression so no conversion
         #      is necessary
-        train_labels = data.sa[self.params.targets].value
+        train_labels = data.sa[self.params.targets_attr].value
         self._train_labels = train_labels
 
         if not retrainable or _changedData['traindata'] \

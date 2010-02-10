@@ -1296,7 +1296,7 @@ class ClassifierError(ClassWithCollections):
         if self.__clf.ca.is_enabled('trained_targets') \
                and not self.__clf.__is_regression__ \
                and not testdataset is None:
-            newlabels = Set(testdataset.sa[self.clf.params.targets].unique) \
+            newlabels = Set(testdataset.sa[self.clf.params.targets_attr].unique) \
                         - Set(self.__clf.ca.trained_targets)
             if len(newlabels)>0:
                 warning("Classifier %s wasn't trained to classify labels %s" %
@@ -1424,7 +1424,7 @@ class TransferError(ClassifierError):
 
         Returns a scalar value of the transfer error.
         """
-        testtargets = testdataset.sa[self.clf.params.targets].value
+        testtargets = testdataset.sa[self.clf.params.targets_attr].value
         # OPT: local binding
         clf = self.clf
         if testdataset is None:

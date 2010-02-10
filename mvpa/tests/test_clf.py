@@ -176,7 +176,7 @@ class ClassifiersTests(unittest.TestCase):
         """Simple test if a learner could cope with custom sa not targets
         """
         lrn_ = lrn.clone()
-        lrn_.params.targets = 'custom'
+        lrn_.params.targets_attr = 'custom'
 
         te = CrossValidatedTransferError(TransferError(lrn),
                                          NFoldSplitter())
