@@ -319,7 +319,7 @@ def __check_reportlab():
 
 def __check_pprocess():
     import pprocess as pp
-    versions['pprocess'] = SmartVersion(pp.Version)
+    versions['pprocess'] = SmartVersion(pp.__version__)
 
 def __check_rpy():
     """Check either rpy is available and also set it for the sane execution
