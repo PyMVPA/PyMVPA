@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA serial feature inclusion algorithm"""
 
+from mvpa.testing import *
 from mvpa.misc.support import *
 from mvpa.base.types import asobjarray
 from mvpa.datasets.splitters import NFoldSplitter
@@ -215,6 +216,19 @@ class SupportFxTests(unittest.TestCase):
             self.failUnless(version_to_tuple(v1) < SV(v2),
                             msg="Failed to compare tuple of %s to %s"
                             % (v1, v2))
+
+
+def test_value2idx():
+    times = [1.2, 1.3, 2., 4., 0., 2., 1.1]
+    assert_equal(value2idx(0, times), 4)
+    assert_equal(value2idx(100, times), 3)
+    assert_equal(value2idx(1.5, times), 1)
+    assert_equal(value2idx(1.5, times, 'ceil'), 2)
+    assert_equal(value2idx(1.2, times, 'floor'), 0)
+    assert_equal(value2idx(1.14, times, 'round'), 6)
+    assert_equal(value2idx(1.14, times, 'floor'), 6)
+    assert_equal(value2idx(1.14, times, 'ceil'), 0)
+    assert_equal(value2idx(-100, times, 'ceil'), 4)
 
 
 def suite():
