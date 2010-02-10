@@ -17,6 +17,7 @@ import numpy as N
 from sets import Set
 
 from mvpa.datasets.base import dataset_wizard, Dataset
+from mvpa import pymvpa_dataroot, pymvpa_datadbroot
 
 if __debug__:
     from mvpa.base import debug
@@ -326,13 +327,57 @@ def load_example_fmri_dataset():
     """Load minimal fMRI dataset that is shipped with PyMVPA."""
     from mvpa.datasets.mri import fmri_dataset
     from mvpa.misc.io import SampleAttributes
-    from mvpa import pymvpa_dataroot
 
     attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
     ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                       targets=attr.targets, chunks=attr.chunks,
                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
+    return ds
+
+
+def load_datadb_demo_blockfmri(path=os.path.join(pymvpa_datadbroot,
+                                                 'demo_blockfmri',
+                                                 'demo_blockfmri'),
+                               roi='brain'):
+    """Loads the block-design demo dataset from PyMVPA dataset DB.
+
+    Parameters
+    ----------
+    path : str
+      Path of the directory containing the dataset files.
+    roi : str or int or tuple or None
+      Region Of Interest to be used for masking the dataset. If a string is
+      given a corresponding mask image from the demo dataset will be used
+      (mask_<str>.nii.gz). If an int value is given, the corresponding ROI
+      is determined from the atlas image (mask_hoc.nii.gz). If a tuple is
+      provided it may contain int values that a processed as explained
+      before, but the union of a ROIs is taken to produce the final mask.
+      If None, no masking is performed.
+    """
+    from nifti import NiftiImage
+    from mvpa.datasets.mri import fmri_dataset
+    from mvpa.misc.io import SampleAttributes
+    if roi is None:
+        mask = None
+    elif isinstance(roi, str):
+        mask = os.path.join(path, 'mask_' + roi + '.nii.gz')
+    elif isinstance(roi, int):
+        nimg = NiftiImage(os.path.join(path, 'mask_hoc.nii.gz'))
+        tmpmask = nimg.data == roi
+        mask = NiftiImage(tmpmask.astype(int), nimg.header)
+    elif isinstance(roi, tuple) or isinstance(roi, list):
+        nimg = NiftiImage(os.path.join(path, 'mask_hoc.nii.gz'))
+        tmpmask = N.zeros(nimg.data.shape, dtype='bool')
+        for r in roi:
+            tmpmask = N.logical_or(tmpmask, nimg.data == r)
+        mask = NiftiImage(tmpmask.astype(int), nimg.header)
+    else:
+        raise ValueError("Got something as mask that I cannot handle.")
+    attr = SampleAttributes(os.path.join(path, 'attributes.txt'))
+    ds = fmri_dataset(samples=os.path.join(path, 'bold.nii.gz'),
+                      targets=attr.targets, chunks=attr.chunks,
+                      mask=mask)
     return ds
 
 
