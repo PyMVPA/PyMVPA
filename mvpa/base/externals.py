@@ -317,6 +317,10 @@ def __check_reportlab():
     import reportlab as rl
     versions['reportlab'] = SmartVersion(rl.Version)
 
+def __check_pprocess():
+    import pprocess as pp
+    versions['pprocess'] = SmartVersion(pp.Version)
+
 def __check_rpy():
     """Check either rpy is available and also set it for the sane execution
     """
@@ -401,7 +405,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'running ipython env': "__check_in_ipython()",
           'reportlab': "__check_reportlab()",
           'nose': "import nose as __",
-          'pprocess': "import pprocess as __",
+          'pprocess': "__check_pprocess()",
           'h5py': "import h5py as __",
           }
 

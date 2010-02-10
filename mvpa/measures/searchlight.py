@@ -82,8 +82,12 @@ class Searchlight(DatasetMeasure):
 
         if nproc is None and externals.exists('pprocess'):
             import pprocess
-            nproc = pprocess.get_number_of_cores() or 1
-
+            try:
+                nproc = pprocess.get_number_of_cores() or 1
+            except AttributeError:
+                warning("pprocess version %s has no API to figure out maximal "
+                        "number of cores. Using 1" % externals.versions['pprocess'])
+                nproc = 1
         # train the queryengine
         self.__qe.train(dataset)
 
