@@ -123,7 +123,7 @@ class SVM(_SVM):
     def _train(self, dataset):
         """Train SVM
         """
-        targets_sa_name = self.params.targets    # name of targets sa
+        targets_sa_name = self.params.targets_attr    # name of targets sa
         targets_sa = dataset.sa[targets_sa_name] # actual targets sa
 
         # libsvm needs doubles

@@ -227,7 +227,7 @@ def plot_decision_boundary_2d(dataset, clf=None,
       Trained classifier
     targets : string, optional
       What samples attributes to use for targets.  If None and clf is
-      provided, then `clf.params.targets` is used.
+      provided, then `clf.params.targets_attr` is used.
     regions : string, optional
       Plot regions (polygons) around groups of samples with the same
       attribute (and target attribute) values. E.g. chunks.
@@ -288,7 +288,7 @@ def plot_decision_boundary_2d(dataset, clf=None,
         clf.ca.enable('estimates')
 
         if targets is None:
-            targets = clf.params.targets
+            targets = clf.params.targets_attr
         # Lets reuse classifiers attrmap if it is good enough
         attrmap = clf._attrmap
         predictions = clf.predict(dataset)

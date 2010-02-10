@@ -80,7 +80,7 @@ class LinearSVMWeights(Sensitivity):
                       " non-binary classification task"
             # libsvm might have different idea on the ordering
             # of labels, so we would need to map them back explicitely
-            ds_labels = list(dataset.sa[clf.params.targets].unique) # labels in the dataset
+            ds_labels = list(dataset.sa[clf.params.targets_attr].unique) # labels in the dataset
             senses = [None for i in ds_labels]
             # first label is given positive value
             for i, (c, l) in enumerate( [(svcoef > 0, lambda x: x),
@@ -162,7 +162,7 @@ class LinearSVMWeights(Sensitivity):
             sens_labels = clf._attrmap.to_literal(sens_labels, recurse=True)
 
         # NOTE: `weights` is already and always 2D
-        weights_ds = Dataset(weights, sa={clf.params.targets: sens_labels})
+        weights_ds = Dataset(weights, sa={clf.params.targets_attr: sens_labels})
         return weights_ds
 
     _customizeDocInherit = True

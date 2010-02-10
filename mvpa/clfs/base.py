@@ -151,8 +151,7 @@ class Classifier(ClassWithCollections):
     """Describes some specifics about the classifier -- is that it is
     doing regression for instance...."""
 
-    # TODO: make it available only for actually retrainable classifiers
-    targets = Parameter('targets', allowedtype='bool',# ro=True,
+    targets_attr = Parameter('targets', allowedtype='bool',# ro=True,
         doc="""What samples attribute to use as targets.""",
         index=999)
 
@@ -232,7 +231,7 @@ class Classifier(ClassWithCollections):
 
                 # Look at the data if any was changed
                 for key, data_ in (('traindata', dataset.samples),
-                                   ('targets', dataset.sa[params.targets].value)):
+                                   ('targets', dataset.sa[params.targets_attr].value)):
                     _changedData[key] = self.__was_data_changed(key, data_)
                     # if those idhashes were invalidated by retraining
                     # we need to adjust _changedData accordingly
@@ -267,7 +266,7 @@ class Classifier(ClassWithCollections):
         """
         ca = self.ca
         if ca.is_enabled('trained_targets'):
-            ca.trained_targets = dataset.sa[self.params.targets].unique
+            ca.trained_targets = dataset.sa[self.params.targets_attr].unique
 
         ca.trained_dataset = dataset
         ca.trained_nsamples = dataset.nsamples
@@ -294,7 +293,7 @@ class Classifier(ClassWithCollections):
             predictions = self.predict(dataset)
             self.ca.reset_changed_temporarily()
             self.ca.training_confusion = self.__summary_class__(
-                targets=dataset.sa[self.params.targets].value,
+                targets=dataset.sa[self.params.targets_attr].value,
                 predictions=predictions)
 
         if self.ca.is_enabled('feature_ids'):
@@ -742,7 +741,7 @@ class Classifier(ClassWithCollections):
         # To check if we are not fooled
         if __debug__ and 'CHECK_RETRAIN' in debug.active:
             for key, data_ in (('traindata', dataset.samples),
-                               ('targets', dataset.sa[self.params.targets].value)):
+                               ('targets', dataset.sa[self.params.targets_attr].value)):
                 # so it wasn't told to be invalid
                 if not chd[key] and not ichd.get(key, False):
                     if self.__was_data_changed(key, data_, update=False):

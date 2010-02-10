@@ -114,7 +114,7 @@ class GNB(Classifier):
         """Train the classifier using `dataset` (`Dataset`).
         """
         params = self.params
-        targets_sa_name = params.targets
+        targets_sa_name = params.targets_attr
         targets_sa = dataset.sa[targets_sa_name]
 
         # get the dataset information into easy vars
