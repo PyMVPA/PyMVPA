@@ -8,15 +8,15 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for the dataset implementation'''
 
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
+
 import numpy as N
 import random
 import shutil
 import tempfile
 import os
 
-from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true, assert_array_equal
-from mvpa.testing.datasets import datasets
 
 from mvpa.base.externals import versions, exists
 from mvpa.base.types import is_datasetlike
@@ -718,11 +718,7 @@ def is_bsr(x):
     return hasattr(sparse, 'bsr_matrix') and isinstance(x, sparse.bsr_matrix)
 
 def test_other_samples_dtypes():
-    if not exists('scipy'):
-        # yoh: theoretically we should still test for non-sparse types below
-        #      but checks are too much interleaved -- so lets just don't test
-        #      if scipy is not there
-        return
+    skip_if_no_external('scipy')
     import scipy.sparse as sparse
     dshape = (4, 3)
     # test for ndarray, custom ndarray-subclass, matrix,
@@ -821,8 +817,7 @@ def test_other_samples_dtypes():
 
 
 def test_h5py_io():
-    if not exists('h5py'):
-        return
+    skip_if_no_external('h5py')
 
     tempdir = tempfile.mkdtemp()
 

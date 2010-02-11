@@ -13,11 +13,8 @@ import numpy as N
 from mvpa.testing import *
 from mvpa.testing.datasets import datasets, saveload_warehouse
 
-from mvpa.base.externals import exists
-if exists('h5py', raiseException=True):
-    import h5py
-else:
-    raise RuntimeError, "Don't run me if no h5py is present"
+skip_if_no_external('h5py')
+import h5py
 
 import os
 from tempfile import mkstemp

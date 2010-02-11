@@ -10,11 +10,11 @@
 
 import numpy as N
 
+from mvpa.testing import *
+skip_if_no_external('mdp')
+
 from mvpa.base import externals
-if externals.exists('mdp', raiseException=True):
-    import mdp
-else:
-    raise RuntimeError, "Don't run me if no mdp is present"
+import mdp
 
 from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper, PCAMapper, \
         ICAMapper
@@ -23,8 +23,6 @@ from mvpa.datasets.base import Dataset
 from mvpa.base.dataset import DAE
 from mvpa.misc.data_generators import normal_feature_dataset
 
-from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true,  assert_array_equal, assert_array_almost_equal
 
 def test_mdpnodemapper():
     ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
@@ -79,9 +77,9 @@ def test_mdpflowmapper():
 
 
 def test_mdpflow_additional_arguments():
-    if externals.versions['mdp'] < '2.5':
-        # we have no IdentityNode yet... is there analog?
-        return
+    skip_if_no_external('mdp', min_version='2.5')
+    # we have no IdentityNode yet... is there analog?
+
     ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
     flow = mdp.nodes.PCANode() + mdp.nodes.IdentityNode() + mdp.nodes.FDANode()
     # this is what it would look like in MDP itself
@@ -96,9 +94,9 @@ def test_mdpflow_additional_arguments():
     assert_array_almost_equal(ds.samples, rds.samples)
 
 def test_mdpflow_additional_arguments_nones():
-    if externals.versions['mdp'] < '2.5':
-        # we have no IdentityNode yet... is there analog?
-        return
+    skip_if_no_external('mdp', min_version='2.5')
+    # we have no IdentityNode yet... is there analog?
+
     ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
     flow = mdp.nodes.PCANode() + mdp.nodes.IdentityNode() + mdp.nodes.FDANode()
     # this is what it would look like in MDP itself
@@ -154,8 +152,7 @@ def test_icamapper():
 
 
 def test_llemapper():
-    if externals.versions['mdp'] < '2.4':
-        return
+    skip_if_no_external('mdp', min_version='2.4')
 
     ds = Dataset(N.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
                           [1., 0., 0.], [0., 1., 1.], [1., 0., 1.],

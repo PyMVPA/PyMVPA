@@ -100,6 +100,9 @@ class SearchlightTests(unittest.TestCase):
 
     def test_chi_square_searchlight(self):
         # only do partial to save time
+
+        # Can't yet do this since test_searchlight isn't yet "under nose"
+        #skip_if_no_external('scipy')
         if not externals.exists('scipy'):
             return
 

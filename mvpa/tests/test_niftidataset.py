@@ -11,11 +11,11 @@
 import os.path
 import numpy as N
 
-from mvpa.base import externals
-if externals.exists('nifti', raiseException=True):
-    from nifti import NiftiImage
-else:
-    raise RuntimeError, "Don't run me if no nifti is present"
+from mvpa.testing import *
+
+skip_if_no_external('nifti')
+
+from nifti import NiftiImage
 
 from mvpa import pymvpa_dataroot
 from mvpa.datasets.mri import fmri_dataset, _load_anynifti, map2nifti
@@ -24,8 +24,6 @@ from mvpa.misc.fsl import FslEV3
 from mvpa.misc.support import Event, value2idx
 from mvpa.misc.io.base import SampleAttributes
 
-from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true, assert_array_equal
 
 def test_nifti_dataset():
     """Basic testing of NiftiDataset
