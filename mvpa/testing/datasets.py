@@ -26,7 +26,8 @@ from mvpa.datasets import Dataset
 from mvpa.datasets.splitters import OddEvenSplitter
 from mvpa.misc.data_generators import *
 
-__all__ = [ 'datasets', 'get_random_rotation', 'saveload_warehouse']
+__all__ = [ 'datasets', 'get_random_rotation', 'saveload_warehouse',
+            'pure_multivariate_signal']
 
 # Define datasets to be used all over. Split-half later on is used to
 # split into training/testing

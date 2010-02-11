@@ -40,7 +40,10 @@ __all__ = ['clfswh', 'regrswh', 'Classifier', 'SameSignClassifier',
 if externals.exists('libsvm') or externals.exists('shogun'):
     from mvpa.clfs.svm import *
     __all__ += ['LinearCSVMC']
-
+    if externals.exists('libsvm'):
+        __all__ += ['libsvm', 'LinearNuSVMC']
+    if externals.exists('shogun'):
+        __all__ += ['sg']
 #
 # Few silly classifiers
 #
