@@ -25,17 +25,7 @@ individual event.
 
 from mvpa.suite import *
 
-# filename of the source fMRI timeseries image
-fmri_src = os.path.join(pymvpa_dataroot, 'bold.nii.gz')
-
-mask = NiftiImage(os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
-
-# load the samples attributes as usual and preserve the
-# literal labels
-attr = SampleAttributes(
-                os.path.join(pymvpa_dataroot,
-                             'attributes_literal.txt'),
-                        literallabels=True)
+ds = load_datadb_demo_blockfmri(roi=(36,39,40))
 
 """
 
@@ -51,18 +41,15 @@ the events of interest.
 
 """
 
-verbose(1, "Load data for preprocessing")
-pre_ds = NiftiImage(fmri_src)
-
-# actual labels are not important here, could be 'labels=1'
-pre_ds = NiftiDataset(samples=fmri_src, labels=attr.targets,
-                      chunks=attr.chunks, mask=mask)
-
-# convert to floats
-pre_ds.setSamplesDType('float')
-
 # detrend on full timeseries
-detrend(pre_ds, perchunk=True, model='linear')
+poly_detrend(ds, polyord=1, chunks='chunks')
+
+
+# might make sense to zscore here (i.e. against 'baseline') but there is also
+# the potential to remove the signal, e.g. if events are averaged later on
+print ds
+# using rest as baseline
+zscore(ds, chunks='chunks', param_est=('targets', 'rest'))
 
 """
 
@@ -76,9 +63,7 @@ interested in `face` or `house` blocks.
 
 """
 
-evs = [ev for ev in attr.to_events()
-            if ev['label'] in ['face', 'house']]
-
+events = find_events({'targets': ds.sa.targets, 'chunks': ds.sa.chunks})
 """
 
 Since we might want to take a look at the sensitivity profile ranging
@@ -88,7 +73,8 @@ extract a set of twelve consecutive volume a as sample for each event.
 
 """
 
-for ev in evs:
+events = [ev for ev in events if ev['targets'] in ['house', 'face']]
+for ev in events:
     ev['onset'] -= 1
     ev['duration'] = 12
 
@@ -102,11 +88,7 @@ samples. It is also capable of applying a volume mask.
 
 # could use evconv...
 verbose(1, "Segmenting timeseries into events")
-ds = ERNiftiDataset(samples=pre_ds.map2Nifti(),
-                    events=evs,
-                    mask=mask,
-                    labels_map={'face': 1,
-                                'house': 2})
+ds = eventrelated_dataset(ds, events=events)
 
 """
 
@@ -116,7 +98,7 @@ further processing is done.
 """
 
 # preserve
-orig_ds = deepcopy(ds)
+orig_ds = ds.copy()
 
 """
 
@@ -127,8 +109,6 @@ cross-validated sensitivity analysis.
 
 """
 
-# using rest as baseline
-zscore(ds, perchunk=True)
 
 clf = LinearCSVMC()
 sclf = SplitClassifier(clf, NFoldSplitter(),
@@ -136,8 +116,7 @@ sclf = SplitClassifier(clf, NFoldSplitter(),
 
 # Compute sensitivity, which in turn trains the sclf
 sensitivities = \
-    sclf.get_sensitivity_analyzer(combiner=None,
-                                slave_combiner=None)(ds)
+    sclf.get_sensitivity_analyzer()(ds)
 
 """
 
@@ -165,7 +144,7 @@ sensitivity vector for each CV-fold back into a 4D snippet.
 """
 
 # reverse map sensitivities -> fold x volumes x Z x Y x X
-smaps = N.array([ds.mapReverse(s) for s in sensitivities])
+smaps = N.array([ds.a.mapper.reverse1(s) for s in sensitivities])
 
 # extract sensitivity profile for target voxel ijk(33,10,0)
 v = (0, 3, 15)

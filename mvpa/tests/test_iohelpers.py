@@ -16,6 +16,7 @@ import numpy as N
 from mvpa.testing.tools import ok_
 
 from mvpa import pymvpa_dataroot
+from mvpa.datasets.eventrelated import find_events
 from mvpa.misc.io import *
 from mvpa.misc.fsl import *
 from mvpa.misc.bv import BrainVoyagerRTC
@@ -101,14 +102,14 @@ class IOHelperTests(unittest.TestCase):
         ok_(sa.nrows == 1452, msg='There should be 1452 samples')
 
         # convert to event list, with some custom attr
-        ev = sa.to_events(funky='yeah')
+        ev = find_events(sa, funky='yeah')
         ok_(len(ev) == 17 * (max(sa.chunks) + 1),
             msg='Not all events got detected.')
 
         ok_(len([e for e in ev if e.has_key('funky')]) == len(ev),
             msg='All events need to have to custom arg "funky".')
 
-        ok_(ev[0]['label'] == ev[-1]['label'] == 'rest',
+        ok_(ev[0]['targets'] == ev[-1]['targets'] == 'rest',
             msg='First and last event are rest condition.')
 
         ok_(ev[-1]['onset'] + ev[-1]['duration'] == sa.nrows,

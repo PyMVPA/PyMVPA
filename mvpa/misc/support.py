@@ -659,3 +659,35 @@ class Event(dict):
                                   - out['onset'])
 
         return out
+
+
+def value2idx(val, x, solv='round'):
+    """Convert a value into an index of the closes matching array element.
+
+    Parameters
+    ----------
+    val : scalar
+      Value that is to be converted.
+    x : array or sequence
+      One-dimensional array whose elements are used for comparision.
+    solv : {'round', 'floor', 'ceil'}
+      Resolver strategie: absolute closest element (round), closest smaller
+      element (floor), or closest larger element (ceil).
+
+    Returns
+    -------
+    int
+    """
+    # distance to val
+    x = N.asanyarray(x) - val
+    if solv == 'round':
+        pass
+    elif solv == 'ceil':
+        x[x<0] = N.inf
+    elif solv == 'floor':
+        x[x>0] = N.inf
+    else:
+        ValueError("Unkown resolving method '%s'." % solv)
+    x = N.abs(x)
+    idx = N.argmin(x)
+    return idx

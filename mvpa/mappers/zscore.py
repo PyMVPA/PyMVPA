@@ -172,7 +172,7 @@ class ZScoreMapper(Mapper):
             # shallow copy to put the new stuff in
             mds = ds.copy(deep=False)
 
-        # cast the data to float, since in-place operations below to not upcast!
+        # cast the data to float, since in-place operations below do not upcast!
         if N.issubdtype(mds.samples.dtype, N.integer):
             mds.samples = mds.samples.astype(dtype)
 
