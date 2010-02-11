@@ -12,20 +12,32 @@ Primarily the ones from nose.tools
 """
 __docformat__ = 'restructuredtext'
 
+import unittest
 from mvpa.base import externals
 
-externals.exists('nose', raiseException=True)
+if externals.exists('nose'):
+    # We use nose now
+    from nose.tools import (
+        ok_, eq_,
+        # Asserting (pep8-ed from unittest)
+        assert_true, assert_false, assert_raises,
+        assert_equal, assert_equals, assert_not_equal, assert_not_equals,
+        # Decorators
+        timed, with_setup, raises, istest, nottest, make_decorator )
+else:
+    # Lets make it possible to import testing.tools even if nose is
+    # NA, and run unittests which do not require nose yet
+    def _need_nose(*args, **kwargs):
+        """Catcher for unittests requiring nose functionality
+        """
+        raise unittest.TestCase.failureException(
+            "Unittest requires nose testing framework")
 
-# We use nose now
-from nose.tools import (
-    ok_, eq_,
-    # Asserting (pep8-ed from unittest)
-    assert_true, assert_false, assert_raises,
-    assert_equal, assert_equals, assert_not_equal, assert_not_equals,
-    # Decorators
-    timed, with_setup, raises, istest, nottest, make_decorator )
+    ok_ = eq_ = assert_true = assert_false = assert_raises = \
+    assert_equal = assert_equals = assert_not_equal = asserte_not_equals = \
+    timed = with_setup = raises = istest = nottest = make_decorator = _need_nose
 
-# But some pieces are useful from numpy.testing
+# Some pieces are useful from numpy.testing
 from numpy.testing import (
     assert_almost_equal, assert_approx_equal,
     assert_array_almost_equal, assert_array_equal, assert_array_less,
