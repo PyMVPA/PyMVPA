@@ -76,7 +76,7 @@ class SVMKernelTests(unittest.TestCase):
 
 
 def suite():
-    return unittest.makeSuite(KernelTests)
+    return unittest.makeSuite(SVMKernelTests)
 
 
 if __name__ == '__main__':

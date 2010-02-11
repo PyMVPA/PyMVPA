@@ -8,13 +8,15 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA least angle regression (ENET) classifier"""
 
+from mvpa.testing import *
+from mvpa.testing.datasets import *
+
 from mvpa import cfg
 from mvpa.clfs.glmnet import GLMNET_R,GLMNET_C
 
 #from scipy.stats import pearsonr
 # Lets use our CorrErrorFx which would be available even without scipy
 from mvpa.misc.errorfx import CorrErrorFx
-from tests_warehouse import *
 from mvpa.misc.data_generators import normal_feature_dataset
 
 from mvpa.testing.tools import assert_true, assert_equal, assert_array_equal

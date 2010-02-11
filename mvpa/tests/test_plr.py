@@ -8,8 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA logistic regression classifier"""
 
+import numpy as N
+
 from mvpa.clfs.plr import PLR
-from tests_warehouse import *
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
 
 
 class PLRTests(unittest.TestCase):
