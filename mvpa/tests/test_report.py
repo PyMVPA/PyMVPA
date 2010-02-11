@@ -16,7 +16,7 @@ from mvpa.base import verbose, externals
 from mvpa.base.report_dummy import Report as DummyReport
 _test_classes = [ DummyReport ]
 
-from tests_warehouse import sweepargs
+from mvpa.testing import sweepargs
 
 if externals.exists('reportlab', raiseException=False):
     from mvpa.base.report import Report

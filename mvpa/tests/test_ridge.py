@@ -10,7 +10,8 @@
 
 from mvpa.clfs.ridge import RidgeReg
 from scipy.stats import pearsonr
-from tests_warehouse import *
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
 
 class RidgeRegTests(unittest.TestCase):
 

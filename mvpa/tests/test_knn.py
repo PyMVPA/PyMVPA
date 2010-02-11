@@ -8,9 +8,12 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA kNN classifier"""
 
+import numpy as N
+
+from mvpa.testing import *
+from mvpa.testing.datasets import pure_multivariate_signal
+
 from mvpa.clfs.knn import kNN
-from tests_warehouse import *
-from tests_warehouse import pure_multivariate_signal
 from mvpa.clfs.distance import one_minus_correlation
 
 class KNNTests(unittest.TestCase):

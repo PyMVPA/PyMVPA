@@ -8,6 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA searchlight algorithm"""
 
+from mvpa.testing import *
+from mvpa.testing.clfs import *
+from mvpa.testing.datasets import *
+
 from mvpa.base import externals
 from mvpa.measures.searchlight import sphere_searchlight
 from mvpa.datasets.splitters import NFoldSplitter
@@ -15,8 +19,6 @@ from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
 from mvpa.clfs.gnb import GNB
 
-from tests_warehouse import *
-from mvpa.testing.clfs import *
 
 class SearchlightTests(unittest.TestCase):
 

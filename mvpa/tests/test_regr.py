@@ -8,6 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA Regressions"""
 
+from mvpa.testing import *
+from mvpa.testing.clfs import *
+from mvpa.testing.datasets import datasets
+
 from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
 
 from mvpa.misc.errorfx import CorrErrorFx
@@ -19,8 +23,6 @@ from mvpa.misc.attrmap import AttributeMap
 from mvpa.mappers.fx import mean_sample
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
-from tests_warehouse import *
-from mvpa.testing.clfs import *
 
 class RegressionsTests(unittest.TestCase):
 

@@ -23,7 +23,7 @@ try:
 except RuntimeError:
     _has_sg = False
 
-from tests_warehouse import datasets
+from mvpa.testing.datasets import datasets
 
 class KernelTests(unittest.TestCase):
     """Test bloody kernels

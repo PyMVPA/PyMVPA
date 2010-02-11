@@ -20,7 +20,7 @@ from mvpa.datasets import Dataset
 # from mvpa.mappers.mask import MaskMapper
 from mvpa.support import copy
 
-from tests_warehouse import datasets
+from mvpa.testing.datasets import datasets
 
 class DatasetTests(unittest.TestCase):
     """Basic dataset unitests"""

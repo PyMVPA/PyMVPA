@@ -8,7 +8,13 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA SplittingSensitivityAnalyzer"""
 
-from mvpa.base import externals
+import numpy as N
+
+from mvpa.testing import *
+from mvpa.testing.clfs import *
+from mvpa.testing.datasets import *
+
+from mvpa.base import externals, warning
 from mvpa.featsel.base import FeatureSelectionPipeline, \
      SensitivityBasedFeatureSelection, CombinedFeatureSelection
 from mvpa.featsel.helpers import FixedNElementTailSelector, \
@@ -32,10 +38,6 @@ from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
      IterativeRelief_Devel, IterativeReliefOnline_Devel
 
-from tests_warehouse import *
-from mvpa.testing.clfs import *
-
-from mvpa.testing.tools import assert_equal, assert_array_equal
 
 _MEASURES_2_SWEEP = [ OneWayAnova(),
                       CompoundOneWayAnova(postproc=sumofabs_sample()),

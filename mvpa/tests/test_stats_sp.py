@@ -8,15 +8,16 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA stats helpers -- those requiring scipy"""
 
-from test_stats import *
+from mvpa.testing.tools import assert_raises
+from mvpa.testing.datasets import datasets
+
+from mvpa.tests.test_stats import *
 externals.exists('scipy', raiseException=True)
 
 from scipy import signal
 from mvpa.misc.stats import chisquare
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.datasets.base import dataset_wizard
-
-from mvpa.testing.tools import assert_raises
 
 class StatsTestsScipy(unittest.TestCase):
     """Unittests for various statistics which use scipy"""

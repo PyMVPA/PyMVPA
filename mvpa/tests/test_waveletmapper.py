@@ -19,7 +19,7 @@ from mvpa.mappers.boxcar import BoxcarMapper
 from mvpa.mappers.wavelet import *
 from mvpa.datasets import Dataset
 
-from tests_warehouse import datasets
+from mvpa.testing.datasets import datasets
 
 class WaveletMappersTests(unittest.TestCase):
 
