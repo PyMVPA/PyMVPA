@@ -22,4 +22,13 @@ if __debug__:
 from mvpa.testing.tools import *
 
 if __debug__:
+    from mvpa.base import debug
+
+    _all_ca_enabled = 'ENFORCE_STATES_ENABLED' in debug.active
+else:
+    _all_ca_enabled = False
+
+from sweepargs import sweepargs
+
+if __debug__:
     debug('INIT', 'mvpa.testing end')
