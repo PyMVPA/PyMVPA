@@ -33,7 +33,7 @@ from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
      IterativeRelief_Devel, IterativeReliefOnline_Devel
 
 from tests_warehouse import *
-from tests_warehouse_clfs import *
+from mvpa.testing.clfs import *
 
 from mvpa.testing.tools import assert_equal, assert_array_equal
 

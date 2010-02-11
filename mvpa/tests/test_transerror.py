@@ -25,8 +25,9 @@ from mvpa.clfs.stats import MCNullDist
 
 from mvpa.misc.exceptions import UnknownStateError
 
-from tests_warehouse import datasets, sweepargs
-from tests_warehouse_clfs import *
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
+from mvpa.testing.clfs import *
 
 class ErrorsTests(unittest.TestCase):
 

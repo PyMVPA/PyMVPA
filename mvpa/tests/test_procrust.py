@@ -13,7 +13,8 @@ import unittest
 import numpy as N
 from numpy.linalg import norm
 from mvpa.datasets.base import dataset_wizard
-from tests_warehouse import datasets, sweepargs, get_random_rotation
+from mvpa.testing import *
+from mvpa.testing.datasets import *
 from mvpa.mappers.procrustean import ProcrusteanMapper
 
 

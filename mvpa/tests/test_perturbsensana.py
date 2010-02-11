@@ -15,7 +15,7 @@ from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
 
 from tests_warehouse import *
-from tests_warehouse_clfs import *
+from mvpa.testing.clfs import *
 
 class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
 

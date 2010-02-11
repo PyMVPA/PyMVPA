@@ -18,7 +18,7 @@ from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
 from tests_warehouse import pure_multivariate_signal
 from tests_warehouse import *
-from tests_warehouse_clfs import *
+from mvpa.testing.clfs import *
 
 class SVMTests(unittest.TestCase):
 

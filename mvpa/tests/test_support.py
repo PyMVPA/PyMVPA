@@ -15,7 +15,7 @@ from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.clfs.transerror import TransferError
 from tests_warehouse import *
 from tests_warehouse import get_mv_pattern
-from tests_warehouse_clfs import *
+from mvpa.testing.clfs import *
 from mvpa.clfs.distance import one_minus_correlation
 
 from mvpa.support.copy import deepcopy

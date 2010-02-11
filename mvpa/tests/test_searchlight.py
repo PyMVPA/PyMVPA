@@ -16,7 +16,7 @@ from mvpa.clfs.transerror import TransferError
 from mvpa.clfs.gnb import GNB
 
 from tests_warehouse import *
-from tests_warehouse_clfs import *
+from mvpa.testing.clfs import *
 
 class SearchlightTests(unittest.TestCase):
 

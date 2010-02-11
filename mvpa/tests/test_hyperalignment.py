@@ -19,7 +19,7 @@ from mvpa.algorithms.hyperalignment import Hyperalignment
 from tests_warehouse import datasets, get_random_rotation, sweepargs
 
 # if you need some classifiers
-#from tests_warehouse_clfs import *
+#from mvpa.testing.clfs import *
 
 class HyperAlignmentTests(unittest.TestCase):
 
