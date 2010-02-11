@@ -8,14 +8,15 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for new Kernel-based SVMs"""
 
-import unittest
 import numpy as N
+
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
+skip_if_no_external('shogun')
 
 from mvpa.clfs.libsvmc import SVM as lsSVM
 from mvpa.clfs.sg import SVM as sgSVM
 
-from mvpa.testing import *
-from mvpa.testing.datasets import datasets
 
 class SVMKernelTests(unittest.TestCase):
 

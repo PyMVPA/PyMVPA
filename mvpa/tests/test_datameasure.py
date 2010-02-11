@@ -362,8 +362,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.failUnless(N.any(sens[0] != sens[1]))
 
 
-        if not externals.exists('scipy'):
-            return
+        #skip_if_no_external('scipy')
         # Let's disable this one for now until we are sure about the destiny of
         # DistPValue -- read the docstring of it!
         # Most evil example

@@ -8,11 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA stats helpers -- those requiring scipy"""
 
-from mvpa.testing.tools import assert_raises
-from mvpa.testing.datasets import datasets
+from mvpa.testing import *
+skip_if_no_external('scipy')
 
+from mvpa.testing.datasets import datasets
 from mvpa.tests.test_stats import *
-externals.exists('scipy', raiseException=True)
 
 from scipy import signal
 from mvpa.misc.stats import chisquare
@@ -39,8 +39,7 @@ class StatsTestsScipy(unittest.TestCase):
 
     def test_null_dist_prob_any(self):
         """Test 'any' tail statistics estimation"""
-        if not externals.exists('scipy'):
-            return
+        skip_if_no_external('scipy')
 
         # test 'any' mode
         from mvpa.measures.corrcoef import CorrCoef
@@ -67,9 +66,7 @@ class StatsTestsScipy(unittest.TestCase):
     @sweepargs(nd=nulldist_sweep)
     def test_dataset_measure_prob(self, nd):
         """Test estimation of measures statistics"""
-        if not externals.exists('scipy'):
-            # due to null_t requirement
-            return
+        skip_if_no_external('scipy')
 
         ds = datasets['uni2medium']
 
