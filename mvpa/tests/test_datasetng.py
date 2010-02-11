@@ -16,6 +16,7 @@ import os
 
 from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true, assert_array_equal
+from mvpa.testing.datasets import datasets
 
 from mvpa.base.externals import versions, exists
 from mvpa.base.types import is_datasetlike
@@ -28,7 +29,6 @@ from mvpa.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection, \
         ArrayCollectable, SampleAttribute, Collectable
 
-from tests_warehouse import *
 
 class myarray(N.ndarray):
     pass
