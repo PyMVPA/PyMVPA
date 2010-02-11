@@ -80,6 +80,7 @@ from mvpa.datasets import *
 from mvpa.datasets.base import *
 from mvpa.datasets.miscfx import *
 from mvpa.datasets.eep import *
+from mvpa.datasets.eventrelated import *
 if externals.exists('nifti'):
     from mvpa.datasets.mri import *
 

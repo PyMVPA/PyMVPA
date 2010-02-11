@@ -193,6 +193,10 @@ class SequenceCollectable(Collectable):
         return self.value.__len__()
 
 
+    def __getitem__(self, key):
+        return self.value.__getitem__(key)
+
+
     def _set(self, val):
         # check if the new value has the desired length -- if length checking is
         # desired at all

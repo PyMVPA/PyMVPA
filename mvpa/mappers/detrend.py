@@ -308,6 +308,12 @@ class PolyDetrendMapper(Mapper):
         # remove all and keep only the residuals
         if self._secret_inplace_detrend:
             # if we are in evil mode do evil
+
+            # cast the data to float, since in-place operations below do not
+            # upcast!
+            if N.issubdtype(mds.samples.dtype, N.integer):
+                mds.samples = mds.samples.astype('float')
+
             mds.samples -= N.dot(regs, y)
         else:
             # important to assign to ensure COW behavior
