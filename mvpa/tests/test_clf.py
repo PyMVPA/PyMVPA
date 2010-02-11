@@ -8,6 +8,14 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA basic Classifiers"""
 
+import numpy as N
+
+from mvpa.testing import *
+from mvpa.testing import _ENFORCE_CA_ENABLED
+
+from mvpa.testing.datasets import *
+from mvpa.testing.clfs import *
+
 from mvpa.support.copy import deepcopy
 from mvpa.base import externals
 
@@ -28,10 +36,6 @@ from mvpa.mappers.flatten import mask_mapper
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.mappers.fx import mean_sample
 
-from tests_warehouse import *
-from tests_warehouse_clfs import *
-
-from mvpa.testing.tools import assert_array_equal, assert_array_almost_equal
 
 # What exceptions to allow while testing degenerate cases.
 # If it pukes -- it is ok -- user will notice that something
@@ -63,7 +67,7 @@ class ClassifiersTests(unittest.TestCase):
         """Should have no predictions after training. Predictions
         state should be explicitely disabled"""
 
-        if not _all_ca_enabled:
+        if not _ENFORCE_CA_ENABLED:
             self.failUnlessRaises(UnknownStateError,
                 clf.ca.__getattribute__, "trained_dataset")
 
@@ -106,7 +110,7 @@ class ClassifiersTests(unittest.TestCase):
 
         # check ca enabling propagation
         self.failUnlessEqual(self.clf_sign.ca.is_enabled('feature_ids'),
-                             _all_ca_enabled)
+                             _ENFORCE_CA_ENABLED)
         self.failUnlessEqual(bclf.clfs[0].ca.is_enabled('feature_ids'), True)
 
         bclf2 = CombinedClassifier(clfs=[self.clf_sign.clone(),
@@ -115,9 +119,9 @@ class ClassifiersTests(unittest.TestCase):
                                   enable_ca=['feature_ids'])
 
         self.failUnlessEqual(self.clf_sign.ca.is_enabled('feature_ids'),
-                             _all_ca_enabled)
+                             _ENFORCE_CA_ENABLED)
         self.failUnlessEqual(bclf2.clfs[0].ca.is_enabled('feature_ids'),
-                             _all_ca_enabled)
+                             _ENFORCE_CA_ENABLED)
 
 
 
@@ -413,7 +417,6 @@ class ClassifiersTests(unittest.TestCase):
 
 
     def test_feature_selection_classifier(self):
-        from test_rfe import SillySensitivityAnalyzer
         from mvpa.featsel.base import \
              SensitivityBasedFeatureSelection
         from mvpa.featsel.helpers import \
@@ -465,7 +468,6 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnlessEqual(clf011.predict(testdata3.samples), res110)
 
     def test_feature_selection_classifier_with_regression(self):
-        from test_rfe import SillySensitivityAnalyzer
         from mvpa.featsel.base import \
              SensitivityBasedFeatureSelection
         from mvpa.featsel.helpers import \
