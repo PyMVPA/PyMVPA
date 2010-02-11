@@ -15,7 +15,11 @@
 Dataset Database
 ****************
 
-Blurb about intentions.
+Provided collection of datasets is not aiming to replace other data
+repositories available online.  Rather it is a selection of datasets which was
+repeatedly analyzed by PyMVPA team and found to be useful for demonstration of
+concrete analysis methodologies especially in the context of neural data
+analysis.
 
 .. toctree::
    :maxdepth: 1
@@ -23,3 +27,25 @@ Blurb about intentions.
    datadb/demo_blockfmri
    datadb/haxby2001
    datadb/mnist
+
+
+==========================
+External Data Repositories
+==========================
+
+Repositories containing generic datasets in the realm of :term:`Machine
+Learning`:
+
+* `UC Irvine Machine Learning Repository`_
+
+
+Neural data repositories:
+
+* `fMRI Data Center`_
+* `1000 Functional Connectomes`_
+* `Test-Retest Resting State Data`_ (Shehzad, Kelly et al. (2009))
+
+.. _UC Irvine Machine Learning Repository: http://archive.ics.uci.edu/ml/
+.. _fMRI Data Center: http://www.fmridc.org
+.. _1000 Functional Connectomes: http://www.nitrc.org/projects/fcon_1000/
+.. _Test-Retest Resting State Data: http://www.nitrc.org/frs/?group_id=274
