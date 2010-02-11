@@ -8,8 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA kernels"""
 
-import unittest
 import numpy as N
+
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
+
 from mvpa.base.externals import exists
 from mvpa.datasets import Dataset
 from mvpa.clfs.distance import squared_euclidean_distance, \
@@ -23,7 +26,6 @@ try:
 except RuntimeError:
     _has_sg = False
 
-from mvpa.testing.datasets import datasets
 
 class KernelTests(unittest.TestCase):
     """Test bloody kernels
