@@ -226,7 +226,9 @@ class ClassifiersTests(unittest.TestCase):
             self.failUnless(('targets' in s.sa) ^ isreg)
             self.failUnless(not 'targets' in s_.sa)
             self.failUnless(not 'custom' in s.sa)
-            assert_array_almost_equal(s.samples, s_.samples)
+            if not 'smlr' in lrn.__tags__ or \
+               cfg.getboolean('tests', 'labile', default='yes'):
+                assert_array_almost_equal(s.samples, s_.samples)
 
 
     @sweepargs(clf=clfswh[:] + regrswh[:])
