@@ -6,7 +6,11 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Miscelaneous functions/datasets to be used in the unit tests"""
+"""Provides convenience datasets for unittesting.
+
+Also performs testing of storing/reloading datasets into hdf5 file if
+cfg.getboolean('tests', 'use hdf datasets'
+"""
 
 __docformat__ = 'restructuredtext'
 
@@ -14,28 +18,15 @@ import tempfile
 import shutil
 import os
 import traceback as tbm
-import unittest, sys
+import sys
 import numpy as N
 
 from mvpa import cfg, externals
 from mvpa.datasets import Dataset
 from mvpa.datasets.splitters import OddEvenSplitter
-from mvpa.clfs.base import Classifier
-from mvpa.misc.state import ClassWithCollections
 from mvpa.misc.data_generators import *
 
-__all__ = [ 'datasets', 'N', 'unittest', '_all_ca_enabled',
-            'saveload_warehouse']
-
-if __debug__:
-    from mvpa.base import debug
-    __all__.append('debug')
-
-    _all_ca_enabled = 'ENFORCE_STATES_ENABLED' in debug.active
-else:
-    _all_ca_enabled = False
-
-
+__all__ = [ 'datasets', 'get_random_rotation', 'saveload_warehouse']
 
 # Define datasets to be used all over. Split-half later on is used to
 # split into training/testing
