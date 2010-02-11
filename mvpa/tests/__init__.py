@@ -45,6 +45,7 @@ def collect_test_suites():
         'test_meg',
         # Classifiers (longer tests)
         'test_kernel',
+        'test_svmkernels',
         'test_clf',
         'test_regr',
         'test_knn',
