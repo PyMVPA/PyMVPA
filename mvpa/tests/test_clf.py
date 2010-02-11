@@ -42,9 +42,6 @@ from mvpa.mappers.fx import mean_sample
 # is wrong
 _degenerate_allowed_exceptions = [
     DegenerateInputError, FailedToTrainError, FailedToPredictError]
-if externals.exists('rpy'):
-    import rpy
-    _degenerate_allowed_exceptions += [rpy.RPyRException]
 
 
 class ClassifiersTests(unittest.TestCase):
