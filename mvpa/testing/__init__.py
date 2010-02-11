@@ -12,6 +12,7 @@
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N            # we barely can step somewhere without it
 from mvpa.base import externals
 from mvpa import pymvpa_dataroot
 
