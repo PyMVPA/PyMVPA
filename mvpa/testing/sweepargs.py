@@ -14,8 +14,9 @@ import sys
 import traceback as tbm
 
 from mvpa import cfg
-from mvpa.clfs.base import Classifier
-from mvpa.misc.state import ClassWithCollections
+
+if __debug__:
+    from mvpa.base import debug
 
 __all__ = [ 'sweepargs' ]
 
@@ -31,6 +32,10 @@ def sweepargs(**kwargs):
     Often some unittest method can be ran on multiple classifiers.
     So this decorator aims to do that
     """
+
+    from mvpa.clfs.base import Classifier
+    from mvpa.misc.state import ClassWithCollections
+
     def unittest_method(method):
         def do_sweep(*args_, **kwargs_):
             """Perform sweeping over provided keyword arguments
