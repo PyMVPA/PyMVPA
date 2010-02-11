@@ -20,7 +20,7 @@ from mvpa.mappers.fx import mean_sample
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
 from tests_warehouse import *
-from tests_warehouse_clfs import *
+from mvpa.testing.clfs import *
 
 class RegressionsTests(unittest.TestCase):
 
