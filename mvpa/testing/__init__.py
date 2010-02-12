@@ -20,6 +20,7 @@ if __debug__:
     debug('INIT', 'mvpa.testing')
 
 from mvpa.testing.tools import *
+import numpy as N
 
 if __debug__:
     debug('INIT', 'mvpa.testing end')
