@@ -9,6 +9,8 @@
 """Unit tests for PyMVPA least angle regression (ENET) classifier"""
 
 from mvpa.testing import *
+skip_if_no_external('glmnet')
+
 from mvpa.testing.datasets import *
 
 from mvpa import cfg
