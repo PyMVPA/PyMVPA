@@ -83,7 +83,6 @@ class BoxcarMapper(Mapper):
         badguy = '_%s__selectors' % self.__class__.__name__
         if badguy in state:
             del state[badguy]
-        print state
         return (self.__class__,
                     (self.startpoints, self.boxlength, self.offset),
                     state)

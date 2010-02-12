@@ -182,10 +182,10 @@ def eventrelated_dataset(ds, events=None, time_attr=None, conv_strategy='floor',
             # best matching sample
             idx = value2idx(ev['onset'], tvec, conv_strategy)
             # store offset of sample time and real onset
-            ev[eprefix + '_offset'] = ev['onset'] - tvec[idx]
+            ev['orig_offset'] = ev['onset'] - tvec[idx]
             # rescue the real onset into a new attribute
-            ev[eprefix + '_onset'] = ev['onset']
-            ev[eprefix + '_duration'] = ev['duration']
+            ev['orig_onset'] = ev['onset']
+            ev['orig_duration'] = ev['duration']
             # figure out how many sample we need
             ev['duration'] = \
                     len(tvec[idx:][tvec[idx:] < ev['onset'] + ev['duration']])
@@ -225,9 +225,18 @@ def eventrelated_dataset(ds, events=None, time_attr=None, conv_strategy='floor',
     # add samples attributes for the events, simply dump everything as a samples
     # attribute
     for a in evvars:
-        # special case: we want the non-descrete, original onset and duration
+        if not eprefix is None and a in ds.sa:
+            # if there is already a samples attribute like this, it got mapped
+            # by BoxcarMapper (i.e. is multi-dimensional). We move it aside
+            # under new `eprefix` name
+            ds.sa[eprefix + '_' + a] = ds.sa[a]
         if a in ['onset', 'duration']:
-            ds.sa[eprefix + '_attrs_' + a] = [e[a] for e in events]
+            # special case: we want the non-descrete, original onset and
+            # duration
+            if not time_attr is None:
+                # but only if there was a conversion happining, since otherwise
+                # we get the same info from BoxcarMapper
+                ds.sa[a] = [e[a] for e in events]
         else:
-            ds.sa[eprefix + '_attrs_' + a] = evvars[a]
+            ds.sa[a] = evvars[a]
     return ds

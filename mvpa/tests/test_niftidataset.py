@@ -167,9 +167,9 @@ def test_er_nifti_dataset():
     # each feature got an event offset value
     assert_array_equal(ds.fa.event_offsetidx, N.repeat([0,1,2,3], 800))
     # check for all event attributes
-    assert_true('event_attrs_onset' in ds.sa)
-    assert_true('event_attrs_duration' in ds.sa)
-    assert_true('event_attrs_features' in ds.sa)
+    assert_true('onset' in ds.sa)
+    assert_true('duration' in ds.sa)
+    assert_true('features' in ds.sa)
     # check samples
     origsamples = _load_anynifti(tssrc).data
     for i, onset in \
@@ -185,7 +185,7 @@ def test_er_nifti_dataset():
             assert_array_equal(evs[i]['_'.join(evattr.split('_')[2:])],
                                ds.sa[evattr].value[i])
     # check offset: only the last one exactly matches the tr
-    assert_array_equal(ds.sa.event_attrs_event_offset, [1, 1, 0])
+    assert_array_equal(ds.sa.orig_offset, [1, 1, 0])
 
     # map back into voxel space, should ignore addtional features
     nim = map2nifti(ds)
