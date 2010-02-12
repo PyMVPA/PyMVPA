@@ -84,7 +84,6 @@ def collect_test_suites():
                          ('scipy', 'stats_sp'),
                          ('scipy', 'gpr'),
                          (['lars','scipy'], 'lars'),
-                         ('pywt', 'waveletmapper'),
                          (['cPickle', 'gzip'], 'hamster'),
                        ]
 
@@ -131,6 +130,7 @@ def collect_nose_tests():
               'test_eepdataset',
               'test_zscoremapper',
               'test_svmkernels',
+              'test_waveletmapper',
               ]
     ## SkipTest will take care about marking those as S
     ## if externals.exists('scipy'):
