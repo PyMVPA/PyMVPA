@@ -136,7 +136,7 @@ def find_events(attrs, **kwargs):
 #    return events
 
 
-def eventrelated_dataset(ds, events=None, time_attr=None, conv_strategy='floor',
+def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
                          eprefix='event'):
     """XXX All docs need to be rewritten.
 
@@ -172,6 +172,11 @@ def eventrelated_dataset(ds, events=None, time_attr=None, conv_strategy='floor',
     eprefix : str or None
 
     """
+    # relabel argument
+    conv_strategy = {'prev': 'floor',
+                     'next': 'ceil',
+                     'closest': 'round'}[match]
+
     if not time_attr is None:
         tvec = ds.sa[time_attr].value
         # we are asked to convert onset time into sample ids

@@ -45,7 +45,30 @@ def test_erdataset():
                        N.repeat(N.arange(blocklength), nfeatures))
     # that should also be the temporal feature offset
     assert_array_equal(erds.samples[0], erds.fa.event_offsetidx)
+    assert_array_equal(erds.sa.event_onsetidx, N.arange(0,71,5))
     # finally we should see two mappers
     assert_equal(len(erds.a.mapper), 2)
     assert_true(isinstance(erds.a.mapper[0], BoxcarMapper))
     assert_true(isinstance(erds.a.mapper[1], FlattenMapper))
+    #
+    # now check the same dataset with event descretization
+    tr = 2.5
+    ds.sa['time'] = N.arange(nchunks * ntargets * blocklength) * tr
+    evs = [{'onset': 4.9, 'duration': 6.2}]
+    # doesn't work without conversion
+    assert_raises(ValueError, eventrelated_dataset, ds, evs)
+    erds = eventrelated_dataset(ds, evs, time_attr='time')
+    assert_equal(len(erds), 1)
+    assert_array_equal(erds.samples[0], N.repeat(N.arange(1,5), nfeatures))
+    assert_array_equal(erds.sa.orig_onset, [evs[0]['onset']])
+    assert_array_equal(erds.sa.orig_duration, [evs[0]['duration']])
+    assert_array_almost_equal(erds.sa.orig_offset, [2.4])
+    assert_array_equal(erds.sa.time, [N.arange(2.5, 11, 2.5)])
+    # now with closest match
+    erds = eventrelated_dataset(ds, evs, time_attr='time', match='closest')
+    assert_equal(len(erds), 1)
+    assert_array_equal(erds.samples[0], N.repeat(N.arange(2,5), nfeatures))
+    assert_array_equal(erds.sa.orig_onset, [evs[0]['onset']])
+    assert_array_equal(erds.sa.orig_duration, [evs[0]['duration']])
+    assert_array_almost_equal(erds.sa.orig_offset, [-0.1])
+    assert_array_equal(erds.sa.time, [N.arange(5.0, 11, 2.5)])
