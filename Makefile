@@ -312,7 +312,7 @@ unittest-nonlabile: build
 # test if no errors would result if we force enabling of all ca
 unittest-ca: build
 	@echo "I: Running unittests with all ca enabled."
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=ENFORCE_STATES_ENABLED $(PYTHON) mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=ENFORCE_CA_ENABLED $(PYTHON) mvpa/tests/main.py
 
 # Run unittests with optimization on -- helps to catch unconditional
 # debug calls

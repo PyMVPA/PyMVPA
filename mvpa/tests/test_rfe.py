@@ -8,13 +8,12 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA recursive feature elimination"""
 
-from sets import Set
+import numpy as N
 
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.datasets.base import Dataset
 from mvpa.mappers.fx import maxofabs_sample, mean_sample
-from mvpa.measures.base import FeaturewiseDatasetMeasure
 from mvpa.featsel.rfe import RFE
 from mvpa.featsel.base import \
      SensitivityBasedFeatureSelection, \
@@ -26,29 +25,14 @@ from mvpa.featsel.helpers import \
 
 from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier
 from mvpa.clfs.transerror import TransferError
-from mvpa.misc.transformers import Absolute
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.clfs.stats import MCNullDist
 
 from mvpa.misc.state import UnknownStateError
 
-from tests_warehouse import *
-from tests_warehouse_clfs import *
-
-class SillySensitivityAnalyzer(FeaturewiseDatasetMeasure):
-    """Simple one which just returns xrange[-N/2, N/2], where N is the
-    number of features
-    """
-
-    def __init__(self, mult=1, **kwargs):
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
-        self.__mult = mult
-
-    def _call(self, dataset):
-        """Train linear SVM on `dataset` and extract weights from classifier.
-        """
-        sens = self.__mult *( N.arange(dataset.nfeatures) - int(dataset.nfeatures/2) )
-        return Dataset(sens[N.newaxis])
+from mvpa.testing import *
+from mvpa.testing.clfs import *
+from mvpa.testing.datasets import datasets
 
 
 class RFETests(unittest.TestCase):
@@ -353,8 +337,8 @@ class RFETests(unittest.TestCase):
         self.failUnless( (nfeatures[::-1] == rfe.ca.nfeatures).all() )
 
         # check if history has elements for every step
-        self.failUnless(Set(rfe.ca.history)
-                        == Set(range(len(N.array(rfe.ca.errors)))))
+        self.failUnless(set(rfe.ca.history)
+                        == set(range(len(N.array(rfe.ca.errors)))))
 
         # Last (the largest number) can be present multiple times even
         # if we remove 1 feature at a time -- just need to stop well

@@ -8,8 +8,12 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA sparse multinomial logistic regression classifier"""
 
+import numpy as N
+
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
+
 from mvpa.clfs.smlr import SMLR
-from tests_warehouse import *
 from mvpa.misc.data_generators import normal_feature_dataset
 
 

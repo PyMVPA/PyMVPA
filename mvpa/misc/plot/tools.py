@@ -30,4 +30,8 @@ if mpl_backend_isinteractive:
         P.draw()
         P.ion()
 else:
-    Pioff = Pion = lambda x:None
+    def _Pnothing():
+        """Dummy function which does nothing
+        """
+        pass
+    Pioff = Pion = _Pnothing

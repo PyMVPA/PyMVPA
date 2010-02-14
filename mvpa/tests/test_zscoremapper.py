@@ -19,7 +19,7 @@ from mvpa.mappers.zscore import ZScoreMapper, zscore
 from mvpa.testing.tools import assert_array_almost_equal, assert_array_equal, \
         assert_equal, assert_raises, ok_
 
-from tests_warehouse import datasets
+from mvpa.testing.datasets import datasets
 
 def test_mapper_vs_zscore():
     """Test by comparing to results of elderly z-score function

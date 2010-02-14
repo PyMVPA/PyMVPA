@@ -16,10 +16,11 @@ from mvpa.base import cfg
 from mvpa.algorithms.hyperalignment import Hyperalignment
 
 # Somewhat slow but provides all needed ;)
-from tests_warehouse import datasets, get_random_rotation, sweepargs
+from mvpa.testing import sweepargs
+from mvpa.testing.datasets import datasets, get_random_rotation
 
 # if you need some classifiers
-#from tests_warehouse_clfs import *
+#from mvpa.testing.clfs import *
 
 class HyperAlignmentTests(unittest.TestCase):
 

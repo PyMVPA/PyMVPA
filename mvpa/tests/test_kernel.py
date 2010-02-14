@@ -8,8 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA kernels"""
 
-import unittest
 import numpy as N
+
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
+
 from mvpa.base.externals import exists
 from mvpa.datasets import Dataset
 from mvpa.clfs.distance import squared_euclidean_distance, \
@@ -23,7 +26,6 @@ try:
 except RuntimeError:
     _has_sg = False
 
-from tests_warehouse import datasets
 
 class KernelTests(unittest.TestCase):
     """Test bloody kernels
@@ -108,7 +110,7 @@ class KernelTests(unittest.TestCase):
         self.failUnless(ck._recomputed,
                         "CachedKernel did not recompute old data which had\n" +\
                         "previously been computed, but had the cache overriden")
-    
+
     if _has_sg:
         # Unit tests which require shogun kernels
         # Note - there is a loss of precision from double to float32 in SG
@@ -119,13 +121,14 @@ class KernelTests(unittest.TestCase):
         def test_sg_conversions(self):
             nk = PrecomputedKernel(matrix=N.random.randn(50, 50))
             nk.compute()
-            if exists('sg ge 0.6.5'):
-                sk = nk.as_sg()
-                sk.compute()
-                # CustomKernels interally store as float32 ??
-                self.failUnless((nk._k.astype('float32') == \
-                                 sk.as_raw_np().astype('float32')).all(),
-                                'Failure converting arrays between NP as SG')
+
+            skip_if_no_external('sg ge 0.6.5')
+            sk = nk.as_sg()
+            sk.compute()
+            # CustomKernels interally store as float32 ??
+            self.failUnless((nk._k.astype('float32') == \
+                             sk.as_raw_np().astype('float32')).all(),
+                            'Failure converting arrays between NP as SG')
             
         def test_linear_sg(self):
             d1 = N.random.randn(105, 32)
