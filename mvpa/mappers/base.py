@@ -688,7 +688,24 @@ class ChainMapper(Mapper):
         """
         mp = data
         for m in self:
+            if __debug__:
+                debug('MAP', "Forwarding input (%s) though '%s'."
+                        % (mp.shape, str(m)))
             mp = m.forward(mp)
+        return mp
+
+
+    def forward1(self, data):
+        """Forward data or datasets through the chain.
+
+        See baseclass method for more information.
+        """
+        mp = data
+        for m in self:
+            if __debug__:
+                debug('MAP', "Forwarding single input (%s) though '%s'."
+                        % (mp.shape, str(m)))
+            mp = m.forward1(mp)
         return mp
 
 
@@ -705,7 +722,35 @@ class ChainMapper(Mapper):
             # the chain. If that pops up, we have to think about a proper
             # solution.
             try:
+                if __debug__:
+                    debug('MAP',
+                          "Reversing single %s-shaped input though '%s'."
+                           % (mp.shape, str(m)))
                 mp = m.reverse(mp)
+            except NotImplementedError:
+                if __debug__:
+                    debug('MAP', "Ignoring %s on reverse mapping." % m)
+        return mp
+
+
+    def reverse1(self, data):
+        """Reverse-maps data or datasets through the chain (backwards).
+
+        See baseclass method for more information.
+        """
+        mp = data
+        for m in reversed(self):
+            # we ignore mapper that do not have reverse mapping implemented
+            # (e.g. detrending). That might cause problems if ignoring the
+            # mapper make the data incompatible input for the next mapper in
+            # the chain. If that pops up, we have to think about a proper
+            # solution.
+            try:
+                if __debug__:
+                    debug('MAP',
+                          "Reversing single %s-shaped input though '%s'."
+                           % (mp.shape, str(m)))
+                mp = m.reverse1(mp)
             except NotImplementedError:
                 if __debug__:
                     debug('MAP', "Ignoring %s on reverse mapping." % m)
