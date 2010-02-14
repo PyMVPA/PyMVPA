@@ -159,7 +159,7 @@ class StateVariable(IndexedCollectable):
         """
         # Force enabled state regardless of the input
         # to facilitate testing
-        if __debug__ and 'ENFORCE_STATES_ENABLED' in debug.active:
+        if __debug__ and 'ENFORCE_CA_ENABLED' in debug.active:
             enabled = True
         self.__enabled = enabled
         self._defaultenabled = enabled
