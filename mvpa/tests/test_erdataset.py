@@ -66,9 +66,16 @@ def test_erdataset():
     assert_array_equal(erds.sa.time, [N.arange(2.5, 11, 2.5)])
     # now with closest match
     erds = eventrelated_dataset(ds, evs, time_attr='time', match='closest')
+    expected_nsamples = 3
     assert_equal(len(erds), 1)
-    assert_array_equal(erds.samples[0], N.repeat(N.arange(2,5), nfeatures))
+    assert_array_equal(erds.samples[0],
+                       N.repeat(N.arange(2,2+expected_nsamples),
+                                nfeatures))
     assert_array_equal(erds.sa.orig_onset, [evs[0]['onset']])
     assert_array_equal(erds.sa.orig_duration, [evs[0]['duration']])
     assert_array_almost_equal(erds.sa.orig_offset, [-0.1])
     assert_array_equal(erds.sa.time, [N.arange(5.0, 11, 2.5)])
+    # now test the way back
+    results = N.arange(erds.nfeatures)
+    assert_array_equal(erds.a.mapper.reverse1(results),
+                       results.reshape(expected_nsamples, nfeatures))
