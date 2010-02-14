@@ -8,20 +8,20 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for HDF5 converter'''
 
-from mvpa.base.externals import exists
-if exists('h5py', raiseException=True):
-    import h5py
-else:
-    raise RuntimeError, "Don't run me if no h5py is present"
+import numpy as N
+
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets, saveload_warehouse
+
+skip_if_no_external('h5py')
+import h5py
 
 import os
 from tempfile import mkstemp
 
-from mvpa.testing import *
 from mvpa.base.dataset import AttrDataset
 from mvpa.base.hdf5 import h5save, h5load, obj2hdf
 
-from tests_warehouse import *
 
 
 def test_h5py_datasets():

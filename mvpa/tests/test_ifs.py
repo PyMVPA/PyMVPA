@@ -8,6 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA incremental feature search."""
 
+from mvpa.testing import *
+from mvpa.testing.clfs import *
+from mvpa.testing.datasets import datasets
+
 from mvpa.datasets.base import Dataset
 from mvpa.featsel.ifs import IFS
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
@@ -16,8 +20,6 @@ from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.featsel.helpers import FixedNElementTailSelector
 from mvpa.mappers.fx import mean_sample
 
-from tests_warehouse import *
-from tests_warehouse_clfs import *
 
 
 class IFSTests(unittest.TestCase):

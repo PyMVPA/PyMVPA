@@ -8,8 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA Wavelet mappers"""
 
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
+skip_if_no_external('pywt')
+
 from mvpa.base import externals
-externals.exists('pywt', raiseException=True)
 
 import unittest
 from mvpa.support.copy import deepcopy
@@ -19,7 +22,6 @@ from mvpa.mappers.boxcar import BoxcarMapper
 from mvpa.mappers.wavelet import *
 from mvpa.datasets import Dataset
 
-from tests_warehouse import datasets
 
 class WaveletMappersTests(unittest.TestCase):
 
@@ -115,8 +117,8 @@ class WaveletMappersTests(unittest.TestCase):
             diff = N.linalg.norm(d3d - d3d_rev)
             ornorm = N.linalg.norm(d3d)
 
-            if externals.exists('pywt wp reconstruct fixed'):
-                self.failUnless(diff/ornorm < 1e-10)
+            skip_if_no_external('pywt wp reconstruct fixed')
+            self.failUnless(diff/ornorm < 1e-10)
         else:
             self.failUnlessRaises(NotImplementedError, wdm.reverse, d3d_wd)
 
@@ -146,7 +148,8 @@ class WaveletMappersTests(unittest.TestCase):
             d3d_wd_ = wdm_(d3d)
 
             self.failUnless((d3d_wd == d3d_wd_).all(),
-                            msg="We should have got same result with old and new code. Got %s and %s" % (d3d_wd, d3d_wd_))
+                msg="We should have got same result with old and new code. "
+                    "Got %s and %s" % (d3d_wd, d3d_wd_))
 
 
 def suite():

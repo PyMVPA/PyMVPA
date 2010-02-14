@@ -84,7 +84,6 @@ def collect_test_suites():
                          ('scipy', 'stats_sp'),
                          ('scipy', 'gpr'),
                          (['lars','scipy'], 'lars'),
-                         ('pywt', 'waveletmapper'),
                          (['cPickle', 'gzip'], 'hamster'),
                        ]
 
@@ -121,21 +120,29 @@ def collect_nose_tests():
               'test_arraymapper',
               'test_boxcarmapper',
               'test_mapper',
+              'test_mapper_sp',
               'test_fxmapper',
+              'test_glmnet',
+              'test_hdf5',
               'test_neighborhood',
+              'test_mdp',
+              'test_niftidataset',
               'test_eepdataset',
               'test_zscoremapper',
+              'test_svmkernels',
+              'test_waveletmapper',
               ]
-    if externals.exists('scipy'):
-        tests += ['test_mapper_sp']
-    if externals.exists('glmnet'):
-        tests += ['test_glmnet']
-    if externals.exists('nifti'):
-        tests += ['test_niftidataset']
-    if externals.exists('mdp'):
-        tests += ['test_mdp']
-    if externals.exists('h5py'):
-        tests += ['test_hdf5']
+    ## SkipTest will take care about marking those as S
+    ## if externals.exists('scipy'):
+    ##     tests += ['test_mapper_sp']
+    ## if externals.exists('glmnet'):
+    ##     tests += ['test_glmnet']
+    ## if externals.exists('nifti'):
+    ##     tests += ['test_niftidataset']
+    ## if externals.exists('mdp'):
+    ##     tests += ['test_mdp']
+    ## if externals.exists('h5py'):
+    ##     tests += ['test_hdf5']
 
     return tests
 

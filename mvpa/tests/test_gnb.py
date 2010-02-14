@@ -8,8 +8,12 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA GNB classifier"""
 
+import numpy as N
+
+from mvpa.testing import *
+from mvpa.testing.datasets import *
+
 from mvpa.clfs.gnb import GNB
-from tests_warehouse import *
 
 class GNBTests(unittest.TestCase):
 

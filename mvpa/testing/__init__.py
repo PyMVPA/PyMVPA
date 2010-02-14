@@ -12,6 +12,7 @@
 
 __docformat__ = 'restructuredtext'
 
+import numpy as N            # we barely can step somewhere without it
 from mvpa.base import externals
 from mvpa import pymvpa_dataroot
 
@@ -21,6 +22,15 @@ if __debug__:
 
 from mvpa.testing.tools import *
 import numpy as N
+
+if __debug__:
+    from mvpa.base import debug
+
+    _ENFORCE_CA_ENABLED = 'ENFORCE_CA_ENABLED' in debug.active
+else:
+    _ENFORCE_CA_ENABLED = False
+
+from sweepargs import sweepargs
 
 if __debug__:
     debug('INIT', 'mvpa.testing end')

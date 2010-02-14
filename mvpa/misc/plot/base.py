@@ -13,6 +13,8 @@ __docformat__ = 'restructuredtext'
 import pylab as P
 import numpy as N
 
+from mvpa.misc.plot.tools import Pion, Pioff
+from mvpa.misc.attrmap import AttributeMap
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.clfs.distance import squared_euclidean_distance
 from mvpa.datasets.miscfx import get_samples_by_attr
@@ -248,8 +250,6 @@ def plot_decision_boundary_2d(dataset, clf=None,
       I.e. this can be a function to normalize them, or cache them
       before they are classified.
     """
-    #from mvpa.misc.attrmap import AttributeMap
-    #from mvpa.misc.plot.tools import *
 
     if False:
         from mvpa.misc.data_generators import *
@@ -343,8 +343,8 @@ def plot_decision_boundary_2d(dataset, clf=None,
     extent = (xmin, xmax, ymin, ymax)
 
     # Create grid to evaluate, predict it
-    (x,y) = N.mgrid[xmin:xmax:N.complex(0, res),
-                    ymin:ymax:N.complex(0, res)]
+    (x,y) = N.mgrid[xmin:xmax:N.complex(0, maps_res),
+                    ymin:ymax:N.complex(0, maps_res)]
     news = N.vstack((x.ravel(), y.ravel())).T
     try:
         news = data_callback(news)

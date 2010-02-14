@@ -11,12 +11,12 @@
 import unittest, re
 import numpy as N
 
-from mvpa.base import externals, warning
+from mvpa.testing import *
 
-if externals.exists('nifti', raiseException=True):
-    from mvpa.atlases import *
-else:
-    raise RuntimeError, "Don't run me if no nifti is present"
+skip_if_no_external('nifti')
+
+from mvpa.base import externals, warning
+from mvpa.atlases import *
 
 import os
 from mvpa import pymvpa_dataroot
@@ -72,10 +72,11 @@ class AtlasesTests(unittest.TestCase):
             #print atlas[ (0, -7, 20), : ]
             #   print atlas.get_labels(0)
         if not tested:
-            warning("No atlases were found -- thus no testing was done")
+            raise SkipTest("No atlases were found -- thus no testing was done")
 
     def test_find(self):
-        if not externals.exists('atlas_fsl'): return
+        skip_if_no_external('atlas_fsl')
+
         tshape = (182, 218, 182)        # target shape of fsl atlas chosen by default
         atl = Atlas(name='HarvardOxford-Cortical')
         atl.levels_dict[0].find('Frontal Pole')

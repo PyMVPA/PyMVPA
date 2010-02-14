@@ -17,7 +17,8 @@ from mvpa.misc.transformers import Absolute, one_minus, rank_order, \
      reverse_rank_order, l1_normed, l2_normed, OverAxis, \
      DistPValue, first_axis_sum_not_zero
 
-from tests_warehouse import sweepargs, datasets
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
 
 from mvpa.base import cfg
 

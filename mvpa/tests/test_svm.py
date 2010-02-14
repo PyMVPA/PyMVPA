@@ -8,17 +8,17 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for SVM classifier"""
 
-from sets import Set
+import numpy as N
+
+from mvpa.testing import *
+from mvpa.testing.clfs import *
+from mvpa.testing.datasets import *
 
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.datasets.miscfx import get_nsamples_per_attr
 from mvpa.clfs.meta import ProxyClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
-
-from tests_warehouse import pure_multivariate_signal
-from tests_warehouse import *
-from tests_warehouse_clfs import *
 
 class SVMTests(unittest.TestCase):
 
@@ -45,8 +45,8 @@ class SVMTests(unittest.TestCase):
         #                     [nl_param_orig[k] for k in orig_keys],
         #   msg="New instance mustn't override values in previously created")
         ## and keys separately
-        #self.failUnlessEqual(Set(nl_clf.param._params.keys()),
-        #                     Set(orig_keys),
+        #self.failUnlessEqual(set(nl_clf.param._params.keys()),
+        #                     set(orig_keys),
         #   msg="New instance doesn't change set of parameters in original")
 
         # We must be able to deepcopy not yet trained SVMs now
