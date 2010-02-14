@@ -69,7 +69,7 @@ do_checkout() {
     #fi
     $precmd git checkout $branch
     #provide datadb
-    [ -e "$datadbdir" ] || $precmd ln -s "$datadbdir" .
+    [ -e "datadb" ] || $precmd ln -s "$datadbdir" .
 }
 
 do_build() {
