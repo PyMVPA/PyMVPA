@@ -36,8 +36,9 @@ clean::
 		rm -f $${p%*.svg}.pdf; \
 		rm -f $${p%*.svg}.png; \
 		rm -f $${p%*.svg}.jpg; \
+		rm -f $(STATICDIR)/$${p%*.svg}.jpg; \
 	done
-	-rm $(STATICDIR)/*_icon.jpg *_icon.*
+	-rm -f $(STATICDIR)/*_icon.jpg *_icon.*
 
 .PHONY: ignore-%
 ignore-%:
