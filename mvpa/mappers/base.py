@@ -739,7 +739,7 @@ class ChainMapper(Mapper):
         See baseclass method for more information.
         """
         mp = data
-        for m in reversed(self):
+        for i, m in enumerate(reversed(self)):
             # we ignore mapper that do not have reverse mapping implemented
             # (e.g. detrending). That might cause problems if ignoring the
             # mapper make the data incompatible input for the next mapper in
@@ -754,6 +754,15 @@ class ChainMapper(Mapper):
             except NotImplementedError:
                 if __debug__:
                     debug('MAP', "Ignoring %s on reverse mapping." % m)
+            except ValueError:
+                if __debug__:
+                    debug('MAP',
+                          "Failed to reverse-map through chain at '%s'. Maybe"
+                          "previous mapper return multiple samples. Trying to "
+                          "switch to reverse() for the remainder of the chain."
+                          % str(m))
+                    mp = self[:-1*i].reverse(mp)
+                    return mp
         return mp
 
 
