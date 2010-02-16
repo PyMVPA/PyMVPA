@@ -134,6 +134,20 @@ def __check_libsvm_verbosity_control():
         raise ImportError, "Provided version of libsvm has no way to control " \
               "its level of verbosity"
 
+def __assign_shogun_versions():
+    """Assign shogun versions
+    """
+    if 'shogun' in versions:
+        return
+    import shogun.Classifier as __sc
+    versions['shogun:rev'] = __sc.Version_get_version_revision()
+    ver = __sc.Version_get_version_release().lstrip('v')
+    versions['shogun:full'] = ver
+    if '_' in ver:
+        ver = ver[:ver.index('_')]
+    versions['shogun'] = ver
+
+
 def __check_shogun(bottom_version, custom_versions=[]):
     """Check if version of shogun is high enough (or custom known) to
     be enabled in the testsuite
@@ -148,6 +162,7 @@ def __check_shogun(bottom_version, custom_versions=[]):
     """
     import shogun.Classifier as __sc
     ver = __sc.Version_get_version_revision()
+    __assign_shogun_versions()
     if (ver in custom_versions) or (ver >= bottom_version):
         return True
     else:
@@ -363,11 +378,11 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'nifti ge 0.20090205.1':
                 'from nifti.clib import detachDataFromImage as __',
           'ctypes':'import ctypes as __',
-          'shogun':'import shogun as __',
-          'shogun.krr': 'import shogun.Regression as __; x=__.KRR',
-          'shogun.mpd': 'import shogun.Classifier as __; x=__.MPDSVM',
-          'shogun.lightsvm': 'import shogun.Classifier as __; x=__.SVMLight',
-          'shogun.svrlight': 'from shogun.Regression import SVRLight as __',
+          'shogun':'__assign_shogun_versions()',
+          'shogun.krr': '__assign_shogun_versions(); import shogun.Regression as __; x=__.KRR',
+          'shogun.mpd': '__assign_shogun_versions(); import shogun.Classifier as __; x=__.MPDSVM',
+          'shogun.lightsvm': '__assign_shogun_versions(); import shogun.Classifier as __; x=__.SVMLight',
+          'shogun.svrlight': '__assign_shogun_versions(); from shogun.Regression import SVRLight as __',
           'numpy': "__check_numpy()",
           'scipy': "__check_scipy()",
           'good scipy.stats.rdist': "__check_stablerdist()",
