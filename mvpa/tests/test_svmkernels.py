@@ -28,6 +28,7 @@ class SVMKernelTests(unittest.TestCase):
         pass
 
     def test_cache_speedup(self):
+        skip_if_no_external('shogun', ver_dep='shogun:rev', min_version=4455)
         from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
         from mvpa.datasets.splitters import NFoldSplitter
         from time import time

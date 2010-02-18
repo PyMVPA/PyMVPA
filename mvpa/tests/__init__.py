@@ -44,7 +44,6 @@ def collect_test_suites():
         'test_args',
         'test_meg',
         # Classifiers (longer tests)
-        'test_kernel',
         'test_clf',
         'test_regr',
         'test_knn',
@@ -129,6 +128,7 @@ def collect_nose_tests():
               'test_niftidataset',
               'test_eepdataset',
               'test_zscoremapper',
+              'test_kernel',
               'test_svmkernels',
               'test_waveletmapper',
               ]

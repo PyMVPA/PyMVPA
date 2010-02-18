@@ -15,7 +15,7 @@ if __debug__:
 
 import numpy as N
 
-from mvpa.base import externals
+from mvpa.base import externals, warning
 from mvpa.base.dochelpers import borrowkwargs
 
 from mvpa.datasets import Dataset, hstack

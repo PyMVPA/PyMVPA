@@ -50,13 +50,16 @@ from numpy.testing import (
     assert_string_equal)
 
 
-def skip_if_no_external(dep, min_version=None, max_version=None):
+def skip_if_no_external(dep, ver_dep=None, min_version=None, max_version=None):
     """Raise SkipTest if external is missing
 
     Parameters
     ----------
     dep : string
       Name of the external
+    ver_dep : string, optional
+      If for version checking use some different key, e.g. shogun:rev.
+      If not specified, `dep` will be used.
     min_version : None or string or tuple
       Minimal required version
     max_version : None or string or tuple
@@ -67,14 +70,17 @@ def skip_if_no_external(dep, min_version=None, max_version=None):
         raise SkipTest, \
               "External %s is not present thus tests battery skipped" % dep
 
-    if min_version is not None and externals.versions[dep] < min_version:
+    if ver_dep is None:
+        ver_dep = dep
+
+    if min_version is not None and externals.versions[ver_dep] < min_version:
         raise SkipTest, \
               "Minimal version %s of %s is required. Present version is %s" \
               ". Test was skipped." \
-              % (min_version, dep, externals.versions[dep])
+              % (min_version, ver_dep, externals.versions[ver_dep])
 
-    if max_version is not None and externals.versions[dep] > max_version:
+    if max_version is not None and externals.versions[ver_dep] > max_version:
         raise SkipTest, \
               "Maximal version %s of %s is required. Present version is %s" \
               ". Test was skipped." \
-              % (min_version, dep, externals.versions[dep])
+              % (min_version, ver_dep, externals.versions[ver_dep])
