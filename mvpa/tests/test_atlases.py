@@ -14,6 +14,7 @@ import numpy as N
 from mvpa.testing import *
 
 skip_if_no_external('nifti')
+skip_if_no_external('lxml')
 
 from mvpa.base import externals, warning
 from mvpa.atlases import *
