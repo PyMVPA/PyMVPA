@@ -86,10 +86,6 @@ def collect_test_suites():
                          (['cPickle', 'gzip'], 'hamster'),
                        ]
 
-    if not cfg.getboolean('tests', 'lowmem', default='no'):
-        __optional_tests += [(['nifti', 'lxml'], 'atlases')]
-
-
     # and now for the optional tests
     optional_tests = []
 
@@ -132,6 +128,11 @@ def collect_nose_tests():
               'test_svmkernels',
               'test_waveletmapper',
               ]
+
+    if not cfg.getboolean('tests', 'lowmem', default='no'):
+        tests += ['test_atlases']
+
+
     ## SkipTest will take care about marking those as S
     ## if externals.exists('scipy'):
     ##     tests += ['test_mapper_sp']
