@@ -113,12 +113,17 @@ if externals.exists('scipy'):
     class CorrErrorFx(_ErrorFx):
         """Computes the correlation between the target and the
         predicted values. Resultant value is the 1 - correlation
-        coefficient, so minimization leads to the best value (at 0)
+        coefficient, so minimization leads to the best value (at 0).
 
+        In case of NaN correlation (no variance in predictors or
+        targets) result output error is 1.0.
         """
         def __call__(self, predicted, target):
             """Requires all arguments."""
-            return 1.0-pearsonr(predicted, target)[0]
+            r = pearsonr(predicted, target)[0]
+            if N.isnan(r):
+                r = 0.0
+            return 1.0 - r
 
 
     class CorrErrorPFx(_ErrorFx):
@@ -138,12 +143,17 @@ else:
         """Computes the correlation between the target and the predicted
         values. Return 1-CC
 
+        In case of NaN correlation (no variance in predictors or
+        targets) result output error is 1.0.
         """
         def __call__(self, predicted, target):
             """Requires all arguments."""
             l = len(predicted)
-            return 1.0 - N.corrcoef(N.reshape(predicted, l),
-                                N.reshape(target, l))[0,1]
+            r = N.corrcoef(N.reshape(predicted, l),
+                           N.reshape(target, l))[0,1]
+            if N.isnan(r):
+                r = 0.0
+            return 1.0 - r
 
 
     class CorrErrorPFx(_ErrorFx):
