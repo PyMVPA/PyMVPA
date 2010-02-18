@@ -79,3 +79,14 @@ def test_erdataset():
     results = N.arange(erds.nfeatures)
     assert_array_equal(erds.a.mapper.reverse1(results),
                        results.reshape(expected_nsamples, nfeatures))
+    # what about multiple results?
+    nresults = 5
+    results = dataset_wizard([results] * nresults)
+    # and let's have an attribute to make it more difficult
+    results.sa['myattr'] = N.arange(5)
+    rds = erds.a.mapper.reverse(results)
+    assert_array_equal(rds,
+                       results.samples.reshape(nresults * expected_nsamples,
+                                               nfeatures))
+    assert_array_equal(rds.sa.myattr, N.repeat(results.sa.myattr,
+                                               expected_nsamples))
