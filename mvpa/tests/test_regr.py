@@ -48,8 +48,10 @@ class RegressionsTests(unittest.TestCase):
             splitter=NFoldSplitter(),
             postproc=mean_sample(),
             enable_ca=['training_confusion', 'confusion'])
-        corr = cve(ds).samples.squeeze()
+        corr = N.asscalar(cve(ds).samples)
 
+        # Our CorrErrorFx should never return NaN
+        self.failUnless(not N.isnan(corr))
         self.failUnless(corr == cve.ca.confusion.stats['CCe'])
 
         splitregr = SplitClassifier(
@@ -68,7 +70,8 @@ class RegressionsTests(unittest.TestCase):
             # Part of it for now -- CCe
             for conf in confusion.summaries:
                 stats = conf.stats
-                self.failUnless(stats['CCe'] < 0.5)
+                if cfg.getboolean('tests', 'labile', default='yes'):
+                    self.failUnless(stats['CCe'] < 0.5)
                 self.failUnlessEqual(stats['CCe'], stats['Summary CCe'])
 
             s0 = confusion.as_string(short=True)
