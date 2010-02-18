@@ -33,22 +33,75 @@ class KernelTests(unittest.TestCase):
 
     # mvpa.kernel stuff
     
-    def kernel_equiv(self, k1, k2, accuracy = 1e-12):
+    def kernel_equiv(self, k1, k2, accuracy=None, relative_precision=0.7):
         """Test how accurately two kernels agree
-        
-        Will fail if maximum difference (per element) > accurracy
-        OR if the float32 casts are not exactly equal
+
+        Parameters
+        ----------
+        k1 : kernel
+        k2 : kernel
+        accuracy : None or float
+          To what accuracy to operate.  If None, length of mantissa
+          (precision) is taken into account together with
+          relative_precision to provide the `accuracy`.
+        relative_precision : float, optional
+          What proportion of leading digits in mantissa should match
+          between k1 and k2 (effective only if `precision` is None).
         """
         k1m = k1.as_np()._k
         k2m = k2.as_np()._k
+
+        # We should operate on mantissas (given exponents are the same) since
+        # pure difference makes no sense to compare and we care about
+        # digits in mantissa but there is no convenient way to compare
+        # by mantissa:
+        #      unfortunately there is no assert_array_approx_equal so
+        #      we could specify number of significant digits to use.
+        #      assert_array_almost_equal relies on number of decimals AFTER
+        #      comma, so both
+        #       assert_array_almost_equal([11111.001], [11111.002], decimal=4)
+        #       and
+        #       assert_array_almost_equal([0.001], [0.002], decimal=4)
+        #      would fail, whenever
+        #       assert_approx_equal(11111.001, 11111.002, significant=3)
+        #      would be ok
+
+        # assert_array_almost_equal(k1m, k2m, decimal=6)
+        # assert_approx_equal(k1m, k2m, significant=12)
+
+        if accuracy is None:
+            # What precision should be operate at given relative_precision
+            # and current dtype
+
+            # first check if dtypes are the same
+            ok_(k1m.dtype is k2m.dtype)
+
+            k12mean = 0.5*(N.abs(k1m) + N.abs(k2m))
+            scales = N.ones(k12mean.shape)
+
+            # don't bother dealing with values which would be within
+            # resolution -- ** operation would lead to NaNs or 0s
+            k12mean_nz = k12mean >= N.finfo(k1m.dtype).resolution * 1e+1
+            scales[k12mean_nz] = 10**N.floor(N.log10(k12mean[k12mean_nz]))
+            for a in (k1m, k2m):
+                # lets normalize by exponent first
+                anz = a != 0
+                # "remove" exponent
+                a[anz] /= scales[anz]
+
+            accuracy = 10**-(N.finfo(k1m.dtype).precision * relative_precision)
+
         diff = N.abs(k1m - k2m)
-        dmax = diff.max()
+        dmax = diff.max()               # and maximal difference
+
         self.failUnless(dmax <= accuracy,
                         '\n%s\nand\n%s\ndiffer by %s'%(k1, k2, dmax))
+
         self.failUnless(N.all(k1m.astype('float32') == \
                               k2m.astype('float32')),
                         '\n%s\nand\n%s\nare unequal as float32'%(k1, k2))
-            
+
+
     def test_linear_kernel(self):
         """Simplistic testing of linear kernel"""
         d1 = Dataset(N.asarray([range(5)]*10, dtype=float))
@@ -87,7 +140,7 @@ class KernelTests(unittest.TestCase):
         for chunk in [d[d.sa.chunks == i] for i in range(nchunks)]:
             rk.compute(chunk)
             ck.compute(chunk)
-            self.kernel_equiv(rk, ck, accuracy=1e-12)
+            self.kernel_equiv(rk, ck) #, accuracy=1e-12)
             self.failIf(ck._recomputed,
                         "CachedKernel incorrectly recomputed it's kernel")
 
@@ -153,10 +206,7 @@ class KernelTests(unittest.TestCase):
                 sk.compute(d1, d2)
                 nk.compute(d1, d2)
                 
-                # This has less accuracy than other kernels - dunno why, but
-                # given that it is less accurate only for higher orders I don't
-                # think this is a huge issue --SG
-                self.kernel_equiv(nk, sk, accuracy = 10.**(p-12))
+                self.kernel_equiv(nk, sk)
                 
         def test_rbf_sg(self):
             d1 = N.random.randn(105, 32)
