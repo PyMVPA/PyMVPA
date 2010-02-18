@@ -14,6 +14,7 @@ import numpy as N
 
 from mvpa.mappers.base import Mapper
 from mvpa.clfs.base import accepts_dataset_as_samples
+from mvpa.base.dochelpers import _str
 
 if __debug__:
     from mvpa.base import debug
@@ -110,6 +111,10 @@ class BoxcarMapper(Mapper):
                          1)
 
 
+    def __str__(self):
+        return _str(self, bl=self.boxlength)
+
+
     def forward1(self, data):
         # if we have a single 'raw' sample (not a boxcar)
         # extend it to cover the full box -- useful if one
@@ -189,8 +194,21 @@ class BoxcarMapper(Mapper):
 
 
     def _reverse_data(self, data):
+        if len(data.shape) < 2:
+            # this is not something that this mapper created -- let's broadcast
+            # its elements and hope that it would work
+            return N.repeat(data, self.boxlength)
+
         # stack them all together -- this will cause overlapping boxcars to
         # result in multiple identical samples
+        if not data.shape[1] == self.boxlength:
+            # stacking doesn't make sense, since we got something strange
+            raise ValueError("%s cannot reverse-map, since the number of "
+                             "elements along the second axis (%i) does not "
+                             "match the boxcar-length (%i)."
+                             % (self.__class__.__name__,
+                                data.shape[1],
+                                self.boxlength))
 
         # need to take care of the special case when the first axis is of length
         # one, in that case it would be squashed away
