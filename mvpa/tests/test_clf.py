@@ -176,6 +176,15 @@ class ClassifiersTests(unittest.TestCase):
     def test_custom_targets(self, lrn):
         """Simple test if a learner could cope with custom sa not targets
         """
+
+        # Since we are comparing performances of two learners, we need
+        # to assure that if they depend on some random seed -- they
+        # would use the same value.  Currently we have such stochastic
+        # behavior in SMLR
+        if 'seed' in lrn.params:
+            from mvpa import _random_seed
+            lrn = lrn.clone()              # clone the beast
+            lrn.params.seed = _random_seed # reuse the same seed
         lrn_ = lrn.clone()
         lrn_.params.targets_attr = 'custom'
 
@@ -877,5 +886,5 @@ def suite():
     return unittest.makeSuite(ClassifiersTests)
 
 
-#if __name__ == '__main__':
-#    import runner
+if __name__ == '__main__':
+    import runner
