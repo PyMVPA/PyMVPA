@@ -175,7 +175,8 @@ class KernelTests(unittest.TestCase):
             nk = PrecomputedKernel(matrix=N.random.randn(50, 50))
             nk.compute()
 
-            skip_if_no_external('sg ge 0.6.5')
+            skip_if_no_external('shogun',
+                                ver_dep='shogun:rev', min_version=4455)
             sk = nk.as_sg()
             sk.compute()
             # CustomKernels interally store as float32 ??
