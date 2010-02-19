@@ -295,6 +295,7 @@ if __debug__:
     debug.register('SG',  "PyMVPA SG wrapping")
     debug.register('SG_', "PyMVPA SG wrapping verbose")
     debug.register('SG__', "PyMVPA SG wrapping debug")
+    debug.register('SG_GC', "For all entities enable highest level (garbage collector)")
     debug.register('SG_SVM', "Internal shogun debug output for SVM itself")
     debug.register('SG_FEATURES', "Internal shogun debug output for features")
     debug.register('SG_LABELS', "Internal shogun debug output for labels")

@@ -41,6 +41,7 @@ if externals.exists('shogun', raiseException=True):
     if hasattr(shogun.Classifier, 'M_DEBUG'):
         _M_DEBUG = shogun.Classifier.M_DEBUG
         _M_ERROR = shogun.Classifier.M_ERROR
+        _M_GCDEBUG = None
     elif hasattr(shogun.Classifier, 'MSG_DEBUG'):
         _M_DEBUG = shogun.Classifier.MSG_DEBUG
         _M_ERROR = shogun.Classifier.MSG_ERROR
@@ -48,6 +49,12 @@ if externals.exists('shogun', raiseException=True):
         _M_DEBUG, _M_ERROR = None, None
         warning("Could not figure out debug IDs within shogun. "
                 "No control over shogun verbosity would be provided")
+    # Highest level
+    if hasattr(shogun.Classifier, 'MSG_GCDEBUG'):
+        _M_GCDEBUG = shogun.Classifier.MSG_GCDEBUG
+    else:
+        _M_GCDEBUG = None
+
 else:
     # set a fake default kernel here, to be able to import this module
     # when building the docs without SG
@@ -88,16 +95,24 @@ def _setdebug(obj, partname):
     debugname = "SG_%s" % partname.upper()
 
     switch = {True: (_M_DEBUG, 'M_DEBUG', "enable"),
-              False: (_M_ERROR, 'M_ERROR', "disable")}
+              False: (_M_ERROR, 'M_ERROR', "disable"),
+              'GCDEBUG': (_M_GCDEBUG, 'M_GCDEBUG', "enable")}
 
-    key = __debug__ and debugname in debug.active
+    if __debug__:
+        if 'SG_GC' in debug.active:
+            key = 'GCDEBUG'
+        else:
+            key = debugname in debug.active
+    else:
+        key = False
 
     sglevel, slevel, progressfunc = switch[key]
 
-    if __debug__:
+    if __debug__ and 'SG_' in debug.active:
         debug("SG_", "Setting verbosity for shogun.%s instance: %s to %s" %
               (partname, `obj`, slevel))
-    obj.io.set_loglevel(sglevel)
+    if sglevel is not None:
+        obj.io.set_loglevel(sglevel)
     try:
         exec "obj.io.%s_progress()" % progressfunc
     except:
