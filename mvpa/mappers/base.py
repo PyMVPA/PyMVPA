@@ -724,7 +724,7 @@ class ChainMapper(Mapper):
             try:
                 if __debug__:
                     debug('MAP',
-                          "Reversing single %s-shaped input though '%s'."
+                          "Reversing %s-shaped input though '%s'."
                            % (mp.shape, str(m)))
                 mp = m.reverse(mp)
             except NotImplementedError:
