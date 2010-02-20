@@ -343,8 +343,8 @@ def _orthogonal_permutations(a_dict):
     The order is not defined, therefore the elements should be
     orthogonal to each other.
 
-    >>> for i in orthogonal_permutations({'a': [1,2,3], 'b': [4,5]}):
-            print i
+    >>> for i in _orthogonal_permutations({'a': [1,2,3], 'b': [4,5]}):
+    ...     print i
     {'a': 1, 'b': 4}
     {'a': 1, 'b': 5}
     {'a': 2, 'b': 4}

@@ -36,11 +36,14 @@ class Hamster(object):
 
     To undig burried hamster use Hamster(filename). Here is an example:
 
-      >>> h = Hamster(bla='blai')
-      >>> h.boo = N.arange(5)
-      >>> h.dump(filename)
-      ...
-      >>> h = Hamster(filename)
+    >>> import numpy as N
+    >>> import tempfile
+    >>> h = Hamster(bla='blai')
+    >>> h.boo = N.arange(5)
+    >>> tmp = tempfile.NamedTemporaryFile()
+    >>> h.dump(tmp.name)
+    ...
+    >>> h = Hamster(tmp.name)
 
     Since Hamster introduces methods `dump`, `asdict` and property
     'registered', those names cannot be used to assign an attribute,
