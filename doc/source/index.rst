@@ -53,22 +53,39 @@ PyMVPA stands for **M**\ ulti\ **V**\ ariate **P**\ attern **A**\ nalysis
 News
 ====
 
-PyMVPA 0.4.4 is out [2 Feb 2010]
-  This release brings a set of bug fixes, few new features. See the
-  :ref:`changelog <chap_changelog>` for details. Are you :ref:`using it
-  <chap_whoisusingit>` already?
+.. raw:: html
 
-
-PyMVPA Extravaganza 2009 at Dartmouth College [30th Nov -- 4th Dec]
-  :ref:`Read more <chap_workshop_2009fall>` about the topics and achievements.
-
-
-First publication from outside the PyMVPA team employing PyMVPA [19 Jul 2009]
-  :ref:`Sun et al. (2009) <SET+09>`: *Elucidating an MRI-Based Neuroanatomic
-  Biomarker for Psychosis: Classification Analysis Using Probabilistic Brain
-  Atlas and Machine Learning Algorithms.*
-
-.. _pydocweb: https://code.launchpad.net/~pauli-virtanen/scipy/pydocweb
+ <script src="http://widgets.twimg.com/j/2/widget.js"></script>
+ <script>
+ new TWTR.Widget({
+   version: 2,
+   type: 'profile',
+   rpp: 4,
+   interval: 6000,
+   width: 'auto',
+   height: 300,
+   theme: {
+     shell: {
+       background: '#e6e6e6',
+       color: '#000000'
+     },
+     tweets: {
+       background: '#ffffff',
+       color: '#525052',
+       links: '#993e4d'
+     }
+   },
+   features: {
+     scrollbar: false,
+     loop: false,
+     live: false,
+     hashtags: true,
+     timestamp: true,
+     avatars: true,
+     behavior: 'all'
+   }
+ }).render().setUser('pymvpa').start();
+ </script>
 
 
 License
