@@ -113,6 +113,8 @@ def _setdebug(obj, partname):
               (partname, `obj`, slevel))
     if sglevel is not None:
         obj.io.set_loglevel(sglevel)
+    if 'SG_LINENO' in debug.active:
+        obj.io.enable_file_and_line()
     try:
         exec "obj.io.%s_progress()" % progressfunc
     except:
