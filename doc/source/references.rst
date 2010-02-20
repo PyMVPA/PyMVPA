@@ -135,11 +135,24 @@ experiments.
 
 .. _HR06:
 
-**Haynes, J. & Rees, G.** (2006). Decoding mental ca from brain activity in humans. *Nature Reviews Neuroscience*, *7*, 523–534.
+**Haynes, J. & Rees, G.** (2006). Decoding mental states from brain activity in humans. *Nature Reviews Neuroscience*, *7*, 523–534.
   *Review of decoding studies, emphasizing the importance of ethical issues
   concerning the privacy of personal thought.*
 
   DOI: http://dx.doi.org/10.1038/nrn1931
+
+
+.. _Ioa05:
+
+**Ioannidis, J. P. A.** (2005). Why most published research findings are false. *PLoS Med*, *2*, e124.
+  *Simulation study speculating that it is more likely for a research claim to be
+  false than true. Along the way the paper highlights aspects to keep in mind
+  while assessing the 'scientific significance' of any given study, such as,
+  viability, reproducibility, and results.*
+
+  Keywords: :keyword:`hypothesis testing`
+
+  DOI: http://dx.doi.org/10.1371/journal.pmed.0020124
 
 
 .. _JL09:
