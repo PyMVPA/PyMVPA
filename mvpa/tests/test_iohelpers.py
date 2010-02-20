@@ -102,12 +102,9 @@ class IOHelperTests(unittest.TestCase):
         ok_(sa.nrows == 1452, msg='There should be 1452 samples')
 
         # convert to event list, with some custom attr
-        ev = find_events(sa, funky='yeah')
+        ev = find_events(**sa)
         ok_(len(ev) == 17 * (max(sa.chunks) + 1),
             msg='Not all events got detected.')
-
-        ok_(len([e for e in ev if e.has_key('funky')]) == len(ev),
-            msg='All events need to have to custom arg "funky".')
 
         ok_(ev[0]['targets'] == ev[-1]['targets'] == 'rest',
             msg='First and last event are rest condition.')

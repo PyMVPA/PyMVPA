@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Datasets for event-related analysis."""
+"""Dataset for event-related samples."""
 
 __docformat__ = 'restructuredtext'
 
@@ -20,24 +20,34 @@ from mvpa.mappers.boxcar import BoxcarMapper
 from mvpa.base import warning
 
 
-def find_events(attrs, **kwargs):
-    """Convert into a list of `Event` instances.
+def find_events(**kwargs):
+    """Detect changes in multiple synchronous sequences.
 
-    Each change in the label or chunks value is taken as a new event onset.
-    The length of an event is determined by the number of identical
-    consecutive label-chunk combinations. Since the attributes list has no
-    sense of absolute timing, both `onset` and `duration` are determined and
-    stored in #samples units.
+    Multiple sequence arguments are scanned for changes in the unique value
+    combination at corresponding locations. Each change in the combination is
+    taken as a new event onset.  The length of an event is determined by the
+    number of identical consecutive combinations.
 
     Parameters
     ----------
-    attrs : dict or collection
-    **kwargs
+    **kwargs : sequences
+      Arbitrary number of sequences that shall be scanned.
+
+    Returns
+    -------
+    list
+      Detected events, where each event is a dictionary with the unique
+      combination of values stored under their original name. In addition, the
+      dictionary also contains the ``onset`` of the event (as index in the
+      sequence), as well as the ``duration`` (as number of identical
+      consecutive items).
+
+    See Also
+    --------
+    eventrelated_dataset : event-related segmentation of a dataset
     """
     def _build_event(onset, duration, combo):
         ev = Event(onset=onset, duration=duration, **combo)
-        for k in kwargs:
-            ev[k] = kwargs[k]
         return ev
 
     events = []
@@ -45,9 +55,9 @@ def find_events(attrs, **kwargs):
     old_combo = None
     duration = 1
     # over all samples
-    for r in xrange(len(attrs.values()[0])):
+    for r in xrange(len(kwargs.values()[0])):
         # current attribute combination
-        combo = dict([(k, v[r]) for k, v in attrs.iteritems()])
+        combo = dict([(k, v[r]) for k, v in kwargs.iteritems()])
 
         # check if things changed
         if not combo == old_combo:
@@ -70,70 +80,6 @@ def find_events(attrs, **kwargs):
         events.append(_build_event(prev_onset, duration, old_combo))
 
     return events
-
-
-
-#def find_events(src, targets_attr='targets', chunks_attr='chunks',
-#                time_attr='time_coords', start_offset=0,
-#                end_offset=0, max_duration=None):
-#    """Convert into a list of `Event` instances.
-#
-#    Each change in the label or chunks value is taken as a new event onset.
-#    The length of an event is determined by the number of identical
-#    consecutive label-chunk combinations. Since the attributes list has no
-#    sense of absolute timing, both `onset` and `duration` are determined and
-#    stored in #samples units.
-#
-#    Parameters
-#    ----------
-#    src : dict or collection
-#    """
-#    # onset_time
-#    # onset_step
-#    # duration_time
-#    # duration_steps
-#
-#    def _build_event(start, end):
-#        # apply offset and duration limit
-#        start = start - start_offset
-#        end = end - end_offset
-#        if not max_duration is None and end - start > max_duration:
-#            end = start + max_duration
-#        # minimal info
-#        event = {'onset_step': start,
-#                 'duration_steps': end - start}
-#        # convert all other attributes
-#        for a in src:
-#            event[a] = _uniquemerge2literal(src[a][start:end])
-#        if not time_attr is None:
-#            event['onset_time'] = src[time_attr][start]
-#            event['duration_time'] = \
-#                    src[time_attr][end] - src[time_attr][start]
-#        return event
-#
-#    events = []
-#    prev_onset = 0
-#    old_comb = None
-#    # over all samples
-#    for r in xrange(len(src[targets_attr])):
-#        # the label-chunk combination
-#        comb = (src[targets_attr][r], src[chunks_attr][r])
-#
-#        # check if things changed
-#        if not comb == old_comb:
-#            # did we ever had an event
-#            if not old_comb is None:
-#                events.append(_build_event(prev_onset, r))
-#                # store the current samples as onset for the next event
-#                prev_onset = r
-#            # update the reference combination
-#            old_comb = comb
-#
-#    # push the last event in the pipeline
-#    if not old_comb is None:
-#        events.append(_build_event(prev_onset, r))
-#
-#    return events
 
 
 def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
