@@ -92,7 +92,7 @@ def _pvalue(x, cdf_func, tail, return_tails=False, name=None):
         cdf[right_tail] = 1.0 - cdf[right_tail]
         if tail == 'both':
             # we need to half the signficance
-            cdf *= 2
+            cdf *= 0.5
 
     # Assure that NaNs didn't get significant value
     cdf[N.isnan(x)] = 1.0
@@ -363,7 +363,7 @@ class FixedNullDist(NullDist):
     >>> from scipy import stats
     >>> from mvpa.clfs.stats import FixedNullDist
     >>>
-    >>> dist = FixedNullDist(stats.norm(loc=2, scale=4))
+    >>> dist = FixedNullDist(stats.norm(loc=2, scale=4), tail='left')
     >>> dist.p(2)
     0.5
     >>>
