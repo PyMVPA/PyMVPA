@@ -692,12 +692,12 @@ if externals.exists('scipy'):
         --------
         >>> data = N.random.normal(size=(1000,1));
         >>> matches = match_distribution(
-              data,
-              distributions=['rdist',
-                             ('rdist', {'name':'rdist_fixed',
-                                        'loc': 0.0,
-                                        'args': (10,)})],
-              nsamples=30, test='p-roc', p=0.05)
+        ...   data,
+        ...   distributions=['rdist',
+        ...                  ('rdist', {'name':'rdist_fixed',
+        ...                             'loc': 0.0,
+        ...                             'args': (10,)})],
+        ...   nsamples=30, test='p-roc', p=0.05)
         """
 
         # Handle parameters
