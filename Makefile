@@ -363,7 +363,8 @@ dt-%: build
 		MVPA_EXTERNALS_RAISE_EXCEPTION=off \
 		MVPA_DATADB_ROOT=datadb \
 		$(NOSETESTS) --with-doctest \
-			$(shell git grep -l __docformat__ | grep '^mvpa' | grep "$*")
+			$(shell git grep -l __docformat__ | grep '^mvpa' \
+				| grep -v filter.py | grep -v channel.py | grep "$*")
 
 tm-%: build
 	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
