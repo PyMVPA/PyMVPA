@@ -355,6 +355,16 @@ testexamples: te-svdclf te-smlr te-searchlight te-sensanas te-pylab_2d \
               te-searchlight_minimal te-smlr te-start_easy te-topo_plot \
               te-gpr te-gpr_model_selection0
 
+testdocstrings: dt-mvpa
+
+dt-%: build
+	@PYTHONPATH=.:$(PYTHONPATH) \
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		MVPA_EXTERNALS_RAISE_EXCEPTION=off \
+		MVPA_DATADB_ROOT=datadb \
+		$(NOSETESTS) --with-doctest \
+			$(shell git grep -l __docformat__ | grep '^mvpa' | grep "$*")
+
 tm-%: build
 	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
@@ -362,7 +372,7 @@ tm-%: build
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 	                 --doctest-tests doc/source/$*.rst
 
-testmanual: build
+testmanual: build testdocstrings
 	@echo "I: Testing code samples found in documentation"
 	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
