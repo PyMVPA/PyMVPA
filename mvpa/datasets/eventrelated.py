@@ -45,6 +45,17 @@ def find_events(**kwargs):
     See Also
     --------
     eventrelated_dataset : event-related segmentation of a dataset
+
+    Examples
+    --------
+    >>> seq1 = ['one', 'one', 'two', 'two']
+    >>> seq2 = [1, 1, 1, 2]
+    >>> events = find_events(targets=seq1, chunks=seq2)
+    >>> for e in events:
+    ...     print e
+    {'chunks': 1, 'duration': 2, 'onset': 0, 'targets': 'one'}
+    {'chunks': 1, 'duration': 1, 'onset': 2, 'targets': 'two'}
+    {'chunks': 2, 'duration': 1, 'onset': 3, 'targets': 'two'}
     """
     def _build_event(onset, duration, combo):
         ev = Event(onset=onset, duration=duration, **combo)
