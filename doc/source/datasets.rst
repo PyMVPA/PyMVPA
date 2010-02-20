@@ -30,6 +30,7 @@ Datasets
      base.dataset
      datasets.base
      datasets.mri
+     datasets.eventrelated
      datasets.eep
      datasets.miscfx
      datasets.splitters
