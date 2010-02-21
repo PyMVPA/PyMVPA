@@ -98,9 +98,9 @@ class BoxcarMapper(Mapper):
             for sp in startpoints:
                 if ( sp + offset + boxlength - 1 > len(data)-1 ) \
                    or ( sp + offset < 0 ):
-                    raise ValueError, \
-                          'Illegal box: start: %i, offset: %i, length: %i' \
-                          % (sp, offset, boxlength)
+                    raise ValueError('Illegal box (start: %i, offset: %i, '
+                          'length: %i) with total input sample being %i.' \
+                          % (sp, offset, boxlength, len(data)))
         self._outshape = (len(startpoints), boxlength) + data.shape[1:]
 
 

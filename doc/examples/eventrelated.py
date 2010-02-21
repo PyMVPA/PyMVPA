@@ -82,7 +82,7 @@ the experiment.
 
 """
 
-events = find_events({'targets': ds.sa.targets, 'chunks': ds.sa.chunks})
+events = find_events(targets=ds.sa.targets, chunks=ds.sa.chunks)
 
 """
 

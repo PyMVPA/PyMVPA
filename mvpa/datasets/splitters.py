@@ -670,7 +670,7 @@ class CustomSplitter(Splitter):
     contains only samples with attrbiute 3 and the last dataset
     contains the samples with attribute 5 and 6.
 
-    >>> CustomSplitter([(None, [0, 1, 2]), ([1,2], [3], [5, 6])])
+    >>> splitter = CustomSplitter([(None, [0, 1, 2]), ([1,2], [3], [5, 6])])
     """
     def __init__(self, splitrule, **kwargs):
         """

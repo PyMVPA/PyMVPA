@@ -91,7 +91,8 @@ def _pvalue(x, cdf_func, tail, return_tails=False, name=None):
         right_tail = (cdf >= 0.5)
         cdf[right_tail] = 1.0 - cdf[right_tail]
         if tail == 'both':
-            # we need to half the signficance
+            # we need report the area under both tails
+            # XXX this is only meaningful for symetric distributions
             cdf *= 2
 
     # Assure that NaNs didn't get significant value
@@ -363,7 +364,7 @@ class FixedNullDist(NullDist):
     >>> from scipy import stats
     >>> from mvpa.clfs.stats import FixedNullDist
     >>>
-    >>> dist = FixedNullDist(stats.norm(loc=2, scale=4))
+    >>> dist = FixedNullDist(stats.norm(loc=2, scale=4), tail='left')
     >>> dist.p(2)
     0.5
     >>>
@@ -692,12 +693,12 @@ if externals.exists('scipy'):
         --------
         >>> data = N.random.normal(size=(1000,1));
         >>> matches = match_distribution(
-              data,
-              distributions=['rdist',
-                             ('rdist', {'name':'rdist_fixed',
-                                        'loc': 0.0,
-                                        'args': (10,)})],
-              nsamples=30, test='p-roc', p=0.05)
+        ...   data,
+        ...   distributions=['rdist',
+        ...                  ('rdist', {'name':'rdist_fixed',
+        ...                             'loc': 0.0,
+        ...                             'args': (10,)})],
+        ...   nsamples=30, test='p-roc', p=0.05)
         """
 
         # Handle parameters

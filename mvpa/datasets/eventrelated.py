@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Datasets for event-related analysis."""
+"""Dataset for event-related samples."""
 
 __docformat__ = 'restructuredtext'
 
@@ -20,24 +20,45 @@ from mvpa.mappers.boxcar import BoxcarMapper
 from mvpa.base import warning
 
 
-def find_events(attrs, **kwargs):
-    """Convert into a list of `Event` instances.
+def find_events(**kwargs):
+    """Detect changes in multiple synchronous sequences.
 
-    Each change in the label or chunks value is taken as a new event onset.
-    The length of an event is determined by the number of identical
-    consecutive label-chunk combinations. Since the attributes list has no
-    sense of absolute timing, both `onset` and `duration` are determined and
-    stored in #samples units.
+    Multiple sequence arguments are scanned for changes in the unique value
+    combination at corresponding locations. Each change in the combination is
+    taken as a new event onset.  The length of an event is determined by the
+    number of identical consecutive combinations.
 
     Parameters
     ----------
-    attrs : dict or collection
-    **kwargs
+    **kwargs : sequences
+      Arbitrary number of sequences that shall be scanned.
+
+    Returns
+    -------
+    list
+      Detected events, where each event is a dictionary with the unique
+      combination of values stored under their original name. In addition, the
+      dictionary also contains the ``onset`` of the event (as index in the
+      sequence), as well as the ``duration`` (as number of identical
+      consecutive items).
+
+    See Also
+    --------
+    eventrelated_dataset : event-related segmentation of a dataset
+
+    Examples
+    --------
+    >>> seq1 = ['one', 'one', 'two', 'two']
+    >>> seq2 = [1, 1, 1, 2]
+    >>> events = find_events(targets=seq1, chunks=seq2)
+    >>> for e in events:
+    ...     print e
+    {'chunks': 1, 'duration': 2, 'onset': 0, 'targets': 'one'}
+    {'chunks': 1, 'duration': 1, 'onset': 2, 'targets': 'two'}
+    {'chunks': 2, 'duration': 1, 'onset': 3, 'targets': 'two'}
     """
     def _build_event(onset, duration, combo):
         ev = Event(onset=onset, duration=duration, **combo)
-        for k in kwargs:
-            ev[k] = kwargs[k]
         return ev
 
     events = []
@@ -45,9 +66,9 @@ def find_events(attrs, **kwargs):
     old_combo = None
     duration = 1
     # over all samples
-    for r in xrange(len(attrs.values()[0])):
+    for r in xrange(len(kwargs.values()[0])):
         # current attribute combination
-        combo = dict([(k, v[r]) for k, v in attrs.iteritems()])
+        combo = dict([(k, v[r]) for k, v in kwargs.iteritems()])
 
         # check if things changed
         if not combo == old_combo:
@@ -72,105 +93,89 @@ def find_events(attrs, **kwargs):
     return events
 
 
-
-#def find_events(src, targets_attr='targets', chunks_attr='chunks',
-#                time_attr='time_coords', start_offset=0,
-#                end_offset=0, max_duration=None):
-#    """Convert into a list of `Event` instances.
-#
-#    Each change in the label or chunks value is taken as a new event onset.
-#    The length of an event is determined by the number of identical
-#    consecutive label-chunk combinations. Since the attributes list has no
-#    sense of absolute timing, both `onset` and `duration` are determined and
-#    stored in #samples units.
-#
-#    Parameters
-#    ----------
-#    src : dict or collection
-#    """
-#    # onset_time
-#    # onset_step
-#    # duration_time
-#    # duration_steps
-#
-#    def _build_event(start, end):
-#        # apply offset and duration limit
-#        start = start - start_offset
-#        end = end - end_offset
-#        if not max_duration is None and end - start > max_duration:
-#            end = start + max_duration
-#        # minimal info
-#        event = {'onset_step': start,
-#                 'duration_steps': end - start}
-#        # convert all other attributes
-#        for a in src:
-#            event[a] = _uniquemerge2literal(src[a][start:end])
-#        if not time_attr is None:
-#            event['onset_time'] = src[time_attr][start]
-#            event['duration_time'] = \
-#                    src[time_attr][end] - src[time_attr][start]
-#        return event
-#
-#    events = []
-#    prev_onset = 0
-#    old_comb = None
-#    # over all samples
-#    for r in xrange(len(src[targets_attr])):
-#        # the label-chunk combination
-#        comb = (src[targets_attr][r], src[chunks_attr][r])
-#
-#        # check if things changed
-#        if not comb == old_comb:
-#            # did we ever had an event
-#            if not old_comb is None:
-#                events.append(_build_event(prev_onset, r))
-#                # store the current samples as onset for the next event
-#                prev_onset = r
-#            # update the reference combination
-#            old_comb = comb
-#
-#    # push the last event in the pipeline
-#    if not old_comb is None:
-#        events.append(_build_event(prev_onset, r))
-#
-#    return events
-
-
 def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
                          eprefix='event'):
-    """XXX All docs need to be rewritten.
+    """Segment a dataset into a set of events.
 
-    Dataset with event-defined samples from a NIfTI timeseries image.
+    This function can be used to extract event-related samples from any
+    time-series based dataset (actually, it don't have to be time series, but
+    could also be any other type of ordered samples). Boxcar-shaped event
+    samples, potentially spanning multiple input samples can be automatically
+    extracted using :class:`~mvpa.misc.support.Event` definition lists.  For
+    each event all samples covering that particular event are used to form the
+    corresponding sample.
 
-    This is a convenience dataset to facilitate the analysis of event-related
-    fMRI datasets. Boxcar-shaped samples are automatically extracted from the
-    full timeseries using :class:`~mvpa.misc.support.Event` definition lists.
-    For each event all volumes covering that particular event in time
-    (including partial coverage) are used to form the corresponding sample.
+    An event definition is a dictionary that contains ``onset`` (as sample index
+    in the input dataset), ``duration`` (as number of consecutive samples after
+    the onset), as well as an arbitrary number of additonal attributes.
 
-    The class supports the conversion of events defined in 'realtime' into the
-    descrete temporal space defined by the NIfTI image. Moreover, potentially
-    varying offsets between true event onset and timepoint of the first selected
-    volume can be stored as an additional feature in the dataset.
-
-    Additionally, the dataset supports masking. This is done similar to the
-    masking capabilities of :class:`~mvpa.datasets.nifti.NiftiDataset`. However,
-    the mask can either be of the same shape as a single NIfTI volume, or
-    can be of the same shape as the generated boxcar samples, i.e.
-    a samples consisting of three volumes with 24 slices and 64x64 inplane
-    resolution needs a mask with shape (3, 24, 64, 64). In the former case the
-    mask volume is automatically expanded to be identical in a volumes of the
-    boxcar.
+    Alternatively, ``onset`` and ``duration`` may also be given as real time
+    stamps (or durations). In this case a to be specified samples attribute in
+    the input dataset will be used to convert these into sample indices.
 
     Parameters
     ----------
     ds : Dataset
+      The samples of this input dataset have to be in whatever ascending order.
     events : list
-    tr : float or None
-      Temporal distance of two adjacent NIfTI volumes. This can be used
-      to override the corresponding value in the NIfTI header.
+      Each event definition has to specify ``onset`` and ``duration``. All other
+      attributes will be passed on to the sample attributes collection of the
+      returned dataset.
+    time_attr : str or None
+      If not None, the ``onset`` and ``duration`` specs from the event list will
+      be converted using information from this sample attribute. Its values will
+      be treated as in-the-same-unit and are used to determine corresponding
+      samples from real-value onset and duration definitions.
+    match : {'prev', 'next', 'closest'}
+      Strategy used to match real-value onsets to sample indices. 'prev' chooses
+      the closes preceding samples, 'next' the closest following sample and
+      'closest' to absolute closest sample.
     eprefix : str or None
+      If not None, this prefix is used to name additional attributes generated
+      by the underlying `~mvpa.mappers.boxcar.BoxcarMapper`. If it is set to
+      None, no additional attributes will be created.
 
+    Returns
+    -------
+    Dataset
+      The returned dataset has one sample per each event definition that has
+      been passed to the function.
+
+    Examples
+    --------
+    The documentation also contains an :ref:`example script
+    <example_eventrelated>` showing a spatio-temporal analysis of fMRI data
+    that involves this function.
+
+    >>> from mvpa.datasets import Dataset
+    >>> ds = Dataset(N.random.randn(10, 25))
+    >>> events = [{'onset': 2, 'duration': 4},
+    ...           {'onset': 4, 'duration': 4}]
+    >>> eds = eventrelated_dataset(ds, events)
+    >>> len(eds)
+    2
+    >>> eds.nfeatures == ds.nfeatures * 4
+    True
+    >>> 'mapper' in ds.a
+    False
+    >>> print eds.a.mapper
+    <ChainMapper: <Boxcar: bl=4>-<Flatten>>
+
+    And now the same conversion, but with events specified as real time. This is
+    on possible if the input dataset contains a sample attribute with the
+    necessary information about the input samples.
+
+    >>> ds.sa['record_time'] = N.linspace(0, 5, len(ds))
+    >>> rt_events = [{'onset': 1.05, 'duration': 2.2},
+    ...              {'onset': 2.3, 'duration': 2.12}]
+    >>> rt_eds = eventrelated_dataset(ds, rt_events, time_attr='record_time',
+    ...                               match='closest')
+    >>> N.all(eds.samples == rt_eds.samples)
+    True
+    >>> # returned dataset e.g. has info from original samples
+    >>> rt_eds.sa.record_time
+    array([[ 1.11111111,  1.66666667,  2.22222222,  2.77777778],
+           [ 2.22222222,  2.77777778,  3.33333333,  3.88888889]])
     """
     # relabel argument
     conv_strategy = {'prev': 'floor',

@@ -181,6 +181,7 @@ htmldoc: examples2rst build pics
 		$(MAKE) html BUILDDIR=$(BUILDDIR) SPHINXOPTS="$(SPHINXOPTS)"
 	cd $(HTML_DIR)/generated && ln -sf ../_static
 	cd $(HTML_DIR)/examples && ln -sf ../_static
+	cd $(HTML_DIR)/workshops && ln -sf ../_static
 	cd $(HTML_DIR)/datadb && ln -sf ../_static
 	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
 
@@ -260,9 +261,11 @@ upload-htmldoc:
 
 upload-website-dev:
 	sed -i -e "s,http://disqus.com/forums/pymvpa/,http://disqus.com/forums/pymvpa-dev/,g" \
+		-e "s,^<!-- HEADNOTES -->,<!-- HEADNOTES --><div class='admonition note'>This content refers to an unreleased development version of PyMVPA</div>,g" \
 		doc/source/_themes/pymvpa_online/page.html
 	$(MAKE) website SPHINXOPTS='-D html_theme=pymvpa_online'
 	sed -i -e "s,http://disqus.com/forums/pymvpa-dev/,http://disqus.com/forums/pymvpa/,g" \
+		-e "s,^<!-- HEADNOTES -->.*$$,<!-- HEADNOTES -->,g" \
 		doc/source/_themes/pymvpa_online/page.html
 	sed -i -e "s,www.pymvpa.org,dev.pymvpa.org,g" $(WWW_DIR)/sitemap.xml
 	chmod a+rX -R $(WWW_DIR)
@@ -270,9 +273,11 @@ upload-website-dev:
 
 upload-htmldoc-dev:
 	sed -i -e "s,http://disqus.com/forums/pymvpa/,http://disqus.com/forums/pymvpa-dev/,g" \
+		-e "s,^<!-- HEADNOTES -->,<!-- HEADNOTES --><div class='admonition note'>This content refers to an unreleased development version of PyMVPA</div>,g" \
 		doc/source/_themes/pymvpa_online/page.html
 	$(MAKE) htmldoc SPHINXOPTS='-D html_theme=pymvpa_online'
 	sed -i -e "s,http://disqus.com/forums/pymvpa-dev/,http://disqus.com/forums/pymvpa/,g" \
+		-e "s,^<!-- HEADNOTES -->.*$$,<!-- HEADNOTES -->,g" \
 		doc/source/_themes/pymvpa_online/page.html
 	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI_DEV)/
 
@@ -350,6 +355,17 @@ testexamples: te-svdclf te-smlr te-searchlight te-sensanas te-pylab_2d \
               te-searchlight_minimal te-smlr te-start_easy te-topo_plot \
               te-gpr te-gpr_model_selection0
 
+testdocstrings: dt-mvpa
+
+dt-%: build
+	@PYTHONPATH=.:$(PYTHONPATH) \
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		MVPA_EXTERNALS_RAISE_EXCEPTION=off \
+		MVPA_DATADB_ROOT=datadb \
+		$(NOSETESTS) --with-doctest \
+			$(shell git grep -l __docformat__ | grep '^mvpa' \
+				| grep -v filter.py | grep -v channel.py | grep "$*")
+
 tm-%: build
 	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
@@ -357,7 +373,7 @@ tm-%: build
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 	                 --doctest-tests doc/source/$*.rst
 
-testmanual: build
+testmanual: build testdocstrings
 	@echo "I: Testing code samples found in documentation"
 	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
