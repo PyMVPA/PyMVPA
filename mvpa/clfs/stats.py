@@ -91,8 +91,9 @@ def _pvalue(x, cdf_func, tail, return_tails=False, name=None):
         right_tail = (cdf >= 0.5)
         cdf[right_tail] = 1.0 - cdf[right_tail]
         if tail == 'both':
-            # we need to half the signficance
-            cdf *= 0.5
+            # we need report the area under both tails
+            # XXX this is only meaningful for symetric distributions
+            cdf *= 2
 
     # Assure that NaNs didn't get significant value
     cdf[N.isnan(x)] = 1.0
