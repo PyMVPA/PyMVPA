@@ -40,7 +40,7 @@ and custom ndarray subclasses. All of these examples should work with a
 dataset. It should be noted that the samples container is stored *as-is* in the
 dataset (unless it was a list that got converted into an array):
 
-  >>> from mvpa.suiet import *
+  >>> from mvpa.suite import *
   >>> import scipy.sparse as sparse
   >>> mat = sparse.csc_matrix((10000, 20000))
   >>> sparse_ds = Dataset(mat)
