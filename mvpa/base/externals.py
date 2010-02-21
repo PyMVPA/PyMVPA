@@ -54,7 +54,8 @@ def __check_scipy():
         and numpy_ver > "1.1.0":
         import warnings
         if not __debug__ or (__debug__ and not 'PY' in debug.active):
-            debug('EXT', "Setting up filters for numpy DeprecationWarnings")
+            if __debug__:
+                debug('EXT', "Setting up filters for numpy DeprecationWarnings")
             filter_lines = [
                 ('NumpyTest will be removed in the next release.*',
                  DeprecationWarning),
@@ -74,6 +75,19 @@ def __check_numpy():
     """
     import numpy as N
     versions['numpy'] = SmartVersion(N.__version__)
+
+
+def __check_mdp():
+    """Check if mdp is present (it must be) an if it is -- store its version
+    """
+    import mdp
+    ver = mdp.__version__
+    if SmartVersion(ver) == "2.5" and not hasattr(mdp.nodes, 'IdentityNode'):
+        # Thanks to Yarik's shipment of svn snapshots into Debian we
+        # can't be sure if that was already released version, since
+        # mdp guys didn't use -dev suffix
+        ver += '-dev'
+    versions['mdp'] = SmartVersion(ver)
 
 
 def __check_pywt(features=None):
@@ -120,6 +134,20 @@ def __check_libsvm_verbosity_control():
         raise ImportError, "Provided version of libsvm has no way to control " \
               "its level of verbosity"
 
+def __assign_shogun_versions():
+    """Assign shogun versions
+    """
+    if 'shogun' in versions:
+        return
+    import shogun.Classifier as __sc
+    versions['shogun:rev'] = __sc.Version_get_version_revision()
+    ver = __sc.Version_get_version_release().lstrip('v')
+    versions['shogun:full'] = ver
+    if '_' in ver:
+        ver = ver[:ver.index('_')]
+    versions['shogun'] = ver
+
+
 def __check_shogun(bottom_version, custom_versions=[]):
     """Check if version of shogun is high enough (or custom known) to
     be enabled in the testsuite
@@ -134,6 +162,7 @@ def __check_shogun(bottom_version, custom_versions=[]):
     """
     import shogun.Classifier as __sc
     ver = __sc.Version_get_version_revision()
+    __assign_shogun_versions()
     if (ver in custom_versions) or (ver >= bottom_version):
         return True
     else:
@@ -257,6 +286,11 @@ def __check_matplotlib():
     backend = cfg.get('matplotlib', 'backend')
     if backend:
         matplotlib.use(backend)
+        import warnings
+        # And disable useless warning from matplotlib in the future
+        warnings.filterwarnings(
+            'ignore', 'This call to matplotlib.use() has no effect.*',
+            UserWarning)
 
 def __check_pylab():
     """Check if matplotlib is there and then pylab"""
@@ -298,6 +332,10 @@ def __check_reportlab():
     import reportlab as rl
     versions['reportlab'] = SmartVersion(rl.Version)
 
+def __check_pprocess():
+    import pprocess as pp
+    versions['pprocess'] = SmartVersion(pp.__version__)
+
 def __check_rpy():
     """Check either rpy is available and also set it for the sane execution
     """
@@ -321,22 +359,30 @@ def __check_rpy():
 def __check_rpy2():
     """Check either rpy2 is available and also set it for the sane execution
     """
+    import rpy2
+    versions['rpy2'] = rpy2.__version__
+
     import rpy2.robjects
     r = rpy2.robjects.r
     r.options(warn=cfg.get('rpy', 'warn', default=-1))
 
+    # To shut R up while it is importing libraries to do not ruin out
+    # doctests
+    r.library = lambda libname: \
+                r("suppressPackageStartupMessages(library(%r))" % libname)
 
 # contains list of available (optional) external classifier extensions
-_KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
+_KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
           'nifti':'from nifti import NiftiImage as __',
           'nifti ge 0.20090205.1':
                 'from nifti.clib import detachDataFromImage as __',
           'ctypes':'import ctypes as __',
-          'shogun':'import shogun as __',
-          'shogun.mpd': 'import shogun.Classifier as __; x=__.MPDSVM',
-          'shogun.lightsvm': 'import shogun.Classifier as __; x=__.SVMLight',
-          'shogun.svrlight': 'from shogun.Regression import SVRLight as __',
+          'shogun':'__assign_shogun_versions()',
+          'shogun.krr': '__assign_shogun_versions(); import shogun.Regression as __; x=__.KRR',
+          'shogun.mpd': '__assign_shogun_versions(); import shogun.Classifier as __; x=__.MPDSVM',
+          'shogun.lightsvm': '__assign_shogun_versions(); import shogun.Classifier as __; x=__.SVMLight',
+          'shogun.svrlight': '__assign_shogun_versions(); from shogun.Regression import SVRLight as __',
           'numpy': "__check_numpy()",
           'scipy': "__check_scipy()",
           'good scipy.stats.rdist': "__check_stablerdist()",
@@ -347,15 +393,17 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
           'rpy': "__check_rpy()",
           'rpy2': "__check_rpy2()",
-          'lars': "exists('rpy', raiseException=True); import rpy; rpy.r.library('lars')",
-          'elasticnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('elasticnet')",
-          # 'glmnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('glmnet')",
-          'glmnet': "exists('rpy2', raiseException=True); import rpy2.robjects; rpy2.robjects.r.library('glmnet')",
+          'lars': "exists('rpy2', raiseException=True);" \
+                  "import rpy2.robjects; rpy2.robjects.r.library('lars')",
+          'elasticnet': "exists('rpy2', raiseException=True); "\
+                  "import rpy2.robjects; rpy2.robjects.r.library('elasticnet')",
+          'glmnet': "exists('rpy2', raiseException=True); " \
+                  "import rpy2.robjects; rpy2.robjects.r.library('glmnet')",
           'matplotlib': "__check_matplotlib()",
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
           'openopt': "__check_openopt()",
-          'mdp': "import mdp as __",
+          'mdp': "__check_mdp()",
           'mdp ge 2.4': "from mdp.nodes import LLENode as __",
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
            # 3318 corresponds to release 0.6.4
@@ -372,7 +420,8 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'running ipython env': "__check_in_ipython()",
           'reportlab': "__check_reportlab()",
           'nose': "import nose as __",
-          'pprocess': "import pprocess as __",
+          'pprocess': "__check_pprocess()",
+          'h5py': "import h5py as __",
           }
 
 
@@ -437,29 +486,21 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
         # Exceptions which are silently caught while running tests for externals
         _caught_exceptions = [ImportError, AttributeError, RuntimeError]
 
-        # check whether RPy is involved and catch its exceptions as well.
-        # however, try to determine whether this is really necessary, as
-        # importing RPy also involved starting a full-blown R session, which can
-        # take seconds and therefore is quite nasty...
-        if dep.count('rpy') or _KNOWN[dep].count('rpy'):
-            try:
-                if dep == 'rpy':
-                    __check_rpy()          # needed to be run to adjust options first
-                else:
-                    if exists('rpy'):
-                        # otherwise no need to add anything -- test
-                        # would fail since rpy isn't available
-                        from rpy import RException
-                        _caught_exceptions += [RException]
-            except:
-                pass
-
         estr = ''
         try:
             exec _KNOWN[dep]
             result = True
         except tuple(_caught_exceptions), e:
             estr = ". Caught exception was: " + str(e)
+        except Exception, e:
+            # Add known ones by their names so we don't need to
+            # actually import anything manually to get those classes
+            if e.__class__.__name__ in ['RPy_Exception', 'RRuntimeError',
+                                        'RPy_RException']:
+                _caught_exceptions += [e.__class__]
+                estr = ". Caught exception was: " + str(e)
+            else:
+                raise
 
         if __debug__:
             debug('EXT', "Presence of %s is%s verified%s" %
@@ -488,7 +529,8 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
     return result
 
 
-def testAllDependencies(force=False):
+##REF: Name was automagically refactored
+def test_all_dependencies(force=False):
     """
     Test for all known dependencies.
 

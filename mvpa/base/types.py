@@ -8,6 +8,9 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Things concerned with types and type-checking in PyMVPA"""
 
+import numpy as N
+
+
 def is_datasetlike(obj):
     """Check if an object looks like a Dataset."""
     if hasattr(obj, 'samples') and \
@@ -33,3 +36,18 @@ def accepts_dataset_as_samples(fx):
             return fx(obj, data)
     return extract_samples
 
+
+def asobjarray(x):
+    """Generates numpy.ndarray with dtype object from an iterable
+
+    Is needed to assure object dtype, so first empty array of
+    dtype=object needs to be constructed and then only items to be
+    assigned.
+
+    Parameters
+    ----------
+    x : list or tuple or ndarray
+    """
+    res = N.empty(len(x), dtype=object)
+    res[:] = x
+    return res

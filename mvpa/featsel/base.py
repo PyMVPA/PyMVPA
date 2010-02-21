@@ -119,16 +119,10 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         sensitivity = self.__sensitivity_analyzer(dataset)
         """Compute the sensitivity map."""
 
-        if len(sensitivity) > 1:
-            raise ValueError("Feature selectors cannot handle multiple "
-                             "sensitivities at once. '%s' returned %i "
-                             "sensitivities."
-                             % (self.__sensitivity_analyzer.__class__.__name__,
-                                len(sensitivity)))
-        self.states.sensitivity = sensitivity
+        self.ca.sensitivity = sensitivity
 
         # Select features to preserve
-        selected_ids = self.__feature_selector(sensitivity.samples[0])
+        selected_ids = self.__feature_selector(sensitivity)
 
         if __debug__:
             debug("FS_", "Sensitivity: %s Selected ids: %s" %
@@ -147,7 +141,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
 
         # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
         selected_ids.sort()
-        self.states.selected_ids = selected_ids
+        self.ca.selected_ids = selected_ids
 
         # dataset with selected features is returned
         return results
@@ -198,31 +192,31 @@ class FeatureSelectionPipeline(FeatureSelection):
         wdataset = dataset
         wtestdataset = testdataset
 
-        self.states.selected_ids = None
+        self.ca.selected_ids = None
 
-        self.states.nfeatures = []
+        self.ca.nfeatures = []
         """Number of features at each step (before running selection)"""
 
         for fs in self.__feature_selections:
 
             # enable selected_ids state if it was requested from this class
-            fs.states.change_temporarily(
-                enable_states=["selected_ids"], other=self)
-            if self.states.is_enabled("nfeatures"):
-                self.states.nfeatures.append(wdataset.nfeatures)
+            fs.ca.change_temporarily(
+                enable_ca=["selected_ids"], other=self)
+            if self.ca.is_enabled("nfeatures"):
+                self.ca.nfeatures.append(wdataset.nfeatures)
 
             if __debug__:
                 debug('FSPL', 'Invoking %s on (%s, %s)' %
                       (fs, wdataset, wtestdataset))
             wdataset, wtestdataset = fs(wdataset, wtestdataset, **kwargs)
 
-            if self.states.is_enabled("selected_ids"):
-                if self.states.selected_ids == None:
-                    self.states.selected_ids = fs.states.selected_ids
+            if self.ca.is_enabled("selected_ids"):
+                if self.ca.selected_ids == None:
+                    self.ca.selected_ids = fs.ca.selected_ids
                 else:
-                    self.states.selected_ids = self.states.selected_ids[fs.states.selected_ids]
+                    self.ca.selected_ids = self.ca.selected_ids[fs.ca.selected_ids]
 
-            fs.states.reset_changed_temporarily()
+            fs.ca.reset_changed_temporarily()
 
         return (wdataset, wtestdataset)
 
@@ -273,33 +267,33 @@ class CombinedFeatureSelection(FeatureSelection):
         # to hold the union
         selected_ids = None
         # to hold the individuals
-        self.states.selections_ids = []
+        self.ca.selections_ids = []
 
         for fs in self.__feature_selections:
             # we need the feature ids that were selection by each method,
             # so enable them temporarily
-            fs.states.change_temporarily(
-                enable_states=["selected_ids"], other=self)
+            fs.ca.change_temporarily(
+                enable_ca=["selected_ids"], other=self)
 
             # compute feature selection, but ignore return datasets
             fs(dataset, testdataset)
 
             # retrieve feature ids and determined union of all selections
             if selected_ids == None:
-                selected_ids = set(fs.states.selected_ids)
+                selected_ids = set(fs.ca.selected_ids)
             else:
                 if self.__combiner == 'union':
-                    selected_ids.update(fs.states.selected_ids)
+                    selected_ids.update(fs.ca.selected_ids)
                 elif self.__combiner == 'intersection':
-                    selected_ids.intersection_update(fs.states.selected_ids)
+                    selected_ids.intersection_update(fs.ca.selected_ids)
                 else:
                     raise ValueError, "Unknown combiner '%s'" % self.__combiner
 
             # store individual set in state
-            self.states.selections_ids.append(fs.states.selected_ids)
+            self.ca.selections_ids.append(fs.ca.selected_ids)
 
-            # restore states to previous settings
-            fs.states.reset_changed_temporarily()
+            # restore ca to previous settings
+            fs.ca.reset_changed_temporarily()
 
         # finally apply feature set union selection to original datasets
         selected_ids = sorted(list(selected_ids))
@@ -313,7 +307,7 @@ class CombinedFeatureSelection(FeatureSelection):
         d_sel = dataset[:, selected_ids]
 
         # finally store ids in state
-        self.states.selected_ids = selected_ids
+        self.ca.selected_ids = selected_ids
 
         return (d_sel, td_sel)
 

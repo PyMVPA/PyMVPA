@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# emacs: -*- coding: utf-8; mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
+
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -33,6 +34,8 @@ def exfile2rst(filename):
     indocs = False
     doc2code = False
     code2doc = False
+    interactiveblock = False
+    preserved_indent = False
     # an empty line found in the example enables the check for a potentially
     # indented docstring starting on the next line (as an attempt to exclude
     # function or class docstrings)
@@ -56,6 +59,7 @@ def exfile2rst(filename):
             cleanline = line[:line.find('#')].lstrip()
             indent_level = len(line) - len(cleanline) - 1
             cleanline = cleanline.rstrip()
+            interactiveblock = False
         else:
             cleanline = line[:line.find('#')].rstrip()
 
@@ -80,16 +84,19 @@ def exfile2rst(filename):
                     proc_line = cleanline[3:-3]
                 else:
                     # must be start of multiline block
+                    interactiveblock = False
                     indocs = True
                     code2doc = True
                     # rescue what is left on the line
                     proc_line = cleanline[3:] # strip """
+                first_codeline_in_block = False
             else:
                 # we are already in the docs
                 # handle doc end
                 if cleanline.endswith('"""') or cleanline.endswith("'''"):
                     indocs = False
                     doc2code = True
+                    preserved_indent = False
                     # rescue what is left on the line
                     proc_line = cleanline[:-3]
                     # reset the indentation
@@ -111,12 +118,36 @@ def exfile2rst(filename):
                 s += proc_line.rstrip() + '\n'
 
         else:
-            if doc2code:
-                doc2code = False
-                s += '\n::\n'
+            # we are in a code block
+            if line.startswith("if cfg.getboolean('examples', 'interactive'"):
+                interactiveblock = True
+            elif not interactiveblock:
+                # we exclude the code that is used to disable the interactive
+                # plots.
+                if doc2code:
+                    doc2code = False
+                    first_codeline_in_block = True
+                    # the spaces at the end are crucial to get intentation of
+                    # indented code block -- otherwise sphinx removes common
+                    # whitespace
+                    s += '\n::\n'
 
-            # has to be code
-            s += '  %s' % line
+                # has to be code
+                leading_whitespace = len(line) > 2 \
+                                     and len(line) > len(line.lstrip())
+                line = line.rstrip()
+                # anything left?
+                if line:
+                    if first_codeline_in_block and leading_whitespace \
+                            and not preserved_indent:
+                        s += ' »%s\n' % line
+                        preserved_indent = True
+                    else:
+                        s += '  %s\n' % line
+
+                    first_codeline_in_block = False
+                else:
+                    s += '\n'
 
     xfile.close()
 

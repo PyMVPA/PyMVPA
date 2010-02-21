@@ -1,4 +1,4 @@
-.. -*- mode: rst; fill-column: 78 -*-
+.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
@@ -14,7 +14,7 @@
 PyMVPA Extravaganza -- Fall 2009
 ********************************
 
-This development workshop took take place at Dartmouth College, Nov 30 -- Dec
+This development workshop took place at Dartmouth College, Nov 30 -- Dec
 4, 2009.
 
 

@@ -114,17 +114,17 @@ class GeneralizedLinearKernel(NumpyKernel):
                         doc="""
        A simple constant squared value which is broadcasted across
        kernel. In the case of GPR -- standard deviation of the Gaussian
-       prior probability N(0,sigma_0**2) of the intercept of the
-       constant regression.""")
+       prior probability Normal(0, sigma_0**2) of the intercept of the
+       linear regression.""")
 
     Sigma_p = Parameter(1.0,
-                        doc="""
+                        doc=r"""
        A generic scalar or vector, or diagonal matrix to scale all
        dimensions or associate different scaling to each dimensions
        while computing te kernel matrix:
-       math::     k(x_A,x_B) = x_A^\top \Sigma_p x_B + \sigma_0^2
-       In the case of GPR -- scalar or a diagonal of covariance matrix
-       of the Gaussian prior probability N(0,Sigma_p) on the weights
+       :math:`k(x_A,x_B) = x_A^\top \Sigma_p x_B + \sigma_0^2`.
+       In the case of GPR -- a scalar or a diagonal of covariance matrix
+       of the Gaussian prior probability Normal(0, Sigma_p) on the weights
        of the linear regression.""")
 
     gradients = StateVariable(enabled=False,
@@ -132,6 +132,10 @@ class GeneralizedLinearKernel(NumpyKernel):
 
     gradientslog = StateVariable(enabled=False,
         doc="Dictionary of gradients per a parameter in logspace")
+
+    def __init__(self, *args, **kwargs):
+        # for docstring holder
+        NumpyKernel.__init__(self, *args, **kwargs)
 
     ## def __init__(self, Sigma_p=None, sigma_0=1.0, **kwargs):
     ##     """Initialize the linear kernel instance.
@@ -203,11 +207,11 @@ class GeneralizedLinearKernel(NumpyKernel):
         self._k = k = N.dot(data1, data2_sc) + sigma_0 ** 2
 
         # Compute gradients if any was requested
-        do_g  = self.states.is_enabled('gradients')
-        do_gl = self.states.is_enabled('gradientslog')
+        do_g  = self.ca.is_enabled('gradients')
+        do_gl = self.ca.is_enabled('gradientslog')
         if do_g or do_gl:
             if N.isscalar(Sigma_p):
-                g_Sigma_p = N.dot(data1.T, data2)
+                g_Sigma_p = N.dot(data1, data2.T)
                 gl_Sigma_p = Sigma_p * g_Sigma_p
             else:
                 nfeat = len(Sigma_p)
@@ -219,11 +223,11 @@ class GeneralizedLinearKernel(NumpyKernel):
                     if do_g:  g_Sigma_p[:, :, i] = outer
                     if do_gl: gl_Sigma_p = Sigma_p[i] * outer
             if do_g:
-                self.states.gradients = dict(
+                self.ca.gradients = dict(
                     sigma_0=2*sigma_0,
                     Sigma_p=g_Sigma_p)
             if do_gl:
-                self.states.gradientslog = dict(
+                self.ca.gradientslog = dict(
                     sigma_0=2*sigma_0**2,
                     Sigma_p=gl_Sigma_p)
     pass
@@ -244,6 +248,9 @@ class ExponentialKernel(NumpyKernel):
     sigma_f = Parameter(1.0, allowedtype='float',
         doc="""Signal standard deviation.""")
 
+    def __init__(self, *args, **kwargs):
+        # for docstring holder
+        NumpyKernel.__init__(self, *args, **kwargs)
 
     ## def __init__(self, length_scale=1.0, sigma_f = 1.0, **kwargs):
     ##     """Initialize an Exponential kernel instance.

@@ -8,112 +8,224 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """
-Searchlight Analysis on an fMRI Dataset
-=======================================
+Searchlight on fMRI data
+========================
 
-Example demonstrating a searchlight analysis on an fMRI dataset.
+.. index:: Searchlight
+
+The original idea of a spatial searchlight algorithm stems from a paper by
+:ref:`Kriegeskorte et al. (2006) <KGB06>`, and has subseqently been used in a
+number of studies. The most common use for a searchlight is to compute a full
+cross-validation analysis in each spherical region of interest (ROI) in the
+brain. This analysis yields a map of (typically) classification accuracies that
+are often interpreted or post-processed similar to a GLM statistics output map
+(e.g. subsequent analysis with inferential statistics). In this example we look
+at how this type of analysis can be conducted in PyMVPA.
+
+As always, we first have to import PyMVPA.
 """
 
 from mvpa.suite import *
 
+"""As searchlight analyses are usually quite expensive in term of computational
+ressources, we are going to enable some progress output, to entertain us while
+we are waiting."""
 
-def main():
-    """ Wrapped into a function call for easy profiling later on
+# enable debug output for searchlight call
+if __debug__:
+    debug.active += ["SLC"]
+
+"""The next few calls load an fMRI dataset, while assigning associated class
+targets and chunks (experiment runs) to each volume in the 4D timeseries.  One
+aspect is worth mentioning. When loading the fMRI data with
+:func:`~mvpa.datasets.mri.fmri_dataset()` additional feature attributes can be
+added, by providing a dictionary with names and source pairs to the `add_fa`
+arguments. In this case we are loading a thresholded zstat-map of a category
+selectivity contrast for voxels ventral temporal cortex."""
+
+# data path
+datapath = os.path.join(pymvpa_datadbroot, 'demo_blockfmri', 'demo_blockfmri')
+# source of class targets and chunks definitions
+attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
+
+dataset = fmri_dataset(
+                samples=os.path.join(datapath, 'bold.nii.gz'),
+                targets=attr.targets,
+                chunks=attr.chunks,
+                mask=os.path.join(datapath, 'mask_brain.nii.gz'),
+                add_fa={'vt_thr_glm': os.path.join(datapath, 'mask_vt.nii.gz')})
+
+"""The dataset is now loaded and contains all brain voxels as features, and all
+volumes as samples. To precondition this data for the intended analysis we have
+to perform a few preprocessing steps (please note that the data was already
+motion-corrected). The first step is a chunk-wise (run-wise) removal of linear
+trends, typically caused by the acquisition equipment."""
+
+poly_detrend(dataset, polyord=1, chunks='chunks')
+
+"""Now that the detrending is done, we can remove parts of the timeseries we
+are not interested in. For this example we are only considering volume acquired
+during stimulation block with images of houses and scrambled pictures, as well
+as rest periods (for now). It is important to perform the detrending before
+this selection, as otherwise the equal spacing of fMRI volumes is no longer
+guaranteed."""
+
+dataset = dataset[N.array([l in ['rest', 'house', 'scrambledpix']
+                           for l in dataset.targets], dtype='bool')]
+
+"""The final preprocessing step is data-normalization. This is a required step
+for many classification algorithm. it scales all features (voxels)
+approximately into the same range and removed the mean. In this example, we
+perform a chunk-wise normalization and compute standard deviation and mean for
+z-scoring based on the volumes corresponding to rest periods in the experiment.
+The resulting features could be interpreted as being voxel salience relative
+to 'rest'."""
+
+zscore(dataset, chunks='chunks', param_est=('targets', ['rest']), dtype='float32')
+
+"""After normalization is completed, we no longer need the 'rest'-samples and
+remove them."""
+
+dataset = dataset[dataset.sa.targets != 'rest']
+
+"""But now for the interesting part: Next we define the measure that shall be
+computed for each sphere. Theoretically, this can be anything, but here we
+choose to compute a full leave-one-out cross-validation using a linear Nu-SVM
+classifier."""
+
+# choose classifier
+clf = LinearNuSVMC()
+
+# setup measure to be computed by Searchlight
+# cross-validated mean transfer using an N-fold dataset splitter
+cv = CrossValidatedTransferError(TransferError(clf),
+                                 NFoldSplitter())
+
+"""In this example, we do not want to compute full-brain accuracy maps, but
+instead limit ourselves to a specific subset of voxels. We'll select all voxel
+that have a non-zero z-stats value in the localizer mask we loaded above, as
+center coordinates for a searchlight sphere. These spheres will still include
+voxels that did not pass the threshold. the localizer merely define the
+location of all to be processed spheres."""
+
+# get ids of features that have a nonzero value
+center_ids = dataset.fa.vt_thr_glm.nonzero()[0]
+
+"""Finally, we can the searchlight. We'll perform the analysis for three
+different radii, each time computing an error for each sphere. To achieve this,
+we simply use the :func:`~mvpa.measures.searchlight.sphere_searchlight` class,
+which takes any :term:`processing object` and a radius as arguments. The
+:term:`processing object` has to compute the intended measure, when called with
+a dataset. The :func:`~mvpa.measures.searchlight.sphere_searchlight` object
+will do nothing more than generating small datasets for each sphere, feeding it
+to the processing object and storing the result."""
+
+# setup plotting parameters (not essential for the analysis itself)
+plot_args = {
+    'background' : os.path.join(datapath, 'anat.nii.gz'),
+    'background_mask' : os.path.join(datapath, 'mask_brain.nii.gz'),
+    'overlay_mask' : os.path.join(datapath, 'mask_vt.nii.gz'),
+    'do_stretch_colors' : False,
+    'cmap_bg' : 'gray',
+    'cmap_overlay' : 'autumn', # YlOrRd_r # P.cm.autumn
+    'interactive' : cfg.getboolean('examples', 'interactive', True),
+    }
+
+for radius in [0, 1, 3]:
+    # tell which one we are doing
+    print "Running searchlight with radius: %i ..." % (radius)
+
+    """
+    Here we actually setup the spherical searchlight by configuring the
+    radius, and our selection of sphere center coordinates. Moreover, via the
+    `space` argument we can instruct the searchlight which feature attribute
+    shall be sued to determine the voxel neighborhood. By default,
+    :func:`~mvpa.datasets.mri.fmri_dataset()` creates a corresponding attribute
+    called `voxel_indices`.  Using the `mapper` argument it is possible to
+    post-process the results computed for each sphere. Corss-validation will
+    compute an error value per each fold, but here we are only interested in
+    the mean error across all folds. Finally, on multi-core machines `nproc`
+    can be used to enabled parallelization by setting it to the number of
+    processes utilized by the searchlight (default value of `nproc`=`None` utilizes
+    all available local cores).
     """
 
-    parser.usage = """\
-    %s [options] <NIfTI samples> <labels+blocks> <NIfTI mask> [<output>]
+    sl = sphere_searchlight(cv, radius=radius, space='voxel_indices',
+                            center_ids=center_ids,
+                            postproc=mean_sample())
 
-    where labels+blocks is a text file that lists the class label and the
-    associated block of each data sample/volume as a tuple of two integer
-    values (separated by a single space). -- one tuple per line.""" \
-    % sys.argv[0]
+    """
+    Since we care about efficiency, we are stripping all attributes from the
+    dataset that are not required for the searchlight analysis. This will offers
+    some speedup, since it reduces the time that is spent on dataset slicing.
+    """
 
-    parser.option_groups = [opts.SVM, opts.KNN, opts.general, opts.common]
+    ds = dataset.copy(deep=False,
+                      sa=['targets', 'chunks'],
+                      fa=['voxel_indices'],
+                      a=['mapper'])
 
-    # Set a set of available classifiers for this example
-    opt.clf.choices=['knn', 'lin_nu_svmc', 'rbf_nu_svmc']
-    opt.clf.default='lin_nu_svmc'
+    """
+    Finally, we actually run the analysis. The result is returned as a
+    dataset. For the coming plotting, we are transforming the returned error
+    maps into accuracies.
+    """
 
-    parser.add_options([opt.clf, opt.zscore])
+    sl_map = sl(ds)
+    sl_map.samples *= -1
+    sl_map.samples += 1
 
-    (options, files) = parser.parse_args()
+    """
+    The result dataset is fully aware of the original dataspace. Using this
+    information we can map the 1D accuracy maps back into "brain-space" (using
+    NIfTI image header information from the original input timeseries.
+    """
 
-    if not len(files) in [3, 4]:
-        parser.error("Please provide 3 or 4 files in the command line")
-        sys.exit(1)
+    niftiresults = map2nifti(sl_map, imghdr=dataset.a.imghdr)
 
-    verbose(1, "Loading data")
+    """
+    PyMVPA comes with a convenient plotting function to visualize the
+    searchlight amps. We are only looking at fMRI slices that are covered
+    by the mask of ventral temproal cortex.
+    """
 
-    # data filename
-    dfile = files[0]
-    # text file with labels and block definitions (chunks)
-    cfile = files[1]
-    # mask volume filename
-    mfile = files[2]
+    fig = P.figure(figsize=(12, 4), facecolor='white')
+    subfig = plot_lightbox(overlay=niftiresults,
+                           vlim=(0.5, None), slices=range(23,31),
+                           fig=fig, **plot_args)
+    P.title('Accuracy distribution for radius %i' % radius)
 
-    ofile = None
-    if len(files)>=4:
-        # outfile name
-        ofile = files[3]
 
-    # read conditions into an array (assumed to be two columns of integers)
-    # TODO: We need some generic helper to read conditions stored in some
-    #       common formats
-    verbose(2, "Reading conditions from file %s" % cfile)
-    attrs = SampleAttributes(cfile, literallabels=True)
+if cfg.getboolean('examples', 'interactive', True):
+    # show all the cool figures
+    P.show()
 
-    verbose(2, "Loading volume file %s" % dfile)
-    data = nifti_dataset(dfile,
-                         labels=attrs.labels,
-                         chunks=attrs.chunks,
-                         mask=mfile)
+"""The following figures show the resulting accuracy maps for the slices
+covered by the ventral temporal cortex mask. Note that each voxel value
+represents the accuracy of a sphere centered around this voxel.
 
-    # do not try to classify baseline condition
-    # XXX this is only valid for our haxby8 example dataset and should
-    # probably be turned into a proper --baselinelabel option that can
-    # be used for zscoring as well.
-    data = data[data.labels != 'rest']
+.. figure:: ../pics/ex_searchlight_vt_r0.*
+   :align: center
 
-    if options.zscore:
-        verbose(1, "Zscoring data samples")
-        zscore(data, perchunk=True, targetdtype='float32')
+   Searchlight (single element; univariate) accuracy maps for binary
+   classification *house* vs. *scrambledpix*.
 
-    if options.clf == 'knn':
-        clf = kNN(k=options.knearestdegree)
-    elif options.clf == 'lin_nu_svmc':
-        clf = LinearNuSVMC(nu=options.svm_nu)
-    elif options.clf == 'rbf_nu_svmc':
-        clf = RbfNuSVMC(nu=options.svm_nu)
-    else:
-        raise ValueError, 'Unknown classifier type: %s' % `options.clf`
-    verbose(3, "Using '%s' classifier" % options.clf)
+.. figure:: ../pics/ex_searchlight_vt_r1.*
+   :align: center
 
-    verbose(1, "Computing")
+   Searchlight (sphere of neighboring voxels; 9 elements) accuracy maps for
+   binary classification *house* vs.  *scrambledpix*.
 
-    verbose(3, "Assigning a measure to be CrossValidation")
-    # compute N-1 cross-validation with the selected classifier in each sphere
-    cv = CrossValidatedTransferError(TransferError(clf),
-                            NFoldSplitter(cvtype=options.crossfolddegree))
+.. figure:: ../pics/ex_searchlight_vt_r3.*
+   :align: center
 
-    verbose(3, "Generating Searchlight instance")
-    # contruct searchlight with 5mm radius
-    # this assumes that the spatial pixdim values in the source NIfTI file
-    # are specified in mm
-    sl = Searchlight(cv, radius=options.radius)
+   Searchlight (radius 3 elements; 123 voxels) accuracy maps for binary
+   classification *house* vs.  *scrambledpix*.
 
-    # run searchlight
-    verbose(3, "Running searchlight on loaded data")
-    results = sl(data)
-
-    if not ofile is None:
-        # map the result vector back into a nifti image
-        rimg = data.map2Nifti(results)
-
-        # save to file
-        rimg.save(ofile)
-    else:
-        print results
-
-if __name__ == "__main__":
-    main()
+With radius 0 (only the center voxel is part of the part the sphere) there is a
+clear distinction between two distributions. The *chance distribution*,
+relatively symetric and centered around the expected chance-performance at 50%.
+The second distribution, presumambly of voxels with univariate signal, is nicely
+segregated from that. Increasing the searchlight size significantly blurrs the
+accuracy map, but also lead to an increase in classification accuracy.
+"""

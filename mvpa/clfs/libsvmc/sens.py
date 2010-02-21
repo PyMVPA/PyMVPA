@@ -15,6 +15,7 @@ import numpy as N
 from mvpa.base import warning
 from mvpa.misc.state import StateVariable
 from mvpa.misc.param import Parameter
+from mvpa.base.types import asobjarray
 from mvpa.measures.base import Sensitivity
 from mvpa.datasets.base import Dataset
 
@@ -67,11 +68,11 @@ class LinearSVMWeights(Sensitivity):
         #            (str(clf), nr_class) +
         #            " classes. Make sure that it is what you intended to do" )
 
-        svcoef = N.matrix(model.getSVCoef())
-        svs = N.matrix(model.getSV())
-        rhos = N.asarray(model.getRho())
+        svcoef = N.matrix(model.get_sv_coef())
+        svs = N.matrix(model.get_sv())
+        rhos = N.asarray(model.get_rho())
 
-        self.states.biases = rhos
+        self.ca.biases = rhos
         if self.params.split_weights:
             if nr_class != 2:
                 raise NotImplementedError, \
@@ -79,7 +80,7 @@ class LinearSVMWeights(Sensitivity):
                       " non-binary classification task"
             # libsvm might have different idea on the ordering
             # of labels, so we would need to map them back explicitely
-            ds_labels = list(dataset.sa['labels'].unique) # labels in the dataset
+            ds_labels = list(dataset.sa[clf.params.targets_attr].unique) # labels in the dataset
             senses = [None for i in ds_labels]
             # first label is given positive value
             for i, (c, l) in enumerate( [(svcoef > 0, lambda x: x),
@@ -105,16 +106,17 @@ class LinearSVMWeights(Sensitivity):
             if nr_class <= 2:
                 # as simple as this
                 weights = (svcoef * svs).A
-                sens_labels = [tuple(svm_labels)]
+                # ??? First label seems corresponds to positive
+                sens_labels = [tuple(svm_labels[::-1])]
             else:
                 # we need to compose correctly per each pair of classifiers.
-                # See docstring for getSVCoef for more details on internal
+                # See docstring for get_sv_coef for more details on internal
                 # structure of bloody storage
 
                 # total # of pairs
                 npairs = nr_class * (nr_class-1)/2
                 # # of SVs in each class
-                NSVs_perclass = model.getNSV()
+                NSVs_perclass = model.get_n_sv()
                 # indices where each class starts in each row of SVs
                 # name is after similar variable in libsvm internals
                 nz_start = N.cumsum([0] + NSVs_perclass[:-1])
@@ -132,15 +134,21 @@ class LinearSVMWeights(Sensitivity):
                     for j in xrange(i+1, nr_class):
                         weights[ipair, :] = N.asarray(
                             svcoef[j-1, nz_start[i]:nz_end[i]]
-                            * svs[nz_start[i]:nz_end[i]])
-                        sens_labels += [(svm_labels[i], svm_labels[j])]
+                            * svs[nz_start[i]:nz_end[i]]
+                            +
+                            svcoef[i, nz_start[j]:nz_end[j]]
+                            * svs[nz_start[j]:nz_end[j]]
+                            )
+                        # ??? First label corresponds to positive
+                        # that is why [j], [i]
+                        sens_labels += [(svm_labels[j], svm_labels[i])]
                         ipair += 1      # go to the next pair
                 assert(ipair == npairs)
 
         if __debug__:
             debug('SVM',
                   "Extracting weights for %d-class SVM: #SVs=%s, " % \
-                  (nr_class, str(model.getNSV())) + \
+                  (nr_class, str(model.get_n_sv())) + \
                   " SVcoefshape=%s SVs.shape=%s Rhos=%s." % \
                   (svcoef.shape, svs.shape, rhos) + \
                   " Result: min=%f max=%f" % (N.min(weights), N.max(weights)))
@@ -148,9 +156,13 @@ class LinearSVMWeights(Sensitivity):
         # and we should have prepared the labels
         assert(sens_labels is not None)
 
-        # NOTE: `weights` is already and always 2D
-        weights_ds = Dataset(weights, sa={'labels': sens_labels})
+        if len(clf._attrmap):
+            if isinstance(sens_labels[0], tuple):
+                sens_labels = asobjarray(sens_labels)
+            sens_labels = clf._attrmap.to_literal(sens_labels, recurse=True)
 
+        # NOTE: `weights` is already and always 2D
+        weights_ds = Dataset(weights, sa={clf.params.targets_attr: sens_labels})
         return weights_ds
 
     _customizeDocInherit = True

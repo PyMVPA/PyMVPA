@@ -20,7 +20,7 @@ from mvpa.base.dataset import AttrDataset
 from mvpa.base.dataset import _expand_attribute
 from mvpa.misc.support import idhash as idhash_
 from mvpa.mappers.base import ChainMapper, FeatureSliceMapper
-from mvpa.mappers.flatten import FlattenMapper
+from mvpa.mappers.flatten import mask_mapper, FlattenMapper
 
 if __debug__:
     from mvpa.base import debug
@@ -101,6 +101,16 @@ class Dataset(AttrDataset):
         return ds
 
 
+    def item(self):
+        """Provide the first element of samples array.
+
+        Notes
+        -----
+        Introduced to provide compatibility with `numpy.asscalar`.
+        See `numpy.ndarray.item` for more information.
+        """
+        return self.samples.item()
+
 
     @property
     def idhash(self):
@@ -123,38 +133,45 @@ class Dataset(AttrDataset):
 
 
     @classmethod
-    def from_basic(cls, samples, labels=None, chunks=None, mapper=None):
-        """Create a Dataset from samples and elementary attributes.
+    def from_wizard(cls, samples, targets=None, chunks=None, mask=None,
+                    mapper=None, space=None):
+        """Convenience method to create dataset.
+
+        Datasets can be created from N-dimensional samples. Data arrays with
+        more than two dimensions are going to be flattened, while preserving
+        the first axis (separating the samples) and concatenating all other as
+        the second axis. Optionally, it is possible to specify targets and
+        chunk attributes for all samples, and masking of the input data (only
+        selecting elements corresponding to non-zero mask elements
 
         Parameters
         ----------
         samples : ndarray
-          The two-dimensional samples matrix.
-        labels : ndarray, optional
-        chunks : ndarray, optional
+          N-dimensional samples array. The first axis separates individual
+          samples.
+        targets : scalar or ndarray, optional
+          Labels for all samples. If a scalar is provided its values is assigned
+          as label to all samples.
+        chunks : scalar or ndarray, optional
+          Chunks definition for all samples. If a scalar is provided its values
+          is assigned as chunk of all samples.
+        mask : ndarray, optional
+          The shape of the array has to correspond to the shape of a single
+          sample (shape(samples)[1:] == shape(mask)). Its non-zero elements
+          are used to mask the input data.
+        space : str, optional
+          If provided it is assigned to the mapper instance that performs the
+          initial flattening of the data.
         mapper : Mapper instance, optional
           A (potentially trained) mapper instance that is used to forward-map
-          the samples upon construction of the dataset. The mapper must
-          have a simple feature space (samples x features) as output. Use
-          chained mappers to achieve that, if necessary.
+          the already flattened and masked samples upon construction of the
+          dataset. The mapper must have a simple feature space (samples x
+          features) as output. Use a `ChainMapper` to achieve that, if
+          necessary.
 
         Returns
         -------
         instance : Dataset
-
-        Notes
-        -----
-        blah blah
-
-        it needs to be a little longer to be able to pick it up
-
-        See Also
-        --------
-        blah blah
-
-        Examples
-        --------
-        blah blah
         """
         # for all non-ndarray samples you need to go with the constructor
         samples = N.asanyarray(samples)
@@ -162,10 +179,10 @@ class Dataset(AttrDataset):
         # compile the necessary samples attributes collection
         sa_items = {}
 
-        if not labels is None:
-            sa_items['labels'] = _expand_attribute(labels,
+        if not targets is None:
+            sa_items['targets'] = _expand_attribute(targets,
                                                    samples.shape[0],
-                                                  'labels')
+                                                  'targets')
 
         if not chunks is None:
             # unlike previous implementation, we do not do magic to do chunks
@@ -176,39 +193,87 @@ class Dataset(AttrDataset):
 
         # common checks should go into __init__
         ds = cls(samples, sa=sa_items)
+        # apply mask through mapper
+        if mask is None:
+            if len(samples.shape) > 2:
+                # if we have multi-dim data
+                fm = FlattenMapper(shape=samples.shape[1:], inspace=space)
+                ds = ds.get_mapped(fm)
+        else:
+            mm = mask_mapper(mask, inspace=space)
+            ds = ds.get_mapped(mm)
+
+        # apply generic mapper
         if not mapper is None:
             ds = ds.get_mapped(mapper)
         return ds
 
 
     @classmethod
-    def from_masked(cls, samples, labels=None, chunks=None, mask=None,
-                    space=None):
-        """
-        """
-        # need to have arrays
-        samples = N.asanyarray(samples)
+    def from_channeltimeseries(cls, samples, targets=None, chunks=None,
+                               t0=None, dt=None, channelids=None):
+        """Create a dataset from segmented, per-channel timeseries.
 
-        # use full mask if none is provided
-        if mask is None:
-            mask = N.ones(samples.shape[1:], dtype='bool')
+        Channels are assumes to contain multiple, equally spaced acquisition
+        timepoints. The dataset will contain additional feature attributes
+        associating each feature with a specific `channel` and `timepoint`.
 
-        fm = FlattenMapper(shape=mask.shape, inspace=space)
-        flatmask = fm.forward1(mask)
-        submapper = FeatureSliceMapper(flatmask, dshape=flatmask.shape)
-        mapper = ChainMapper([fm, submapper])
-        return cls.from_basic(samples, labels=labels, chunks=chunks,
-                              mapper=mapper)
+        Parameters
+        ----------
+        samples : ndarray
+          Three-dimensional array: (samples x channels x timepoints).
+        t0 : float
+          Reference time of the first timepoint. Can be used to preserve
+          information about the onset of some stimulation. Preferably in
+          seconds.
+        dt : float
+          Temporal distance between two timepoints. Preferably in seconds.
+        channelids : list
+          List of channel names.
+        targets, chunks
+          See `Dataset.from_wizard` for documentation about these arguments.
+        """
+        # check samples
+        if len(samples.shape) != 3:
+            raise ValueError(
+                "Input data should be (samples x channels x timepoints. Got: %s"
+                % samples.shape)
+
+        if not t0 is None and not dt is None:
+            timepoints = N.arange(t0, t0 + samples.shape[2] * dt, dt)
+            # broadcast over all channels
+            timepoints = N.vstack([timepoints] * samples.shape[1])
+        else:
+            timepoints = None
+
+        if not channelids is None:
+            if len(channelids) != samples.shape[1]:
+                raise ValueError(
+                    "Number of channel ids does not match channels in the "
+                    "sample data. Expected %i, but got %i"
+                    % (samples.shape[1], len(channelids)))
+            # broadcast over all timepoints
+            channelids = N.dstack([channelids] * samples.shape[2])[0]
+
+        ds = cls.from_wizard(samples, targets=targets, chunks=chunks)
+
+        # add additional attributes
+        if not timepoints is None:
+            ds.fa['timepoints'] = ds.a.mapper.forward1(timepoints)
+        if not channelids is None:
+            ds.fa['channels'] = ds.a.mapper.forward1(channelids)
+
+        return ds
 
 
     # shortcut properties
     S = property(fget=lambda self:self.samples)
-    labels = property(fget=lambda self:self.sa.labels,
-                      fset=lambda self, v:self.sa.__setattr__('labels', v))
-    uniquelabels = property(fget=lambda self:self.sa['labels'].unique)
+    targets = property(fget=lambda self:self.sa.targets,
+                      fset=lambda self, v:self.sa.__setattr__('targets', v))
+    uniquetargets = property(fget=lambda self:self.sa['targets'].unique)
 
-    L = labels
-    UL = property(fget=lambda self:self.sa['labels'].unique)
+    T = targets
+    UT = property(fget=lambda self:self.sa['targets'].unique)
     chunks = property(fget=lambda self:self.sa.chunks,
                       fset=lambda self, v:self.sa.__setattr__('chunks', v))
     uniquechunks = property(fget=lambda self:self.sa['chunks'].unique)
@@ -218,6 +283,6 @@ class Dataset(AttrDataset):
     O = property(fget=lambda self:self.a.mapper.reverse(self.samples))
 
 
-
 # convenience alias
-dataset = Dataset.from_basic
+dataset_wizard = Dataset.from_wizard
+

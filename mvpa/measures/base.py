@@ -6,8 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Base class for data measures: algorithms that quantify properties of
-datasets.
+"""Base classes for measures: algorithms that quantify properties of datasets.
 
 Besides the `DatasetMeasure` base class this module also provides the
 (abstract) `FeaturewiseDatasetMeasure` class. The difference between a general
@@ -25,10 +24,12 @@ import mvpa.support.copy as copy
 
 from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.args import group_kwargs
-from mvpa.base.dochelpers import enhancedDocString
+from mvpa.base.types import asobjarray
+
+from mvpa.base.dochelpers import enhanced_doc_string
 from mvpa.base import externals, warning
-from mvpa.clfs.stats import autoNullDist
-from mvpa.base.types import is_datasetlike
+from mvpa.clfs.stats import auto_null_dist
+from mvpa.base.dataset import AttrDataset
 from mvpa.datasets import Dataset, vstack
 
 if __debug__:
@@ -57,6 +58,7 @@ class DatasetMeasure(ClassWithCollections):
     For developers: All subclasses shall get all necessary parameters via
     their constructor, so it is possible to get the same type of measure for
     multiple datasets by passing them to the __call__() method successively.
+
     """
 
     raw_results = StateVariable(enabled=False,
@@ -68,32 +70,32 @@ class DatasetMeasure(ClassWithCollections):
     """Stores the t-score corresponding to null_prob under assumption
     of Normal distribution"""
 
-    def __init__(self, mapper=None, null_dist=None, **kwargs):
+    def __init__(self, postproc=None, null_dist=None, **kwargs):
         """Does nothing special.
 
         Parameters
         ----------
-        mapper : Mapper instance
-          This mapper is applied in `__call__()` to perform a final
-          processing step on the to be returned dataset measure.
-          If None, nothing is done.
+        postproc : Mapper instance
+          Mapper to perform post-processing of results. This mapper is applied
+          in `__call__()` to perform a final processing step on the to be
+          returned dataset measure. If None, nothing is done.
         null_dist : instance of distribution estimator
           The estimated distribution is used to assign a probability for a
           certain value of the computed measure.
         """
         ClassWithCollections.__init__(self, **kwargs)
 
-        self.__mapper = mapper
+        self.__postproc = postproc
         """Functor to be called in return statement of all subclass __call__()
         methods."""
-        null_dist_ = autoNullDist(null_dist)
+        null_dist_ = auto_null_dist(null_dist)
         if __debug__:
             debug('SA', 'Assigning null_dist %s whenever original given was %s'
                   % (null_dist_, null_dist))
         self.__null_dist = null_dist_
 
 
-    __doc__ = enhancedDocString('DatasetMeasure', locals(), ClassWithCollections)
+    __doc__ = enhanced_doc_string('DatasetMeasure', locals(), ClassWithCollections)
 
 
     def __call__(self, dataset):
@@ -103,14 +105,15 @@ class DatasetMeasure(ClassWithCollections):
         dataset.
 
         Returns the computed measure in some iterable (list-like)
-        container applying mapper if such is defined
+        container applying a post-processing mapper if such is defined.
         """
         result = self._call(dataset)
         result = self._postcall(dataset, result)
 
         # XXX Remove when "sensitivity-return-dataset" transition is done
         if __debug__ \
-           and not is_datasetlike(result) and not len(result.shape) == 1:
+           and not isinstance(result, AttrDataset) \
+           and not len(result.shape) == 1:
             warning("Postprocessing of '%s' doesn't return a Dataset, or "
                     "1D-array (got: '%s')."
                     % (self.__class__.__name__, result))
@@ -131,18 +134,13 @@ class DatasetMeasure(ClassWithCollections):
     def _postcall(self, dataset, result):
         """Some postprocessing on the result
         """
-        if not is_datasetlike(result):
-            # Unless we got the results in a dataset, ensure that we have some
-            # iterable (could be a scalar if it was just a single value)
-            result = N.atleast_1d(result)
-        self.raw_result = result
-        self.states.raw_results = result
+        self.ca.raw_results = result
 
         # post-processing
-        if not self.__mapper is None:
+        if not self.__postproc is None:
             if __debug__:
-                debug("SA_", "Applying mapper %s" % self.__mapper)
-            result = self.__mapper.forward(result)
+                debug("SA_", "Applying mapper %s" % self.__postproc)
+            result = self.__postproc.forward(result)
 
         # estimate the NULL distribution when functor is given
         if not self.__null_dist is None:
@@ -157,12 +155,12 @@ class DatasetMeasure(ClassWithCollections):
             measure.__null_dist = None
             self.__null_dist.fit(measure, dataset)
 
-            if self.states.is_enabled('null_t'):
+            if self.ca.is_enabled('null_t'):
                 # get probability under NULL hyp, but also request
                 # either it belong to the right tail
                 null_prob, null_right_tail = \
                            self.__null_dist.p(result, return_tails=True)
-                self.states.null_prob = null_prob
+                self.ca.null_prob = null_prob
 
                 externals.exists('scipy', raiseException=True)
                 from scipy.stats import norm
@@ -188,7 +186,7 @@ class DatasetMeasure(ClassWithCollections):
                 clip = 1e-16
                 null_t = norm.ppf(N.clip(acdf, clip, 1.0 - clip))
                 null_t[~null_right_tail] *= -1.0 # revert sign for negatives
-                self.states.null_t = null_t                 # store
+                self.ca.null_t = null_t                 # store
             else:
                 # get probability of result under NULL hypothesis if available
                 # and don't request tail information
@@ -203,8 +201,8 @@ class DatasetMeasure(ClassWithCollections):
         Includes only arguments which differ from default ones
         """
         prefixes = prefixes[:]
-        if self.__mapper is not None:
-            prefixes.append("mapper=%s" % self.__mapper)
+        if self.__postproc is not None:
+            prefixes.append("postproc=%s" % self.__postproc)
         if self.__null_dist is not None:
             prefixes.append("null_dist=%s" % self.__null_dist)
         return super(DatasetMeasure, self).__repr__(prefixes=prefixes)
@@ -223,9 +221,9 @@ class DatasetMeasure(ClassWithCollections):
         return self.__null_dist
 
     @property
-    def mapper(self):
+    def postproc(self):
         """Return mapper"""
-        return self.__mapper
+        return self.__postproc
 
 
 class FeaturewiseDatasetMeasure(DatasetMeasure):
@@ -280,7 +278,8 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         # This method get the 'result' either as a 1D array, or as a Dataset
         # everything else is illegal
         if __debug__ \
-           and not is_datasetlike(result) and not len(result.shape) == 1:
+           and not isinstance(result, AttrDataset) \
+           and not len(result.shape) == 1:
                raise RuntimeError("FeaturewiseDatasetMeasures have to return "
                                   "their results as 1D array, or as a Dataset "
                                   "(error made by: '%s')." % repr(self))
@@ -288,17 +287,17 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         if len(result.shape) > 1:
             n_base = len(result)
             """Number of base sensitivities"""
-            if self.states.is_enabled('base_sensitivities'):
+            if self.ca.is_enabled('base_sensitivities'):
                 b_sensitivities = []
-                if not self.states.has_key('biases'):
+                if not self.ca.has_key('biases'):
                     biases = None
                 else:
-                    biases = self.states.biases
-                    if len(self.states.biases) != n_base:
+                    biases = self.ca.biases
+                    if len(self.ca.biases) != n_base:
                         warning("Number of biases %d differs from number "
                                 "of base sensitivities %d which could happen "
                                 "when measure is collided across labels."
-                                % (len(self.states.biases), n_base))
+                                % (len(self.ca.biases), n_base))
                 for i in xrange(n_base):
                     if not biases is None:
                         if n_base > 1 and len(biases) == 1:
@@ -311,11 +310,11 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
                     b_sensitivities = StaticDatasetMeasure(
                         measure = result[i],
                         bias = bias)
-                self.states.base_sensitivities = b_sensitivities
+                self.ca.base_sensitivities = b_sensitivities
 
         # XXX Remove when "sensitivity-return-dataset" transition is done
         if __debug__ \
-           and not is_datasetlike(result) and not len(result.shape) == 1:
+           and not isinstance(result, AttrDataset) and not len(result.shape) == 1:
             warning("FeaturewiseDatasetMeasures-related post-processing "
                     "of '%s' doesn't return a Dataset, or 1D-array."
                     % self.__class__.__name__)
@@ -364,6 +363,9 @@ class StaticDatasetMeasure(DatasetMeasure):
 # Flavored implementations of FeaturewiseDatasetMeasures
 
 class Sensitivity(FeaturewiseDatasetMeasure):
+    """Sensitivities of features for a given Classifier.
+
+    """
 
     _LEGAL_CLFS = []
     """If Sensitivity is classifier specific, classes of classifiers
@@ -375,9 +377,9 @@ class Sensitivity(FeaturewiseDatasetMeasure):
 
         Parameters
         ----------
-        clf : :class:`Classifier`
+        clf : `Classifier`
           classifier to use.
-        force_training : Bool
+        force_training : bool
           if classifier was already trained -- do not retrain
         """
 
@@ -435,7 +437,8 @@ class Sensitivity(FeaturewiseDatasetMeasure):
         return FeaturewiseDatasetMeasure.__call__(self, dataset)
 
 
-    def _setClassifier(self, clf):
+    ##REF: Name was automagically refactored
+    def _set_classifier(self, clf):
         self.__clf = clf
 
 
@@ -449,11 +452,11 @@ class Sensitivity(FeaturewiseDatasetMeasure):
     def feature_ids(self):
         """Return feature_ids used by the underlying classifier
         """
-        return self.__clf._getFeatureIds()
+        return self.__clf._get_feature_ids()
 
 
     clf = property(fget=lambda self:self.__clf,
-                   fset=_setClassifier)
+                   fset=_set_classifier)
 
 
 
@@ -467,7 +470,7 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
     #     well as in the parent -- FeaturewiseDatasetMeasure
     # YYY because we don't use parent's _call. Needs RF
     def __init__(self, analyzers=None,  # XXX should become actually 'measures'
-                 combiner=None, #FirstAxisMean,
+                 combiner=None, #first_axis_mean,
                  **kwargs):
         """Initialize CombinedFeaturewiseDatasetMeasure
 
@@ -507,7 +510,7 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
         if len(sensitivities) == 1:
             sensitivities = N.asanyarray(sensitivities[0])
         else:
-            if is_datasetlike(sensitivities[0]):
+            if isinstance(sensitivities[0], AttrDataset):
                 smerged = None
                 for i, s in enumerate(sensitivities):
                     s.sa['splits'] = N.repeat(i, len(s))
@@ -520,7 +523,7 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
                 sensitivities = \
                     Dataset(sensitivities,
                             sa={'splits': N.arange(len(sensitivities))})
-        self.states.sensitivities = sensitivities
+        self.ca.sensitivities = sensitivities
         return sensitivities
 
 
@@ -531,14 +534,15 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
             for anal in self.__analyzers:
                 anal.untrain()
 
-    def _setAnalyzers(self, analyzers):
+    ##REF: Name was automagically refactored
+    def _set_analyzers(self, analyzers):
         """Set the analyzers
         """
         self.__analyzers = analyzers
         """Analyzers to use"""
 
     analyzers = property(fget=lambda x:x.__analyzers,
-                         fset=_setAnalyzers,
+                         fset=_set_analyzers,
                          doc="Used analyzers")
 
 
@@ -581,7 +585,7 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
 
         # Here we provide mapper None since the postprocessing should be done
         # at the toplevel and just once
-        FeaturewiseDatasetMeasure.__init__(self, mapper=None, **kwargs)
+        FeaturewiseDatasetMeasure.__init__(self, postproc=None, **kwargs)
 
         self.__analyzer = analyzer
         """Analyzer to use per split"""
@@ -605,8 +609,8 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
         insplit_index = self.__insplit_index
 
         sensitivities = []
-        self.states.splits = splits = []
-        store_splits = self.states.is_enabled("splits")
+        self.ca.splits = splits = []
+        store_splits = self.ca.is_enabled("splits")
 
         for ind,split in enumerate(self.__splitter(dataset)):
             ds = split[insplit_index]
@@ -620,7 +624,7 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
         result = vstack(sensitivities)
         result.sa['splits'] = N.concatenate([[i] * len(s)
                                 for i, s in enumerate(sensitivities)])
-        self.states.sensitivities = sensitivities
+        self.ca.sensitivities = sensitivities
         return result
 
 
@@ -675,7 +679,7 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         # create analyzers
         for clf in self.clf.clfs:
             if self.__analyzer is None:
-                analyzer = clf.getSensitivityAnalyzer(**(self._slave_kwargs))
+                analyzer = clf.get_sensitivity_analyzer(**(self._slave_kwargs))
                 if analyzer is None:
                     raise ValueError, \
                           "Wasn't able to figure basic analyzer for clf %s" % \
@@ -741,7 +745,7 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
         analyzer = self.__analyzer
 
         if analyzer is None:
-            analyzer = clfclf.getSensitivityAnalyzer(
+            analyzer = clfclf.get_sensitivity_analyzer(
                 **(self._slave_kwargs))
             if analyzer is None:
                 raise ValueError, \
@@ -762,7 +766,7 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
             analyzer._force_training = False
 
         result = analyzer._call(dataset)
-        self.states.clf_sensitivities = result
+        self.ca.clf_sensitivities = result
 
         return result
 
@@ -789,20 +793,28 @@ class RegressionAsClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyz
     def _call(self, dataset):
         sens = super(RegressionAsClassifierSensitivityAnalyzer,
                      self)._call(dataset)
-        if 'labels' in sens.sa:
-            # TODO : handle tuple labels case
-            sens.labels[:] = [self._trained_attrmap[l] for l in sens.sa.labels]
+        # We can have only a single sensitivity out of regression
+        assert(sens.shape[0] == 1)
+        if 'targets' not in sens.sa:
+            clf = self.clf
+            # We just assign a tuple of all labels sorted
+            labels = tuple(sorted(clf._trained_attrmap.values()))
+            if len(clf._trained_attrmap):
+                labels = clf._trained_attrmap.to_literal(labels, recurse=True)
+            sens.sa['targets'] = asobjarray([labels])
         return sens
 
 
-class FeatureSelectionClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
+class FeatureSelectionClassifierSensitivityAnalyzer(
+    ProxyClassifierSensitivityAnalyzer):
     """Set sensitivity analyzer output be reverse mapped using mapper of the
     slave classifier"""
 
     def _call(self, dataset):
-        sens = super(FeatureSelectionClassifierSensitivityAnalyzer, self)._call(dataset)
+        sens = super(FeatureSelectionClassifierSensitivityAnalyzer,
+                     self)._call(dataset)
         # `sens` is either 1D array, or Dataset
-        if is_datasetlike(sens):
+        if isinstance(sens, AttrDataset):
             return self.clf.maskclf.mapper.reverse(sens)
         else:
             return self.clf.maskclf.mapper.reverse1(sens)

@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA simple report facility"""
 
-import unittest, os
+import unittest, os, shutil
 from tempfile import mktemp
 
 from mvpa.base import verbose, externals
@@ -16,7 +16,7 @@ from mvpa.base import verbose, externals
 from mvpa.base.report_dummy import Report as DummyReport
 _test_classes = [ DummyReport ]
 
-from tests_warehouse import sweepargs
+from mvpa.testing import sweepargs
 
 if externals.exists('reportlab', raiseException=False):
     from mvpa.base.report import Report
@@ -29,7 +29,8 @@ class ReportTest(unittest.TestCase):
     """Just basic testing of reports -- pretty much that nothing fails
     """
 
-    def auxBasic(self, dirname, rc):
+    ##REF: Name was automagically refactored
+    def aux_basic(self, dirname, rc):
         """Helper function -- to assure that all filehandlers
            get closed so we could remove trash directory.
 
@@ -101,23 +102,13 @@ class ReportTest(unittest.TestCase):
 
 
     @sweepargs(rc=_test_classes)
-    def testBasic(self, rc):
+    def test_basic(self, rc):
         """Test all available reports, real or dummy for just working
         """
         dirname = mktemp('mvpa', 'test_report')
-        self.auxBasic(dirname, rc)
+        self.aux_basic(dirname, rc)
         # cleanup
-        if os.path.exists(dirname):
-            # poor man recursive remove
-            for f in os.listdir(dirname):
-                try:
-                    os.remove(os.path.join(dirname, f))
-                except:
-                    # could be a directory... but no deeper ones expected
-                    for f2 in os.listdir(os.path.join(dirname, f)):
-                        os.remove(os.path.join(dirname, f, f2))
-                    os.rmdir(os.path.join(dirname, f))
-            os.rmdir(dirname)
+        shutil.rmtree(dirname, ignore_errors=True)
 
 
 def suite():

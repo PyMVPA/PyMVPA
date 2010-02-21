@@ -28,8 +28,8 @@ import pylab as P
 train_size = 40
 test_size = 100
 F = 1
-dataset = data_generators.sinModulated(train_size, F)
-dataset_test = data_generators.sinModulated(test_size, F, flat=True)
+dataset = data_generators.sin_modulated(train_size, F)
+dataset_test = data_generators.sin_modulated(test_size, F, flat=True)
 
 print "Looking for better hyperparameters: grid search"
 
@@ -48,9 +48,9 @@ for x in sigma_noise_steps:
     for y in length_scale_steps:
         kse = SquaredExponentialKernel(length_scale=y)
         g = GPR(kse, sigma_noise=x)
-        g.states.enable("log_marginal_likelihood")
+        g.ca.enable("log_marginal_likelihood")
         g.train(dataset)
-        lml[i, j] = g.states.log_marginal_likelihood
+        lml[i, j] = g.ca.log_marginal_likelihood
         if lml[i, j] > lml_best:
             lml_best = lml[i, j]
             length_scale_best = y
@@ -89,7 +89,7 @@ print "number of expected upcrossing on the unitary intervale:", \
 # Plot predicted values using best hyperparameters:
 # P.figure()
 # compute_prediction(1.0, length_scale_best, sigma_noise_best, True, dataset,
-#                    dataset_test.samples, dataset_test.labels, F, True)
+#                    dataset_test.samples, dataset_test.targets, F, True)
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
     P.show()

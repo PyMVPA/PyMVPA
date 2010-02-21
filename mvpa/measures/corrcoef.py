@@ -27,7 +27,7 @@ class CorrCoef(FeaturewiseDatasetMeasure):
     XXX: Explain me!
     """
 
-    def __init__(self, pvalue=False, attr='labels', **kwargs):
+    def __init__(self, pvalue=False, attr='targets', **kwargs):
         """Initialize
 
         Parameters

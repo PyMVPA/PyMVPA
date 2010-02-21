@@ -1,4 +1,4 @@
-.. -*- mode: rst; fill-column: 78 -*-
+.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
@@ -26,8 +26,8 @@ terms found in the literature to the terminology used in this manual.
 
   Block-averaging
     Averaging all samples recorded during a block of continuous stimulation in a
-    block-design fMRI experiment. The rationale behind this technique is, that
-    a averaging might lead to an improved signal-to-noise ratio. However,
+    block-design :term:`fMRI` experiment. The rationale behind this technique is, that
+    averaging might lead to an improved signal-to-noise ratio. However,
     averaging further decreases the number of samples in a dataset, which is
     already very low in typical fMRI datasets, especially in comparison to the
     number of features/voxels. Block-averaging might nevertheless improve the
@@ -59,6 +59,9 @@ terms found in the literature to the terminology used in this manual.
   Dataset
     In PyMVPA a dataset is the combination of samples, their ...
 
+  Dataset attribute
+    An arbitrary auxiliary information that is stored in a dataset.
+
   Decoding
     This term is usually used to refer to the application of machine learning or
     pattern recognition techniques to brainimaging datasets, and therefore is
@@ -69,7 +72,7 @@ terms found in the literature to the terminology used in this manual.
     Sometimes used to refer to a group of successively acquired samples, and,
     thus, related to a :term:`chunk`.
 
-  Examplar
+  Exemplar
     Another term for :term:`sample`.
 
   Feature
@@ -78,24 +81,25 @@ terms found in the literature to the terminology used in this manual.
     reflecting specific aspect of data, such as a specific spectral
     component.
 
+  Feature attribute
+    Analogous to a :term:`sample attribute`, this is a per-feature vector of
+    auxiliary information that is stored in a dataset.
+
   Feature Selection
     A technique that targets detection of features relevant to a given
     problem, so that their selection improves generalization of the
     constructed model.
 
   fMRI
-    This abbrevation stands for *functional magnetic resonance imaging*.
+    This acronym stands for *functional magnetic resonance imaging*.
 
   Generalization
     An ability of a model to perform reliably well on any novel data in
     the given domain.
 
   Label
-    A label associates each :term:`sample` in the :term:`dataset` with
-    a certain category, experimental condition or, in case of a regression
-    problem, with some metric variable. The label therefore defines the model
-    that a classifier has to learn. The labels also provide the "true"
-    model value when computing classifier errors.
+    A label is a special case of a :term:`target` for specifying discrete
+    categories of :term:`samples` in a classification analyses.
 
   Machine Learning
     A field of Computer Science that aims at constructing methods, such
@@ -112,24 +116,33 @@ terms found in the literature to the terminology used in this manual.
 
   Neural Data Modality
     A reflection of neural activity collected using some available
-    instrumental method (\eg EEG, :term:`fMRI`).
+    instrumental method (e.g., EEG, :term:`fMRI`).
 
   Processing object
-   Most objects dealing with data are implemented as processing objects. Such
-   objects are instantiated *once*, with all appropriate parameters configured
-   as desired. When created, they can be used multiple time by simply calling
-   them with new data.
+    Most objects dealing with data are implemented as processing objects. Such
+    objects are instantiated *once*, with all appropriate parameters
+    configured as desired. When created, they can be used multiple times by
+    simply calling them with new data.
 
   Sample
-    A sample a vector with observations for all :term:`feature` variables.
+    A sample is a vector with observations for all :term:`feature` variables.
+
+  Sample attribute
+    A per-sample vector of auxiliary information that is stored in a
+    dataset. This could, for example, be a vector identifying specific
+    :term:`chunk`\ s of samples.
 
   Sensitivity
-    The sensitivity is a score assigned to a particular :term:`feature` with
-    respect to its impact on a classifier's decision. The sensitivity is
-    often available from a classifier's :term:`weight vector`. There are some
-    more scores which are similar to a sensitivity in terms of indicating the
-    "importance" of a particular feature -- examples are a univariate
-    :ref:`anova` score or a :ref:`noise_perturbation` measure.
+
+   A sensitivity is a score assigned to each :term:`feature` with respect to
+    its impact on the performance of the learner.  So, for a classifier,
+    sensitivity of a feature might describe its influence on generalization
+    performance of the classifier.  In case of linear classifiers, it could
+    simply be coefficients of separating hyperplane given by :term:`weight
+    vector`. There exist additional scores which are similar to sensitivities
+    in terms of indicating the "importance" of a particular feature --
+    examples are a univariate :ref:`anova` score or a
+    :ref:`noise_perturbation` measure.
 
   Sensitivity Map
     A vector of several sensitivity scores -- one for each feature in a
@@ -142,12 +155,19 @@ terms found in the literature to the terminology used in this manual.
   Statistical Discrimination Map (SDM)
     This is another term for a :term:`sensitivity map`, used in e.g.
     :ref:`Sato et al. (2008) <SMM+08>`, where instead of raw sensitivity
-    significance testing result is assigned.
+    the result of significance testing is assigned.
 
   Statistical Learning
     A field of science related to :term:`machine learning` which aims at
     exploiting statistical properties of data to construct robust models, and to
     assess their convergence and :term:`generalization` performances.
+
+  Target
+    A target associates each :term:`sample` in the :term:`dataset` with a
+    certain category, experimental condition or, in case of a regression
+    problem, with some metric variable.  In case of supervised learning
+    algorithm targets define the model to be trained, and provide the "ground
+    truth" for assessing the model's generalization performance.
 
   Time-compression
     This usually refers to the :term:`block-averaging` of samples from a

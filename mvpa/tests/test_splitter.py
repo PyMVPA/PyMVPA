@@ -8,25 +8,25 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA pattern handling"""
 
-from mvpa.datasets.base import dataset
+import unittest
+import numpy as N
+
+from mvpa.datasets.base import dataset_wizard
 from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter, \
                                    NoneSplitter, HalfSplitter, \
                                    CustomSplitter, NGroupSplitter
-import unittest
-from numpy.testing import assert_array_equal
-from nose.tools import ok_
-import numpy as N
 
+from mvpa.testing.tools import ok_, assert_array_equal
 
 class SplitterTests(unittest.TestCase):
 
     def setUp(self):
-        self.data = dataset(N.random.normal(size=(100,10)),
-                            labels=[ i%4 for i in range(100) ],
+        self.data = dataset_wizard(N.random.normal(size=(100,10)),
+                            targets=[ i%4 for i in range(100) ],
                             chunks=[ i/10 for i in range(100)])
 
 
-    def testSimplestCVPatGen(self):
+    def test_simplest_cv_pat_gen(self):
         # create the generator
         nfs = NFoldSplitter(cvtype=1)
 
@@ -42,7 +42,7 @@ class SplitterTests(unittest.TestCase):
             self.failUnless( p[1].chunks[0] == i )
 
 
-    def testOddEvenSplit(self):
+    def test_odd_even_split(self):
         oes = OddEvenSplitter()
 
         splits = [ (train, test) for (train, test) in oes(self.data) ]
@@ -67,7 +67,7 @@ class SplitterTests(unittest.TestCase):
             self.failUnless(split[1] != None)
 
 
-    def testHalfSplit(self):
+    def test_half_split(self):
         hs = HalfSplitter()
 
         splits = [ (train, test) for (train, test) in hs(self.data) ]
@@ -91,7 +91,7 @@ class SplitterTests(unittest.TestCase):
             self.failUnless(split[0] != None)
             self.failUnless(split[1] != None)
 
-    def testNGroupSplit(self):
+    def test_n_group_split(self):
         """Test NGroupSplitter alongside with the reversal of the
         order of spit out datasets
         """
@@ -157,7 +157,7 @@ class SplitterTests(unittest.TestCase):
         s20 = NGroupSplitter(20)
         self.assertRaises(ValueError,splitcall,s20,self.data)
 
-    def testCustomSplit(self):
+    def test_custom_split(self):
         #simulate half splitter
         hs = CustomSplitter([(None,[0,1,2,3,4]),(None,[5,6,7,8,9])])
         splits = list(hs(self.data))
@@ -210,29 +210,29 @@ class SplitterTests(unittest.TestCase):
         csall = CustomSplitter([([0,3,4],[5,9],[2])],
                                nrunspersplit=3)
         # lets craft simpler dataset
-        #ds = Dataset(samples=N.arange(12), labels=[1]*6+[2]*6, chunks=1)
+        #ds = Dataset(samples=N.arange(12), targets=[1]*6+[2]*6, chunks=1)
         splits = list(cs(self.data))
         splitsall = list(csall(self.data))
 
         self.failUnless(len(splits) == 3)
-        ul = self.data.sa['labels'].unique
+        ul = self.data.sa['targets'].unique
 
         assert_array_equal(
-            (N.array(splitsall[0][0].get_nsamples_per_attr('labels').values())
+            (N.array(splitsall[0][0].get_nsamples_per_attr('targets').values())
                 *[0.3, 0.6, 1.0, 0.5]).round().astype(int),
-            N.array(splits[0][0].get_nsamples_per_attr('labels').values()))
+            N.array(splits[0][0].get_nsamples_per_attr('targets').values()))
 
         assert_array_equal(
-            (N.array(splitsall[0][1].get_nsamples_per_attr('labels').values())
+            (N.array(splitsall[0][1].get_nsamples_per_attr('targets').values())
                 * 0.5).round().astype(int),
-            N.array(splits[0][1].get_nsamples_per_attr('labels').values()))
+            N.array(splits[0][1].get_nsamples_per_attr('targets').values()))
 
         assert_array_equal(
-            N.array(splitsall[0][2].get_nsamples_per_attr('labels').values()),
-            N.array(splits[0][2].get_nsamples_per_attr('labels').values()))
+            N.array(splitsall[0][2].get_nsamples_per_attr('targets').values()),
+            N.array(splits[0][2].get_nsamples_per_attr('targets').values()))
 
 
-    def testNoneSplitter(self):
+    def test_none_splitter(self):
         nos = NoneSplitter()
         splits = [ (train, test) for (train, test) in nos(self.data) ]
         self.failUnless(len(splits) == 1)
@@ -256,7 +256,7 @@ class SplitterTests(unittest.TestCase):
         for split in splits:
             self.failUnless(split[0] == None)
             self.failUnless(split[1].nsamples == 40)
-            ok_(split[1].get_nsamples_per_attr('labels').values() ==
+            ok_(split[1].get_nsamples_per_attr('targets').values() ==
                 [10,10,10,10])
 
         # auto-determined
@@ -268,22 +268,22 @@ class SplitterTests(unittest.TestCase):
         for split in splits:
             self.failUnless(split[0] == None)
             self.failUnless(split[1].nsamples == 100)
-            ok_(split[1].get_nsamples_per_attr('labels').values() ==
+            ok_(split[1].get_nsamples_per_attr('targets').values() ==
                 [25,25,25,25])
 
 
-    def testLabelSplitter(self):
-        oes = OddEvenSplitter(attr='labels')
+    def test_label_splitter(self):
+        oes = OddEvenSplitter(attr='targets')
 
         splits = [ (first, second) for (first, second) in oes(self.data) ]
 
-        assert_array_equal(splits[0][0].sa['labels'].unique, [0,2])
-        assert_array_equal(splits[0][1].sa['labels'].unique, [1,3])
-        assert_array_equal(splits[1][0].sa['labels'].unique, [1,3])
-        assert_array_equal(splits[1][1].sa['labels'].unique, [0,2])
+        assert_array_equal(splits[0][0].sa['targets'].unique, [0,2])
+        assert_array_equal(splits[0][1].sa['targets'].unique, [1,3])
+        assert_array_equal(splits[1][0].sa['targets'].unique, [1,3])
+        assert_array_equal(splits[1][1].sa['targets'].unique, [0,2])
 
 
-    def testCountedSplitting(self):
+    def test_counted_splitting(self):
         # count > #chunks, should result in 10 splits
         nchunks = len(self.data.sa['chunks'].unique)
         for strategy in NFoldSplitter._STRATEGIES:
@@ -329,7 +329,7 @@ class SplitterTests(unittest.TestCase):
                           % strategy
 
 
-    def testDiscardedBoundaries(self):
+    def test_discarded_boundaries(self):
         splitters = [NFoldSplitter(),
                      NFoldSplitter(discard_boundary=(0,1)), # discard testing
                      NFoldSplitter(discard_boundary=(1,0)), # discard training

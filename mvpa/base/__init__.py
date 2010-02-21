@@ -20,7 +20,7 @@ PyMVPA code, and are generic building blocks
 __docformat__ = 'restructuredtext'
 
 
-import sys
+import sys, os
 from mvpa.base.config import ConfigManager
 from mvpa.base.verbosity import LevelLogger, OnceLogger
 
@@ -56,7 +56,11 @@ class __Singleton:
 # As the very first step: Setup configuration registry instance and
 # read all configuration settings from files and env variables
 #
-cfg = __Singleton('cfg', ConfigManager())
+_cfgfile = os.environ.get('MVPACONFIG', None)
+if _cfgfile:
+    # We have to provide a list
+    _cfgfile = [_cfgfile]
+cfg = __Singleton('cfg', ConfigManager(_cfgfile))
 
 verbose = __Singleton("verbose", LevelLogger(
     handlers = cfg.get('verbose', 'output', default='stdout').split(',')))
@@ -138,11 +142,12 @@ class WarningLog(OnceLogger):
         OnceLogger.__call__(self, msgid, fullmsg, self.__maxcount)
 
 
-    def _setMaxCount(self, value):
+    ##REF: Name was automagically refactored
+    def _set_max_count(self, value):
         """Set maxcount for the warning"""
         self.__maxcount = value
 
-    maxcount = property(fget=lambda x:x.__maxcount, fset=_setMaxCount)
+    maxcount = property(fget=lambda x:x.__maxcount, fset=_set_max_count)
 
 # XXX what is 'bt'? Maybe more verbose name?
 if cfg.has_option('warnings', 'bt'):
@@ -176,7 +181,7 @@ if __debug__:
         handlers=cfg.get('debug', 'output', default='stdout').split(',')))
 
     # set some debugging matricses to report
-    # debug.registerMetric('vmem')
+    # debug.register_metric('vmem')
 
     # List agreed sets for debug
     debug.register('PY',   "No suppression of various warnings (numpy, scipy) etc.")
@@ -225,16 +230,18 @@ if __debug__:
                    "Checking in checking if clf was trained on given dataset")
     debug.register('CHECK_RETRAIN', "Checking in retraining/retesting")
     debug.register('CHECK_STABILITY', "Checking for numerical stability")
-    debug.register('ENFORCE_STATES_ENABLED', "Forcing all states to be enabled")
+    debug.register('ENFORCE_CA_ENABLED', "Forcing all ca to be enabled")
 
     debug.register('MAP',   "*Mapper")
     debug.register('MAP_',  "*Mapper (verbose)")
+    debug.register('ZSCM',  "ZScoreMapper")
 
     debug.register('COL',  "Generic Collectable")
+    debug.register('COL_RED',  "__reduce__ of collectables")
     debug.register('UATTR', "Attributes with unique")
     debug.register('ST',   "State")
     debug.register('STV',  "State Variable")
-    debug.register('COLR', "Collector for states and classifier parameters")
+    debug.register('COLR', "Collector for ca and classifier parameters")
     debug.register('ES',   "Element selectors")
 
     debug.register('CLF',    "Base Classifiers")
@@ -255,6 +262,7 @@ if __debug__:
     debug.register('STAT',   "Statistics estimates")
     debug.register('STAT_',  "Statistics estimates (verbose)")
     debug.register('STAT__', "Statistics estimates (very verbose)")
+    debug.register('STATMC', "Progress in Monte-Carlo estimation")
 
     debug.register('FS',     "FeatureSelections")
     debug.register('FS_',    "FeatureSelections (verbose)")
@@ -287,6 +295,10 @@ if __debug__:
     debug.register('SG',  "PyMVPA SG wrapping")
     debug.register('SG_', "PyMVPA SG wrapping verbose")
     debug.register('SG__', "PyMVPA SG wrapping debug")
+    debug.register('SG_GC', "For all entities enable highest level"
+                            " (garbage collector)")
+    debug.register('SG_LINENO', "Enable printing of the file:lineno"
+                                " where SG_ERROR occurred.")
     debug.register('SG_SVM', "Internal shogun debug output for SVM itself")
     debug.register('SG_FEATURES', "Internal shogun debug output for features")
     debug.register('SG_LABELS', "Internal shogun debug output for labels")
@@ -301,9 +313,13 @@ if __debug__:
     debug.register('CROSSC', "Cross-validation call")
     debug.register('CERR', "Various ClassifierErrors")
 
+    debug.register('HPAL',   "Hyperalignment")
+    debug.register('HPAL_',  "Hyperalignment (verbose)")
     debug.register('ATL',    "Atlases")
     debug.register('ATL_',   "Atlases (verbose)")
     debug.register('ATL__',  "Atlases (very verbose)")
+
+    debug.register('PLLB',   "plot_lightbox")
 
     debug.register('REP',    "Reports")
     debug.register('REP_',   "Reports (verbose)")
@@ -313,11 +329,11 @@ if __debug__:
 
     # Lets check if environment can tell us smth
     if cfg.has_option('general', 'debug'):
-        debug.setActiveFromString(cfg.get('general', 'debug'))
+        debug.set_active_from_string(cfg.get('general', 'debug'))
 
     # Lets check if environment can tell us smth
     if cfg.has_option('debug', 'metrics'):
-        debug.registerMetric(cfg.get('debug', 'metrics').split(","))
+        debug.register_metric(cfg.get('debug', 'metrics').split(","))
 
 
 

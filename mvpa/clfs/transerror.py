@@ -20,14 +20,14 @@ from math import log10, ceil
 
 from mvpa.base import externals
 
-from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
+from mvpa.misc.errorfx import mean_power_fx, root_mean_power_fx, RMSErrorFx, \
      CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx, \
      AUCErrorFx
 from mvpa.base import warning
 from mvpa.base.collections import Collectable
 from mvpa.misc.state import StateVariable, ClassWithCollections
-from mvpa.base.dochelpers import enhancedDocString, table2string
-from mvpa.clfs.stats import autoNullDist
+from mvpa.base.dochelpers import enhanced_doc_string, table2string
+from mvpa.clfs.stats import auto_null_dist
 
 if __debug__:
     from mvpa.base import debug
@@ -146,7 +146,8 @@ class SummaryStatistics(object):
         self._computed = False
 
 
-    def asstring(self, short=False, header=True, summary=True,
+    ##REF: Name was automagically refactored
+    def as_string(self, short=False, header=True, summary=True,
                  description=False):
         """'Pretty print' the matrix
 
@@ -175,7 +176,7 @@ class SummaryStatistics(object):
             description = ('CM' in debug.active)
         else:
             description = False
-        return self.asstring(short=False, header=True, summary=True,
+        return self.as_string(short=False, header=True, summary=True,
                              description=description)
 
 
@@ -279,7 +280,8 @@ class ROCCurve(object):
             return
 
         # take sets which have values in the shape we can handle
-        def _checkValues(set_):
+        ##REF: Name was automagically refactored
+        def _check_values(set_):
             """Check if values are 'acceptable'"""
             if len(set_)<3: return False
             x = set_[2]
@@ -302,7 +304,7 @@ class ROCCurve(object):
                     return False
             return True
 
-        sets_wv = filter(_checkValues, sets)
+        sets_wv = filter(_check_values, sets)
         # check if all had values, if not -- complain
         Nsets_wv = len(sets_wv)
         if Nsets_wv > 0 and len(sets) != Nsets_wv:
@@ -357,7 +359,7 @@ class ROCCurve(object):
         # we need to estimate ROC per each label
         # XXX order of labels might not correspond to the one among 'estimates'
         #     which were used to make a decision... check
-        ROCs, aucs = [], []             # 1 per label
+        rocs, aucs = [], []             # 1 per label
         for i,label in enumerate(labels):
             aucs_pl = []
             ROCs_pl = []
@@ -368,12 +370,12 @@ class ROCCurve(object):
                 aucs_pl += [ROC([N.asanyarray(x)[i] for x in s[2]], targets_pl)]
                 ROCs_pl.append(ROC)
             if len(aucs_pl)>0:
-                ROCs += [ROCs_pl]
+                rocs += [ROCs_pl]
                 aucs += [nanmean(aucs_pl)]
                 #aucs += [N.mean(aucs_pl)]
 
         # store results within the object
-        self._ROCs =  ROCs
+        self._ROCs =  rocs
         self._aucs = aucs
         self.__computed = True
 
@@ -387,7 +389,8 @@ class ROCCurve(object):
 
 
     @property
-    def ROCs(self):
+    ##REF: Name was automagically refactored
+    def rocs(self):
         self._compute()
         return self._ROCs
 
@@ -404,15 +407,15 @@ class ROCCurve(object):
         self._compute()
 
         labels = self._labels
-        # select only ROCs for the given label
-        ROCs = self.ROCs[label_index]
+        # select only rocs for the given label
+        rocs = self.rocs[label_index]
 
         fig = P.gcf()
         ax = P.gca()
 
         P.plot([0, 1], [0, 1], 'k:')
 
-        for ROC in ROCs:
+        for ROC in rocs:
             P.plot(ROC.fp, ROC.tp, linewidth=1)
 
         P.axis((0.0, 1.0, 0.0, 1.0))
@@ -434,7 +437,7 @@ class ConfusionMatrix(SummaryStatistics):
     the constructor.
 
     Confusion matrix provides a set of performance statistics (use
-    asstring(description=True) for the description of abbreviations),
+    as_string(description=True) for the description of abbreviations),
     as well ROC curve (http://en.wikipedia.org/wiki/ROC_curve)
     plotting and analysis (AUC) in the limited set of problems:
     binary, multiclass 1-vs-all.
@@ -631,7 +634,8 @@ class ConfusionMatrix(SummaryStatistics):
         self._stats.update(stats)
 
 
-    def asstring(self, short=False, header=True, summary=True,
+    ##REF: Name was automagically refactored
+    def as_string(self, short=False, header=True, summary=True,
                  description=False):
         """'Pretty print' the matrix
 
@@ -953,11 +957,13 @@ class ConfusionMatrix(SummaryStatistics):
         return self.__labels
 
 
-    def getLabels_map(self):
+    ##REF: Name was automagically refactored
+    def get_labels_map(self):
         return self.__labels_map
 
 
-    def setLabels_map(self, val):
+    ##REF: Name was automagically refactored
+    def set_labels_map(self, val):
         if val is None or isinstance(val, dict):
             self.__labels_map = val
         else:
@@ -974,11 +980,12 @@ class ConfusionMatrix(SummaryStatistics):
 
 
     @property
-    def percentCorrect(self):
+    ##REF: Name was automagically refactored
+    def percent_correct(self):
         self.compute()
         return 100.0*self.__Ncorrect/sum(self.__Nsamples)
 
-    labels_map = property(fget=getLabels_map, fset=setLabels_map)
+    labels_map = property(fget=get_labels_map, fset=set_labels_map)
 
 
 class RegressionStatistics(SummaryStatistics):
@@ -1021,9 +1028,9 @@ class RegressionStatistics(SummaryStatistics):
         stats = {}
 
         funcs = {
-            'RMP_t': lambda p,t:rootMeanPowerFx(t),
+            'RMP_t': lambda p,t:root_mean_power_fx(t),
             'STD_t': lambda p,t:N.std(t),
-            'RMP_p': lambda p,t:rootMeanPowerFx(p),
+            'RMP_p': lambda p,t:root_mean_power_fx(p),
             'STD_p': lambda p,t:N.std(p),
             'CCe': CorrErrorFx(),
             'CCp': CorrErrorPFx(),
@@ -1113,7 +1120,7 @@ class RegressionStatistics(SummaryStatistics):
             if len(lines)>1:
                 P.legend(lines[:2], ('Target', 'Prediction'))
             if plot_stats:
-                P.title(self.asstring(short='very'))
+                P.title(self.as_string(short='very'))
 
         if splot:
             nplot += 1
@@ -1130,7 +1137,8 @@ class RegressionStatistics(SummaryStatistics):
 
         return fig, sps
 
-    def asstring(self, short=False, header=True,  summary=True,
+    ##REF: Name was automagically refactored
+    def as_string(self, short=False, header=True,  summary=True,
                  description=False):
         """'Pretty print' the statistics"""
 
@@ -1250,7 +1258,7 @@ class ClassifierError(ClassWithCollections):
         """Either to train classifier if trainingdata is provided"""
 
 
-    __doc__ = enhancedDocString('ClassifierError', locals(), ClassWithCollections)
+    __doc__ = enhanced_doc_string('ClassifierError', locals(), ClassWithCollections)
 
 
     def __copy__(self):
@@ -1268,28 +1276,28 @@ class ClassifierError(ClassWithCollections):
                 # XXX can be pretty annoying if triggered inside an algorithm
                 # where it cannot be switched of, but retraining might be
                 # intended or at least not avoidable.
-                # Additonally isTrained docs say:
+                # Additonally is_trained docs say:
                 #   MUST BE USED WITH CARE IF EVER
                 #
                 # switching it off for now
-                #if self.__clf.isTrained(trainingdataset):
+                #if self.__clf.is_trained(trainingdataset):
                 #    warning('It seems that classifier %s was already trained' %
                 #            self.__clf + ' on dataset %s. Please inspect' \
                 #                % trainingdataset)
-                if self.states.is_enabled('training_confusion'):
-                    self.__clf.states.change_temporarily(
-                        enable_states=['training_confusion'])
+                if self.ca.is_enabled('training_confusion'):
+                    self.__clf.ca.change_temporarily(
+                        enable_ca=['training_confusion'])
                 self.__clf.train(trainingdataset)
-                if self.states.is_enabled('training_confusion'):
-                    self.states.training_confusion = \
-                        self.__clf.states.training_confusion
-                    self.__clf.states.reset_changed_temporarily()
+                if self.ca.is_enabled('training_confusion'):
+                    self.ca.training_confusion = \
+                        self.__clf.ca.training_confusion
+                    self.__clf.ca.reset_changed_temporarily()
 
-        if self.__clf.states.is_enabled('trained_labels') \
+        if self.__clf.ca.is_enabled('trained_targets') \
                and not self.__clf.__is_regression__ \
                and not testdataset is None:
-            newlabels = Set(testdataset.sa['labels'].unique) \
-                        - Set(self.__clf.states.trained_labels)
+            newlabels = Set(testdataset.sa[self.clf.params.targets_attr].unique) \
+                        - Set(self.__clf.ca.trained_targets)
             if len(newlabels)>0:
                 warning("Classifier %s wasn't trained to classify labels %s" %
                         (self.__clf, newlabels) +
@@ -1299,7 +1307,7 @@ class ClassifierError(ClassWithCollections):
         ### Here checking for if it was trained... might be a cause of trouble
         # XXX disabled since it is unreliable.. just rely on explicit
         # self.__train
-        #    if  not self.__clf.isTrained(trainingdataset):
+        #    if  not self.__clf.is_trained(trainingdataset):
         #        self.__clf.train(trainingdataset)
         #    elif __debug__:
         #        debug('CERR',
@@ -1389,11 +1397,11 @@ class TransferError(ClassifierError):
         """
         ClassifierError.__init__(self, clf, labels, **kwargs)
         self.__errorfx = errorfx
-        self.__null_dist = autoNullDist(null_dist)
+        self.__null_dist = auto_null_dist(null_dist)
         self.__samples_idattr = samples_idattr
 
 
-    __doc__ = enhancedDocString('TransferError', locals(), ClassifierError)
+    __doc__ = enhanced_doc_string('TransferError', locals(), ClassifierError)
 
 
     def __copy__(self):
@@ -1416,6 +1424,7 @@ class TransferError(ClassifierError):
 
         Returns a scalar value of the transfer error.
         """
+        testtargets = testdataset.sa[self.clf.params.targets_attr].value
         # OPT: local binding
         clf = self.clf
         if testdataset is None:
@@ -1444,34 +1453,30 @@ class TransferError(ClassifierError):
         # Should it migrate into ClassifierError.__postcall?
         # -> Probably not because other childs could estimate it
         #  not from test/train datasets explicitely, see
-        #  `ConfusionBasedError`, wherestates. confusion is simply
+        #  `ConfusionBasedError`, whereca. confusion is simply
         #  bound to classifiers confusion matrix
-        states = self.states
-        if states.is_enabled('confusion'):
+        ca = self.ca
+        if ca.is_enabled('confusion'):
             confusion = clf.__summary_class__(
-                #labels = self.labels,
-                targets = testdataset.sa.labels,
+                #labels = self.targets,
+                targets = testtargets,
                 predictions = predictions,
-                estimates = clf.states.get('estimates', None))
-            try:
-                confusion.labels_map = testdataset.labels_map
-            except:
-                pass
-            states.confusion = confusion
+                estimates = clf.ca.get('estimates', None))
+            ca.confusion = confusion
 
-        if states.is_enabled('samples_error'):
+        if ca.is_enabled('samples_error'):
             samples_error = []
             for i, p in enumerate(predictions):
                 samples_error.append(
-                    self.__errorfx([p], testdataset.sa.labels[i:i+1]))
+                    self.__errorfx([p], testtargets[i:i+1]))
             testdataset.init_origids(
                 'samples', attr=self.__samples_idattr, mode='existing')
-            states.samples_error = dict(
+            ca.samples_error = dict(
                 zip(testdataset.sa[self.__samples_idattr].value,
                     samples_error))
 
         # compute error from desired and predicted values
-        error = self.__errorfx(predictions, testdataset.sa.labels)
+        error = self.__errorfx(predictions, testtargets)
 
         return error
 
@@ -1492,7 +1497,7 @@ class TransferError(ClassifierError):
 
         # get probability of error under NULL hypothesis if available
         if not error is None and not self.__null_dist is None:
-            self.states.null_prob = self.__null_dist.p(error)
+            self.ca.null_prob = self.__null_dist.p(error)
 
 
     @property
@@ -1534,24 +1539,24 @@ class ConfusionBasedError(ClassifierError):
         self.__confusion_state = confusion_state
         """What state to extract from"""
 
-        if not clf.states.has_key(confusion_state):
+        if not clf.ca.has_key(confusion_state):
             raise ValueError, \
                   "State variable %s is not defined for classifier %r" % \
                   (confusion_state, clf)
-        if not clf.states.is_enabled(confusion_state):
+        if not clf.ca.is_enabled(confusion_state):
             if __debug__:
                 debug('CERR', "Forcing state %s to be enabled for %r" %
                       (confusion_state, clf))
-            clf.states.enable(confusion_state)
+            clf.ca.enable(confusion_state)
 
 
-    __doc__ = enhancedDocString('ConfusionBasedError', locals(),
+    __doc__ = enhanced_doc_string('ConfusionBasedError', locals(),
                                 ClassifierError)
 
 
     def _call(self, testdata, trainingdata=None):
         """Extract transfer error. Nor testdata, neither trainingdata is used
         """
-        confusion = self.clf.states[self.__confusion_state].value
-        self.states.confusion = confusion
+        confusion = self.clf.ca[self.__confusion_state].value
+        self.ca.confusion = confusion
         return confusion.error

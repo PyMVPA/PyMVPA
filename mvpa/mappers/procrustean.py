@@ -49,6 +49,8 @@ class ProcrusteanMapper(ProjectionMapper):
         oblique_rcond : float
           Cutoff for 'small' singular values to regularize the inverse. See
           :class:`~numpy.linalg.lstsq` for more information.
+        **kwargs
+          To be passed to ProjectionMapper
         """
         ProjectionMapper.__init__(self, **kwargs)
 
@@ -98,7 +100,7 @@ class ProcrusteanMapper(ProjectionMapper):
         assess_residuals = __debug__ and 'MAP_' in debug.active
 
         if target is None:
-            target = source.labels
+            target = source.targets
 
         for i, ds in enumerate((source, target)):
             if isinstance(ds, Dataset):

@@ -15,7 +15,7 @@ import unittest
 
 class SuiteTest(unittest.TestCase):
 
-    def testSuiteLoad(self):
+    def test_suite_load(self):
         """Test if we are loading fine
         """
         try:
@@ -24,7 +24,7 @@ class SuiteTest(unittest.TestCase):
             self.fail(msg="Cannot import everything from mvpa.suite."
                       "Getting %s" % e)
 
-    def testDocstrings(self):
+    def test_docstrings(self):
         from mvpa.suite import suite_stats
         # Lets do compliance checks
         # Get gross information on what we have in general

@@ -68,13 +68,13 @@ class VerboseOutputTest(unittest.TestCase):
         self.sout.close()
 
 
-    def testVerboseAbove(self):
+    def test_verbose_above(self):
         """Test if it doesn't output at higher levels"""
         verbose(5, self.msg)
         self.failUnlessEqual(self.sout.getvalue(), "")
 
 
-    def testVerboseBelow(self):
+    def test_verbose_below(self):
         """Test if outputs at lower levels and indents
         by default with spaces
         """
@@ -82,7 +82,7 @@ class VerboseOutputTest(unittest.TestCase):
         self.failUnlessEqual(self.sout.getvalue(),
                              "  %s\n" % self.msg)
 
-    def testVerboseIndent(self):
+    def test_verbose_indent(self):
         """Test indent symbol
         """
         verbose.indent = "."
@@ -90,12 +90,12 @@ class VerboseOutputTest(unittest.TestCase):
         self.failUnlessEqual(self.sout.getvalue(), "..%s\n" % self.msg)
         verbose.indent = " "            # restore
 
-    def testVerboseNegative(self):
+    def test_verbose_negative(self):
         """Test if chokes on negative level"""
         self.failUnlessRaises( ValueError,
-                               verbose._setLevel, -10 )
+                               verbose._set_level, -10 )
 
-    def testNoLF(self):
+    def test_no_lf(self):
         """Test if it works fine with no newline (LF) symbol"""
         verbose(2, self.msg, lf=False)
         verbose(2, " continue ", lf=False)
@@ -105,7 +105,7 @@ class VerboseOutputTest(unittest.TestCase):
                              "  %s continue end\nnew %s\n" % \
                              (self.msg, self.msg))
 
-    def testCR(self):
+    def test_cr(self):
         """Test if works fine with carriage return (cr) symbol"""
         verbose(2, self.msg, cr=True)
         verbose(2, "rewrite", cr=True)
@@ -116,7 +116,7 @@ class VerboseOutputTest(unittest.TestCase):
                  '\r       \rrewrite 2 add finish\n'
         self.failUnlessEqual(self.sout.getvalue(), target)
 
-    def testOnceLogger(self):
+    def test_once_logger(self):
         """Test once logger"""
         self.once("X", self.msg)
         self.once("X", self.msg)
@@ -128,14 +128,14 @@ class VerboseOutputTest(unittest.TestCase):
         self.failUnlessEqual(self.sout.getvalue(), self.msg+"\nXXX\nXXX\n")
 
 
-    def testError(self):
+    def test_error(self):
         """Test error message"""
         error(self.msg, critical=False) # should not exit
         self.failUnless(self.sout.getvalue().startswith("ERROR"))
 
 
     if __debug__:
-        def testDebug(self):
+        def test_debug(self):
             verbose.handlers = []           # so debug doesn't spoil it
             debug.active = ['1', '2', 'SLC']
             # do not offset for this test
@@ -149,7 +149,7 @@ class VerboseOutputTest(unittest.TestCase):
                             (svalue, regexp))
 
 
-        def testDebugRgexp(self):
+        def test_debug_rgexp(self):
             verbose.handlers = []           # so debug doesn't spoil it
             debug.active = ['.*']
             # we should have enabled all of them

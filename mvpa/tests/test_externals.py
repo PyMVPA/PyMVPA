@@ -41,11 +41,11 @@ class TestExternals(unittest.TestCase):
                              sorted(str(cfg).split('\n')))
 
 
-    def testExternals(self):
+    def test_externals(self):
         self.failUnlessRaises(ValueError, externals.exists, 'BoGuS')
 
 
-    def testExternalsNoDoubleInvocation(self):
+    def test_externals_no_double_invocation(self):
         # no external should be checking twice (unless specified
         # explicitely)
 
@@ -72,7 +72,7 @@ class TestExternals(unittest.TestCase):
         externals._KNOWN.pop('checker')
 
 
-    def testExternalsCorrect2ndInvocation(self):
+    def test_externals_correct2nd_invocation(self):
         # always fails
         externals._KNOWN['checker2'] = 'raise ImportError'
 

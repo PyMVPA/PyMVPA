@@ -13,9 +13,10 @@ import unittest
 from tempfile import mkstemp
 import numpy as N
 
-from nose.tools import ok_
+from mvpa.testing.tools import ok_
 
 from mvpa import pymvpa_dataroot
+from mvpa.datasets.eventrelated import find_events
 from mvpa.misc.io import *
 from mvpa.misc.fsl import *
 from mvpa.misc.bv import BrainVoyagerRTC
@@ -23,7 +24,7 @@ from mvpa.misc.bv import BrainVoyagerRTC
 
 class IOHelperTests(unittest.TestCase):
 
-    def testColumnDataFromFile(self):
+    def test_column_data_from_file(self):
         ex1 = """eins zwei drei
         0 1 2
         3 4 5
@@ -69,7 +70,7 @@ class IOHelperTests(unittest.TestCase):
         d.tofile(fpath, header_order=header_order)
 
         # test sample selection
-        dsel = d.selectSamples([0, 2])
+        dsel = d.select_samples([0, 2])
         self.failUnlessEqual(dsel['eins'], [0, 0])
         self.failUnlessEqual(dsel['zwei'], [1, 1])
         self.failUnlessEqual(dsel['drei'], [2, 2])
@@ -93,7 +94,7 @@ class IOHelperTests(unittest.TestCase):
             pass
 
 
-    def testSamplesAttributes(self):
+    def test_samples_attributes(self):
         sa = SampleAttributes(os.path.join(pymvpa_dataroot,
                                            'attributes_literal.txt'),
                               literallabels=True)
@@ -101,21 +102,21 @@ class IOHelperTests(unittest.TestCase):
         ok_(sa.nrows == 1452, msg='There should be 1452 samples')
 
         # convert to event list, with some custom attr
-        ev = sa.toEvents(funky='yeah')
+        ev = find_events(sa, funky='yeah')
         ok_(len(ev) == 17 * (max(sa.chunks) + 1),
             msg='Not all events got detected.')
 
         ok_(len([e for e in ev if e.has_key('funky')]) == len(ev),
             msg='All events need to have to custom arg "funky".')
 
-        ok_(ev[0]['label'] == ev[-1]['label'] == 'rest',
+        ok_(ev[0]['targets'] == ev[-1]['targets'] == 'rest',
             msg='First and last event are rest condition.')
 
         ok_(ev[-1]['onset'] + ev[-1]['duration'] == sa.nrows,
             msg='Something is wrong with the timiing of the events')
 
 
-    def testFslEV(self):
+    def test_fsl_ev(self):
         ex1 = """0.0 2.0 1
         13.89 2 1
         16 2.0 0.5
@@ -137,7 +138,7 @@ class IOHelperTests(unittest.TestCase):
         self.failUnless(d['intensities'] == [1.0, 1.0, 0.5])
 
         self.failUnless(d.nevs == 3)
-        self.failUnless(d.getEV(1) == (13.89, 2.0, 1.0))
+        self.failUnless(d.get_ev(1) == (13.89, 2.0, 1.0))
         # cleanup and ignore stupidity
         try:
             os.remove(fpath)
@@ -145,13 +146,13 @@ class IOHelperTests(unittest.TestCase):
             pass
 
         d = FslEV3(os.path.join(pymvpa_dataroot, 'fslev3.txt'))
-        ev = d.toEvents()
+        ev = d.to_events()
         self.failUnless(len(ev) == 3)
         self.failUnless([e['duration'] for e in ev] == [9] * 3)
         self.failUnless([e['onset'] for e in ev] == [6, 21, 35])
         self.failUnless([e['features'] for e in ev] == [[1],[1],[1]])
 
-        ev = d.toEvents(label='face', chunk=0, crap=True)
+        ev = d.to_events(label='face', chunk=0, crap=True)
         ev[0]['label'] = 'house'
         self.failUnless(len(ev) == 3)
         self.failUnless([e['duration'] for e in ev] == [9] * 3)
@@ -162,16 +163,16 @@ class IOHelperTests(unittest.TestCase):
         self.failUnless([e['crap'] for e in ev] == [True]*3)
 
 
-    def testFslEV2(self):
+    def test_fsl_ev2(self):
         attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'smpl_attr.txt'))
 
         # check header (sort because order in dict is unpredictable)
         self.failUnless(sorted(attr.keys()) == \
-            ['chunks','labels'])
+            ['chunks','targets'])
 
         self.failUnless(attr.nsamples == 3)
 
-    def testBVRTC(self):
+    def test_bv_rtc(self):
         """Simple testing of reading RTC files from BrainVoyager"""
 
         attr = BrainVoyagerRTC(os.path.join(pymvpa_dataroot, 'bv', 'smpl_model.rtc'))
@@ -218,14 +219,14 @@ class IOHelperTests(unittest.TestCase):
         self.failUnless((N.unique(chunks) == range(4)).all())
 
 
-    def testSensorLocations(self):
+    def test_sensor_locations(self):
         sl = XAVRSensorLocations(os.path.join(pymvpa_dataroot, 'xavr1010.dat'))
 
         for var in ['names', 'pos_x', 'pos_y', 'pos_z']:
             self.failUnless(len(eval('sl.' + var)) == 31)
 
 
-    def testFslGLMDesign(self):
+    def test_fsl_glm_design(self):
         glm = FslGLMDesign(os.path.join(pymvpa_dataroot, 'glm.mat'))
 
         self.failUnless(glm.mat.shape == (850, 6))

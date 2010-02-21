@@ -28,13 +28,13 @@ import numpy as N
 class DigitsIterator:
     def __init__(self, digits, labels):
         self.digits = digits
-        self.labels = labels
+        self.targets = labels
     def __iter__(self):
         frac = 10
-        ll = len(self.labels)
+        ll = len(self.targets)
         for i in xrange(frac):
             yield self.digits[i*ll/frac:(i+1)*ll/frac], \
-                  self.labels[i*ll/frac:(i+1)*ll/frac]
+                  self.targets[i*ll/frac:(i+1)*ll/frac]
 
 data = cPickle.load(gzip.open('mnist.pickle.gz'))
 for k in ['traindata', 'testdata']:
@@ -81,14 +81,12 @@ you are running this example first.
 """
 
 data = cPickle.load(gzip.open('mnist.pickle.gz'))
-ds = Dataset.from_basic(
+ds = dataset_wizard(
         data['traindata'],
-        labels=data['trainlabels'],
-        mapper=FlattenMapper((28, 28)))
-testds = Dataset.from_basic(
+        targets=data['trainlabels'])
+testds = dataset_wizard(
         data['testdata'],
-        labels=data['testlabels'],
-        mapper=ds.a.mapper)
+        targets=data['testlabels'])
 
 ds.init_origids('samples')
 testds.init_origids('samples')
@@ -114,10 +112,10 @@ fdaflow = (mdp.nodes.WhiteningNode(output_dim=10, dtype='d') +
 fdaflow.verbose = True
 
 mapper = MDPFlowMapper(fdaflow,
-                       ([], [], [DatasetAttributeExtractor('sa', 'labels')]))
+                       ([], [], [DatasetAttributeExtractor('sa', 'targets')]))
 
 terr = TransferError(MappedClassifier(SMLR(), mapper),
-                     enable_states=['confusion',
+                     enable_ca=['confusion',
                                     'samples_error'])
 err = terr(testds, ds)
 print 'Test error:', err

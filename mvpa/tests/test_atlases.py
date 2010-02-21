@@ -11,12 +11,13 @@
 import unittest, re
 import numpy as N
 
-from mvpa.base import externals, warning
+from mvpa.testing import *
 
-if externals.exists('nifti', raiseException=True):
-    from mvpa.atlases import *
-else:
-    raise RuntimeError, "Don't run me if no nifti is present"
+skip_if_no_external('nifti')
+skip_if_no_external('lxml')
+
+from mvpa.base import externals, warning
+from mvpa.atlases import *
 
 import os
 from mvpa import pymvpa_dataroot
@@ -25,11 +26,11 @@ class AtlasesTests(unittest.TestCase):
     """Basic tests for support of atlases such as the ones
     shipped with FSL
     """
-    def testTransformations(self):
+    def test_transformations(self):
         """TODO"""
         pass
 
-    def testAtlases(self):
+    def test_atlases(self):
         """Basic testing of atlases"""
 
         tested = 0
@@ -43,7 +44,7 @@ class AtlasesTests(unittest.TestCase):
                 continue
             #print isinstance(atlas.atlas, objectify.ObjectifiedElement)
             #print atlas.header.images.imagefile.get('offset')
-            #print atlas.labelVoxel( (0, -7, 20) )
+            #print atlas.label_voxel( (0, -7, 20) )
             #print atlas[ 0, 0, 0 ]
             coord = (-63, -12, 22)
 
@@ -52,7 +53,7 @@ class AtlasesTests(unittest.TestCase):
             self.failUnless(len(atlas.levels_dict[0].labels) > 0)
 
             for res in [ atlas[coord],
-                         atlas.labelPoint(coord) ]:
+                         atlas.label_point(coord) ]:
                 self.failUnless(res.get('coord_queried', None) == coord,
                                 '%s: Comparison failed. Got %s and %s'
                                 % (name, res.get('coord_queried', None), coord))
@@ -63,19 +64,20 @@ class AtlasesTests(unittest.TestCase):
             # test explicit level specification via slice, although bogus here
             # XXX levels in queries should be deprecated -- too much of
             # performance hit
-            res0 = atlas[coord, range(atlas.Nlevels)]
+            res0 = atlas[coord, range(atlas.n_levels)]
             self.failUnless(res0 == res)
 
             #print atlas[ 0, -7, 20, [1,2,3] ]
             #print atlas[ (0, -7, 20), 1:2 ]
             #print atlas[ (0, -7, 20) ]
             #print atlas[ (0, -7, 20), : ]
-            #   print atlas.getLabels(0)
+            #   print atlas.get_labels(0)
         if not tested:
-            warning("No atlases were found -- thus no testing was done")
+            raise SkipTest("No atlases were found -- thus no testing was done")
 
-    def testFind(self):
-        if not externals.exists('atlas_fsl'): return
+    def test_find(self):
+        skip_if_no_external('atlas_fsl')
+
         tshape = (182, 218, 182)        # target shape of fsl atlas chosen by default
         atl = Atlas(name='HarvardOxford-Cortical')
         atl.levels_dict[0].find('Frontal Pole')
@@ -83,21 +85,21 @@ class AtlasesTests(unittest.TestCase):
             len(atl.find(re.compile('Fusiform'), unique=False)),
             4)
 
-        m = atl.getMap(1)
+        m = atl.get_map(1)
         self.failUnlessEqual(m.shape, tshape)
         self.failUnless(N.max(m)==100)
         self.failUnless(N.min(m)==0)
 
-        ms = atl.getMaps('Fusiform')
+        ms = atl.get_maps('Fusiform')
         self.failUnlessEqual(len(ms), 4)
         self.failUnlessEqual(ms[0].shape, tshape)
 
-        ms = atl.getMaps('ZaZaZa')
+        ms = atl.get_maps('ZaZaZa')
         self.failUnless(not len(ms))
 
-        self.failUnlessRaises(ValueError, atl.getMap, 'Fusiform')
+        self.failUnlessRaises(ValueError, atl.get_map, 'Fusiform')
         self.failUnless(len(atl.find('Fusiform', unique=False)) == 4)
-        self.failUnlessEqual(atl.getMap('Fusiform', strategy='max').shape,
+        self.failUnlessEqual(atl.get_map('Fusiform', strategy='max').shape,
                              tshape)
 
         # Test loading of custom atlas
@@ -106,8 +108,8 @@ class AtlasesTests(unittest.TestCase):
                      image_file=atl._image_file)
 
         # we should get exactly the same maps from both in this dummy case
-        self.failUnless((atl.getMap('Frontal Pole') ==
-                         atl2.getMap('Frontal Pole')).all())
+        self.failUnless((atl.get_map('Frontal Pole') ==
+                         atl2.get_map('Frontal Pole')).all())
 
 
         # Lets falsify and feed some crammy file as the atlas
@@ -116,8 +118,8 @@ class AtlasesTests(unittest.TestCase):
                                              'example4d.nii.gz'))
 
         # we should get not even comparable maps now ;)
-        self.failUnless(atl.getMap('Frontal Pole').shape
-                        != atl2.getMap('Frontal Pole').shape)
+        self.failUnless(atl.get_map('Frontal Pole').shape
+                        != atl2.get_map('Frontal Pole').shape)
 
 
 def suite():

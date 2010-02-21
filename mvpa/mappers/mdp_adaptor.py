@@ -19,7 +19,7 @@ import mdp
 
 from mvpa.base.dataset import DatasetAttributeExtractor
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
-from mvpa.misc.support import isInVolume
+from mvpa.misc.support import is_in_volume
 
 
 class MDPNodeMapper(Mapper):
@@ -36,8 +36,8 @@ class MDPNodeMapper(Mapper):
     actual processing. Upon subsequent training attempts a new copy of the
     original node is made and replaces the previous one.
 
-    Note
-    ----
+    Notes
+    -----
     MDP nodes requiring multiple training phases are not supported. Use a
     MDPFlowWrapper for that. Moreover, it is not possible to perform
     incremental training of a node.
@@ -234,10 +234,10 @@ class MDPFlowMapper(Mapper):
     ...         mdp.nodes.FDANode())
     >>> mapper = MDPFlowMapper(flow,
     ...                        node_arguments=(None, None,
-    ...                        [DAE('sa', 'labels')]))
+    ...                        [DAE('sa', 'targets')]))
 
-    Note
-    ----
+    Notes
+    -----
     It is not possible to perform incremental training of the MDP flow. 
     """
     def __init__(self, flow, node_arguments=None, inspace=None):

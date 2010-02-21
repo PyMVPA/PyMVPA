@@ -8,43 +8,45 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA serial feature inclusion algorithm"""
 
+from mvpa.testing import *
 from mvpa.misc.support import *
+from mvpa.base.types import asobjarray
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.clfs.transerror import TransferError
-from tests_warehouse import *
-from tests_warehouse import getMVPattern
-from tests_warehouse_clfs import *
-from mvpa.clfs.distance import oneMinusCorrelation
+from mvpa.testing import *
+from mvpa.testing.datasets import get_mv_pattern
+from mvpa.testing.clfs import *
+from mvpa.clfs.distance import one_minus_correlation
 
 from mvpa.support.copy import deepcopy
 
 class SupportFxTests(unittest.TestCase):
 
-    def testTransformWithBoxcar(self):
+    def test_transform_with_boxcar(self):
         data = N.arange(10)
         sp = N.arange(10)
 
         # check if stupid thing don't work
         self.failUnlessRaises(ValueError,
-                              transformWithBoxcar,
+                              transform_with_boxcar,
                               data,
                               sp,
                               0 )
 
         # now do an identity transformation
-        trans = transformWithBoxcar(data, sp, 1)
+        trans = transform_with_boxcar(data, sp, 1)
         self.failUnless( (trans == data).all() )
 
         # now check for illegal boxes
         self.failUnlessRaises(ValueError,
-                              transformWithBoxcar,
+                              transform_with_boxcar,
                               data,
                               sp,
                               2)
 
         # now something that should work
         sp = N.arange(9)
-        trans = transformWithBoxcar( data, sp, 2)
+        trans = transform_with_boxcar( data, sp, 2)
         self.failUnless( ( trans == \
                            [0.5,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5] ).all() )
 
@@ -52,12 +54,12 @@ class SupportFxTests(unittest.TestCase):
         # now test for proper data shape
         data = N.ones((10,3,4,2))
         sp = [ 2, 4, 3, 5 ]
-        trans = transformWithBoxcar( data, sp, 4)
+        trans = transform_with_boxcar( data, sp, 4)
         self.failUnless( trans.shape == (4,3,4,2) )
 
 
 
-    def testEvent(self):
+    def test_event(self):
         self.failUnlessRaises(ValueError, Event)
         ev = Event(onset=2.5)
 
@@ -65,42 +67,42 @@ class SupportFxTests(unittest.TestCase):
         self.failUnless(ev.items() == [('onset', 2.5)])
 
         # conversion
-        self.failUnless(ev.asDescreteTime(dt=2).items() == [('onset', 1)])
-        evc = ev.asDescreteTime(dt=2, storeoffset=True)
+        self.failUnless(ev.as_descrete_time(dt=2).items() == [('onset', 1)])
+        evc = ev.as_descrete_time(dt=2, storeoffset=True)
         self.failUnless(evc.has_key('offset'))
         self.failUnless(evc['offset'] == 0.5)
 
         # same with duration included
-        evc = Event(onset=2.5, duration=3.55).asDescreteTime(dt=2)
+        evc = Event(onset=2.5, duration=3.55).as_descrete_time(dt=2)
         self.failUnless(evc['duration'] == 3)
 
 
-    def testMofNCombinations(self):
+    def test_mof_n_combinations(self):
         self.failUnlessEqual(
-            getUniqueLengthNCombinations( range(3), 1 ), [[0],[1],[2]] )
+            get_unique_length_n_combinations( range(3), 1 ), [[0],[1],[2]] )
         self.failUnlessEqual(
-            getUniqueLengthNCombinations(
+            get_unique_length_n_combinations(
                         range(4), 2 ),
                         [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]
                         )
         self.failUnlessEqual(
-            getUniqueLengthNCombinations(
+            get_unique_length_n_combinations(
                         range(4), 3 ),
                         [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]] )
 
 
-    def testBreakPoints(self):
+    def test_break_points(self):
         items_cont = [0, 0, 0, 1, 1, 1, 3, 3, 2]
         items_noncont = [0, 0, 1, 1, 0, 3, 2]
-        self.failUnlessRaises(ValueError, getBreakPoints, items_noncont)
-        self.failUnlessEqual(getBreakPoints(items_noncont, contiguous=False),
+        self.failUnlessRaises(ValueError, get_break_points, items_noncont)
+        self.failUnlessEqual(get_break_points(items_noncont, contiguous=False),
                              [0, 2, 4, 5, 6])
-        self.failUnlessEqual(getBreakPoints(items_cont), [0, 3, 6, 8])
-        self.failUnlessEqual(getBreakPoints(items_cont, contiguous=False),
+        self.failUnlessEqual(get_break_points(items_cont), [0, 3, 6, 8])
+        self.failUnlessEqual(get_break_points(items_cont, contiguous=False),
                              [0, 3, 6, 8])
 
 
-    def testMapOverlap(self):
+    def test_map_overlap(self):
         mo = MapOverlap()
 
         maps = [[1,0,1,0],
@@ -125,7 +127,7 @@ class SupportFxTests(unittest.TestCase):
     @sweepargs(pair=[(N.random.normal(size=(10,20)), N.random.normal(size=(10,20))),
                      ([1,2,3,0], [1,3,2,0]),
                      ((1,2,3,1), (1,3,2,1))])
-    def testIdHash(self, pair):
+    def test_id_hash(self, pair):
         a, b = pair
         a1 = deepcopy(a)
         a_1 = idhash(a)
@@ -143,11 +145,19 @@ class SupportFxTests(unittest.TestCase):
         self.failUnless(a_2 != a_3, msg="Idhash must change after slicing")
 
 
-    def testCorrelation(self):
+    def test_asobjarray(self):
+        for i in ([1, 2, 3], ['a', 2, '3'],
+                  ('asd')):
+            i_con = asobjarray(i)
+            self.failUnless(i_con.dtype is N.dtype('object'))
+            self.failUnlessEqual(len(i), len(i_con))
+            self.failUnless(N.all(i == i_con))
+
+    def test_correlation(self):
         # data: 20 samples, 80 features
         X = N.random.rand(20,80)
 
-        C = 1 - oneMinusCorrelation(X, X)
+        C = 1 - one_minus_correlation(X, X)
 
         # get nsample x nssample correlation matrix
         self.failUnless(C.shape == (20, 20))
@@ -156,7 +166,7 @@ class SupportFxTests(unittest.TestCase):
 
         # now two different
         Y = N.random.rand(5,80)
-        C2 = 1 - oneMinusCorrelation(X, Y)
+        C2 = 1 - one_minus_correlation(X, Y)
         # get nsample x nssample correlation matrix
         self.failUnless(C2.shape == (20, 5))
         # external validity check -- we are dealing with correlations
@@ -170,7 +180,7 @@ class SupportFxTests(unittest.TestCase):
         self.failUnless(version_to_tuple('0.7.1rc3') == (0, 7, 1, 'rc', 3))
 
 
-    def testSmartVersion(self):
+    def test_smart_version(self):
         """Test our ad-hoc SmartVersion
         """
         SV = SmartVersion
@@ -206,6 +216,19 @@ class SupportFxTests(unittest.TestCase):
             self.failUnless(version_to_tuple(v1) < SV(v2),
                             msg="Failed to compare tuple of %s to %s"
                             % (v1, v2))
+
+
+def test_value2idx():
+    times = [1.2, 1.3, 2., 4., 0., 2., 1.1]
+    assert_equal(value2idx(0, times), 4)
+    assert_equal(value2idx(100, times), 3)
+    assert_equal(value2idx(1.5, times), 1)
+    assert_equal(value2idx(1.5, times, 'ceil'), 2)
+    assert_equal(value2idx(1.2, times, 'floor'), 0)
+    assert_equal(value2idx(1.14, times, 'round'), 6)
+    assert_equal(value2idx(1.14, times, 'floor'), 6)
+    assert_equal(value2idx(1.14, times, 'ceil'), 0)
+    assert_equal(value2idx(-100, times, 'ceil'), 4)
 
 
 def suite():

@@ -23,13 +23,15 @@ if __debug__:
     from mvpa.base import debug, warning
 
 
-def cartesianDistance(a, b):
+##REF: Name was automagically refactored
+def cartesian_distance(a, b):
     """Return Cartesian distance between a and b
     """
     return N.linalg.norm(a-b)
 
 
-def absminDistance(a, b):
+##REF: Name was automagically refactored
+def absmin_distance(a, b):
     """Returns dinstance max(\|a-b\|)
     XXX There must be better name!
     XXX Actually, why is it absmin not absmax?
@@ -39,13 +41,15 @@ def absminDistance(a, b):
     return max(abs(a-b))
 
 
-def manhattenDistance(a, b):
+##REF: Name was automagically refactored
+def manhatten_distance(a, b):
     """Return Manhatten distance between a and b
     """
     return sum(abs(a-b))
 
 
-def mahalanobisDistance(x, y=None, w=None):
+##REF: Name was automagically refactored
+def mahalanobis_distance(x, y=None, w=None):
     """Calculate Mahalanobis distance of the pairs of points.
 
     Parameters
@@ -212,7 +216,8 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
     return squared_euclidean_distance_matrix
 
 
-def oneMinusCorrelation(X, Y):
+##REF: Name was automagically refactored
+def one_minus_correlation(X, Y):
     """Return one minus the correlation matrix between the rows of two matrices.
 
     This functions computes a matrix of correlations between all pairs of
@@ -231,7 +236,7 @@ def oneMinusCorrelation(X, Y):
 
       >>> X = N.random.rand(20,80)
       >>> Y = N.random.rand(5,80)
-      >>> C = oneMinusCorrelation(X, Y)
+      >>> C = one_minus_correlation(X, Y)
       >>> print C.shape
       (20, 5)
     """

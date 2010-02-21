@@ -1,4 +1,4 @@
-.. -*- mode: rst; fill-column: 78 -*-
+.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
@@ -61,7 +61,8 @@ The following software packages are required or PyMVPA will not work at all.
   Python_ 2.4 with ctypes_ 1.0.1 or a later Python 2.X release
     With some modifications PyMVPA could probably work with Python 2.3, but as
     it is quite old already and Python 2.4 is widely available there should be
-    no need to do this.
+    no need to do this.  Python 2.5 is preferable release since that is the
+    version we use for PyMVPA development.  Python 3.X is not yet supported.
   NumPy_
     PyMVPA makes extensive use of NumPy to store and handle data. There is no
     way around it.
@@ -374,13 +375,13 @@ Service`_, first download it from the `OpenSUSE software website`_.
 .. note::
 
    This site does not only offer OpenSUSE packages, but also binaries for other
-   distributions, including: CentOS 5, Fedora 9-10, Mandriva 2007-2008, RedHat
-   Enterprise Linux 5, SUSE Linux Enterprise 10, OpenSUSE 10.2 up to 11.0.
+   distributions, including: CentOS 5, Fedora 9-12, RedHat Enterprise Linux 5,
+   OpenSUSE 11.0 up to 11.2.
 
 Once downloaded, open a console and invoke (the example command refers to
-PyMVPA 0.3.1)::
+PyMVPA 0.4.4)::
 
-  rpm -i python-mvpa-0.3.1-19.1.i386.rpm
+  rpm -i python-mvpa-0.4.4-1.1.i386.rpm
 
 The OpenSUSE website also offers `1-click-installations`_ for distributions
 supporting it.
@@ -390,16 +391,20 @@ updates is to included one of the RPM-package repositories in the system's
 package management configuration. For e.g. OpenSUSE 11.0, simply use Yast to add
 another repository, using the following URL:
 
-  http://download.opensuse.org/repositories/home:/hankem/openSUSE_11.0/
+  http://download.opensuse.org/repositories/home:/hankem:/suse/openSUSE_11.0/
 
 For other distributions use the respective package managers (e.g. Yum) to setup
 the repository URL.  The repositories include all core dependencies of PyMVPA
 (usually Numpy and PyNIfTI), if they are not available from other repositories
 of the respective distribution. There are two different repository groups, one
-for `Suse and Mandriva-related packages`_ and another one for `Fedora, Redhat
+for `SUSE-related packages`_ and another one for `Fedora, Redhat
 and CentOS-related packages`_.
 
-.. _Suse and Mandriva-related packages: http://download.opensuse.org/repositories/home:/hankem/
+Please note that on Redhat and CentOS systems you will also have to enable the
+`Extra Packages for Enterprise Linux (EPEL)`_ repository.
+
+.. _Extra Packages for Enterprise Linux (EPEL): http://fedoraproject.org/wiki/EPEL
+.. _SUSE-related packages: http://download.opensuse.org/repositories/home:/hankem:/suse/
 .. _Fedora, Redhat and CentOS-related packages: http://download.opensuse.org/repositories/home://hankem://rh5/
 .. _1-click-installations: http://software.opensuse.org/search?baseproject=ALL&p=1&q=python-mvpa
 .. _OpenSUSE software website: http://software.opensuse.org/search?baseproject=ALL&p=1&q=python-mvpa

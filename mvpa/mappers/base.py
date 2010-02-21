@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Data mapper"""
+"""Basic, general purpose and meta mappers."""
 
 __docformat__ = 'restructuredtext'
 
@@ -16,9 +16,12 @@ import copy
 from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
 from mvpa.base.dochelpers import _str
 
+if __debug__:
+    from mvpa.base import debug
+
 
 class Mapper(object):
-    """Interface to provide mapping between two spaces: IN and OUT.
+    """Basic mapper interface definition.
 
     ::
               forward
@@ -36,6 +39,13 @@ class Mapper(object):
         """
         self.__inspace = None
         self.set_inspace(inspace)
+        # internal settings that influence what should be done to the dataset
+        # attributes in the default forward() and reverse() implementations.
+        # they are passed to the Dataset.copy() method
+        self._sa_filter = None
+        self._fa_filter = None
+        self._a_filter = None
+
 
     #
     # The following methods are abstract and merely define the intended
@@ -91,7 +101,10 @@ class Mapper(object):
         dataset : Dataset-like
         """
         msamples = self._forward_data(dataset.samples)
-        mds = dataset.copy(deep=False)
+        mds = dataset.copy(deep=False,
+                           sa=self._sa_filter,
+                           fa=self._fa_filter,
+                           a=self._a_filter)
         mds.samples = msamples
         return mds
 
@@ -109,7 +122,10 @@ class Mapper(object):
         dataset : Dataset-like
         """
         msamples = self._reverse_data(dataset.samples)
-        mds = dataset.copy(deep=False)
+        mds = dataset.copy(deep=False,
+                           sa=self._sa_filter,
+                           fa=self._fa_filter,
+                           a=self._a_filter)
         mds.samples = msamples
         return mds
 
@@ -412,6 +428,9 @@ class FeatureSliceMapper(Mapper):
         if isinstance(self._slicearg, slice) and self._slicearg == slice(None):
             self._slicearg = other._slicearg
             return self
+        if isinstance(self._slicearg, list):
+            # simply convert it into an array and proceed from there
+            self._slicearg = N.asanyarray(self._slicearg)
         if self._slicearg.dtype.type is N.bool_:
             # simply convert it into an index array --prevents us from copying a
             # lot and allows for sliceargs such as [3,3,4,4,5,5]
@@ -570,7 +589,8 @@ class CombinedMapper(Mapper):
         return N.sum(m.get_outsize() for m in self._mappers)
 
 
-    def selectOut(self, outIds):
+    ##REF: Name was automagically refactored
+    def select_out(self, outIds):
         """Remove some elements and leave only ids in 'out'/feature space.
 
         Notes
@@ -583,7 +603,7 @@ class CombinedMapper(Mapper):
           All output feature ids to be selected/kept.
         """
         # determine which features belong to what mapper
-        # and call its selectOut() accordingly
+        # and call its select_out() accordingly
         ids = N.asanyarray(outIds)
         fsum = 0
         for m in self._mappers:
@@ -593,31 +613,34 @@ class CombinedMapper(Mapper):
             selected = ids[selector] - fsum
             fsum += m.get_outsize()
             # finally apply to mapper
-            m.selectOut(selected)
+            m.select_out(selected)
 
 
-    def getNeighbor(self, outId, *args, **kwargs):
+    ##REF: Name was automagically refactored
+    def get_neighbor(self, outId, *args, **kwargs):
         """Get the ids of the neighbors of a single feature in output dataspace.
 
         Parameters
         ----------
         outId : int
-          Single id of a feature in output space, whos neighbors should be
+          Single id of a feature in output space, whose neighbors should be
           determined.
         *args, **kwargs
           Additional arguments are passed to the metric of the embedded
           mapper, that is responsible for the corresponding feature.
 
-        Returns a list of outIds
+        Returns
+        -------
+        list of outIds
         """
         fsum = 0
         for m in self._mappers:
             fsum_new = fsum + m.get_outsize()
             if outId >= fsum and outId < fsum_new:
-                return m.getNeighbor(outId - fsum, *args, **kwargs)
+                return m.get_neighbor(outId - fsum, *args, **kwargs)
             fsum = fsum_new
 
-        raise ValueError, "Invalid outId passed to CombinedMapper.getNeighbor()"
+        raise ValueError, "Invalid outId passed to CombinedMapper.get_neighbor()"
 
 
     def __repr__(self):
@@ -665,7 +688,24 @@ class ChainMapper(Mapper):
         """
         mp = data
         for m in self:
+            if __debug__:
+                debug('MAP', "Forwarding input (%s) though '%s'."
+                        % (mp.shape, str(m)))
             mp = m.forward(mp)
+        return mp
+
+
+    def forward1(self, data):
+        """Forward data or datasets through the chain.
+
+        See baseclass method for more information.
+        """
+        mp = data
+        for m in self:
+            if __debug__:
+                debug('MAP', "Forwarding single input (%s) though '%s'."
+                        % (mp.shape, str(m)))
+            mp = m.forward1(mp)
         return mp
 
 
@@ -676,7 +716,53 @@ class ChainMapper(Mapper):
         """
         mp = data
         for m in reversed(self):
-            mp = m.reverse(mp)
+            # we ignore mapper that do not have reverse mapping implemented
+            # (e.g. detrending). That might cause problems if ignoring the
+            # mapper make the data incompatible input for the next mapper in
+            # the chain. If that pops up, we have to think about a proper
+            # solution.
+            try:
+                if __debug__:
+                    debug('MAP',
+                          "Reversing %s-shaped input though '%s'."
+                           % (mp.shape, str(m)))
+                mp = m.reverse(mp)
+            except NotImplementedError:
+                if __debug__:
+                    debug('MAP', "Ignoring %s on reverse mapping." % m)
+        return mp
+
+
+    def reverse1(self, data):
+        """Reverse-maps data or datasets through the chain (backwards).
+
+        See baseclass method for more information.
+        """
+        mp = data
+        for i, m in enumerate(reversed(self)):
+            # we ignore mapper that do not have reverse mapping implemented
+            # (e.g. detrending). That might cause problems if ignoring the
+            # mapper make the data incompatible input for the next mapper in
+            # the chain. If that pops up, we have to think about a proper
+            # solution.
+            try:
+                if __debug__:
+                    debug('MAP',
+                          "Reversing single %s-shaped input though '%s'."
+                           % (mp.shape, str(m)))
+                mp = m.reverse1(mp)
+            except NotImplementedError:
+                if __debug__:
+                    debug('MAP', "Ignoring %s on reverse mapping." % m)
+            except ValueError:
+                if __debug__:
+                    debug('MAP',
+                          "Failed to reverse-map through chain at '%s'. Maybe"
+                          "previous mapper return multiple samples. Trying to "
+                          "switch to reverse() for the remainder of the chain."
+                          % str(m))
+                    mp = self[:-1*i].reverse(mp)
+                    return mp
         return mp
 
 

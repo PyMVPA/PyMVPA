@@ -16,14 +16,18 @@ import numpy as N
 import mvpa.base.externals as externals
 
 # do conditional to be able to build module reference
-if externals.exists('rpy', raiseException=True) and \
-   externals.exists('elasticnet', raiseException=True):
-    import rpy
-    rpy.r.library('elasticnet')
+if externals.exists('elasticnet', raiseException=True):
+    import rpy2.robjects
+    import rpy2.robjects.numpy2ri
+    RRuntimeError = rpy2.robjects.rinterface.RRuntimeError
+    r = rpy2.robjects.r
+    r.library('elasticnet')
+    from mvpa.support.rpy2_addons import Rrx2
 
 
 # local imports
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
+     FailedToTrainError, FailedToPredictError
 from mvpa.measures.base import Sensitivity
 
 if __debug__:
@@ -107,55 +111,58 @@ class ENET(Classifier):
 
         # It does not make sense to calculate a confusion matrix for a
         # regression
-        self.states.enable('training_confusion', False)
+        self.ca.enable('training_confusion', False)
 
     def __repr__(self):
         """String summary of the object
         """
-        return """ENET(lm=%s, normalize=%s, intercept=%s, trace=%s, max_steps=%s, enable_states=%s)""" % \
+        return """ENET(lm=%s, normalize=%s, intercept=%s, trace=%s, max_steps=%s, enable_ca=%s)""" % \
                (self.__lm,
                 self.__normalize,
                 self.__intercept,
                 self.__trace,
                 self.__max_steps,
-                str(self.states.enabled))
+                str(self.ca.enabled))
 
 
     def _train(self, data):
         """Train the classifier using `data` (`Dataset`).
         """
-        if self.__max_steps is None:
-            # train without specifying max_steps
-            self.__trained_model = rpy.r.enet(data.samples,
-                                              data.labels[:,N.newaxis],
-                                              self.__lm,
-                                              normalize=self.__normalize,
-                                              intercept=self.__intercept,
-                                              trace=self.__trace)
-        else:
-            # train with specifying max_steps
-            self.__trained_model = rpy.r.enet(data.samples,
-                                              data.labels[:,N.newaxis],
-                                              self.__lm,
-                                              normalize=self.__normalize,
-                                              intercept=self.__intercept,
-                                              trace=self.__trace,
-                                              max_steps=self.__max_steps)
+        targets = data.sa[self.params.targets_attr].value[:, N.newaxis]
+        enet_kwargs = {}
+        if self.__max_steps is not None:
+            enet_kwargs['max.steps'] = self.__max_steps
+
+        try:
+            self.__trained_model = trained_model = \
+                r.enet(data.samples,
+                       targets,
+                       self.__lm,
+                       normalize=self.__normalize,
+                       intercept=self.__intercept,
+                       trace=self.__trace,
+                       **enet_kwargs)
+        except RRuntimeError, e:
+            raise FailedToTrainError, \
+                  "Failed to predict on %s using %s. Exceptions was: %s" \
+                  % (data, self, e)
 
         # find the step with the lowest Cp (risk)
         # it is often the last step if you set a max_steps
         # must first convert dictionary to array
-#         Cp_vals = N.asarray([self.__trained_model['Cp'][str(x)]
-#                              for x in range(len(self.__trained_model['Cp']))])
+#         Cp_vals = N.asarray([trained_model['Cp'][str(x)]
+#                              for x in range(len(trained_model['Cp']))])
 #         self.__lowest_Cp_step = Cp_vals.argmin()
 
         # set the weights to the last step
-        self.__weights = N.zeros(data.nfeatures,dtype=self.__trained_model['beta.pure'].dtype)
-        ind = N.asarray(self.__trained_model['allset'])-1
-        self.__weights[ind] = self.__trained_model['beta.pure'][-1,:]
-
+        beta_pure = N.asanyarray(Rrx2(trained_model, 'beta.pure'))
+        self.__beta_pure_shape = beta_pure.shape
+        self.__weights = N.zeros(data.nfeatures,
+                                 dtype=beta_pure.dtype)
+        ind = N.asanyarray(Rrx2(trained_model, 'allset'))-1
+        self.__weights[ind] = beta_pure[-1,:]
 #         # set the weights to the final state
-#         self.__weights = self.__trained_model['beta'][-1,:]
+#         self.__weights = trained_model['beta'][-1,:]
 
 
     @accepts_dataset_as_samples
@@ -163,28 +170,35 @@ class ENET(Classifier):
         """Predict the output for the provided data.
         """
         # predict with the final state (i.e., the last step)
-        res = rpy.r.predict_enet(self.__trained_model,
-                                 data,
-                                 mode='step',
-                                 type='fit',
-                                 s=self.__trained_model['beta.pure'].shape[0])
-                                 #s=self.__lowest_Cp_step)
+        try:
+            res = r.predict(self.__trained_model,
+                            data,
+                            mode='step',
+                            type='fit',
+                            s=rpy2.robjects.IntVector(self.__beta_pure_shape))
+            fit = N.asanyarray(Rrx2(res, 'fit'))[:, -1]
+        except RRuntimeError, e:
+            raise FailedToPredictError, \
+                  "Failed to predict on %s using %s. Exceptions was: %s" \
+                  % (data, self, e)
 
-        fit = N.asarray(res['fit'])
         if len(fit.shape) == 0:
             # if we just got 1 sample with a scalar
             fit = fit.reshape( (1,) )
+        self.ca.estimates = fit     # charge conditional attribute
         return fit
 
 
-    def _getFeatureIds(self):
+    ##REF: Name was automagically refactored
+    def _get_feature_ids(self):
         """Return ids of the used features
         """
         return N.where(N.abs(self.__weights)>0)[0]
 
 
 
-    def getSensitivityAnalyzer(self, **kwargs):
+    ##REF: Name was automagically refactored
+    def get_sensitivity_analyzer(self, **kwargs):
         """Returns a sensitivity analyzer for ENET."""
         return ENETWeights(self, **kwargs)
 

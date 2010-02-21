@@ -8,13 +8,16 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA logistic regression classifier"""
 
+import numpy as N
+
 from mvpa.clfs.plr import PLR
-from tests_warehouse import *
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
 
 
 class PLRTests(unittest.TestCase):
 
-    def testPLR(self):
+    def test_plr(self):
         data = datasets['dumb2']
 
         clf = PLR()
@@ -22,22 +25,22 @@ class PLRTests(unittest.TestCase):
         clf.train(data)
 
         # prediction has to be perfect
-        self.failUnless((clf.predict(data.samples) == data.labels).all())
+        self.failUnless((clf.predict(data.samples) == data.targets).all())
 
-    def testPLRState(self):
+    def test_plr_state(self):
         data = datasets['dumb2']
 
         clf = PLR()
 
         clf.train(data)
 
-        clf.states.enable('estimates')
-        clf.states.enable('predictions')
+        clf.ca.enable('estimates')
+        clf.ca.enable('predictions')
 
         p = clf.predict(data.samples)
 
-        self.failUnless((p == clf.states.predictions).all())
-        self.failUnless(N.array(clf.states.estimates).shape == N.array(p).shape)
+        self.failUnless((p == clf.ca.predictions).all())
+        self.failUnless(N.array(clf.ca.estimates).shape == N.array(p).shape)
 
 
 def suite():

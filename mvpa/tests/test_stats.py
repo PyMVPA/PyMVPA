@@ -8,15 +8,17 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA stats helpers"""
 
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
+
+from mvpa import cfg
 from mvpa.base import externals
 from mvpa.clfs.stats import MCNullDist, FixedNullDist, NullDist
 from mvpa.datasets import Dataset
 from mvpa.measures.glm import GLM
 from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
-from mvpa.misc.fx import doubleGammaHRF, singleGammaHRF
-from tests_warehouse import *
-from mvpa import cfg
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+from mvpa.misc.fx import double_gamma_hrf, single_gamma_hrf
+
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
@@ -26,10 +28,13 @@ nulldist_sweep = [ MCNullDist(permutations=30, tail='any'),
 if externals.exists('scipy'):
     from mvpa.support.stats import scipy
     from scipy.stats import f_oneway
+    from mvpa.clfs.stats import rv_semifrozen
     nulldist_sweep += [ MCNullDist(scipy.stats.norm, permutations=30,
                                    tail='any'),
                         MCNullDist(scipy.stats.norm, permutations=30,
                                    tail='right'),
+                        MCNullDist(rv_semifrozen(scipy.stats.norm, loc=0),
+                                   permutations=30, tail='right'),
                         MCNullDist(scipy.stats.expon, permutations=30,
                                    tail='right'),
                         FixedNullDist(scipy.stats.norm(0, 10.0), tail='any'),
@@ -42,7 +47,7 @@ class StatsTests(unittest.TestCase):
 
 
     @sweepargs(null=nulldist_sweep[1:])
-    def testNullDistProb(self, null):
+    def test_null_dist_prob(self, null):
         """Testing null dist probability"""
         if not isinstance(null, NullDist):
             return
@@ -72,7 +77,7 @@ class StatsTests(unittest.TestCase):
             self.failUnlessRaises(ValueError, null.p, [5, 3, 4])
 
 
-    def testAnova(self):
+    def test_anova(self):
         """Do some extended testing of OneWayAnova
 
         in particular -- compound estimation
@@ -87,17 +92,22 @@ class StatsTests(unittest.TestCase):
         a, ac = m(ds), mc(ds)
 
         self.failUnless(a.shape == (1, ds.nfeatures))
-        self.failUnless(ac.shape == (len(ds.UL), ds.nfeatures))
+        self.failUnless(ac.shape == (len(ds.UT), ds.nfeatures))
 
         assert_array_equal(ac[0], ac[1])
         assert_array_equal(a, ac[1])
+
+        # check for p-value attrs
+        if externals.exists('scipy'):
+            assert_true('fprob' in a.fa.keys())
+            assert_equal(len(ac.fa), len(ac))
 
         ds = datasets['uni4large']
         ac = mc(ds)
         if cfg.getboolean('tests', 'labile', default='yes'):
             # All non-bogus features must be high for a corresponding feature
             self.failUnless((ac.samples[N.arange(4),
-                                        N.array(ds.nonbogus_features)] >= 1
+                                        N.array(ds.a.nonbogus_features)] >= 1
                                         ).all())
         # All features should have slightly but different CompoundAnova
         # values. I really doubt that there will be a case when this

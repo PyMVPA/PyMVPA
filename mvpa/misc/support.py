@@ -25,7 +25,8 @@ if __debug__:
     from mvpa.base import debug
 
 
-def reuseAbsolutePath(file1, file2, force=False):
+##REF: Name was automagically refactored
+def reuse_absolute_path(file1, file2, force=False):
     """Use path to file1 as the path to file2 is no absolute
     path is given for file2
 
@@ -41,7 +42,8 @@ def reuseAbsolutePath(file1, file2, force=False):
         return file2
 
 
-def transformWithBoxcar(data, startpoints, boxlength, offset=0, fx=N.mean):
+##REF: Name was automagically refactored
+def transform_with_boxcar(data, startpoints, boxlength, offset=0, fx=N.mean):
     """This function extracts boxcar windows from an array. Such a boxcar is
     defined by a starting point and the size of the window along the first axis
     of the array (`boxlength`). Afterwards a customizable function is applied
@@ -80,7 +82,8 @@ def transformWithBoxcar(data, startpoints, boxlength, offset=0, fx=N.mean):
     return N.array( selected )
 
 
-def _getUniqueLengthNCombinations_lt3(data, n):
+##REF: Name was automagically refactored
+def _get_unique_length_n_combinations_lt3(data, n):
     """Generates a list of lists containing all combinations of
     elements of data of length 'n' without repetitions.
 
@@ -100,7 +103,7 @@ def _getUniqueLengthNCombinations_lt3(data, n):
     """
 
     if n > 2:
-        raise ValueError, "_getUniqueLengthNCombinations_lt3 " \
+        raise ValueError, "_get_unique_length_n_combinations_lt3 " \
               "is broken for n>2, hence should not be used directly."
 
     # to be returned
@@ -135,7 +138,8 @@ def _getUniqueLengthNCombinations_lt3(data, n):
     # return the result
     return combos
 
-def xuniqueCombinations(L, n):
+##REF: Name was automagically refactored
+def xunique_combinations(L, n):
     """Generator of unique combinations form a list L of objects in
     groups of size n.
 
@@ -156,10 +160,11 @@ def xuniqueCombinations(L, n):
     if n==0: yield []
     else:
         for i in xrange(len(L)-n+1):
-            for cc in xuniqueCombinations(L[i+1:],n-1):
+            for cc in xunique_combinations(L[i+1:],n-1):
                 yield [L[i]]+cc
 
-def _getUniqueLengthNCombinations_binary(L, n=None, sort=True):
+##REF: Name was automagically refactored
+def _get_unique_length_n_combinations_binary(L, n=None, sort=True):
     """Find all subsets of data
 
     Parameters
@@ -193,7 +198,8 @@ def _getUniqueLengthNCombinations_binary(L, n=None, sort=True):
     return result
 
 
-def getUniqueLengthNCombinations(L, n=None, sort=True):
+##REF: Name was automagically refactored
+def get_unique_length_n_combinations(L, n=None, sort=True):
     """Find all subsets of data
 
     Parameters
@@ -205,12 +211,12 @@ def getUniqueLengthNCombinations(L, n=None, sort=True):
       then only the ones of the length n are returned
 
     TODO: work out single stable implementation -- probably just by fixing
-    _getUniqueLengthNCombinations_lt3
+    _get_unique_length_n_combinations_lt3
     """
     if n == 1:
-        return _getUniqueLengthNCombinations_lt3(L, n)
+        return _get_unique_length_n_combinations_lt3(L, n)
     elif n==None:
-        return _getUniqueLengthNCombinations_binary(L, n, sort=True)
+        return _get_unique_length_n_combinations_binary(L, n, sort=True)
     else:
         # XXX EO: Is it safe to remove "list" and use generator
         #         directly to save memory for large number of
@@ -218,10 +224,11 @@ def getUniqueLengthNCombinations(L, n=None, sort=True):
         #         I'd like a second opinion.
         # XXX EO: what about inserting a warning if number of
         #         combinations > 10000? No one would run it...
-        return list(xuniqueCombinations(L, n))
+        return list(xunique_combinations(L, n))
 
 
-def _getUniqueLengthNCombinations_binary(L, n=None, sort=True):
+##REF: Name was automagically refactored
+def _get_unique_length_n_combinations_binary(L, n=None, sort=True):
     """Find all subsets of data
 
     Parameters
@@ -255,7 +262,8 @@ def _getUniqueLengthNCombinations_binary(L, n=None, sort=True):
     return result
 
 
-def getUniqueLengthNCombinations(L, n=None, sort=True):
+##REF: Name was automagically refactored
+def get_unique_length_n_combinations(L, n=None, sort=True):
     """Find all subsets of data
 
     Parameters
@@ -267,15 +275,16 @@ def getUniqueLengthNCombinations(L, n=None, sort=True):
       then only the ones of the length n are returned
 
     TODO: work out single stable implementation -- probably just by fixing
-    _getUniqueLengthNCombinations_lt3
+    _get_unique_length_n_combinations_lt3
     """
     if n == 1:
-        return _getUniqueLengthNCombinations_lt3(L, n)
+        return _get_unique_length_n_combinations_lt3(L, n)
     else:
-        return _getUniqueLengthNCombinations_binary(L, n, sort=True)
+        return _get_unique_length_n_combinations_binary(L, n, sort=True)
 
 
-def indentDoc(v):
+##REF: Name was automagically refactored
+def indent_doc(v):
     """Given a `value` returns a string where each line is indented
 
     Needed for a cleaner __repr__ output
@@ -300,7 +309,8 @@ def idhash(val):
         pass
     return res
 
-def isSorted(items):
+##REF: Name was automagically refactored
+def is_sorted(items):
     """Check if listed items are in sorted order.
 
     Parameters
@@ -318,7 +328,8 @@ def isSorted(items):
     return equality
 
 
-def isInVolume(coord, shape):
+##REF: Name was automagically refactored
+def is_in_volume(coord, shape):
     """For given coord check if it is within a specified volume size.
 
     Returns True/False. Assumes that volume coordinates start at 0.
@@ -329,6 +340,24 @@ def isInVolume(coord, shape):
         if coord[i] < 0 or coord[i] >= shape[i]:
             return False
     return True
+
+
+def array_whereequal(a, x):
+    """Reliable comparison for numpy.array
+
+    numpy.array (as of 1.5.0.dev) fails to compare tuples in array of
+    dtype object, e.g.::
+
+    >>> import numpy as N; a=N.array([1, (0,1)], dtype=object); print a == (0,1),  a[1] == (0,1)
+    [False False] True
+
+    This function checks if dtype is object and just does list
+    comprehension in that case
+    """
+    if a.dtype is N.dtype('object'):
+        return N.array([i==x for i in a], dtype=bool)
+    else:
+        return a == x
 
 
 def version_to_tuple(v):
@@ -438,7 +467,8 @@ class SmartVersion(Version):
                         return mult*cmp(x,y)
         return 0
 
-def getBreakPoints(items, contiguous=True):
+##REF: Name was automagically refactored
+def get_break_points(items, contiguous=True):
     """Return a list of break points.
 
     Parameters
@@ -475,7 +505,8 @@ def getBreakPoints(items, contiguous=True):
     return result
 
 
-def RFEHistory2maps(history):
+##REF: Name was automagically refactored
+def rfe_history_to_maps(history):
     """Convert history generated by RFE into the array of binary maps
 
     Example:
@@ -581,7 +612,8 @@ class Event(dict):
                 raise ValueError, "Event must have '%s' defined." % k
 
 
-    def asDescreteTime(self, dt, storeoffset=False, offsetattr='offset'):
+    ##REF: Name was automagically refactored
+    def as_descrete_time(self, dt, storeoffset=False, offsetattr='offset'):
         """Convert `onset` and `duration` information into descrete timepoints.
 
         Parameters
@@ -627,3 +659,35 @@ class Event(dict):
                                   - out['onset'])
 
         return out
+
+
+def value2idx(val, x, solv='round'):
+    """Convert a value into an index of the closes matching array element.
+
+    Parameters
+    ----------
+    val : scalar
+      Value that is to be converted.
+    x : array or sequence
+      One-dimensional array whose elements are used for comparision.
+    solv : {'round', 'floor', 'ceil'}
+      Resolver strategie: absolute closest element (round), closest smaller
+      element (floor), or closest larger element (ceil).
+
+    Returns
+    -------
+    int
+    """
+    # distance to val
+    x = N.asanyarray(x) - val
+    if solv == 'round':
+        pass
+    elif solv == 'ceil':
+        x[x<0] = N.inf
+    elif solv == 'floor':
+        x[x>0] = N.inf
+    else:
+        ValueError("Unkown resolving method '%s'." % solv)
+    x = N.abs(x)
+    idx = N.argmin(x)
+    return idx

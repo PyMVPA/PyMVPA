@@ -27,7 +27,7 @@ The mvpa package contains the following subpackages and modules:
          `Yaroslav Halchenko <debian@onerussian.com>`__,
          `Per B. Sederberg <persed@princeton.edu>`__
 :requires: Python 2.4+
-:version: 0.4.3
+:version: 0.5.0.dev
 :see: `The PyMVPA webpage <http://www.pymvpa.org>`__
 :see: `GIT Repository Browser <http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary>`__
 
@@ -45,7 +45,7 @@ The mvpa package contains the following subpackages and modules:
 __docformat__ = 'restructuredtext'
 
 # canonical PyMVPA version string
-__version__ = '0.4.3'
+__version__ = '0.5.0.dev'
 
 import os
 import random
@@ -56,7 +56,14 @@ from mvpa.base.info import wtf
 
 # locate data root -- data might not be installed, but if it is, it should be at
 # this location
-pymvpa_dataroot = os.path.join(os.path.dirname(__file__), 'data')
+pymvpa_dataroot = \
+        cfg.get('data', 'root',
+                default=os.path.join(os.path.dirname(__file__), 'data'))
+# locate PyMVPA data database root -- also might not be installed, but if it is,
+# it should be at this location
+pymvpa_datadbroot = \
+        cfg.get('datadb', 'root',
+                default=os.path.join(os.curdir, 'data'))
 
 if not __debug__:
     try:

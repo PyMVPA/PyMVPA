@@ -99,7 +99,7 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
         # do normalization in all cases to be safe :)
         self.w = self.w/(self.w**2).sum()
 
-        M, H = self.compute_M_H(dataset.labels)
+        M, H = self.compute_M_H(dataset.targets)
 
         while True:
             self.k = self.kernel(length_scale = self.kernel_width/self.w)
@@ -184,7 +184,7 @@ class IterativeReliefOnline_Devel(IterativeRelief_Devel):
         # do normalization in all cases to be safe :)
         self.w = self.w/(self.w**2).sum()
 
-        M, H = self.compute_M_H(dataset.labels)
+        M, H = self.compute_M_H(dataset.targets)
 
         ni = N.zeros(NF, 'd')
         pi = N.zeros(NF, 'd')
@@ -328,7 +328,7 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
 
         w /= (w ** 2).sum() # do normalization in all cases to be safe :)
 
-        M, H = self.compute_M_H(dataset.labels)
+        M, H = self.compute_M_H(dataset.targets)
 
         while True:
             d_w_k = self.k(pnorm_w(data1=samples, weight=w, p=1))
@@ -401,7 +401,7 @@ class IterativeReliefOnline(IterativeRelief):
         # do normalization in all cases to be safe :)
         w /= (w ** 2).sum()
 
-        M, H = self.compute_M_H(dataset.labels)
+        M, H = self.compute_M_H(dataset.targets)
 
         ni = N.zeros(NF, 'd')
         pi = N.zeros(NF, 'd')

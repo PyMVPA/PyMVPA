@@ -17,6 +17,7 @@ if externals.exists('shogun', raiseException=True):
     import shogun.Classifier
 
 from mvpa.misc.state import StateVariable
+from mvpa.base.types import asobjarray
 from mvpa.measures.base import Sensitivity
 from mvpa.datasets.base import Dataset
 
@@ -47,27 +48,62 @@ class LinearSVMWeights(Sensitivity):
 
     def __sg_helper(self, svm):
         """Helper function to compute sensitivity for a single given SVM"""
-        self.offsets = svm.get_bias()
+        bias = svm.get_bias()
         svcoef = N.matrix(svm.get_alphas())
         svnums = svm.get_support_vectors()
         svs = self.clf.traindataset.samples[svnums,:]
         res = (svcoef * svs).mean(axis=0).A1
-        return res
+        return res, bias
 
 
     def _call(self, dataset):
         # XXX Hm... it might make sense to unify access functions
         # naming across our swig libsvm wrapper and sg access
         # functions for svm
-        svm = self.clf.svm
-        if isinstance(svm, shogun.Classifier.MultiClassSVM):
-            sens = []
-            for i in xrange(svm.get_num_svms()):
-                sens.append(self.__sg_helper(svm.get_svm(i)))
+        clf = self.clf
+        sgsvm = clf.svm
+        sens_labels = None
+        if isinstance(sgsvm, shogun.Classifier.MultiClassSVM):
+            sens, biases = [], []
+            nsvms = sgsvm.get_num_svms()
+            clabels = sorted(clf._attrmap.values())
+            nclabels = len(clabels)
+            sens_labels = []
+            isvm = 0                    # index for svm among known
+            for i in xrange(nclabels):
+                for j in xrange(i+1, nclabels):
+                    sgsvmi = sgsvm.get_svm(isvm)
+                    labels_tuple = (clabels[i], clabels[j])
+                    # Since we gave the labels in incremental order,
+                    # we always should be right - but it does not
+                    # hurt to check if set of labels is the same
+                    assert(set([sgsvmi.get_label(int(x))
+                                for x in sgsvmi.get_support_vectors()])
+                           == set(labels_tuple))
+                    sens1, bias = self.__sg_helper(sgsvmi)
+                    sens.append(sens1)
+                    biases.append(bias)
+                    sens_labels += [labels_tuple[::-1]] # ??? positive first
+                    isvm += 1
+            assert(len(sens) == nsvms)  # we should have  covered all
         else:
-            sens = self.__sg_helper(svm)
+            sens1, bias = self.__sg_helper(sgsvm)
+            biases = N.atleast_1d(bias)
+            sens = N.atleast_2d(sens1)
+            if not clf.__is_regression__:
+                assert(set(clf._attrmap.values()) == set([-1.0, 1.0]))
+                assert(sens.shape[0] == 1)
+                sens_labels = [(-1.0, 1.0)]
 
         ds = Dataset(N.atleast_2d(sens))
-        # TODO: handle binary(1)/multiclass(pairs) correctly
-        #       and assign labels
+        if sens_labels is not None:
+            if isinstance(sens_labels[0], tuple):
+                # Need to have them in array of dtype object
+                sens_labels = asobjarray(sens_labels)
+
+            if len(clf._attrmap):
+                sens_labels = clf._attrmap.to_literal(sens_labels, recurse=True)
+            ds.sa[clf.params.targets_attr] = sens_labels
+        self.ca.biases = biases
+
         return ds

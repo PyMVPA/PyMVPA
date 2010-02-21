@@ -8,7 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for SVM classifier"""
 
-from sets import Set
+import numpy as N
+
+from mvpa.testing import *
+from mvpa.testing.clfs import *
+from mvpa.testing.datasets import *
 
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.datasets.miscfx import get_nsamples_per_attr
@@ -16,15 +20,11 @@ from mvpa.clfs.meta import ProxyClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
-from tests_warehouse import pureMultivariateSignal
-from tests_warehouse import *
-from tests_warehouse_clfs import *
-
 class SVMTests(unittest.TestCase):
 
 #    @sweepargs(nl_clf=clfswh['non-linear', 'svm'] )
 #    @sweepargs(nl_clf=clfswh['non-linear', 'svm'] )
-    def testMultivariate(self):
+    def test_multivariate(self):
         mv_perf = []
         mv_lin_perf = []
         uv_perf = []
@@ -45,8 +45,8 @@ class SVMTests(unittest.TestCase):
         #                     [nl_param_orig[k] for k in orig_keys],
         #   msg="New instance mustn't override values in previously created")
         ## and keys separately
-        #self.failUnlessEqual(Set(nl_clf.param._params.keys()),
-        #                     Set(orig_keys),
+        #self.failUnlessEqual(set(nl_clf.param._params.keys()),
+        #                     set(orig_keys),
         #   msg="New instance doesn't change set of parameters in original")
 
         # We must be able to deepcopy not yet trained SVMs now
@@ -58,23 +58,23 @@ class SVMTests(unittest.TestCase):
             self.fail(msg="Failed to deepcopy not-yet trained SVM %s" % nl_clf)
 
         for i in xrange(20):
-            train = pureMultivariateSignal( 20, 3 )
-            test = pureMultivariateSignal( 20, 3 )
+            train = pure_multivariate_signal( 20, 3 )
+            test = pure_multivariate_signal( 20, 3 )
 
             # use non-linear CLF on 2d data
             nl_clf.train(train)
             p_mv = nl_clf.predict(test.samples)
-            mv_perf.append(N.mean(p_mv==test.labels))
+            mv_perf.append(N.mean(p_mv==test.targets))
 
             # use linear CLF on 2d data
             l_clf.train(train)
             p_lin_mv = l_clf.predict(test.samples)
-            mv_lin_perf.append(N.mean(p_lin_mv==test.labels))
+            mv_lin_perf.append(N.mean(p_lin_mv==test.targets))
 
             # use non-linear CLF on 1d data
             nl_clf.train(train[:, 0])
             p_uv = nl_clf.predict(test[:, 0].samples)
-            uv_perf.append(N.mean(p_uv==test.labels))
+            uv_perf.append(N.mean(p_uv==test.targets))
 
         mean_mv_perf = N.mean(mv_perf)
         mean_mv_lin_perf = N.mean(mv_lin_perf)
@@ -91,7 +91,7 @@ class SVMTests(unittest.TestCase):
     # XXX for now works only with linear... think it through -- should
     #     work non-linear, shouldn't it?
     @sweepargs(clf=clfswh['svm', 'linear', '!regression', '!gnpp', '!meta'])
-    def testCperClass(self, clf):
+    def test_cper_class(self, clf):
         if not (clf.params.has_key('C')):
             # skip those without C
             return
@@ -111,27 +111,27 @@ class SVMTests(unittest.TestCase):
         ds_ = ds[(range(ds.nsamples) + range(ds.nsamples/2) * times)]
         ds_.samples = ds_.samples + \
                       0.5 * N.random.normal(size=(ds_.samples.shape))
-        spl = get_nsamples_per_attr(ds_, 'labels') #_.samplesperlabel
-        #print ds_.labels, ds_.chunks
+        spl = get_nsamples_per_attr(ds_, 'targets') #_.samplesperlabel
+        #print ds_.targets, ds_.chunks
 
         cve = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
-                                          enable_states='confusion')
+                                          enable_ca='confusion')
         # on balanced
         e = cve(ds__)
-        tpr_1 = cve.states.confusion.stats["TPR"][1]
+        tpr_1 = cve.ca.confusion.stats["TPR"][1]
 
         # on disbalanced
         e = cve(ds_)
-        tpr_2 =  cve.states.confusion.stats["TPR"][1]
+        tpr_2 =  cve.ca.confusion.stats["TPR"][1]
 
         # Set '1 C per label'
         # recreate cvte since previous might have operated on copies
         cve = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
-                                          enable_states='confusion')
+                                          enable_ca='confusion')
         oldC = clf.params.C
         # TODO: provide clf.params.C not with a tuple but dictionary
         #       with C per label (now order is deduced in a cruel way)
-        ratio = N.sqrt(float(spl[ds_.UL[0]])/spl[ds_.UL[1]])
+        ratio = N.sqrt(float(spl[ds_.UT[0]])/spl[ds_.UT[1]])
         clf.params.C = (-1/ratio, -1*ratio)
         try:
             # on disbalanced but with balanced C
@@ -141,7 +141,7 @@ class SVMTests(unittest.TestCase):
         except:
             clf.params.C = oldC
             raise
-        tpr_3 = cve.states.confusion.stats["TPR"][1]
+        tpr_3 = cve.ca.confusion.stats["TPR"][1]
 
         # Actual tests
         if cfg.getboolean('tests', 'labile', default='yes'):
@@ -160,7 +160,7 @@ class SVMTests(unittest.TestCase):
 
 
 
-    def testSillyness(self):
+    def test_sillyness(self):
         """Test if we raise exceptions on incorrect specifications
         """
 

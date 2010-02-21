@@ -13,61 +13,93 @@ Basic (f)MRI plotting
 
 .. index:: plotting
 
-Estimate basic univariate sensitivity (ANOVA) an plot it overlayed on top
-of the anatomical.
+When running an fMRI data analysis it is often necessary to visualize results
+in their original dataspace, typically as an overlay on some anatomical brain
+image. PyMVPA has the ability to export results into the NIfTI format, and via
+this data format it is compatible with virtually any MRI visualization software.
 
-We start with basic steps: loading PyMVPA and the example fMRI
-dataset, basic preprocessing, estimation of the ANOVA scores and
-plotting.
+However, sometimes having a scriptable plotting facility within Python is
+desired. There are a number of candidate tools for this purpose (e.g. Mayavi_),
+but also PyMVPA itself offers some basic MRI plotting.
+
+.. _Mayavi: http://mayavi.sourceforge.net
+
+In this example, we are showing a quick-and-dirty plot of a voxel-wise
+ANOVA measure, overlaid on the respective brain anatomy. Note that the plotting
+is not specific to ANOVAs. Any feature-wise measure can be plotted this way.
+
+We start with basic steps: loading PyMVPA and the example fMRI dataset, only
+select voxels that correspond to some pre-computed gray matter mask, do basic
+preprocessing, and estimate ANOVA scores. This has already been described
+elsewhere, hence we only provide the code here for the sake of completeness.
 """
 
 from mvpa.suite import *
 
 # load PyMVPA example dataset
-attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes_literal.txt'),
-                        literallabels=True)
-dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                       labels=attr.labels,
+datapath = os.path.join(pymvpa_datadbroot, 'demo_blockfmri', 'demo_blockfmri')
+attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
+dataset = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
+                       targets=attr.targets,
                        chunks=attr.chunks,
-                       mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
-
-# since we don't have a proper anatomical -- lets overlay on BOLD
-nianat = NiftiImage(dataset.O[0], header=dataset.a.imghdr)
+                       mask=os.path.join(datapath, 'mask_gray.nii.gz'))
 
 # do chunkswise linear detrending on dataset
-detrend(dataset, perchunk=True, model='linear')
+poly_detrend(dataset, chunks='chunks')
 
-# define sensitivity analyzer
-sensana = OneWayAnova(transformer=N.abs)
+# exclude the rest conditions from the dataset, since that should be
+# quite different from the 'active' conditions, and make the computation
+# below pointless
+dataset = dataset[dataset.sa.targets != 'rest']
+
+# define sensitivity analyzer to compute ANOVA F-scores on the remaining
+# samples
+sensana = OneWayAnova()
 sens = sensana(dataset)
 
 """
-It might be convinient to pre-define common arguments for multiple calls to
-plotMRI
+The measure is computed, and we can look at the actual plotting. Typically, it
+is useful to pre-define some common plotting arguments, for example to ensure
+consistency throughout multiple figures. This following sets up which backround
+image to use (``background``), which portions of the image to plot
+(``background_mask``), and which portions of the overlay images to plot
+(``overlay_mask``). All these arguments are actually NIfTI images of the same
+dimensions and orientation as the to be plotted F-scores image. the remaining
+settings configure the colormaps to be used for plotting and trigger
+interactive plotting.
 """
 
 mri_args = {
-    'background' : nianat,              # could be a filename
-    'background_mask' : os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
-    'overlay_mask' : os.path.join(pymvpa_dataroot, 'mask.nii.gz'),
-    'do_stretch_colors' : False,
+    'background' : os.path.join(datapath, 'anat.nii.gz'),
+    'background_mask' : os.path.join(datapath, 'mask_brain.nii.gz'),
+    'overlay_mask' : os.path.join(datapath, 'mask_gray.nii.gz'),
     'cmap_bg' : 'gray',
     'cmap_overlay' : 'autumn', # YlOrRd_r # P.cm.autumn
-    'fig' : None,              # create new figure
     'interactive' : cfg.getboolean('examples', 'interactive', True),
     }
 
-fig = plotMRI(overlay=dataset.map2nifti(sens),
-              vlim=(0.5, None),
-              #vlim_type="symneg_z",
-              **mri_args)
+"""
+All that remains to do is a single call to `plot_lightbox()`. We pass it the
+F-score vector. `map2nifti` uses the mapper in our original dataset to project
+it back into the functional MRI volume space. We treshold the data with the
+interval [0, +inf] (i.e. all possible values and F-Score can have), and select
+a subset of slices to be plotted. That's it.
+"""
 
+
+fig = plot_lightbox(overlay=map2nifti(dataset, sens),
+              vlim=(0, None), slices=range(25,29), **mri_args)
 
 """
-Output of the example analysis:
+The resulting figure would look like this:
 
-.. image:: ../pics/ex_plotMRI.*
+.. image:: ../pics/ex_plot_lightbox.*
    :align: center
-   :alt: Simple plotting facility for (f)MRI
+   :alt: Simple plotting facility for (f)MRI. F-scores
 
+In interactive mode it is possible to click on the histogram to adjust the
+thresholding of the overlay volumes. Left-click sets the value corresponding
+to the lowest value in the colormap, and right-click set the value for the upper
+end of the colormap. Try right-clicking somewhere at the beginning of the x-axis
+and left on the end of the x-axis.
 """

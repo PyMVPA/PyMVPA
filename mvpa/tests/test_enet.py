@@ -8,15 +8,19 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA least angle regression (ENET) classifier"""
 
+import numpy as N
+
+from mvpa.testing import *
+from mvpa.testing.datasets import *
+
 from mvpa import cfg
 from mvpa.clfs.enet import ENET
 from scipy.stats import pearsonr
-from tests_warehouse import *
-from mvpa.misc.data_generators import normalFeatureDataset
+from mvpa.misc.data_generators import normal_feature_dataset
 
 class ENETTests(unittest.TestCase):
 
-    def testENET(self):
+    def test_enet(self):
         # not the perfect dataset with which to test, but
         # it will do for now.
         #data = datasets['dumb2']
@@ -30,11 +34,11 @@ class ENETTests(unittest.TestCase):
         # prediction has to be almost perfect
         # test with a correlation
         pre = clf.predict(data.samples)
-        cor = pearsonr(pre, data.labels)
+        cor = pearsonr(pre, data.targets)
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless(cor[0] > .8)
 
-    def testENETState(self):
+    def test_enet_state(self):
         #data = datasets['dumb2']
         # for some reason the R code fails with the dumb data
         data = datasets['chirp_linear']
@@ -43,14 +47,14 @@ class ENETTests(unittest.TestCase):
 
         clf.train(data)
 
-        clf.states.enable('predictions')
+        clf.ca.enable('predictions')
 
         p = clf.predict(data.samples)
 
-        self.failUnless((p == clf.states.predictions).all())
+        self.failUnless((p == clf.ca.predictions).all())
 
 
-    def testENETSensitivities(self):
+    def test_enet_sensitivities(self):
         data = datasets['chirp_linear']
 
         # use ENET on binary problem
@@ -59,7 +63,7 @@ class ENETTests(unittest.TestCase):
 
         # now ask for the sensitivities WITHOUT having to pass the dataset
         # again
-        sens = clf.getSensitivityAnalyzer(force_training=False)()
+        sens = clf.get_sensitivity_analyzer(force_training=False)()
 
         self.failUnless(sens.shape == (data.nfeatures,))
 

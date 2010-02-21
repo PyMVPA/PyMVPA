@@ -13,11 +13,11 @@ import unittest
 import numpy as N
 from mvpa import cfg
 from mvpa.mappers.som import SimpleSOMMapper
-from mvpa.datasets.base import dataset
+from mvpa.datasets.base import dataset_wizard
 
 class SOMMapperTests(unittest.TestCase):
 
-    def testSimpleSOM(self):
+    def test_simple_som(self):
         colors = N.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
                           [1., 0., 0.], [0., 1., 1.], [1., 0., 1.],
                           [1., 1., 0.], [1., 1., 1.]])
@@ -26,7 +26,7 @@ class SOMMapperTests(unittest.TestCase):
         som = SimpleSOMMapper((10, 5), 200, learning_rate=0.05)
 
         # no acces when nothing is there
-        self.failUnlessRaises(RuntimeError, som._accessKohonen)
+        self.failUnlessRaises(RuntimeError, som._access_kohonen)
 
         som.train(colors)
 

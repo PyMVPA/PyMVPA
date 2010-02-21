@@ -8,12 +8,16 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA GNB classifier"""
 
+import numpy as N
+
+from mvpa.testing import *
+from mvpa.testing.datasets import *
+
 from mvpa.clfs.gnb import GNB
-from tests_warehouse import *
 
 class GNBTests(unittest.TestCase):
 
-    def testGNB(self):
+    def test_gnb(self):
         gnb = GNB()
         gnb_nc = GNB(common_variance=False)
         gnb_n = GNB(normalize=True)
@@ -37,7 +41,7 @@ class GNBTests(unittest.TestCase):
                                prior=prior,
                                normalize=n,
                                logprob=ls,
-                               enable_states=es)
+                               enable_ca=es)
                     gnb_.train(ds_tr)
                     predictions = gnb_.predict(ds_te.samples)
                     if tp is None:
@@ -47,7 +51,7 @@ class GNBTests(unittest.TestCase):
                                     gnb_)
                     # if normalized -- check if estimates are such
                     if n and 'estimates' in es:
-                        v = gnb_.states.estimates
+                        v = gnb_.ca.estimates
                         if ls:          # in log space -- take exp ;)
                             v = N.exp(v)
                         d1 = N.sum(v, axis=1) - 1.0

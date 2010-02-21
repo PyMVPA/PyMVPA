@@ -28,7 +28,7 @@ if __debug__:
 attr = SampleAttributes(os.path.join(pymvpa_dataroot,
                         'attributes_literal.txt'))
 dataset = fmri_dataset(os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                       labels=attr.labels, chunks=attr.chunks,
+                       targets=attr.targets, chunks=attr.chunks,
                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 #
@@ -40,13 +40,13 @@ poly_detrend(dataset, polyord=1, chunks='chunks')
 
 # only use 'rest', 'cats' and 'scissors' samples from dataset
 dataset = dataset[N.array([ l in ['rest', 'cat', 'scissors']
-                    for l in dataset.labels], dtype='bool')]
+                    for l in dataset.targets], dtype='bool')]
 
 # zscore dataset relative to baseline ('rest') mean
-zscore(dataset, perchunk=True, baselinelabels=['rest'], targetdtype='float32')
+zscore(dataset, perchunk=True, baselinetargets=['rest'], targetdtype='float32')
 
 # remove baseline samples from dataset for final analysis
-dataset = dataset[dataset.sa.labels != 'rest']
+dataset = dataset[dataset.sa.targets != 'rest']
 
 # Specify the base classifier to be used
 # To parametrize the classifier to be used
@@ -77,13 +77,13 @@ for desc, clf in clfs:
     cv = CrossValidatedTransferError(
             TransferError(clf),
             NFoldSplitter(),
-            enable_states=['results'])
+            enable_ca=['results'])
     cv(dataset)
 
-    results.append(cv.states.results)
+    results.append(cv.ca.results)
     labels.append(desc)
 
-plotBars(results, labels=labels,
+plot_bars(results, labels=labels,
          title='Linear C-SVM classification (cats vs. scissors)',
          ylabel='Mean classification error (N-1 cross-validation, 12-fold)',
          distance=0.5)

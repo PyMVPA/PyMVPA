@@ -17,6 +17,7 @@ from datetime import datetime
 
 import mvpa
 from mvpa.base import externals, verbose
+from mvpa.base.dochelpers import borrowkwargs
 
 if __debug__:
     from mvpa.base import debug
@@ -167,6 +168,8 @@ class Report(object):
             style = self.style
         self._story.append(Paragraph(line, style=style))
 
+    # Can't use here since Report isn't yet defined at this point
+    #@borrowkwargs(Report, 'xml')
     def text(self, line, **kwargs):
         """Add a text string to the report
         """
@@ -182,22 +185,19 @@ class Report(object):
     as a handler for verbose
     """
 
-
-
+    # can't do here once again since it needs to conditional on externals
+    # TODO: workaround -- either passing symbolic names or assign
+    #       post-class creation
+    #@borrowkwargs(reportlab.platypus.Image, '__init__')
     def figure(self, fig=None, name=None, savefig_kwargs={}, **kwargs):
         """Add a figure to the report
 
         Parameters
         ----------
         fig : None or str or `figure.Figure`
-          Figure to place into report:
-            str
-             treat as a filename
-            Figure
-             stores it into a file under directory
-             and embeds into the report
-            None
-             takes the current figure
+          Figure to place into report: `str` is treated as a filename,
+          `Figure` stores it into a file under directory and embeds
+          into the report, and `None` takes the current figure
         savefig_kwargs : dict
           Additional keyword arguments to provide savefig with (e.g. dpi)
         **kwargs
@@ -309,7 +309,8 @@ class Report(object):
 
         pageinfo = self.name + " data"
 
-        def myFirstPage(canvas, doc):
+        ##REF: Name was automagically refactored
+        def my_first_page(canvas, doc):
             canvas.saveState()
             canvas.setFont(self.font, 16)
             canvas.drawCentredString(self.pagesize[0]/2.0,
@@ -319,7 +320,8 @@ class Report(object):
                               "First Page / %s" % pageinfo)
             canvas.restoreState()
 
-        def myLaterPages(canvas, doc):
+        ##REF: Name was automagically refactored
+        def my_later_pages(canvas, doc):
             canvas.saveState()
             canvas.setFont(self.font, 9)
             canvas.drawString(inch, 0.75 * inch,
@@ -337,6 +339,6 @@ class Report(object):
             debug("REP", "Saving the report into %s" % filename)
 
         doc.build(story,
-                  onFirstPage=myFirstPage,
-                  onLaterPages=myLaterPages)
+                  onFirstPage=my_first_page,
+                  onLaterPages=my_later_pages)
 

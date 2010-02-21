@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import copy
 
+from mvpa.base import externals
 from mvpa.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection, \
         SampleAttribute, FeatureAttribute, DatasetAttribute
@@ -21,6 +22,8 @@ from mvpa.base.dochelpers import _str
 
 if __debug__:
     from mvpa.base import debug
+from mvpa.base import warning
+
 
 
 class AttrDataset(object):
@@ -79,15 +82,15 @@ class AttrDataset(object):
            [ 9, 10, 11]])
 
     The above dataset can only be used for unsupervised machine-learning
-    algorithms, since it doesn't have any labels associated with its
+    algorithms, since it doesn't have any targets associated with its
     samples. However, creating a labeled dataset is equally simple.
 
-    >>> ds_labeled = AttrDataset.from_basic(samples, labels=range(4))
+    >>> ds_labeled = AttrDataset.from_basic(samples, targets=range(4))
 
     For convenience `AttrDataset.from_basic` is also available as `dataset`,
     so the above call is equivalent to:
 
-    >>> ds_labeled = dataset(samples, labels=range(4))
+    >>> ds_labeled = dataset_wizard(samples, targets=range(4))
 
     Both the labeled and the unlabeled dataset share the same samples
     array. No copying is performed.
@@ -98,10 +101,10 @@ class AttrDataset(object):
     If the data should not be shared the samples array has to be copied
     beforehand.
 
-    The labels are available from the samples attributes collection, but
-    also via the convenience property `labels`.
+    The targets are available from the samples attributes collection, but
+    also via the convenience property `targets`.
 
-    >>> ds_labeled.sa.labels is ds_labeled.labels
+    >>> ds_labeled.sa.targets is ds_labeled.targets
     True
 
     If desired, it is possible to add an arbitrary amount of additional
@@ -117,7 +120,7 @@ class AttrDataset(object):
     which would also test for an appropriate size of the given
     attributes:
 
-    >>> fancyds = AttrDataset(samples, sa={'labels': range(4),
+    >>> fancyds = AttrDataset(samples, sa={'targets': range(4),
     ...                                'lovesme': [0,0,1,0]})
     >>> fancyds.sa.lovesme
     array([0, 0, 1, 0])
@@ -319,6 +322,14 @@ class AttrDataset(object):
         return self.copy(deep=True, memo=memo)
 
 
+    def __reduce__(self):
+        return (self.__class__,
+                    (self.samples,
+                     dict(self.sa),
+                     dict(self.fa),
+                     dict(self.a)))
+
+
     def copy(self, deep=True, sa=None, fa=None, a=None, memo=None):
         """Create a copy of a dataset.
 
@@ -346,7 +357,7 @@ class AttrDataset(object):
           an empty list is given, all attributes are stripped from the copy..
         memo : dict
           Developers only: This argument is only useful if copy() is called
-          inside the __deepcopy__() method and refers to the dict-arhument
+          inside the __deepcopy__() method and refers to the dict-argument
           `memo` in the Python documentation.
         """
         if deep:
@@ -395,8 +406,8 @@ class AttrDataset(object):
         other : AttrDataset
           The content of this dataset will be append.
 
-        Note
-        ----
+        Notes
+        -----
         No dataset attributes, or feature attributes will be merged!  These
         respective properties of the *other* dataset are neither checked for
         compatibility nor copied over to this dataset. However, all samples
@@ -543,6 +554,52 @@ class AttrDataset(object):
     def __len__(self):
         return self.shape[0]
 
+
+    @classmethod
+    def from_hdf5(cls, source, name=None):
+        if not externals.exists('h5py'):
+            raise RuntimeError("Missing 'h5py' package -- saving is not possible.")
+
+        import h5py
+        from mvpa.base.hdf5 import hdf2obj
+
+        # look if we got an hdf file instance already
+        if isinstance(source, h5py.highlevel.File):
+            own_file = False
+            hdf = source
+        else:
+            own_file = True
+            hdf = h5py.File(source, 'r')
+
+        if not name is None:
+            # some HDF5 subset is requested
+            if not name in hdf:
+                raise ValueError("Cannot find '%s' group in HDF file %s.  "
+                                 "File contains groups: %s"
+                                 % (name, source, hdf.keys()))
+
+            # access the group that should contain the dataset
+            dsgrp = hdf[name]
+            res = hdf2obj(dsgrp)
+            if not isinstance(res, AttrDataset):
+                # TODO: unittest before committing
+                raise ValueError, "%r in %s contains %s not a dataset.  " \
+                      "File contains groups: %s." \
+                      % (name, source, type(res), hdf.keys())
+            return res
+        else:
+            # just consider the whole file
+            res = hdf2obj(hdf)
+            if not isinstance(res, AttrDataset):
+                # TODO: unittest before committing
+                raise ValueError, "Failed to load a dataset from %s.  " \
+                      "Loaded %s instead." \
+                      % (source, type(res))
+            return res
+
+            raise V
+
+
     # shortcut properties
     nsamples = property(fget=lambda self:len(self))
     nfeatures = property(fget=lambda self:self.shape[1])
@@ -570,7 +627,12 @@ def vstack(datasets):
     datasets must have an identical set of sample attributes (matching keys,
     not values), otherwise a ValueError will be raised.
     No dataset attributes from any source dataset will be transferred into the
-    stacked dataset.
+    stacked dataset. If all input dataset have common dataset attributes that
+    are also valid for the stacked dataset, they can be moved into the output
+    dataset like this::
+
+      ds_merged = vstack((ds1, ds2, ds3))
+      ds_merged.a.update(ds1.a)
 
     Parameters
     ----------
@@ -693,9 +755,9 @@ class DatasetAttributeExtractor(object):
     Examples
     --------
     >>> ds = AttrDataset(N.arange(12).reshape((4,3)),
-    ...              sa={'labels': range(4)},
+    ...              sa={'targets': range(4)},
     ...              fa={'foo': [0,0,1]})
-    >>> ext = DAE('sa', 'labels')
+    >>> ext = DAE('sa', 'targets')
     >>> ext(ds)
     array([0, 1, 2, 3])
 
@@ -732,3 +794,36 @@ class DatasetAttributeExtractor(object):
 # attribute extraction
 DAE = DatasetAttributeExtractor
 
+
+@datasetmethod
+def save(dataset, destination, name=None, compression=None):
+    """Save Dataset into HDF5 file
+
+    Parameters
+    ----------
+    dataset : `Dataset`
+    destination : `h5py.highlevel.File` or str
+    name : str, optional
+    compression : None or int or {'gzip', 'szip', 'lzf'}, optional
+      Level of compression for gzip, or another compression strategy.
+    """
+    if not externals.exists('h5py'):
+        raise RuntimeError("Missing 'h5py' package -- saving is not possible.")
+
+    import h5py
+    from mvpa.base.hdf5 import obj2hdf
+
+    # look if we got an hdf file instance already
+    if isinstance(destination, h5py.highlevel.File):
+        own_file = False
+        hdf = destination
+    else:
+        own_file = True
+        hdf = h5py.File(destination, 'w')
+
+    obj2hdf(hdf, dataset, name, compression=compression)
+
+    # if we opened the file ourselves we close it now
+    if own_file:
+        hdf.close()
+    return

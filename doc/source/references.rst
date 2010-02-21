@@ -1,4 +1,4 @@
-.. -*- mode: rst; fill-column: 78 -*-
+.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
   #
   # THIS IS A GENERATED FILE -- DO NOT EDIT!
   #
@@ -34,6 +34,16 @@ experiments.
   Keywords: :keyword:`feature selection stability`
 
   DOI: http://dx.doi.org/10.1002/hbm.20243
+
+
+.. _Coh94:
+
+**Cohen, J.** (1994). The earth is round (p< 0.05). *American Psychologist*, *49*, 997–1003.
+  *Classical critic of null hypothesis significance testing*
+
+  Keywords: :keyword:`hypothesis testing`
+
+  URL: http://www.citeulike.org/user/mdreid/article/2643653
 
 
 .. _Dem06:
@@ -101,7 +111,7 @@ experiments.
 
 .. _HMH04:
 
-**Hanson, S. J., Matsuka, T. & Haxby, J. V.** (2004). Combinatorial codes in ventral temporal lobe for object recognition: Haxby (2001) revisited: is there a "face" area?. *Neuroimage*, *23*, 156–166.
+**Hanson, S. J., Matsuka, T. & Haxby, J. V.** (2004). Combinatorial codes in ventral temporal lobe for object recognition: Haxby (2001) revisited: is there a "face" area?. *NeuroImage*, *23*, 156–166.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2004.05.020
 
 
@@ -130,6 +140,19 @@ experiments.
   concerning the privacy of personal thought.*
 
   DOI: http://dx.doi.org/10.1038/nrn1931
+
+
+.. _Ioa05:
+
+**Ioannidis, J. P. A.** (2005). Why most published research findings are false. *PLoS Med*, *2*, e124.
+  *Simulation study speculating that it is more likely for a research claim to be
+  false than true. Along the way the paper highlights aspects to keep in mind
+  while assessing the 'scientific significance' of any given study, such as,
+  viability, reproducibility, and results.*
+
+  Keywords: :keyword:`hypothesis testing`
+
+  DOI: http://dx.doi.org/10.1371/journal.pmed.0020124
 
 
 .. _JL09:
@@ -191,13 +214,24 @@ experiments.
 
 .. _LSC+05:
 
-**LaConte, S., Strother, S., Cherkassky, V., Anderson, J. & Hu, X.** (2005). Support vector machines for temporal classification of block design fMRI data. *Neuroimage*, *26*, 317–329.
+**LaConte, S., Strother, S., Cherkassky, V., Anderson, J. & Hu, X.** (2005). Support vector machines for temporal classification of block design fMRI data. *NeuroImage*, *26*, 317–329.
   *Comprehensive evaluation of preprocessing options with respect to
   SVM-classifier (and others) performance on block-design fMRI data.*
 
   Keywords: :keyword:`SVM`
 
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2005.01.048
+
+
+.. _LBB+98:
+
+**Lecun, Y., Bottou, L., Bengio, Y. & Haffner, P.** (1998). Gradient-based learning applied to document recognition. *Proceedings of the IEEE*, *86*, 2278–2324.
+  *Paper introducing Modified NIST (MNIST) dataset for performance comparisons of
+  character recognition performance across a variety of classifiers.*
+
+  Keywords: :keyword:`handwritten character recognition`, :keyword:`multilayer neural networks`, :keyword:`MNIST`
+
+  DOI: http://dx.doi.org/10.1109/5.726791
 
 
 .. _MHH10:
@@ -247,7 +281,7 @@ experiments.
 
 .. _PMB+IP:
 
-**Pereira, F., Mitchell, T. & Botvinick, M.** (in press). Machine learning classifiers and fMRI: A tutorial overview. *Neuroimage*.
+**Pereira, F., Mitchell, T. & Botvinick, M.** (in press). Machine learning classifiers and fMRI: A tutorial overview. *NeuroImage*.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2008.11.007
 
 
@@ -290,7 +324,7 @@ experiments.
 
 .. _WCW+07:
 
-**Wang, Z., Childress, A. R., Wang, J. & Detre, J. A.** (2007). Support vector machine learning-based fMRI data group analysis. *Neuroimage*, *36*, 1139–51.
+**Wang, Z., Childress, A. R., Wang, J. & Detre, J. A.** (2007). Support vector machine learning-based fMRI data group analysis. *NeuroImage*, *36*, 1139–51.
   Keywords: :keyword:`support vector machine`, :keyword:`SVM`, :keyword:`group analysis`
 
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2007.03.072

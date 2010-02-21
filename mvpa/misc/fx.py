@@ -13,11 +13,12 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 
-def singleGammaHRF(t, A=5.4, W=5.2, K=1.0):
+##REF: Name was automagically refactored
+def single_gamma_hrf(t, A=5.4, W=5.2, K=1.0):
     """Hemodynamic response function model.
 
     The version consists of a single gamma function (also see
-    doubleGammaHRF()).
+    double_gamma_hrf()).
 
     Parameters
     ----------
@@ -37,10 +38,11 @@ def singleGammaHRF(t, A=5.4, W=5.2, K=1.0):
            * N.e ** ((t - A) / -((W ** 2) / A / 8.0 / N.log(2.0)))
 
 
-def doubleGammaHRF(t, A1=5.4, W1=5.2, K1=1.0, A2=10.8, W2=7.35, K2=0.35):
+##REF: Name was automagically refactored
+def double_gamma_hrf(t, A1=5.4, W1=5.2, K1=1.0, A2=10.8, W2=7.35, K2=0.35):
     """Hemodynamic response function model.
 
-    The version is using two gamma functions (also see singleGammaHRF()).
+    The version is using two gamma functions (also see single_gamma_hrf()).
 
     Parameters
     ----------
@@ -62,10 +64,11 @@ def doubleGammaHRF(t, A1=5.4, W1=5.2, K1=1.0, A2=10.8, W2=7.35, K2=0.35):
     A2 = float(A2)
     W2 = float(W2)
     K2 = float(K2)
-    return singleGammaHRF(t, A1, W1, K1) - singleGammaHRF(t, A2, W2, K2)
+    return single_gamma_hrf(t, A1, W1, K1) - single_gamma_hrf(t, A2, W2, K2)
 
 
-def leastSqFit(fx, params, y, x=None, **kwargs):
+##REF: Name was automagically refactored
+def least_sq_fit(fx, params, y, x=None, **kwargs):
     """Simple convenience wrapper around SciPy's optimize.leastsq.
 
     The advantage of using this wrapper instead of optimize.leastsq directly

@@ -25,9 +25,16 @@ __docformat__ = 'restructuredtext'
 from mvpa import *
 
 from mvpa.base import *
+from mvpa.base.collections import *
 from mvpa.base.config import *
-from mvpa.base.verbosity import *
+from mvpa.base.dataset import *
+from mvpa.base.externals import *
 from mvpa.base.info import *
+from mvpa.base.types import *
+from mvpa.base.verbosity import *
+
+if externals.exists('h5py'):
+    from mvpa.base.hdf5 import *
 
 if externals.exists('reportlab'):
     from mvpa.base.report import *
@@ -36,6 +43,7 @@ else:
 
 
 from mvpa.algorithms.cvtranserror import *
+from mvpa.algorithms.hyperalignment import *
 
 from mvpa import clfs
 from mvpa.clfs.distance import *
@@ -52,18 +60,27 @@ from mvpa.clfs.smlr import *
 from mvpa.clfs.blr import *
 from mvpa.clfs.gnb import *
 from mvpa.clfs.stats import *
+from mvpa.clfs.similarity import *
 if externals.exists('libsvm') or externals.exists('shogun'):
     from mvpa.clfs.svm import *
 from mvpa.clfs.transerror import *
 from mvpa.clfs.warehouse import *
+
+from mvpa import kernels
+from mvpa.kernels.base import *
+from mvpa.kernels.np import *
+if externals.exists('libsvm'):
+    from mvpa.kernels.libsvm import *
+if externals.exists('shogun'):
+    from mvpa.kernels.sg import *
 
 from mvpa import datasets
 from mvpa.datasets import *
 # just to make testsuite happy
 from mvpa.datasets.base import *
 from mvpa.datasets.miscfx import *
-from mvpa.datasets.channel import *
 from mvpa.datasets.eep import *
+from mvpa.datasets.eventrelated import *
 if externals.exists('nifti'):
     from mvpa.datasets.mri import *
 
@@ -79,14 +96,16 @@ from mvpa.featsel.rfe import *
 from mvpa import mappers
 #from mvpa.mappers import *
 from mvpa.mappers.base import *
+from mvpa.mappers.flatten import *
+from mvpa.mappers.prototype import *
 from mvpa.mappers.projection import *
 from mvpa.mappers.svd import *
 from mvpa.mappers.procrustean import *
 from mvpa.mappers.boxcar import *
 from mvpa.mappers.fx import *
 from mvpa.mappers.som import *
+from mvpa.mappers.zscore import *
 if externals.exists('scipy'):
-    from mvpa.mappers.zscore import ZScoreMapper
     from mvpa.mappers.detrend import *
 if externals.exists('mdp'):
     from mvpa.mappers.mdp_adaptor import *
@@ -111,7 +130,7 @@ from mvpa.misc.data_generators import *
 from mvpa.misc.exceptions import *
 from mvpa.misc import *
 from mvpa.misc.io import *
-from mvpa.misc.io.eepbin import *
+from mvpa.misc.io.base import *
 from mvpa.misc.io.meg import *
 if externals.exists('cPickle') and externals.exists('gzip'):
     from mvpa.misc.io.hamster import *
@@ -131,8 +150,7 @@ if externals.exists("pylab"):
     from mvpa.misc.plot.erp import *
     if externals.exists(['griddata', 'scipy']):
         from mvpa.misc.plot.topo import *
-    if externals.exists('nifti'):
-        from mvpa.misc.plot.mri import plotMRI
+    from mvpa.misc.plot.lightbox import plot_lightbox
 
 if externals.exists("scipy"):
     from mvpa.support.stats import scipy

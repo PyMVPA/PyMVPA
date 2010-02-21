@@ -80,7 +80,7 @@ def single_or_plural(single, plural, n):
 
 def handle_docstring(text, polite=True):
     """Take care of empty and non existing doc strings."""
-    if text == None or not len(text):
+    if text is None or not len(text):
         if polite:
             return '' #No documentation found. Sorry!'
         else:
@@ -122,7 +122,7 @@ def _split_out_parameters(initdoc):
     # TODO: bind it to the only word in the line
     p_res = __parameters_str_re.search(initdoc)
     if p_res is None:
-        result = initdoc, "", ""
+        return initdoc, "", ""
     else:
         # Could have been accomplished also via re.match
 
@@ -144,7 +144,9 @@ def _split_out_parameters(initdoc):
 
     # XXX a bit of duplication of effort since handle_docstring might
     # do splitting internally
-    return [handle_docstring(x, polite=False).strip('\n') for x in result]
+    return handle_docstring(result[0], polite=False).strip('\n'), \
+           textwrap.dedent(result[1]).strip('\n'), \
+           textwrap.dedent(result[2]).strip('\n')
 
 
 __re_params = re.compile('(?:\n\S.*?)+$')
@@ -156,7 +158,7 @@ def _parse_parameters(paramdoc):
     It is needed to remove multiple entries for the same parameter
     like it could be with adding parameters from the parent class
 
-    It assumes that previousely parameters were unwrapped, so their
+    It assumes that previously parameters were unwrapped, so their
     documentation starts at the begining of the string, like what
     should it be after _split_out_parameters
     """
@@ -169,7 +171,8 @@ def _parse_parameters(paramdoc):
     return result
 
 
-def enhancedDocString(item, *args, **kwargs):
+##REF: Name was automagically refactored
+def enhanced_doc_string(item, *args, **kwargs):
     """Generate enhanced doc strings for various items.
 
     Parameters
@@ -193,7 +196,7 @@ def enhancedDocString(item, *args, **kwargs):
     if len(kwargs):
         if set(kwargs.keys()).issubset(set(['force_extend'])):
             raise ValueError, "Got unknown keyword arguments (smth among %s)" \
-                  " in enhancedDocString." % kwargs
+                  " in enhanced_doc_string." % kwargs
     force_extend = kwargs.get('force_extend', False)
     skip_params = kwargs.get('skip_params', [])
 
@@ -201,14 +204,14 @@ def enhancedDocString(item, *args, **kwargs):
     if isinstance(item, basestring):
         if len(args)<1 or not isinstance(args[0], dict):
             raise ValueError, \
-                  "Please provide locals for enhancedDocString of %s" % item
+                  "Please provide locals for enhanced_doc_string of %s" % item
         name = item
         lcl = args[0]
         args = args[1:]
     elif hasattr(item, "im_class"):
         # bound method
         raise NotImplementedError, \
-              "enhancedDocString is not yet implemented for methods"
+              "enhanced_doc_string is not yet implemented for methods"
     elif hasattr(item, "__name__"):
         name = item.__name__
         lcl = item.__dict__
@@ -226,8 +229,8 @@ def enhancedDocString(item, *args, **kwargs):
     rst_lvlmarkup = ["=", "-", "_"]
 
     # would then be called for any child... ok - ad hoc for SVM???
-    if hasattr(item, '_customizeDoc') and name=='SVM':
-        item._customizeDoc()
+    if hasattr(item, '_customize_doc') and name=='SVM':
+        item._customize_doc()
 
     initdoc = ""
     if lcl.has_key('__init__'):
@@ -310,11 +313,18 @@ def enhancedDocString(item, *args, **kwargs):
                                  % name, rst_lvlmarkup[2]),
                   initdoc ]
 
-    # Add information about the states if available
-    if lcl.has_key('_statesdoc') and len(item._statesdoc):
-        # no indent is necessary since states list must be already indented
-        docs += [_rst_section('Notes') + '\nAvailable state variables:',
-                     handle_docstring(item._statesdoc)]
+    # Add information about the ca if available
+    if lcl.has_key('_cadoc') and len(item._cadoc):
+        # to don't conflict with Notes section if such was already
+        # present
+        lcldoc = lcl['__doc__'] or ''
+        if not 'Notes' in lcldoc:
+            section_name = _rst_section('Notes')
+        else:
+            section_name = '\n'         # just an additional newline
+        # no indent is necessary since ca list must be already indented
+        docs += ['%s\nAvailable state variables:' % section_name,
+                 handle_docstring(item._cadoc)]
 
     # Deprecated -- but actually we might like to have it in ipython
     # mode may be?
@@ -427,7 +437,7 @@ def _str(obj, *args, **kwargs):
     -------
     str
     """
-    truncate = cfg.getAsDType('verbose', 'truncate str', int)
+    truncate = cfg.get_as_dtype('verbose', 'truncate str', int, default=200)
 
     if hasattr(obj, 'descr'):
         s = obj.descr
@@ -453,3 +463,107 @@ def _str(obj, *args, **kwargs):
 
     # finally wrap in <> and return
     return '<%s>' % s
+
+
+def borrowdoc(cls, methodname=None):
+    """Return a decorator to borrow docstring from another `cls`.`methodname`
+
+    Examples
+    --------
+    To borrow `__repr__` docstring from parent class `Mapper`, do::
+
+       @borrowdoc(Mapper)
+       def __repr__(self):
+           ...
+
+    Parameters
+    ----------
+    cls
+      Usually a parent class
+    methodname : None or str
+      Name of the method from which to borrow.  If None, would use
+      the same name as of the decorated method
+    """
+
+    def _borrowdoc(method):
+        """Decorator which assigns to the `method` docstring from another
+        """
+        if methodname is None:
+            other_method = getattr(cls, method.__name__)
+        else:
+            other_method = getattr(cls, methodname)
+        if hasattr(other_method, '__doc__'):
+            method.__doc__ = other_method.__doc__
+        return method
+    return _borrowdoc
+
+
+def borrowkwargs(cls, methodname=None, exclude=None):
+    """Return  a decorator which would borrow docstring for ``**kwargs``
+
+    Notes
+    -----
+    TODO: take care about ``*args`` in  a clever way if those are also present
+
+    Examples
+    --------
+    In the simplest scenario -- just grab all arguments from parent class::
+
+           @borrowkwargs(A)
+           def met1(self, bu, **kwargs):
+               pass
+
+    Parameters
+    ----------
+    methodname : None or str
+      Name of the method from which to borrow.  If None, would use
+      the same name as of the decorated method
+    exclude : None or list of arguments to exclude
+      If function does not pass all ``**kwargs``, you would need to list
+      those here to be excluded from borrowed docstring
+    """
+
+    def _borrowkwargs(method):
+        """Decorator which borrows docstrings for ``**kwargs`` for the `method`
+        """
+        if methodname is None:
+            other_method = getattr(cls, method.__name__)
+        else:
+            other_method = getattr(cls, methodname)
+        # TODO:
+        # method.__doc__ = enhanced_from(other_method.__doc__)
+
+        mdoc, odoc = method.__doc__, other_method.__doc__
+        if mdoc is None:
+            mdoc = ''
+
+        mpreamble, mparams, msuffix = _split_out_parameters(mdoc)
+        opreamble, oparams, osuffix = _split_out_parameters(odoc)
+        mplist = _parse_parameters(mparams)
+        oplist = _parse_parameters(oparams)
+        known_params = set([i[0] for i in mplist])
+
+        # !!! has to not rebind exclude variable
+        skip_params = exclude or []         # handle None
+        skip_params = set(['kwargs', '**kwargs'] + skip_params)
+
+        # combine two and filter out items to skip
+        aplist = [i for i in mplist if not i[0] in skip_params]
+        aplist += [i for i in oplist
+                   if not i[0] in skip_params.union(known_params)]
+
+        docstring = mpreamble
+        if len(aplist):
+            params_ = '\n'.join([i[1].rstrip() for i in aplist])
+            docstring += "\n\n%s\n" \
+                         % _rst_section('Parameters') + _indent(params_)
+
+        if msuffix != "":
+            docstring += "\n\n" + msuffix
+
+        docstring = handle_docstring(docstring)
+
+        # Finally assign generated doc to the method
+        method.__doc__ = docstring
+        return method
+    return _borrowkwargs

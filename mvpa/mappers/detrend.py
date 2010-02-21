@@ -18,14 +18,14 @@ if externals.exists('scipy', raiseException=True):
     # if we construct the polynomials ourselves, we wouldn't need scipy here
     from scipy.special import legendre
 
-from mvpa.base.dochelpers import _str
+from mvpa.base.dochelpers import _str, borrowkwargs
 from mvpa.mappers.base import Mapper
 
 
 class PolyDetrendMapper(Mapper):
     """Mapper for regression-based removal of polynomial trends.
 
-    Noteworthy feature are the possibility for chunk-wise detrending, optional
+    Noteworthy features are the possibility for chunk-wise detrending, optional
     regressors, and the ability to use positional information about the samples
     from the dataset.
 
@@ -56,18 +56,18 @@ class PolyDetrendMapper(Mapper):
 
     Examples
     --------
-    >>> from mvpa.datasets import dataset
+    >>> from mvpa.datasets import dataset_wizard
     >>> from mvpa.mappers.detrend import PolyDetrendMapper
     >>> samples = N.array([[1.0, 2, 3, 3, 2, 1],
     ...                    [-2.0, -4, -6, -6, -4, -2]]).T
     >>> chunks = [0, 0, 0, 1, 1, 1]
-    >>> ds = dataset(samples, chunks=chunks)
+    >>> ds = dataset_wizard(samples, chunks=chunks)
     >>> dm = PolyDetrendMapper(chunks='chunks', polyord=1)
 
-    # the mapper will be auto-trained upon first use
+    >>> # the mapper will be auto-trained upon first use
     >>> mds = dm.forward(ds)
 
-    # total removal all all (chunk-wise) linear trends
+    >>> # total removal all all (chunk-wise) linear trends
     >>> N.sum(N.abs(mds)) < 0.00001
     True
     """
@@ -308,6 +308,12 @@ class PolyDetrendMapper(Mapper):
         # remove all and keep only the residuals
         if self._secret_inplace_detrend:
             # if we are in evil mode do evil
+
+            # cast the data to float, since in-place operations below do not
+            # upcast!
+            if N.issubdtype(mds.samples.dtype, N.integer):
+                mds.samples = mds.samples.astype('float')
+
             mds.samples -= N.dot(regs, y)
         else:
             # important to assign to ensure COW behavior
@@ -322,15 +328,12 @@ class PolyDetrendMapper(Mapper):
                            % self.__class__.__name__)
 
 
-    def _reverse_data(self, data):
-        raise RuntimeError("%s cannot map plain data."
-                           % self.__class__.__name__)
 
-
+@borrowkwargs(PolyDetrendMapper, '__init__')
 def poly_detrend(ds, **kwargs):
     """In-place polynomial detrending.
 
-    This function behaves identical to the PolyDetrendMapper. The only
+    This function behaves identical to the `PolyDetrendMapper`. The only
     difference is that the actual detrending is done in-place -- potentially
     causing a significant reduction of the memory demands.
 
@@ -344,4 +347,7 @@ def poly_detrend(ds, **kwargs):
     """
     dm = PolyDetrendMapper(**kwargs)
     dm._secret_inplace_detrend = True
-    return dm(ds)
+    # map
+    mapped = dm(ds)
+    # and append the mapper to the dataset
+    mapped._append_mapper(dm)

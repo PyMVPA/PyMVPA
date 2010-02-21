@@ -49,7 +49,8 @@ class OptionGroups(object):
     def add(self, name, l, doc):
         self._d[name] = (doc, l)
 
-    def _getGroup(self, name):
+    ##REF: Name was automagically refactored
+    def _get_group(self, name):
         try:
             doc, l = self._d[name]
         except KeyError:
@@ -67,7 +68,7 @@ class OptionGroups(object):
         if index[0] == '_':
             return object.__getattribute__(self, index)
         if self._d.has_key(index):
-            return self._getGroup(index)
+            return self._get_group(index)
         return object.__getattribute__(self, index)
 
 
@@ -93,7 +94,8 @@ opts = OptionGroups(parser)
 #
 # Verbosity options
 #
-def _verboseCallback(option, optstr, value, parser):
+##REF: Name was automagically refactored
+def _verbose_callback(option, optstr, value, parser):
     """Callback for -v|--verbose cmdline option
     """
     if __debug__:
@@ -109,7 +111,7 @@ opt.help = \
 
 opt.verbose = \
     Option("-v", "--verbose", "--verbosity",
-           action="callback", callback=_verboseCallback, nargs=1,
+           action="callback", callback=_verbose_callback, nargs=1,
            type="int", dest="verbose", default=0,
            help="Verbosity level of output")
 """Pre-cooked `optparse`'s option to specify verbose level"""
@@ -119,7 +121,8 @@ commonopts_list = [opt.verbose, opt.help]
 if __debug__:
     from mvpa.base import debug
 
-    def _debugCallback(option, optstr, value, parser):
+    ##REF: Name was automagically refactored
+    def _debug_callback(option, optstr, value, parser):
         """Callback for -d|--debug cmdline option
         """
         if value == "list":
@@ -134,13 +137,13 @@ if __debug__:
             raise SystemExit, 0
 
         optstr = optstr                     # pylint shut up
-        debug.setActiveFromString(value)
+        debug.set_active_from_string(value)
 
         setattr(parser.values, option.dest, value)
 
 
     optDebug = Option("-d", "--debug",
-                      action="callback", callback=_debugCallback,
+                      action="callback", callback=_debug_callback,
                       nargs=1,
                       type="string", dest="debug", default="",
                       help="Debug entries to report. " +
@@ -234,7 +237,8 @@ opts.add('preproc', [opt.zscore, opt.tr, opt.detrend], "Preprocessing options")
 # Wavelets options
 if externals.exists('pywt'):
     import pywt
-    def _waveletFamilyCallback(option, optstr, value, parser):
+    ##REF: Name was automagically refactored
+    def _wavelet_family_callback(option, optstr, value, parser):
         """Callback for -w|--wavelet-family cmdline option
         """
         wl_list = pywt.wavelist()
@@ -272,7 +276,7 @@ if externals.exists('pywt'):
 
 
     opt.wavelet_family = \
-            Option("-w", "--wavelet-family", callback=_waveletFamilyCallback,
+            Option("-w", "--wavelet-family", callback=_wavelet_family_callback,
                    action="callback", type="string", dest="wavelet_family",
                    default='-1',
                    help="Wavelet family: string or index among the available. " +

@@ -13,11 +13,12 @@ import numpy as N
 
 from mvpa.base import externals
 
-from mvpa.misc.transformers import Absolute, OneMinus, RankOrder, \
-     ReverseRankOrder, L1Normed, L2Normed, OverAxis, \
-     DistPValue, FirstAxisSumNotZero
+from mvpa.misc.transformers import Absolute, one_minus, rank_order, \
+     reverse_rank_order, l1_normed, l2_normed, OverAxis, \
+     DistPValue, first_axis_sum_not_zero
 
-from tests_warehouse import sweepargs, datasets
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
 
 from mvpa.base import cfg
 
@@ -27,31 +28,31 @@ class TransformerTests(unittest.TestCase):
         self.d1 = N.array([ 1,  0, -1, -2, -3])
         self.d2 = N.array([ 2.3,  0, -1, 2, -30, 1])
 
-    def testAbsolute(self):
+    def test_absolute(self):
         # generate 100 values (gaussian noise mean -1000 -> all negative)
         out = Absolute(N.random.normal(-1000, size=100))
 
         self.failUnless(out.min() >= 0)
         self.failUnless(len(out) == 100)
 
-    def testAbsolute2(self):
+    def test_absolute2(self):
         target = self.d1
-        out = OneMinus(N.arange(5))
+        out = one_minus(N.arange(5))
         self.failUnless((out == target).all())
 
-    def testFirstAxisSumNotZero(self):
+    def test_first_axis_sum_not_zero(self):
         src = [[ 1, -22.9, 6.8, 0],
                [ -.8, 7, 0, 0.0],
                [88, 0, 0.0, 0],
                [0, 0, 0, 0.0]]
         target = N.array([ 3, 2, 1, 0])
-        out = FirstAxisSumNotZero(src)
+        out = first_axis_sum_not_zero(src)
         self.failUnless((out == target).all())
         
-    def testRankOrder(self):
+    def test_rank_order(self):
         nelements = len(self.d2)
-        out = RankOrder(self.d2)
-        outr = ReverseRankOrder(self.d2)
+        out = rank_order(self.d2)
+        outr = reverse_rank_order(self.d2)
         uout = N.unique(out)
         uoutr = N.unique(outr)
         self.failUnless((uout == N.arange(nelements)).all(),
@@ -61,16 +62,16 @@ class TransformerTests(unittest.TestCase):
         self.failUnless((out+outr+1 == nelements).all())
         self.failUnless((out == [ 0,  3,  4,  1,  5,  2]).all())
 
-    def testL2Norm(self):
-        out = L2Normed(self.d2)
+    def test_l2_norm(self):
+        out = l2_normed(self.d2)
         self.failUnless(N.abs(N.sum(out*out)-1.0) < 1e-10)
 
-    def testL1Norm(self):
-        out = L1Normed(self.d2)
+    def test_l1_norm(self):
+        out = l1_normed(self.d2)
         self.failUnless(N.abs(N.sum(N.abs(out))-1.0) < 1e-10)
 
 
-    def testOverAxis(self):
+    def test_over_axis(self):
         data = datasets['uni4large'].samples[:120,0].reshape((2,3,4,5))
         # Simple transformer/combiner which collapses across given
         # dimension, e.g. sum
@@ -81,18 +82,18 @@ class TransformerTests(unittest.TestCase):
 
         # Transformer which doesn't modify dimensionality of the data
         data = data.reshape((6, -1))
-        overnorm = OverAxis(L2Normed, axis=1)(data)
+        overnorm = OverAxis(l2_normed, axis=1)(data)
         self.failUnless(N.linalg.norm(overnorm)!=1.0)
         for d in overnorm:
             self.failUnless(N.abs(N.linalg.norm(d) - 1.0)<0.00001)
 
-        overnorm = OverAxis(L2Normed, axis=0)(data)
+        overnorm = OverAxis(l2_normed, axis=0)(data)
         self.failUnless(N.linalg.norm(overnorm)!=1.0)
         for d in overnorm.T:
             self.failUnless(N.abs(N.linalg.norm(d) - 1.0)<0.00001)
 
 
-    def testDistPValue(self):
+    def test_dist_p_value(self):
         """Basic testing of DistPValue"""
         if not externals.exists('scipy'):
             return
@@ -122,10 +123,10 @@ class TransformerTests(unittest.TestCase):
             self.failUnless((result<=1).all)
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(distPValue.states.positives_recovered[0] > 10)
-            self.failUnless((N.array(distPValue.states.positives_recovered) +
-                             N.array(distPValue.states.nulldist_number) == ndb + ndu).all())
-            self.failUnless(distPValue.states.positives_recovered[1] == 0)
+            self.failUnless(distPValue.ca.positives_recovered[0] > 10)
+            self.failUnless((N.array(distPValue.ca.positives_recovered) +
+                             N.array(distPValue.ca.nulldist_number) == ndb + ndu).all())
+            self.failUnless(distPValue.ca.positives_recovered[1] == 0)
 
 
 def suite():

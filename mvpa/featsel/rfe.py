@@ -166,16 +166,16 @@ class RFE(FeatureSelection):
         errors = []
         """Computed error for each tested features set."""
 
-        states = self.states
-        states.nfeatures = []
+        ca = self.ca
+        ca.nfeatures = []
         """Number of features at each step. Since it is not used by the
         algorithm it is stored directly in the state variable"""
 
-        states.history = arange(dataset.nfeatures)
+        ca.history = arange(dataset.nfeatures)
         """Store the last step # when the feature was still present
         """
 
-        states.sensitivities = []
+        ca.sensitivities = []
 
         stop = False
         """Flag when RFE should be stopped."""
@@ -215,20 +215,20 @@ class RFE(FeatureSelection):
             # mark the features which are present at this step
             # if it brings anyb mentionable computational burden in the future,
             # only mark on removed features at each step
-            states.history[orig_feature_ids] = step
+            ca.history[orig_feature_ids] = step
 
             # Compute sensitivity map
             if self.__update_sensitivity or sensitivity == None:
                 sensitivity = self.__sensitivity_analyzer(wdataset)
                 if len(sensitivity) > 1:
                     raise ValueError(
-                            "REF cannot handle multiple sensitivities at once. "
+                            "RFE cannot handle multiple sensitivities at once. "
                             "'%s' returned %i sensitivities."
                             % (self.__sensitivity_analyzer.__class__.__name__,
                                len(sensitivity)))
 
-            if states.is_enabled("sensitivities"):
-                states.sensitivities.append(sensitivity)
+            if ca.is_enabled("sensitivities"):
+                ca.sensitivities.append(sensitivity)
 
             # do not retrain clf if not necessary
             if self.__train_clf:
@@ -246,8 +246,8 @@ class RFE(FeatureSelection):
 
             nfeatures = wdataset.nfeatures
 
-            if states.is_enabled("nfeatures"):
-                states.nfeatures.append(wdataset.nfeatures)
+            if ca.is_enabled("nfeatures"):
+                ca.nfeatures.append(wdataset.nfeatures)
 
             # store result
             if isthebest:
@@ -294,16 +294,16 @@ class RFE(FeatureSelection):
 
             # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
             selected_ids.sort()
-            if self.states.is_enabled("history") \
-                   or self.states.is_enabled('selected_ids'):
+            if self.ca.is_enabled("history") \
+                   or self.ca.is_enabled('selected_ids'):
                 orig_feature_ids = orig_feature_ids[selected_ids]
 
 
             if hasattr(self.__transfer_error, "clf"):
                 self.__transfer_error.clf.untrain()
         # charge state variables
-        self.states.errors = errors
-        self.states.selected_ids = result_selected_ids
+        self.ca.errors = errors
+        self.ca.selected_ids = result_selected_ids
 
         # best dataset ever is returned
         return results

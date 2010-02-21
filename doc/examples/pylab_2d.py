@@ -51,8 +51,8 @@ feat_test = N.array((N.ravel(x), N.ravel(y)))
 from mvpa.suite import *
 
 # create the pymvpa dataset from the labeled features
-patternsPos = dataset(samples=feat_pos.T, labels=1)
-patternsNeg = dataset(samples=feat_neg.T, labels=0)
+patternsPos = dataset_wizard(samples=feat_pos.T, targets=1)
+patternsNeg = dataset_wizard(samples=feat_neg.T, targets=0)
 ds_lin = vstack((patternsPos, patternsNeg))
 
 """Let's add another dataset: XOR. This problem is not linear separable
@@ -61,7 +61,7 @@ provided by the PyMVPA dataset warehouse.
 """
 
 # 30 samples per condition, SNR 3
-ds_nl = pureMultivariateSignal(30,3)
+ds_nl = pure_multivariate_signal(30,3)
 
 datasets = {'linear': ds_lin, 'non-linear': ds_nl}
 
@@ -72,9 +72,9 @@ compile a long list, if necessary."""
 # set up classifiers to try out
 clfs = {'Ridge Regression': RidgeReg(),
         'Linear SVM': LinearNuSVMC(probability=1,
-                      enable_states=['probabilities']),
+                      enable_ca=['probabilities']),
         'RBF SVM': RbfNuSVMC(probability=1,
-                      enable_states=['probabilities']),
+                      enable_ca=['probabilities']),
         'SMLR': SMLR(lm=0.01),
         'Logistic Regression': PLR(criterion=0.00001),
         'k-Nearest-Neighbour': kNN(k=10),
@@ -106,18 +106,18 @@ for id, ds in datasets.iteritems():
         P.subplot(3, 3, fig)
 
         # plot the training points
-        P.plot(ds.samples[ds.labels == 1, 0],
-               ds.samples[ds.labels == 1, 1],
+        P.plot(ds.samples[ds.targets == 1, 0],
+               ds.samples[ds.targets == 1, 1],
                "r.")
-        P.plot(ds.samples[ds.labels == 0, 0],
-               ds.samples[ds.labels == 0, 1],
+        P.plot(ds.samples[ds.targets == 0, 0],
+               ds.samples[ds.targets == 0, 1],
                "b.")
 
         # select the clasifier
         clf = clfs[c]
 
         # enable saving of the estimates used for the prediction
-        clf.states.enable('estimates')
+        clf.ca.enable('estimates')
 
         # train with the known points
         clf.train(ds)
@@ -131,19 +131,19 @@ for id, ds in datasets.iteritems():
             res = N.asarray(pre)
         elif c == 'Logistic Regression':
             # get out the values used for the prediction
-            res = N.asarray(clf.states.estimates)
+            res = N.asarray(clf.ca.estimates)
         elif c in ['SMLR']:
-            res = N.asarray(clf.states.estimates[:, 1])
+            res = N.asarray(clf.ca.estimates[:, 1])
         elif c.startswith('GNB'):
             # Since probabilities are raw: for visualization lets
             # operate on logprobs and in comparison one to another
-            res = clf.states.estimates[:, 1] - clf.states.estimates[:, 0]
+            res = clf.ca.estimates[:, 1] - clf.ca.estimates[:, 0]
             # Scale and position around 0.5
             res = 0.5 + res/max(N.abs(res))
         else:
             # get the probabilities from the svm
             res = N.asarray([(q[1][1] - q[1][0] + 1) / 2
-                    for q in clf.states.probabilities])
+                    for q in clf.ca.probabilities])
 
         # reshape the results
         z = N.asarray(res).reshape((npoints, npoints))

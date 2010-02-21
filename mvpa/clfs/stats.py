@@ -110,11 +110,11 @@ class NullDist(ClassWithCollections):
 
     """
 
-    # Although base class is not benefiting from states, derived
+    # Although base class is not benefiting from ca, derived
     # classes do (MCNullDist). For the sake of avoiding multiple
     # inheritance and associated headache -- let them all be ClassWithCollections,
     # performance hit should be negligible in most of the scenarios
-    _ATTRIBUTE_COLLECTIONS = ['states']
+    _ATTRIBUTE_COLLECTIONS = ['ca']
 
     def __init__(self, tail='both', **kwargs):
         """
@@ -128,14 +128,15 @@ class NullDist(ClassWithCollections):
         """
         ClassWithCollections.__init__(self, **kwargs)
 
-        self._setTail(tail)
+        self._set_tail(tail)
 
     def __repr__(self, prefixes=[]):
         return super(NullDist, self).__repr__(
             prefixes=["tail=%s" % `self.__tail`] + prefixes)
 
 
-    def _setTail(self, tail):
+    ##REF: Name was automagically refactored
+    def _set_tail(self, tail):
         # sanity check
         if tail not in ('left', 'right', 'any', 'both'):
             raise ValueError, 'Unknown value "%s" to `tail` argument.' \
@@ -167,7 +168,7 @@ class NullDist(ClassWithCollections):
         return _pvalue(x, self.cdf, self.__tail, **kwargs)
 
 
-    tail = property(fget=lambda x:x.__tail, fset=_setTail)
+    tail = property(fget=lambda x:x.__tail, fset=_set_tail)
 
 
 class MCNullDist(NullDist):
@@ -199,7 +200,8 @@ class MCNullDist(NullDist):
     dist_samples = StateVariable(enabled=False,
                                  doc='Samples obtained for each permutation')
 
-    def __init__(self, dist_class=Nonparametric, permutations=100, **kwargs):
+    def __init__(self, dist_class=Nonparametric, permutations=100,
+                 perchunk=False, **kwargs):
         """Initialize Monte-Carlo Permutation Null-hypothesis testing
 
         Parameters
@@ -212,6 +214,8 @@ class MCNullDist(NullDist):
         permutations : int
           This many permutations of label will be performed to
           determine the distribution under the null hypothesis.
+        perchunk: bool
+            If True, only permutes labels within each chunk
         """
         NullDist.__init__(self, **kwargs)
 
@@ -222,8 +226,12 @@ class MCNullDist(NullDist):
         """Number of permutations to compute the estimate the null
         distribution."""
 
+        self.__perchunk = perchunk
+
     def __repr__(self, prefixes=[]):
         prefixes_ = ["permutations=%s" % self.__permutations]
+        if self.__perchunk:
+            prefixes_ += ['perchunk=True']
         if self._dist_class != Nonparametric:
             prefixes_.insert(0, 'dist_class=%s' % `self._dist_class`)
         return super(MCNullDist, self).__repr__(
@@ -252,13 +260,17 @@ class MCNullDist(NullDist):
             # new permutation all the time
             # but only permute the training data and keep the testdata constant
             #
+            if __debug__:
+                debug('STATMC', "Doing %i permutations: %i" \
+                      % (self.__permutations, p+1), cr=True)
+
             # TODO this really needs to be more clever! If data samples are
             # shuffled within a class it really makes no difference for the
             # classifier, hence the number of permutations to estimate the
             # null-distribution of transfer errors can be reduced dramatically
             # when the *right* permutations (the ones that matter) are done.
             permuted_wdata = wdata.copy('shallow')
-            permuted_wdata.permute_labels(perchunk=False)
+            permuted_wdata.permute_targets(perchunk=self.__perchunk)
 
             # decide on the arguments to measure
             if not vdata is None:
@@ -272,8 +284,12 @@ class MCNullDist(NullDist):
             res = N.asanyarray(res)
             dist_samples.append(res)
 
+        if __debug__:
+            debug('STATMC', '')
+
+
         # store samples
-        self.states.dist_samples = dist_samples = N.asarray(dist_samples)
+        self.ca.dist_samples = dist_samples = N.asarray(dist_samples)
 
         # fit distribution per each element
 
@@ -521,6 +537,12 @@ if externals.exists('scipy'):
             """Arguments which should get some fixed value"""
 
 
+        def __call__(self, *args, **kwargs):
+            """Upon call mimic call to get actual rv_frozen distribution
+            """
+            return self._dist(*args, **kwargs)
+
+
         def nnlf(self, theta, x):
             # - sum (log pdf(x, theta),axis=0)
             #   where theta are the parameters (including loc and scale)
@@ -618,7 +640,8 @@ if externals.exists('scipy'):
 
 
 
-    def matchDistribution(data, nsamples=None, loc=None, scale=None,
+    ##REF: Name was automagically refactored
+    def match_distribution(data, nsamples=None, loc=None, scale=None,
                           args=None, test='kstest', distributions=None,
                           **kwargs):
         """Determine best matching distribution.
@@ -668,7 +691,7 @@ if externals.exists('scipy'):
         Examples
         --------
         >>> data = N.random.normal(size=(1000,1));
-        >>> matches = matchDistribution(
+        >>> matches = match_distribution(
               data,
               distributions=['rdist',
                              ('rdist', {'name':'rdist_fixed',
@@ -810,7 +833,8 @@ if externals.exists('scipy'):
     if externals.exists('pylab'):
         import pylab as P
 
-        def plotDistributionMatches(data, matches, nbins=31, nbest=5,
+        ##REF: Name was automagically refactored
+        def plot_distribution_matches(data, matches, nbins=31, nbest=5,
                                     expand_tails=8, legend=2, plot_cdf=True,
                                     p=None, tail='both'):
             """Plot best matching distributions
@@ -820,7 +844,7 @@ if externals.exists('scipy'):
             data : N.ndarray
               Data which was used to obtain the matches
             matches : list of tuples
-              Sorted matches as provided by matchDistribution
+              Sorted matches as provided by match_distribution
             nbins : int
               Number of bins in the histogram
             nbest : int
@@ -942,18 +966,19 @@ if externals.exists('scipy'):
 
     #if True:
     #    data = N.random.normal(size=(1000,1));
-    #    matches = matchDistribution(
+    #    matches = match_distribution(
     #        data,
     #        distributions=['scipy',
     #                       ('norm', {'name':'norm_known',
     #                                 'scale': 1.0,
     #                                 'loc': 0.0})],
     #        nsamples=30, test='p-roc', p=0.05)
-    #    P.figure(); plotDistributionMatches(data, matches, nbins=101,
+    #    P.figure(); plot_distribution_matches(data, matches, nbins=101,
     #                                        p=0.05, legend=4, nbest=5)
 
 
-def autoNullDist(dist):
+##REF: Name was automagically refactored
+def auto_null_dist(dist):
     """Cheater for human beings -- wraps `dist` if needed with some
     NullDist
 

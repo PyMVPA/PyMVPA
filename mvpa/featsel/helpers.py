@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 from math import floor
 import numpy as N
 
+from mvpa.base.dataset import AttrDataset
 from mvpa.misc.state import ClassWithCollections, StateVariable
 
 if __debug__:
@@ -252,11 +253,12 @@ class ElementSelector(ClassWithCollections):
         """
         ClassWithCollections.__init__(self, **kwargs)
 
-        self._setMode(mode)
+        self._set_mode(mode)
         """Flag whether to select or to discard elements."""
 
 
-    def _setMode(self, mode):
+    ##REF: Name was automagically refactored
+    def _set_mode(self, mode):
         """Choose `select` or `discard` mode."""
 
         if not mode in ['discard', 'select']:
@@ -267,12 +269,38 @@ class ElementSelector(ClassWithCollections):
 
 
     def __call__(self, seq):
+        """
+        Parameters
+        ----------
+        seq
+           Sequence based on values of which to perform the selection.
+           If `Dataset`, then only 1st sample is taken.
+        """
+        if isinstance(seq, AttrDataset):
+            if len(seq)>1:
+                raise ValueError(
+                    "Feature selectors cannot handle multiple "
+                    "sequences in a Dataset at once.  We got dataset %s "
+                    "as input."
+                    % (seq,))
+            seq = seq.samples[0]
+        elif hasattr(seq, 'shape'):
+            shape = seq.shape
+            if len(shape) > 1:
+                raise ValueError(
+                    "Feature selectors cannot handle multidimensional "
+                    "inputs (such as ndarrays with more than a single "
+                    "dimension.  We got %s with shape %s "
+                    "as input." % (seq.__class__, shape))
+        return self._call(seq)
+
+    def _call(self, seq):
         """Implementations in derived classed have to return a list of selected
         element IDs based on the given sequence.
         """
         raise NotImplementedError
 
-    mode = property(fget=lambda self:self.__mode, fset=_setMode)
+    mode = property(fget=lambda self:self.__mode, fset=_set_mode)
 
 
 class RangeElementSelector(ElementSelector):
@@ -318,7 +346,7 @@ class RangeElementSelector(ElementSelector):
 
         self.__inclusive = inclusive
 
-    def __call__(self, seq):
+    def _call(self, seq):
         """Returns selected IDs.
         """
         lower, upper = self.__range
@@ -379,13 +407,14 @@ class TailSelector(ElementSelector):
         # init State before registering anything
         ElementSelector.__init__(self, **kwargs)
 
-        self._setTail(tail)
+        self._set_tail(tail)
         """Know which tail to select."""
 
         self.__sort = sort
 
 
-    def _setTail(self, tail):
+    ##REF: Name was automagically refactored
+    def _set_tail(self, tail):
         """Set the tail to be processed."""
         if not tail in ['lower', 'upper']:
             raise ValueError, "Unkown tail argument [%s]. Can only be one " \
@@ -394,21 +423,22 @@ class TailSelector(ElementSelector):
         self.__tail = tail
 
 
-    def _getNElements(self, seq):
+    ##REF: Name was automagically refactored
+    def _get_n_elements(self, seq):
         """In derived classes has to return the number of elements to be
         processed given a sequence values forming the distribution.
         """
         raise NotImplementedError
 
 
-    def __call__(self, seq):
+    def _call(self, seq):
         """Returns selected IDs.
         """
         # TODO: Think about selecting features which have equal values but
         #       some are selected and some are not
         len_seq = len(seq)
         # how many to select (cannot select more than available)
-        nelements = min(self._getNElements(seq), len_seq)
+        nelements = min(self._get_n_elements(seq), len_seq)
 
         # make sure that data is ndarray and compute a sequence rank matrix
         # lowest value is first
@@ -416,16 +446,16 @@ class TailSelector(ElementSelector):
 
         if self.mode == 'discard' and self.__tail == 'upper':
             good_ids = seqrank[:-1*nelements]
-            self.states.ndiscarded = nelements
+            self.ca.ndiscarded = nelements
         elif self.mode == 'discard' and self.__tail == 'lower':
             good_ids = seqrank[nelements:]
-            self.states.ndiscarded = nelements
+            self.ca.ndiscarded = nelements
         elif self.mode == 'select' and self.__tail == 'upper':
             good_ids = seqrank[-1*nelements:]
-            self.states.ndiscarded = len_seq - nelements
+            self.ca.ndiscarded = len_seq - nelements
         else: # select lower tail
             good_ids = seqrank[:nelements]
-            self.states.ndiscarded = len_seq - nelements
+            self.ca.ndiscarded = len_seq - nelements
 
         # sort ids to keep order
         # XXX should we do here are leave to other place
@@ -450,7 +480,7 @@ class FixedNElementTailSelector(TailSelector):
         """
         TailSelector.__init__(self, **kwargs)
         self.__nelements = None
-        self._setNElements(nelements)
+        self._set_n_elements(nelements)
 
 
     def __repr__(self):
@@ -458,11 +488,13 @@ class FixedNElementTailSelector(TailSelector):
             TailSelector.__repr__(self), self.nelements)
 
 
-    def _getNElements(self, seq):
+    ##REF: Name was automagically refactored
+    def _get_n_elements(self, seq):
         return self.__nelements
 
 
-    def _setNElements(self, nelements):
+    ##REF: Name was automagically refactored
+    def _set_n_elements(self, nelements):
         if __debug__:
             if nelements <= 0:
                 raise ValueError, "Number of elements less or equal to zero " \
@@ -472,7 +504,7 @@ class FixedNElementTailSelector(TailSelector):
 
 
     nelements = property(fget=lambda x:x.__nelements,
-                         fset=_setNElements)
+                         fset=_set_n_elements)
 
 
 
@@ -489,7 +521,7 @@ class FractionTailSelector(TailSelector):
             specified at least one element will be selected.
         """
         TailSelector.__init__(self, **kwargs)
-        self._setFElements(felements)
+        self._set_f_elements(felements)
 
 
     def __repr__(self):
@@ -497,7 +529,8 @@ class FractionTailSelector(TailSelector):
             TailSelector.__repr__(self), self.__felements)
 
 
-    def _getNElements(self, seq):
+    ##REF: Name was automagically refactored
+    def _get_n_elements(self, seq):
         num = int(floor(self.__felements * len(seq)))
         num = max(1, num)               # remove at least 1
         # no need for checks as base class will do anyway
@@ -505,7 +538,8 @@ class FractionTailSelector(TailSelector):
         return num
 
 
-    def _setFElements(self, felements):
+    ##REF: Name was automagically refactored
+    def _set_f_elements(self, felements):
         """What fraction to discard"""
         if felements > 1.0 or felements < 0.0:
             raise ValueError, \
@@ -516,7 +550,7 @@ class FractionTailSelector(TailSelector):
 
 
     felements = property(fget=lambda x:x.__felements,
-                         fset=_setFElements)
+                         fset=_set_f_elements)
 
 
 
