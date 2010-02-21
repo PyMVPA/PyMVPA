@@ -95,39 +95,87 @@ def find_events(**kwargs):
 
 def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
                          eprefix='event'):
-    """XXX All docs need to be rewritten.
+    """Segment a dataset into a set of events.
 
-    Dataset with event-defined samples from a NIfTI timeseries image.
+    This function can be used to extract event-related samples from any
+    time-series based dataset (actually, it don't have to be time series, but
+    could also be any other type of ordered samples). Boxcar-shaped event
+    samples, potentially spanning multiple input samples can be automatically
+    extracted using :class:`~mvpa.misc.support.Event` definition lists.  For
+    each event all samples covering that particular event are used to form the
+    corresponding sample.
 
-    This is a convenience dataset to facilitate the analysis of event-related
-    fMRI datasets. Boxcar-shaped samples are automatically extracted from the
-    full timeseries using :class:`~mvpa.misc.support.Event` definition lists.
-    For each event all volumes covering that particular event in time
-    (including partial coverage) are used to form the corresponding sample.
+    An event definition is a dictionary that contains ``onset`` (as sample index
+    in the input dataset), ``duration`` (as number of consecutive samples after
+    the onset), as well as an arbitrary number of additonal attributes.
 
-    The class supports the conversion of events defined in 'realtime' into the
-    descrete temporal space defined by the NIfTI image. Moreover, potentially
-    varying offsets between true event onset and timepoint of the first selected
-    volume can be stored as an additional feature in the dataset.
-
-    Additionally, the dataset supports masking. This is done similar to the
-    masking capabilities of :class:`~mvpa.datasets.nifti.NiftiDataset`. However,
-    the mask can either be of the same shape as a single NIfTI volume, or
-    can be of the same shape as the generated boxcar samples, i.e.
-    a samples consisting of three volumes with 24 slices and 64x64 inplane
-    resolution needs a mask with shape (3, 24, 64, 64). In the former case the
-    mask volume is automatically expanded to be identical in a volumes of the
-    boxcar.
+    Alternatively, ``onset`` and ``duration`` may also be given as real time
+    stamps (or durations). In this case a to be specified samples attribute in
+    the input dataset will be used to convert these into sample indices.
 
     Parameters
     ----------
     ds : Dataset
+      The samples of this input dataset have to be in whatever ascending order.
     events : list
-    tr : float or None
-      Temporal distance of two adjacent NIfTI volumes. This can be used
-      to override the corresponding value in the NIfTI header.
+      Each event definition has to specify ``onset`` and ``duration``. All other
+      attributes will be passed on to the sample attributes collection of the
+      returned dataset.
+    time_attr : str or None
+      If not None, the ``onset`` and ``duration`` specs from the event list will
+      be converted using information from this sample attribute. Its values will
+      be treated as in-the-same-unit and are used to determine corresponding
+      samples from real-value onset and duration definitions.
+    match : {'prev', 'next', 'closest'}
+      Strategy used to match real-value onsets to sample indices. 'prev' chooses
+      the closes preceding samples, 'next' the closest following sample and
+      'closest' to absolute closest sample.
     eprefix : str or None
+      If not None, this prefix is used to name additional attributes generated
+      by the underlying `~mvpa.mappers.boxcar.BoxcarMapper`. If it is set to
+      None, no additional attributes will be created.
 
+    Returns
+    -------
+    Dataset
+      The returned dataset has one sample per each event definition that has
+      been passed to the function.
+
+    Examples
+    --------
+    The documentation also contains an :ref:`example script
+    <example_eventrelated>` showing a spatio-temporal analysis of fMRI data
+    that involves this function.
+
+    >>> from mvpa.datasets import Dataset
+    >>> ds = Dataset(N.random.randn(10, 25))
+    >>> events = [{'onset': 2, 'duration': 4},
+    ...           {'onset': 4, 'duration': 4}]
+    >>> eds = eventrelated_dataset(ds, events)
+    >>> len(eds)
+    2
+    >>> eds.nfeatures == ds.nfeatures * 4
+    True
+    >>> 'mapper' in ds.a
+    False
+    >>> print eds.a.mapper
+    <ChainMapper: <Boxcar: bl=4>-<Flatten>>
+
+    And now the same conversion, but with events specified as real time. This is
+    on possible if the input dataset contains a sample attribute with the
+    necessary information about the input samples.
+
+    >>> ds.sa['record_time'] = N.linspace(0, 5, len(ds))
+    >>> rt_events = [{'onset': 1.05, 'duration': 2.2},
+    ...              {'onset': 2.3, 'duration': 2.12}]
+    >>> rt_eds = eventrelated_dataset(ds, rt_events, time_attr='record_time',
+    ...                               match='closest')
+    >>> N.all(eds.samples == rt_eds.samples)
+    True
+    >>> # returned dataset e.g. has info from original samples
+    >>> rt_eds.sa.record_time
+    array([[ 1.11111111,  1.66666667,  2.22222222,  2.77777778],
+           [ 2.22222222,  2.77777778,  3.33333333,  3.88888889]])
     """
     # relabel argument
     conv_strategy = {'prev': 'floor',
