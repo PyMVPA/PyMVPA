@@ -1,22 +1,22 @@
 #!/bin/bash
-known_states="\(all_label_counts\|confusion\|confusions\|emp_error\|errors\|history\|ndiscarded\|nfeatures\|null_errors\|predictions\|raw_predictions\|raw_values\|results\|selected_ids\|sensitivities\|sensitivity\|splits\|state[123]\|trained_confusion\|trained_confusions\|transerrors\|values\)"
+known_ca="\(all_label_counts\|confusion\|confusions\|emp_error\|errors\|history\|ndiscarded\|nfeatures\|null_errors\|predictions\|raw_predictions\|raw_values\|results\|selected_ids\|sensitivities\|sensitivity\|splits\|state[123]\|trained_confusion\|trained_confusions\|transerrors\|values\)"
 
 sed -i \
  -e 's/\(\W\)State\.)/\1Stateful\./g' \
  -e 's/State\.__init/Stateful\.__init/g' \
  -e 's/State\.__str/Stateful\.__str/g' \
- -e 's/\.enableState/\.states\.enable/g' \
- -e 's/\.enableStates/\.states\.enable/g' \
- -e 's/\.enabledStates/\.states\.enabled/g' \
- -e 's/\.disableState/\.states\.disable/g' \
- -e 's/\.disableStates/\.states\.disable/g' \
- -e 's/\.listStates/\.states\.listing/g' \
- -e 's/\.hasState/\.states\.isKnown/g' \
- -e 's/\.isStateEnabled/\.states\.isEnabled/g' \
- -e 's/\._enableStatesTemporarily/\.states\._enableTemporarily/g' \
- -e 's/\.isStateActive/\.states\.isActive/g' \
- -e "s/\(\w\)[[]\([\"']\)$known_states\2[]]/\1\.\3/g" \
- -e "s/self\._registerState(\([\"']\)$known_states\1\,* */\2 = StateVariable(/g" \
+ -e 's/\.enableState/\.ca\.enable/g' \
+ -e 's/\.enableStates/\.ca\.enable/g' \
+ -e 's/\.enabledStates/\.ca\.enabled/g' \
+ -e 's/\.disableState/\.ca\.disable/g' \
+ -e 's/\.disableStates/\.ca\.disable/g' \
+ -e 's/\.listStates/\.ca\.listing/g' \
+ -e 's/\.hasState/\.ca\.isKnown/g' \
+ -e 's/\.isStateEnabled/\.ca\.isEnabled/g' \
+ -e 's/\._enableStatesTemporarily/\.ca\._enableTemporarily/g' \
+ -e 's/\.isStateActive/\.ca\.isActive/g' \
+ -e "s/\(\w\)[[]\([\"']\)$known_ca\2[]]/\1\.\3/g" \
+ -e "s/self\._registerState(\([\"']\)$known_ca\1\,* */\2 = StateVariable(/g" \
  $@
 
 exit 0
@@ -24,7 +24,7 @@ exit 0
 sed -i \
  -e 's/(State)/(Stateful)/g' \
  -e 's/import State/import StateVariable, Stateful/g' \
- -e "s/self\._registerState(\([\"']\)$known_states\1\,* */\2 = StateVariable(/g" \
+ -e "s/self\._registerState(\([\"']\)$known_ca\1\,* */\2 = StateVariable(/g" \
  $@
 
 exit 0
@@ -40,7 +40,7 @@ grep -v mvpa | sort | uniq | tr '\n' '\|'; echo
 enableState  enable
 enabledStates  enabled
 listStates listing
-states items
+ca items
 _enableStatesTemporarily _enableTemporarily
 _getRegisteredStates _getNames
 

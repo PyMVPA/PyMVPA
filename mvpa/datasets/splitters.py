@@ -11,7 +11,7 @@
 Module Description
 ==================
 
-Splitters are destined to split the provided dataset varous ways to
+Splitters are destined to split the provided dataset various ways to
 simplify cross-validation analysis, implement boosting of the
 estimates, or sample null-space via permutation testing.
 
@@ -36,8 +36,8 @@ import operator
 import numpy as N
 
 import mvpa.misc.support as support
-from mvpa.base.dochelpers import enhancedDocString
-from mvpa.datasets.miscfx import coarsenChunks, permute_labels, random_samples, \
+from mvpa.base.dochelpers import enhanced_doc_string
+from mvpa.datasets.miscfx import coarsen_chunks, permute_targets, random_samples, \
                                  get_nsamples_per_attr
 
 if __debug__:
@@ -82,7 +82,7 @@ class Splitter(object):
           Two special strings are recognized: 'all' uses all available
           samples (default) and 'equal' uses the maximum number of samples
           the can be provided by all of the classes. This value might be
-          provided as a sequence whos length matches the number of datasets
+          provided as a sequence length of which matches the number of datasets
           per split and indicates the configuration for the respective dataset
           in each split.
         nrunspersplit : int
@@ -132,15 +132,16 @@ class Splitter(object):
         self.count = count
         """Number (max) of splits to output on call"""
 
-        self._setStrategy(strategy)
+        self._set_strategy(strategy)
 
         # pattern sampling status vars
-        self.setNPerLabel(nperlabel)
+        self.set_n_per_label(nperlabel)
 
 
-    __doc__ = enhancedDocString('Splitter', locals())
+    __doc__ = enhanced_doc_string('Splitter', locals())
 
-    def _setStrategy(self, strategy):
+    ##REF: Name was automagically refactored
+    def _set_strategy(self, strategy):
         """Set strategy to select splits out from available
         """
         strategy = strategy.lower()
@@ -149,7 +150,8 @@ class Splitter(object):
                   % str(self._STRATEGIES)
         self.__strategy = strategy
 
-    def setNPerLabel(self, value):
+    ##REF: Name was automagically refactored
+    def set_n_per_label(self, value):
         """Set the number of samples per label in the split datasets.
 
         'equal' sets sample size to highest possible number of samples that
@@ -164,7 +166,8 @@ class Splitter(object):
         self.__nperlabel = value
 
 
-    def _getSplitConfig(self, uniqueattr):
+    ##REF: Name was automagically refactored
+    def _get_split_config(self, uniqueattr):
         """Return list with samples of 2nd dataset in a split.
 
         Each subclass has to implement this method. It gets a sequence with
@@ -198,7 +201,7 @@ class Splitter(object):
                 nperlabelsplit = self.__nperlabel
 
             # get splitted datasets
-            split_ds = self.splitDataset(dataset, split)
+            split_ds = self.split_dataset(dataset, split)
 
             # do multiple post-processing runs for this split
             for run in xrange(self.__runspersplit):
@@ -222,7 +225,7 @@ class Splitter(object):
                             ds_a.lastsplit = lastsplit
                     # permute the labels
                     if self.__permute:
-                        permute_labels(ds, perchunk=True)
+                        permute_targets(ds, perchunk=True)
 
                     # select subset of samples if requested
                     if nperlabel == 'all' or ds is None:
@@ -236,7 +239,7 @@ class Splitter(object):
                         if nperlabel == 'equal':
                             # determine the min number of samples per class
                             npl = N.array(get_nsamples_per_attr(
-                                ds, 'labels').values()).min()
+                                ds, 'targets').values()).min()
                         elif isinstance(nperlabel, float) or (
                             operator.isSequenceType(nperlabel) and
                             len(nperlabel) > 0 and
@@ -244,7 +247,7 @@ class Splitter(object):
                             # determine number of samples per class and take
                             # a ratio
                             counts = N.array(get_nsamples_per_attr(
-                                ds, 'labels').values())
+                                ds, 'targets').values())
                             npl = (counts * nperlabel).round().astype(int)
                         else:
                             npl = nperlabel
@@ -259,7 +262,8 @@ class Splitter(object):
                     yield finalized_datasets
 
 
-    def splitDataset(self, dataset, specs):
+    ##REF: Name was automagically refactored
+    def split_dataset(self, dataset, specs):
         """Split a dataset by separating the samples where the configured
         sample attribute matches an element of `specs`.
 
@@ -349,7 +353,7 @@ class Splitter(object):
 
     def splitcfg(self, dataset):
         """Return splitcfg for a given dataset"""
-        cfgs = self._getSplitConfig(dataset.sa[self.__splitattr].unique)
+        cfgs = self._get_split_config(dataset.sa[self.__splitattr].unique)
 
         # Select just some splits if desired
         count, n_cfgs = self.count, len(cfgs)
@@ -387,7 +391,7 @@ class Splitter(object):
 
 
     strategy = property(fget=lambda self:self.__strategy,
-                        fset=_setStrategy)
+                        fset=_set_strategy)
     splitattr = property(fget=lambda self:self.__splitattr)
 
 
@@ -417,10 +421,11 @@ class NoneSplitter(Splitter):
         self.__mode = mode
 
 
-    __doc__ = enhancedDocString('NoneSplitter', locals(), Splitter)
+    __doc__ = enhanced_doc_string('NoneSplitter', locals(), Splitter)
 
 
-    def _getSplitConfig(self, uniqueattrs):
+    ##REF: Name was automagically refactored
+    def _get_split_config(self, uniqueattrs):
         """Return just one full split: no first or second dataset.
         """
         if self.__mode == 'second':
@@ -459,10 +464,11 @@ class OddEvenSplitter(Splitter):
         self.__usevalues = usevalues
 
 
-    __doc__ = enhancedDocString('OddEvenSplitter', locals(), Splitter)
+    __doc__ = enhanced_doc_string('OddEvenSplitter', locals(), Splitter)
 
 
-    def _getSplitConfig(self, uniqueattrs):
+    ##REF: Name was automagically refactored
+    def _get_split_config(self, uniqueattrs):
         """
         Returns
         -------
@@ -496,10 +502,11 @@ class HalfSplitter(Splitter):
         Splitter.__init__(self, **(kwargs))
 
 
-    __doc__ = enhancedDocString('HalfSplitter', locals(), Splitter)
+    __doc__ = enhanced_doc_string('HalfSplitter', locals(), Splitter)
 
 
-    def _getSplitConfig(self, uniqueattrs):
+    ##REF: Name was automagically refactored
+    def _get_split_config(self, uniqueattrs):
         """
         Returns
         -------
@@ -539,10 +546,11 @@ class NGroupSplitter(Splitter):
 
         self.__ngroups = ngroups
 
-    __doc__ = enhancedDocString('NGroupSplitter', locals(), Splitter)
+    __doc__ = enhanced_doc_string('NGroupSplitter', locals(), Splitter)
 
 
-    def _getSplitConfig(self, uniqueattrs):
+    ##REF: Name was automagically refactored
+    def _get_split_config(self, uniqueattrs):
         """
         Returns
         -------
@@ -557,8 +565,8 @@ class NGroupSplitter(Splitter):
                   "or equal to the number of unique attributes (%d)" % \
                   (len(uniqueattrs))
 
-        # use coarsenChunks to get the split indices
-        split_ind = coarsenChunks(uniqueattrs, nchunks=self.__ngroups)
+        # use coarsen_chunks to get the split indices
+        split_ind = coarsen_chunks(uniqueattrs, nchunks=self.__ngroups)
         split_ind = N.asarray(split_ind)
 
         # loop and create splits
@@ -620,7 +628,7 @@ class NFoldSplitter(Splitter):
         self.__cvtype = cvtype
 
 
-    __doc__ = enhancedDocString('NFoldSplitter', locals(), Splitter)
+    __doc__ = enhanced_doc_string('NFoldSplitter', locals(), Splitter)
 
 
     def __str__(self):
@@ -630,11 +638,12 @@ class NFoldSplitter(Splitter):
           "N-%d-FoldSplitter / " % self.__cvtype + Splitter.__str__(self)
 
 
-    def _getSplitConfig(self, uniqueattrs):
+    ##REF: Name was automagically refactored
+    def _get_split_config(self, uniqueattrs):
         """Returns proper split configuration for N-M fold split.
         """
         return [(None, i) for i in \
-                    support.getUniqueLengthNCombinations(uniqueattrs,
+                    support.get_unique_length_n_combinations(uniqueattrs,
                                                          self.__cvtype)]
 
 
@@ -675,10 +684,11 @@ class CustomSplitter(Splitter):
         self.__splitrule = splitrule
 
 
-    __doc__ = enhancedDocString('CustomSplitter', locals(), Splitter)
+    __doc__ = enhanced_doc_string('CustomSplitter', locals(), Splitter)
 
 
-    def _getSplitConfig(self, uniqueattrs):
+    ##REF: Name was automagically refactored
+    def _get_split_config(self, uniqueattrs):
         """
         Returns
         -------

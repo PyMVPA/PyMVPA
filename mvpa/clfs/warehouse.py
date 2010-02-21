@@ -20,7 +20,8 @@ from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN
 from mvpa.clfs.gnb import GNB
-from mvpa.kernels.np import LinearKernel, SquaredExponentialKernel
+from mvpa.kernels.np import LinearKernel, SquaredExponentialKernel, \
+     GeneralizedLinearKernel
 
 # Helpers
 from mvpa.base import externals, cfg
@@ -248,7 +249,10 @@ if externals.exists('shogun'):
 #                   % impl, svm_impl=impl, kernel=SigmoidSGKernel(),),
             ]
 
-    for impl in ['libsvr', 'krr']:# \
+    _optional_regressions = []
+    if externals.exists('shogun.krr'):
+        _optional_regressions += ['krr']
+    for impl in ['libsvr'] + _optional_regressions:# \
         # XXX svrlight sucks in SG -- dont' have time to figure it out
         #+ ([], ['svrlight'])['svrlight' in sg.SVM._KNOWN_IMPLEMENTATIONS]:
         regrswh._known_tags.union_update([impl])
@@ -267,7 +271,8 @@ if externals.exists('lars'):
     from mvpa.clfs.lars import LARS
     for model in lars.known_models:
         # XXX create proper repository of classifiers!
-        lars_clf = LARS(descr="LARS(%s)" % model, model_type=model)
+        lars_clf = RegressionAsClassifier(LARS(descr="LARS(%s)" % model, model_type=model),
+                                          descr='LARS(model_type=%r) classifier' % model)
         clfswh += lars_clf
 
         # is a regression, too
@@ -277,12 +282,12 @@ if externals.exists('lars'):
         # clfswh += MulticlassClassifier(lars,
         #             descr='Multiclass %s' % lars.descr)
 
-## PBS: enet has some weird issue that causes it to fail.  GLMNET is
-## better anyway, so just use that instead
-## # enet from R via RPy
+## Still fails unittests battery although overhauled otherwise.
+## # enet from R via RPy2
 ## if externals.exists('elasticnet'):
 ##     from mvpa.clfs.enet import ENET
-##     clfswh += ENET(descr="RegressionAsClassifier(ENET())")
+##     clfswh += RegressionAsClassifier(ENET(),
+##                                      descr="RegressionAsClassifier(ENET())")
 ##     regrswh += ENET(descr="ENET()")
 
 # glmnet from R via RPy
@@ -300,7 +305,7 @@ clfswh += \
         kNN(),
         SensitivityBasedFeatureSelection(
            SMLRWeights(SMLR(lm=1.0, implementation="C"),
-                       mapper=maxofabs_sample()),
+                       postproc=maxofabs_sample()),
            RangeElementSelector(mode='select')),
         descr="kNN on SMLR(lm=1) non-0")
 
@@ -344,7 +349,7 @@ if externals.exists('scipy'):
 
     # Add wrapped GPR as a classifier
     clfswh += RegressionAsClassifier(
-        GPR(kernel=LinearKernel()), descr="GPRC(kernel='linear')")
+        GPR(kernel=GeneralizedLinearKernel()), descr="GPRC(kernel='linear')")
 
 # BLR
 from mvpa.clfs.blr import BLR
@@ -366,7 +371,7 @@ if len(clfswh['linear', 'svm']) > 0:
              linearSVMC.clone(),
              SensitivityBasedFeatureSelection(
                 SMLRWeights(SMLR(lm=0.1, implementation="C"),
-                            mapper=maxofabs_sample()),
+                            postproc=maxofabs_sample()),
                 RangeElementSelector(mode='select')),
              descr="LinSVM on SMLR(lm=0.1) non-0")
 
@@ -376,7 +381,7 @@ if len(clfswh['linear', 'svm']) > 0:
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
                 SMLRWeights(SMLR(lm=1.0, implementation="C"),
-                            mapper=maxofabs_sample()),
+                            postproc=maxofabs_sample()),
                 RangeElementSelector(mode='select')),
             descr="LinSVM on SMLR(lm=1) non-0")
 
@@ -387,7 +392,7 @@ if len(clfswh['linear', 'svm']) > 0:
             RbfCSVMC(),
             SensitivityBasedFeatureSelection(
                SMLRWeights(SMLR(lm=1.0, implementation="C"),
-                           mapper=maxofabs_sample()),
+                           postproc=maxofabs_sample()),
                RangeElementSelector(mode='select')),
             descr="RbfSVM on SMLR(lm=1) non-0")
 
@@ -411,7 +416,7 @@ if len(clfswh['linear', 'svm']) > 0:
         FeatureSelectionClassifier(
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
-               linearSVMC.getSensitivityAnalyzer(mapper=maxofabs_sample()),
+               linearSVMC.get_sensitivity_analyzer(postproc=maxofabs_sample()),
                FractionTailSelector(0.05, mode='select', tail='upper')),
             descr="LinSVM on 5%(SVM)")
 
@@ -419,7 +424,7 @@ if len(clfswh['linear', 'svm']) > 0:
         FeatureSelectionClassifier(
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
-               linearSVMC.getSensitivityAnalyzer(mapper=maxofabs_sample()),
+               linearSVMC.get_sensitivity_analyzer(postproc=maxofabs_sample()),
                FixedNElementTailSelector(50, mode='select', tail='upper')),
             descr="LinSVM on 50(SVM)")
 
@@ -448,7 +453,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(), #clfswh['LinearSVMC'][0],         # we train LinearSVM
     #    feature_selection = RFE(             # on features selected via RFE
     #        # based on sensitivity of a clf which does splitting internally
-    #        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
+    #        sensitivity_analyzer=rfesvm_split.get_sensitivity_analyzer(),
     #        transfer_error=ConfusionBasedError(
     #           rfesvm_split,
     #           confusion_state="confusion"),
@@ -465,7 +470,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(),                 # we train LinearSVM
     #    feature_selection = RFE(             # on features selected via RFE
     #        # based on sensitivity of a clf which does splitting internally
-    #        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
+    #        sensitivity_analyzer=rfesvm_split.get_sensitivity_analyzer(),
     #        transfer_error=ConfusionBasedError(
     #           rfesvm_split,
     #           confusion_state="confusion"),
@@ -488,7 +493,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(),
     #    feature_selection = RFE(             # on features selected via RFE
     #        sensitivity_analyzer=\
-    #            rfesvm.getSensitivityAnalyzer(mapper=absolute_features()),
+    #            rfesvm.get_sensitivity_analyzer(postproc=absolute_features()),
     #        transfer_error=TransferError(rfesvm),
     #        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
     #        feature_selector=FractionTailSelector(
@@ -505,7 +510,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(),
     #    feature_selection = RFE(             # on features selected via RFE
     #        sensitivity_analyzer=\
-    #            rfesvm.getSensitivityAnalyzer(mapper=absolute_features()),
+    #            rfesvm.get_sensitivity_analyzer(postproc=absolute_features()),
     #        transfer_error=TransferError(rfesvm),
     #        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
     #        feature_selector=FractionTailSelector(

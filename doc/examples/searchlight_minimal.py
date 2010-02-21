@@ -26,21 +26,21 @@ draft of a complete analysis.
 
 First import a necessary pieces of PyMVPA -- this time each bit individually.
 """
-from mvpa.datasets.base import dataset
+from mvpa.datasets.base import dataset_wizard
 from mvpa.datasets.splitters import OddEvenSplitter
 from mvpa.clfs.svm import LinearCSVMC
 from mvpa.clfs.transerror import TransferError
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.measures.searchlight import Searchlight
-from mvpa.misc.data_generators import normalFeatureDataset
+from mvpa.misc.data_generators import normal_feature_dataset
 
 """For the sake of simplicity, let's use a small artificial dataset."""
 
 # overcomplicated way to generate an example dataset
-ds = normalFeatureDataset(perlabel=10, nlabels=2, nchunks=2,
+ds = normal_feature_dataset(perlabel=10, nlabels=2, nchunks=2,
                           nfeatures=10, nonbogus_features=[3, 7],
                           snr=5.0)
-dataset = dataset(samples=ds.samples, labels=ds.labels,
+dataset = dataset_wizard(samples=ds.samples, targets=ds.targets,
                   chunks=ds.chunks)
 
 """Now it only takes three lines for a searchlight analysis."""
@@ -62,7 +62,7 @@ print 'Best performing sphere error:', min(sl_map)
 """
 If this analysis is done on a fMRI dataset using `NiftiDataset` the resulting
 searchlight map (`sl_map`) can be mapped back into the original dataspace
-and viewed as a brain overlay. :ref:`Another example <example_searchlight_2d>`
+and viewed as a brain overlay. :ref:`Another example <example_searchlight>`
 shows a typical application of this algorithm.
 
 .. Mention the fact that it also is a special `SensitivityAnalyzer`

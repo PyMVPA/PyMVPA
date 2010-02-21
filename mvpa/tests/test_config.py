@@ -14,7 +14,7 @@ from mvpa.base.config import ConfigManager
 
 class ConfigTests(unittest.TestCase):
 
-    def testConfig(self):
+    def test_config(self):
         cfg = ConfigManager()
 
         # does nothing so far, but will be used to test the default

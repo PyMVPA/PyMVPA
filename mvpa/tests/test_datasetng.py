@@ -8,25 +8,27 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for the dataset implementation'''
 
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
+
 import numpy as N
 import random
+import shutil
+import tempfile
+import os
 
-from numpy.testing import assert_array_equal
-from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true
 
-from mvpa.base.externals import versions
+from mvpa.base.externals import versions, exists
 from mvpa.base.types import is_datasetlike
 from mvpa.base.dataset import DatasetError, vstack, hstack
 from mvpa.mappers.flatten import mask_mapper
-from mvpa.datasets.base import dataset, Dataset
-from mvpa.misc.data_generators import normalFeatureDataset
+from mvpa.datasets.base import dataset_wizard, Dataset
+from mvpa.misc.data_generators import normal_feature_dataset
 import mvpa.support.copy as copy
 from mvpa.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection, \
-        ArrayCollectable, SampleAttribute
+        ArrayCollectable, SampleAttribute, Collectable
 
-from tests_warehouse import *
 
 class myarray(N.ndarray):
     pass
@@ -34,12 +36,12 @@ class myarray(N.ndarray):
 
 # TODO Urgently need test to ensure that multidimensional samples and feature
 #      attributes work and adjust docs to mention that we support such
-def test_from_basic():
+def test_from_wizard():
     samples = N.arange(12).reshape((4, 3)).view(myarray)
     labels = range(4)
     chunks = [1, 1, 2, 2]
 
-    ds = Dataset.from_basic(samples, labels, chunks)
+    ds = Dataset(samples, sa={'targets': labels, 'chunks': chunks})
     ds.init_origids('both')
     first = ds.sa.origids
     # now do again and check that they get regenerated
@@ -61,29 +63,29 @@ def test_from_basic():
     # maybe we need some form of leightweightCollection?
 
     assert_array_equal(ds.samples, samples)
-    assert_array_equal(ds.sa.labels, labels)
+    assert_array_equal(ds.sa.targets, labels)
     assert_array_equal(ds.sa.chunks, chunks)
 
     # same should work for shortcuts
-    assert_array_equal(ds.labels, labels)
+    assert_array_equal(ds.targets, labels)
     assert_array_equal(ds.chunks, chunks)
 
-    ok_(sorted(ds.sa.keys()) == ['chunks', 'labels', 'origids'])
+    ok_(sorted(ds.sa.keys()) == ['chunks', 'origids', 'targets'])
     ok_(sorted(ds.fa.keys()) == ['origids'])
     # add some more
     ds.a['random'] = 'blurb'
 
     # check stripping attributes from a copy
     cds = ds.copy() # full copy
-    ok_(sorted(cds.sa.keys()) == ['chunks', 'labels', 'origids'])
+    ok_(sorted(cds.sa.keys()) == ['chunks', 'origids', 'targets'])
     ok_(sorted(cds.fa.keys()) == ['origids'])
     ok_(sorted(cds.a.keys()) == ['random'])
     cds = ds.copy(sa=[], fa=[], a=[]) # plain copy
     ok_(cds.sa.keys() == [])
     ok_(cds.fa.keys() == [])
     ok_(cds.a.keys() == [])
-    cds = ds.copy(sa=['labels'], fa=None, a=['random']) # partial copy
-    ok_(cds.sa.keys() == ['labels'])
+    cds = ds.copy(sa=['targets'], fa=None, a=['random']) # partial copy
+    ok_(cds.sa.keys() == ['targets'])
     ok_(cds.fa.keys() == ['origids'])
     ok_(cds.a.keys() == ['random'])
 
@@ -91,17 +93,17 @@ def test_from_basic():
     ok_(not ds.a.has_key('mapper'))
 
     # has to complain about misshaped samples attributes
-    assert_raises(ValueError, Dataset.from_basic, samples, labels + labels)
+    assert_raises(ValueError, Dataset.from_wizard, samples, labels + labels)
 
     # check that we actually have attributes of the expected type
-    ok_(isinstance(ds.sa['labels'], ArrayCollectable))
+    ok_(isinstance(ds.sa['targets'], ArrayCollectable))
 
     # the dataset will take care of not adding stupid stuff
     assert_raises(ValueError, ds.sa.__setitem__, 'stupid', N.arange(3))
     assert_raises(ValueError, ds.fa.__setitem__, 'stupid', N.arange(4))
     # or change proper attributes to stupid shapes
     try:
-        ds.sa.labels = N.arange(3)
+        ds.sa.targets = N.arange(3)
     except ValueError:
         pass
     else:
@@ -113,30 +115,30 @@ def test_labelschunks_access():
     samples = N.arange(12).reshape((4, 3)).view(myarray)
     labels = range(4)
     chunks = [1, 1, 2, 2]
-    ds = Dataset.from_basic(samples, labels, chunks)
+    ds = Dataset.from_wizard(samples, labels, chunks)
 
     # array subclass survives
     ok_(isinstance(ds.samples, myarray))
 
-    assert_array_equal(ds.labels, labels)
+    assert_array_equal(ds.targets, labels)
     assert_array_equal(ds.chunks, chunks)
 
     # moreover they should point to the same thing
-    ok_(ds.labels is ds.sa.labels)
-    ok_(ds.labels is ds.sa['labels'].value)
+    ok_(ds.targets is ds.sa.targets)
+    ok_(ds.targets is ds.sa['targets'].value)
     ok_(ds.chunks is ds.sa.chunks)
     ok_(ds.chunks is ds.sa['chunks'].value)
 
     # assignment should work at all levels including 1st
-    ds.labels = chunks
-    assert_array_equal(ds.labels, chunks)
-    ok_(ds.labels is ds.sa.labels)
-    ok_(ds.labels is ds.sa['labels'].value)
+    ds.targets = chunks
+    assert_array_equal(ds.targets, chunks)
+    ok_(ds.targets is ds.sa.targets)
+    ok_(ds.targets is ds.sa['targets'].value)
 
 
-def test_from_masked():
-    ds = Dataset.from_masked(samples=N.atleast_2d(N.arange(5)).view(myarray),
-                             labels=1, chunks=1)
+def test_ex_from_masked():
+    ds = Dataset.from_wizard(samples=N.atleast_2d(N.arange(5)).view(myarray),
+                             targets=1, chunks=1)
     # simple sequence has to be a single pattern
     assert_equal(ds.nsamples, 1)
     # array subclass survives
@@ -146,31 +148,31 @@ def test_from_masked():
     assert_array_equal(ds.samples, [[0, 1, 2, 3, 4]])
 
     # check for single label and origin
-    assert_array_equal(ds.labels, [1])
+    assert_array_equal(ds.targets, [1])
     assert_array_equal(ds.chunks, [1])
 
     # now try adding pattern with wrong shape
     assert_raises(DatasetError, ds.append,
-                  Dataset.from_masked(N.ones((2,3)), labels=1, chunks=1))
+                  Dataset.from_wizard(N.ones((2,3)), targets=1, chunks=1))
 
     # now add two real patterns
-    ds.append(Dataset.from_masked(N.random.standard_normal((2, 5)),
-                                  labels=2, chunks=2))
+    ds.append(Dataset.from_wizard(N.random.standard_normal((2, 5)),
+                                  targets=2, chunks=2))
     assert_equal(ds.nsamples, 3)
-    assert_array_equal(ds.labels, [1, 2, 2])
+    assert_array_equal(ds.targets, [1, 2, 2])
     assert_array_equal(ds.chunks, [1, 2, 2])
 
     # test unique class labels
-    ds.append(Dataset.from_masked(N.random.standard_normal((2, 5)),
-                                  labels=3, chunks=5))
-    assert_array_equal(ds.sa['labels'].unique, [1, 2, 3])
+    ds.append(Dataset.from_wizard(N.random.standard_normal((2, 5)),
+                                  targets=3, chunks=5))
+    assert_array_equal(ds.sa['targets'].unique, [1, 2, 3])
 
     # test wrong attributes length
-    assert_raises(ValueError, Dataset.from_masked,
-                  N.random.standard_normal((4,2,3,4)), labels=[1, 2, 3],
+    assert_raises(ValueError, Dataset.from_wizard,
+                  N.random.standard_normal((4,2,3,4)), targets=[1, 2, 3],
                   chunks=2)
-    assert_raises(ValueError, Dataset.from_masked,
-                  N.random.standard_normal((4,2,3,4)), labels=[1, 2, 3, 4],
+    assert_raises(ValueError, Dataset.from_wizard,
+                  N.random.standard_normal((4,2,3,4)), targets=[1, 2, 3, 4],
                   chunks=[2, 2, 2])
 
     # no test one that is using from_masked
@@ -182,8 +184,8 @@ def test_from_masked():
 
 
 def test_shape_conversion():
-    ds = Dataset.from_masked(N.arange(24).reshape((2, 3, 4)).view(myarray),
-                             labels=1, chunks=1)
+    ds = Dataset.from_wizard(N.arange(24).reshape((2, 3, 4)).view(myarray),
+                             targets=1, chunks=1)
     # array subclass survives
     ok_(isinstance(ds.samples, myarray))
 
@@ -196,19 +198,19 @@ def test_multidim_attrs():
     samples = N.arange(24).reshape(2, 3, 4)
     # have a dataset with two samples -- mapped from 2d into 1d
     # but have 2d labels and 3d chunks -- whatever that is
-    ds = Dataset.from_masked(samples.copy(),
-                             labels=samples.copy(),
+    ds = Dataset.from_wizard(samples.copy(),
+                             targets=samples.copy(),
                              chunks=N.random.normal(size=(2,10,4,2)))
     assert_equal(ds.nsamples, 2)
     assert_equal(ds.nfeatures, 12)
-    assert_equal(ds.sa.labels.shape, (2,3,4))
+    assert_equal(ds.sa.targets.shape, (2,3,4))
     assert_equal(ds.sa.chunks.shape, (2,10,4,2))
 
     # try slicing
     subds = ds[0]
     assert_equal(subds.nsamples, 1)
     assert_equal(subds.nfeatures, 12)
-    assert_equal(subds.sa.labels.shape, (1,3,4))
+    assert_equal(subds.sa.targets.shape, (1,3,4))
     assert_equal(subds.sa.chunks.shape, (1,10,4,2))
 
     # add multidim feature attr
@@ -223,7 +225,7 @@ def test_multidim_attrs():
 
 
 def test_samples_shape():
-    ds = Dataset.from_masked(N.ones((10, 2, 3, 4)), labels=1, chunks=1)
+    ds = Dataset.from_wizard(N.ones((10, 2, 3, 4)), targets=1, chunks=1)
     ok_(ds.samples.shape == (10, 24))
 
     # what happens to 1D samples
@@ -235,8 +237,7 @@ def test_samples_shape():
 def test_basic_datamapping():
     samples = N.arange(24).reshape((4, 3, 2)).view(myarray)
 
-    ds = Dataset.from_basic(samples,
-            mapper=mask_mapper(shape=samples.shape[1:]))
+    ds = Dataset.from_wizard(samples)
 
     # array subclass survives
     ok_(isinstance(ds.samples, myarray))
@@ -251,14 +252,14 @@ def test_basic_datamapping():
 
 def test_ds_shallowcopy():
     # lets use some instance of somewhat evolved dataset
-    ds = normalFeatureDataset()
+    ds = normal_feature_dataset()
     ds.samples = ds.samples.view(myarray)
 
     # SHALLOW copy the beast
     ds_ = copy.copy(ds)
     # verify that we have the same data
     assert_array_equal(ds.samples, ds_.samples)
-    assert_array_equal(ds.labels, ds_.labels)
+    assert_array_equal(ds.targets, ds_.targets)
     assert_array_equal(ds.chunks, ds_.chunks)
 
     # array subclass survives
@@ -268,25 +269,25 @@ def test_ds_shallowcopy():
     # modify and see that we actually DO change the data in both
     ds_.samples[0, 0] = 1234
     assert_array_equal(ds.samples, ds_.samples)
-    assert_array_equal(ds.labels, ds_.labels)
+    assert_array_equal(ds.targets, ds_.targets)
     assert_array_equal(ds.chunks, ds_.chunks)
 
-    ds_.sa.labels[0] = 'ab'
+    ds_.sa.targets[0] = 'ab'
     ds_.sa.chunks[0] = 234
     assert_array_equal(ds.samples, ds_.samples)
-    assert_array_equal(ds.labels, ds_.labels)
+    assert_array_equal(ds.targets, ds_.targets)
     assert_array_equal(ds.chunks, ds_.chunks)
-    ok_(ds.sa.labels[0] == 'ab')
+    ok_(ds.sa.targets[0] == 'ab')
     ok_(ds.sa.chunks[0] == 234)
 
     # XXX implement me
-    #ok_(N.any(ds.uniquelabels != ds_.uniquelabels))
+    #ok_(N.any(ds.uniquetargets != ds_.uniquetargets))
     #ok_(N.any(ds.uniquechunks != ds_.uniquechunks))
 
 
 def test_ds_deepcopy():
     # lets use some instance of somewhat evolved dataset
-    ds = normalFeatureDataset()
+    ds = normal_feature_dataset()
     ds.samples = ds.samples.view(myarray)
     # Clone the beast
     ds_ = ds.copy()
@@ -295,38 +296,38 @@ def test_ds_deepcopy():
 
     # verify that we have the same data
     assert_array_equal(ds.samples, ds_.samples)
-    assert_array_equal(ds.labels, ds_.labels)
+    assert_array_equal(ds.targets, ds_.targets)
     assert_array_equal(ds.chunks, ds_.chunks)
 
     # modify and see if we don't change data in the original one
     ds_.samples[0, 0] = 1234
     ok_(N.any(ds.samples != ds_.samples))
-    assert_array_equal(ds.labels, ds_.labels)
+    assert_array_equal(ds.targets, ds_.targets)
     assert_array_equal(ds.chunks, ds_.chunks)
 
-    ds_.sa.labels = N.hstack(([123], ds_.labels[1:]))
+    ds_.sa.targets = N.hstack(([123], ds_.targets[1:]))
     ok_(N.any(ds.samples != ds_.samples))
-    ok_(N.any(ds.labels != ds_.labels))
+    ok_(N.any(ds.targets != ds_.targets))
     assert_array_equal(ds.chunks, ds_.chunks)
 
     ds_.sa.chunks = N.hstack(([1234], ds_.chunks[1:]))
     ok_(N.any(ds.samples != ds_.samples))
-    ok_(N.any(ds.labels != ds_.labels))
+    ok_(N.any(ds.targets != ds_.targets))
     ok_(N.any(ds.chunks != ds_.chunks))
 
     # XXX implement me
-    #ok_(N.any(ds.uniquelabels != ds_.uniquelabels))
+    #ok_(N.any(ds.uniquetargets != ds_.uniquetargets))
     #ok_(N.any(ds.uniquechunks != ds_.uniquechunks))
 
 
 def test_mergeds():
-    data0 = Dataset.from_basic(N.ones((5, 5)), labels=1)
+    data0 = Dataset.from_wizard(N.ones((5, 5)), targets=1)
     data0.fa['one'] = N.ones(5)
-    data1 = Dataset.from_basic(N.ones((5, 5)), labels=1, chunks=1)
+    data1 = Dataset.from_wizard(N.ones((5, 5)), targets=1, chunks=1)
     data1.fa['one'] = N.zeros(5)
-    data2 = Dataset.from_basic(N.ones((3, 5)), labels=2, chunks=1)
-    data3 = Dataset.from_basic(N.ones((4, 5)), labels=2)
-    data4 = Dataset.from_basic(N.ones((2, 5)), labels=3, chunks=2)
+    data2 = Dataset.from_wizard(N.ones((3, 5)), targets=2, chunks=1)
+    data3 = Dataset.from_wizard(N.ones((4, 5)), targets=2)
+    data4 = Dataset.from_wizard(N.ones((2, 5)), targets=3, chunks=2)
     data4.fa['test'] = N.arange(5)
 
     # cannot merge if there are attributes missing in one of the datasets
@@ -338,14 +339,14 @@ def test_mergeds():
     ok_( merged.nfeatures == 5 )
     l12 = [1]*5 + [2]*3
     l1 = [1]*8
-    ok_((merged.labels == l12).all())
+    ok_((merged.targets == l12).all())
     ok_((merged.chunks == l1).all())
 
     data_append = data1.copy()
     data_append.append(data2)
 
     ok_(data_append.nfeatures == 5)
-    ok_((data_append.labels == l12).all())
+    ok_((data_append.targets == l12).all())
     ok_((data_append.chunks == l1).all())
 
     #
@@ -358,13 +359,15 @@ def test_mergeds():
     #
     # vstacking
     #
-    assert_raises(ValueError, vstack, (data0, data1, data2, data3))
+    if __debug__:
+        # tested only in __debug__
+        assert_raises(ValueError, vstack, (data0, data1, data2, data3))
     datasets = (data1, data2, data4)
     merged = vstack(datasets)
     assert_equal(merged.shape,
                  (N.sum([len(ds) for ds in datasets]), data1.nfeatures))
     assert_true('test' in merged.fa)
-    assert_array_equal(merged.sa.labels, [1]*5 + [2]*3 + [3]*2)
+    assert_array_equal(merged.sa.targets, [1]*5 + [2]*3 + [3]*2)
 
     #
     # hstacking
@@ -381,9 +384,9 @@ def test_mergeds():
 def test_mergeds2():
     """Test composition of new datasets by addition of existing ones
     """
-    data = dataset([range(5)], labels=1, chunks=1)
+    data = dataset_wizard([range(5)], targets=1, chunks=1)
 
-    assert_array_equal(data.UL, [1])
+    assert_array_equal(data.UT, [1])
 
     # simple sequence has to be a single pattern
     assert_equal(data.nsamples, 1)
@@ -391,40 +394,40 @@ def test_mergeds2():
     assert_array_equal(data.samples, [[0, 1, 2, 3, 4]])
 
     # check for single labels and origin
-    assert_array_equal(data.labels, [1])
+    assert_array_equal(data.targets, [1])
     assert_array_equal(data.chunks, [1])
 
     # now try adding pattern with wrong shape
     assert_raises(DatasetError,
                   data.append,
-                  dataset(N.ones((2,3)), labels=1, chunks=1))
+                  dataset_wizard(N.ones((2,3)), targets=1, chunks=1))
 
     # now add two real patterns
     dss = datasets['uni2large'].samples
-    data.append(dataset(dss[:2, :5], labels=2, chunks=2))
+    data.append(dataset_wizard(dss[:2, :5], targets=2, chunks=2))
     assert_equal(data.nfeatures, 5)
-    assert_array_equal(data.labels, [1, 2, 2])
+    assert_array_equal(data.targets, [1, 2, 2])
     assert_array_equal(data.chunks, [1, 2, 2])
 
     # test automatic origins
-    data.append(dataset(dss[3:5, :5], labels=3, chunks=[0, 1]))
+    data.append(dataset_wizard(dss[3:5, :5], targets=3, chunks=[0, 1]))
     assert_array_equal(data.chunks, [1, 2, 2, 0, 1])
 
     # test unique class labels
-    assert_array_equal(data.UL, [1, 2, 3])
+    assert_array_equal(data.UT, [1, 2, 3])
 
     # test wrong label length
-    assert_raises(ValueError, dataset, dss[:4, :5], labels=[ 1, 2, 3 ],
+    assert_raises(ValueError, dataset_wizard, dss[:4, :5], targets=[ 1, 2, 3 ],
                                          chunks=2)
 
     # test wrong origin length
-    assert_raises(ValueError, dataset, dss[:4, :5], labels=[ 1, 2, 3, 4 ],
+    assert_raises(ValueError, dataset_wizard, dss[:4, :5], targets=[ 1, 2, 3, 4 ],
                                          chunks=[ 2, 2, 2 ])
 
 
 def test_combined_samplesfeature_selection():
-    data = dataset(N.arange(20).reshape((4, 5)).view(myarray),
-                   labels=[1,2,3,4],
+    data = dataset_wizard(N.arange(20).reshape((4, 5)).view(myarray),
+                   targets=[1,2,3,4],
                    chunks=[5,6,7,8])
 
     # array subclass survives
@@ -435,7 +438,7 @@ def test_combined_samplesfeature_selection():
     sel = data[[0, 3], [1, 2]]
     ok_(sel.nsamples == 2)
     ok_(sel.nfeatures == 2)
-    assert_array_equal(sel.labels, [1, 4])
+    assert_array_equal(sel.targets, [1, 4])
     assert_array_equal(sel.chunks, [5, 8])
     assert_array_equal(sel.samples, [[1, 2], [16, 17]])
     # array subclass survives
@@ -473,32 +476,32 @@ def test_combined_samplesfeature_selection():
 
 
 def test_labelpermutation_randomsampling():
-    ds  = Dataset.from_basic(N.ones((5, 1)),     labels=range(5), chunks=1)
-    ds.append(Dataset.from_basic(N.ones((5, 1)) + 1, labels=range(5), chunks=2))
-    ds.append(Dataset.from_basic(N.ones((5, 1)) + 2, labels=range(5), chunks=3))
-    ds.append(Dataset.from_basic(N.ones((5, 1)) + 3, labels=range(5), chunks=4))
-    ds.append(Dataset.from_basic(N.ones((5, 1)) + 4, labels=range(5), chunks=5))
+    ds  = Dataset.from_wizard(N.ones((5, 1)),     targets=range(5), chunks=1)
+    ds.append(Dataset.from_wizard(N.ones((5, 1)) + 1, targets=range(5), chunks=2))
+    ds.append(Dataset.from_wizard(N.ones((5, 1)) + 2, targets=range(5), chunks=3))
+    ds.append(Dataset.from_wizard(N.ones((5, 1)) + 3, targets=range(5), chunks=4))
+    ds.append(Dataset.from_wizard(N.ones((5, 1)) + 4, targets=range(5), chunks=5))
     # use subclass for testing if it would survive
     ds.samples = ds.samples.view(myarray)
 
-    ok_(ds.get_nsamples_per_attr('labels') == {0:5, 1:5, 2:5, 3:5, 4:5})
+    ok_(ds.get_nsamples_per_attr('targets') == {0:5, 1:5, 2:5, 3:5, 4:5})
     sample = ds.random_samples(2)
-    ok_(sample.get_nsamples_per_attr('labels').values() == [ 2, 2, 2, 2, 2 ])
+    ok_(sample.get_nsamples_per_attr('targets').values() == [ 2, 2, 2, 2, 2 ])
     ok_((ds.sa['chunks'].unique == range(1, 6)).all())
 
     # keep the orig labels
-    orig_labels = ds.labels[:]
+    orig_labels = ds.targets[:]
 
     # also keep the orig dataset, but SHALLOW copy and leave everything
     # else as a view!
     ods = copy.copy(ds)
 
-    ds.permute_labels()
+    ds.permute_targets()
     # some permutation should have happened
-    assert_false((ds.labels == orig_labels).all())
+    assert_false((ds.targets == orig_labels).all())
 
     # but the original dataset should be uneffected
-    assert_array_equal(ods.labels, orig_labels)
+    assert_array_equal(ods.targets, orig_labels)
     # array subclass survives
     ok_(isinstance(ods.samples, myarray))
 
@@ -513,7 +516,7 @@ def test_labelpermutation_randomsampling():
 
 def test_masked_featureselection():
     origdata = N.random.standard_normal((10, 2, 4, 3, 5)).view(myarray)
-    data = Dataset.from_masked(origdata, labels=2, chunks=2)
+    data = Dataset.from_wizard(origdata, targets=2, chunks=2)
 
     unmasked = data.samples.copy()
     # array subclass survives
@@ -554,7 +557,7 @@ def test_masked_featureselection():
 
 def test_origmask_extraction():
     origdata = N.random.standard_normal((10, 2, 4, 3))
-    data = Dataset.from_masked(origdata, labels=2, chunks=2)
+    data = Dataset.from_wizard(origdata, targets=2, chunks=2)
 
     # check with custom mask
     sel = data[:, 5]
@@ -565,8 +568,8 @@ def test_feature_masking():
     mask = N.zeros((5, 3), dtype='bool')
     mask[2, 1] = True
     mask[4, 0] = True
-    data = Dataset.from_masked(N.arange(60).reshape((4, 5, 3)),
-                               labels=1, chunks=1, mask=mask)
+    data = Dataset.from_wizard(N.arange(60).reshape((4, 5, 3)),
+                               targets=1, chunks=1, mask=mask)
 
     # check simple masking
     ok_(data.nfeatures == 2)
@@ -584,14 +587,14 @@ def test_feature_masking():
     #self.failUnless(N.all(data.I == data.origids))
     assert_array_equal(data.C, data.chunks)
     assert_array_equal(data.UC, N.unique(data.chunks))
-    assert_array_equal(data.L, data.labels)
-    assert_array_equal(data.UL, N.unique(data.labels))
+    assert_array_equal(data.T, data.targets)
+    assert_array_equal(data.UT, N.unique(data.targets))
     assert_array_equal(data.S, data.samples)
     assert_array_equal(data.O, data.mapper.reverse(data.samples))
 
 
 def test_origid_handling():
-    ds = dataset(N.atleast_2d(N.arange(35)).T)
+    ds = dataset_wizard(N.atleast_2d(N.arange(35)).T)
     ds.init_origids('both')
     ok_(ds.nsamples == 35)
     assert_equal(len(N.unique(ds.sa.origids)), 35)
@@ -621,17 +624,17 @@ def test_origid_handling():
     ok_((fa_origids != subds.fa.origids).any())
 
 def test_idhash():
-    ds = dataset(N.arange(12).reshape((4, 3)),
-                 labels=1, chunks=1)
+    ds = dataset_wizard(N.arange(12).reshape((4, 3)),
+                 targets=1, chunks=1)
     origid = ds.idhash
     #XXX BUG -- no assurance that labels would become an array... for now -- do manually
-    ds.labels = N.array([3, 1, 2, 3])   # change all labels
+    ds.targets = N.array([3, 1, 2, 3])   # change all labels
     ok_(origid != ds.idhash,
-                    msg="Changing all labels should alter dataset's idhash")
+                    msg="Changing all targets should alter dataset's idhash")
 
     origid = ds.idhash
 
-    z = ds.labels[1]
+    z = ds.targets[1]
     assert_equal(origid, ds.idhash,
                  msg="Accessing shouldn't change idhash")
     z = ds.chunks
@@ -647,27 +650,27 @@ def test_idhash():
         msg="Changing value in data should change idhash")
 
     origid = ds.idhash
-    orig_labels = ds.labels #.copy()
-    ds.permute_labels()
+    orig_labels = ds.targets #.copy()
+    ds.permute_targets()
     ok_(origid != ds.idhash,
         msg="Permutation also changes idhash")
 
-    ds.labels = orig_labels
+    ds.targets = orig_labels
     ok_(origid == ds.idhash,
-        msg="idhash should be restored after reassigning orig labels")
+        msg="idhash should be restored after reassigning orig targets")
 
 
 def test_arrayattributes():
     samples = N.arange(12).reshape((4, 3))
     labels = range(4)
     chunks = [1, 1, 2, 2]
-    ds = dataset(samples, labels, chunks)
+    ds = dataset_wizard(samples, labels, chunks)
 
-    for a in (ds.samples, ds.labels, ds.chunks):
+    for a in (ds.samples, ds.targets, ds.chunks):
         ok_(isinstance(a, N.ndarray))
 
-    ds.labels = labels
-    ok_(isinstance(ds.labels, N.ndarray))
+    ds.targets = labels
+    ok_(isinstance(ds.targets, N.ndarray))
 
     ds.chunks = chunks
     ok_(isinstance(ds.chunks, N.ndarray))
@@ -686,10 +689,26 @@ def test_repr():
     ok_(repr(eattr), attr_repr)
 
     # should also work for a simple dataset
-    ds = datasets['uni2small']
+    # Does not work due to bug in numpy:
+    #  python -c "from numpy import *; print __version__; r=repr(array(['s', None])); print r; eval(r)"
+    # would give "array([s, None], dtype=object)" without '' around s
+    #ds = datasets['uni2small']
+    ds = Dataset([[0, 1]],
+                 a={'dsa1': 'v1'},
+                 sa={'targets': [0]},
+                 fa={'targets': ['b', 'n']})
     ds_repr = repr(ds)
     ok_(repr(eval(ds_repr)) == ds_repr)
 
+def test_str():
+    args = ( N.arange(12, dtype=N.int8).reshape((4, 3)),
+             range(4),
+             [1, 1, 2, 2])
+    for iargs in range(1, len(args)):
+        ds = dataset_wizard(*(args[:iargs]))
+        ds_s = str(ds)
+        ok_(ds_s.startswith('<Dataset: 4x3@int8'))
+        ok_(ds_s.endswith('>'))
 
 def is_bsr(x):
     """Helper function to check if instance is bsr_matrix if such is
@@ -699,6 +718,7 @@ def is_bsr(x):
     return hasattr(sparse, 'bsr_matrix') and isinstance(x, sparse.bsr_matrix)
 
 def test_other_samples_dtypes():
+    skip_if_no_external('scipy')
     import scipy.sparse as sparse
     dshape = (4, 3)
     # test for ndarray, custom ndarray-subclass, matrix,
@@ -795,3 +815,26 @@ def test_other_samples_dtypes():
         # Nothing to index, hence no features
         assert_equal(ds.nfeatures, 1)
 
+
+def test_h5py_io():
+    skip_if_no_external('h5py')
+
+    tempdir = tempfile.mkdtemp()
+
+    # store random dataset to file
+    ds = datasets['3dlarge']
+    ds.save(os.path.join(tempdir, 'plain.hdf5'))
+
+    # reload and check for identity
+    ds2 = Dataset.from_hdf5(os.path.join(tempdir, 'plain.hdf5'))
+    assert_array_equal(ds.samples, ds2.samples)
+    for attr in ds.sa:
+        assert_array_equal(ds.sa[attr].value, ds2.sa[attr].value)
+    for attr in ds.fa:
+        assert_array_equal(ds.fa[attr].value, ds2.fa[attr].value)
+    assert_true(len(ds.a.mapper), 2)
+    # since we have no __equal__ do at least some comparison
+    assert_equal(repr(ds.a.mapper), repr(ds2.a.mapper))
+
+    #cleanup temp dir
+    shutil.rmtree(tempdir, ignore_errors=True)

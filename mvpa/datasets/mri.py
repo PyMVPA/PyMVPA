@@ -6,7 +6,15 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Dataset that gets its samples from a NIfTI file"""
+"""Dataset for magnetic resonance imaging (MRI) data.
+
+This module offers functions to import MRI data in the NIfTI format into
+PyMVPA, and export PyMVPA datasets back into NIfTI files.
+
+Currently NIfTI file access is based on PyNIfTI_.
+
+.. _PyNIfTI: http://niftilib.sourceforge.net/pynifti
+"""
 
 __docformat__ = 'restructuredtext'
 
@@ -15,6 +23,7 @@ from mvpa.base import externals
 import sys
 import numpy as N
 from mvpa.support.copy import deepcopy
+from mvpa.misc.support import Event
 from mvpa.base.collections import DatasetAttribute
 from mvpa.base.dataset import _expand_attribute
 
@@ -25,12 +34,190 @@ if externals.exists('nifti', raiseException=True):
     from nifti import NiftiImage
 
 from mvpa.datasets.base import Dataset
+from mvpa.mappers.fx import _uniquemerge2literal
 from mvpa.mappers.flatten import FlattenMapper
 from mvpa.mappers.boxcar import BoxcarMapper
 from mvpa.base import warning
 
 
-def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
+def map2nifti(dataset, data=None, imghdr=None):
+    """Maps data(sets) into the original dataspace and wraps it in a NiftiImage.
+
+    Parameters
+    ----------
+    dataset : Dataset
+      The mapper of this dataset is used to perform the reverse-mapping.
+    data : ndarray or Dataset, optional
+      The data to be wrapped into NiftiImage. If None (default), it
+      would wrap samples of the current dataset. If it is a Dataset
+      instance -- takes its samples for mapping.
+    imghdr : dict
+      Image header data. If None, the header is taken from `dataset`.
+
+    Returns
+    -------
+    NiftiImage
+    """
+    if data is None:
+        data = dataset.samples
+    elif isinstance(data, Dataset):
+        # ease users life
+        data = data.samples
+    # call the appropriate function to map single samples or multiples
+    if len(data.shape) > 1:
+        dsarray = dataset.a.mapper.reverse(data)
+    else:
+        dsarray = dataset.a.mapper.reverse1(data)
+
+    if imghdr is None:
+        imghdr = dataset.a.imghdr
+
+    return NiftiImage(dsarray, imghdr)
+
+
+def fmri_dataset(samples, targets=None, chunks=None, mask=None,
+                 sprefix='voxel', tprefix='time', add_fa=None,):
+    """Create a dataset from an fMRI timeseries image.
+
+    The timeseries image serves as the samples data, with each volume becoming
+    a sample. All 3D volume samples are flattened into one-dimensional feature
+    vectors, optionally being masked (i.e. subset of voxels corresponding to
+    non-zero elements in a mask image).
+
+    In addition to (optional) samples attributes for targets and chunks the
+    returned dataset contains a number of additional attributes:
+
+    Samples attributes (per each volume):
+
+      * volume index (time_indices)
+      * volume acquisition time (time_coord)
+
+    Feature attributes (per each voxel):
+
+      * voxel indices (voxel_indices), sometimes referred to as ijk
+
+    Dataset attributes:
+
+      * dump of the NIfTI image header data (imghdr)
+      * volume extent (voxel_dim)
+      * voxel extent (voxel_eldim)
+
+    The default attribute name is listed in parenthesis, but may be altered by
+    the corresponding prefix arguments. The validity of the attribute values
+    relies on correct settings in the NIfTI image header.
+
+    Parameters
+    ----------
+    samples : str or NiftiImage or list
+      fMRI timeseries, specified either as a filename (single file 4D image),
+      an image instance (4D image), or a list of filenames or image instances
+      (each list item corresponding to a 3D volume).
+    targets : scalar or sequence
+      Label attribute for each volume in the timeseries, or a scalar value that
+      is assigned to all samples.
+    chunks : scalar or sequence
+      Chunk attribute for each volume in the timeseries, or a scalar value that
+      is assigned to all samples.
+    mask : str or NiftiImage
+      Filename or image instance of a 3D volume mask. Voxels corresponding to
+      non-zero elements in the mask will be selected. The mask has to be in the
+      same space (orientation and dimensions) as the timeseries image
+    sprefix : str or None
+      Prefix for attribute names describing spatial properties of the
+      timeseries. If None, no such attributes are stored in the dataset.
+    tprefix : str or None
+      Prefix for attribute names describing temporal properties of the
+      timeseries. If None, no such attributes are stored in the dataset.
+    add_fa : dict or None
+      Optional dictionary with additional volumetric data that shall be stored
+      as feature attributes in the dataset. The dictionary key serves as the
+      feature attribute name. Each value might be of any type supported by the
+      'mask' argument of this function.
+
+    Returns
+    -------
+    Dataset
+    """
+    # load the samples
+    niftisamples = _load_anynifti(samples, ensure=True, enforce_dim=4)
+    samples = niftisamples.data
+
+    # figure out what the mask is, but onyl handle known cases, the rest
+    # goes directly into the mapper which maybe knows more
+    niftimask = _load_anynifti(mask)
+    if niftimask is None:
+        pass
+    elif isinstance(niftimask, N.ndarray):
+        mask = niftimask
+    else:
+        mask = _get_nifti_data(niftimask)
+
+    # compile the samples attributes
+    sa = {}
+    if not targets is None:
+        sa['targets'] = _expand_attribute(targets, samples.shape[0], 'targets')
+    if not chunks is None:
+        sa['chunks'] = _expand_attribute(chunks, samples.shape[0], 'chunks')
+
+    # create a dataset
+    ds = Dataset(samples, sa=sa)
+    if sprefix is None:
+        inspace = None
+    else:
+        inspace = sprefix + '_indices'
+    ds = ds.get_mapped(FlattenMapper(shape=samples.shape[1:], inspace=inspace))
+
+    # now apply the mask if any
+    if not mask is None:
+        flatmask = ds.a.mapper.forward1(mask)
+        # direct slicing is possible, and it is potentially more efficient,
+        # so let's use it
+        #mapper = FeatureSliceMapper(flatmask)
+        #ds = ds.get_mapped(FeatureSliceMapper(flatmask))
+        ds = ds[:, flatmask != 0]
+
+    # load and store additional feature attributes
+    if not add_fa is None:
+        for fattr in add_fa:
+            value = _get_nifti_data(_load_anynifti(add_fa[fattr]))
+            ds.fa[fattr] = ds.a.mapper.forward1(value)
+
+    # store interesting props in the dataset
+    # do not put the whole NiftiImage in the dict as this will most
+    # likely be deepcopy'ed at some point and ensuring data integrity
+    # of the complex Python-C-Swig hybrid might be a tricky task.
+    # Only storing the header dict should achieve the same and is more
+    # memory efficient and even simpler
+    ds.a['imghdr'] = niftisamples.header
+    # If there is a space assigned , store the extent of that space
+    if sprefix is not None:
+        ds.a[sprefix + '_dim'] = samples.shape[1:]
+        # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
+        ds.a[sprefix + '_eldim'] = \
+                tuple([i for i in reversed(niftisamples.voxdim)])
+        # TODO extend with the unit
+    if tprefix is not None:
+        ds.sa[tprefix + '_indices'] = N.arange(len(ds), dtype='int')
+        ds.sa[tprefix + '_coords'] = N.arange(len(ds), dtype='float') \
+                                     * niftisamples.header['pixdim'][4]
+        # TODO extend with the unit
+
+    return ds
+
+
+def _get_nifti_data(nim):
+    """Convenience function to extract the data array from a NiftiImage
+
+    This function will make use of advanced features of PyNIfTI to prevent
+    unnecessary copying if a sufficent version is available.
+    """
+    if externals.exists('nifti ge 0.20090205.1'):
+        return nim.data
+    else:
+        return nim.asarray()
+
+
+def _load_anynifti(src, ensure=False, enforce_dim=None):
     """Load/access NIfTI data from files or instances.
 
     Parameters
@@ -62,7 +249,7 @@ def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
         try:
             nifti = NiftiImage(src)
         except RuntimeError, e:
-            warning("ERROR: NiftiDatasets: Cannot open NIfTI file %s" \
+            warning("ERROR: Cannot open NIfTI file %s" \
                     % src)
             raise e
     elif isinstance(src, NiftiImage):
@@ -74,7 +261,7 @@ def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
         # load from a list of given entries
         if enforce_dim is not None: enforce_dim_ = enforce_dim - 1
         else:                       enforce_dim_ = None
-        srcs = [getNiftiFromAnySource(s, ensure=ensure,
+        srcs = [_load_anynifti(s, ensure=ensure,
                                       enforce_dim=enforce_dim_)
                 for s in src]
         if __debug__:
@@ -117,214 +304,4 @@ def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
     return nifti
 
 
-def getNiftiData(nim):
-    """Convenience function to extract the data array from a NiftiImage
 
-    This function will make use of advanced features of PyNIfTI to prevent
-    unnecessary copying if a sufficent version is available.
-    """
-    if externals.exists('nifti ge 0.20090205.1'):
-        return nim.data
-    else:
-        return nim.asarray()
-
-
-class NiftiDataset(Dataset):
-    """Dataset loading its samples from a NIfTI image or file.
-
-    Samples can be loaded from a NiftiImage instance or directly from a NIfTI
-    file. This class stores all relevant information from the NIfTI file header
-    and provides information about the metrics and neighborhood information of
-    all voxels.
-
-    Most importantly it allows to map data back into the original data space
-    and format via :meth:`~mvpa.datasets.nifti.NiftiDataset.map2Nifti`.
-
-    This class allows for convenient pre-selection of features by providing a
-    mask to the constructor. Only non-zero elements from this mask will be
-    considered as features.
-
-    NIfTI files are accessed via PyNIfTI. See
-    http://niftilib.sourceforge.net/pynifti/ for more information about
-    pynifti.
-    """
-    def map2nifti(dataset, data=None):
-        """Maps a data vector into the dataspace and wraps it with a
-        NiftiImage. The header data of this object is used to initialize
-        the new NiftiImage.
-
-        Parameters
-        ----------
-        data : ndarray or Dataset, optional
-          The data to be wrapped into NiftiImage. If None (default), it
-          would wrap samples of the current dataset. If it is a Dataset
-          instance -- takes its samples for mapping.
-        """
-        if data is None:
-            data = dataset.samples
-        elif isinstance(data, Dataset):
-            # ease users life
-            data = data.samples
-        # call the appropriate function to map single samples or multiples
-        if len(data.shape) > 1:
-            dsarray = dataset.a.mapper.reverse(data)
-        else:
-            dsarray = dataset.a.mapper.reverse1(data)
-        return NiftiImage(dsarray, dataset.a.imghdr)
-
-
-def fmri_dataset(samples, labels=None, chunks=None, mask=None,
-                 events=None, tr=None,
-                 sprefix='voxel', tprefix='time', eprefix='event'):
-    """Constructs a `Dataset` given 4D fMRI file
-
-
-    ALSO
-
-
-    Dataset with event-defined samples from a NIfTI timeseries image.
-
-    This is a convenience dataset to facilitate the analysis of event-related
-    fMRI datasets. Boxcar-shaped samples are automatically extracted from the
-    full timeseries using :class:`~mvpa.misc.support.Event` definition lists.
-    For each event all volumes covering that particular event in time
-    (including partial coverage) are used to form the corresponding sample.
-
-    The class supports the conversion of events defined in 'realtime' into the
-    descrete temporal space defined by the NIfTI image. Moreover, potentially
-    varying offsets between true event onset and timepoint of the first selected
-    volume can be stored as an additional feature in the dataset.
-
-    Additionally, the dataset supports masking. This is done similar to the
-    masking capabilities of :class:`~mvpa.datasets.nifti.NiftiDataset`. However,
-    the mask can either be of the same shape as a single NIfTI volume, or
-    can be of the same shape as the generated boxcar samples, i.e.
-    a samples consisting of three volumes with 24 slices and 64x64 inplane
-    resolution needs a mask with shape (3, 24, 64, 64). In the former case the
-    mask volume is automatically expanded to be identical in a volumes of the
-    boxcar.
-
-    Parameters
-    ----------
-    tr : float
-      Temporal distance of two adjacent NIfTI volumes. This can be used
-      to override the corresponding value in the NIfTI header.
-
-
-    TODO: extend
-    """
-    # TODO: Create detrending mapper and allow a mapper to be applied before
-    # boxcaring -- we can only resonably detrend before boxcaring...
-
-    # load the samples
-    niftisamples = getNiftiFromAnySource(samples, ensure=True, enforce_dim=4)
-    samples = niftisamples.data
-
-    # figure out what the mask is, but onyl handle known cases, the rest
-    # goes directly into the mapper which maybe knows more
-    niftimask = getNiftiFromAnySource(mask)
-    if niftimask is None:
-        pass
-    elif isinstance(niftimask, N.ndarray):
-        mask = niftimask
-    else:
-        mask = getNiftiData(niftimask)
-
-    # compile the samples attributes
-    sa = {}
-    if not labels is None:
-        sa['labels'] = _expand_attribute(labels, samples.shape[0], 'labels')
-    if not chunks is None:
-        sa['chunks'] = _expand_attribute(chunks, samples.shape[0], 'chunks')
-
-    # create a dataset
-    ds = NiftiDataset(samples, sa=sa)
-    if sprefix is None:
-        inspace = None
-    else:
-        inspace = sprefix + '_indices'
-    ds = ds.get_mapped(FlattenMapper(shape=samples.shape[1:], inspace=inspace))
-
-    # now apply the mask if any
-    if not mask is None:
-        flatmask = ds.a.mapper.forward1(mask != 0)
-        # direct slicing is possible, and it is potentially more efficient,
-        # so let's use it
-        #mapper = FeatureSliceMapper(flatmask)
-        #ds = ds.get_mapped(FeatureSliceMapper(flatmask))
-        ds = ds[:, flatmask]
-
-    # store interesting props in the dataset
-    # do not put the whole NiftiImage in the dict as this will most
-    # likely be deepcopy'ed at some point and ensuring data integrity
-    # of the complex Python-C-Swig hybrid might be a tricky task.
-    # Only storing the header dict should achieve the same and is more
-    # memory efficient and even simpler
-    ds.a['imghdr'] = niftisamples.header
-    # If there is a space assigned , store the extent of that space
-    if sprefix is not None:
-        ds.a[sprefix + '_dim'] = samples.shape[1:]
-        # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
-        ds.a[sprefix + '_eldim'] = [i for i in reversed(niftisamples.voxdim)]
-        # TODO extend with the unit
-    if tprefix is not None:
-        ds.sa[tprefix + '_indices'] = N.arange(len(ds), dtype='int')
-        ds.sa[tprefix + '_coords'] = N.arange(len(ds), dtype='float') \
-                                     * niftisamples.header['pixdim'][4]
-        # TODO extend with the unit
-
-    # exit here if there are no events specified
-    if events is None:
-        return ds
-
-    #
-    # Post-processing for event handling
-    #
-    # determine TR, take from NIfTI header by default
-    dt = niftisamples.header['pixdim'][4]
-    # override if necessary
-    if not tr is None:
-        dt = tr
-    # convert all onsets into descrete integer values representing volume ids
-    # but storing any possible offset to the real event onset as an additional
-    # feature of that event -- these features will be stored as sample
-    # attributes
-    descr_events = [ev.asDescreteTime(dt, storeoffset=True) for ev in events]
-
-    # convert the event specs into the format expected by BoxcarMapper
-    # take the first event as an example of contained keys
-    evvars = {}
-    for k in descr_events[0]:
-        try:
-            evvars[k] = [e[k] for e in descr_events]
-        except KeyError:
-            raise ValueError("Each event property must be present for all "
-                             "events (could not find '%s'" % k)
-    # checks
-    for p in ['onset', 'duration']:
-        if not p in evvars:
-            raise ValueError("'%s' is a required property for all events."
-                             % p)
-    boxlength = max(evvars['duration'])
-    if __debug__:
-        if not max(evvars['duration']) == min(evvars['duration']):
-            warning('Boxcar mapper will use maximum boxlength (%i) of all '
-                    'provided Events.'% boxlength)
-
-    # finally create, train und use the boxcar mapper
-    bcm = BoxcarMapper(evvars['onset'], boxlength, inspace=eprefix)
-    bcm.train(ds)
-    ds = ds.get_mapped(bcm)
-    # at last reflatten the dataset
-    # could we add some meaningful attribute during this mapping, i.e. would 
-    # assigning 'inspace' do something good?
-    ds = ds.get_mapped(FlattenMapper(shape=ds.samples.shape[1:]))
-    # add samples attributes for the events, simply dump everything as a samples
-    # attribute
-    for a in evvars:
-        # special case: we want the non-descrete, original onset and duration
-        if a in ['onset', 'duration']:
-            ds.sa[eprefix + '_attrs_' + a] = [e[a] for e in events]
-        else:
-            ds.sa[eprefix + '_attrs_' + a] = evvars[a]
-    return ds

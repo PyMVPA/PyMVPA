@@ -12,22 +12,20 @@ import os
 import numpy as N
 from numpy import array
 
-from numpy.testing import assert_array_equal
-from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true
-
 from mvpa.datasets.base import Dataset
 import mvpa.misc.neighborhood as ne
 from mvpa.clfs.distance import *
 
+from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
+        assert_array_equal
 
-def testDistances():
+def test_distances():
     a = N.array([3,8])
     b = N.array([6,4])
     # test distances or yarik recalls unit testing ;)
-    assert_equal(cartesianDistance(a, b), 5.0)
-    assert_equal(manhattenDistance(a, b), 7)
-    assert_equal(absminDistance(a, b), 4)
+    assert_equal(cartesian_distance(a, b), 5.0)
+    assert_equal(manhatten_distance(a, b), 7)
+    assert_equal(absmin_distance(a, b), 4)
 
 
 def test_sphere():
@@ -82,14 +80,17 @@ def test_sphere():
 
     s = ne.Sphere(1)
     #assert_raises(ValueError, s, (1))
-    # No float coordinates allowed for now... XXX might like to change that ;)
-    assert_raises(ValueError, s, (1.0, 1.0, 1.0))
+    if __debug__:
+        # No float coordinates allowed for now...
+        # XXX might like to change that ;)
+        # 
+        assert_raises(ValueError, s, (1.0, 1.0, 1.0))
 
 
 def test_sphere_distance_func():
     # Test some other distance
     se = ne.Sphere(3)
-    sm = ne.Sphere(3, distance_func=manhattenDistance)
+    sm = ne.Sphere(3, distance_func=manhatten_distance)
     rese = se((10, 5))
     resm = sm((10, 5))
     for res in rese, resm:

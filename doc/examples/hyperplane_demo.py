@@ -87,7 +87,7 @@ as basketball players, i.e. get mapped onto the desired output of `-1`.
 
 The equation for a straight line has this form:
 
-.. math:: \vec{w} \times \mathbf{D} - \vec{b} = 0
+.. math:: \vec{w} \mathbf{D} - \vec{b} = 0
 
 were :math:`\vec{w}` is a weight vector, :math:`\mathbf{D}` is the data matrix,
 and :math:`\vec{b}` is the offset of the dataset form the origin, or the bias.
@@ -104,25 +104,25 @@ Now, having gotten rid of that annoying bias term,
 we want to find a weight vector which gives us the best solution
 that we can find to this equation:
 
-.. math:: \mathbf{D_{C}} \times \vec{w} = \vec{o}
+.. math:: \mathbf{D_{C}} \vec{w} = \vec{o}
 
 were :math:`\vec{o}` is the desired output, or the class labels.  But, there is
 no such perfect set of weights.  We can only get a best fit, such that
 
-.. math:: \mathbf{D_{C}} \times \vec{w} = \vec{o} + \vec{e}
+.. math:: \mathbf{D_{C}} \vec{w} = \vec{o} + \vec{e}
 
 where the error term :math:`\vec{e}` is as small as possible.
 
 Note that our equation 
 
-.. math:: \mathbf{D_{C}} \times \vec{w} = \vec{o}
+.. math:: \mathbf{D_{C}} \vec{w} = \vec{o}
 
 has exactly the same form as the equation
 from the tutorial code in 
 http://www.dartmouth.edu/~raj/Matlab/fMRI/design_matrix_tutorial.m
 which is:
 
-.. math:: \mathbf{X} \times \vec{\beta} = \vec{y}
+.. math:: \mathbf{X} \vec{\beta} = \vec{y}
 
 where :math:`\mathbf{X}` was the design matrix, :math:`\vec{\beta}` the
 sensitivity vector, and :math:`\vec{y}` the voxel response.
@@ -132,12 +132,12 @@ If we could find a matrix-inverse of the data matrix,
 then we could pre-multiply both sides by that inverse,
 and that would give us the weights:
 
-.. math:: \mathbf{D_{C}^{-1}} \times \mathbf{D_{C}} \times \vec{w} = \mathbf{D_{C}^{-1}} \times \vec{o}
+.. math:: \mathbf{D_{C}^{-1}} \mathbf{D_{C}} \vec{w} = \mathbf{D_{C}^{-1}} \vec{o}
 
 The :math:`\mathbf{D_{C}^{-1}}` and :math:`\mathbf{D_{C}}` terms on the left
 would cancel each other out, and we would be left with:
 
-.. math:: \vec{w} = \mathbf{D_{C}^{-1}} \times \vec{o}
+.. math:: \vec{w} = \mathbf{D_{C}^{-1}} \vec{o}
 
 However, unfortunately there will in general not exist any matrix-inverse of
 the data matrix :math:`\mathbf{D_{C}}`.  Only square matrices have inverses,
@@ -149,7 +149,7 @@ want.
 
 So, instead of
 
-.. math:: \vec{w} = \mathbf{D_{C}^{-1}} \times \vec{o}
+.. math:: \vec{w} = \mathbf{D_{C}^{-1}} \vec{o}
 
 we have this equation:
 """
@@ -205,7 +205,7 @@ P.title('Decision output')
 P.legend()
 
 
-
+from mvpa.base import cfg
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
     P.show()

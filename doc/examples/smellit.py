@@ -15,33 +15,18 @@ Example showing some possibilities of data exploration
 (i.e. to 'smell' data).
 """
 
-import numpy as N
-import pylab as P
-import os
-
-from mvpa import pymvpa_dataroot
-from mvpa.misc.plot import plotFeatureHist, plotSamplesDistance
-from mvpa import cfg
-from mvpa.datasets.mri import fmri_dataset
-from mvpa.misc.io import SampleAttributes
-from mvpa.datasets.miscfx import zscore, detrend
+from mvpa.suite import *
 
 # load example fmri dataset
-attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
-ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                  labels=attr.labels,
-                  chunks=attr.chunks,
-                  mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+ds = load_example_fmri_dataset()
 
 # only use the first 5 chunks to save some cpu-cycles
 ds = ds[ds.chunks < 5]
 
 # take a look at the distribution of the feature values in all
 # sample categories and chunks
-plotFeatureHist(ds, perchunk=True, bins=20, normed=True,
+plot_feature_hist(ds, perchunk=True, bins=20, normed=True,
                 xlim=(0, ds.samples.max()))
-if cfg.getboolean('examples', 'interactive', True):
-    P.show()
 
 # next only works with floating point data
 ds.samples = ds.samples.astype('float')
@@ -49,34 +34,33 @@ ds.samples = ds.samples.astype('float')
 # look at sample similiarity
 # Note, the decreasing similarity with increasing temporal distance
 # of the samples
+P.figure()
 P.subplot(121)
-plotSamplesDistance(ds, sortbyattr='chunks')
+plot_samples_distance(ds, sortbyattr='chunks')
 P.title('Sample distances (sorted by chunks)')
 
 # similar distance plot, but now samples sorted by their
-# respective labels, i.e. samples with same labels are plotted
+# respective targets, i.e. samples with same targets are plotted
 # in adjacent columns/rows.
 # Note, that the first and largest group corresponds to the
 # 'rest' condition in the dataset
 P.subplot(122)
-plotSamplesDistance(ds, sortbyattr='labels')
-P.title('Sample distances (sorted by labels)')
-if cfg.getboolean('examples', 'interactive', True):
-    P.show()
-
+plot_samples_distance(ds, sortbyattr='targets')
+P.title('Sample distances (sorted by targets)')
 
 # z-score features individually per chunk
 print 'Detrending data'
-detrend(ds, perchunk=True, model='regress', polyord=2)
+poly_detrend(ds, polyord=2, chunks='chunks')
 print 'Z-Scoring data'
 zscore(ds)
 
+P.figure()
 P.subplot(121)
-plotSamplesDistance(ds, sortbyattr='chunks')
+plot_samples_distance(ds, sortbyattr='chunks')
 P.title('Distances: z-scored, detrended (sorted by chunks)')
 P.subplot(122)
-plotSamplesDistance(ds, sortbyattr='labels')
-P.title('Distances: z-scored, detrended (sorted by labels)')
+plot_samples_distance(ds, sortbyattr='targets')
+P.title('Distances: z-scored, detrended (sorted by targets)')
 if cfg.getboolean('examples', 'interactive', True):
     P.show()
 

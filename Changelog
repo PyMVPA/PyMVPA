@@ -4,18 +4,18 @@
 
 .. index:: changelog
 
-****************************
-PyMVPA Development Changelog
-****************************
+*********************
+Development Changelog
+*********************
 
 This changelog only lists rather macroscopic changes to PyMVPA. The full VCS
 changelog is available here:
 
   http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary
 
-In addition there is also a somewhat unconventional visual changelog:
+In addition there is also a somewhat unconventional `visual changelog`_.
 
-  http://www.pymvpa.org/history.html
+.. _visual changelog: http://www.pymvpa.org/history.html
 
 'Closes' statement IDs refer to the Debian bug tracking system and can be
 queried by visiting the URL::
@@ -27,20 +27,58 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
-  * Fixed :class:`~mvpa.measures.anova.OneWayAnova` to compute F-scores with
-    expected distributions. Previous implementation did not properly took
-    degrees of freedom into account.
+  * Many, many, many
 
 
 Releases
 ========
 
-* 0.?.? (???, ? ??? 20??) (Total: ? commits)
+* 0.4.4 (Mon, Feb 2 2010) (Total: 144 commits)
 
-  * New functionality (25 NF commits):
+  Primarily a bugfix release, probably the last in 0.4 series since
+  development for 0.5 release is leaping forward.
+
+  * New functionality (19 NF commits):
 
     - :class:`~mvpa.clfs.gnb.GNB` implements Gaussian Naïve Bayes
       Classifier.
+    - :func:`~mvpa.misc.fsl.base.read_fsl_design` to read FSL FEAT design.fsf
+      files (Contributed by Russell A. Poldrack).
+    - :class:`~mvpa.datasets.miscfx.SequenceStats` to provide basic
+      statistics on labels sequence (counter-balancing,
+      autocorrelation).
+    - New exceptions :class:`~mvpa.clfs.base.DegenerateInputError` and
+      :class:`~mvpa.clfs.base.FailedToTrainError` to be thrown by
+      classifiers primarily during training/testing.
+    - Debug target `STATMC` to report on progress of Monte-Carlo
+      sampling (during permutation testing).
+
+  * Refactored (15 RF commits):
+
+    - To get users prepared to 0.5 release, internally and in some
+      examples/documentation, access to states and
+      parameters is done via corresponding collections, not from the
+      top level object (e.g. `clf.states.predictions` instead of
+      soon-to-be-deprecated `clf.predictions`).  That should lead also
+      to improved performance.
+    - Adopted copy.py from python2.6 (support Ellipsis as well).
+
+  * Fixed (38 BF commits):
+
+    - GLM output does not depend on the enabled states any more.
+    - Variety of docstrings fixed and/or improved.
+    - Do not derive NaN scaling for SVM's C whenever data is
+      degenerate (lead to never finishing SVM training).
+    - :mod:`~mvpa.clfs.sg` :
+
+      + KRR is optional now -- avoids crashing if KRR is not available.
+      + tolerance to absent `set_precompute_matrix` in svmlight in
+        recent shogun versions.
+      + support for recent (present in 0.9.1) API change in exposing
+        debug levels.
+
+    - Python 2.4 compatibility issues: :class:`~mvpa.clfs.knn.kNN` and
+      :class:`~mvpa.featsel.ifs.IFS`
 
 
 * 0.4.3 (Sat, 5 Sep 2009) (Total: 165 commits)
@@ -308,7 +346,7 @@ Releases
   * Make website stylesheet compatible with sphinx 0.4.
   * Several minor improvements of the compatibility with MacOS.
   * Extended FAQ section of the manual.
-  * Bugfix: doubleGammaHRF() ignoring K2 argument.
+  * Bugfix: double_gamma_hrf() ignoring K2 argument.
 
 
 * 0.2.2 (Tue, 17 Jun 2008)

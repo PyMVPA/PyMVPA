@@ -10,9 +10,9 @@
 
 
 import numpy as N
-from numpy.testing import assert_array_equal
-from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true
+
+from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
+        assert_true, assert_array_equal
 
 from mvpa.mappers.boxcar import BoxcarMapper
 from mvpa.datasets import Dataset
@@ -32,7 +32,9 @@ def test_simpleboxcar():
     assert_array_equal(trans[:,0], data)
 
     # now check for illegal boxes
-    assert_raises(ValueError, BoxcarMapper(sp, 2).train, data)
+    if __debug__:
+        # condition is checked only in __debug__
+        assert_raises(ValueError, BoxcarMapper(sp, 2).train, data)
 
     # now something that should work
     nbox = 9

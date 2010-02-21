@@ -16,7 +16,7 @@ if __debug__:
 
 class ArgsHelpersTest(unittest.TestCase):
 
-    def testBasic(self):
+    def test_basic(self):
         """Test if we are not missing basic parts"""
         kwargs = {'a':1, 'slave_a':3, 'slave_z':4, 'slave_slave_z':5, 'c':3}
 
@@ -30,7 +30,7 @@ class ArgsHelpersTest(unittest.TestCase):
         self.failUnless(res[''] == kwargs)
 
 
-    def testDecorator(self):
+    def test_decorator(self):
         """Test the group_kwargs decorator"""
 
         selftop = self

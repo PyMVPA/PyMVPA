@@ -161,7 +161,13 @@ class ConfigManager(SafeConfigParser):
         if not self.has_option(section, option):
             return default
 
-        return SafeConfigParser.get(self, section, option, **kwargs)
+        try:
+            return SafeConfigParser.get(self, section, option, **kwargs)
+        except ValueError, e:
+            # provide somewhat descriptive error
+            raise ValueError, \
+                  "Failed to obtain value from configuration for %s.%s. " \
+                  "Original exception was: %s" % (section, option, e)
 
 
     def getboolean(self, section, option, default=None):
@@ -182,7 +188,8 @@ class ConfigManager(SafeConfigParser):
         return SafeConfigParser.getboolean(self, section, option)
 
 
-    def getAsDType(self, section, option, dtype, default=None):
+    ##REF: Name was automagically refactored
+    def get_as_dtype(self, section, option, dtype, default=None):
         """Convenience method to query options with a custom default and type
 
         This method simply wraps the base class method, but adds a `default`
@@ -193,5 +200,10 @@ class ConfigManager(SafeConfigParser):
         """
         if not self.has_option(section, option):
             return default
-
-        return SafeConfigParser._get(self, section, dtype, option)
+        try:
+            return SafeConfigParser._get(self, section, dtype, option)
+        except ValueError, e:
+            # provide somewhat descriptive error
+            raise ValueError, \
+                  "Failed to obtain value from configuration for %s.%s. " \
+                  "Original exception was: %s" % (section, option, e)

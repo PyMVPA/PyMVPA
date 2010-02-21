@@ -21,9 +21,6 @@ class Similarity(object):
 
     """
 
-    def __init__(self):
-        pass
-
     def __repr__(self):
         return "Similarity()"
 
@@ -32,15 +29,27 @@ class Similarity(object):
 
 
 class SingleDimensionSimilarity(Similarity):
-    """exp(-|data1_j-data2_j|_2)
+    """TODO
+
+    math:: e^{(-|data1_j-data2_j|_2)}``
+
     """
     def __init__(self, d=0, **kwargs):
+        """
+        Parameters
+        ----------
+        d : int
+          Dimension (feature) across which to compute similarity
+        **kwargs
+          Passed to Similarity
+        """
         Similarity.__init__(self, **kwargs)
         self.d = d
 
     def computed(self, data1, data2=None):
         if data2 == None: data2 = data1
-        self.similarity_matrix = N.exp(-N.abs(data1[:,self.d],data2[:,self.d]))
+        self.similarity_matrix = N.exp(-N.abs(data1[:, self.d],
+                                              data2[:, self.d]))
         return self.similarity_matrix
 
 
@@ -49,6 +58,14 @@ class StreamlineSimilarity(Similarity):
     """
 
     def __init__(self, distance, gamma=1.0):
+        """
+        Parameters
+        ----------
+        distance : func
+          Distance measure
+        gamma : float
+          Exponent coefficient
+        """
         Similarity.__init__(self)
         self.distance = distance
         self.gamma = gamma

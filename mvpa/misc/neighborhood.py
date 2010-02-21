@@ -13,13 +13,13 @@ from numpy import array
 import operator
 import sys
 
-from mvpa.clfs.distance import cartesianDistance
+from mvpa.clfs.distance import cartesian_distance
 
 if __debug__:
     from mvpa.base import debug
 
 class Sphere(object):
-    """N-Dimensional sphere
+    """N-Dimensional hypersphere.
 
     Use this if you want to obtain all the neighbors within a given
     radius from a point in a space with arbitrary number of dimensions
@@ -27,8 +27,8 @@ class Sphere(object):
 
     No validation of producing coordinates within any extent is done.
 
-    Example
-    -------
+    Examples
+    --------
     Create a Sphere of diameter 1 and obtain all coordinates within range for the
     coordinate (1,1,1).
 
@@ -66,13 +66,13 @@ class Sphere(object):
           to 1s in all dimensions.
         distance_func : None or lambda
           Distance function to use (choose one from `mvpa.clfs.distance`).
-          If None, cartesianDistance to be used.
+          If None, cartesian_distance to be used.
         """
         self._radius = radius
         # TODO: make ability to lookup in a dataset
         self._element_sizes = element_sizes
         if distance_func is None:
-            distance_func = cartesianDistance
+            distance_func = cartesian_distance
         self._distance_func = distance_func
 
         self._increments = None
@@ -119,6 +119,7 @@ class Sphere(object):
         return array([x for x in tentative_increments
                       if self._distance_func(x * element_sizes, center)
                       <= self._radius])
+
 
     def train(self, dataset):
         # XXX YOH:  yeap -- BUT if you care about my note above on extracting
@@ -183,6 +184,84 @@ class Sphere(object):
         # "tuppling" it seems to be faster than tuppling each
         # sub-array
         return [tuple(x) for x in coord_array.tolist()]
+
+
+class HollowSphere(Sphere):
+    """N-Dimensional hypersphere with a hollow internal sphere
+
+    See parent class `Sphere` for more information.
+
+    Examples
+    --------
+    Create a Sphere of diameter 1 and obtain all coordinates within range for the
+    coordinate (1,1,1).
+
+    >>> s = HollowSphere(1, 0)
+    >>> s((2, 1))
+    [(1, 1), (2, 0), (2, 2), (3, 1)]
+    >>> s((1, ))
+    [(0,), (2,)]
+
+    """
+
+    def __init__(self, radius, inner_radius, **kwargs):
+        """ Initialize the Sphere
+
+        Parameters
+        ----------
+        radius : float
+          Radius of the 'sphere'.  If no `element_sizes` provided --
+          radius would be effectively in number of voxels (if
+          operating on MRI data).
+        inner_radius : float
+          Inner radius of the 'sphere', describing where hollow
+          part starts.  It is inclusive, so `inner_radius` of 0,
+          would already remove the center element.
+        **kwargs
+          See `Sphere` for additional keyword arguments
+        """
+        if inner_radius > radius:
+            raise ValueError, "inner_radius (got %g) should be smaller " \
+                  "than the radius (got %g)" % (inner_radius, radius)
+        Sphere.__init__(self, radius, **kwargs)
+        self._inner_radius = inner_radius
+
+
+    # Properties to assure R/O behavior for now
+    @property
+    def inner_radius(self):
+        return self._inner_radius
+
+    def _get_increments(self, ndim):
+        """Creates a list of increments for a given dimensionality
+
+        RF: lame yoh just cut-pasted and tuned up because everything
+            depends on ndim...
+        """
+        # Set element_sizes
+        element_sizes = self._element_sizes
+        if element_sizes is None:
+            element_sizes = N.ones(ndim)
+        else:
+            if (ndim != len(element_sizes)):
+                raise ValueError, \
+                      "Dimensionality mismatch: element_sizes %s provided " \
+                      "to constructor had %i dimensions, whenever queried " \
+                      "coordinate had %i" \
+                      % (element_sizes, len(element_sizes), ndim)
+        center = N.zeros(ndim)
+
+        element_sizes = N.asanyarray(element_sizes)
+        # What range for each dimension
+        erange = N.ceil(self._radius / element_sizes).astype(int)
+
+        tentative_increments = N.array(list(N.ndindex(tuple(erange*2 + 1)))) \
+                               - erange
+        # Filter out the ones beyond the "sphere"
+        return array([x for x in tentative_increments
+                      if self._inner_radius
+                      < self._distance_func(x * element_sizes, center)
+                      <= self._radius])
 
 
 class QueryEngine(object):

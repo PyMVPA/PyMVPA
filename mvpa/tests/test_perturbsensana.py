@@ -8,14 +8,16 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA perturbation sensitivity analyzer."""
 
+import numpy as N
+from mvpa.testing import *
+from mvpa.testing.clfs import *
+
 from mvpa.datasets.base import Dataset
 from mvpa.measures.noiseperturbation import NoisePerturbationSensitivity
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
 
-from tests_warehouse import *
-from tests_warehouse_clfs import *
 
 class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
 
@@ -28,11 +30,11 @@ class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
         mask = N.ones( (3, 4, 2), dtype='bool')
         mask[0,0,0] = 0
         mask[1,3,1] = 0
-        self.dataset = Dataset.from_masked(samples=data, labels=labels,
+        self.dataset = Dataset.from_wizard(samples=data, targets=labels,
                                            chunks=chunks, mask=mask)
 
 
-    def testPerturbationSensitivityAnalyzer(self):
+    def test_perturbation_sensitivity_analyzer(self):
         # compute N-1 cross-validation as datameasure
         cv = CrossValidatedTransferError(
                 TransferError(sample_clf_lin),

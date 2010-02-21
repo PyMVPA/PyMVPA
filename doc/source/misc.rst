@@ -1,4 +1,4 @@
-.. -*- mode: rst; fill-column: 78 -*-
+.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
@@ -15,8 +15,38 @@
 Miscellaneous
 *************
 
-.. index:: settings, configuration, cfg
+.. automodule:: mvpa.misc
 
+.. only:: html
+
+   Related API documentation
+   =========================
+
+   .. currentmodule:: mvpa
+   .. autosummary::
+      :toctree: generated
+
+      atlases
+      misc.args
+      misc.attributes
+      misc.attrmap
+      misc.cmdline
+      misc.data_generators
+      misc.errorfx
+      misc.exceptions
+      misc.fx
+      misc.neighborhood
+      misc.param
+      misc.sampleslookup
+      misc.state
+      misc.stats
+      misc.support
+      misc.transformers
+      misc.vproperty
+
+
+
+.. index:: settings, configuration, cfg
 
 Managing (Custom) Configurations
 ================================
@@ -394,7 +424,7 @@ motion-aware data detrending:
   >>>
   >>> # some dummy dataset
   >>> from mvpa.datasets import Dataset
-  >>> ds = Dataset(samples=N.random.normal(size=(19, 3)), labels=1)
+  >>> ds = Dataset(samples=N.random.normal(size=(19, 3)))
   >>>
   >>> # load motion correction output
   >>> from mvpa.misc.fsl.base import McFlirtParams
@@ -404,9 +434,14 @@ motion-aware data detrending:
   >>> # afterwards)
   >>> mc.plot()
   >>>
+  >>> # merge the correction parameters into the dataset itself
+  >>> for param in mc:
+  ...     ds.sa['mc_' + param] = mc[param]
+  >>>
   >>> # detrend some dataset with mc params as additonal regressors
-  >>> from mvpa.datasets.miscfx import detrend
-  >>> res = detrend(ds, model='regress', opt_reg=mc.toarray())
+  >>> from mvpa.mappers.detrend import poly_detrend
+  >>> res = poly_detrend(ds, opt_regs=['mc_x', 'mc_y', 'mc_z',
+  ...                                  'mc_rot1', 'mc_rot2', 'mc_rot3'])
   >>> # 'res' contains all regressors and their associated weights
 
 All FSL bindings are located in the `mvpa.misc.fsl`_ module.

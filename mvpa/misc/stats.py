@@ -137,7 +137,8 @@ class DSMatrix(object):
 
         self.full_matrix = dsmatrix
 
-    def getTriangle(self):
+    ##REF: Name was automagically refactored
+    def get_triangle(self):
         # if we need to create the u_triangle representation, do so
         if (self.u_triangle is None):
             self.u_triangle = N.triu(self.full_matrix)
@@ -161,11 +162,12 @@ class DSMatrix(object):
     #  4.  Set all the -1-valued elements in the vector to 0 (their
     #      original value)
     #  5.  Cast to numpy array
-    def getVectorForm(self):
+    ##REF: Name was automagically refactored
+    def get_vector_form(self):
         if (self.vector_form is not None):
             return self.vector_form
 
-        orig_dsmatrix = copy.deepcopy(self.getFullMatrix())
+        orig_dsmatrix = copy.deepcopy(self.get_full_matrix())
 
         orig_dsmatrix[orig_dsmatrix == 0] = -1
 
@@ -182,8 +184,10 @@ class DSMatrix(object):
 
     # XXX is there any reason to have these get* methods
     #     instead of plain access to full_matrix and method?
-    def getFullMatrix(self):
+    ##REF: Name was automagically refactored
+    def get_full_matrix(self):
         return self.full_matrix
 
-    def getMetric(self):
+    ##REF: Name was automagically refactored
+    def get_metric(self):
         return self.metric

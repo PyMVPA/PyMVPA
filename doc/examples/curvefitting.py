@@ -20,8 +20,8 @@ First, importing the necessary pieces:
 import numpy as N
 import pylab as P
 
-from mvpa.misc.plot import plotErrLine
-from mvpa.misc.fx import singleGammaHRF, leastSqFit
+from mvpa.misc.plot import plot_err_line
+from mvpa.misc.fx import single_gamma_hrf, least_sq_fit
 from mvpa import cfg
 
 """
@@ -29,7 +29,7 @@ Now, we generate some noisy "trial time courses" from a simple gamma function
 (40 samples, 6s time-to-peak, 7s FWHM and no additional scaling:
 """
 
-a = N.asarray([singleGammaHRF(N.arange(20), A=6, W=7, K=1)] * 40)
+a = N.asarray([single_gamma_hrf(N.arange(20), A=6, W=7, K=1)] * 40)
 # get closer to reality with noise
 a += N.random.normal(size=a.shape)
 
@@ -38,7 +38,7 @@ Fitting a gamma function to this data is easy (using resonable seeds for the
 parameter search (5s time-to-peak, 5s FWHM, and no scaling):
 """
 
-fpar, succ = leastSqFit(singleGammaHRF, [5,5,1], a)
+fpar, succ = least_sq_fit(single_gamma_hrf, [5,5,1], a)
 
 """
 Generate high-resultion curves for the 'true' time course and the fitted one
@@ -46,11 +46,11 @@ for visualization and plot them together with the data:
 """
 
 x = N.linspace(0,20)
-curves = [(x, singleGammaHRF(x, 6, 7, 1)),
-          (x, singleGammaHRF(x, *fpar))]
+curves = [(x, single_gamma_hrf(x, 6, 7, 1)),
+          (x, single_gamma_hrf(x, *fpar))]
 
 # plot data (with error bars) and both curves
-plotErrLine(a, curves=curves, linestyle='-')
+plot_err_line(a, curves=curves, linestyle='-')
 
 # add legend to plot
 P.legend(('original', 'fit'))

@@ -13,7 +13,7 @@ import sys
 
 from mvpa import _random_seed, cfg
 from mvpa.base import externals, warning
-from mvpa.tests import collectTestSuites, runNoseTests
+from mvpa.tests import collect_test_suites, run_nose_tests
 
 
 def main():
@@ -25,17 +25,27 @@ def main():
         # instance, since for CHECK_RETRAIN it has to be set before object
         # gets created, ie while importing clfs.warehouse
 
-    suites = collectTestSuites()
-
-    # and make global test suite
-    ts = unittest.TestSuite(suites.values())
-
-    # no MVPA warnings during whole testsuite
-    warning.handlers = []
-
     # No python warnings (like ctypes version for slmr)
     import warnings
     warnings.simplefilter('ignore')
+
+    # no MVPA warnings during whole testsuite
+    owarning_handlers = warning.handlers
+
+    warning.handlers = []
+    #
+    # Run Nosetests before classic unittests, since that one might sys.exit() on error
+    run_nose_tests()
+
+    # We want warnings about missing externals being present
+    warning.handlers = owarning_handlers
+    #
+    # Classic unittests
+    suites = collect_test_suites()
+    warning.handlers = []
+
+    # and make global test suite
+    ts = unittest.TestSuite(suites.values())
 
     class TextTestRunnerPyMVPA(unittest.TextTestRunner):
         """Extend TextTestRunner to print out random seed which was
@@ -54,6 +64,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # run before main(), since that one might sys.exit() on error
-    runNoseTests()
     main()

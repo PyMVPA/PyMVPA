@@ -2,41 +2,66 @@
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
 
 
-PyMVPA is a Python_ module intended to ease pattern classification analyses of
-large datasets. In the neuroimaging contexts such analysis techniques are also
-known as :term:`decoding` or :term:`MVPA` analysis. PyMVPA provides high-level
-abstraction of typical processing steps and a number of implementations of some
-popular algorithms.  While it is not limited to the neuroimaging domain, it is
-eminently suited for such datasets.  PyMVPA is truly free software (in every
-respect) and additionally requires nothing but free-software to run.
-
-.. _Python: http://www.python.org
+PyMVPA is a Python_ package intended to ease statistical learning analyses of
+large datasets. It offers an extensible framework with a high-level interface
+to a broad range of algorithms for classification, regression, feature
+selection, data import and export. While it is not limited to the neuroimaging
+domain, it is eminently suited for such datasets. PyMVPA is truly free software
+(in every respect) and additionally requires nothing but free-software to run.
 
 PyMVPA stands for **M**\ ulti\ **V**\ ariate **P**\ attern **A**\ nalysis
 (:term:`MVPA`) in **Py**\ thon.
 
-PyMVPA is developed inside the `Debian Experimental Psychology Project`_. This
-website, the source code repository and download services are hosted on 
-Alioth_, a service that is kindly provided by the `Debian project`_.
+.. _Python: http://www.python.org
 
-.. _Debian Experimental Psychology Project: http://pkg-exppsy.alioth.debian.org
-.. _Alioth: http://alioth.debian.org
-.. _Debian project: http://www.debian.org
+
+
+.. raw:: html
+
+ <table style="border-style:none;overflow:scroll">
+  <tr>
+   <td>
+    <a href="download.html">
+     <img alt="Download" src="_static/download_icon.jpg" title="Download and Installation" />
+    </a>
+   </td>
+   <td>
+    <a href="tutorial.html">
+     <img alt="Tutorial" src="_static/tutorial_icon.jpg" title="Tutorial for Beginners" />
+    </a>
+   </td>
+   <td>
+    <a href="docoverview.html">
+     <img alt="Documentation" src="_static/documentation_icon.jpg" title="Documentation" />
+    </a>
+   </td>
+   <td>
+    <a href="support.html">
+     <img alt="Support" src="_static/support_icon.jpg" title="Getting Support" />
+    </a>
+   </td>
+  </tr>
+  <tr>
+    <td style="text-align:center"><a href="download.html">Download</a></td>
+    <td style="text-align:center"><a href="tutorial.html">Tutorial</a></td>
+    <td style="text-align:center"><a href="docoverview.html">Documentation</a></td>
+    <td style="text-align:center"><a href="support">Support</a></td>
+  </tr>
+ </table>
 
 
 News
 ====
 
-PyMVPA Extravaganza 2009 at Dartmotuh College [30th Nov -- 4th Dec]
+PyMVPA 0.4.4 is out [2 Feb 2010]
+  This release brings a set of bug fixes, few new features. See the
+  :ref:`changelog <chap_changelog>` for details. Are you :ref:`using it
+  <chap_whoisusingit>` already?
+
+
+PyMVPA Extravaganza 2009 at Dartmouth College [30th Nov -- 4th Dec]
   :ref:`Read more <chap_workshop_2009fall>` about the topics and achievements.
 
-PyMVPA 0.4.3 is out [5 Sep 2009]
-  This release brings some new stuff,  lots of fixes for old stuff and some speed
-  improvements. See the :ref:`changelog <chap_changelog>` for details.
-
-.. raw:: html
-
-   <dt></dt><dd><script type="text/javascript" src="http://www.ohloh.net/p/16363/widgets/project_users_logo.js"></script></dd>
 
 First publication from outside the PyMVPA team employing PyMVPA [19 Jul 2009]
   :ref:`Sun et al. (2009) <SET+09>`: *Elucidating an MRI-Based Neuroanatomic
@@ -44,42 +69,6 @@ First publication from outside the PyMVPA team employing PyMVPA [19 Jul 2009]
   Atlas and Machine Learning Algorithms.*
 
 .. _pydocweb: https://code.launchpad.net/~pauli-virtanen/scipy/pydocweb
-
-Documentation
-=============
-
-For users
----------
-
-* :ref:`User Documentation <contents>` [PDF-manual_] (**the** documentation).
-* :ref:`Installation Instructions <chap_installation>`
-* :ref:`FAQ <chap_faq>` (short answers to common problems)
-* :ref:`Module Reference <chap_modref>` (user-oriented reference)
-* :ref:`Bibliography <chap_references>` (references to interesting literature)
-* :ref:`Development Changelog <chap_changelog>` [:ref:`Movie version
-  <chap_code_swarm>`] (see what has changed)
-
-.. _PDF-manual: PyMVPA-Manual.pdf
-
-* :ref:`exampledata` (single subject dataset from :ref:`Haxby et al., 2001
-  <HGF+01>`)
-
-.. comment to separate the two lists
-
-* :ref:`genindex` (access by keywords)
-* :ref:`search` (online and offline full-text search)
-
-
-For developers
---------------
-
-* :ref:`Developer Guidelines <chap_devguide>` [PDF-guide_] (information for people
-  contributing code)
-* `API Reference`_ (comprehensive and up-to-date information about the details
-  of the implementation)
-
-.. _PDF-guide: PyMVPA-DevGuide.pdf
-.. _API Reference: api/index.html
 
 
 License
@@ -94,108 +83,6 @@ full text of the license.
 .. _MIT License: http://www.opensource.org/licenses/mit-license.php
 .. _appendix of the manual: manual.html#license
 
-
-
-Download
-========
-
-Binary packages
----------------
-
-Binary packages are available for:
-
-* Debian and Ubuntu (:ref:`installation instructions <install_debian>`)
-    PyMVPA is an `official Debian package`_ (`python-mvpa`).
-    Additionally, backports for some Debian and Ubuntu releases are also
-    available. Please read the `package repository instructions`_ to learn
-    about how to obtain them.
-
-* RPM-based GNU/Linux distributions (:ref:`installation instructions <install_rpm>`)
-    RPM packages are provided through the `OpenSUSE Build Service`_. The
-    currently supported distributions include: CentOS 5, Fedora 9-10, Mandriva
-    2007-2008, RedHat Enterprise Linux 5, SUSE Linux Enterprise 10, OpenSUSE
-    10.2 up to 11.0. The build service supports RPM-package repositories (`Suse
-    and Mandriva-related`_ and `Fedora, Redhat and CentOS-related`_) and
-    `1-click-installations`_.
-
-* MacOS X (:ref:`installation instructions <install_macos>`)
-    PyMVPA is available from the MacPorts_ framework.
-
-* Windows (:ref:`installation instructions <install_win>`)
-    An installer for Python 2.5 is available from the `download area`_.
-
-If there are no binary packages for your particular operating system or
-platform, you need to compile your own. The manual contains :ref:`instructions
-<buildfromsource>` to build PyMVPA in various environments.
-
-.. _MacPorts: http://www.macports.org
-.. _official Debian package: http://packages.debian.org/python-mvpa
-.. _package repository instructions: http://neuro.debian.net/#how-to-use-this-repository
-.. _Suse and Mandriva-related: http://download.opensuse.org/repositories/home:/hankem/
-.. _Fedora, Redhat and CentOS-related: http://download.opensuse.org/repositories/home://hankem://rh5/
-.. _1-click-installations: http://software.opensuse.org/search?baseproject=ALL&p=1&q=python-mvpa
-.. _OpenSUSE Build Service: https://build.opensuse.org/
-
-
-Source code
------------
-
-Source code tarballs of PyMVPA releases are available from the `download
-area`_. Alternatively, one can also download a tarball of the latest
-development snapshot_ (i.e. the current state of the *master* branch of the
-PyMVPA source code repository).
-
-To get access to both the full PyMVPA history and the latest
-development code, the PyMVPA Git_ repository is publicly available. To view the
-repository, please point your webbrowser to gitweb:
-http://git.debian.org/?p=pkg-exppsy/pymvpa.git
-
-To clone (aka checkout) the PyMVPA repository simply do:
-
-::
-
-  git clone git://git.debian.org/git/pkg-exppsy/pymvpa.git
-
-After a short while you will have a `pymvpa` directory below your current
-working directory, that contains the PyMVPA repository.
-
-More detailed instructions on :ref:`installation requirements <requirements>`
-and on how to :ref:`build PyMVPA from source <buildfromsource>` are provided
-in the manual.
-
-
-.. _download area: http://alioth.debian.org/frs/?group_id=30954
-.. _Git: http://git.or.cz/
-.. _snapshot:  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=snapshot;h=refs/heads/master;sf=tgz
-
-
-Support
-=======
-
-If you have problems installing the software or questions about usage,
-documentation or something else related to PyMVPA, you can post to the PyMVPA
-mailing list (preferred) or contact the authors on IRC:
-
-:Mailing list: pkg-exppsy-pymvpa@lists.alioth.debian.org [subscription_,
-               archive_]
-:IRC: #exppsy on OTFC/Freenode
-
-All users should subscribe to the mailing list. PyMVPA is still a young project
-that is under heavy development. Significant modifications (hopefully
-improvements) are very likely to happen frequently. The mailing list is the
-preferred way to announce such changes. The mailing list archive can also be
-searched using the *mailing list archive search* located in the sidebar of the
-PyMVPA home page.
-
-.. _subscription: http://lists.alioth.debian.org/mailman/listinfo/pkg-exppsy-pymvpa
-.. _archive: http://lists.alioth.debian.org/pipermail/pkg-exppsy-pymvpa/
-
-
-
-Publications
-============
-
-.. include:: publications.rst
 
 
 Authors & Contributors
@@ -237,6 +124,8 @@ here.
 * Orange_: Powerful general-purpose data mining software. Orange also has Python
   bindings.
 
+* PROBID_: Matlab-based GUI pattern recognition toolbox for MRI data.
+
 * `PyMGH/PyFSIO`_: Python IO library to for FreeSurfer's `.mgh` data format.
 
 * PyML_: PyML is an interactive object oriented framework for machine learning
@@ -259,6 +148,7 @@ here.
 .. _MDP: http://mdp-toolkit.sourceforge.net
 .. _MVPA Toolbox: http://www.csbmb.princeton.edu/mvpa/
 .. _NiPy: http://neuroimaging.scipy.org
+.. _PROBID: http://www.brainmap.co.uk/probid.htm
 .. _PyMGH/PyFSIO: http://code.google.com/p/pyfsio
 .. _PyNIfTI: http://niftilib.sourceforge.net/pynifti
 .. _OpenMEEG: http://www-sop.inria.fr/odyssee/software/OpenMEEG

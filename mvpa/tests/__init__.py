@@ -13,7 +13,8 @@ from mvpa import _random_seed, cfg
 from mvpa.base import externals, warning
 
 
-def collectTestSuites():
+##REF: Name was automagically refactored
+def collect_test_suites():
     """Runs over all tests it knows and composes a dictionary with test suite
     instances as values and IDs as keys. IDs are the filenames of the unittest
     without '.py' extension and 'test_' prefix.
@@ -31,7 +32,6 @@ def collectTestSuites():
         'test_splitter',
         'test_state',
         'test_params',
-        'test_eepdataset',
         # Misc supporting utilities
         'test_config',
         'test_stats',
@@ -44,12 +44,10 @@ def collectTestSuites():
         'test_args',
         'test_meg',
         # Classifiers (longer tests)
-        'test_kernel',
         'test_clf',
         'test_regr',
         'test_knn',
         'test_gnb',
-        'test_gpr',
         'test_svm',
         'test_plr',
         'test_smlr',
@@ -78,20 +76,15 @@ def collectTestSuites():
     # So we could see all warnings about missing dependencies
     warning.maxcount = 1000
     # fully test of externals
-    externals.testAllDependencies()
+    externals.test_all_dependencies()
 
 
     __optional_tests = [ ('scipy', 'ridge'),
                          ('scipy', 'stats_sp'),
+                         ('scipy', 'gpr'),
                          (['lars','scipy'], 'lars'),
-                         ('scipy', 'zscoremapper'),
-                         ('pywt', 'waveletmapper'),
                          (['cPickle', 'gzip'], 'hamster'),
                        ]
-
-    if not cfg.getboolean('tests', 'lowmem', default='no'):
-        __optional_tests += [(['nifti', 'lxml'], 'atlases')]
-
 
     # and now for the optional tests
     optional_tests = []
@@ -112,34 +105,56 @@ def collectTestSuites():
     return dict([(t[5:], eval(t + '.suite()')) for t in tests ])
 
 
-def collectNoseTests():
+##REF: Name was automagically refactored
+def collect_nose_tests():
     """Return list of tests which are pure nose-based
     """
     tests = [ 'test_collections',
               'test_datasetng',
-              'test_niftidataset',
               'test_attrmap',
               'test_arraymapper',
               'test_boxcarmapper',
               'test_mapper',
+              'test_mapper_sp',
               'test_fxmapper',
-              'test_mdp',
+              'test_glmnet',
+              'test_hdf5',
               'test_neighborhood',
+              'test_mdp',
+              'test_niftidataset',
+              'test_eepdataset',
+              'test_zscoremapper',
+              'test_kernel',
+              'test_svmkernels',
+              'test_waveletmapper',
               ]
-    if externals.exists('scipy'):
-        tests += ['test_mapper_sp']
-    if externals.exists('glmnet'):
-        tests += ['test_glmnet']
+
+    if not cfg.getboolean('tests', 'lowmem', default='no'):
+        tests += ['test_atlases']
+
+
+    ## SkipTest will take care about marking those as S
+    ## if externals.exists('scipy'):
+    ##     tests += ['test_mapper_sp']
+    ## if externals.exists('glmnet'):
+    ##     tests += ['test_glmnet']
+    ## if externals.exists('nifti'):
+    ##     tests += ['test_niftidataset']
+    ## if externals.exists('mdp'):
+    ##     tests += ['test_mdp']
+    ## if externals.exists('h5py'):
+    ##     tests += ['test_hdf5']
 
     return tests
 
-def runNoseTests():
+##REF: Name was automagically refactored
+def run_nose_tests():
     """Run nose-based tests -- really really silly way, just to get started
 
     TODO: just switch to using numpy.testing framework, for that
           unittests need to be cleaned and unified first
     """
-    nosetests = collectNoseTests()
+    nosetests = collect_nose_tests()
     if not externals.exists('nose'):
         warning("You do not have python-nose installed -- no tests %s were ran"
                 % (', '.join(nosetests)))
@@ -169,7 +184,7 @@ def run(limit=None, verbosity=None):
         debug.active += ['CHECK_.*']
 
     # collect all tests
-    suites = collectTestSuites()
+    suites = collect_test_suites()
 
     if limit is None:
         # make global test suite (use them all)
@@ -201,7 +216,7 @@ def run(limit=None, verbosity=None):
     TextTestRunnerPyMVPA(verbosity=verbosity).run(ts)
 
     # and nose tests
-    runNoseTests()
+    run_nose_tests()
 
     # restore warning handlers
     warning.handlers = handler_backup

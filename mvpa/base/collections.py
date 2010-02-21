@@ -89,6 +89,11 @@ class Collectable(object):
         return res
 
 
+    def __reduce__(self):
+        return (self.__class__,
+                    (self._value, self.name, self.__doc__))
+
+
     def __repr__(self):
         value = self.value
         return "%s(name=%s, doc=%s, value=%s)" % (self.__class__.__name__,
@@ -169,6 +174,11 @@ class SequenceCollectable(Collectable):
         self._reset_unique()
 
 
+    def __reduce__(self):
+        return (self.__class__,
+                    (self.value, self.name, self.__doc__, self._target_length))
+
+
     def __repr__(self):
         value = self.value
         return "%s(name=%s, doc=%s, value=%s, length=%s)" \
@@ -181,6 +191,10 @@ class SequenceCollectable(Collectable):
 
     def __len__(self):
         return self.value.__len__()
+
+
+    def __getitem__(self, key):
+        return self.value.__getitem__(key)
 
 
     def _set(self, val):
@@ -319,12 +333,21 @@ class Collection(dict):
         """
         if isinstance(source, list):
             for a in source:
+                if isinstance(a, tuple):
+                    #list of tuples, e.g. from dict.items()
+                    name = a[0]
+                    value = a[1]
+                else:
+                    # list of collectables
+                    name = a.name
+                    value = a
+
                 if copyvalues is None:
-                    self[a.name] = a
+                    self[name] = value
                 elif copyvalues is 'shallow':
-                    self[a.name] = copy.copy(a)
+                    self[name] = copy.copy(value)
                 elif copyvalues is 'deep':
-                    self[a.name] = copy.deepcopy(a)
+                    self[name] = copy.deepcopy(value)
                 else:
                     raise ValueError("Unknown value ('%s') for copy argument."
                                      % copy)
@@ -394,6 +417,11 @@ class UniformLengthCollection(Collection):
         # before its __init__ is called.
         self._uniform_length = length
         Collection.__init__(self, items)
+
+
+    def __reduce__(self):
+        return (self.__class__,
+                    (self.items(), self._uniform_length))
 
 
     def set_length_check(self, value):

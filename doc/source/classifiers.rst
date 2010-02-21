@@ -1,4 +1,4 @@
-.. -*- mode: rst; fill-column: 78 -*-
+.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
 .. ex: set sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
@@ -14,6 +14,45 @@
 ***********
 Classifiers
 ***********
+
+.. automodule:: mvpa.clfs
+
+.. only:: html
+
+   Related API documentation
+   =========================
+
+   .. currentmodule:: mvpa
+   .. autosummary::
+      :toctree: generated
+
+      clfs.base
+      clfs.meta
+      clfs.blr
+      clfs.enet
+      clfs.glmnet
+      clfs.gnb
+      clfs.gpr
+      clfs.knn
+      clfs.lars
+      clfs.plr
+      clfs.ridge
+      clfs.smlr
+      clfs.svm
+      clfs.sg
+      clfs.libsvmc
+      clfs.distance
+      clfs.similarity
+      clfs.stats
+      clfs.transerror
+      clfs.warehouse
+
+
+
+
+
+
+
 
 PyMVPA includes a number of ready-to-use classifiers, which are described in
 the following sections. All classifiers implement the same, very simple
@@ -33,18 +72,19 @@ This examples demonstrates the typical daily life of a classifier.
 
   >>> import numpy as N
   >>> from mvpa.clfs.knn import kNN
-  >>> from mvpa.datasets import Dataset
-  >>> training = Dataset(samples=N.array(
+  >>> from mvpa.datasets import dataset_wizard
+  >>> training = dataset_wizard(samples=N.array(
   ...                                N.arange(100),ndmin=2, dtype='float').T,
-  ...                    labels=[0] * 50 + [1] * 50)
+  ...                    targets=[0] * 50 + [1] * 50)
   >>> rand100 = N.random.rand(10)*100
-  >>> validation = Dataset(samples=N.array(rand100, ndmin=2, dtype='float').T,
-  ...                      labels=[ int(i>50) for i in rand100 ])
+  >>> validation = dataset_wizard(samples=N.array(
+  ...                                rand100, ndmin=2, dtype='float').T,
+  ...                      targets=[ int(i>50) for i in rand100 ])
   >>> clf = kNN(k=10)
   >>> clf.train(training)
-  >>> N.mean(clf.predict(training.samples) == training.labels)
+  >>> N.mean(clf.predict(training.samples) == training.targets)
   1.0
-  >>> N.mean(clf.predict(validation.samples) == validation.labels)
+  >>> N.mean(clf.predict(validation.samples) == validation.targets)
   1.0
 
 Two datasets with 100 and 10 samples each are generated. Both datasets only
@@ -80,7 +120,7 @@ these figure can be found in the `pylab_2d.py` example in the
 :ref:`example_pylab_2d` section.
 
 
-.. index:: states
+.. index:: ca
 
 Stateful objects
 ================
@@ -96,46 +136,45 @@ interest might consume a lot of memory or needs intensive computation, and not
 needed in most (or in some) of the use cases.
 
 For instance, the :class:`~mvpa.clfs.base.Classifier` class defines the
-`trained_labels` state variable, which just stores the unique labels for which
-the classifier was trained. Since `trained_labels` stores meaningful
+`trained_targets` state variable, which just stores the unique targets for which
+the classifier was trained. Since `trained_targets` stores meaningful
 information only for a trained classifier, attempt to access
-'clf.trained_labels' before training would result in an error,
+'clf.ca.trained_targets' before training would result in an error,
 
  >>> from mvpa.misc.exceptions import UnknownStateError
  >>> try:
  ...     untrained_clf = kNN()
- ...     labels = untrained_clf.trained_labels
+ ...     targets = untrained_clf.ca.trained_targets
  ... except UnknownStateError:
  ...     "Does not work"
  'Does not work'
 
 since the classifier has not seen the data yet and, thus, does not know the
-labels. In other words, it is not yet in the state to know anything about the
-labels. Any state variable can be enabled or disabled on per instance basis at
+targets. In other words, it is not yet in the state to know anything about the
+targets. Any state variable can be enabled or disabled on per instance basis at
 any time of the execution (see :class:`~mvpa.misc.state.ClassWithCollections`).
 
 To continue the last example, each classifier, or more precisely every
 stateful object, can be asked to report existing state-related attributes:
 
-  >>> list_with_verbose_explanations = clf.states.listing
+  >>> list_with_verbose_explanations = clf.ca.listing
 
-'clf.states' is an instance of :class:`~mvpa.misc.state.StateCollection` class
-which is a container for all state variables of the given class. Although
-values can be queried or set (if state is enabled) operating directly on the
-stateful object
+'clf.ca' is an instance of :class:`~mvpa.misc.state.StateCollection` class
+which is a container for all state variables of the given class. To access (query
+the value or set the value if state is enabled), and enable or disable you
+should operate on `ca` collection (which is different from version prior
+'0.5.0' where you could query values directly from the object, i.e. `clf` in
+this example)
 
-  >>> clf.trained_labels
+  >>> clf.ca.trained_targets
   array([0, 1])
 
-any other operation on the state (e.g. enabling, disabling) has to be carried
-out through the `states` attribute.
-
-  >>> print clf.states
-  states{trained_dataset predicting_time*+ training_confusion predictions*+...}
-  >>> clf.states.enable('estimates')
-  >>> print clf.states
-  states{trained_dataset predicting_time*+ training_confusion predictions*+...}
-  >>> clf.states.disable('estimates')
+  >>> print clf.ca
+  ca{distances training_time*+ predicting_time*+ training_confusion...}
+  >>> clf.ca.enable('estimates')
+  >>> print clf.ca
+  ca{distances training_time*+ predicting_time*+ training_confusion...}
+  >>> clf.ca.disable('estimates')
 
 A string representation of the state collection mentioned above lists
 all state variables present accompanied with 2 markers: '+' for an
@@ -145,7 +184,7 @@ enabled state variable, and '*' for a variable that stores some value
 
 .. TODO: Refactor
 
-By default all classifiers provide state variables `estimates`,
+By default all classifiers provide state variables `estimates` and
 `predictions`. The latter is simply the set of predictions that was returned
 by the last call to the objects :meth:`~mvpa.clfs.base.Classifier.predict`
 method. The former is heavily
@@ -153,18 +192,18 @@ classifier-specific. By convention the `estimates` key provides access to the
 raw values that a classifier prediction is based on (e.g. votes or
 probabilities per each label).  Depending on the
 classifier, this information might required significant resources when stored.
-Therefore all states can be disabled or enabled (`states.disable()`,
-`states.enable()`) and their current status can be queried like this:
+Therefore all ca can be disabled or enabled (`ca.disable()`,
+`ca.enable()`) and their current status can be queried like this:
 
-  >>> clf.states.is_active('predictions')
+  >>> clf.ca.is_active('predictions')
   True
-  >>> clf.states.is_active('estimates')
+  >>> clf.ca.is_active('estimates')
   False
 
 States can be enabled or disabled during stateful object construction, if
-`enable_states` or `disable_states` (or both) arguments, which store the list
+`enable_ca` or `disable_ca` (or both) arguments, which store the list
 of desired state variables names, passed to the object constructor. Keyword
-'all' can be used to select all known states for that stateful object.
+'all' can be used to select all known ca for that stateful object.
 
 
 .. index:: error, classifier error, transfer error
@@ -225,8 +264,8 @@ cross-validation reusing the transfer error object from the previous example
 and some :class:`~mvpa.datasets.base.Dataset` `data`.
 
   >>> # create some dataset
-  >>> from mvpa.misc.data_generators import normalFeatureDataset
-  >>> data = normalFeatureDataset(perlabel=50, nlabels=2,
+  >>> from mvpa.misc.data_generators import normal_feature_dataset
+  >>> data = normal_feature_dataset(perlabel=50, nlabels=2,
   ...                             nfeatures=20, nonbogus_features=[3, 7],
   ...                             snr=3.0)
   >>> # now cross-validation
@@ -234,7 +273,7 @@ and some :class:`~mvpa.datasets.base.Dataset` `data`.
   >>> from mvpa.datasets.splitters import NFoldSplitter
   >>> cvterr = CrossValidatedTransferError(terr,
   ...                                      NFoldSplitter(cvtype=1),
-  ...                                      enable_states=['confusion'])
+  ...                                      enable_ca=['confusion'])
   >>> error = cvterr(data)
 
 
@@ -246,12 +285,12 @@ generalization performance of a cross-validated classifier. Such
 summary is provided by instances of a
 :class:`~mvpa.clfs.transerror.ConfusionMatrix` class, and is
 accompanied by various performance metrics.  For example, the 8-fold
-cross-validation of the dataset with 8 labels with the SMLR classifier produced
+cross-validation of the dataset with 8 targets with the SMLR classifier produced
 the following confusion matrix::
 
   >>> # Simple 'print cvterr.confusion' provides the same output
   >>> # without the description of abbreviations
-  >>> print cvterr.confusion.asstring(description=True) \
+  >>> print cvterr.confusion.as_string(description=True) \
   ... # doctest: +SKIP
   --------.        3kHz  7kHz  12kHz 20kHz 30kHz song1 song2 song3 song4 song5
   predict.\targets 38    39    40    41    42    43    44    45    46    47
@@ -342,7 +381,7 @@ k-Nearest-Neighbour
 -------------------
 
 The :class:`~mvpa.clfs.knn.kNN` classifier makes predictions based on the
-labels of nearby samples.  It currently uses Euclidean distance to determine
+targets of nearby samples.  It currently uses Euclidean distance to determine
 the nearest neighbours, but future enhancements may include support for other
 kernels.
 
@@ -454,7 +493,7 @@ package, beneath which there are several specific options:
     typically uses multiple classifiers internally
 
 :class:`~mvpa.clfs.meta.ProxyClassifier`
-    typically performs some action on the data/labels before classification
+    typically performs some action on the data/targets before classification
     is performed
 
 Within these more general categories, specific classifiers are implemented.
@@ -480,7 +519,7 @@ Furthermore, there are also several :class:`~mvpa.clfs.meta.ProxyClassifier`
 subclasses:
 
 :class:`~mvpa.clfs.meta.BinaryClassifier`
-    maps a set of labels into two categories (+1 and -1)
+    maps a set of targets into two categories (+1 and -1)
 
 :class:`~mvpa.clfs.meta.MappedClassifier`
     uses a mapper on input data prior to training/testing
@@ -519,7 +558,7 @@ method calls).  Consider the following code, which can be found in
   ...   feature_selection = RFE(
   ...       # based on sensitivity of a clf which does
   ...       # splitting internally
-  ...       sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
+  ...       sensitivity_analyzer=rfesvm_split.get_sensitivity_analyzer(),
   ...       transfer_error=ConfusionBasedError(
   ...          rfesvm_split,
   ...          confusion_state="confusion"),
@@ -550,7 +589,7 @@ specification got changed. For instance, for kernel-based classifier (e.g. GPR)
 it makes no sense to recompute kernel matrix, if only a classifier (not kernel)
 parameter (e.g. ``sigma_noise``) was changed. Another similar usecase: for
 :ref:`null-hypothesis statistical testing <example_permutation_test>` it might be
-needed to train classifier multiple times on a randomized set of labels.
+needed to train classifier multiple times on a randomized set of targets.
 
 Only classifiers which have ``retrainable`` in their ``__tags__`` are
 capable of efficient retraining. To enable retraining, just provide

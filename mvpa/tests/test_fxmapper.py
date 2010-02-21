@@ -10,10 +10,10 @@
 
 
 import numpy as N
-from numpy.testing import assert_array_equal
-from nose.tools import assert_equal, assert_raises
 from mvpa.mappers.fx import *
-from mvpa.datasets.base import dataset, Dataset
+from mvpa.datasets.base import dataset_wizard, Dataset
+
+from mvpa.testing.tools import assert_equal, assert_raises,  assert_array_equal
 
 def test_samplesgroup_mapper():
     data = N.arange(24).reshape(8,3)
@@ -25,12 +25,12 @@ def test_samplesgroup_mapper():
     clabels = [0, 1, 0, 1]
     cchunks = [0, 0, 1, 1]
 
-    ds = dataset(samples=data, labels=labels, chunks=chunks)
+    ds = dataset_wizard(samples=data, targets=labels, chunks=chunks)
     # add some feature attribute -- just to check
     ds.fa['checker'] = N.arange(3)
     ds.init_origids('samples')
 
-    m = mean_group_sample(['labels', 'chunks'])
+    m = mean_group_sample(['targets', 'chunks'])
     mds = m.forward(ds)
     assert_array_equal(mds.samples, csamples)
     # FAs should simply remain the same
@@ -44,13 +44,13 @@ def test_samplesgroup_mapper():
 
     # directly apply to dataset
     # using untrained mapper
-    m = mean_group_sample(['labels', 'chunks'])
+    m = mean_group_sample(['targets', 'chunks'])
     mapped = ds.get_mapped(m)
 
     assert_equal(mapped.nsamples, 4)
     assert_equal(mapped.nfeatures, 3)
     assert_array_equal(mapped.samples, csamples)
-    assert_array_equal(mapped.labels, clabels)
+    assert_array_equal(mapped.targets, clabels)
     assert_array_equal(mapped.chunks, cchunks)
     # make sure origids get regenerated
     assert_array_equal([s.count('+') for s in mapped.sa.origids], [1] * 4)

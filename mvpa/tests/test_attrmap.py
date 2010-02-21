@@ -7,8 +7,10 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from numpy.testing import assert_array_equal
-from nose.tools import assert_raises, ok_, assert_false, assert_equal
+import numpy as N
+
+from mvpa.testing.tools import assert_raises, ok_, assert_false, assert_equal, \
+     assert_array_equal
 
 from mvpa.misc.attrmap import AttributeMap
 
@@ -30,6 +32,38 @@ def test_attrmap():
     ok_(am)
     ok_(len(am) == 3)
 
+    #
+    # Tests for recursive mapping + preserving datatype
+    class myarray(N.ndarray):
+        pass
+
+    assert_raises(KeyError, am.to_literal, [(1, 2), 2, 0])
+    literal_fancy = [(1, 2), 2, [0], N.array([0, 1]).view(myarray)]
+    literal_fancy_tuple = tuple(literal_fancy)
+    literal_fancy_array = N.array(literal_fancy, dtype=object)
+
+    for l in (literal_fancy, literal_fancy_tuple,
+              literal_fancy_array):
+        res = am.to_literal(l, recurse=True)
+        assert_equal(res[0], ('sieben', 'zwei'))
+        assert_equal(res[1], 'zwei')
+        assert_equal(res[2], ['eins'])
+        assert_array_equal(res[3], ['eins', 'sieben'])
+
+        # types of result and subsequences should be preserved
+        ok_(isinstance(res, l.__class__))
+        ok_(isinstance(res[0], tuple))
+        ok_(isinstance(res[1], str))
+        ok_(isinstance(res[2], list))
+        ok_(isinstance(res[3], myarray))
+
+    # yet another example
+    a = N.empty(1, dtype=object)
+    a[0] = (0, 1)
+    res = am.to_literal(a, recurse=True)
+    ok_(isinstance(res[0], tuple))
+
+    #
     # with custom mapping
     am = AttributeMap(map=map_custom)
     assert_array_equal(am.to_numeric(literal), num_custom)
@@ -48,7 +82,9 @@ def test_attrmap():
 
     # map mismatch
     am = AttributeMap(map=map_custom)
-    assert_raises(KeyError, am.to_numeric, literal_nonmatching)
+    if __debug__:
+        # checked only in __debug__
+        assert_raises(KeyError, am.to_numeric, literal_nonmatching)
     # needs reset and should work afterwards
     am.clear()
     assert_array_equal(am.to_numeric(literal_nonmatching), [2, 0, 1])
@@ -60,6 +96,7 @@ def test_attrmap():
     am = AttributeMap()
 
     ok_([(k, v) for k, v in am.iteritems()] == [])
+
 
 def test_attrmap_repr():
     assert_equal(repr(AttributeMap()), "AttributeMap()")

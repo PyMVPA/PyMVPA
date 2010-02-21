@@ -17,7 +17,7 @@ import sys
 # We have to use deepcopy from python 2.5, since otherwise it fails to
 # copy sensitivity analyzers with assigned combiners which are just
 # functions not functors
-if sys.version_info[:2] >= (2, 5):
+if sys.version_info[:2] >= (2, 6):
     # enforce absolute import
     _copy = __import__('copy', globals(), locals(), [], 0)
     copy = _copy.copy

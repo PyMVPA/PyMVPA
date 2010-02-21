@@ -34,8 +34,8 @@ class DSMDatasetMeasure(DatasetMeasure):
         # create the dissimilarity matrix for the data in the input dataset
         self.dset_dsm = DSMatrix(dataset.samples, self.dset_metric)
 
-        in_vec = self.dsmatrix.getVectorForm()
-        dset_vec = self.dset_dsm.getVectorForm()
+        in_vec = self.dsmatrix.get_vector_form()
+        dset_vec = self.dset_dsm.get_vector_form()
 
         # concatenate the two vectors, send to dissimlarity function
         test_mat = N.asarray([in_vec, dset_vec])
@@ -43,4 +43,4 @@ class DSMDatasetMeasure(DatasetMeasure):
         test_dsmatrix = DSMatrix(test_mat, self.output_metric)
 
         # return correct dissimilarity value
-        return test_dsmatrix.getFullMatrix()[0, 1]
+        return test_dsmatrix.get_full_matrix()[0, 1]

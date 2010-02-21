@@ -11,9 +11,8 @@
 import numpy as N
 import copy
 
-from numpy.testing import assert_array_equal, assert_array_almost_equal
-from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
-    assert_true
+from mvpa.testing.tools import assert_raises, assert_false, assert_equal, \
+    assert_true,  assert_array_equal, assert_array_almost_equal
 
 from mvpa.base.collections import Collectable, ArrayCollectable, \
         SampleAttributesCollection
@@ -112,3 +111,7 @@ def test_collections():
 
     # names which are already present in dict interface
     assert_raises(ValueError, sa.__setitem__, 'values', range(5))
+
+    sa_c = copy.deepcopy(sa)
+    assert_equal(len(sa), len(sa_c))
+    assert_array_equal(sa.test, sa_c.test)

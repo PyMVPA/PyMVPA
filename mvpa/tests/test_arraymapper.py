@@ -11,11 +11,12 @@
 
 from mvpa.mappers.flatten import mask_mapper
 from mvpa.mappers.base import FeatureSliceMapper
-from numpy.testing import assert_array_equal
-from nose.tools import ok_, assert_raises, assert_false, assert_equal
+
+from mvpa.testing.tools import assert_raises, assert_equal, assert_array_equal
+
 import numpy as N
 
-def testForwardDenseArrayMapper():
+def test_forward_dense_array_mapper():
     mask = N.ones((3,2), dtype='bool')
     map_ = mask_mapper(mask)
 
@@ -53,7 +54,7 @@ def testForwardDenseArrayMapper():
     assert_array_equal(mp, N.arange(24))
 
 
-def testReverseDenseArrayMapper():
+def test_reverse_dense_array_mapper():
     mask = N.ones((3,2), dtype='bool')
     mask[1,1] = 0
     map_ = mask_mapper(mask)
@@ -75,13 +76,13 @@ def testReverseDenseArrayMapper():
     assert_equal(rmapped2[1,2,1], 10 )
 
 
-def testMapperAliases():
+def test_mapper_aliases():
     mm=mask_mapper(N.ones((3,4,2), dtype='bool'))
     assert_array_equal(mm(N.ones((2,3,4,2))),
                        mm.forward(N.ones((2,3,4,2))))
 
 
-def testSelects():
+def test_selects():
     mask = N.ones((3,2), dtype='bool')
     mask[1,1] = 0
     mask0 = mask.copy()

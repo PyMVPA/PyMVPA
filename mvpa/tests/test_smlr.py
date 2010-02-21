@@ -8,14 +8,18 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA sparse multinomial logistic regression classifier"""
 
+import numpy as N
+
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
+
 from mvpa.clfs.smlr import SMLR
-from tests_warehouse import *
-from mvpa.misc.data_generators import normalFeatureDataset
+from mvpa.misc.data_generators import normal_feature_dataset
 
 
 class SMLRTests(unittest.TestCase):
 
-    def testSMLR(self):
+    def test_smlr(self):
         data = datasets['dumb']
 
         clf = SMLR()
@@ -32,27 +36,27 @@ class SMLRTests(unittest.TestCase):
         # have here -- there is no solution which would pass through
         # (0,0)
         predictions = clf.predict(data.samples)
-        self.failUnless((predictions == data.labels).all())
+        self.failUnless((predictions == data.targets).all())
 
 
-    def testSMLRState(self):
+    def test_smlr_state(self):
         data = datasets['dumb']
 
         clf = SMLR()
 
         clf.train(data)
 
-        clf.states.enable('estimates')
-        clf.states.enable('predictions')
+        clf.ca.enable('estimates')
+        clf.ca.enable('predictions')
 
         p = N.asarray(clf.predict(data.samples))
 
-        self.failUnless((p == clf.states.predictions).all())
-        self.failUnless(N.array(clf.states.estimates).shape[0] == N.array(p).shape[0])
+        self.failUnless((p == clf.ca.predictions).all())
+        self.failUnless(N.array(clf.ca.estimates).shape[0] == N.array(p).shape[0])
 
 
-    def testSMLRSensitivities(self):
-        data = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+    def test_smlr_sensitivities(self):
+        data = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
 
         # use SMLR on binary problem, but not fitting all weights
         clf = SMLR(fit_all_weights=False)
@@ -60,8 +64,8 @@ class SMLRTests(unittest.TestCase):
 
         # now ask for the sensitivities WITHOUT having to pass the dataset
         # again
-        sens = clf.getSensitivityAnalyzer(force_training=False)()
-        self.failUnless(sens.shape == (len(data.UL) - 1, data.nfeatures))
+        sens = clf.get_sensitivity_analyzer(force_training=False)()
+        self.failUnless(sens.shape == (len(data.UT) - 1, data.nfeatures))
 
 
 def suite():

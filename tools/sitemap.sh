@@ -3,7 +3,7 @@
 # Generate a XML sitemap to make the search engines love the website.
 #
 
-baseurl="http://www.pymvpa.org"
+: ${baseurl:="http://www.pymvpa.org"}
 siteroot="build/website"
 
 cat << EOT
@@ -16,7 +16,7 @@ cat << EOT
 </url>
 EOT
 
-for file in $(find $siteroot/ -maxdepth 1 -name '*.html' -o -name '*.pdf'); do
+for file in $(find $siteroot/ -maxdepth 1 -name '*.html' -o -name 'PyMVPA*.pdf'); do
 cat << EOT
 <url>
 <loc>$baseurl/$(basename $file)</loc>

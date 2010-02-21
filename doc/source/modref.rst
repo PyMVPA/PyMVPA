@@ -39,6 +39,7 @@ Basic Facilities
    base.config
    base.dochelpers
    base.externals
+   base.hdf5
    base.info
    base.report
    base.types
@@ -54,7 +55,6 @@ Datasets: Input, Output, Storage and Preprocessing
    base.dataset
    datasets.base
    datasets.mri
-   datasets.channel
    datasets.eep
    datasets.miscfx
    datasets.splitters
@@ -75,7 +75,10 @@ Mappers: Data Transformations
    mappers.prototype
    mappers.fx
    mappers.som
+   mappers.lle
+   mappers.svd
    mappers.wavelet
+   mappers.detrend
    mappers.zscore
 
 
@@ -134,7 +137,6 @@ Measures: Searchlights and Sensitivties
    measures.glm
    measures.irelief
    measures.noiseperturbation
-   measures.pls
    measures.searchlight
 
 
@@ -185,6 +187,19 @@ Miscellaneous
    misc.vproperty
 
 
+Basic Plotting Utilities
+------------------------
+
+.. autosummary::
+   :toctree: generated
+
+   misc.plot
+   misc.plot.base
+   misc.plot.erp
+   misc.plot.lightbox
+   misc.plot.topo
+
+
 3rd-party Interfaces
 --------------------
 
@@ -199,7 +214,6 @@ Miscellaneous
    misc.fsl.melodic
    misc.io
    misc.io.base
-   misc.io.eepbin
    misc.io.hamster
    misc.io.meg
 

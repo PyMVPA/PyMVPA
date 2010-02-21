@@ -27,7 +27,7 @@ class CorrStability(FeaturewiseDatasetMeasure):
 
     """
 
-    def __init__(self, attr='labels', **kwargs):
+    def __init__(self, attr='targets', **kwargs):
         """Initialize
 
         Parameters

@@ -24,17 +24,19 @@ from mvpa.clfs.libsvmc._svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
 if __debug__:
     from mvpa.base import debug
 
-def intArray(seq):
+##REF: Name was automagically refactored
+def int_array(seq):
     size = len(seq)
     array = svmc.new_int(size)
     i = 0
     for item in seq:
-        svmc.int_setitem(array, i, item)
+        svmc.int_setitem(array, i, int(item))
         i = i + 1
     return array
 
 
-def doubleArray(seq):
+##REF: Name was automagically refactored
+def double_array(seq):
     size = len(seq)
     array = svmc.new_double(size)
     i = 0
@@ -44,21 +46,25 @@ def doubleArray(seq):
     return array
 
 
-def freeIntArray(x):
+##REF: Name was automagically refactored
+def free_int_array(x):
     if x != 'NULL' and x != None:
         svmc.delete_int(x)
 
 
-def freeDoubleArray(x):
+##REF: Name was automagically refactored
+def free_double_array(x):
     if x != 'NULL' and x != None:
         svmc.delete_double(x)
 
 
-def intArray2List(x, n):
+##REF: Name was automagically refactored
+def int_array_to_list(x, n):
     return map(svmc.int_getitem, [x]*n, range(n))
 
 
-def doubleArray2List(x, n):
+##REF: Name was automagically refactored
+def double_array_to_list(x, n):
     return map(svmc.double_getitem, [x]*n, range(n))
 
 
@@ -94,14 +100,14 @@ class SVMParameter(object):
                 # adjust val if necessary
                 if attr == 'weight_label':
                     #self.__weight_label_len = len(val)
-                    val = intArray(val)
+                    val = int_array(val)
                     # no need?
-                    #freeIntArray(self.weight_label)
+                    #free_int_array(self.weight_label)
                 elif attr == 'weight':
                     #self.__weight_len = len(val)
-                    val = doubleArray(val)
+                    val = double_array(val)
                     # no need?
-                    # freeDoubleArray(self.weight)
+                    # free_double_array(self.weight)
                 # set the parameter through corresponding call
                 set_func = getattr(svmc, 'svm_parameter_%s_set' % (attr))
                 set_func(self.param, val)
@@ -109,8 +115,8 @@ class SVMParameter(object):
         def __del__(self):
             if __debug__:
                 debug('CLF_', 'Destroying libsvm._SVMCParameter %s' % str(self))
-            freeIntArray(svmc.svm_parameter_weight_label_get(self.param))
-            freeDoubleArray(svmc.svm_parameter_weight_get(self.param))
+            free_int_array(svmc.svm_parameter_weight_label_get(self.param))
+            free_double_array(svmc.svm_parameter_weight_get(self.param))
             svmc.delete_svm_parameter(self.param)
 
 
@@ -160,7 +166,8 @@ class SVMParameter(object):
             debug('CLF_', 'Destroying libsvm.SVMParameter %s' % str(self))
         self._clear_svmc_params()
 
-    def _setParameter(self, key, value):
+    ##REF: Name was automagically refactored
+    def _set_parameter(self, key, value):
         """Not exactly proper one -- if lists are svmc_recompute, would fail anyways"""
         self.__svmc_recompute = True
         self._params[key] = value
@@ -171,12 +178,13 @@ class SVMParameter(object):
             exec "%s.%s = property(fget=%s, fset=%s)"  % \
                  (cls.__name__, key,
                   "lambda self:self._params['%s']" % key,
-                  "lambda self,val:self._setParameter('%s', val)" % key)
+                  "lambda self,val:self._set_parameter('%s', val)" % key)
 
 
 SVMParameter._register_properties()
 
-def convert2SVMNode(x):
+##REF: Name was automagically refactored
+def seq_to_svm_node(x):
     """convert a sequence or mapping to an SVMNode array"""
     import operator
 
@@ -224,7 +232,7 @@ class SVMProblem:
         for i in xrange(size):
             x_i = x[i]
             lx_i = len(x_i)
-            data[i] = d = convert2SVMNode(x_i)
+            data[i] = d = seq_to_svm_node(x_i)
             svmc.svm_node_matrix_set(x_matrix, i, d)
             if isinstance(x_i, dict):
                 if (lx_i > 0):
@@ -279,7 +287,7 @@ class SVMModel:
         #create labels(classes)
         intarr = svmc.new_int(self.nr_class)
         svmc.svm_get_labels(self.model, intarr)
-        self.labels = intArray2List(intarr, self.nr_class)
+        self.labels = int_array_to_list(intarr, self.nr_class)
         svmc.delete_int(intarr)
         #check if valid probability model
         self.probability = svmc.svm_check_probability_model(self.model)
@@ -301,17 +309,19 @@ class SVMModel:
 
 
     def predict(self, x):
-        data = convert2SVMNode(x)
+        data = seq_to_svm_node(x)
         ret = svmc.svm_predict(self.model, data)
         svmc.svm_node_array_destroy(data)
         return ret
 
 
-    def getNRClass(self):
+    ##REF: Name was automagically refactored
+    def get_nr_class(self):
         return self.nr_class
 
 
-    def getLabels(self):
+    ##REF: Name was automagically refactored
+    def get_labels(self):
         if self.svm_type == NU_SVR \
            or self.svm_type == EPSILON_SVR \
            or self.svm_type == ONE_CLASS:
@@ -324,20 +334,22 @@ class SVMModel:
     #                svmc_parameter=svmc.svm_model_param_get(self.model))
 
 
-    def predictValuesRaw(self, x):
+    ##REF: Name was automagically refactored
+    def predict_values_raw(self, x):
         #convert x into SVMNode, allocate a double array for return
         n = self.nr_class*(self.nr_class-1)//2
-        data = convert2SVMNode(x)
+        data = seq_to_svm_node(x)
         dblarr = svmc.new_double(n)
         svmc.svm_predict_values(self.model, data, dblarr)
-        ret = doubleArray2List(dblarr, n)
+        ret = double_array_to_list(dblarr, n)
         svmc.delete_double(dblarr)
         svmc.svm_node_array_destroy(data)
         return ret
 
 
-    def predictValues(self, x):
-        v = self.predictValuesRaw(x)
+    ##REF: Name was automagically refactored
+    def predict_values(self, x):
+        v = self.predict_values_raw(x)
         if self.svm_type == NU_SVR \
            or self.svm_type == EPSILON_SVR \
            or self.svm_type == ONE_CLASS:
@@ -353,7 +365,8 @@ class SVMModel:
             return  d
 
 
-    def predictProbability(self, x):
+    ##REF: Name was automagically refactored
+    def predict_probability(self, x):
         #c code will do nothing on wrong type, so we have to check ourself
         if self.svm_type == NU_SVR or self.svm_type == EPSILON_SVR:
             raise TypeError, "call get_svr_probability or get_svr_pdf " \
@@ -366,10 +379,10 @@ class SVMModel:
             raise TypeError, "model does not support probabiliy estimates"
 
         #convert x into SVMNode, alloc a double array to receive probabilities
-        data = convert2SVMNode(x)
+        data = seq_to_svm_node(x)
         dblarr = svmc.new_double(self.nr_class)
         pred = svmc.svm_predict_probability(self.model, data, dblarr)
-        pv = doubleArray2List(dblarr, self.nr_class)
+        pv = double_array_to_list(dblarr, self.nr_class)
         svmc.delete_double(dblarr)
         svmc.svm_node_array_destroy(data)
         p = {}
@@ -378,7 +391,8 @@ class SVMModel:
         return pred, p
 
 
-    def getSVRProbability(self):
+    ##REF: Name was automagically refactored
+    def get_svr_probability(self):
         #leave the Error checking to svm.cpp code
         ret = svmc.svm_get_svr_probability(self.model)
         if ret == 0:
@@ -387,9 +401,10 @@ class SVMModel:
         return ret
 
 
-    def getSVRPdf(self):
+    ##REF: Name was automagically refactored
+    def get_svr_pdf(self):
         #get_svr_probability will handle error checking
-        sigma = self.getSVRProbability()
+        sigma = self.get_svr_probability()
         return lambda z: exp(-fabs(z)/sigma)/(2*sigma)
 
 
@@ -409,29 +424,33 @@ class SVMModel:
             pass
 
 
-    def getTotalNSV(self):
+    ##REF: Name was automagically refactored
+    def get_total_n_sv(self):
         return svmc.svm_model_l_get(self.model)
 
 
-    def getNSV(self):
+    ##REF: Name was automagically refactored
+    def get_n_sv(self):
         """Returns a list with the number of support vectors per class.
         """
         return [ svmc.int_getitem(svmc.svm_model_nSV_get( self.model ), i) 
                     for i in range( self.nr_class ) ]
 
 
-    def getSV(self):
+    ##REF: Name was automagically refactored
+    def get_sv(self):
         """Returns an array with the all support vectors.
 
         array( nSV x <nFeatures>)
         """
         return svmc.svm_node_matrix2numpy_array(
                     svmc.svm_model_SV_get(self.model),
-                    self.getTotalNSV(),
+                    self.get_total_n_sv(),
                     self.prob.maxlen)
 
 
-    def getSVCoef(self):
+    ##REF: Name was automagically refactored
+    def get_sv_coef(self):
         """Return coefficients for SVs... Needs to be used directly with caution!
 
         Summary on what is happening in libsvm internals with sv_coef
@@ -463,10 +482,11 @@ class SVMModel:
         return svmc.doubleppcarray2numpy_array(
                     svmc.svm_model_sv_coef_get(self.model),
                     self.nr_class - 1,
-                    self.getTotalNSV())
+                    self.get_total_n_sv())
 
 
-    def getRho(self):
+    ##REF: Name was automagically refactored
+    def get_rho(self):
         """Return constant(s) in decision function(s) (if multi-class)"""
-        return doubleArray2List(svmc.svm_model_rho_get(self.model),
+        return double_array_to_list(svmc.svm_model_rho_get(self.model),
                                 self.nr_class * (self.nr_class-1)/2)

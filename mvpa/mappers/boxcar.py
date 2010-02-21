@@ -14,6 +14,7 @@ import numpy as N
 
 from mvpa.mappers.base import Mapper
 from mvpa.clfs.base import accepts_dataset_as_samples
+from mvpa.base.dochelpers import _str
 
 if __debug__:
     from mvpa.base import debug
@@ -75,6 +76,19 @@ class BoxcarMapper(Mapper):
                              for i in startpoints ]
 
 
+    def __reduce__(self):
+        # python < 2.6 cannot copy slices, we will use the constructor the get
+        # them back and additionally reapply the stae of the object (except for
+        # the bad bad slices)
+        state = self.__dict__.copy()
+        badguy = '_%s__selectors' % self.__class__.__name__
+        if badguy in state:
+            del state[badguy]
+        return (self.__class__,
+                    (self.startpoints, self.boxlength, self.offset),
+                    state)
+
+
     @accepts_dataset_as_samples
     def _train(self, data):
         startpoints = self.startpoints
@@ -95,6 +109,10 @@ class BoxcarMapper(Mapper):
         return s.replace("(", "(boxlength=%d, offset=%d, startpoints=%s, " %
                          (self.boxlength, self.offset, str(self.startpoints)),
                          1)
+
+
+    def __str__(self):
+        return _str(self, bl=self.boxlength)
 
 
     def forward1(self, data):
@@ -176,8 +194,21 @@ class BoxcarMapper(Mapper):
 
 
     def _reverse_data(self, data):
+        if len(data.shape) < 2:
+            # this is not something that this mapper created -- let's broadcast
+            # its elements and hope that it would work
+            return N.repeat(data, self.boxlength)
+
         # stack them all together -- this will cause overlapping boxcars to
         # result in multiple identical samples
+        if not data.shape[1] == self.boxlength:
+            # stacking doesn't make sense, since we got something strange
+            raise ValueError("%s cannot reverse-map, since the number of "
+                             "elements along the second axis (%i) does not "
+                             "match the boxcar-length (%i)."
+                             % (self.__class__.__name__,
+                                data.shape[1],
+                                self.boxlength))
 
         # need to take care of the special case when the first axis is of length
         # one, in that case it would be squashed away

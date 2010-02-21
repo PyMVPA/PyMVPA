@@ -28,26 +28,33 @@ class Parameter(IndexedCollectable):
     It might be useful if a little more information than the pure parameter
     value is required (or even only useful).
 
-    Each parameter must have a value. However additional property can be
+    Each parameter must have a value. However additional attributes can be
     passed to the constructor and will be stored in the object.
 
-    BIG ASSUMPTION: stored values are not mutable, ie nobody should do
+    .. warning::
 
-    cls.parameter1[:] = ...
+      BIG ASSUMPTION: stored values are not mutable, ie nobody should do
 
-    or we wouldn't know that it was changed
+        cls.parameter1[:] = ...
 
-    Here is a list of possible property names:
+      or we wouldn't know that it was changed
 
-        min   - minimum value
-        max   - maximum value
-        step  - increment/decrement stepsize
+    Here is a list of possible additional attributes:
+
+    allowedtype : str
+      Description of what types are allowed
+    min
+      Minimum value
+    max
+      Maximum value
+    step
+      Increment/decrement step size hint for optimization
     """
 
-    def __init__(self, default, name=None, doc=None, index=None, ro=False,
-                 value=None, **kwargs):
+    def __init__(self, default, ro=False,  index=None,  value=None,
+                 name=None, doc=None, **kwargs):
         """Specify a Parameter with a default value and arbitrary
-        number of additional parameters.
+        number of additional attributes.
 
         Parameters
         ----------
@@ -65,8 +72,6 @@ class Parameter(IndexedCollectable):
         value
           Actual value of the parameter to be assigned
         """
-        self.__default = default
-        self._ro = ro
         # XXX probably is too generic...
         # and potentially dangerous...
         # let's at least keep track of what is passed
@@ -75,17 +80,32 @@ class Parameter(IndexedCollectable):
             self.__setattr__(k, v)
             self._additional_props.append(k)
 
+        self.__default = default
+        self._ro = ro
+
         # needs to come after kwargs processing, since some debug statements
         # rely on working repr()
-        IndexedCollectable.__init__(self, name=name, doc=doc, index=index,
-                                      value=value)
+        # value is not passed since we need to invoke _set with init=True
+        # below
+        IndexedCollectable.__init__(self, index=index, # value=value,
+                                    name=name, doc=doc)
         self._isset = False
-        if self.value is None:
+        if value is None:
             self._set(self.__default, init=True)
+        else:
+            self._set(value, init=True)
 
         if __debug__:
             if kwargs.has_key('val'):
                 raise ValueError, "'val' property name is illegal."
+
+
+    def __reduce__(self):
+        icr = IndexedCollectable.__reduce__(self)
+        res = (icr[0], (self.__default, self._ro) + icr[1], icr[2])
+        #if __debug__ and 'COL_RED' in debug.active:
+        #    debug('COL_RED', 'Returning %s for %s' % (res, self))
+        return res
 
 
 
@@ -129,7 +149,7 @@ class Parameter(IndexedCollectable):
             paramsdoc += " : %s" % self.allowedtype
         paramsdoc = [paramsdoc]
         try:
-            doc = self.__doc__
+            doc = self.__doc__.strip()
             if not doc.endswith('.'): doc += '.'
             try:
                 doc += " (Default: %s)" % self.default
@@ -160,29 +180,30 @@ class Parameter(IndexedCollectable):
             self.value = self.__default
 
     def _set(self, val, init=False):
-        comparison = self._value != val
-        isarray = isinstance(comparison, N.ndarray)
+        different_value = self._value != val
+        isarray = isinstance(different_value, N.ndarray)
         if self._ro and not init:
             raise RuntimeError, \
                   "Attempt to set read-only parameter %s to %s" \
                   % (self.name, val)
-        if (isarray and N.any(comparison)) or \
-           ((not isarray) and comparison):
+        if (isarray and N.any(different_value)) or \
+           ((not isarray) and different_value):
             if __debug__:
                 debug("COL",
                       "Parameter: setting %s to %s " % (str(self), val))
-            if hasattr(self, 'min') and val < self.min:
-                raise ValueError, \
-                      "Minimal value for parameter %s is %s. Got %s" % \
-                      (self.name, self.min, val)
-            if hasattr(self, 'max') and val > self.max:
-                raise ValueError, \
-                      "Maximal value for parameter %s is %s. Got %s" % \
-                      (self.name, self.max, val)
-            if hasattr(self, 'choices') and (not val in self.choices):
-                raise ValueError, \
-                      "Valid choices for parameter %s are %s. Got %s" % \
-                      (self.name, self.choices, val)
+            if not isarray:
+                if hasattr(self, 'min') and val < self.min:
+                    raise ValueError, \
+                          "Minimal value for parameter %s is %s. Got %s" % \
+                          (self.name, self.min, val)
+                if hasattr(self, 'max') and val > self.max:
+                    raise ValueError, \
+                          "Maximal value for parameter %s is %s. Got %s" % \
+                          (self.name, self.max, val)
+                if hasattr(self, 'choices') and (not val in self.choices):
+                    raise ValueError, \
+                          "Valid choices for parameter %s are %s. Got %s" % \
+                          (self.name, self.choices, val)
             self._value = val
             # Set 'isset' only if not called from initialization routine
             self._isset = not init #True

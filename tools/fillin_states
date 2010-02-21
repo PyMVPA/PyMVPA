@@ -55,8 +55,8 @@ while i < len(inlines):
         # import asked module
         exec "from mvpa.%s import %s as Victim" % (d['path'], d['cls'])
 
-        states = Victim._collections_template['states'].items
-        keys = states.keys()
+        ca = Victim._collections_template['ca'].items
+        keys = ca.keys()
         keys.sort()
 
         isthere = inlines[i+1].startswith("Supported st")
@@ -72,7 +72,7 @@ Supported state%s:
 
         for k in keys:
             verbose(3, " " + k)
-            v = states[k]
+            v = ca[k]
             doc = v.__doc__
             if not doc.endswith('.'): doc += '.'
             doc = wrap(doc, 46)

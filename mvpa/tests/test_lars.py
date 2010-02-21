@@ -8,15 +8,17 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA least angle regression (LARS) classifier"""
 
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
+
 from mvpa import cfg
 from mvpa.clfs.lars import LARS
 from scipy.stats import pearsonr
-from tests_warehouse import *
-from mvpa.misc.data_generators import normalFeatureDataset
+from mvpa.misc.data_generators import normal_feature_dataset
 
 class LARSTests(unittest.TestCase):
 
-    def testLARS(self):
+    def test_lars(self):
         # not the perfect dataset with which to test, but
         # it will do for now.
         #data = datasets['dumb2']
@@ -31,11 +33,11 @@ class LARSTests(unittest.TestCase):
         # prediction has to be almost perfect
         # test with a correlation
         pre = clf.predict(data.samples)
-        cor = pearsonr(pre, data.labels)
+        cor = pearsonr(pre, data.targets)
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless(cor[0] > .8)
 
-    def testLARSState(self):
+    def test_lars_state(self):
         #data = datasets['dumb2']
         # for some reason the R code fails with the dumb data
         data = datasets['chirp_linear']
@@ -45,14 +47,14 @@ class LARSTests(unittest.TestCase):
 
         clf.train(data)
 
-        clf.states.enable('predictions')
+        clf.ca.enable('predictions')
 
         p = clf.predict(data.samples)
 
-        self.failUnless((p == clf.states.predictions).all())
+        self.failUnless((p == clf.ca.predictions).all())
 
 
-    def testLARSSensitivities(self):
+    def test_lars_sensitivities(self):
         data = datasets['chirp_linear']
 
         # use LARS on binary problem
@@ -61,7 +63,7 @@ class LARSTests(unittest.TestCase):
 
         # now ask for the sensitivities WITHOUT having to pass the dataset
         # again
-        sens = clf.getSensitivityAnalyzer(force_training=False)()
+        sens = clf.get_sensitivity_analyzer(force_training=False)()
 
         self.failUnless(sens.shape == (1, data.nfeatures))
 

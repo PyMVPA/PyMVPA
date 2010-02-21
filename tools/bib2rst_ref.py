@@ -10,7 +10,8 @@
 import _bibtex
 import re
 
-def compareBibByDate(a, b):
+##REF: Name was automagically refactored
+def compare_bib_by_date(a, b):
     """Sorting helper."""
     x = a[1][1]
     y = b[1][1]
@@ -26,7 +27,7 @@ def compareBibByDate(a, b):
                     comp =  cmp(xyear, yyear)
 
                     if comp == 0:
-                        return compareBibByAuthor(a,b)
+                        return compare_bib_by_author(a,b)
                     else:
                         return (-1)*comp
                 else:
@@ -36,7 +37,7 @@ def compareBibByDate(a, b):
                 if y['year'][0].isdigit():
                     return -1
                 else:
-                    return compareBibByAuthor(a,b)
+                    return compare_bib_by_author(a,b)
         else:
             # only x has date
             return 1
@@ -45,17 +46,18 @@ def compareBibByDate(a, b):
             return -1
         else:
             # neither nor y have dates
-            return compareBibByAuthor(a, b)
+            return compare_bib_by_author(a, b)
 
 
-def compareBibByAuthor(a,b):
+##REF: Name was automagically refactored
+def compare_bib_by_author(a,b):
     """Sorting helper."""
     x = a[1][1]
     y = b[1][1]
 
     if x.has_key('author'):
         if y.has_key('author'):
-            return cmp(joinAuthorList(x['author']), joinAuthorList(y['author']))
+            return cmp(join_author_list(x['author']), join_author_list(y['author']))
         else:
             # only x has author
             return 1
@@ -66,7 +68,8 @@ def compareBibByAuthor(a,b):
             # neither nor y have authors
             return 0
 
-def formatSurname(s, keep_full = False):
+##REF: Name was automagically refactored
+def format_surname(s, keep_full = False):
     """Recieves a string with surname(s) and returns a string with nicely
     concatenated surnames or initals (with dots).
     """
@@ -88,7 +91,8 @@ def formatSurname(s, keep_full = False):
     return s
 
 
-def formatAuthor(s, full_surname = False):
+##REF: Name was automagically refactored
+def format_author(s, full_surname = False):
     """ Takes a string as argument an tries to determine the lastname and 
     surname(s) of a single author.
 
@@ -111,7 +115,7 @@ def formatAuthor(s, full_surname = False):
         surnames = u' '.join(slist[1:])
 
         # get nicely formated surnames concat with spaces
-        surname = u' '.join( [ formatSurname(i, full_surname) for i in surnames.split() ] )
+        surname = u' '.join( [ format_surname(i, full_surname) for i in surnames.split() ] )
 
 
     else:
@@ -142,27 +146,29 @@ def formatAuthor(s, full_surname = False):
             else:
                 surnames = u' '.join(slist[:-1])
 
-        surname = u' '.join( [ formatSurname(i, full_surname) for i in surnames.split() ] )
+        surname = u' '.join( [ format_surname(i, full_surname) for i in surnames.split() ] )
 
     return lastname + u', ' + surname
 
 
-def joinAuthorList(alist):
+##REF: Name was automagically refactored
+def join_author_list(alist):
     """ Nicely concatenate a list of author with ', ' and a final ' & '.
 
-    Each author is passed to formatAuthor() internally.
+    Each author is passed to format_author() internally.
     """
     if not len(alist) > 1:
-        return formatAuthor(alist[0])
+        return format_author(alist[0])
 
-    ret = u', '.join( [ formatAuthor(a) for a in alist[:-1] ] )
+    ret = u', '.join( [ format_author(a) for a in alist[:-1] ] )
 
-    ret += u' & ' + formatAuthor( alist[-1] )
+    ret += u' & ' + format_author( alist[-1] )
 
     return ret
 
 
-def formatProperty(string, indent, max_length = 80):
+##REF: Name was automagically refactored
+def format_property(string, indent, max_length = 80):
     """ Helper function to place linebreaks and indentation for
     pretty printing.
     """
@@ -267,7 +273,7 @@ class BibTeX(dict):
                 keyname = '  ' + ek
 
                 bibstring += ',\n'
-                bibstring += formatProperty( keyname.ljust(15) + '= {' + ev + '}', 
+                bibstring += format_property( keyname.ljust(15) + '= {' + ev + '}', 
                                          self.indent,
                                          self.line_length )
 
@@ -288,7 +294,7 @@ def bib2rst_references(bib):
     rst += '\n\n'
 
     biblist = bib.items()
-    biblist.sort(compareBibByAuthor)
+    biblist.sort(compare_bib_by_author)
 
     for id, (cat, prop) in biblist:
         # put reference target for citations
@@ -298,11 +304,11 @@ def bib2rst_references(bib):
         cit = u''
         # initial details equal for all item types
         if prop.has_key('author'):
-            cit += u'**' + joinAuthorList(prop['author']) + u'**'
+            cit += u'**' + join_author_list(prop['author']) + u'**'
         if prop.has_key('year'):
             cit += ' (' + prop['year'] + ').'
         if prop.has_key('title'):
-            cit += ' ' + smoothRsT(prop['title'])
+            cit += ' ' + smooth_rst(prop['title'])
             if not prop['title'].endswith('.'):
                 cit += '.'
 
@@ -327,12 +333,12 @@ def bib2rst_references(bib):
 
         # beautify citation with linebreaks and proper indentation
         # damn, no. list label has to be a single line... :(
-        #rst += formatProperty(cit, 0)
+        #rst += format_property(cit, 0)
         rst += cit
 
         # place optional paper summary
         if prop.has_key('pymvpa-summary'):
-            rst += '\n  *' + formatProperty(prop['pymvpa-summary'], 2) + '*\n'
+            rst += '\n  *' + format_property(prop['pymvpa-summary'], 2) + '*\n'
 
         # make keywords visible
         if prop.has_key('pymvpa-keywords'):
@@ -360,7 +366,8 @@ def bib2rst_references(bib):
     return rst.encode('utf-8')
 
 
-def smoothRsT(s):
+##REF: Name was automagically refactored
+def smooth_rst(s):
     """Replace problematic stuff with less problematic stuff."""
     s = re.sub("``", '"', s)
     # assuming that empty strings to not occur in a bib file

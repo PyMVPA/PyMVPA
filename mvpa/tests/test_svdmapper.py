@@ -12,7 +12,6 @@
 import unittest
 from mvpa.support.copy import deepcopy
 import numpy as N
-from mvpa.datasets.base import dataset
 from mvpa.mappers.svd import SVDMapper
 
 
@@ -29,7 +28,7 @@ class SVDMapperTests(unittest.TestCase):
                                         for i in range(40)]).reshape(40,-1).T
 
 
-    def testSimpleSVD(self):
+    def test_simple_svd(self):
         pm = SVDMapper()
         # train SVD
         pm.train(self.ndlin)
@@ -57,7 +56,7 @@ class SVDMapperTests(unittest.TestCase):
         self.failUnless(N.abs(pm.reverse(p) - self.ndlin).sum() < 0.0001)
 
 
-    def testMoreSVD(self):
+    def test_more_svd(self):
         pm = SVDMapper()
         # train SVD
         pm.train(self.largefeat)

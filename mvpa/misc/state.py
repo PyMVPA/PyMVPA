@@ -22,7 +22,7 @@ TODO:
 + repr(instance.params) contains only default value -- not current or
   set in the constructor... not good
   Now if value is not default -- would be present
-? check/possible assure order of parameters/states to be as listed in the
+? check/possible assure order of parameters/ca to be as listed in the
   constructor
   There is _instance_index (could be set with 'index' parameter in
   Parameter). ATM it is used in documentation to list them in original
@@ -45,7 +45,7 @@ from textwrap import TextWrapper
 # Although not used here -- included into interface
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.misc.attributes import IndexedCollectable, StateVariable
-from mvpa.base.dochelpers import enhancedDocString
+from mvpa.base.dochelpers import enhanced_doc_string
 
 from mvpa.base import externals
 # XXX local rename is due but later on
@@ -98,7 +98,7 @@ class Collection(BaseCollection):
         owner : object
           an object to which collection belongs
         name : str
-          name of the collection (as seen in the owner, e.g. 'states')
+          name of the collection (as seen in the owner, e.g. 'ca')
         """
         # first set all stuff to nothing and later on charge it
         # this is important, since some of the stuff below relies in the
@@ -172,7 +172,7 @@ class Collection(BaseCollection):
         """
         # XXX Each collection has to provide what indexes it allows
         #     to be set within constructor. Custom handling of some
-        #     arguments (like (dis|en)able_states) is to be performed
+        #     arguments (like (dis|en)able_ca) is to be performed
         #     in _initialize
         # raise NotImplementedError, \
         #      "Class %s should override _is_initializable" \
@@ -377,7 +377,7 @@ class Collection(BaseCollection):
     # XXX RF: not used anywhere / myself -- hence not worth it?
     @property
     def listing(self):
-        """Return a list of registered states along with the documentation"""
+        """Return a list of registered ca along with the documentation"""
 
         # lets assure consistent litsting order
         items_ = self.items()
@@ -401,7 +401,7 @@ class ParameterCollection(Collection):
 #        Parameters
 #        ----------
 #        items : dict
-#          dictionary of states
+#          dictionary of ca
 #        """
 #        Collection.__init__(self, items, owner, name)
 #
@@ -441,17 +441,17 @@ class StateCollection(Collection):
         Parameters
         ----------
         items : dict
-          dictionary of states
+          dictionary of ca
         owner : ClassWithCollections
           object which owns the collection
         name : str
           literal description. Usually just attribute name for the
-          collection, e.g. 'states'
+          collection, e.g. 'ca'
         """
         Collection.__init__(self, items=items, owner=owner)
 
         self.__storedTemporarily = []
-        """List to contain sets of enabled states which were enabled
+        """List to contain sets of enabled ca which were enabled
         temporarily.
         """
 
@@ -467,10 +467,10 @@ class StateCollection(Collection):
         """
         prefixes = []
         for name, invert in ( ('enable', False), ('disable', True) ):
-            states = self._get_enabled(nondefault=False,
+            ca = self._get_enabled(nondefault=False,
                                        invert=invert)
-            if len(states):
-                prefixes.append("%s_states=%s" % (name, str(states)))
+            if len(ca):
+                prefixes.append("%s_ca=%s" % (name, str(ca)))
         return prefixes
 
 
@@ -478,30 +478,30 @@ class StateCollection(Collection):
         """Checks if key could be assigned within collection via
         setvalue
         """
-        return key in ['enable_states', 'disable_states']
+        return key in ['enable_ca', 'disable_ca']
 
 
     def _initialize(self, key, value):
         if value is None:
             value = []
-        if key == 'enable_states':
+        if key == 'enable_ca':
             self.enable(value, missingok=True)
-        elif key == 'disable_states':
+        elif key == 'disable_ca':
             self.disable(value)
         else:
-            raise ValueError, "StateCollection can accept only enable_states " \
-                  "and disable_states arguments for the initialization. " \
+            raise ValueError, "StateCollection can accept only enable_ca " \
+                  "and disable_ca arguments for the initialization. " \
                   "Got %s" % key
 
     # XXX RF: used only in meta -- those should become a bit tighter coupled
     #         and .copy / .update should only be used
-    def _copy_states_(self, fromstate, key=None, deep=False):
-        """Copy known here states from `fromstate` object into current object
+    def _copy_ca_(self, fromstate, key=None, deep=False):
+        """Copy known here ca from `fromstate` object into current object
 
         Parameters
         ----------
         fromstate : Collection or ClassWithCollections
-          Source states to copy from
+          Source ca to copy from
         key : None or list of str
           If not to copy all set state variables, key provides
           selection of what to copy
@@ -519,13 +519,13 @@ class StateCollection(Collection):
         #     raise ValueError, \
         #           "Class  %s is not subclass of %s, " % \
         #           (fromstate.__class__, self.__class__) + \
-        #           "thus not eligible for _copy_states_"
+        #           "thus not eligible for _copy_ca_"
         # TODO: FOR NOW NO TEST! But this beast needs to be fixed...
         operation = { True: copy.deepcopy,
                       False: copy.copy }[deep]
 
         if isinstance(fromstate, ClassWithCollections):
-            fromstate = fromstate.states
+            fromstate = fromstate.ca
 
         if key is None:
             # copy all set ones
@@ -563,54 +563,54 @@ class StateCollection(Collection):
 
     # TODO XXX think about some more generic way to grab temporary
     # snapshot of IndexedCollectables to be restored later on...
-    def change_temporarily(self, enable_states=None,
-                           disable_states=None, other=None):
-        """Temporarily enable/disable needed states for computation
+    def change_temporarily(self, enable_ca=None,
+                           disable_ca=None, other=None):
+        """Temporarily enable/disable needed ca for computation
 
-        Enable or disable states which are enabled in `other` and listed in
-        `enable _states`. Use `reset_enabled_temporarily` to reset
+        Enable or disable ca which are enabled in `other` and listed in
+        `enable _ca`. Use `reset_enabled_temporarily` to reset
         to previous state of enabled.
 
         `other` can be a ClassWithCollections object or StateCollection
         """
-        if enable_states == None:
-            enable_states = []
-        if disable_states == None:
-            disable_states = []
+        if enable_ca == None:
+            enable_ca = []
+        if disable_ca == None:
+            disable_ca = []
         self.__storedTemporarily.append(self.enabled)
         other_ = other
         if isinstance(other, ClassWithCollections):
-            other = other.states
+            other = other.ca
 
         if not other is None:
-            # lets take states which are enabled in other but not in
+            # lets take ca which are enabled in other but not in
             # self
-            add_enable_states = list(Set(other.enabled).difference(
-                 Set(enable_states)).intersection(self.keys()))
-            if len(add_enable_states)>0:
+            add_enable_ca = list(Set(other.enabled).difference(
+                 Set(enable_ca)).intersection(self.keys()))
+            if len(add_enable_ca)>0:
                 if __debug__:
                     debug("ST",
-                          "Adding states %s from %s to be enabled temporarily" %
-                          (add_enable_states, other_) +
+                          "Adding ca %s from %s to be enabled temporarily" %
+                          (add_enable_ca, other_) +
                           " since they are not enabled in %s" %
                           (self))
-                enable_states += add_enable_states
+                enable_ca += add_enable_ca
 
         # Lets go one by one enabling only disabled once... but could be as
         # simple as
-        self.enable(enable_states)
-        self.disable(disable_states)
+        self.enable(enable_ca)
+        self.disable(disable_ca)
 
 
     def reset_changed_temporarily(self):
-        """Reset to previousely stored set of enabled states"""
+        """Reset to previousely stored set of enabled ca"""
         if __debug__:
-            debug("ST", "Resetting to previous set of enabled states")
+            debug("ST", "Resetting to previous set of enabled ca")
         if len(self.enabled)>0:
             self.enabled = self.__storedTemporarily.pop()
         else:
             raise ValueError("Trying to restore not-stored list of enabled " \
-                             "states")
+                             "ca")
 
 
     # XXX probably nondefault logic could be done at places?
@@ -618,14 +618,14 @@ class StateCollection(Collection):
     # XXX also may be we need enabled to return a subcollection
     #        with binds to StateVariables found to be enabled?
     def _get_enabled(self, nondefault=True, invert=False):
-        """Return list of enabled states
+        """Return list of enabled ca
 
         Parameters
         ----------
         nondefault : bool
-          Either to return also states which are enabled simply by default
+          Either to return also ca which are enabled simply by default
         invert : bool
-          Would invert the meaning, ie would return disabled states
+          Would invert the meaning, ie would return disabled ca
         """
         if invert:
             fmatch = lambda y: not self.is_enabled(y)
@@ -643,7 +643,7 @@ class StateCollection(Collection):
     def _set_enabled(self, keys):
         """Given `keys` make only those in the list enabled
 
-        It might be handy to store set of enabled states and then to restore
+        It might be handy to store set of enabled ca and then to restore
         it later on. It can be easily accomplished now::
 
         >>> from mvpa.misc.state import ClassWithCollections, StateVariable
@@ -651,9 +651,9 @@ class StateCollection(Collection):
         ...   bleh = StateVariable(enabled=False, doc='Example')
         ...
         >>> blah = Blah()
-        >>> states_enabled = blah.states.enabled
-        >>> blah.states.enabled = ['bleh']
-        >>> blah.states.enabled = states_enabled
+        >>> ca_enabled = blah.ca.enabled
+        >>> blah.ca.enabled = ['bleh']
+        >>> blah.ca.enabled = ca_enabled
         """
         for key in self.keys():
             self.enable(key, key in keys)
@@ -673,7 +673,7 @@ class StateCollection(Collection):
 #
 _known_collections = {
     # Quite a generic one but mostly in classifiers
-    'StateVariable': ("states", StateCollection),
+    'StateVariable': ("ca", StateCollection),
     # For classifiers only
     'Parameter': ("params", ParameterCollection),
     'KernelParameter': ("kernel_params", ParameterCollection),
@@ -692,8 +692,8 @@ _col2class = dict(_known_collections.values())
 
 #MH: no magic for datasets
 #_COLLECTIONS_ORDER = ['sa', 'fa', 'dsa',
-#                      'params', 'kernel_params', 'states']
-_COLLECTIONS_ORDER = ['params', 'kernel_params', 'states']
+#                      'params', 'kernel_params', 'ca']
+_COLLECTIONS_ORDER = ['params', 'kernel_params', 'ca']
 
 
 class AttributesCollector(type):
@@ -738,14 +738,14 @@ class AttributesCollector(type):
                 #     able to construct proper collections even in derived classes
                 delattr(cls, name)
 
-        # XXX can we first collect parent's states and then populate with ours?
+        # XXX can we first collect parent's ca and then populate with ours?
         # TODO
 
         for base in bases:
             if hasattr(base, "__metaclass__") and \
                    base.__metaclass__ == AttributesCollector:
                 # TODO take care about overriding one from super class
-                # for state in base.states:
+                # for state in base.ca:
                 #    if state[0] =
                 newcollections = base._collections_template
                 if len(newcollections) == 0:
@@ -823,29 +823,29 @@ class AttributesCollector(type):
         setattr(cls, "_paramscols", paramscols)
 
         # States doc
-        statesdoc = ""
-        if collections.has_key('states'):
-            paramsdoc += """  enable_states : None or list of str
+        cadoc = ""
+        if collections.has_key('ca'):
+            paramsdoc += """  enable_ca : None or list of str
     Names of the state variables which should be enabled additionally
     to default ones
-  disable_states : None or list of str
+  disable_ca : None or list of str
     Names of the state variables which should be disabled
 """
-            if len(collections['states']):
-                statesdoc += '\n'.join(['  * ' + x
-                                        for x in collections['states'].listing])
-                statesdoc += "\n\n(States enabled by default suffixed with `+`)"
+            if len(collections['ca']):
+                cadoc += '\n'.join(['  * ' + x
+                                        for x in collections['ca'].listing])
+                cadoc += "\n\n(States enabled by default suffixed with `+`)"
             if __debug__:
-                debug("COLR", "Assigning __statesdoc to be %s" % statesdoc)
-            setattr(cls, "_statesdoc", statesdoc)
+                debug("COLR", "Assigning __cadoc to be %s" % cadoc)
+            setattr(cls, "_cadoc", cadoc)
 
         if paramsdoc != "":
             if __debug__ and 'COLR' in debug.active:
                 debug("COLR", "Assigning __paramsdoc to be %s" % paramsdoc)
             setattr(cls, "_paramsdoc", paramsdoc)
 
-        if paramsdoc + statesdoc != "":
-            cls.__doc__ = enhancedDocString(cls, *bases)
+        if paramsdoc + cadoc != "":
+            cls.__doc__ = enhanced_doc_string(cls, *bases)
 
 
 
@@ -877,7 +877,7 @@ class ClassWithCollections(object):
         # is the proper default
         self.__params_set = False
 
-        # need to check to avoid override of enabled states in the case
+        # need to check to avoid override of enabled ca in the case
         # of multiple inheritance, like both ClassWithCollectionsl and
         # Harvestable
         if not s__dict__.has_key('_collections'):
@@ -972,7 +972,7 @@ class ClassWithCollections(object):
                   % (self.__class__.__name__, id(self), descr))
 
 
-    #__doc__ = enhancedDocString('ClassWithCollections', locals())
+    #__doc__ = enhanced_doc_string('ClassWithCollections', locals())
 
     if __debug__ and _debug_references:
         def __debug_references_call(self, method, key):
@@ -984,7 +984,7 @@ class ClassWithCollections(object):
                 clsstr = str(self.__class__)
                 # Skip some False positives
                 if 'mvpa.datasets' in clsstr and 'Dataset' in clsstr and \
-                       (key in ['labels', 'chunks', 'samples', 'mapper']):
+                       (key in ['targets', 'chunks', 'samples', 'mapper']):
                     return
                 colname = known_attribs[key]
                 # figure out and report invocation location
@@ -1123,7 +1123,7 @@ class Harvestable(ClassWithCollections):
     data from the processing which is especially important if an
     object performs something in loop and discards some intermidiate
     possibly interesting results (like in case of
-    CrossValidatedTransferError and states of the trained classifier
+    CrossValidatedTransferError and ca of the trained classifier
     or TransferError).
 
     """
@@ -1171,7 +1171,7 @@ class Harvestable(ClassWithCollections):
         """
         if attribs:
             # force the state
-            self.states.enable('harvested')
+            self.ca.enable('harvested')
             self.__attribs = []
             for i, attrib in enumerate(attribs):
                 if isinstance(attrib, dict):
@@ -1204,7 +1204,7 @@ class Harvestable(ClassWithCollections):
                 if attrib['obj'] == '':
                     attrib['obj'] = 'self'
 
-                # TODO: may be enabling of the states??
+                # TODO: may be enabling of the ca??
 
                 self.__attribs.append(attrib)     # place value back
         else:
@@ -1228,11 +1228,11 @@ class Harvestable(ClassWithCollections):
         nothing
         """
 
-        if not self.states.is_enabled('harvested') or len(self.__attribs)==0:
+        if not self.ca.is_enabled('harvested') or len(self.__attribs)==0:
             return
 
-        if not self.states.is_set('harvested'):
-            self.states.harvested = dict([(a['name'], [])
+        if not self.ca.is_set('harvested'):
+            self.ca.harvested = dict([(a['name'], [])
                                         for a in self.__attribs])
 
         for attrib in self.__attribs:
@@ -1247,7 +1247,7 @@ class Harvestable(ClassWithCollections):
                      'deepcopy':copy.deepcopy,
                      None:lambda x:x}[attrib['copy']](attrv)
 
-            self.states.harvested[attrib['name']].append(attrv)
+            self.ca.harvested[attrib['name']].append(attrv)
 
 
     harvest_attribs = property(fget=lambda self:self.__attribs,

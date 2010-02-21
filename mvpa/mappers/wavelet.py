@@ -91,7 +91,8 @@ class _WaveletMapper(Mapper):
 
 
 
-def _getIndexes(shape, dim):
+##REF: Name was automagically refactored
+def _get_indexes(shape, dim):
     """Generator for coordinate tuples providing slice for all in `dim`
 
     XXX Somewhat sloppy implementation... but works...
@@ -139,7 +140,8 @@ class WaveletPacketMapper(_WaveletMapper):
 
     # XXX too much of duplications between such methods -- it begs
     #     refactoring
-    def __forwardSingleLevel(self, data):
+    ##REF: Name was automagically refactored
+    def __forward_single_level(self, data):
         if __debug__:
             debug('MAP', "Converting signal using DWP (single level)")
 
@@ -151,7 +153,7 @@ class WaveletPacketMapper(_WaveletMapper):
         dim = self._dim
 
         level_paths = None
-        for indexes in _getIndexes(data.shape, self._dim):
+        for indexes in _get_indexes(data.shape, self._dim):
             if __debug__:
                 debug('MAP_', " %s" % (indexes,), lf=False, cr=True)
             WP = pywt.WaveletPacket(
@@ -177,11 +179,12 @@ class WaveletPacketMapper(_WaveletMapper):
         return wp
 
 
-    def __forwardMultipleLevels(self, data):
+    ##REF: Name was automagically refactored
+    def __forward_multiple_levels(self, data):
         wp = None
         levels_length = None                # total length at each level
         levels_lengths = None                # list of lengths per each level
-        for indexes in _getIndexes(data.shape, self._dim):
+        for indexes in _get_indexes(data.shape, self._dim):
             if __debug__:
                 debug('MAP_', " %s" % (indexes,), lf=False, cr=True)
             WP = pywt.WaveletPacket(
@@ -238,14 +241,15 @@ class WaveletPacketMapper(_WaveletMapper):
             debug('MAP', "Converting signal using DWP")
 
         if self.__level is None:
-            return self.__forwardMultipleLevels(data)
+            return self.__forward_multiple_levels(data)
         else:
-            return self.__forwardSingleLevel(data)
+            return self.__forward_single_level(data)
 
     #
     # Reverse mapping
     #
-    def __reverseSingleLevel(self, wp):
+    ##REF: Name was automagically refactored
+    def __reverse_single_level(self, wp):
 
         # local bindings
         level_paths = self.__level_paths
@@ -259,7 +263,7 @@ class WaveletPacketMapper(_WaveletMapper):
         signal_shape = wp.shape[:1] + self._inshape[1:]
         signal = N.zeros(signal_shape)
         Ntime_points = self._intimepoints
-        for indexes in _getIndexes(signal_shape,
+        for indexes in _get_indexes(signal_shape,
                                    self._dim):
             if __debug__:
                 debug('MAP_', " %s" % (indexes,), lf=False, cr=True)
@@ -289,7 +293,7 @@ class WaveletPacketMapper(_WaveletMapper):
                         "Please check for an update of 'pywt', or be careful "
                         "when interpreting the edges of the reverse mapped "
                         "data." % self.__class__.__name__)
-            return self.__reverseSingleLevel(data)
+            return self.__reverse_single_level(data)
 
 
 
@@ -304,7 +308,7 @@ class WaveletTransformationMapper(_WaveletMapper):
             debug('MAP', "Converting signal using DWT")
         wd = None
         coeff_lengths = None
-        for indexes in _getIndexes(data.shape, self._dim):
+        for indexes in _get_indexes(data.shape, self._dim):
             if __debug__:
                 debug('MAP_', " %s" % (indexes,), lf=False, cr=True)
             coeffs = pywt.wavedec(
@@ -347,16 +351,16 @@ class WaveletTransformationMapper(_WaveletMapper):
             debug('MAP', "Performing iDWT")
         signal = None
         wd_offsets = [0] + list(N.cumsum(self.lengths))
-        Nlevels = len(self.lengths)
+        n_levels = len(self.lengths)
         Ntime_points = self._intimepoints #len(time_points)
         # unfortunately sometimes due to padding iDWT would return longer
         # sequences, thus we just limit to the right ones
 
-        for indexes in _getIndexes(wd.shape, self._dim):
+        for indexes in _get_indexes(wd.shape, self._dim):
             if __debug__:
                 debug('MAP_', " %s" % (indexes,), lf=False, cr=True)
             wd_sample = wd[indexes]
-            wd_coeffs = [wd_sample[wd_offsets[i]:wd_offsets[i+1]] for i in xrange(Nlevels)]
+            wd_coeffs = [wd_sample[wd_offsets[i]:wd_offsets[i+1]] for i in xrange(n_levels)]
             # need to compose original list
             time_points = pywt.waverec(
                 wd_coeffs, wavelet=self._wavelet, mode=self._mode)

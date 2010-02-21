@@ -10,16 +10,20 @@
 
 __docformat__ = 'restructuredtext'
 
+import os
 import numpy as N
+
 
 from sets import Set
 
-from mvpa.datasets.base import dataset, Dataset
+from mvpa.datasets.base import dataset_wizard, Dataset
+from mvpa import pymvpa_dataroot, pymvpa_datadbroot
 
 if __debug__:
     from mvpa.base import debug
 
-def multipleChunks(func, n_chunks, *args, **kwargs):
+##REF: Name was automagically refactored
+def multiple_chunks(func, n_chunks, *args, **kwargs):
     """Replicate datasets multiple times raising different chunks
 
     Given some randomized (noisy) generator of a dataset with a single
@@ -45,7 +49,8 @@ def multipleChunks(func, n_chunks, *args, **kwargs):
     return ds
 
 
-def dumbFeatureDataset():
+##REF: Name was automagically refactored
+def dumb_feature_dataset():
     """Create a very simple dataset with 2 features and 3 labels
     """
     data = [[1, 0], [1, 1], [2, 0], [2, 1], [3, 0], [3, 1], [4, 0], [4, 1],
@@ -54,10 +59,11 @@ def dumbFeatureDataset():
             [12, 1]]
     regs = ([1] * 8) + ([2] * 8) + ([3] * 8)
 
-    return dataset(samples=N.array(data), labels=regs, chunks=range(len(regs)))
+    return dataset_wizard(samples=N.array(data), targets=regs, chunks=range(len(regs)))
 
 
-def dumbFeatureBinaryDataset():
+##REF: Name was automagically refactored
+def dumb_feature_binary_dataset():
     """Very simple binary (2 labels) dataset
     """
     data = [[1, 0], [1, 1], [2, 0], [2, 1], [3, 0], [3, 1], [4, 0], [4, 1],
@@ -66,38 +72,43 @@ def dumbFeatureBinaryDataset():
             [12, 1]]
     regs = ([0] * 12) + ([1] * 12)
 
-    return dataset(samples=N.array(data), labels=regs, chunks=range(len(regs)))
+    return dataset_wizard(samples=N.array(data), targets=regs, chunks=range(len(regs)))
 
 
 
-def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
-                         means=None, nonbogus_features=None, snr=3.0):
+##REF: Name was automagically refactored
+def normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
+                         means=None, nonbogus_features=None, snr=3.0,
+                         normalize=True):
     """Generate a univariate dataset with normal noise and specified means.
 
     Could be considered to be a generalization of
-    `pureMultivariateSignal` where means=[ [0,1], [1,0] ].
+    `pure_multivariate_signal` where means=[ [0,1], [1,0] ].
 
     Specify either means or `nonbogus_features` so means get assigned
-    accordingly.
+    accordingly.  If neither `means` nor `nonbogus_features` are
+    provided, data will be pure noise and no per-label information.
 
     Parameters
     ----------
-    perlabel : int
+    perlabel : int, optional
       Number of samples per each label
-    nlabels : int
+    nlabels : int, optional
       Number of labels in the dataset
-    nfeatures : int
+    nfeatures : int, optional
       Total number of features (including bogus features which carry
       no label-related signal)
-    nchunks : int
+    nchunks : int, optional
       Number of chunks (perlabel should be multiple of nchunks)
-    means : None or list of float or ndarray
-      Specified means for each of features among nfeatures.
+    means : None or ndarray of (nlabels, nfeatures) shape
+      Specified means for each of features (columns) for all labels (rows).
     nonbogus_features : None or list of int
-      Indexes of non-bogus features (1 per label)
-    snr : float
+      Indexes of non-bogus features (1 per label).
+    snr : float, optional
       Signal-to-noise ration assuming that signal has std 1.0 so we
       just divide random normal noise by snr
+    normalize : bool, optional
+      Divide by max(abs()) value to bring data into [-1, 1] range.
     """
 
     data = N.random.standard_normal((perlabel*nlabels, nfeatures))/N.sqrt(snr)
@@ -112,18 +123,29 @@ def normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
     if not means is None:
         # add mean
         data += N.repeat(N.array(means, ndmin=2), perlabel, axis=0)
-    # bring it 'under 1', since otherwise some classifiers have difficulties
-    # during optimization
-    data = 1.0/(N.max(N.abs(data))) * data
+    if normalize:
+        # bring it 'under 1', since otherwise some classifiers have difficulties
+        # during optimization
+        data = 1.0/(N.max(N.abs(data))) * data
     labels = N.concatenate([N.repeat('L%d' % i, perlabel)
                                 for i in range(nlabels)])
     chunks = N.concatenate([N.repeat(range(nchunks),
                                      perlabel/nchunks) for i in range(nlabels)])
-    ds = Dataset.from_basic(data, labels=labels, chunks=chunks)
-    ds.nonbogus_features = nonbogus_features
+    ds = dataset_wizard(data, targets=labels, chunks=chunks)
+
+    # If nonbogus was provided -- assign .a and .fa accordingly
+    if nonbogus_features is not None:
+        ds.fa['targets'] = N.array([None]*nfeatures)
+        ds.fa.targets[nonbogus_features] = ['L%d' % i for i in range(nlabels)]
+        ds.a['nonbogus_features'] = nonbogus_features
+        ds.a['bogus_features'] = [x for x in range(nfeatures)
+                                  if not x in nonbogus_features]
+
+
     return ds
 
-def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
+##REF: Name was automagically refactored
+def pure_multivariate_signal(patterns, signal2noise = 1.5, chunks=None):
     """ Create a 2d dataset with a clear multivariate signal, but no
     univariate information.
 
@@ -153,101 +175,13 @@ def pureMultivariateSignal(patterns, signal2noise = 1.5, chunks=None):
 
     if chunks is None:
         chunks = range(len(data))
-    return dataset(samples=data, labels=regs, chunks=chunks)
+    return dataset_wizard(samples=data, targets=regs, chunks=chunks)
 
 
-def _normalFeatureDataset__(dataset=None, labels=None, nchunks=None,
-                            perlabel=50, activation_probability_steps=1,
-                            randomseed=None, randomvoxels=False):
-    """ NOT FINISHED """
-    raise NotImplementedError
-
-    if dataset is None and labels is None:
-        raise ValueError, \
-              "Provide at least labels or a background dataset"
-
-    if dataset is None:
-        nlabels = len(labels)
-    else:
-        nchunks = len(dataset.uniquechunks)
-
-    N.random.seed(randomseed)
-
-    # Create a sequence of indexes from which to select voxels to be used
-    # for features
-    if randomvoxels:
-        indexes = N.random.permutation(dataset.nfeatures)
-    else:
-        indexes = N.arange(dataset.nfeatures)
-
-    allind, maps = [], []
-    if __debug__:
-        debug('DG', "Ugly creation of the copy of background")
-
-    dtype = dataset.samples.dtype
-    if not N.issubdtype(dtype, N.float):
-        dtype = N.float
-    totalsignal = N.zeros(dataset.samples.shape, dtype=dtype)
-
-    for l in xrange(len(labels)):
-        label = labels[l]
-        if __debug__:
-            debug('DG', "Simulating independent labels for %s" % label)
-
-        # What sample ids belong to this label
-        labelids = dataset.idsbylabels(label)
-
-
-        # What features belong here and what is left over
-        nfeatures = perlabel * activation_probability_steps
-        ind, indexes = indexes[0:nfeatures], \
-                       indexes[nfeatures+1:]
-        allind += list(ind)              # store what indexes we used
-
-        # Create a dataset only for 'selected' features NB there is
-        # sideeffect that selectFeatures will sort those ind provided
-        # does not sort anymore, and does not exist anymore
-        ds = dataset[:, ind]
-        ds.samples[:] = 0.0             # zero them out
-
-        # assign data
-        prob = [1.0 - x*1.0/activation_probability_steps
-                for x in xrange(activation_probability_steps)]
-
-        # repeat so each feature gets itw own
-        probabilities = N.repeat(prob, perlabel)
-        if __debug__:
-            debug('DG', 'For prob=%s probabilities=%s' % (prob, probabilities))
-
-        for chunk in ds.uniquechunks:
-            chunkids = ds.idsbychunks(chunk) # samples in this chunk
-            ids = list(Set(chunkids).intersection(Set(labelids)))
-            chunkvalue = N.random.uniform() # random number to decide either
-                                        # to 'activate' the voxel
-            for id_ in ids:
-                ds.samples[id_, :] = \
-                                (chunkvalue <= probabilities).astype('float')
-
-        maps.append(N.array(probabilities, copy=True))
-
-        signal = ds.map2Nifti(ds.samples)
-        totalsignal[:, ind] += ds.samples
-
-    # figure out average variance across all 'working' features
-    wfeatures = dataset.samples[:, allind]
-    meanstd = N.mean(N.std(wfeatures, 1))
-    if __debug__:
-        debug('DG', "Mean deviation is %f" % meanstd)
-
-    totalsignal *= meanstd * options.snr
-    # add signal on top of background
-    dataset.samples += totalsignal
-
-    return dataset
-
-def getMVPattern(s2n):
+##REF: Name was automagically refactored
+def get_mv_pattern(s2n):
     """Simple multivariate dataset"""
-    return multipleChunks(pureMultivariateSignal, 6,
+    return multiple_chunks(pure_multivariate_signal, 6,
                           5, s2n, 1)
 
 
@@ -290,10 +224,11 @@ def wr1996(size=200):
     x34 = x + N.random.randn(size, 2)*0.02
     x56 = N.random.randn(size, 2)
     x = N.hstack([x, x34, x56])
-    return dataset(samples=x, labels=y)
+    return dataset_wizard(samples=x, targets=y)
 
 
-def sinModulated(n_instances, n_features,
+##REF: Name was automagically refactored
+def sin_modulated(n_instances, n_features,
                   flat=False, noise=0.4):
     """ Generate a (quite) complex multidimensional non-linear dataset
 
@@ -307,9 +242,10 @@ def sinModulated(n_instances, n_features,
         data = N.random.rand(n_instances, n_features)*N.pi
     label = N.sin((data**2).sum(1)).round()
     label += N.random.rand(label.size)*noise
-    return dataset(samples=data, labels=label)
+    return dataset_wizard(samples=data, targets=label)
 
-def chirpLinear(n_instances, n_features=4, n_nonbogus_features=2,
+##REF: Name was automagically refactored
+def chirp_linear(n_instances, n_features=4, n_nonbogus_features=2,
                 data_noise=0.4, noise=0.1):
     """ Generates simple dataset for linear regressions
 
@@ -326,7 +262,7 @@ def chirpLinear(n_instances, n_features=4, n_nonbogus_features=2,
 
     labels = y + N.random.normal(size=(n_instances,))*noise
 
-    return dataset(samples=data, labels=labels)
+    return dataset_wizard(samples=data, targets=labels)
 
 
 def linear_awgn(size=10, intercept=0.0, slope=0.4, noise_std=0.01, flat=False):
@@ -349,7 +285,7 @@ def linear_awgn(size=10, intercept=0.0, slope=0.4, noise_std=0.01, flat=False):
     y = N.dot(x, slope)[:, N.newaxis] \
         + (N.random.randn(*(x.shape[0], 1)) * noise_std) + intercept
 
-    return dataset(samples=x, labels=y)
+    return dataset_wizard(samples=x, targets=y)
 
 
 def noisy_2d_fx(size_per_fx, dfx, sfx, center, noise_std=1):
@@ -374,7 +310,7 @@ def noisy_2d_fx(size_per_fx, dfx, sfx, center, noise_std=1):
 
     samples += N.array(center)
 
-    return dataset(samples=samples, labels=labels)
+    return dataset_wizard(samples=samples, targets=labels)
 
 
 def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
@@ -384,4 +320,119 @@ def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
     x = N.linspace(start=x_min, stop=x_max, num=size)
     noise = N.random.randn(size)*sigma
     y = x * slope + intercept + noise
-    return dataset(samples=x[:, None], labels=y)
+    return dataset_wizard(samples=x[:, None], targets=y)
+
+
+def load_example_fmri_dataset():
+    """Load minimal fMRI dataset that is shipped with PyMVPA."""
+    from mvpa.datasets.mri import fmri_dataset
+    from mvpa.misc.io import SampleAttributes
+
+    attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
+    ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+                      targets=attr.targets, chunks=attr.chunks,
+                      mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+
+    return ds
+
+
+def load_datadb_demo_blockfmri(path=os.path.join(pymvpa_datadbroot,
+                                                 'demo_blockfmri',
+                                                 'demo_blockfmri'),
+                               roi='brain'):
+    """Loads the block-design demo dataset from PyMVPA dataset DB.
+
+    Parameters
+    ----------
+    path : str
+      Path of the directory containing the dataset files.
+    roi : str or int or tuple or None
+      Region Of Interest to be used for masking the dataset. If a string is
+      given a corresponding mask image from the demo dataset will be used
+      (mask_<str>.nii.gz). If an int value is given, the corresponding ROI
+      is determined from the atlas image (mask_hoc.nii.gz). If a tuple is
+      provided it may contain int values that a processed as explained
+      before, but the union of a ROIs is taken to produce the final mask.
+      If None, no masking is performed.
+    """
+    from nifti import NiftiImage
+    from mvpa.datasets.mri import fmri_dataset
+    from mvpa.misc.io import SampleAttributes
+    if roi is None:
+        mask = None
+    elif isinstance(roi, str):
+        mask = os.path.join(path, 'mask_' + roi + '.nii.gz')
+    elif isinstance(roi, int):
+        nimg = NiftiImage(os.path.join(path, 'mask_hoc.nii.gz'))
+        tmpmask = nimg.data == roi
+        mask = NiftiImage(tmpmask.astype(int), nimg.header)
+    elif isinstance(roi, tuple) or isinstance(roi, list):
+        nimg = NiftiImage(os.path.join(path, 'mask_hoc.nii.gz'))
+        tmpmask = N.zeros(nimg.data.shape, dtype='bool')
+        for r in roi:
+            tmpmask = N.logical_or(tmpmask, nimg.data == r)
+        mask = NiftiImage(tmpmask.astype(int), nimg.header)
+    else:
+        raise ValueError("Got something as mask that I cannot handle.")
+    attr = SampleAttributes(os.path.join(path, 'attributes.txt'))
+    ds = fmri_dataset(samples=os.path.join(path, 'bold.nii.gz'),
+                      targets=attr.targets, chunks=attr.chunks,
+                      mask=mask)
+    return ds
+
+
+def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None):
+    """Generate a dataset with samples being temporally autocorrelated noise.
+
+    Parameters
+    ----------
+    ds : Dataset
+      Source dataset whose mean samples serves as the pedestal of the new noise
+      samples. All attributes of this dataset will also go into the generated
+      one.
+    sr : float
+      Sampling rate (in Hz) of the samples in the dataset.
+    cutoff : float
+      Cutoff frequency of the low-pass butterworth filter.
+    bord : int
+      Order of the butterworth filter that is applied for low-pass
+      filtering.
+    lfnl : float
+      Low frequency noise level in percent signal (per feature).
+    hfnl : float or None
+      High frequency noise level in percent signal (per feature). If None, no
+      HF noise is added.
+    """
+    from scipy.signal import butter, lfilter
+
+    # something to play with
+    fds = ds.copy(deep=False)
+
+    # compute the pedestal
+    msample = fds.samples.mean(axis=0)
+
+    # noise/signal amplitude relative to each feature mean signal
+    noise_amps = msample * (lfnl / 100.)
+
+    # generate gaussian noise for the full dataset
+    nsamples = N.random.standard_normal(fds.samples.shape)
+    # scale per each feature
+    nsamples *= noise_amps
+
+    # nyquist frequency
+    nf = sr / 2.0
+
+    # along samples low-pass filtering
+    fb, fa = butter(bord, cutoff / nf)
+    nsamples = lfilter(fb, fa, nsamples, axis=0)
+
+    # add the pedestal
+    nsamples += msample
+
+    # HF noise
+    if not hfnl is None:
+        noise_amps = msample * (hfnl / 100.)
+        nsamples += N.random.standard_normal(nsamples.shape) * noise_amps
+
+    fds.samples = nsamples
+    return fds

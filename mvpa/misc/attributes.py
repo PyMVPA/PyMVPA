@@ -44,7 +44,7 @@ class IndexedCollectable(Collectable):
 
     _instance_index = 0
 
-    def __init__(self, index=None, **kwargs):
+    def __init__(self, index=None, *args, **kwargs):
         """
         Parameters
         ----------
@@ -66,7 +66,7 @@ class IndexedCollectable(Collectable):
         self._isset = False
         self.reset()
 
-        Collectable.__init__(self, **kwargs)
+        Collectable.__init__(self, *args, **kwargs)
 
         if __debug__ and 'COL' in debug.active:
             debug("COL",
@@ -81,11 +81,21 @@ class IndexedCollectable(Collectable):
     #    copied.value = copy.copy(self.value)
     #    return copied
 
+    def __reduce__(self):
+        cr = Collectable.__reduce__(self)
+        assert(len(cr) == 2)            # otherwise we need to change logic below
+        res = (cr[0],
+                (self._instance_index,) + cr[1],
+                {'_isset' : self._isset})
+        #if __debug__ and 'COL_RED' in debug.active:
+        #    debug('COL_RED', 'Returning %s for %s' % (res, self))
+        return res
+
 
     # XXX had to override due to _isset, init=
     def _set(self, val, init=False):
         """4Developers: Override this method in derived classes if you desire
-           some logic (drop value in case of states, or not allow to set value
+           some logic (drop value in case of ca, or not allow to set value
            for read-only Parameters unless called with init=1) etc)
         """
         if __debug__: # Since this call is quite often, don't convert
@@ -124,19 +134,20 @@ class IndexedCollectable(Collectable):
             value = None
         else:
             value = self.value
-        return "%s(index=%s, value=%s, name=%s, doc=%s)" % (
+        return "%s(value=%s, name=%s, doc=%s, index=%s)" % (
             self.__class__.__name__,
-            self._instance_index,
+            repr(value),
             repr(self.name),
             repr(self.__doc__),
-            repr(value))
+            self._instance_index,
+            )
 
 
 class StateVariable(IndexedCollectable):
     """Simple container intended to conditionally store the value
     """
 
-    def __init__(self, enabled=True, **kwargs):
+    def __init__(self, enabled=True, *args, **kwargs):
         """
         Parameters
         ----------
@@ -148,12 +159,19 @@ class StateVariable(IndexedCollectable):
         """
         # Force enabled state regardless of the input
         # to facilitate testing
-        if __debug__ and 'ENFORCE_STATES_ENABLED' in debug.active:
+        if __debug__ and 'ENFORCE_CA_ENABLED' in debug.active:
             enabled = True
-        IndexedCollectable.__init__(self, **kwargs)
         self.__enabled = enabled
         self._defaultenabled = enabled
+        IndexedCollectable.__init__(self, *args, **kwargs)
 
+    def __reduce__(self):
+        icr = IndexedCollectable.__reduce__(self)
+        icr[2].update({'_StateVariable__enabled' : self.__enabled})
+        res = (icr[0], (self._defaultenabled,) + icr[1], icr[2])
+        #if __debug__ and 'COL_RED' in debug.active:
+        #    debug('COL_RED', 'Returning %s for %s' % (res, self))
+        return res
 
     def __str__(self):
         res = IndexedCollectable.__str__(self)

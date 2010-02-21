@@ -131,10 +131,10 @@ class SMLR(Classifier):
         # init base class first
         Classifier.__init__(self, **kwargs)
 
-        if _cStepwiseRegression is None and self.implementation == 'C':
+        if _cStepwiseRegression is None and self.params.implementation == 'C':
             warning('SMLR: C implementation is not available.'
                     ' Using pure Python one')
-            self.implementation = 'Python'
+            self.params.implementation = 'Python'
 
         # pylint friendly initializations
         self._ulabels = None
@@ -147,7 +147,8 @@ class SMLR(Classifier):
         """The biases, will remain none if has_bias is False"""
 
 
-    def _pythonStepwiseRegression(self, w, X, XY, Xw, E,
+    ##REF: Name was automagically refactored
+    def _python_stepwise_regression(self, w, X, XY, Xw, E,
                                   auto_corr,
                                   lambda_over_2_auto_corr,
                                   S,
@@ -293,9 +294,12 @@ class SMLR(Classifier):
     def _train(self, dataset):
         """Train the classifier using `dataset` (`Dataset`).
         """
+        targets_sa_name = self.params.targets_attr    # name of targets sa
+        targets_sa = dataset.sa[targets_sa_name] # actual targets sa
+
         # Process the labels to turn into 1 of N encoding
-        uniquelabels = dataset.sa['labels'].unique
-        labels = _label2oneofm(dataset.sa.labels, uniquelabels)
+        uniquelabels = targets_sa.unique
+        labels = _label2oneofm(targets_sa.value, uniquelabels)
         self._ulabels = uniquelabels.copy()
 
         Y = labels
@@ -331,7 +335,7 @@ class SMLR(Classifier):
 
         # set the feature dimensions
         elif self.params.implementation.upper() == 'PYTHON':
-            _stepwise_regression = self._pythonStepwiseRegression
+            _stepwise_regression = self._python_stepwise_regression
         else:
             raise ValueError, \
                   "Unknown implementation %s of stepwise_regression" % \
@@ -396,8 +400,8 @@ class SMLR(Classifier):
         self.__weights_all = w
         self.__weights = w[:dataset.nfeatures, :]
 
-        if self.states.is_enabled('feature_ids'):
-            self.states.feature_ids = N.where(N.max(N.abs(w[:dataset.nfeatures, :]),
+        if self.ca.is_enabled('feature_ids'):
+            self.ca.feature_ids = N.where(N.max(N.abs(w[:dataset.nfeatures, :]),
                                              axis=1)>0)[0]
 
         # and a bias
@@ -459,7 +463,8 @@ class SMLR(Classifier):
         return new_weights
 
 
-    def _getFeatureIds(self):
+    ##REF: Name was automagically refactored
+    def _get_feature_ids(self):
         """Return ids of the used features
         """
         return N.where(N.max(N.abs(self.__weights), axis=1)>0)[0]
@@ -494,7 +499,7 @@ class SMLR(Classifier):
                    N.min(E), N.max(E)))
 
         values = E / S[:, N.newaxis].repeat(E.shape[1], axis=1)
-        self.states.estimates = values
+        self.ca.estimates = values
 
         # generate predictions
         predictions = N.asarray([self._ulabels[N.argmax(vals)]
@@ -506,7 +511,8 @@ class SMLR(Classifier):
         return predictions
 
 
-    def getSensitivityAnalyzer(self, **kwargs):
+    ##REF: Name was automagically refactored
+    def get_sensitivity_analyzer(self, **kwargs):
         """Returns a sensitivity analyzer for SMLR."""
         return SMLRWeights(self, **kwargs)
 
@@ -543,7 +549,7 @@ class SMLRWeights(Sensitivity):
         weights = clf.weights.T
 
         if clf.params.has_bias:
-            self.states.biases = clf.biases
+            self.ca.biases = clf.biases
 
         if __debug__:
             debug('SMLR',
@@ -554,4 +560,5 @@ class SMLRWeights(Sensitivity):
 
         # limit the labels to the number of sensitivity sets, to deal
         # with the case of `fit_all_weights=False`
-        return Dataset(weights, sa={'labels': clf._ulabels[:len(weights)]})
+        return Dataset(weights,
+                       sa={clf.params.targets_attr: clf._ulabels[:len(weights)]})

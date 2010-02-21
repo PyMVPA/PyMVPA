@@ -8,6 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA incremental feature search."""
 
+from mvpa.testing import *
+from mvpa.testing.clfs import *
+from mvpa.testing.datasets import datasets
+
 from mvpa.datasets.base import Dataset
 from mvpa.featsel.ifs import IFS
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
@@ -16,32 +20,31 @@ from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.featsel.helpers import FixedNElementTailSelector
 from mvpa.mappers.fx import mean_sample
 
-from tests_warehouse import *
-from tests_warehouse_clfs import *
 
 
 class IFSTests(unittest.TestCase):
 
-    def getData(self):
+    ##REF: Name was automagically refactored
+    def get_data(self):
         data = N.random.standard_normal(( 100, 2, 2, 2 ))
         labels = N.concatenate( ( N.repeat( 0, 50 ),
                                   N.repeat( 1, 50 ) ) )
         chunks = N.repeat( range(5), 10 )
         chunks = N.concatenate( (chunks, chunks) )
-        return Dataset.from_masked(samples=data, labels=labels, chunks=chunks)
+        return Dataset.from_wizard(samples=data, targets=labels, chunks=chunks)
 
 
     # XXX just testing based on a single classifier. Not sure if
     # should test for every known classifier since we are simply
     # testing IFS algorithm - not sensitivities
     @sweepargs(svm=clfswh['has_sensitivity', '!meta'][:1])
-    def testIFS(self, svm):
+    def test_ifs(self, svm):
 
         # data measure and transfer error quantifier use the SAME clf!
         trans_error = TransferError(svm)
         data_measure = CrossValidatedTransferError(trans_error,
                                                    NFoldSplitter(1),
-                                                   mapper=mean_sample())
+                                                   postproc=mean_sample())
 
         ifs = IFS(data_measure,
                   trans_error,
@@ -50,9 +53,9 @@ class IFSTests(unittest.TestCase):
                     # errors -> low is good
                     FixedNElementTailSelector(1, tail='lower', mode='select'),
                   )
-        wdata = self.getData()
+        wdata = self.get_data()
         wdata_nfeatures = wdata.nfeatures
-        tdata = self.getData()
+        tdata = self.get_data()
         tdata_nfeatures = tdata.nfeatures
 
         sdata, stdata = ifs(wdata, tdata)
@@ -62,8 +65,8 @@ class IFSTests(unittest.TestCase):
         self.failUnless(tdata.nfeatures == tdata_nfeatures)
 
         # check that the features set with the least error is selected
-        self.failUnless(len(ifs.states.errors))
-        e = N.array(ifs.states.errors)
+        self.failUnless(len(ifs.ca.errors))
+        e = N.array(ifs.ca.errors)
         self.failUnless(sdata.nfeatures == e.argmin() + 1)
 
 

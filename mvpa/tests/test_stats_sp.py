@@ -8,20 +8,21 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA stats helpers -- those requiring scipy"""
 
-from test_stats import *
-externals.exists('scipy', raiseException=True)
+from mvpa.testing import *
+skip_if_no_external('scipy')
+
+from mvpa.testing.datasets import datasets
+from mvpa.tests.test_stats import *
 
 from scipy import signal
 from mvpa.misc.stats import chisquare
 from mvpa.misc.attrmap import AttributeMap
-from mvpa.datasets.base import dataset
-
-from nose.tools import assert_raises
+from mvpa.datasets.base import dataset_wizard
 
 class StatsTestsScipy(unittest.TestCase):
     """Unittests for various statistics which use scipy"""
 
-    def testChiSquare(self):
+    def test_chi_square(self):
         """Test chi-square distribution"""
         # test equal distribution
         tbl = N.array([[5, 5], [5, 5]])
@@ -36,10 +37,9 @@ class StatsTestsScipy(unittest.TestCase):
         self.failUnless(p < 0.05)
 
 
-    def testNullDistProbAny(self):
+    def test_null_dist_prob_any(self):
         """Test 'any' tail statistics estimation"""
-        if not externals.exists('scipy'):
-            return
+        skip_if_no_external('scipy')
 
         # test 'any' mode
         from mvpa.measures.corrcoef import CorrCoef
@@ -49,7 +49,7 @@ class StatsTestsScipy(unittest.TestCase):
 
         assert_raises(ValueError, null.fit, CorrCoef(), ds)
         # cheat and map to numeric for this test
-        ds.sa.labels = AttributeMap().to_numeric(ds.labels)
+        ds.sa.targets = AttributeMap().to_numeric(ds.targets)
         null.fit(CorrCoef(), ds)
 
         # 100 and -100 should both have zero probability on their respective
@@ -64,25 +64,23 @@ class StatsTestsScipy(unittest.TestCase):
 
 
     @sweepargs(nd=nulldist_sweep)
-    def testDatasetMeasureProb(self, nd):
+    def test_dataset_measure_prob(self, nd):
         """Test estimation of measures statistics"""
-        if not externals.exists('scipy'):
-            # due to null_t requirement
-            return
+        skip_if_no_external('scipy')
 
         ds = datasets['uni2medium']
 
-        m = OneWayAnova(null_dist=nd, enable_states=['null_t'])
+        m = OneWayAnova(null_dist=nd, enable_ca=['null_t'])
         score = m(ds)
 
-        score_nonbogus = N.mean(score.samples[:,ds.nonbogus_features])
-        score_bogus = N.mean(score.samples[:,ds.bogus_features])
+        score_nonbogus = N.mean(score.samples[:,ds.a.nonbogus_features])
+        score_bogus = N.mean(score.samples[:,ds.a.bogus_features])
         # plausability check
         self.failUnless(score_bogus < score_nonbogus)
 
         # [0] because the first axis is len == 0
-        null_prob_nonbogus = m.states.null_prob[0][ds.nonbogus_features]
-        null_prob_bogus = m.states.null_prob[0][ds.bogus_features]
+        null_prob_nonbogus = m.ca.null_prob[0][ds.a.nonbogus_features]
+        null_prob_bogus = m.ca.null_prob[0][ds.a.bogus_features]
 
         self.failUnless((null_prob_nonbogus < 0.05).all(),
             msg="Nonbogus features should have a very unlikely value. Got %s"
@@ -99,21 +97,21 @@ class StatsTestsScipy(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             # Failed on c94ec26eb593687f25d8c27e5cfdc5917e352a69
             # with MVPA_SEED=833393575
-            self.failUnless((N.abs(m.states.null_t[0][ds.nonbogus_features]) >= 5).all(),
+            self.failUnless((N.abs(m.ca.null_t[0][ds.a.nonbogus_features]) >= 5).all(),
                 msg="Nonbogus features should have high t-score. Got %s"
-                % (m.states.null_t[0][ds.nonbogus_features]))
+                % (m.ca.null_t[0][ds.a.nonbogus_features]))
 
-            bogus_min = min(N.abs(m.states.null_t[0][ds.bogus_features]))
+            bogus_min = min(N.abs(m.ca.null_t[0][ds.a.bogus_features]))
             self.failUnless(bogus_min < 4,
                 msg="Some bogus features should have low t-score of %g."
                     "Got (t,p,sens):%s"
                     % (bogus_min,
-                        zip(m.states.null_t[0][ds.bogus_features],
-                            m.states.null_prob[0][ds.bogus_features],
-                            score.samples[0][ds.bogus_features])))
+                        zip(m.ca.null_t[0][ds.a.bogus_features],
+                            m.ca.null_prob[0][ds.a.bogus_features],
+                            score.samples[0][ds.a.bogus_features])))
 
 
-    def testNegativeT(self):
+    def test_negative_t(self):
         """Basic testing of the sign in p and t scores
         """
         from mvpa.measures.base import FeaturewiseDatasetMeasure
@@ -130,22 +128,22 @@ class StatsTestsScipy(unittest.TestCase):
                 return res
 
         nd = FixedNullDist(scipy.stats.norm(0, 0.1), tail='any')
-        m = BogusMeasure(null_dist=nd, enable_states=['null_t'])
+        m = BogusMeasure(null_dist=nd, enable_ca=['null_t'])
         ds = datasets['uni2small']
         score = m(ds)
-        t, p = m.states.null_t, m.states.null_prob
+        t, p = m.ca.null_t, m.ca.null_prob
         self.failUnless((p>=0).all())
         self.failUnless((t[:2] > 0).all())
         self.failUnless((t[2:4] < 0).all())
 
 
-    def testMatchDistribution(self):
-        """Some really basic testing for matchDistribution
+    def test_match_distribution(self):
+        """Some really basic testing for match_distribution
         """
-        from mvpa.clfs.stats import matchDistribution, rv_semifrozen
+        from mvpa.clfs.stats import match_distribution, rv_semifrozen
 
         ds = datasets['uni2medium']      # large to get stable stats
-        data = ds.samples[:, ds.bogus_features[0]]
+        data = ds.samples[:, ds.a.bogus_features[0]]
         # choose bogus feature, which
         # should have close to normal distribution
 
@@ -167,7 +165,7 @@ class StatsTestsScipy(unittest.TestCase):
         for loc in [None, data_mean]:
             for test in ['p-roc', 'kstest']:
                 # some really basic testing
-                matched = matchDistribution(
+                matched = match_distribution(
                     data=data,
                     distributions = ['scipy',
                                      ('norm',
@@ -187,7 +185,7 @@ class StatsTestsScipy(unittest.TestCase):
                         # 30 best matching ;-)
                         self.failUnless(inorm <= 30)
 
-    def testRDistStability(self):
+    def test_r_dist_stability(self):
         """Test either rdist distribution performs nicely
         """
         try:
@@ -227,26 +225,26 @@ class StatsTestsScipy(unittest.TestCase):
         self.failUnless(v>=0, v<=1)
 
 
-    def testAnovaCompliance(self):
+    def test_anova_compliance(self):
         ds = datasets['uni2large']
 
         fwm = OneWayAnova()
         f = fwm(ds)
-        f_sp = f_oneway(ds[ds.labels == 'L1'].samples,
-                        ds[ds.labels == 'L0'].samples)
+        f_sp = f_oneway(ds[ds.targets == 'L1'].samples,
+                        ds[ds.targets == 'L0'].samples)
 
         # SciPy needs to compute the same F-scores
         assert_array_almost_equal(f, f_sp[0:1])
 
 
 
-    def testGLM(self):
+    def test_glm(self):
         """Test GLM
         """
         # play fmri
         # full-blown HRF with initial dip and undershoot ;-)
         hrf_x = N.linspace(0, 25, 250)
-        hrf = doubleGammaHRF(hrf_x) - singleGammaHRF(hrf_x, 0.8, 1, 0.05)
+        hrf = double_gamma_hrf(hrf_x) - single_gamma_hrf(hrf_x, 0.8, 1, 0.05)
 
         # come up with an experimental design
         samples = 1800
@@ -274,7 +272,7 @@ class StatsTestsScipy(unittest.TestCase):
         X = N.array([model_lr, N.repeat(1, len(model_lr))]).T
 
         # two 'voxel' dataset
-        data = dataset(samples=N.array((wsignal, nsignal, nsignal)).T, labels=1)
+        data = dataset_wizard(samples=N.array((wsignal, nsignal, nsignal)).T, targets=1)
 
         # check GLM betas
         glm = GLM(X)
@@ -308,7 +306,7 @@ class StatsTestsScipy(unittest.TestCase):
                 msg='with signal should have higher zstats')
 
 
-    def testBinomdistPPF(self):
+    def test_binomdist_ppf(self):
         """Test if binomial distribution works ok
 
         after possibly a monkey patch

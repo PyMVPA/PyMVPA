@@ -8,48 +8,45 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA EEP dataset"""
 
-import unittest
 import os.path
 import numpy as N
 
 from mvpa import pymvpa_dataroot
 from mvpa.base import externals
-from mvpa.datasets.eep import eep_dataset
-from mvpa.misc.io.eepbin import EEPBin
+from mvpa.datasets.eep import eep_dataset, EEPBin
+
+from mvpa.testing.tools import assert_equal, assert_true, \
+     assert_array_almost_equal
+
+def test_eep_load():
+    eb = EEPBin(os.path.join(pymvpa_dataroot, 'eep.bin'))
+
+    ds = [ eep_dataset(source, targets=[1, 2]) for source in
+            (eb, os.path.join(pymvpa_dataroot, 'eep.bin')) ]
+
+    for d in ds:
+        assert_equal(d.nsamples, 2)
+        assert_equal(d.nfeatures, 128)
+        assert_equal(N.unique(d.fa.channels[4*23:4*23+4]), 'Pz')
+        assert_array_almost_equal([N.arange(-0.002, 0.005, 0.002)] * 32,
+                                  d.a.mapper.reverse1(d.fa.timepoints))
 
 
-class EEPDatasetTests(unittest.TestCase):
+def test_eep_bin():
+    eb = EEPBin(os.path.join(pymvpa_dataroot, 'eep.bin'))
 
-    def testLoad(self):
-        eb = EEPBin(os.path.join(pymvpa_dataroot, 'eep.bin'))
-
-        ds = [ eep_dataset(source, labels=[1, 2]) for source in
-                (eb, os.path.join(pymvpa_dataroot, 'eep.bin')) ]
-
-        for d in ds:
-            self.failUnless(d.nsamples == 2)
-            self.failUnless(d.nfeatures == 128)
-            self.failUnless(d.a.channelids[23] == 'Pz')
-            self.failUnless(N.round(d.a.t0 + 0.002, decimals=3) == 0)
-            self.failUnless(N.round(d.a.dt - 0.002, decimals=3) == 0)
-            self.failUnless(N.round(d.samplingrate) == 500)
-
-
-    def testEEPBin(self):
-        eb = EEPBin(os.path.join(pymvpa_dataroot, 'eep.bin'))
-
-        self.failUnless(eb.nchannels == 32)
-        self.failUnless(eb.nsamples == 2)
-        self.failUnless(eb.ntimepoints == 4)
-        self.failUnless(eb.t0 - eb.dt < 0.00000001)
-        self.failUnless(len(eb.channels) == 32)
-        self.failUnless(eb.data.shape == (2, 32, 4))
+    assert_equal(eb.nchannels, 32)
+    assert_equal(eb.nsamples, 2)
+    assert_equal(eb.ntimepoints, 4)
+    assert_true(eb.t0 - eb.dt < 0.00000001)
+    assert_equal(len(eb.channels), 32)
+    assert_equal(eb.data.shape, (2, 32, 4))
 
 
     # XXX put me back whenever there is a proper resamples()
-#     def testResampling(self):
+#     def test_resampling(self):
 #         ds = eep_dataset(os.path.join(pymvpa_dataroot, 'eep.bin'),
-#                          labels=[1, 2])
+#                          targets=[1, 2])
 #         channelids = N.array(ds.a.channelids).copy()
 #         self.failUnless(N.round(ds.samplingrate) == 500.0)
 # 
@@ -73,11 +70,3 @@ class EEPDatasetTests(unittest.TestCase):
 #             self.failUnless(N.all(d.a.channelids == channelids))
 #             # lets now see if we still have a mapper
 #             self.failUnless(d.O.shape == (2, len(channelids), 2))
-
-def suite():
-    return unittest.makeSuite(EEPDatasetTests)
-
-
-if __name__ == '__main__':
-    import runner
-

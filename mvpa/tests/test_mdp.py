@@ -9,23 +9,23 @@
 '''Tests for basic mappers'''
 
 import numpy as N
-import mdp
 
-from numpy.testing import assert_array_equal, assert_array_almost_equal
-from nose.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true
+from mvpa.testing import *
+skip_if_no_external('mdp')
 
 from mvpa.base import externals
+import mdp
+
 from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper, PCAMapper, \
         ICAMapper
 from mvpa.mappers.lle import LLEMapper
 from mvpa.datasets.base import Dataset
 from mvpa.base.dataset import DAE
-from mvpa.misc.data_generators import normalFeatureDataset
+from mvpa.misc.data_generators import normal_feature_dataset
 
 
 def test_mdpnodemapper():
-    ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+    ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
 
     node = mdp.nodes.PCANode()
     mm = MDPNodeMapper(node, nodeargs={'stoptrain': ((), {'debug': True})})
@@ -33,7 +33,8 @@ def test_mdpnodemapper():
     mm.train(ds)
 
     fds = mm.forward(ds)
-    assert_true(hasattr(mm.node, 'cov_mtx'))
+    if externals.versions['mdp'] >= '2.5':
+        assert_true(hasattr(mm.node, 'cov_mtx'))
 
     assert_true(isinstance(fds, Dataset))
     assert_equal(fds.samples.shape, ds.samples.shape)
@@ -57,14 +58,14 @@ def test_mdpnodemapper():
 
     # retraining has to work on a new dataset too, since we copy the node
     # internally
-    dsbig = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=10)
+    dsbig = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=10)
     mm.train(dsbig)
 
 
 def test_mdpflowmapper():
     flow = mdp.nodes.PCANode() + mdp.nodes.SFANode()
     fm = MDPFlowMapper(flow)
-    ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+    ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
 
     fm.train(ds)
     assert_false(fm.flow[0].is_training())
@@ -76,27 +77,33 @@ def test_mdpflowmapper():
 
 
 def test_mdpflow_additional_arguments():
-    ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+    skip_if_no_external('mdp', min_version='2.5')
+    # we have no IdentityNode yet... is there analog?
+
+    ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
     flow = mdp.nodes.PCANode() + mdp.nodes.IdentityNode() + mdp.nodes.FDANode()
     # this is what it would look like in MDP itself
     #flow.train([[ds.samples],
-    #            [[ds.samples, ds.sa.labels]]])
+    #            [[ds.samples, ds.sa.targets]]])
     assert_raises(ValueError, MDPFlowMapper, flow, node_arguments=[[],[]])
-    fm = MDPFlowMapper(flow, node_arguments = ([], [], [DAE('sa', 'labels')]))
+    fm = MDPFlowMapper(flow, node_arguments = ([], [], [DAE('sa', 'targets')]))
     fm.train(ds)
     fds = fm.forward(ds)
     assert_equal(ds.samples.shape, fds.samples.shape)
     rds = fm.reverse(fds)
     assert_array_almost_equal(ds.samples, rds.samples)
 
-def test_mdpflow_additional_arguments_Nones():
-    ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+def test_mdpflow_additional_arguments_nones():
+    skip_if_no_external('mdp', min_version='2.5')
+    # we have no IdentityNode yet... is there analog?
+
+    ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
     flow = mdp.nodes.PCANode() + mdp.nodes.IdentityNode() + mdp.nodes.FDANode()
     # this is what it would look like in MDP itself
     #flow.train([[ds.samples],
-    #            [[ds.samples, ds.sa.labels]]])
+    #            [[ds.samples, ds.sa.targets]]])
     assert_raises(ValueError, MDPFlowMapper, flow, node_arguments=[[],[]])
-    fm = MDPFlowMapper(flow, node_arguments = (None, None, [ds.sa.labels]))
+    fm = MDPFlowMapper(flow, node_arguments = (None, None, [ds.sa.targets]))
     fm.train(ds)
     fds = fm.forward(ds)
     assert_equal(ds.samples.shape, fds.samples.shape)
@@ -145,8 +152,7 @@ def test_icamapper():
 
 
 def test_llemapper():
-    if not externals.exists('mdp ge 2.4'):
-        return
+    skip_if_no_external('mdp', min_version='2.4')
 
     ds = Dataset(N.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
                           [1., 0., 0.], [0., 1., 1.], [1., 0., 1.],

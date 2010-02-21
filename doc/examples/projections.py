@@ -22,7 +22,8 @@ import numpy as N
 center = [10, 20]
 axis_range = 7
 
-def plotProjDir(p):
+##REF: Name was automagically refactored
+def plot_proj_dir(p):
     P.plot([0, p[0,0]], [0, p[0,1]],
            linewidth=3, hold=True, color='y')
     P.plot([0, p[1,0]], [0, p[1,1]],
@@ -61,8 +62,8 @@ for ds in datasets:
 
         P.scatter(ds.samples[:, 0] - center[0],
                   ds.samples[:, 1] - center[1],
-                  s=30, c=(ds.sa.labels) * 200)
-        plotProjDir(mproj)
+                  s=30, c=(ds.sa.targets) * 200)
+        plot_proj_dir(mproj)
         fig += 1
 
 

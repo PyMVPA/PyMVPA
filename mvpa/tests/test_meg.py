@@ -8,18 +8,20 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA MEG stuff"""
 
-import unittest
 import os.path
 
+from mvpa.testing import *
 from mvpa import pymvpa_dataroot
-from mvpa.base import externals
 from mvpa.misc.io.meg import TuebingenMEG
 
 class MEGTests(unittest.TestCase):
 
-    def testTuebingenMEG(self):
+    def test_tuebingen_meg(self):
+        # Use this whenever we fully switch to nose to run tests
+        #skip_if_no_external('gzip')
         if not externals.exists('gzip'):
             return
+
         meg = TuebingenMEG(os.path.join(pymvpa_dataroot, 'tueb_meg.dat.gz'))
 
         # check basics

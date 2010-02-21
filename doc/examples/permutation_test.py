@@ -70,16 +70,21 @@ state variable named `null_prob`.
 # lazy import
 from mvpa.suite import *
 
+# enable progress output for MC estimation
+if __debug__:
+    debug.active += ["STATMC"]
+
 # some example data with signal
-train = normalFeatureDataset(perlabel=50, nlabels=2, nfeatures=3,
-                             nonbogus_features=[0,1], snr=3, nchunks=1)
+train = normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=3,
+                             nonbogus_features=[0,1], snr=0.3, nchunks=1)
 
 # define class to estimate NULL distribution of errors
 # use left tail of the distribution since we use MeanMatchFx as error
 # function and lower is better
-# in a real analysis the number of permutations should be MUCH larger
+# in a real analysis the number of permutations should be larger
+# to get stable estimates
 terr = TransferError(clf=SMLR(),
-                     null_dist=MCNullDist(permutations=10,
+                     null_dist=MCNullDist(permutations=100,
                                           tail='left'))
 
 # compute classifier error on training dataset (should be low :)
@@ -88,4 +93,4 @@ print 'Error on training set:', err
 
 # check that the result is highly significant since we know that the
 # data has signal
-print 'Corresponding p-value: ',  terr.states.null_prob
+print 'Corresponding p-value: ',  terr.ca.null_prob
