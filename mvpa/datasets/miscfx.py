@@ -332,12 +332,11 @@ class SequenceStats(dict):
         ----------
         seq : list or ndarray
           Actual sequence of labels
-
-        :Keywords:
-          order : int
-            Maximal order of counter-balancing check. For perfect
-            counterbalancing all matrices should be identical
+        order : int
+          Maximal order of counter-balancing check. For perfect
+          counterbalancing all matrices should be identical
         """
+
         """
           chunks : None or list or ndarray
             Chunks to use if `perchunk`=True
@@ -348,7 +347,7 @@ class SequenceStats(dict):
         self._seq = seq
         self.stats = None
         self._str_stats = None
-        self.__compute()
+        self._compute()
 
 
     def __repr__(self):
@@ -359,7 +358,7 @@ class SequenceStats(dict):
     def __str__(self):
         return self._str_stats
 
-    def __compute(self):
+    def _compute(self):
         """Compute stats and string representation
         """
         # Do actual computation
@@ -370,17 +369,17 @@ class SequenceStats(dict):
         nlabels = len(ulabels)              # # of labels
 
         # mapping for labels
-        labels_map = dict([(l, i) for i,l in enumerate(ulabels)])
+        labels_map = dict([(l, i) for i, l in enumerate(ulabels)])
 
         # map sequence first
         seqm = [labels_map[i] for i in seq]
-        nperlabel = N.bincount(seqm)
+        # nperlabel = N.bincount(seqm)
 
         res = dict(ulabels=ulabels)
         # Estimate counter-balance
         cbcounts = N.zeros((order, nlabels, nlabels), dtype=int)
         for cb in xrange(order):
-            for i,j in zip(seqm[:-(cb+1)], seqm[cb+1:]):
+            for i, j in zip(seqm[:-(cb+1)], seqm[cb+1:]):
                 cbcounts[cb, i, j] += 1
         res['cbcounts'] = cbcounts
 
