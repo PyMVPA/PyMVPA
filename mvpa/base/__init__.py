@@ -308,6 +308,7 @@ if __debug__:
 
     debug.register('IOH',    "IO Helpers")
     debug.register('IO_HAM', "Hamster")
+    debug.register('HDF5',   "HDF5 IO")
     debug.register('CM',   "Confusion matrix computation")
     debug.register('ROC',  "ROC analysis")
     debug.register('CROSSC', "Cross-validation call")

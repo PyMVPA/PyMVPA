@@ -17,7 +17,7 @@ skip_if_no_external('h5py')
 import h5py
 
 import os
-from tempfile import mkstemp
+import tempfile
 
 from mvpa.base.dataset import AttrDataset
 from mvpa.base.hdf5 import h5save, h5load, obj2hdf
@@ -51,7 +51,7 @@ def test_h5py_datasets():
 def test_h5py_dataset_typecheck():
     ds = datasets['uni2small']
 
-    _, fpath = mkstemp('mvpa', 'test')
+    _, fpath = tempfile.mkstemp('mvpa', 'test')
 
     h5save(fpath, [[1, 2, 3]])
     assert_raises(ValueError, AttrDataset.from_hdf5, fpath)
@@ -78,3 +78,14 @@ def test_matfile_v73_compat():
     assert_equal(sorted(mat.keys()), ['x', 'y'])
     assert_array_equal(mat['x'], N.arange(6)[None].T)
     assert_array_equal(mat['y'], N.array([(1,0,1)], dtype='uint8').T)
+
+
+def test_directaccess():
+    f = tempfile.NamedTemporaryFile()
+    h5save(f.name, 'test')
+    assert_equal(h5load(f.name), 'test')
+    f.close()
+    f = tempfile.NamedTemporaryFile()
+    h5save(f.name, datasets['uni4medium'])
+    assert_array_equal(h5load(f.name).samples,
+                       datasets['uni4medium'].samples)
