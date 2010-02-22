@@ -40,6 +40,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import h5py
 from mvpa.base.types import asobjarray
+from mvpa.base import debug
 
 
 #
@@ -215,11 +216,23 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
     # right away
     if N.isscalar(obj) \
        or (isinstance(obj, N.ndarray) and not obj.dtype == N.object):
+        if name is None:
+            # HDF5 cannot handle datasets without a name
+            name = '__unnamed__'
+        if __debug__:
+            debug('HDF5', "Storing '%s' in HDF5 dataset '%s'"
+                          % (type(obj), name))
+
         hdf.create_dataset(name, None, None, obj, **kwargs)
         return
 
+    if __debug__:
+        debug('HDF5', "Convert '%s' into HDF5 group." % (type(obj)))
+
     if not name is None:
         # complex objects
+        if __debug__:
+            debug('HDF5', "Create HDF5 group '%s'" % (name))
         grp = hdf.create_group(name)
     else:
         grp = hdf
@@ -227,6 +240,8 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
     # special case of array of type object -- we turn them into lists and
     # process as usual, but set a flag to trigger appropriate reconstruction
     if isinstance(obj, N.ndarray) and obj.dtype == N.object:
+        if __debug__:
+            debug('HDF5', "Convert array of objects into a list.")
         obj = list(obj)
         grp.attrs.create('is_objarray', True)
 
@@ -236,6 +251,9 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
     except TypeError:
         # probably a container
         pieces = None
+        if __debug__:
+            debug('HDF5', "'%s' could not be __reduce__()'d. A container?."
+                          % (type(obj)))
 
     # common container handling, either __reduce__ was not possible
     # or it was the default implementation
@@ -244,10 +262,12 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
         grp.attrs.create('class', obj.__class__.__name__)
         grp.attrs.create('module', obj.__class__.__module__)
         if isinstance(obj, list) or isinstance(obj, tuple):
+            if __debug__: debug('HDF5', "Special case: Store a list.")
             items = grp.create_group('items')
             for i, item in enumerate(obj):
                 obj2hdf(items, item, str(i), **kwargs)
         elif isinstance(obj, dict):
+            if __debug__: debug('HDF5', "Special case: Store a dictionary.")
             items = grp.create_group('items')
             for key in obj:
                 obj2hdf(items, obj[key], key, **kwargs)
@@ -256,12 +276,17 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
             stategrp = grp.create_group('state')
             # there is something in the state
             state = pieces[2]
+            if __debug__:
+                debug('HDF5', "Store object state (%i items)." % len(state))
             # loop over all attributes and store them
             for attr in state:
                 obj2hdf(stategrp, state[attr], attr, **kwargs)
         # for the default __reduce__ there is nothin else to do
         return
     else:
+        if __debug__:
+            debug('HDF5', "Custom __reduce__: (%i constructor arguments)."
+                          % len(pieces[1]))
         # XXX handle custom reduce
         grp.attrs.create('recon', pieces[0].__name__)
         grp.attrs.create('module', pieces[0].__module__)
@@ -336,9 +361,15 @@ def h5load(filename, name=None):
                 except LookupError:
                     # no object into at the top-level, but maybe in the next one
                     # this would happen for plain mat files with arrays
-                    obj = {}
-                    for k in hdf:
-                        obj[k] = hdf2obj(hdf[k])
+                    if len(hdf) == 1 and '__unnamed__' in hdf:
+                        # just a single with special naem -> special case:
+                        # return as is
+                        obj = hdf2obj(hdf['__unnamed__'])
+                    else:
+                        # otherwise build dict with content
+                        obj = {}
+                        for k in hdf:
+                            obj[k] = hdf2obj(hdf[k])
     finally:
         hdf.close()
     return obj
