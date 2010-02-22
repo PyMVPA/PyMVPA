@@ -224,6 +224,9 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
     center_ids : list of int
       List of feature ids (not coordinates) the shall serve as sphere
       centers. By default all features will be used.
+    space : str
+      Name of a feature attribute of the input dataset that defines the spatial
+      coordinates of all features.
     **kwargs
       In addition this class supports all keyword arguments of its
       base-class :class:`~mvpa.measures.base.DatasetMeasure`.
