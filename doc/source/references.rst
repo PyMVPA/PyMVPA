@@ -330,6 +330,17 @@ experiments.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2007.03.072
 
 
+.. _Wri09:
+
+**Wright, D.** (2009). Ten Statisticians and Their Impacts for Psychologists. *Perspectives on Psychological Science*, *4*, 587–597.
+  *Historical excurse into the life of 10 prominent statisticians of XXth century
+  and their scientific contributions.*
+
+  Keywords: :keyword:`statistics`, :keyword:`hypothesis testing`
+
+  DOI: http://dx.doi.org/10.1111/j.1745-6924.2009.01167.x
+
+
 .. _ZH05:
 
 **Zou, H. & Hastie, T.** (2005). Regularization and variable selection via the elastic net. *Journal of the Royal Statistical Society Series B*, *67*, 301–320.
