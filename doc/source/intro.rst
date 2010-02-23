@@ -46,7 +46,7 @@ There is a growing number of introductory papers about the application of
 machine learning algorithms to (f)MRI data. A very high-level overview about
 the basic principles is available in :ref:`Mur et al. (2009) <MBK09>`. A more
 detailed tutorial covering a wide variety of aspects is provided in
-:ref:`Pereira et al. (in press) <PMB+IP>`. Two reviews by :ref:`Norman et al.
+:ref:`Pereira et al. (2009) <PMB09>`. Two reviews by :ref:`Norman et al.
 (2006) <NPD+06>` and :ref:`Haynes and Rees (2006) <HR06>` give a broad overview
 about the literature.
 

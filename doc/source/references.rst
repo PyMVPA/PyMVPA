@@ -290,9 +290,9 @@ experiments.
   DOI: http://dx.doi.org/10.1162/jocn.2007.19.11.1735
 
 
-.. _PMB+IP:
+.. _PMB09:
 
-**Pereira, F., Mitchell, T. & Botvinick, M.** (in press). Machine learning classifiers and fMRI: A tutorial overview. *NeuroImage*.
+**Pereira, F., Mitchell, T. & Botvinick, M.** (2009). Machine learning classifiers and fMRI: A tutorial overview. *NeuroImage*, *45*, 199–209.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2008.11.007
 
 
