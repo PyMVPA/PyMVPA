@@ -40,7 +40,9 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 import h5py
 from mvpa.base.types import asobjarray
-from mvpa.base import debug
+
+if __debug__:
+    from mvpa.base import debug
 
 
 #
