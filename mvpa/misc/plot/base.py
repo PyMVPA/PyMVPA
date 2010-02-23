@@ -40,7 +40,7 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
     curves : None or list of tuple(x, y)
       Each tuple represents an additional curve, with x and y coordinates of
       each point on the curve.
-    linestyle : str
+    linestyle : str or None
       matplotlib linestyle argument. Applied to either the additional
       curve or a the line connecting the datapoints. Set to 'None' to
       disable the line completely.
@@ -105,7 +105,10 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
         for c in curves:
             xc, yc = c
             # scales line array to same range as datapoints
-            P.plot(xc, yc, linestyle)
+            if not linestyle is None:
+                P.plot(xc, yc, linestyle)
+            else:
+                P.plot(xc, yc)
 
         # no line between data points
         linestyle = 'None'
