@@ -36,23 +36,9 @@ recreate our preprocessed demo dataset. The code is taken verbatim from the
 no questions. We get a dataset with one sample per category per run.
 
 >>> from tutorial_lib import *
->>> # directory that contains the data files
->>> datapath = os.path.join(pymvpa_datadbroot,
-...                         'demo_blockfmri', 'demo_blockfmri')
->>> # load the raw data
->>> attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
->>> ds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
-...                   targets=attr.targets, chunks=attr.chunks,
-...                   mask=os.path.join(datapath, 'mask_vt.nii.gz'))
->>> # pre-process
->>> poly_detrend(ds, polyord=1, chunks='chunks')
->>> zscore(ds, param_est=('targets', ['rest']))
->>> ds = ds[ds.sa.targets != 'rest']
->>> # average
->>> run_averager = mean_group_sample(['targets', 'chunks'])
->>> ds = ds.get_mapped(run_averager)
+>>> ds = get_haxby2001_data(roi='vt')
 >>> ds.shape
-(96, 577)
+(16, 577)
 
 
 Measures
@@ -110,8 +96,66 @@ ANOVA, a **univariate** measure, to localize important voxels? There must
 be something else -- and there is!
 
 
-Searching, searching, searching
--------------------------------
+Searching, searching, searching, ...
+------------------------------------
+
+:ref:`Kriegeskorte et al. (2006) <KGB06>` suggested an algorithm that takes
+a small, sphere-shaped neighborhood of brain voxels and computes a
+multivariate measure to quantify the amount of information encoded in its
+pattern (e.g.  `mutual information`_). Later on this :term:`searchlight`
+approach has been extended to run a full classifier cross-validation in
+every possible sphere in the brain. Since that, multiple studies have
+employed this approach to localize relevant information in a locally
+constraint fashion.
+
+.. _mutual information: http://en.wikipedia.org/wiki/Mutual_information
+
+We almost know all the pieces to implement a searchlight analyses in
+PyMVPA. We can load and preprocess datasets, we can set up a
+cross-validation procedure.
+
+>>> clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
+>>> terr = TransferError(clf)
+>>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter())
+
+The only thing left is that we have to split the dataset into all possible
+sphere neighborhoods that intersect with the brain. To achieve this, we
+can use :func:`~mvpa.measures.searchlight.sphere_searchlight`:
+
+>>> sl = sphere_searchlight(cvte, postproc=mean_sample())
+
+This single line configures a searchlight analysis that runs a full
+cross-validation in every possible sphere in the dataset. The algorithm
+uses the coordinates (by default ``voxel_indices``) stored in a feature
+attribute of the input dataset to determine local neighborhoods. From the
+``postproc`` argument you might have guessed that this object is also a
+measure -- and your are right. This measure returns whatever value is
+computed by the basic measure (here this is a cross-validation) and
+assignes it to the feature representing the center of the sphere in the
+output dataset. For this initial example we are not interested in the full
+cross-validation output (error per each fold), but only in the mean error,
+hence we are using an appropriate mapper for post-processing. As with any
+other :term:`processing object` we have to call it with a dataset to run
+the actual analysis:
+
+#$>>> res = sl(ds)
+>>> print res
+<Dataset: 1x577@float64, <sa: cv_fold>, <a: mapper>>
+
+That was it. However, this was just a toy example with only our ventral
+temporal ROI. Let's now run it on a much larger volume, so we can actually
+localize something (even loading and preprocessing will take a few seconds).
+We will reuse the same searchlight setup and run it on this data as well.
+Due to the size of the data it might take a few minutes to compute the
+results, depending on the number of CPU in the system.
+
+>>> ds = get_haxby2001_data_alternative(roi=0)
+>>> print ds.nfeatures
+34888
+>>> res = sl(ds)
+
+>>> h = hist(res.samples[0], bins=len(N.unique(res.samples[0]))+1)
+
 
 ds = get_haxby2001_data_alternative(roi=0)
 clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')

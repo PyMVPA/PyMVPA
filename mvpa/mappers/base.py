@@ -761,8 +761,8 @@ class ChainMapper(Mapper):
                           "previous mapper return multiple samples. Trying to "
                           "switch to reverse() for the remainder of the chain."
                           % str(m))
-                    mp = self[:-1*i].reverse(mp)
-                    return mp
+                mp = self[:-1*i].reverse(mp)
+                return mp
         return mp
 
 

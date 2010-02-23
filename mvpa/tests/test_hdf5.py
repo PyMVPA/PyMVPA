@@ -21,6 +21,8 @@ import tempfile
 
 from mvpa.base.dataset import AttrDataset
 from mvpa.base.hdf5 import h5save, h5load, obj2hdf
+from mvpa.misc.data_generators import load_example_fmri_dataset
+from mvpa.mappers.fx import mean_sample
 
 
 
@@ -89,3 +91,17 @@ def test_directaccess():
     h5save(f.name, datasets['uni4medium'])
     assert_array_equal(h5load(f.name).samples,
                        datasets['uni4medium'].samples)
+
+
+def test_function_ptrs():
+    ds = load_example_fmri_dataset()
+    # add a mapper with a function ptr inside
+    ds = ds.get_mapped(mean_sample())
+    f = tempfile.NamedTemporaryFile()
+    h5save(f.name, ds)
+    ds_loaded = h5load(f.name)
+    fresh = load_example_fmri_dataset().O
+    # check that the reconstruction function pointer in the FxMapper points
+    # to the right one
+    assert_array_equal(ds_loaded.a.mapper.forward(fresh),
+                        ds.samples)
