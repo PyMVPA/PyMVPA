@@ -218,7 +218,7 @@ The :class:`~mvpa.clfs.transerror.TransferError` class provides a convenient
 way to determine the transfer error of a trained classifier on some validation
 dataset, i.e. the accuracy of the classifier's predictions on a novel,
 independent dataset. A :class:`~mvpa.clfs.transerror.TransferError` object is
-instanciated by passing a classifier object to the constructor.  Optionally a
+instantiated by passing a classifier object to the constructor.  Optionally a
 custom error function can be specified (see `errorfx` argument).
 
 To compute the transfer error simply call the object with a validation dataset.

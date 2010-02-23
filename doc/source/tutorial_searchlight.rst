@@ -59,7 +59,7 @@ idea. We created an object instance ``aov`` being a
 :class:`~mvpa.datasets.base.Dataset`. Where have we seen this before?
 Right! That is little different from a call to
 :class:`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError`.
-Both are objects that get instanciated (potentially with some custom
+Both are objects that get instantiated (potentially with some custom
 arguments) and yield the results in a dataset when called with an input
 dataset. This is called a :term:`processing object` and is a common
 concept in PyMVPA.
@@ -72,7 +72,7 @@ per feature. The latter is called a
 :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure`. But other than the
 number of features in the returned dataset there is little difference. All
 measures in PyMVPA, for example, support an optional post-processing step.
-During instanciation an arbitray mapper can be specified that is called
+During instantiation an arbitray mapper can be specified that is called
 internally to forward-map the results before they are returned. If, for
 some reason, the F-scores need to be scaled into the interval [0,1], an
 :class:`~mvpa.mappers.fx.FxMapper` can be used to achieve that:
@@ -138,7 +138,7 @@ but only in the mean error, hence we are using an appropriate mapper for
 post-processing. As with any other :term:`processing object` we have to
 call it with a dataset to run the actual analysis:
 
-#$>>> res = sl(ds)
+>>> res = sl(ds)
 >>> print res
 <Dataset: 1x577@float64, <sa: cv_fold>, <a: mapper>>
 
@@ -248,7 +248,7 @@ that there is a way out of this dilemma. We can look at the confusion
 matrix of a classifier to get a lot more information that is otherwise
 hidden. However, we cannot reasonably do this for thousands of searchlight
 spheres. It becomes obvious that a searchlight analysis is probably not the
-end of a data exploration, as it raises more questions then it answers.
+end of a data exploration, as it raises more questions than it answers.
 
 Moreover, a searchlight cannot detect signals that extend beyond a small
 local neighborhood. This property effectively limits the scope of analyses
@@ -263,10 +263,10 @@ that are more gentle in this respect.
 .. _multiple comparisons: http://en.wikipedia.org/wiki/Multiple_comparisons
 
 Despite these limitations a searchlight analysis can be a valuable
-exporative tool if use appropriately. The capabilities of PyMVPA's searchlight
+exporative tool if used appropriately. The capabilities of PyMVPA's searchlight
 implementation go beyond what we looked at in this tutorial. It is not only
 possible to run *spatial* searchlights, but multiple spaces can be
-considered simultaneously. We will get back to these more advanced topic later
+considered simultaneously. We will get back to these more advanced topics later
 on.
 
 
