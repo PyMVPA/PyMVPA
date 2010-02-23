@@ -62,6 +62,17 @@ experiments.
   DOI: http://dx.doi.org/10.1214/009053604000000067
 
 
+.. _Fis25:
+
+**Fisher, R. A.** (1925). Statistical methods for research workers. Oliver and Boyd: Edinburgh.
+  *One of the 20th century's most influential books on statistical methods, which
+  coined the term 'Test of significance'.*
+
+  Keywords: :keyword:`statistics`, :keyword:`hypothesis testing`
+
+  URL: http://psychclassics.yorku.ca/Fisher/Methods/
+
+
 .. _GE03:
 
 **Guyon, I. & Elisseeff, A.** (2003). An Introduction to Variable and Feature Selection. *Journal of Machine Learning*, *3*, 1157–1182.
