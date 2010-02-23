@@ -216,7 +216,6 @@ class ClassifiersTests(unittest.TestCase):
         # TODO: sg/libsvm segfaults
         #       GPR  -- non-linear sensitivities
         if ('has_sensitivity' in lrn.__tags__
-            and not 'sg' in lrn.__tags__
             and not 'libsvm' in lrn.__tags__
             and not ('gpr' in lrn.__tags__
                      and 'non-linear' in lrn.__tags__)

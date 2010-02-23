@@ -15,6 +15,7 @@ import numpy as N
 from mvpa.base import externals
 if externals.exists('shogun', raiseException=True):
     import shogun.Classifier
+    _shogun_exposes_slavesvm_labels = externals.versions['shogun:rev'] < 4633
 
 from mvpa.misc.state import StateVariable
 from mvpa.base.types import asobjarray
@@ -70,6 +71,7 @@ class LinearSVMWeights(Sensitivity):
             nclabels = len(clabels)
             sens_labels = []
             isvm = 0                    # index for svm among known
+
             for i in xrange(nclabels):
                 for j in xrange(i+1, nclabels):
                     sgsvmi = sgsvm.get_svm(isvm)
@@ -77,9 +79,14 @@ class LinearSVMWeights(Sensitivity):
                     # Since we gave the labels in incremental order,
                     # we always should be right - but it does not
                     # hurt to check if set of labels is the same
-                    assert(set([sgsvmi.get_label(int(x))
-                                for x in sgsvmi.get_support_vectors()])
-                           == set(labels_tuple))
+                    if __debug__ and _shogun_exposes_slavesvm_labels:
+                        if not sgsvmi.get_labels():
+                            # We need to call classify() so labels get assigned
+                            # to the multiclass SVM
+                            sgsvm.classify()
+                        assert(set([sgsvmi.get_label(int(x))
+                                    for x in sgsvmi.get_support_vectors()])
+                               == set(labels_tuple))
                     sens1, bias = self.__sg_helper(sgsvmi)
                     sens.append(sens1)
                     biases.append(bias)
