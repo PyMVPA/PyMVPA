@@ -170,7 +170,8 @@ def get_samples_per_chunk_label(dataset):
 
 
 @datasetmethod
-def permute_targets(dataset, perchunk=True, assure_permute=False):
+def permute_targets(dataset, targets_attr='targets', chunks_attr='chunks',
+                    assure_permute=False):
     """Permute the targets of a Dataset.
 
     A new permuted set of targets is assigned to the dataset, replacing
@@ -180,35 +181,47 @@ def permute_targets(dataset, perchunk=True, assure_permute=False):
 
     Parameters
     ----------
-    perchunk : bool
-      If True, permutation is limited to samples sharing the same chunk
-      value.  Therefore only the association of a certain sample with
-      a label is permuted while keeping the absolute number of
-      occurences of each label value within a certain chunk constant.
-      If there is no `chunks` information in the dataset this flag has
-      no effect.
-    assure_permute : bool
-      If True, assures that targets are permutted, i.e. any one is
+    targets_attr : string, optional
+      Name of the samples attribute which is used as ``targets``
+      (i.e. gets permuted).
+    chunks_attr : None or string
+      If a string given, permutation is limited to samples sharing the
+      same value of the `chunks_attr` samples attribute.  Therefore,
+      only the association of a certain sample with a label is
+      permuted while keeping the absolute number of occurrences of each
+      label value within a certain chunk constant.
+    assure_permute : bool, optional
+      If True, assures that targets are permuted, i.e. any one is
       different from the original one
+
+    Returns
+    -------
+    Dataset
+       shallow copy of original dataset with permuted labels.
     """
     if __debug__:
-        if len(N.unique(dataset.sa.targets)) < 2:
+        if len(dataset.sa[targets_attr].unique) < 2:
             raise RuntimeError(
                   "Permuting targets is only meaningful if there are "
-                  "more than two different targets.")
+                  "more than two different values of targets.")
 
     # local binding
-    targets = dataset.sa['targets'].value
+    targets = dataset.sa[targets_attr].value
 
     # now scramble
-    if perchunk and dataset.sa.has_key('chunks'):
-        chunks = dataset.sa['chunks'].value
+    if chunks_attr:
+        if chunks_attr in dataset.sa:
+            chunks = dataset.sa[chunks_attr].value
 
-        ptargets = N.zeros(targets.shape, dtype=targets.dtype)
+            ptargets = N.zeros(targets.shape, dtype=targets.dtype)
 
-        for o in dataset.sa['chunks'].unique:
-            ptargets[chunks == o] = \
-                N.random.permutation(targets[chunks == o])
+            for o in dataset.sa[chunks_attr].unique:
+                ptargets[chunks == o] = \
+                    N.random.permutation(targets[chunks == o])
+        else:
+            raise ValueError, \
+                  "There is no sa named %r in %s, thus no permutation is " \
+                  "possible" % (chunks_attr, dataset)
     else:
         ptargets = N.random.permutation(targets)
 
@@ -218,18 +231,20 @@ def permute_targets(dataset, perchunk=True, assure_permute=False):
                 if assure_permute == 1:
                     raise RuntimeError, \
                           "Cannot assure permutation of targets %s for " \
-                          "some reason with chunks %s and while " \
-                          "perchunk=%s . Should not happen" % \
-                          (targets, self.chunks, perchunk)
+                          "some reason for dataset %s and chunks_attr=%r. " \
+                          "Should not happen" % \
+                          (targets, dataset, chunks_attr)
             else:
                 assure_permute = 11 # make 10 attempts
             if __debug__:
                 debug("DS",  "Recalling permute to assure different targets")
             permute_targets(dataset,
-                           perchunk=perchunk,
-                           assure_permute=assure_permute-1)
+                            targets_attr=targets_attr,
+                            chunks_attr=chunks_attr,
+                            assure_permute=assure_permute-1)
+
     # reassign to the dataset
-    dataset.sa.targets = ptargets
+    dataset.sa[targets_attr].value = ptargets
 
 
 @datasetmethod
@@ -238,20 +253,20 @@ def random_samples(dataset, nperlabel):
 
     Parameters
     ----------
-    nperlabel : int, list
-
-      If an integer is given, the specified number of samples is randomly
-      choosen from the group of samples sharing a unique label value (total
+    dataset : Dataset
+    nperlabel : int or list
+      If an `int` is given, the specified number of samples is randomly
+      chosen from the group of samples sharing a unique label value. Total
       number of selected samples: nperlabel x len(uniquetargets).
-
-      If a list is given which's length is matching the unique label values, it
-      will specify the number of samples chosen for each particular unique
+      If a `list` is given of length matching the unique label values, it
+      specifies the number of samples chosen for each particular unique
       label.
 
     Returns
     -------
-    A dataset instance for the chosen samples. All feature attributes and
-    dataset attribute share there data with the source dataset.
+    Dataset
+      A dataset instance for the chosen samples. All feature attributes and
+      dataset attribute share there data with the source dataset.
     """
     uniquetargets = dataset.sa['targets'].unique
     # if interger is given take this value for all classes
@@ -325,7 +340,7 @@ class SequenceStats(dict):
     Current implementation is ugly!
     """
 
-    def __init__(self, seq, order=2):#, chunks=None, perchunk=False):
+    def __init__(self, seq, order=2):#, chunks=None, chunks_attr=None):
         """Initialize SequenceStats
 
         Parameters

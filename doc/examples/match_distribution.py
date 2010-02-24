@@ -68,8 +68,8 @@ dataset = nifti_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
 dataset = dataset[:, int(N.random.uniform()*dataset.nfeatures)]
 
 verbose(2, "Minimal preprocessing to remove the bias per each voxel")
-detrend(dataset, perchunk=True, model='linear')
-zscore(dataset, perchunk=True, baselinetargets=[0],
+detrend(dataset, chunks_attr='chunks', model='linear')
+zscore(dataset, chunks_attr='chunks', baselinetargets=[0],
        targetdtype='float32')
 
 # on all voxels at once, just for the sake of visualization

@@ -29,7 +29,7 @@ dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
 poly_detrend(dataset, polyord=1, chunks_attr='chunks')
 
 # zscore dataset relative to baseline ('rest') mean
-zscore(dataset, perchunk=True, baselinetargets=['rest'])
+zscore(dataset, chunks_attr='chunks', baselinetargets=['rest'])
 
 # select class face and house for this demo analysis
 # would work with full datasets (just a little slower)

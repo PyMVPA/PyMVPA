@@ -232,7 +232,7 @@ class Splitter(object):
                             ds_a.lastsplit = lastsplit
                     # permute the labels
                     if self.__permute:
-                        permute_targets(ds, perchunk=True)
+                        permute_targets(ds, chunks_attr='chunks')
 
                     # select subset of samples if requested
                     if nperlabel == 'all' or ds is None:

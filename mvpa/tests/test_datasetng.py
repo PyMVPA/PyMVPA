@@ -513,6 +513,19 @@ def test_labelpermutation_randomsampling():
     ds.chunks[0] = 9876
     assert_array_equal(ds.chunks, ods.chunks)
 
+    # try to permute on custom target
+    ds = ods.copy()
+    otargets = ods.sa.targets.copy()
+    ds.sa['custom'] = ods.sa.targets.copy()
+    assert_array_equal(ds.sa.custom, otargets)
+    assert_array_equal(ds.sa.targets, otargets)
+
+    ds.permute_targets(targets_attr='custom')
+    # original targets should still match
+    assert_array_equal(ds.sa.targets, otargets)
+    # but custom should get permuted
+    assert_false((ds.sa.custom == otargets).all())
+
 
 def test_masked_featureselection():
     origdata = N.random.standard_normal((10, 2, 4, 3, 5)).view(myarray)
