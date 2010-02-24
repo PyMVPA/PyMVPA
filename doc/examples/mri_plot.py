@@ -74,7 +74,7 @@ mri_args = {
     'background_mask' : os.path.join(datapath, 'mask_brain.nii.gz'),
     'overlay_mask' : os.path.join(datapath, 'mask_gray.nii.gz'),
     'cmap_bg' : 'gray',
-    'cmap_overlay' : 'autumn', # YlOrRd_r # P.cm.autumn
+    'cmap_overlay' : 'autumn', # YlOrRd_r # pl.cm.autumn
     'interactive' : cfg.getboolean('examples', 'interactive', True),
     }
 

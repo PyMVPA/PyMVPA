@@ -16,7 +16,7 @@ raise NotImplementedError
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import externals
 if externals.exists('scipy', raiseException=True):
@@ -99,7 +99,7 @@ class FFTResamplemapper(Mapper):
             raise RuntimeError, 'This should not happen!'
 
 
-        nt = N.round(nt)
+        nt = np.round(nt)
 
         # downsample data
         data = signal.resample(orig_data, nt, axis=2, window=window, **kwargs)
@@ -113,7 +113,7 @@ class FFTResamplemapper(Mapper):
             #     accordingly instead of creating a new one.
             #     It would give us opportunity to assess what
             #     resampling did...
-            mapper = MaskMapper(N.ones(data.shape[1:], dtype='bool'))
+            mapper = MaskMapper(np.ones(data.shape[1:], dtype='bool'))
             # reassign a new mapper.
             # XXX this is very evil -- who knows what mapper it is replacing
             self.a['mapper'].value = mapper

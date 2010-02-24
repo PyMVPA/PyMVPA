@@ -8,20 +8,20 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Helpers for wrapping C libraries with ctypes."""
 
-import numpy as N
+import numpy as np
 import ctypes as C
 
 # define an array type to help with wrapping
-c_darray = N.ctypeslib.ndpointer(dtype=N.float64, flags='aligned,contiguous')
-c_larray = N.ctypeslib.ndpointer(dtype=N.int64, flags='aligned,contiguous')
-c_farray = N.ctypeslib.ndpointer(dtype=N.float32, flags='aligned,contiguous')
-c_iarray = N.ctypeslib.ndpointer(dtype=N.int32, flags='aligned,contiguous')
+c_darray = np.ctypeslib.ndpointer(dtype=np.float64, flags='aligned,contiguous')
+c_larray = np.ctypeslib.ndpointer(dtype=np.int64, flags='aligned,contiguous')
+c_farray = np.ctypeslib.ndpointer(dtype=np.float32, flags='aligned,contiguous')
+c_iarray = np.ctypeslib.ndpointer(dtype=np.int32, flags='aligned,contiguous')
 
 def extend_args(*args):
     """Turn ndarray arguments into dims and arrays."""
     arglist = []
     for arg in args:
-        if isinstance(arg, N.ndarray):
+        if isinstance(arg, np.ndarray):
             # add the dimensions
             arglist.extend(arg.shape)
 
@@ -36,17 +36,17 @@ def extend_args(*args):
 
 # incomplete type conversion
 typemap = {
-    N.float64: C.c_double,
-    N.float32: C.c_float,
-    N.int64: C.c_int64,
-    N.int32: C.c_int32}
+    np.float64: C.c_double,
+    np.float32: C.c_float,
+    np.int64: C.c_int64,
+    np.int32: C.c_int32}
 
 def process_args(*args):
     """Turn ndarray arguments into dims and array pointers for calling
     a ctypes-wrapped function."""
     arglist = []
     for arg in args:
-        if isinstance(arg, N.ndarray):
+        if isinstance(arg, np.ndarray):
             # add the dimensions
             arglist.extend(arg.shape)
 
@@ -62,12 +62,12 @@ def process_args(*args):
 def get_argtypes(*args):
     argtypes = []
     for arg in args:
-        if isinstance(arg, N.ndarray):
+        if isinstance(arg, np.ndarray):
             # add the dimensions
             argtypes.extend([C.c_int]*len(arg.shape))
 
             # add the pointer to the ndarray
-            argtypes.append(N.ctypeslib.ndpointer(dtype=arg.dtype))
+            argtypes.append(np.ctypeslib.ndpointer(dtype=arg.dtype))
         else:
             # try and figure out the type
             argtypes.append(arg)

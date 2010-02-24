@@ -9,7 +9,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import os
-import numpy as N
+import numpy as np
 
 # later replace with
 from mvpa.suite import *

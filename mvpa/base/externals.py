@@ -43,8 +43,8 @@ versions = _VersionsChecker()
 def __assign_numpy_version():
     """Check if numpy is present (it must be) an if it is -- store its version
     """
-    import numpy as N
-    versions['numpy'] = SmartVersion(N.__version__)
+    import numpy as np
+    versions['numpy'] = SmartVersion(np.__version__)
 
 def __assign_scipy_version():
     # To don't allow any crappy warning to sneak in
@@ -113,8 +113,8 @@ def __check_pywt(features=None):
       'wp reconstruct fixed'
     """
     import pywt
-    import numpy as N
-    data = N.array([ 0.57316901,  0.65292526,  0.75266733,  0.67020084,  0.46505364,
+    import numpy as np
+    data = np.array([ 0.57316901,  0.65292526,  0.75266733,  0.67020084,  0.46505364,
                      0.76478331,  0.33034164,  0.49165547,  0.32979941,  0.09696717,
                      0.72552711,  0.4138999 ,  0.54460628,  0.786351  ,  0.50096306,
                      0.72436454, 0.2193098 , -0.0135051 ,  0.34283984,  0.65596245,
@@ -131,7 +131,7 @@ def __check_pywt(features=None):
 
     if 'wp reconstruct fixed' in features:
         rec = wp2.reconstruct()
-        if N.linalg.norm(rec[:len(data)] - data) > 1e-3:
+        if np.linalg.norm(rec[:len(data)] - data) > 1e-3:
             raise ImportError, \
                   "Failed to reconstruct WP correctly"
     return True
@@ -198,7 +198,7 @@ def __check_weave():
     """
     from scipy import weave
     from scipy.weave import converters, build_tools
-    import numpy as N
+    import numpy as np
     # to shut weave up
     import sys
     # we can't rely on weave at all at the restoring argv. On etch box
@@ -216,7 +216,7 @@ def __check_weave():
         cargs = []
     fmsg = None
     try:
-        data = N.array([1,2,3])
+        data = np.array([1,2,3])
         counter = weave.inline("data[0]=fabs(-1);", ['data'],
                                type_converters=converters.blitz,
                                verbose=0,
@@ -249,11 +249,11 @@ def __check_atlas_family(family):
 
 def __check_stablerdist():
     import scipy.stats
-    import numpy as N
+    import numpy as np
     ## Unfortunately 0.7.0 hasn't fixed the issue so no chance but to do
     ## a proper numerical test here
     try:
-        scipy.stats.rdist(1.32, 0, 1).cdf(-1.0 + N.finfo(float).eps)
+        scipy.stats.rdist(1.32, 0, 1).cdf(-1.0 + np.finfo(float).eps)
         # Actually previous test is insufficient for 0.6, so enabling
         # elderly test on top
         # ATM all known implementations which implement custom cdf for
@@ -311,7 +311,7 @@ def __check_matplotlib():
 def __check_pylab():
     """Check if matplotlib is there and then pylab"""
     exists('matplotlib', raiseException=True)
-    import pylab as P
+    import pylab as pl
 
 def __check_pylab_plottable():
     """Simple check either we can plot anything using pylab.
@@ -320,10 +320,10 @@ def __check_pylab_plottable():
     """
     try:
         exists('pylab', raiseException=True)
-        import pylab as P
-        fig = P.figure()
-        P.plot([1,2], [1,2])
-        P.close(fig)
+        import pylab as pl
+        fig = pl.figure()
+        pl.plot([1,2], [1,2])
+        pl.close(fig)
     except:
         raise RuntimeError, "Cannot plot in pylab"
     return True

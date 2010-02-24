@@ -13,22 +13,22 @@ __docformat__ = 'restructuredtext'
 from mvpa.base import externals
 
 externals.exists("pylab", raiseException=True)
-import pylab as P
+import pylab as pl
 
 interactive_backends = ['GTKAgg', 'TkAgg']
 
 # Backends can be modified only prior importing matplotlib, so it is
 # safe to just assign current backend right here
-mpl_backend = P.matplotlib.get_backend()
+mpl_backend = pl.matplotlib.get_backend()
 mpl_backend_isinteractive = mpl_backend in interactive_backends
 
 if mpl_backend_isinteractive:
-    Pioff = P.ioff
+    Pioff = pl.ioff
     def Pion():
-        """Little helper to call P.draw() and P.ion() if backend is interactive
+        """Little helper to call pl.draw() and pl.ion() if backend is interactive
         """
-        P.draw()
-        P.ion()
+        pl.draw()
+        pl.ion()
 else:
     def _Pnothing():
         """Dummy function which does nothing

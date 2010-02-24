@@ -16,7 +16,7 @@ __docformat__ = 'restructuredtext'
 
 from mvpa.base import externals
 
-import numpy as N
+import numpy as np
 
 from mvpa.mappers.mdp_adaptor import MDPNodeMapper
 
@@ -38,7 +38,7 @@ class LLEMapper(MDPNodeMapper):
     the corresponding MDP processing nodes). 1) An algorithm outlined in *An
     Introduction to Locally Linear Embedding* by L. Saul and S. Roweis, using
     improvements suggested in *Locally Linear Embedding for Classification* by
-    D. deRidder and R.P.W. Duin (aka `LLENode`) and 2) Hessian Locally Linear
+    D. deRidder and R.pl.W. Duin (aka `LLENode`) and 2) Hessian Locally Linear
     Embedding analysis based on algorithm outlined in *Hessian Eigenmaps: new
     locally linear embedding techniques for high-dimensional data* by C. Grimes
     and D. Donoho, 2003.

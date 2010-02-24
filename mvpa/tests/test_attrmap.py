@@ -7,7 +7,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import numpy as N
+import numpy as np
 
 from mvpa.testing.tools import assert_raises, ok_, assert_false, assert_equal, \
      assert_array_equal
@@ -34,13 +34,13 @@ def test_attrmap():
 
     #
     # Tests for recursive mapping + preserving datatype
-    class myarray(N.ndarray):
+    class myarray(np.ndarray):
         pass
 
     assert_raises(KeyError, am.to_literal, [(1, 2), 2, 0])
-    literal_fancy = [(1, 2), 2, [0], N.array([0, 1]).view(myarray)]
+    literal_fancy = [(1, 2), 2, [0], np.array([0, 1]).view(myarray)]
     literal_fancy_tuple = tuple(literal_fancy)
-    literal_fancy_array = N.array(literal_fancy, dtype=object)
+    literal_fancy_array = np.array(literal_fancy, dtype=object)
 
     for l in (literal_fancy, literal_fancy_tuple,
               literal_fancy_array):
@@ -58,7 +58,7 @@ def test_attrmap():
         ok_(isinstance(res[3], myarray))
 
     # yet another example
-    a = N.empty(1, dtype=object)
+    a = np.empty(1, dtype=object)
     a[0] = (0, 1)
     res = am.to_literal(a, recurse=True)
     ok_(isinstance(res[0], tuple))

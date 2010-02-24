@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Things concerned with types and type-checking in PyMVPA"""
 
-import numpy as N
+import numpy as np
 
 
 def is_datasetlike(obj):
@@ -48,6 +48,6 @@ def asobjarray(x):
     ----------
     x : list or tuple or ndarray
     """
-    res = N.empty(len(x), dtype=object)
+    res = np.empty(len(x), dtype=object)
     res[:] = x
     return res

@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA atlases"""
 
 import unittest, re
-import numpy as N
+import numpy as np
 
 from mvpa.testing import *
 
@@ -87,8 +87,8 @@ class AtlasesTests(unittest.TestCase):
 
         m = atl.get_map(1)
         self.failUnlessEqual(m.shape, tshape)
-        self.failUnless(N.max(m)==100)
-        self.failUnless(N.min(m)==0)
+        self.failUnless(np.max(m)==100)
+        self.failUnless(np.min(m)==0)
 
         ms = atl.get_maps('Fusiform')
         self.failUnlessEqual(len(ms), 4)

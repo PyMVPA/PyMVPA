@@ -12,7 +12,7 @@
 __docformat__ = 'restructuredtext'
 
 
-import numpy as N
+import numpy as np
 
 from mvpa.misc.state import StateVariable
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
@@ -93,25 +93,25 @@ class BLR(Classifier):
         # provide a basic (i.e. identity matrix) and correct prior
         # sigma_p, if not provided before or not compliant to 'data':
         if self.sigma_p == None: # case: not provided
-            self.sigma_p = N.eye(data.samples.shape[1]+1)
+            self.sigma_p = np.eye(data.samples.shape[1]+1)
         elif self.sigma_p.shape[1] != (data.samples.shape[1]+1): # case: wrong dimensions
-            self.sigma_p = N.eye(data.samples.shape[1]+1)
+            self.sigma_p = np.eye(data.samples.shape[1]+1)
         else:
             # ...then everything is OK :)
             pass
 
         # add one fake column of '1.0' to model the intercept:
-        self.samples_train = N.hstack([data.samples,N.ones((data.samples.shape[0],1))])
+        self.samples_train = np.hstack([data.samples,np.ones((data.samples.shape[0],1))])
         if type(self.sigma_p)!=type(self.samples_train): # if sigma_p is a number...
-            self.sigma_p = N.eye(self.samples_train.shape[1])*self.sigma_p # convert in matrix
+            self.sigma_p = np.eye(self.samples_train.shape[1])*self.sigma_p # convert in matrix
             pass
 
-        self.A_inv = N.linalg.inv(1.0/(self.sigma_noise**2) *
-                                  N.dot(self.samples_train.T,
+        self.A_inv = np.linalg.inv(1.0/(self.sigma_noise**2) *
+                                  np.dot(self.samples_train.T,
                                         self.samples_train) +
-                                  N.linalg.inv(self.sigma_p))
-        self.w = 1.0/(self.sigma_noise**2) * N.dot(self.A_inv,
-                                                   N.dot(self.samples_train.T,
+                                  np.linalg.inv(self.sigma_p))
+        self.w = 1.0/(self.sigma_noise**2) * np.dot(self.A_inv,
+                                                   np.dot(self.samples_train.T,
                                                          train_labels))
         pass
 
@@ -122,12 +122,12 @@ class BLR(Classifier):
         Predict the output for the provided data.
         """
 
-        data = N.hstack([data,N.ones((data.shape[0],1),dtype=data.dtype)])
-        predictions = N.dot(data,self.w)
+        data = np.hstack([data,np.ones((data.shape[0],1),dtype=data.dtype)])
+        predictions = np.dot(data,self.w)
 
         if self.ca.is_enabled('predicted_variances'):
             # do computation only if state variable was enabled
-            self.ca.predicted_variances = N.dot(data, N.dot(self.A_inv, data.T)).diagonal()[:,N.newaxis]
+            self.ca.predicted_variances = np.dot(data, np.dot(self.A_inv, data.T)).diagonal()[:,np.newaxis]
         self.ca.estimates = predictions
         return predictions
 
@@ -142,7 +142,7 @@ class BLR(Classifier):
         args=args[0]
         self.sigma_noise = args[0]
         if len(args)>1:
-            self.sigma_p = N.array(args[1:]) # XXX check if this is ok
+            self.sigma_p = np.array(args[1:]) # XXX check if this is ok
             pass
         return
 
@@ -160,10 +160,10 @@ if __name__ == "__main__":
     test_size = 100
     F = 1 # dimensions of the dataset
 
-    # N.random.seed(1)
+    # np.random.seed(1)
 
-    slope = N.random.rand(F)
-    intercept = N.random.rand(1)
+    slope = np.random.rand(F)
+    intercept = np.random.rand(1)
     print "True slope:",slope
     print "True intercept:",intercept
 
@@ -174,7 +174,7 @@ if __name__ == "__main__":
     regression = True
     logml = False
 
-    b = BLR(sigma_p=N.eye(F+1), sigma_noise=0.1)
+    b = BLR(sigma_p=np.eye(F+1), sigma_noise=0.1)
     b.ca.enable("predicted_variances")
     b.train(dataset_train)
     predictions = b.predict(dataset_test.samples)
@@ -187,10 +187,10 @@ if __name__ == "__main__":
 
         pylab.plot(dataset_test.samples, predictions, "b-", label="prediction")
         pylab.plot(dataset_test.samples,
-                   predictions+N.sqrt(b.ca.predicted_variances),
+                   predictions+np.sqrt(b.ca.predicted_variances),
                    "b--", label="pred(+/-)std")
         pylab.plot(dataset_test.samples,
-                   predictions-N.sqrt(b.ca.predicted_variances),
+                   predictions-np.sqrt(b.ca.predicted_variances),
                    "b--", label=None)
         pylab.legend()
         pylab.xlabel("samples")

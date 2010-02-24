@@ -33,7 +33,7 @@ class CrossValidationTests(unittest.TestCase):
         self.failUnless(
             (data.sa.chunks == \
                 [k for k in range(1, 7) for i in range(20)]).all())
-        assert_equal(len(N.unique(data.sa.origids)), data.nsamples)
+        assert_equal(len(np.unique(data.sa.origids)), data.nsamples)
 
         transerror = TransferError(sample_clf_nl)
         cv = CrossValidatedTransferError(
@@ -76,7 +76,7 @@ class CrossValidationTests(unittest.TestCase):
         results = cv(data)
 
         # must be at chance level
-        pmean = N.array(results).mean()
+        pmean = np.array(results).mean()
         self.failUnless( pmean < 0.58 and pmean > 0.42 )
 
 

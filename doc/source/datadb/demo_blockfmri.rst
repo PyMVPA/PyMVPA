@@ -99,7 +99,7 @@ References
 ==========
 
 :ref:`Haxby, J., Gobbini, M., Furey, M., Ishai, A., Schouten, J., and Pietrini,
-P.  (2001) <HGF+01>`. Distributed and overlapping representations of faces and
+pl.  (2001) <HGF+01>`. Distributed and overlapping representations of faces and
 objects in ventral temporal cortex. Science 293, 2425–2430.
 
 

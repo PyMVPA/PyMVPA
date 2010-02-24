@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 from math import floor
-import numpy as N
+import numpy as np
 
 from mvpa.base.dataset import AttrDataset
 from mvpa.misc.state import ClassWithCollections, StateVariable
@@ -58,10 +58,10 @@ class BestDetector(object):
 
         if self.__lastminimum:
             # make sure it is an array
-            errors = N.array(errors)
+            errors = np.array(errors)
             # to find out the location of the minimum but starting from the
             # end!
-            minindex = N.array((errors == minerror).nonzero()).max()
+            minindex = np.array((errors == minerror).nonzero()).max()
         else:
             minindex = errors.index(minerror)
 
@@ -124,9 +124,9 @@ class MultiStopCrit(StoppingCriterion):
         crits = [ c(errors) for c in self.__crits ]
 
         if self.__mode == 'and':
-            return N.all(crits)
+            return np.all(crits)
         else:
-            return N.any(crits)
+            return np.any(crits)
 
 
 
@@ -357,7 +357,7 @@ class RangeElementSelector(ElementSelector):
             else:
                 selected = seq > lower
         else:
-            selected = N.ones( (len_seq), dtype=N.bool )
+            selected = np.ones( (len_seq), dtype=np.bool )
 
         if not upper is None:
             if self.__inclusive:
@@ -367,17 +367,17 @@ class RangeElementSelector(ElementSelector):
             if not lower is None:
                 if lower < upper:
                     # regular range
-                    selected = N.logical_and(selected, selected_upper)
+                    selected = np.logical_and(selected, selected_upper)
                 else:
                     # outside, though that would be similar to exclude
-                    selected = N.logical_or(selected, selected_upper)
+                    selected = np.logical_or(selected, selected_upper)
             else:
                 selected = selected_upper
 
         if self.mode == 'discard':
-            selected = N.logical_not(selected)
+            selected = np.logical_not(selected)
 
-        result = N.where(selected)[0]
+        result = np.where(selected)[0]
 
         if __debug__:
             debug("ES", "Selected %d out of %d elements" %
@@ -442,7 +442,7 @@ class TailSelector(ElementSelector):
 
         # make sure that data is ndarray and compute a sequence rank matrix
         # lowest value is first
-        seqrank = N.array(seq).argsort()
+        seqrank = np.array(seq).argsort()
 
         if self.mode == 'discard' and self.__tail == 'upper':
             good_ids = seqrank[:-1*nelements]

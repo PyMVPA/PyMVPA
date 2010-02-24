@@ -22,7 +22,7 @@ warning.handlers = []
 def main():
 
     # fix seed or set to None for new each time
-    N.random.seed(44)
+    np.random.seed(44)
 
 
     # Load Haxby dataset example
@@ -33,7 +33,7 @@ def main():
                           targets=attrs.targets,
                           chunks=attrs.chunks,
                           mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
-    haxby8.samples = haxby8.samples.astype(N.float32)
+    haxby8.samples = haxby8.samples.astype(np.float32)
 
     # preprocess slightly
     detrend(haxby8, chunks_attr='chunks', model='linear')
@@ -93,8 +93,8 @@ def main():
                 print "no features were selected. skipped"
                 continue
             tfull = time.time() - t0
-            times = N.mean(times, axis=0)
-            nf = N.mean(nf)
+            times = np.mean(times, axis=0)
+            nf = np.mean(nf)
             # print "\n", confusion
             print "%5.1f%%   %-4d\t %.2fs  %.2fs   %.2fs" % \
                   (confusion.percent_correct, nf, times[0], times[1], tfull)

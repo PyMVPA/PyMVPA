@@ -33,7 +33,7 @@ equivalent to a regular constructor call (i.e.  `~mvpa.datasets.base.Dataset`),
 but we will shortly see some nice convenience aspects.
 
 >>> from mvpa.suite import *
->>> ds = dataset_wizard(N.ones((5, 12)))
+>>> ds = dataset_wizard(np.ones((5, 12)))
 >>> ds.shape
 (5, 12)
 
@@ -47,7 +47,7 @@ False
 Now let's look at a very similar dataset that only differs in a tiny but
 a very important detail:
 
->>> ds = dataset_wizard(N.ones((5, 4, 3)))
+>>> ds = dataset_wizard(np.ones((5, 4, 3)))
 >>> ds.shape
 (5, 12)
 >>> 'mapper' in ds.a
@@ -91,7 +91,7 @@ dataset like a breadcrumb track.
 As it has been mentioned, mappers  not only can transform a single dataset, but
 can be feed with other data (as long as it is compatible with the mapper).
 
->>> fwdtest = N.arange(12).reshape(4,3)
+>>> fwdtest = np.arange(12).reshape(4,3)
 >>> print fwdtest
 [[ 0  1  2]
  [ 3  4  5]
@@ -161,12 +161,12 @@ volume in the NIfTI image.
 >>> attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
 >>> len(attr.targets)
 1452
->>> print N.unique(attr.targets)
+>>> print np.unique(attr.targets)
 ['bottle' 'cat' 'chair' 'face' 'house' 'rest' 'scissors' 'scrambledpix'
  'shoe']
 >>> len(attr.chunks)
 1452
->>> print N.unique(attr.chunks)
+>>> print np.unique(attr.chunks)
 [  0.   1.   2.   3.   4.   5.   6.   7.   8.   9.  10.  11.]
 
 `SampleAttributes` allows us to load this type of file, and access its
@@ -380,7 +380,7 @@ dataset from the beginning we can see how it works:
 <ChainMapper: <Flatten>-<FeatureSlice>>
 >>> subds.nfeatures
 4
->>> revtest = N.arange(subds.nfeatures) + 10
+>>> revtest = np.arange(subds.nfeatures) + 10
 >>> print revtest
 [10 11 12 13]
 >>> rmapped = subds.a.mapper.reverse1(revtest)
@@ -409,7 +409,7 @@ averaging. We would reverse mapping do in this case? Let's test:
 
 >>> fds.nfeatures
 577
->>> revtest = N.arange(100, 100 + fds.nfeatures)
+>>> revtest = np.arange(100, 100 + fds.nfeatures)
 >>> rmapped = fds.a.mapper.reverse1(revtest)
 >>> rmapped.shape
 (64, 64, 40)

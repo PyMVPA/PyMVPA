@@ -205,11 +205,11 @@ class Report(object):
         """
 
         if externals.exists('pylab', raiseException=True):
-            import pylab as P
-            figure = P.matplotlib.figure
+            import pylab as pl
+            figure = pl.matplotlib.figure
 
         if fig is None:
-            fig = P.gcf()
+            fig = pl.gcf()
 
         if isinstance(fig, figure.Figure):
             # Create directory if needed
@@ -263,8 +263,8 @@ class Report(object):
         figures() multiple times
         """
         if externals.exists('pylab', raiseException=True):
-            import pylab as P
-        figs = P.matplotlib._pylab_helpers.Gcf.figs
+            import pylab as pl
+        figs = pl.matplotlib._pylab_helpers.Gcf.figs
         if __debug__ and not self in debug.handlers:
             debug('REP', "Saving all %d present figures" % len(figs))
         for fid, f in figs.iteritems():

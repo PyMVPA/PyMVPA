@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 import copy
-import numpy as N
+import numpy as np
 from mvpa.misc.support import Event, value2idx
 from mvpa.base.dataset import _expand_attribute
 from mvpa.mappers.fx import _uniquemerge2literal
@@ -148,7 +148,7 @@ def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
     that involves this function.
 
     >>> from mvpa.datasets import Dataset
-    >>> ds = Dataset(N.random.randn(10, 25))
+    >>> ds = Dataset(np.random.randn(10, 25))
     >>> events = [{'onset': 2, 'duration': 4},
     ...           {'onset': 4, 'duration': 4}]
     >>> eds = eventrelated_dataset(ds, events)
@@ -165,12 +165,12 @@ def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
     on possible if the input dataset contains a sample attribute with the
     necessary information about the input samples.
 
-    >>> ds.sa['record_time'] = N.linspace(0, 5, len(ds))
+    >>> ds.sa['record_time'] = np.linspace(0, 5, len(ds))
     >>> rt_events = [{'onset': 1.05, 'duration': 2.2},
     ...              {'onset': 2.3, 'duration': 2.12}]
     >>> rt_eds = eventrelated_dataset(ds, rt_events, time_attr='record_time',
     ...                               match='closest')
-    >>> N.all(eds.samples == rt_eds.samples)
+    >>> np.all(eds.samples == rt_eds.samples)
     True
     >>> # returned dataset e.g. has info from original samples
     >>> rt_eds.sa.record_time

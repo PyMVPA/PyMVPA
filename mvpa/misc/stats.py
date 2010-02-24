@@ -15,7 +15,7 @@ from mvpa.base import externals
 if externals.exists('scipy', raiseException=True):
     import scipy.stats as stats
 
-import numpy as N
+import numpy as np
 import copy
 
 def chisquare(obs, exp=None):
@@ -30,23 +30,23 @@ def chisquare(obs, exp=None):
     tuple
      chisquare-stats, associated p-value (upper tail)
     """
-    obs = N.array(obs)
+    obs = np.array(obs)
 
     # get total number of observations
-    nobs = N.sum(obs)
+    nobs = np.sum(obs)
 
     # if no expected value are supplied assume equal distribution
     if exp == None:
-        exp = N.ones(obs.shape) * nobs / N.prod(obs.shape)
+        exp = np.ones(obs.shape) * nobs / np.prod(obs.shape)
 
     # make sure to have floating point data
     exp = exp.astype(float)
 
     # compute chisquare value
-    chisq = N.sum((obs - exp )**2 / exp)
+    chisq = np.sum((obs - exp )**2 / exp)
 
     # return chisq and probability (upper tail)
-    return chisq, stats.chisqprob(chisq, N.prod(obs.shape) - 1)
+    return chisq, stats.chisqprob(chisq, np.prod(obs.shape) - 1)
 
 
 class DSMatrix(object):
@@ -76,18 +76,18 @@ class DSMatrix(object):
         self.metric = metric
 
         # size of dataset (checking if we're dealing with a column vector only)
-        num_exem = N.shape(data_vectors)[0]
+        num_exem = np.shape(data_vectors)[0]
         flag_1d = False
         # changed 4/26/09 to new way of figuring out if array is 1-D
-        #if (isinstance(data_vectors, N.ndarray)):
-        if (not(num_exem == N.size(data_vectors))):
-            num_features = N.shape(data_vectors)[1]
+        #if (isinstance(data_vectors, np.ndarray)):
+        if (not(num_exem == np.size(data_vectors))):
+            num_features = np.shape(data_vectors)[1]
         else:
             flag_1d = True
             num_features = 1
 
         # generate output (dissimilarity) matrix
-        dsmatrix = N.mat(N.zeros((num_exem, num_exem)))
+        dsmatrix = np.mat(np.zeros((num_exem, num_exem)))
 
         if (metric == 'euclidean'):
             #print 'Using Euclidean distance metric...'
@@ -96,10 +96,10 @@ class DSMatrix(object):
                 # across columns
                 for j in range(num_exem):
                     if (not(flag_1d)):
-                        dsmatrix[i, j] = N.linalg.norm(
+                        dsmatrix[i, j] = np.linalg.norm(
                             data_vectors[i, :] - data_vectors[j, :])
                     else:
-                        dsmatrix[i, j] = N.linalg.norm(
+                        dsmatrix[i, j] = np.linalg.norm(
                             data_vectors[i] - data_vectors[j])
 
         elif (metric == 'spearman'):
@@ -128,9 +128,9 @@ class DSMatrix(object):
                 for j in range(num_exem):
                     if (not(flag_1d)):
                         dsmatrix[i, j] = 1 - int(
-                            N.floor(N.sum((
+                            np.floor(np.sum((
                                 data_vectors[i, :] == data_vectors[j, :]
-                                ).astype(N.int32)) / num_features))
+                                ).astype(np.int32)) / num_features))
                     else:
                         dsmatrix[i, j] = 1 - int(
                             data_vectors[i] == data_vectors[j])
@@ -141,7 +141,7 @@ class DSMatrix(object):
     def get_triangle(self):
         # if we need to create the u_triangle representation, do so
         if (self.u_triangle is None):
-            self.u_triangle = N.triu(self.full_matrix)
+            self.u_triangle = np.triu(self.full_matrix)
 
         return self.u_triangle
 
@@ -171,13 +171,13 @@ class DSMatrix(object):
 
         orig_dsmatrix[orig_dsmatrix == 0] = -1
 
-        orig_tri = N.triu(orig_dsmatrix)
+        orig_tri = np.triu(orig_dsmatrix)
 
         vector_form = orig_tri[abs(orig_tri) > 0]
 
         vector_form[vector_form == -1] = 0
 
-        vector_form = N.asarray(vector_form)
+        vector_form = np.asarray(vector_form)
         self.vector_form = vector_form[0]
 
         return self.vector_form

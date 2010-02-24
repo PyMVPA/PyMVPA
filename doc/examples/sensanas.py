@@ -69,7 +69,7 @@ of each feature to a standard mean and variance."""
 poly_detrend(dataset, polyord=1, chunks_attr='chunks')
 
 # only use 'rest', 'shoe' and 'bottle' samples from dataset
-dataset = dataset[N.array([l in ['rest', 'shoe', 'bottle']
+dataset = dataset[np.array([l in ['rest', 'shoe', 'bottle']
                     for l in dataset.sa.targets], dtype='bool')]
 
 # zscore dataset relative to baseline ('rest') mean
@@ -83,7 +83,7 @@ the sensitivity scores. The resulting vectors are then mapped back into the
 dataspace of the original fMRI samples, which are then plotted."""
 
 fig = 0
-P.figure(figsize=(14, 8))
+pl.figure(figsize=(14, 8))
 
 keys = sensanas.keys()
 keys.sort()
@@ -101,32 +101,32 @@ for s in keys:
 
     # map sensitivity map into original dataspace
     orig_smap = dataset.mapper.reverse1(smap)
-    masked_orig_smap = N.ma.masked_array(orig_smap, mask=orig_smap == 0)
+    masked_orig_smap = np.ma.masked_array(orig_smap, mask=orig_smap == 0)
 
     # make a new subplot for each classifier
     fig += 1
-    P.subplot(3, 3, fig)
+    pl.subplot(3, 3, fig)
 
-    P.title(s)
+    pl.title(s)
 
-    P.imshow(masked_orig_smap[0],
+    pl.imshow(masked_orig_smap[0],
              interpolation='nearest',
              aspect=1.25,
-             cmap=P.cm.autumn)
+             cmap=pl.cm.autumn)
 
     # uniform scaling per base sensitivity analyzer
     if s.count('ANOVA'):
-        P.clim(0, 30)
+        pl.clim(0, 30)
     elif s.count('SVM'):
-        P.clim(0, 0.055)
+        pl.clim(0, 0.055)
     else:
         pass
 
-    P.colorbar(shrink=0.6)
+    pl.colorbar(shrink=0.6)
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
-    P.show()
+    pl.show()
 
 """
 Output of the example analysis:

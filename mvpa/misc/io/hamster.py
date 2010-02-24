@@ -36,10 +36,10 @@ class Hamster(object):
 
     To undig burried hamster use Hamster(filename). Here is an example:
 
-    >>> import numpy as N
+    >>> import numpy as np
     >>> import tempfile
     >>> h = Hamster(bla='blai')
-    >>> h.boo = N.arange(5)
+    >>> h.boo = np.arange(5)
     >>> tmp = tempfile.NamedTemporaryFile()
     >>> h.dump(tmp.name)
     ...

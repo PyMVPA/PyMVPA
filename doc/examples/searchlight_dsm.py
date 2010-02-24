@@ -45,7 +45,7 @@ dsm = DSMatrix(dataset.targets, 'confusion')
 # setup measure to be computed in each sphere (correlation
 # distance between dissimilarity matrix and the dissimilarities
 # of a particular searchlight sphere across experimental
-# conditions), N.B. in this example between-condition
+# conditions), np.B. in this example between-condition
 # dissimilarity is also pearson's r (i.e., correlation distance)
 dsmetric = DSMDatasetMeasure(dsm, 'pearson', 'pearson')
  
