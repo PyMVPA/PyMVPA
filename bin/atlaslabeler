@@ -15,7 +15,7 @@ import mvpa
 from mvpa.misc.cmdline import parser, opts, opt
 from mvpa.base import verbose, warning, externals
 
-if externals.exists('nifti', raiseException=True):
+if externals.exists('nifti', raise_=True):
     from nifti import NiftiImage
 
 if __debug__:
@@ -435,7 +435,7 @@ else:
     verbose(2, "Chaining needed transformations")
     # by default -- no transformation
     if options.transformationFile:
-        externals.exists('scipy', raiseException=True)
+        externals.exists('scipy', raise_=True)
         from scipy.io import read_array
 
         transfMatrix = read_array(options.transformationFile)

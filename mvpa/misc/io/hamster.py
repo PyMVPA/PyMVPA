@@ -20,8 +20,8 @@ _d_seti_ = dict.__setitem__
 _o_geta_ = dict.__getattribute__
 _o_seta_ = dict.__setattr__
 
-if externals.exists('cPickle', raiseException=True) and \
-   externals.exists('gzip', raiseException=True):
+if externals.exists('cPickle', raise_=True) and \
+   externals.exists('gzip', raise_=True):
     import cPickle, gzip
 
 if __debug__:

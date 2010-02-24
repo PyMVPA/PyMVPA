@@ -16,11 +16,11 @@ import numpy as np
 from mvpa.base import externals
 from mvpa.misc.exceptions import InvalidHyperparameterError
 
-if externals.exists("scipy", raiseException=True):
+if externals.exists("scipy", raise_=True):
     import scipy.linalg as SL
 
 # no sense to import this module if openopt is not available
-if externals.exists("openopt", raiseException=True):
+if externals.exists("openopt", raise_=True):
     try:
         from openopt import NLP
     except ImportError:

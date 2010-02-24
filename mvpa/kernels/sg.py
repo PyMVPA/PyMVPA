@@ -22,7 +22,7 @@ from mvpa.base.externals import exists, versions
 from mvpa.kernels.base import Kernel
 from mvpa.misc.param import Parameter
 
-if exists('shogun', raiseException=True):
+if exists('shogun', raise_=True):
     import shogun.Kernel as sgk
     from shogun.Features import RealFeatures
 else:

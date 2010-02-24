@@ -33,7 +33,7 @@ class _VersionsChecker(dict):
                 # run registered procedure to obtain versions
                 self._KNOWN[key]()
             else:
-                exists(key, force=True, raiseException=True)
+                exists(key, force=True, raise_=True)
         return super(_VersionsChecker, self).__getitem__(key)
 
 versions = _VersionsChecker()
@@ -61,7 +61,7 @@ def __assign_scipy_version():
 def __check_scipy():
     """Check if scipy is present an if it is -- store its version
     """
-    exists('numpy', raiseException=True)
+    exists('numpy', raise_=True)
     __assign_numpy_version()
     __assign_scipy_version()
     import scipy as sp
@@ -310,7 +310,7 @@ def __check_matplotlib():
 
 def __check_pylab():
     """Check if matplotlib is there and then pylab"""
-    exists('matplotlib', raiseException=True)
+    exists('matplotlib', raise_=True)
     import pylab as pl
 
 def __check_pylab_plottable():
@@ -319,7 +319,7 @@ def __check_pylab_plottable():
     Primary use in unittests
     """
     try:
-        exists('pylab', raiseException=True)
+        exists('pylab', raise_=True)
         import pylab as pl
         fig = pl.figure()
         pl.plot([1,2], [1,2])
@@ -409,11 +409,11 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
           'rpy': "__check_rpy()",
           'rpy2': "__check_rpy2()",
-          'lars': "exists('rpy2', raiseException=True);" \
+          'lars': "exists('rpy2', raise_=True);" \
                   "import rpy2.robjects; rpy2.robjects.r.library('lars')",
-          'elasticnet': "exists('rpy2', raiseException=True); "\
+          'elasticnet': "exists('rpy2', raise_=True); "\
                   "import rpy2.robjects; rpy2.robjects.r.library('elasticnet')",
-          'glmnet': "exists('rpy2', raiseException=True); " \
+          'glmnet': "exists('rpy2', raise_=True); " \
                   "import rpy2.robjects; rpy2.robjects.r.library('glmnet')",
           'matplotlib': "__check_matplotlib()",
           'pylab': "__check_pylab()",
@@ -442,7 +442,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           }
 
 
-def exists(dep, force=False, raiseException=False, issueWarning=None):
+def exists(dep, force=False, raise_=False, issueWarning=None):
     """
     Test whether a known dependency is installed on the system.
 
@@ -457,7 +457,7 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
     force : boolean
       Whether to force the test even if it has already been
       performed.
-    raiseException : boolean
+    raise_ : boolean
       Whether to raise RuntimeError if dependency is missing.
     issueWarning : string or None or True
       If string, warning with given message would be thrown.
@@ -466,7 +466,7 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
     """
     # if we are provided with a list of deps - go through all of them
     if isinstance(dep, list) or isinstance(dep, tuple):
-        results = [ exists(dep_, force, raiseException) for dep_ in dep ]
+        results = [ exists(dep_, force, raise_) for dep_ in dep ]
         return bool(reduce(lambda x,y: x and y, results, True))
 
     # where to look in cfg
@@ -482,7 +482,7 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
         # check whether an exception should be raised, even though the external
         # was already tested previously
         if not cfg.getboolean('externals', cfgid) \
-               and raiseException \
+               and raise_ \
                and cfg.getboolean('externals', 'raise exception', True):
             raise RuntimeError, "Required external '%s' was not found" % dep
         return cfg.getboolean('externals', cfgid)
@@ -524,7 +524,7 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
                   (dep, {True:'', False:' NOT'}[result], estr))
 
     if not result:
-        if raiseException \
+        if raise_ \
                and cfg.getboolean('externals', 'raise exception', True):
             raise RuntimeError, "Required external '%s' was not found" % dep
         if issueWarning is not None \

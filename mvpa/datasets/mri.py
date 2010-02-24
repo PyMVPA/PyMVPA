@@ -30,7 +30,7 @@ from mvpa.base.dataset import _expand_attribute
 if __debug__:
     from mvpa.base import debug
 
-if externals.exists('nifti', raiseException=True):
+if externals.exists('nifti', raise_=True):
     from nifti import NiftiImage
 
 from mvpa.datasets.base import Dataset

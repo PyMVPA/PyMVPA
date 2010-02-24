@@ -10,7 +10,7 @@
 
 from mvpa.base import externals
 
-if externals.exists('pywt', raiseException=True):
+if externals.exists('pywt', raise_=True):
     # import conditional to be able to import the whole module while building
     # the docs even if pywt is not installed
     import pywt

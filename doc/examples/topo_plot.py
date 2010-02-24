@@ -16,7 +16,7 @@ Example demonstrating a topography plot."""
 from mvpa.suite import *
 
 # Sanity check if we have griddata available
-externals.exists("griddata", raiseException=True)
+externals.exists("griddata", raise_=True)
 
 # EEG example splot
 pl.subplot(1, 2, 1)

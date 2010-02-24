@@ -16,7 +16,7 @@ from mvpa.base import externals, warning, cfg
 if __debug__:
     from mvpa.base import debug
 
-if externals.exists('scipy', raiseException=True):
+if externals.exists('scipy', raise_=True):
     import scipy
     import scipy.stats
     import scipy.stats as stats
@@ -67,7 +67,7 @@ if not externals.exists('good scipy.stats.rdist'):
 
     try: # Retest
         externals.exists('good scipy.stats.rdist', force=True,
-                         raiseException=True)
+                         raise_=True)
     except RuntimeError:
         warning("scipy.stats.rdist was not fixed with a monkey-patch. "
                 "It remains broken")
@@ -126,7 +126,7 @@ if not externals.exists('good scipy.stats.rv_discrete.ppf'):
     scipy.stats.distributions.rv_discrete.ppf = ppf7
     try:
         externals.exists('good scipy.stats.rv_discrete.ppf', force=True,
-                         raiseException=True)
+                         raise_=True)
     except RuntimeError:
         warning("rv_discrete.ppf was not fixed with a monkey-patch. "
                 "It remains broken")

@@ -18,7 +18,7 @@ from mvpa.base.externals import exists, versions
 
 __all__ = []
 
-if exists('rpy2', raiseException=True):
+if exists('rpy2', raise_=True):
     __all__ = [ 'Rrx', 'Rrx2' ]
 
     if versions['rpy2'] >= '2.1.0beta':
