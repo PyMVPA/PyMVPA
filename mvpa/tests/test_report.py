@@ -18,7 +18,7 @@ _test_classes = [ DummyReport ]
 
 from mvpa.testing import sweepargs
 
-if externals.exists('reportlab', raiseException=False):
+if externals.exists('reportlab', raise_=False):
     from mvpa.base.report import Report
     _test_classes += [ Report ]
 

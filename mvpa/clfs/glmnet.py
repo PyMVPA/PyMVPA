@@ -16,7 +16,7 @@ import numpy as np
 import mvpa.base.externals as externals
 
 # do conditional to be able to build module reference
-if externals.exists('glmnet', raiseException=True):
+if externals.exists('glmnet', raise_=True):
     import rpy2.robjects
     import rpy2.robjects.numpy2ri
     RRuntimeError = rpy2.robjects.rinterface.RRuntimeError

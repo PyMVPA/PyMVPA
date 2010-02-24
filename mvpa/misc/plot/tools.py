@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 from mvpa.base import externals
 
-externals.exists("pylab", raiseException=True)
+externals.exists("pylab", raise_=True)
 import pylab as pl
 
 interactive_backends = ['GTKAgg', 'TkAgg']

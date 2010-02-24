@@ -17,14 +17,14 @@ import numpy as np
 
 from mvpa.base import externals
 
-if externals.exists("pylab", raiseException=True):
+if externals.exists("pylab", raise_=True):
     import pylab as pl
     import matplotlib.numerix.ma as M
 
-if externals.exists("griddata", raiseException=True):
+if externals.exists("griddata", raise_=True):
     from mvpa.support.griddata import griddata
 
-if externals.exists("scipy", raiseException=True):
+if externals.exists("scipy", raise_=True):
     from scipy.optimize import leastsq
 
 

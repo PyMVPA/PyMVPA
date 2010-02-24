@@ -19,7 +19,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.base import externals
-if externals.exists('scipy', raiseException=True):
+if externals.exists('scipy', raise_=True):
     from scipy.signal import resample
 
 from mvpa.base.dochelpers import _str, borrowkwargs

@@ -88,7 +88,7 @@ def main():
 
     # late import of pynifti to be able to get help output without a big
     # external dep.
-    externals.exists('nifti', raiseException=True)
+    externals.exists('nifti', raise_=True)
     from nifti import NiftiImage
 
     if len(infiles) > 1 or not len(infiles):
@@ -162,7 +162,7 @@ def main():
 
     if options.mcflirt_plots:
         verbose(2, "Plot motion parameters estimates")
-        externals.exists('pylab', raiseException=True)
+        externals.exists('pylab', raise_=True)
         mc = McFlirtParams(os.path.join(opath, 'func_mc.par'))
 
         for k, (title, fields, ylabel) in enumerate(

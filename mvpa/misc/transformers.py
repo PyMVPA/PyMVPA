@@ -238,7 +238,7 @@ class DistPValue(ClassWithCollections):
         WARNING: Highly experimental/slow/etc: no theoretical grounds have been
         presented in any paper, nor proven
         """
-        externals.exists('scipy', raiseException=True)
+        externals.exists('scipy', raise_=True)
         ClassWithCollections.__init__(self, **kwargs)
 
         self.sd = sd
