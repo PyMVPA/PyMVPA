@@ -127,6 +127,7 @@ def collect_nose_tests():
               'test_kernel',
               'test_svmkernels',
               'test_waveletmapper',
+              'test_emp_null',
               ]
 
     if not cfg.getboolean('tests', 'lowmem', default='no'):

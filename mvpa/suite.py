@@ -160,6 +160,7 @@ if externals.exists("scipy"):
     from mvpa.clfs.plr import *
     from mvpa.misc.stats import *
     from mvpa.clfs.gpr import *
+    from mvpa.support.nipy import *
 
 if externals.exists("pywt"):
     from mvpa.mappers.wavelet import *
