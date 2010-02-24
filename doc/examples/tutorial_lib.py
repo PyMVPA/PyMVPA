@@ -99,3 +99,10 @@ def get_haxby2001_clf():
     clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
     return clf
 
+
+def load_tutorial_results(name,
+                          path=os.path.join(pymvpa_datadbroot,
+                                            'demo_blockfmri',
+                                            'demo_blockfmri',
+                                            'results')):
+    return h5load(os.path.join(path, name + '.hdf5'))
