@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for basic mappers'''
 
-import numpy as N
+import numpy as np
 
 from mvpa.testing import *
 skip_if_no_external('mdp')
@@ -113,7 +113,7 @@ def test_mdpflow_additional_arguments_nones():
 
 def test_pcamapper():
     # data: 40 sample feature line in 20d space (40x20; samples x features)
-    ndlin = Dataset(N.concatenate([N.arange(40)
+    ndlin = Dataset(np.concatenate([np.arange(40)
                                for i in range(20)]).reshape(20,-1).T)
 
     pm = PCAMapper()
@@ -121,7 +121,7 @@ def test_pcamapper():
     assert_raises(mdp.NodeException, pm.train, ndlin)
     ndlin.samples = ndlin.samples.astype('float')
     ndlin_noise = ndlin.copy()
-    ndlin_noise.samples += N.random.random(size=ndlin.samples.shape)
+    ndlin_noise.samples += np.random.random(size=ndlin.samples.shape)
     # we have no variance for more than one PCA component, hence just one
     # actual non-zero eigenvalue
     assert_raises(mdp.NodeException, pm.train, ndlin)
@@ -136,9 +136,9 @@ def test_pcamapper():
 
 def test_icamapper():
     # data: 40 sample feature line in 2d space (40x2; samples x features)
-    samples = N.vstack([N.arange(40.) for i in range(2)]).T
+    samples = np.vstack([np.arange(40.) for i in range(2)]).T
     samples -= samples.mean()
-    samples +=  N.random.normal(size=samples.shape, scale=0.1)
+    samples +=  np.random.normal(size=samples.shape, scale=0.1)
     ndlin = Dataset(samples)
 
     pm = ICAMapper()
@@ -154,7 +154,7 @@ def test_icamapper():
 def test_llemapper():
     skip_if_no_external('mdp', min_version='2.4')
 
-    ds = Dataset(N.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
+    ds = Dataset(np.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
                           [1., 0., 0.], [0., 1., 1.], [1., 0., 1.],
                           [1., 1., 0.], [1., 1., 1.]]))
     pm = LLEMapper(3, output_dim=2)

@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA logistic regression classifier"""
 
-import numpy as N
+import numpy as np
 
 from mvpa.clfs.plr import PLR
 from mvpa.testing import *
@@ -40,7 +40,7 @@ class PLRTests(unittest.TestCase):
         p = clf.predict(data.samples)
 
         self.failUnless((p == clf.ca.predictions).all())
-        self.failUnless(N.array(clf.ca.estimates).shape == N.array(p).shape)
+        self.failUnless(np.array(clf.ca.estimates).shape == np.array(p).shape)
 
 
 def suite():

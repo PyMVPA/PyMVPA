@@ -12,7 +12,7 @@ dedicated containers aka. `Collections`.
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base.collections import Collectable
 

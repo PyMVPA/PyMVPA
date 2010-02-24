@@ -48,10 +48,10 @@ class RegressionsTests(unittest.TestCase):
             splitter=NFoldSplitter(),
             postproc=mean_sample(),
             enable_ca=['training_confusion', 'confusion'])
-        corr = N.asscalar(cve(ds).samples)
+        corr = np.asscalar(cve(ds).samples)
 
         # Our CorrErrorFx should never return NaN
-        self.failUnless(not N.isnan(corr))
+        self.failUnless(not np.isnan(corr))
         self.failUnless(corr == cve.ca.confusion.stats['CCe'])
 
         splitregr = SplitClassifier(
@@ -98,9 +98,9 @@ class RegressionsTests(unittest.TestCase):
         split_predictions = splitregr.predict(ds.samples)
 
         # To test basic plotting
-        #import pylab as P
+        #import pylab as pl
         #cve.confusion.plot()
-        #P.show()
+        #pl.show()
 
     @sweepargs(clf=clfswh['regression'])
     def test_regressions_classifiers(self, clf):

@@ -38,7 +38,7 @@ help with disassembling are also handled.
 __docformat__ = 'restructuredtext'
 
 import types
-import numpy as N
+import numpy as np
 import h5py
 from mvpa.base.types import asobjarray
 
@@ -84,7 +84,7 @@ def hdf2obj(hdf):
             return hdf[()]
         else:
             # read array-dataset into an array
-            value = N.empty(hdf.shape, hdf.dtype)
+            value = np.empty(hdf.shape, hdf.dtype)
             hdf.read_direct(value)
             return value
     else:
@@ -260,8 +260,8 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
     """
     # if it is something that can go directly into HDF5, put it there
     # right away
-    if N.isscalar(obj) \
-       or (isinstance(obj, N.ndarray) and not obj.dtype == N.object):
+    if np.isscalar(obj) \
+       or (isinstance(obj, np.ndarray) and not obj.dtype == np.object):
         if name is None:
             # HDF5 cannot handle datasets without a name
             name = '__unnamed__'
@@ -286,7 +286,7 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
 
     # special case of array of type object -- we turn them into lists and
     # process as usual, but set a flag to trigger appropriate reconstruction
-    if isinstance(obj, N.ndarray) and obj.dtype == N.object:
+    if isinstance(obj, np.ndarray) and obj.dtype == np.object:
         if __debug__:
             debug('HDF5', "Convert array of objects into a list.")
         obj = list(obj)

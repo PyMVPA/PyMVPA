@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.measures.base import FeaturewiseDatasetMeasure
 from mvpa.misc.state import StateVariable
@@ -48,7 +48,7 @@ class GLM(FeaturewiseDatasetMeasure):
         """
         FeaturewiseDatasetMeasure.__init__(self, **kwargs)
         # store the design matrix as a such (no copying if already array)
-        self._design = N.asmatrix(design)
+        self._design = np.asmatrix(design)
 
         # what should be computed ('variable of interest')
         if not voi in ['pe', 'zstat']:
@@ -91,11 +91,11 @@ class GLM(FeaturewiseDatasetMeasure):
             # XXX next lines ignore off-diagonal elements and hence covariance
             # between regressors. The humble being writing these lines asks the
             # god of statistics for forgives, because it knows not what it does
-            diag_ip = N.diag(self._inv_ip)
+            diag_ip = np.diag(self._inv_ip)
             # (features x betas)
-            beta_vars = N.array([ r.var() * diag_ip for r in residuals.T ])
+            beta_vars = np.array([ r.var() * diag_ip for r in residuals.T ])
             # (parameter x feature)
-            zstat = pe / N.sqrt(beta_vars)
+            zstat = pe / np.sqrt(beta_vars)
 
             # charge state
             self.ca.zstat = zstat
@@ -110,5 +110,5 @@ class GLM(FeaturewiseDatasetMeasure):
             # we shall never get to this point
             raise ValueError, \
                   "Unknown variable of interest '%s'" % str(self._voi)
-        result.sa['regressor'] = N.arange(len(result))
+        result.sa['regressor'] = np.arange(len(result))
         return result

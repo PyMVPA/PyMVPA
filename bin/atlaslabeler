@@ -29,7 +29,7 @@ from mvpa.atlases import Atlas, ReferencesAtlas, FSLProbabilisticAtlas, \
 
 from optparse import OptionParser, Option
 
-import numpy as N
+import numpy as np
 #import numpy.linalg as la
 # to read in transformation matrix
 
@@ -65,9 +65,9 @@ def select_from_volume_iterator(volFileName, lt=None, ut=None):
     elif lt is not None and ut is None:
         mask = volData >= lt
     else:
-        mask = N.logical_and(volData >= lt, volData <= ut)
+        mask = np.logical_and(volData >= lt, volData <= ut)
 
-    matchingVoxels = N.where(mask)
+    matchingVoxels = np.where(mask)
     # qf = volFile.qform
     # qfi = la.inv(qf)
     for ivoxel in xrange(len(matchingVoxels[0])):
@@ -415,9 +415,9 @@ if isinstance(atlas, FSLProbabilisticAtlas):
 # Original talairachlabel assumed that if respective to origin -- voxels were
 # scaled already.
 #if options.coordInTalairachSpace:
-#   voxelSizeOriginal = N.array([1, 1, 1])
+#   voxelSizeOriginal = np.array([1, 1, 1])
 #else:
-#   voxelSizeOriginal = N.array([2, 2, 2])
+#   voxelSizeOriginal = np.array([2, 2, 2])
 
 if options.coordInTalairachSpace:
         options.inputSpace = "Talairach"
@@ -450,13 +450,13 @@ else:
         if options.inputSpace == "Talairach":
             # assume that atlas is in Talairach space already
             voxelOriginOriginal = atlas.origin
-            voxelSizeOriginal = N.array([1, 1, 1])
+            voxelSizeOriginal = np.array([1, 1, 1])
         elif options.inputSpace == "MNI":
             # need to adjust for MNI origin as it was thought to be at
             # in terms of voxels
-            #voxelOriginOriginal = N.array([46, 64, 37])
-            voxelOriginOriginal = N.array([45, 63, 36])
-            voxelSizeOriginal = N.array([2.0, 2.0, 2.0])
+            #voxelOriginOriginal = np.array([46, 64, 37])
+            voxelOriginOriginal = np.array([45, 63, 36])
+            voxelSizeOriginal = np.array([2.0, 2.0, 2.0])
             warning("Assuming elderly sizes for MNI volumes with"
                        " origin %s and sizes %s" %\
                        ( `voxelOriginOriginal`, `voxelSizeOriginal`))
@@ -486,7 +486,7 @@ else:
                   [options.MNI2TalTransformation](previous=coordT)
 
     if options.inputSpace == "MNI" and options.halfVoxelCorrection:
-        originCorrection = N.array([0.5, 0.5, 0.5])
+        originCorrection = np.array([0.5, 0.5, 0.5])
     else:
         # perform transformation any way to convert to voxel space (integers)
         originCorrection = None
@@ -539,7 +539,7 @@ if options.dumpmapFile:
               "but input wasn't a volume"
         sys.exit(1)
     ni_dump = NiftiImage(infile)
-    ni_dump_data = N.zeros((len(options.levels),) + ni_dump.data.shape[:3])
+    ni_dump_data = np.zeros((len(options.levels),) + ni_dump.data.shape[:3])
 
 
 # Read coordinates
@@ -564,7 +564,7 @@ for c in coordsIterator:
     numVoxels += 1
 
     # Apply necessary transformations
-    coord = coord_orig = N.array(coord_orig)
+    coord = coord_orig = np.array(coord_orig)
 
     if coordT:
         coord = coordT[ coord_orig ]
@@ -651,10 +651,10 @@ def statistics(values):
     N_ = len(values)
     if N_==0:
         return 0, None, None, None, None, ""
-    mean = N.mean(values)
-    std = N.std(values)
-    minv = N.min(values)
-    maxv = N.max(values)
+    mean = np.mean(values)
+    std = np.std(values)
+    minv = np.min(values)
+    maxv = np.max(values)
     ssummary = "[%3.2f : %3.2f] %3.2f+-%3.2f" % (minv, maxv, mean, std)
     return N_, mean, std, minv, maxv, ssummary
 

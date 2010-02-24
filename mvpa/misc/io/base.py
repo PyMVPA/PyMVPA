@@ -11,7 +11,7 @@ disk."""
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 import mvpa.support.copy as copy
 from mvpa.base.dochelpers import enhanced_doc_string
 from sets import Set
@@ -451,7 +451,7 @@ class SensorLocations(ColumnData):
         -------
         (nchannels x 3) array with coordinates in (x, y, z)
         """
-        return N.array((self.pos_x, self.pos_y, self.pos_z)).T
+        return np.array((self.pos_x, self.pos_y, self.pos_z)).T
 
 
 
@@ -580,7 +580,7 @@ def labels2chunks(labels, method="alllabels", ignore_labels=None):
                 if not label in ignore_labels:
                     seenlabels.union_update([label])
             chunks.append(chunk)
-        chunks = N.array(chunks)
+        chunks = np.array(chunks)
         # fix up a bit the trailer
         if seenlabels != alllabels:
             chunks[chunks == chunk] = chunk-1

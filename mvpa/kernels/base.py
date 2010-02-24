@@ -20,7 +20,7 @@ Concerns:
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base.types import is_datasetlike
 from mvpa.misc.state import ClassWithCollections
@@ -132,7 +132,7 @@ class Kernel(ClassWithCollections):
 
     def as_raw_np(self):
         """Directly return this kernel as a numpy array"""
-        return N.array(self)
+        return np.array(self)
     
     ############################################################################
     
@@ -250,7 +250,7 @@ class PrecomputedKernel(NumpyKernel):
         """
         NumpyKernel.__init__(self, *args, **kwargs)
 
-        self._k = N.array(matrix)
+        self._k = np.array(matrix)
 
     def compute(self, *args, **kwargs):
         pass
@@ -367,7 +367,7 @@ else:
       - different data ids
 
 
-ckernel = PrecomputedKernel(matrix=N.array([1,2,3]))
+ckernel = PrecomputedKernel(matrix=np.array([1,2,3]))
 ck = CachedKernel(kernel=ckernel)
 
 """

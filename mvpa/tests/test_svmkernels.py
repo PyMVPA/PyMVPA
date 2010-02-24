@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for new Kernel-based SVMs"""
 
-import numpy as N
+import numpy as np
 
 from mvpa.testing import *
 from mvpa.testing.datasets import datasets
@@ -48,7 +48,7 @@ class SVMKernelTests(unittest.TestCase):
         #data = datasets['uni4large']
         P = 5000
         data = normal_feature_dataset(snr=2, perlabel=200, nchunks=10,
-                                    means=N.random.randn(2, P), nfeatures=P)
+                                    means=np.random.randn(2, P), nfeatures=P)
 
         t0 = time()
         ck.params.kernel.compute(data)
@@ -62,8 +62,8 @@ class SVMKernelTests(unittest.TestCase):
         norm_err = cv_s(data)
         ncv_time = time()-t0
 
-        assert_almost_equal(N.asanyarray(cached_err),
-                            N.asanyarray(norm_err))
+        assert_almost_equal(np.asanyarray(cached_err),
+                            np.asanyarray(norm_err))
         ok_(cachetime<ncv_time)
         ok_(ccv_time<ncv_time)
         #print 'Regular CV time: %s seconds'%ncv_time

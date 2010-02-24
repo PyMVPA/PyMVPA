@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Helper to map and validate samples' origids into indices"""
 
-import numpy as N
+import numpy as np
 
 class SamplesLookup(object):
     """Map to translate sample origids into unique indices.
@@ -33,7 +33,7 @@ class SamplesLookup(object):
             # origids not yet generated
             if __debug__:
                 Warning("Generating dataset origids in SamplesLookup")
-            ds.sa.update({'origids':N.arange(ds.nsamples)})
+            ds.sa.update({'origids':np.arange(ds.nsamples)})
             sample_ids = ds.sa.origids
         
         try:
@@ -56,5 +56,5 @@ class SamplesLookup(object):
         if (not 'magic_id' in ds.a) or ds.a.magic_id != self._orig_ds_id:
             raise KeyError, 'This dataset is not indexed by this SamplesLookup'
         _map = self._map
-        return N.array([_map[i] for i in ds.sa.origids])
+        return np.array([_map[i] for i in ds.sa.origids])
 

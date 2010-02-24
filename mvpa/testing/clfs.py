@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 # Global modules
-import numpy as N
+import numpy as np
 
 # Some global imports useful through out unittests
 from mvpa.base import cfg
@@ -61,7 +61,7 @@ class SameSignClassifier(Classifier):
 
     @accepts_dataset_as_samples
     def _predict(self, data):
-        data = N.asanyarray(data)
+        data = np.asanyarray(data)
         datalen = len(data)
         estimates = []
         for d in data:
@@ -94,8 +94,8 @@ class SillySensitivityAnalyzer(FeaturewiseDatasetMeasure):
     def _call(self, dataset):
         """Train linear SVM on `dataset` and extract weights from classifier.
         """
-        sens = self.__mult *( N.arange(dataset.nfeatures) - int(dataset.nfeatures/2) )
-        return Dataset(sens[N.newaxis])
+        sens = self.__mult *( np.arange(dataset.nfeatures) - int(dataset.nfeatures/2) )
+        return Dataset(sens[np.newaxis])
 
 
 

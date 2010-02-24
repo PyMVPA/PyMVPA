@@ -24,7 +24,7 @@ part <chap_tutorial_start>`:
 >>> terr = TransferError(clf)
 >>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter(attr='runtype'))
 >>> cv_results = cvte(ds)
->>> N.mean(cv_results)
+>>> np.mean(cv_results)
 0.0625
 
 Looking at this little code snippet we can nicely see the logical parts of
@@ -48,7 +48,7 @@ If, for example, we want to try the popular :term:`support vector machine`
 >>> terr = TransferError(clf)
 >>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter(attr='runtype'))
 >>> cv_results = cvte(ds)
->>> N.mean(cv_results)
+>>> np.mean(cv_results)
 0.1875
 
 Instead of k-nearest-neighbor, we create a linear SVM classifier,
@@ -66,10 +66,10 @@ However, PyMVPA offers a number of alternative functions in the
 For example, if we do not want to have error reported, but instead accuracy, we
 can do that:
 
->>> terr = TransferError(clf, errorfx=lambda p, t: N.mean(p == t))
+>>> terr = TransferError(clf, errorfx=lambda p, t: np.mean(p == t))
 >>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter(attr='runtype'))
 >>> cv_results = cvte(ds)
->>> N.mean(cv_results)
+>>> np.mean(cv_results)
 0.8125
 
 This example reuses the SVM classifier we have create before, and
@@ -104,7 +104,7 @@ following code snippet should be plausible:
 ...                   targets=attr.targets, chunks=attr.chunks,
 ...                   mask=os.path.join(datapath, 'mask_vt.nii.gz'))
 >>> # pre-process
->>> poly_detrend(ds, polyord=1, chunks='chunks')
+>>> poly_detrend(ds, polyord=1, chunks_attr='chunks')
 >>> zscore(ds, param_est=('targets', ['rest']))
 >>> ds = ds[ds.sa.targets != 'rest']
 >>> # average
@@ -121,7 +121,7 @@ going to select samples from one ``chunk`` at a time:
 
 >>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
 >>> cv_results = cvte(ds)
->>> N.mean(cv_results)
+>>> np.mean(cv_results)
 0.78125
 
 We get almost the same prediction accuracy (reusing the SVM classifier and
@@ -326,7 +326,7 @@ spanned by the singular vectors of the training data, it would look like this:
 >>> terr = TransferError(metaclf)
 >>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
 >>> cv_results = cvte(ds)
->>> print N.mean(cv_results)
+>>> print np.mean(cv_results)
 0.15625
 
 First we notice that little has been changed in the code and the results --
@@ -354,7 +354,7 @@ and the rest is noise. We can easily check that with an appropriate mapper:
 >>> terr = TransferError(metaclf)
 >>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
 >>> cv_results = cvte(ds)
->>> svm_err = N.mean(cv_results)
+>>> svm_err = np.mean(cv_results)
 >>> print round(svm_err, 2)
 0.57
 
@@ -370,7 +370,7 @@ in the past.
 >>> terr = TransferError(metaclf)
 >>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
 >>> cv_results = cvte(ds)
->>> N.mean(cv_results) < svm_err
+>>> np.mean(cv_results) < svm_err
 False
 
 Oh, that was even worse. We would have to take a closer look at the data to

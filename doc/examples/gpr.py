@@ -48,7 +48,7 @@ hyperparameters to be used for GPR.
 """
 
 # Hyperparameters. Each row is [sigma_f, length_scale, sigma_noise]
-hyperparameters = N.array([[1.0, 0.2, 0.4],
+hyperparameters = np.array([[1.0, 0.2, 0.4],
                            [1.0, 0.1, 0.1],
                            [1.0, 1.0, 0.1],
                            [1.0, 0.1, 1.0]])
@@ -60,9 +60,9 @@ performed in a single loop.
 
 rows = 2
 columns = 2
-P.figure(figsize=(12, 12))
+pl.figure(figsize=(12, 12))
 for i in range(rows*columns):
-    P.subplot(rows, columns, i+1)
+    pl.subplot(rows, columns, i+1)
     regression = True
     logml = True
 
@@ -103,7 +103,7 @@ for i in range(rows*columns):
     # print prediction
     accuracy = None
     if regression:
-        accuracy = N.sqrt(((prediction-label_test)**2).sum()/prediction.size)
+        accuracy = np.sqrt(((prediction-label_test)**2).sum()/prediction.size)
         print "RMSE:", accuracy
     else:
         accuracy = (prediction.astype('l')==label_test.astype('l')).sum() \
@@ -116,26 +116,26 @@ for i in range(rows*columns):
     """
 
     if F == 1:
-        P.title(r"$\sigma_f=%0.2f$, $length_s=%0.2f$, $\sigma_n=%0.2f$" \
+        pl.title(r"$\sigma_f=%0.2f$, $length_s=%0.2f$, $\sigma_n=%0.2f$" \
                 % (sigma_f,length_scale,sigma_noise))
-        P.plot(data_train, label_train, "ro", label="train")
-        P.plot(data_test, prediction, "b-", label="prediction")
-        P.plot(data_test, label_test, "g+", label="test")
+        pl.plot(data_train, label_train, "ro", label="train")
+        pl.plot(data_test, prediction, "b-", label="prediction")
+        pl.plot(data_test, label_test, "g+", label="test")
         if regression:
-            P.plot(data_test, prediction - N.sqrt(g.ca.predicted_variances),
+            pl.plot(data_test, prediction - np.sqrt(g.ca.predicted_variances),
                        "b--", label=None)
-            P.plot(data_test, prediction+N.sqrt(g.ca.predicted_variances),
+            pl.plot(data_test, prediction+np.sqrt(g.ca.predicted_variances),
                        "b--", label=None)
-            P.text(0.5, -0.8, "$RMSE=%.3f$" %(accuracy))
-            P.text(0.5, -0.95, "$LML=%.3f$" %(g.ca.log_marginal_likelihood))
+            pl.text(0.5, -0.8, "$RMSE=%.3f$" %(accuracy))
+            pl.text(0.5, -0.95, "$LML=%.3f$" %(g.ca.log_marginal_likelihood))
         else:
-            P.text(0.5, -0.8, "$accuracy=%s" % accuracy)
+            pl.text(0.5, -0.8, "$accuracy=%s" % accuracy)
 
-        P.legend(loc='lower right')
+        pl.legend(loc='lower right')
 
     print "LML:", g.ca.log_marginal_likelihood
 
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
-    P.show()
+    pl.show()

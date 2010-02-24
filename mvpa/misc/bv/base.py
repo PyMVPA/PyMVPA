@@ -50,9 +50,9 @@ class BrainVoyagerRTC(ColumnData):
     def toarray(self):
         """Returns the data as an array
         """
-        import numpy as N
+        import numpy as np
 
         # return as array with time axis first
-        return N.array([self[i] for i in self._header_order],
+        return np.array([self[i] for i in self._header_order],
                        dtype='float').T
 

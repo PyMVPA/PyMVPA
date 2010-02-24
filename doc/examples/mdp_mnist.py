@@ -23,7 +23,7 @@ MDP-style classification
 import cPickle
 import mdp
 import gzip
-import numpy as N
+import numpy as np
 
 class DigitsIterator:
     def __init__(self, digits, labels):
@@ -57,7 +57,7 @@ fdaflow.train([[data['traindata']],
 
 feature_space = fdaflow[:-1](data['testdata'])
 guess = fdaflow[-1].classify(feature_space)
-err = 1 - N.mean(guess == data['testlabels'])
+err = 1 - np.mean(guess == data['testlabels'])
 print 'Test error:', err
 
 """
@@ -67,7 +67,7 @@ Doing it the PyMVPA way
 
 """
 
-import pylab as P
+import pylab as pl
 from mvpa.suite import *
 
 """
@@ -93,17 +93,17 @@ testds.init_origids('samples')
 
 examples = [0, 25024, 50000, 59000]
 
-P.figure(figsize=(6, 6))
+pl.figure(figsize=(6, 6))
 
 for i, id_ in enumerate(examples):
-    ax = P.subplot(2, 2, i+1)
+    ax = pl.subplot(2, 2, i+1)
     ax.axison = False
-    P.imshow(data['traindata'][id_].T, cmap=P.cm.gist_yarg,
+    pl.imshow(data['traindata'][id_].T, cmap=pl.cm.gist_yarg,
              interpolation='nearest', aspect='equal')
 
-P.subplots_adjust(left=0, right=1, bottom=0, top=1,
+pl.subplots_adjust(left=0, right=1, bottom=0, top=1,
                   wspace=0.05, hspace=0.05)
-P.show()
+pl.show()
 
 
 fdaflow = (mdp.nodes.WhiteningNode(output_dim=10, dtype='d') +
@@ -137,4 +137,4 @@ if P3D:
 
 #if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
-#    P.show()
+#    pl.show()

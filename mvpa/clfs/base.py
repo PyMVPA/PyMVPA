@@ -11,7 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.support.copy import deepcopy
 
@@ -431,7 +431,7 @@ class Classifier(ClassWithCollections):
             if not self.__changedData_isset:
                 self.__reset_changed_data()
                 _changedData = self._changedData
-                data = N.asanyarray(dataset.samples)
+                data = np.asanyarray(dataset.samples)
                 _changedData['testdata'] = \
                                         self.__was_data_changed('testdata', data)
                 if __debug__:
@@ -461,7 +461,7 @@ class Classifier(ClassWithCollections):
         since otherwise it would loop
         """
         ## ??? yoh: changed to asany from as without exhaustive check
-        data = N.asanyarray(dataset.samples)
+        data = np.asanyarray(dataset.samples)
         if __debug__:
             debug("CLF", "Predicting classifier %(clf)s on ds %(dataset)s",
                 msgargs={'clf':self, 'dataset':dataset})
@@ -641,7 +641,7 @@ class Classifier(ClassWithCollections):
         if __debug__ and 'CHECK_RETRAIN' in debug.active:
             __trained = self.__trained
             changed2 = entry != __trained[key]
-            if isinstance(changed2, N.ndarray):
+            if isinstance(changed2, np.ndarray):
                 changed2 = changed2.any()
             if changed != changed2 and not changed:
                 raise RuntimeError, \

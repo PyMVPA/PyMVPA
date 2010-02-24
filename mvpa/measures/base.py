@@ -19,7 +19,7 @@ has to be in some iterable container.
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 import mvpa.support.copy as copy
 
 from mvpa.misc.state import StateVariable, ClassWithCollections
@@ -169,11 +169,11 @@ class DatasetMeasure(ClassWithCollections):
                 #       not here
                 tail = self.null_dist.tail
                 if tail == 'left':
-                    acdf = N.abs(null_prob)
+                    acdf = np.abs(null_prob)
                 elif tail == 'right':
-                    acdf = 1.0 - N.abs(null_prob)
+                    acdf = 1.0 - np.abs(null_prob)
                 elif tail in ['any', 'both']:
-                    acdf = 1.0 - N.clip(N.abs(null_prob), 0, 0.5)
+                    acdf = 1.0 - np.clip(np.abs(null_prob), 0, 0.5)
                 else:
                     raise RuntimeError, 'Unhandled tail %s' % tail
                 # We need to clip to avoid non-informative inf's ;-)
@@ -184,7 +184,7 @@ class DatasetMeasure(ClassWithCollections):
                 # to distinguishable value around p=1 and max z=8.2.
                 # Should be sufficient range of z-values ;-)
                 clip = 1e-16
-                null_t = norm.ppf(N.clip(acdf, clip, 1.0 - clip))
+                null_t = norm.ppf(np.clip(acdf, clip, 1.0 - clip))
                 null_t[~null_right_tail] *= -1.0 # revert sign for negatives
                 self.ca.null_t = null_t                 # store
             else:
@@ -508,12 +508,12 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
 
         # TODO Simplify if we go Dataset-only
         if len(sensitivities) == 1:
-            sensitivities = N.asanyarray(sensitivities[0])
+            sensitivities = np.asanyarray(sensitivities[0])
         else:
             if isinstance(sensitivities[0], AttrDataset):
                 smerged = None
                 for i, s in enumerate(sensitivities):
-                    s.sa['splits'] = N.repeat(i, len(s))
+                    s.sa['splits'] = np.repeat(i, len(s))
                     if smerged is None:
                         smerged = s
                     else:
@@ -522,7 +522,7 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
             else:
                 sensitivities = \
                     Dataset(sensitivities,
-                            sa={'splits': N.arange(len(sensitivities))})
+                            sa={'splits': np.arange(len(sensitivities))})
         self.ca.sensitivities = sensitivities
         return sensitivities
 
@@ -622,7 +622,7 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
             if store_splits: splits.append(split)
 
         result = vstack(sensitivities)
-        result.sa['splits'] = N.concatenate([[i] * len(s)
+        result.sa['splits'] = np.concatenate([[i] * len(s)
                                 for i, s in enumerate(sensitivities)])
         self.ca.sensitivities = sensitivities
         return result

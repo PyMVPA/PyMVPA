@@ -36,7 +36,7 @@ be sufficient::
 
   from mvpa import cfg
   if cfg.getboolean('examples', 'interactive', True):
-      P.show()
+      pl.show()
 
 All examples are automatically converted into RsT documents for inclusion in the
 manual. Each of them is preprocessed in the following way:
@@ -288,7 +288,7 @@ is returned as the final results. By default no transformation is performed.
 If a :class:`~mvpa.measures.base.DatasetMeasure` computes a characteristic, were both large positive and
 large negative values indicate high relevance, it should nevertheless *not*
 return absolute sensitivities, but set a default transformer instead that takes
-the absolute (e.g. plain `N.absolute` or a convinience wrapper Absolute_).
+the absolute (e.g. plain `np.absolute` or a convinience wrapper Absolute_).
 
 To add a new measure implementation it is sufficient to create a new sub-class
 of :class:`~mvpa.measures.base.DatasetMeasure` (or :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure`, or :class:`~mvpa.measures.base.Sensitivity`) and add an

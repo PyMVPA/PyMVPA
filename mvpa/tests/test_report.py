@@ -68,15 +68,15 @@ class ReportTest(unittest.TestCase):
         if externals.exists('pylab plottable'):
             if not isdummy:
                 clen = len(report._story)
-            import pylab as P
-            P.ioff()
-            P.close('all')
-            P.figure()
-            P.plot([1, 2], [3, 2])
+            import pylab as pl
+            pl.ioff()
+            pl.close('all')
+            pl.figure()
+            pl.plot([1, 2], [3, 2])
 
-            P.figure()
-            P.plot([2, 10], [3, 2])
-            P.title("Figure 2 must be it")
+            pl.figure()
+            pl.plot([2, 10], [3, 2])
+            pl.title("Figure 2 must be it")
             report.figures()
 
             if not isdummy:
@@ -93,9 +93,9 @@ class ReportTest(unittest.TestCase):
         report.save()
 
         if externals.exists('pylab'):
-            import pylab as P
-            P.close('all')
-            P.ion()
+            import pylab as pl
+            pl.close('all')
+            pl.ion()
 
         verbose.handlers = ohandlers
         pass

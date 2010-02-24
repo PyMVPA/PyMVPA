@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 import os
-import numpy as N
+import numpy as np
 
 from mvpa.base import externals
 if externals.exists('nifti', raiseException=True):
@@ -35,13 +35,13 @@ class MelodicResults( object ):
         self.__funcdata = \
             nifti.NiftiImage( os.path.join( self.__outputpath,
                                             'filtered_func_data' ) )
-        self.__tmodes = N.fromfile( os.path.join( self.__icapath,
+        self.__tmodes = np.fromfile( os.path.join( self.__icapath,
                                                   'melodic_Tmodes' ),
                                     sep = ' ' ).reshape( self.tr, self.nic )
-        self.__smodes = N.fromfile( os.path.join( self.__icapath,
+        self.__smodes = np.fromfile( os.path.join( self.__icapath,
                                                   'melodic_Smodes' ),
                                     sep = ' ' )
-        self.__icstats = N.fromfile( os.path.join( self.__icapath,
+        self.__icstats = np.fromfile( os.path.join( self.__icapath,
                                                    'melodic_ICstats' ),
                                      sep = ' ' ).reshape( self.nic, 4 )
 

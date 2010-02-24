@@ -35,7 +35,7 @@ generalization performance on publicly available datasets with known
 characteristics (number of classes, independence of samples, actual presence
 of information of interest, etc).  Therefore, generalization performances
 presented in statistical learning publications are usually high enough to
-obliterate even a slight chance that they obtained such performance simply by
+obliterate even a slight chance that they could have been obtained  simply by
 chance.  For example, those classifiers trained on _MNIST dataset of
 handwritten digits were worth reporting whenever they demonstrated average
 errors of only 1-2% while doing classification among samples of 10 different
@@ -76,7 +76,7 @@ incorrect <Ioa05>`.
 
 The second peculiarity of application of statistical learning in psychological
 research is neural datasets which researchers are doomed to analyze.  As we
-could already assess from previous explorations, typical fMRI data has
+have already seen from previous tutorial parts, typical fMRI data has
 
 - relatively ***low number of samples*** (up to few thousands in total)
 - relatively ***large dimensionality*** (tens of thousands)

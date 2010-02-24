@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 from math import exp, fabs
 import re, copy
 
-import numpy as N
+import numpy as np
 
 from mvpa.clfs.libsvmc import _svmc as svmc
 from mvpa.clfs.libsvmc._svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
@@ -193,15 +193,15 @@ def seq_to_svm_node(x):
     # make two lists, one of indices, one of values
     # YYY Use isinstance  instead of type...is so we could
     #     easily use derived subclasses
-    if isinstance(x, N.ndarray):
+    if isinstance(x, np.ndarray):
         iter_range = range(length)
         iter_values = x
     elif isinstance(x, dict):
         iter_range = list(x).sort()
-        iter_values = N.ndarray(x.values())
+        iter_values = np.ndarray(x.values())
     elif operator.isSequenceType(x):
         iter_range = range(length)
-        iter_values = N.asarray(x)
+        iter_values = np.asarray(x)
     else:
         raise TypeError, "data must be a mapping or an ndarray or a sequence"
 

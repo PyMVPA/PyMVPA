@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 if __debug__:
     from mvpa.base import debug
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import externals, warning
 from mvpa.base.dochelpers import borrowkwargs
@@ -103,12 +103,12 @@ class Searchlight(DatasetMeasure):
                           "dataset has only %d features" \
                           % (max(roi_ids), dataset.nfeatures)
         else:
-            roi_ids = N.arange(dataset.nfeatures)
+            roi_ids = np.arange(dataset.nfeatures)
 
         # compute
         if nproc > 1:
             # split all target ROIs centers into `nproc` equally sized chunks
-            roi_chunks = N.array_split(roi_ids, nproc)
+            roi_chunks = np.array_split(roi_ids, nproc)
 
             # the next block sets up the infrastructure for parallel computing
             # this can easily be changed into a ParallelPython loop, if we
@@ -279,7 +279,7 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
 #
 #
 #        # now determine the best classification accuracy
-#        best = N.array(self.__perfmeans).argmax( axis=0 )
+#        best = np.array(self.__perfmeans).argmax( axis=0 )
 #
 #        # select the corresponding values of the best classification
 #        # in all data tables
@@ -290,7 +290,7 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
 #        self.spheresize = best.choose(*(self.__spheresizes))
 #
 #        # store the best performing radius
-#        self.bestradius = N.zeros( self.perfmean.shape, dtype='uint' )
+#        self.bestradius = np.zeros( self.perfmean.shape, dtype='uint' )
 #        self.bestradius[searchlight.mask==True] = \
 #            best.choose( test_radii )[searchlight.mask==True]
 #
@@ -307,7 +307,7 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
 #            raise ValueError, 'elementsize does not match mask dimensions.'
 #
 #    # rois will be drawn into this mask
-#    roi_mask = N.zeros( mask.shape, dtype='int32' )
+#    roi_mask = np.zeros( mask.shape, dtype='int32' )
 #
 #    # while increase with every ROI
 #    roi_id_counter = 1

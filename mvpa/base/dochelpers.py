@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import re, textwrap
 
 # for table2string
-import numpy as N
+import numpy as np
 from math import ceil
 from StringIO import StringIO
 from mvpa import cfg
@@ -375,7 +375,7 @@ def table2string(table, out=None):
         table[i] += [''] * (Nelements_max - len(table_))
 
     # figure out lengths within each column
-    atable = N.asarray(table)
+    atable = np.asarray(table)
     markup_strip = re.compile('^@[lrc]')
     col_width = [ max( [len(markup_strip.sub('', x))
                         for x in column] ) for column in atable.T ]

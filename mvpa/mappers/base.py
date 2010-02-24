@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 import copy
 
 from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
@@ -228,10 +228,10 @@ class Mapper(object):
         one-dimensional arguments. The map whole dataset this method cannot
         be used. but `forward()` handles them.
         """
-        if isinstance(data, N.ndarray):
-            return self.forward(data[N.newaxis])[0]
+        if isinstance(data, np.ndarray):
+            return self.forward(data[np.newaxis])[0]
         else:
-            return self.forward(N.array([data]))[0]
+            return self.forward(np.array([data]))[0]
 
 
 
@@ -260,10 +260,10 @@ class Mapper(object):
         arguments. To map whole dataset this method cannot be used. but
         `reverse()` handles them.
         """
-        if isinstance(data, N.ndarray):
-            return self.reverse(data[N.newaxis])[0]
+        if isinstance(data, np.ndarray):
+            return self.reverse(data[np.newaxis])[0]
         else:
-            return self.reverse(N.array([data]))[0]
+            return self.reverse(np.array([data]))[0]
 
 
     def __repr__(self):
@@ -365,7 +365,7 @@ class FeatureSliceMapper(Mapper):
                 "unknown. Either set `dshape` in the constructor, or call "
                 "train().")
         # this wouldn't preserve ndarray subclasses
-        #mapped = N.zeros(data.shape[:1] + self.__dshape,
+        #mapped = np.zeros(data.shape[:1] + self.__dshape,
         #                 dtype=data.dtype)
         # let's do it a little awkward but pass subclasses through
         # suggestions for improvements welcome
@@ -430,13 +430,13 @@ class FeatureSliceMapper(Mapper):
             return self
         if isinstance(self._slicearg, list):
             # simply convert it into an array and proceed from there
-            self._slicearg = N.asanyarray(self._slicearg)
-        if self._slicearg.dtype.type is N.bool_:
+            self._slicearg = np.asanyarray(self._slicearg)
+        if self._slicearg.dtype.type is np.bool_:
             # simply convert it into an index array --prevents us from copying a
             # lot and allows for sliceargs such as [3,3,4,4,5,5]
             self._slicearg = self._slicearg.nonzero()[0]
             # do not return since it needs further processing
-        if self._slicearg.dtype.char in N.typecodes['AllInteger']:
+        if self._slicearg.dtype.char in np.typecodes['AllInteger']:
             self._slicearg = self._slicearg[other._slicearg]
             return self
 
@@ -511,7 +511,7 @@ class CombinedMapper(Mapper):
         # return a big array for the result of the forward mapped data
         # of each embedded mapper
         try:
-            return N.hstack(
+            return np.hstack(
                     [self._mappers[i].forward(d) for i, d in enumerate(data)])
         except ValueError:
             raise ValueError, \
@@ -535,7 +535,7 @@ class CombinedMapper(Mapper):
         # assure array and transpose
         # i.e. transpose of 1D does nothing, but of 2D puts features
         # along first dimension
-        data = N.asanyarray(data).T
+        data = np.asanyarray(data).T
 
         if not len(data) == self.get_outsize():
             raise ValueError, \
@@ -581,12 +581,12 @@ class CombinedMapper(Mapper):
 
     def get_insize(self):
         """Returns the size of the entity in input space"""
-        return N.sum(m.get_insize() for m in self._mappers)
+        return np.sum(m.get_insize() for m in self._mappers)
 
 
     def get_outsize(self):
         """Returns the size of the entity in output space"""
-        return N.sum(m.get_outsize() for m in self._mappers)
+        return np.sum(m.get_outsize() for m in self._mappers)
 
 
     ##REF: Name was automagically refactored
@@ -604,11 +604,11 @@ class CombinedMapper(Mapper):
         """
         # determine which features belong to what mapper
         # and call its select_out() accordingly
-        ids = N.asanyarray(outIds)
+        ids = np.asanyarray(outIds)
         fsum = 0
         for m in self._mappers:
             # bool which meta feature ids belongs to this mapper
-            selector = N.logical_and(ids < fsum + m.get_outsize(), ids >= fsum)
+            selector = np.logical_and(ids < fsum + m.get_outsize(), ids >= fsum)
             # make feature ids relative to this dataset
             selected = ids[selector] - fsum
             fsum += m.get_outsize()

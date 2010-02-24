@@ -26,11 +26,11 @@ class IFSTests(unittest.TestCase):
 
     ##REF: Name was automagically refactored
     def get_data(self):
-        data = N.random.standard_normal(( 100, 2, 2, 2 ))
-        labels = N.concatenate( ( N.repeat( 0, 50 ),
-                                  N.repeat( 1, 50 ) ) )
-        chunks = N.repeat( range(5), 10 )
-        chunks = N.concatenate( (chunks, chunks) )
+        data = np.random.standard_normal(( 100, 2, 2, 2 ))
+        labels = np.concatenate( ( np.repeat( 0, 50 ),
+                                  np.repeat( 1, 50 ) ) )
+        chunks = np.repeat( range(5), 10 )
+        chunks = np.concatenate( (chunks, chunks) )
         return Dataset.from_wizard(samples=data, targets=labels, chunks=chunks)
 
 
@@ -66,7 +66,7 @@ class IFSTests(unittest.TestCase):
 
         # check that the features set with the least error is selected
         self.failUnless(len(ifs.ca.errors))
-        e = N.array(ifs.ca.errors)
+        e = np.array(ifs.ca.errors)
         self.failUnless(sdata.nfeatures == e.argmin() + 1)
 
 

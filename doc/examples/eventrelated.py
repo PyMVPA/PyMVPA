@@ -47,7 +47,7 @@ contiguous linear trend throughout the whole recording session.
 """
 
 # detrend on full timeseries
-poly_detrend(ds, polyord=1, chunks='chunks')
+poly_detrend(ds, polyord=1, chunks_attr='chunks')
 
 """
 
@@ -67,7 +67,7 @@ be interpreted as "activation scores". We are again doing it per each run.
 
 """
 
-zscore(ds, chunks='chunks', param_est=('targets', 'rest'))
+zscore(ds, chunks_attr='chunks', param_est=('targets', 'rest'))
 
 """
 
@@ -177,17 +177,17 @@ voxels.
 vx_lty = ['-', '--']
 t_col = ['b', 'r']
 
-P.subplot(311)
+pl.subplot(311)
 for i, v in enumerate(example_voxels):
-    slicer = N.array([tuple(idx) == v for idx in ds.fa.voxel_indices])
+    slicer = np.array([tuple(idx) == v for idx in ds.fa.voxel_indices])
     evds_detrend = eventrelated_dataset(orig_ds[:, slicer], events=events)
     for j, t in enumerate(evds.uniquetargets):
-        P.plot(N.mean(evds_detrend[evds_detrend.sa.targets == t], axis=0),
+        pl.plot(np.mean(evds_detrend[evds_detrend.sa.targets == t], axis=0),
                t_col[j] + vx_lty[i],
                label='Voxel %i: %s' % (i, t))
-P.ylabel('Detrended signal')
-P.axhline(linestyle='--', color='0.6')
-P.legend()
+pl.ylabel('Detrended signal')
+pl.axhline(linestyle='--', color='0.6')
+pl.legend()
 
 """
 
@@ -196,15 +196,15 @@ normalized data.
 
 """
 
-P.subplot(312)
+pl.subplot(312)
 for i, v in enumerate(example_voxels):
-    slicer = N.array([tuple(idx) == v for idx in ds.fa.voxel_indices])
+    slicer = np.array([tuple(idx) == v for idx in ds.fa.voxel_indices])
     evds_norm = eventrelated_dataset(ds[:, slicer], events=events)
     for j, t in enumerate(evds.uniquetargets):
-        P.plot(N.mean(evds_norm[evds_norm.sa.targets == t], axis=0),
+        pl.plot(np.mean(evds_norm[evds_norm.sa.targets == t], axis=0),
                t_col[j] + vx_lty[i])
-P.ylabel('Normalized signal')
-P.axhline(linestyle='--', color='0.6')
+pl.ylabel('Normalized signal')
+pl.axhline(linestyle='--', color='0.6')
 
 """
 
@@ -217,21 +217,21 @@ voxel features``.
 
 """
 
-P.subplot(313)
+pl.subplot(313)
 smaps = evds.a.mapper[-1].reverse(sensitivities)
 
 for i, v in enumerate(example_voxels):
-    slicer = N.array([tuple(idx) == v for idx in ds.fa.voxel_indices])
+    slicer = np.array([tuple(idx) == v for idx in ds.fa.voxel_indices])
     smap = smaps.samples[:,:,slicer].squeeze()
     plot_err_line(smap, fmt='ko', linestyle=vx_lty[i])
-P.xlim((0,12))
-P.ylabel('Sensitivity')
-P.axhline(linestyle='--', color='0.6')
-P.xlabel('Peristimulus volumes')
+pl.xlim((0,12))
+pl.ylabel('Sensitivity')
+pl.axhline(linestyle='--', color='0.6')
+pl.xlabel('Peristimulus volumes')
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
-    P.show()
+    pl.show()
 
 """
 

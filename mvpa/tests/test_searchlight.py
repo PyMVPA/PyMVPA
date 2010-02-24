@@ -73,9 +73,9 @@ class SearchlightTests(unittest.TestCase):
         if len(all_results) > 1:
             # if we had multiple searchlights, we can check either they all
             # gave the same result (they should have)
-            aresults = N.array([a.samples for a in all_results])
-            dresults = N.abs(aresults - aresults.mean(axis=0))
-            dmax = N.max(dresults)
+            aresults = np.array([a.samples for a in all_results])
+            dresults = np.abs(aresults - aresults.mean(axis=0))
+            dmax = np.max(dresults)
             self.failUnlessEqual(dmax, 0.0)
 
     def test_partial_searchlight_with_full_report(self):
