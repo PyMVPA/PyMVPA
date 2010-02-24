@@ -22,22 +22,33 @@ if __debug__:
 class _VersionsChecker(dict):
     """Helper class to check the versions of the available externals
     """
+
+    def __init__(self, *args, **kwargs):
+        self._KNOWN = {}
+        dict.__init__(self, *args, **kwargs)
+
     def __getitem__(self, key):
         if not self.has_key(key):
-            exists(key, force=True, raiseException=True)
+            if key in self._KNOWN:
+                # run registered procedure to obtain versions
+                self._KNOWN[key]()
+            else:
+                exists(key, force=True, raiseException=True)
         return super(_VersionsChecker, self).__getitem__(key)
 
 versions = _VersionsChecker()
 """Versions of available externals, as tuples
 """
 
-
-def __check_scipy():
-    """Check if scipy is present an if it is -- store its version
+def __assign_numpy_version():
+    """Check if numpy is present (it must be) an if it is -- store its version
     """
-    import warnings
-    exists('numpy', raiseException=True)
+    import numpy as N
+    versions['numpy'] = SmartVersion(N.__version__)
+
+def __assign_scipy_version():
     # To don't allow any crappy warning to sneak in
+    import warnings
     warnings.simplefilter('ignore', DeprecationWarning)
     try:
         import scipy as sp
@@ -45,9 +56,18 @@ def __check_scipy():
         warnings.simplefilter('default', DeprecationWarning)
         raise
     warnings.simplefilter('default', DeprecationWarning)
+    versions['scipy'] = SmartVersion(sp.__version__)
+
+def __check_scipy():
+    """Check if scipy is present an if it is -- store its version
+    """
+    exists('numpy', raiseException=True)
+    __assign_numpy_version()
+    __assign_scipy_version()
+    import scipy as sp
     # Infiltrate warnings if necessary
     numpy_ver = versions['numpy']
-    scipy_ver = versions['scipy'] = SmartVersion(sp.__version__)
+    scipy_ver = versions['scipy']
     # There is way too much deprecation warnings spit out onto the
     # user. Lets assume that they should be fixed by scipy 0.7.0 time
     if scipy_ver >= "0.6.0" and scipy_ver < "0.7.0" \
@@ -70,14 +90,7 @@ def __check_scipy():
                 warnings.filterwarnings('ignore', f, w)
 
 
-def __check_numpy():
-    """Check if numpy is present (it must be) an if it is -- store its version
-    """
-    import numpy as N
-    versions['numpy'] = SmartVersion(N.__version__)
-
-
-def __check_mdp():
+def __assign_mdp_version():
     """Check if mdp is present (it must be) an if it is -- store its version
     """
     import mdp
@@ -134,7 +147,7 @@ def __check_libsvm_verbosity_control():
         raise ImportError, "Provided version of libsvm has no way to control " \
               "its level of verbosity"
 
-def __assign_shogun_versions():
+def __assign_shogun_version():
     """Assign shogun versions
     """
     if 'shogun' in versions:
@@ -162,13 +175,12 @@ def __check_shogun(bottom_version, custom_versions=[]):
     """
     import shogun.Classifier as __sc
     ver = __sc.Version_get_version_revision()
-    __assign_shogun_versions()
+    __assign_shogun_version()
     if (ver in custom_versions) or (ver >= bottom_version):
         return True
     else:
         raise ImportError, 'Version %s is smaller than needed %s' % \
               (ver, bottom_version)
-
 
 def __assign_nipy_version():
     import nipy
@@ -382,12 +394,12 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'nifti ge 0.20090205.1':
                 'from nifti.clib import detachDataFromImage as __',
           'ctypes':'import ctypes as __',
-          'shogun':'__assign_shogun_versions()',
-          'shogun.krr': '__assign_shogun_versions(); import shogun.Regression as __; x=__.KRR',
-          'shogun.mpd': '__assign_shogun_versions(); import shogun.Classifier as __; x=__.MPDSVM',
-          'shogun.lightsvm': '__assign_shogun_versions(); import shogun.Classifier as __; x=__.SVMLight',
-          'shogun.svrlight': '__assign_shogun_versions(); from shogun.Regression import SVRLight as __',
-          'numpy': "__check_numpy()",
+          'shogun':'__assign_shogun_version()',
+          'shogun.krr': '__assign_shogun_version(); import shogun.Regression as __; x=__.KRR',
+          'shogun.mpd': '__assign_shogun_version(); import shogun.Classifier as __; x=__.MPDSVM',
+          'shogun.lightsvm': '__assign_shogun_version(); import shogun.Classifier as __; x=__.SVMLight',
+          'shogun.svrlight': '__assign_shogun_version(); from shogun.Regression import SVRLight as __',
+          'numpy': "__assign_numpy_version()",
           'scipy': "__check_scipy()",
           'good scipy.stats.rdist': "__check_stablerdist()",
           'good scipy.stats.rv_discrete.ppf': "__check_rv_discrete_ppf()",
@@ -407,7 +419,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
           'openopt': "__check_openopt()",
-          'mdp': "__check_mdp()",
+          'mdp': "__assign_mdp_version()",
           'mdp ge 2.4': "from mdp.nodes import LLENode as __",
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
            # 3318 corresponds to release 0.6.4
@@ -532,6 +544,21 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
         cfg.set('externals', 'have ' + dep, 'no')
 
     return result
+
+# Bind functions for some versions checkings
+versions._KNOWN.update({
+    'numpy' : __assign_numpy_version,
+    'scipy' : __assign_scipy_version,
+    'nipy' : __assign_nipy_version,
+    'mdp' : __assign_mdp_version,
+    'ipython' : __check_in_ipython,
+    'reportlab' : __check_reportlab,
+    'pprocess' : __check_pprocess,
+    'rpy2' : __check_rpy2,
+    'shogun' : __assign_shogun_version,
+    'shogun:rev' : __assign_shogun_version,
+    'shogun:full' : __assign_shogun_version,
+    })
 
 
 ##REF: Name was automagically refactored
