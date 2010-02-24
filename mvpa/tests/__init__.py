@@ -101,7 +101,7 @@ def collect_test_suites():
     for t in tests:
         exec 'import ' + t
 
-    # instanciate all tests suites and return dict of them (with ID as key)
+    # instantiate all tests suites and return dict of them (with ID as key)
     return dict([(t[5:], eval(t + '.suite()')) for t in tests ])
 
 
