@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.misc.io import ColumnData
 from mvpa.misc.support import Event
@@ -127,32 +127,32 @@ class McFlirtParams(ColumnData):
         """
         # import internally as it takes some time and might not be needed most
         # of the time
-        import pylab as P
+        import pylab as pl
 
         # translations subplot
-        P.subplot(211)
-        P.plot(self.x)
-        P.plot(self.y)
-        P.plot(self.z)
-        P.ylabel('Translations in mm')
-        P.legend(('x', 'y', 'z'), loc=0)
+        pl.subplot(211)
+        pl.plot(self.x)
+        pl.plot(self.y)
+        pl.plot(self.z)
+        pl.ylabel('Translations in mm')
+        pl.legend(('x', 'y', 'z'), loc=0)
 
         # rotations subplot
-        P.subplot(212)
-        P.plot(self.rot1)
-        P.plot(self.rot2)
-        P.plot(self.rot3)
-        P.ylabel('Rotations in rad')
-        P.legend(('rot1', 'rot2', 'rot3'), loc=0)
+        pl.subplot(212)
+        pl.plot(self.rot1)
+        pl.plot(self.rot2)
+        pl.plot(self.rot3)
+        pl.ylabel('Rotations in rad')
+        pl.legend(('rot1', 'rot2', 'rot3'), loc=0)
 
 
     def toarray(self):
         """Returns the data as an array with six columns (same order as in file).
         """
-        import numpy as N
+        import numpy as np
 
         # return as array with time axis first
-        return N.array([self[i] for i in McFlirtParams.header_def],
+        return np.array([self[i] for i in McFlirtParams.header_def],
                        dtype='float').T
 
 
@@ -202,7 +202,7 @@ class FslGLMDesign(object):
 
         # done with the header, now revert to NumPy's loadtxt for convenience
         fh.close()
-        self.mat = N.loadtxt(fname, skiprows=matrix_offset)
+        self.mat = np.loadtxt(fname, skiprows=matrix_offset)
 
         # checks
         if not self.mat.shape == (ntimepoints, nwaves):
@@ -224,32 +224,32 @@ class FslGLMDesign(object):
         """
         # import internally as it takes some time and might not be needed most
         # of the time
-        import pylab as P
+        import pylab as pl
 
         if style == 'lines':
             # common y-axis
-            yax = N.arange(0, self.mat.shape[0])
+            yax = np.arange(0, self.mat.shape[0])
             axcenters = []
             col_offset = max(self.ppheights)
 
             # for all columns
             for i in xrange(self.mat.shape[1]):
                 axcenter = i * col_offset
-                P.plot(self.mat[:, i] + axcenter, yax, **kwargs)
+                pl.plot(self.mat[:, i] + axcenter, yax, **kwargs)
                 axcenters.append(axcenter)
 
-            P.xticks(N.array(axcenters), range(self.mat.shape[1]))
+            pl.xticks(np.array(axcenters), range(self.mat.shape[1]))
         elif style == 'matrix':
-            P.pcolor(self.mat, **kwargs)
-            ticks = N.arange(1, self.mat.shape[1]+1)
-            P.xticks(ticks - 0.5, ticks)
+            pl.pcolor(self.mat, **kwargs)
+            ticks = np.arange(1, self.mat.shape[1]+1)
+            pl.xticks(ticks - 0.5, ticks)
         else:
             raise ValueError, "Unknown plotting style '%s'" % style
 
         # labels and turn y-axis upside down
-        P.ylabel('Samples (top to bottom)')
-        P.xlabel('Regressors')
-        P.ylim(self.mat.shape[0],0)
+        pl.ylabel('Samples (top to bottom)')
+        pl.xlabel('Regressors')
+        pl.ylim(self.mat.shape[0],0)
 
 
 def read_fsl_design(fsf_file):

@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for SVM classifier"""
 
-import numpy as N
+import numpy as np
 
 from mvpa.testing import *
 from mvpa.testing.clfs import *
@@ -64,21 +64,21 @@ class SVMTests(unittest.TestCase):
             # use non-linear CLF on 2d data
             nl_clf.train(train)
             p_mv = nl_clf.predict(test.samples)
-            mv_perf.append(N.mean(p_mv==test.targets))
+            mv_perf.append(np.mean(p_mv==test.targets))
 
             # use linear CLF on 2d data
             l_clf.train(train)
             p_lin_mv = l_clf.predict(test.samples)
-            mv_lin_perf.append(N.mean(p_lin_mv==test.targets))
+            mv_lin_perf.append(np.mean(p_lin_mv==test.targets))
 
             # use non-linear CLF on 1d data
             nl_clf.train(train[:, 0])
             p_uv = nl_clf.predict(test[:, 0].samples)
-            uv_perf.append(N.mean(p_uv==test.targets))
+            uv_perf.append(np.mean(p_uv==test.targets))
 
-        mean_mv_perf = N.mean(mv_perf)
-        mean_mv_lin_perf = N.mean(mv_lin_perf)
-        mean_uv_perf = N.mean(uv_perf)
+        mean_mv_perf = np.mean(mv_perf)
+        mean_mv_lin_perf = np.mean(mv_lin_perf)
+        mean_uv_perf = np.mean(uv_perf)
 
         # non-linear CLF has to be close to perfect
         self.failUnless( mean_mv_perf > 0.9 )
@@ -103,14 +103,14 @@ class SVMTests(unittest.TestCase):
         # Lets add a bit of noise to drive classifier nuts. same
         # should be done for disballanced set
         ds__.samples = ds__.samples + \
-                       0.5 * N.random.normal(size=(ds__.samples.shape))
+                       0.5 * np.random.normal(size=(ds__.samples.shape))
         #
         # disballanced set
         # lets overpopulate label 0
         times = 20
         ds_ = ds[(range(ds.nsamples) + range(ds.nsamples/2) * times)]
         ds_.samples = ds_.samples + \
-                      0.5 * N.random.normal(size=(ds_.samples.shape))
+                      0.5 * np.random.normal(size=(ds_.samples.shape))
         spl = get_nsamples_per_attr(ds_, 'targets') #_.samplesperlabel
         #print ds_.targets, ds_.chunks
 
@@ -131,7 +131,7 @@ class SVMTests(unittest.TestCase):
         oldC = clf.params.C
         # TODO: provide clf.params.C not with a tuple but dictionary
         #       with C per label (now order is deduced in a cruel way)
-        ratio = N.sqrt(float(spl[ds_.UT[0]])/spl[ds_.UT[1]])
+        ratio = np.sqrt(float(spl[ds_.UT[0]])/spl[ds_.UT[1]])
         clf.params.C = (-1/ratio, -1*ratio)
         try:
             # on disbalanced but with balanced C

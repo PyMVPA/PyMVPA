@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import re
 import textwrap
-import numpy as N
+import numpy as np
 from mvpa.misc.state import IndexedCollectable
 
 if __debug__:
@@ -181,12 +181,12 @@ class Parameter(IndexedCollectable):
 
     def _set(self, val, init=False):
         different_value = self._value != val
-        isarray = isinstance(different_value, N.ndarray)
+        isarray = isinstance(different_value, np.ndarray)
         if self._ro and not init:
             raise RuntimeError, \
                   "Attempt to set read-only parameter %s to %s" \
                   % (self.name, val)
-        if (isarray and N.any(different_value)) or \
+        if (isarray and np.any(different_value)) or \
            ((not isarray) and different_value):
             if __debug__:
                 debug("COL",

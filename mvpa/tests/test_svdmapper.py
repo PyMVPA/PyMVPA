@@ -11,7 +11,7 @@
 
 import unittest
 from mvpa.support.copy import deepcopy
-import numpy as N
+import numpy as np
 from mvpa.mappers.svd import SVDMapper
 
 
@@ -19,12 +19,12 @@ class SVDMapperTests(unittest.TestCase):
 
     def setUp(self):
         # data: 40 sample feature line in 20d space (40x20; samples x features)
-        self.ndlin = N.concatenate([N.arange(40)
+        self.ndlin = np.concatenate([np.arange(40)
                                         for i in range(20)]).reshape(20,-1).T
 
         # data: 10 sample feature line in 40d space
         #       (10x40; samples x features)
-        self.largefeat = N.concatenate([N.arange(10)
+        self.largefeat = np.concatenate([np.arange(10)
                                         for i in range(40)]).reshape(40,-1).T
 
 
@@ -53,7 +53,7 @@ class SVDMapperTests(unittest.TestCase):
         pr = pm.reverse(p)
 
         self.failUnlessEqual(pr.shape, (40,20))
-        self.failUnless(N.abs(pm.reverse(p) - self.ndlin).sum() < 0.0001)
+        self.failUnless(np.abs(pm.reverse(p) - self.ndlin).sum() < 0.0001)
 
 
     def test_more_svd(self):
@@ -81,13 +81,13 @@ class SVDMapperTests(unittest.TestCase):
         # check that the mapped data can be fully recovered by 'reverse()'
         rp = pm.reverse(p)
         self.failUnlessEqual(rp.shape, self.largefeat.shape)
-        self.failUnless((N.round(rp) == self.largefeat).all())
+        self.failUnless((np.round(rp) == self.largefeat).all())
 
         # copy mapper
         pm2 = deepcopy(pm)
 
         # now make new random data and do forward->reverse check
-        data = N.random.normal(size=(98,40))
+        data = np.random.normal(size=(98,40))
         data_f = pm.forward(data)
 
         self.failUnlessEqual(data_f.shape, (98,10))

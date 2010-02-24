@@ -160,11 +160,11 @@ Now let's see what we got. Since a vector with 35k elements is a little
 hard to comprehend we have to resort to some statistics.
 
 >>> sphere_errors = res.samples[0]
->>> res_mean = N.mean(res)
->>> res_std = N.std(res)
+>>> res_mean = np.mean(res)
+>>> res_std = np.std(res)
 >>> # we deal with errors here, hence 1.0 minus
 >>> chance_level = 1.0 - (1.0 / len(ds.uniquetargets))
->>> print chance_level, N.round(res_mean, 3), N.round(res_std, 3)
+>>> print chance_level, np.round(res_mean, 3), np.round(res_std, 3)
 0.875 0.848 0.094
 
 Well, the mean empirical error is just barely below the chance level.
@@ -172,7 +172,7 @@ However, we would not expect a signal for perfect classification
 performance in all spheres anyway. Let's see for how many spheres the error
 is more the two standard deviations lower than chance.
 
->>> print N.round(N.mean(sphere_errors < chance_level - 2 * res_std), 3)
+>>> print np.round(np.mean(sphere_errors < chance_level - 2 * res_std), 3)
 0.091
 
 So in almost 10% of all spheres the error is subtantially lower than what
@@ -182,7 +182,7 @@ we would expect for random guessing of the classifier -- that is more than
 .. exercise::
 
   Look at the distribution of the errors
-  (hint: ``hist(sphere_errors, bins=N.linspace(0, 1, 18))``.
+  (hint: ``hist(sphere_errors, bins=np.linspace(0, 1, 18))``.
   What do you think in how many spheres the classifier actually picked up
   real signal? What would be a good value to threshold the errors to
   distinguish false from true positives? Think of it in the context of
@@ -207,7 +207,7 @@ we would expect for random guessing of the classifier -- that is more than
                                1.0 / len(ds.uniquetargets),
                                size=ds.nfeatures) / float(len(ds)))
      distr.append(histogram(r, range=(0, 1), bins=bins, normed=True)[0])
- distr = N.array(distr)
+ distr = np.array(distr)
  loc = hist(sphere_errors, range=(0, 1), bins=bins, normed=True)[1]
  plot(loc[:-1] + 1.0/bins/2, distr.mean(axis=0), 'rx--')
  ylim(0,6)

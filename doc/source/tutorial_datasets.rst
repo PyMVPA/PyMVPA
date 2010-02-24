@@ -57,8 +57,8 @@ therefore have as many samples as elements in the vector, and only one feature.
 On the other hand, if a dataset is created from multi-dimensional data, only its
 second axis represent the features
 
->>> import numpy as N
->>> m_ds = Dataset(N.random.random((3, 4, 2, 3)))
+>>> import numpy as np
+>>> m_ds = Dataset(np.random.random((3, 4, 2, 3)))
 >>> m_ds.shape
 (3, 4, 2, 3)
 >>> m_ds.nfeatures
@@ -216,7 +216,7 @@ array([[ 1,  1, -1],
        [ 3,  1,  1]])
 >>>
 >>> # Boolean mask array
->>> mask = N.array([True, False, True, False])
+>>> mask = np.array([True, False, True, False])
 >>> ds[mask].samples
 array([[ 1,  1, -1],
        [ 3,  1,  1]])
@@ -451,7 +451,7 @@ an argument and returns the stored dataset. Compressed data will be handled
 transparently.
 
 >>> loaded = h5load(os.path.join(tempdir, 'mydataset.hdf5'))
->>> N.all(ds.samples == loaded.samples)
+>>> np.all(ds.samples == loaded.samples)
 True
 >>> # cleanup the temporary directory, and everything it includes
 >>> shutil.rmtree(tempdir, ignore_errors=True)

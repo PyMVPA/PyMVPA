@@ -34,19 +34,19 @@ ds.samples = ds.samples.astype('float')
 # look at sample similiarity
 # Note, the decreasing similarity with increasing temporal distance
 # of the samples
-P.figure()
-P.subplot(121)
+pl.figure()
+pl.subplot(121)
 plot_samples_distance(ds, sortbyattr='chunks')
-P.title('Sample distances (sorted by chunks)')
+pl.title('Sample distances (sorted by chunks)')
 
 # similar distance plot, but now samples sorted by their
 # respective targets, i.e. samples with same targets are plotted
 # in adjacent columns/rows.
 # Note, that the first and largest group corresponds to the
 # 'rest' condition in the dataset
-P.subplot(122)
+pl.subplot(122)
 plot_samples_distance(ds, sortbyattr='targets')
-P.title('Sample distances (sorted by targets)')
+pl.title('Sample distances (sorted by targets)')
 
 # z-score features individually per chunk
 print 'Detrending data'
@@ -54,15 +54,15 @@ poly_detrend(ds, polyord=2, chunks_attr='chunks')
 print 'Z-Scoring data'
 zscore(ds)
 
-P.figure()
-P.subplot(121)
+pl.figure()
+pl.subplot(121)
 plot_samples_distance(ds, sortbyattr='chunks')
-P.title('Distances: z-scored, detrended (sorted by chunks)')
-P.subplot(122)
+pl.title('Distances: z-scored, detrended (sorted by chunks)')
+pl.subplot(122)
 plot_samples_distance(ds, sortbyattr='targets')
-P.title('Distances: z-scored, detrended (sorted by targets)')
+pl.title('Distances: z-scored, detrended (sorted by targets)')
 if cfg.getboolean('examples', 'interactive', True):
-    P.show()
+    pl.show()
 
 # XXX add some more, maybe show effect of preprocessing
 

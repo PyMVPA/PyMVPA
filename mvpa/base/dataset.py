@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 import copy
 
 from mvpa.base import externals
@@ -67,9 +67,9 @@ class AttrDataset(object):
 
     The simplest way to create a dataset is from a 2D array.
 
-    >>> import numpy as N
+    >>> import numpy as np
     >>> from mvpa.datasets import *
-    >>> samples = N.arange(12).reshape((4,3))
+    >>> samples = np.arange(12).reshape((4,3))
     >>> ds = AttrDataset(samples)
     >>> ds.nsamples
     4
@@ -127,12 +127,12 @@ class AttrDataset(object):
     selection masks, index sequences or slicing arguments. The following
     calls for samples selection all result in the same dataset:
 
-    >>> sel1 = ds[N.array([False, True, True])]
+    >>> sel1 = ds[np.array([False, True, True])]
     >>> sel2 = ds[[1,2]]
     >>> sel3 = ds[1:3]
-    >>> N.all(sel1.samples == sel2.samples)
+    >>> np.all(sel1.samples == sel2.samples)
     True
-    >>> N.all(sel2.samples == sel3.samples)
+    >>> np.all(sel2.samples == sel3.samples)
     True
 
     During selection data is only copied if necessary. If the slicing
@@ -205,7 +205,7 @@ class AttrDataset(object):
         """
         # conversions
         if isinstance(samples, list):
-            samples = N.array(samples)
+            samples = np.array(samples)
         # Check all conditions we need to have for `samples` dtypes
         if not hasattr(samples, 'dtype'):
             raise ValueError(
@@ -222,7 +222,7 @@ class AttrDataset(object):
         # handling of 1D-samples
         # i.e. 1D is treated as multiple samples with a single feature
         if len(samples.shape) == 1:
-            samples = N.atleast_2d(samples).T
+            samples = np.atleast_2d(samples).T
 
         # that's all -- accepted
         self.samples = samples
@@ -288,7 +288,7 @@ class AttrDataset(object):
                 elif mode == 'raise':
                     raise RuntimeError, \
                           "Attribute %r already known to %s" % (attr, self.sa)
-            ids = N.array(['%s-%i' % (thisid, i)
+            ids = np.array(['%s-%i' % (thisid, i)
                                 for i in xrange(self.samples.shape[0])])
             if self.sa.has_key(attr):
                 self.sa[attr].value = ids
@@ -301,7 +301,7 @@ class AttrDataset(object):
                 elif mode == 'raise':
                     raise RuntimeError, \
                           "Attribute %r already known to %s" % (attr, self.fa)
-            ids = N.array(['%s-%i' % (thisid, i)
+            ids = np.array(['%s-%i' % (thisid, i)
                                 for i in xrange(self.samples.shape[1])])
             if self.fa.has_key(attr):
                 self.fa[attr].value = ids
@@ -418,13 +418,13 @@ class AttrDataset(object):
                                "set %s" % (self.sa.keys(), other.sa.keys()))
 
         # concat the samples as well
-        self.samples = N.concatenate((self.samples, other.samples), axis=0)
+        self.samples = np.concatenate((self.samples, other.samples), axis=0)
 
         # tell the collection the new desired length of all attributes
         self.sa.set_length_check(len(self.samples))
         # concat all samples attributes
         for k, v in other.sa.iteritems():
-            self.sa[k].value = N.concatenate((self.sa[k].value, v.value),
+            self.sa[k].value = np.concatenate((self.sa[k].value, v.value),
                                              axis=0)
 
 
@@ -462,8 +462,8 @@ class AttrDataset(object):
         # simultaneous slicing of numpy arrays only yields intended results
         # if at least one of the slicing args is an actual slice and not
         # and index list are selection mask vector
-        if isinstance(self.samples, N.ndarray) \
-           and N.any([isinstance(a, slice) for a in args]):
+        if isinstance(self.samples, np.ndarray) \
+           and np.any([isinstance(a, slice) for a in args]):
             samples = self.samples[args[0], args[1]]
         else:
             # in all other cases we have to do the selection sequentially
@@ -640,19 +640,19 @@ def vstack(datasets):
     """
     # fall back to numpy if it is not a dataset
     if not is_datasetlike(datasets[0]):
-        return AttrDataset(N.vstack(datasets))
+        return AttrDataset(np.vstack(datasets))
 
     if __debug__:
         target = sorted(datasets[0].sa.keys())
-        if not N.all([sorted(ds.sa.keys()) == target for ds in datasets]):
+        if not np.all([sorted(ds.sa.keys()) == target for ds in datasets]):
             raise ValueError("Sample attributes collections of to be stacked "
                              "datasets have varying attributes.")
     # will puke if not equal number of features
-    stacked_samp = N.concatenate([ds.samples for ds in datasets], axis=0)
+    stacked_samp = np.concatenate([ds.samples for ds in datasets], axis=0)
 
     stacked_sa = {}
     for attr in datasets[0].sa:
-        stacked_sa[attr] = N.concatenate([ds.sa[attr].value for ds in datasets],
+        stacked_sa[attr] = np.concatenate([ds.sa[attr].value for ds in datasets],
                                          axis=0)
     # create the dataset
     merged = datasets[0].__class__(stacked_samp, sa=stacked_sa)
@@ -690,19 +690,19 @@ def hstack(datasets):
     if not is_datasetlike(datasets[0]):
         # we might get a list of 1Ds that would yield wrong results when
         # turned into a dict (would run along samples-axis)
-        return AttrDataset(N.atleast_2d(N.hstack(datasets)))
+        return AttrDataset(np.atleast_2d(np.hstack(datasets)))
 
     if __debug__:
         target = sorted(datasets[0].fa.keys())
-        if not N.all([sorted(ds.fa.keys()) == target for ds in datasets]):
+        if not np.all([sorted(ds.fa.keys()) == target for ds in datasets]):
             raise ValueError("Feature attributes collections of to be stacked "
                              "datasets have varying attributes.")
     # will puke if not equal number of samples
-    stacked_samp = N.concatenate([ds.samples for ds in datasets], axis=1)
+    stacked_samp = np.concatenate([ds.samples for ds in datasets], axis=1)
 
     stacked_fa = {}
     for attr in datasets[0].fa:
-        stacked_fa[attr] = N.concatenate([ds.fa[attr].value for ds in datasets],
+        stacked_fa[attr] = np.concatenate([ds.fa[attr].value for ds in datasets],
                                          axis=1)
     # create the dataset
     merged = datasets[0].__class__(stacked_samp, fa=stacked_fa)
@@ -728,11 +728,11 @@ def _expand_attribute(attr, length, attr_name):
             raise ValueError("Length of attribute '%s' [%d] has to be %d."
                              % (attr_name, len(attr), length))
         # sequence as array
-        return N.asanyarray(attr)
+        return np.asanyarray(attr)
 
     except TypeError:
         # make sequence of identical value matching the desired length
-        return N.repeat(attr, length)
+        return np.repeat(attr, length)
 
 
 
@@ -749,7 +749,7 @@ class DatasetAttributeExtractor(object):
 
     Examples
     --------
-    >>> ds = AttrDataset(N.arange(12).reshape((4,3)),
+    >>> ds = AttrDataset(np.arange(12).reshape((4,3)),
     ...              sa={'targets': range(4)},
     ...              fa={'foo': [0,0,1]})
     >>> ext = DAE('sa', 'targets')

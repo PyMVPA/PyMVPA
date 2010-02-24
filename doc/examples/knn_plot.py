@@ -17,7 +17,7 @@ TODO
 
 """
 
-import numpy as N
+import numpy as np
 
 
 """
@@ -40,13 +40,13 @@ dataset_plot = normal_feature_dataset(**dataset_kwargs)
 
 
 # make a new figure
-P.figure(figsize=(9, 9))
+pl.figure(figsize=(9, 9))
 
 for i,k in enumerate((1, 3, 9, 20)):
     knn = kNN(k)
 
     print "Processing %s problem..." % id
-    P.subplot(2, 2, i+1)
+    pl.subplot(2, 2, i+1)
 
     """
     """
@@ -58,4 +58,4 @@ for i,k in enumerate((1, 3, 9, 20)):
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
-    P.show()
+    pl.show()

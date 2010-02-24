@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import externals
 from mvpa.measures.base import FeaturewiseDatasetMeasure
@@ -55,26 +55,26 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
         if labels is None:
             labels = dataset.targets
 
-        ul = N.unique(labels)
+        ul = np.unique(labels)
 
         na = len(ul)
         bign = float(dataset.nsamples)
         alldata = dataset.samples
 
         # total squares of sums
-        sostot = N.sum(alldata, axis=0)
+        sostot = np.sum(alldata, axis=0)
         sostot *= sostot
         sostot /= bign
 
         # total sum of squares
-        sstot = N.sum(alldata * alldata, axis=0) - sostot
+        sstot = np.sum(alldata * alldata, axis=0) - sostot
 
         # between group sum of squares
         ssbn = 0
         for l in ul:
             # all samples for the respective label
             d = alldata[labels == l]
-            sos = N.sum(d, axis=0)
+            sos = np.sum(d, axis=0)
             sos *= sos
             ssbn += sos / float(len(d))
 
@@ -95,13 +95,13 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
         #   File "mtrand.pyx", line 1661, in mtrand.shuffle
         #  TypeError: object of type 'numpy.int64' has no len()
         # without any sane backtrace
-        f[N.isnan(f)] = 0
+        f[np.isnan(f)] = 0
 
         if externals.exists('scipy'):
             from scipy.stats import fprob
-            return Dataset(f[N.newaxis], fa={'fprob': fprob(dfbn, dfwn, f)})
+            return Dataset(f[np.newaxis], fa={'fprob': fprob(dfbn, dfwn, f)})
         else:
-            return Dataset(f[N.newaxis])
+            return Dataset(f[np.newaxis])
 
 
 class CompoundOneWayAnova(OneWayAnova):

@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import warning
 from mvpa.base.dochelpers import _str, borrowkwargs
@@ -137,7 +137,7 @@ class ZScoreMapper(Mapper):
                 # per chunk estimate
                 params = {}
                 for c in ds.sa[chunks_attr].unique:
-                    slicer = N.where(ds.sa[chunks_attr].value == c)[0]
+                    slicer = np.where(ds.sa[chunks_attr].value == c)[0]
                     if not isinstance(est_ids, slice):
                         slicer = list(est_ids.intersection(set(slicer)))
                     params[c] = self._compute_params(ds.samples[slicer])
@@ -155,7 +155,7 @@ class ZScoreMapper(Mapper):
         dtype = self.__dtype
 
         if __debug__ and not chunks_attr is None \
-          and N.array(get_nsamples_per_attr(ds, chunks_attr).values()).min() <= 2:
+          and np.array(get_nsamples_per_attr(ds, chunks_attr).values()).min() <= 2:
             warning("Z-scoring chunk-wise having a chunk with less than three "
                     "samples will set features in these samples to either zero "
                     "(with 1 sample in a chunk) "
@@ -173,7 +173,7 @@ class ZScoreMapper(Mapper):
             mds = ds.copy(deep=False)
 
         # cast the data to float, since in-place operations below do not upcast!
-        if N.issubdtype(mds.samples.dtype, N.integer):
+        if np.issubdtype(mds.samples.dtype, np.integer):
             mds.samples = mds.samples.astype(dtype)
 
         if '__all__' in params:
@@ -187,7 +187,7 @@ class ZScoreMapper(Mapper):
                         "%s has no parameters for chunk '%s'. It probably "
                         "wasn't present in the training dataset!?"
                         % (self.__class__.__name__, c))
-                slicer = N.where(mds.sa[chunks_attr].value == c)[0]
+                slicer = np.where(mds.sa[chunks_attr].value == c)[0]
                 mds.samples[slicer] = self._zscore(mds.samples[slicer],
                                                    *params[c])
 
@@ -211,7 +211,7 @@ class ZScoreMapper(Mapper):
 
         # mappers should not modify the input data
         # cast the data to float, since in-place operations below to not upcast!
-        if N.issubdtype(data.dtype, N.integer):
+        if np.issubdtype(data.dtype, np.integer):
             mdata = data.astype(self.__dtype)
         else:
             mdata = data.copy()
@@ -226,14 +226,14 @@ class ZScoreMapper(Mapper):
 
     def _zscore(self, samples, mean, std):
         # de-mean
-        if N.isscalar(mean) or samples.shape[1] == len(mean):
+        if np.isscalar(mean) or samples.shape[1] == len(mean):
             samples -= mean
         else:
             raise RuntimeError("mean should be a per-feature vector. Got: %r"
                                % (mean,))
 
         # scale
-        if N.isscalar(std):
+        if np.isscalar(std):
             if std == 0:
                 samples[:] = 0
             else:
@@ -244,7 +244,7 @@ class ZScoreMapper(Mapper):
             else:
                 # check for invariant features
                 std_nz = std != 0
-                samples[:, std_nz] /= N.asanyarray(std)[std_nz]
+                samples[:, std_nz] /= np.asanyarray(std)[std_nz]
         return samples
 
 

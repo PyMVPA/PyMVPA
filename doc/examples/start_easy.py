@@ -33,7 +33,7 @@ zscore(dataset, chunks_attr='chunks', baselinetargets=['rest'])
 
 # select class face and house for this demo analysis
 # would work with full datasets (just a little slower)
-dataset = dataset[N.array([l in ['face', 'house'] for l in dataset.sa.targets],
+dataset = dataset[np.array([l in ['face', 'house'] for l in dataset.sa.targets],
                           dtype='bool')]
 
 # setup cross validation procedure, using SMLR classifier
@@ -41,7 +41,7 @@ cv = CrossValidatedTransferError(
             TransferError(SMLR()),
             OddEvenSplitter())
 # and run it
-error = N.mean(cv(dataset))
+error = np.mean(cv(dataset))
 
 # UC: unique chunks, UT: unique targets
 print "Error for %i-fold cross-validation on %i-class problem: %f" \

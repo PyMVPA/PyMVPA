@@ -18,7 +18,7 @@ __docformat__ = 'restructuredtext'
 
 from mvpa.support.copy import deepcopy
 
-import numpy as N
+import numpy as np
 
 from mvpa.misc.state import StateVariable, ClassWithCollections
 from mvpa.misc.param import Parameter
@@ -65,7 +65,7 @@ class Hyperalignment(ClassWithCollections):
     combiner1 = Parameter(lambda x,y: 0.5*(x+y), #
             doc="How to update common space in the 1st loop")
 
-    combiner2 = Parameter(lambda l: N.mean(l, axis=0),
+    combiner2 = Parameter(lambda l: np.mean(l, axis=0),
             doc="How to combine all individual spaces to common space.")
 
     def __init__(self, **kwargs):
@@ -90,7 +90,7 @@ class Hyperalignment(ClassWithCollections):
 
         residuals = None
         if ca['residual_errors'].enabled:
-            residuals = N.zeros((2 + params.level2_niter, ndatasets))
+            residuals = np.zeros((2 + params.level2_niter, ndatasets))
             ca.residual_errors = Dataset(
                 samples = residuals,
                 sa = {'levels' :
@@ -103,7 +103,7 @@ class Hyperalignment(ClassWithCollections):
                   % (self, ndatasets))
 
         if params.ref_ds is None:
-            ref_ds = N.argmax(nfeatures)
+            ref_ds = np.argmax(nfeatures)
         else:
             ref_ds = params.ref_ds
             if ref_ds < 0 and ref_ds >= ndatasets:
@@ -117,10 +117,10 @@ class Hyperalignment(ClassWithCollections):
         # ds = [ zscore(ds, chunks_attr=None) for ds in datasets]
 
         # Level 1 (first)
-        commonspace = N.asanyarray(datasets[ref_ds])
+        commonspace = np.asanyarray(datasets[ref_ds])
         if params.zscore_common:
             zscore(commonspace, chunks_attr=None)
-        data_mapped = [N.asanyarray(ds) for ds in datasets]
+        data_mapped = [np.asanyarray(ds) for ds in datasets]
         for i, (m, data) in enumerate(zip(mappers, data_mapped)):
             if __debug__:
                 debug('HPAL_', "Level 1: ds #%i" % i)
@@ -135,7 +135,7 @@ class Hyperalignment(ClassWithCollections):
             data_mapped[i] = data_temp
 
             if residuals is not None:
-                residuals[0, i] = N.linalg.norm(data_temp - commonspace)
+                residuals[0, i] = np.linalg.norm(data_temp - commonspace)
 
             ## if ds_mapped == []:
             ##     ds_mapped = [zscore(m.forward(d), chunks_attr=None)]
@@ -167,9 +167,9 @@ class Hyperalignment(ClassWithCollections):
                 #ZSC zscore(ds_temp, chunks_attr=None)
                 ds_new.targets = commonspace #PRJ ds_temp
                 m.train(ds_new) # ds_temp)
-                data_mapped[i] = m.forward(N.asanyarray(ds))
+                data_mapped[i] = m.forward(np.asanyarray(ds))
                 if residuals is not None:
-                    residuals[1+loop, i] = N.linalg.norm(data_mapped - commonspace)
+                    residuals[1+loop, i] = np.linalg.norm(data_mapped - commonspace)
 
                 #ds_mapped[i] = zscore( m.forward(ds_temp), chunks_attr=None)
 
@@ -193,7 +193,7 @@ class Hyperalignment(ClassWithCollections):
 
             if residuals is not None:
                 data_mapped = m.forward(ds_new)
-                residuals[-1, i] = N.linalg.norm(data_mapped - commonspace)
+                residuals[-1, i] = np.linalg.norm(data_mapped - commonspace)
 
         return mappers
 

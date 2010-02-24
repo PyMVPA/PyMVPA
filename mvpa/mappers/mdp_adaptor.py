@@ -14,7 +14,7 @@ into PyMVPA.
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 import mdp
 
 from mvpa.base.dataset import DatasetAttributeExtractor
@@ -136,12 +136,12 @@ class MDPNodeMapper(Mapper):
 
     def _forward_data(self, data):
         args, kwargs = self._expand_args('exec', data)
-        return self.node.execute(N.atleast_2d(data), *args, **kwargs).squeeze()
+        return self.node.execute(np.atleast_2d(data), *args, **kwargs).squeeze()
 
 
     def _reverse_data(self, data):
         args, kwargs = self._expand_args('inv', data)
-        return self.node.inverse(N.atleast_2d(data), *args, **kwargs).squeeze()
+        return self.node.inverse(np.atleast_2d(data), *args, **kwargs).squeeze()
 
 
 
@@ -311,8 +311,8 @@ class MDPFlowMapper(Mapper):
 
 
     def _forward_data(self, data):
-        return self.flow.execute(N.atleast_2d(data)).squeeze()
+        return self.flow.execute(np.atleast_2d(data)).squeeze()
 
 
     def _reverse_data(self, data):
-        return self.flow.inverse(N.atleast_2d(data)).squeeze()
+        return self.flow.inverse(np.atleast_2d(data)).squeeze()

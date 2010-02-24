@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for HDF5 converter'''
 
-import numpy as N
+import numpy as np
 
 from mvpa.testing import *
 from mvpa.testing.datasets import datasets, saveload_warehouse
@@ -78,8 +78,8 @@ def test_matfile_v73_compat():
     mat = h5load(os.path.join(pymvpa_dataroot, 'v73.mat'))
     assert_equal(len(mat), 2)
     assert_equal(sorted(mat.keys()), ['x', 'y'])
-    assert_array_equal(mat['x'], N.arange(6)[None].T)
-    assert_array_equal(mat['y'], N.array([(1,0,1)], dtype='uint8').T)
+    assert_array_equal(mat['x'], np.arange(6)[None].T)
+    assert_array_equal(mat['y'], np.array([(1,0,1)], dtype='uint8').T)
 
 
 def test_directaccess():

@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA ..."""
 
 import unittest
-import numpy as N
+import numpy as np
 
 from mvpa.base import cfg
 # See other tests and test_procrust.py for some example on what to do ;)
@@ -45,7 +45,7 @@ class HyperAlignmentTests(unittest.TestCase):
             random_scales += [ds_orig.samples[i, 3] * 100]
             random_shifts += [ds_orig.samples[i+10] * 10]
             random_noise = ds4l.samples[:, ds4l.a.bogus_features[:4]]
-            ds_.samples = N.dot(ds_orig.samples, R) * random_scales[-1] \
+            ds_.samples = np.dot(ds_orig.samples, R) * random_scales[-1] \
                           + random_shifts[-1]
             dss_rotated_clean.append(ds_)
 
@@ -67,17 +67,17 @@ class HyperAlignmentTests(unittest.TestCase):
             dss_clean_back = [m.forward(ds_)
                               for m, ds_ in zip(mappers, dss_rotated_clean)]
 
-            ds_norm = N.linalg.norm(dss[ref_ds].samples)
+            ds_norm = np.linalg.norm(dss[ref_ds].samples)
             nddss = []
-            ds_orig_Rref = N.dot(ds_orig.samples, Rs[ref_ds]) \
+            ds_orig_Rref = np.dot(ds_orig.samples, Rs[ref_ds]) \
                            * random_scales[ref_ds] \
                            + random_shifts[ref_ds]
             for ds_back in dss_clean_back:
                 dds = ds_back.samples - ds_orig_Rref
-                ndds = N.linalg.norm(dds) / ds_norm
+                ndds = np.linalg.norm(dds) / ds_norm
                 nddss += [ndds]
             if not noisy or cfg.getboolean('tests', 'labile', default='yes'):
-                self.failUnless(N.all(ndds <= (1e-10, 1e-2)[int(noisy)]),
+                self.failUnless(np.all(ndds <= (1e-10, 1e-2)[int(noisy)]),
                     msg="Should have reconstructed original dataset more or"
                         "less. Got normed differences %s in %s case."
                         % (nddss, ('clean', 'noisy')[int(noisy)]))
@@ -86,7 +86,7 @@ class HyperAlignmentTests(unittest.TestCase):
         ha = Hyperalignment(ref_ds=ref_ds, level2_niter=2,
                             enable_ca=['residual_errors'])
         mappers = ha(dss_rotated_clean)
-        self.failUnless(N.all(ha.ca.residual_errors.sa.levels ==
+        self.failUnless(np.all(ha.ca.residual_errors.sa.levels ==
                               ['1', '2:0', '2:1', '3']))
         rerrors = ha.ca.residual_errors.samples
         # just basic tests:
@@ -114,17 +114,17 @@ class HyperAlignmentTests(unittest.TestCase):
         Compute feature ranks in each dataset
         based on correlation with other datasets
         '''
-        feature_scores = [ N.zeros(ds[i].nfeatures) for i in range(len(subj)) ]
+        feature_scores = [ np.zeros(ds[i].nfeatures) for i in range(len(subj)) ]
         '''
         for i in range(len(subj)):
-            ds_temp = ds[i].samples - N.mean(ds[i].samples, axis=0)
-            ds_temp = ds_temp / N.sqrt( N.sum( N.square(ds_temp), axis=0) )
+            ds_temp = ds[i].samples - np.mean(ds[i].samples, axis=0)
+            ds_temp = ds_temp / np.sqrt( np.sum( np.square(ds_temp), axis=0) )
             for j in range(i+1,len(subj)):
-            ds_temp2 = ds[j].samples - N.mean(ds[j].samples, axis=0)
-            ds_temp2 = ds_temp2 / N.sqrt( N.sum( N.square(ds_temp2), axis=0) )
-            corr_temp= N.asarray(N.mat(N.transpose(ds_temp))*N.mat(ds_temp2))
-            feature_scores[i] = feature_scores[i] + N.max(corr_temp, axis = 1)
-            feature_scores[j] = feature_scores[j] + N.max(corr_temp, axis = 0)
+            ds_temp2 = ds[j].samples - np.mean(ds[j].samples, axis=0)
+            ds_temp2 = ds_temp2 / np.sqrt( np.sum( np.square(ds_temp2), axis=0) )
+            corr_temp= np.asarray(np.mat(np.transpose(ds_temp))*np.mat(ds_temp2))
+            feature_scores[i] = feature_scores[i] + np.max(corr_temp, axis = 1)
+            feature_scores[j] = feature_scores[j] + np.max(corr_temp, axis = 0)
         '''
         for i, sd in enumerate(ds):
             ds_temp = sd.copy()
@@ -132,11 +132,11 @@ class HyperAlignmentTests(unittest.TestCase):
             for j, sd2 in enumerate(ds[i+1:]):
                 ds_temp2 = sd2.copy()
                 zscore(ds_temp2, chunks_attr=None)
-                corr_temp = N.dot(ds_temp.samples.T, ds_temp2.samples)
+                corr_temp = np.dot(ds_temp.samples.T, ds_temp2.samples)
                 feature_scores[i] = feature_scores[i] + \
-                                    N.max(corr_temp, axis = 1)
+                                    np.max(corr_temp, axis = 1)
                 feature_scores[j+i+1] = feature_scores[j+i+1] + \
-                                        N.max(corr_temp, axis = 0)
+                                        np.max(corr_temp, axis = 0)
 
         for i, sd in enumerate(ds):
             sd.fa['bsc_scores'] = feature_scores[i]
@@ -158,7 +158,7 @@ class HyperAlignmentTests(unittest.TestCase):
         for sub in subj:
             mkdg_ds.append(fmri_dataset(
                 samples=sub+'_mkdg.nii.gz', targets=md_labels,
-                chunks=N.repeat(range(8), 192), mask=sub+'_mask_vt.nii.gz'))
+                chunks=np.repeat(range(8), 192), mask=sub+'_mask_vt.nii.gz'))
 
         m=mean_group_sample(['targets', 'chunks'])
 
@@ -182,26 +182,26 @@ class HyperAlignmentTests(unittest.TestCase):
             splitter=NFoldSplitter(), enable_ca=['confusion'])
         for sd in mkdg_ds_fs:
             wsc = cvterr(sd)
-            within_acc.append(1-N.mean(wsc))
+            within_acc.append(1-np.mean(wsc))
 
         within_acc_mapped = []
         for sd in mkdg_ds_mapped:
             wsc = cvterr(sd)
-            within_acc_mapped.append(1-N.mean(wsc))
+            within_acc_mapped.append(1-np.mean(wsc))
 
-        print N.mean(within_acc)
-        print N.mean(within_acc_mapped)
+        print np.mean(within_acc)
+        print np.mean(within_acc_mapped)
 
         mkdg_ds_all = vstack(mkdg_ds_mapped)
-        mkdg_ds_all.sa['subject'] = N.repeat(range(10), 56)
+        mkdg_ds_all.sa['subject'] = np.repeat(range(10), 56)
         mkdg_ds_all.sa['chunks'] = mkdg_ds_all.sa['subject']
 
         bsc = cvterr(mkdg_ds_all)
-        print 1-N.mean(bsc)
+        print 1-np.mean(bsc)
         mkdg_all = vstack(mkdg_ds_fs)
-        mkdg_all.sa['chunks'] = N.repeat(range(10), 56)
+        mkdg_all.sa['chunks'] = np.repeat(range(10), 56)
         bsc_orig = cvterr(mkdg_all)
-        print 1-N.mean(bsc_orig)
+        print 1-np.mean(bsc_orig)
         pass
 
 

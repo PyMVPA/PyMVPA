@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 
-import numpy as N
+import numpy as np
 
 from mvpa.misc.exceptions import ConvergenceError
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
@@ -80,35 +80,35 @@ class PLR(Classifier):
             # Select only the n largest eigenvectors
             U, S, V = svd(X.T)
             S /= S[0]
-            V = N.matrix(V[:, :N.max(N.where(S > self.__reduced)) + 1])
+            V = np.matrix(V[:, :np.max(np.where(S > self.__reduced)) + 1])
             # Map Data to the subspace spanned by the eigenvectors
             X = (X.T * V).T
 
         nfeatures, npatterns = X.shape
 
         # Weighting vector
-        w  = N.matrix(N.zeros( (nfeatures + 1, 1), 'd'))
+        w  = np.matrix(np.zeros( (nfeatures + 1, 1), 'd'))
         # Error for convergence criterion
-        dw = N.matrix(N.ones(  (nfeatures + 1, 1), 'd'))
+        dw = np.matrix(np.ones(  (nfeatures + 1, 1), 'd'))
         # Patterns of interest in the columns
-        X = N.matrix( \
-                N.concatenate((X, N.ones((1, npatterns), 'd')), 0) \
+        X = np.matrix( \
+                np.concatenate((X, np.ones((1, npatterns), 'd')), 0) \
                 )
-        p = N.matrix(N.zeros((1, npatterns), 'd'))
+        p = np.matrix(np.zeros((1, npatterns), 'd'))
         # Matrix implementation of penalty term
-        Lambda = self.__lm * N.identity(nfeatures + 1, 'd')
+        Lambda = self.__lm * np.identity(nfeatures + 1, 'd')
         Lambda[nfeatures, nfeatures] = 0
         # Gradient
-        g = N.matrix(N.zeros((nfeatures + 1, 1), 'd'))
+        g = np.matrix(np.zeros((nfeatures + 1, 1), 'd'))
         # Fisher information matrix
-        H = N.matrix(N.identity(nfeatures + 1, 'd'))
+        H = np.matrix(np.identity(nfeatures + 1, 'd'))
 
         # Optimize
         k = 0
-        while N.sum(N.ravel(dw.A ** 2)) > self.__criterion:
+        while np.sum(np.ravel(dw.A ** 2)) > self.__criterion:
             p[:, :] = self.__f(w.T * X)
             g[:, :] = X * (d - p).T - Lambda * w
-            H[:, :] = X * N.diag(p.A1 * (1 - p.A1)) * X.T + Lambda
+            H[:, :] = X * np.diag(p.A1 * (1 - p.A1)) * X.T + Lambda
             dw[:, :] = H.I * g
             w += dw
             k += 1
@@ -120,7 +120,7 @@ class PLR(Classifier):
         if __debug__:
             debug("PLR", \
                   "PLR converged after %d steps. Error: %g" % \
-                  (k, N.sum(N.ravel(dw.A ** 2))))
+                  (k, np.sum(np.ravel(dw.A ** 2))))
 
         if self.__reduced:
             # We have computed in rank reduced space ->
@@ -135,7 +135,7 @@ class PLR(Classifier):
     def __f(self, y):
         """This is the logistic function f, that is used for determination of
         the vector w"""
-        return 1. / (1 + N.exp(-y))
+        return 1. / (1 + np.exp(-y))
 
 
     @accepts_dataset_as_samples
@@ -146,10 +146,10 @@ class PLR(Classifier):
         Returns a list of class labels
         """
         # make sure the data are in matrix form
-        data = N.matrix(N.asarray(data))
+        data = np.matrix(np.asarray(data))
 
         # get the values and then predictions
-        values = N.ravel(self.__f(self.offset + data * self.w))
+        values = np.ravel(self.__f(self.offset + data * self.w))
         predictions = values > 0.5
 
         # save the state if desired, relying on State._setitem_ to

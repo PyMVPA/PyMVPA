@@ -49,7 +49,7 @@ __version__ = '0.5.0.dev'
 
 import os
 import random
-import numpy as N
+import numpy as np
 from mvpa.base import cfg
 from mvpa.base import externals
 from mvpa.base.info import wtf
@@ -81,13 +81,13 @@ else:
 if cfg.has_option('general', 'seed'):
     _random_seed = cfg.getint('general', 'seed')
 else:
-    _random_seed = int(N.random.uniform()*(2**31-1))
+    _random_seed = int(np.random.uniform()*(2**31-1))
 
 def seed(random_seed):
     """Uniform and combined seeding of all relevant random number
     generators.
     """
-    N.random.seed(random_seed)
+    np.random.seed(random_seed)
     random.seed(random_seed)
 
 seed(_random_seed)

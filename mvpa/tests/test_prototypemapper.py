@@ -10,7 +10,7 @@
 
 
 import unittest
-import numpy as N
+import numpy as np
 from mvpa.mappers.prototype import PrototypeMapper
 from mvpa.kernels.np import ExponentialKernel, SquaredExponentialKernel
 
@@ -33,7 +33,7 @@ class PrototypeMapperTests(unittest.TestCase):
     ##REF: Name was automagically refactored
     def build_vector_based_pm(self):
         # samples: 40 samples in 20d space (40x20; samples x features)
-        self.samples = N.random.rand(40,20)
+        self.samples = np.random.rand(40,20)
 
         # initial prototypes are samples itself:
         self.prototypes = self.samples.copy()
@@ -67,7 +67,7 @@ class PrototypeMapperTests(unittest.TestCase):
         fraction = 0.5
         prototype_number = max(int(len(self.samples)*fraction),1)
         ## debug("MAP","Generating "+str(prototype_number)+" random prototypes.")
-        self.prototypes2 = N.array(random.sample(self.samples, prototype_number))
+        self.prototypes2 = np.array(random.sample(self.samples, prototype_number))
         self.pm2 = PrototypeMapper(similarities=self.similarities, prototypes=self.prototypes2)
         self.pm2.train(self.samples)
         assert_array_equal(self.pm2.proj.shape, (self.samples.shape[0], self.pm2.prototypes.shape[0]*len(self.similarities)))
@@ -81,10 +81,10 @@ class PrototypeMapperTests(unittest.TestCase):
 
         # trying to pack it into an 'object' array to prevent conversion in the
         # Dataset
-        self.streamline_samples = N.array([
-                                   N.random.rand(3,3),
-                                   N.random.rand(5,3),
-                                   N.random.rand(7,3)],
+        self.streamline_samples = np.array([
+                                   np.random.rand(3,3),
+                                   np.random.rand(5,3),
+                                   np.random.rand(7,3)],
                                    dtype='object')
         self.dataset = Dataset(self.streamline_samples)
         self.similarities = [StreamlineSimilarity(distance=corouge)]
@@ -114,7 +114,7 @@ class PrototypeMapperTests(unittest.TestCase):
         fraction = 0.5
         prototype_number = max(int(len(self.dataset.samples)*fraction),1)
         ## debug("MAP","Generating "+str(prototype_number)+" random prototypes.")
-        self.prototypes_random = self.dataset.samples[N.random.permutation(self.dataset.samples.size)][:prototype_number]
+        self.prototypes_random = self.dataset.samples[np.random.permutation(self.dataset.samples.size)][:prototype_number]
         ## debug("MAP","prototypes: "+str(self.prototypes_random))
 
         self.pm = PrototypeMapper(similarities=self.similarities, prototypes=self.prototypes_random, demean=False)

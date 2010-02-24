@@ -16,7 +16,7 @@ with uppercase letter.
 __docformat__ = 'restructuredtext'
 
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import externals, warning
 from mvpa.misc.state import StateVariable, ClassWithCollections
@@ -34,7 +34,7 @@ def Absolute(x):
     x : scalar or sequence
 
     """
-    return N.absolute(x)
+    return np.absolute(x)
 
 
 ##REF: Name was automagically refactored
@@ -51,13 +51,13 @@ def Identity(x):
 ##REF: Name was automagically refactored
 def first_axis_mean(x):
     """Mean computed along the first axis."""
-    return N.mean(x, axis=0)
+    return np.mean(x, axis=0)
 
 ##REF: Name was automagically refactored
 def first_axis_sum_not_zero(x):
     """Sum computed over first axis of whether the values are not
     equal to zero."""
-    return (N.asarray(x)!=0).sum(axis=0)
+    return (np.asarray(x)!=0).sum(axis=0)
 
 
 ##REF: Name was automagically refactored
@@ -68,7 +68,7 @@ def second_axis_mean(x):
      - to combine multiple sensitivities to get sense about
        mean sensitivity across splits
     """
-    return N.mean(x, axis=1)
+    return np.mean(x, axis=1)
 
 
 ##REF: Name was automagically refactored
@@ -79,20 +79,20 @@ def _second_axis_sum_of_abs(x):
      - to combine multiple sensitivities to get sense about
        what features are most influential
     """
-    return N.abs(x).sum(axis=1)
+    return np.abs(x).sum(axis=1)
 
 
 ##REF: Name was automagically refactored
 def second_axis_max_of_abs(x):
     """Max of absolute values along the 2nd axis
     """
-    return N.abs(x).max(axis=1)
+    return np.abs(x).max(axis=1)
 
 
 ##REF: Name was automagically refactored
 def grand_mean(x):
     """Just what the name suggests."""
-    return N.mean(x)
+    return np.mean(x)
 
 
 ##REF: Name was automagically refactored
@@ -102,13 +102,13 @@ def l2_normed(x, norm=1.0, reverse=False):
     More verbose: Norm that the sum of the squared elements of the
     returned vector becomes `norm`.
     """
-    xnorm = N.linalg.norm(x)
+    xnorm = np.linalg.norm(x)
     return x * (norm/xnorm)
 
 ##REF: Name was automagically refactored
 def l1_normed(x, norm=1.0, reverse=False):
     """Norm the values so that L_1 norm (sum|x|) becomes `norm`"""
-    xnorm = N.sum(N.abs(x))
+    xnorm = np.sum(np.abs(x))
     return x * (norm/xnorm)
 
 
@@ -118,14 +118,14 @@ def rank_order(x, reverse=False):
 
     # XXX was Yarik on drugs? please simplify this beast
     nelements = len(x)
-    indexes = N.arange(nelements)
+    indexes = np.arange(nelements)
     t_indexes = indexes
     if not reverse:
         t_indexes = indexes[::-1]
     tosort = zip(x, indexes)
     tosort.sort()
     ztosort = zip(tosort, t_indexes)
-    rankorder = N.empty(nelements, dtype=int)
+    rankorder = np.empty(nelements, dtype=int)
     rankorder[ [x[0][1] for x in ztosort] ] = \
                [x[1] for x in ztosort]
     return rankorder
@@ -165,7 +165,7 @@ class OverAxis(object):
         if axis is None:
             return transformer(x, *args, **kwargs)
 
-        x = N.asanyarray(x)
+        x = np.asanyarray(x)
         shape = x.shape
         if axis >= len(shape):
             raise ValueError, "Axis given in constructor %d is higher " \
@@ -180,8 +180,8 @@ class OverAxis(object):
         shape_sweep = shape[:axis] + shape[axis+1:]
         shrinker = None
         """Either transformer reduces the dimensionality of the data"""
-        #results = N.empty(shape_out, dtype=x.dtype)
-        for index_sweep in N.ndindex(shape_sweep):
+        #results = np.empty(shape_out, dtype=x.dtype)
+        for index_sweep in np.ndindex(shape_sweep):
             if axis > 0:
                 index = index_sweep[:axis]
             else:
@@ -190,11 +190,11 @@ class OverAxis(object):
             x_sel = x[index]
             x_t = transformer(x_sel, *args, **kwargs)
             if shrinker is None:
-                if N.isscalar(x_t) or x_t.shape == shape_sweep:
-                    results = N.empty(shape_sweep, dtype=x.dtype)
+                if np.isscalar(x_t) or x_t.shape == shape_sweep:
+                    results = np.empty(shape_sweep, dtype=x.dtype)
                     shrinker = True
                 elif x_t.shape == x_sel.shape:
-                    results = N.empty(x.shape, dtype=x.dtype)
+                    results = np.empty(x.shape, dtype=x.dtype)
                     shrinker = False
                 else:
                     raise RuntimeError, 'Not handled by OverAxis kind of transformer'
@@ -260,7 +260,7 @@ class DistPValue(ClassWithCollections):
         fpp = self.fpp
         nbins = self.nbins
 
-        x = N.asanyarray(x)
+        x = np.asanyarray(x)
         shape_orig = x.shape
         ndims = len(shape_orig)
 
@@ -272,13 +272,13 @@ class DistPValue(ClassWithCollections):
             raise NotImplementedError, \
                   "TODO: add support for more than 2 dimensions"
         elif ndims == 1:
-            x, sd = x[:, N.newaxis], 0
+            x, sd = x[:, np.newaxis], 0
 
         # lets transpose for convenience
         if sd == 0: x = x.T
 
         # Output p-values of x in null-distribution
-        pvalues = N.zeros(x.shape)
+        pvalues = np.zeros(x.shape)
         nulldist_number, positives_recovered = [], []
 
         # finally go through all data
@@ -289,16 +289,16 @@ class DistPValue(ClassWithCollections):
                         " items -- may be incorrect sd=%d was provided" % sd)
         dist = stats.rdist(nd-1, 0, 1)
         for i, xx in enumerate(x):
-            xx /= N.linalg.norm(xx)
+            xx /= np.linalg.norm(xx)
 
             if fpp is not None:
                 # Adaptive adjustment for false negatives:
                 Nxx, xxx, pN_emp_prev = len(xx), xx, 1.0
                 Nxxx = Nxx
-                indexes = N.arange(Nxx)
+                indexes = np.arange(Nxx)
                 """What features belong to Null-distribution"""
                 while True:
-                    Nhist = N.histogram(xxx, bins=nbins, normed=False,
+                    Nhist = np.histogram(xxx, bins=nbins, normed=False,
                                         **hist_kwargs)
                     pdf = Nhist[0].astype(float)/Nxxx
                     bins = Nhist[1]
@@ -310,11 +310,11 @@ class DistPValue(ClassWithCollections):
 
                     # otherwise just recompute manually
                     # dist_pdf = dist.pdf(bins)
-                    # dist_pdf /= N.sum(dist_pdf)
+                    # dist_pdf /= np.sum(dist_pdf)
 
                     # XXX can't recall the function... silly
-                    #     probably could use N.integrate
-                    cdf = N.zeros(nbins, dtype=float)
+                    #     probably could use np.integrate
+                    cdf = np.zeros(nbins, dtype=float)
                     #dist_cdf = cdf.copy()
                     dist_prevv = cdf_prevv = 0.0
                     for j in range(nbins):
@@ -322,12 +322,12 @@ class DistPValue(ClassWithCollections):
                         #dist_prevv = dist_cdf[j] = dist_prevv + dist_pdf[j]
 
                     # what bins fall into theoretical 'positives' in both tails
-                    p = (0.5 - N.abs(dist_cdf - 0.5) < fpp/2.0)
+                    p = (0.5 - np.abs(dist_cdf - 0.5) < fpp/2.0)
 
                     # amount in empirical tails -- if we match theoretical, we
                     # should have total >= p
 
-                    pN_emp = N.sum(pdf[p]) # / (1.0 * nbins)
+                    pN_emp = np.sum(pdf[p]) # / (1.0 * nbins)
 
                     if __debug__:
                         debug('TRAN_', "empirical p=%.3f for theoretical p=%.3f"
@@ -347,11 +347,11 @@ class DistPValue(ClassWithCollections):
 
                     pN_emp_prev = pN_emp
                     # very silly way for now -- just proceed by 1 bin
-                    keep = N.logical_and(xxx > bins[0], # + bins_halfstep,
+                    keep = np.logical_and(xxx > bins[0], # + bins_halfstep,
                                          xxx < bins[-1]) # - bins_halfstep)
                     if __debug__:
                         debug('TRAN_', "Keeping %d out of %d elements" %
-                              (N.sum(keep), Nxxx))
+                              (np.sum(keep), Nxxx))
 
                     # Preserve them if we need to "roll back"
                     indexes_prev, xxx_prev, dist_prev = indexes, xxx, dist
@@ -360,7 +360,7 @@ class DistPValue(ClassWithCollections):
                     # which should not belong to Null-dist
                     xxx, indexes = xxx[keep], indexes[keep]
                     # L2 renorm it
-                    xxx = xxx / N.linalg.norm(xxx)
+                    xxx = xxx / np.linalg.norm(xxx)
                     Nxxx = len(xxx)
                     dist = stats.rdist(Nxxx-1, 0, 1)
 

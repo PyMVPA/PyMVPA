@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.mappers.base import Mapper
 from mvpa.clfs.base import accepts_dataset_as_samples
@@ -51,14 +51,14 @@ class BoxcarMapper(Mapper):
         Mapper.__init__(self, **kwargs)
         self._outshape = None
 
-        startpoints = N.asanyarray(startpoints)
-        if N.issubdtype(startpoints.dtype, 'i'):
+        startpoints = np.asanyarray(startpoints)
+        if np.issubdtype(startpoints.dtype, 'i'):
             self.startpoints = startpoints
         else:
             if __debug__:
                 debug('MAP', "Boxcar: obtained startpoints are not of int type."
                       " Rounding and changing dtype")
-            self.startpoints = N.asanyarray(N.round(startpoints), dtype='i')
+            self.startpoints = np.asanyarray(np.round(startpoints), dtype='i')
 
         # Sanity checks
         if boxlength < 1:
@@ -128,7 +128,7 @@ class BoxcarMapper(Mapper):
             raise ValueError("Data shape %s does not match sample shape %s."
                              % (data.shape[0], self._outshape[2]))
 
-        return N.vstack([data[N.newaxis]] * self.boxlength)
+        return np.vstack([data[np.newaxis]] * self.boxlength)
 
 
     def _forward_data(self, data):
@@ -145,7 +145,7 @@ class BoxcarMapper(Mapper):
         """
         # NOTE: _forward_dataset() relies on the assumption that the following
         # also works with 1D arrays and still yields sane results
-        return N.vstack([data[box][N.newaxis] for box in self.__selectors])
+        return np.vstack([data[box][np.newaxis] for box in self.__selectors])
 
 
     def _forward_dataset(self, dataset):
@@ -173,11 +173,11 @@ class BoxcarMapper(Mapper):
                 # each new feature attribute should have the shape of a single
                 # sample otherwise subsequent flattening wouldn't work
                 mds.fa[self.get_inspace() + '_offsetidx'] = \
-                        N.repeat(N.arange(mds.nfeatures, dtype='int'),
-                                 N.prod(msamp.shape[2:])).reshape(msamp[0].shape)
+                        np.repeat(np.arange(mds.nfeatures, dtype='int'),
+                                 np.prod(msamp.shape[2:])).reshape(msamp[0].shape)
             else:
                 mds.fa[self.get_inspace() + '_offsetidx'] = \
-                        N.arange(mds.nfeatures, dtype='int')
+                        np.arange(mds.nfeatures, dtype='int')
             mds.sa[self.get_inspace() + '_onsetidx'] = self.startpoints.copy()
         return mds
 
@@ -197,7 +197,7 @@ class BoxcarMapper(Mapper):
         if len(data.shape) < 2:
             # this is not something that this mapper created -- let's broadcast
             # its elements and hope that it would work
-            return N.repeat(data, self.boxlength)
+            return np.repeat(data, self.boxlength)
 
         # stack them all together -- this will cause overlapping boxcars to
         # result in multiple identical samples
@@ -213,9 +213,9 @@ class BoxcarMapper(Mapper):
         # need to take care of the special case when the first axis is of length
         # one, in that case it would be squashed away
         if data.shape[0] == 1:
-            return N.concatenate(data)[N.newaxis]
+            return np.concatenate(data)[np.newaxis]
         else:
-            return N.concatenate(data)
+            return np.concatenate(data)
 
 
     def _reverse_dataset(self, dataset):

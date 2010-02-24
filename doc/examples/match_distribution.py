@@ -31,7 +31,7 @@ verbose.handlers += [report]     # Lets add verbose output to the report.
 
 # generate random signal from normal distribution
 verbose(1, "Random signal with normal distribution")
-data = N.random.normal(size=(1000, 1))
+data = np.random.normal(size=(1000, 1))
 
 # find matching distributions
 # NOTE: since kstest is broken in older versions of scipy
@@ -42,15 +42,15 @@ figsize = (15, 10)
 verbose(1, "Find matching datasets")
 matches = match_distribution(data, test=test, p=0.05)
 
-P.figure(figsize=figsize)
-P.subplot(2, 1, 1)
+pl.figure(figsize=figsize)
+pl.subplot(2, 1, 1)
 plot_distribution_matches(data, matches, legend=1, nbest=5)
-P.title('Normal: 5 best distributions')
+pl.title('Normal: 5 best distributions')
 
-P.subplot(2, 1, 2)
+pl.subplot(2, 1, 2)
 plot_distribution_matches(data, matches, nbest=5, p=0.05,
                         tail='any', legend=4)
-P.title('Accept regions for two-tailed test')
+pl.title('Accept regions for two-tailed test')
 
 # we are done with the figure -- add it to report
 report.figure()
@@ -65,7 +65,7 @@ dataset = nifti_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                         chunks=attr.chunks,
                         mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 # select random voxel
-dataset = dataset[:, int(N.random.uniform()*dataset.nfeatures)]
+dataset = dataset[:, int(np.random.uniform()*dataset.nfeatures)]
 
 verbose(2, "Minimal preprocessing to remove the bias per each voxel")
 detrend(dataset, chunks_attr='chunks', model='linear')
@@ -77,22 +77,22 @@ data = dataset.samples.ravel()
 verbose(2, "Find matching distribution")
 matches = match_distribution(data, test=test, p=0.05)
 
-P.figure(figsize=figsize)
-P.subplot(2, 1, 1)
+pl.figure(figsize=figsize)
+pl.subplot(2, 1, 1)
 plot_distribution_matches(data, matches, legend=1, nbest=5)
-P.title('Random voxel: 5 best distributions')
+pl.title('Random voxel: 5 best distributions')
 
-P.subplot(2, 1, 2)
+pl.subplot(2, 1, 2)
 plot_distribution_matches(data, matches, nbest=5, p=0.05,
                         tail='any', legend=4)
-P.title('Accept regions for two-tailed test')
+pl.title('Accept regions for two-tailed test')
 report.figure()
 
 if cfg.getboolean('examples', 'interactive', True):
     # store the report
     report.save()
     # show the cool figure
-    P.show()
+    pl.show()
 
 """
 Example output for a random voxel is

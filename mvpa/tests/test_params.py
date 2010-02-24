@@ -10,7 +10,7 @@
 
 import unittest, copy
 
-import numpy as N
+import numpy as np
 from sets import Set
 
 from mvpa.datasets.base import dataset_wizard

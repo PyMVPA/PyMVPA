@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import externals
 if externals.exists('shogun', raiseException=True):
@@ -50,7 +50,7 @@ class LinearSVMWeights(Sensitivity):
     def __sg_helper(self, svm):
         """Helper function to compute sensitivity for a single given SVM"""
         bias = svm.get_bias()
-        svcoef = N.matrix(svm.get_alphas())
+        svcoef = np.matrix(svm.get_alphas())
         svnums = svm.get_support_vectors()
         svs = self.clf.traindataset.samples[svnums,:]
         res = (svcoef * svs).mean(axis=0).A1
@@ -95,14 +95,14 @@ class LinearSVMWeights(Sensitivity):
             assert(len(sens) == nsvms)  # we should have  covered all
         else:
             sens1, bias = self.__sg_helper(sgsvm)
-            biases = N.atleast_1d(bias)
-            sens = N.atleast_2d(sens1)
+            biases = np.atleast_1d(bias)
+            sens = np.atleast_2d(sens1)
             if not clf.__is_regression__:
                 assert(set(clf._attrmap.values()) == set([-1.0, 1.0]))
                 assert(sens.shape[0] == 1)
                 sens_labels = [(-1.0, 1.0)]
 
-        ds = Dataset(N.atleast_2d(sens))
+        ds = Dataset(np.atleast_2d(sens))
         if sens_labels is not None:
             if isinstance(sens_labels[0], tuple):
                 # Need to have them in array of dtype object

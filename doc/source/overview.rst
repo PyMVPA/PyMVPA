@@ -45,7 +45,7 @@ using the mean and standard deviation determined from *rest* volumes
 
 Select a subset of two stimulation conditions from the whole dataset.
 
- >>> interesting = N.array([i in ['face', 'house'] for i in dataset.sa.targets])
+ >>> interesting = np.array([i in ['face', 'house'] for i in dataset.sa.targets])
  >>> dataset = dataset[interesting]
 
 Finally, setup the cross-validation procedure using an odd-even split of the

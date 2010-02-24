@@ -39,7 +39,7 @@ dataset = fmri_dataset(os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
 poly_detrend(dataset, polyord=1, chunks_attr='chunks')
 
 # only use 'rest', 'cats' and 'scissors' samples from dataset
-dataset = dataset[N.array([ l in ['rest', 'cat', 'scissors']
+dataset = dataset[np.array([ l in ['rest', 'cat', 'scissors']
                     for l in dataset.targets], dtype='bool')]
 
 # zscore dataset relative to baseline ('rest') mean
@@ -89,7 +89,7 @@ plot_bars(results, labels=labels,
          distance=0.5)
 
 if cfg.getboolean('examples', 'interactive', True):
-    P.show()
+    pl.show()
 
 """
 Output of the example analysis:

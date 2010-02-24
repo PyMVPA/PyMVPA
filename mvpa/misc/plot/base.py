@@ -10,8 +10,8 @@
 
 __docformat__ = 'restructuredtext'
 
-import pylab as P
-import numpy as N
+import pylab as pl
+import numpy as np
 
 from mvpa.misc.plot.tools import Pion, Pioff
 from mvpa.misc.attrmap import AttributeMap
@@ -62,27 +62,27 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
     Make dataset with 20 samples from a full sinus wave period,
     computed 100 times with individual noise pattern.
 
-        >>> x = N.linspace(0, N.pi * 2, 20)
-        >>> data = N.vstack([N.sin(x)] * 30)
-        >>> data += N.random.normal(size=data.shape)
+        >>> x = np.linspace(0, np.pi * 2, 20)
+        >>> data = np.vstack([np.sin(x)] * 30)
+        >>> data += np.random.normal(size=data.shape)
 
       Now, plot mean data points with error bars, plus a high-res
       version of the original sinus wave.
 
-        >>> x = N.linspace(0, N.pi * 2, 200)
-        >>> plot_err_line(data, curves=[(x, N.sin(x))])
-        >>> #P.show()
+        >>> x = np.linspace(0, np.pi * 2, 200)
+        >>> plot_err_line(data, curves=[(x, np.sin(x))])
+        >>> #pl.show()
     """
-    data = N.asanyarray(data)
+    data = np.asanyarray(data)
 
     if len(data.shape) < 2:
-        data = N.atleast_2d(data)
+        data = np.atleast_2d(data)
 
     # compute mean signal course
     md = data.mean(axis=0)
 
     if baseline is None:
-        baseline = N.abs(md[0])
+        baseline = np.abs(md[0])
 
     if perc_sigchg:
         md /= baseline
@@ -94,7 +94,7 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
 
     # compute matching datapoint locations on x-axis
     if x is None:
-        x = N.arange(len(md))
+        x = np.arange(len(md))
     else:
         if not len(md) == len(x):
             raise ValueError, "The length of `x` (%i) has to match the 2nd " \
@@ -106,23 +106,23 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
             xc, yc = c
             # scales line array to same range as datapoints
             if not linestyle is None:
-                P.plot(xc, yc, linestyle)
+                pl.plot(xc, yc, linestyle)
             else:
-                P.plot(xc, yc)
+                pl.plot(xc, yc)
 
         # no line between data points
         linestyle = 'None'
 
     # compute error per datapoint
     if errtype == 'ste':
-        err = data.std(axis=0) / N.sqrt(len(data))
+        err = data.std(axis=0) / np.sqrt(len(data))
     elif errtype == 'std':
         err = data.std(axis=0)
     else:
         raise ValueError, "Unknown error type '%s'" % errtype
 
     # plot datapoints with error bars
-    P.errorbar(x, md, err, fmt=fmt, linestyle=linestyle)
+    pl.errorbar(x, md, err, fmt=fmt, linestyle=linestyle)
 
 
 ##REF: Name was automagically refactored
@@ -155,14 +155,14 @@ def plot_feature_hist(dataset, xlim=None, noticks=True,
     ncols = len(dataset.sa[chunks_attr].unique)
 
     def doplot(data):
-        P.hist(data, **kwargs)
+        pl.hist(data, **kwargs)
 
         if xlim is not None:
-            P.xlim(xlim)
+            pl.xlim(xlim)
 
         if noticks:
-            P.yticks([])
-            P.xticks([])
+            pl.yticks([])
+            pl.xticks([])
 
     fig = 1
 
@@ -171,20 +171,20 @@ def plot_feature_hist(dataset, xlim=None, noticks=True,
         if chunks_attr:
             for col, (alsoignore, d) in enumerate(csplit(ds)):
 
-                P.subplot(nrows, ncols, fig)
+                pl.subplot(nrows, ncols, fig)
                 doplot(d.samples.ravel())
 
                 if row == 0:
-                    P.title('C:' + str(d.sa[chunks_attr].unique[0]))
+                    pl.title('C:' + str(d.sa[chunks_attr].unique[0]))
                 if col == 0:
-                    P.ylabel('L:' + str(d.sa[targets_attr].unique[0]))
+                    pl.ylabel('L:' + str(d.sa[targets_attr].unique[0]))
 
                 fig += 1
         else:
-            P.subplot(1, nrows, fig)
+            pl.subplot(1, nrows, fig)
             doplot(ds.samples)
 
-            P.title('L:' + str(ds.sa[targets_attr].unique[0]))
+            pl.title('L:' + str(ds.sa[targets_attr].unique[0]))
 
             fig += 1
 
@@ -213,10 +213,10 @@ def plot_samples_distance(dataset, sortbyattr=None):
     else:
         samples = dataset.samples
 
-    ed = N.sqrt(squared_euclidean_distance(samples))
+    ed = np.sqrt(squared_euclidean_distance(samples))
 
-    P.imshow(ed)
-    P.colorbar()
+    pl.imshow(ed)
+    pl.colorbar()
 
 
 def plot_decision_boundary_2d(dataset, clf=None,
@@ -281,13 +281,13 @@ def plot_decision_boundary_2d(dataset, clf=None,
         res = 50
         vals = [-1, 0, 1]
         data_callback=None
-        P.clf()
+        pl.clf()
 
     if dataset.nfeatures != 2:
         raise ValueError('Can only plot a decision boundary in 2D')
 
     Pioff()
-    a = P.gca() # f.add_subplot(1,1,1)
+    a = pl.gca() # f.add_subplot(1,1,1)
 
     attrmap = None
     if clf:
@@ -315,13 +315,13 @@ def plot_decision_boundary_2d(dataset, clf=None,
 
     vmin = min(utargets)
     vmax = max(utargets)
-    cmap = P.cm.RdYlGn                  # argument
+    cmap = pl.cm.RdYlGn                  # argument
 
     # Scatter points
     if clf:
         all_hits = predictions == targets_lit
     else:
-        all_hits = N.ones((len(targets),), dtype=bool)
+        all_hits = np.ones((len(targets),), dtype=bool)
 
     targets_colors = {}
     for l in utargets:
@@ -332,7 +332,7 @@ def plot_decision_boundary_2d(dataset, clf=None,
 
         # We want to plot hits and misses with different symbols
         hits = all_hits[targets_mask]
-        misses = N.logical_not(hits)
+        misses = np.logical_not(hits)
         scatter_kwargs = dict(
             c=[c], zorder=10+(l-vmin))
 
@@ -350,9 +350,9 @@ def plot_decision_boundary_2d(dataset, clf=None,
     extent = (xmin, xmax, ymin, ymax)
 
     # Create grid to evaluate, predict it
-    (x,y) = N.mgrid[xmin:xmax:N.complex(0, maps_res),
-                    ymin:ymax:N.complex(0, maps_res)]
-    news = N.vstack((x.ravel(), y.ravel())).T
+    (x,y) = np.mgrid[xmin:xmax:np.complex(0, maps_res),
+                    ymin:ymax:np.complex(0, maps_res)]
+    news = np.vstack((x.ravel(), y.ravel())).T
     try:
         news = data_callback(news)
     except TypeError: # Not a callable object
@@ -419,12 +419,12 @@ def plot_decision_boundary_2d(dataset, clf=None,
         for target in utargets:
             t_mask = targets == target
             for chunk in uchunks:
-                tc_mask = N.logical_and(t_mask,
+                tc_mask = np.logical_and(t_mask,
                                         chunk == chunks)
                 tc_samples = dataset.samples[tc_mask]
                 tr = Triangulation(tc_samples[:, 0],
                                    tc_samples[:, 1])
-                poly = P.fill(tc_samples[tr.hull, 0],
+                poly = pl.fill(tc_samples[tr.hull, 0],
                               tc_samples[tr.hull, 1],
                               closed=True,
                               facecolor=targets_colors[target],
@@ -435,12 +435,12 @@ def plot_decision_boundary_2d(dataset, clf=None,
                               linewidth=0.5,
                               )
 
-    P.legend(scatterpoints=1)
+    pl.legend(scatterpoints=1)
     if clf and not estimates_were_enabled:
         clf.ca.disable('estimates')
     Pion()
-    P.axis('tight')
-    #P.show()
+    pl.axis('tight')
+    #pl.show()
 
 ##REF: Name was automagically refactored
 def plot_bars(data, labels=None, title=None, ylim=None, ylabel=None,
@@ -484,19 +484,19 @@ def plot_bars(data, labels=None, title=None, ylim=None, ylabel=None,
     """
     # determine location of bars
     if xloc is None:
-        xloc = (N.arange(len(data)) * distance) + offset
+        xloc = (np.arange(len(data)) * distance) + offset
 
     if yerr == 'ste':
-        yerr = [N.std(d) / N.sqrt(len(d)) for d in data]
+        yerr = [np.std(d) / np.sqrt(len(d)) for d in data]
     elif yerr == 'std':
-        yerr = [N.std(d) for d in data]
+        yerr = [np.std(d) for d in data]
     else:
         # if something that we do not know just pass on
         pass
 
     # plot bars
-    plot = P.bar(xloc,
-                 [N.mean(d) for d in data],
+    plot = pl.bar(xloc,
+                 [np.mean(d) for d in data],
                  yerr=yerr,
                  width=width,
                  color=color,
@@ -504,18 +504,18 @@ def plot_bars(data, labels=None, title=None, ylim=None, ylabel=None,
                  **kwargs)
 
     if ylim:
-        P.ylim(*(ylim))
+        pl.ylim(*(ylim))
     if title:
-        P.title(title)
+        pl.title(title)
 
     if labels:
-        P.xticks(xloc + width / 2, labels)
+        pl.xticks(xloc + width / 2, labels)
 
     if ylabel:
-        P.ylabel(ylabel)
+        pl.ylabel(ylabel)
 
     # leave some space after last bar
-    P.xlim(0, xloc[-1] + width + offset)
+    pl.xlim(0, xloc[-1] + width + offset)
 
     return plot
 
@@ -547,8 +547,8 @@ def plot_dataset_chunks(ds, clf_labels=None):
     """
     if ds.nfeatures != 2:
         raise ValueError, "Can plot only in 2D, ie for datasets with 2 features"
-    if P.matplotlib.get_backend() == 'TkAgg':
-        P.ioff()
+    if pl.matplotlib.get_backend() == 'TkAgg':
+        pl.ioff()
     if clf_labels is not None and len(clf_labels) != ds.nsamples:
         clf_labels = None
     colors = ('b', 'g', 'r', 'c', 'm', 'y', 'k', 'w')
@@ -564,16 +564,16 @@ def plot_dataset_chunks(ds, clf_labels=None):
             format = ''
             if clf_labels != None:
                 if clf_labels[i] != ds_chunk.targets[i]:
-                    P.plot([s[0]], [s[1]], 'x' + labels_map[l])
-            P.text(s[0], s[1], chunk_text, color=labels_map[l],
+                    pl.plot([s[0]], [s[1]], 'x' + labels_map[l])
+            pl.text(s[0], s[1], chunk_text, color=labels_map[l],
                    horizontalalignment='center',
                    verticalalignment='center',
                    )
     dss = ds.samples
-    P.axis((1.1 * N.min(dss[:, 0]),
-            1.1 * N.max(dss[:, 1]),
-            1.1 * N.max(dss[:, 0]),
-            1.1 * N.min(dss[:, 1])))
-    P.draw()
-    P.ion()
+    pl.axis((1.1 * np.min(dss[:, 0]),
+            1.1 * np.max(dss[:, 1]),
+            1.1 * np.max(dss[:, 0]),
+            1.1 * np.min(dss[:, 1])))
+    pl.draw()
+    pl.ion()
 
