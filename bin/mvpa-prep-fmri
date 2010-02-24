@@ -26,7 +26,7 @@ import sys
 import os
 from subprocess import call
 
-import numpy as N
+import numpy as np
 
 from mvpa.misc.cmdline import parser, opt
 from mvpa.base import verbose, externals, error
@@ -168,16 +168,16 @@ def main():
         for k, (title, fields, ylabel) in enumerate(
             (('Translation', ('x', 'y', 'z'), 'mm'),
              ('Rotation', ('rot1', 'rot2', 'rot3'), 'radians'))):
-            P.subplot(211+k)
-            P.title(title)
-            P.plot([0, timepoints], [0, 0], '0.6')
+            pl.subplot(211+k)
+            pl.title(title)
+            pl.plot([0, timepoints], [0, 0], '0.6')
             for dim in fields:
-                P.plot(mc[dim], label=dim)
-            P.legend()
-            P.axis('tight')
-            P.ylabel(ylabel)
+                pl.plot(mc[dim], label=dim)
+            pl.legend()
+            pl.axis('tight')
+            pl.ylabel(ylabel)
 
-        P.gcf().savefig(os.path.join(opath, 'func_mc.pdf'))
+        pl.gcf().savefig(os.path.join(opath, 'func_mc.pdf'))
 
     bet_call = \
         ' '.join(
@@ -199,7 +199,7 @@ def main():
     func_nim = NiftiImage(os.path.join(opath, 'func_mc'))
     # special case: single slice mask
     if len(mask_nim.extent) < 3:
-        func_nim.data[:, N.asarray([mask_nim.data]) == 0] = 0
+        func_nim.data[:, np.asarray([mask_nim.data]) == 0] = 0
     else:
         func_nim.data[:, mask_nim.data == 0] = 0
     func_nim.save()

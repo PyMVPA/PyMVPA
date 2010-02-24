@@ -44,20 +44,20 @@ if False:           # just to please Python so it could parse the file
         """
         # if no baseline length is given, use t0
         if t is None:
-            t = N.abs(self.t0)
+            t = np.abs(self.t0)
 
         # determine length of baseline in samples
         if isinstance(t, float):
-            t = N.round(t * self.samplingrate)
+            t = np.round(t * self.samplingrate)
 
         # get original data
         data = self.O
 
         # compute baseline
         # XXX: shouldn't this be done per chunk?
-        baseline = N.mean(data[:, :, :t], axis=2)
+        baseline = np.mean(data[:, :, :t], axis=2)
         # remove baseline
-        data -= baseline[..., N.newaxis]
+        data -= baseline[..., np.newaxis]
 
         # put data back into dataset
         self.samples[:] = self.mapForward(data)

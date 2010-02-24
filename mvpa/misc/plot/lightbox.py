@@ -10,8 +10,8 @@
 
 """
 
-import pylab as P
-import numpy as N
+import pylab as pl
+import numpy as np
 import matplotlib as mpl
 
 from mvpa.base import warning, externals
@@ -106,7 +106,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             # Assure that we have 3D (at least)
             if len(argshape)<3:
                 arg.data = arg.data.reshape((1,)*(3-len(argshape)) + argshape)
-        if isinstance(arg, N.ndarray):
+        if isinstance(arg, np.ndarray):
             if len(arg.shape) != 3:
                 raise ValueError, "For now just handling 3D volumes"
         return arg
@@ -114,7 +114,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
     bg = handle_arg(background)
     if isinstance(bg, NiftiImage):
         # figure out aspect
-        # fov = (N.array(bg.header['pixdim']) * bg.header['dim'])[3:0:-1]
+        # fov = (np.array(bg.header['pixdim']) * bg.header['dim'])[3:0:-1]
         # aspect = fov[1]/fov[2]
         # just scale by voxel-size ratio (extent is disabled)
         aspect = bg.header['pixdim'][2] / bg.header['pixdim'][1]
@@ -151,7 +151,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
         if v is not None:
             if v.ndim > 3:
                 # we could squeeze out first bogus dimensions
-                if N.all(N.array(v.shape[:v.ndim-3]) == 1):
+                if np.all(np.array(v.shape[:v.ndim-3]) == 1):
                     v.shape = v.shape[v.ndim-3:]
                 else:
                     raise ValueError, \
@@ -169,17 +169,17 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             fnonpos = func_masked[func_masked<=0]
             fneg = func_masked[func_masked<0]
             # take together with sign-reverted negative values
-            fsym = N.hstack((-fneg, fnonpos))
+            fsym = np.hstack((-fneg, fnonpos))
             nfsym = len(fsym)
             # Estimate normal std under assumption of mean=0
-            std = N.sqrt(N.mean(abs(fsym)**2))
+            std = np.sqrt(np.mean(abs(fsym)**2))
             # convert vlim assuming it is z-scores
             for i,v in enumerate(vlim):
                 if v is not None:
                     vlim[i] = std * v
             # add a plot to histogram
-            add_dist2hist = [(lambda x: nfsym/(N.sqrt(2*N.pi)*std) \
-                                        *N.exp(-(x**2)/(2*std**2)),
+            add_dist2hist = [(lambda x: nfsym/(np.sqrt(2*np.pi)*std) \
+                                        *np.exp(-(x**2)/(2*std**2)),
                               {})]
         else:
             raise ValueError, 'Unknown specification of vlim=%s' % vlim + \
@@ -210,12 +210,12 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             add_hist = self._locals['add_hist']
             slices = self._locals['slices']
             slice_title = self._locals['slice_title']
-            if N.isscalar(vlim): vlim = (vlim, None)
-            if vlim[0] is None: vlim = (N.min(func), vlim[1])
-            if vlim[1] is None: vlim = (vlim[0], N.max(func))
+            if np.isscalar(vlim): vlim = (vlim, None)
+            if vlim[0] is None: vlim = (np.min(func), vlim[1])
+            if vlim[1] is None: vlim = (vlim[0], np.max(func))
             if __debug__ and 'PLLB' in debug.active:
                 debug('PLLB', "Maximum %g at %s, vlim is %s" %
-                      (N.max(func), N.where(func==N.max(func)), str(vlim)))
+                      (np.max(func), np.where(func==np.max(func)), str(vlim)))
             invert = vlim[1] < vlim[0]
             if invert:
                 vlim = (vlim[1], vlim[0])
@@ -224,14 +224,14 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             # adjust lower bound if it is too low
             # and there are still multiple values ;)
             func_masked = func[func_mask]
-            if vlim[0] < N.min(func_masked) and \
-                   N.min(func_masked) != N.max(func_masked):
+            if vlim[0] < np.min(func_masked) and \
+                   np.min(func_masked) != np.max(func_masked):
                 vlim = list(vlim)
-                vlim[0] = N.min(func[func_mask])
+                vlim[0] = np.min(func[func_mask])
                 vlim = tuple(vlim)
 
-            bound_above = (max(vlim) < N.max(func))
-            bound_below = (min(vlim) > N.min(func))
+            bound_above = (max(vlim) < np.max(func))
+            bound_below = (min(vlim) > np.min(func))
 
             #
             # reverse the map if needed
@@ -242,11 +242,11 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 else:
                     cmap_ += '_r'
 
-            func_cmap = eval("P.cm.%s" % cmap_)
-            bg_cmap = eval("P.cm.%s" % cmap_bg)
+            func_cmap = eval("pl.cm.%s" % cmap_)
+            bg_cmap = eval("pl.cm.%s" % cmap_bg)
 
             if do_stretch_colors:
-                clim = (N.min(func), N.max(func))#vlim
+                clim = (np.min(func), np.max(func))#vlim
             else:
                 clim = vlim
 
@@ -268,9 +268,9 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
 
             # more or less square alignment ;-)
             if ncolumns is None:
-                ncolumns = int(N.sqrt(nslices))
+                ncolumns = int(np.sqrt(nslices))
             ndcolumns = ncolumns
-            nrows = max(nrows, int(N.ceil(nslices*1.0/ncolumns)))
+            nrows = max(nrows, int(np.ceil(nslices*1.0/ncolumns)))
 
             # Check if additional column/row information was provided
             # and extend nrows/ncolumns
@@ -307,13 +307,13 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             Pioff()
 
             if self.fig is None:
-                self.fig = P.figure(facecolor='white',
+                self.fig = pl.figure(facecolor='white',
                                     figsize=(4*ncolumns, 4*nrows))
             fig = self.fig
 
             #
             # how to threshold images
-            thresholder = lambda x: N.logical_and(x>=vlim[0],
+            thresholder = lambda x: np.logical_and(x>=vlim[0],
                                                   x<=vlim[1]) ^ invert
 
             #
@@ -328,8 +328,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 ax.axison = False
                 slice_bg = bg[islice]
 
-                slice_bg_ = N.ma.masked_array(slice_bg,
-                                              mask=N.logical_not(bg_mask[islice]))
+                slice_bg_ = np.ma.masked_array(slice_bg,
+                                              mask=np.logical_not(bg_mask[islice]))
                                               #slice_bg<=0)
                 slice_bg_nvoxels = len(slice_bg_.nonzero()[0])
                 if __debug__:
@@ -339,10 +339,10 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 slice_sl  = func[islice]
 
                 in_thresh = thresholder(slice_sl)
-                out_thresh = N.logical_not(in_thresh)
-                slice_sl_ = N.ma.masked_array(slice_sl,
-                                mask=N.logical_or(out_thresh,
-                                                  N.logical_not(func_mask[islice])))
+                out_thresh = np.logical_not(in_thresh)
+                slice_sl_ = np.ma.masked_array(slice_sl,
+                                mask=np.logical_or(out_thresh,
+                                                  np.logical_not(func_mask[islice])))
 
                 slice_func_nvoxels = len(slice_sl_.nonzero()[0])
                 if __debug__:
@@ -355,7 +355,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
 
                 # paste a blank white background first, since otherwise
                 # recent matplotlib screws up those masked imshows
-                im = ax.imshow(N.ones(slice_sl_.shape),
+                im = ax.imshow(np.ones(slice_sl_.shape),
                                cmap=bg_cmap,
                                **kwargs)
                 im.set_clim((0,1))
@@ -379,38 +379,38 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                     im0 = im
 
                 if slice_title:
-                    P.title(slice_title % locals())
+                    pl.title(slice_title % locals())
 
             # func_masked = func[func_mask]
 
             #
             # Add summary information
-            func_thr = func[N.logical_and(func_mask, thresholder(func))]
+            func_thr = func[np.logical_and(func_mask, thresholder(func))]
             if add_info and len(func_thr):
                 self.info_ax = ax = fig.add_subplot(nrows, ncolumns,
                                                     locs.index('info')+1,
                                                     frame_on=False)
-                #    cb = P.colorbar(shrink=0.8)
+                #    cb = pl.colorbar(shrink=0.8)
                 #    #cb.set_clim(clim[0], clim[1])
                 ax.axison = False
                 #if add_colorbar:
-                #    cb = P.colorbar(im, shrink=0.8, pad=0.0, drawedges=False,
+                #    cb = pl.colorbar(im, shrink=0.8, pad=0.0, drawedges=False,
                 #                    extend=extend, cmap=func_cmap)
 
                 stats = {'v':len(func_masked),
                          'vt': len(func_thr),
-                         'm': N.mean(func_masked),
-                         'mt': N.mean(func_thr),
-                         'min': N.min(func_masked),
-                         'mint': N.min(func_thr),
-                         'max': N.max(func_masked),
-                         'maxt': N.max(func_thr),
-                         'mm': N.median(func_masked),
-                         'mmt': N.median(func_thr),
-                         'std': N.std(func_masked),
-                         'stdt': N.std(func_thr),
+                         'm': np.mean(func_masked),
+                         'mt': np.mean(func_thr),
+                         'min': np.min(func_masked),
+                         'mint': np.min(func_thr),
+                         'max': np.max(func_masked),
+                         'maxt': np.max(func_thr),
+                         'mm': np.median(func_masked),
+                         'mmt': np.median(func_thr),
+                         'std': np.std(func_masked),
+                         'stdt': np.std(func_thr),
                          'sthr': thresh_str}
-                P.text(0, 0.5, """
+                pl.text(0, 0.5, """
  Original:
   voxels = %(v)d
   range = [%(min).3g, %(max).3g]
@@ -435,7 +435,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 kwargs_cb = {}
                 #if add_hist:
                 #    kwargs_cb['cax'] = self.hist_ax
-                self.cb_ax = cb = P.colorbar(
+                self.cb_ax = cb = pl.colorbar(
                     im0, #self.hist_ax,
                     shrink=0.8, pad=0.0, drawedges=False,
                     extend=extend, cmap=func_cmap, **kwargs_cb)
@@ -447,18 +447,18 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                                                locs.index('hist') + 1,
                                                frame_on=True)
 
-                minv, maxv = N.min(func_masked), N.max(func_masked)
+                minv, maxv = np.min(func_masked), np.max(func_masked)
                 if minv<0 and maxv>0:               # then make it centered on 0
                     maxx = max(-minv, maxv)
                     range_ = (-maxx, maxx)
                 else:
                     range_ = (minv, maxv)
-                H = N.histogram(func_masked, range=range_, bins=31)
-                H2 = P.hist(func_masked, bins=H[1], align='center',
+                H = np.histogram(func_masked, range=range_, bins=31)
+                H2 = pl.hist(func_masked, bins=H[1], align='center',
                             facecolor='#FFFFFF', hold=True)
                 for a, kwparams in add_dist2hist:
                     dbin = (H[1][1] - H[1][0])
-                    P.plot(H2[1], [a(x) * dbin for x in H2[1]], **kwparams)
+                    pl.plot(H2[1], [a(x) * dbin for x in H2[1]], **kwparams)
                 if add_colorbar and cb:
                     cbrgba = cb.to_rgba(H2[1])
                     for face, facecolor, value in zip(H2[2], cbrgba, H2[1]):
@@ -501,9 +501,9 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
 
     # Global adjustments
     if interactive:
-        # if P.matplotlib.is_interactive():
-        P.connect('button_press_event', plotter.on_click)
-        P.show()
+        # if pl.matplotlib.is_interactive():
+        pl.connect('button_press_event', plotter.on_click)
+        pl.show()
 
     plotter.fig.plotter = plotter
     return plotter.fig
@@ -524,7 +524,7 @@ if __name__ == "__main__":
         do_stretch_colors = False,
         add_colorbar = True,
         cmap_bg = 'gray',
-        cmap_overlay = 'hot', # YlOrRd_r # P.cm.autumn
+        cmap_overlay = 'hot', # YlOrRd_r # pl.cm.autumn
         #
         fig = None,
         # vlim describes value limits
@@ -541,4 +541,4 @@ if __name__ == "__main__":
         slices = [20, 23, 26, 29, 32, 35]
         )
 
-    P.show()
+    pl.show()

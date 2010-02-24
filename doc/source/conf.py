@@ -13,7 +13,7 @@
 # serve to show the default.
 
 import sys, os, re
-import numpy as N
+import numpy as np
 import mvpa
 
 try:

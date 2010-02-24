@@ -12,7 +12,7 @@
 from mvpa.base import externals
 
 from mvpa.support.copy import deepcopy
-import numpy as N
+import numpy as np
 
 from mvpa.datasets.base import dataset_wizard
 from mvpa.mappers.zscore import ZScoreMapper, zscore
@@ -26,8 +26,8 @@ def test_mapper_vs_zscore():
     """
     # data: 40 sample feature line in 20d space (40x20; samples x features)
     dss = [
-        dataset_wizard(N.concatenate(
-            [N.arange(40) for i in range(20)]).reshape(20,-1).T,
+        dataset_wizard(np.concatenate(
+            [np.arange(40) for i in range(20)]).reshape(20,-1).T,
                 targets=1, chunks=1),
         ] + datasets.values()
 
@@ -35,18 +35,18 @@ def test_mapper_vs_zscore():
         ds1 = deepcopy(ds)
         ds2 = deepcopy(ds)
 
-        zsm = ZScoreMapper(chunks=None)
+        zsm = ZScoreMapper(chunks_attr=None)
         assert_raises(RuntimeError, zsm.forward, ds1.samples)
         zsm.train(ds1)
         ds1z = zsm.forward(ds1.samples)
 
-        zscore(ds2, chunks=None)
+        zscore(ds2, chunks_attr=None)
         assert_array_almost_equal(ds1z, ds2.samples)
         assert_array_equal(ds1.samples, ds.samples)
 
 def test_zcore_repr():
     # Just basic test if everything is sane... no proper comparison
-    for m in (ZScoreMapper(chunks=None),
+    for m in (ZScoreMapper(chunks_attr=None),
               ZScoreMapper(params=(3, 1)),
               ZScoreMapper()):
         mr = eval(repr(m))
@@ -56,20 +56,20 @@ def test_zscore():
     """Test z-scoring transformation
     """
     # dataset: mean=2, std=1
-    samples = N.array((0, 1, 3, 4, 2, 2, 3, 1, 1, 3, 3, 1, 2, 2, 2, 2)).\
+    samples = np.array((0, 1, 3, 4, 2, 2, 3, 1, 1, 3, 3, 1, 2, 2, 2, 2)).\
         reshape((16, 1))
     data = dataset_wizard(samples.copy(), targets=range(16), chunks=[0] * 16)
     assert_equal(data.samples.mean(), 2.0)
     assert_equal(data.samples.std(), 1.0)
-    zscore(data, chunks='chunks')
+    zscore(data, chunks_attr='chunks')
 
     # check z-scoring
-    check = N.array([-2, -1, 1, 2, 0, 0, 1, -1, -1, 1, 1, -1, 0, 0, 0, 0],
+    check = np.array([-2, -1, 1, 2, 0, 0, 1, -1, -1, 1, 1, -1, 0, 0, 0, 0],
                     dtype='float64').reshape(16, 1)
     assert_array_equal(data.samples, check)
 
     data = dataset_wizard(samples.copy(), targets=range(16), chunks=[0] * 16)
-    zscore(data, chunks=None)
+    zscore(data, chunks_attr=None)
     assert_array_equal(data.samples, check)
 
     # check z-scoring taking set of labels as a baseline
@@ -91,9 +91,9 @@ def test_zscore():
     # these might be duplicating code above -- but twice is better than nothing
 
     # dataset: mean=2, std=1
-    raw = N.array((0, 1, 3, 4, 2, 2, 3, 1, 1, 3, 3, 1, 2, 2, 2, 2))
+    raw = np.array((0, 1, 3, 4, 2, 2, 3, 1, 1, 3, 3, 1, 2, 2, 2, 2))
     # dataset: mean=12, std=1
-    raw2 = N.array((0, 1, 3, 4, 2, 2, 3, 1, 1, 3, 3, 1, 2, 2, 2, 2)) + 10
+    raw2 = np.array((0, 1, 3, 4, 2, 2, 3, 1, 1, 3, 3, 1, 2, 2, 2, 2)) + 10
     # zscore target
     check = [-2, -1, 1, 2, 0, 0, 1, -1, -1, 1, 1, -1, 0, 0, 0, 0]
 
@@ -103,25 +103,25 @@ def test_zscore():
     zm = ZScoreMapper()
     # should do global zscore by default
     zm.train(ds)                        # train
-    assert_array_almost_equal(zm.forward(ds), N.transpose([check]))
+    assert_array_almost_equal(zm.forward(ds), np.transpose([check]))
     # should not modify the source
     assert_array_equal(pristine, ds)
 
     # if we tell it a different mean it should obey the order
     zm = ZScoreMapper(params=(3,1))
     zm.train(ds)
-    assert_array_almost_equal(zm.forward(ds), N.transpose([check]) - 1 )
+    assert_array_almost_equal(zm.forward(ds), np.transpose([check]) - 1 )
     assert_array_equal(pristine, ds)
 
     # let's look at chunk-wise z-scoring
-    ds = dataset_wizard(N.hstack((raw.copy(), raw2.copy())),
+    ds = dataset_wizard(np.hstack((raw.copy(), raw2.copy())),
                         targets=range(32),
                         chunks=[0] * 16 + [1] * 16)
     # by default chunk-wise
     zm = ZScoreMapper()
     zm.train(ds)                        # train
-    assert_array_almost_equal(zm.forward(ds), N.transpose([check + check]))
+    assert_array_almost_equal(zm.forward(ds), np.transpose([check + check]))
     # we should be able to do that same manually
     zm = ZScoreMapper(params={0: (2,1), 1: (12,1)})
     zm.train(ds)                        # train
-    assert_array_almost_equal(zm.forward(ds), N.transpose([check + check]))
+    assert_array_almost_equal(zm.forward(ds), np.transpose([check + check]))

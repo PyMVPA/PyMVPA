@@ -12,7 +12,7 @@
 __docformat__ = 'restructuredtext'
 
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import externals
 
@@ -37,16 +37,16 @@ if __debug__:
 
 # Some local bindings for bits of speed up
 from numpy import array, asarray
-Nlog = N.log
-Ndot = N.dot
-Ndiag = N.diag
-NLAcholesky = N.linalg.cholesky
-NLAsolve = N.linalg.solve
-NLAError = N.linalg.linalg.LinAlgError
-eps64 = N.finfo(N.float64).eps
+Nlog = np.log
+Ndot = np.dot
+Ndiag = np.diag
+NLAcholesky = np.linalg.cholesky
+NLAsolve = np.linalg.solve
+NLAError = np.linalg.linalg.LinAlgError
+eps64 = np.finfo(np.float64).eps
 
 # Some precomputed items. log is relatively expensive
-_halflog2pi = 0.5 * Nlog(2 * N.pi)
+_halflog2pi = 0.5 * Nlog(2 * np.pi)
 
 
 class GPR(Classifier):
@@ -187,22 +187,22 @@ class GPR(Classifier):
         # gradient again. COULD THIS BE TAKEN INTO ACCOUNT BY THE
         # NEW CACHED KERNEL INFRASTRUCTURE?
 
-        # self.Kinv = N.linalg.inv(self._C)
+        # self.Kinv = np.linalg.inv(self._C)
         # Faster:
-        Kinv = SLcho_solve(self._LL, N.eye(self._L.shape[0]))
+        Kinv = SLcho_solve(self._LL, np.eye(self._L.shape[0]))
 
-        alphalphaT = N.dot(self._alpha[:,None], self._alpha[None,:])
+        alphalphaT = np.dot(self._alpha[:,None], self._alpha[None,:])
         tmp = alphalphaT - Kinv
         # Pass tmp to __kernel and let it compute its gradient terms.
         # This scales up to huge number of hyperparameters:
         grad_LML_hypers = self.__kernel.compute_lml_gradient(
             tmp, self._train_fv)
-        grad_K_sigma_n = 2.0*self.params.sigma_noise*N.eye(tmp.shape[0])
+        grad_K_sigma_n = 2.0*self.params.sigma_noise*np.eye(tmp.shape[0])
         # Add the term related to sigma_noise:
-        # grad_LML_sigma_n = 0.5 * N.trace(N.dot(tmp,grad_K_sigma_n))
+        # grad_LML_sigma_n = 0.5 * np.trace(np.dot(tmp,grad_K_sigma_n))
         # Faster formula: tr(AB) = (A*B.T).sum()
         grad_LML_sigma_n = 0.5 * (tmp * (grad_K_sigma_n).T).sum()
-        lml_gradient = N.hstack([grad_LML_sigma_n, grad_LML_hypers])
+        lml_gradient = np.hstack([grad_LML_sigma_n, grad_LML_hypers])
         self.log_marginal_likelihood_gradient = lml_gradient
         return lml_gradient
 
@@ -212,19 +212,19 @@ class GPR(Classifier):
         hyperparameters are in logscale. This version use a more
         compact formula provided by Williams and Rasmussen book.
         """
-        # Kinv = N.linalg.inv(self._C)
+        # Kinv = np.linalg.inv(self._C)
         # Faster:
-        Kinv = SLcho_solve(self._LL, N.eye(self._L.shape[0]))
-        alphalphaT = N.dot(self._alpha[:,None], self._alpha[None,:])
+        Kinv = SLcho_solve(self._LL, np.eye(self._L.shape[0]))
+        alphalphaT = np.dot(self._alpha[:,None], self._alpha[None,:])
         tmp = alphalphaT - Kinv
         grad_LML_log_hypers = \
             self.__kernel.compute_lml_gradient_logscale(tmp, self._train_fv)
-        grad_K_log_sigma_n = 2.0 * self.params.sigma_noise ** 2 * N.eye(Kinv.shape[0])
+        grad_K_log_sigma_n = 2.0 * self.params.sigma_noise ** 2 * np.eye(Kinv.shape[0])
         # Add the term related to sigma_noise:
-        # grad_LML_log_sigma_n = 0.5 * N.trace(N.dot(tmp, grad_K_log_sigma_n))
+        # grad_LML_log_sigma_n = 0.5 * np.trace(np.dot(tmp, grad_K_log_sigma_n))
         # Faster formula: tr(AB) = (A * B.T).sum()
         grad_LML_log_sigma_n = 0.5 * (tmp * (grad_K_log_sigma_n).T).sum()
-        lml_gradient = N.hstack([grad_LML_log_sigma_n, grad_LML_log_hypers])
+        lml_gradient = np.hstack([grad_LML_log_sigma_n, grad_LML_log_hypers])
         self.log_marginal_likelihood_gradient = lml_gradient
         return lml_gradient
 
@@ -310,9 +310,9 @@ class GPR(Classifier):
             # commented out code would return?
             self._C = km_train_train + \
                   self.params.sigma_noise ** 2 * \
-                  N.identity(km_train_train.shape[0], 'd')
+                  np.identity(km_train_train.shape[0], 'd')
             # The following decomposition could raise
-            # N.linalg.linalg.LinAlgError because of numerical
+            # np.linalg.linalg.LinAlgError because of numerical
             # reasons, due to the too rapid decay of 'self._C'
             # eigenvalues. In that case we try adding a small constant
             # to self._C, e.g. epsilon=1.0e-20. It should be a form of
@@ -324,7 +324,7 @@ class GPR(Classifier):
             # Cholesky decomposition is provided by three different
             # NumPy/SciPy routines (fastest first):
             # 1) self._LL = scipy.linalg.cho_factor(self._C, lower=True)
-            #    self._L = L = N.tril(self._LL[0])
+            #    self._L = L = np.tril(self._LL[0])
             # 2) self._L = scipy.linalg.cholesky(self._C, lower=True)
             # 3) self._L = numpy.linalg.cholesky(self._C)
             # Even though 1 is the fastest we choose 2 since 1 does
@@ -336,7 +336,7 @@ class GPR(Classifier):
             # and use the same value for all folds of your data.
             try:
                 # apply regularization
-                epsilon = self.params.lm * N.eye(self._C.shape[0])
+                epsilon = self.params.lm * np.eye(self._C.shape[0])
                 self._L = SLcholesky(self._C + epsilon, lower=True)
                 self._LL = (self._L, True)
             except SLAError:
@@ -421,12 +421,12 @@ class GPR(Classifier):
             L = self._L
             # v = NLAsolve(L, km_train_test)
             # Faster:
-            piv = N.arange(L.shape[0])
+            piv = np.arange(L.shape[0])
             v = SL.lu_solve((L.T, piv), km_train_test, trans=1)
             # self.predicted_variances = \
             #     Ndiag(km_test_test - Ndot(v.T, v)) \
             #     + self.sigma_noise**2
-            # Faster formula: N.diag(Ndot(v.T, v)) = (v**2).sum(0):
+            # Faster formula: np.diag(Ndot(v.T, v)) = (v**2).sum(0):
             ca.predicted_variances = Ndiag(km_test_test) - (v ** 2).sum(0) \
                                        + self.params.sigma_noise ** 2
             pass
@@ -508,17 +508,17 @@ class GPRLinearWeights(Sensitivity):
 
         if self.ca.is_enabled('variances'):
             # super ugly formulas that can be quite surely improved:
-            tmp = N.linalg.inv(clf._L)
+            tmp = np.linalg.inv(clf._L)
             Kyinv = Ndot(tmp.T, tmp)
             # XXX in such lengthy matrix manipulations you might better off
-            #     using N.matrix where * is a matrix product
+            #     using np.matrix where * is a matrix product
             self.ca.variances = Ndiag(
                 Sigma_p -
                 Ndot(Sigma_p,
                       Ndot(train_fv.T,
                             Ndot(Kyinv,
                                   Ndot(train_fv, Sigma_p)))))
-        return Dataset(N.atleast_2d(weights))
+        return Dataset(np.atleast_2d(weights))
 
 
 if externals.exists('openopt'):
@@ -554,9 +554,9 @@ if externals.exists('openopt'):
             #     or may be add ability to specify starting points in the constructor
             sigma_noise_initial = 1.0e-5
             sigma_f_initial = 1.0
-            length_scale_initial = N.ones(ds.nfeatures)*1.0e4
-            # length_scale_initial = N.random.rand(ds.nfeatures)*1.0e4
-            hyp_initial_guess = N.hstack([sigma_noise_initial,
+            length_scale_initial = np.ones(ds.nfeatures)*1.0e4
+            # length_scale_initial = np.random.rand(ds.nfeatures)*1.0e4
+            hyp_initial_guess = np.hstack([sigma_noise_initial,
                                           sigma_f_initial,
                                           length_scale_initial])
             fixedHypers = array([0]*hyp_initial_guess.size, dtype=bool)
@@ -574,7 +574,7 @@ if externals.exists('openopt'):
                 debug("GPR",
                       "%s, train: shape %s, labels %s, min:max %g:%g, "
                       "sigma_noise %g, sigma_f %g" %
-                      (clf, clf._train_fv.shape, N.unique(clf._train_labels),
+                      (clf, clf._train_fv.shape, np.unique(clf._train_labels),
                        clf._train_fv.min(), clf._train_fv.max(),
                        ms.hyperparameters_best[0], ms.hyperparameters_best[1]))
 

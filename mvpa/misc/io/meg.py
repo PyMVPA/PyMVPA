@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import externals
 
@@ -83,12 +83,12 @@ class TuebingenMEG(object):
             id = line[:colon]
             data = line[colon+1:].strip()
             if id == 'Sample Number':
-                timepoints = N.fromstring(data, dtype=int, sep='\t')
+                timepoints = np.fromstring(data, dtype=int, sep='\t')
                 # one more as it starts with zero
                 self.ntimepoints = int(timepoints.max()) + 1
                 self.nsamples = int(len(timepoints) / self.ntimepoints)
             elif id == 'Time':
-                self.timepoints = N.fromstring(data,
+                self.timepoints = np.fromstring(data,
                                                dtype=float,
                                                count=self.ntimepoints,
                                                sep='\t')
@@ -97,14 +97,14 @@ class TuebingenMEG(object):
             else:
                 # load data
                 self.data.append(
-                    N.fromstring(data, dtype=float, sep='\t').reshape(
+                    np.fromstring(data, dtype=float, sep='\t').reshape(
                         self.nsamples, self.ntimepoints))
                 # store id
                 self.channelids.append(id)
 
         # reshape data from (channels x samples x timepoints) to
         # (samples x chanels x timepoints)
-        self.data = N.swapaxes(N.array(self.data), 0, 1)
+        self.data = np.swapaxes(np.array(self.data), 0, 1)
 
 
     def __str__(self):

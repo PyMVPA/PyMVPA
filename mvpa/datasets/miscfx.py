@@ -17,7 +17,7 @@ __docformat__ = 'restructuredtext'
 from operator import isSequenceType
 import random
 
-import numpy as N
+import numpy as np
 
 from mvpa.base.dataset import datasetmethod
 from mvpa.datasets.base import Dataset
@@ -32,7 +32,7 @@ if __debug__:
 
 @datasetmethod
 ##REF: Name was automagically refactored
-def aggregate_features(dataset, fx=N.mean):
+def aggregate_features(dataset, fx=np.mean):
     """Apply a function to each row of the samples matrix of a dataset.
 
     The functor given as `fx` has to honour an `axis` keyword argument in the
@@ -44,7 +44,7 @@ def aggregate_features(dataset, fx=N.mean):
     """
     agg = fx(dataset.samples, axis=1)
 
-    return Dataset(samples=N.array(agg, ndmin=2).T, sa=dataset.sa)
+    return Dataset(samples=np.array(agg, ndmin=2).T, sa=dataset.sa)
 
 
 @datasetmethod
@@ -77,7 +77,7 @@ def coarsen_chunks(source, nchunks=4):
         chunks = source.chunks
     else:
         chunks = source
-    chunks_unique = N.unique(chunks)
+    chunks_unique = np.unique(chunks)
     nchunks_orig = len(chunks_unique)
 
     if nchunks_orig < nchunks:
@@ -94,7 +94,7 @@ def coarsen_chunks(source, nchunks=4):
     # of samples per chunk. No sophistication is done -- just
     # consecutively group to get close to desired number of samples
     # per chunk
-    avg_chunk_size = N.sum(counts.values())*1.0/nchunks
+    avg_chunk_size = np.sum(counts.values())*1.0/nchunks
     chunks_groups = []
     cur_chunk = []
     nchunks = 0
@@ -128,7 +128,7 @@ def coarsen_chunks(source, nchunks=4):
             chunks_map[c] = i
 
     # we always want an array!
-    chunks_new = N.array([chunks_map[x] for x in chunks])
+    chunks_new = np.array([chunks_map[x] for x in chunks])
 
     if __debug__:
         debug("DS_", "Using dictionary %s to remap old chunks %s into new %s"
@@ -159,18 +159,19 @@ def get_samples_per_chunk_label(dataset):
     ul = dataset.sa['targets'].unique
     uc = dataset.sa['chunks'].unique
 
-    count = N.zeros((len(uc), len(ul)), dtype='uint')
+    count = np.zeros((len(uc), len(ul)), dtype='uint')
 
     for cc, c in enumerate(uc):
         for lc, l in enumerate(ul):
-            count[cc, lc] = N.sum(N.logical_and(dataset.targets == l,
+            count[cc, lc] = np.sum(np.logical_and(dataset.targets == l,
                                                 dataset.chunks == c))
 
     return count
 
 
 @datasetmethod
-def permute_targets(dataset, perchunk=True, assure_permute=False):
+def permute_targets(dataset, targets_attr='targets', chunks_attr='chunks',
+                    assure_permute=False):
     """Permute the targets of a Dataset.
 
     A new permuted set of targets is assigned to the dataset, replacing
@@ -180,37 +181,49 @@ def permute_targets(dataset, perchunk=True, assure_permute=False):
 
     Parameters
     ----------
-    perchunk : bool
-      If True, permutation is limited to samples sharing the same chunk
-      value.  Therefore only the association of a certain sample with
-      a label is permuted while keeping the absolute number of
-      occurences of each label value within a certain chunk constant.
-      If there is no `chunks` information in the dataset this flag has
-      no effect.
-    assure_permute : bool
-      If True, assures that targets are permutted, i.e. any one is
+    targets_attr : string, optional
+      Name of the samples attribute which is used as ``targets``
+      (i.e. gets permuted).
+    chunks_attr : None or string
+      If a string given, permutation is limited to samples sharing the
+      same value of the `chunks_attr` samples attribute.  Therefore,
+      only the association of a certain sample with a label is
+      permuted while keeping the absolute number of occurrences of each
+      label value within a certain chunk constant.
+    assure_permute : bool, optional
+      If True, assures that targets are permuted, i.e. any one is
       different from the original one
+
+    Returns
+    -------
+    Dataset
+       shallow copy of original dataset with permuted labels.
     """
     if __debug__:
-        if len(N.unique(dataset.sa.targets)) < 2:
+        if len(dataset.sa[targets_attr].unique) < 2:
             raise RuntimeError(
                   "Permuting targets is only meaningful if there are "
-                  "more than two different targets.")
+                  "more than two different values of targets.")
 
     # local binding
-    targets = dataset.sa['targets'].value
+    targets = dataset.sa[targets_attr].value
 
     # now scramble
-    if perchunk and dataset.sa.has_key('chunks'):
-        chunks = dataset.sa['chunks'].value
+    if chunks_attr:
+        if chunks_attr in dataset.sa:
+            chunks = dataset.sa[chunks_attr].value
 
-        ptargets = N.zeros(targets.shape, dtype=targets.dtype)
+            ptargets = np.zeros(targets.shape, dtype=targets.dtype)
 
-        for o in dataset.sa['chunks'].unique:
-            ptargets[chunks == o] = \
-                N.random.permutation(targets[chunks == o])
+            for o in dataset.sa[chunks_attr].unique:
+                ptargets[chunks == o] = \
+                    np.random.permutation(targets[chunks == o])
+        else:
+            raise ValueError, \
+                  "There is no sa named %r in %s, thus no permutation is " \
+                  "possible" % (chunks_attr, dataset)
     else:
-        ptargets = N.random.permutation(targets)
+        ptargets = np.random.permutation(targets)
 
     if assure_permute:
         if not (ptargets != targets).any():
@@ -218,18 +231,20 @@ def permute_targets(dataset, perchunk=True, assure_permute=False):
                 if assure_permute == 1:
                     raise RuntimeError, \
                           "Cannot assure permutation of targets %s for " \
-                          "some reason with chunks %s and while " \
-                          "perchunk=%s . Should not happen" % \
-                          (targets, self.chunks, perchunk)
+                          "some reason for dataset %s and chunks_attr=%r. " \
+                          "Should not happen" % \
+                          (targets, dataset, chunks_attr)
             else:
                 assure_permute = 11 # make 10 attempts
             if __debug__:
                 debug("DS",  "Recalling permute to assure different targets")
             permute_targets(dataset,
-                           perchunk=perchunk,
-                           assure_permute=assure_permute-1)
+                            targets_attr=targets_attr,
+                            chunks_attr=chunks_attr,
+                            assure_permute=assure_permute-1)
+
     # reassign to the dataset
-    dataset.sa.targets = ptargets
+    dataset.sa[targets_attr].value = ptargets
 
 
 @datasetmethod
@@ -238,20 +253,20 @@ def random_samples(dataset, nperlabel):
 
     Parameters
     ----------
-    nperlabel : int, list
-
-      If an integer is given, the specified number of samples is randomly
-      choosen from the group of samples sharing a unique label value (total
+    dataset : Dataset
+    nperlabel : int or list
+      If an `int` is given, the specified number of samples is randomly
+      chosen from the group of samples sharing a unique label value. Total
       number of selected samples: nperlabel x len(uniquetargets).
-
-      If a list is given which's length is matching the unique label values, it
-      will specify the number of samples chosen for each particular unique
+      If a `list` is given of length matching the unique label values, it
+      specifies the number of samples chosen for each particular unique
       label.
 
     Returns
     -------
-    A dataset instance for the chosen samples. All feature attributes and
-    dataset attribute share there data with the source dataset.
+    Dataset
+      A dataset instance for the chosen samples. All feature attributes and
+      dataset attribute share there data with the source dataset.
     """
     uniquetargets = dataset.sa['targets'].unique
     # if interger is given take this value for all classes
@@ -302,11 +317,11 @@ def get_samples_by_attr(dataset, attr, values, sort=True):
 
     # TODO: compare to plain for loop through the targets
     #       on a real data example
-    sel = N.array([], dtype=N.int16)
+    sel = np.array([], dtype=np.int16)
     sa = dataset.sa
     for value in values:
-        sel = N.concatenate((
-            sel, N.where(sa[attr].value == value)[0]))
+        sel = np.concatenate((
+            sel, np.where(sa[attr].value == value)[0]))
 
     if sort:
         # place samples in the right order
@@ -325,7 +340,7 @@ class SequenceStats(dict):
     Current implementation is ugly!
     """
 
-    def __init__(self, seq, order=2):#, chunks=None, perchunk=False):
+    def __init__(self, seq, order=2):#, chunks=None, chunks_attr=None):
         """Initialize SequenceStats
 
         Parameters
@@ -373,11 +388,11 @@ class SequenceStats(dict):
 
         # map sequence first
         seqm = [labels_map[i] for i in seq]
-        # nperlabel = N.bincount(seqm)
+        # nperlabel = np.bincount(seqm)
 
         res = dict(ulabels=ulabels)
         # Estimate counter-balance
-        cbcounts = N.zeros((order, nlabels, nlabels), dtype=int)
+        cbcounts = np.zeros((order, nlabels, nlabels), dtype=int)
         for cb in xrange(order):
             for i, j in zip(seqm[:-(cb+1)], seqm[cb+1:]):
                 cbcounts[cb, i, j] += 1
@@ -393,10 +408,10 @@ class SequenceStats(dict):
         for shift in xrange(1, nsamples):
             shifted = seqm[shift:] + seqm[:shift]
             # ??? User pearsonsr with p may be?
-            corr += [N.corrcoef(seqm, shifted)[0, 1]]
+            corr += [np.corrcoef(seqm, shifted)[0, 1]]
             # ??? report high (anti)correlations?
-        res['corrcoef'] = corr = N.array(corr)
-        res['sumabscorr'] = sumabscorr = N.sum(N.abs(corr))
+        res['corrcoef'] = corr = np.array(corr)
+        res['sumabscorr'] = sumabscorr = np.sum(np.abs(corr))
         self.update(res)
 
         # Assign textual summary
@@ -411,7 +426,7 @@ class SequenceStats(dict):
                 t[i][(cb+1)*(nlabels+1)] = " | "
             m = cbcounts[cb]
             # ??? there should be better way to get indexes
-            ind = N.where(~N.isnan(m))
+            ind = np.where(~np.isnan(m))
             for i, j in zip(*ind):
                 t[1+i][1+cb*(nlabels+1)+j] = '%d' % m[i, j]
 
@@ -420,7 +435,7 @@ class SequenceStats(dict):
                "Counter-balance table for orders up to %d:\n" % order \
                + table2string(t)
         sout += "Correlations: min=%.2g max=%.2g mean=%.2g sum(abs)=%.2g" \
-                % (min(corr), max(corr), N.mean(corr), sumabscorr)
+                % (min(corr), max(corr), np.mean(corr), sumabscorr)
         self._str_stats = sout
 
 
@@ -428,9 +443,9 @@ class SequenceStats(dict):
         """Plot correlation coefficients
         """
         externals.exists('pylab', raiseException=True)
-        import pylab as P
-        P.plot(self['corrcoef'])
-        P.title('Auto-correlation of the sequence')
-        P.xlabel('Offset')
-        P.ylabel('Correlation Coefficient')
-        P.show()
+        import pylab as pl
+        pl.plot(self['corrcoef'])
+        pl.title('Auto-correlation of the sequence')
+        pl.xlabel('Offset')
+        pl.ylabel('Correlation Coefficient')
+        pl.show()

@@ -45,7 +45,7 @@ dataset = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
                        mask=os.path.join(datapath, 'mask_gray.nii.gz'))
 
 # do chunkswise linear detrending on dataset
-poly_detrend(dataset, chunks='chunks')
+poly_detrend(dataset, chunks_attr='chunks')
 
 # exclude the rest conditions from the dataset, since that should be
 # quite different from the 'active' conditions, and make the computation
@@ -74,7 +74,7 @@ mri_args = {
     'background_mask' : os.path.join(datapath, 'mask_brain.nii.gz'),
     'overlay_mask' : os.path.join(datapath, 'mask_gray.nii.gz'),
     'cmap_bg' : 'gray',
-    'cmap_overlay' : 'autumn', # YlOrRd_r # P.cm.autumn
+    'cmap_overlay' : 'autumn', # YlOrRd_r # pl.cm.autumn
     'interactive' : cfg.getboolean('examples', 'interactive', True),
     }
 

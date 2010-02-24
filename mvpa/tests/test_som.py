@@ -10,7 +10,7 @@
 
 
 import unittest
-import numpy as N
+import numpy as np
 from mvpa import cfg
 from mvpa.mappers.som import SimpleSOMMapper
 from mvpa.datasets.base import dataset_wizard
@@ -18,7 +18,7 @@ from mvpa.datasets.base import dataset_wizard
 class SOMMapperTests(unittest.TestCase):
 
     def test_simple_som(self):
-        colors = N.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
+        colors = np.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
                           [1., 0., 0.], [0., 1., 1.], [1., 0., 1.],
                           [1., 1., 0.], [1., 1., 1.]])
 
@@ -39,7 +39,7 @@ class SOMMapperTests(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             # should approximately restore the input, but could fail
             # with bad initialisation
-            self.failUnless((N.round(rmapped) == colors).all())
+            self.failUnless((np.round(rmapped) == colors).all())
 
 
 def suite():

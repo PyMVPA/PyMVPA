@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA kNN classifier"""
 
-import numpy as N
+import numpy as np
 
 from mvpa.testing import *
 from mvpa.testing.datasets import pure_multivariate_signal
@@ -29,14 +29,14 @@ class KNNTests(unittest.TestCase):
             test = pure_multivariate_signal( 20, 3 )
             clf.train(train)
             p_mv = clf.predict( test.samples )
-            mv_perf.append( N.mean(p_mv==test.targets) )
+            mv_perf.append( np.mean(p_mv==test.targets) )
 
             clf.train(train[:, 0])
             p_uv = clf.predict(test[:, 0].samples)
-            uv_perf.append( N.mean(p_uv==test.targets) )
+            uv_perf.append( np.mean(p_uv==test.targets) )
 
-        mean_mv_perf = N.mean(mv_perf)
-        mean_uv_perf = N.mean(uv_perf)
+        mean_mv_perf = np.mean(mv_perf)
+        mean_uv_perf = np.mean(uv_perf)
 
         self.failUnless( mean_mv_perf > 0.9 )
         self.failUnless( mean_uv_perf < mean_mv_perf )
@@ -54,7 +54,7 @@ class KNNTests(unittest.TestCase):
         p = clf.predict(test.samples)
 
         self.failUnless(p == clf.ca.predictions)
-        self.failUnless(N.array(clf.ca.estimates).shape == (80,2))
+        self.failUnless(np.array(clf.ca.estimates).shape == (80,2))
         self.failUnless(clf.ca.distances.shape == (80,160))
 
         self.failUnless(not clf.ca.distances.fa is train.sa)

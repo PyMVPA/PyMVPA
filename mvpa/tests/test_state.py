@@ -11,7 +11,7 @@
 import unittest
 import mvpa.support.copy as copy
 
-import numpy as N
+import numpy as np
 from sets import Set
 
 from mvpa.base import externals

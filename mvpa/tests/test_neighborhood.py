@@ -9,7 +9,7 @@
 
 import os
 
-import numpy as N
+import numpy as np
 from numpy import array
 
 from mvpa.datasets.base import Dataset
@@ -20,8 +20,8 @@ from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_array_equal
 
 def test_distances():
-    a = N.array([3,8])
-    b = N.array([6,4])
+    a = np.array([3,8])
+    b = np.array([6,4])
     # test distances or yarik recalls unit testing ;)
     assert_equal(cartesian_distance(a, b), 5.0)
     assert_equal(manhatten_distance(a, b), 7)
@@ -60,7 +60,7 @@ def test_sphere():
     res = s(center1)
     assert_array_equal(array(res), target)
     # They all should be tuples
-    ok_(N.all([isinstance(x, tuple) for x in res]))
+    ok_(np.all([isinstance(x, tuple) for x in res]))
 
     # test for larger diameter
     s = ne.Sphere(4)
@@ -98,9 +98,9 @@ def test_sphere_distance_func():
         ok_(len(res) == len(set(res)))
 
     # in manhatten distance we should all be no further than 3 "steps" away
-    ok_(N.all([N.sum(N.abs(N.array(x) - (10, 5))) <= 3 for x in resm]))
+    ok_(np.all([np.sum(np.abs(np.array(x) - (10, 5))) <= 3 for x in resm]))
     # in euclidean we are taking shortcuts ;)
-    ok_(N.any([N.sum(N.abs(N.array(x) - (10, 5))) > 3 for x in rese]))
+    ok_(np.any([np.sum(np.abs(np.array(x) - (10, 5))) > 3 for x in rese]))
 
 
 def test_sphere_scaled():
@@ -123,40 +123,40 @@ def test_sphere_scaled():
 
     s = ne.Sphere(1.5, element_sizes=(1.5, 1.5, 1.5))
     res = s((0, 0, 0))
-    ok_(N.all([N.sqrt(N.sum(N.array(x)**2)) <= 1.5 for x in res]))
+    ok_(np.all([np.sqrt(np.sum(np.array(x)**2)) <= 1.5 for x in res]))
     ok_(len(res) == 7)
 
     # all neighbors so no more than 1 voxel away -- just a cube, for
     # some "sphere" effect radius had to be 3.0 ;)
-    td = N.sqrt(3*1.5**2)
+    td = np.sqrt(3*1.5**2)
     s = ne.Sphere(td, element_sizes=(1.5, 1.5, 1.5))
     res = s((0, 0, 0))
-    ok_(N.all([N.sqrt(N.sum(N.array(x)**2)) <= td for x in res]))
-    ok_(N.all([N.sum(N.abs(x) > 1) == 0 for x in res]))
+    ok_(np.all([np.sqrt(np.sum(np.array(x)**2)) <= td for x in res]))
+    ok_(np.all([np.sum(np.abs(x) > 1) == 0 for x in res]))
     ok_(len(res) == 27)
 
 
 def test_query_engine():
-    data = N.arange(54)
+    data = np.arange(54)
     # indices in 3D
-    ind = N.transpose((N.ones((3, 3, 3)).nonzero()))
+    ind = np.transpose((np.ones((3, 3, 3)).nonzero()))
     # sphere generator for 3 elements diameter
     sphere = ne.Sphere(1)
     # dataset with just one "space"
-    ds = Dataset([data, data], fa={'s_ind': N.concatenate((ind, ind))})
+    ds = Dataset([data, data], fa={'s_ind': np.concatenate((ind, ind))})
     # and the query engine attaching the generator to the "index-space"
     qe = ne.IndexQueryEngine(s_ind=sphere)
     # cannot train since the engine does not know about the second space
     assert_raises(ValueError, qe.train, ds)
     # now do it again with a full spec
-    ds = Dataset([data, data], fa={'s_ind': N.concatenate((ind, ind)),
-                                   't_ind': N.repeat([0,1], 27)})
+    ds = Dataset([data, data], fa={'s_ind': np.concatenate((ind, ind)),
+                                   't_ind': np.repeat([0,1], 27)})
     qe = ne.IndexQueryEngine(s_ind=sphere, t_ind=None)
     qe.train(ds)
     # internal representation check
     # YOH: invalid for new implementation with lookup tables (dictionaries)
     #assert_array_equal(qe._searcharray,
-    #                   N.arange(54).reshape(qe._searcharray.shape) + 1)
+    #                   np.arange(54).reshape(qe._searcharray.shape) + 1)
     # should give us one corner, collapsing the 't_ind'
     assert_array_equal(qe(s_ind=(0, 0, 0)),
                        [0, 1, 3, 9, 27, 28, 30, 36])
