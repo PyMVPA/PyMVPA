@@ -202,7 +202,7 @@ class MCNullDist(NullDist):
                                  doc='Samples obtained for each permutation')
 
     def __init__(self, dist_class=Nonparametric, permutations=100,
-                 perchunk=False, **kwargs):
+                 chunks_attr=None, **kwargs):
         """Initialize Monte-Carlo Permutation Null-hypothesis testing
 
         Parameters
@@ -215,8 +215,10 @@ class MCNullDist(NullDist):
         permutations : int
           This many permutations of label will be performed to
           determine the distribution under the null hypothesis.
-        perchunk: bool
-            If True, only permutes labels within each chunk
+        chunks_attr : None or string
+            If not None, permutes labels within the chunks,
+            i.e. blocks of data having the same value of
+            `chunks_attr`.
         """
         NullDist.__init__(self, **kwargs)
 
@@ -227,12 +229,12 @@ class MCNullDist(NullDist):
         """Number of permutations to compute the estimate the null
         distribution."""
 
-        self.__perchunk = perchunk
+        self.__chunks_attr = chunks_attr
 
     def __repr__(self, prefixes=[]):
         prefixes_ = ["permutations=%s" % self.__permutations]
-        if self.__perchunk:
-            prefixes_ += ['perchunk=True']
+        if self.__chunks_attr:
+            prefixes_ += ['chunks_attr=%r' % self.__chunks_attr]
         if self._dist_class != Nonparametric:
             prefixes_.insert(0, 'dist_class=%s' % `self._dist_class`)
         return super(MCNullDist, self).__repr__(
@@ -271,7 +273,7 @@ class MCNullDist(NullDist):
             # null-distribution of transfer errors can be reduced dramatically
             # when the *right* permutations (the ones that matter) are done.
             permuted_wdata = wdata.copy('shallow')
-            permuted_wdata.permute_targets(perchunk=self.__perchunk)
+            permuted_wdata.permute_targets(chunks_attr=self.__chunks_attr)
 
             # decide on the arguments to measure
             if not vdata is None:

@@ -36,8 +36,8 @@ def main():
     haxby8.samples = haxby8.samples.astype(N.float32)
 
     # preprocess slightly
-    detrend(haxby8, perchunk=True, model='linear')
-    zscore(haxby8, perchunk=True, baselinetargets=['rest'],
+    detrend(haxby8, chunks_attr='chunks', model='linear')
+    zscore(haxby8, chunks_attr='chunks', baselinetargets=['rest'],
            targetdtype='float32')
     haxby8_no0 = haxby8[haxby8.targets != 'rest']
 

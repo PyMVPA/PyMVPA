@@ -126,7 +126,8 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
 
 
 ##REF: Name was automagically refactored
-def plot_feature_hist(dataset, xlim=None, noticks=True, perchunk=False,
+def plot_feature_hist(dataset, xlim=None, noticks=True,
+                      targets_attr='targets', chunks_attr=None,
                     **kwargs):
     """Plot histograms of feature values for each labels.
 
@@ -138,17 +139,20 @@ def plot_feature_hist(dataset, xlim=None, noticks=True, perchunk=False,
     noticks : bool
       If True, no axis ticks will be plotted. This is useful to save
       space in large plots.
-    perchunk : bool
-      If True, one histogramm will be plotted per each label and each
-      chunk, resulting is a histogram grid (labels x chunks).
+    targets_attr : string, optional
+      Name of samples attribute to be used as targets
+    chunks_attr : None or string
+      If a string, a histogram will be plotted per each target and each
+      chunk (as defined in sa named `chunks_attr`), resulting is a
+      histogram grid (targets x chunks).
     **kwargs
       Any additional arguments are passed to matplotlib's hist().
     """
-    lsplit = NFoldSplitter(1, attr='targets')
-    csplit = NFoldSplitter(1, attr='chunks')
+    lsplit = NFoldSplitter(1, attr=targets_attr)
+    csplit = NFoldSplitter(1, attr=chunks_attr)
 
-    nrows = len(dataset.sa['targets'].unique)
-    ncols = len(dataset.sa['chunks'].unique)
+    nrows = len(dataset.sa[targets_attr].unique)
+    ncols = len(dataset.sa[chunks_attr].unique)
 
     def doplot(data):
         P.hist(data, **kwargs)
@@ -164,23 +168,23 @@ def plot_feature_hist(dataset, xlim=None, noticks=True, perchunk=False,
 
     # for all labels
     for row, (ignore, ds) in enumerate(lsplit(dataset)):
-        if perchunk:
+        if chunks_attr:
             for col, (alsoignore, d) in enumerate(csplit(ds)):
 
                 P.subplot(nrows, ncols, fig)
                 doplot(d.samples.ravel())
 
                 if row == 0:
-                    P.title('C:' + str(d.sa['chunks'].unique[0]))
+                    P.title('C:' + str(d.sa[chunks_attr].unique[0]))
                 if col == 0:
-                    P.ylabel('L:' + str(d.sa['targets'].unique[0]))
+                    P.ylabel('L:' + str(d.sa[targets_attr].unique[0]))
 
                 fig += 1
         else:
             P.subplot(1, nrows, fig)
             doplot(ds.samples)
 
-            P.title('L:' + str(ds.sa['targets'].unique[0]))
+            P.title('L:' + str(ds.sa[targets_attr].unique[0]))
 
             fig += 1
 

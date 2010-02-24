@@ -114,7 +114,7 @@ class Hyperalignment(ClassWithCollections):
         # might prefer some other way to initialize... later
         mappers = [deepcopy(params.alignment) for ds in datasets]
         # zscore all data sets
-        # ds = [ zscore(ds, perchunk=False) for ds in datasets]
+        # ds = [ zscore(ds, chunks_attr=None) for ds in datasets]
 
         # Level 1 (first)
         commonspace = N.asanyarray(datasets[ref_ds])
@@ -126,21 +126,21 @@ class Hyperalignment(ClassWithCollections):
                 debug('HPAL_', "Level 1: ds #%i" % i)
             if i == ref_ds:
                 continue
-            #ZSC zscore(data, perchunk=False)
+            #ZSC zscore(data, chunks_attr=None)
             ds = dataset_wizard(samples=data, targets=commonspace)
-            #ZSC zscore(ds, perchunk=False)
+            #ZSC zscore(ds, chunks_attr=None)
             m.train(ds)
             data_temp = m.forward(data)
-            #ZSC zscore(data_temp, perchunk=False)
+            #ZSC zscore(data_temp, chunks_attr=None)
             data_mapped[i] = data_temp
 
             if residuals is not None:
                 residuals[0, i] = N.linalg.norm(data_temp - commonspace)
 
             ## if ds_mapped == []:
-            ##     ds_mapped = [zscore(m.forward(d), perchunk=False)]
+            ##     ds_mapped = [zscore(m.forward(d), chunks_attr=None)]
             ## else:
-            ##     ds_mapped += [zscore(m.forward(d), perchunk=False)]
+            ##     ds_mapped += [zscore(m.forward(d), chunks_attr=None)]
 
             # zscore before adding
             # TODO: make just a function so we dont' waste space
@@ -160,18 +160,18 @@ class Hyperalignment(ClassWithCollections):
                     debug('HPAL_', "Level 2 (%i-th iteration): ds #%i" % (loop, i))
 
                 ## ds_temp = zscore( (commonspace*ndatasets - ds_mapped[i])
-                ##                   /(ndatasets-1), perchunk=False )
+                ##                   /(ndatasets-1), chunks_attr=None )
                 ds_new = ds.copy()
-                #ZSC zscore(ds_new, perchunk=False)
+                #ZSC zscore(ds_new, chunks_attr=None)
                 #PRJ ds_temp = (commonspace*ndatasets - ds_mapped[i])/(ndatasets-1)
-                #ZSC zscore(ds_temp, perchunk=False)
+                #ZSC zscore(ds_temp, chunks_attr=None)
                 ds_new.targets = commonspace #PRJ ds_temp
                 m.train(ds_new) # ds_temp)
                 data_mapped[i] = m.forward(N.asanyarray(ds))
                 if residuals is not None:
                     residuals[1+loop, i] = N.linalg.norm(data_mapped - commonspace)
 
-                #ds_mapped[i] = zscore( m.forward(ds_temp), perchunk=False)
+                #ds_mapped[i] = zscore( m.forward(ds_temp), chunks_attr=None)
 
             commonspace = params.combiner2(data_mapped)
             if params.zscore_common:
@@ -183,11 +183,11 @@ class Hyperalignment(ClassWithCollections):
                 debug('HPAL_', "Level 3: ds #%i" % i)
 
             ## ds_temp = zscore( (commonspace*ndatasets - ds_mapped[i])
-            ##                   /(ndatasets-1), perchunk=False )
+            ##                   /(ndatasets-1), chunks_attr=None )
             ds_new = ds.copy()     # shallow copy so we could assign new labels
-            #ZSC zscore(ds_new, perchunk=False)
+            #ZSC zscore(ds_new, chunks_attr=None)
             #PRJ ds_temp = (commonspace*ndatasets - ds_mapped[i])/(ndatasets-1)
-            #ZSC zscore(ds_temp, perchunk=False)
+            #ZSC zscore(ds_temp, chunks_attr=None)
             ds_new.targets = commonspace #PRJ ds_temp#
             m.train(ds_new) #ds_temp)
 
