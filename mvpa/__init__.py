@@ -98,10 +98,10 @@ from mvpa.tests import run as test
 # PyMVPA is useless without numpy
 # Also, this check enforcing population of externals.versions
 # for possible later version checks, hence don't remove
-externals.exists('numpy', force=True, raiseException=True)
+externals.exists('numpy', force=True, raise_=True)
 # We might need to suppress the warnings so enforcing check here,
 # it is ok if it would fail
-externals.exists('scipy', force=True, raiseException=False)
+externals.exists('scipy', force=True, raise_=False)
 
 if __debug__:
     debug('RANDOM', 'Seeding RNG with %d' % _random_seed)

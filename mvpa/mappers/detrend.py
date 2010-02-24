@@ -14,7 +14,7 @@ import numpy as np
 from operator import isSequenceType
 
 from mvpa.base import externals
-if externals.exists('scipy', raiseException=True):
+if externals.exists('scipy', raise_=True):
     # if we construct the polynomials ourselves, we wouldn't need scipy here
     from scipy.special import legendre
 

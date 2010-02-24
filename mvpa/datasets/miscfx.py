@@ -442,7 +442,7 @@ class SequenceStats(dict):
     def plot(self):
         """Plot correlation coefficients
         """
-        externals.exists('pylab', raiseException=True)
+        externals.exists('pylab', raise_=True)
         import pylab as pl
         pl.plot(self['corrcoef'])
         pl.title('Auto-correlation of the sequence')

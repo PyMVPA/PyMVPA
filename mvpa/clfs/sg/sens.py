@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.base import externals
-if externals.exists('shogun', raiseException=True):
+if externals.exists('shogun', raise_=True):
     import shogun.Classifier
     _shogun_exposes_slavesvm_labels = externals.versions['shogun:rev'] < 4633
 

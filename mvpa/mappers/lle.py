@@ -20,7 +20,7 @@ import numpy as np
 
 from mvpa.mappers.mdp_adaptor import MDPNodeMapper
 
-if externals.exists('mdp ge 2.4', raiseException=True):
+if externals.exists('mdp ge 2.4', raise_=True):
     import mdp
 
 

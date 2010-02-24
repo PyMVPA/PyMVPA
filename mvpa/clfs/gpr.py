@@ -25,7 +25,7 @@ from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import InvalidHyperparameterError
 from mvpa.datasets import Dataset, dataset_wizard
 
-if externals.exists("scipy", raiseException=True):
+if externals.exists("scipy", raise_=True):
     from scipy.linalg import cho_solve as SLcho_solve
     from scipy.linalg import cholesky as SLcholesky
     import scipy.linalg as SL
