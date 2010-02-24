@@ -26,7 +26,7 @@ dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 # do chunkswise linear detrending on dataset
-poly_detrend(dataset, polyord=1, chunks='chunks')
+poly_detrend(dataset, polyord=1, chunks_attr='chunks')
 
 # zscore dataset relative to baseline ('rest') mean
 zscore(dataset, perchunk=True, baselinetargets=['rest'])

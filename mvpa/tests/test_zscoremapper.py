@@ -35,18 +35,18 @@ def test_mapper_vs_zscore():
         ds1 = deepcopy(ds)
         ds2 = deepcopy(ds)
 
-        zsm = ZScoreMapper(chunks=None)
+        zsm = ZScoreMapper(chunks_attr=None)
         assert_raises(RuntimeError, zsm.forward, ds1.samples)
         zsm.train(ds1)
         ds1z = zsm.forward(ds1.samples)
 
-        zscore(ds2, chunks=None)
+        zscore(ds2, chunks_attr=None)
         assert_array_almost_equal(ds1z, ds2.samples)
         assert_array_equal(ds1.samples, ds.samples)
 
 def test_zcore_repr():
     # Just basic test if everything is sane... no proper comparison
-    for m in (ZScoreMapper(chunks=None),
+    for m in (ZScoreMapper(chunks_attr=None),
               ZScoreMapper(params=(3, 1)),
               ZScoreMapper()):
         mr = eval(repr(m))
@@ -61,7 +61,7 @@ def test_zscore():
     data = dataset_wizard(samples.copy(), targets=range(16), chunks=[0] * 16)
     assert_equal(data.samples.mean(), 2.0)
     assert_equal(data.samples.std(), 1.0)
-    zscore(data, chunks='chunks')
+    zscore(data, chunks_attr='chunks')
 
     # check z-scoring
     check = N.array([-2, -1, 1, 2, 0, 0, 1, -1, -1, 1, 1, -1, 0, 0, 0, 0],
@@ -69,7 +69,7 @@ def test_zscore():
     assert_array_equal(data.samples, check)
 
     data = dataset_wizard(samples.copy(), targets=range(16), chunks=[0] * 16)
-    zscore(data, chunks=None)
+    zscore(data, chunks_attr=None)
     assert_array_equal(data.samples, check)
 
     # check z-scoring taking set of labels as a baseline

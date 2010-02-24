@@ -45,7 +45,7 @@ dataset = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
                        mask=os.path.join(datapath, 'mask_gray.nii.gz'))
 
 # do chunkswise linear detrending on dataset
-poly_detrend(dataset, chunks='chunks')
+poly_detrend(dataset, chunks_attr='chunks')
 
 # exclude the rest conditions from the dataset, since that should be
 # quite different from the 'active' conditions, and make the computation

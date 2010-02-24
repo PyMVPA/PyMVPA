@@ -119,7 +119,7 @@ class Hyperalignment(ClassWithCollections):
         # Level 1 (first)
         commonspace = N.asanyarray(datasets[ref_ds])
         if params.zscore_common:
-            zscore(commonspace, chunks=None)
+            zscore(commonspace, chunks_attr=None)
         data_mapped = [N.asanyarray(ds) for ds in datasets]
         for i, (m, data) in enumerate(zip(mappers, data_mapped)):
             if __debug__:
@@ -146,12 +146,12 @@ class Hyperalignment(ClassWithCollections):
             # TODO: make just a function so we dont' waste space
             commonspace = params.combiner1(data_mapped[i], commonspace)
             if params.zscore_common:
-                zscore(commonspace, chunks=None)
+                zscore(commonspace, chunks_attr=None)
 
         # update commonspace to mean of ds_mapped
         commonspace = params.combiner2(data_mapped)
         if params.zscore_common:
-            zscore(commonspace, chunks=None)
+            zscore(commonspace, chunks_attr=None)
 
         # Level 2 -- might iterate multiple times
         for loop in xrange(params.level2_niter):
@@ -175,7 +175,7 @@ class Hyperalignment(ClassWithCollections):
 
             commonspace = params.combiner2(data_mapped)
             if params.zscore_common:
-                zscore(commonspace, chunks=None)
+                zscore(commonspace, chunks_attr=None)
 
         # Level 3 (last) to params.levels
         for i, (m, ds) in enumerate(zip(mappers, datasets)):

@@ -65,7 +65,7 @@ def test_polydetrend():
 
     # chunk-wise detrending
     ds = dataset_wizard(samples_forchunks, chunks=chunks)
-    dm = PolyDetrendMapper(chunks='chunks', polyord=1, inspace='police')
+    dm = PolyDetrendMapper(chunks_attr='chunks', polyord=1, inspace='police')
     mds = dm(ds)
     # features are chunkswise linear trends, so detrending should remove all
     assert_array_almost_equal(mds.samples, N.zeros(mds.shape))
@@ -90,14 +90,14 @@ def test_polydetrend():
     # although they are no longer there
     ds = dataset_wizard(N.array([[1.0, 2, 3, 1, 2, 3]], ndmin=2).T,
                  targets=chunks, chunks=chunks)
-    mds = PolyDetrendMapper(chunks='chunks', polyord=1)(ds)
+    mds = PolyDetrendMapper(chunks_attr='chunks', polyord=1)(ds)
     assert_array_almost_equal(mds.samples, N.zeros(mds.shape))
 
     # test of different polyord on each chunk
     target_mixed = N.array( [[-1.0, 0, 1, 0, 0, 0],
                              [2.0, 0, -2, 0, 0, 0]], ndmin=2 ).T
     ds = dataset_wizard(samples_forchunks.copy(), targets=chunks, chunks=chunks)
-    mds = PolyDetrendMapper(chunks='chunks', polyord=[0,1])(ds)
+    mds = PolyDetrendMapper(chunks_attr='chunks', polyord=[0,1])(ds)
     assert_array_almost_equal(mds, target_mixed)
 
     # test irregluar spacing of samples, but with corrective time info
@@ -115,10 +115,10 @@ def test_polydetrend():
     chunks = [0, 1, 0, 1, 0, 1]
     time = [4, 4, 12, 8, 8, 12]
     ds = Dataset(samples_forchunks.copy(), sa={'chunks': chunks, 'time': time})
-    mds = PolyDetrendMapper(chunks='chunks', polyord=1, inspace='time')(ds)
+    mds = PolyDetrendMapper(chunks_attr='chunks', polyord=1, inspace='time')(ds)
 
     # the whole thing must not affect the source data
     assert_array_equal(ds, samples_forchunks)
     # but if done inplace that is no longer true
-    poly_detrend(ds, chunks='chunks', polyord=1, inspace='time')
+    poly_detrend(ds, chunks_attr='chunks', polyord=1, inspace='time')
     assert_array_equal(ds, mds)

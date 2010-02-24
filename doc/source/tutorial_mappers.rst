@@ -216,7 +216,7 @@ regression and taking the residuals as the new feature values. Detrending can
 be seen as a type of data transformation, hence in PyMVPA it is implemented as
 a mapper.
 
->>> detrender = PolyDetrendMapper(polyord=1, chunks='chunks')
+>>> detrender = PolyDetrendMapper(polyord=1, chunks_attr='chunks')
 
 What we have just created is a mapper that will perform chunk-wise linear
 (1st-order polynomial) detrending. Chunk-wise detrending is desirable,

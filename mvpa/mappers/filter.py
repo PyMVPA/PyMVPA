@@ -27,22 +27,22 @@ from mvpa.mappers.base import Mapper
 
 
 class FFTResamplemapper(Mapper):
-    def __init__(self, chunks=None, inspace=None):
+    def __init__(self, chunks_attr=None, inspace=None):
         Mapper.__init__(self, inspace=inspace)
 
-        self.__chunks = chunks
+        self.__chunks_attr = chunks_attr
 
 
     def __repr__(self):
         s = super(FFTResamplemapper, self).__repr__()
         return s.replace("(",
-                         "(chunks=%s, "
-                          % (repr(self.__chunks),),
+                         "(chunks_attr=%s, "
+                          % (repr(self.__chunks_attr),),
                          1)
 
 
     def __str__(self):
-        return _str(self, chunks=self.__chunks)
+        return _str(self, chunks_attr=self.__chunks_attr)
 
 
     def _resample(self, nt=None, sr=None, dt=None, window='ham',

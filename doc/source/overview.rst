@@ -40,7 +40,7 @@ Perform linear detrending and afterwards zscore the timeseries of each voxel
 using the mean and standard deviation determined from *rest* volumes
 (all done for each experiment run individually).
 
- >>> poly_detrend(dataset, polyord=1, chunks='chunks')
+ >>> poly_detrend(dataset, polyord=1, chunks_attr='chunks')
  >>> zscore(dataset, param_est=('targets', ['rest']), dtype='float32')
 
 Select a subset of two stimulation conditions from the whole dataset.

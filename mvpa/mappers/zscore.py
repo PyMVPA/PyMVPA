@@ -47,7 +47,7 @@ class ZScoreMapper(Mapper):
 
     Reverse-mapping is currently not implemented.
     """
-    def __init__(self, params=None, param_est=None, chunks='chunks',
+    def __init__(self, params=None, param_est=None, chunks_attr='chunks',
                  dtype='float64', inspace=None):
         """
         Parameters
@@ -65,7 +65,7 @@ class ZScoreMapper(Mapper):
           attribute as the first element, and a sequence of attribute values
           as the second element. If None, all samples will be used for parameter
           estimation.
-        chunks : str or None
+        chunks_attr : str or None
           If provided, it specifies the name of a samples attribute in the
           training data, unique values of which will be used to identify chunks of
           samples, and to perform individual Z-scoring within them.
@@ -77,7 +77,7 @@ class ZScoreMapper(Mapper):
         """
         Mapper.__init__(self, inspace=inspace)
 
-        self.__chunks = chunks
+        self.__chunks_attr = chunks_attr
         self.__params = params
         self.__param_est = param_est
         self.__params_dict = None
@@ -94,8 +94,8 @@ class ZScoreMapper(Mapper):
             add_args += ['params=%s' % repr(self.__params)]
         if self.__param_est is not None:
             add_args += ['param_est=%s' % repr(self.__param_est)]
-        if self.__chunks != 'chunks':
-            add_args += ['chunks=%s' % repr(self.__chunks)]
+        if self.__chunks_attr != 'chunks':
+            add_args += ['chunks_attr=%s' % repr(self.__chunks_attr)]
         if self.__dtype != 'float64':
             add_args += ['dtype=%s' % repr(self.__dtype)]
         if add_args:
@@ -110,7 +110,7 @@ class ZScoreMapper(Mapper):
 
     def _train(self, ds):
         # local binding
-        chunks = self.__chunks
+        chunks_attr = self.__chunks_attr
         params = self.__params
         param_est = self.__param_est
 
@@ -133,11 +133,11 @@ class ZScoreMapper(Mapper):
                 est_ids = slice(None)
 
             # now we can either do it one for all, or per chunk
-            if not chunks is None:
+            if not chunks_attr is None:
                 # per chunk estimate
                 params = {}
-                for c in ds.sa[chunks].unique:
-                    slicer = N.where(ds.sa[chunks].value == c)[0]
+                for c in ds.sa[chunks_attr].unique:
+                    slicer = N.where(ds.sa[chunks_attr].value == c)[0]
                     if not isinstance(est_ids, slice):
                         slicer = list(est_ids.intersection(set(slicer)))
                     params[c] = self._compute_params(ds.samples[slicer])
@@ -151,11 +151,11 @@ class ZScoreMapper(Mapper):
 
     def _forward_dataset(self, ds):
         # local binding
-        chunks = self.__chunks
+        chunks_attr = self.__chunks_attr
         dtype = self.__dtype
 
-        if __debug__ and not chunks is None \
-          and N.array(get_nsamples_per_attr(ds, chunks).values()).min() <= 2:
+        if __debug__ and not chunks_attr is None \
+          and N.array(get_nsamples_per_attr(ds, chunks_attr).values()).min() <= 2:
             warning("Z-scoring chunk-wise having a chunk with less than three "
                     "samples will set features in these samples to either zero "
                     "(with 1 sample in a chunk) "
@@ -181,13 +181,13 @@ class ZScoreMapper(Mapper):
             mds.samples = self._zscore(mds.samples, *params['__all__'])
         else:
             # per chunk z-scoring
-            for c in mds.sa[chunks].unique:
+            for c in mds.sa[chunks_attr].unique:
                 if not c in params:
                     raise RuntimeError(
                         "%s has no parameters for chunk '%s'. It probably "
                         "wasn't present in the training dataset!?"
                         % (self.__class__.__name__, c))
-                slicer = N.where(mds.sa[chunks].value == c)[0]
+                slicer = N.where(mds.sa[chunks_attr].value == c)[0]
                 mds.samples[slicer] = self._zscore(mds.samples[slicer],
                                                    *params[c])
 
@@ -195,10 +195,10 @@ class ZScoreMapper(Mapper):
 
 
     def _forward_data(self, data):
-        if self.__chunks is not None:
-            raise RuntimeError("%s cannot do chunk-wise Z-scoring of plain "
-                               "data since it has to be parameterized with chunks."
-                               % self)
+        if self.__chunks_attr is not None:
+            raise RuntimeError(
+                "%s cannot do chunk-wise Z-scoring of plain data "
+                "since it has to be parameterized with chunks_attr." % self)
         if self.__param_est is not None:
             raise RuntimeError("%s cannot do Z-scoring with estimating "
                                "parameters on some attributes of plain"
