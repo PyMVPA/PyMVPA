@@ -14,7 +14,7 @@ import os
 import numpy as np
 
 from mvpa.base import externals
-if externals.exists('nifti', raiseException=True):
+if externals.exists('nifti', raise_=True):
     import nifti
 
 

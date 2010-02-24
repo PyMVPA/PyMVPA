@@ -26,7 +26,7 @@ import numpy as np
 
 # Rely on SG
 from mvpa.base import externals, warning
-if externals.exists('shogun', raiseException=True):
+if externals.exists('shogun', raise_=True):
     import shogun.Features
     import shogun.Classifier
     import shogun.Regression
@@ -183,7 +183,7 @@ class SVM(_SVM):
     _KNOWN_SENSITIVITIES={'linear':LinearSVMWeights,
                           }
     _KNOWN_IMPLEMENTATIONS = {}
-    if externals.exists('shogun', raiseException=True):
+    if externals.exists('shogun', raise_=True):
         _KNOWN_IMPLEMENTATIONS = {
             "libsvm" : (shogun.Classifier.LibSVM, ('C',),
                        ('multiclass', 'binary'),

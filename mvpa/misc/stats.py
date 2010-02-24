@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 from mvpa.base import externals
 
-if externals.exists('scipy', raiseException=True):
+if externals.exists('scipy', raise_=True):
     import scipy.stats as stats
 
 import numpy as np

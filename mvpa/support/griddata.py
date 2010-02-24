@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 import sys
 from mvpa.base import externals
 
-if externals.exists('griddata', raiseException=True):
+if externals.exists('griddata', raise_=True):
     if __debug__:
         from mvpa.base import debug
 

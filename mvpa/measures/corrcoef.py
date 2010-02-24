@@ -14,7 +14,7 @@ from mvpa.base import externals
 
 import numpy as np
 
-if externals.exists('scipy', raiseException=True):
+if externals.exists('scipy', raise_=True):
     # TODO: implement corrcoef optionally without scipy, e.g. np.corrcoef
     from scipy.stats import pearsonr
 

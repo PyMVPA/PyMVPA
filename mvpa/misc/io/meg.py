@@ -65,7 +65,7 @@ class TuebingenMEG(object):
         # open textfiles
         if isinstance(source, str):
             if source.endswith('.gz'):
-                externals.exists('gzip', raiseException=True)
+                externals.exists('gzip', raise_=True)
                 import gzip
                 source = gzip.open(source, 'r')
             else:

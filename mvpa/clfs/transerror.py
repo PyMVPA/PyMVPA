@@ -401,7 +401,7 @@ class ROCCurve(object):
         TODO: make it friendly to labels given by values?
               should we also treat labels_map?
         """
-        externals.exists("pylab", raiseException=True)
+        externals.exists("pylab", raise_=True)
         import pylab as pl
 
         self._compute()
@@ -798,7 +798,7 @@ class ConfusionMatrix(SummaryStatistics):
          (fig, im, cb) -- figure, imshow, colorbar
         """
 
-        externals.exists("pylab", raiseException=True)
+        externals.exists("pylab", raise_=True)
         import pylab as pl
 
         self.compute()
@@ -1087,7 +1087,7 @@ class RegressionStatistics(SummaryStatistics):
         -------
          (fig, im, cb) -- figure, imshow, colorbar
         """
-        externals.exists("pylab", raiseException=True)
+        externals.exists("pylab", raise_=True)
         import pylab as pl
 
         self.compute()

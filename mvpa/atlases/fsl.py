@@ -12,7 +12,7 @@
 
 from mvpa.base import warning, externals
 
-if externals.exists('nifti', raiseException=True):
+if externals.exists('nifti', raise_=True):
     from nifti import NiftiImage
 
 import os, re

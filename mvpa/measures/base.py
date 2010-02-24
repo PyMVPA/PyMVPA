@@ -162,7 +162,7 @@ class DatasetMeasure(ClassWithCollections):
                            self.__null_dist.p(result, return_tails=True)
                 self.ca.null_prob = null_prob
 
-                externals.exists('scipy', raiseException=True)
+                externals.exists('scipy', raise_=True)
                 from scipy.stats import norm
 
                 # TODO: following logic should appear in NullDist,
