@@ -61,7 +61,7 @@ to perform a few preprocessing steps (please note that the data was already
 motion-corrected). The first step is a chunk-wise (run-wise) removal of linear
 trends, typically caused by the acquisition equipment."""
 
-poly_detrend(dataset, polyord=1, chunks='chunks')
+poly_detrend(dataset, polyord=1, chunks_attr='chunks')
 
 """Now that the detrending is done, we can remove parts of the timeseries we
 are not interested in. For this example we are only considering volume acquired
@@ -81,7 +81,7 @@ z-scoring based on the volumes corresponding to rest periods in the experiment.
 The resulting features could be interpreted as being voxel salience relative
 to 'rest'."""
 
-zscore(dataset, chunks='chunks', param_est=('targets', ['rest']), dtype='float32')
+zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']), dtype='float32')
 
 """After normalization is completed, we no longer need the 'rest'-samples and
 remove them."""

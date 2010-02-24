@@ -50,7 +50,7 @@ P.title('Sample distances (sorted by targets)')
 
 # z-score features individually per chunk
 print 'Detrending data'
-poly_detrend(ds, polyord=2, chunks='chunks')
+poly_detrend(ds, polyord=2, chunks_attr='chunks')
 print 'Z-Scoring data'
 zscore(ds)
 

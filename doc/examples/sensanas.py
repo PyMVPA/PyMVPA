@@ -66,7 +66,7 @@ detrending, selecting a subset of the experimental conditions, normalization
 of each feature to a standard mean and variance."""
 
 # do chunkswise linear detrending on dataset
-poly_detrend(dataset, polyord=1, chunks='chunks')
+poly_detrend(dataset, polyord=1, chunks_attr='chunks')
 
 # only use 'rest', 'shoe' and 'bottle' samples from dataset
 dataset = dataset[N.array([l in ['rest', 'shoe', 'bottle']

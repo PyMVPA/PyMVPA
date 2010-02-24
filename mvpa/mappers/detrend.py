@@ -62,7 +62,7 @@ class PolyDetrendMapper(Mapper):
     ...                    [-2.0, -4, -6, -6, -4, -2]]).T
     >>> chunks = [0, 0, 0, 1, 1, 1]
     >>> ds = dataset_wizard(samples, chunks=chunks)
-    >>> dm = PolyDetrendMapper(chunks='chunks', polyord=1)
+    >>> dm = PolyDetrendMapper(chunks_attr='chunks', polyord=1)
 
     >>> # the mapper will be auto-trained upon first use
     >>> mds = dm.forward(ds)
@@ -71,7 +71,7 @@ class PolyDetrendMapper(Mapper):
     >>> N.sum(N.abs(mds)) < 0.00001
     True
     """
-    def __init__(self, polyord=1, chunks=None, opt_regs=None, inspace=None):
+    def __init__(self, polyord=1, chunks_attr=None, opt_regs=None, inspace=None):
         """
         Parameters
         ----------
@@ -81,11 +81,11 @@ class PolyDetrendMapper(Mapper):
           value.  For example, 3 will remove 0th, 1st, 2nd, and 3rd order
           polynomials from the data.  N.B.: The 0th polynomial is the
           baseline shift, the 1st is the linear trend.
-          If you specify a single int and `chunks` is not None, then this value
+          If you specify a single int and `chunks_attr` is not None, then this value
           is used for each chunk.  You can also specify a different polyord
           value for each chunk by providing a list or ndarray of polyord
           values the length of the number of chunks.
-        chunks : str or None
+        chunks_attr : str or None
           If None, the whole dataset is detrended at once. Otherwise, the given
           samples attribute (given by its name) is used to define chunks of the
           dataset that are processed individually. In that case, all the samples
@@ -107,7 +107,7 @@ class PolyDetrendMapper(Mapper):
         """
         Mapper.__init__(self, inspace=inspace)
 
-        self.__chunks = chunks
+        self.__chunks_attr = chunks_attr
         self.__polyord = polyord
         self.__opt_reg = opt_regs
 
@@ -122,9 +122,9 @@ class PolyDetrendMapper(Mapper):
     def __repr__(self):
         s = super(PolyDetrendMapper, self).__repr__()
         return s.replace("(",
-                         "(polyord=%i, chunks=%s, opt_regs=%s, "
+                         "(polyord=%i, chunks_attr=%s, opt_regs=%s, "
                           % (self.__polyord,
-                             repr(self.__chunks),
+                             repr(self.__chunks_attr),
                              repr(self.__opt_reg)),
                          1)
 
@@ -180,14 +180,14 @@ class PolyDetrendMapper(Mapper):
 
     def _train(self, ds):
         # local binding
-        chunks = self.__chunks
+        chunks_attr = self.__chunks_attr
         polyord = self.__polyord
         opt_reg = self.__opt_reg
         inspace = self.get_inspace()
         self._polycoords = None
 
         # global detrending is desired
-        if chunks is None:
+        if chunks_attr is None:
             # consider the entire dataset
             reg = []
             # create the timespan
@@ -197,14 +197,14 @@ class PolyDetrendMapper(Mapper):
         # chunk-wise detrending is desired
         else:
              # get the unique chunks
-            uchunks = ds.sa[chunks].unique
+            uchunks = ds.sa[chunks_attr].unique
 
             # Process the polyord to be a list with length of the number of
             # chunks
             if not isSequenceType(polyord):
                 # repeat to be proper length
                 polyord = [polyord] * len(uchunks)
-            elif not chunks is None and len(polyord) != len(uchunks):
+            elif not chunks_attr is None and len(polyord) != len(uchunks):
                 raise ValueError("If you specify a sequence of polyord values "
                                  "they sequence length must match the "
                                  "number of unique chunks in the dataset.")
@@ -224,7 +224,7 @@ class PolyDetrendMapper(Mapper):
                 self._polycoords = N.empty(len(ds), dtype='int')
             for n, chunk in enumerate(uchunks):
                 # get the indices for that chunk
-                cinds = ds.sa[chunks].value == chunk
+                cinds = ds.sa[chunks_attr].value == chunk
 
                 # create the timespan
                 polycoords, polycoords_scaled = self._get_polycoords(ds, cinds)

@@ -104,7 +104,7 @@ following code snippet should be plausible:
 ...                   targets=attr.targets, chunks=attr.chunks,
 ...                   mask=os.path.join(datapath, 'mask_vt.nii.gz'))
 >>> # pre-process
->>> poly_detrend(ds, polyord=1, chunks='chunks')
+>>> poly_detrend(ds, polyord=1, chunks_attr='chunks')
 >>> zscore(ds, param_est=('targets', ['rest']))
 >>> ds = ds[ds.sa.targets != 'rest']
 >>> # average

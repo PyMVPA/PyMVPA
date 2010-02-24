@@ -45,6 +45,10 @@ Critical API Changes
   - factory functions (even for whatever might have been before a class)
     are in pythonic_style
 
+* `detrend` -> `poly_detrend`
+
+* ``perchunk=bool`` (in zscore/detrend) got refactored into ``chunks_attr=None
+  or string`` to specify on which sample attribute to operate.
 
 General Changes
 ===============

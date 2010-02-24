@@ -47,7 +47,7 @@ contiguous linear trend throughout the whole recording session.
 """
 
 # detrend on full timeseries
-poly_detrend(ds, polyord=1, chunks='chunks')
+poly_detrend(ds, polyord=1, chunks_attr='chunks')
 
 """
 
@@ -67,7 +67,7 @@ be interpreted as "activation scores". We are again doing it per each run.
 
 """
 
-zscore(ds, chunks='chunks', param_est=('targets', 'rest'))
+zscore(ds, chunks_attr='chunks', param_est=('targets', 'rest'))
 
 """
 
