@@ -170,6 +170,10 @@ def __check_shogun(bottom_version, custom_versions=[]):
               (ver, bottom_version)
 
 
+def __assign_nipy_version():
+    import nipy
+    versions['nipy'] = nipy.__version__
+
 def __check_weave():
     """Apparently presence of scipy is not sufficient since some
     versions experience problems. E.g. in Sep,Oct 2008 lenny's weave
@@ -422,6 +426,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'nose': "import nose as __",
           'pprocess': "__check_pprocess()",
           'h5py': "import h5py as __",
+          'nipy': "__assign_nipy_version()",
           }
 
 
