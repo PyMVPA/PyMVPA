@@ -259,10 +259,10 @@ def plot_decision_boundary_2d(dataset, clf=None,
     """
 
     if False:
-        from mvpa.misc.data_generators import *
-        from mvpa.clfs.svm import *
-        from mvpa.clfs.knn import *
-        #ds = dumb_feature_binary_dataset()
+        ## from mvpa.misc.data_generators import *
+        ## from mvpa.clfs.svm import *
+        ## from mvpa.clfs.knn import *
+        ## ds = dumb_feature_binary_dataset()
         dataset = normal_feature_dataset(nfeatures=2, nchunks=5,
                                          snr=10, nlabels=4, means=[ [0,1], [1,0], [1,1], [0,0] ])
         dataset.samples += dataset.sa.chunks[:, None]*0.1 # slight shifts for chunks ;)
