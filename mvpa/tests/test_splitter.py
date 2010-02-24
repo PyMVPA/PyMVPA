@@ -11,12 +11,13 @@
 import unittest
 import numpy as N
 
-from mvpa.datasets.base import dataset_wizard
+from mvpa.datasets.base import dataset_wizard, Dataset
 from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter, \
                                    NoneSplitter, HalfSplitter, \
                                    CustomSplitter, NGroupSplitter
 
-from mvpa.testing.tools import ok_, assert_array_equal
+from mvpa.testing.tools import ok_, assert_array_equal, assert_true, \
+        assert_false, assert_equal
 
 class SplitterTests(unittest.TestCase):
 
@@ -371,6 +372,40 @@ class SplitterTests(unittest.TestCase):
         # visually... looks ok;)
         #for count in counts[5:]:
         #    print count
+
+
+    def test_slicing(self):
+        spl = HalfSplitter()
+        splits = [ (train, test) for (train, test) in spl(self.data) ]
+        for s in splits:
+            # we get slicing all the time
+            assert_true(s[0].samples.base is self.data.samples)
+            assert_true(s[1].samples.base is self.data.samples)
+        spl = HalfSplitter(noslicing=True)
+        splits = [ (train, test) for (train, test) in spl(self.data) ]
+        for s in splits:
+            # we no slicing at all
+            assert_false(s[0].samples.base is self.data.samples)
+            assert_false(s[1].samples.base is self.data.samples)
+        spl = NFoldSplitter()
+        splits = [ (train, test) for (train, test) in spl(self.data) ]
+        for i, s in enumerate(splits):
+            # training only first and last split
+            if i == 0 or i == len(splits) - 1:
+                assert_true(s[0].samples.base is self.data.samples)
+            else:
+                assert_false(s[0].samples.base is self.data.samples)
+            # we get slicing all the time
+            assert_true(s[1].samples.base is self.data.samples)
+        step_ds = Dataset(N.random.randn(20,2),
+                          sa={'chunks': N.tile([0,1], 10)})
+        spl = OddEvenSplitter()
+        splits = [ (train, test) for (train, test) in spl(step_ds) ]
+        assert_equal(len(splits), 2)
+        for s in splits:
+            # we get slicing all the time
+            assert_true(s[0].samples.base is step_ds.samples)
+            assert_true(s[1].samples.base is step_ds.samples)
 
 
 def suite():

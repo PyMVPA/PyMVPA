@@ -70,7 +70,8 @@ class Splitter(object):
                  strategy='equidistant',
                  discard_boundary=None,
                  attr='chunks',
-                 reverse=False):
+                 reverse=False,
+                 noslicing=False):
         """Initialize splitter base.
 
         Parameters
@@ -117,12 +118,18 @@ class Splitter(object):
           If True, the order of datasets in the split is reversed, e.g.
           instead of (training, testing), (training, testing) will be spit
           out
+        noslicing : bool
+          If True, dataset splitting is not done by slicing (causing
+          shared data between source and split datasets) even if it would
+          be possible. By default slicing is performed whenever possible
+          to reduce the memory footprint.
         """
         # pylint happyness block
         self.__nperlabel = None
         self.__runspersplit = nrunspersplit
         self.__permute = permute
         self.__splitattr = attr
+        self.__noslicing = noslicing
         self._reverse = reverse
         self.discard_boundary = discard_boundary
 
@@ -299,7 +306,7 @@ class Splitter(object):
                 none_specs += 1
             else:
                 filter_ = N.array([ i in spec \
-                                    for i in splitattr_data])
+                                    for i in splitattr_data], dtype='bool')
                 filters.append(filter_)
                 if cum_filter is None:
                     cum_filter = filter_
@@ -334,13 +341,50 @@ class Splitter(object):
         #      keeping it this way for now, to maintain current behavior
         split_datasets = []
 
+
         for filter_ in filters:
             if (filter_ == False).all():
                 split_datasets.append(None)
             else:
-                split_datasets.append(dataset[filter_])
+                # check whether we can do slicing instead of advanced
+                # indexing -- if we can split the dataset without causing
+                # the data to be copied, its is quicker and leaner.
+                # However, it only works if we have a contiguous chunk or
+                # regular step sizes for the samples to be split
+                split_datasets.append(dataset[self._filter2slice(filter_)])
 
         return split_datasets
+
+
+    def _filter2slice(self, bf):
+        if self.__noslicing:
+            # we are not allowed to help :-(
+            return bf
+        # the filter should be a boolean array
+        if not len(bf):
+            raise ValueError("'%s' recieved an empty filter. This is a "
+                             "bug." % self.__class__.__name__)
+        # get indices of non-zero filter elements
+        idx = bf.nonzero()[0]
+        idx_start = idx[0]
+        idx_end = idx[-1] + 1
+        idx_step = None
+        if len(idx) > 1:
+            # we need to figure out if there is a regular step-size
+            # between elements
+            stepsizes = N.unique(idx[1:] - idx[:-1])
+            if len(stepsizes) > 1:
+                # multiple step-sizes -> slicing is not possible -> return
+                # orginal filter
+                return bf
+            else:
+                idx_step = stepsizes[0]
+
+        sl = slice(idx_start, idx_end, idx_step)
+        if __debug__:
+            debug("SPL", "Splitting by basic slicing is possible and permitted "
+                         "(%s)." % sl)
+        return sl
 
 
     def __str__(self):
