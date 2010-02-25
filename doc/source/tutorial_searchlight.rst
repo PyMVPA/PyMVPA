@@ -254,11 +254,11 @@ Moreover, a searchlight cannot detect signals that extend beyond a small
 local neighborhood. This property effectively limits the scope of analyses
 that can employ this strategy. A study looking a global brain circuitry
 will hardly restrict the analysis to patches of few cubic millimeters of
-brain tissue. Searchlights also have another nasty aspect. Although they provide
-us with a multivariate localization measure, they also inherit the curse of
-univariate fMRI data analysis -- `multiple comparisons`_. The :ref:`next
-tutorial part <chap_tutorial_sensitivity>` will offers some alternatives
-that are more gentle in this respect.
+brain tissue. As we have seen before, searchlights also have another nasty
+aspect. Although they provide us with a multivariate localization measure,
+they also inherit the curse of univariate fMRI data analysis -- `multiple
+comparisons`_. The :ref:`next tutorial part <chap_tutorial_sensitivity>`
+will offers some alternatives that are more gentle in this respect.
 
 .. _multiple comparisons: http://en.wikipedia.org/wiki/Multiple_comparisons
 
