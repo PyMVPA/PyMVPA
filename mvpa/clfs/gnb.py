@@ -14,7 +14,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from numpy import ones, zeros, sum, abs, isfinite, dot
 from mvpa.base import warning, externals
@@ -114,7 +114,7 @@ class GNB(Classifier):
         """Train the classifier using `dataset` (`Dataset`).
         """
         params = self.params
-        targets_sa_name = params.targets
+        targets_sa_name = params.targets_attr
         targets_sa = dataset.sa[targets_sa_name]
 
         # get the dataset information into easy vars
@@ -130,11 +130,11 @@ class GNB(Classifier):
         s_shape = X.shape[1:]           # shape of a single sample
 
         self.means = means = \
-                     N.zeros((nlabels, ) + s_shape)
+                     np.zeros((nlabels, ) + s_shape)
         self.variances = variances = \
-                     N.zeros((nlabels, ) + s_shape)
+                     np.zeros((nlabels, ) + s_shape)
         # degenerate dimension are added for easy broadcasting later on
-        nsamples_per_class = N.zeros((nlabels,) + (1,)*len(s_shape))
+        nsamples_per_class = np.zeros((nlabels,) + (1,)*len(s_shape))
 
         # Estimate means and number of samples per each label
         for s, l in zip(X, labels):
@@ -155,7 +155,7 @@ class GNB(Classifier):
         ## Actually compute the variances
         if params.common_variance:
             # we need to get global std
-            cvar = N.sum(variances, axis=0)/nsamples # sum across labels
+            cvar = np.sum(variances, axis=0)/nsamples # sum across labels
             # broadcast the same variance across labels
             variances[:] = cvar
         else:
@@ -164,12 +164,12 @@ class GNB(Classifier):
         # Store prior probabilities
         prior = params.prior
         if prior == 'uniform':
-            self.priors = N.ones((nlabels,))/nlabels
+            self.priors = np.ones((nlabels,))/nlabels
         elif prior == 'laplacian_smoothing':
-            self.priors = (1+N.squeeze(nsamples_per_class)) \
+            self.priors = (1+np.squeeze(nsamples_per_class)) \
                           / (float(nsamples) + nlabels)
         elif prior == 'ratio':
-            self.priors = N.squeeze(nsamples_per_class) / float(nsamples)
+            self.priors = np.squeeze(nsamples_per_class) / float(nsamples)
         else:
             raise "No idea on how to handle '%s' way to compute priors" \
                   % params.prior
@@ -177,13 +177,13 @@ class GNB(Classifier):
         # Precompute and store weighting coefficient for Gaussian
         if params.logprob:
             # it would be added to exponent
-            self._norm_weight = -0.5 * N.log(2*N.pi*variances)
+            self._norm_weight = -0.5 * np.log(2*np.pi*variances)
         else:
-            self._norm_weight = 1.0/N.sqrt(2*N.pi*variances)
+            self._norm_weight = 1.0/np.sqrt(2*np.pi*variances)
 
         if __debug__ and 'GNB' in debug.active:
             debug('GNB', "training finished on data.shape=%s " % (X.shape, )
-                  + "min:max(data)=%f:%f" % (N.min(X), N.max(X)))
+                  + "min:max(data)=%f:%f" % (np.min(X), np.max(X)))
 
 
     def untrain(self):
@@ -203,8 +203,8 @@ class GNB(Classifier):
         params = self.params
         # argument of exponentiation
         scaled_distances = \
-            -0.5 * (((data - self.means[:, N.newaxis, ...])**2) \
-                          / self.variances[:, N.newaxis, ...])
+            -0.5 * (((data - self.means[:, np.newaxis, ...])**2) \
+                          / self.variances[:, np.newaxis, ...])
         if params.logprob:
             # if self.params.common_variance:
             # XXX YOH:
@@ -213,7 +213,7 @@ class GNB(Classifier):
             # simply discarded since it is common across features AND
             # classes
             # For completeness -- computing everything now even in logprob
-            lprob_csfs = self._norm_weight[:, N.newaxis, ...] + scaled_distances
+            lprob_csfs = self._norm_weight[:, np.newaxis, ...] + scaled_distances
 
             # XXX for now just cut/paste with different operators, but
             #     could just bind them and reuse in the same equations
@@ -225,13 +225,13 @@ class GNB(Classifier):
             lprob_cs = lprob_csf.sum(axis=2)
 
             # Incorporate class probabilities:
-            prob_cs_cp = lprob_cs + N.log(self.priors[:, N.newaxis])
+            prob_cs_cp = lprob_cs + np.log(self.priors[:, np.newaxis])
 
         else:
             # Just a regular Normal distribution with per
             # feature/class mean and variances
             prob_csfs = \
-                 self._norm_weight[:, N.newaxis, ...] * N.exp(scaled_distances)
+                 self._norm_weight[:, np.newaxis, ...] * np.exp(scaled_distances)
 
             # Naive part -- just a product of probabilities across features
             ## First we need to reshape to get class x samples x features
@@ -241,17 +241,17 @@ class GNB(Classifier):
             prob_cs = prob_csf.prod(axis=2)
 
             # Incorporate class probabilities:
-            prob_cs_cp = prob_cs * self.priors[:, N.newaxis]
+            prob_cs_cp = prob_cs * self.priors[:, np.newaxis]
 
         # Normalize by evidence P(data)
         if params.normalize:
             if params.logprob:
-                prob_cs_cp_real = N.exp(prob_cs_cp)
+                prob_cs_cp_real = np.exp(prob_cs_cp)
             else:
                 prob_cs_cp_real = prob_cs_cp
-            prob_s_cp_marginals = N.sum(prob_cs_cp_real, axis=0)
+            prob_s_cp_marginals = np.sum(prob_cs_cp_real, axis=0)
             if params.logprob:
-                prob_cs_cp -= N.log(prob_s_cp_marginals)
+                prob_cs_cp -= np.log(prob_s_cp_marginals)
             else:
                 prob_cs_cp /= prob_s_cp_marginals
 
@@ -264,7 +264,7 @@ class GNB(Classifier):
 
         if __debug__ and 'GNB' in debug.active:
             debug('GNB', "predict on data.shape=%s min:max(data)=%f:%f " %
-                  (data.shape, N.min(data), N.max(data)))
+                  (data.shape, np.min(data), np.max(data)))
 
         return predictions
 

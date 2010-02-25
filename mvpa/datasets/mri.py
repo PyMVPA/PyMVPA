@@ -21,18 +21,20 @@ __docformat__ = 'restructuredtext'
 from mvpa.base import externals
 
 import sys
-import numpy as N
+import numpy as np
 from mvpa.support.copy import deepcopy
+from mvpa.misc.support import Event
 from mvpa.base.collections import DatasetAttribute
 from mvpa.base.dataset import _expand_attribute
 
 if __debug__:
     from mvpa.base import debug
 
-if externals.exists('nifti', raiseException=True):
+if externals.exists('nifti', raise_=True):
     from nifti import NiftiImage
 
 from mvpa.datasets.base import Dataset
+from mvpa.mappers.fx import _uniquemerge2literal
 from mvpa.mappers.flatten import FlattenMapper
 from mvpa.mappers.boxcar import BoxcarMapper
 from mvpa.base import warning
@@ -145,7 +147,7 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
     niftimask = _load_anynifti(mask)
     if niftimask is None:
         pass
-    elif isinstance(niftimask, N.ndarray):
+    elif isinstance(niftimask, np.ndarray):
         mask = niftimask
     else:
         mask = _get_nifti_data(niftimask)
@@ -195,97 +197,11 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
                 tuple([i for i in reversed(niftisamples.voxdim)])
         # TODO extend with the unit
     if tprefix is not None:
-        ds.sa[tprefix + '_indices'] = N.arange(len(ds), dtype='int')
-        ds.sa[tprefix + '_coords'] = N.arange(len(ds), dtype='float') \
+        ds.sa[tprefix + '_indices'] = np.arange(len(ds), dtype='int')
+        ds.sa[tprefix + '_coords'] = np.arange(len(ds), dtype='float') \
                                      * niftisamples.header['pixdim'][4]
         # TODO extend with the unit
 
-    return ds
-
-
-def extract_events(ds, events, tr=None, eprefix='event'):
-    """XXX All docs need to be rewritten.
-
-    Dataset with event-defined samples from a NIfTI timeseries image.
-
-    This is a convenience dataset to facilitate the analysis of event-related
-    fMRI datasets. Boxcar-shaped samples are automatically extracted from the
-    full timeseries using :class:`~mvpa.misc.support.Event` definition lists.
-    For each event all volumes covering that particular event in time
-    (including partial coverage) are used to form the corresponding sample.
-
-    The class supports the conversion of events defined in 'realtime' into the
-    descrete temporal space defined by the NIfTI image. Moreover, potentially
-    varying offsets between true event onset and timepoint of the first selected
-    volume can be stored as an additional feature in the dataset.
-
-    Additionally, the dataset supports masking. This is done similar to the
-    masking capabilities of :class:`~mvpa.datasets.nifti.NiftiDataset`. However,
-    the mask can either be of the same shape as a single NIfTI volume, or
-    can be of the same shape as the generated boxcar samples, i.e.
-    a samples consisting of three volumes with 24 slices and 64x64 inplane
-    resolution needs a mask with shape (3, 24, 64, 64). In the former case the
-    mask volume is automatically expanded to be identical in a volumes of the
-    boxcar.
-
-    Parameters
-    ----------
-    ds : Dataset
-    events : list
-    tr : float or None
-      Temporal distance of two adjacent NIfTI volumes. This can be used
-      to override the corresponding value in the NIfTI header.
-    eprefix : str or None
-
-    """
-    if tr is None:
-        # determine TR, take from NIfTI header by default
-        dt = ds.a.imghdr['pixdim'][4]
-    else:
-    # override if necessary
-        dt = tr
-    # convert all onsets into descrete integer values representing volume ids
-    # but storing any possible offset to the real event onset as an additional
-    # feature of that event -- these features will be stored as sample
-    # attributes
-    descr_events = [ev.as_descrete_time(dt, storeoffset=True) for ev in events]
-
-    # convert the event specs into the format expected by BoxcarMapper
-    # take the first event as an example of contained keys
-    evvars = {}
-    for k in descr_events[0]:
-        try:
-            evvars[k] = [e[k] for e in descr_events]
-        except KeyError:
-            raise ValueError("Each event property must be present for all "
-                             "events (could not find '%s'" % k)
-    # checks
-    for p in ['onset', 'duration']:
-        if not p in evvars:
-            raise ValueError("'%s' is a required property for all events."
-                             % p)
-    boxlength = max(evvars['duration'])
-    if __debug__:
-        if not max(evvars['duration']) == min(evvars['duration']):
-            warning('Boxcar mapper will use maximum boxlength (%i) of all '
-                    'provided Events.'% boxlength)
-
-    # finally create, train und use the boxcar mapper
-    bcm = BoxcarMapper(evvars['onset'], boxlength, inspace=eprefix)
-    bcm.train(ds)
-    ds = ds.get_mapped(bcm)
-    # at last reflatten the dataset
-    # could we add some meaningful attribute during this mapping, i.e. would 
-    # assigning 'inspace' do something good?
-    ds = ds.get_mapped(FlattenMapper(shape=ds.samples.shape[1:]))
-    # add samples attributes for the events, simply dump everything as a samples
-    # attribute
-    for a in evvars:
-        # special case: we want the non-descrete, original onset and duration
-        if a in ['onset', 'duration']:
-            ds.sa[eprefix + '_attrs_' + a] = [e[a] for e in events]
-        else:
-            ds.sa[eprefix + '_attrs_' + a] = evvars[a]
     return ds
 
 
@@ -351,12 +267,12 @@ def _load_anynifti(src, ensure=False, enforce_dim=None):
         if __debug__:
             # lets check if they all have the same dimensionality
             shapes = [s.data.shape for s in srcs]
-            if not N.all([s == shapes[0] for s in shapes]):
+            if not np.all([s == shapes[0] for s in shapes]):
                 raise ValueError, \
                       "Input volumes contain variable number of dimensions:" \
                       " %s" % (shapes,)
         # Combine them all into a single beast
-        nifti = NiftiImage(N.array([s.asarray() for s in srcs]),
+        nifti = NiftiImage(np.array([s.asarray() for s in srcs]),
                            srcs[0].header)
     elif ensure:
         raise ValueError, "Cannot load NIfTI from %s" % (src,)

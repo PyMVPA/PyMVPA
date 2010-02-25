@@ -9,7 +9,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base.dochelpers import enhanced_doc_string
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
@@ -120,7 +120,7 @@ class ProjectionMapper(Mapper):
         # local binding
         demean = self._demean
 
-        d = N.asmatrix(data)
+        d = np.asmatrix(data)
 
         # Remove input offset if present
         if demean and self._offset_in is not None:
@@ -139,7 +139,7 @@ class ProjectionMapper(Mapper):
     def _reverse_data(self, data):
         if self._proj is None:
             raise RuntimeError, "Mapper needs to be trained before used."
-        d = N.asmatrix(data)
+        d = np.asmatrix(data)
         # Remove offset if present in output space
         if self._demean and self._offset_out is not None:
             d = d - self._offset_out
@@ -160,7 +160,7 @@ class ProjectionMapper(Mapper):
         By default -- pseudoinverse of projection matrix.  Might be overridden
         in derived classes for efficiency.
         """
-        return N.linalg.pinv(self._proj)
+        return np.linalg.pinv(self._proj)
 
 
     ##REF: Name was automagically refactored

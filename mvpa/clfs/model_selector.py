@@ -12,15 +12,15 @@
 __docformat__ = 'restructuredtext'
 
 
-import numpy as N
+import numpy as np
 from mvpa.base import externals
 from mvpa.misc.exceptions import InvalidHyperparameterError
 
-if externals.exists("scipy", raiseException=True):
+if externals.exists("scipy", raise_=True):
     import scipy.linalg as SL
 
 # no sense to import this module if openopt is not available
-if externals.exists("openopt", raiseException=True):
+if externals.exists("openopt", raise_=True):
     try:
         from openopt import NLP
     except ImportError:
@@ -97,10 +97,10 @@ class ModelSelector(object):
         self.use_gradient = use_gradient
         self.logscale = logscale # use log-scale on hyperparameters to enhance numerical stability
         self.optimization_algorithm = optimization_algorithm
-        self.hyp_initial_guess = N.array(hyp_initial_guess)
-        self.hyp_initial_guess_log = N.log(self.hyp_initial_guess)
+        self.hyp_initial_guess = np.array(hyp_initial_guess)
+        self.hyp_initial_guess_log = np.log(self.hyp_initial_guess)
         if fixedHypers is None:
-            fixedHypers = N.zeros(self.hyp_initial_guess.shape[0],dtype=bool)
+            fixedHypers = np.zeros(self.hyp_initial_guess.shape[0],dtype=bool)
             pass
         self.freeHypers = -fixedHypers
         if self.logscale:
@@ -131,19 +131,19 @@ class ModelSelector(object):
             # REMOVE print "guess:",self.hyp_running_guess,x
             try:
                 if self.logscale:
-                    self.parametric_model.set_hyperparameters(N.exp(self.hyp_running_guess))
+                    self.parametric_model.set_hyperparameters(np.exp(self.hyp_running_guess))
                 else:
                     self.parametric_model.set_hyperparameters(self.hyp_running_guess)
                     pass
             except InvalidHyperparameterError:
                 if __debug__: debug("MOD_SEL","WARNING: invalid hyperparameters!")
-                return -N.inf
+                return -np.inf
             try:
                 self.parametric_model.train(self.dataset)
-            except (N.linalg.linalg.LinAlgError, SL.basic.LinAlgError, ValueError):
+            except (np.linalg.linalg.LinAlgError, SL.basic.LinAlgError, ValueError):
                 # Note that ValueError could be raised when Cholesky gets Inf or Nan.
                 if __debug__: debug("MOD_SEL", "WARNING: Cholesky failed! Invalid hyperparameters!")
-                return -N.inf
+                return -np.inf
             log_marginal_likelihood = self.parametric_model.compute_log_marginal_likelihood()
             # REMOVE print log_marginal_likelihood
             return log_marginal_likelihood
@@ -164,26 +164,26 @@ class ModelSelector(object):
             # should solve this issue.
             try:
                 if self.logscale:
-                    self.parametric_model.set_hyperparameters(N.exp(self.hyp_running_guess))
+                    self.parametric_model.set_hyperparameters(np.exp(self.hyp_running_guess))
                 else:
                     self.parametric_model.set_hyperparameters(self.hyp_running_guess)
                     pass
             except InvalidHyperparameterError:
                 if __debug__: debug("MOD_SEL", "WARNING: invalid hyperparameters!")
-                return -N.inf
+                return -np.inf
             # Check if it is possible to avoid useless computations
             # already done in f(). According to tests and information
             # collected from OpenOpt people, it is sufficiently
             # unexpected that the following test succeed:
-            if N.any(x!=self.f_last_x):
+            if np.any(x!=self.f_last_x):
                 if __debug__: debug("MOD_SEL","UNEXPECTED: recomputing train+log_marginal_likelihood.")
                 try:
                     self.parametric_model.train(self.dataset)
-                except (N.linalg.linalg.LinAlgError, SL.basic.LinAlgError, ValueError):
+                except (np.linalg.linalg.LinAlgError, SL.basic.LinAlgError, ValueError):
                     if __debug__: debug("MOD_SEL", "WARNING: Cholesky failed! Invalid hyperparameters!")
                     # XXX EO: which value for the gradient to return to
                     # OpenOpt when hyperparameters are wrong?
-                    return N.zeros(x.size)
+                    return np.zeros(x.size)
                 log_marginal_likelihood = self.parametric_model.compute_log_marginal_likelihood() # recompute what's needed (to be safe) REMOVE IN FUTURE!
                 pass
             if self.logscale:
@@ -215,7 +215,7 @@ class ModelSelector(object):
              # set lower bound for hyperparameters: avoid negative
              # hyperparameters. Note: problem.n is the size of
              # hyperparameters' vector
-            self.problem.lb = N.zeros(self.problem.n)+self.contol
+            self.problem.lb = np.zeros(self.problem.n)+self.contol
             pass
         # max number of iterations for the optimizer.
         self.problem.maxiter = maxiter
@@ -236,13 +236,13 @@ class ModelSelector(object):
         # log_marginal_likelihood but other measures as well
         # (e.g. cross-valideted error).
 
-        if N.all(self.freeHypers==False): # no optimization needed
+        if np.all(self.freeHypers==False): # no optimization needed
             self.hyperparameters_best = self.hyp_initial_guess.copy()
             try:
                 self.parametric_model.set_hyperparameters(self.hyperparameters_best)
             except InvalidHyperparameterError:
                 if __debug__: debug("MOD_SEL", "WARNING: invalid hyperparameters!")
-                self.log_marginal_likelihood_best = -N.inf
+                self.log_marginal_likelihood_best = -np.inf
                 return self.log_marginal_likelihood_best
             self.parametric_model.train(self.dataset)
             self.log_marginal_likelihood_best = self.parametric_model.compute_log_marginal_likelihood()
@@ -259,7 +259,7 @@ class ModelSelector(object):
         elif result.stopcase == 1:
             self.hyperparameters_best = self.hyp_initial_guess.copy()
             if self.logscale:
-                self.hyperparameters_best[self.freeHypers] = N.exp(result.xf) # best hyperparameters found # NOTE is it better to return a copy?
+                self.hyperparameters_best[self.freeHypers] = np.exp(result.xf) # best hyperparameters found # NOTE is it better to return a copy?
             else:
                 self.hyperparameters_best[self.freeHypers] = result.xf
                 pass

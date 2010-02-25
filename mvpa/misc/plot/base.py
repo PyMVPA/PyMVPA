@@ -10,13 +10,14 @@
 
 __docformat__ = 'restructuredtext'
 
-import pylab as P
-import numpy as N
+import pylab as pl
+import numpy as np
 
+from mvpa.misc.plot.tools import Pion, Pioff
+from mvpa.misc.attrmap import AttributeMap
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.clfs.distance import squared_euclidean_distance
 from mvpa.datasets.miscfx import get_samples_by_attr
-
 
 
 ##REF: Name was automagically refactored
@@ -34,16 +35,12 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
       the 2nd axis id `data`. If `None`, a sequence of ascending integers
       will be generated.
     errtype : 'ste' or 'std'
-      Type of error value to be computed per datapoint:
-
-        'ste'
-          standard error of the mean
-        'std'
-          standard deviation
+      Type of error value to be computed per datapoint: 'ste' --
+      standard error of the mean, 'std' -- standard deviation.
     curves : None or list of tuple(x, y)
       Each tuple represents an additional curve, with x and y coordinates of
       each point on the curve.
-    linestyle : str
+    linestyle : str or None
       matplotlib linestyle argument. Applied to either the additional
       curve or a the line connecting the datapoints. Set to 'None' to
       disable the line completely.
@@ -65,27 +62,27 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
     Make dataset with 20 samples from a full sinus wave period,
     computed 100 times with individual noise pattern.
 
-        >>> x = N.linspace(0, N.pi * 2, 20)
-        >>> data = N.vstack([N.sin(x)] * 30)
-        >>> data += N.random.normal(size=data.shape)
+        >>> x = np.linspace(0, np.pi * 2, 20)
+        >>> data = np.vstack([np.sin(x)] * 30)
+        >>> data += np.random.normal(size=data.shape)
 
       Now, plot mean data points with error bars, plus a high-res
       version of the original sinus wave.
 
-        >>> x = N.linspace(0, N.pi * 2, 200)
-        >>> plot_err_line(data, curves=[(x, N.sin(x))])
-        >>> #P.show()
+        >>> x = np.linspace(0, np.pi * 2, 200)
+        >>> plot_err_line(data, curves=[(x, np.sin(x))])
+        >>> #pl.show()
     """
-    data = N.asanyarray(data)
+    data = np.asanyarray(data)
 
     if len(data.shape) < 2:
-        data = N.atleast_2d(data)
+        data = np.atleast_2d(data)
 
     # compute mean signal course
     md = data.mean(axis=0)
 
     if baseline is None:
-        baseline = N.abs(md[0])
+        baseline = np.abs(md[0])
 
     if perc_sigchg:
         md /= baseline
@@ -97,7 +94,7 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
 
     # compute matching datapoint locations on x-axis
     if x is None:
-        x = N.arange(len(md))
+        x = np.arange(len(md))
     else:
         if not len(md) == len(x):
             raise ValueError, "The length of `x` (%i) has to match the 2nd " \
@@ -108,25 +105,29 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
         for c in curves:
             xc, yc = c
             # scales line array to same range as datapoints
-            P.plot(xc, yc, linestyle)
+            if not linestyle is None:
+                pl.plot(xc, yc, linestyle)
+            else:
+                pl.plot(xc, yc)
 
         # no line between data points
         linestyle = 'None'
 
     # compute error per datapoint
     if errtype == 'ste':
-        err = data.std(axis=0) / N.sqrt(len(data))
+        err = data.std(axis=0) / np.sqrt(len(data))
     elif errtype == 'std':
         err = data.std(axis=0)
     else:
         raise ValueError, "Unknown error type '%s'" % errtype
 
     # plot datapoints with error bars
-    P.errorbar(x, md, err, fmt=fmt, linestyle=linestyle)
+    pl.errorbar(x, md, err, fmt=fmt, linestyle=linestyle)
 
 
 ##REF: Name was automagically refactored
-def plot_feature_hist(dataset, xlim=None, noticks=True, perchunk=False,
+def plot_feature_hist(dataset, xlim=None, noticks=True,
+                      targets_attr='targets', chunks_attr=None,
                     **kwargs):
     """Plot histograms of feature values for each labels.
 
@@ -138,49 +139,52 @@ def plot_feature_hist(dataset, xlim=None, noticks=True, perchunk=False,
     noticks : bool
       If True, no axis ticks will be plotted. This is useful to save
       space in large plots.
-    perchunk : bool
-      If True, one histogramm will be plotted per each label and each
-      chunk, resulting is a histogram grid (labels x chunks).
+    targets_attr : string, optional
+      Name of samples attribute to be used as targets
+    chunks_attr : None or string
+      If a string, a histogram will be plotted per each target and each
+      chunk (as defined in sa named `chunks_attr`), resulting is a
+      histogram grid (targets x chunks).
     **kwargs
       Any additional arguments are passed to matplotlib's hist().
     """
-    lsplit = NFoldSplitter(1, attr='targets')
-    csplit = NFoldSplitter(1, attr='chunks')
+    lsplit = NFoldSplitter(1, attr=targets_attr)
+    csplit = NFoldSplitter(1, attr=chunks_attr)
 
-    nrows = len(dataset.sa['targets'].unique)
-    ncols = len(dataset.sa['chunks'].unique)
+    nrows = len(dataset.sa[targets_attr].unique)
+    ncols = len(dataset.sa[chunks_attr].unique)
 
     def doplot(data):
-        P.hist(data, **kwargs)
+        pl.hist(data, **kwargs)
 
         if xlim is not None:
-            P.xlim(xlim)
+            pl.xlim(xlim)
 
         if noticks:
-            P.yticks([])
-            P.xticks([])
+            pl.yticks([])
+            pl.xticks([])
 
     fig = 1
 
     # for all labels
     for row, (ignore, ds) in enumerate(lsplit(dataset)):
-        if perchunk:
+        if chunks_attr:
             for col, (alsoignore, d) in enumerate(csplit(ds)):
 
-                P.subplot(nrows, ncols, fig)
+                pl.subplot(nrows, ncols, fig)
                 doplot(d.samples.ravel())
 
                 if row == 0:
-                    P.title('C:' + str(d.sa['chunks'].unique[0]))
+                    pl.title('C:' + str(d.sa[chunks_attr].unique[0]))
                 if col == 0:
-                    P.ylabel('L:' + str(d.sa['targets'].unique[0]))
+                    pl.ylabel('L:' + str(d.sa[targets_attr].unique[0]))
 
                 fig += 1
         else:
-            P.subplot(1, nrows, fig)
+            pl.subplot(1, nrows, fig)
             doplot(ds.samples)
 
-            P.title('L:' + str(ds.sa['targets'].unique[0]))
+            pl.title('L:' + str(ds.sa[targets_attr].unique[0]))
 
             fig += 1
 
@@ -209,106 +213,234 @@ def plot_samples_distance(dataset, sortbyattr=None):
     else:
         samples = dataset.samples
 
-    ed = N.sqrt(squared_euclidean_distance(samples))
+    ed = np.sqrt(squared_euclidean_distance(samples))
 
-    P.imshow(ed)
-    P.colorbar()
+    pl.imshow(ed)
+    pl.colorbar()
 
 
-##REF: Name was automagically refactored
-def plot_decision_boundary_2d(dataset, clf, res=50, vals=[-1, 0, 1],
-                           data_callback=None):
+def plot_decision_boundary_2d(dataset, clf=None,
+                              targets=None, regions=None, maps=None,
+                              maps_res=50, vals=[-1, 0, 1],
+                              data_callback=None):
     """Plot a scatter of a classifier's decision boundary and data points
 
     Assumes data is 2d (no way to visualize otherwise!!)
 
     Parameters
     ----------
-    dataset: `Dataset`
+    dataset : `Dataset`
       Data points to visualize (might be the data `clf` was train on, or
       any novel data).
-    clf: `Classifier`
+    clf : `Classifier`, optional
       Trained classifier
-    res: int, optional
+    targets : string, optional
+      What samples attributes to use for targets.  If None and clf is
+      provided, then `clf.params.targets_attr` is used.
+    regions : string, optional
+      Plot regions (polygons) around groups of samples with the same
+      attribute (and target attribute) values. E.g. chunks.
+    maps : string in {'targets', 'estimates'}, optional
+      Either plot underlying colored maps, such as clf predictions
+      within the spanned regions, or estimates from the classifier
+      (might not work for some).
+    maps_res : int, optional
       Number of points in each direction to evaluate.
       Points are between axis limits, which are set automatically by
       matplotlib.  Higher number will yield smoother decision lines but come
       at the cost of O^2 classifying time/memory.
-    vals: ???, optional
-      Where to draw the contour lines
-    data_callback: callable, optional
+    vals : array of floats, optional
+      Where to draw the contour lines if maps='estimates'
+    data_callback : callable, optional
       Callable object to preprocess the new data points.
       Classified points of the form samples = data_callback(xysamples).
       I.e. this can be a function to normalize them, or cache them
       before they are classified.
     """
-    try:
-        # TODO: allow quick&dirty argument for which features to plot
-        #       from dataset
-        assert dataset.nfeatures == 2
-    except AssertionError:
-        RuntimeError('Can only plot a decision boundary in 2D')
-    von = clf.ca.is_enabled('estimates')
-    clf.ca.enable('estimates')
 
-    # Init figure
-    f = P.figure()
-    a = f.add_subplot(1,1,1)
-    targets_sa_name = clf.params.targets
-    targets = dataset.sa[targets_sa_name].value
-    utargets = dataset.sa[targets_sa_name].unique
-    # XXX literal?
+    if False:
+        ## from mvpa.misc.data_generators import *
+        ## from mvpa.clfs.svm import *
+        ## from mvpa.clfs.knn import *
+        ## ds = dumb_feature_binary_dataset()
+        dataset = normal_feature_dataset(nfeatures=2, nchunks=5,
+                                         snr=10, nlabels=4, means=[ [0,1], [1,0], [1,1], [0,0] ])
+        dataset.samples += dataset.sa.chunks[:, None]*0.1 # slight shifts for chunks ;)
+        #dataset = normal_feature_dataset(nfeatures=2, nlabels=3, means=[ [0,1], [1,0], [1,1] ])
+        #dataset = normal_feature_dataset(nfeatures=2, nlabels=2, means=[ [0,1], [1,0] ])
+        #clf = LinearCSVMC(C=-1)
+        clf = kNN(4)#LinearCSVMC(C=-1)
+        clf.train(dataset)
+        #clf = None
+        #plot_decision_boundary_2d(ds, clf)
+        targets = 'targets'
+        regions = 'chunks'
+        #maps = 'estimates'
+        maps = 'targets'
+        #maps = None #'targets'
+        res = 50
+        vals = [-1, 0, 1]
+        data_callback=None
+        pl.clf()
+
+    if dataset.nfeatures != 2:
+        raise ValueError('Can only plot a decision boundary in 2D')
+
+    Pioff()
+    a = pl.gca() # f.add_subplot(1,1,1)
+
+    attrmap = None
+    if clf:
+        estimates_were_enabled = clf.ca.is_enabled('estimates')
+        clf.ca.enable('estimates')
+
+        if targets is None:
+            targets = clf.params.targets_attr
+        # Lets reuse classifiers attrmap if it is good enough
+        attrmap = clf._attrmap
+        predictions = clf.predict(dataset)
+
+    targets_sa_name = targets           # bad Yarik -- will rebind targets to actual values
+    targets_lit = dataset.sa[targets_sa_name].value
+    utargets_lit = dataset.sa[targets_sa_name].unique
+
+    if not (attrmap is not None
+            and len(attrmap)
+            and set(clf._attrmap.keys()).issuperset(utargets_lit)):
+        # create our own
+        attrmap = AttributeMap(mapnumeric=True)
+
+    targets = attrmap.to_numeric(targets_lit)
+    utargets = attrmap.to_numeric(utargets_lit)
+
     vmin = min(utargets)
     vmax = max(utargets)
-    cmap = P.cm.RdYlGn
+    cmap = pl.cm.RdYlGn                  # argument
 
     # Scatter points
+    if clf:
+        all_hits = predictions == targets_lit
+    else:
+        all_hits = np.ones((len(targets),), dtype=bool)
+
+    targets_colors = {}
     for l in utargets:
-        s = dataset[targets==l]
-        c = [cmap((l-vmin)/float(vmax-vmin))] * len(s)
-        a.scatter(s.samples[:, 0], s.samples[:, 1], label='%s' % l,
-                  c=c, zorder=10+(l-vmin))
+        targets_mask = targets==l
+        s = dataset[targets_mask]
+        targets_colors[l] = c \
+            = cmap((l-vmin)/float(vmax-vmin))
+
+        # We want to plot hits and misses with different symbols
+        hits = all_hits[targets_mask]
+        misses = np.logical_not(hits)
+        scatter_kwargs = dict(
+            c=[c], zorder=10+(l-vmin))
+
+        if sum(hits):
+            a.scatter(s.samples[hits, 0], s.samples[hits, 1], marker='o',
+                      label='%s [%d]' % (attrmap.to_literal(l), sum(hits)),
+                      **scatter_kwargs)
+        if sum(misses):
+            a.scatter(s.samples[misses, 0], s.samples[misses, 1], marker='x',
+                      label='%s [%d] (miss)' % (attrmap.to_literal(l), sum(misses)),
+                      edgecolor=[c], **scatter_kwargs)
+
     (xmin, xmax) = a.get_xlim()
     (ymin, ymax) = a.get_ylim()
     extent = (xmin, xmax, ymin, ymax)
 
     # Create grid to evaluate, predict it
-    (x,y) = N.mgrid[xmin:xmax:N.complex(0, res), ymin:ymax:N.complex(0,res)]
-    news = N.vstack((x.ravel(), y.ravel())).T
+    (x,y) = np.mgrid[xmin:xmax:np.complex(0, maps_res),
+                    ymin:ymax:np.complex(0, maps_res)]
+    news = np.vstack((x.ravel(), y.ravel())).T
     try:
         news = data_callback(news)
     except TypeError: # Not a callable object
         pass
 
-    clf.predict(news)
+    imshow_kwargs = dict(origin='lower',
+            zorder=1,
+            aspect='auto',
+            interpolation='bilinear', alpha=0.9, cmap=cmap,
+            vmin=vmin, vmax=vmax,
+            extent=extent)
 
-    # Contour and show predictions
-    trained_labels = clf.ca.trained_labels
-    if len(trained_labels)==2:
-        linestyles = []
-        for v in vals:
-            if v == 0:
-                linestyles.append('solid')
-            else:
-                linestyles.append('dashed')
-        vmin, vmax = -3, 3 # Gives a nice tonal range ;)
-    else:
-        vals = (trained_labels[:-1] + trained_labels[1:])/2.
-        linestyles = ['solid'] * len(vals)
+    if maps is not None:
+        if clf is None:
+            raise ValueError, \
+                  "Please provide classifier for plotting maps of %s" % maps
+        predictions_new = clf.predict(news)
 
-    a.imshow(N.flipud(clf.ca.estimates.reshape(x.shape).T), zorder=1,
-             aspect='auto',
-             interpolation='bilinear', alpha=1, cmap=cmap,
-             vmin=vmin, vmax=vmax,
-             extent=extent,)# extends map beyond -1,1 for aesthetics
+    if maps == 'estimates':
+        # Contour and show predictions
+        trained_targets = attrmap.to_numeric(clf.ca.trained_targets)
 
-    CS = a.contour(x, y, clf.ca.estimates.reshape(x.shape), vals, zorder=6,
-                   linestyles=linestyles, extent=extent, colors='k')
+        if len(trained_targets)==2:
+            linestyles = []
+            for v in vals:
+                if v == 0:
+                    linestyles.append('solid')
+                else:
+                    linestyles.append('dashed')
+            vmin, vmax = -3, 3 # Gives a nice tonal range ;)
+            map_ = 'estimates' # should actually depend on estimates
+        else:
+            vals = (trained_targets[:-1] + trained_targets[1:])/2.
+            linestyles = ['solid'] * len(vals)
+            map_ = 'targets'
 
-    P.legend()
-    if not von:
+        try:
+            clf.ca.estimates.reshape(x.shape)
+            a.imshow(map_values.T, **imshow_kwargs)
+            CS = a.contour(x, y, map_values, vals, zorder=6,
+                           linestyles=linestyles, extent=extent, colors='k')
+        except ValueError, e:
+            print "Sorry - plotting of estimates isn't full supported for %s. " \
+                  "Got exception %s" % (clf, e)
+    elif maps == 'targets':
+        map_values = attrmap.to_numeric(predictions_new).reshape(x.shape)
+        a.imshow(map_values.T, **imshow_kwargs)
+        #CS = a.contour(x, y, map_values, vals, zorder=6,
+        #               linestyles=linestyles, extent=extent, colors='k')
+
+    # Plot regions belonging to the same pair of attribute given
+    # (e.g. chunks) and targets attribute
+    if regions:
+        chunks_sa = dataset.sa[regions]
+        chunks_lit = chunks_sa.value
+        uchunks_lit = chunks_sa.value
+        chunks_attrmap = AttributeMap(mapnumeric=True)
+        chunks = chunks_attrmap.to_numeric(chunks_lit)
+        uchunks = chunks_attrmap.to_numeric(uchunks_lit)
+
+        from matplotlib.delaunay.triangulate import Triangulation
+        from matplotlib.patches import Polygon
+        # Lets figure out convex halls for each chunk/label pair
+        for target in utargets:
+            t_mask = targets == target
+            for chunk in uchunks:
+                tc_mask = np.logical_and(t_mask,
+                                        chunk == chunks)
+                tc_samples = dataset.samples[tc_mask]
+                tr = Triangulation(tc_samples[:, 0],
+                                   tc_samples[:, 1])
+                poly = pl.fill(tc_samples[tr.hull, 0],
+                              tc_samples[tr.hull, 1],
+                              closed=True,
+                              facecolor=targets_colors[target],
+                              #fill=False,
+                              alpha=0.01,
+                              edgecolor='gray',
+                              linestyle='dotted',
+                              linewidth=0.5,
+                              )
+
+    pl.legend(scatterpoints=1)
+    if clf and not estimates_were_enabled:
         clf.ca.disable('estimates')
-
+    Pion()
+    pl.axis('tight')
+    #pl.show()
 
 ##REF: Name was automagically refactored
 def plot_bars(data, labels=None, title=None, ylim=None, ylabel=None,
@@ -352,19 +484,19 @@ def plot_bars(data, labels=None, title=None, ylim=None, ylabel=None,
     """
     # determine location of bars
     if xloc is None:
-        xloc = (N.arange(len(data)) * distance) + offset
+        xloc = (np.arange(len(data)) * distance) + offset
 
     if yerr == 'ste':
-        yerr = [N.std(d) / N.sqrt(len(d)) for d in data]
+        yerr = [np.std(d) / np.sqrt(len(d)) for d in data]
     elif yerr == 'std':
-        yerr = [N.std(d) for d in data]
+        yerr = [np.std(d) for d in data]
     else:
         # if something that we do not know just pass on
         pass
 
     # plot bars
-    plot = P.bar(xloc,
-                 [N.mean(d) for d in data],
+    plot = pl.bar(xloc,
+                 [np.mean(d) for d in data],
                  yerr=yerr,
                  width=width,
                  color=color,
@@ -372,18 +504,18 @@ def plot_bars(data, labels=None, title=None, ylim=None, ylabel=None,
                  **kwargs)
 
     if ylim:
-        P.ylim(*(ylim))
+        pl.ylim(*(ylim))
     if title:
-        P.title(title)
+        pl.title(title)
 
     if labels:
-        P.xticks(xloc + width / 2, labels)
+        pl.xticks(xloc + width / 2, labels)
 
     if ylabel:
-        P.ylabel(ylabel)
+        pl.ylabel(ylabel)
 
     # leave some space after last bar
-    P.xlim(0, xloc[-1] + width + offset)
+    pl.xlim(0, xloc[-1] + width + offset)
 
     return plot
 
@@ -415,8 +547,8 @@ def plot_dataset_chunks(ds, clf_labels=None):
     """
     if ds.nfeatures != 2:
         raise ValueError, "Can plot only in 2D, ie for datasets with 2 features"
-    if P.matplotlib.get_backend() == 'TkAgg':
-        P.ioff()
+    if pl.matplotlib.get_backend() == 'TkAgg':
+        pl.ioff()
     if clf_labels is not None and len(clf_labels) != ds.nsamples:
         clf_labels = None
     colors = ('b', 'g', 'r', 'c', 'm', 'y', 'k', 'w')
@@ -432,16 +564,16 @@ def plot_dataset_chunks(ds, clf_labels=None):
             format = ''
             if clf_labels != None:
                 if clf_labels[i] != ds_chunk.targets[i]:
-                    P.plot([s[0]], [s[1]], 'x' + labels_map[l])
-            P.text(s[0], s[1], chunk_text, color=labels_map[l],
+                    pl.plot([s[0]], [s[1]], 'x' + labels_map[l])
+            pl.text(s[0], s[1], chunk_text, color=labels_map[l],
                    horizontalalignment='center',
                    verticalalignment='center',
                    )
     dss = ds.samples
-    P.axis((1.1 * N.min(dss[:, 0]),
-            1.1 * N.max(dss[:, 1]),
-            1.1 * N.max(dss[:, 0]),
-            1.1 * N.min(dss[:, 1])))
-    P.draw()
-    P.ion()
+    pl.axis((1.1 * np.min(dss[:, 0]),
+            1.1 * np.max(dss[:, 1]),
+            1.1 * np.max(dss[:, 0]),
+            1.1 * np.min(dss[:, 1])))
+    pl.draw()
+    pl.ion()
 

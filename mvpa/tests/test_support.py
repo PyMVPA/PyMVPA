@@ -8,13 +8,14 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA serial feature inclusion algorithm"""
 
+from mvpa.testing import *
 from mvpa.misc.support import *
 from mvpa.base.types import asobjarray
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.clfs.transerror import TransferError
-from tests_warehouse import *
-from tests_warehouse import get_mv_pattern
-from tests_warehouse_clfs import *
+from mvpa.testing import *
+from mvpa.testing.datasets import get_mv_pattern
+from mvpa.testing.clfs import *
 from mvpa.clfs.distance import one_minus_correlation
 
 from mvpa.support.copy import deepcopy
@@ -22,8 +23,8 @@ from mvpa.support.copy import deepcopy
 class SupportFxTests(unittest.TestCase):
 
     def test_transform_with_boxcar(self):
-        data = N.arange(10)
-        sp = N.arange(10)
+        data = np.arange(10)
+        sp = np.arange(10)
 
         # check if stupid thing don't work
         self.failUnlessRaises(ValueError,
@@ -44,14 +45,14 @@ class SupportFxTests(unittest.TestCase):
                               2)
 
         # now something that should work
-        sp = N.arange(9)
+        sp = np.arange(9)
         trans = transform_with_boxcar( data, sp, 2)
         self.failUnless( ( trans == \
                            [0.5,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5] ).all() )
 
 
         # now test for proper data shape
-        data = N.ones((10,3,4,2))
+        data = np.ones((10,3,4,2))
         sp = [ 2, 4, 3, 5 ]
         trans = transform_with_boxcar( data, sp, 4)
         self.failUnless( trans.shape == (4,3,4,2) )
@@ -123,7 +124,7 @@ class SupportFxTests(unittest.TestCase):
         self.failUnless((mo.ovstats_map == [1,0,2./3,1./3]).all())
 
 
-    @sweepargs(pair=[(N.random.normal(size=(10,20)), N.random.normal(size=(10,20))),
+    @sweepargs(pair=[(np.random.normal(size=(10,20)), np.random.normal(size=(10,20))),
                      ([1,2,3,0], [1,3,2,0]),
                      ((1,2,3,1), (1,3,2,1))])
     def test_id_hash(self, pair):
@@ -132,7 +133,7 @@ class SupportFxTests(unittest.TestCase):
         a_1 = idhash(a)
         self.failUnless(a_1 == idhash(a),  msg="Must be of the same idhash")
         self.failUnless(a_1 != idhash(b), msg="Must be of different idhash")
-        if isinstance(a, N.ndarray):
+        if isinstance(a, np.ndarray):
             self.failUnless(a_1 != idhash(a.T), msg=".T must be of different idhash")
         if not isinstance(a, tuple):
             self.failUnless(a_1 != idhash(a1), msg="Must be of different idhash")
@@ -148,28 +149,28 @@ class SupportFxTests(unittest.TestCase):
         for i in ([1, 2, 3], ['a', 2, '3'],
                   ('asd')):
             i_con = asobjarray(i)
-            self.failUnless(i_con.dtype is N.dtype('object'))
+            self.failUnless(i_con.dtype is np.dtype('object'))
             self.failUnlessEqual(len(i), len(i_con))
-            self.failUnless(N.all(i == i_con))
+            self.failUnless(np.all(i == i_con))
 
     def test_correlation(self):
         # data: 20 samples, 80 features
-        X = N.random.rand(20,80)
+        X = np.random.rand(20,80)
 
         C = 1 - one_minus_correlation(X, X)
 
         # get nsample x nssample correlation matrix
         self.failUnless(C.shape == (20, 20))
         # diagonal is 1
-        self.failUnless((N.abs(N.diag(C) - 1).mean() < 0.00001).all())
+        self.failUnless((np.abs(np.diag(C) - 1).mean() < 0.00001).all())
 
         # now two different
-        Y = N.random.rand(5,80)
+        Y = np.random.rand(5,80)
         C2 = 1 - one_minus_correlation(X, Y)
         # get nsample x nssample correlation matrix
         self.failUnless(C2.shape == (20, 5))
         # external validity check -- we are dealing with correlations
-        self.failUnless(C2[10,2] - N.corrcoef(X[10], Y[2])[0,1] < 0.000001)
+        self.failUnless(C2[10,2] - np.corrcoef(X[10], Y[2])[0,1] < 0.000001)
 
     def test_version_to_tuple(self):
         """Test conversion of versions from strings
@@ -215,6 +216,19 @@ class SupportFxTests(unittest.TestCase):
             self.failUnless(version_to_tuple(v1) < SV(v2),
                             msg="Failed to compare tuple of %s to %s"
                             % (v1, v2))
+
+
+def test_value2idx():
+    times = [1.2, 1.3, 2., 4., 0., 2., 1.1]
+    assert_equal(value2idx(0, times), 4)
+    assert_equal(value2idx(100, times), 3)
+    assert_equal(value2idx(1.5, times), 1)
+    assert_equal(value2idx(1.5, times, 'ceil'), 2)
+    assert_equal(value2idx(1.2, times, 'floor'), 0)
+    assert_equal(value2idx(1.14, times, 'round'), 6)
+    assert_equal(value2idx(1.14, times, 'floor'), 6)
+    assert_equal(value2idx(1.14, times, 'ceil'), 0)
+    assert_equal(value2idx(-100, times, 'ceil'), 4)
 
 
 def suite():

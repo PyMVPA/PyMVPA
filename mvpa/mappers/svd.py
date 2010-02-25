@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.mappers.base import accepts_dataset_as_samples
 from mvpa.mappers.projection import ProjectionMapper
@@ -48,11 +48,11 @@ class SVDMapper(ProjectionMapper):
         """Determine the projection matrix onto the SVD components from
         a 2D samples x feature data matrix.
         """
-        X = N.asmatrix(samples)
+        X = np.asmatrix(samples)
         X = self._demean_data(X)
 
         # singular value decomposition
-        U, SV, Vh = N.linalg.svd(X, full_matrices=0)
+        U, SV, Vh = np.linalg.svd(X, full_matrices=0)
 
         # store the final matrix with the new basis vectors to project the
         # features onto the SVD components. And store its .H right away to
@@ -69,7 +69,7 @@ class SVDMapper(ProjectionMapper):
             # .norm might be somewhat expensive to compute
             if "MAP_" in debug.active:
                 debug("MAP_", "Mixing matrix has %s shape and norm=%f" %
-                      (self._proj.shape, N.linalg.norm(self._proj)))
+                      (self._proj.shape, np.linalg.norm(self._proj)))
 
 
     ##REF: Name was automagically refactored

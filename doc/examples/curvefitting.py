@@ -17,8 +17,8 @@ data.
 First, importing the necessary pieces:
 """
 
-import numpy as N
-import pylab as P
+import numpy as np
+import pylab as pl
 
 from mvpa.misc.plot import plot_err_line
 from mvpa.misc.fx import single_gamma_hrf, least_sq_fit
@@ -29,9 +29,9 @@ Now, we generate some noisy "trial time courses" from a simple gamma function
 (40 samples, 6s time-to-peak, 7s FWHM and no additional scaling:
 """
 
-a = N.asarray([single_gamma_hrf(N.arange(20), A=6, W=7, K=1)] * 40)
+a = np.asarray([single_gamma_hrf(np.arange(20), A=6, W=7, K=1)] * 40)
 # get closer to reality with noise
-a += N.random.normal(size=a.shape)
+a += np.random.normal(size=a.shape)
 
 """
 Fitting a gamma function to this data is easy (using resonable seeds for the
@@ -45,7 +45,7 @@ Generate high-resultion curves for the 'true' time course and the fitted one
 for visualization and plot them together with the data:
 """
 
-x = N.linspace(0,20)
+x = np.linspace(0,20)
 curves = [(x, single_gamma_hrf(x, 6, 7, 1)),
           (x, single_gamma_hrf(x, *fpar))]
 
@@ -53,11 +53,11 @@ curves = [(x, single_gamma_hrf(x, 6, 7, 1)),
 plot_err_line(a, curves=curves, linestyle='-')
 
 # add legend to plot
-P.legend(('original', 'fit'))
+pl.legend(('original', 'fit'))
 
 if cfg.getboolean('examples', 'interactive', True):
     # show the cool figure
-    P.show()
+    pl.show()
 
 """
 The ouput of the provided example should look like

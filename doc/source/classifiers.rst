@@ -70,21 +70,21 @@ for a sample might be totally unknown.
 
 This examples demonstrates the typical daily life of a classifier.
 
-  >>> import numpy as N
+  >>> import numpy as np
   >>> from mvpa.clfs.knn import kNN
   >>> from mvpa.datasets import dataset_wizard
-  >>> training = dataset_wizard(samples=N.array(
-  ...                                N.arange(100),ndmin=2, dtype='float').T,
+  >>> training = dataset_wizard(samples=np.array(
+  ...                                np.arange(100),ndmin=2, dtype='float').T,
   ...                    targets=[0] * 50 + [1] * 50)
-  >>> rand100 = N.random.rand(10)*100
-  >>> validation = dataset_wizard(samples=N.array(
+  >>> rand100 = np.random.rand(10)*100
+  >>> validation = dataset_wizard(samples=np.array(
   ...                                rand100, ndmin=2, dtype='float').T,
   ...                      targets=[ int(i>50) for i in rand100 ])
   >>> clf = kNN(k=10)
   >>> clf.train(training)
-  >>> N.mean(clf.predict(training.samples) == training.targets)
+  >>> np.mean(clf.predict(training.samples) == training.targets)
   1.0
-  >>> N.mean(clf.predict(validation.samples) == validation.targets)
+  >>> np.mean(clf.predict(validation.samples) == validation.targets)
   1.0
 
 Two datasets with 100 and 10 samples each are generated. Both datasets only
@@ -218,7 +218,7 @@ The :class:`~mvpa.clfs.transerror.TransferError` class provides a convenient
 way to determine the transfer error of a trained classifier on some validation
 dataset, i.e. the accuracy of the classifier's predictions on a novel,
 independent dataset. A :class:`~mvpa.clfs.transerror.TransferError` object is
-instanciated by passing a classifier object to the constructor.  Optionally a
+instantiated by passing a classifier object to the constructor.  Optionally a
 custom error function can be specified (see `errorfx` argument).
 
 To compute the transfer error simply call the object with a validation dataset.
@@ -344,10 +344,10 @@ alternative graphical representation of the confusion matrix
 via the :meth:`~mvpa.clfs.transerror.ConfusionMatrix.plot` method of a
 :class:`~mvpa.clfs.transerror.ConfusionMatrix`::
 
-  >>> import pylab as P
+  >>> import pylab as pl
   >>> cvterr.confusion.plot() \
   ... # doctest: +SKIP
-  >>> P.show() \
+  >>> pl.show() \
   ... # doctest: +SKIP
 
 .. image:: pics/confusion_matrix.*

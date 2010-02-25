@@ -8,6 +8,9 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA stats helpers"""
 
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
+
 from mvpa import cfg
 from mvpa.base import externals
 from mvpa.clfs.stats import MCNullDist, FixedNullDist, NullDist
@@ -15,9 +18,7 @@ from mvpa.datasets import Dataset
 from mvpa.measures.glm import GLM
 from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa.misc.fx import double_gamma_hrf, single_gamma_hrf
-from tests_warehouse import *
-from mvpa.testing.tools import assert_array_almost_equal, assert_array_equal, \
-assert_true, assert_equal
+
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
@@ -57,17 +58,17 @@ class StatsTests(unittest.TestCase):
         # check reasonable output.
         # p-values for non-bogus features should significantly different,
         # while bogus (0) not
-        prob = null.p([20, 0, 0, 0, 0, N.nan])
+        prob = null.p([20, 0, 0, 0, 0, np.nan])
         # XXX this is labile! it also needs checking since the F-scores
         # of the MCNullDists using normal distribution are apparently not
         # distributed that way, hence the test often (if not always) fails.
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(N.abs(prob[0]) < 0.05,
+            self.failUnless(np.abs(prob[0]) < 0.05,
                             msg="Expected small p, got %g" % prob[0])
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless((N.abs(prob[1:]) > 0.05).all(),
+            self.failUnless((np.abs(prob[1:]) > 0.05).all(),
                             msg="Bogus features should have insignificant p."
-                            " Got %s" % (N.abs(prob[1:]),))
+                            " Got %s" % (np.abs(prob[1:]),))
 
         # has to have matching shape
         if not isinstance(null, FixedNullDist):
@@ -105,13 +106,13 @@ class StatsTests(unittest.TestCase):
         ac = mc(ds)
         if cfg.getboolean('tests', 'labile', default='yes'):
             # All non-bogus features must be high for a corresponding feature
-            self.failUnless((ac.samples[N.arange(4),
-                                        N.array(ds.a.nonbogus_features)] >= 1
+            self.failUnless((ac.samples[np.arange(4),
+                                        np.array(ds.a.nonbogus_features)] >= 1
                                         ).all())
         # All features should have slightly but different CompoundAnova
         # values. I really doubt that there will be a case when this
         # test would fail just to being 'labile'
-        self.failUnless(N.max(N.std(ac, axis=1))>0,
+        self.failUnless(np.max(np.std(ac, axis=1))>0,
                         msg='In compound anova, we should get different'
                         ' results for different labels. Got %s' % ac)
 

@@ -11,13 +11,15 @@
 __docformat__ = 'restructuredtext'
 
 # Global modules
-import numpy as N
+import numpy as np
 
 # Some global imports useful through out unittests
 from mvpa.base import cfg
 
 # Base classes
 from mvpa.clfs.base import Classifier
+from mvpa.datasets.base import Dataset
+from mvpa.measures.base import FeaturewiseDatasetMeasure
 
 #
 # first deal with classifiers which do not have external deps
@@ -30,10 +32,18 @@ from mvpa.clfs.warehouse import clfswh, regrswh
 from mvpa.base import externals
 from mvpa.base.types import accepts_dataset_as_samples
 
+__all__ = ['clfswh', 'regrswh', 'Classifier', 'SameSignClassifier',
+           'Less1Classifier', 'sample_clf_nl', 'sample_clf_lin',
+           'sample_clf_reg', 'cfg', 'SillySensitivityAnalyzer']
+
 # if have ANY svm implementation
 if externals.exists('libsvm') or externals.exists('shogun'):
     from mvpa.clfs.svm import *
-
+    __all__ += ['LinearCSVMC']
+    if externals.exists('libsvm'):
+        __all__ += ['libsvm', 'LinearNuSVMC']
+    if externals.exists('shogun'):
+        __all__ += ['sg']
 #
 # Few silly classifiers
 #
@@ -51,7 +61,7 @@ class SameSignClassifier(Classifier):
 
     @accepts_dataset_as_samples
     def _predict(self, data):
-        data = N.asanyarray(data)
+        data = np.asanyarray(data)
         datalen = len(data)
         estimates = []
         for d in data:
@@ -70,6 +80,24 @@ class Less1Classifier(SameSignClassifier):
             estimates.append(2*int(max(d)<=1)-1)
         self.predictions = estimates
         return estimates
+
+
+class SillySensitivityAnalyzer(FeaturewiseDatasetMeasure):
+    """Simple one which just returns xrange[-N/2, N/2], where N is the
+    number of features
+    """
+
+    def __init__(self, mult=1, **kwargs):
+        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
+        self.__mult = mult
+
+    def _call(self, dataset):
+        """Train linear SVM on `dataset` and extract weights from classifier.
+        """
+        sens = self.__mult *( np.arange(dataset.nfeatures) - int(dataset.nfeatures/2) )
+        return Dataset(sens[np.newaxis])
+
+
 
 # Sample universal classifiers (linear and non-linear) which should be
 # used whenever it doesn't matter what classifier it is for testing

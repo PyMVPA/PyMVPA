@@ -10,11 +10,11 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 from operator import isSequenceType
 
 from mvpa.base import externals
-if externals.exists('scipy', raiseException=True):
+if externals.exists('scipy', raise_=True):
     # if we construct the polynomials ourselves, we wouldn't need scipy here
     from scipy.special import legendre
 
@@ -58,20 +58,20 @@ class PolyDetrendMapper(Mapper):
     --------
     >>> from mvpa.datasets import dataset_wizard
     >>> from mvpa.mappers.detrend import PolyDetrendMapper
-    >>> samples = N.array([[1.0, 2, 3, 3, 2, 1],
+    >>> samples = np.array([[1.0, 2, 3, 3, 2, 1],
     ...                    [-2.0, -4, -6, -6, -4, -2]]).T
     >>> chunks = [0, 0, 0, 1, 1, 1]
     >>> ds = dataset_wizard(samples, chunks=chunks)
-    >>> dm = PolyDetrendMapper(chunks='chunks', polyord=1)
+    >>> dm = PolyDetrendMapper(chunks_attr='chunks', polyord=1)
 
     >>> # the mapper will be auto-trained upon first use
     >>> mds = dm.forward(ds)
 
     >>> # total removal all all (chunk-wise) linear trends
-    >>> N.sum(N.abs(mds)) < 0.00001
+    >>> np.sum(np.abs(mds)) < 0.00001
     True
     """
-    def __init__(self, polyord=1, chunks=None, opt_regs=None, inspace=None):
+    def __init__(self, polyord=1, chunks_attr=None, opt_regs=None, inspace=None):
         """
         Parameters
         ----------
@@ -79,13 +79,13 @@ class PolyDetrendMapper(Mapper):
           Order of the Legendre polynomial to remove from the data.  This
           will remove every polynomial up to and including the provided
           value.  For example, 3 will remove 0th, 1st, 2nd, and 3rd order
-          polynomials from the data.  N.B.: The 0th polynomial is the
+          polynomials from the data.  np.B.: The 0th polynomial is the
           baseline shift, the 1st is the linear trend.
-          If you specify a single int and `chunks` is not None, then this value
+          If you specify a single int and `chunks_attr` is not None, then this value
           is used for each chunk.  You can also specify a different polyord
           value for each chunk by providing a list or ndarray of polyord
           values the length of the number of chunks.
-        chunks : str or None
+        chunks_attr : str or None
           If None, the whole dataset is detrended at once. Otherwise, the given
           samples attribute (given by its name) is used to define chunks of the
           dataset that are processed individually. In that case, all the samples
@@ -107,7 +107,7 @@ class PolyDetrendMapper(Mapper):
         """
         Mapper.__init__(self, inspace=inspace)
 
-        self.__chunks = chunks
+        self.__chunks_attr = chunks_attr
         self.__polyord = polyord
         self.__opt_reg = opt_regs
 
@@ -122,9 +122,9 @@ class PolyDetrendMapper(Mapper):
     def __repr__(self):
         s = super(PolyDetrendMapper, self).__repr__()
         return s.replace("(",
-                         "(polyord=%i, chunks=%s, opt_regs=%s, "
+                         "(polyord=%i, chunks_attr=%s, opt_regs=%s, "
                           % (self.__polyord,
-                             repr(self.__chunks),
+                             repr(self.__chunks_attr),
                              repr(self.__opt_reg)),
                          1)
 
@@ -161,7 +161,7 @@ class PolyDetrendMapper(Mapper):
 
         # if we don't have to take care of an inspace thing are easy
         if inspace is None:
-            polycoords_scaled = N.linspace(-1, 1, nsamples)
+            polycoords_scaled = np.linspace(-1, 1, nsamples)
             return None, polycoords_scaled
         else:
             # there is interest in the inspace, but do we have information, or
@@ -174,37 +174,37 @@ class PolyDetrendMapper(Mapper):
             else:
                 # no info in the dataset, just be nice and generate some
                 # meaningful polycoords
-                polycoords = N.arange(nsamples)
+                polycoords = np.arange(nsamples)
             return polycoords, self._scale_array(polycoords.astype('float'))
 
 
     def _train(self, ds):
         # local binding
-        chunks = self.__chunks
+        chunks_attr = self.__chunks_attr
         polyord = self.__polyord
         opt_reg = self.__opt_reg
         inspace = self.get_inspace()
         self._polycoords = None
 
         # global detrending is desired
-        if chunks is None:
+        if chunks_attr is None:
             # consider the entire dataset
             reg = []
             # create the timespan
             self._polycoords, polycoords_scaled = self._get_polycoords(ds, None)
             for n in range(polyord + 1):
-                reg.append(legendre(n)(polycoords_scaled)[:, N.newaxis])
+                reg.append(legendre(n)(polycoords_scaled)[:, np.newaxis])
         # chunk-wise detrending is desired
         else:
              # get the unique chunks
-            uchunks = ds.sa[chunks].unique
+            uchunks = ds.sa[chunks_attr].unique
 
             # Process the polyord to be a list with length of the number of
             # chunks
             if not isSequenceType(polyord):
                 # repeat to be proper length
                 polyord = [polyord] * len(uchunks)
-            elif not chunks is None and len(polyord) != len(uchunks):
+            elif not chunks_attr is None and len(polyord) != len(uchunks):
                 raise ValueError("If you specify a sequence of polyord values "
                                  "they sequence length must match the "
                                  "number of unique chunks in the dataset.")
@@ -221,10 +221,10 @@ class PolyDetrendMapper(Mapper):
                 # otherwise we prepare and empty array that is going to be
                 # filled below -- we know that those polycoords are going to
                 # be ints
-                self._polycoords = N.empty(len(ds), dtype='int')
+                self._polycoords = np.empty(len(ds), dtype='int')
             for n, chunk in enumerate(uchunks):
                 # get the indices for that chunk
-                cinds = ds.sa[chunks].value == chunk
+                cinds = ds.sa[chunks_attr].value == chunk
 
                 # create the timespan
                 polycoords, polycoords_scaled = self._get_polycoords(ds, cinds)
@@ -232,7 +232,7 @@ class PolyDetrendMapper(Mapper):
                     self._polycoords[cinds] = polycoords
                 # create each polyord with the value for that chunk
                 for n in range(polyord[n] + 1):
-                    newreg = N.zeros((len(ds), 1))
+                    newreg = np.zeros((len(ds), 1))
                     newreg[cinds, 0] = legendre(n)(polycoords_scaled)
                     reg.append(newreg)
 
@@ -244,10 +244,10 @@ class PolyDetrendMapper(Mapper):
         if not opt_reg is None:
             # add in the optional regressors, too
             for oreg in opt_reg:
-                reg.append(ds.sa[oreg].value[N.newaxis].T)
+                reg.append(ds.sa[oreg].value[np.newaxis].T)
 
         # combine the regs (time x reg)
-        self._regs = N.hstack(reg)
+        self._regs = np.hstack(reg)
 
 
     def _forward_dataset(self, ds):
@@ -285,13 +285,13 @@ class PolyDetrendMapper(Mapper):
                 # trained ones (that should be the common case and nothing needs
                 # to be done
                 # otherwise look whether we can find the right regressors
-                if not N.all(space_coords == polycoords):
+                if not np.all(space_coords == polycoords):
                     # to make the stuff below work, we'd need to store chunk
                     # info too, otherwise we cannot determine the correct
                     # regressor rows
                     raise NotImplementedError
                     # determine the regressor rows that match the samples
-                    reg_idx = [N.argwhere(polycoords == c).flatten()[0]
+                    reg_idx = [np.argwhere(polycoords == c).flatten()[0]
                                     for c in space_coords]
                     # slice the regressors accordingly
                     regs = regs[reg_idx]
@@ -301,17 +301,23 @@ class PolyDetrendMapper(Mapper):
                 mds.sa[inspace] = self._polycoords
 
         # regression for each feature
-        fit = N.linalg.lstsq(regs, ds.samples)
+        fit = np.linalg.lstsq(regs, ds.samples)
         # actually we are only interested in the solution
         # res[0] is (nregr x nfeatures)
         y = fit[0]
         # remove all and keep only the residuals
         if self._secret_inplace_detrend:
             # if we are in evil mode do evil
-            mds.samples -= N.dot(regs, y)
+
+            # cast the data to float, since in-place operations below do not
+            # upcast!
+            if np.issubdtype(mds.samples.dtype, np.integer):
+                mds.samples = mds.samples.astype('float')
+
+            mds.samples -= np.dot(regs, y)
         else:
             # important to assign to ensure COW behavior
-            mds.samples = ds.samples - N.dot(regs, y)
+            mds.samples = ds.samples - np.dot(regs, y)
 
         return mds
 

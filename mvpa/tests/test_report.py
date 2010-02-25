@@ -16,9 +16,9 @@ from mvpa.base import verbose, externals
 from mvpa.base.report_dummy import Report as DummyReport
 _test_classes = [ DummyReport ]
 
-from tests_warehouse import sweepargs
+from mvpa.testing import sweepargs
 
-if externals.exists('reportlab', raiseException=False):
+if externals.exists('reportlab', raise_=False):
     from mvpa.base.report import Report
     _test_classes += [ Report ]
 
@@ -68,15 +68,15 @@ class ReportTest(unittest.TestCase):
         if externals.exists('pylab plottable'):
             if not isdummy:
                 clen = len(report._story)
-            import pylab as P
-            P.ioff()
-            P.close('all')
-            P.figure()
-            P.plot([1, 2], [3, 2])
+            import pylab as pl
+            pl.ioff()
+            pl.close('all')
+            pl.figure()
+            pl.plot([1, 2], [3, 2])
 
-            P.figure()
-            P.plot([2, 10], [3, 2])
-            P.title("Figure 2 must be it")
+            pl.figure()
+            pl.plot([2, 10], [3, 2])
+            pl.title("Figure 2 must be it")
             report.figures()
 
             if not isdummy:
@@ -93,9 +93,9 @@ class ReportTest(unittest.TestCase):
         report.save()
 
         if externals.exists('pylab'):
-            import pylab as P
-            P.close('all')
-            P.ion()
+            import pylab as pl
+            pl.close('all')
+            pl.ion()
 
         verbose.handlers = ohandlers
         pass

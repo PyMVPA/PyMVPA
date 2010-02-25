@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import mvpa.support.copy as copy
 
-import numpy as N
+import numpy as np
 
 from sets import Set
 from StringIO import StringIO
@@ -289,7 +289,7 @@ class ROCCurve(object):
             if (x is None) or len(x) == 0: return False          # undefined
             for v in x:
                 try:
-                    if Nlabels <= 2 and N.isscalar(v):
+                    if Nlabels <= 2 and np.isscalar(v):
                         continue
                     if (isinstance(v, dict) or # not dict for pairs
                         ((Nlabels>=2) and len(v)!=Nlabels) # 1 per each label for multiclass
@@ -322,27 +322,27 @@ class ROCCurve(object):
             # we will do inplace modification, thus go by index
             estimates = s[2]
             # we would need it to be a list to reassign element with a list
-            if isinstance(estimates, N.ndarray) and len(estimates.shape)==1:
+            if isinstance(estimates, np.ndarray) and len(estimates.shape)==1:
                 # XXX ??? so we are going away from inplace modifications?
                 estimates = list(estimates)
             rangev = None
             for i in xrange(len(estimates)):
                 v = estimates[i]
-                if N.isscalar(v):
+                if np.isscalar(v):
                     if Nlabels == 1:
                         # ensure the right dimensionality
-                        estimates[i] = N.array(v, ndmin=2)
+                        estimates[i] = np.array(v, ndmin=2)
                     elif Nlabels == 2:
                         def last_el(x):
                             """Helper function. Returns x if x is scalar, and
                             last element if x is not (ie list/tuple)"""
-                            if N.isscalar(x): return x
+                            if np.isscalar(x): return x
                             else:             return x[-1]
                         if rangev is None:
                             # we need to figure out min/max estimates
                             # to invert for the 0th label
                             estimates_ = [last_el(x) for x in estimates]
-                            rangev = N.min(estimates_) + N.max(estimates_)
+                            rangev = np.min(estimates_) + np.max(estimates_)
                         estimates[i] = [rangev - v, v]
                     else:
                         raise ValueError, \
@@ -353,7 +353,7 @@ class ROCCurve(object):
                           "Got %d estimates whenever there is %d labels" % \
                           (len(v), Nlabels)
             # reassign possibly adjusted estimates
-            sets_wv[iset] = (s[0], s[1], N.asarray(estimates))
+            sets_wv[iset] = (s[0], s[1], np.asarray(estimates))
 
 
         # we need to estimate ROC per each label
@@ -364,15 +364,15 @@ class ROCCurve(object):
             aucs_pl = []
             ROCs_pl = []
             for s in sets_wv:
-                targets_pl = (N.asanyarray(s[0]) == label).astype(int)
+                targets_pl = (np.asanyarray(s[0]) == label).astype(int)
                 # XXX we might unify naming between AUC/ROC
                 ROC = AUCErrorFx()
-                aucs_pl += [ROC([N.asanyarray(x)[i] for x in s[2]], targets_pl)]
+                aucs_pl += [ROC([np.asanyarray(x)[i] for x in s[2]], targets_pl)]
                 ROCs_pl.append(ROC)
             if len(aucs_pl)>0:
                 rocs += [ROCs_pl]
                 aucs += [nanmean(aucs_pl)]
-                #aucs += [N.mean(aucs_pl)]
+                #aucs += [np.mean(aucs_pl)]
 
         # store results within the object
         self._ROCs =  rocs
@@ -401,8 +401,8 @@ class ROCCurve(object):
         TODO: make it friendly to labels given by values?
               should we also treat labels_map?
         """
-        externals.exists("pylab", raiseException=True)
-        import pylab as P
+        externals.exists("pylab", raise_=True)
+        import pylab as pl
 
         self._compute()
 
@@ -410,20 +410,20 @@ class ROCCurve(object):
         # select only rocs for the given label
         rocs = self.rocs[label_index]
 
-        fig = P.gcf()
-        ax = P.gca()
+        fig = pl.gcf()
+        ax = pl.gca()
 
-        P.plot([0, 1], [0, 1], 'k:')
+        pl.plot([0, 1], [0, 1], 'k:')
 
         for ROC in rocs:
-            P.plot(ROC.fp, ROC.tp, linewidth=1)
+            pl.plot(ROC.fp, ROC.tp, linewidth=1)
 
-        P.axis((0.0, 1.0, 0.0, 1.0))
-        P.axis('scaled')
-        P.title('Label %s. Mean AUC=%.2f' % (label_index, self.aucs[label_index]))
+        pl.axis((0.0, 1.0, 0.0, 1.0))
+        pl.axis('scaled')
+        pl.title('Label %s. Mean AUC=%.2f' % (label_index, self.aucs[label_index]))
 
-        P.xlabel('False positive rate')
-        P.ylabel('True positive rate')
+        pl.xlabel('False positive rate')
+        pl.ylabel('True positive rate')
 
 
 class ConfusionMatrix(SummaryStatistics):
@@ -556,12 +556,12 @@ class ConfusionMatrix(SummaryStatistics):
             debug("CM", "Got labels %s" % labels)
 
         # Create a matrix for all votes
-        mat_all = N.zeros( (Nsets, Nlabels, Nlabels), dtype=int )
+        mat_all = np.zeros( (Nsets, Nlabels, Nlabels), dtype=int )
 
         # create total number of samples of each label counts
         # just for convinience I guess since it can always be
         # computed from mat_all
-        counts_all = N.zeros( (Nsets, Nlabels) )
+        counts_all = np.zeros( (Nsets, Nlabels) )
 
         # reverse mapping from label into index in the list of labels
         rev_map = dict([ (x[1], x[0]) for x in enumerate(labels)])
@@ -573,22 +573,22 @@ class ConfusionMatrix(SummaryStatistics):
         # for now simply compute a sum of votes across different sets
         # we might do something more sophisticated later on, and this setup
         # should easily allow it
-        self.__matrix = N.sum(mat_all, axis=0)
-        self.__Nsamples = N.sum(self.__matrix, axis=0)
-        self.__Ncorrect = sum(N.diag(self.__matrix))
+        self.__matrix = np.sum(mat_all, axis=0)
+        self.__Nsamples = np.sum(self.__matrix, axis=0)
+        self.__Ncorrect = sum(np.diag(self.__matrix))
 
-        TP = N.diag(self.__matrix)
-        offdiag = self.__matrix - N.diag(TP)
+        TP = np.diag(self.__matrix)
+        offdiag = self.__matrix - np.diag(TP)
         stats = {
             '# of labels' : Nlabels,
             'TP' : TP,
-            'FP' : N.sum(offdiag, axis=1),
-            'FN' : N.sum(offdiag, axis=0)}
+            'FP' : np.sum(offdiag, axis=1),
+            'FN' : np.sum(offdiag, axis=0)}
 
-        stats['CORR']  = N.sum(TP)
+        stats['CORR']  = np.sum(TP)
         stats['TN']  = stats['CORR'] - stats['TP']
         stats['P']  = stats['TP'] + stats['FN']
-        stats['N']  = N.sum(stats['P']) - stats['P']
+        stats['N']  = np.sum(stats['P']) - stats['P']
         stats["P'"] = stats['TP'] + stats['FP']
         stats["N'"] = stats['TN'] + stats['FN']
         stats['TPR'] = stats['TP'] / (1.0*stats['P'])
@@ -600,14 +600,14 @@ class ConfusionMatrix(SummaryStatistics):
         stats['FDR'] = stats['FP'] / (1.0*stats["P'"])
         stats['SPC'] = (stats['TN']) / (1.0*stats['FP'] + stats['TN'])
 
-        MCC_denom = N.sqrt(1.0*stats['P']*stats['N']*stats["P'"]*stats["N'"])
+        MCC_denom = np.sqrt(1.0*stats['P']*stats['N']*stats["P'"]*stats["N'"])
         nz = MCC_denom!=0.0
-        stats['MCC'] = N.zeros(stats['TP'].shape)
+        stats['MCC'] = np.zeros(stats['TP'].shape)
         stats['MCC'][nz] = \
                  (stats['TP'] * stats['TN'] - stats['FP'] * stats['FN'])[nz] \
                   / MCC_denom[nz]
 
-        stats['ACC'] = N.sum(TP)/(1.0*N.sum(stats['P']))
+        stats['ACC'] = np.sum(TP)/(1.0*np.sum(stats['P']))
         stats['ACC%'] = stats['ACC'] * 100.0
 
         #
@@ -623,13 +623,13 @@ class ConfusionMatrix(SummaryStatistics):
             self.ROC = ROC
         else:
             # we don't want to provide ROC if it is bogus
-            stats['AUC'] = [N.nan] * Nlabels
+            stats['AUC'] = [np.nan] * Nlabels
             self.ROC = None
 
 
         # compute mean stats
         for k,v in stats.items():
-            stats['mean(%s)' % k] = N.mean(v)
+            stats['mean(%s)' % k] = np.mean(v)
 
         self._stats.update(stats)
 
@@ -737,7 +737,7 @@ class ConfusionMatrix(SummaryStatistics):
             # compute mean stats
             # XXX refactor to expose them in stats as well, as
             #     mean(FCC)
-            mean_stats = N.mean(N.array([stats[k] for k in stats_perpredict]),
+            mean_stats = np.mean(np.array([stats[k] for k in stats_perpredict]),
                                 axis=1)
             printed.append(['@lSummary \ Means:'] + underscores
                            + [_p2(stats['mean(%s)' % x])
@@ -798,8 +798,8 @@ class ConfusionMatrix(SummaryStatistics):
          (fig, im, cb) -- figure, imshow, colorbar
         """
 
-        externals.exists("pylab", raiseException=True)
-        import pylab as P
+        externals.exists("pylab", raise_=True)
+        import pylab as pl
 
         self.compute()
         labels_order = labels
@@ -844,8 +844,8 @@ class ConfusionMatrix(SummaryStatistics):
             labels_plot = labels
 
         # where we have Nones?
-        isempty = N.array([l is None for l in labels_plot])
-        non_empty = N.where(N.logical_not(isempty))[0]
+        isempty = np.array([l is None for l in labels_plot])
+        non_empty = np.where(np.logical_not(isempty))[0]
         # numbers of different entries
         NlabelsNN = len(non_empty)
         Nlabels = len(labels_plot)
@@ -855,7 +855,7 @@ class ConfusionMatrix(SummaryStatistics):
                   "Number of labels %d doesn't correspond the size" + \
                   " of a confusion matrix %s" % (NlabelsNN, matrix.shape)
 
-        confusionmatrix = N.zeros((Nlabels, Nlabels))
+        confusionmatrix = np.zeros((Nlabels, Nlabels))
         mask = confusionmatrix.copy()
         ticks = []
         tick_labels = []
@@ -875,14 +875,14 @@ class ConfusionMatrix(SummaryStatistics):
             else:
                 mask[i, :] = mask[:, i] = 1
 
-        confusionmatrix = N.ma.MaskedArray(confusionmatrix, mask=mask)
+        confusionmatrix = np.ma.MaskedArray(confusionmatrix, mask=mask)
 
         # turn off automatic update if interactive
-        if P.matplotlib.get_backend() == 'TkAgg':
-            P.ioff()
+        if pl.matplotlib.get_backend() == 'TkAgg':
+            pl.ioff()
 
-        fig = P.gcf()
-        ax = P.gca()
+        fig = pl.gcf()
+        ax = pl.gca()
         ax.axis('off')
 
         # some customization depending on the origin
@@ -903,43 +903,43 @@ class ConfusionMatrix(SummaryStatistics):
             numbers_kwargs_ = {'fontsize': 10,
                                'horizontalalignment': 'center',
                                'verticalalignment': 'center'}
-            maxv = float(N.max(confusionmatrix))
+            maxv = float(np.max(confusionmatrix))
             colors = [im.to_rgba(0), im.to_rgba(maxv)]
-            for i,j in zip(*N.logical_not(mask).nonzero()):
+            for i,j in zip(*np.logical_not(mask).nonzero()):
                 v = confusionmatrix[j, i]
                 # scale alpha non-linearly
                 if numbers_alpha is None:
                     alpha = 1.0
                 else:
                     # scale according to value
-                    alpha = 1 - N.array(1 - v / maxv) ** numbers_alpha
+                    alpha = 1 - np.array(1 - v / maxv) ** numbers_alpha
                 y = {'lower':j, 'upper':Nlabels-j-1}[origin]
                 numbers_kwargs_['color'] = colors[int(v<maxv/2)]
                 numbers_kwargs_.update(numbers_kwargs)
-                P.text(i+0.5, y+0.5, '%d' % v, alpha=alpha, **numbers_kwargs_)
+                pl.text(i+0.5, y+0.5, '%d' % v, alpha=alpha, **numbers_kwargs_)
 
-        maxv = N.max(confusionmatrix)
-        boundaries = N.linspace(0, maxv, N.min((maxv, 10)), True)
+        maxv = np.max(confusionmatrix)
+        boundaries = np.linspace(0, maxv, np.min((maxv, 10)), True)
 
         # Label axes
-        P.xlabel("targets")
-        P.ylabel("predictions")
+        pl.xlabel("targets")
+        pl.ylabel("predictions")
 
-        P.setp(axi, xticks=ticks, yticks=yticks,
+        pl.setp(axi, xticks=ticks, yticks=yticks,
                xticklabels=tick_labels, yticklabels=tick_labels)
 
         axi.xaxis.set_ticks_position(xticks_position)
         axi.xaxis.set_label_position(xticks_position)
 
         if xlabels_vertical:
-            P.setp(P.getp(axi, 'xticklabels'), rotation='vertical')
+            pl.setp(pl.getp(axi, 'xticklabels'), rotation='vertical')
 
         axcb = fig.add_axes([0.8, ybottom, 0.02, 0.7])
-        cb = P.colorbar(im, cax=axcb, format='%d', ticks = boundaries)
+        cb = pl.colorbar(im, cax=axcb, format='%d', ticks = boundaries)
 
-        if P.matplotlib.get_backend() == 'TkAgg':
-            P.ion()
-        P.draw()
+        if pl.matplotlib.get_backend() == 'TkAgg':
+            pl.ion()
+        pl.draw()
         # Store it primarily for testing
         self._plotted_confusionmatrix = confusionmatrix
         return fig, im, cb
@@ -1029,9 +1029,9 @@ class RegressionStatistics(SummaryStatistics):
 
         funcs = {
             'RMP_t': lambda p,t:root_mean_power_fx(t),
-            'STD_t': lambda p,t:N.std(t),
+            'STD_t': lambda p,t:np.std(t),
             'RMP_p': lambda p,t:root_mean_power_fx(p),
-            'STD_p': lambda p,t:N.std(p),
+            'STD_p': lambda p,t:np.std(p),
             'CCe': CorrErrorFx(),
             'CCp': CorrErrorPFx(),
             'RMSE': RMSErrorFx(),
@@ -1043,11 +1043,11 @@ class RegressionStatistics(SummaryStatistics):
             stats[funcname_all] = []
             for i, (targets, predictions, estimates) in enumerate(sets):
                 stats[funcname_all] += [func(predictions, targets)]
-            stats[funcname_all] = N.array(stats[funcname_all])
-            stats[funcname] = N.mean(stats[funcname_all])
-            stats[funcname+'_std'] = N.std(stats[funcname_all])
-            stats[funcname+'_max'] = N.max(stats[funcname_all])
-            stats[funcname+'_min'] = N.min(stats[funcname_all])
+            stats[funcname_all] = np.array(stats[funcname_all])
+            stats[funcname] = np.mean(stats[funcname_all])
+            stats[funcname+'_std'] = np.std(stats[funcname_all])
+            stats[funcname+'_max'] = np.max(stats[funcname_all])
+            stats[funcname+'_min'] = np.min(stats[funcname_all])
 
         # create ``summary`` statistics, since some per-set statistics
         # might be uncomputable if a set contains just a single number
@@ -1087,53 +1087,53 @@ class RegressionStatistics(SummaryStatistics):
         -------
          (fig, im, cb) -- figure, imshow, colorbar
         """
-        externals.exists("pylab", raiseException=True)
-        import pylab as P
+        externals.exists("pylab", raise_=True)
+        import pylab as pl
 
         self.compute()
         # total number of plots
         nplots = plot + splot
 
         # turn off automatic update if interactive
-        if P.matplotlib.get_backend() == 'TkAgg':
-            P.ioff()
+        if pl.matplotlib.get_backend() == 'TkAgg':
+            pl.ioff()
 
-        fig = P.gcf()
-        P.clf()
+        fig = pl.gcf()
+        pl.clf()
         sps = []                        # subplots
 
         nplot = 0
         if plot:
             nplot += 1
-            sps.append(P.subplot(nplots, 1, nplot))
+            sps.append(pl.subplot(nplots, 1, nplot))
             xstart = 0
             lines = []
             for s in self.sets:
                 nsamples = len(s[0])
                 xend = xstart+nsamples
                 xs = xrange(xstart, xend)
-                lines += [P.plot(xs, s[0], 'b')]
-                lines += [P.plot(xs, s[1], 'r')]
+                lines += [pl.plot(xs, s[0], 'b')]
+                lines += [pl.plot(xs, s[1], 'r')]
                 # vertical line
-                P.plot([xend, xend], [N.min(s[0]), N.max(s[0])], 'k--')
+                pl.plot([xend, xend], [np.min(s[0]), np.max(s[0])], 'k--')
                 xstart = xend
             if len(lines)>1:
-                P.legend(lines[:2], ('Target', 'Prediction'))
+                pl.legend(lines[:2], ('Target', 'Prediction'))
             if plot_stats:
-                P.title(self.as_string(short='very'))
+                pl.title(self.as_string(short='very'))
 
         if splot:
             nplot += 1
-            sps.append(P.subplot(nplots, 1, nplot))
+            sps.append(pl.subplot(nplots, 1, nplot))
             for s in self.sets:
-                P.plot(s[0], s[1], 'o',
+                pl.plot(s[0], s[1], 'o',
                        markeredgewidth=0.2,
                        markersize=2)
-            P.gca().set_aspect('equal')
+            pl.gca().set_aspect('equal')
 
-        if P.matplotlib.get_backend() == 'TkAgg':
-            P.ion()
-        P.draw()
+        if pl.matplotlib.get_backend() == 'TkAgg':
+            pl.ion()
+        pl.draw()
 
         return fig, sps
 
@@ -1296,7 +1296,7 @@ class ClassifierError(ClassWithCollections):
         if self.__clf.ca.is_enabled('trained_targets') \
                and not self.__clf.__is_regression__ \
                and not testdataset is None:
-            newlabels = Set(testdataset.sa[self.clf.params.targets].unique) \
+            newlabels = Set(testdataset.sa[self.clf.params.targets_attr].unique) \
                         - Set(self.__clf.ca.trained_targets)
             if len(newlabels)>0:
                 warning("Classifier %s wasn't trained to classify labels %s" %
@@ -1424,7 +1424,7 @@ class TransferError(ClassifierError):
 
         Returns a scalar value of the transfer error.
         """
-        testtargets = testdataset.sa[self.clf.params.targets].value
+        testtargets = testdataset.sa[self.clf.params.targets_attr].value
         # OPT: local binding
         clf = self.clf
         if testdataset is None:

@@ -8,15 +8,16 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA stats helpers -- those requiring scipy"""
 
-from test_stats import *
-externals.exists('scipy', raiseException=True)
+from mvpa.testing import *
+skip_if_no_external('scipy')
+
+from mvpa.testing.datasets import datasets
+from mvpa.tests.test_stats import *
 
 from scipy import signal
 from mvpa.misc.stats import chisquare
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.datasets.base import dataset_wizard
-
-from mvpa.testing.tools import assert_raises
 
 class StatsTestsScipy(unittest.TestCase):
     """Unittests for various statistics which use scipy"""
@@ -24,13 +25,13 @@ class StatsTestsScipy(unittest.TestCase):
     def test_chi_square(self):
         """Test chi-square distribution"""
         # test equal distribution
-        tbl = N.array([[5, 5], [5, 5]])
+        tbl = np.array([[5, 5], [5, 5]])
         chi, p = chisquare(tbl)
         self.failUnless( chi == 0.0 )
         self.failUnless( p == 1.0 )
 
         # test non-equal distribution
-        tbl = N.array([[4, 0], [0, 4]])
+        tbl = np.array([[4, 0], [0, 4]])
         chi, p = chisquare(tbl)
         self.failUnless(chi == 8.0)
         self.failUnless(p < 0.05)
@@ -38,8 +39,7 @@ class StatsTestsScipy(unittest.TestCase):
 
     def test_null_dist_prob_any(self):
         """Test 'any' tail statistics estimation"""
-        if not externals.exists('scipy'):
-            return
+        skip_if_no_external('scipy')
 
         # test 'any' mode
         from mvpa.measures.corrcoef import CorrCoef
@@ -66,17 +66,15 @@ class StatsTestsScipy(unittest.TestCase):
     @sweepargs(nd=nulldist_sweep)
     def test_dataset_measure_prob(self, nd):
         """Test estimation of measures statistics"""
-        if not externals.exists('scipy'):
-            # due to null_t requirement
-            return
+        skip_if_no_external('scipy')
 
         ds = datasets['uni2medium']
 
         m = OneWayAnova(null_dist=nd, enable_ca=['null_t'])
         score = m(ds)
 
-        score_nonbogus = N.mean(score.samples[:,ds.a.nonbogus_features])
-        score_bogus = N.mean(score.samples[:,ds.a.bogus_features])
+        score_nonbogus = np.mean(score.samples[:,ds.a.nonbogus_features])
+        score_bogus = np.mean(score.samples[:,ds.a.bogus_features])
         # plausability check
         self.failUnless(score_bogus < score_nonbogus)
 
@@ -89,8 +87,8 @@ class StatsTestsScipy(unittest.TestCase):
                 % null_prob_nonbogus)
 
         # the others should be a lot larger
-        self.failUnless(N.mean(N.abs(null_prob_bogus)) >
-                        N.mean(N.abs(null_prob_nonbogus)))
+        self.failUnless(np.mean(np.abs(null_prob_bogus)) >
+                        np.mean(np.abs(null_prob_nonbogus)))
 
         if isinstance(nd, MCNullDist):
             # MCs are not stable with just 10 samples... so lets skip them
@@ -99,11 +97,11 @@ class StatsTestsScipy(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             # Failed on c94ec26eb593687f25d8c27e5cfdc5917e352a69
             # with MVPA_SEED=833393575
-            self.failUnless((N.abs(m.ca.null_t[0][ds.a.nonbogus_features]) >= 5).all(),
+            self.failUnless((np.abs(m.ca.null_t[0][ds.a.nonbogus_features]) >= 5).all(),
                 msg="Nonbogus features should have high t-score. Got %s"
                 % (m.ca.null_t[0][ds.a.nonbogus_features]))
 
-            bogus_min = min(N.abs(m.ca.null_t[0][ds.a.bogus_features]))
+            bogus_min = min(np.abs(m.ca.null_t[0][ds.a.bogus_features]))
             self.failUnless(bogus_min < 4,
                 msg="Some bogus features should have low t-score of %g."
                     "Got (t,p,sens):%s"
@@ -124,7 +122,7 @@ class StatsTestsScipy(unittest.TestCase):
             """
             def _call(self, dataset):
                 """just a little helper... pylint shut up!"""
-                res = N.random.normal(size=(dataset.nfeatures,))
+                res = np.random.normal(size=(dataset.nfeatures,))
                 res[0] = res[1] = 100
                 res[2] = res[3] = -100
                 return res
@@ -163,7 +161,7 @@ class StatsTestsScipy(unittest.TestCase):
         for res in [floc, fscale, flocscale, full]:
             self.failUnless(len(res) == 2)
 
-        data_mean = N.mean(data)
+        data_mean = np.mean(data)
         for loc in [None, data_mean]:
             for test in ['p-roc', 'kstest']:
                 # some really basic testing
@@ -192,7 +190,7 @@ class StatsTestsScipy(unittest.TestCase):
         """
         try:
             # actually I haven't managed to cause this error
-            scipy.stats.rdist(1.32, 0, 1).pdf(-1.0+N.finfo(float).eps)
+            scipy.stats.rdist(1.32, 0, 1).pdf(-1.0+np.finfo(float).eps)
         except Exception, e:
             self.fail('Failed to compute rdist.pdf due to numeric'
                       ' loss of precision. Exception was %s' % e)
@@ -207,7 +205,7 @@ class StatsTestsScipy(unittest.TestCase):
             #      would puke. But for now that fix is not here
             #
             # value = scipy.stats.rdist(1.32, 0, 1).cdf(
-            #      [-1.0+N.finfo(float).eps, 0])
+            #      [-1.0+np.finfo(float).eps, 0])
             #
             # to cause it now just run this unittest only with
             #  nosetests -s test_stats:StatsTests.testRDistStability
@@ -215,7 +213,7 @@ class StatsTestsScipy(unittest.TestCase):
             # NB: very cool way to store the trace of the execution
             #import pydb
             #pydb.debugger(dbg_cmds=['bt', 'l', 's']*300 + ['c'])
-            scipy.stats.rdist(1.32, 0, 1).cdf(-1.0+N.finfo(float).eps)
+            scipy.stats.rdist(1.32, 0, 1).cdf(-1.0+np.finfo(float).eps)
         except IndexError, e:
             self.fail('Failed due to bug which leads to InvalidIndex if only'
                       ' scalar is provided to cdf')
@@ -245,17 +243,17 @@ class StatsTestsScipy(unittest.TestCase):
         """
         # play fmri
         # full-blown HRF with initial dip and undershoot ;-)
-        hrf_x = N.linspace(0, 25, 250)
+        hrf_x = np.linspace(0, 25, 250)
         hrf = double_gamma_hrf(hrf_x) - single_gamma_hrf(hrf_x, 0.8, 1, 0.05)
 
         # come up with an experimental design
         samples = 1800
-        fast_er_onsets = N.array([10, 200, 250, 500, 600, 900, 920, 1400])
-        fast_er = N.zeros(samples)
+        fast_er_onsets = np.array([10, 200, 250, 500, 600, 900, 920, 1400])
+        fast_er = np.zeros(samples)
         fast_er[fast_er_onsets] = 1
 
         # high resolution model of the convolved regressor
-        model_hr = N.convolve(fast_er, hrf)[:samples]
+        model_hr = np.convolve(fast_er, hrf)[:samples]
 
         # downsample the regressor to fMRI resolution
         tr = 2.0
@@ -267,14 +265,14 @@ class StatsTestsScipy(unittest.TestCase):
         # something
         baseline = 800.0
         wsignal = baseline + 2 * model_lr + \
-                  N.random.randn(int(samples / tr / 10)) * 0.2
-        nsignal = baseline + N.random.randn(int(samples / tr / 10)) * 0.5
+                  np.random.randn(int(samples / tr / 10)) * 0.2
+        nsignal = baseline + np.random.randn(int(samples / tr / 10)) * 0.5
 
         # build design matrix: bold-regressor and constant
-        X = N.array([model_lr, N.repeat(1, len(model_lr))]).T
+        X = np.array([model_lr, np.repeat(1, len(model_lr))]).T
 
         # two 'voxel' dataset
-        data = dataset_wizard(samples=N.array((wsignal, nsignal, nsignal)).T, targets=1)
+        data = dataset_wizard(samples=np.array((wsignal, nsignal, nsignal)).T, targets=1)
 
         # check GLM betas
         glm = GLM(X)
@@ -283,15 +281,15 @@ class StatsTestsScipy(unittest.TestCase):
         # betas for each feature and each regressor
         self.failUnless(betas.shape == (X.shape[1], data.nfeatures))
 
-        self.failUnless(N.absolute(betas.samples[1] - baseline < 10).all(),
+        self.failUnless(np.absolute(betas.samples[1] - baseline < 10).all(),
             msg="baseline betas should be huge and around 800")
 
         self.failUnless(betas.samples[0,0] > betas[0,1],
             msg="feature (with signal) beta should be larger than for noise")
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(N.absolute(betas[0,1]) < 0.5)
-            self.failUnless(N.absolute(betas[0,0]) > 1.0)
+            self.failUnless(np.absolute(betas[0,1]) < 0.5)
+            self.failUnless(np.absolute(betas[0,0]) > 1.0)
 
 
         # check GLM zscores
@@ -304,7 +302,7 @@ class StatsTestsScipy(unittest.TestCase):
                 msg='constant zstats should be huge')
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(N.absolute(betas[0,0]) > betas[0,1],
+            self.failUnless(np.absolute(betas[0,0]) > betas[0,1],
                 msg='with signal should have higher zstats')
 
 

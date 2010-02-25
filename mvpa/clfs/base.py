@@ -11,7 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.support.copy import deepcopy
 
@@ -151,8 +151,7 @@ class Classifier(ClassWithCollections):
     """Describes some specifics about the classifier -- is that it is
     doing regression for instance...."""
 
-    # TODO: make it available only for actually retrainable classifiers
-    targets = Parameter('targets', allowedtype='bool',# ro=True,
+    targets_attr = Parameter('targets', allowedtype='bool',# ro=True,
         doc="""What samples attribute to use as targets.""",
         index=999)
 
@@ -232,7 +231,7 @@ class Classifier(ClassWithCollections):
 
                 # Look at the data if any was changed
                 for key, data_ in (('traindata', dataset.samples),
-                                   ('targets', dataset.sa[params.targets].value)):
+                                   ('targets', dataset.sa[params.targets_attr].value)):
                     _changedData[key] = self.__was_data_changed(key, data_)
                     # if those idhashes were invalidated by retraining
                     # we need to adjust _changedData accordingly
@@ -267,7 +266,7 @@ class Classifier(ClassWithCollections):
         """
         ca = self.ca
         if ca.is_enabled('trained_targets'):
-            ca.trained_targets = dataset.sa[self.params.targets].unique
+            ca.trained_targets = dataset.sa[self.params.targets_attr].unique
 
         ca.trained_dataset = dataset
         ca.trained_nsamples = dataset.nsamples
@@ -294,7 +293,7 @@ class Classifier(ClassWithCollections):
             predictions = self.predict(dataset)
             self.ca.reset_changed_temporarily()
             self.ca.training_confusion = self.__summary_class__(
-                targets=dataset.sa[self.params.targets].value,
+                targets=dataset.sa[self.params.targets_attr].value,
                 predictions=predictions)
 
         if self.ca.is_enabled('feature_ids'):
@@ -432,7 +431,7 @@ class Classifier(ClassWithCollections):
             if not self.__changedData_isset:
                 self.__reset_changed_data()
                 _changedData = self._changedData
-                data = N.asanyarray(dataset.samples)
+                data = np.asanyarray(dataset.samples)
                 _changedData['testdata'] = \
                                         self.__was_data_changed('testdata', data)
                 if __debug__:
@@ -462,7 +461,7 @@ class Classifier(ClassWithCollections):
         since otherwise it would loop
         """
         ## ??? yoh: changed to asany from as without exhaustive check
-        data = N.asanyarray(dataset.samples)
+        data = np.asanyarray(dataset.samples)
         if __debug__:
             debug("CLF", "Predicting classifier %(clf)s on ds %(dataset)s",
                 msgargs={'clf':self, 'dataset':dataset})
@@ -642,7 +641,7 @@ class Classifier(ClassWithCollections):
         if __debug__ and 'CHECK_RETRAIN' in debug.active:
             __trained = self.__trained
             changed2 = entry != __trained[key]
-            if isinstance(changed2, N.ndarray):
+            if isinstance(changed2, np.ndarray):
                 changed2 = changed2.any()
             if changed != changed2 and not changed:
                 raise RuntimeError, \
@@ -742,7 +741,7 @@ class Classifier(ClassWithCollections):
         # To check if we are not fooled
         if __debug__ and 'CHECK_RETRAIN' in debug.active:
             for key, data_ in (('traindata', dataset.samples),
-                               ('targets', dataset.sa[self.params.targets].value)):
+                               ('targets', dataset.sa[self.params.targets_attr].value)):
                 # so it wasn't told to be invalid
                 if not chd[key] and not ichd.get(key, False):
                     if self.__was_data_changed(key, data_, update=False):

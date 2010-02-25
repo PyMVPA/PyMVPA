@@ -49,7 +49,7 @@ __version__ = '0.5.0.dev'
 
 import os
 import random
-import numpy as N
+import numpy as np
 from mvpa.base import cfg
 from mvpa.base import externals
 from mvpa.base.info import wtf
@@ -81,13 +81,13 @@ else:
 if cfg.has_option('general', 'seed'):
     _random_seed = cfg.getint('general', 'seed')
 else:
-    _random_seed = int(N.random.uniform()*(2**31-1))
+    _random_seed = int(np.random.uniform()*(2**31-1))
 
 def seed(random_seed):
     """Uniform and combined seeding of all relevant random number
     generators.
     """
-    N.random.seed(random_seed)
+    np.random.seed(random_seed)
     random.seed(random_seed)
 
 seed(_random_seed)
@@ -98,10 +98,13 @@ from mvpa.tests import run as test
 # PyMVPA is useless without numpy
 # Also, this check enforcing population of externals.versions
 # for possible later version checks, hence don't remove
-externals.exists('numpy', force=True, raiseException=True)
+externals.exists('numpy', force=True, raise_=True)
 # We might need to suppress the warnings so enforcing check here,
 # it is ok if it would fail
-externals.exists('scipy', force=True, raiseException=False)
+externals.exists('scipy', force=True, raise_=False)
+# And check if we aren't under IPython so we could pacify completion
+# a bit
+externals.exists('running ipython env', force=True, raise_=False)
 
 if __debug__:
     debug('RANDOM', 'Seeding RNG with %d' % _random_seed)

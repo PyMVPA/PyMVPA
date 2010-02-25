@@ -24,7 +24,7 @@ TESTS_COMMON="unittests testmanual testsuite testsphinx testexamples testcfg"
 # Associative array with tests lists per branch
 declare -A TESTS_BRANCHES
 # stable branches
-for b in maint/0.4 yoh/0.4; do
+for b in maint/0.4; do
     #have no datadb and still use epydoc
     TESTS_BRANCHES["$b"]="$TESTS_COMMON testapiref"
 done
@@ -68,6 +68,8 @@ do_checkout() {
     $precmd git checkout -b $branch origin/$branch || :
     #fi
     $precmd git checkout $branch
+    #provide datadb
+    [ -e "datadb" ] || $precmd ln -s "$datadbdir" .
 }
 
 do_build() {
@@ -107,7 +109,6 @@ sweep()
     echo "I: Cloning repository"
     $precmd git clone -q $repo 2>&1 | indent
     $precmd cd pymvpa
-    $precmd ln -s "$datadbdir" .
     # no need to check here since checkout would fail below otherwise
 
     #

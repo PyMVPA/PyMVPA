@@ -36,14 +36,14 @@ dataset = fmri_dataset(os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
 #
 
 # do chunkswise linear detrending on dataset
-poly_detrend(dataset, polyord=1, chunks='chunks')
+poly_detrend(dataset, polyord=1, chunks_attr='chunks')
 
 # only use 'rest', 'cats' and 'scissors' samples from dataset
-dataset = dataset[N.array([ l in ['rest', 'cat', 'scissors']
+dataset = dataset[np.array([ l in ['rest', 'cat', 'scissors']
                     for l in dataset.targets], dtype='bool')]
 
 # zscore dataset relative to baseline ('rest') mean
-zscore(dataset, perchunk=True, baselinetargets=['rest'], targetdtype='float32')
+zscore(dataset, chunks_attr='chunks', baselinetargets=['rest'], targetdtype='float32')
 
 # remove baseline samples from dataset for final analysis
 dataset = dataset[dataset.sa.targets != 'rest']
@@ -89,7 +89,7 @@ plot_bars(results, labels=labels,
          distance=0.5)
 
 if cfg.getboolean('examples', 'interactive', True):
-    P.show()
+    pl.show()
 
 """
 Output of the example analysis:

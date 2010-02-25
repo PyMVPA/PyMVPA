@@ -8,22 +8,22 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for HDF5 converter'''
 
-from mvpa.base.externals import exists
-if exists('h5py', raiseException=True):
-    import h5py
-else:
-    raise RuntimeError, "Don't run me if no h5py is present"
+import numpy as np
+
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets, saveload_warehouse
+
+skip_if_no_external('h5py')
+import h5py
 
 import os
-from tempfile import mkstemp
-
-from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_array_equal
+import tempfile
 
 from mvpa.base.dataset import AttrDataset
-from mvpa.base.hdf5 import h5save, obj2hdf
+from mvpa.base.hdf5 import h5save, h5load, obj2hdf
+from mvpa.misc.data_generators import load_example_fmri_dataset
+from mvpa.mappers.fx import mean_sample
 
-from tests_warehouse import *
 
 
 def test_h5py_datasets():
@@ -53,7 +53,7 @@ def test_h5py_datasets():
 def test_h5py_dataset_typecheck():
     ds = datasets['uni2small']
 
-    _, fpath = mkstemp('mvpa', 'test')
+    _, fpath = tempfile.mkstemp('mvpa', 'test')
 
     h5save(fpath, [[1, 2, 3]])
     assert_raises(ValueError, AttrDataset.from_hdf5, fpath)
@@ -73,3 +73,35 @@ def test_h5py_dataset_typecheck():
     # cleanup and ignore stupidity
     os.remove(fpath)
 
+
+def test_matfile_v73_compat():
+    mat = h5load(os.path.join(pymvpa_dataroot, 'v73.mat'))
+    assert_equal(len(mat), 2)
+    assert_equal(sorted(mat.keys()), ['x', 'y'])
+    assert_array_equal(mat['x'], np.arange(6)[None].T)
+    assert_array_equal(mat['y'], np.array([(1,0,1)], dtype='uint8').T)
+
+
+def test_directaccess():
+    f = tempfile.NamedTemporaryFile()
+    h5save(f.name, 'test')
+    assert_equal(h5load(f.name), 'test')
+    f.close()
+    f = tempfile.NamedTemporaryFile()
+    h5save(f.name, datasets['uni4medium'])
+    assert_array_equal(h5load(f.name).samples,
+                       datasets['uni4medium'].samples)
+
+
+def test_function_ptrs():
+    ds = load_example_fmri_dataset()
+    # add a mapper with a function ptr inside
+    ds = ds.get_mapped(mean_sample())
+    f = tempfile.NamedTemporaryFile()
+    h5save(f.name, ds)
+    ds_loaded = h5load(f.name)
+    fresh = load_example_fmri_dataset().O
+    # check that the reconstruction function pointer in the FxMapper points
+    # to the right one
+    assert_array_equal(ds_loaded.a.mapper.forward(fresh),
+                        ds.samples)

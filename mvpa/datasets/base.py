@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 import copy
 
 from mvpa.base.collections import SampleAttributesCollection, \
@@ -74,7 +74,7 @@ class Dataset(AttrDataset):
 
         # if we get an slicing array for feature selection and it is *not* 1D
         # try feeding it through the mapper (if there is any)
-        if len(args) > 1 and isinstance(args[1], N.ndarray) \
+        if len(args) > 1 and isinstance(args[1], np.ndarray) \
            and len(args[1].shape) > 1 \
            and self.a.has_key('mapper'):
             args = list(args)
@@ -174,7 +174,7 @@ class Dataset(AttrDataset):
         instance : Dataset
         """
         # for all non-ndarray samples you need to go with the constructor
-        samples = N.asanyarray(samples)
+        samples = np.asanyarray(samples)
 
         # compile the necessary samples attributes collection
         sa_items = {}
@@ -240,9 +240,9 @@ class Dataset(AttrDataset):
                 % samples.shape)
 
         if not t0 is None and not dt is None:
-            timepoints = N.arange(t0, t0 + samples.shape[2] * dt, dt)
+            timepoints = np.arange(t0, t0 + samples.shape[2] * dt, dt)
             # broadcast over all channels
-            timepoints = N.vstack([timepoints] * samples.shape[1])
+            timepoints = np.vstack([timepoints] * samples.shape[1])
         else:
             timepoints = None
 
@@ -253,7 +253,7 @@ class Dataset(AttrDataset):
                     "sample data. Expected %i, but got %i"
                     % (samples.shape[1], len(channelids)))
             # broadcast over all timepoints
-            channelids = N.dstack([channelids] * samples.shape[2])[0]
+            channelids = np.dstack([channelids] * samples.shape[2])[0]
 
         ds = cls.from_wizard(samples, targets=targets, chunks=chunks)
 

@@ -21,12 +21,12 @@ TODOs:
    storing all training SVs/samples to make classification in predict())
 """
 
-import numpy as N
+import numpy as np
 
 
 # Rely on SG
 from mvpa.base import externals, warning
-if externals.exists('shogun', raiseException=True):
+if externals.exists('shogun', raise_=True):
     import shogun.Features
     import shogun.Classifier
     import shogun.Regression
@@ -41,6 +41,7 @@ if externals.exists('shogun', raiseException=True):
     if hasattr(shogun.Classifier, 'M_DEBUG'):
         _M_DEBUG = shogun.Classifier.M_DEBUG
         _M_ERROR = shogun.Classifier.M_ERROR
+        _M_GCDEBUG = None
     elif hasattr(shogun.Classifier, 'MSG_DEBUG'):
         _M_DEBUG = shogun.Classifier.MSG_DEBUG
         _M_ERROR = shogun.Classifier.MSG_ERROR
@@ -48,6 +49,12 @@ if externals.exists('shogun', raiseException=True):
         _M_DEBUG, _M_ERROR = None, None
         warning("Could not figure out debug IDs within shogun. "
                 "No control over shogun verbosity would be provided")
+    # Highest level
+    if hasattr(shogun.Classifier, 'MSG_GCDEBUG'):
+        _M_GCDEBUG = shogun.Classifier.MSG_GCDEBUG
+    else:
+        _M_GCDEBUG = None
+
 else:
     # set a fake default kernel here, to be able to import this module
     # when building the docs without SG
@@ -88,16 +95,26 @@ def _setdebug(obj, partname):
     debugname = "SG_%s" % partname.upper()
 
     switch = {True: (_M_DEBUG, 'M_DEBUG', "enable"),
-              False: (_M_ERROR, 'M_ERROR', "disable")}
+              False: (_M_ERROR, 'M_ERROR', "disable"),
+              'GCDEBUG': (_M_GCDEBUG, 'M_GCDEBUG', "enable")}
 
-    key = __debug__ and debugname in debug.active
+    if __debug__:
+        if 'SG_GC' in debug.active:
+            key = 'GCDEBUG'
+        else:
+            key = debugname in debug.active
+    else:
+        key = False
 
     sglevel, slevel, progressfunc = switch[key]
 
-    if __debug__:
+    if __debug__ and 'SG_' in debug.active:
         debug("SG_", "Setting verbosity for shogun.%s instance: %s to %s" %
               (partname, `obj`, slevel))
-    obj.io.set_loglevel(sglevel)
+    if sglevel is not None:
+        obj.io.set_loglevel(sglevel)
+    if __debug__ and 'SG_LINENO' in debug.active:
+        obj.io.enable_file_and_line()
     try:
         exec "obj.io.%s_progress()" % progressfunc
     except:
@@ -166,7 +183,7 @@ class SVM(_SVM):
     _KNOWN_SENSITIVITIES={'linear':LinearSVMWeights,
                           }
     _KNOWN_IMPLEMENTATIONS = {}
-    if externals.exists('shogun', raiseException=True):
+    if externals.exists('shogun', raise_=True):
         _KNOWN_IMPLEMENTATIONS = {
             "libsvm" : (shogun.Classifier.LibSVM, ('C',),
                        ('multiclass', 'binary'),
@@ -250,7 +267,7 @@ class SVM(_SVM):
         params = self.params
         retrainable = self.params.retrainable
 
-        targets_sa_name = params.targets    # name of targets sa
+        targets_sa_name = params.targets_attr    # name of targets sa
         targets_sa = dataset.sa[targets_sa_name] # actual targets sa
 
         if retrainable:
@@ -269,7 +286,7 @@ class SVM(_SVM):
             debug("SG_", "Creating labels instance")
 
         if self.__is_regression__:
-            labels_ = N.asarray(targets_sa.value, dtype='double')
+            labels_ = np.asarray(targets_sa.value, dtype='double')
         else:
             ul = targets_sa.unique
             # ul.sort()
@@ -344,13 +361,13 @@ class SVM(_SVM):
                 #     ie do not rescale automagically by the number of samples
                 #if len(Cs) == 2 and not ('regression' in self.__tags__) and len(ul) == 2:
                 #    # we were given two Cs
-                #    if N.max(C) < 0 and N.min(C) < 0:
+                #    if np.max(C) < 0 and np.min(C) < 0:
                 #        # and both are requested to be 'scaled' TODO :
                 #        # provide proper 'features' to the parameters,
                 #        # so we could specify explicitely if to scale
                 #        # them by the number of samples here
-                #        nl = [N.sum(labels_ == _labels_dict[l]) for l in ul]
-                #        ratio = N.sqrt(float(nl[1]) / nl[0])
+                #        nl = [np.sum(labels_ == _labels_dict[l]) for l in ul]
+                #        ratio = np.sqrt(float(nl[1]) / nl[0])
                 #        #ratio = (float(nl[1]) / nl[0])
                 #        Cs[0] *= ratio
                 #        Cs[1] /= ratio
@@ -511,7 +528,7 @@ class SVM(_SVM):
             predictions = values
         else:
             if len(self._attrmap.keys()) == 2:
-                predictions = N.sign(values)
+                predictions = np.sign(values)
             else:
                 predictions = values
 
@@ -603,7 +620,7 @@ class SVM(_SVM):
                       "Shogun: Implementation %s doesn't handle multiclass " \
                       "data. Got labels %s. Use some other classifier" % \
                       (self._svm_impl,
-                       self.__traindataset.sa[self.params.targets].unique)
+                       self.__traindataset.sa[self.params.targets_attr].unique)
             if __debug__:
                 debug("SG_", "Using %s for multiclass data of %s" %
                       (svm_impl_class, self._svm_impl))

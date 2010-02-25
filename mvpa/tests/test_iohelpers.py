@@ -11,11 +11,12 @@
 import os
 import unittest
 from tempfile import mkstemp
-import numpy as N
+import numpy as np
 
 from mvpa.testing.tools import ok_
 
 from mvpa import pymvpa_dataroot
+from mvpa.datasets.eventrelated import find_events
 from mvpa.misc.io import *
 from mvpa.misc.fsl import *
 from mvpa.misc.bv import BrainVoyagerRTC
@@ -101,14 +102,11 @@ class IOHelperTests(unittest.TestCase):
         ok_(sa.nrows == 1452, msg='There should be 1452 samples')
 
         # convert to event list, with some custom attr
-        ev = sa.to_events(funky='yeah')
+        ev = find_events(**sa)
         ok_(len(ev) == 17 * (max(sa.chunks) + 1),
             msg='Not all events got detected.')
 
-        ok_(len([e for e in ev if e.has_key('funky')]) == len(ev),
-            msg='All events need to have to custom arg "funky".')
-
-        ok_(ev[0]['label'] == ev[-1]['label'] == 'rest',
+        ok_(ev[0]['targets'] == ev[-1]['targets'] == 'rest',
             msg='First and last event are rest condition.')
 
         ok_(ev[-1]['onset'] + ev[-1]['duration'] == sa.nrows,
@@ -193,7 +191,7 @@ class IOHelperTests(unittest.TestCase):
         labels0 = design2labels(attr, baseline_label='silence')
         labels = design2labels(attr, baseline_label='silence',
                                 func=lambda x:x>0.5)
-        Nsilence = lambda x:len(N.where(N.array(x) == 'silence')[0])
+        Nsilence = lambda x:len(np.where(np.array(x) == 'silence')[0])
 
         nsilence0 = Nsilence(labels0)
         nsilence = Nsilence(labels)
@@ -212,10 +210,10 @@ class IOHelperTests(unittest.TestCase):
         chunks = labels2chunks(labels)
         self.failUnlessEqual(len(labels), len(chunks))
         # we must got them in sorted order
-        chunks_sorted = N.sort(chunks)
+        chunks_sorted = np.sort(chunks)
         self.failUnless((chunks == chunks_sorted).all())
         # for this specific one we must have just 4 chunks
-        self.failUnless((N.unique(chunks) == range(4)).all())
+        self.failUnless((np.unique(chunks) == range(4)).all())
 
 
     def test_sensor_locations(self):

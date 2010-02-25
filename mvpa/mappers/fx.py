@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 import operator
 
 from mvpa.base.dochelpers import _str
@@ -94,11 +94,11 @@ class FxMapper(Mapper):
                                % self.__class__.__name__)
         # apply fx along samples axis for each feature
         if self.__axis == 'samples':
-            mdata = N.apply_along_axis(self.__fx, 0, data, *self.__fxargs)
+            mdata = np.apply_along_axis(self.__fx, 0, data, *self.__fxargs)
         # apply fx along features axis for each sample
         elif self.__axis == 'features':
-            mdata = N.apply_along_axis(self.__fx, 1, data, *self.__fxargs)
-        return N.atleast_2d(mdata)
+            mdata = np.apply_along_axis(self.__fx, 1, data, *self.__fxargs)
+        return np.atleast_2d(mdata)
 
     @borrowdoc(Mapper)
     def _forward_dataset(self, ds):
@@ -115,7 +115,7 @@ class FxMapper(Mapper):
             mdata, sattrs = self._forward_dataset_grouped(ds)
             single_attr = False
 
-        samples = N.atleast_2d(mdata)
+        samples = np.atleast_2d(mdata)
 
         # return early if there is no attribute treatment desired
         if self.__attrfx is None:
@@ -142,7 +142,7 @@ class FxMapper(Mapper):
             if single_attr:
                 col[attr] = [a]
             else:
-                col[attr] = N.atleast_1d(a)
+                col[attr] = np.atleast_1d(a)
 
         return out
 
@@ -166,7 +166,7 @@ class FxMapper(Mapper):
                                 [col[attr].unique for attr in self.__uattrs]))
         # let it generate all combinations of unique elements in any attr
         for comb in _orthogonal_permutations(self.__attrcombs):
-            selector = reduce(N.multiply,
+            selector = reduce(np.multiply,
                                 [array_whereequal(col[attr].value, value)
                                  for attr, value in comb.iteritems()])
             # process the samples
@@ -175,7 +175,7 @@ class FxMapper(Mapper):
             else:
                 samples = ds.samples[:, selector]
 
-            fxed_samples = N.apply_along_axis(self.__fx, axis, samples,
+            fxed_samples = np.apply_along_axis(self.__fx, axis, samples,
                                               *self.__fxargs)
             mdata.append(fxed_samples)
             if not self.__attrfx is None:
@@ -186,9 +186,9 @@ class FxMapper(Mapper):
                     attrs[attr].append(fxed_attrs[i])
 
         if axis == 0:
-            mdata = N.vstack(mdata)
+            mdata = np.vstack(mdata)
         else:
-            mdata = N.vstack(N.transpose(mdata))
+            mdata = np.vstack(np.transpose(mdata))
         return mdata, attrs
 
 
@@ -231,7 +231,7 @@ def mean_sample(attrfx='merge'):
     -------
     FxMapper instance.
     """
-    return FxMapper('samples', N.mean, attrfx=attrfx)
+    return FxMapper('samples', np.mean, attrfx=attrfx)
 
 
 def mean_group_sample(attrs, attrfx='merge'):
@@ -255,7 +255,7 @@ def mean_group_sample(attrs, attrfx='merge'):
     -------
     FxMapper instance.
     """
-    return FxMapper('samples', N.mean, uattrs=attrs, attrfx=attrfx)
+    return FxMapper('samples', np.mean, uattrs=attrs, attrfx=attrfx)
 
 
 def mean_group_feature(attrs, attrfx='merge'):
@@ -279,7 +279,7 @@ def mean_group_feature(attrs, attrfx='merge'):
     -------
     FxMapper instance.
     """
-    return FxMapper('features', N.mean, uattrs=attrs, attrfx=attrfx)
+    return FxMapper('features', np.mean, uattrs=attrs, attrfx=attrfx)
 
 
 def absolute_features():
@@ -291,18 +291,18 @@ def absolute_features():
     -------
     FxMapper instance.
     """
-    return FxMapper('features', N.absolute, attrfx=None)
+    return FxMapper('features', np.absolute, attrfx=None)
 
 
 def sumofabs_sample():
     """Returns a mapper that returns the sum of absolute values of all samples.
     """
-    return FxMapper('samples', lambda x: N.abs(x).sum())
+    return FxMapper('samples', lambda x: np.abs(x).sum())
 
 def maxofabs_sample():
     """Returns a mapper that finds max of absolute values of all samples.
     """
-    return FxMapper('samples', lambda x: N.abs(x).max())
+    return FxMapper('samples', lambda x: np.abs(x).max())
 #
 # Utility functions
 #
@@ -325,7 +325,7 @@ def _uniquemerge2literal(attrs):
     # only do something if multiple items are given
     if not operator.isSequenceType(attrs):
         return attrs
-    unq = N.unique(attrs)
+    unq = np.unique(attrs)
     if len(unq) > 1:
         return '+'.join([str(l) for l in unq])
     else:
@@ -343,8 +343,8 @@ def _orthogonal_permutations(a_dict):
     The order is not defined, therefore the elements should be
     orthogonal to each other.
 
-    >>> for i in orthogonal_permutations({'a': [1,2,3], 'b': [4,5]}):
-            print i
+    >>> for i in _orthogonal_permutations({'a': [1,2,3], 'b': [4,5]}):
+    ...     print i
     {'a': 1, 'b': 4}
     {'a': 1, 'b': 5}
     {'a': 2, 'b': 4}

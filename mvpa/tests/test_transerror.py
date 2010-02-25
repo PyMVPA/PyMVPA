@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA classifier cross-validation"""
 
 import unittest
-import numpy as N
+import numpy as np
 
 from mvpa.support.copy import copy
 
@@ -25,19 +25,20 @@ from mvpa.clfs.stats import MCNullDist
 
 from mvpa.misc.exceptions import UnknownStateError
 
-from tests_warehouse import datasets, sweepargs
-from tests_warehouse_clfs import *
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
+from mvpa.testing.clfs import *
 
 class ErrorsTests(unittest.TestCase):
 
     def test_confusion_matrix(self):
-        data = N.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
+        data = np.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
         reg = [1,1,1,2,2,2,3,3,3]
         regl = [1,2,1,2,2,2,3,2,1]
         correct_cm = [[2,0,1],[1,3,1],[0,0,1]]
-        # Check if we are ok with any input type - either list, or N.array, or tuple
-        for t in [reg, tuple(reg), list(reg), N.array(reg)]:
-            for p in [regl, tuple(regl), list(regl), N.array(regl)]:
+        # Check if we are ok with any input type - either list, or np.array, or tuple
+        for t in [reg, tuple(reg), list(reg), np.array(reg)]:
+            for p in [regl, tuple(regl), list(regl), np.array(regl)]:
                 cm = ConfusionMatrix(targets=t, predictions=p)
                 # check table content
                 self.failUnless((cm.matrix == correct_cm).all())
@@ -55,14 +56,14 @@ class ErrorsTests(unittest.TestCase):
         self.failUnlessEqual(cm.matrix.shape, (3,3),
             msg="should be square matrix (len(reglabels) x len(reglabels)")
 
-        self.failUnlessRaises(ValueError, cm.add, reg, N.array([1]))
+        self.failUnlessRaises(ValueError, cm.add, reg, np.array([1]))
         """ConfusionMatrix must complaint if number of samples different"""
 
         # check table content
         self.failUnless((cm.matrix == correct_cm).all())
 
         # lets add with new labels (not yet known)
-        cm.add(reg, N.array([1,4,1,2,2,2,4,2,1]))
+        cm.add(reg, np.array([1,4,1,2,2,2,4,2,1]))
 
         self.failUnlessEqual(cm.labels, [1,2,3,4],
                              msg="We should have gotten 4th label")
@@ -117,7 +118,7 @@ class ErrorsTests(unittest.TestCase):
 
 
     def test_confusion_matrix_with_mappings(self):
-        data = N.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
+        data = np.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
         reg = [1,1,1,2,2,2,3,3,3]
         regl = [1,2,1,2,2,2,3,2,1]
         correct_cm = [[2,0,1], [1,3,1], [0,0,1]]
@@ -196,8 +197,8 @@ class ErrorsTests(unittest.TestCase):
         # for this simple test it can only be correct or misclassified
         # (boolean)
         self.failUnless(
-            N.sum(N.array(se.values(), dtype='float') \
-                  - N.array(se.values(), dtype='b')) == 0)
+            np.sum(np.array(se.values(), dtype='float') \
+                  - np.array(se.values(), dtype='b')) == 0)
 
 
     @sweepargs(clf=clfswh['multiclass'])
@@ -231,8 +232,8 @@ class ErrorsTests(unittest.TestCase):
             # so we at least do slightly above chance
             self.failUnless(stats['ACC'] > 1.2 / Nlabels)
             auc = stats['AUC']
-            if (Nlabels == 2) or (Nlabels > 2 and auc[0] is not N.nan):
-                mauc = N.min(stats['AUC'])
+            if (Nlabels == 2) or (Nlabels > 2 and auc[0] is not np.nan):
+                mauc = np.min(stats['AUC'])
                 if cfg.getboolean('tests', 'labile', default='yes'):
                     self.failUnless(mauc > 0.55,
                          msg='All AUCs must be above chance. Got minimal '
@@ -253,12 +254,12 @@ class ErrorsTests(unittest.TestCase):
         ##rcmpl('text', usetex=True)
         ##rcmpl('font',  family='sans', style='normal', variant='normal',
         ##   weight='bold',  stretch='normal', size='large')
-        #import numpy as N
+        #import numpy as np
         #from mvpa.clfs.transerror import \
         #     TransferError, ConfusionMatrix, ConfusionBasedError
 
-        array = N.array
-        uint8 = N.uint8
+        array = np.array
+        uint8 = np.uint8
         sets = [
            (array([47, 39, 38, 43, 45, 41, 44, 40, 46, 42, 47, 39, 38, 43, 45, 41, 44,
                  40, 46, 42, 47, 39, 38, 43, 45, 41, 44, 40, 46, 42, 47, 39, 38, 43,
@@ -485,8 +486,8 @@ class ErrorsTests(unittest.TestCase):
         self.failUnless('3kHz / 38' in cm.as_string())
 
         if externals.exists("pylab plottable"):
-            import pylab as P
-            P.figure()
+            import pylab as pl
+            pl.figure()
             labels_order = ("3kHz", "7kHz", "12kHz", "20kHz","30kHz", None,
                             "song1","song2","song3","song4","song5")
             #print cm
@@ -497,18 +498,18 @@ class ErrorsTests(unittest.TestCase):
             self.failUnless(cm._plotted_confusionmatrix[0,1] == cm.matrix[1,0])
             self.failUnless(cm._plotted_confusionmatrix[1,1] == cm.matrix[0,0])
             self.failUnless(cm._plotted_confusionmatrix[1,0] == cm.matrix[0,1])
-            P.close(fig)
+            pl.close(fig)
             fig, im, cb = cm.plot(labels=labels_order, numbers=True)
-            P.close(fig)
-            # P.show()
+            pl.close(fig)
+            # pl.show()
 
     def test_confusion_plot2(self):
         """Based on a sample confusion which plots incorrectly
 
         """
 
-        array = N.array
-        uint8 = N.uint8
+        array = np.array
+        uint8 = np.uint8
         sets = [(array([1, 2]), array([1, 1]),
                  array([[ 0.54343765,  0.45656235],
                         [ 0.92395853,  0.07604147]])),
@@ -537,16 +538,16 @@ class ErrorsTests(unittest.TestCase):
         except:
             self.fail()
         if externals.exists("pylab plottable"):
-            import pylab as P
-            #P.figure()
+            import pylab as pl
+            #pl.figure()
             #print cm
             fig, im, cb = cm.plot(origin='lower', numbers=True)
-            #P.plot()
+            #pl.plot()
             self.failUnless((cm._plotted_confusionmatrix == cm.matrix).all())
-            P.close(fig)
+            pl.close(fig)
             #fig, im, cb = cm.plot(labels=labels_order, numbers=True)
-            #P.close(fig)
-            #P.show()
+            #pl.close(fig)
+            #pl.show()
 
 
 def suite():
