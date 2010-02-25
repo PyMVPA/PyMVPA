@@ -100,15 +100,18 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
             raise ValueError, "The length of `x` (%i) has to match the 2nd " \
                               "axis of the data array (%i)" % (len(x), len(md))
 
+    # collect pylab things that are plotted for later modification
+    lines = []
+
     # plot highres line if present
     if curves is not None:
         for c in curves:
             xc, yc = c
             # scales line array to same range as datapoints
             if not linestyle is None:
-                pl.plot(xc, yc, linestyle)
+                lines.append(pl.plot(xc, yc, linestyle))
             else:
-                pl.plot(xc, yc)
+                lines.append(pl.plot(xc, yc))
 
         # no line between data points
         linestyle = 'None'
@@ -122,7 +125,9 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
         raise ValueError, "Unknown error type '%s'" % errtype
 
     # plot datapoints with error bars
-    pl.errorbar(x, md, err, fmt=fmt, linestyle=linestyle)
+    lines.append(pl.errorbar(x, md, err, fmt=fmt, linestyle=linestyle))
+    return lines
+
 
 
 ##REF: Name was automagically refactored
