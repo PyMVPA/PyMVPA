@@ -656,12 +656,12 @@ class TreeClassifier(ProxyClassifier):
     would separate to classify human vs animal and so on::
 
                                    SVM
-                                 /      \
-                            animate   inanimate
-                             /             \
-                           SVM             SMLR
-                         /     \          / | \ \
-                    human    animal      5  6 7  8
+                                 /     \
+                            animate  inanimate
+                             /            \
+                           SVM            SMLR
+                         /     \         / | \ \
+                    human    animal     5  6 7  8
                      |          |
                     SVM        SVM
                    /   \       /  \
