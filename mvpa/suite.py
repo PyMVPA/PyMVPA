@@ -171,6 +171,14 @@ if externals.exists("pylab"):
 if externals.exists("lxml") and externals.exists("nifti"):
     from mvpa.atlases import *
 
+
+if externals.exists("running ipython env"):
+    try:
+        if not cfg.getboolean('ipython', 'complete protected', False):
+            __IPYTHON__.Completer.omit__names = 2
+    finally:
+        pass
+
 def suite_stats():
     """Return cruel dict of things which evil suite provides
     """
