@@ -284,8 +284,6 @@ def __check_in_ipython():
             versions['ipython'] = SmartVersion(Release.version)
         except:
             pass
-        if not cfg.getboolean('ipython', 'complete protected', False):
-            __IPYTHON__.Completer.omit__names = 2
         return
     raise RuntimeError, "Not running in IPython session"
 
