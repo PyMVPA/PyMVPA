@@ -28,7 +28,7 @@ def test_erdataset():
                 nfeatures).reshape(-1, nfeatures)
     ds = dataset_wizard(samples, targets=targets, chunks=chunks)
     # check if events are determined properly
-    evs = find_events({'targets':ds.sa.targets, 'chunks':ds.sa.chunks})
+    evs = find_events(targets=ds.sa.targets, chunks=ds.sa.chunks)
     for ev in evs:
         assert_equal(ev['duration'], blocklength)
     assert_equal(ntargets * nchunks, len(evs))
@@ -90,3 +90,20 @@ def test_erdataset():
                                                nfeatures))
     assert_array_equal(rds.sa.myattr, np.repeat(results.sa.myattr,
                                                expected_nsamples))
+
+    from mvpa.measures.searchlight import Searchlight
+    from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
+    measure = lambda x: x
+    sl = Searchlight(measure,
+                     IndexQueryEngine(voxel_indices=Sphere(2),
+                                      event_offsetidx=Sphere(1)),
+                     nproc=1)
+
+    # add a second space to the dataset
+    erds.fa['voxel_indices'] = np.tile(np.arange(ds.nfeatures), 3)
+    print erds
+    print erds.fa.voxel_indices
+    print erds.fa.event_offsetidx
+    res = sl(erds)
+    print res
+    assert_false(res.nfeatures == 0)
