@@ -123,6 +123,7 @@ def collect_nose_tests():
               'test_mdp',
               'test_niftidataset',
               'test_eepdataset',
+              'test_erdataset',
               'test_zscoremapper',
               'test_kernel',
               'test_svmkernels',
