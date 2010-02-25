@@ -12,7 +12,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 from mvpa.measures.base import DatasetMeasure
 from mvpa.misc.stats import DSMatrix
 
@@ -38,7 +38,7 @@ class DSMDatasetMeasure(DatasetMeasure):
         dset_vec = self.dset_dsm.get_vector_form()
 
         # concatenate the two vectors, send to dissimlarity function
-        test_mat = N.asarray([in_vec, dset_vec])
+        test_mat = np.asarray([in_vec, dset_vec])
 
         test_dsmatrix = DSMatrix(test_mat, self.output_metric)
 

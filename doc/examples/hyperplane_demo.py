@@ -42,31 +42,31 @@ basketball_players_weight = [ 2, 5, 3, 7, 3 ]
 Let's plot this.
 """
 
-import pylab as P
-P.plot(sumo_wrestlers_height, sumo_wrestlers_weight, 'ro',
+import pylab as pl
+pl.plot(sumo_wrestlers_height, sumo_wrestlers_weight, 'ro',
        linewidth=2, label="Sumo wrestlers")
-P.plot(basketball_players_height, basketball_players_weight, 'bx',
+pl.plot(basketball_players_height, basketball_players_weight, 'bx',
        linewidth=2, label="Basketball players")
-P.xlim(0, 6)
-P.ylim(0, 10)
-P.xlabel('Height')
-P.ylabel('Weight')
-P.legend()
+pl.xlim(0, 6)
+pl.ylim(0, 10)
+pl.xlabel('Height')
+pl.ylabel('Weight')
+pl.legend()
 
 """
 Let's stack up the sumo data on top of the basketball players data.
 """
 
-import numpy as N
+import numpy as np
 
 # transpose to have observations along the first axis
-sumo_data = N.vstack((sumo_wrestlers_height,
+sumo_data = np.vstack((sumo_wrestlers_height,
                       sumo_wrestlers_weight)).T
 # same for the baskball data
-basketball_data = N.vstack((basketball_players_height,
+basketball_data = np.vstack((basketball_players_height,
                             basketball_players_weight)).T
 # now stack them all together
-all_data = N.vstack((sumo_data, basketball_data))
+all_data = np.vstack((sumo_data, basketball_data))
 
 """
 In order to be able to train a classifier on the input vectors, we need to know
@@ -75,7 +75,7 @@ for sumo wrestlers, and `-1` for basketball players.
 """
 
 # creates: [  1,  1,  1,  1,  1, -1, -1, -1, -1, -1]
-all_desired_output = N.repeat([1, -1], 5)
+all_desired_output = np.repeat([1, -1], 5)
 
 """
 We want to find a linear decision boundary,
@@ -155,9 +155,9 @@ we have this equation:
 """
 
 # compute pseudo-inverse as a matrix
-pinv = N.linalg.pinv(N.mat(zero_meaned_data))
+pinv = np.linalg.pinv(np.mat(zero_meaned_data))
 # column-vector of observations
-y = all_desired_output[N.newaxis].T
+y = all_desired_output[np.newaxis].T
 
 weights = pinv * y
 
@@ -167,8 +167,8 @@ A useful command for making grids of points
 which span a particular 2D space is called "meshgrid"
 """
 
-gridspec = N.linspace(-4, 4, 20)
-input_space_X, input_space_Y = N.meshgrid(gridspec, gridspec)
+gridspec = np.linspace(-4, 4, 20)
+input_space_X, input_space_Y = np.meshgrid(gridspec, gridspec)
 
 # for the rest it is easier to have `weights` as a simple array, instead
 # of a matrix
@@ -182,30 +182,30 @@ if it is greater than 0, and `-1` if it is less than zero.
 Let's plot the decision surface color-coded.
 """
 
-P.figure()
-P.pcolor(input_space_X, input_space_Y, weighted_output_Z,
-         cmap=P.cm.Spectral)
+pl.figure()
+pl.pcolor(input_space_X, input_space_Y, weighted_output_Z,
+         cmap=pl.cm.Spectral)
 
 """
 Let's plot the zero-meaned sumo and basketball data on top of this.
 """
 
-P.plot(zero_meaned_data[all_desired_output == 1, 0],
+pl.plot(zero_meaned_data[all_desired_output == 1, 0],
        zero_meaned_data[all_desired_output == 1, 1],
        'ro', linewidth=2, label="Sumo wrestlers")
-P.plot(zero_meaned_data[all_desired_output == -1, 0],
+pl.plot(zero_meaned_data[all_desired_output == -1, 0],
        zero_meaned_data[all_desired_output == -1, 1],
        'bx', linewidth=2, label="Basketball players")
-P.xlim(-4, 4)
-P.ylim(-4, 4)
-P.colorbar()
-P.xlabel('Demeaned height')
-P.ylabel('Demeaned weight')
-P.title('Decision output')
-P.legend()
+pl.xlim(-4, 4)
+pl.ylim(-4, 4)
+pl.colorbar()
+pl.xlabel('Demeaned height')
+pl.ylabel('Demeaned weight')
+pl.title('Decision output')
+pl.legend()
 
 
 from mvpa.base import cfg
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
-    P.show()
+    pl.show()

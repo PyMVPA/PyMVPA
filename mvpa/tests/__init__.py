@@ -44,7 +44,6 @@ def collect_test_suites():
         'test_args',
         'test_meg',
         # Classifiers (longer tests)
-        'test_kernel',
         'test_clf',
         'test_regr',
         'test_knn',
@@ -84,13 +83,8 @@ def collect_test_suites():
                          ('scipy', 'stats_sp'),
                          ('scipy', 'gpr'),
                          (['lars','scipy'], 'lars'),
-                         ('pywt', 'waveletmapper'),
                          (['cPickle', 'gzip'], 'hamster'),
                        ]
-
-    if not cfg.getboolean('tests', 'lowmem', default='no'):
-        __optional_tests += [(['nifti', 'lxml'], 'atlases')]
-
 
     # and now for the optional tests
     optional_tests = []
@@ -107,7 +101,7 @@ def collect_test_suites():
     for t in tests:
         exec 'import ' + t
 
-    # instanciate all tests suites and return dict of them (with ID as key)
+    # instantiate all tests suites and return dict of them (with ID as key)
     return dict([(t[5:], eval(t + '.suite()')) for t in tests ])
 
 
@@ -121,21 +115,36 @@ def collect_nose_tests():
               'test_arraymapper',
               'test_boxcarmapper',
               'test_mapper',
+              'test_mapper_sp',
               'test_fxmapper',
+              'test_glmnet',
+              'test_hdf5',
               'test_neighborhood',
+              'test_mdp',
+              'test_niftidataset',
               'test_eepdataset',
               'test_zscoremapper',
+              'test_kernel',
+              'test_svmkernels',
+              'test_waveletmapper',
+              'test_emp_null',
               ]
-    if externals.exists('scipy'):
-        tests += ['test_mapper_sp']
-    if externals.exists('glmnet'):
-        tests += ['test_glmnet']
-    if externals.exists('nifti'):
-        tests += ['test_niftidataset']
-    if externals.exists('mdp'):
-        tests += ['test_mdp']
-    if externals.exists('h5py'):
-        tests += ['test_hdf5']
+
+    if not cfg.getboolean('tests', 'lowmem', default='no'):
+        tests += ['test_atlases']
+
+
+    ## SkipTest will take care about marking those as S
+    ## if externals.exists('scipy'):
+    ##     tests += ['test_mapper_sp']
+    ## if externals.exists('glmnet'):
+    ##     tests += ['test_glmnet']
+    ## if externals.exists('nifti'):
+    ##     tests += ['test_niftidataset']
+    ## if externals.exists('mdp'):
+    ##     tests += ['test_mdp']
+    ## if externals.exists('h5py'):
+    ##     tests += ['test_hdf5']
 
     return tests
 

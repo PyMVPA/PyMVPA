@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Import helper for miscalaneouse PyMVPA plotting functions (mvpa.misc.plot)"""
+"""Import helper for miscellaneous PyMVPA plotting functions (mvpa.misc.plot)"""
 
 __docformat__ = 'restructuredtext'
 

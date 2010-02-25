@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.mappers.projection import ProjectionMapper
 from mvpa.datasets import Dataset
@@ -104,7 +104,7 @@ class ProcrusteanMapper(ProjectionMapper):
 
         for i, ds in enumerate((source, target)):
             if isinstance(ds, Dataset):
-                data = N.asarray(ds.samples)
+                data = np.asarray(ds.samples)
             else:
                 data = ds
             if assess_residuals:
@@ -129,25 +129,25 @@ class ProcrusteanMapper(ProjectionMapper):
                   % (sn, tn)
 
         # Sums of squares
-        ssqs = [N.sum(d**2, axis=0) for d in datas]
+        ssqs = [np.sum(d**2, axis=0) for d in datas]
 
         # XXX check for being invariant?
         #     needs to be tuned up properly and not raise but handle
         for i in xrange(2):
-            if N.all(ssqs[i] <= N.abs((N.finfo(datas[i].dtype).eps
+            if np.all(ssqs[i] <= np.abs((np.finfo(datas[i].dtype).eps
                                        * sn * means[i] )**2)):
                 raise ValueError, "For now do not handle invariant in time datasets"
 
-        norms = [ N.sqrt(N.sum(ssq)) for ssq in ssqs ]
+        norms = [ np.sqrt(np.sum(ssq)) for ssq in ssqs ]
         normed = [ data/norm for (data, norm) in zip(datas, norms) ]
 
         # add new blank dimensions to source space if needed
         if sm < tm:
-            normed[0] = N.hstack( (normed[0], N.zeros((sn, tm-sm))) )
+            normed[0] = np.hstack( (normed[0], np.zeros((sn, tm-sm))) )
 
         if sm > tm:
             if self._reduction:
-                normed[1] = N.hstack( (normed[1], N.zeros((sn, sm-tm))) )
+                normed[1] = np.hstack( (normed[1], np.zeros((sn, sm-tm))) )
             else:
                 raise ValueError, "reduction=False, so mapping from " \
                       "higher dimensionality " \
@@ -159,16 +159,16 @@ class ProcrusteanMapper(ProjectionMapper):
             # Just do silly linear system of equations ;) or naive
             # inverse problem
             if sn == sm and tm == 1:
-                T = N.linalg.solve(source, target)
+                T = np.linalg.solve(source, target)
             else:
-                T = N.linalg.lstsq(source, target, rcond=self._oblique_rcond)[0]
+                T = np.linalg.lstsq(source, target, rcond=self._oblique_rcond)[0]
             ss = 1.0
         else:
             # Orthogonal transformation
             # figure out optimal rotation
-            U, s, Vh = N.linalg.svd(N.dot(target.T, source),
+            U, s, Vh = np.linalg.svd(np.dot(target.T, source),
                                     full_matrices=False)
-            T = N.dot(Vh.T, U.T)
+            T = np.dot(Vh.T, U.T)
 
             if not self._reflection:
                 # then we need to assure that it is only rotation
@@ -178,8 +178,8 @@ class ProcrusteanMapper(ProjectionMapper):
                 # http://dx.doi.org/10.1007%2FBF02289451
                 nsv = len(s)
                 s[:-1] = 1
-                s[-1] = N.linalg.det(T)
-                T = N.dot(U[:, :nsv] * s, Vh)
+                s[-1] = np.linalg.det(T)
+                T = np.dot(U[:, :nsv] * s, Vh)
 
             # figure out scale and final translation
             # XXX with reflection False -- not sure if here or there or anywhere...
@@ -206,8 +206,8 @@ class ProcrusteanMapper(ProjectionMapper):
         if __debug__ and 'MAP_' in debug.active:
             # compute the residuals
             res_f = self.forward(odatas[0])
-            d_f = N.linalg.norm(odatas[1] - res_f)/N.linalg.norm(odatas[1])
+            d_f = np.linalg.norm(odatas[1] - res_f)/np.linalg.norm(odatas[1])
             res_r = self.reverse(odatas[1])
-            d_r = N.linalg.norm(odatas[0] - res_r)/N.linalg.norm(odatas[0])
+            d_r = np.linalg.norm(odatas[0] - res_r)/np.linalg.norm(odatas[0])
             debug('MAP_', "%s, residuals are forward: %g,"
                   " reverse: %g" % (repr(self), d_f, d_r))

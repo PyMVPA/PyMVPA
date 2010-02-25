@@ -30,6 +30,7 @@ Datasets
      base.dataset
      datasets.base
      datasets.mri
+     datasets.eventrelated
      datasets.eep
      datasets.miscfx
      datasets.splitters
@@ -59,9 +60,9 @@ of the derived classes. However, it is perfectly possible to use it directly.
 In the simplest case a dataset can be constructed by specifying some
 data samples and the corresponding class labels.
 
-  >>> import numpy as N
+  >>> import numpy as np
   >>> from mvpa.datasets import dataset_wizard
-  >>> data = dataset_wizard(samples=N.random.normal(size=(10,5)), targets=1)
+  >>> data = dataset_wizard(samples=np.random.normal(size=(10,5)), targets=1)
   >>> print data
   <Dataset: 10x5@float64, <sa: targets>>
 
@@ -287,11 +288,11 @@ as of e.g. the Python `xrange()` function.
 To perform data splitting for the already mentioned cross-validation, PyMVPA
 provides the  :class:`~mvpa.datasets.splitters.NFoldSplitter` class. It implements a method to generate
 arbitrary N-M splits, where N is the number of different chunks in a dataset
-and M is any non-negative integer smaller than N. Doing a leave-one-out split
+and M is any non-negative integer smaller than np. Doing a leave-one-out split
 of our example dataset looks like this:
 
   >>> from mvpa.datasets.splitters import NFoldSplitter
-  >>> data = dataset_wizard(samples=N.random.normal(size=(10,5)),
+  >>> data = dataset_wizard(samples=np.random.normal(size=(10,5)),
   ...                       targets=1, chunks=range(10))
   >>> splitter = NFoldSplitter(cvtype=1)   # Do N-1
   >>> for wdata, vdata in splitter(data):

@@ -32,10 +32,10 @@ goodfeat = 10
 offset = .5
 
 # create the sample datasets
-samp1 = N.random.randn(nsamp,nfeat)
+samp1 = np.random.randn(nsamp,nfeat)
 samp1[:,:goodfeat] += offset
 
-samp2 = N.random.randn(nsamp,nfeat)
+samp2 = np.random.randn(nsamp,nfeat)
 samp2[:,:goodfeat] -= offset
 
 # create the pymvpa training dataset from the labeled features
@@ -87,7 +87,7 @@ lsvm_confusion = ConfusionMatrix(
 # now train SVM with selected features
 print "Evaluating Linear SVM classifier with SMLR's features..."
 
-keepInd = (N.abs(smlr.weights).mean(axis=1)!=0)
+keepInd = (np.abs(smlr.weights).mean(axis=1)!=0)
 newtrainpat = trainpat[:, keepInd]
 newtestpat = testpat[:, keepInd]
 
@@ -105,7 +105,7 @@ lsvm_confusion_sparse = ConfusionMatrix(
 
 print "SMLR Percent Correct:\t%g%% (Retained %d/%d features)" % \
     (smlr_confusion.percent_correct,
-     (smlr.weights!=0).sum(), N.prod(smlr.weights.shape))
+     (smlr.weights!=0).sum(), np.prod(smlr.weights.shape))
 print "linear-SVM Percent Correct:\t%g%%" % \
     (lsvm_confusion.percent_correct)
 print "linear-SVM Percent Correct (with %d features from SMLR):\t%g%%" % \

@@ -8,6 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA Regressions"""
 
+from mvpa.testing import *
+from mvpa.testing.clfs import *
+from mvpa.testing.datasets import datasets
+
 from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
 
 from mvpa.misc.errorfx import CorrErrorFx
@@ -19,8 +23,6 @@ from mvpa.misc.attrmap import AttributeMap
 from mvpa.mappers.fx import mean_sample
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
-from tests_warehouse import *
-from tests_warehouse_clfs import *
 
 class RegressionsTests(unittest.TestCase):
 
@@ -46,8 +48,10 @@ class RegressionsTests(unittest.TestCase):
             splitter=NFoldSplitter(),
             postproc=mean_sample(),
             enable_ca=['training_confusion', 'confusion'])
-        corr = cve(ds).samples.squeeze()
+        corr = np.asscalar(cve(ds).samples)
 
+        # Our CorrErrorFx should never return NaN
+        self.failUnless(not np.isnan(corr))
         self.failUnless(corr == cve.ca.confusion.stats['CCe'])
 
         splitregr = SplitClassifier(
@@ -66,7 +70,8 @@ class RegressionsTests(unittest.TestCase):
             # Part of it for now -- CCe
             for conf in confusion.summaries:
                 stats = conf.stats
-                self.failUnless(stats['CCe'] < 0.5)
+                if cfg.getboolean('tests', 'labile', default='yes'):
+                    self.failUnless(stats['CCe'] < 0.5)
                 self.failUnlessEqual(stats['CCe'], stats['Summary CCe'])
 
             s0 = confusion.as_string(short=True)
@@ -93,9 +98,9 @@ class RegressionsTests(unittest.TestCase):
         split_predictions = splitregr.predict(ds.samples)
 
         # To test basic plotting
-        #import pylab as P
+        #import pylab as pl
         #cve.confusion.plot()
-        #P.show()
+        #pl.show()
 
     @sweepargs(clf=clfswh['regression'])
     def test_regressions_classifiers(self, clf):

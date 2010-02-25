@@ -15,7 +15,7 @@ set and include important features successively.
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 from mvpa.support.copy import copy
 
 from mvpa.featsel.base import FeatureSelection
@@ -139,7 +139,7 @@ class IFS(FeatureSelection):
                 # compute data measure on this feature set
                 measures.append(self.__data_measure(tmp_dataset))
 
-            measures = [N.asscalar(m) for m in measures]
+            measures = [np.asscalar(m) for m in measures]
             # Select promissing feature candidates (staging)
             # IDs are only applicable to the current set of feature candidates
             tmp_staging_ids = self.__feature_selector(measures)

@@ -230,7 +230,7 @@ if __debug__:
                    "Checking in checking if clf was trained on given dataset")
     debug.register('CHECK_RETRAIN', "Checking in retraining/retesting")
     debug.register('CHECK_STABILITY', "Checking for numerical stability")
-    debug.register('ENFORCE_STATES_ENABLED', "Forcing all ca to be enabled")
+    debug.register('ENFORCE_CA_ENABLED', "Forcing all ca to be enabled")
 
     debug.register('MAP',   "*Mapper")
     debug.register('MAP_',  "*Mapper (verbose)")
@@ -295,6 +295,10 @@ if __debug__:
     debug.register('SG',  "PyMVPA SG wrapping")
     debug.register('SG_', "PyMVPA SG wrapping verbose")
     debug.register('SG__', "PyMVPA SG wrapping debug")
+    debug.register('SG_GC', "For all entities enable highest level"
+                            " (garbage collector)")
+    debug.register('SG_LINENO', "Enable printing of the file:lineno"
+                                " where SG_ERROR occurred.")
     debug.register('SG_SVM', "Internal shogun debug output for SVM itself")
     debug.register('SG_FEATURES', "Internal shogun debug output for features")
     debug.register('SG_LABELS', "Internal shogun debug output for labels")
@@ -304,6 +308,7 @@ if __debug__:
 
     debug.register('IOH',    "IO Helpers")
     debug.register('IO_HAM', "Hamster")
+    debug.register('HDF5',   "HDF5 IO")
     debug.register('CM',   "Confusion matrix computation")
     debug.register('ROC',  "ROC analysis")
     debug.register('CROSSC', "Cross-validation call")

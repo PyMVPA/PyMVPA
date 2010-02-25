@@ -22,22 +22,33 @@ if __debug__:
 class _VersionsChecker(dict):
     """Helper class to check the versions of the available externals
     """
+
+    def __init__(self, *args, **kwargs):
+        self._KNOWN = {}
+        dict.__init__(self, *args, **kwargs)
+
     def __getitem__(self, key):
         if not self.has_key(key):
-            exists(key, force=True, raiseException=True)
+            if key in self._KNOWN:
+                # run registered procedure to obtain versions
+                self._KNOWN[key]()
+            else:
+                exists(key, force=True, raise_=True)
         return super(_VersionsChecker, self).__getitem__(key)
 
 versions = _VersionsChecker()
 """Versions of available externals, as tuples
 """
 
-
-def __check_scipy():
-    """Check if scipy is present an if it is -- store its version
+def __assign_numpy_version():
+    """Check if numpy is present (it must be) an if it is -- store its version
     """
-    import warnings
-    exists('numpy', raiseException=True)
+    import numpy as np
+    versions['numpy'] = SmartVersion(np.__version__)
+
+def __assign_scipy_version():
     # To don't allow any crappy warning to sneak in
+    import warnings
     warnings.simplefilter('ignore', DeprecationWarning)
     try:
         import scipy as sp
@@ -45,9 +56,18 @@ def __check_scipy():
         warnings.simplefilter('default', DeprecationWarning)
         raise
     warnings.simplefilter('default', DeprecationWarning)
+    versions['scipy'] = SmartVersion(sp.__version__)
+
+def __check_scipy():
+    """Check if scipy is present an if it is -- store its version
+    """
+    exists('numpy', raise_=True)
+    __assign_numpy_version()
+    __assign_scipy_version()
+    import scipy as sp
     # Infiltrate warnings if necessary
     numpy_ver = versions['numpy']
-    scipy_ver = versions['scipy'] = SmartVersion(sp.__version__)
+    scipy_ver = versions['scipy']
     # There is way too much deprecation warnings spit out onto the
     # user. Lets assume that they should be fixed by scipy 0.7.0 time
     if scipy_ver >= "0.6.0" and scipy_ver < "0.7.0" \
@@ -70,14 +90,7 @@ def __check_scipy():
                 warnings.filterwarnings('ignore', f, w)
 
 
-def __check_numpy():
-    """Check if numpy is present (it must be) an if it is -- store its version
-    """
-    import numpy as N
-    versions['numpy'] = SmartVersion(N.__version__)
-
-
-def __check_mdp():
+def __assign_mdp_version():
     """Check if mdp is present (it must be) an if it is -- store its version
     """
     import mdp
@@ -100,8 +113,8 @@ def __check_pywt(features=None):
       'wp reconstruct fixed'
     """
     import pywt
-    import numpy as N
-    data = N.array([ 0.57316901,  0.65292526,  0.75266733,  0.67020084,  0.46505364,
+    import numpy as np
+    data = np.array([ 0.57316901,  0.65292526,  0.75266733,  0.67020084,  0.46505364,
                      0.76478331,  0.33034164,  0.49165547,  0.32979941,  0.09696717,
                      0.72552711,  0.4138999 ,  0.54460628,  0.786351  ,  0.50096306,
                      0.72436454, 0.2193098 , -0.0135051 ,  0.34283984,  0.65596245,
@@ -118,7 +131,7 @@ def __check_pywt(features=None):
 
     if 'wp reconstruct fixed' in features:
         rec = wp2.reconstruct()
-        if N.linalg.norm(rec[:len(data)] - data) > 1e-3:
+        if np.linalg.norm(rec[:len(data)] - data) > 1e-3:
             raise ImportError, \
                   "Failed to reconstruct WP correctly"
     return True
@@ -134,6 +147,20 @@ def __check_libsvm_verbosity_control():
         raise ImportError, "Provided version of libsvm has no way to control " \
               "its level of verbosity"
 
+def __assign_shogun_version():
+    """Assign shogun versions
+    """
+    if 'shogun' in versions:
+        return
+    import shogun.Classifier as __sc
+    versions['shogun:rev'] = __sc.Version_get_version_revision()
+    ver = __sc.Version_get_version_release().lstrip('v')
+    versions['shogun:full'] = ver
+    if '_' in ver:
+        ver = ver[:ver.index('_')]
+    versions['shogun'] = ver
+
+
 def __check_shogun(bottom_version, custom_versions=[]):
     """Check if version of shogun is high enough (or custom known) to
     be enabled in the testsuite
@@ -148,12 +175,16 @@ def __check_shogun(bottom_version, custom_versions=[]):
     """
     import shogun.Classifier as __sc
     ver = __sc.Version_get_version_revision()
+    __assign_shogun_version()
     if (ver in custom_versions) or (ver >= bottom_version):
         return True
     else:
         raise ImportError, 'Version %s is smaller than needed %s' % \
               (ver, bottom_version)
 
+def __assign_nipy_version():
+    import nipy
+    versions['nipy'] = nipy.__version__
 
 def __check_weave():
     """Apparently presence of scipy is not sufficient since some
@@ -167,7 +198,7 @@ def __check_weave():
     """
     from scipy import weave
     from scipy.weave import converters, build_tools
-    import numpy as N
+    import numpy as np
     # to shut weave up
     import sys
     # we can't rely on weave at all at the restoring argv. On etch box
@@ -185,7 +216,7 @@ def __check_weave():
         cargs = []
     fmsg = None
     try:
-        data = N.array([1,2,3])
+        data = np.array([1,2,3])
         counter = weave.inline("data[0]=fabs(-1);", ['data'],
                                type_converters=converters.blitz,
                                verbose=0,
@@ -218,11 +249,11 @@ def __check_atlas_family(family):
 
 def __check_stablerdist():
     import scipy.stats
-    import numpy as N
+    import numpy as np
     ## Unfortunately 0.7.0 hasn't fixed the issue so no chance but to do
     ## a proper numerical test here
     try:
-        scipy.stats.rdist(1.32, 0, 1).cdf(-1.0 + N.finfo(float).eps)
+        scipy.stats.rdist(1.32, 0, 1).cdf(-1.0 + np.finfo(float).eps)
         # Actually previous test is insufficient for 0.6, so enabling
         # elderly test on top
         # ATM all known implementations which implement custom cdf for
@@ -271,11 +302,16 @@ def __check_matplotlib():
     backend = cfg.get('matplotlib', 'backend')
     if backend:
         matplotlib.use(backend)
+        import warnings
+        # And disable useless warning from matplotlib in the future
+        warnings.filterwarnings(
+            'ignore', 'This call to matplotlib.use() has no effect.*',
+            UserWarning)
 
 def __check_pylab():
     """Check if matplotlib is there and then pylab"""
-    exists('matplotlib', raiseException=True)
-    import pylab as P
+    exists('matplotlib', raise_=True)
+    import pylab as pl
 
 def __check_pylab_plottable():
     """Simple check either we can plot anything using pylab.
@@ -283,11 +319,11 @@ def __check_pylab_plottable():
     Primary use in unittests
     """
     try:
-        exists('pylab', raiseException=True)
-        import pylab as P
-        fig = P.figure()
-        P.plot([1,2], [1,2])
-        P.close(fig)
+        exists('pylab', raise_=True)
+        import pylab as pl
+        fig = pl.figure()
+        pl.plot([1,2], [1,2])
+        pl.close(fig)
     except:
         raise RuntimeError, "Cannot plot in pylab"
     return True
@@ -311,6 +347,10 @@ def __check_griddata():
 def __check_reportlab():
     import reportlab as rl
     versions['reportlab'] = SmartVersion(rl.Version)
+
+def __check_pprocess():
+    import pprocess as pp
+    versions['pprocess'] = SmartVersion(pp.__version__)
 
 def __check_rpy():
     """Check either rpy is available and also set it for the sane execution
@@ -354,12 +394,12 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'nifti ge 0.20090205.1':
                 'from nifti.clib import detachDataFromImage as __',
           'ctypes':'import ctypes as __',
-          'shogun':'import shogun as __',
-          'shogun.krr': 'import shogun.Regression as __; x=__.KRR',
-          'shogun.mpd': 'import shogun.Classifier as __; x=__.MPDSVM',
-          'shogun.lightsvm': 'import shogun.Classifier as __; x=__.SVMLight',
-          'shogun.svrlight': 'from shogun.Regression import SVRLight as __',
-          'numpy': "__check_numpy()",
+          'shogun':'__assign_shogun_version()',
+          'shogun.krr': '__assign_shogun_version(); import shogun.Regression as __; x=__.KRR',
+          'shogun.mpd': '__assign_shogun_version(); import shogun.Classifier as __; x=__.MPDSVM',
+          'shogun.lightsvm': '__assign_shogun_version(); import shogun.Classifier as __; x=__.SVMLight',
+          'shogun.svrlight': '__assign_shogun_version(); from shogun.Regression import SVRLight as __',
+          'numpy': "__assign_numpy_version()",
           'scipy': "__check_scipy()",
           'good scipy.stats.rdist': "__check_stablerdist()",
           'good scipy.stats.rv_discrete.ppf': "__check_rv_discrete_ppf()",
@@ -369,17 +409,17 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
           'rpy': "__check_rpy()",
           'rpy2': "__check_rpy2()",
-          'lars': "exists('rpy2', raiseException=True);" \
+          'lars': "exists('rpy2', raise_=True);" \
                   "import rpy2.robjects; rpy2.robjects.r.library('lars')",
-          'elasticnet': "exists('rpy2', raiseException=True); "\
+          'elasticnet': "exists('rpy2', raise_=True); "\
                   "import rpy2.robjects; rpy2.robjects.r.library('elasticnet')",
-          'glmnet': "exists('rpy2', raiseException=True); " \
+          'glmnet': "exists('rpy2', raise_=True); " \
                   "import rpy2.robjects; rpy2.robjects.r.library('glmnet')",
           'matplotlib': "__check_matplotlib()",
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
           'openopt': "__check_openopt()",
-          'mdp': "__check_mdp()",
+          'mdp': "__assign_mdp_version()",
           'mdp ge 2.4': "from mdp.nodes import LLENode as __",
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
            # 3318 corresponds to release 0.6.4
@@ -396,12 +436,13 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'running ipython env': "__check_in_ipython()",
           'reportlab': "__check_reportlab()",
           'nose': "import nose as __",
-          'pprocess': "import pprocess as __",
+          'pprocess': "__check_pprocess()",
           'h5py': "import h5py as __",
+          'nipy': "__assign_nipy_version()",
           }
 
 
-def exists(dep, force=False, raiseException=False, issueWarning=None):
+def exists(dep, force=False, raise_=False, issueWarning=None):
     """
     Test whether a known dependency is installed on the system.
 
@@ -416,7 +457,7 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
     force : boolean
       Whether to force the test even if it has already been
       performed.
-    raiseException : boolean
+    raise_ : boolean
       Whether to raise RuntimeError if dependency is missing.
     issueWarning : string or None or True
       If string, warning with given message would be thrown.
@@ -425,7 +466,7 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
     """
     # if we are provided with a list of deps - go through all of them
     if isinstance(dep, list) or isinstance(dep, tuple):
-        results = [ exists(dep_, force, raiseException) for dep_ in dep ]
+        results = [ exists(dep_, force, raise_) for dep_ in dep ]
         return bool(reduce(lambda x,y: x and y, results, True))
 
     # where to look in cfg
@@ -441,7 +482,7 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
         # check whether an exception should be raised, even though the external
         # was already tested previously
         if not cfg.getboolean('externals', cfgid) \
-               and raiseException \
+               and raise_ \
                and cfg.getboolean('externals', 'raise exception', True):
             raise RuntimeError, "Required external '%s' was not found" % dep
         return cfg.getboolean('externals', cfgid)
@@ -483,7 +524,7 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
                   (dep, {True:'', False:' NOT'}[result], estr))
 
     if not result:
-        if raiseException \
+        if raise_ \
                and cfg.getboolean('externals', 'raise exception', True):
             raise RuntimeError, "Required external '%s' was not found" % dep
         if issueWarning is not None \
@@ -503,6 +544,21 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
         cfg.set('externals', 'have ' + dep, 'no')
 
     return result
+
+# Bind functions for some versions checkings
+versions._KNOWN.update({
+    'numpy' : __assign_numpy_version,
+    'scipy' : __assign_scipy_version,
+    'nipy' : __assign_nipy_version,
+    'mdp' : __assign_mdp_version,
+    'ipython' : __check_in_ipython,
+    'reportlab' : __check_reportlab,
+    'pprocess' : __check_pprocess,
+    'rpy2' : __check_rpy2,
+    'shogun' : __assign_shogun_version,
+    'shogun:rev' : __assign_shogun_version,
+    'shogun:full' : __assign_shogun_version,
+    })
 
 
 ##REF: Name was automagically refactored

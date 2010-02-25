@@ -11,7 +11,7 @@
 import os
 import unittest
 from tempfile import mktemp
-import numpy as N
+import numpy as np
 
 from mvpa.misc.io.hamster import *
 
@@ -40,7 +40,7 @@ class HamsterHelperTests(unittest.TestCase):
         0 1 2
         3 4 5
         """
-        ex2 = {'d1': N.random.normal(size=(4,4))}
+        ex2 = {'d1': np.random.normal(size=(4,4))}
 
         hamster = Hamster(ex1=ex1)
         hamster.d = ex2
@@ -104,7 +104,7 @@ class HamsterHelperTests(unittest.TestCase):
         0 1 2
         3 4 5
         """
-        ex2 = {'d1': N.random.normal(size=(4,4))}
+        ex2 = {'d1': np.random.normal(size=(4,4))}
 
         h = Hamster(ex1=ex1)
         h.ex2 = ex2

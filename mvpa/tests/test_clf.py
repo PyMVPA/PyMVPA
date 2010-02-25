@@ -8,6 +8,14 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA basic Classifiers"""
 
+import numpy as np
+
+from mvpa.testing import *
+from mvpa.testing import _ENFORCE_CA_ENABLED
+
+from mvpa.testing.datasets import *
+from mvpa.testing.clfs import *
+
 from mvpa.support.copy import deepcopy
 from mvpa.base import externals
 
@@ -28,19 +36,12 @@ from mvpa.mappers.flatten import mask_mapper
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.mappers.fx import mean_sample
 
-from tests_warehouse import *
-from tests_warehouse_clfs import *
-
-from mvpa.testing.tools import assert_array_equal, assert_array_almost_equal
 
 # What exceptions to allow while testing degenerate cases.
 # If it pukes -- it is ok -- user will notice that something
 # is wrong
 _degenerate_allowed_exceptions = [
     DegenerateInputError, FailedToTrainError, FailedToPredictError]
-if externals.exists('rpy'):
-    import rpy
-    _degenerate_allowed_exceptions += [rpy.RPyRException]
 
 
 class ClassifiersTests(unittest.TestCase):
@@ -63,7 +64,7 @@ class ClassifiersTests(unittest.TestCase):
         """Should have no predictions after training. Predictions
         state should be explicitely disabled"""
 
-        if not _all_ca_enabled:
+        if not _ENFORCE_CA_ENABLED:
             self.failUnlessRaises(UnknownStateError,
                 clf.ca.__getattribute__, "trained_dataset")
 
@@ -106,7 +107,7 @@ class ClassifiersTests(unittest.TestCase):
 
         # check ca enabling propagation
         self.failUnlessEqual(self.clf_sign.ca.is_enabled('feature_ids'),
-                             _all_ca_enabled)
+                             _ENFORCE_CA_ENABLED)
         self.failUnlessEqual(bclf.clfs[0].ca.is_enabled('feature_ids'), True)
 
         bclf2 = CombinedClassifier(clfs=[self.clf_sign.clone(),
@@ -115,9 +116,9 @@ class ClassifiersTests(unittest.TestCase):
                                   enable_ca=['feature_ids'])
 
         self.failUnlessEqual(self.clf_sign.ca.is_enabled('feature_ids'),
-                             _all_ca_enabled)
+                             _ENFORCE_CA_ENABLED)
         self.failUnlessEqual(bclf2.clfs[0].ca.is_enabled('feature_ids'),
-                             _all_ca_enabled)
+                             _ENFORCE_CA_ENABLED)
 
 
 
@@ -175,8 +176,17 @@ class ClassifiersTests(unittest.TestCase):
     def test_custom_targets(self, lrn):
         """Simple test if a learner could cope with custom sa not targets
         """
+
+        # Since we are comparing performances of two learners, we need
+        # to assure that if they depend on some random seed -- they
+        # would use the same value.  Currently we have such stochastic
+        # behavior in SMLR
+        if 'seed' in lrn.params:
+            from mvpa import _random_seed
+            lrn = lrn.clone()              # clone the beast
+            lrn.params.seed = _random_seed # reuse the same seed
         lrn_ = lrn.clone()
-        lrn_.params.targets = 'custom'
+        lrn_.params.targets_attr = 'custom'
 
         te = CrossValidatedTransferError(TransferError(lrn),
                                          NFoldSplitter())
@@ -206,7 +216,6 @@ class ClassifiersTests(unittest.TestCase):
         # TODO: sg/libsvm segfaults
         #       GPR  -- non-linear sensitivities
         if ('has_sensitivity' in lrn.__tags__
-            and not 'sg' in lrn.__tags__
             and not 'libsvm' in lrn.__tags__
             and not ('gpr' in lrn.__tags__
                      and 'non-linear' in lrn.__tags__)
@@ -225,7 +234,9 @@ class ClassifiersTests(unittest.TestCase):
             self.failUnless(('targets' in s.sa) ^ isreg)
             self.failUnless(not 'targets' in s_.sa)
             self.failUnless(not 'custom' in s.sa)
-            assert_array_almost_equal(s.samples, s_.samples)
+            if not 'smlr' in lrn.__tags__ or \
+               cfg.getboolean('tests', 'labile', default='yes'):
+                assert_array_almost_equal(s.samples, s_.samples)
 
 
     @sweepargs(clf=clfswh[:] + regrswh[:])
@@ -283,7 +294,7 @@ class ClassifiersTests(unittest.TestCase):
                 if 'ACC' in cm.stats:
                     self.failUnlessEqual(cm.stats['ACC'], 0.5)
                 else:
-                    self.failUnless(N.isnan(cm.stats['CCe']))
+                    self.failUnless(np.isnan(cm.stats['CCe']))
             except tuple(_degenerate_allowed_exceptions):
                 pass
         clf.ca.reset_changed_temporarily()
@@ -338,7 +349,7 @@ class ClassifiersTests(unittest.TestCase):
         #  semantics clear. If you need to get deeper -- use upcoming
         #  harvesting facility ;-)
         # self.failUnlessEqual(len(clf.feature_ids), len(ds.uniquechunks))
-        # self.failUnless(N.array([len(ids)==ds.nfeatures
+        # self.failUnless(np.array([len(ids)==ds.nfeatures
         #                         for ids in clf.feature_ids]).all())
 
         # Just check if we get it at all ;-)
@@ -400,20 +411,19 @@ class ClassifiersTests(unittest.TestCase):
 
 
     def test_mapped_classifier(self):
-        samples = N.array([ [ 0,  0, -1], [ 1, 0, 1],
+        samples = np.array([ [ 0,  0, -1], [ 1, 0, 1],
                             [-1, -1,  1], [-1, 0, 1],
                             [ 1, -1,  1] ])
         for mask, res in (([1, 1, 0], [ 1, 1,  1, -1, -1]),
                           ([1, 0, 1], [-1, 1, -1, -1,  1]),
                           ([0, 1, 1], [-1, 1, -1,  1, -1])):
             clf = MappedClassifier(clf=self.clf_sign,
-                                   mapper=mask_mapper(N.array(mask,
+                                   mapper=mask_mapper(np.array(mask,
                                                               dtype=bool)))
             self.failUnlessEqual(clf.predict(samples), res)
 
 
     def test_feature_selection_classifier(self):
-        from test_rfe import SillySensitivityAnalyzer
         from mvpa.featsel.base import \
              SensitivityBasedFeatureSelection
         from mvpa.featsel.helpers import \
@@ -431,12 +441,12 @@ class ClassifiersTests(unittest.TestCase):
         feat_sel_rev = SensitivityBasedFeatureSelection(sens_ana_rev,
             FixedNElementTailSelector(1))
 
-        samples = N.array([ [0, 0, -1], [1, 0, 1], [-1, -1, 1],
+        samples = np.array([ [0, 0, -1], [1, 0, 1], [-1, -1, 1],
                             [-1, 0, 1], [1, -1, 1] ])
 
         testdata3 = dataset_wizard(samples=samples, targets=1)
         # dummy train data so proper mapper gets created
-        traindata = dataset_wizard(samples=N.array([ [0, 0, -1], [1, 0, 1] ]),
+        traindata = dataset_wizard(samples=np.array([ [0, 0, -1], [1, 0, 1] ]),
                             targets=[1, 2])
 
         # targets
@@ -465,7 +475,6 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnlessEqual(clf011.predict(testdata3.samples), res110)
 
     def test_feature_selection_classifier_with_regression(self):
-        from test_rfe import SillySensitivityAnalyzer
         from mvpa.featsel.base import \
              SensitivityBasedFeatureSelection
         from mvpa.featsel.helpers import \
@@ -485,12 +494,12 @@ class ClassifiersTests(unittest.TestCase):
         # then setting the values from the results, which the second
         # time is set to predictions.  The final outcome is that the
         # values are actually predictions...
-        dat = dataset_wizard(samples=N.random.randn(4, 10),
+        dat = dataset_wizard(samples=np.random.randn(4, 10),
                       targets=[-1, -1, 1, 1])
         clf_reg = FeatureSelectionClassifier(sample_clf_reg, feat_sel)
         clf_reg.train(dat)
         _ = clf_reg.predict(dat.samples)
-        self.failIf((N.array(clf_reg.ca.estimates)
+        self.failIf((np.array(clf_reg.ca.estimates)
                      - clf_reg.ca.predictions).sum()==0,
                     msg="Values were set to the predictions in %s." %
                     sample_clf_reg)
@@ -503,7 +512,7 @@ class ClassifiersTests(unittest.TestCase):
         clfs = clfswh['binary']         # pool of classifiers
         # Lets permute so each time we try some different combination
         # of the classifiers
-        clfs = [clfs[i] for i in N.random.permutation(len(clfs))]
+        clfs = [clfs[i] for i in np.random.permutation(len(clfs))]
         # Test conflicting definition
         tclf = TreeClassifier(clfs[0], {
             'L0+2' : (('L0', 'L2'), clfs[1]),
@@ -600,7 +609,7 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless(svm2.trained == False,
             msg="Un-Trained SVM should be untrained")
 
-        self.failUnless(N.array([x.trained for x in mclf.clfs]).all(),
+        self.failUnless(np.array([x.trained for x in mclf.clfs]).all(),
             msg="Trained Boosted classifier should have all primary classifiers trained")
         self.failUnless(mclf.trained,
             msg="Trained Boosted classifier should be marked as trained")
@@ -609,7 +618,7 @@ class ClassifiersTests(unittest.TestCase):
 
         self.failUnless(not mclf.trained,
                         msg="UnTrained Boosted classifier should not be trained")
-        self.failUnless(not N.array([x.trained for x in mclf.clfs]).any(),
+        self.failUnless(not np.array([x.trained for x in mclf.clfs]).any(),
             msg="UnTrained Boosted classifier should have no primary classifiers trained")
 
         if oldC is not None:
@@ -633,7 +642,7 @@ class ClassifiersTests(unittest.TestCase):
             clf.train(traindata)
             predicts = clf.predict(testdata.samples)
             # values should be different from predictions for SVMs we have
-            self.failUnless(N.any(predicts != clf.ca.estimates))
+            self.failUnless(np.any(predicts != clf.ca.estimates))
 
             if knows_probabilities and clf.ca.is_set('probabilities'):
                 # XXX test more thoroughly what we are getting here ;-)
@@ -686,9 +695,9 @@ class ClassifiersTests(unittest.TestCase):
         def batch_test(retrain=True, retest=True, closer=True):
             err = trerr(dstest, dstrain)
             err_re = trerr_re(dstest, dstrain)
-            corr = N.corrcoef(
+            corr = np.corrcoef(
                 clf.ca.estimates, clf_re.ca.estimates)[0, 1]
-            corr_old = N.corrcoef(values_1, clf_re.ca.estimates)[0, 1]
+            corr_old = np.corrcoef(values_1, clf_re.ca.estimates)[0, 1]
             if __debug__:
                 debug('TEST', "Retraining stats: errors %g %g corr %g "
                       "with old error %g corr %g" %
@@ -794,7 +803,7 @@ class ClassifiersTests(unittest.TestCase):
 
             # TODO: enforce uniform return from predict??
             #predicted = clf.predict(traindata.samples)
-            #self.failUnless(isinstance(predicted, N.ndarray))
+            #self.failUnless(isinstance(predicted, np.ndarray))
 
         # Just simple test that all of them are syntaxed correctly
         self.failUnless(str(clf) != "")
@@ -816,9 +825,9 @@ class ClassifiersTests(unittest.TestCase):
         # the same storage, problem becomes unseparable. Like in this case
         # incorrect order of dimensions lead to equal samples [0, 1, 0]
         traindatas = [
-            dataset_wizard(samples=N.array([ [0, 0, 1.0],
+            dataset_wizard(samples=np.array([ [0, 0, 1.0],
                                         [1, 0, 0] ]), targets=[-1, 1]),
-            dataset_wizard(samples=N.array([ [0, 0.0],
+            dataset_wizard(samples=np.array([ [0, 0.0],
                                       [1, 1] ]), targets=[-1, 1])]
 
         clf.ca.change_temporarily(enable_ca = ['training_confusion'])
@@ -876,5 +885,5 @@ def suite():
     return unittest.makeSuite(ClassifiersTests)
 
 
-#if __name__ == '__main__':
-#    import runner
+if __name__ == '__main__':
+    import runner

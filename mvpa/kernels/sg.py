@@ -16,13 +16,13 @@ kernel, use `CustomSGKernel` to define one.
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
-from mvpa.base.externals import exists
+from mvpa.base.externals import exists, versions
 from mvpa.kernels.base import Kernel
 from mvpa.misc.param import Parameter
 
-if exists('shogun', raiseException=True):
+if exists('shogun', raise_=True):
     import shogun.Kernel as sgk
     from shogun.Features import RealFeatures
 else:
@@ -89,7 +89,7 @@ class _BasicSGKernel(SGKernel):
           If necessary, provide a list of arguments for the normalizer.
         """
         SGKernel.__init__(self, **kwargs)
-        if (normalizer_cls is not None) and (not exists('sg ge 0.6.5')):
+        if (normalizer_cls is not None) and (versions['shogun:rev'] < 3377):
             raise ValueError, \
                "Normalizer specification is supported only for sg >= 0.6.5. " \
                "Please upgrade shogun python modular bindings."
@@ -206,11 +206,11 @@ class PrecomputedSGKernel(SGKernel):
             k = matrix.as_raw_np() # Convert to NP otherwise
         else:
             # Otherwise SG would segfault ;-)
-            k = N.array(matrix)
+            k = np.array(matrix)
 
         SGKernel.__init__(self, **kwargs)
 
-        if exists('sg ge 0.6.5'):
+        if versions['shogun:rev'] >= 4455:
             self._k = sgk.CustomKernel(k)
         else:
             raise RuntimeError, \

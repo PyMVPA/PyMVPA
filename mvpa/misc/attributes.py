@@ -12,7 +12,7 @@ dedicated containers aka. `Collections`.
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base.collections import Collectable
 
@@ -159,7 +159,7 @@ class StateVariable(IndexedCollectable):
         """
         # Force enabled state regardless of the input
         # to facilitate testing
-        if __debug__ and 'ENFORCE_STATES_ENABLED' in debug.active:
+        if __debug__ and 'ENFORCE_CA_ENABLED' in debug.active:
             enabled = True
         self.__enabled = enabled
         self._defaultenabled = enabled

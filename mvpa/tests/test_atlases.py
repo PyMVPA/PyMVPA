@@ -9,14 +9,15 @@
 """Unit tests for PyMVPA atlases"""
 
 import unittest, re
-import numpy as N
+import numpy as np
+
+from mvpa.testing import *
+
+skip_if_no_external('nifti')
+skip_if_no_external('lxml')
 
 from mvpa.base import externals, warning
-
-if externals.exists('nifti', raiseException=True):
-    from mvpa.atlases import *
-else:
-    raise RuntimeError, "Don't run me if no nifti is present"
+from mvpa.atlases import *
 
 import os
 from mvpa import pymvpa_dataroot
@@ -72,10 +73,11 @@ class AtlasesTests(unittest.TestCase):
             #print atlas[ (0, -7, 20), : ]
             #   print atlas.get_labels(0)
         if not tested:
-            warning("No atlases were found -- thus no testing was done")
+            raise SkipTest("No atlases were found -- thus no testing was done")
 
     def test_find(self):
-        if not externals.exists('atlas_fsl'): return
+        skip_if_no_external('atlas_fsl')
+
         tshape = (182, 218, 182)        # target shape of fsl atlas chosen by default
         atl = Atlas(name='HarvardOxford-Cortical')
         atl.levels_dict[0].find('Frontal Pole')
@@ -85,8 +87,8 @@ class AtlasesTests(unittest.TestCase):
 
         m = atl.get_map(1)
         self.failUnlessEqual(m.shape, tshape)
-        self.failUnless(N.max(m)==100)
-        self.failUnless(N.min(m)==0)
+        self.failUnless(np.max(m)==100)
+        self.failUnless(np.min(m)==0)
 
         ms = atl.get_maps('Fusiform')
         self.failUnlessEqual(len(ms), 4)

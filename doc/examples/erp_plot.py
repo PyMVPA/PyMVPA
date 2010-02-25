@@ -49,7 +49,7 @@ cargs = {
     }
 
 # Create a new figure
-fig = P.figure(figsize=(12, 8))
+fig = pl.figure(figsize=(12, 8))
 
 # Following plots are plotted inverted (negative up) for the
 # demonstration of this capability and elderly convention for ERP
@@ -75,7 +75,7 @@ plot_erps(plots[2:3], ax=ax, ymult=-1e6, **cargs)
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
-    P.show()
+    pl.show()
 
 """
 The ouput of the provided example is presented below. It is not a very

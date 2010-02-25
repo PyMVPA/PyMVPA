@@ -8,8 +8,12 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA sparse multinomial logistic regression classifier"""
 
+import numpy as np
+
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
+
 from mvpa.clfs.smlr import SMLR
-from tests_warehouse import *
 from mvpa.misc.data_generators import normal_feature_dataset
 
 
@@ -45,10 +49,10 @@ class SMLRTests(unittest.TestCase):
         clf.ca.enable('estimates')
         clf.ca.enable('predictions')
 
-        p = N.asarray(clf.predict(data.samples))
+        p = np.asarray(clf.predict(data.samples))
 
         self.failUnless((p == clf.ca.predictions).all())
-        self.failUnless(N.array(clf.ca.estimates).shape[0] == N.array(p).shape[0])
+        self.failUnless(np.array(clf.ca.estimates).shape[0] == np.array(p).shape[0])
 
 
     def test_smlr_sensitivities(self):

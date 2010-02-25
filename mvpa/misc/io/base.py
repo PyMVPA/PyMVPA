@@ -11,7 +11,7 @@ disk."""
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 import mvpa.support.copy as copy
 from mvpa.base.dochelpers import enhanced_doc_string
 from sets import Set
@@ -425,58 +425,6 @@ class SampleAttributes(ColumnData):
         return self.nrows
 
 
-    ##REF: Name was automagically refactored
-    def to_events(self, **kwargs):
-        """Convert into a list of `Event` instances.
-
-        Each change in the label or chunks value is taken as a new event onset.
-        The length of an event is determined by the number of identical
-        consecutive label-chunk combinations. Since the attributes list has no
-        sense of absolute timing, both `onset` and `duration` are determined and
-        stored in #samples units.
-
-        Parameters
-        ----------
-        **kwargs
-          Any keyword arugment provided would be replicated, through all
-          the entries.
-        """
-        events = []
-        prev_onset = 0
-        old_comb = None
-        duration = 1
-        # over all samples
-        for r in xrange(self.nrows):
-            # the label-chunk combination
-            comb = (self.targets[r], self.chunks[r])
-
-            # check if things changed
-            if not comb == old_comb:
-                # did we ever had an event
-                if not old_comb is None:
-                    events.append(
-                        Event(onset=prev_onset, duration=duration,
-                              label=old_comb[0], chunk=old_comb[1], **kwargs))
-                    # reset duration for next event
-                    duration = 1
-                    # store the current samples as onset for the next event
-                    prev_onset = r
-
-                # update the reference combination
-                old_comb = comb
-            else:
-                # current event is lasting
-                duration += 1
-
-        # push the last event in the pipeline
-        if not old_comb is None:
-            events.append(
-                Event(onset=prev_onset, duration=duration,
-                      label=old_comb[0], chunk=old_comb[1], **kwargs))
-
-        return events
-
-
 
 class SensorLocations(ColumnData):
     """Base class for sensor location readers.
@@ -503,7 +451,7 @@ class SensorLocations(ColumnData):
         -------
         (nchannels x 3) array with coordinates in (x, y, z)
         """
-        return N.array((self.pos_x, self.pos_y, self.pos_z)).T
+        return np.array((self.pos_x, self.pos_y, self.pos_z)).T
 
 
 
@@ -632,7 +580,7 @@ def labels2chunks(labels, method="alllabels", ignore_labels=None):
                 if not label in ignore_labels:
                     seenlabels.union_update([label])
             chunks.append(chunk)
-        chunks = N.array(chunks)
+        chunks = np.array(chunks)
         # fix up a bit the trailer
         if seenlabels != alllabels:
             chunks[chunks == chunk] = chunk-1

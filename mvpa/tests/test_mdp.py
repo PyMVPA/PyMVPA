@@ -8,13 +8,13 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for basic mappers'''
 
-import numpy as N
+import numpy as np
+
+from mvpa.testing import *
+skip_if_no_external('mdp')
 
 from mvpa.base import externals
-if externals.exists('mdp', raiseException=True):
-    import mdp
-else:
-    raise RuntimeError, "Don't run me if no mdp is present"
+import mdp
 
 from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper, PCAMapper, \
         ICAMapper
@@ -23,8 +23,6 @@ from mvpa.datasets.base import Dataset
 from mvpa.base.dataset import DAE
 from mvpa.misc.data_generators import normal_feature_dataset
 
-from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true,  assert_array_equal, assert_array_almost_equal
 
 def test_mdpnodemapper():
     ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
@@ -79,9 +77,9 @@ def test_mdpflowmapper():
 
 
 def test_mdpflow_additional_arguments():
-    if externals.versions['mdp'] < '2.5':
-        # we have no IdentityNode yet... is there analog?
-        return
+    skip_if_no_external('mdp', min_version='2.5')
+    # we have no IdentityNode yet... is there analog?
+
     ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
     flow = mdp.nodes.PCANode() + mdp.nodes.IdentityNode() + mdp.nodes.FDANode()
     # this is what it would look like in MDP itself
@@ -96,9 +94,9 @@ def test_mdpflow_additional_arguments():
     assert_array_almost_equal(ds.samples, rds.samples)
 
 def test_mdpflow_additional_arguments_nones():
-    if externals.versions['mdp'] < '2.5':
-        # we have no IdentityNode yet... is there analog?
-        return
+    skip_if_no_external('mdp', min_version='2.5')
+    # we have no IdentityNode yet... is there analog?
+
     ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
     flow = mdp.nodes.PCANode() + mdp.nodes.IdentityNode() + mdp.nodes.FDANode()
     # this is what it would look like in MDP itself
@@ -115,7 +113,7 @@ def test_mdpflow_additional_arguments_nones():
 
 def test_pcamapper():
     # data: 40 sample feature line in 20d space (40x20; samples x features)
-    ndlin = Dataset(N.concatenate([N.arange(40)
+    ndlin = Dataset(np.concatenate([np.arange(40)
                                for i in range(20)]).reshape(20,-1).T)
 
     pm = PCAMapper()
@@ -123,7 +121,7 @@ def test_pcamapper():
     assert_raises(mdp.NodeException, pm.train, ndlin)
     ndlin.samples = ndlin.samples.astype('float')
     ndlin_noise = ndlin.copy()
-    ndlin_noise.samples += N.random.random(size=ndlin.samples.shape)
+    ndlin_noise.samples += np.random.random(size=ndlin.samples.shape)
     # we have no variance for more than one PCA component, hence just one
     # actual non-zero eigenvalue
     assert_raises(mdp.NodeException, pm.train, ndlin)
@@ -138,9 +136,9 @@ def test_pcamapper():
 
 def test_icamapper():
     # data: 40 sample feature line in 2d space (40x2; samples x features)
-    samples = N.vstack([N.arange(40.) for i in range(2)]).T
+    samples = np.vstack([np.arange(40.) for i in range(2)]).T
     samples -= samples.mean()
-    samples +=  N.random.normal(size=samples.shape, scale=0.1)
+    samples +=  np.random.normal(size=samples.shape, scale=0.1)
     ndlin = Dataset(samples)
 
     pm = ICAMapper()
@@ -154,10 +152,9 @@ def test_icamapper():
 
 
 def test_llemapper():
-    if externals.versions['mdp'] < '2.4':
-        return
+    skip_if_no_external('mdp', min_version='2.4')
 
-    ds = Dataset(N.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
+    ds = Dataset(np.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
                           [1., 0., 0.], [0., 1., 1.], [1., 0., 1.],
                           [1., 1., 0.], [1., 1., 1.]]))
     pm = LLEMapper(3, output_dim=2)

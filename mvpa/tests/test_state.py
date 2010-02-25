@@ -11,7 +11,7 @@
 import unittest
 import mvpa.support.copy as copy
 
-import numpy as N
+import numpy as np
 from sets import Set
 
 from mvpa.base import externals
@@ -134,7 +134,7 @@ class StateTests(unittest.TestCase):
 
         proper.ca.enable(['state2'])
         self.failUnlessEqual(Set(proper.ca.keys()), Set(['state1', 'state2']))
-        if __debug__ and 'ENFORCE_STATES_ENABLED' in debug.active:
+        if __debug__ and 'ENFORCE_CA_ENABLED' in debug.active:
             # skip testing since all ca are on now
             return
         self.failUnless(proper.ca.enabled == ['state2'])
@@ -174,7 +174,7 @@ class StateTests(unittest.TestCase):
     def test_get_save_enabled(self):
         """Check if we can store/restore set of enabled ca"""
 
-        if __debug__ and 'ENFORCE_STATES_ENABLED' in debug.active:
+        if __debug__ and 'ENFORCE_CA_ENABLED' in debug.active:
             # skip testing since all ca are on now
             return
 
@@ -199,7 +199,7 @@ class StateTests(unittest.TestCase):
         proper   = TestClassProper()
         properch = TestClassProperChild(enable_ca=["state1"])
 
-        if __debug__ and 'ENFORCE_STATES_ENABLED' in debug.active:
+        if __debug__ and 'ENFORCE_CA_ENABLED' in debug.active:
             # skip testing since all ca are on now
             return
 

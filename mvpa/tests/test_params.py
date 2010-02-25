@@ -10,14 +10,14 @@
 
 import unittest, copy
 
-import numpy as N
+import numpy as np
 from sets import Set
 
 from mvpa.datasets.base import dataset_wizard
 from mvpa.misc.state import ClassWithCollections, StateVariable
 from mvpa.misc.param import Parameter, KernelParameter
 
-from tests_warehouse_clfs import SameSignClassifier
+from mvpa.testing.clfs import *
 
 class ParametrizedClassifier(SameSignClassifier):
     p1 = Parameter(1.0)

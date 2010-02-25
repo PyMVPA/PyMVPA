@@ -22,7 +22,7 @@ Meta Classifiers can be grouped according to their function as
 __docformat__ = 'restructuredtext'
 
 import operator
-import numpy as N
+import numpy as np
 
 from sets import Set
 
@@ -147,7 +147,7 @@ class BoostedClassifier(Classifier, Harvestable):
         self.ca.raw_predictions = raw_predictions
         assert(len(self.__clfs)>0)
         if self.ca.is_enabled("estimates"):
-            if N.array([x.ca.is_enabled("estimates")
+            if np.array([x.ca.is_enabled("estimates")
                         for x in self.__clfs]).all():
                 estimates = [ clf.ca.estimates for clf in self.__clfs ]
                 self.ca.raw_estimates = estimates
@@ -470,8 +470,8 @@ class MeanPrediction(PredictionsCombiner):
             all_predictions.append(clf.ca.predictions)
 
         # compute mean
-        all_predictions = N.asarray(all_predictions)
-        predictions = N.mean(all_predictions, axis=0)
+        all_predictions = np.asarray(all_predictions)
+        predictions = np.mean(all_predictions, axis=0)
 
         ca = self.ca
         ca.estimates = all_predictions
@@ -656,12 +656,12 @@ class TreeClassifier(ProxyClassifier):
     would separate to classify human vs animal and so on::
 
                                    SVM
-                                 /      \
-                            animate   inanimate
-                             /             \
-                           SVM             SMLR
-                         /     \          / | \ \
-                    human    animal      5  6 7  8
+                                 /     \
+                            animate  inanimate
+                             /            \
+                           SVM            SMLR
+                         /     \         / | \ \
+                    human    animal     5  6 7  8
                      |          |
                     SVM        SVM
                    /   \       /  \
@@ -761,7 +761,7 @@ class TreeClassifier(ProxyClassifier):
         on a corresponding subset of samples.
         """
         # Local bindings
-        targets_sa_name = self.params.targets    # name of targets sa
+        targets_sa_name = self.params.targets_attr    # name of targets sa
         targets_sa = dataset.sa[targets_sa_name] # actual targets sa
         clf, clfs, index2group = self.clf, self.clfs, self._index2group
 
@@ -845,7 +845,7 @@ class TreeClassifier(ProxyClassifier):
         """
         # Local bindings
         clfs, index2group = self.clfs, self._index2group
-        clf_predictions = N.asanyarray(ProxyClassifier._predict(self, dataset))
+        clf_predictions = np.asanyarray(ProxyClassifier._predict(self, dataset))
         # assure that predictions are indexes, ie int
         clf_predictions = clf_predictions.astype(int)
 
@@ -860,11 +860,11 @@ class TreeClassifier(ProxyClassifier):
             if __debug__:
                 debug('CLFTREE',
                       'Predicting for group %s using %s on %d samples' %
-                      (gk, clf_, N.sum(group_indexes)))
+                      (gk, clf_, np.sum(group_indexes)))
             p = clf_.predict(dataset[group_indexes])
             if predictions is None:
-                predictions = N.zeros((len(dataset),),
-                                      dtype=N.asanyarray(p).dtype)
+                predictions = np.zeros((len(dataset),),
+                                      dtype=np.asanyarray(p).dtype)
             predictions[group_indexes] = p
         return predictions
 
@@ -928,7 +928,7 @@ class BinaryClassifier(ProxyClassifier):
     def _train(self, dataset):
         """Train `BinaryClassifier`
         """
-        targets_sa_name = self.params.targets
+        targets_sa_name = self.params.targets_attr
         idlabels = [(x, +1) for x in get_samples_by_attr(dataset, targets_sa_name,
                                                          self.__poslabels)] + \
                     [(x, -1) for x in get_samples_by_attr(dataset, targets_sa_name,
@@ -1035,7 +1035,7 @@ class MulticlassClassifier(CombinedClassifier):
     def _train(self, dataset):
         """Train classifier
         """
-        targets_sa_name = self.params.targets
+        targets_sa_name = self.params.targets_attr
 
         # construct binary classifiers
         ulabels = dataset.sa[targets_sa_name].unique
@@ -1124,7 +1124,7 @@ class SplitClassifier(CombinedClassifier):
     def _train(self, dataset):
         """Train `SplitClassifier`
         """
-        targets_sa_name = self.params.targets
+        targets_sa_name = self.params.targets_attr
 
         # generate pairs and corresponding classifiers
         bclfs = []
@@ -1349,7 +1349,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
 
         # create a mask to devise a mapper
         # TODO -- think about making selected_ids a MaskMapper
-        mappermask = N.zeros(dataset.nfeatures, dtype='bool')
+        mappermask = np.zeros(dataset.nfeatures, dtype='bool')
         mappermask[self.__feature_selection.ca.selected_ids] = True
         mapper = FeatureSliceMapper(mappermask, dshape=mappermask.shape)
 
@@ -1476,7 +1476,7 @@ class RegressionAsClassifier(ProxyClassifier):
 
 
     def _train(self, dataset):
-        targets_sa_name = self.params.targets
+        targets_sa_name = self.params.targets_attr
         targets_sa = dataset.sa[targets_sa_name]
 
         # May be it is an advanced one needing training.
@@ -1488,7 +1488,7 @@ class RegressionAsClassifier(ProxyClassifier):
         if self.centroids is None:
             # setup centroids -- equidistant points
             # XXX we might preferred -1/+1 for binary...
-            centers = N.arange(len(ul), dtype=float)
+            centers = np.arange(len(ul), dtype=float)
         else:
             # verify centroids and assign
             if not set(self.centroids.keys()).issuperset(ul):
@@ -1498,7 +1498,7 @@ class RegressionAsClassifier(ProxyClassifier):
                       % (self.centroids.keys(), ul)
             # override with superset
             ul = self.centroids.keys()
-            centers = N.array([self.centroids[k] for k in ul])
+            centers = np.array([self.centroids[k] for k in ul])
 
         #self._trained_ul = ul
         # Map labels into indexes (not centers)
@@ -1535,10 +1535,10 @@ class RegressionAsClassifier(ProxyClassifier):
 
         # Compute distances
         self.ca.distances = distances \
-            = N.array([[distance_measure(s, c) for c in centers]
+            = np.array([[distance_measure(s, c) for c in centers]
                        for s in regr_predictions])
 
-        predictions = attrmap.to_literal(N.argmin(distances, axis=1))
+        predictions = attrmap.to_literal(np.argmin(distances, axis=1))
         if __debug__:
             debug("CLF_", "Converted regression distances %(distances)s "
                   "into labels %(predictions)s for %(self_)s",

@@ -13,11 +13,16 @@
 # serve to show the default.
 
 import sys, os, re
-import numpy as N
+import numpy as np
 import mvpa
 
 try:
     import matplotlib
+    # Disable warning from matplotlib
+    import warnings
+    warnings.filterwarnings(
+        'ignore', 'This call to matplotlib.use() has no effect.*',
+        UserWarning)
     matplotlib.use('svg')
 except:
     pass
@@ -279,4 +284,5 @@ intersphinx_mapping = {'http://docs.python.org/': None,
                        'http://h5py.alfven.org/docs': None,
                        'http://docs.scipy.org/doc/scipy/reference': None,
                        'http://docs.scipy.org/doc/numpy/objects.inv': None,
+                       'http://matplotlib.sourceforge.net/objects.inv': None,
                        }

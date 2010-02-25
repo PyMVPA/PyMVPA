@@ -8,8 +8,12 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA GNB classifier"""
 
+import numpy as np
+
+from mvpa.testing import *
+from mvpa.testing.datasets import *
+
 from mvpa.clfs.gnb import GNB
-from tests_warehouse import *
 
 class GNBTests(unittest.TestCase):
 
@@ -49,9 +53,9 @@ class GNBTests(unittest.TestCase):
                     if n and 'estimates' in es:
                         v = gnb_.ca.estimates
                         if ls:          # in log space -- take exp ;)
-                            v = N.exp(v)
-                        d1 = N.sum(v, axis=1) - 1.0
-                        self.failUnless(N.max(N.abs(d1)) < 1e-5)
+                            v = np.exp(v)
+                        d1 = np.sum(v, axis=1) - 1.0
+                        self.failUnless(np.max(np.abs(d1)) < 1e-5)
 
 def suite():
     return unittest.makeSuite(GNBTests)

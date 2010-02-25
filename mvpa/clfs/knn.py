@@ -14,7 +14,7 @@ import sys
 # not worthy of externals checking
 _dict_has_key = sys.version_info >= (2, 5)
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import warning
 from mvpa.datasets.base import Dataset
@@ -117,7 +117,7 @@ class kNN(Classifier):
         self.__weights = None
 
         # create dictionary with an item for each condition
-        uniquelabels = data.sa[self.params.targets].unique
+        uniquelabels = data.sa[self.params.targets_attr].unique
         self.__votes_init = dict(zip(uniquelabels,
                                      [0] * len(uniquelabels)))
 
@@ -129,7 +129,7 @@ class kNN(Classifier):
         Returns a list of class labels (one for each data sample).
         """
         # make sure we're talking about arrays
-        data = N.asarray(data)
+        data = np.asarray(data)
 
         # checks only in debug mode
         if __debug__:
@@ -172,7 +172,7 @@ class kNN(Classifier):
         # store the predictions in the state. Relies on State._setitem to do
         # nothing if the relevant state member is not enabled
         self.ca.predictions = predicted
-        self.ca.estimates = N.array([r[1] for r in results])
+        self.ca.estimates = np.array([r[1] for r in results])
 
         return predicted
 
@@ -184,7 +184,7 @@ class kNN(Classifier):
         # local bindings
         _data = self.__data
 
-        targets_sa_name = self.params.targets
+        targets_sa_name = self.params.targets_attr
         targets_sa = _data.sa[targets_sa_name]
 
         labels = targets_sa.value
@@ -214,7 +214,7 @@ class kNN(Classifier):
         """
         # local bindings
         _data = self.__data
-        targets_sa_name = self.params.targets
+        targets_sa_name = self.params.targets_attr
         targets_sa = _data.sa[targets_sa_name]
 
         uniquelabels = targets_sa.unique
@@ -251,7 +251,7 @@ class kNN(Classifier):
 
         # find the class with most votes
         # return votes as well to store them in the state
-        return uniquelabels[N.asarray(votes).argmax()], \
+        return uniquelabels[np.asarray(votes).argmax()], \
                votes
 
 

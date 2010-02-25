@@ -15,7 +15,7 @@ convinience, and they confirm the agreement that 'smaller' is 'better'"""
 __docformat__ = 'restructuredtext'
 
 
-import numpy as N
+import numpy as np
 from numpy import trapz
 
 from mvpa.base import externals
@@ -27,7 +27,7 @@ def mean_power_fx(data):
 
     Similar to var but without demeaning
     """
-    return N.mean(N.asanyarray(data)**2)
+    return np.mean(np.asanyarray(data)**2)
 
 ##REF: Name was automagically refactored
 def root_mean_power_fx(data):
@@ -35,7 +35,7 @@ def root_mean_power_fx(data):
 
     to be comparable against RMSE
     """
-    return N.sqrt(mean_power_fx(data))
+    return np.sqrt(mean_power_fx(data))
 
 
 class _ErrorFx(object):
@@ -73,7 +73,7 @@ class RMSErrorFx(_ErrorFx):
         """Both 'predicted' and 'target' can be either scalars or sequences,
         but have to be of the same length.
         """
-        return N.sqrt(N.mean(N.subtract(predicted, target)**2))
+        return np.sqrt(np.mean(np.subtract(predicted, target)**2))
 
 
 class MeanMismatchErrorFx(_ErrorFx):
@@ -84,7 +84,7 @@ class MeanMismatchErrorFx(_ErrorFx):
         """Both 'predicted' and 'target' can be either scalars or sequences,
         but have to be of the same length.
         """
-        return 1 - N.mean( predicted == target )
+        return 1 - np.mean( predicted == target )
 
 
 class AUCErrorFx(_ErrorFx):
@@ -94,15 +94,15 @@ class AUCErrorFx(_ErrorFx):
         """Requires all arguments."""
         # sort the target in descending order based on the predicted and
         # set to boolean
-        self.t = t = N.asanyarray(target)[N.argsort(predicted)[::-1]] > 0
+        self.t = t = np.asanyarray(target)[np.argsort(predicted)[::-1]] > 0
 
         # calculate the true positives
-        self.tp = tp = N.concatenate(
-            ([0], N.cumsum(t)/t.sum(dtype=N.float), [1]))
+        self.tp = tp = np.concatenate(
+            ([0], np.cumsum(t)/t.sum(dtype=np.float), [1]))
 
         # calculate the false positives
-        self.fp = fp = N.concatenate(
-            ([0], N.cumsum(~t)/(~t).sum(dtype=N.float), [1]))
+        self.fp = fp = np.concatenate(
+            ([0], np.cumsum(~t)/(~t).sum(dtype=np.float), [1]))
 
         return trapz(tp, fp)
 
@@ -113,12 +113,17 @@ if externals.exists('scipy'):
     class CorrErrorFx(_ErrorFx):
         """Computes the correlation between the target and the
         predicted values. Resultant value is the 1 - correlation
-        coefficient, so minimization leads to the best value (at 0)
+        coefficient, so minimization leads to the best value (at 0).
 
+        In case of NaN correlation (no variance in predictors or
+        targets) result output error is 1.0.
         """
         def __call__(self, predicted, target):
             """Requires all arguments."""
-            return 1.0-pearsonr(predicted, target)[0]
+            r = pearsonr(predicted, target)[0]
+            if np.isnan(r):
+                r = 0.0
+            return 1.0 - r
 
 
     class CorrErrorPFx(_ErrorFx):
@@ -138,12 +143,17 @@ else:
         """Computes the correlation between the target and the predicted
         values. Return 1-CC
 
+        In case of NaN correlation (no variance in predictors or
+        targets) result output error is 1.0.
         """
         def __call__(self, predicted, target):
             """Requires all arguments."""
             l = len(predicted)
-            return 1.0 - N.corrcoef(N.reshape(predicted, l),
-                                N.reshape(target, l))[0,1]
+            r = np.corrcoef(np.reshape(predicted, l),
+                           np.reshape(target, l))[0,1]
+            if np.isnan(r):
+                r = 0.0
+            return 1.0 - r
 
 
     class CorrErrorPFx(_ErrorFx):
@@ -178,12 +188,12 @@ class Variance1SVFx(_ErrorFx):
     """
 
     def __call__(self, predicted, target):
-        data = N.vstack( (predicted, target) ).T
+        data = np.vstack( (predicted, target) ).T
         # demean
-        data_demeaned = data - N.mean(data, axis=0)
-        u, s, vh = N.linalg.svd(data_demeaned, full_matrices=0)
+        data_demeaned = data - np.mean(data, axis=0)
+        u, s, vh = np.linalg.svd(data_demeaned, full_matrices=0)
         # assure sorting
         s.sort()
         s=s[::-1]
-        cvar = s[0]**2 / N.sum(s**2)
+        cvar = s[0]**2 / np.sum(s**2)
         return cvar

@@ -13,9 +13,9 @@ __docformat__ = 'restructuredtext'
 if __debug__:
     from mvpa.base import debug
 
-import numpy as N
+import numpy as np
 
-from mvpa.base import externals
+from mvpa.base import externals, warning
 from mvpa.base.dochelpers import borrowkwargs
 
 from mvpa.datasets import Dataset, hstack
@@ -82,8 +82,12 @@ class Searchlight(DatasetMeasure):
 
         if nproc is None and externals.exists('pprocess'):
             import pprocess
-            nproc = pprocess.get_number_of_cores() or 1
-
+            try:
+                nproc = pprocess.get_number_of_cores() or 1
+            except AttributeError:
+                warning("pprocess version %s has no API to figure out maximal "
+                        "number of cores. Using 1" % externals.versions['pprocess'])
+                nproc = 1
         # train the queryengine
         self.__qe.train(dataset)
 
@@ -99,12 +103,12 @@ class Searchlight(DatasetMeasure):
                           "dataset has only %d features" \
                           % (max(roi_ids), dataset.nfeatures)
         else:
-            roi_ids = N.arange(dataset.nfeatures)
+            roi_ids = np.arange(dataset.nfeatures)
 
         # compute
         if nproc > 1:
             # split all target ROIs centers into `nproc` equally sized chunks
-            roi_chunks = N.array_split(roi_ids, nproc)
+            roi_chunks = np.array_split(roi_ids, nproc)
 
             # the next block sets up the infrastructure for parallel computing
             # this can easily be changed into a ParallelPython loop, if we
@@ -220,6 +224,9 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
     center_ids : list of int
       List of feature ids (not coordinates) the shall serve as sphere
       centers. By default all features will be used.
+    space : str
+      Name of a feature attribute of the input dataset that defines the spatial
+      coordinates of all features.
     **kwargs
       In addition this class supports all keyword arguments of its
       base-class :class:`~mvpa.measures.base.DatasetMeasure`.
@@ -272,7 +279,7 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
 #
 #
 #        # now determine the best classification accuracy
-#        best = N.array(self.__perfmeans).argmax( axis=0 )
+#        best = np.array(self.__perfmeans).argmax( axis=0 )
 #
 #        # select the corresponding values of the best classification
 #        # in all data tables
@@ -283,7 +290,7 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
 #        self.spheresize = best.choose(*(self.__spheresizes))
 #
 #        # store the best performing radius
-#        self.bestradius = N.zeros( self.perfmean.shape, dtype='uint' )
+#        self.bestradius = np.zeros( self.perfmean.shape, dtype='uint' )
 #        self.bestradius[searchlight.mask==True] = \
 #            best.choose( test_radii )[searchlight.mask==True]
 #
@@ -300,7 +307,7 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
 #            raise ValueError, 'elementsize does not match mask dimensions.'
 #
 #    # rois will be drawn into this mask
-#    roi_mask = N.zeros( mask.shape, dtype='int32' )
+#    roi_mask = np.zeros( mask.shape, dtype='int32' )
 #
 #    # while increase with every ROI
 #    roi_id_counter = 1

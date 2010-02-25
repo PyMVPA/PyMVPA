@@ -42,5 +42,7 @@ For developers
 
 * :ref:`Developer Guidelines <chap_devguide>` [PDF-guide_] (information for people
   contributing code)
+* :ref:`Achievements of the first PyMVPA Extravaganza <chap_workshop_2009fall>`
+  at Dartmouth College (Nov 30 -- Dec 4 2009)
 
 .. _PDF-guide: PyMVPA-DevGuide.pdf
