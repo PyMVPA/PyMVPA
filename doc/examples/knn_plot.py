@@ -45,7 +45,7 @@ pl.figure(figsize=(9, 9))
 for i,k in enumerate((1, 3, 9, 20)):
     knn = kNN(k)
 
-    print "Processing %s problem..." % id
+    print "Processing kNN(%i) problem..." % k
     pl.subplot(2, 2, i+1)
 
     """
