@@ -34,8 +34,10 @@ if __debug__:
 
 if externals.exists('scipy'):
     from scipy.stats.stats import nanmean
+    from mvpa.misc.stats import chisquare
 else:
     from mvpa.clfs.stats import nanmean
+    chisquare = None
 
 def _p2(x, prec=2):
     """Helper to print depending on the type nicely. For some
@@ -461,6 +463,7 @@ class ConfusionMatrix(SummaryStatistics):
         ('MCC', "Matthews Correlation Coefficient",
                 "MCC = (TP*TN - FP*FN)/sqrt(P N P' N')"),
         ('AUC', "Area under (AUC) curve", None),
+        ('CHI^2', "Chi-square of contingency table", None),
         ) + SummaryStatistics._STATS_DESCRIPTION
 
 
@@ -609,7 +612,10 @@ class ConfusionMatrix(SummaryStatistics):
 
         stats['ACC'] = np.sum(TP)/(1.0*np.sum(stats['P']))
         stats['ACC%'] = stats['ACC'] * 100.0
-
+        if chisquare:
+            # indep_rows to assure reasonable handling of disbalanced
+            # cases
+            stats['CHI^2'] = chisquare(self.__matrix, exp='indep_rows')
         #
         # ROC computation if available
         ROC = ROCCurve(labels=labels, sets=self.sets)
@@ -742,6 +748,11 @@ class ConfusionMatrix(SummaryStatistics):
             printed.append(['@lSummary \ Means:'] + underscores
                            + [_p2(stats['mean(%s)' % x])
                               for x in stats_perpredict])
+
+            if 'CHI^2' in self.stats:
+                chi2t = stats['CHI^2']
+                printed.append(['CHI^2'] + [_p2(chi2t[0])]
+                               + ['p:'] + [_p2(chi2t[1])])
 
             for stat in stats_summary:
                 printed.append([stat] + [_p2(stats[stat])])
