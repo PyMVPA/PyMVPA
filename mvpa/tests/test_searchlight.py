@@ -12,8 +12,10 @@ from mvpa.testing import *
 from mvpa.testing.clfs import *
 from mvpa.testing.datasets import *
 
+from mvpa.datasets import Dataset
 from mvpa.base import externals
-from mvpa.measures.searchlight import sphere_searchlight
+from mvpa.measures.searchlight import sphere_searchlight, Searchlight
+from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.transerror import TransferError
@@ -127,6 +129,30 @@ class SearchlightTests(unittest.TestCase):
         self.failUnless(results.nfeatures == 2)
 
 
+    def test_1d_multispace_searchlight(self):
+        ds = Dataset([np.arange(6)])
+        ds.fa['coord1'] = np.repeat(np.arange(3), 2)
+        # add a second space to the dataset
+        ds.fa['coord2'] = np.tile(np.arange(2), 3)
+        measure = lambda x: "+".join([str(x) for x in x.samples[0]])
+        # simply select each feature once
+        res = Searchlight(measure,
+                          IndexQueryEngine(coord1=Sphere(0),
+                                           coord2=Sphere(0)),
+                          nproc=1)(ds)
+        assert_array_equal(res.samples, [['0', '1', '2', '3', '4', '5']])
+        res = Searchlight(measure,
+                          IndexQueryEngine(coord1=Sphere(0),
+                                           coord2=Sphere(1)),
+                          nproc=1)(ds)
+        assert_array_equal(res.samples,
+                           [['0+1', '0+1', '2+3', '2+3', '4+5', '4+5']])
+        res = Searchlight(measure,
+                          IndexQueryEngine(coord1=Sphere(1),
+                                           coord2=Sphere(0)),
+                          nproc=1)(ds)
+        assert_array_equal(res.samples,
+                           [['0+2', '1+3', '0+2+4', '1+3+5', '2+4', '3+5']])
 
 def suite():
     return unittest.makeSuite(SearchlightTests)

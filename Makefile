@@ -207,7 +207,6 @@ examples2rst-stamp: mkdir-DOCBUILD_DIR
 		--project PyMVPA \
 		--outdir $(DOCSRC_DIR)/examples \
 		--exclude doc/examples/searchlight_app.py \
-		--exclude doc/examples/tutorial_lib.py \
 		doc/examples
 	touch $@
 
@@ -375,17 +374,18 @@ tm-%: build
 
 testmanual: build testdocstrings
 	@echo "I: Testing code samples found in documentation"
-	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
+	@PYTHONPATH=.:$(CURDIR)/tutorial_data:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
+		MVPA_LOCATION_TUTORIAL_DATA=tutorial_data \
 		MVPA_DATADB_ROOT=datadb \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 		             --doctest-tests doc/source
 
 testtutorial-%: build
 	@echo "I: Testing code samples found in tutorial part $*"
-	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
+	@PYTHONPATH=.:$(CURDIR)/tutorial_data:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
-		MVPA_DATADB_ROOT=datadb \
+		MVPA_LOCATION_TUTORIAL_DATA=tutorial_data \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 		             --doctest-tests doc/source/tutorial_$**.rst
 

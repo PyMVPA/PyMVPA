@@ -28,7 +28,7 @@ def test_erdataset():
                 nfeatures).reshape(-1, nfeatures)
     ds = dataset_wizard(samples, targets=targets, chunks=chunks)
     # check if events are determined properly
-    evs = find_events({'targets':ds.sa.targets, 'chunks':ds.sa.chunks})
+    evs = find_events(targets=ds.sa.targets, chunks=ds.sa.chunks)
     for ev in evs:
         assert_equal(ev['duration'], blocklength)
     assert_equal(ntargets * nchunks, len(evs))

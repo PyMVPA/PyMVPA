@@ -36,6 +36,7 @@ recreate our preprocessed demo dataset. The code is taken verbatim from the
 no questions. We get a dataset with one sample per category per run.
 
 >>> from tutorial_lib import *
+>>> # alt: `ds = load_tutorial_results('ds_haxby2001')`
 >>> ds = get_haxby2001_data(roi='vt')
 >>> ds.shape
 (16, 577)
@@ -83,6 +84,8 @@ some reason, the F-scores need to be scaled into the interval [0,1], an
 >>> f = aov(ds)
 >>> print f.samples.max()
 1.0
+
+.. map2nifti(ds, f).save('results/res_haxby2001_fscore_vt.nii.gz')
 
 .. exercise::
 
@@ -149,12 +152,15 @@ We will reuse the same searchlight setup and run it on this data as well.
 Due to the size of the data it might take a few minutes to compute the
 results, depending on the number of CPU in the system.
 
->>> # instead if actually running this code you can also load the results by
->>> # `res = load_tutorial_results('sl_roi0_results')`
+>>> # alt: `ds = load_tutorial_results('ds_haxby2001_alt_roi0')`
 >>> ds = get_haxby2001_data_alternative(roi=0)
 >>> print ds.nfeatures
 34888
+>>> # alt: `res = load_tutorial_results('sl_roi0_results')`
 >>> res = sl(ds)
+
+.. h5save("results/ds_haxby2001_alt_roi0.hdf5", ds, compression=9)
+.. h5save('results/res_haxby2001_sl_avgacc_roi0.hdf5', res)
 
 Now let's see what we got. Since a vector with 35k elements is a little
 hard to comprehend we have to resort to some statistics.
@@ -164,16 +170,15 @@ hard to comprehend we have to resort to some statistics.
 >>> res_std = np.std(res)
 >>> # we deal with errors here, hence 1.0 minus
 >>> chance_level = 1.0 - (1.0 / len(ds.uniquetargets))
->>> print chance_level, np.round(res_mean, 3), np.round(res_std, 3)
-0.875 0.848 0.094
 
-Well, the mean empirical error is just barely below the chance level.
+.. map2nifti(ds, 1.0 - sphere_errors).save('results/res_haxby2001_sl_avgacc_roi0.nii.gz')
+
+As you'll see, the mean empirical error is just barely below the chance level.
 However, we would not expect a signal for perfect classification
 performance in all spheres anyway. Let's see for how many spheres the error
 is more the two standard deviations lower than chance.
 
->>> print np.round(np.mean(sphere_errors < chance_level - 2 * res_std), 3)
-0.091
+>>> frac_lower = np.round(np.mean(sphere_errors < chance_level - 2 * res_std), 3)
 
 So in almost 10% of all spheres the error is subtantially lower than what
 we would expect for random guessing of the classifier -- that is more than
@@ -230,6 +235,13 @@ let's do another one, but this time on a more familiar ROI -- the full brain.
   it compare to results of the previous exercise? What would be a good
   choice for the threshold in this case?
 
+.. h5save('results/ds_haxby2001_alt_brain.hdf5', ds)
+.. h5save('results/res_haxby2001_sl_avgacc_r0_brain.hdf5', r0)
+.. map2nifti(ds, 1.0 - r0.samples[0]).save('results/res_haxby2001_sl_avgacc_r0_brain.nii.gz')
+.. h5save('results/res_haxby2001_sl_avgacc_r1_brain.hdf5', r1)
+.. map2nifti(ds, 1.0 - r1.samples[0]).save('results/res_haxby2001_sl_avgacc_r1_brain.nii.gz')
+.. h5save('results/res_haxby2001_sl_avgacc_r3_brain.hdf5', r3)
+.. map2nifti(ds, 1.0 - r3.samples[0]).save('results/res_haxby2001_sl_avgacc_r3_brain.nii.gz')
 
 You have now performed a number of searchlight analyses, investigated the
 results and probably tried to interpret them. What conclusions did you draw

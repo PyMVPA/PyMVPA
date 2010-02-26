@@ -40,13 +40,20 @@ class FeatureSelection(ClassWithCollections):
         testdataset : Dataset
           dataset the might be used to compute a stopping criterion
 
-        Returns a tuple with the dataset containing the selected features.
-        If present the tuple also contains the selected features of the
-        test dataset. Derived classes must provide interface to access other
-        relevant to the feature selection process information (e.g. mask,
-        elimination step (in RFE), etc)
+        Returns
+        -------
+        Dataset or tuple
+          The dataset contains the selected features. If a ``testdataset`` has
+          been passed a tuple with both processed datasets is return instead.
         """
-        raise NotImplementedError
+        # Derived classes must provide interface to access other
+        # relevant to the feature selection process information (e.g. mask,
+        # elimination step (in RFE), etc)
+        results = self._call(dataset, testdataset)
+        if testdataset is None:
+            return results[0]
+        else:
+            return results
 
 
     def untrain(self):
@@ -102,7 +109,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         self.__sensitivity_analyzer.untrain()
 
 
-    def __call__(self, dataset, testdataset=None):
+    def _call(self, dataset, testdataset=None):
         """Select the most important features
 
         Parameters
@@ -186,7 +193,7 @@ class FeatureSelectionPipeline(FeatureSelection):
             fs.untrain()
 
 
-    def __call__(self, dataset, testdataset=None, **kwargs):
+    def _call(self, dataset, testdataset=None, **kwargs):
         """Invocation of the feature selection
         """
         wdataset = dataset
@@ -261,7 +268,7 @@ class CombinedFeatureSelection(FeatureSelection):
             fs.untrain()
 
 
-    def __call__(self, dataset, testdataset=None):
+    def _call(self, dataset, testdataset=None):
         """Really run it.
         """
         # to hold the union

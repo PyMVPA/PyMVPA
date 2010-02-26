@@ -1333,8 +1333,16 @@ class FeatureSelectionClassifier(ProxyClassifier):
             debug("CLFFS", "Performing feature selection using %s" %
                   self.__feature_selection + " on %s" % dataset)
 
-        (wdataset, tdataset) = self.__feature_selection(dataset,
-                                                        self.__testdataset)
+        selected = self.__feature_selection(dataset,
+                                            self.__testdataset)
+        # if __testdataset is None we get no tuple back, but just one
+        # dataset
+        if isinstance(selected, tuple):
+            (wdataset, tdataset) = selected
+        else:
+            wdataset = selected
+            tdataset = None
+
         if __debug__:
             add_ = ""
             if "CLFFS_" in debug.active:

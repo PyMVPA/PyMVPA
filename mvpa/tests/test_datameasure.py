@@ -435,7 +435,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                       enable_ca=['selected_ids',
                                                      'selections_ids'])
 
-        od, otd = fs(self.dataset)
+        od = fs(self.dataset)
 
         self.failUnless(fs.combiner == 'union')
         self.failUnless(len(fs.ca.selections_ids))
@@ -456,7 +456,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                       enable_ca=['selected_ids',
                                                      'selections_ids'])
         # simply run it for now -- can't think of additional tests
-        od, otd = fs(self.dataset)
+        od = fs(self.dataset)
 
 
 
