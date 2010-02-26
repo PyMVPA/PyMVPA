@@ -158,11 +158,14 @@ timeseries dataset into event-related samples. PyMVPA offers
 perform this conversion. Let's just do it, it only needs the original
 dataset and our list of events.
 
+>>> # alt: `evds = load_tutorial_results('ds_haxby2001_blkev_facehouse')`
 >>> evds = eventrelated_dataset(ds, events=events)
 >>> len(evds) == len(events)
 True
 >>> evds.nfeatures == ds.nfeatures * event_duration
 True
+
+.. h5save('results/ds_haxby2001_blkev_facehouse.hdf5', ds)
 
 .. exercise::
 
@@ -215,6 +218,7 @@ inspecting, as otherwise the assigned weights are meaningless.
   Viewer needs to be capable of visualizing timeseries (hint: for FSLView
   the timeseries image has to be opened first)!
 
+..
 
 A Plotting Example
 ------------------
