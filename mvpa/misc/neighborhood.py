@@ -149,6 +149,12 @@ class Sphere(object):
         # type checking
         coordinate = np.asanyarray(coordinate)
         # XXX This might go into _train ...
+        scalar = coordinate.ndim == 0
+        if scalar:
+            # we are dealing with scalars -- lets add a dimension
+            # artificially
+            coordinate = coordinate[None]
+        # XXX This might go into _train ...
         ndim = len(coordinate)
         if self._increments is None  or self._increments_ndim != ndim:
             if __debug__:
@@ -180,10 +186,15 @@ class Sphere(object):
         ##                            and (c < self.extent).all()])
         ## coord_array = coord_array.transpose()
 
-        # Note: converting first full array to list and then
-        # "tuppling" it seems to be faster than tuppling each
-        # sub-array
-        return [tuple(x) for x in coord_array.tolist()]
+        if scalar:
+            # Take just 0th dimension since 1st was artificially introduced
+            coord_array = coord_array[:, 0]
+            return coord_array.tolist()
+        else:
+            # Note: converting first full array to list and then
+            # "tuppling" it seems to be faster than tuppling each
+            # sub-array
+            return [tuple(x) for x in coord_array.tolist()]
 
 
 class HollowSphere(Sphere):
