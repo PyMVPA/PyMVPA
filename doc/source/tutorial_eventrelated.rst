@@ -67,7 +67,7 @@ on the original, continuous timeseries.
 In its current shape our dataset consists of 1452 samples that represent
 contiguous fMRI volumes. At this stage we can easily perform linear
 detrending. Again, we are going to do it per each experiment run (the
-dataset has to runs encoded in the ``chunk`` sample attribute), since we do
+dataset has to runs encoded in the ``chunks`` sample attribute), since we do
 not assume a contiguous linear trend throughout the whole timeseries.
 
 >>> poly_detrend(ds, polyord=1, chunks_attr='chunks')
@@ -309,6 +309,9 @@ coordinate combination as well. matplotlib allows to stored this figure in
 SVG_ format that allows for convenient post-processing in Inkscape_ -- a
 publication quality figure is only minutes away.
 
+.. _SVG: http://en.wikipedia.org/wiki/Scalable_Vector_Graphics
+.. _Inkscape: http://www.inkscape.org/
+
 .. figure:: pics/ex_eventrelated.*
    :align: center
 
@@ -337,20 +340,45 @@ need to run a function like
 directly specified and passed to
 :func:`~mvpa.datasets.eventrelated.eventrelated_dataset()`.
 
-At the end of this tutorial part we want to take a little glimpse on the
-power of PyMVPA for "multi-space" analysis.
+At the end of this tutorial part we want to take a little glimpse on the power
+of PyMVPA for "multi-space" analysis. From the :ref:`previous tutorial part
+<chap_tutorial_searchlight>` we know how to do searchlight analyses and it was
+promised that there is more to it than what we already saw. And here it is:
 
->>> 
+>>> cvte = CrossValidatedTransferError(
+...             TransferError(LinearCSVMC()),
+...             splitter=NFoldSplitter())
+>>> sl = Searchlight(cvte,
+...                  IndexQueryEngine(voxel_indices=Sphere(1),
+...                                   event_offsetidx=Sphere(2)),
+...                  postproc=mean_sample())
+>>> res = sl(evds)
+
+Have you been able to deduce what this analysis will do? Clearly, it is
+some sort of searchlight, but it doesn't use
+:func:`~mvpa.measures.searchlight.sphere_searchlight`. Instead, it
+utilizes :class:`~mvpa.measures.searchlight.Searchlight`. Yes, your are
+correct this is a spatio-temporal searchlight. The searchlight focus
+travels along all possible locations in our ventral temporal ROI, but at
+the same time also along the peristimulus time segment cover by the
+events. The spatial searchlight extent is the center voxel and its
+immediate neighbors and the temporal dimension comprises two timepoints in
+each direction. The result is again a dataset. Its shape is compatible
+with the mapper of ``evds``, hence it can also be back-projected into the
+original 4D fMRI brain space.
+
+:class:`~mvpa.measures.searchlight.Searchlight` is a powerful class that
+allows for complex runtime ROI generation. In this case it uses an
+:class:`~mvpa.misc.neighborhood.IndexQueryEngine` to look at certain
+feature attributes in the dataset to compose sphere-shaped ROIs and two
+spaces at this same time. This approach is very flexible and can be
+extented with additional query engines to algorithms of almost arbitrary
+complexity.
 
 
-cvte = CrossValidatedTransferError(TransferError(LinearCSVMC()), splitter=NFoldSplitter(), enable_ca=['confusion'])
-sl=Searchlight(cvte, IndexQueryEngine(voxel_indices=Sphere(2), event_offsetidx=Sphere(1)), nproc=1)
-res = sl(evds)
-
-    kwa = {space: Sphere(radius)}
-    qe = IndexQueryEngine(**kwa)
-    # init the searchlight with the queryengine
-    return Searchlight(datameasure, qe, center_ids=center_ids, **kwargs)
+.. there is something that prevents us from mapping the whole dataset
+>>> ts = res.a.mapper.reverse1(1 - res.samples[0])
+>>> NiftiImage(ts, ds.a.imghdr).save('ersl.nii')
 
 .. only:: html
 
