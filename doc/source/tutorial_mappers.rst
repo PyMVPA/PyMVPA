@@ -32,7 +32,7 @@ new method to create the dataset, the `dataset_wizard`. Here it is fully
 equivalent to a regular constructor call (i.e.  `~mvpa.datasets.base.Dataset`),
 but we will shortly see some nice convenience aspects.
 
->>> from mvpa.suite import *
+>>> from tutorial_lib import *
 >>> ds = dataset_wizard(np.ones((5, 12)))
 >>> ds.shape
 (5, 12)
@@ -156,8 +156,7 @@ first column, and the chunk identifier in the second, with one line per
 volume in the NIfTI image.
 
 >>> # directory that contains the data files
->>> datapath = os.path.join(pymvpa_datadbroot,
-...                         'demo_blockfmri', 'demo_blockfmri')
+>>> datapath = os.path.join(tutorial_data_path, 'data')
 >>> attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
 >>> len(attr.targets)
 1452

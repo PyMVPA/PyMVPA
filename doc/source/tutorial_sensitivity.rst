@@ -121,7 +121,7 @@ dataset to perform the feature selection:
 .. Put slicing logic from Splitters also in these objects
 .. refactor them to return just one dataset
 
->>> ds_p = fsel(ds)[0]
+>>> ds_p = fsel(ds)
 >>> print ds_p.shape
 (96, 500)
 
@@ -164,7 +164,7 @@ this binary problem
 Not much, but that doesn't surprise. Let's see what effect our ANOVA-based
 feature selection has
 
->>> bin_demo_p = fsel(bin_demo)[0]
+>>> bin_demo_p = fsel(bin_demo)
 >>> results = cvte(bin_demo_p)
 >>> print cvte.ca.confusion.stats["ACC%"]
 100.0

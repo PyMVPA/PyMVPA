@@ -96,8 +96,7 @@ have learned from the :ref:`last tutorial part <chap_tutorial_mappers>` the
 following code snippet should be plausible:
 
 >>> # directory that contains the data files
->>> datapath = os.path.join(pymvpa_datadbroot,
-...                         'demo_blockfmri', 'demo_blockfmri')
+>>> datapath = os.path.join(tutorial_data_path, 'data')
 >>> # load the raw data
 >>> attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
 >>> ds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
