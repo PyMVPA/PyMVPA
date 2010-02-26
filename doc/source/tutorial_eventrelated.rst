@@ -29,9 +29,9 @@ Here we are going to employ a similar approach in our well-known example
 data -- this time selecting a subset of ventral temporal regions.
 
 >>> from tutorial_lib import *
->>> ds = load_datadb_demo_blockfmri(roi=(36,38,39,40))
+>>> ds = get_raw_haxby2001_data(roi=(36,38,39,40))
 >>> print ds.shape
-(1452, 39912)
+(1452, 941)
 
 As we know, this dataset consists of 12 concatenated experiment sessions.
 Every session had a stimulation block spanning multiple fMRI volumes for

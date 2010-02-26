@@ -15,12 +15,10 @@ Part 1: A Gentle Start
 **********************
 
 Virtually every Python script starts with some `import` statements that load
-functionality provided elsewhere. We start this tutorial by importing NumPy_,
-Python's foundation for scientific computing.  Furthermore, we also import
-some little helpers we are going to use in the tutorial, and whose purpose we
-are going to see shortly.
+functionality provided elsewhere. We start this tutorial by importing some
+little helpers (including all of PyMVPA) we are going to use in the tutorial,
+and whose purpose we are going to see shortly.
 
->>> import numpy as np
 >>> from tutorial_lib import *
 
 Getting the data
