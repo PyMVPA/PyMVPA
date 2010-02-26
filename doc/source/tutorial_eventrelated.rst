@@ -49,10 +49,10 @@ literature offers three principal techniques:
 
 1. Choose a single representative volume.
 2. Compress all relevant volumes into a single one (averaging).
-3. Consider to full event-related timeseries.
+3. Consider the full event-related timeseries.
 
 Obviously, only the third approach can possibly provide us with a temporal
-sensitivity profile, hence we will choose this patch.
+sensitivity profile, hence we will choose this path.
 
 Event-related Pre-processing Is Not Event-related
 -------------------------------------------------
@@ -67,7 +67,7 @@ on the original, continuous timeseries.
 In its current shape our dataset consists of 1452 samples that represent
 contiguous fMRI volumes. At this stage we can easily perform linear
 detrending. Again, we are going to do it per each experiment run (the
-dataset has to runs encoded in the ``chunks`` sample attribute), since we do
+dataset has runs encoded in the ``chunks`` sample attribute), since we do
 not assume a contiguous linear trend throughout the whole timeseries.
 
 >>> poly_detrend(ds, polyord=1, chunks_attr='chunks')
@@ -90,8 +90,8 @@ From Timeseries To Events
 
 After detrending and normalization, we can now segment the timeseries into
 a set of events. To achieve this we have to compile a list of event
-definitions first. In event is defined by *onset*, *duration* and
-potentially as number of additional properties, such as stimulus condition
+definitions first. An event is defined by *onset*, *duration* and
+potentially a number of additional properties, such as stimulus condition
 or recording session number.
 
 In this example we will simply convert the block-design setup defined by
@@ -142,7 +142,7 @@ We can easily filter out all other events.
 >>> np.unique([e['duration'] for e in events])
 array([9])
 
-All of our event are of the same length, 9 consecutive fMRI volume. Later
+All of our events are of the same length, 9 consecutive fMRI volume. Later
 on we want to view the temporal sensitivity profile from *before* until
 *after* the stimulation block, hence we should extend the duration of the
 events a bit.
@@ -158,11 +158,14 @@ timeseries dataset into event-related samples. PyMVPA offers
 perform this conversion. Let's just do it, it only needs the original
 dataset and our list of events.
 
+>>> # alt: `evds = load_tutorial_results('ds_haxby2001_blkev_facehouse')`
 >>> evds = eventrelated_dataset(ds, events=events)
 >>> len(evds) == len(events)
 True
 >>> evds.nfeatures == ds.nfeatures * event_duration
 True
+
+.. h5save('results/ds_haxby2001_blkev_facehouse.hdf5', ds)
 
 .. exercise::
 
@@ -184,7 +187,7 @@ conversion into events.
   reverse map multiple samples at once and compare the result. Is this what
   you would expect?
 
-The rest of our analysis business as usual and quickly done.  We want to
+The rest of our analysis is business as usual and quickly done.  We want to
 perform a cross-validation analysis of a SVM classifier. We are not
 primarily interested in its performance, but in the weights it assigns to
 the features. Remember, each feature is now voxel-timepoint, so we get a
@@ -215,6 +218,7 @@ inspecting, as otherwise the assigned weights are meaningless.
   Viewer needs to be capable of visualizing timeseries (hint: for FSLView
   the timeseries image has to be opened first)!
 
+..
 
 A Plotting Example
 ------------------
@@ -371,7 +375,7 @@ original 4D fMRI brain space.
 allows for complex runtime ROI generation. In this case it uses an
 :class:`~mvpa.misc.neighborhood.IndexQueryEngine` to look at certain
 feature attributes in the dataset to compose sphere-shaped ROIs and two
-spaces at this same time. This approach is very flexible and can be
+spaces at the same time. This approach is very flexible and can be
 extented with additional query engines to algorithms of almost arbitrary
 complexity.
 
