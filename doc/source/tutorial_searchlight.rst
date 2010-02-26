@@ -164,16 +164,13 @@ hard to comprehend we have to resort to some statistics.
 >>> res_std = np.std(res)
 >>> # we deal with errors here, hence 1.0 minus
 >>> chance_level = 1.0 - (1.0 / len(ds.uniquetargets))
->>> print chance_level, np.round(res_mean, 3), np.round(res_std, 3)
-0.875 0.848 0.094
 
-Well, the mean empirical error is just barely below the chance level.
+As you'll see, the mean empirical error is just barely below the chance level.
 However, we would not expect a signal for perfect classification
 performance in all spheres anyway. Let's see for how many spheres the error
 is more the two standard deviations lower than chance.
 
->>> print np.round(np.mean(sphere_errors < chance_level - 2 * res_std), 3)
-0.091
+>>> frac_lower = np.round(np.mean(sphere_errors < chance_level - 2 * res_std), 3)
 
 So in almost 10% of all spheres the error is subtantially lower than what
 we would expect for random guessing of the classifier -- that is more than
