@@ -56,7 +56,6 @@ def collect_test_suites():
         'test_procrust',
         'test_hyperalignment',
         'test_transformers',
-        'test_transerror',
         'test_clfcrossval',
         'test_searchlight',
         'test_rfe',
@@ -129,6 +128,7 @@ def collect_nose_tests():
               'test_svmkernels',
               'test_waveletmapper',
               'test_emp_null',
+              'test_transerror',
               ]
 
     if not cfg.getboolean('tests', 'lowmem', default='no'):
