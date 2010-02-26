@@ -86,7 +86,7 @@ class IFS(FeatureSelection):
         self.__stopping_criterion = stopping_criterion
 
 
-    def __call__(self, dataset, testdataset):
+    def _call(self, dataset, testdataset):
         """Proceed and select the features recursively eliminating less
         important ones.
 
