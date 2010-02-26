@@ -107,8 +107,8 @@ class Searchlight(DatasetMeasure):
 
         # compute
         if nproc > 1:
-            # split all target ROIs centers into `nproc` equally sized chunks
-            roi_chunks = np.array_split(roi_ids, nproc)
+            # split all target ROIs centers into `nproc` equally sized blocks
+            roi_blocks = np.array_split(roi_ids, nproc)
 
             # the next block sets up the infrastructure for parallel computing
             # this can easily be changed into a ParallelPython loop, if we
@@ -116,11 +116,11 @@ class Searchlight(DatasetMeasure):
             import pprocess
             p_results = pprocess.Map(limit=nproc)
             compute = p_results.manage(
-                        pprocess.MakeParallel(self._proc_chunk))
-            for chunk in roi_chunks:
+                        pprocess.MakeParallel(self._proc_block))
+            for block in roi_blocks:
                 # should we maybe deepcopy the measure to have a unique and
                 # independent one per process?
-                compute(chunk, dataset, copy.copy(self.__datameasure))
+                compute(block, dataset, copy.copy(self.__datameasure))
 
             # collect results
             results = []
@@ -136,7 +136,7 @@ class Searchlight(DatasetMeasure):
         else:
             # otherwise collect the results in a list
             results, roisizes = \
-                    self._proc_chunk(roi_ids, dataset, self.__datameasure)
+                    self._proc_block(roi_ids, dataset, self.__datameasure)
 
         if not roisizes is None:
             self.ca.roisizes = roisizes
@@ -169,10 +169,13 @@ class Searchlight(DatasetMeasure):
         return results
 
 
-    def _proc_chunk(self, chunk, ds, measure):
+    def _proc_block(self, block, ds, measure):
         """Little helper to capture the parts of the computation that can be
         parallelized
         """
+        if __debug__:
+            debug_slc_ = 'SLC_' in debug.active
+
         if self.ca.is_enabled('roisizes'):
             roisizes = []
         else:
@@ -180,10 +183,14 @@ class Searchlight(DatasetMeasure):
         results = []
         # put rois around all features in the dataset and compute the
         # measure within them
-        for i, f in enumerate(chunk):
+        for i, f in enumerate(block):
             # retrieve the feature ids of all features in the ROI from the query
             # engine
             roi_fids = self.__qe[f]
+
+            if __debug__ and  debug_slc_:
+                debug('SLC_', 'For %r query returned ids %r' % (f, roi_fids))
+
             # slice the dataset
             roi = ds[:, roi_fids]
 
@@ -196,10 +203,10 @@ class Searchlight(DatasetMeasure):
 
             if __debug__:
                 debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
-                    % (len(chunk),
+                    % (len(block),
                        f+1,
                        roi.nfeatures,
-                       float(i+1)/len(chunk)*100,), cr=True)
+                       float(i+1)/len(block)*100,), cr=True)
 
         return results, roisizes
 

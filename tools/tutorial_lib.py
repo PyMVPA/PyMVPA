@@ -14,33 +14,27 @@ import numpy as np
 # later replace with
 from mvpa.suite import *
 
+tutorial_data_path = mvpa.cfg.get('location', 'tutorial data', default=os.path.curdir)
 
-def get_raw_haxby2001_data(path=os.path.join(pymvpa_datadbroot,
-                                            'demo_blockfmri',
-                                            'demo_blockfmri'),
+def get_raw_haxby2001_data(path=os.path.join(tutorial_data_path, 'data'),
                            roi='vt'):
-    if roi is None:
-        mask = None
-    elif isinstance(roi, str):
-        mask = os.path.join(path, 'mask_' + roi + '.nii.gz')
-    elif isinstance(roi, int):
+    if roi is 0:
+        # this means something special in the searchlight tutorial
         nimg = NiftiImage(os.path.join(path, 'mask_hoc.nii.gz'))
         nimg_brain = NiftiImage(os.path.join(path, 'mask_brain.nii.gz'))
         tmpmask = nimg.data == roi
-        if roi == 0:
-            # trim it down to the lower anterior quadrant
-            tmpmask[tmpmask.shape[0]/2:] = False
-            tmpmask[:, :tmpmask.shape[1]/2] = False
-            tmpmask[nimg_brain.data > 0] = False
+        # trim it down to the lower anterior quadrant
+        tmpmask[tmpmask.shape[0]/2:] = False
+        tmpmask[:, :tmpmask.shape[1]/2] = False
+        tmpmask[nimg_brain.data > 0] = False
         mask = NiftiImage(tmpmask.astype(int), nimg.header)
+        attr = SampleAttributes(os.path.join(path, 'attributes.txt'))
+        ds = fmri_dataset(samples=os.path.join(path, 'bold.nii.gz'),
+                          targets=attr.targets, chunks=attr.chunks,
+                          mask=mask)
+        return ds
     else:
-        raise ValueError("Got something as mask that I cannot handle.")
-    attr = SampleAttributes(os.path.join(path, 'attributes.txt'))
-    ds = fmri_dataset(samples=os.path.join(path, 'bold.nii.gz'),
-                      targets=attr.targets, chunks=attr.chunks,
-                      mask=mask)
-
-    return ds
+        return load_datadb_demo_blockfmri(path=path, roi=roi)
 
 
 def get_haxby2001_data(path=None, roi='vt'):
@@ -100,9 +94,6 @@ def get_haxby2001_clf():
     return clf
 
 
-def load_tutorial_results(name,
-                          path=os.path.join(pymvpa_datadbroot,
-                                            'demo_blockfmri',
-                                            'demo_blockfmri',
-                                            'results')):
+def load_tutorial_results(name, path=os.path.join(tutorial_data_path,
+                                                  'results')):
     return h5load(os.path.join(path, name + '.hdf5'))

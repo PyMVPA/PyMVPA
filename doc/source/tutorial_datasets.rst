@@ -22,7 +22,7 @@ take a look at what a dataset consists of, and how it works.
 In the simplest case, a dataset only contains *data* that is a matrix of
 numerical values.
 
->>> from mvpa.suite import *
+>>> from tutorial_lib import *
 >>> data = [[  1,  1, -1],
 ...         [  2,  0,  0],
 ...         [  3,  1,  1],
@@ -316,9 +316,7 @@ look at is a single subject from Haxby et al. (2001) that we already
 loaded in part one of this tutorial. For more convenience, and less typing
 we first specify the path of the directory with the fMRI data.
 
->>> # 'pymvpa_datadbroot' is set by PyMVPA and points to the global data
->>> # database (downloadable from http://data.pymvpa.org)
->>> path=os.path.join(pymvpa_datadbroot, 'demo_blockfmri', 'demo_blockfmri')
+>>> path=os.path.join(tutorial_data_path, 'data')
 
 In the simplest case, we now let `fmri_dataset` do its job, by just
 pointing it to the fMRI data file. The data is stored as a NIfTI file that has

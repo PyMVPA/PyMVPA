@@ -45,7 +45,7 @@ PyMVPA stands for **M**\ ulti\ **V**\ ariate **P**\ attern **A**\ nalysis
     <td style="text-align:center"><a href="download.html">Download</a></td>
     <td style="text-align:center"><a href="tutorial.html">Tutorial</a></td>
     <td style="text-align:center"><a href="docoverview.html">Documentation</a></td>
-    <td style="text-align:center"><a href="support">Support</a></td>
+    <td style="text-align:center"><a href="support.html">Support</a></td>
   </tr>
  </table>
 

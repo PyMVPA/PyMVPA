@@ -144,7 +144,7 @@ class RFE(FeatureSelection):
             self.__train_clf = True
 
 
-    def __call__(self, dataset, testdataset):
+    def _call(self, dataset, testdataset):
         """Proceed and select the features recursively eliminating less
         important ones.
 
