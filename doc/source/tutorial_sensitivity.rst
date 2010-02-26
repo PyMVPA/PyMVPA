@@ -23,6 +23,7 @@ the data as we have done before and perform volume averaging to get a
 single sample per stimulus category and original experiment session.
 
 >>> from tutorial_lib import *
+>>> # alt: `ds = load_tutorial_results('ds_haxby2001blkavg_brain')`
 >>> ds = get_raw_haxby2001_data(roi='brain')
 >>> print ds.shape
 (1452, 39912)
@@ -35,6 +36,8 @@ single sample per stimulus category and original experiment session.
 >>> ds = ds.get_mapped(run_averager)
 >>> print ds.shape
 (96, 39912)
+
+.. h5save('results/ds_haxby2001_blkavg_brain.hdf5', ds)
 
 A searchlight analysis on this dataset would look exactly as we have seen
 :ref:`before <chap_tutorial_searchlight>`, but it would take a bit longer
@@ -268,11 +271,14 @@ As you can see, this even works for our meta-classifier. And again this
 analyzer is a :term:`processing object` that returns the desired sensitivity
 when called with a dataset.
 
+>>> # alt: `sens = load_tutorial_results('res_haxby2001_sens_5pANOVA')`
 >>> sens = sensana(ds)
 >>> type(sens)
 <class 'mvpa.datasets.base.Dataset'>
 >>> print sens.shape
 (28, 39912)
+
+.. h5save('results/res_haxby2001_sens_5pANOVA.hdf5', sens)
 
 Why do we get 28 sensitivity maps from the classifier? The support vector
 machine is an algorithm for binary classification problems. To be able to deal
@@ -299,6 +305,8 @@ of the importance of feature for *any* partial classification.
   the searchlight maps of different radii from the :ref:`previous tutorial
   part <chap_tutorial_searchlight>`.
 
+.. map2nifti(ds, sens_comb).save('results/res_haxby2001_sens_maxofabs_5pANOVA.nii.gz')
+
 You might have noticed some imperfection in our recent approach to compute
 a full-brain sensitivity map. We derived it from the full dataset, and not
 from cross-validation splits of the data. Rectifying it is easy with a
@@ -307,11 +315,14 @@ that takes a basic measure, adds a processing step to it and behaves like a
 measure itself. The meta-measure we want to use is
 :class:`~mvpa.measures.base.SplitFeaturewiseDatasetMeasure`.
 
+>>> # alt: `sens = load_tutorial_results('res_haxby2001_splitsens_5pANOVA')`
 >>> sensana = fclf.get_sensitivity_analyzer(postproc=maxofabs_sample())
 >>> cv_sensana = SplitFeaturewiseDatasetMeasure(NFoldSplitter(), sensana)
 >>> sens = cv_sensana(ds)
 >>> print sens.shape
 (12, 39912)
+
+.. h5save('results/res_haxby2001_splitsens_5pANOVA.hdf5', sens)
 
 We re-create our basic sensitivity analyzer, this time automatically
 applying the post-processing step that combines the sensitivity maps for
