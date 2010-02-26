@@ -463,7 +463,7 @@ class ConfusionMatrix(SummaryStatistics):
         ('MCC', "Matthews Correlation Coefficient",
                 "MCC = (TP*TN - FP*FN)/sqrt(P N P' N')"),
         ('AUC', "Area under (AUC) curve", None),
-        ('CHI^2', "Chi-square of contingency table", None),
+        ('CHI^2', "Chi-square of confusion matrix", None),
         ) + SummaryStatistics._STATS_DESCRIPTION
 
 
@@ -752,7 +752,7 @@ class ConfusionMatrix(SummaryStatistics):
             if 'CHI^2' in self.stats:
                 chi2t = stats['CHI^2']
                 printed.append(['CHI^2'] + [_p2(chi2t[0])]
-                               + ['p:'] + [_p2(chi2t[1])])
+                               + ['p:'] + ['%.2g' % chi2t[1]])
 
             for stat in stats_summary:
                 printed.append([stat] + [_p2(stats[stat])])
