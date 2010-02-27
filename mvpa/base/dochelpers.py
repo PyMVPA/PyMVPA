@@ -323,7 +323,7 @@ def enhanced_doc_string(item, *args, **kwargs):
         else:
             section_name = '\n'         # just an additional newline
         # no indent is necessary since ca list must be already indented
-        docs += ['%s\nAvailable state variables:' % section_name,
+        docs += ['%s\nAvailable conditional attributes:' % section_name,
                  handle_docstring(item._cadoc)]
 
     # Deprecated -- but actually we might like to have it in ipython

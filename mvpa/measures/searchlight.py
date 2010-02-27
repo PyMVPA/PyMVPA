@@ -22,7 +22,7 @@ from mvpa.datasets import Dataset, hstack
 from mvpa.support import copy
 from mvpa.mappers.base import FeatureSliceMapper
 from mvpa.measures.base import DatasetMeasure
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa.base.dochelpers import _str, borrowkwargs
 
@@ -33,7 +33,7 @@ class Searchlight(DatasetMeasure):
     :ref:`Kriegeskorte et al. (2006) <KGB06>`.
     """
 
-    roisizes = StateVariable(enabled=False,
+    roisizes = ConditionalAttribute(enabled=False,
         doc="Number of features in each ROI.")
 
     def __init__(self, datameasure, queryengine, center_ids=None,

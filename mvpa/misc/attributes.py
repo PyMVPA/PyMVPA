@@ -32,7 +32,7 @@ class IndexedCollectable(Collectable):
 
     Derived classes will have specific semantics:
 
-    * StateVariable: conditional storage
+    * ConditionalAttribute: conditional storage
     * Parameter: attribute with validity ranges.
 
     `IndexedAttributes` instances are to be automagically grouped into
@@ -143,7 +143,7 @@ class IndexedCollectable(Collectable):
             )
 
 
-class StateVariable(IndexedCollectable):
+class ConditionalAttribute(IndexedCollectable):
     """Simple container intended to conditionally store the value
     """
 
@@ -152,7 +152,7 @@ class StateVariable(IndexedCollectable):
         Parameters
         ----------
         enabled : bool
-          If a StateVariable is not enabled then assignment of any value has no
+          If a ConditionalAttribute is not enabled then assignment of any value has no
           effect, i.e. nothing is stored.
         **kwargs
           Passed to `IndexedCollectable`
@@ -167,7 +167,7 @@ class StateVariable(IndexedCollectable):
 
     def __reduce__(self):
         icr = IndexedCollectable.__reduce__(self)
-        icr[2].update({'_StateVariable__enabled' : self.__enabled})
+        icr[2].update({'_ConditionalAttribute__enabled' : self.__enabled})
         res = (icr[0], (self._defaultenabled,) + icr[1], icr[2])
         #if __debug__ and 'COL_RED' in debug.active:
         #    debug('COL_RED', 'Returning %s for %s' % (res, self))

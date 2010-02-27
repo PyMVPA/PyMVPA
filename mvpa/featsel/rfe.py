@@ -17,7 +17,7 @@ from mvpa.featsel.helpers import BestDetector, \
                                  NBackHistoryStopCrit, \
                                  FractionTailSelector
 from numpy import arange
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 
 if __debug__:
     from mvpa.base import debug
@@ -51,13 +51,13 @@ class RFE(FeatureSelection):
       486--503.
     """
 
-    errors = StateVariable(
+    errors = ConditionalAttribute(
         doc="History of errors through RFE")
-    nfeatures = StateVariable(
+    nfeatures = ConditionalAttribute(
         doc="History of # of features left")
-    history = StateVariable(
+    history = ConditionalAttribute(
         doc="Last step # when each feature was still present")
-    sensitivities = StateVariable(enabled=False,
+    sensitivities = ConditionalAttribute(enabled=False,
         doc="History of sensitivities (might consume too much memory")
 
     def __init__(self,
@@ -169,7 +169,7 @@ class RFE(FeatureSelection):
         ca = self.ca
         ca.nfeatures = []
         """Number of features at each step. Since it is not used by the
-        algorithm it is stored directly in the state variable"""
+        algorithm it is stored directly in the conditional attribute"""
 
         ca.history = arange(dataset.nfeatures)
         """Store the last step # when the feature was still present
@@ -301,7 +301,7 @@ class RFE(FeatureSelection):
 
             if hasattr(self.__transfer_error, "clf"):
                 self.__transfer_error.clf.untrain()
-        # charge state variables
+        # charge conditional attributes
         self.ca.errors = errors
         self.ca.selected_ids = result_selected_ids
 

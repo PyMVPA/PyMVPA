@@ -20,7 +20,7 @@ from mvpa.support.copy import deepcopy
 
 import numpy as np
 
-from mvpa.misc.state import StateVariable, ClassWithCollections
+from mvpa.misc.state import ConditionalAttribute, ClassWithCollections
 from mvpa.misc.param import Parameter
 from mvpa.misc.transformers import grand_mean
 from mvpa.mappers.procrustean import ProcrusteanMapper
@@ -38,10 +38,10 @@ class Hyperalignment(ClassWithCollections):
     features into a common space
     """
 
-    residual_errors = StateVariable(enabled=False,
+    residual_errors = ConditionalAttribute(enabled=False,
             doc="""Residual error per each dataset at each level.""")
 
-    choosen_ref_ds = StateVariable(enabled=True,
+    choosen_ref_ds = ConditionalAttribute(enabled=True,
             doc="""If ref_ds wasn't provided, it gets choosen.""")
 
     # Lets use built-in facilities to specify parameters which

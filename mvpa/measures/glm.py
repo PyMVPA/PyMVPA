@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.measures.base import FeaturewiseDatasetMeasure
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 from mvpa.datasets.base import Dataset
 
 class GLM(FeaturewiseDatasetMeasure):
@@ -29,10 +29,10 @@ class GLM(FeaturewiseDatasetMeasure):
     The measure is reported in a (nfeatures x nregressors)-shaped array.
     """
 
-    pe = StateVariable(enabled=False,
+    pe = ConditionalAttribute(enabled=False,
         doc="Parameter estimates (nfeatures x nparameters).")
 
-    zstat = StateVariable(enabled=False,
+    zstat = ConditionalAttribute(enabled=False,
         doc="Standardized parameter estimates (nfeatures x nparameters).")
 
     def __init__(self, design, voi='pe', **kwargs):

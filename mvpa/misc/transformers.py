@@ -19,7 +19,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.base import externals, warning
-from mvpa.misc.state import StateVariable, ClassWithCollections
+from mvpa.misc.state import ConditionalAttribute, ClassWithCollections
 
 if __debug__:
     from mvpa.base import debug
@@ -211,10 +211,10 @@ class DistPValue(ClassWithCollections):
     """Converts values into p-values under vague and non-scientific assumptions
     """
 
-    nulldist_number = StateVariable(enabled=True,
+    nulldist_number = ConditionalAttribute(enabled=True,
         doc="Number of features within the estimated null-distribution")
 
-    positives_recovered = StateVariable(enabled=True,
+    positives_recovered = ConditionalAttribute(enabled=True,
         doc="Number of features considered to be positives and which were recovered")
 
 
@@ -384,7 +384,7 @@ class DistPValue(ClassWithCollections):
         # XXX we might add an option to transform it to z-scores?
         result = pvalues
 
-        # charge state variables
+        # charge conditional attributes
         # XXX might want to populate them for non-adaptive handling as well
         self.ca.nulldist_number = nulldist_number
         self.ca.positives_recovered = positives_recovered
