@@ -23,6 +23,7 @@ from mvpa.base.dataset import datasetmethod
 from mvpa.datasets.base import Dataset
 from mvpa.base.dochelpers import table2string
 from mvpa.misc.support import get_break_points
+from mvpa.misc.support import idhash as idhash_
 
 from mvpa.base import externals, warning
 
@@ -328,6 +329,105 @@ def get_samples_by_attr(dataset, attr, values, sort=True):
         sel.sort()
 
     return sel
+
+@datasetmethod
+def summary(dataset, stats=True, lstats=True, idhash=False,
+            maxc=30, maxt=20):
+    """String summary over the object
+
+    Parameters
+    ----------
+    stats : bool
+     Include some basic statistics (mean, std, var) over dataset samples
+    lstats : bool
+     Include statistics on chunks/targets
+    idhash : bool
+     Include idhash value for dataset and samples
+    maxt : int
+      Maximal number of targets when provide details on targets/chunks
+    maxc : int
+      Maximal number of chunks when provide details on targets/chunks
+    """
+    # local bindings
+    samples = dataset.samples
+    s = str(dataset)[1:-1]
+
+    if idhash:
+        s += '\nID-Hashes: %s' % dataset.idhash
+
+    ssep = (' ', '\n')[lstats]
+
+    ## Possibly summarize attributes listed as having unique
+    if stats:
+        # TODO -- avg per chunk?
+        # XXX We might like to use scipy.stats.describe to get
+        # quick summary statistics (mean/range/skewness/kurtosis)
+        if dataset.nfeatures:
+            s += "%sstats: mean=%g std=%g var=%g min=%g max=%g\n" % \
+                 (ssep, np.mean(samples), np.std(samples),
+                  np.var(samples), np.min(samples), np.max(samples))
+        else:
+            s += "%sstats: dataset has no features\n" % ssep
+
+    if lstats:
+        s += dataset.summary_targets(maxc=maxc, maxt=maxt)
+
+    return s
+
+@datasetmethod
+def summary_targets(dataset, maxc=30, maxt=20):
+    """Provide summary statistics over the targets and chunks
+
+    Parameters
+    ----------
+    maxc : int
+      Maximal number of chunks when provide details
+    maxt : int
+      Maximal number of targets when provide details
+    """
+    # We better avoid bound function since if people only
+    # imported Dataset without miscfx it would fail
+    spcl = get_samples_per_chunk_target(dataset)
+    # XXX couldn't they be unordered?
+    ul = dataset.sa['targets'].unique.tolist()
+    uc = dataset.sa['chunks'].unique.tolist()
+    s = ""
+    if len(ul) < maxt and len(uc) < maxc:
+        s += "\nCounts of targets in each chunk:"
+        # only in a resonable case do printing
+        table = [['  chunks\\targets'] + ul]
+        table += [[''] + ['---'] * len(ul)]
+        for c, counts in zip(uc, spcl):
+            table.append([ str(c) ] + counts.tolist())
+        s += '\n' + table2string(table)
+    else:
+        s += "No details due to large number of targets or chunks. " \
+             "Increase maxc and maxt if desired"
+
+
+    def cl_stats(axis, u, name1, name2):
+        """Compute statistics per target
+        """
+        stats = {'min': np.min(spcl, axis=axis),
+                 'max': np.max(spcl, axis=axis),
+                 'mean': np.mean(spcl, axis=axis),
+                 'std': np.std(spcl, axis=axis),
+                 '#%ss' % name2: np.sum(spcl>0, axis=axis)}
+        entries = ['  ' + name1, 'mean', 'std', 'min', 'max', '#%ss' % name2]
+        table = [ entries ]
+        for i, l in enumerate(u):
+            d = {'  ' + name1 : l}
+            d.update(dict([ (k, stats[k][i]) for k in stats.keys()]))
+            table.append( [ ('%.3g', '%s')[isinstance(d[e], basestring)]
+                            % d[e] for e in entries] )
+        return '\nSummary per %s across %ss\n' % (name1, name2) \
+               + table2string(table)
+
+    if len(ul) < maxt:
+        s += cl_stats(0, ul, 'target', 'chunk')
+    if len(uc) < maxc:
+        s += cl_stats(1, uc, 'chunk', 'target')
+    return s
 
 
 class SequenceStats(dict):
