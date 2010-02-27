@@ -238,7 +238,7 @@ Data analysis
 How do I know which features were finally selected by a classifier doing feature selection?
 -------------------------------------------------------------------------------------------
 
-All classifier possess a state variable `feature_ids`. When enable, the
+All classifier possess a conditional attribute `feature_ids`. When enable, the
 classifier stores the ids of all features that were finally used to train
 the classifier.
 
@@ -310,7 +310,7 @@ trained anyway by the :class:`~mvpa.clfs.transerror.TransferError` instance
 they belong to.
 
 The return values of all code snippets defined in `harvest_attribs` are
-available in the `harvested` state variable. `harvested` is a dictionary where
+available in the `harvested` conditional attribute. `harvested` is a dictionary where
 the keys are the code snippets used to compute the value. As the key in this
 case is pretty long, we simply take the first (and only) value from the
 dictionary.  The value is actually a list of sensitivity datasets, one per

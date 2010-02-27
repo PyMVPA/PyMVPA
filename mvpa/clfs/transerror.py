@@ -25,7 +25,7 @@ from mvpa.misc.errorfx import mean_power_fx, root_mean_power_fx, RMSErrorFx, \
      AUCErrorFx
 from mvpa.base import warning
 from mvpa.base.collections import Collectable
-from mvpa.misc.state import StateVariable, ClassWithCollections
+from mvpa.misc.state import ConditionalAttribute, ClassWithCollections
 from mvpa.base.dochelpers import enhanced_doc_string, table2string
 from mvpa.clfs.stats import auto_null_dist
 
@@ -1236,12 +1236,12 @@ class ClassifierError(ClassWithCollections):
     """Compute (or return) some error of a (trained) classifier on a dataset.
     """
 
-    confusion = StateVariable(enabled=False)
+    confusion = ConditionalAttribute(enabled=False)
     """TODO Think that labels might be also symbolic thus can't directly
        be indicies of the array
     """
 
-    training_confusion = StateVariable(enabled=False,
+    training_confusion = ConditionalAttribute(enabled=False,
         doc="Proxy training_confusion from underlying classifier.")
 
 
@@ -1378,10 +1378,10 @@ class TransferError(ClassifierError):
     training dataset to the __call__() method.
     """
 
-    null_prob = StateVariable(enabled=True,
+    null_prob = ConditionalAttribute(enabled=True,
                     doc="Stores the probability of an error result under "
                          "the NULL hypothesis")
-    samples_error = StateVariable(enabled=False,
+    samples_error = ConditionalAttribute(enabled=False,
                         doc="Per sample errors computed by invoking the "
                             "error function for each sample individually. "
                             "Errors are available in a dictionary with each "
@@ -1404,7 +1404,7 @@ class TransferError(ClassifierError):
         null_dist : instance of distribution estimator, optional
         samples_idattr : str, optional
           What samples attribute to use to identify and store samples_errors
-          state variable
+          conditional attribute
         """
         ClassifierError.__init__(self, clf, labels, **kwargs)
         self.__errorfx = errorfx
@@ -1524,7 +1524,7 @@ class TransferError(ClassifierError):
 class ConfusionBasedError(ClassifierError):
     """For a given classifier report an error based on internally
     computed error measure (given by some `ConfusionMatrix` stored in
-    some state variable of `Classifier`).
+    some conditional attribute of `Classifier`).
 
     This way we can perform feature selection taking as the error
     criterion either learning error, or transfer to splits error in
@@ -1540,7 +1540,7 @@ class ConfusionBasedError(ClassifierError):
         clf : Classifier
           Either trained or untrained classifier
         confusion_state
-          Id of the state variable which stores `ConfusionMatrix`
+          Id of the conditional attribute which stores `ConfusionMatrix`
         labels : list
           if provided, should be a set of labels to add on top of the
           ones present in testdata
@@ -1552,7 +1552,7 @@ class ConfusionBasedError(ClassifierError):
 
         if not clf.ca.has_key(confusion_state):
             raise ValueError, \
-                  "State variable %s is not defined for classifier %r" % \
+                  "Conditional attribute %s is not defined for classifier %r" % \
                   (confusion_state, clf)
         if not clf.ca.is_enabled(confusion_state):
             if __debug__:

@@ -17,7 +17,7 @@ if externals.exists('shogun', raise_=True):
     import shogun.Classifier
     _shogun_exposes_slavesvm_labels = externals.versions['shogun:rev'] < 4633
 
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 from mvpa.base.types import asobjarray
 from mvpa.measures.base import Sensitivity
 from mvpa.datasets.base import Dataset
@@ -31,7 +31,7 @@ class LinearSVMWeights(Sensitivity):
     on a given `Dataset`.
     """
 
-    biases = StateVariable(enabled=True,
+    biases = ConditionalAttribute(enabled=True,
                            doc="Offsets of separating hyperplanes")
 
     def __init__(self, clf, **kwargs):

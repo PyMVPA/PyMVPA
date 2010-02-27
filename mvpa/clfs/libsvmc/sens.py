@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.base import warning
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 from mvpa.misc.param import Parameter
 from mvpa.base.types import asobjarray
 from mvpa.measures.base import Sensitivity
@@ -29,7 +29,7 @@ class LinearSVMWeights(Sensitivity):
     _ATTRIBUTE_COLLECTIONS = ['params']
 
     # XXX TODO: should become just as sa may be?
-    biases = StateVariable(enabled=True,
+    biases = ConditionalAttribute(enabled=True,
                            doc="Offsets of separating hyper-planes")
 
     split_weights = Parameter(False, allowedtype='bool',

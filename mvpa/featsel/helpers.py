@@ -14,7 +14,7 @@ from math import floor
 import numpy as np
 
 from mvpa.base.dataset import AttrDataset
-from mvpa.misc.state import ClassWithCollections, StateVariable
+from mvpa.misc.state import ClassWithCollections, ConditionalAttribute
 
 if __debug__:
     from mvpa.base import debug
@@ -241,7 +241,7 @@ class ElementSelector(ClassWithCollections):
     sequence of values.
     """
 
-    ndiscarded = StateVariable(enabled=True,
+    ndiscarded = ConditionalAttribute(enabled=True,
         doc="Store number of discarded elements.")
 
     def __init__(self, mode='discard', **kwargs):

@@ -44,7 +44,7 @@ from textwrap import TextWrapper
 
 # Although not used here -- included into interface
 from mvpa.misc.exceptions import UnknownStateError
-from mvpa.misc.attributes import IndexedCollectable, StateVariable
+from mvpa.misc.attributes import IndexedCollectable, ConditionalAttribute
 from mvpa.base.dochelpers import enhanced_doc_string
 
 from mvpa.base import externals
@@ -269,7 +269,7 @@ class Collection(BaseCollection):
         Parameters
         ----------
         key : str
-          Name of the state variable
+          Name of the conditional attribute
         func
           Function (not bound) to call given an item, and **kwargs
         missingok : bool
@@ -295,7 +295,7 @@ class Collection(BaseCollection):
 
 
     def reset(self, key=None):
-        """Reset the state variable defined by `key`"""
+        """Reset the conditional attribute defined by `key`"""
 
         if not key is None:
             keys = [ key ]
@@ -312,7 +312,7 @@ class Collection(BaseCollection):
     def _set_owner(self, owner):
         if not isinstance(owner, ClassWithCollections):
             raise ValueError, \
-                  "Owner of the StateCollection must be ClassWithCollections object"
+                  "Owner of the ConditionalAttributesCollection must be ClassWithCollections object"
         if __debug__:
             try:    strowner = str(owner)
             except: strowner = "UNDEF: <%s#%s>" % (owner.__class__, id(owner))
@@ -396,7 +396,7 @@ class ParameterCollection(Collection):
     """
 
 #    def __init__(self, items=None, owner=None, name=None):
-#        """Initialize the state variables of a derived class
+#        """Initialize the conditional attributes of a derived class
 #
 #        Parameters
 #        ----------
@@ -424,8 +424,8 @@ class ParameterCollection(Collection):
         self._action(key, Parameter.reset_value, missingok=False)
 
 
-class StateCollection(Collection):
-    """Container of StateVariables for a stateful object.
+class ConditionalAttributesCollection(Collection):
+    """Container of ConditionalAttributes for a stateful object.
 
     :Groups:
      - `Public Access Functions`: `has_key`, `is_enabled`, `is_active`
@@ -436,7 +436,7 @@ class StateCollection(Collection):
     """
 
     def __init__(self, items=None, owner=None):
-        """Initialize the state variables of a derived class
+        """Initialize the conditional attributes of a derived class
 
         Parameters
         ----------
@@ -489,7 +489,7 @@ class StateCollection(Collection):
         elif key == 'disable_ca':
             self.disable(value)
         else:
-            raise ValueError, "StateCollection can accept only enable_ca " \
+            raise ValueError, "ConditionalAttributesCollection can accept only enable_ca " \
                   "and disable_ca arguments for the initialization. " \
                   "Got %s" % key
 
@@ -503,7 +503,7 @@ class StateCollection(Collection):
         fromstate : Collection or ClassWithCollections
           Source ca to copy from
         key : None or list of str
-          If not to copy all set state variables, key provides
+          If not to copy all set conditional attributes, key provides
           selection of what to copy
         deep : bool
           Optional control over the way to copy
@@ -550,15 +550,15 @@ class StateCollection(Collection):
 
 
     def enable(self, key, value=True, missingok=False):
-        """Enable  state variable given in `key`"""
-        self._action(key, StateVariable._set_enabled, missingok=missingok,
+        """Enable  conditional attribute given in `key`"""
+        self._action(key, ConditionalAttribute._set_enabled, missingok=missingok,
                      value=value)
 
 
     def disable(self, key):
-        """Disable state variable defined by `key` id"""
+        """Disable conditional attribute defined by `key` id"""
         self._action(key,
-                     StateVariable._set_enabled, missingok=False, value=False)
+                     ConditionalAttribute._set_enabled, missingok=False, value=False)
 
 
     # TODO XXX think about some more generic way to grab temporary
@@ -571,7 +571,7 @@ class StateCollection(Collection):
         `enable _ca`. Use `reset_enabled_temporarily` to reset
         to previous state of enabled.
 
-        `other` can be a ClassWithCollections object or StateCollection
+        `other` can be a ClassWithCollections object or ConditionalAttributesCollection
         """
         if enable_ca == None:
             enable_ca = []
@@ -616,7 +616,7 @@ class StateCollection(Collection):
     # XXX probably nondefault logic could be done at places?
     #     =False is used in __repr__ and _svmbase
     # XXX also may be we need enabled to return a subcollection
-    #        with binds to StateVariables found to be enabled?
+    #        with binds to ConditionalAttributes found to be enabled?
     def _get_enabled(self, nondefault=True, invert=False):
         """Return list of enabled ca
 
@@ -646,9 +646,9 @@ class StateCollection(Collection):
         It might be handy to store set of enabled ca and then to restore
         it later on. It can be easily accomplished now::
 
-        >>> from mvpa.misc.state import ClassWithCollections, StateVariable
+        >>> from mvpa.misc.state import ClassWithCollections, ConditionalAttribute
         >>> class Blah(ClassWithCollections):
-        ...   bleh = StateVariable(enabled=False, doc='Example')
+        ...   bleh = ConditionalAttribute(enabled=False, doc='Example')
         ...
         >>> blah = Blah()
         >>> ca_enabled = blah.ca.enabled
@@ -673,7 +673,7 @@ class StateCollection(Collection):
 #
 _known_collections = {
     # Quite a generic one but mostly in classifiers
-    'StateVariable': ("ca", StateCollection),
+    'ConditionalAttribute': ("ca", ConditionalAttributesCollection),
     # For classifiers only
     'Parameter': ("params", ParameterCollection),
     'KernelParameter': ("kernel_params", ParameterCollection),
@@ -763,7 +763,7 @@ class AttributesCollector(type):
 
         if __debug__:
             debug("COLR",
-                  "Creating StateCollection template %s with collections %s"
+                  "Creating ConditionalAttributesCollection template %s with collections %s"
                   % (cls, collections.keys()))
 
         # if there is an explicit
@@ -826,10 +826,10 @@ class AttributesCollector(type):
         cadoc = ""
         if collections.has_key('ca'):
             paramsdoc += """  enable_ca : None or list of str
-    Names of the state variables which should be enabled additionally
+    Names of the conditional attributes which should be enabled additionally
     to default ones
   disable_ca : None or list of str
-    Names of the state variables which should be disabled
+    Names of the conditional attributes which should be disabled
 """
             if len(collections['ca']):
                 cadoc += '\n'.join(['  * ' + x
@@ -1128,7 +1128,7 @@ class Harvestable(ClassWithCollections):
 
     """
 
-    harvested = StateVariable(enabled=False, doc=
+    harvested = ConditionalAttribute(enabled=False, doc=
        """Store specified attributes of classifiers at each split""")
 
     _KNOWN_COPY_METHODS = [ None, 'copy', 'deepcopy' ]
@@ -1140,7 +1140,7 @@ class Harvestable(ClassWithCollections):
         Parameters
         harvest_attribs : list of (str or dict)
           What attributes of call to store and return within
-          harvested state variable. If an item is a dictionary,
+          harvested conditional attribute. If an item is a dictionary,
           following keys are used ['name', 'copy'].
         copy_attribs : None or str, optional
           Default copying. If None -- no copying, 'copy'

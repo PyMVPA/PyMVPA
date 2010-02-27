@@ -20,7 +20,7 @@ from numpy import ones, zeros, sum, abs, isfinite, dot
 from mvpa.base import warning, externals
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.misc.param import Parameter
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 #from mvpa.measures.base import Sensitivity
 #from mvpa.misc.transformers import second_axis_max_of_abs # XXX ?
 
@@ -60,12 +60,12 @@ class GNB(Classifier):
     this).
 
     Whenever decisions are made based on log-probabilities (parameter
-    logprob=True, which is the default), then state variable `values`
+    logprob=True, which is the default), then conditional attribute `values`
     if enabled would also contain log-probabilities.  Also mention
     that normalization by the evidence (P(data)) is disabled by
     default since it has no impact per se on classification decision.
     You might like set parameter normalize to True if you want to
-    access properly scaled probabilities in `values` state variable.
+    access properly scaled probabilities in `values` conditional attribute.
     """
     # XXX decide when should we set corresponding internal,
     #     since it depends actually on the data -- no clear way,

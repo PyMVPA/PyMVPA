@@ -23,7 +23,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 from mvpa.misc.param import Parameter
 from mvpa.misc.exceptions import InvalidHyperparameterError
 from mvpa.clfs.distance import squared_euclidean_distance
@@ -127,10 +127,10 @@ class GeneralizedLinearKernel(NumpyKernel):
        of the Gaussian prior probability Normal(0, Sigma_p) on the weights
        of the linear regression.""")
 
-    gradients = StateVariable(enabled=False,
+    gradients = ConditionalAttribute(enabled=False,
         doc="Dictionary of gradients per a parameter")
 
-    gradientslog = StateVariable(enabled=False,
+    gradientslog = ConditionalAttribute(enabled=False,
         doc="Dictionary of gradients per a parameter in logspace")
 
     def __init__(self, *args, **kwargs):

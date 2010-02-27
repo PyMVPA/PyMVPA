@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.featsel.helpers import FractionTailSelector
-from mvpa.misc.state import StateVariable, ClassWithCollections
+from mvpa.misc.state import ConditionalAttribute, ClassWithCollections
 
 if __debug__:
     from mvpa.base import debug
@@ -23,7 +23,7 @@ class FeatureSelection(ClassWithCollections):
     datasets.
     """
 
-    selected_ids = StateVariable(enabled=False)
+    selected_ids = ConditionalAttribute(enabled=False)
 
     def __init__(self, **kwargs):
         # base init first
@@ -74,7 +74,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
     features.
     """
 
-    sensitivity = StateVariable(enabled=False)
+    sensitivity = ConditionalAttribute(enabled=False)
 
     def __init__(self,
                  sensitivity_analyzer,
@@ -164,7 +164,7 @@ class FeatureSelectionPipeline(FeatureSelection):
     Given as list of FeatureSelections it applies them in turn.
     """
 
-    nfeatures = StateVariable(
+    nfeatures = ConditionalAttribute(
         doc="Number of features before each step in pipeline")
     # TODO: may be we should also append resultant number of features?
 
@@ -240,9 +240,9 @@ class CombinedFeatureSelection(FeatureSelection):
     all sets.
 
     The individual feature sets of all embedded methods are optionally avialable
-    from the `selections_ids` state variable.
+    from the `selections_ids` conditional attribute.
     """
-    selections_ids = StateVariable(
+    selections_ids = ConditionalAttribute(
         doc="List of feature id sets for each performed method.")
 
     def __init__(self, feature_selections, combiner, **kwargs):

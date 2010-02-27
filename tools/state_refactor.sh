@@ -16,21 +16,21 @@ sed -i \
  -e 's/\._enableStatesTemporarily/\.ca\._enableTemporarily/g' \
  -e 's/\.isStateActive/\.ca\.isActive/g' \
  -e "s/\(\w\)[[]\([\"']\)$known_ca\2[]]/\1\.\3/g" \
- -e "s/self\._registerState(\([\"']\)$known_ca\1\,* */\2 = StateVariable(/g" \
+ -e "s/self\._registerState(\([\"']\)$known_ca\1\,* */\2 = ConditionalAttribute(/g" \
  $@
 
 exit 0
 
 sed -i \
  -e 's/(State)/(Stateful)/g' \
- -e 's/import State/import StateVariable, Stateful/g' \
- -e "s/self\._registerState(\([\"']\)$known_ca\1\,* */\2 = StateVariable(/g" \
+ -e 's/import State/import ConditionalAttribute, Stateful/g' \
+ -e "s/self\._registerState(\([\"']\)$known_ca\1\,* */\2 = ConditionalAttribute(/g" \
  $@
 
 exit 0
 
 
-obtained list of all state variables ever known by
+obtained list of all conditional attributes ever known by
 grep '_registerState(' *py `find ../mvpa -iname \*.py` 2>/dev/null| \
 grep -v 'def _reg' |  sed -e "s/.*(\([\"']\)\([^ ,]*\)\1.*/\2/g"  | \
 grep -v mvpa | sort | uniq | tr '\n' '\|'; echo
