@@ -226,7 +226,7 @@ attribute to determine which samples should form a dataset subset.
 .. exercise::
 
   Try calling the ``hspl`` object with our dataset. What happens? How can we
-  we get the split datasets from it?
+  get the split datasets from it?
 
 Once the ``cvte`` object is created, it can be called with a dataset and
 will internally perform all splitting, as well as training and testing on each
