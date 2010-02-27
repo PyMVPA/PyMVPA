@@ -71,8 +71,9 @@ incorrect <Ioa05>`.
 
 .. exercise::
 
-   XXX Which finding would you believe to reflect the existing phenomenon:
-   ability to decode finger-tapping sequence at p<0.05, or ability to decode ...
+   XXX If it was managed to get results at significance p<0.05, which finding
+   would you believe to reflect the existing phenomenon: ability to decode
+   finger-tapping sequence of the subject or of the ....
 
 The second peculiarity of application of statistical learning in psychological
 research is neural datasets which researchers are doomed to analyze.  As we
@@ -87,9 +88,8 @@ have already seen from previous tutorial parts, typical fMRI data has
 - ***unknown nature of the signal***, since BOLD effect is not entirely
      understood.
 
-Let's investigate effects of those factors on classification performance with
-simple examples.
-
+Let's investigate effects of some of those factors on classification
+performance with simple examples.
 
 
 Hypothesis Testing

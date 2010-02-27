@@ -14,7 +14,7 @@
 Part 1: A Gentle Start
 **********************
 
-The purpose of this first tutorial part is to make your familar with a few basic
+The purpose of this first tutorial part is to make your familiar with a few basic
 properties and building blocks of PyMVPA. Let's have a slow start and compute a
 cross-validation analysis.
 
@@ -31,8 +31,8 @@ Getting the data
 As a first step we will load an fMRI dataset that is the first subject of the
 classic study of :ref:`Haxby et al. (2001) <HGF+01>`. For the sake of
 simplicity we are using a helper function that loads and pre-processes the data
-in a similar way as it was done in the original study. Later on we will get
-back to this point and look at what was done in more detail, but for now it is
+in a way similar to the original study. Later on we will get
+back to this point and look in greater detail at what was done, but for now it is
 as simple as:
 
 >>> ds = get_haxby2001_data()
@@ -41,7 +41,7 @@ What we get as ``ds`` is a PyMVPA dataset that contains the fMRI data, and a lot
 of additional information which we will investigate later on. In the original
 study the authors split the dataset in half (in odd and even runs), and
 computed a *pattern of activation* for each stimulus category in each half.
-Hence the dataset consists of 16 patterns which are called :term:`sample` in
+Hence the dataset consists of 16 patterns which are called :term:`sample`\s in
 PyMVPA (one for each of the eight categories in each half of the experiment).
 The number of samples in a dataset is equivalent to its length, and can be
 queried by:
@@ -51,7 +51,7 @@ queried by:
 
 Most datasets in PyMVPA are represented as a two-dimensional array, where the first
 axis is the samples axis, and the second axis represents the :term:`feature`\s
-of the dataset. In the Haxby study the authors used a region of interest (ROI)
+of the samples. In the Haxby study the authors used a region of interest (ROI)
 in the ventral temporal cortex. For subject 1 this ROI comprises 577 voxels.
 Since the analysis was done on the voxel activation patterns, those voxels are
 the actual features of this dataset, and hence we have 577 of them.
@@ -100,7 +100,7 @@ this dataset is a :term:`classifier`. This time we will not use a magic
 function to help us, but will create the classifier ourselves. The original study
 employed a so-called 1-nearest-neighbor classifier, using correlation as a
 distance measure. In PyMVPA this type of classifier is provided by the
-`~mvpa.clfs.knn.kNN` class, that makes is possible to specify the desired
+`~mvpa.clfs.knn.kNN` class, that makes it possible to specify the desired
 parameters.
 
 >>> clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
