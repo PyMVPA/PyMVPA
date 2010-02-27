@@ -77,11 +77,8 @@ def chisquare(obs, exp='uniform'):
     chisq = np.sum(((obs - exp )**2)[exp_nonzeros] / exp[exp_nonzeros])
 
     # return chisq and probability (upper tail)
-    res = chisq, st.chisqprob(chisq, np.prod(obs.shape) - 1)
-    if np.isnan(res[0]):
-        import pydb
-        pydb.debugger()
-    return res
+    # taking only the elements with something expected
+    return chisq, st.chisqprob(chisq, np.sum(exp_nonzeros) - 1)
 
 
 class DSMatrix(object):
