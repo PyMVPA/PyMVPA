@@ -834,7 +834,7 @@ class AttributesCollector(type):
             if len(collections['ca']):
                 cadoc += '\n'.join(['  * ' + x
                                         for x in collections['ca'].listing])
-                cadoc += "\n\n(States enabled by default suffixed with `+`)"
+                cadoc += "\n\n(Conditional attributes enabled by default suffixed with `+`)"
             if __debug__:
                 debug("COLR", "Assigning __cadoc to be %s" % cadoc)
             setattr(cls, "_cadoc", cadoc)
