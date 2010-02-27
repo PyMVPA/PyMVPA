@@ -36,9 +36,9 @@ def main():
     haxby8.samples = haxby8.samples.astype(np.float32)
 
     # preprocess slightly
-    detrend(haxby8, chunks_attr='chunks', model='linear')
-    zscore(haxby8, chunks_attr='chunks', baselinetargets=['rest'],
-           targetdtype='float32')
+    poly_detrend(haxby8, chunks_attr='chunks', polyord=1)
+    zscore(haxby8, chunks_attr='chunks', param_est=('targets', 'rest'))
+
     haxby8_no0 = haxby8[haxby8.targets != 'rest']
 
     dummy2 = normal_feature_dataset(perlabel=30, nlabels=2,
