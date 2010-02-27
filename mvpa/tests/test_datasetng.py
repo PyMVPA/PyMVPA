@@ -829,6 +829,10 @@ def test_other_samples_dtypes():
         assert_equal(ds.nfeatures, 1)
 
 
+def test_dataset_summary():
+    print datasets['uni4large'].summary()
+
+
 def test_h5py_io():
     skip_if_no_external('h5py')
 
