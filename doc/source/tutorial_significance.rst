@@ -38,7 +38,7 @@ presented in statistical learning publications are usually high enough to
 obliterate even a slight chance that they could have been obtained  simply by
 chance.  For example, those classifiers trained on MNIST_ dataset of
 handwritten digits were worth reporting whenever they demonstrated average
-errors of only 1-2% while doing classification among samples of 10 different
+**errors of only 1-2%** while doing classification among samples of 10 different
 digits (the largest error reported was 12% using the simplest classification
 approach).
 
@@ -69,13 +69,26 @@ significance" alone, taken without accompanying support on viability and
 reproducibility of a given finding, was argued :ref:`more likely to be
 incorrect <Ioa05>`.
 
-
 .. exerciseTODO::
 
    If results were obtained at the same significance p<0.05, which finding
    would you believe to reflect the existing phenomenon: ability to decode
    finger-tapping sequence of the subject participating in the experiment or
    ability to decode ...
+
+What differs multivariate analysis from univariate is that it
+
+* avoids **multiple comparisons** problem in NHST
+* has higher **flexibility**, thus lower **stability**
+
+Multivariate methods became very popular in the last decade of neuroimaging
+research partially due to their inherent ability to avoid multiple comparisons
+issue, which is a flagman of difficulties while going for a "fishing
+expedition" with univariate methods.  Performing cross-validation on entire
+ROI or even full-brain allowed people to state presence of so desired effects
+without defending chosen critical value against multiple-comparisons.
+Unfortunately, as there is no such thing as "free lunch", ability to work with
+all observable data at once came at a price for multivariate methods.
 
 The second peculiarity of the application of statistical learning in
 psychological research is the actual neural data which researchers are doomed
@@ -173,7 +186,9 @@ correspondingly for those two levels of significance.
 Dataset Exploration for Confounds
 =================================
 
-:ref:`"Randomization is a crucial aspect of experimental design" <NH02>`.
+:ref:`"Randomization is a crucial aspect of experimental design... In the
+absence of random allocation, unforeseen factors may bias the results."
+<NH02>`.
 
 Unfortunately it is impossible to detect and warn about all possible sources
 of confounds which would invalidate NHST based on a simple parametric binomial
@@ -188,7 +203,7 @@ strikingly convincing or too provocative.  Possible obvious problems could be:
 
 To allow for easy inspection of dataset to prevent such obvious confounds,
 :func:`~mvpa.datasets.miscfx.summary` function (also a method of any
-`Dataset`) was constructed.  Lets for instance look at our 8-categories
+`Dataset`) was constructed.  Lets have yet another look at our 8-categories
 dataset:
 
 >>> from tutorial_lib import *
@@ -293,14 +308,38 @@ TODO
    generators or permutation functions provided in :mod:`numpy.random` and
    assess their counter-balance.
 
-
-.. exercise::
+.. exerciseTODO::
 
    If you take provided data set, what accuracy could(would) you achieve in
    Taro-reading of the future stimuli conditions based on just previous
    stimuli condition(fMRI data) data 15-30 seconds prior the actual stimuli
    block?  Would it be statistically/scientifically significant?
 
+Some sources of confounds might be hard to detect or to eliminate:
+
+ - dependent variable is assessed after data has been collected (RT, ACC,
+   etc) so it might be hard to guarantee equal sampling across different
+   splits of the data.
+
+ - motion effects, if motion is correlated with the design, might introduce
+   major confounds into the signal.  With multivariate analysis the problem
+   becomes even more sever due to the high sensitivity of multivariate methods
+   and the fact that motion effects might be impossible to eliminate entirely
+   since they are strongly non-linear.  So, even if you regress out whatever
+   number of descriptors describing motion (mean displacement, angles, shifts,
+   etc.) you would not be able to eliminate motion effects entirely.  And that
+   residual variance from motion spread through the entire volume might
+   contribute to your "generalization performance".
+
+.. exercise::
+
+   Inspect the arguments of generic interface of all splitters
+   :class:`~mvpa.datasets.splitters.Splitter` for a possible workaround in the
+   case of dis-balanced targets.
+
+Therefore, before the analysis on the actual fMRI data, it might be worth
+inspecting what kind of :term:`generalization` performance you might obtain if
+you operate simply on the confounds (e.g. motion parameters and effects).
 
 .. index:: monte-carlo, permutation
 
@@ -316,39 +355,28 @@ Hypothesis Testing
   so; ... these data do not, however, demonstrate the point beyond possibility
   of doubt".
 
+Ways to assess "by-chance" null-hypothesis distribution of measures range from
+fixed, to estimated parametric, to non-parametric permutation testing.
+Unfortunately not a single way provides an ultimate testing facility to be
+applied blindly to any chosen problem without investigating the
+appropriateness of the data at hand (see previous section).  Every kind of
+:class:`~mvpa.measures.base.DatasetMeasure` provides an easy way to trigger
+assessment of "statistical significance" by specifying ``null_dist`` parameter
+with a distribution estimator.  After a given measure is computed, the
+corresponding p-value(s) for the returned value(s) could be accessed at
+``ca.null_prob``.
 
-.. note::
+:ref:`"Applications of permutation testing methods to single subject fMRI
+require modelling the temporal auto-correlation in the time series." <NH02>`
 
-   TODO: Ways to assess by-chance distribution -- from fixed, to estimated
-   parametric, to non-parametric permutation testing.  Provide an example
-   where even non-parametric is overly optimistic (forgotten
-   **exchangeability** requirement for parametric testing, such as multiple
-   samples within a block for a block design)
+.. exercise::
 
+   Try to assess significance of the finding on two problematic categories
+   from 8-categories dataset without averaging the samples within the blocks
+   of the same target.  Even non-parametric test should be overly optimistic
+   (forgotten **exchangeability** requirement for parametric testing, such as
+   multiple samples within a block for a block design)... TODO
 
-Effects of Experimental Design
-==============================
-
-Would blind permutation be enough? nope... permutation testing holds whenever
-**exchangeability** could be guaranteed.
-
-NH02: "Applications of permutation testing methods to single subject fMRI
-require modelling the temporal auto-correlation in the time series."
-
-Confounds some times might be hard to detect or to eliminate:
-
- - dependent variable is assessed after data has been collected (RT, ACC,
-   etc).
-
- - motion effects, if motion is correlated with the design, might introduce
-   major confounds into the signal.  With multivariate analysis problem
-   become even more sever due to their sensitivity and the fact that motion
-   effects might be impossible to eliminate entirely since they are strongly
-   non-linear.  So, even if you regress out whatever number of descriptors
-   describing motion (mean displacement, angles, shifts, etc.) you would not
-   be able to eliminate motion effects entirely.  And that residual variance
-   from motion spread through the entire volume might contribute to your
-   "generalization performance".
 
 
 Statistical Treatment of Sensitivities
@@ -357,7 +385,7 @@ Statistical Treatment of Sensitivities
 .. note:: Statistical learning is about constructing reliable models to
           describe the data, and not really to reason either data is noise.
 
-.. note:: how do we decide to threshold sensitivities, remind them searchlight
+.. note:: How do we decide to threshold sensitivities, remind them searchlight
           results with strong bimodal distributions, distribution outside of
           the brain as a true by-chance.  May be reiterate that sensitivities
           of bogus model are bogus
@@ -365,27 +393,6 @@ Statistical Treatment of Sensitivities
 Moreover, constructed mapping with barely "above-chance" performance is often
 further analyzed for its :ref:`sensitivity to the input variables
 <chap_tutorial_sensitivity>`.
-
-What differs multivariate analysis from univariate
-
-- avoids **multiple comparisons** problem in NHST
-- has higher **flexibility**, thus lower **stability**
-
-Multivariate methods became very popular in the last decade partially due to
-their inherent ability to avoid multiple comparisons issue, which is a flagman
-of difficulties while going for a "fishing expedition" with univariate
-methods.  Performing cross-validation on entire ROI or even full-brain allowed
-people to state presence of so desired effects without defending chosen
-critical value against multiple-comparisons.  Unfortunately, as there is no
-such thing as "free lunch", ability to work with all observable data at once
-came at a price for multivariate methods. ...
-
-
-Whenever low number of samples
-
-it seems to be important to have reasonable methodology to assess reliable ways ...
-
-
 
 
 
