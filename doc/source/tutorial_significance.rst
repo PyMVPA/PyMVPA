@@ -36,7 +36,7 @@ characteristics (number of classes, independence of samples, actual presence
 of information of interest, etc).  Therefore, generalization performances
 presented in statistical learning publications are usually high enough to
 obliterate even a slight chance that they could have been obtained  simply by
-chance.  For example, those classifiers trained on _MNIST dataset of
+chance.  For example, those classifiers trained on MNIST_ dataset of
 handwritten digits were worth reporting whenever they demonstrated average
 errors of only 1-2% while doing classification among samples of 10 different
 digits (the largest error reported was 12% using the simplest classification
@@ -55,11 +55,12 @@ but rather to show that learnt mapping is good enough to claim that such
 mapping exists and data carries the effects caused by the corresponding
 experiment.  Such an existence claim is conventionally verified with a
 classical methodology of null-hypothesis (H0) significance testing (NHST),
-whenever achievement of generalization performance excursion away from
-"chance-level" is taken as the proof that data carries effects of interest.
+whenever the achievement of generalization performance with "statistically
+significant" excursion away from the "chance-level" is taken as the proof that
+data carries effects of interest.
 
-The conceptual problem with NHST is a widespread belief that having observed
-the data, the level of significance H0 could be rejected is equivalent to the
+The main conceptual problem with NHST is a widespread belief that having observed
+the data, the level of significance at which H0 could be rejected is equivalent to the
 probability of the H0 being true.  I.e. if it is unlikely that data comes from
 H0, it is as unlikely for H0 being true.  Such assumptions were shown to be
 generally wrong using :ref:`deductive and Bayesian reasoning <Coh94>` since
@@ -109,10 +110,64 @@ statistical functions.
   and distributions families it provides.  If you feel challenged, try to
   figure out what is the meaning/application of :func:`~scipy.stats.rdist`.
 
-The most popular distribution employed in carrying out NHST in the context
-of statistical learning, is :func:`~scipy.stats.binom` for testing either
-generalization performance of the classifier on independent data could provide
-evidence that the data contains the effects of interest.  Lets see how ...
+The most popular distribution employed for NHST in the context of statistical
+learning, is :class:`~scipy.stats.binom` for testing either generalization
+performance of the classifier on independent data could provide evidence that
+the data contains the effects of interest.
+
+.. note::
+
+   `scipy.stats` provides function :func:`~scipy.stats.binom_test`, but that
+   one was devised only for doing two-sides tests, thus is not directly
+   applicable for testing generalization performance where we aim at the tail
+   with lower than chance performance values.
+
+.. exercise::
+
+   Think about scenarios when could you achieve strong and very significant
+   mis-classification performance, i.e. when, for instance, binary classifier
+   tends to generalize into the other category.  What could it mean?
+
+:class:`~scipy.stats.binom` whenever instantiated with the parameters of the
+distribution (which are number of trials, probability of success on each
+trial), it provides you easy ability to compute a variety of measures.  For
+instance, if we want to know, what would be the probability of having achieved
+57 of more correct responses out of 100 trials, we need to use survival
+function (1-cdf) to achieve the "weight" of the right tail including 57
+(i.e. query for survival function of 56):
+
+>>> from scipy.stats import binom
+>>> binom100 = binom(100, 1./2)
+>>> print '%.3g' % binom100.sf(56)
+0.0967
+
+Apparently obtaining 57 correct out 100 cannot be considered significantly
+well performance by anyone.  Lets investigate how many correct responses we
+need to reach the level of 'significance'
+
+>>> binom100.isf(0.05) + 1
+59.0
+>>> binom100.isf(0.01) + 1
+63.0
+
+So, depending on your believe and prior support for your hypothesis and data
+you should get at least 59-63 correct responses from a 100 trials to claim
+existence of the effects.  Someone could rephrase above observation that to
+achieve significant performance you needed an effect size of 9-13
+correspondingly for those two levels of significance.
+
+.. exercise::
+
+  Plot a curve of "effect size" (number of correct predictions above
+  chance-level) vs number of trials at significance level of 0.05 for a range
+  of trial numbers from 4 to 1000.  Plot %-accuracy vs number of trials for
+  the same range in a separate plot. TODO
+
+.. commentTODO::
+
+  If this is your first ever analysis and you are not comparing obtained
+  results across different models (classifiers), since then you would
+  (theoretically) correct your significance level for multiple comparisons.
 
 
 Dataset Exploration for Confounds
