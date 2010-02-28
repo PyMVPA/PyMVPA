@@ -346,7 +346,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         sana = SplitFeaturewiseDatasetMeasure(
             analyzer=SMLR(
               fit_all_weights=True).get_sensitivity_analyzer(),
-            splitter=NoneSplitter(nperlabel=0.25, mode='first',
+            splitter=NoneSplitter(npertarget=0.25, mode='first',
                                   nrunspersplit=2),
             enable_ca=['splits', 'sensitivities'])
         sens = sana(ds)
@@ -372,7 +372,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         #boosted_sana = SplitFeaturewiseDatasetMeasure(
         #    analyzer=SVM().get_sensitivity_analyzer(
         #       transformer=DistPValue(fpp=0.05)),
-        #    splitter=NoneSplitter(nperlabel=0.8, mode='first', nrunspersplit=2),
+        #    splitter=NoneSplitter(npertarget=0.8, mode='first', nrunspersplit=2),
         #    enable_ca=['splits', 'sensitivities'])
         ## lets create feature selector
         #fsel = RangeElementSelector(upper=0.05, lower=0.95, inclusive=True)

@@ -147,8 +147,8 @@ def coarsen_chunks(source, nchunks=4):
 
 @datasetmethod
 ##REF: Name was automagically refactored
-def get_samples_per_chunk_label(dataset):
-    """Returns an array with the number of samples per label in each chunk.
+def get_samples_per_chunk_target(dataset):
+    """Returns an array with the number of samples per target in each chunk.
 
     Array shape is (chunks x targets).
 
@@ -188,9 +188,9 @@ def permute_targets(dataset, targets_attr='targets', chunks_attr='chunks',
     chunks_attr : None or string
       If a string given, permutation is limited to samples sharing the
       same value of the `chunks_attr` samples attribute.  Therefore,
-      only the association of a certain sample with a label is
+      only the association of a certain sample with a target is
       permuted while keeping the absolute number of occurrences of each
-      label value within a certain chunk constant.
+      target value within a certain chunk constant.
     assure_permute : bool, optional
       If True, assures that targets are permuted, i.e. any one is
       different from the original one
@@ -198,7 +198,7 @@ def permute_targets(dataset, targets_attr='targets', chunks_attr='chunks',
     Returns
     -------
     Dataset
-       shallow copy of original dataset with permuted labels.
+       shallow copy of original dataset with permuted targets.
     """
     if __debug__:
         if len(dataset.sa[targets_attr].unique) < 2:
@@ -249,19 +249,19 @@ def permute_targets(dataset, targets_attr='targets', chunks_attr='chunks',
 
 
 @datasetmethod
-def random_samples(dataset, nperlabel):
+def random_samples(dataset, npertarget):
     """Create a dataset with a random subset of samples.
 
     Parameters
     ----------
     dataset : Dataset
-    nperlabel : int or list
+    npertarget : int or list
       If an `int` is given, the specified number of samples is randomly
-      chosen from the group of samples sharing a unique label value. Total
-      number of selected samples: nperlabel x len(uniquetargets).
-      If a `list` is given of length matching the unique label values, it
+      chosen from the group of samples sharing a unique target value. Total
+      number of selected samples: npertarget x len(uniquetargets).
+      If a `list` is given of length matching the unique target values, it
       specifies the number of samples chosen for each particular unique
-      label.
+      target.
 
     Returns
     -------
@@ -271,15 +271,15 @@ def random_samples(dataset, nperlabel):
     """
     uniquetargets = dataset.sa['targets'].unique
     # if interger is given take this value for all classes
-    if isinstance(nperlabel, int):
-        nperlabel = [nperlabel for i in uniquetargets]
+    if isinstance(npertarget, int):
+        npertarget = [npertarget for i in uniquetargets]
 
     sample = []
     # for each available class
     targets = dataset.targets
     for i, r in enumerate(uniquetargets):
         # get the list of pattern ids for this class
-        sample += random.sample((targets == r).nonzero()[0], nperlabel[i] )
+        sample += random.sample((targets == r).nonzero()[0], npertarget[i] )
 
     return dataset[sample]
 
@@ -446,7 +446,7 @@ class SequenceStats(dict):
         Parameters
         ----------
         seq : list or ndarray
-          Actual sequence of labels
+          Actual sequence of targets
         order : int
           Maximal order of counter-balancing check. For perfect
           counterbalancing all matrices should be identical
@@ -479,20 +479,20 @@ class SequenceStats(dict):
         # Do actual computation
         order = self.order
         seq = list(self._seq)               # assure list
-        nsamples = len(seq)                 # # of samples/labels
-        ulabels = sorted(list(set(seq)))    # unique labels
-        nlabels = len(ulabels)              # # of labels
+        nsamples = len(seq)                 # # of samples/targets
+        utargets = sorted(list(set(seq)))    # unique targets
+        ntargets = len(utargets)              # # of targets
 
-        # mapping for labels
-        labels_map = dict([(l, i) for i, l in enumerate(ulabels)])
+        # mapping for targets
+        targets_map = dict([(l, i) for i, l in enumerate(utargets)])
 
         # map sequence first
-        seqm = [labels_map[i] for i in seq]
-        # nperlabel = np.bincount(seqm)
+        seqm = [targets_map[i] for i in seq]
+        # npertarget = np.bincount(seqm)
 
-        res = dict(ulabels=ulabels)
+        res = dict(utargets=utargets)
         # Estimate counter-balance
-        cbcounts = np.zeros((order, nlabels, nlabels), dtype=int)
+        cbcounts = np.zeros((order, ntargets, ntargets), dtype=int)
         for cb in xrange(order):
             for i, j in zip(seqm[:-(cb+1)], seqm[cb+1:]):
                 cbcounts[cb, i, j] += 1
@@ -500,7 +500,7 @@ class SequenceStats(dict):
 
         """
         Lets compute relative counter-balancing
-        Ideally, nperlabel[i]/nlabels should precede each label
+        Ideally, npertarget[i]/ntargets should precede each target
         """
         # Autocorrelation
         corr = []
@@ -516,22 +516,22 @@ class SequenceStats(dict):
 
         # Assign textual summary
         # XXX move into a helper function and do on demand
-        t = [ [""] * (1 + self.order*(nlabels+1)) for i in xrange(nlabels+1) ]
-        t[0][0] = "Labels/Order"
-        for i, l  in enumerate(ulabels):
+        t = [ [""] * (1 + self.order*(ntargets+1)) for i in xrange(ntargets+1) ]
+        t[0][0] = "Targets/Order"
+        for i, l  in enumerate(utargets):
             t[i+1][0] = '%s:' % l
         for cb in xrange(order):
-            t[0][1+cb*(nlabels+1)] = "O%d" % (cb+1)
-            for i  in xrange(nlabels+1):
-                t[i][(cb+1)*(nlabels+1)] = " | "
+            t[0][1+cb*(ntargets+1)] = "O%d" % (cb+1)
+            for i  in xrange(ntargets+1):
+                t[i][(cb+1)*(ntargets+1)] = " | "
             m = cbcounts[cb]
             # ??? there should be better way to get indexes
             ind = np.where(~np.isnan(m))
             for i, j in zip(*ind):
-                t[1+i][1+cb*(nlabels+1)+j] = '%d' % m[i, j]
+                t[1+i][1+cb*(ntargets+1)+j] = '%d' % m[i, j]
 
         sout = "Original sequence had %d entries from set %s\n" \
-               % (len(seq), ulabels) + \
+               % (len(seq), utargets) + \
                "Counter-balance table for orders up to %d:\n" % order \
                + table2string(t)
         sout += "Correlations: min=%.2g max=%.2g mean=%.2g sum(abs)=%.2g" \

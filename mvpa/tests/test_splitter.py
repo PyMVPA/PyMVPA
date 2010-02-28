@@ -190,7 +190,7 @@ class SplitterTests(unittest.TestCase):
 
         # full test with additional sampling and 3 datasets per split
         cs = CustomSplitter([([0,3,4],[5,9],[2])],
-                            nperlabel=[3,4,1],
+                            npertarget=[3,4,1],
                             nrunspersplit=3)
         splits = list(cs(self.data))
         self.failUnless(len(splits) == 3)
@@ -204,7 +204,7 @@ class SplitterTests(unittest.TestCase):
         # lets test selection of samples by ratio and combined with
         # other ways
         cs = CustomSplitter([([0,3,4],[5,9],[2])],
-                            nperlabel=[[0.3, 0.6, 1.0, 0.5],
+                            npertarget=[[0.3, 0.6, 1.0, 0.5],
                                        0.5,
                                        'all'],
                             nrunspersplit=3)
@@ -250,7 +250,7 @@ class SplitterTests(unittest.TestCase):
         # test sampling tools
         # specified value
         nos = NoneSplitter(nrunspersplit=3,
-                           nperlabel=10)
+                           npertarget=10)
         splits = [ (train, test) for (train, test) in nos(self.data) ]
 
         self.failUnless(len(splits) == 3)
@@ -262,7 +262,7 @@ class SplitterTests(unittest.TestCase):
 
         # auto-determined
         nos = NoneSplitter(nrunspersplit=3,
-                           nperlabel='equal')
+                           npertarget='equal')
         splits = [ (train, test) for (train, test) in nos(self.data) ]
 
         self.failUnless(len(splits) == 3)
