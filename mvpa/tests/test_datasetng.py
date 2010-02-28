@@ -830,8 +830,11 @@ def test_other_samples_dtypes():
 
 
 def test_dataset_summary():
-    print datasets['uni4large'].summary()
-
+    for ds in datasets.itervalues():
+        s = ds.summary()
+        ok_(s.startswith(str(ds)[1:-1])) # we strip surrounding '<...>'
+        # TODO: actual test of what was returned; to do that properly
+        #       RF the summary() so it is a dictionary
 
 def test_h5py_io():
     skip_if_no_external('h5py')

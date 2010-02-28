@@ -88,7 +88,7 @@ getNRClass	get_nr_class
 getNSV	get_n_sv
 _getRecon	_get_recon
 getRho	get_rho
-getSamplesPerChunkLabel	get_samples_per_chunk_label
+getSamplesPerChunkLabel	get_samples_per_chunk_target
 getSensitivityAnalyzer	get_sensitivity_analyzer
 _getSplitConfig	_get_split_config
 getSVCoef	get_sv_coef

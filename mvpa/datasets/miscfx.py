@@ -22,8 +22,7 @@ import numpy as np
 from mvpa.base.dataset import datasetmethod
 from mvpa.datasets.base import Dataset
 from mvpa.base.dochelpers import table2string
-from mvpa.misc.support import get_break_points
-from mvpa.misc.support import idhash as idhash_
+# from mvpa.misc.support import get_break_points
 
 from mvpa.base import externals, warning
 
@@ -341,7 +340,7 @@ def get_samples_by_attr(dataset, attr, values, sort=True):
     return sel
 
 @datasetmethod
-def summary(dataset, stats=True, lstats=True, idhash=False,
+def summary(dataset, stats=True, lstats=True, sstats=True, idhash=False,
             targets_attr='targets', chunks_attr='chunks',
             maxc=30, maxt=20):
     """String summary over the object
@@ -352,6 +351,8 @@ def summary(dataset, stats=True, lstats=True, idhash=False,
       Include some basic statistics (mean, std, var) over dataset samples
     lstats : bool
       Include statistics on chunks/targets
+    sstats : bool
+      Sequence (order) statistics
     idhash : bool
       Include idhash value for dataset and samples
     targets_attr : string, optional
@@ -392,6 +393,13 @@ def summary(dataset, stats=True, lstats=True, idhash=False,
         except KeyError, e:
             s += 'No per %s/%s due to %r' % (targets_attr, chunks_attr, e)
 
+    if sstats:
+        if len(dataset.sa[targets_attr].unique) < maxt:
+            ss = SequenceStats(dataset.sa[targets_attr].value)
+            s += str(ss)
+        else:
+            s += "Number of unique %s > %d thus no sequence statistics" % \
+                 (targets_attr, maxt)
     return s
 
 @datasetmethod
@@ -468,6 +476,8 @@ class SequenceStats(dict):
     Current implementation is ugly!
     """
 
+    # TODO: operate given some "chunks" so it could report also
+    #       counter-balance for the borders, mean across chunks, etc
     def __init__(self, seq, order=2):#, chunks=None, chunks_attr=None):
         """Initialize SequenceStats
 
@@ -483,7 +493,6 @@ class SequenceStats(dict):
         """
           chunks : None or list or ndarray
             Chunks to use if `perchunk`=True
-          perchunk .... TODO
           """
         dict.__init__(self)
         self.order = order
@@ -558,8 +567,8 @@ class SequenceStats(dict):
             for i, j in zip(*ind):
                 t[1+i][1+cb*(ntargets+1)+j] = '%d' % m[i, j]
 
-        sout = "Original sequence had %d entries from set %s\n" \
-               % (len(seq), utargets) + \
+        sout = "Sequence statistics for sequence with %d entries" \
+               " from set %s\n" % (len(seq), utargets) + \
                "Counter-balance table for orders up to %d:\n" % order \
                + table2string(t)
         sout += "Correlations: min=%.2g max=%.2g mean=%.2g sum(abs)=%.2g" \
