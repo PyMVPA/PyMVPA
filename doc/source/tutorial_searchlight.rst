@@ -156,7 +156,7 @@ results, depending on the number of CPU in the system.
 >>> ds = get_haxby2001_data_alternative(roi=0)
 >>> print ds.nfeatures
 34888
->>> # alt: `res = load_tutorial_results('sl_roi0_results')`
+>>> # alt: `res = load_tutorial_results('res_haxby2001_sl_avgacc_roi0')`
 >>> res = sl(ds)
 
 .. h5save("results/ds_haxby2001_alt_roi0.hdf5", ds, compression=9)
