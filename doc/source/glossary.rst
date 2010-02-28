@@ -99,7 +99,7 @@ terms found in the literature to the terminology used in this manual.
 
   Label
     A label is a special case of a :term:`target` for specifying discrete
-    categories of :term:`samples` in a classification analyses.
+    categories of :term:`sample`\s in a classification analyses.
 
   Machine Learning
     A field of Computer Science that aims at constructing methods, such
@@ -133,8 +133,7 @@ terms found in the literature to the terminology used in this manual.
     :term:`chunk`\ s of samples.
 
   Sensitivity
-
-   A sensitivity is a score assigned to each :term:`feature` with respect to
+    A sensitivity is a score assigned to each :term:`feature` with respect to
     its impact on the performance of the learner.  So, for a classifier,
     sensitivity of a feature might describe its influence on generalization
     performance of the classifier.  In case of linear classifiers, it could
@@ -174,4 +173,4 @@ terms found in the literature to the terminology used in this manual.
     block-design fMRI dataset.
 
   Weight Vector
-    See :term:`sensitivity`.
+    See :term:`Sensitivity`.
