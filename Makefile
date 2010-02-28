@@ -389,6 +389,17 @@ testtutorial-%: build
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 		             --doctest-tests doc/source/tutorial_$**.rst
 
+# Test either all # alt references in tutorials are correct
+# Just outputs filenames found missing -- doesn't fail the rule
+TUTORIAL_RESDIR=tutorial_data/results
+testtutorials-alt:
+	@grep '# *alt' doc/source/tutorial*rst | \
+	 sed -e "s/.*'\(.*\)'.*/\1/g" | \
+	 while read f; do \
+	  fs="$$(/bin/ls tutorial_data/results/$$f.* 2>/dev/null)"; \
+	  [ -z "$$fs" ] && echo "$$f missing" || :; \
+	 done
+
 testdatadb: build
 	@echo "I: Testing code samples on the dataset DB website"
 	@PYTHONPATH=.:$(PYTHONPATH) \
