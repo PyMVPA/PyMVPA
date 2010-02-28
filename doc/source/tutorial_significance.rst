@@ -44,7 +44,7 @@ approach).
 
 .. _MNIST: http://yann.lecun.com/exdb/mnist
 
-.. note:: Intro: Statistical learning brought into the realm of hypothesis testing
+.. Statistical learning brought into the realm of hypothesis testing
 
 .. todo:: Literature search for what other domains such approach is also used
 
@@ -69,53 +69,79 @@ reproducibility of a given finding, was argued :ref:`more likely to be
 incorrect <Ioa05>`.
 
 
-.. exercise::
+.. exerciseTODO::
 
-   XXX If it was managed to get results at significance p<0.05, which finding
+   If results were obtained at the same significance p<0.05, which finding
    would you believe to reflect the existing phenomenon: ability to decode
-   finger-tapping sequence of the subject or of the ....
+   finger-tapping sequence of the subject participating in the experiment or
+   ability to decode ...
 
-The second peculiarity of application of statistical learning in psychological
-research is neural datasets which researchers are doomed to analyze.  As we
-have already seen from previous tutorial parts, typical fMRI data has
+The second peculiarity of the application of statistical learning in
+psychological research is the actual neural data which researchers are doomed
+to analyze.  As we have already seen from previous tutorial parts, typical
+fMRI data has
 
-- relatively ***low number of samples*** (up to few thousands in total)
-- relatively ***large dimensionality*** (tens of thousands)
-- ***small signal-to-noise ratio***
-- ***non-independent measurements***
-- ***unknown ground-truth*** (either there is an effect at all, or if there is --
+- relatively **low number of samples** (up to few thousands in total)
+- relatively **large dimensionality** (tens of thousands)
+- **small signal-to-noise ratio**
+- **non-independent measurements**
+- **unknown ground-truth** (either there is an effect at all, or if there is --
   what is inherent bias/error)
-- ***unknown nature of the signal***, since BOLD effect is not entirely
+- **unknown nature of the signal**, since BOLD effect is not entirely
      understood.
 
-Let's investigate effects of some of those factors on classification
-performance with simple examples.
+Lets investigate effects of some of those factors on classification
+performance with simple examples.  But first lets overview the tools and
+methodologies for NHST commonly employed.
 
+
+Statistical Tools in Python
+===========================
+
+`scipy` Python module is an umbrella project to cover the majority of core
+functionality for scientific computing.  In turn, :mod:`~scipy.stats`
+submodule covers a wide range of continuous and discrete distributions and
+statistical functions.
+
+.. exercise::
+
+  Glance over the `scipy.stats` documentation for what statistical functions
+  and distributions families it provides.  If you feel challenged, try to
+  figure out what is the meaning/application of :func:`~scipy.stats.rdist`.
+
+The most popular distribution employed in carrying out NHST in the context
+of statistical learning, is :func:`~scipy.stats.binom` for testing either
+generalization performance of the classifier on independent data could provide
+evidence that the data contains the effects of interest.  Lets see how
+
+
+.. index:: monte-carlo, permutation
 
 Hypothesis Testing
 ==================
 
-When thinking about what critical value to choose for NHST keep such
-:ref:`guidelines from NHST inventor, Dr.Fisher <Fis25>` in mind.  For
-significance range '0.2 - 0.5' he says: "judged significant, though barely so;
-... these data do not, however, demonstrate the point beyond possibility of
-doubt".
+.. note::
+
+  When thinking about what critical value to choose for NHST keep such
+  :ref:`guidelines from NHST inventor, Dr.Fisher <Fis25>` in mind.  For
+  significance range '0.2 - 0.5' he says: "judged significant, though barely
+  so; ... these data do not, however, demonstrate the point beyond possibility
+  of doubt".
 
 
-.. note:: goal: p(H0|Data), H0-test gives p(Data|H0)
+.. note::
 
-.. note:: ways to assess by-chance distribution -- from fixed, to
-          estimated parametric, to non-parametric permutation testing
-		  Try to provide an example where even non-parametric is overly
-		  optimistic (if it is, as it is in Yarik's head ;-))
+   Ways to assess by-chance distribution -- from fixed, to estimated
+   parametric, to non-parametric permutation testing Try to provide an
+   example where even non-parametric is overly optimistic (if it is, as it is
+   in Yarik's head ;-))
 
-.. index:: monte-carlo, permutation
 
- would blind permutation be enough? nope... permutation testing holds whenever:
-   - exchangeability
+Would blind permutation be enough? nope... permutation testing holds whenever
+**exchangeability** could be guaranteed.
 
-NH02:
-"Applications of permutation testing methods to single subject fMRI require modelling the temporal auto-correlation in the time series."
+NH02: "Applications of permutation testing methods to single subject fMRI
+require modelling the temporal auto-correlation in the time series."
 
 
 Effects of Experimental Design
@@ -149,8 +175,8 @@ further analyzed for its :ref:`sensitivity to the input variables
 
 What differs multivariate analysis from univariate
 
-- avoids ***multiple comparisons*** problem in NHST
-- has higher ***flexibility***, thus lower ***stability***
+- avoids **multiple comparisons** problem in NHST
+- has higher **flexibility**, thus lower **stability**
 
 Multivariate methods became very popular in the last decade partially due to
 their inherent ability to avoid multiple comparisons issue, which is a flagman
@@ -182,9 +208,9 @@ References
 
 :ref:`Ioannidis, J. (2005) <Ioa05>`
   *Simulation study speculating that it is more likely for a research claim to
-   be false than true.  Along the way the paper highlights aspects to keep in
-   mind while assessing the 'scientific significance' of any given study, such
-   as, viability, reproducibility, and results.*
+  be false than true.  Along the way the paper highlights aspects to keep in
+  mind while assessing the 'scientific significance' of any given study, such
+  as, viability, reproducibility, and results.*
 
 :ref:`Nichols et al. (2002) <NH02>`
   *Overview of standard nonparametric randomization and permutation testing
