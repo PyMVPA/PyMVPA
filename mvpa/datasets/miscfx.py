@@ -448,8 +448,8 @@ def summary_targets(dataset, targets_attr='targets', chunks_attr='chunks',
                  'max': np.max(spcl, axis=axis),
                  'mean': np.mean(spcl, axis=axis),
                  'std': np.std(spcl, axis=axis),
-                 '#%ss' % name2: np.sum(spcl>0, axis=axis)}
-        entries = ['  ' + name1, 'mean', 'std', 'min', 'max', '#%ss' % name2]
+                 '#%s' % name2: np.sum(spcl>0, axis=axis)}
+        entries = ['  ' + name1, 'mean', 'std', 'min', 'max', '#%s' % name2]
         table = [ entries ]
         for i, l in enumerate(u):
             d = {'  ' + name1 : l}
@@ -567,7 +567,7 @@ class SequenceStats(dict):
             for i, j in zip(*ind):
                 t[1+i][1+cb*(ntargets+1)+j] = '%d' % m[i, j]
 
-        sout = "Sequence statistics for sequence with %d entries" \
+        sout = "Sequence statistics for %d entries" \
                " from set %s\n" % (len(seq), utargets) + \
                "Counter-balance table for orders up to %d:\n" % order \
                + table2string(t)
