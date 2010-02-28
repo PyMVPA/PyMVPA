@@ -55,8 +55,8 @@ but rather to show that learnt mapping is good enough to claim that such
 mapping exists and data carries the effects caused by the corresponding
 experiment.  Such an existence claim is conventionally verified with a
 classical methodology of null-hypothesis (H0) significance testing (NHST),
-whenever the achievement of generalization performance with "statistically
-significant" excursion away from the "chance-level" is taken as the proof that
+whenever the achievement of generalization performance with *statistically
+significant* excursion away from the *chance-level* is taken as the proof that
 data carries effects of interest.
 
 The main conceptual problem with NHST is a widespread belief that having observed
@@ -64,8 +64,8 @@ the data, the level of significance at which H0 could be rejected is equivalent 
 probability of the H0 being true.  I.e. if it is unlikely that data comes from
 H0, it is as unlikely for H0 being true.  Such assumptions were shown to be
 generally wrong using :ref:`deductive and Bayesian reasoning <Coh94>` since
-P(D|H0) not equal P(H0|D) (unless P(D)==P(H0)).  Moreover, "statistical
-significance" alone, taken without accompanying support on viability and
+P(D|H0) not equal P(H0|D) (unless P(D)==P(H0)).  Moreover, *statistical
+significance* alone, taken without accompanying support on viability and
 reproducibility of a given finding, was argued :ref:`more likely to be
 incorrect <Ioa05>`.
 
@@ -83,11 +83,11 @@ What differs multivariate analysis from univariate is that it
 
 Multivariate methods became very popular in the last decade of neuroimaging
 research partially due to their inherent ability to avoid multiple comparisons
-issue, which is a flagman of difficulties while going for a "fishing
-expedition" with univariate methods.  Performing cross-validation on entire
+issue, which is a flagman of difficulties while going for a *fishing
+expedition* with univariate methods.  Performing cross-validation on entire
 ROI or even full-brain allowed people to state presence of so desired effects
 without defending chosen critical value against multiple-comparisons.
-Unfortunately, as there is no such thing as "free lunch", ability to work with
+Unfortunately, as there is no such thing as *free lunch*, ability to work with
 all observable data at once came at a price for multivariate methods.
 
 The second peculiarity of the application of statistical learning in
@@ -102,18 +102,19 @@ fMRI data has
 - **unknown ground-truth** (either there is an effect at all, or if there is --
   what is inherent bias/error)
 - **unknown nature of the signal**, since BOLD effect is not entirely
-     understood.
+  understood.
 
-Lets investigate effects of some of those factors on classification
-performance with simple examples.  But first lets overview the tools and
-methodologies for NHST commonly employed.
+In the following part of the tutorial we will investigate the effects of some
+of those factors on classification performance with simple (or not so)
+examples.  But first lets overview the tools and methodologies for NHST
+commonly employed.
 
 
 Statistical Tools in Python
 ===========================
 
 `scipy` Python module is an umbrella project to cover the majority of core
-functionality for scientific computing.  In turn, :mod:`~scipy.stats`
+functionality for scientific computing in Python.  In turn, :mod:`~scipy.stats`
 submodule covers a wide range of continuous and discrete distributions and
 statistical functions.
 
@@ -143,10 +144,10 @@ the data contains the effects of interest.
 
 :class:`~scipy.stats.binom` whenever instantiated with the parameters of the
 distribution (which are number of trials, probability of success on each
-trial), it provides you easy ability to compute a variety of measures.  For
-instance, if we want to know, what would be the probability of having achieved
-57 of more correct responses out of 100 trials, we need to use survival
-function (1-cdf) to achieve the "weight" of the right tail including 57
+trial), it provides you ability to easily compute a variety of statistics of
+that distribution.  For instance, if we want to know, what would be the probability of having achieved
+57 of more correct responses out of 100 trials, we need to use a survival
+function (1-cdf) to obtain the *weight* of the right tail including 57
 (i.e. query for survival function of 56):
 
 >>> from scipy.stats import binom
@@ -155,8 +156,8 @@ function (1-cdf) to achieve the "weight" of the right tail including 57
 0.0967
 
 Apparently obtaining 57 correct out 100 cannot be considered significantly
-well performance by anyone.  Lets investigate how many correct responses we
-need to reach the level of 'significance'
+good performance by anyone.  Lets investigate how many correct responses we
+need to reach the level of 'significance' and use *inverse survival function*:
 
 >>> binom100.isf(0.05) + 1
 59.0
@@ -165,16 +166,23 @@ need to reach the level of 'significance'
 
 So, depending on your believe and prior support for your hypothesis and data
 you should get at least 59-63 correct responses from a 100 trials to claim
-existence of the effects.  Someone could rephrase above observation that to
+the existence of the effects.  Someone could rephrase above observation that to
 achieve significant performance you needed an effect size of 9-13
 correspondingly for those two levels of significance.
 
 .. exercise::
 
-  Plot a curve of "effect size" (number of correct predictions above
-  chance-level) vs number of trials at significance level of 0.05 for a range
+  Plot a curve of *effect sizes* (number of correct predictions above
+  chance-level) vs a number of trials at significance level of 0.05 for a range
   of trial numbers from 4 to 1000.  Plot %-accuracy vs number of trials for
   the same range in a separate plot. TODO
+
+.. nsamples = np.arange(4, 1000, 2)
+.. effect_sizes = [ceil(binom(n,0.5).isf(0.05) + 1 - n/2) for n in nsamples]
+.. pl.plot(nsamples, effect_sizes)
+.. pl.figure()
+.. pl.plot(nsamples, 0.5 + effect_sizes / nsamples)
+.. pl.ylabel
 
 .. commentTODO::
 
@@ -329,7 +337,7 @@ Some sources of confounds might be hard to detect or to eliminate:
    number of descriptors describing motion (mean displacement, angles, shifts,
    etc.) you would not be able to eliminate motion effects entirely.  And that
    residual variance from motion spread through the entire volume might
-   contribute to your "generalization performance".
+   contribute to your *generalization performance*.
 
 .. exercise::
 
@@ -355,13 +363,13 @@ Hypothesis Testing
   so; ... these data do not, however, demonstrate the point beyond possibility
   of doubt".
 
-Ways to assess "by-chance" null-hypothesis distribution of measures range from
+Ways to assess *by-chance* null-hypothesis distribution of measures range from
 fixed, to estimated parametric, to non-parametric permutation testing.
 Unfortunately not a single way provides an ultimate testing facility to be
 applied blindly to any chosen problem without investigating the
 appropriateness of the data at hand (see previous section).  Every kind of
 :class:`~mvpa.measures.base.DatasetMeasure` provides an easy way to trigger
-assessment of "statistical significance" by specifying ``null_dist`` parameter
+assessment of *statistical significance* by specifying ``null_dist`` parameter
 with a distribution estimator.  After a given measure is computed, the
 corresponding p-value(s) for the returned value(s) could be accessed at
 ``ca.null_prob``.
@@ -390,7 +398,7 @@ Statistical Treatment of Sensitivities
           the brain as a true by-chance.  May be reiterate that sensitivities
           of bogus model are bogus
 
-Moreover, constructed mapping with barely "above-chance" performance is often
+Moreover, constructed mapping with barely *above-chance* performance is often
 further analyzed for its :ref:`sensitivity to the input variables
 <chap_tutorial_sensitivity>`.
 
