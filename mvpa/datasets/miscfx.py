@@ -146,8 +146,10 @@ def coarsen_chunks(source, nchunks=4):
 
 
 @datasetmethod
-##REF: Name was automagically refactored
-def get_samples_per_chunk_target(dataset):
+## TODO: make more efficient and more generic (accept >=1 attrs to
+##       operate on)
+def get_samples_per_chunk_target(dataset,
+                                 targets_attr='targets', chunks_attr='chunks'):
     """Returns an array with the number of samples per target in each chunk.
 
     Array shape is (chunks x targets).
@@ -157,15 +159,23 @@ def get_samples_per_chunk_target(dataset):
     dataset : Dataset
       Source dataset.
     """
-    ul = dataset.sa['targets'].unique
-    uc = dataset.sa['chunks'].unique
+    # shortcuts/local bindings
+    ta = dataset.sa[targets_attr]
+    ca = dataset.sa[chunks_attr]
 
-    count = np.zeros((len(uc), len(ul)), dtype='uint')
+    # unique
+    ut = ta.unique
+    uc = ca.unique
 
-    for cc, c in enumerate(uc):
-        for lc, l in enumerate(ul):
-            count[cc, lc] = np.sum(np.logical_and(dataset.targets == l,
-                                                dataset.chunks == c))
+    # all
+    ts = ta.value
+    cs = ca.value
+
+    count = np.zeros((len(uc), len(ut)), dtype='uint')
+
+    for ic, c in enumerate(uc):
+        for it, t in enumerate(ut):
+            count[ic, it] = np.sum(np.logical_and(ts==t, cs==c))
 
     return count
 
@@ -332,17 +342,22 @@ def get_samples_by_attr(dataset, attr, values, sort=True):
 
 @datasetmethod
 def summary(dataset, stats=True, lstats=True, idhash=False,
+            targets_attr='targets', chunks_attr='chunks',
             maxc=30, maxt=20):
     """String summary over the object
 
     Parameters
     ----------
     stats : bool
-     Include some basic statistics (mean, std, var) over dataset samples
+      Include some basic statistics (mean, std, var) over dataset samples
     lstats : bool
-     Include statistics on chunks/targets
+      Include statistics on chunks/targets
     idhash : bool
-     Include idhash value for dataset and samples
+      Include idhash value for dataset and samples
+    targets_attr : string, optional
+      Name of sample attributes of targets
+    chunks_attr : string, optional
+      Name of sample attributes of chunks -- independent groups of samples
     maxt : int
       Maximal number of targets when provide details on targets/chunks
     maxc : int
@@ -370,16 +385,28 @@ def summary(dataset, stats=True, lstats=True, idhash=False,
             s += "%sstats: dataset has no features\n" % ssep
 
     if lstats:
-        s += dataset.summary_targets(maxc=maxc, maxt=maxt)
+        try:
+            s += dataset.summary_targets(
+                targets_attr=targets_attr, chunks_attr=chunks_attr,
+                maxc=maxc, maxt=maxt)
+        except KeyError, e:
+            s += 'No per %s/%s due to %r' % (targets_attr, chunks_attr, e)
 
     return s
 
 @datasetmethod
-def summary_targets(dataset, maxc=30, maxt=20):
+def summary_targets(dataset, targets_attr='targets', chunks_attr='chunks',
+                    maxc=30, maxt=20):
     """Provide summary statistics over the targets and chunks
 
     Parameters
     ----------
+    dataset : `Dataset`
+      Dataset to operate on
+    targets_attr : string, optional
+      Name of sample attributes of targets
+    chunks_attr : string, optional
+      Name of sample attributes of chunks -- independent groups of samples
     maxc : int
       Maximal number of chunks when provide details
     maxt : int
@@ -387,15 +414,16 @@ def summary_targets(dataset, maxc=30, maxt=20):
     """
     # We better avoid bound function since if people only
     # imported Dataset without miscfx it would fail
-    spcl = get_samples_per_chunk_target(dataset)
+    spcl = get_samples_per_chunk_target(
+        dataset, targets_attr=targets_attr, chunks_attr=chunks_attr)
     # XXX couldn't they be unordered?
-    ul = dataset.sa['targets'].unique.tolist()
-    uc = dataset.sa['chunks'].unique.tolist()
+    ul = dataset.sa[targets_attr].unique.tolist()
+    uc = dataset.sa[chunks_attr].unique.tolist()
     s = ""
     if len(ul) < maxt and len(uc) < maxc:
         s += "\nCounts of targets in each chunk:"
-        # only in a resonable case do printing
-        table = [['  chunks\\targets'] + ul]
+        # only in a reasonable case do printing
+        table = [['  %s\\%s' % (chunks_attr, targets_attr)] + ul]
         table += [[''] + ['---'] * len(ul)]
         for c, counts in zip(uc, spcl):
             table.append([ str(c) ] + counts.tolist())
@@ -420,13 +448,13 @@ def summary_targets(dataset, maxc=30, maxt=20):
             d.update(dict([ (k, stats[k][i]) for k in stats.keys()]))
             table.append( [ ('%.3g', '%s')[isinstance(d[e], basestring)]
                             % d[e] for e in entries] )
-        return '\nSummary per %s across %ss\n' % (name1, name2) \
+        return '\nSummary for %s across %s\n' % (name1, name2) \
                + table2string(table)
 
     if len(ul) < maxt:
-        s += cl_stats(0, ul, 'target', 'chunk')
+        s += cl_stats(0, ul, targets_attr, chunks_attr)
     if len(uc) < maxc:
-        s += cl_stats(1, uc, 'chunk', 'target')
+        s += cl_stats(1, uc, chunks_attr, targets_attr)
     return s
 
 
