@@ -21,17 +21,18 @@ And that is despite the fact that we have analyzed the data repeatedly,
 with different classifiers and investigated error rates and confusion
 matrices. So what can we do?
 
-Ideally, we would have something that computes a vector with a per feature
-score that indicates how important a particular feature (most of the time a
+Ideally, we would like to have something that estimates per each feature a
+score that indicates how important that particular feature (most of the time a
 voxel) is in the context of a certain classification task. There are various
-possibilities to get such a vector in PyMVPA. We could simply compute an
-ANOVA_ F-score per feature, yielding a score that tell us which feature
-varies significantly between any of the categories in our dataset. 
+possibilities to get a vector of such per feature scores in PyMVPA. We could
+simply compute an ANOVA_ F-score per each feature, yielding scores that would
+tell us which features vary significantly between any of the categories in our
+dataset.
 
 .. _ANOVA: http://en.wikipedia.org/wiki/Analysis_of_variance
 
 Before we can take a look at the implementation details, let's first
-recreate our preprocessed demo dataset. The code is taken verbatim from the 
+recreate our preprocessed demo dataset. The code is taken verbatim from the
 :ref:`previous tutorial part <chap_tutorial_classifiers>` and should raise
 no questions. We get a dataset with one sample per category per run.
 
@@ -53,12 +54,12 @@ relatively painless:
 >>> print f
 <Dataset: 1x577@float64, <fa: fprob>>
 
-If the code snippet above is no surprise then you probably got the basic
+If the code snippet above is of no surprise then you probably got the basic
 idea. We created an object instance ``aov`` being a
 :class:`~mvpa.measures.anova.OneWayAnova`. This instance is subsequently
-*called* with a dataset and yields the F-scores -- in a
+*called* with a dataset and yields the F-scores wrapped into a
 :class:`~mvpa.datasets.base.Dataset`. Where have we seen this before?
-Right! That is little different from a call to
+Right!  This one differs little from a call to
 :class:`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError`.
 Both are objects that get instantiated (potentially with some custom
 arguments) and yield the results in a dataset when called with an input
@@ -71,15 +72,17 @@ a dataset with a single feature -- the accuracy or error rate, while
 :class:`~mvpa.measures.anova.OneWayAnova` returns a vector with one value
 per feature. The latter is called a
 :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure`. But other than the
-number of features in the returned dataset there is little difference. All
+number of features in the returned dataset there is not much of a difference. All
 measures in PyMVPA, for example, support an optional post-processing step.
-During instantiation an arbitray mapper can be specified that is called
+During instantiation of a measure an arbitrary mapper can be specified to be called
 internally to forward-map the results before they are returned. If, for
 some reason, the F-scores need to be scaled into the interval [0,1], an
 :class:`~mvpa.mappers.fx.FxMapper` can be used to achieve that:
 
+.. TODO fix the beast
+
 >>> aov = OneWayAnova(
-...         postproc=FxMapper('samples',
+...         postproc=FxMapper('features',
 ...                           lambda x: x / x.max()))
 >>> f = aov(ds)
 >>> print f.samples.max()
@@ -113,7 +116,7 @@ constraint fashion.
 
 .. _mutual information: http://en.wikipedia.org/wiki/Mutual_information
 
-We almost know all the pieces to implement a searchlight analyses in
+We know almost all pieces to implement a searchlight analysis in
 PyMVPA. We can load and preprocess datasets, we can set up a
 cross-validation procedure.
 
@@ -134,7 +137,7 @@ radius of three voxels. The algorithm uses the coordinates (by default
 determine local neighborhoods. From the ``postproc`` argument you might
 have guessed that this object is also a measure -- and your are right. This
 measure returns whatever value is computed by the basic measure (here this
-is a cross-validation) and assignes it to the feature representing the
+is a cross-validation) and assigns it to the feature representing the
 center of the sphere in the output dataset. For this initial example we are
 not interested in the full cross-validation output (error per each fold),
 but only in the mean error, hence we are using an appropriate mapper for
@@ -203,7 +206,7 @@ we would expect for random guessing of the classifier -- that is more than
   Did looking at the image change your mind?
 
 ..
- # figure for the error distribution (emprical and binomial)
+ # figure for the error distribution (empirical and binomial)
  bins = 18
  distr = []
  for i in xrange(100):
