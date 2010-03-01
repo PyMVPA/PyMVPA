@@ -177,12 +177,14 @@ correspondingly for those two levels of significance.
   of trial numbers from 4 to 1000.  Plot %-accuracy vs number of trials for
   the same range in a separate plot. TODO
 
+.. XXX ripples...
 .. nsamples = np.arange(4, 1000, 2)
 .. effect_sizes = [ceil(binom(n,0.5).isf(0.05) + 1 - n/2) for n in nsamples]
 .. pl.plot(nsamples, effect_sizes)
 .. pl.figure()
 .. pl.plot(nsamples, 0.5 + effect_sizes / nsamples)
-.. pl.ylabel
+.. pl.ylabel('Accuracy to reach p<=0.05')
+.. pl.hlines([0.5, 1.0], 0, 1000)
 
 .. commentTODO::
 
