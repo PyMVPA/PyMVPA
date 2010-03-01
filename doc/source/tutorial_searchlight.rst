@@ -79,11 +79,10 @@ internally to forward-map the results before they are returned. If, for
 some reason, the F-scores need to be scaled into the interval [0,1], an
 :class:`~mvpa.mappers.fx.FxMapper` can be used to achieve that:
 
-.. TODO fix the beast
-
 >>> aov = OneWayAnova(
 ...         postproc=FxMapper('features',
-...                           lambda x: x / x.max()))
+...                           lambda x: x / x.max(),
+...                           attrfx=None))
 >>> f = aov(ds)
 >>> print f.samples.max()
 1.0
