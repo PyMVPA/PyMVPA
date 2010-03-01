@@ -410,6 +410,7 @@ testdatadb: build
 
 # Check if everything (with few exclusions) is imported in unitests is
 # known to the mvpa.suite()
+# XXX remove \|spam whenever clfs.spam gets available
 testsuite:
 	@echo "I: Running full testsuite"
 	@tfile=`mktemp -u testsuiteXXXXXXX`; \
@@ -420,7 +421,7 @@ testsuite:
 	 grep -v -e 'mvpa\.base\.dochelpers' \
 			 -e 'mvpa\.\(tests\|testing\|support\)' \
 			 -e 'mvpa\.misc\.args' \
-			 -e 'mvpa\.clfs\.\(libsvmc\|sg\)' \
+			 -e 'mvpa\.clfs\.\(libsvmc\|sg\|spam\)' \
 	| while read i; do \
 	 grep -q "^ *$$i" mvpa/suite.py || \
 	 { echo "E: '$$i' is missing from mvpa.suite()"; touch "$$tfile"; }; \
