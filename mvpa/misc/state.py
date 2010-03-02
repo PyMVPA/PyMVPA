@@ -84,19 +84,13 @@ class Collection(BaseCollection):
      (thus `listing` property)
     """
 
-    # XXX Necessary so __owner is available while deepcopying
-    #     is to be defined per instance within the class
-    __owner = None
-
-    def __init__(self, items=None, owner=None, name=None):
+    def __init__(self, items=None, name=None):
         """Initialize the Collection
 
         Parameters
         ----------
         items : dict of IndexedCollectable's
           items to initialize with
-        owner : object
-          an object to which collection belongs
         name : str
           name of the collection (as seen in the owner, e.g. 'ca')
         """
@@ -104,12 +98,9 @@ class Collection(BaseCollection):
         # this is important, since some of the stuff below relies in the
         # defaults
         self.__name = None
-        self.__owner = None
 
         super(Collection, self).__init__(items)
 
-        if not owner is None:
-            self._set_owner(owner)
         if not name is None:
             self._set_name(name)
 
@@ -136,10 +127,6 @@ class Collection(BaseCollection):
         if len(self) > maxnumber:
             res += "..."
         res += "}"
-        if __debug__:
-            if "ST" in debug.active:
-                res += " owner:%s#%s" % (self.__owner.__class__.__name__,
-                                         id(self.__owner))
         return res
 
 
@@ -211,8 +198,6 @@ class Collection(BaseCollection):
                 pass
         if items_s != "":
             s += "items={%s}" % items_s
-        if self.__owner is not None:
-            s += "%sowner=%r" % (sep, self.__owner)
         s += ")"
         return s
 
@@ -247,20 +232,6 @@ class Collection(BaseCollection):
             if v.is_set:
                 result.append(key)
         return result
-
-
-    # XXX RF to be removed if ownership feature is removed
-    def __setitem__(self, key, value):
-        super(Collection, self).__setitem__(key, value)
-        if not self.__owner is None:
-            self._update_owner(key)
-
-
-    def pop(self, key):
-        """Pop (remove and return) item from the collection
-        """
-        _ = super(Collection, self).pop(key)
-        self._update_owner(key, register=False)
 
 
     def _action(self, key, func, missingok=False, **kwargs):
@@ -308,72 +279,6 @@ class Collection(BaseCollection):
                 self._action(key, self.values()[0].__class__.reset,
                              missingok=False)
 
-
-    def _set_owner(self, owner):
-        if not isinstance(owner, ClassWithCollections):
-            raise ValueError, \
-                  "Owner of the ConditionalAttributesCollection must be ClassWithCollections object"
-        if __debug__:
-            try:    strowner = str(owner)
-            except: strowner = "UNDEF: <%s#%s>" % (owner.__class__, id(owner))
-            debug("ST", "Setting owner for %s to be %s" % (self, strowner))
-        if not self.__owner is None:
-            # Remove attributes which were registered to that owner previousely
-            self._update_owner(register=False)
-        self.__owner = owner
-        if not self.__owner is None:
-            self._update_owner(register=True)
-
-
-    def _update_owner(self, key=None, register=True):
-        """Define an entry within owner's __dict__
-         so ipython could easily complete it
-
-         Parameters
-         ----------
-         key : str or list of str
-           Name of the attribute. If None -- all known get registered
-         register : bool
-           Register if True or unregister if False
-
-         XXX Needs refactoring since we duplicate the logic of expansion of
-         key value
-        """
-        # Yarik standing behind me, forcing me to do this -- I have no clue....
-        if not (__debug__ and _debug_references):
-            return
-        if not key is None:
-            if not key in self:
-                raise ValueError, \
-                      "Attribute %s is not known to %s" % (key, self)
-            keys = [ key ]
-        else:
-            keys = self.keys()
-
-        ownerdict = self.owner.__dict__
-        selfdict = self.__dict__
-        owner_known = ownerdict['_known_attribs']
-        for key_ in keys:
-            if register:
-                if key_ in ownerdict:
-                    raise RuntimeError, \
-                          "Cannot register attribute %s within %s " % \
-                          (key_, self.owner) + "since it has one already"
-                ownerdict[key_] = self[key_]
-                if key_ in selfdict:
-                    raise RuntimeError, \
-                          "Cannot register attribute %s within %s " % \
-                          (key_, self) + "since it has one already"
-                selfdict[key_] = self[key_]
-                owner_known[key_] = self.__name
-            else:
-                if key_ in ownerdict:
-                    # yoh doesn't think that we need to complain if False
-                    ownerdict.pop(key_)
-                    owner_known.pop(key_)
-                if key_ in selfdict:
-                    selfdict.pop(key_)
-
     # XXX RF: not used anywhere / myself -- hence not worth it?
     @property
     def listing(self):
@@ -387,7 +292,6 @@ class Collection(BaseCollection):
 
 
     # Properties
-    owner = property(fget=lambda x:x.__owner, fset=_set_owner)
     name = property(fget=lambda x:x.__name, fset=_set_name)
 
 
@@ -395,7 +299,7 @@ class ParameterCollection(Collection):
     """Container of Parameters for a stateful object.
     """
 
-#    def __init__(self, items=None, owner=None, name=None):
+#    def __init__(self, items=None, name=None):
 #        """Initialize the conditional attributes of a derived class
 #
 #        Parameters
@@ -403,7 +307,7 @@ class ParameterCollection(Collection):
 #        items : dict
 #          dictionary of ca
 #        """
-#        Collection.__init__(self, items, owner, name)
+#        Collection.__init__(self, items, name)
 #
 
     def _cls_repr(self):
@@ -435,20 +339,18 @@ class ConditionalAttributesCollection(Collection):
      - `R/W Properties`: `enabled`
     """
 
-    def __init__(self, items=None, owner=None):
+    def __init__(self, items=None):
         """Initialize the conditional attributes of a derived class
 
         Parameters
         ----------
         items : dict
           dictionary of ca
-        owner : ClassWithCollections
-          object which owns the collection
         name : str
           literal description. Usually just attribute name for the
           collection, e.g. 'ca'
         """
-        Collection.__init__(self, items=items, owner=owner)
+        Collection.__init__(self, items=items)
 
         self.__storedTemporarily = []
         """List to contain sets of enabled ca which were enabled
@@ -899,7 +801,6 @@ class ClassWithCollections(object):
                           (self, col)
                 s__dict__[col] = collection
                 collection.name = col
-                collection.owner = self
 
             self.__params_set = False
 
