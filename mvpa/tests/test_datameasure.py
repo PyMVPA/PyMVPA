@@ -31,7 +31,7 @@ from mvpa.mappers.fx import sumofabs_sample, absolute_features, FxMapper, \
 from mvpa.datasets.splitters import NFoldSplitter, NoneSplitter
 
 from mvpa.misc.transformers import Absolute, \
-     _second_axis_sum_of_abs, DistPValue
+     DistPValue
 
 from mvpa.measures.base import SplitFeaturewiseDatasetMeasure
 from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
