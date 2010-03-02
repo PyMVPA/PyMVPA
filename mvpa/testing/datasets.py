@@ -94,6 +94,8 @@ datasets['dumbinv'] = _dsinv
 
 # Datasets for regressions testing
 datasets['sin_modulated'] = multiple_chunks(sin_modulated, 4, 30, 1)
+# use the same full for training
+datasets['sin_modulated_train'] = datasets['sin_modulated']
 datasets['sin_modulated_test'] = sin_modulated(30, 1, flat=True)
 
 # simple signal for linear regressors
