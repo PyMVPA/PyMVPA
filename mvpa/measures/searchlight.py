@@ -26,8 +26,8 @@ from mvpa.misc.state import ConditionalAttribute
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
 
 
-class Searchlight(DatasetMeasure):
-    """An implementation of searchlight measure.
+class BaseSearchlight(DatasetMeasure):
+    """Base class for searchlights.
 
     The idea for a searchlight algorithm stems from a paper by
     :ref:`Kriegeskorte et al. (2006) <KGB06>`.
@@ -36,14 +36,11 @@ class Searchlight(DatasetMeasure):
     roisizes = ConditionalAttribute(enabled=False,
         doc="Number of features in each ROI.")
 
-    def __init__(self, datameasure, queryengine, center_ids=None,
-                 nproc=None, **kwargs):
+    @borrowkwargs(DatasetMeasure, '__init__')
+    def __init__(self, queryengine, center_ids=None, nproc=None, **kwargs):
         """
         Parameters
         ----------
-        datameasure : callable
-          Any object that takes a :class:`~mvpa.datasets.base.Dataset`
-          and returns some measure when called.
         queryengine : QueryEngine
           Engine to use to discover the "neighborhood" of each feature.
           See :class:`~mvpa.misc.neighborhood.QueryEngine`.
@@ -65,8 +62,7 @@ class Searchlight(DatasetMeasure):
                                "install python-pprocess, or reduce `nproc` "
                                "to 1 (got nproc=%i)" % nproc)
 
-        self.__datameasure = datameasure
-        self.__qe = queryengine
+        self._qe = queryengine
         if center_ids is not None and not len(center_ids):
             raise ValueError, \
                   "Cannot run searchlight on an empty list of center_ids"
@@ -90,7 +86,7 @@ class Searchlight(DatasetMeasure):
                         % externals.versions['pprocess'])
                 nproc = 1
         # train the queryengine
-        self.__qe.train(dataset)
+        self._qe.train(dataset)
 
         # decide whether to run on all possible center coords or just a provided
         # subset
@@ -106,49 +102,11 @@ class Searchlight(DatasetMeasure):
         else:
             roi_ids = np.arange(dataset.nfeatures)
 
-        # compute
-        if nproc > 1:
-            # split all target ROIs centers into `nproc` equally sized blocks
-            roi_blocks = np.array_split(roi_ids, nproc)
-
-            # the next block sets up the infrastructure for parallel computing
-            # this can easily be changed into a ParallelPython loop, if we
-            # decide to have a PP job server in PyMVPA
-            import pprocess
-            p_results = pprocess.Map(limit=nproc)
-            compute = p_results.manage(
-                        pprocess.MakeParallel(self._proc_block))
-            for block in roi_blocks:
-                # should we maybe deepcopy the measure to have a unique and
-                # independent one per process?
-                compute(block, dataset, copy.copy(self.__datameasure))
-
-            # collect results
-            results = []
-            if self.ca.is_enabled('roisizes'):
-                roisizes = []
-            else:
-                roisizes = None
-
-            for r, rsizes in p_results:
-                results += r
-                if not roisizes is None:
-                    roisizes += rsizes
-        else:
-            # otherwise collect the results in a list
-            results, roisizes = \
-                    self._proc_block(roi_ids, dataset, self.__datameasure)
+        # pass to subclass
+        results, roisizes = self._sl_call(dataset, roi_ids, nproc)
 
         if not roisizes is None:
             self.ca.roisizes = roisizes
-
-        if __debug__:
-            debug('SLC', '')
-
-        # but be careful: this call also serves as conversion from parallel maps
-        # to regular lists!
-        # this uses the Dataset-hstack
-        results = hstack(results)
 
         if 'mapper' in dataset.a:
             # since we know the space we can stick the original mapper into the
@@ -187,7 +145,121 @@ class Searchlight(DatasetMeasure):
         for i, f in enumerate(block):
             # retrieve the feature ids of all features in the ROI from the query
             # engine
-            roi_fids = self.__qe[f]
+            roi_fids = self._qe[f]
+
+            if __debug__ and  debug_slc_:
+                debug('SLC_', 'For %r query returned ids %r' % (f, roi_fids))
+
+            # slice the dataset
+            roi = ds[:, roi_fids]
+
+            # compute the datameasure and store in results
+            results.append(measure(roi))
+
+            # store the size of the roi dataset
+            if not roisizes is None:
+                roisizes.append(roi.nfeatures)
+
+            if __debug__:
+                debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
+                    % (len(block),
+                       f+1,
+                       roi.nfeatures,
+                       float(i+1)/len(block)*100,), cr=True)
+
+        return results, roisizes
+
+
+class Searchlight(BaseSearchlight):
+    """The implementation of a generic searchlight measure.
+
+    The idea for a searchlight algorithm stems from a paper by
+    :ref:`Kriegeskorte et al. (2006) <KGB06>`.  As a result it
+    produces a map of measures given a `datameasure` instance of
+    interest, which is ran at each spatial location.
+    """
+
+    @borrowkwargs(BaseSearchlight, '__init__')
+    def __init__(self, datameasure, *args, **kwargs):
+        """
+        Parameters
+        ----------
+        datameasure : callable
+          Any object that takes a :class:`~mvpa.datasets.base.Dataset`
+          and returns some measure when called.
+        **kwargs
+          In addition this class supports all keyword arguments of its
+          base-class :class:`~mvpa.measures.searchlight.BaseSearchlight`.
+        """
+        BaseSearchlight.__init__(self, *args, **kwargs)
+        self.__datameasure = datameasure
+
+
+    def _sl_call(self, dataset, roi_ids, nproc):
+        """Classical generic searchlight implementation
+        """
+        # compute
+        if nproc > 1:
+            # split all target ROIs centers into `nproc` equally sized blocks
+            roi_blocks = np.array_split(roi_ids, nproc)
+
+            # the next block sets up the infrastructure for parallel computing
+            # this can easily be changed into a ParallelPython loop, if we
+            # decide to have a PP job server in PyMVPA
+            import pprocess
+            p_results = pprocess.Map(limit=nproc)
+            compute = p_results.manage(
+                        pprocess.MakeParallel(self._proc_block))
+            for block in roi_blocks:
+                # should we maybe deepcopy the measure to have a unique and
+                # independent one per process?
+                compute(block, dataset, copy.copy(self.__datameasure))
+
+            # collect results
+            results = []
+            if self.ca.is_enabled('roisizes'):
+                roisizes = []
+            else:
+                roisizes = None
+
+            for r, rsizes in p_results:
+                results += r
+                if not roisizes is None:
+                    roisizes += rsizes
+        else:
+            # otherwise collect the results in a list
+            results, roisizes = \
+                    self._proc_block(roi_ids, dataset, self.__datameasure)
+
+        if __debug__:
+            debug('SLC', '')
+
+        # but be careful: this call also serves as conversion from parallel maps
+        # to regular lists!
+        # this uses the Dataset-hstack
+        results = hstack(results)
+
+        return results, roisizes
+
+
+    def _proc_block(self, block, ds, measure):
+        """Little helper to capture the parts of the computation that can be
+        parallelized
+        """
+        if __debug__:
+            debug_slc_ = 'SLC_' in debug.active
+
+        if self.ca.is_enabled('roisizes'):
+            roisizes = []
+        else:
+            roisizes = None
+        results = []
+        # put rois around all features in the dataset and compute the
+        # measure within them
+        for i, f in enumerate(block):
+            # retrieve the feature ids of all features in the ROI from the query
+            # engine
+            roi_fids = self._qe[f]
 
             if __debug__ and  debug_slc_:
                 debug('SLC_', 'For %r query returned ids %r' % (f, roi_fids))
