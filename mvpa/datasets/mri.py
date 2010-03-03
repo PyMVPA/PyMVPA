@@ -30,9 +30,6 @@ from mvpa.base.dataset import _expand_attribute
 if __debug__:
     from mvpa.base import debug
 
-if externals.exists('nifti', raise_=True):
-    from nifti import NiftiImage
-
 from mvpa.datasets.base import Dataset
 from mvpa.mappers.fx import _uniquemerge2literal
 from mvpa.mappers.flatten import FlattenMapper
@@ -40,7 +37,45 @@ from mvpa.mappers.boxcar import BoxcarMapper
 from mvpa.base import warning
 
 
-def map2nifti(dataset, data=None, imghdr=None):
+def _data2img(data, hdr=None, imgtype=None):
+    # input data is t,x,y,z
+    if externals.exists('nibabel'):
+        # let's try whether we can get it done with nibabel
+        import nibabel
+        if imgtype is None:
+            # default is NIfTI1
+            itype = nibabel.Nifti1Image
+        else:
+            itype = imgtype
+        if issubclass(itype, nibabel.spatialimages.SpatialImage) \
+           and (hdr is None or isinstance(hdr, nibabel.spatialimages.Header)):
+            # we can handle the desired image type and hdr with nibabel
+            # use of `None` for the affine should cause to pull it from
+            # the header
+            return itype(_get_xyzt_shaped(data), None, hdr)
+        # otherwise continue and see if there is hope ....
+    if externals.exists('nifti'):
+        # maybe pynifti can help
+        import nifti
+        if imgtype is None:
+            itype = nifti.NiftiImage
+        else:
+            itype = imgtype
+        if issubclass(itype, nifti.NiftiImage) \
+           and (hdr is None or isinstance(hdr, dict)):
+            # pynifti wants it transposed
+            return itype(_get_xyzt_shaped(data).T, hdr)
+
+    raise RuntimeError("Cannot convert data to an MRI image "
+                       "(backends: nibabel(%s), pynifti(%s). Got hdr='%s', "
+                       "imgtype='%s'."
+                       % (externals.exists('nibabel'),
+                          externals.exists('nifti'),
+                          hdr,
+                          imgtype))
+
+
+def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
     """Maps data(sets) into the original dataspace and wraps it in a NiftiImage.
 
     Parameters
@@ -70,9 +105,12 @@ def map2nifti(dataset, data=None, imghdr=None):
         dsarray = dataset.a.mapper.reverse1(data)
 
     if imghdr is None:
-        imghdr = dataset.a.imghdr
+        if 'imghdr' in dataset.a:
+            imghdr = dataset.a.imghdr
+        elif __debug__:
+            debug('DS_NIFTI', 'No image header found. Using defaults.')
 
-    return NiftiImage(_get_xyzt_shaped(dsarray).T, imghdr)
+    return _data2img(dsarray, imghdr, imgtype)
 
 
 def fmri_dataset(samples, targets=None, chunks=None, mask=None,
@@ -263,24 +301,24 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
     """
     imgdata = imghdr = None
 
+    import nifti
     # figure out what type
     if isinstance(src, str):
         # open the img file
         try:
-            img = NiftiImage(src)
+            img = nifti.NiftiImage(src)
         except RuntimeError, e:
             warning("ERROR: Cannot open NIfTI file %s" \
                     % src)
             raise e
         imghdr = img.header
         imgdata = _get_txyz_shaped(_get_data_form_pynifti_img(img))
-    elif isinstance(src, NiftiImage):
+    elif isinstance(src, nifti.NiftiImage):
         # nothing special
         imghdr = src.header
         imgdata = _get_txyz_shaped(_get_data_form_pynifti_img(src))
     elif (isinstance(src, list) or isinstance(src, tuple)) \
-        and len(src)>0 \
-        and (isinstance(src[0], str) or isinstance(src[0], NiftiImage)):
+            and len(src)>0:
         # load from a list of given entries
         if enforce_dim is not None: enforce_dim_ = enforce_dim - 1
         else:                       enforce_dim_ = None
