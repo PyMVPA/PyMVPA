@@ -33,18 +33,18 @@ class BaseSearchlight(DatasetMeasure):
     :ref:`Kriegeskorte et al. (2006) <KGB06>`.
     """
 
-    roisizes = ConditionalAttribute(enabled=False,
+    roi_sizes = ConditionalAttribute(enabled=False,
         doc="Number of features in each ROI.")
 
     @borrowkwargs(DatasetMeasure, '__init__')
-    def __init__(self, queryengine, center_ids=None, nproc=None, **kwargs):
+    def __init__(self, queryengine, roi_ids=None, nproc=None, **kwargs):
         """
         Parameters
         ----------
         queryengine : QueryEngine
           Engine to use to discover the "neighborhood" of each feature.
           See :class:`~mvpa.misc.neighborhood.QueryEngine`.
-        center_ids : None or list of int
+        roi_ids : None or list of int
           List of feature ids (not coordinates) the shall serve as sphere
           centers. By default all features will be used.
         nproc : None or int
@@ -63,10 +63,10 @@ class BaseSearchlight(DatasetMeasure):
                                "to 1 (got nproc=%i)" % nproc)
 
         self._qe = queryengine
-        if center_ids is not None and not len(center_ids):
+        if roi_ids is not None and not len(roi_ids):
             raise ValueError, \
-                  "Cannot run searchlight on an empty list of center_ids"
-        self.__center_ids = center_ids
+                  "Cannot run searchlight on an empty list of roi_ids"
+        self.__roi_ids = roi_ids
         self.__nproc = nproc
 
 
@@ -90,8 +90,8 @@ class BaseSearchlight(DatasetMeasure):
 
         # decide whether to run on all possible center coords or just a provided
         # subset
-        if self.__center_ids is not None:
-            roi_ids = self.__center_ids
+        if self.__roi_ids is not None:
+            roi_ids = self.__roi_ids
             # safeguard against stupidity
             if __debug__:
                 if max(roi_ids) >= dataset.nfeatures:
@@ -103,21 +103,21 @@ class BaseSearchlight(DatasetMeasure):
             roi_ids = np.arange(dataset.nfeatures)
 
         # pass to subclass
-        results, roisizes = self._sl_call(dataset, roi_ids, nproc)
+        results, roi_sizes = self._sl_call(dataset, roi_ids, nproc)
 
-        if not roisizes is None:
-            self.ca.roisizes = roisizes
+        if not roi_sizes is None:
+            self.ca.roi_sizes = roi_sizes
 
         if 'mapper' in dataset.a:
             # since we know the space we can stick the original mapper into the
             # results as well
-            if self.__center_ids is None:
+            if self.__roi_ids is None:
                 results.a['mapper'] = copy.copy(dataset.a.mapper)
             else:
                 # there is an additional selection step that needs to be
                 # expressed by another mapper
                 mapper = copy.copy(dataset.a.mapper)
-                mapper.append(FeatureSliceMapper(self.__center_ids,
+                mapper.append(FeatureSliceMapper(self.__roi_ids,
                                                  dshape=dataset.shape[1:]))
                 results.a['mapper'] = mapper
 
@@ -135,10 +135,10 @@ class BaseSearchlight(DatasetMeasure):
         if __debug__:
             debug_slc_ = 'SLC_' in debug.active
 
-        if self.ca.is_enabled('roisizes'):
-            roisizes = []
+        if self.ca.is_enabled('roi_sizes'):
+            roi_sizes = []
         else:
-            roisizes = None
+            roi_sizes = None
         results = []
         # put rois around all features in the dataset and compute the
         # measure within them
@@ -157,8 +157,8 @@ class BaseSearchlight(DatasetMeasure):
             results.append(measure(roi))
 
             # store the size of the roi dataset
-            if not roisizes is None:
-                roisizes.append(roi.nfeatures)
+            if not roi_sizes is None:
+                roi_sizes.append(roi.nfeatures)
 
             if __debug__:
                 debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
@@ -167,7 +167,7 @@ class BaseSearchlight(DatasetMeasure):
                        roi.nfeatures,
                        float(i+1)/len(block)*100,), cr=True)
 
-        return results, roisizes
+        return results, roi_sizes
 
 
 class Searchlight(BaseSearchlight):
@@ -217,18 +217,18 @@ class Searchlight(BaseSearchlight):
 
             # collect results
             results = []
-            if self.ca.is_enabled('roisizes'):
-                roisizes = []
+            if self.ca.is_enabled('roi_sizes'):
+                roi_sizes = []
             else:
-                roisizes = None
+                roi_sizes = None
 
             for r, rsizes in p_results:
                 results += r
-                if not roisizes is None:
-                    roisizes += rsizes
+                if not roi_sizes is None:
+                    roi_sizes += rsizes
         else:
             # otherwise collect the results in a list
-            results, roisizes = \
+            results, roi_sizes = \
                     self._proc_block(roi_ids, dataset, self.__datameasure)
 
         if __debug__:
@@ -239,7 +239,7 @@ class Searchlight(BaseSearchlight):
         # this uses the Dataset-hstack
         results = hstack(results)
 
-        return results, roisizes
+        return results, roi_sizes
 
 
     def _proc_block(self, block, ds, measure):
@@ -249,10 +249,10 @@ class Searchlight(BaseSearchlight):
         if __debug__:
             debug_slc_ = 'SLC_' in debug.active
 
-        if self.ca.is_enabled('roisizes'):
-            roisizes = []
+        if self.ca.is_enabled('roi_sizes'):
+            roi_sizes = []
         else:
-            roisizes = None
+            roi_sizes = None
         results = []
         # put rois around all features in the dataset and compute the
         # measure within them
@@ -271,8 +271,8 @@ class Searchlight(BaseSearchlight):
             results.append(measure(roi))
 
             # store the size of the roi dataset
-            if not roisizes is None:
-                roisizes.append(roi.nfeatures)
+            if not roi_sizes is None:
+                roi_sizes.append(roi.nfeatures)
 
             if __debug__:
                 debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
@@ -281,10 +281,10 @@ class Searchlight(BaseSearchlight):
                        roi.nfeatures,
                        float(i+1)/len(block)*100,), cr=True)
 
-        return results, roisizes
+        return results, roi_sizes
 
 
-@borrowkwargs(Searchlight, '__init__')
+@borrowkwargs(Searchlight, '__init__', exclude=['roi_ids'])
 def sphere_searchlight(datameasure, radius=1, center_ids=None,
                        space='voxel_indices', **kwargs):
     """Creates a `Searchlight` to run a scalar `DatasetMeasure` on
@@ -303,7 +303,8 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
       of a sphere.
     center_ids : list of int
       List of feature ids (not coordinates) the shall serve as sphere
-      centers. By default all features will be used.
+      centers. By default all features will be used (it is passed
+      roi_ids argument for Searchlight).
     space : str
       Name of a feature attribute of the input dataset that defines the spatial
       coordinates of all features.
@@ -326,7 +327,7 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
     kwa = {space: Sphere(radius)}
     qe = IndexQueryEngine(**kwa)
     # init the searchlight with the queryengine
-    return Searchlight(datameasure, qe, center_ids=center_ids, **kwargs)
+    return Searchlight(datameasure, qe, roi_ids=center_ids, **kwargs)
 
 
 #class OptimalSearchlight( object ):

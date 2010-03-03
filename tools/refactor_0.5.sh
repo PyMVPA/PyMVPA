@@ -225,6 +225,7 @@ _verboseCallback	_verbose_callback
 __wasDataChanged	__was_data_changed
 _waveletFamilyCallback	_wavelet_family_callback
 nperlabel	npertarget
+roisizes	roi_sizes
 xuniqueCombinations	xunique_combinations"  | \
 while read old new; do
 	echo -en "$old:\t"
