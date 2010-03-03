@@ -81,8 +81,8 @@ from mvpa.datasets.base import *
 from mvpa.datasets.miscfx import *
 from mvpa.datasets.eep import *
 from mvpa.datasets.eventrelated import *
-if externals.exists('nifti'):
-    from mvpa.datasets.mri import *
+# safe to import since multiple externals are handled inside
+from mvpa.datasets.mri import *
 
 from mvpa.datasets import splitters
 from mvpa.datasets.splitters import *
