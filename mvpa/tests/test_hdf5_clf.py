@@ -54,7 +54,7 @@ def test_h5py_clfs(lrn):
 
     # lets choose a dataset
     dsname, errorfx = \
-            {False: ('uni2small', MeanMismatchErrorFx()),
+            {False: ('uni2large', MeanMismatchErrorFx()),
              True: ('sin_modulated', CorrErrorFx())}\
             ['regression' in lrn.__tags__]
     ds_train = datasets['%s_train' % dsname]
