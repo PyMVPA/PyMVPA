@@ -8,7 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Gaussian Naive Bayes Classifier
 
-   EXPERIMENTAL ;)
    Basic implementation of Gaussian Naive Bayes classifier.
 """
 
@@ -32,39 +31,40 @@ __all__ = [ "GNB" ]
 class GNB(Classifier):
     """Gaussian Naive Bayes `Classifier`.
 
-    GNB is a probabilistic classifier relying on Bayes rule to
+    `GNB` is a probabilistic classifier relying on Bayes rule to
     estimate posterior probabilities of labels given the data.  Naive
     assumption in it is an independence of the features, which allows
     to combine per-feature likelihoods by a simple product across
-    likelihoods of"independent" features.
+    likelihoods of "independent" features.
     See http://en.wikipedia.org/wiki/Naive_bayes for more information.
 
     Provided here implementation is "naive" on its own -- various
-    aspects could be improved, but has its own advantages:
+    aspects could be improved, but it has its own advantages:
 
-     - implementation is simple and straightforward
-     - no data copying while considering samples of specific class
-     - provides alternative ways to assess prior distribution of the
-       classes in the case of unbalanced sets of samples (see parameter
-       `prior`)
-     - makes use of NumPy broadcasting mechanism, so should be
-       relatively efficient
-     - should work for any dimensionality of samples
+    - implementation is simple and straightforward
+    - no data copying while considering samples of specific class
+    - provides alternative ways to assess prior distribution of the
+      classes in the case of unbalanced sets of samples (see parameter
+      `prior`)
+    - makes use of NumPy broadcasting mechanism, so should be
+      relatively efficient
+    - should work for any dimensionality of samples
 
-    GNB is listed both as linear and non-linear classifier, since
+    `GNB` is listed both as linear and non-linear classifier, since
     specifics of separating boundary depends on the data and/or
     parameters: linear separation is achieved whenever samples are
-    balanced (or prior='uniform') and features have the same variance
-    across different classes (i.e. if common_variance=True to enforce
-    this).
+    balanced (or ``prior='uniform'``) and features have the same
+    variance across different classes (i.e. if
+    ``common_variance=True`` to enforce this).
 
     Whenever decisions are made based on log-probabilities (parameter
-    logprob=True, which is the default), then conditional attribute `values`
-    if enabled would also contain log-probabilities.  Also mention
-    that normalization by the evidence (P(data)) is disabled by
-    default since it has no impact per se on classification decision.
-    You might like set parameter normalize to True if you want to
-    access properly scaled probabilities in `values` conditional attribute.
+    ``logprob=True``, which is the default), then conditional
+    attribute `values`, if enabled, would also contain
+    log-probabilities.  Also mention that normalization by the
+    evidence (P(data)) is disabled by default since it has no impact
+    per se on classification decision.  You might like to set
+    parameter normalize to True if you want to access properly scaled
+    probabilities in `values` conditional attribute.
     """
     # XXX decide when should we set corresponding internal,
     #     since it depends actually on the data -- no clear way,
@@ -74,6 +74,7 @@ class GNB(Classifier):
 
     common_variance = Parameter(False, allowedtype='bool',
              doc="""Use the same variance across all classes.""")
+
     prior = Parameter('laplacian_smoothing',
              allowedtype='basestring',
              choices=["laplacian_smoothing", "uniform", "ratio"],
@@ -83,6 +84,7 @@ class GNB(Classifier):
              doc="""Operate on log probabilities.  Preferable to avoid unneeded
              exponentiation and loose precision.
              If set, logprobs are stored in `values`""")
+
     normalize = Parameter(False, allowedtype='bool',
              doc="""Normalize (log)prob by P(data).  Requires probabilities thus
              for `logprob` case would require exponentiation of 'logprob's, thus
@@ -170,7 +172,8 @@ class GNB(Classifier):
         elif prior == 'ratio':
             self.priors = np.squeeze(nsamples_per_class) / float(nsamples)
         else:
-            raise "No idea on how to handle '%s' way to compute priors" \
+            raise ValueError, \
+                  "No idea on how to handle '%s' way to compute priors" \
                   % params.prior
 
         # Precompute and store weighting coefficient for Gaussian
@@ -212,7 +215,8 @@ class GNB(Classifier):
             # simply discarded since it is common across features AND
             # classes
             # For completeness -- computing everything now even in logprob
-            lprob_csfs = self._norm_weight[:, np.newaxis, ...] + scaled_distances
+            lprob_csfs = self._norm_weight[:, np.newaxis, ...] \
+                         + scaled_distances
 
             # XXX for now just cut/paste with different operators, but
             #     could just bind them and reuse in the same equations
@@ -230,7 +234,8 @@ class GNB(Classifier):
             # Just a regular Normal distribution with per
             # feature/class mean and variances
             prob_csfs = \
-                 self._norm_weight[:, np.newaxis, ...] * np.exp(scaled_distances)
+                 self._norm_weight[:, np.newaxis, ...] \
+                 * np.exp(scaled_distances)
 
             # Naive part -- just a product of probabilities across features
             ## First we need to reshape to get class x samples x features
