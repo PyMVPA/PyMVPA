@@ -152,7 +152,7 @@ class Parameter(IndexedCollectable):
             doc = self.__doc__.strip()
             if not doc.endswith('.'): doc += '.'
             try:
-                doc += " (Default: %s)" % self.default
+                doc += " (Default: %r)" % (self.default,)
             except:
                 pass
             # Explicitly deal with multiple spaces, for some reason

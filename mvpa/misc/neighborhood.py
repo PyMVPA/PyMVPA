@@ -13,6 +13,7 @@ from numpy import array
 import operator
 import sys
 
+from mvpa.base.dochelpers import borrowkwargs
 from mvpa.clfs.distance import cartesian_distance
 
 if __debug__:
@@ -279,12 +280,19 @@ class QueryEngine(object):
     """Basic class defining interface for querying neighborhood in a dataset
 
     Derived classes provide specific implementations possibly with trade-offs
-    between generality and performance
+    between generality and performance.
 
-    XXX
+    TODO: extend
     """
 
     def __init__(self, **kwargs):
+        """
+        Parameters
+        ----------
+        **kwargs
+          a dictionary of query objects. Something like
+          dict(voxel_indices=Sphere(3))
+        """
         # XXX for example:
         # voxels=Sphere(diameter=3)
         self._queryobjs = kwargs
@@ -334,6 +342,7 @@ class IndexQueryEngine(QueryEngine):
     - repr
     """
 
+    @borrowkwargs(QueryEngine, '__init__')
     def __init__(self, sorted=True, **kwargs):
         """
         Parameters

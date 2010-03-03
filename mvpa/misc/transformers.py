@@ -71,22 +71,20 @@ def second_axis_mean(x):
     return np.mean(x, axis=1)
 
 
-##REF: Name was automagically refactored
-def _second_axis_sum_of_abs(x):
+def sum_of_abs(x):
     """Sum of absolute values along the 2nd axis
 
     Use cases:
      - to combine multiple sensitivities to get sense about
        what features are most influential
     """
-    return np.abs(x).sum(axis=1)
+    return np.abs(x).sum()
 
 
-##REF: Name was automagically refactored
-def second_axis_max_of_abs(x):
+def max_of_abs(x):
     """Max of absolute values along the 2nd axis
     """
-    return np.abs(x).max(axis=1)
+    return np.abs(x).max()
 
 
 ##REF: Name was automagically refactored
