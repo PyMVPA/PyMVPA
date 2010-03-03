@@ -18,13 +18,13 @@ import numpy as np
 from mvpa.base import externals, warning
 from mvpa.base.dochelpers import borrowkwargs
 
-from mvpa.datasets import Dataset, hstack
+from mvpa.datasets import hstack
 from mvpa.support import copy
 from mvpa.mappers.base import FeatureSliceMapper
 from mvpa.measures.base import DatasetMeasure
 from mvpa.misc.state import ConditionalAttribute
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
-from mvpa.base.dochelpers import _str, borrowkwargs
+
 
 class Searchlight(DatasetMeasure):
     """An implementation of searchlight measure.
@@ -86,7 +86,8 @@ class Searchlight(DatasetMeasure):
                 nproc = pprocess.get_number_of_cores() or 1
             except AttributeError:
                 warning("pprocess version %s has no API to figure out maximal "
-                        "number of cores. Using 1" % externals.versions['pprocess'])
+                        "number of cores. Using 1"
+                        % externals.versions['pprocess'])
                 nproc = 1
         # train the queryengine
         self.__qe.train(dataset)
