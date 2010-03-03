@@ -99,9 +99,9 @@ from mvpa.tests import run as test
 # Also, this check enforcing population of externals.versions
 # for possible later version checks, hence don't remove
 externals.exists('numpy', force=True, raise_=True)
-# We might need to suppress the warnings so enforcing check here,
-# it is ok if it would fail
-externals.exists('scipy', force=True, raise_=False)
+# We might need to suppress the warnings:
+if externals.exists('scipy'):
+    externals._suppress_scipy_warnings()
 # And check if we aren't under IPython so we could pacify completion
 # a bit
 externals.exists('running ipython env', force=True, raise_=False)

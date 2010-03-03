@@ -65,6 +65,8 @@ def __check_scipy():
     __assign_numpy_version()
     __assign_scipy_version()
     import scipy as sp
+
+def _suppress_scipy_warnings():
     # Infiltrate warnings if necessary
     numpy_ver = versions['numpy']
     scipy_ver = versions['scipy']
