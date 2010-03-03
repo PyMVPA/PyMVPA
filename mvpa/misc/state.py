@@ -706,7 +706,7 @@ class AttributesCollector(type):
                                   width=70)
 
         # Parameters
-        paramsdoc = ""
+        paramsdoc = []
         paramscols = []
         for col in ('params', 'kernel_params'):
             if collections.has_key(col):
@@ -716,9 +716,9 @@ class AttributesCollector(type):
                 iparams = [(v._instance_index, k)
                            for k,v in col_items.iteritems()]
                 iparams.sort()
-                paramsdoc += '\n'.join(
-                    [col_items[iparam[1]].doc(indent='  ')
-                     for iparam in iparams]) + '\n'
+                paramsdoc += [(col_items[iparam[1]].name,
+                               col_items[iparam[1]]._paramdoc())
+                              for iparam in iparams]
 
         # Parameters collection could be taked hash of to decide if
         # any were changed? XXX may be not needed at all?
@@ -727,12 +727,15 @@ class AttributesCollector(type):
         # States doc
         cadoc = ""
         if collections.has_key('ca'):
-            paramsdoc += """  enable_ca : None or list of str
-    Names of the conditional attributes which should be enabled additionally
-    to default ones
-  disable_ca : None or list of str
-    Names of the conditional attributes which should be disabled
-"""
+            paramsdoc += [
+                ('enable_ca',
+                 "enable_ca : None or list of str\n  "
+                 "Names of the conditional attributes which should "
+                 "be enabled in addition\n  to the default ones"),
+                ('disable_ca',
+                 "disable_ca : None or list of str\n  "
+                 "Names of the conditional attributes which should "
+                 "be disabled""")]
             if len(collections['ca']):
                 cadoc += '\n'.join(['* ' + x
                                     for x in collections['ca'].listing])
@@ -746,7 +749,7 @@ class AttributesCollector(type):
                 debug("COLR", "Assigning __paramsdoc to be %s" % paramsdoc)
             setattr(cls, "_paramsdoc", paramsdoc)
 
-        if paramsdoc + cadoc != "":
+        if len(paramsdoc) or cadoc != "":
             cls.__doc__ = enhanced_doc_string(cls, *bases)
 
 
