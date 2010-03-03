@@ -18,7 +18,7 @@ skip_if_no_external('nifti')
 from nifti import NiftiImage
 
 from mvpa import pymvpa_dataroot
-from mvpa.datasets.mri import fmri_dataset, _load_anynifti, map2nifti
+from mvpa.datasets.mri import fmri_dataset, _load_anyimg, map2nifti
 from mvpa.datasets.eventrelated import eventrelated_dataset
 from mvpa.misc.fsl import FslEV3
 from mvpa.misc.support import Event, value2idx
@@ -33,7 +33,7 @@ def test_nifti_dataset():
     assert_equal(ds.nfeatures, 294912)
     assert_equal(ds.nsamples, 2)
 
-    assert_array_equal(ds.a.voxel_eldim, ds.a.imghdr['pixdim'][3:0:-1])
+    assert_array_equal(ds.a.voxel_eldim, ds.a.imghdr['pixdim'][1:4])
     assert_true(ds.a['voxel_dim'].value == (24,96,128))
 
 
@@ -170,7 +170,7 @@ def test_er_nifti_dataset():
     assert_true('duration' in ds.sa)
     assert_true('features' in ds.sa)
     # check samples
-    origsamples = _load_anynifti(tssrc).data
+    origsamples = _load_anyimg(tssrc)[0]
     for i, onset in \
         enumerate([value2idx(e['onset'], ds_orig.sa.time_coords, 'floor')
                         for e in evs]):
@@ -196,7 +196,7 @@ def test_er_nifti_dataset():
     # and now with masking
     ds = fmri_dataset(tssrc, mask=masrc)
     ds = eventrelated_dataset(ds, evs, time_attr='time_coords')
-    nnonzero = len(_load_anynifti(masrc).data.nonzero()[0])
+    nnonzero = len(_load_anyimg(masrc)[0].nonzero()[0])
     assert_equal(nnonzero, 530)
     # we ask for boxcars of 9s length, and the tr in the file header says 2.5s
     # hence we should get round(9.0/2.4) * np.prod((1,20,40) == 3200 features

@@ -139,33 +139,31 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
     Dataset
     """
     # load the samples
-    niftisamples = _load_anynifti(samples, ensure=True, enforce_dim=4)
-    samples = niftisamples.data
+    imgdata, imghdr = _load_anyimg(samples, ensure=True, enforce_dim=4)
 
-    # figure out what the mask is, but onyl handle known cases, the rest
+    # figure out what the mask is, but only handle known cases, the rest
     # goes directly into the mapper which maybe knows more
-    niftimask = _load_anynifti(mask)
-    if niftimask is None:
+    maskimg = _load_anyimg(mask)
+    if maskimg is None:
         pass
-    elif isinstance(niftimask, np.ndarray):
-        mask = niftimask
     else:
-        mask = _get_nifti_data(niftimask)
+        # take just data and ignore the header
+        mask = maskimg[0]
 
     # compile the samples attributes
     sa = {}
     if not targets is None:
-        sa['targets'] = _expand_attribute(targets, samples.shape[0], 'targets')
+        sa['targets'] = _expand_attribute(targets, imgdata.shape[0], 'targets')
     if not chunks is None:
-        sa['chunks'] = _expand_attribute(chunks, samples.shape[0], 'chunks')
+        sa['chunks'] = _expand_attribute(chunks, imgdata.shape[0], 'chunks')
 
     # create a dataset
-    ds = Dataset(samples, sa=sa)
+    ds = Dataset(imgdata, sa=sa)
     if sprefix is None:
         inspace = None
     else:
         inspace = sprefix + '_indices'
-    ds = ds.get_mapped(FlattenMapper(shape=samples.shape[1:], inspace=inspace))
+    ds = ds.get_mapped(FlattenMapper(shape=imgdata.shape[1:], inspace=inspace))
 
     # now apply the mask if any
     if not mask is None:
@@ -179,33 +177,37 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
     # load and store additional feature attributes
     if not add_fa is None:
         for fattr in add_fa:
-            value = _get_nifti_data(_load_anynifti(add_fa[fattr]))
+            value = _load_anyimg(add_fa[fattr], ensure=True)[0]
             ds.fa[fattr] = ds.a.mapper.forward1(value)
 
     # store interesting props in the dataset
-    # do not put the whole NiftiImage in the dict as this will most
-    # likely be deepcopy'ed at some point and ensuring data integrity
-    # of the complex Python-C-Swig hybrid might be a tricky task.
-    # Only storing the header dict should achieve the same and is more
-    # memory efficient and even simpler
-    ds.a['imghdr'] = niftisamples.header
+    ds.a['imghdr'] = imghdr
     # If there is a space assigned , store the extent of that space
     if sprefix is not None:
-        ds.a[sprefix + '_dim'] = samples.shape[1:]
+        ds.a[sprefix + '_dim'] = imgdata.shape[1:]
         # 'voxdim' is (x,y,z) while 'samples' are (t,z,y,x)
-        ds.a[sprefix + '_eldim'] = \
-                tuple([i for i in reversed(niftisamples.voxdim)])
+        ds.a[sprefix + '_eldim'] = _get_voxdim(imghdr)
         # TODO extend with the unit
     if tprefix is not None:
         ds.sa[tprefix + '_indices'] = np.arange(len(ds), dtype='int')
         ds.sa[tprefix + '_coords'] = np.arange(len(ds), dtype='float') \
-                                     * niftisamples.header['pixdim'][4]
+                                     * _get_dt(imghdr)
         # TODO extend with the unit
 
     return ds
 
 
-def _get_nifti_data(nim):
+def _get_voxdim(hdr):
+    """Get the size of a voxel from some image header format."""
+    return tuple(hdr['pixdim'][1:4])
+
+
+def _get_dt(hdr):
+    """Get the TR of a fMRI timeseries from some image header format."""
+    return hdr['pixdim'][4]
+
+
+def _get_data_form_pynifti_img(nim):
     """Convenience function to extract the data array from a NiftiImage
 
     This function will make use of advanced features of PyNIfTI to prevent
@@ -217,7 +219,7 @@ def _get_nifti_data(nim):
         return nim.asarray()
 
 
-def _load_anynifti(src, ensure=False, enforce_dim=None):
+def _load_anyimg(src, ensure=False, enforce_dim=None):
     """Load/access NIfTI data from files or instances.
 
     Parameters
@@ -241,44 +243,46 @@ def _load_anynifti(src, ensure=False, enforce_dim=None):
       If there is a problem with data (variable dimensionality) or
       failed to load data and ensure=True.
     """
-    nifti = None
+    imgdata = imghdr = None
 
     # figure out what type
     if isinstance(src, str):
-        # open the nifti file
+        # open the img file
         try:
-            nifti = NiftiImage(src)
+            img = NiftiImage(src)
         except RuntimeError, e:
             warning("ERROR: Cannot open NIfTI file %s" \
                     % src)
             raise e
+        imghdr = img.header
+        imgdata = _get_data_form_pynifti_img(img)
     elif isinstance(src, NiftiImage):
         # nothing special
-        nifti = src
+        imghdr = src.header
+        imgdata = _get_data_form_pynifti_img(src)
     elif (isinstance(src, list) or isinstance(src, tuple)) \
         and len(src)>0 \
         and (isinstance(src[0], str) or isinstance(src[0], NiftiImage)):
         # load from a list of given entries
         if enforce_dim is not None: enforce_dim_ = enforce_dim - 1
         else:                       enforce_dim_ = None
-        srcs = [_load_anynifti(s, ensure=ensure,
-                                      enforce_dim=enforce_dim_)
+        srcs = [_load_anyimg(s, ensure=ensure, enforce_dim=enforce_dim_)
                 for s in src]
         if __debug__:
             # lets check if they all have the same dimensionality
-            shapes = [s.data.shape for s in srcs]
+            shapes = [s[0].shape for s in srcs]
             if not np.all([s == shapes[0] for s in shapes]):
                 raise ValueError, \
                       "Input volumes contain variable number of dimensions:" \
                       " %s" % (shapes,)
         # Combine them all into a single beast
-        nifti = NiftiImage(np.array([s.asarray() for s in srcs]),
-                           srcs[0].header)
+        imgdata = np.array([s[0] for s in srcs])
+        imghdr = srcs[0][1]
     elif ensure:
         raise ValueError, "Cannot load NIfTI from %s" % (src,)
 
-    if nifti is not None and enforce_dim is not None:
-        shape, new_shape = nifti.data.shape, None
+    if imgdata is not None and enforce_dim is not None:
+        shape, new_shape = imgdata.shape, None
         lshape = len(shape)
 
         # check if we need to tune up shape
@@ -299,9 +303,12 @@ def _load_anynifti(src, ensure=False, enforce_dim=None):
             if __debug__:
                 debug('DS_NIFTI', 'Enforcing shape %s for %s data from %s' %
                       (new_shape, shape, src))
-            nifti.data.shape = new_shape
+            imgdata.shape = new_shape
 
-    return nifti
+    if imgdata is None:
+        return None
+    else:
+        return imgdata, imghdr
 
 
 
