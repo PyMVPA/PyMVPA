@@ -45,7 +45,11 @@ from mvpa.base.types import asobjarray
 if __debug__:
     from mvpa.base import debug
 
-
+# Comment: H5Py defines H5Error
+class HDF5ConversionError(Exception):
+    """Generic exception to be thrown while doing conversions to/from HDF5
+    """
+    pass
 
 #
 # TODO: check for recursions!!!
@@ -136,13 +140,13 @@ def hdf2obj(hdf):
                 debug('HDF5', "Importing '%s' from '%s'." % (cls, mod))
             mod = __import__(mod, fromlist=[cls])
 
-            if cls == 'function':
-                fxname = hdf.attrs['name']
+            if cls in ('function', 'type'):
+                oname = hdf.attrs['name']
                 # special case of non-built-in functions
                 if __debug__:
-                    debug('HDF5', "Loaded function '%s' from '%s'."
-                                  % (fxname, mod))
-                return mod.__dict__[fxname]
+                    debug('HDF5', "Loaded %s '%s' from '%s'."
+                                  % (cls, oname, mod))
+                return mod.__dict__[oname]
 
             # get the class definition from the module dict
             cls = mod.__dict__[cls]
@@ -312,15 +316,20 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
         else:
             grp.attrs.create('module', obj.__class__.__module__)
         if hasattr(obj, '__name__'):
-            # for functions we need a name for reconstruction
-            grp.attrs.create('name', obj.__name__)
+            # for functions/types we need a name for reconstruction
+            oname = obj.__name__
+            if oname == '<lambda>':
+                raise HDF5ConversionError(
+                    "Can't obj2hdf lambda functions. Got %r" % (obj,))
+            grp.attrs.create('name', oname)
         if isinstance(obj, list) or isinstance(obj, tuple):
             if __debug__: debug('HDF5', "Special case: Store a list/tuple.")
             items = grp.create_group('items')
             for i, item in enumerate(obj):
                 obj2hdf(items, item, name=str(i), **kwargs)
         elif isinstance(obj, dict):
-            if __debug__: debug('HDF5', "Special case: Store a dictionary.")
+            if __debug__:
+                debug('HDF5', "Special case: Store a dictionary.")
             items = grp.create_group('items')
             for i, key in enumerate(obj):
                 # keys might be complex object, so they cannot serve as a

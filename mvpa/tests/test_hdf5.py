@@ -94,6 +94,7 @@ def test_directaccess():
 
 
 def test_function_ptrs():
+    skip_if_no_external('nifti')
     ds = load_example_fmri_dataset()
     # add a mapper with a function ptr inside
     ds = ds.get_mapped(mean_sample())
@@ -106,20 +107,3 @@ def test_function_ptrs():
     assert_array_equal(ds_loaded.a.mapper.forward(fresh),
                         ds.samples)
 
-
-#@sweepargs(lrn=clfswh[:] + regrswh[:])
-def _test_h5py_clfs():
-    # YOH: For now just to see which ones work (could be stored/loaded)
-    #      Later on to become a proper valid test
-    from mvpa.clfs.warehouse import clfswh, regrswh
-
-    for lrn in clfswh[:] + regrswh[:]:
-        print lrn
-        f = tempfile.NamedTemporaryFile()
-        try:
-            h5save(f.name, lrn)
-            lrn_ = h5load(f.name)
-            print "ok: %s" % lrn_
-        except Exception, e:
-            #raise AssertionError,
-            print "Failed to store %s due to %r" % (lrn, e)

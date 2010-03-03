@@ -173,9 +173,9 @@ ROCs	rocs
 rootMeanPowerFx	root_mean_power_fx
 runNoseTests	run_nose_tests
 runTests	run_tests
-SecondAxisMaxOfAbs	second_axis_max_of_abs
-SecondAxisMean	second_axis_mean
-SecondAxisSumOfAbs	_second_axis_sum_of_abs
+SecondAxisMaxOfAbs	REFACTOR_USE_FXMAPPERS
+SecondAxisMean	REFACTOR_USE_FXMAPPERS
+SecondAxisSumOfAbs	REFACTOR_USE_FXMAPPERS
 selectOut	select_out
 selectSamples	select_samples
 selectVoxelsFromVolumeIteratorNumPY	select_from_volume_iterator

@@ -18,6 +18,8 @@ from mvpa.mappers.base import Mapper
 from mvpa.misc.support import array_whereequal
 from mvpa.base.dochelpers import borrowdoc
 
+from mvpa.misc.transformers import sum_of_abs, max_of_abs
+
 class FxMapper(Mapper):
     """Apply a custom transformation to (groups of) samples or features.
 
@@ -297,12 +299,12 @@ def absolute_features():
 def sumofabs_sample():
     """Returns a mapper that returns the sum of absolute values of all samples.
     """
-    return FxMapper('samples', lambda x: np.abs(x).sum())
+    return FxMapper('samples', sum_of_abs)
 
 def maxofabs_sample():
     """Returns a mapper that finds max of absolute values of all samples.
     """
-    return FxMapper('samples', lambda x: np.abs(x).max())
+    return FxMapper('samples', max_of_abs)
 #
 # Utility functions
 #
