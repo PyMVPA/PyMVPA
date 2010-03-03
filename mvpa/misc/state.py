@@ -734,8 +734,8 @@ class AttributesCollector(type):
     Names of the conditional attributes which should be disabled
 """
             if len(collections['ca']):
-                cadoc += '\n'.join(['  * ' + x
-                                        for x in collections['ca'].listing])
+                cadoc += '\n'.join(['* ' + x
+                                    for x in collections['ca'].listing])
                 cadoc += "\n\n(Conditional attributes enabled by default suffixed with `+`)"
             if __debug__:
                 debug("COLR", "Assigning __cadoc to be %s" % cadoc)
