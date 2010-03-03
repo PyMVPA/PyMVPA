@@ -34,7 +34,7 @@ def test_nifti_dataset():
     assert_equal(ds.nsamples, 2)
 
     assert_array_equal(ds.a.voxel_eldim, ds.a.imghdr['pixdim'][1:4])
-    assert_true(ds.a['voxel_dim'].value == (24,96,128))
+    assert_true(ds.a['voxel_dim'].value == (128,96,24))
 
 
     # XXX move elsewhere
@@ -58,23 +58,23 @@ def test_nifti_dataset():
     assert_array_equal(merged.samples[3], merged.samples[1])
 
     # check whether we can use a plain ndarray as mask
-    mask = np.zeros((24, 96, 128), dtype='bool')
-    mask[12, 20, 40] = True
+    mask = np.zeros((128, 96, 24), dtype='bool')
+    mask[40, 20, 12] = True
     nddata = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
                           targets=[1,2],
                           mask=mask)
     assert_equal(nddata.nfeatures, 1)
     rmap = nddata.a.mapper.reverse1(np.array([44]))
-    assert_equal(rmap.shape, (24, 96, 128))
+    assert_equal(rmap.shape, (128, 96, 24))
     assert_equal(np.sum(rmap), 44)
-    assert_equal(rmap[12, 20, 40], 44)
+    assert_equal(rmap[40, 20, 12], 44)
 
 
 def test_fmridataset():
     # full-blown fmri dataset testing
     maskimg = NiftiImage(os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
     # assign some values we can check later on
-    maskimg.data[maskimg.data>0] = np.arange(1, np.sum(maskimg.data) + 1)
+    maskimg.data.T[maskimg.data.T>0] = np.arange(1, np.sum(maskimg.data) + 1)
     attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
     ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'bold'),
                       targets=attr.targets, chunks=attr.chunks,
@@ -91,7 +91,7 @@ def test_fmridataset():
     assert_array_equal(sorted(ds.a.keys()),
             ['imghdr', 'mapper', 'subj1_dim', 'subj1_eldim'])
     # vol extent
-    assert_equal(ds.a.subj1_dim, (1, 20, 40))
+    assert_equal(ds.a.subj1_dim, (40, 20, 1))
     # check time
     assert_equal(ds.sa.time_coords[-1], 3627.5)
     # non-zero mask values
@@ -188,10 +188,12 @@ def test_er_nifti_dataset():
 
     # map back into voxel space, should ignore addtional features
     nim = map2nifti(ds)
-    assert_equal(nim.data.shape, (len(ds) * 4,) + origsamples.shape[1:])
+    # origsamples has t,x,y,z but pynifti image has [t,]z,y,x
+    assert_equal(nim.data.T.shape, origsamples.shape[1:] + (len(ds) * 4,))
     # check shape of a single sample
     nim = map2nifti(ds, ds.samples[0])
-    assert_equal(nim.data.shape, (4, 1, 20, 40))
+    # pynifti image has [t,]z,y,x
+    assert_equal(nim.data.T.shape, (40, 20, 1, 4))
 
     # and now with masking
     ds = fmri_dataset(tssrc, mask=masrc)
@@ -211,10 +213,12 @@ def test_er_nifti_dataset():
 def test_er_nifti_dataset_mapping():
     """Some mapping testing -- more tests is better
     """
+    # z,y,x
     sample_size = (4, 3, 2)
+    # t,z,y,x
     samples = np.arange(120).reshape((5,) + sample_size)
-    dsmask = np.arange(24).reshape(sample_size)%2
-    tds = fmri_dataset(NiftiImage(samples), mask=dsmask)
+    dsmask = np.arange(24).reshape(sample_size) % 2
+    tds = fmri_dataset(NiftiImage(samples), mask=NiftiImage(dsmask))
     ds = eventrelated_dataset(
             tds,
             events=[Event(onset=0, duration=2, label=1,
@@ -222,11 +226,11 @@ def test_er_nifti_dataset_mapping():
                     Event(onset=1, duration=2, label=2,
                           chunk=1, features=[2000, 2001])])
     nfeatures = tds.nfeatures
-    mask = np.zeros(sample_size, dtype='bool')
+    mask = np.zeros(dsmask.shape, dtype='bool')
     mask[0, 0, 0] = mask[1, 0, 1] = mask[0, 0, 1] = 1
-    fmask = ds.a.mapper.forward1(mask)
+    fmask = ds.a.mapper.forward1(mask.T)
     # select using mask in volume and all features in the other part
-    ds_sel = ds[:, ds.a.mapper.forward1(mask)]
+    ds_sel = ds[:, fmask]
 
     # now tests
     assert_array_equal(mask.reshape(24).nonzero()[0], [0, 1, 7])
@@ -239,17 +243,17 @@ def test_er_nifti_dataset_mapping():
                         [  25,   31,   49,   55]])
     # reproducability
     assert_array_equal(ds_sel.samples,
-                       ds_sel.a.mapper.forward(samples))
+                       ds_sel.a.mapper.forward(np.rollaxis(samples.T, -1)))
 
     # reverse-mapping
     rmapped = ds_sel.a.mapper.reverse1(np.arange(10, 14))
-    assert_equal(rmapped.shape, (2,) + sample_size)
+    assert_equal(np.rollaxis(rmapped, 0, 4).T.shape, (2,) + sample_size)
     expected = np.zeros((2,)+sample_size, dtype='int')
     expected[0,0,0,1] = 10
     expected[0,1,0,1] = 11
     expected[1,0,0,1] = 12
     expected[1,1,0,1] = 13
-    assert_array_equal(rmapped, expected)
+    assert_array_equal(np.rollaxis(rmapped, 0, 4).T, expected)
 
 
 def test_nifti_dataset_from3_d():

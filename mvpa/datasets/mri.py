@@ -72,7 +72,7 @@ def map2nifti(dataset, data=None, imghdr=None):
     if imghdr is None:
         imghdr = dataset.a.imghdr
 
-    return NiftiImage(dsarray, imghdr)
+    return NiftiImage(_get_xyzt_shaped(dsarray).T, imghdr)
 
 
 def fmri_dataset(samples, targets=None, chunks=None, mask=None,
@@ -214,9 +214,27 @@ def _get_data_form_pynifti_img(nim):
     unnecessary copying if a sufficent version is available.
     """
     if externals.exists('nifti ge 0.20090205.1'):
-        return nim.data
+        data = nim.data
     else:
-        return nim.asarray()
+        data = nim.asarray()
+    # we want the data to be x,y,z,t
+    return data.T
+
+
+def _get_txyz_shaped(arr):
+    # we get the data as x,y,z[,t] but we want to have the time axis first
+    # if any
+    if len(arr.shape) == 4:
+        arr = np.rollaxis(arr, -1)
+    return arr
+
+
+def _get_xyzt_shaped(arr):
+    # we get the data as [t,]x,y,z but we want to have the time axis last
+    # if any
+    if len(arr.shape) == 4:
+        arr = np.rollaxis(arr, 0, 4)
+    return arr
 
 
 def _load_anyimg(src, ensure=False, enforce_dim=None):
@@ -255,11 +273,11 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
                     % src)
             raise e
         imghdr = img.header
-        imgdata = _get_data_form_pynifti_img(img)
+        imgdata = _get_txyz_shaped(_get_data_form_pynifti_img(img))
     elif isinstance(src, NiftiImage):
         # nothing special
         imghdr = src.header
-        imgdata = _get_data_form_pynifti_img(src)
+        imgdata = _get_txyz_shaped(_get_data_form_pynifti_img(src))
     elif (isinstance(src, list) or isinstance(src, tuple)) \
         and len(src)>0 \
         and (isinstance(src[0], str) or isinstance(src[0], NiftiImage)):
@@ -276,6 +294,7 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
                       "Input volumes contain variable number of dimensions:" \
                       " %s" % (shapes,)
         # Combine them all into a single beast
+        # will be t,x,y,z
         imgdata = np.array([s[0] for s in srcs])
         imghdr = srcs[0][1]
     elif ensure:
