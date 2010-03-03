@@ -48,11 +48,13 @@ def _data2img(data, hdr=None, imgtype=None):
         else:
             itype = imgtype
         if issubclass(itype, nibabel.spatialimages.SpatialImage) \
-           and (hdr is None or isinstance(hdr, nibabel.spatialimages.Header)):
+           and (hdr is None or hasattr(hdr, 'get_data_dtype')):
             # we can handle the desired image type and hdr with nibabel
             # use of `None` for the affine should cause to pull it from
             # the header
             return itype(_get_xyzt_shaped(data), None, hdr)
+        print itype, issubclass(itype, nibabel.spatialimages.SpatialImage)
+        print hdr, isinstance(hdr, nibabel.spatialimages.Header)
         # otherwise continue and see if there is hope ....
     if externals.exists('nifti'):
         # maybe pynifti can help
@@ -73,6 +75,52 @@ def _data2img(data, hdr=None, imgtype=None):
                           externals.exists('nifti'),
                           hdr,
                           imgtype))
+
+
+def _img2data(src):
+    excpt = None
+    if externals.exists('nibabel'):
+        # let's try whether we can get it done with nibabel
+        import nibabel
+        if isinstance(src, str):
+            # filename
+            try:
+                img = nibabel.load(src)
+            except nibabel.spatialimages.ImageFileError, excpt:
+                # nibabel has some problem, but we might be lucky with
+                # pynifti below. if not, we have stored the exception
+                # and raise it below
+                img = None
+                pass
+        else:
+            # assume this is an image already
+            img = src
+        if isinstance(img, nibabel.spatialimages.SpatialImage):
+            # nibabel image, dissect and return pieces
+            return _get_txyz_shaped(img.get_data()), img.get_header()
+    if externals.exists('nifti'):
+        # maybe pynifti can help
+        import nifti
+        if isinstance(src, str):
+            # filename
+            img = nifti.NiftiImage(src)
+        else:
+            # assume this is an image already
+            img = src
+        if isinstance(img, nifti.NiftiImage):
+            if externals.exists('nifti ge 0.20090205.1'):
+                data = img.data
+            else:
+                data = img.asarray()
+            # pynifti provides it transposed
+            return _get_txyz_shaped(data.T), img.header
+
+    # pending exception?
+    if not excpt is None:
+        raise excpt
+
+    # no clue what this was, but we cannot help with it
+    return None
 
 
 def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
@@ -301,23 +349,9 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
     """
     imgdata = imghdr = None
 
-    import nifti
-    # figure out what type
-    if isinstance(src, str):
-        # open the img file
-        try:
-            img = nifti.NiftiImage(src)
-        except RuntimeError, e:
-            warning("ERROR: Cannot open NIfTI file %s" \
-                    % src)
-            raise e
-        imghdr = img.header
-        imgdata = _get_txyz_shaped(_get_data_form_pynifti_img(img))
-    elif isinstance(src, nifti.NiftiImage):
-        # nothing special
-        imghdr = src.header
-        imgdata = _get_txyz_shaped(_get_data_form_pynifti_img(src))
-    elif (isinstance(src, list) or isinstance(src, tuple)) \
+    # figure out whether we have a list of things to load and handle that
+    # first
+    if (isinstance(src, list) or isinstance(src, tuple)) \
             and len(src)>0:
         # load from a list of given entries
         if enforce_dim is not None: enforce_dim_ = enforce_dim - 1
@@ -335,8 +369,13 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
         # will be t,x,y,z
         imgdata = np.array([s[0] for s in srcs])
         imghdr = srcs[0][1]
-    elif ensure:
-        raise ValueError, "Cannot load NIfTI from %s" % (src,)
+    else:
+        # try opening the beast; this might yield none in case of an unsupported
+        # argument and is handled accordingly below
+        data = _img2data(src)
+        if not data is None:
+            imgdata = data[0]
+            imghdr = data[1]
 
     if imgdata is not None and enforce_dim is not None:
         shape, new_shape = imgdata.shape, None

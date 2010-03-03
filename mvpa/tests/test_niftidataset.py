@@ -13,9 +13,8 @@ import numpy as np
 
 from mvpa.testing import *
 
-skip_if_no_external('nifti')
-
-from nifti import NiftiImage
+if not externals.exists('nifti') and not externals.exists('nibabel'):
+    raise SkipTest
 
 from mvpa import pymvpa_dataroot
 from mvpa.datasets.mri import fmri_dataset, _load_anyimg, map2nifti
@@ -28,7 +27,7 @@ from mvpa.misc.io.base import SampleAttributes
 def test_nifti_dataset():
     """Basic testing of NiftiDataset
     """
-    ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+    ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d.nii.gz'),
                        targets=[1,2], sprefix='voxel')
     assert_equal(ds.nfeatures, 294912)
     assert_equal(ds.nsamples, 2)
@@ -60,7 +59,7 @@ def test_nifti_dataset():
     # check whether we can use a plain ndarray as mask
     mask = np.zeros((128, 96, 24), dtype='bool')
     mask[40, 20, 12] = True
-    nddata = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+    nddata = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d.nii.gz'),
                           targets=[1,2],
                           mask=mask)
     assert_equal(nddata.nfeatures, 1)
@@ -72,11 +71,19 @@ def test_nifti_dataset():
 
 def test_fmridataset():
     # full-blown fmri dataset testing
-    maskimg = NiftiImage(os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
-    # assign some values we can check later on
-    maskimg.data.T[maskimg.data.T>0] = np.arange(1, np.sum(maskimg.data) + 1)
+    if externals.exists('nibabel'):
+        import nibabel
+        maskimg = nibabel.load(os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+        data = maskimg.get_data().copy()
+        data[data>0] = np.arange(1, np.sum(data) + 1)
+        maskimg = nibabel.Nifti1Image(data, None, maskimg.get_header())
+    else:
+        import nifti
+        maskimg = nifti.NiftiImage(os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+        # assign some values we can check later on
+        maskimg.data.T[maskimg.data.T>0] = np.arange(1, np.sum(maskimg.data) + 1)
     attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
-    ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'bold'),
+    ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'bold.nii.gz'),
                       targets=attr.targets, chunks=attr.chunks,
                       mask=maskimg,
                       sprefix='subj1',
@@ -102,53 +109,40 @@ def test_fmridataset():
 def test_nifti_mapper():
     """Basic testing of map2Nifti
     """
-    data = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+    data = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d.nii.gz'),
                         targets=[1,2])
 
     # test mapping of ndarray
     vol = map2nifti(data, np.ones((294912,), dtype='int16'))
-    assert_equal(vol.data.shape, (24, 96, 128))
-    assert_true((vol.data == 1).all())
-
-    # test mapping of the dataset
-    vol = map2nifti(data)
-    assert_equal(vol.data.shape, (2, 24, 96, 128))
-
-
-def test_nifti_self_mapper():
-    """Test map2Nifti facility ran without arguments
-    """
-    example_path = os.path.join(pymvpa_dataroot, 'example4d')
-    example = NiftiImage(example_path)
-    data = fmri_dataset(samples=example_path,
-                         targets=[1,2])
-
-    # Map read data to itself
-    vol = map2nifti(data)
-
-    assert_equal(vol.data.shape, example.data.shape)
-    assert_array_equal(vol.data, example.data)
-
-    data.samples[:] = 1
-    vol = map2nifti(data)
-    assert_true((vol.data == 1).all())
+    if externals.exists('nibabel'):
+        assert_equal(vol.get_shape(), (128, 96, 24))
+        assert_true((vol.get_data() == 1).all())
+        # test mapping of the dataset
+        vol = map2nifti(data)
+        assert_equal(vol.get_shape(), (128, 96, 24, 2))
+    else:
+        assert_equal(vol.data.shape, (24, 96, 128))
+        assert_true((vol.data == 1).all())
+        # test mapping of the dataset
+        vol = map2nifti(data)
+        assert_equal(vol.data.shape, (2, 24, 96, 128))
 
 
 def test_multiple_calls():
     """Test if doing exactly the same operation twice yields the same result
     """
-    data = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+    data = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d.nii.gz'),
                         targets=1, sprefix='abc')
-    data2 = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d'),
+    data2 = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d.nii.gz'),
                          targets=1, sprefix='abc')
     assert_array_equal(data.a.abc_eldim, data2.a.abc_eldim)
 
 
 def test_er_nifti_dataset():
     # setup data sources
-    tssrc = os.path.join(pymvpa_dataroot, 'bold')
+    tssrc = os.path.join(pymvpa_dataroot, 'bold.nii.gz')
     evsrc = os.path.join(pymvpa_dataroot, 'fslev3.txt')
-    masrc = os.path.join(pymvpa_dataroot, 'mask')
+    masrc = os.path.join(pymvpa_dataroot, 'mask.nii.gz')
     evs = FslEV3(evsrc).to_events()
     # load timeseries
     ds_orig = fmri_dataset(tssrc)
@@ -188,12 +182,20 @@ def test_er_nifti_dataset():
 
     # map back into voxel space, should ignore addtional features
     nim = map2nifti(ds)
-    # origsamples has t,x,y,z but pynifti image has [t,]z,y,x
-    assert_equal(nim.data.T.shape, origsamples.shape[1:] + (len(ds) * 4,))
-    # check shape of a single sample
-    nim = map2nifti(ds, ds.samples[0])
-    # pynifti image has [t,]z,y,x
-    assert_equal(nim.data.T.shape, (40, 20, 1, 4))
+    if externals.exists('nibabel'):
+        # origsamples has t,x,y,z
+        assert_equal(nim.get_shape(), origsamples.shape[1:] + (len(ds) * 4,))
+        # check shape of a single sample
+        nim = map2nifti(ds, ds.samples[0])
+        # pynifti image has [t,]z,y,x
+        assert_equal(nim.get_shape(), (40, 20, 1, 4))
+    else:
+        # origsamples has t,x,y,z but pynifti image has [t,]z,y,x
+        assert_equal(nim.data.T.shape, origsamples.shape[1:] + (len(ds) * 4,))
+        # check shape of a single sample
+        nim = map2nifti(ds, ds.samples[0])
+        # pynifti image has [t,]z,y,x
+        assert_equal(nim.data.T.shape, (40, 20, 1, 4))
 
     # and now with masking
     ds = fmri_dataset(tssrc, mask=masrc)
@@ -218,7 +220,14 @@ def test_er_nifti_dataset_mapping():
     # t,z,y,x
     samples = np.arange(120).reshape((5,) + sample_size)
     dsmask = np.arange(24).reshape(sample_size) % 2
-    tds = fmri_dataset(NiftiImage(samples), mask=NiftiImage(dsmask))
+    if externals.exists('nibabel'):
+        import nibabel
+        tds = fmri_dataset(nibabel.Nifti1Image(samples.T, None),
+                           mask=nibabel.Nifti1Image(dsmask.T, None))
+    else:
+        import nifti
+        tds = fmri_dataset(nifti.NiftiImage(samples),
+                           mask=nifti.NiftiImage(dsmask))
     ds = eventrelated_dataset(
             tds,
             events=[Event(onset=0, duration=2, label=1,
@@ -259,17 +268,26 @@ def test_er_nifti_dataset_mapping():
 def test_nifti_dataset_from3_d():
     """Test NiftiDataset based on 3D volume(s)
     """
-    tssrc = os.path.join(pymvpa_dataroot, 'bold')
-    masrc = os.path.join(pymvpa_dataroot, 'mask')
+    tssrc = os.path.join(pymvpa_dataroot, 'bold.nii.gz')
+    masrc = os.path.join(pymvpa_dataroot, 'mask.nii.gz')
 
     # Test loading of 3D volumes
     # by default we are enforcing 4D, testing here with the demo 3d mask
     ds = fmri_dataset(masrc, mask=masrc, targets=1)
     assert_equal(len(ds), 1)
-    plain_data = NiftiImage(masrc).data
-    # Lets check if mapping back works as well
-    assert_array_equal(plain_data,
-                       map2nifti(ds).data.reshape(plain_data.shape))
+
+    if externals.exists('nibabel'):
+        import nibabel
+        plain_data = nibabel.load(masrc).get_data()
+        # Lets check if mapping back works as well
+        assert_array_equal(plain_data,
+                           map2nifti(ds).get_data().reshape(plain_data.shape))
+    else:
+        import nifti
+        plain_data = nifti.NiftiImage(masrc).data
+        # Lets check if mapping back works as well
+        assert_array_equal(plain_data,
+                           map2nifti(ds).data.reshape(plain_data.shape))
 
     # test loading from a list of filenames
 
