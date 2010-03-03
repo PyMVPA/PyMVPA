@@ -43,12 +43,12 @@ class SearchlightTests(unittest.TestCase):
                 NFoldSplitter(cvtype=1))
 
         sls = [sphere_searchlight(cv, radius=1,
-                         enable_ca=['roisizes', 'raw_results'])]
+                         enable_ca=['roi_sizes', 'raw_results'])]
 
         if externals.exists('pprocess'):
             sls += [sphere_searchlight(cv, radius=1,
                          nproc=2,
-                         enable_ca=['roisizes', 'raw_results'])]
+                         enable_ca=['roi_sizes', 'raw_results'])]
 
         all_results = []
         for sl in sls:
@@ -65,9 +65,9 @@ class SearchlightTests(unittest.TestCase):
             self.failUnless(0.4 < results.samples.mean() < 0.6)
 
             # check resonable sphere sizes
-            self.failUnless(len(sl.ca.roisizes) == 106)
-            self.failUnless(max(sl.ca.roisizes) == 7)
-            self.failUnless(min(sl.ca.roisizes) == 4)
+            self.failUnless(len(sl.ca.roi_sizes) == 106)
+            self.failUnless(max(sl.ca.roi_sizes) == 7)
+            self.failUnless(min(sl.ca.roi_sizes) == 4)
 
             # check base-class state
             self.failUnlessEqual(sl.ca.raw_results.nfeatures, 106)

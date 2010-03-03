@@ -382,7 +382,7 @@ sensitivity.
         NOS.seen += cls._KNOWN_PARAMS# + cls._KNOWN_KERNEL_PARAMS
 
         idoc += '\n' + _rst_section('Parameters') + '\n' + '\n'.join(
-            [v.doc(indent='  ')
+            [v._paramdoc()
              for k,v in cls._SVM_PARAMS.iteritems()
              if k in NOS.seen])
 
