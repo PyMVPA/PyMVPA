@@ -120,6 +120,7 @@ from mvpa.measures.base import *
 from mvpa.measures.noiseperturbation import *
 from mvpa.misc.neighborhood import *
 from mvpa.measures.searchlight import *
+from mvpa.measures.gnbsearchlight import *
 from mvpa.measures.corrstability import *
 
 from mvpa.support.copy import *
