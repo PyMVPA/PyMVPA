@@ -67,14 +67,14 @@ class BaseSearchlight(DatasetMeasure):
             raise ValueError, \
                   "Cannot run searchlight on an empty list of roi_ids"
         self.__roi_ids = roi_ids
-        self.__nproc = nproc
+        self._nproc = nproc
 
 
     def _call(self, dataset):
         """Perform the ROI search.
         """
         # local binding
-        nproc = self.__nproc
+        nproc = self._nproc
 
         if nproc is None and externals.exists('pprocess'):
             import pprocess
