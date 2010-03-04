@@ -95,13 +95,30 @@ class GNBSearchlight(BaseSearchlight):
             class A(object):
                 pass
             self = A()
+            import numpy as np
             from mvpa.clfs.gnb import GNB
-            #from mvpa.datasets.splitters import NFoldSplitter
+            from mvpa.datasets.splitters import NFoldSplitter
             from mvpa.misc.errorfx import MeanMismatchErrorFx
             from mvpa.testing.datasets import datasets
             from mvpa.datasets import Dataset
-            qe = IndexQueryEngine(myspace=Sphere(radius=1))
+            from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
+            from mvpa.clfs.distance import absmin_distance
+            import time
+            if __debug__:
+                from mvpa.base import debug
+                debug.active += ['SLC.*']
+                # XXX is it that ugly?
+                debug.active.pop(debug.active.index('SLC_'))
+                debug.metrics += ['reltime']
             dataset = datasets['3dlarge']
+            sphere = Sphere(radius=1,
+                            distance_func=absmin_distance)
+            qe = IndexQueryEngine(myspace=sphere)
+
+            # Fracisco's data
+            #dataset = ds_fp
+            #qe = IndexQueryEngine(voxel_indices=sphere)
+
             qe.train(dataset)
             roi_ids = np.arange(dataset.nfeatures)
             gnb = GNB()
@@ -109,16 +126,25 @@ class GNBSearchlight(BaseSearchlight):
             splitter = NFoldSplitter()
             errorfx = MeanMismatchErrorFx()
 
+        if __debug__:
+            time_start = time.time()
         targets_sa_name = params.targets_attr
         targets_sa = dataset.sa[targets_sa_name]
 
+        if __debug__:
+            debug_slc_ = 'SLC_' in debug.active
+
         # get the dataset information into easy vars
         X = dataset.samples
+        if len(X.shape) != 2:
+            raise ValueError, \
+                  'Unlike GNB, GNBSearchlight (for now) operates on already' \
+                  'flattened datasets'
         labels = targets_sa.value
         self.ulabels = ulabels = targets_sa.unique
         nlabels = len(ulabels)
         label2index = dict((l, il) for il, l in enumerate(ulabels))
-        labels_numeric = [label2index[l] for l in labels]
+        labels_numeric = np.array([label2index[l] for l in labels])
         ulabels_numeric = [label2index[l] for l in ulabels]
         # set the feature dimensions
         nsamples = len(X)
@@ -192,17 +218,28 @@ class GNBSearchlight(BaseSearchlight):
             debug('SLC',
                   'Phase 3. Computing statistics for %i blocks' % (nblocks,))
         # number of samples in each block
-        block_counts_test = np.histogram(sample2block, bins=np.arange(nblocks+1))[0]
+        block_counts_test = np.histogram(sample2block,
+                                         bins=np.arange(nblocks+1))[0]
 
-        # compute sums and sums of squares per each block
+        #
+        # reusable containers which should stay of the same size
+        #
+
+        # sums and sums of squares per each block
         sums = np.zeros((nblocks, ) + s_shape)
         # sums of squares
         sums2 = np.zeros((nblocks, ) + s_shape)
-        # variables which will be used later on
+
+        # per each label:
         means = np.zeros((nlabels, ) + s_shape)
         # means of squares for stddev computation
         means2 = np.zeros((nlabels, ) + s_shape)
         variances = np.zeros((nlabels, ) + s_shape)
+        # degenerate dimension are added for easy broadcasting later on
+        nsamples_per_class = np.zeros((nlabels,) + (1,)*len(s_shape))
+
+        # results
+        results = np.zeros((nsplits,) + s_shape)
 
         block_counts = np.zeros((nblocks,))
         block_labels = [None] * nblocks
@@ -217,7 +254,9 @@ class GNBSearchlight(BaseSearchlight):
                 block_labels[ib] = l
             else:
                 assert(block_labels[ib] == l)
-        # yet another silly test for paranoid
+        block_labels = np.asanyarray(block_labels)
+        # additional silly tests for paranoid
+        assert(block_labels.dtype.kind is 'i')
         assert((block_counts == block_counts_test).all())
 
         # 4. Lets deduce all neighbors... might need to be RF into the
@@ -228,17 +267,13 @@ class GNBSearchlight(BaseSearchlight):
                   'Phase 4. Deducing neighbors information for %i ROIs'
                   % (nrois,))
         roi_fids = [qe[f] for f in roi_ids]
+        nroi_fids = len(roi_fids)
 
         # 5. Lets do actual "splitting" and "classification"
         if __debug__:
             debug('SLC', 'Phase 5. Major loop' )
 
-        # reusable containers which should stay of the same size
-
-        # degenerate dimension are added for easy broadcasting later on
-        nsamples_per_class = np.zeros((nlabels,) + (1,)*len(s_shape))
-
-        for isplit, split in enumerate(splits):
+        for isplit, split in enumerate(splits): # XXX
             if __debug__:
                 debug('SLC', ' Split %i out of %i' % (isplit, nsplits))
             # figure out for a given splits the blocks we want to work
@@ -270,19 +305,91 @@ class GNBSearchlight(BaseSearchlight):
 
             if params.common_variance:
                 variances[:] = \
-                    np.sum(means2 - nsamples_per_class*np.squared(means), axis=0) \
+                    np.sum(means2 - nsamples_per_class*np.square(means), axis=0) \
                     / training_nsamples
             else:
                 variances[non0labels] = \
-                    (means2 - nsamples_per_class*np.squared(means))[non0labels] \
+                    (means2 - nsamples_per_class*np.square(means))[non0labels] \
                     / nsamples_per_class[non0labels]
 
             # assign priors
             priors = gnb._get_priors(nlabels, training_nsamples, nsamples_per_class)
 
-            if __debug__ and 'GNB' in debug.active:
-                debug('SLC', "'Training' is done")
+            # proceed in a way we have in GNB code with logprob=True,
+            # i.e. operating within the exponents -- should lead to some
+            # performance advantage
+            norm_weight = -0.5 * np.log(2*np.pi*variances)
+            # last added dimension would be for ROIs
+            logpriors = np.log(priors[:, np.newaxis, np.newaxis])
 
+            if __debug__:
+                debug('SLC', "  'Training' is done")
+
+            # Now it is time to "classify" our samples.
+            # and for that we first need to compute corresponding
+            # probabilities (or may be un
+            data = X[split[1].samples[:, 0]]
+            targets = labels_numeric[split[1].samples[:, 0]]
+
+            # argument of exponentiation
+            scaled_distances = \
+                 -0.5 * (((data - means[:, np.newaxis, ...])**2) \
+                         / variances[:, np.newaxis, ...])
+
+            # incorporate the normalization from normals
+            lprob_csfs = norm_weight[:, np.newaxis, ...] + scaled_distances
+            ## First we need to reshape to get class x samples x features
+            lprob_csf = lprob_csfs.reshape(lprob_csfs.shape[:2] + (-1,))
+
+            ## Now we come to naive part which requires looping
+            ## through all spheres
+            ## TODO: check, that may be making use of sparse matrices
+            ##       would give a benefit over a loop
+
+            if __debug__:
+                debug('SLC', "  Doing 'Searchlight'")
+            # resultant logprobs for each class x sample x roi
+            lprob_cs_sl = lprob_csfs.reshape(lprob_csfs.shape[:2] + (nroi_fids,))
+            for iroi, roi_fids_ in enumerate(roi_fids):
+                if __debug__ and debug_slc_:
+                    debug('SLC_', "   Doing %i ROIs: %i (%i features) [%i%%]" \
+                          % (nroi_fids,
+                             iroi,
+                             len(roi_fids_),
+                             float(iroi+1)/nroi_fids*100,), cr=True)
+                lprob_cs_sl[:, :, iroi] = lprob_csf[:, :, roi_fids_].sum(axis=2)
+            # just a new line
+            if __debug__ and debug_slc_:
+                debug('SLC_', '   ')
+            # XXX at some other point we might return back and start
+            # worrying about unneeded memory consumption ;)
+            #lprob_cs_cp_sl = lprob_cs_sl + logpriors
+            # nah -- lets do right away
+            lprob_cs_sl += logpriors
+            lprob_cs_cp_sl = lprob_cs_sl
+
+            # for each of the ROIs take the class with maximal (log)probability
+            predictions = lprob_cs_cp_sl.argmax(axis=0)
+            #predictions = winners # no need to map back [self.ulabels[c] for c in winners]
+            # assess the errors
+            if __debug__:
+                debug('SLC', "  Assessing accuracies")
+
+            # somewhat silly but a way which allows to use pre-crafted
+            # error functions without a chance to screw up
+            for i, fpredictions in enumerate(predictions.T):
+                results[isplit, :] = errorfx(fpredictions, targets)
+
+        if __debug__:
+            debug('SLC', "GNBSearchlight is done in %.3g sec" %
+                  (time.time() - time_start))
+
+        # makes sense to waste precious ms only if ca is enabled
+        if self.ca.is_enabled('roi_sizes'):
+            roi_sizes = [len(x) for x in roi_fids]
+        else:
+            roi_sizes = []
+        return results, roi_sizes
 
     def untrain(self):
         """Untrain classifier and reset all learnt params
