@@ -124,7 +124,7 @@ class CustomSGKernel(_BasicSGKernel):
     # TODO: rename args here for convenience?
     def __init__(self, kernel_cls, kernel_params=[], **kwargs):
         """Initialize CustomSGKernel.
-        
+
         Parameters
         ----------
         kernel_cls : Shogun.Kernel
@@ -134,22 +134,18 @@ class CustomSGKernel(_BasicSGKernel):
           and the order is the explicit order required by the Shogun constructor
         """
         self.__kernel_cls__ = kernel_cls # These are normally static
-        
+
         _BasicSGKernel.__init__(self, **kwargs)
         order = []
         for k, v in kernel_params:
             self.params[k] = Parameter(default=v)
             order.append(k)
         self.__kp_order__ = tuple(order)
-        
+
 class LinearSGKernel(_BasicSGKernel):
     """A basic linear kernel computed via Shogun: K(a,b) = a*b.T"""
     __kernel_cls__ = sgk.LinearKernel
     __kernel_name__ = 'linear'
-
-    def __init__(self, **kwargs):
-        # Necessary for proper docstring construction
-        _BasicSGKernel.__init__(self, **kwargs)
 
 
 class RbfSGKernel(_BasicSGKernel):
@@ -181,16 +177,17 @@ class PolySGKernel(_BasicSGKernel):
         __kp_order__ = __kp_order__ + ('use_normalization',)
 
     def __init__(self, **kwargs):
+        # Necessary for proper docstring construction
         _BasicSGKernel.__init__(self, **kwargs)
 
 class PrecomputedSGKernel(SGKernel):
     """A kernel which is precomputed from a numpy array or a Shogun kernel"""
     # This class can't be handled directly by BasicSGKernel because it never
     # should take data, and never has compute called, etc
-    
+
     # NB: To avoid storing kernel twice, self.params.matrix = self._k once the
     # kernel is 'computed'
-    
+
     def __init__(self, matrix=None, **kwargs):
         """Initialize PrecomputedSGKernel
 
