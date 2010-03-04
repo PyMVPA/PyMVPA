@@ -23,22 +23,24 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from numpy import ones, zeros, sum, abs, isfinite, dot
-from mvpa.base import warning, externals
-from mvpa.clfs.gnb import GNB
-
+#from numpy import ones, zeros, sum, abs, isfinite, dot
+#from mvpa.base import warning, externals
+from mvpa.datasets.base import Dataset
+#from mvpa.clfs.gnb import GNB
 from mvpa.misc.errorfx import MeanMismatchErrorFx
 from mvpa.measures.searchlight import BaseSearchlight
-
-from mvpa.misc.param import Parameter
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.dochelpers import borrowkwargs
+#from mvpa.misc.param import Parameter
+#from mvpa.misc.state import ConditionalAttribute
 #from mvpa.measures.base import Sensitivity
 
+from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
 
 if __debug__:
     from mvpa.base import debug
+    import time as time
 
-__all__ = [ "GNB" ]
+__all__ = [ "GNBSearchlight", 'sphere_gnbsearchlight' ]
 
 class GNBSearchlight(BaseSearchlight):
     """Gaussian Naive Bayes `Searchlight`.
@@ -77,57 +79,59 @@ class GNBSearchlight(BaseSearchlight):
         self._splitter = splitter
         self._gnb = gnb
 
-        if not self._nproc in ('auto', 1):
-            raise NotImplementedError, "For now only nproc=1 (or 'auto') " \
-                  "is supported by GNBSearchlight"
+        if not self._nproc in (None, 1):
+            raise NotImplementedError, "For now only nproc=1 (or None for " \
+                  "autodetection) is supported by GNBSearchlight"
 
 
     def _sl_call(self, dataset, roi_ids, nproc):
         """Call to GNBSearchlight
         """
         # Local bindings
-        params = self._gnb.params
+        gnb = self._gnb
+        params = gnb.params
         splitter = self._splitter
         errorfx = self._errorfx
         qe = self._qe
 
-        if True:
-            class A(object):
-                pass
-            self = A()
-            import numpy as np
-            from mvpa.clfs.gnb import GNB
-            from mvpa.datasets.splitters import NFoldSplitter
-            from mvpa.misc.errorfx import MeanMismatchErrorFx
-            from mvpa.testing.datasets import datasets
-            from mvpa.datasets import Dataset
-            from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
-            from mvpa.clfs.distance import absmin_distance
-            import time
-            if __debug__:
-                from mvpa.base import debug
-                debug.active += ['SLC.*']
-                # XXX is it that ugly?
-                debug.active.pop(debug.active.index('SLC_'))
-                debug.metrics += ['reltime']
-            dataset = datasets['3dlarge']
-            sphere = Sphere(radius=1,
-                            distance_func=absmin_distance)
-            qe = IndexQueryEngine(myspace=sphere)
+        ## if False:
+        ##     class A(object):
+        ##         pass
+        ##     self = A()
+        ##     import numpy as np
+        ##     from mvpa.clfs.gnb import GNB
+        ##     from mvpa.datasets.splitters import NFoldSplitter
+        ##     from mvpa.misc.errorfx import MeanMismatchErrorFx
+        ##     #from mvpa.testing.datasets import datasets
+        ##     from mvpa.datasets import Dataset
+        ##     from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
+        ##     from mvpa.clfs.distance import absmin_distance
+        ##     import time
+        ##     if __debug__:
+        ##         from mvpa.base import debug
+        ##         debug.active += ['SLC.*']
+        ##         # XXX is it that ugly?
+        ##         debug.active.pop(debug.active.index('SLC_'))
+        ##         debug.metrics += ['reltime']
+        ##     dataset = datasets['3dlarge']
+        ##     sphere = Sphere(radius=1,
+        ##                     distance_func=absmin_distance)
+        ##     qe = IndexQueryEngine(myspace=sphere)
 
-            # Fracisco's data
-            #dataset = ds_fp
-            #qe = IndexQueryEngine(voxel_indices=sphere)
+        ##     # Fracisco's data
+        ##     dataset = ds_fp
+        ##     qe = IndexQueryEngine(voxel_indices=sphere)
 
-            qe.train(dataset)
-            roi_ids = np.arange(dataset.nfeatures)
-            gnb = GNB()
-            params = gnb.params
-            splitter = NFoldSplitter()
-            errorfx = MeanMismatchErrorFx()
+        ##     qe.train(dataset)
+        ##     roi_ids = np.arange(dataset.nfeatures)
+        ##     gnb = GNB()
+        ##     params = gnb.params
+        ##     splitter = NFoldSplitter()
+        ##     errorfx = MeanMismatchErrorFx()
 
         if __debug__:
             time_start = time.time()
+
         targets_sa_name = params.targets_attr
         targets_sa = dataset.sa[targets_sa_name]
 
@@ -141,7 +145,7 @@ class GNBSearchlight(BaseSearchlight):
                   'Unlike GNB, GNBSearchlight (for now) operates on already' \
                   'flattened datasets'
         labels = targets_sa.value
-        self.ulabels = ulabels = targets_sa.unique
+        ulabels = targets_sa.unique
         nlabels = len(ulabels)
         label2index = dict((l, il) for il, l in enumerate(ulabels))
         labels_numeric = np.array([label2index[l] for l in labels])
@@ -208,9 +212,6 @@ class GNBSearchlight(BaseSearchlight):
         description2block = dict([(d, i) for i, d in enumerate(udescriptions)])
         # Indices for samples to point to their block
         sample2block = np.array([description2block[d] for d in descriptions])
-        # what samples participate in each block...
-        block2samples = []           # TODO???
-        # ??? also label per each block???
 
         # 3. Compute statistics per each block
         #
@@ -287,7 +288,8 @@ class GNBSearchlight(BaseSearchlight):
             training_nsamples = 0
             for il, l in enumerate(ulabels_numeric):
                 bis_il = training_bis[block_labels[training_bis] == l]
-                nsamples_per_class[il] = N_float = float(np.sum(block_counts[bis_il]))
+                nsamples_per_class[il] = N_float = \
+                                         float(np.sum(block_counts[bis_il]))
                 training_nsamples += N_float
                 if N_float == 0.0:
                     variances[il] = means[il] = means2[il] = 0.
@@ -305,7 +307,8 @@ class GNBSearchlight(BaseSearchlight):
 
             if params.common_variance:
                 variances[:] = \
-                    np.sum(means2 - nsamples_per_class*np.square(means), axis=0) \
+                    np.sum(means2 - nsamples_per_class*np.square(means),
+                           axis=0) \
                     / training_nsamples
             else:
                 variances[non0labels] = \
@@ -338,6 +341,7 @@ class GNBSearchlight(BaseSearchlight):
 
             # incorporate the normalization from normals
             lprob_csfs = norm_weight[:, np.newaxis, ...] + scaled_distances
+
             ## First we need to reshape to get class x samples x features
             lprob_csf = lprob_csfs.reshape(lprob_csfs.shape[:2] + (-1,))
 
@@ -346,10 +350,11 @@ class GNBSearchlight(BaseSearchlight):
             ## TODO: check, that may be making use of sparse matrices
             ##       would give a benefit over a loop
 
+
             if __debug__:
                 debug('SLC', "  Doing 'Searchlight'")
             # resultant logprobs for each class x sample x roi
-            lprob_cs_sl = lprob_csfs.reshape(lprob_csfs.shape[:2] + (nroi_fids,))
+            lprob_cs_sl = np.zeros(lprob_csfs.shape[:2] + (nroi_fids,))
             for iroi, roi_fids_ in enumerate(roi_fids):
                 if __debug__ and debug_slc_:
                     debug('SLC_', "   Doing %i ROIs: %i (%i features) [%i%%]" \
@@ -358,6 +363,7 @@ class GNBSearchlight(BaseSearchlight):
                              len(roi_fids_),
                              float(iroi+1)/nroi_fids*100,), cr=True)
                 lprob_cs_sl[:, :, iroi] = lprob_csf[:, :, roi_fids_].sum(axis=2)
+
             # just a new line
             if __debug__ and debug_slc_:
                 debug('SLC_', '   ')
@@ -367,7 +373,6 @@ class GNBSearchlight(BaseSearchlight):
             # nah -- lets do right away
             lprob_cs_sl += logpriors
             lprob_cs_cp_sl = lprob_cs_sl
-
             # for each of the ROIs take the class with maximal (log)probability
             predictions = lprob_cs_cp_sl.argmax(axis=0)
             #predictions = winners # no need to map back [self.ulabels[c] for c in winners]
@@ -378,7 +383,7 @@ class GNBSearchlight(BaseSearchlight):
             # somewhat silly but a way which allows to use pre-crafted
             # error functions without a chance to screw up
             for i, fpredictions in enumerate(predictions.T):
-                results[isplit, :] = errorfx(fpredictions, targets)
+                results[isplit, i] = errorfx(fpredictions, targets)
 
         if __debug__:
             debug('SLC', "GNBSearchlight is done in %.3g sec" %
@@ -389,91 +394,49 @@ class GNBSearchlight(BaseSearchlight):
             roi_sizes = [len(x) for x in roi_fids]
         else:
             roi_sizes = []
-        return results, roi_sizes
-
-    def untrain(self):
-        """Untrain classifier and reset all learnt params
-        """
-        self.means = None
-        self.variances = None
-        self.ulabels = None
-        self.priors = None
-        super(GNB, self).untrain()
+        return Dataset(results), roi_sizes
 
 
-    @accepts_dataset_as_samples
-    def _predict(self, data):
-        """Predict the output for the provided data.
-        """
-        params = self.params
-        # argument of exponentiation
-        scaled_distances = \
-            -0.5 * (((data - self.means[:, np.newaxis, ...])**2) \
-                          / self.variances[:, np.newaxis, ...])
-        if params.logprob:
-            # if self.params.common_variance:
-            # XXX YOH:
-            # For decision there is no need to actually compute
-            # properly scaled p, ie 1/sqrt(2pi * sigma_i) could be
-            # simply discarded since it is common across features AND
-            # classes
-            # For completeness -- computing everything now even in logprob
-            lprob_csfs = self._norm_weight[:, np.newaxis, ...] + scaled_distances
+@borrowkwargs(GNBSearchlight, '__init__', exclude=['roi_ids'])
+def sphere_gnbsearchlight(gnb, splitter, radius=1, center_ids=None,
+                          space='voxel_indices', *args, **kwargs):
+    """Creates a `GNBSearchlight` to assess :term:`cross-validation`
+    classification performance of GNB on all possible spheres of a
+    certain size within a dataset.
 
-            # XXX for now just cut/paste with different operators, but
-            #     could just bind them and reuse in the same equations
-            # Naive part -- just a product of probabilities across features
-            ## First we need to reshape to get class x samples x features
-            lprob_csf = lprob_csfs.reshape(
-                lprob_csfs.shape[:2] + (-1,))
-            ## Now -- sum across features
-            lprob_cs = lprob_csf.sum(axis=2)
+    The idea of taking advantage of naiveness of GNB for the sake of
+    quick searchlight-ing stems from Francisco Pereira (paper under
+    review).
 
-            # Incorporate class probabilities:
-            prob_cs_cp = lprob_cs + np.log(self.priors[:, np.newaxis])
+    Parameters
+    ----------
+    radius : float
+      All features within this radius around the center will be part
+      of a sphere.
+    center_ids : list of int
+      List of feature ids (not coordinates) the shall serve as sphere
+      centers. By default all features will be used (it is passed
+      roi_ids argument for Searchlight).
+    space : str
+      Name of a feature attribute of the input dataset that defines the spatial
+      coordinates of all features.
+    **kwargs
+      In addition this class supports all keyword arguments of
+      :class:`~mvpa.measures.gnbsearchlight.GNBSearchlight`.
 
-        else:
-            # Just a regular Normal distribution with per
-            # feature/class mean and variances
-            prob_csfs = \
-                 self._norm_weight[:, np.newaxis, ...] * np.exp(scaled_distances)
-
-            # Naive part -- just a product of probabilities across features
-            ## First we need to reshape to get class x samples x features
-            prob_csf = prob_csfs.reshape(
-                prob_csfs.shape[:2] + (-1,))
-            ## Now -- product across features
-            prob_cs = prob_csf.prod(axis=2)
-
-            # Incorporate class probabilities:
-            prob_cs_cp = prob_cs * self.priors[:, np.newaxis]
-
-        # Normalize by evidence P(data)
-        if params.normalize:
-            if params.logprob:
-                prob_cs_cp_real = np.exp(prob_cs_cp)
-            else:
-                prob_cs_cp_real = prob_cs_cp
-            prob_s_cp_marginals = np.sum(prob_cs_cp_real, axis=0)
-            if params.logprob:
-                prob_cs_cp -= np.log(prob_s_cp_marginals)
-            else:
-                prob_cs_cp /= prob_s_cp_marginals
-
-        # Take the class with maximal (log)probability
-        winners = prob_cs_cp.argmax(axis=0)
-        predictions = [self.ulabels[c] for c in winners]
-
-        # set to the probabilities per class
-        self.ca.estimates = prob_cs_cp.T
-
-        if __debug__ and 'GNB' in debug.active:
-            debug('GNB', "predict on data.shape=%s min:max(data)=%f:%f " %
-                  (data.shape, np.min(data), np.max(data)))
-
-        return predictions
-
-# Lazy way to reuse params definitions from GNB
-GNBSearchlight._collections_template['params'].update(
-    GNB._collections_template['params'])
-GNBSearchlight._paramsdoc += GNB._paramsdoc
+    Notes
+    -----
+    If any `BaseSearchlight` is used as `SensitivityAnalyzer` one has to make
+    sure that the specified scalar `DatasetMeasure` returns large
+    (absolute) values for high sensitivities and small (absolute) values
+    for low sensitivities. Especially when using error functions usually
+    low values imply high performance and therefore high sensitivity.
+    This would in turn result in sensitivity maps that have low
+    (absolute) values indicating high sensitivities and this conflicts
+    with the intended behavior of a `SensitivityAnalyzer`.
+    """
+    # build a matching query engine from the arguments
+    kwa = {space: Sphere(radius)}
+    qe = IndexQueryEngine(**kwa)
+    # init the searchlight with the queryengine
+    return GNBSearchlight(gnb, splitter, queryengine=qe, roi_ids=center_ids, *args, **kwargs)
