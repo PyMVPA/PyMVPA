@@ -11,6 +11,13 @@
    Basic implementation of Gaussian Naive Bayes classifier.
 """
 
+"""
+TODO: for now all estimates are allocated at the first level of GNB
+instance (e.g. self.priors, etc) -- move them deeper or into a
+corresponding "Collection"?
+The same for GNBSearchlight
+"""
+
 __docformat__ = 'restructuredtext'
 
 import numpy as np
@@ -111,6 +118,23 @@ class GNB(Classifier):
         # Define internal state of classifier
         self._norm_weight = None
 
+    def _get_priors(self, nlabels, nsamples, nsamples_per_class):
+        """Return prior probabilities given data
+        """
+        prior = self.params.prior
+        if prior == 'uniform':
+            priors = np.ones((nlabels,))/nlabels
+        elif prior == 'laplacian_smoothing':
+            priors = (1+np.squeeze(nsamples_per_class)) \
+                          / (float(nsamples) + nlabels)
+        elif prior == 'ratio':
+            priors = np.squeeze(nsamples_per_class) / float(nsamples)
+        else:
+            raise ValueError, \
+                  "No idea on how to handle '%s' way to compute priors" \
+                  % self.params.prior
+        return priors
+
     def _train(self, dataset):
         """Train the classifier using `dataset` (`Dataset`).
         """
@@ -123,7 +147,6 @@ class GNB(Classifier):
         labels = targets_sa.value
         self.ulabels = ulabels = targets_sa.unique
         nlabels = len(ulabels)
-        #params = self.params        # for quicker access
         label2index = dict((l, il) for il, l in enumerate(ulabels))
 
         # set the feature dimensions
@@ -163,18 +186,7 @@ class GNB(Classifier):
             variances[non0labels] /= nsamples_per_class[non0labels]
 
         # Store prior probabilities
-        prior = params.prior
-        if prior == 'uniform':
-            self.priors = np.ones((nlabels,))/nlabels
-        elif prior == 'laplacian_smoothing':
-            self.priors = (1+np.squeeze(nsamples_per_class)) \
-                          / (float(nsamples) + nlabels)
-        elif prior == 'ratio':
-            self.priors = np.squeeze(nsamples_per_class) / float(nsamples)
-        else:
-            raise ValueError, \
-                  "No idea on how to handle '%s' way to compute priors" \
-                  % params.prior
+        self.priors = self._get_priors(nlabels, nsamples, nsamples_per_class)
 
         # Precompute and store weighting coefficient for Gaussian
         if params.logprob:
