@@ -437,6 +437,8 @@ class Splitter(object):
     strategy = property(fget=lambda self:self.__strategy,
                         fset=_set_strategy)
     splitattr = property(fget=lambda self:self.__splitattr)
+    permute = property(fget=lambda self:self.__permute)
+    npertarget = property(fget=lambda self:self.__npertarget)
 
 
 
