@@ -11,9 +11,16 @@
 This module offers functions to import MRI data in the NIfTI format into
 PyMVPA, and export PyMVPA datasets back into NIfTI files.
 
-Currently NIfTI file access is based on PyNIfTI_.
+Currently two different backends for MRI fileformat IO are supported:
+
+- PyNIfTI_
+- NiBabel_
+
+In the future, NiBabel will allow access to other formats than NIfTI. However,
+while this is technically  already possible, it hasn't been tested yet.
 
 .. _PyNIfTI: http://niftilib.sourceforge.net/pynifti
+.. _NiBabel: http://nipy..sourceforge.net/nibabel
 """
 
 __docformat__ = 'restructuredtext'
