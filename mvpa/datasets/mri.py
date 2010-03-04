@@ -53,8 +53,6 @@ def _data2img(data, hdr=None, imgtype=None):
             # use of `None` for the affine should cause to pull it from
             # the header
             return itype(_get_xyzt_shaped(data), None, hdr)
-        print itype, issubclass(itype, nibabel.spatialimages.SpatialImage)
-        print hdr, isinstance(hdr, nibabel.spatialimages.Header)
         # otherwise continue and see if there is hope ....
     if externals.exists('nifti'):
         # maybe pynifti can help
