@@ -19,7 +19,7 @@ import shutil
 import os
 import traceback as tbm
 import sys
-import numpy as N
+import numpy as np
 
 from mvpa import cfg, externals
 from mvpa.datasets import Dataset
@@ -43,7 +43,7 @@ specs = {'large' : { 'perlabel': 99, 'nchunks': 11,
 
 # Lets permute upon each invocation of test, so we could possibly
 # trigger some funny cases
-nonbogus_pool = N.random.permutation([0, 1, 3, 5])
+nonbogus_pool = np.random.permutation([0, 1, 3, 5])
 
 datasets = {}
 
@@ -70,11 +70,11 @@ for kind, spec in specs.iteritems():
     # sample 3D
     total = 2*spec['perlabel']
     nchunks = spec['nchunks']
-    data = N.random.standard_normal(( total, 3, 6, 6 ))
-    labels = N.concatenate( ( N.repeat( 0, spec['perlabel'] ),
-                              N.repeat( 1, spec['perlabel'] ) ) )
-    chunks = N.asarray(range(nchunks)*(total/nchunks))
-    mask = N.ones((3, 6, 6), dtype='bool')
+    data = np.random.standard_normal(( total, 3, 6, 6 ))
+    labels = np.concatenate( ( np.repeat( 0, spec['perlabel'] ),
+                              np.repeat( 1, spec['perlabel'] ) ) )
+    chunks = np.asarray(range(nchunks)*(total/nchunks))
+    mask = np.ones((3, 6, 6), dtype='bool')
     mask[0, 0, 0] = 0
     mask[1, 3, 2] = 0
     ds = Dataset.from_wizard(samples=data, targets=labels, chunks=chunks,
@@ -87,13 +87,15 @@ datasets['dumb2'] = dumb_feature_binary_dataset()
 datasets['dumb'] = dumb_feature_dataset()
 # dataset with few invariant features
 _dsinv = dumb_feature_dataset()
-_dsinv.samples = N.hstack((_dsinv.samples,
-                           N.zeros((_dsinv.nsamples, 1)),
-                           N.ones((_dsinv.nsamples, 1))))
+_dsinv.samples = np.hstack((_dsinv.samples,
+                           np.zeros((_dsinv.nsamples, 1)),
+                           np.ones((_dsinv.nsamples, 1))))
 datasets['dumbinv'] = _dsinv
 
 # Datasets for regressions testing
 datasets['sin_modulated'] = multiple_chunks(sin_modulated, 4, 30, 1)
+# use the same full for training
+datasets['sin_modulated_train'] = datasets['sin_modulated']
 datasets['sin_modulated_test'] = sin_modulated(30, 1, flat=True)
 
 # simple signal for linear regressors
@@ -149,13 +151,13 @@ def get_random_rotation(ns, nt=None, data=None):
     # figure out some "random" rotation
     d = max(ns, nt)
     if data is None:
-        data = N.random.normal(size=(d*10, d))
-    _u, _s, _vh = N.linalg.svd(data[:, :d])
+        data = np.random.normal(size=(d*10, d))
+    _u, _s, _vh = np.linalg.svd(data[:, :d])
     R = _vh[:ns, :nt]
     if ns == nt:
         # Test if it is indeed a rotation matrix ;)
         # Lets flip first axis if necessary
-        if N.linalg.det(R) < 0:
+        if np.linalg.det(R) < 0:
             R[:, 0] *= -1.0
     return R
 

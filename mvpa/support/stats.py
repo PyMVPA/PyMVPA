@@ -16,7 +16,7 @@ from mvpa.base import externals, warning, cfg
 if __debug__:
     from mvpa.base import debug
 
-if externals.exists('scipy', raiseException=True):
+if externals.exists('scipy', raise_=True):
     import scipy
     import scipy.stats
     import scipy.stats as stats
@@ -26,18 +26,18 @@ if not externals.exists('good scipy.stats.rdist'):
         debug("EXT", "Fixing up scipy.stats.rdist")
     # Lets fix it up, future imports of scipy.stats should carry fixed
     # version, isn't python is \emph{evil} ;-)
-    import numpy as N
+    import numpy as np
 
     from scipy.stats.distributions import rv_continuous
     from scipy import special
     import scipy.integrate
 
     # NB: Following function is copied from scipy SVN rev.5236
-    #     and fixed with pow -> N.power (thanks Josef!)
+    #     and fixed with pow -> np.power (thanks Josef!)
     # FIXME: PPF does not work.
     class rdist_gen(rv_continuous):
         def _pdf(self, x, c):
-            return N.power((1.0-x*x),c/2.0-1) / special.beta(0.5,c/2.0)
+            return np.power((1.0-x*x),c/2.0-1) / special.beta(0.5,c/2.0)
         def _cdf_skip(self, x, c):
             #error inspecial.hyp2f1 for some values see tickets 758, 759
             return 0.5 + x/special.beta(0.5,c/2.0)* \
@@ -67,7 +67,7 @@ if not externals.exists('good scipy.stats.rdist'):
 
     try: # Retest
         externals.exists('good scipy.stats.rdist', force=True,
-                         raiseException=True)
+                         raise_=True)
     except RuntimeError:
         warning("scipy.stats.rdist was not fixed with a monkey-patch. "
                 "It remains broken")
@@ -78,7 +78,7 @@ if not externals.exists('good scipy.stats.rdist'):
 if not externals.exists('good scipy.stats.rv_discrete.ppf'):
     # Local rebindings for ppf7 (7 is for the scipy version from
     # which code was borrowed)
-    arr = N.asarray
+    arr = np.asarray
     from scipy.stats.distributions import valarray, argsreduce
     from numpy import shape, place, any
 
@@ -126,7 +126,7 @@ if not externals.exists('good scipy.stats.rv_discrete.ppf'):
     scipy.stats.distributions.rv_discrete.ppf = ppf7
     try:
         externals.exists('good scipy.stats.rv_discrete.ppf', force=True,
-                         raiseException=True)
+                         raise_=True)
     except RuntimeError:
         warning("rv_discrete.ppf was not fixed with a monkey-patch. "
                 "It remains broken")

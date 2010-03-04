@@ -40,7 +40,7 @@ inlines = infile.readlines()
 infile.close()
 outlines = []
 
-reg = re.compile('^.. IncludeStates: +(?P<path>\S*) +(?P<cls>\S*)')
+reg = re.compile('^.. autoconditional: +(?P<path>\S*) +(?P<cls>\S*)')
 i = 0
 while i < len(inlines):
     line = inlines[i]
@@ -63,10 +63,10 @@ while i < len(inlines):
 
         suffix = ['', 's'][len(keys)>1]
         outlines.append("""
-Supported state%s:
+Supported conditional attribute%s:
 
 ================== ==============================================   =========
-    State Name      Description                                      Default
+       Name         Description                                      Default
 ------------------ ----------------------------------------------   ---------
 """%suffix)
 

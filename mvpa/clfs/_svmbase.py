@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 import textwrap
 import operator
 
@@ -265,7 +265,7 @@ class _SVM(Classifier):
         """
 
         if self.params.kernel.__kernel_name__ == 'linear':
-            datasetnorm = N.mean(N.sqrt(N.sum(data*data, axis=1)))
+            datasetnorm = np.mean(np.sqrt(np.sum(data*data, axis=1)))
             if datasetnorm == 0:
                 warning("Obtained degenerate data with zero norm for training "
                         "of %s.  Scaling of C cannot be done." % self)
@@ -382,7 +382,7 @@ sensitivity.
         NOS.seen += cls._KNOWN_PARAMS# + cls._KNOWN_KERNEL_PARAMS
 
         idoc += '\n' + _rst_section('Parameters') + '\n' + '\n'.join(
-            [v.doc(indent='  ')
+            [v._paramdoc()
              for k,v in cls._SVM_PARAMS.iteritems()
              if k in NOS.seen])
 

@@ -202,6 +202,7 @@ if __debug__:
     debug.register('PLR',  "PLR call")
     debug.register('NBH',  "Neighborhood estimations")
     debug.register('SLC',  "Searchlight call")
+    debug.register('SLC_', "Searchlight call (verbose)")
     debug.register('SA',   "Sensitivity analyzers")
     debug.register('SOM',  "Self-organizing-maps (SOM)")
     debug.register('IRELIEF', "Various I-RELIEFs")
@@ -308,6 +309,7 @@ if __debug__:
 
     debug.register('IOH',    "IO Helpers")
     debug.register('IO_HAM', "Hamster")
+    debug.register('HDF5',   "HDF5 IO")
     debug.register('CM',   "Confusion matrix computation")
     debug.register('ROC',  "ROC analysis")
     debug.register('CROSSC', "Cross-validation call")

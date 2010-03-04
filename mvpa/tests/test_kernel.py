@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA kernels"""
 
-import numpy as N
+import numpy as np
 
 from mvpa.testing import *
 from mvpa.testing.datasets import datasets
@@ -76,35 +76,35 @@ class KernelTests(unittest.TestCase):
             # first check if dtypes are the same
             ok_(k1m.dtype is k2m.dtype)
 
-            k12mean = 0.5*(N.abs(k1m) + N.abs(k2m))
-            scales = N.ones(k12mean.shape)
+            k12mean = 0.5*(np.abs(k1m) + np.abs(k2m))
+            scales = np.ones(k12mean.shape)
 
             # don't bother dealing with values which would be within
             # resolution -- ** operation would lead to NaNs or 0s
-            k12mean_nz = k12mean >= N.finfo(k1m.dtype).resolution * 1e+1
-            scales[k12mean_nz] = 10**N.floor(N.log10(k12mean[k12mean_nz]))
+            k12mean_nz = k12mean >= np.finfo(k1m.dtype).resolution * 1e+1
+            scales[k12mean_nz] = 10**np.floor(np.log10(k12mean[k12mean_nz]))
             for a in (k1m, k2m):
                 # lets normalize by exponent first
                 anz = a != 0
                 # "remove" exponent
                 a[anz] /= scales[anz]
 
-            accuracy = 10**-(N.finfo(k1m.dtype).precision * relative_precision)
+            accuracy = 10**-(np.finfo(k1m.dtype).precision * relative_precision)
 
-        diff = N.abs(k1m - k2m)
+        diff = np.abs(k1m - k2m)
         dmax = diff.max()               # and maximal difference
 
         self.failUnless(dmax <= accuracy,
                         '\n%s\nand\n%s\ndiffer by %s'%(k1, k2, dmax))
 
-        self.failUnless(N.all(k1m.astype('float32') == \
+        self.failUnless(np.all(k1m.astype('float32') == \
                               k2m.astype('float32')),
                         '\n%s\nand\n%s\nare unequal as float32'%(k1, k2))
 
 
     def test_linear_kernel(self):
         """Simplistic testing of linear kernel"""
-        d1 = Dataset(N.asarray([range(5)]*10, dtype=float))
+        d1 = Dataset(np.asarray([range(5)]*10, dtype=float))
         lk = npK.LinearKernel()
         lk.compute(d1)
         self.failUnless(lk._k.shape == (10, 10),
@@ -114,7 +114,7 @@ class KernelTests(unittest.TestCase):
 
     def test_precomputed_kernel(self):
         """Statistic Kernels"""
-        d = N.random.randn(50, 50)
+        d = np.random.randn(50, 50)
         nk = PrecomputedKernel(matrix=d)
         nk.compute()
         self.failUnless((d == nk._k).all(),
@@ -123,8 +123,8 @@ class KernelTests(unittest.TestCase):
     def test_cached_kernel(self):
         nchunks = 5
         n = 50*nchunks
-        d = Dataset(N.random.randn(n, 132))
-        d.sa.chunks = N.random.randint(nchunks, size=n)
+        d = Dataset(np.random.randn(n, 132))
+        d.sa.chunks = np.random.randint(nchunks, size=n)
         
         # We'll compare against an Rbf just because it has a parameter to change
         rk = npK.RbfKernel(sigma=1.5)
@@ -151,11 +151,11 @@ class KernelTests(unittest.TestCase):
                         "CachedKernel doesn't recompute on kernel change")
         rk.params.sigma = 3.5
         rk.compute(d)
-        self.failUnless(N.all(rk._k == ck._k),
+        self.failUnless(np.all(rk._k == ck._k),
                         'Cached and rbf kernels disagree after kernel change')
         
         # Now test handling new data
-        d2 = Dataset(N.random.randn(32, 43))
+        d2 = Dataset(np.random.randn(32, 43))
         ck.compute(d2)
         self.failUnless(ck._recomputed,
                         "CachedKernel did not automatically recompute new data")
@@ -172,7 +172,7 @@ class KernelTests(unittest.TestCase):
         # sources of noise.  In all cases float32 should be identical
             
         def test_sg_conversions(self):
-            nk = PrecomputedKernel(matrix=N.random.randn(50, 50))
+            nk = PrecomputedKernel(matrix=np.random.randn(50, 50))
             nk.compute()
 
             skip_if_no_external('shogun',
@@ -185,8 +185,8 @@ class KernelTests(unittest.TestCase):
                             'Failure converting arrays between NP as SG')
             
         def test_linear_sg(self):
-            d1 = N.random.randn(105, 32)
-            d2 = N.random.randn(41, 32)
+            d1 = np.random.randn(105, 32)
+            d2 = np.random.randn(41, 32)
             
             nk = npK.LinearKernel()
             sk = sgK.LinearSGKernel()
@@ -196,8 +196,8 @@ class KernelTests(unittest.TestCase):
             self.kernel_equiv(nk, sk)
             
         def test_poly_sg(self):
-            d1 = N.random.randn(105, 32)
-            d2 = N.random.randn(41, 32)
+            d1 = np.random.randn(105, 32)
+            d2 = np.random.randn(41, 32)
             sk = sgK.PolySGKernel()
             nk = npK.PolyKernel(coef0=1)
             ordervals = [1, 2, 3, 5, 7]
@@ -210,11 +210,11 @@ class KernelTests(unittest.TestCase):
                 self.kernel_equiv(nk, sk)
                 
         def test_rbf_sg(self):
-            d1 = N.random.randn(105, 32)
-            d2 = N.random.randn(41, 32)
+            d1 = np.random.randn(105, 32)
+            d2 = np.random.randn(41, 32)
             sk = sgK.RbfSGKernel()
             nk = npK.RbfKernel()
-            sigmavals = N.logspace(-2, 5, num=10)
+            sigmavals = np.logspace(-2, 5, num=10)
             for s in sigmavals:
                 sk.params.sigma = s
                 nk.params.sigma = s
@@ -235,15 +235,15 @@ class KernelTests(unittest.TestCase):
             custom = sgK.CustomSGKernel(sgK.sgk.PolyKernel,
                                         kernel_params=poly_params)
 
-            d = N.random.randn(253, 52)
+            d = np.random.randn(253, 52)
             lk.compute(d)
             cl.compute(d)
             poly.compute(d)
             custom.compute(d)
 
-            self.failUnless(N.all(lk.as_np()._k == cl.as_np()._k),
+            self.failUnless(np.all(lk.as_np()._k == cl.as_np()._k),
                             'CustomSGKernel does not agree with Linear')
-            self.failUnless(N.all(poly.as_np()._k == custom.as_np()._k),
+            self.failUnless(np.all(poly.as_np()._k == custom.as_np()._k),
                             'CustomSGKernel does not agree with Poly')
 
     # Older kernel stuff (ie not mvpa.kernel) - perhaps refactor?
@@ -262,15 +262,15 @@ class KernelTests(unittest.TestCase):
         self.failUnless(ed.shape == true_size)
 
         # slow version to compute distance matrix
-        ed_manual = N.zeros(true_size, 'd')
+        ed_manual = np.zeros(true_size, 'd')
         for i in range(true_size[0]):
             for j in range(true_size[1]):
-                #ed_manual[i,j] = N.sqrt(((data[i,:] - data[j,:] )** 2).sum())
+                #ed_manual[i,j] = np.sqrt(((data[i,:] - data[j,:] )** 2).sum())
                 ed_manual[i,j] = ((data[i,:] - data[j,:] )** 2).sum()
         ed_manual[ed_manual < 0] = 0
 
-        self.failUnless(N.diag(ed_manual).sum() < 0.0000000001)
-        self.failUnless(N.diag(ed).sum() < 0.0000000001)
+        self.failUnless(np.diag(ed_manual).sum() < 0.0000000001)
+        self.failUnless(np.diag(ed).sum() < 0.0000000001)
 
         # let see whether Kernel does the same
         self.failUnless((ed - ed_manual).sum() < 0.0000001)
@@ -278,7 +278,7 @@ class KernelTests(unittest.TestCase):
 
     def test_pnorm_w(self):
         data0 = datasets['uni4large'].samples.T
-        weight = N.abs(data0[11, :60])
+        weight = np.abs(data0[11, :60])
 
         self.failUnlessRaises(ValueError, pnorm_w_python,
                               data0[:10,:2], p=1.2, heuristic='buga')
@@ -311,9 +311,9 @@ class KernelTests(unittest.TestCase):
                 d = pnorm_w(**kwargs)    # default one
                 # to assess how far we are
                 kwargs0 = kwargs.copy()
-                kwargs0['data2'] = N.zeros(data1.shape)
+                kwargs0['data2'] = np.zeros(data1.shape)
                 d0 = pnorm_w(**kwargs0)
-                d0norm = N.linalg.norm(d - d0, 'fro')
+                d0norm = np.linalg.norm(d - d0, 'fro')
                 # test different implementations
                 for iid, d2 in enumerate(
                     [pnorm_w_python(**kwargs),
@@ -324,7 +324,7 @@ class KernelTests(unittest.TestCase):
                     [pnorm_w_python(heuristic=h,
                                     use_sq_euclidean=False, **kwargs)
                      for h in ('auto', 'samples', 'features')]):
-                    dnorm = N.linalg.norm(d2 - d, 'fro')
+                    dnorm = np.linalg.norm(d2 - d, 'fro')
                     self.failUnless(dnorm/d0norm < 1e-7,
                         msg="Failed comparison of different implementations on "
                             "data #%d, implementation #%d, p=%s. "

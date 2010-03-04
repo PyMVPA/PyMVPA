@@ -62,6 +62,17 @@ experiments.
   DOI: http://dx.doi.org/10.1214/009053604000000067
 
 
+.. _Fis25:
+
+**Fisher, R. A.** (1925). Statistical methods for research workers. Oliver and Boyd: Edinburgh.
+  *One of the 20th century's most influential books on statistical methods, which
+  coined the term 'Test of significance'.*
+
+  Keywords: :keyword:`statistics`, :keyword:`hypothesis testing`
+
+  URL: http://psychclassics.yorku.ca/Fisher/Methods/
+
+
 .. _GE03:
 
 **Guyon, I. & Elisseeff, A.** (2003). An Introduction to Variable and Feature Selection. *Journal of Machine Learning*, *3*, 1157–1182.
@@ -279,9 +290,9 @@ experiments.
   DOI: http://dx.doi.org/10.1162/jocn.2007.19.11.1735
 
 
-.. _PMB+IP:
+.. _PMB09:
 
-**Pereira, F., Mitchell, T. & Botvinick, M.** (in press). Machine learning classifiers and fMRI: A tutorial overview. *NeuroImage*.
+**Pereira, F., Mitchell, T. & Botvinick, M.** (2009). Machine learning classifiers and fMRI: A tutorial overview. *NeuroImage*, *45*, 199–209.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2008.11.007
 
 
@@ -328,6 +339,17 @@ experiments.
   Keywords: :keyword:`support vector machine`, :keyword:`SVM`, :keyword:`group analysis`
 
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2007.03.072
+
+
+.. _Wri09:
+
+**Wright, D.** (2009). Ten Statisticians and Their Impacts for Psychologists. *Perspectives on Psychological Science*, *4*, 587–597.
+  *Historical excurse into the life of 10 prominent statisticians of XXth century
+  and their scientific contributions.*
+
+  Keywords: :keyword:`statistics`, :keyword:`hypothesis testing`
+
+  DOI: http://dx.doi.org/10.1111/j.1745-6924.2009.01167.x
 
 
 .. _ZH05:

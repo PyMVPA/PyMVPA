@@ -12,41 +12,73 @@ __docformat__ = 'restructuredtext'
 
 from mvpa.base import externals
 
-if externals.exists('scipy', raiseException=True):
-    import scipy.stats as stats
+if externals.exists('scipy', raise_=True):
+    import scipy.stats as st
 
-import numpy as N
+import numpy as np
 import copy
 
-def chisquare(obs, exp=None):
+def chisquare(obs, exp='uniform'):
     """Compute the chisquare value of a contingency table with arbitrary
     dimensions.
 
-    If no expected frequencies are supplied, the total N is assumed to be
-    equally distributed across all cells.
+    Parameters
+    ----------
+    obs : array
+      Observations matrix
+    exp : ('uniform', 'indep_rows') or array, optional
+      Matrix of expected values of the same size as `obs`.  If no
+      array is given, then for 'uniform' -- evenly distributes all
+      observations.  In 'indep_rows' case contingency table takes into
+      account frequencies relative across different columns, so, if
+      the contingency table is predictions vs targets, it would
+      account for dis-balance among different targets.  Although
+      'uniform' is the default, for confusion matrices 'indep_rows' is
+      preferable.
 
     Returns
     -------
     tuple
      chisquare-stats, associated p-value (upper tail)
     """
-    obs = N.array(obs)
+    obs = np.array(obs)
 
     # get total number of observations
-    nobs = N.sum(obs)
+    nobs = np.sum(obs)
 
     # if no expected value are supplied assume equal distribution
-    if exp == None:
-        exp = N.ones(obs.shape) * nobs / N.prod(obs.shape)
+    if not isinstance(exp, np.ndarray):
+        ones = np.ones(obs.shape, dtype=float)
+        if exp == 'indep_rows':
+            # multiply each column
+            exp = np.sum(obs, axis=0)[None, :] * ones / obs.shape[0]
+        elif exp == 'indep_cols':
+            # multiply each row
+            exp = np.sum(obs, axis=1)[:, None] * ones / obs.shape[1]
+        elif exp == 'uniform':
+            # just evenly distribute
+            exp = nobs * np.ones(obs.shape, dtype=float) / np.prod(obs.shape)
+        else:
+            raise ValueError, \
+                  "Unknown specification of expected values exp=%r" % (exp,)
+    else:
+        assert(exp.shape == obs.shape)
 
     # make sure to have floating point data
     exp = exp.astype(float)
 
     # compute chisquare value
-    chisq = N.sum((obs - exp )**2 / exp)
+    exp_zeros = exp == 0
+    exp_nonzeros = np.logical_not(exp_zeros)
+    if np.sum(exp_zeros) !=0 and (obs[exp_zeros] != 0).any():
+        raise ValueError, \
+              "chisquare: Expected values have 0-values, but there are actual" \
+              " observations -- chi^2 cannot be computed"
+    chisq = np.sum(((obs - exp )**2)[exp_nonzeros] / exp[exp_nonzeros])
 
     # return chisq and probability (upper tail)
-    return chisq, stats.chisqprob(chisq, N.prod(obs.shape) - 1)
+    # taking only the elements with something expected
+    return chisq, st.chisqprob(chisq, np.sum(exp_nonzeros) - 1)
 
 
 class DSMatrix(object):
@@ -76,18 +108,18 @@ class DSMatrix(object):
         self.metric = metric
 
         # size of dataset (checking if we're dealing with a column vector only)
-        num_exem = N.shape(data_vectors)[0]
+        num_exem = np.shape(data_vectors)[0]
         flag_1d = False
         # changed 4/26/09 to new way of figuring out if array is 1-D
-        #if (isinstance(data_vectors, N.ndarray)):
-        if (not(num_exem == N.size(data_vectors))):
-            num_features = N.shape(data_vectors)[1]
+        #if (isinstance(data_vectors, np.ndarray)):
+        if (not(num_exem == np.size(data_vectors))):
+            num_features = np.shape(data_vectors)[1]
         else:
             flag_1d = True
             num_features = 1
 
         # generate output (dissimilarity) matrix
-        dsmatrix = N.mat(N.zeros((num_exem, num_exem)))
+        dsmatrix = np.mat(np.zeros((num_exem, num_exem)))
 
         if (metric == 'euclidean'):
             #print 'Using Euclidean distance metric...'
@@ -96,10 +128,10 @@ class DSMatrix(object):
                 # across columns
                 for j in range(num_exem):
                     if (not(flag_1d)):
-                        dsmatrix[i, j] = N.linalg.norm(
+                        dsmatrix[i, j] = np.linalg.norm(
                             data_vectors[i, :] - data_vectors[j, :])
                     else:
-                        dsmatrix[i, j] = N.linalg.norm(
+                        dsmatrix[i, j] = np.linalg.norm(
                             data_vectors[i] - data_vectors[j])
 
         elif (metric == 'spearman'):
@@ -108,7 +140,7 @@ class DSMatrix(object):
             for i in range(num_exem):
                 # across columns
                 for j in range(num_exem):
-                    dsmatrix[i, j] = 1 - stats.spearmanr(
+                    dsmatrix[i, j] = 1 - st.spearmanr(
                         data_vectors[i,:], data_vectors[j,:])[0]
 
         elif (metric == 'pearson'):
@@ -117,7 +149,7 @@ class DSMatrix(object):
             for i in range(num_exem):
                 # across columns
                 for j in range(num_exem):
-                    dsmatrix[i, j] = 1 - stats.pearsonr(
+                    dsmatrix[i, j] = 1 - st.pearsonr(
                         data_vectors[i,:], data_vectors[j,:])[0]
 
         elif (metric == 'confusion'):
@@ -128,9 +160,9 @@ class DSMatrix(object):
                 for j in range(num_exem):
                     if (not(flag_1d)):
                         dsmatrix[i, j] = 1 - int(
-                            N.floor(N.sum((
+                            np.floor(np.sum((
                                 data_vectors[i, :] == data_vectors[j, :]
-                                ).astype(N.int32)) / num_features))
+                                ).astype(np.int32)) / num_features))
                     else:
                         dsmatrix[i, j] = 1 - int(
                             data_vectors[i] == data_vectors[j])
@@ -141,7 +173,7 @@ class DSMatrix(object):
     def get_triangle(self):
         # if we need to create the u_triangle representation, do so
         if (self.u_triangle is None):
-            self.u_triangle = N.triu(self.full_matrix)
+            self.u_triangle = np.triu(self.full_matrix)
 
         return self.u_triangle
 
@@ -171,13 +203,13 @@ class DSMatrix(object):
 
         orig_dsmatrix[orig_dsmatrix == 0] = -1
 
-        orig_tri = N.triu(orig_dsmatrix)
+        orig_tri = np.triu(orig_dsmatrix)
 
         vector_form = orig_tri[abs(orig_tri) > 0]
 
         vector_form[vector_form == -1] = 0
 
-        vector_form = N.asarray(vector_form)
+        vector_form = np.asarray(vector_form)
         self.vector_form = vector_form[0]
 
         return self.vector_form

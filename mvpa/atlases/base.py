@@ -25,19 +25,19 @@ mvpa.atlases.base module contains support for various atlases
 
 from mvpa.base import externals
 
-if externals.exists('lxml', raiseException=True):
+if externals.exists('lxml', raise_=True):
     from lxml import etree, objectify
 
 from mvpa.base.dochelpers import enhanced_doc_string
 
 import os, re
-import numpy as N
+import numpy as np
 from numpy.linalg import norm
 
 from mvpa.atlases.transformation import SpaceTransformation, Linear
 from mvpa.misc.support import reuse_absolute_path
 
-if externals.exists('nifti', raiseException=True):
+if externals.exists('nifti', raise_=True):
     from nifti import NiftiImage
 
 from mvpa.base import warning
@@ -137,8 +137,8 @@ class XMLBasedAtlas(BaseAtlas):
         self._image = None
         self._load_images()
         if self._image is not None:
-            self._extent = N.abs(N.asanyarray(self._image.extent[0:3]))
-            self._voxdim = N.asanyarray(self._image.voxdim)
+            self._extent = np.abs(np.asanyarray(self._image.extent[0:3]))
+            self._voxdim = np.asanyarray(self._image.voxdim)
             self.relativeToOrigin = True
         # Assign transformation to get into voxel coordinates,
         # spaceT will be set accordingly
@@ -233,7 +233,7 @@ class XMLBasedAtlas(BaseAtlas):
         self._coordT = coordT           # lets store for debugging etc
         if self._image is not None:
             # Combine with the image's qform
-            coordT = Linear(N.linalg.inv(self._image.qform),
+            coordT = Linear(np.linalg.inv(self._image.qform),
                             previous=coordT)
         self._spaceT = SpaceTransformation(
             previous=coordT, to_real_space=False
@@ -254,8 +254,8 @@ class XMLBasedAtlas(BaseAtlas):
         levels : None or list of int
           At what levels to return the results
         """
-        coord_ = N.asarray(coord)          # or we would alter what should be constant
-        #if not isinstance(coord, N.numpy):
+        coord_ = np.asarray(coord)          # or we would alter what should be constant
+        #if not isinstance(coord, np.numpy):
         #c = self.getVolumeCoordinate(coord)
         #c = self.spaceT.to_voxel_space(coord_)
         #if self.coordT:
@@ -615,9 +615,9 @@ class PyMVPAAtlas(XMLBasedAtlas):
         # Set offset if defined in XML file
         # XXX: should just take one from the qoffset... now that one is
         #       defined... this origin might be misleading actually
-        self._origin = N.array( (0, 0, 0) )
+        self._origin = np.array( (0, 0, 0) )
         if imagefile.attrib.has_key('offset'):
-            self._origin = N.array( [int(x) for x in
+            self._origin = np.array( [int(x) for x in
                                      imagefile.get('offset').split(',')] )
 
         # Load the image file which has labels

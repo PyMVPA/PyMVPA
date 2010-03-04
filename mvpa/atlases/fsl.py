@@ -12,11 +12,11 @@
 
 from mvpa.base import warning, externals
 
-if externals.exists('nifti', raiseException=True):
+if externals.exists('nifti', raise_=True):
     from nifti import NiftiImage
 
 import os, re
-import numpy as N
+import numpy as np
 
 from mvpa.misc.support import reuse_absolute_path
 from mvpa.base.dochelpers import enhanced_doc_string
@@ -96,7 +96,7 @@ class FSLAtlas(XMLBasedAtlas):
             debug('ATL__', "Loading atlas data from %s" % self._image_file)
         self._image = ni_image
         self._resolution = ni_image.pixdim[0]
-        self._origin = N.abs(ni_image.header['qoffset']) * 1.0  # XXX
+        self._origin = np.abs(ni_image.header['qoffset']) * 1.0  # XXX
         self._data   = self._image.data
 
 
@@ -233,8 +233,8 @@ class FSLProbabilisticAtlas(FSLAtlas):
             if strategy == 'unique':
                 return self.get_map(lev.find(target, unique=True).index)
             else:
-                maps = N.array(self.get_maps(target))
-                return N.max(maps, axis=0)
+                maps = np.array(self.get_maps(target))
+                return np.max(maps, axis=0)
 
     ##REF: Name was automagically refactored
     def get_maps(self, target):

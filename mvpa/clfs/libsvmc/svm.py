@@ -10,12 +10,12 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 import operator
 
 from mvpa.base import warning
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 
 from mvpa.clfs.base import accepts_dataset_as_samples, \
      accepts_samples_as_dataset
@@ -36,7 +36,7 @@ from mvpa.clfs.libsvmc._svmc import \
      PRECOMPUTED, ONE_CLASS
 
 def _data2ls(data):
-    return N.asarray(data).astype(float)
+    return np.asarray(data).astype(float)
 
 class SVM(_SVM):
     """Support Vector Machine Classifier.
@@ -44,9 +44,9 @@ class SVM(_SVM):
     This is a simple interface to the libSVM package.
     """
 
-    # Since this is internal feature of LibSVM, this state variable is present
+    # Since this is internal feature of LibSVM, this conditional attribute is present
     # here
-    probabilities = StateVariable(enabled=False,
+    probabilities = ConditionalAttribute(enabled=False,
         doc="Estimates of samples probabilities as provided by LibSVM")
 
     # TODO p is specific for SVR
@@ -165,7 +165,7 @@ class SVM(_SVM):
             Cs = self._get_cvec(dataset)
             if len(Cs)>1:
                 C0 = abs(Cs[0])
-                scale = 1.0/(C0)#*N.sqrt(C0))
+                scale = 1.0/(C0)#*np.sqrt(C0))
                 # so we got 1 C per label
                 uls = self._attrmap.to_numeric(targets_sa.unique)
                 if len(Cs) != len(uls):
@@ -197,7 +197,7 @@ class SVM(_SVM):
                 estimates = [ self.model.predict_values_raw(p)[0] for p in src ]
             else:
                 # if 'trained_targets' are literal they have to be mapped
-                if N.issubdtype(self.ca.trained_targets.dtype, 'c'):
+                if np.issubdtype(self.ca.trained_targets.dtype, 'c'):
                     trained_targets = self._attrmap.to_numeric(
                             self.ca.trained_targets)
                 else:
@@ -221,7 +221,7 @@ class SVM(_SVM):
                             debug("SVM",
                                   "Forcing estimates to be ndarray and reshaping"
                                   " them into 1D vector")
-                        estimates = N.asarray(estimates).reshape(len(estimates))
+                        estimates = np.asarray(estimates).reshape(len(estimates))
                 else:
                     # In multiclass we return dictionary for all pairs
                     # of labels, since libsvm does 1-vs-1 pairs
@@ -252,9 +252,9 @@ class SVM(_SVM):
                 C = _svm.svmc.svm_parameter_C_get(prm)
                 # extract information of how many SVs sit inside the margin,
                 # i.e. so called 'bounded SVs'
-                inside_margin = N.sum(
+                inside_margin = np.sum(
                     # take 0.99 to avoid rounding issues
-                    N.abs(self.__model.get_sv_coef())
+                    np.abs(self.__model.get_sv_coef())
                           >= 0.99*_svm.svmc.svm_parameter_C_get(prm))
                 s += ' #bounded SVs:%d' % inside_margin
                 s += ' used C:%5g' % C

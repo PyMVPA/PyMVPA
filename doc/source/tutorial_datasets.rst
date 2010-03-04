@@ -22,7 +22,7 @@ take a look at what a dataset consists of, and how it works.
 In the simplest case, a dataset only contains *data* that is a matrix of
 numerical values.
 
->>> from mvpa.suite import *
+>>> from tutorial_lib import *
 >>> data = [[  1,  1, -1],
 ...         [  2,  0,  0],
 ...         [  3,  1,  1],
@@ -41,8 +41,8 @@ array([[ 1,  1, -1],
        [ 4,  0, -1]])
 
 In the above example, every row vector in the `data` matrix becomes an
-observation or :term:`sample` in the dataset, and every column vector
-represents an individual variable or :term:`feature`. The concepts of samples
+observation or a :term:`sample` in the dataset, and every column vector
+represents an individual variable or a :term:`feature`. The concepts of samples
 and features are essential for a dataset, hence we take a further, closer look.
 
 The dataset assumes the first axis of the data to be the samples separating
@@ -55,10 +55,10 @@ therefore have as many samples as elements in the vector, and only one feature.
 (4, 1)
 
 On the other hand, if a dataset is created from multi-dimensional data, only its
-second axis represent the features
+second axis represents the features
 
->>> import numpy as N
->>> m_ds = Dataset(N.random.random((3, 4, 2, 3)))
+>>> import numpy as np
+>>> m_ds = Dataset(np.random.random((3, 4, 2, 3)))
 >>> m_ds.shape
 (3, 4, 2, 3)
 >>> m_ds.nfeatures
@@ -107,7 +107,7 @@ array([ 0.,  1.,  1.,  3.])
 
 This "complication" is done to be able to extend attributes with additional
 functionality that is often needed and can offer significant speed-up of
-processing. For example, sample attributes carry a list of there unique values.
+processing. For example, sample attributes carry a list of their unique values.
 This list is only computed once (upon first request) and can subsequently be
 accessed directly without repeated and expensive searches:
 
@@ -170,9 +170,9 @@ called `fa`:
 For The Dataset
 ---------------
 
-Finally, there can also be attributes, not per each sample, or each
+Finally, there can be also attributes, not per each sample, or each
 feature, but for the dataset as a whole: so called :term:`dataset
-attributes`. Assigning such attributes and accessing them later on work in
+attribute`\s. Assigning such attributes and accessing them later on work in
 exactly the same way as for the other two types of attributes, except that dataset
 attributes are stored in their own collection which is accessible via the
 `a` property of the dataset.  However, in contrast to sample and feature
@@ -194,7 +194,7 @@ enrich it with an arbitrary number of additional attributes. But just
 having a dataset isn't enough. From part one of this tutorial we already
 know that we need to be able to select subsets of a dataset for further
 processing, and we also know that this is possible with PyMVPA's datasets.
-Now it is time to have a closer look on how it works.
+Now it is time to have a closer look into how it works.
 
 Slicing a dataset (i.e. selecting specific subsets) is very similar to
 slicing a NumPy array. It actually works *almost* identical. A dataset
@@ -216,7 +216,7 @@ array([[ 1,  1, -1],
        [ 3,  1,  1]])
 >>>
 >>> # Boolean mask array
->>> mask = N.array([True, False, True, False])
+>>> mask = np.array([True, False, True, False])
 >>> ds[mask].samples
 array([[ 1,  1, -1],
        [ 3,  1,  1]])
@@ -250,7 +250,7 @@ array([[ 1, -1],
        [ 0, -1]])
 
 By applying a selection by indices to the second axis, we can easily get
-the last two features of our example dataset. Please note the `:` supplied
+the last two features of our example dataset. Please note the `:` is supplied
 as first axis slicing. This is the Python way to indicate *take everything
 along this axis*, hence take all samples.
 
@@ -274,7 +274,7 @@ the style of slicing allows to select specific elements by their indices on
 each axis of an array. For PyMVPA's datasets this mode is not very useful,
 instead we typically want to select rows and columns, i.e. samples and
 features given by their indices, hence **samples and features slicing is
-always applied sequentially**, even if ran simultaneously.
+always applied sequentially**, even if were ran simultaneously.
 
 
 .. exercise::
@@ -316,9 +316,7 @@ look at is a single subject from Haxby et al. (2001) that we already
 loaded in part one of this tutorial. For more convenience, and less typing
 we first specify the path of the directory with the fMRI data.
 
->>> # 'pymvpa_datadbroot' is set by PyMVPA and points to the global data
->>> # database (downloadable from http://data.pymvpa.org)
->>> path=os.path.join(pymvpa_datadbroot, 'demo_blockfmri', 'demo_blockfmri')
+>>> path=os.path.join(tutorial_data_path, 'data')
 
 In the simplest case, we now let `fmri_dataset` do its job, by just
 pointing it to the fMRI data file. The data is stored as a NIfTI file that has
@@ -451,7 +449,7 @@ an argument and returns the stored dataset. Compressed data will be handled
 transparently.
 
 >>> loaded = h5load(os.path.join(tempdir, 'mydataset.hdf5'))
->>> N.all(ds.samples == loaded.samples)
+>>> np.all(ds.samples == loaded.samples)
 True
 >>> # cleanup the temporary directory, and everything it includes
 >>> shutil.rmtree(tempdir, ignore_errors=True)

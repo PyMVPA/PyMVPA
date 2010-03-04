@@ -118,6 +118,7 @@ from mvpa.measures.glm import *
 from mvpa.measures.irelief import *
 from mvpa.measures.base import *
 from mvpa.measures.noiseperturbation import *
+from mvpa.misc.neighborhood import *
 from mvpa.measures.searchlight import *
 from mvpa.measures.corrstability import *
 
@@ -160,15 +161,24 @@ if externals.exists("scipy"):
     from mvpa.clfs.plr import *
     from mvpa.misc.stats import *
     from mvpa.clfs.gpr import *
+    from mvpa.support.nipy import *
 
 if externals.exists("pywt"):
     from mvpa.mappers.wavelet import *
 
 if externals.exists("pylab"):
-    import pylab as P
+    import pylab as pl
 
 if externals.exists("lxml") and externals.exists("nifti"):
     from mvpa.atlases import *
+
+
+if externals.exists("running ipython env"):
+    try:
+        if not cfg.getboolean('ipython', 'complete protected', False):
+            __IPYTHON__.Completer.omit__names = 2
+    finally:
+        pass
 
 def suite_stats():
     """Return cruel dict of things which evil suite provides

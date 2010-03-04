@@ -88,7 +88,7 @@ getNRClass	get_nr_class
 getNSV	get_n_sv
 _getRecon	_get_recon
 getRho	get_rho
-getSamplesPerChunkLabel	get_samples_per_chunk_label
+getSamplesPerChunkLabel	get_samples_per_chunk_target
 getSensitivityAnalyzer	get_sensitivity_analyzer
 _getSplitConfig	_get_split_config
 getSVCoef	get_sv_coef
@@ -173,9 +173,9 @@ ROCs	rocs
 rootMeanPowerFx	root_mean_power_fx
 runNoseTests	run_nose_tests
 runTests	run_tests
-SecondAxisMaxOfAbs	second_axis_max_of_abs
-SecondAxisMean	second_axis_mean
-SecondAxisSumOfAbs	_second_axis_sum_of_abs
+SecondAxisMaxOfAbs	REFACTOR_USE_FXMAPPERS
+SecondAxisMean	REFACTOR_USE_FXMAPPERS
+SecondAxisSumOfAbs	REFACTOR_USE_FXMAPPERS
 selectOut	select_out
 selectSamples	select_samples
 selectVoxelsFromVolumeIteratorNumPY	select_from_volume_iterator
@@ -224,6 +224,8 @@ transformWithBoxcar	transform_with_boxcar
 _verboseCallback	_verbose_callback
 __wasDataChanged	__was_data_changed
 _waveletFamilyCallback	_wavelet_family_callback
+nperlabel	npertarget
+roisizes	roi_sizes
 xuniqueCombinations	xunique_combinations"  | \
 while read old new; do
 	echo -en "$old:\t"

@@ -12,7 +12,7 @@ if __debug__:
     from mvpa.base import debug
     debug('INIT', 'mvpa.clfs.libsmlrc')
 
-import numpy as N
+import numpy as np
 import ctypes as C
 import os
 import sys
@@ -28,7 +28,7 @@ elif sys.platform == 'darwin':
     # look for .so extension on Mac (not .dylib this time)
     smlrlib = C.cdll[os.path.join(os.path.dirname(__file__), 'smlrc.so')]
 else:
-    smlrlib = N.ctypeslib.load_library('smlrc', os.path.dirname(__file__))
+    smlrlib = np.ctypeslib.load_library('smlrc', os.path.dirname(__file__))
 
 # wrap the stepwise function
 def stepwise_regression(*args):

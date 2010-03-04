@@ -14,12 +14,12 @@ import sys
 # not worthy of externals checking
 _dict_has_key = sys.version_info >= (2, 5)
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import warning
 from mvpa.datasets.base import Dataset
 from mvpa.misc.support import indent_doc
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.clfs.distance import squared_euclidean_distance
@@ -52,7 +52,7 @@ class kNN(Classifier):
 
     """
 
-    distances = StateVariable(enabled=False,
+    distances = ConditionalAttribute(enabled=False,
         doc="Distances computed for each sample")
 
 
@@ -129,7 +129,7 @@ class kNN(Classifier):
         Returns a list of class labels (one for each data sample).
         """
         # make sure we're talking about arrays
-        data = N.asarray(data)
+        data = np.asarray(data)
 
         # checks only in debug mode
         if __debug__:
@@ -172,7 +172,7 @@ class kNN(Classifier):
         # store the predictions in the state. Relies on State._setitem to do
         # nothing if the relevant state member is not enabled
         self.ca.predictions = predicted
-        self.ca.estimates = N.array([r[1] for r in results])
+        self.ca.estimates = np.array([r[1] for r in results])
 
         return predicted
 
@@ -251,7 +251,7 @@ class kNN(Classifier):
 
         # find the class with most votes
         # return votes as well to store them in the state
-        return uniquelabels[N.asarray(votes).argmax()], \
+        return uniquelabels[np.asarray(votes).argmax()], \
                votes
 
 

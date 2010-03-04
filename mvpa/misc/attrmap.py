@@ -10,7 +10,7 @@
 
 
 from operator import isSequenceType
-import numpy as N
+import numpy as np
 
 class AttributeMap(object):
     # might be derived from dict, but do not see advantages right now,
@@ -130,18 +130,18 @@ class AttributeMap(object):
 
         Please see the class documentation for more information.
         """
-        attr = N.asanyarray(attr)
+        attr = np.asanyarray(attr)
 
         # no mapping if already numeric
-        if not N.issubdtype(attr.dtype, 'c') and not self.mapnumeric:
+        if not np.issubdtype(attr.dtype, 'c') and not self.mapnumeric:
             return attr
 
         if self._nmap is None:
             # sorted list of unique attr values
-            ua = N.unique(attr)
+            ua = np.unique(attr)
             self._nmap = dict(zip(ua, range(len(ua))))
         elif __debug__:
-            ua = N.unique(attr)
+            ua = np.unique(attr)
             mkeys = sorted(self._nmap.keys())
             if (ua != mkeys).any():
                 # maps to not match
@@ -151,7 +151,7 @@ class AttributeMap(object):
                         % (str(ua), str(mkeys)))
 
 
-        num = N.empty(attr.shape, dtype=N.int)
+        num = np.empty(attr.shape, dtype=np.int)
         for k, v in self._nmap.iteritems():
             num[attr == k] = v
         return num
@@ -190,28 +190,28 @@ class AttributeMap(object):
             target_constr = attr.__class__
             # ndarrays are special since array is just a factory, and
             # ndarray takes shape as the first argument
-            isarray = issubclass(target_constr, N.ndarray)
+            isarray = issubclass(target_constr, np.ndarray)
             if isarray:
-                if attr.dtype is N.dtype('object'):
-                    target_constr = lambda x: N.array(x, dtype=object)
+                if attr.dtype is np.dtype('object'):
+                    target_constr = lambda x: np.array(x, dtype=object)
                 else:
                     # Otherwise no special handling
-                    target_constr = N.array
+                    target_constr = np.array
 
             # Perform lookup and store to the list
             resl = [lookupfx(k) for k in attr]
 
             # If necessary assure derived ndarray class type
             if isarray:
-                if attr.dtype is N.dtype('object'):
+                if attr.dtype is np.dtype('object'):
                     # we need first to create empty one and then
                     # assign items -- god bless numpy
-                    resa = N.empty(len(resl), dtype=attr.dtype)
+                    resa = np.empty(len(resl), dtype=attr.dtype)
                     resa[:] = resl
                 else:
                     resa = target_constr(resl)
 
-                if not (attr.__class__ is N.ndarray):
+                if not (attr.__class__ is np.ndarray):
                     # to accommodate subclasses of ndarray
                     res = resa.view(attr.__class__)
                 else:

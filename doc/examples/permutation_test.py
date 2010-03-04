@@ -58,7 +58,7 @@ is the default value of `dist_class` for MCNullDist_).  If `null_dist` is
 provided, the respective :class:`~mvpa.clfs.transerror.TransferError` or
 :class:`~mvpa.measures.base.DatasetMeasure` instance will automatically use it
 to estimate the *NULL* distribution and store the associated *p*-values in a
-state variable named `null_prob`.
+conditional attribute named `null_prob`.
 
 
 .. _Distribution: api/mvpa.clfs.stats.NullDist-class.html

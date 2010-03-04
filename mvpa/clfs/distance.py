@@ -16,7 +16,7 @@ __docformat__ = 'restructuredtext'
 #       need to be capable of dealing with unequal number of rows!
 #       If we would have that, we could make use of them in kNN.
 
-import numpy as N
+import numpy as np
 from mvpa.base import externals
 
 if __debug__:
@@ -27,7 +27,7 @@ if __debug__:
 def cartesian_distance(a, b):
     """Return Cartesian distance between a and b
     """
-    return N.linalg.norm(a-b)
+    return np.linalg.norm(a-b)
 
 
 ##REF: Name was automagically refactored
@@ -59,40 +59,40 @@ def mahalanobis_distance(x, y=None, w=None):
       features.
     `y`
       second list of points (optional)
-    `w` : N.ndarray
+    `w` : np.ndarray
       optional inverse covariance matrix between the points. It is
       computed if not given
 
     Inverse covariance matrix can be calculated with the following
 
-      w = N.linalg.solve(N.cov(x.T), N.identity(x.shape[1]))
+      w = np.linalg.solve(np.cov(x.T), np.identity(x.shape[1]))
 
     or
 
-      w = N.linalg.inv(N.cov(x.T))
+      w = np.linalg.inv(np.cov(x.T))
     """
     # see if pairwise between two matrices or just within a single matrix
     if y is None:
         # pairwise distances of single matrix
         # calculate the inverse correlation matrix if necessary
         if w is None:
-            w = N.linalg.inv(N.cov(x.T))
+            w = np.linalg.inv(np.cov(x.T))
 
         # get some shapes of the data
         mx, nx = x.shape
         #mw, nw = w.shape
 
         # allocate for the matrix to fill
-        d = N.zeros((mx, mx), dtype=N.float32)
+        d = np.zeros((mx, mx), dtype=np.float32)
         for i in range(mx-1):
             # get the current row to compare
             xi = x[i, :]
             # replicate the row
-            xi = xi[N.newaxis, :].repeat(mx-i-1, axis=0)
+            xi = xi[np.newaxis, :].repeat(mx-i-1, axis=0)
             # take the distance between all the matrices
             dc = x[i+1:mx, :] - xi
             # scale the distance by the correlation
-            d[i+1:mx, i] = N.real(N.sum((N.inner(dc, w) * N.conj(dc)), 1))
+            d[i+1:mx, i] = np.real(np.sum((np.inner(dc, w) * np.conj(dc)), 1))
             # fill the other direction of the matrix
             d[i, i+1:mx] = d[i+1:mx, i].T
     else:
@@ -100,14 +100,14 @@ def mahalanobis_distance(x, y=None, w=None):
         # calculate the inverse correlation matrix if necessary
         if w is None:
             # calculate over all points
-            w = N.linalg.inv(N.cov(N.concatenate((x, y)).T))
+            w = np.linalg.inv(np.cov(np.concatenate((x, y)).T))
 
         # get some shapes of the data
         mx, nx = x.shape
         my, ny = y.shape
 
         # allocate for the matrix to fill
-        d = N.zeros((mx, my), dtype=N.float32)
+        d = np.zeros((mx, my), dtype=np.float32)
 
         # loop over shorter of two dimensions
         if mx <= my:
@@ -116,25 +116,25 @@ def mahalanobis_distance(x, y=None, w=None):
                 # get the current row to compare
                 xi = x[i, :]
                 # replicate the row
-                xi = xi[N.newaxis, :].repeat(my, axis=0)
+                xi = xi[np.newaxis, :].repeat(my, axis=0)
                 # take the distance between all the matrices
                 dc = xi - y
                 # scale the distance by the correlation
-                d[i, :] = N.real(N.sum((N.inner(dc, w) * N.conj(dc)), 1))
+                d[i, :] = np.real(np.sum((np.inner(dc, w) * np.conj(dc)), 1))
         else:
             # loop over the y patterns
             for j in range(my):
                 # get the current row to compare
                 yj = y[j, :]
                 # replicate the row
-                yj = yj[N.newaxis, :].repeat(mx, axis=0)
+                yj = yj[np.newaxis, :].repeat(mx, axis=0)
                 # take the distance between all the matrices
                 dc = x - yj
                 # scale the distance by the correlation
-                d[:, j] = N.real(N.sum((N.inner(dc, w) * N.conj(dc)), 1))
+                d[:, j] = np.real(np.sum((np.inner(dc, w) * np.conj(dc)), 1))
 
     # return the dist
-    return N.sqrt(d)
+    return np.sqrt(d)
 
 
 def squared_euclidean_distance(data1, data2=None, weight=None):
@@ -143,32 +143,32 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
 
     Parameters
     ----------
-    data1 : N.ndarray
+    data1 : np.ndarray
         first dataset
-    data2 : N.ndarray
+    data2 : np.ndarray
         second dataset. If None, compute the euclidean distance between
         the first dataset versus itself.
         (Defaults to None)
-    weight : N.ndarray
+    weight : np.ndarray
         vector of weights, each one associated to each dimension of the
         dataset (Defaults to None)
     """
     if __debug__:
         # check if both datasets are floating point
-        if not N.issubdtype(data1.dtype, 'f') \
-           or (data2 is not None and not N.issubdtype(data2.dtype, 'f')):
+        if not np.issubdtype(data1.dtype, 'f') \
+           or (data2 is not None and not np.issubdtype(data2.dtype, 'f')):
             warning('Computing euclidean distance on integer data ' \
                     'is not supported.')
 
     # removed for efficiency (see below)
     #if weight is None:
-    #    weight = N.ones(data1.shape[1], 'd') # unitary weight
+    #    weight = np.ones(data1.shape[1], 'd') # unitary weight
 
     # In the following you can find faster implementations of this
     # basic code:
     #
     # squared_euclidean_distance_matrix = \
-    #           N.zeros((data1.shape[0], data2.shape[0]), 'd')
+    #           np.zeros((data1.shape[0], data2.shape[0]), 'd')
     # for i in range(size1):
     #     for j in range(size2):
     #         squared_euclidean_distance_matrix[i, j] = \
@@ -197,21 +197,21 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
 
     squared_euclidean_distance_matrix = \
         (data1w * data1).sum(1)[:, None] \
-        -2 * N.dot(data1w, data2.T) \
+        -2 * np.dot(data1w, data2.T) \
         + (data2 * data2w).sum(1)
 
     # correction to some possible numerical instabilities:
     less0 = squared_euclidean_distance_matrix < 0
     if __debug__ and 'CHECK_STABILITY' in debug.active:
-        less0num = N.sum(less0)
+        less0num = np.sum(less0)
         if less0num > 0:
-            norm0 = N.linalg.norm(squared_euclidean_distance_matrix[less0])
-            totalnorm = N.linalg.norm(squared_euclidean_distance_matrix)
+            norm0 = np.linalg.norm(squared_euclidean_distance_matrix[less0])
+            totalnorm = np.linalg.norm(squared_euclidean_distance_matrix)
             if totalnorm != 0 and norm0 / totalnorm > 1e-8:
                 warning("Found %d elements out of %d unstable (<0) in " \
                         "computation of squared_euclidean_distance_matrix. " \
                         "Their norm is %s when total norm is %s" % \
-                        (less0num, N.sum(less0.shape), norm0, totalnorm))
+                        (less0num, np.sum(less0.shape), norm0, totalnorm))
     squared_euclidean_distance_matrix[less0] = 0
     return squared_euclidean_distance_matrix
 
@@ -234,8 +234,8 @@ def one_minus_correlation(X, Y):
 
     Example:
 
-      >>> X = N.random.rand(20,80)
-      >>> Y = N.random.rand(5,80)
+      >>> X = np.random.rand(20,80)
+      >>> Y = np.random.rand(5,80)
       >>> C = one_minus_correlation(X, Y)
       >>> print C.shape
       (20, 5)
@@ -248,17 +248,17 @@ def one_minus_correlation(X, Y):
                               % (X.shape, Y.shape)
 
     # zscore each sample/row
-    Zx = X - N.c_[X.mean(axis=1)]
-    Zx /= N.c_[X.std(axis=1)]
-    Zy = Y - N.c_[Y.mean(axis=1)]
-    Zy /= N.c_[Y.std(axis=1)]
+    Zx = X - np.c_[X.mean(axis=1)]
+    Zx /= np.c_[X.std(axis=1)]
+    Zy = Y - np.c_[Y.mean(axis=1)]
+    Zy /= np.c_[Y.std(axis=1)]
 
-    C = ((N.matrix(Zx) * N.matrix(Zy).T) / Zx.shape[1]).A
+    C = ((np.matrix(Zx) * np.matrix(Zy).T) / Zx.shape[1]).A
 
     # let it behave like a distance, i.e. smaller is closer
     C -= 1.0
 
-    return N.abs(C)
+    return np.abs(C)
 
 
 def pnorm_w_python(data1, data2=None, weight=None, p=2,
@@ -269,11 +269,11 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
 
     Parameters
     ----------
-    data1 : N.ndarray
+    data1 : np.ndarray
       First dataset
-    data2 : N.ndarray or None
+    data2 : np.ndarray or None
       Optional second dataset
-    weight : N.ndarray or None
+    weight : np.ndarray or None
       Optional weights per 2nd dimension (features)
     p
       Power
@@ -288,11 +288,11 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
       Either to use squared_euclidean_distance_matrix for computation if p==2
     """
     if weight == None:
-        weight = N.ones(data1.shape[1], 'd')
+        weight = np.ones(data1.shape[1], 'd')
         pass
 
     if p == 2 and use_sq_euclidean:
-        return N.sqrt(squared_euclidean_distance(data1=data1, data2=data2,
+        return np.sqrt(squared_euclidean_distance(data1=data1, data2=data2,
                                                  weight=weight**2))
 
     if data2 == None:
@@ -306,7 +306,7 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
         raise ValueError, \
               "Datasets should have same #columns == #weights. Got " \
               "%d %d %d" % (F1, F2, weight.size)
-    d = N.zeros((S1, S2), 'd')
+    d = np.zeros((S1, S2), 'd')
 
     # Adjust local functions for specific p values
     # pf - power function
@@ -326,15 +326,15 @@ def pnorm_w_python(data1, data2=None, weight=None, p=2,
     if heuristic == 'features':
         #  Efficient implementation if the feature size is little.
         for NF in range(F1):
-            d += pf(N.abs(N.subtract.outer(data1[:, NF],
+            d += pf(np.abs(np.subtract.outer(data1[:, NF],
                                            data2[:, NF]))*weight[NF])
             pass
     elif heuristic == 'samples':
         #  Efficient implementation if the feature size is much larger
         #  than number of samples
         for NS in xrange(S1):
-            dfw = pf(N.abs(data1[NS] - data2) * weight)
-            d[NS] = N.sum(dfw, axis=1)
+            dfw = pf(np.abs(data1[NS] - data2) * weight)
+            d[NS] = np.sum(dfw, axis=1)
             pass
     else:
         raise ValueError, "Unknown heuristic '%s'. Need one of " \
@@ -353,18 +353,18 @@ if externals.exists('weave'):
 
         Parameters
         ----------
-        data1 : N.ndarray
+        data1 : np.ndarray
           First dataset
-        data2 : N.ndarray or None
+        data2 : np.ndarray or None
           Optional second dataset
-        weight : N.ndarray or None
+        weight : np.ndarray or None
           Optional weights per 2nd dimension (features)
         p
           Power
         """
 
         if weight == None:
-            weight = N.ones(data1.shape[1], 'd')
+            weight = np.ones(data1.shape[1], 'd')
             pass
         S1, F1 = data1.shape[:2]
         code = ""
@@ -374,7 +374,7 @@ if externals.exists('weave'):
                       "Dataset should have same #columns == #weights. Got " \
                       "%d %d" % (F1, weight.size)
             F = F1
-            d = N.zeros((S1, S1), 'd')
+            d = np.zeros((S1, S1), 'd')
             try:
                 code_peritem = \
                     {1.0 : "tmp = tmp+weight(t)*fabs(data1(i,t)-data1(j,t))",
@@ -403,7 +403,7 @@ if externals.exists('weave'):
                                ['data1', 'S1', 'F', 'weight', 'd', 'p'],
                                type_converters=converters.blitz,
                                compiler = 'gcc')
-            d = d + N.triu(d).T # copy upper part to lower part
+            d = d + np.triu(d).T # copy upper part to lower part
             return d**(1.0/p)
 
         S2, F2 = data2.shape[:2]
@@ -412,7 +412,7 @@ if externals.exists('weave'):
                   "Datasets should have same #columns == #weights. Got " \
                   "%d %d %d" % (F1, F2, weight.size)
         F = F1
-        d = N.zeros((S1, S2), 'd')
+        d = np.zeros((S1, S2), 'd')
         try:
             code_peritem = \
                 {1.0 : "tmp = tmp+weight(t)*fabs(data1(i,t)-data2(j,t))",
@@ -458,8 +458,8 @@ def mean_min(streamline1, streamline2):
     """Basic building block to compute several distances between
     streamlines.
     """
-    d_e_12 = N.sqrt(squared_euclidean_distance(streamline1, streamline2))
-    return N.array([d_e_12.min(1).mean(), d_e_12.min(0).mean()])
+    d_e_12 = np.sqrt(squared_euclidean_distance(streamline1, streamline2))
+    return np.array([d_e_12.min(1).mean(), d_e_12.min(0).mean()])
 
 
 def corouge(streamline1, streamline2):

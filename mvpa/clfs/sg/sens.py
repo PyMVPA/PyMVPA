@@ -10,13 +10,14 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import externals
-if externals.exists('shogun', raiseException=True):
+if externals.exists('shogun', raise_=True):
     import shogun.Classifier
+    _shogun_exposes_slavesvm_labels = externals.versions['shogun:rev'] < 4633
 
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 from mvpa.base.types import asobjarray
 from mvpa.measures.base import Sensitivity
 from mvpa.datasets.base import Dataset
@@ -30,7 +31,7 @@ class LinearSVMWeights(Sensitivity):
     on a given `Dataset`.
     """
 
-    biases = StateVariable(enabled=True,
+    biases = ConditionalAttribute(enabled=True,
                            doc="Offsets of separating hyperplanes")
 
     def __init__(self, clf, **kwargs):
@@ -49,7 +50,7 @@ class LinearSVMWeights(Sensitivity):
     def __sg_helper(self, svm):
         """Helper function to compute sensitivity for a single given SVM"""
         bias = svm.get_bias()
-        svcoef = N.matrix(svm.get_alphas())
+        svcoef = np.matrix(svm.get_alphas())
         svnums = svm.get_support_vectors()
         svs = self.clf.traindataset.samples[svnums,:]
         res = (svcoef * svs).mean(axis=0).A1
@@ -70,6 +71,7 @@ class LinearSVMWeights(Sensitivity):
             nclabels = len(clabels)
             sens_labels = []
             isvm = 0                    # index for svm among known
+
             for i in xrange(nclabels):
                 for j in xrange(i+1, nclabels):
                     sgsvmi = sgsvm.get_svm(isvm)
@@ -77,9 +79,14 @@ class LinearSVMWeights(Sensitivity):
                     # Since we gave the labels in incremental order,
                     # we always should be right - but it does not
                     # hurt to check if set of labels is the same
-                    assert(set([sgsvmi.get_label(int(x))
-                                for x in sgsvmi.get_support_vectors()])
-                           == set(labels_tuple))
+                    if __debug__ and _shogun_exposes_slavesvm_labels:
+                        if not sgsvmi.get_labels():
+                            # We need to call classify() so labels get assigned
+                            # to the multiclass SVM
+                            sgsvm.classify()
+                        assert(set([sgsvmi.get_label(int(x))
+                                    for x in sgsvmi.get_support_vectors()])
+                               == set(labels_tuple))
                     sens1, bias = self.__sg_helper(sgsvmi)
                     sens.append(sens1)
                     biases.append(bias)
@@ -88,14 +95,14 @@ class LinearSVMWeights(Sensitivity):
             assert(len(sens) == nsvms)  # we should have  covered all
         else:
             sens1, bias = self.__sg_helper(sgsvm)
-            biases = N.atleast_1d(bias)
-            sens = N.atleast_2d(sens1)
+            biases = np.atleast_1d(bias)
+            sens = np.atleast_2d(sens1)
             if not clf.__is_regression__:
                 assert(set(clf._attrmap.values()) == set([-1.0, 1.0]))
                 assert(sens.shape[0] == 1)
                 sens_labels = [(-1.0, 1.0)]
 
-        ds = Dataset(N.atleast_2d(sens))
+        ds = Dataset(np.atleast_2d(sens))
         if sens_labels is not None:
             if isinstance(sens_labels[0], tuple):
                 # Need to have them in array of dtype object

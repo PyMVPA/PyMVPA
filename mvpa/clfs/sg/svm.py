@@ -21,12 +21,12 @@ TODOs:
    storing all training SVs/samples to make classification in predict())
 """
 
-import numpy as N
+import numpy as np
 
 
 # Rely on SG
 from mvpa.base import externals, warning
-if externals.exists('shogun', raiseException=True):
+if externals.exists('shogun', raise_=True):
     import shogun.Features
     import shogun.Classifier
     import shogun.Regression
@@ -71,7 +71,7 @@ from mvpa.clfs.base import accepts_dataset_as_samples, \
      accepts_samples_as_dataset, FailedToTrainError
 from mvpa.clfs.meta import MulticlassClassifier
 from mvpa.clfs._svmbase import _SVM
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 from mvpa.measures.base import Sensitivity
 
 from sens import *
@@ -183,7 +183,7 @@ class SVM(_SVM):
     _KNOWN_SENSITIVITIES={'linear':LinearSVMWeights,
                           }
     _KNOWN_IMPLEMENTATIONS = {}
-    if externals.exists('shogun', raiseException=True):
+    if externals.exists('shogun', raise_=True):
         _KNOWN_IMPLEMENTATIONS = {
             "libsvm" : (shogun.Classifier.LibSVM, ('C',),
                        ('multiclass', 'binary'),
@@ -286,7 +286,7 @@ class SVM(_SVM):
             debug("SG_", "Creating labels instance")
 
         if self.__is_regression__:
-            labels_ = N.asarray(targets_sa.value, dtype='double')
+            labels_ = np.asarray(targets_sa.value, dtype='double')
         else:
             ul = targets_sa.unique
             # ul.sort()
@@ -361,13 +361,13 @@ class SVM(_SVM):
                 #     ie do not rescale automagically by the number of samples
                 #if len(Cs) == 2 and not ('regression' in self.__tags__) and len(ul) == 2:
                 #    # we were given two Cs
-                #    if N.max(C) < 0 and N.min(C) < 0:
+                #    if np.max(C) < 0 and np.min(C) < 0:
                 #        # and both are requested to be 'scaled' TODO :
                 #        # provide proper 'features' to the parameters,
                 #        # so we could specify explicitely if to scale
                 #        # them by the number of samples here
-                #        nl = [N.sum(labels_ == _labels_dict[l]) for l in ul]
-                #        ratio = N.sqrt(float(nl[1]) / nl[0])
+                #        nl = [np.sum(labels_ == _labels_dict[l]) for l in ul]
+                #        ratio = np.sqrt(float(nl[1]) / nl[0])
                 #        #ratio = (float(nl[1]) / nl[0])
                 #        Cs[0] *= ratio
                 #        Cs[1] /= ratio
@@ -446,7 +446,7 @@ class SVM(_SVM):
 
         # Assign training confusion right away here since we are ready
         # to do so.
-        # XXX TODO use some other state variable like 'trained_targets' and
+        # XXX TODO use some other conditional attribute like 'trained_targets' and
         #     use it within base Classifier._posttrain to assign predictions
         #     instead of duplicating code here
         # XXX For now it can be done only for regressions since labels need to
@@ -528,7 +528,7 @@ class SVM(_SVM):
             predictions = values
         else:
             if len(self._attrmap.keys()) == 2:
-                predictions = N.sign(values)
+                predictions = np.sign(values)
             else:
                 predictions = values
 
@@ -539,7 +539,7 @@ class SVM(_SVM):
             if __debug__:
                 debug("SG__", "Tuned predictions %s" % predictions)
 
-        # store state variable
+        # store conditional attribute
         # TODO: extract values properly for multiclass SVMs --
         #       ie 1 value per label or pairs for all 1-vs-1 classifications
         self.ca.estimates = values
@@ -634,7 +634,7 @@ class SVM(_SVM):
     traindataset = property(fget=lambda self: self.__traindataset)
     """Dataset which was used for training
 
-    TODO -- might better become state variable I guess"""
+    TODO -- might better become conditional attribute I guess"""
 
 
 

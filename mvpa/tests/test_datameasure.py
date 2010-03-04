@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA SplittingSensitivityAnalyzer"""
 
-import numpy as N
+import numpy as np
 
 from mvpa.testing import *
 from mvpa.testing.clfs import *
@@ -31,7 +31,7 @@ from mvpa.mappers.fx import sumofabs_sample, absolute_features, FxMapper, \
 from mvpa.datasets.splitters import NFoldSplitter, NoneSplitter
 
 from mvpa.misc.transformers import Absolute, \
-     _second_axis_sum_of_abs, DistPValue
+     DistPValue
 
 from mvpa.measures.base import SplitFeaturewiseDatasetMeasure
 from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
@@ -65,14 +65,14 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # compute scores
         f = dsm(data)
         # check if nothing evil is done to dataset
-        self.failUnless(N.all(data.samples == datass))
+        self.failUnless(np.all(data.samples == datass))
         self.failUnless(f.shape == (1, data.nfeatures))
         self.failUnless(abs(f.samples[0, 1]) <= 1e-12, # some small value
             msg="Failed test with value %g instead of != 0.0" % f.samples[0, 1])
         self.failUnless(f[0] > 0.1)     # some reasonably large value
 
         # we should not have NaNs
-        self.failUnless(not N.any(N.isnan(f)))
+        self.failUnless(not np.any(np.isnan(f)))
 
 
 
@@ -136,8 +136,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         sens_ulabels = sens.sa['targets'].unique
         # Some labels might be pairs(tuples) so ndarray would be of
         # dtype object and we would need to get them all
-        if sens_ulabels.dtype is N.dtype('object'):
-            sens_ulabels = N.unique(
+        if sens_ulabels.dtype is np.dtype('object'):
+            sens_ulabels = np.unique(
                 reduce(lambda x,y: x+y, [list(x) for x in sens_ulabels]))
 
         assert_array_equal(sens_ulabels, ds.sa['targets'].unique)
@@ -170,7 +170,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         # Since  now we have per split and possibly per label -- lets just find
         # mean per each feature per label across splits
-        sensm = FxMapper('samples', lambda x: N.sum(x),
+        sensm = FxMapper('samples', lambda x: np.sum(x),
                          uattrs=['targets'])(sens)
         sensgm = maxofabs_sample()(sensm)    # global max of abs of means
 
@@ -202,12 +202,12 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 if lndim == 1: # just a single label
                     self.failUnless(label in ulabels)
 
-                    ilabel_all = N.where(ds.fa.targets == label)[0]
+                    ilabel_all = np.where(ds.fa.targets == label)[0]
                     # should have just 1 feature for the label
                     self.failUnlessEqual(len(ilabel_all), 1)
                     ilabel = ilabel_all[0]
 
-                    maxsensi = N.argmax(sens1) # index of max sensitivity
+                    maxsensi = np.argmax(sens1) # index of max sensitivity
                     self.failUnlessEqual(maxsensi, ilabel,
                         "Maximal sensitivity for %s was found in %i whenever"
                         " original feature was %i for nonbogus features %s"
@@ -215,8 +215,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 elif lndim == 2 and labels1.shape[1] == 2: # pair of labels
                     # we should have highest (in abs) coefficients in
                     # those two labels
-                    maxsensi2 = N.argsort(N.abs(sens1))[0][-2:]
-                    ilabel2 = [N.where(ds.fa.targets == l)[0][0]
+                    maxsensi2 = np.argsort(np.abs(sens1))[0][-2:]
+                    ilabel2 = [np.where(ds.fa.targets == l)[0][0]
                                     for l in label]
                     self.failUnlessEqual(
                         set(maxsensi2), set(ilabel2),
@@ -297,7 +297,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # and lets look at all sensitivities
         ds2 = datasets['uni4large'].copy()
         zscore(ds2, param_est=('targets', ['L2', 'L3']))
-        ds2 = ds2[N.logical_or(ds2.sa.targets == 'L0', ds2.sa.targets == 'L1')]
+        ds2 = ds2[np.logical_or(ds2.sa.targets == 'L0', ds2.sa.targets == 'L1')]
 
         senssplit = sana_split(ds2)
         sensfull = sana_full(ds2)
@@ -309,7 +309,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # manually we obtain the same
         dmap = (-1 * senssplit.samples[1]  + senssplit.samples[0]) \
                - sensfull.samples
-        self.failUnless((N.abs(dmap) <= 1e-10).all())
+        self.failUnless((np.abs(dmap) <= 1e-10).all())
         #print "____"
         #print senssplit
         #print SMLR().get_sensitivity_analyzer(combiner=None)(ds2)
@@ -346,7 +346,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         sana = SplitFeaturewiseDatasetMeasure(
             analyzer=SMLR(
               fit_all_weights=True).get_sensitivity_analyzer(),
-            splitter=NoneSplitter(nperlabel=0.25, mode='first',
+            splitter=NoneSplitter(npertarget=0.25, mode='first',
                                   nrunspersplit=2),
             enable_ca=['splits', 'sensitivities'])
         sens = sana(ds)
@@ -355,11 +355,11 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                   ds.nfeatures))
         splits = sana.ca.splits
         self.failUnlessEqual(len(splits), 2)
-        self.failUnless(N.all([s[0].nsamples == ds.nsamples/4 for s in splits]))
+        self.failUnless(np.all([s[0].nsamples == ds.nsamples/4 for s in splits]))
         # should have used different samples
-        self.failUnless(N.any([splits[0][0].sa.origids != splits[1][0].sa.origids]))
+        self.failUnless(np.any([splits[0][0].sa.origids != splits[1][0].sa.origids]))
         # and should have got different sensitivities
-        self.failUnless(N.any(sens[0] != sens[1]))
+        self.failUnless(np.any(sens[0] != sens[1]))
 
 
         #skip_if_no_external('scipy')
@@ -372,7 +372,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         #boosted_sana = SplitFeaturewiseDatasetMeasure(
         #    analyzer=SVM().get_sensitivity_analyzer(
         #       transformer=DistPValue(fpp=0.05)),
-        #    splitter=NoneSplitter(nperlabel=0.8, mode='first', nrunspersplit=2),
+        #    splitter=NoneSplitter(npertarget=0.8, mode='first', nrunspersplit=2),
         #    enable_ca=['splits', 'sensitivities'])
         ## lets create feature selector
         #fsel = RangeElementSelector(upper=0.05, lower=0.95, inclusive=True)
@@ -435,7 +435,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                       enable_ca=['selected_ids',
                                                      'selections_ids'])
 
-        od, otd = fs(self.dataset)
+        od = fs(self.dataset)
 
         self.failUnless(fs.combiner == 'union')
         self.failUnless(len(fs.ca.selections_ids))
@@ -456,7 +456,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                       enable_ca=['selected_ids',
                                                      'selections_ids'])
         # simply run it for now -- can't think of additional tests
-        od, otd = fs(self.dataset)
+        od = fs(self.dataset)
 
 
 

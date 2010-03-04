@@ -10,10 +10,10 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import warning
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 from mvpa.misc.param import Parameter
 from mvpa.base.types import asobjarray
 from mvpa.measures.base import Sensitivity
@@ -29,7 +29,7 @@ class LinearSVMWeights(Sensitivity):
     _ATTRIBUTE_COLLECTIONS = ['params']
 
     # XXX TODO: should become just as sa may be?
-    biases = StateVariable(enabled=True,
+    biases = ConditionalAttribute(enabled=True,
                            doc="Offsets of separating hyper-planes")
 
     split_weights = Parameter(False, allowedtype='bool',
@@ -68,9 +68,9 @@ class LinearSVMWeights(Sensitivity):
         #            (str(clf), nr_class) +
         #            " classes. Make sure that it is what you intended to do" )
 
-        svcoef = N.matrix(model.get_sv_coef())
-        svs = N.matrix(model.get_sv())
-        rhos = N.asarray(model.get_rho())
+        svcoef = np.matrix(model.get_sv_coef())
+        svs = np.matrix(model.get_sv())
+        rhos = np.asarray(model.get_rho())
 
         self.ca.biases = rhos
         if self.params.split_weights:
@@ -91,7 +91,7 @@ class LinearSVMWeights(Sensitivity):
                 senses[ds_labels.index(
                             clf._attrmap.to_literal(svm_labels[i]))] = \
                                 (l(svcoef[:, c_] * svs[c_, :])).A[0]
-            weights = N.array(senses)
+            weights = np.array(senses)
             sens_labels = svm_labels
         else:
             # XXX yoh: .mean() is effectively
@@ -119,10 +119,10 @@ class LinearSVMWeights(Sensitivity):
                 NSVs_perclass = model.get_n_sv()
                 # indices where each class starts in each row of SVs
                 # name is after similar variable in libsvm internals
-                nz_start = N.cumsum([0] + NSVs_perclass[:-1])
+                nz_start = np.cumsum([0] + NSVs_perclass[:-1])
                 nz_end = nz_start + NSVs_perclass
                 # reserve storage
-                weights = N.zeros((npairs, svs.shape[1]))
+                weights = np.zeros((npairs, svs.shape[1]))
                 ipair = 0               # index of the pair
                 """
                 // classifier (i,j): coefficients with
@@ -132,7 +132,7 @@ class LinearSVMWeights(Sensitivity):
                 sens_labels = []
                 for i in xrange(nr_class):
                     for j in xrange(i+1, nr_class):
-                        weights[ipair, :] = N.asarray(
+                        weights[ipair, :] = np.asarray(
                             svcoef[j-1, nz_start[i]:nz_end[i]]
                             * svs[nz_start[i]:nz_end[i]]
                             +
@@ -151,7 +151,7 @@ class LinearSVMWeights(Sensitivity):
                   (nr_class, str(model.get_n_sv())) + \
                   " SVcoefshape=%s SVs.shape=%s Rhos=%s." % \
                   (svcoef.shape, svs.shape, rhos) + \
-                  " Result: min=%f max=%f" % (N.min(weights), N.max(weights)))
+                  " Result: min=%f max=%f" % (np.min(weights), np.max(weights)))
 
         # and we should have prepared the labels
         assert(sens_labels is not None)

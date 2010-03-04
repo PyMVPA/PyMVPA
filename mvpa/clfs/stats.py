@@ -10,10 +10,10 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import externals, warning
-from mvpa.misc.state import ClassWithCollections, StateVariable
+from mvpa.misc.state import ClassWithCollections, ConditionalAttribute
 
 if __debug__:
     from mvpa.base import debug
@@ -32,7 +32,7 @@ class Nonparametric(object):
         dist_samples : ndarray
           Samples to be used to assess the distribution.
         """
-        self._dist_samples = N.ravel(dist_samples)
+        self._dist_samples = np.ravel(dist_samples)
 
 
     @staticmethod
@@ -43,7 +43,7 @@ class Nonparametric(object):
     def cdf(self, x):
         """Returns the cdf value at `x`.
         """
-        return N.vectorize(lambda v:(self._dist_samples <= v).mean())(x)
+        return np.vectorize(lambda v:(self._dist_samples <= v).mean())(x)
 
 
 def _pvalue(x, cdf_func, tail, return_tails=False, name=None):
@@ -63,14 +63,14 @@ def _pvalue(x, cdf_func, tail, return_tails=False, name=None):
       1s if value was from the right tail, and 0 if the value was
       from the left tail.
     """
-    is_scalar = N.isscalar(x)
+    is_scalar = np.isscalar(x)
     if is_scalar:
         x = [x]
 
     cdf = cdf_func(x)
 
     if __debug__ and 'CHECK_STABILITY' in debug.active:
-        cdf_min, cdf_max = N.min(cdf), N.max(cdf)
+        cdf_min, cdf_max = np.min(cdf), np.max(cdf)
         if cdf_min < 0 or cdf_max > 1.0:
             s = ('', ' for %s' % name)[int(name is not None)]
             warning('Stability check of cdf %s failed%s. Min=%s, max=%s' % \
@@ -78,15 +78,15 @@ def _pvalue(x, cdf_func, tail, return_tails=False, name=None):
 
     # no escape but to assure that CDF is in the right range. Some
     # distributions from scipy tend to jump away from [0,1]
-    cdf = N.clip(cdf, 0, 1.0)
+    cdf = np.clip(cdf, 0, 1.0)
 
     if tail == 'left':
         if return_tails:
-            right_tail = N.zeros(cdf.shape, dtype=bool)
+            right_tail = np.zeros(cdf.shape, dtype=bool)
     elif tail == 'right':
         cdf = 1 - cdf
         if return_tails:
-            right_tail = N.ones(cdf.shape, dtype=bool)
+            right_tail = np.ones(cdf.shape, dtype=bool)
     elif tail in ('any', 'both'):
         right_tail = (cdf >= 0.5)
         cdf[right_tail] = 1.0 - cdf[right_tail]
@@ -96,7 +96,7 @@ def _pvalue(x, cdf_func, tail, return_tails=False, name=None):
             cdf *= 2
 
     # Assure that NaNs didn't get significant value
-    cdf[N.isnan(x)] = 1.0
+    cdf[np.isnan(x)] = 1.0
     if is_scalar: res = cdf[0]
     else:         res = cdf
 
@@ -198,11 +198,11 @@ class MCNullDist(NullDist):
     them to be bimodal (or actually multimodal) in many scenarios.
     """
 
-    dist_samples = StateVariable(enabled=False,
+    dist_samples = ConditionalAttribute(enabled=False,
                                  doc='Samples obtained for each permutation')
 
     def __init__(self, dist_class=Nonparametric, permutations=100,
-                 perchunk=False, **kwargs):
+                 chunks_attr=None, **kwargs):
         """Initialize Monte-Carlo Permutation Null-hypothesis testing
 
         Parameters
@@ -215,8 +215,10 @@ class MCNullDist(NullDist):
         permutations : int
           This many permutations of label will be performed to
           determine the distribution under the null hypothesis.
-        perchunk: bool
-            If True, only permutes labels within each chunk
+        chunks_attr : None or string
+            If not None, permutes labels within the chunks,
+            i.e. blocks of data having the same value of
+            `chunks_attr`.
         """
         NullDist.__init__(self, **kwargs)
 
@@ -227,12 +229,12 @@ class MCNullDist(NullDist):
         """Number of permutations to compute the estimate the null
         distribution."""
 
-        self.__perchunk = perchunk
+        self.__chunks_attr = chunks_attr
 
     def __repr__(self, prefixes=[]):
         prefixes_ = ["permutations=%s" % self.__permutations]
-        if self.__perchunk:
-            prefixes_ += ['perchunk=True']
+        if self.__chunks_attr:
+            prefixes_ += ['chunks_attr=%r' % self.__chunks_attr]
         if self._dist_class != Nonparametric:
             prefixes_.insert(0, 'dist_class=%s' % `self._dist_class`)
         return super(MCNullDist, self).__repr__(
@@ -271,7 +273,7 @@ class MCNullDist(NullDist):
             # null-distribution of transfer errors can be reduced dramatically
             # when the *right* permutations (the ones that matter) are done.
             permuted_wdata = wdata.copy('shallow')
-            permuted_wdata.permute_targets(perchunk=self.__perchunk)
+            permuted_wdata.permute_targets(chunks_attr=self.__chunks_attr)
 
             # decide on the arguments to measure
             if not vdata is None:
@@ -282,7 +284,7 @@ class MCNullDist(NullDist):
             # compute and store the measure of this permutation
             # assume it has `TransferError` interface
             res = measure(*measure_args)
-            res = N.asanyarray(res)
+            res = np.asanyarray(res)
             dist_samples.append(res)
 
         if __debug__:
@@ -290,7 +292,7 @@ class MCNullDist(NullDist):
 
 
         # store samples
-        self.ca.dist_samples = dist_samples = N.asarray(dist_samples)
+        self.ca.dist_samples = dist_samples = np.asarray(dist_samples)
 
         # fit distribution per each element
 
@@ -300,10 +302,10 @@ class MCNullDist(NullDist):
         # if just 1 dim, original data was scalar, just create an
         # artif dimension for it
         if nshape == 1:
-            dist_samples = dist_samples[:, N.newaxis]
+            dist_samples = dist_samples[:, np.newaxis]
 
         # fit per each element.
-        # XXX could be more elegant? may be use N.vectorize?
+        # XXX could be more elegant? may be use np.vectorize?
         dist_samples_rs = dist_samples.reshape((shape[0], -1))
         dist = []
         for samples in dist_samples_rs.T:
@@ -324,11 +326,11 @@ class MCNullDist(NullDist):
             # default parameters. But then what about Nonparametric
             raise RuntimeError, "Distribution has to be fit first"
 
-        is_scalar = N.isscalar(x)
+        is_scalar = np.isscalar(x)
         if is_scalar:
             x = [x]
 
-        x = N.asanyarray(x)
+        x = np.asanyarray(x)
         xshape = x.shape
         # assure x is a 1D array now
         x = x.reshape((-1,))
@@ -340,7 +342,7 @@ class MCNullDist(NullDist):
 
         # extract cdf values per each element
         cdfs = [ dist.cdf(v) for v, dist in zip(x, self._dist) ]
-        return N.array(cdfs).reshape(xshape)
+        return np.array(cdfs).reshape(xshape)
 
 
     def clean(self):
@@ -360,7 +362,7 @@ class FixedNullDist(NullDist):
 
     All distributions from SciPy's 'stats' module can be used with this class.
 
-    >>> import numpy as N
+    >>> import numpy as np
     >>> from scipy import stats
     >>> from mvpa.clfs.stats import FixedNullDist
     >>>
@@ -368,11 +370,11 @@ class FixedNullDist(NullDist):
     >>> dist.p(2)
     0.5
     >>>
-    >>> dist.cdf(N.arange(5))
+    >>> dist.cdf(np.arange(5))
     array([ 0.30853754,  0.40129367,  0.5       ,  0.59870633,  0.69146246])
     >>>
     >>> dist = FixedNullDist(stats.norm(loc=2, scale=4), tail='right')
-    >>> dist.p(N.arange(5))
+    >>> dist.p(np.arange(5))
     array([ 0.69146246,  0.59870633,  0.5       ,  0.40129367,  0.30853754])
     """
     def __init__(self, dist, **kwargs):
@@ -417,7 +419,7 @@ class AdaptiveNullDist(FixedNullDist):
         try:
             nfeatures = len(measure.feature_ids)
         except ValueError:              # XXX
-            nfeatures = N.prod(wdata.shape[1:])
+            nfeatures = np.prod(wdata.shape[1:])
 
         dist_gen = self._dist
         if not hasattr(dist_gen, 'fit'): # frozen already
@@ -447,8 +449,8 @@ class AdaptiveRDist(AdaptiveNullDist):
     # here
     def cdf(self, x):
         cdf_ = self._dist.cdf(x)
-        bad_values = N.where(N.abs(cdf_)>1)
-        # XXX there might be better implementation (faster/elegant) using N.clip,
+        bad_values = np.where(np.abs(cdf_)>1)
+        # XXX there might be better implementation (faster/elegant) using np.clip,
         #     the only problem is that instability results might flip the sign
         #     arbitrarily
         if len(bad_values[0]):
@@ -467,7 +469,7 @@ class AdaptiveNormal(AdaptiveNullDist):
     """
 
     def _adapt(self, nfeatures, measure, wdata, vdata=None):
-        return (0, 1.0/N.sqrt(nfeatures)), {}
+        return (0, 1.0/np.sqrt(nfeatures)), {}
 
 
 if externals.exists('scipy'):
@@ -572,13 +574,13 @@ if externals.exists('scipy'):
             except IndexError:
                 raise ValueError, "Not enough input arguments."
             if not self._argcheck(*args) or scale <= 0:
-                return N.inf
-            x = N.asarray((x-loc) / scale)
+                return np.inf
+            x = np.asarray((x-loc) / scale)
             cond0 = (x <= self.a) | (x >= self.b)
-            if (N.any(cond0)):
-                return N.inf
+            if (np.any(cond0)):
+                return np.inf
             else:
-                return self._nnlf(x, *args) + len(x)*N.log(scale)
+                return self._nnlf(x, *args) + len(x)*np.log(scale)
 
         def fit(self, data, *args, **kwds):
             loc0, scale0 = map(kwds.get, ['loc', 'scale'], [0.0, 1.0])
@@ -603,7 +605,7 @@ if externals.exists('scipy'):
                 x0 = x0 + (scale0,)
 
             opt_x = scipy.optimize.fmin(
-                self.nnlf, x0, args=(N.ravel(data),), disp=0)
+                self.nnlf, x0, args=(np.ravel(data),), disp=0)
 
             # reconstruct back
             i = 0
@@ -620,7 +622,7 @@ if externals.exists('scipy'):
                 fargs[i] = opt_x[i]
 
             #raise ValueError
-            opt_x = N.hstack((fargs[:-2], (loc, scale)))
+            opt_x = np.hstack((fargs[:-2], (loc, scale)))
             return opt_x
 
 
@@ -655,7 +657,7 @@ if externals.exists('scipy'):
 
         Parameters
         ----------
-        data : N.ndarray
+        data : np.ndarray
           Array of the data for which to deduce the distribution. It has
           to be sufficiently large to make a reliable conclusion
         nsamples : int or None
@@ -691,7 +693,7 @@ if externals.exists('scipy'):
 
         Examples
         --------
-        >>> data = N.random.normal(size=(1000,1));
+        >>> data = np.random.normal(size=(1000,1));
         >>> matches = match_distribution(
         ...   data,
         ...   distributions=['rdist',
@@ -707,24 +709,24 @@ if externals.exists('scipy'):
             raise ValueError, 'Unknown kind of test %s. Known are %s' \
                   % (test, _KNOWN_TESTS)
 
-        data = N.ravel(data)
+        data = np.ravel(data)
         # data sampled
         if nsamples is not None:
             if __debug__:
                 debug('STAT', 'Sampling %d samples from data for the ' \
                       'estimation of the distributions parameters' % nsamples)
-            indexes_selected = (N.random.sample(nsamples)*len(data)).astype(int)
+            indexes_selected = (np.random.sample(nsamples)*len(data)).astype(int)
             data_selected = data[indexes_selected]
         else:
-            indexes_selected = N.arange(len(data))
+            indexes_selected = np.arange(len(data))
             data_selected = data
 
         p_thr = kwargs.get('p', 0.05)
         if test == 'p-roc':
             tail = kwargs.get('tail', 'both')
             data_p = _pvalue(data, Nonparametric(data).cdf, tail)
-            data_p_thr = N.abs(data_p) <= p_thr
-            true_positives = N.sum(data_p_thr)
+            data_p_thr = np.abs(data_p) <= p_thr
+            true_positives = np.sum(data_p_thr)
             if true_positives == 0:
                 raise ValueError, "Provided data has no elements in non-" \
                       "parametric distribution under p<=%.3f. Please " \
@@ -782,9 +784,9 @@ if externals.exists('scipy'):
                 if test == 'p-roc':
                     cdf_func = lambda x: dist_gen_.cdf(x, *dist_params)
                     # We need to compare detection under given p
-                    cdf_p = N.abs(_pvalue(data, cdf_func, tail, name=dist_gen))
+                    cdf_p = np.abs(_pvalue(data, cdf_func, tail, name=dist_gen))
                     cdf_p_thr = cdf_p <= p_thr
-                    D, p = (N.sum(N.abs(data_p_thr - cdf_p_thr))*1.0/true_positives, 1)
+                    D, p = (np.sum(np.abs(data_p_thr - cdf_p_thr))*1.0/true_positives, 1)
                     if __debug__:
                         res_sum = 'D=%.2f' % D
                 elif test == 'kstest':
@@ -799,7 +801,7 @@ if externals.exists('scipy'):
                           % (d, str(e)))
                 continue
 
-            if p > p_thr and not N.isnan(D):
+            if p > p_thr and not np.isnan(D):
                 results += [ (D, dist_gen, dist_name, dist_params) ]
                 if __debug__:
                     debug('STAT_',
@@ -832,7 +834,7 @@ if externals.exists('scipy'):
 
 
     if externals.exists('pylab'):
-        import pylab as P
+        import pylab as pl
 
         ##REF: Name was automagically refactored
         def plot_distribution_matches(data, matches, nbins=31, nbest=5,
@@ -842,7 +844,7 @@ if externals.exists('scipy'):
 
             Parameters
             ----------
-            data : N.ndarray
+            data : np.ndarray
               Data which was used to obtain the matches
             matches : list of tuples
               Sorted matches as provided by match_distribution
@@ -875,18 +877,18 @@ if externals.exists('scipy'):
             list of lines
             """
 
-            hist = P.hist(data, nbins, normed=1, align='center')
-            data_range = [N.min(data), N.max(data)]
+            hist = pl.hist(data, nbins, normed=1, align='center')
+            data_range = [np.min(data), np.max(data)]
 
             # x's
             x = hist[1]
             dx = x[expand_tails] - x[0] # how much to expand tails by
-            x = N.hstack((x[:expand_tails] - dx, x, x[-expand_tails:] + dx))
+            x = np.hstack((x[:expand_tails] - dx, x, x[-expand_tails:] + dx))
 
             nonparam = Nonparametric(data)
             # plot cdf
             if plot_cdf:
-                P.plot(x, nonparam.cdf(x), 'k--', linewidth=1)
+                pl.plot(x, nonparam.cdf(x), 'k--', linewidth=1)
 
             p_thr = p
 
@@ -894,7 +896,7 @@ if externals.exists('scipy'):
             data_p_thr = (data_p <= p_thr).ravel()
 
             x_p = _pvalue(x, Nonparametric(data).cdf, tail)
-            x_p_thr = N.abs(x_p) <= p_thr
+            x_p_thr = np.abs(x_p) <= p_thr
             # color bars which pass thresholding in red
             for thr, bar_ in zip(x_p_thr[expand_tails:], hist[2]):
                 bar_.set_facecolor(('w','r')[int(thr)])
@@ -914,31 +916,31 @@ if externals.exists('scipy'):
                 if legend > 1:
                     label += '(D=%.2f)' % (D)
 
-                xcdf_p = N.abs(_pvalue(x, dist.cdf, tail))
+                xcdf_p = np.abs(_pvalue(x, dist.cdf, tail))
                 xcdf_p_thr = (xcdf_p <= p_thr).ravel()
 
                 if p is not None and legend > 2:
                     # We need to compare detection under given p
-                    data_cdf_p = N.abs(_pvalue(data, dist.cdf, tail))
+                    data_cdf_p = np.abs(_pvalue(data, dist.cdf, tail))
                     data_cdf_p_thr = (data_cdf_p <= p_thr).ravel()
 
                     # true positives
-                    tp = N.logical_and(data_cdf_p_thr, data_p_thr)
+                    tp = np.logical_and(data_cdf_p_thr, data_p_thr)
                     # false positives
-                    fp = N.logical_and(data_cdf_p_thr, ~data_p_thr)
+                    fp = np.logical_and(data_cdf_p_thr, ~data_p_thr)
                     # false negatives
-                    fn = N.logical_and(~data_cdf_p_thr, data_p_thr)
+                    fn = np.logical_and(~data_cdf_p_thr, data_p_thr)
 
                     label += ' tp/fp/fn=%d/%d/%d)' % \
-                            tuple(map(N.sum, [tp, fp, fn]))
+                            tuple(map(np.sum, [tp, fp, fn]))
 
                 pdf = dist.pdf(x)
-                line = P.plot(x, pdf, '-', linewidth=2, label=label)
+                line = pl.plot(x, pdf, '-', linewidth=2, label=label)
                 color = line[0].get_color()
 
                 if plot_cdf:
                     cdf = dist.cdf(x)
-                    P.plot(x, cdf, ':', linewidth=1, color=color, label=label)
+                    pl.plot(x, cdf, ':', linewidth=1, color=color, label=label)
 
                 # TODO: decide on tp/fp/fn by not centers of the bins but
                 #       by the values in data in the ranges covered by
@@ -946,27 +948,27 @@ if externals.exists('scipy'):
                 #       mentioned in the legend
                 if p is not None:
                     # true positives
-                    xtp = N.logical_and(xcdf_p_thr, x_p_thr)
+                    xtp = np.logical_and(xcdf_p_thr, x_p_thr)
                     # false positives
-                    xfp = N.logical_and(xcdf_p_thr, ~x_p_thr)
+                    xfp = np.logical_and(xcdf_p_thr, ~x_p_thr)
                     # false negatives
-                    xfn = N.logical_and(~xcdf_p_thr, x_p_thr)
+                    xfn = np.logical_and(~xcdf_p_thr, x_p_thr)
 
                     # no need to plot tp explicitely -- marked by color of the bar
-                    # P.plot(x[xtp], pdf[xtp], 'o', color=color)
-                    P.plot(x[xfp], pdf[xfp], '^', color=color)
-                    P.plot(x[xfn], pdf[xfn], 'v', color=color)
+                    # pl.plot(x[xtp], pdf[xtp], 'o', color=color)
+                    pl.plot(x[xfp], pdf[xfp], '^', color=color)
+                    pl.plot(x[xfn], pdf[xfn], 'v', color=color)
 
                 lines.append(line)
                 labels.append(label)
 
             if legend:
-                P.legend(lines, labels)
+                pl.legend(lines, labels)
 
             return (hist, lines)
 
     #if True:
-    #    data = N.random.normal(size=(1000,1));
+    #    data = np.random.normal(size=(1000,1));
     #    matches = match_distribution(
     #        data,
     #        distributions=['scipy',
@@ -974,7 +976,7 @@ if externals.exists('scipy'):
     #                                 'scale': 1.0,
     #                                 'loc': 0.0})],
     #        nsamples=30, test='p-roc', p=0.05)
-    #    P.figure(); plot_distribution_matches(data, matches, nbins=101,
+    #    pl.figure(); plot_distribution_matches(data, matches, nbins=101,
     #                                        p=0.05, legend=4, nbest=5)
 
 
@@ -1001,10 +1003,10 @@ def auto_null_dist(dist):
 # if no scipy, we need nanmean
 def _chk_asarray(a, axis):
     if axis is None:
-        a = N.ravel(a)
+        a = np.ravel(a)
         outaxis = 0
     else:
-        a = N.asarray(a)
+        a = np.asarray(a)
         outaxis = axis
     return a, outaxis
 
@@ -1026,7 +1028,7 @@ def nanmean(x, axis=0):
     x, axis = _chk_asarray(x, axis)
     x = x.copy()
     Norig = x.shape[axis]
-    factor = 1.0 - N.sum(N.isnan(x), axis)*1.0/Norig
+    factor = 1.0 - np.sum(np.isnan(x), axis)*1.0/Norig
 
-    x[N.isnan(x)] = 0
-    return N.mean(x, axis)/factor
+    x[np.isnan(x)] = 0
+    return np.mean(x, axis)/factor

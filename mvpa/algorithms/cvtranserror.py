@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.support.copy import deepcopy
 
@@ -18,7 +18,7 @@ from mvpa.measures.base import DatasetMeasure
 from mvpa.datasets.base import Dataset
 from mvpa.datasets.splitters import NoneSplitter
 from mvpa.base import warning
-from mvpa.misc.state import StateVariable, Harvestable
+from mvpa.misc.state import ConditionalAttribute, Harvestable
 from mvpa.misc.transformers import grand_mean
 
 if __debug__:
@@ -37,19 +37,19 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
     cross-validation folds.
     """
 
-    results = StateVariable(enabled=False, doc=
+    results = ConditionalAttribute(enabled=False, doc=
        """Store individual results in the state""")
-    splits = StateVariable(enabled=False, doc=
+    splits = ConditionalAttribute(enabled=False, doc=
        """Store the actual splits of the data. Can be memory expensive""")
-    transerrors = StateVariable(enabled=False, doc=
+    transerrors = ConditionalAttribute(enabled=False, doc=
        """Store copies of transerrors at each step. If enabled -
        operates on clones of transerror, but for the last split original
        transerror is used""")
-    confusion = StateVariable(enabled=False, doc=
+    confusion = ConditionalAttribute(enabled=False, doc=
        """Store total confusion matrix (if available)""")
-    training_confusion = StateVariable(enabled=False, doc=
+    training_confusion = ConditionalAttribute(enabled=False, doc=
        """Store total training confusion matrix (if available)""")
-    samples_error = StateVariable(enabled=False,
+    samples_error = ConditionalAttribute(enabled=False,
                         doc="Per sample errors.")
 
 
@@ -81,12 +81,12 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
           testdataset for RFE to determine stopping point).
         harvest_attribs : list of str
           What attributes of call to store and return within
-          harvested state variable
+          harvested conditional attribute
         copy_attribs : None or str, optional
           Force copying values of attributes on harvesting
         samples_idattr : str, optional
           What samples attribute to use to identify and store samples_errors
-          state variable
+          conditional attribute
         **kwargs
           All additional arguments are passed to the
           :class:`~mvpa.measures.base.DatasetMeasure` base class.
@@ -241,7 +241,7 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
             self.__transerror.ca.reset_changed_temporarily()
 
         self.ca.results = results
-        """Store state variable if it is enabled"""
+        """Store conditional attribute if it is enabled"""
         results = Dataset(results, sa={'cv_fold': splitinfo})
         return results
 

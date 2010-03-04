@@ -21,7 +21,7 @@ __docformat__ = 'restructuredtext'
 from mvpa.base import externals
 
 import sys
-import numpy as N
+import numpy as np
 from mvpa.support.copy import deepcopy
 from mvpa.misc.support import Event
 from mvpa.base.collections import DatasetAttribute
@@ -30,7 +30,7 @@ from mvpa.base.dataset import _expand_attribute
 if __debug__:
     from mvpa.base import debug
 
-if externals.exists('nifti', raiseException=True):
+if externals.exists('nifti', raise_=True):
     from nifti import NiftiImage
 
 from mvpa.datasets.base import Dataset
@@ -147,7 +147,7 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
     niftimask = _load_anynifti(mask)
     if niftimask is None:
         pass
-    elif isinstance(niftimask, N.ndarray):
+    elif isinstance(niftimask, np.ndarray):
         mask = niftimask
     else:
         mask = _get_nifti_data(niftimask)
@@ -197,8 +197,8 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
                 tuple([i for i in reversed(niftisamples.voxdim)])
         # TODO extend with the unit
     if tprefix is not None:
-        ds.sa[tprefix + '_indices'] = N.arange(len(ds), dtype='int')
-        ds.sa[tprefix + '_coords'] = N.arange(len(ds), dtype='float') \
+        ds.sa[tprefix + '_indices'] = np.arange(len(ds), dtype='int')
+        ds.sa[tprefix + '_coords'] = np.arange(len(ds), dtype='float') \
                                      * niftisamples.header['pixdim'][4]
         # TODO extend with the unit
 
@@ -267,12 +267,12 @@ def _load_anynifti(src, ensure=False, enforce_dim=None):
         if __debug__:
             # lets check if they all have the same dimensionality
             shapes = [s.data.shape for s in srcs]
-            if not N.all([s == shapes[0] for s in shapes]):
+            if not np.all([s == shapes[0] for s in shapes]):
                 raise ValueError, \
                       "Input volumes contain variable number of dimensions:" \
                       " %s" % (shapes,)
         # Combine them all into a single beast
-        nifti = NiftiImage(N.array([s.asarray() for s in srcs]),
+        nifti = NiftiImage(np.array([s.asarray() for s in srcs]),
                            srcs[0].header)
     elif ensure:
         raise ValueError, "Cannot load NIfTI from %s" % (src,)

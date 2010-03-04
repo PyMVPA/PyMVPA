@@ -15,7 +15,7 @@ set and include important features successively.
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 from mvpa.support.copy import copy
 
 from mvpa.featsel.base import FeatureSelection
@@ -23,7 +23,7 @@ from mvpa.featsel.helpers import NBackHistoryStopCrit, \
                                  FixedNElementTailSelector, \
                                  BestDetector
 
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 
 if __debug__:
     from mvpa.base import debug
@@ -47,7 +47,7 @@ class IFS(FeatureSelection):
     is reached.
     """
 
-    errors = StateVariable()
+    errors = ConditionalAttribute()
 
     def __init__(self,
                  data_measure,
@@ -86,7 +86,7 @@ class IFS(FeatureSelection):
         self.__stopping_criterion = stopping_criterion
 
 
-    def __call__(self, dataset, testdataset):
+    def _call(self, dataset, testdataset):
         """Proceed and select the features recursively eliminating less
         important ones.
 
@@ -139,7 +139,7 @@ class IFS(FeatureSelection):
                 # compute data measure on this feature set
                 measures.append(self.__data_measure(tmp_dataset))
 
-            measures = [N.asscalar(m) for m in measures]
+            measures = [np.asscalar(m) for m in measures]
             # Select promissing feature candidates (staging)
             # IDs are only applicable to the current set of feature candidates
             tmp_staging_ids = self.__feature_selector(measures)

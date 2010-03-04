@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA perturbation sensitivity analyzer."""
 
-import numpy as N
+import numpy as np
 from mvpa.testing import *
 from mvpa.testing.clfs import *
 
@@ -22,12 +22,12 @@ from mvpa.clfs.transerror import TransferError
 class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
 
     def setUp(self):
-        data = N.random.standard_normal(( 100, 3, 4, 2 ))
-        labels = N.concatenate( ( N.repeat( 0, 50 ),
-                                  N.repeat( 1, 50 ) ) )
-        chunks = N.repeat( range(5), 10 )
-        chunks = N.concatenate( (chunks, chunks) )
-        mask = N.ones( (3, 4, 2), dtype='bool')
+        data = np.random.standard_normal(( 100, 3, 4, 2 ))
+        labels = np.concatenate( ( np.repeat( 0, 50 ),
+                                  np.repeat( 1, 50 ) ) )
+        chunks = np.repeat( range(5), 10 )
+        chunks = np.concatenate( (chunks, chunks) )
+        mask = np.ones( (3, 4, 2), dtype='bool')
         mask[0,0,0] = 0
         mask[1,3,1] = 0
         self.dataset = Dataset.from_wizard(samples=data, targets=labels,
@@ -40,7 +40,7 @@ class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
                 TransferError(sample_clf_lin),
                 NFoldSplitter(cvtype=1))
         # do perturbation analysis using gaussian noise
-        pa = NoisePerturbationSensitivity(cv, noise=N.random.normal)
+        pa = NoisePerturbationSensitivity(cv, noise=np.random.normal)
 
         # run analysis
         map = pa(self.dataset)
@@ -49,7 +49,7 @@ class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
         self.failUnless(map.nfeatures == self.dataset.nfeatures)
 
         # dataset is noise -> mean sensitivity should be zero
-        self.failUnless(-0.2 < N.mean(map) < 0.2)
+        self.failUnless(-0.2 < np.mean(map) < 0.2)
 
 
 def suite():

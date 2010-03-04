@@ -16,7 +16,7 @@ from mvpa.base import externals
 
 import unittest
 from mvpa.support.copy import deepcopy
-import numpy as N
+import numpy as np
 
 from mvpa.mappers.boxcar import BoxcarMapper
 from mvpa.mappers.wavelet import *
@@ -31,7 +31,7 @@ class WaveletMappersTests(unittest.TestCase):
         ds = datasets['uni2medium']
         d2d = ds.samples
         ws = 15                          # size of timeline for wavelet
-        sp = N.arange(ds.nsamples-ws*2) + ws
+        sp = np.arange(ds.nsamples-ws*2) + ws
 
         # create 3D instance (samples x timepoints x channels)
         bcm = BoxcarMapper(sp, ws)
@@ -74,8 +74,8 @@ class WaveletMappersTests(unittest.TestCase):
                 self.failUnlessEqual(dd_rev.shape, dd.shape,
                                      msg="Shape should be the same after iDWT")
 
-                diff = N.linalg.norm(dd - dd_rev)
-                ornorm = N.linalg.norm(dd)
+                diff = np.linalg.norm(dd - dd_rev)
+                ornorm = np.linalg.norm(dd)
                 self.failUnless(diff/ornorm < 1e-10)
 
 
@@ -86,7 +86,7 @@ class WaveletMappersTests(unittest.TestCase):
         ds = datasets['uni2large']
         d2d = ds.samples
         ws = 50                          # size of timeline for wavelet
-        sp = (N.arange(ds.nsamples - ws*2) + ws)[:4]
+        sp = (np.arange(ds.nsamples - ws*2) + ws)[:4]
 
         # create 3D instance (samples x timepoints x channels)
         bcm = BoxcarMapper(sp, ws)
@@ -114,8 +114,8 @@ class WaveletMappersTests(unittest.TestCase):
             self.failUnlessEqual(d3d_rev.shape, d3d.shape,
                                  msg="Shape should be the same after iDWT")
 
-            diff = N.linalg.norm(d3d - d3d_rev)
-            ornorm = N.linalg.norm(d3d)
+            diff = np.linalg.norm(d3d - d3d_rev)
+            ornorm = np.linalg.norm(d3d)
 
             skip_if_no_external('pywt wp reconstruct fixed')
             self.failUnless(diff/ornorm < 1e-10)
@@ -133,7 +133,7 @@ class WaveletMappersTests(unittest.TestCase):
         ds = datasets['uni2medium']
         d2d = ds.samples
         ws = 16                          # size of timeline for wavelet
-        sp = N.arange(ds.nsamples-ws*2) + ws
+        sp = np.arange(ds.nsamples-ws*2) + ws
 
         # create 3D instance (samples x timepoints x channels)
         bcm = BoxcarMapper(sp, ws)

@@ -70,21 +70,21 @@ for a sample might be totally unknown.
 
 This examples demonstrates the typical daily life of a classifier.
 
-  >>> import numpy as N
+  >>> import numpy as np
   >>> from mvpa.clfs.knn import kNN
   >>> from mvpa.datasets import dataset_wizard
-  >>> training = dataset_wizard(samples=N.array(
-  ...                                N.arange(100),ndmin=2, dtype='float').T,
+  >>> training = dataset_wizard(samples=np.array(
+  ...                                np.arange(100),ndmin=2, dtype='float').T,
   ...                    targets=[0] * 50 + [1] * 50)
-  >>> rand100 = N.random.rand(10)*100
-  >>> validation = dataset_wizard(samples=N.array(
+  >>> rand100 = np.random.rand(10)*100
+  >>> validation = dataset_wizard(samples=np.array(
   ...                                rand100, ndmin=2, dtype='float').T,
   ...                      targets=[ int(i>50) for i in rand100 ])
   >>> clf = kNN(k=10)
   >>> clf.train(training)
-  >>> N.mean(clf.predict(training.samples) == training.targets)
+  >>> np.mean(clf.predict(training.samples) == training.targets)
   1.0
-  >>> N.mean(clf.predict(validation.samples) == validation.targets)
+  >>> np.mean(clf.predict(validation.samples) == validation.targets)
   1.0
 
 Two datasets with 100 and 10 samples each are generated. Both datasets only
@@ -130,13 +130,13 @@ mention another feature common to all of them. While their interface is simple,
 classifiers are in no way limited to report only predictions. All classifiers
 implement an additional interface: Objects of any class that are derived from
 :class:`~mvpa.misc.state.ClassWithCollections` have attributes (we refer to
-such attributes as state variables), which are conditionally computed and
+such attributes as conditional attributes), which are conditionally computed and
 stored by PyMVPA. Such conditional storage and access is handy if a variable of
 interest might consume a lot of memory or needs intensive computation, and not
 needed in most (or in some) of the use cases.
 
 For instance, the :class:`~mvpa.clfs.base.Classifier` class defines the
-`trained_targets` state variable, which just stores the unique targets for which
+`trained_targets` conditional attribute, which just stores the unique targets for which
 the classifier was trained. Since `trained_targets` stores meaningful
 information only for a trained classifier, attempt to access
 'clf.ca.trained_targets' before training would result in an error,
@@ -151,7 +151,7 @@ information only for a trained classifier, attempt to access
 
 since the classifier has not seen the data yet and, thus, does not know the
 targets. In other words, it is not yet in the state to know anything about the
-targets. Any state variable can be enabled or disabled on per instance basis at
+targets. Any conditional attribute can be enabled or disabled on per instance basis at
 any time of the execution (see :class:`~mvpa.misc.state.ClassWithCollections`).
 
 To continue the last example, each classifier, or more precisely every
@@ -159,8 +159,8 @@ stateful object, can be asked to report existing state-related attributes:
 
   >>> list_with_verbose_explanations = clf.ca.listing
 
-'clf.ca' is an instance of :class:`~mvpa.misc.state.StateCollection` class
-which is a container for all state variables of the given class. To access (query
+'clf.ca' is an instance of :class:`~mvpa.misc.state.ConditionalAttributesCollection` class
+which is a container for all conditional attributes of the given class. To access (query
 the value or set the value if state is enabled), and enable or disable you
 should operate on `ca` collection (which is different from version prior
 '0.5.0' where you could query values directly from the object, i.e. `clf` in
@@ -177,14 +177,14 @@ this example)
   >>> clf.ca.disable('estimates')
 
 A string representation of the state collection mentioned above lists
-all state variables present accompanied with 2 markers: '+' for an
-enabled state variable, and '*' for a variable that stores some value
+all conditional attributes present accompanied with 2 markers: '+' for an
+enabled conditional attribute, and '*' for a variable that stores some value
 (but might have been disabled already and, therefore, would have no
 '+' and attempts to reassign it would result in no action).
 
 .. TODO: Refactor
 
-By default all classifiers provide state variables `estimates` and
+By default all classifiers provide conditional attributes `estimates` and
 `predictions`. The latter is simply the set of predictions that was returned
 by the last call to the objects :meth:`~mvpa.clfs.base.Classifier.predict`
 method. The former is heavily
@@ -202,7 +202,7 @@ Therefore all ca can be disabled or enabled (`ca.disable()`,
 
 States can be enabled or disabled during stateful object construction, if
 `enable_ca` or `disable_ca` (or both) arguments, which store the list
-of desired state variables names, passed to the object constructor. Keyword
+of desired conditional attributes names, passed to the object constructor. Keyword
 'all' can be used to select all known ca for that stateful object.
 
 
@@ -218,12 +218,12 @@ The :class:`~mvpa.clfs.transerror.TransferError` class provides a convenient
 way to determine the transfer error of a trained classifier on some validation
 dataset, i.e. the accuracy of the classifier's predictions on a novel,
 independent dataset. A :class:`~mvpa.clfs.transerror.TransferError` object is
-instanciated by passing a classifier object to the constructor.  Optionally a
+instantiated by passing a classifier object to the constructor.  Optionally a
 custom error function can be specified (see `errorfx` argument).
 
 To compute the transfer error simply call the object with a validation dataset.
 The computed error value is returned.
-:class:`~mvpa.clfs.transerror.TransferError` also supports a state variable
+:class:`~mvpa.clfs.transerror.TransferError` also supports a conditional attribute
 `confusion` that contains the full confusion matrix of the predictions made on
 the validation dataset. The confusion matrix is disabled by default.
 
@@ -344,10 +344,10 @@ alternative graphical representation of the confusion matrix
 via the :meth:`~mvpa.clfs.transerror.ConfusionMatrix.plot` method of a
 :class:`~mvpa.clfs.transerror.ConfusionMatrix`::
 
-  >>> import pylab as P
+  >>> import pylab as pl
   >>> cvterr.confusion.plot() \
   ... # doctest: +SKIP
-  >>> P.show() \
+  >>> pl.show() \
   ... # doctest: +SKIP
 
 .. image:: pics/confusion_matrix.*

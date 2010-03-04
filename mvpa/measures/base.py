@@ -19,10 +19,10 @@ has to be in some iterable container.
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 import mvpa.support.copy as copy
 
-from mvpa.misc.state import StateVariable, ClassWithCollections
+from mvpa.misc.state import ConditionalAttribute, ClassWithCollections
 from mvpa.misc.args import group_kwargs
 from mvpa.base.types import asobjarray
 
@@ -43,7 +43,7 @@ class DatasetMeasure(ClassWithCollections):
     after it has been computed. Transformation are done by processing the
     measure with a functor that is specified via the `transformer` keyword
     argument of the constructor. Upon request, the raw measure (before
-    transformations are applied) is stored in the `raw_results` state variable.
+    transformations are applied) is stored in the `raw_results` conditional attribute.
 
     Additionally all dataset measures support the estimation of the
     probabilit(y,ies) of a measure under some distribution. Typically this will
@@ -51,7 +51,7 @@ class DatasetMeasure(ClassWithCollections):
     permutation tests. If a distribution estimator instance is passed to the
     `null_dist` keyword argument of the constructor the respective
     probabilities are automatically computed and stored in the `null_prob`
-    state variable.
+    conditional attribute.
 
     Notes
     -----
@@ -61,12 +61,12 @@ class DatasetMeasure(ClassWithCollections):
 
     """
 
-    raw_results = StateVariable(enabled=False,
+    raw_results = ConditionalAttribute(enabled=False,
         doc="Computed results before applying any " +
             "transformation algorithm")
-    null_prob = StateVariable(enabled=True)
+    null_prob = ConditionalAttribute(enabled=True)
     """Stores the probability of a measure under the NULL hypothesis"""
-    null_t = StateVariable(enabled=False)
+    null_t = ConditionalAttribute(enabled=False)
     """Stores the t-score corresponding to null_prob under assumption
     of Normal distribution"""
 
@@ -162,18 +162,18 @@ class DatasetMeasure(ClassWithCollections):
                            self.__null_dist.p(result, return_tails=True)
                 self.ca.null_prob = null_prob
 
-                externals.exists('scipy', raiseException=True)
+                externals.exists('scipy', raise_=True)
                 from scipy.stats import norm
 
                 # TODO: following logic should appear in NullDist,
                 #       not here
                 tail = self.null_dist.tail
                 if tail == 'left':
-                    acdf = N.abs(null_prob)
+                    acdf = np.abs(null_prob)
                 elif tail == 'right':
-                    acdf = 1.0 - N.abs(null_prob)
+                    acdf = 1.0 - np.abs(null_prob)
                 elif tail in ['any', 'both']:
-                    acdf = 1.0 - N.clip(N.abs(null_prob), 0, 0.5)
+                    acdf = 1.0 - np.clip(np.abs(null_prob), 0, 0.5)
                 else:
                     raise RuntimeError, 'Unhandled tail %s' % tail
                 # We need to clip to avoid non-informative inf's ;-)
@@ -184,7 +184,7 @@ class DatasetMeasure(ClassWithCollections):
                 # to distinguishable value around p=1 and max z=8.2.
                 # Should be sufficient range of z-values ;-)
                 clip = 1e-16
-                null_t = norm.ppf(N.clip(acdf, clip, 1.0 - clip))
+                null_t = norm.ppf(np.clip(acdf, clip, 1.0 - clip))
                 null_t[~null_right_tail] *= -1.0 # revert sign for negatives
                 self.ca.null_t = null_t                 # store
             else:
@@ -233,7 +233,7 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
     """
 
     # MH: why isn't this piece in the Sensitivity class?
-    base_sensitivities = StateVariable(enabled=False,
+    base_sensitivities = ConditionalAttribute(enabled=False,
         doc="Stores basic sensitivities if the sensitivity " +
             "relies on combining multiple ones")
 
@@ -354,7 +354,7 @@ class StaticDatasetMeasure(DatasetMeasure):
         """
         return self.__measure
 
-    #XXX Might need to move into StateVariable?
+    #XXX Might need to move into ConditionalAttribute?
     bias = property(fget=lambda self:self.__bias)
 
 
@@ -463,7 +463,7 @@ class Sensitivity(FeaturewiseDatasetMeasure):
 class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
     """Set sensitivity analyzers to be merged into a single output"""
 
-    sensitivities = StateVariable(enabled=False,
+    sensitivities = ConditionalAttribute(enabled=False,
         doc="Sensitivities produced by each analyzer")
 
     # XXX think again about combiners... now we have it in here and as
@@ -508,12 +508,12 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
 
         # TODO Simplify if we go Dataset-only
         if len(sensitivities) == 1:
-            sensitivities = N.asanyarray(sensitivities[0])
+            sensitivities = np.asanyarray(sensitivities[0])
         else:
             if isinstance(sensitivities[0], AttrDataset):
                 smerged = None
                 for i, s in enumerate(sensitivities):
-                    s.sa['splits'] = N.repeat(i, len(s))
+                    s.sa['splits'] = np.repeat(i, len(s))
                     if smerged is None:
                         smerged = s
                     else:
@@ -522,7 +522,7 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
             else:
                 sensitivities = \
                     Dataset(sensitivities,
-                            sa={'splits': N.arange(len(sensitivities))})
+                            sa={'splits': np.arange(len(sensitivities))})
         self.ca.sensitivities = sensitivities
         return sensitivities
 
@@ -556,10 +556,10 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
     # XXX This beast is created based on code of
     #     CombinedFeaturewiseDatasetMeasure, thus another reason to refactor
 
-    sensitivities = StateVariable(enabled=False,
+    sensitivities = ConditionalAttribute(enabled=False,
         doc="Sensitivities produced for each split")
 
-    splits = StateVariable(enabled=False, doc=
+    splits = ConditionalAttribute(enabled=False, doc=
        """Store the actual splits of the data. Can be memory expensive""")
 
     def __init__(self, splitter, analyzer,
@@ -622,7 +622,7 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
             if store_splits: splits.append(split)
 
         result = vstack(sensitivities)
-        result.sa['splits'] = N.concatenate([[i] * len(s)
+        result.sa['splits'] = np.concatenate([[i] * len(s)
                                 for i, s in enumerate(sensitivities)])
         self.ca.sensitivities = sensitivities
         return result
@@ -712,7 +712,7 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
 class ProxyClassifierSensitivityAnalyzer(Sensitivity):
     """Set sensitivity analyzer output just to pass through"""
 
-    clf_sensitivities = StateVariable(enabled=False,
+    clf_sensitivities = ConditionalAttribute(enabled=False,
         doc="Stores sensitivities of the proxied classifier")
 
 
