@@ -11,7 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.support.copy import deepcopy
 
@@ -21,7 +21,7 @@ from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
 
 from mvpa.datasets.base import Dataset
 from mvpa.misc.support import idhash
-from mvpa.misc.state import StateVariable, ClassWithCollections
+from mvpa.misc.state import ConditionalAttribute, ClassWithCollections
 from mvpa.misc.param import Parameter
 from mvpa.misc.attrmap import AttributeMap
 
@@ -119,32 +119,32 @@ class Classifier(ClassWithCollections):
     # minimal iteration stepsize, ...), therefore the value to each key should
     # also be a dict or we should use mvpa.misc.param.Parameter'...
 
-    trained_targets = StateVariable(enabled=True,
+    trained_targets = ConditionalAttribute(enabled=True,
         doc="Set of unique targets it has been trained on")
 
-    trained_nsamples = StateVariable(enabled=True,
+    trained_nsamples = ConditionalAttribute(enabled=True,
         doc="Number of samples it has been trained on")
 
-    trained_dataset = StateVariable(enabled=False,
+    trained_dataset = ConditionalAttribute(enabled=False,
         doc="The dataset it has been trained on")
 
-    training_confusion = StateVariable(enabled=False,
+    training_confusion = ConditionalAttribute(enabled=False,
         doc="Confusion matrix of learning performance")
 
-    predictions = StateVariable(enabled=True,
+    predictions = ConditionalAttribute(enabled=True,
         doc="Most recent set of predictions")
 
-    estimates = StateVariable(enabled=True,
+    estimates = ConditionalAttribute(enabled=True,
         doc="Internal classifier estimates the most recent " +
             "predictions are based on")
 
-    training_time = StateVariable(enabled=True,
+    training_time = ConditionalAttribute(enabled=True,
         doc="Time (in seconds) which took classifier to train")
 
-    predicting_time = StateVariable(enabled=True,
+    predicting_time = ConditionalAttribute(enabled=True,
         doc="Time (in seconds) which took classifier to predict")
 
-    feature_ids = StateVariable(enabled=False,
+    feature_ids = ConditionalAttribute(enabled=False,
         doc="Feature IDS which were used for the actual training.")
 
     __tags__ = []
@@ -210,7 +210,7 @@ class Classifier(ClassWithCollections):
     def _pretrain(self, dataset):
         """Functionality prior to training
         """
-        # So we reset all state variables and may be free up some memory
+        # So we reset all conditional attributes and may be free up some memory
         # explicitly
         params = self.params
         if not params.retrainable:
@@ -431,7 +431,7 @@ class Classifier(ClassWithCollections):
             if not self.__changedData_isset:
                 self.__reset_changed_data()
                 _changedData = self._changedData
-                data = N.asanyarray(dataset.samples)
+                data = np.asanyarray(dataset.samples)
                 _changedData['testdata'] = \
                                         self.__was_data_changed('testdata', data)
                 if __debug__:
@@ -461,7 +461,7 @@ class Classifier(ClassWithCollections):
         since otherwise it would loop
         """
         ## ??? yoh: changed to asany from as without exhaustive check
-        data = N.asanyarray(dataset.samples)
+        data = np.asanyarray(dataset.samples)
         if __debug__:
             debug("CLF", "Predicting classifier %(clf)s on ds %(dataset)s",
                 msgargs={'clf':self, 'dataset':dataset})
@@ -583,9 +583,9 @@ class Classifier(ClassWithCollections):
                             " since classifier has no such capability. It would"
                             " just lead to resources consumption and slowdown"
                             % self)
-                ca['retrained'] = StateVariable(enabled=True,
+                ca['retrained'] = ConditionalAttribute(enabled=True,
                         doc="Either retrainable classifier was retrained")
-                ca['repredicted'] = StateVariable(enabled=True,
+                ca['repredicted'] = ConditionalAttribute(enabled=True,
                         doc="Either retrainable classifier was repredicted")
 
             pretrainable.value = value
@@ -641,7 +641,7 @@ class Classifier(ClassWithCollections):
         if __debug__ and 'CHECK_RETRAIN' in debug.active:
             __trained = self.__trained
             changed2 = entry != __trained[key]
-            if isinstance(changed2, N.ndarray):
+            if isinstance(changed2, np.ndarray):
                 changed2 = changed2.any()
             if changed != changed2 and not changed:
                 raise RuntimeError, \

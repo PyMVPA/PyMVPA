@@ -11,8 +11,8 @@
 Can be used for plotting not only ERP but any event-locked data
 """
 
-import pylab as P
-import numpy as N
+import pylab as pl
+import numpy as np
 import matplotlib as mpl
 
 from mvpa.base import warning
@@ -164,7 +164,7 @@ def _make_centeredaxis(ax, loc, offset=5, ai=0, mult=1.0,
 ##REF: Name was automagically refactored
 def plot_erp(data, SR=500, onsets=None,
             pre=0.2, pre_onset=None, post=None, pre_mean=None,
-            color='r', errcolor=None, errtype=None, ax=P,
+            color='r', errcolor=None, errtype=None, ax=pl,
             ymult=1.0, *args, **kwargs):
     """Plot single ERP on existing canvas
 
@@ -269,7 +269,7 @@ def plot_erp(data, SR=500, onsets=None,
 
     if not (pre_mean == 0 or pre_mean is None):
         # mean of pre-onset signal accross trials
-        erp_baseline = N.mean(
+        erp_baseline = np.mean(
             erp_data[:, int((pre_onset-pre_mean)*SR):int(pre_onset*SR)])
         # center data on pre-onset mean
         # NOTE: make sure that we make a copy of the data to don't
@@ -279,7 +279,7 @@ def plot_erp(data, SR=500, onsets=None,
     # generate timepoints and error ranges to plot filled error area
     # top ->
     # bottom <-
-    time_points = N.arange(erp_data.shape[1]) * 1.0 / SR - pre_onset
+    time_points = np.arange(erp_data.shape[1]) * 1.0 / SR - pre_onset
 
     # if pre != pre_onset
     if pre_discard > 0:
@@ -294,7 +294,7 @@ def plot_erp(data, SR=500, onsets=None,
         erp_data = erp_data[:, :npoints]
 
     # compute mean signal timecourse accross trials
-    erp_mean = N.mean(erp_data, axis=0)
+    erp_mean = np.mean(erp_data, axis=0)
 
     # give sane default
     if errtype is None:
@@ -305,7 +305,7 @@ def plot_erp(data, SR=500, onsets=None,
     for et in errtype:
         # compute error per datapoint
         if et in ['ste', 'ci95']:
-            erp_stderr = erp_data.std(axis=0) / N.sqrt(len(erp_data))
+            erp_stderr = erp_data.std(axis=0) / np.sqrt(len(erp_data))
             if et == 'ci95':
                 erp_stderr *= 1.96
         elif et == 'std':
@@ -313,11 +313,11 @@ def plot_erp(data, SR=500, onsets=None,
         else:
             raise ValueError, "Unknown error type '%s'" % errtype
 
-        time_points2w = N.hstack((time_points, time_points[::-1]))
+        time_points2w = np.hstack((time_points, time_points[::-1]))
 
         error_top = erp_mean + erp_stderr
         error_bottom = erp_mean - erp_stderr
-        error2w = N.hstack((error_top, error_bottom[::-1]))
+        error2w = np.hstack((error_top, error_bottom[::-1]))
 
         if errcolor is None:
             errcolor = color
@@ -330,7 +330,7 @@ def plot_erp(data, SR=500, onsets=None,
     # plot mean signal timecourse
     ax.plot(time_points, erp_mean, lw=2, color=color, zorder=4,
             *args, **kwargs)
-#    ax.xaxis.set_major_locator(P.MaxNLocator(4))
+#    ax.xaxis.set_major_locator(pl.MaxNLocator(4))
     return erp_mean
 
 
@@ -413,11 +413,11 @@ def plot_erps(erps, data=None, ax=None, pre=0.2, post=None,
     """
 
     if ax is None:
-        fig = P.figure(facecolor='white')
+        fig = pl.figure(facecolor='white')
         fig.clf()
         ax = fig.add_subplot(111, frame_on=False)
     else:
-        fig = P.gcf()
+        fig = pl.gcf()
 
     # We don't want original axis being on
     ax.axison = True
@@ -467,15 +467,15 @@ def plot_erps(erps, data=None, ax=None, pre=0.2, post=None,
     set_limits()
     _make_centeredaxis(ax, 0, ai=0, label=xlabel, **props)
     set_limits()
-    _make_centeredaxis(ax, 0, ai=1, mult=N.sign(ymult), label=ylabel, **props)
+    _make_centeredaxis(ax, 0, ai=1, mult=np.sign(ymult), label=ylabel, **props)
 
-    ax.yaxis.set_major_locator(P.NullLocator())
-    ax.xaxis.set_major_locator(P.NullLocator())
+    ax.yaxis.set_major_locator(pl.NullLocator())
+    ax.xaxis.set_major_locator(pl.NullLocator())
 
     # legend obscures plotting a bit... seems to be plotting
     # everything twice. Thus disabled by default
-    if legend is not None and N.any(N.array(labels) != ''):
-        P.legend(labels, loc=legend)
+    if legend is not None and np.any(np.array(labels) != ''):
+        pl.legend(labels, loc=legend)
 
     fig.canvas.draw()
     return fig

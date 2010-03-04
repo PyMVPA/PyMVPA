@@ -21,9 +21,9 @@ classifier gets trained on some new data of different dimensionality
 __docformat__ = 'restructuredtext'
 
 
-import numpy as N
+import numpy as np
 
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 from mvpa.misc.param import Parameter
 from mvpa.misc.exceptions import InvalidHyperparameterError
 from mvpa.clfs.distance import squared_euclidean_distance
@@ -36,7 +36,7 @@ if __debug__:
 class LinearKernel(NumpyKernel):
     """Simple linear kernel: K(a,b) = a*b.T"""
     def _compute(self, d1, d2):
-        self._k = N.dot(d1, d2.T)
+        self._k = np.dot(d1, d2.T)
 
 
 class PolyKernel(NumpyKernel):
@@ -46,7 +46,7 @@ class PolyKernel(NumpyKernel):
     coef0 = Parameter(1, doc="Offset added to dot product before exponent")
     
     def _compute(self, d1, d2):
-        self._k = N.power(self.params.gamma*N.dot(d1, d2.T)+self.params.coef0,
+        self._k = np.power(self.params.gamma*np.dot(d1, d2.T)+self.params.coef0,
                           self.params.degree)
 
 
@@ -58,7 +58,7 @@ class RbfKernel(NumpyKernel):
     
     def _compute(self, d1, d2):
         # Do the Rbf
-        self._k = N.exp(-squared_euclidean_distance(d1,d2) / self.params.sigma)
+        self._k = np.exp(-squared_euclidean_distance(d1,d2) / self.params.sigma)
         
 # More complex
 class ConstantKernel(NumpyKernel):
@@ -83,7 +83,7 @@ class ConstantKernel(NumpyKernel):
           rhs data
         """
         self._k = \
-            (self.params.sigma_0 ** 2) * N.ones((data1.shape[0], data2.shape[0]))
+            (self.params.sigma_0 ** 2) * np.ones((data1.shape[0], data2.shape[0]))
 
     ## def set_hyperparameters(self, hyperparameter):
     ##     if hyperparameter < 0:
@@ -93,15 +93,15 @@ class ConstantKernel(NumpyKernel):
 
     def compute_lml_gradient(self, alphaalphaT_Kinv, data):
         K_grad_sigma_0 = 2*self.params.sigma_0
-        # self.lml_gradient = 0.5*(N.trace(N.dot(alphaalphaT_Kinv,K_grad_sigma_0*N.ones(alphaalphaT_Kinv.shape)))
-        # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
+        # self.lml_gradient = 0.5*(np.trace(np.dot(alphaalphaT_Kinv,K_grad_sigma_0*np.ones(alphaalphaT_Kinv.shape)))
+        # Faster formula: np.trace(np.dot(A,B)) = (A*(B.T)).sum()
         # Fastest when B is a constant: B*A.sum()
-        self.lml_gradient = 0.5*N.array(K_grad_sigma_0*alphaalphaT_Kinv.sum())
+        self.lml_gradient = 0.5*np.array(K_grad_sigma_0*alphaalphaT_Kinv.sum())
         #return self.lml_gradient
 
     def compute_lml_gradient_logscale(self, alphaalphaT_Kinv, data):
         K_grad_sigma_0 = 2*self.params.sigma_0**2
-        self.lml_gradient = 0.5*N.array(K_grad_sigma_0*alphaalphaT_Kinv.sum())
+        self.lml_gradient = 0.5*np.array(K_grad_sigma_0*alphaalphaT_Kinv.sum())
         #return self.lml_gradient
     pass
 
@@ -127,10 +127,10 @@ class GeneralizedLinearKernel(NumpyKernel):
        of the Gaussian prior probability Normal(0, Sigma_p) on the weights
        of the linear regression.""")
 
-    gradients = StateVariable(enabled=False,
+    gradients = ConditionalAttribute(enabled=False,
         doc="Dictionary of gradients per a parameter")
 
-    gradientslog = StateVariable(enabled=False,
+    gradientslog = ConditionalAttribute(enabled=False,
         doc="Dictionary of gradients per a parameter in logspace")
 
     def __init__(self, *args, **kwargs):
@@ -174,14 +174,14 @@ class GeneralizedLinearKernel(NumpyKernel):
         """
         # it is better to use separate lines of computation, to don't
         # incure computation cost without need (otherwise
-        # N.dot(self.Sigma_p, data2.T) can take forever for relatively
+        # np.dot(self.Sigma_p, data2.T) can take forever for relatively
         # large number of features)
 
         Sigma_p = self.params.Sigma_p          # local binding
         sigma_0 = self.params.sigma_0
 
         #if scalar - scale second term appropriately
-        if N.isscalar(Sigma_p):
+        if np.isscalar(Sigma_p):
             if Sigma_p == 1.0:
                 data2_sc = data2.T
             else:
@@ -199,27 +199,27 @@ class GeneralizedLinearKernel(NumpyKernel):
         # matrix product
         else:
             raise ValueError, "Please provide Sigma_p as a scalar or a vector"
-            data2_sc = N.dot(Sigma_p, data2.T)
+            data2_sc = np.dot(Sigma_p, data2.T)
             pass
 
         # XXX if Sigma_p is changed a warning should be issued!
         # XXX other cases of incorrect Sigma_p could be catched
-        self._k = k = N.dot(data1, data2_sc) + sigma_0 ** 2
+        self._k = k = np.dot(data1, data2_sc) + sigma_0 ** 2
 
         # Compute gradients if any was requested
         do_g  = self.ca.is_enabled('gradients')
         do_gl = self.ca.is_enabled('gradientslog')
         if do_g or do_gl:
-            if N.isscalar(Sigma_p):
-                g_Sigma_p = N.dot(data1, data2.T)
+            if np.isscalar(Sigma_p):
+                g_Sigma_p = np.dot(data1, data2.T)
                 gl_Sigma_p = Sigma_p * g_Sigma_p
             else:
                 nfeat = len(Sigma_p)
                 gsize = (len(data1), len(data2), nfeat)
-                if do_g:  g_Sigma_p = N.empty(gsize)
-                if do_gl: gl_Sigma_p = N.empty(gsize)
+                if do_g:  g_Sigma_p = np.empty(gsize)
+                if do_gl: gl_Sigma_p = np.empty(gsize)
                 for i in xrange(nfeat):
-                    outer = N.multiply.outer(data1[:, i], data2[:, i])
+                    outer = np.multiply.outer(data1[:, i], data2[:, i])
                     if do_g:  g_Sigma_p[:, :, i] = outer
                     if do_gl: gl_Sigma_p = Sigma_p[i] * outer
             if do_g:
@@ -291,10 +291,10 @@ class ExponentialKernel(NumpyKernel):
         # efficient since length_scale is squared and then
         # square-rooted uselessly.
         # Weighted euclidean distance matrix:
-        self.wdm = N.sqrt(squared_euclidean_distance(
+        self.wdm = np.sqrt(squared_euclidean_distance(
             data1, data2, weight=(params.length_scale**-2)))
         self._k = \
-            params.sigma_f**2 * N.exp(-self.wdm)
+            params.sigma_f**2 * np.exp(-self.wdm)
 
     def gradient(self, data1, data2):
         """Compute gradient of the kernel matrix. A must for fast
@@ -307,7 +307,7 @@ class ExponentialKernel(NumpyKernel):
 
     ##     Used by model selection.
     ##     """
-    ##     if N.any(hyperparameter < 0):
+    ##     if np.any(hyperparameter < 0):
     ##         raise InvalidHyperparameterError()
     ##     self.sigma_f = hyperparameter[0]
     ##     self.length_scale = hyperparameter[1:]
@@ -322,23 +322,23 @@ class ExponentialKernel(NumpyKernel):
         """
         self.lml_gradient = []
         def lml_grad(K_grad_i):
-            # return N.trace(N.dot(alphaalphaT_Kinv,K_grad_i))
-            # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
+            # return np.trace(np.dot(alphaalphaT_Kinv,K_grad_i))
+            # Faster formula: np.trace(np.dot(A,B)) = (A*(B.T)).sum()
             return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
         grad_sigma_f = 2.0/self.sigma_f*self.kernel_matrix
         self.lml_gradient.append(lml_grad(grad_sigma_f))
-        if N.isscalar(self.length_scale) or self.length_scale.size==1:
+        if np.isscalar(self.length_scale) or self.length_scale.size==1:
             # use the same length_scale for all dimensions:
             K_grad_l = self.wdm*self.kernel_matrix*(self.length_scale**-1)
             self.lml_gradient.append(lml_grad(K_grad_l))
         else:
             # use one length_scale for each dimension:
             for i in range(self.length_scale.size):
-                K_grad_i = (self.length_scale[i]**-3)*(self.wdm**-1)*self.kernel_matrix*N.subtract.outer(data[:,i],data[:,i])**2
+                K_grad_i = (self.length_scale[i]**-3)*(self.wdm**-1)*self.kernel_matrix*np.subtract.outer(data[:,i],data[:,i])**2
                 self.lml_gradient.append(lml_grad(K_grad_i))
                 pass
             pass
-        self.lml_gradient = 0.5*N.array(self.lml_gradient)
+        self.lml_gradient = 0.5*np.array(self.lml_gradient)
         return self.lml_gradient
 
     def compute_lml_gradient_logscale(self,alphaalphaT_Kinv,data):
@@ -350,23 +350,23 @@ class ExponentialKernel(NumpyKernel):
         """
         self.lml_gradient = []
         def lml_grad(K_grad_i):
-            # return N.trace(N.dot(alphaalphaT_Kinv,K_grad_i))
-            # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
+            # return np.trace(np.dot(alphaalphaT_Kinv,K_grad_i))
+            # Faster formula: np.trace(np.dot(A,B)) = (A*(B.T)).sum()
             return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
         grad_log_sigma_f = 2.0*self.kernel_matrix
         self.lml_gradient.append(lml_grad(grad_log_sigma_f))
-        if N.isscalar(self.length_scale) or self.length_scale.size==1:
+        if np.isscalar(self.length_scale) or self.length_scale.size==1:
             # use the same length_scale for all dimensions:
             K_grad_l = self.wdm*self.kernel_matrix
             self.lml_gradient.append(lml_grad(K_grad_l))
         else:
             # use one length_scale for each dimension:
             for i in range(self.length_scale.size):
-                K_grad_i = (self.length_scale[i]**-2)*(self.wdm**-1)*self.kernel_matrix*N.subtract.outer(data[:,i],data[:,i])**2
+                K_grad_i = (self.length_scale[i]**-2)*(self.wdm**-1)*self.kernel_matrix*np.subtract.outer(data[:,i],data[:,i])**2
                 self.lml_gradient.append(lml_grad(K_grad_i))
                 pass
             pass
-        self.lml_gradient = 0.5*N.array(self.lml_gradient)
+        self.lml_gradient = 0.5*np.array(self.lml_gradient)
         return self.lml_gradient
 
     pass
@@ -421,10 +421,10 @@ class SquaredExponentialKernel(NumpyKernel):
         """
         # weighted squared euclidean distance matrix:
         self.wdm2 = squared_euclidean_distance(data1, data2, weight=(self.length_scale**-2))
-        self._k = self.sigma_f**2 * N.exp(-0.5*self.wdm2)
+        self._k = self.sigma_f**2 * np.exp(-0.5*self.wdm2)
         # XXX EO: old implementation:
         # self.kernel_matrix = \
-        #     self.sigma_f * N.exp(-squared_euclidean_distance(
+        #     self.sigma_f * np.exp(-squared_euclidean_distance(
         #         data1, data2, weight=0.5 / (self.length_scale ** 2)))
 
     def set_hyperparameters(self, hyperparameter):
@@ -432,7 +432,7 @@ class SquaredExponentialKernel(NumpyKernel):
 
         Used by model selection.
         """
-        if N.any(hyperparameter < 0):
+        if np.any(hyperparameter < 0):
             raise InvalidHyperparameterError()
         self.sigma_f = hyperparameter[0]
         self._length_scale = hyperparameter[1:]
@@ -445,23 +445,23 @@ class SquaredExponentialKernel(NumpyKernel):
         """
         self.lml_gradient = []
         def lml_grad(K_grad_i):
-            # return N.trace(N.dot(alphaalphaT_Kinv,K_grad_i))
-            # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
+            # return np.trace(np.dot(alphaalphaT_Kinv,K_grad_i))
+            # Faster formula: np.trace(np.dot(A,B)) = (A*(B.T)).sum()
             return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
         grad_sigma_f = 2.0/self.sigma_f*self.kernel_matrix
         self.lml_gradient.append(lml_grad(grad_sigma_f))
-        if N.isscalar(self.length_scale) or self.length_scale.size==1:
+        if np.isscalar(self.length_scale) or self.length_scale.size==1:
             # use the same length_scale for all dimensions:
             K_grad_l = self.wdm2*self.kernel_matrix*(1.0/self.length_scale)
             self.lml_gradient.append(lml_grad(K_grad_l))
         else:
             # use one length_scale for each dimension:
             for i in range(self.length_scale.size):
-                K_grad_i = 1.0/(self.length_scale[i]**3)*self.kernel_matrix*N.subtract.outer(data[:,i],data[:,i])**2
+                K_grad_i = 1.0/(self.length_scale[i]**3)*self.kernel_matrix*np.subtract.outer(data[:,i],data[:,i])**2
                 self.lml_gradient.append(lml_grad(K_grad_i))
                 pass
             pass
-        self.lml_gradient = 0.5*N.array(self.lml_gradient)
+        self.lml_gradient = 0.5*np.array(self.lml_gradient)
         return self.lml_gradient
 
     def compute_lml_gradient_logscale(self,alphaalphaT_Kinv,data):
@@ -472,23 +472,23 @@ class SquaredExponentialKernel(NumpyKernel):
         """
         self.lml_gradient = []
         def lml_grad(K_grad_i):
-            # return N.trace(N.dot(alphaalphaT_Kinv,K_grad_i))
-            # Faster formula: N.trace(N.dot(A,B)) = (A*(B.T)).sum()
+            # return np.trace(np.dot(alphaalphaT_Kinv,K_grad_i))
+            # Faster formula: np.trace(np.dot(A,B)) = (A*(B.T)).sum()
             return (alphaalphaT_Kinv*(K_grad_i.T)).sum()
         K_grad_log_sigma_f = 2.0*self.kernel_matrix
         self.lml_gradient.append(lml_grad(K_grad_log_sigma_f))
-        if N.isscalar(self.length_scale) or self.length_scale.size==1:
+        if np.isscalar(self.length_scale) or self.length_scale.size==1:
             # use the same length_scale for all dimensions:
             K_grad_log_l = self.wdm2*self.kernel_matrix
             self.lml_gradient.append(lml_grad(K_grad_log_l))
         else:
             # use one length_scale for each dimension:
             for i in range(self.length_scale.size):
-                K_grad_log_l_i = 1.0/(self.length_scale[i]**2)*self.kernel_matrix*N.subtract.outer(data[:,i],data[:,i])**2
+                K_grad_log_l_i = 1.0/(self.length_scale[i]**2)*self.kernel_matrix*np.subtract.outer(data[:,i],data[:,i])**2
                 self.lml_gradient.append(lml_grad(K_grad_log_l_i))
                 pass
             pass
-        self.lml_gradient = 0.5*N.array(self.lml_gradient)
+        self.lml_gradient = 0.5*np.array(self.lml_gradient)
         return self.lml_gradient
 
     def _setlength_scale(self, v):
@@ -551,15 +551,15 @@ class Matern_3_2Kernel(NumpyKernel):
         tmp = squared_euclidean_distance(
                 data1, data2, weight=0.5 / (self.length_scale ** 2))
         if self.numerator == 3.0:
-            tmp = N.sqrt(tmp)
+            tmp = np.sqrt(tmp)
             self._k = \
-                self.sigma_f**2 * (1.0 + N.sqrt(3.0) * tmp) \
-                * N.exp(-N.sqrt(3.0) * tmp)
+                self.sigma_f**2 * (1.0 + np.sqrt(3.0) * tmp) \
+                * np.exp(-np.sqrt(3.0) * tmp)
         elif self.numerator == 5.0:
-            tmp2 = N.sqrt(tmp)
+            tmp2 = np.sqrt(tmp)
             self._k = \
-                self.sigma_f**2 * (1.0 + N.sqrt(5.0) * tmp2 + 5.0 / 3.0 * tmp) \
-                * N.exp(-N.sqrt(5.0) * tmp2)
+                self.sigma_f**2 * (1.0 + np.sqrt(5.0) * tmp2 + 5.0 / 3.0 * tmp) \
+                * np.exp(-np.sqrt(5.0) * tmp2)
 
 
     def gradient(self, data1, data2):
@@ -577,7 +577,7 @@ class Matern_3_2Kernel(NumpyKernel):
         Used by model selection.
         Note: 'numerator' is not considered as an hyperparameter.
         """
-        if N.any(hyperparameter < 0):
+        if np.any(hyperparameter < 0):
             raise InvalidHyperparameterError()
         self.sigma_f = hyperparameter[0]
         self.length_scale = hyperparameter[1:]
@@ -669,7 +669,7 @@ class RationalQuadraticKernel(NumpyKernel):
         Used by model selection.
         Note: 'alpha' is not considered as an hyperparameter.
         """
-        if N.any(hyperparameter < 0):
+        if np.any(hyperparameter < 0):
             raise InvalidHyperparameterError()
         self.sigma_f = hyperparameter[0]
         self.length_scale = hyperparameter[1:]

@@ -33,7 +33,7 @@ __docformat__ = 'restructuredtext'
 
 import operator
 
-import numpy as N
+import numpy as np
 
 import mvpa.misc.support as support
 from mvpa.base.dochelpers import enhanced_doc_string
@@ -63,19 +63,20 @@ class Splitter(object):
     _NPERLABEL_STR = ['equal', 'all']
 
     def __init__(self,
-                 nperlabel='all',
+                 npertarget='all',
                  nrunspersplit=1,
                  permute=False,
                  count=None,
                  strategy='equidistant',
                  discard_boundary=None,
                  attr='chunks',
-                 reverse=False):
+                 reverse=False,
+                 noslicing=False):
         """Initialize splitter base.
 
         Parameters
         ----------
-        nperlabel : int or str (or list of them) or float
+        npertarget : int or str (or list of them) or float
           Number of dataset samples per label to be included in each
           split. If given as a float, it must be in [0,1] range and would
           mean the ratio of selected samples per each label.
@@ -89,7 +90,7 @@ class Splitter(object):
           Number of times samples for each split are chosen. This
           is mostly useful if a subset of the available samples
           is used in each split and the subset is randomly
-          selected for each run (see the `nperlabel` argument).
+          selected for each run (see the `npertarget` argument).
         permute : bool
           If set to `True`, the labels of each generated dataset
           will be permuted on a per-chunk basis.
@@ -117,12 +118,18 @@ class Splitter(object):
           If True, the order of datasets in the split is reversed, e.g.
           instead of (training, testing), (training, testing) will be spit
           out
+        noslicing : bool
+          If True, dataset splitting is not done by slicing (causing
+          shared data between source and split datasets) even if it would
+          be possible. By default slicing is performed whenever possible
+          to reduce the memory footprint.
         """
         # pylint happyness block
-        self.__nperlabel = None
+        self.__npertarget = None
         self.__runspersplit = nrunspersplit
         self.__permute = permute
         self.__splitattr = attr
+        self.__noslicing = noslicing
         self._reverse = reverse
         self.discard_boundary = discard_boundary
 
@@ -135,7 +142,7 @@ class Splitter(object):
         self._set_strategy(strategy)
 
         # pattern sampling status vars
-        self.set_n_per_label(nperlabel)
+        self.set_n_per_label(npertarget)
 
 
     __doc__ = enhanced_doc_string('Splitter', locals())
@@ -160,10 +167,10 @@ class Splitter(object):
         """
         if isinstance(value, basestring):
             if not value in self._NPERLABEL_STR:
-                raise ValueError, "Unsupported value '%s' for nperlabel." \
+                raise ValueError, "Unsupported value '%s' for npertarget." \
                       " Supported ones are %s or float or int" \
                       % (value, self._NPERLABEL_STR)
-        self.__nperlabel = value
+        self.__npertarget = value
 
 
     ##REF: Name was automagically refactored
@@ -194,11 +201,11 @@ class Splitter(object):
         for isplit, split in enumerate(cfgs):
 
             # determine sample sizes
-            if not operator.isSequenceType(self.__nperlabel) \
-                   or isinstance(self.__nperlabel, str):
-                nperlabelsplit = [self.__nperlabel] * len(split)
+            if not operator.isSequenceType(self.__npertarget) \
+                   or isinstance(self.__npertarget, str):
+                npertargetsplit = [self.__npertarget] * len(split)
             else:
-                nperlabelsplit = self.__nperlabel
+                npertargetsplit = self.__npertarget
 
             # get splitted datasets
             split_ds = self.split_dataset(dataset, split)
@@ -209,7 +216,7 @@ class Splitter(object):
                 # post-process all datasets
                 finalized_datasets = []
 
-                for ds, nperlabel in zip(split_ds, nperlabelsplit):
+                for ds, npertarget in zip(split_ds, npertargetsplit):
                     # Set flag of dataset either this was the last split
                     # ??? per our discussion this might be the best
                     #     solution which would scale if we care about
@@ -225,10 +232,10 @@ class Splitter(object):
                             ds_a.lastsplit = lastsplit
                     # permute the labels
                     if self.__permute:
-                        permute_targets(ds, perchunk=True)
+                        permute_targets(ds, chunks_attr='chunks')
 
                     # select subset of samples if requested
-                    if nperlabel == 'all' or ds is None:
+                    if npertarget == 'all' or ds is None:
                         finalized_datasets.append(ds)
                     else:
                         # We need to select a subset of samples
@@ -236,21 +243,21 @@ class Splitter(object):
 
                         # go for maximum possible number of samples provided
                         # by each label in this dataset
-                        if nperlabel == 'equal':
+                        if npertarget == 'equal':
                             # determine the min number of samples per class
-                            npl = N.array(get_nsamples_per_attr(
+                            npl = np.array(get_nsamples_per_attr(
                                 ds, 'targets').values()).min()
-                        elif isinstance(nperlabel, float) or (
-                            operator.isSequenceType(nperlabel) and
-                            len(nperlabel) > 0 and
-                            isinstance(nperlabel[0], float)):
+                        elif isinstance(npertarget, float) or (
+                            operator.isSequenceType(npertarget) and
+                            len(npertarget) > 0 and
+                            isinstance(npertarget[0], float)):
                             # determine number of samples per class and take
                             # a ratio
-                            counts = N.array(get_nsamples_per_attr(
+                            counts = np.array(get_nsamples_per_attr(
                                 ds, 'targets').values())
-                            npl = (counts * nperlabel).round().astype(int)
+                            npl = (counts * npertarget).round().astype(int)
                         else:
-                            npl = nperlabel
+                            npl = npertarget
 
                         # finally select the patterns
                         finalized_datasets.append(
@@ -298,13 +305,13 @@ class Splitter(object):
                 filters.append(None)
                 none_specs += 1
             else:
-                filter_ = N.array([ i in spec \
-                                    for i in splitattr_data])
+                filter_ = np.array([ i in spec \
+                                    for i in splitattr_data], dtype='bool')
                 filters.append(filter_)
                 if cum_filter is None:
                     cum_filter = filter_
                 else:
-                    cum_filter = N.logical_and(cum_filter, filter_)
+                    cum_filter = np.logical_and(cum_filter, filter_)
 
         # need to turn possible Nones into proper ids sequences
         if none_specs > 1:
@@ -313,7 +320,7 @@ class Splitter(object):
 
         for i, filter_ in enumerate(filters):
             if filter_ is None:
-                filters[i] = N.logical_not(cum_filter)
+                filters[i] = np.logical_not(cum_filter)
 
             # If it was told to discard samples on the boundary to the
             # other parts of the split
@@ -324,9 +331,9 @@ class Splitter(object):
                     # should not be the main reason for a slow-down of
                     # the whole analysis ;)
                     f, lenf = filters[i], len(filters[i])
-                    f_pad = N.concatenate(([True]*ndiscard, f, [True]*ndiscard))
+                    f_pad = np.concatenate(([True]*ndiscard, f, [True]*ndiscard))
                     for d in xrange(2*ndiscard+1):
-                        f = N.logical_and(f, f_pad[d:d+lenf])
+                        f = np.logical_and(f, f_pad[d:d+lenf])
                     filters[i] = f[:]
 
         # split data: return None if no samples are left
@@ -334,21 +341,58 @@ class Splitter(object):
         #      keeping it this way for now, to maintain current behavior
         split_datasets = []
 
+
         for filter_ in filters:
             if (filter_ == False).all():
                 split_datasets.append(None)
             else:
-                split_datasets.append(dataset[filter_])
+                # check whether we can do slicing instead of advanced
+                # indexing -- if we can split the dataset without causing
+                # the data to be copied, its is quicker and leaner.
+                # However, it only works if we have a contiguous chunk or
+                # regular step sizes for the samples to be split
+                split_datasets.append(dataset[self._filter2slice(filter_)])
 
         return split_datasets
+
+
+    def _filter2slice(self, bf):
+        if self.__noslicing:
+            # we are not allowed to help :-(
+            return bf
+        # the filter should be a boolean array
+        if not len(bf):
+            raise ValueError("'%s' recieved an empty filter. This is a "
+                             "bug." % self.__class__.__name__)
+        # get indices of non-zero filter elements
+        idx = bf.nonzero()[0]
+        idx_start = idx[0]
+        idx_end = idx[-1] + 1
+        idx_step = None
+        if len(idx) > 1:
+            # we need to figure out if there is a regular step-size
+            # between elements
+            stepsizes = np.unique(idx[1:] - idx[:-1])
+            if len(stepsizes) > 1:
+                # multiple step-sizes -> slicing is not possible -> return
+                # orginal filter
+                return bf
+            else:
+                idx_step = stepsizes[0]
+
+        sl = slice(idx_start, idx_end, idx_step)
+        if __debug__:
+            debug("SPL", "Splitting by basic slicing is possible and permitted "
+                         "(%s)." % sl)
+        return sl
 
 
     def __str__(self):
         """String summary over the object
         """
         return \
-          "SplitterConfig: nperlabel:%s runs-per-split:%d permute:%s" \
-          % (self.__nperlabel, self.__runspersplit, self.__permute)
+          "SplitterConfig: npertarget:%s runs-per-split:%d permute:%s" \
+          % (self.__npertarget, self.__runspersplit, self.__permute)
 
 
     def splitcfg(self, dataset):
@@ -375,7 +419,7 @@ class Splitter(object):
                     assert(step >= 1.0)
                     indexes = [int(round(step * i)) for i in xrange(count)]
                 elif strategy == 'random':
-                    indexes = N.random.permutation(range(n_cfgs))[:count]
+                    indexes = np.random.permutation(range(n_cfgs))[:count]
                     # doesn't matter much but lets keep them in the original
                     # order at least
                     indexes.sort()
@@ -479,8 +523,8 @@ class OddEvenSplitter(Splitter):
             return [(None, uniqueattrs[(uniqueattrs % 2) == True]),
                     (None, uniqueattrs[(uniqueattrs % 2) == False])]
         else:
-            return [(None, uniqueattrs[N.arange(len(uniqueattrs)) %2 == True]),
-                    (None, uniqueattrs[N.arange(len(uniqueattrs)) %2 == False])]
+            return [(None, uniqueattrs[np.arange(len(uniqueattrs)) %2 == True]),
+                    (None, uniqueattrs[np.arange(len(uniqueattrs)) %2 == False])]
 
 
     def __str__(self):
@@ -567,7 +611,7 @@ class NGroupSplitter(Splitter):
 
         # use coarsen_chunks to get the split indices
         split_ind = coarsen_chunks(uniqueattrs, nchunks=self.__ngroups)
-        split_ind = N.asarray(split_ind)
+        split_ind = np.asarray(split_ind)
 
         # loop and create splits
         split_list = [(None, uniqueattrs[split_ind==i])

@@ -21,14 +21,14 @@ def test_erdataset():
     ntargets = 5
     blocklength = 5
     nfeatures = 10
-    targets = N.tile(N.repeat(range(ntargets), blocklength), nchunks)
-    chunks = N.repeat(N.arange(nchunks), ntargets * blocklength)
-    samples = N.repeat(
-                N.arange(nchunks * ntargets * blocklength),
+    targets = np.tile(np.repeat(range(ntargets), blocklength), nchunks)
+    chunks = np.repeat(np.arange(nchunks), ntargets * blocklength)
+    samples = np.repeat(
+                np.arange(nchunks * ntargets * blocklength),
                 nfeatures).reshape(-1, nfeatures)
     ds = dataset_wizard(samples, targets=targets, chunks=chunks)
     # check if events are determined properly
-    evs = find_events({'targets':ds.sa.targets, 'chunks':ds.sa.chunks})
+    evs = find_events(targets=ds.sa.targets, chunks=ds.sa.chunks)
     for ev in evs:
         assert_equal(ev['duration'], blocklength)
     assert_equal(ntargets * nchunks, len(evs))
@@ -42,10 +42,10 @@ def test_erdataset():
                  ['chunks', 'targets'])
     # samples as expected?
     assert_array_equal(erds.samples[0],
-                       N.repeat(N.arange(blocklength), nfeatures))
+                       np.repeat(np.arange(blocklength), nfeatures))
     # that should also be the temporal feature offset
     assert_array_equal(erds.samples[0], erds.fa.event_offsetidx)
-    assert_array_equal(erds.sa.event_onsetidx, N.arange(0,71,5))
+    assert_array_equal(erds.sa.event_onsetidx, np.arange(0,71,5))
     # finally we should see two mappers
     assert_equal(len(erds.a.mapper), 2)
     assert_true(isinstance(erds.a.mapper[0], BoxcarMapper))
@@ -53,40 +53,40 @@ def test_erdataset():
     #
     # now check the same dataset with event descretization
     tr = 2.5
-    ds.sa['time'] = N.arange(nchunks * ntargets * blocklength) * tr
+    ds.sa['time'] = np.arange(nchunks * ntargets * blocklength) * tr
     evs = [{'onset': 4.9, 'duration': 6.2}]
     # doesn't work without conversion
     assert_raises(ValueError, eventrelated_dataset, ds, evs)
     erds = eventrelated_dataset(ds, evs, time_attr='time')
     assert_equal(len(erds), 1)
-    assert_array_equal(erds.samples[0], N.repeat(N.arange(1,5), nfeatures))
+    assert_array_equal(erds.samples[0], np.repeat(np.arange(1,5), nfeatures))
     assert_array_equal(erds.sa.orig_onset, [evs[0]['onset']])
     assert_array_equal(erds.sa.orig_duration, [evs[0]['duration']])
     assert_array_almost_equal(erds.sa.orig_offset, [2.4])
-    assert_array_equal(erds.sa.time, [N.arange(2.5, 11, 2.5)])
+    assert_array_equal(erds.sa.time, [np.arange(2.5, 11, 2.5)])
     # now with closest match
     erds = eventrelated_dataset(ds, evs, time_attr='time', match='closest')
     expected_nsamples = 3
     assert_equal(len(erds), 1)
     assert_array_equal(erds.samples[0],
-                       N.repeat(N.arange(2,2+expected_nsamples),
+                       np.repeat(np.arange(2,2+expected_nsamples),
                                 nfeatures))
     assert_array_equal(erds.sa.orig_onset, [evs[0]['onset']])
     assert_array_equal(erds.sa.orig_duration, [evs[0]['duration']])
     assert_array_almost_equal(erds.sa.orig_offset, [-0.1])
-    assert_array_equal(erds.sa.time, [N.arange(5.0, 11, 2.5)])
+    assert_array_equal(erds.sa.time, [np.arange(5.0, 11, 2.5)])
     # now test the way back
-    results = N.arange(erds.nfeatures)
+    results = np.arange(erds.nfeatures)
     assert_array_equal(erds.a.mapper.reverse1(results),
                        results.reshape(expected_nsamples, nfeatures))
     # what about multiple results?
     nresults = 5
     results = dataset_wizard([results] * nresults)
     # and let's have an attribute to make it more difficult
-    results.sa['myattr'] = N.arange(5)
+    results.sa['myattr'] = np.arange(5)
     rds = erds.a.mapper.reverse(results)
     assert_array_equal(rds,
                        results.samples.reshape(nresults * expected_nsamples,
                                                nfeatures))
-    assert_array_equal(rds.sa.myattr, N.repeat(results.sa.myattr,
+    assert_array_equal(rds.sa.myattr, np.repeat(results.sa.myattr,
                                                expected_nsamples))

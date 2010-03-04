@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA least angle regression (ENET) classifier"""
 
-import numpy as N
+import numpy as np
 
 from mvpa.testing import *
 from mvpa.testing.datasets import *

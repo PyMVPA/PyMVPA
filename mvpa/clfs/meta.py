@@ -22,7 +22,7 @@ Meta Classifiers can be grouped according to their function as
 __docformat__ = 'restructuredtext'
 
 import operator
-import numpy as N
+import numpy as np
 
 from sets import Set
 
@@ -32,7 +32,7 @@ from mvpa.misc.param import Parameter
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.datasets.miscfx import get_samples_by_attr
 from mvpa.misc.attrmap import AttributeMap
-from mvpa.misc.state import StateVariable, ClassWithCollections, Harvestable
+from mvpa.misc.state import ConditionalAttribute, ClassWithCollections, Harvestable
 from mvpa.mappers.base import FeatureSliceMapper
 
 from mvpa.clfs.base import Classifier
@@ -59,10 +59,10 @@ class BoostedClassifier(Classifier, Harvestable):
 
     # should not be needed if we have prediction_estimates upstairs
     # raw_predictions should be handled as Harvestable???
-    raw_predictions = StateVariable(enabled=False,
+    raw_predictions = ConditionalAttribute(enabled=False,
         doc="Predictions obtained from each classifier")
 
-    raw_estimates = StateVariable(enabled=False,
+    raw_estimates = ConditionalAttribute(enabled=False,
         doc="Estimates obtained from each classifier")
 
 
@@ -147,14 +147,14 @@ class BoostedClassifier(Classifier, Harvestable):
         self.ca.raw_predictions = raw_predictions
         assert(len(self.__clfs)>0)
         if self.ca.is_enabled("estimates"):
-            if N.array([x.ca.is_enabled("estimates")
+            if np.array([x.ca.is_enabled("estimates")
                         for x in self.__clfs]).all():
                 estimates = [ clf.ca.estimates for clf in self.__clfs ]
                 self.ca.raw_estimates = estimates
             else:
                 warning("One or more classifiers in %s has no 'estimates' state" %
                         self + "enabled, thus BoostedClassifier can't have" +
-                        " 'raw_estimates' state variable defined")
+                        " 'raw_estimates' conditional attribute defined")
 
         return raw_predictions
 
@@ -269,7 +269,7 @@ class ProxyClassifier(Classifier):
                           is self.clf.ca['retrained']):
             if __debug__:
                 debug("CLFPRX",
-                      "Rebinding state variables from slave clf %s" % self.clf)
+                      "Rebinding conditional attributes from slave clf %s" % self.clf)
             self.ca['retrained'] = self.clf.ca['retrained']
             self.ca['repredicted'] = self.clf.ca['repredicted']
 
@@ -340,7 +340,7 @@ class PredictionsCombiner(ClassWithCollections):
         clfs : list of Classifier
           List of classifiers to combine. Has to be classifiers (not
           pure predictions), since combiner might use some other
-          state variables (value's) instead of pure prediction's
+          conditional attributes (value's) instead of pure prediction's
         dataset : Dataset
           training data in this case
         """
@@ -355,7 +355,7 @@ class PredictionsCombiner(ClassWithCollections):
         clfs : list of Classifier
           List of classifiers to combine. Has to be classifiers (not
           pure predictions), since combiner might use some other
-          state variables (value's) instead of pure prediction's
+          conditional attributes (value's) instead of pure prediction's
         """
         raise NotImplementedError
 
@@ -364,9 +364,9 @@ class PredictionsCombiner(ClassWithCollections):
 class MaximalVote(PredictionsCombiner):
     """Provides a decision using maximal vote rule"""
 
-    predictions = StateVariable(enabled=True,
+    predictions = ConditionalAttribute(enabled=True,
         doc="Voted predictions")
-    estimates = StateVariable(enabled=False,
+    estimates = ConditionalAttribute(enabled=False,
         doc="Estimates keep counts across classifiers for each label/sample")
 
     def __init__(self):
@@ -391,7 +391,7 @@ class MaximalVote(PredictionsCombiner):
 
         all_label_counts = None
         for clf in clfs:
-            # Lets check first if necessary state variable is enabled
+            # Lets check first if necessary conditional attribute is enabled
             if not clf.ca.is_enabled("predictions"):
                 raise ValueError, "MaximalVote needs classifiers (such as " + \
                       "%s) with state 'predictions' enabled" % clf
@@ -448,10 +448,10 @@ class MeanPrediction(PredictionsCombiner):
     """Provides a decision by taking mean of the results
     """
 
-    predictions = StateVariable(enabled=True,
+    predictions = ConditionalAttribute(enabled=True,
         doc="Mean predictions")
 
-    estimates = StateVariable(enabled=True,
+    estimates = ConditionalAttribute(enabled=True,
         doc="Predictions from all classifiers are stored")
 
     def __call__(self, clfs, dataset):
@@ -463,15 +463,15 @@ class MeanPrediction(PredictionsCombiner):
 
         all_predictions = []
         for clf in clfs:
-            # Lets check first if necessary state variable is enabled
+            # Lets check first if necessary conditional attribute is enabled
             if not clf.ca.is_enabled("predictions"):
                 raise ValueError, "MeanPrediction needs learners (such " \
                       " as %s) with state 'predictions' enabled" % clf
             all_predictions.append(clf.ca.predictions)
 
         # compute mean
-        all_predictions = N.asarray(all_predictions)
-        predictions = N.mean(all_predictions, axis=0)
+        all_predictions = np.asarray(all_predictions)
+        predictions = np.mean(all_predictions, axis=0)
 
         ca = self.ca
         ca.estimates = all_predictions
@@ -485,7 +485,7 @@ class ClassifierCombiner(PredictionsCombiner):
     TODO: implement
     """
 
-    predictions = StateVariable(enabled=True,
+    predictions = ConditionalAttribute(enabled=True,
         doc="Trained predictions")
 
 
@@ -497,7 +497,7 @@ class ClassifierCombiner(PredictionsCombiner):
         clf : Classifier
           Classifier to train on the predictions
         variables : list of str
-          List of state variables stored in 'combined' classifiers, which
+          List of conditional attributes stored in 'combined' classifiers, which
           to use as features for training this classifier
         """
         PredictionsCombiner.__init__(self)
@@ -508,7 +508,7 @@ class ClassifierCombiner(PredictionsCombiner):
         if variables == None:
             variables = ['predictions']
         self.__variables = variables
-        """What state variables of the classifiers to use"""
+        """What conditional attributes of the classifiers to use"""
 
 
     def untrain(self):
@@ -616,7 +616,7 @@ class CombinedClassifier(BoostedClassifier):
         BoostedClassifier._predict(self, dataset)
         if ca.is_enabled("estimates"):
             cca.enable('estimates')
-        # combiner will make use of state variables instead of only predictions
+        # combiner will make use of conditional attributes instead of only predictions
         # returned from _predict
         predictions = self.combiner(self.clfs, dataset)
         ca.predictions = predictions
@@ -656,12 +656,12 @@ class TreeClassifier(ProxyClassifier):
     would separate to classify human vs animal and so on::
 
                                    SVM
-                                 /      \
-                            animate   inanimate
-                             /             \
-                           SVM             SMLR
-                         /     \          / | \ \
-                    human    animal      5  6 7  8
+                                 /     \
+                            animate  inanimate
+                             /            \
+                           SVM            SMLR
+                         /     \         / | \ \
+                    human    animal     5  6 7  8
                      |          |
                     SVM        SVM
                    /   \       /  \
@@ -845,7 +845,7 @@ class TreeClassifier(ProxyClassifier):
         """
         # Local bindings
         clfs, index2group = self.clfs, self._index2group
-        clf_predictions = N.asanyarray(ProxyClassifier._predict(self, dataset))
+        clf_predictions = np.asanyarray(ProxyClassifier._predict(self, dataset))
         # assure that predictions are indexes, ie int
         clf_predictions = clf_predictions.astype(int)
 
@@ -860,11 +860,11 @@ class TreeClassifier(ProxyClassifier):
             if __debug__:
                 debug('CLFTREE',
                       'Predicting for group %s using %s on %d samples' %
-                      (gk, clf_, N.sum(group_indexes)))
+                      (gk, clf_, np.sum(group_indexes)))
             p = clf_.predict(dataset[group_indexes])
             if predictions is None:
-                predictions = N.zeros((len(dataset),),
-                                      dtype=N.asanyarray(p).dtype)
+                predictions = np.zeros((len(dataset),),
+                                      dtype=np.asanyarray(p).dtype)
             predictions[group_indexes] = p
         return predictions
 
@@ -1078,11 +1078,11 @@ class SplitClassifier(CombinedClassifier):
 
     # TODO: unify with CrossValidatedTransferError which now uses
     # harvest_attribs to expose gathered attributes
-    confusion = StateVariable(enabled=False,
+    confusion = ConditionalAttribute(enabled=False,
         doc="Resultant confusion whenever classifier trained " +
             "on 1 part and tested on 2nd part of each split")
 
-    splits = StateVariable(enabled=False, doc=
+    splits = ConditionalAttribute(enabled=False, doc=
        """Store the actual splits of the data. Can be memory expensive""")
 
     # ??? couldn't be training_confusion since it has other meaning
@@ -1094,7 +1094,7 @@ class SplitClassifier(CombinedClassifier):
     #     we might want to implement global_training_confusion which would
     #     correspond to overall confusion on full training dataset as it is
     #     done in base Classifier
-    #global_training_confusion = StateVariable(enabled=False,
+    #global_training_confusion = ConditionalAttribute(enabled=False,
     #    doc="Summary over training confusions acquired at each split")
 
     def __init__(self, clf, splitter=NFoldSplitter(cvtype=1), **kwargs):
@@ -1333,8 +1333,16 @@ class FeatureSelectionClassifier(ProxyClassifier):
             debug("CLFFS", "Performing feature selection using %s" %
                   self.__feature_selection + " on %s" % dataset)
 
-        (wdataset, tdataset) = self.__feature_selection(dataset,
-                                                        self.__testdataset)
+        selected = self.__feature_selection(dataset,
+                                            self.__testdataset)
+        # if __testdataset is None we get no tuple back, but just one
+        # dataset
+        if isinstance(selected, tuple):
+            (wdataset, tdataset) = selected
+        else:
+            wdataset = selected
+            tdataset = None
+
         if __debug__:
             add_ = ""
             if "CLFFS_" in debug.active:
@@ -1349,7 +1357,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
 
         # create a mask to devise a mapper
         # TODO -- think about making selected_ids a MaskMapper
-        mappermask = N.zeros(dataset.nfeatures, dtype='bool')
+        mappermask = np.zeros(dataset.nfeatures, dtype='bool')
         mappermask[self.__feature_selection.ca.selected_ids] = True
         mapper = FeatureSliceMapper(mappermask, dshape=mappermask.shape)
 
@@ -1416,7 +1424,7 @@ class RegressionAsClassifier(ProxyClassifier):
       might provide necessary means of classification
     """
 
-    distances = StateVariable(enabled=False,
+    distances = ConditionalAttribute(enabled=False,
         doc="Distances obtained during prediction")
 
     __sa_class__ = RegressionAsClassifierSensitivityAnalyzer
@@ -1488,7 +1496,7 @@ class RegressionAsClassifier(ProxyClassifier):
         if self.centroids is None:
             # setup centroids -- equidistant points
             # XXX we might preferred -1/+1 for binary...
-            centers = N.arange(len(ul), dtype=float)
+            centers = np.arange(len(ul), dtype=float)
         else:
             # verify centroids and assign
             if not set(self.centroids.keys()).issuperset(ul):
@@ -1498,7 +1506,7 @@ class RegressionAsClassifier(ProxyClassifier):
                       % (self.centroids.keys(), ul)
             # override with superset
             ul = self.centroids.keys()
-            centers = N.array([self.centroids[k] for k in ul])
+            centers = np.array([self.centroids[k] for k in ul])
 
         #self._trained_ul = ul
         # Map labels into indexes (not centers)
@@ -1535,10 +1543,10 @@ class RegressionAsClassifier(ProxyClassifier):
 
         # Compute distances
         self.ca.distances = distances \
-            = N.array([[distance_measure(s, c) for c in centers]
+            = np.array([[distance_measure(s, c) for c in centers]
                        for s in regr_predictions])
 
-        predictions = attrmap.to_literal(N.argmin(distances, axis=1))
+        predictions = attrmap.to_literal(np.argmin(distances, axis=1))
         if __debug__:
             debug("CLF_", "Converted regression distances %(distances)s "
                   "into labels %(predictions)s for %(self_)s",

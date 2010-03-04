@@ -24,7 +24,7 @@ part <chap_tutorial_start>`:
 >>> terr = TransferError(clf)
 >>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter(attr='runtype'))
 >>> cv_results = cvte(ds)
->>> N.mean(cv_results)
+>>> np.mean(cv_results)
 0.0625
 
 Looking at this little code snippet we can nicely see the logical parts of
@@ -48,7 +48,7 @@ If, for example, we want to try the popular :term:`support vector machine`
 >>> terr = TransferError(clf)
 >>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter(attr='runtype'))
 >>> cv_results = cvte(ds)
->>> N.mean(cv_results)
+>>> np.mean(cv_results)
 0.1875
 
 Instead of k-nearest-neighbor, we create a linear SVM classifier,
@@ -66,10 +66,10 @@ However, PyMVPA offers a number of alternative functions in the
 For example, if we do not want to have error reported, but instead accuracy, we
 can do that:
 
->>> terr = TransferError(clf, errorfx=lambda p, t: N.mean(p == t))
+>>> terr = TransferError(clf, errorfx=lambda p, t: np.mean(p == t))
 >>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter(attr='runtype'))
 >>> cv_results = cvte(ds)
->>> N.mean(cv_results)
+>>> np.mean(cv_results)
 0.8125
 
 This example reuses the SVM classifier we have create before, and
@@ -96,15 +96,14 @@ have learned from the :ref:`last tutorial part <chap_tutorial_mappers>` the
 following code snippet should be plausible:
 
 >>> # directory that contains the data files
->>> datapath = os.path.join(pymvpa_datadbroot,
-...                         'demo_blockfmri', 'demo_blockfmri')
+>>> datapath = os.path.join(tutorial_data_path, 'data')
 >>> # load the raw data
 >>> attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
 >>> ds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
 ...                   targets=attr.targets, chunks=attr.chunks,
 ...                   mask=os.path.join(datapath, 'mask_vt.nii.gz'))
 >>> # pre-process
->>> poly_detrend(ds, polyord=1, chunks='chunks')
+>>> poly_detrend(ds, polyord=1, chunks_attr='chunks')
 >>> zscore(ds, param_est=('targets', ['rest']))
 >>> ds = ds[ds.sa.targets != 'rest']
 >>> # average
@@ -121,7 +120,7 @@ going to select samples from one ``chunk`` at a time:
 
 >>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
 >>> cv_results = cvte(ds)
->>> N.mean(cv_results)
+>>> np.mean(cv_results)
 0.78125
 
 We get almost the same prediction accuracy (reusing the SVM classifier and
@@ -237,6 +236,7 @@ Per target:          ------------  ------------  ------------  ------------  ---
          TP               6             10            7             12            12            6             12            10
          TN               69            65            68            63            63            69            63            65
 Summary \ Means:     ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------ 12 68.25 2.62 2.62 0.81 0.96 0.78 0.96 0.19 0.67
+       CHI^2            442.67          p:          2e-58
         ACC              0.78
         ACC%            78.12
      # of sets            12
@@ -264,6 +264,7 @@ Abbreviations (for details see http://en.wikipedia.org/wiki/ROC_curve):
  MCC: Matthews Correlation Coefficient
       MCC = (TP*TN - FP*FN)/sqrt(P N P' N')
  AUC: Area under (AUC) curve
+ CHI^2: Chi-square of confusion matrix
  # of sets: number of target/prediction sets which were provided
 <BLANKLINE>
 
@@ -326,7 +327,7 @@ spanned by the singular vectors of the training data, it would look like this:
 >>> terr = TransferError(metaclf)
 >>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
 >>> cv_results = cvte(ds)
->>> print N.mean(cv_results)
+>>> print np.mean(cv_results)
 0.15625
 
 First we notice that little has been changed in the code and the results --
@@ -354,7 +355,7 @@ and the rest is noise. We can easily check that with an appropriate mapper:
 >>> terr = TransferError(metaclf)
 >>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
 >>> cv_results = cvte(ds)
->>> svm_err = N.mean(cv_results)
+>>> svm_err = np.mean(cv_results)
 >>> print round(svm_err, 2)
 0.57
 
@@ -370,7 +371,7 @@ in the past.
 >>> terr = TransferError(metaclf)
 >>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
 >>> cv_results = cvte(ds)
->>> N.mean(cv_results) < svm_err
+>>> np.mean(cv_results) < svm_err
 False
 
 Oh, that was even worse. We would have to take a closer look at the data to

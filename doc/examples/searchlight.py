@@ -61,7 +61,7 @@ to perform a few preprocessing steps (please note that the data was already
 motion-corrected). The first step is a chunk-wise (run-wise) removal of linear
 trends, typically caused by the acquisition equipment."""
 
-poly_detrend(dataset, polyord=1, chunks='chunks')
+poly_detrend(dataset, polyord=1, chunks_attr='chunks')
 
 """Now that the detrending is done, we can remove parts of the timeseries we
 are not interested in. For this example we are only considering volume acquired
@@ -70,7 +70,7 @@ as rest periods (for now). It is important to perform the detrending before
 this selection, as otherwise the equal spacing of fMRI volumes is no longer
 guaranteed."""
 
-dataset = dataset[N.array([l in ['rest', 'house', 'scrambledpix']
+dataset = dataset[np.array([l in ['rest', 'house', 'scrambledpix']
                            for l in dataset.targets], dtype='bool')]
 
 """The final preprocessing step is data-normalization. This is a required step
@@ -81,7 +81,7 @@ z-scoring based on the volumes corresponding to rest periods in the experiment.
 The resulting features could be interpreted as being voxel salience relative
 to 'rest'."""
 
-zscore(dataset, chunks='chunks', param_est=('targets', ['rest']), dtype='float32')
+zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']), dtype='float32')
 
 """After normalization is completed, we no longer need the 'rest'-samples and
 remove them."""
@@ -127,7 +127,7 @@ plot_args = {
     'overlay_mask' : os.path.join(datapath, 'mask_vt.nii.gz'),
     'do_stretch_colors' : False,
     'cmap_bg' : 'gray',
-    'cmap_overlay' : 'autumn', # YlOrRd_r # P.cm.autumn
+    'cmap_overlay' : 'autumn', # YlOrRd_r # pl.cm.autumn
     'interactive' : cfg.getboolean('examples', 'interactive', True),
     }
 
@@ -189,16 +189,16 @@ for radius in [0, 1, 3]:
     by the mask of ventral temproal cortex.
     """
 
-    fig = P.figure(figsize=(12, 4), facecolor='white')
+    fig = pl.figure(figsize=(12, 4), facecolor='white')
     subfig = plot_lightbox(overlay=niftiresults,
                            vlim=(0.5, None), slices=range(23,31),
                            fig=fig, **plot_args)
-    P.title('Accuracy distribution for radius %i' % radius)
+    pl.title('Accuracy distribution for radius %i' % radius)
 
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
-    P.show()
+    pl.show()
 
 """The following figures show the resulting accuracy maps for the slices
 covered by the ventral temporal cortex mask. Note that each voxel value

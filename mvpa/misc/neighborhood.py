@@ -8,11 +8,12 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """ Neighborhood objects """
 
-import numpy as N
+import numpy as np
 from numpy import array
 import operator
 import sys
 
+from mvpa.base.dochelpers import borrowkwargs
 from mvpa.clfs.distance import cartesian_distance
 
 if __debug__:
@@ -99,7 +100,7 @@ class Sphere(object):
         # Set element_sizes
         element_sizes = self._element_sizes
         if element_sizes is None:
-            element_sizes = N.ones(ndim)
+            element_sizes = np.ones(ndim)
         else:
             if (ndim != len(element_sizes)):
                 raise ValueError, \
@@ -107,13 +108,13 @@ class Sphere(object):
                       "to constructor had %i dimensions, whenever queried " \
                       "coordinate had %i" \
                       % (element_sizes, len(element_sizes), ndim)
-        center = N.zeros(ndim)
+        center = np.zeros(ndim)
 
-        element_sizes = N.asanyarray(element_sizes)
+        element_sizes = np.asanyarray(element_sizes)
         # What range for each dimension
-        erange = N.ceil(self._radius / element_sizes).astype(int)
+        erange = np.ceil(self._radius / element_sizes).astype(int)
 
-        tentative_increments = N.array(list(N.ndindex(tuple(erange*2 + 1)))) \
+        tentative_increments = np.array(list(np.ndindex(tuple(erange*2 + 1)))) \
                                - erange
         # Filter out the ones beyond the "sphere"
         return array([x for x in tentative_increments
@@ -147,7 +148,13 @@ class Sphere(object):
 
         """
         # type checking
-        coordinate = N.asanyarray(coordinate)
+        coordinate = np.asanyarray(coordinate)
+        # XXX This might go into _train ...
+        scalar = coordinate.ndim == 0
+        if scalar:
+            # we are dealing with scalars -- lets add a dimension
+            # artificially
+            coordinate = coordinate[None]
         # XXX This might go into _train ...
         ndim = len(coordinate)
         if self._increments is None  or self._increments_ndim != ndim:
@@ -159,7 +166,7 @@ class Sphere(object):
             self._increments_ndim = ndim
 
         if __debug__:
-            if coordinate.dtype.char not in N.typecodes['AllInteger']:
+            if coordinate.dtype.char not in np.typecodes['AllInteger']:
                 raise ValueError("Sphere must be called on a sequence of "
                                  "integers of length %i, you gave %s "
                                  % (ndim, coordinate))
@@ -180,10 +187,15 @@ class Sphere(object):
         ##                            and (c < self.extent).all()])
         ## coord_array = coord_array.transpose()
 
-        # Note: converting first full array to list and then
-        # "tuppling" it seems to be faster than tuppling each
-        # sub-array
-        return [tuple(x) for x in coord_array.tolist()]
+        if scalar:
+            # Take just 0th dimension since 1st was artificially introduced
+            coord_array = coord_array[:, 0]
+            return coord_array.tolist()
+        else:
+            # Note: converting first full array to list and then
+            # "tuppling" it seems to be faster than tuppling each
+            # sub-array
+            return [tuple(x) for x in coord_array.tolist()]
 
 
 class HollowSphere(Sphere):
@@ -241,7 +253,7 @@ class HollowSphere(Sphere):
         # Set element_sizes
         element_sizes = self._element_sizes
         if element_sizes is None:
-            element_sizes = N.ones(ndim)
+            element_sizes = np.ones(ndim)
         else:
             if (ndim != len(element_sizes)):
                 raise ValueError, \
@@ -249,13 +261,13 @@ class HollowSphere(Sphere):
                       "to constructor had %i dimensions, whenever queried " \
                       "coordinate had %i" \
                       % (element_sizes, len(element_sizes), ndim)
-        center = N.zeros(ndim)
+        center = np.zeros(ndim)
 
-        element_sizes = N.asanyarray(element_sizes)
+        element_sizes = np.asanyarray(element_sizes)
         # What range for each dimension
-        erange = N.ceil(self._radius / element_sizes).astype(int)
+        erange = np.ceil(self._radius / element_sizes).astype(int)
 
-        tentative_increments = N.array(list(N.ndindex(tuple(erange*2 + 1)))) \
+        tentative_increments = np.array(list(np.ndindex(tuple(erange*2 + 1)))) \
                                - erange
         # Filter out the ones beyond the "sphere"
         return array([x for x in tentative_increments
@@ -268,12 +280,19 @@ class QueryEngine(object):
     """Basic class defining interface for querying neighborhood in a dataset
 
     Derived classes provide specific implementations possibly with trade-offs
-    between generality and performance
+    between generality and performance.
 
-    XXX
+    TODO: extend
     """
 
     def __init__(self, **kwargs):
+        """
+        Parameters
+        ----------
+        **kwargs
+          a dictionary of query objects. Something like
+          dict(voxel_indices=Sphere(3))
+        """
         # XXX for example:
         # voxels=Sphere(diameter=3)
         self._queryobjs = kwargs
@@ -323,6 +342,7 @@ class IndexQueryEngine(QueryEngine):
     - repr
     """
 
+    @borrowkwargs(QueryEngine, '__init__')
     def __init__(self, sorted=True, **kwargs):
         """
         Parameters
@@ -359,12 +379,12 @@ class IndexQueryEngine(QueryEngine):
             # If it is >1D ndarray we need to transform to list of tuples,
             # since ndarray is not hashable
             # XXX would probably work for ANY discrete attribute
-            if not qattr.dtype.char in N.typecodes['AllInteger']:
+            if not qattr.dtype.char in np.typecodes['AllInteger']:
                 pass
                 #raise ValueError("IndexQueryEngine can only operate on "
                 #                 "feature attributes with integer indices "
                 #                 "(got: %s)." % str(qattr.dtype))
-            if isinstance(qattr, N.ndarray) and len(qattr.shape) > 1:
+            if isinstance(qattr, np.ndarray) and len(qattr.shape) > 1:
                 qattr = [tuple(x) for x in qattr]
 
             # determine the dimensions of this space
@@ -378,30 +398,30 @@ class IndexQueryEngine(QueryEngine):
                              dict([(u, i) for i, u in enumerate(uqattr)])
             # Precraft "slicing" for all elements for dummy numpy way
             # to select things ;)
-            sliceall[space] = N.arange(dim)
+            sliceall[space] = np.arange(dim)
             # And fill out selector using current values from qattr
             selector.append([lookup[x] for x in qattr])
 
         # now check whether we have sufficient information to put each feature
         # id into one unique search array element
-        dims = N.array(dims)
+        dims = np.array(dims)
         # we can deal with less features (e.g. masked dataset, but not more)
         # XXX (yoh): seems to be too weak of a check... pretty much you are trying
         #            to check either 2 features do not collide in the target
         #            "mask", right?
-        if N.prod(dims) < dataset.nfeatures:
+        if np.prod(dims) < dataset.nfeatures:
             raise ValueError("IndexQueryEngine has insufficient information "
                              "about the dataset spaces. It is required to "
                              "specify an ROI generator for each feature space "
                              "in the dataset (got: %s, #describable: %i, "
                              "#actual features: %i)."
-                             % (str(self._spaceorder), N.prod(dims),
+                             % (str(self._spaceorder), np.prod(dims),
                                    dataset.nfeatures))
         # now we can create the search array
-        self._searcharray = N.zeros(dims, dtype='int')
+        self._searcharray = np.zeros(dims, dtype='int')
         # and fill it with feature ids, but start from ONE to be different from
         # the zeros
-        self._searcharray[tuple(selector)] = N.arange(1, dataset.nfeatures + 1)
+        self._searcharray[tuple(selector)] = np.arange(1, dataset.nfeatures + 1)
         # Lets do additional check -- now we should have same # of
         # non-zero elements as features
         if len(self._searcharray.nonzero()[0]) != dataset.nfeatures:
@@ -426,7 +446,7 @@ class IndexQueryEngine(QueryEngine):
                 # if no ROI generator is available, take provided indexes
                 # without any additional neighbors etc
                 if self._queryobjs[space] is None:
-                    roi = N.atleast_1d(space_args)
+                    roi = np.atleast_1d(space_args)
                 else:
                     roi = self._queryobjs[space](space_args)
                 # lookup and filter the results
@@ -445,7 +465,7 @@ class IndexQueryEngine(QueryEngine):
                   "in parameters of the query" % (kwargs.keys())
         # only ids are of interest -> flatten
         # and we need to back-transfer them into dataset ids by substracting 1
-        res = self._searcharray[N.ix_(*slicer)].flatten() - 1
+        res = self._searcharray[np.ix_(*slicer)].flatten() - 1
         res = res[res>=0]              # return only the known ones
         if self.sorted:
             return sorted(res)

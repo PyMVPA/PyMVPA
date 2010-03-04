@@ -14,22 +14,22 @@ Kernel-Demo
 This is an example demonstrating various kernel implementation in PyMVPA.
 """
 
-import numpy as N
-import pylab as P
+import numpy as np
+import pylab as pl
 
 #from mvpa.suite import *
 from mvpa.base import cfg
 from mvpa.kernels.np import *
 
 
-# N.random.seed(1)
-data = N.random.rand(4, 2)
+# np.random.seed(1)
+data = np.random.rand(4, 2)
 
 for kernel_class, kernel_args in (
     (ConstantKernel, {'sigma_0':1.0}),
     (ConstantKernel, {'sigma_0':1.0}),
-    (GeneralizedLinearKernel, {'Sigma_p':N.eye(data.shape[1])}),
-    (GeneralizedLinearKernel, {'Sigma_p':N.ones(data.shape[1])}),
+    (GeneralizedLinearKernel, {'Sigma_p':np.eye(data.shape[1])}),
+    (GeneralizedLinearKernel, {'Sigma_p':np.ones(data.shape[1])}),
     (GeneralizedLinearKernel, {'Sigma_p':2.0}),
     (GeneralizedLinearKernel, {}),
     (ExponentialKernel, {}),
@@ -50,23 +50,23 @@ for kernel_class, kernel_args in (
 # used for regression/classfication with GPR/GPC.
 count = 1
 for k in kernel_dictionary.keys():
-    P.subplot(3, 4, count)
-    # X = N.random.rand(size)*12.0-6.0
+    pl.subplot(3, 4, count)
+    # X = np.random.rand(size)*12.0-6.0
     # X.sort()
-    X = N.arange(-1, 1, .02)
-    X = X[:, N.newaxis]
+    X = np.arange(-1, 1, .02)
+    X = X[:, np.newaxis]
     ker = kernel_dictionary[k]()
     ker.compute(X, X)
     print k
-    K = N.asarray(ker)
+    K = np.asarray(ker)
     for i in range(10):
-        f = N.random.multivariate_normal(N.zeros(X.shape[0]), K)
-        P.plot(X[:, 0], f, "b-")
+        f = np.random.multivariate_normal(np.zeros(X.shape[0]), K)
+        pl.plot(X[:, 0], f, "b-")
 
-    P.title(k)
-    P.axis('tight')
+    pl.title(k)
+    pl.axis('tight')
     count += 1
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
-    P.show()
+    pl.show()

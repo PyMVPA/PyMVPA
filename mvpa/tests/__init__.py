@@ -13,7 +13,6 @@ from mvpa import _random_seed, cfg
 from mvpa.base import externals, warning
 
 
-##REF: Name was automagically refactored
 def collect_test_suites():
     """Runs over all tests it knows and composes a dictionary with test suite
     instances as values and IDs as keys. IDs are the filenames of the unittest
@@ -56,7 +55,6 @@ def collect_test_suites():
         'test_procrust',
         'test_hyperalignment',
         'test_transformers',
-        'test_transerror',
         'test_clfcrossval',
         'test_searchlight',
         'test_rfe',
@@ -101,11 +99,10 @@ def collect_test_suites():
     for t in tests:
         exec 'import ' + t
 
-    # instanciate all tests suites and return dict of them (with ID as key)
+    # instantiate all tests suites and return dict of them (with ID as key)
     return dict([(t[5:], eval(t + '.suite()')) for t in tests ])
 
 
-##REF: Name was automagically refactored
 def collect_nose_tests():
     """Return list of tests which are pure nose-based
     """
@@ -119,14 +116,18 @@ def collect_nose_tests():
               'test_fxmapper',
               'test_glmnet',
               'test_hdf5',
+              'test_hdf5_clf',
               'test_neighborhood',
               'test_mdp',
               'test_niftidataset',
               'test_eepdataset',
+              'test_erdataset',
               'test_zscoremapper',
               'test_kernel',
               'test_svmkernels',
               'test_waveletmapper',
+              'test_emp_null',
+              'test_transerror',
               ]
 
     if not cfg.getboolean('tests', 'lowmem', default='no'):
@@ -147,7 +148,7 @@ def collect_nose_tests():
 
     return tests
 
-##REF: Name was automagically refactored
+
 def run_nose_tests():
     """Run nose-based tests -- really really silly way, just to get started
 

@@ -21,7 +21,7 @@ mailing list (preferred) or contact the authors on IRC:
 
 :Mailing list: pkg-exppsy-pymvpa@lists.alioth.debian.org [subscription_,
                archive_]
-:IRC: #exppsy on OTFC/Freenode
+:IRC: #exppsy on OTFC
 
 All users should subscribe to the mailing list. PyMVPA is still a young project
 that is under heavy development. Significant modifications (hopefully
@@ -41,7 +41,10 @@ If you think you have discovered a bug, please report it. Only known bugs can
 be fixed. If you have a GitHub_ account, the easiest way to report a bug is via
 the `issue tracker`_ -- just click the "Create Issue" button, describe
 your problem, and submit.  If your are using a Debian package of PyMVPA, you
-can alternatively use the :command:`reportbug` command.
+can alternatively use the :command:`reportbug` command. If you spot an error in
+the documentation, simply leave a comment at the bottom of the corresponding
+webpage on pympva.org (comments can be made without the need for any type of
+account).
 
 If you don't like either way, please post to the user mailing list (see above).
 

@@ -9,19 +9,20 @@
 """Unit tests for PyMVPA pattern handling"""
 
 import unittest
-import numpy as N
+import numpy as np
 
-from mvpa.datasets.base import dataset_wizard
+from mvpa.datasets.base import dataset_wizard, Dataset
 from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter, \
                                    NoneSplitter, HalfSplitter, \
                                    CustomSplitter, NGroupSplitter
 
-from mvpa.testing.tools import ok_, assert_array_equal
+from mvpa.testing.tools import ok_, assert_array_equal, assert_true, \
+        assert_false, assert_equal
 
 class SplitterTests(unittest.TestCase):
 
     def setUp(self):
-        self.data = dataset_wizard(N.random.normal(size=(100,10)),
+        self.data = dataset_wizard(np.random.normal(size=(100,10)),
                             targets=[ i%4 for i in range(100) ],
                             chunks=[ i/10 for i in range(100)])
 
@@ -189,7 +190,7 @@ class SplitterTests(unittest.TestCase):
 
         # full test with additional sampling and 3 datasets per split
         cs = CustomSplitter([([0,3,4],[5,9],[2])],
-                            nperlabel=[3,4,1],
+                            npertarget=[3,4,1],
                             nrunspersplit=3)
         splits = list(cs(self.data))
         self.failUnless(len(splits) == 3)
@@ -203,14 +204,14 @@ class SplitterTests(unittest.TestCase):
         # lets test selection of samples by ratio and combined with
         # other ways
         cs = CustomSplitter([([0,3,4],[5,9],[2])],
-                            nperlabel=[[0.3, 0.6, 1.0, 0.5],
+                            npertarget=[[0.3, 0.6, 1.0, 0.5],
                                        0.5,
                                        'all'],
                             nrunspersplit=3)
         csall = CustomSplitter([([0,3,4],[5,9],[2])],
                                nrunspersplit=3)
         # lets craft simpler dataset
-        #ds = Dataset(samples=N.arange(12), targets=[1]*6+[2]*6, chunks=1)
+        #ds = Dataset(samples=np.arange(12), targets=[1]*6+[2]*6, chunks=1)
         splits = list(cs(self.data))
         splitsall = list(csall(self.data))
 
@@ -218,18 +219,18 @@ class SplitterTests(unittest.TestCase):
         ul = self.data.sa['targets'].unique
 
         assert_array_equal(
-            (N.array(splitsall[0][0].get_nsamples_per_attr('targets').values())
+            (np.array(splitsall[0][0].get_nsamples_per_attr('targets').values())
                 *[0.3, 0.6, 1.0, 0.5]).round().astype(int),
-            N.array(splits[0][0].get_nsamples_per_attr('targets').values()))
+            np.array(splits[0][0].get_nsamples_per_attr('targets').values()))
 
         assert_array_equal(
-            (N.array(splitsall[0][1].get_nsamples_per_attr('targets').values())
+            (np.array(splitsall[0][1].get_nsamples_per_attr('targets').values())
                 * 0.5).round().astype(int),
-            N.array(splits[0][1].get_nsamples_per_attr('targets').values()))
+            np.array(splits[0][1].get_nsamples_per_attr('targets').values()))
 
         assert_array_equal(
-            N.array(splitsall[0][2].get_nsamples_per_attr('targets').values()),
-            N.array(splits[0][2].get_nsamples_per_attr('targets').values()))
+            np.array(splitsall[0][2].get_nsamples_per_attr('targets').values()),
+            np.array(splits[0][2].get_nsamples_per_attr('targets').values()))
 
 
     def test_none_splitter(self):
@@ -249,7 +250,7 @@ class SplitterTests(unittest.TestCase):
         # test sampling tools
         # specified value
         nos = NoneSplitter(nrunspersplit=3,
-                           nperlabel=10)
+                           npertarget=10)
         splits = [ (train, test) for (train, test) in nos(self.data) ]
 
         self.failUnless(len(splits) == 3)
@@ -261,7 +262,7 @@ class SplitterTests(unittest.TestCase):
 
         # auto-determined
         nos = NoneSplitter(nrunspersplit=3,
-                           nperlabel='equal')
+                           npertarget='equal')
         splits = [ (train, test) for (train, test) in nos(self.data) ]
 
         self.failUnless(len(splits) == 3)
@@ -371,6 +372,40 @@ class SplitterTests(unittest.TestCase):
         # visually... looks ok;)
         #for count in counts[5:]:
         #    print count
+
+
+    def test_slicing(self):
+        spl = HalfSplitter()
+        splits = [ (train, test) for (train, test) in spl(self.data) ]
+        for s in splits:
+            # we get slicing all the time
+            assert_true(s[0].samples.base is self.data.samples)
+            assert_true(s[1].samples.base is self.data.samples)
+        spl = HalfSplitter(noslicing=True)
+        splits = [ (train, test) for (train, test) in spl(self.data) ]
+        for s in splits:
+            # we no slicing at all
+            assert_false(s[0].samples.base is self.data.samples)
+            assert_false(s[1].samples.base is self.data.samples)
+        spl = NFoldSplitter()
+        splits = [ (train, test) for (train, test) in spl(self.data) ]
+        for i, s in enumerate(splits):
+            # training only first and last split
+            if i == 0 or i == len(splits) - 1:
+                assert_true(s[0].samples.base is self.data.samples)
+            else:
+                assert_false(s[0].samples.base is self.data.samples)
+            # we get slicing all the time
+            assert_true(s[1].samples.base is self.data.samples)
+        step_ds = Dataset(np.random.randn(20,2),
+                          sa={'chunks': np.tile([0,1], 10)})
+        spl = OddEvenSplitter()
+        splits = [ (train, test) for (train, test) in spl(step_ds) ]
+        assert_equal(len(splits), 2)
+        for s in splits:
+            # we get slicing all the time
+            assert_true(s[0].samples.base is step_ds.samples)
+            assert_true(s[1].samples.base is step_ds.samples)
 
 
 def suite():

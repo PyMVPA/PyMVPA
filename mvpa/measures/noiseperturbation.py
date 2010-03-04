@@ -17,7 +17,7 @@ if __debug__:
 
 from mvpa.support.copy import deepcopy
 
-import numpy as N
+import numpy as np
 
 from mvpa.measures.base import FeaturewiseDatasetMeasure
 from mvpa.datasets.base import Dataset
@@ -41,7 +41,7 @@ class NoisePerturbationSensitivity(FeaturewiseDatasetMeasure):
     The computed sensitivity map might have positive and negative values!
     """
     def __init__(self, datameasure,
-                 noise=N.random.normal):
+                 noise=np.random.normal):
         """
         Parameters
         ----------
@@ -63,7 +63,7 @@ class NoisePerturbationSensitivity(FeaturewiseDatasetMeasure):
     def _call(self, dataset):
         # first cast to floating point dtype, because noise is most likely
         # floating point as well and '+=' on int would not do the right thing
-        if not N.issubdtype(dataset.samples.dtype, N.float):
+        if not np.issubdtype(dataset.samples.dtype, np.float):
             ds = dataset.copy(deep=False)
             ds.samples = dataset.samples.astype('float32')
             dataset = ds
@@ -107,8 +107,8 @@ class NoisePerturbationSensitivity(FeaturewiseDatasetMeasure):
 
         # turn into an array and get rid of unnecessary axes -- ideally yielding
         # 2D array
-        sens_map = N.array(sens_map).squeeze()
+        sens_map = np.array(sens_map).squeeze()
         # swap first to axis: we have nfeatures on first but want it as second
         # in a dataset
-        sens_map = N.swapaxes(sens_map, 0, 1)
+        sens_map = np.swapaxes(sens_map, 0, 1)
         return Dataset(sens_map)

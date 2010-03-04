@@ -11,12 +11,12 @@
 __docformat__ = 'restructuredtext'
 
 # system imports
-import numpy as N
+import numpy as np
 
 import mvpa.base.externals as externals
 
 # do conditional to be able to build module reference
-if externals.exists('lars', raiseException=True):
+if externals.exists('lars', raise_=True):
     import rpy2.robjects
     import rpy2.robjects.numpy2ri
     RRuntimeError = rpy2.robjects.rinterface.RRuntimeError
@@ -142,7 +142,7 @@ class LARS(Classifier):
     def _train(self, data):
         """Train the classifier using `data` (`Dataset`).
         """
-        targets = data.sa[self.params.targets_attr].value[:, N.newaxis]
+        targets = data.sa[self.params.targets_attr].value[:, np.newaxis]
         # some non-Python friendly R-lars arguments
         lars_kwargs = {'use.Gram': self.__use_Gram}
         if self.__max_steps is not None:
@@ -163,7 +163,7 @@ class LARS(Classifier):
         # must first convert dictionary to array
         Cp_vals = None
         try:
-            Cp_vals = N.asanyarray(Rrx2(trained_model, 'Cp'))
+            Cp_vals = np.asanyarray(Rrx2(trained_model, 'Cp'))
         except TypeError, e:
             raise FailedToTrainError, \
                   "Failed to train %s on %s. Got '%s' while trying to access " \
@@ -172,7 +172,7 @@ class LARS(Classifier):
         if Cp_vals is None:
             # if there were no any -- just choose 0th
             lowest_Cp_step = 0
-        elif N.isnan(Cp_vals[0]):
+        elif np.isnan(Cp_vals[0]):
             # sometimes may come back nan, so just pick the last one
             lowest_Cp_step = len(Cp_vals)-1
         else:
@@ -181,7 +181,7 @@ class LARS(Classifier):
 
         self.__lowest_Cp_step = lowest_Cp_step
         # set the weights to the lowest Cp step
-        self.__weights = N.asanyarray(
+        self.__weights = np.asanyarray(
             Rrx2(trained_model, 'beta'))[lowest_Cp_step]
 
         self.__trained_model = trained_model # bind to an instance
@@ -202,7 +202,7 @@ class LARS(Classifier):
                             mode='step',
                             s=self.__lowest_Cp_step)
                             #s=self.__trained_model['beta'].shape[0])
-            fit = N.atleast_1d(Rrx2(res, 'fit'))
+            fit = np.atleast_1d(Rrx2(res, 'fit'))
         except RRuntimeError, e:
             raise FailedToPredictError, \
                   "Failed to predict on %s using %s. Exceptions was: %s" \
@@ -216,7 +216,7 @@ class LARS(Classifier):
     def _get_feature_ids(self):
         """Return ids of the used features
         """
-        return N.where(N.abs(self.__weights)>0)[0]
+        return np.where(np.abs(self.__weights)>0)[0]
 
 
 
@@ -248,7 +248,7 @@ class LARSWeights(Sensitivity):
             debug('LARS',
                   "Extracting weights for LARS - "+
                   "Result: min=%f max=%f" %\
-                  (N.min(weights), N.max(weights)))
+                  (np.min(weights), np.max(weights)))
 
-        return Dataset(N.atleast_2d(weights))
+        return Dataset(np.atleast_2d(weights))
 

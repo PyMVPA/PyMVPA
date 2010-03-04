@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base.dochelpers import _str
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples, \
@@ -79,7 +79,7 @@ class FlattenMapper(Mapper):
         # first axis is the samples-separating dimension
         self.__origshape = shape
         # total number of features in a sample
-        self.__nfeatures = N.prod(self.__origshape)
+        self.__nfeatures = np.prod(self.__origshape)
 
 
     def _forward_data(self, data):
@@ -123,7 +123,7 @@ class FlattenMapper(Mapper):
         # otherwise create the coordinates as feature attributes
         else:
             mds.fa[self.get_inspace()] = \
-                list(N.ndindex(dataset.samples[0].shape))
+                list(np.ndindex(dataset.samples[0].shape))
             return mds
 
 
@@ -186,13 +186,13 @@ def mask_mapper(mask=None, shape=None, inspace=None):
                   "Either `shape` or `mask` have to be specified."
         else:
             # make full dataspace mask if nothing else is provided
-            mask = N.ones(shape, dtype='bool')
+            mask = np.ones(shape, dtype='bool')
     else:
         if not shape is None:
             # expand mask to span all dimensions but first one
             # necessary e.g. if only one slice from timeseries of volumes is
             # requested.
-            mask = N.array(mask, copy=False, subok=True, ndmin=len(shape))
+            mask = np.array(mask, copy=False, subok=True, ndmin=len(shape))
             # check for compatibility
             if not shape == mask.shape:
                 raise ValueError, \

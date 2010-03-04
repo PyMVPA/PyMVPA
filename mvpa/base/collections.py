@@ -13,7 +13,7 @@ dedicated containers aka. `Collections`.
 __docformat__ = 'restructuredtext'
 
 import copy
-import numpy as N
+import numpy as np
 from operator import isSequenceType
 
 from mvpa.base.dochelpers import _str
@@ -221,10 +221,10 @@ class SequenceCollectable(Collectable):
             return None
         if self._unique_values is None:
             # XXX we might better use Set, but yoh recalls that
-            #     N.unique was more efficient. May be we should check
+            #     np.unique was more efficient. May be we should check
             #     on the the class and use Set only if we are not
             #     dealing with ndarray (or lists/tuples)
-            self._unique_values = N.unique(self.value)
+            self._unique_values = np.unique(self.value)
         return self._unique_values
 
 
@@ -259,7 +259,7 @@ class ArrayCollectable(SequenceCollectable):
     def _set(self, val):
         if not hasattr(val, 'view'):
             if isSequenceType(val):
-                val = N.asanyarray(val)
+                val = np.asanyarray(val)
             else:
                 raise ValueError("%s only takes ndarrays (or array-likes "
                                  "providing view(), or sequence that can "

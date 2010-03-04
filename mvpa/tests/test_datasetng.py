@@ -11,7 +11,7 @@
 from mvpa.testing import *
 from mvpa.testing.datasets import datasets
 
-import numpy as N
+import numpy as np
 import random
 import shutil
 import tempfile
@@ -30,14 +30,14 @@ from mvpa.base.collections import SampleAttributesCollection, \
         ArrayCollectable, SampleAttribute, Collectable
 
 
-class myarray(N.ndarray):
+class myarray(np.ndarray):
     pass
 
 
 # TODO Urgently need test to ensure that multidimensional samples and feature
 #      attributes work and adjust docs to mention that we support such
 def test_from_wizard():
-    samples = N.arange(12).reshape((4, 3)).view(myarray)
+    samples = np.arange(12).reshape((4, 3)).view(myarray)
     labels = range(4)
     chunks = [1, 1, 2, 2]
 
@@ -99,11 +99,11 @@ def test_from_wizard():
     ok_(isinstance(ds.sa['targets'], ArrayCollectable))
 
     # the dataset will take care of not adding stupid stuff
-    assert_raises(ValueError, ds.sa.__setitem__, 'stupid', N.arange(3))
-    assert_raises(ValueError, ds.fa.__setitem__, 'stupid', N.arange(4))
+    assert_raises(ValueError, ds.sa.__setitem__, 'stupid', np.arange(3))
+    assert_raises(ValueError, ds.fa.__setitem__, 'stupid', np.arange(4))
     # or change proper attributes to stupid shapes
     try:
-        ds.sa.targets = N.arange(3)
+        ds.sa.targets = np.arange(3)
     except ValueError:
         pass
     else:
@@ -112,7 +112,7 @@ def test_from_wizard():
 
 
 def test_labelschunks_access():
-    samples = N.arange(12).reshape((4, 3)).view(myarray)
+    samples = np.arange(12).reshape((4, 3)).view(myarray)
     labels = range(4)
     chunks = [1, 1, 2, 2]
     ds = Dataset.from_wizard(samples, labels, chunks)
@@ -137,7 +137,7 @@ def test_labelschunks_access():
 
 
 def test_ex_from_masked():
-    ds = Dataset.from_wizard(samples=N.atleast_2d(N.arange(5)).view(myarray),
+    ds = Dataset.from_wizard(samples=np.atleast_2d(np.arange(5)).view(myarray),
                              targets=1, chunks=1)
     # simple sequence has to be a single pattern
     assert_equal(ds.nsamples, 1)
@@ -153,26 +153,26 @@ def test_ex_from_masked():
 
     # now try adding pattern with wrong shape
     assert_raises(DatasetError, ds.append,
-                  Dataset.from_wizard(N.ones((2,3)), targets=1, chunks=1))
+                  Dataset.from_wizard(np.ones((2,3)), targets=1, chunks=1))
 
     # now add two real patterns
-    ds.append(Dataset.from_wizard(N.random.standard_normal((2, 5)),
+    ds.append(Dataset.from_wizard(np.random.standard_normal((2, 5)),
                                   targets=2, chunks=2))
     assert_equal(ds.nsamples, 3)
     assert_array_equal(ds.targets, [1, 2, 2])
     assert_array_equal(ds.chunks, [1, 2, 2])
 
     # test unique class labels
-    ds.append(Dataset.from_wizard(N.random.standard_normal((2, 5)),
+    ds.append(Dataset.from_wizard(np.random.standard_normal((2, 5)),
                                   targets=3, chunks=5))
     assert_array_equal(ds.sa['targets'].unique, [1, 2, 3])
 
     # test wrong attributes length
     assert_raises(ValueError, Dataset.from_wizard,
-                  N.random.standard_normal((4,2,3,4)), targets=[1, 2, 3],
+                  np.random.standard_normal((4,2,3,4)), targets=[1, 2, 3],
                   chunks=2)
     assert_raises(ValueError, Dataset.from_wizard,
-                  N.random.standard_normal((4,2,3,4)), targets=[1, 2, 3, 4],
+                  np.random.standard_normal((4,2,3,4)), targets=[1, 2, 3, 4],
                   chunks=[2, 2, 2])
 
     # no test one that is using from_masked
@@ -184,7 +184,7 @@ def test_ex_from_masked():
 
 
 def test_shape_conversion():
-    ds = Dataset.from_wizard(N.arange(24).reshape((2, 3, 4)).view(myarray),
+    ds = Dataset.from_wizard(np.arange(24).reshape((2, 3, 4)).view(myarray),
                              targets=1, chunks=1)
     # array subclass survives
     ok_(isinstance(ds.samples, myarray))
@@ -195,12 +195,12 @@ def test_shape_conversion():
 
 
 def test_multidim_attrs():
-    samples = N.arange(24).reshape(2, 3, 4)
+    samples = np.arange(24).reshape(2, 3, 4)
     # have a dataset with two samples -- mapped from 2d into 1d
     # but have 2d labels and 3d chunks -- whatever that is
     ds = Dataset.from_wizard(samples.copy(),
                              targets=samples.copy(),
-                             chunks=N.random.normal(size=(2,10,4,2)))
+                             chunks=np.random.normal(size=(2,10,4,2)))
     assert_equal(ds.nsamples, 2)
     assert_equal(ds.nfeatures, 12)
     assert_equal(ds.sa.targets.shape, (2,3,4))
@@ -225,17 +225,17 @@ def test_multidim_attrs():
 
 
 def test_samples_shape():
-    ds = Dataset.from_wizard(N.ones((10, 2, 3, 4)), targets=1, chunks=1)
+    ds = Dataset.from_wizard(np.ones((10, 2, 3, 4)), targets=1, chunks=1)
     ok_(ds.samples.shape == (10, 24))
 
     # what happens to 1D samples
-    ds = Dataset(N.arange(5))
+    ds = Dataset(np.arange(5))
     assert_equal(ds.shape, (5, 1))
     assert_equal(ds.nfeatures, 1)
 
 
 def test_basic_datamapping():
-    samples = N.arange(24).reshape((4, 3, 2)).view(myarray)
+    samples = np.arange(24).reshape((4, 3, 2)).view(myarray)
 
     ds = Dataset.from_wizard(samples)
 
@@ -281,8 +281,8 @@ def test_ds_shallowcopy():
     ok_(ds.sa.chunks[0] == 234)
 
     # XXX implement me
-    #ok_(N.any(ds.uniquetargets != ds_.uniquetargets))
-    #ok_(N.any(ds.uniquechunks != ds_.uniquechunks))
+    #ok_(np.any(ds.uniquetargets != ds_.uniquetargets))
+    #ok_(np.any(ds.uniquechunks != ds_.uniquechunks))
 
 
 def test_ds_deepcopy():
@@ -301,34 +301,34 @@ def test_ds_deepcopy():
 
     # modify and see if we don't change data in the original one
     ds_.samples[0, 0] = 1234
-    ok_(N.any(ds.samples != ds_.samples))
+    ok_(np.any(ds.samples != ds_.samples))
     assert_array_equal(ds.targets, ds_.targets)
     assert_array_equal(ds.chunks, ds_.chunks)
 
-    ds_.sa.targets = N.hstack(([123], ds_.targets[1:]))
-    ok_(N.any(ds.samples != ds_.samples))
-    ok_(N.any(ds.targets != ds_.targets))
+    ds_.sa.targets = np.hstack(([123], ds_.targets[1:]))
+    ok_(np.any(ds.samples != ds_.samples))
+    ok_(np.any(ds.targets != ds_.targets))
     assert_array_equal(ds.chunks, ds_.chunks)
 
-    ds_.sa.chunks = N.hstack(([1234], ds_.chunks[1:]))
-    ok_(N.any(ds.samples != ds_.samples))
-    ok_(N.any(ds.targets != ds_.targets))
-    ok_(N.any(ds.chunks != ds_.chunks))
+    ds_.sa.chunks = np.hstack(([1234], ds_.chunks[1:]))
+    ok_(np.any(ds.samples != ds_.samples))
+    ok_(np.any(ds.targets != ds_.targets))
+    ok_(np.any(ds.chunks != ds_.chunks))
 
     # XXX implement me
-    #ok_(N.any(ds.uniquetargets != ds_.uniquetargets))
-    #ok_(N.any(ds.uniquechunks != ds_.uniquechunks))
+    #ok_(np.any(ds.uniquetargets != ds_.uniquetargets))
+    #ok_(np.any(ds.uniquechunks != ds_.uniquechunks))
 
 
 def test_mergeds():
-    data0 = Dataset.from_wizard(N.ones((5, 5)), targets=1)
-    data0.fa['one'] = N.ones(5)
-    data1 = Dataset.from_wizard(N.ones((5, 5)), targets=1, chunks=1)
-    data1.fa['one'] = N.zeros(5)
-    data2 = Dataset.from_wizard(N.ones((3, 5)), targets=2, chunks=1)
-    data3 = Dataset.from_wizard(N.ones((4, 5)), targets=2)
-    data4 = Dataset.from_wizard(N.ones((2, 5)), targets=3, chunks=2)
-    data4.fa['test'] = N.arange(5)
+    data0 = Dataset.from_wizard(np.ones((5, 5)), targets=1)
+    data0.fa['one'] = np.ones(5)
+    data1 = Dataset.from_wizard(np.ones((5, 5)), targets=1, chunks=1)
+    data1.fa['one'] = np.zeros(5)
+    data2 = Dataset.from_wizard(np.ones((3, 5)), targets=2, chunks=1)
+    data3 = Dataset.from_wizard(np.ones((4, 5)), targets=2)
+    data4 = Dataset.from_wizard(np.ones((2, 5)), targets=3, chunks=2)
+    data4.fa['test'] = np.arange(5)
 
     # cannot merge if there are attributes missing in one of the datasets
     assert_raises(DatasetError, data1.append, data0)
@@ -365,7 +365,7 @@ def test_mergeds():
     datasets = (data1, data2, data4)
     merged = vstack(datasets)
     assert_equal(merged.shape,
-                 (N.sum([len(ds) for ds in datasets]), data1.nfeatures))
+                 (np.sum([len(ds) for ds in datasets]), data1.nfeatures))
     assert_true('test' in merged.fa)
     assert_array_equal(merged.sa.targets, [1]*5 + [2]*3 + [3]*2)
 
@@ -376,7 +376,7 @@ def test_mergeds():
     datasets = (data0, data1)
     merged = hstack(datasets)
     assert_equal(merged.shape,
-                 (len(data1), N.sum([ds.nfeatures for ds in datasets])))
+                 (len(data1), np.sum([ds.nfeatures for ds in datasets])))
     assert_true('chunks' in merged.sa)
     assert_array_equal(merged.fa.one, [1]*5 + [0]*5)
 
@@ -400,7 +400,7 @@ def test_mergeds2():
     # now try adding pattern with wrong shape
     assert_raises(DatasetError,
                   data.append,
-                  dataset_wizard(N.ones((2,3)), targets=1, chunks=1))
+                  dataset_wizard(np.ones((2,3)), targets=1, chunks=1))
 
     # now add two real patterns
     dss = datasets['uni2large'].samples
@@ -426,7 +426,7 @@ def test_mergeds2():
 
 
 def test_combined_samplesfeature_selection():
-    data = dataset_wizard(N.arange(20).reshape((4, 5)).view(myarray),
+    data = dataset_wizard(np.arange(20).reshape((4, 5)).view(myarray),
                    targets=[1,2,3,4],
                    chunks=[5,6,7,8])
 
@@ -476,11 +476,11 @@ def test_combined_samplesfeature_selection():
 
 
 def test_labelpermutation_randomsampling():
-    ds  = Dataset.from_wizard(N.ones((5, 1)),     targets=range(5), chunks=1)
-    ds.append(Dataset.from_wizard(N.ones((5, 1)) + 1, targets=range(5), chunks=2))
-    ds.append(Dataset.from_wizard(N.ones((5, 1)) + 2, targets=range(5), chunks=3))
-    ds.append(Dataset.from_wizard(N.ones((5, 1)) + 3, targets=range(5), chunks=4))
-    ds.append(Dataset.from_wizard(N.ones((5, 1)) + 4, targets=range(5), chunks=5))
+    ds  = Dataset.from_wizard(np.ones((5, 1)),     targets=range(5), chunks=1)
+    ds.append(Dataset.from_wizard(np.ones((5, 1)) + 1, targets=range(5), chunks=2))
+    ds.append(Dataset.from_wizard(np.ones((5, 1)) + 2, targets=range(5), chunks=3))
+    ds.append(Dataset.from_wizard(np.ones((5, 1)) + 3, targets=range(5), chunks=4))
+    ds.append(Dataset.from_wizard(np.ones((5, 1)) + 4, targets=range(5), chunks=5))
     # use subclass for testing if it would survive
     ds.samples = ds.samples.view(myarray)
 
@@ -513,9 +513,22 @@ def test_labelpermutation_randomsampling():
     ds.chunks[0] = 9876
     assert_array_equal(ds.chunks, ods.chunks)
 
+    # try to permute on custom target
+    ds = ods.copy()
+    otargets = ods.sa.targets.copy()
+    ds.sa['custom'] = ods.sa.targets.copy()
+    assert_array_equal(ds.sa.custom, otargets)
+    assert_array_equal(ds.sa.targets, otargets)
+
+    ds.permute_targets(targets_attr='custom')
+    # original targets should still match
+    assert_array_equal(ds.sa.targets, otargets)
+    # but custom should get permuted
+    assert_false((ds.sa.custom == otargets).all())
+
 
 def test_masked_featureselection():
-    origdata = N.random.standard_normal((10, 2, 4, 3, 5)).view(myarray)
+    origdata = np.random.standard_normal((10, 2, 4, 3, 5)).view(myarray)
     data = Dataset.from_wizard(origdata, targets=2, chunks=2)
 
     unmasked = data.samples.copy()
@@ -528,12 +541,12 @@ def test_masked_featureselection():
 
     # check that full mask uses all features
     # this uses auto-mapping of selection arrays in __getitem__
-    sel = data[:, N.ones((2, 4, 3, 5), dtype='bool')]
+    sel = data[:, np.ones((2, 4, 3, 5), dtype='bool')]
     ok_(sel.nfeatures == data.samples.shape[1])
     ok_(data.nfeatures == 120)
 
     # check partial array mask
-    partial_mask = N.zeros((2, 4, 3, 5), dtype='bool')
+    partial_mask = np.zeros((2, 4, 3, 5), dtype='bool')
     partial_mask[0, 0, 2, 2] = 1
     partial_mask[1, 2, 2, 0] = 1
 
@@ -556,7 +569,7 @@ def test_masked_featureselection():
 
 
 def test_origmask_extraction():
-    origdata = N.random.standard_normal((10, 2, 4, 3))
+    origdata = np.random.standard_normal((10, 2, 4, 3))
     data = Dataset.from_wizard(origdata, targets=2, chunks=2)
 
     # check with custom mask
@@ -565,10 +578,10 @@ def test_origmask_extraction():
 
 
 def test_feature_masking():
-    mask = N.zeros((5, 3), dtype='bool')
+    mask = np.zeros((5, 3), dtype='bool')
     mask[2, 1] = True
     mask[4, 0] = True
-    data = Dataset.from_wizard(N.arange(60).reshape((4, 5, 3)),
+    data = Dataset.from_wizard(np.arange(60).reshape((4, 5, 3)),
                                targets=1, chunks=1, mask=mask)
 
     # check simple masking
@@ -584,21 +597,21 @@ def test_feature_masking():
 
     # check sugarings
     # XXX put me back
-    #self.failUnless(N.all(data.I == data.origids))
+    #self.failUnless(np.all(data.I == data.origids))
     assert_array_equal(data.C, data.chunks)
-    assert_array_equal(data.UC, N.unique(data.chunks))
+    assert_array_equal(data.UC, np.unique(data.chunks))
     assert_array_equal(data.T, data.targets)
-    assert_array_equal(data.UT, N.unique(data.targets))
+    assert_array_equal(data.UT, np.unique(data.targets))
     assert_array_equal(data.S, data.samples)
     assert_array_equal(data.O, data.mapper.reverse(data.samples))
 
 
 def test_origid_handling():
-    ds = dataset_wizard(N.atleast_2d(N.arange(35)).T)
+    ds = dataset_wizard(np.atleast_2d(np.arange(35)).T)
     ds.init_origids('both')
     ok_(ds.nsamples == 35)
-    assert_equal(len(N.unique(ds.sa.origids)), 35)
-    assert_equal(len(N.unique(ds.fa.origids)), 1)
+    assert_equal(len(np.unique(ds.sa.origids)), 35)
+    assert_equal(len(np.unique(ds.fa.origids)), 1)
     selector = [3, 7, 10, 15]
     subds = ds[selector]
     assert_array_equal(subds.sa.origids, ds.sa.origids[selector])
@@ -624,11 +637,11 @@ def test_origid_handling():
     ok_((fa_origids != subds.fa.origids).any())
 
 def test_idhash():
-    ds = dataset_wizard(N.arange(12).reshape((4, 3)),
+    ds = dataset_wizard(np.arange(12).reshape((4, 3)),
                  targets=1, chunks=1)
     origid = ds.idhash
     #XXX BUG -- no assurance that labels would become an array... for now -- do manually
-    ds.targets = N.array([3, 1, 2, 3])   # change all labels
+    ds.targets = np.array([3, 1, 2, 3])   # change all labels
     ok_(origid != ds.idhash,
                     msg="Changing all targets should alter dataset's idhash")
 
@@ -661,26 +674,26 @@ def test_idhash():
 
 
 def test_arrayattributes():
-    samples = N.arange(12).reshape((4, 3))
+    samples = np.arange(12).reshape((4, 3))
     labels = range(4)
     chunks = [1, 1, 2, 2]
     ds = dataset_wizard(samples, labels, chunks)
 
     for a in (ds.samples, ds.targets, ds.chunks):
-        ok_(isinstance(a, N.ndarray))
+        ok_(isinstance(a, np.ndarray))
 
     ds.targets = labels
-    ok_(isinstance(ds.targets, N.ndarray))
+    ok_(isinstance(ds.targets, np.ndarray))
 
     ds.chunks = chunks
-    ok_(isinstance(ds.chunks, N.ndarray))
+    ok_(isinstance(ds.chunks, np.ndarray))
 
 
 def test_repr():
     attr_repr = "SampleAttribute(name='TestAttr', doc='my own test', " \
                                 "value=array([0, 1, 2, 3, 4]), length=None)"
     sattr = SampleAttribute(name='TestAttr', doc='my own test',
-                            value=N.arange(5))
+                            value=np.arange(5))
     # check precise formal representation
     ok_(repr(sattr) == attr_repr)
     # check that it actually works as a Python expression
@@ -701,7 +714,7 @@ def test_repr():
     ok_(repr(eval(ds_repr)) == ds_repr)
 
 def test_str():
-    args = ( N.arange(12, dtype=N.int8).reshape((4, 3)),
+    args = ( np.arange(12, dtype=np.int8).reshape((4, 3)),
              range(4),
              [1, 1, 2, 2])
     for iargs in range(1, len(args)):
@@ -723,24 +736,24 @@ def test_other_samples_dtypes():
     dshape = (4, 3)
     # test for ndarray, custom ndarray-subclass, matrix,
     # and all sparse matrix types we know
-    stypes = [N.arange(N.prod(dshape)).reshape(dshape),
-              N.arange(N.prod(dshape)).reshape(dshape).view(myarray),
-              N.matrix(N.arange(N.prod(dshape)).reshape(dshape)),
-              sparse.csc_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
-              sparse.csr_matrix(N.arange(N.prod(dshape)).reshape(dshape))]
+    stypes = [np.arange(np.prod(dshape)).reshape(dshape),
+              np.arange(np.prod(dshape)).reshape(dshape).view(myarray),
+              np.matrix(np.arange(np.prod(dshape)).reshape(dshape)),
+              sparse.csc_matrix(np.arange(np.prod(dshape)).reshape(dshape)),
+              sparse.csr_matrix(np.arange(np.prod(dshape)).reshape(dshape))]
     if hasattr(sparse, 'bsr_matrix'):
         stypes += [
               # BSR cannot be sliced, but is more efficient for sparse
               # arithmetic operations than CSC pr CSR
-              sparse.bsr_matrix(N.arange(N.prod(dshape)).reshape(dshape))]
+              sparse.bsr_matrix(np.arange(np.prod(dshape)).reshape(dshape))]
               # LIL and COO are best for constructing matrices, not for
               # doing something with them
-              #sparse.lil_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
-              #sparse.coo_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
+              #sparse.lil_matrix(np.arange(np.prod(dshape)).reshape(dshape)),
+              #sparse.coo_matrix(np.arange(np.prod(dshape)).reshape(dshape)),
               # DOK doesn't allow duplicates and is bad at array-like slicing
-              #sparse.dok_matrix(N.arange(N.prod(dshape)).reshape(dshape)),
+              #sparse.dok_matrix(np.arange(np.prod(dshape)).reshape(dshape)),
               # DIA only has diagonal storage and cannot be sliced
-              #sparse.dia_matrix(N.arange(N.prod(dshape)).reshape(dshape))]
+              #sparse.dia_matrix(np.arange(np.prod(dshape)).reshape(dshape))]
 
     # it needs to have .shape (the only way to get len(sparse))
     for s in stypes:
@@ -754,11 +767,11 @@ def test_other_samples_dtypes():
 
         # sparse doesn't work like an array
         if sparse.isspmatrix(ds.samples):
-            assert_raises(RuntimeError, N.mean, ds)
+            assert_raises(RuntimeError, np.mean, ds)
         else:
             # need to convert results, since matrices return matrices
-            assert_array_equal(N.mean(ds, axis=0),
-                               N.array(N.mean(ds.samples, axis=0)).squeeze())
+            assert_array_equal(np.mean(ds, axis=0),
+                               np.array(np.mean(ds.samples, axis=0)).squeeze())
 
         # select subset and see what happens
         # bsr type doesn't support first axis slicing
@@ -800,7 +813,7 @@ def test_other_samples_dtypes():
         # voodoo
         assert_raises(ValueError, Dataset, voodoo())
         # crippled
-        assert_raises(ValueError, Dataset, N.array(5))
+        assert_raises(ValueError, Dataset, np.array(5))
 
         # things that might behave in surprising ways
         # lists -- first axis is samples, hence single feature
@@ -808,13 +821,20 @@ def test_other_samples_dtypes():
         assert_equal(ds.nfeatures, 1)
         assert_equal(ds.shape, (5, 1))
         # arrays of objects
-        data = N.array([{},{}])
+        data = np.array([{},{}])
         ds = Dataset(data)
         assert_equal(ds.shape, (2, 1))
         assert_equal(ds.nsamples, 2)
         # Nothing to index, hence no features
         assert_equal(ds.nfeatures, 1)
 
+
+def test_dataset_summary():
+    for ds in datasets.itervalues():
+        s = ds.summary()
+        ok_(s.startswith(str(ds)[1:-1])) # we strip surrounding '<...>'
+        # TODO: actual test of what was returned; to do that properly
+        #       RF the summary() so it is a dictionary
 
 def test_h5py_io():
     skip_if_no_external('h5py')

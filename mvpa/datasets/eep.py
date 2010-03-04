@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 from mvpa.datasets import Dataset
 from mvpa.misc.io import DataReader
 
@@ -136,7 +136,7 @@ class EEPBin(DataReader):
             self._props['channels'] = hdr['channels'].split()
 
         self._data = \
-            N.reshape(N.fromfile(infile, dtype='f'), \
+            np.reshape(np.fromfile(infile, dtype='f'), \
                 (nsamples,
                  self._props['nchannels'],
                  self._props['ntimepoints']))

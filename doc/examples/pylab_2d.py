@@ -19,7 +19,7 @@ decision surface of each classifier.
 First compose some sample data -- no PyMVPA involved.
 """
 
-import numpy as N
+import numpy as np
 
 # set up the labeled data
 # two skewed 2-D distributions
@@ -27,12 +27,12 @@ num_dat = 200
 dist = 4
 # Absolute max value allowed. Just to assure proper plots
 xyamax = 10
-feat_pos=N.random.randn(2, num_dat)
+feat_pos=np.random.randn(2, num_dat)
 feat_pos[0, :] *= 2.
 feat_pos[1, :] *= .5
 feat_pos[0, :] += dist
 feat_pos = feat_pos.clip(-xyamax, xyamax)
-feat_neg=N.random.randn(2, num_dat)
+feat_neg=np.random.randn(2, num_dat)
 feat_neg[0, :] *= .5
 feat_neg[1, :] *= 2.
 feat_neg[0, :] -= dist
@@ -40,10 +40,10 @@ feat_neg = feat_neg.clip(-xyamax, xyamax)
 
 # set up the testing features
 npoints = 101
-x1 = N.linspace(-xyamax, xyamax, npoints)
-x2 = N.linspace(-xyamax, xyamax, npoints)
-x,y = N.meshgrid(x1, x2);
-feat_test = N.array((N.ravel(x), N.ravel(y)))
+x1 = np.linspace(-xyamax, xyamax, npoints)
+x2 = np.linspace(-xyamax, xyamax, npoints)
+x,y = np.meshgrid(x1, x2);
+feat_test = np.array((np.ravel(x), np.ravel(y)))
 
 """Now load PyMVPA and convert the data into a proper
 :class:`~mvpa.datasets.base.Dataset`."""
@@ -93,7 +93,7 @@ for id, ds in datasets.iteritems():
     fig = 0
 
     # make a new figure
-    P.figure(figsize=(9, 9))
+    pl.figure(figsize=(9, 9))
 
     print "Processing %s problem..." % id
 
@@ -103,13 +103,13 @@ for id, ds in datasets.iteritems():
 
         # make a new subplot for each classifier
         fig += 1
-        P.subplot(3, 3, fig)
+        pl.subplot(3, 3, fig)
 
         # plot the training points
-        P.plot(ds.samples[ds.targets == 1, 0],
+        pl.plot(ds.samples[ds.targets == 1, 0],
                ds.samples[ds.targets == 1, 1],
                "r.")
-        P.plot(ds.samples[ds.targets == 0, 0],
+        pl.plot(ds.samples[ds.targets == 0, 0],
                ds.samples[ds.targets == 0, 1],
                "b.")
 
@@ -128,35 +128,35 @@ for id, ds in datasets.iteritems():
         # if ridge, use the prediction, otherwise use the values
         if c == 'Ridge Regression' or c.startswith('k-Nearest'):
             # use the prediction
-            res = N.asarray(pre)
+            res = np.asarray(pre)
         elif c == 'Logistic Regression':
             # get out the values used for the prediction
-            res = N.asarray(clf.ca.estimates)
+            res = np.asarray(clf.ca.estimates)
         elif c in ['SMLR']:
-            res = N.asarray(clf.ca.estimates[:, 1])
+            res = np.asarray(clf.ca.estimates[:, 1])
         elif c.startswith('GNB'):
             # Since probabilities are raw: for visualization lets
             # operate on logprobs and in comparison one to another
             res = clf.ca.estimates[:, 1] - clf.ca.estimates[:, 0]
             # Scale and position around 0.5
-            res = 0.5 + res/max(N.abs(res))
+            res = 0.5 + res/max(np.abs(res))
         else:
             # get the probabilities from the svm
-            res = N.asarray([(q[1][1] - q[1][0] + 1) / 2
+            res = np.asarray([(q[1][1] - q[1][0] + 1) / 2
                     for q in clf.ca.probabilities])
 
         # reshape the results
-        z = N.asarray(res).reshape((npoints, npoints))
+        z = np.asarray(res).reshape((npoints, npoints))
 
         # plot the predictions
-        P.pcolor(x, y, z, shading='interp')
-        P.clim(0, 1)
-        P.colorbar()
-        P.contour(x, y, z, linewidths=1, colors='black', hold=True)
-        P.axis('tight')
+        pl.pcolor(x, y, z, shading='interp')
+        pl.clim(0, 1)
+        pl.colorbar()
+        pl.contour(x, y, z, linewidths=1, colors='black', hold=True)
+        pl.axis('tight')
         # add the title
-        P.title(c)
+        pl.title(c)
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
-    P.show()
+    pl.show()

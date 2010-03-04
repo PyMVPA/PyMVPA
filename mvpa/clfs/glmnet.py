@@ -11,12 +11,12 @@
 __docformat__ = 'restructuredtext'
 
 # system imports
-import numpy as N
+import numpy as np
 
 import mvpa.base.externals as externals
 
 # do conditional to be able to build module reference
-if externals.exists('glmnet', raiseException=True):
+if externals.exists('glmnet', raise_=True):
     import rpy2.robjects
     import rpy2.robjects.numpy2ri
     RRuntimeError = rpy2.robjects.rinterface.RRuntimeError
@@ -40,7 +40,7 @@ def _label2indlist(labels, ulabels):
     """
 
     # allocate for the new one-of-M labels
-    new_labels = N.zeros(len(labels), dtype=N.int)
+    new_labels = np.zeros(len(labels), dtype=np.int)
 
     # loop and convert to one-of-M
     for i, c in enumerate(ulabels):
@@ -56,7 +56,7 @@ def _label2oneofm(labels, ulabels):
     """
 
     # allocate for the new one-of-M labels
-    new_labels = N.zeros((len(labels), len(ulabels)))
+    new_labels = np.zeros((len(labels), len(ulabels)))
 
     # loop and convert to one-of-M
     for i, c in enumerate(ulabels):
@@ -206,15 +206,15 @@ class _GLMNET(Classifier):
                   % (self, dataset, e)
 
         self.__last_lambda = last_lambda = \
-                             N.asanyarray(Rrx2(trained_model, 'lambda'))[-1]
+                             np.asanyarray(Rrx2(trained_model, 'lambda'))[-1]
 
         # set the weights to the last step
         weights = r.coef(trained_model, s=last_lambda)
         if self.params.family == 'multinomial':
-            self.__weights = N.hstack([N.array(r['as.matrix'](weights[i]))[1:]
+            self.__weights = np.hstack([np.array(r['as.matrix'](weights[i]))[1:]
                                        for i in range(len(weights))])
         elif self.params.family == 'gaussian':
-            self.__weights = N.array(r['as.matrix'](weights))[1:, 0]
+            self.__weights = np.array(r['as.matrix'](weights))[1:, 0]
         else:
             raise NotImplementedError, \
                   "Somehow managed to get here with family %s." % \
@@ -226,7 +226,7 @@ class _GLMNET(Classifier):
         Predict the output for the provided data.
         """
         # predict with standard method
-        values = N.array(r.predict(self.__trained_model,
+        values = np.array(r.predict(self.__trained_model,
                                    newx=data,
                                    type='link',
                                    s=self.__last_lambda))
@@ -238,7 +238,7 @@ class _GLMNET(Classifier):
             values = values[:, :, 0]
 
             # get the classes too (they are 1-indexed)
-            class_ind = N.array(r.predict(self.__trained_model,
+            class_ind = np.array(r.predict(self.__trained_model,
                                           newx=data,
                                           type='class',
                                           s=self.__last_lambda))
@@ -271,7 +271,7 @@ class _GLMNET(Classifier):
     def _get_feature_ids(self):
         """Return ids of the used features
         """
-        return N.where(N.abs(self.__weights)>0)[0]
+        return np.where(np.abs(self.__weights)>0)[0]
 
 
     ##REF: Name was automagically refactored
@@ -302,13 +302,13 @@ class GLMNETWeights(Sensitivity):
             debug('GLMNET',
                   "Extracting weights for GLMNET - "+
                   "Result: min=%f max=%f" %\
-                  (N.min(weights), N.max(weights)))
+                  (np.min(weights), np.max(weights)))
 
         #return weights
         if clf.params.family == 'multinomial':
             return Dataset(weights.T, sa={clf.params.targets_attr: clf._utargets})
         else:
-            return Dataset(weights[N.newaxis])
+            return Dataset(weights[np.newaxis])
 
 
 class GLMNET_R(_GLMNET):

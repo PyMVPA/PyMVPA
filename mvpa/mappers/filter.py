@@ -16,10 +16,10 @@ raise NotImplementedError
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import externals
-if externals.exists('scipy', raiseException=True):
+if externals.exists('scipy', raise_=True):
     from scipy.signal import resample
 
 from mvpa.base.dochelpers import _str, borrowkwargs
@@ -27,22 +27,22 @@ from mvpa.mappers.base import Mapper
 
 
 class FFTResamplemapper(Mapper):
-    def __init__(self, chunks=None, inspace=None):
+    def __init__(self, chunks_attr=None, inspace=None):
         Mapper.__init__(self, inspace=inspace)
 
-        self.__chunks = chunks
+        self.__chunks_attr = chunks_attr
 
 
     def __repr__(self):
         s = super(FFTResamplemapper, self).__repr__()
         return s.replace("(",
-                         "(chunks=%s, "
-                          % (repr(self.__chunks),),
+                         "(chunks_attr=%s, "
+                          % (repr(self.__chunks_attr),),
                          1)
 
 
     def __str__(self):
-        return _str(self, chunks=self.__chunks)
+        return _str(self, chunks_attr=self.__chunks_attr)
 
 
     def _resample(self, nt=None, sr=None, dt=None, window='ham',
@@ -99,7 +99,7 @@ class FFTResamplemapper(Mapper):
             raise RuntimeError, 'This should not happen!'
 
 
-        nt = N.round(nt)
+        nt = np.round(nt)
 
         # downsample data
         data = signal.resample(orig_data, nt, axis=2, window=window, **kwargs)
@@ -113,7 +113,7 @@ class FFTResamplemapper(Mapper):
             #     accordingly instead of creating a new one.
             #     It would give us opportunity to assess what
             #     resampling did...
-            mapper = MaskMapper(N.ones(data.shape[1:], dtype='bool'))
+            mapper = MaskMapper(np.ones(data.shape[1:], dtype='bool'))
             # reassign a new mapper.
             # XXX this is very evil -- who knows what mapper it is replacing
             self.a['mapper'].value = mapper

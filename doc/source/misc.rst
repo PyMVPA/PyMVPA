@@ -420,11 +420,11 @@ motion-aware data detrending:
 
 
   >>> from os import path
-  >>> import numpy as N
+  >>> import numpy as np
   >>>
   >>> # some dummy dataset
   >>> from mvpa.datasets import Dataset
-  >>> ds = Dataset(samples=N.random.normal(size=(19, 3)))
+  >>> ds = Dataset(samples=np.random.normal(size=(19, 3)))
   >>>
   >>> # load motion correction output
   >>> from mvpa.misc.fsl.base import McFlirtParams

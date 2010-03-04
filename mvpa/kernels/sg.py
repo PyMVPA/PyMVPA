@@ -16,13 +16,13 @@ kernel, use `CustomSGKernel` to define one.
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base.externals import exists, versions
 from mvpa.kernels.base import Kernel
 from mvpa.misc.param import Parameter
 
-if exists('shogun', raiseException=True):
+if exists('shogun', raise_=True):
     import shogun.Kernel as sgk
     from shogun.Features import RealFeatures
 else:
@@ -206,7 +206,7 @@ class PrecomputedSGKernel(SGKernel):
             k = matrix.as_raw_np() # Convert to NP otherwise
         else:
             # Otherwise SG would segfault ;-)
-            k = N.array(matrix)
+            k = np.array(matrix)
 
         SGKernel.__init__(self, **kwargs)
 

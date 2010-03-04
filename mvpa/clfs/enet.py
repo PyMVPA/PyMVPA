@@ -11,12 +11,12 @@
 __docformat__ = 'restructuredtext'
 
 # system imports
-import numpy as N
+import numpy as np
 
 import mvpa.base.externals as externals
 
 # do conditional to be able to build module reference
-if externals.exists('elasticnet', raiseException=True):
+if externals.exists('elasticnet', raise_=True):
     import rpy2.robjects
     import rpy2.robjects.numpy2ri
     RRuntimeError = rpy2.robjects.rinterface.RRuntimeError
@@ -128,7 +128,7 @@ class ENET(Classifier):
     def _train(self, data):
         """Train the classifier using `data` (`Dataset`).
         """
-        targets = data.sa[self.params.targets_attr].value[:, N.newaxis]
+        targets = data.sa[self.params.targets_attr].value[:, np.newaxis]
         enet_kwargs = {}
         if self.__max_steps is not None:
             enet_kwargs['max.steps'] = self.__max_steps
@@ -150,16 +150,16 @@ class ENET(Classifier):
         # find the step with the lowest Cp (risk)
         # it is often the last step if you set a max_steps
         # must first convert dictionary to array
-#         Cp_vals = N.asarray([trained_model['Cp'][str(x)]
+#         Cp_vals = np.asarray([trained_model['Cp'][str(x)]
 #                              for x in range(len(trained_model['Cp']))])
 #         self.__lowest_Cp_step = Cp_vals.argmin()
 
         # set the weights to the last step
-        beta_pure = N.asanyarray(Rrx2(trained_model, 'beta.pure'))
+        beta_pure = np.asanyarray(Rrx2(trained_model, 'beta.pure'))
         self.__beta_pure_shape = beta_pure.shape
-        self.__weights = N.zeros(data.nfeatures,
+        self.__weights = np.zeros(data.nfeatures,
                                  dtype=beta_pure.dtype)
-        ind = N.asanyarray(Rrx2(trained_model, 'allset'))-1
+        ind = np.asanyarray(Rrx2(trained_model, 'allset'))-1
         self.__weights[ind] = beta_pure[-1,:]
 #         # set the weights to the final state
 #         self.__weights = trained_model['beta'][-1,:]
@@ -176,7 +176,7 @@ class ENET(Classifier):
                             mode='step',
                             type='fit',
                             s=rpy2.robjects.IntVector(self.__beta_pure_shape))
-            fit = N.asanyarray(Rrx2(res, 'fit'))[:, -1]
+            fit = np.asanyarray(Rrx2(res, 'fit'))[:, -1]
         except RRuntimeError, e:
             raise FailedToPredictError, \
                   "Failed to predict on %s using %s. Exceptions was: %s" \
@@ -193,7 +193,7 @@ class ENET(Classifier):
     def _get_feature_ids(self):
         """Return ids of the used features
         """
-        return N.where(N.abs(self.__weights)>0)[0]
+        return np.where(np.abs(self.__weights)>0)[0]
 
 
 
@@ -225,7 +225,7 @@ class ENETWeights(Sensitivity):
             debug('ENET',
                   "Extracting weights for ENET - "+
                   "Result: min=%f max=%f" %\
-                  (N.min(weights), N.max(weights)))
+                  (np.min(weights), np.max(weights)))
 
         return weights
 
