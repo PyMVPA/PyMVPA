@@ -56,8 +56,8 @@ class GNBSearchlight(BaseSearchlight):
     _ATTRIBUTE_COLLECTIONS = ['params', 'ca']
 
     @borrowkwargs(BaseSearchlight, '__init__')
-    def __init__(self, gnb, splitter, errorfx=MeanMismatchErrorFx(),
-                 *args, **kwargs):
+    def __init__(self, gnb, splitter, qe, errorfx=MeanMismatchErrorFx(),
+                 **kwargs):
         """Initialize a GNBSearchlight
 
         Parameters
@@ -73,7 +73,7 @@ class GNBSearchlight(BaseSearchlight):
         """
 
         # init base class first
-        BaseSearchlight.__init__(self, *args, **kwargs)
+        BaseSearchlight.__init__(self, qe, **kwargs)
 
         self._errorfx = errorfx
         self._splitter = splitter
@@ -439,4 +439,5 @@ def sphere_gnbsearchlight(gnb, splitter, radius=1, center_ids=None,
     kwa = {space: Sphere(radius)}
     qe = IndexQueryEngine(**kwa)
     # init the searchlight with the queryengine
-    return GNBSearchlight(gnb, splitter, queryengine=qe, roi_ids=center_ids, *args, **kwargs)
+    return GNBSearchlight(gnb, splitter, qe,
+                          roi_ids=center_ids, *args, **kwargs)
