@@ -15,6 +15,9 @@ from mvpa.testing.datasets import *
 from mvpa.datasets import Dataset
 from mvpa.base import externals
 from mvpa.measures.searchlight import sphere_searchlight, Searchlight
+from mvpa.measures.gnbsearchlight import sphere_gnbsearchlight,\
+     GNBSearchlight
+
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
@@ -30,39 +33,52 @@ class SearchlightTests(unittest.TestCase):
         # the searchlight
         self.dataset.fa['voxel_indices'] = self.dataset.fa.myspace
 
-
-    def test_spatial_searchlight(self):
+    @sweepargs(common_variance=('True', 'False'))
+    def test_spatial_searchlight(self, common_variance):
+        """Tests both generic and GNBSearchlight
+        Test of GNBSearchlight anyways requires a ground-truth
+        comparison to the generic version, so we are doing sweepargs here
+        """
         # compute N-1 cross-validation for each sphere
         # YOH: unfortunately sample_clf_lin is not guaranteed
         #      to provide exactly the same results due to inherent
         #      iterative process.  Therefore lets use something quick
         #      and pure Python
-        transerror = TransferError(GNB(common_variance=True))
+        gnb = GNB(common_variance=common_variance)
+        transerror = TransferError(gnb)
         cv = CrossValidatedTransferError(
                 transerror,
                 NFoldSplitter(cvtype=1))
 
-        sls = [sphere_searchlight(cv, radius=1,
-                         enable_ca=['roi_sizes', 'raw_results'])]
+        skwargs = dict(radius=1, enable_ca=['roi_sizes', 'raw_results'])
+        sls = [sphere_searchlight(cv, **skwargs),
+               #GNBSearchlight(gnb, NFoldSplitter(cvtype=1))
+               sphere_gnbsearchlight(gnb, NFoldSplitter(cvtype=1), **skwargs)
+               ]
 
-        if externals.exists('pprocess'):
-            sls += [sphere_searchlight(cv, radius=1,
-                         nproc=2,
-                         enable_ca=['roi_sizes', 'raw_results'])]
+        # Just test nproc whenever common_variance is True
+        if externals.exists('pprocess') and common_variance:
+            sls += [sphere_searchlight(cv, nproc=2, **skwargs)]
 
         all_results = []
+        ds = datasets['3dsmall'].copy()
+        ds.fa['voxel_indices'] = ds.fa.myspace
         for sl in sls:
             # run searchlight
-            results = sl(self.dataset)
+            results = sl(ds)
             all_results.append(results)
 
             # check for correct number of spheres
             self.failUnless(results.nfeatures == 106)
             # and measures (one per xfold)
-            self.failUnless(len(results) == len(self.dataset.UC))
+            self.failUnless(len(results) == len(ds.UC))
 
             # check for chance-level performance across all spheres
             self.failUnless(0.4 < results.samples.mean() < 0.6)
+
+            mean_errors = results.samples.mean(axis=0)
+            # that we do get different errors ;)
+            self.failUnless(len(np.unique(mean_errors) > 3))
 
             # check resonable sphere sizes
             self.failUnless(len(sl.ca.roi_sizes) == 106)
@@ -78,7 +94,7 @@ class SearchlightTests(unittest.TestCase):
             aresults = np.array([a.samples for a in all_results])
             dresults = np.abs(aresults - aresults.mean(axis=0))
             dmax = np.max(dresults)
-            self.failUnlessEqual(dmax, 0.0)
+            self.failUnless(dmax <= 1e-13)
 
     def test_partial_searchlight_with_full_report(self):
         # compute N-1 cross-validation for each sphere
