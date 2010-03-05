@@ -218,9 +218,6 @@ class GNBSearchlight(BaseSearchlight):
         if __debug__:
             debug('SLC',
                   'Phase 3. Computing statistics for %i blocks' % (nblocks,))
-        # number of samples in each block
-        block_counts_test = np.histogram(sample2block,
-                                         bins=np.arange(nblocks+1))[0]
 
         #
         # reusable containers which should stay of the same size
@@ -258,7 +255,6 @@ class GNBSearchlight(BaseSearchlight):
         block_labels = np.asanyarray(block_labels)
         # additional silly tests for paranoid
         assert(block_labels.dtype.kind is 'i')
-        assert((block_counts == block_counts_test).all())
 
         # 4. Lets deduce all neighbors... might need to be RF into the
         #    parallel part later on
