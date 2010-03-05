@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -eu
 files=$*
 
@@ -10,6 +10,8 @@ if [ -z "$files" ]; then
 		exit 1
 	fi
 fi
+
+echo "Replacing known patters"
 
 echo \
 "absminDistance	absmin_distance
@@ -226,11 +228,25 @@ __wasDataChanged	__was_data_changed
 _waveletFamilyCallback	_wavelet_family_callback
 nperlabel	npertarget
 roisizes	roi_sizes
-xuniqueCombinations	xunique_combinations"  | \
+xuniqueCombinations	xunique_combinations
+|model='linear'	polyord=1
+|baselinetargets=	param_est=('targets'\\\,) 
+targetdtype	dtype
+detrend	poly_detrend
+nifti_dataset	fmri_dataset"  | \
 while read old new; do
-	echo -en "$old:\t"
+	echo -en "\r$old                             "
+
 	# def definition
 	grep -l "def *$old" $files | xargs -r sed -i -e "s,^\( *\)\(def  *$old*\)(,\1##REF: Name was automagically refactored\n\1def $new(,g"
 	# occurances
-	grep -l "\<$old\>" $files | xargs -r sed -i -e "s,\<$old\>,$new,g" && echo "" || :
+	if [ "${old:0:1}" = '|' ]; then
+		old="${old:1}"
+		# we got a complete regexp -- no need to guard
+		grep -l "$old" $files | xargs -r sed -i -e "s,$old,$new,g" && echo -n "" || :
+	else
+		# we got a word expression -- need to guard on the boundaries
+		grep -l "\<$old\>" $files | xargs -r sed -i -e "s,\<$old\>,$new,g" && echo -n "" || :
+	fi
 done
+echo -e "\rDONE                              "
