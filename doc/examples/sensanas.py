@@ -73,7 +73,8 @@ dataset = dataset[np.array([l in ['rest', 'shoe', 'bottle']
                     for l in dataset.sa.targets], dtype='bool')]
 
 # zscore dataset relative to baseline ('rest') mean
-zscore(dataset, chunks_attr='chunks', baselinetargets=['rest'], targetdtype='float32')
+zscore(dataset, chunks_attr='chunks',
+       param_est=('targets', ['rest']), dtype='float32')
 
 # remove baseline samples from dataset for final analysis
 dataset = dataset[dataset.sa.targets != 'rest']
