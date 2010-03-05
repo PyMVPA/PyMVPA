@@ -312,9 +312,9 @@ class QueryEngine(object):
     def query_byid(self, fid):
         """Return feature ids of neighbors for a given feature id
         """
-        kwargs = {}
-        for space in self._queryattrs:
-            kwargs[space] = self._queryattrs[space][fid]
+        queryattrs = self._queryattrs
+        kwargs = dict([(space, queryattrs[space][fid])
+                       for space in queryattrs])
         return self.query(**kwargs)
 
     #
@@ -464,7 +464,7 @@ class IndexQueryEngine(QueryEngine):
             raise ValueError, "Do not know how to treat space(s) %s given " \
                   "in parameters of the query" % (kwargs.keys())
         # only ids are of interest -> flatten
-        # and we need to back-transfer them into dataset ids by substracting 1
+        # and we need to back-transfer them into dataset ids by subtracting 1
         res = self._searcharray[np.ix_(*slicer)].flatten() - 1
         res = res[res>=0]              # return only the known ones
         if self.sorted:
