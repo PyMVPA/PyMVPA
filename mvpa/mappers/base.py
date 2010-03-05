@@ -590,6 +590,7 @@ class CombinedMapper(Mapper):
 
 
     ##REF: Name was automagically refactored
+    ##TODO: yoh: is deprecated, right?
     def select_out(self, outIds):
         """Remove some elements and leave only ids in 'out'/feature space.
 
