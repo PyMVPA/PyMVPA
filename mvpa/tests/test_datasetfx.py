@@ -79,7 +79,7 @@ class MiscDatasetFxTests(unittest.TestCase):
 
         # and some which should just return results
         for f in ['aggregate_features', 'remove_invariant_features',
-                  'get_samples_per_chunk_label']:
+                  'get_samples_per_chunk_target']:
             res = eval('ds.%s()' % f)
             self.failUnless(res is not None,
                 msg='We should have got result from function %s' % f)
@@ -112,8 +112,8 @@ class MiscDatasetFxTests(unittest.TestCase):
 
         # Generic conformance tests
         for r in (rp, rb, r5, r1):
-            ulabels = r['ulabels']
-            nlabels = len(r['ulabels'])
+            ulabels = r['utargets']
+            nlabels = len(r['utargets'])
             cbcounts = r['cbcounts']
             self.failUnlessEqual(len(cbcounts), order)
             for cb in cbcounts:

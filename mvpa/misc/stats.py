@@ -13,17 +13,28 @@ __docformat__ = 'restructuredtext'
 from mvpa.base import externals
 
 if externals.exists('scipy', raise_=True):
-    import scipy.stats as stats
+    import scipy.stats as st
 
 import numpy as np
 import copy
 
-def chisquare(obs, exp=None):
+def chisquare(obs, exp='uniform'):
     """Compute the chisquare value of a contingency table with arbitrary
     dimensions.
 
-    If no expected frequencies are supplied, the total N is assumed to be
-    equally distributed across all cells.
+    Parameters
+    ----------
+    obs : array
+      Observations matrix
+    exp : ('uniform', 'indep_rows') or array, optional
+      Matrix of expected values of the same size as `obs`.  If no
+      array is given, then for 'uniform' -- evenly distributes all
+      observations.  In 'indep_rows' case contingency table takes into
+      account frequencies relative across different columns, so, if
+      the contingency table is predictions vs targets, it would
+      account for dis-balance among different targets.  Although
+      'uniform' is the default, for confusion matrices 'indep_rows' is
+      preferable.
 
     Returns
     -------
@@ -36,17 +47,38 @@ def chisquare(obs, exp=None):
     nobs = np.sum(obs)
 
     # if no expected value are supplied assume equal distribution
-    if exp == None:
-        exp = np.ones(obs.shape) * nobs / np.prod(obs.shape)
+    if not isinstance(exp, np.ndarray):
+        ones = np.ones(obs.shape, dtype=float)
+        if exp == 'indep_rows':
+            # multiply each column
+            exp = np.sum(obs, axis=0)[None, :] * ones / obs.shape[0]
+        elif exp == 'indep_cols':
+            # multiply each row
+            exp = np.sum(obs, axis=1)[:, None] * ones / obs.shape[1]
+        elif exp == 'uniform':
+            # just evenly distribute
+            exp = nobs * np.ones(obs.shape, dtype=float) / np.prod(obs.shape)
+        else:
+            raise ValueError, \
+                  "Unknown specification of expected values exp=%r" % (exp,)
+    else:
+        assert(exp.shape == obs.shape)
 
     # make sure to have floating point data
     exp = exp.astype(float)
 
     # compute chisquare value
-    chisq = np.sum((obs - exp )**2 / exp)
+    exp_zeros = exp == 0
+    exp_nonzeros = np.logical_not(exp_zeros)
+    if np.sum(exp_zeros) !=0 and (obs[exp_zeros] != 0).any():
+        raise ValueError, \
+              "chisquare: Expected values have 0-values, but there are actual" \
+              " observations -- chi^2 cannot be computed"
+    chisq = np.sum(((obs - exp )**2)[exp_nonzeros] / exp[exp_nonzeros])
 
     # return chisq and probability (upper tail)
-    return chisq, stats.chisqprob(chisq, np.prod(obs.shape) - 1)
+    # taking only the elements with something expected
+    return chisq, st.chisqprob(chisq, np.sum(exp_nonzeros) - 1)
 
 
 class DSMatrix(object):
@@ -108,7 +140,7 @@ class DSMatrix(object):
             for i in range(num_exem):
                 # across columns
                 for j in range(num_exem):
-                    dsmatrix[i, j] = 1 - stats.spearmanr(
+                    dsmatrix[i, j] = 1 - st.spearmanr(
                         data_vectors[i,:], data_vectors[j,:])[0]
 
         elif (metric == 'pearson'):
@@ -117,7 +149,7 @@ class DSMatrix(object):
             for i in range(num_exem):
                 # across columns
                 for j in range(num_exem):
-                    dsmatrix[i, j] = 1 - stats.pearsonr(
+                    dsmatrix[i, j] = 1 - st.pearsonr(
                         data_vectors[i,:], data_vectors[j,:])[0]
 
         elif (metric == 'confusion'):

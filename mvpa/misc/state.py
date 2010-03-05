@@ -44,7 +44,7 @@ from textwrap import TextWrapper
 
 # Although not used here -- included into interface
 from mvpa.misc.exceptions import UnknownStateError
-from mvpa.misc.attributes import IndexedCollectable, StateVariable
+from mvpa.misc.attributes import IndexedCollectable, ConditionalAttribute
 from mvpa.base.dochelpers import enhanced_doc_string
 
 from mvpa.base import externals
@@ -84,19 +84,13 @@ class Collection(BaseCollection):
      (thus `listing` property)
     """
 
-    # XXX Necessary so __owner is available while deepcopying
-    #     is to be defined per instance within the class
-    __owner = None
-
-    def __init__(self, items=None, owner=None, name=None):
+    def __init__(self, items=None, name=None):
         """Initialize the Collection
 
         Parameters
         ----------
         items : dict of IndexedCollectable's
           items to initialize with
-        owner : object
-          an object to which collection belongs
         name : str
           name of the collection (as seen in the owner, e.g. 'ca')
         """
@@ -104,12 +98,9 @@ class Collection(BaseCollection):
         # this is important, since some of the stuff below relies in the
         # defaults
         self.__name = None
-        self.__owner = None
 
         super(Collection, self).__init__(items)
 
-        if not owner is None:
-            self._set_owner(owner)
         if not name is None:
             self._set_name(name)
 
@@ -136,10 +127,6 @@ class Collection(BaseCollection):
         if len(self) > maxnumber:
             res += "..."
         res += "}"
-        if __debug__:
-            if "ST" in debug.active:
-                res += " owner:%s#%s" % (self.__owner.__class__.__name__,
-                                         id(self.__owner))
         return res
 
 
@@ -211,8 +198,6 @@ class Collection(BaseCollection):
                 pass
         if items_s != "":
             s += "items={%s}" % items_s
-        if self.__owner is not None:
-            s += "%sowner=%r" % (sep, self.__owner)
         s += ")"
         return s
 
@@ -249,27 +234,13 @@ class Collection(BaseCollection):
         return result
 
 
-    # XXX RF to be removed if ownership feature is removed
-    def __setitem__(self, key, value):
-        super(Collection, self).__setitem__(key, value)
-        if not self.__owner is None:
-            self._update_owner(key)
-
-
-    def pop(self, key):
-        """Pop (remove and return) item from the collection
-        """
-        _ = super(Collection, self).pop(key)
-        self._update_owner(key, register=False)
-
-
     def _action(self, key, func, missingok=False, **kwargs):
         """Run specific func either on a single item or on all of them
 
         Parameters
         ----------
         key : str
-          Name of the state variable
+          Name of the conditional attribute
         func
           Function (not bound) to call given an item, and **kwargs
         missingok : bool
@@ -295,7 +266,7 @@ class Collection(BaseCollection):
 
 
     def reset(self, key=None):
-        """Reset the state variable defined by `key`"""
+        """Reset the conditional attribute defined by `key`"""
 
         if not key is None:
             keys = [ key ]
@@ -307,72 +278,6 @@ class Collection(BaseCollection):
                 # XXX Check if that works as desired
                 self._action(key, self.values()[0].__class__.reset,
                              missingok=False)
-
-
-    def _set_owner(self, owner):
-        if not isinstance(owner, ClassWithCollections):
-            raise ValueError, \
-                  "Owner of the StateCollection must be ClassWithCollections object"
-        if __debug__:
-            try:    strowner = str(owner)
-            except: strowner = "UNDEF: <%s#%s>" % (owner.__class__, id(owner))
-            debug("ST", "Setting owner for %s to be %s" % (self, strowner))
-        if not self.__owner is None:
-            # Remove attributes which were registered to that owner previousely
-            self._update_owner(register=False)
-        self.__owner = owner
-        if not self.__owner is None:
-            self._update_owner(register=True)
-
-
-    def _update_owner(self, key=None, register=True):
-        """Define an entry within owner's __dict__
-         so ipython could easily complete it
-
-         Parameters
-         ----------
-         key : str or list of str
-           Name of the attribute. If None -- all known get registered
-         register : bool
-           Register if True or unregister if False
-
-         XXX Needs refactoring since we duplicate the logic of expansion of
-         key value
-        """
-        # Yarik standing behind me, forcing me to do this -- I have no clue....
-        if not (__debug__ and _debug_references):
-            return
-        if not key is None:
-            if not key in self:
-                raise ValueError, \
-                      "Attribute %s is not known to %s" % (key, self)
-            keys = [ key ]
-        else:
-            keys = self.keys()
-
-        ownerdict = self.owner.__dict__
-        selfdict = self.__dict__
-        owner_known = ownerdict['_known_attribs']
-        for key_ in keys:
-            if register:
-                if key_ in ownerdict:
-                    raise RuntimeError, \
-                          "Cannot register attribute %s within %s " % \
-                          (key_, self.owner) + "since it has one already"
-                ownerdict[key_] = self[key_]
-                if key_ in selfdict:
-                    raise RuntimeError, \
-                          "Cannot register attribute %s within %s " % \
-                          (key_, self) + "since it has one already"
-                selfdict[key_] = self[key_]
-                owner_known[key_] = self.__name
-            else:
-                if key_ in ownerdict:
-                    # yoh doesn't think that we need to complain if False
-                    ownerdict.pop(key_)
-                    owner_known.pop(key_)
-                if key_ in selfdict:
-                    selfdict.pop(key_)
 
     # XXX RF: not used anywhere / myself -- hence not worth it?
     @property
@@ -387,7 +292,6 @@ class Collection(BaseCollection):
 
 
     # Properties
-    owner = property(fget=lambda x:x.__owner, fset=_set_owner)
     name = property(fget=lambda x:x.__name, fset=_set_name)
 
 
@@ -395,15 +299,15 @@ class ParameterCollection(Collection):
     """Container of Parameters for a stateful object.
     """
 
-#    def __init__(self, items=None, owner=None, name=None):
-#        """Initialize the state variables of a derived class
+#    def __init__(self, items=None, name=None):
+#        """Initialize the conditional attributes of a derived class
 #
 #        Parameters
 #        ----------
 #        items : dict
 #          dictionary of ca
 #        """
-#        Collection.__init__(self, items, owner, name)
+#        Collection.__init__(self, items, name)
 #
 
     def _cls_repr(self):
@@ -424,8 +328,8 @@ class ParameterCollection(Collection):
         self._action(key, Parameter.reset_value, missingok=False)
 
 
-class StateCollection(Collection):
-    """Container of StateVariables for a stateful object.
+class ConditionalAttributesCollection(Collection):
+    """Container of ConditionalAttributes for a stateful object.
 
     :Groups:
      - `Public Access Functions`: `has_key`, `is_enabled`, `is_active`
@@ -435,20 +339,18 @@ class StateCollection(Collection):
      - `R/W Properties`: `enabled`
     """
 
-    def __init__(self, items=None, owner=None):
-        """Initialize the state variables of a derived class
+    def __init__(self, items=None):
+        """Initialize the conditional attributes of a derived class
 
         Parameters
         ----------
         items : dict
           dictionary of ca
-        owner : ClassWithCollections
-          object which owns the collection
         name : str
           literal description. Usually just attribute name for the
           collection, e.g. 'ca'
         """
-        Collection.__init__(self, items=items, owner=owner)
+        Collection.__init__(self, items=items)
 
         self.__storedTemporarily = []
         """List to contain sets of enabled ca which were enabled
@@ -489,7 +391,7 @@ class StateCollection(Collection):
         elif key == 'disable_ca':
             self.disable(value)
         else:
-            raise ValueError, "StateCollection can accept only enable_ca " \
+            raise ValueError, "ConditionalAttributesCollection can accept only enable_ca " \
                   "and disable_ca arguments for the initialization. " \
                   "Got %s" % key
 
@@ -503,7 +405,7 @@ class StateCollection(Collection):
         fromstate : Collection or ClassWithCollections
           Source ca to copy from
         key : None or list of str
-          If not to copy all set state variables, key provides
+          If not to copy all set conditional attributes, key provides
           selection of what to copy
         deep : bool
           Optional control over the way to copy
@@ -550,15 +452,15 @@ class StateCollection(Collection):
 
 
     def enable(self, key, value=True, missingok=False):
-        """Enable  state variable given in `key`"""
-        self._action(key, StateVariable._set_enabled, missingok=missingok,
+        """Enable  conditional attribute given in `key`"""
+        self._action(key, ConditionalAttribute._set_enabled, missingok=missingok,
                      value=value)
 
 
     def disable(self, key):
-        """Disable state variable defined by `key` id"""
+        """Disable conditional attribute defined by `key` id"""
         self._action(key,
-                     StateVariable._set_enabled, missingok=False, value=False)
+                     ConditionalAttribute._set_enabled, missingok=False, value=False)
 
 
     # TODO XXX think about some more generic way to grab temporary
@@ -571,7 +473,7 @@ class StateCollection(Collection):
         `enable _ca`. Use `reset_enabled_temporarily` to reset
         to previous state of enabled.
 
-        `other` can be a ClassWithCollections object or StateCollection
+        `other` can be a ClassWithCollections object or ConditionalAttributesCollection
         """
         if enable_ca == None:
             enable_ca = []
@@ -616,7 +518,7 @@ class StateCollection(Collection):
     # XXX probably nondefault logic could be done at places?
     #     =False is used in __repr__ and _svmbase
     # XXX also may be we need enabled to return a subcollection
-    #        with binds to StateVariables found to be enabled?
+    #        with binds to ConditionalAttributes found to be enabled?
     def _get_enabled(self, nondefault=True, invert=False):
         """Return list of enabled ca
 
@@ -646,9 +548,9 @@ class StateCollection(Collection):
         It might be handy to store set of enabled ca and then to restore
         it later on. It can be easily accomplished now::
 
-        >>> from mvpa.misc.state import ClassWithCollections, StateVariable
+        >>> from mvpa.misc.state import ClassWithCollections, ConditionalAttribute
         >>> class Blah(ClassWithCollections):
-        ...   bleh = StateVariable(enabled=False, doc='Example')
+        ...   bleh = ConditionalAttribute(enabled=False, doc='Example')
         ...
         >>> blah = Blah()
         >>> ca_enabled = blah.ca.enabled
@@ -673,7 +575,7 @@ class StateCollection(Collection):
 #
 _known_collections = {
     # Quite a generic one but mostly in classifiers
-    'StateVariable': ("ca", StateCollection),
+    'ConditionalAttribute': ("ca", ConditionalAttributesCollection),
     # For classifiers only
     'Parameter': ("params", ParameterCollection),
     'KernelParameter': ("kernel_params", ParameterCollection),
@@ -763,7 +665,7 @@ class AttributesCollector(type):
 
         if __debug__:
             debug("COLR",
-                  "Creating StateCollection template %s with collections %s"
+                  "Creating ConditionalAttributesCollection template %s with collections %s"
                   % (cls, collections.keys()))
 
         # if there is an explicit
@@ -804,7 +706,7 @@ class AttributesCollector(type):
                                   width=70)
 
         # Parameters
-        paramsdoc = ""
+        paramsdoc = []
         paramscols = []
         for col in ('params', 'kernel_params'):
             if collections.has_key(col):
@@ -814,9 +716,9 @@ class AttributesCollector(type):
                 iparams = [(v._instance_index, k)
                            for k,v in col_items.iteritems()]
                 iparams.sort()
-                paramsdoc += '\n'.join(
-                    [col_items[iparam[1]].doc(indent='  ')
-                     for iparam in iparams]) + '\n'
+                paramsdoc += [(col_items[iparam[1]].name,
+                               col_items[iparam[1]]._paramdoc())
+                              for iparam in iparams]
 
         # Parameters collection could be taked hash of to decide if
         # any were changed? XXX may be not needed at all?
@@ -825,16 +727,19 @@ class AttributesCollector(type):
         # States doc
         cadoc = ""
         if collections.has_key('ca'):
-            paramsdoc += """  enable_ca : None or list of str
-    Names of the state variables which should be enabled additionally
-    to default ones
-  disable_ca : None or list of str
-    Names of the state variables which should be disabled
-"""
+            paramsdoc += [
+                ('enable_ca',
+                 "enable_ca : None or list of str\n  "
+                 "Names of the conditional attributes which should "
+                 "be enabled in addition\n  to the default ones"),
+                ('disable_ca',
+                 "disable_ca : None or list of str\n  "
+                 "Names of the conditional attributes which should "
+                 "be disabled""")]
             if len(collections['ca']):
-                cadoc += '\n'.join(['  * ' + x
-                                        for x in collections['ca'].listing])
-                cadoc += "\n\n(States enabled by default suffixed with `+`)"
+                cadoc += '\n'.join(['* ' + x
+                                    for x in collections['ca'].listing])
+                cadoc += "\n\n(Conditional attributes enabled by default suffixed with `+`)"
             if __debug__:
                 debug("COLR", "Assigning __cadoc to be %s" % cadoc)
             setattr(cls, "_cadoc", cadoc)
@@ -844,7 +749,7 @@ class AttributesCollector(type):
                 debug("COLR", "Assigning __paramsdoc to be %s" % paramsdoc)
             setattr(cls, "_paramsdoc", paramsdoc)
 
-        if paramsdoc + cadoc != "":
+        if len(paramsdoc) or cadoc != "":
             cls.__doc__ = enhanced_doc_string(cls, *bases)
 
 
@@ -899,7 +804,6 @@ class ClassWithCollections(object):
                           (self, col)
                 s__dict__[col] = collection
                 collection.name = col
-                collection.owner = self
 
             self.__params_set = False
 
@@ -1128,7 +1032,7 @@ class Harvestable(ClassWithCollections):
 
     """
 
-    harvested = StateVariable(enabled=False, doc=
+    harvested = ConditionalAttribute(enabled=False, doc=
        """Store specified attributes of classifiers at each split""")
 
     _KNOWN_COPY_METHODS = [ None, 'copy', 'deepcopy' ]
@@ -1140,7 +1044,7 @@ class Harvestable(ClassWithCollections):
         Parameters
         harvest_attribs : list of (str or dict)
           What attributes of call to store and return within
-          harvested state variable. If an item is a dictionary,
+          harvested conditional attribute. If an item is a dictionary,
           following keys are used ['name', 'copy'].
         copy_attribs : None or str, optional
           Default copying. If None -- no copying, 'copy'

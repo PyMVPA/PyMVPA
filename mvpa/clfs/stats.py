@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.base import externals, warning
-from mvpa.misc.state import ClassWithCollections, StateVariable
+from mvpa.misc.state import ClassWithCollections, ConditionalAttribute
 
 if __debug__:
     from mvpa.base import debug
@@ -198,7 +198,7 @@ class MCNullDist(NullDist):
     them to be bimodal (or actually multimodal) in many scenarios.
     """
 
-    dist_samples = StateVariable(enabled=False,
+    dist_samples = ConditionalAttribute(enabled=False,
                                  doc='Samples obtained for each permutation')
 
     def __init__(self, dist_class=Nonparametric, permutations=100,

@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 
 if __debug__:
@@ -26,10 +26,10 @@ class BLR(Classifier):
 
     """
 
-    predicted_variances = StateVariable(enabled=False,
+    predicted_variances = ConditionalAttribute(enabled=False,
         doc="Variance per each predicted value")
 
-    log_marginal_likelihood = StateVariable(enabled=False,
+    log_marginal_likelihood = ConditionalAttribute(enabled=False,
         doc="Log Marginal Likelihood")
 
 
@@ -126,7 +126,7 @@ class BLR(Classifier):
         predictions = np.dot(data,self.w)
 
         if self.ca.is_enabled('predicted_variances'):
-            # do computation only if state variable was enabled
+            # do computation only if conditional attribute was enabled
             self.ca.predicted_variances = np.dot(data, np.dot(self.A_inv, data.T)).diagonal()[:,np.newaxis]
         self.ca.estimates = predictions
         return predictions

@@ -15,7 +15,7 @@ import numpy as np
 import operator
 
 from mvpa.base import warning
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 
 from mvpa.clfs.base import accepts_dataset_as_samples, \
      accepts_samples_as_dataset
@@ -44,9 +44,9 @@ class SVM(_SVM):
     This is a simple interface to the libSVM package.
     """
 
-    # Since this is internal feature of LibSVM, this state variable is present
+    # Since this is internal feature of LibSVM, this conditional attribute is present
     # here
-    probabilities = StateVariable(enabled=False,
+    probabilities = ConditionalAttribute(enabled=False,
         doc="Estimates of samples probabilities as provided by LibSVM")
 
     # TODO p is specific for SVR

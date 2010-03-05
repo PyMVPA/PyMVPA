@@ -389,6 +389,17 @@ testtutorial-%: build
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 		             --doctest-tests doc/source/tutorial_$**.rst
 
+# Test either all # alt references in tutorials are correct
+# Just outputs filenames found missing -- doesn't fail the rule
+TUTORIAL_RESDIR=tutorial_data/results
+testtutorials-alt:
+	@grep '# *alt' doc/source/tutorial*rst | \
+	 sed -e "s/.*'\(.*\)'.*/\1/g" | \
+	 while read f; do \
+	  fs="$$(/bin/ls tutorial_data/results/$$f.* 2>/dev/null)"; \
+	  [ -z "$$fs" ] && echo "$$f missing" || :; \
+	 done
+
 testdatadb: build
 	@echo "I: Testing code samples on the dataset DB website"
 	@PYTHONPATH=.:$(PYTHONPATH) \
@@ -399,6 +410,7 @@ testdatadb: build
 
 # Check if everything (with few exclusions) is imported in unitests is
 # known to the mvpa.suite()
+# XXX remove \|spam whenever clfs.spam gets available
 testsuite:
 	@echo "I: Running full testsuite"
 	@tfile=`mktemp -u testsuiteXXXXXXX`; \
@@ -409,7 +421,7 @@ testsuite:
 	 grep -v -e 'mvpa\.base\.dochelpers' \
 			 -e 'mvpa\.\(tests\|testing\|support\)' \
 			 -e 'mvpa\.misc\.args' \
-			 -e 'mvpa\.clfs\.\(libsvmc\|sg\)' \
+			 -e 'mvpa\.clfs\.\(libsvmc\|sg\|spam\)' \
 	| while read i; do \
 	 grep -q "^ *$$i" mvpa/suite.py || \
 	 { echo "E: '$$i' is missing from mvpa.suite()"; touch "$$tfile"; }; \

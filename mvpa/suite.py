@@ -81,8 +81,8 @@ from mvpa.datasets.base import *
 from mvpa.datasets.miscfx import *
 from mvpa.datasets.eep import *
 from mvpa.datasets.eventrelated import *
-if externals.exists('nifti'):
-    from mvpa.datasets.mri import *
+# safe to import since multiple externals are handled inside
+from mvpa.datasets.mri import *
 
 from mvpa.datasets import splitters
 from mvpa.datasets.splitters import *
@@ -118,6 +118,7 @@ from mvpa.measures.glm import *
 from mvpa.measures.irelief import *
 from mvpa.measures.base import *
 from mvpa.measures.noiseperturbation import *
+from mvpa.misc.neighborhood import *
 from mvpa.measures.searchlight import *
 from mvpa.measures.corrstability import *
 

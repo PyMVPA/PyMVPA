@@ -171,7 +171,6 @@ def _parse_parameters(paramdoc):
     return result
 
 
-##REF: Name was automagically refactored
 def enhanced_doc_string(item, *args, **kwargs):
     """Generate enhanced doc strings for various items.
 
@@ -251,12 +250,16 @@ def enhanced_doc_string(item, *args, **kwargs):
             initdoc = "Initialize instance of %s" % name
 
         initdoc, params, suffix = _split_out_parameters(initdoc)
-
-        if lcl.has_key('_paramsdoc'):
-            params += '\n' + handle_docstring(lcl['_paramsdoc'])
-
         params_list = _parse_parameters(params)
+
         known_params = set([i[0] for i in params_list])
+
+        # If there are additional ones:
+        if lcl.has_key('_paramsdoc'):
+            params_list += [i for i in lcl['_paramsdoc']
+                            if not (i[0] in known_params)]
+            known_params = set([i[0] for i in params_list])
+
         # no need for placeholders
         skip_params = set(skip_params + ['kwargs', '**kwargs'])
 
@@ -323,7 +326,7 @@ def enhanced_doc_string(item, *args, **kwargs):
         else:
             section_name = '\n'         # just an additional newline
         # no indent is necessary since ca list must be already indented
-        docs += ['%s\nAvailable state variables:' % section_name,
+        docs += ['%s\nAvailable conditional attributes:' % section_name,
                  handle_docstring(item._cadoc)]
 
     # Deprecated -- but actually we might like to have it in ipython

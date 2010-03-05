@@ -126,6 +126,14 @@ class DochelpersTests(unittest.TestCase):
         self.failUnless('B.met_nodockwargs' in B.met_nodockwargs.__doc__)
         self.failUnless('boguse' in B.met_excludes.__doc__)
 
+    def test_searchlight_doc(self):
+        # Searchlight __doc__ revealed issue of multiple enable_ca
+        from mvpa.measures.searchlight import Searchlight
+        sldoc = Searchlight.__init__.__doc__
+        self.failUnlessEqual(sldoc.count('enable_ca'), 1)
+        self.failUnlessEqual(sldoc.count('disable_ca'), 1)
+
+
 # TODO: more unittests
 def suite():
     return unittest.makeSuite(DochelpersTests)

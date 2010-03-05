@@ -27,10 +27,19 @@ and how to obtain that knowledge.
 Throughout the tutorial there will be little exercises with tasks that are
 meant to deepen the understanding of a particular problem or to train
 important skills. However, even without a dedicated exercise the reader is
-adviced to run the tutorial code interactively and explore code snippets
+advised to run the tutorial code interactively and explore code snippets
 beyond what is touched by the tutorial. Typically, only the most important
 aspects will be mentioned and each building block in PyMVPA can be used in
 more flexible ways than what is shown. Enjoy the ride.
+
+To be able to run the code in this tutorial, you need to download the
+corresponding data from the PyMVPA website. Once downloaded, extract the
+tarball, open a terminal, go into the directory with the extracted tarball
+content and run: :command:`./start_tutorial_session.sh`.
+
+If you want to prevent yourself from re-typing all code snippets into the
+terminal window, you might want to investigate IPython's ``%cpaste``
+command.
 
 .. _Python: http://www.python.org
 
