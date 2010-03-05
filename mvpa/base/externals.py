@@ -382,7 +382,7 @@ def __check_rpy2():
 
     import rpy2.robjects
     r = rpy2.robjects.r
-    r.options(warn=cfg.get('rpy', 'warn', default=-1))
+    r.options(warn=cfg.get_as_dtype('rpy', 'warn', dtype=int, default=-1))
 
     # To shut R up while it is importing libraries to do not ruin out
     # doctests
