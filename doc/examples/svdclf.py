@@ -13,8 +13,9 @@ Classification of SVD-mapped Datasets
 
 .. index:: mapper, SVD, MappedClassifier
 
-Demonstrate the usage of a dataset mapper performing data projection onto
-singular value components within a cross-validation -- for *any* clasifier.
+Demonstrate the usage of a dataset mapper performing data projection
+onto singular value components within a cross-validation -- for *any*
+classifier.
 """
 
 from mvpa.suite import *
@@ -43,29 +44,36 @@ dataset = dataset[np.array([ l in ['rest', 'cat', 'scissors']
                     for l in dataset.targets], dtype='bool')]
 
 # zscore dataset relative to baseline ('rest') mean
-zscore(dataset, chunks_attr='chunks', baselinetargets=['rest'], targetdtype='float32')
+zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']), dtype='float32')
 
 # remove baseline samples from dataset for final analysis
 dataset = dataset[dataset.sa.targets != 'rest']
 
-# Specify the base classifier to be used
-# To parametrize the classifier to be used
-#   Clf = lambda *args:LinearCSVMC(C=-10, *args)
-# Just to assign a particular classifier class
+# Specify the class of a base classifier to be used
 Clf = LinearCSVMC
+# And create the instance of SVDMapper to be reused
+svdmapper = SVDMapper()
 
-# define some classifiers: a simple one and several classifiers with
-# built-in SVDs
+"""Lets create a generator of a `ChainMapper` which would first perform
+SVD and then subselect the desired range of components."""
+
+get_SVD_sliced = lambda x: ChainMapper([svdmapper,
+                                        FeatureSliceMapper(x)])
+
+"""Now we can define a list of some classifiers: a simple one and several
+classifiers with built-in SVD transformation and selection of
+corresponding SVD subspaces"""
+
 clfs = [('All orig.\nfeatures (%i)' % dataset.nfeatures, Clf()),
         ('All Comps\n(%i)' % (dataset.nsamples \
                  - (dataset.nsamples / len(dataset.UC)),),
-                        MappedClassifier(Clf(), SVDMapper())),
+                        MappedClassifier(Clf(), svdmapper)),
         ('First 5\nComp.', MappedClassifier(Clf(),
-                        SVDMapper(selector=range(5)))),
+                        get_SVD_sliced(slice(0, 5)))),
         ('First 30\nComp.', MappedClassifier(Clf(),
-                        SVDMapper(selector=range(30)))),
+                        get_SVD_sliced(slice(0, 30)))),
         ('Comp.\n6-30', MappedClassifier(Clf(),
-                        SVDMapper(selector=range(5,30))))]
+                        get_SVD_sliced(slice(5, 30))))]
 
 
 # run and visualize in barplot
