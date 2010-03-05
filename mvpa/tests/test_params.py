@@ -14,7 +14,7 @@ import numpy as np
 from sets import Set
 
 from mvpa.datasets.base import dataset_wizard
-from mvpa.misc.state import ClassWithCollections, StateVariable
+from mvpa.misc.state import ClassWithCollections, ConditionalAttribute
 from mvpa.misc.param import Parameter, KernelParameter
 
 from mvpa.testing.clfs import *
@@ -38,7 +38,7 @@ class SimpleClass(ClassWithCollections):
 class MixedClass(ClassWithCollections):
     C = Parameter(1.0, min=0, doc="C parameter")
     D = Parameter(3.0, min=0, doc="D parameter")
-    state1 = StateVariable(doc="bogus")
+    state1 = ConditionalAttribute(doc="bogus")
 
 class ParamsTests(unittest.TestCase):
 

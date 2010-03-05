@@ -58,20 +58,24 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
 
     Examples
     --------
-
-    Make dataset with 20 samples from a full sinus wave period,
+    Make a dataset with 20 samples from a full sinus wave period,
     computed 100 times with individual noise pattern.
 
-        >>> x = np.linspace(0, np.pi * 2, 20)
-        >>> data = np.vstack([np.sin(x)] * 30)
-        >>> data += np.random.normal(size=data.shape)
+    >>> x = np.linspace(0, np.pi * 2, 20)
+    >>> data = np.vstack([np.sin(x)] * 30)
+    >>> data += np.random.normal(size=data.shape)
 
-      Now, plot mean data points with error bars, plus a high-res
-      version of the original sinus wave.
+    Now, plot mean data points with error bars, plus a high-res
+    version of the original sinus wave.
 
-        >>> x = np.linspace(0, np.pi * 2, 200)
-        >>> plot_err_line(data, curves=[(x, np.sin(x))])
-        >>> #pl.show()
+    >>> x_hd = np.linspace(0, np.pi * 2, 200)
+    >>> elines = plot_err_line(data, x, curves=[(x_hd, np.sin(x_hd))])
+    >>> # pl.show()
+
+    Returns
+    -------
+    list
+      Of lines which were plotted.
     """
     data = np.asanyarray(data)
 
@@ -160,6 +164,9 @@ def plot_feature_hist(dataset, xlim=None, noticks=True,
     ncols = len(dataset.sa[chunks_attr].unique)
 
     def doplot(data):
+        """Just a little helper which plots the histogram and removes
+        ticks etc"""
+
         pl.hist(data, **kwargs)
 
         if xlim is not None:
@@ -172,9 +179,9 @@ def plot_feature_hist(dataset, xlim=None, noticks=True,
     fig = 1
 
     # for all labels
-    for row, (ignore, ds) in enumerate(lsplit(dataset)):
+    for row, (_, ds) in enumerate(lsplit(dataset)):
         if chunks_attr:
-            for col, (alsoignore, d) in enumerate(csplit(ds)):
+            for col, (_, d) in enumerate(csplit(ds)):
 
                 pl.subplot(nrows, ncols, fig)
                 doplot(d.samples.ravel())

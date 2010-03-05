@@ -211,14 +211,14 @@ sub-class of :class:`~mvpa.clfs.base.Classifier` and add implementations of the 
 
 With this minimal implementation the classifier provides some useful
 functionality, by automatically storing some relevant information upon request
-in state variables.
+in conditional attributes.
 
-.. IncludeStates: clfs.base Classifier
+.. autoconditional: clfs.base Classifier
 
-Supported ca:
+Supported conditional attributes:
 
 ================== ==============================================   =========
-    State Name      Description                                      Default
+       Name         Description                                      Default
 ------------------ ----------------------------------------------   ---------
 feature_ids         Feature IDS which were used for the actual       Disabled
                     training.
@@ -296,14 +296,14 @@ implementation of the `_call(dataset)` method. It will be called with an
 instance of :class:`~mvpa.datasets.base.Dataset`. :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure` (e.g. :class:`~mvpa.measures.base.Sensitivity` as well)
 has to return a vector of featurewise sensitivity scores.
 
-.. IncludeStates: measures.base DatasetMeasure
+.. autoconditional: measures.base DatasetMeasure
 
-Supported ca:
+Supported conditional attributes:
 
 ================== ==============================================   =========
-    State Name      Description                                      Default
+       Name         Description                                      Default
 ------------------ ----------------------------------------------   ---------
-null_prob           State variable.                                  Enabled
+null_prob           Conditional attribute.                           Enabled
 raw_results         Computed results before applying any             Disabled
                     transformation algorithm.
 ================== ==============================================   =========
@@ -327,16 +327,16 @@ the necessary classifier and handles its training upon request
 (boolean `force_training` keyword argument of the constructor). Access to the
 embedded classifier object is provided via the `clf` property.
 
-.. IncludeStates: measures.base Sensitivity
+.. autoconditional: measures.base Sensitivity
 
-Supported ca:
+Supported conditional attributes:
 
 ================== ==============================================   =========
-    State Name      Description                                      Default
+       Name         Description                                      Default
 ------------------ ----------------------------------------------   ---------
 base_sensitivities  Stores basic sensitivities if the sensitivity    Disabled
                     relies on combining multiple ones.
-null_prob           State variable.                                  Enabled
+null_prob           Conditional attribute.                           Enabled
 raw_results         Computed results before applying any             Disabled
                     transformation algorithm.
 ================== ==============================================   =========
@@ -474,7 +474,7 @@ Things to implement for the next release (Release goals)
 
     class.HARVESTABLE={'blah' : ' some description'}
 
-    Add information on HARVESTABLE and StateVariable
+    Add information on HARVESTABLE and ConditionalAttribute
     Collectable -> Attribute
 
     base.attributes
@@ -517,7 +517,7 @@ Things to implement for the next release (Release goals)
       * RFE
       * IFS
 
-  * .mapper state variable
+  * .mapper conditional attribute
 
         mvpa.featsel (NB no featsel.featsel.featsel more than 4 times!)
         mvpa.featsel.rfe

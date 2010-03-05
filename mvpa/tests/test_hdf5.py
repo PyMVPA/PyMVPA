@@ -94,6 +94,8 @@ def test_directaccess():
 
 
 def test_function_ptrs():
+    if not externals.exists('nifti') and not externals.exists('nibabel'):
+        raise SkipTest
     ds = load_example_fmri_dataset()
     # add a mapper with a function ptr inside
     ds = ds.get_mapped(mean_sample())
@@ -105,3 +107,4 @@ def test_function_ptrs():
     # to the right one
     assert_array_equal(ds_loaded.a.mapper.forward(fresh),
                         ds.samples)
+

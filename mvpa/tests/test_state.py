@@ -16,7 +16,7 @@ from sets import Set
 
 from mvpa.base import externals
 
-from mvpa.misc.state import StateVariable, ClassWithCollections, \
+from mvpa.misc.state import ConditionalAttribute, ClassWithCollections, \
      ParameterCollection, _def_sep
 from mvpa.misc.param import *
 from mvpa.misc.exceptions import UnknownStateError
@@ -29,7 +29,7 @@ class TestClassEmpty(ClassWithCollections):
 
 class TestClassBlank(ClassWithCollections):
     # We can force to have 'ca' present even though we don't have
-    # any StateVariable defined here -- it might be added later on at run time
+    # any ConditionalAttribute defined here -- it might be added later on at run time
     _ATTRIBUTE_COLLECTIONS = ['ca']
     pass
 
@@ -38,13 +38,13 @@ class TestClassBlankNoExplicitStates(ClassWithCollections):
 
 class TestClassProper(ClassWithCollections):
 
-    state1 = StateVariable(enabled=False, doc="state1 doc")
-    state2 = StateVariable(enabled=True, doc="state2 doc")
+    state1 = ConditionalAttribute(enabled=False, doc="state1 doc")
+    state2 = ConditionalAttribute(enabled=True, doc="state2 doc")
 
 
 class TestClassProperChild(TestClassProper):
 
-    state4 = StateVariable(enabled=False, doc="state4 doc")
+    state4 = ConditionalAttribute(enabled=False, doc="state4 doc")
 
 class TestClassReadOnlyParameter(ClassWithCollections):
     paramro = Parameter(0, doc="state4 doc", ro=True)
@@ -52,7 +52,7 @@ class TestClassReadOnlyParameter(ClassWithCollections):
 
 class TestClassParametrized(TestClassProper, ClassWithCollections):
     p1 = Parameter(0)
-    state0 = StateVariable(enabled=False)
+    state0 = ConditionalAttribute(enabled=False)
 
     def __init__(self, **kwargs):
         # XXX make such example when we actually need to invoke
@@ -80,7 +80,7 @@ class StateTests(unittest.TestCase):
         # update the ca... may be will be implemented in the future if necessity comes
         return
 
-        # add some state variable
+        # add some conditional attribute
         blank._registerState('state1', False)
         self.failUnless(blank.ca == ['state1'])
 
@@ -90,7 +90,7 @@ class StateTests(unittest.TestCase):
 
         # assign value now
         blank.state1 = 123
-        # should have no effect since the state variable wasn't enabled
+        # should have no effect since the conditional attribute wasn't enabled
         self.failUnlessRaises(UnknownStateError, blank.__getattribute__, 'state1')
 
         # lets enable and assign
@@ -222,7 +222,7 @@ class StateTests(unittest.TestCase):
 
     def test_proper_state_child(self):
         """
-        Simple test if child gets state variables from the parent as well
+        Simple test if child gets conditional attributes from the parent as well
         """
         proper = TestClassProperChild()
         self.failUnlessEqual(Set(proper.ca.keys()),
@@ -233,21 +233,21 @@ class StateTests(unittest.TestCase):
         """To test new ca"""
 
         class S1(ClassWithCollections):
-            v1 = StateVariable(enabled=True, doc="values1 is ...")
-            v1XXX = StateVariable(enabled=False, doc="values1 is ...")
+            v1 = ConditionalAttribute(enabled=True, doc="values1 is ...")
+            v1XXX = ConditionalAttribute(enabled=False, doc="values1 is ...")
 
 
         class S2(ClassWithCollections):
-            v2 = StateVariable(enabled=True, doc="values12 is ...")
+            v2 = ConditionalAttribute(enabled=True, doc="values12 is ...")
 
         class S1_(S1):
             pass
 
         class S1__(S1_):
-            v1__ = StateVariable(enabled=False)
+            v1__ = ConditionalAttribute(enabled=False)
 
         class S12(S1__, S2):
-            v12 = StateVariable()
+            v12 = ConditionalAttribute()
 
         s1, s2, s1_, s1__, s12 = S1(), S2(), S1_(), S1__(), S12()
 
@@ -318,7 +318,7 @@ class StateTests(unittest.TestCase):
 
     def test_deep_copying_state_variable(self):
         for v in (True, False):
-            sv = StateVariable(enabled=v,
+            sv = ConditionalAttribute(enabled=v,
                                doc="Testing")
             sv.enabled = not v
             sv_dc = copy.deepcopy(sv)

@@ -13,7 +13,8 @@ import numpy as np
 from mvpa.mappers.fx import *
 from mvpa.datasets.base import dataset_wizard, Dataset
 
-from mvpa.testing.tools import assert_equal, assert_raises,  assert_array_equal
+from mvpa.testing.tools import *
+
 
 def test_samplesgroup_mapper():
     data = np.arange(24).reshape(8,3)
@@ -89,3 +90,17 @@ def test_fxmapper():
     assert_array_equal(m_s.forward(ds), origdata)
     assert_array_equal(a_m.forward(ds), origdata)
     assert_array_equal(m_s.forward(ds), m_f.forward(ds))
+
+
+def test_features01():
+    from mvpa.testing.datasets import datasets
+    from mvpa.measures.anova import OneWayAnova
+    # TODO: might be worth creating appropriate factory
+    #       help in mappers/fx
+    aov = OneWayAnova(
+        postproc=FxMapper('features',
+                          lambda x: x / x.max(),
+                          attrfx=None))
+    f = aov(datasets['uni2small'])
+    ok_((f.samples != 1.0).any())
+    ok_(f.samples.max() == 1.0)

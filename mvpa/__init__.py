@@ -32,8 +32,8 @@ The mvpa package contains the following subpackages and modules:
 :see: `GIT Repository Browser <http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary>`__
 
 :license: The MIT License <http://www.opensource.org/licenses/mit-license.php>
-:copyright: |copy| 2006-2009 Michael Hanke <michael.hanke@gmail.com>
-:copyright: |copy| 2007-2009 Yaroslav O. Halchenko <debian@onerussian.com>
+:copyright: |copy| 2006-2010 Michael Hanke <michael.hanke@gmail.com>
+:copyright: |copy| 2007-2010 Yaroslav O. Halchenko <debian@onerussian.com>
 
 :newfield contributor: Contributor, Contributors (Alphabetical Order)
 :contributor: `Emanuele Olivetti <emanuele@relativita.com>`__
@@ -99,9 +99,9 @@ from mvpa.tests import run as test
 # Also, this check enforcing population of externals.versions
 # for possible later version checks, hence don't remove
 externals.exists('numpy', force=True, raise_=True)
-# We might need to suppress the warnings so enforcing check here,
-# it is ok if it would fail
-externals.exists('scipy', force=True, raise_=False)
+# We might need to suppress the warnings:
+if externals.exists('scipy'):
+    externals._suppress_scipy_warnings()
 # And check if we aren't under IPython so we could pacify completion
 # a bit
 externals.exists('running ipython env', force=True, raise_=False)

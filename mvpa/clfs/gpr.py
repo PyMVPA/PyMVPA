@@ -16,7 +16,7 @@ import numpy as np
 
 from mvpa.base import externals
 
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.misc.param import Parameter
 from mvpa.kernels.np import SquaredExponentialKernel, GeneralizedLinearKernel, \
@@ -54,13 +54,13 @@ class GPR(Classifier):
 
     """
 
-    predicted_variances = StateVariable(enabled=False,
+    predicted_variances = ConditionalAttribute(enabled=False,
         doc="Variance per each predicted value")
 
-    log_marginal_likelihood = StateVariable(enabled=False,
+    log_marginal_likelihood = ConditionalAttribute(enabled=False,
         doc="Log Marginal Likelihood")
 
-    log_marginal_likelihood_gradient = StateVariable(enabled=False,
+    log_marginal_likelihood_gradient = ConditionalAttribute(enabled=False,
         doc="Log Marginal Likelihood Gradient")
 
     __tags__ = [ 'gpr', 'regression', 'retrainable' ]
@@ -127,7 +127,7 @@ class GPR(Classifier):
             if externals.exists('openopt'):
                 self.__tags__ += ['has_sensitivity']
 
-        # No need to initialize state variables. Unless they got set
+        # No need to initialize conditional attributes. Unless they got set
         # they would raise an exception self.predicted_variances =
         # None self.log_marginal_likelihood = None
         self._init_internals()
@@ -402,7 +402,7 @@ class GPR(Classifier):
         predictions = Ndot(km_train_test.transpose(), self._alpha)
 
         if ca.is_enabled('predicted_variances'):
-            # do computation only if state variable was enabled
+            # do computation only if conditional attribute was enabled
             if not retrainable or self._km_test_test is None \
                    or self._changedData['testdata']:
                 if __debug__:
@@ -485,7 +485,7 @@ class GPRLinearWeights(Sensitivity):
     Note that the intercept is not computed.
     """
 
-    variances = StateVariable(enabled=False,
+    variances = ConditionalAttribute(enabled=False,
         doc="Variances of the weights (for GeneralizedLinearKernel)")
 
     _LEGAL_CLFS = [ GPR ]

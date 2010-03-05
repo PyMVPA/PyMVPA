@@ -25,7 +25,7 @@ from mvpa.misc.errorfx import mean_power_fx, root_mean_power_fx, RMSErrorFx, \
      AUCErrorFx
 from mvpa.base import warning
 from mvpa.base.collections import Collectable
-from mvpa.misc.state import StateVariable, ClassWithCollections
+from mvpa.misc.state import ConditionalAttribute, ClassWithCollections
 from mvpa.base.dochelpers import enhanced_doc_string, table2string
 from mvpa.clfs.stats import auto_null_dist
 
@@ -34,8 +34,10 @@ if __debug__:
 
 if externals.exists('scipy'):
     from scipy.stats.stats import nanmean
+    from mvpa.misc.stats import chisquare
 else:
     from mvpa.clfs.stats import nanmean
+    chisquare = None
 
 def _p2(x, prec=2):
     """Helper to print depending on the type nicely. For some
@@ -461,6 +463,7 @@ class ConfusionMatrix(SummaryStatistics):
         ('MCC', "Matthews Correlation Coefficient",
                 "MCC = (TP*TN - FP*FN)/sqrt(P N P' N')"),
         ('AUC', "Area under (AUC) curve", None),
+        ('CHI^2', "Chi-square of confusion matrix", None),
         ) + SummaryStatistics._STATS_DESCRIPTION
 
 
@@ -609,7 +612,10 @@ class ConfusionMatrix(SummaryStatistics):
 
         stats['ACC'] = np.sum(TP)/(1.0*np.sum(stats['P']))
         stats['ACC%'] = stats['ACC'] * 100.0
-
+        if chisquare:
+            # indep_rows to assure reasonable handling of disbalanced
+            # cases
+            stats['CHI^2'] = chisquare(self.__matrix, exp='indep_rows')
         #
         # ROC computation if available
         ROC = ROCCurve(labels=labels, sets=self.sets)
@@ -742,6 +748,11 @@ class ConfusionMatrix(SummaryStatistics):
             printed.append(['@lSummary \ Means:'] + underscores
                            + [_p2(stats['mean(%s)' % x])
                               for x in stats_perpredict])
+
+            if 'CHI^2' in self.stats:
+                chi2t = stats['CHI^2']
+                printed.append(['CHI^2'] + [_p2(chi2t[0])]
+                               + ['p:'] + ['%.2g' % chi2t[1]])
 
             for stat in stats_summary:
                 printed.append([stat] + [_p2(stats[stat])])
@@ -1225,12 +1236,12 @@ class ClassifierError(ClassWithCollections):
     """Compute (or return) some error of a (trained) classifier on a dataset.
     """
 
-    confusion = StateVariable(enabled=False)
+    confusion = ConditionalAttribute(enabled=False)
     """TODO Think that labels might be also symbolic thus can't directly
        be indicies of the array
     """
 
-    training_confusion = StateVariable(enabled=False,
+    training_confusion = ConditionalAttribute(enabled=False,
         doc="Proxy training_confusion from underlying classifier.")
 
 
@@ -1367,10 +1378,10 @@ class TransferError(ClassifierError):
     training dataset to the __call__() method.
     """
 
-    null_prob = StateVariable(enabled=True,
+    null_prob = ConditionalAttribute(enabled=True,
                     doc="Stores the probability of an error result under "
                          "the NULL hypothesis")
-    samples_error = StateVariable(enabled=False,
+    samples_error = ConditionalAttribute(enabled=False,
                         doc="Per sample errors computed by invoking the "
                             "error function for each sample individually. "
                             "Errors are available in a dictionary with each "
@@ -1393,7 +1404,7 @@ class TransferError(ClassifierError):
         null_dist : instance of distribution estimator, optional
         samples_idattr : str, optional
           What samples attribute to use to identify and store samples_errors
-          state variable
+          conditional attribute
         """
         ClassifierError.__init__(self, clf, labels, **kwargs)
         self.__errorfx = errorfx
@@ -1513,7 +1524,7 @@ class TransferError(ClassifierError):
 class ConfusionBasedError(ClassifierError):
     """For a given classifier report an error based on internally
     computed error measure (given by some `ConfusionMatrix` stored in
-    some state variable of `Classifier`).
+    some conditional attribute of `Classifier`).
 
     This way we can perform feature selection taking as the error
     criterion either learning error, or transfer to splits error in
@@ -1529,7 +1540,7 @@ class ConfusionBasedError(ClassifierError):
         clf : Classifier
           Either trained or untrained classifier
         confusion_state
-          Id of the state variable which stores `ConfusionMatrix`
+          Id of the conditional attribute which stores `ConfusionMatrix`
         labels : list
           if provided, should be a set of labels to add on top of the
           ones present in testdata
@@ -1541,7 +1552,7 @@ class ConfusionBasedError(ClassifierError):
 
         if not clf.ca.has_key(confusion_state):
             raise ValueError, \
-                  "State variable %s is not defined for classifier %r" % \
+                  "Conditional attribute %s is not defined for classifier %r" % \
                   (confusion_state, clf)
         if not clf.ca.is_enabled(confusion_state):
             if __debug__:

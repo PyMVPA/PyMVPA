@@ -283,6 +283,6 @@ intersphinx_mapping = {'http://docs.python.org/': None,
                        'http://nipy.sourceforge.net/nipy': None,
                        'http://h5py.alfven.org/docs': None,
                        'http://docs.scipy.org/doc/scipy/reference': None,
-                       'http://docs.scipy.org/doc/numpy/objects.inv': None,
-                       'http://matplotlib.sourceforge.net/objects.inv': None,
+                       'http://docs.scipy.org/doc/numpy/': None,
+                       'http://matplotlib.sourceforge.net/': None,
                        }

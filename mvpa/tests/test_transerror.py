@@ -115,6 +115,8 @@ class ErrorsTests(unittest.TestCase):
         regl = [1,0,1,0]
         cm = ConfusionMatrix(targets=reg, predictions=regl)
         self.failUnless('ACC%         50' in str(cm))
+        skip_if_no_external('scipy')
+        self.failUnless(cm.stats['CHI^2'] == (0., 1.))
 
 
     def test_confusion_matrix_with_mappings(self):
@@ -131,7 +133,6 @@ class ErrorsTests(unittest.TestCase):
         s = str(cm)
         for l in lm.keys():
             self.failUnless(l in s)
-
 
 
     @sweepargs(l_clf=clfswh['linear', 'svm'])

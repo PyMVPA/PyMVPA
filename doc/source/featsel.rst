@@ -193,7 +193,7 @@ transfer error on the testing part of the split. If a :class:`~mvpa.clfs.meta.Sp
 is later on asked to *predict* some new data, it uses (by default) the
 MaximalVote_ strategy to derive an answer.  A summary about the performance of
 a :class:`~mvpa.clfs.meta.SplitClassifier` internally on each split of the training dataset is
-available by accessing the `confusion` state variable.
+available by accessing the `confusion` conditional attribute.
 
 To summarize somewhat, RFE_ is just one method of feature selection, so we use a
 :class:`~mvpa.clfs.meta.FeatureSelectionClassifier` to facilitate this.  To parameterize the RFE

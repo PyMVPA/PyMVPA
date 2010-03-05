@@ -56,8 +56,25 @@ terms found in the literature to the terminology used in this manual.
     temporal forward contamination of the hemodynamic response whose correlate
     is measured by the MR scanner.
 
+  Conditional Attribute
+    An attribute of a :term:`learner` which might be enabled or disabled,
+    grouped within ``.ca`` attributes collection.  If enabled, it might cause
+    additional computation and memory consumption, so the "heaviest"
+    conditional attributes are disabled by default.
+
+  Confusion Matrix
+    Visualization of the :term:`generalization` performance of a
+    :term:`classifier`.  Each row of the matrix represents the instances in a
+    predicted class, while each column represents the :term:`sample`\s in an
+    actual (target) class.  Each cell provides a count of how many
+    :term:`sample`\s of the target class were (mis)classifier into the
+    corresponding class.  In PyMVPA instances of
+    :class:`~mvpa.clfs.transerror.ConfusionMatrix` class provide not only
+    confusion matrix itself but a bulk of additional statistics.
+
   Dataset
-    In PyMVPA a dataset is the combination of samples, their ...
+    In PyMVPA a dataset is the combination of samples, and their
+    :term:`Dataset attribute`\s.
 
   Dataset attribute
     An arbitrary auxiliary information that is stored in a dataset.
@@ -99,7 +116,16 @@ terms found in the literature to the terminology used in this manual.
 
   Label
     A label is a special case of a :term:`target` for specifying discrete
-    categories of :term:`samples` in a classification analyses.
+    categories of :term:`sample`\s in a classification analyses.
+
+  Learner
+    A model that upon training given some data (:term:`sample`\s and may be
+    :term:`target`\s) develops an ability to map an arbitrary :term:`feature`
+    space of :term:`sample`\s into another space.  If :term:`target`\s were
+    provided, such learner is called :term:`supervised` and tries to achieve
+    mapping into the space of :term:`target`\s.  If the target space defined by
+    a set of discrete set of labels, such learner is called a
+    :term:`classifier`.
 
   Machine Learning
     A field of Computer Science that aims at constructing methods, such
@@ -133,10 +159,9 @@ terms found in the literature to the terminology used in this manual.
     :term:`chunk`\ s of samples.
 
   Sensitivity
-
-   A sensitivity is a score assigned to each :term:`feature` with respect to
+    A sensitivity is a score assigned to each :term:`feature` with respect to
     its impact on the performance of the learner.  So, for a classifier,
-    sensitivity of a feature might describe its influence on generalization
+    sensitivity of a feature might describe its influence on :term:`generalization`
     performance of the classifier.  In case of linear classifiers, it could
     simply be coefficients of separating hyperplane given by :term:`weight
     vector`. There exist additional scores which are similar to sensitivities
@@ -162,16 +187,27 @@ terms found in the literature to the terminology used in this manual.
     exploiting statistical properties of data to construct robust models, and to
     assess their convergence and :term:`generalization` performances.
 
+  Supervised
+    Is a :term:`learner` which obtains both :term:`sample`\s data and
+    :term:`target`\s within a :term:`training dataset`.
+
   Target
     A target associates each :term:`sample` in the :term:`dataset` with a
     certain category, experimental condition or, in case of a regression
     problem, with some metric variable.  In case of supervised learning
     algorithm targets define the model to be trained, and provide the "ground
-    truth" for assessing the model's generalization performance.
+    truth" for assessing the model's :term:`generalization` performance.
 
   Time-compression
     This usually refers to the :term:`block-averaging` of samples from a
     block-design fMRI dataset.
 
+  Training Dataset
+    :term:`Dataset` which is used for training of the :term:`learner`.
+
+  Testing Dataset
+    :term:`Dataset` which is used to assess the :term:`generalization` of the
+    :term:`learner`.
+
   Weight Vector
-    See :term:`sensitivity`.
+    See :term:`Sensitivity`.

@@ -19,7 +19,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.base import externals, warning
-from mvpa.misc.state import StateVariable, ClassWithCollections
+from mvpa.misc.state import ConditionalAttribute, ClassWithCollections
 
 if __debug__:
     from mvpa.base import debug
@@ -71,22 +71,20 @@ def second_axis_mean(x):
     return np.mean(x, axis=1)
 
 
-##REF: Name was automagically refactored
-def _second_axis_sum_of_abs(x):
+def sum_of_abs(x):
     """Sum of absolute values along the 2nd axis
 
     Use cases:
      - to combine multiple sensitivities to get sense about
        what features are most influential
     """
-    return np.abs(x).sum(axis=1)
+    return np.abs(x).sum()
 
 
-##REF: Name was automagically refactored
-def second_axis_max_of_abs(x):
+def max_of_abs(x):
     """Max of absolute values along the 2nd axis
     """
-    return np.abs(x).max(axis=1)
+    return np.abs(x).max()
 
 
 ##REF: Name was automagically refactored
@@ -211,10 +209,10 @@ class DistPValue(ClassWithCollections):
     """Converts values into p-values under vague and non-scientific assumptions
     """
 
-    nulldist_number = StateVariable(enabled=True,
+    nulldist_number = ConditionalAttribute(enabled=True,
         doc="Number of features within the estimated null-distribution")
 
-    positives_recovered = StateVariable(enabled=True,
+    positives_recovered = ConditionalAttribute(enabled=True,
         doc="Number of features considered to be positives and which were recovered")
 
 
@@ -384,7 +382,7 @@ class DistPValue(ClassWithCollections):
         # XXX we might add an option to transform it to z-scores?
         result = pvalues
 
-        # charge state variables
+        # charge conditional attributes
         # XXX might want to populate them for non-adaptive handling as well
         self.ca.nulldist_number = nulldist_number
         self.ca.positives_recovered = positives_recovered

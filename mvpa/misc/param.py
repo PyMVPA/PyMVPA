@@ -31,14 +31,13 @@ class Parameter(IndexedCollectable):
     Each parameter must have a value. However additional attributes can be
     passed to the constructor and will be stored in the object.
 
-    .. warning::
-
-      BIG ASSUMPTION: stored values are not mutable, ie nobody should do
+    Notes
+    -----
+    BIG ASSUMPTION: stored values are not mutable, ie nobody should do
 
         cls.parameter1[:] = ...
 
-      or we wouldn't know that it was changed
-
+    or we wouldn't know that it was changed
     Here is a list of possible additional attributes:
 
     allowedtype : str
@@ -137,14 +136,14 @@ class Parameter(IndexedCollectable):
         return s
 
 
-    def doc(self, indent="  ", width=70):
+    def _paramdoc(self, indent="  ", width=70):
         """Docstring for the parameter to be used in lists of parameters
 
         Returns
         -------
         string or list of strings (if indent is None)
         """
-        paramsdoc = "  %s" % self.name
+        paramsdoc = '%s' % self.name
         if hasattr(paramsdoc, 'allowedtype'):
             paramsdoc += " : %s" % self.allowedtype
         paramsdoc = [paramsdoc]
@@ -152,22 +151,19 @@ class Parameter(IndexedCollectable):
             doc = self.__doc__.strip()
             if not doc.endswith('.'): doc += '.'
             try:
-                doc += " (Default: %s)" % self.default
+                doc += " (Default: %r)" % (self.default,)
             except:
                 pass
             # Explicitly deal with multiple spaces, for some reason
             # replace_whitespace is non-effective
             doc = _whitespace_re.sub(' ', doc)
-            paramsdoc += ['  ' + x
+            paramsdoc += [indent + x
                           for x in textwrap.wrap(doc, width=width-len(indent),
                                                  replace_whitespace=True)]
         except Exception, e:
             pass
 
-        if indent is None:
-            return paramsdoc
-        else:
-            return ('\n' + indent).join(paramsdoc)
+        return '\n'.join(paramsdoc)
 
 
     # XXX should be named reset2default? correspondingly in

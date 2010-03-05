@@ -22,19 +22,36 @@ from mvpa.datasets.base import dataset_wizard
 class StatsTestsScipy(unittest.TestCase):
     """Unittests for various statistics which use scipy"""
 
-    def test_chi_square(self):
+    @sweepargs(exp=('uniform', 'indep_rows', 'indep_cols'))
+    def test_chi_square(self, exp):
         """Test chi-square distribution"""
         # test equal distribution
         tbl = np.array([[5, 5], [5, 5]])
-        chi, p = chisquare(tbl)
+        chi, p = chisquare(tbl, exp=exp)
         self.failUnless( chi == 0.0 )
         self.failUnless( p == 1.0 )
 
-        # test non-equal distribution
+        # test perfect "generalization"
         tbl = np.array([[4, 0], [0, 4]])
-        chi, p = chisquare(tbl)
+        chi, p = chisquare(tbl, exp=exp)
         self.failUnless(chi == 8.0)
         self.failUnless(p < 0.05)
+
+    def test_chi_square_disbalanced(self):
+        # test perfect "generalization"
+        tbl = np.array([[1,100], [1,100]])
+        chi, p = chisquare(tbl, exp='indep_rows')
+        self.failUnless(chi == 0)
+        self.failUnless(p == 1)
+
+        chi, p = chisquare(tbl, exp='uniform')
+        self.failUnless(chi > 194)
+        self.failUnless(p < 1e-10)
+
+        # by default lets do uniform
+        chi_, p_ = chisquare(tbl)
+        self.failUnless(chi == chi_)
+        self.failUnless(p == p_)
 
 
     def test_null_dist_prob_any(self):

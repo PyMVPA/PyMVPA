@@ -17,7 +17,7 @@ from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import ConvergenceError
 from mvpa.misc.param import Parameter
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 from mvpa.datasets.base import Dataset
 
 __all__ = [ "SMLR", "SMLRWeights" ]
@@ -504,7 +504,7 @@ class SMLR(Classifier):
         # generate predictions
         predictions = np.asarray([self._ulabels[np.argmax(vals)]
                                  for vals in values])
-        # no need to assign state variable here -- would be done
+        # no need to assign conditional attribute here -- would be done
         # in Classifier._postpredict anyway
         #self.predictions = predictions
 
@@ -532,7 +532,7 @@ class SMLRWeights(Sensitivity):
     arguments how to custmize this behavior.
     """
 
-    biases = StateVariable(enabled=True,
+    biases = ConditionalAttribute(enabled=True,
                            doc="A 1-d ndarray of biases")
 
     _LEGAL_CLFS = [ SMLR ]

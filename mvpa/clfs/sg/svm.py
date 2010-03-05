@@ -71,7 +71,7 @@ from mvpa.clfs.base import accepts_dataset_as_samples, \
      accepts_samples_as_dataset, FailedToTrainError
 from mvpa.clfs.meta import MulticlassClassifier
 from mvpa.clfs._svmbase import _SVM
-from mvpa.misc.state import StateVariable
+from mvpa.misc.state import ConditionalAttribute
 from mvpa.measures.base import Sensitivity
 
 from sens import *
@@ -446,7 +446,7 @@ class SVM(_SVM):
 
         # Assign training confusion right away here since we are ready
         # to do so.
-        # XXX TODO use some other state variable like 'trained_targets' and
+        # XXX TODO use some other conditional attribute like 'trained_targets' and
         #     use it within base Classifier._posttrain to assign predictions
         #     instead of duplicating code here
         # XXX For now it can be done only for regressions since labels need to
@@ -539,7 +539,7 @@ class SVM(_SVM):
             if __debug__:
                 debug("SG__", "Tuned predictions %s" % predictions)
 
-        # store state variable
+        # store conditional attribute
         # TODO: extract values properly for multiclass SVMs --
         #       ie 1 value per label or pairs for all 1-vs-1 classifications
         self.ca.estimates = values
@@ -634,7 +634,7 @@ class SVM(_SVM):
     traindataset = property(fget=lambda self: self.__traindataset)
     """Dataset which was used for training
 
-    TODO -- might better become state variable I guess"""
+    TODO -- might better become conditional attribute I guess"""
 
 
 

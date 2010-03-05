@@ -32,7 +32,7 @@ from mvpa.misc.param import Parameter
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.datasets.miscfx import get_samples_by_attr
 from mvpa.misc.attrmap import AttributeMap
-from mvpa.misc.state import StateVariable, ClassWithCollections, Harvestable
+from mvpa.misc.state import ConditionalAttribute, ClassWithCollections, Harvestable
 from mvpa.mappers.base import FeatureSliceMapper
 
 from mvpa.clfs.base import Classifier
@@ -59,10 +59,10 @@ class BoostedClassifier(Classifier, Harvestable):
 
     # should not be needed if we have prediction_estimates upstairs
     # raw_predictions should be handled as Harvestable???
-    raw_predictions = StateVariable(enabled=False,
+    raw_predictions = ConditionalAttribute(enabled=False,
         doc="Predictions obtained from each classifier")
 
-    raw_estimates = StateVariable(enabled=False,
+    raw_estimates = ConditionalAttribute(enabled=False,
         doc="Estimates obtained from each classifier")
 
 
@@ -154,7 +154,7 @@ class BoostedClassifier(Classifier, Harvestable):
             else:
                 warning("One or more classifiers in %s has no 'estimates' state" %
                         self + "enabled, thus BoostedClassifier can't have" +
-                        " 'raw_estimates' state variable defined")
+                        " 'raw_estimates' conditional attribute defined")
 
         return raw_predictions
 
@@ -269,7 +269,7 @@ class ProxyClassifier(Classifier):
                           is self.clf.ca['retrained']):
             if __debug__:
                 debug("CLFPRX",
-                      "Rebinding state variables from slave clf %s" % self.clf)
+                      "Rebinding conditional attributes from slave clf %s" % self.clf)
             self.ca['retrained'] = self.clf.ca['retrained']
             self.ca['repredicted'] = self.clf.ca['repredicted']
 
@@ -340,7 +340,7 @@ class PredictionsCombiner(ClassWithCollections):
         clfs : list of Classifier
           List of classifiers to combine. Has to be classifiers (not
           pure predictions), since combiner might use some other
-          state variables (value's) instead of pure prediction's
+          conditional attributes (value's) instead of pure prediction's
         dataset : Dataset
           training data in this case
         """
@@ -355,7 +355,7 @@ class PredictionsCombiner(ClassWithCollections):
         clfs : list of Classifier
           List of classifiers to combine. Has to be classifiers (not
           pure predictions), since combiner might use some other
-          state variables (value's) instead of pure prediction's
+          conditional attributes (value's) instead of pure prediction's
         """
         raise NotImplementedError
 
@@ -364,9 +364,9 @@ class PredictionsCombiner(ClassWithCollections):
 class MaximalVote(PredictionsCombiner):
     """Provides a decision using maximal vote rule"""
 
-    predictions = StateVariable(enabled=True,
+    predictions = ConditionalAttribute(enabled=True,
         doc="Voted predictions")
-    estimates = StateVariable(enabled=False,
+    estimates = ConditionalAttribute(enabled=False,
         doc="Estimates keep counts across classifiers for each label/sample")
 
     def __init__(self):
@@ -391,7 +391,7 @@ class MaximalVote(PredictionsCombiner):
 
         all_label_counts = None
         for clf in clfs:
-            # Lets check first if necessary state variable is enabled
+            # Lets check first if necessary conditional attribute is enabled
             if not clf.ca.is_enabled("predictions"):
                 raise ValueError, "MaximalVote needs classifiers (such as " + \
                       "%s) with state 'predictions' enabled" % clf
@@ -448,10 +448,10 @@ class MeanPrediction(PredictionsCombiner):
     """Provides a decision by taking mean of the results
     """
 
-    predictions = StateVariable(enabled=True,
+    predictions = ConditionalAttribute(enabled=True,
         doc="Mean predictions")
 
-    estimates = StateVariable(enabled=True,
+    estimates = ConditionalAttribute(enabled=True,
         doc="Predictions from all classifiers are stored")
 
     def __call__(self, clfs, dataset):
@@ -463,7 +463,7 @@ class MeanPrediction(PredictionsCombiner):
 
         all_predictions = []
         for clf in clfs:
-            # Lets check first if necessary state variable is enabled
+            # Lets check first if necessary conditional attribute is enabled
             if not clf.ca.is_enabled("predictions"):
                 raise ValueError, "MeanPrediction needs learners (such " \
                       " as %s) with state 'predictions' enabled" % clf
@@ -485,7 +485,7 @@ class ClassifierCombiner(PredictionsCombiner):
     TODO: implement
     """
 
-    predictions = StateVariable(enabled=True,
+    predictions = ConditionalAttribute(enabled=True,
         doc="Trained predictions")
 
 
@@ -497,7 +497,7 @@ class ClassifierCombiner(PredictionsCombiner):
         clf : Classifier
           Classifier to train on the predictions
         variables : list of str
-          List of state variables stored in 'combined' classifiers, which
+          List of conditional attributes stored in 'combined' classifiers, which
           to use as features for training this classifier
         """
         PredictionsCombiner.__init__(self)
@@ -508,7 +508,7 @@ class ClassifierCombiner(PredictionsCombiner):
         if variables == None:
             variables = ['predictions']
         self.__variables = variables
-        """What state variables of the classifiers to use"""
+        """What conditional attributes of the classifiers to use"""
 
 
     def untrain(self):
@@ -616,7 +616,7 @@ class CombinedClassifier(BoostedClassifier):
         BoostedClassifier._predict(self, dataset)
         if ca.is_enabled("estimates"):
             cca.enable('estimates')
-        # combiner will make use of state variables instead of only predictions
+        # combiner will make use of conditional attributes instead of only predictions
         # returned from _predict
         predictions = self.combiner(self.clfs, dataset)
         ca.predictions = predictions
@@ -1078,11 +1078,11 @@ class SplitClassifier(CombinedClassifier):
 
     # TODO: unify with CrossValidatedTransferError which now uses
     # harvest_attribs to expose gathered attributes
-    confusion = StateVariable(enabled=False,
+    confusion = ConditionalAttribute(enabled=False,
         doc="Resultant confusion whenever classifier trained " +
             "on 1 part and tested on 2nd part of each split")
 
-    splits = StateVariable(enabled=False, doc=
+    splits = ConditionalAttribute(enabled=False, doc=
        """Store the actual splits of the data. Can be memory expensive""")
 
     # ??? couldn't be training_confusion since it has other meaning
@@ -1094,7 +1094,7 @@ class SplitClassifier(CombinedClassifier):
     #     we might want to implement global_training_confusion which would
     #     correspond to overall confusion on full training dataset as it is
     #     done in base Classifier
-    #global_training_confusion = StateVariable(enabled=False,
+    #global_training_confusion = ConditionalAttribute(enabled=False,
     #    doc="Summary over training confusions acquired at each split")
 
     def __init__(self, clf, splitter=NFoldSplitter(cvtype=1), **kwargs):
@@ -1424,7 +1424,7 @@ class RegressionAsClassifier(ProxyClassifier):
       might provide necessary means of classification
     """
 
-    distances = StateVariable(enabled=False,
+    distances = ConditionalAttribute(enabled=False,
         doc="Distances obtained during prediction")
 
     __sa_class__ = RegressionAsClassifierSensitivityAnalyzer
