@@ -299,6 +299,8 @@ def idhash(val):
     res = "%s" % id(val)
     if isinstance(val, list):
         val = tuple(val)
+    elif isinstance(val, dict):
+        val = tuple(val.items())
     try:
         res += ":%s" % hash(buffer(val))
     except:
