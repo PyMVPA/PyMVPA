@@ -263,7 +263,7 @@ class GNBSearchlight(BaseSearchlight):
             debug('SLC',
                   'Phase 4. Deducing neighbors information for %i ROIs'
                   % (nrois,))
-        roi_fids = [qe[f] for f in roi_ids]
+        roi_fids = [qe.query_byfid(f) for f in roi_ids]
         nroi_fids = len(roi_fids)
 
         # 5. Lets do actual "splitting" and "classification"
