@@ -13,7 +13,7 @@ from mvpa import _random_seed, cfg
 from mvpa.base import externals, warning
 
 
-def collect_test_suites():
+def collect_unit_tests(verbosity=1):
     """Runs over all tests it knows and composes a dictionary with test suite
     instances as values and IDs as keys. IDs are the filenames of the unittest
     without '.py' extension and 'test_' prefix.
@@ -28,17 +28,13 @@ def collect_test_suites():
         'test_base',
         'test_dochelpers',
         'test_som',
-        'test_splitter',
         'test_state',
         'test_params',
         # Misc supporting utilities
         'test_config',
-        'test_stats',
         'test_support',
         'test_verbosity',
-        'test_iohelpers',
         'test_report',
-        'test_datasetfx',
         'test_cmdline',
         'test_args',
         'test_meg',
@@ -55,30 +51,15 @@ def collect_test_suites():
         'test_procrust',
         'test_hyperalignment',
         'test_transformers',
-        'test_clfcrossval',
         'test_searchlight',
         'test_rfe',
         'test_ifs',
-        'test_datameasure',
         'test_perturbsensana',
         # And the suite (all-in-1)
         'test_suite',
         ]
 
-    # provide people with a hint about the warnings that might show up in a
-    # second
-    warning('Testing for availability of external software packages. Test '
-            'cases depending on missing packages will not be part of the test '
-            'suite.')
-
-    # So we could see all warnings about missing dependencies
-    warning.maxcount = 1000
-    # fully test of externals
-    externals.test_all_dependencies()
-
-
     __optional_tests = [ ('scipy', 'ridge'),
-                         ('scipy', 'stats_sp'),
                          ('scipy', 'gpr'),
                          (['lars','scipy'], 'lars'),
                          (['cPickle', 'gzip'], 'hamster'),
@@ -90,80 +71,124 @@ def collect_test_suites():
     for external, testname in __optional_tests:
         if externals.exists(external):
             optional_tests.append('test_%s' % testname)
-
+        elif verbosity:
+            print('T: Tests from "test_%s" are skipped due to missing externals: %s'
+                  % (testname, external))
 
     # finally merge all of them
     tests += optional_tests
+    return tests
 
+def collect_test_suites(verbosity=1):
+    tests = collect_unit_tests(verbosity=verbosity)
     # import all test modules
     for t in tests:
-        exec 'import ' + t
+        exec 'import mvpa.tests.' + t
 
     # instantiate all tests suites and return dict of them (with ID as key)
-    return dict([(t[5:], eval(t + '.suite()')) for t in tests ])
+    return dict([(t[5:], eval('mvpa.tests.' + t + '.suite()')) for t in tests ])
 
 
-def collect_nose_tests():
+def collect_nose_tests(verbosity=1):
     """Return list of tests which are pure nose-based
     """
-    tests = [ 'test_collections',
-              'test_datasetng',
-              'test_attrmap',
-              'test_arraymapper',
-              'test_boxcarmapper',
-              'test_mapper',
-              'test_mapper_sp',
-              'test_fxmapper',
-              'test_glmnet',
-              'test_hdf5',
-              'test_hdf5_clf',
-              'test_neighborhood',
-              'test_mdp',
-              'test_niftidataset',
-              'test_eepdataset',
-              'test_erdataset',
-              'test_zscoremapper',
-              'test_kernel',
-              'test_svmkernels',
-              'test_waveletmapper',
-              'test_emp_null',
-              'test_transerror',
-              ]
+    tests = [
+        # Basic data structures/manipulators
+        'test_collections',
+        'test_attrmap',
+
+        # Datasets
+        'test_datasetng',
+        'test_datasetfx',
+        'test_splitter',
+        'test_niftidataset',
+        'test_eepdataset',
+        'test_erdataset',
+
+        # Misc supporting
+        'test_neighborhood',
+        'test_stats',
+        'test_stats_sp',
+
+        # Mappers
+        'test_mapper',
+        'test_mapper_sp',
+        'test_arraymapper',
+        'test_boxcarmapper',
+        'test_prototypemapper',
+        'test_fxmapper',
+        'test_zscoremapper',
+        'test_waveletmapper',
+        'test_mdp',
+
+        # Learners
+        'test_enet',
+        'test_spam',
+        'test_glmnet',
+        'test_kernel',
+        'test_svmkernels',
+
+        # Algorithms
+        'test_emp_null',
+        'test_clfcrossval',
+
+        # IO
+        'test_iohelpers',
+        'test_hdf5',
+        'test_hdf5_clf',
+
+        # Measures
+        'test_transerror',
+        'test_datameasure',
+        ]
 
     if not cfg.getboolean('tests', 'lowmem', default='no'):
         tests += ['test_atlases']
 
-
-    ## SkipTest will take care about marking those as S
-    ## if externals.exists('scipy'):
-    ##     tests += ['test_mapper_sp']
-    ## if externals.exists('glmnet'):
-    ##     tests += ['test_glmnet']
-    ## if externals.exists('nifti'):
-    ##     tests += ['test_niftidataset']
-    ## if externals.exists('mdp'):
-    ##     tests += ['test_mdp']
-    ## if externals.exists('h5py'):
-    ##     tests += ['test_hdf5']
-
     return tests
 
 
-def run_nose_tests():
+def run_tests_using_nose(limit=None, verbosity=1):
     """Run nose-based tests -- really really silly way, just to get started
 
     TODO: just switch to using numpy.testing framework, for that
           unittests need to be cleaned and unified first
     """
-    nosetests = collect_nose_tests()
+    nosetests = collect_nose_tests(verbosity=verbosity)
+
     if not externals.exists('nose'):
-        warning("You do not have python-nose installed -- no tests %s were ran"
-                % (', '.join(nosetests)))
+        warning("You do not have python-nose installed.  Some unittests were "
+                "skipped: %s" % (', '.join(nosetests)))
         return
+
     from nose import main
-    # main.config.verbosity = int(cfg.get('tests', 'verbosity', default=1))
-    for nt in nosetests:
-        main(defaultTest='mvpa.tests.' + nt, exit=False)
+    import nose
+    import nose.config
+
+    tests = collect_unit_tests(verbosity=verbosity) + nosetests
+
+    config = nose.config.Config(
+        verbosity=verbosity,
+        plugins=nose.plugins.DefaultPluginManager())
+    if limit is None:
+        # Lets see if we aren't missing any:
+        if verbosity:
+            import os, glob
+            testfiles = glob.glob('%s%stest_*.py'
+                                  % (os.path.dirname(__file__), os.path.sep))
+            not_tested = set([os.path.basename(f) for f in testfiles]) \
+                         - set(['%s.py' % f for f in tests])
+            if len(not_tested):
+                print("T: Warning -- following test files were found but will "
+                      "not be tested: %s" % ', '.join(not_tested))
+        config.testNames = ['mvpa.tests.' + nt for nt in tests]
+    else:
+        config.testNames = ['mvpa.tests.' + nt for nt in tests
+                            if nt[5:] in limit]
+
+    # run the tests
+    _ = main(defaultTest=(), config=config, exit=False)
+
 
 def run(limit=None, verbosity=None):
     """Runs the full or a subset of the PyMVPA unittest suite.
@@ -184,14 +209,20 @@ def run(limit=None, verbosity=None):
         # Lets add some targets which provide additional testing
         debug.active += ['CHECK_.*']
 
-    # collect all tests
-    suites = collect_test_suites()
+    if verbosity is None:
+        verbosity = int(cfg.get('tests', 'verbosity', default=1))
 
-    if limit is None:
-        # make global test suite (use them all)
-        ts = unittest.TestSuite(suites.values())
-    else:
-        ts = unittest.TestSuite([suites[s] for s in limit])
+    # provide people with a hint about the warnings that might show up in a
+    # second
+    if verbosity:
+        print("T: MVPA_SEED=%s" % _random_seed)
+        if verbosity > 1:
+            print('T: Testing for availability of external software packages.')
+
+    # So we could see all warnings about missing dependencies
+    warning.maxcount = 1000
+    # fully test of externals
+    externals.test_all_dependencies(verbosity=max(0, verbosity-1))
 
     # no MVPA warnings during whole testsuite (but restore handlers later on)
     handler_backup = warning.handlers
@@ -201,23 +232,41 @@ def run(limit=None, verbosity=None):
     import warnings
     warnings.simplefilter('ignore')
 
-    class TextTestRunnerPyMVPA(unittest.TextTestRunner):
-        """Extend TextTestRunner to print out random seed which was
-        used in the case of failure"""
-        def run(self, test):
-            """Run the bloody test and puke the seed value if failed"""
-            result = super(TextTestRunnerPyMVPA, self).run(test)
-            if not result.wasSuccessful():
-                print "MVPA_SEED=%s" % _random_seed
+    try:
+        if externals.exists('nose'):
+            # Lets just use nose
+            run_tests_using_nose(limit=limit, verbosity=verbosity)
+        else:
+            print("T: Warning -- major bulk of tests is skipped since nose "
+                  "is unavailable")
+            # collect all tests
+            suites = collect_test_suites(verbosity=verbosity)
 
-    if verbosity is None:
-        verbosity = int(cfg.get('tests', 'verbosity', default=1))
+            if limit is None:
+                # make global test suite (use them all)
+                ts = unittest.TestSuite(suites.values())
+            else:
+                ts = unittest.TestSuite([suites[s] for s in limit])
 
-    # finally run it
-    TextTestRunnerPyMVPA(verbosity=verbosity).run(ts)
 
-    # and nose tests
-    run_nose_tests()
+            class TextTestRunnerPyMVPA(unittest.TextTestRunner):
+                """Extend TextTestRunner to print out random seed which was
+                used in the case of failure"""
+                def run(self, test):
+                    """Run the bloody test and puke the seed value if failed"""
+                    result = super(TextTestRunnerPyMVPA, self).run(test)
+                    if not result.wasSuccessful():
+                        print "MVPA_SEED=%s" % _random_seed
 
-    # restore warning handlers
-    warning.handlers = handler_backup
+            if verbosity is None:
+                verbosity = int(cfg.get('tests', 'verbosity', default=1))
+
+            # finally run it
+            TextTestRunnerPyMVPA(verbosity=verbosity).run(ts)
+    finally:
+        # restore warning handlers
+        warning.handlers = handler_backup
+
+
+if __name__ == "__main__":
+    run()
