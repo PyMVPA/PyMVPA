@@ -224,9 +224,9 @@ apidoc-stamp: build
 	touch $@
 
 # this takes some minutes !!
-profile: build mvpa/tests/main.py
+profile: build mvpa/tests/__init__.py
 	@echo "I: Profiling unittests"
-	@PYTHONPATH=.:$(PYTHONPATH) tools/profile -K  -O $(PROFILE_FILE) mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) tools/profile -K  -O $(PROFILE_FILE) mvpa/tests/__init__.py
 
 
 #
@@ -298,31 +298,31 @@ ut-%: build
 
 unittest: build
 	@echo "I: Running unittests (without optimization nor debug output)"
-	PYTHONPATH=.:$(PYTHONPATH) $(PYTHON) mvpa/tests/main.py
+	PYTHONPATH=.:$(PYTHONPATH) $(PYTHON) mvpa/tests/__init__.py
 
 
 # test if PyMVPA is working if optional externals are missing
 unittest-badexternals: build
 	@echo "I: Running unittests under assumption of missing optional externals."
-	@PYTHONPATH=mvpa/tests/badexternals:.:$(PYTHONPATH) $(PYTHON) mvpa/tests/main.py 2>&1 \
+	@PYTHONPATH=mvpa/tests/badexternals:.:$(PYTHONPATH) $(PYTHON) mvpa/tests/__init__.py 2>&1 \
 	| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
               -e 'WARNING:.*SMLR.* implementation'
 
 # only non-labile tests
 unittest-nonlabile: build
 	@echo "I: Running only non labile unittests. None of them should ever fail."
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/__init__.py
 
 # test if no errors would result if we force enabling of all ca
 unittest-ca: build
 	@echo "I: Running unittests with all ca enabled."
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=ENFORCE_CA_ENABLED $(PYTHON) mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=ENFORCE_CA_ENABLED $(PYTHON) mvpa/tests/__init__.py
 
 # Run unittests with optimization on -- helps to catch unconditional
 # debug calls
 unittest-optimization: build
 	@echo "I: Running unittests with $(PYTHON) -O."
-	@PYTHONPATH=.:$(PYTHONPATH) $(PYTHON) -O mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) $(PYTHON) -O mvpa/tests/__init__.py
 
 # Run unittests with all debug ids and some metrics (crossplatform ones) on.
 #   That does:
@@ -331,7 +331,7 @@ unittest-optimization: build
 unittest-debug: build
 	@echo "I: Running unittests with debug output. No progress output."
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
-       $(PYTHON) mvpa/tests/main.py 2>&1 \
+       $(PYTHON) mvpa/tests/__init__.py 2>&1 \
        |  sed -n -e '/^[=-]\{60,\}$$/,/^\(MVPA_SEED=\|OK\)/p'
 
 
@@ -450,17 +450,17 @@ testcfg: build
 	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c 'from mvpa.suite import *; cfg.save("pymvpa.cfg");'
 	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c 'from mvpa.suite import *;'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/__init__.py
 	@echo "+I: Check all known dependencies and store them"
 	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c \
 	  'from mvpa.suite import *; mvpa.base.externals.test_all_dependencies(force=False); cfg.save("pymvpa.cfg");'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/__init__.py
 	-@rm -f pymvpa.cfg
 
 testourcfg: build
 	@echo "+I: Run non-labile testing to verify safety of shipped configuration"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPACONFIG=doc/examples/pymvpa.cfg MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPACONFIG=doc/examples/pymvpa.cfg MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/__init__.py
 
 
 test: unittests testmanual testsuite testexamples testcfg testourcfg
@@ -474,7 +474,7 @@ $(COVERAGE_REPORT): build
 	@echo "I: Generating coverage data and report. Takes awhile. No progress output."
 	@{ \
 	  export PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL; \
-	  python-coverage -x mvpa/tests/main.py >/dev/null 2>&1; \
+	  python-coverage -x mvpa/tests/__init__.py >/dev/null 2>&1; \
 	  python-coverage -r -i -o /usr,/var >| $(COVERAGE_REPORT); \
 	  grep -v '100%$$' $(COVERAGE_REPORT); \
 	  python-coverage -a -i -o /usr,/var ; }
