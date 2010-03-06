@@ -564,7 +564,7 @@ versions._KNOWN.update({
 
 
 ##REF: Name was automagically refactored
-def test_all_dependencies(force=False):
+def test_all_dependencies(force=False, verbosity=1):
     """
     Test for all known dependencies.
 
@@ -578,7 +578,8 @@ def test_all_dependencies(force=False):
     # loop over all known dependencies
     for dep in _KNOWN:
         if not exists(dep, force):
-            warning("%s is not available." % dep)
+            if verbosity:
+                warning("%s is not available." % dep)
 
     if __debug__:
         debug('EXT', 'The following optional externals are present: %s' \
