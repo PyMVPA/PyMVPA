@@ -345,7 +345,8 @@ te-%: build
 	@echo -n "I: Testing example $*: "
 	@MVPA_EXAMPLES_INTERACTIVE=no PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg \
 	 $(PYTHON) doc/examples/$*.py >| temp-$@.log 2>&1 \
-	 && echo "passed" || { echo "failed:"; cat temp-$@.log; }
+	 && echo "passed" \
+	 || { echo "failed:"; cat temp-$@.log; rm -f temp-$@.log; exit 1; }
 	@rm -f temp-$@.log
 
 testexamples: te-svdclf te-smlr te-searchlight te-sensanas te-pylab_2d \
