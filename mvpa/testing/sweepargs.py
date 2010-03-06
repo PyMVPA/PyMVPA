@@ -129,6 +129,7 @@ def sweepargs(**kwargs):
                 raise AssertionError(estr), None, etb
 
         do_sweep.func_name = method.func_name
+        do_sweep.__doc__ = method.__doc__
         return do_sweep
 
     if len(kwargs) > 1:
