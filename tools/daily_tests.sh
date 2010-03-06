@@ -30,7 +30,7 @@ for b in maint/0.4; do
 done
 # development branches
 for b in master yoh/master mh/master; do
-    TESTS_BRANCHES["$b"]="$TESTS_COMMON testdatadb testourcfg"
+    TESTS_BRANCHES["$b"]="$TESTS_COMMON testdatadb testourcfg testdocstrings"
 done
 # all known tests
 TESTS_ALL=`echo "${TESTS_BRANCHES[*]}" | tr ' ' '\n' | sort | uniq`
@@ -87,6 +87,12 @@ do_clean() {
 
 for c in $TESTS_ALL; do
     eval "do_$c() { $precmd make $c; }"
+done
+
+# need to override some so they are ran with -k
+# so we see all that fail
+for c in testexamples unittests; do
+    eval "do_$c() { $precmd make -k $c; }"
 done
 
 # Counters
@@ -155,4 +161,3 @@ sweep >| $logfile 2>&1
 # Email always since it is better to see that indeed everything is smooth
 # and to confirm that it is tested daily
 cat $logfile | mail -s "PyMVPA: daily testing: +$succeeded/-$failed" $EMAILS
-
