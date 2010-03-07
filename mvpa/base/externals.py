@@ -395,6 +395,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'nifti':'from nifti import NiftiImage as __',
           'nifti ge 0.20090205.1':
                 'from nifti.clib import detachDataFromImage as __',
+          'nibabel':'from nibabel import Nifti1Image as __',
           'ctypes':'import ctypes as __',
           'shogun':'__assign_shogun_version()',
           'shogun.krr': '__assign_shogun_version(); import shogun.Regression as __; x=__.KRR',
