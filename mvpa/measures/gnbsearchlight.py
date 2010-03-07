@@ -489,10 +489,14 @@ class GNBSearchlight(BaseSearchlight):
             if __debug__:
                 debug('SLC', "  Assessing accuracies")
 
-            # somewhat silly but a way which allows to use pre-crafted
-            # error functions without a chance to screw up
-            for i, fpredictions in enumerate(predictions.T):
-                results[isplit, i] = errorfx(fpredictions, targets)
+            if isinstance(errorfx, MeanMismatchErrorFx):
+                results[isplit, :] = (predictions != targets[:, None]).sum(axis=0) \
+                                     /float(len(targets))
+            else:
+                # somewhat silly but a way which allows to use pre-crafted
+                # error functions without a chance to screw up
+                for i, fpredictions in enumerate(predictions.T):
+                    results[isplit, i] = errorfx(fpredictions, targets)
 
         if __debug__:
             debug('SLC', "GNBSearchlight is done in %.3g sec" %
