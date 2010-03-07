@@ -11,9 +11,16 @@
 This module offers functions to import MRI data in the NIfTI format into
 PyMVPA, and export PyMVPA datasets back into NIfTI files.
 
-Currently NIfTI file access is based on PyNIfTI_.
+Currently two different backends for MRI fileformat IO are supported:
+
+- PyNIfTI_
+- NiBabel_
+
+In the future, NiBabel will allow access to other formats than NIfTI. However,
+while this is technically  already possible, it hasn't been tested yet.
 
 .. _PyNIfTI: http://niftilib.sourceforge.net/pynifti
+.. _NiBabel: http://nipy..sourceforge.net/nibabel
 """
 
 __docformat__ = 'restructuredtext'
@@ -53,8 +60,6 @@ def _data2img(data, hdr=None, imgtype=None):
             # use of `None` for the affine should cause to pull it from
             # the header
             return itype(_get_xyzt_shaped(data), None, hdr)
-        print itype, issubclass(itype, nibabel.spatialimages.SpatialImage)
-        print hdr, isinstance(hdr, nibabel.spatialimages.Header)
         # otherwise continue and see if there is hope ....
     if externals.exists('nifti'):
         # maybe pynifti can help
