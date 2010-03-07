@@ -29,6 +29,7 @@ from mvpa.datasets.base import Dataset
 #from mvpa.clfs.gnb import GNB
 from mvpa.misc.errorfx import MeanMismatchErrorFx
 from mvpa.measures.searchlight import BaseSearchlight
+from mvpa.base import externals, warning
 from mvpa.base.dochelpers import borrowkwargs
 #from mvpa.misc.param import Parameter
 #from mvpa.misc.state import ConditionalAttribute
@@ -40,7 +41,90 @@ if __debug__:
     from mvpa.base import debug
     import time as time
 
+if externals.exists('scipy'):
+    import scipy.sparse as sps
+
 __all__ = [ "GNBSearchlight", 'sphere_gnbsearchlight' ]
+
+def lastdim_columnsums_fancy_indexing(a, inds, out):#, out=None):
+    ## if out is None:
+    ##     out_ = np.empty(a.shape[:-1] + (len(inds),))
+    ## else:
+    ##     out_ = out
+    for i, inds_ in enumerate(inds):
+        ## if __debug__ and debug_slc_:
+        ##     debug('SLC_', "   Doing %i ROIs: %i (%i features) [%i%%]" \
+        ##           % (nroi_fids,
+        ##              iroi,
+        ##              len(roi_fids_),
+        ##              float(iroi+1)/nroi_fids*100,), cr=True)
+        out[..., i] = a[..., inds_].sum(axis=-1)
+    ## # just a new line
+    ## if __debug__ and debug_slc_:
+    ##     debug('SLC_', '   ')
+
+    ## if out is None:
+    ##     return out_
+
+#
+# Machinery for sparse matrix way
+#
+
+# silly Yarik failed to do np.r_[*neighbors] directly, so here is a
+# trick
+def r_helper(*args):
+    return np.r_[args]
+
+def _inds_list_to_coo(inds, shape=None):
+    inds_r = r_helper(*(inds))
+    inds_i = r_helper(*[[i]*len(ind)
+                        for i,ind in enumerate(inds)])
+    data = np.ones(len(inds_r))
+    ij = np.array([inds_r, inds_i])
+    spmat = sps.coo_matrix((data, ij), dtype=int, shape=shape)
+    return spmat
+
+def _inds_array_to_coo(inds, shape=None):
+    n_sums, n_cols_per_sum = inds.shape
+    cps_inds = inds.ravel()
+    row_inds = np.repeat(np.arange(n_sums)[None, :],
+                         n_cols_per_sum, axis=0).T.ravel()
+    ij = np.r_[cps_inds[None, :], row_inds[None, :]]
+    data  = np.ones(ij.shape[1])
+    inds_s = sps.coo_matrix((data, ij), shape=shape)
+    return inds_s
+
+def inds_to_coo(inds, shape=None):
+    """Dispatcher for conversion to coo
+    """
+    if isinstance(inds, np.ndarray):
+        return _inds_array_to_coo(inds, shape)
+    elif isinstance(inds, list):
+        return _inds_list_to_coo(inds, shape)
+    else:
+        raise NotImplementedError, "add conversion here"
+
+def lastdim_columnsums_spmatrix(a, inds, out):
+    # inds is a 2D array or list or already a sparse matrix, with each
+    # row specifying a set of columns (in fact last dimension indices)
+    # to sum.  Thus there are the same number of sums as there are
+    # rows in `inds`.
+
+    n_cols = a.shape[-1]
+    in_shape = a.shape[:-1]
+
+    # first convert to sparse if necessary
+    if sps.isspmatrix(inds):
+        n_sums = inds.shape[1]
+        inds_s = inds
+    else:                               # assume regular iterable
+        n_sums = len(inds)
+        inds_s = inds_to_coo(inds, shape=(n_cols, n_sums))
+
+    ar = a.reshape((-1, a.shape[-1]))
+    sums = np.asarray((sps.csr_matrix(ar) * inds_s).todense())
+    out[:] = sums.reshape(in_shape+(n_sums,))
+
 
 class GNBSearchlight(BaseSearchlight):
     """Gaussian Naive Bayes `Searchlight`.
@@ -57,7 +141,7 @@ class GNBSearchlight(BaseSearchlight):
 
     @borrowkwargs(BaseSearchlight, '__init__')
     def __init__(self, gnb, splitter, qe, errorfx=MeanMismatchErrorFx(),
-                 **kwargs):
+                 indexsum=None, **kwargs):
         """Initialize a GNBSearchlight
 
         Parameters
@@ -67,9 +151,14 @@ class GNBSearchlight(BaseSearchlight):
           to use. Instance itself isn't used.
         splitter : `Splitter`
           `Splitter` to use to compute the error.
-        errorfx: func, optional
+        errorfx : func, optional
           Functor that computes a scalar error value from the vectors of
           desired and predicted values (e.g. subclass of `ErrorFunction`)
+        indexsum : ('sparse', 'fancy'), optional
+          What use to compute sums over arbitrary columns.  'fancy'
+          corresponds to regular fancy indexing over columns, whenever
+          in 'sparse', produce of sparse matrices is used (usually
+          faster, so is default if `scipy` is available.
         """
 
         # init base class first
@@ -78,6 +167,18 @@ class GNBSearchlight(BaseSearchlight):
         self._errorfx = errorfx
         self._splitter = splitter
         self._gnb = gnb
+
+        if indexsum is None:
+            if externals.exists('scipy'):
+                indexsum = 'sparse'
+            else:
+                indexsum = 'fancy'
+        else:
+            if indexsum == 'sparse' and not externals.exists('scipy'):
+                warning("Scipy.sparse isn't available so taking 'fancy' as "
+                        "'indexsum' method.")
+                indexsum = 'fancy'
+        self._indexsum = indexsum
 
         if not self._nproc in (None, 1):
             raise NotImplementedError, "For now only nproc=1 (or None for " \
@@ -265,6 +366,28 @@ class GNBSearchlight(BaseSearchlight):
                   % (nrois,))
         roi_fids = [qe.query_byid(f) for f in roi_ids]
         nroi_fids = len(roi_fids)
+        # makes sense to waste precious ms only if ca is enabled
+        if self.ca.is_enabled('roi_sizes'):
+            roi_sizes = [len(x) for x in roi_fids]
+        else:
+            roi_sizes = []
+
+        indexsum = self._indexsum
+        if indexsum == 'sparse':
+            if __debug__:
+                debug('SLC',
+                      'Phase 4b. Converting neighbors to sparse matrix '
+                      'representation')
+            # convert to "sparse representation" where column j contains
+            # 1s only at the roi_fids[j] indices
+            roi_fids = inds_to_coo(roi_fids,
+                                   shape=(dataset.nfeatures, nroi_fids))
+            indexsum_fx = lastdim_columnsums_spmatrix
+        elif indexsum == 'fancy':
+            indexsum_fx = lastdim_columnsums_fancy_indexing
+        else:
+            raise ValueError, \
+                  "Do not know how to deal with indexsum=%s" % indexsum
 
         # 5. Lets do actual "splitting" and "classification"
         if __debug__:
@@ -351,18 +474,8 @@ class GNBSearchlight(BaseSearchlight):
                 debug('SLC', "  Doing 'Searchlight'")
             # resultant logprobs for each class x sample x roi
             lprob_cs_sl = np.zeros(lprob_csfs.shape[:2] + (nroi_fids,))
-            for iroi, roi_fids_ in enumerate(roi_fids):
-                if __debug__ and debug_slc_:
-                    debug('SLC_', "   Doing %i ROIs: %i (%i features) [%i%%]" \
-                          % (nroi_fids,
-                             iroi,
-                             len(roi_fids_),
-                             float(iroi+1)/nroi_fids*100,), cr=True)
-                lprob_cs_sl[:, :, iroi] = lprob_csf[:, :, roi_fids_].sum(axis=2)
+            indexsum_fx(lprob_csf, roi_fids, out=lprob_cs_sl)
 
-            # just a new line
-            if __debug__ and debug_slc_:
-                debug('SLC_', '   ')
             # XXX at some other point we might return back and start
             # worrying about unneeded memory consumption ;)
             #lprob_cs_cp_sl = lprob_cs_sl + logpriors
@@ -385,11 +498,6 @@ class GNBSearchlight(BaseSearchlight):
             debug('SLC', "GNBSearchlight is done in %.3g sec" %
                   (time.time() - time_start))
 
-        # makes sense to waste precious ms only if ca is enabled
-        if self.ca.is_enabled('roi_sizes'):
-            roi_sizes = [len(x) for x in roi_fids]
-        else:
-            roi_sizes = []
         return Dataset(results), roi_sizes
 
 
