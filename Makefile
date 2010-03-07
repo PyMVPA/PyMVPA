@@ -3,6 +3,7 @@ COVERAGE_REPORT=$(CURDIR)/$(BUILDDIR)/coverage
 BUILDDIR=$(CURDIR)/build
 HTML_DIR=$(BUILDDIR)/html
 DOC_DIR=$(CURDIR)/doc
+TUT_DIR=$(CURDIR)/datadb/tutorial_data/tutorial_data
 DOCSRC_DIR=$(DOC_DIR)/source
 DOCBUILD_DIR=$(BUILDDIR)/doc
 MAN_DIR=$(BUILDDIR)/man
@@ -375,18 +376,18 @@ tm-%: build
 
 testmanual: build testdocstrings
 	@echo "I: Testing code samples found in documentation"
-	@PYTHONPATH=.:$(CURDIR)/tutorial_data:$(PYTHONPATH) \
+	@PYTHONPATH=.:$(TUT_DIR):$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
-		MVPA_LOCATION_TUTORIAL_DATA=tutorial_data \
+		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 		MVPA_DATADB_ROOT=datadb \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 		             --doctest-tests doc/source
 
 testtutorial-%: build
 	@echo "I: Testing code samples found in tutorial part $*"
-	@PYTHONPATH=.:$(CURDIR)/tutorial_data:$(PYTHONPATH) \
+	@PYTHONPATH=.:$(TUT_DIR):$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
-		MVPA_LOCATION_TUTORIAL_DATA=tutorial_data \
+		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 		             --doctest-tests doc/source/tutorial_$**.rst
 
@@ -397,7 +398,7 @@ testtutorials-alt:
 	@grep '# *alt' doc/source/tutorial*rst | \
 	 sed -e "s/.*'\(.*\)'.*/\1/g" | \
 	 while read f; do \
-	  fs="$$(/bin/ls tutorial_data/results/$$f.* 2>/dev/null)"; \
+	  fs="$$(/bin/ls $(TUT_DIR)/results/$$f.* 2>/dev/null)"; \
 	  [ -z "$$fs" ] && echo "$$f missing" || :; \
 	 done
 
@@ -577,12 +578,18 @@ bdist_mpkg: 3rd
 #
 
 fetch-data:
-	rsync $(RSYNC_OPTS) $(DATA_URI)/demo_blockfmri $(DATA_URI)/mnist datadb
-	for ds in datadb/*; do \
+	@echo "I: fetching data from datadb"
+	@rsync $(RSYNC_OPTS) $(DATA_URI)/tutorial_data $(DATA_URI)/mnist datadb
+	@for ds in datadb/*; do \
+		echo " I: looking at $$ds"; \
 		cd $(CURDIR)/$${ds} && \
 		md5sum -c MD5SUMS && \
-		[ -f *.tar.gz ] && \
-		[ ! -d $$(basename $${ds}) ] && tar xzf *.tar.gz || : ;\
+		tbs="$$(/bin/ls *.tar.gz 2>/dev/null)" && \
+		[ ! -z "$$tbs" ] && \
+		for tb in $${tbs}; do \
+		 fn=$${tb%.tar.gz}; dn=$${fn%-*}; \
+		 [ ! -d $$dn ] && tar xzf $$tb || : ;\
+		done; \
 	done
 
 # Various other data which might be sensitive and not distribu
