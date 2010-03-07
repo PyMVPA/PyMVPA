@@ -577,12 +577,18 @@ bdist_mpkg: 3rd
 #
 
 fetch-data:
-	rsync $(RSYNC_OPTS) $(DATA_URI)/demo_blockfmri $(DATA_URI)/mnist datadb
-	for ds in datadb/*; do \
+	@echo "I: fetching data from datadb"
+	@rsync $(RSYNC_OPTS) $(DATA_URI)/tutorial_data $(DATA_URI)/mnist datadb
+	@for ds in datadb/*; do \
+		echo " I: looking at $$ds"; \
 		cd $(CURDIR)/$${ds} && \
 		md5sum -c MD5SUMS && \
-		[ -f *.tar.gz ] && \
-		[ ! -d $$(basename $${ds}) ] && tar xzf *.tar.gz || : ;\
+		tbs="$$(/bin/ls *.tar.gz 2>/dev/null)" && \
+		[ ! -z "$$tbs" ] && \
+		for tb in $${tbs}; do \
+		 fn=$${tb%.tar.gz}; dn=$${fn%-*}; \
+		 [ ! -d $$dn ] && tar xzf $$tb || : ;\
+		done; \
 	done
 
 # Various other data which might be sensitive and not distribu
