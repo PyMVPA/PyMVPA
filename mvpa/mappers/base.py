@@ -24,11 +24,13 @@ class Mapper(object):
     """Basic mapper interface definition.
 
     ::
+
               forward
              --------->
          IN              OUT
              <--------/
                reverse
+
     """
     def __init__(self, inspace=None):
         """
