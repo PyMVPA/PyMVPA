@@ -396,4 +396,4 @@ complexity.
   .. autosummary::
      :toctree: generated
 
-     ~mvpa.datasets.mri.extract_events
+     ~mvpa.datasets.eventrelated.eventrelated_dataset
