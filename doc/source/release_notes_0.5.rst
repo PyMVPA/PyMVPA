@@ -37,6 +37,10 @@ Critical API Changes
   - NiftiDataset -> `fmri_dataset`
   - ERNiftiDataset -> `fmri_dataset` + call to `.extract_events`
 
+* MRI volumes: 3,4D volumes (and coordinates) are exposed with following order
+  of axes: t,x,y,z.  Previously we followed a convention of t,z,y,x order of
+  axis in volume data (to be consistent with PyNIfTI).
+
 * Masks (`mask_mapper`)
  - now [1,1,0] is not the same as [True, True, False]
 
