@@ -12,7 +12,6 @@ Spatio-temporal Analysis of event-related fMRI data
 ===================================================
 
 .. index:: event-related fMRI
-.. _ex_eventrelated:
 
 In this example we are going to take a look at an event-related analysis of
 timeseries data. We will do this on fMRI data, implementing a spatio-temporal
