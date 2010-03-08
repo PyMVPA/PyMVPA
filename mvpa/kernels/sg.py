@@ -198,7 +198,7 @@ class PrecomputedSGKernel(SGKernel):
         """
         # Convert to appropriate kernel for input
         if isinstance(matrix, SGKernel):
-            k = m._k # Take internal shogun
+            k = matrix._k # Take internal shogun
         elif isinstance(matrix, Kernel):
             k = matrix.as_raw_np() # Convert to NP otherwise
         else:
@@ -219,6 +219,6 @@ class PrecomputedSGKernel(SGKernel):
             #self._k.set_full_kernel_matrix_from_full(k)
 
     def compute(self, *args, **kwargs):
-        """'Compute' `PrecomputedSGKernel -- no actual "computation" is done
+        """'Compute' `PrecomputedSGKernel` -- no actual "computation" is done
         """
         pass
