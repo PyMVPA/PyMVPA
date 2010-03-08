@@ -41,18 +41,19 @@ class Kernel(ClassWithCollections):
     This class should not be used directly, but rather use a subclass which
     enforces a consistent internal representation, such as a NumpyKernel.
 
-    Conversion mechanisms
-    ---------------------
+    Notes
+    -----
+    Conversion mechanisms: Each kernel type should implement methods
+    as necessary for the following two methods to work:
 
-    Each kernel type should implement methods as necessary for the following two
-    methods to work:
-
-    kernel.as_np() # Return a new NumpyKernel object with internal Numpy kernel
+    :meth:`~mvpa.kernels.Kernel.as_np`
+      *Return a new NumpyKernel object with internal Numpy kernel*.
       This method can be generally inherited from the base Kernel class by
       creating a PrecomputedKernel from the raw numpy matrix, as implemented
       here.
 
-    kernel.as_raw_np() # Return a raw Numpy array from this kernel
+    :meth:`~mvpa.kernels.Kernel.as_raw_np`
+      *Return a raw Numpy array from this kernel*.
       This method should behave identically to numpy.array(kernel), and in fact,
       defining either method (via defining Kernel.__array__) will be sufficient
       for both method calls to work.  See this source code for more details.
@@ -71,16 +72,19 @@ class Kernel(ClassWithCollections):
     object to store the results in the new kernel type.
 
     For example:
-    k = SomeShogunKernel()
-    k.compute(data1, data2)
 
-    # Incorrect and unsupported use
-    k2 = k.as_cuda()
-    k2.compute(data3, data4) # Would require 'functional translation' to the new
-                             # backend, which is impossible
+    ::
 
-    # Correct use
-    someOtherAlgorithm(k.as_raw_cuda()) # Simply uses kernel results in CUDA
+      k = SomeShogunKernel()
+      k.compute(data1, data2)
+
+      # Incorrect and unsupported use
+      k2 = k.as_cuda()
+      k2.compute(data3, data4) # Would require 'functional translation' to the new
+                               # backend, which is impossible
+
+      # Correct use
+      someOtherAlgorithm(k.as_raw_cuda()) # Simply uses kernel results in CUDA
     """
 
     _ATTRIBUTE_COLLECTIONS = ['params'] # enforce presence of params collections
