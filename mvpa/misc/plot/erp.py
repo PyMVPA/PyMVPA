@@ -389,6 +389,8 @@ def plot_erps(erps, data=None, ax=None, pre=0.2, post=None,
     Examples
     --------
 
+    ::
+
       kwargs  = {'SR' : eeg.SR, 'pre_mean' : 0.2}
       fig = plot_erps((('60db', 'b', eeg.erp_onsets['60db']),
                        ('80db', 'r', eeg.erp_onsets['80db'])),
@@ -396,7 +398,10 @@ def plot_erps(erps, data=None, ax=None, pre=0.2, post=None,
                       ax=fig.add_subplot(1,1,1,frame_on=False), pre=0.2,
                       post=0.6, **kwargs)
 
-        or
+    or
+
+    ::
+    
         fig = plot_erps((('60db', 'b', eeg.erp_onsets['60db']),
                           {'color': 'r',
                            'onsets': eeg.erp_onsets['80db'],
