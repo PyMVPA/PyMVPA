@@ -55,6 +55,7 @@ Datasets: Input, Output, Storage and Preprocessing
    base.dataset
    datasets.base
    datasets.mri
+   datasets.eventrelated
    datasets.eep
    datasets.miscfx
    datasets.splitters
@@ -66,6 +67,7 @@ Mappers: Data Transformations
 .. autosummary::
    :toctree: generated
 
+   mappers
    mappers.base
    mappers.flatten
    mappers.boxcar

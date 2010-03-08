@@ -36,9 +36,9 @@ documentation is covered by the MIT license.
   THE SOFTWARE.
 
 
-**************
+==============
 3rd Party Code
-**************
+==============
 
 Some code distributed within PyMVPA was not developed by PyMVPA team, hence
 you should adhere to the copyright and license terms of respective authors if
