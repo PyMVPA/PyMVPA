@@ -83,6 +83,9 @@ from mvpa.datasets.eep import *
 from mvpa.datasets.eventrelated import *
 # safe to import since multiple externals are handled inside
 from mvpa.datasets.mri import *
+# make NiftiImage available for people
+if externals.exists('nifti'):
+    from nifti import NiftiImage
 
 from mvpa.datasets import splitters
 from mvpa.datasets.splitters import *
