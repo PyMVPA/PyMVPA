@@ -39,6 +39,12 @@ terms found in the literature to the terminology used in this manual.
     A model that maps an arbitrary feature space into a discrete set of
     labels.
 
+  Meta-classifier
+    An internal to PyMVPA term to describe a classifier which is usually a
+    proxy to the main classifier which it wraps to provide additional data
+    preprocessing (e.g. feature selection) before actually training and/or
+    testing of the wrapped classifier.
+
   Cross-validation
     A technique to assess the :term:`generalization` of the constructed model
     by the analysis of accuracy of the model predictions on presumably

@@ -37,7 +37,7 @@ Critical API Changes
   - MaskedDataset -> `dataset_wizard`
   - NiftiDataset -> `fmri_dataset`
   - ERNiftiDataset -> `fmri_dataset` + `eventrelated_dataset` (see
-    :ref:`event-related analysis example <ex_eventrelated_>`)
+    :ref:`event-related analysis example <example_eventrelated_>`)
 
 * MRI volumes: 3,4D volumes (and coordinates) are exposed with following order
   of axes: t,x,y,z.  Previously we followed a convention of t,z,y,x order of
