@@ -380,6 +380,19 @@ def test_mergeds():
     assert_true('chunks' in merged.sa)
     assert_array_equal(merged.fa.one, [1]*5 + [0]*5)
 
+def test_hstack():
+    """Additional tests for hstacking of datasets
+    """
+    ds3d = datasets['3dsmall']
+    nf1 = ds3d.nfeatures
+    nf3 = 3 * nf1
+    ds3dstacked = hstack((ds3d, ds3d, ds3d))
+    ok_(ds3dstacked.nfeatures == nf3)
+    for fav in ds3dstacked.fa.itervalues():
+        v = fav.value
+        ok_(len(v) == nf3)
+        assert_array_equal(v[:nf1], v[nf1:2*nf1])
+        assert_array_equal(v[2*nf1:], v[nf1:2*nf1])
 
 def test_mergeds2():
     """Test composition of new datasets by addition of existing ones
