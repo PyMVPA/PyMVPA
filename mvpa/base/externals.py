@@ -298,19 +298,33 @@ def __check_openopt():
     import scikits.openopt as _
     return
 
+def _set_matplotlib_backend():
+    """Check if we have custom backend to set and it is different
+    from current one
+    """
+    backend = cfg.get('matplotlib', 'backend')
+    if backend:
+        import matplotlib as mpl
+        mpl_backend = mpl.get_backend().lower()
+        if mpl_backend != backend.lower():
+            if __debug__:
+                debug('EXT_', "Trying to set matplotlib backend to %s" % backend)
+            mpl.use(backend)
+            import warnings
+            # And disable useless warning from matplotlib in the future
+            warnings.filterwarnings(
+                'ignore', 'This call to matplotlib.use() has no effect.*',
+                UserWarning)
+        elif __debug__:
+            debug('EXT_',
+                  "Not trying to set matplotlib backend to %s since it was "
+                  "already set" % backend)
+
+
 def __check_matplotlib():
     """Check for presence of matplotlib and set backend if requested."""
     import matplotlib
-    backend = cfg.get('matplotlib', 'backend')
-    if backend:
-        if __debug__:
-            debug('EXT_', "Trying to set matplotlib backend to %s" % backend)
-        matplotlib.use(backend)
-        import warnings
-        # And disable useless warning from matplotlib in the future
-        warnings.filterwarnings(
-            'ignore', 'This call to matplotlib.use() has no effect.*',
-            UserWarning)
+    _set_matplotlib_backend()
 
 def __check_pylab():
     """Check if matplotlib is there and then pylab"""

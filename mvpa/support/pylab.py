@@ -17,6 +17,9 @@ from mvpa.base import externals
 __all__ = ['pl']
 
 if externals.exists('pylab', raise_=True):
+    # Assure that we have correct backend
+    externals._set_matplotlib_backend()
+
     if sys.version_info[:2] >= (2, 5):
         # enforce absolute import
         pl = __import__('pylab', globals(),
@@ -35,4 +38,3 @@ if externals.exists('pylab', raise_=True):
             # restore old settings
             __name__ = oldname
             raise
-
