@@ -303,6 +303,8 @@ def __check_matplotlib():
     import matplotlib
     backend = cfg.get('matplotlib', 'backend')
     if backend:
+        if __debug__:
+            debug('EXT_', "Trying to set matplotlib backend to %s" % backend)
         matplotlib.use(backend)
         import warnings
         # And disable useless warning from matplotlib in the future
