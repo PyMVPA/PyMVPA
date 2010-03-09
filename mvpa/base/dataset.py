@@ -703,7 +703,7 @@ def hstack(datasets):
     stacked_fa = {}
     for attr in datasets[0].fa:
         stacked_fa[attr] = np.concatenate([ds.fa[attr].value for ds in datasets],
-                                         axis=1)
+                                         axis=0)
     # create the dataset
     merged = datasets[0].__class__(stacked_samp, fa=stacked_fa)
 
