@@ -84,7 +84,39 @@ class MeanMismatchErrorFx(_ErrorFx):
         """Both 'predicted' and 'target' can be either scalars or sequences,
         but have to be of the same length.
         """
-        return 1 - np.mean( predicted == target )
+        return np.mean( predicted != target )
+
+
+class MismatchErrorFx(_ErrorFx):
+    """Computes number of mismatches between some target and some
+    predicted values.
+    """
+    def __call__(self, predicted, target):
+        """Both 'predicted' and 'target' can be either scalars or sequences,
+        but have to be of the same length.
+        """
+        return np.sum( predicted != target )
+
+
+class AccuracyFx(_ErrorFx):
+    """Computes number of matches between some target and some
+    predicted values.
+    """
+    def __call__(self, predicted, target):
+        """Both 'predicted' and 'target' can be either scalars or sequences,
+        but have to be of the same length.
+        """
+        return np.sum( predicted == target )
+
+class MeanAccuracyFx(_ErrorFx):
+    """Computes mean of number of matches between some target and some
+    predicted values.
+    """
+    def __call__(self, predicted, target):
+        """Both 'predicted' and 'target' can be either scalars or sequences,
+        but have to be of the same length.
+        """
+        return np.mean( predicted == target )
 
 
 class AUCErrorFx(_ErrorFx):
