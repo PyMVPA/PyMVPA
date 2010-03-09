@@ -14,7 +14,7 @@ Searchlight on fMRI data
 .. index:: Searchlight
 
 The original idea of a spatial searchlight algorithm stems from a paper by
-:ref:`Kriegeskorte et al. (2006) <KGB06>`, and has subseqently been used in a
+:ref:`Kriegeskorte et al. (2006) <KGB06>`, and has subsequently been used in a
 number of studies. The most common use for a searchlight is to compute a full
 cross-validation analysis in each spherical region of interest (ROI) in the
 brain. This analysis yields a map of (typically) classification accuracies that
@@ -28,7 +28,7 @@ As always, we first have to import PyMVPA.
 from mvpa.suite import *
 
 """As searchlight analyses are usually quite expensive in term of computational
-ressources, we are going to enable some progress output, to entertain us while
+resources, we are going to enable some progress output, to entertain us while
 we are waiting."""
 
 # enable debug output for searchlight call
@@ -44,7 +44,8 @@ arguments. In this case we are loading a thresholded zstat-map of a category
 selectivity contrast for voxels ventral temporal cortex."""
 
 # data path
-datapath = os.path.join(pymvpa_datadbroot, 'demo_blockfmri', 'demo_blockfmri')
+datapath = os.path.join(pymvpa_datadbroot,
+                        'tutorial_data', 'tutorial_data', 'data')
 # source of class targets and chunks definitions
 attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
 
