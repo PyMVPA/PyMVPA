@@ -10,6 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
+from mvpa.base import externals
+externals.exists('matplotlib', force=True, raise_=False)
+
 import pylab as pl
 import numpy as np
 
