@@ -85,9 +85,9 @@ Instructions
   >>> print ds.shape
   (1452, 39912)
   >>> print ds.a.voxel_dim
-  (64, 64, 40)
+  (40, 64, 64)
   >>> print ds.a.voxel_eldim
-  (3.75, 3.75, 3.5)
+  (3.5, 3.75, 3.75)
   >>> print ds.a.mapper
   <ChainMapper: <Flatten>-<FeatureSlice>>
   >>> print ds.uniquetargets
