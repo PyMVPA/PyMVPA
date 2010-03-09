@@ -369,20 +369,28 @@ Finally, the dataset also contains information about the dimensionality
 of the input volumes, voxel size, and any other NIfTI-specific information
 since it also includes a dump of the full NIfTI image header.
 
+.. note::
+   Previously (0.4.x versions and 0.5 development prior March 03, 2010),
+   PyMVPA exposed 4D (and 3D with degenerate 1st dimension) data in `tkji`
+   (corresponds to `tzyx` if volumes were axial slices in
+   neurologic convention) order of dimensions.  Now it uses more convenient
+   order `tijk` (corresponding to `txyz`), which will match the order exposed
+   by NiBabel (PyNIfTI and NiftiImage still expose them as `tkji`).
+
 >>> ds.sa.time_indices[:5]
 array([0, 1, 2, 3, 4])
 >>> ds.sa.time_coords[:5]
 array([  0. ,   2.5,   5. ,   7.5,  10. ])
 >>> ds.fa.voxel_indices[:5]
-array([[22, 20, 31],
-       [22, 20, 32],
-       [22, 25,  8],
-       [22, 26,  8],
-       [23, 18, 10]])
+array([[ 6, 23, 24],
+       [ 7, 18, 25],
+       [ 7, 18, 26],
+       [ 7, 18, 27],
+       [ 7, 19, 25]])
 >>> ds.a.voxel_eldim
-(3.75, 3.75, 3.5)
+(3.5, 3.75, 3.75)
 >>> ds.a.voxel_dim
-(64, 64, 40)
+(40, 64, 64)
 >>> 'imghdr' in ds.a
 True
 
