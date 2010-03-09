@@ -58,7 +58,10 @@ sensanas = {
     'h) Splitting SVM (nfold)':
         SplitFeaturewiseDatasetMeasure(
             NFoldSplitter(),
-            LinearNuSVMC().get_sensitivity_analyzer(postproc=absolute_features()))
+            LinearNuSVMC().get_sensitivity_analyzer(postproc=absolute_features())),
+    'i) GNB Searchlight':
+        sphere_gnbsearchlight(GNB(), NFoldSplitter(cvtype=1),
+                              radius=0, errorfx=MeanAccuracyFx())
            }
 
 """Now, we are performing some a more or less standard preprocessing steps:
@@ -110,18 +113,18 @@ for s in keys:
 
     pl.title(s)
 
-    pl.imshow(masked_orig_smap[0],
+    pl.imshow(masked_orig_smap[..., 0].T,
              interpolation='nearest',
              aspect=1.25,
              cmap=pl.cm.autumn)
 
     # uniform scaling per base sensitivity analyzer
-    if s.count('ANOVA'):
-        pl.clim(0, 30)
-    elif s.count('SVM'):
-        pl.clim(0, 0.055)
-    else:
-        pass
+    ## if s.count('ANOVA'):
+    ##     pl.clim(0, 30)
+    ## elif s.count('SVM'):
+    ##     pl.clim(0, 0.055)
+    ## else:
+    ##     pass
 
     pl.colorbar(shrink=0.6)
 
