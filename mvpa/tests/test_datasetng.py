@@ -12,22 +12,21 @@ from mvpa.testing import *
 from mvpa.testing.datasets import datasets
 
 import numpy as np
-import random
 import shutil
 import tempfile
 import os
 
 
-from mvpa.base.externals import versions, exists
+from mvpa.base.externals import versions
 from mvpa.base.types import is_datasetlike
 from mvpa.base.dataset import DatasetError, vstack, hstack
-from mvpa.mappers.flatten import mask_mapper
 from mvpa.datasets.base import dataset_wizard, Dataset
 from mvpa.misc.data_generators import normal_feature_dataset
 import mvpa.support.copy as copy
-from mvpa.base.collections import SampleAttributesCollection, \
-        FeatureAttributesCollection, DatasetAttributesCollection, \
-        ArrayCollectable, SampleAttribute, Collectable
+from mvpa.base.collections import \
+     SampleAttributesCollection, FeatureAttributesCollection, \
+     DatasetAttributesCollection, ArrayCollectable, SampleAttribute, \
+     Collectable
 
 
 class myarray(np.ndarray):
@@ -203,24 +202,24 @@ def test_multidim_attrs():
                              chunks=np.random.normal(size=(2,10,4,2)))
     assert_equal(ds.nsamples, 2)
     assert_equal(ds.nfeatures, 12)
-    assert_equal(ds.sa.targets.shape, (2,3,4))
-    assert_equal(ds.sa.chunks.shape, (2,10,4,2))
+    assert_equal(ds.sa.targets.shape, (2, 3, 4))
+    assert_equal(ds.sa.chunks.shape, (2, 10, 4, 2))
 
     # try slicing
     subds = ds[0]
     assert_equal(subds.nsamples, 1)
     assert_equal(subds.nfeatures, 12)
-    assert_equal(subds.sa.targets.shape, (1,3,4))
-    assert_equal(subds.sa.chunks.shape, (1,10,4,2))
+    assert_equal(subds.sa.targets.shape, (1, 3, 4))
+    assert_equal(subds.sa.chunks.shape, (1, 10, 4, 2))
 
     # add multidim feature attr
     fattr = ds.mapper.forward(samples)
-    assert_equal(fattr.shape, (2,12))
+    assert_equal(fattr.shape, (2, 12))
     # should puke -- first axis is #samples
     assert_raises(ValueError, ds.fa.__setitem__, 'moresamples', fattr)
     # but that should be fine
     ds.fa['moresamples'] = fattr.T
-    assert_equal(ds.fa.moresamples.shape, (12,2))
+    assert_equal(ds.fa.moresamples.shape, (12, 2))
 
 
 
@@ -434,8 +433,8 @@ def test_mergeds2():
                                          chunks=2)
 
     # test wrong origin length
-    assert_raises(ValueError, dataset_wizard, dss[:4, :5], targets=[ 1, 2, 3, 4 ],
-                                         chunks=[ 2, 2, 2 ])
+    assert_raises(ValueError, dataset_wizard, dss[:4, :5],
+                  targets=[ 1, 2, 3, 4 ], chunks=[ 2, 2, 2 ])
 
 
 def test_combined_samplesfeature_selection():
@@ -489,11 +488,10 @@ def test_combined_samplesfeature_selection():
 
 
 def test_labelpermutation_randomsampling():
-    ds  = Dataset.from_wizard(np.ones((5, 1)),     targets=range(5), chunks=1)
-    ds.append(Dataset.from_wizard(np.ones((5, 1)) + 1, targets=range(5), chunks=2))
-    ds.append(Dataset.from_wizard(np.ones((5, 1)) + 2, targets=range(5), chunks=3))
-    ds.append(Dataset.from_wizard(np.ones((5, 1)) + 3, targets=range(5), chunks=4))
-    ds.append(Dataset.from_wizard(np.ones((5, 1)) + 4, targets=range(5), chunks=5))
+    ds = Dataset.from_wizard(np.ones((5, 1)),     targets=range(5), chunks=1)
+    for i in xrange(1, 5):
+        ds.append(Dataset.from_wizard(np.ones((5, 1)) + i,
+                                      targets=range(5), chunks=i+1))
     # use subclass for testing if it would survive
     ds.samples = ds.samples.view(myarray)
 
@@ -813,11 +811,11 @@ def test_other_samples_dtypes():
             assert_equal(sel.shape, (dshape[0], 2))
             assert_equal(type(s), type(sel.samples))
             if sparse.isspmatrix(sel.samples):
-                assert_array_equal(sel.samples[:,1].todense(),
-                        ds.samples[:,2].todense())
+                assert_array_equal(sel.samples[:, 1].todense(),
+                        ds.samples[:, 2].todense())
             else:
-                assert_array_equal(sel.samples[:,1],
-                        ds.samples[:,2])
+                assert_array_equal(sel.samples[:, 1],
+                        ds.samples[:, 2])
 
 
         # what we don't do
@@ -834,7 +832,7 @@ def test_other_samples_dtypes():
         assert_equal(ds.nfeatures, 1)
         assert_equal(ds.shape, (5, 1))
         # arrays of objects
-        data = np.array([{},{}])
+        data = np.array([{}, {}])
         ds = Dataset(data)
         assert_equal(ds.shape, (2, 1))
         assert_equal(ds.nsamples, 2)
