@@ -18,11 +18,11 @@ First, importing the necessary pieces:
 """
 
 import numpy as np
-import pylab as pl
 
 from mvpa.misc.plot import plot_err_line
 from mvpa.misc.fx import single_gamma_hrf, least_sq_fit
 from mvpa import cfg
+import pylab as pl
 
 """
 Now, we generate some noisy "trial time courses" from a simple gamma function
