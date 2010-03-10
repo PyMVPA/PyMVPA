@@ -20,7 +20,7 @@ Documentation
 Code Documentation
 ------------------
 
-All documentation should be written using Numpy documentation conventions:
+All documentation should be written using NumPy_ documentation conventions:
 
   http://projects.scipy.org/numpy/wiki/CodingStyleGuidelines#docstring-standard
 
@@ -573,7 +573,7 @@ Things to implement for the next release (Release goals)
 
 * In a related issue, the predictions and values ca of the classifiers need to have
   a consitent format.  Currently, SVM returns a list of dictionaries for values and SMLR
-  returns a numpy ndarray.
+  returns a NumPy_ ndarray.
 
 
 
