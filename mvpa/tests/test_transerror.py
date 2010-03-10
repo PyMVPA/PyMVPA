@@ -144,9 +144,10 @@ class ErrorsTests(unittest.TestCase):
         """Shouldn't be able to access the state yet"""
 
         l_clf.train(train)
-        self.failUnlessEqual(err(None), terr(train),
-            msg="ConfusionBasedError should be equal to TransferError on" +
-                " traindataset")
+        e, te = err(None), terr(train)
+        self.failUnless(abs(e-te) < 1e-10,
+            msg="ConfusionBasedError (%.2g) should be equal to TransferError "
+                "(%.2g) on traindataset" % (e, te))
 
         # this will print nasty WARNING but it is ok -- it is just checking code
         # NB warnings are not printed while doing whole testing
