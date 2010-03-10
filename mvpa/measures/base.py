@@ -95,7 +95,8 @@ class DatasetMeasure(ClassWithCollections):
         self.__null_dist = null_dist_
 
 
-    __doc__ = enhanced_doc_string('DatasetMeasure', locals(), ClassWithCollections)
+    __doc__ = enhanced_doc_string('DatasetMeasure', locals(),
+                                  ClassWithCollections)
 
 
     def __call__(self, dataset):
@@ -186,7 +187,7 @@ class DatasetMeasure(ClassWithCollections):
                 clip = 1e-16
                 null_t = norm.ppf(np.clip(acdf, clip, 1.0 - clip))
                 null_t[~null_right_tail] *= -1.0 # revert sign for negatives
-                self.ca.null_t = null_t                 # store
+                self.ca.null_t = null_t          # store
             else:
                 # get probability of result under NULL hypothesis if available
                 # and don't request tail information
@@ -196,7 +197,7 @@ class DatasetMeasure(ClassWithCollections):
 
 
     def __repr__(self, prefixes=[]):
-        """String representation of DatasetMeasure
+        """String representation of a `DatasetMeasure`
 
         Includes only arguments which differ from default ones
         """
@@ -278,11 +279,11 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         # This method get the 'result' either as a 1D array, or as a Dataset
         # everything else is illegal
         if __debug__ \
-           and not isinstance(result, AttrDataset) \
-           and not len(result.shape) == 1:
-               raise RuntimeError("FeaturewiseDatasetMeasures have to return "
-                                  "their results as 1D array, or as a Dataset "
-                                  "(error made by: '%s')." % repr(self))
+               and not isinstance(result, AttrDataset) \
+               and not len(result.shape) == 1:
+            raise RuntimeError("FeaturewiseDatasetMeasures have to return "
+                               "their results as 1D array, or as a Dataset "
+                               "(error made by: '%s')." % repr(self))
 
         if len(result.shape) > 1:
             n_base = len(result)
@@ -395,8 +396,8 @@ class Sensitivity(FeaturewiseDatasetMeasure):
                     break
             if not found:
                 raise ValueError, \
-                  "Classifier %s has to be of allowed class (%s), but is %s" \
-                              % (clf, _LEGAL_CLFS, `type(clf)`)
+                  "Classifier %s has to be of allowed class (%s), but is %r" \
+                  % (clf, _LEGAL_CLFS, type(clf))
 
         self.__clf = clf
         """Classifier used to computed sensitivity"""
@@ -437,7 +438,6 @@ class Sensitivity(FeaturewiseDatasetMeasure):
         return FeaturewiseDatasetMeasure.__call__(self, dataset)
 
 
-    ##REF: Name was automagically refactored
     def _set_classifier(self, clf):
         self.__clf = clf
 
@@ -494,7 +494,7 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
 
     def _call(self, dataset):
         sensitivities = []
-        for ind,analyzer in enumerate(self.__analyzers):
+        for ind, analyzer in enumerate(self.__analyzers):
             if __debug__:
                 debug("SA", "Computing sensitivity for SA#%d:%s" %
                       (ind, analyzer))
@@ -612,14 +612,15 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
         self.ca.splits = splits = []
         store_splits = self.ca.is_enabled("splits")
 
-        for ind,split in enumerate(self.__splitter(dataset)):
+        for ind, split in enumerate(self.__splitter(dataset)):
             ds = split[insplit_index]
             if __debug__ and "SA" in debug.active:
                 debug("SA", "Computing sensitivity for split %d on "
                       "dataset %s using %s" % (ind, ds, analyzer))
             sensitivity = analyzer(ds)
             sensitivities.append(sensitivity)
-            if store_splits: splits.append(split)
+            if store_splits:
+                splits.append(split)
 
         result = vstack(sensitivities)
         result.sa['splits'] = np.concatenate([[i] * len(s)
@@ -647,7 +648,7 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         clf : `BoostedClassifier`
           Classifier to be used
         analyzer : analyzer
-          Is used to populate combined_analyzer 
+          Is used to populate combined_analyzer
         slave_*
           Arguments to pass to created analyzer if analyzer is None
         """
@@ -682,11 +683,11 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
                 analyzer = clf.get_sensitivity_analyzer(**(self._slave_kwargs))
                 if analyzer is None:
                     raise ValueError, \
-                          "Wasn't able to figure basic analyzer for clf %s" % \
-                          `clf`
+                          "Wasn't able to figure basic analyzer for clf %r" % \
+                          (clf,)
                 if __debug__:
-                    debug("SA", "Selected analyzer %s for clf %s" % \
-                          (`analyzer`, `clf`))
+                    debug("SA", "Selected analyzer %r for clf %r" % \
+                          (analyzer, clf))
             else:
                 # XXX shallow copy should be enough...
                 analyzer = copy.copy(self.__analyzer)
