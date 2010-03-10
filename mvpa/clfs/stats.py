@@ -280,6 +280,9 @@ class MCNullDist(NullDist):
           If provided measure is assumed to be a `TransferError` and
           working and validation dataset are passed onto it.
         """
+        # TODO: place exceptions separately so we could avoid circular imports
+        from mvpa.clfs.base import LearnerError
+
         dist_samples = []
         """Holds the values for randomized labels."""
 
@@ -308,7 +311,12 @@ class MCNullDist(NullDist):
 
             # compute and store the measure of this permutation
             # assume it has `TransferError` interface
-            res = measure(*measure_args)
+            try:
+                res = measure(*measure_args)
+            except LearnerError, e:
+                warning('Failed to obtain value from %s due to %s.  Measurement'
+                        ' was skipped, which could lead to unstable and/or'
+                        ' incorrect assessment of the null_dist' % (measure, e))
             res = np.asanyarray(res)
             dist_samples.append(res)
 
