@@ -388,6 +388,17 @@ complexity.
 >>> ts = res.a.mapper.reverse1(1 - res.samples[0])
 >>> ni = NiftiImage(ts, ds.a.imghdr).save('ersl.nii')
 
+After all is done
+-----------------
+
+.. We need to remove generated files so daily tests pass
+
+After you are done and want to tidy up after yourself, you can easily remove
+unneeded generated files from within Python:
+
+>>> os.unlink('ersl.nii')
+
+
 .. only:: html
 
   References
