@@ -501,7 +501,7 @@ def test_labelpermutation_randomsampling():
     ok_((ds.sa['chunks'].unique == range(1, 6)).all())
 
     # keep the orig labels
-    orig_labels = ds.targets[:]
+    orig_labels = ds.targets.copy()
 
     # also keep the orig dataset, but SHALLOW copy and leave everything
     # else as a view!
