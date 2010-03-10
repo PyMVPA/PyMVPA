@@ -191,10 +191,10 @@ def permute_targets(dataset, targets_attr='targets', chunks_attr='chunks',
 
     Parameters
     ----------
-    targets_attr : string, optional
+    targets_attr : str, optional
       Name of the samples attribute which is used as ``targets``
       (i.e. gets permuted).
-    chunks_attr : None or string
+    chunks_attr : None or str
       If a string given, permutation is limited to samples sharing the
       same value of the `chunks_attr` samples attribute.  Therefore,
       only the association of a certain sample with a target is
@@ -203,11 +203,6 @@ def permute_targets(dataset, targets_attr='targets', chunks_attr='chunks',
     assure_permute : bool, optional
       If True, assures that targets are permuted, i.e. any one is
       different from the original one
-
-    Returns
-    -------
-    Dataset
-       shallow copy of original dataset with permuted targets.
     """
     if __debug__:
         if len(dataset.sa[targets_attr].unique) < 2:
@@ -355,9 +350,9 @@ def summary(dataset, stats=True, lstats=True, sstats=True, idhash=False,
       Sequence (order) statistics
     idhash : bool
       Include idhash value for dataset and samples
-    targets_attr : string, optional
+    targets_attr : str, optional
       Name of sample attributes of targets
-    chunks_attr : string, optional
+    chunks_attr : str, optional
       Name of sample attributes of chunks -- independent groups of samples
     maxt : int
       Maximal number of targets when provide details on targets/chunks
@@ -411,9 +406,9 @@ def summary_targets(dataset, targets_attr='targets', chunks_attr='chunks',
     ----------
     dataset : `Dataset`
       Dataset to operate on
-    targets_attr : string, optional
+    targets_attr : str, optional
       Name of sample attributes of targets
-    chunks_attr : string, optional
+    chunks_attr : str, optional
       Name of sample attributes of chunks -- independent groups of samples
     maxc : int
       Maximal number of chunks when provide details
