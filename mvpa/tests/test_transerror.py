@@ -24,6 +24,7 @@ from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.stats import MCNullDist
 
 from mvpa.misc.exceptions import UnknownStateError
+from mvpa.mappers.fx import mean_sample
 
 from mvpa.testing import *
 from mvpa.testing.datasets import datasets
@@ -179,14 +180,13 @@ class ErrorsTests(unittest.TestCase):
         self.failUnless(err < 0.4)
 
         # Lets do the same for CVTE
-        debug.active += ['SA.*']
         cvte = CrossValidatedTransferError(
             TransferError(clf=l_clf),
             OddEvenSplitter(),
             null_dist=MCNullDist(permutations=num_perm,
                                  tail='left',
                                  enable_ca=['dist_samples']),
-            enable_ca=['null_prob'])
+            postproc=mean_sample())
         cv_err = cvte(train)
 
         # check that the result is highly significant since we know that the
