@@ -165,16 +165,29 @@ class ErrorsTests(unittest.TestCase):
     def test_null_dist_prob(self, l_clf):
         train = datasets['uni2medium']
 
+        num_perm = 10
         # define class to estimate NULL distribution of errors
         # use left tail of the distribution since we use MeanMatchFx as error
         # function and lower is better
-        terr = TransferError(clf=l_clf,
-                             null_dist=MCNullDist(permutations=10,
-                                                  tail='left'))
+        terr = TransferError(
+            clf=l_clf,
+            null_dist=MCNullDist(permutations=num_perm,
+                                 tail='left'))
 
         # check reasonable error range
         err = terr(train, train)
         self.failUnless(err < 0.4)
+
+        # Lets do the same for CVTE
+        debug.active += ['SA.*']
+        cvte = CrossValidatedTransferError(
+            TransferError(clf=l_clf),
+            OddEvenSplitter(),
+            null_dist=MCNullDist(permutations=num_perm,
+                                 tail='left',
+                                 enable_ca=['dist_samples']),
+            enable_ca=['null_prob'])
+        cv_err = cvte(train)
 
         # check that the result is highly significant since we know that the
         # data has signal
@@ -184,6 +197,15 @@ class ErrorsTests(unittest.TestCase):
                 msg="Failed to check that the result is highly significant "
                     "(got %f) since we know that the data has signal"
                     % null_prob)
+
+            self.failUnless(cvte.ca.null_prob < 0.01,
+                msg="Failed to check that the result is highly significant "
+                    "(got p(cvte)=%f) since we know that the data has signal"
+                    % cvte.ca.null_prob)
+
+            # and we should be able to access the actual samples of the distribution
+            self.failUnlessEqual(len(cvte.null_dist.ca.dist_samples),
+                                 num_perm)
 
 
     @sweepargs(l_clf=clfswh['linear', 'svm'])
