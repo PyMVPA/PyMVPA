@@ -174,14 +174,6 @@ class ErrorsTests(unittest.TestCase):
         err = terr(train, train)
         self.failUnless(err < 0.4)
 
-        # check that the result is highly significant since we know that the
-        # data has signal
-        null_prob = terr.null_prob
-        self.failUnless(null_prob < 0.01,
-            msg="Failed to check that the result is highly significant "
-                "(got p(te)=%f) since we know that the data has signal"
-                % null_prob)
-
         # Lets do the same for CVTE
         cvte = CrossValidatedTransferError(
             TransferError(clf=l_clf),
@@ -190,14 +182,24 @@ class ErrorsTests(unittest.TestCase):
                                  tail='left',
                                  enable_states=['dist_samples']))
         cv_err = cvte(train)
-        null_prob = cvte.null_prob
-        self.failUnless(null_prob < 0.01,
-            msg="Failed to check that the result is highly significant "
-                "(got p(cvte)=%f) since we know that the data has signal"
-                % null_prob)
 
-        # and we should be able to access the actual samples of the distribution
-        self.failUnlessEqual(len(cvte.null_dist.dist_samples), num_perm)
+        # check that the result is highly significant since we know that the
+        # data has signal
+        null_prob = terr.states.null_prob
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless(null_prob <= 0.1,
+                msg="Failed to check that the result is highly significant "
+                    "(got %f) since we know that the data has signal"
+                    % null_prob)
+
+            self.failUnless(cvte.states.null_prob <= 0.1,
+                msg="Failed to check that the result is highly significant "
+                    "(got p(cvte)=%f) since we know that the data has signal"
+                    % cvte.states.null_prob)
+
+            # and we should be able to access the actual samples of the distribution
+            self.failUnlessEqual(len(cvte.null_dist.states.dist_samples),
+                                 num_perm)
 
 
     @sweepargs(l_clf=clfswh['linear', 'svm'])

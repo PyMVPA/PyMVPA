@@ -25,9 +25,29 @@ class Nonparametric(object):
     Introduced to complement parametric distributions present in scipy.stats.
     """
 
-    def __init__(self, dist_samples):
+    def __init__(self, dist_samples, correction='clip'):
+        """
+        Parameters
+        ----------
+        dist_samples : ndarray
+          Samples to be used to assess the distribution.
+        correction : {'clip'} or None, optional
+          Determines the behavior when .cdf is queried.  If None -- no
+          correction is made.  If 'clip' -- values are clipped to lie
+          in the range [1/(N+2), (N+1)/(N+2)] (simply because
+          non-parametric assessment lacks the power to resolve with
+          higher precision in the tails, so 'imagery' samples are
+          placed in each of the two tails).
+        """
         self._dist_samples = N.ravel(dist_samples)
+        self._correction = correction
 
+    def __repr__(self):
+        return '%s(%r%s)' % (
+            self.__class__.__name__,
+            self._dist_samples,
+            ('', ', correction=%r' % self._correction)
+              [int(self._correction != 'clip')])
 
     @staticmethod
     def fit(dist_samples):
@@ -37,7 +57,18 @@ class Nonparametric(object):
     def cdf(self, x):
         """Returns the cdf value at `x`.
         """
-        return N.vectorize(lambda v:(self._dist_samples <= v).mean())(x)
+        dist_samples = self._dist_samples
+        res = N.vectorize(lambda v:(dist_samples <= v).mean())(x)
+        if self._correction == 'clip':
+            nsamples = len(dist_samples)
+            N.clip(res, 1.0/(nsamples+2), (nsamples+1.0)/(nsamples+2), res)
+        elif self._correction is None:
+            pass
+        else:
+            raise ValueError, \
+                  '%r is incorrect value for correction parameter of %s' \
+                  % (self._correction, self.__class__.__name__)
+        return res
 
 
 def _pvalue(x, cdf_func, tail, return_tails=False, name=None):
