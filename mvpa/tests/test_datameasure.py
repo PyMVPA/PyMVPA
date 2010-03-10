@@ -15,6 +15,7 @@ from mvpa.testing.clfs import *
 from mvpa.testing.datasets import *
 
 from mvpa.base import externals, warning
+from mvpa.datasets.base import Dataset
 from mvpa.featsel.base import FeatureSelectionPipeline, \
      SensitivityBasedFeatureSelection, CombinedFeatureSelection
 from mvpa.featsel.helpers import FixedNElementTailSelector, \
@@ -458,7 +459,26 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # simply run it for now -- can't think of additional tests
         od = fs(self.dataset)
 
+    def test_anova(self):
+        """Additional aspects of OnewayAnova
+        """
+        oa = OneWayAnova()
+        oa_custom = OneWayAnova(targets_attr='custom')
 
+        ds = datasets['uni4large']
+        ds_custom = Dataset(ds.samples, sa={'custom' : ds.targets})
+
+        r = oa(ds)
+        self.failUnlessRaises(KeyError, oa_custom, ds)
+        r_custom = oa_custom(ds_custom)
+
+        self.failUnless(np.allclose(r.samples, r_custom.samples))
+
+        # we should get the same results on subsequent runs
+        r2 = oa(ds)
+        r_custom2 = oa_custom(ds_custom)
+        self.failUnless(np.allclose(r.samples, r2.samples))
+        self.failUnless(np.allclose(r_custom.samples, r_custom2.samples))
 
 def suite():
     return unittest.makeSuite(SensitivityAnalysersTests)
