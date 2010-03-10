@@ -191,7 +191,7 @@ class DatasetMeasure(ClassWithCollections):
             else:
                 # get probability of result under NULL hypothesis if available
                 # and don't request tail information
-                self.null_prob = self.__null_dist.p(result)
+                self.ca.null_prob = self.__null_dist.p(result)
 
         return result
 
