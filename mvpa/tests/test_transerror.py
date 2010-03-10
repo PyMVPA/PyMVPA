@@ -193,12 +193,12 @@ class ErrorsTests(unittest.TestCase):
         # data has signal
         null_prob = terr.ca.null_prob
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(null_prob < 0.01,
+            self.failUnless(null_prob <= 0.1,
                 msg="Failed to check that the result is highly significant "
                     "(got %f) since we know that the data has signal"
                     % null_prob)
 
-            self.failUnless(cvte.ca.null_prob < 0.01,
+            self.failUnless(cvte.ca.null_prob <= 0.1,
                 msg="Failed to check that the result is highly significant "
                     "(got p(cvte)=%f) since we know that the data has signal"
                     % cvte.ca.null_prob)
