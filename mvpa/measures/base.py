@@ -170,6 +170,8 @@ class DatasetMeasure(ClassWithCollections):
                 # Should be sufficient range of z-values ;-)
                 clip = 1e-16
                 null_t = norm.ppf(N.clip(acdf, clip, 1.0 - clip))
+                # assure that we deal with arrays:
+                null_t = N.array(null_t, ndmin=1, copy=False)
                 null_t[~null_right_tail] *= -1.0 # revert sign for negatives
                 self.states.null_t = null_t                 # store
             else:
