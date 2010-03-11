@@ -186,7 +186,7 @@ _setActive	_set_active
 _setAnalyzers	_set_analyzers
 _setClassifier	_set_classifier
 _setClassifiers	_set_classifiers
-setCoordT	set_coord_t
+setCoordT	set_coordT
 setDistance	set_distance
 _setFElements	_set_f_elements
 _setHandlers	_set_handlers
