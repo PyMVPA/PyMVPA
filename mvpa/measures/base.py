@@ -186,6 +186,8 @@ class DatasetMeasure(ClassWithCollections):
                 # Should be sufficient range of z-values ;-)
                 clip = 1e-16
                 null_t = norm.ppf(np.clip(acdf, clip, 1.0 - clip))
+                # assure that we deal with arrays:
+                null_t = np.array(null_t, ndmin=1, copy=False)
                 null_t[~null_right_tail] *= -1.0 # revert sign for negatives
                 self.ca.null_t = null_t          # store
             else:
