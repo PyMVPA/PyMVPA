@@ -95,8 +95,13 @@ def test_fsl_hox_queries():
 
     assert_raises(ValueError, atl.get_map, 'Fusiform')
     ok_(len(atl.find('Fusiform', unique=False)) == 4)
-    assert_equal(atl.get_map('Fusiform', strategy='max').shape,
-                         tshape)
+    ff_map = atl.get_map('Fusiform', strategy='max')
+    assert_equal(ff_map.shape, tshape)
+
+    # atlas has very unfortunate shape -- the same under .T ... heh heh
+    # Lets validate either map is in correct orientation
+    ok_(ff_map[119, 91, 52] > 60)
+    ok_(ff_map[52, 91, 119] == 0)
 
     # Lets validate some coordinates queries
     r_gi = atl[(-48, -75, 19)]
@@ -118,6 +123,7 @@ def test_fsl_hox_queries():
     ok_(r_point['voxel_atlas'] == r_point['voxel_queried'] ==
         list(r_voxel['voxel_queried']) == [138, 51, 91])
     # TODO: unify list/tuple in above -- r_point has lists
+
     # Test loading of custom atlas
     # for now just on the original file
     atl2 = Atlas(name='HarvardOxford-Cortical',
