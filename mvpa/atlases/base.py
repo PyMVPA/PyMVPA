@@ -30,7 +30,7 @@ if externals.exists('lxml', raise_=True):
 
 from mvpa.base.dochelpers import enhanced_doc_string
 
-import os, re
+import re
 import numpy as np
 from numpy.linalg import norm
 
@@ -45,11 +45,13 @@ if __debug__:
     from mvpa.base import debug
 
 
-##REF: Name was automagically refactored
 def check_range(coord, range):
-    """
-    Check if coordinates are within range (0,0,0) - (range)
-    Return True on success
+    """Check if coordinates are within range (0,0,0) - (range)
+
+    Returns
+    -------
+    bool
+      Success status
     """
     # TODO: optimize
     if len(coord) != len(range):
@@ -62,24 +64,25 @@ def check_range(coord, range):
             return False
     return True
 
-
-class BaseAtlas(object):
-    """Base class for the atlases.
-    """
-
-    def __init__ (self):
-        """
-        Create an atlas object based on the... XXX
-        """
-        self.__name = "blank"           # XXX use or remove
-
+#
+# Base classes
+#
 
 class XMLAtlasException(Exception):
     """Exception to be thrown if smth goes wrong dealing with XML based atlas
     """
     pass
 
+class BaseAtlas(object):
+    """Base class for the atlases.
+    """
+    pass
+
+
+
 class XMLBasedAtlas(BaseAtlas):
+    """Base class for atlases using XML as the definition backend
+    """
 
     def __init__(self, filename=None,
                  resolution=None, image_file=None,
@@ -106,11 +109,12 @@ class XMLBasedAtlas(BaseAtlas):
           What levels by default to operate on
         """
         BaseAtlas.__init__(self)
-        self.__version = None
-        self.__type = None              # XXX use or remove
-        self._image_file = None
+
         self.__atlas = None
+
+        self._image_file = None
         self._filename = filename
+        # TODO: think about more generalizable way?
         self._resolution = resolution
         self._force_image_file = image_file
         self.query_voxel = query_voxel
@@ -121,17 +125,20 @@ class XMLBasedAtlas(BaseAtlas):
 
         # common sanity checks
         if not self._check_version(self.version):
-            raise IOError("Version %s is not recognized to be native to class %s" % \
-                          (self.version, self.__name__))
+            raise IOError(
+                "Version %s is not recognized to be native to class %s" % \
+                (self.version, self.__name__))
 
-        if not set(['header', 'data']) == set([i.tag for i in self.getchildren()]):
+        if not set(['header', 'data']) \
+               == set([i.tag for i in self.getchildren()]):
             raise IOError("No header or data were defined in %s" % filename)
 
         header = self.header
         headerChildrenTags = XMLBasedAtlas._children_tags(header)
         if not ('images' in headerChildrenTags) or \
            not ('imagefile' in XMLBasedAtlas._children_tags(header.images)):
-            raise XMLAtlasException("Atlas requires image/imagefile header fields")
+            raise XMLAtlasException(
+                "Atlas requires image/imagefile header fields")
 
         # Load and post-process images
         self._image = None
@@ -142,47 +149,42 @@ class XMLBasedAtlas(BaseAtlas):
             self.relativeToOrigin = True
         # Assign transformation to get into voxel coordinates,
         # spaceT will be set accordingly
-        self.set_coord_t(coordT)
+        self.set_coordT(coordT)
         self._load_data()
 
 
-    ##REF: Name was automagically refactored
     def _check_range(self, c):
         """ check and adjust the voxel coordinates"""
         # check range
-        # list(c) for consistent appearance... some times c might be ndarray
-        if __debug__: debug('ATL__', "Querying for voxel %s" % `list(c)`)
+        if __debug__:
+            debug('ATL__', "Querying for voxel %r" % (c,))
         if not check_range(c, self.extent):
-            msg = "Coordinates %s are not within the extent %s." \
-                  "Reset to (0,0,0)" % ( `c`, `self.extent` )
-            if __debug__: debug('ATL_', msg)
-            # assume that voxel [0,0,0] is blank
-            c = [0]*3;
+            warning("Coordinates %r are not within the extent %r." \
+                    " Reseting to (0,0,0)" % (c, self.extent))
+            # assume that voxel [0,0,0] is blank, i.e. carries
+            # no labels which could possibly result in evil outcome
+            c = [0]*3
         return c
 
 
     @staticmethod
-    ##REF: Name was automagically refactored
     def _check_version(version):
         """To be overriden in the derived classes. By default anything is good"""
         return True
 
-
-    ##REF: Name was automagically refactored
     def _load_images(self):
         """To be overriden in the derived classes. By default does nothing"""
         pass
 
-
-    ##REF: Name was automagically refactored
     def _load_data(self):
         """To be overriden in the derived classes. By default does nothing"""
         pass
 
-
-    ##REF: Name was automagically refactored
     def load_atlas(self, filename):
-        if __debug__: debug('ATL_', "Loading atlas definition xml file " + filename)
+        """Load atlas from a file
+        """
+        if __debug__:
+            debug('ATL_', "Loading atlas definition xml file " + filename)
         # Create objectify parser first
         parser = etree.XMLParser(remove_blank_text=True)
         lookup = objectify.ObjectifyElementClassLookup()
@@ -201,15 +203,9 @@ class XMLBasedAtlas(BaseAtlas):
             return None
 
     @staticmethod
-    def _compare_lists(checkitems, neededitems):
-        raise RuntimeError, "DEPRECATED _compare_lists"
-        checkitems.sort()
-        neededitems.sort()
-        return (checkitems == neededitems)
-
-
-    @staticmethod
     def _children_tags(root):
+        """Little helper to return tags for the children of the node
+        """
         return [i.tag for i in root.getchildren()]
 
 
@@ -220,11 +216,11 @@ class XMLBasedAtlas(BaseAtlas):
         if not self.__atlas is None:
             return getattr(self.__atlas, attr)
         else:
-            raise XMLAtlasException("Atlas in " + self.__name__ + " was not read yet")
+            raise XMLAtlasException(
+                "Atlas in " + self.__name__ + " was not read yet")
 
 
-    ##REF: Name was automagically refactored
-    def set_coord_t(self, coordT):
+    def set_coordT(self, coordT):
         """Set coordT transformation.
 
         spaceT needs to be adjusted since we glob those two
@@ -236,8 +232,7 @@ class XMLBasedAtlas(BaseAtlas):
             coordT = Linear(np.linalg.inv(self._image.qform),
                             previous=coordT)
         self._spaceT = SpaceTransformation(
-            previous=coordT, to_real_space=False
-            )
+            previous=coordT, to_real_space=False)
 
 
     ##REF: Name was automagically refactored
@@ -333,7 +328,7 @@ class XMLBasedAtlas(BaseAtlas):
             levels_slice = index[-1]
         else:
             if self.levels is None:
-                levels_slice = slice(None,None,None)
+                levels_slice = slice(None, None, None)
             else:
                 levels_slice = self.levels
 
@@ -372,12 +367,13 @@ class XMLBasedAtlas(BaseAtlas):
     levels_dict = property(fget=_get_levels_dict)
 
 
+    resolution = property(fget=lambda self:self._resolution)
     origin = property(fget=lambda self:self._origin)
     extent = property(fget=lambda self:self._extent)
     voxdim = property(fget=lambda self:self._voxdim)
     spaceT = property(fget=lambda self:self._spaceT)
     coordT = property(fget=lambda self:self._spaceT,
-                      fset=set_coord_t)
+                      fset=set_coordT)
 
 class Label(object):
     """Represents a label. Just to bring all relevant information together
@@ -410,17 +406,18 @@ class Label(object):
         return self.__index
 
     def __repr__(self):
-        return "Label(%s%s, coord=(%s, %s, %s), count=%s, index=%s)" % \
-               ((self.__text,
-                (', abbr=%s' % repr(self.__abbr), '')[int(self.__abbr is None)])
-                + tuple(self.__coord) + (self.__count, self.__index))
+        return "Label(%s%s, coord=%r, count=%s, index=%s)" % \
+               (self.__text,
+                (', abbr=%s' % repr(self.__abbr), '')[int(self.__abbr is None)],
+                self.__coord, self.__count, self.__index)
 
     def __str__(self):
         return self.__text
 
     @staticmethod
-    ##REF: Name was automagically refactored
     def from_xml(Elabel):
+        """Create label from an XML node
+        """
         kwargs = {}
         if Elabel.attrib.has_key('x'):
             kwargs['coord'] = ( Elabel.attrib.get('x'),
@@ -572,14 +569,14 @@ class ReferencesLevel(Level):
                                     "following attributes defined " +
                                     `requiredAttrs`)
 
-        indexes = ( int(Elevel.get("x")), int(Elevel.get("y")),
-                    int(Elevel.get("z")) )
+        indexes = tuple(int(Elevel.get(a)) for a in ('x', 'y', 'z'))
 
         return ReferencesLevel(Elevel.get('description'),
                                indexes)
 
     @property
-    def indexes(self): return self.__indexes
+    def indexes(self):
+        return self.__indexes
 
 
 class PyMVPAAtlas(XMLBasedAtlas):
