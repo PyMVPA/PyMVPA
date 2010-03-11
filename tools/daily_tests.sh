@@ -68,6 +68,8 @@ do_checkout() {
     $precmd git checkout -b $branch origin/$branch || :
     #fi
     $precmd git checkout $branch
+    # Clean up again since we might have some directories
+    $precmd git clean -df | indent
     #provide datadb
     [ -e "datadb" ] || $precmd ln -s "$datadbdir" .
 }
