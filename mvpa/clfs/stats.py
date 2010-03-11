@@ -27,17 +27,16 @@ class Nonparametric(object):
 
     def __init__(self, dist_samples, correction='clip'):
         """
-        Parameters
-        ----------
-        dist_samples : ndarray
-          Samples to be used to assess the distribution.
-        correction : {'clip'} or None, optional
-          Determines the behavior when .cdf is queried.  If None -- no
-          correction is made.  If 'clip' -- values are clipped to lie
-          in the range [1/(N+2), (N+1)/(N+2)] (simply because
-          non-parametric assessment lacks the power to resolve with
-          higher precision in the tails, so 'imagery' samples are
-          placed in each of the two tails).
+        :Parameters:
+          dist_samples : ndarray
+            Samples to be used to assess the distribution.
+          correction : {'clip'} or None, optional
+            Determines the behavior when .cdf is queried.  If None -- no
+            correction is made.  If 'clip' -- values are clipped to lie
+            in the range [1/(N+2), (N+1)/(N+2)] (simply because
+            non-parametric assessment lacks the power to resolve with
+            higher precision in the tails, so 'imagery' samples are
+            placed in each of the two tails).
         """
         self._dist_samples = N.ravel(dist_samples)
         self._correction = correction
