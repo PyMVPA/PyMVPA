@@ -472,7 +472,6 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
     #     well as in the parent -- FeaturewiseDatasetMeasure
     # YYY because we don't use parent's _call. Needs RF
     def __init__(self, analyzers=None,  # XXX should become actually 'measures'
-                 combiner=None, #first_axis_mean,
                  **kwargs):
         """Initialize CombinedFeaturewiseDatasetMeasure
 
@@ -490,9 +489,6 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
         self.__analyzers = analyzers
         """List of analyzers to use"""
 
-        self.__combiner = combiner
-        """Which functor to use to combine all sensitivities"""
-
 
     def _call(self, dataset):
         sensitivities = []
@@ -505,27 +501,25 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
 
         if __debug__:
             debug("SA",
-                  "Returning combined using %s sensitivity across %d items" %
-                  (self.__combiner, len(sensitivities)))
+                  "Returning %d sensitivities from %s" %
+                  (len(sensitivities), self.__class__.__name__))
 
-        # TODO Simplify if we go Dataset-only
-        if len(sensitivities) == 1:
-            sensitivities = np.asanyarray(sensitivities[0])
+        if isinstance(sensitivities[0], AttrDataset):
+            smerged = None
+            for i, s in enumerate(sensitivities):
+                s.sa['splits'] = np.repeat(i, len(s))
+                if smerged is None:
+                    smerged = s
+                else:
+                    smerged.append(s)
+            sensitivities = smerged
         else:
-            if isinstance(sensitivities[0], AttrDataset):
-                smerged = None
-                for i, s in enumerate(sensitivities):
-                    s.sa['splits'] = np.repeat(i, len(s))
-                    if smerged is None:
-                        smerged = s
-                    else:
-                        smerged.append(s)
-                sensitivities = smerged
-            else:
-                sensitivities = \
-                    Dataset(sensitivities,
-                            sa={'splits': np.arange(len(sensitivities))})
+            sensitivities = \
+                Dataset(sensitivities,
+                        sa={'splits': np.arange(len(sensitivities))})
+
         self.ca.sensitivities = sensitivities
+
         return sensitivities
 
 
