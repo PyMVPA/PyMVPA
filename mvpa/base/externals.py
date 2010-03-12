@@ -426,7 +426,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'pywt': "import pywt as __",
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
-          'rpy': "__check_rpy()",
+          #'rpy': "__check_rpy()",
           'rpy2': "__check_rpy2()",
           'lars': "exists('rpy2', raise_=True);" \
                   "import rpy2.robjects; rpy2.robjects.r.library('lars')",
