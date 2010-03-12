@@ -348,8 +348,17 @@ if externals.exists('scipy'):
                    descr="GPR(kernel='sqexp')")
 
     # Add wrapped GPR as a classifier
-    clfswh += RegressionAsClassifier(
+    gprcb = RegressionAsClassifier(
         GPR(kernel=GeneralizedLinearKernel()), descr="GPRC(kernel='linear')")
+    # lets remove multiclass label from it
+    gprcb.__tags__.pop(gprcb.__tags__.index('multiclass'))
+    clfswh += gprcb
+
+    # and create a proper multiclass one
+    clfswh += MulticlassClassifier(
+        RegressionAsClassifier(
+            GPR(kernel=GeneralizedLinearKernel())),
+        descr="GPRCM(kernel='linear')")
 
 # BLR
 from mvpa.clfs.blr import BLR
