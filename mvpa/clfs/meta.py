@@ -1013,6 +1013,12 @@ class MulticlassClassifier(CombinedClassifier):
         self.__clf = clf
         """Store sample instance of basic classifier"""
 
+        # adhere to slave classifier capabilities
+        if clf is not None:
+            self.__tags__ += clf.__tags__
+        if not 'multiclass' in self.__tags__:
+            self.__tags__ += ['multiclass']
+
         # Some checks on known ways to do multiclass
         if bclf_type == "1-vs-1":
             pass
