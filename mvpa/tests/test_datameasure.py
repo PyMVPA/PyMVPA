@@ -91,6 +91,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # We need to skip some LARSes here
         _sclf = str(clf)
         if 'LARS(' in _sclf and "type='stepwise'" in _sclf:
+            # ADD KnownToFail thingie from NiPy
             return
 
         # To don't waste too much time testing lets limit to 3 splits
@@ -118,6 +119,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
         else:
             # and for pairs in case of multiclass
             req_nsamples += [ (nlabels * (nlabels-1) / 2) * nsplits ]
+            # and for 1-vs-1 embedded within Multiclass operating on
+            # pairs (e.g. SMLR)
+            req_nsamples += [req_nsamples[-1]*2]
+
             # Also for regression_based -- they can do multiclass
             # but only 1 sensitivity is provided
             if 'regression_based' in clf.__tags__:
