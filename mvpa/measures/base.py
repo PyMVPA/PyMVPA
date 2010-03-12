@@ -24,6 +24,7 @@ import mvpa.support.copy as copy
 
 from mvpa.misc.state import ConditionalAttribute, ClassWithCollections
 from mvpa.misc.args import group_kwargs
+from mvpa.misc.attrmap import AttributeMap
 from mvpa.base.types import asobjarray
 
 from mvpa.base.dochelpers import enhanced_doc_string
@@ -472,6 +473,7 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
     #     well as in the parent -- FeaturewiseDatasetMeasure
     # YYY because we don't use parent's _call. Needs RF
     def __init__(self, analyzers=None,  # XXX should become actually 'measures'
+                 sa_attr='combinations',
                  **kwargs):
         """Initialize CombinedFeaturewiseDatasetMeasure
 
@@ -481,10 +483,12 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
           List of analyzers to be used. There is no logic to populate
           such a list in __call__, so it must be either provided to
           the constructor or assigned to .analyzers prior calling
+        sa_attr : str
+          Name of the sa to be populated with the indexes of combinations
         """
         if analyzers is None:
             analyzers = []
-
+        self._sa_attr = sa_attr
         FeaturewiseDatasetMeasure.__init__(self, **kwargs)
         self.__analyzers = analyzers
         """List of analyzers to use"""
@@ -504,10 +508,11 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
                   "Returning %d sensitivities from %s" %
                   (len(sensitivities), self.__class__.__name__))
 
+        sa_attr = self._sa_attr
         if isinstance(sensitivities[0], AttrDataset):
             smerged = None
             for i, s in enumerate(sensitivities):
-                s.sa['splits'] = np.repeat(i, len(s))
+                s.sa[sa_attr] = np.repeat(i, len(s))
                 if smerged is None:
                     smerged = s
                 else:
@@ -516,7 +521,7 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
         else:
             sensitivities = \
                 Dataset(sensitivities,
-                        sa={'splits': np.arange(len(sensitivities))})
+                        sa={sa_attr: np.arange(len(sensitivities))})
 
         self.ca.sensitivities = sensitivities
 
@@ -635,6 +640,7 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
                  clf,
                  analyzer=None,
                  combined_analyzer=None,
+                 sa_attr='lrn_index',
                  slave_kwargs={},
                  **kwargs):
         """Initialize Sensitivity Analyzer for `BoostedClassifier`
@@ -645,6 +651,10 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
           Classifier to be used
         analyzer : analyzer
           Is used to populate combined_analyzer
+        sa_attr : str
+          Name of the sa to be populated with the indexes of learners
+          (passed to CombinedFeaturewiseDatasetMeasure is None is
+          given in `combined_analyzer`)
         slave_*
           Arguments to pass to created analyzer if analyzer is None
         """
@@ -652,7 +662,8 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         if combined_analyzer is None:
             # sanitarize kwargs
             kwargs.pop('force_training', None)
-            combined_analyzer = CombinedFeaturewiseDatasetMeasure(**kwargs)
+            combined_analyzer = CombinedFeaturewiseDatasetMeasure(sa_attr=sa_attr,
+                                                                  **kwargs)
         self.__combined_analyzer = combined_analyzer
         """Combined analyzer to use"""
 
@@ -784,6 +795,30 @@ class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
         return sens_mapped.T
 
 
+class BinaryClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
+    """Set sensitivity analyzer output to have proper labels"""
+
+    def _call(self, dataset):
+        sens = super(self.__class__, self)._call(dataset)
+        clf = self.clf
+        targets_attr = clf.params.targets_attr
+        if targets_attr in sens.sa:
+            # if labels are present -- transform them into meaningful tuples
+            # (or not if just a single beast)
+            am = AttributeMap(dict([(l, -1) for l in clf.neglabels] +
+                                   [(l, +1) for l in clf.poslabels]))
+
+            # XXX here we still can get a sensitivity per each label
+            # (e.g. with SMLR as the slave clf), so I guess we should
+            # tune up Multiclass...Analyzer to add an additional sa
+            # And here we might need to check if asobjarray call is necessary
+            # and should be actually done
+            #asobjarray(
+            sens.sa[targets_attr] = \
+                am.to_literal(sens.sa[targets_attr].value, recurse=True)
+        return sens
+
+
 class RegressionAsClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
     """Set sensitivity analyzer output to have proper labels"""
 
@@ -792,13 +827,14 @@ class RegressionAsClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyz
                      self)._call(dataset)
         # We can have only a single sensitivity out of regression
         assert(sens.shape[0] == 1)
-        if 'targets' not in sens.sa:
-            clf = self.clf
+        clf = self.clf
+        targets_attr = clf.params.targets_attr
+        if targets_attr not in sens.sa:
             # We just assign a tuple of all labels sorted
             labels = tuple(sorted(clf._trained_attrmap.values()))
             if len(clf._trained_attrmap):
                 labels = clf._trained_attrmap.to_literal(labels, recurse=True)
-            sens.sa['targets'] = asobjarray([labels])
+            sens.sa[targets_attr] = asobjarray([labels])
         return sens
 
 
