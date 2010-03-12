@@ -267,6 +267,8 @@ def run(limit=None, verbosity=None):
         # restore warning handlers
         warning.handlers = handler_backup
 
+# to avoid nosetests running the beasts defined in this file
+__test__ = False
 
 if __name__ == "__main__":
     run()
