@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base import externals
+from mvpa.base import externals, warning
 
 from mvpa.misc.state import ConditionalAttribute
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
@@ -47,6 +47,43 @@ eps64 = np.finfo(np.float64).eps
 
 # Some precomputed items. log is relatively expensive
 _halflog2pi = 0.5 * Nlog(2 * np.pi)
+
+def _SLcholesky_autoreg(C, nsteps=None, **kwargs):
+    """Simple wrapper around cholesky to incrementally regularize the
+    matrix until successful computation.
+
+    For `nsteps` we boost diagonal 10-fold each time from the
+    'epsilon' of the respective dtype. If None -- would proceed until
+    reaching 1.
+    """
+    if nsteps is None:
+        nsteps = -int(np.floor(np.log10(np.finfo(float).eps)))
+    result = None
+    for step in xrange(nsteps):
+        epsilon_value = (10**step) * np.finfo(C.dtype).eps
+        epsilon = epsilon_value * np.eye(C.shape[0])
+        try:
+            result = SLcholesky(C + epsilon, lower=True)
+        except SLAError, e:
+            warning("Cholesky decomposition lead to failure: %s.  "
+                    "As requested, performing auto-regularization but "
+                    "for better control you might prefer to regularize "
+                    "yourself by providing lm parameter to GPR" % e)
+            if step < nsteps-1:
+                if __debug__:
+                    debug("GPR", "Failed to obtain cholesky on "
+                          "auto-regularization step %d value %g. Got %s."
+                          " Boosting lambda more to reg. C."
+                          % (step, epsilon_value, e))
+                continue
+            else:
+                raise
+
+    if result is None:
+        # no loop was done for some reason
+        result = SLcholesky(C, lower=True)
+
+    return result
 
 
 class GPR(Classifier):
@@ -86,9 +123,10 @@ class GPR(Classifier):
     #    doc="Kernel object defining the covariance between instances. "
     #        "(Defaults to KernelSquaredExponential if None in arguments)")
 
-    lm = Parameter(0.0, min=0.0, allowedtype='float',
-                   doc="""The regularization term lambda.
-                   Increase this when the kernel matrix is not positive, definite.""")
+    lm = Parameter(None, min=0.0, allowedtype='None or float',
+        doc="""The regularization term lambda.
+        Increase this when the kernel matrix is not positive definite. If None,
+        some regularization will be provided upon necessity""")
 
 
     def __init__(self, kernel=None, **kwargs):
@@ -274,7 +312,8 @@ class GPR(Classifier):
         """
 
         # local bindings for faster lookup
-        retrainable = self.params.retrainable
+        params = self.params
+        retrainable = params.retrainable
         if retrainable:
             newkernel = False
             newL = False
@@ -284,7 +323,7 @@ class GPR(Classifier):
         # GRP relies on numerical labels
         # yoh: yeah -- GPR now is purely regression so no conversion
         #      is necessary
-        train_labels = data.sa[self.params.targets_attr].value
+        train_labels = data.sa[params.targets_attr].value
         self._train_labels = train_labels
 
         if not retrainable or _changedData['traindata'] \
@@ -305,11 +344,11 @@ class GPR(Classifier):
         if not retrainable or newkernel or _changedData['params']:
             if __debug__:
                 debug("GPR", "Computing L. sigma_noise=%g" \
-                             % self.params.sigma_noise)
+                             % params.sigma_noise)
             # XXX it seems that we do not need binding to object, but may be
             # commented out code would return?
             self._C = km_train_train + \
-                  self.params.sigma_noise ** 2 * \
+                  params.sigma_noise ** 2 * \
                   np.identity(km_train_train.shape[0], 'd')
             # The following decomposition could raise
             # np.linalg.linalg.LinAlgError because of numerical
@@ -334,13 +373,22 @@ class GPR(Classifier):
             # all the time.  I figured that if ever you were going to
             # use regularization, you would want to set it yourself
             # and use the same value for all folds of your data.
+            # YOH: Ideally so, but in real "use cases" some might have no
+            #      clue, also our unittests (actually clfs_examples) might
+            #      fail without any good reason.  So lets return a magic with
+            #      an option to forbid any regularization (if lm is None)
             try:
                 # apply regularization
-                epsilon = self.params.lm * np.eye(self._C.shape[0])
-                self._L = SLcholesky(self._C + epsilon, lower=True)
+                lm, C = params.lm, self._C
+                if lm is not None:
+                    epsilon = lm * np.eye(C.shape[0])
+                    self._L = SLcholesky(C + epsilon, lower=True)
+                else:
+                    # do 10 attempts to raise each time by 10
+                    self._L = _SLcholesky_autoreg(C, nsteps=None, lower=True)
                 self._LL = (self._L, True)
             except SLAError:
-                raise SLAError("Kernel matrix is not positive, definite.  " + \
+                raise SLAError("Kernel matrix is not positive, definite. "
                                "Try increasing the lm parameter.")
                 pass
             newL = True
@@ -348,13 +396,13 @@ class GPR(Classifier):
             if __debug__:
                 debug("GPR", "Not computing L since kernel, data and params "
                       "stayed the same")
-            L = self._L                 # reuse
 
         # XXX we leave _alpha being recomputed, although we could check
         #   if newL or _changedData['targets']
         #
         if __debug__:
             debug("GPR", "Computing alpha")
+        # L = self._L                 # reuse
         # self._alpha = NLAsolve(L.transpose(),
         #                              NLAsolve(L, train_labels))
         # Faster:
