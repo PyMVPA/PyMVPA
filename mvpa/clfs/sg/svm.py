@@ -411,6 +411,14 @@ class SVM(_SVM):
             else:
                 self.__svm = svm_impl_class(Cs[0], self.__kernel, labels)
                 self.__svm.set_epsilon(self.params.epsilon)
+
+            # Set shrinking
+            if self.params.isKnown('shrinking'):
+                shrinking = self.params.shrinking
+                if __debug__:
+                    debug("SG_", "Setting shrinking to %s" % shrinking)
+                self.__svm.set_shrinking_enabled(shrinking)
+
             if Cs is not None and len(Cs) == 2:
                 if __debug__:
                     debug("SG_", "Since multiple Cs are provided: %s, assign them" % Cs)
