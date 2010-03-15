@@ -127,8 +127,8 @@ class RegressionsTests(unittest.TestCase):
         sa = regr.getSensitivityAnalyzer()
         try:
             res = sa(myds)
-        except:
-            self.fail('Failed to obtain a sensitivity')
+        except Exception, e:
+            self.fail('Failed to obtain a sensitivity due to %r' % (e,))
         self.failUnless(res.shape == (myds.nfeatures,))
         # TODO: extend the test -- checking for validity of sensitivities etc
 
