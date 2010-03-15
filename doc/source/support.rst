@@ -21,7 +21,7 @@ mailing list (preferred) or contact the authors on IRC:
 
 :Mailing list: pkg-exppsy-pymvpa@lists.alioth.debian.org [subscription_,
                archive_]
-:IRC: #exppsy on OTFC
+:IRC: #exppsy on OFTC
 
 All users should subscribe to the mailing list. PyMVPA is still a young project
 that is under heavy development. Significant modifications (hopefully
