@@ -47,10 +47,14 @@ class LinearSVMWeights(Sensitivity):
 
     def _call(self, dataset, callables=[]):
         # local bindings
-        model = self.clf.model
-        nr_class = model.nr_class
+        clf = self.clf
+        model = clf.model
+        if clf.params.regression:
+            nr_class = None
+        else:
+            nr_class = model.nr_class
 
-        if nr_class != 2:
+        if not nr_class in [None, 2]:
             warning("You are estimating sensitivity for SVM %s trained on %d" %
                     (str(self.clf), self.clf.model.nr_class) +
                     " classes. Make sure that it is what you intended to do" )
@@ -84,16 +88,20 @@ class LinearSVMWeights(Sensitivity):
             # think). See more info on this topic in svm.py on how sv_coefs
             # are stored
             #
-            # First multiply SV coefficients with the actuall SVs to get
+            # First multiply SV coefficients with the actual SVs to get
             # weighted impact of SVs on decision, then for each feature
             # take mean across SVs to get a single weight value
             # per feature
             weights = svcoef * svs
 
-        if __debug__:
+        if __debug__ and 'SVM' in debug.active:
+            if clf.params.regression:
+                nsvs = model.getTotalNSV()
+            else:
+                nsvs = model.getNSV()
             debug('SVM',
                   "Extracting weights for %d-class SVM: #SVs=%s, " % \
-                  (nr_class, str(model.getNSV())) + \
+                  (nr_class, nsvs) + \
                   " SVcoefshape=%s SVs.shape=%s Rhos=%s." % \
                   (svcoef.shape, svs.shape, rhos) + \
                   " Result: min=%f max=%f" % (N.min(weights), N.max(weights)))
