@@ -114,6 +114,25 @@ class RegressionsTests(unittest.TestCase):
         clf.states._resetEnabledTemporarily()
 
 
+    def _testSensitivities(self, clf):
+        """Based on a snippet leading to segfault from Daniel Kimberg
+
+        leads to segfaults -- enable and extend the test whenever
+        segfault is resolved
+        """
+        import numpy as N
+        from mvpa.clfs.svm import SVM
+        from mvpa.clfs import sg
+        from mvpa.datasets import Dataset
+        myds = Dataset(samples=N.random.normal(size=(10,5)),
+                       labels=N.random.normal(size=10))
+        from mvpa.clfs import sg
+        cc = sg.SVM(svm_impl='libsvr', kernel_type='linear', regression=True)
+        #cc = SVM(svm_impl='NU_SVR', kernel_type='linear', regression=True)
+        ss = cc.getSensitivityAnalyzer()
+        res = ss(myds)
+        print "ENABLE ME", res.shape
+
 
 def suite():
     return unittest.makeSuite(RegressionsTests)
