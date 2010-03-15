@@ -114,24 +114,23 @@ class RegressionsTests(unittest.TestCase):
         clf.states._resetEnabledTemporarily()
 
 
-    def _testSensitivities(self, clf):
-        """Based on a snippet leading to segfault from Daniel Kimberg
+    @sweepargs(regr=regrswh['regression', 'has_sensitivity'])
+    def testSensitivities(self, regr):
+        """Inspired by a snippet leading to segfault from Daniel Kimberg
 
-        leads to segfaults -- enable and extend the test whenever
-        segfault is resolved
+        lead to segfaults due to inappropriate access of SVs thinking
+        that it is a classification problem (libsvm keeps SVs at None
+        for those, although reports nr_class to be 2.
         """
-        import numpy as N
-        from mvpa.clfs.svm import SVM
-        from mvpa.clfs import sg
-        from mvpa.datasets import Dataset
         myds = Dataset(samples=N.random.normal(size=(10,5)),
                        labels=N.random.normal(size=10))
-        from mvpa.clfs import sg
-        cc = sg.SVM(svm_impl='libsvr', kernel_type='linear', regression=True)
-        #cc = SVM(svm_impl='NU_SVR', kernel_type='linear', regression=True)
-        ss = cc.getSensitivityAnalyzer()
-        res = ss(myds)
-        print "ENABLE ME", res.shape
+        sa = regr.getSensitivityAnalyzer()
+        try:
+            res = sa(myds)
+        except:
+            self.fail('Failed to obtain a sensitivity')
+        self.failUnless(res.shape == (myds.nfeatures,))
+        # TODO: extend the test -- checking for validity of sensitivities etc
 
 
 def suite():
