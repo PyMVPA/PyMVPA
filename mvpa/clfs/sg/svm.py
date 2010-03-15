@@ -23,6 +23,7 @@ TODOs:
 
 import numpy as N
 
+from mvpa import _random_seed
 
 # Rely on SG
 from mvpa.base import externals, warning
@@ -44,6 +45,15 @@ if externals.exists('shogun', raiseException=True):
         _M_DEBUG, _M_ERROR = None, None
         warning("Could not figure out debug IDs within shogun. "
                 "No control over shogun verbosity would be provided")
+
+    try:
+        # reuse the same seed for shogun
+        shogun.Library.Math_init_random(_random_seed)
+        # and do it twice to stick ;) for some reason is necessary
+        # atm
+        shogun.Library.Math_init_random(_random_seed)
+    except Exception, e:
+        warning('Shogun cannot be seeded due to %s' % (e,))
 
 import operator
 
