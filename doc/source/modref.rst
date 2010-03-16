@@ -189,6 +189,20 @@ Miscellaneous
    misc.vproperty
 
 
+Testing
+=======
+
+.. autosummary::
+   :toctree: generated
+
+   testing
+   testing.clfs
+   testing.datasets
+   testing.tools
+   testing.sweepargs
+   tests
+
+
 Basic Plotting Utilities
 ------------------------
 
