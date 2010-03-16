@@ -43,7 +43,7 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'regression', 'regression_based',
         'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
-        'gnb']
+        'gnb', 'rpy2', 'swig' ]
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
