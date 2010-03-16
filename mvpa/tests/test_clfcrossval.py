@@ -72,7 +72,7 @@ class CrossValidationTests(unittest.TestCase):
 
         # do crossval with permuted regressors
         cv = CrossValidatedTransferError(transerror,
-                  NFoldSplitter(cvtype=1, attr='targets',
+                  NFoldSplitter(cvtype=1, permute_attr='targets',
                                 nrunspersplit=10) )
         results = cv(data)
 
