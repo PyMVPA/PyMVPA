@@ -87,7 +87,8 @@ class FSLAtlas(XMLBasedAtlas):
             # TODO: also make use of summaryimagefile may be?
 
         if ni_image is None:
-            msg = "Could not find an appropriate atlas among %d atlases."
+            msg = "Could not find an appropriate atlas among %d atlases." \
+                  % len(imagefile_candidates)
             if resolution is not None:
                 msg += " Atlases had resolutions %s" % \
                       (resolutions,)
@@ -164,7 +165,7 @@ class FSLProbabilisticAtlas(FSLAtlas):
 
         Parameters
         ----------
-        - c : tuple of coordinates (xyz)
+        c : tuple of coordinates (xyz)
         - levels : just for API consistency (heh heh). Must be 0 for FSL atlases
         """
 

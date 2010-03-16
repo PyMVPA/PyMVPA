@@ -9,7 +9,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Script to provide anatomical labels for the voxels, or their statistics """
 
-import re, sys
+import re, sys, os
 
 import mvpa
 from mvpa.misc.cmdline import parser, opts, opt
@@ -21,7 +21,6 @@ if externals.exists('nifti', raise_=True):
 if __debug__:
     from mvpa.base import debug
 
-# from rumba.tools.misc import *
 from mvpa.atlases.transformation import *
 
 from mvpa.atlases import Atlas, ReferencesAtlas, FSLProbabilisticAtlas, \
@@ -40,7 +39,6 @@ except:
     pass
 
 
-##REF: Name was automagically refactored
 def select_from_volume_iterator(volFileName, lt=None, ut=None):
     """
     Generator which returns value + coordinates with values of non-0 entries
@@ -79,7 +77,6 @@ def select_from_volume_iterator(volFileName, lt=None, ut=None):
         yield (value, voxel[0], voxel[1], voxel[2], 0) #voxel[-4])
 
 
-##REF: Name was automagically refactored
 def parsed_coordinates_iterator(
     parseString="^\s*(?P<x>\S+)[ \t,](?P<y>\S+)[ \t,](?P<z>\S+)\s*$",
     inputStream=sys.stdin):
@@ -127,14 +124,27 @@ def present_labels(labels):
 
 
 #def processCmdLine():
-parser.usage = "%s [OPTIONS] [input_file.nii.gz]" % sys.argv[0] + """
+parser.usage = """%(cmd)s [OPTIONS] [input_file.nii.gz]
+
 Examples:
 
-%s -s -A talairach-dist -d 10 -R Closest\ Gray -l Structure,Brodmann\ area  -cC mask.nii.gz
+> %(cmd)s -s -A talairach-dist -d 10 -R Closest\ Gray -l Structure,Brodmann\ area  -cC mask.nii.gz
 
 produces a summary per each structure and brodmann area, for each voxel
 looking within 10mm radius for the closest gray matter voxel.
-""" % (sys.argv[0], )
+
+Simpler, more reliable, and faster usage is by providing a
+corresponding atlas volume image registered to the volume at hands,
+e.g.:
+
+> %(cmd)s -f MNI-prob-bold.nii.gz -A MNI -s mask_vt.nii.gz
+> %(cmd)s -f HarvardOxford-cort-prob-bold.nii.gz -A HarvardOxford-Cortical -s mask_vt.nii.gz
+
+would provide summary over the MNI (or HarvardOxford-Cortical) atlas,
+.nii.gz of which were previously flirted (or fnirted) into the space of
+mask_vt.nii.gz and provided in '-f' argument.""" \
+% {'cmd': os.path.basename(sys.argv[0])}
+
 parser.version = "%prog " + mvpa.__version__
 
 # can't use due to conflict with -d (debug and distance)
@@ -160,6 +170,14 @@ parser.add_option("-A", "--atlas",
                   default="talairach", choices=KNOWN_ATLASES.keys(),
                   help="Atlas to use. Choices: %s"
                        % ', '.join(KNOWN_ATLASES.keys()))
+
+parser.add_option("-f", "--atlas-image-file",
+                  action="store", type="string", dest="atlasImageFile",
+                  default=None,
+                  help=r"Path to the data image for the corresponding atlas. "
+                       " Can be used to override default image if it was "
+                       " already resliced into a corresponding space (e.g."
+                       " subject)")
 
 parser.add_option("-i", "--input-coordinates-file",
                   action="store", type="string", dest="inputCoordFile",
@@ -368,11 +386,16 @@ if options.atlasFile is None:
         options.atlasPath = KNOWN_ATLASES[options.atlasName]
     options.atlasFile = options.atlasPath % ( {'name': options.atlasName} )
 
+akwargs_common = {}
+if options.atlasImageFile:
+    akwargs_common['image_file'] = options.atlasImageFile
+
 if not options.forbidDirectMapping \
        and niftiInput is not None and not options.transformationFile:
     akwargs = {
         'resolution': niftiInput.pixdim[0],
         'query_voxel': True }
+    akwargs.update(akwargs_common)
     verbose(1, "Will attempt direct mapping from input voxels into atlas "
                "voxels at resolution %.2f" % akwargs['resolution'])
 
@@ -387,17 +410,25 @@ if not options.forbidDirectMapping \
             " to proceed" %(options.inputSpace, atlas.space), 1)
         atlas.query_voxel = False
     elif not (niftiInput.qform == atlas._image.qform).all():
-        warning(
-            "Cannot do direct mapping between files with different qforms."
-            " Please provide original transformation (-T)."
-            "\n Input qform:\n%s\n Atlas qform: \n%s"
-            %(niftiInput.qform, atlas._image.qform), 1)
-        # reset variables
-        atlas.query_voxel = False
+        if options.atlasImageFile is None:
+            warning(
+                "Cannot do direct mapping between files with different qforms."
+                " Please provide original transformation (-T)."
+                "\n Input qform:\n%s\n Atlas qform: \n%s"
+                %(niftiInput.qform, atlas._image.qform), 1)
+            # reset ability to query by voxels
+            atlas.query_voxel = False
+        else:
+            warning(
+                "QForms are different between input image and "
+                "provided atlas image."
+                "\n Input qform of %s:\n%s\n Atlas qform of %s:\n%s"
+                %(infile, niftiInput.qform,
+                  options.atlasImageFile, atlas._image.qform), 1)
     else:
         coordT = None
 else:
-    atlas = Atlas(options.atlasFile)
+    atlas = Atlas(options.atlasFile, **akwargs_common)
 
 
 if isinstance(atlas, ReferencesAtlas):
