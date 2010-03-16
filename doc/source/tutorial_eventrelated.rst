@@ -385,6 +385,7 @@ complexity.
 
 
 .. there is something that prevents us from mapping the whole dataset
+
 >>> ts = res.a.mapper.reverse1(1 - res.samples[0])
 >>> ni = NiftiImage(ts, ds.a.imghdr).save('ersl.nii')
 
