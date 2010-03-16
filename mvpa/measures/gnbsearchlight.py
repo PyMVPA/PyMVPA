@@ -278,7 +278,7 @@ class GNBSearchlight(BaseSearchlight):
         # TODO: RF splitters so we could reliably obtain the configuration
         #       splitcfg just returns what to split into the other in terms
         #       of chunks... and we need actual indicies
-        if splitter.permute:
+        if splitter.permute_attr is not None:
             raise NotImplementedError, \
                   "Splitters which permute targets aren't supported here"
         # Lets just create a dummy ds which will store for us actual sample

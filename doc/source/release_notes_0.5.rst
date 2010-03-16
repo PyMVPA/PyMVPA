@@ -76,6 +76,12 @@ Sparse data support
 Dataset in principal now support non-ndarray types for dataset samples. However,
 most parts of PyMVPA still assume an (at least) ndarray-like interface.
 
+Splitters
+---------
+
+* `permute` -> `permute_attr`, so if you had `permute=True`, use
+  `attr='targets'` if you like to permute targets
+
 
 Classifiers
 ===========
