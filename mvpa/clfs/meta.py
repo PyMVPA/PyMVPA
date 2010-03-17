@@ -1208,7 +1208,8 @@ class SplitClassifier(CombinedClassifier):
                 if __debug__:
                     dact = debug.active
                     if 'CLFSPL_' in dact:
-                        debug('CLFSPL_', 'Split %d:\n%s' % (i, self.confusion))
+                        debug('CLFSPL_',
+                              'Split %d:\n%s' % (i, self.ca.confusion))
                     elif 'CLFSPL' in dact:
                         debug('CLFSPL', 'Split %d error %.2f%%'
                               % (i, self.ca.confusion.summaries[-1].error))
