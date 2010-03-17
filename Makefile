@@ -333,7 +333,7 @@ unittest-debug: build
 	@echo "I: Running unittests with debug output. No progress output."
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
        $(PYTHON) mvpa/tests/__init__.py 2>&1 \
-       |  sed -n -e '/^[=-]\{60,\}$$/,/^\(MVPA_SEED=\|OK\)/p'
+       |  sed -n -e '/^[=-]\{60,\}$$/,$$p'
 
 
 # Run all unittests
