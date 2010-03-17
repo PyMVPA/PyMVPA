@@ -88,7 +88,7 @@ class _GLMNET(Classifier):
     """
 
     __tags__ = [ 'glmnet', 'linear', 'has_sensitivity',
-                 'does_feature_selection'
+                 'does_feature_selection', 'rpy2'
                  ]
 
     family = Parameter('gaussian',
@@ -141,6 +141,7 @@ class _GLMNET(Classifier):
         Classifier.__init__(self, **kwargs)
 
         # pylint friendly initializations
+        self._utargets = None
         self.__weights = None
         """The beta weights for each feature."""
         self.__trained_model = None
@@ -159,7 +160,6 @@ class _GLMNET(Classifier):
 #                 self.__trace,
 #                 self.__max_steps,
 #                 str(self.ca.enabled))
-
 
     def _train(self, dataset):
         """Train the classifier using `data` (`Dataset`).
@@ -266,6 +266,23 @@ class _GLMNET(Classifier):
             # return the values as predictions
             return values
 
+
+    def _init_internals(self):
+        """Reinitialize all internals
+        """
+        self._utargets = None
+        self.__weights = None
+        """The beta weights for each feature."""
+        self.__trained_model = None
+        """The model object after training that will be used for
+        predictions."""
+        self.__last_lambda = None
+        """Lambda obtained on the last step"""
+
+    def untrain(self):
+        super(_GLMNET, self).untrain()
+        self._init_internals()
+        pass
 
     ##REF: Name was automagically refactored
     def _get_feature_ids(self):

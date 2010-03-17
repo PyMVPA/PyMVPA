@@ -458,12 +458,19 @@ class AttrDataset(object):
             if isinstance(a, int):
                 args[i] = [a]
 
-        # simultaneous slicing of numpy arrays only yields intended results
-        # if at least one of the slicing args is an actual slice and not
-        # and index list are selection mask vector
-        if isinstance(self.samples, np.ndarray) \
-           and np.any([isinstance(a, slice) for a in args]):
-            samples = self.samples[args[0], args[1]]
+        # for simultaneous slicing of numpy arrays we should
+        # distinguish the case when one of the args is a slice, so no
+        # ix_ is needed
+        if isinstance(self.samples, np.ndarray):
+            if np.any([isinstance(a, slice) for a in args]):
+                samples = self.samples[args[0], args[1]]
+            else:
+                # works even with bool masks (although without
+                # assurance/checking if mask is of actual length as
+                # needed, so would work with bogus shorter
+                # masks). TODO check in __debug__? or may be just do
+                # enforcing of proper dimensions and order manually?
+                samples = self.samples[np.ix_(*args)]
         else:
             # in all other cases we have to do the selection sequentially
             #

@@ -16,7 +16,7 @@ This examples shows a test of various classifiers on different datasets.
 
 from mvpa.suite import *
 
-# no MVPA warnings during whole testsuite
+# no MVPA warnings during this example
 warning.handlers = []
 
 def main():

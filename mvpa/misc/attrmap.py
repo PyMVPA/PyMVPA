@@ -50,7 +50,8 @@ class AttributeMap(object):
     >>> am.to_numeric(['eins', 'zwei', 'drei'])
     array([11, 22, 33])
     """
-    def __init__(self, map=None, mapnumeric=False):
+    def __init__(self, map=None, mapnumeric=False,
+                 collisions_resolution=None):
         """
         Parameters
         ----------
@@ -60,15 +61,25 @@ class AttributeMap(object):
           In some cases it is necessary to map numeric labels too, for
           instance when target labels should be from a specific set,
           e.g. (-1, +1).
+        collisions_resolution : None or {'tuple', 'lucky'}
+          How to resolve collisions on to_literal if multiple entries
+          map to the same value when custom map was provided.  If None
+          -- exception would get raise, if 'tuple' -- collided entries
+          are grouped into a tuple, if 'lucky' -- some last
+          encountered literal wins (i.e. arbitrary resolution).  This
+          parameter is in effect only when calling :meth:`to_literal`.
 
         Please see the class documentation for more information.
         """
         self.clear()
         self.mapnumeric = mapnumeric
+        self.collisions_resolution = collisions_resolution
+
         if not map is None:
             if not isinstance(map, dict):
                 raise ValueError("Custom map need to be a dict.")
             self._nmap = map
+        self._lmap = None               # pylint happiness
 
     def __repr__(self):
         """String representation of AttributeMap
@@ -78,6 +89,9 @@ class AttributeMap(object):
             args.append(repr(self._nmap)),
         if self.mapnumeric:
             args.append('mapnumeric=True')
+        if self.collisions_resolution:
+            args.append('collisions_resolution=%r'
+                        % (self.collisions_resolution,))
         return "%s(%s)"  % (self.__class__.__name__, ', '.join(args))
 
     def __len__(self):
@@ -156,6 +170,38 @@ class AttributeMap(object):
             num[attr == k] = v
         return num
 
+    def _get_lmap(self):
+        """Recomputes lmap from the stored _nmap
+        """
+        cr = self.collisions_resolution
+        if cr == 'lucky':
+            lmap = dict([(v, k) for k, v in self._nmap.iteritems()])
+        elif cr in [None, 'tuple']:
+            lmap = {}
+            counts = {}                     # is used for 'tuple' resolution
+            for k, v in self._nmap.iteritems():
+                count = counts.get(v, 0)
+                if count:               # we saw it already
+                    if cr is None:
+                        raise ValueError, \
+                            "Numeric value %r was already reverse mapped to " \
+                            "%r.  Now trying to remap into %r.  Please adjust" \
+                            " your mapping or change collissions_resolution" \
+                            " parameter" % (v, lmap[v], k)
+                    else:
+                        if count == 1:
+                            lmap[v] = (lmap[v], k)
+                        else:
+                            lmap[v] = lmap[v] + (k, ) # create new tuple
+                else:
+                    lmap[v] = k
+                counts[v] = count +1
+        else:
+            raise ValueError, \
+                  "Provided parameter collisions_resolution=%r is of unknown " \
+                  "value. See documentation for AttributeMapper" % (cr,)
+        return lmap
+
     def to_literal(self, attr, recurse=False):
         """Map numerical value back to literal ones.
 
@@ -175,7 +221,8 @@ class AttributeMap(object):
                                "Ever called to_numeric()?")
 
         if self._lmap is None:
-            self._lmap = dict([(v, k) for k, v in self._nmap.iteritems()])
+            self._lmap = self._get_lmap()
+
         lmap = self._lmap
 
         if isSequenceType(attr) and not isinstance(attr, str):
