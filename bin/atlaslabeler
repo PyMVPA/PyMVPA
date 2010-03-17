@@ -529,9 +529,9 @@ else:
 if options.createSummary:
     summary = {}
     if options.levels is None:
-        options.levels = str(min(4, atlas.n_levels-1))
+        options.levels = str(min(4, atlas.nlevels-1))
 if options.levels is None:
-    options.levels = range(atlas.n_levels)
+    options.levels = range(atlas.nlevels)
 elif isinstance(options.levels, basestring):
     if options.levels == 'list':
         print "Known levels and their indicies:\n" + atlas.levels_listing()

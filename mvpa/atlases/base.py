@@ -269,7 +269,7 @@ class XMLBasedAtlas(BaseAtlas):
 
     ##REF: Name was automagically refactored
     def levels_listing(self):
-        lkeys = range(self.n_levels)
+        lkeys = range(self.nlevels)
         return '\n'.join(['%d: ' % k + str(self._levels_dict[k])
                           for k in lkeys])
 
@@ -281,7 +281,7 @@ class XMLBasedAtlas(BaseAtlas):
         Depends on given `levels` as well as self.levels
         """
         if levels is None:
-            levels = [ i for i in xrange(self.n_levels) ]
+            levels = [ i for i in xrange(self.nlevels) ]
         elif (isinstance(levels, slice)):
             # levels are given as a range
             if levels.step: step = levels.step
@@ -291,7 +291,7 @@ class XMLBasedAtlas(BaseAtlas):
             else: start = 0
 
             if levels.stop: stop = levels.stop
-            else: stop = self.n_levels
+            else: stop = self.nlevels
 
             levels = [ i for i in xrange(start, stop, step) ]
 
@@ -607,7 +607,7 @@ class PyMVPAAtlas(XMLBasedAtlas):
     def _load_images(self):
         # shortcut
         imagefile = self.header.images.imagefile
-        #self.n_levels = len(self._levels_by_id)
+        #self.nlevels = len(self._levels_by_id)
 
         # Set offset if defined in XML file
         # XXX: should just take one from the qoffset... now that one is
@@ -641,9 +641,9 @@ class PyMVPAAtlas(XMLBasedAtlas):
             new_shape = self._data.shape[-4:]
             self._data.reshape(new_shape)
 
-        #if self._image.extent[3] != self.n_levels:
+        #if self._image.extent[3] != self.nlevels:
         #   raise XMLAtlasException("Atlas %s has %d levels defined whenever %s has %d volumes" % \
-        #                           ( filename, self.n_levels, imagefilename, self._image.extent[3] ))
+        #                           ( filename, self.nlevels, imagefilename, self._image.extent[3] ))
 
 
     ##REF: Name was automagically refactored
@@ -673,12 +673,12 @@ class PyMVPAAtlas(XMLBasedAtlas):
 
 
     ##REF: Name was automagically refactored
-    def _get_n_levels_virtual(self):
+    def _get_nlevels_virtual(self):
         return self._Nlevels
 
     ##REF: Name was automagically refactored
-    def _get_n_levels(self):
-        return self._get_n_levels_virtual()
+    def _get_nlevels(self):
+        return self._get_nlevels_virtual()
 
     @staticmethod
     ##REF: Name was automagically refactored
@@ -689,7 +689,7 @@ class PyMVPAAtlas(XMLBasedAtlas):
 
     space = property(fget=lambda self:self.__space)
     space_flavor = property(fget=lambda self:self.__spaceFlavor)
-    n_levels = property(fget=_get_n_levels)
+    nlevels = property(fget=_get_nlevels)
 
 
 class LabelsAtlas(PyMVPAAtlas):
@@ -767,10 +767,10 @@ class ReferencesAtlas(PyMVPAAtlas):
 
     # number of levels must be of the referenced atlas due to
     # handling of that in __getitem__
-    #n_levels = property(fget=lambda self:self.__referenceAtlas.n_levels)
+    #nlevels = property(fget=lambda self:self.__referenceAtlas.nlevels)
     ##REF: Name was automagically refactored
-    def _get_n_levels_virtual(self):
-        return self.__referenceAtlas.n_levels
+    def _get_nlevels_virtual(self):
+        return self.__referenceAtlas.nlevels
 
 
     ##REF: Name was automagically refactored

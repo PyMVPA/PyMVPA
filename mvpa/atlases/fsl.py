@@ -107,7 +107,7 @@ class FSLAtlas(XMLBasedAtlas):
         # Load levels
         self._levels_dict = {}
         # preprocess labels for different levels
-        self.n_levels = 1
+        self.nlevels = 1
         #level = Level.from_xml(self.data, level_type='label')
         level = LabelsLevel.from_xml(self.data)#, level_type='label')
         level.description = self.header.name.text
@@ -122,7 +122,7 @@ class FSLAtlas(XMLBasedAtlas):
         #           pass
         #   else:
         #       raise XMLAtlasException("Unknown child '%s' within data" % child.tag)
-        #   self.n_levels += 1
+        #   self.nlevels += 1
         #pass
 
 

@@ -351,7 +351,7 @@ class WaveletTransformationMapper(_WaveletMapper):
             debug('MAP', "Performing iDWT")
         signal = None
         wd_offsets = [0] + list(np.cumsum(self.lengths))
-        n_levels = len(self.lengths)
+        nlevels = len(self.lengths)
         Ntime_points = self._intimepoints #len(time_points)
         # unfortunately sometimes due to padding iDWT would return longer
         # sequences, thus we just limit to the right ones
@@ -360,7 +360,7 @@ class WaveletTransformationMapper(_WaveletMapper):
             if __debug__:
                 debug('MAP_', " %s" % (indexes,), lf=False, cr=True)
             wd_sample = wd[indexes]
-            wd_coeffs = [wd_sample[wd_offsets[i]:wd_offsets[i+1]] for i in xrange(n_levels)]
+            wd_coeffs = [wd_sample[wd_offsets[i]:wd_offsets[i+1]] for i in xrange(nlevels)]
             # need to compose original list
             time_points = pywt.waverec(
                 wd_coeffs, wavelet=self._wavelet, mode=self._mode)
