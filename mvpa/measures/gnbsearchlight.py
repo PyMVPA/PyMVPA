@@ -75,13 +75,18 @@ def lastdim_columnsums_fancy_indexing(a, inds, out):#, out=None):
 def r_helper(*args):
     return np.r_[args]
 
+# API of scipy.sparse has changed in 0.7.0 -- lets account for this
+_coo_shape_argument = {True: 'shape',
+                       False: 'dims'} [externals.versions['scipy'] >= '0.7.0']
+
 def _inds_list_to_coo(inds, shape=None):
     inds_r = r_helper(*(inds))
     inds_i = r_helper(*[[i]*len(ind)
                         for i,ind in enumerate(inds)])
     data = np.ones(len(inds_r))
     ij = np.array([inds_r, inds_i])
-    spmat = sps.coo_matrix((data, ij), dtype=int, shape=shape)
+
+    spmat = sps.coo_matrix((data, ij), dtype=int, **{_coo_shape_argument:shape})
     return spmat
 
 def _inds_array_to_coo(inds, shape=None):
@@ -91,7 +96,8 @@ def _inds_array_to_coo(inds, shape=None):
                          n_cols_per_sum, axis=0).T.ravel()
     ij = np.r_[cps_inds[None, :], row_inds[None, :]]
     data  = np.ones(ij.shape[1])
-    inds_s = sps.coo_matrix((data, ij), shape=shape)
+
+    inds_s = sps.coo_matrix((data, ij), **{_coo_shape_argument:shape})
     return inds_s
 
 def inds_to_coo(inds, shape=None):
