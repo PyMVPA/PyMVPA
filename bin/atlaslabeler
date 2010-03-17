@@ -558,8 +558,8 @@ elif isinstance(options.levels, basestring):
         try:
             int_level = int(level)
         except:
-            if atlas.levels_dict.has_key(level):
-                int_level = atlas.levels_dict[level].index
+            if atlas.levels.has_key(level):
+                int_level = atlas.levels[level].index
             else:
                 raise RuntimeError(
                     "Unknown level '%s'. " % level +

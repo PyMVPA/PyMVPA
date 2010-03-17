@@ -101,23 +101,22 @@ class FSLAtlas(XMLBasedAtlas):
         self._data   = self._image.data
 
 
-    ##REF: Name was automagically refactored
-    def _load_data(self):
+    def _load_metadata(self):
         """   """
         # Load levels
-        self._levels_dict = {}
+        self._levels = {}
         # preprocess labels for different levels
         self.nlevels = 1
         #level = Level.from_xml(self.data, level_type='label')
         level = LabelsLevel.from_xml(self.data)#, level_type='label')
         level.description = self.header.name.text
-        self._levels_dict = {0: level}
+        self._levels = {0: level}
         #for index, child in enumerate(self.data.getchildren()):
         #   if child.tag == 'level':
         #       level = Level.from_xml(child)
-        #       self._levels_dict[level.description] = level
+        #       self._levels[level.description] = level
         #       try:
-        #           self._levels_dict[level.index] = level
+        #           self._levels[level.index] = level
         #       except:
         #           pass
         #   else:
@@ -171,8 +170,8 @@ class FSLProbabilisticAtlas(FSLAtlas):
 
         if levels is not None and not (levels in [0, [0], (0,)]):
             raise ValueError, \
-                  "I guess we don't support levels other than 0 in FSL atlas"
-
+                  "I guess we don't support levels other than 0 in FSL atlas." \
+                  " Got levels=%s" % (levels,)
         # check range
         c = self._check_range(c)
 
@@ -180,7 +179,7 @@ class FSLProbabilisticAtlas(FSLAtlas):
         # different level
         level = 0
         resultLabels = []
-        for index, area in enumerate(self._levels_dict[level]):
+        for index, area in enumerate(self._levels[level]):
             prob =  int(self._data[index, c[2], c[1], c[0]])
             if prob > self.thr:
                 resultLabels += [dict(index=index,
@@ -211,7 +210,7 @@ class FSLProbabilisticAtlas(FSLAtlas):
 
         See :class:`~mvpa.atlases.base.Level.find` for more info
         """
-        return self.levels_dict[0].find(*args, **kwargs)
+        return self.levels[0].find(*args, **kwargs)
 
     def get_map(self, target, strategy='unique', axes_order='xyz'):
         """Return a probability map as an array
@@ -240,7 +239,7 @@ class FSLProbabilisticAtlas(FSLAtlas):
                 raise ValueError, \
                       "Unknown axes_order=%r provided" % (axes_order,)
         else:
-            lev = self.levels_dict[0]       # we have just 1 here
+            lev = self.levels[0]       # we have just 1 here
             if strategy == 'unique':
                 return self.get_map(lev.find(target, unique=True).index,
                                     axes_order=axes_order)
@@ -258,7 +257,7 @@ class FSLProbabilisticAtlas(FSLAtlas):
         axes_order : str in ('xyz', 'zyx')
           In what order axes of the returned array should follow.
         """
-        lev = self.levels_dict[0]       # we have just 1 here
+        lev = self.levels[0]       # we have just 1 here
         return [self.get_map(l.index, axes_order=axes_order)
                 for l in lev.find(target, unique=False)]
 
