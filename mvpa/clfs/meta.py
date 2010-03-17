@@ -1373,7 +1373,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
             add_ = ""
             if "CLFFS_" in debug.active:
                 add_ = " Selected features: %s" % \
-                       self.__feature_selection.selected_ids
+                       self.__feature_selection.ca.selected_ids
             debug("CLFFS", "%(fs)s selected %(nfeat)d out of " +
                   "%(dsnfeat)d features.%(app)s",
                   msgargs={'fs':self.__feature_selection,

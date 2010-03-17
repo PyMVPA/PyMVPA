@@ -308,7 +308,7 @@ class CombinedFeatureSelection(FeatureSelection):
         # take care of optional second dataset
         td_sel = None
         if not testdataset is None:
-            td_sel = testdataset[:, self.selected_ids]
+            td_sel = testdataset[:, self.ca.selected_ids]
 
         # and main dataset
         d_sel = dataset[:, selected_ids]
