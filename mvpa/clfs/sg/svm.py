@@ -65,9 +65,6 @@ else:
     try:
         # reuse the same seed for shogun
         shogun.Library.Math_init_random(_random_seed)
-        # and do it twice to stick ;) for some reason is necessary
-        # atm
-        shogun.Library.Math_init_random(_random_seed)
     except Exception, e:
         warning('Shogun cannot be seeded due to %s' % (e,))
 
