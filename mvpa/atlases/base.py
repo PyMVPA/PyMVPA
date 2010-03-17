@@ -145,7 +145,7 @@ class XMLBasedAtlas(BaseAtlas):
         # Assign transformation to get into voxel coordinates,
         # spaceT will be set accordingly
         self.set_coordT(coordT)
-        self._load_data()
+        self._load_metadata()
 
 
     def _check_range(self, c):
@@ -171,7 +171,7 @@ class XMLBasedAtlas(BaseAtlas):
         """To be overriden in the derived classes. By default does nothing"""
         pass
 
-    def _load_data(self):
+    def _load_metadata(self):
         """To be overriden in the derived classes. By default does nothing"""
         pass
 
@@ -262,15 +262,13 @@ class XMLBasedAtlas(BaseAtlas):
         return result
 
 
-    ##REF: Name was automagically refactored
     def levels_listing(self):
         lkeys = range(self.nlevels)
-        return '\n'.join(['%d: ' % k + str(self._levels_dict[k])
+        return '\n'.join(['%d: ' % k + str(self._levels[k])
                           for k in lkeys])
 
 
-    ##REF: Name was automagically refactored
-    def _get_levels(self, levels=None):
+    def _get_selected_levels(self, levels=None):
         """Helper to provide list of levels to operate on
 
         Depends on given `levels` as well as self.default_levels
@@ -300,15 +298,16 @@ class XMLBasedAtlas(BaseAtlas):
         else:
             raise TypeError('Given levels "%s" are of unsupported type' % `levels`)
 
+        selected_levels = levels
         # test given values
-        levels_dict = self.levels_dict
-        for level in levels:
-            if not level in levels_dict:
+        levels = self.levels
+        for level in selected_levels:
+            if not level in levels:
                 raise ValueError, \
-                      "Levels %s is not known (out of range?). Known levels are:\n%s" \
+                      "Level %r is not known (out of range?). Known levels are:\n%s" \
                       % (level, self.levels_listing())
 
-        return levels
+        return selected_levels
 
 
     def query(self, index, query_voxel=False):
@@ -340,7 +339,7 @@ class XMLBasedAtlas(BaseAtlas):
             else:
                 levels_slice = self.default_levels
 
-        levels = self._get_levels(levels=levels_slice)
+        levels = self._get_selected_levels(levels=levels_slice)
 
         if len(index) in [3, 4]:
             # we got coordinates 1 by 1 + may be a level
@@ -383,15 +382,14 @@ class XMLBasedAtlas(BaseAtlas):
         return self.query(args, False)
 
     # REDO in some sane fashion so referenceatlas returns levels for the base
-    ##REF: Name was automagically refactored
-    def _get_levels_dict(self):
-        return self._get_levels_dict_virtual()
+    def _get_levels(self):
+        return self._get_levels_virtual()
 
     ##REF: Name was automagically refactored
-    def _get_levels_dict_virtual(self):
-        return self._levels_dict
+    def _get_levels_virtual(self):
+        return self._levels
 
-    levels_dict = property(fget=_get_levels_dict)
+    levels = property(fget=_get_levels)
 
 
     resolution = property(fget=lambda self:self._resolution)
@@ -674,25 +672,25 @@ class PyMVPAAtlas(XMLBasedAtlas):
 
 
     ##REF: Name was automagically refactored
-    def _load_data(self):
+    def _load_metadata(self):
         # Load levels
-        self._levels_dict = {}
+        self._levels = {}
         # preprocess labels for different levels
         self._Nlevels = 0
         index_incr = 0
         for index, child in enumerate(self.data.getchildren()):
             if child.tag == 'level':
                 level = Level.from_xml(child)
-                self._levels_dict[level.description] = level
+                self._levels[level.description] = level
                 if hasattr(level, 'index'):
                     index = level.index
                 else:
                     # to avoid collision if some levels do
                     # have indexes
-                    while index_incr in self._levels_dict:
+                    while index_incr in self._levels:
                         index_incr += 1
                     index, index_incr = index_incr, index_incr+1
-                self._levels_dict[index] = level
+                self._levels[index] = level
             else:
                 raise XMLAtlasException(
                     "Unknown child '%s' within data" % child.tag)
@@ -729,7 +727,7 @@ class LabelsAtlas(PyMVPAAtlas):
         """
         Return labels for the given voxel at specified levels specified by index
         """
-        levels = self._get_levels(levels=levels)
+        levels = self._get_selected_levels(levels=levels)
 
         result = {'voxel_queried' : c}
 
@@ -738,8 +736,8 @@ class LabelsAtlas(PyMVPAAtlas):
 
         resultLevels = []
         for level in levels:
-            if self._levels_dict.has_key(level):
-                level_ = self._levels_dict[ level ]
+            if self._levels.has_key(level):
+                level_ = self._levels[ level ]
             else:
                 raise IndexError(
                     "Unknown index or description for level %d" % level)
@@ -805,12 +803,12 @@ class ReferencesAtlas(PyMVPAAtlas):
         """
         Set the level which will be queried
         """
-        if self._levels_dict.has_key(level):
-            self.__referenceLevel = self._levels_dict[level]
+        if self._levels.has_key(level):
+            self.__referenceLevel = self._levels[level]
         else:
             raise IndexError, \
                   "Unknown reference level %r. " % level + \
-                  "Known are %r" % (self._levels_dict.keys(), )
+                  "Known are %r" % (self._levels.keys(), )
 
 
     ##REF: Name was automagically refactored
@@ -819,7 +817,7 @@ class ReferencesAtlas(PyMVPAAtlas):
         if self.__referenceLevel is None:
             warning("You did not provide what level to use "
                     "for reference. Assigning 0th level -- '%s'"
-                    % (self._levels_dict[0],))
+                    % (self._levels[0],))
             self.set_reference_level(0)
             # return self.__referenceAtlas.label_voxel(c, levels)
 
@@ -850,8 +848,8 @@ class ReferencesAtlas(PyMVPAAtlas):
         return self.__referenceAtlas.levels_listing()
 
     ##REF: Name was automagically refactored
-    def _get_levels_dict_virtual(self):
-        return self.__referenceAtlas.levels_dict
+    def _get_levels_virtual(self):
+        return self.__referenceAtlas.levels
 
     ##REF: Name was automagically refactored
     def set_distance(self, distance):

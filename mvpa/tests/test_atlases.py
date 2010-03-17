@@ -48,7 +48,7 @@ def test_atlases(name):
 
     # Atlas must have at least 1 level and that one must
     # have some labels
-    ok_(len(atlas.levels_dict[0].labels) > 0)
+    ok_(len(atlas.levels[0].labels) > 0)
 
     for res in [ atlas(coord),
                  atlas.label_point(coord) ]:
@@ -77,7 +77,7 @@ def test_fsl_hox_queries():
 
     tshape = (182, 218, 182)        # target shape of fsl atlas chosen by default
     atl = Atlas(name='HarvardOxford-Cortical')
-    atl.levels_dict[0].find('Frontal Pole')
+    atl.levels[0].find('Frontal Pole')
     assert_equal(len(atl.find(re.compile('Fusiform'), unique=False)),
                  4)
 
