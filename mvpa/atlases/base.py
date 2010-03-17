@@ -86,8 +86,7 @@ class XMLBasedAtlas(BaseAtlas):
 
     def __init__(self, filename=None,
                  resolution=None, image_file=None,
-                 query_voxel=False,
-                 coordT=None, levels=None):
+                 coordT=None, default_levels=None):
         """
         Parameters
         ----------
@@ -100,12 +99,9 @@ class XMLBasedAtlas(BaseAtlas):
         image_file : None or str
           If None, overrides filename for the used imagefile, so
           it could load a custom (re-registered) atlas maps
-        query_voxel : bool, optional
-          By default [x,y,z] assumes coordinates in space, but if
-          query_voxel is True, they are assumed to be voxel coordinates
         coordT
           Optional transformation to apply first
-        levels : None or slice or list of int
+        default_levels : None or slice or list of int
           What levels by default to operate on
         """
         BaseAtlas.__init__(self)
@@ -117,8 +113,7 @@ class XMLBasedAtlas(BaseAtlas):
         # TODO: think about more generalizable way?
         self._resolution = resolution
         self._force_image_file = image_file
-        self.query_voxel = query_voxel
-        self.levels = levels
+        self.default_levels = default_levels
 
         if filename:
             self.load_atlas(filename)
@@ -278,7 +273,7 @@ class XMLBasedAtlas(BaseAtlas):
     def _get_levels(self, levels=None):
         """Helper to provide list of levels to operate on
 
-        Depends on given `levels` as well as self.levels
+        Depends on given `levels` as well as self.default_levels
         """
         if levels is None:
             levels = [ i for i in xrange(self.nlevels) ]
@@ -316,21 +311,34 @@ class XMLBasedAtlas(BaseAtlas):
         return levels
 
 
-    def __getitem__(self, index):
-        """
-        Accessing the elements via simple indexing. Examples:
-        print atlas[ 0, -7, 20, [1,2,3] ]
-        print atlas[ (0, -7, 20), 1:2 ]
-        print atlas[ (0, -7, 20) ]
-        print atlas[ (0, -7, 20), : ]
+    def query(self, index, query_voxel=False):
+        """Generic query method.
+
+        Use shortcuts `__getitem__` for querying by voxel indices and
+        `__call__` for querying by space coordinates.
+
+        Parameters
+        ----------
+        index : tuple or list
+          Arguments of the query, such as coordinates and optionally
+          levels
+        query_voxel : bool
+          Either at the end query a voxel indexes or point coordinates
+
+        Allows to access the elements via simple indexing. Examples::
+
+            print atlas[ 0, -7, 20, [1,2,3] ]
+            print atlas[ (0, -7, 20), 1:2 ]
+            print atlas[ (0, -7, 20) ]
+            print atlas[ (0, -7, 20), : ]
         """
         if len(index) in [2, 4]:
             levels_slice = index[-1]
         else:
-            if self.levels is None:
+            if self.default_levels is None:
                 levels_slice = slice(None, None, None)
             else:
-                levels_slice = self.levels
+                levels_slice = self.default_levels
 
         levels = self._get_levels(levels=levels_slice)
 
@@ -349,11 +357,30 @@ class XMLBasedAtlas(BaseAtlas):
         else:
             raise TypeError("Unknown shape of parameters `%s`" % `index`)
 
-        if self.query_voxel:
+        if query_voxel:
             return self.label_voxel(coord, levels)
         else:
             return self.label_point(coord, levels)
 
+    #
+    ## Shortcuts for `query`
+    #
+    def __getitem__(self, index):
+        """Query atlas with voxel indexes
+
+        Examples
+        --------
+
+        ::
+            print atlas[ 0, -7, 20, [1,2,3] ]
+            print atlas[ (0, -7, 20), 1:2 ]
+            print atlas[ (0, -7, 20) ]
+            print atlas[ (0, -7, 20), : ]
+        """
+        return self.query(index, True)
+
+    def __call__(self, *args):
+        return self.query(args, False)
 
     # REDO in some sane fashion so referenceatlas returns levels for the base
     ##REF: Name was automagically refactored
