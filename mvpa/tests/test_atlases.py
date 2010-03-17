@@ -62,7 +62,7 @@ def test_atlases(name):
     # test explicit level specification via slice, although bogus here
     # XXX levels in queries should be deprecated -- too much of
     # performance hit
-    res0 = atlas[coord, range(atlas.n_levels)]
+    res0 = atlas[coord, range(atlas.nlevels)]
     ok_(res0 == res)
 
     #print atlas[ 0, -7, 20, [1,2,3] ]

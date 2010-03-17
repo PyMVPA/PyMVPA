@@ -136,7 +136,7 @@ MNI2Tal_YOHflirt	mni_to_tal_yohflirt
 multipleChunks	multiple_chunks
 myFirstPage	my_first_page
 myLaterPages	my_later_pages
-Nlevels	n_levels
+Nlevels	nlevels
 normalFeatureDataset	normal_feature_dataset
 oneMinusCorrelation	one_minus_correlation
 OneMinus	one_minus
