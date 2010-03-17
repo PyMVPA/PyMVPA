@@ -488,10 +488,13 @@ def test_combined_samplesfeature_selection():
 
 
 def test_labelpermutation_randomsampling():
-    ds = Dataset.from_wizard(np.ones((5, 1)),     targets=range(5), chunks=1)
+    ds = Dataset.from_wizard(np.ones((5, 10)),     targets=range(5), chunks=1)
     for i in xrange(1, 5):
-        ds.append(Dataset.from_wizard(np.ones((5, 1)) + i,
+        ds.append(Dataset.from_wizard(np.ones((5, 10)) + i,
                                       targets=range(5), chunks=i+1))
+    # assign some feature attributes
+    ds.fa['roi'] = np.repeat(np.arange(5), 2)
+    ds.fa['lucky'] = np.arange(10)%2
     # use subclass for testing if it would survive
     ds.samples = ds.samples.view(myarray)
 
@@ -507,11 +510,11 @@ def test_labelpermutation_randomsampling():
     # else as a view!
     ods = copy.copy(ds)
 
-    ds.permute_targets()
-    # some permutation should have happened
+    ds.permute_attr()
+    # by default, some permutation of targets should have happened
     assert_false((ds.targets == orig_labels).all())
 
-    # but the original dataset should be uneffected
+    # but the original dataset should be unaffected
     assert_array_equal(ods.targets, orig_labels)
     # array subclass survives
     ok_(isinstance(ods.samples, myarray))
@@ -531,11 +534,31 @@ def test_labelpermutation_randomsampling():
     assert_array_equal(ds.sa.custom, otargets)
     assert_array_equal(ds.sa.targets, otargets)
 
-    ds.permute_targets(targets_attr='custom')
+    ds.permute_attr(attr='custom')
     # original targets should still match
     assert_array_equal(ds.sa.targets, otargets)
     # but custom should get permuted
     assert_false((ds.sa.custom == otargets).all())
+
+    #
+    # Test permutation among features
+    #
+    assert_raises(KeyError, ds.permute_attr,
+                  attr='roi') # wrong collection
+    ds = ods.copy()
+    ds.permute_attr(attr='lucky', chunks_attr='roi', col='fa')
+    # we should have not touched samples attributes
+    for sa in ds.sa.keys():
+        assert_array_equal(ds.sa[sa].value, ods.sa[sa].value)
+    # but we should have changed the roi
+    assert_false((ds.fa['lucky'].value == ods.fa['lucky'].value).all())
+    assert_array_equal(ds.fa['roi'].value, ods.fa['roi'].value)
+
+    # permute ROI as well without chunking (??? should we make
+    # chunks_attr=None by default?)
+    ds.permute_attr(attr='roi', chunks_attr=None, col='fa')
+    assert_false((ds.fa['roi'].value == ods.fa['roi'].value).all())
+
 
 
 def test_masked_featureselection():
@@ -675,7 +698,7 @@ def test_idhash():
 
     origid = ds.idhash
     orig_labels = ds.targets #.copy()
-    ds.permute_targets()
+    ds.permute_attr()
     ok_(origid != ds.idhash,
         msg="Permutation also changes idhash")
 

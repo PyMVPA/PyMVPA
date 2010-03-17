@@ -10,12 +10,12 @@
 
 """
 
-from mvpa.base import warning, externals
+from mvpa.base import externals
 
 if externals.exists('nifti', raise_=True):
     from nifti import NiftiImage
 
-import os, re
+import re
 import numpy as np
 
 from mvpa.misc.support import reuse_absolute_path
@@ -213,41 +213,54 @@ class FSLProbabilisticAtlas(FSLAtlas):
         """
         return self.levels_dict[0].find(*args, **kwargs)
 
-    ##REF: Name was automagically refactored
-    def get_map(self, target, strategy='unique'):
-        """Return a probability map
+    def get_map(self, target, strategy='unique', axes_order='xyz'):
+        """Return a probability map as an array
 
         Parameters
         ----------
         target : int or str or re._pattern_type
           If int, map for given index is returned. Otherwise, .find is called
-          with unique=True to find matching area
+          with ``unique=True`` to find matching area
         strategy : str in ('unique', 'max')
           If 'unique', then if multiple areas match, exception would be raised.
           In case of 'max', each voxel would get maximal value of probabilities
           from all matching areas
+        axes_order : str in ('xyz', 'zyx')
+          In what order axes of the returned array should follow.
         """
         if isinstance(target, int):
-            return self._data[target]
+            res = self._data[target]
+            if axes_order == 'xyz':
+                # ATM we store/access in zyx (kji) order, so we would need
+                # to swap
+                return res.T
+            elif axes_order == 'zyx':
+                return res
+            else:
+                raise ValueError, \
+                      "Unknown axes_order=%r provided" % (axes_order,)
         else:
             lev = self.levels_dict[0]       # we have just 1 here
             if strategy == 'unique':
-                return self.get_map(lev.find(target, unique=True).index)
+                return self.get_map(lev.find(target, unique=True).index,
+                                    axes_order=axes_order)
             else:
-                maps = np.array(self.get_maps(target))
+                maps = np.array(self.get_maps(target, axes_order=axes_order))
                 return np.max(maps, axis=0)
 
-    ##REF: Name was automagically refactored
-    def get_maps(self, target):
+    def get_maps(self, target, axes_order='xyz'):
         """Return a list of probability maps for the target
 
         Parameters
         ----------
         target : str or re._pattern_type
           .find is called with a target and unique=False to find all matches
+        axes_order : str in ('xyz', 'zyx')
+          In what order axes of the returned array should follow.
         """
         lev = self.levels_dict[0]       # we have just 1 here
-        return [self.get_map(l.index) for l in lev.find(target, unique=False)]
+        return [self.get_map(l.index, axes_order=axes_order)
+                for l in lev.find(target, unique=False)]
 
 
 class FSLLabelsAtlas(XMLBasedAtlas):

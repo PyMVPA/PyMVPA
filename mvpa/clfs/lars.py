@@ -72,8 +72,8 @@ class LARS(Classifier):
 
     # XXX from yoh: it is linear, isn't it?
     __tags__ = [ 'lars', 'regression', 'linear', 'has_sensitivity',
-                       'does_feature_selection',
-                       ]
+                 'does_feature_selection', 'rpy2' ]
+
     def __init__(self, model_type="lasso", trace=False, normalize=True,
                  intercept=True, max_steps=None, use_Gram=False, **kwargs):
         """
@@ -210,6 +210,21 @@ class LARS(Classifier):
 
         self.ca.estimates = fit
         return fit
+
+
+    def _init_internals(self):
+        """Reinitialize all internals
+        """
+        self.__lowest_Cp_step = None
+        self.__weights = None
+        """The beta weights for each feature."""
+        self.__trained_model = None
+        """The model object after training that will be used for
+        predictions."""
+
+    def untrain(self):
+        super(LARS, self).untrain()
+        self._init_internals()
 
 
     ##REF: Name was automagically refactored

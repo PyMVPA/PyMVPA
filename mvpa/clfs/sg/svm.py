@@ -23,6 +23,7 @@ TODOs:
 
 import numpy as np
 
+from mvpa import _random_seed
 
 # Rely on SG
 from mvpa.base import externals, warning
@@ -60,6 +61,15 @@ else:
     # when building the docs without SG
     _default_kernel_class_ = None
 
+
+    try:
+        # reuse the same seed for shogun
+        shogun.Library.Math_init_random(_random_seed)
+        # and do it twice to stick ;) for some reason is necessary
+        # atm
+        shogun.Library.Math_init_random(_random_seed)
+    except Exception, e:
+        warning('Shogun cannot be seeded due to %s' % (e,))
 
 import operator
 
@@ -390,6 +400,14 @@ class SVM(_SVM):
             else:
                 self.__svm = svm_impl_class(Cs[0], self.__kernel, labels)
                 self.__svm.set_epsilon(self.params.epsilon)
+
+            # Set shrinking
+            if 'shrinking' in params:
+                shrinking = params.shrinking
+                if __debug__:
+                    debug("SG_", "Setting shrinking to %s" % shrinking)
+                self.__svm.set_shrinking_enabled(shrinking)
+
             if Cs is not None and len(Cs) == 2:
                 if __debug__:
                     debug("SG_", "Since multiple Cs are provided: %s, assign them" % Cs)

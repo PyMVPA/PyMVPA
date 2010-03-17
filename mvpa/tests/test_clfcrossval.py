@@ -63,7 +63,7 @@ class CrossValidationTests(unittest.TestCase):
 
         # do crossval with default errorfx and 'mean' combiner
         transerror = TransferError(sample_clf_nl)
-        cv = CrossValidatedTransferError(transerror, NFoldSplitter(cvtype=1)) 
+        cv = CrossValidatedTransferError(transerror, NFoldSplitter(cvtype=1))
 
         # must return a scalar value
         result = cv(data)
@@ -72,7 +72,8 @@ class CrossValidationTests(unittest.TestCase):
 
         # do crossval with permuted regressors
         cv = CrossValidatedTransferError(transerror,
-                  NFoldSplitter(cvtype=1, permute=True, nrunspersplit=10) )
+                  NFoldSplitter(cvtype=1, permute_attr='targets',
+                                nrunspersplit=10) )
         results = cv(data)
 
         # must be at chance level

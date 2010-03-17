@@ -68,8 +68,13 @@ do_checkout() {
     $precmd git checkout -b $branch origin/$branch || :
     #fi
     $precmd git checkout $branch
+    # Clean up again since we might have some directories
+    $precmd git clean -df | indent
     #provide datadb
     [ -e "datadb" ] || $precmd ln -s "$datadbdir" .
+    # provide information in the log about what was current position
+    # in the branch
+    echo "I: " $(git describe)
 }
 
 do_build() {

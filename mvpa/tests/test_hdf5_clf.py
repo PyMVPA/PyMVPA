@@ -13,7 +13,7 @@ from mvpa.testing import *
 skip_if_no_external('h5py')
 
 import numpy as np
-from mvpa.testing.datasets import datasets, OddEvenSplitter
+from mvpa.testing.datasets import datasets
 from mvpa.clfs.base import Classifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.errorfx import CorrErrorFx, MeanMismatchErrorFx
@@ -68,7 +68,9 @@ def test_h5py_clfs(lrn):
 
     ok_(error == error_)
 
-    return                     # for now
+    if len(set(['swig', 'rpy2']).intersection(lrn.__tags__)):
+        raise SkipTest("Trained swigged and R-interfaced classifiers can't "
+                       "be stored/reloaded yet")
 
     # now lets store/reload the trained one
     try:

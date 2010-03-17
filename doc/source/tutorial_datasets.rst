@@ -273,15 +273,15 @@ the samples, and the result is fundamentally different. For NumPy arrays
 the style of slicing allows to select specific elements by their indices on
 each axis of an array. For PyMVPA's datasets this mode is not very useful,
 instead we typically want to select rows and columns, i.e. samples and
-features given by their indices, hence **samples and features slicing is
-always applied sequentially**, even if were ran simultaneously.
+features given by their indices.
 
 
 .. exercise::
 
   Try to select samples [0,1] and features [0,2,3] simultaneously using
   dataset slicing.  Now apply the same slicing to the samples array itself
-  (`ds.samples`) -- make sure that the result doesn't surprise you.
+  (`ds.samples`) -- make sure that the result doesn't surprise you and find
+  a pure NumPy way to achieve similar selection.
 
 
 One last interesting thing to look at, in the context of dataset slicing

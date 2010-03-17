@@ -98,9 +98,24 @@ def test_attrmap():
     ok_([(k, v) for k, v in am.iteritems()] == [])
 
 
+def test_attrmap_conflicts():
+    am_n = AttributeMap({'a':1, 'b':2, 'c':1})
+    am_t = AttributeMap({'a':1, 'b':2, 'c':1}, collisions_resolution='tuple')
+    am_l = AttributeMap({'a':1, 'b':2, 'c':1}, collisions_resolution='lucky')
+    q_f = ['a', 'b', 'a', 'c']
+    # should have no effect on forward mapping
+    ok_(np.all(am_n.to_numeric(q_f) == am_t.to_numeric(q_f)))
+    ok_(np.all(am_t.to_numeric(q_f) == am_l.to_numeric(q_f)))
+
+    assert_raises(ValueError, am_n.to_literal, [2])
+    r_t = am_t.to_literal([2, 1])
+    r_l = am_l.to_literal([2, 1])
+
 def test_attrmap_repr():
     assert_equal(repr(AttributeMap()), "AttributeMap()")
     assert_equal(repr(AttributeMap(dict(a=2, b=1))),
                  "AttributeMap({'a': 2, 'b': 1})")
     assert_equal(repr(AttributeMap(dict(a=2, b=1), mapnumeric=True)),
                  "AttributeMap({'a': 2, 'b': 1}, mapnumeric=True)")
+    assert_equal(repr(AttributeMap(dict(a=2, b=1), mapnumeric=True, collisions_resolution='tuple')),
+                 "AttributeMap({'a': 2, 'b': 1}, mapnumeric=True, collisions_resolution='tuple')")
