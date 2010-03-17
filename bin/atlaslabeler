@@ -79,7 +79,9 @@ def select_from_volume_iterator(volFileName, lt=None, ut=None):
 
 def parsed_coordinates_iterator(
     parseString="^\s*(?P<x>\S+)[ \t,](?P<y>\S+)[ \t,](?P<z>\S+)\s*$",
-    inputStream=sys.stdin):
+    inputStream=sys.stdin,
+    ctype=float,
+    dtype=float):
     """Iterator to provide coordinates/values parsed from the string stream,
     most often from the stdin
     """
@@ -93,11 +95,11 @@ def parsed_coordinates_iterator(
                       % (line, parseString))
         else:
             r = match.groupdict()
-            if r.has_key('v'): v = float(r['v'])
+            if r.has_key('v'): v = dtype(r['v'])
             else:              v = 0.0
-            if r.has_key('t'): t = float(r['t'])
+            if r.has_key('t'): t = dtype(r['t'])
             else:              t = 0.0
-            yield (v, float(r['x']), float(r['y']), float(r['z']), t)
+            yield (v, ctype(r['x']), ctype(r['y']), ctype(r['z']), t)
 
 
 # XXX helper to process labels... move me
@@ -292,10 +294,10 @@ parser.add_option("-t", "--talairach",
                   " Shortcut for '-I Talairach'")
 
 parser.add_option("-H", "--half-voxel-correction",
-                  action="store_false", dest="halfVoxelCorrection",
-                  default=True,
-                  help="Adjust coord by 0.5mm after transformation to " + \
-                  "Tal space. Please use -H to turn such adjustment off")
+                  action="store_true", dest="halfVoxelCorrection",
+                  default=False,
+                  help="Adjust coord by 0.5mm after transformation to "
+                  "Tal space.")
 
 parser.add_option("-r", "--relative-to-origin",
                   action="store_true", dest="coordRelativeToOrigin",
@@ -307,6 +309,11 @@ parser.add_option("--input-line-format",
                   action="store", type="string", dest="inputLineFormat",
                   default=r"^\s*(?P<x>\S+)[ \t,]+(?P<y>\S+)[ \t,]+(?P<z>\S+)\s*$",
                   help="Format of the input lines (if ASCII input is provided)")
+
+parser.add_option("--iv", "--input-voxels",
+                  action="store_true", dest="input_voxels",
+                  default=False,
+                  help="Input lines carry voxel indices (int), not coordinates.")
 
 # Specific atlas options
 # TODO : group into options groups
@@ -342,16 +349,25 @@ if len(infiles)>1:
 fileIn = None
 coordT = None
 niftiInput = None
+# define data type for coordinates
+if options.input_voxels:
+    ctype = int
+    query_voxel = True
+else:
+    ctype = float
+    query_voxel = False
+
 # Setup coordinates read-in
 #
 # compatibility with older talairachlabel
 if options.inputCoordFile:
     fileIn = file(options.inputCoordFile)
-    coordsIterator = parsed_coordinates_iterator(options.inputLineFormat,
-                                               fileIn)
+    coordsIterator = parsed_coordinates_iterator(
+        options.inputLineFormat, fileIn, ctype=ctype)
 # input is stdin
 elif len(infiles)==0:
-    coordsIterator = parsed_coordinates_iterator(options.inputLineFormat)
+    coordsIterator = parsed_coordinates_iterator(
+        options.inputLineFormat, ctype=ctype)
 else:
     if len(infiles)>1:
         print "Just a single file should be provided at the command line"
@@ -377,7 +393,7 @@ else:
             debug('ATL', "No it is not")
         fileIn = file(infile)
         coordsIterator = parsed_coordinates_iterator(
-            options.inputLineFormat, fileIn)
+            options.inputLineFormat, fileIn, ctype=ctype)
 
 
 # Open and initialize atlas lookup
@@ -392,9 +408,9 @@ if options.atlasImageFile:
 
 if not options.forbidDirectMapping \
        and niftiInput is not None and not options.transformationFile:
-    akwargs = {
-        'resolution': niftiInput.pixdim[0],
-        'query_voxel': True }
+    akwargs = {'resolution': niftiInput.pixdim[0]}
+    query_voxel = True   # if we can query directly by voxel, do so
+
     akwargs.update(akwargs_common)
     verbose(1, "Will attempt direct mapping from input voxels into atlas "
                "voxels at resolution %.2f" % akwargs['resolution'])
@@ -408,7 +424,7 @@ if not options.forbidDirectMapping \
             " atlas in %s space. Use -I switch to override input space if"
             " it misspecified, or use -T to provide transformation. Trying"
             " to proceed" %(options.inputSpace, atlas.space), 1)
-        atlas.query_voxel = False
+        query_voxel = False
     elif not (niftiInput.qform == atlas._image.qform).all():
         if options.atlasImageFile is None:
             warning(
@@ -417,7 +433,7 @@ if not options.forbidDirectMapping \
                 "\n Input qform:\n%s\n Atlas qform: \n%s"
                 %(niftiInput.qform, atlas._image.qform), 1)
             # reset ability to query by voxels
-            atlas.query_voxel = False
+            query_voxel = False
         else:
             warning(
                 "QForms are different between input image and "
@@ -459,7 +475,7 @@ if not (options.inputSpace == atlas.space or
     raise XMLAtlasException("Unknown space '%s' which is not the same as atlas"
                             "space '%s' either" % ( inputSpace, atlas.space ))
 
-if atlas.query_voxel:
+if query_voxel:
     # we do direct mapping
     coordT = None
 else:
@@ -556,7 +572,7 @@ else:
 
 verbose(3, "Operating on following levels: %s" % options.levels)
 # assign levels to the atlas
-atlas.levels = options.levels
+atlas.default_levels = options.levels
 
 if options.outputFile:
     output = open(options.outputFile, 'w')
@@ -572,6 +588,14 @@ if options.dumpmapFile:
     ni_dump = NiftiImage(infile)
     ni_dump_data = np.zeros((len(options.levels),) + ni_dump.data.shape[:3])
 
+# Also check if we have provided voxels but not querying by voxels
+if options.input_voxels:
+    if coordT is not None:
+        raise NotImplementedError, \
+              "Cannot perform voxels querying having coordT defined"
+    if not query_voxel:
+        raise NotImplementedError, \
+              "query_voxel was reset to False, can't do queries by voxel"
 
 # Read coordinates
 numVoxels = 0
@@ -601,7 +625,10 @@ for c in coordsIterator:
         coord = coordT[ coord_orig ]
 
     # Query label
-    voxel = atlas[ coord ]
+    if query_voxel:
+        voxel = atlas[coord]
+    else:
+        voxel = atlas(coord)
     voxel['coord_orig'] = coord_orig
     voxel['value'] = value
     voxel['t'] = t
