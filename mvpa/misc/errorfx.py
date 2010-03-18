@@ -157,6 +157,20 @@ if externals.exists('scipy'):
                 r = 0.0
             return 1.0 - r
 
+    class CorrFx(_ErrorFx):
+        """Computes the correlation between the target and the
+        predicted values.
+
+        In case of NaN correlation (no variance in predictors or
+        targets) result output error is 0.
+        """
+        def __call__(self, predicted, target):
+            """Requires all arguments."""
+            r = pearsonr(predicted, target)[0]
+            if np.isnan(r):
+                r = 0.0
+            return r
+
 
     class CorrErrorPFx(_ErrorFx):
         """Computes p-value of correlation between the target and the predicted
