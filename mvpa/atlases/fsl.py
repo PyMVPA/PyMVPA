@@ -244,11 +244,14 @@ class FSLProbabilisticAtlas(FSLAtlas):
                 return self.get_map(lev.find(target, unique=True).index,
                                     axes_order=axes_order)
             else:
-                maps = np.array(self.get_maps(target, axes_order=axes_order))
+                maps_dict = self.get_maps(target, axes_order=axes_order)
+                maps = np.array(maps_dict.values())
                 return np.max(maps, axis=0)
 
-    def get_maps(self, target, axes_order='xyz'):
-        """Return a list of probability maps for the target
+    def get_maps(self, target, axes_order='xyz', key_attr=None):
+        """Return a dictionary of probability maps for the target
+
+        Each key is a `Label` instance, and value is the probability map
 
         Parameters
         ----------
@@ -256,10 +259,21 @@ class FSLProbabilisticAtlas(FSLAtlas):
           .find is called with a target and unique=False to find all matches
         axes_order : str in ('xyz', 'zyx')
           In what order axes of the returned array should follow.
+        key_attr : None or str
+          What to use for the keys of the dictionary.  If None,
+          `Label` instance would be used as a key.  If some attribute
+          provided (e.g. 'text', 'abbr', 'index'), corresponding
+          attribute of the `Label` instance would be taken as a key.
         """
         lev = self.levels[0]       # we have just 1 here
-        return [self.get_map(l.index, axes_order=axes_order)
-                for l in lev.find(target, unique=False)]
+        if key_attr is None:
+            key_gen = lambda x: x
+        else:
+            key_gen = lambda x: getattr(x, key_attr)
+
+        return dict((key_gen(l),
+                     self.get_map(l.index, axes_order=axes_order))
+                    for l in lev.find(target, unique=False))
 
 
 class FSLLabelsAtlas(XMLBasedAtlas):
