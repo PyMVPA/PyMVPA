@@ -121,14 +121,19 @@ def _setdebug(obj, partname):
     if sglevel is not None:
         obj.io.set_loglevel(sglevel)
     if __debug__ and 'SG_LINENO' in debug.active:
-        obj.io.enable_file_and_line()
+        try:
+            obj.io.enable_file_and_line()
+        except AttributeError, e:
+            warning("Cannot enable SG_LINENO debug target for shogun %s"
+                    % externals.versions['shogun'])
     try:
         exec "obj.io.%s_progress()" % progressfunc
     except:
-        warning("Shogun version installed has no way to enable progress" +
-                " reports")
+        warning("Shogun version %s has no way to enable progress" +
+                " reports" % externals.versions['shogun'])
 
 
+# Deprecated indeed in favor of kernels
 def _tosg(data):
     """Draft helper function to convert data we have into SG suitable format
 
@@ -451,13 +456,15 @@ class SVM(_SVM):
         # Report on training
         if (__debug__ and 'SG__' in debug.active) or \
            self.ca.is_enabled('training_confusion'):
+            debug("SG_", "Assessing predictions on training data")
             trained_targets = self.__svm.classify().get_labels()
+
         else:
             trained_targets = None
 
         if __debug__ and "SG__" in debug.active:
-                debug("SG__", "Original labels: %s, Trained labels: %s" %
-                              (targets_sa.value, trained_targets))
+            debug("SG__", "Original labels: %s, Trained labels: %s" %
+                  (targets_sa.value, trained_targets))
 
         # Assign training confusion right away here since we are ready
         # to do so.
