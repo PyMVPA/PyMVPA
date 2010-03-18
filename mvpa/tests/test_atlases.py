@@ -88,7 +88,8 @@ def test_fsl_hox_queries():
 
     ms = atl.get_maps('Fusiform')
     assert_equal(len(ms), 4)
-    assert_equal(ms[0].shape, tshape)
+    for l, m in ms.iteritems():
+        assert_equal(m.shape, tshape)
 
     ms = atl.get_maps('ZaZaZa')
     ok_(not len(ms))
