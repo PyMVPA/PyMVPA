@@ -34,6 +34,8 @@ else:
     sgk.GaussianKernel = None
     sgk.PolyKernel = None
 
+if __debug__:
+    from mvpa.base import debug
 
 class SGKernel(Kernel):
     """A Kernel object with internal representation in Shogun"""
