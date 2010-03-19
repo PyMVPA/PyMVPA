@@ -396,7 +396,11 @@ class SVM(_SVM):
 
             if self._svm_impl in ['libsvr', 'svrlight']:
                 # for regressions constructor a bit different
-                self.__svm = svm_impl_class(Cs[0], self.params.epsilon, self.__kernel, labels)
+                epsilon = self.params.epsilon
+                self.__svm = svm_impl_class(Cs[0], epsilon, self.__kernel, labels)
+                # might need to set epsilon explicitly
+                if self.__svm.get_epsilon() != epsilon:
+                    self.__svm.set_epsilon(epsilon)
             elif self._svm_impl in ['krr']:
                 self.__svm = svm_impl_class(self.params.tau, self.__kernel, labels)
             else:
