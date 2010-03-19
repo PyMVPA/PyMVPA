@@ -178,11 +178,8 @@ if externals.exists("lxml") and externals.exists("nifti"):
 
 
 if externals.exists("running ipython env"):
-    try:
-        if not cfg.getboolean('ipython', 'complete protected', False):
-            __IPYTHON__.Completer.omit__names = 2
-    finally:
-        pass
+    from mvpa.support.ipython import *
+    ipy_activate_pymvpa_goodies()
 
 def suite_stats():
     """Return cruel dict of things which evil suite provides
