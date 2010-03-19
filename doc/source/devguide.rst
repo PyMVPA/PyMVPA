@@ -274,6 +274,7 @@ While working on the project we adhere to the following rules:
   specific external being present should make use of
   :func:`~mvpa.testing.tools.skip_if_no_external`, e.g.
 
+    >>> from mvpa.testing import *
     >>> skip_if_no_external('numpy')
 
 
