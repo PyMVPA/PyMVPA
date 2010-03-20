@@ -67,8 +67,8 @@ class ENET(Classifier):
     """
 
     __tags__ = [ 'enet', 'regression', 'linear', 'has_sensitivity',
-                       'does_feature_selection'
-                       ]
+                 'does_feature_selection', 'rpy2' ]
+
     def __init__(self, lm=1.0, trace=False, normalize=True,
                  intercept=True, max_steps=None, **kwargs):
         """

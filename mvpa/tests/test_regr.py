@@ -10,7 +10,7 @@
 
 from mvpa.testing import *
 from mvpa.testing.clfs import *
-from mvpa.testing.datasets import datasets
+from mvpa.testing.datasets import dataset_wizard, datasets
 
 from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
 
@@ -123,6 +123,27 @@ class RegressionsTests(unittest.TestCase):
         self.failUnless(len(clf.ca.estimates) == ds[ds.chunks == 1].nsamples)
         clf.ca.reset_changed_temporarily()
 
+
+    @sweepargs(regr=regrswh['regression', 'has_sensitivity', '!gpr'])
+    def test_sensitivities(self, regr):
+        """Test "sensitivities" provided by regressions
+
+        Inspired by a snippet leading to segfault from Daniel Kimberg
+
+        lead to segfaults due to inappropriate access of SVs thinking
+        that it is a classification problem (libsvm keeps SVs at None
+        for those, although reports nr_class to be 2.
+        """
+        myds = dataset_wizard(samples=np.random.normal(size=(10,5)),
+                              targets=np.random.normal(size=10))
+        sa = regr.get_sensitivity_analyzer()
+        #try:
+        if True:
+            res = sa(myds)
+        #except Exception, e:
+        #    self.fail('Failed to obtain a sensitivity due to %r' % (e,))
+        self.failUnless(res.shape == (1, myds.nfeatures))
+        # TODO: extend the test -- checking for validity of sensitivities etc
 
 
 def suite():

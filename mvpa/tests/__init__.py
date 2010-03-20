@@ -16,7 +16,7 @@ from mvpa.base import externals, warning
 def collect_unit_tests(verbosity=1):
     """Runs over all tests it knows and composes a dictionary with test suite
     instances as values and IDs as keys. IDs are the filenames of the unittest
-    without '.py' extension and 'test_' prefix.
+    without '.py' extension and ``test_`` prefix.
 
     During collection this function will run a full and verbose test for all
     known externals.
