@@ -1208,7 +1208,8 @@ class SplitClassifier(CombinedClassifier):
                 if __debug__:
                     dact = debug.active
                     if 'CLFSPL_' in dact:
-                        debug('CLFSPL_', 'Split %d:\n%s' % (i, self.confusion))
+                        debug('CLFSPL_',
+                              'Split %d:\n%s' % (i, self.ca.confusion))
                     elif 'CLFSPL' in dact:
                         debug('CLFSPL', 'Split %d error %.2f%%'
                               % (i, self.ca.confusion.summaries[-1].error))
@@ -1372,7 +1373,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
             add_ = ""
             if "CLFFS_" in debug.active:
                 add_ = " Selected features: %s" % \
-                       self.__feature_selection.selected_ids
+                       self.__feature_selection.ca.selected_ids
             debug("CLFFS", "%(fs)s selected %(nfeat)d out of " +
                   "%(dsnfeat)d features.%(app)s",
                   msgargs={'fs':self.__feature_selection,

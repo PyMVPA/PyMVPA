@@ -159,7 +159,7 @@ class LinearSVMWeights(Sensitivity):
                 nsvs = model.get_total_n_sv()
 
             debug('SVM',
-                  "Extracting weights for %d-class SVM: #SVs=%s, " % \
+                  "Extracting weights for %s-class SVM: #SVs=%s, " % \
                   (nr_class, nsvs) + \
                   " SVcoefshape=%s SVs.shape=%s Rhos=%s." % \
                   (svcoef.shape, svs.shape, rhos) + \
