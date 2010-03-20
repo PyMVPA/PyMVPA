@@ -62,12 +62,6 @@ else:
     _default_kernel_class_ = None
 
 
-    try:
-        # reuse the same seed for shogun
-        shogun.Library.Math_init_random(_random_seed)
-    except Exception, e:
-        warning('Shogun cannot be seeded due to %s' % (e,))
-
 import operator
 
 from mvpa.misc.param import Parameter
@@ -86,6 +80,17 @@ from sens import *
 if __debug__:
     from mvpa.base import debug
 
+
+def seed(random_seed):
+    if __debug__:
+        debug('SG', "Seeding shogun's RNG with %s" % random_seed)
+    try:
+        # reuse the same seed for shogun
+        shogun.Library.Math_init_random(random_seed)
+    except Exception, e:
+        warning('Shogun cannot be seeded due to %s' % (e,))
+
+seed(_random_seed)
 
 def _setdebug(obj, partname):
     """Helper to set level of debugging output for SG
@@ -396,11 +401,9 @@ class SVM(_SVM):
 
             if self._svm_impl in ['libsvr', 'svrlight']:
                 # for regressions constructor a bit different
-                epsilon = self.params.epsilon
-                self.__svm = svm_impl_class(Cs[0], epsilon, self.__kernel, labels)
-                # might need to set epsilon explicitly
-                if self.__svm.get_epsilon() != epsilon:
-                    self.__svm.set_epsilon(epsilon)
+                self.__svm = svm_impl_class(Cs[0], self.params.tube_epsilon, self.__kernel, labels)
+                # we need to set epsilon explicitly
+                self.__svm.set_epsilon(self.params.epsilon)
             elif self._svm_impl in ['krr']:
                 self.__svm = svm_impl_class(self.params.tau, self.__kernel, labels)
             else:
@@ -460,7 +463,8 @@ class SVM(_SVM):
         # Report on training
         if (__debug__ and 'SG__' in debug.active) or \
            self.ca.is_enabled('training_confusion'):
-            debug("SG_", "Assessing predictions on training data")
+            if __debug__:
+                debug("SG_", "Assessing predictions on training data")
             trained_targets = self.__svm.classify().get_labels()
 
         else:
