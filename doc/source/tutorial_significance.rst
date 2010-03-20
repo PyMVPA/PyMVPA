@@ -69,7 +69,8 @@ significance* alone, taken without accompanying support on viability and
 reproducibility of a given finding, was argued :ref:`more likely to be
 incorrect <Ioa05>`.
 
-.. exerciseTODO::
+..
+   exerciseTODO::
 
    If results were obtained at the same significance p<0.05, which finding
    would you believe to reflect the existing phenomenon: ability to decode
@@ -186,7 +187,8 @@ correspondingly for those two levels of significance.
 .. pl.ylabel('Accuracy to reach p<=0.05')
 .. pl.hlines([0.5, 1.0], 0, 1000)
 
-.. commentTODO::
+..
+  commentTODO::
 
   If this is your first ever analysis and you are not comparing obtained
   results across different models (classifiers), since then you would
@@ -318,7 +320,8 @@ TODO
    generators or permutation functions provided in :mod:`numpy.random` and
    assess their counter-balance.
 
-.. exerciseTODO::
+..
+   exerciseTODO::
 
    If you take provided data set, what accuracy could(would) you achieve in
    Taro-reading of the future stimuli conditions based on just previous
@@ -436,6 +439,7 @@ References
      :toctree: generated
 
      ~numpy.ndarray
+     ~numpy.random
      ~scipy.stats.distributions.norm
      ~mvpa.clfs.stats.Nonparametric
      ~mvpa.clfs.stats.rv_semifrozen
