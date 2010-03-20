@@ -44,13 +44,12 @@ Institutions Where PyMVPA Is Used
 Studies employing PyMVPA
 ========================
 
-* :ref:`Meyer et al. (2010) <MKE10>`: *Predicting visual stimuli based on
-  activity in auditory cortices* (Nature Neuroscience).
+* :ref:`Meyer et al., Nature Neuroscience (2010) <MKE10>`: Predicting visual stimuli based on
+  activity in auditory cortices.
 
-* :ref:`Manelis et al. (2010) <MHH10>`: *Implicit memory for object
-  locations depends on reactivation of encoding-related brain regions*
-  (Human Brain Mapping).
+* :ref:`Manelis et al., Human Brain Mapping (2010) <MHH10>`: Implicit memory for object
+  locations depends on reactivation of encoding-related brain regions.
 
-* :ref:`Sun et al. (2009) <SET+09>`: *Elucidating an MRI-Based Neuroanatomic
+* :ref:`Sun et al., Biological Psychiatry (2009) <SET+09>`: Elucidating an MRI-Based Neuroanatomic
   Biomarker for Psychosis: Classification Analysis Using Probabilistic Brain
-  Atlas and Machine Learning Algorithms* (Biological Psychiatry).
+  Atlas and Machine Learning Algorithms.
