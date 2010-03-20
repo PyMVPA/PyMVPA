@@ -36,6 +36,7 @@ Institutions Where PyMVPA Is Used
 * Department of Experimental Psychology, **Otto-von-Guericke-University
   Magdeburg**, Germany
 * Department of Psychology, **University of California at Los Angeles**, USA
+* Brain & Creativity Institute, **University of Southern California**, USA
 * Imaging Research Center, **University of Texas at Austin**, USA
 * Department of Psychology, **Yale University**, USA
 
@@ -43,9 +44,12 @@ Institutions Where PyMVPA Is Used
 Studies employing PyMVPA
 ========================
 
-* :ref:`Manelis et al. (2010) <MHH10>`: *Implicit memory for object
-  locations depends on reactivation of encoding-related brain regions*
+* :ref:`Meyer et al., Nature Neuroscience (2010) <MKE10>`: Predicting visual stimuli based on
+  activity in auditory cortices.
 
-* :ref:`Sun et al. (2009) <SET+09>`: *Elucidating an MRI-Based Neuroanatomic
+* :ref:`Manelis et al., Human Brain Mapping (2010) <MHH10>`: Implicit memory for object
+  locations depends on reactivation of encoding-related brain regions.
+
+* :ref:`Sun et al., Biological Psychiatry (2009) <SET+09>`: Elucidating an MRI-Based Neuroanatomic
   Biomarker for Psychosis: Classification Analysis Using Probabilistic Brain
-  Atlas and Machine Learning Algorithms.*
+  Atlas and Machine Learning Algorithms.
