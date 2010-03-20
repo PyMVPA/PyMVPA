@@ -43,6 +43,9 @@ if __debug__:
 
 if externals.exists('scipy'):
     import scipy.sparse as sps
+    # API of scipy.sparse has changed in 0.7.0 -- lets account for this
+    _coo_shape_argument = {True: 'shape',
+                           False: 'dims'} [externals.versions['scipy'] >= '0.7.0']
 
 __all__ = [ "GNBSearchlight", 'sphere_gnbsearchlight' ]
 
@@ -74,10 +77,6 @@ def lastdim_columnsums_fancy_indexing(a, inds, out):#, out=None):
 # trick
 def r_helper(*args):
     return np.r_[args]
-
-# API of scipy.sparse has changed in 0.7.0 -- lets account for this
-_coo_shape_argument = {True: 'shape',
-                       False: 'dims'} [externals.versions['scipy'] >= '0.7.0']
 
 def _inds_list_to_coo(inds, shape=None):
     inds_r = r_helper(*(inds))
