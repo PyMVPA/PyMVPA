@@ -329,6 +329,8 @@ unittest-optimization: build
 #   That does:
 #     additional checking,
 #     debug() calls validation, etc
+# Need to use /bin/bash due to use of PIPESTATUS
+unittest-debug: SHELL=/bin/bash
 unittest-debug: build
 	@echo "I: Running unittests with debug output. No progress output."
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
