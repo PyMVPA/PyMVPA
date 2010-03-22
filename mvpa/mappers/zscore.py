@@ -212,7 +212,13 @@ class ZScoreMapper(Mapper):
         # mappers should not modify the input data
         # cast the data to float, since in-place operations below to not upcast!
         if np.issubdtype(data.dtype, np.integer):
+            if self._secret_inplace_zscore:
+                raise TypeError(
+                    "Cannot perform inplace z-scoring since data is of integer "
+                    "type. Please convert to float before calling zscore")
             mdata = data.astype(self.__dtype)
+        elif self._secret_inplace_zscore:
+            mdata = data
         else:
             mdata = data.copy()
 

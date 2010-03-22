@@ -67,14 +67,14 @@ class BaseSearchlight(DatasetMeasure):
             raise ValueError, \
                   "Cannot run searchlight on an empty list of roi_ids"
         self.__roi_ids = roi_ids
-        self.__nproc = nproc
+        self._nproc = nproc
 
 
     def _call(self, dataset):
         """Perform the ROI search.
         """
         # local binding
-        nproc = self.__nproc
+        nproc = self._nproc
 
         if nproc is None and externals.exists('pprocess'):
             import pprocess
@@ -208,6 +208,9 @@ class Searchlight(BaseSearchlight):
             # decide to have a PP job server in PyMVPA
             import pprocess
             p_results = pprocess.Map(limit=nproc)
+            if __debug__:
+                debug('SLC', "Starting off child processes for nproc=%i"
+                      % nproc)
             compute = p_results.manage(
                         pprocess.MakeParallel(self._proc_block))
             for block in roi_blocks:
@@ -248,7 +251,8 @@ class Searchlight(BaseSearchlight):
         """
         if __debug__:
             debug_slc_ = 'SLC_' in debug.active
-
+            debug('SLC',
+                  "Starting computing block for %i elements" % len(block))
         if self.ca.is_enabled('roi_sizes'):
             roi_sizes = []
         else:

@@ -61,7 +61,20 @@ def test_zscore():
     data = dataset_wizard(samples.copy(), targets=range(16), chunks=[0] * 16)
     assert_equal(data.samples.mean(), 2.0)
     assert_equal(data.samples.std(), 1.0)
+    data_samples = data.samples.copy()
     zscore(data, chunks_attr='chunks')
+
+    # copy should stay intact
+    assert_equal(data_samples.mean(), 2.0)
+    assert_equal(data_samples.std(), 1.0)
+    # we should be able to operate on ndarrays
+    # But we can't change type inplace for an array, can't we?
+    assert_raises(TypeError, zscore, data_samples, chunks_attr=None)
+    # so lets do manually
+    data_samples = data_samples.astype(float)
+    zscore(data_samples, chunks_attr=None)
+    assert_array_equal(data.samples, data_samples)
+    print data_samples
 
     # check z-scoring
     check = np.array([-2, -1, 1, 2, 0, 0, 1, -1, -1, 1, 1, -1, 0, 0, 0, 0],

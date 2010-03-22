@@ -13,6 +13,8 @@ import numpy as np
 from mvpa.testing import *
 from mvpa.testing.datasets import *
 
+skip_if_no_external('elasticnet')
+
 from mvpa import cfg
 from mvpa.clfs.enet import ENET
 from scipy.stats import pearsonr

@@ -40,11 +40,31 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
     values indicating higher sensitivity.
 
     The sensitivity map is returned as a single-sample dataset. If SciPy is
-    available the associated p-values will also be computed and are avialable
+    available the associated p-values will also be computed and are available
     from the 'fprob' feature attribute.
     """
 
-    def _call(self, dataset, labels=None):
+    def __init__(self, targets_attr='targets', **kwargs):
+        """
+        Parameters
+        ----------
+        targets_attr : str
+          What samples attribute to use as targets (labels).
+        """
+        self._targets_attr = targets_attr
+        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
+
+
+    def __repr__(self, prefixes=None):
+        if prefixes is None:
+            prefixes = []
+        if self._targets_attr != 'targets':
+            prefixes = prefixes + ['targets_attr=%r' % (self._targets_attr)]
+        return \
+            super(FeaturewiseDatasetMeasure, self).__repr__(prefixes=prefixes)
+
+
+    def _call(self, dataset):
         # This code is based on SciPy's stats.f_oneway()
         # Copyright (c) Gary Strangman.  All rights reserved
         # License: BSD
@@ -52,10 +72,9 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
         # However, it got tweaked and optimized to better fit into PyMVPA.
 
         # number of groups
-        if labels is None:
-            labels = dataset.targets
-
-        ul = np.unique(labels)
+        targets_sa = dataset.sa[self._targets_attr]
+        labels = targets_sa.value
+        ul = targets_sa.unique
 
         na = len(ul)
         bign = float(dataset.nsamples)
@@ -120,14 +139,19 @@ class CompoundOneWayAnova(OneWayAnova):
     def _call(self, dataset):
         """Computes featurewise f-scores using compound comparisons."""
 
-        orig_labels = dataset.targets
+        targets_sa = dataset.sa[self._targets_attr]
+        orig_labels = targets_sa.value
         labels = orig_labels.copy()
 
+        # Lets create a very shallow copy of a dataset with just
+        # samples and targets_attr
+        dataset_mod = Dataset(dataset.samples,
+                              sa={self._targets_attr : labels})
         results = []
-        for ul in dataset.sa['targets'].unique:
+        for ul in targets_sa.unique:
             labels[orig_labels == ul] = 1
             labels[orig_labels != ul] = 2
-            f_ds = OneWayAnova._call(self, dataset, labels)
+            f_ds = OneWayAnova._call(self, dataset_mod)
             if 'fprob' in f_ds.fa:
                 # rename the fprob attribute to something label specific
                 # to survive final aggregation stage
@@ -136,5 +160,5 @@ class CompoundOneWayAnova(OneWayAnova):
             results.append(f_ds)
 
         results = vstack(results)
-        results.sa['targets'] = dataset.sa['targets'].unique
+        results.sa[self._targets_attr] = targets_sa.unique
         return results

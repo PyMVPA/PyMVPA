@@ -224,14 +224,14 @@ A Plotting Example
 ------------------
 
 We have inspected the spatio-temporal profile of the sensitivities using
-some MRI viewer application, but we can also assemble an informative figure 
+some MRI viewer application, but we can also assemble an informative figure
 right here. Let's compose a figure that shows the original peri-stimulus
 timeseries, the effect of normalization, as well as the corresponding
 sensitivity profile of the trained SVM classifier. We are going to do that
 for two example voxels, whose coordinates we might have derived from
 inspecting the full map.
 
->>> example_voxels = [(25,25,28), (25,23,28)]
+>>> example_voxels = [(28,25,25), (28,23,25)]
 
 The plotting will be done by the popular matplotlib_ package.
 
@@ -244,12 +244,16 @@ example voxels. The code below will create the plot using matplotlib's
 ``pylab`` interface (imported as ``pl``). If you are familiar with Matlab's
 plotting facilities, this shouldn't be hard to read.
 
+.. note::
+   ``_ =`` is used in the examples below simply to absorb output of plotting
+   functions.  You do not have to swallow output in your interactive sessions.
+
 >>> # linestyles and colors for plotting
 >>> vx_lty = ['-', '--']
 >>> t_col = ['b', 'r']
 
 >>> # whole figure will have three rows -- this is the first
->>> pl.subplot(311)
+>>> _ = pl.subplot(311)
 >>> # for each of the example voxels
 >>> for i, v in enumerate(example_voxels):
 ...     # get a slicing array matching just to current example voxel
@@ -263,17 +267,17 @@ plotting facilities, this shouldn't be hard to read.
 ...         # label this plot for automatic legend generation
 ...         l[0][0].set_label('Voxel %i: %s' % (i, t))
 >>> # y-axis caption
->>> pl.ylabel('Detrended signal')
+>>> _ = pl.ylabel('Detrended signal')
 >>> # visualize zero-level
->>> pl.axhline(linestyle='--', color='0.6')
+>>> _ = pl.axhline(linestyle='--', color='0.6')
 >>> # put automatic legend
->>> pl.legend()
->>> pl.xlim((0,12))
+>>> _ = pl.legend()
+>>> _ = pl.xlim((0,12))
 
 In the next figure row we do exactly the same again, but this time for the
 normalized data.
 
->>> pl.subplot(312)
+>>> _ = pl.subplot(312)
 >>> for i, v in enumerate(example_voxels):
 ...     slicer = np.array([tuple(idx) == v for idx in ds.fa.voxel_indices])
 ...     evds_norm = eventrelated_dataset(ds[:, slicer], events=events)
@@ -281,9 +285,9 @@ normalized data.
 ...         l = plot_err_line(evds_norm[evds_norm.sa.targets == t].samples,
 ...                           fmt=t_col[j], linestyle=vx_lty[i])
 ...         l[0][0].set_label('Voxel %i: %s' % (i, t))
->>> pl.ylabel('Normalized signal')
->>> pl.axhline(linestyle='--', color='0.6')
->>> pl.xlim((0,12))
+>>> _ = pl.ylabel('Normalized signal')
+>>> _ = pl.axhline(linestyle='--', color='0.6')
+>>> _ = pl.xlim((0,12))
 
 Finally, we plot the associated SVM weight profile for each peristimulus
 timepoint of both voxels. For easier selection we do a little trick and
@@ -292,7 +296,7 @@ dataset's chain mapper (look at ``evds.a.mapper`` for the whole chain).
 This will reshape the sensitivities into ``cross-validation fold x volume x
 voxel features``.
 
->>> pl.subplot(313)
+>>> _ = pl.subplot(313)
 >>> # L1 normalization of sensitivity maps per split to make them
 >>> # comparable
 >>> normed = sens.get_mapped(FxMapper(axis='features', fx=l1_normed))
@@ -301,11 +305,11 @@ voxel features``.
 >>> for i, v in enumerate(example_voxels):
 ...     slicer = np.array([tuple(idx) == v for idx in ds.fa.voxel_indices])
 ...     smap = smaps.samples[:,:,slicer].squeeze()
-...     plot_err_line(smap, fmt='ko', linestyle=vx_lty[i], errtype='std')
->>> pl.xlim((0,12))
->>> pl.ylabel('Sensitivity')
->>> pl.axhline(linestyle='--', color='0.6')
->>> pl.xlabel('Peristimulus volumes')
+...     l = plot_err_line(smap, fmt='ko', linestyle=vx_lty[i], errtype='std')
+>>> _ = pl.xlim((0,12))
+>>> _ = pl.ylabel('Sensitivity')
+>>> _ = pl.axhline(linestyle='--', color='0.6')
+>>> _ = pl.xlabel('Peristimulus volumes')
 
 That was it. Perhaps you are scared by the amount of code. Please note that
 it could have done shorter, but this way allows to plot any other voxel
@@ -376,13 +380,25 @@ allows for complex runtime ROI generation. In this case it uses an
 :class:`~mvpa.misc.neighborhood.IndexQueryEngine` to look at certain
 feature attributes in the dataset to compose sphere-shaped ROIs and two
 spaces at the same time. This approach is very flexible and can be
-extented with additional query engines to algorithms of almost arbitrary
+extended with additional query engines to algorithms of almost arbitrary
 complexity.
 
 
 .. there is something that prevents us from mapping the whole dataset
+
 >>> ts = res.a.mapper.reverse1(1 - res.samples[0])
->>> NiftiImage(ts, ds.a.imghdr).save('ersl.nii')
+>>> ni = NiftiImage(ts, ds.a.imghdr).save('ersl.nii')
+
+After all is done
+-----------------
+
+.. We need to remove generated files so daily tests pass
+
+After you are done and want to tidy up after yourself, you can easily remove
+unneeded generated files from within Python:
+
+>>> os.unlink('ersl.nii')
+
 
 .. only:: html
 
@@ -392,4 +408,4 @@ complexity.
   .. autosummary::
      :toctree: generated
 
-     ~mvpa.datasets.mri.extract_events
+     ~mvpa.datasets.eventrelated.eventrelated_dataset

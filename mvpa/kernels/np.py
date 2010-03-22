@@ -194,13 +194,16 @@ class GeneralizedLinearKernel(NumpyKernel):
             # which due to numpy broadcasting is the same as product
             # with scalar above
             data2_sc = (Sigma_p * data2).T
-
-        # if it is a full matrix -- full-featured and lengthy
-        # matrix product
-        else:
-            raise ValueError, "Please provide Sigma_p as a scalar or a vector"
+        # If (diagonal) or full-matrix -- full-featured and lengthy matrix
+        # product
+        elif len(Sigma_p.shape) == 2 and \
+                 Sigma_p.shape[0] == Sigma_p.shape[1] == data2.shape[1]:
+            # which due to numpy broadcasting is the same as product
+            # with scalar above
             data2_sc = np.dot(Sigma_p, data2.T)
-            pass
+        else:
+            raise ValueError, "Please provide Sigma_p as a scalar, vector, " \
+                  "or square (diagonal) matrix."
 
         # XXX if Sigma_p is changed a warning should be issued!
         # XXX other cases of incorrect Sigma_p could be catched

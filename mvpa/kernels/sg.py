@@ -34,6 +34,8 @@ else:
     sgk.GaussianKernel = None
     sgk.PolyKernel = None
 
+if __debug__:
+    from mvpa.base import debug
 
 class SGKernel(Kernel):
     """A Kernel object with internal representation in Shogun"""
@@ -50,7 +52,15 @@ class SGKernel(Kernel):
     @staticmethod
     def _data2features(data):
         """Converts data to shogun features"""
-        return RealFeatures(data.astype(float).T)
+        if __debug__:
+            debug('KRN_SG',
+                  'Converting data of shape %s into shogun RealFeatures'
+                  % (data.shape,))
+        res = RealFeatures(data.astype(float).T)
+        if __debug__:
+            debug('KRN_SG', 'Done converting data')
+
+        return res
 
 # Conversion methods
 def _as_raw_sg(kernel):
@@ -124,7 +134,7 @@ class CustomSGKernel(_BasicSGKernel):
     # TODO: rename args here for convenience?
     def __init__(self, kernel_cls, kernel_params=[], **kwargs):
         """Initialize CustomSGKernel.
-        
+
         Parameters
         ----------
         kernel_cls : Shogun.Kernel
@@ -134,22 +144,18 @@ class CustomSGKernel(_BasicSGKernel):
           and the order is the explicit order required by the Shogun constructor
         """
         self.__kernel_cls__ = kernel_cls # These are normally static
-        
+
         _BasicSGKernel.__init__(self, **kwargs)
         order = []
         for k, v in kernel_params:
             self.params[k] = Parameter(default=v)
             order.append(k)
         self.__kp_order__ = tuple(order)
-        
+
 class LinearSGKernel(_BasicSGKernel):
     """A basic linear kernel computed via Shogun: K(a,b) = a*b.T"""
     __kernel_cls__ = sgk.LinearKernel
     __kernel_name__ = 'linear'
-
-    def __init__(self, **kwargs):
-        # Necessary for proper docstring construction
-        _BasicSGKernel.__init__(self, **kwargs)
 
 
 class RbfSGKernel(_BasicSGKernel):
@@ -181,16 +187,17 @@ class PolySGKernel(_BasicSGKernel):
         __kp_order__ = __kp_order__ + ('use_normalization',)
 
     def __init__(self, **kwargs):
+        # Necessary for proper docstring construction
         _BasicSGKernel.__init__(self, **kwargs)
 
 class PrecomputedSGKernel(SGKernel):
     """A kernel which is precomputed from a numpy array or a Shogun kernel"""
     # This class can't be handled directly by BasicSGKernel because it never
     # should take data, and never has compute called, etc
-    
+
     # NB: To avoid storing kernel twice, self.params.matrix = self._k once the
     # kernel is 'computed'
-    
+
     def __init__(self, matrix=None, **kwargs):
         """Initialize PrecomputedSGKernel
 
@@ -201,7 +208,7 @@ class PrecomputedSGKernel(SGKernel):
         """
         # Convert to appropriate kernel for input
         if isinstance(matrix, SGKernel):
-            k = m._k # Take internal shogun
+            k = matrix._k # Take internal shogun
         elif isinstance(matrix, Kernel):
             k = matrix.as_raw_np() # Convert to NP otherwise
         else:
@@ -222,6 +229,6 @@ class PrecomputedSGKernel(SGKernel):
             #self._k.set_full_kernel_matrix_from_full(k)
 
     def compute(self, *args, **kwargs):
-        """'Compute' `PrecomputedSGKernel -- no actual "computation" is done
+        """'Compute' `PrecomputedSGKernel` -- no actual "computation" is done
         """
         pass

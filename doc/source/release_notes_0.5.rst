@@ -33,17 +33,24 @@ Critical API Changes
 
 * Dataset: behaves more like a NumPy array.  No specialized Dataset classes,
   but constructors
+
   - MaskedDataset -> `dataset_wizard`
   - NiftiDataset -> `fmri_dataset`
-  - ERNiftiDataset -> `fmri_dataset` + call to `.extract_events`
+  - ERNiftiDataset -> `fmri_dataset` + `eventrelated_dataset` (see
+    :ref:`event-related analysis example <example_eventrelated_>`)
+
+* MRI volumes: 3,4D volumes (and coordinates) are exposed with following order
+  of axes: t,x,y,z.  Previously we followed a convention of t,z,y,x order of
+  axis in volume data (to be consistent with PyNIfTI).
 
 * Masks (`mask_mapper`)
- - now [1,1,0] is not the same as [True, True, False]
+
+ - now ``[1,1,0]`` is not the same as ``[True, True, False]``
 
 * We have weird (but consistent) conventions now
   - classes are CamelCased
   - factory functions (even for whatever might have been before a class)
-    are in pythonic_style
+  are in pythonic_style
 
 * `detrend` -> `poly_detrend`
 
@@ -68,6 +75,12 @@ Sparse data support
 
 Dataset in principal now support non-ndarray types for dataset samples. However,
 most parts of PyMVPA still assume an (at least) ndarray-like interface.
+
+Splitters
+---------
+
+* `permute` -> `permute_attr`, so if you had `permute=True`, use
+  `attr='targets'` if you like to permute targets
 
 
 Classifiers

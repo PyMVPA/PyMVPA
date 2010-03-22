@@ -299,6 +299,8 @@ def idhash(val):
     res = "%s" % id(val)
     if isinstance(val, list):
         val = tuple(val)
+    elif isinstance(val, dict):
+        val = tuple(val.items())
     try:
         res += ":%s" % hash(buffer(val))
     except:
@@ -343,10 +345,10 @@ def is_in_volume(coord, shape):
 
 
 def array_whereequal(a, x):
-    """Reliable comparison for numpy.array
+    """Reliable comparison for `numpy.ndarray`
 
-    numpy.array (as of 1.5.0.dev) fails to compare tuples in array of
-    dtype object, e.g.::
+    `numpy.ndarray` (as of 1.5.0.dev) fails to compare tuples in array of
+    dtype object, e.g.
 
     >>> import numpy as np; a=np.array([1, (0,1)], dtype=object); print a == (0,1),  a[1] == (0,1)
     [False False] True

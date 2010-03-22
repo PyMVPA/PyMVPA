@@ -298,17 +298,33 @@ def __check_openopt():
     import scikits.openopt as _
     return
 
+def _set_matplotlib_backend():
+    """Check if we have custom backend to set and it is different
+    from current one
+    """
+    backend = cfg.get('matplotlib', 'backend')
+    if backend:
+        import matplotlib as mpl
+        mpl_backend = mpl.get_backend().lower()
+        if mpl_backend != backend.lower():
+            if __debug__:
+                debug('EXT_', "Trying to set matplotlib backend to %s" % backend)
+            mpl.use(backend)
+            import warnings
+            # And disable useless warning from matplotlib in the future
+            warnings.filterwarnings(
+                'ignore', 'This call to matplotlib.use() has no effect.*',
+                UserWarning)
+        elif __debug__:
+            debug('EXT_',
+                  "Not trying to set matplotlib backend to %s since it was "
+                  "already set" % backend)
+
+
 def __check_matplotlib():
     """Check for presence of matplotlib and set backend if requested."""
     import matplotlib
-    backend = cfg.get('matplotlib', 'backend')
-    if backend:
-        matplotlib.use(backend)
-        import warnings
-        # And disable useless warning from matplotlib in the future
-        warnings.filterwarnings(
-            'ignore', 'This call to matplotlib.use() has no effect.*',
-            UserWarning)
+    _set_matplotlib_backend()
 
 def __check_pylab():
     """Check if matplotlib is there and then pylab"""
@@ -382,7 +398,7 @@ def __check_rpy2():
 
     import rpy2.robjects
     r = rpy2.robjects.r
-    r.options(warn=cfg.get('rpy', 'warn', default=-1))
+    r.options(warn=cfg.get_as_dtype('rpy', 'warn', dtype=int, default=-1))
 
     # To shut R up while it is importing libraries to do not ruin out
     # doctests
@@ -410,7 +426,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'pywt': "import pywt as __",
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
-          'rpy': "__check_rpy()",
+          #'rpy': "__check_rpy()",
           'rpy2': "__check_rpy2()",
           'lars': "exists('rpy2', raise_=True);" \
                   "import rpy2.robjects; rpy2.robjects.r.library('lars')",
@@ -565,7 +581,7 @@ versions._KNOWN.update({
 
 
 ##REF: Name was automagically refactored
-def test_all_dependencies(force=False):
+def test_all_dependencies(force=False, verbosity=1):
     """
     Test for all known dependencies.
 
@@ -579,7 +595,8 @@ def test_all_dependencies(force=False):
     # loop over all known dependencies
     for dep in _KNOWN:
         if not exists(dep, force):
-            warning("%s is not available." % dep)
+            if verbosity:
+                warning("%s is not available." % dep)
 
     if __debug__:
         debug('EXT', 'The following optional externals are present: %s' \

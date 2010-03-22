@@ -187,7 +187,7 @@ class WTF(object):
             ('openopt', 'openopt', SV),
             ('openopt', 'scikits.openopt', ('.openopt.__version__',)),
             ('pywt', None, SV),
-            ('rpy', None, ('.rpy_version',)),
+            #('rpy', None, ('.rpy_version',)),
             ('shogun', None, ('.Classifier.Version_get_version_release()',)),
             ):
             try:

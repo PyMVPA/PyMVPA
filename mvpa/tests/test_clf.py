@@ -749,14 +749,14 @@ class ClassifiersTests(unittest.TestCase):
 
         # should retrain nicely if we change labels
         oldlabels = dstrain.targets[:]
-        dstrain.permute_targets(assure_permute=True)
+        dstrain.permute_attr(assure_permute=True)
         self.failUnless((oldlabels != dstrain.targets).any(),
             msg="We should succeed at permutting -- now got the same targets")
         batch_test()
 
         # Change labels in testing
         oldlabels = dstest.targets[:]
-        dstest.permute_targets(assure_permute=True)
+        dstest.permute_attr(assure_permute=True)
         self.failUnless((oldlabels != dstest.targets).any(),
             msg="We should succeed at permutting -- now got the same targets")
         batch_test()

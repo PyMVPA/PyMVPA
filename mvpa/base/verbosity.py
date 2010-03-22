@@ -366,20 +366,26 @@ if __debug__:
     from os import getpid
     from os.path import basename, dirname
 
-    ##REF: Name was automagically refactored
+    __pymvpa_pid__ = getpid()
     def parse_status(field='VmSize'):
         """Return stat information on current process.
 
         Usually it is needed to know where the memory is gone, that is
         why VmSize is the default for the field to spit out
+
         TODO: Spit out multiple fields. Use some better way than parsing proc
         """
-
-        fd = open('/proc/%d/status' % getpid())
-        lines = fd.readlines()
-        fd.close()
-        match = filter(lambda x:re.match('^%s:'%field, x), lines)[0].strip()
-        match = re.sub('[ \t]+', ' ', match)
+        regex = re.compile('^%s:' % field)
+        match = None
+        try:
+            for l in open('/proc/%d/status' % __pymvpa_pid__):
+                if regex.match(l):
+                    match = l.strip()
+                    break
+            if match:
+                match = re.sub('[ \t]+', ' ', match)
+        except IOError:
+            pass
         return match
 
     def mbasename(s):
@@ -387,7 +393,9 @@ if __debug__:
 
         Also strip .py at the end
         """
-        base = basename(s).rstrip('py').rstrip('.')
+        base = basename(s)
+        if base.endswith('.py'):
+            base = base[:-3]
         if base in Set(['base', '__init__']):
             base = basename(dirname(s)) + '.' + base
         return base
@@ -411,7 +419,7 @@ if __debug__:
         def __call__(self):
             ftb = traceback.extract_stack(limit=100)[:-2]
             entries = [[mbasename(x[0]), str(x[1])] for x in ftb]
-            entries = filter(lambda x:x[0] != 'unittest', entries)
+            entries = [ e for e in entries if e[0] != 'unittest' ]
 
             # lets make it more consize
             entries_out = [entries[0]]
@@ -467,13 +475,14 @@ if __debug__:
         """
 
         _known_metrics = {
+            # TODO: make up Windows-friendly version or pure Python platform
+            # independent version (probably just make use of psutil)
             'vmem' : lambda : parse_status(field='VmSize'),
             'pid' : lambda : parse_status(field='Pid'),
             'asctime' : time.asctime,
             'tb' : TraceBack(),
             'tbc' : TraceBack(collide=True),
             }
-
 
         def __init__(self, metrics=None, offsetbydepth=True, *args, **kwargs):
             """

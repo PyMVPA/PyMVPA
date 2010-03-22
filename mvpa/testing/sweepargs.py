@@ -14,6 +14,7 @@ import sys
 import traceback as tbm
 
 from mvpa import cfg
+from mvpa.testing.tools import SkipTest
 
 if __debug__:
     from mvpa.base import debug
@@ -48,6 +49,7 @@ def sweepargs(**kwargs):
                     argvalue.untrain()
 
             failed_tests = {}
+            skipped_tests = []
             for argname in kwargs.keys():
                 for argvalue in kwargs[argname]:
                     if isinstance(argvalue, Classifier):
@@ -63,6 +65,8 @@ def sweepargs(**kwargs):
                             debug('TEST', 'Running %s on args=%r and kwargs=%r'
                                   % (method.__name__, args_, kwargs_))
                         method(*args_, **kwargs_)
+                    except SkipTest, e:
+                        skipped_tests += [e]
                     except AssertionError, e:
                         estr = str(e)
                         etype, value, tb = sys.exc_info()
@@ -127,8 +131,13 @@ def sweepargs(**kwargs):
                     # take first one... they all should be identical
                     etb = els[0][2]
                 raise AssertionError(estr), None, etb
-
+            if len(skipped_tests):
+                # so if nothing has failed, lets at least report that some were
+                # skipped -- for now just  a simple SkipTest message
+                raise SkipTest("%d tests were skipped in testing %s"
+                               % (len(skipped_tests), method.func_name))
         do_sweep.func_name = method.func_name
+        do_sweep.__doc__ = method.__doc__
         return do_sweep
 
     if len(kwargs) > 1:

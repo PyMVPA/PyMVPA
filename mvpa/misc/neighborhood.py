@@ -13,8 +13,10 @@ from numpy import array
 import operator
 import sys
 
-from mvpa.base.dochelpers import borrowkwargs
+from mvpa.base.dochelpers import borrowkwargs, borrowdoc
 from mvpa.clfs.distance import cartesian_distance
+
+from mvpa.misc.support import idhash as idhash_
 
 if __debug__:
     from mvpa.base import debug
@@ -276,7 +278,42 @@ class HollowSphere(Sphere):
                       <= self._radius])
 
 
-class QueryEngine(object):
+class QueryEngineInterface(object):
+    """Very basic class for `QueryEngine`\s defining the interface
+
+    It should not be used directly, but is used to check either we are
+    working with QueryEngine instances
+    """
+
+    def train(self, dataset):
+        raise NotImplementedError
+
+
+    def query_byid(self, fid):
+        """Return feature ids of neighbors for a given feature id
+        """
+        raise NotImplementedError
+
+
+    def query(self, **kwargs):
+        """Return feature ids of neighbors given a specific query
+        """
+        raise NotImplementedError
+
+    #
+    # aliases
+    #
+
+    def __call__(self, **kwargs):
+        return self.query(**kwargs)
+
+
+    def __getitem__(self, fid):
+        return self.query_byid(fid)
+
+
+
+class QueryEngine(QueryEngineInterface):
     """Basic class defining interface for querying neighborhood in a dataset
 
     Derived classes provide specific implementations possibly with trade-offs
@@ -293,8 +330,7 @@ class QueryEngine(object):
           a dictionary of query objects. Something like
           dict(voxel_indices=Sphere(3))
         """
-        # XXX for example:
-        # voxels=Sphere(diameter=3)
+        super(QueryEngine, self).__init__()
         self._queryobjs = kwargs
         self._queryattrs = {}
 
@@ -312,21 +348,11 @@ class QueryEngine(object):
     def query_byid(self, fid):
         """Return feature ids of neighbors for a given feature id
         """
-        kwargs = {}
-        for space in self._queryattrs:
-            kwargs[space] = self._queryattrs[space][fid]
+        queryattrs = self._queryattrs
+        kwargs = dict([(space, queryattrs[space][fid])
+                       for space in queryattrs])
         return self.query(**kwargs)
 
-    #
-    # aliases
-    #
-
-    def __call__(self, **kwargs):
-        return self.query(**kwargs)
-
-
-    def __getitem__(self, fid):
-        return self.query_byid(fid)
 
 
 class IndexQueryEngine(QueryEngine):
@@ -464,10 +490,95 @@ class IndexQueryEngine(QueryEngine):
             raise ValueError, "Do not know how to treat space(s) %s given " \
                   "in parameters of the query" % (kwargs.keys())
         # only ids are of interest -> flatten
-        # and we need to back-transfer them into dataset ids by substracting 1
+        # and we need to back-transfer them into dataset ids by subtracting 1
         res = self._searcharray[np.ix_(*slicer)].flatten() - 1
         res = res[res>=0]              # return only the known ones
         if self.sorted:
             return sorted(res)
         else:
             return res
+
+
+class CachedQueryEngine(QueryEngineInterface):
+    """Provides caching facility for query engines.
+
+    Notes
+    -----
+
+    This QueryEngine simply remembers the results of the previous
+    queries.  Not much checking is done on either datasets it gets in
+    :meth:`train` is the same as the on in previous sweep of queries,
+    i.e. either none of the relevant for underlying QueryEngine
+    feature attributes was modified.  So, CAUTION should be paid to
+    avoid calling the same instance of `CachedQueryEngine` on
+    different datasets (which might have different masking etc) .
+
+    :func:`query_byid` should be working reliably and without
+    surprises.
+
+    :func:`query` relies on hashid of the queries, so there might be a
+    collision! Thus consider it EXPERIMENTAL for now.
+    """
+
+    def __init__(self, qe):
+        """
+        Parameters
+        ----------
+        qe : QueryEngine
+          Results of which engine to cache
+        """
+        super(CachedQueryEngine, self).__init__()
+        self._qe = qe
+        self._trained_ds_fa_hash = None
+        """Will give information about either dataset's FA were changed
+        """
+        self._lookup_ids = None
+        self._lookup = None
+
+    def train(self, dataset):
+        """'Train' `CachedQueryEngine`.
+
+        Raises
+        ------
+        ValueError
+          If `dataset`'s .fa were changed -- it would raise an
+          exception telling to `untrain` explicitly, since the idea is
+          to reuse CachedQueryEngine with the same engine and same
+          dataset (up to variation of .sa, such as labels permutation
+        """
+        ds_fa_hash = idhash_(dataset.fa) + ':%d' % dataset.fa._uniform_length
+        if self._trained_ds_fa_hash is None:
+            # First time is called
+            self._trained_ds_fa_hash = ds_fa_hash
+            self._qe.train(dataset)     # train the qe
+            self._lookup_ids = [None] * dataset.nfeatures # lookup for query_byid
+            self._lookup = {}           # generic lookup
+        elif self._trained_ds_fa_hash != ds_fa_hash:
+            raise ValueError, \
+                  "Feature attributes of %s (idhash=%r) were changed from " \
+                  "what this %s was trained on (idhash=%r). Untrain it " \
+                  "explicitly if you like to reuse it on some other data." \
+                  % (dataset, ds_fa_hash, self, self._trained_ds_fa_hash)
+        else:
+            pass
+
+    def untrain(self):
+        """Forgetting that CachedQueryEngine was already trained
+        """
+        self._trained_ds_fa_hash = None
+
+
+    @borrowdoc(QueryEngineInterface)
+    def query_byid(self, fid):
+        v = self._lookup_ids[fid]
+        if v is None:
+            self._lookup_ids[fid] = v = self._qe.query_byid(fid)
+        return v
+
+    @borrowdoc(QueryEngineInterface)
+    def query(self, **kwargs):
+        k = idhash_(kwargs.items())
+        v = self._lookup.get(k, None)
+        if v is None:
+            self._lookup[k] = v = self._qe.query(**kwargs)
+        return v
