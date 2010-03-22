@@ -250,7 +250,7 @@ if externals.exists('shogun'):
             ]
 
     _optional_regressions = []
-    if externals.exists('shogun.krr'):
+    if externals.exists('shogun.krr') and externals.versions['shogun'] >= '0.9':
         _optional_regressions += ['krr']
     for impl in ['libsvr'] + _optional_regressions:# \
         # XXX svrlight sucks in SG -- dont' have time to figure it out

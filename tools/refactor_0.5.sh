@@ -74,9 +74,9 @@ _getHandlers	_get_handlers
 _getIndexes	_get_indexes
 getLabels	get_labels
 getLabels_map	get_labels_map
-_getLevelsDict	_get_levels_dict
-_getLevelsDict_virtual	_get_levels_dict_virtual
-_getLevels	_get_levels
+_getLevelsDict	_get_levels
+_getLevelsDict_virtual	_get_levels_virtual
+_getLevels	_get_selected_levels
 getMajorityVote	get_majority_vote
 getMap	get_map
 getMaps	get_maps
@@ -121,7 +121,7 @@ leastSqFit	least_sq_fit
 levelsListing	levels_listing
 levelType	level_type
 loadAtlas	load_atlas
-_loadData	_load_data
+_loadData	_load_metadata
 _loadFile	_load_file
 _loadImages	_load_images
 mahalanobisDistance	mahalanobis_distance
@@ -136,7 +136,7 @@ MNI2Tal_YOHflirt	mni_to_tal_yohflirt
 multipleChunks	multiple_chunks
 myFirstPage	my_first_page
 myLaterPages	my_later_pages
-Nlevels	n_levels
+Nlevels	nlevels
 normalFeatureDataset	normal_feature_dataset
 oneMinusCorrelation	one_minus_correlation
 OneMinus	one_minus

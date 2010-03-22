@@ -34,6 +34,8 @@ else:
     sgk.GaussianKernel = None
     sgk.PolyKernel = None
 
+if __debug__:
+    from mvpa.base import debug
 
 class SGKernel(Kernel):
     """A Kernel object with internal representation in Shogun"""
@@ -50,7 +52,15 @@ class SGKernel(Kernel):
     @staticmethod
     def _data2features(data):
         """Converts data to shogun features"""
-        return RealFeatures(data.astype(float).T)
+        if __debug__:
+            debug('KRN_SG',
+                  'Converting data of shape %s into shogun RealFeatures'
+                  % (data.shape,))
+        res = RealFeatures(data.astype(float).T)
+        if __debug__:
+            debug('KRN_SG', 'Done converting data')
+
+        return res
 
 # Conversion methods
 def _as_raw_sg(kernel):
