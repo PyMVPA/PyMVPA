@@ -32,7 +32,8 @@ from mvpa.misc.param import Parameter
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.datasets.miscfx import get_samples_by_attr
 from mvpa.misc.attrmap import AttributeMap
-from mvpa.misc.state import ConditionalAttribute, ClassWithCollections, Harvestable
+from mvpa.misc.state import ConditionalAttribute, ClassWithCollections, \
+     Harvestable
 from mvpa.mappers.base import FeatureSliceMapper
 
 from mvpa.clfs.base import Classifier
@@ -43,7 +44,8 @@ from mvpa.measures.base import \
     BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer, \
     MappedClassifierSensitivityAnalyzer, \
     FeatureSelectionClassifierSensitivityAnalyzer, \
-    RegressionAsClassifierSensitivityAnalyzer
+    RegressionAsClassifierSensitivityAnalyzer, \
+    BinaryClassifierSensitivityAnalyzer
 
 from mvpa.base import warning
 
@@ -129,7 +131,6 @@ class BoostedClassifier(Classifier, Harvestable):
             self.__changedData_isset = False
 
 
-    ##REF: Name was automagically refactored
     def _get_feature_ids(self):
         """Custom _get_feature_ids for `BoostedClassifier`
         """
@@ -159,7 +160,6 @@ class BoostedClassifier(Classifier, Harvestable):
         return raw_predictions
 
 
-    ##REF: Name was automagically refactored
     def _set_classifiers(self, clfs):
         """Set the classifiers used by the boosted classifier
 
@@ -194,7 +194,6 @@ class BoostedClassifier(Classifier, Harvestable):
             clf.untrain()
         super(BoostedClassifier, self).untrain()
 
-    ##REF: Name was automagically refactored
     def get_sensitivity_analyzer(self, **kwargs):
         """Return an appropriate SensitivityAnalyzer"""
         return BoostedClassifierSensitivityAnalyzer(
@@ -260,7 +259,6 @@ class ProxyClassifier(Classifier):
                  (self.__clf.summary().replace('\n', '\n |'))
         return s
 
-    ##REF: Name was automagically refactored
     def _set_retrainable(self, value, force=False):
         # XXX Lazy implementation
         self.clf._set_retrainable(value, force=force)
@@ -312,9 +310,17 @@ class ProxyClassifier(Classifier):
 
 
     @group_kwargs(prefixes=['slave_'], passthrough=True)
-    ##REF: Name was automagically refactored
     def get_sensitivity_analyzer(self, slave_kwargs, **kwargs):
-        """Return an appropriate SensitivityAnalyzer"""
+        """Return an appropriate SensitivityAnalyzer
+
+        Parameters
+        ----------
+        slave_kwargs : dict
+          Arguments to be passed to the proxied (slave) classifier
+        **kwargs
+          Specific additional arguments for the sensitivity analyzer
+          for the class.  See documentation of a corresponding `.__sa_class__`.
+        """
         return self.__sa_class__(
                 self,
                 analyzer=self.__clf.get_sensitivity_analyzer(**slave_kwargs),
@@ -873,6 +879,8 @@ class BinaryClassifier(ProxyClassifier):
     """`ProxyClassifier` which maps set of two labels into +1 and -1
     """
 
+    __sa_class__ = BinaryClassifierSensitivityAnalyzer
+
     def __init__(self, clf, poslabels, neglabels, **kwargs):
         """
         Parameters
@@ -888,8 +896,12 @@ class BinaryClassifier(ProxyClassifier):
         ProxyClassifier.__init__(self, clf, **kwargs)
 
         # Handle labels
-        sposlabels = Set(poslabels) # so to remove duplicates
-        sneglabels = Set(neglabels) # so to remove duplicates
+        sposlabels = set(poslabels)
+        sneglabels = set(neglabels)
+
+        # TODO: move to use AttributeMap
+        #self._attrmap = AttributeMap(dict([(l, -1) for l in sneglabels] +
+        #                                  [(l, +1) for l in sposlabels]))
 
         # check if there is no overlap
         overlap = sposlabels.intersection(sneglabels)
@@ -918,6 +930,13 @@ class BinaryClassifier(ProxyClassifier):
         else:
             self.__predictneg = self.__neglabels[0]
 
+    @property
+    def poslabels(self):
+        return self.__poslabels
+
+    @property
+    def neglabels(self):
+        return self.__neglabels
 
     def __repr__(self, prefixes=[]):
         prefix = "poslabels=%s, neglabels=%s" % (
@@ -966,7 +985,8 @@ class BinaryClassifier(ProxyClassifier):
 
         # now we got a dataset with only 2 labels
         if __debug__:
-            assert((datasetselected.sa[targets_sa_name].unique == [-1, 1]).all())
+            assert(set(datasetselected.sa[targets_sa_name].unique) ==
+                   set([-1, 1]))
 
         self.clf.train(datasetselected)
 
@@ -1012,6 +1032,12 @@ class MulticlassClassifier(CombinedClassifier):
 
         self.__clf = clf
         """Store sample instance of basic classifier"""
+
+        # adhere to slave classifier capabilities
+        if clf is not None:
+            self.__tags__ += clf.__tags__
+        if not 'multiclass' in self.__tags__:
+            self.__tags__ += ['multiclass']
 
         # Some checks on known ways to do multiclass
         if bclf_type == "1-vs-1":
@@ -1182,7 +1208,8 @@ class SplitClassifier(CombinedClassifier):
                 if __debug__:
                     dact = debug.active
                     if 'CLFSPL_' in dact:
-                        debug('CLFSPL_', 'Split %d:\n%s' % (i, self.confusion))
+                        debug('CLFSPL_',
+                              'Split %d:\n%s' % (i, self.ca.confusion))
                     elif 'CLFSPL' in dact:
                         debug('CLFSPL', 'Split %d error %.2f%%'
                               % (i, self.ca.confusion.summaries[-1].error))
@@ -1193,17 +1220,16 @@ class SplitClassifier(CombinedClassifier):
 
 
     @group_kwargs(prefixes=['slave_'], passthrough=True)
-    ##REF: Name was automagically refactored
     def get_sensitivity_analyzer(self, slave_kwargs, **kwargs):
         """Return an appropriate SensitivityAnalyzer for `SplitClassifier`
 
         Parameters
         ----------
         combiner
-          If not provided, first_axis_mean is assumed
+          If not provided, `first_axis_mean` is assumed
         """
         return BoostedClassifierSensitivityAnalyzer(
-                self,
+                self, sa_attr='splits',
                 analyzer=self.__clf.get_sensitivity_analyzer(**slave_kwargs),
                 **kwargs)
 
@@ -1347,7 +1373,7 @@ class FeatureSelectionClassifier(ProxyClassifier):
             add_ = ""
             if "CLFFS_" in debug.active:
                 add_ = " Selected features: %s" % \
-                       self.__feature_selection.selected_ids
+                       self.__feature_selection.ca.selected_ids
             debug("CLFFS", "%(fs)s selected %(nfeat)d out of " +
                   "%(dsnfeat)d features.%(app)s",
                   msgargs={'fs':self.__feature_selection,
@@ -1373,7 +1399,6 @@ class FeatureSelectionClassifier(ProxyClassifier):
         # TODO see for ProxyClassifier
         #self.ca._copy_ca_(self.__maskclf, deep=False)
 
-    ##REF: Name was automagically refactored
     def _get_feature_ids(self):
         """Return used feature ids for `FeatureSelectionClassifier`
 
@@ -1392,7 +1417,6 @@ class FeatureSelectionClassifier(ProxyClassifier):
         self.ca._copy_ca_(clf, ['estimates'], deep=False)
         return result
 
-    ##REF: Name was automagically refactored
     def set_test_dataset(self, testdataset):
         """Set testing dataset to be used for feature selection
         """
@@ -1556,7 +1580,6 @@ class RegressionAsClassifier(ProxyClassifier):
         return predictions
 
 
-    ##REF: Name was automagically refactored
     def _set_retrainable(self, value, **kwargs):
         if value:
             raise NotImplementedError, \

@@ -83,6 +83,9 @@ from mvpa.datasets.eep import *
 from mvpa.datasets.eventrelated import *
 # safe to import since multiple externals are handled inside
 from mvpa.datasets.mri import *
+# make NiftiImage available for people
+if externals.exists('nifti'):
+    from nifti import NiftiImage
 
 from mvpa.datasets import splitters
 from mvpa.datasets.splitters import *
@@ -120,6 +123,7 @@ from mvpa.measures.base import *
 from mvpa.measures.noiseperturbation import *
 from mvpa.misc.neighborhood import *
 from mvpa.measures.searchlight import *
+from mvpa.measures.gnbsearchlight import *
 from mvpa.measures.corrstability import *
 
 from mvpa.support.copy import *
@@ -174,11 +178,8 @@ if externals.exists("lxml") and externals.exists("nifti"):
 
 
 if externals.exists("running ipython env"):
-    try:
-        if not cfg.getboolean('ipython', 'complete protected', False):
-            __IPYTHON__.Completer.omit__names = 2
-    finally:
-        pass
+    from mvpa.support.ipython import *
+    ipy_activate_pymvpa_goodies()
 
 def suite_stats():
     """Return cruel dict of things which evil suite provides

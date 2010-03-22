@@ -22,7 +22,7 @@ However, sometimes having a scriptable plotting facility within Python is
 desired. There are a number of candidate tools for this purpose (e.g. Mayavi_),
 but also PyMVPA itself offers some basic MRI plotting.
 
-.. _Mayavi: http://mayavi.sourceforge.net
+.. _Mayavi: http://code.enthought.com/projects/mayavi/
 
 In this example, we are showing a quick-and-dirty plot of a voxel-wise
 ANOVA measure, overlaid on the respective brain anatomy. Note that the plotting
@@ -37,7 +37,8 @@ elsewhere, hence we only provide the code here for the sake of completeness.
 from mvpa.suite import *
 
 # load PyMVPA example dataset
-datapath = os.path.join(pymvpa_datadbroot, 'demo_blockfmri', 'demo_blockfmri')
+datapath = os.path.join(pymvpa_datadbroot,
+                        'tutorial_data', 'tutorial_data', 'data')
 attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
 dataset = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
                        targets=attr.targets,

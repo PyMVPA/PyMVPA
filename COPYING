@@ -14,7 +14,7 @@ documentation is covered by the MIT license.
 
   The MIT License
 
-  Copyright (c) 2006-2009 Michael Hanke
+  Copyright (c) 2006-2010 Michael Hanke
                 2007-2010 Yaroslav Halchenko
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -36,9 +36,9 @@ documentation is covered by the MIT license.
   THE SOFTWARE.
 
 
-**************
+==============
 3rd Party Code
-**************
+==============
 
 Some code distributed within PyMVPA was not developed by PyMVPA team, hence
 you should adhere to the copyright and license terms of respective authors if

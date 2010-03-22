@@ -24,11 +24,13 @@ class Mapper(object):
     """Basic mapper interface definition.
 
     ::
+
               forward
              --------->
          IN              OUT
              <--------/
                reverse
+
     """
     def __init__(self, inspace=None):
         """
@@ -590,6 +592,7 @@ class CombinedMapper(Mapper):
 
 
     ##REF: Name was automagically refactored
+    ##TODO: yoh: is deprecated, right?
     def select_out(self, outIds):
         """Remove some elements and leave only ids in 'out'/feature space.
 

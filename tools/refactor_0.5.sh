@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -eu
 files=$*
 
@@ -10,6 +10,8 @@ if [ -z "$files" ]; then
 		exit 1
 	fi
 fi
+
+echo "Replacing known patters"
 
 echo \
 "absminDistance	absmin_distance
@@ -72,9 +74,9 @@ _getHandlers	_get_handlers
 _getIndexes	_get_indexes
 getLabels	get_labels
 getLabels_map	get_labels_map
-_getLevelsDict	_get_levels_dict
-_getLevelsDict_virtual	_get_levels_dict_virtual
-_getLevels	_get_levels
+_getLevelsDict	_get_levels
+_getLevelsDict_virtual	_get_levels_virtual
+_getLevels	_get_selected_levels
 getMajorityVote	get_majority_vote
 getMap	get_map
 getMaps	get_maps
@@ -119,7 +121,7 @@ leastSqFit	least_sq_fit
 levelsListing	levels_listing
 levelType	level_type
 loadAtlas	load_atlas
-_loadData	_load_data
+_loadData	_load_metadata
 _loadFile	_load_file
 _loadImages	_load_images
 mahalanobisDistance	mahalanobis_distance
@@ -134,7 +136,7 @@ MNI2Tal_YOHflirt	mni_to_tal_yohflirt
 multipleChunks	multiple_chunks
 myFirstPage	my_first_page
 myLaterPages	my_later_pages
-Nlevels	n_levels
+Nlevels	nlevels
 normalFeatureDataset	normal_feature_dataset
 oneMinusCorrelation	one_minus_correlation
 OneMinus	one_minus
@@ -184,7 +186,7 @@ _setActive	_set_active
 _setAnalyzers	_set_analyzers
 _setClassifier	_set_classifier
 _setClassifiers	_set_classifiers
-setCoordT	set_coord_t
+setCoordT	set_coordT
 setDistance	set_distance
 _setFElements	_set_f_elements
 _setHandlers	_set_handlers
@@ -226,11 +228,25 @@ __wasDataChanged	__was_data_changed
 _waveletFamilyCallback	_wavelet_family_callback
 nperlabel	npertarget
 roisizes	roi_sizes
-xuniqueCombinations	xunique_combinations"  | \
+xuniqueCombinations	xunique_combinations
+|model='linear'	polyord=1
+|baselinetargets=	param_est=('targets'\\\,) 
+targetdtype	dtype
+detrend	poly_detrend
+nifti_dataset	fmri_dataset"  | \
 while read old new; do
-	echo -en "$old:\t"
+	echo -en "\r$old                             "
+
 	# def definition
 	grep -l "def *$old" $files | xargs -r sed -i -e "s,^\( *\)\(def  *$old*\)(,\1##REF: Name was automagically refactored\n\1def $new(,g"
 	# occurances
-	grep -l "\<$old\>" $files | xargs -r sed -i -e "s,\<$old\>,$new,g" && echo "" || :
+	if [ "${old:0:1}" = '|' ]; then
+		old="${old:1}"
+		# we got a complete regexp -- no need to guard
+		grep -l "$old" $files | xargs -r sed -i -e "s,$old,$new,g" && echo -n "" || :
+	else
+		# we got a word expression -- need to guard on the boundaries
+		grep -l "\<$old\>" $files | xargs -r sed -i -e "s,\<$old\>,$new,g" && echo -n "" || :
+	fi
 done
+echo -e "\rDONE                              "

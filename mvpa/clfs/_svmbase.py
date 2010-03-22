@@ -105,7 +105,7 @@ class _SVM(Classifier):
     """Parameters which are specific to a given instantiation of SVM
     """
 
-    __tags__ = [ 'svm', 'kernel-based' ]
+    __tags__ = [ 'svm', 'kernel-based', 'swig' ]
 
     def __init__(self, **kwargs):
         """Init base class of SVMs. *Not to be publicly used*

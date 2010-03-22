@@ -64,6 +64,7 @@ Visualization
 .. toctree::
 
    examples/erp_plot
+   examples/knn_plot
    examples/pylab_2d
    examples/topo_plot
    examples/som

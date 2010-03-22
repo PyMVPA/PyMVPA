@@ -41,7 +41,7 @@ replicate the :ref:`Haxby et al. (2001) <HGF+01>`, but what if we want to
 try a different algorithm? In this case a nice feature of PyMVPA comes into
 play. All classifiers implement a common interface that makes them easily
 exchangeable without the need to adapt any other part of the analysis code.
-If, for example, we want to try the popular :term:`support vector machine`
+If, for example, we want to try the popular :mod:`support vector machine <mvpa.clfs.svm>`
 (SVM) on our example dataset it looks like this:
 
 >>> clf = LinearCSVMC()
@@ -198,7 +198,7 @@ analysis procedures can be applied here as well.
 .. _cross tabulation: http://en.wikipedia.org/wiki/Cross_tabulation
 .. _signal detection theory: http://en.wikipedia.org/wiki/Detection_theory
 
-PyMVPA provides convenient access to :term:`confusion matrices`, i.e.
+PyMVPA provides convenient access to :term:`confusion matrices <confusion matrix>`, i.e.
 contingency tables of targets vs. actual predictions.  However, to prevent
 wasting CPU-time and memory they are not computed by default, but instead
 have to be enabled explicitly. Optional analysis results like this are
