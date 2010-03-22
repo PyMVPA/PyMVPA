@@ -48,9 +48,9 @@ def test_atlases(name):
 
     # Atlas must have at least 1 level and that one must
     # have some labels
-    ok_(len(atlas.levels_dict[0].labels) > 0)
+    ok_(len(atlas.levels[0].labels) > 0)
 
-    for res in [ atlas[coord],
+    for res in [ atlas(coord),
                  atlas.label_point(coord) ]:
         ok_(res.get('coord_queried', None) == coord,
                         '%s: Comparison failed. Got %s and %s'
@@ -62,7 +62,7 @@ def test_atlases(name):
     # test explicit level specification via slice, although bogus here
     # XXX levels in queries should be deprecated -- too much of
     # performance hit
-    res0 = atlas[coord, range(atlas.n_levels)]
+    res0 = atlas(coord, range(atlas.nlevels))
     ok_(res0 == res)
 
     #print atlas[ 0, -7, 20, [1,2,3] ]
@@ -77,7 +77,7 @@ def test_fsl_hox_queries():
 
     tshape = (182, 218, 182)        # target shape of fsl atlas chosen by default
     atl = Atlas(name='HarvardOxford-Cortical')
-    atl.levels_dict[0].find('Frontal Pole')
+    atl.levels[0].find('Frontal Pole')
     assert_equal(len(atl.find(re.compile('Fusiform'), unique=False)),
                  4)
 
@@ -88,7 +88,8 @@ def test_fsl_hox_queries():
 
     ms = atl.get_maps('Fusiform')
     assert_equal(len(ms), 4)
-    assert_equal(ms[0].shape, tshape)
+    for l, m in ms.iteritems():
+        assert_equal(m.shape, tshape)
 
     ms = atl.get_maps('ZaZaZa')
     ok_(not len(ms))
@@ -104,16 +105,18 @@ def test_fsl_hox_queries():
     ok_(ff_map[52, 91, 119] == 0)
 
     # Lets validate some coordinates queries
-    r_gi = atl[(-48, -75, 19)]
+    r_gi = atl(-48, -75, 19)
     r_point = atl.label_point((-48, -75, 19))
     r_voxel = atl.label_voxel((138, 51, 91))
 
+    # by default, __getitem__ queries coordinates in voxels
+    ok_(r_voxel == atl[(138, 51, 91)] == atl[138, 51, 91])
     # by default -- opens at highest-available resolution,
     # i.e. 1mm since a while
     ok_(atl.resolution == 1.)
 
-    # by default, __getitem__ queries coordinates in space
-    ok_(r_gi == r_point)
+    # by default, __call__ queries coordinates in space
+    ok_(r_point == atl(-48, -75, 19) == atl((-48, -75, 19)))
 
     ok_(r_point['labels'] == r_voxel['labels'] ==
          [[{'index': 21, 'prob': 64,
