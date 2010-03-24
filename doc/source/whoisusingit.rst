@@ -44,12 +44,33 @@ Institutions Where PyMVPA Is Used
 Studies employing PyMVPA
 ========================
 
-* :ref:`Meyer et al., Nature Neuroscience (2010) <MKE10>`: Predicting visual stimuli based on
-  activity in auditory cortices.
+* :ref:`Meyer et al., Nature Neuroscience (2010) <MKE10>`: Predicting visual
+  stimuli based on activity in auditory cortices.
 
-* :ref:`Manelis et al., Human Brain Mapping (2010) <MHH10>`: Implicit memory for object
-  locations depends on reactivation of encoding-related brain regions.
+* :ref:`Manelis et al., Human Brain Mapping (2010) <MHH10>`: Implicit memory
+  for object locations depends on reactivation of encoding-related brain
+  regions.
 
-* :ref:`Sun et al., Biological Psychiatry (2009) <SET+09>`: Elucidating an MRI-Based Neuroanatomic
-  Biomarker for Psychosis: Classification Analysis Using Probabilistic Brain
-  Atlas and Machine Learning Algorithms.
+* :ref:`Sun et al., Biological Psychiatry (2009) <SET+09>`: Elucidating an
+  MRI-Based Neuroanatomic Biomarker for Psychosis: Classification Analysis
+  Using Probabilistic Brain Atlas and Machine Learning Algorithms.
+
+
+Articles referring to PyMVPA
+============================
+
+* :ref:`Spacek et al., The Neuromorphic Engineer (2009) <SS09>`: Python in
+  Neuroscience.
+
+* :ref:`Bandettini, Journal of Integrative Neuroscience (2009) <Ban09>`: Seven
+  topics in functional magnetic reasonance imaging.
+
+* :ref:`Garcia et al., Frontiers in Neuroinformatics (2009) <GF09>`:
+  OpenElectrophy: An Electrophysiological Data- and Analysis-Sharing Framework.
+
+* :ref:`Mur et al., Social Cognitive and Affective Neuroscience (2009)
+  <MBK09>`: Revealing representational content with pattern-information fMRI –
+  an introductory guide.
+
+* :ref:`Pereira et al., NeuroImage (2009) <PMB09>`: Machine learning
+  classifiers and fMRI: A tutorial overview.
