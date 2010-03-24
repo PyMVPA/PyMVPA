@@ -39,7 +39,7 @@ class SamplesLookup(object):
                       "Generating dataset origids in SamplesLookup for %(ds)s",
                       msgargs=dict(ds=ds))
 
-            ds.sa.update({'origids': np.arange(ds.nsamples)})
+            ds.init_origids('samples')  # XXX may be both?
             sample_ids = ds.sa.origids
 
         try:
@@ -52,8 +52,16 @@ class SamplesLookup(object):
                       "Generating dataset magic_id in SamplesLookup for %(ds)s",
                       msgargs=dict(ds=ds))
 
+        nsample_ids = len(sample_ids)
         self._map = dict(zip(sample_ids,
-                             range(len(sample_ids))))
+                             range(nsample_ids)))
+        if __debug__:
+            # some sanity checks
+            if len(self._map) != nsample_ids:
+                raise ValueError, \
+                    "Apparently samples' origids are not uniquely identifying" \
+                    " samples in %s.  You must change them so they are unique" \
+                    ". Use ds.init_origids('samples')" % ds
 
     def __call__(self, ds):
         """
