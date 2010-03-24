@@ -9,13 +9,23 @@
 """Unit tests for new Kernel-based SVMs"""
 
 import numpy as np
+from time import time
 
 from mvpa.testing import *
 from mvpa.testing.datasets import datasets
 skip_if_no_external('shogun')
 
+from mvpa.kernels.base import CachedKernel
+from mvpa.kernels.sg import RbfSGKernel, LinearSGKernel
+
+from mvpa.misc.data_generators import normal_feature_dataset
+
 from mvpa.clfs.libsvmc import SVM as lsSVM
 from mvpa.clfs.sg import SVM as sgSVM
+
+from mvpa.datasets.splitters import NFoldSplitter
+from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
+from mvpa.clfs.transerror import TransferError
 
 
 class SVMKernelTests(unittest.TestCase):
@@ -29,13 +39,6 @@ class SVMKernelTests(unittest.TestCase):
 
     def test_cache_speedup(self):
         skip_if_no_external('shogun', ver_dep='shogun:rev', min_version=4455)
-        from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
-        from mvpa.datasets.splitters import NFoldSplitter
-        from time import time
-        from mvpa.clfs.transerror import TransferError
-        from mvpa.kernels.base import CachedKernel
-        from mvpa.kernels.sg import RbfSGKernel
-        from mvpa.misc.data_generators import normal_feature_dataset
 
         ck = sgSVM(kernel=CachedKernel(kernel=RbfSGKernel(sigma=2)), C=1)
         sk = sgSVM(kernel=RbfSGKernel(sigma=2), C=1)
@@ -76,6 +79,47 @@ class SVMKernelTests(unittest.TestCase):
         # Speedup ideally should be 10, though it's not purely linear
         self.failIf(speedup < 2, 'Problem caching data - too slow!')
 
+    def test_cached_kernel_different_datasets(self):
+        skip_if_no_external('shogun', ver_dep='shogun:rev', min_version=4455)
+
+        # Inspired by the problem Swaroop ran into
+        k  = LinearSGKernel(normalizer_cls=False)
+        k_ = LinearSGKernel(normalizer_cls=False)   # to be cached
+        ck = CachedKernel(k_)
+
+        clf = sgSVM(svm_impl='libsvm', kernel=k, C=-1)
+        clf_ = sgSVM(svm_impl='libsvm', kernel=ck, C=-1)
+
+        cvte = CrossValidatedTransferError(
+            TransferError(clf), NFoldSplitter())
+        cvte_ = CrossValidatedTransferError(
+            TransferError(clf_), NFoldSplitter())
+
+        te = TransferError(clf)
+        te_ = TransferError(clf_)
+
+        for r in xrange(2):
+            ds1 = datasets['uni2medium']
+            errs1 = cvte(ds1)
+            ck.compute(ds1)
+            ok_(ck._recomputed)
+            errs1_ = cvte_(ds1)
+            ok_(~ck._recomputed)
+            assert_array_equal(errs1, errs1_)
+
+            ds2 = datasets['uni3small']
+            errs2 = cvte(ds2)
+            ck.compute(ds2)
+            ok_(ck._recomputed)
+            errs2_ = cvte_(ds2)
+            ok_(~ck._recomputed)
+            assert_array_equal(errs2, errs2_)
+
+            ssel = np.round(datasets['uni2large'].samples[:5, 0]).astype(int)
+            terr = te(datasets['uni3small_test'][ssel], datasets['uni3small_train'][::2])
+            terr_ = te_(datasets['uni3small_test'][ssel], datasets['uni3small_train'][::2])
+            ok_(~ck._recomputed)
+            ok_(terr == terr_)
 
 def suite():
     return unittest.makeSuite(SVMKernelTests)
