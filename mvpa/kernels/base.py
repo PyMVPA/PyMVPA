@@ -331,9 +331,16 @@ class CachedKernel(NumpyKernel):
         self.params.reset()
         # TODO: store params representation for later comparison
 
-    def compute(self, ds1, ds2=None):
+    def compute(self, ds1, ds2=None, force=False):
         """Automatically computes and caches the kernel or extracts the
         relevant part of a precached kernel into self._k
+
+        Parameters
+        ----------
+        force : bool
+          If True it forces re-caching of the kernel.  It is advised
+          to be used whenever explicitly pre-caching the kernel and
+          it is known that data was changed.
         """
         if __debug__ and 'KRN' in debug.active:
             debug('KRN', "Computing kernel %(inst)s on ds1=%(ds1)s, ds2=%(ds1)s"
@@ -348,7 +355,7 @@ class CachedKernel(NumpyKernel):
 
         # TODO: figure out if data were modified...
         # params_modified = True
-        changedData = False
+        changedData = False or force
         if len(self.params.which_set()) or changedData \
            or self._lhsids is None:
             self._cache(ds1, ds2)# hopefully this will never reset values, just
