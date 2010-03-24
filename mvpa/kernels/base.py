@@ -355,16 +355,13 @@ class CachedKernel(NumpyKernel):
             # changed status
         else:
             # figure d1, d2
-            # TODO: find saner numpy way to select both rows and columns
             try:
                 lhsids = self._lhsids(ds1) #
                 if ds2 is None:
                     rhsids = lhsids
                 else:
                     rhsids = self._rhsids(ds2)
-                self._k = self._kfull.take(
-                    lhsids, axis=0).take(
-                    rhsids, axis=1)
+                self._k = self._kfull[np.ix_(lhsids, rhsids)]
             except KeyError:
                 self._cache(ds1, ds2)
 
