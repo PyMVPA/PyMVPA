@@ -10,6 +10,9 @@
 
 import numpy as np
 
+if __debug__:
+    from mvpa.base import debug
+
 class SamplesLookup(object):
     """Map to translate sample origids into unique indices.
     """
@@ -21,7 +24,7 @@ class SamplesLookup(object):
         ds : Dataset
             Dataset for which to create the map
         """
-        
+
         # TODO: Generate origids and magic_id in Dataset!!
         # They are simply added here for development convenience, but they
         # should be removed.  We should also consider how exactly to calculate
@@ -32,29 +35,43 @@ class SamplesLookup(object):
         except AttributeError:
             # origids not yet generated
             if __debug__:
-                Warning("Generating dataset origids in SamplesLookup")
-            ds.sa.update({'origids':np.arange(ds.nsamples)})
+                debug('SAL',
+                      "Generating dataset origids in SamplesLookup for %(ds)s",
+                      msgargs=dict(ds=ds))
+
+            ds.sa.update({'origids': np.arange(ds.nsamples)})
             sample_ids = ds.sa.origids
-        
+
         try:
             self._orig_ds_id = ds.a.magic_id
         except AttributeError:
-            ds.a.update({'magic_id':hash(ds)})
+            ds.a.update({'magic_id': hash(ds)})
             self._orig_ds_id = ds.a.magic_id
             if __debug__:
-                Warning("Generating dataset magic_id in SamplesLookup")
-                
+                debug('SAL',
+                      "Generating dataset magic_id in SamplesLookup for %(ds)s",
+                      msgargs=dict(ds=ds))
+
         self._map = dict(zip(sample_ids,
                              range(len(sample_ids))))
 
     def __call__(self, ds):
         """
         .. note:
-           Will raise KeyError if lookup for sample_ids fails, or ds has not 
+           Will raise KeyError if lookup for sample_ids fails, or ds has not
            been mapped at all
            """
         if (not 'magic_id' in ds.a) or ds.a.magic_id != self._orig_ds_id:
-            raise KeyError, 'This dataset is not indexed by this SamplesLookup'
-        _map = self._map
-        return np.array([_map[i] for i in ds.sa.origids])
+            raise KeyError, \
+                  'Dataset %s is not indexed by %s' % (ds, self)
 
+        _map = self._map
+        _origids = ds.sa.origids
+
+        res = np.array([_map[i] for i in _origids])
+        if __debug__:
+            debug('SAL',
+                  "Successful lookup: %(inst)s on %(ds)s having "
+                  "origids=%(origids)s resulted in %(res)s",
+                  msgargs=dict(inst=self, ds=ds, origids=_origids, res=res))
+        return res

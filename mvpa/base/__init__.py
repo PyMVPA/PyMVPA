@@ -291,6 +291,7 @@ if __debug__:
     debug.register('GPR_WEIGHTS', "Track progress of GPRWeights computation")
     debug.register('KRN',     "Kernels module (mvpa.kernels)")
     debug.register('KRN_SG',  "Shogun kernels module (mvpa.kernels.sg)")
+    debug.register('SAL',     "Samples lookup (for cached kernels)")
     debug.register('MOD_SEL', "Model Selector (also makes openopt's iprint=0)")
     debug.register('OPENOPT', "OpenOpt toolbox verbose (iprint=1)")
 
