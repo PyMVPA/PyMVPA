@@ -121,6 +121,44 @@ class SVMKernelTests(unittest.TestCase):
             ok_(~ck._recomputed)
             ok_(terr == terr_)
 
+    def test_vstack_and_origids_issue(self):
+        # That is actually what swaroop hit
+        skip_if_no_external('shogun', ver_dep='shogun:rev', min_version=4455)
+
+        # Inspired by the problem Swaroop ran into
+        k  = LinearSGKernel(normalizer_cls=False)
+        k_ = LinearSGKernel(normalizer_cls=False)   # to be cached
+        ck = CachedKernel(k_)
+
+        clf = sgSVM(svm_impl='libsvm', kernel=k, C=-1)
+        clf_ = sgSVM(svm_impl='libsvm', kernel=ck, C=-1)
+
+        cvte = CrossValidatedTransferError(
+            TransferError(clf), NFoldSplitter())
+        cvte_ = CrossValidatedTransferError(
+            TransferError(clf_), NFoldSplitter())
+
+        ds = datasets['uni2large_test'].copy(deep=True)
+        ok_(~('orig_ids' in ds.sa))     # assure that there are None
+        ck.compute(ds)                  # so we initialize origids
+        ok_('origids' in ds.sa)
+        ds2 = ds.copy(deep=True)
+        ds2.samples = np.zeros(ds2.shape)
+        from mvpa.base.dataset import vstack
+        ds_vstacked = vstack((ds2, ds))
+        # should complaint now since there would not be unique
+        # samples' origids
+        assert_raises(ValueError, ck.compute, ds_vstacked)
+
+        ds_vstacked.init_origids('samples')      # reset origids
+        ck.compute(ds_vstacked)
+
+        errs = cvte(ds_vstacked)
+        errs_ = cvte_(ds_vstacked)
+        # Following test would have failed since origids
+        # were just ints, and then non-unique after vstack
+        assert_array_equal(errs.samples, errs_.samples)
+
 def suite():
     return unittest.makeSuite(SVMKernelTests)
 
