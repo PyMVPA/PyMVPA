@@ -72,9 +72,6 @@ do_checkout() {
     $precmd git clean -df | indent
     #provide datadb
     [ -e "datadb" ] || $precmd ln -s "$datadbdir" .
-    # provide information in the log about what was current position
-    # in the branch
-    echo "I: " $(git describe)
 }
 
 do_build() {
@@ -142,6 +139,9 @@ sweep()
                 echo " ! FAILED ! Output was:"
                 cat $tmpfile | indent
             fi
+            # provide information in the log about what was current position
+            # in the branch
+            [ "$action" = "checkout" ] && echo "I: current position $(git describe)"
         done
         if [ "x$branch_has_problems" != x ]; then
             branches_with_problems+="\n  $branch: $branch_has_problems"
