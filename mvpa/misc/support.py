@@ -213,58 +213,6 @@ def getUniqueLengthNCombinations(L, n=None, sort=True):
         return list(xuniqueCombinations(L, n))
 
 
-def _getUniqueLengthNCombinations_binary(L, n=None, sort=True):
-    """Find all subsets of data
-
-    :Parameters:
-      L : list
-        list of unique ids
-      n : None or int
-        If None, all possible subsets are returned. If n is specified (int),
-        then only the ones of the length n are returned
-      sort : bool
-        Either to sort the resultant sequence
-
-    Adopted from Alex Martelli:
-    http://mail.python.org/pipermail/python-list/2001-January/067815.html
-    """
-    N = len(L)
-    if N > 20 and n == 1:
-        warning("getUniqueLengthNCombinations_binary should not be used for "
-                "large N")
-    result = []
-    for X in range(2**N):
-        x = [ L[i] for i in range(N) if X & (1L<<i) ]
-        if n is None or len(x) == n:
-            # yield x # if we wanted to use it as a generator
-            result.append(x)
-    result.sort()
-    # if __debug__ and n is not None:
-    #     # verify the result
-    #     # would need scipy... screw it
-    #     assert(len(result) == ...)
-    return result
-
-
-def getUniqueLengthNCombinations(L, n=None, sort=True):
-    """Find all subsets of data
-
-    :Parameters:
-      L : list
-        list of unique ids
-      n : None or int
-        If None, all possible subsets are returned. If n is specified (int),
-        then only the ones of the length n are returned
-
-    TODO: work out single stable implementation -- probably just by fixing
-    _getUniqueLengthNCombinations_lt3
-    """
-    if n == 1:
-        return _getUniqueLengthNCombinations_lt3(L, n)
-    else:
-        return _getUniqueLengthNCombinations_binary(L, n, sort=True)
-
-
 def indentDoc(v):
     """Given a `value` returns a string where each line is indented
 
