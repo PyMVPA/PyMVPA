@@ -148,7 +148,7 @@ def collect_nose_tests(verbosity=1):
     return tests
 
 
-def run_tests_using_nose(limit=None, verbosity=1):
+def run_tests_using_nose(limit=None, verbosity=1, exit_=False):
     """Run nose-based tests -- really really silly way, just to get started
 
     TODO: just switch to using numpy.testing framework, for that
@@ -187,10 +187,10 @@ def run_tests_using_nose(limit=None, verbosity=1):
                             if nt[5:] in limit]
 
     # run the tests
-    _ = main(defaultTest=(), config=config, exit=False)
+    _ = main(defaultTest=(), config=config, exit=exit_)
 
 
-def run(limit=None, verbosity=None):
+def run(limit=None, verbosity=None, exit_=False):
     """Runs the full or a subset of the PyMVPA unittest suite.
 
     Parameters
@@ -203,6 +203,8 @@ def run(limit=None, verbosity=None):
     verbosity : None or int
       Verbosity of unittests execution. If None, controlled by PyMVPA
       configuration tests/verbosity
+    exit_ : bool, optional
+      Either to exit with an error code upon the completion.
     """
     if __debug__:
         from mvpa.base import debug
@@ -235,7 +237,7 @@ def run(limit=None, verbosity=None):
     try:
         if externals.exists('nose'):
             # Lets just use nose
-            run_tests_using_nose(limit=limit, verbosity=verbosity)
+            run_tests_using_nose(limit=limit, verbosity=verbosity, exit_=exit_)
         else:
             print("T: Warning -- major bulk of tests is skipped since nose "
                   "is unavailable")
@@ -271,4 +273,4 @@ def run(limit=None, verbosity=None):
 __test__ = False
 
 if __name__ == "__main__":
-    run()
+    run(exit_=True)
