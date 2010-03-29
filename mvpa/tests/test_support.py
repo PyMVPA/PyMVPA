@@ -79,14 +79,14 @@ class SupportFxTests(unittest.TestCase):
 
     def test_mof_n_combinations(self):
         self.failUnlessEqual(
-            get_unique_length_n_combinations( range(3), 1 ), [[0],[1],[2]] )
+            unique_combinations( range(3), 1 ), [[0],[1],[2]] )
         self.failUnlessEqual(
-            get_unique_length_n_combinations(
+            unique_combinations(
                         range(4), 2 ),
                         [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]
                         )
         self.failUnlessEqual(
-            get_unique_length_n_combinations(
+            unique_combinations(
                         range(4), 3 ),
                         [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]] )
 
