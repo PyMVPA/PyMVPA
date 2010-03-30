@@ -336,10 +336,9 @@ def load_example_fmri_dataset():
     return ds
 
 
-def load_datadb_demo_blockfmri(path=os.path.join(pymvpa_datadbroot,
-                                                 'demo_blockfmri',
-                                                 'demo_blockfmri'),
-                               roi='brain'):
+def load_datadb_tutorial_data(path=os.path.join(
+      pymvpa_datadbroot, 'tutorial_data', 'tutorial_data', 'data'),
+    roi='brain'):
     """Loads the block-design demo dataset from PyMVPA dataset DB.
 
     Parameters
@@ -380,6 +379,11 @@ def load_datadb_demo_blockfmri(path=os.path.join(pymvpa_datadbroot,
                       mask=mask)
     return ds
 
+
+load_datadb_demo_blockfmri = load_datadb_tutorial_data
+"""For backward compatibility with tutorial_lib which people might be
+   "using" already.  Deprecate entirely whenever tutorial_data gets updated.
+"""
 
 def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None):
     """Generate a dataset with samples being temporally autocorrelated noise.
