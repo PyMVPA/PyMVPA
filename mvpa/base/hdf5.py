@@ -262,6 +262,12 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
     **kwargs
       All additional arguments will be passed to `h5py.Group.create_dataset()`
     """
+    if isinstance(obj, np.ndarray) and obj.dtype == np.object \
+       and not len(obj.shape):
+        # we store 0d object arrays just by content and set a flag
+        obj = np.asscalar(obj)
+        hdf.attrs.create('is_objarray', True)
+
     # if it is something that can go directly into HDF5, put it there
     # right away
     if np.isscalar(obj) \
@@ -419,7 +425,7 @@ def h5load(filename, name=None):
                                  % (name, filename))
             obj = hdf2obj(hdf[name])
         else:
-            if len(hdf) == 0:
+            if not len(hdf) and not len(hdf.attrs):
                 # there is nothing
                 obj = None
             else:
@@ -441,6 +447,9 @@ def h5load(filename, name=None):
                         # just a single with special naem -> special case:
                         # return as is
                         obj = hdf2obj(hdf['__unnamed__'])
+                        if 'is_objarray' in hdf.attrs:
+                            # handle 0d obj arrays
+                            obj = np.array(obj, dtype=np.object)
                     else:
                         # otherwise build dict with content
                         obj = {}

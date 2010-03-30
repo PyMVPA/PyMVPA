@@ -113,6 +113,7 @@ def test_0d_object_ndarray():
     a = np.array(0, dtype=object)
     h5save(f.name, a)
     a_ = h5load(f.name)
+    ok_(type(a_) == type(a))
     ok_(a == a_)
 
 def test_locally_defined_class_oldstyle():
