@@ -163,7 +163,7 @@ normalization.
 """
 
 # example voxel coordinates
-example_voxels = [(25,25,28), (25,23,28)]
+example_voxels = [(28,25,25), (28,23,25)]
 
 """
 
