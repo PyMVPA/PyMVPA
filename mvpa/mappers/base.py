@@ -296,12 +296,14 @@ class Mapper(object):
 class FeatureSliceMapper(Mapper):
     """Mapper to select a subset of features.
     """
-    def __init__(self, slicearg, dshape=None, **kwargs):
+    def __init__(self, slicearg, dshape=None, filler=0, **kwargs):
         """
         Parameters
         ----------
         slicearg : int, list(int), array(int), array(bool)
         dshape : tuple
+        filler : optional
+          Value to fill empty entries upon reverse operation
         """
         Mapper.__init__(self, **kwargs)
         # store it here, might be modified later
@@ -312,7 +314,7 @@ class FeatureSliceMapper(Mapper):
         if isinstance(slicearg, int):
             slicearg = [slicearg]
         self._slicearg = slicearg
-
+        self.filler = filler
 
     def __repr__(self):
         s = super(FeatureSliceMapper, self).__repr__()
@@ -378,7 +380,7 @@ class FeatureSliceMapper(Mapper):
         # features
         mapped.resize(data.shape[:1] + self.__dshape + data.shape[2:],
                       refcheck=False)
-        mapped.fill(0)
+        mapped.fill(self.filler)
         mapped[:, self._slicearg] = data
         return mapped
 
