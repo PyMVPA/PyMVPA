@@ -429,18 +429,12 @@ def h5load(filename, name=None):
                 # there is nothing
                 obj = None
             else:
-                try:
+                # stored objects can only by special groups or datasets
+                if isinstance(hdf, h5py.Dataset) \
+                   or ('class' in hdf.attrs or 'recon' in hdf.attrs):
+                    # this is an object stored at the toplevel
                     obj = hdf2obj(hdf)
-                    # XXX above operation might be really expensive
-                    # and finally fail with something very deep
-                    # under. TODO: RF to carry some cheap 'sensoring'
-                    # first and then simply proceed with deep
-                    # recursion or logic below
-                except LookupError, e:
-                    if __debug__:
-                        debug('HDF5', "Failed to lookup object at top level of "
-                              "'%s' due to %s." % (hdf, e))
-
+                else:
                     # no object into at the top-level, but maybe in the next one
                     # this would happen for plain mat files with arrays
                     if len(hdf) == 1 and '__unnamed__' in hdf:
