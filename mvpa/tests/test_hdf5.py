@@ -24,7 +24,8 @@ from mvpa.base.hdf5 import h5save, h5load, obj2hdf
 from mvpa.misc.data_generators import load_example_fmri_dataset
 from mvpa.mappers.fx import mean_sample
 
-
+class HDFDemo(object):
+    pass
 
 def test_h5py_datasets():
     # this one stores and reloads all datasets in the warehouse
@@ -157,3 +158,17 @@ def test_dataset_without_chunks():
     save(ds, f.name, compression='gzip')
     ds_loaded = h5load(f.name)
     ok_(ds_loaded.a.custom == ds.a.custom)
+
+def test_recursion():
+    obj = range(2)
+    obj.append(HDFDemo())
+    obj.append(obj)
+    f = tempfile.NamedTemporaryFile()
+    h5save(f.name, obj)
+    import os
+    os.system('h5dump %s' % f.name)
+    lobj = h5load(f.name)
+    assert_equal(obj[:2], lobj[:2])
+    assert_equal(type(obj[2]), type(lobj[2]))
+    ok_(obj[3] is obj)
+    ok_(lobj[3] is lobj)
