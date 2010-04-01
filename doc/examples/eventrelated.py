@@ -21,7 +21,7 @@ the fMRI dataset.
 
 from mvpa.suite import *
 
-ds = load_datadb_demo_blockfmri(roi=(36,38,39,40))
+ds = load_datadb_tutorial_data(roi=(36,38,39,40))
 
 """
 
@@ -163,7 +163,7 @@ normalization.
 """
 
 # example voxel coordinates
-example_voxels = [(25,25,28), (25,23,28)]
+example_voxels = [(28,25,25), (28,23,25)]
 
 """
 

@@ -27,6 +27,9 @@ from mvpa.misc.state import ClassWithCollections
 from mvpa.misc.param import Parameter
 from mvpa.misc.sampleslookup import SamplesLookup # required for CachedKernel
 
+if __debug__:
+    from mvpa.base import debug
+
 __all__ = ['Kernel', 'NumpyKernel', 'CustomKernel', 'PrecomputedKernel',
            'CachedKernel']
 
@@ -308,6 +311,10 @@ class CachedKernel(NumpyKernel):
     def _cache(self, ds1, ds2=None):
         """Initializes internal lookups + _kfull via caching the kernel matrix
         """
+        if __debug__ and 'KRN' in debug.active:
+            debug('KRN', "Caching %(inst)s for ds1=%(ds1)s, ds2=%(ds1)s"
+                  % dict(inst=self, ds1=ds1, ds2=ds2))
+
         self._lhsids = SamplesLookup(ds1)
         if (ds2 is None) or (ds2 is ds1):
             self._rhsids = self._lhsids
@@ -324,10 +331,21 @@ class CachedKernel(NumpyKernel):
         self.params.reset()
         # TODO: store params representation for later comparison
 
-    def compute(self, ds1, ds2=None):
+    def compute(self, ds1, ds2=None, force=False):
         """Automatically computes and caches the kernel or extracts the
         relevant part of a precached kernel into self._k
+
+        Parameters
+        ----------
+        force : bool
+          If True it forces re-caching of the kernel.  It is advised
+          to be used whenever explicitly pre-caching the kernel and
+          it is known that data was changed.
         """
+        if __debug__ and 'KRN' in debug.active:
+            debug('KRN', "Computing kernel %(inst)s on ds1=%(ds1)s, ds2=%(ds1)s"
+                  % dict(inst=self, ds1=ds1, ds2=ds2))
+
         # Flag lets us know whether cache was recomputed
         self._recomputed = False
 
@@ -337,25 +355,28 @@ class CachedKernel(NumpyKernel):
 
         # TODO: figure out if data were modified...
         # params_modified = True
-        changedData = False
+        changedData = False or force
         if len(self.params.which_set()) or changedData \
            or self._lhsids is None:
             self._cache(ds1, ds2)# hopefully this will never reset values, just
             # changed status
         else:
             # figure d1, d2
-            # TODO: find saner numpy way to select both rows and columns
             try:
                 lhsids = self._lhsids(ds1) #
                 if ds2 is None:
                     rhsids = lhsids
                 else:
                     rhsids = self._rhsids(ds2)
-                self._k = self._kfull.take(
-                    lhsids, axis=0).take(
-                    rhsids, axis=1)
+                self._k = self._kfull[np.ix_(lhsids, rhsids)]
             except KeyError:
                 self._cache(ds1, ds2)
+
+        if __debug__ and self._recomputed:
+            debug('KRN',
+                  "Kernel %(inst)s was recomputed on ds1=%(ds1)s, ds2=%(ds1)s"
+                  % dict(inst=self, ds1=ds1, ds2=ds2))
+
 
 __BOGUS_NOTES__ = """
 if ds1 is the "derived" dataset as it was computed on:

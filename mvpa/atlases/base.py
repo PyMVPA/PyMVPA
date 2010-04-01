@@ -417,12 +417,12 @@ class Label(object):
         count : int, optional
           Count of those labels in the atlas
         """
-        self.__text = text.strip()
+        self.text = text.strip()
         if abbr is not None:
             abbr = abbr.strip()
+        self.coord = coord
+        self.count = count
         self.__abbr = abbr
-        self.__coord = coord
-        self.__count = count
         self.__index = int(index)
 
 
@@ -432,12 +432,12 @@ class Label(object):
 
     def __repr__(self):
         return "Label(%s%s, coord=%r, count=%s, index=%s)" % \
-               (self.__text,
+               (self.text,
                 (', abbr=%s' % repr(self.__abbr), '')[int(self.__abbr is None)],
-                self.__coord, self.__count, self.__index)
+                self.coord, self.count, self.__index)
 
     def __str__(self):
-        return self.__text
+        return self.text
 
     @staticmethod
     def from_xml(Elabel):
@@ -454,17 +454,11 @@ class Label(object):
         return Label(Elabel.text.strip(), **kwargs)
 
     @property
-    def count(self): return self.__count
-    @property
-    def coord(self): return self.__coord
-    @property
-    def text(self):  return self.__text
-    @property
     def abbr(self):
         """Returns abbreviated version if such is available
         """
         if self.__abbr in [None, ""]:
-            return self.__text
+            return self.text
         else:
             return self.__abbr
 

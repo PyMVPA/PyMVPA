@@ -19,7 +19,7 @@ import h5py
 import os
 import tempfile
 
-from mvpa.base.dataset import AttrDataset
+from mvpa.base.dataset import AttrDataset, save
 from mvpa.base.hdf5 import h5save, h5load, obj2hdf
 from mvpa.misc.data_generators import load_example_fmri_dataset
 from mvpa.mappers.fx import mean_sample
@@ -108,3 +108,52 @@ def test_function_ptrs():
     assert_array_equal(ds_loaded.a.mapper.forward(fresh),
                         ds.samples)
 
+def test_0d_object_ndarray():
+    f = tempfile.NamedTemporaryFile()
+    a = np.array(0, dtype=object)
+    h5save(f.name, a)
+    a_ = h5load(f.name)
+    ok_(type(a_) == type(a))
+    ok_(a == a_)
+
+def test_locally_defined_class_oldstyle():
+    # AttributeError: CustomOld instance has no attribute '__reduce__'
+
+    # old style classes do not define reduce -- sure thing we might
+    # not need to support them at all, but then some meaningful
+    # exception should be thrown
+
+    class CustomOld:
+        pass
+    co = CustomOld()
+    co.v = 1
+
+    f = tempfile.NamedTemporaryFile()
+    save(co, f.name, compression='gzip')
+    co_ = h5load(f.name)
+    ok_(co_.v == co.v)
+
+def test_locally_defined_class():
+
+    # yoh: I've placed a comment in the code (and debug message)
+    #      related (commit c4f202)
+
+    # LookupError: Found hdf group without class instance information (group: /state). Cannot convert it into an object (attributes: '[]').
+
+    class Custom(object):
+        pass
+    c = Custom()
+    c.v = 1
+
+    f = tempfile.NamedTemporaryFile()
+    save(c, f.name, compression='gzip')
+    c_ = h5load(f.name)
+    ok_(c_.v == c.v)
+
+def test_dataset_without_chunks():
+    #  ValueError: All chunk dimensions must be positive (Invalid arguments to routine: Out of range)
+    f = tempfile.NamedTemporaryFile()
+    ds = AttrDataset([], a=dict(custom=1))
+    save(ds, f.name, compression='gzip')
+    ds_loaded = h5load(f.name)
+    ok_(ds_loaded.a.custom == ds.a.custom)
