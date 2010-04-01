@@ -54,7 +54,7 @@ class HDF5ConversionError(Exception):
 #
 # TODO: check for recursions!!!
 #
-def hdf2obj(hdf):
+def hdf2obj(hdf, memo=None):
     """Convert an HDF5 group definition into an object instance.
 
     Obviously, this function assumes the conventions implemented in the
@@ -65,6 +65,9 @@ def hdf2obj(hdf):
     ----------
     hdf : HDF5 group instance
       HDF5 group instance. this could also be an HDF5 file instance.
+    memo : dict
+      Dictionary tracking reconstructed objects to prevent recursions (analog to
+      deepcopy).
 
     Notes
     -----
@@ -79,18 +82,36 @@ def hdf2obj(hdf):
     -------
     object instance
     """
+    if memo is None:
+        # init object tracker
+        memo = {}
+    # note, older file formats did not store objrefs
+    if 'objref' in hdf.attrs:
+        objref = hdf.attrs['objref']
+    else:
+        objref = None
+
+    # if this HDF group has an objref that points to an already recontructed
+    # object, simple return this object again
+    if not objref is None and objref in memo:
+        debug('HDF5', "Reusing known object reference")
+        return memo[objref]
+
     # already at the level of real data
     if isinstance(hdf, h5py.Dataset):
         if __debug__:
             debug('HDF5', "Load HDF5 dataset '%s'." % hdf.name)
         if not len(hdf.shape):
             # extract the scalar from the 0D array
-            return hdf[()]
+            value = hdf[()]
         else:
             # read array-dataset into an array
             value = np.empty(hdf.shape, hdf.dtype)
             hdf.read_direct(value)
-            return value
+        # store ref
+        if objref:
+            memo[objref] = value
+        return value
     else:
         # check if we have a class instance definition here
         if not ('class' in hdf.attrs or 'recon' in hdf.attrs):
@@ -118,7 +139,7 @@ def hdf2obj(hdf):
             recon = mod.__dict__[recon]
 
             if 'rcargs' in hdf:
-                recon_args = _hdf_tupleitems_to_obj(hdf['rcargs'])
+                recon_args = _hdf_tupleitems_to_obj(hdf['rcargs'], memo)
             else:
                 recon_args = ()
 
@@ -129,6 +150,8 @@ def hdf2obj(hdf):
             obj = recon(*recon_args)
 
             # TODO Handle potentially avialable state settings
+            if objref:
+                memo[objref] = obj
             return obj
 
         cls = hdf.attrs['class']
@@ -146,7 +169,10 @@ def hdf2obj(hdf):
                 if __debug__:
                     debug('HDF5', "Loaded %s '%s' from '%s'."
                                   % (cls, oname, mod))
-                return mod.__dict__[oname]
+                obj = mod.__dict__[oname]
+                if objref:
+                    memo[objref] = obj
+                return obj
 
             # get the class definition from the module dict
             cls = mod.__dict__[cls]
@@ -165,7 +191,7 @@ def hdf2obj(hdf):
                 # insert the state of the object
                 if __debug__:
                     debug('HDF5', "Populating instance state.")
-                state = _hdf_dictitems_to_obj(hdf['state'])
+                state = _hdf_dictitems_to_obj(hdf['state'], memo)
                 obj.__dict__.update(state)
                 if __debug__:
                     debug('HDF5', "Updated %i state items." % len(state))
@@ -176,13 +202,15 @@ def hdf2obj(hdf):
                     # charge a dict itself
                     if __debug__:
                         debug('HDF5', "Populating dictionary object.")
-                    obj.update(_hdf_dictitems_to_obj(hdf['items']))
+                    obj.update(_hdf_dictitems_to_obj(hdf['items'], memo))
                     if __debug__:
                         debug('HDF5', "Loaded %i items." % len(obj))
                 else:
                     raise NotImplementedError(
                             "Unhandled conatiner typ (got: '%s')." % cls)
 
+            if objref:
+                memo[objref] = obj
             return obj
 
         else:
@@ -193,16 +221,14 @@ def hdf2obj(hdf):
             if cls == 'NoneType':
                 return None
             elif cls == 'tuple':
-                return _hdf_tupleitems_to_obj(hdf['items'])
+                obj = _hdf_tupleitems_to_obj(hdf, memo)
             elif cls == 'list':
-                l = _hdf_listitems_to_obj(hdf['items'])
+                obj = _hdf_list_to_obj(hdf, memo)
                 if 'is_objarray' in hdf.attrs:
                     # need to handle special case of arrays of objects
-                    return asobjarray(l)
-                else:
-                    return l
+                    obj = asobjarray(obj)
             elif cls == 'dict':
-                return _hdf_dictitems_to_obj(hdf['items'])
+                obj = _hdf_dictitems_to_obj(hdf['items'], memo)
             elif cls == 'function':
                 raise RuntimeError("Unhandled reconstruction of built-in "
                         "function (at '%s')." % hdf.name)
@@ -211,33 +237,76 @@ def hdf2obj(hdf):
                         "that is not handled by the parser (group: %s). This "
                         "is a conceptual bug in the parser. Please report."
                         % hdf.name)
+            if objref:
+                memo[objref] = obj
+            return obj
 
 
-def _hdf_dictitems_to_obj(hdf, skip=None):
+def _hdf_dictitems_to_obj(hdf, memo, skip=None):
     if skip is None:
         skip = []
     if hdf.attrs.get('__keys_in_tuple__', 0):
-        items = _hdf_listitems_to_obj(hdf)
+        items = _hdf_list_to_obj(hdf, memo)
         items = [i for i in items if not i[0] in skip]
         return dict(items)
     else:
         # legacy files had keys as group names
-        return dict([(item, hdf2obj(hdf[item]))
+        return dict([(item, hdf2obj(hdf[item], memo=memo))
                         for item in hdf
                             if not item in skip])
 
 
-def _hdf_listitems_to_obj(hdf):
-    return [hdf2obj(hdf[str(i)]) for i in xrange(len(hdf))]
+def _hdf_list_to_obj(hdf, memo):
+    # new-style files have explicit length
+    if 'length' in hdf.attrs:
+        length = hdf.attrs['length']
+    else:
+        length = len(hdf['items'])
+    hdf_items = hdf['items']
+    # prepare item list
+    items = [None] * length
+    # need to put items list in memo before starting to parse to allow to detect
+    # self-inclusion of this list in itself
+    if 'objref' in hdf.attrs:
+        memo[hdf.attrs['objref']] = items
+    # for all expected items
+    for i in xrange(length):
+        str_i = str(i)
+        obj = None
+        objref = None
+        # do we have an item attribute for this item (which is the objref)
+        if str_i in hdf_items.attrs:
+            objref = hdf_items.attrs[str_i]
+        # do we have an actual value for this item
+        if str_i in hdf_items:
+            obj = hdf2obj(hdf_items[str_i], memo=memo)
+        if obj is None:
+            # no actual value for item
+            if objref is None:
+                raise LookupError("Cannot find list item '%s'" % str_i)
+            else:
+                # no value but reference -> value should be in memo
+                if objref in memo:
+                    items[i] = memo[objref]
+                else:
+                    raise LookupError("No value for objref '%i'" % objref)
+        else:
+            # we have a value for this item
+            items[i] = obj
+            # store value for ref if present
+            if not objref is None:
+                memo[objref] = obj
+
+    return items
 
 
-def _hdf_tupleitems_to_obj(hdf):
-    return tuple(_hdf_listitems_to_obj(hdf))
+def _hdf_tupleitems_to_obj(hdf, memo):
+    return tuple(_hdf_list_to_obj(hdf, memo))
 
 #
 # TODO: check for recursions!!!
 #
-def obj2hdf(hdf, obj, name=None, **kwargs):
+def obj2hdf(hdf, obj, name=None, memo=None, **kwargs):
     """Store an object instance in an HDF5 group.
 
     A given object instance is (recursively) disassembled into pieces that are
@@ -259,9 +328,31 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
       Name of the object. In case of a complex object that cannot be stored
       natively without disassembling them, this is going to be a new group,
       Otherwise the name of the dataset. If None, no new group is created.
+    memo : dict
+      Dictionary tracking stored objects to prevent recursions (analog to
+      deepcopy).
     **kwargs
       All additional arguments will be passed to `h5py.Group.create_dataset()`
     """
+    if memo is None:
+        # initialize empty recursion tracker
+        memo = {}
+
+    # one way or the other we are going to store this object
+    obj_id = id(obj)
+    # store a reference id this object either under its name or generic
+    if name is None:
+        hdf.attrs.create('objref', obj_id)
+    else:
+        hdf.attrs.create(name, obj_id)
+    if obj_id in memo:
+        # already in here somewhere, nothing else but reference needed
+        debug('HDF5', "Duplicate object -- store reference only")
+        return
+    else:
+        # store object reference to be able to detect duplicated deeper down
+        memo[obj_id] = None
+
     if isinstance(obj, np.ndarray) and obj.dtype == np.object \
        and not len(obj.shape):
         # we store 0d object arrays just by content and set a flag
@@ -332,7 +423,8 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
             if __debug__: debug('HDF5', "Special case: Store a list/tuple.")
             items = grp.create_group('items')
             for i, item in enumerate(obj):
-                obj2hdf(items, item, name=str(i), **kwargs)
+                obj2hdf(items, item, name=str(i), memo=memo, **kwargs)
+            grp.attrs.create('length', len(obj))
         elif isinstance(obj, dict):
             if __debug__:
                 debug('HDF5', "Special case: Store a dictionary.")
@@ -340,7 +432,7 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
             for i, key in enumerate(obj):
                 # keys might be complex object, so they cannot serve as a
                 # name in this case
-                obj2hdf(items, (key, obj[key]), name=str(i), **kwargs)
+                obj2hdf(items, (key, obj[key]), name=str(i), memo=memo, **kwargs)
                 # leave a tag that the keys are stored within the item
                 # tuple, to make it possible to support legacy files
                 items.attrs.create('__keys_in_tuple__', 1)
@@ -353,7 +445,7 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
                 debug('HDF5', "Store object state (%i items)." % len(state))
             # loop over all attributes and store them
             for attr in state:
-                obj2hdf(stategrp, state[attr], attr, **kwargs)
+                obj2hdf(stategrp, state[attr], attr, memo=memo, **kwargs)
         # for the default __reduce__ there is nothin else to do
         return
     else:
@@ -365,7 +457,7 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
         grp.attrs.create('module', pieces[0].__module__)
         args = grp.create_group('rcargs')
         for i, arg in enumerate(pieces[1]):
-            obj2hdf(args, arg, str(i), **kwargs)
+            obj2hdf(args, arg, str(i), memo=memo, **kwargs)
         return
 
 
