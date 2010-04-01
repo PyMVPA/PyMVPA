@@ -262,6 +262,12 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
     **kwargs
       All additional arguments will be passed to `h5py.Group.create_dataset()`
     """
+    if isinstance(obj, np.ndarray) and obj.dtype == np.object \
+       and not len(obj.shape):
+        # we store 0d object arrays just by content and set a flag
+        obj = np.asscalar(obj)
+        hdf.attrs.create('is_objarray', True)
+
     # if it is something that can go directly into HDF5, put it there
     # right away
     if np.isscalar(obj) \
@@ -419,19 +425,31 @@ def h5load(filename, name=None):
                                  % (name, filename))
             obj = hdf2obj(hdf[name])
         else:
-            if len(hdf) == 0:
+            if not len(hdf) and not len(hdf.attrs):
                 # there is nothing
                 obj = None
             else:
                 try:
                     obj = hdf2obj(hdf)
-                except LookupError:
+                    # XXX above operation might be really expensive
+                    # and finally fail with something very deep
+                    # under. TODO: RF to carry some cheap 'sensoring'
+                    # first and then simply proceed with deep
+                    # recursion or logic below
+                except LookupError, e:
+                    if __debug__:
+                        debug('HDF5', "Failed to lookup object at top level of "
+                              "'%s' due to %s." % (hdf, e))
+
                     # no object into at the top-level, but maybe in the next one
                     # this would happen for plain mat files with arrays
                     if len(hdf) == 1 and '__unnamed__' in hdf:
                         # just a single with special naem -> special case:
                         # return as is
                         obj = hdf2obj(hdf['__unnamed__'])
+                        if 'is_objarray' in hdf.attrs:
+                            # handle 0d obj arrays
+                            obj = np.array(obj, dtype=np.object)
                     else:
                         # otherwise build dict with content
                         obj = {}

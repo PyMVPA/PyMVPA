@@ -687,14 +687,11 @@ class NFoldSplitter(Splitter):
           "N-%d-FoldSplitter / " % self.__cvtype + Splitter.__str__(self)
 
 
-    ##REF: Name was automagically refactored
     def _get_split_config(self, uniqueattrs):
         """Returns proper split configuration for N-M fold split.
         """
         return [(None, i) for i in \
-                    support.get_unique_length_n_combinations(uniqueattrs,
-                                                         self.__cvtype)]
-
+                 support.xunique_combinations(uniqueattrs, self.__cvtype)]
 
 
 class CustomSplitter(Splitter):

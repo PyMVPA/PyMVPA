@@ -143,3 +143,22 @@ def test_fsl_hox_queries():
     # we should get not even comparable maps now ;)
     ok_(atl.get_map('Frontal Pole').shape != atl2.get_map('Frontal Pole').shape)
 
+    # Lets check unique resolution for the atlas
+    maps = atl.get_maps('Fusiform')
+    maps_max = atl.get_maps('Fusiform', overlaps='max')
+
+    mk = maps.keys()
+    ok_(set(mk) == set(maps_max.keys()))
+
+    maps_ab = np.array([maps[k]!=0 for k in mk])
+    maps_max_ab = np.array([maps_max[k]!=0 for k in mk])
+
+    # We should have difference
+    ok_(np.any(maps_ab != maps_max_ab))
+    maps_max_ab_sum = np.sum(maps_max_ab, axis=0)
+    ok_(np.all(0<=maps_max_ab_sum))
+    ok_(np.all(maps_max_ab_sum<=1))
+    ok_(np.any(np.sum(maps_ab, axis=0)>1))
+
+    # we should still cover the same set of voxels
+    assert_array_equal(np.max(maps_ab, axis=0), np.max(maps_max_ab, axis=0))

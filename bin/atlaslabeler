@@ -243,6 +243,20 @@ parser.add_option("--uthr", "--upper-threshold",
                   default=None,
                   help="Upper threshold for voxels to output")
 
+parser.add_option("--count-thr", "--cthr",
+                  action="store", type=int, dest="countThreshold",
+                  default=1,
+                  help="Lowest number of voxels for area to be reported in summary")
+
+parser.add_option("--count-pthr", "--pthr",
+                  action="store", type=float, dest="countPercentThreshold",
+                  default=0.00001,
+                  help="Lowest percentage of voxels within an area to be reported in summary")
+
+parser.add_option("--suppress-none", "--sn",
+                  action="store_true", dest="suppressNone",
+                  help="Suppress reporting of voxels which found no labels (reported as None)")
+
 parser.add_option("--abbr", "--abbreviated-labels",
                   action="store_true", dest="abbreviatedLabels",
                   help="Manipulate with abbreviations for labels instead of"
@@ -358,6 +372,8 @@ else:
     query_voxel = False
 
 # Setup coordinates read-in
+volQForm = None
+
 #
 # compatibility with older talairachlabel
 if options.inputCoordFile:
@@ -386,6 +402,8 @@ else:
             infile, options.lowerThreshold, options.upperThreshold)
         assert(coordT is None)
         coordT = Linear(niftiInput.qform)
+        # lets store volumeQForm for possible conversion of voxels into coordinates
+        volQForm = coordT
         # previous iterator returns space coordinates
         options.coordRelativeToOrigin = True
     except:
@@ -737,21 +755,34 @@ def get_summary(summary, output):
 
     # may be I should have simply made a counter ;-)
     total = sum(map(lambda x:len(x['values']), summary.values()))
+    count_reported = 0
     for index in keys:
+        if index.rstrip(' /') == 'None' and options.suppressNone:
+            continue
         summary_ = summary[index]
         values = summary_['values']
         N, mean, std, minv, maxv, ssummary = statistics(values)
-        # print "N=", N
+        Npercent = 100.0*N/total
+        if N < options.countThreshold \
+               or Npercent < options.countPercentThreshold:
+            continue
+        count_reported += N
         msg = "%%%ds:" % maxkeylength
         output.write(msg % index)
         output.write("%4d/%4.1f%% items" \
-                     % (N, 100.0*N/total ))
+                     % (N, Npercent))
 
         if options.createSummary>1:
             output.write(" %s" % ssummary)
 
         if options.createSummary>2:
             output.write(" max at %s" % summary_['maxcoord'])
+            if options.showOriginalCoordinates and volQForm:
+                #import pydb
+                #pydb.debugger()
+                #coord = np.dot(volQForm, summary_['maxcoord']+[1])[:3]
+                coord = volQForm[summary_['maxcoord']]
+                output.write(" %r" % (tuple(coord),))
 
         if options.createSummary>3 and summary_.has_key('distances'):
             # if we got statistics over referenced voxels
@@ -770,7 +801,10 @@ def get_summary(summary, output):
         except IOError:
             pass
     output.write("-----\n")
-    output.write("TOTAL: %d items\n" % total)
+    output.write("TOTAL: %d items" % count_reported)
+    if total != count_reported:
+        output.write(" (out of %i, %i were excluded)" % (total, total-count_reported))
+    output.write("\n")
 
 if options.createSummary:
     if numVoxels == 0:
