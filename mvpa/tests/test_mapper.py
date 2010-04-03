@@ -174,6 +174,24 @@ def test_subset():
     #assert_false(subsm.is_valid_inid(-1))
     #assert_false(subsm.is_valid_inid(16))
 
+def test_subset_filler():
+    sm = FeatureSliceMapper(np.arange(3))
+    sm_f0 = FeatureSliceMapper(np.arange(3), filler=0)
+    sm_fm1 = FeatureSliceMapper(np.arange(3), filler=-1)
+    sm_fnan = FeatureSliceMapper(np.arange(3), filler=np.nan)
+    data = np.arange(12).astype(float).reshape((2, -1))
+
+    sm.train(data)
+    data_forwarded = sm.forward(data)
+
+    for m in (sm, sm_f0, sm_fm1, sm_fnan):
+        m.train(data)
+        assert_array_equal(data_forwarded, m.forward(data))
+
+    data_back_fm1 = sm_fm1.reverse(data_forwarded)
+    ok_(np.all(data_back_fm1[:, 3:] == -1))
+    data_back_fnan = sm_fnan.reverse(data_forwarded)
+    ok_(np.all(np.isnan(data_back_fnan[:, 3:])))
 
 def test_repr():
     # this time give mask only by its target length

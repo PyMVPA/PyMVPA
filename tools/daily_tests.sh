@@ -29,7 +29,7 @@ for b in maint/0.4; do
     TESTS_BRANCHES["$b"]="$TESTS_COMMON testapiref"
 done
 # development branches
-for b in master yoh/master mh/master; do
+for b in master yoh/master; do
     TESTS_BRANCHES["$b"]="$TESTS_COMMON testdatadb testourcfg testdocstrings"
 done
 # all known tests

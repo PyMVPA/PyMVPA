@@ -20,11 +20,15 @@ import os
 import tempfile
 
 from mvpa.base.dataset import AttrDataset, save
-from mvpa.base.hdf5 import h5save, h5load, obj2hdf
+from mvpa.base.hdf5 import h5save, h5load, obj2hdf, HDF5ConversionError
 from mvpa.misc.data_generators import load_example_fmri_dataset
 from mvpa.mappers.fx import mean_sample
 
+class HDFDemo(object):
+    pass
 
+class CustomOldStyle:
+    pass
 
 def test_h5py_datasets():
     # this one stores and reloads all datasets in the warehouse
@@ -113,47 +117,44 @@ def test_0d_object_ndarray():
     a = np.array(0, dtype=object)
     h5save(f.name, a)
     a_ = h5load(f.name)
-    ok_(type(a_) == type(a))
     ok_(a == a_)
 
-def test_locally_defined_class_oldstyle():
+def test_class_oldstyle():
     # AttributeError: CustomOld instance has no attribute '__reduce__'
 
     # old style classes do not define reduce -- sure thing we might
     # not need to support them at all, but then some meaningful
     # exception should be thrown
-
-    class CustomOld:
-        pass
-    co = CustomOld()
+    co = CustomOldStyle()
     co.v = 1
-
     f = tempfile.NamedTemporaryFile()
-    save(co, f.name, compression='gzip')
-    co_ = h5load(f.name)
-    ok_(co_.v == co.v)
+    assert_raises(HDF5ConversionError, save, co, f.name, compression='gzip')
 
 def test_locally_defined_class():
-
-    # yoh: I've placed a comment in the code (and debug message)
-    #      related (commit c4f202)
-
-    # LookupError: Found hdf group without class instance information (group: /state). Cannot convert it into an object (attributes: '[]').
-
+    # cannot store locally defined classes
     class Custom(object):
         pass
     c = Custom()
-    c.v = 1
-
     f = tempfile.NamedTemporaryFile()
-    save(c, f.name, compression='gzip')
-    c_ = h5load(f.name)
-    ok_(c_.v == c.v)
+    assert_raises(HDF5ConversionError, h5save, f.name, c, compression='gzip')
 
 def test_dataset_without_chunks():
     #  ValueError: All chunk dimensions must be positive (Invalid arguments to routine: Out of range)
+    # MH: This is not about Dataset chunks, but about an empty samples array
     f = tempfile.NamedTemporaryFile()
-    ds = AttrDataset([], a=dict(custom=1))
+    ds = AttrDataset([8], a=dict(custom=1))
     save(ds, f.name, compression='gzip')
     ds_loaded = h5load(f.name)
     ok_(ds_loaded.a.custom == ds.a.custom)
+
+def test_recursion():
+    obj = range(2)
+    obj.append(HDFDemo())
+    obj.append(obj)
+    f = tempfile.NamedTemporaryFile()
+    h5save(f.name, obj)
+    lobj = h5load(f.name)
+    assert_equal(obj[:2], lobj[:2])
+    assert_equal(type(obj[2]), type(lobj[2]))
+    ok_(obj[3] is obj)
+    ok_(lobj[3] is lobj)
