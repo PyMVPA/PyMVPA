@@ -358,6 +358,15 @@ experiments.
   DOI: http://dx.doi.org/10.1016/j.biopsych.2009.07.019
 
 
+.. _TRL09:
+
+**Trautmann, E., Ray, L. & Lever, J.** (2009). Development of an autonomous robot for ground penetrating radar surveys of polar ice. The 2009 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), 1685–1690.
+  *Study using PyMVPA to perform immobilization detection to improve navigation
+  reliability of an autonomous robot.*
+
+  DOI: http://dx.doi.org/10.1109/IROS.2009.5354290
+
+
 .. _Vap95:
 
 **Vapnik, V.** (1995). The Nature of Statistical Learning Theory. Springer: New York.
