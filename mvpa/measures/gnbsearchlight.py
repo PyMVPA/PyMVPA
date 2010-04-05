@@ -6,17 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Efficient implementation of searchlight for GNB
-
-It takes advantage that :class:`~mvpa.clfs.gnb.GNB` is "naive" in its
-reliance on massive univariate conditional probabilities of each feature
-given a target class.  On the other side,
-:class:`~mvpa.measures.searchlight.Searchlight` analysis approach
-would ask for the same information over again and over again for the
-same feature in multiple "lights".
-
-Kudos for the idea and showing that it indeed might be beneficial over
-generic Searchlight with GNB go to Francisco Pereira.
+"""An efficient implementation of searchlight for GNB.
 """
 
 __docformat__ = 'restructuredtext'
@@ -44,8 +34,9 @@ if __debug__:
 if externals.exists('scipy'):
     import scipy.sparse as sps
     # API of scipy.sparse has changed in 0.7.0 -- lets account for this
-    _coo_shape_argument = {True: 'shape',
-                           False: 'dims'} [externals.versions['scipy'] >= '0.7.0']
+    _coo_shape_argument = {
+        True: 'shape',
+        False: 'dims'} [externals.versions['scipy'] >= '0.7.0']
 
 __all__ = [ "GNBSearchlight", 'sphere_gnbsearchlight' ]
 
@@ -132,14 +123,20 @@ def lastdim_columnsums_spmatrix(a, inds, out):
 
 
 class GNBSearchlight(BaseSearchlight):
-    """Gaussian Naive Bayes `Searchlight`.
+    """Efficient implementation of Gaussian Naive Bayes `Searchlight`.
 
-    See Also
-    --------
-    :class:`~mvpa.clfs.gnb.GNB`
-    :class:`~mvpa.measures.searchlight.Searchlight`
+    This implementation takes advantage that :class:`~mvpa.clfs.gnb.GNB` is
+    "naive" in its reliance on massive univariate conditional
+    probabilities of each feature given a target class.  Plain
+    :class:`~mvpa.measures.searchlight.Searchlight` analysis approach
+    asks for the same information over again and over again for
+    the same feature in multiple "lights".  So it becomes possible to
+    drastically cut running time of a Searchlight by pre-computing basic
+    statistics necessary used by GNB beforehand and then doing their
+    subselection for a given split/feature set.
 
-    TODO
+    Kudos for the idea and showing that it indeed might be beneficial
+    over generic Searchlight with GNB go to Francisco Pereira.
     """
 
     _ATTRIBUTE_COLLECTIONS = ['params', 'ca']
@@ -398,7 +395,7 @@ class GNBSearchlight(BaseSearchlight):
         if __debug__:
             debug('SLC', 'Phase 5. Major loop' )
 
-        for isplit, split in enumerate(splits): # XXX
+        for isplit, split in enumerate(splits):
             if __debug__:
                 debug('SLC', ' Split %i out of %i' % (isplit, nsplits))
             # figure out for a given splits the blocks we want to work
@@ -440,7 +437,8 @@ class GNBSearchlight(BaseSearchlight):
                     / nsamples_per_class[non0labels]
 
             # assign priors
-            priors = gnb._get_priors(nlabels, training_nsamples, nsamples_per_class)
+            priors = gnb._get_priors(
+                nlabels, training_nsamples, nsamples_per_class)
 
             # proceed in a way we have in GNB code with logprob=True,
             # i.e. operating within the exponents -- should lead to some
@@ -471,32 +469,26 @@ class GNBSearchlight(BaseSearchlight):
 
             ## Now we come to naive part which requires looping
             ## through all spheres
-            ## TODO: check, that may be making use of sparse matrices
-            ##       would give a benefit over a loop
-
-
             if __debug__:
                 debug('SLC', "  Doing 'Searchlight'")
             # resultant logprobs for each class x sample x roi
             lprob_cs_sl = np.zeros(lprob_csfs.shape[:2] + (nroi_fids,))
             indexsum_fx(lprob_csf, roi_fids, out=lprob_cs_sl)
 
-            # XXX at some other point we might return back and start
-            # worrying about unneeded memory consumption ;)
-            #lprob_cs_cp_sl = lprob_cs_sl + logpriors
-            # nah -- lets do right away
             lprob_cs_sl += logpriors
             lprob_cs_cp_sl = lprob_cs_sl
             # for each of the ROIs take the class with maximal (log)probability
             predictions = lprob_cs_cp_sl.argmax(axis=0)
-            #predictions = winners # no need to map back [self.ulabels[c] for c in winners]
+            # no need to map back [self.ulabels[c] for c in winners]
+            #predictions = winners
             # assess the errors
             if __debug__:
                 debug('SLC', "  Assessing accuracies")
 
             if isinstance(errorfx, MeanMismatchErrorFx):
-                results[isplit, :] = (predictions != targets[:, None]).sum(axis=0) \
-                                     /float(len(targets))
+                results[isplit, :] = \
+                    (predictions != targets[:, None]).sum(axis=0) \
+                    / float(len(targets))
             else:
                 # somewhat silly but a way which allows to use pre-crafted
                 # error functions without a chance to screw up
