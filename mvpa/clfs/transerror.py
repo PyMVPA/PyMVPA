@@ -276,7 +276,7 @@ class ROCCurve(object):
         # Handle degenerate cases politely
         if Nlabels < 2:
             warning("ROC was asked to be evaluated on data with %i"
-                    " labels which is a degenerate case.")
+                    " labels which is a degenerate case." % Nlabels)
             self._ROCs = []
             self._aucs = []
             return
