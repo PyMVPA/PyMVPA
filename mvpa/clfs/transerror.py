@@ -1387,7 +1387,7 @@ class TransferError(ClassifierError):
                             "Errors are available in a dictionary with each "
                             "samples origid as key.")
 
-    def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None,
+    def __init__(self, clf, errorfx=None, labels=None,
                  null_dist=None, samples_idattr='origids', **kwargs):
         """Initialization.
 
@@ -1397,7 +1397,9 @@ class TransferError(ClassifierError):
           Either trained or untrained classifier
         errorfx: func, optional
           Functor that computes a scalar error value from the vectors of
-          desired and predicted values (e.g. subclass of `ErrorFunction`)
+          desired and predicted values (e.g. subclass of `ErrorFunction`).
+          If None, then MeanMismatchErrorFx is chosen for classifiers and
+          CorrErrorFx for regressions
         labels : list, optional
           If provided, should be a set of labels to add on top of the
           ones present in testdata
@@ -1407,6 +1409,9 @@ class TransferError(ClassifierError):
           conditional attribute
         """
         ClassifierError.__init__(self, clf, labels, **kwargs)
+        if errorfx is None:
+            errorfx = {False: MeanMismatchErrorFx,
+                       True: CorrErrorFx}[clf.__is_regression__]()
         self.__errorfx = errorfx
         self.__null_dist = auto_null_dist(null_dist)
         self.__samples_idattr = samples_idattr
