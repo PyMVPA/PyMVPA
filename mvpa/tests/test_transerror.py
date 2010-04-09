@@ -268,7 +268,9 @@ class ErrorsTests(unittest.TestCase):
 
 
     def test_confusion_plot(self):
-        """Based on existing cell dataset results.
+        """Basic test of confusion plot
+
+        Based on existing cell dataset results.
 
         Let in for possible future testing, but is not a part of the
         unittests suite
@@ -528,9 +530,6 @@ class ErrorsTests(unittest.TestCase):
             # pl.show()
 
     def test_confusion_plot2(self):
-        """Based on a sample confusion which plots incorrectly
-
-        """
 
         array = np.array
         uint8 = np.uint8

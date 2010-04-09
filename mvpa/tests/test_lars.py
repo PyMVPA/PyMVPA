@@ -9,6 +9,8 @@
 """Unit tests for PyMVPA least angle regression (LARS) classifier"""
 
 from mvpa.testing import *
+skip_if_no_external('lars')
+
 from mvpa.testing.datasets import datasets
 
 from mvpa import cfg
