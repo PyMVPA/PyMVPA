@@ -101,7 +101,7 @@ class Parameter(IndexedCollectable):
 
     def __reduce__(self):
         icr = IndexedCollectable.__reduce__(self)
-        res = (icr[0], (self.__default, self._ro) + icr[1], icr[2])
+        res = (self.__class__, (self.__default, self._ro) + icr[1], icr[2])
         #if __debug__ and 'COL_RED' in debug.active:
         #    debug('COL_RED', 'Returning %s for %s' % (res, self))
         return res

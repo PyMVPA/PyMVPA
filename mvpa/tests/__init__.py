@@ -61,7 +61,6 @@ def collect_unit_tests(verbosity=1):
 
     __optional_tests = [ ('scipy', 'ridge'),
                          ('scipy', 'gpr'),
-                         (['lars','scipy'], 'lars'),
                          (['cPickle', 'gzip'], 'hamster'),
                        ]
 
@@ -125,6 +124,7 @@ def collect_nose_tests(verbosity=1):
         # Learners
         'test_enet',
         'test_spam',
+        'test_lars',
         'test_glmnet',
         'test_kernel',
         'test_svmkernels',

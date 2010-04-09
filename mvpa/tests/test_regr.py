@@ -44,10 +44,13 @@ class RegressionsTests(unittest.TestCase):
         ds.sa.targets = AttributeMap().to_numeric(ds.targets)
 
         cve = CrossValidatedTransferError(
-            TransferError(regr, CorrErrorFx()),
+            TransferError(regr),
             splitter=NFoldSplitter(),
             postproc=mean_sample(),
             enable_ca=['training_confusion', 'confusion'])
+        # check the default
+        self.failUnless(isinstance(cve.transerror.errorfx,
+                                   CorrErrorFx))
         corr = np.asscalar(cve(ds).samples)
 
         # Our CorrErrorFx should never return NaN

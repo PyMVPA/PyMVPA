@@ -460,7 +460,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             # objref for scalar items would be overkill
             hdf[name].attrs.create('objref', obj_id)
             # store object reference to be able to detect duplicates
-            memo[obj_id] = None
+            memo[obj_id] = obj
             if __debug__:
                 debug('HDF5', "Record objref in memo-dict (%i)" % obj_id)
         if is_obj_array:
@@ -493,25 +493,22 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         # no refs for basic types
         grp.attrs.create('objref', obj_id)
         # we also note that we processed this object
-        memo[obj_id] = None
+        memo[obj_id] = obj
 
     if is_obj_array:
         # we need to confess the true origin
         grp.attrs.create('is_objarray', True)
 
     # standard containers need special treatment
-    if isinstance(obj, list) or isinstance(obj, tuple) or isinstance(obj, dict):
+    if not hasattr(obj, '__reduce__'):
+        raise HDF5ConversionError("Cannot store class without __reduce__ "
+                                  "implementation (%s)" % type(obj))
+    # try disassembling the object
+    try:
+        pieces = obj.__reduce__()
+    except TypeError:
+        # needs special treatment
         pieces = None
-    else:
-        if not hasattr(obj, '__reduce__'):
-            raise HDF5ConversionError("Cannot store class without __reduce__ "
-                                      "implementation (%s)" % type(obj))
-        # try disassembling the object
-        try:
-            pieces = obj.__reduce__()
-        except TypeError:
-            # needs special treatment
-            pieces = None
 
     # common container handling, either __reduce__ was not possible
     # or it was the default implementation
