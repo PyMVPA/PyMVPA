@@ -17,6 +17,7 @@ import tempfile
 import os
 
 
+from mvpa.base import cfg
 from mvpa.base.externals import versions
 from mvpa.base.types import is_datasetlike
 from mvpa.base.dataset import DatasetError, vstack, hstack
@@ -745,7 +746,14 @@ def test_repr():
                  sa={'targets': [0]},
                  fa={'targets': ['b', 'n']})
     ds_repr = repr(ds)
-    ok_(repr(eval(ds_repr)) == ds_repr)
+    cfg_repr = cfg.get('datasets', 'repr', 'full')
+    if cfg_repr == 'full':
+        ok_(repr(eval(ds_repr)) == ds_repr)
+    elif cfg_repr == 'str':
+        ok_(str(ds) == ds_repr)
+    else:
+        raise AssertionError('Unknown kind of datasets.repr configuration %r'
+                             % cfg_repr)
 
 def test_str():
     args = ( np.arange(12, dtype=np.int8).reshape((4, 3)),
