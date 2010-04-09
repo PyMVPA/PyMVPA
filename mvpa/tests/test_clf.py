@@ -23,6 +23,7 @@ from mvpa.datasets.base import dataset_wizard
 from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
 
 from mvpa.misc.exceptions import UnknownStateError
+from mvpa.misc.errorfx import MeanMismatchErrorFx
 
 from mvpa.clfs.base import DegenerateInputError, FailedToTrainError, \
      FailedToPredictError
@@ -153,6 +154,10 @@ class ClassifiersTests(unittest.TestCase):
         """
         te = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
                                          postproc=mean_sample())
+        # check the default
+        self.failUnless(isinstance(te.transerror.errorfx,
+                                   MeanMismatchErrorFx))
+
         nclasses = 2 * (1 + int('multiclass' in clf.__tags__))
 
         ds = datasets['uni%dmedium' % nclasses]
