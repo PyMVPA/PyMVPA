@@ -296,18 +296,26 @@ class Mapper(object):
 class FeatureSliceMapper(Mapper):
     """Mapper to select a subset of features.
     """
-    def __init__(self, slicearg, dshape=None, filler=0, **kwargs):
+    def __init__(self, slicearg, dshape=None, oshape=None, filler=0, **kwargs):
         """
         Parameters
         ----------
         slicearg : int, list(int), array(int), array(bool)
+          Any slicing argument that is compatible with numpy arrays. Depending
+          on the argument the mapper will perform basic slicing or
+          advanced indexing (with all consequences on speed and memory
+          consumption).
         dshape : tuple
+          Preseed the mappers input data shape (single sample shape).
+        oshape: tuple
+          Preseed the mappers output data shape (single sample shape).
         filler : optional
           Value to fill empty entries upon reverse operation
         """
         Mapper.__init__(self, **kwargs)
         # store it here, might be modified later
         self.__dshape = dshape
+        self.__oshape = oshape
 
         # convert int sliceargs into lists to prevent getting scalar values when
         # slicing
@@ -336,13 +344,18 @@ class FeatureSliceMapper(Mapper):
         data : array-like
           Either one-dimensional sample or two-dimensional samples matrix.
         """
-        return data[:, self._slicearg]
+        mdata = data[:, self._slicearg]
+        # store the output shape if not set yet
+        if self.__oshape is None:
+            self.__oshape = mdata.shape[1:]
+        return mdata
 
 
     def _forward_dataset(self, dataset):
         # XXX this should probably not affect the source dataset, but right now
         # init_origid is not flexible enough
         if not self.get_inspace() is None:
+            # TODO need to do a copy first!!!
             dataset.init_origids('features', attr=self.get_inspace())
         # invoke super class _forward_dataset, this calls, _forward_dataset
         # and this calles _forward_data in this class
@@ -353,6 +366,18 @@ class FeatureSliceMapper(Mapper):
         for k in mds.fa:
             mds.fa[k] = self.forward1(mds.fa[k].value)
         return mds
+
+
+    def reverse1(self, data):
+        # we need to reject inappropriate "single" samples to allow
+        # chainmapper to properly switch to reverse() for multiple samples
+        # use the fact that a single sample needs to conform to the known
+        # data shape -- but may have additional appended dimensions
+        if not data.shape[:len(self.__oshape)] == self.__oshape:
+            raise ValueError("Data shape does not match training "
+                             "(trained: %s; got: %s)"
+                             % (self.__dshape, data.shape))
+        return super(FeatureSliceMapper, self).reverse1(data)
 
 
     def _reverse_data(self, data):
@@ -401,7 +426,14 @@ class FeatureSliceMapper(Mapper):
     def _train(self, data):
         if self.__dshape is None:
             # XXX what about arrays of generic objects???
+            # MH: in this case the shape will be (), which is just
+            # fine since feature slicing is meaningless without features
+            # the only thing we can do is kill the whole samples matrix
             self.__dshape = data.shape[1:]
+            # we also need to know what the output shape looks like
+            # otherwise we cannot reliably say what is appropriate input
+            # for reverse*()
+            self.__oshape = data[:, self._slicearg].shape[1:]
 
 
     def is_mergable(self, other):
