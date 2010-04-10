@@ -7,13 +7,13 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """
-Analysis of eyemovement patterns
-================================
+Analysis of eye movement patterns
+=================================
 
-In this example we are going to look at a classification analysis of eyemovement
-patterns. Although complex preprocessing steps can be performed to extract
-higher-order features from the raw coordinate timeseries provided by an
-eyetracker, we are keeping it simple.
+In this example we are going to look at a classification analysis of eye
+movement patterns. Although complex preprocessing steps can be performed to
+extract higher-order features from the raw coordinate timeseries provided by an
+eye-tracker, we are keeping it simple.
 
 Right after importing the PyMVPA suite, we load the data from a textfile.
 It contains coordinate timeseries of 144 trials (recorded with 350 Hz), where
