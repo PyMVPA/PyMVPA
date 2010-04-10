@@ -96,6 +96,11 @@ class Dataset(AttrDataset):
             # be fully functional without them.
             subsetmapper = FeatureSliceMapper(args[1],
                                               dshape=self.samples.shape[1:])
+            # do not-act forward mapping to charge the output shape of the
+            # slice mapper without having it to train on a full dataset (which
+            # is most likely more expensive)
+            subsetmapper.forward(np.zeros((1,) + self.shape[1:], dtype='bool'))
+            # mapper is ready to use -- simply store
             ds._append_mapper(subsetmapper)
 
         return ds
