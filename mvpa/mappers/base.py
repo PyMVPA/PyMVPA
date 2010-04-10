@@ -762,7 +762,7 @@ class ChainMapper(Mapper):
             except ValueError:
                 if __debug__:
                     debug('MAP',
-                          "Failed to reverse-map through chain at '%s'. Maybe"
+                          "Failed to reverse-map through chain at '%s'. Maybe "
                           "previous mapper return multiple samples. Trying to "
                           "switch to reverse() for the remainder of the chain."
                           % str(m))
