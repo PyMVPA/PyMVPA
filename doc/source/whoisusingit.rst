@@ -37,6 +37,7 @@ Institutions Where PyMVPA Is Used
 * Department of Experimental Psychology, **Otto-von-Guericke-University
   Magdeburg**, Germany
 * Department of Psychology, **University of California at Los Angeles**, USA
+* Department of Neurology, **University of Pennsylvania**, USA
 * Brain & Creativity Institute, **University of Southern California**, USA
 * Imaging Research Center, **University of Texas at Austin**, USA
 * Department of Psychology, **Yale University**, USA
