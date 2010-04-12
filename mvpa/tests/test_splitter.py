@@ -240,7 +240,7 @@ class SplitterTests(unittest.TestCase):
         self.failUnless(splits[0][0] == None)
         self.failUnless(splits[0][1].nsamples == 100)
 
-        nos = NoneSplitter(mode='first')
+        nos = NoneSplitter(reverse=True)
         splits = [ (train, test) for (train, test) in nos(self.data) ]
         self.failUnless(len(splits) == 1)
         self.failUnless(splits[0][1] == None)

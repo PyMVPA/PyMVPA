@@ -452,21 +452,8 @@ class NoneSplitter(Splitter):
     class.
     """
 
-    _known_modes = ['first', 'second']
-
-    def __init__(self, mode='second', **kwargs):
-        """
-        Parameters
-        ----------
-        mode : {'first', 'second'}
-          Either 'first' or 'second' (default) -- which output dataset
-          would actually contain the samples
-        """
+    def __init__(self, **kwargs):
         Splitter.__init__(self, **(kwargs))
-
-        if not mode in NoneSplitter._known_modes:
-            raise ValueError, "Unknown mode %s for NoneSplitter" % mode
-        self.__mode = mode
 
 
     __doc__ = enhanced_doc_string('NoneSplitter', locals(), Splitter)
@@ -474,12 +461,7 @@ class NoneSplitter(Splitter):
 
     ##REF: Name was automagically refactored
     def _get_split_config(self, uniqueattrs):
-        """Return just one full split: no first or second dataset.
-        """
-        if self.__mode == 'second':
-            return [([], None)]
-        else:
-            return [(None, [])]
+        return [([], None)]
 
 
 
