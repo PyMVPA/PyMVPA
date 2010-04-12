@@ -8,9 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Collection of dataset splitters.
 
-Module Description
-==================
-
 Splitters are destined to split the provided dataset various ways to
 simplify cross-validation analysis, implement boosting of the
 estimates, or sample null-space via permutation testing.
@@ -18,15 +15,6 @@ estimates, or sample null-space via permutation testing.
 Most of the splitters at the moment split 2-ways -- conventionally
 first part is used for training, and 2nd part for testing by
 `CrossValidatedTransferError` and `SplitClassifier`.
-
-Brief Description of Available Splitters
-========================================
-
-* `NoneSplitter` - just return full dataset as the desired part (training/testing)
-* `OddEvenSplitter` - 2 splits: (odd samples,even samples) and (even, odd)
-* `HalfSplitter` - 2 splits: (first half, second half) and (second, first)
-* `NFoldSplitter` - splits for N-Fold cross validation.
-
 """
 
 __docformat__ = 'restructuredtext'
@@ -36,7 +24,7 @@ import operator
 import numpy as np
 
 import mvpa.misc.support as support
-from mvpa.base.dochelpers import enhanced_doc_string
+from mvpa.base.dochelpers import enhanced_doc_string, _str, _repr
 from mvpa.datasets.miscfx import coarsen_chunks, permute_attr, random_samples, \
                                  get_nsamples_per_attr
 
@@ -390,12 +378,23 @@ class Splitter(object):
         return sl
 
 
+    def __repr__(self, *args, **kwargs):
+        return _repr(self,
+                     npertarget=self.__npertarget,
+                     nrunspersplit=self.__runspersplit,
+                     permute_attr=self.__permute_attr,
+                     count=self.count,
+                     strategy=self.__strategy,
+                     discard_boundary=self.discard_boundary,
+                     attr=self.__splitattr,
+                     reverse=self._reverse,
+                     noslicing=self.__noslicing,
+                     *args,
+                     **kwargs)
+
+
     def __str__(self):
-        """String summary over the object
-        """
-        return \
-          "SplitterConfig: npertarget:%s runs-per-split:%d permute_attr:%s" \
-          % (self.__npertarget, self.__runspersplit, self.__permute_attr)
+        return _str(self)
 
 
     def splitcfg(self, dataset):
@@ -446,11 +445,11 @@ class Splitter(object):
 
 
 class NoneSplitter(Splitter):
-    """This is a dataset splitter that does **not** split. It simply returns
-    the full dataset that it is called with.
+    """Non-splitting Splitter for resampling purposes.
 
-    The passed dataset is returned as the second element of the 2-tuple.
-    The first element of that tuple will always be 'None'.
+    This dataset splitter that does **not** split dataset, but it offers access
+    to the full set of resampling techniques provided by the Splitter base
+    class.
     """
 
     _known_modes = ['first', 'second']
@@ -459,7 +458,7 @@ class NoneSplitter(Splitter):
         """
         Parameters
         ----------
-        mode
+        mode : {'first', 'second'}
           Either 'first' or 'second' (default) -- which output dataset
           would actually contain the samples
         """
@@ -481,13 +480,6 @@ class NoneSplitter(Splitter):
             return [([], None)]
         else:
             return [(None, [])]
-
-
-    def __str__(self):
-        """String summary over the object
-        """
-        return \
-          "NoneSplitter / " + Splitter.__str__(self)
 
 
 
@@ -532,12 +524,9 @@ class OddEvenSplitter(Splitter):
                     (None, uniqueattrs[np.arange(len(uniqueattrs)) %2 == False])]
 
 
-    def __str__(self):
-        """String summary over the object
-        """
-        return \
-          "OddEvenSplitter / " + Splitter.__str__(self)
-
+    def __repr__(self):
+        return super(OddEvenSplitter, self).__repr__(
+                    usevalues=self.__usevalues)
 
 
 class HalfSplitter(Splitter):
@@ -564,13 +553,6 @@ class HalfSplitter(Splitter):
         """
         return [(None, uniqueattrs[:len(uniqueattrs)/2]),
                 (None, uniqueattrs[len(uniqueattrs)/2:])]
-
-
-    def __str__(self):
-        """String summary over the object
-        """
-        return \
-          "HalfSplitter / " + Splitter.__str__(self)
 
 
 
@@ -624,11 +606,9 @@ class NGroupSplitter(Splitter):
         return split_list
 
 
-    def __str__(self):
-        """String summary over the object
-        """
-        return \
-          "N-%d-GroupSplitter / " % self.__ngroup + Splitter.__str__(self)
+    def __repr__(self):
+        return super(NGroupSplitter, self).__repr__(
+                     ngroups=self.__ngroups)
 
 
 
@@ -680,18 +660,17 @@ class NFoldSplitter(Splitter):
     __doc__ = enhanced_doc_string('NFoldSplitter', locals(), Splitter)
 
 
-    def __str__(self):
-        """String summary over the object
-        """
-        return \
-          "N-%d-FoldSplitter / " % self.__cvtype + Splitter.__str__(self)
-
-
     def _get_split_config(self, uniqueattrs):
         """Returns proper split configuration for N-M fold split.
         """
         return [(None, i) for i in \
                  support.xunique_combinations(uniqueattrs, self.__cvtype)]
+
+
+    def __repr__(self):
+        return super(NFoldSplitter, self).__repr__(
+                     cvtype=self.__cvtype)
+
 
 
 class CustomSplitter(Splitter):
@@ -743,7 +722,6 @@ class CustomSplitter(Splitter):
         return self.__splitrule
 
 
-    def __str__(self):
-        """String summary over the object
-        """
-        return "CustomSplitter / " + Splitter.__str__(self)
+    def __repr__(self):
+        return super(CustomSplitter, self).__repr__(
+                     repr(self.__splitrule))
