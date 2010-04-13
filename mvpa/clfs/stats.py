@@ -335,12 +335,12 @@ class MCNullDist(NullDist):
             # assume it has `TransferError` interface
             try:
                 res = measure(*measure_args)
+                res = np.asanyarray(res)
+                dist_samples.append(res)
             except LearnerError, e:
                 warning('Failed to obtain value from %s due to %s.  Measurement'
                         ' was skipped, which could lead to unstable and/or'
                         ' incorrect assessment of the null_dist' % (measure, e))
-            res = np.asanyarray(res)
-            dist_samples.append(res)
 
         if __debug__:
             debug('STATMC', '')
