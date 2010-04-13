@@ -144,6 +144,8 @@ def hdf2obj(hdf, memo=None):
                 obj = _hdf_list_to_obj(hdf, memo)
             elif cls_name == 'dict':
                 obj = _hdf_dict_to_obj(hdf, memo)
+            elif cls_name == 'type':
+                obj = eval(hdf.attrs['name'])
             elif cls_name == 'function':
                 raise RuntimeError("Unhandled reconstruction of built-in "
                         "function (at '%s')." % hdf.name)
