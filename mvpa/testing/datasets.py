@@ -22,7 +22,7 @@ import sys
 import numpy as np
 
 from mvpa import cfg, externals
-from mvpa.datasets import Dataset
+from mvpa.datasets.base import Dataset, HollowSamples
 from mvpa.datasets.splitters import OddEvenSplitter
 from mvpa.misc.data_generators import *
 
@@ -105,6 +105,9 @@ datasets['chirp_linear_test'] = chirp_linear(20, 5, 2, 0.4, 0.1)
 
 datasets['wr1996'] = multiple_chunks(wr1996, 4, 50)
 datasets['wr1996_test'] = wr1996(50)
+
+datasets['hollow'] = Dataset(HollowSamples((40,20)),
+                             sa={'targets': np.tile(['one', 'two'], 20)})
 
 
 def saveload_warehouse():

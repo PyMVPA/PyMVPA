@@ -291,3 +291,98 @@ class Dataset(AttrDataset):
 # convenience alias
 dataset_wizard = Dataset.from_wizard
 
+
+class HollowSamples(object):
+    """Samples container that doesn't store samples.
+
+    The purpose of this class is to provide an object that can be used as
+    ``samples`` in a Dataset, without having actual samples. Instead of storing
+    multiple samples it only maintains a IDs for samples and features it
+    pretends to contain.
+
+    Using this class in a dataset in conjuction will actual attributes, will
+    yield a lightweight dataset that is compatible with the majority of all
+    mappers and can be used to 'simulate' processing by mappers. The class
+    offers acces to the sample and feature IDs via its ``sid`` and ``fid``
+    members.
+    """
+    def __init__(self, shape=None, sid=None, fid=None, dtype=np.float):
+        """
+        Parameters
+        ----------
+        shape : 2-tuple or None
+          Shape of the pretend-sample array (nsamples x nfeatures). Can be
+          left out if both ``sid`` and ``fid`` are provided.
+        sid : 1d-array or None
+          Vector of sample IDs. Can be left out if ``shape`` is provided.
+        fid : 1d-array or None
+          Vector of feature IDs. Can be left out if ``shape`` is provided.
+        dtype : type or str
+          Pretend-datatype of the non-existing samples.
+        """
+        if shape is None and sid is None and fid is None:
+            raise ValueError("Either shape or ID vectors have to be given")
+        if not shape is None and not len(shape) == 2:
+            raise ValueError("Only two-dimensional shapes are supported")
+        if sid is None:
+            self.sid = np.arange(shape[0], dtype='uint')
+        else:
+            self.sid = sid
+        if fid is None:
+            self.fid = np.arange(shape[1], dtype='uint')
+        else:
+            self.fid = fid
+        self.dtype = dtype
+        # sanity check
+        if not shape is None and not len(self.sid) == shape[0] \
+                and not len(self.fid) == shape[1]:
+            raise ValueError("Provided ID vectors do not match given `shape`")
+
+
+    def __reduce__(self):
+        return (self.__class__,
+                ((len(self.sid), len(self.fid)),
+                 self.sid,
+                 self.fid,
+                 self.dtype))
+
+
+    @property
+    def shape(self):
+        return (len(self.sid), len(self.fid))
+
+
+    @property
+    def samples(self):
+        return np.zeros((len(self.sid), len(self.fid)), dtype=self.dtype)
+
+
+    def __array__(self, dtype=None):
+        # come up with a fake array of proper dtype
+        return np.zeros((len(self.sid), len(self.fid)), dtype=self.dtype)
+
+
+    def __getitem__(self, args):
+        if not isinstance(args, tuple):
+            args = (args,)
+
+        if len(args) > 2:
+            raise ValueError("Too many arguments (%i). At most there can be "
+                             "two arguments, one for samples selection and one "
+                             "for features selection" % len(args))
+
+        if len(args) == 1:
+            args = [args[0], slice(None)]
+        else:
+            args = [a for a in args]
+        # ints need to become lists to prevent silent dimensionality changes
+        # of the arrays when slicing
+        for i, a in enumerate(args):
+            if isinstance(a, int):
+                args[i] = [a]
+        # apply to vectors
+        sid = self.sid[args[0]]
+        fid = self.fid[args[1]]
+
+        return HollowSamples((len(sid), len(fid)), sid=sid, fid=fid,
+                             dtype=self.dtype)
