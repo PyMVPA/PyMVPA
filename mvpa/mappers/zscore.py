@@ -17,6 +17,7 @@ from mvpa.base.dochelpers import _str, borrowkwargs
 from mvpa.mappers.base import accepts_dataset_as_samples, Mapper
 from mvpa.datasets.base import Dataset
 from mvpa.datasets.miscfx import get_nsamples_per_attr, get_samples_by_attr
+from mvpa.support import copy
 
 
 class ZScoreMapper(Mapper):
@@ -220,14 +221,15 @@ class ZScoreMapper(Mapper):
         elif self._secret_inplace_zscore:
             mdata = data
         else:
-            mdata = data.copy()
+            # do not call .copy() directly, since it might not be an array
+            mdata = copy.deepcopy(data)
 
         self._zscore(mdata, *params['__all__'])
         return mdata
 
 
     def _compute_params(self, samples):
-        return (samples.mean(axis=0), samples.std(axis=0))
+        return (np.mean(samples, axis=0), np.std(samples, axis=0))
 
 
     def _zscore(self, samples, mean, std):
