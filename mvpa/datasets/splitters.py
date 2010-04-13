@@ -178,10 +178,6 @@ class Splitter(object):
 
         This method behaves like a generator.
         """
-
-        # local bindings to methods to gain some speedup
-        ds_class = dataset.__class__
-
         # for each split
         cfgs = self.splitcfg(dataset)
         n_cfgs = len(cfgs)
