@@ -284,7 +284,7 @@ class SmartVersion(Version):
         # Do ad-hoc comparison of strings
         i = 0
         s, o = self.version, other.version
-        regex_prerelease = re.compile('~|-?dev|-?rc|-?svn|-?pre', re.I)
+        regex_prerelease = re.compile('~|-?dev|-?rc|-?svn|-?pre|-?beta|-?alpha', re.I)
         for i in xrange(max(len(s), len(o))):
             if i < len(s): si = s[i]
             else: si = None
