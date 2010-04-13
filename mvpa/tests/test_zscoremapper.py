@@ -74,7 +74,6 @@ def test_zscore():
     data_samples = data_samples.astype(float)
     zscore(data_samples, chunks_attr=None)
     assert_array_equal(data.samples, data_samples)
-    print data_samples
 
     # check z-scoring
     check = np.array([-2, -1, 1, 2, 0, 0, 1, -1, -1, 1, 1, -1, 0, 0, 0, 0],
