@@ -30,7 +30,7 @@ class SOMMapperTests(unittest.TestCase):
 
         som.train(colors)
 
-        fmapped = som(colors)
+        fmapped = som.forward(colors)
         self.failUnless(fmapped.shape == (8, 2))
 
         # reverse mapping

@@ -280,7 +280,7 @@ def zscore(ds, **kwargs):
     else:
         zm.train(Dataset(ds))
     # map
-    mapped = zm(ds)
+    mapped = zm.forward(ds)
     # and append the mapper to the dataset
     if isinstance(mapped, Dataset):
         mapped._append_mapper(zm)

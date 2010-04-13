@@ -21,18 +21,19 @@ For The Impatient
 * Datasets are no longer relatively static objects, but become flexible
   multi-purpose containers that can handle attributes for samples, feature,
   or whole datasets. There is some inital support for other datatypes than
-  NumPy's `ndarrays`, e.g. sparse matrices.
+  NumPy's ``ndarrays``, e.g. sparse matrices.
 
 
 Critical API Changes
 ====================
 
-* `.states` -> `.ca` (for conditional attributes).  All attributes stored in
-  collections (parameters for Classifiers in `.params`, states in `.ca`)
+* ``.states`` -> ``.ca`` (for conditional attributes).  All attributes stored in
+  collections (parameters for Classifiers in ``.params``, states in ``.ca``)
   should be accessed not at top level of the object but through a collection.
+  For example: ``clf.confusion`` becomes ``clf.ca.confusion``
 
 * Dataset: behaves more like a NumPy array.  No specialized Dataset classes,
-  but constructors
+  but factory functions:
 
   - MaskedDataset -> `dataset_wizard`
   - NiftiDataset -> `fmri_dataset`
@@ -47,10 +48,13 @@ Critical API Changes
 
  - now ``[1,1,0]`` is not the same as ``[True, True, False]``
 
+   This first is a list of indices, and the second is a boolean selection
+   vector.
+
 * We have weird (but consistent) conventions now
   - classes are CamelCased
   - factory functions (even for whatever might have been before a class)
-  are in pythonic_style
+    are lowercase with underscores
 
 * `detrend` -> `poly_detrend`
 
@@ -59,6 +63,11 @@ Critical API Changes
 
 * internally and as provided by mvpa.suite, `numpy` is imported as `np`, and
   `pylab` is imported as `pl`
+
+* Calling mappers (`Mapper.__call__()`) is no longer a simple alias to
+  `Mapper.forward()`, but instead causes a mapper to behave like a generator and
+  yield (potentially multiple) results when calling with a single input dataset.
+
 
 General Changes
 ===============

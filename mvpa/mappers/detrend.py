@@ -348,6 +348,6 @@ def poly_detrend(ds, **kwargs):
     dm = PolyDetrendMapper(**kwargs)
     dm._secret_inplace_detrend = True
     # map
-    mapped = dm(ds)
+    mapped = dm.forward(ds)
     # and append the mapper to the dataset
     mapped._append_mapper(dm)
