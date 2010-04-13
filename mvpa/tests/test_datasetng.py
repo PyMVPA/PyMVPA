@@ -21,7 +21,7 @@ from mvpa.base import cfg
 from mvpa.base.externals import versions
 from mvpa.base.types import is_datasetlike
 from mvpa.base.dataset import DatasetError, vstack, hstack
-from mvpa.datasets.base import dataset_wizard, Dataset
+from mvpa.datasets.base import dataset_wizard, Dataset, HollowSamples
 from mvpa.misc.data_generators import normal_feature_dataset
 import mvpa.support.copy as copy
 from mvpa.base.collections import \
@@ -900,3 +900,20 @@ def test_h5py_io():
 
     #cleanup temp dir
     shutil.rmtree(tempdir, ignore_errors=True)
+
+
+def test_hollow_samples():
+    sshape = (10,5)
+    ds = Dataset(HollowSamples(sshape, dtype=int),
+                 sa={'targets': np.tile(['one', 'two'], sshape[0] / 2)})
+    assert_equal(ds.shape, sshape)
+    assert_equal(ds.samples.dtype, int)
+    # should give us features [1,3] and samples [2,3,5]
+    mds = ds[[2,3,5], 1::2]
+    assert_array_equal(mds.samples.sid, [2,3,5])
+    assert_array_equal(mds.samples.fid, [1,3])
+    assert_equal(mds.shape, (3, 2))
+    assert_equal(ds.samples.dtype, mds.samples.dtype)
+    # orig should stay pristine
+    assert_equal(ds.samples.dtype, int)
+    assert_equal(ds.shape, sshape)
