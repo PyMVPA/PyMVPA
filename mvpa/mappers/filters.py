@@ -176,4 +176,4 @@ def fft_resample(ds, num, **kwargs):
       FFTResampleMapper.
     """
     dm = FFTResampleMapper(num, **kwargs)
-    return dm(ds)
+    return dm.forward(ds)

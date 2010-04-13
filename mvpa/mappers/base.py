@@ -274,10 +274,19 @@ class Mapper(object):
                    repr(self.get_inspace()))
 
 
-    def __call__(self, data):
-        """Calls the mappers forward() method.
+    def __call__(self, ds):
+        """Use the mapper like a generator.
+
+        This default implementation simply yields the result of a call to
+        forward(). Derived classed mgiht reimplement this method to offer
+        actual generator-like processing.
+
+        Parameters
+        ----------
+        ds : Dataset
+          To be mapped dataset.
         """
-        return self.forward(data)
+        yield self.forward(data)
 
 
     def get_inspace(self):

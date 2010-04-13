@@ -41,7 +41,7 @@ def test_simpleboxcar():
     boxlength = 2
     sp = np.arange(nbox)
     bcm = BoxcarMapper(sp, boxlength)
-    trans = bcm(data)
+    trans = bcm.forward(data)
     # check that is properly upcasts the dimensionality
     assert_equal(trans.shape, (nbox, boxlength) + data.shape[1:])
     # check actual values, squeezing the last dim for simplicity
@@ -51,7 +51,7 @@ def test_simpleboxcar():
     # now test for proper data shape
     data = np.ones((10,3,4,2))
     sp = [ 2, 4, 3, 5 ]
-    trans = BoxcarMapper(sp, 4)(data)
+    trans = BoxcarMapper(sp, 4).forward(data)
     assert_equal(trans.shape, (4,4,3,4,2))
 
     # test reverse

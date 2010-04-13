@@ -177,8 +177,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # Since  now we have per split and possibly per label -- lets just find
         # mean per each feature per label across splits
         sensm = FxMapper('samples', lambda x: np.sum(x),
-                         uattrs=['targets'])(sens)
-        sensgm = maxofabs_sample()(sensm)    # global max of abs of means
+                         uattrs=['targets']).forward(sens)
+        sensgm = maxofabs_sample().forward(sensm)    # global max of abs of means
 
         assert_equal(sensgm.shape[0], 1)
         assert_equal(sensgm.shape[1], ds.nfeatures)
