@@ -156,3 +156,64 @@ def least_sq_fit(fx, params, y, x=None, **kwargs):
 
     # do fit
     return leastsq(efx, params)
+
+
+def fit2histogram(X, fx, params, nbins=20, x_range=None):
+    """Fit a function to multiple histograms.
+
+    First histogram is computed for each data row vector individually.
+    Afterwards a custom function is fitted to the binned data.
+
+    Parameters
+    ----------
+    X : array-like
+      Data (nsamples x nfeatures)
+    fx : functor
+      Function to be fitted. Its interface has to comply to the requirements
+      as for `least_sq_fit`.
+    params : tuple
+      Initial parameter values.
+    nbins : int
+      Number of histogram bins.
+    x_range : None or tuple
+      Range spanned by the histogram bins. By default the actual mininum and
+      maximum values of the data are used.
+
+    Returns
+    -------
+    tuple
+      (histograms (nsampels x nbins),
+       bin locations (left border),
+       bin width,
+       output of `least_sq_fit`)
+    """
+    if x_range is None:
+        # use global min max to ensure consistent bins across observations
+        xrange = (X.min(), X.max())
+
+    nobsrv = len(X)
+    # histograms per observation
+    H = []
+    bin_centers = None
+    bin_left = None
+    for obsrv in X:
+        hi = np.histogram(obsrv, bins=nbins, range=x_range)
+        if bin_centers is None:
+            bin_left = hi[1][:-1]
+            # round to take care of numerical instabilities
+            bin_width = np.abs(
+                            np.asscalar(
+                                np.unique(
+                                    np.round(bin_left - hi[1][1:],
+                                             decimals=6))))
+            bin_centers = bin_left + bin_width / 2
+        H.append(hi[0])
+
+    H = np.asarray(H)
+
+    return (H,
+            bin_left,
+            bin_width,
+            least_sq_fit(fx, params, H, bin_centers))
+
+
