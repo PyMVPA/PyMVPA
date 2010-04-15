@@ -67,6 +67,31 @@ def double_gamma_hrf(t, A1=5.4, W1=5.2, K1=1.0, A2=10.8, W2=7.35, K2=0.35):
     return single_gamma_hrf(t, A1, W1, K1) - single_gamma_hrf(t, A2, W2, K2)
 
 
+def dual_gaussian(x, amp1=1.0, mean1=0.0, std1=1.0,
+                     amp2=1.0, mean2=0.0, std2=1.0):
+    """Sum of two Gaussians.
+
+    Parameters
+    ----------
+    x : array
+      Function argument
+    amp1: float
+      Amplitude parameter of the first Gaussian
+    mean1: float
+      Mean parameter of the first Gaussian
+    std1: float
+      Standard deviation parameter of the first Gaussian
+    amp2: float
+      Amplitude parameter of the second Gaussian
+    mean2: float
+      Mean parameter of the second Gaussian
+    std2: float
+      Standard deviation parameter of the second Gaussian
+    """
+    from scipy.stats import norm
+    return (amp1 * norm.pdf(x, mean1, std1)) + (amp2 * norm.pdf(x, mean2, std2))
+
+
 ##REF: Name was automagically refactored
 def least_sq_fit(fx, params, y, x=None, **kwargs):
     """Simple convenience wrapper around SciPy's optimize.leastsq.
