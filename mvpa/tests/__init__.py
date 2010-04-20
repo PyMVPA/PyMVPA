@@ -99,6 +99,7 @@ def collect_nose_tests(verbosity=1):
         # Datasets
         'test_datasetng',
         'test_datasetfx',
+        'test_dataset_formats',
         'test_splitter',
         'test_niftidataset',
         'test_eepdataset',
