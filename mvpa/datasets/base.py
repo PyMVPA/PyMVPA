@@ -202,10 +202,10 @@ class Dataset(AttrDataset):
         if mask is None:
             if len(samples.shape) > 2:
                 # if we have multi-dim data
-                fm = FlattenMapper(shape=samples.shape[1:], inspace=space)
+                fm = FlattenMapper(shape=samples.shape[1:], space=space)
                 ds = ds.get_mapped(fm)
         else:
-            mm = mask_mapper(mask, inspace=space)
+            mm = mask_mapper(mask, space=space)
             ds = ds.get_mapped(mm)
 
         # apply generic mapper

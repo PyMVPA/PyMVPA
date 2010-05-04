@@ -100,7 +100,7 @@ def test_datasetmapping():
     # with overlapping and non-overlapping boxcars
     startpoints = [0, 1, 4]
     boxlength = 2
-    bm = BoxcarMapper(startpoints, boxlength, inspace='boxy')
+    bm = BoxcarMapper(startpoints, boxlength, space='boxy')
     # train is critical
     bm.train(ds)
     mds = bm.forward(ds)
