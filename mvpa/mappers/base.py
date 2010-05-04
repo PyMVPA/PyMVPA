@@ -33,14 +33,14 @@ class Mapper(Learner):
                reverse
 
     """
-    def __init__(self, inspace=None):
+    def __init__(self, **kwargs):
         """
         Parameters
         ----------
-        inspace : str, optional
-          Name of the input space
+        **kwargs
+          All additional arguments are passed to the baseclass.
         """
-        Learner.__init__(self, space=inspace)
+        Learner.__init__(self, **kwargs)
         # internal settings that influence what should be done to the dataset
         # attributes in the default forward() and reverse() implementations.
         # they are passed to the Dataset.copy() method
@@ -205,21 +205,9 @@ class Mapper(Learner):
 
 
     def __repr__(self):
-        return "%s(inspace=%s)" \
+        return "%s(space=%s)" \
                 % (self.__class__.__name__,
-                   repr(self.get_inspace()))
-
-
-    def get_inspace(self):
-        """
-        """
-        return self.get_space()
-
-
-    def set_inspace(self, name):
-        """
-        """
-        self.set_space(name)
+                   repr(self.get_space()))
 
 
 
@@ -284,9 +272,9 @@ class FeatureSliceMapper(Mapper):
     def _forward_dataset(self, dataset):
         # XXX this should probably not affect the source dataset, but right now
         # init_origid is not flexible enough
-        if not self.get_inspace() is None:
+        if not self.get_space() is None:
             # TODO need to do a copy first!!!
-            dataset.init_origids('features', attr=self.get_inspace())
+            dataset.init_origids('features', attr=self.get_space())
         # invoke super class _forward_dataset, this calls, _forward_dataset
         # and this calles _forward_data in this class
         mds = super(FeatureSliceMapper, self)._forward_dataset(dataset)
@@ -645,7 +633,7 @@ class ChainMapper(Mapper):
     def __copy__(self):
         # XXX need to copy the base class stuff as well
         return self.__class__([copy.copy(m) for m in self],
-                              inspace=self.get_inspace())
+                              space=self.get_space())
 
 
     def forward(self, data):

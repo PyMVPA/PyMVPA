@@ -46,8 +46,8 @@ def test_flatten():
 
     # actually, there should be no difference between a plain FlattenMapper and
     # a chain that only has a FlattenMapper as the one element
-    for fm in [FlattenMapper(inspace='voxel'),
-               ChainMapper([FlattenMapper(inspace='voxel'),
+    for fm in [FlattenMapper(space='voxel'),
+               ChainMapper([FlattenMapper(space='voxel'),
                             FeatureSliceMapper(slice(None))])]:
         # not working if untrained
         assert_raises(RuntimeError,
@@ -195,7 +195,7 @@ def test_subset_filler():
 
 def test_repr():
     # this time give mask only by its target length
-    sm = FeatureSliceMapper(slice(None), inspace='myspace')
+    sm = FeatureSliceMapper(slice(None), space='myspace')
 
     # check reproduction
     sm_clone = eval(repr(sm))

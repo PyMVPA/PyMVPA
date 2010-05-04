@@ -36,7 +36,7 @@ class FFTResampleMapper(Mapper):
 
     """
     def __init__(self, num, window=None, chunks_attr=None, position_attr=None,
-                 attr_strategy='remove', inspace=None):
+                 attr_strategy='remove', **kwargs):
         """
         Parameters
         ----------
@@ -62,7 +62,7 @@ class FFTResampleMapper(Mapper):
           procedure to the attributes as well (which might not be possible, e.g.
           for literal attributes).
         """
-        Mapper.__init__(self, inspace=inspace)
+        Mapper.__init__(self, **kwargs)
 
         self.__num = num
         self.__window_args = window

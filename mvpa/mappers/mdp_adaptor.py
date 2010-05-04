@@ -42,7 +42,7 @@ class MDPNodeMapper(Mapper):
     MDPFlowWrapper for that. Moreover, it is not possible to perform
     incremental training of a node.
     """
-    def __init__(self, node, nodeargs=None, inspace=None):
+    def __init__(self, node, nodeargs=None, **kwargs):
         """
         Parameters
         ----------
@@ -73,7 +73,7 @@ class MDPNodeMapper(Mapper):
         if not len(node._train_seq) == 1:
             raise ValueError("MDPNodeMapper does not support MDP nodes with "
                              "multiple training phases.")
-        Mapper.__init__(self, inspace=inspace)
+        Mapper.__init__(self, **kwargs)
         self.__pristine_node = None
         self.node = node
         self.nodeargs = nodeargs
@@ -240,7 +240,7 @@ class MDPFlowMapper(Mapper):
     -----
     It is not possible to perform incremental training of the MDP flow. 
     """
-    def __init__(self, flow, node_arguments=None, inspace=None):
+    def __init__(self, flow, node_arguments=None, **kwargs):
         """
         Parameters
         ----------
@@ -253,13 +253,12 @@ class MDPFlowMapper(Mapper):
           the flow. If a node does not require additional arguments, None
           can be provided instead. Keyword arguments are currently not
           supported by mdp.Flow.
-        inspace : see base class
         """
         if not node_arguments is None and len(node_arguments) != len(flow):
             raise ValueError("Length of node_arguments (%i) does not match the "
                              "number of nodes in the flow (%i)."
                              % (len(node_arguments), len(flow)))
-        Mapper.__init__(self, inspace=inspace)
+        Mapper.__init__(self, **kwargs)
         self.__pristine_flow = None
         self.flow = flow
         self.node_arguments = node_arguments

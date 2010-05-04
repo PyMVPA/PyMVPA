@@ -49,7 +49,7 @@ class ZScoreMapper(Mapper):
     Reverse-mapping is currently not implemented.
     """
     def __init__(self, params=None, param_est=None, chunks_attr='chunks',
-                 dtype='float64', inspace=None):
+                 dtype='float64', **kwargs):
         """
         Parameters
         ----------
@@ -73,10 +73,8 @@ class ZScoreMapper(Mapper):
         dtype : Numpy dtype, optional
           Target dtype that is used for upcasting, in case integer data is to be
           Z-scored.
-        inspace : None
-          Currently, this argument has no effect.
         """
-        Mapper.__init__(self, inspace=inspace)
+        Mapper.__init__(self, **kwargs)
 
         self.__chunks_attr = chunks_attr
         self.__params = params

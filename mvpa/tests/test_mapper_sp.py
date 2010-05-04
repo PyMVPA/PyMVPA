@@ -33,7 +33,7 @@ def test_polydetrend():
     ds = Dataset(samples_forwhole)
 
     # this one will auto-train the mapper on first use
-    dm = PolyDetrendMapper(polyord=1, inspace='police')
+    dm = PolyDetrendMapper(polyord=1, space='police')
     mds = dm.forward(ds)
     # features are linear trends, so detrending should remove all
     assert_array_almost_equal(mds.samples, np.zeros(mds.shape))
@@ -65,7 +65,7 @@ def test_polydetrend():
 
     # chunk-wise detrending
     ds = dataset_wizard(samples_forchunks, chunks=chunks)
-    dm = PolyDetrendMapper(chunks_attr='chunks', polyord=1, inspace='police')
+    dm = PolyDetrendMapper(chunks_attr='chunks', polyord=1, space='police')
     mds = dm.forward(ds)
     # features are chunkswise linear trends, so detrending should remove all
     assert_array_almost_equal(mds.samples, np.zeros(mds.shape))
@@ -105,7 +105,7 @@ def test_polydetrend():
                                  [-2.0, -8, -12, -16, -4, -18]], ndmin=2 ).T
     ds = Dataset(samples_forwhole, sa={'time': samples_forwhole[:,0]})
     # linear detrending that makes use of temporal info from dataset
-    dm = PolyDetrendMapper(polyord=1, inspace='time')
+    dm = PolyDetrendMapper(polyord=1, space='time')
     mds = dm.forward(ds)
     assert_array_almost_equal(mds.samples, np.zeros(mds.shape))
 
@@ -115,10 +115,10 @@ def test_polydetrend():
     chunks = [0, 1, 0, 1, 0, 1]
     time = [4, 4, 12, 8, 8, 12]
     ds = Dataset(samples_forchunks.copy(), sa={'chunks': chunks, 'time': time})
-    mds = PolyDetrendMapper(chunks_attr='chunks', polyord=1, inspace='time').forward(ds)
+    mds = PolyDetrendMapper(chunks_attr='chunks', polyord=1, space='time').forward(ds)
 
     # the whole thing must not affect the source data
     assert_array_equal(ds, samples_forchunks)
     # but if done inplace that is no longer true
-    poly_detrend(ds, chunks_attr='chunks', polyord=1, inspace='time')
+    poly_detrend(ds, chunks_attr='chunks', polyord=1, space='time')
     assert_array_equal(ds, mds)

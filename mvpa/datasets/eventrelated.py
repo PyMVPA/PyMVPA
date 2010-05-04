@@ -225,7 +225,7 @@ def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
                     'provided Events.'% boxlength)
 
     # finally create, train und use the boxcar mapper
-    bcm = BoxcarMapper(evvars['onset'], boxlength, inspace=eprefix)
+    bcm = BoxcarMapper(evvars['onset'], boxlength, space=eprefix)
     bcm.train(ds)
     ds = ds.get_mapped(bcm)
     # at last reflatten the dataset

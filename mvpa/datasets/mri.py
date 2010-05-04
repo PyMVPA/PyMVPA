@@ -251,10 +251,10 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
     # create a dataset
     ds = Dataset(imgdata, sa=sa)
     if sprefix is None:
-        inspace = None
+        space = None
     else:
-        inspace = sprefix + '_indices'
-    ds = ds.get_mapped(FlattenMapper(shape=imgdata.shape[1:], inspace=inspace))
+        space = sprefix + '_indices'
+    ds = ds.get_mapped(FlattenMapper(shape=imgdata.shape[1:], space=space))
 
     # now apply the mask if any
     if not mask is None:
