@@ -211,7 +211,24 @@ class Mapper(Learner):
 
 
 
-class FeatureSliceMapper(Mapper):
+class SliceMapper(Mapper):
+    """Baseclass of Mapper that slice a Dataset in various ways.
+    """
+    def __init__(self, slicearg, **kwargs):
+        Mapper.__init__(self, **kwargs)
+        # convert int sliceargs into lists to prevent getting scalar values when
+        # slicing
+        if isinstance(slicearg, int):
+            slicearg = [slicearg]
+        self._slicearg = slicearg
+
+
+    def __str__(self):
+        return _str(self)
+
+
+
+class FeatureSliceMapper(SliceMapper):
     """Mapper to select a subset of features.
     """
     def __init__(self, slicearg, dshape=None, oshape=None, filler=0, **kwargs):
@@ -230,17 +247,12 @@ class FeatureSliceMapper(Mapper):
         filler : optional
           Value to fill empty entries upon reverse operation
         """
-        Mapper.__init__(self, **kwargs)
+        SliceMapper.__init__(self, slicearg, **kwargs)
         # store it here, might be modified later
         self.__dshape = dshape
         self.__oshape = oshape
-
-        # convert int sliceargs into lists to prevent getting scalar values when
-        # slicing
-        if isinstance(slicearg, int):
-            slicearg = [slicearg]
-        self._slicearg = slicearg
         self.filler = filler
+
 
     def __repr__(self):
         s = super(FeatureSliceMapper, self).__repr__()
@@ -248,10 +260,6 @@ class FeatureSliceMapper(Mapper):
                          "(slicearg=%s, dshape=%s, "
                           % (repr(self._slicearg), repr(self.__dshape)),
                          1)
-
-
-    def __str__(self):
-        return _str(self)
 
 
     def _forward_data(self, data):
