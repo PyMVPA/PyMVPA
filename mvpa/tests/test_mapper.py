@@ -255,3 +255,11 @@ def test_chainmapper():
     # content as far it could be restored
     assert_array_equal(rdata[rdata > 0], data[rdata > 0])
     assert_equal(np.sum(rdata > 0), 8)
+
+
+def test_partitionmapper():
+    ds = dataset_wizard(np.random.normal(size=(100,10)),
+                        targets=[ i%4 for i in range(100) ],
+                        chunks=[ i/10 for i in range(100)])
+    pm = PartitionAttributeMapper([(None,[0,1,2,3,4]),(None,[5,6,7,8,9])])
+    splits = list(pm(ds))

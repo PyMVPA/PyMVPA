@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import copy
 
+from mvpa.base.learner import Learner
 from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
 from mvpa.base.dochelpers import _str
 
@@ -20,7 +21,7 @@ if __debug__:
     from mvpa.base import debug
 
 
-class Mapper(object):
+class Mapper(Learner):
     """Basic mapper interface definition.
 
     ::
@@ -39,8 +40,7 @@ class Mapper(object):
         inspace : str, optional
           Name of the input space
         """
-        self.__inspace = None
-        self.set_inspace(inspace)
+        Learner.__init__(self, space=inspace)
         # internal settings that influence what should be done to the dataset
         # attributes in the default forward() and reverse() implementations.
         # they are passed to the Dataset.copy() method
@@ -55,11 +55,6 @@ class Mapper(object):
     # the docstrings of the respective methods for details about what they
     # should do.
     #
-    def _train(self, dataset):
-        """Worker method. Needs to be implemented by subclass."""
-        raise NotImplementedError
-
-
     def _forward_data(self, data):
         """Forward-map some data.
 
@@ -132,69 +127,10 @@ class Mapper(object):
         return mds
 
 
-    def _pretrain(self, dataset):
-        """Preprocessing before actual mapper training.
-
-        This method can be reimplemented in derived classes. By default it does
-        nothing.
-
-        Parameters
-        ----------
-        dataset : Dataset-like, anything
-          Typically this is a `Dataset`, but it might also be a plain data
-          array, or even something completely different(TM) that is supported
-          by a subclass' implementation.
-        """
-        pass
-
-
-    def _posttrain(self, dataset):
-        """Postprocessing after actual mapper training.
-
-        This method can be reimplemented in derived classes. By default it does
-        nothing.
-
-        Parameters
-        ----------
-        dataset : Dataset-like, anything
-          Typically this is a `Dataset`, but it might also be a plain data
-          array, or even something completely different(TM) that is supported
-          by a subclass' implementation.
-        """
-        pass
-
-
     #
     # The following methods provide common functionality for all mappers
     # and there should be no immediate need to reimplement them
     #
-    def train(self, dataset):
-        """Perform training of the mapper.
-
-        This method is called to put the mapper in a state that allows it to
-        perform the intended mapping. It takes care of running pre- and
-        postprocessing that is potentially implemented in derived classes.
-
-        Parameters
-        ----------
-        dataset : Dataset-like, anything
-          Typically this is a `Dataset`, but it might also be a plain data
-          array, or even something completely different(TM) that is supported
-          by a subclass' implementation.
-
-        Returns
-        -------
-        whoknows
-          Returns whatever is returned by the derived class.
-        """
-        # this mimics Classifier.train() -- we might merge them all at some
-        # point
-        self._pretrain(dataset)
-        result = self._train(dataset)
-        self._posttrain(dataset)
-        return result
-
-
     def forward(self, data):
         """Map data from input to output space.
 
@@ -274,31 +210,16 @@ class Mapper(object):
                    repr(self.get_inspace()))
 
 
-    def __call__(self, ds):
-        """Use the mapper like a generator.
-
-        This default implementation simply yields the result of a call to
-        forward(). Derived classed mgiht reimplement this method to offer
-        actual generator-like processing.
-
-        Parameters
-        ----------
-        ds : Dataset
-          To be mapped dataset.
-        """
-        yield self.forward(data)
-
-
     def get_inspace(self):
         """
         """
-        return self.__inspace
+        return self.get_space()
 
 
     def set_inspace(self, name):
         """
         """
-        self.__inspace = name
+        self.set_space(name)
 
 
 
