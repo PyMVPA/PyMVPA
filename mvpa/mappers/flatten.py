@@ -14,7 +14,8 @@ import numpy as np
 
 from mvpa.base.dochelpers import _str
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples, \
-        ChainMapper, FeatureSliceMapper
+        ChainMapper
+from mvpa.mappers.slicing import FeatureSliceMapper
 from mvpa.misc.support import is_in_volume
 
 
