@@ -99,6 +99,7 @@ from mvpa.featsel.rfe import *
 from mvpa import mappers
 #from mvpa.mappers import *
 from mvpa.mappers.base import *
+from mvpa.mappers.slicing import *
 from mvpa.mappers.flatten import *
 from mvpa.mappers.prototype import *
 from mvpa.mappers.projection import *

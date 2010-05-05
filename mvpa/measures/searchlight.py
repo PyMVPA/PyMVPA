@@ -20,7 +20,7 @@ from mvpa.base.dochelpers import borrowkwargs
 
 from mvpa.datasets import hstack
 from mvpa.support import copy
-from mvpa.mappers.base import FeatureSliceMapper
+from mvpa.mappers.slicing import FeatureSliceMapper
 from mvpa.measures.base import DatasetMeasure
 from mvpa.misc.state import ConditionalAttribute
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere

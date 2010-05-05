@@ -16,10 +16,13 @@ from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true, assert_array_equal
 
 from mvpa.mappers.flatten import FlattenMapper
-from mvpa.mappers.base import FeatureSliceMapper, ChainMapper
+from mvpa.mappers.base import ChainMapper
+from mvpa.mappers.slicing import FeatureSliceMapper
 from mvpa.support.copy import copy
 from mvpa.datasets.base import Dataset
 from mvpa.base.collections import ArrayCollectable
+from mvpa.datasets.base import dataset_wizard
+from mvpa.mappers.partition import PartitionAttributeMapper
 
 # arbitrary ndarray subclass for testing
 class myarray(np.ndarray):
@@ -257,9 +260,13 @@ def test_chainmapper():
     assert_equal(np.sum(rdata > 0), 8)
 
 
-def test_partitionmapper():
-    ds = dataset_wizard(np.random.normal(size=(100,10)),
-                        targets=[ i%4 for i in range(100) ],
-                        chunks=[ i/10 for i in range(100)])
-    pm = PartitionAttributeMapper([(None,[0,1,2,3,4]),(None,[5,6,7,8,9])])
-    splits = list(pm(ds))
+#def test_partitionmapper():
+#    ds = dataset_wizard(np.random.normal(size=(100,10)),
+#                        targets=[ i%4 for i in range(100) ],
+#                        chunks=[ i/10 for i in range(100)])
+#    pm = PartitionAttributeMapper([(None,[0,1,2,3,4]),(None,[5,6,7,8,9])])
+#    splits = list(pm(ds))
+
+
+def test_sampleslicemapper():
+    pass

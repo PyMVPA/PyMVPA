@@ -10,7 +10,7 @@
 
 
 from mvpa.mappers.flatten import mask_mapper
-from mvpa.mappers.base import FeatureSliceMapper
+from mvpa.mappers.slicing import FeatureSliceMapper
 
 from mvpa.testing.tools import assert_raises, assert_equal, assert_array_equal
 

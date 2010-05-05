@@ -19,7 +19,8 @@ from mvpa.base.collections import SampleAttributesCollection, \
 from mvpa.base.dataset import AttrDataset
 from mvpa.base.dataset import _expand_attribute
 from mvpa.misc.support import idhash as idhash_
-from mvpa.mappers.base import ChainMapper, FeatureSliceMapper
+from mvpa.mappers.base import ChainMapper
+from mvpa.mappers.slicing import FeatureSliceMapper
 from mvpa.mappers.flatten import mask_mapper, FlattenMapper
 
 if __debug__:
