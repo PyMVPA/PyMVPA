@@ -33,6 +33,27 @@ class SliceMapper(Mapper):
 
 
 
+class SampleSliceMapper(SliceMapper):
+    """Mapper to select a subset of samples."""
+    def __init__(self, slicearg, **kwargs):
+        """
+        Parameters
+        ----------
+        slicearg : int, list(int), array(int), array(bool)
+          Any slicing argument that is compatible with numpy arrays. Depending
+          on the argument the mapper will perform basic slicing or
+          advanced indexing (with all consequences on speed and memory
+          consumption).
+        """
+        SliceMapper.__init__(self, slicearg, **kwargs)
+
+
+    def _call(self, ds):
+        # it couldn't be simpler
+        return ds[self._slicearg]
+
+
+
 class FeatureSliceMapper(SliceMapper):
     """Mapper to select a subset of features.
     """
