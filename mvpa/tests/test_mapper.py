@@ -15,9 +15,10 @@ from numpy import array
 from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true, assert_array_equal
 
+from mvpa.testing.datasets import datasets
 from mvpa.mappers.flatten import FlattenMapper
 from mvpa.mappers.base import ChainMapper
-from mvpa.mappers.slicing import FeatureSliceMapper
+from mvpa.mappers.slicing import FeatureSliceMapper, SampleSliceMapper
 from mvpa.support.copy import copy
 from mvpa.datasets.base import Dataset
 from mvpa.base.collections import ArrayCollectable
@@ -269,4 +270,9 @@ def test_chainmapper():
 
 
 def test_sampleslicemapper():
-    pass
+    # this does nothing but Dataset.__getitem__ which is tested elsewhere -- but
+    # at least we run it
+    ds = datasets['uni2small']
+    ssm = SampleSliceMapper(slice(3, 8, 2))
+    sds = ssm(ds)
+    assert_equal(len(sds), 3)
