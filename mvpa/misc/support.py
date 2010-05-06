@@ -541,3 +541,45 @@ def value2idx(val, x, solv='round'):
     x = np.abs(x)
     idx = np.argmin(x)
     return idx
+
+
+def mask2slice(mask):
+    """Convert a boolean mask vector into an equivalent slice (if possible).
+
+    Parameters
+    ----------
+    mask: boolean array
+      The mask.
+
+    Returns
+    -------
+    slice or boolean array
+      If possible the boolean mask is converted into a `slice`. If this is not
+      possible the unmodified boolean mask is returned.
+    """
+    # the filter should be a boolean array
+    # TODO Could be easily extended to also accept index arrays
+    if not len(mask):
+        raise ValueError("Got an empty mask.")
+    # get indices of non-zero filter elements
+    idx = mask.nonzero()[0]
+    idx_start = idx[0]
+    idx_end = idx[-1] + 1
+    idx_step = None
+    if len(idx) > 1:
+        # we need to figure out if there is a regular step-size
+        # between elements
+        stepsizes = np.unique(idx[1:] - idx[:-1])
+        if len(stepsizes) > 1:
+            # multiple step-sizes -> slicing is not possible -> return
+            # orginal filter
+            return mask
+        else:
+            idx_step = stepsizes[0]
+
+    sl = slice(idx_start, idx_end, idx_step)
+    if __debug__:
+        debug("SPL", "Boolean mask conversion to slice is possible (%s)." % sl)
+    return sl
+
+
