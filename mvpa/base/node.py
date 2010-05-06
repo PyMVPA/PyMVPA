@@ -10,6 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
+from mvpa.base.dochelpers import _str, _repr
 
 class Node(object):
     """Common processing object.
@@ -127,3 +128,7 @@ class Node(object):
     def set_space(self, name):
         """Set the processing space name of this node."""
         self.__space = name
+
+
+    def __str__(self):
+        return _str(self)
