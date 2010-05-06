@@ -100,6 +100,7 @@ def collect_nose_tests(verbosity=1):
         'test_datasetng',
         'test_datasetfx',
         'test_splitter',
+        'test_generators',
         'test_niftidataset',
         'test_eepdataset',
         'test_erdataset',

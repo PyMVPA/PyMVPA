@@ -1,0 +1,157 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Generator nodes to split dataset into multiple parts.
+"""
+
+__docformat__ = 'restructuredtext'
+
+import numpy as np
+
+from mvpa.base.node import Node
+from mvpa.base import warning
+from mvpa.misc.support import mask2slice
+
+
+class Splitter(Node):
+    """Generator node for dataset splitting.
+
+    The splitter is configured with the name of an attribute. When its
+    ``generate()`` methods is called with a dataset, it subsequently yields
+    all possible subsets of this dataset, by selecting all dataset
+    samples/features corresponding to a particular attribute value, for all
+    unique attribute values.
+
+    Dataset splitting is possible by sample attribute, or by feature attribute.
+    The maximum number of splits can be limited, and custom attribute values
+    may be provided.
+    """
+    def __init__(self, attr, attr_values=None, count=None, noslicing=False,
+                 collection=None, **kwargs):
+        """
+        Parameters
+        ----------
+        attr : str
+          Sample attribute used to determine splits.
+        attr_values : list
+          If not None, this is a list of value of the ``attr`` used to determine
+          the splits. The order of values in this list defines the order of the
+          resulting splits. It is possible to specify a particular value
+          multiple times. All dataset samples with values that are not listed
+          are going to be ignored.
+        count : None or int
+          Desired number of generated splits. If None, all splits are output
+          (default), otherwise the number of splits is limited to the given
+          ``count`` or the maximum number of possible split (whatever is less).
+        noslicing : bool
+          If True, dataset splitting is not done by slicing (causing
+          shared data between source and split datasets) even if it would
+          be possible. By default slicing is performed whenever possible
+          to reduce the memory footprint.
+        collection : {None, 'sa', 'fa'}
+          Specify the collection that contains the split-defining attribute. If
+          None the collections is auto-detected by searching the dataset
+          collections (sample attributes first). Alternatively, it is possible
+          to specified 'sa' (sample attribute) or 'fa' (feature attribute).
+        """
+        Node.__init__(self, **kwargs)
+        self.__splitattr = attr
+        self.__splitattr_values = attr_values
+        self.__count = count
+        self.__noslicing = noslicing
+        self.__collection = collection
+
+
+    def generate(self, ds):
+        """Yield dataset splits.
+
+        Parameters
+        ----------
+        ds: Dataset
+          Input dataset
+
+        Returns
+        -------
+        generator
+          The generator yields every possible split according to the splitter
+          configuration. All generated dataset have a boolean 'lastsplit'
+          attribute in their dataset attribute collection indicating whether
+          this particular dataset is the last one.
+        """
+        # localbinding
+        col_name = self.__collection
+        noslicing = self.__noslicing
+        count = self.__count
+        splattr = self.__splitattr
+
+        if col_name is None:
+            # auto-detect collection
+            if splattr in ds.sa:
+                col_name = 'sa'
+                if __debug__ and splattr in ds.fa:
+                    warning("%s: An attribute with name '%s' is also present "
+                            "in the feature attribute collection -- make sure "
+                            "that the splitter is using the right one (see "
+                            "`collection` argument)."
+                            % (self.__class__.__name__, splattr))
+            elif splattr in ds.fa:
+                col_name = 'fa'
+                # we don't need to warn here, since it wouldn't happen
+            else:
+                ValueError("Cannot find '%s' attribute in any dataset "
+                           "collection." % splattr)
+        if col_name == 'sa':
+            collection = ds.sa
+        elif col_name == 'fa':
+            collection = ds.fa
+        else:
+            ValueError("Unknown collection '%s'. Possible values are 'sa', "
+                       "'fa'." % col_name)
+
+        splattr_data = collection[splattr].value
+        cfgs = self.__splitattr_values
+        if cfgs is None:
+            cfgs = collection[splattr].unique
+        n_cfgs = len(cfgs)
+
+        # split the data
+        for isplit, split in enumerate(cfgs):
+            if not count is None and isplit >= count:
+                # number of max splits is reached
+                break
+            # boolean mask is 'selected' samples for this split
+            filter_ = splattr_data == split
+
+            if noslicing:
+                # advanced indexing (with data copying) via boolean vector
+                split_ds = ds[filter_]
+            else:
+                # check whether we can do slicing instead of advanced
+                # indexing -- if we can split the dataset without causing
+                # the data to be copied, its is quicker and leaner.
+                # However, it only works if we have a contiguous chunk or
+                # regular step sizes for the samples to be split
+                if col_name == 'sa':
+                    split_ds = ds[mask2slice(filter_)]
+                if col_name == 'fa':
+                    split_ds = ds[:, mask2slice(filter_)]
+
+            # is this the last split
+            if count is None:
+                lastsplit = (isplit == n_cfgs - 1)
+            else:
+                lastsplit = (isplit == count - 1)
+
+            if not split_ds.a.has_key('lastsplit'):
+                # if not yet known -- add one
+                split_ds.a['lastsplit'] = lastsplit
+            else:
+                # otherwise just assign a new value
+                split_ds.a.lastsplit = lastsplit
+
+            yield split_ds
