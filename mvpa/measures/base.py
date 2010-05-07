@@ -167,11 +167,13 @@ class Measure(Learner):
         return result
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=None):
         """String representation of a `Measure`
 
         Includes only arguments which differ from default ones
         """
+        if prefixes is None:
+            prefixes = []
         prefixes = prefixes[:]
         if self.__postproc is not None:
             prefixes.append("postproc=%s" % self.__postproc)
