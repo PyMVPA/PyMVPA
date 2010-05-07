@@ -14,8 +14,8 @@ import numpy as np
 from sets import Set
 
 from mvpa.datasets.base import dataset_wizard
-from mvpa.misc.state import ClassWithCollections, ConditionalAttribute
-from mvpa.misc.param import Parameter, KernelParameter
+from mvpa.base.state import ClassWithCollections, ConditionalAttribute
+from mvpa.base.param import Parameter, KernelParameter
 
 from mvpa.testing.clfs import *
 

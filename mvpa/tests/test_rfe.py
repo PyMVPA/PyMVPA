@@ -28,7 +28,7 @@ from mvpa.clfs.transerror import TransferError
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.clfs.stats import MCNullDist
 
-from mvpa.misc.state import UnknownStateError
+from mvpa.base.state import UnknownStateError
 
 from mvpa.testing import *
 from mvpa.testing.clfs import *

@@ -17,7 +17,7 @@ if externals.exists('shogun', raise_=True):
     import shogun.Classifier
     _shogun_exposes_slavesvm_labels = externals.versions['shogun:rev'] < 4633
 
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 from mvpa.base.types import asobjarray
 from mvpa.measures.base import Sensitivity
 from mvpa.datasets.base import Dataset

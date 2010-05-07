@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.base import externals, warning
-from mvpa.misc.state import ClassWithCollections, ConditionalAttribute
+from mvpa.base.state import ClassWithCollections, ConditionalAttribute
 
 if __debug__:
     from mvpa.base import debug

@@ -168,7 +168,7 @@ __str__
   if any), not necessarily *eval*\uable.
 
 .. note::
-   Classes derived from :class:`~mvpa.misc.state.ClassWithCollections` and
+   Classes derived from :class:`~mvpa.base.state.ClassWithCollections` and
    using `params` and `ca` collections for their need of parametrization
    (e.g. :class:`~mvpa.clfs.base.Classifier`) would obtain an acceptable
    definitions of `__repr__` and `__str__` automagically.

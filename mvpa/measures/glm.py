@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.measures.base import FeaturewiseMeasure
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 from mvpa.datasets.base import Dataset
 
 class GLM(FeaturewiseMeasure):

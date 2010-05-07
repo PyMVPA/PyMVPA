@@ -25,7 +25,7 @@ from mvpa.misc.errorfx import mean_power_fx, root_mean_power_fx, RMSErrorFx, \
      AUCErrorFx
 from mvpa.base import warning
 from mvpa.base.collections import Collectable
-from mvpa.misc.state import ConditionalAttribute, ClassWithCollections
+from mvpa.base.state import ConditionalAttribute, ClassWithCollections
 from mvpa.base.dochelpers import enhanced_doc_string, table2string
 from mvpa.clfs.stats import auto_null_dist
 

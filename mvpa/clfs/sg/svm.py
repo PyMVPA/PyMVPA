@@ -64,7 +64,7 @@ else:
 
 import operator
 
-from mvpa.misc.param import Parameter
+from mvpa.base.param import Parameter
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.base import warning
 
@@ -72,7 +72,7 @@ from mvpa.clfs.base import accepts_dataset_as_samples, \
      accepts_samples_as_dataset, FailedToTrainError
 from mvpa.clfs.meta import MulticlassClassifier
 from mvpa.clfs._svmbase import _SVM
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 from mvpa.measures.base import Sensitivity
 
 from sens import *

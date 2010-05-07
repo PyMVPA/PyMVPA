@@ -17,7 +17,7 @@ from mvpa.featsel.helpers import BestDetector, \
                                  NBackHistoryStopCrit, \
                                  FractionTailSelector
 from numpy import arange
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 
 if __debug__:
     from mvpa.base import debug

@@ -18,7 +18,7 @@ from mvpa.measures.base import Measure
 from mvpa.datasets.base import Dataset
 from mvpa.datasets.splitters import NoneSplitter
 from mvpa.base import warning
-from mvpa.misc.state import ConditionalAttribute, Harvestable
+from mvpa.base.state import ConditionalAttribute, Harvestable
 from mvpa.misc.transformers import grand_mean
 
 if __debug__:

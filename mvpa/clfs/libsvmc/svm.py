@@ -15,7 +15,7 @@ import numpy as np
 import operator
 
 from mvpa.base import warning
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 
 from mvpa.clfs.base import accepts_dataset_as_samples, \
      accepts_samples_as_dataset

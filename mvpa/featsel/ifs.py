@@ -23,7 +23,7 @@ from mvpa.featsel.helpers import NBackHistoryStopCrit, \
                                  FixedNElementTailSelector, \
                                  BestDetector
 
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 
 if __debug__:
     from mvpa.base import debug

@@ -21,8 +21,8 @@ from mvpa.misc.errorfx import MeanMismatchErrorFx
 from mvpa.measures.searchlight import BaseSearchlight
 from mvpa.base import externals, warning
 from mvpa.base.dochelpers import borrowkwargs
-#from mvpa.misc.param import Parameter
-#from mvpa.misc.state import ConditionalAttribute
+#from mvpa.base.param import Parameter
+#from mvpa.base.state import ConditionalAttribute
 #from mvpa.measures.base import Sensitivity
 
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere

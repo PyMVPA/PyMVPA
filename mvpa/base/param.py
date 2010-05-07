@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import re
 import textwrap
 import numpy as np
-from mvpa.misc.state import IndexedCollectable
+from mvpa.base.state import IndexedCollectable
 
 if __debug__:
     from mvpa.base import debug

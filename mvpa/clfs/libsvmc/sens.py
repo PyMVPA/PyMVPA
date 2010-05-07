@@ -13,8 +13,8 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.base import warning
-from mvpa.misc.state import ConditionalAttribute
-from mvpa.misc.param import Parameter
+from mvpa.base.state import ConditionalAttribute
+from mvpa.base.param import Parameter
 from mvpa.base.types import asobjarray
 from mvpa.measures.base import Sensitivity
 from mvpa.datasets.base import Dataset
