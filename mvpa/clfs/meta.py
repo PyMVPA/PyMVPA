@@ -27,12 +27,12 @@ import numpy as np
 from sets import Set
 
 from mvpa.misc.args import group_kwargs
-from mvpa.misc.param import Parameter
+from mvpa.base.param import Parameter
 
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.datasets.miscfx import get_samples_by_attr
 from mvpa.misc.attrmap import AttributeMap
-from mvpa.misc.state import ConditionalAttribute, ClassWithCollections, \
+from mvpa.base.state import ConditionalAttribute, ClassWithCollections, \
      Harvestable
 from mvpa.mappers.slicing import FeatureSliceMapper
 

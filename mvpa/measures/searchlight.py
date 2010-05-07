@@ -22,7 +22,7 @@ from mvpa.datasets import hstack
 from mvpa.support import copy
 from mvpa.mappers.slicing import FeatureSliceMapper
 from mvpa.measures.base import Measure
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
 
 

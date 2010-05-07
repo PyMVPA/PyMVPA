@@ -16,9 +16,9 @@ from sets import Set
 
 from mvpa.base import externals
 
-from mvpa.misc.state import ConditionalAttribute, ClassWithCollections, \
+from mvpa.base.state import ConditionalAttribute, ClassWithCollections, \
      ParameterCollection, _def_sep
-from mvpa.misc.param import *
+from mvpa.base.param import *
 from mvpa.misc.exceptions import UnknownStateError
 
 if __debug__:

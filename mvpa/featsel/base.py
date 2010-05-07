@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.featsel.helpers import FractionTailSelector
-from mvpa.misc.state import ConditionalAttribute, ClassWithCollections
+from mvpa.base.state import ConditionalAttribute, ClassWithCollections
 
 if __debug__:
     from mvpa.base import debug

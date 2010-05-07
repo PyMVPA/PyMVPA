@@ -16,8 +16,8 @@ from mvpa.base import warning, externals
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import ConvergenceError
-from mvpa.misc.param import Parameter
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.param import Parameter
+from mvpa.base.state import ConditionalAttribute
 from mvpa.datasets.base import Dataset
 
 __all__ = [ "SMLR", "SMLRWeights" ]

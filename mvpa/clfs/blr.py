@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 
 if __debug__:

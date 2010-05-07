@@ -32,6 +32,8 @@ from mvpa.base.externals import *
 from mvpa.base.info import *
 from mvpa.base.types import *
 from mvpa.base.verbosity import *
+from mvpa.base.param import *
+from mvpa.base.state import *
 
 if externals.exists('h5py'):
     from mvpa.base.hdf5 import *
@@ -144,8 +146,6 @@ if externals.exists('cPickle') and externals.exists('gzip'):
 from mvpa.misc.fsl import *
 from mvpa.misc.bv import *
 from mvpa.misc.bv.base import *
-from mvpa.misc.param import *
-from mvpa.misc.state import *
 from mvpa.misc.support import *
 from mvpa.misc.transformers import *
 

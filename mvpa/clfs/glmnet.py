@@ -29,7 +29,7 @@ from mvpa.base import warning
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
      FailedToTrainError
 from mvpa.measures.base import Sensitivity
-from mvpa.misc.param import Parameter
+from mvpa.base.param import Parameter
 from mvpa.datasets.base import Dataset
 
 if __debug__:

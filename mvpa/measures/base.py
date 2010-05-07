@@ -22,7 +22,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import mvpa.support.copy as copy
 
-from mvpa.misc.state import ConditionalAttribute, ClassWithCollections
+from mvpa.base.state import ConditionalAttribute, ClassWithCollections
 from mvpa.misc.args import group_kwargs
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.base.types import asobjarray

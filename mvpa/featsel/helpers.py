@@ -14,7 +14,7 @@ from math import floor
 import numpy as np
 
 from mvpa.base.dataset import AttrDataset
-from mvpa.misc.state import ClassWithCollections, ConditionalAttribute
+from mvpa.base.state import ClassWithCollections, ConditionalAttribute
 
 if __debug__:
     from mvpa.base import debug

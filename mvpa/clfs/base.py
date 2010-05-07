@@ -21,8 +21,8 @@ from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
 
 from mvpa.datasets.base import Dataset
 from mvpa.misc.support import idhash
-from mvpa.misc.state import ConditionalAttribute, ClassWithCollections
-from mvpa.misc.param import Parameter
+from mvpa.base.state import ConditionalAttribute, ClassWithCollections
+from mvpa.base.param import Parameter
 from mvpa.misc.attrmap import AttributeMap
 
 from mvpa.clfs.transerror import ConfusionMatrix, RegressionStatistics
@@ -123,7 +123,7 @@ class Classifier(ClassWithCollections):
     # Additionally Michael thinks ATM that additional information might be
     # necessary in some situations (e.g. reasonably predefined parameter range,
     # minimal iteration stepsize, ...), therefore the value to each key should
-    # also be a dict or we should use mvpa.misc.param.Parameter'...
+    # also be a dict or we should use mvpa.base.param.Parameter'...
 
     trained_targets = ConditionalAttribute(enabled=True,
         doc="Set of unique targets it has been trained on")

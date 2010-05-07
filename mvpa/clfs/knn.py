@@ -19,7 +19,7 @@ import numpy as np
 from mvpa.base import warning
 from mvpa.datasets.base import Dataset
 from mvpa.misc.support import indent_doc
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.clfs.distance import squared_euclidean_distance
