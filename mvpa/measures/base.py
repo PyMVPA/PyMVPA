@@ -461,6 +461,90 @@ class Sensitivity(FeaturewiseMeasure):
 
 
 
+class CombinedFeaturewiseMeasure(FeaturewiseMeasure):
+    """Set sensitivity analyzers to be merged into a single output"""
+
+    sensitivities = ConditionalAttribute(enabled=False,
+        doc="Sensitivities produced by each analyzer")
+
+    # XXX think again about combiners... now we have it in here and as
+    #     well as in the parent -- FeaturewiseMeasure
+    # YYY because we don't use parent's _call. Needs RF
+    def __init__(self, analyzers=None,  # XXX should become actually 'measures'
+                 sa_attr='combinations',
+                 **kwargs):
+        """Initialize CombinedFeaturewiseMeasure
+
+        Parameters
+        ----------
+        analyzers : list or None
+          List of analyzers to be used. There is no logic to populate
+          such a list in __call__, so it must be either provided to
+          the constructor or assigned to .analyzers prior calling
+        sa_attr : str
+          Name of the sa to be populated with the indexes of combinations
+        """
+        if analyzers is None:
+            analyzers = []
+        self._sa_attr = sa_attr
+        FeaturewiseMeasure.__init__(self, **kwargs)
+        self.__analyzers = analyzers
+        """List of analyzers to use"""
+
+
+    def _call(self, dataset):
+        sensitivities = []
+        for ind, analyzer in enumerate(self.__analyzers):
+            if __debug__:
+                debug("SA", "Computing sensitivity for SA#%d:%s" %
+                      (ind, analyzer))
+            sensitivity = analyzer(dataset)
+            sensitivities.append(sensitivity)
+
+        if __debug__:
+            debug("SA",
+                  "Returning %d sensitivities from %s" %
+                  (len(sensitivities), self.__class__.__name__))
+
+        sa_attr = self._sa_attr
+        if isinstance(sensitivities[0], AttrDataset):
+            smerged = None
+            for i, s in enumerate(sensitivities):
+                s.sa[sa_attr] = np.repeat(i, len(s))
+                if smerged is None:
+                    smerged = s
+                else:
+                    smerged.append(s)
+            sensitivities = smerged
+        else:
+            sensitivities = \
+                Dataset(sensitivities,
+                        sa={sa_attr: np.arange(len(sensitivities))})
+
+        self.ca.sensitivities = sensitivities
+
+        return sensitivities
+
+
+    def untrain(self):
+        """Untrain CombinedFDM
+        """
+        if self.__analyzers is not None:
+            for anal in self.__analyzers:
+                anal.untrain()
+
+    ##REF: Name was automagically refactored
+    def _set_analyzers(self, analyzers):
+        """Set the analyzers
+        """
+        self.__analyzers = analyzers
+        """Analyzers to use"""
+
+    analyzers = property(fget=lambda x:x.__analyzers,
+                         fset=_set_analyzers,
+                         doc="Used analyzers")
+
+
 # XXX Why did we come to name everything analyzer? inputs of regular
 #     things like CombinedFeaturewiseMeasure can be simple
 #     measures....
