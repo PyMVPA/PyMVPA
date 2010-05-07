@@ -14,7 +14,7 @@ Minimal Searchlight Example
 .. index:: searchlight, cross-validation
 
 The term :class:`~mvpa.measures.searchlight.Searchlight` refers to an algorithm
-that runs a scalar :class:`~mvpa.measures.base.DatasetMeasure` on all possible
+that runs a scalar :class:`~mvpa.measures.base.Measure` on all possible
 spheres of a certain size within a dataset (that provides information about
 distances between feature locations).  The measure typically computed is a
 cross-validated transfer error (see :ref:`CrossValidatedTransferError

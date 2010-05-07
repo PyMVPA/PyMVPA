@@ -187,7 +187,7 @@ class NullDist(ClassWithCollections):
         Returned values are determined left, right, or from any tail
         depending on the constructor setting.
 
-        In case a `FeaturewiseDatasetMeasure` was used to estimate the
+        In case a `FeaturewiseMeasure` was used to estimate the
         distribution the method returns an array. In that case `x` can be
         a scalar value or an array of a matching shape.
         """
@@ -201,7 +201,7 @@ class MCNullDist(NullDist):
     """Null-hypothesis distribution is estimated from randomly permuted data labels.
 
     The distribution is estimated by calling fit() with an appropriate
-    `DatasetMeasure` or `TransferError` instance and a training and a
+    `Measure` or `TransferError` instance and a training and a
     validation dataset (in case of a `TransferError`). For a customizable
     amount of cycles the training data labels are permuted and the
     corresponding measure computed. In case of a `TransferError` this is the
@@ -212,7 +212,7 @@ class MCNullDist(NullDist):
     i.e. fraction of the distribution that is lower or larger than some
     critical value.
 
-    This class also supports `FeaturewiseDatasetMeasure`. In that case `cdf()`
+    This class also supports `FeaturewiseMeasure`. In that case `cdf()`
     returns an array of featurewise probabilities/frequencies.
     """
 
@@ -290,7 +290,7 @@ class MCNullDist(NullDist):
 
         Parameters
         ----------
-        measure: (`Featurewise`)`DatasetMeasure` or `TransferError`
+        measure: (`Featurewise`)`Measure` or `TransferError`
           TransferError instance used to compute all errors.
         wdata: `Dataset` which gets permuted and used to compute the
           measure/transfer error multiple times.

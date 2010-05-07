@@ -13,18 +13,18 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.measures.base import FeaturewiseMeasure
 
 if __debug__:
     from mvpa.base import debug
 
 
-class PLS(FeaturewiseDatasetMeasure):
+class PLS(FeaturewiseMeasure):
     def __init__(self, num_permutations=200, num_bootstraps=100, **kwargs):
         raise NotImplemented, 'PLS was not yet implemented fully'
 
         # init base classes first
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
+        FeaturewiseMeasure.__init__(self, **kwargs)
 
         # save the args for the analysis
         self.num_permutations = num_permutations

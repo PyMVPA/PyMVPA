@@ -32,7 +32,7 @@ if __debug__:
 class IFS(FeatureSelection):
     """Incremental feature search.
 
-    A scalar `DatasetMeasure` is computed multiple times on variations of a
+    A scalar `Measure` is computed multiple times on variations of a
     certain dataset. These measures are in turn used to incrementally select
     important features. Starting with an empty feature set the dataset measure
     is first computed for each single feature. A number of features is selected
@@ -63,7 +63,7 @@ class IFS(FeatureSelection):
 
         Parameters
         ----------
-        data_measure : DatasetMeasure
+        data_measure : Measure
           Computed for each candidate feature selection. The measure has
           to compute a scalar value.
         transfer_error : TransferError

@@ -14,7 +14,7 @@ import numpy as np
 
 from mvpa.support.copy import deepcopy
 
-from mvpa.measures.base import DatasetMeasure
+from mvpa.measures.base import Measure
 from mvpa.datasets.base import Dataset
 from mvpa.datasets.splitters import NoneSplitter
 from mvpa.base import warning
@@ -25,7 +25,7 @@ if __debug__:
     from mvpa.base import debug
 
 
-class CrossValidatedTransferError(DatasetMeasure, Harvestable):
+class CrossValidatedTransferError(Measure, Harvestable):
     """Classifier cross-validation.
 
     This class provides a simple interface to cross-validate a classifier
@@ -89,9 +89,9 @@ class CrossValidatedTransferError(DatasetMeasure, Harvestable):
           conditional attribute
         **kwargs
           All additional arguments are passed to the
-          :class:`~mvpa.measures.base.DatasetMeasure` base class.
+          :class:`~mvpa.measures.base.Measure` base class.
         """
-        DatasetMeasure.__init__(self, **kwargs)
+        Measure.__init__(self, **kwargs)
         Harvestable.__init__(self, harvest_attribs, copy_attribs)
 
         if splitter is None:

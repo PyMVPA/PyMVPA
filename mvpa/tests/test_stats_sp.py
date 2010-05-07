@@ -142,9 +142,9 @@ class StatsTestsScipy(unittest.TestCase):
     def test_negative_t(self):
         """Basic testing of the sign in p and t scores
         """
-        from mvpa.measures.base import FeaturewiseDatasetMeasure
+        from mvpa.measures.base import FeaturewiseMeasure
 
-        class BogusMeasure(FeaturewiseDatasetMeasure):
+        class BogusMeasure(FeaturewiseMeasure):
             """Just put high positive into first 2 features, and high
             negative into 2nd two
             """

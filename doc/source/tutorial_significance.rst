@@ -373,7 +373,7 @@ fixed, to estimated parametric, to non-parametric permutation testing.
 Unfortunately not a single way provides an ultimate testing facility to be
 applied blindly to any chosen problem without investigating the
 appropriateness of the data at hand (see previous section).  Every kind of
-:class:`~mvpa.measures.base.DatasetMeasure` provides an easy way to trigger
+:class:`~mvpa.measures.base.Measure` provides an easy way to trigger
 assessment of *statistical significance* by specifying ``null_dist`` parameter
 with a distribution estimator.  After a given measure is computed, the
 corresponding p-value(s) for the returned value(s) could be accessed at

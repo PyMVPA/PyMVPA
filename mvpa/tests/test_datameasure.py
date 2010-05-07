@@ -34,7 +34,7 @@ from mvpa.datasets.splitters import NFoldSplitter, NoneSplitter
 from mvpa.misc.transformers import Absolute, \
      DistPValue
 
-from mvpa.measures.base import SplitFeaturewiseDatasetMeasure
+from mvpa.measures.base import SplitFeaturewiseMeasure
 from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
      IterativeRelief_Devel, IterativeReliefOnline_Devel
@@ -334,7 +334,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
     def test_split_featurewise_dataset_measure(self):
         ds = datasets['uni3small']
-        sana = SplitFeaturewiseDatasetMeasure(
+        sana = SplitFeaturewiseMeasure(
             analyzer=SMLR(
               fit_all_weights=True).get_sensitivity_analyzer(),
             splitter=NFoldSplitter(),
@@ -349,7 +349,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # Lets try more complex example with 'boosting'
         ds = datasets['uni3medium']
         ds.init_origids('samples')
-        sana = SplitFeaturewiseDatasetMeasure(
+        sana = SplitFeaturewiseMeasure(
             analyzer=SMLR(
               fit_all_weights=True).get_sensitivity_analyzer(),
             splitter=NoneSplitter(npertarget=0.25, reverse=True,
@@ -375,7 +375,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         #ds = datasets['uni2medium']
         #plain_sana = SVM().get_sensitivity_analyzer(
         #       transformer=DistPValue())
-        #boosted_sana = SplitFeaturewiseDatasetMeasure(
+        #boosted_sana = SplitFeaturewiseMeasure(
         #    analyzer=SVM().get_sensitivity_analyzer(
         #       transformer=DistPValue(fpp=0.05)),
         #    splitter=NoneSplitter(npertarget=0.8, mode='first', nrunspersplit=2),
