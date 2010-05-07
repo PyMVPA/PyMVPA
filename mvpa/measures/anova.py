@@ -6,14 +6,14 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""FeaturewiseDatasetMeasure performing a univariate ANOVA."""
+"""FeaturewiseMeasure performing a univariate ANOVA."""
 
 __docformat__ = 'restructuredtext'
 
 import numpy as np
 
 from mvpa.base import externals
-from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.measures.base import FeaturewiseMeasure
 from mvpa.base.dataset import vstack
 from mvpa.datasets.base import Dataset
 
@@ -28,8 +28,8 @@ from mvpa.datasets.base import Dataset
 #
 # and may be some others
 
-class OneWayAnova(FeaturewiseDatasetMeasure):
-    """`FeaturewiseDatasetMeasure` that performs a univariate ANOVA.
+class OneWayAnova(FeaturewiseMeasure):
+    """`FeaturewiseMeasure` that performs a univariate ANOVA.
 
     F-scores are computed for each feature as the standard fraction of between
     and within group variances. Groups are defined by samples with unique
@@ -52,7 +52,7 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
           What samples attribute to use as targets (labels).
         """
         self._targets_attr = targets_attr
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
+        FeaturewiseMeasure.__init__(self, **kwargs)
 
 
     def __repr__(self, prefixes=None):
@@ -61,7 +61,7 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
         if self._targets_attr != 'targets':
             prefixes = prefixes + ['targets_attr=%r' % (self._targets_attr)]
         return \
-            super(FeaturewiseDatasetMeasure, self).__repr__(prefixes=prefixes)
+            super(FeaturewiseMeasure, self).__repr__(prefixes=prefixes)
 
 
     def _call(self, dataset):

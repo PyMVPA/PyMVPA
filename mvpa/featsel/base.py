@@ -72,7 +72,7 @@ class FeatureSelection(ClassWithCollections):
 class SensitivityBasedFeatureSelection(FeatureSelection):
     """Feature elimination.
 
-    A `FeaturewiseDatasetMeasure` is used to compute sensitivity maps given a certain
+    A `FeaturewiseMeasure` is used to compute sensitivity maps given a certain
     dataset. These sensitivity maps are in turn used to discard unimportant
     features.
     """
@@ -88,7 +88,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
 
         Parameters
         ----------
-        sensitivity_analyzer : FeaturewiseDatasetMeasure
+        sensitivity_analyzer : FeaturewiseMeasure
           sensitivity analyzer to come up with sensitivity
         feature_selector : Functor
           Given a sensitivity map it has to return the ids of those

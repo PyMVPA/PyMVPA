@@ -534,7 +534,7 @@ class SMLRWeights(Sensitivity):
 
     By default SMLR provides multiple weights per feature (one per label in
     training dataset). By default, all weights are combined into a single
-    sensitivity value. Please, see the `FeaturewiseDatasetMeasure` constructor
+    sensitivity value. Please, see the `FeaturewiseMeasure` constructor
     arguments how to custmize this behavior.
     """
 

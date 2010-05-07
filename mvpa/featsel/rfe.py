@@ -32,7 +32,7 @@ if __debug__:
 class RFE(FeatureSelection):
     """Recursive feature elimination.
 
-    A `FeaturewiseDatasetMeasure` is used to compute sensitivity maps given a
+    A `FeaturewiseMeasure` is used to compute sensitivity maps given a
     certain dataset. These sensitivity maps are in turn used to discard
     unimportant features. For each feature selection the transfer error on some
     testdatset is computed. This procedure is repeated until a given
@@ -76,7 +76,7 @@ class RFE(FeatureSelection):
 
         Parameters
         ----------
-        sensitivity_analyzer : FeaturewiseDatasetMeasure object
+        sensitivity_analyzer : FeaturewiseMeasure object
         transfer_error : TransferError object
           used to compute the transfer error of a classifier based on a
           certain feature set on the test dataset.

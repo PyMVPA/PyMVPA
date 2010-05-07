@@ -8,11 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Base classes for measures: algorithms that quantify properties of datasets.
 
-Besides the `DatasetMeasure` base class this module also provides the
-(abstract) `FeaturewiseDatasetMeasure` class. The difference between a general
-measure and the output of the `FeaturewiseDatasetMeasure` is that the latter
+Besides the `Measure` base class this module also provides the
+(abstract) `FeaturewiseMeasure` class. The difference between a general
+measure and the output of the `FeaturewiseMeasure` is that the latter
 returns a 1d map (one value per feature in the dataset). In contrast there are
-no restrictions on the returned value of `DatasetMeasure` except for that it
+no restrictions on the returned value of `Measure` except for that it
 has to be in some iterable container.
 
 """
@@ -37,7 +37,7 @@ if __debug__:
     from mvpa.base import debug
 
 
-class DatasetMeasure(ClassWithCollections):
+class Measure(ClassWithCollections):
     """A measure computed from a `Dataset`
 
     All dataset measures support arbitrary transformation of the measure
@@ -96,7 +96,7 @@ class DatasetMeasure(ClassWithCollections):
         self.__null_dist = null_dist_
 
 
-    __doc__ = enhanced_doc_string('DatasetMeasure', locals(),
+    __doc__ = enhanced_doc_string('Measure', locals(),
                                   ClassWithCollections)
 
 
@@ -200,7 +200,7 @@ class DatasetMeasure(ClassWithCollections):
 
 
     def __repr__(self, prefixes=[]):
-        """String representation of a `DatasetMeasure`
+        """String representation of a `Measure`
 
         Includes only arguments which differ from default ones
         """
@@ -209,7 +209,7 @@ class DatasetMeasure(ClassWithCollections):
             prefixes.append("postproc=%s" % self.__postproc)
         if self.__null_dist is not None:
             prefixes.append("null_dist=%s" % self.__null_dist)
-        return super(DatasetMeasure, self).__repr__(prefixes=prefixes)
+        return super(Measure, self).__repr__(prefixes=prefixes)
 
     def untrain(self):
         """'Untraining' Measure
@@ -230,10 +230,10 @@ class DatasetMeasure(ClassWithCollections):
         return self.__postproc
 
 
-class FeaturewiseDatasetMeasure(DatasetMeasure):
+class FeaturewiseMeasure(Measure):
     """A per-feature-measure computed from a `Dataset` (base class).
 
-    Should behave like a DatasetMeasure.
+    Should behave like a Measure.
     """
 
     # MH: why isn't this piece in the Sensitivity class?
@@ -242,19 +242,19 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
             "relies on combining multiple ones")
 
     def __init__(self, **kwargs):
-        DatasetMeasure.__init__(self, **kwargs)
+        Measure.__init__(self, **kwargs)
 
     def __repr__(self, prefixes=None):
         if prefixes is None:
             prefixes = []
         return \
-            super(FeaturewiseDatasetMeasure, self).__repr__(prefixes=prefixes)
+            super(FeaturewiseMeasure, self).__repr__(prefixes=prefixes)
 
 
     def _call(self, dataset):
         """Computes a per-feature-measure on a given `Dataset`.
 
-        Behaves like a `DatasetMeasure`, but computes and returns a 1d ndarray
+        Behaves like a `Measure`, but computes and returns a 1d ndarray
         with one value per feature.
         """
         raise NotImplementedError
@@ -270,10 +270,10 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
          base_sensitivities doesn't sound appropriate.
          MH: There is indeed some overlap, but also significant differences.
              This one operates on a single sensana and combines over second
-             axis, CombinedFeaturewiseDatasetMeasure uses first axis.
+             axis, CombinedFeaturewiseMeasure uses first axis.
              Additionally, 'Sensitivity' base class is
-             FeaturewiseDatasetMeasures which would have to be changed to
-             CombinedFeaturewiseDatasetMeasure to deal with stuff like
+             FeaturewiseMeasures which would have to be changed to
+             CombinedFeaturewiseMeasure to deal with stuff like
              SMLRWeights that return multiple sensitivity values by default.
              Not sure if unification of both (and/or removal of functionality
              here does not lead to an overall more complicated situation,
@@ -284,7 +284,7 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         if __debug__ \
                and not isinstance(result, AttrDataset) \
                and not len(result.shape) == 1:
-            raise RuntimeError("FeaturewiseDatasetMeasures have to return "
+            raise RuntimeError("FeaturewiseMeasures have to return "
                                "their results as 1D array, or as a Dataset "
                                "(error made by: '%s')." % repr(self))
 
@@ -311,7 +311,7 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
                             bias = biases[i]
                     else:
                         bias = None
-                    b_sensitivities = StaticDatasetMeasure(
+                    b_sensitivities = StaticMeasure(
                         measure = result[i],
                         bias = bias)
                 self.ca.base_sensitivities = b_sensitivities
@@ -319,18 +319,18 @@ class FeaturewiseDatasetMeasure(DatasetMeasure):
         # XXX Remove when "sensitivity-return-dataset" transition is done
         if __debug__ \
            and not isinstance(result, AttrDataset) and not len(result.shape) == 1:
-            warning("FeaturewiseDatasetMeasures-related post-processing "
+            warning("FeaturewiseMeasures-related post-processing "
                     "of '%s' doesn't return a Dataset, or 1D-array."
                     % self.__class__.__name__)
 
         # call base class postcall
-        result = DatasetMeasure._postcall(self, dataset, result)
+        result = Measure._postcall(self, dataset, result)
 
         return result
 
 
 
-class StaticDatasetMeasure(DatasetMeasure):
+class StaticMeasure(Measure):
     """A static (assigned) sensitivity measure.
 
     Since implementation is generic it might be per feature or
@@ -347,7 +347,7 @@ class StaticDatasetMeasure(DatasetMeasure):
         bias
            optionally available bias
         """
-        DatasetMeasure.__init__(self, *args, **kwargs)
+        Measure.__init__(self, *args, **kwargs)
         if measure is None:
             raise ValueError, "Sensitivity measure has to be provided"
         self.__measure = measure
@@ -364,9 +364,9 @@ class StaticDatasetMeasure(DatasetMeasure):
 
 
 #
-# Flavored implementations of FeaturewiseDatasetMeasures
+# Flavored implementations of FeaturewiseMeasures
 
-class Sensitivity(FeaturewiseDatasetMeasure):
+class Sensitivity(FeaturewiseMeasure):
     """Sensitivities of features for a given Classifier.
 
     """
@@ -388,7 +388,7 @@ class Sensitivity(FeaturewiseDatasetMeasure):
         """
 
         """Does nothing special."""
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
+        FeaturewiseMeasure.__init__(self, **kwargs)
 
         _LEGAL_CLFS = self._LEGAL_CLFS
         if len(_LEGAL_CLFS) > 0:
@@ -438,7 +438,7 @@ class Sensitivity(FeaturewiseDatasetMeasure):
                        [clf.trained]))
             clf.train(dataset)
 
-        return FeaturewiseDatasetMeasure.__call__(self, dataset)
+        return FeaturewiseMeasure.__call__(self, dataset)
 
 
     def _set_classifier(self, clf):
@@ -463,19 +463,19 @@ class Sensitivity(FeaturewiseDatasetMeasure):
 
 
 
-class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
+class CombinedFeaturewiseMeasure(FeaturewiseMeasure):
     """Set sensitivity analyzers to be merged into a single output"""
 
     sensitivities = ConditionalAttribute(enabled=False,
         doc="Sensitivities produced by each analyzer")
 
     # XXX think again about combiners... now we have it in here and as
-    #     well as in the parent -- FeaturewiseDatasetMeasure
+    #     well as in the parent -- FeaturewiseMeasure
     # YYY because we don't use parent's _call. Needs RF
     def __init__(self, analyzers=None,  # XXX should become actually 'measures'
                  sa_attr='combinations',
                  **kwargs):
-        """Initialize CombinedFeaturewiseDatasetMeasure
+        """Initialize CombinedFeaturewiseMeasure
 
         Parameters
         ----------
@@ -489,7 +489,7 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
         if analyzers is None:
             analyzers = []
         self._sa_attr = sa_attr
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
+        FeaturewiseMeasure.__init__(self, **kwargs)
         self.__analyzers = analyzers
         """List of analyzers to use"""
 
@@ -548,14 +548,14 @@ class CombinedFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
 
 
 # XXX Why did we come to name everything analyzer? inputs of regular
-#     things like CombinedFeaturewiseDatasetMeasure can be simple
+#     things like CombinedFeaturewiseMeasure can be simple
 #     measures....
 
-class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
+class SplitFeaturewiseMeasure(FeaturewiseMeasure):
     """Compute measures across splits for a specific analyzer"""
 
     # XXX This beast is created based on code of
-    #     CombinedFeaturewiseDatasetMeasure, thus another reason to refactor
+    #     CombinedFeaturewiseMeasure, thus another reason to refactor
 
     sensitivities = ConditionalAttribute(enabled=False,
         doc="Sensitivities produced for each split")
@@ -565,13 +565,13 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
 
     def __init__(self, splitter, analyzer,
                  insplit_index=0, **kwargs):
-        """Initialize SplitFeaturewiseDatasetMeasure
+        """Initialize SplitFeaturewiseMeasure
 
         Parameters
         ----------
         splitter : Splitter
           Splitter to use to split the dataset
-        analyzer : DatasetMeasure
+        analyzer : Measure
           Measure to be used. Could be analyzer as well (XXX)
         insplit_index : int
           splitter generates tuples of dataset on each iteration
@@ -586,7 +586,7 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
 
         # Here we provide mapper None since the postprocessing should be done
         # at the toplevel and just once
-        FeaturewiseDatasetMeasure.__init__(self, postproc=None, **kwargs)
+        FeaturewiseMeasure.__init__(self, postproc=None, **kwargs)
 
         self.__analyzer = analyzer
         """Analyzer to use per split"""
@@ -598,7 +598,7 @@ class SplitFeaturewiseDatasetMeasure(FeaturewiseDatasetMeasure):
 
 
     def untrain(self):
-        """Untrain SplitFeaturewiseDatasetMeasure
+        """Untrain SplitFeaturewiseMeasure
         """
         if self.__analyzer is not None:
             self.__analyzer.untrain()
@@ -653,7 +653,7 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
           Is used to populate combined_analyzer
         sa_attr : str
           Name of the sa to be populated with the indexes of learners
-          (passed to CombinedFeaturewiseDatasetMeasure is None is
+          (passed to CombinedFeaturewiseMeasure is None is
           given in `combined_analyzer`)
         slave_*
           Arguments to pass to created analyzer if analyzer is None
@@ -662,7 +662,7 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         if combined_analyzer is None:
             # sanitarize kwargs
             kwargs.pop('force_training', None)
-            combined_analyzer = CombinedFeaturewiseDatasetMeasure(sa_attr=sa_attr,
+            combined_analyzer = CombinedFeaturewiseMeasure(sa_attr=sa_attr,
                                                                   **kwargs)
         self.__combined_analyzer = combined_analyzer
         """Combined analyzer to use"""

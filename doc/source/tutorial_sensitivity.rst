@@ -313,11 +313,11 @@ from cross-validation splits of the data. Rectifying it is easy with a
 meta-measure. A meta-measure is analogous to a meta-classifier: a measure
 that takes a basic measure, adds a processing step to it and behaves like a
 measure itself. The meta-measure we want to use is
-:class:`~mvpa.measures.base.SplitFeaturewiseDatasetMeasure`.
+:class:`~mvpa.measures.base.SplitFeaturewiseMeasure`.
 
 >>> # alt: `sens = load_tutorial_results('res_haxby2001_splitsens_5pANOVA')`
 >>> sensana = fclf.get_sensitivity_analyzer(postproc=maxofabs_sample())
->>> cv_sensana = SplitFeaturewiseDatasetMeasure(NFoldSplitter(), sensana)
+>>> cv_sensana = SplitFeaturewiseMeasure(NFoldSplitter(), sensana)
 >>> sens = cv_sensana(ds)
 >>> print sens.shape
 (12, 39912)
@@ -457,7 +457,7 @@ are going to go beyond spatial analyses and explore the time dimension.
 
      ~mvpa.measures.base.Sensitivity
      ~mvpa.featsel.base.SensitivityBasedFeatureSelection
-     ~mvpa.measures.base.SplitFeaturewiseDatasetMeasure
+     ~mvpa.measures.base.SplitFeaturewiseMeasure
      ~mvpa.clfs.meta.FeatureSelectionClassifier
      ~mvpa.clfs.meta.SplitClassifier
      ~mvpa.clfs.meta.TreeClassifier

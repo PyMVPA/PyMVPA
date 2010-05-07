@@ -420,39 +420,39 @@ Outstanding Questions:
     * when ca and when properties?
 
 
-Adding a new DatasetMeasure
----------------------------
+Adding a new Measure
+--------------------
 
 There are few possible base-classes for new measures (former sensitivity
-analyzers).  First, :class:`~mvpa.measures.base.DatasetMeasure` can directly be sub-classed. It is a base
+analyzers).  First, :class:`~mvpa.measures.base.Measure` can directly be sub-classed. It is a base
 class for any measure to be computed on a :class:`~mvpa.datasets.base.Dataset`. This is the more generic
 approach. In the most of the cases, measures are to be reported per each
-feature, thus :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure` should serve as a base class in those
+feature, thus :class:`~mvpa.measures.base.FeaturewiseMeasure` should serve as a base class in those
 cases. Furthermore, for measures that make use of some classifier and extract
 the sensitivities from it, :class:`~mvpa.measures.base.Sensitivity` (derived from
-:class:`~mvpa.measures.base.FeaturewiseDatasetMeasure`) is a more appropriate base-class, as it provides
+:class:`~mvpa.measures.base.FeaturewiseMeasure`) is a more appropriate base-class, as it provides
 some additional useful functionality for this use case (e.g. training a
 classifier if needed).
 
 .. TODO: deprecate transformers etc
 
-All measures (actually all objects based on :class:`~mvpa.measures.base.DatasetMeasure`)
+All measures (actually all objects based on :class:`~mvpa.measures.base.Measure`)
 support a `transformer` keyword argument to their constructor. The functor
 passed as its value is called with the to be returned results and its outcome
 is returned as the final results. By default no transformation is performed.
 
-If a :class:`~mvpa.measures.base.DatasetMeasure` computes a characteristic, were both large positive and
+If a :class:`~mvpa.measures.base.Measure` computes a characteristic, were both large positive and
 large negative values indicate high relevance, it should nevertheless *not*
 return absolute sensitivities, but set a default transformer instead that takes
 the absolute (e.g. plain `np.absolute` or a convinience wrapper Absolute_).
 
 To add a new measure implementation it is sufficient to create a new sub-class
-of :class:`~mvpa.measures.base.DatasetMeasure` (or :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure`, or :class:`~mvpa.measures.base.Sensitivity`) and add an
+of :class:`~mvpa.measures.base.Measure` (or :class:`~mvpa.measures.base.FeaturewiseMeasure`, or :class:`~mvpa.measures.base.Sensitivity`) and add an
 implementation of the `_call(dataset)` method. It will be called with an
-instance of :class:`~mvpa.datasets.base.Dataset`. :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure` (e.g. :class:`~mvpa.measures.base.Sensitivity` as well)
+instance of :class:`~mvpa.datasets.base.Dataset`. :class:`~mvpa.measures.base.FeaturewiseMeasure` (e.g. :class:`~mvpa.measures.base.Sensitivity` as well)
 has to return a vector of featurewise sensitivity scores.
 
-.. autoconditional: measures.base DatasetMeasure
+.. autoconditional: measures.base Measure
 
 Supported conditional attributes:
 
@@ -556,12 +556,7 @@ Things to implement for the next release (Release goals)
     * Noise perturbation ->         -> mvpa.measures.noisepertrubation
     * meta-algorithms (splitting)   -> mvpa.measures
 
-   DatasetMeasure -> Measure (transformers)
-
-   FeaturewiseDatasetMeasure?
-
-   combiners to be absorbed withing transformers? and then gone?
-   {Classifier?}Sensitivity?
+   FeaturewiseMeasure?
 
   * Mappers::
       mvpa.mappers (AKA mvpa.projections mvpa.transformers)

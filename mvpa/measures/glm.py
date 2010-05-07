@@ -12,11 +12,11 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.measures.base import FeaturewiseMeasure
 from mvpa.misc.state import ConditionalAttribute
 from mvpa.datasets.base import Dataset
 
-class GLM(FeaturewiseDatasetMeasure):
+class GLM(FeaturewiseMeasure):
     """General linear model (GLM).
 
     Regressors can be defined in a design matrix and a linear fit of the data
@@ -46,7 +46,7 @@ class GLM(FeaturewiseDatasetMeasure):
           measure. 'beta' are the parameter estimates and 'zstat' returns
           standardized parameter estimates.
         """
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
+        FeaturewiseMeasure.__init__(self, **kwargs)
         # store the design matrix as a such (no copying if already array)
         self._design = np.asmatrix(design)
 

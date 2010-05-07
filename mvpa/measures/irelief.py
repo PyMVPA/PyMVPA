@@ -7,7 +7,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""FeaturewiseDatasetMeasure performing multivariate Iterative RELIEF
+"""FeaturewiseMeasure performing multivariate Iterative RELIEF
 (I-RELIEF) algorithm.
 See : Y. Sun, Iterative RELIEF for Feature Weighting: Algorithms, Theories,
 and Applications, IEEE Trans. on Pattern Analysis and Machine Intelligence
@@ -19,7 +19,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.datasets import Dataset
-from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.measures.base import FeaturewiseMeasure
 from mvpa.kernels.np import ExponentialKernel
 from mvpa.clfs.distance import pnorm_w
 
@@ -27,8 +27,8 @@ if __debug__:
     from mvpa.base import debug
 
 
-class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
-    """`FeaturewiseDatasetMeasure` that performs multivariate I-RELIEF
+class IterativeRelief_Devel(FeaturewiseMeasure):
+    """`FeaturewiseMeasure` that performs multivariate I-RELIEF
     algorithm. Batch version allowing various kernels.
 
     UNDER DEVELOPMENT.
@@ -53,7 +53,7 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
 
         """
         # init base classes first
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
+        FeaturewiseMeasure.__init__(self, **kwargs)
 
         # Threshold in W changes (stopping criterion for irelief)
         self.threshold = threshold
@@ -142,7 +142,7 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
 
 
 class IterativeReliefOnline_Devel(IterativeRelief_Devel):
-    """`FeaturewiseDatasetMeasure` that performs multivariate I-RELIEF
+    """`FeaturewiseMeasure` that performs multivariate I-RELIEF
     algorithm. Online version.
 
     UNDER DEVELOPMENT
@@ -250,8 +250,8 @@ class IterativeReliefOnline_Devel(IterativeRelief_Devel):
 
 
 
-class IterativeRelief(FeaturewiseDatasetMeasure):
-    """`FeaturewiseDatasetMeasure` that performs multivariate I-RELIEF
+class IterativeRelief(FeaturewiseMeasure):
+    """`FeaturewiseMeasure` that performs multivariate I-RELIEF
     algorithm. Batch version.
 
     Batch I-RELIEF-2 feature weighting algorithm. Works for binary or
@@ -276,7 +276,7 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
 
         """
         # init base classes first
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
+        FeaturewiseMeasure.__init__(self, **kwargs)
 
         # Threshold in W changes (stopping criterion for irelief).
         self.threshold = threshold
@@ -367,7 +367,7 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
 
 
 class IterativeReliefOnline(IterativeRelief):
-    """`FeaturewiseDatasetMeasure` that performs multivariate I-RELIEF
+    """`FeaturewiseMeasure` that performs multivariate I-RELIEF
     algorithm. Online version.
 
     This algorithm is exactly the one in the referenced paper

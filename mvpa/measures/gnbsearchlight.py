@@ -532,7 +532,7 @@ def sphere_gnbsearchlight(gnb, splitter, radius=1, center_ids=None,
     Notes
     -----
     If any `BaseSearchlight` is used as `SensitivityAnalyzer` one has to make
-    sure that the specified scalar `DatasetMeasure` returns large
+    sure that the specified scalar `Measure` returns large
     (absolute) values for high sensitivities and small (absolute) values
     for low sensitivities. Especially when using error functions usually
     low values imply high performance and therefore high sensitivity.
