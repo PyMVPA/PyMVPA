@@ -22,7 +22,8 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import mvpa.support.copy as copy
 
-from mvpa.base.state import ConditionalAttribute, ClassWithCollections
+from mvpa.base.learner import Learner
+from mvpa.base.state import ConditionalAttribute
 from mvpa.misc.args import group_kwargs
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.base.types import asobjarray
@@ -37,7 +38,7 @@ if __debug__:
     from mvpa.base import debug
 
 
-class Measure(ClassWithCollections):
+class Measure(Learner):
     """A measure computed from a `Dataset`
 
     All dataset measures support arbitrary transformation of the measure
@@ -84,7 +85,7 @@ class Measure(ClassWithCollections):
           The estimated distribution is used to assign a probability for a
           certain value of the computed measure.
         """
-        ClassWithCollections.__init__(self, **kwargs)
+        Learner.__init__(self, **kwargs)
 
         self.__postproc = postproc
         """Functor to be called in return statement of all subclass __call__()
@@ -97,33 +98,7 @@ class Measure(ClassWithCollections):
 
 
     __doc__ = enhanced_doc_string('Measure', locals(),
-                                  ClassWithCollections)
-
-
-    def __call__(self, dataset):
-        """Compute measure on a given `Dataset`.
-
-        Each implementation has to handle a single arguments: the source
-        dataset.
-
-        Returns the computed measure in some iterable (list-like)
-        container applying a post-processing mapper if such is defined.
-        """
-        result = self._call(dataset)
-        result = self._postcall(dataset, result)
-
-        return result
-
-
-    def _call(self, dataset):
-        """Actually compute measure on a given `Dataset`.
-
-        Each implementation has to handle a single arguments: the source
-        dataset.
-
-        Returns the computed measure in some iterable (list-like) container.
-        """
-        raise NotImplemented
+                                  Learner)
 
 
     def _postcall(self, dataset, result):
@@ -242,15 +217,6 @@ class FeaturewiseMeasure(Measure):
             prefixes = []
         return \
             super(FeaturewiseMeasure, self).__repr__(prefixes=prefixes)
-
-
-    def _call(self, dataset):
-        """Computes a per-feature-measure on a given `Dataset`.
-
-        Behaves like a `Measure`, but computes and returns a 1d ndarray
-        with one value per feature.
-        """
-        raise NotImplementedError
 
 
     def _postcall(self, dataset, result):
