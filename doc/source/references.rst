@@ -260,7 +260,9 @@ experiments.
 .. _MHH10:
 
 **Manelis, A., Hanson, C. & Hanson, S. J.** (2010). Implicit memory for object locations depends on reactivation of encoding-related brain regions. *Human Brain Mapping*.
-  Keywords: :keyword:`PyMVPA`, :keyword:`implicit memory`, :keyword:`MRI`
+  Keywords: :keyword:`PyMVPA`, :keyword:`implicit memory`, :keyword:`fMRI`
+
+  DOI: http://dx.doi.org/10.1002/hbm.20992
 
 
 .. _MKE10:
