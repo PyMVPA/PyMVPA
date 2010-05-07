@@ -30,11 +30,12 @@ from mvpa.mappers.zscore import zscore
 from mvpa.mappers.fx import sumofabs_sample, absolute_features, FxMapper, \
      maxofabs_sample
 from mvpa.datasets.splitters import NFoldSplitter, NoneSplitter
+from mvpa.generators.splitters import Splitter
 
 from mvpa.misc.transformers import Absolute, \
      DistPValue
 
-from mvpa.measures.base import SplitFeaturewiseMeasure
+from mvpa.measures.base import Measure, SplitFeaturewiseMeasure, TransferMeasure
 from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
      IterativeRelief_Devel, IterativeReliefOnline_Devel
@@ -484,6 +485,21 @@ class SensitivityAnalysersTests(unittest.TestCase):
         r_custom2 = oa_custom(ds_custom)
         self.failUnless(np.allclose(r.samples, r2.samples))
         self.failUnless(np.allclose(r_custom.samples, r_custom2.samples))
+
+
+    def test_transfer_measure(self):
+        # come up with my own measure that only checks if training data
+        # and test data are the same
+        class MyMeasure(Measure):
+            def _train(self, ds):
+                self._tds = ds
+            def _call(self, ds):
+                return Dataset(ds.samples == self._tds.samples)
+
+        tm = TransferMeasure(MyMeasure(), Splitter('chunks', count=2))
+        # result should not be all True (== identical)
+        assert_true((tm(self.dataset).samples == False).any())
+
 
 def suite():
     return unittest.makeSuite(SensitivityAnalysersTests)

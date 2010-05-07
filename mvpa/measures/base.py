@@ -200,6 +200,43 @@ class Measure(Learner):
         return self.__postproc
 
 
+class TransferMeasure(Measure):
+    """Train and run a measure on two different parts of a dataset.
+
+    Upon calling a TransferMeasure instance with a dataset the input dataset
+    is passed to a `Splitter` to will generate dataset subsets. The first
+    generated dataset is used to train an arbitray embedded `Measure. Once
+    trained, the measure is then called with the second generated dataset
+    and the result is returned.
+    """
+    def __init__(self, measure, splitter, **kwargs):
+        """
+        Parameters
+        ----------
+        measure: Measure
+          This measure instance is trained on the first dataset and called with
+          the second.
+        splitter: Splitter
+          This splitter instance has to generate at least two dataset splits
+          when called with the input dataset. The first split is used to train
+          the measure, the second split is used to run the trained measure.
+        """
+        Measure.__init__(self, **kwargs)
+        self.__measure = measure
+        self.__splitter = splitter
+
+
+    def _call(self, ds):
+        # activate the dataset splitter
+        dsgen = self.__splitter.generate(ds)
+        # train on first
+        self.__measure.train(dsgen.next())
+        # run with second
+        res = self.__measure(dsgen.next())
+        return res
+
+
+
 class FeaturewiseMeasure(Measure):
     """A per-feature-measure computed from a `Dataset` (base class).
 
