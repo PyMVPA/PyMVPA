@@ -112,13 +112,6 @@ class Measure(ClassWithCollections):
         result = self._call(dataset)
         result = self._postcall(dataset, result)
 
-        # XXX Remove when "sensitivity-return-dataset" transition is done
-        if __debug__ \
-           and not isinstance(result, AttrDataset) \
-           and not len(result.shape) == 1:
-            warning("Postprocessing of '%s' doesn't return a Dataset, or "
-                    "1D-array (got: '%s')."
-                    % (self.__class__.__name__, result))
         return result
 
 
