@@ -10,9 +10,12 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.base.dochelpers import _str, _repr
 
-class Node(object):
+from mvpa.base.dochelpers import _str, _repr
+from mvpa.base.state import ClassWithCollections
+
+
+class Node(ClassWithCollections):
     """Common processing object.
 
     A `Node` is an object the processes datasets. It can be called with a
@@ -25,7 +28,7 @@ class Node(object):
     compute and store information about the input data that is "interesting" in
     the context of the corresponding processing in the output dataset.
     """
-    def __init__(self, space=None):
+    def __init__(self, space=None, **kwargs):
         """
         Parameters
         ----------
@@ -36,6 +39,7 @@ class Node(object):
           the input data that is "interesting" in the context of the
           corresponding processing in the output dataset.
         """
+        ClassWithCollections.__init__(self, **kwargs)
         self.set_space(space)
 
 
