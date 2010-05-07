@@ -23,6 +23,13 @@ For The Impatient
   or whole datasets. There is some inital support for other datatypes than
   NumPy's ``ndarrays``, e.g. sparse matrices.
 
+* All mappers, classifiers, regressions, and measure are now implemented as
+  `Node`\s that can be called with a `Dataset` and return a processed dataset.
+  All nodes provide a ``generat()`` method that causes the node to yields to
+  processing result. In addition, there is special nodes that implement more
+  complex generators yielding multiple results (e.g. resampling, permuting, or
+  splitting nodes).
+
 
 Critical API Changes
 ====================
