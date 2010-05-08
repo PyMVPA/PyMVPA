@@ -181,23 +181,18 @@ class Measure(Learner):
             prefixes.append("null_dist=%s" % self.__null_dist)
         return super(Measure, self).__repr__(prefixes=prefixes)
 
-    def untrain(self):
-        """'Untraining' Measure
-
-        Some derived classes might used classifiers, so we need to
-        untrain those
-        """
-        pass
 
     @property
     def null_dist(self):
         """Return Null Distribution estimator"""
         return self.__null_dist
 
+
     @property
     def postproc(self):
         """Return mapper"""
         return self.__postproc
+
 
 
 class TransferMeasure(Measure):
