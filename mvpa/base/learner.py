@@ -18,7 +18,6 @@ class Learner(Node):
     A `Learner` is a `Node` that can (maybe has to) be trained on a dataset,
     before it can perform its function.
     """
-    # XXX maybe add `untrain()` as well?
     def __init__(self, **kwargs):
         """
         Parameters
@@ -46,6 +45,14 @@ class Learner(Node):
         self._pretrain(ds)
         result = self._train(ds)
         result = self._posttrain(ds)
+
+
+    def untrain(self):
+        """Reverts changes in the state of this node caused by previous training
+        """
+        # TODO evaluate whether this should also reset the nodes collections, or
+        # whether that should be done by a more general reset() method
+        pass
 
 
     def _pretrain(self, ds):
