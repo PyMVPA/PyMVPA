@@ -14,6 +14,7 @@ import numpy as np
 import copy
 
 from mvpa.base.learner import Learner
+from mvpa.base.node import ChainNode
 from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
 from mvpa.base.dochelpers import _str
 
@@ -204,6 +205,10 @@ class Mapper(Learner):
             return self.reverse(np.array([data]))[0]
 
 
+    def _call(self, ds):
+        return self.forward(ds)
+
+
     def __repr__(self):
         return "%s(space=%s)" \
                 % (self.__class__.__name__,
@@ -211,52 +216,20 @@ class Mapper(Learner):
 
 
 
-class ChainMapper(Mapper):
-    """Meta mapper that embeds a chain of other mappers.
+class ChainMapper(ChainNode):
+    """Class that amends ChainNode with a mapper-like interface.
 
-    Each mapper in the chain is called successively to perform forward or
-    reverse mapping. The class behaves to some degree like a list container.
+    ChainMapper supports sequential training of a mapper chain, as well as
+    reverse-mapping and mapping of single samples.
     """
-    def __init__(self, mappers, **kwargs):
-        """
-        Parameters
-        ----------
-        mappers : list of Mapper instances
-        **kwargs
-          All additional arguments are passed to the base-class constructor.
-        """
-        Mapper.__init__(self, **kwargs)
-
-        if not len(mappers):
-            raise ValueError, 'ChainMapper needs at least one embedded mapper.'
-
-        self._mappers = mappers
-
-
-    def __copy__(self):
-        # XXX need to copy the base class stuff as well
-        return self.__class__([copy.copy(m) for m in self],
-                              space=self.get_space())
-
-
-    def forward(self, data):
-        """Forward data or datasets through the chain.
-
-        See baseclass method for more information.
-        """
-        mp = data
-        for m in self:
-            if __debug__:
-                debug('MAP', "Forwarding input (%s) though '%s'."
-                        % (mp.shape, str(m)))
-            mp = m.forward(mp)
-        return mp
+    def forward(self, ds):
+        return self(ds)
 
 
     def forward1(self, data):
         """Forward data or datasets through the chain.
 
-        See baseclass method for more information.
+        See `Mapper` for more information.
         """
         mp = data
         for m in self:
@@ -270,7 +243,7 @@ class ChainMapper(Mapper):
     def reverse(self, data):
         """Reverse-maps data or datasets through the chain (backwards).
 
-        See baseclass method for more information.
+        See `Mapper` for more information.
         """
         mp = data
         for m in reversed(self):
@@ -294,7 +267,7 @@ class ChainMapper(Mapper):
     def reverse1(self, data):
         """Reverse-maps data or datasets through the chain (backwards).
 
-        See baseclass method for more information.
+        See `Mapper` for more information.
         """
         mp = data
         for i, m in enumerate(reversed(self)):
@@ -324,13 +297,13 @@ class ChainMapper(Mapper):
         return mp
 
 
-    def _train(self, dataset):
-        """Trains the mapper chain.
+    def train(self, dataset):
+        """Train the mapper chain sequentially.
 
         The training dataset is used to train the first mapper. Afterwards it is
         forward-mapped by this (now trained) mapper and the transformed dataset
         and then used to train the next mapper. This procedure is done till all
-        mapper are trained.
+        mappers are trained.
 
         Parameters
         ----------
@@ -346,53 +319,7 @@ class ChainMapper(Mapper):
 
 
     def __repr__(self):
-        s = Mapper.__repr__(self)
-        m_repr = 'mappers=[%s]' % ', '.join([repr(m) for m in self])
+        s = ChainNode.__repr__(self)
+        m_repr = '[%s]' % ', '.join([repr(m) for m in self])
         return s.replace("(", "(%s, " % m_repr, 1)
 
-
-    def __str__(self):
-        mapperlist = "%s" % "-".join([str(m) for m in self])
-        return _str(self,
-                    mapperlist.replace('Mapper', ''))
-
-    #
-    # Behave as a container
-    #
-    def append(self, mapper):
-        """Append a mapper to the chain.
-
-        The mapper's input size has to match the output size of the current
-        chain.
-        """
-        # not checking, since get_outsize() is about to vanish
-        #if not self.get_outsize() == mapper.get_insize():
-        #    raise ValueError("To be appended mapper does not match the output "
-        #                     "size of the current chain (%s vs. %s)."
-        #                     % (mapper.get_insize(),  self.get_outsize()))
-        self._mappers.append(mapper)
-
-
-    def __len__(self):
-        return len(self._mappers)
-
-
-    def __iter__(self):
-        for m in self._mappers:
-            yield m
-
-
-    def __reversed__(self):
-        return reversed(self._mappers)
-
-
-    def __getitem__(self, key):
-        # if just one is requested return just one, otherwise return a
-        # ChainMapper again
-        if isinstance(key, int):
-            return self._mappers[key]
-        else:
-            # operate on shallow copy of self
-            sliced = copy.copy(self)
-            sliced._mappers = self._mappers[key]
-            return sliced
