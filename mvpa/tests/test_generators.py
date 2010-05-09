@@ -16,6 +16,7 @@ from mvpa.testing.tools import ok_, assert_array_equal, assert_true, \
 
 from mvpa.datasets import dataset_wizard
 from mvpa.generators.splitters import Splitter
+from mvpa.base.node import ChainNode
 
 
 def give_data():
@@ -28,10 +29,10 @@ def give_data():
 def test_splitter():
     ds = give_data()
     # split with defaults
-    spl = Splitter('chunks')
-    assert_raises(NotImplementedError, spl, ds)
+    spl1 = Splitter('chunks')
+    assert_raises(NotImplementedError, spl1, ds)
 
-    splits = list(spl.generate(ds))
+    splits = list(spl1.generate(ds))
     assert_equal(len(splits), len(ds.sa['chunks'].unique))
 
     for split in splits:
@@ -42,9 +43,9 @@ def test_splitter():
     assert_true(splits[-1].a.lastsplit)
 
     # now again, more customized
-    spl = Splitter('targets', attr_values = [0,1,1,2,3,3,3], count=4,
+    spl2 = Splitter('targets', attr_values = [0,1,1,2,3,3,3], count=4,
                    noslicing=True)
-    splits = list(spl.generate(ds))
+    splits = list(spl2.generate(ds))
     assert_equal(len(splits), 4)
     for split in splits:
         # it should NOT have perform basic slicing!
@@ -59,10 +60,16 @@ def test_splitter():
     # now go wild and split by feature attribute
     ds.fa['roi'] = np.repeat([0,1], 5)
     # splitter should auto-detect that this is a feature attribute
-    spl = Splitter('roi')
-    splits = list(spl.generate(ds))
+    spl3 = Splitter('roi')
+    splits = list(spl3.generate(ds))
     assert_equal(len(splits), 2)
     for split in splits:
         assert_true(split.samples.base is ds.samples)
         assert_equal(len(split.fa['roi'].unique), 1)
         assert_equal(split.shape, (100, 5))
+
+    # and finally test chained splitters
+    cspl = ChainNode([spl2, spl3, spl1])
+    splits = list(cspl.generate(ds))
+    # 4 target splits and 2 roi splits each and 10 chunks each
+    assert_equal(len(splits), 80)
