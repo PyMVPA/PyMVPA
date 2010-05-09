@@ -10,6 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
+from mvpa.support import copy
 
 from mvpa.base.dochelpers import _str, _repr
 from mvpa.base.state import ClassWithCollections
@@ -168,9 +169,9 @@ class ChainNode(Node):
         self._nodes = nodes
 
 
-#    def __copy__(self):
-#        # XXX how do we safely and exhaustively copy a node?
-#        return self.__class__([copy.copy(m) for n in self])
+    def __copy__(self):
+        # XXX how do we safely and exhaustively copy a node?
+        return self.__class__([copy.copy(n) for n in self])
 
 
     def _call(self, ds):
