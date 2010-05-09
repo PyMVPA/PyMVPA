@@ -11,12 +11,13 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.featsel.helpers import FractionTailSelector
-from mvpa.base.state import ConditionalAttribute, ClassWithCollections
+from mvpa.base.learner import Learner
+from mvpa.base.state import ConditionalAttribute
 
 if __debug__:
     from mvpa.base import debug
 
-class FeatureSelection(ClassWithCollections):
+class FeatureSelection(Learner):
     """Base class for any feature selection
 
     Base class for Functors which implement feature selection on the
@@ -27,7 +28,7 @@ class FeatureSelection(ClassWithCollections):
 
     def __init__(self, **kwargs):
         # base init first
-        ClassWithCollections.__init__(self, **kwargs)
+        Learner.__init__(self, **kwargs)
 
 
     def __call__(self, dataset, testdataset=None):
@@ -58,15 +59,6 @@ class FeatureSelection(ClassWithCollections):
         else:
             return results
 
-
-    def untrain(self):
-        """ 'Untrain' feature selection
-
-        Necessary for full 'untraining' of the classifiers. By default
-        does nothing, needs to be overridden in corresponding feature
-        selections to pass to the sensitivities
-        """
-        pass
 
 
 class SensitivityBasedFeatureSelection(FeatureSelection):
