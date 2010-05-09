@@ -23,7 +23,7 @@ from mvpa.support.copy import copy
 from mvpa.datasets.base import Dataset
 from mvpa.base.collections import ArrayCollectable
 from mvpa.datasets.base import dataset_wizard
-from mvpa.mappers.partition import PartitionAttributeMapper
+#from mvpa.mappers.partition import PartitionAttributeMapper
 
 # arbitrary ndarray subclass for testing
 class myarray(np.ndarray):
