@@ -14,7 +14,9 @@ import numpy as np
 from mvpa.datasets.base import dataset_wizard, Dataset
 from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter, \
                                    NoneSplitter, HalfSplitter, \
-                                   CustomSplitter, NGroupSplitter
+                                   CustomSplitter
+from mvpa.generators.splitters import Splitter
+from mvpa.generators.partition import *
 
 from mvpa.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal
@@ -29,10 +31,10 @@ class SplitterTests(unittest.TestCase):
 
     def test_simplest_cv_pat_gen(self):
         # create the generator
-        nfs = NFoldSplitter(cvtype=1)
-
+        nfs = NFoldPartitioner(cvtype=1)
+        spl = Splitter(attr='partitions')
         # now get the xval pattern sets One-Fold CV)
-        xvpat = [ (train, test) for (train,test) in nfs(self.data) ]
+        xvpat = [ list(spl.generate(p)) for p in nfs.generate(self.data) ]
 
         self.failUnless( len(xvpat) == 10 )
 
@@ -44,9 +46,10 @@ class SplitterTests(unittest.TestCase):
 
 
     def test_odd_even_split(self):
-        oes = OddEvenSplitter()
+        oes = OddEvenPartitioner()
+        spl = Splitter(attr='partitions')
 
-        splits = [ (train, test) for (train, test) in oes(self.data) ]
+        splits = [ list(spl.generate(p)) for p in oes.generate(self.data) ]
 
         self.failUnless(len(splits) == 2)
 
@@ -61,7 +64,7 @@ class SplitterTests(unittest.TestCase):
         assert_array_equal(splits[1][1].sa['chunks'].unique, [0, 2, 4, 6, 8])
 
         # check if it works on pure odd and even chunk ids
-        moresplits = [ (train, test) for (train, test) in oes(splits[0][0])]
+        moresplits = [ list(spl.generate(p)) for p in oes.generate(splits[0][0])]
 
         for split in moresplits:
             self.failUnless(split[0] != None)
@@ -69,9 +72,10 @@ class SplitterTests(unittest.TestCase):
 
 
     def test_half_split(self):
-        hs = HalfSplitter()
+        hs = HalfPartitioner()
+        spl = Splitter(attr='partitions')
 
-        splits = [ (train, test) for (train, test) in hs(self.data) ]
+        splits = [ list(spl.generate(p)) for p in hs.generate(self.data) ]
 
         self.failUnless(len(splits) == 2)
 
@@ -86,7 +90,7 @@ class SplitterTests(unittest.TestCase):
         assert_array_equal(splits[1][0].sa['chunks'].unique, [0, 1, 2, 3, 4])
 
         # check if it works on pure odd and even chunk ids
-        moresplits = [ (train, test) for (train, test) in hs(splits[0][0])]
+        moresplits = [ list(spl.generate(p)) for p in hs.generate(splits[0][0])]
 
         for split in moresplits:
             self.failUnless(split[0] != None)
@@ -97,11 +101,14 @@ class SplitterTests(unittest.TestCase):
         order of spit out datasets
         """
         # Test 2 groups like HalfSplitter first
-        hs = NGroupSplitter(2)
-        hs_reversed = NGroupSplitter(2, reverse=True)
+        hs = NGroupPartitioner(2)
 
-        for isreversed, splitter in enumerate((hs, hs_reversed)):
-            splits = list(splitter(self.data))
+        for isreversed, splitter in enumerate((hs, hs)):
+            if isreversed:
+                spl = Splitter(attr='partitions', reverse=True)
+            else:
+                spl = Splitter(attr='partitions')
+            splits = [ list(spl.generate(p)) for p in hs.generate(self.data) ]
             self.failUnless(len(splits) == 2)
 
             for i, p in enumerate(splits):
@@ -119,19 +126,22 @@ class SplitterTests(unittest.TestCase):
                                [0, 1, 2, 3, 4])
 
         # check if it works on pure odd and even chunk ids
-        moresplits = list(hs(splits[0][0]))
+        moresplits = [ list(spl.generate(p)) for p in hs.generate(splits[0][0])]
 
         for split in moresplits:
             self.failUnless(split[0] != None)
             self.failUnless(split[1] != None)
 
         # now test more groups
-        s5 = NGroupSplitter(5)
-        s5_reversed = NGroupSplitter(5, reverse=True)
+        s5 = NGroupPartitioner(5)
 
         # get the splits
-        for isreversed, s5splitter in enumerate((s5, s5_reversed)):
-            splits = list(s5splitter(self.data))
+        for isreversed, s5splitter in enumerate((s5, s5)):
+            if isreversed:
+                spl = Splitter(attr='partitions', reverse=True)
+            else:
+                spl = Splitter(attr='partitions')
+            splits = [ list(spl.generate(p)) for p in s5splitter.generate(self.data) ]
 
             # must have 10 splits
             self.failUnless(len(splits) == 5)
@@ -154,14 +164,15 @@ class SplitterTests(unittest.TestCase):
 
         # Test for too many groups
         def splitcall(spl, dat):
-            return [ (train, test) for (train, test) in spl(dat) ]
-        s20 = NGroupSplitter(20)
+            return list(spl.generate(dat))
+        s20 = NGroupPartitioner(20)
         self.assertRaises(ValueError,splitcall,s20,self.data)
 
     def test_custom_split(self):
         #simulate half splitter
-        hs = CustomSplitter([(None,[0,1,2,3,4]),(None,[5,6,7,8,9])])
-        splits = list(hs(self.data))
+        hs = CustomPartitioner([(None,[0,1,2,3,4]),(None,[5,6,7,8,9])])
+        spl = Splitter(attr='partitions')
+        splits = [ list(spl.generate(p)) for p in hs.generate(self.data) ]
         self.failUnless(len(splits) == 2)
 
         for i,p in enumerate(splits):
@@ -176,8 +187,10 @@ class SplitterTests(unittest.TestCase):
 
 
         # check fully customized split with working and validation set specified
-        cs = CustomSplitter([([0,3,4],[5,9])])
-        splits = list(cs(self.data))
+        cs = CustomPartitioner([([0,3,4],[5,9])])
+        # we want to discared the unselected partition of the data, hence attr_value
+        spl = Splitter(attr='partitions', attr_values=[1,2])
+        splits = [ list(spl.generate(p)) for p in cs.generate(self.data) ]
         self.failUnless(len(splits) == 1)
 
         for i,p in enumerate(splits):
@@ -274,9 +287,10 @@ class SplitterTests(unittest.TestCase):
 
 
     def test_label_splitter(self):
-        oes = OddEvenSplitter(attr='targets')
+        oes = OddEvenPartitioner(attr='targets')
+        spl = Splitter(attr='partitions')
 
-        splits = [ (first, second) for (first, second) in oes(self.data) ]
+        splits = [ list(spl.generate(p)) for p in oes.generate(self.data) ]
 
         assert_array_equal(splits[0][0].sa['targets'].unique, [0,2])
         assert_array_equal(splits[0][1].sa['targets'].unique, [1,3])
@@ -285,9 +299,10 @@ class SplitterTests(unittest.TestCase):
 
 
     def test_counted_splitting(self):
+        spl = Splitter(attr='partitions')
         # count > #chunks, should result in 10 splits
         nchunks = len(self.data.sa['chunks'].unique)
-        for strategy in NFoldSplitter._STRATEGIES:
+        for strategy in Partitioner._STRATEGIES:
             for count, target in [ (nchunks*2, nchunks),
                                    (nchunks, nchunks),
                                    (nchunks-1, nchunks-1),
@@ -295,13 +310,14 @@ class SplitterTests(unittest.TestCase):
                                    (0, 0),
                                    (1, 1)
                                    ]:
-                nfs = NFoldSplitter(cvtype=1, count=count, strategy=strategy)
-                splits = [ (train, test) for (train,test) in nfs(self.data) ]
+                nfs = NFoldPartitioner(cvtype=1, count=count,
+                                       selection_strategy=strategy)
+                splits = [ list(spl.generate(p)) for p in nfs.generate(self.data) ]
                 self.failUnless(len(splits) == target)
                 chosenchunks = [int(s[1].uniquechunks) for s in splits]
 
                 # Test if configuration matches as well
-                nsplits_cfg = len(nfs.splitcfg(self.data))
+                nsplits_cfg = len(nfs.get_partition_specs(self.data))
                 self.failUnlessEqual(nsplits_cfg, target)
 
                 # Check if "lastsplit" dsattr was assigned appropriately
@@ -309,11 +325,11 @@ class SplitterTests(unittest.TestCase):
                 if nsplits > 0:
                     # dummy-proof testing of last split
                     for ds_ in splits[-1]:
-                        self.failUnless(ds_.a.lastsplit)
+                        self.failUnless(ds_.a.lastpartitionset)
                     # test all now
                     for isplit,split in enumerate(splits):
                         for ds_ in split:
-                            ds_.a.lastsplit == isplit==nsplits-1
+                            ds_.a.lastpartitionset == isplit==nsplits-1
 
                 # Check results of different strategies
                 if strategy == 'first':
@@ -375,37 +391,48 @@ class SplitterTests(unittest.TestCase):
 
 
     def test_slicing(self):
-        spl = HalfSplitter()
-        splits = [ (train, test) for (train, test) in spl(self.data) ]
+        hs = HalfPartitioner()
+        spl = Splitter(attr='partitions')
+        splits = list(hs.generate(self.data))
+        for s in splits:
+            # partitioned dataset shared the data
+            assert_true(s.samples.base is self.data.samples)
+        splits = [ list(spl.generate(p)) for p in hs.generate(self.data) ]
         for s in splits:
             # we get slicing all the time
-            assert_true(s[0].samples.base is self.data.samples)
-            assert_true(s[1].samples.base is self.data.samples)
-        spl = HalfSplitter(noslicing=True)
-        splits = [ (train, test) for (train, test) in spl(self.data) ]
+            assert_true(s[0].samples.base.base is self.data.samples)
+            assert_true(s[1].samples.base.base is self.data.samples)
+        spl = Splitter(attr='partitions', noslicing=True)
+        splits = [ list(spl.generate(p)) for p in hs.generate(self.data) ]
         for s in splits:
             # we no slicing at all
             assert_false(s[0].samples.base is self.data.samples)
             assert_false(s[1].samples.base is self.data.samples)
-        spl = NFoldSplitter()
-        splits = [ (train, test) for (train, test) in spl(self.data) ]
+        nfs = NFoldPartitioner()
+        spl = Splitter(attr='partitions')
+        splits = [ list(spl.generate(p)) for p in nfs.generate(self.data) ]
         for i, s in enumerate(splits):
             # training only first and last split
             if i == 0 or i == len(splits) - 1:
-                assert_true(s[0].samples.base is self.data.samples)
+                assert_true(s[0].samples.base.base is self.data.samples)
             else:
-                assert_false(s[0].samples.base is self.data.samples)
+                assert_true(s[0].samples.base is None)
             # we get slicing all the time
-            assert_true(s[1].samples.base is self.data.samples)
+            assert_true(s[1].samples.base.base is self.data.samples)
         step_ds = Dataset(np.random.randn(20,2),
                           sa={'chunks': np.tile([0,1], 10)})
-        spl = OddEvenSplitter()
-        splits = [ (train, test) for (train, test) in spl(step_ds) ]
+        oes = OddEvenPartitioner()
+        spl = Splitter(attr='partitions')
+        splits = list(oes.generate(step_ds))
+        for s in splits:
+            # partitioned dataset shared the data
+            assert_true(s.samples.base is step_ds.samples)
+        splits = [ list(spl.generate(p)) for p in oes.generate(step_ds) ]
         assert_equal(len(splits), 2)
         for s in splits:
             # we get slicing all the time
-            assert_true(s[0].samples.base is step_ds.samples)
-            assert_true(s[1].samples.base is step_ds.samples)
+            assert_true(s[0].samples.base.base is step_ds.samples)
+            assert_true(s[1].samples.base.base is step_ds.samples)
 
 
 def suite():

@@ -17,6 +17,7 @@ from mvpa.testing.tools import ok_, assert_array_equal, assert_true, \
 from mvpa.datasets import dataset_wizard
 from mvpa.generators.splitters import Splitter
 from mvpa.base.node import ChainNode
+from mvpa.generators.partition import OddEvenPartitioner
 
 
 def give_data():
@@ -73,3 +74,14 @@ def test_splitter():
     splits = list(cspl.generate(ds))
     # 4 target splits and 2 roi splits each and 10 chunks each
     assert_equal(len(splits), 80)
+
+
+def test_partitionmapper():
+    ds = give_data()
+    oep = OddEvenPartitioner()
+    parts = list(oep.generate(ds))
+    assert_equal(len(parts), 2)
+    for i, p in enumerate(parts):
+        assert_array_equal(p.sa['partitions'].unique, [1, 2])
+        assert_equal(p.a.partitions_set, i)
+        assert_equal(len(p), len(ds))
