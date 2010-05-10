@@ -32,7 +32,7 @@ class Splitter(Node):
     may be provided.
     """
     def __init__(self, attr, attr_values=None, count=None, noslicing=False,
-                 collection=None, **kwargs):
+                 collection=None, reverse=False, **kwargs):
         """
         Parameters
         ----------
@@ -58,6 +58,10 @@ class Splitter(Node):
           None the collections is auto-detected by searching the dataset
           collections (sample attributes first). Alternatively, it is possible
           to specified 'sa' (sample attribute) or 'fa' (feature attribute).
+        reverse : bool
+          If True, the order of datasets in the split is reversed, e.g.
+          instead of (training, testing), (training, testing) will be spit
+          out
         """
         Node.__init__(self, **kwargs)
         self.__splitattr = attr
@@ -65,6 +69,7 @@ class Splitter(Node):
         self.__count = count
         self.__noslicing = noslicing
         self.__collection = collection
+        self.__reverse = reverse
 
 
     def generate(self, ds):
@@ -119,6 +124,9 @@ class Splitter(Node):
             cfgs = collection[splattr].unique
         n_cfgs = len(cfgs)
 
+        if self.__reverse:
+            cfgs = cfgs[::-1]
+
         # split the data
         for isplit, split in enumerate(cfgs):
             if not count is None and isplit >= count:
@@ -138,8 +146,10 @@ class Splitter(Node):
                 # regular step sizes for the samples to be split
                 if col_name == 'sa':
                     split_ds = ds[mask2slice(filter_)]
-                if col_name == 'fa':
+                elif col_name == 'fa':
                     split_ds = ds[:, mask2slice(filter_)]
+                else:
+                    RuntimeError("This should never happen.")
 
             # is this the last split
             if count is None:
