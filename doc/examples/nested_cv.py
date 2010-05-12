@@ -102,7 +102,7 @@ def select_best_clf(dataset, clfs):
             best_error = error
         verbose(3, "Classifier %s cv error=%.2f" % (clf.descr, error))
     verbose(2, "Selected the best out of %i classifiers %s with error %.2f"
-            % (len(clfs), clf.descr, best_error))
+            % (len(clfs), best_clf.descr, best_error))
     return best_clf, best_error
 
 """
