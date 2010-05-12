@@ -120,6 +120,7 @@ def collect_nose_tests(verbosity=1):
         'test_zscoremapper',
         'test_waveletmapper',
         'test_mdp',
+        'test_filters',
 
         # Learners
         'test_enet',
