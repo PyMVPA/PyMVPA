@@ -57,6 +57,7 @@ Analysis
    examples/match_distribution
    examples/eventrelated
    examples/mdp_mnist
+   examples/eyemovements
 
 
 Visualization

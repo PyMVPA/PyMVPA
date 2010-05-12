@@ -110,6 +110,7 @@ from mvpa.mappers.som import *
 from mvpa.mappers.zscore import *
 if externals.exists('scipy'):
     from mvpa.mappers.detrend import *
+    from mvpa.mappers.filters import *
 if externals.exists('mdp'):
     from mvpa.mappers.mdp_adaptor import *
 if externals.exists('mdp ge 2.4'):
