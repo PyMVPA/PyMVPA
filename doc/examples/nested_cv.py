@@ -111,13 +111,16 @@ eliminating model-selection bias
 """
 errors = []
 best_clfs = {}
+confusion = ConfusionMatrix()
 for isplit, (dstrain, dstest) in enumerate(NFoldSplitter()(dataset)):
     verbose(1, "Processing split #%i" % isplit)
     best_clf, best_error = select_best_clf(dstrain, clfswh['!gnpp'])
     best_clfs[best_clf.descr] = best_clfs.get(best_clf.descr, 0) + 1
     # now that we have the best classifier, lets assess its transfer
     # to the testing dataset while training on entire training
-    errors.append(TransferError(best_clf)(dstest, dstrain))
+    te = TransferError(best_clf, enable_ca=['confusion'])
+    errors.append(te(dstest, dstrain))
+    confusion += te.ca.confusion
 
 """
 And for comparison, lets assess what would be the best performance if
@@ -136,3 +139,6 @@ print "# of times following classifiers were selected within " \
       "nested cross-validation:"
 for c, count in sorted(best_clfs.items(), key=lambda x:x[1], reverse=True):
     print " %i times %s" % (count, c)
+
+print "\nConfusion table for the nested cross-validation results:"
+print confusion
