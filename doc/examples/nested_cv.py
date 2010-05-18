@@ -51,6 +51,7 @@ verbose.level = 3
 For this simple example lets generate some fresh random data with 2
 relevant features and low SNR.
 """
+
 dataset = normal_feature_dataset(nlabels=2, nonbogus_features=[0, 1],
                                  nfeatures=50, snr=3.0)
 
@@ -58,6 +59,7 @@ dataset = normal_feature_dataset(nlabels=2, nonbogus_features=[0, 1],
 For the demonstration of model selection benefit, lets first compute
 cross-validated error using simple and popular kNN.
 """
+
 clf_sample = kNN()
 cv_sample = CrossValidatedTransferError(
     TransferError(clf_sample), NFoldSplitter())
@@ -68,6 +70,7 @@ error_sample = np.mean(cv_sample(dataset))
 For the convenience lets define a helpful function which we will use
 twice -- once within cross-validation, and once on the whole dataset
 """
+
 def select_best_clf(dataset, clfs):
     """Select best model according to CVTE
 
