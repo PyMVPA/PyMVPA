@@ -69,7 +69,8 @@ from mvpa.misc.attrmap import AttributeMap
 from mvpa.base import warning
 
 from mvpa.clfs.base import accepts_dataset_as_samples, \
-     accepts_samples_as_dataset, FailedToTrainError
+     accepts_samples_as_dataset
+from mvpa.base.learner import FailedToTrainError
 from mvpa.clfs.meta import MulticlassClassifier
 from mvpa.clfs._svmbase import _SVM
 from mvpa.base.state import ConditionalAttribute

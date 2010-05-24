@@ -27,7 +27,8 @@ if externals.exists('elasticnet', raise_=True):
 
 # local imports
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
-     FailedToTrainError, FailedToPredictError
+        FailedToPredictError
+from mvpa.base.learner import FailedToTrainError
 from mvpa.measures.base import Sensitivity
 
 if __debug__:

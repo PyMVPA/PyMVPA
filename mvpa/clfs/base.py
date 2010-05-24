@@ -18,10 +18,11 @@ from mvpa.support.copy import deepcopy
 import time
 
 from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
-
+from mvpa.base.learner import Learner, LearnerError, DegenerateInputError, \
+        FailedToPredictError
 from mvpa.datasets.base import Dataset
 from mvpa.misc.support import idhash
-from mvpa.base.state import ConditionalAttribute, ClassWithCollections
+from mvpa.base.state import ConditionalAttribute
 from mvpa.base.param import Parameter
 from mvpa.misc.attrmap import AttributeMap
 
@@ -33,9 +34,7 @@ if __debug__:
     from mvpa.base import debug
 
 __all__ = [ 'Classifier',
-            'accepts_dataset_as_samples', 'accepts_samples_as_dataset',
-            'DegenerateInputError', 'FailedToTrainError',
-            'FailedToPredictError', 'LearnerError']
+            'accepts_dataset_as_samples', 'accepts_samples_as_dataset']
 
 def accepts_samples_as_dataset(fx):
     """Decorator to wrap samples into a Dataset.
@@ -51,29 +50,7 @@ def accepts_samples_as_dataset(fx):
     return wrap_samples
 
 
-class LearnerError(Exception):
-    """Base class for exceptions thrown by the learners (classifiers,
-    regressions)"""
-    pass
-
-class DegenerateInputError(LearnerError):
-    """Exception to be thrown by learners if input data is bogus, i.e. no
-    features or samples"""
-    pass
-
-class FailedToTrainError(LearnerError):
-    """Exception to be thrown whenever classifier fails to learn for
-    some reason"""
-    pass
-
-class FailedToPredictError(LearnerError):
-    """Exception to be thrown whenever classifier fails to provide predictions.
-    Usually happens if it was trained on degenerate data but without any complaints.
-    """
-    pass
-
-
-class Classifier(ClassWithCollections):
+class Classifier(Learner):
     """Abstract classifier class to be inherited by all classifiers
     """
 
@@ -144,9 +121,6 @@ class Classifier(ClassWithCollections):
         doc="Internal classifier estimates the most recent " +
             "predictions are based on")
 
-    training_time = ConditionalAttribute(enabled=True,
-        doc="Time (in seconds) which took classifier to train")
-
     predicting_time = ConditionalAttribute(enabled=True,
         doc="Time (in seconds) which took classifier to predict")
 
@@ -169,7 +143,7 @@ class Classifier(ClassWithCollections):
 
 
     def __init__(self, **kwargs):
-        ClassWithCollections.__init__(self, **kwargs)
+        Learner.__init__(self, **kwargs)
 
         # XXX
         # the place to map literal to numerical labels (and back)
@@ -380,40 +354,6 @@ class Classifier(ClassWithCollections):
         raise NotImplementedError
 
 
-    def train(self, dataset):
-        """Train classifier on a dataset
-
-        Shouldn't be overridden in subclasses unless explicitly needed
-        to do so
-        """
-        if dataset.nfeatures == 0 or dataset.nsamples == 0:
-            raise DegenerateInputError, \
-                  "Cannot train classifier on degenerate data %s" % dataset
-        if __debug__:
-            debug("CLF", "Training classifier %(clf)s on dataset %(dataset)s",
-                  msgargs={'clf':self, 'dataset':dataset})
-
-        self._pretrain(dataset)
-
-        # remember the time when started training
-        t0 = time.time()
-
-        if dataset.nfeatures > 0:
-
-            result = self._train(dataset)
-        else:
-            warning("Trying to train on dataset with no features present")
-            if __debug__:
-                debug("CLF",
-                      "No features present for training, no actual training " \
-                      "is called")
-            result = None
-
-        self.ca.training_time = time.time() - t0
-        self._posttrain(dataset)
-        return result
-
-
     def _prepredict(self, dataset):
         """Functionality prior prediction
         """
@@ -507,6 +447,14 @@ class Classifier(ClassWithCollections):
 
         self._postpredict(dataset, result)
         return result
+
+
+    def _call(self, ds):
+        # get the predictions
+        # call with full dataset, since we might need it further down in
+        # the stream, e.g. for caching...
+        pred = self.predict(ds)
+        raise NotImplementedError
 
     # XXX deprecate ???
     ##REF: Name was automagically refactored
