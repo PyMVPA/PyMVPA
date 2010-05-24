@@ -25,8 +25,8 @@ from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.misc.errorfx import MeanMismatchErrorFx
 
-from mvpa.clfs.base import DegenerateInputError, FailedToTrainError, \
-     FailedToPredictError
+from mvpa.base.learner import DegenerateInputError, FailedToTrainError, \
+        FailedToPredictError
 from mvpa.clfs.meta import CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \

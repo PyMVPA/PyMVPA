@@ -26,8 +26,8 @@ if externals.exists('glmnet', raise_=True):
 
 # local imports
 from mvpa.base import warning
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
-     FailedToTrainError
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa.base.learner import FailedToTrainError
 from mvpa.measures.base import Sensitivity
 from mvpa.base.param import Parameter
 from mvpa.datasets.base import Dataset
