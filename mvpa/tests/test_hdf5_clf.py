@@ -16,7 +16,7 @@ import numpy as np
 from mvpa.testing.datasets import datasets
 from mvpa.clfs.base import Classifier
 from mvpa.clfs.transerror import TransferError
-from mvpa.misc.errorfx import CorrErrorFx, MeanMismatchErrorFx
+from mvpa.misc.errorfx import corr_error, mean_mismatch_error
 
 from mvpa.clfs.warehouse import clfswh, regrswh
 
@@ -54,8 +54,8 @@ def test_h5py_clfs(lrn):
 
     # lets choose a dataset
     dsname, errorfx = \
-            {False: ('uni2large', MeanMismatchErrorFx()),
-             True: ('sin_modulated', CorrErrorFx())}\
+            {False: ('uni2large', mean_mismatch_error),
+             True: ('sin_modulated', corr_error)}\
             ['regression' in lrn.__tags__]
     ds_train = datasets['%s_train' % dsname]
     ds_test = datasets['%s_test' % dsname]

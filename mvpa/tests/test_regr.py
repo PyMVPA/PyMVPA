@@ -14,7 +14,7 @@ from mvpa.testing.datasets import dataset_wizard, datasets
 
 from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
 
-from mvpa.misc.errorfx import CorrErrorFx
+from mvpa.misc.errorfx import corr_error
 
 from mvpa.clfs.meta import SplitClassifier
 from mvpa.clfs.transerror import TransferError
@@ -49,8 +49,7 @@ class RegressionsTests(unittest.TestCase):
             postproc=mean_sample(),
             enable_ca=['training_confusion', 'confusion'])
         # check the default
-        self.failUnless(isinstance(cve.transerror.errorfx,
-                                   CorrErrorFx))
+        self.failUnless(cve.transerror.errorfx is corr_error)
         corr = np.asscalar(cve(ds).samples)
 
         # Our CorrErrorFx should never return NaN
