@@ -454,7 +454,10 @@ class Classifier(Learner):
         # call with full dataset, since we might need it further down in
         # the stream, e.g. for caching...
         pred = self.predict(ds)
-        raise NotImplementedError
+        tattr = self.params.targets_attr
+        # return the predictions and the targets in a dataset
+        return Dataset(pred, sa={tattr: ds.sa[tattr]})
+
 
     # XXX deprecate ???
     ##REF: Name was automagically refactored
