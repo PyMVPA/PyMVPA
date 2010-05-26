@@ -90,7 +90,7 @@ class Learner(Node):
         # TODO remove first condition if all Learners get only datasets
         if got_ds and (ds.nfeatures == 0 or len(ds) == 0):
             raise DegenerateInputError(
-                    "Cannot train classifier on degenerate data %s" % dataset)
+                    "Cannot train classifier on degenerate data %s" % ds)
         if __debug__:
             debug("LRN", "Training learner %(lrn)s on dataset %(dataset)s",
                   msgargs={'lrn':self, 'dataset': ds})
