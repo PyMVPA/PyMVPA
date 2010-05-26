@@ -31,12 +31,14 @@ from mvpa.mappers.fx import sumofabs_sample, absolute_features, FxMapper, \
      maxofabs_sample, BinaryFxNode
 from mvpa.datasets.splitters import NFoldSplitter, NoneSplitter
 from mvpa.generators.splitters import Splitter
+from mvpa.generators.partition import NFoldPartitioner
 
 from mvpa.misc.errorfx import mean_mismatch_error
 from mvpa.misc.transformers import Absolute, \
      DistPValue
 
-from mvpa.measures.base import Measure, SplitFeaturewiseMeasure, TransferMeasure
+from mvpa.measures.base import Measure, SplitFeaturewiseMeasure, \
+        TransferMeasure, RepeatedMeasure
 from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
      IterativeRelief_Devel, IterativeReliefOnline_Devel
@@ -515,6 +517,17 @@ class SensitivityAnalysersTests(unittest.TestCase):
         auto_error = tm_err(self.dataset)
         ok_((manual_error == postproc_error.samples[0,0]) \
                 == auto_error.samples[0,0])
+
+
+    def test_pseudo_cv_measure(self):
+        clf = SMLR()
+        enode = BinaryFxNode(mean_mismatch_error, 'targets')
+        tm = TransferMeasure(clf, Splitter('partitions'), postproc=enode)
+        cvgen = NFoldPartitioner()
+        rm = RepeatedMeasure(tm, cvgen)
+        res = rm(self.dataset)
+        # one error per fold
+        assert_equal(res.shape, (len(self.dataset.sa['chunks'].unique), 1))
 
 
 def suite():
