@@ -20,9 +20,9 @@ from math import log10, ceil
 
 from mvpa.base import externals
 
-from mvpa.misc.errorfx import mean_power_fx, root_mean_power_fx, RMSErrorFx, \
-     CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx, \
-     AUCErrorFx
+from mvpa.misc.errorfx import mean_power_fx, root_mean_power_fx, rms_error, \
+     corr_error, corr_error_prob, relative_rms_error, mean_mismatch_error, \
+     auc_error
 from mvpa.base import warning
 from mvpa.base.collections import Collectable
 from mvpa.base.state import ConditionalAttribute, ClassWithCollections
@@ -368,7 +368,7 @@ class ROCCurve(object):
             for s in sets_wv:
                 targets_pl = (np.asanyarray(s[0]) == label).astype(int)
                 # XXX we might unify naming between AUC/ROC
-                ROC = AUCErrorFx()
+                ROC = auc_error
                 aucs_pl += [ROC([np.asanyarray(x)[i] for x in s[2]], targets_pl)]
                 ROCs_pl.append(ROC)
             if len(aucs_pl)>0:
@@ -1043,10 +1043,10 @@ class RegressionStatistics(SummaryStatistics):
             'STD_t': lambda p,t:np.std(t),
             'RMP_p': lambda p,t:root_mean_power_fx(p),
             'STD_p': lambda p,t:np.std(p),
-            'CCe': CorrErrorFx(),
-            'CCp': CorrErrorPFx(),
-            'RMSE': RMSErrorFx(),
-            'RMSE/RMP_t': RelativeRMSErrorFx()
+            'CCe': corr_error,
+            'CCp': corr_error_prob,
+            'RMSE': rms_error,
+            'RMSE/RMP_t': relative_rms_error
             }
 
         for funcname, func in funcs.iteritems():
@@ -1398,8 +1398,8 @@ class TransferError(ClassifierError):
         errorfx: func, optional
           Functor that computes a scalar error value from the vectors of
           desired and predicted values (e.g. subclass of `ErrorFunction`).
-          If None, then MeanMismatchErrorFx is chosen for classifiers and
-          CorrErrorFx for regressions
+          If None, then mean_mismatch_error is chosen for classifiers and
+          corr_error for regressions
         labels : list, optional
           If provided, should be a set of labels to add on top of the
           ones present in testdata
@@ -1410,8 +1410,8 @@ class TransferError(ClassifierError):
         """
         ClassifierError.__init__(self, clf, labels, **kwargs)
         if errorfx is None:
-            errorfx = {False: MeanMismatchErrorFx,
-                       True: CorrErrorFx}[clf.__is_regression__]()
+            errorfx = {False: mean_mismatch_error,
+                       True: corr_error}[clf.__is_regression__]
         self.__errorfx = errorfx
         self.__null_dist = auto_null_dist(null_dist)
         self.__samples_idattr = samples_idattr

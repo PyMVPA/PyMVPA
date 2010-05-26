@@ -17,7 +17,7 @@ import numpy as np
 #from mvpa.base import warning, externals
 from mvpa.datasets.base import Dataset
 #from mvpa.clfs.gnb import GNB
-from mvpa.misc.errorfx import MeanMismatchErrorFx
+from mvpa.misc.errorfx import mean_mismatch_error
 from mvpa.measures.searchlight import BaseSearchlight
 from mvpa.base import externals, warning
 from mvpa.base.dochelpers import borrowkwargs
@@ -142,7 +142,7 @@ class GNBSearchlight(BaseSearchlight):
     _ATTRIBUTE_COLLECTIONS = ['params', 'ca']
 
     @borrowkwargs(BaseSearchlight, '__init__')
-    def __init__(self, gnb, splitter, qe, errorfx=MeanMismatchErrorFx(),
+    def __init__(self, gnb, splitter, qe, errorfx=mean_mismatch_error,
                  indexsum=None, **kwargs):
         """Initialize a GNBSearchlight
 
@@ -204,7 +204,7 @@ class GNBSearchlight(BaseSearchlight):
         ##     import numpy as np
         ##     from mvpa.clfs.gnb import GNB
         ##     from mvpa.datasets.splitters import NFoldSplitter
-        ##     from mvpa.misc.errorfx import MeanMismatchErrorFx
+        ##     from mvpa.misc.errorfx import mean_mismatch_error
         ##     #from mvpa.testing.datasets import datasets
         ##     from mvpa.datasets import Dataset
         ##     from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
@@ -230,7 +230,7 @@ class GNBSearchlight(BaseSearchlight):
         ##     gnb = GNB()
         ##     params = gnb.params
         ##     splitter = NFoldSplitter()
-        ##     errorfx = MeanMismatchErrorFx()
+        ##     errorfx = mean_mismatch_error
 
         if __debug__:
             time_start = time.time()
@@ -485,7 +485,7 @@ class GNBSearchlight(BaseSearchlight):
             if __debug__:
                 debug('SLC', "  Assessing accuracies")
 
-            if isinstance(errorfx, MeanMismatchErrorFx):
+            if errorfx is mean_mismatch_error:
                 results[isplit, :] = \
                     (predictions != targets[:, None]).sum(axis=0) \
                     / float(len(targets))
