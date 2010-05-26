@@ -196,6 +196,52 @@ class Measure(Learner):
 
 
 
+class RepeatedMeasure(Measure):
+    """Repeatedly run a measure on generated dataset.
+
+    A measure is ran multiple times on datasets yielded by a custom generator.
+    Results of all measure runs are stacked and returned as a dataset upon call.
+    """
+    def __init__(self,
+                 node,
+                 generator,
+                 **kwargs):
+        """
+        Parameters
+        ----------
+        node : Node
+          Node or Measure implementing the procedure that is supposed to be run
+          multiple times.
+        generator : Node
+          Generator to yield a dataset for each measure run. The number of
+          datasets returned by the node determines the number of runs.
+        """
+        Measure.__init__(self, **kwargs)
+
+        self.__node = node
+        self.__generator = generator
+
+
+    def _call(self, ds):
+        # local binding
+        generator = self.__generator
+        node = self.__node
+
+        # run the node an all generated datasets
+        results = []
+        for sds in generator.generate(ds):
+            # run the beast
+            result = node(sds)
+            results.append(result)
+
+        # stack all results into a single Dataset
+        results = vstack(results)
+        # no need to store the raw results, since the Measure class will
+        # automatically store them in a CA
+        return results
+
+
+
 class TransferMeasure(Measure):
     """Train and run a measure on two different parts of a dataset.
 
