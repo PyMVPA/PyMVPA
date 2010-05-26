@@ -109,8 +109,9 @@ class Measure(Learner):
         # post-processing
         if not self.__postproc is None:
             if __debug__:
-                debug("SA_", "Applying mapper %s" % self.__postproc)
-            result = self.__postproc.forward(result)
+                debug("SA_",
+                      "Applying post-processing node %s" % self.__postproc)
+            result = self.__postproc(result)
 
         # estimate the NULL distribution when functor is given
         if not self.__null_dist is None:

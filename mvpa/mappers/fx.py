@@ -14,6 +14,8 @@ import numpy as np
 import operator
 
 from mvpa.base import warning
+from mvpa.base.node import Node
+from mvpa.datasets import Dataset
 from mvpa.base.dochelpers import _str
 from mvpa.mappers.base import Mapper
 from mvpa.misc.support import array_whereequal
@@ -386,3 +388,48 @@ def _product(iterable):
         result = [x+[y] for x in result for y in pool]
     for prod in result:
         yield tuple(prod)
+
+
+
+class BinaryFxNode(Node):
+    """Extract a dataset attribute and call a function with it and the samples.
+
+    This node takes a dataset's samples and a configurable attribute and passes
+    them to a custom callable. This node can be used to implement comparisons,
+    or error quantifications.
+
+    When called with a dataset the node returns a new dataset with the return
+    value of the callable as samples.
+    """
+    # TODO: Allow using feature attributes too
+    def __init__(self, fx, space, **kwargs):
+        """
+        Parameters
+        ----------
+        fx : callable
+          Callable that is passed with the dataset samples as first and
+          attribute values as second argument.
+        space : str
+          name of the sample attribute that contains the target values.
+        """
+        Node.__init__(self, space=space, **kwargs)
+        self.__fx = fx
+
+
+    def _call(self, ds):
+        # extract samples and targets and pass them to the errorfx
+        targets = ds.sa[self.get_space()].value
+        # squeeze to remove bogus dimensions are prevent problems during
+        # comparision later on
+        values = ds.samples.squeeze()
+        if not values.shape == targets.shape:
+            # if they have different shape numpy's broadcasting might introduce
+            # pointless stuff (compare individual features or yield a single
+            # boolean
+            raise ValueError("Trying to compute an error between data of "
+                             "different shape (%s vs. %s)."
+                             % (values.shape, targets.shape))
+        err = self.__fx(values, targets)
+        if np.isscalar(err):
+            err = np.array(err, ndmin=2)
+        return Dataset(err)

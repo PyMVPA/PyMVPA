@@ -28,10 +28,11 @@ from mvpa.clfs.meta import SplitClassifier, MulticlassClassifier, \
 from mvpa.clfs.smlr import SMLR, SMLRWeights
 from mvpa.mappers.zscore import zscore
 from mvpa.mappers.fx import sumofabs_sample, absolute_features, FxMapper, \
-     maxofabs_sample
+     maxofabs_sample, BinaryFxNode
 from mvpa.datasets.splitters import NFoldSplitter, NoneSplitter
 from mvpa.generators.splitters import Splitter
 
+from mvpa.misc.errorfx import mean_mismatch_error
 from mvpa.misc.transformers import Absolute, \
      DistPValue
 
@@ -499,6 +500,21 @@ class SensitivityAnalysersTests(unittest.TestCase):
         tm = TransferMeasure(MyMeasure(), Splitter('chunks', count=2))
         # result should not be all True (== identical)
         assert_true((tm(self.dataset).samples == False).any())
+
+
+    def test_clf_transfer_measure(self):
+        # and now on a classifier
+        clf = SMLR()
+        enode = BinaryFxNode(mean_mismatch_error, 'targets')
+        tm = TransferMeasure(clf, Splitter('chunks', count=2))
+        res = tm(self.dataset)
+        manual_error = np.mean(res.samples.squeeze() == res.sa.targets)
+        postproc_error = enode(res)
+        tm_err = TransferMeasure(clf, Splitter('chunks', count=2),
+                                 postproc=enode)
+        auto_error = tm_err(self.dataset)
+        ok_((manual_error == postproc_error.samples[0,0]) \
+                == auto_error.samples[0,0])
 
 
 def suite():
