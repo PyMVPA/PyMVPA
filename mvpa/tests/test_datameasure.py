@@ -510,7 +510,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         enode = BinaryFxNode(mean_mismatch_error, 'targets')
         tm = TransferMeasure(clf, Splitter('chunks', count=2))
         res = tm(self.dataset)
-        manual_error = np.mean(res.samples.squeeze() == res.sa.targets)
+        manual_error = np.mean(res.samples.squeeze() != res.sa.targets)
         postproc_error = enode(res)
         tm_err = TransferMeasure(clf, Splitter('chunks', count=2),
                                  postproc=enode)
