@@ -37,9 +37,8 @@ dataset = dataset[np.array([l in ['face', 'house'] for l in dataset.sa.targets],
                           dtype='bool')]
 
 # setup cross validation procedure, using SMLR classifier
-cv = CrossValidatedTransferError(
-            TransferError(SMLR()),
-            OddEvenSplitter())
+cv = CrossValidation(SMLR(), OddEvenPartitioner())
+
 # and run it
 error = np.mean(cv(dataset))
 

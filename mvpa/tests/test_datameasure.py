@@ -38,7 +38,7 @@ from mvpa.misc.transformers import Absolute, \
      DistPValue
 
 from mvpa.measures.base import Measure, SplitFeaturewiseMeasure, \
-        TransferMeasure, RepeatedMeasure
+        TransferMeasure, RepeatedMeasure, CrossValidation
 from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
      IterativeRelief_Devel, IterativeReliefOnline_Devel
@@ -515,8 +515,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         tm_err = TransferMeasure(clf, Splitter('chunks', count=2),
                                  postproc=enode)
         auto_error = tm_err(self.dataset)
-        ok_((manual_error == postproc_error.samples[0,0]) \
-                == auto_error.samples[0,0])
+        ok_(manual_error == postproc_error.samples[0,0])
 
 
     def test_pseudo_cv_measure(self):
@@ -528,6 +527,12 @@ class SensitivityAnalysersTests(unittest.TestCase):
         res = rm(self.dataset)
         # one error per fold
         assert_equal(res.shape, (len(self.dataset.sa['chunks'].unique), 1))
+
+        # we can do the same with Crossvalidation
+        cv = CrossValidation(clf, cvgen)
+        res = cv(self.dataset)
+        assert_equal(res.shape, (len(self.dataset.sa['chunks'].unique), 1))
+
 
 
 def suite():

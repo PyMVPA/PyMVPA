@@ -92,6 +92,9 @@ if externals.exists('nifti'):
 from mvpa.datasets import splitters
 from mvpa.datasets.splitters import *
 
+from mvpa.generators.partition import *
+from mvpa.generators.splitters import *
+
 from mvpa import featsel
 from mvpa.featsel.base import *
 from mvpa.featsel.helpers import *
