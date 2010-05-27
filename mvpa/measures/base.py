@@ -206,7 +206,7 @@ class RepeatedMeasure(Measure):
     Results of all measure runs are stacked and returned as a dataset upon call.
     """
 
-    results = ConditionalAttribute(enabled=False, doc=
+    repetition_results = ConditionalAttribute(enabled=False, doc=
        """Store individual result datasets for each repetition""")
 
     def __init__(self,
@@ -242,7 +242,7 @@ class RepeatedMeasure(Measure):
             results.append(result)
 
         # charge condition attribute
-        self.ca.results = results
+        self.ca.repetition_results = results
 
         # stack all results into a single Dataset
         results = vstack(results)
