@@ -285,7 +285,7 @@ class SVM(_SVM):
         params = self.params
         retrainable = self.params.retrainable
 
-        targets_sa_name = params.targets_attr    # name of targets sa
+        targets_sa_name = self.get_space()    # name of targets sa
         targets_sa = dataset.sa[targets_sa_name] # actual targets sa
 
         if retrainable:
@@ -651,7 +651,7 @@ class SVM(_SVM):
                       "Shogun: Implementation %s doesn't handle multiclass " \
                       "data. Got labels %s. Use some other classifier" % \
                       (self._svm_impl,
-                       self.__traindataset.sa[self.params.targets_attr].unique)
+                       self.__traindataset.sa[self.get_space()].unique)
             if __debug__:
                 debug("SG_", "Using %s for multiclass data of %s" %
                       (svm_impl_class, self._svm_impl))

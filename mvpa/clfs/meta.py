@@ -767,7 +767,7 @@ class TreeClassifier(ProxyClassifier):
         on a corresponding subset of samples.
         """
         # Local bindings
-        targets_sa_name = self.params.targets_attr    # name of targets sa
+        targets_sa_name = self.get_space()    # name of targets sa
         targets_sa = dataset.sa[targets_sa_name] # actual targets sa
         clf, clfs, index2group = self.clf, self.clfs, self._index2group
 
@@ -947,7 +947,7 @@ class BinaryClassifier(ProxyClassifier):
     def _train(self, dataset):
         """Train `BinaryClassifier`
         """
-        targets_sa_name = self.params.targets_attr
+        targets_sa_name = self.get_space()
         idlabels = [(x, +1) for x in get_samples_by_attr(dataset, targets_sa_name,
                                                          self.__poslabels)] + \
                     [(x, -1) for x in get_samples_by_attr(dataset, targets_sa_name,
@@ -1061,7 +1061,7 @@ class MulticlassClassifier(CombinedClassifier):
     def _train(self, dataset):
         """Train classifier
         """
-        targets_sa_name = self.params.targets_attr
+        targets_sa_name = self.get_space()
 
         # construct binary classifiers
         ulabels = dataset.sa[targets_sa_name].unique
@@ -1150,7 +1150,7 @@ class SplitClassifier(CombinedClassifier):
     def _train(self, dataset):
         """Train `SplitClassifier`
         """
-        targets_sa_name = self.params.targets_attr
+        targets_sa_name = self.get_space()
 
         # generate pairs and corresponding classifiers
         bclfs = []
@@ -1508,7 +1508,7 @@ class RegressionAsClassifier(ProxyClassifier):
 
 
     def _train(self, dataset):
-        targets_sa_name = self.params.targets_attr
+        targets_sa_name = self.get_space()
         targets_sa = dataset.sa[targets_sa_name]
 
         # May be it is an advanced one needing training.

@@ -118,8 +118,8 @@ easily accessible via the corresponding sensitivity analyzer.
 """
 
 
-clf = SVM(targets_attr='orient')
-mclf = SplitClassifier(clf, NFoldSplitter(), targets_attr='orient',
+clf = SVM(space='orient')
+mclf = SplitClassifier(clf, NFoldSplitter(), space='orient',
                        enable_ca=['confusion'])
 sensana = mclf.get_sensitivity_analyzer()
 sens = sensana(fds)

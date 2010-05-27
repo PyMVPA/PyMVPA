@@ -310,7 +310,7 @@ def plot_decision_boundary_2d(dataset, clf=None,
         clf.ca.enable('estimates')
 
         if targets is None:
-            targets = clf.params.targets_attr
+            targets = clf.get_space()
         # Lets reuse classifiers attrmap if it is good enough
         attrmap = clf._attrmap
         predictions = clf.predict(dataset)

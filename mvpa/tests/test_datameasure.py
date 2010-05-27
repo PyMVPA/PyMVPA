@@ -472,7 +472,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         """Additional aspects of OnewayAnova
         """
         oa = OneWayAnova()
-        oa_custom = OneWayAnova(targets_attr='custom')
+        oa_custom = OneWayAnova(space='custom')
 
         ds = datasets['uni4large']
         ds_custom = Dataset(ds.samples, sa={'custom' : ds.targets})

@@ -841,7 +841,7 @@ class BinaryClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
     def _call(self, dataset):
         sens = super(self.__class__, self)._call(dataset)
         clf = self.clf
-        targets_attr = clf.params.targets_attr
+        targets_attr = clf.get_space()
         if targets_attr in sens.sa:
             # if labels are present -- transform them into meaningful tuples
             # (or not if just a single beast)
@@ -868,7 +868,7 @@ class RegressionAsClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyz
         # We can have only a single sensitivity out of regression
         assert(sens.shape[0] == 1)
         clf = self.clf
-        targets_attr = clf.params.targets_attr
+        targets_attr = clf.get_space()
         if targets_attr not in sens.sa:
             # We just assign a tuple of all labels sorted
             labels = tuple(sorted(clf._trained_attrmap.values()))

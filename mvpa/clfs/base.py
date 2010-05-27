@@ -131,19 +131,18 @@ class Classifier(Learner):
     """Describes some specifics about the classifier -- is that it is
     doing regression for instance...."""
 
-    targets_attr = Parameter('targets', allowedtype='bool',# ro=True,
-        doc="""What samples attribute to use as targets.""",
-        index=999)
-
-
     # TODO: make it available only for actually retrainable classifiers
     retrainable = Parameter(False, allowedtype='bool',
         doc="""Either to enable retraining for 'retrainable' classifier.""",
         index=1002)
 
 
-    def __init__(self, **kwargs):
-        Learner.__init__(self, **kwargs)
+    def __init__(self, space=None, **kwargs):
+        # by default we want classifiers to use the 'targets' sample attribute
+        # for training/testing
+        if space is None:
+            space = 'targets'
+        Learner.__init__(self, space=space, **kwargs)
 
         # XXX
         # the place to map literal to numerical labels (and back)
@@ -211,7 +210,7 @@ class Classifier(Learner):
 
                 # Look at the data if any was changed
                 for key, data_ in (('traindata', dataset.samples),
-                                   ('targets', dataset.sa[params.targets_attr].value)):
+                                   ('targets', dataset.sa[self.get_space()].value)):
                     _changedData[key] = self.__was_data_changed(key, data_)
                     # if those idhashes were invalidated by retraining
                     # we need to adjust _changedData accordingly
@@ -246,7 +245,7 @@ class Classifier(Learner):
         """
         ca = self.ca
         if ca.is_enabled('trained_targets'):
-            ca.trained_targets = dataset.sa[self.params.targets_attr].unique
+            ca.trained_targets = dataset.sa[self.get_space()].unique
 
         ca.trained_dataset = dataset
         ca.trained_nsamples = dataset.nsamples
@@ -273,7 +272,7 @@ class Classifier(Learner):
             predictions = self.predict(dataset)
             self.ca.reset_changed_temporarily()
             self.ca.training_confusion = self.__summary_class__(
-                targets=dataset.sa[self.params.targets_attr].value,
+                targets=dataset.sa[self.get_space()].value,
                 predictions=predictions)
 
         if self.ca.is_enabled('feature_ids'):
@@ -454,7 +453,7 @@ class Classifier(Learner):
         # call with full dataset, since we might need it further down in
         # the stream, e.g. for caching...
         pred = self.predict(ds)
-        tattr = self.params.targets_attr
+        tattr = self.get_space()
         # return the predictions and the targets in a dataset
         return Dataset(pred, sa={tattr: ds.sa[tattr]})
 
@@ -698,7 +697,7 @@ class Classifier(Learner):
         # To check if we are not fooled
         if __debug__ and 'CHECK_RETRAIN' in debug.active:
             for key, data_ in (('traindata', dataset.samples),
-                               ('targets', dataset.sa[self.params.targets_attr].value)):
+                               ('targets', dataset.sa[self.get_space()].value)):
                 # so it wasn't told to be invalid
                 if not chd[key] and not ichd.get(key, False):
                     if self.__was_data_changed(key, data_, update=False):
