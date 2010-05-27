@@ -300,7 +300,7 @@ class SMLR(Classifier):
     def _train(self, dataset):
         """Train the classifier using `dataset` (`Dataset`).
         """
-        targets_sa_name = self.params.targets_attr    # name of targets sa
+        targets_sa_name = self.get_space()    # name of targets sa
         targets_sa = dataset.sa[targets_sa_name] # actual targets sa
 
         # Process the labels to turn into 1 of N encoding
@@ -567,4 +567,4 @@ class SMLRWeights(Sensitivity):
         # limit the labels to the number of sensitivity sets, to deal
         # with the case of `fit_all_weights=False`
         return Dataset(weights,
-                       sa={clf.params.targets_attr: clf._ulabels[:len(weights)]})
+                       sa={clf.get_space(): clf._ulabels[:len(weights)]})

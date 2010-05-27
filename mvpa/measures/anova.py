@@ -44,22 +44,21 @@ class OneWayAnova(FeaturewiseMeasure):
     from the 'fprob' feature attribute.
     """
 
-    def __init__(self, targets_attr='targets', **kwargs):
+    def __init__(self, space='targets', **kwargs):
         """
         Parameters
         ----------
-        targets_attr : str
+        space : str
           What samples attribute to use as targets (labels).
         """
-        self._targets_attr = targets_attr
-        FeaturewiseMeasure.__init__(self, **kwargs)
+        FeaturewiseMeasure.__init__(self, space=space, **kwargs)
 
 
     def __repr__(self, prefixes=None):
         if prefixes is None:
             prefixes = []
-        if self._targets_attr != 'targets':
-            prefixes = prefixes + ['targets_attr=%r' % (self._targets_attr)]
+        if self.get_space() != 'targets':
+            prefixes = prefixes + ['targets_attr=%r' % (self.get_space())]
         return \
             super(FeaturewiseMeasure, self).__repr__(prefixes=prefixes)
 
@@ -72,7 +71,7 @@ class OneWayAnova(FeaturewiseMeasure):
         # However, it got tweaked and optimized to better fit into PyMVPA.
 
         # number of groups
-        targets_sa = dataset.sa[self._targets_attr]
+        targets_sa = dataset.sa[self.get_space()]
         labels = targets_sa.value
         ul = targets_sa.unique
 
@@ -139,14 +138,14 @@ class CompoundOneWayAnova(OneWayAnova):
     def _call(self, dataset):
         """Computes featurewise f-scores using compound comparisons."""
 
-        targets_sa = dataset.sa[self._targets_attr]
+        targets_sa = dataset.sa[self.get_space()]
         orig_labels = targets_sa.value
         labels = orig_labels.copy()
 
         # Lets create a very shallow copy of a dataset with just
         # samples and targets_attr
         dataset_mod = Dataset(dataset.samples,
-                              sa={self._targets_attr : labels})
+                              sa={self.get_space() : labels})
         results = []
         for ul in targets_sa.unique:
             labels[orig_labels == ul] = 1
@@ -160,5 +159,5 @@ class CompoundOneWayAnova(OneWayAnova):
             results.append(f_ds)
 
         results = vstack(results)
-        results.sa[self._targets_attr] = targets_sa.unique
+        results.sa[self.get_space()] = targets_sa.unique
         return results

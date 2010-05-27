@@ -190,7 +190,7 @@ class ClassifiersTests(unittest.TestCase):
             lrn = lrn.clone()              # clone the beast
             lrn.params.seed = _random_seed # reuse the same seed
         lrn_ = lrn.clone()
-        lrn_.params.targets_attr = 'custom'
+        lrn_.set_space('custom')
 
         te = CrossValidatedTransferError(TransferError(lrn),
                                          NFoldSplitter())

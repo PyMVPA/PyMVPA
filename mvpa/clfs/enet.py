@@ -129,7 +129,7 @@ class ENET(Classifier):
     def _train(self, data):
         """Train the classifier using `data` (`Dataset`).
         """
-        targets = data.sa[self.params.targets_attr].value[:, np.newaxis]
+        targets = data.sa[self.get_space()].value[:, np.newaxis]
         enet_kwargs = {}
         if self.__max_steps is not None:
             enet_kwargs['max.steps'] = self.__max_steps

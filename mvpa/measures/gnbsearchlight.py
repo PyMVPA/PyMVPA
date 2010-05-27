@@ -235,7 +235,7 @@ class GNBSearchlight(BaseSearchlight):
         if __debug__:
             time_start = time.time()
 
-        targets_sa_name = params.targets_attr
+        targets_sa_name = gnb.get_space()
         targets_sa = dataset.sa[targets_sa_name]
 
         if __debug__:
