@@ -26,6 +26,7 @@ from mvpa.base.learner import Learner
 from mvpa.base.state import ConditionalAttribute
 from mvpa.misc.args import group_kwargs
 from mvpa.misc.attrmap import AttributeMap
+from mvpa.misc.errorfx import mean_mismatch_error
 from mvpa.base.types import asobjarray
 
 from mvpa.base.dochelpers import enhanced_doc_string
@@ -33,6 +34,8 @@ from mvpa.base import externals, warning
 from mvpa.clfs.stats import auto_null_dist
 from mvpa.base.dataset import AttrDataset
 from mvpa.datasets import Dataset, vstack
+from mvpa.mappers.fx import BinaryFxNode
+from mvpa.generators.splitters import Splitter
 
 if __debug__:
     from mvpa.base import debug
@@ -239,6 +242,58 @@ class RepeatedMeasure(Measure):
         # no need to store the raw results, since the Measure class will
         # automatically store them in a CA
         return results
+
+
+
+class CrossValidation(RepeatedMeasure):
+    """Cross-validate a learner's transfer on datasets.
+
+    A generator is used to resample a dataset into multiple instances (e.g.
+    sets of dataset partitions for leave-one-out folding). For each dataset
+    instance a transfer measure is computed by splitting the dataset into
+    two parts (defined by the dataset generators output space) and train a
+    custom learner on the first part and run it on the next. An arbitray error
+    function can by used to determine the learner's error when prediction the
+    dataset part that has been unseen during training.
+    """
+    # TODO move conditional attributes from CVTE into this guy
+    def __init__(self, learner, generator, errorfx=mean_mismatch_error,
+                 space='targets', **kwargs):
+        """
+        Parameters
+        ----------
+        learner : Learner
+          Any trainable node that shall be run on the dataset folds.
+        generator : Node
+          Generator used to resample the input dataset into multiple instances
+          (i.e. partitioning it). The number of datasets yielded by this
+          generator determines the number of cross-validation folds.
+        errorfx : callable
+          Custom implementation of an error function. The callable needs to
+          accept two arguments (1. predicted values, 2. target values).
+        space : str
+          Target space of the learner, i.e. the sample attribute it will be
+          trained on and tries to predict.
+        """
+        # compile the appropriate repeated measure to do cross-validation from
+        # pieces
+        if not errorfx is None:
+            # error node -- postproc of transfer measure
+            enode = BinaryFxNode(mean_mismatch_error, space)
+        else:
+            enode = Node
+
+        # enforce learner's space
+        # XXX maybe not in all cases?
+        learner.set_space(space)
+
+        # transfer measure to wrap the learner
+        # splitter used the output space of the generator to know what to split
+        tm = TransferMeasure(learner, Splitter(generator.get_space()),
+                postproc=enode)
+
+        # and finally the repeated measure to perform the x-val
+        RepeatedMeasure.__init__(self, tm, generator)
 
 
 
