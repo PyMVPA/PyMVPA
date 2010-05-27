@@ -205,6 +205,10 @@ class RepeatedMeasure(Measure):
     A measure is ran multiple times on datasets yielded by a custom generator.
     Results of all measure runs are stacked and returned as a dataset upon call.
     """
+
+    results = ConditionalAttribute(enabled=False, doc=
+       """Store individual result datasets for each repetition""")
+
     def __init__(self,
                  node,
                  generator,
@@ -236,6 +240,9 @@ class RepeatedMeasure(Measure):
             # run the beast
             result = node(sds)
             results.append(result)
+
+        # charge condition attribute
+        self.ca.results = results
 
         # stack all results into a single Dataset
         results = vstack(results)
@@ -293,7 +300,7 @@ class CrossValidation(RepeatedMeasure):
                 postproc=enode)
 
         # and finally the repeated measure to perform the x-val
-        RepeatedMeasure.__init__(self, tm, generator)
+        RepeatedMeasure.__init__(self, tm, generator, **kwargs)
 
 
 
