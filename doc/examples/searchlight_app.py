@@ -100,8 +100,7 @@ def main():
 
     verbose(3, "Assigning a measure to be CrossValidation")
     # compute N-1 cross-validation with the selected classifier in each sphere
-    cv = CrossValidatedTransferError(TransferError(clf),
-                            NFoldSplitter(cvtype=options.crossfolddegree))
+    cv = CrossValidation(clf, NFoldPartitioner(cvtype=options.crossfolddegree))
 
     verbose(3, "Generating Searchlight instance")
     # contruct searchlight with 5mm radius

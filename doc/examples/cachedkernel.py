@@ -50,16 +50,12 @@ speed-up and achievement of exactly the same results"""
 
 # setup a classifier and cross-validation procedure
 clf = sg.SVM(svm_impl='libsvm', C=-1.0, kernel=kernel)
-cv = CrossValidatedTransferError(
-            TransferError(clf),
-            splitter=NFoldSplitter())
+cv = CrossValidation(clf, NFoldPartitioner())
 
 # setup exactly the same using a plain kernel for demonstration of
 # speedup and equivalence of the results
 clf_plain = sg.SVM(svm_impl='libsvm', C=-1.0, kernel=kernel_plain)
-cv_plain = CrossValidatedTransferError(
-                  TransferError(clf_plain),
-                  splitter=NFoldSplitter())
+cv_plain = CrossValidation(clf_plain, NFoldPartitioner())
 
 
 """Although it would be done internally by cached kernel during
