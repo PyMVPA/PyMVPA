@@ -99,8 +99,7 @@ clf = LinearNuSVMC()
 
 # setup measure to be computed by Searchlight
 # cross-validated mean transfer using an N-fold dataset splitter
-cv = CrossValidatedTransferError(TransferError(clf),
-                                 NFoldSplitter())
+cv = CrossValidation(clf, NFoldPartitioner())
 
 """In this example, we do not want to compute full-brain accuracy maps, but
 instead limit ourselves to a specific subset of voxels. We'll select all voxel
