@@ -135,21 +135,20 @@ class Splitter(Node):
             # boolean mask is 'selected' samples for this split
             filter_ = splattr_data == split
 
-            if noslicing:
-                # advanced indexing (with data copying) via boolean vector
-                split_ds = ds[filter_]
-            else:
+            if not noslicing:
                 # check whether we can do slicing instead of advanced
                 # indexing -- if we can split the dataset without causing
                 # the data to be copied, its is quicker and leaner.
                 # However, it only works if we have a contiguous chunk or
                 # regular step sizes for the samples to be split
-                if col_name == 'sa':
-                    split_ds = ds[mask2slice(filter_)]
-                elif col_name == 'fa':
-                    split_ds = ds[:, mask2slice(filter_)]
-                else:
-                    RuntimeError("This should never happen.")
+                filter_ = mask2slice(filter_)
+
+            if col_name == 'sa':
+                split_ds = ds[filter_]
+            elif col_name == 'fa':
+                split_ds = ds[:, filter_]
+            else:
+                RuntimeError("This should never happen.")
 
             # is this the last split
             if count is None:
