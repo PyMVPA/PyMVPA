@@ -18,7 +18,8 @@ from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
 from mvpa.testing.datasets import datasets
 from mvpa.mappers.flatten import FlattenMapper
 from mvpa.mappers.base import ChainMapper
-from mvpa.mappers.slicing import FeatureSliceMapper, SampleSliceMapper
+from mvpa.mappers.slicing import FeatureSliceMapper, SampleSliceMapper, \
+        StripBoundariesSamples
 from mvpa.support.copy import copy
 from mvpa.datasets.base import Dataset
 from mvpa.base.collections import ArrayCollectable
@@ -267,3 +268,13 @@ def test_sampleslicemapper():
     ssm = SampleSliceMapper(slice(3, 8, 2))
     sds = ssm(ds)
     assert_equal(len(sds), 3)
+
+
+def test_strip_boundary():
+    ds = datasets['hollow']
+    ds.sa['btest'] = np.repeat([0,1], 20)
+    sn = StripBoundariesSamples('btest', 1, 2)
+    sds = sn(ds)
+    assert_equal(len(sds), len(ds) - 3)
+    for i in [19, 20, 21]:
+        assert_false(i in sds.samples.sid)
