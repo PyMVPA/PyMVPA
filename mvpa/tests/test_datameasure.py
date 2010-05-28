@@ -100,9 +100,9 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         # To don't waste too much time testing lets limit to 3 splits
         nsplits = 3
-        splitter = NFoldSplitter(count=nsplits)
+        partitioner = NFoldPartitioner(count=nsplits)
         mclf = SplitClassifier(clf=clf,
-                               splitter=splitter,
+                               partitioner=partitioner,
                                enable_ca=['training_confusion',
                                               'confusion'])
         sana = mclf.get_sensitivity_analyzer(# postproc=absolute_features(),
@@ -111,7 +111,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         ulabels = ds.uniquetargets
         nlabels = len(ulabels)
         # Can't rely on splitcfg since count-limit is done in __call__
-        assert(nsplits == len(list(splitter(ds))))
+        assert(nsplits == len(list(partitioner.generate(ds))))
         sens = sana(ds)
 
         # It should return either ...

@@ -12,8 +12,7 @@ from mvpa.testing import *
 from mvpa.testing.clfs import *
 from mvpa.testing.datasets import dataset_wizard, datasets
 
-from mvpa.datasets.splitters import OddEvenSplitter
-from mvpa.generators.partition import NFoldPartitioner
+from mvpa.generators.partition import NFoldPartitioner, OddEvenPartitioner
 from mvpa.measures.base import CrossValidation
 from mvpa.misc.errorfx import corr_error
 
@@ -54,7 +53,7 @@ class RegressionsTests(unittest.TestCase):
         self.failUnless(corr == cve.ca.stats.stats['CCe'])
 
         splitregr = SplitClassifier(
-            regr, splitter=OddEvenSplitter(),
+            regr, partitioner=OddEvenPartitioner(),
             enable_ca=['training_confusion', 'confusion'])
         splitregr.train(ds)
         split_corr = splitregr.ca.confusion.stats['CCe']

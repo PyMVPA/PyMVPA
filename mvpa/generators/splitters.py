@@ -108,15 +108,15 @@ class Splitter(Node):
                 col_name = 'fa'
                 # we don't need to warn here, since it wouldn't happen
             else:
-                ValueError("Cannot find '%s' attribute in any dataset "
-                           "collection." % splattr)
+                raise ValueError("Cannot find '%s' attribute in any dataset "
+                                 "collection." % splattr)
         if col_name == 'sa':
             collection = ds.sa
         elif col_name == 'fa':
             collection = ds.fa
         else:
-            ValueError("Unknown collection '%s'. Possible values are 'sa', "
-                       "'fa'." % col_name)
+            raise ValueError("Unknown collection '%s'. Possible values are "
+                             "'sa', 'fa'." % col_name)
 
         splattr_data = collection[splattr].value
         cfgs = self.__splitattr_values

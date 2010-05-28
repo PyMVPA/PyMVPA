@@ -198,7 +198,6 @@ reasonably well, since only a generalizing classifier model is worth
 inspecting, as otherwise the assigned weights are meaningless.
 
 >>> sclf = SplitClassifier(LinearCSVMC(),
-...                        NFoldSplitter(),
 ...                        enable_ca=['confusion'])
 >>> sensana = sclf.get_sensitivity_analyzer()
 >>> sens = sensana(evds)
