@@ -12,8 +12,10 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
+from mvpa.base.node import Node
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
 from mvpa.base.dochelpers import _str
+from mvpa.generators.splitters import mask2slice
 
 
 class SliceMapper(Mapper):
@@ -229,3 +231,50 @@ class FeatureSliceMapper(SliceMapper):
             return self
 
         raise RuntimeError("This should not happen. Undetected condition!")
+
+
+
+class StripBoundariesSamples(Node):
+    """Strip samples on boundaries defines by sample attribute values.
+
+    A sample attribute of a dataset is scanned for consecutive blocks if
+    identical values. Every change in the value is treated as a boundary
+    and custom number of samples is removed prior and after this boundary.
+    """
+    def __init__(self, space, prestrip, poststrip, **kwargs):
+        """
+        Parameters
+        ----------
+        space : str
+          name of the sample attribute that shall be used to determine the
+          boundaries.
+        prestrip : int
+          Number of samples to be stripped prior to each boundary.
+        poststrip : int
+          Number of samples to be stripped after each boundary (this includes
+          the boundary sample itself, i.e. the first samples with a different
+          sample attribute value).
+        """
+        Node.__init__(self, space=space, **kwargs)
+        self._prestrip = prestrip
+        self._poststrip = poststrip
+
+
+    def _call(self, ds):
+        # attribute to detect boundaries
+        battr = ds.sa[self.get_space()].value
+        # filter which samples to keep
+        filter_ = np.ones(battr.shape, dtype='bool')
+        # determine boundary indices -- shift by one to have the new value
+        # as the boundary
+        bindices = (battr[:-1] != battr[1:]).nonzero()[0] + 1
+
+        # for all boundaries
+        for b in bindices:
+            lower = b - self._prestrip
+            upper = b + self._poststrip
+            filter_[lower:upper] = False
+
+        filter_ = mask2slice(filter_)
+
+        return ds[filter_]
