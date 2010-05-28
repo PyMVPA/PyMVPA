@@ -530,7 +530,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         assert_equal(res.shape, (len(self.dataset.sa['chunks'].unique), 1))
 
         # we can do the same with Crossvalidation
-        cv = CrossValidation(clf, cvgen, enable_ca=['stats'])
+        cv = CrossValidation(clf, cvgen, enable_ca=['stats', 'training_stats',
+                                                    'datasets'])
         res = cv(self.dataset)
         assert_equal(res.shape, (len(self.dataset.sa['chunks'].unique), 1))
 
