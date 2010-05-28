@@ -11,11 +11,11 @@
 import unittest
 import numpy as np
 
+from mvpa.testing.datasets import datasets
+from mvpa.base.node import ChainNode
 from mvpa.datasets.base import dataset_wizard, Dataset
 from mvpa.generators.partition import NFoldPartitioner
-from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter, \
-                                   NoneSplitter, HalfSplitter, \
-                                   CustomSplitter
+from mvpa.mappers.slicing import StripBoundariesSamples
 from mvpa.generators.splitters import Splitter
 from mvpa.generators.partition import *
 
@@ -202,90 +202,6 @@ class SplitterTests(unittest.TestCase):
         self.failUnless((splits[0][1].sa['chunks'].unique == [5, 9]).all())
         self.failUnless((splits[0][0].sa['chunks'].unique == [0, 3, 4]).all())
 
-        # full test with additional sampling and 3 datasets per split
-        cs = CustomSplitter([([0,3,4],[5,9],[2])],
-                            npertarget=[3,4,1],
-                            nrunspersplit=3)
-        splits = list(cs(self.data))
-        self.failUnless(len(splits) == 3)
-
-        for i,p in enumerate(splits):
-            self.failUnless( len(p) == 3 )
-            self.failUnless( p[0].nsamples == 12 )
-            self.failUnless( p[1].nsamples == 16 )
-            self.failUnless( p[2].nsamples == 4 )
-
-        # lets test selection of samples by ratio and combined with
-        # other ways
-        cs = CustomSplitter([([0,3,4],[5,9],[2])],
-                            npertarget=[[0.3, 0.6, 1.0, 0.5],
-                                       0.5,
-                                       'all'],
-                            nrunspersplit=3)
-        csall = CustomSplitter([([0,3,4],[5,9],[2])],
-                               nrunspersplit=3)
-        # lets craft simpler dataset
-        #ds = Dataset(samples=np.arange(12), targets=[1]*6+[2]*6, chunks=1)
-        splits = list(cs(self.data))
-        splitsall = list(csall(self.data))
-
-        self.failUnless(len(splits) == 3)
-        ul = self.data.sa['targets'].unique
-
-        assert_array_equal(
-            (np.array(splitsall[0][0].get_nsamples_per_attr('targets').values())
-                *[0.3, 0.6, 1.0, 0.5]).round().astype(int),
-            np.array(splits[0][0].get_nsamples_per_attr('targets').values()))
-
-        assert_array_equal(
-            (np.array(splitsall[0][1].get_nsamples_per_attr('targets').values())
-                * 0.5).round().astype(int),
-            np.array(splits[0][1].get_nsamples_per_attr('targets').values()))
-
-        assert_array_equal(
-            np.array(splitsall[0][2].get_nsamples_per_attr('targets').values()),
-            np.array(splits[0][2].get_nsamples_per_attr('targets').values()))
-
-
-    def test_none_splitter(self):
-        nos = NoneSplitter()
-        splits = [ (train, test) for (train, test) in nos(self.data) ]
-        self.failUnless(len(splits) == 1)
-        self.failUnless(splits[0][0] == None)
-        self.failUnless(splits[0][1].nsamples == 100)
-
-        nos = NoneSplitter(reverse=True)
-        splits = [ (train, test) for (train, test) in nos(self.data) ]
-        self.failUnless(len(splits) == 1)
-        self.failUnless(splits[0][1] == None)
-        self.failUnless(splits[0][0].nsamples == 100)
-
-
-        # test sampling tools
-        # specified value
-        nos = NoneSplitter(nrunspersplit=3,
-                           npertarget=10)
-        splits = [ (train, test) for (train, test) in nos(self.data) ]
-
-        self.failUnless(len(splits) == 3)
-        for split in splits:
-            self.failUnless(split[0] == None)
-            self.failUnless(split[1].nsamples == 40)
-            ok_(split[1].get_nsamples_per_attr('targets').values() ==
-                [10,10,10,10])
-
-        # auto-determined
-        nos = NoneSplitter(nrunspersplit=3,
-                           npertarget='equal')
-        splits = [ (train, test) for (train, test) in nos(self.data) ]
-
-        self.failUnless(len(splits) == 3)
-        for split in splits:
-            self.failUnless(split[0] == None)
-            self.failUnless(split[1].nsamples == 100)
-            ok_(split[1].get_nsamples_per_attr('targets').values() ==
-                [25,25,25,25])
-
 
     def test_label_splitter(self):
         oes = OddEvenPartitioner(attr='targets')
@@ -348,47 +264,24 @@ class SplitterTests(unittest.TestCase):
 
 
     def test_discarded_boundaries(self):
-        splitters = [NFoldSplitter(),
-                     NFoldSplitter(discard_boundary=(0,1)), # discard testing
-                     NFoldSplitter(discard_boundary=(1,0)), # discard training
-                     NFoldSplitter(discard_boundary=(2,0)), # discard 2 from training
-                     NFoldSplitter(discard_boundary=1),     # discard from both
-                     OddEvenSplitter(discard_boundary=(1,0)),
-                     OddEvenSplitter(discard_boundary=(0,1)),
-                     HalfSplitter(discard_boundary=(1,0)),
-                     ]
+        ds = datasets['hollow']
+        # four runs
+        ds.sa['chunks'] = np.repeat(np.arange(4), 10)
+        # do odd even splitting for lots of boundaries in few splits
+        part = ChainNode([OddEvenPartitioner(),
+                          StripBoundariesSamples('chunks', 1, 2)])
 
-        split_sets = [list(s(self.data)) for s in splitters]
-        counts = [[(len(s[0].chunks), len(s[1].chunks)) for s in split_set]
-                  for split_set in split_sets]
+        parts = [d.samples.sid for d in part.generate(ds)]
 
-        nodiscard_tr = [c[0] for c in counts[0]]
-        nodiscard_te = [c[1] for c in counts[0]]
+        # both dataset should have the same samples, because the boundaries are
+        # identical and the same sample should be stripped
+        assert_array_equal(parts[0], parts[1])
 
-        # Discarding in testing:
-        self.failUnless(nodiscard_tr == [c[0] for c in counts[1]])
-        self.failUnless(nodiscard_te[1:-1] == [c[1] + 2 for c in counts[1][1:-1]])
-        # at the beginning/end chunks, just a single element
-        self.failUnless(nodiscard_te[0] == counts[1][0][1] + 1)
-        self.failUnless(nodiscard_te[-1] == counts[1][-1][1] + 1)
+        # we strip 3 samples per boundary
+        assert_equal(len(parts[0]), len(ds) - (3 * 3))
 
-        # Discarding in training
-        for d in [1,2]:
-            self.failUnless(nodiscard_te == [c[1] for c in counts[1+d]])
-            self.failUnless(nodiscard_tr[0] == counts[1+d][0][0] + d)
-            self.failUnless(nodiscard_tr[-1] == counts[1+d][-1][0] + d)
-            self.failUnless(nodiscard_tr[1:-1] == [c[0] + d*2
-                                                   for c in counts[1+d][1:-1]])
-
-        # Discarding in both -- should be eq min from counts[1] and [2]
-        counts_min = [(min(c1[0], c2[0]), min(c1[1], c2[1]))
-                      for c1,c2 in zip(counts[1], counts[2])]
-        self.failUnless(counts_min == counts[4])
-
-        # TODO: test all those odd/even etc splitters... YOH: did
-        # visually... looks ok;)
-        #for count in counts[5:]:
-        #    print count
+        for i in [9, 10, 11, 19, 20, 21, 29, 30, 31]:
+            assert_false(i in parts[0])
 
 
     def test_slicing(self):
