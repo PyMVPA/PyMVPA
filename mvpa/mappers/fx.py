@@ -421,7 +421,7 @@ class BinaryFxNode(Node):
         targets = ds.sa[self.get_space()].value
         # squeeze to remove bogus dimensions are prevent problems during
         # comparision later on
-        values = ds.samples.squeeze()
+        values = np.atleast_1d(ds.samples.squeeze())
         if not values.shape == targets.shape:
             # if they have different shape numpy's broadcasting might introduce
             # pointless stuff (compare individual features or yield a single

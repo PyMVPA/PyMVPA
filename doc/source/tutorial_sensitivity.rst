@@ -69,10 +69,8 @@ We will use a simple cross-validation procedure with a linear support
 vector machine and we want a confusion matrix:
 
 >>> clf = LinearCSVMC()
->>> cvte = CrossValidatedTransferError(
-...             TransferError(clf),
-...             splitter=NFoldSplitter(),
-...             enable_ca=['confusion'])
+>>> cvte = CrossValidation(clf, NFoldPartitioner(),
+...                        enable_ca=['confusion'])
 
 Ready, set, go!
 
@@ -199,12 +197,10 @@ got a meta-classifier that can be used just as any other classifier. Most
 importantly we can plug it into a cross-validation procedure (almost
 identical to the one we had in the beginning).
 
->>> cvte = CrossValidatedTransferError(
-...             TransferError(fclf),
-...             splitter=NFoldSplitter(),
-...             enable_ca=['confusion'])
+>>> cvte = CrossValidation(fclf, NFoldPartitioner(),
+...                        enable_ca=['stats'])
 >>> results = cvte(bin_demo)
->>> print np.round(cvte.ca.confusion.stats['ACC%'], 1)
+>>> print np.round(cvte.ca.stats.stats['ACC%'], 1)
 70.8
 
 This is a lot worse and a lot closer to the truth -- or a so-called
@@ -246,12 +242,10 @@ feature selection to retain more.
 ...            OneWayAnova(),
 ...            FractionTailSelector(0.05, mode='select', tail='upper'))
 >>> fclf = FeatureSelectionClassifier(clf, fsel)
->>> cvte = CrossValidatedTransferError(
-...             TransferError(fclf),
-...             splitter=NFoldSplitter(),
-...             enable_ca=['confusion'])
+>>> cvte = CrossValidation(fclf, NFoldPartitioner(),
+...                        enable_ca=['stats'])
 >>> results = cvte(ds)
->>> print np.round(cvte.ca.confusion.stats['ACC%'], 1)
+>>> print np.round(cvte.ca.stats.stats['ACC%'], 1)
 70.8
 
 A drop of 8% in accuracy on about 4 times the number of features. This time

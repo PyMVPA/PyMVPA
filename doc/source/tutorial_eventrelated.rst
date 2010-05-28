@@ -353,9 +353,7 @@ of PyMVPA for "multi-space" analysis. From the :ref:`previous tutorial part
 <chap_tutorial_searchlight>` we know how to do searchlight analyses and it was
 promised that there is more to it than what we already saw. And here it is:
 
->>> cvte = CrossValidatedTransferError(
-...             TransferError(LinearCSVMC()),
-...             splitter=NFoldSplitter())
+>>> cvte = CrossValidation(LinearCSVMC(), NFoldPartitioner())
 >>> sl = Searchlight(cvte,
 ...                  IndexQueryEngine(voxel_indices=Sphere(1),
 ...                                   event_offsetidx=Sphere(2)),

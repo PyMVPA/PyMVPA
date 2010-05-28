@@ -14,12 +14,12 @@ import numpy as np
 from mvpa.support.copy import copy
 
 from mvpa.base import externals, warning
-from mvpa.datasets.splitters import OddEvenSplitter
+from mvpa.generators.partition import OddEvenPartitioner
 
 from mvpa.clfs.meta import MulticlassClassifier
 from mvpa.clfs.transerror import \
      TransferError, ConfusionMatrix, ConfusionBasedError
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
+from mvpa.measures.base import CrossValidation
 
 from mvpa.clfs.stats import MCNullDist
 
@@ -180,9 +180,7 @@ class ErrorsTests(unittest.TestCase):
         self.failUnless(err < 0.4)
 
         # Lets do the same for CVTE
-        cvte = CrossValidatedTransferError(
-            TransferError(clf=l_clf),
-            OddEvenSplitter(),
+        cvte = CrossValidation(l_clf, OddEvenPartitioner(),
             null_dist=MCNullDist(permutations=num_perm,
                                  tail='left',
                                  enable_ca=['dist_samples']),
@@ -246,12 +244,10 @@ class ErrorsTests(unittest.TestCase):
         ds3.sa.targets = nl
         for ds in [datasets['uni2small'], ds2,
                    datasets['uni3small'], ds3]:
-            cv = CrossValidatedTransferError(
-                TransferError(clf),
-                OddEvenSplitter(),
-                enable_ca=['confusion', 'training_confusion'])
+            cv = CrossValidation(clf, OddEvenPartitioner(),
+                enable_ca=['stats', 'training_stats'])
             cverror = cv(ds)
-            stats = cv.ca.confusion.stats
+            stats = cv.ca.stats.stats
             Nlabels = len(ds.uniquetargets)
             # so we at least do slightly above chance
             self.failUnless(stats['ACC'] > 1.2 / Nlabels)

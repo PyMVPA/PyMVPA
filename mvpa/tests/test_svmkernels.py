@@ -23,8 +23,8 @@ from mvpa.misc.data_generators import normal_feature_dataset
 from mvpa.clfs.libsvmc import SVM as lsSVM
 from mvpa.clfs.sg import SVM as sgSVM
 
-from mvpa.datasets.splitters import NFoldSplitter
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
+from mvpa.generators.partition import NFoldPartitioner
+from mvpa.measures.base import CrossValidation
 from mvpa.clfs.transerror import TransferError
 
 
@@ -43,10 +43,8 @@ class SVMKernelTests(unittest.TestCase):
         ck = sgSVM(kernel=CachedKernel(kernel=RbfSGKernel(sigma=2)), C=1)
         sk = sgSVM(kernel=RbfSGKernel(sigma=2), C=1)
 
-        cv_c = CrossValidatedTransferError(TransferError(ck),
-                                           splitter=NFoldSplitter())
-        cv_s = CrossValidatedTransferError(TransferError(sk),
-                                           splitter=NFoldSplitter())
+        cv_c = CrossValidation(ck, NFoldPartitioner())
+        cv_s = CrossValidation(sk, NFoldPartitioner())
 
         #data = datasets['uni4large']
         P = 5000
@@ -90,10 +88,8 @@ class SVMKernelTests(unittest.TestCase):
         clf = sgSVM(svm_impl='libsvm', kernel=k, C=-1)
         clf_ = sgSVM(svm_impl='libsvm', kernel=ck, C=-1)
 
-        cvte = CrossValidatedTransferError(
-            TransferError(clf), NFoldSplitter())
-        cvte_ = CrossValidatedTransferError(
-            TransferError(clf_), NFoldSplitter())
+        cvte = CrossValidation(clf, NFoldPartitioner())
+        cvte_ = CrossValidation(clf_, NFoldPartitioner())
 
         te = TransferError(clf)
         te_ = TransferError(clf_)
@@ -133,10 +129,8 @@ class SVMKernelTests(unittest.TestCase):
         clf = sgSVM(svm_impl='libsvm', kernel=k, C=-1)
         clf_ = sgSVM(svm_impl='libsvm', kernel=ck, C=-1)
 
-        cvte = CrossValidatedTransferError(
-            TransferError(clf), NFoldSplitter())
-        cvte_ = CrossValidatedTransferError(
-            TransferError(clf_), NFoldSplitter())
+        cvte = CrossValidation(clf, NFoldPartitioner())
+        cvte_ = CrossValidation(clf_, NFoldPartitioner())
 
         ds = datasets['uni2large_test'].copy(deep=True)
         ok_(~('orig_ids' in ds.sa))     # assure that there are None

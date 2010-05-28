@@ -20,7 +20,8 @@ from mvpa.support.copy import deepcopy
 from mvpa.base import externals
 
 from mvpa.datasets.base import dataset_wizard
-from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
+from mvpa.generators.partition import NFoldPartitioner, OddEvenPartitioner
+from mvpa.datasets.splitters import NFoldSplitter
 
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.misc.errorfx import mean_mismatch_error
@@ -32,7 +33,7 @@ from mvpa.clfs.meta import CombinedClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \
      TreeClassifier, RegressionAsClassifier
 from mvpa.clfs.transerror import TransferError
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
+from mvpa.measures.base import CrossValidation
 from mvpa.mappers.flatten import mask_mapper
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.mappers.fx import mean_sample
@@ -152,10 +153,9 @@ class ClassifiersTests(unittest.TestCase):
     def test_classifier_generalization(self, clf):
         """Simple test if classifiers can generalize ok on simple data
         """
-        te = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
-                                         postproc=mean_sample())
+        te = CrossValidation(clf, NFoldPartitioner(), postproc=mean_sample())
         # check the default
-        self.failUnless(te.transerror.errorfx is mean_mismatch_error)
+        #self.failUnless(te.transerror.errorfx is mean_mismatch_error)
 
         nclasses = 2 * (1 + int('multiclass' in clf.__tags__))
 
@@ -190,13 +190,10 @@ class ClassifiersTests(unittest.TestCase):
             lrn = lrn.clone()              # clone the beast
             lrn.params.seed = _random_seed # reuse the same seed
         lrn_ = lrn.clone()
-        lrn_.set_space('custom')
 
-        te = CrossValidatedTransferError(TransferError(lrn),
-                                         NFoldSplitter())
+        te = CrossValidation(lrn, NFoldPartitioner())
 
-        te_ = CrossValidatedTransferError(TransferError(lrn_),
-                                         NFoldSplitter())
+        te_ = CrossValidation(lrn_, NFoldPartitioner(), space='custom')
         nclasses = 2 * (1 + int('multiclass' in lrn.__tags__))
         dsname = ('uni%dsmall' % nclasses,
                   'sin_modulated')[int(lrn.__is_regression__)]
@@ -316,22 +313,20 @@ class ClassifiersTests(unittest.TestCase):
         tr_error = clf.ca.training_confusion.error
 
         clf2 = clf.clone()
-        cv = CrossValidatedTransferError(
-            TransferError(clf2),
-            NFoldSplitter(),
-            postproc=mean_sample(),
-            enable_ca=['confusion', 'training_confusion'])
-        cverror = cv(ds).samples.squeeze()
-        tr_cverror = cv.ca.training_confusion.error
+        cv = CrossValidation(clf2, NFoldPartitioner(), postproc=mean_sample(),
+            enable_ca=['stats', 'training_stats'])
+        cverror = cv(ds)
+        cverror = cverror.samples.squeeze()
+        tr_cverror = cv.ca.training_stats.error
 
         self.failUnlessEqual(error, cverror,
                 msg="We should get the same error using split classifier as"
-                    " using CrossValidatedTransferError. Got %s and %s"
+                    " using CrossValidation. Got %s and %s"
                     % (error, cverror))
 
         self.failUnlessEqual(tr_error, tr_cverror,
                 msg="We should get the same training error using split classifier as"
-                    " using CrossValidatedTransferError. Got %s and %s"
+                    " using CrossValidation. Got %s and %s"
                     % (tr_error, tr_cverror))
 
         self.failUnlessEqual(clf.ca.confusion.percent_correct,
@@ -370,16 +365,13 @@ class ClassifiersTests(unittest.TestCase):
         clf.train(ds)                   # train the beast
         error = clf.ca.confusion.error
 
-        cv = CrossValidatedTransferError(
-            TransferError(clf2),
-            NFoldSplitter(),
-            postproc=mean_sample(),
-            enable_ca=['confusion', 'training_confusion'])
+        cv = CrossValidation(clf2, NFoldPartitioner(), postproc=mean_sample(),
+            enable_ca=['stats', 'training_stats'])
         cverror = cv(ds).samples.squeeze()
 
         self.failUnless(abs(error-cverror)<0.01,
                 msg="We should get the same error using split classifier as"
-                    " using CrossValidatedTransferError. Got %s and %s"
+                    " using CrossValidation. Got %s and %s"
                     % (error, cverror))
 
         if cfg.getboolean('tests', 'labile', default='yes'):
@@ -537,11 +529,8 @@ class ClassifiersTests(unittest.TestCase):
             'L2+3' : (('L2', 'L3'), clfs[2])})
 
         # Lets test train/test cycle using CVTE
-        cv = CrossValidatedTransferError(
-            TransferError(tclf),
-            OddEvenSplitter(),
-            postproc=mean_sample(),
-            enable_ca=['confusion', 'training_confusion'])
+        cv = CrossValidation(tclf, OddEvenPartitioner(), postproc=mean_sample(),
+            enable_ca=['stats', 'training_stats'])
         cverror = cv(ds).samples.squeeze()
         try:
             rtclf = repr(tclf)
@@ -552,8 +541,8 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnless(tclf.clfs['L0+1'] is clfs[1])
         self.failUnless(tclf.clfs['L2+3'] is clfs[2])
 
-        cvtrc = cv.ca.training_confusion
-        cvtc = cv.ca.confusion
+        cvtrc = cv.ca.training_stats
+        cvtc = cv.ca.stats
         if cfg.getboolean('tests', 'labile', default='yes'):
             # just a dummy check to make sure everything is working
             self.failUnless(cvtrc != cvtc)
@@ -573,10 +562,8 @@ class ClassifiersTests(unittest.TestCase):
             return
         ds = datasets['uni2small']
         clf.ca.change_temporarily(enable_ca = ['estimates'])
-        cv = CrossValidatedTransferError(
-            TransferError(clf),
-            OddEvenSplitter(),
-            enable_ca=['confusion', 'training_confusion'])
+        cv = CrossValidation(clf, OddEvenPartitioner(),
+            enable_ca=['stats', 'training_stats'])
         _ = cv(ds)
         #print clf.descr, clf.values[0]
         # basic test either we get 1 set of values per each sample
@@ -859,11 +846,9 @@ class ClassifiersTests(unittest.TestCase):
             ds = datasets[dsname]
 
             clf = RegressionAsClassifier(regr, enable_ca=['distances'])
-            cv = CrossValidatedTransferError(
-                TransferError(clf),
-                OddEvenSplitter(),
-                postproc=mean_sample(),
-                enable_ca=['confusion', 'training_confusion'])
+            cv = CrossValidation(clf, OddEvenPartitioner(),
+                    postproc=mean_sample(),
+                    enable_ca=['stats', 'training_stats'])
 
             error = cv(ds).samples.squeeze()
 

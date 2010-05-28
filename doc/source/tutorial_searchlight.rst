@@ -120,8 +120,7 @@ PyMVPA. We can load and preprocess datasets, we can set up a
 cross-validation procedure.
 
 >>> clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
->>> terr = TransferError(clf)
->>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter())
+>>> cvte = CrossValidation(clf, HalfPartitioner())
 
 The only thing left is that we have to split the dataset into all possible
 sphere neighborhoods that intersect with the brain. To achieve this, we

@@ -12,6 +12,7 @@ import unittest
 import numpy as np
 
 from mvpa.datasets.base import dataset_wizard, Dataset
+from mvpa.generators.partition import NFoldPartitioner
 from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter, \
                                    NoneSplitter, HalfSplitter, \
                                    CustomSplitter
