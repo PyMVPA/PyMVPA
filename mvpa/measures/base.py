@@ -313,6 +313,10 @@ class TransferMeasure(Measure):
     trained, the measure is then called with the second generated dataset
     and the result is returned.
     """
+
+    stats = ConditionalAttribute(enabled=False, doc=
+       """Optional summary statistics about the transfer performance""")
+
     def __init__(self, measure, splitter, **kwargs):
         """
         Parameters
@@ -331,12 +335,34 @@ class TransferMeasure(Measure):
 
 
     def _call(self, ds):
+        # local binding
+        measure = self.__measure
+        splitter = self.__splitter
+        ca = self.ca
+
         # activate the dataset splitter
-        dsgen = self.__splitter.generate(ds)
+        dsgen = splitter.generate(ds)
         # train on first
-        self.__measure.train(dsgen.next())
+        measure.train(dsgen.next())
+
+        # TODO get training confusion/stats
+
         # run with second
-        res = self.__measure(dsgen.next())
+        res = measure(dsgen.next())
+
+        # compute measure stats
+        if ca.is_enabled('stats'):
+            if not hasattr(measure, '__summary_class__'):
+                raise ValueError('%s has no __summary_class__ attribute -- '
+                                 'necessary for computing transfer stats'
+                                 % measure)
+            stats = measure.__summary_class__(
+                # hmm, might be unsupervised, i.e no targets...
+                targets=res.sa[measure.get_space()].value,
+                predictions=res.samples.squeeze(),
+                estimates = measure.ca.get('estimates', None))
+            ca.stats = stats
+
         return res
 
 
