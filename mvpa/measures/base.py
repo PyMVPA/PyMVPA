@@ -231,14 +231,14 @@ class RepeatedMeasure(Measure):
         """
         Measure.__init__(self, **kwargs)
 
-        self.__node = node
-        self.__generator = generator
+        self._node = node
+        self._generator = generator
 
 
     def _call(self, ds):
         # local binding
-        generator = self.__generator
-        node = self.__node
+        generator = self._generator
+        node = self._node
         ca = self.ca
 
         if self.ca.is_enabled("stats") and (not node.ca.has_key("stats") or
@@ -336,9 +336,9 @@ class CrossValidation(RepeatedMeasure):
         # pieces
         if not errorfx is None:
             # error node -- postproc of transfer measure
-            enode = BinaryFxNode(mean_mismatch_error, space)
+            enode = BinaryFxNode(errorfx, space)
         else:
-            enode = Node
+            enode = None
 
         # enforce learner's space
         # XXX maybe not in all cases?
@@ -373,6 +373,8 @@ class CrossValidation(RepeatedMeasure):
             # harvest summary stats
             ca['training_stats'].value.__iadd__(node.ca['training_stats'].value)
 
+
+    transfermeasure = property(fget=lambda self:self._node)
 
 
 
@@ -433,7 +435,8 @@ class TransferMeasure(Measure):
             stats = measure.__summary_class__(
                 # hmm, might be unsupervised, i.e no targets...
                 targets=res.sa[measure.get_space()].value,
-                predictions=res.samples.squeeze(),
+                # XXX this should really accept the full dataset
+                predictions=res.samples[:, 0],
                 estimates = measure.ca.get('estimates', None))
             ca.stats = stats
         if ca.is_enabled('training_stats'):
