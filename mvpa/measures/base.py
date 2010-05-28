@@ -209,6 +209,10 @@ class RepeatedMeasure(Measure):
     repetition_results = ConditionalAttribute(enabled=False, doc=
        """Store individual result datasets for each repetition""")
 
+    stats = ConditionalAttribute(enabled=False, doc=
+       """Summary statistics about the node performance across all repetitions
+       """)
+
     def __init__(self,
                  node,
                  generator,
@@ -233,6 +237,13 @@ class RepeatedMeasure(Measure):
         # local binding
         generator = self.__generator
         node = self.__node
+        ca = self.ca
+
+        if self.ca.is_enabled("stats") and (not node.ca.has_key("stats") or
+                                            not node.ca.is_enabled("stats")):
+            raise ValueError("'stats' conditional attribute was enabled, but "
+                             "the assigned node either doesn't support it, "
+                             "or it is disabled")
 
         # run the node an all generated datasets
         results = []
@@ -240,6 +251,13 @@ class RepeatedMeasure(Measure):
             # run the beast
             result = node(sds)
             results.append(result)
+
+            if ca.is_enabled("stats"):
+                if not ca.is_set('stats'):
+                    # create empty stats container of matching type
+                    ca.stats = node.ca['stats'].value.__class__()
+                # harvest summary stats
+                ca['stats'].value.__iadd__(node.ca['stats'].value)
 
         # charge condition attribute
         self.ca.repetition_results = results
@@ -263,6 +281,7 @@ class CrossValidation(RepeatedMeasure):
     function can by used to determine the learner's error when prediction the
     dataset part that has been unseen during training.
     """
+
     # TODO move conditional attributes from CVTE into this guy
     def __init__(self, learner, generator, errorfx=mean_mismatch_error,
                  space='targets', **kwargs):
@@ -301,6 +320,10 @@ class CrossValidation(RepeatedMeasure):
 
         # and finally the repeated measure to perform the x-val
         RepeatedMeasure.__init__(self, tm, generator, **kwargs)
+
+        if self.ca.is_enabled('stats'):
+            # enforce 'stats' if requested
+            tm.ca.enable('stats')
 
 
 
