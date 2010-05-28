@@ -387,3 +387,7 @@ class HollowSamples(object):
 
         return HollowSamples((len(sid), len(fid)), sid=sid, fid=fid,
                              dtype=self.dtype)
+
+    def view(self):
+        """Return itself"""
+        return self
