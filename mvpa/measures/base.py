@@ -208,9 +208,11 @@ class RepeatedMeasure(Measure):
 
     repetition_results = ConditionalAttribute(enabled=False, doc=
        """Store individual result datasets for each repetition""")
-
     stats = ConditionalAttribute(enabled=False, doc=
        """Summary statistics about the node performance across all repetitions
+       """)
+    datasets = ConditionalAttribute(enabled=False, doc=
+       """Store generated datasets for all repetitions. Can be memory expensive
        """)
 
     def __init__(self,
@@ -244,13 +246,21 @@ class RepeatedMeasure(Measure):
             raise ValueError("'stats' conditional attribute was enabled, but "
                              "the assigned node either doesn't support it, "
                              "or it is disabled")
+        # precharge conditional attributes
+        ca.datasets = []
 
         # run the node an all generated datasets
         results = []
         for sds in generator.generate(ds):
+            if ca.is_enabled("datasets"):
+                # store dataset in ca
+                ca.datasets.append(sds)
             # run the beast
             result = node(sds)
             results.append(result)
+
+            # subclass postprocessing
+            self._repetition_postcall(sds, node, result)
 
             if ca.is_enabled("stats"):
                 if not ca.is_set('stats'):
@@ -269,6 +279,23 @@ class RepeatedMeasure(Measure):
         return results
 
 
+    def _repetition_postcall(self, ds, node, result):
+        """Post-processing handler for each repetition.
+
+        Maybe overwritten in subclasses to harvest additional data.
+
+        Parameters
+        ----------
+        ds : Dataset
+          Input dataset for the node for this repetition
+        node : Node
+          Node after having processed the input dataset
+        result : Dataset
+          Output dataset of the node for this repetition.
+        """
+        pass
+
+
 
 class CrossValidation(RepeatedMeasure):
     """Cross-validate a learner's transfer on datasets.
@@ -281,6 +308,10 @@ class CrossValidation(RepeatedMeasure):
     function can by used to determine the learner's error when prediction the
     dataset part that has been unseen during training.
     """
+
+    training_stats = ConditionalAttribute(enabled=False, doc=
+       """Summary statistics about the training status of the learner
+       across all cross-validation fold.""")
 
     # TODO move conditional attributes from CVTE into this guy
     def __init__(self, learner, generator, errorfx=mean_mismatch_error,
@@ -321,9 +352,27 @@ class CrossValidation(RepeatedMeasure):
         # and finally the repeated measure to perform the x-val
         RepeatedMeasure.__init__(self, tm, generator, **kwargs)
 
-        if self.ca.is_enabled('stats'):
-            # enforce 'stats' if requested
-            tm.ca.enable('stats')
+        for ca in ['stats', 'training_stats']:
+            if self.ca.is_enabled(ca):
+                # enforce ca if requested
+                tm.ca.enable(ca)
+        if self.ca.is_enabled('training_stats'):
+            # also enable training stats in the learner
+            # TODO this needs to become 'training_stats' whenever the
+            # classifiers are ready
+            learner.ca.enable('training_confusion')
+
+
+    def _repetition_postcall(self, ds, node, result):
+        # local binding
+        ca = self.ca
+        if ca.is_enabled("training_stats"):
+            if not ca.is_set('training_stats'):
+                # create empty stats container of matching type
+                ca.training_stats = node.ca['training_stats'].value.__class__()
+            # harvest summary stats
+            ca['training_stats'].value.__iadd__(node.ca['training_stats'].value)
+
 
 
 
@@ -339,6 +388,8 @@ class TransferMeasure(Measure):
 
     stats = ConditionalAttribute(enabled=False, doc=
        """Optional summary statistics about the transfer performance""")
+    training_stats = ConditionalAttribute(enabled=False, doc=
+       """Summary statistics about the training status of the learner""")
 
     def __init__(self, measure, splitter, **kwargs):
         """
@@ -385,6 +436,8 @@ class TransferMeasure(Measure):
                 predictions=res.samples.squeeze(),
                 estimates = measure.ca.get('estimates', None))
             ca.stats = stats
+        if ca.is_enabled('training_stats'):
+            ca.training_stats = measure.ca.training_confusion
 
         return res
 
