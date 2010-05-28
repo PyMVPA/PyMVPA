@@ -29,7 +29,8 @@ from sets import Set
 from mvpa.misc.args import group_kwargs
 from mvpa.base.param import Parameter
 
-from mvpa.datasets.splitters import NFoldSplitter
+from mvpa.generators.splitters import Splitter
+from mvpa.generators.partition import NFoldPartitioner
 from mvpa.datasets.miscfx import get_samples_by_attr
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.base.state import ConditionalAttribute, ClassWithCollections, \
@@ -1123,7 +1124,8 @@ class SplitClassifier(CombinedClassifier):
     #global_training_confusion = ConditionalAttribute(enabled=False,
     #    doc="Summary over training confusions acquired at each split")
 
-    def __init__(self, clf, splitter=NFoldSplitter(cvtype=1), **kwargs):
+    def __init__(self, clf, partitioner=NFoldPartitioner(),
+                 splitter=Splitter('partitions', count=2), **kwargs):
         """Initialize the instance
 
         Parameters
@@ -1144,6 +1146,7 @@ class SplitClassifier(CombinedClassifier):
                   "Please provide an instance of a splitter, not a type." \
                   " Got %s" % splitter
 
+        self.__partitioner = partitioner
         self.__splitter = splitter
 
 
@@ -1169,7 +1172,7 @@ class SplitClassifier(CombinedClassifier):
 
         # for proper and easier debugging - first define classifiers and then
         # train them
-        for split in self.__splitter.splitcfg(dataset):
+        for split in self.__partitioner.get_partition_specs(dataset):
             if __debug__:
                 debug("CLFSPL_",
                       "Deepcopying %(clf)s for %(sclf)s",
@@ -1181,9 +1184,12 @@ class SplitClassifier(CombinedClassifier):
 
         self.ca.splits = []
 
-        for i, split in enumerate(self.__splitter(dataset)):
+        for i, pset in enumerate(self.__partitioner.generate(dataset)):
             if __debug__:
                 debug("CLFSPL", "Training classifier for split %d" % (i))
+
+            # split partitioned dataset
+            split = [d for d in self.__splitter.generate(pset)]
 
             if ca.is_enabled("splits"):
                 self.ca.splits.append(split)
@@ -1233,8 +1239,10 @@ class SplitClassifier(CombinedClassifier):
                 analyzer=self.__clf.get_sensitivity_analyzer(**slave_kwargs),
                 **kwargs)
 
+    partitioner = property(fget=lambda x:x.__partitioner,
+                        doc="Partitioner used by SplitClassifier")
     splitter = property(fget=lambda x:x.__splitter,
-                        doc="Splitter user by SplitClassifier")
+                        doc="Splitter used by SplitClassifier")
 
 
 class MappedClassifier(ProxyClassifier):

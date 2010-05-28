@@ -21,7 +21,6 @@ from mvpa.base import externals
 
 from mvpa.datasets.base import dataset_wizard
 from mvpa.generators.partition import NFoldPartitioner, OddEvenPartitioner
-from mvpa.datasets.splitters import NFoldSplitter
 
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.misc.errorfx import mean_mismatch_error
@@ -305,7 +304,6 @@ class ClassifiersTests(unittest.TestCase):
     def test_split_classifier(self):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
-                splitter=NFoldSplitter(1),
                 enable_ca=['confusion', 'training_confusion',
                                'feature_ids'])
         clf.train(ds)                   # train the beast
@@ -360,7 +358,6 @@ class ClassifiersTests(unittest.TestCase):
         clf2 = clf_.clone()
         ds = datasets['uni2medium']#self.data_bin_1
         clf = SplitClassifier(clf=clf_, #SameSignClassifier(),
-                splitter=NFoldSplitter(1),
                 enable_ca=['confusion', 'feature_ids'])
         clf.train(ds)                   # train the beast
         error = clf.ca.confusion.error
@@ -392,7 +389,6 @@ class ClassifiersTests(unittest.TestCase):
         """
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
-                splitter=NFoldSplitter(1),
                 enable_ca=['confusion', 'training_confusion',
                                'feature_ids'],
                 harvest_attribs=['clf.ca.feature_ids',

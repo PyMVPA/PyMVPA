@@ -347,7 +347,7 @@ access the total performance of the underlying classifier. To again gain
 access to it, and get the sensitivities at the same time, we can twist the
 processing pipeline a bit.
 
->>> sclf = SplitClassifier(fclf, NFoldSplitter(), enable_ca=['confusion'])
+>>> sclf = SplitClassifier(fclf, enable_ca=['confusion'])
 >>> cv_sensana = sclf.get_sensitivity_analyzer()
 >>> sens = cv_sensana(ds)
 >>> print sens.shape
