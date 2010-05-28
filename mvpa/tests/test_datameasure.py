@@ -508,7 +508,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # and now on a classifier
         clf = SMLR()
         enode = BinaryFxNode(mean_mismatch_error, 'targets')
-        tm = TransferMeasure(clf, Splitter('chunks', count=2))
+        tm = TransferMeasure(clf, Splitter('chunks', count=2),
+                             enable_ca=['stats'])
         res = tm(self.dataset)
         manual_error = np.mean(res.samples.squeeze() != res.sa.targets)
         postproc_error = enode(res)
