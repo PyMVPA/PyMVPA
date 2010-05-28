@@ -20,7 +20,7 @@ from mvpa.base.dochelpers import _str, borrowkwargs
 from mvpa.mappers.base import Mapper
 from mvpa.datasets import Dataset
 from mvpa.base.dataset import vstack
-from mvpa.datasets.splitters import CustomSplitter
+from mvpa.generators.splitters import Splitter
 
 
 class FFTResampleMapper(Mapper):
@@ -100,10 +100,9 @@ class FFTResampleMapper(Mapper):
             proc_ds = ds.copy(deep=False, sa=keep_sa, fa=[], a=[])
             # process all chunks individually
             # use a customsplitter to speed-up splitting
-            spl = CustomSplitter([((i,),)
-                                    for i in ds.sa[self.__chunks_attr].unique],
-                                 attr=self.__chunks_attr)
-            dses = [self._forward_dataset_helper(d[0]) for d in spl(proc_ds)]
+            spl = Splitter(self.__chunks_attr)
+            dses = [self._forward_dataset_helper(d)
+                        for d in spl.generate(proc_ds)]
             # and merge them again
             mds = vstack(dses)
             # put back attributes
