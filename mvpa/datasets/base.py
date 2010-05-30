@@ -107,6 +107,82 @@ class Dataset(AttrDataset):
         return ds
 
 
+    def find_collection(self, attr):
+        """Lookup collection that contains an attribute of a given name.
+
+        Collections are search in the following order: sample attributes,
+        feature attributes, dataset attributes. The first collection
+        containing a matching attribute is returned.
+
+        Parameters
+        ----------
+        attr : str
+          Attribute name to be looked up.
+
+        Returns
+        -------
+        Collection
+          If not matching collection is found a LookupError exception is raised.
+        """
+        if attr in self.sa:
+            col = self.sa
+            if __debug__ and (attr in self.fa or attr in self.a):
+                warning("An attribute with name '%s' is also present "
+                        "in another attribute collection -- make sure "
+                        "that you got the right one (see ``col`` argument)."
+                        % (attr,))
+        elif attr in ds.fa:
+            col = self.fa
+            if __debug__ and attr in self.a:
+                warning("An attribute with name '%s' is also present "
+                        "in the dataset attribute collection -- make sure "
+                        "that you got the right one (see ``col`` argument)."
+                        % (attr,))
+        elif attr in ds.a:
+            col = self.a
+            # we don't need to warn here, since it wouldn't happen
+        else:
+            raise LookupError("Cannot find '%s' attribute in any dataset "
+                              "collection." % attr)
+        return col
+
+
+    def get_attr(self, name, col=None):
+        """Return an attribute from a collection.
+
+        A collection can be specified, but can also be auto-detected.
+
+        Parameters
+        ----------
+        name : str
+          Attribute name.
+        col : {'sa', 'fa', 'a'} or None
+          Name of the source collection or None if auto-detection is desired.
+
+        Returns
+        -------
+        (attr, collection)
+          2-tuple: First element is the requested attribute and the second
+          element is the collection that contains the attribute. If no matching
+          attribute can be found a LookupError exception is raised.
+        """
+        if col is None:
+            # auto-detect collection
+            col = self.find_collection(name)
+        else:
+            # translate collection names into collection
+            if col == 'sa':
+                col = self.sa
+            elif col == 'fa':
+                col = self.fa
+            elif col == 'a':
+                col = self.a
+            else:
+                raise LookupError("Unknown collection '%s'. Possible values "
+                                  "are: 'sa', 'fa', 'a'." % col)
+        return (col[name], col)
+
+
     def item(self):
         """Provide the first element of samples array.
 
