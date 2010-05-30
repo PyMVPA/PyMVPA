@@ -94,34 +94,12 @@ class Splitter(Node):
         count = self.__count
         splattr = self.__splitattr
 
-        if col_name is None:
-            # auto-detect collection
-            if splattr in ds.sa:
-                col_name = 'sa'
-                if __debug__ and splattr in ds.fa:
-                    warning("%s: An attribute with name '%s' is also present "
-                            "in the feature attribute collection -- make sure "
-                            "that the splitter is using the right one (see "
-                            "`collection` argument)."
-                            % (self.__class__.__name__, splattr))
-            elif splattr in ds.fa:
-                col_name = 'fa'
-                # we don't need to warn here, since it wouldn't happen
-            else:
-                raise ValueError("Cannot find '%s' attribute in any dataset "
-                                 "collection." % splattr)
-        if col_name == 'sa':
-            collection = ds.sa
-        elif col_name == 'fa':
-            collection = ds.fa
-        else:
-            raise ValueError("Unknown collection '%s'. Possible values are "
-                             "'sa', 'fa'." % col_name)
-
-        splattr_data = collection[splattr].value
+        # get attribute and source collection from dataset
+        splattr, collection = ds.get_attr(splattr)
+        splattr_data = splattr.value
         cfgs = self.__splitattr_values
         if cfgs is None:
-            cfgs = collection[splattr].unique
+            cfgs = splattr.unique
         n_cfgs = len(cfgs)
 
         if self.__reverse:
@@ -143,9 +121,9 @@ class Splitter(Node):
                 # regular step sizes for the samples to be split
                 filter_ = mask2slice(filter_)
 
-            if col_name == 'sa':
+            if collection is ds.sa:
                 split_ds = ds[filter_]
-            elif col_name == 'fa':
+            elif collection is ds.fa:
                 split_ds = ds[:, filter_]
             else:
                 RuntimeError("This should never happen.")
