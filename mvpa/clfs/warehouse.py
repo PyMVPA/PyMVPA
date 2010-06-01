@@ -19,7 +19,7 @@ from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
      MulticlassClassifier, RegressionAsClassifier
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN
-from mvpa.clfs.lda import LDA, QDA
+from mvpa.clfs.gda import LDA, QDA
 from mvpa.clfs.gnb import GNB
 from mvpa.kernels.np import LinearKernel, SquaredExponentialKernel, \
      GeneralizedLinearKernel
