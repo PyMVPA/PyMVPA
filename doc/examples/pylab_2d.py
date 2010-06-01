@@ -80,8 +80,13 @@ clfs = {'Ridge Regression': RidgeReg(),
         'k-Nearest-Neighbour': kNN(k=10),
         'GNB': GNB(common_variance=True),
         'GNB(common_variance=False)': GNB(common_variance=False),
+        'LDA': LDA(),
+        'QDA': QDA(),
         }
 
+# How many rows/columns we need
+nx = int(ceil(np.sqrt(len(clfs))))
+ny = int(ceil(len(clfs)/float(nx)))
 
 """Now we are ready to run the classifiers. The following loop trains
 and queries each classifier to finally generate a nice plot showing
@@ -93,17 +98,17 @@ for id, ds in datasets.iteritems():
     fig = 0
 
     # make a new figure
-    pl.figure(figsize=(9, 9))
+    pl.figure(figsize=(nx*3, ny*3))
 
     print "Processing %s problem..." % id
 
-    for c in clfs:
+    for c in sorted(clfs):
         # tell which one we are doing
         print "Running %s classifier..." % (c)
 
         # make a new subplot for each classifier
         fig += 1
-        pl.subplot(3, 3, fig)
+        pl.subplot(ny, nx, fig)
 
         # plot the training points
         pl.plot(ds.samples[ds.targets == 1, 0],
@@ -134,6 +139,9 @@ for id, ds in datasets.iteritems():
             res = np.asarray(clf.ca.estimates)
         elif c in ['SMLR']:
             res = np.asarray(clf.ca.estimates[:, 1])
+        elif c in ['LDA', 'QDA']:
+            res = np.asarray(clf.ca.estimates[:, 0]
+                             - clf.ca.estimates[:, 1])
         elif c.startswith('GNB'):
             # Since probabilities are raw: for visualization lets
             # operate on logprobs and in comparison one to another
