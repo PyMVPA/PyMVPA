@@ -27,6 +27,10 @@ class SKLLearnerAdapter(Classifier):
     like any other learner present within PyMVPA (so obtains all the
     conditional attributes defined at the base level of a
     `Classifier`)
+
+    Examples
+    --------
+    
     """
 
     __tags__ = ['skl']
