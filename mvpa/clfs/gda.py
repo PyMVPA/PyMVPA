@@ -65,7 +65,7 @@ class GDA(Classifier):
         # pylint friendly initializations
         self.means = None
         """Means of features per class"""
-        self.covariances = None
+        self.cov = None
         """Co-variances per class, but "vars" is taken ;)"""
         self.ulabels = None
         """Labels classifier was trained on"""
@@ -119,11 +119,11 @@ class GDA(Classifier):
         # XXX might want to remove -- for now taken from GNB as is
         self.nsamples_per_class = nsamples_per_class \
                                   = np.zeros((nlabels, 1))
-        self.covariances = covariances = \
+        self.cov = cov = \
                      np.zeros((nlabels, nfeatures, nfeatures))
 
 
-        # Estimate covariances
+        # Estimate cov
         # better loop than repmat! ;)
         for l, il in label2index.iteritems():
             Xl = X[labels == l]
@@ -133,7 +133,7 @@ class GDA(Classifier):
             means[il] = np.mean(Xl, axis=0)
             # since we have means already lets do manually cov here
             Xldm = Xl - means[il]
-            covariances[il] = np.dot(Xldm.T, Xldm)
+            cov[il] = np.dot(Xldm.T, Xldm)
             # scaling will be done correspondingly in LDA or QDA
 
         # Store prior probabilities
@@ -148,7 +148,7 @@ class GDA(Classifier):
         """Untrain classifier and reset all learnt params
         """
         self.means = None
-        self.covariances = None
+        self.cov = None
         self.ulabels = None
         self.priors = None
         super(GDA, self).untrain()
@@ -163,7 +163,7 @@ class GDA(Classifier):
         self.ca.estimates = prob_cs_cp = self._g_k(data)
 
         # Take the class with maximal (log)probability
-        # XXX in GNB it is axis=0
+        # XXX in GNB it is axis=0, i.e. classes were first
         winners = prob_cs_cp.argmax(axis=1)
         predictions = [self.ulabels[c] for c in winners]
 
@@ -191,8 +191,8 @@ class LDA(GDA):
         super(LDA, self)._train(dataset)
         nlabels = len(self.ulabels)
         # Sum and scale the covariance
-        self.covariances = cov = \
-            np.sum(self.covariances, axis=0) \
+        self.cov = cov = \
+            np.sum(self.cov, axis=0) \
             / (np.sum(self.nsamples_per_class) - nlabels)
 
         # For now as simple as that -- see notes on top
@@ -224,32 +224,32 @@ class QDA(GDA):
     def untrain(self):
         # XXX theoretically we could use the same _w although with
         # different "content"
-        self._covariances_inverse = None
+        self._icov = None
         self._b = None
         super(QDA, self).untrain()
 
     def _train(self, dataset):
         super(QDA, self)._train(dataset)
 
-        # XXX should we drag covariances around at all then?
-        self._covariances_inverse = np.zeros(self.covariances.shape)
+        # XXX should we drag cov around at all then?
+        self._icov = np.zeros(self.cov.shape)
 
-        for ic, cov in enumerate(self.covariances):
+        for ic, cov in enumerate(self.cov):
             cov /= float(self.nsamples_per_class[ic])
             try:
-                self._covariances_inverse[ic] = np.linalg.inv(cov)
+                self._icov[ic] = np.linalg.inv(cov)
             except Exception, e:
                 raise DegenerateInputError, \
                       "Data is probably singular, since inverse fails. Got %s"\
                       % (e,)
 
         self._b = np.array([np.log(p) - 0.5 * np.log(np.linalg.det(c))
-                            for p,c in zip(self.priors, self.covariances)])
+                            for p,c in zip(self.priors, self.cov)])
 
     def _g_k(self, data):
         """Return decision function values"""
         res = []
-        for m, covi, b in zip(self.means, self._covariances_inverse, self._b):
+        for m, covi, b in zip(self.means, self._icov, self._b):
             dm = data - m
-            res.append(np.sum(np.dot(dm, covi) * dm, axis=1) + b)
+            res.append(b - 0.5 * np.sum(np.dot(dm, covi) * dm, axis=1))
         return np.array(res).T
