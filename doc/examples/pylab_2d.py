@@ -60,8 +60,8 @@ and therefore need a non-linear classifier to be solved. The dataset is
 provided by the PyMVPA dataset warehouse.
 """
 
-# 30 samples per condition, SNR 3
-ds_nl = pure_multivariate_signal(30,3)
+# 30 samples per condition, SNR 2
+ds_nl = pure_multivariate_signal(30, 2)
 
 datasets = {'linear': ds_lin, 'non-linear': ds_nl}
 
@@ -70,14 +70,16 @@ classifier involves almost no runtime costs, so it is easily possible
 compile a long list, if necessary."""
 
 # set up classifiers to try out
-clfs = {'Ridge Regression': RidgeReg(),
+clfs = {
+        'Ridge Regression': RidgeReg(),
         'Linear SVM': LinearNuSVMC(probability=1,
                       enable_ca=['probabilities']),
         'RBF SVM': RbfNuSVMC(probability=1,
                       enable_ca=['probabilities']),
         'SMLR': SMLR(lm=0.01),
         'Logistic Regression': PLR(criterion=0.00001),
-        'k-Nearest-Neighbour': kNN(k=10),
+        '3-Nearest-Neighbour': kNN(k=3),
+        '10-Nearest-Neighbour': kNN(k=10),
         'GNB': GNB(common_variance=True),
         'GNB(common_variance=False)': GNB(common_variance=False),
         'LDA': LDA(),
@@ -98,7 +100,7 @@ for id, ds in datasets.iteritems():
     fig = 0
 
     # make a new figure
-    pl.figure(figsize=(nx*3, ny*3))
+    pl.figure(figsize=(nx*4, ny*4))
 
     print "Processing %s problem..." % id
 
@@ -109,14 +111,6 @@ for id, ds in datasets.iteritems():
         # make a new subplot for each classifier
         fig += 1
         pl.subplot(ny, nx, fig)
-
-        # plot the training points
-        pl.plot(ds.samples[ds.targets == 1, 0],
-               ds.samples[ds.targets == 1, 1],
-               "r.")
-        pl.plot(ds.samples[ds.targets == 0, 0],
-               ds.samples[ds.targets == 0, 1],
-               "b.")
 
         # select the clasifier
         clf = clfs[c]
@@ -131,21 +125,24 @@ for id, ds in datasets.iteritems():
         pre = clf.predict(feat_test.T)
 
         # if ridge, use the prediction, otherwise use the values
-        if c == 'Ridge Regression' or c.startswith('k-Nearest'):
+        if c == 'Ridge Regression':
             # use the prediction
             res = np.asarray(pre)
+        elif 'Nearest-Ne' in c:
+            # Use the votes
+            res = clf.ca.estimates[:, 1] / np.sum(clf.ca.estimates, axis=1)
         elif c == 'Logistic Regression':
             # get out the values used for the prediction
             res = np.asarray(clf.ca.estimates)
         elif c in ['SMLR']:
             res = np.asarray(clf.ca.estimates[:, 1])
-        elif c in ['LDA', 'QDA']:
-            res = np.asarray(clf.ca.estimates[:, 0]
-                             - clf.ca.estimates[:, 1])
-        elif c.startswith('GNB'):
-            # Since probabilities are raw: for visualization lets
-            # operate on logprobs and in comparison one to another
-            res = clf.ca.estimates[:, 1] - clf.ca.estimates[:, 0]
+        elif c in ['LDA', 'QDA'] or c.startswith('GNB'):
+            # Since probabilities are logprobs -- just for
+            # visualization of trade-off just plot relative
+            # "trade-off" which determines decision boundaries if an
+            # alternative log-odd value was chosen for a cutoff
+            res = np.asarray(clf.ca.estimates[:, 1]
+                             - clf.ca.estimates[:, 0])
             # Scale and position around 0.5
             res = 0.5 + res/max(np.abs(res))
         else:
@@ -160,7 +157,20 @@ for id, ds in datasets.iteritems():
         pl.pcolor(x, y, z, shading='interp')
         pl.clim(0, 1)
         pl.colorbar()
-        pl.contour(x, y, z, linewidths=1, colors='black', hold=True)
+        # plot decision surfaces at few levels to emphasize the
+        # topology
+        pl.contour(x, y, z, [0.1, 0.4, 0.5, 0.6, 0.9],
+                   linestyles=['dotted', 'dashed', 'solid', 'dashed', 'dotted'],
+                   linewidths=1, colors='black', hold=True)
+
+        # plot the training points
+        pl.plot(ds.samples[ds.targets == 1, 0],
+               ds.samples[ds.targets == 1, 1],
+               "r.")
+        pl.plot(ds.samples[ds.targets == 0, 0],
+               ds.samples[ds.targets == 0, 1],
+               "b.")
+
         pl.axis('tight')
         # add the title
         pl.title(c)
