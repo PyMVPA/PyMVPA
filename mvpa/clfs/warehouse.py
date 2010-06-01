@@ -43,7 +43,7 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'regression', 'regression_based',
         'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
-        'gnb', 'rpy2', 'swig' ]
+        'gnb', 'rpy2', 'swig', 'skl', 'lda' ]
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
@@ -295,6 +295,13 @@ if externals.exists('glmnet'):
     from mvpa.clfs.glmnet import GLMNET_C, GLMNET_R
     clfswh += GLMNET_C(descr="GLMNET_C()")
     regrswh += GLMNET_R(descr="GLMNET_R()")
+
+if externals.exists('skl'):
+    from scikits.learn.lda import LDA as sklLDA
+    from mvpa.clfs.skl.base import SKLLearnerAdapter
+    clfswh += SKLLearnerAdapter(sklLDA(), tags=['lda', 'linear', 'multiclass', 'binary'],
+                                enable_ca=['estimates'],
+                                descr='scikits.learn.LDA()_adapter')
 
 # kNN
 clfswh += kNN(k=5, descr="kNN(k=5)")

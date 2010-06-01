@@ -298,6 +298,9 @@ def __check_openopt():
     import scikits.openopt as _
     return
 
+def __check_skl():
+    import scikits.learn as _
+
 def _set_matplotlib_backend():
     """Check if we have custom backend to set and it is different
     from current one
@@ -438,6 +441,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
           'openopt': "__check_openopt()",
+          'skl': "__check_skl()",
           'mdp': "__assign_mdp_version()",
           'mdp ge 2.4': "from mdp.nodes import LLENode as __",
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
