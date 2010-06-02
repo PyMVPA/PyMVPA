@@ -433,6 +433,8 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'rpy2': "__check_rpy2()",
           'lars': "exists('rpy2', raise_=True);" \
                   "import rpy2.robjects; rpy2.robjects.r.library('lars')",
+          'mass': "exists('rpy2', raise_=True);" \
+                  "import rpy2.robjects; rpy2.robjects.r.library('MASS')",
           'elasticnet': "exists('rpy2', raise_=True); "\
                   "import rpy2.robjects; rpy2.robjects.r.library('elasticnet')",
           'glmnet': "exists('rpy2', raise_=True); " \
