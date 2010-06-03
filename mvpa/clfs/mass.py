@@ -41,14 +41,14 @@ class MASSLearnerAdapter(Classifier):
     Examples
     --------
     >>> from mvpa.testing.datasets import datasets
-    >>> mass_qda = MASSLearnerAdapter('qda', tags=['non-linear', 'multiclass'])
+    >>> mass_qda = MASSLearnerAdapter('qda', tags=['non-linear', 'multiclass'], enable_ca=['posterior'])
     >>> mass_qda.train(datasets['uni2large_train'])
     >>> mass_qda.predict(datasets['uni2large_test'])
     """
 
     __tags__ = ['mass', 'rpy2']
 
-    posterior = CondtitionalAttribute(enabled=False,
+    posterior = ConditionalAttribute(enabled=False,
         doc='Posterior probabilities if provided by classifier')
 
     def __init__(self, learner, kwargs=None, kwargs_predict=None,
@@ -118,7 +118,7 @@ class MASSLearnerAdapter(Classifier):
             if classes.rclass[0] == 'factor':
                 classes = [int(classes.levels[i-1]) for i in classes]
             if 'posterior' in output.names:
-                self.ca['posterior'] = np.asarray(Rrx2(output, 'posterior'))
+                self.ca.posterior = np.asarray(Rrx2(output, 'posterior'))
             res = np.asarray(classes)
         except Exception, e:
             raise FailedToPredictError, \
