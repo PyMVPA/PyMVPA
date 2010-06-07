@@ -40,6 +40,9 @@ class SearchlightTests(unittest.TestCase):
         # check for correct number of spheres
         self.failUnless(len(results) == 106)
 
+        # verify if we can map correctly back
+        results_ospace = self.dataset.mapper.reverse(results)
+
         # check for chance-level performance across all spheres
         self.failUnless(0.4 < results.mean() < 0.6)
 

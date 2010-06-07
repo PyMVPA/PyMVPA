@@ -114,6 +114,24 @@ class RegressionsTests(unittest.TestCase):
         clf.states._resetEnabledTemporarily()
 
 
+    @sweepargs(regr=regrswh['regression', 'has_sensitivity'])
+    def testSensitivities(self, regr):
+        """Inspired by a snippet leading to segfault from Daniel Kimberg
+
+        lead to segfaults due to inappropriate access of SVs thinking
+        that it is a classification problem (libsvm keeps SVs at None
+        for those, although reports nr_class to be 2.
+        """
+        myds = Dataset(samples=N.random.normal(size=(10,5)),
+                       labels=N.random.normal(size=10))
+        sa = regr.getSensitivityAnalyzer()
+        try:
+            res = sa(myds)
+        except Exception, e:
+            self.fail('Failed to obtain a sensitivity due to %r' % (e,))
+        self.failUnless(res.shape == (myds.nfeatures,))
+        # TODO: extend the test -- checking for validity of sensitivities etc
+
 
 def suite():
     return unittest.makeSuite(RegressionsTests)

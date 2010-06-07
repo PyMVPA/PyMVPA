@@ -47,13 +47,23 @@ class StatsTestsScipy(unittest.TestCase):
 
         # 100 and -100 should both have zero probability on their respective
         # tails
-        self.failUnless(null.p([-100, 0, 0, 0, 0, 0])[0] == 0)
-        self.failUnless(null.p([100, 0, 0, 0, 0, 0])[0] == 0)
+        pm100 = null.p([-100, 0, 0, 0, 0, 0])
+        p100 = null.p([100, 0, 0, 0, 0, 0])
+        assert_array_almost_equal(pm100, p100)
 
+        # With 10 samples isn't that easy to get reliable sampling for
+        # non-parametric, so we can allow somewhat low significance
+        # ;-)
+        self.failUnless(pm100[0] <= 0.1)
+        self.failUnless(p100[0] <= 0.1)
+
+        self.failUnless(N.all(pm100[1:] >= 0.1))
+        self.failUnless(N.all(pm100[1:] >= 0.1))
         # same test with just scalar measure/feature
+
         null.fit(CorrCoef(), ds.selectFeatures([0]))
-        self.failUnless(null.p(-100) == 0)
-        self.failUnless(null.p(100) == 0)
+        self.failUnlessAlmostEqual(null.p(-100), null.p(100))
+        self.failUnless(null.p(100) <= 0.1)
 
 
     @sweepargs(nd=nulldist_sweep)
