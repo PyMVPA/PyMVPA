@@ -1,3 +1,18 @@
+pymvpa (0.4.5~dev23-1) unstable; urgency=low
+
+  * New upstream pre-release snapshot.  Includes few enhancements
+    and fixes:
+    - Compatible with libsvm >= 2.91 (Closes: #583018)
+    - No string exceptions raised
+    - Setting of shrinking parameter in sg.svm interface
+    - Deducing number of SVs for SVR (libsvm)
+    - Correction of significance in the tails of non-parametric
+      tests
+  * debian/control
+    - Moving under umbrella of NeuroDebian Team
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 07 Jun 2010 12:08:57 -0400
+
 pymvpa (0.4.4-1) unstable; urgency=low
 
   * New upstream release.

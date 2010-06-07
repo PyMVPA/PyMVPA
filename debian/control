@@ -1,7 +1,7 @@
 Source: pymvpa
 Section: python
 Priority: optional
-Maintainer: Experimental Psychology Maintainers <pkg-exppsy-maintainers@lists.alioth.debian.org>
+Maintainer: NeuroDebian Team <team@neuro.debian.net>
 Uploaders: Michael Hanke <michael.hanke@gmail.com>, Yaroslav Halchenko <debian@onerussian.com>
 Build-Depends: cdbs, debhelper (>= 5.0.38), swig, python-all-dev (>= 2.5), python-support (>= 0.6), python-numpy-ext, libsvm-dev (>= 2.84.0), python-epydoc (>> 2.99), python-docutils (<< 0.6) | python-docutils (>= 0.6-3~), python-sphinx, help2man, rsync, graphviz, python-lxml, python-nifti, python-nose, shogun-python-modular
 Build-Conflicts: python-epydoc (= 3.0.1-3)
