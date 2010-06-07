@@ -168,8 +168,9 @@ class GNB(Classifier):
         elif prior == 'ratio':
             self.priors = N.squeeze(nsamples_per_class) / float(nsamples)
         else:
-            raise "No idea on how to handle '%s' way to compute priors" \
-                  % params.prior
+            raise ValueError(
+                "No idea on how to handle '%s' way to compute priors"
+                % params.prior)
 
         # Precompute and store weighting coefficient for Gaussian
         if params.logprob:
