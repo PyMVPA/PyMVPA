@@ -10,12 +10,12 @@
 
 """
 
-from mvpa.base import warning, externals
+from mvpa.base import externals
 
 if externals.exists('nifti', raise_=True):
     from nifti import NiftiImage
 
-import os, re
+import re
 import numpy as np
 
 from mvpa.misc.support import reuse_absolute_path
@@ -87,7 +87,8 @@ class FSLAtlas(XMLBasedAtlas):
             # TODO: also make use of summaryimagefile may be?
 
         if ni_image is None:
-            msg = "Could not find an appropriate atlas among %d atlases."
+            msg = "Could not find an appropriate atlas among %d atlases." \
+                  % len(imagefile_candidates)
             if resolution is not None:
                 msg += " Atlases had resolutions %s" % \
                       (resolutions,)
@@ -100,28 +101,27 @@ class FSLAtlas(XMLBasedAtlas):
         self._data   = self._image.data
 
 
-    ##REF: Name was automagically refactored
-    def _load_data(self):
+    def _load_metadata(self):
         """   """
         # Load levels
-        self._levels_dict = {}
+        self._levels = {}
         # preprocess labels for different levels
-        self.n_levels = 1
+        self.nlevels = 1
         #level = Level.from_xml(self.data, level_type='label')
         level = LabelsLevel.from_xml(self.data)#, level_type='label')
         level.description = self.header.name.text
-        self._levels_dict = {0: level}
+        self._levels = {0: level}
         #for index, child in enumerate(self.data.getchildren()):
         #   if child.tag == 'level':
         #       level = Level.from_xml(child)
-        #       self._levels_dict[level.description] = level
+        #       self._levels[level.description] = level
         #       try:
-        #           self._levels_dict[level.index] = level
+        #           self._levels[level.index] = level
         #       except:
         #           pass
         #   else:
         #       raise XMLAtlasException("Unknown child '%s' within data" % child.tag)
-        #   self.n_levels += 1
+        #   self.nlevels += 1
         #pass
 
 
@@ -164,14 +164,14 @@ class FSLProbabilisticAtlas(FSLAtlas):
 
         Parameters
         ----------
-        - c : tuple of coordinates (xyz)
+        c : tuple of coordinates (xyz)
         - levels : just for API consistency (heh heh). Must be 0 for FSL atlases
         """
 
         if levels is not None and not (levels in [0, [0], (0,)]):
             raise ValueError, \
-                  "I guess we don't support levels other than 0 in FSL atlas"
-
+                  "I guess we don't support levels other than 0 in FSL atlas." \
+                  " Got levels=%s" % (levels,)
         # check range
         c = self._check_range(c)
 
@@ -179,7 +179,7 @@ class FSLProbabilisticAtlas(FSLAtlas):
         # different level
         level = 0
         resultLabels = []
-        for index, area in enumerate(self._levels_dict[level]):
+        for index, area in enumerate(self._levels[level]):
             prob =  int(self._data[index, c[2], c[1], c[0]])
             if prob > self.thr:
                 resultLabels += [dict(index=index,
@@ -210,44 +210,100 @@ class FSLProbabilisticAtlas(FSLAtlas):
 
         See :class:`~mvpa.atlases.base.Level.find` for more info
         """
-        return self.levels_dict[0].find(*args, **kwargs)
+        return self.levels[0].find(*args, **kwargs)
 
-    ##REF: Name was automagically refactored
-    def get_map(self, target, strategy='unique'):
-        """Return a probability map
+    def get_map(self, target, strategy='unique', axes_order='xyz'):
+        """Return a probability map as an array
 
         Parameters
         ----------
         target : int or str or re._pattern_type
           If int, map for given index is returned. Otherwise, .find is called
-          with unique=True to find matching area
+          with ``unique=True`` to find matching area
         strategy : str in ('unique', 'max')
           If 'unique', then if multiple areas match, exception would be raised.
           In case of 'max', each voxel would get maximal value of probabilities
           from all matching areas
+        axes_order : str in ('xyz', 'zyx')
+          In what order axes of the returned array should follow.
         """
         if isinstance(target, int):
-            return self._data[target]
-        else:
-            lev = self.levels_dict[0]       # we have just 1 here
-            if strategy == 'unique':
-                return self.get_map(lev.find(target, unique=True).index)
+            res = self._data[target]
+            if axes_order == 'xyz':
+                # ATM we store/access in zyx (kji) order, so we would need
+                # to swap
+                return res.T
+            elif axes_order == 'zyx':
+                return res
             else:
-                maps = np.array(self.get_maps(target))
+                raise ValueError, \
+                      "Unknown axes_order=%r provided" % (axes_order,)
+        else:
+            lev = self.levels[0]       # we have just 1 here
+            if strategy == 'unique':
+                return self.get_map(lev.find(target, unique=True).index,
+                                    axes_order=axes_order)
+            else:
+                maps_dict = self.get_maps(target, axes_order=axes_order)
+                maps = np.array(maps_dict.values())
                 return np.max(maps, axis=0)
 
-    ##REF: Name was automagically refactored
-    def get_maps(self, target):
-        """Return a list of probability maps for the target
+    def get_maps(self, target, axes_order='xyz', key_attr=None,
+                 overlaps=None):
+        """Return a dictionary of probability maps for the target
+
+        Each key is a `Label` instance, and value is the probability map
 
         Parameters
         ----------
         target : str or re._pattern_type
           .find is called with a target and unique=False to find all matches
+        axes_order : str in ('xyz', 'zyx')
+          In what order axes of the returned array should follow.
+        key_attr : None or str
+          What to use for the keys of the dictionary.  If None,
+          `Label` instance would be used as a key.  If some attribute
+          provided (e.g. 'text', 'abbr', 'index'), corresponding
+          attribute of the `Label` instance would be taken as a key.
+        overlaps : None or {'max'}
+          How to treat overlaps in maps.  If None, nothing is done and maps
+          might have overlaps.  If 'max', then maps would not overlap and
+          competing maps will be resolved based on maximal value (e.g. if
+          maps contain probabilities).
         """
-        lev = self.levels_dict[0]       # we have just 1 here
-        return [self.get_map(l.index) for l in lev.find(target, unique=False)]
+        lev = self.levels[0]       # we have just 1 here
+        if key_attr is None:
+            key_gen = lambda x: x
+        else:
+            key_gen = lambda x: getattr(x, key_attr)
 
+        res = [[key_gen(l),
+                self.get_map(l.index, axes_order=axes_order)]
+               for l in lev.find(target, unique=False)]
+
+        if overlaps == 'max':
+            # not efficient since it places all maps back into a single
+            # ndarray... but well
+            maps = np.array([x[1] for x in res])
+            maximums = np.argmax(maps, axis=0)
+            overlaps = np.sum(maps != 0, axis=0)>1
+            # now lets go and infiltrate maps:
+            # and do silly loop since we will reassign
+            # the entries possibly
+            for i in xrange(len(res)):
+                n, m = res[i]
+                loosers = np.logical_and(overlaps, ~(maximums == i))
+                if len(loosers):
+                    # copy and modify
+                    m_new = m.copy()
+                    m_new[loosers] = 0
+                    res[i][1] = m_new
+        elif overlaps is None:
+            pass
+        else:
+            raise ValueError, \
+                  "Incorrect value of overlaps argument %s" % overlaps
+        return dict(res)
 
 class FSLLabelsAtlas(XMLBasedAtlas):
     """Not sure what this one was for"""

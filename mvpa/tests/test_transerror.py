@@ -24,6 +24,7 @@ from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.clfs.stats import MCNullDist
 
 from mvpa.misc.exceptions import UnknownStateError
+from mvpa.mappers.fx import mean_sample
 
 from mvpa.testing import *
 from mvpa.testing.datasets import datasets
@@ -147,9 +148,10 @@ class ErrorsTests(unittest.TestCase):
         """Shouldn't be able to access the state yet"""
 
         l_clf.train(train)
-        self.failUnlessEqual(err(None), terr(train),
-            msg="ConfusionBasedError should be equal to TransferError on" +
-                " traindataset")
+        e, te = err(None), terr(train)
+        self.failUnless(abs(e-te) < 1e-10,
+            msg="ConfusionBasedError (%.2g) should be equal to TransferError "
+                "(%.2g) on traindataset" % (e, te))
 
         # this will print nasty WARNING but it is ok -- it is just checking code
         # NB warnings are not printed while doing whole testing
@@ -164,25 +166,46 @@ class ErrorsTests(unittest.TestCase):
     def test_null_dist_prob(self, l_clf):
         train = datasets['uni2medium']
 
+        num_perm = 10
         # define class to estimate NULL distribution of errors
         # use left tail of the distribution since we use MeanMatchFx as error
         # function and lower is better
-        terr = TransferError(clf=l_clf,
-                             null_dist=MCNullDist(permutations=10,
-                                                  tail='left'))
+        terr = TransferError(
+            clf=l_clf,
+            null_dist=MCNullDist(permutations=num_perm,
+                                 tail='left'))
 
         # check reasonable error range
         err = terr(train, train)
         self.failUnless(err < 0.4)
 
+        # Lets do the same for CVTE
+        cvte = CrossValidatedTransferError(
+            TransferError(clf=l_clf),
+            OddEvenSplitter(),
+            null_dist=MCNullDist(permutations=num_perm,
+                                 tail='left',
+                                 enable_ca=['dist_samples']),
+            postproc=mean_sample())
+        cv_err = cvte(train)
+
         # check that the result is highly significant since we know that the
         # data has signal
         null_prob = terr.ca.null_prob
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(null_prob < 0.01,
+            self.failUnless(null_prob <= 0.1,
                 msg="Failed to check that the result is highly significant "
                     "(got %f) since we know that the data has signal"
                     % null_prob)
+
+            self.failUnless(cvte.ca.null_prob <= 0.1,
+                msg="Failed to check that the result is highly significant "
+                    "(got p(cvte)=%f) since we know that the data has signal"
+                    % cvte.ca.null_prob)
+
+            # and we should be able to access the actual samples of the distribution
+            self.failUnlessEqual(len(cvte.null_dist.ca.dist_samples),
+                                 num_perm)
 
 
     @sweepargs(l_clf=clfswh['linear', 'svm'])
@@ -207,22 +230,28 @@ class ErrorsTests(unittest.TestCase):
         """Test AUC computation
         """
         if isinstance(clf, MulticlassClassifier):
-            # TODO: handle those values correctly
-            return
+            raise SkipTest, \
+                  "TODO: handle values correctly in MulticlassClassifier"
         clf.ca.change_temporarily(enable_ca = ['estimates'])
+        if 'qda' in clf.__tags__:
+            # for reliable estimation of covariances, need sufficient
+            # sample size
+            ds_size = 'large'
+        else:
+            ds_size = 'small'
         # uni2 dataset with reordered labels
-        ds2 = datasets['uni2small'].copy()
+        ds2 = datasets['uni2' + ds_size].copy()
         # revert labels
         ds2.sa['targets'].value = ds2.targets[::-1].copy()
         # same with uni3
-        ds3 = datasets['uni3small'].copy()
+        ds3 = datasets['uni3' + ds_size].copy()
         ul = ds3.sa['targets'].unique
         nl = ds3.targets.copy()
         for l in xrange(3):
             nl[ds3.targets == ul[l]] = ul[(l+1)%3]
         ds3.sa.targets = nl
-        for ds in [datasets['uni2small'], ds2,
-                   datasets['uni3small'], ds3]:
+        for ds in [datasets['uni2' + ds_size], ds2,
+                   datasets['uni3' + ds_size], ds3]:
             cv = CrossValidatedTransferError(
                 TransferError(clf),
                 OddEvenSplitter(),
@@ -245,7 +274,9 @@ class ErrorsTests(unittest.TestCase):
 
 
     def test_confusion_plot(self):
-        """Based on existing cell dataset results.
+        """Basic test of confusion plot
+
+        Based on existing cell dataset results.
 
         Let in for possible future testing, but is not a part of the
         unittests suite
@@ -505,9 +536,6 @@ class ErrorsTests(unittest.TestCase):
             # pl.show()
 
     def test_confusion_plot2(self):
-        """Based on a sample confusion which plots incorrectly
-
-        """
 
         array = np.array
         uint8 = np.uint8

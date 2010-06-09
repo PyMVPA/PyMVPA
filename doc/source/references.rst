@@ -24,6 +24,12 @@ containing descriptions of interesting analysis methods or fruitful
 experiments.
 
 
+.. _Ban09:
+
+**Bandettini, P. A.** (2009). Seven topics in functional magnetic resonance imaging. *Journal of Integrative Neuroscience*, *8*, 371–403.
+  URL: http://www.ncbi.nlm.nih.gov/pubmed/19938211
+
+
 .. _CPL+06:
 
 **Chen, X., Pereira, F., Lee, W., Strother, S. & Mitchell, T.** (2006). Exploring predictive and reproducible modeling with the single-subject FIAC dataset. *Human Brain Mapping*, *27*, 452–461.
@@ -31,7 +37,7 @@ experiments.
   reproducibility of a classifier's feature selection as at least equally
   important to it's generalization performance.*
 
-  Keywords: :keyword:`feature selection stability`
+  Keywords: :keyword:`feature selection`, :keyword:`feature selection stability`
 
   DOI: http://dx.doi.org/10.1002/hbm.20243
 
@@ -71,6 +77,12 @@ experiments.
   Keywords: :keyword:`statistics`, :keyword:`hypothesis testing`
 
   URL: http://psychclassics.yorku.ca/Fisher/Methods/
+
+
+.. _GF09:
+
+**Garcia, S. & Fourcaud-Trocmé, N.** (2009). OpenElectrophy: An Electrophysiological Data- and Analysis-Sharing Framework. *Front Neuroinformatics*, *3*, 14.
+  DOI: http://dx.doi.org/10.3389/neuro.11.014.2009
 
 
 .. _GE03:
@@ -115,7 +127,7 @@ experiments.
 .. _HH08:
 
 **Hanson, S. J. & Halchenko, Y. O.** (2008). Brain reading using full brain support vector machines for object recognition: there is no "face" identification area. *Neural Computation*, *20*, 486–503.
-  Keywords: :keyword:`support vector machine`, :keyword:`SVM`, :keyword:`recursive feature elimination`, :keyword:`RFE`
+  Keywords: :keyword:`support vector machine`, :keyword:`SVM`, :keyword:`feature selection`, :keyword:`recursive feature elimination`, :keyword:`RFE`
 
   DOI: http://dx.doi.org/10.1162/neco.2007.09-06-340
 
@@ -178,7 +190,7 @@ experiments.
   *A summary of the relationship of machine learning and cognitive science.
   Moreover it also points out the role of kernel-based methods in this context.*
 
-  Keywords: :keyword:`kernel`, :keyword:`similarity`
+  Keywords: :keyword:`kernel methods`, :keyword:`similarity`
 
   DOI: http://dx.doi.org/10.1016/j.tics.2009.06.002
 
@@ -240,7 +252,7 @@ experiments.
   *Paper introducing Modified NIST (MNIST) dataset for performance comparisons of
   character recognition performance across a variety of classifiers.*
 
-  Keywords: :keyword:`handwritten character recognition`, :keyword:`multilayer neural networks`, :keyword:`MNIST`
+  Keywords: :keyword:`handwritten character recognition`, :keyword:`multilayer neural networks`, :keyword:`MNIST`, :keyword:`statistical learning`
 
   DOI: http://dx.doi.org/10.1109/5.726791
 
@@ -248,8 +260,14 @@ experiments.
 .. _MHH10:
 
 **Manelis, A., Hanson, C. & Hanson, S. J.** (2010). Implicit memory for object locations depends on reactivation of encoding-related brain regions. *Human Brain Mapping*.
-  Keywords: :keyword:`PyMVPA`, :keyword:`implicit memory`, :keyword:`MRI`
+  Keywords: :keyword:`PyMVPA`, :keyword:`implicit memory`, :keyword:`fMRI`
 
+  DOI: http://dx.doi.org/10.1002/hbm.20992
+
+
+.. _MKE10:
+
+**Meyer, K., Kaplan, J. T., Essex, R., Webber, C., Damasio, H. & Damasio, A.** (2010). Predicting visual stimuli based on activity in auditory cortices. *Nature Neuroscience*.
 
 .. _MHN+04:
 
@@ -317,6 +335,21 @@ experiments.
   DOI: http://dx.doi.org/10.1016/j.jneumeth.2008.04.008
 
 
+.. _SS01:
+
+**Scholkopf, B. & Smola, A.** (2001). Learning with Kernels: Support Vector Machines, Regularization. MIT Press: Cambridge, MA.
+  *Good coverage of kernel methods and associated statistical learning aspects
+  (e.g. error bounds)*
+
+  Keywords: :keyword:`statistical learning`, :keyword:`kernel methods`, :keyword:`error estimation`
+
+
+.. _SS09:
+
+**Spacek, M. & Swindale, N.** (2009). Python in Neuroscience. *The Neuromorphic Engineer*.
+  DOI: http://dx.doi.org/10.2417/1200907.1682
+
+
 .. _SET+09:
 
 **Sun, D., van Erp, T. G., Thompson, P. M., Bearden, C. E., Daley, M., Kushan, L., Hardt, M. E., Nuechterlein, K. H., Toga, A. W. & Cannon, T. D.** (2009). Elucidating an MRI-Based Neuroanatomic Biomarker for Psychosis: Classification Analysis Using Probabilistic Brain Atlas and Machine Learning Algorithms. *Biological Psychiatry*.
@@ -327,10 +360,30 @@ experiments.
   DOI: http://dx.doi.org/10.1016/j.biopsych.2009.07.019
 
 
+.. _TRL09:
+
+**Trautmann, E., Ray, L. & Lever, J.** (2009). Development of an autonomous robot for ground penetrating radar surveys of polar ice. The 2009 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), 1685–1690.
+  *Study using PyMVPA to perform immobilization detection to improve navigation
+  reliability of an autonomous robot.*
+
+  DOI: http://dx.doi.org/10.1109/IROS.2009.5354290
+
+
 .. _Vap95:
 
 **Vapnik, V.** (1995). The Nature of Statistical Learning Theory. Springer: New York.
   Keywords: :keyword:`support vector machine`, :keyword:`SVM`
+
+
+.. _VS06:
+
+**Varma, S. & Simon, R.** (2006). Bias in error estimation when using cross-validation for model selection. *BMC Bioinformatics*, *7*, 91.
+  *Demonstration of overfitting and introducing the bias in the error estimation
+  using cross-validation on entire dataset for performing model selection.*
+
+  Keywords: :keyword:`statistical learning`, :keyword:`model selection`, :keyword:`error estimation`, :keyword:`hypothesis testing`
+
+  DOI: http://dx.doi.org/10.1186/1471-2105-7-91
 
 
 .. _WCW+07:
@@ -355,6 +408,8 @@ experiments.
 .. _ZH05:
 
 **Zou, H. & Hastie, T.** (2005). Regularization and variable selection via the elastic net. *Journal of the Royal Statistical Society Series B*, *67*, 301–320.
+  Keywords: :keyword:`feature selection`, :keyword:`statistical learning`
+
   URL: http://www-stat.stanford.edu/%7Ehastie/Papers/B67.2%20(2005)%20301-320%20Zou%20%26%20Hastie.pdf
 
 

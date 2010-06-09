@@ -97,17 +97,17 @@ class Collection(BaseCollection):
         # first set all stuff to nothing and later on charge it
         # this is important, since some of the stuff below relies in the
         # defaults
-        self.__name = None
-
+        self.name = name
         super(Collection, self).__init__(items)
 
-        if not name is None:
-            self._set_name(name)
 
+    def __reduce__(self):
+        #bcr = BaseCollection.__reduce__(self)
+        res = (self.__class__, (self.items(), self.name,))
+        #if __debug__ and 'COL_RED' in debug.active:
+        #    debug('COL_RED', 'Returning %s for %s' % (res, self))
+        return res
 
-
-    def _set_name(self, name):
-        self.__name = name
 
     def __str__(self):
         num = len(self)
@@ -115,8 +115,8 @@ class Collection(BaseCollection):
             maxnumber = 1000            # I guess all
         else:
             maxnumber = 4
-        if self.__name is not None:
-            res = self.__name
+        if self.name is not None:
+            res = self.name
         else:
             res = ""
         res += "{"
@@ -291,9 +291,6 @@ class Collection(BaseCollection):
                  for x in items_ ]
 
 
-    # Properties
-    name = property(fget=lambda x:x.__name, fset=_set_name)
-
 
 class ParameterCollection(Collection):
     """Container of Parameters for a stateful object.
@@ -339,7 +336,7 @@ class ConditionalAttributesCollection(Collection):
      - `R/W Properties`: `enabled`
     """
 
-    def __init__(self, items=None):
+    def __init__(self, items=None, name=None):
         """Initialize the conditional attributes of a derived class
 
         Parameters
@@ -350,7 +347,7 @@ class ConditionalAttributesCollection(Collection):
           literal description. Usually just attribute name for the
           collection, e.g. 'ca'
         """
-        Collection.__init__(self, items=items)
+        Collection.__init__(self, items=items, name=name)
 
         self.__storedTemporarily = []
         """List to contain sets of enabled ca which were enabled
@@ -634,7 +631,7 @@ class AttributesCollector(type):
                 collections[col][name] = value
                 # and assign name if not yet was set
                 if value.name is None:
-                    value._set_name(name)
+                    value.name = name
                 # !!! We do not keep copy of this attribute static in the class.
                 #     Due to below traversal of base classes, we should be
                 #     able to construct proper collections even in derived classes

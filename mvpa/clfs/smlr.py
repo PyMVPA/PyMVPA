@@ -26,8 +26,14 @@ __all__ = [ "SMLR", "SMLRWeights" ]
 _DEFAULT_IMPLEMENTATION = "Python"
 if externals.exists('ctypes'):
     # Uber-fast C-version of the stepwise regression
-    from mvpa.clfs.libsmlrc import stepwise_regression as _cStepwiseRegression
-    _DEFAULT_IMPLEMENTATION = "C"
+    try:
+        from mvpa.clfs.libsmlrc import stepwise_regression as _cStepwiseRegression
+        _DEFAULT_IMPLEMENTATION = "C"
+    except OSError, e:
+        warning("Failed to load fast implementation of SMLR.  May be you "
+                "forgotten to build it.  We will use much slower pure-Python "
+                "version. Original exception was %s" % (e,))
+        _cStepwiseRegression = None
 else:
     _cStepwiseRegression = None
     warning("SMLR implementation without ctypes is overwhelmingly slow."

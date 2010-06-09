@@ -84,7 +84,7 @@ def main():
 
     if options.zscore:
         verbose(1, "Zscoring data samples")
-        zscore(data, chunks_attr='chunks', targetdtype='float32')
+        zscore(data, chunks_attr='chunks', dtype='float32')
 
     if options.clf == 'knn':
         clf = kNN(k=options.knearestdegree)

@@ -19,6 +19,7 @@ from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
      MulticlassClassifier, RegressionAsClassifier
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN
+from mvpa.clfs.gda import LDA, QDA
 from mvpa.clfs.gnb import GNB
 from mvpa.kernels.np import LinearKernel, SquaredExponentialKernel, \
      GeneralizedLinearKernel
@@ -43,7 +44,7 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'regression', 'regression_based',
         'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
-        'gnb']
+        'gnb', 'rpy2', 'swig', 'skl', 'lda', 'qda' ]
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
@@ -250,7 +251,7 @@ if externals.exists('shogun'):
             ]
 
     _optional_regressions = []
-    if externals.exists('shogun.krr'):
+    if externals.exists('shogun.krr') and externals.versions['shogun'] >= '0.9':
         _optional_regressions += ['krr']
     for impl in ['libsvr'] + _optional_regressions:# \
         # XXX svrlight sucks in SG -- dont' have time to figure it out
@@ -295,6 +296,16 @@ if externals.exists('glmnet'):
     from mvpa.clfs.glmnet import GLMNET_C, GLMNET_R
     clfswh += GLMNET_C(descr="GLMNET_C()")
     regrswh += GLMNET_R(descr="GLMNET_R()")
+
+# LDA/QDA
+clfswh += LDA(descr='LDA()')
+clfswh += QDA(descr='QDA()')
+
+if externals.exists('skl'):
+    from scikits.learn.lda import LDA as sklLDA
+    from mvpa.clfs.skl.base import SKLLearnerAdapter
+    clfswh += SKLLearnerAdapter(sklLDA(), tags=['lda', 'linear', 'multiclass', 'binary'],
+                                descr='scikits.learn.LDA()_adapter')
 
 # kNN
 clfswh += kNN(k=5, descr="kNN(k=5)")
@@ -348,8 +359,17 @@ if externals.exists('scipy'):
                    descr="GPR(kernel='sqexp')")
 
     # Add wrapped GPR as a classifier
-    clfswh += RegressionAsClassifier(
+    gprcb = RegressionAsClassifier(
         GPR(kernel=GeneralizedLinearKernel()), descr="GPRC(kernel='linear')")
+    # lets remove multiclass label from it
+    gprcb.__tags__.pop(gprcb.__tags__.index('multiclass'))
+    clfswh += gprcb
+
+    # and create a proper multiclass one
+    clfswh += MulticlassClassifier(
+        RegressionAsClassifier(
+            GPR(kernel=GeneralizedLinearKernel())),
+        descr="GPRCM(kernel='linear')")
 
 # BLR
 from mvpa.clfs.blr import BLR

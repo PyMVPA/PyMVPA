@@ -52,8 +52,9 @@ Python 2.5 since that is the version we are using for the development, but,
 once again, 2.4 or 2.6 should be fine.
 
 Any machine which has Python 2.X available can be used for PyMVPA-based
-processing. Any GNU/Linux distribution already comes with Python by
-default. The Python website offers `installers for Windows and MacOS X`_.
+processing (see :ref:`Download section <chap_download>` on how to deploy
+PyMVPA on your system). Any GNU/Linux distribution already comes with Python
+by default. The Python website offers `installers for Windows and MacOS X`_.
 
 .. _installers for Windows and MacOS X: http://www.python.org/download
 
@@ -181,3 +182,4 @@ http://ipython.scipy.org/moin/Documentation
 
   IPython documentation page which references additional materials, such as
   the main IPython documentation which extensively covers features of IPython.
+

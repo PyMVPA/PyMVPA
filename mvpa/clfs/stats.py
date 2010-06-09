@@ -25,15 +25,29 @@ class Nonparametric(object):
     Introduced to complement parametric distributions present in scipy.stats.
     """
 
-    def __init__(self, dist_samples):
+    def __init__(self, dist_samples, correction='clip'):
         """
         Parameters
         ----------
         dist_samples : ndarray
           Samples to be used to assess the distribution.
+        correction : {'clip'} or None, optional
+          Determines the behavior when .cdf is queried.  If None -- no
+          correction is made.  If 'clip' -- values are clipped to lie
+          in the range [1/(N+2), (N+1)/(N+2)] (simply because
+          non-parametric assessment lacks the power to resolve with
+          higher precision in the tails, so 'imagery' samples are
+          placed in each of the two tails).
         """
         self._dist_samples = np.ravel(dist_samples)
+        self._correction = correction
 
+    def __repr__(self):
+        return '%s(%r%s)' % (
+            self.__class__.__name__,
+            self._dist_samples,
+            ('', ', correction=%r' % self._correction)
+              [int(self._correction != 'clip')])
 
     @staticmethod
     def fit(dist_samples):
@@ -43,7 +57,18 @@ class Nonparametric(object):
     def cdf(self, x):
         """Returns the cdf value at `x`.
         """
-        return np.vectorize(lambda v:(self._dist_samples <= v).mean())(x)
+        dist_samples = self._dist_samples
+        res = np.vectorize(lambda v:(dist_samples <= v).mean())(x)
+        if self._correction == 'clip':
+            nsamples = len(dist_samples)
+            np.clip(res, 1.0/(nsamples+2), (nsamples+1.0)/(nsamples+2), res)
+        elif self._correction is None:
+            pass
+        else:
+            raise ValueError, \
+                  '%r is incorrect value for correction parameter of %s' \
+                  % (self._correction, self.__class__.__name__)
+        return res
 
 
 def _pvalue(x, cdf_func, tail, return_tails=False, name=None):
@@ -201,8 +226,10 @@ class MCNullDist(NullDist):
     dist_samples = ConditionalAttribute(enabled=False,
                                  doc='Samples obtained for each permutation')
 
+    # XXX shouldn't we may be RF permute_attr into a Permutator class? ;)
     def __init__(self, dist_class=Nonparametric, permutations=100,
-                 chunks_attr=None, **kwargs):
+                 permute_attr='targets', chunks_attr=None,
+                 permute_col='sa', assure_permute=False, **kwargs):
         """Initialize Monte-Carlo Permutation Null-hypothesis testing
 
         Parameters
@@ -215,10 +242,17 @@ class MCNullDist(NullDist):
         permutations : int
           This many permutations of label will be performed to
           determine the distribution under the null hypothesis.
-        chunks_attr : None or string
-            If not None, permutes labels within the chunks,
-            i.e. blocks of data having the same value of
-            `chunks_attr`.
+        permute_attr : str
+          Name of the samples attribute to permute. ('targets' by default)
+        chunks_attr : None or str
+          If not None, permutes labels within the chunks,
+          i.e. blocks of data having the same value of `chunks_attr`.
+        permute_col : str, optional
+          What collection `permute_attr` belongs to.
+        assure_permute : bool
+          Passed to func:`~mvpa.datasets.misc.permute_attr`. If True,
+          assures that targets are permuted, i.e. any one is different from
+          the original one
         """
         NullDist.__init__(self, **kwargs)
 
@@ -229,14 +263,23 @@ class MCNullDist(NullDist):
         """Number of permutations to compute the estimate the null
         distribution."""
 
-        self.__chunks_attr = chunks_attr
+        self.permute_attr = permute_attr
+        self.chunks_attr = chunks_attr
+        self.assure_permute = assure_permute
+        self.permute_col = permute_col
 
     def __repr__(self, prefixes=[]):
         prefixes_ = ["permutations=%s" % self.__permutations]
-        if self.__chunks_attr:
-            prefixes_ += ['chunks_attr=%r' % self.__chunks_attr]
+        if self.permute_attr != 'targets':
+            prefixes_ += ['attr=%r' % self.permute_attr]
+        if self.chunks_attr:
+            prefixes_ += ['chunks_attr=%r' % self.chunks_attr]
+        if self.permute_col != 'sa':
+            prefixes_ += ['permute_col=%r' % self.permute_col]
+        if self.assure_permute:
+            prefixes_ += ['assure_permute=%r' % self.assure_permute]
         if self._dist_class != Nonparametric:
-            prefixes_.insert(0, 'dist_class=%s' % `self._dist_class`)
+            prefixes_.insert(0, 'dist_class=%r' % (self._dist_class,))
         return super(MCNullDist, self).__repr__(
             prefixes=prefixes_ + prefixes)
 
@@ -255,6 +298,9 @@ class MCNullDist(NullDist):
           If provided measure is assumed to be a `TransferError` and
           working and validation dataset are passed onto it.
         """
+        # TODO: place exceptions separately so we could avoid circular imports
+        from mvpa.clfs.base import LearnerError
+
         dist_samples = []
         """Holds the values for randomized labels."""
 
@@ -273,7 +319,11 @@ class MCNullDist(NullDist):
             # null-distribution of transfer errors can be reduced dramatically
             # when the *right* permutations (the ones that matter) are done.
             permuted_wdata = wdata.copy('shallow')
-            permuted_wdata.permute_targets(chunks_attr=self.__chunks_attr)
+            permuted_wdata.permute_attr(
+                attr=self.permute_attr,
+                chunks_attr=self.chunks_attr,
+                col=self.permute_col,
+                assure_permute=self.assure_permute)
 
             # decide on the arguments to measure
             if not vdata is None:
@@ -283,7 +333,12 @@ class MCNullDist(NullDist):
 
             # compute and store the measure of this permutation
             # assume it has `TransferError` interface
-            res = measure(*measure_args)
+            try:
+                res = measure(*measure_args)
+            except LearnerError, e:
+                warning('Failed to obtain value from %s due to %s.  Measurement'
+                        ' was skipped, which could lead to unstable and/or'
+                        ' incorrect assessment of the null_dist' % (measure, e))
             res = np.asanyarray(res)
             dist_samples.append(res)
 

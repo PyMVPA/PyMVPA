@@ -49,5 +49,6 @@ class PrototypeMapper(ProjectionMapper):
 
         self._proj = np.hstack([similarity.computed(samples, self.prototypes)
                                for similarity in self.similarities])
-        debug("MAP", "projected data of shape %s: %s "
-                % (self._proj.shape, self._proj))
+        if __debug__:
+            debug("MAP", "projected data of shape %s: %s "
+                  % (self._proj.shape, self._proj))

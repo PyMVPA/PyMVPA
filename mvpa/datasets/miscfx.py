@@ -180,85 +180,88 @@ def get_samples_per_chunk_target(dataset,
 
 
 @datasetmethod
-def permute_targets(dataset, targets_attr='targets', chunks_attr='chunks',
-                    assure_permute=False):
-    """Permute the targets of a Dataset.
+def permute_attr(dataset, attr='targets', chunks_attr='chunks',
+                 col='sa', assure_permute=False):
+    """Permute values of some attribute (samples or features) of a Dataset.
 
-    A new permuted set of targets is assigned to the dataset, replacing
-    the previous targets. The targets are not modified in-place, hence
-    it is safe to call the function on shallow copies of a dataset
-    without modifying the original dataset's targets.
+    A new permuted set of values is assigned to the dataset's
+    attribute, replacing the previous values. The values are not
+    modified in-place, hence it is safe to call the function on
+    shallow copies of a dataset without modifying the original
+    dataset's attribute values.
 
     Parameters
     ----------
-    targets_attr : string, optional
-      Name of the samples attribute which is used as ``targets``
-      (i.e. gets permuted).
-    chunks_attr : None or string
-      If a string given, permutation is limited to samples sharing the
-      same value of the `chunks_attr` samples attribute.  Therefore,
-      only the association of a certain sample with a target is
+    attr : str, optional
+      Name of the attribute values of which are to be permuted
+      (``targets`` by default).  (i.e. gets permuted).
+    chunks_attr : None or str
+      If a string given, permutation is limited to samples or features sharing the
+      same value of the `chunks_attr` attribute in the same collection.  Therefore,
+      in case of sa.targets, only the association of a certain sample with a target is
       permuted while keeping the absolute number of occurrences of each
       target value within a certain chunk constant.
+    col : {'sa', 'fa'}
+      Collection to operate on (i.e. where attr and chunks_attr reside in).
     assure_permute : bool, optional
-      If True, assures that targets are permuted, i.e. any one is
-      different from the original one
-
-    Returns
-    -------
-    Dataset
-       shallow copy of original dataset with permuted targets.
+      If True, assures that values are permuted, i.e. any one is
+      different from the original one (note that it doesn't provide assurance of
+      avoiding replacement among permuted sets).
     """
+    ac = {'sa': dataset.sa, 'fa': dataset.fa}[col]
     if __debug__:
-        if len(dataset.sa[targets_attr].unique) < 2:
+        uv = ac[attr].unique
+        if len(uv) < 2:
             raise RuntimeError(
-                  "Permuting targets is only meaningful if there are "
-                  "more than two different values of targets.")
+                "Permuting values of %s is only meaningful if there are "
+                "more than two different values. Now it contains only %s."
+                % (attr, uv))
 
     # local binding
-    targets = dataset.sa[targets_attr].value
+    values = ac[attr].value
 
     # now scramble
     if chunks_attr:
-        if chunks_attr in dataset.sa:
-            chunks = dataset.sa[chunks_attr].value
+        if chunks_attr in ac:
+            chunks = ac[chunks_attr].value
 
-            ptargets = np.zeros(targets.shape, dtype=targets.dtype)
+            pvalues = np.zeros(values.shape, dtype=values.dtype)
 
-            for o in dataset.sa[chunks_attr].unique:
-                ptargets[chunks == o] = \
-                    np.random.permutation(targets[chunks == o])
+            for o in ac[chunks_attr].unique:
+                pvalues[chunks == o] = \
+                    np.random.permutation(values[chunks == o])
         else:
             raise ValueError, \
-                  "There is no sa named %r in %s, thus no permutation is " \
-                  "possible" % (chunks_attr, dataset)
+                  "There is no %s named %r in %s, thus no permutation is " \
+                  "possible" % (col, chunks_attr, dataset)
     else:
-        ptargets = np.random.permutation(targets)
+        pvalues = np.random.permutation(values)
 
     if assure_permute:
-        if not (ptargets != targets).any():
+        if not (pvalues != values).any():
             if not (assure_permute is True):
                 if assure_permute == 1:
                     raise RuntimeError, \
-                          "Cannot assure permutation of targets %s for " \
+                          "Cannot assure permutation of values of %s.%s for " \
                           "some reason for dataset %s and chunks_attr=%r. " \
                           "Should not happen" % \
-                          (targets, dataset, chunks_attr)
+                          (col, values, dataset, chunks_attr)
             else:
                 assure_permute = 11 # make 10 attempts
             if __debug__:
-                debug("DS",  "Recalling permute to assure different targets")
-            permute_targets(dataset,
-                            targets_attr=targets_attr,
-                            chunks_attr=chunks_attr,
-                            assure_permute=assure_permute-1)
+                debug("DS",  "Recalling permute to assure different values")
+            permute_attr(dataset,
+                         attr=attr,
+                         chunks_attr=chunks_attr,
+                         col=col,
+                         assure_permute=assure_permute-1)
 
     # reassign to the dataset
-    dataset.sa[targets_attr].value = ptargets
+    ac[attr].value = pvalues
 
 
 @datasetmethod
-def random_samples(dataset, npertarget):
+def random_samples(dataset, npertarget, targets_attr='targets'):
     """Create a dataset with a random subset of samples.
 
     Parameters
@@ -271,6 +274,7 @@ def random_samples(dataset, npertarget):
       If a `list` is given of length matching the unique target values, it
       specifies the number of samples chosen for each particular unique
       target.
+    targets_attr : str, optional
 
     Returns
     -------
@@ -278,15 +282,16 @@ def random_samples(dataset, npertarget):
       A dataset instance for the chosen samples. All feature attributes and
       dataset attribute share there data with the source dataset.
     """
-    uniquetargets = dataset.sa['targets'].unique
+    satargets = dataset.sa[targets_attr]
+    utargets = satargets.unique
     # if interger is given take this value for all classes
     if isinstance(npertarget, int):
-        npertarget = [npertarget for i in uniquetargets]
+        npertarget = [npertarget for i in utargets]
 
     sample = []
     # for each available class
-    targets = dataset.targets
-    for i, r in enumerate(uniquetargets):
+    targets = satargets.value
+    for i, r in enumerate(utargets):
         # get the list of pattern ids for this class
         sample += random.sample((targets == r).nonzero()[0], npertarget[i] )
 
@@ -355,9 +360,9 @@ def summary(dataset, stats=True, lstats=True, sstats=True, idhash=False,
       Sequence (order) statistics
     idhash : bool
       Include idhash value for dataset and samples
-    targets_attr : string, optional
+    targets_attr : str, optional
       Name of sample attributes of targets
-    chunks_attr : string, optional
+    chunks_attr : str, optional
       Name of sample attributes of chunks -- independent groups of samples
     maxt : int
       Maximal number of targets when provide details on targets/chunks
@@ -393,7 +398,7 @@ def summary(dataset, stats=True, lstats=True, sstats=True, idhash=False,
         except KeyError, e:
             s += 'No per %s/%s due to %r' % (targets_attr, chunks_attr, e)
 
-    if sstats:
+    if sstats and not targets_attr is None:
         if len(dataset.sa[targets_attr].unique) < maxt:
             ss = SequenceStats(dataset.sa[targets_attr].value)
             s += str(ss)
@@ -411,9 +416,9 @@ def summary_targets(dataset, targets_attr='targets', chunks_attr='chunks',
     ----------
     dataset : `Dataset`
       Dataset to operate on
-    targets_attr : string, optional
+    targets_attr : str, optional
       Name of sample attributes of targets
-    chunks_attr : string, optional
+    chunks_attr : str, optional
       Name of sample attributes of chunks -- independent groups of samples
     maxc : int
       Maximal number of chunks when provide details

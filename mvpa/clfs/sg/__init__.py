@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Classifiers provied by shogun (sg) library"""
+"""Classifiers provided by shogun (sg) library"""
 
 __docformat__ = 'restructuredtext'
 

@@ -11,7 +11,8 @@
 Determine the Distribution of some Variable
 ===========================================
 
-This is an example demonstrating discovery of the distribution facility.
+This is an example demonstrating discovery of the distribution
+facility.
 """
 
 from mvpa.suite import *
@@ -21,10 +22,27 @@ if __debug__:
     # report useful debug information for the example
     debug.active += ['STAT', 'STAT_']
 
+"""
+
+While doing distribution matching, this example also demonstrates
+infrastructure within PyMVPA to log a progress report not only on the
+screen, but also into external files, such as
+
+- simple text file,
+- PDF file including all text messages and pictures which were rendered.
+
+For PDF report you need to have ``reportlab`` external available.
+
+"""
+
 report = Report(name='match_distribution_report',
                 title='PyMVPA Example: match_distribution.py')
 verbose.handlers += [report]     # Lets add verbose output to the report.
                                  # Similar action could be done to 'debug'
+
+# Also append verbose output into a log file we care about
+verbose.handlers += [open('match_distribution_report.log', 'a')]
+
 #
 # Figure for just normal distribution
 #
@@ -60,7 +78,7 @@ report.figure()
 #
 verbose(1, "Load sample fMRI dataset")
 attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
-dataset = nifti_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
+dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
                         targets=attr.targets,
                         chunks=attr.chunks,
                         mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
@@ -68,9 +86,9 @@ dataset = nifti_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
 dataset = dataset[:, int(np.random.uniform()*dataset.nfeatures)]
 
 verbose(2, "Minimal preprocessing to remove the bias per each voxel")
-detrend(dataset, chunks_attr='chunks', model='linear')
-zscore(dataset, chunks_attr='chunks', baselinetargets=[0],
-       targetdtype='float32')
+poly_detrend(dataset, chunks_attr='chunks', polyord=1)
+zscore(dataset, chunks_attr='chunks', param_est=('targets', ['0']),
+       dtype='float32')
 
 # on all voxels at once, just for the sake of visualization
 data = dataset.samples.ravel()

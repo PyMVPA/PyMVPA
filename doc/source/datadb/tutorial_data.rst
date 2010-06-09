@@ -1,10 +1,13 @@
-.. _datadb_demo_blockfmri:
+.. _datadb_tutorial_data:
 
-*******************************
-Demo-Dataset: Block-design fMRI
-*******************************
+********************************
+Tutorial Data: Block-design fMRI
+********************************
 
-This is a dataset with a single subject from a study published by :ref:`Haxby
+This dataset is a compilation of data and results for :ref:`PyMVPA
+Tutorial <chap_tutorial>`.
+
+At the moment dataset is based on data for a single subject from a study published by :ref:`Haxby
 et al. (2001) <HGF+01>`. The full (raw) dataset of this study is also
 :ref:`available <datadb_haxby2001>`. However, in constrast to the full data
 this single subject datasets has been preprocessed to a degree that should
@@ -38,46 +41,64 @@ Download
 
 A tarball is available at:
 
-  http://data.pymvpa.org/datasets/demo_blockfmri
+  http://data.pymvpa.org/datasets/tutorial_data
 
 
 Tarball Content
 ===============
 
-bold.nii.gz
-  The motion-corrected 4D timeseries (1452 volumes with 40 x 64 x 64 voxels,
-  corresponding to a voxel size of 3.5 x 3.75 x 3.75 mm and a volume repetition
-  time of 2.5 seconds). The timeseries contains all 12 runs of the original
-  experiment, concatenated in a single file. Please note, that the timeseries
-  signal is *not* detrended.
+data/
+  Contains data files:
 
-bold_mc.par
-  The motion correction parameter output. This is a 6-column textfile with
-  three rotation and three translation parameters respectively. This
-  information can be used e.g. as additional regressors for :ref:`motion-aware
-  timeseries detrending <motion-aware_detrending>`.
+  bold.nii.gz
+    The motion-corrected 4D timeseries (1452 volumes with 40 x 64 x 64 voxels,
+    corresponding to a voxel size of 3.5 x 3.75 x 3.75 mm and a volume repetition
+    time of 2.5 seconds). The timeseries contains all 12 runs of the original
+    experiment, concatenated in a single file. Please note, that the timeseries
+    signal is *not* detrended.
 
-mask*.nii.gz
-  A number of mask images in the subjects functional space, including a
-  full-brain mask.
+  bold_mc.par
+    The motion correction parameters. This is a 6-column textfile with
+    three rotation and three translation parameters respectively. This
+    information can be used e.g. as additional regressors for :ref:`motion-aware
+    timeseries detrending <motion-aware_detrending>`.
 
-attributes.txt
-  A two-column text file with the stimulation condition and the corresponding
-  experimental run for each volume in the timeseries image. The labels are given
-  in literal form (e.g. 'face').
+  mask*.nii.gz
+    A number of mask images in the subjects functional space, including a
+    full-brain mask.
 
-anat.nii.gz
-  An anatomical image of the subject, projected and resampled into the same
-  space as the functional images, hence also of the same spatial resolution. The
-  image is *not* skull-stripped.
+  attributes.txt
+    A two-column text file with the stimulation condition and the corresponding
+    experimental run for each volume in the timeseries image. The labels are given
+    in literal form (e.g. 'face').
 
+  anat.nii.gz
+    An anatomical image of the subject, projected and resampled into the same
+    space as the functional images, hence also of the same spatial resolution. The
+    image is *not* skull-stripped.
+
+results/
+  Some analyses presented in the tutorial takes non-negligible time to
+  compute. Therefore, we provide results of some analysis so they
+  could simply be loaded while following the tutorial (commands to
+  load them are embedded in the code snippets through out tutorial and
+  prefixed with ``# alt: ``).
+
+start_tutorial_session.sh
+  Helper shell script to start an interactive session within IPython
+  to proceed with the tutorial code.
+
+tutorial_lib.py
+  Helper Python module used through out the tutorial to avoid
+  presenting sequences of common operations (e.g. loading data)
+  multiple times.
 
 Instructions
 ============
 
   >>> from mvpa.suite import *
-  >>> datapath = os.path.join(pymvpa_datadbroot, 'demo_blockfmri',
-  ...                         'demo_blockfmri')
+  >>> datapath = os.path.join(pymvpa_datadbroot, 'tutorial_data',
+  ...                         'tutorial_data', 'data')
   >>> attrs = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
   >>> ds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
   ...                   targets=attrs.targets, chunks=attrs.chunks,
@@ -85,9 +106,9 @@ Instructions
   >>> print ds.shape
   (1452, 39912)
   >>> print ds.a.voxel_dim
-  (64, 64, 40)
+  (40, 64, 64)
   >>> print ds.a.voxel_eldim
-  (3.75, 3.75, 3.5)
+  (3.5, 3.75, 3.75)
   >>> print ds.a.mapper
   <ChainMapper: <Flatten>-<FeatureSlice>>
   >>> print ds.uniquetargets
