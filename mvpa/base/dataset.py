@@ -13,18 +13,20 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import copy
 
-from mvpa.base import externals
+from mvpa.base import externals, cfg
 from mvpa.base.collections import SampleAttributesCollection, \
-        FeatureAttributesCollection, DatasetAttributesCollection, \
-        SampleAttribute, FeatureAttribute, DatasetAttribute
+        FeatureAttributesCollection, DatasetAttributesCollection
 from mvpa.base.types import is_datasetlike
 from mvpa.base.dochelpers import _str
 
 if __debug__:
     from mvpa.base import debug
-from mvpa.base import warning
 
+__REPR_STYLE__ = cfg.get('datasets', 'repr', 'full')
 
+if not __REPR_STYLE__ in ('full', 'str'):
+    raise ValueError, "Incorrect value %r for option datasets.repr." \
+          " Valid are 'full' and 'str'." % __REPR_STYLE__
 
 class AttrDataset(object):
     """Generic storage class for datasets with multiple attributes.
@@ -209,12 +211,14 @@ class AttrDataset(object):
         # Check all conditions we need to have for `samples` dtypes
         if not hasattr(samples, 'dtype'):
             raise ValueError(
-                "AttrDataset only supports dtypes as samples that have a `dtype` "
-                "attribute that behaves similar to the one of an array-like.")
+                "AttrDataset only supports dtypes as samples that have a "
+                "`dtype` attribute that behaves similar to the one of an "
+                "array-like.")
         if not hasattr(samples, 'shape'):
             raise ValueError(
-                "AttrDataset only supports dtypes as samples that have a `shape` "
-                "attribute that behaves similar to the one of an array-like.")
+                "AttrDataset only supports dtypes as samples that have a "
+                "`shape` attribute that behaves similar to the one of an "
+                "array-like.")
         if not len(samples.shape):
             raise ValueError("Only `samples` with at least one axis are "
                     "supported (got: %i)" % len(samples.shape))
@@ -459,12 +463,19 @@ class AttrDataset(object):
             if isinstance(a, int):
                 args[i] = [a]
 
-        # simultaneous slicing of numpy arrays only yields intended results
-        # if at least one of the slicing args is an actual slice and not
-        # and index list are selection mask vector
-        if isinstance(self.samples, np.ndarray) \
-           and np.any([isinstance(a, slice) for a in args]):
-            samples = self.samples[args[0], args[1]]
+        # for simultaneous slicing of numpy arrays we should
+        # distinguish the case when one of the args is a slice, so no
+        # ix_ is needed
+        if isinstance(self.samples, np.ndarray):
+            if np.any([isinstance(a, slice) for a in args]):
+                samples = self.samples[args[0], args[1]]
+            else:
+                # works even with bool masks (although without
+                # assurance/checking if mask is of actual length as
+                # needed, so would work with bogus shorter
+                # masks). TODO check in __debug__? or may be just do
+                # enforcing of proper dimensions and order manually?
+                samples = self.samples[np.ix_(*args)]
         else:
             # in all other cases we have to do the selection sequentially
             #
@@ -515,7 +526,7 @@ class AttrDataset(object):
         return self.__class__(samples, sa=sa, fa=fa, a=a)
 
 
-    def __repr__(self):
+    def __repr_full__(self):
         return "%s(%s, sa=%s, fa=%s, a=%s)" \
                 % (self.__class__.__name__,
                    repr(self.samples),
@@ -534,15 +545,17 @@ class AttrDataset(object):
         # include only collections that have content
         return _str(self, samplesstr, *cols)
 
+    __repr__ = {'full' : __repr_full__,
+                'str'  : __str__}[__REPR_STYLE__]
 
     def __array__(self, dtype=None):
         # another possibility would be converting .todense() for sparse data
         # but that might easily kill the machine ;-)
         if not hasattr(self.samples, '__array__'):
             raise RuntimeError(
-                "This AttrDataset instance cannot be used like a Numpy array since "
-                "its data-container does not provide an '__array__' methods. "
-                "Container type is %s." % type(self.samples))
+                "This AttrDataset instance cannot be used like a Numpy array "
+                "since its data-container does not provide an '__array__' "
+                "methods. Container type is %s." % type(self.samples))
         return self.samples.__array__(dtype)
 
 
@@ -552,8 +565,28 @@ class AttrDataset(object):
 
     @classmethod
     def from_hdf5(cls, source, name=None):
+        """Load a Dataset from HDF5 file
+
+        Parameters
+        ----------
+        source : string or h5py.highlevel.File
+          Filename or HDF5's File to load dataset from
+        name : string, optional
+          If file contains multiple entries at the 1st level, if
+          provided, `name` specifies the group to be loaded as the
+          AttrDataset.
+
+        Returns
+        -------
+        AttrDataset
+
+        Raises
+        ------
+        ValueError
+        """
         if not externals.exists('h5py'):
-            raise RuntimeError("Missing 'h5py' package -- saving is not possible.")
+            raise RuntimeError(
+                "Missing 'h5py' package -- saving is not possible.")
 
         import h5py
         from mvpa.base.hdf5 import hdf2obj
@@ -581,7 +614,6 @@ class AttrDataset(object):
                 raise ValueError, "%r in %s contains %s not a dataset.  " \
                       "File contains groups: %s." \
                       % (name, source, type(res), hdf.keys())
-            return res
         else:
             # just consider the whole file
             res = hdf2obj(hdf)
@@ -590,13 +622,13 @@ class AttrDataset(object):
                 raise ValueError, "Failed to load a dataset from %s.  " \
                       "Loaded %s instead." \
                       % (source, type(res))
-            return res
-
-            raise V
+        if own_file:
+            hdf.close()
+        return res
 
 
     # shortcut properties
-    nsamples = property(fget=lambda self:len(self))
+    nsamples = property(fget=len)
     nfeatures = property(fget=lambda self:self.shape[1])
     shape = property(fget=lambda self:self.samples.shape)
 
@@ -605,7 +637,8 @@ def datasetmethod(func):
     """Decorator to easily bind functions to an AttrDataset class
     """
     if __debug__:
-        debug("DS_",  "Binding function %s to AttrDataset class" % func.func_name)
+        debug("DS_",
+              "Binding function %s to AttrDataset class" % func.func_name)
 
     # Bind the function
     setattr(AttrDataset, func.func_name, func)
@@ -652,8 +685,8 @@ def vstack(datasets):
 
     stacked_sa = {}
     for attr in datasets[0].sa:
-        stacked_sa[attr] = np.concatenate([ds.sa[attr].value for ds in datasets],
-                                         axis=0)
+        stacked_sa[attr] = np.concatenate(
+            [ds.sa[attr].value for ds in datasets], axis=0)
     # create the dataset
     merged = datasets[0].__class__(stacked_samp, sa=stacked_sa)
 
@@ -702,8 +735,8 @@ def hstack(datasets):
 
     stacked_fa = {}
     for attr in datasets[0].fa:
-        stacked_fa[attr] = np.concatenate([ds.fa[attr].value for ds in datasets],
-                                         axis=1)
+        stacked_fa[attr] = np.concatenate(
+            [ds.fa[attr].value for ds in datasets], axis=0)
     # create the dataset
     merged = datasets[0].__class__(stacked_samp, fa=stacked_fa)
 

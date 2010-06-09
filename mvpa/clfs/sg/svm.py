@@ -23,6 +23,7 @@ TODOs:
 
 import numpy as np
 
+from mvpa import _random_seed
 
 # Rely on SG
 from mvpa.base import externals, warning
@@ -80,6 +81,17 @@ if __debug__:
     from mvpa.base import debug
 
 
+def seed(random_seed):
+    if __debug__:
+        debug('SG', "Seeding shogun's RNG with %s" % random_seed)
+    try:
+        # reuse the same seed for shogun
+        shogun.Library.Math_init_random(random_seed)
+    except Exception, e:
+        warning('Shogun cannot be seeded due to %s' % (e,))
+
+seed(_random_seed)
+
 def _setdebug(obj, partname):
     """Helper to set level of debugging output for SG
     Parameters
@@ -114,14 +126,19 @@ def _setdebug(obj, partname):
     if sglevel is not None:
         obj.io.set_loglevel(sglevel)
     if __debug__ and 'SG_LINENO' in debug.active:
-        obj.io.enable_file_and_line()
+        try:
+            obj.io.enable_file_and_line()
+        except AttributeError, e:
+            warning("Cannot enable SG_LINENO debug target for shogun %s"
+                    % externals.versions['shogun'])
     try:
         exec "obj.io.%s_progress()" % progressfunc
     except:
-        warning("Shogun version installed has no way to enable progress" +
-                " reports")
+        warning("Shogun version %s has no way to enable progress" +
+                " reports" % externals.versions['shogun'])
 
 
+# Deprecated indeed in favor of kernels
 def _tosg(data):
     """Draft helper function to convert data we have into SG suitable format
 
@@ -384,12 +401,22 @@ class SVM(_SVM):
 
             if self._svm_impl in ['libsvr', 'svrlight']:
                 # for regressions constructor a bit different
-                self.__svm = svm_impl_class(Cs[0], self.params.epsilon, self.__kernel, labels)
+                self.__svm = svm_impl_class(Cs[0], self.params.tube_epsilon, self.__kernel, labels)
+                # we need to set epsilon explicitly
+                self.__svm.set_epsilon(self.params.epsilon)
             elif self._svm_impl in ['krr']:
                 self.__svm = svm_impl_class(self.params.tau, self.__kernel, labels)
             else:
                 self.__svm = svm_impl_class(Cs[0], self.__kernel, labels)
                 self.__svm.set_epsilon(self.params.epsilon)
+
+            # Set shrinking
+            if 'shrinking' in params:
+                shrinking = params.shrinking
+                if __debug__:
+                    debug("SG_", "Setting shrinking to %s" % shrinking)
+                self.__svm.set_shrinking_enabled(shrinking)
+
             if Cs is not None and len(Cs) == 2:
                 if __debug__:
                     debug("SG_", "Since multiple Cs are provided: %s, assign them" % Cs)
@@ -436,13 +463,16 @@ class SVM(_SVM):
         # Report on training
         if (__debug__ and 'SG__' in debug.active) or \
            self.ca.is_enabled('training_confusion'):
+            if __debug__:
+                debug("SG_", "Assessing predictions on training data")
             trained_targets = self.__svm.classify().get_labels()
+
         else:
             trained_targets = None
 
         if __debug__ and "SG__" in debug.active:
-                debug("SG__", "Original labels: %s, Trained labels: %s" %
-                              (targets_sa.value, trained_targets))
+            debug("SG__", "Original labels: %s, Trained labels: %s" %
+                  (targets_sa.value, trained_targets))
 
         # Assign training confusion right away here since we are ready
         # to do so.

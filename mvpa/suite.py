@@ -56,6 +56,9 @@ if externals.exists('elasticnet'):
     from mvpa.clfs.enet import *
 if externals.exists('glmnet'):
     from mvpa.clfs.glmnet import *
+if externals.exists('skl'):
+    import scikits.learn as skl
+    from mvpa.clfs.skl import *
 from mvpa.clfs.smlr import *
 from mvpa.clfs.blr import *
 from mvpa.clfs.gnb import *
@@ -81,8 +84,11 @@ from mvpa.datasets.base import *
 from mvpa.datasets.miscfx import *
 from mvpa.datasets.eep import *
 from mvpa.datasets.eventrelated import *
+# safe to import since multiple externals are handled inside
+from mvpa.datasets.mri import *
+# make NiftiImage available for people
 if externals.exists('nifti'):
-    from mvpa.datasets.mri import *
+    from nifti import NiftiImage
 
 from mvpa.datasets import splitters
 from mvpa.datasets.splitters import *
@@ -107,6 +113,7 @@ from mvpa.mappers.som import *
 from mvpa.mappers.zscore import *
 if externals.exists('scipy'):
     from mvpa.mappers.detrend import *
+    from mvpa.mappers.filters import *
 if externals.exists('mdp'):
     from mvpa.mappers.mdp_adaptor import *
 if externals.exists('mdp ge 2.4'):
@@ -120,6 +127,7 @@ from mvpa.measures.base import *
 from mvpa.measures.noiseperturbation import *
 from mvpa.misc.neighborhood import *
 from mvpa.measures.searchlight import *
+from mvpa.measures.gnbsearchlight import *
 from mvpa.measures.corrstability import *
 
 from mvpa.support.copy import *
@@ -174,11 +182,8 @@ if externals.exists("lxml") and externals.exists("nifti"):
 
 
 if externals.exists("running ipython env"):
-    try:
-        if not cfg.getboolean('ipython', 'complete protected', False):
-            __IPYTHON__.Completer.omit__names = 2
-    finally:
-        pass
+    from mvpa.support.ipython import *
+    ipy_activate_pymvpa_goodies()
 
 def suite_stats():
     """Return cruel dict of things which evil suite provides

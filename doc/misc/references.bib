@@ -25,7 +25,7 @@
 }
 
 @Article{ CPL+06,
-	Author = "X. Chen and F. Pereira and W. Lee and Stephen Strother and Tom Mitchell",
+	Author = "X. Chen and Francisco Pereira and W. Lee and Stephen Strother and Tom Mitchell",
 	Title = "Exploring predictive and reproducible modeling with the single-subject {FIAC} dataset.",
 	Journal = "Human Brain Mapping",
 	Volume = "27",
@@ -33,7 +33,7 @@
 	url = "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?cmd=prlinks&dbfrom=pubmed&retmode=ref&id=16565951",
 	year = 2006,
 	doi = "10.1002/hbm.20243",
-	pymvpa-keywords = "feature selection stability",
+	pymvpa-keywords = "feature selection, feature selection stability",
 	pymvpa-summary = "This paper illustrates the necessity to consider the stability or reproducibility of a classifier's feature selection as at least equally important to it's generalization performance."
 }
 
@@ -119,7 +119,7 @@
 	pages = "486–503",
 	author = "Stephen José Hanson and Yaroslav O. Halchenko",
 	doi = "10.1162/neco.2007.09-06-340",
-	pymvpa-keywords = "support vector machine, SVM, recursive feature elimination, RFE",
+	pymvpa-keywords = "support vector machine, SVM, feature selection, recursive feature elimination, RFE",
 	affiliation = "Rutgers Mind/Brain Analysis Laboratories, Psychology Department, Rutgers University, Newark, NJ 07102, U.S.A. jose@tractatus.rutgers.edu."
 }
 
@@ -237,7 +237,7 @@
 	pages = "301–320",
 	year = "2005",
 	publisher = "Blackwell Synergy",
-	keywords = "Feature Selection, Machine Learning",
+	pymvpa-keywords = "feature selection, statistical learning",
 	url = "http://www-stat.stanford.edu/%7Ehastie/Papers/B67.2%20(2005)%20301-320%20Zou%20%26%20Hastie.pdf"
 }
 
@@ -372,7 +372,7 @@
 	pages = "381–388",
 	year = "2009",
 	doi = "10.1016/j.tics.2009.06.002",
-	pymvpa-keywords = "kernel, similarity",
+	pymvpa-keywords = "kernel methods, similarity",
 	pymvpa-summary = "A summary of the relationship of machine learning and cognitive science. Moreover it also points out the role of kernel-based methods in this context."
 }
 
@@ -405,7 +405,8 @@
 	journal = "Human Brain Mapping",
 	number = "(In press)",
 	year = "2010",
-	pymvpa-keywords = "PyMVPA, implicit memory, MRI"
+    doi = "10.1002/hbm.20992",
+	pymvpa-keywords = "PyMVPA, implicit memory, fMRI"
 }
 
 @Book{ HTF09,
@@ -432,7 +433,7 @@
 	year = 1998,
 	issn = "0018-9219",
 	doi = "10.1109/5.726791",
-	pymvpa-keywords = "handwritten character recognition, multilayer neural networks, MNIST",
+	pymvpa-keywords = "handwritten character recognition, multilayer neural networks, MNIST, statistical learning",
 	pymvpa-summary = "Paper introducing Modified NIST (MNIST) dataset for performance comparisons of character recognition performance across a variety of classifiers."
 }
 
@@ -471,5 +472,82 @@
 	url = "http://psychclassics.yorku.ca/Fisher/Methods/",
 	pymvpa-keywords = "statistics, hypothesis testing",
 	pymvpa-summary = "One of the 20th century's most influential books on statistical methods, which coined the term 'Test of significance'."
+}
+
+@Article{ MKE10,
+	title = "Predicting visual stimuli based on activity in auditory cortices.",
+	author = "K. Meyer and Jonas T. Kaplan and R. Essex and C. Webber and H. Damasio and A. Damasio",
+	journal = "Nature Neuroscience",
+	year = "2010"
+}
+
+@Article{ VS06,
+	title = "Bias in error estimation when using cross-validation for model selection",
+	author = "Sudhir Varma and Richard Simon",
+	journal = "BMC Bioinformatics",
+	pages = "91",
+	volume = "7",
+	year = "2006",
+	issn = "1471-2105",
+	abstract = {BACKGROUND: Cross-validation (CV) is an effective method for estimating the prediction error of a classifier. Some recent articles have proposed methods for optimizing classifiers by choosing classifier parameter values that minimize the CV error estimate. We have evaluated the validity of using the CV error estimate of the optimized classifier as an estimate of the true error expected on independent data. RESULTS: We used CV to optimize the classification parameters for two kinds of classifiers; Shrunken Centroids and Support Vector Machines (SVM). Random training datasets were created, with no difference in the distribution of the features between the two classes. Using these "null" datasets, we selected classifier parameter values that minimized the CV error estimate. 10-fold CV was used for Shrunken Centroids while Leave-One-Out-CV (LOOCV) was used for the SVM. Independent test data was created to estimate the true error. With "null" and "non null" (with differential expression between the classes) data, we also tested a nested CV procedure, where an inner CV loop is used to perform the tuning of the parameters while an outer CV is used to compute an estimate of the error. The CV error estimate for the classifier with the optimal parameters was found to be a substantially biased estimate of the true error that the classifier would incur on independent data. Even though there is no real difference between the two classes for the "null" datasets, the CV error estimate for the Shrunken Centroid with the optimal parameters was less than 30\% on 18.5\% of simulated training data-sets. For SVM with optimal parameters the estimated error rate was less than 30\% on 38\% of "null" data-sets. Performance of the optimized classifiers on the independent test set was no better than chance. The nested CV procedure reduces the bias considerably and gives an estimate of the error that is very close to that obtained on the independent testing set for both Shrunken Centroids and SVM classifiers for "null" and "non-null" data distributions. CONCLUSION: We show that using CV to compute an error estimate for a classifier that has itself been tuned using CV gives a significantly biased estimate of the true error. Proper use of CV for estimating true error of a classifier developed using a well defined algorithm requires that all steps of the algorithm, including classifier parameter tuning, be repeated in each CV loop. A nested CV procedure provides an almost unbiased estimate of the true error.},
+	url = "http://www.ncbi.nlm.nih.gov/pubmed/16504092",
+	doi = "10.1186/1471-2105-7-91",
+	affiliation = "Biometric Research Branch, National Cancer Institute, Bethesda, MD, USA. varmas@mail.nih.gov",
+	pymvpa-keywords = "statistical learning, model selection, error estimation, hypothesis testing",
+	pymvpa-summary = "Demonstration of overfitting and introducing the bias in the error estimation using cross-validation on entire dataset for performing model selection."
+}
+
+@Book{ SS01,
+	title = "{Learning with Kernels: Support Vector Machines, Regularization}",
+	author = "B. Scholkopf and A.J. Smola",
+	publisher = "MIT Press",
+	address = "Cambridge, MA",
+	journal = "Optimization, and Beyond.",
+	pages = "2",
+	edition = "1",
+	month = "December",
+	year = "2001",
+	isbn = "0-262-19475-9",
+	pymvpa-keywords = "statistical learning, kernel methods, error estimation",
+	pymvpa-summary = "Good coverage of kernel methods and associated statistical learning aspects (e.g. error bounds)"
+}
+
+@Article{ SS09,
+	title = "Python in Neuroscience",
+	author = "Martin Spacek and Nicholas Swindale",
+	journal = "The Neuromorphic Engineer",
+	year = "2009",
+	doi = "10.2417/1200907.1682"
+}
+
+@Article{ GF09,
+	url = "http://www.ncbi.nlm.nih.gov/pubmed/19521545",
+	volume = "3",
+	year = "2009",
+	journal = "Front Neuroinformatics",
+	title = "OpenElectrophy: An Electrophysiological Data- and Analysis-Sharing Framework.",
+	pages = "14",
+	author = "Samuel Garcia and Nicolas Fourcaud-Trocmé",
+	doi = "10.3389/neuro.11.014.2009"
+}
+
+@Article{ Ban09,
+	title = "Seven topics in functional magnetic resonance imaging.",
+	author = "Peter A Bandettini",
+	journal = "Journal of Integrative Neuroscience",
+	pages = "371–403",
+	volume = "8",
+	year = "2009",
+	url = "http://www.ncbi.nlm.nih.gov/pubmed/19938211"
+}
+
+@InProceedings{ TRL09,
+	title = "Development of an autonomous robot for ground penetrating radar surveys of polar ice",
+	booktitle = "The 2009 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)",
+	author = "Eric Trautmann and Laura Ray and Jim Lever",
+	pages = "1685–1690 ",
+	year = "2009",
+	doi = "10.1109/IROS.2009.5354290",
+	pymvpa-summary = "Study using PyMVPA to perform immobilization detection to improve navigation reliability of an autonomous robot."
 }
 

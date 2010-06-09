@@ -18,6 +18,7 @@ from mvpa.clfs.distance import *
 
 from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_array_equal
+from mvpa.testing.datasets import datasets
 
 def test_distances():
     a = np.array([3,8])
@@ -196,3 +197,50 @@ def test_query_engine():
     assert_array_equal(qe_lit(s_ind=(0, 0, 0), lit=['roi1', 'ro2']),
                        [0, 1, 3, 9, 27, 28, 30, 36])
 
+
+def test_cached_query_engine():
+    """Test cached query engine
+    """
+    sphere = ne.Sphere(1)
+    # dataset with just one "space"
+    ds = datasets['3dlarge']
+    qe0 = ne.IndexQueryEngine(myspace=sphere)
+    qec = ne.CachedQueryEngine(qe0)
+
+    # and ground truth one
+    qe = ne.IndexQueryEngine(myspace=sphere)
+    results_ind = []
+    results_kw = []
+
+    def cmp_res(res1, res2):
+        comp = [x == y for x, y in zip(res1, res2)]
+        ok_(np.all(comp))
+
+    for iq, q in enumerate((qe, qec)):
+        q.train(ds)
+        # sequential train on the same should be ok in both cases
+        q.train(ds)
+        res_ind = [q[fid] for fid in xrange(ds.nfeatures)]
+        res_kw = [q(myspace=x) for x in ds.fa.myspace]
+        # test if results match
+        cmp_res(res_ind, res_kw)
+
+        results_ind.append(res_ind)
+        results_kw.append(res_kw)
+
+    # now check if results of cached were the same as of regular run
+    cmp_res(results_ind[0], results_ind[1])
+
+    # Now do sanity checks
+    assert_raises(ValueError, qec.train, ds[:, :-1])
+    assert_raises(ValueError, qec.train, ds.copy())
+    ds2 = ds.copy()
+    qec.untrain()
+    qec.train(ds2)
+    # should be the same results on the copy
+    cmp_res(results_ind[0], [qec[fid] for fid in xrange(ds.nfeatures)])
+    cmp_res(results_kw[0], [qec(myspace=x) for x in ds.fa.myspace])
+    ok_(qec.train(ds2) is None)
+    # unfortunately we are not catching those
+    #ds2.fa.myspace = ds2.fa.myspace*3
+    #assert_raises(ValueError, qec.train, ds2)

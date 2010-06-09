@@ -45,6 +45,9 @@ class FeatureSelection(ClassWithCollections):
         Dataset or tuple
           The dataset contains the selected features. If a ``testdataset`` has
           been passed a tuple with both processed datasets is return instead.
+          Note that the resulting dataset(s) reference the same values for samples
+          attributes (e.g. labels and chunks) of the input dataset(s): be careful
+          if you alter them later.
         """
         # Derived classes must provide interface to access other
         # relevant to the feature selection process information (e.g. mask,
@@ -308,7 +311,7 @@ class CombinedFeatureSelection(FeatureSelection):
         # take care of optional second dataset
         td_sel = None
         if not testdataset is None:
-            td_sel = testdataset[:, self.selected_ids]
+            td_sel = testdataset[:, self.ca.selected_ids]
 
         # and main dataset
         d_sel = dataset[:, selected_ids]

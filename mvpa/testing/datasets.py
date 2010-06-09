@@ -73,6 +73,7 @@ for kind, spec in specs.iteritems():
     data = np.random.standard_normal(( total, 3, 6, 6 ))
     labels = np.concatenate( ( np.repeat( 0, spec['perlabel'] ),
                               np.repeat( 1, spec['perlabel'] ) ) )
+    data[:, 1, 0, 0] += 2*labels           # add some signal
     chunks = np.asarray(range(nchunks)*(total/nchunks))
     mask = np.ones((3, 6, 6), dtype='bool')
     mask[0, 0, 0] = 0

@@ -37,7 +37,7 @@ import numpy as np
 
 import mvpa.misc.support as support
 from mvpa.base.dochelpers import enhanced_doc_string
-from mvpa.datasets.miscfx import coarsen_chunks, permute_targets, random_samples, \
+from mvpa.datasets.miscfx import coarsen_chunks, permute_attr, random_samples, \
                                  get_nsamples_per_attr
 
 if __debug__:
@@ -65,7 +65,7 @@ class Splitter(object):
     def __init__(self,
                  npertarget='all',
                  nrunspersplit=1,
-                 permute=False,
+                 permute_attr=None,
                  count=None,
                  strategy='equidistant',
                  discard_boundary=None,
@@ -91,9 +91,10 @@ class Splitter(object):
           is mostly useful if a subset of the available samples
           is used in each split and the subset is randomly
           selected for each run (see the `npertarget` argument).
-        permute : bool
-          If set to `True`, the labels of each generated dataset
-          will be permuted on a per-chunk basis.
+        permute_attr : None or str
+          If set to a string (e.g. 'targets'), the corresponding .sa
+          of each generated dataset will be permuted on a per-chunk
+          basis.
         count : None or int
           Desired number of splits to be output. It is limited by the
           number of splits possible for a given splitter
@@ -127,7 +128,7 @@ class Splitter(object):
         # pylint happyness block
         self.__npertarget = None
         self.__runspersplit = nrunspersplit
-        self.__permute = permute
+        self.__permute_attr = permute_attr
         self.__splitattr = attr
         self.__noslicing = noslicing
         self._reverse = reverse
@@ -231,8 +232,10 @@ class Splitter(object):
                             # otherwise just assign a new value
                             ds_a.lastsplit = lastsplit
                     # permute the labels
-                    if self.__permute:
-                        permute_targets(ds, chunks_attr='chunks')
+                    if self.__permute_attr is not None:
+                        permute_attr(ds,
+                                            attr=self.__permute_attr,
+                                            chunks_attr='chunks', col='sa')
 
                     # select subset of samples if requested
                     if npertarget == 'all' or ds is None:
@@ -391,8 +394,8 @@ class Splitter(object):
         """String summary over the object
         """
         return \
-          "SplitterConfig: npertarget:%s runs-per-split:%d permute:%s" \
-          % (self.__npertarget, self.__runspersplit, self.__permute)
+          "SplitterConfig: npertarget:%s runs-per-split:%d permute_attr:%s" \
+          % (self.__npertarget, self.__runspersplit, self.__permute_attr)
 
 
     def splitcfg(self, dataset):
@@ -437,6 +440,8 @@ class Splitter(object):
     strategy = property(fget=lambda self:self.__strategy,
                         fset=_set_strategy)
     splitattr = property(fget=lambda self:self.__splitattr)
+    permute_attr = property(fget=lambda self:self.__permute_attr)
+    npertarget = property(fget=lambda self:self.__npertarget)
 
 
 
@@ -682,14 +687,11 @@ class NFoldSplitter(Splitter):
           "N-%d-FoldSplitter / " % self.__cvtype + Splitter.__str__(self)
 
 
-    ##REF: Name was automagically refactored
     def _get_split_config(self, uniqueattrs):
         """Returns proper split configuration for N-M fold split.
         """
         return [(None, i) for i in \
-                    support.get_unique_length_n_combinations(uniqueattrs,
-                                                         self.__cvtype)]
-
+                 support.xunique_combinations(uniqueattrs, self.__cvtype)]
 
 
 class CustomSplitter(Splitter):

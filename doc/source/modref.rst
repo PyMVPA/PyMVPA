@@ -55,6 +55,7 @@ Datasets: Input, Output, Storage and Preprocessing
    base.dataset
    datasets.base
    datasets.mri
+   datasets.eventrelated
    datasets.eep
    datasets.miscfx
    datasets.splitters
@@ -66,6 +67,7 @@ Mappers: Data Transformations
 .. autosummary::
    :toctree: generated
 
+   mappers
    mappers.base
    mappers.flatten
    mappers.boxcar
@@ -138,6 +140,7 @@ Measures: Searchlights and Sensitivties
    measures.irelief
    measures.noiseperturbation
    measures.searchlight
+   measures.gnbsearchlight
 
 
 Feature Selection
@@ -185,6 +188,20 @@ Miscellaneous
    misc.support
    misc.transformers
    misc.vproperty
+
+
+Testing
+=======
+
+.. autosummary::
+   :toctree: generated
+
+   testing
+   testing.clfs
+   testing.datasets
+   testing.tools
+   testing.sweepargs
+   tests
 
 
 Basic Plotting Utilities

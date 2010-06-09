@@ -23,14 +23,12 @@ if __debug__:
     from mvpa.base import debug, warning
 
 
-##REF: Name was automagically refactored
 def cartesian_distance(a, b):
     """Return Cartesian distance between a and b
     """
     return np.linalg.norm(a-b)
 
 
-##REF: Name was automagically refactored
 def absmin_distance(a, b):
     """Returns dinstance max(\|a-b\|)
     XXX There must be better name!
@@ -41,14 +39,12 @@ def absmin_distance(a, b):
     return max(abs(a-b))
 
 
-##REF: Name was automagically refactored
 def manhatten_distance(a, b):
     """Return Manhatten distance between a and b
     """
     return sum(abs(a-b))
 
 
-##REF: Name was automagically refactored
 def mahalanobis_distance(x, y=None, w=None):
     """Calculate Mahalanobis distance of the pairs of points.
 
@@ -216,7 +212,6 @@ def squared_euclidean_distance(data1, data2=None, weight=None):
     return squared_euclidean_distance_matrix
 
 
-##REF: Name was automagically refactored
 def one_minus_correlation(X, Y):
     """Return one minus the correlation matrix between the rows of two matrices.
 

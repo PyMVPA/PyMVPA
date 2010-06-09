@@ -411,7 +411,7 @@ averaging. We would reverse mapping do in this case? Let's test:
 >>> revtest = np.arange(100, 100 + fds.nfeatures)
 >>> rmapped = fds.a.mapper.reverse1(revtest)
 >>> rmapped.shape
-(64, 64, 40)
+(40, 64, 64)
 
 What happens is excatly what we expect: The initial one-dimensional vector
 is passed backwards through the mapper chain. Reverting a group-based

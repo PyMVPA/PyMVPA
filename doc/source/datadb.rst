@@ -24,7 +24,7 @@ analysis.
 .. toctree::
    :maxdepth: 1
 
-   datadb/demo_blockfmri
+   datadb/tutorial_data
    datadb/haxby2001
    datadb/mnist
 

@@ -63,7 +63,7 @@ pymvpa_dataroot = \
 # it should be at this location
 pymvpa_datadbroot = \
         cfg.get('datadb', 'root',
-                default=os.path.join(os.curdir, 'data'))
+                default=os.path.join(os.curdir, 'datadb'))
 
 if not __debug__:
     try:

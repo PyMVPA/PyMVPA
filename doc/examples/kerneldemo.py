@@ -15,7 +15,7 @@ This is an example demonstrating various kernel implementation in PyMVPA.
 """
 
 import numpy as np
-import pylab as pl
+from mvpa.support.pylab import pl
 
 #from mvpa.suite import *
 from mvpa.base import cfg

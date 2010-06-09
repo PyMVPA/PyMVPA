@@ -20,7 +20,7 @@ For users
 
 * :ref:`Installation Instructions <chap_installation>` (where to obtain it, and
   how to get it running)
-* :ref:`Tutorial <manual>` (hands-on introduction).
+* :ref:`Tutorial <chap_tutorial>` (hands-on introduction).
 * :ref:`User Manual <manual>` [PDF-manual_]
 * :ref:`FAQ <chap_faq>` (short answers to common problems)
 * :ref:`chap_examples` (batteries included)

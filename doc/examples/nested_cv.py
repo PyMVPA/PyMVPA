@@ -1,0 +1,147 @@
+#!/usr/bin/env python
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""
+Nested Cross-Validation
+=======================
+
+.. index:: model selection, cross-validation
+
+Often it is desired to explore multiple models (classifiers,
+parameterizations) but it becomes an easy trap for introducing an
+optimistic bias into generalization estimate.  The easiest but
+computationally intensive solution to overcome such a bias is to carry
+model selection by estimating the same (or different) performance
+characteristic while operating only on training data.  If such
+performance is a cross-validation, then it leads to the so called
+"nested cross-validation" procedure.
+
+This example will demonstrate on how to implement such nested
+cross-validation while selecting the best performing classifier from
+the warehouse of available within PyMVPA.
+"""
+
+from mvpa.suite import *
+# increase verbosity a bit for now
+verbose.level = 3
+
+## # load PyMVPA example dataset
+## datapath = os.path.join(pymvpa_datadbroot,
+##                         'tutorial_data', 'tutorial_data', 'data')
+## attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
+## dataset = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
+##                        targets=attr.targets,
+##                        chunks=attr.chunks,
+##                        mask=os.path.join(datapath, 'mask_gray.nii.gz'))
+## # do chunkswise linear detrending on dataset
+## poly_detrend(dataset, chunks_attr='chunks')
+
+## # exclude the rest conditions from the dataset, since that should be
+## # quite different from the 'active' conditions, and make the computation
+## # below pointless
+## dataset = dataset[dataset.sa.targets != 'rest']
+
+"""
+For this simple example lets generate some fresh random data with 2
+relevant features and low SNR.
+"""
+
+dataset = normal_feature_dataset(nlabels=2, nonbogus_features=[0, 1],
+                                 nfeatures=50, snr=3.0)
+
+"""
+For the demonstration of model selection benefit, lets first compute
+cross-validated error using simple and popular kNN.
+"""
+
+clf_sample = kNN()
+cv_sample = CrossValidatedTransferError(
+    TransferError(clf_sample), NFoldSplitter())
+
+error_sample = np.mean(cv_sample(dataset))
+
+"""
+For the convenience lets define a helpful function which we will use
+twice -- once within cross-validation, and once on the whole dataset
+"""
+
+def select_best_clf(dataset, clfs):
+    """Select best model according to CVTE
+
+    Helper function which we will use twice -- once for proper nested
+    cross-validation, and once to see how big an optimistic bias due
+    to model selection could be if we simply provide an entire dataset.
+
+    Parameters
+    ----------
+    dataset : Dataset
+    clfs : list of Classifiers
+      Which classifiers to explore
+
+    Returns
+    -------
+    best_clf, best_error
+    """
+    best_error = None
+    for clf in clfs:
+        cv = CrossValidatedTransferError(TransferError(clf),
+                                         NFoldSplitter())
+        # unfortunately we don't have ability to reassign clf atm
+        # cv.transerror.clf = clf
+        try:
+            error = np.mean(cv(dstrain))
+        except LearnerError, e:
+            # skip the classifier if data was not appropriate and it
+            # failed to learn/predict at all
+            continue
+        if best_error is None or error < best_error:
+            best_clf = clf
+            best_error = error
+        verbose(3, "Classifier %s cv error=%.2f" % (clf.descr, error))
+    verbose(2, "Selected the best out of %i classifiers %s with error %.2f"
+            % (len(clfs), best_clf.descr, best_error))
+    return best_clf, best_error
+
+"""
+First lets select a classifier within cross-validation, thus
+eliminating model-selection bias
+"""
+errors = []
+best_clfs = {}
+confusion = ConfusionMatrix()
+for isplit, (dstrain, dstest) in enumerate(NFoldSplitter()(dataset)):
+    verbose(1, "Processing split #%i" % isplit)
+    best_clf, best_error = select_best_clf(dstrain, clfswh['!gnpp'])
+    best_clfs[best_clf.descr] = best_clfs.get(best_clf.descr, 0) + 1
+    # now that we have the best classifier, lets assess its transfer
+    # to the testing dataset while training on entire training
+    te = TransferError(best_clf, enable_ca=['confusion'])
+    errors.append(te(dstest, dstrain))
+    confusion += te.ca.confusion
+
+"""
+And for comparison, lets assess what would be the best performance if
+we simply explore all available classifiers, providing all the data at
+once
+"""
+cheating_clf, cheating_error = select_best_clf(dataset, clfswh['!gnpp'])
+
+print """Errors:
+ sample classifier: %.2f
+ model selection within cross-validation: %.2f
+ model selection via fishing expedition: %.2f with %s
+ """ % (error_sample, np.mean(errors), cheating_error, cheating_clf.descr)
+
+print "# of times following classifiers were selected within " \
+      "nested cross-validation:"
+for c, count in sorted(best_clfs.items(), key=lambda x:x[1], reverse=True):
+    print " %i times %s" % (count, c)
+
+print "\nConfusion table for the nested cross-validation results:"
+print confusion

@@ -35,7 +35,7 @@ if __debug__:
 __all__ = [ 'Classifier',
             'accepts_dataset_as_samples', 'accepts_samples_as_dataset',
             'DegenerateInputError', 'FailedToTrainError',
-            'FailedToPredictError']
+            'FailedToPredictError', 'LearnerError']
 
 def accepts_samples_as_dataset(fx):
     """Decorator to wrap samples into a Dataset.
@@ -50,17 +50,23 @@ def accepts_samples_as_dataset(fx):
             return fx(obj, Dataset(data), *args, **kwargs)
     return wrap_samples
 
-class DegenerateInputError(Exception):
+
+class LearnerError(Exception):
+    """Base class for exceptions thrown by the learners (classifiers,
+    regressions)"""
+    pass
+
+class DegenerateInputError(LearnerError):
     """Exception to be thrown by learners if input data is bogus, i.e. no
     features or samples"""
     pass
 
-class FailedToTrainError(Exception):
+class FailedToTrainError(LearnerError):
     """Exception to be thrown whenever classifier fails to learn for
     some reason"""
     pass
 
-class FailedToPredictError(Exception):
+class FailedToPredictError(LearnerError):
     """Exception to be thrown whenever classifier fails to provide predictions.
     Usually happens if it was trained on degenerate data but without any complaints.
     """

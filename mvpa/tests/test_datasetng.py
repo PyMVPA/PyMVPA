@@ -12,22 +12,22 @@ from mvpa.testing import *
 from mvpa.testing.datasets import datasets
 
 import numpy as np
-import random
 import shutil
 import tempfile
 import os
 
 
-from mvpa.base.externals import versions, exists
+from mvpa.base import cfg
+from mvpa.base.externals import versions
 from mvpa.base.types import is_datasetlike
 from mvpa.base.dataset import DatasetError, vstack, hstack
-from mvpa.mappers.flatten import mask_mapper
 from mvpa.datasets.base import dataset_wizard, Dataset
 from mvpa.misc.data_generators import normal_feature_dataset
 import mvpa.support.copy as copy
-from mvpa.base.collections import SampleAttributesCollection, \
-        FeatureAttributesCollection, DatasetAttributesCollection, \
-        ArrayCollectable, SampleAttribute, Collectable
+from mvpa.base.collections import \
+     SampleAttributesCollection, FeatureAttributesCollection, \
+     DatasetAttributesCollection, ArrayCollectable, SampleAttribute, \
+     Collectable
 
 
 class myarray(np.ndarray):
@@ -203,24 +203,24 @@ def test_multidim_attrs():
                              chunks=np.random.normal(size=(2,10,4,2)))
     assert_equal(ds.nsamples, 2)
     assert_equal(ds.nfeatures, 12)
-    assert_equal(ds.sa.targets.shape, (2,3,4))
-    assert_equal(ds.sa.chunks.shape, (2,10,4,2))
+    assert_equal(ds.sa.targets.shape, (2, 3, 4))
+    assert_equal(ds.sa.chunks.shape, (2, 10, 4, 2))
 
     # try slicing
     subds = ds[0]
     assert_equal(subds.nsamples, 1)
     assert_equal(subds.nfeatures, 12)
-    assert_equal(subds.sa.targets.shape, (1,3,4))
-    assert_equal(subds.sa.chunks.shape, (1,10,4,2))
+    assert_equal(subds.sa.targets.shape, (1, 3, 4))
+    assert_equal(subds.sa.chunks.shape, (1, 10, 4, 2))
 
     # add multidim feature attr
     fattr = ds.mapper.forward(samples)
-    assert_equal(fattr.shape, (2,12))
+    assert_equal(fattr.shape, (2, 12))
     # should puke -- first axis is #samples
     assert_raises(ValueError, ds.fa.__setitem__, 'moresamples', fattr)
     # but that should be fine
     ds.fa['moresamples'] = fattr.T
-    assert_equal(ds.fa.moresamples.shape, (12,2))
+    assert_equal(ds.fa.moresamples.shape, (12, 2))
 
 
 
@@ -380,6 +380,19 @@ def test_mergeds():
     assert_true('chunks' in merged.sa)
     assert_array_equal(merged.fa.one, [1]*5 + [0]*5)
 
+def test_hstack():
+    """Additional tests for hstacking of datasets
+    """
+    ds3d = datasets['3dsmall']
+    nf1 = ds3d.nfeatures
+    nf3 = 3 * nf1
+    ds3dstacked = hstack((ds3d, ds3d, ds3d))
+    ok_(ds3dstacked.nfeatures == nf3)
+    for fav in ds3dstacked.fa.itervalues():
+        v = fav.value
+        ok_(len(v) == nf3)
+        assert_array_equal(v[:nf1], v[nf1:2*nf1])
+        assert_array_equal(v[2*nf1:], v[nf1:2*nf1])
 
 def test_mergeds2():
     """Test composition of new datasets by addition of existing ones
@@ -421,8 +434,8 @@ def test_mergeds2():
                                          chunks=2)
 
     # test wrong origin length
-    assert_raises(ValueError, dataset_wizard, dss[:4, :5], targets=[ 1, 2, 3, 4 ],
-                                         chunks=[ 2, 2, 2 ])
+    assert_raises(ValueError, dataset_wizard, dss[:4, :5],
+                  targets=[ 1, 2, 3, 4 ], chunks=[ 2, 2, 2 ])
 
 
 def test_combined_samplesfeature_selection():
@@ -476,11 +489,13 @@ def test_combined_samplesfeature_selection():
 
 
 def test_labelpermutation_randomsampling():
-    ds  = Dataset.from_wizard(np.ones((5, 1)),     targets=range(5), chunks=1)
-    ds.append(Dataset.from_wizard(np.ones((5, 1)) + 1, targets=range(5), chunks=2))
-    ds.append(Dataset.from_wizard(np.ones((5, 1)) + 2, targets=range(5), chunks=3))
-    ds.append(Dataset.from_wizard(np.ones((5, 1)) + 3, targets=range(5), chunks=4))
-    ds.append(Dataset.from_wizard(np.ones((5, 1)) + 4, targets=range(5), chunks=5))
+    ds = Dataset.from_wizard(np.ones((5, 10)),     targets=range(5), chunks=1)
+    for i in xrange(1, 5):
+        ds.append(Dataset.from_wizard(np.ones((5, 10)) + i,
+                                      targets=range(5), chunks=i+1))
+    # assign some feature attributes
+    ds.fa['roi'] = np.repeat(np.arange(5), 2)
+    ds.fa['lucky'] = np.arange(10)%2
     # use subclass for testing if it would survive
     ds.samples = ds.samples.view(myarray)
 
@@ -490,17 +505,17 @@ def test_labelpermutation_randomsampling():
     ok_((ds.sa['chunks'].unique == range(1, 6)).all())
 
     # keep the orig labels
-    orig_labels = ds.targets[:]
+    orig_labels = ds.targets.copy()
 
     # also keep the orig dataset, but SHALLOW copy and leave everything
     # else as a view!
     ods = copy.copy(ds)
 
-    ds.permute_targets()
-    # some permutation should have happened
+    ds.permute_attr()
+    # by default, some permutation of targets should have happened
     assert_false((ds.targets == orig_labels).all())
 
-    # but the original dataset should be uneffected
+    # but the original dataset should be unaffected
     assert_array_equal(ods.targets, orig_labels)
     # array subclass survives
     ok_(isinstance(ods.samples, myarray))
@@ -520,11 +535,31 @@ def test_labelpermutation_randomsampling():
     assert_array_equal(ds.sa.custom, otargets)
     assert_array_equal(ds.sa.targets, otargets)
 
-    ds.permute_targets(targets_attr='custom')
+    ds.permute_attr(attr='custom')
     # original targets should still match
     assert_array_equal(ds.sa.targets, otargets)
     # but custom should get permuted
     assert_false((ds.sa.custom == otargets).all())
+
+    #
+    # Test permutation among features
+    #
+    assert_raises(KeyError, ds.permute_attr,
+                  attr='roi') # wrong collection
+    ds = ods.copy()
+    ds.permute_attr(attr='lucky', chunks_attr='roi', col='fa')
+    # we should have not touched samples attributes
+    for sa in ds.sa.keys():
+        assert_array_equal(ds.sa[sa].value, ods.sa[sa].value)
+    # but we should have changed the roi
+    assert_false((ds.fa['lucky'].value == ods.fa['lucky'].value).all())
+    assert_array_equal(ds.fa['roi'].value, ods.fa['roi'].value)
+
+    # permute ROI as well without chunking (??? should we make
+    # chunks_attr=None by default?)
+    ds.permute_attr(attr='roi', chunks_attr=None, col='fa')
+    assert_false((ds.fa['roi'].value == ods.fa['roi'].value).all())
+
 
 
 def test_masked_featureselection():
@@ -664,7 +699,7 @@ def test_idhash():
 
     origid = ds.idhash
     orig_labels = ds.targets #.copy()
-    ds.permute_targets()
+    ds.permute_attr()
     ok_(origid != ds.idhash,
         msg="Permutation also changes idhash")
 
@@ -711,7 +746,14 @@ def test_repr():
                  sa={'targets': [0]},
                  fa={'targets': ['b', 'n']})
     ds_repr = repr(ds)
-    ok_(repr(eval(ds_repr)) == ds_repr)
+    cfg_repr = cfg.get('datasets', 'repr', 'full')
+    if cfg_repr == 'full':
+        ok_(repr(eval(ds_repr)) == ds_repr)
+    elif cfg_repr == 'str':
+        ok_(str(ds) == ds_repr)
+    else:
+        raise AssertionError('Unknown kind of datasets.repr configuration %r'
+                             % cfg_repr)
 
 def test_str():
     args = ( np.arange(12, dtype=np.int8).reshape((4, 3)),
@@ -800,11 +842,11 @@ def test_other_samples_dtypes():
             assert_equal(sel.shape, (dshape[0], 2))
             assert_equal(type(s), type(sel.samples))
             if sparse.isspmatrix(sel.samples):
-                assert_array_equal(sel.samples[:,1].todense(),
-                        ds.samples[:,2].todense())
+                assert_array_equal(sel.samples[:, 1].todense(),
+                        ds.samples[:, 2].todense())
             else:
-                assert_array_equal(sel.samples[:,1],
-                        ds.samples[:,2])
+                assert_array_equal(sel.samples[:, 1],
+                        ds.samples[:, 2])
 
 
         # what we don't do
@@ -821,7 +863,7 @@ def test_other_samples_dtypes():
         assert_equal(ds.nfeatures, 1)
         assert_equal(ds.shape, (5, 1))
         # arrays of objects
-        data = np.array([{},{}])
+        data = np.array([{}, {}])
         ds = Dataset(data)
         assert_equal(ds.shape, (2, 1))
         assert_equal(ds.nsamples, 2)

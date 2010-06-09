@@ -3,6 +3,7 @@ COVERAGE_REPORT=$(CURDIR)/$(BUILDDIR)/coverage
 BUILDDIR=$(CURDIR)/build
 HTML_DIR=$(BUILDDIR)/html
 DOC_DIR=$(CURDIR)/doc
+TUT_DIR=$(CURDIR)/datadb/tutorial_data/tutorial_data
 DOCSRC_DIR=$(DOC_DIR)/source
 DOCBUILD_DIR=$(BUILDDIR)/doc
 MAN_DIR=$(BUILDDIR)/man
@@ -137,8 +138,8 @@ clean:
 		 -o -iname '*_flymake.*' \
 		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
-	-@rm -rf dist *_report
-	-@rm -f *-stamp *_report.pdf pymvpa.cfg
+	-@rm -rf dist *report
+	-@rm -f *-stamp *_report.pdf *_report.log pymvpa.cfg
 
 # this target should put the source tree into shape for building the source
 # distribution
@@ -224,9 +225,9 @@ apidoc-stamp: build
 	touch $@
 
 # this takes some minutes !!
-profile: build mvpa/tests/main.py
+profile: build mvpa/tests/__init__.py
 	@echo "I: Profiling unittests"
-	@PYTHONPATH=.:$(PYTHONPATH) tools/profile -K  -O $(PROFILE_FILE) mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) tools/profile -K  -O $(PROFILE_FILE) mvpa/tests/__init__.py
 
 
 #
@@ -271,7 +272,8 @@ upload-website-dev:
 	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI_DEV)/
 
 upload-htmldoc-dev:
-	sed -i -e "s,http://disqus.com/forums/pymvpa/,http://disqus.com/forums/pymvpa-dev/,g" \
+	grep -q pymvpa-dev doc/source/_themes/pymvpa_online/page.html || \
+	 sed -i -e "s,http://disqus.com/forums/pymvpa/,http://disqus.com/forums/pymvpa-dev/,g" \
 		-e "s,^<!-- HEADNOTES -->,<!-- HEADNOTES --><div class='admonition note'>This content refers to an unreleased development version of PyMVPA</div>,g" \
 		doc/source/_themes/pymvpa_online/page.html
 	$(MAKE) htmldoc SPHINXOPTS='-D html_theme=pymvpa_online'
@@ -298,41 +300,44 @@ ut-%: build
 
 unittest: build
 	@echo "I: Running unittests (without optimization nor debug output)"
-	PYTHONPATH=.:$(PYTHONPATH) $(PYTHON) mvpa/tests/main.py
+	PYTHONPATH=.:$(PYTHONPATH) $(PYTHON) mvpa/tests/__init__.py
 
 
 # test if PyMVPA is working if optional externals are missing
 unittest-badexternals: build
 	@echo "I: Running unittests under assumption of missing optional externals."
-	@PYTHONPATH=mvpa/tests/badexternals:.:$(PYTHONPATH) $(PYTHON) mvpa/tests/main.py 2>&1 \
+	@PYTHONPATH=mvpa/tests/badexternals:.:$(PYTHONPATH) $(PYTHON) mvpa/tests/__init__.py 2>&1 \
 	| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
               -e 'WARNING:.*SMLR.* implementation'
 
 # only non-labile tests
 unittest-nonlabile: build
 	@echo "I: Running only non labile unittests. None of them should ever fail."
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/__init__.py
 
 # test if no errors would result if we force enabling of all ca
 unittest-ca: build
 	@echo "I: Running unittests with all ca enabled."
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=ENFORCE_CA_ENABLED $(PYTHON) mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=ENFORCE_CA_ENABLED $(PYTHON) mvpa/tests/__init__.py
 
 # Run unittests with optimization on -- helps to catch unconditional
 # debug calls
 unittest-optimization: build
 	@echo "I: Running unittests with $(PYTHON) -O."
-	@PYTHONPATH=.:$(PYTHONPATH) $(PYTHON) -O mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) $(PYTHON) -O mvpa/tests/__init__.py
 
 # Run unittests with all debug ids and some metrics (crossplatform ones) on.
 #   That does:
 #     additional checking,
 #     debug() calls validation, etc
+# Need to use /bin/bash due to use of PIPESTATUS
+unittest-debug: SHELL=/bin/bash
 unittest-debug: build
 	@echo "I: Running unittests with debug output. No progress output."
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
-       $(PYTHON) mvpa/tests/main.py 2>&1 \
-       |  sed -n -e '/^[=-]\{60,\}$$/,/^\(MVPA_SEED=\|OK\)/p'
+       $(PYTHON) mvpa/tests/__init__.py 2>&1 \
+       |  sed -n -e '/^[=-]\{60,\}$$/,$$p'; \
+	   exit $${PIPESTATUS[0]}	# reaquire status of 1st command, works only in bash!
 
 
 # Run all unittests
@@ -345,14 +350,15 @@ te-%: build
 	@echo -n "I: Testing example $*: "
 	@MVPA_EXAMPLES_INTERACTIVE=no PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg \
 	 $(PYTHON) doc/examples/$*.py >| temp-$@.log 2>&1 \
-	 && echo "passed" || { echo "failed:"; cat temp-$@.log; }
+	 && echo "passed" \
+	 || { echo "failed:"; cat temp-$@.log; rm -f temp-$@.log; exit 1; }
 	@rm -f temp-$@.log
 
 testexamples: te-svdclf te-smlr te-searchlight te-sensanas te-pylab_2d \
               te-curvefitting te-projections te-kerneldemo te-clfs_examples \
               te-erp_plot te-match_distribution te-permutation_test \
               te-searchlight_minimal te-smlr te-start_easy te-topo_plot \
-              te-gpr te-gpr_model_selection0
+              te-gpr te-gpr_model_selection0 te-mri_plot
 
 testdocstrings: dt-mvpa
 
@@ -374,18 +380,18 @@ tm-%: build
 
 testmanual: build testdocstrings
 	@echo "I: Testing code samples found in documentation"
-	@PYTHONPATH=.:$(CURDIR)/tutorial_data:$(PYTHONPATH) \
+	@PYTHONPATH=.:$(TUT_DIR):$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
-		MVPA_LOCATION_TUTORIAL_DATA=tutorial_data \
+		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 		MVPA_DATADB_ROOT=datadb \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 		             --doctest-tests doc/source
 
 testtutorial-%: build
 	@echo "I: Testing code samples found in tutorial part $*"
-	@PYTHONPATH=.:$(CURDIR)/tutorial_data:$(PYTHONPATH) \
+	@PYTHONPATH=.:$(TUT_DIR):$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
-		MVPA_LOCATION_TUTORIAL_DATA=tutorial_data \
+		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 		             --doctest-tests doc/source/tutorial_$**.rst
 
@@ -396,7 +402,7 @@ testtutorials-alt:
 	@grep '# *alt' doc/source/tutorial*rst | \
 	 sed -e "s/.*'\(.*\)'.*/\1/g" | \
 	 while read f; do \
-	  fs="$$(/bin/ls tutorial_data/results/$$f.* 2>/dev/null)"; \
+	  fs="$$(/bin/ls $(TUT_DIR)/results/$$f.* 2>/dev/null)"; \
 	  [ -z "$$fs" ] && echo "$$f missing" || :; \
 	 done
 
@@ -449,17 +455,17 @@ testcfg: build
 	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c 'from mvpa.suite import *; cfg.save("pymvpa.cfg");'
 	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c 'from mvpa.suite import *;'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/__init__.py
 	@echo "+I: Check all known dependencies and store them"
 	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c \
 	  'from mvpa.suite import *; mvpa.base.externals.test_all_dependencies(force=False); cfg.save("pymvpa.cfg");'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/__init__.py
 	-@rm -f pymvpa.cfg
 
 testourcfg: build
 	@echo "+I: Run non-labile testing to verify safety of shipped configuration"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPACONFIG=doc/examples/pymvpa.cfg MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/main.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPACONFIG=doc/examples/pymvpa.cfg MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/__init__.py
 
 
 test: unittests testmanual testsuite testexamples testcfg testourcfg
@@ -473,7 +479,7 @@ $(COVERAGE_REPORT): build
 	@echo "I: Generating coverage data and report. Takes awhile. No progress output."
 	@{ \
 	  export PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL; \
-	  python-coverage -x mvpa/tests/main.py >/dev/null 2>&1; \
+	  python-coverage -x mvpa/tests/__init__.py >/dev/null 2>&1; \
 	  python-coverage -r -i -o /usr,/var >| $(COVERAGE_REPORT); \
 	  grep -v '100%$$' $(COVERAGE_REPORT); \
 	  python-coverage -a -i -o /usr,/var ; }
@@ -576,12 +582,18 @@ bdist_mpkg: 3rd
 #
 
 fetch-data:
-	rsync $(RSYNC_OPTS) $(DATA_URI)/demo_blockfmri $(DATA_URI)/mnist datadb
-	for ds in datadb/*; do \
+	@echo "I: fetching data from datadb"
+	@rsync $(RSYNC_OPTS) $(DATA_URI)/tutorial_data $(DATA_URI)/mnist datadb
+	@for ds in datadb/*; do \
+		echo " I: looking at $$ds"; \
 		cd $(CURDIR)/$${ds} && \
 		md5sum -c MD5SUMS && \
-		[ -f *.tar.gz ] && \
-		[ ! -d $$(basename $${ds}) ] && tar xzf *.tar.gz || : ;\
+		tbs="$$(/bin/ls *.tar.gz 2>/dev/null)" && \
+		[ ! -z "$$tbs" ] && \
+		for tb in $${tbs}; do \
+		 fn=$${tb%.tar.gz}; dn=$${fn%-*}; \
+		 [ ! -d $$dn ] && tar xzf $$tb || : ;\
+		done; \
 	done
 
 # Various other data which might be sensitive and not distribu

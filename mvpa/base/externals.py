@@ -186,7 +186,7 @@ def __check_shogun(bottom_version, custom_versions=[]):
 
 def __assign_nipy_version():
     import nipy
-    versions['nipy'] = nipy.__version__
+    versions['nipy'] = SmartVersion(nipy.__version__)
 
 def __check_weave():
     """Apparently presence of scipy is not sufficient since some
@@ -298,17 +298,36 @@ def __check_openopt():
     import scikits.openopt as _
     return
 
+def __check_skl():
+    import scikits.learn as _
+
+def _set_matplotlib_backend():
+    """Check if we have custom backend to set and it is different
+    from current one
+    """
+    backend = cfg.get('matplotlib', 'backend')
+    if backend:
+        import matplotlib as mpl
+        mpl_backend = mpl.get_backend().lower()
+        if mpl_backend != backend.lower():
+            if __debug__:
+                debug('EXT_', "Trying to set matplotlib backend to %s" % backend)
+            mpl.use(backend)
+            import warnings
+            # And disable useless warning from matplotlib in the future
+            warnings.filterwarnings(
+                'ignore', 'This call to matplotlib.use() has no effect.*',
+                UserWarning)
+        elif __debug__:
+            debug('EXT_',
+                  "Not trying to set matplotlib backend to %s since it was "
+                  "already set" % backend)
+
+
 def __check_matplotlib():
     """Check for presence of matplotlib and set backend if requested."""
     import matplotlib
-    backend = cfg.get('matplotlib', 'backend')
-    if backend:
-        matplotlib.use(backend)
-        import warnings
-        # And disable useless warning from matplotlib in the future
-        warnings.filterwarnings(
-            'ignore', 'This call to matplotlib.use() has no effect.*',
-            UserWarning)
+    _set_matplotlib_backend()
 
 def __check_pylab():
     """Check if matplotlib is there and then pylab"""
@@ -378,11 +397,11 @@ def __check_rpy2():
     """Check either rpy2 is available and also set it for the sane execution
     """
     import rpy2
-    versions['rpy2'] = rpy2.__version__
+    versions['rpy2'] = SmartVersion(rpy2.__version__)
 
     import rpy2.robjects
     r = rpy2.robjects.r
-    r.options(warn=cfg.get('rpy', 'warn', default=-1))
+    r.options(warn=cfg.get_as_dtype('rpy', 'warn', dtype=int, default=-1))
 
     # To shut R up while it is importing libraries to do not ruin out
     # doctests
@@ -395,6 +414,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'nifti':'from nifti import NiftiImage as __',
           'nifti ge 0.20090205.1':
                 'from nifti.clib import detachDataFromImage as __',
+          'nibabel':'from nibabel import Nifti1Image as __',
           'ctypes':'import ctypes as __',
           'shogun':'__assign_shogun_version()',
           'shogun.krr': '__assign_shogun_version(); import shogun.Regression as __; x=__.KRR',
@@ -409,10 +429,12 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'pywt': "import pywt as __",
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
-          'rpy': "__check_rpy()",
+          #'rpy': "__check_rpy()",
           'rpy2': "__check_rpy2()",
           'lars': "exists('rpy2', raise_=True);" \
                   "import rpy2.robjects; rpy2.robjects.r.library('lars')",
+          'mass': "exists('rpy2', raise_=True);" \
+                  "import rpy2.robjects; rpy2.robjects.r.library('MASS')",
           'elasticnet': "exists('rpy2', raise_=True); "\
                   "import rpy2.robjects; rpy2.robjects.r.library('elasticnet')",
           'glmnet': "exists('rpy2', raise_=True); " \
@@ -421,6 +443,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
           'openopt': "__check_openopt()",
+          'skl': "__check_skl()",
           'mdp': "__assign_mdp_version()",
           'mdp ge 2.4': "from mdp.nodes import LLENode as __",
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
@@ -564,7 +587,7 @@ versions._KNOWN.update({
 
 
 ##REF: Name was automagically refactored
-def test_all_dependencies(force=False):
+def test_all_dependencies(force=False, verbosity=1):
     """
     Test for all known dependencies.
 
@@ -578,7 +601,8 @@ def test_all_dependencies(force=False):
     # loop over all known dependencies
     for dep in _KNOWN:
         if not exists(dep, force):
-            warning("%s is not available." % dep)
+            if verbosity:
+                warning("%s is not available." % dep)
 
     if __debug__:
         debug('EXT', 'The following optional externals are present: %s' \
