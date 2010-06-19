@@ -240,15 +240,16 @@ if externals.exists('shogun'):
             sg.SVM(
                 C=1.0, descr="sg.LinSVM(C=1)/%s" % impl, svm_impl=impl),
             ]
-        clfswh += [
-            sg.SVM(kernel=RbfSGKernel(),
-                   descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
-#            sg.SVM(kernel=RbfSGKernel(),
-#                   descr="sg.RbfSVM(gamma=0.1)/%s"
-#                    % impl, svm_impl=impl, gamma=0.1),
-#           sg.SVM(descr="sg.SigmoidSVM()/%s"
-#                   % impl, svm_impl=impl, kernel=SigmoidSGKernel(),),
-            ]
+        if not impl in ['svmocas']:     # inherently linear only
+            clfswh += [
+                sg.SVM(kernel=RbfSGKernel(),
+                       descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
+    #            sg.SVM(kernel=RbfSGKernel(),
+    #                   descr="sg.RbfSVM(gamma=0.1)/%s"
+    #                    % impl, svm_impl=impl, gamma=0.1),
+    #           sg.SVM(descr="sg.SigmoidSVM()/%s"
+    #                   % impl, svm_impl=impl, kernel=SigmoidSGKernel(),),
+                ]
 
     _optional_regressions = []
     if externals.exists('shogun.krr') and externals.versions['shogun'] >= '0.9':

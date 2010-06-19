@@ -821,6 +821,7 @@ class ClassifiersTests(unittest.TestCase):
 
     # XXX TODO: should work on smlr, knn, ridgereg, lars as well! but now
     #     they fail to train
+    #    svmocas -- segfaults -- reported to mailing list
     #    GNB, LDA, QDA -- cannot train since 1 sample isn't sufficient
     #    to assess variance
     @sweepargs(clf=clfswh['!smlr', '!knn', '!gnb', '!lda', '!qda', '!lars', '!meta', '!ridge'])
