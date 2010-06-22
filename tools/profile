@@ -133,7 +133,7 @@ if __name__ == "__main__":
             except SystemExit:
                 pass
         else:
-            prof.run('\n'.join(open(cmdname, 'r').readlines()))
+            prof.run(''.join(open(cmdname, 'r').readlines()))
             verbose(1, "Running whole module/script with a profiler")
 
         verbose(1, "Saving profile data into %s" % pfilename)
