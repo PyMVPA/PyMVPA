@@ -581,6 +581,8 @@ class SVM(_SVM):
         else:
             if len(self._attrmap.keys()) == 2:
                 predictions = np.sign(values)
+                # since np.sign(0) == 0
+                predictions[predictions==0] = 1
             else:
                 predictions = values
 
