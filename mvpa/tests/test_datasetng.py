@@ -546,7 +546,8 @@ def test_labelpermutation_randomsampling():
     assert_raises(KeyError, ds.permute_attr,
                   attr='roi') # wrong collection
     ds = ods.copy()
-    ds.permute_attr(attr='lucky', chunks_attr='roi', col='fa')
+    ds.permute_attr(attr='lucky', chunks_attr='roi', col='fa',
+                    assure_permute=True)
     # we should have not touched samples attributes
     for sa in ds.sa.keys():
         assert_array_equal(ds.sa[sa].value, ods.sa[sa].value)
