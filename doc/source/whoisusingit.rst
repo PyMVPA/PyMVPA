@@ -26,6 +26,7 @@ Institutions Where PyMVPA Is Used
 =================================
 
 * Department of Psychological and Brain Sciences, **Dartmouth College**, USA
+* Thayer School of Engineering, **Dartmouth College**, USA
 * Department of Psychology & Neuroscience, **Duke University**, USA
 * **Fondazione Bruno Kessler**, Italy
 * Department of Brain and Cognitive Sciences, **Massachusetts Institute of
@@ -50,6 +51,10 @@ Studies employing PyMVPA
 * :ref:`Manelis et al., Human Brain Mapping (2010) <MHH10>`: Implicit memory
   for object locations depends on reactivation of encoding-related brain
   regions.
+
+* :ref:`Trautmann et al., IEEE/RSJ International Conference on Intelligent
+  Robots and Systems (2009) <TRL09>`: Development of an autonomous robot for
+  ground penetrating radar surveys of polar ice.
 
 * :ref:`Sun et al., Biological Psychiatry (2009) <SET+09>`: Elucidating an
   MRI-Based Neuroanatomic Biomarker for Psychosis: Classification Analysis

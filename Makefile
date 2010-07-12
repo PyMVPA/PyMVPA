@@ -272,7 +272,8 @@ upload-website-dev:
 	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI_DEV)/
 
 upload-htmldoc-dev:
-	sed -i -e "s,http://disqus.com/forums/pymvpa/,http://disqus.com/forums/pymvpa-dev/,g" \
+	grep -q pymvpa-dev doc/source/_themes/pymvpa_online/page.html || \
+	 sed -i -e "s,http://disqus.com/forums/pymvpa/,http://disqus.com/forums/pymvpa-dev/,g" \
 		-e "s,^<!-- HEADNOTES -->,<!-- HEADNOTES --><div class='admonition note'>This content refers to an unreleased development version of PyMVPA</div>,g" \
 		doc/source/_themes/pymvpa_online/page.html
 	$(MAKE) htmldoc SPHINXOPTS='-D html_theme=pymvpa_online'

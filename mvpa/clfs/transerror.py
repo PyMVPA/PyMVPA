@@ -276,7 +276,7 @@ class ROCCurve(object):
         # Handle degenerate cases politely
         if Nlabels < 2:
             warning("ROC was asked to be evaluated on data with %i"
-                    " labels which is a degenerate case.")
+                    " labels which is a degenerate case." % Nlabels)
             self._ROCs = []
             self._aucs = []
             return
@@ -611,6 +611,8 @@ class ConfusionMatrix(SummaryStatistics):
                   / MCC_denom[nz]
 
         stats['ACC'] = np.sum(TP)/(1.0*np.sum(stats['P']))
+        # TODO: STD of accuracy and corrected one according to
+        #    Nadeau and Bengio [50] 
         stats['ACC%'] = stats['ACC'] * 100.0
         if chisquare:
             # indep_rows to assure reasonable handling of disbalanced
@@ -1387,7 +1389,7 @@ class TransferError(ClassifierError):
                             "Errors are available in a dictionary with each "
                             "samples origid as key.")
 
-    def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None,
+    def __init__(self, clf, errorfx=None, labels=None,
                  null_dist=None, samples_idattr='origids', **kwargs):
         """Initialization.
 
@@ -1397,7 +1399,9 @@ class TransferError(ClassifierError):
           Either trained or untrained classifier
         errorfx: func, optional
           Functor that computes a scalar error value from the vectors of
-          desired and predicted values (e.g. subclass of `ErrorFunction`)
+          desired and predicted values (e.g. subclass of `ErrorFunction`).
+          If None, then MeanMismatchErrorFx is chosen for classifiers and
+          CorrErrorFx for regressions
         labels : list, optional
           If provided, should be a set of labels to add on top of the
           ones present in testdata
@@ -1407,6 +1411,9 @@ class TransferError(ClassifierError):
           conditional attribute
         """
         ClassifierError.__init__(self, clf, labels, **kwargs)
+        if errorfx is None:
+            errorfx = {False: MeanMismatchErrorFx,
+                       True: CorrErrorFx}[clf.__is_regression__]()
         self.__errorfx = errorfx
         self.__null_dist = auto_null_dist(null_dist)
         self.__samples_idattr = samples_idattr

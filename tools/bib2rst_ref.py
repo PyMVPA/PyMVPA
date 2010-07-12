@@ -326,6 +326,10 @@ def bib2rst_references(bib):
             cit += ': ' + prop['address']
         elif cat.lower() == 'manual':
             cit += ' ' + prop['address']
+        elif cat.lower() == 'inproceedings':
+            cit += ' ' + prop['booktitle']
+            if prop.has_key('pages'):
+                cit += ', ' + '-'.join(prop['pages'])
         else:
             print "WARNING: Cannot handle bibtex item type:", cat
 

@@ -148,7 +148,8 @@ class SVMKernelTests(unittest.TestCase):
         ds_vstacked = vstack((ds2, ds))
         # should complaint now since there would not be unique
         # samples' origids
-        assert_raises(ValueError, ck.compute, ds_vstacked)
+        if __debug__:
+            assert_raises(ValueError, ck.compute, ds_vstacked)
 
         ds_vstacked.init_origids('samples')      # reset origids
         ck.compute(ds_vstacked)

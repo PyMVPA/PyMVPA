@@ -19,6 +19,7 @@ from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
      MulticlassClassifier, RegressionAsClassifier
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN
+from mvpa.clfs.gda import LDA, QDA
 from mvpa.clfs.gnb import GNB
 from mvpa.kernels.np import LinearKernel, SquaredExponentialKernel, \
      GeneralizedLinearKernel
@@ -43,7 +44,7 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'regression', 'regression_based',
         'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
-        'gnb', 'rpy2', 'swig' ]
+        'gnb', 'rpy2', 'swig', 'skl', 'lda', 'qda' ]
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
@@ -239,15 +240,16 @@ if externals.exists('shogun'):
             sg.SVM(
                 C=1.0, descr="sg.LinSVM(C=1)/%s" % impl, svm_impl=impl),
             ]
-        clfswh += [
-            sg.SVM(kernel=RbfSGKernel(),
-                   descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
-#            sg.SVM(kernel=RbfSGKernel(),
-#                   descr="sg.RbfSVM(gamma=0.1)/%s"
-#                    % impl, svm_impl=impl, gamma=0.1),
-#           sg.SVM(descr="sg.SigmoidSVM()/%s"
-#                   % impl, svm_impl=impl, kernel=SigmoidSGKernel(),),
-            ]
+        if not impl in ['svmocas']:     # inherently linear only
+            clfswh += [
+                sg.SVM(kernel=RbfSGKernel(),
+                       descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
+    #            sg.SVM(kernel=RbfSGKernel(),
+    #                   descr="sg.RbfSVM(gamma=0.1)/%s"
+    #                    % impl, svm_impl=impl, gamma=0.1),
+    #           sg.SVM(descr="sg.SigmoidSVM()/%s"
+    #                   % impl, svm_impl=impl, kernel=SigmoidSGKernel(),),
+                ]
 
     _optional_regressions = []
     if externals.exists('shogun.krr') and externals.versions['shogun'] >= '0.9':
@@ -295,6 +297,16 @@ if externals.exists('glmnet'):
     from mvpa.clfs.glmnet import GLMNET_C, GLMNET_R
     clfswh += GLMNET_C(descr="GLMNET_C()")
     regrswh += GLMNET_R(descr="GLMNET_R()")
+
+# LDA/QDA
+clfswh += LDA(descr='LDA()')
+clfswh += QDA(descr='QDA()')
+
+if externals.exists('skl'):
+    from scikits.learn.lda import LDA as sklLDA
+    from mvpa.clfs.skl.base import SKLLearnerAdapter
+    clfswh += SKLLearnerAdapter(sklLDA(), tags=['lda', 'linear', 'multiclass', 'binary'],
+                                descr='scikits.learn.LDA()_adapter')
 
 # kNN
 clfswh += kNN(k=5, descr="kNN(k=5)")

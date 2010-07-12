@@ -442,30 +442,31 @@ def _str(obj, *args, **kwargs):
     """
     truncate = cfg.get_as_dtype('verbose', 'truncate str', int, default=200)
 
+    s = None
     if hasattr(obj, 'descr'):
         s = obj.descr
-    else:
-        s ='%s' % obj.__class__.__name__
+    if s is None:
+        s = obj.__class__.__name__
         auto_descr = ', '.join(list(args)
                        + ["%s=%s" % (k, v) for k, v in kwargs.iteritems()])
         if len(auto_descr):
-            s += ': %s' % auto_descr
+            s = s + ': ' + auto_descr
 
     if not truncate is None and len(s) > truncate - 5:
-        # take <...> into account
-        truncate -= 5
-        s = "%s..." % s[:truncate]
+        # -5 to take <...> into account
+        s = s[:truncate-5] + '...'
 
     if __debug__ and 'DS_ID' in debug.active:
         # in case there was nothing but the class name
-        if s[-1]:
-            s += ', id=%i' % id(obj)
-        else:
-            s += ' id=%i' % id(obj)
-
+        if len(s):
+            if s[-1]:
+                s += ','
+            s += ' '
+        s += 'id=%i' % id(obj)
 
     # finally wrap in <> and return
-    return '<%s>' % s
+    # + instead of '%s' for bits of speedup
+    return '<' + s + '>'
 
 
 def borrowdoc(cls, methodname=None):
