@@ -888,11 +888,24 @@ def test_other_samples_dtypes():
 
 
 def test_dataset_summary():
+    # default summaries we should expect
+    summaries = ['Summary for targets', 'Summary for chunks',
+                 'Sequence statistics']
     for ds in datasets.itervalues():
         s = ds.summary()
         ok_(s.startswith(str(ds)[1:-1])) # we strip surrounding '<...>'
         # TODO: actual test of what was returned; to do that properly
         #       RF the summary() so it is a dictionary
+
+        # By default we should get all kinds of summaries
+        if not 'Number of unique targets >' in s:
+            for summary in summaries:
+                ok_(summary in s)
+
+        # If we give "wrong" targets_attr we should see none of summaries
+        s2 = ds.summary(targets_attr='bogus')
+        for summary in summaries:
+            ok_(not summary in s2)
 
 def test_h5py_io():
     skip_if_no_external('h5py')

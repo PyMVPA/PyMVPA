@@ -348,7 +348,7 @@ def get_samples_by_attr(dataset, attr, values, sort=True):
     return sel
 
 @datasetmethod
-def summary(dataset, stats=True, lstats=True, sstats=True, idhash=False,
+def summary(dataset, stats=True, lstats='auto', sstats='auto', idhash=False,
             targets_attr='targets', chunks_attr='chunks',
             maxc=30, maxt=20):
     """String summary over the object
@@ -357,10 +357,12 @@ def summary(dataset, stats=True, lstats=True, sstats=True, idhash=False,
     ----------
     stats : bool
       Include some basic statistics (mean, std, var) over dataset samples
-    lstats : bool
-      Include statistics on chunks/targets
-    sstats : bool
-      Sequence (order) statistics
+    lstats : 'auto' or bool
+      Include statistics on chunks/targets.  If 'auto', includes only if both
+      targets_attr and chunks_attr are present.
+    sstats : 'auto' or bool
+      Sequence (order) statistics. If 'auto', includes only if
+      targets_attr is present.
     idhash : bool
       Include idhash value for dataset and samples
     targets_attr : str, optional
@@ -374,10 +376,17 @@ def summary(dataset, stats=True, lstats=True, sstats=True, idhash=False,
     """
     # local bindings
     samples = dataset.samples
+    sa = dataset.sa
     s = str(dataset)[1:-1]
 
     if idhash:
         s += '\nID-Hashes: %s' % dataset.idhash
+
+    # Deduce if necessary lstats and sstats
+    if lstats is 'auto':
+        lstats = (targets_attr in sa) and (chunks_attr in sa)
+    if sstats is 'auto':
+        sstats = (targets_attr in sa)
 
     ssep = (' ', '\n')[lstats]
 
