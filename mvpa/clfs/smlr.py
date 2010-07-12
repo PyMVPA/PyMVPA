@@ -32,7 +32,7 @@ if externals.exists('ctypes'):
     except OSError, e:
         warning("Failed to load fast implementation of SMLR.  May be you "
                 "forgotten to build it.  We will use much slower pure-Python "
-                "version")
+                "version. Original exception was %s" % (e,))
         _cStepwiseRegression = None
 else:
     _cStepwiseRegression = None

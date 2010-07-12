@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import operator
 
+from mvpa.base import warning
 from mvpa.base.dochelpers import _str
 from mvpa.mappers.base import Mapper
 from mvpa.misc.support import array_whereequal
@@ -177,6 +178,13 @@ class FxMapper(Mapper):
             else:
                 samples = ds.samples[:, selector]
 
+            # check if there were any samples for such a combination,
+            # if not -- warning and skip the rest of the loop body
+            if not len(samples):
+                warning('There were no samples for combination %s. It might be '
+                        'a sign of a disbalanced dataset %s.' % (comb, ds))
+                continue
+
             fxed_samples = np.apply_along_axis(self.__fx, axis, samples,
                                               *self.__fxargs)
             mdata.append(fxed_samples)
@@ -322,16 +330,20 @@ def _uniquemerge2literal(attrs):
     Returns
     -------
     Non-sequence arguments are passed as is. Sequences are converted into
-    a single item representation (see above) and returned.
+    a single item representation (see above) and returned.  None is returned
+    in case of an empty sequence.
     """
     # only do something if multiple items are given
     if not operator.isSequenceType(attrs):
         return attrs
     unq = np.unique(attrs)
-    if len(unq) > 1:
+    lunq = len(unq)
+    if lunq > 1:
         return '+'.join([str(l) for l in unq])
-    else:
+    elif lunq:                          # first entry (non
         return unq[0]
+    else:
+        return None
 
 
 def _orthogonal_permutations(a_dict):

@@ -56,6 +56,12 @@ def test_samplesgroup_mapper():
     # make sure origids get regenerated
     assert_array_equal([s.count('+') for s in mapped.sa.origids], [1] * 4)
 
+    # disbalanced dataset -- lets remove 0th sample so there is no target
+    # 0 in 0th chunk
+    ds_ = ds[[0, 1, 3, 5]]
+    mapped = ds_.get_mapped(m)
+    ok_(len(mapped) == 3)
+    ok_(not None in mapped.sa.origids)
 
 def test_featuregroup_mapper():
     ds = Dataset(np.arange(24).reshape(3,8))

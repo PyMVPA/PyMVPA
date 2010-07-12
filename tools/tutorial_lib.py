@@ -34,7 +34,7 @@ def get_raw_haxby2001_data(path=os.path.join(tutorial_data_path, 'data'),
                           mask=mask)
         return ds
     else:
-        return load_datadb_demo_blockfmri(path=path, roi=roi)
+        return load_datadb_tutorial_data(path=path, roi=roi)
 
 
 def get_haxby2001_data(path=None, roi='vt'):

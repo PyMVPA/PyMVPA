@@ -140,6 +140,7 @@ Measures: Searchlights and Sensitivties
    measures.irelief
    measures.noiseperturbation
    measures.searchlight
+   measures.gnbsearchlight
 
 
 Feature Selection

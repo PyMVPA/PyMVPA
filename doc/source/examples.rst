@@ -47,6 +47,7 @@ Analysis
    examples/clfs_examples
    examples/gpr
    examples/gpr_model_selection0
+   examples/cachedkernel
    examples/searchlight_minimal
    examples/searchlight
    examples/searchlight_dsm
@@ -56,6 +57,7 @@ Analysis
    examples/match_distribution
    examples/eventrelated
    examples/mdp_mnist
+   examples/eyemovements
 
 
 Visualization

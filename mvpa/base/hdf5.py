@@ -23,16 +23,14 @@ disassemble it into basic pieces.  The default implementation of
 `object.__reduce__()` is typically sufficient. Hence, for any new-style Python
 class there is, in general, no need to implement `__reduce__()`. However, custom
 implementations might allow for leaner HDF5 representations and leaner files.
-Basic types, such as `list`, and `dict`, which `__reduce__()` method does not do
+Basic types, such as `list`, and `dict`, whose `__reduce__()` method does not do
 help with disassembling are also handled.
 
 .. warning::
 
   Although, in principle, storage and reconstruction of arbitrary object types
   is possible, it might not be implemented yet. The current focus lies on
-  storage of PyMVPA datasets and their attributes (e.g. Mappers).  Especially,
-  objects with recursive references will cause problems with the current
-  implementation.
+  storage of PyMVPA datasets and their attributes (e.g. Mappers).
 """
 
 __docformat__ = 'restructuredtext'
@@ -51,10 +49,7 @@ class HDF5ConversionError(Exception):
     """
     pass
 
-#
-# TODO: check for recursions!!!
-#
-def hdf2obj(hdf):
+def hdf2obj(hdf, memo=None):
     """Convert an HDF5 group definition into an object instance.
 
     Obviously, this function assumes the conventions implemented in the
@@ -65,6 +60,9 @@ def hdf2obj(hdf):
     ----------
     hdf : HDF5 group instance
       HDF5 group instance. this could also be an HDF5 file instance.
+    memo : dict
+      Dictionary tracking reconstructed objects to prevent recursions (analog to
+      deepcopy).
 
     Notes
     -----
@@ -79,131 +77,74 @@ def hdf2obj(hdf):
     -------
     object instance
     """
-    # already at the level of real data
+    if memo is None:
+        # init object tracker
+        memo = {}
+    # note, older file formats did not store objrefs
+    if 'objref' in hdf.attrs:
+        objref = hdf.attrs['objref']
+    else:
+        objref = None
+
+    # if this HDF group has an objref that points to an already recontructed
+    # object, simple return this object again
+    if not objref is None and objref in memo:
+        obj = memo[objref]
+        if __debug__:
+            debug('HDF5', "Use tracked object %s (%i)" % (type(obj), objref))
+        return obj
+
+    #
+    # Actual data
+    #
     if isinstance(hdf, h5py.Dataset):
         if __debug__:
-            debug('HDF5', "Load HDF5 dataset '%s'." % hdf.name)
-        if not len(hdf.shape):
+            debug('HDF5', "Load from HDF5 dataset [%s]" % hdf.name)
+        if 'is_scalar' in hdf.attrs:
             # extract the scalar from the 0D array
-            return hdf[()]
+            obj = hdf[()]
         else:
             # read array-dataset into an array
-            value = np.empty(hdf.shape, hdf.dtype)
-            hdf.read_direct(value)
-            return value
+            obj = np.empty(hdf.shape, hdf.dtype)
+            hdf.read_direct(obj)
     else:
         # check if we have a class instance definition here
         if not ('class' in hdf.attrs or 'recon' in hdf.attrs):
             raise LookupError("Found hdf group without class instance "
                     "information (group: %s). Cannot convert it into an "
-                    "object (attributes: '%s')."
-                    % (hdf.name, hdf.attrs.keys()))
+                    "object (content: '%s', attributes: '%s')."
+                    % (hdf.name, hdf.keys(), hdf.attrs.keys()))
 
-        if __debug__:
-            debug('HDF5', "Parsing HDF5 group (attributes: '%s')."
-                          % (hdf.attrs.keys()))
+        mod_name = hdf.attrs['module']
+
         if 'recon' in hdf.attrs:
-            # we found something that has some special idea about how it wants
-            # to be reconstructed
-            # look for arguments for that reconstructor
-            recon = hdf.attrs['recon']
-            mod = hdf.attrs['module']
-            if mod == '__builtin__':
-                raise NotImplementedError(
-                        "Built-in reconstructors are not supported (yet). "
-                        "Got: '%s'." % recon)
-
-            # turn names into definitions
-            mod = __import__(mod, fromlist=[recon])
-            recon = mod.__dict__[recon]
-
-            if 'rcargs' in hdf:
-                recon_args = _hdf_tupleitems_to_obj(hdf['rcargs'])
+            # Custom objects custom reconstructor
+            obj = _recon_customobj_customrecon(hdf, memo)
+        elif mod_name != '__builtin__':
+            # Custom objects default reconstructor
+            cls_name = hdf.attrs['class']
+            if cls_name in ('function', 'type'):
+                # Functions and types
+                obj = _recon_functype(hdf)
             else:
-                recon_args = ()
-
-            if __debug__:
-                debug('HDF5', "Reconstructing object with '%s' (%i arguments)."
-                              % (recon, len(recon_args)))
-            # reconstruct
-            obj = recon(*recon_args)
-
-            # TODO Handle potentially avialable state settings
-            return obj
-
-        cls = hdf.attrs['class']
-        mod = hdf.attrs['module']
-        if not mod == '__builtin__':
-            # some custom class is desired
-            # import the module and the class
-            if __debug__:
-                debug('HDF5', "Importing '%s' from '%s'." % (cls, mod))
-            mod = __import__(mod, fromlist=[cls])
-
-            if cls in ('function', 'type'):
-                oname = hdf.attrs['name']
-                # special case of non-built-in functions
-                if __debug__:
-                    debug('HDF5', "Loaded %s '%s' from '%s'."
-                                  % (cls, oname, mod))
-                return mod.__dict__[oname]
-
-            # get the class definition from the module dict
-            cls = mod.__dict__[cls]
-
-            if __debug__:
-                debug('HDF5', "Reconstructing class '%s' instance."
-                              % cls)
-            # create the object
-            if issubclass(cls, dict):
-                # use specialized __new__ if necessary or beneficial
-                obj = dict.__new__(cls)
-            else:
-                obj = object.__new__(cls)
-
-            if 'state' in hdf:
-                # insert the state of the object
-                if __debug__:
-                    debug('HDF5', "Populating instance state.")
-                state = _hdf_dictitems_to_obj(hdf['state'])
-                obj.__dict__.update(state)
-                if __debug__:
-                    debug('HDF5', "Updated %i state items." % len(state))
-
-            # do we process a container?
-            if 'items' in hdf:
-                if issubclass(cls, dict):
-                    # charge a dict itself
-                    if __debug__:
-                        debug('HDF5', "Populating dictionary object.")
-                    obj.update(_hdf_dictitems_to_obj(hdf['items']))
-                    if __debug__:
-                        debug('HDF5', "Loaded %i items." % len(obj))
-                else:
-                    raise NotImplementedError(
-                            "Unhandled conatiner typ (got: '%s')." % cls)
-
-            return obj
-
+                # Other custom objects
+                obj = _recon_customobj_defaultrecon(hdf, memo)
         else:
+            # Built-in objects
+            cls_name = hdf.attrs['class']
             if __debug__:
-                debug('HDF5', "Reconstruction built-in object '%s'." % cls)
+                debug('HDF5', "Reconstructing built-in object '%s'." % cls_name)
             # built in type (there should be only 'list', 'dict' and 'None'
             # that would not be in a Dataset
-            if cls == 'NoneType':
-                return None
-            elif cls == 'tuple':
-                return _hdf_tupleitems_to_obj(hdf['items'])
-            elif cls == 'list':
-                l = _hdf_listitems_to_obj(hdf['items'])
-                if 'is_objarray' in hdf.attrs:
-                    # need to handle special case of arrays of objects
-                    return asobjarray(l)
-                else:
-                    return l
-            elif cls == 'dict':
-                return _hdf_dictitems_to_obj(hdf['items'])
-            elif cls == 'function':
+            if cls_name == 'NoneType':
+                obj = None
+            elif cls_name == 'tuple':
+                obj = _hdf_tupleitems_to_obj(hdf, memo)
+            elif cls_name == 'list':
+                obj = _hdf_list_to_obj(hdf, memo)
+            elif cls_name == 'dict':
+                obj = _hdf_dict_to_obj(hdf, memo)
+            elif cls_name == 'function':
                 raise RuntimeError("Unhandled reconstruction of built-in "
                         "function (at '%s')." % hdf.name)
             else:
@@ -211,33 +152,224 @@ def hdf2obj(hdf):
                         "that is not handled by the parser (group: %s). This "
                         "is a conceptual bug in the parser. Please report."
                         % hdf.name)
+    #
+    # Final post-processing
+    #
+    if 'is_objarray' in hdf.attrs:
+        # need to handle special case of arrays of objects
+        if np.isscalar(obj):
+            obj = np.array(obj, dtype=np.object)
+        else:
+            obj = asobjarray(obj)
+    # track if desired
+    if objref:
+        memo[objref] = obj
+    if __debug__:
+        debug('HDF5', "Done loading %s [%s]"
+                      % (type(obj), hdf.name))
+    return obj
 
 
-def _hdf_dictitems_to_obj(hdf, skip=None):
+def _recon_functype(hdf):
+    """Reconstruct a function or type from HDF"""
+    cls_name = hdf.attrs['class']
+    mod_name = hdf.attrs['module']
+    ft_name = hdf.attrs['name']
+    if __debug__:
+        debug('HDF5', "Load '%s.%s.%s' [%s]"
+                      % (mod_name, cls_name, ft_name, hdf.name))
+    mod = __import__(mod_name, fromlist=[cls_name])
+    obj = mod.__dict__[ft_name]
+    return obj
+
+
+def _recon_customobj_customrecon(hdf, memo):
+    """Reconstruct a custom object from HDF using a custom recontructor"""
+    # we found something that has some special idea about how it wants
+    # to be reconstructed
+    mod_name = hdf.attrs['module']
+    recon_name = hdf.attrs['recon']
+    if mod_name == '__builtin__':
+        raise NotImplementedError(
+                "Built-in reconstructors are not supported (yet). "
+                "Got: '%s'" % recon_name)
+
+    if __debug__:
+        debug('HDF5', "Load from custom reconstructor '%s.%s' [%s]"
+                      % (mod_name, recon_name, hdf.name))
+    # turn names into definitions
+    mod = __import__(mod_name, fromlist=[recon_name])
+    recon = mod.__dict__[recon_name]
+
+    if 'rcargs' in hdf:
+        recon_args_hdf = hdf['rcargs']
+        if __debug__:
+            debug('HDF5', "Load reconstructor args in [%s]"
+                          % recon_args_hdf.name)
+        recon_args = _hdf_tupleitems_to_obj(recon_args_hdf, memo)
+    else:
+        recon_args = ()
+
+    # reconstruct
+    obj = recon(*recon_args)
+    # TODO Handle potentially avialable state settings
+    return obj
+
+
+def _recon_customobj_defaultrecon(hdf, memo):
+    """Reconstruct a custom object from HDF using the default recontructor"""
+    cls_name = hdf.attrs['class']
+    mod_name = hdf.attrs['module']
+    if __debug__:
+        debug('HDF5', "Load class instance '%s.%s' instance [%s]"
+                      % (mod_name, cls_name, hdf.name))
+    mod = __import__(mod_name, fromlist=[cls_name])
+    cls = mod.__dict__[cls_name]
+
+    # create the object
+    if issubclass(cls, dict):
+        # use specialized __new__ if necessary or beneficial
+        obj = dict.__new__(cls)
+    else:
+        obj = object.__new__(cls)
+
+    if 'state' in hdf:
+        # insert the state of the object
+        if __debug__:
+            debug('HDF5', "Populating instance state.")
+        state = _hdf_dict_to_obj(hdf['state'], memo)
+        obj.__dict__.update(state)
+        if __debug__:
+            debug('HDF5', "Updated %i state items." % len(state))
+
+    # do we process a container?
+    if 'items' in hdf:
+        if issubclass(cls, dict):
+            # charge a dict itself
+            if __debug__:
+                debug('HDF5', "Populating dictionary object.")
+            obj.update(_hdf_dict_to_obj(hdf, memo))
+            if __debug__:
+                debug('HDF5', "Loaded %i items." % len(obj))
+        else:
+            raise NotImplementedError(
+                    "Unhandled container typ (got: '%s')." % cls)
+    return obj
+
+
+def _hdf_dict_to_obj(hdf, memo, skip=None):
     if skip is None:
         skip = []
-    if hdf.attrs.get('__keys_in_tuple__', 0):
-        items = _hdf_listitems_to_obj(hdf)
+    # legacy compat code
+    if not 'items' in hdf:
+        items_container = hdf
+    # end of legacy compat code
+    else:
+        items_container = hdf['items']
+
+    if items_container.attrs.get('__keys_in_tuple__', 0):
+        items = _hdf_list_to_obj(hdf, memo)
         items = [i for i in items if not i[0] in skip]
         return dict(items)
     else:
         # legacy files had keys as group names
-        return dict([(item, hdf2obj(hdf[item]))
-                        for item in hdf
+        return dict([(item, hdf2obj(items_container[item], memo=memo))
+                        for item in items_container
                             if not item in skip])
 
 
-def _hdf_listitems_to_obj(hdf):
-    return [hdf2obj(hdf[str(i)]) for i in xrange(len(hdf))]
+def _hdf_list_to_obj(hdf, memo):
+    """Convert an HDF item sequence into a list"""
+    # new-style files have explicit length
+    if 'length' in hdf.attrs:
+        length = hdf.attrs['length']
+        if __debug__:
+            debug('HDF5', "Found explicit sequence length setting (%i)"
+                          % length)
+        hdf_items = hdf['items']
+    elif 'items' in hdf:
+        # not so legacy file, at least has an items container
+        length = len(hdf['items'])
+        if __debug__:
+            debug('HDF5', "No explicit sequence length setting (guess: %i)"
+                          % length)
+        hdf_items = hdf['items']
+    # legacy compat code
+    else:
+        length = len(hdf)
+        if __debug__:
+            debug('HDF5', "Ancient file, guessing sequence length (%i)"
+                          % length)
+        # really legacy file, not even items container
+        hdf_items = hdf
+    # end of legacy compat code
+
+    # prepare item list
+    items = [None] * length
+    # need to put items list in memo before starting to parse to allow to detect
+    # self-inclusion of this list in itself
+    if 'objref' in hdf.attrs:
+        obj_id = hdf.attrs['objref']
+        memo[obj_id] = items
+        if __debug__:
+            debug('HDF5', "Track sequence under ref: %i)" % length)
+    # for all expected items
+    for i in xrange(length):
+        if __debug__:
+            debug('HDF5', "Item %i" % i)
+        str_i = str(i)
+        obj = None
+        objref = None
+        # we need a separate flag, see below
+        got_obj = False
+        # do we have an item attribute for this item (which is the objref)
+        if str_i in hdf_items.attrs:
+            objref = hdf_items.attrs[str_i]
+        # do we have an actual value for this item
+        if str_i in hdf_items:
+            obj = hdf2obj(hdf_items[str_i], memo=memo)
+            # we need to signal that we got something, since it could as well
+            # be None
+            got_obj = True
+        if not got_obj:
+            # no actual value for item
+            if objref is None:
+                raise LookupError("Cannot find list item '%s'" % str_i)
+            else:
+                # no value but reference -> value should be in memo
+                if objref in memo:
+                    if __debug__:
+                        debug('HDF5', "Use tracked object (%i)"
+                                      % objref)
+                    items[i] = memo[objref]
+                else:
+                    raise LookupError("No value for objref '%i'" % objref)
+        else:
+            # we have a value for this item
+            items[i] = obj
+            # store value for ref if present
+            if not objref is None:
+                memo[objref] = obj
+
+    return items
 
 
-def _hdf_tupleitems_to_obj(hdf):
-    return tuple(_hdf_listitems_to_obj(hdf))
+def _hdf_tupleitems_to_obj(hdf, memo):
+    """Same as _hdf_list_to_obj, but converts to tuple upon return"""
+    return tuple(_hdf_list_to_obj(hdf, memo))
 
-#
-# TODO: check for recursions!!!
-#
-def obj2hdf(hdf, obj, name=None, **kwargs):
+
+def _seqitems_to_hdf(obj, hdf, memo, noid=False, **kwargs):
+    """Store a sequence as HDF item list"""
+    hdf.attrs.create('length', len(obj))
+    items = hdf.create_group('items')
+    for i, item in enumerate(obj):
+        if __debug__:
+            debug('HDF5', "Item %i" % i)
+        obj2hdf(items, item, name=str(i), memo=memo, noid=noid, **kwargs)
+
+
+def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
     """Store an object instance in an HDF5 group.
 
     A given object instance is (recursively) disassembled into pieces that are
@@ -259,62 +391,151 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
       Name of the object. In case of a complex object that cannot be stored
       natively without disassembling them, this is going to be a new group,
       Otherwise the name of the dataset. If None, no new group is created.
+    memo : dict
+      Dictionary tracking stored objects to prevent recursions (analog to
+      deepcopy).
+    noid : bool
+      If True, the to be processed object has no usable id. Set if storing
+      objects that were created temporarily, e.g. during type conversions.
     **kwargs
       All additional arguments will be passed to `h5py.Group.create_dataset()`
     """
+    if memo is None:
+        # initialize empty recursion tracker
+        memo = {}
+
+    #
+    # Catch recursions: just stored references to already known objects
+    #
+    if noid:
+        # noid: tracking this particular object is not intended
+        obj_id = 0
+    else:
+        obj_id = id(obj)
+    if not noid and obj_id in memo:
+        # already in here somewhere, nothing else but reference needed
+        # this can also happen inside containers, so 'name' should not be None
+        hdf.attrs.create(name, obj_id)
+        if __debug__:
+            debug('HDF5', "Store '%s' by objref: %i" % (type(obj), obj_id))
+        # done
+        return
+
+    #
+    # Ugly special case of arrays of objects
+    #
+    if isinstance(obj, np.ndarray) and obj.dtype == np.object:
+        if not len(obj.shape):
+            # even worse: 0d array
+            # we store 0d object arrays just by content
+            if __debug__:
+                debug('HDF5', "0d array(object) -> object")
+            obj = obj[()]
+        else:
+            # proper arrays can become lists
+            if __debug__:
+                debug('HDF5', "array(objects) -> list(objects)")
+            obj = list(obj)
+            # make sure we don't ref this temporary list object
+            noid = True
+        # flag that we messed with the original type
+        is_obj_array = True
+    else:
+        # puh, thanks!
+        is_obj_array = False
+
     # if it is something that can go directly into HDF5, put it there
     # right away
-    if np.isscalar(obj) \
-       or (isinstance(obj, np.ndarray) and not obj.dtype == np.object):
+    if np.isscalar(obj) or isinstance(obj, np.ndarray):
+        is_scalar = np.isscalar(obj)
         if name is None:
             # HDF5 cannot handle datasets without a name
             name = '__unnamed__'
         if __debug__:
-            debug('HDF5', "Storing '%s' in HDF5 dataset '%s'"
-                          % (type(obj), name))
-
+            debug('HDF5', "Store '%s' (ref: %i) in [%s/%s]"
+                          % (type(obj), obj_id, hdf.name, name))
+        # the real action is here
         hdf.create_dataset(name, None, None, obj, **kwargs)
+        if not noid and not is_scalar:
+            # objref for scalar items would be overkill
+            hdf[name].attrs.create('objref', obj_id)
+            # store object reference to be able to detect duplicates
+            memo[obj_id] = obj
+            if __debug__:
+                debug('HDF5', "Record objref in memo-dict (%i)" % obj_id)
+        if is_obj_array:
+            # we need to confess the true origin
+            hdf[name].attrs.create('is_objarray', True)
+        if is_scalar:
+            hdf[name].attrs.create('is_scalar', True)
         return
 
-    if __debug__:
-        debug('HDF5', "Convert '%s' into HDF5 group with name '%s'."
-                      % (type(obj), name))
-
+    #
+    # Below handles stuff that cannot be natively stored in HDF5
+    #
     if not name is None:
-        # complex objects
         if __debug__:
-            debug('HDF5', "Create HDF5 group '%s'" % (name))
+            debug('HDF5', "Store '%s' (ref: %i) in [%s/%s]"
+                          % (type(obj), obj_id, hdf.name, name))
         grp = hdf.create_group(str(name))
     else:
+        # XXX wouldn't it be more coherent to always have non-native objects in
+        # a separate group
+        if __debug__:
+            debug('HDF5', "Store '%s' (ref: %i) in [%s]"
+                          % (type(obj), obj_id, hdf.name))
         grp = hdf
 
-    # special case of array of type object -- we turn them into lists and
-    # process as usual, but set a flag to trigger appropriate reconstruction
-    if isinstance(obj, np.ndarray) and obj.dtype == np.object:
-        if __debug__:
-            debug('HDF5', "Convert array of objects into a list.")
-        obj = list(obj)
+    #
+    # Store important flags and references in the group meta data
+    #
+    if not noid and not obj is None:
+        # no refs for basic types
+        grp.attrs.create('objref', obj_id)
+        # we also note that we processed this object
+        memo[obj_id] = obj
+
+    if is_obj_array:
+        # we need to confess the true origin
         grp.attrs.create('is_objarray', True)
 
+    # standard containers need special treatment
+    if not hasattr(obj, '__reduce__'):
+        raise HDF5ConversionError("Cannot store class without __reduce__ "
+                                  "implementation (%s)" % type(obj))
     # try disassembling the object
     try:
         pieces = obj.__reduce__()
     except TypeError:
-        # probably a container
+        # needs special treatment
         pieces = None
-        if __debug__:
-            debug('HDF5', "'%s' could not be __reduce__()'d. A container?."
-                          % (type(obj)))
 
     # common container handling, either __reduce__ was not possible
     # or it was the default implementation
     if pieces is None or pieces[0].__name__ == '_reconstructor':
-        # store class info (fully-qualified)
-        grp.attrs.create('class', obj.__class__.__name__)
+        # figure out the source module
         if hasattr(obj, '__module__'):
-            grp.attrs.create('module', obj.__module__)
+            src_module = obj.__module__
         else:
-            grp.attrs.create('module', obj.__class__.__module__)
+            src_module = obj.__class__.__module__
+
+        cls_name = obj.__class__.__name__
+
+        if src_module != '__builtin__':
+            if hasattr(obj, '__name__'):
+                if not obj.__name__ in dir(__import__(src_module,
+                                                      fromlist=[obj.__name__])):
+                    raise HDF5ConversionError("Cannot store locally defined "
+                                              "function '%s'" % cls_name)
+            else:
+                if not cls_name in dir(__import__(src_module,
+                                                  fromlist=[cls_name])):
+                    raise HDF5ConversionError("Cannot store locally defined "
+                                              "class '%s'" % cls_name)
+        # store class info (fully-qualified)
+        grp.attrs.create('class', cls_name)
+        grp.attrs.create('module', src_module)
+
         if hasattr(obj, '__name__'):
             # for functions/types we need a name for reconstruction
             oname = obj.__name__
@@ -323,44 +544,33 @@ def obj2hdf(hdf, obj, name=None, **kwargs):
                     "Can't obj2hdf lambda functions. Got %r" % (obj,))
             grp.attrs.create('name', oname)
         if isinstance(obj, list) or isinstance(obj, tuple):
-            if __debug__: debug('HDF5', "Special case: Store a list/tuple.")
-            items = grp.create_group('items')
-            for i, item in enumerate(obj):
-                obj2hdf(items, item, name=str(i), **kwargs)
+            _seqitems_to_hdf(obj, grp, memo, **kwargs)
         elif isinstance(obj, dict):
             if __debug__:
-                debug('HDF5', "Special case: Store a dictionary.")
-            items = grp.create_group('items')
-            for i, key in enumerate(obj):
-                # keys might be complex object, so they cannot serve as a
-                # name in this case
-                obj2hdf(items, (key, obj[key]), name=str(i), **kwargs)
-                # leave a tag that the keys are stored within the item
-                # tuple, to make it possible to support legacy files
-                items.attrs.create('__keys_in_tuple__', 1)
+                debug('HDF5', "Store dict as zipped list")
+            # need to set noid since outer tuple containers are temporary
+            _seqitems_to_hdf(zip(obj.keys(), obj.values()), grp, memo,
+                             noid=True, **kwargs)
+            grp['items'].attrs.create('__keys_in_tuple__', 1)
+
         # pull all remaining data from the default __reduce__
         if not pieces is None and len(pieces) > 2:
-            stategrp = grp.create_group('state')
             # there is something in the state
             state = pieces[2]
             if __debug__:
                 debug('HDF5', "Store object state (%i items)." % len(state))
-            # loop over all attributes and store them
-            for attr in state:
-                obj2hdf(stategrp, state[attr], attr, **kwargs)
-        # for the default __reduce__ there is nothin else to do
-        return
+            # need to set noid since state dict is unique to an object
+            obj2hdf(grp, state, name='state', memo=memo, noid=True,
+                    **kwargs)
     else:
         if __debug__:
-            debug('HDF5', "Custom __reduce__: (%i constructor arguments)."
+            debug('HDF5', "Use custom __reduce__: (%i arguments)."
                           % len(pieces[1]))
         # XXX handle custom reduce
         grp.attrs.create('recon', pieces[0].__name__)
         grp.attrs.create('module', pieces[0].__module__)
         args = grp.create_group('rcargs')
-        for i, arg in enumerate(pieces[1]):
-            obj2hdf(args, arg, str(i), **kwargs)
-        return
+        _seqitems_to_hdf(pieces[1], args, memo, **kwargs)
 
 
 def h5save(filename, data, name=None, mode='w', **kwargs):
@@ -387,6 +597,7 @@ def h5save(filename, data, name=None, mode='w', **kwargs):
       This could, for example, be `compression='gzip'`.
     """
     hdf = h5py.File(filename, mode)
+    hdf.attrs.create('__pymvpa_hdf5_version__', 1)
     try:
         obj2hdf(hdf, data, name, **kwargs)
     finally:
@@ -419,26 +630,20 @@ def h5load(filename, name=None):
                                  % (name, filename))
             obj = hdf2obj(hdf[name])
         else:
-            if len(hdf) == 0:
+            if not len(hdf) and not len(hdf.attrs):
                 # there is nothing
                 obj = None
             else:
-                try:
+                # stored objects can only by special groups or datasets
+                if isinstance(hdf, h5py.Dataset) \
+                   or ('class' in hdf.attrs or 'recon' in hdf.attrs):
+                    # this is an object stored at the toplevel
                     obj = hdf2obj(hdf)
-                    # XXX above operation might be really expensive
-                    # and finally fail with something very deep
-                    # under. TODO: RF to carry some cheap 'sensoring'
-                    # first and then simply proceed with deep
-                    # recursion or logic below
-                except LookupError, e:
-                    if __debug__:
-                        debug('HDF5', "Failed to lookup object at top level of "
-                              "'%s' due to %s." % (hdf, e))
-
+                else:
                     # no object into at the top-level, but maybe in the next one
                     # this would happen for plain mat files with arrays
                     if len(hdf) == 1 and '__unnamed__' in hdf:
-                        # just a single with special naem -> special case:
+                        # just a single with special name -> special case:
                         # return as is
                         obj = hdf2obj(hdf['__unnamed__'])
                     else:

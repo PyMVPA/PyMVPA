@@ -410,7 +410,7 @@ def summary(dataset, stats=True, lstats='auto', sstats='auto', idhash=False,
         except KeyError, e:
             s += 'No per %s/%s due to %r' % (targets_attr, chunks_attr, e)
 
-    if sstats:
+    if sstats and not targets_attr is None:
         if len(dataset.sa[targets_attr].unique) < maxt:
             ss = SequenceStats(dataset.sa[targets_attr].value)
             s += str(ss)

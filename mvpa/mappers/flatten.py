@@ -202,6 +202,9 @@ def mask_mapper(mask=None, shape=None, inspace=None):
 
     fm = FlattenMapper(shape=mask.shape, inspace=inspace)
     flatmask = fm.forward1(mask)
-    mapper = ChainMapper([fm, FeatureSliceMapper(flatmask,
-                                                 dshape=flatmask.shape)])
+    mapper = ChainMapper([fm,
+                          FeatureSliceMapper(
+                              flatmask,
+                              dshape=flatmask.shape,
+                              oshape=(len(flatmask.nonzero()[0]),))])
     return mapper
