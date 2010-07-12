@@ -766,7 +766,10 @@ def test_repr():
                  sa={'targets': [0]},
                  fa={'targets': ['b', 'n']})
     ds_repr = repr(ds)
-    ok_(repr(eval(ds_repr)) == ds_repr)
+    try:
+        ok_(repr(eval(ds_repr)) == ds_repr)
+    except SyntaxError, e:
+        raise AssertionError, "%r cannot be evaluated" % ds_repr
 
 def test_str():
     args = ( np.arange(12, dtype=np.int8).reshape((4, 3)),
