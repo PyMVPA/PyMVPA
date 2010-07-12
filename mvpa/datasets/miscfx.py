@@ -255,6 +255,9 @@ def permute_attr(dataset, attr='targets', chunks_attr='chunks',
                          chunks_attr=chunks_attr,
                          col=col,
                          assure_permute=assure_permute-1)
+            # if we did assure_permute recurse -- return here avoiding
+            # reassignment of bad (non-permuted) ones below
+            return
 
     # reassign to the dataset
     ac[attr].value = pvalues

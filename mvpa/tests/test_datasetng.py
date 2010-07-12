@@ -559,7 +559,27 @@ def test_labelpermutation_randomsampling():
     ds.permute_attr(attr='roi', chunks_attr=None, col='fa')
     assert_false((ds.fa['roi'].value == ods.fa['roi'].value).all())
 
+def test_assure_permute():
+    # Create a dataset where permutation would very often lead
+    # to the same values, unless enforced
+    ds = Dataset.from_wizard(np.ones((2, 2)),
+                             targets=range(2),
+                             chunks=1)
 
+    # First test default behavior -- no assurance by default
+    failures = 0
+    for i in xrange(10):
+        otargets = ds.sa.targets.copy()
+        ds.permute_attr()
+        failures += (ds.targets != otargets).any()
+    ok_(failures > 0)
+
+    # If we assure permutation -- we should obtain it permuted
+    # always
+    for i in xrange(10):
+        otargets = ds.sa.targets.copy()
+        ds.permute_attr(assure_permute=True)
+        ok_((ds.targets != otargets).any())
 
 def test_masked_featureselection():
     origdata = np.random.standard_normal((10, 2, 4, 3, 5)).view(myarray)
