@@ -2,6 +2,9 @@ pymvpa (0.4.5~dev23-2) unstable; urgency=low
 
   * Build-Depend on python-numpy providing numpy-ext (Closes: #589587).
     Thanks Jakub Wilk for keeping us in a good shape ;)
+  * Updated years for the copyrights for upstream and packaging parts
+  * Bump Standards-Version to 3.9.0:
+    - include entire text of BSD-3 for shipped (but not used) libsvm
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 26 Jul 2010 23:40:39 -0400
 
