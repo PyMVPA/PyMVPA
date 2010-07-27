@@ -1,3 +1,10 @@
+pymvpa (0.4.5~dev23-2) unstable; urgency=low
+
+  * Build-Depend on python-numpy providing numpy-ext (Closes: #589587).
+    Thanks Jakub Wilk for keeping us in a good shape ;)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 26 Jul 2010 23:40:39 -0400
+
 pymvpa (0.4.5~dev23-1) unstable; urgency=low
 
   * New upstream pre-release snapshot.  Includes few enhancements
