@@ -99,9 +99,13 @@ class LinearSVMWeights(Sensitivity):
                 nsvs = model.getTotalNSV()
             else:
                 nsvs = model.getNSV()
+            if clf.regression:
+                svm_type = clf._svm_impl # type of regression
+            else:
+                svm_type = '%d-class SVM(%s)' % (nr_class, clf._svm_impl)
             debug('SVM',
-                  "Extracting weights for %d-class SVM: #SVs=%s, " % \
-                  (nr_class, nsvs) + \
+                  "Extracting weights for %s: #SVs=%s, " % \
+                  (svm_type, nsvs) + \
                   " SVcoefshape=%s SVs.shape=%s Rhos=%s." % \
                   (svcoef.shape, svs.shape, rhos) + \
                   " Result: min=%f max=%f" % (N.min(weights), N.max(weights)))
