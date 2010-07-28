@@ -40,14 +40,14 @@ data = cPickle.load(gzip.open('mnist.pickle.gz'))
 for k in ['traindata', 'testdata']:
     data[k] = data[k].reshape(-1, 28 * 28)
 
-fdaflow = (mdp.nodes.WhiteningNode(output_dim=10, dtype='d') +
-           mdp.nodes.PolynomialExpansionNode(2) +
-           mdp.nodes.FDANode(output_dim=9) +
-           mdp.nodes.GaussianClassifierNode())
+fdaclf = (mdp.nodes.WhiteningNode(output_dim=10, dtype='d') +
+          mdp.nodes.PolynomialExpansionNode(2) +
+          mdp.nodes.FDANode(output_dim=9) +
+          mdp.nodes.GaussianClassifierNode())
 
-fdaflow.verbose = True
+fdaclf.verbose = True
 
-fdaflow.train([[data['traindata']],
+fdaclf.train([[data['traindata']],
                None,
                DigitsIterator(data['traindata'],
                               data['trainlabels']),
@@ -55,8 +55,8 @@ fdaflow.train([[data['traindata']],
                               data['trainlabels'])
                ])
 
-feature_space = fdaflow[:-1](data['testdata'])
-guess = fdaflow[-1].classify(feature_space)
+feature_space = fdaclf[:-1](data['testdata'])
+guess = fdaclf[-1].label(feature_space)
 err = 1 - np.mean(guess == data['testlabels'])
 print 'Test error:', err
 
@@ -68,6 +68,7 @@ Doing it the PyMVPA way
 """
 
 import pylab as pl
+from mpl_toolkits.mplot3d import Axes3D
 from mvpa.suite import *
 
 """
@@ -75,6 +76,8 @@ from mvpa.suite import *
 Following  MNIST_ dataset is not distributed along with
 PyMVPA due to its size.  Please download it into directory from which
 you are running this example first.
+Data visualization depends on the 3D matplotlib features, which are
+available only from version 0.99
 
 .. _MNIST: http://www.pymvpa.org/files/data/mnist.pickle.gz
 
@@ -91,7 +94,8 @@ testds = dataset_wizard(
 ds.init_origids('samples')
 testds.init_origids('samples')
 
-examples = [0, 25024, 50000, 59000]
+#examples = [0, 25024, 50000, 59000]
+examples = [0, 9000, 18000]
 
 pl.figure(figsize=(6, 6))
 
@@ -103,7 +107,7 @@ for i, id_ in enumerate(examples):
 
 pl.subplots_adjust(left=0, right=1, bottom=0, top=1,
                   wspace=0.05, hspace=0.05)
-pl.show()
+pl.draw()
 
 
 fdaflow = (mdp.nodes.WhiteningNode(output_dim=10, dtype='d') +
@@ -119,22 +123,19 @@ terr = TransferError(MappedClassifier(SMLR(), mapper),
                                     'samples_error'])
 err = terr(testds, ds)
 print 'Test error:', err
-try:
-    from enthought.mayavi.mlab import points3d
-    P3D = True
-except ImportError:
-    print 'Sorry, no 3D plots!'
-    P3D = False
 
-fmts = ['bo', 'ro', 'ko', 'mo']
 pts = []
 for i, ex in enumerate(examples):
-    pts.append(mapper.forward(ds.samples[ex:ex+100])[:, :3])
+    pts.append(mapper.forward(ds.samples[ex:ex+500])[:, :3])
 
-if P3D:
-    for p in pts:
-        points3d(p[:, 0], p[:, 1], p[:, 2])
+fig = pl.figure()
+ax = Axes3D(fig)
+colors = ('r','g','b','k')
+for i, p in enumerate(pts):
+    ax.scatter(p[:, 0], p[:, 1], p[:, 2], c=colors[i])
 
-#if cfg.getboolean('examples', 'interactive', True):
+pl.draw()
+
+if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
-#    pl.show()
+    pl.show()
