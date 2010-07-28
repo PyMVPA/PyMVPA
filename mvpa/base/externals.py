@@ -186,7 +186,7 @@ def __check_shogun(bottom_version, custom_versions=[]):
 
 def __assign_nipy_version():
     import nipy
-    versions['nipy'] = nipy.__version__
+    versions['nipy'] = SmartVersion(nipy.__version__)
 
 def __check_weave():
     """Apparently presence of scipy is not sufficient since some
@@ -394,7 +394,7 @@ def __check_rpy2():
     """Check either rpy2 is available and also set it for the sane execution
     """
     import rpy2
-    versions['rpy2'] = rpy2.__version__
+    versions['rpy2'] = SmartVersion(rpy2.__version__)
 
     import rpy2.robjects
     r = rpy2.robjects.r
