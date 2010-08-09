@@ -83,8 +83,8 @@ from mvpa.datasets.base import *
 from mvpa.datasets.miscfx import *
 from mvpa.datasets.eep import *
 from mvpa.datasets.eventrelated import *
-# safe to import since multiple externals are handled inside
-from mvpa.datasets.mri import *
+if externals.exists('nifti') or externals.exists('nibabel') :
+    from mvpa.datasets.mri import *
 # make NiftiImage available for people
 if externals.exists('nifti'):
     from nifti import NiftiImage
