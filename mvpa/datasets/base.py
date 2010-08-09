@@ -131,14 +131,14 @@ class Dataset(AttrDataset):
                         "in another attribute collection -- make sure "
                         "that you got the right one (see ``col`` argument)."
                         % (attr,))
-        elif attr in ds.fa:
+        elif attr in self.fa:
             col = self.fa
             if __debug__ and attr in self.a:
                 warning("An attribute with name '%s' is also present "
                         "in the dataset attribute collection -- make sure "
                         "that you got the right one (see ``col`` argument)."
                         % (attr,))
-        elif attr in ds.a:
+        elif attr in self.a:
             col = self.a
             # we don't need to warn here, since it wouldn't happen
         else:
