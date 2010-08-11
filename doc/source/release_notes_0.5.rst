@@ -95,8 +95,9 @@ most parts of PyMVPA still assume an (at least) ndarray-like interface.
 Splitters
 ---------
 
-* `permute` -> `permute_attr`, so if you had `permute=True`, use
-  `attr='targets'` if you like to permute targets
+* Splitters as such do not exist any longer. They have been replaced by a number
+  of generators that offer the same functionality, but can be combined in more
+  flexible way.
 
 
 Classifiers

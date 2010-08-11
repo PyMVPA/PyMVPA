@@ -15,8 +15,9 @@ from operator import isSequenceType
 import numpy as np
 
 from mvpa.base.node import Node
+from mvpa.base.dochelpers import _str, _repr
 
-class AttributePermuter(Node):
+class AttributePermutator(Node):
     """Node to permute one a more attributes in a dataset.
 
     This node can permute arbitrary sample or feature attributes in a dataset.
@@ -61,7 +62,7 @@ class AttributePermuter(Node):
         """
         Node.__init__(self, **kwargs)
         self._pattr = attr
-        self._nruns = n
+        self.nruns = n
         self._limit = limit
         self._collection = collection
         self._pcfg = None
@@ -178,8 +179,13 @@ class AttributePermuter(Node):
         # figure out permutation setup once for all runs
         self._pcfg = self._get_pcfg(ds)
         # permute as often as requested
-        for i in xrange(self._nruns):
+        for i in xrange(self.nruns):
             yield self(ds)
 
         # reset permutation setup to do the right thing upon next call to object
         self._pcfg = None
+
+
+    def __str__(self):
+        return _str(self, self._pattr, n=self.nruns, limit=self._limit,
+                    collection=self._collection, assure=self._assure_permute)

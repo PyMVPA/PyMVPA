@@ -10,8 +10,10 @@
 
 from mvpa.testing.tools import assert_equal, ok_, assert_array_equal
 
+from mvpa.base.node import ChainNode
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.generators.partition import NFoldPartitioner
+from mvpa.generators.permutation import AttributePermutator
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.measures.base import CrossValidation
 from mvpa.clfs.transerror import TransferError
@@ -70,10 +72,10 @@ class CrossValidationTests(unittest.TestCase):
         self.failUnless((result.samples < 0.05).all())
 
         # do crossval with permuted regressors
-        transerror = TransferError(sample_clf_nl)
-        cv = CrossValidatedTransferError(transerror,
-                  NFoldSplitter(cvtype=1, permute_attr='targets',
-                                nrunspersplit=10) )
+        cv = CrossValidation(sample_clf_nl,
+                        ChainNode([NFoldPartitioner(),
+                            AttributePermutator('targets', n=10)],
+                                  space='partitions'))
         results = cv(data)
 
         # must be at chance level

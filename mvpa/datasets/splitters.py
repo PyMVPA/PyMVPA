@@ -25,7 +25,7 @@ import numpy as np
 
 import mvpa.misc.support as support
 from mvpa.base.dochelpers import enhanced_doc_string, _str, _repr
-from mvpa.datasets.miscfx import coarsen_chunks, permute_attr, random_samples, \
+from mvpa.datasets.miscfx import coarsen_chunks, random_samples, \
                                  get_nsamples_per_attr
 
 if __debug__:
@@ -53,7 +53,6 @@ class Splitter(object):
     def __init__(self,
                  npertarget='all',
                  nrunspersplit=1,
-                 permute_attr=None,
                  count=None,
                  strategy='equidistant',
                  discard_boundary=None,
@@ -79,10 +78,6 @@ class Splitter(object):
           is mostly useful if a subset of the available samples
           is used in each split and the subset is randomly
           selected for each run (see the `npertarget` argument).
-        permute_attr : None or str
-          If set to a string (e.g. 'targets'), the corresponding .sa
-          of each generated dataset will be permuted on a per-chunk
-          basis.
         count : None or int
           Desired number of splits to be output. It is limited by the
           number of splits possible for a given splitter
@@ -116,7 +111,6 @@ class Splitter(object):
         # pylint happyness block
         self.__npertarget = None
         self.__runspersplit = nrunspersplit
-        self.__permute_attr = permute_attr
         self.__splitattr = attr
         self.__noslicing = noslicing
         self._reverse = reverse
@@ -215,11 +209,6 @@ class Splitter(object):
                         else:
                             # otherwise just assign a new value
                             ds_a.lastsplit = lastsplit
-                    # permute the labels
-                    if self.__permute_attr is not None:
-                        permute_attr(ds,
-                                            attr=self.__permute_attr,
-                                            chunks_attr='chunks', col='sa')
 
                     # select subset of samples if requested
                     if npertarget == 'all' or ds is None:
@@ -378,7 +367,6 @@ class Splitter(object):
         return _repr(self,
                      npertarget=self.__npertarget,
                      nrunspersplit=self.__runspersplit,
-                     permute_attr=self.__permute_attr,
                      count=self.count,
                      strategy=self.__strategy,
                      discard_boundary=self.discard_boundary,
@@ -435,7 +423,6 @@ class Splitter(object):
     strategy = property(fget=lambda self:self.__strategy,
                         fset=_set_strategy)
     splitattr = property(fget=lambda self:self.__splitattr)
-    permute_attr = property(fget=lambda self:self.__permute_attr)
     npertarget = property(fget=lambda self:self.__npertarget)
 
 
