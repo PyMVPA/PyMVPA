@@ -95,12 +95,14 @@ ds.init_origids('samples')
 testds.init_origids('samples')
 
 #examples = [0, 25024, 50000, 59000]
-examples = [0, 9000, 18000]
+examples = [3001 + 5940 * i for i in range(10)]
+#examples = [0, 9000, 18000]
 
-pl.figure(figsize=(6, 6))
+
+pl.figure(figsize=(2, 5))
 
 for i, id_ in enumerate(examples):
-    ax = pl.subplot(2, 2, i+1)
+    ax = pl.subplot(2, 5, i+1)
     ax.axison = False
     pl.imshow(data['traindata'][id_].T, cmap=pl.cm.gist_yarg,
              interpolation='nearest', aspect='equal')
@@ -124,16 +126,23 @@ terr = TransferError(MappedClassifier(SMLR(), mapper),
 err = terr(testds, ds)
 print 'Test error:', err
 
+if externals.exists('matplotlib') \
+   and externals.versions['matplotlib'] >= '0.99':
 pts = []
 for i, ex in enumerate(examples):
-    pts.append(mapper.forward(ds.samples[ex:ex+500])[:, :3])
+    pts.append(mapper.forward(ds.samples[ex:ex+200])[:, :3])
 
 fig = pl.figure()
-ax = Axes3D(fig)
-colors = ('r','g','b','k')
-for i, p in enumerate(pts):
-    ax.scatter(p[:, 0], p[:, 1], p[:, 2], c=colors[i])
 
+ax = Axes3D(fig)
+colors = ('r','g','b','k','c','m','y','burlywood','chartreuse','gray')
+clouds = []
+for i, p in enumerate(pts):
+    print i
+    clouds.append(ax.plot(p[:, 0], p[:, 1], p[:, 2], 'o', c=colors[i],
+                          label=str(i), alpha=0.6))
+
+ax.legend([str(i) for i in range(10)])
 pl.draw()
 
 if cfg.getboolean('examples', 'interactive', True):
