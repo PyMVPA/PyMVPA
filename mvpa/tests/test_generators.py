@@ -18,7 +18,7 @@ from mvpa.datasets import dataset_wizard
 from mvpa.generators.splitters import Splitter
 from mvpa.base.node import ChainNode
 from mvpa.generators.partition import OddEvenPartitioner
-from mvpa.generators.permutation import AttributePermuter
+from mvpa.generators.permutation import AttributePermutator
 
 
 def give_data():
@@ -92,7 +92,7 @@ def test_attrpermute():
     ds = give_data()
     ds.sa['ids'] = range(len(ds))
     pristine_data = ds.samples.copy()
-    permutation = AttributePermuter(['targets', 'ids'], assure=True)
+    permutation = AttributePermutator(['targets', 'ids'], assure=True)
     pds = permutation(ds)
     # should not touch the data
     assert_array_equal(pristine_data, pds.samples)
@@ -106,13 +106,13 @@ def test_attrpermute():
     assert_array_equal(pds.sa.chunks, ds.sa.chunks)
 
     # now chunk-wise permutation
-    permutation = AttributePermuter('ids', limit='chunks')
+    permutation = AttributePermutator('ids', limit='chunks')
     pds = permutation(ds)
     # first ten should remain first ten
     assert_false(np.any(pds.sa.ids[:10] > 9))
 
     # same thing, but only permute single chunk
-    permutation = AttributePermuter('ids', limit={'chunks': 3})
+    permutation = AttributePermutator('ids', limit={'chunks': 3})
     pds = permutation(ds)
     # one chunk should change
     assert_false(np.any(pds.sa.ids[30:40] > 39))
@@ -121,7 +121,7 @@ def test_attrpermute():
     assert_array_equal(pds.sa.ids[:30], range(30))
 
     # or a list of chunks
-    permutation = AttributePermuter('ids', limit={'chunks': [3,4]})
+    permutation = AttributePermutator('ids', limit={'chunks': [3,4]})
     pds = permutation(ds)
     # two chunks should change
     assert_false(np.any(pds.sa.ids[30:50] > 49))
@@ -131,7 +131,7 @@ def test_attrpermute():
 
     # and now try generating more permutations
     nruns = 2
-    permutation = AttributePermuter(['targets', 'ids'], assure=True, n=nruns)
+    permutation = AttributePermutator(['targets', 'ids'], assure=True, n=nruns)
     pds = list(permutation.generate(ds))
     assert_equal(len(pds), nruns)
     for p in pds:
@@ -139,6 +139,6 @@ def test_attrpermute():
 
     # permute feature attrs
     ds.fa['ids'] = range(ds.shape[1])
-    permutation = AttributePermuter('ids', assure=True, collection='fa')
+    permutation = AttributePermutator('ids', assure=True, collection='fa')
     pds = permutation(ds)
     assert_false(np.all(pds.fa.ids == ds.fa.ids))

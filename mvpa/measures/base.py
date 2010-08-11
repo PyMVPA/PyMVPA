@@ -325,6 +325,9 @@ class CrossValidation(RepeatedMeasure):
           Generator used to resample the input dataset into multiple instances
           (i.e. partitioning it). The number of datasets yielded by this
           generator determines the number of cross-validation folds.
+          IMPORTANT: The ``space`` of this generator determines the attribute
+          that will be used to split all generated datasets into training and
+          testing sets.
         errorfx : callable
           Custom implementation of an error function. The callable needs to
           accept two arguments (1. predicted values, 2. target values).

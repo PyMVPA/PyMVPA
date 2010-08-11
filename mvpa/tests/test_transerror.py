@@ -15,6 +15,7 @@ from mvpa.support.copy import copy
 
 from mvpa.base import externals, warning
 from mvpa.generators.partition import OddEvenPartitioner
+from mvpa.generators.permutation import AttributePermutator
 
 from mvpa.clfs.meta import MulticlassClassifier
 from mvpa.clfs.transerror import \
@@ -167,12 +168,13 @@ class ErrorsTests(unittest.TestCase):
         train = datasets['uni2medium']
 
         num_perm = 10
+        permutator = AttributePermutator('targets', n=num_perm)
         # define class to estimate NULL distribution of errors
         # use left tail of the distribution since we use MeanMatchFx as error
         # function and lower is better
         terr = TransferError(
             clf=l_clf,
-            null_dist=MCNullDist(permutations=num_perm,
+            null_dist=MCNullDist(permutator,
                                  tail='left'))
 
         # check reasonable error range
@@ -181,7 +183,7 @@ class ErrorsTests(unittest.TestCase):
 
         # Lets do the same for CVTE
         cvte = CrossValidation(l_clf, OddEvenPartitioner(),
-            null_dist=MCNullDist(permutations=num_perm,
+            null_dist=MCNullDist(permutator,
                                  tail='left',
                                  enable_ca=['dist_samples']),
             postproc=mean_sample())

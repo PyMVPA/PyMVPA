@@ -21,6 +21,7 @@ from mvpa.base import externals
 
 from mvpa.datasets.base import dataset_wizard
 from mvpa.generators.partition import NFoldPartitioner, OddEvenPartitioner
+from mvpa.generators.permutation import AttributePermutator
 
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.misc.errorfx import mean_mismatch_error
@@ -735,15 +736,16 @@ class ClassifiersTests(unittest.TestCase):
             batch_test(retest=not('gamma' in clf.kernel_params))
 
         # should retrain nicely if we change labels
+        permute = AttributePermutator('targets', assure=True)
         oldlabels = dstrain.targets[:]
-        dstrain.permute_attr(assure_permute=True)
+        dstrain = permute(dstrain)
         self.failUnless((oldlabels != dstrain.targets).any(),
             msg="We should succeed at permutting -- now got the same targets")
         batch_test()
 
         # Change labels in testing
         oldlabels = dstest.targets[:]
-        dstest.permute_attr(assure_permute=True)
+        dstest = permute(dstest)
         self.failUnless((oldlabels != dstest.targets).any(),
             msg="We should succeed at permutting -- now got the same targets")
         batch_test()

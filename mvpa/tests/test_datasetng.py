@@ -504,62 +504,6 @@ def test_labelpermutation_randomsampling():
     ok_(sample.get_nsamples_per_attr('targets').values() == [ 2, 2, 2, 2, 2 ])
     ok_((ds.sa['chunks'].unique == range(1, 6)).all())
 
-    # keep the orig labels
-    orig_labels = ds.targets.copy()
-
-    # also keep the orig dataset, but SHALLOW copy and leave everything
-    # else as a view!
-    ods = copy.copy(ds)
-
-    ds.permute_attr()
-    # by default, some permutation of targets should have happened
-    assert_false((ds.targets == orig_labels).all())
-
-    # but the original dataset should be unaffected
-    assert_array_equal(ods.targets, orig_labels)
-    # array subclass survives
-    ok_(isinstance(ods.samples, myarray))
-
-    # samples are really shared
-    ds.samples[0, 0] = 123456
-    assert_array_equal(ds.samples, ods.samples)
-
-    # and other samples attributes too
-    ds.chunks[0] = 9876
-    assert_array_equal(ds.chunks, ods.chunks)
-
-    # try to permute on custom target
-    ds = ods.copy()
-    otargets = ods.sa.targets.copy()
-    ds.sa['custom'] = ods.sa.targets.copy()
-    assert_array_equal(ds.sa.custom, otargets)
-    assert_array_equal(ds.sa.targets, otargets)
-
-    ds.permute_attr(attr='custom')
-    # original targets should still match
-    assert_array_equal(ds.sa.targets, otargets)
-    # but custom should get permuted
-    assert_false((ds.sa.custom == otargets).all())
-
-    #
-    # Test permutation among features
-    #
-    assert_raises(KeyError, ds.permute_attr,
-                  attr='roi') # wrong collection
-    ds = ods.copy()
-    ds.permute_attr(attr='lucky', chunks_attr='roi', col='fa')
-    # we should have not touched samples attributes
-    for sa in ds.sa.keys():
-        assert_array_equal(ds.sa[sa].value, ods.sa[sa].value)
-    # but we should have changed the roi
-    assert_false((ds.fa['lucky'].value == ods.fa['lucky'].value).all())
-    assert_array_equal(ds.fa['roi'].value, ods.fa['roi'].value)
-
-    # permute ROI as well without chunking (??? should we make
-    # chunks_attr=None by default?)
-    ds.permute_attr(attr='roi', chunks_attr=None, col='fa')
-    assert_false((ds.fa['roi'].value == ods.fa['roi'].value).all())
-
 
 
 def test_masked_featureselection():
@@ -699,9 +643,9 @@ def test_idhash():
 
     origid = ds.idhash
     orig_labels = ds.targets #.copy()
-    ds.permute_attr()
+    ds.sa.targets = range(len(ds))
     ok_(origid != ds.idhash,
-        msg="Permutation also changes idhash")
+        msg="Chaging attribute also changes idhash")
 
     ds.targets = orig_labels
     ok_(origid == ds.idhash,

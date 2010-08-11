@@ -12,6 +12,7 @@ import numpy as np
 
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.generators.partition import NFoldPartitioner
+from mvpa.generators.permutation import AttributePermutator
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.datasets.base import Dataset
 from mvpa.mappers.fx import maxofabs_sample, mean_sample
@@ -407,10 +408,9 @@ class RFETests(unittest.TestCase):
                 update_sensitivity=True))
 
         no_permutations = 1000
-
+        permutator = AttributePermutator('targets', n=no_permutations)
         cv = CrossValidation(clf, NFoldPartitioner(),
-            null_dist=MCNullDist(permutations=no_permutations,
-                                 tail='left'),
+            null_dist=MCNullDist(permutator, tail='left'),
             enable_ca=['stats'])
         error = cv(datasets['uni2small'])
         self.failUnless(error < 0.4)
