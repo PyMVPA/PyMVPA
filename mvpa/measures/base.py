@@ -109,6 +109,7 @@ class DatasetMeasure(ClassWithCollections):
         Returns the computed measure in some iterable (list-like)
         container applying a post-processing mapper if such is defined.
         """
+        self.reset()                    # so all .ca are reset etc
         result = self._call(dataset)
         result = self._postcall(dataset, result)
 
