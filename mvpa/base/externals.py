@@ -321,9 +321,10 @@ def _set_matplotlib_backend():
                   "already set" % backend)
 
 
-def __check_matplotlib():
-    """Check for presence of matplotlib and set backend if requested."""
+def __assign_matplotlib_version():
+    """Check for matplotlib version and set backend if requested."""
     import matplotlib
+    versions['matplotlib'] = SmartVersion(matplotlib.__version__)
     _set_matplotlib_backend()
 
 def __check_pylab():
@@ -434,7 +435,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
                   "import rpy2.robjects; rpy2.robjects.r.library('elasticnet')",
           'glmnet': "exists('rpy2', raise_=True); " \
                   "import rpy2.robjects; rpy2.robjects.r.library('glmnet')",
-          'matplotlib': "__check_matplotlib()",
+          'matplotlib': "__assign_matplotlib_version()",
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
           'openopt': "__check_openopt()",
@@ -569,6 +570,7 @@ versions._KNOWN.update({
     'numpy' : __assign_numpy_version,
     'scipy' : __assign_scipy_version,
     'nipy' : __assign_nipy_version,
+    'matplotlib': __assign_matplotlib_version,
     'mdp' : __assign_mdp_version,
     'ipython' : __check_in_ipython,
     'reportlab' : __check_reportlab,
