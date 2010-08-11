@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -389,6 +389,24 @@ require modelling the temporal auto-correlation in the time series." <NH02>`
    of the same target.  Even non-parametric test should be overly optimistic
    (forgotten **exchangeability** requirement for parametric testing, such as
    multiple samples within a block for a block design)... TODO
+
+
+Independent Samples
+-------------------
+
+Since "voodoo correlations" paper, most of the literature in brain imaging is
+seems to became more careful in avoiding "double-dipping" and keeping their
+testing data independent from training data, which is one of the major
+concerns for doing valid hypothesis testing later on.  Not much attention is
+given though to independence of samples aspect -- i.e. not only samples in
+testing set should be independent from training ones, but, to make binomial
+distribution testing valid, testing samples should be independent from each
+other as well.  The reason is simple -- number of the testing samples defines
+the width of the null-chance distribution, but consider the limiting case
+where all testing samples are heavily non-independent, consider them to be a
+1000 instances of the same sample.  Canonical binomial distribution would be
+very narrow, although effectively it is just 1 independent sample being
+tested, thus ... TODO
 
 
 

@@ -58,6 +58,9 @@ if externals.exists('elasticnet'):
     from mvpa.clfs.enet import *
 if externals.exists('glmnet'):
     from mvpa.clfs.glmnet import *
+if externals.exists('skl'):
+    import scikits.learn as skl
+    from mvpa.clfs.skl import *
 from mvpa.clfs.smlr import *
 from mvpa.clfs.blr import *
 from mvpa.clfs.gnb import *
