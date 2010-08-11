@@ -50,10 +50,15 @@ class LinearSVMWeights(Sensitivity):
     def __sg_helper(self, svm):
         """Helper function to compute sensitivity for a single given SVM"""
         bias = svm.get_bias()
-        svcoef = np.matrix(svm.get_alphas())
-        svnums = svm.get_support_vectors()
-        svs = self.clf.traindataset.samples[svnums,:]
-        res = (svcoef * svs).mean(axis=0).A1
+        # if it has get_w (linear ones like SVMOcas) -- use it,
+        # otherwise resort to recomputing
+        if hasattr(svm, 'get_w'):
+            res = svm.get_w()
+        else:
+            svcoef = np.matrix(svm.get_alphas())
+            svnums = svm.get_support_vectors()
+            svs = self.clf.traindataset.samples[svnums,:]
+            res = (svcoef * svs).mean(axis=0).A1
         return res, bias
 
 

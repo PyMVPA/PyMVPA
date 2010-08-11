@@ -298,6 +298,9 @@ def __check_openopt():
     import scikits.openopt as _
     return
 
+def __check_skl():
+    import scikits.learn as _
+
 def _set_matplotlib_backend():
     """Check if we have custom backend to set and it is different
     from current one
@@ -418,6 +421,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'shogun.krr': '__assign_shogun_version(); import shogun.Regression as __; x=__.KRR',
           'shogun.mpd': '__assign_shogun_version(); import shogun.Classifier as __; x=__.MPDSVM',
           'shogun.lightsvm': '__assign_shogun_version(); import shogun.Classifier as __; x=__.SVMLight',
+          'shogun.svmocas': '__assign_shogun_version(); import shogun.Classifier as __; x=__.SVMOcas',
           'shogun.svrlight': '__assign_shogun_version(); from shogun.Regression import SVRLight as __',
           'numpy': "__assign_numpy_version()",
           'scipy': "__check_scipy()",
@@ -431,6 +435,8 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'rpy2': "__check_rpy2()",
           'lars': "exists('rpy2', raise_=True);" \
                   "import rpy2.robjects; rpy2.robjects.r.library('lars')",
+          'mass': "exists('rpy2', raise_=True);" \
+                  "import rpy2.robjects; rpy2.robjects.r.library('MASS')",
           'elasticnet': "exists('rpy2', raise_=True); "\
                   "import rpy2.robjects; rpy2.robjects.r.library('elasticnet')",
           'glmnet': "exists('rpy2', raise_=True); " \
@@ -439,6 +445,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
           'openopt': "__check_openopt()",
+          'skl': "__check_skl()",
           'mdp': "__assign_mdp_version()",
           'mdp ge 2.4': "from mdp.nodes import LLENode as __",
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",

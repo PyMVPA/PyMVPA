@@ -133,9 +133,9 @@ class _SVM(Classifier):
             self._KNOWN_PARAMS = \
                  self._KNOWN_PARAMS[:] + list(add_params)
 
-        
+
         # Assign per-instance __tags__
-        self.__tags__ = self.__tags__[:]
+        self.__tags__ = self.__tags__[:] + [svm_impl]
 
         # Add corresponding internals
         if add_internals is not None:

@@ -28,7 +28,7 @@ As always, we first have to import PyMVPA.
 from mvpa.suite import *
 
 """As searchlight analyses are usually quite expensive in term of computational
-resources, we are going to enable some progress output, to entertain us while
+resources, we are going to enable some progress output to entertain us while
 we are waiting."""
 
 # enable debug output for searchlight call
@@ -65,8 +65,8 @@ trends, typically caused by the acquisition equipment."""
 poly_detrend(dataset, polyord=1, chunks_attr='chunks')
 
 """Now that the detrending is done, we can remove parts of the timeseries we
-are not interested in. For this example we are only considering volume acquired
-during stimulation block with images of houses and scrambled pictures, as well
+are not interested in. For this example we are only considering volumes acquired
+during a stimulation block with images of houses and scrambled pictures, as well
 as rest periods (for now). It is important to perform the detrending before
 this selection, as otherwise the equal spacing of fMRI volumes is no longer
 guaranteed."""
@@ -75,8 +75,8 @@ dataset = dataset[np.array([l in ['rest', 'house', 'scrambledpix']
                            for l in dataset.targets], dtype='bool')]
 
 """The final preprocessing step is data-normalization. This is a required step
-for many classification algorithm. it scales all features (voxels)
-approximately into the same range and removed the mean. In this example, we
+for many classification algorithms. It scales all features (voxels)
+into approximately the same range and removes the mean. In this example, we
 perform a chunk-wise normalization and compute standard deviation and mean for
 z-scoring based on the volumes corresponding to rest periods in the experiment.
 The resulting features could be interpreted as being voxel salience relative
@@ -111,14 +111,14 @@ location of all to be processed spheres."""
 # get ids of features that have a nonzero value
 center_ids = dataset.fa.vt_thr_glm.nonzero()[0]
 
-"""Finally, we can the searchlight. We'll perform the analysis for three
+"""Finally, we can run the searchlight. We'll perform the analysis for three
 different radii, each time computing an error for each sphere. To achieve this,
 we simply use the :func:`~mvpa.measures.searchlight.sphere_searchlight` class,
 which takes any :term:`processing object` and a radius as arguments. The
 :term:`processing object` has to compute the intended measure, when called with
 a dataset. The :func:`~mvpa.measures.searchlight.sphere_searchlight` object
-will do nothing more than generating small datasets for each sphere, feeding it
-to the processing object and storing the result."""
+will do nothing more than generate small datasets for each sphere, feeding them
+to the processing object, and storing the result."""
 
 # setup plotting parameters (not essential for the analysis itself)
 plot_args = {
@@ -139,10 +139,10 @@ for radius in [0, 1, 3]:
     Here we actually setup the spherical searchlight by configuring the
     radius, and our selection of sphere center coordinates. Moreover, via the
     `space` argument we can instruct the searchlight which feature attribute
-    shall be sued to determine the voxel neighborhood. By default,
+    shall be used to determine the voxel neighborhood. By default,
     :func:`~mvpa.datasets.mri.fmri_dataset()` creates a corresponding attribute
     called `voxel_indices`.  Using the `mapper` argument it is possible to
-    post-process the results computed for each sphere. Corss-validation will
+    post-process the results computed for each sphere. Cross-validation will
     compute an error value per each fold, but here we are only interested in
     the mean error across all folds. Finally, on multi-core machines `nproc`
     can be used to enabled parallelization by setting it to the number of
@@ -167,7 +167,7 @@ for radius in [0, 1, 3]:
 
     """
     Finally, we actually run the analysis. The result is returned as a
-    dataset. For the coming plotting, we are transforming the returned error
+    dataset. For the upcoming plots, we are transforming the returned error
     maps into accuracies.
     """
 

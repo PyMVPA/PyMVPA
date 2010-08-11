@@ -130,9 +130,9 @@ class GNB(Classifier):
         elif prior == 'ratio':
             priors = np.squeeze(nsamples_per_class) / float(nsamples)
         else:
-            raise ValueError, \
-                  "No idea on how to handle '%s' way to compute priors" \
-                  % self.params.prior
+            raise ValueError(
+                "No idea on how to handle '%s' way to compute priors"
+                % self.params.prior)
         return priors
 
     def _train(self, dataset):
@@ -170,6 +170,9 @@ class GNB(Classifier):
         non0labels = (nsamples_per_class.squeeze() != 0)
         means[non0labels] /= nsamples_per_class[non0labels]
 
+        # Store prior probabilities
+        self.priors = self._get_priors(nlabels, nsamples, nsamples_per_class)
+
         # Estimate variances
         # better loop than repmat! ;)
         for s, l in zip(X, labels):
@@ -184,9 +187,6 @@ class GNB(Classifier):
             variances[:] = cvar
         else:
             variances[non0labels] /= nsamples_per_class[non0labels]
-
-        # Store prior probabilities
-        self.priors = self._get_priors(nlabels, nsamples, nsamples_per_class)
 
         # Precompute and store weighting coefficient for Gaussian
         if params.logprob:

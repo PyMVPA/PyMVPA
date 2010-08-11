@@ -505,7 +505,6 @@ def test_labelpermutation_randomsampling():
     ok_((ds.sa['chunks'].unique == range(1, 6)).all())
 
 
-
 def test_masked_featureselection():
     origdata = np.random.standard_normal((10, 2, 4, 3, 5)).view(myarray)
     data = Dataset.from_wizard(origdata, targets=2, chunks=2)
@@ -692,7 +691,10 @@ def test_repr():
     ds_repr = repr(ds)
     cfg_repr = cfg.get('datasets', 'repr', 'full')
     if cfg_repr == 'full':
-        ok_(repr(eval(ds_repr)) == ds_repr)
+        try:
+            ok_(repr(eval(ds_repr)) == ds_repr)
+        except SyntaxError, e:
+            raise AssertionError, "%r cannot be evaluated" % ds_repr
     elif cfg_repr == 'str':
         ok_(str(ds) == ds_repr)
     else:
@@ -821,6 +823,20 @@ def test_dataset_summary():
         ok_(s.startswith(str(ds)[1:-1])) # we strip surrounding '<...>'
         # TODO: actual test of what was returned; to do that properly
         #       RF the summary() so it is a dictionary
+
+        summaries = ['Sequence statistics']
+        if 'targets' in ds.sa and 'chunks' in ds.sa:
+            summaries += ['Summary for targets', 'Summary for chunks']
+
+        # By default we should get all kinds of summaries
+        if not 'Number of unique targets >' in s:
+            for summary in summaries:
+                ok_(summary in s)
+
+        # If we give "wrong" targets_attr we should see none of summaries
+        s2 = ds.summary(targets_attr='bogus')
+        for summary in summaries:
+            ok_(not summary in s2)
 
 def test_h5py_io():
     skip_if_no_external('h5py')

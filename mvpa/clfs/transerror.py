@@ -611,6 +611,8 @@ class ConfusionMatrix(SummaryStatistics):
                   / MCC_denom[nz]
 
         stats['ACC'] = np.sum(TP)/(1.0*np.sum(stats['P']))
+        # TODO: STD of accuracy and corrected one according to
+        #    Nadeau and Bengio [50] 
         stats['ACC%'] = stats['ACC'] * 100.0
         if chisquare:
             # indep_rows to assure reasonable handling of disbalanced

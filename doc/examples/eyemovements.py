@@ -28,10 +28,13 @@ showing a male or female face, and wether it was upright or inverted.
 
 from mvpa.suite import *
 
+# where is the data
+datapath = os.path.join(pymvpa_datadbroot,
+                        'face_inversion_demo', 'face_inversion_demo')
 # (X, Y, trial id) for all timepoints
-data = np.loadtxt('gaze_coords.txt')
+data = np.loadtxt(os.path.join(datapath, 'gaze_coords.txt'))
 # (orientation, gender, image id) for each trial
-attribs = np.loadtxt('trial_attrs.txt')
+attribs = np.loadtxt(os.path.join(datapath, 'trial_attrs.txt'))
 
 """
 As a first step we put the coordinate timeseries into a dataset, and labels each
@@ -158,7 +161,7 @@ fig = 1
 
 pl.subplot(2, 2, fig)
 pl.title('Mean Gaze Track')
-face_img = pl.imread('demo_face.png')
+face_img = pl.imread(os.path.join(datapath, 'demo_face.png'))
 # determine the extend of the image in original screen coordinates
 # to match with gaze position
 orig_img_extent=(screen_center[0] - face_img.shape[1]/2,

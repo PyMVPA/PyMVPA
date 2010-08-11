@@ -230,22 +230,28 @@ class ErrorsTests(unittest.TestCase):
         """Test AUC computation
         """
         if isinstance(clf, MulticlassClassifier):
-            # TODO: handle those values correctly
-            return
+            raise SkipTest, \
+                  "TODO: handle values correctly in MulticlassClassifier"
         clf.ca.change_temporarily(enable_ca = ['estimates'])
+        if 'qda' in clf.__tags__:
+            # for reliable estimation of covariances, need sufficient
+            # sample size
+            ds_size = 'large'
+        else:
+            ds_size = 'small'
         # uni2 dataset with reordered labels
-        ds2 = datasets['uni2small'].copy()
+        ds2 = datasets['uni2' + ds_size].copy()
         # revert labels
         ds2.sa['targets'].value = ds2.targets[::-1].copy()
         # same with uni3
-        ds3 = datasets['uni3small'].copy()
+        ds3 = datasets['uni3' + ds_size].copy()
         ul = ds3.sa['targets'].unique
         nl = ds3.targets.copy()
         for l in xrange(3):
             nl[ds3.targets == ul[l]] = ul[(l+1)%3]
         ds3.sa.targets = nl
-        for ds in [datasets['uni2small'], ds2,
-                   datasets['uni3small'], ds3]:
+        for ds in [datasets['uni2' + ds_size], ds2,
+                   datasets['uni3' + ds_size], ds3]:
             cv = CrossValidation(clf, OddEvenPartitioner(),
                 enable_ca=['stats', 'training_stats'])
             cverror = cv(ds)
