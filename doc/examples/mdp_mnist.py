@@ -40,14 +40,14 @@ data = cPickle.load(gzip.open('mnist.pickle.gz'))
 for k in ['traindata', 'testdata']:
     data[k] = data[k].reshape(-1, 28 * 28)
 
-fdaflow = (mdp.nodes.WhiteningNode(output_dim=10, dtype='d') +
-           mdp.nodes.PolynomialExpansionNode(2) +
-           mdp.nodes.FDANode(output_dim=9) +
-           mdp.nodes.GaussianClassifierNode())
+fdaclf = (mdp.nodes.WhiteningNode(output_dim=10, dtype='d') +
+          mdp.nodes.PolynomialExpansionNode(2) +
+          mdp.nodes.FDANode(output_dim=9) +
+          mdp.nodes.GaussianClassifierNode())
 
-fdaflow.verbose = True
+fdaclf.verbose = True
 
-fdaflow.train([[data['traindata']],
+fdaclf.train([[data['traindata']],
                None,
                DigitsIterator(data['traindata'],
                               data['trainlabels']),
@@ -55,8 +55,8 @@ fdaflow.train([[data['traindata']],
                               data['trainlabels'])
                ])
 
-feature_space = fdaflow[:-1](data['testdata'])
-guess = fdaflow[-1].classify(feature_space)
+feature_space = fdaclf[:-1](data['testdata'])
+guess = fdaclf[-1].label(feature_space)
 err = 1 - np.mean(guess == data['testlabels'])
 print 'Test error:', err
 
@@ -119,12 +119,6 @@ terr = TransferError(MappedClassifier(SMLR(), mapper),
                                     'samples_error'])
 err = terr(testds, ds)
 print 'Test error:', err
-try:
-    from enthought.mayavi.mlab import points3d
-    P3D = True
-except ImportError:
-    print 'Sorry, no 3D plots!'
-    P3D = False
 
 fmts = ['bo', 'ro', 'ko', 'mo']
 pts = []
