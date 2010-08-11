@@ -130,9 +130,9 @@ class GNB(Classifier):
         elif prior == 'ratio':
             priors = np.squeeze(nsamples_per_class) / float(nsamples)
         else:
-            raise ValueError, \
-                  "No idea on how to handle '%s' way to compute priors" \
-                  % self.params.prior
+            raise ValueError(
+                "No idea on how to handle '%s' way to compute priors"
+                % self.params.prior)
         return priors
 
     def _train(self, dataset):
