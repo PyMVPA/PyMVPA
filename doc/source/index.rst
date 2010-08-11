@@ -1,5 +1,5 @@
 .. -*- mode: rst -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
 
 
 PyMVPA is a Python_ package intended to ease statistical learning analyses of
