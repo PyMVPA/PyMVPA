@@ -145,7 +145,7 @@ def normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
     return ds
 
 ##REF: Name was automagically refactored
-def pure_multivariate_signal(patterns, signal2noise = 1.5, chunks=None):
+def pure_multivariate_signal(patterns, signal2noise = 1.5, chunks=None, targets=[0, 1]):
     """ Create a 2d dataset with a clear multivariate signal, but no
     univariate information.
 
@@ -171,7 +171,7 @@ def pure_multivariate_signal(patterns, signal2noise = 1.5, chunks=None):
     data[3*patterns:4*patterns, 0] += signal2noise
 
     # two conditions
-    regs = np.array(([0] * patterns) + ([1] * 2 * patterns) + ([0] * patterns))
+    regs = np.array((targets[0:1] * patterns) + (targets[1:2] * 2 * patterns) + (targets[0:1] * patterns))
 
     if chunks is None:
         chunks = range(len(data))

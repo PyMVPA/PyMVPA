@@ -289,6 +289,9 @@ class ClassifiersTests(unittest.TestCase):
                     clf.train(ds)                   # should not crash or stall
                 except (ValueError), e:
                     self.fail("Failed to train on degenerate data. Error was %r" % e)
+                except DegenerateInputError:
+                    # so it realized that data is degenerate and puked
+                    continue
                 # could we still get those?
                 _ = clf.summary()
                 cm = clf.ca.training_confusion
@@ -818,8 +821,10 @@ class ClassifiersTests(unittest.TestCase):
 
     # XXX TODO: should work on smlr, knn, ridgereg, lars as well! but now
     #     they fail to train
-    #    GNB -- cannot train since 1 sample isn't sufficient to assess variance
-    @sweepargs(clf=clfswh['!smlr', '!knn', '!gnb', '!lars', '!meta', '!ridge'])
+    #    svmocas -- segfaults -- reported to mailing list
+    #    GNB, LDA, QDA -- cannot train since 1 sample isn't sufficient
+    #    to assess variance
+    @sweepargs(clf=clfswh['!smlr', '!knn', '!gnb', '!lda', '!qda', '!lars', '!meta', '!ridge'])
     def test_correct_dimensions_order(self, clf):
         """To check if known/present Classifiers are working properly
         with samples being first dimension. Started to worry about

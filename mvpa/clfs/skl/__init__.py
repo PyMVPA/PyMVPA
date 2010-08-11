@@ -6,15 +6,15 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Classifiers provided by shogun (sg) library"""
+"""Classifiers provided by scikit-learn (skl) library"""
 
 __docformat__ = 'restructuredtext'
 
 if __debug__:
     from mvpa.base import debug
-    debug('INIT', 'mvpa.clfs.sg')
+    debug('INIT', 'mvpa.clfs.skl')
 
-from mvpa.clfs.sg.svm import SVM
+from mvpa.clfs.skl.base import SKLLearnerAdapter
 
 if __debug__:
-    debug('INIT', 'mvpa.clfs.sg end')
+    debug('INIT', 'mvpa.clfs.skl end')
