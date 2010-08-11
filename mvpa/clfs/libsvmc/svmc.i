@@ -103,9 +103,15 @@ static void print_string_stdout(const char *s)
 /* provide convenience wrapper */
 void svm_set_verbosity(int verbosity_flag){
 	if (verbosity_flag)
+# if LIBSVM_VERSION < 291
 		svm_print_string = &print_string_stdout;
 	else
 		svm_print_string = &print_null;
+# else
+		svm_set_print_string_function(&print_string_stdout);
+	else
+		svm_set_print_string_function(&print_null);
+# endif
 }
 #endif
 
