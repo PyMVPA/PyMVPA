@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import copy
 
+from mvpa.base import warning
 from mvpa.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection, \
         SampleAttribute, FeatureAttribute, DatasetAttribute
