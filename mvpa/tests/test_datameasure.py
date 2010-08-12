@@ -212,7 +212,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 if lndim == 1: # just a single label
                     self.failUnless(label in ulabels)
 
-                    ilabel_all = np.where(ds.fa.targets == label)[0]
+                    ilabel_all = np.where(ds.fa.nonbogus_targets == label)[0]
                     # should have just 1 feature for the label
                     self.failUnlessEqual(len(ilabel_all), 1)
                     ilabel = ilabel_all[0]
@@ -226,7 +226,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                     # we should have highest (in abs) coefficients in
                     # those two labels
                     maxsensi2 = np.argsort(np.abs(sens1))[0][-2:]
-                    ilabel2 = [np.where(ds.fa.targets == l)[0][0]
+                    ilabel2 = [np.where(ds.fa.nonbogus_targets == l)[0][0]
                                     for l in label]
                     self.failUnlessEqual(
                         set(maxsensi2), set(ilabel2),
