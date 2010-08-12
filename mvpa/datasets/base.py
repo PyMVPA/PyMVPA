@@ -129,9 +129,9 @@ class Dataset(AttrDataset):
             col = self.sa
             if __debug__ and (attr in self.fa or attr in self.a):
                 warning("An attribute with name '%s' is also present "
-                        "in another attribute collection -- make sure "
-                        "that you got the right one (see ``col`` argument)."
-                        % (attr,))
+                        "in another attribute collection (fa=%s, a=%s) -- make "
+                        "sure that you got the right one (see ``col`` "
+                        "argument)." % (attr, attr in self.fa, attr in self.a))
         elif attr in self.fa:
             col = self.fa
             if __debug__ and attr in self.a:
