@@ -14,6 +14,8 @@ from mvpa.testing import *
 from mvpa.testing.datasets import *
 
 from mvpa.clfs.gnb import GNB
+from mvpa.measures.base import TransferMeasure
+from mvpa.generators.splitters import Splitter
 
 class GNBTests(unittest.TestCase):
 
@@ -23,8 +25,7 @@ class GNBTests(unittest.TestCase):
         gnb_n = GNB(normalize=True)
         gnb_n_nc = GNB(normalize=True, common_variance=False)
 
-        ds_tr = datasets['uni2medium_train']
-        ds_te = datasets['uni2medium_test']
+        ds = datasets['uni2medium']
 
         # Generic silly coverage just to assure that it works in all
         # possible scenarios:
@@ -42,13 +43,11 @@ class GNBTests(unittest.TestCase):
                                normalize=n,
                                logprob=ls,
                                enable_ca=es)
-                    gnb_.train(ds_tr)
-                    predictions = gnb_.predict(ds_te.samples)
+                    tm = TransferMeasure(gnb_, Splitter('train'))
+                    predictions = tm(ds).samples[:,0]
                     if tp is None:
                         tp = predictions
-                    self.failUnless((predictions == tp),
-                                    msg="%s failed to reproduce predictions" %
-                                    gnb_)
+                    assert_array_equal(predictions, tp)
                     # if normalized -- check if estimates are such
                     if n and 'estimates' in es:
                         v = gnb_.ca.estimates

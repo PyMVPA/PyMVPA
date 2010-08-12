@@ -413,7 +413,7 @@ class BinaryFxNode(Node):
           name of the sample attribute that contains the target values.
         """
         Node.__init__(self, space=space, **kwargs)
-        self.__fx = fx
+        self.fx = fx
 
 
     def _call(self, ds):
@@ -429,7 +429,7 @@ class BinaryFxNode(Node):
             raise ValueError("Trying to compute an error between data of "
                              "different shape (%s vs. %s)."
                              % (values.shape, targets.shape))
-        err = self.__fx(values, targets)
+        err = self.fx(values, targets)
         if np.isscalar(err):
             err = np.array(err, ndmin=2)
         return Dataset(err)

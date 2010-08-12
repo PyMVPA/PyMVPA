@@ -16,16 +16,18 @@ from mvpa.support.copy import copy
 from mvpa.base import externals, warning
 from mvpa.generators.partition import OddEvenPartitioner
 from mvpa.generators.permutation import AttributePermutator
+from mvpa.generators.splitters import Splitter
 
 from mvpa.clfs.meta import MulticlassClassifier
-from mvpa.clfs.transerror import \
-     TransferError, ConfusionMatrix, ConfusionBasedError
-from mvpa.measures.base import CrossValidation
+from mvpa.clfs.transerror import ConfusionMatrix, ConfusionBasedError, \
+        TransferError
+from mvpa.measures.base import CrossValidation, TransferMeasure
 
 from mvpa.clfs.stats import MCNullDist
 
 from mvpa.misc.exceptions import UnknownStateError
-from mvpa.mappers.fx import mean_sample
+from mvpa.misc.errorfx import mean_mismatch_error
+from mvpa.mappers.fx import mean_sample, BinaryFxNode
 
 from mvpa.testing import *
 from mvpa.testing.datasets import datasets
@@ -139,9 +141,11 @@ class ErrorsTests(unittest.TestCase):
 
     @sweepargs(l_clf=clfswh['linear', 'svm'])
     def test_confusion_based_error(self, l_clf):
-        train = datasets['uni2medium_train']
+        train = datasets['uni2medium']
+        train = train[train.sa.train == 1]
         # to check if we fail to classify for 3 labels
-        test3 = datasets['uni3medium_train']
+        test3 = datasets['uni3medium']
+        test3 = test3[test3.sa.train == 1]
         err = ConfusionBasedError(clf=l_clf)
         terr = TransferError(clf=l_clf)
 
@@ -172,14 +176,16 @@ class ErrorsTests(unittest.TestCase):
         # define class to estimate NULL distribution of errors
         # use left tail of the distribution since we use MeanMatchFx as error
         # function and lower is better
-        terr = TransferError(
-            clf=l_clf,
+        terr = TransferMeasure(
+            l_clf,
+            Splitter(None, count=2),
+            postproc=BinaryFxNode(mean_mismatch_error, 'targets'),
             null_dist=MCNullDist(permutator,
                                  tail='left'))
 
         # check reasonable error range
-        err = terr(train, train)
-        self.failUnless(err < 0.4)
+        err = terr(train)
+        self.failUnless(np.mean(err) < 0.4)
 
         # Lets do the same for CVTE
         cvte = CrossValidation(l_clf, OddEvenPartitioner(),

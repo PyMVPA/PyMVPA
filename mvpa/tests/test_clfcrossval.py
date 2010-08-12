@@ -15,7 +15,6 @@ from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.generators.partition import NFoldPartitioner
 from mvpa.generators.permutation import AttributePermutator
 from mvpa.measures.base import CrossValidation
-from mvpa.clfs.transerror import TransferError
 
 from mvpa.testing import *
 from mvpa.testing.datasets import pure_multivariate_signal, get_mv_pattern
