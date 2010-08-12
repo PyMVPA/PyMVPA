@@ -75,22 +75,28 @@ if __debug__:
     debug.active += ["STATMC"]
 
 # some example data with signal
-train = normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=3,
-                             nonbogus_features=[0,1], snr=0.3, nchunks=1)
+ds = normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=3,
+                            nonbogus_features=[0,1], snr=1.0, nchunks=1)
 
 # define class to estimate NULL distribution of errors
 # use left tail of the distribution since we use MeanMatchFx as error
 # function and lower is better
 # in a real analysis the number of permutations should be larger
 # to get stable estimates
-terr = TransferError(clf=SMLR(),
-                     null_dist=MCNullDist(permutations=100,
-                                          tail='left'))
+permutator = AttributePermutator('targets', n=100)
+# we use a splitter that doesn't split the dataset but return the input dataset
+# two times to compute the transfer performance on the training dataset itself
+splitter = Splitter(None, count=2)
+tm = TransferMeasure(LinearCSVMC(),
+                     splitter,
+                     postproc=BinaryFxNode(mean_mismatch_error, 'targets'),
+                     null_dist=MCNullDist(permutator, tail='left'),
+                     enable_ca=['stats'])
 
 # compute classifier error on training dataset (should be low :)
-err = terr(train, train)
-print 'Error on training set:', err
+tm(ds)
+print 'Error on training set:', 1 - tm.ca.stats.stats['ACC']
 
 # check that the result is highly significant since we know that the
 # data has signal
-print 'Corresponding p-value: ',  terr.ca.null_prob
+print 'Corresponding p-value: ',  tm.ca.null_prob
