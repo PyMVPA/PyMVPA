@@ -128,22 +128,22 @@ print 'Test error:', err
 
 if externals.exists('matplotlib') \
    and externals.versions['matplotlib'] >= '0.99':
-pts = []
-for i, ex in enumerate(examples):
-    pts.append(mapper.forward(ds.samples[ex:ex+200])[:, :3])
+    pts = []
+    for i, ex in enumerate(examples):
+        pts.append(mapper.forward(ds.samples[ex:ex+200])[:, :3])
 
-fig = pl.figure()
+    fig = pl.figure()
 
-ax = Axes3D(fig)
-colors = ('r','g','b','k','c','m','y','burlywood','chartreuse','gray')
-clouds = []
-for i, p in enumerate(pts):
-    print i
-    clouds.append(ax.plot(p[:, 0], p[:, 1], p[:, 2], 'o', c=colors[i],
-                          label=str(i), alpha=0.6))
+    ax = Axes3D(fig)
+    colors = ('r','g','b','k','c','m','y','burlywood','chartreuse','gray')
+    clouds = []
+    for i, p in enumerate(pts):
+        print i
+        clouds.append(ax.plot(p[:, 0], p[:, 1], p[:, 2], 'o', c=colors[i],
+                              label=str(i), alpha=0.6))
 
-ax.legend([str(i) for i in range(10)])
-pl.draw()
+    ax.legend([str(i) for i in range(10)])
+    pl.draw()
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
