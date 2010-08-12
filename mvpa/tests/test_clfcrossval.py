@@ -11,7 +11,6 @@
 from mvpa.testing.tools import assert_equal, ok_, assert_array_equal
 
 from mvpa.base.node import ChainNode
-from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.generators.partition import NFoldPartitioner
 from mvpa.generators.permutation import AttributePermutator
 from mvpa.measures.base import CrossValidation
