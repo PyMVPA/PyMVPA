@@ -31,7 +31,6 @@ import numpy as np
 
 from mvpa.generators.partition import OddEvenPartitioner
 from mvpa.clfs.svm import LinearCSVMC
-from mvpa.clfs.transerror import TransferError
 from mvpa.measures.base import CrossValidation
 from mvpa.measures.searchlight import sphere_searchlight
 from mvpa.testing.datasets import datasets
