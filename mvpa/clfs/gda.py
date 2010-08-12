@@ -29,8 +29,8 @@ import numpy as np
 
 from numpy import ones, zeros, sum, abs, isfinite, dot
 from mvpa.base import warning, externals
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
-     DegenerateInputError
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa.base.learner import DegenerateInputError
 from mvpa.base.param import Parameter
 from mvpa.base.state import ConditionalAttribute
 #from mvpa.measures.base import Sensitivity
