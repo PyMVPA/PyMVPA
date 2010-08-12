@@ -41,11 +41,13 @@ class RFETests(unittest.TestCase):
 
     ##REF: Name was automagically refactored
     def get_data(self):
-        return datasets['uni2medium_train']
+        d = datasets['uni2medium']
+        return d[d.sa.train == 1]
 
     ##REF: Name was automagically refactored
     def get_data_t(self):
-        return datasets['uni2medium_test']
+        d = datasets['uni2medium']
+        return d[d.sa.train == 2]
 
 
     def test_best_detector(self):

@@ -24,8 +24,7 @@ from mvpa.clfs.libsvmc import SVM as lsSVM
 from mvpa.clfs.sg import SVM as sgSVM
 
 from mvpa.generators.partition import NFoldPartitioner
-from mvpa.measures.base import CrossValidation
-from mvpa.clfs.transerror import TransferError
+from mvpa.measures.base import CrossValidation, TransferMeasure
 
 
 class SVMKernelTests(unittest.TestCase):
@@ -91,8 +90,10 @@ class SVMKernelTests(unittest.TestCase):
         cvte = CrossValidation(clf, NFoldPartitioner())
         cvte_ = CrossValidation(clf_, NFoldPartitioner())
 
-        te = TransferError(clf)
-        te_ = TransferError(clf_)
+        splitter = Splitter('train')
+        postproc=BinaryFxNode(mean_mismatch_error, 'targets')
+        te = TransferMeasure(clf, splitter, postproc=postproc)
+        te_ = TransferMeasure(clf_, splitter, postproc=postproc)
 
         for r in xrange(2):
             ds1 = datasets['uni2medium']
@@ -111,8 +112,10 @@ class SVMKernelTests(unittest.TestCase):
             ok_(~ck._recomputed)
             assert_array_equal(errs2, errs2_)
 
+            raise RuntimeError('The following test could not be refactored, '
+                    'because Shogun keeps core-dumping :-(')
             ssel = np.round(datasets['uni2large'].samples[:5, 0]).astype(int)
-            terr = te(datasets['uni3small_test'][ssel], datasets['uni3small_train'][::2])
+            terr = te(datasets['uni3small'][ssel], datasets['uni3small_train'][::2])
             terr_ = te_(datasets['uni3small_test'][ssel], datasets['uni3small_train'][::2])
             ok_(~ck._recomputed)
             ok_(terr == terr_)

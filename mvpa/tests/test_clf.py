@@ -22,6 +22,7 @@ from mvpa.base import externals
 from mvpa.datasets.base import dataset_wizard
 from mvpa.generators.partition import NFoldPartitioner, OddEvenPartitioner
 from mvpa.generators.permutation import AttributePermutator
+from mvpa.generators.splitters import Splitter
 
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.misc.errorfx import mean_mismatch_error
@@ -32,7 +33,7 @@ from mvpa.clfs.meta import CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \
      TreeClassifier, RegressionAsClassifier
-from mvpa.clfs.transerror import TransferError
+from mvpa.measures.base import TransferMeasure
 from mvpa.measures.base import CrossValidation
 from mvpa.mappers.flatten import mask_mapper
 from mvpa.misc.attrmap import AttributeMap
@@ -587,8 +588,8 @@ class ClassifiersTests(unittest.TestCase):
         mclf = MulticlassClassifier(clf=svm,
                                    enable_ca=['training_confusion'])
 
-        svm2.train(datasets['uni2small_train'])
-        mclf.train(datasets['uni2small_train'])
+        svm2.train(datasets['uni2small'])
+        mclf.train(datasets['uni2small'])
         s1 = str(mclf.ca.training_confusion)
         s2 = str(svm2.ca.training_confusion)
         self.failUnlessEqual(s1, s2,
@@ -628,17 +629,17 @@ class ClassifiersTests(unittest.TestCase):
             enable_ca += ['probabilities']
 
         clf.ca.change_temporarily(enable_ca = enable_ca)
-        for traindata, testdata in [
-            (datasets['uni2small_train'], datasets['uni2small_test']) ]:
-            clf.train(traindata)
-            predicts = clf.predict(testdata.samples)
-            # values should be different from predictions for SVMs we have
-            self.failUnless(np.any(predicts != clf.ca.estimates))
+        spl = Splitter('train', count=2)
+        traindata, testdata = list(spl.generate(datasets['uni2small']))
+        clf.train(traindata)
+        predicts = clf.predict(testdata.samples)
+        # values should be different from predictions for SVMs we have
+        self.failUnless(np.any(predicts != clf.ca.estimates))
 
-            if knows_probabilities and clf.ca.is_set('probabilities'):
-                # XXX test more thoroughly what we are getting here ;-)
-                self.failUnlessEqual( len(clf.ca.probabilities),
-                                      len(testdata.samples)  )
+        if knows_probabilities and clf.ca.is_set('probabilities'):
+            # XXX test more thoroughly what we are getting here ;-)
+            self.failUnlessEqual( len(clf.ca.probabilities),
+                                  len(testdata.samples)  )
         clf.ca.reset_changed_temporarily()
 
 
@@ -665,16 +666,22 @@ class ClassifiersTests(unittest.TestCase):
         # are to change to use generic datasets - make sure to copy
         # them here
         dstrain = deepcopy(datasets['uni2large_train'])
+        dstrain.sa['dstype'] = np.repeat('train', len(dstrain))
         dstest = deepcopy(datasets['uni2large_test'])
-
+        dstest.sa['dstype'] = np.repeat('test', len(dstest))
+        ds = vstack((dstrain, dstest))
         clf.untrain()
         clf_re.untrain()
-        trerr, trerr_re = TransferError(clf), \
-                          TransferError(clf_re,
-                                        disable_ca=['training_confusion'])
+        trerr = TransferMeasure(clf,
+                                Splitter('dstype',
+                                         attr_values=['train', 'test']))
+        trerr_re =  TransferMeasure(clf_re,
+                                    Splitter('dstype',
+                                             attr_values=['train', 'test']),
+                                    disable_ca=['training_confusion'])
 
         # Just check for correctness of retraining
-        err_1 = trerr(dstest, dstrain)
+        err_1 = trerr(ds)
         self.failUnless(err_1<0.3,
             msg="We should test here on easy dataset. Got error of %s" % err_1)
         values_1 = clf.ca.estimates[:]
@@ -684,8 +691,8 @@ class ClassifiersTests(unittest.TestCase):
 
 
         def batch_test(retrain=True, retest=True, closer=True):
-            err = trerr(dstest, dstrain)
-            err_re = trerr_re(dstest, dstrain)
+            err = trerr(ds)
+            err_re = trerr_re(ds)
             corr = np.corrcoef(
                 clf.ca.estimates, clf_re.ca.estimates)[0, 1]
             corr_old = np.corrcoef(values_1, clf_re.ca.estimates)[0, 1]
@@ -744,6 +751,7 @@ class ClassifiersTests(unittest.TestCase):
         dstrain = permute(dstrain)
         self.failUnless((oldlabels != dstrain.targets).any(),
             msg="We should succeed at permutting -- now got the same targets")
+        ds = vstack((dstrain, dstest))
         batch_test()
 
         # Change labels in testing
@@ -751,6 +759,7 @@ class ClassifiersTests(unittest.TestCase):
         dstest = permute(dstest)
         self.failUnless((oldlabels != dstest.targets).any(),
             msg="We should succeed at permutting -- now got the same targets")
+        ds = vstack((dstrain, dstest))
         batch_test()
 
         # should re-train if we change data
@@ -759,6 +768,7 @@ class ClassifiersTests(unittest.TestCase):
             oldsamples = dstrain.samples.copy()
             dstrain.samples[:] += dstrain.samples*0.05
             self.failUnless((oldsamples != dstrain.samples).any())
+            ds = vstack((dstrain, dstest))
             batch_test(retest=False)
         clf.ca.reset_changed_temporarily()
 
