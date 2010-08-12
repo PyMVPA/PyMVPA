@@ -104,6 +104,21 @@ class Measure(Learner):
                                   Learner)
 
 
+    def _precall(self, ds):
+        # estimate the NULL distribution when functor is given
+        if not self.__null_dist is None:
+            if __debug__:
+                debug("SA_", "Estimating NULL distribution using %s"
+                      % self.__null_dist)
+
+            # we need a matching measure instance, but we have to disable
+            # the estimation of the null distribution in that child to prevent
+            # infinite looping.
+            measure = copy.copy(self)
+            measure.__null_dist = None
+            self.__null_dist.fit(measure, ds)
+
+
     def _postcall(self, dataset, result):
         """Some postprocessing on the result
         """
@@ -116,19 +131,7 @@ class Measure(Learner):
                       "Applying post-processing node %s" % self.__postproc)
             result = self.__postproc(result)
 
-        # estimate the NULL distribution when functor is given
         if not self.__null_dist is None:
-            if __debug__:
-                debug("SA_", "Estimating NULL distribution using %s"
-                      % self.__null_dist)
-
-            # we need a matching datameasure instance, but we have to disable
-            # the estimation of the null distribution in that child to prevent
-            # infinite looping.
-            measure = copy.copy(self)
-            measure.__null_dist = None
-            self.__null_dist.fit(measure, dataset)
-
             if self.ca.is_enabled('null_t'):
                 # get probability under NULL hyp, but also request
                 # either it belong to the right tail
