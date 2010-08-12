@@ -419,16 +419,19 @@ class TransferMeasure(Measure):
         splitter = self.__splitter
         ca = self.ca
 
+        # generate the training and testing dataset subsequently to reduce the
+        # memory footprint, i.e. the splitter might generate copies of the data
+        # and no creates one at a time instead of two (for train and test) at
+        # once
         # activate the dataset splitter
         dsgen = splitter.generate(ds)
-        # train on first
+        # ask splitter for first part
         measure.train(dsgen.next())
 
         # TODO get training confusion/stats
 
         # run with second
         res = measure(dsgen.next())
-
         # compute measure stats
         if ca.is_enabled('stats'):
             if not hasattr(measure, '__summary_class__'):
