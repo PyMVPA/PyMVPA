@@ -14,7 +14,6 @@ from mvpa.base.node import ChainNode
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.generators.partition import NFoldPartitioner
 from mvpa.generators.permutation import AttributePermutator
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.measures.base import CrossValidation
 from mvpa.clfs.transerror import TransferError
 
@@ -81,21 +80,6 @@ class CrossValidationTests(unittest.TestCase):
         # must be at chance level
         pmean = np.array(results).mean()
         self.failUnless( pmean < 0.58 and pmean > 0.42 )
-
-
-    def test_harvesting(self):
-        # get a dataset with a very high SNR
-        data = get_mv_pattern(10)
-        # do crossval with default errorfx and 'mean' combiner
-        transerror = TransferError(clfswh['linear'][0])
-        cv = CrossValidatedTransferError(
-                transerror,
-                NFoldSplitter(cvtype=1),
-                harvest_attribs=['transerror.clf.ca.training_time'])
-        result = cv(data)
-        ok_(cv.ca.harvested.has_key('transerror.clf.ca.training_time'))
-        assert_equal(len(cv.ca.harvested['transerror.clf.ca.training_time']),
-                     len(data.UC))
 
 
 
