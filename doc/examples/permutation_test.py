@@ -75,15 +75,15 @@ if __debug__:
     debug.active += ["STATMC"]
 
 # some example data with signal
-ds = normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=3,
-                            nonbogus_features=[0,1], snr=1.0, nchunks=1)
+ds = normal_feature_dataset(perlabel=100, nlabels=2, nfeatures=3,
+                            nonbogus_features=[0,1], snr=0.3, nchunks=1)
 
 # define class to estimate NULL distribution of errors
 # use left tail of the distribution since we use MeanMatchFx as error
 # function and lower is better
 # in a real analysis the number of permutations should be larger
 # to get stable estimates
-permutator = AttributePermutator('targets', n=100)
+permutator = AttributePermutator('targets', n=200)
 # we use a splitter that doesn't split the dataset but return the input dataset
 # two times to compute the transfer performance on the training dataset itself
 splitter = Splitter(None, count=2)
