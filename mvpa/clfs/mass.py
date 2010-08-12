@@ -18,8 +18,8 @@ import numpy as np
 
 from mvpa.base import warning, externals
 from mvpa.misc.state import ConditionalAttribute
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
-     FailedToTrainError, FailedToPredictError, DegenerateInputError
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa.base.learner import FailedToTrainError, FailedToPredictError
 
 
 # do conditional to be able to build module reference

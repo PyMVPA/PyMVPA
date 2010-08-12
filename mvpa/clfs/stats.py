@@ -270,7 +270,7 @@ class MCNullDist(NullDist):
           working and validation dataset are passed onto it.
         """
         # TODO: place exceptions separately so we could avoid circular imports
-        from mvpa.clfs.base import LearnerError
+        from mvpa.base.learner import LearnerError
 
         dist_samples = []
         """Holds the values for randomized labels."""

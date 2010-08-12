@@ -18,8 +18,8 @@ from mvpa.support.copy import deepcopy
 import time
 
 from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
-from mvpa.base.learner import Learner, LearnerError, DegenerateInputError, \
-        FailedToPredictError
+from mvpa.measures.base import Measure
+from mvpa.base.learner import Learner, FailedToPredictError
 from mvpa.datasets.base import Dataset
 from mvpa.misc.support import idhash
 from mvpa.base.state import ConditionalAttribute
