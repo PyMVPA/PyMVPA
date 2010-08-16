@@ -67,15 +67,15 @@ PyMVPA source code repository).
 To get access to both the full PyMVPA history and the latest
 development code, the PyMVPA Git_ repository is publicly available. To view the
 repository, please point your webbrowser to gitweb:
-http://git.debian.org/?p=pkg-exppsy/pymvpa.git
+http://github.com/PyMVPA/PyMVPA
 
 To clone (aka checkout) the PyMVPA repository simply do:
 
 ::
 
-  git clone git://git.debian.org/git/pkg-exppsy/pymvpa.git
+  git clone git://github.com/PyMVPA/PyMVPA.git
 
-After a short while you will have a ``pymvpa`` directory below your current
+After a short while you will have a ``PyMVPA`` directory below your current
 working directory, that contains the PyMVPA repository.
 
 More detailed instructions on :ref:`installation requirements <requirements>`
@@ -85,4 +85,4 @@ in the manual.
 
 .. _download area: http://alioth.debian.org/frs/?group_id=30954
 .. _Git: http://git.or.cz/
-.. _snapshot:  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=snapshot;h=refs/heads/master;sf=tgz
+.. _snapshot: http://github.com/PyMVPA/PyMVPA/archives/master

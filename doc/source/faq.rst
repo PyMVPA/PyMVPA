@@ -104,9 +104,9 @@ repository and preparing the patch. Here is a quick sketch of the workflow.
 
 First get the latest code::
 
-  git clone git://git.debian.org/git/pkg-exppsy/pymvpa.git
+  git clone git://github.com/PyMVPA/PyMVPA.git
 
-This will create a new `pymvpa` subdirectory, that contains the complete
+This will create a new `PyMVPA` subdirectory, that contains the complete
 repository. Enter this directory and run `gitk --all` to browse the full
 history and *all* branches that have ever been published.
 
