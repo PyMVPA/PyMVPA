@@ -439,22 +439,22 @@ Alternatively, one can also download a tarball of the latest development
 snapshot_ (i.e. the current state of the *master* branch of the PyMVPA source
 code repository).
 
-.. _snapshot:  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=snapshot;h=refs/heads/master;sf=tgz
+.. _snapshot:  http://github.com/PyMVPA/PyMVPA/archives/master
 .. index:: Git, Git repository
 
 If you want to have access to both, the full PyMVPA history and the latest
 development code, you can use the PyMVPA Git_ repository, which is publicly
 available. To view the repository, please point your web browser to gitweb:
 
-  http://git.debian.org/?p=pkg-exppsy/pymvpa.git
+  http://github.com/PyMVPA/PyMVPA
 
 The gitweb browser also allows to download arbitrary development snapshots
 of PyMVPA. For a full clone (aka checkout) of the PyMVPA repository simply
 do:
 
-  :command:`git clone git://git.debian.org/git/pkg-exppsy/pymvpa.git`
+  :command:`git clone git://github.com/PyMVPA/PyMVPA.git`
 
-After a short while you will have a `pymvpa` directory below your current
+After a short while you will have a `PyMVPA` directory below your current
 working directory, that contains the PyMVPA repository.
 
 .. _Git: http://git.or.cz/
