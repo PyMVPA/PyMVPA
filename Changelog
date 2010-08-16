@@ -11,7 +11,7 @@ Development Changelog
 This changelog only lists rather macroscopic changes to PyMVPA. The full VCS
 changelog is available here:
 
-  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary
+  http://github.com/PyMVPA/PyMVPA/commits/master
 
 In addition there is also a somewhat unconventional `visual changelog`_.
 
