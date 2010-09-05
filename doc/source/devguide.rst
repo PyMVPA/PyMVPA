@@ -92,7 +92,7 @@ Merges
 For easy tracking of what changes were absorbed during merge, we
 advice to enable merge summary within git:
 
-  git-config merge.summary true
+  git config merge.summary true
 
 
 Code
