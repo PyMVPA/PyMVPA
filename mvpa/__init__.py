@@ -29,7 +29,7 @@ The mvpa package contains the following subpackages and modules:
 :requires: Python 2.4+
 :version: 0.5.0.dev
 :see: `The PyMVPA webpage <http://www.pymvpa.org>`__
-:see: `GIT Repository Browser <http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary>`__
+:see: `GIT Repository Browser <http://github.com/PyMVPA/PyMVPA>`__
 
 :license: The MIT License <http://www.opensource.org/licenses/mit-license.php>
 :copyright: |copy| 2006-2010 Michael Hanke <michael.hanke@gmail.com>
