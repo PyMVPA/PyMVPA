@@ -90,9 +90,14 @@ Merges
 ------
 
 For easy tracking of what changes were absorbed during merge, we
-advice to enable merge summary within git:
+advice to enable automagic inclusion of their log entries into the
+commit message of the merge::
 
-  git config merge.summary true
+  git config merge.log true
+
+.. note::
+
+  `merge.log` superseeds deprecated x`merge.summary`
 
 
 Code
