@@ -5,7 +5,7 @@
 *.kcache.*
 *.prof
 *.pstats
-*.py[co]
+*.py[cod]
 *.swp
 *.o
 *.a
