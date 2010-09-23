@@ -29,7 +29,7 @@ for b in maint/0.4; do
     TESTS_BRANCHES["$b"]="$TESTS_COMMON testapiref"
 done
 # development branches
-for b in master yoh/master; do
+for b in master; do
     TESTS_BRANCHES["$b"]="$TESTS_COMMON testdatadb testourcfg testdocstrings"
 done
 # all known tests
@@ -43,7 +43,9 @@ EMAILS='yoh@onerussian.com,michael.hanke@gmail.com'
 precmd=
 #precmd="echo  C: "
 # XXX
-repo="git://git.debian.org/git/pkg-exppsy/pymvpa.git"
+# TODO: multiple repositories with branches, since no <user>/master
+#       any longer
+repo="http://github.com/PyMVPA/PyMVPA"
 
 ds=`date +"20%y%m%d_%H%M%S"`
 topdir=$HOME/proj/pymvpa

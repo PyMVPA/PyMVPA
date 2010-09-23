@@ -36,6 +36,7 @@ Institutions Where PyMVPA Is Used
 * **MRC Cognition and Brain Sciences Unit**, Cambridge, UK
 * Department of Experimental Psychology, **Otto-von-Guericke-University
   Magdeburg**, Germany
+* Donders Center for Cognition, **Radboud University Nijmegen**, Netherlands
 * Department of Psychology, **University of California at Los Angeles**, USA
 * Center for Functional Neuroimaging, **University of Pennsylvania**, USA
 * Brain & Creativity Institute, **University of Southern California**, USA

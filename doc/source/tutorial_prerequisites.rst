@@ -99,7 +99,7 @@ basic Python programming to efficient scientific computing with Python.
 Tutorial Introductions Into General Python Programming
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-http://en.wikibooks.org/wiki/Non-Programmer's_Tutorial_for_Python_2.0
+http://en.wikibooks.org/wiki/Non-Programmer's_Tutorial_for_Python_2.6
 
   Basic from-scratch introduction into Python. This should give you the basics,
   even if you had *no* prior programming experience.

@@ -19,30 +19,25 @@ Git Repository
 Layout
 ------
 
-The git repository is structured by a number of branches.  Originally we
-followed the scheme, where each developer prefixed his/her branches with a
-unique string plus '/' (maybe initials or similar).  That is why currently
-there are:
-
-  :eo: Emanuele Olivetti
-  :mh: Michael Hanke
-  :per: Per B. Sederberg
-  :yoh: Yaroslav O. Halchenko
-
-At the moment, with availability of PyMVPA repository at github_, such
-convention slowly gets superseded with adopting a true distributed workflow:
+The git repository is structured by a number of branches and clones (forks) at
+github_.
 Anyone is welcome to fork the repository on github_ (just click on "Fork"
 button), and file a "Pull request" whenever he/she thinks that his changes are
 ready to be included (merged) into the main repository.  Alternatively, if you
-just want quickly submit a patch -- just email it to the mailing list.  You
-might take advantage of ``git format-patch`` command.
+just want quickly submit a patch -- just email it to the mailing list.
+Concise accompanying description is a plus. You might take advantage of
+``git format-patch`` command.
+
+.. _github: http://github.com/PyMVPA/PyMVPA/
+
+
+Branches
+--------
 
 Any developer can have an infinite number of branches. If the number of
 branches causes gitk output to exceed a usual 19" screen, the respective
 developer has to spend some bucks (or euros) on new screens for all others
 ;-)
-
-.. _github: http://github.com/hanke/PyMVPA/
 
 The main release branch is called *master*. This is a merge-only branch.
 Features finished or updated by some developer are merged from the
@@ -63,6 +58,18 @@ maintenance (as well as backport) releases should be gone under
 *dist/debian/security/lenny*).  Branch *dist/debian/dev* is dedicated for
 Debian packages of development snapshots.
 
+Besides *master*, *maint/...*, *dist/...* we are following the convention for
+additional prefixes for new branches:
+
+_bf/...
+  Bugfix branches -- should be simply deleted on remotes whenever accepted
+_tent/...
+  Tentative new features which might be adopted or not.  Whenever feature gets
+  adopted (merged into some *master*), corresponding HEAD of *_tent/* branch
+  should be tagged with a corresponding non-annotated *+tent/* tag
+
+Please do not base your work on *_tent/* branches of the others since those
+could be forcefully rebased without further notice.
 
 Commits
 -------
@@ -90,9 +97,14 @@ Merges
 ------
 
 For easy tracking of what changes were absorbed during merge, we
-advice to enable merge summary within git:
+advice to enable automagic inclusion of their log entries into the
+commit message of the merge::
 
-  git-config merge.summary true
+  git config merge.log true
+
+.. note::
+
+  `merge.log` superseeds deprecated x`merge.summary`
 
 
 Code
