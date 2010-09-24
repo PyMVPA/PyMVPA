@@ -997,20 +997,6 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
     analyzer = property(fget=lambda x:x.__analyzer)
 
 
-class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
-    """Set sensitivity analyzer output be reverse mapped using mapper of the
-    slave classifier"""
-
-    def _call(self, dataset):
-        sens = super(MappedClassifierSensitivityAnalyzer, self)._call(dataset)
-        # So we have here the case that some sensitivities are given
-        #  as nfeatures x nclasses, thus we need to take .T for the
-        #  mapper and revert back afterwards
-        # devguide's TODO lists this point to 'disguss'
-        sens_mapped = self.clf.mapper.reverse(sens.T)
-        return sens_mapped.T
-
-
 class BinaryClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
     """Set sensitivity analyzer output to have proper labels"""
 
@@ -1054,16 +1040,19 @@ class RegressionAsClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyz
         return sens
 
 
-class FeatureSelectionClassifierSensitivityAnalyzer(
-    ProxyClassifierSensitivityAnalyzer):
+class FeatureSelectionClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
+    pass
+
+class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
     """Set sensitivity analyzer output be reverse mapped using mapper of the
     slave classifier"""
 
     def _call(self, dataset):
-        sens = super(FeatureSelectionClassifierSensitivityAnalyzer,
+        sens = super(MappedClassifierSensitivityAnalyzer,
                      self)._call(dataset)
         # `sens` is either 1D array, or Dataset
+        # XXX maybe it is always a dataset?
         if isinstance(sens, AttrDataset):
-            return self.clf.maskclf.mapper.reverse(sens)
+            return self.clf.mapper.reverse(sens)
         else:
-            return self.clf.maskclf.mapper.reverse1(sens)
+            return self.clf.mapper.reverse1(sens)
