@@ -58,6 +58,10 @@ class SampleSliceMapper(SliceMapper):
         # it couldn't be simpler
         return ds[self._slicearg]
 
+    def untrain(self):
+        self._slicearg = None
+        super(SliceMapper, self).untrain()
+
 
 
 class FeatureSliceMapper(SliceMapper):
@@ -81,8 +85,8 @@ class FeatureSliceMapper(SliceMapper):
         """
         SliceMapper.__init__(self, slicearg, **kwargs)
         # store it here, might be modified later
-        self.__dshape = dshape
-        self.__oshape = oshape
+        self._dshape = dshape
+        self._oshape = oshape
         self.filler = filler
 
 
@@ -90,7 +94,7 @@ class FeatureSliceMapper(SliceMapper):
         s = super(FeatureSliceMapper, self).__repr__()
         return s.replace("(",
                          "(slicearg=%s, dshape=%s, "
-                          % (repr(self._slicearg), repr(self.__dshape)),
+                          % (repr(self._slicearg), repr(self._dshape)),
                          1)
 
 
@@ -104,8 +108,8 @@ class FeatureSliceMapper(SliceMapper):
         """
         mdata = data[:, self._slicearg]
         # store the output shape if not set yet
-        if self.__oshape is None:
-            self.__oshape = mdata.shape[1:]
+        if self._oshape is None:
+            self._oshape = mdata.shape[1:]
         return mdata
 
 
@@ -131,10 +135,10 @@ class FeatureSliceMapper(SliceMapper):
         # chainmapper to properly switch to reverse() for multiple samples
         # use the fact that a single sample needs to conform to the known
         # data shape -- but may have additional appended dimensions
-        if not data.shape[:len(self.__oshape)] == self.__oshape:
+        if not data.shape[:len(self._oshape)] == self._oshape:
             raise ValueError("Data shape does not match training "
                              "(trained: %s; got: %s)"
-                             % (self.__dshape, data.shape))
+                             % (self._dshape, data.shape))
         return super(FeatureSliceMapper, self).reverse1(data)
 
 
@@ -146,13 +150,13 @@ class FeatureSliceMapper(SliceMapper):
         data : array-like
           Either one-dimensional sample or two-dimensional samples matrix.
         """
-        if self.__dshape is None:
+        if self._dshape is None:
             raise RuntimeError(
                 "Cannot reverse-map data since the original data shape is "
                 "unknown. Either set `dshape` in the constructor, or call "
                 "train().")
         # this wouldn't preserve ndarray subclasses
-        #mapped = np.zeros(data.shape[:1] + self.__dshape,
+        #mapped = np.zeros(data.shape[:1] + self._dshape,
         #                 dtype=data.dtype)
         # let's do it a little awkward but pass subclasses through
         # suggestions for improvements welcome
@@ -161,7 +165,7 @@ class FeatureSliceMapper(SliceMapper):
         # changes in the second axis -- the feature axis
         # this madness is necessary to support mapping of multi-dimensional
         # features
-        mapped.resize(data.shape[:1] + self.__dshape + data.shape[2:],
+        mapped.resize(data.shape[:1] + self._dshape + data.shape[2:],
                       refcheck=False)
         mapped.fill(self.filler)
         mapped[:, self._slicearg] = data
@@ -182,16 +186,22 @@ class FeatureSliceMapper(SliceMapper):
 
     @accepts_dataset_as_samples
     def _train(self, data):
-        if self.__dshape is None:
+        if self._dshape is None:
             # XXX what about arrays of generic objects???
             # MH: in this case the shape will be (), which is just
             # fine since feature slicing is meaningless without features
             # the only thing we can do is kill the whole samples matrix
-            self.__dshape = data.shape[1:]
+            self._dshape = data.shape[1:]
             # we also need to know what the output shape looks like
             # otherwise we cannot reliably say what is appropriate input
             # for reverse*()
-            self.__oshape = data[:, self._slicearg].shape[1:]
+            self._oshape = data[:, self._slicearg].shape[1:]
+
+
+    def untrain(self):
+        self._dshape = None
+        self._oshape = None
+        super(FeatureSliceMapper, self).untrain()
 
 
     def is_mergable(self, other):
