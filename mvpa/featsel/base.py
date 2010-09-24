@@ -11,53 +11,35 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.featsel.helpers import FractionTailSelector
-from mvpa.base.learner import Learner
+from mvpa.mappers.slicing import FeatureSliceMapper
 from mvpa.base.state import ConditionalAttribute
 
 if __debug__:
     from mvpa.base import debug
 
-class FeatureSelection(Learner):
+
+class FeatureSelection(FeatureSliceMapper):
     """Base class for any feature selection
 
     Base class for Functors which implement feature selection on the
     datasets.
     """
-
-    selected_ids = ConditionalAttribute(enabled=False)
-
     def __init__(self, **kwargs):
-        # base init first
-        Learner.__init__(self, **kwargs)
+        # initialize FeatureSliceMapper with a `None` slicing argument, since
+        # the actual slicing needs to be determined by train()
+        FeatureSliceMapper.__init__(self, None, **kwargs)
 
 
-    def __call__(self, dataset, testdataset=None):
-        """Invocation of the feature selection
+    def is_mergable(self, other):
+        """Returns False
 
-        Parameters
-        ----------
-        dataset : Dataset
-          dataset used to select features
-        testdataset : Dataset
-          dataset the might be used to compute a stopping criterion
-
-        Returns
-        -------
-        Dataset or tuple
-          The dataset contains the selected features. If a ``testdataset`` has
-          been passed a tuple with both processed datasets is return instead.
-          Note that the resulting dataset(s) reference the same values for samples
-          attributes (e.g. labels and chunks) of the input dataset(s): be careful
-          if you alter them later.
+        Unlike simple FeatureSliceMappers feature selection algorithms cannot
+        simply be merged. Although it is technical possible to merge actual
+        feature selection results, any retraining would yield unexpected
+        behavior, since the original training algorithm might have been replaced
+        by a Mapper merge.
         """
-        # Derived classes must provide interface to access other
-        # relevant to the feature selection process information (e.g. mask,
-        # elimination step (in RFE), etc)
-        results = self._call(dataset, testdataset)
-        if testdataset is None:
-            return results[0]
-        else:
-            return results
+        return False
 
 
 
@@ -98,26 +80,14 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         """Functor which takes care about removing some features."""
 
 
-    def untrain(self):
-        if __debug__:
-            debug("FS_", "Untraining sensitivity-based FS: %s" % self)
-        self.__sensitivity_analyzer.untrain()
-
-
-    def _call(self, dataset, testdataset=None):
+    def _train(self, dataset):
         """Select the most important features
 
         Parameters
         ----------
         dataset : Dataset
           used to compute sensitivity maps
-        testdataset : Dataset
-          optional dataset to select features on
-
-        Returns a tuple of two new datasets with selected feature
-        subset of `dataset`.
         """
-
         sensitivity = self.__sensitivity_analyzer(dataset)
         """Compute the sensitivity map."""
 
@@ -130,23 +100,22 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
             debug("FS_", "Sensitivity: %s Selected ids: %s" %
                   (sensitivity, selected_ids))
 
-        # Create a dataset only with selected features
-        wdataset = dataset[:, selected_ids]
-
-        if not testdataset is None:
-            wtestdataset = testdataset[:, selected_ids]
-        else:
-            wtestdataset = None
-
-        # Differ from the order in RFE when actually error reported is for
-        results = (wdataset, wtestdataset)
-
-        # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
+        # XXX not sure if it really has to be sorted
         selected_ids.sort()
-        self.ca.selected_ids = selected_ids
+        # announce desired features to the underlying slice mapper
+        self._safe_assign_slicearg(selected_ids)
+        # and perform its own training
+        super(SensitivityBasedFeatureSelection, self)._train(dataset)
 
-        # dataset with selected features is returned
-        return results
+
+    def untrain(self):
+        if __debug__:
+            debug("FS_", "Untraining sensitivity-based FS: %s" % self)
+        self.__sensitivity_analyzer.untrain()
+        # reset slicearg that has been assigned during training
+        self._safe_assign_slicearg(None)
+        # ask base class to do its untrain
+        super(SensitivityBasedFeatureSelection, self).untrain()
 
     # make it accessible from outside
     sensitivity_analyzer = property(fget=lambda self:self.__sensitivity_analyzer,

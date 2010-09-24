@@ -16,8 +16,7 @@ from mvpa.testing.datasets import *
 
 from mvpa.base import externals, warning
 from mvpa.datasets.base import Dataset
-from mvpa.featsel.base import FeatureSelectionPipeline, \
-     SensitivityBasedFeatureSelection, CombinedFeatureSelection
+from mvpa.featsel.base import SensitivityBasedFeatureSelection
 from mvpa.featsel.helpers import FixedNElementTailSelector, \
                                  FractionTailSelector, RangeElementSelector
 

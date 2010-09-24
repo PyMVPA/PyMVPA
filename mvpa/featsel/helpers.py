@@ -462,7 +462,9 @@ class TailSelector(ElementSelector):
         if self.__sort:
             good_ids.sort()
 
-        return good_ids
+        # only return proper slice args: this is a list of int ids, hence return
+        # a list not an array
+        return list(good_ids)
 
 
 
