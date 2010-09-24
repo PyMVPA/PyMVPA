@@ -106,21 +106,21 @@ class ClassifiersTests(unittest.TestCase):
     def test_boosted_state_propagation(self):
         bclf = CombinedClassifier(clfs=[self.clf_sign.clone(),
                                         self.clf_sign.clone()],
-                                  enable_ca=['feature_ids'])
+                                  enable_ca=['training_confusion'])
 
         # check ca enabling propagation
-        self.failUnlessEqual(self.clf_sign.ca.is_enabled('feature_ids'),
+        self.failUnlessEqual(self.clf_sign.ca.is_enabled('training_confusion'),
                              _ENFORCE_CA_ENABLED)
-        self.failUnlessEqual(bclf.clfs[0].ca.is_enabled('feature_ids'), True)
+        self.failUnlessEqual(bclf.clfs[0].ca.is_enabled('training_confusion'), True)
 
         bclf2 = CombinedClassifier(clfs=[self.clf_sign.clone(),
                                          self.clf_sign.clone()],
                                   propagate_ca=False,
-                                  enable_ca=['feature_ids'])
+                                  enable_ca=['training_confusion'])
 
-        self.failUnlessEqual(self.clf_sign.ca.is_enabled('feature_ids'),
+        self.failUnlessEqual(self.clf_sign.ca.is_enabled('training_confusion'),
                              _ENFORCE_CA_ENABLED)
-        self.failUnlessEqual(bclf2.clfs[0].ca.is_enabled('feature_ids'),
+        self.failUnlessEqual(bclf2.clfs[0].ca.is_enabled('training_confusion'),
                              _ENFORCE_CA_ENABLED)
 
 
@@ -394,15 +394,13 @@ class ClassifiersTests(unittest.TestCase):
         """
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
-                enable_ca=['confusion', 'training_confusion',
-                               'feature_ids'],
-                harvest_attribs=['clf.ca.feature_ids',
-                                 'clf.ca.training_time'],
+                enable_ca=['confusion', 'training_confusion'],
+                harvest_attribs=['clf.ca.training_time'],
                 descr="DESCR")
         clf.train(ds)                   # train the beast
         # Number of harvested items should be equal to number of chunks
         self.failUnlessEqual(
-            len(clf.ca.harvested['clf.ca.feature_ids']), len(ds.UC))
+            len(clf.ca.harvested['clf.ca.training_time']), len(ds.UC))
         # if we can blame multiple inheritance and ClassWithCollections.__init__
         self.failUnlessEqual(clf.descr, "DESCR")
 
@@ -463,7 +461,7 @@ class ClassifiersTests(unittest.TestCase):
                         msg="We need to pass values into ProxyClassifier")
         self.clf_sign.ca.reset_changed_temporarily()
 
-        self.failUnlessEqual(len(clf011.ca.feature_ids), 2)
+        self.failUnlessEqual(clf011.mapper._oshape, (2,))
         "Feature selection classifier had to be trained on 2 features"
 
         # first classifier -- last feature should be discarded

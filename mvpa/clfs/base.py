@@ -124,9 +124,6 @@ class Classifier(Learner):
     predicting_time = ConditionalAttribute(enabled=True,
         doc="Time (in seconds) which took classifier to predict")
 
-    feature_ids = ConditionalAttribute(enabled=False,
-        doc="Feature IDS which were used for the actual training.")
-
     __tags__ = []
     """Describes some specifics about the classifier -- is that it is
     doing regression for instance...."""
@@ -275,20 +272,6 @@ class Classifier(Learner):
                 targets=dataset.sa[self.get_space()].value,
                 predictions=predictions)
 
-        if self.ca.is_enabled('feature_ids'):
-            self.ca.feature_ids = self._get_feature_ids()
-
-
-    ##REF: Name was automagically refactored
-    def _get_feature_ids(self):
-        """Virtual method to return feature_ids used while training
-
-        Is not intended to be called anywhere but from _posttrain,
-        thus classifier is assumed to be trained at this point
-        """
-        # By default all features are used
-        return range(self.__trainednfeatures)
-
 
     def summary(self):
         """Providing summary over the classifier"""
@@ -317,8 +300,6 @@ class Classifier(Learner):
                 s += ' #chunks:%d' % nchunks
 
             s += " #features:%d" % self.__trainednfeatures
-            if ca.is_set('feature_ids'):
-                s += ", used #features:%d" % len(ca.feature_ids)
             if ca.is_set('training_confusion'):
                 s += ", training error:%.3g" % ca.training_confusion.error
         else:
