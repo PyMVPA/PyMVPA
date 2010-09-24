@@ -23,6 +23,10 @@ class SliceMapper(Mapper):
     """
     def __init__(self, slicearg, **kwargs):
         Mapper.__init__(self, **kwargs)
+        self._safe_assign_slicearg(slicearg)
+
+
+    def _safe_assign_slicearg(self, slicearg):
         # convert int sliceargs into lists to prevent getting scalar values when
         # slicing
         if isinstance(slicearg, int):
