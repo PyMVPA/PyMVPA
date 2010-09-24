@@ -323,3 +323,7 @@ class ChainMapper(ChainNode):
         m_repr = '[%s]' % ', '.join([repr(m) for m in self])
         return s.replace("(", "(%s, " % m_repr, 1)
 
+
+# XXX implement a 'CombinedMapper' (analog to ex-CombinedFeatureSelection) that
+# can a dataset to multiple child-mappers and hstacks the results into a single
+# output dataset
