@@ -440,7 +440,7 @@ class ConditionalAttributesCollection(Collection):
 
     def is_enabled(self, key):
         """Returns `True` if state `key` is enabled"""
-        return self[key].enabled
+        return key in self and self[key].enabled
 
 
     def is_active(self, key):
