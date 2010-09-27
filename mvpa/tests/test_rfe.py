@@ -15,6 +15,7 @@ from mvpa.generators.partition import NFoldPartitioner
 from mvpa.generators.permutation import AttributePermutator
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.datasets.base import Dataset
+from mvpa.mappers.base import ChainMapper
 from mvpa.mappers.fx import maxofabs_sample, mean_sample
 from mvpa.featsel.rfe import RFE
 from mvpa.featsel.base import \
@@ -241,13 +242,11 @@ class RFETests(unittest.TestCase):
     def test_feature_selection_pipeline(self):
         sens_ana = SillySensitivityAnalyzer()
 
-        wdata = self.get_data()
-        wdata_nfeatures = wdata.nfeatures
-        tdata = self.get_data_t()
-        tdata_nfeatures = tdata.nfeatures
+        data = self.get_data()
+        data_nfeatures = data.nfeatures
 
         # test silly one first ;-)
-        self.failUnlessEqual(sens_ana(wdata).samples[0,0], -int(wdata_nfeatures/2))
+        self.failUnlessEqual(sens_ana(data).samples[0,0], -int(data_nfeatures/2))
 
         # OLD: first remove 25% == 6, and then 4, total removing 10
         # NOW: test should be independent of the numerical number of features
@@ -260,25 +259,18 @@ class RFETests(unittest.TestCase):
                               ]
 
         # create a FeatureSelection pipeline
-        feat_sel_pipeline = FeatureSelectionPipeline(
-            feature_selections=feature_selections,
-            enable_ca=['nfeatures', 'selected_ids'])
+        feat_sel_pipeline = ChainMapper(feature_selections)
 
-        sdata, stdata = feat_sel_pipeline(wdata, tdata)
+        feat_sel_pipeline.train(data)
+        resds = feat_sel_pipeline(data)
 
-        self.failUnlessEqual(len(feat_sel_pipeline.feature_selections),
+        self.failUnlessEqual(len(feat_sel_pipeline),
                              len(feature_selections),
                              msg="Test the property feature_selections")
 
-        desired_nfeatures = int(np.ceil(wdata_nfeatures*0.75))
-        self.failUnlessEqual(feat_sel_pipeline.ca.nfeatures,
-                             [wdata_nfeatures, desired_nfeatures],
-                             msg="Test if nfeatures get assigned properly."
-                             " Got %s!=%s" % (feat_sel_pipeline.ca.nfeatures,
-                                              [wdata_nfeatures, desired_nfeatures]))
-
-        self.failUnlessEqual(list(feat_sel_pipeline.ca.selected_ids),
-                             range(int(wdata_nfeatures*0.25)+4, wdata_nfeatures))
+        desired_nfeatures = int(np.ceil(data_nfeatures*0.75))
+        self.failUnlessEqual([fe._oshape[0] for fe in feat_sel_pipeline],
+                             [desired_nfeatures, desired_nfeatures - 4])
 
 
     # TODO: should later on work for any clfs_with_sens
