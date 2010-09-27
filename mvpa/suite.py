@@ -44,7 +44,6 @@ else:
     from mvpa.base.report_dummy import Report
 
 
-from mvpa.algorithms.cvtranserror import *
 from mvpa.algorithms.hyperalignment import *
 
 from mvpa import clfs
