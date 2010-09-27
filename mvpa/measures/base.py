@@ -201,6 +201,33 @@ class Measure(Learner):
         return self.__postproc
 
 
+class ProxyMeasure(Measure):
+    """Wrapper to allow for alternative post-processing of a shared measure.
+
+    This class is useful whenever a measure (or for example a trained
+    classifier) shall be utilized in multiple nodes, but each node needs to
+    perform its on post-processing of results. One can simply wrap the
+    measure into this class and assign arbitrary post-processing nodes to the
+    wrapper, instead of the measure itself.
+    """
+    def __init__(self, measure, **kwargs):
+        Measure.__init__(self, **kwargs)
+        self.__measure = measure
+
+
+    def _train(self, ds):
+        self.measure.train(ds)
+
+
+    def _call(self, ds):
+        return self.measure(ds)
+
+
+    @property
+    def measure(self):
+        """Return proxied measure"""
+        return self.__measure
+
 
 class RepeatedMeasure(Measure):
     """Repeatedly run a measure on generated dataset.
