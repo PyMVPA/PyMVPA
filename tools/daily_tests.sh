@@ -21,15 +21,22 @@ set -e
 # Unittests to run in all branches
 TESTS_COMMON="unittests testmanual testsuite testsphinx testexamples testcfg"
 
+# Specify the main repository (serves the 'origin')
+# and additional named clones
+# Branches will be specified prepended with names of the remotes
+repo="git://github.com/PyMVPA/PyMVPA.git"
+remotes="git://github.com/yarikoptic/PyMVPA.git yarikoptic
+git://github.com/hanke/PyMVPA.git hanke"
+
 # Associative array with tests lists per branch
 declare -A TESTS_BRANCHES
 # stable branches
-for b in maint/0.4; do
+for b in origin/maint/0.4; do
     #have no datadb and still use epydoc
     TESTS_BRANCHES["$b"]="$TESTS_COMMON testapiref"
 done
 # development branches
-for b in master; do
+for b in origin/master yarikoptic/master hanke/_tent/generators; do
     TESTS_BRANCHES["$b"]="$TESTS_COMMON testdatadb testourcfg testdocstrings"
 done
 # all known tests
@@ -42,10 +49,6 @@ EMAILS='yoh@onerussian.com,michael.hanke@gmail.com'
 
 precmd=
 #precmd="echo  C: "
-# XXX
-# TODO: multiple repositories with branches, since no <user>/master
-#       any longer
-repo="http://github.com/PyMVPA/PyMVPA"
 
 ds=`date +"20%y%m%d_%H%M%S"`
 topdir=$HOME/proj/pymvpa
@@ -64,7 +67,7 @@ indent() {
 }
 
 do_checkout() {
-    $precmd git clean -df | indent
+    $precmd git clean -dfx | indent
     $precmd git reset --hard
     #if [ ! $branch = 'master' ]; then
     $precmd git checkout -b $branch origin/$branch || :
@@ -111,20 +114,29 @@ export MVPA_MATPLOTLIB_BACKEND=agg
 # need to be a function to share global failed/succeded
 sweep()
 {
+    echo "I: working in $logdir"
     cd $logdir
 
     echo "I:" $(date)
 
     # checkout the repository
-    echo "I: Cloning repository"
+    echo "I: Cloning main repository"
     $precmd git clone -q $repo 2>&1 | indent
-    $precmd cd pymvpa
+    $precmd cd PyMVPA
     # no need to check here since checkout would fail below otherwise
+    echo -n "I: Adding remotes: "
+    echo -en "$remotes\n" | while read rurl rname; do
+        echo -e "$rname" | tr '\n' ' '
+        git remote add $rname $rurl
+        git fetch -q $rname
+    done
+    echo                        # just a new line
 
     #
     # Sweep through the branches and actionsto test
     #
     branches_with_problems=
+    shashums_visited=
     for branch in $BRANCHES; do
         branch_has_problems=
         echo
@@ -143,7 +155,15 @@ sweep()
             fi
             # provide information in the log about what was current position
             # in the branch
-            [ "$action" = "checkout" ] && echo "I: current position $(git describe)"
+            if [ "$action" = "checkout" ]; then
+                echo "I: current position $(git describe)"
+                ref=$(git rev-parse --short HEAD)
+                if echo "$shashums_visited" | grep -q "$ref|" ; then
+                    echo "I: skipping since $ref was already tested"
+                    break
+                fi
+                shashums_visited+="$ref|"
+            fi
         done
         if [ "x$branch_has_problems" != x ]; then
             branches_with_problems+="\n  $branch: $branch_has_problems"
