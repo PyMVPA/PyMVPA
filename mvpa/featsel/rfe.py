@@ -51,10 +51,6 @@ class RFE(FeatureSelection):
       486--503.
     """
 
-    errors = ConditionalAttribute(
-        doc="History of errors through RFE")
-    nfeatures = ConditionalAttribute(
-        doc="History of # of features left")
     history = ConditionalAttribute(
         doc="Last step # when each feature was still present")
     sensitivities = ConditionalAttribute(enabled=False,
@@ -64,9 +60,6 @@ class RFE(FeatureSelection):
                  sensitivity_analyzer,
                  transfer_error,
                  feature_selector=FractionTailSelector(0.05),
-                 bestdetector=BestDetector(),
-                 stopping_criterion=NBackHistoryStopCrit(BestDetector()),
-                 train_clf=None,
                  update_sensitivity=True,
                  **kargs
                  ):

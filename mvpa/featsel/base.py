@@ -10,7 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.featsel.helpers import FractionTailSelector
+from mvpa.featsel.helpers import FractionTailSelector, \
+                                 NBackHistoryStopCrit, \
+                                 BestDetector
 from mvpa.mappers.slicing import FeatureSliceMapper
 from mvpa.base.state import ConditionalAttribute
 
@@ -126,3 +128,88 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
     # make it accessible from outside
     sensitivity_analyzer = property(fget=lambda self:self.__sensitivity_analyzer,
                                     doc="Measure which was used to do selection")
+
+
+
+class IterativeFeatureSelection(FeatureSelection):
+    """
+    """
+    errors = ConditionalAttribute(
+        doc="History of errors")
+    nfeatures = ConditionalAttribute(
+        doc="History of # of features left")
+
+    def __init__(self,
+                 fmeasure,
+                 pmeasure,
+                 splitter,
+                 fselector,
+                 stopping_criterion=NBackHistoryStopCrit(BestDetector()),
+                 bestdetector=BestDetector(),
+                 train_pmeasure=True,
+                 **kwargs
+                 ):
+        """
+        Parameters
+        ----------
+        fmeasure : Measure
+          Computed for each candidate feature selection. The measure has
+          to compute a scalar value.
+        pmeasure : Measure
+          Compute against a test dataset for each incremental feature
+          set.
+        splitter: Splitter
+          This splitter instance has to generate at least one dataset split
+          when called with the input dataset that is used to compute the
+          per-feature criterion for feature selection.
+        bestdetector : Functor
+          Given a list of error values it has to return a boolean that
+          signals whether the latest error value is the total minimum.
+        stopping_criterion : Functor
+          Given a list of error values it has to return whether the
+          criterion is fulfilled.
+        fselector
+        """
+        # bases init first
+        FeatureSelection.__init__(self, **kwargs)
+
+        self._fmeasure = fmeasure
+        self._pmeasure = pmeasure
+        self._splitter = splitter
+        self._fselector = fselector
+        self._stopping_criterion = stopping_criterion
+        self._bestdetector = bestdetector
+        self._train_pmeasure = train_pmeasure
+
+
+    def untrain(self):
+        if __debug__:
+            debug("FS_", "Untraining Iterative FS: %s" % self)
+        self._fmeasure.untrain()
+        self._pmeasure.untrain()
+        # ask base class to do its untrain
+        super(IterativeFeatureSelection, self).untrain()
+
+
+    def _evaluate_pmeasure(self, train, test):
+        # local binding
+        pmeasure = self._pmeasure
+        # might safe some cycles to prevent training the measure, but only
+        # the user can know whether this is sensible or possible
+        if self._train_pmeasure:
+            pmeasure.train(train)
+        # actually run the performance measure to estimate "quality" of
+        # selection
+        return pmeasure(test)
+
+
+    def _get_traintest_ds(self, ds):
+        # activate the dataset splitter
+        dsgen = self._splitter.generate(ds)
+        # and derived the dataset part that is used for computing the selection
+        # criterion
+        trainds = dsgen.next()
+        testds = dsgen.next()
+        return trainds, testds
+
+
