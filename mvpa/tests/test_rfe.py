@@ -14,7 +14,6 @@ from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.generators.partition import NFoldPartitioner
 from mvpa.generators.permutation import AttributePermutator
 from mvpa.generators.splitters import Splitter
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.datasets.base import Dataset
 from mvpa.mappers.base import ChainMapper
 from mvpa.mappers.fx import maxofabs_sample, mean_sample, BinaryFxNode
@@ -28,10 +27,9 @@ from mvpa.featsel.helpers import \
      FixedNElementTailSelector, BestDetector, RangeElementSelector
 
 from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier
-from mvpa.clfs.transerror import TransferError
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.clfs.stats import MCNullDist
-from mvpa.measures.base import ProxyMeasure
+from mvpa.measures.base import ProxyMeasure, CrossValidation
 
 from mvpa.base.state import UnknownStateError
 
@@ -350,12 +348,8 @@ class RFETests(unittest.TestCase):
              # update sensitivity at each step (since we're not using the
              # same CLF as sensitivity analyzer)
 
-        cv = CrossValidatedTransferError(
-            TransferError(clf),
-            NFoldSplitter(cvtype=1),
-            postproc=mean_sample(),
-            enable_ca=['confusion'],
-            expose_testdataset=True)
+        cv = CrossValidation(clf, NFoldPartitioner(), postproc=mean_sample(),
+            enable_ca=['confusion'])
         #cv = SplitClassifier(clf)
         try:
             error = cv(dataset).samples.squeeze()

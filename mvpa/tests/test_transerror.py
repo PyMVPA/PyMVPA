@@ -13,14 +13,14 @@ import numpy as np
 
 from mvpa.support.copy import copy
 
+from mvpa.base.dataset import vstack
 from mvpa.base import externals, warning
 from mvpa.generators.partition import OddEvenPartitioner
 from mvpa.generators.permutation import AttributePermutator
 from mvpa.generators.splitters import Splitter
 
 from mvpa.clfs.meta import MulticlassClassifier
-from mvpa.clfs.transerror import ConfusionMatrix, ConfusionBasedError, \
-        TransferError
+from mvpa.clfs.transerror import ConfusionMatrix, ConfusionBasedError
 from mvpa.measures.base import CrossValidation, TransferMeasure
 
 from mvpa.clfs.stats import MCNullDist
@@ -147,13 +147,17 @@ class ErrorsTests(unittest.TestCase):
         test3 = datasets['uni3medium']
         test3 = test3[test3.sa.train == 1]
         err = ConfusionBasedError(clf=l_clf)
-        terr = TransferError(clf=l_clf)
+        terr = TransferMeasure(l_clf, Splitter('train', attr_values=[1,1]),
+                               postproc=BinaryFxNode(mean_mismatch_error,
+                                                     'targets'))
 
         self.failUnlessRaises(UnknownStateError, err, None)
         """Shouldn't be able to access the state yet"""
 
         l_clf.train(train)
         e, te = err(None), terr(train)
+        te = np.asscalar(te)
+        print e, te
         self.failUnless(abs(e-te) < 1e-10,
             msg="ConfusionBasedError (%.2g) should be equal to TransferError "
                 "(%.2g) on traindataset" % (e, te))
@@ -212,23 +216,6 @@ class ErrorsTests(unittest.TestCase):
             # and we should be able to access the actual samples of the distribution
             self.failUnlessEqual(len(cvte.null_dist.ca.dist_samples),
                                  num_perm)
-
-
-    @sweepargs(l_clf=clfswh['linear', 'svm'])
-    def test_per_sample_error(self, l_clf):
-        train = datasets['uni2medium']
-        train.init_origids('samples')
-        terr = TransferError(clf=l_clf, enable_ca=['samples_error'])
-        err = terr(train, train)
-        se = terr.ca.samples_error
-
-        # one error per sample
-        self.failUnless(len(se) == train.nsamples)
-        # for this simple test it can only be correct or misclassified
-        # (boolean)
-        self.failUnless(
-            np.sum(np.array(se.values(), dtype='float') \
-                  - np.array(se.values(), dtype='b')) == 0)
 
 
     @sweepargs(clf=clfswh['multiclass'])
