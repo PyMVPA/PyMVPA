@@ -42,6 +42,14 @@ class FeatureSelection(FeatureSliceMapper):
         return False
 
 
+    def untrain(self):
+        if __debug__:
+            debug("FS_", "Untraining FS: %s" % self)
+        self._safe_assign_slicearg(None)
+        # ask base class to do its untrain
+        super(FeatureSelection, self).untrain()
+
+
 
 class SensitivityBasedFeatureSelection(FeatureSelection):
     """Feature elimination.
@@ -112,8 +120,6 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         if __debug__:
             debug("FS_", "Untraining sensitivity-based FS: %s" % self)
         self.__sensitivity_analyzer.untrain()
-        # reset slicearg that has been assigned during training
-        self._safe_assign_slicearg(None)
         # ask base class to do its untrain
         super(SensitivityBasedFeatureSelection, self).untrain()
 
