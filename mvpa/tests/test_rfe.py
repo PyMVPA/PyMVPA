@@ -13,10 +13,12 @@ import numpy as np
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.generators.partition import NFoldPartitioner
 from mvpa.generators.permutation import AttributePermutator
+from mvpa.generators.splitters import Splitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.datasets.base import Dataset
 from mvpa.mappers.base import ChainMapper
-from mvpa.mappers.fx import maxofabs_sample, mean_sample
+from mvpa.mappers.fx import maxofabs_sample, mean_sample, BinaryFxNode
+from mvpa.misc.errorfx import mean_mismatch_error
 from mvpa.featsel.rfe import RFE
 from mvpa.featsel.base import \
      SensitivityBasedFeatureSelection
@@ -29,6 +31,7 @@ from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier
 from mvpa.clfs.transerror import TransferError
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.clfs.stats import MCNullDist
+from mvpa.measures.base import ProxyMeasure
 
 from mvpa.base.state import UnknownStateError
 
@@ -279,14 +282,16 @@ class RFETests(unittest.TestCase):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
         sens_ana = clf.get_sensitivity_analyzer(postproc=maxofabs_sample())
-        trans_error = TransferError(clf)
+        pmeasure = ProxyMeasure(clf, postproc=BinaryFxNode(mean_mismatch_error,
+                                                           'targets'))
         # because the clf is already trained when computing the sensitivity
         # map, prevent retraining for transfer error calculation
         # Use absolute of the svm weights as sensitivity
         rfe = RFE(sens_ana,
-                  trans_error,
-                  feature_selector=FixedNElementTailSelector(1),
-                  train_clf=False)
+                  pmeasure,
+                  Splitter('train'),
+                  fselector=FixedNElementTailSelector(1),
+                  train_pmeasure=False)
 
         data = self.get_data()
         data_nfeatures = data.nfeatures
@@ -295,15 +300,14 @@ class RFETests(unittest.TestCase):
         resds = rfe(data)
 
         # fail if orig datasets are changed
-        self.failUnless(wdata.nfeatures == wdata_nfeatures)
-        self.failUnless(tdata.nfeatures == tdata_nfeatures)
+        self.failUnless(data.nfeatures == data_nfeatures)
 
         # check that the features set with the least error is selected
         if len(rfe.ca.errors):
             e = np.array(rfe.ca.errors)
-            self.failUnless(sdata.nfeatures == wdata_nfeatures - e.argmin())
+            self.failUnless(resds.nfeatures == data_nfeatures - e.argmin())
         else:
-            self.failUnless(sdata.nfeatures == wdata_nfeatures)
+            self.failUnless(resds.nfeatures == data_nfeatures)
 
         # silly check if nfeatures is in decreasing order
         nfeatures = np.array(rfe.ca.nfeatures).copy()
@@ -330,19 +334,21 @@ class RFETests(unittest.TestCase):
         dataset = datasets['uni2small']
         rfesvm_split = LinearCSVMC()
         fs = \
-            RFE(sensitivity_analyzer=rfesvm_split.get_sensitivity_analyzer(),
-                transfer_error=TransferError(rfesvm_split),
-                feature_selector=FractionTailSelector(
+            RFE(rfesvm_split.get_sensitivity_analyzer(),
+                ProxyMeasure(rfesvm_split,
+                             postproc=BinaryFxNode(mean_mismatch_error,
+                                                   'targets')),
+                Splitter('train'),
+                fselector=FractionTailSelector(
                     percent / 100.0,
                     mode='select', tail='upper'), update_sensitivity=True)
 
         clf = FeatureSelectionClassifier(
-            clf = LinearCSVMC(),
+            LinearCSVMC(),
             # on features selected via RFE
-            feature_selection = fs)
+            fs)
              # update sensitivity at each step (since we're not using the
              # same CLF as sensitivity analyzer)
-        clf.ca.enable('feature_ids')
 
         cv = CrossValidatedTransferError(
             TransferError(clf),
