@@ -1,3 +1,9 @@
+pymvpa (0.4.5-1) experimental; urgency=low
+
+  * Upstream bugfix release -- just few bugfixes since 0.4.5~dev23-2
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 27 Sep 2010 12:38:28 -0400
+
 pymvpa (0.4.5~dev23-2) unstable; urgency=low
 
   * Build-Depend on python-numpy providing numpy-ext (Closes: #589587).
