@@ -288,12 +288,11 @@ class RFETests(unittest.TestCase):
                   feature_selector=FixedNElementTailSelector(1),
                   train_clf=False)
 
-        wdata = self.get_data()
-        wdata_nfeatures = wdata.nfeatures
-        tdata = self.get_data_t()
-        tdata_nfeatures = tdata.nfeatures
+        data = self.get_data()
+        data_nfeatures = data.nfeatures
 
-        sdata, stdata = rfe(wdata, tdata)
+        rfe.train(data)
+        resds = rfe(data)
 
         # fail if orig datasets are changed
         self.failUnless(wdata.nfeatures == wdata_nfeatures)

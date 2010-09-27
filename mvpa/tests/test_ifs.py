@@ -16,12 +16,13 @@ from mvpa.testing.datasets import datasets
 from mvpa.base.dataset import vstack
 from mvpa.datasets.base import Dataset
 from mvpa.featsel.ifs import IFS
-from mvpa.measures.base import CrossValidation
+from mvpa.measures.base import CrossValidation, ProxyMeasure
 from mvpa.clfs.transerror import TransferError
 from mvpa.generators.partition import NFoldPartitioner
 from mvpa.generators.splitters import Splitter
 from mvpa.featsel.helpers import FixedNElementTailSelector
-from mvpa.mappers.fx import mean_sample
+from mvpa.mappers.fx import mean_sample, BinaryFxNode
+from mvpa.misc.errorfx import mean_mismatch_error
 
 
 
@@ -43,14 +44,16 @@ class IFSTests(unittest.TestCase):
     @sweepargs(svm=clfswh['has_sensitivity', '!meta'][:1])
     def test_ifs(self, svm):
 
-        # data measure and transfer error quantifier use the SAME clf!
-        trans_error = TransferError(svm)
-        data_measure = CrossValidation(svm, NFoldPartitioner(), postproc=mean_sample())
+        # measure for feature selection criterion and performance assesment
+        # use the SAME clf!
+        errorfx = mean_mismatch_error
+        fmeasure = CrossValidation(svm, NFoldPartitioner(), postproc=mean_sample())
+        pmeasure = ProxyMeasure(svm, postproc=BinaryFxNode(errorfx, 'targets'))
 
-        ifs = IFS(data_measure,
-                  trans_error,
-                  Splitter('purpose', attr_values=['train']),
-                  feature_selector=\
+        ifs = IFS(fmeasure,
+                  pmeasure,
+                  Splitter('purpose', attr_values=['train', 'test']),
+                  fselector=\
                     # go for lower tail selection as data_measure will return
                     # errors -> low is good
                     FixedNElementTailSelector(1, tail='lower', mode='select'),
@@ -75,9 +78,11 @@ class IFSTests(unittest.TestCase):
 
 
         # repeat with dataset where selection order is known
-        signal = datasets['dumb2']
-        # whole ds is training
-        signal.sa['purpose'] = np.repeat('train', len(signal))
+        wsignal = datasets['dumb2'].copy()
+        wsignal.sa['purpose'] = np.repeat('train', len(wsignal))
+        tsignal = datasets['dumb2'].copy()
+        tsignal.sa['purpose'] = np.repeat('test', len(tsignal))
+        signal = vstack((wsignal, tsignal))
         ifs.train(signal)
         resds = ifs(signal)
         self.failUnless((resds.samples[:,0] == signal.samples[:,0]).all())
