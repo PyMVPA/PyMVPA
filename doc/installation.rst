@@ -184,6 +184,16 @@ below). If there are no binary packages for your operating system or platform
 yet, you can build PyMVPA from source.  Please refer to `Building from Source`_
 for more information.
 
+.. note::
+
+  If you have difficulties deploying PyMVPA itself or third-party modules,
+  such as Shogun, on non Debian-based systems, we would advise you to give a
+  try to `NeuroDebian virtual machine`_ which would allow you to benefit from
+  Debian packaging of PyMVPA and its dependencies by running Debian in a
+  virtualized environment.
+
+.. _NeuroDebian virtual machine: http://neuro.debian.net/vm.html
+
 .. index:: binary packages
 .. index:: Debian
 
@@ -255,7 +265,8 @@ install PyNIfTI_. Download the corresponding installer from the website of the
 `zlib` library, so you also need to download and install it. A binary installer
 is available from the `GnuWin32 project`_. Install it in some arbitrary folder
 (just the binaries nothing else), find the `zlib1.dll` file in the `bin`
-subdirectory and move it in the Windows `system32` directory. Verify that it
+subdirectory and move it in the Windows `system32` (or `system` on 64-bit
+Windows 7) directory. Verify that it
 works by importing the `nifti` module in Python.
 
   >>> import nifti
