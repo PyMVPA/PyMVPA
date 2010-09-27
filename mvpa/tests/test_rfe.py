@@ -18,8 +18,7 @@ from mvpa.datasets.base import Dataset
 from mvpa.mappers.fx import maxofabs_sample, mean_sample
 from mvpa.featsel.rfe import RFE
 from mvpa.featsel.base import \
-     SensitivityBasedFeatureSelection, \
-     FeatureSelectionPipeline
+     SensitivityBasedFeatureSelection
 from mvpa.featsel.helpers import \
      NBackHistoryStopCrit, FractionTailSelector, FixedErrorThresholdStopCrit, \
      MultiStopCrit, NStepsStopCrit, \
@@ -38,16 +37,8 @@ from mvpa.testing.datasets import datasets
 
 
 class RFETests(unittest.TestCase):
-
-    ##REF: Name was automagically refactored
     def get_data(self):
-        d = datasets['uni2medium']
-        return d[d.sa.train == 1]
-
-    ##REF: Name was automagically refactored
-    def get_data_t(self):
-        d = datasets['uni2medium']
-        return d[d.sa.train == 2]
+        return datasets['uni2medium']
 
 
     def test_best_detector(self):
@@ -228,35 +219,23 @@ class RFETests(unittest.TestCase):
                 feature_selector=FixedNElementTailSelector(2),
                 enable_ca=["sensitivity", "selected_ids"])
 
-        wdata = self.get_data()
-        tdata = self.get_data_t()
-        # XXX for now convert to numeric labels, but should better be taken
-        # care of during clf refactoring
-        am = AttributeMap()
-        wdata.targets = am.to_numeric(wdata.targets)
-        tdata.targets = am.to_numeric(tdata.targets)
+        data = self.get_data()
 
-        wdata_nfeatures = wdata.nfeatures
-        tdata_nfeatures = tdata.nfeatures
+        data_nfeatures = data.nfeatures
 
-        sdata, stdata = fe(wdata, tdata)
+        fe.train(data)
+        resds = fe(data)
 
         # fail if orig datasets are changed
-        self.failUnless(wdata.nfeatures == wdata_nfeatures)
-        self.failUnless(tdata.nfeatures == tdata_nfeatures)
+        self.failUnless(data.nfeatures == data_nfeatures)
 
         # silly check if nfeatures got a single one removed
-        self.failUnlessEqual(wdata.nfeatures, sdata.nfeatures+Nremove,
+        self.failUnlessEqual(data.nfeatures, resds.nfeatures+Nremove,
             msg="We had to remove just a single feature")
 
-        self.failUnlessEqual(tdata.nfeatures, stdata.nfeatures+Nremove,
-            msg="We had to remove just a single feature in testing as well")
-
-        self.failUnlessEqual(fe.ca.sensitivity.nfeatures, wdata_nfeatures,
+        self.failUnlessEqual(fe.ca.sensitivity.nfeatures, data_nfeatures,
             msg="Sensitivity have to have # of features equal to original")
 
-        self.failUnlessEqual(len(fe.ca.selected_ids), sdata.nfeatures,
-            msg="# of selected features must be equal the one in the result dataset")
 
 
     def test_feature_selection_pipeline(self):
