@@ -168,7 +168,15 @@ class IterativeFeatureSelection(FeatureSelection):
         stopping_criterion : Functor
           Given a list of error values it has to return whether the
           criterion is fulfilled.
-        fselector
+        fselector : Functor
+        train_clf : bool
+          Flag whether the classifier in `transfer_error` should be
+          trained before computing the error. In general this is
+          required, but if the `sensitivity_analyzer` and
+          `transfer_error` share and make use of the same classifier it
+          can be switched off to save CPU cycles. Default `None` checks
+          if sensitivity_analyzer is based on a classifier and doesn't train
+          if so.
         """
         # bases init first
         FeatureSelection.__init__(self, **kwargs)

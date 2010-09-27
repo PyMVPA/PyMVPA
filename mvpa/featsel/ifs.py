@@ -64,9 +64,9 @@ class IFS(IterativeFeatureSelection):
           Compute against a test dataset for each incremental feature
           set.
         splitter: Splitter
-          This splitter instance has to generate at least one dataset split
-          when called with the input dataset that is used to compute the
-          per-feature criterion for feature selection.
+          This splitter instance has to generate at least two dataset splits
+          when called with the input dataset. The first split serves as the
+          training dataset and the second as the evaluation dataset.
         """
         # bases init first
         IterativeFeatureSelection.__init__(self, fmeasure, pmeasure, splitter,
