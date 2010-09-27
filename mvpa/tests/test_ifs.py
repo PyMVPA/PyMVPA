@@ -17,7 +17,6 @@ from mvpa.base.dataset import vstack
 from mvpa.datasets.base import Dataset
 from mvpa.featsel.ifs import IFS
 from mvpa.measures.base import CrossValidation, ProxyMeasure
-from mvpa.clfs.transerror import TransferError
 from mvpa.generators.partition import NFoldPartitioner
 from mvpa.generators.splitters import Splitter
 from mvpa.featsel.helpers import FixedNElementTailSelector
