@@ -10,7 +10,6 @@
 
 import numpy as np
 
-from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.generators.partition import NFoldPartitioner
 from mvpa.generators.permutation import AttributePermutator
 from mvpa.generators.splitters import Splitter

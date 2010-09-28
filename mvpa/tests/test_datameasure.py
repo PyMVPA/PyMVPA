@@ -15,6 +15,7 @@ from mvpa.testing.clfs import *
 from mvpa.testing.datasets import *
 
 from mvpa.base import externals, warning
+from mvpa.base.node import ChainNode
 from mvpa.datasets.base import Dataset
 from mvpa.featsel.base import SensitivityBasedFeatureSelection
 from mvpa.featsel.helpers import FixedNElementTailSelector, \
@@ -28,7 +29,7 @@ from mvpa.clfs.smlr import SMLR, SMLRWeights
 from mvpa.mappers.zscore import zscore
 from mvpa.mappers.fx import sumofabs_sample, absolute_features, FxMapper, \
      maxofabs_sample, BinaryFxNode
-from mvpa.datasets.splitters import NFoldSplitter, NoneSplitter
+from mvpa.datasets.splitters import NoneSplitter
 from mvpa.generators.splitters import Splitter
 from mvpa.generators.partition import NFoldPartitioner
 
@@ -337,11 +338,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
     def test_split_featurewise_dataset_measure(self):
         ds = datasets['uni3small']
-        sana = SplitFeaturewiseMeasure(
-            analyzer=SMLR(
-              fit_all_weights=True).get_sensitivity_analyzer(),
-            splitter=NFoldSplitter(),
-            )
+        sana = RepeatedMeasure(
+            SMLR(fit_all_weights=True).get_sensitivity_analyzer(),
+            ChainNode([NFoldPartitioner(),
+                       Splitter('partitions', attr_values=[1])]))
 
         sens = sana(ds)
         # a sensitivity for each chunk and each label combination
