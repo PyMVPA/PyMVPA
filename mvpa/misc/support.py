@@ -637,4 +637,33 @@ def get_limit_filter(limit, collection):
     return limit_filter
 
 
+def get_nelements_per_value(data):
+    """Returns the number of elements per unique value of some sequence.
 
+    Parameters
+    ----------
+    data : sequence
+      This can be any sequence. In addition also ArrayCollectables are supported
+      and this function will make use of any available pre-cached list of unique
+      values.
+
+    Returns
+    -------
+    dict with the number of elements (value) per unique value (key) in the
+    sequence.
+    """
+    if hasattr(data, 'unique'):
+        # if this is an ArrayAttribute save some time by using pre-cached unique
+        # values
+        uniquevalues = data.unique
+        values = data.value
+    else:
+        uniquevalues = np.unique(data)
+        values = data
+
+    # use dictionary to cope with arbitrary values
+    result = dict(zip(uniquevalues, [ 0 ] * len(uniquevalues)))
+    for l in values:
+        result[l] += 1
+
+    return result
