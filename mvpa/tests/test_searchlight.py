@@ -19,7 +19,6 @@ from mvpa.measures.gnbsearchlight import sphere_gnbsearchlight,\
      GNBSearchlight
 
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
-from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.generators.partition import NFoldPartitioner
 from mvpa.measures.base import CrossValidation
 from mvpa.clfs.gnb import GNB
