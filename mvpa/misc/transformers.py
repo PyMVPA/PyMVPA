@@ -358,7 +358,7 @@ class DistPValue(ClassWithCollections):
 
                 if __debug__:
                     if  distribution == 'rdist':
-                        assert(dist.args[0], Nindexes-1)
+                        assert(dist.args[0] == Nindexes-1)
                     debug('TRAN', "Positives recovery finished with %d out of %d "
                           "entries in Null-distribution, thus %d positives "
                           "were recovered" % (Nindexes, Nxx, Nrecovered))
