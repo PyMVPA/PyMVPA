@@ -583,3 +583,58 @@ def mask2slice(mask):
     return sl
 
 
+def get_limit_filter(limit, collection):
+    """Create a filter array from a limit definition.
+
+    Parameters
+    -----------
+    limit : None or str or dict
+      If ``None`` all elements wil be included in the filter. If an single
+      attribute name is given, its unique values will be used to define
+      chunks of data that are marked in the filter as unique integers. Finally,
+      if a dictionary is provided, its keys define attribute names and its
+      values (single value or sequence thereof) attribute value, where all
+      key-value combinations across all given items define a "selection" of
+      elements to be included in the filter (AND combination).
+    collection : Collection
+      Dataset attribute collection instance that contains all attributes
+      referenced in the limit specification, as well as defines the shape of
+      the filter.
+
+    Returns
+    -------
+    array
+      This array is either boolean, where a `True` elements represent including
+      in the filter, or the array is numerical, where it unqiue integer values
+      defines individual chunks of a filter.
+    """
+    attr_length = collection.attr_length
+
+    if limit is None:
+        # no limits
+        limit_filter = np.ones(attr_length, dtype='bool')
+    elif isinstance(limit, str):
+        # use the unique values of this attribute to permute each chunk
+        # individually
+        lattr = collection[limit]
+        lattr_data = lattr.value
+        limit_filter = np.zeros(attr_length, dtype='int')
+        for i, uv in enumerate(lattr.unique):
+            limit_filter[lattr_data == uv] = i
+    elif isinstance(limit, dict):
+        limit_filter = np.zeros(attr_length, dtype='bool')
+        for a in limit:
+            if isSequenceType(limit[a]):
+                for v in limit[a]:
+                    # enable the samples matching the value 'v' of the
+                    # current limit attribute 'a'
+                    limit_filter[collection[a] == v] = True
+            else:
+                limit_filter[collection[a] == limit[a]] = True
+    else:
+        raise RuntimeError("Unhandle condition")
+
+    return limit_filter
+
+
+
