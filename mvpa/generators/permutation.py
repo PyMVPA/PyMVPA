@@ -16,6 +16,8 @@ import numpy as np
 
 from mvpa.base.node import Node
 from mvpa.base.dochelpers import _str, _repr
+from mvpa.misc.support import get_limit_filter
+
 
 class AttributePermutator(Node):
     """Node to permute one a more attributes in a dataset.
@@ -70,41 +72,15 @@ class AttributePermutator(Node):
 
 
     def _get_pcfg(self, ds):
-        # local binding
+        # determine to be permuted attribute to find the collection
         pattr = self._pattr
-        limit = self._limit
-        collection = self._collection
-
-        # determine to be permuted attribute and associated collection
         if isinstance(pattr, str):
-            pattr, collection = ds.get_attr(pattr, col=collection)
+            pattr, collection = ds.get_attr(pattr, col=self._collection)
         else:
             # must be sequence of attrs, take first since we only need the shape
-            pattr, collection = ds.get_attr(pattr[0], col=collection)
+            pattr, collection = ds.get_attr(pattr[0], col=self._collection)
 
-        if limit is None:
-            # no limits
-            limit_filter = np.ones(pattr.value.shape, dtype='bool')
-        elif isinstance(limit, str):
-            # use the unique values of this attribute to permute each chunk
-            # individually
-            lattr = collection[limit]
-            lattr_data = lattr.value
-            limit_filter = np.zeros(lattr_data.shape, dtype='int')
-            for i, uv in enumerate(lattr.unique):
-                limit_filter[lattr_data == uv] = i
-        elif isinstance(limit, dict):
-            limit_filter = np.zeros(pattr.value.shape, dtype='bool')
-            for a in limit:
-                if isSequenceType(limit[a]):
-                    for v in limit[a]:
-                        # enable the samples matching the value 'v' of the
-                        # current limit attribute 'a'
-                        limit_filter[collection[a] == v] = True
-                else:
-                    limit_filter[collection[a] == limit[a]] = True
-
-        return limit_filter
+        return get_limit_filter(self._limit, collection)
 
 
     def _call(self, ds):
