@@ -379,7 +379,7 @@ class RFETests(unittest.TestCase):
                 update_sensitivity=True))
 
         no_permutations = 1000
-        permutator = AttributePermutator('targets', n=no_permutations)
+        permutator = AttributePermutator('targets', count=no_permutations)
         cv = CrossValidation(clf, NFoldPartitioner(),
             null_dist=MCNullDist(permutator, tail='left'),
             enable_ca=['stats'])

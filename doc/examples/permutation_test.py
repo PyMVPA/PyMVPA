@@ -83,7 +83,7 @@ ds = normal_feature_dataset(perlabel=100, nlabels=2, nfeatures=3,
 # function and lower is better
 # in a real analysis the number of permutations should be larger
 # to get stable estimates
-permutator = AttributePermutator('targets', n=200)
+permutator = AttributePermutator('targets', count=200)
 # we use a splitter that doesn't split the dataset but return the input dataset
 # two times to compute the transfer performance on the training dataset itself
 splitter = Splitter(None, count=2)

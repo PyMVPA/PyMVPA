@@ -23,7 +23,7 @@ from mvpa.misc.fx import double_gamma_hrf, single_gamma_hrf
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
-permutator = AttributePermutator('targets', n=30)
+permutator = AttributePermutator('targets', count=30)
 nulldist_sweep = [ MCNullDist(permutator, tail='any'),
                    MCNullDist(permutator, tail='right')]
 
