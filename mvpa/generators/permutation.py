@@ -11,7 +11,6 @@
 
 __docformat__ = 'restructuredtext'
 
-from operator import isSequenceType
 import numpy as np
 
 from mvpa.base.node import Node
