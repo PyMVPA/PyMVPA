@@ -462,6 +462,10 @@ class UniformLengthCollection(Collection):
         Collection.__setitem__(self, key, value)
 
 
+    attr_length = property(fget=lambda self:self._uniform_length,
+                    doc="Uniform length of all attributes in a collection")
+
+
 
 class SampleAttributesCollection(UniformLengthCollection):
     """Container for attributes of samples (i.e. labels, chunks...)
