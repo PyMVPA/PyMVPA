@@ -22,7 +22,7 @@ import numpy as np
 from mvpa.base.dataset import datasetmethod
 from mvpa.datasets.base import Dataset
 from mvpa.base.dochelpers import table2string
-# from mvpa.misc.support import get_break_points
+from mvpa.misc.support import get_nelements_per_value
 
 from mvpa.base import externals, warning
 
@@ -230,14 +230,7 @@ def get_nsamples_per_attr(dataset, attr):
     -------
     dict with the number of samples (value) per unique attribute (key).
     """
-    uniqueattr = dataset.sa[attr].unique
-
-    # use dictionary to cope with arbitrary targets
-    result = dict(zip(uniqueattr, [ 0 ] * len(uniqueattr)))
-    for l in dataset.sa[attr].value:
-        result[l] += 1
-
-    return result
+    return get_nelements_per_value(dataset.sa[attr])
 
 
 @datasetmethod
