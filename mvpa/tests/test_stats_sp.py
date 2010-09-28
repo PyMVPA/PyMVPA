@@ -64,7 +64,7 @@ class StatsTestsScipy(unittest.TestCase):
         from mvpa.measures.corrcoef import CorrCoef
         ds = datasets['uni2small']
 
-        permutator = AttributePermutator('targets', n=10)
+        permutator = AttributePermutator('targets', count=10)
         null = MCNullDist(permutator, tail='any')
 
         assert_raises(ValueError, null.fit, CorrCoef(), ds)

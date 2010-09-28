@@ -131,7 +131,7 @@ def test_attrpermute():
 
     # and now try generating more permutations
     nruns = 2
-    permutation = AttributePermutator(['targets', 'ids'], assure=True, n=nruns)
+    permutation = AttributePermutator(['targets', 'ids'], assure=True, count=nruns)
     pds = list(permutation.generate(ds))
     assert_equal(len(pds), nruns)
     for p in pds:

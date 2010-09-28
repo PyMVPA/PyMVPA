@@ -30,7 +30,7 @@ class AttributePermutator(Node):
     The permuted output dataset shared the samples container with the input
     dataset.
     """
-    def __init__(self, attr, n=1, limit=None, collection=None,
+    def __init__(self, attr, count=1, limit=None, collection=None,
                  assure=False, **kwargs):
         """
         Parameters
@@ -39,7 +39,7 @@ class AttributePermutator(Node):
           Name of the to-be-permuted attribute. This can also be a list of
           attribute names, in which case the *identical* shuffling is applied to
           all listed attributes.
-        n : int
+        count : int
           Number of permutations to yielded by .generate()
         limit : None or str or dict
           If ``None`` all attribute values will be permuted. If an single
@@ -62,7 +62,7 @@ class AttributePermutator(Node):
         """
         Node.__init__(self, **kwargs)
         self._pattr = attr
-        self.nruns = n
+        self.nruns = count
         self._limit = limit
         self._collection = collection
         self._pcfg = None

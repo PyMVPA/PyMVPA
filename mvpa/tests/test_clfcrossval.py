@@ -71,7 +71,7 @@ class CrossValidationTests(unittest.TestCase):
         # do crossval with permuted regressors
         cv = CrossValidation(sample_clf_nl,
                         ChainNode([NFoldPartitioner(),
-                            AttributePermutator('targets', n=10)],
+                            AttributePermutator('targets', count=10)],
                                   space='partitions'))
         results = cv(data)
 
