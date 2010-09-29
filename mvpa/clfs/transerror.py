@@ -1050,7 +1050,7 @@ class RegressionStatistics(SummaryStatistics):
             }
         if externals.exists('scipy'):
             funcs['CCe'] = corr_error
-            funcs['CCp'] = corr_error_prob,
+            funcs['CCp'] = corr_error_prob
 
         for funcname, func in funcs.iteritems():
             funcname_all = funcname + '_all'
