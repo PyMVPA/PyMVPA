@@ -20,6 +20,7 @@ from mvpa.base.node import ChainNode
 from mvpa.generators.partition import OddEvenPartitioner
 from mvpa.generators.permutation import AttributePermutator
 from mvpa.generators.resampling import Balancer
+from mvpa.misc.support import get_nelements_per_value
 
 
 def give_data():
@@ -156,9 +157,37 @@ def test_balancer():
     # should kick out 2 samples in each chunk of 10
     assert_almost_equal(np.mean(res.sa.balanced_set), 0.8)
     # same as above, but actually apply the selection
-    bal = Balancer(apply_selection=True)
+    bal = Balancer(apply_selection=True, count=5)
+    # just run it once
     res = bal(ds)
     # we get a new dataset, with shared samples
     assert_false(ds is res)
     # should kick out 2 samples in each chunk of 10
     assert_equal(len(res), int(0.8 * len(ds)))
+    # now use it as a generator
+    dses = list(bal.generate(ds))
+    assert_equal(len(dses), 5)
+    # with limit
+    bal = Balancer(limit={'chunks': 3}, apply_selection=True)
+    res = bal(ds)
+    assert_equal(res.sa['chunks'].unique, (3,))
+    assert_equal(get_nelements_per_value(res.sa.targets).values(),
+                 [2] * 4)
+    # fixed amount
+    bal = Balancer(amount=1, limit={'chunks': 3}, apply_selection=True)
+    res = bal(ds)
+    assert_equal(get_nelements_per_value(res.sa.targets).values(),
+                 [1] * 4)
+    # fraction
+    bal = Balancer(amount=0.499, limit=None, apply_selection=True)
+    res = bal(ds)
+    assert_array_equal(
+            np.round(np.array(get_nelements_per_value(ds.sa.targets).values()) * 0.5),
+            np.array(get_nelements_per_value(res.sa.targets).values()))
+    # check on feature attribute
+    ds.fa['one'] = np.tile([1,2], 5)
+    ds.fa['chk'] = np.repeat([1,2], 5)
+    bal = Balancer(attr='one', amount=2, limit='chk', apply_selection=True)
+    res = bal(ds)
+    assert_equal(get_nelements_per_value(res.fa.one).values(),
+                 [4] * 2)
