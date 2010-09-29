@@ -91,9 +91,6 @@ if externals.exists('nifti') or externals.exists('nibabel') :
 if externals.exists('nifti'):
     from nifti import NiftiImage
 
-from mvpa.datasets import splitters
-from mvpa.datasets.splitters import *
-
 from mvpa.generators.partition import *
 from mvpa.generators.splitters import *
 
