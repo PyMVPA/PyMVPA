@@ -12,13 +12,14 @@
 import numpy as np
 
 from mvpa.testing.tools import ok_, assert_array_equal, assert_true, \
-        assert_false, assert_equal, assert_raises
+        assert_false, assert_equal, assert_raises, assert_almost_equal
 
 from mvpa.datasets import dataset_wizard
 from mvpa.generators.splitters import Splitter
 from mvpa.base.node import ChainNode
 from mvpa.generators.partition import OddEvenPartitioner
 from mvpa.generators.permutation import AttributePermutator
+from mvpa.generators.resampling import Balancer
 
 
 def give_data():
@@ -142,3 +143,22 @@ def test_attrpermute():
     permutation = AttributePermutator('ids', assure=True, collection='fa')
     pds = permutation(ds)
     assert_false(np.all(pds.fa.ids == ds.fa.ids))
+
+
+def test_balancer():
+    ds = give_data()
+    # only mark the selection in an attribute
+    bal = Balancer()
+    res = bal(ds)
+    # we get a new dataset, with shared samples
+    assert_false(ds is res)
+    assert_true(ds.samples is res.samples.base)
+    # should kick out 2 samples in each chunk of 10
+    assert_almost_equal(np.mean(res.sa.balanced_set), 0.8)
+    # same as above, but actually apply the selection
+    bal = Balancer(apply_selection=True)
+    res = bal(ds)
+    # we get a new dataset, with shared samples
+    assert_false(ds is res)
+    # should kick out 2 samples in each chunk of 10
+    assert_equal(len(res), int(0.8 * len(ds)))
