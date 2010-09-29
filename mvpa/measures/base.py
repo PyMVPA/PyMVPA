@@ -326,6 +326,12 @@ class RepeatedMeasure(Measure):
         pass
 
 
+    def untrain(self):
+        """Untrain this measure and the embedded node."""
+        self._node.untrain()
+        super(RepeatedMeasure, self).untrain()
+
+
 
 class CrossValidation(RepeatedMeasure):
     """Cross-validate a learner's transfer on datasets.
