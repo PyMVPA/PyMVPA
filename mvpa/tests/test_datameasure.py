@@ -29,9 +29,9 @@ from mvpa.clfs.smlr import SMLR, SMLRWeights
 from mvpa.mappers.zscore import zscore
 from mvpa.mappers.fx import sumofabs_sample, absolute_features, FxMapper, \
      maxofabs_sample, BinaryFxNode
-from mvpa.datasets.splitters import NoneSplitter
 from mvpa.generators.splitters import Splitter
 from mvpa.generators.partition import NFoldPartitioner
+from mvpa.generators.resampling import Balancer
 
 from mvpa.misc.errorfx import mean_mismatch_error
 from mvpa.misc.transformers import Absolute, \
@@ -352,19 +352,17 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # Lets try more complex example with 'boosting'
         ds = datasets['uni3medium']
         ds.init_origids('samples')
-        sana = SplitFeaturewiseMeasure(
-            analyzer=SMLR(
-              fit_all_weights=True).get_sensitivity_analyzer(),
-            splitter=NoneSplitter(npertarget=0.25, reverse=True,
-                                  nrunspersplit=2),
-            enable_ca=['splits', 'sensitivities'])
+        sana = RepeatedMeasure(
+            SMLR(fit_all_weights=True).get_sensitivity_analyzer(),
+            Balancer(amount=0.25, count=2, apply_selection=True),
+            enable_ca=['datasets', 'repetition_results'])
         sens = sana(ds)
 
         assert_equal(sens.shape, (2 * len(ds.sa['targets'].unique),
                                   ds.nfeatures))
-        splits = sana.ca.splits
+        splits = sana.ca.datasets
         self.failUnlessEqual(len(splits), 2)
-        self.failUnless(np.all([s[0].nsamples == ds.nsamples/4 for s in splits]))
+        self.failUnless(np.all([s.nsamples == ds.nsamples/4 for s in splits]))
         # should have used different samples
         self.failUnless(np.any([splits[0][0].sa.origids != splits[1][0].sa.origids]))
         # and should have got different sensitivities
