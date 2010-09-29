@@ -595,7 +595,7 @@ def get_limit_filter(limit, collection):
       if a dictionary is provided, its keys define attribute names and its
       values (single value or sequence thereof) attribute value, where all
       key-value combinations across all given items define a "selection" of
-      elements to be included in the filter (AND combination).
+      elements to be included in the filter (OR combination).
     collection : Collection
       Dataset attribute collection instance that contains all attributes
       referenced in the limit specification, as well as defines the shape of
@@ -628,9 +628,9 @@ def get_limit_filter(limit, collection):
                 for v in limit[a]:
                     # enable the samples matching the value 'v' of the
                     # current limit attribute 'a'
-                    limit_filter[collection[a] == v] = True
+                    limit_filter[collection[a].value == v] = True
             else:
-                limit_filter[collection[a] == limit[a]] = True
+                limit_filter[collection[a].value == limit[a]] = True
     else:
         raise RuntimeError("Unhandle condition")
 
