@@ -33,11 +33,10 @@ from mvpa.clfs.meta import CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \
      TreeClassifier, RegressionAsClassifier
-from mvpa.measures.base import TransferMeasure
-from mvpa.measures.base import CrossValidation
+from mvpa.measures.base import TransferMeasure, ProxyMeasure, CrossValidation
 from mvpa.mappers.flatten import mask_mapper
 from mvpa.misc.attrmap import AttributeMap
-from mvpa.mappers.fx import mean_sample
+from mvpa.mappers.fx import mean_sample, BinaryFxNode
 
 
 # What exceptions to allow while testing degenerate cases.
@@ -663,23 +662,19 @@ class ClassifiersTests(unittest.TestCase):
         # NB datasets will be changed by the end of testing, so if
         # are to change to use generic datasets - make sure to copy
         # them here
-        dstrain = deepcopy(datasets['uni2large_train'])
-        dstrain.sa['dstype'] = np.repeat('train', len(dstrain))
-        dstest = deepcopy(datasets['uni2large_test'])
-        dstest.sa['dstype'] = np.repeat('test', len(dstest))
-        ds = vstack((dstrain, dstest))
+        ds = deepcopy(datasets['uni2large'])
         clf.untrain()
         clf_re.untrain()
-        trerr = TransferMeasure(clf,
-                                Splitter('dstype',
-                                         attr_values=['train', 'test']))
-        trerr_re =  TransferMeasure(clf_re,
-                                    Splitter('dstype',
-                                             attr_values=['train', 'test']),
-                                    disable_ca=['training_confusion'])
+        trerr = TransferMeasure(clf, Splitter('train'),
+                                postproc=BinaryFxNode(mean_mismatch_error,
+                                                      'targets'))
+        trerr_re =  TransferMeasure(clf_re, Splitter('train'),
+                                    disable_ca=['training_stats'],
+                                    postproc=BinaryFxNode(mean_mismatch_error,
+                                                          'targets'))
 
         # Just check for correctness of retraining
-        err_1 = trerr(ds)
+        err_1 = np.asscalar(trerr(ds))
         self.failUnless(err_1<0.3,
             msg="We should test here on easy dataset. Got error of %s" % err_1)
         values_1 = clf.ca.estimates[:]
@@ -689,8 +684,8 @@ class ClassifiersTests(unittest.TestCase):
 
 
         def batch_test(retrain=True, retest=True, closer=True):
-            err = trerr(ds)
-            err_re = trerr_re(ds)
+            err = np.asscalar(trerr(ds))
+            err_re = np.asscalar(trerr_re(ds))
             corr = np.corrcoef(
                 clf.ca.estimates, clf_re.ca.estimates)[0, 1]
             corr_old = np.corrcoef(values_1, clf_re.ca.estimates)[0, 1]

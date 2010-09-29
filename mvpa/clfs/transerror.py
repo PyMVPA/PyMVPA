@@ -21,8 +21,7 @@ from math import log10, ceil
 from mvpa.base import externals
 
 from mvpa.misc.errorfx import mean_power_fx, root_mean_power_fx, rms_error, \
-     corr_error, corr_error_prob, relative_rms_error, mean_mismatch_error, \
-     auc_error
+     relative_rms_error, mean_mismatch_error, auc_error
 from mvpa.base import warning
 from mvpa.base.collections import Collectable
 from mvpa.base.state import ConditionalAttribute, ClassWithCollections
@@ -35,6 +34,7 @@ if __debug__:
 if externals.exists('scipy'):
     from scipy.stats.stats import nanmean
     from mvpa.misc.stats import chisquare
+    from mvpa.misc.errorfx import corr_error, corr_error_prob
 else:
     from mvpa.clfs.stats import nanmean
     chisquare = None
@@ -1045,11 +1045,12 @@ class RegressionStatistics(SummaryStatistics):
             'STD_t': lambda p,t:np.std(t),
             'RMP_p': lambda p,t:root_mean_power_fx(p),
             'STD_p': lambda p,t:np.std(p),
-            'CCe': corr_error,
-            'CCp': corr_error_prob,
             'RMSE': rms_error,
             'RMSE/RMP_t': relative_rms_error
             }
+        if externals.exists('scipy'):
+            funcs['CCe'] = corr_error
+            funcs['CCp'] = corr_error_prob,
 
         for funcname, func in funcs.iteritems():
             funcname_all = funcname + '_all'

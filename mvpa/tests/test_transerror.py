@@ -157,7 +157,6 @@ class ErrorsTests(unittest.TestCase):
         l_clf.train(train)
         e, te = err(None), terr(train)
         te = np.asscalar(te)
-        print e, te
         self.failUnless(abs(e-te) < 1e-10,
             msg="ConfusionBasedError (%.2g) should be equal to TransferError "
                 "(%.2g) on traindataset" % (e, te))
@@ -165,7 +164,8 @@ class ErrorsTests(unittest.TestCase):
         # this will print nasty WARNING but it is ok -- it is just checking code
         # NB warnings are not printed while doing whole testing
         warning("Don't worry about the following warning.")
-        self.failIf(terr(test3) is None)
+        if 'multiclass' in l_clf.__tags__:
+            self.failIf(terr(test3) is None)
 
         # try copying the beast
         terr_copy = copy(terr)
