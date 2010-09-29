@@ -37,7 +37,7 @@ from mvpa.misc.errorfx import mean_mismatch_error
 from mvpa.misc.transformers import Absolute, \
      DistPValue
 
-from mvpa.measures.base import Measure, SplitFeaturewiseMeasure, \
+from mvpa.measures.base import Measure, \
         TransferMeasure, RepeatedMeasure, CrossValidation
 from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
