@@ -3,8 +3,8 @@
 #
 # Adjust this path to match the version and location of your Python
 # installation
-PYTHON_VERSION=2.5
-PYTHON_PATH=C:\\Python25
+PYTHON_VERSION=2.6
+PYTHON_PATH=C:\\Python26
 
 #
 # Building
