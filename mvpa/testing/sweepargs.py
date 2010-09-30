@@ -35,7 +35,7 @@ def sweepargs(**kwargs):
     """
 
     from mvpa.clfs.base import Classifier
-    from mvpa.misc.state import ClassWithCollections
+    from mvpa.base.state import ClassWithCollections
 
     def unittest_method(method):
         def do_sweep(*args_, **kwargs_):

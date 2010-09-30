@@ -21,7 +21,7 @@ from mvpa.base import cfg
 from mvpa.base.externals import versions
 from mvpa.base.types import is_datasetlike
 from mvpa.base.dataset import DatasetError, vstack, hstack
-from mvpa.datasets.base import dataset_wizard, Dataset
+from mvpa.datasets.base import dataset_wizard, Dataset, HollowSamples
 from mvpa.misc.data_generators import normal_feature_dataset
 import mvpa.support.copy as copy
 from mvpa.base.collections import \
@@ -504,84 +504,6 @@ def test_labelpermutation_randomsampling():
     ok_(sample.get_nsamples_per_attr('targets').values() == [ 2, 2, 2, 2, 2 ])
     ok_((ds.sa['chunks'].unique == range(1, 6)).all())
 
-    # keep the orig labels
-    orig_labels = ds.targets.copy()
-
-    # also keep the orig dataset, but SHALLOW copy and leave everything
-    # else as a view!
-    ods = copy.copy(ds)
-
-    ds.permute_attr()
-    # by default, some permutation of targets should have happened
-    assert_false((ds.targets == orig_labels).all())
-
-    # but the original dataset should be unaffected
-    assert_array_equal(ods.targets, orig_labels)
-    # array subclass survives
-    ok_(isinstance(ods.samples, myarray))
-
-    # samples are really shared
-    ds.samples[0, 0] = 123456
-    assert_array_equal(ds.samples, ods.samples)
-
-    # and other samples attributes too
-    ds.chunks[0] = 9876
-    assert_array_equal(ds.chunks, ods.chunks)
-
-    # try to permute on custom target
-    ds = ods.copy()
-    otargets = ods.sa.targets.copy()
-    ds.sa['custom'] = ods.sa.targets.copy()
-    assert_array_equal(ds.sa.custom, otargets)
-    assert_array_equal(ds.sa.targets, otargets)
-
-    ds.permute_attr(attr='custom')
-    # original targets should still match
-    assert_array_equal(ds.sa.targets, otargets)
-    # but custom should get permuted
-    assert_false((ds.sa.custom == otargets).all())
-
-    #
-    # Test permutation among features
-    #
-    assert_raises(KeyError, ds.permute_attr,
-                  attr='roi') # wrong collection
-    ds = ods.copy()
-    ds.permute_attr(attr='lucky', chunks_attr='roi', col='fa',
-                    assure_permute=True)
-    # we should have not touched samples attributes
-    for sa in ds.sa.keys():
-        assert_array_equal(ds.sa[sa].value, ods.sa[sa].value)
-    # but we should have changed the roi
-    assert_false((ds.fa['lucky'].value == ods.fa['lucky'].value).all())
-    assert_array_equal(ds.fa['roi'].value, ods.fa['roi'].value)
-
-    # permute ROI as well without chunking (??? should we make
-    # chunks_attr=None by default?)
-    ds.permute_attr(attr='roi', chunks_attr=None, col='fa')
-    assert_false((ds.fa['roi'].value == ods.fa['roi'].value).all())
-
-def test_assure_permute():
-    # Create a dataset where permutation would very often lead
-    # to the same values, unless enforced
-    ds = Dataset.from_wizard(np.ones((2, 2)),
-                             targets=range(2),
-                             chunks=1)
-
-    # First test default behavior -- no assurance by default
-    failures = 0
-    for i in xrange(10):
-        otargets = ds.sa.targets.copy()
-        ds.permute_attr()
-        failures += (ds.targets != otargets).any()
-    ok_(failures > 0)
-
-    # If we assure permutation -- we should obtain it permuted
-    # always
-    for i in xrange(10):
-        otargets = ds.sa.targets.copy()
-        ds.permute_attr(assure_permute=True)
-        ok_((ds.targets != otargets).any())
 
 def test_masked_featureselection():
     origdata = np.random.standard_normal((10, 2, 4, 3, 5)).view(myarray)
@@ -720,9 +642,9 @@ def test_idhash():
 
     origid = ds.idhash
     orig_labels = ds.targets #.copy()
-    ds.permute_attr()
+    ds.sa.targets = range(len(ds))
     ok_(origid != ds.idhash,
-        msg="Permutation also changes idhash")
+        msg="Chaging attribute also changes idhash")
 
     ds.targets = orig_labels
     ok_(origid == ds.idhash,
@@ -896,14 +818,15 @@ def test_other_samples_dtypes():
 
 
 def test_dataset_summary():
-    # default summaries we should expect
-    summaries = ['Summary for targets', 'Summary for chunks',
-                 'Sequence statistics']
     for ds in datasets.itervalues():
         s = ds.summary()
         ok_(s.startswith(str(ds)[1:-1])) # we strip surrounding '<...>'
         # TODO: actual test of what was returned; to do that properly
         #       RF the summary() so it is a dictionary
+
+        summaries = ['Sequence statistics']
+        if 'targets' in ds.sa and 'chunks' in ds.sa:
+            summaries += ['Summary for targets', 'Summary for chunks']
 
         # By default we should get all kinds of summaries
         if not 'Number of unique targets >' in s:
@@ -937,3 +860,20 @@ def test_h5py_io():
 
     #cleanup temp dir
     shutil.rmtree(tempdir, ignore_errors=True)
+
+
+def test_hollow_samples():
+    sshape = (10,5)
+    ds = Dataset(HollowSamples(sshape, dtype=int),
+                 sa={'targets': np.tile(['one', 'two'], sshape[0] / 2)})
+    assert_equal(ds.shape, sshape)
+    assert_equal(ds.samples.dtype, int)
+    # should give us features [1,3] and samples [2,3,5]
+    mds = ds[[2,3,5], 1::2]
+    assert_array_equal(mds.samples.sid, [2,3,5])
+    assert_array_equal(mds.samples.fid, [1,3])
+    assert_equal(mds.shape, (3, 2))
+    assert_equal(ds.samples.dtype, mds.samples.dtype)
+    # orig should stay pristine
+    assert_equal(ds.samples.dtype, int)
+    assert_equal(ds.shape, sshape)

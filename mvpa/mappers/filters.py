@@ -20,7 +20,7 @@ from mvpa.base.dochelpers import _str, borrowkwargs
 from mvpa.mappers.base import Mapper
 from mvpa.datasets import Dataset
 from mvpa.base.dataset import vstack
-from mvpa.datasets.splitters import CustomSplitter
+from mvpa.generators.splitters import Splitter
 
 
 class FFTResampleMapper(Mapper):
@@ -36,7 +36,7 @@ class FFTResampleMapper(Mapper):
 
     """
     def __init__(self, num, window=None, chunks_attr=None, position_attr=None,
-                 attr_strategy='remove', inspace=None):
+                 attr_strategy='remove', **kwargs):
         """
         Parameters
         ----------
@@ -62,7 +62,7 @@ class FFTResampleMapper(Mapper):
           procedure to the attributes as well (which might not be possible, e.g.
           for literal attributes).
         """
-        Mapper.__init__(self, inspace=inspace)
+        Mapper.__init__(self, **kwargs)
 
         self.__num = num
         self.__window_args = window
@@ -100,10 +100,9 @@ class FFTResampleMapper(Mapper):
             proc_ds = ds.copy(deep=False, sa=keep_sa, fa=[], a=[])
             # process all chunks individually
             # use a customsplitter to speed-up splitting
-            spl = CustomSplitter([((i,),)
-                                    for i in ds.sa[self.__chunks_attr].unique],
-                                 attr=self.__chunks_attr)
-            dses = [self._forward_dataset_helper(d[0]) for d in spl(proc_ds)]
+            spl = Splitter(self.__chunks_attr)
+            dses = [self._forward_dataset_helper(d)
+                        for d in spl.generate(proc_ds)]
             # and merge them again
             mds = vstack(dses)
             # put back attributes
@@ -176,4 +175,4 @@ def fft_resample(ds, num, **kwargs):
       FFTResampleMapper.
     """
     dm = FFTResampleMapper(num, **kwargs)
-    return dm(ds)
+    return dm.forward(ds)

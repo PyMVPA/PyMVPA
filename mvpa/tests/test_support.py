@@ -11,10 +11,8 @@
 from mvpa.testing import *
 from mvpa.misc.support import *
 from mvpa.base.types import asobjarray
-from mvpa.datasets.splitters import NFoldSplitter
-from mvpa.clfs.transerror import TransferError
 from mvpa.testing import *
-from mvpa.testing.datasets import get_mv_pattern
+from mvpa.testing.datasets import get_mv_pattern, datasets
 from mvpa.testing.clfs import *
 from mvpa.clfs.distance import one_minus_correlation
 
@@ -230,6 +228,18 @@ def test_value2idx():
     assert_equal(value2idx(1.14, times, 'ceil'), 0)
     assert_equal(value2idx(-100, times, 'ceil'), 4)
 
+
+def test_limit_filter():
+    ds = datasets['uni2small']
+    assert_array_equal(get_limit_filter(None, ds.sa),
+                       np.ones(len(ds), dtype=np.bool))
+    assert_array_equal(get_limit_filter('chunks', ds.sa),
+                       ds.sa.chunks)
+    assert_array_equal(get_limit_filter({'chunks': 3}, ds.sa),
+                       ds.sa.chunks == 3)
+    assert_array_equal(get_limit_filter({'chunks': [3,1]}, ds.sa),
+                       np.logical_or(ds.sa.chunks == 3,
+                                     ds.sa.chunks == 1))
 
 def suite():
     return unittest.makeSuite(SupportFxTests)

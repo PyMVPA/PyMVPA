@@ -14,6 +14,7 @@ from mvpa.testing.datasets import datasets
 from mvpa import cfg
 from mvpa.base import externals
 from mvpa.clfs.stats import MCNullDist, FixedNullDist, NullDist
+from mvpa.generators.permutation import AttributePermutator
 from mvpa.datasets import Dataset
 from mvpa.measures.glm import GLM
 from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
@@ -22,20 +23,22 @@ from mvpa.misc.fx import double_gamma_hrf, single_gamma_hrf
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
-nulldist_sweep = [ MCNullDist(permutations=30, tail='any'),
-                   MCNullDist(permutations=30, tail='right')]
+permutator = AttributePermutator('targets', count=30)
+nulldist_sweep = [ MCNullDist(permutator, tail='any'),
+                   MCNullDist(permutator, tail='right')]
 
 if externals.exists('scipy'):
     from mvpa.support.stats import scipy
     from scipy.stats import f_oneway
     from mvpa.clfs.stats import rv_semifrozen
-    nulldist_sweep += [ MCNullDist(scipy.stats.norm, permutations=30,
+    nulldist_sweep += [ MCNullDist(permutator, scipy.stats.norm,
                                    tail='any'),
-                        MCNullDist(scipy.stats.norm, permutations=30,
+                        MCNullDist(permutator, scipy.stats.norm,
                                    tail='right'),
-                        MCNullDist(rv_semifrozen(scipy.stats.norm, loc=0),
-                                   permutations=30, tail='right'),
-                        MCNullDist(scipy.stats.expon, permutations=30,
+                        MCNullDist(permutator,
+                                   rv_semifrozen(scipy.stats.norm, loc=0),
+                                   tail='right'),
+                        MCNullDist(permutator, scipy.stats.expon,
                                    tail='right'),
                         FixedNullDist(scipy.stats.norm(0, 10.0), tail='any'),
                         FixedNullDist(scipy.stats.norm(0, 10.0), tail='right'),

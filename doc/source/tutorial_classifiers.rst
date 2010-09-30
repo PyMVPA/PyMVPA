@@ -21,8 +21,7 @@ part <chap_tutorial_start>`:
 >>> from tutorial_lib import *
 >>> ds = get_haxby2001_data()
 >>> clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
->>> terr = TransferError(clf)
->>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter(attr='runtype'))
+>>> cvte = CrossValidation(clf, HalfPartitioner(attr='runtype'))
 >>> cv_results = cvte(ds)
 >>> np.mean(cv_results)
 0.0625
@@ -45,8 +44,7 @@ If, for example, we want to try the popular :mod:`support vector machine <mvpa.c
 (SVM) on our example dataset it looks like this:
 
 >>> clf = LinearCSVMC()
->>> terr = TransferError(clf)
->>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter(attr='runtype'))
+>>> cvte = CrossValidation(clf, HalfPartitioner(attr='runtype'))
 >>> cv_results = cvte(ds)
 >>> np.mean(cv_results)
 0.1875
@@ -66,8 +64,8 @@ However, PyMVPA offers a number of alternative functions in the
 For example, if we do not want to have error reported, but instead accuracy, we
 can do that:
 
->>> terr = TransferError(clf, errorfx=lambda p, t: np.mean(p == t))
->>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter(attr='runtype'))
+>>> cvte = CrossValidation(clf, HalfPartitioner(attr='runtype'),
+...                        errorfx=lambda p, t: np.mean(p == t))
 >>> cv_results = cvte(ds)
 >>> np.mean(cv_results)
 0.8125
@@ -118,7 +116,8 @@ dataset. To set up a 12-fold leave-one-run-out cross-validation, we can
 make use of `~mvpa.datasets.splitters.NFoldSplitter`. By default it is
 going to select samples from one ``chunk`` at a time:
 
->>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
+>>> cvte = CrossValidation(clf, NFoldPartitioner,
+...                        errorfx=lambda p, t: np.mean(p == t))
 >>> cv_results = cvte(ds)
 >>> np.mean(cv_results)
 0.78125
@@ -206,9 +205,9 @@ available in a dedicated collection of :term:`conditional attribute`\ s --
 analogous to ``sa`` and ``fa`` in datasets, it is named ``ca``. Let's see
 how it works:
 
->>> cvte = CrossValidatedTransferError(terr,
-...                                    splitter=NFoldSplitter(),
-...                                    enable_ca=['confusion'])
+>>> cvte = CrossValidation(clf, NFoldPartitioner,
+...                        errorfx=lambda p, t: np.mean(p == t),
+...                        enable_ca=['stats'])
 >>> cv_results = cvte(ds)
 
 Via the ``enable_ca`` argument we triggered computing confusion tables for
@@ -218,7 +217,7 @@ procedure is available in the ``ca`` collection. Let's take a look (note
 that in the printed manual the output is truncated due to page width
 constraints -- please refer to the HTML-based version full the full matrix).
 
->>> print cvte.ca.confusion.as_string(description=True)
+>>> print cvte.ca.stats.as_string(description=True)
 ----------.
 predictions\targets     bottle         cat          chair          face         house        scissors    scrambledpix      shoe
             `------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------ P'   N'   FP   FN   PPV  NPV  TPR  SPC  FDR  MCC
@@ -280,7 +279,7 @@ via its `~mvpa.clfs.transerror.ConfusionMatrix.plot()` method. If the
 confusions shall be used as input for further processing they can also be
 accessed in pure matrix format:
 
->>> print cvte.ca.confusion.matrix
+>>> print cvte.ca.tats.matrix
 [[ 6  0  3  0  0  5  0  1]
  [ 0 10  0  0  0  0  0  0]
  [ 0  0  7  0  0  0  0  0]
@@ -324,8 +323,7 @@ spanned by the singular vectors of the training data, it would look like this:
 
 >>> baseclf = LinearCSVMC()
 >>> metaclf = MappedClassifier(baseclf, SVDMapper())
->>> terr = TransferError(metaclf)
->>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
+>>> cvte = CrossValidation(metaclf, NFoldPartitioner())
 >>> cv_results = cvte(ds)
 >>> print np.mean(cv_results)
 0.15625
@@ -352,8 +350,7 @@ and the rest is noise. We can easily check that with an appropriate mapper:
 
 >>> mapper = ChainMapper([SVDMapper(), FeatureSliceMapper(slice(None, 2))])
 >>> metaclf = MappedClassifier(baseclf, mapper)
->>> terr = TransferError(metaclf)
->>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
+>>> cvte = CrossValidation(metaclf, NFoldPartitioner())
 >>> cv_results = cvte(ds)
 >>> svm_err = np.mean(cv_results)
 >>> print round(svm_err, 2)
@@ -368,8 +365,7 @@ in the past.
 >>> baseclf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
 >>> mapper = ChainMapper([SVDMapper(), FeatureSliceMapper(slice(None, 2))])
 >>> metaclf = MappedClassifier(baseclf, mapper)
->>> terr = TransferError(metaclf)
->>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
+>>> cvte = CrossValidation(metaclf, NFoldPartitioner())
 >>> cv_results = cvte(ds)
 >>> np.mean(cv_results) < svm_err
 False

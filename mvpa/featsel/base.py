@@ -10,69 +10,53 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.featsel.helpers import FractionTailSelector
-from mvpa.misc.state import ConditionalAttribute, ClassWithCollections
+from mvpa.featsel.helpers import FractionTailSelector, \
+                                 NBackHistoryStopCrit, \
+                                 BestDetector
+from mvpa.mappers.slicing import FeatureSliceMapper
+from mvpa.base.state import ConditionalAttribute
 
 if __debug__:
     from mvpa.base import debug
 
-class FeatureSelection(ClassWithCollections):
+
+class FeatureSelection(FeatureSliceMapper):
     """Base class for any feature selection
 
     Base class for Functors which implement feature selection on the
     datasets.
     """
-
-    selected_ids = ConditionalAttribute(enabled=False)
-
     def __init__(self, **kwargs):
-        # base init first
-        ClassWithCollections.__init__(self, **kwargs)
+        # initialize FeatureSliceMapper with a `None` slicing argument, since
+        # the actual slicing needs to be determined by train()
+        FeatureSliceMapper.__init__(self, None, **kwargs)
 
 
-    def __call__(self, dataset, testdataset=None):
-        """Invocation of the feature selection
+    def is_mergable(self, other):
+        """Returns False
 
-        Parameters
-        ----------
-        dataset : Dataset
-          dataset used to select features
-        testdataset : Dataset
-          dataset the might be used to compute a stopping criterion
-
-        Returns
-        -------
-        Dataset or tuple
-          The dataset contains the selected features. If a ``testdataset`` has
-          been passed a tuple with both processed datasets is return instead.
-          Note that the resulting dataset(s) reference the same values for samples
-          attributes (e.g. labels and chunks) of the input dataset(s): be careful
-          if you alter them later.
+        Unlike simple FeatureSliceMappers feature selection algorithms cannot
+        simply be merged. Although it is technical possible to merge actual
+        feature selection results, any retraining would yield unexpected
+        behavior, since the original training algorithm might have been replaced
+        by a Mapper merge.
         """
-        # Derived classes must provide interface to access other
-        # relevant to the feature selection process information (e.g. mask,
-        # elimination step (in RFE), etc)
-        results = self._call(dataset, testdataset)
-        if testdataset is None:
-            return results[0]
-        else:
-            return results
+        return False
 
 
     def untrain(self):
-        """ 'Untrain' feature selection
+        if __debug__:
+            debug("FS_", "Untraining FS: %s" % self)
+        self._safe_assign_slicearg(None)
+        # ask base class to do its untrain
+        super(FeatureSelection, self).untrain()
 
-        Necessary for full 'untraining' of the classifiers. By default
-        does nothing, needs to be overridden in corresponding feature
-        selections to pass to the sensitivities
-        """
-        pass
 
 
 class SensitivityBasedFeatureSelection(FeatureSelection):
     """Feature elimination.
 
-    A `FeaturewiseDatasetMeasure` is used to compute sensitivity maps given a certain
+    A `FeaturewiseMeasure` is used to compute sensitivity maps given a certain
     dataset. These sensitivity maps are in turn used to discard unimportant
     features.
     """
@@ -88,7 +72,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
 
         Parameters
         ----------
-        sensitivity_analyzer : FeaturewiseDatasetMeasure
+        sensitivity_analyzer : FeaturewiseMeasure
           sensitivity analyzer to come up with sensitivity
         feature_selector : Functor
           Given a sensitivity map it has to return the ids of those
@@ -106,26 +90,14 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         """Functor which takes care about removing some features."""
 
 
-    def untrain(self):
-        if __debug__:
-            debug("FS_", "Untraining sensitivity-based FS: %s" % self)
-        self.__sensitivity_analyzer.untrain()
-
-
-    def _call(self, dataset, testdataset=None):
+    def _train(self, dataset):
         """Select the most important features
 
         Parameters
         ----------
         dataset : Dataset
           used to compute sensitivity maps
-        testdataset : Dataset
-          optional dataset to select features on
-
-        Returns a tuple of two new datasets with selected feature
-        subset of `dataset`.
         """
-
         sensitivity = self.__sensitivity_analyzer(dataset)
         """Compute the sensitivity map."""
 
@@ -138,191 +110,114 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
             debug("FS_", "Sensitivity: %s Selected ids: %s" %
                   (sensitivity, selected_ids))
 
-        # Create a dataset only with selected features
-        wdataset = dataset[:, selected_ids]
-
-        if not testdataset is None:
-            wtestdataset = testdataset[:, selected_ids]
-        else:
-            wtestdataset = None
-
-        # Differ from the order in RFE when actually error reported is for
-        results = (wdataset, wtestdataset)
-
-        # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
+        # XXX not sure if it really has to be sorted
         selected_ids.sort()
-        self.ca.selected_ids = selected_ids
+        # announce desired features to the underlying slice mapper
+        self._safe_assign_slicearg(selected_ids)
+        # and perform its own training
+        super(SensitivityBasedFeatureSelection, self)._train(dataset)
 
-        # dataset with selected features is returned
-        return results
+
+    def untrain(self):
+        if __debug__:
+            debug("FS_", "Untraining sensitivity-based FS: %s" % self)
+        self.__sensitivity_analyzer.untrain()
+        # ask base class to do its untrain
+        super(SensitivityBasedFeatureSelection, self).untrain()
 
     # make it accessible from outside
     sensitivity_analyzer = property(fget=lambda self:self.__sensitivity_analyzer,
                                     doc="Measure which was used to do selection")
 
 
-class FeatureSelectionPipeline(FeatureSelection):
-    """Feature elimination through the list of FeatureSelection's.
 
-    Given as list of FeatureSelections it applies them in turn.
+class IterativeFeatureSelection(FeatureSelection):
     """
-
+    """
+    errors = ConditionalAttribute(
+        doc="History of errors")
     nfeatures = ConditionalAttribute(
-        doc="Number of features before each step in pipeline")
-    # TODO: may be we should also append resultant number of features?
+        doc="History of # of features left")
 
     def __init__(self,
-                 feature_selections,
+                 fmeasure,
+                 pmeasure,
+                 splitter,
+                 fselector,
+                 stopping_criterion=NBackHistoryStopCrit(BestDetector()),
+                 bestdetector=BestDetector(),
+                 train_pmeasure=True,
                  **kwargs
                  ):
-        """Initialize feature selection pipeline
-
+        """
         Parameters
         ----------
-        feature_selections : lisf of FeatureSelection
-          selections which to use. Order matters
+        fmeasure : Measure
+          Computed for each candidate feature selection. The measure has
+          to compute a scalar value.
+        pmeasure : Measure
+          Compute against a test dataset for each incremental feature
+          set.
+        splitter: Splitter
+          This splitter instance has to generate at least one dataset split
+          when called with the input dataset that is used to compute the
+          per-feature criterion for feature selection.
+        bestdetector : Functor
+          Given a list of error values it has to return a boolean that
+          signals whether the latest error value is the total minimum.
+        stopping_criterion : Functor
+          Given a list of error values it has to return whether the
+          criterion is fulfilled.
+        fselector : Functor
+        train_clf : bool
+          Flag whether the classifier in `transfer_error` should be
+          trained before computing the error. In general this is
+          required, but if the `sensitivity_analyzer` and
+          `transfer_error` share and make use of the same classifier it
+          can be switched off to save CPU cycles. Default `None` checks
+          if sensitivity_analyzer is based on a classifier and doesn't train
+          if so.
         """
-        # base init first
+        # bases init first
         FeatureSelection.__init__(self, **kwargs)
 
-        self.__feature_selections = feature_selections
-        """Selectors to use in turn"""
+        self._fmeasure = fmeasure
+        self._pmeasure = pmeasure
+        self._splitter = splitter
+        self._fselector = fselector
+        self._stopping_criterion = stopping_criterion
+        self._bestdetector = bestdetector
+        self._train_pmeasure = train_pmeasure
 
 
     def untrain(self):
         if __debug__:
-            debug("FS_", "Untraining FS pipeline: %s" % self)
-        for fs in self.__feature_selections:
-            fs.untrain()
+            debug("FS_", "Untraining Iterative FS: %s" % self)
+        self._fmeasure.untrain()
+        self._pmeasure.untrain()
+        # ask base class to do its untrain
+        super(IterativeFeatureSelection, self).untrain()
 
 
-    def _call(self, dataset, testdataset=None, **kwargs):
-        """Invocation of the feature selection
-        """
-        wdataset = dataset
-        wtestdataset = testdataset
-
-        self.ca.selected_ids = None
-
-        self.ca.nfeatures = []
-        """Number of features at each step (before running selection)"""
-
-        for fs in self.__feature_selections:
-
-            # enable selected_ids state if it was requested from this class
-            fs.ca.change_temporarily(
-                enable_ca=["selected_ids"], other=self)
-            if self.ca.is_enabled("nfeatures"):
-                self.ca.nfeatures.append(wdataset.nfeatures)
-
-            if __debug__:
-                debug('FSPL', 'Invoking %s on (%s, %s)' %
-                      (fs, wdataset, wtestdataset))
-            wdataset, wtestdataset = fs(wdataset, wtestdataset, **kwargs)
-
-            if self.ca.is_enabled("selected_ids"):
-                if self.ca.selected_ids == None:
-                    self.ca.selected_ids = fs.ca.selected_ids
-                else:
-                    self.ca.selected_ids = self.ca.selected_ids[fs.ca.selected_ids]
-
-            fs.ca.reset_changed_temporarily()
-
-        return (wdataset, wtestdataset)
-
-    feature_selections = property(fget=lambda self:self.__feature_selections,
-                                  doc="List of `FeatureSelections`")
+    def _evaluate_pmeasure(self, train, test):
+        # local binding
+        pmeasure = self._pmeasure
+        # might safe some cycles to prevent training the measure, but only
+        # the user can know whether this is sensible or possible
+        if self._train_pmeasure:
+            pmeasure.train(train)
+        # actually run the performance measure to estimate "quality" of
+        # selection
+        return pmeasure(test)
 
 
-
-class CombinedFeatureSelection(FeatureSelection):
-    """Meta feature selection utilizing several embedded selection methods.
-
-    Each embedded feature selection method is computed individually. Afterwards
-    all feature sets are combined by either taking the union or intersection of
-    all sets.
-
-    The individual feature sets of all embedded methods are optionally avialable
-    from the `selections_ids` conditional attribute.
-    """
-    selections_ids = ConditionalAttribute(
-        doc="List of feature id sets for each performed method.")
-
-    def __init__(self, feature_selections, combiner, **kwargs):
-        """
-        Parameters
-        ----------
-        feature_selections : list
-          FeatureSelection instances to run. Order is not important.
-        combiner : 'union', 'intersection'
-          which method to be used to combine the feature selection set of
-          all computed methods.
-        """
-        FeatureSelection.__init__(self, **kwargs)
-
-        self.__feature_selections = feature_selections
-        self.__combiner = combiner
+    def _get_traintest_ds(self, ds):
+        # activate the dataset splitter
+        dsgen = self._splitter.generate(ds)
+        # and derived the dataset part that is used for computing the selection
+        # criterion
+        trainds = dsgen.next()
+        testds = dsgen.next()
+        return trainds, testds
 
 
-    def untrain(self):
-        if __debug__:
-            debug("FS_", "Untraining combined FS: %s" % self)
-        for fs in self.__feature_selections:
-            fs.untrain()
-
-
-    def _call(self, dataset, testdataset=None):
-        """Really run it.
-        """
-        # to hold the union
-        selected_ids = None
-        # to hold the individuals
-        self.ca.selections_ids = []
-
-        for fs in self.__feature_selections:
-            # we need the feature ids that were selection by each method,
-            # so enable them temporarily
-            fs.ca.change_temporarily(
-                enable_ca=["selected_ids"], other=self)
-
-            # compute feature selection, but ignore return datasets
-            fs(dataset, testdataset)
-
-            # retrieve feature ids and determined union of all selections
-            if selected_ids == None:
-                selected_ids = set(fs.ca.selected_ids)
-            else:
-                if self.__combiner == 'union':
-                    selected_ids.update(fs.ca.selected_ids)
-                elif self.__combiner == 'intersection':
-                    selected_ids.intersection_update(fs.ca.selected_ids)
-                else:
-                    raise ValueError, "Unknown combiner '%s'" % self.__combiner
-
-            # store individual set in state
-            self.ca.selections_ids.append(fs.ca.selected_ids)
-
-            # restore ca to previous settings
-            fs.ca.reset_changed_temporarily()
-
-        # finally apply feature set union selection to original datasets
-        selected_ids = sorted(list(selected_ids))
-
-        # take care of optional second dataset
-        td_sel = None
-        if not testdataset is None:
-            td_sel = testdataset[:, self.ca.selected_ids]
-
-        # and main dataset
-        d_sel = dataset[:, selected_ids]
-
-        # finally store ids in state
-        self.ca.selected_ids = selected_ids
-
-        return (d_sel, td_sel)
-
-
-    feature_selections = property(fget=lambda self:self.__feature_selections,
-                                  doc="List of `FeatureSelections`")
-    combiner = property(fget=lambda self:self.__combiner,
-                        doc="Selection set combination method.")

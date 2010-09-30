@@ -18,11 +18,12 @@ from mvpa.support.copy import deepcopy
 import time
 
 from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
-
+from mvpa.measures.base import Measure
+from mvpa.base.learner import Learner, FailedToPredictError
 from mvpa.datasets.base import Dataset
 from mvpa.misc.support import idhash
-from mvpa.misc.state import ConditionalAttribute, ClassWithCollections
-from mvpa.misc.param import Parameter
+from mvpa.base.state import ConditionalAttribute
+from mvpa.base.param import Parameter
 from mvpa.misc.attrmap import AttributeMap
 
 from mvpa.clfs.transerror import ConfusionMatrix, RegressionStatistics
@@ -33,9 +34,7 @@ if __debug__:
     from mvpa.base import debug
 
 __all__ = [ 'Classifier',
-            'accepts_dataset_as_samples', 'accepts_samples_as_dataset',
-            'DegenerateInputError', 'FailedToTrainError',
-            'FailedToPredictError', 'LearnerError']
+            'accepts_dataset_as_samples', 'accepts_samples_as_dataset']
 
 def accepts_samples_as_dataset(fx):
     """Decorator to wrap samples into a Dataset.
@@ -51,29 +50,7 @@ def accepts_samples_as_dataset(fx):
     return wrap_samples
 
 
-class LearnerError(Exception):
-    """Base class for exceptions thrown by the learners (classifiers,
-    regressions)"""
-    pass
-
-class DegenerateInputError(LearnerError):
-    """Exception to be thrown by learners if input data is bogus, i.e. no
-    features or samples"""
-    pass
-
-class FailedToTrainError(LearnerError):
-    """Exception to be thrown whenever classifier fails to learn for
-    some reason"""
-    pass
-
-class FailedToPredictError(LearnerError):
-    """Exception to be thrown whenever classifier fails to provide predictions.
-    Usually happens if it was trained on degenerate data but without any complaints.
-    """
-    pass
-
-
-class Classifier(ClassWithCollections):
+class Classifier(Learner):
     """Abstract classifier class to be inherited by all classifiers
     """
 
@@ -123,7 +100,7 @@ class Classifier(ClassWithCollections):
     # Additionally Michael thinks ATM that additional information might be
     # necessary in some situations (e.g. reasonably predefined parameter range,
     # minimal iteration stepsize, ...), therefore the value to each key should
-    # also be a dict or we should use mvpa.misc.param.Parameter'...
+    # also be a dict or we should use mvpa.base.param.Parameter'...
 
     trained_targets = ConditionalAttribute(enabled=True,
         doc="Set of unique targets it has been trained on")
@@ -144,23 +121,12 @@ class Classifier(ClassWithCollections):
         doc="Internal classifier estimates the most recent " +
             "predictions are based on")
 
-    training_time = ConditionalAttribute(enabled=True,
-        doc="Time (in seconds) which took classifier to train")
-
     predicting_time = ConditionalAttribute(enabled=True,
         doc="Time (in seconds) which took classifier to predict")
-
-    feature_ids = ConditionalAttribute(enabled=False,
-        doc="Feature IDS which were used for the actual training.")
 
     __tags__ = []
     """Describes some specifics about the classifier -- is that it is
     doing regression for instance...."""
-
-    targets_attr = Parameter('targets', allowedtype='bool',# ro=True,
-        doc="""What samples attribute to use as targets.""",
-        index=999)
-
 
     # TODO: make it available only for actually retrainable classifiers
     retrainable = Parameter(False, allowedtype='bool',
@@ -168,8 +134,12 @@ class Classifier(ClassWithCollections):
         index=1002)
 
 
-    def __init__(self, **kwargs):
-        ClassWithCollections.__init__(self, **kwargs)
+    def __init__(self, space=None, **kwargs):
+        # by default we want classifiers to use the 'targets' sample attribute
+        # for training/testing
+        if space is None:
+            space = 'targets'
+        Learner.__init__(self, space=space, **kwargs)
 
         # XXX
         # the place to map literal to numerical labels (and back)
@@ -237,7 +207,7 @@ class Classifier(ClassWithCollections):
 
                 # Look at the data if any was changed
                 for key, data_ in (('traindata', dataset.samples),
-                                   ('targets', dataset.sa[params.targets_attr].value)):
+                                   ('targets', dataset.sa[self.get_space()].value)):
                     _changedData[key] = self.__was_data_changed(key, data_)
                     # if those idhashes were invalidated by retraining
                     # we need to adjust _changedData accordingly
@@ -272,7 +242,7 @@ class Classifier(ClassWithCollections):
         """
         ca = self.ca
         if ca.is_enabled('trained_targets'):
-            ca.trained_targets = dataset.sa[self.params.targets_attr].unique
+            ca.trained_targets = dataset.sa[self.get_space()].unique
 
         ca.trained_dataset = dataset
         ca.trained_nsamples = dataset.nsamples
@@ -299,22 +269,8 @@ class Classifier(ClassWithCollections):
             predictions = self.predict(dataset)
             self.ca.reset_changed_temporarily()
             self.ca.training_confusion = self.__summary_class__(
-                targets=dataset.sa[self.params.targets_attr].value,
+                targets=dataset.sa[self.get_space()].value,
                 predictions=predictions)
-
-        if self.ca.is_enabled('feature_ids'):
-            self.ca.feature_ids = self._get_feature_ids()
-
-
-    ##REF: Name was automagically refactored
-    def _get_feature_ids(self):
-        """Virtual method to return feature_ids used while training
-
-        Is not intended to be called anywhere but from _posttrain,
-        thus classifier is assumed to be trained at this point
-        """
-        # By default all features are used
-        return range(self.__trainednfeatures)
 
 
     def summary(self):
@@ -344,8 +300,6 @@ class Classifier(ClassWithCollections):
                 s += ' #chunks:%d' % nchunks
 
             s += " #features:%d" % self.__trainednfeatures
-            if ca.is_set('feature_ids'):
-                s += ", used #features:%d" % len(ca.feature_ids)
             if ca.is_set('training_confusion'):
                 s += ", training error:%.3g" % ca.training_confusion.error
         else:
@@ -378,40 +332,6 @@ class Classifier(ClassWithCollections):
         """Function to be actually overridden in derived classes
         """
         raise NotImplementedError
-
-
-    def train(self, dataset):
-        """Train classifier on a dataset
-
-        Shouldn't be overridden in subclasses unless explicitly needed
-        to do so
-        """
-        if dataset.nfeatures == 0 or dataset.nsamples == 0:
-            raise DegenerateInputError, \
-                  "Cannot train classifier on degenerate data %s" % dataset
-        if __debug__:
-            debug("CLF", "Training classifier %(clf)s on dataset %(dataset)s",
-                  msgargs={'clf':self, 'dataset':dataset})
-
-        self._pretrain(dataset)
-
-        # remember the time when started training
-        t0 = time.time()
-
-        if dataset.nfeatures > 0:
-
-            result = self._train(dataset)
-        else:
-            warning("Trying to train on dataset with no features present")
-            if __debug__:
-                debug("CLF",
-                      "No features present for training, no actual training " \
-                      "is called")
-            result = None
-
-        self.ca.training_time = time.time() - t0
-        self._posttrain(dataset)
-        return result
 
 
     def _prepredict(self, dataset):
@@ -507,6 +427,17 @@ class Classifier(ClassWithCollections):
 
         self._postpredict(dataset, result)
         return result
+
+
+    def _call(self, ds):
+        # get the predictions
+        # call with full dataset, since we might need it further down in
+        # the stream, e.g. for caching...
+        pred = self.predict(ds)
+        tattr = self.get_space()
+        # return the predictions and the targets in a dataset
+        return Dataset(pred, sa={tattr: ds.sa[tattr]})
+
 
     # XXX deprecate ???
     ##REF: Name was automagically refactored
@@ -747,7 +678,7 @@ class Classifier(ClassWithCollections):
         # To check if we are not fooled
         if __debug__ and 'CHECK_RETRAIN' in debug.active:
             for key, data_ in (('traindata', dataset.samples),
-                               ('targets', dataset.sa[self.params.targets_attr].value)):
+                               ('targets', dataset.sa[self.get_space()].value)):
                 # so it wasn't told to be invalid
                 if not chd[key] and not ichd.get(key, False):
                     if self.__was_data_changed(key, data_, update=False):

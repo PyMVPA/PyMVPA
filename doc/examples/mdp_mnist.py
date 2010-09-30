@@ -84,15 +84,17 @@ available only from version 0.99
 """
 
 data = cPickle.load(gzip.open('mnist.pickle.gz'))
-ds = dataset_wizard(
+train = dataset_wizard(
         data['traindata'],
-        targets=data['trainlabels'])
-testds = dataset_wizard(
+        targets=data['trainlabels'],
+        chunks='train')
+test = dataset_wizard(
         data['testdata'],
-        targets=data['testlabels'])
-
+        targets=data['testlabels'],
+        chunks='test')
+# merge the datasets into on
+ds = vstack((train, test))
 ds.init_origids('samples')
-testds.init_origids('samples')
 
 #examples = [0, 25024, 50000, 59000]
 examples = [3001 + 5940 * i for i in range(10)]
@@ -120,11 +122,11 @@ fdaflow.verbose = True
 mapper = MDPFlowMapper(fdaflow,
                        ([], [], [DatasetAttributeExtractor('sa', 'targets')]))
 
-terr = TransferError(MappedClassifier(SMLR(), mapper),
-                     enable_ca=['confusion',
-                                    'samples_error'])
-err = terr(testds, ds)
-print 'Test error:', err
+tm = TransferMeasure(MappedClassifier(SMLR(), mapper),
+                     Splitter('chunks', attr_values=['train', 'test']),
+                     enable_ca=['stats', 'samples_error'])
+tm(ds)
+print 'Test error:', 1 - tm.ca.stats.stats['ACC']
 
 if externals.exists('matplotlib') \
    and externals.versions['matplotlib'] >= '0.99':

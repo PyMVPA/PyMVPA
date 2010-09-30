@@ -51,9 +51,7 @@ Select a subset of two stimulation conditions from the whole dataset.
 Finally, setup the cross-validation procedure using an odd-even split of the
 dataset and a *SMLR* classifier -- and run it.
 
- >>> cv = CrossValidatedTransferError(
- ...           TransferError(SMLR()),
- ...           OddEvenSplitter())
+ >>> cv = CrossValidation(SMLR(), OddEvenPartitioner())
  >>> error = cv(dataset)
 
 Done. The mean error of classifier predictions on the test dataset across

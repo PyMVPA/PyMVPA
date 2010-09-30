@@ -168,17 +168,17 @@ class BoxcarMapper(Mapper):
             # this implementation can actually deal with 1D-arrays
             mds.sa[k] = self._forward_data(dataset.sa[k].value)
         # create the box offset attribute if space name is given
-        if self.get_inspace():
+        if self.get_space():
             if len(msamp.shape) > 2:
                 # each new feature attribute should have the shape of a single
                 # sample otherwise subsequent flattening wouldn't work
-                mds.fa[self.get_inspace() + '_offsetidx'] = \
+                mds.fa[self.get_space() + '_offsetidx'] = \
                         np.repeat(np.arange(mds.nfeatures, dtype='int'),
                                  np.prod(msamp.shape[2:])).reshape(msamp[0].shape)
             else:
-                mds.fa[self.get_inspace() + '_offsetidx'] = \
+                mds.fa[self.get_space() + '_offsetidx'] = \
                         np.arange(mds.nfeatures, dtype='int')
-            mds.sa[self.get_inspace() + '_onsetidx'] = self.startpoints.copy()
+            mds.sa[self.get_space() + '_onsetidx'] = self.startpoints.copy()
         return mds
 
 
@@ -228,12 +228,12 @@ class BoxcarMapper(Mapper):
         mds.fa.set_length_check(mds.nfeatures)
         # map old feature attributes -- which simply is taken the first one
         # and kill the inspace attribute, since it 
-        inspace = self.get_inspace() + '_offsetidx'
+        inspace = self.get_space() + '_offsetidx'
         for k in dataset.fa:
             if k != inspace:
                 mds.fa[k] = dataset.fa[k].value[0]
         # reverse-map old sample attributes
-        inspace = self.get_inspace() + '_onsetidx'
+        inspace = self.get_space() + '_onsetidx'
         for k in dataset.sa:
             if k != inspace:
                 mds.sa[k] = self._reverse_data(dataset.sa[k].value)

@@ -26,7 +26,8 @@ if externals.exists('lars', raise_=True):
 
 # local imports
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
-     FailedToTrainError, FailedToPredictError
+        FailedToPredictError
+from mvpa.base.learner import FailedToTrainError
 from mvpa.measures.base import Sensitivity
 from mvpa.datasets.base import Dataset
 
@@ -142,7 +143,7 @@ class LARS(Classifier):
     def _train(self, data):
         """Train the classifier using `data` (`Dataset`).
         """
-        targets = data.sa[self.params.targets_attr].value[:, np.newaxis]
+        targets = data.sa[self.get_space()].value[:, np.newaxis]
         # some non-Python friendly R-lars arguments
         lars_kwargs = {'use.Gram': self.__use_Gram}
         if self.__max_steps is not None:

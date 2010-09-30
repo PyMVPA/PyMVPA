@@ -14,7 +14,8 @@ import numpy as np
 
 from mvpa.base.dochelpers import _str
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples, \
-        ChainMapper, FeatureSliceMapper
+        ChainMapper
+from mvpa.mappers.slicing import FeatureSliceMapper
 from mvpa.misc.support import is_in_volume
 
 
@@ -118,11 +119,11 @@ class FlattenMapper(Mapper):
             mds.fa[k] = self.forward1(mds.fa[k].value)
 
         # if there is no inspace return immediately
-        if self.get_inspace() is None:
+        if self.get_space() is None:
             return mds
         # otherwise create the coordinates as feature attributes
         else:
-            mds.fa[self.get_inspace()] = \
+            mds.fa[self.get_space()] = \
                 list(np.ndindex(dataset.samples[0].shape))
             return mds
 
@@ -149,7 +150,7 @@ class FlattenMapper(Mapper):
         # attribute collection needs to have a new length check
         mds.fa.set_length_check(mds.nfeatures)
         # now unflatten all feature attributes
-        inspace = self.get_inspace()
+        inspace = self.get_space()
         for k in mds.fa:
             # reverse map all attributes, but not the inspace indices, since the
             # did not come through this mapper and make not sense in inspace
@@ -163,7 +164,7 @@ class FlattenMapper(Mapper):
 
 
 
-def mask_mapper(mask=None, shape=None, inspace=None):
+def mask_mapper(mask=None, shape=None, space=None):
     """Factory method to create a chain of Flatten+FeatureSlice Mappers
 
     Parameters
@@ -200,7 +201,7 @@ def mask_mapper(mask=None, shape=None, inspace=None):
                     "compatible with the provided shape %s." \
                     % (mask.shape, shape)
 
-    fm = FlattenMapper(shape=mask.shape, inspace=inspace)
+    fm = FlattenMapper(shape=mask.shape, space=space)
     flatmask = fm.forward1(mask)
     mapper = ChainMapper([fm,
                           FeatureSliceMapper(
