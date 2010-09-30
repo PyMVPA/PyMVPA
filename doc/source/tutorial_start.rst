@@ -220,8 +220,8 @@ use a so-called `~mvpa.datasets.splitters.HalfSplitter` to generate the desired
 dataset splits. Note, that the splitter is instructed to use the ``runtype``
 attribute to determine which samples should form a dataset subset.
 
->>> hspl = HalfSplitter(attr='runtype')
->>> cvte = CrossValidatedTransferError(terr, splitter=hspl)
+>>> hpart = HalfPartitioner(attr='runtype')
+>>> cvte = CrossValidation(clf, hpart)
 
 .. exercise::
 

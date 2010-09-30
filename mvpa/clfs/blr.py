@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 
 if __debug__:
@@ -89,7 +89,7 @@ class BLR(Classifier):
         """Train regression using `data` (`Dataset`).
         """
         # BLR relies on numerical labels
-        train_labels = self._attrmap.to_numeric(data.sa[self.params.targets_attr].value)
+        train_labels = self._attrmap.to_numeric(data.sa[self.get_space()].value)
         # provide a basic (i.e. identity matrix) and correct prior
         # sigma_p, if not provided before or not compliant to 'data':
         if self.sigma_p == None: # case: not provided
@@ -182,7 +182,7 @@ if __name__ == "__main__":
 
     if F==1:
         pylab.plot(dataset_train.samples,
-                   dataset_train.sa[b.params.targets_attr].value,
+                   dataset_train.sa[b.get_space()].value,
                    "ro", label="train")
 
         pylab.plot(dataset_test.samples, predictions, "b-", label="prediction")

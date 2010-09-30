@@ -11,8 +11,9 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa.base import warning, externals
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
-     FailedToTrainError, FailedToPredictError, DegenerateInputError
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa.base.learner import FailedToTrainError, FailedToPredictError, \
+        DegenerateInputError
 
 
 # do conditional to be able to build module reference
@@ -65,7 +66,7 @@ class SKLLearnerAdapter(Classifier):
     def _train(self, dataset):
         """Train the skl learner using `dataset` (`Dataset`).
         """
-        targets_sa = dataset.sa[self.params.targets_attr]
+        targets_sa = dataset.sa[self.get_space()]
         targets = targets_sa.value
         # Some sanity checking so some classifiers such as LDA do not
         # puke meaningless exceptions

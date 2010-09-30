@@ -15,11 +15,15 @@ from numpy import array
 from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true, assert_array_equal
 
+from mvpa.testing.datasets import datasets
 from mvpa.mappers.flatten import FlattenMapper
-from mvpa.mappers.base import FeatureSliceMapper, ChainMapper
+from mvpa.mappers.base import ChainMapper
+from mvpa.mappers.slicing import FeatureSliceMapper, SampleSliceMapper, \
+        StripBoundariesSamples
 from mvpa.support.copy import copy
 from mvpa.datasets.base import Dataset
 from mvpa.base.collections import ArrayCollectable
+from mvpa.datasets.base import dataset_wizard
 
 # arbitrary ndarray subclass for testing
 class myarray(np.ndarray):
@@ -46,8 +50,8 @@ def test_flatten():
 
     # actually, there should be no difference between a plain FlattenMapper and
     # a chain that only has a FlattenMapper as the one element
-    for fm in [FlattenMapper(inspace='voxel'),
-               ChainMapper([FlattenMapper(inspace='voxel'),
+    for fm in [FlattenMapper(space='voxel'),
+               ChainMapper([FlattenMapper(space='voxel'),
                             FeatureSliceMapper(slice(None))])]:
         # not working if untrained
         assert_raises(RuntimeError,
@@ -195,7 +199,7 @@ def test_subset_filler():
 
 def test_repr():
     # this time give mask only by its target length
-    sm = FeatureSliceMapper(slice(None), inspace='myspace')
+    sm = FeatureSliceMapper(slice(None), space='myspace')
 
     # check reproduction
     sm_clone = eval(repr(sm))
@@ -255,3 +259,22 @@ def test_chainmapper():
     # content as far it could be restored
     assert_array_equal(rdata[rdata > 0], data[rdata > 0])
     assert_equal(np.sum(rdata > 0), 8)
+
+
+def test_sampleslicemapper():
+    # this does nothing but Dataset.__getitem__ which is tested elsewhere -- but
+    # at least we run it
+    ds = datasets['uni2small']
+    ssm = SampleSliceMapper(slice(3, 8, 2))
+    sds = ssm(ds)
+    assert_equal(len(sds), 3)
+
+
+def test_strip_boundary():
+    ds = datasets['hollow']
+    ds.sa['btest'] = np.repeat([0,1], 20)
+    sn = StripBoundariesSamples('btest', 1, 2)
+    sds = sn(ds)
+    assert_equal(len(sds), len(ds) - 3)
+    for i in [19, 20, 21]:
+        assert_false(i in sds.samples.sid)

@@ -14,11 +14,10 @@ from mvpa.testing import *
 from mvpa.testing.clfs import *
 from mvpa.testing.datasets import *
 
-from mvpa.datasets.splitters import NFoldSplitter
+from mvpa.generators.partition import NFoldPartitioner
 from mvpa.datasets.miscfx import get_nsamples_per_attr
 from mvpa.clfs.meta import ProxyClassifier
-from mvpa.clfs.transerror import TransferError
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
+from mvpa.measures.base import CrossValidation
 
 class SVMTests(unittest.TestCase):
 
@@ -114,20 +113,19 @@ class SVMTests(unittest.TestCase):
         spl = get_nsamples_per_attr(ds_, 'targets') #_.samplesperlabel
         #print ds_.targets, ds_.chunks
 
-        cve = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
-                                          enable_ca='confusion')
+        cve = CrossValidation(clf, NFoldPartitioner(), enable_ca='stats')
         # on balanced
         e = cve(ds__)
-        tpr_1 = cve.ca.confusion.stats["TPR"][1]
+        tpr_1 = cve.ca.stats.stats["TPR"][1]
 
         # on disbalanced
         e = cve(ds_)
-        tpr_2 =  cve.ca.confusion.stats["TPR"][1]
+        tpr_2 =  cve.ca.stats.stats["TPR"][1]
 
         # Set '1 C per label'
         # recreate cvte since previous might have operated on copies
-        cve = CrossValidatedTransferError(TransferError(clf), NFoldSplitter(),
-                                          enable_ca='confusion')
+        cve = CrossValidation(clf, NFoldPartitioner(),
+                                          enable_ca='stats')
         oldC = clf.params.C
         # TODO: provide clf.params.C not with a tuple but dictionary
         #       with C per label (now order is deduced in a cruel way)
@@ -141,7 +139,7 @@ class SVMTests(unittest.TestCase):
         except:
             clf.params.C = oldC
             raise
-        tpr_3 = cve.ca.confusion.stats["TPR"][1]
+        tpr_3 = cve.ca.stats.stats["TPR"][1]
 
         # Actual tests
         if cfg.getboolean('tests', 'labile', default='yes'):

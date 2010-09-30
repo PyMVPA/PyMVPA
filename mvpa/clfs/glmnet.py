@@ -26,10 +26,10 @@ if externals.exists('glmnet', raise_=True):
 
 # local imports
 from mvpa.base import warning
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
-     FailedToTrainError
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa.base.learner import FailedToTrainError
 from mvpa.measures.base import Sensitivity
-from mvpa.misc.param import Parameter
+from mvpa.base.param import Parameter
 from mvpa.datasets.base import Dataset
 
 if __debug__:
@@ -165,7 +165,7 @@ class _GLMNET(Classifier):
         """Train the classifier using `data` (`Dataset`).
         """
         # process targets based on the model family
-        targets = dataset.sa[self.params.targets_attr].value
+        targets = dataset.sa[self.get_space()].value
         if self.params.family == 'gaussian':
             # do nothing, just save the targets as a list
             #targets = targets.tolist()
@@ -174,7 +174,7 @@ class _GLMNET(Classifier):
             # turn lables into list of range values starting at 1
             #targets = _label2indlist(dataset.targets,
             #                        dataset.uniquetargets)
-            targets_unique = dataset.sa[self.params.targets_attr].unique
+            targets_unique = dataset.sa[self.get_space()].unique
             targets = _label2oneofm(targets, targets_unique)
 
             # save some properties of the data/classification
@@ -323,7 +323,7 @@ class GLMNETWeights(Sensitivity):
 
         #return weights
         if clf.params.family == 'multinomial':
-            return Dataset(weights.T, sa={clf.params.targets_attr: clf._utargets})
+            return Dataset(weights.T, sa={clf.get_space(): clf._utargets})
         else:
             return Dataset(weights[np.newaxis])
 

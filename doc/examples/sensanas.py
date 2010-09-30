@@ -42,21 +42,21 @@ sensanas = {
                                                postproc=absolute_features()),
     'c) I-RELIEF': IterativeRelief(postproc=absolute_features()),
     'd) Splitting ANOVA (odd-even)':
-        SplitFeaturewiseDatasetMeasure(
+        SplitFeaturewiseMeasure(
             OddEvenSplitter(),
             OneWayAnova(postproc=absolute_features())),
     'e) Splitting SVM (odd-even)':
-        SplitFeaturewiseDatasetMeasure(
+        SplitFeaturewiseMeasure(
             OddEvenSplitter(),
             LinearNuSVMC().get_sensitivity_analyzer(postproc=absolute_features())),
     'f) I-RELIEF Online':
         IterativeReliefOnline(postproc=absolute_features()),
     'g) Splitting ANOVA (nfold)':
-        SplitFeaturewiseDatasetMeasure(
+        SplitFeaturewiseMeasure(
             NFoldSplitter(),
             OneWayAnova(postproc=absolute_features())),
     'h) Splitting SVM (nfold)':
-        SplitFeaturewiseDatasetMeasure(
+        SplitFeaturewiseMeasure(
             NFoldSplitter(),
             LinearNuSVMC().get_sensitivity_analyzer(postproc=absolute_features())),
     'i) GNB Searchlight':

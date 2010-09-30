@@ -22,7 +22,7 @@ import numpy as np
 from mvpa.base.dataset import datasetmethod
 from mvpa.datasets.base import Dataset
 from mvpa.base.dochelpers import table2string
-# from mvpa.misc.support import get_break_points
+from mvpa.misc.support import get_nelements_per_value
 
 from mvpa.base import externals, warning
 
@@ -180,90 +180,6 @@ def get_samples_per_chunk_target(dataset,
 
 
 @datasetmethod
-def permute_attr(dataset, attr='targets', chunks_attr='chunks',
-                 col='sa', assure_permute=False):
-    """Permute values of some attribute (samples or features) of a Dataset.
-
-    A new permuted set of values is assigned to the dataset's
-    attribute, replacing the previous values. The values are not
-    modified in-place, hence it is safe to call the function on
-    shallow copies of a dataset without modifying the original
-    dataset's attribute values.
-
-    Parameters
-    ----------
-    attr : str, optional
-      Name of the attribute values of which are to be permuted
-      (``targets`` by default).  (i.e. gets permuted).
-    chunks_attr : None or str
-      If a string given, permutation is limited to samples or features sharing the
-      same value of the `chunks_attr` attribute in the same collection.  Therefore,
-      in case of sa.targets, only the association of a certain sample with a target is
-      permuted while keeping the absolute number of occurrences of each
-      target value within a certain chunk constant.
-    col : {'sa', 'fa'}
-      Collection to operate on (i.e. where attr and chunks_attr reside in).
-    assure_permute : bool, optional
-      If True, assures that values are permuted, i.e. any one is
-      different from the original one (note that it doesn't provide assurance of
-      avoiding replacement among permuted sets).
-    """
-    ac = {'sa': dataset.sa, 'fa': dataset.fa}[col]
-    if __debug__:
-        uv = ac[attr].unique
-        if len(uv) < 2:
-            raise RuntimeError(
-                "Permuting values of %s is only meaningful if there are "
-                "more than two different values. Now it contains only %s."
-                % (attr, uv))
-
-    # local binding
-    values = ac[attr].value
-
-    # now scramble
-    if chunks_attr:
-        if chunks_attr in ac:
-            chunks = ac[chunks_attr].value
-
-            pvalues = np.zeros(values.shape, dtype=values.dtype)
-
-            for o in ac[chunks_attr].unique:
-                pvalues[chunks == o] = \
-                    np.random.permutation(values[chunks == o])
-        else:
-            raise ValueError, \
-                  "There is no %s named %r in %s, thus no permutation is " \
-                  "possible" % (col, chunks_attr, dataset)
-    else:
-        pvalues = np.random.permutation(values)
-
-    if assure_permute:
-        if not (pvalues != values).any():
-            if not (assure_permute is True):
-                if assure_permute == 1:
-                    raise RuntimeError, \
-                          "Cannot assure permutation of values of %s.%s for " \
-                          "some reason for dataset %s and chunks_attr=%r. " \
-                          "Should not happen" % \
-                          (col, values, dataset, chunks_attr)
-            else:
-                assure_permute = 11 # make 10 attempts
-            if __debug__:
-                debug("DS",  "Recalling permute to assure different values")
-            permute_attr(dataset,
-                         attr=attr,
-                         chunks_attr=chunks_attr,
-                         col=col,
-                         assure_permute=assure_permute-1)
-            # if we did assure_permute recurse -- return here avoiding
-            # reassignment of bad (non-permuted) ones below
-            return
-
-    # reassign to the dataset
-    ac[attr].value = pvalues
-
-
-@datasetmethod
 def random_samples(dataset, npertarget, targets_attr='targets'):
     """Create a dataset with a random subset of samples.
 
@@ -314,14 +230,7 @@ def get_nsamples_per_attr(dataset, attr):
     -------
     dict with the number of samples (value) per unique attribute (key).
     """
-    uniqueattr = dataset.sa[attr].unique
-
-    # use dictionary to cope with arbitrary targets
-    result = dict(zip(uniqueattr, [ 0 ] * len(uniqueattr)))
-    for l in dataset.sa[attr].value:
-        result[l] += 1
-
-    return result
+    return get_nelements_per_value(dataset.sa[attr])
 
 
 @datasetmethod

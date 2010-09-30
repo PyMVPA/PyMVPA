@@ -82,13 +82,11 @@ labels = []
 
 for desc, clf in clfs:
     print desc
-    cv = CrossValidatedTransferError(
-            TransferError(clf),
-            NFoldSplitter(),
-            enable_ca=['results'])
-    cv(dataset)
-
-    results.append(cv.ca.results)
+    cv = CrossValidation(clf, NFoldPartitioner())
+    res = cv(dataset)
+    # there is only one 'feature' i.e. the error in the returned
+    # dataset
+    results.append(res.samples[:,0])
     labels.append(desc)
 
 plot_bars(results, labels=labels,

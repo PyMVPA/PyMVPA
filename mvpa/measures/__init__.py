@@ -12,7 +12,7 @@ Module Description
 ==================
 
 Provide some measures given a dataset. Most of the time, derivatives of
-`FeaturewiseDatasetMeasure` are used, such as
+`FeaturewiseMeasure` are used, such as
 
 * `OneWayAnova`
 * `CorrCoef`

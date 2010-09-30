@@ -15,8 +15,10 @@ skip_if_no_external('h5py')
 import numpy as np
 from mvpa.testing.datasets import datasets
 from mvpa.clfs.base import Classifier
-from mvpa.clfs.transerror import TransferError
-from mvpa.misc.errorfx import CorrErrorFx, MeanMismatchErrorFx
+from mvpa.generators.splitters import Splitter
+from mvpa.measures.base import TransferMeasure
+from mvpa.misc.errorfx import corr_error, mean_mismatch_error
+from mvpa.mappers.fx import BinaryFxNode
 
 from mvpa.clfs.warehouse import clfswh, regrswh
 
@@ -54,19 +56,19 @@ def test_h5py_clfs(lrn):
 
     # lets choose a dataset
     dsname, errorfx = \
-            {False: ('uni2large', MeanMismatchErrorFx()),
-             True: ('sin_modulated', CorrErrorFx())}\
+            {False: ('uni2large', mean_mismatch_error),
+             True: ('sin_modulated', corr_error)}\
             ['regression' in lrn.__tags__]
-    ds_train = datasets['%s_train' % dsname]
-    ds_test = datasets['%s_test' % dsname]
+    ds = datasets[dsname]
+    splitter = Splitter('train')
+    postproc=BinaryFxNode(errorfx, 'targets')
+    te = TransferMeasure(lrn, splitter, postproc=postproc)
+    te_ = TransferMeasure(lrn_, splitter, postproc=postproc)
 
-    te = TransferError(lrn, errorfx)
-    te_ = TransferError(lrn_, errorfx)
+    error = te(ds)
+    error_ = te_(ds)
 
-    error = te(ds_test, ds_train)
-    error_ = te_(ds_test, ds_train)
-
-    ok_(error == error_)
+    assert_array_equal(error, error_)
 
     if len(set(['swig', 'rpy2']).intersection(lrn.__tags__)):
         raise SkipTest("Trained swigged and R-interfaced classifiers can't "
@@ -93,9 +95,9 @@ def test_h5py_clfs(lrn):
     # TODO
 
     # now lets do predict and manually compute error
-    predictions = lrn__.predict(ds_test)
-    error__ = errorfx(predictions, ds_test.sa.targets)
-    ok_(error == error__)
+    predictions = lrn__.predict(ds[ds.sa.train == 2].samples)
+    error__ = errorfx(predictions, ds[ds.sa.train == 2].sa.targets)
+    assert_array_equal(error, error__)
 
     # TODO: verify ca's
 

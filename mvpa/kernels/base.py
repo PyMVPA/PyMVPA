@@ -23,8 +23,8 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.base.types import is_datasetlike
-from mvpa.misc.state import ClassWithCollections
-from mvpa.misc.param import Parameter
+from mvpa.base.state import ClassWithCollections
+from mvpa.base.param import Parameter
 from mvpa.misc.sampleslookup import SamplesLookup # required for CachedKernel
 
 if __debug__:

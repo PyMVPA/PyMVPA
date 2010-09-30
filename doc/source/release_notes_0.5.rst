@@ -21,18 +21,26 @@ For The Impatient
 * Datasets are no longer relatively static objects, but become flexible
   multi-purpose containers that can handle attributes for samples, feature,
   or whole datasets. There is some inital support for other datatypes than
-  NumPy's `ndarrays`, e.g. sparse matrices.
+  NumPy's ``ndarrays``, e.g. sparse matrices.
+
+* All mappers, classifiers, regressions, and measure are now implemented as
+  `Node`\s that can be called with a `Dataset` and return a processed dataset.
+  All nodes provide a ``generat()`` method that causes the node to yields to
+  processing result. In addition, there is special nodes that implement more
+  complex generators yielding multiple results (e.g. resampling, permuting, or
+  splitting nodes).
 
 
 Critical API Changes
 ====================
 
-* `.states` -> `.ca` (for conditional attributes).  All attributes stored in
-  collections (parameters for Classifiers in `.params`, states in `.ca`)
+* ``.states`` -> ``.ca`` (for conditional attributes).  All attributes stored in
+  collections (parameters for Classifiers in ``.params``, states in ``.ca``)
   should be accessed not at top level of the object but through a collection.
+  For example: ``clf.confusion`` becomes ``clf.ca.confusion``
 
 * Dataset: behaves more like a NumPy array.  No specialized Dataset classes,
-  but constructors
+  but factory functions:
 
   - MaskedDataset -> `dataset_wizard`
   - NiftiDataset -> `fmri_dataset`
@@ -47,10 +55,13 @@ Critical API Changes
 
  - now ``[1,1,0]`` is not the same as ``[True, True, False]``
 
+   This first is a list of indices, and the second is a boolean selection
+   vector.
+
 * We have weird (but consistent) conventions now
   - classes are CamelCased
   - factory functions (even for whatever might have been before a class)
-  are in pythonic_style
+    are lowercase with underscores
 
 * `detrend` -> `poly_detrend`
 
@@ -59,6 +70,11 @@ Critical API Changes
 
 * internally and as provided by mvpa.suite, `numpy` is imported as `np`, and
   `pylab` is imported as `pl`
+
+* Calling mappers (`Mapper.__call__()`) is no longer a simple alias to
+  `Mapper.forward()`, but instead causes a mapper to behave like a generator and
+  yield (potentially multiple) results when calling with a single input dataset.
+
 
 General Changes
 ===============
@@ -79,8 +95,9 @@ most parts of PyMVPA still assume an (at least) ndarray-like interface.
 Splitters
 ---------
 
-* `permute` -> `permute_attr`, so if you had `permute=True`, use
-  `attr='targets'` if you like to permute targets
+* Splitters as such do not exist any longer. They have been replaced by a number
+  of generators that offer the same functionality, but can be combined in more
+  flexible way.
 
 
 Classifiers

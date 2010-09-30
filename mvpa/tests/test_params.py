@@ -14,8 +14,8 @@ import numpy as np
 from sets import Set
 
 from mvpa.datasets.base import dataset_wizard
-from mvpa.misc.state import ClassWithCollections, ConditionalAttribute
-from mvpa.misc.param import Parameter, KernelParameter
+from mvpa.base.state import ClassWithCollections, ConditionalAttribute
+from mvpa.base.param import Parameter, KernelParameter
 
 from mvpa.testing.clfs import *
 
@@ -98,11 +98,11 @@ class ParamsTests(unittest.TestCase):
 
     def test_classifier(self):
         clf  = ParametrizedClassifier()
-        self.failUnlessEqual(len(clf.params.items()), 3) # + targets # retrainable
+        self.failUnlessEqual(len(clf.params.items()), 2) # + retrainable
         self.failUnlessEqual(len(clf.kernel_params.items()), 1)
 
         clfe  = ParametrizedClassifierExtended()
-        self.failUnlessEqual(len(clfe.params.items()), 3)
+        self.failUnlessEqual(len(clfe.params.items()), 2)
         self.failUnlessEqual(len(clfe.kernel_params.items()), 2)
         self.failUnlessEqual(len(clfe.kernel_params.listing), 2)
 

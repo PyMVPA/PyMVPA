@@ -14,7 +14,7 @@ from math import floor
 import numpy as np
 
 from mvpa.base.dataset import AttrDataset
-from mvpa.misc.state import ClassWithCollections, ConditionalAttribute
+from mvpa.base.state import ClassWithCollections, ConditionalAttribute
 
 if __debug__:
     from mvpa.base import debug
@@ -462,7 +462,9 @@ class TailSelector(ElementSelector):
         if self.__sort:
             good_ids.sort()
 
-        return good_ids
+        # only return proper slice args: this is a list of int ids, hence return
+        # a list not an array
+        return list(good_ids)
 
 
 

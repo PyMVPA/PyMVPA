@@ -61,8 +61,7 @@ cross-validated error using simple and popular kNN.
 """
 
 clf_sample = kNN()
-cv_sample = CrossValidatedTransferError(
-    TransferError(clf_sample), NFoldSplitter())
+cv_sample = CrossValidation(clf_sample, NFoldPartitioner())
 
 error_sample = np.mean(cv_sample(dataset))
 
@@ -90,8 +89,7 @@ def select_best_clf(dataset, clfs):
     """
     best_error = None
     for clf in clfs:
-        cv = CrossValidatedTransferError(TransferError(clf),
-                                         NFoldSplitter())
+        cv = CrossValidation(clf, NFoldPartitioner())
         # unfortunately we don't have ability to reassign clf atm
         # cv.transerror.clf = clf
         try:
@@ -112,18 +110,23 @@ def select_best_clf(dataset, clfs):
 First lets select a classifier within cross-validation, thus
 eliminating model-selection bias
 """
-errors = []
 best_clfs = {}
 confusion = ConfusionMatrix()
-for isplit, (dstrain, dstest) in enumerate(NFoldSplitter()(dataset)):
+partitioner = NFoldPartitioner()
+splitter = Splitter('partitions')
+for isplit, partitions in enumerate(partitioner.generate(dataset)):
     verbose(1, "Processing split #%i" % isplit)
+    dstrain, dstest = list(splitter.generate(partitions))
     best_clf, best_error = select_best_clf(dstrain, clfswh['!gnpp'])
     best_clfs[best_clf.descr] = best_clfs.get(best_clf.descr, 0) + 1
     # now that we have the best classifier, lets assess its transfer
     # to the testing dataset while training on entire training
-    te = TransferError(best_clf, enable_ca=['confusion'])
-    errors.append(te(dstest, dstrain))
-    confusion += te.ca.confusion
+    tm = TransferMeasure(best_clf, splitter,
+                         postproc=BinaryFxNode(mean_mismatch_error,
+                                               space='targets'),
+                         enable_ca=['stats'])
+    tm(partitions)
+    confusion += tm.ca.stats
 
 """
 And for comparison, lets assess what would be the best performance if
@@ -136,7 +139,8 @@ print """Errors:
  sample classifier: %.2f
  model selection within cross-validation: %.2f
  model selection via fishing expedition: %.2f with %s
- """ % (error_sample, np.mean(errors), cheating_error, cheating_clf.descr)
+ """ % (error_sample, 1 - confusion.stats['ACC'],
+        cheating_error, cheating_clf.descr)
 
 print "# of times following classifiers were selected within " \
       "nested cross-validation:"

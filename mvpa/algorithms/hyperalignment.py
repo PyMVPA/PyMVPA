@@ -20,8 +20,8 @@ from mvpa.support.copy import deepcopy
 
 import numpy as np
 
-from mvpa.misc.state import ConditionalAttribute, ClassWithCollections
-from mvpa.misc.param import Parameter
+from mvpa.base.state import ConditionalAttribute, ClassWithCollections
+from mvpa.base.param import Parameter
 from mvpa.misc.transformers import grand_mean
 from mvpa.mappers.procrustean import ProcrusteanMapper
 from mvpa.datasets import dataset_wizard, Dataset
