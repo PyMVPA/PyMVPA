@@ -43,14 +43,13 @@ class LLEMapper(MDPNodeMapper):
     locally linear embedding techniques for high-dimensional data* by C. Grimes
     and D. Donoho, 2003.
 
+    For more information see the MDP website at
+    http://mdp-toolkit.sourceforge.net
+
     Notes
     -----
     This mapper only provides forward-mapping functionality -- no reverse
     mapping is available.
-
-    See Also
-    --------
-    http://mdp-toolkit.sourceforge.net
     """
     def __init__(self, k, alg='LLE', nodeargs=None, **kwargs):
         """
