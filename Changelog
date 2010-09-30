@@ -35,6 +35,23 @@ Unreleased changes
 Releases
 ========
 
+* 0.4.5 (Fri, Oct 01 2010) (Total: 27 commits)
+
+  A bugfix release
+
+  * Fixed (13 BF commits):
+
+    - Compatible with LIBSVM >= 2.91 (Closes: #583018)
+    - No string exceptions raised (Python 2.6 compatibility)
+    - Setting of shrinking parameter in :mod:`~mvpa.clfs.sg` interface
+    - Deducing number of SVs for SVR (LIBSVM)
+    - Correction of significance in the tails of non-parametric
+      tests
+
+  * Miscellaneous:
+
+    - Development repository moved to http://github.com/PyMVPA/PyMVPA
+
 * 0.4.4 (Mon, Feb 2 2010) (Total: 144 commits)
 
   Primarily a bugfix release, probably the last in 0.4 series since
