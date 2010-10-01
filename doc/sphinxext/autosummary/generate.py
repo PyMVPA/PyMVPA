@@ -20,16 +20,15 @@
 import os
 import re
 import sys
-import optparse
-import inspect
 import pydoc
+import optparse
 
 from jinja2 import FileSystemLoader, TemplateNotFound
 from jinja2.sandbox import SandboxedEnvironment
 
-from autosummary import import_by_name, get_documenter
-from sphinx.util import ensuredir
+from sphinx.ext.autosummary import import_by_name, get_documenter
 from sphinx.jinja2glue import BuiltinTemplateLoader
+from sphinx.util.osutil import ensuredir
 
 def main(argv=sys.argv):
     usage = """%prog [OPTIONS] SOURCEFILE ..."""
@@ -60,12 +59,6 @@ def _simple_warn(msg):
 
 # -- Generating output ---------------------------------------------------------
 
-def _is_from_same_file(obj1, obj2):
-    try:
-        return inspect.getsourcefile(obj1) == inspect.getsourcefile(obj2)
-    except TypeError:
-        return False
-
 def generate_autosummary_docs(sources, output_dir=None, suffix='.rst',
                               warn=_simple_warn, info=_simple_info,
                               base_path=None, builder=None, template_dir=None):
@@ -83,7 +76,7 @@ def generate_autosummary_docs(sources, output_dir=None, suffix='.rst',
         sources = [os.path.join(base_path, filename) for filename in sources]
 
     # create our own templating environment
-    template_dirs = [os.path.join(os.path.dirname(__file__), template_dir)]
+    template_dirs = [os.path.join(os.path.dirname(__file__), 'templates')]
     if builder is not None:
         # allow the user to override the templates
         template_loader = BuiltinTemplateLoader()
@@ -143,10 +136,8 @@ def generate_autosummary_docs(sources, output_dir=None, suffix='.rst',
 
             def get_members(obj, typ, include_public=[]):
                 items = [
-                    # filter by file content !!!!
                     name for name in dir(obj)
-                    if get_documenter(getattr(obj, name)).objtype == typ \
-                        and _is_from_same_file(getattr(obj, name), obj)
+                    if get_documenter(getattr(obj, name)).objtype == typ
                 ]
                 public = [x for x in items
                           if x in include_public or not x.startswith('_')]
@@ -162,8 +153,6 @@ def generate_autosummary_docs(sources, output_dir=None, suffix='.rst',
                                  get_members(obj, 'class')
                 ns['exceptions'], ns['all_exceptions'] = \
                                    get_members(obj, 'exception')
-                ns['methods'], ns['all_methods'] = \
-                                 get_members(obj, 'method')
             elif doc.objtype == 'class':
                 ns['members'] = dir(obj)
                 ns['methods'], ns['all_methods'] = \
