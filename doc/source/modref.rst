@@ -74,6 +74,7 @@ Mappers: Data Transformations
 
    mappers
    mappers.base
+   mappers.boxcar
    mappers.detrend
    mappers.filters
    mappers.flatten

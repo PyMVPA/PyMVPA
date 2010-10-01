@@ -110,6 +110,7 @@ def select_best_clf(dataset, clfs):
 First lets select a classifier within cross-validation, thus
 eliminating model-selection bias
 """
+
 best_clfs = {}
 confusion = ConfusionMatrix()
 partitioner = NFoldPartitioner()
@@ -133,6 +134,7 @@ And for comparison, lets assess what would be the best performance if
 we simply explore all available classifiers, providing all the data at
 once
 """
+
 cheating_clf, cheating_error = select_best_clf(dataset, clfswh['!gnpp'])
 
 print """Errors:
