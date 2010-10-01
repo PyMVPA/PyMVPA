@@ -273,11 +273,14 @@ class DistPValue(ClassWithCollections):
             if nd < x.shape[0]:
                 warning("Number of features in DistPValue lower than number of"
                         " items -- may be incorrect sd=%d was provided" % sd)
-        dist = stats.rdist(nd-1, 0, 1)
         for i, xx in enumerate(x):
+            dist = stats.rdist(nd-1, 0, 1)
             xx /= N.linalg.norm(xx)
 
             if fpp is not None:
+                if __debug__:
+                    debug('TRAN_', "starting adaptive adjustment i=%d" % i)
+
                 # Adaptive adjustment for false negatives:
                 Nxx, xxx, pN_emp_prev = len(xx), xx, 1.0
                 Nxxx = Nxx
@@ -358,7 +361,7 @@ class DistPValue(ClassWithCollections):
 
                 if __debug__:
                     if  distribution == 'rdist':
-                        assert(dist.args[0], Nindexes-1)
+                        assert(dist.args[0] == Nindexes-1)
                     debug('TRAN', "Positives recovery finished with %d out of %d "
                           "entries in Null-distribution, thus %d positives "
                           "were recovered" % (Nindexes, Nxx, Nrecovered))
