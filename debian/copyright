@@ -1,13 +1,14 @@
-Format-Specification: http://wiki.debian.org/Proposals/CopyrightFormat
-Upstream-Name: PyMVPA
-Upstream-Source-Location: http://pkg-exppsy.alioth.debian.org/pymvpa
+Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=135
+Name: PyMVPA
+Source: http://www.pymvpa.org
+		http://github.com/PyMVPA/PyMVPA
 
 Files: *
-Copyright: Copyright,
-    2006-2010, Michael Hanke <michael.hanke@gmail.com>
-    2007-2010, Yaroslav Halchenko <debian@onerussian.com>
-    2007-2009, Per B. Sederberg <persed@princeton.edu>
-         2008, Emanuele Olivetti <emanuele@relativita.com>
+Copyright:
+  2006-2010, Michael Hanke <michael.hanke@gmail.com>
+  2007-2010, Yaroslav Halchenko <debian@onerussian.com>
+  2007-2009, Per B. Sederberg <persed@princeton.edu>
+       2008, Emanuele Olivetti <emanuele@relativita.com>
 License: Expat
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -15,10 +16,10 @@ License: Expat
   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
   copies of the Software, and to permit persons to whom the Software is
   furnished to do so, subject to the following conditions:
-
+  .
   The above copyright notice and this permission notice shall be included in
   all copies or substantial portions of the Software.
-
+  .
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -36,7 +37,7 @@ License: Expat
 
 
 Files: 3rd/libsvm/*
-Copyright: Copyright (c) 2000-2007 Chih-Chung Chang and Chih-Jen Lin
+Copyright: 2000-2007, Chih-Chung Chang and Chih-Jen Lin
 License: BSD-3
   The source tarball contains a partial copy of the LIBSVM package.  However,
   the corresponding library is available from the libsvm source package (or
