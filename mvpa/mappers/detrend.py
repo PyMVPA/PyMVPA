@@ -105,8 +105,6 @@ class PolyDetrendMapper(Mapper):
           as sample coordinates in the space that should be spanned by the
           polynomials.
         """
-        Mapper.__init__(self, **kwargs)
-
         self.__chunks_attr = chunks_attr
         self.__polyord = polyord
         self.__opt_reg = opt_regs
@@ -117,6 +115,9 @@ class PolyDetrendMapper(Mapper):
 
         # secret switch to perform in-place detrending
         self._secret_inplace_detrend = False
+
+        # need to init last to prevent base class puking
+        Mapper.__init__(self, **kwargs)
 
 
     def __repr__(self):
