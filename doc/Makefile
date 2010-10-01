@@ -40,6 +40,9 @@ generate-stamp:
 		PYTHONPATH=$(CURDIR)/sphinxext:$(CURDIR)/..:$(PYTHONPATH) \
 		$(PYTHON) sphinxext/autosummary/generate.py \
 		-t $(CURDIR)/templates -o source/generated source/*.rst
+	# wipe everything that is not pymvpa to prevent suffering from the bugs
+	# of other in subsequent stages
+	find source/generated -type f ! -name 'mvpa*' -delete
 	@touch $@
 
 html: generate
