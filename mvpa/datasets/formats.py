@@ -139,9 +139,9 @@ def from_lightsvm_format(in_, targets_attr='targets', am=None):
     -------
     dataset
 
-    See also
+    See Also
     --------
-    `to_lightsvm_format`
+    to_lightsvm_format : conversion to lightsvm format
     """
     targets = []
     samples = []
