@@ -1,7 +1,23 @@
 Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=135
 Name: PyMVPA
 Source: http://www.pymvpa.org
-		http://github.com/PyMVPA/PyMVPA
+        http://github.com/PyMVPA/PyMVPA
+X-References-bib:
+  @Article{ pymvpa,
+      author = "Michael Hanke and Yaroslav O. Halchenko and
+                Per B. Sederberg and Emanuele Olivetti and Ingo Fründ and
+                Jochem W. Rieger and Christoph S. Herrmann and James V. Haxby
+                and Stephen José Hanson and Stefan Pollmann",
+      title = "{PyMVPA}: A Unifying Approach to the Analysis of Neuroscientific Data",
+      journal = "Frontiers in Neuroinformatics",
+      year = "2009",
+      volume = "3",
+      number = "3",
+      doi = "10.3389/neuro.11.003.2009",
+      url = "http://dx.doi.org/10.3389/neuro.11.003.2009",
+      note = "PMC2638552"
+  }
+
 
 Files: *
 Copyright:
