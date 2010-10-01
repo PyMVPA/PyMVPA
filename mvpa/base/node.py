@@ -31,7 +31,7 @@ class Node(ClassWithCollections):
     compute and store information about the input data that is "interesting" in
     the context of the corresponding processing in the output dataset.
     """
-    def __init__(self, space=None, **kwargs):
+    def __init__(self, space=None, postproc=None, **kwargs):
         """
         Parameters
         ----------
@@ -41,9 +41,14 @@ class Node(ClassWithCollections):
           a trigger that tells the node to compute and store information about
           the input data that is "interesting" in the context of the
           corresponding processing in the output dataset.
+        postproc : Node instance
+          Node to perform post-processing of results. This node is applied
+          in `__call__()` to perform a final processing step on the to be
+          result dataset. If None, nothing is done.
         """
         ClassWithCollections.__init__(self, **kwargs)
         self.set_space(space)
+        self.set_postproc(postproc)
 
 
     def __call__(self, ds):
@@ -103,6 +108,12 @@ class Node(ClassWithCollections):
         -------
         Dataset
         """
+        if not self.__postproc is None:
+            if __debug__:
+                debug("NO",
+                      "Applying post-processing node %s" % self.__postproc)
+            result = self.__postproc(result)
+
         return result
 
 
@@ -135,6 +146,19 @@ class Node(ClassWithCollections):
     def set_space(self, name):
         """Set the processing space name of this node."""
         self.__space = name
+
+
+    def get_postproc(self):
+        """Returns the post-processing node or None."""
+        return self.__postproc
+
+
+    def set_postproc(self, node):
+        """Assigns a post-processing node
+
+        Set to `None` to disable postprocessing.
+        """
+        self.__postproc = node
 
 
     def __str__(self):

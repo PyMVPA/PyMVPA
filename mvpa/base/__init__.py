@@ -196,6 +196,7 @@ if __debug__:
     debug.register('ID_IN_REPR', "Include id in __repr__")
     debug.register('CMDLINE', "Handling of command line parameters")
 
+    debug.register('NO',   "Nodes")
     debug.register('DG',   "Data generators")
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
     debug.register('LOOP', "Support's loop construct")
