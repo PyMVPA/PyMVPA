@@ -3,6 +3,7 @@ pymvpa (0.4.5-1) experimental; urgency=low
   * Upstream bugfix release -- just few bugfixes since 0.4.5~dev23-2
   * Bump Standards-Version to 3.9.1 -- no changes are due
   * Adjusted debian/copyright to comply with rev135 of DEP5
+  * Switched to 3.0 (quilt) source format (no patches are needed ATM)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 27 Sep 2010 12:38:28 -0400
 
