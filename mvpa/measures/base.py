@@ -75,24 +75,16 @@ class Measure(Learner):
     """Stores the t-score corresponding to null_prob under assumption
     of Normal distribution"""
 
-    def __init__(self, postproc=None, null_dist=None, **kwargs):
-        """Does nothing special.
-
+    def __init__(self, null_dist=None, **kwargs):
+        """
         Parameters
         ----------
-        postproc : Mapper instance
-          Mapper to perform post-processing of results. This mapper is applied
-          in `__call__()` to perform a final processing step on the to be
-          returned dataset measure. If None, nothing is done.
         null_dist : instance of distribution estimator
           The estimated distribution is used to assign a probability for a
           certain value of the computed measure.
         """
         Learner.__init__(self, **kwargs)
 
-        self.__postproc = postproc
-        """Functor to be called in return statement of all subclass __call__()
-        methods."""
         null_dist_ = auto_null_dist(null_dist)
         if __debug__:
             debug('SA', 'Assigning null_dist %s whenever original given was %s'
@@ -125,11 +117,7 @@ class Measure(Learner):
         self.ca.raw_results = result
 
         # post-processing
-        if not self.__postproc is None:
-            if __debug__:
-                debug("SA_",
-                      "Applying post-processing node %s" % self.__postproc)
-            result = self.__postproc(result)
+        result = super(Measure, self)._postcall(dataset, result)
 
         if not self.__null_dist is None:
             if self.ca.is_enabled('null_t'):
@@ -182,8 +170,8 @@ class Measure(Learner):
         if prefixes is None:
             prefixes = []
         prefixes = prefixes[:]
-        if self.__postproc is not None:
-            prefixes.append("postproc=%s" % self.__postproc)
+        if self.get_postproc() is not None:
+            prefixes.append("postproc=%s" % self.get_postproc())
         if self.__null_dist is not None:
             prefixes.append("null_dist=%s" % self.__null_dist)
         return super(Measure, self).__repr__(prefixes=prefixes)
@@ -193,12 +181,6 @@ class Measure(Learner):
     def null_dist(self):
         """Return Null Distribution estimator"""
         return self.__null_dist
-
-
-    @property
-    def postproc(self):
-        """Return mapper"""
-        return self.__postproc
 
 
 class ProxyMeasure(Measure):
