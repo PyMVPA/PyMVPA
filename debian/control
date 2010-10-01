@@ -41,6 +41,7 @@ Description: documentation and examples for PyMVPA
   * User manual
   * Developer guidelines
   * API documentation
+  * BibTeX references file
  .
  Additionally, all example scripts shipped with the PyMVPA sources are
  included.

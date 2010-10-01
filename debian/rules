@@ -44,6 +44,7 @@ build/python-mvpa-doc:: doc
 # symlinked by debhelper
 install/python-mvpa-doc::
 	-rm build/html/_static/jquery.js
+	install -m 644 ./doc/misc/references.bib debian/python-mvpa-doc/usr/share/bib/pymvpa.bib
 
 install/python-mvpa-lib::
 	# move libraries into the python-mvpa-lib package
