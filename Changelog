@@ -29,11 +29,20 @@ Unreleased changes
 
   * Many, many, many
   * For an overview of the most drastic changes :ref:`see constantly
-    enriching release notes for 0.5 <chap_release_notes_0.5>`
+    evolving release notes for 0.6 <chap_release_notes_0.6>`
 
 
 Releases
 ========
+
+* 0.5.0 (sometime in March 2010)
+
+  This is a special release, because it has never seen the general public.
+  A summary of fundamental changes introduced in this development version
+  can be seen in the :ref:`release notes <chap_release_notes_0.5>`.
+
+  Most notably, this version was to first to come with a comprehensive two-day
+  workshop/tutorial.
 
 * 0.4.5 (Fri, Oct 01 2010) (Total: 27 commits)
 
