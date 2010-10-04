@@ -445,20 +445,29 @@ class UniformLengthCollection(Collection):
         item : IndexedCollectable
           or of derived class. Must have 'name' assigned.
         """
-        if not isinstance(value, SequenceCollectable):
-            # XXX should we check whether it is some other Collectable?
-            value = SequenceCollectable(value)
-        if self._uniform_length is None:
-            self._uniform_length = len(value)
-        elif not len(value.value) == self._uniform_length:
+        # local binding
+        ulength = self._uniform_length
+
+        # XXX should we check whether it is some other Collectable?
+        if not isinstance(value, ArrayCollectable):
+            # if it is only a single element iterable, attempt broadcasting
+            if isSequenceType(value) and len(value) == 1 \
+                    and not ulength is None:
+                if ulength > 1:
+                    # cannot use np.repeat, because it destroys dimensionality
+                    value = [value[0]] * ulength
+            value = ArrayCollectable(value)
+        if ulength is None:
+            ulength = len(value)
+        elif not len(value.value) == ulength:
             raise ValueError("Collectable '%s' with length [%i] does not match "
                              "the required length [%i] of collection '%s'."
                              % (key,
                                 len(value.value),
-                                self._uniform_length,
+                                ulength,
                                 str(self)))
         # tell the attribute to maintain the desired length
-        value.set_length_check(self._uniform_length)
+        value.set_length_check(ulength)
         Collection.__setitem__(self, key, value)
 
 
@@ -470,23 +479,13 @@ class UniformLengthCollection(Collection):
 class SampleAttributesCollection(UniformLengthCollection):
     """Container for attributes of samples (i.e. labels, chunks...)
     """
-    def __setitem__(self, key, value):
-        if not isinstance(value, ArrayCollectable):
-            # XXX should we check whether it is some other Collectable?
-            value = ArrayCollectable(value)
-        UniformLengthCollection.__setitem__(self, key, value)
-
+    pass
 
 
 class FeatureAttributesCollection(UniformLengthCollection):
     """Container for attributes of features
     """
-    def __setitem__(self, key, value):
-        if not isinstance(value, ArrayCollectable):
-            # XXX should we check whether it is some other Collectable?
-            value = ArrayCollectable(value)
-        UniformLengthCollection.__setitem__(self, key, value)
-
+    pass
 
 
 class DatasetAttributesCollection(Collection):
