@@ -269,3 +269,6 @@ class ChainNode(Node):
             sliced._nodes = self._nodes[key]
             return sliced
 
+
+    def __str__(self):
+        return _str(self, '-'.join([str(n) for n in self]))
