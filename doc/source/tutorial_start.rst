@@ -264,14 +264,17 @@ fold.
 array([[ 0.   ],
        [ 0.125]])
 
-The advantage of having a dataset as the return value (as opposed to a plain
-vector, or even a single number) is that we can easily attach additional
-information. In this case the dataset also contains some information about
-which samples (indicated by the respective attribute values used by the
-splitter) formed the training and testing datasets in each fold.
-
->>> print cv_results.sa.cv_fold
-['odd->even' 'even->odd']
+..
+  Disable for now as this doesn't work that way anymore. Look at RepeatedMeasure
+  for a related XXX...
+  The advantage of having a dataset as the return value (as opposed to a plain
+  vector, or even a single number) is that we can easily attach additional
+  information. In this case the dataset also contains some information about
+  which samples (indicated by the respective attribute values used by the
+  splitter) formed the training and testing datasets in each fold.
+  .
+  >>> print cv_results.sa.cvfolds
+  [0 1]
 
 This could be the end of a very simple introduction into cross-validation with
 PyMVPA. However, since we were cheating a bit in the beginning, we actually

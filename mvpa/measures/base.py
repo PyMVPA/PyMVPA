@@ -252,6 +252,7 @@ class RepeatedMeasure(Measure):
         generator = self._generator
         node = self._node
         ca = self.ca
+        space = self.get_space()
 
         if self.ca.is_enabled("stats") and (not node.ca.has_key("stats") or
                                             not node.ca.is_enabled("stats")):
@@ -263,16 +264,22 @@ class RepeatedMeasure(Measure):
 
         # run the node an all generated datasets
         results = []
-        for sds in generator.generate(ds):
+        for i, sds in enumerate(generator.generate(ds)):
             if ca.is_enabled("datasets"):
                 # store dataset in ca
                 ca.datasets.append(sds)
             # run the beast
             result = node(sds)
-            results.append(result)
-
             # subclass postprocessing
-            self._repetition_postcall(sds, node, result)
+            result = self._repetition_postcall(sds, node, result)
+            if space:
+                # XXX maybe try to get something more informative from the
+                # processing node (e.g. in 0.5 it used to be 'chunks'->'chunks'
+                # to indicate what was trained and what was tested. Now it is
+                # more tricky, because `node` could be anything
+                result.set_attr(space, (i,))
+            # store
+            results.append(result)
 
             if ca.is_enabled("stats"):
                 if not ca.is_set('stats'):
@@ -304,8 +311,13 @@ class RepeatedMeasure(Measure):
           Node after having processed the input dataset
         result : Dataset
           Output dataset of the node for this repetition.
+
+        Returns
+        -------
+        dataset
+          The result dataset.
         """
-        pass
+        return result
 
 
     def untrain(self):
@@ -371,7 +383,8 @@ class CrossValidation(RepeatedMeasure):
                 postproc=enode)
 
         # and finally the repeated measure to perform the x-val
-        RepeatedMeasure.__init__(self, tm, generator, **kwargs)
+        RepeatedMeasure.__init__(self, tm, generator, space='sa.cvfolds',
+                                 **kwargs)
 
         for ca in ['stats', 'training_stats']:
             if self.ca.is_enabled(ca):
@@ -393,6 +406,8 @@ class CrossValidation(RepeatedMeasure):
                 ca.training_stats = node.ca['training_stats'].value.__class__()
             # harvest summary stats
             ca['training_stats'].value.__iadd__(node.ca['training_stats'].value)
+
+        return result
 
 
     transfermeasure = property(fget=lambda self:self._node)
@@ -436,6 +451,7 @@ class TransferMeasure(Measure):
         measure = self.__measure
         splitter = self.__splitter
         ca = self.ca
+        space = self.get_space()
 
         # generate the training and testing dataset subsequently to reduce the
         # memory footprint, i.e. the splitter might generate copies of the data
@@ -443,13 +459,32 @@ class TransferMeasure(Measure):
         # once
         # activate the dataset splitter
         dsgen = splitter.generate(ds)
+        dstrain = dsgen.next()
+
+        if space:
+            # get unique chunks for training set
+            train_chunks = ','.join([str(i)
+                    for i in dstrain.get_attr(splitter.get_space())[0].unique])
         # ask splitter for first part
-        measure.train(dsgen.next())
+        measure.train(dstrain)
+        # cleanup to free memory
+        del dstrain
 
         # TODO get training confusion/stats
 
         # run with second
-        res = measure(dsgen.next())
+        dstest = dsgen.next()
+        if space:
+            # get unique chunks for testing set
+            test_chunks = ','.join([str(i)
+                    for i in dstest.get_attr(splitter.get_space())[0].unique])
+        res = measure(dstest)
+        if space:
+            # will broadcast to desired length
+            res.set_attr(space, ("%s->%s" % (train_chunks, test_chunks),))
+        # cleanup to free memory
+        del dstest
+
         # compute measure stats
         if ca.is_enabled('stats'):
             if not hasattr(measure, '__summary_class__'):
@@ -465,7 +500,6 @@ class TransferMeasure(Measure):
             ca.stats = stats
         if ca.is_enabled('training_stats'):
             ca.training_stats = measure.ca.training_confusion
-
         return res
 
 
