@@ -135,6 +135,17 @@ def test_labelschunks_access():
     ok_(ds.targets is ds.sa.targets)
     ok_(ds.targets is ds.sa['targets'].value)
 
+    # test broadcasting
+    # but not for plain scalars
+    assert_raises(ValueError, ds.set_attr, 'sa.bc', 5)
+    # and not for plain plain str
+    assert_raises(TypeError, ds.set_attr, 'sa.bc', "mike")
+    # but for any iterable of len == 1
+    ds.set_attr('sa.bc', (5,))
+    ds.set_attr('sa.dc', ["mike"])
+    assert_array_equal(ds.sa.bc, [5] * len(ds))
+    assert_array_equal(ds.sa.dc, ["mike"] * len(ds))
+
 
 def test_ex_from_masked():
     ds = Dataset.from_wizard(samples=np.atleast_2d(np.arange(5)).view(myarray),
