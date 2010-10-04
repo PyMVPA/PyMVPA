@@ -148,7 +148,7 @@ class Dataset(AttrDataset):
         return col
 
 
-    def get_attr(self, name, col=None):
+    def get_attr(self, name):
         """Return an attribute from a collection.
 
         A collection can be specified, but can also be auto-detected.
@@ -156,9 +156,10 @@ class Dataset(AttrDataset):
         Parameters
         ----------
         name : str
-          Attribute name.
-        col : {'sa', 'fa', 'a'} or None
-          Name of the source collection or None if auto-detection is desired.
+          Attribute name. The attribute name can also be prefixed with any valid
+          collection name ('sa', 'fa', or 'a') separated with a '.', e.g.
+          'sa.targets'. If no collection prefix is found auto-detection of the
+          collection is attempted.
 
         Returns
         -------
@@ -167,10 +168,8 @@ class Dataset(AttrDataset):
           element is the collection that contains the attribute. If no matching
           attribute can be found a LookupError exception is raised.
         """
-        if col is None:
-            # auto-detect collection
-            col = self.find_collection(name)
-        else:
+        if '.' in name:
+            col, name = name.split('.')[0:2]
             # translate collection names into collection
             if col == 'sa':
                 col = self.sa
@@ -181,6 +180,10 @@ class Dataset(AttrDataset):
             else:
                 raise LookupError("Unknown collection '%s'. Possible values "
                                   "are: 'sa', 'fa', 'a'." % col)
+        else:
+            # auto-detect collection
+            col = self.find_collection(name)
+
         return (col[name], col)
 
 
