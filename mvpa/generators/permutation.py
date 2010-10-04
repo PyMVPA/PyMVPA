@@ -31,8 +31,7 @@ class AttributePermutator(Node):
     The permuted output dataset shared the samples container with the input
     dataset.
     """
-    def __init__(self, attr, count=1, limit=None, collection=None,
-                 assure=False, **kwargs):
+    def __init__(self, attr, count=1, limit=None, assure=False, **kwargs):
         """
         Parameters
         ----------
@@ -51,11 +50,6 @@ class AttributePermutator(Node):
           or sequence thereof) attribute value, where all key-value combinations
           across all given items define a "selection" of to-be-permuted samples
           or features.
-        collection : {None, 'sa', 'fa'}
-          Specify the collection that contains the attributes. If
-          ``None`` the collection is auto-detected by searching the dataset
-          collections (sample attributes first). Alternatively, it is possible
-          to specified 'sa' (sample attribute) or 'fa' (feature attribute).
         assure : bool
           If set, by-chance non-permutations will be prevented, i.e. it is
           checked that at least two items change their position. Since this
@@ -65,7 +59,6 @@ class AttributePermutator(Node):
         self._pattr = attr
         self.nruns = count
         self._limit = limit
-        self._collection = collection
         self._pcfg = None
         self._assure_permute = assure
 
@@ -74,10 +67,10 @@ class AttributePermutator(Node):
         # determine to be permuted attribute to find the collection
         pattr = self._pattr
         if isinstance(pattr, str):
-            pattr, collection = ds.get_attr(pattr, col=self._collection)
+            pattr, collection = ds.get_attr(pattr)
         else:
             # must be sequence of attrs, take first since we only need the shape
-            pattr, collection = ds.get_attr(pattr[0], col=self._collection)
+            pattr, collection = ds.get_attr(pattr[0])
 
         return get_limit_filter(self._limit, collection)
 
@@ -85,7 +78,6 @@ class AttributePermutator(Node):
     def _call(self, ds):
         # local binding
         pattr = self._pattr
-        collection = self._collection
         assure_permute = self._assure_permute
 
         # get permutation setup if not set already (maybe from generate())
@@ -126,7 +118,7 @@ class AttributePermutator(Node):
                     raise RuntimeError(
                           "Cannot assure permutation of %s.%s for "
                           "some reason (dataset %s). Should not happen"
-                          % (collection, pattr, ds))
+                          % (pattr, ds))
             else:
                 perm_idx = np.random.permutation(limit_idx)
 
@@ -136,9 +128,9 @@ class AttributePermutator(Node):
             # for all to be permuted attrs
             for pa in pattr:
                 # input attr and collection
-                in_pattr, in_collection = ds.get_attr(pa, col=collection)
+                in_pattr, in_collection = ds.get_attr(pa)
                 # output attr and collection
-                out_pattr, out_collection = out.get_attr(pa, col=collection)
+                out_pattr, out_collection = out.get_attr(pa)
                 # make a copy of the attr value array to decouple ownership
                 out_values = out_pattr.value.copy()
                 # replace all values in current limit with permutations
@@ -163,4 +155,4 @@ class AttributePermutator(Node):
 
     def __str__(self):
         return _str(self, self._pattr, n=self.nruns, limit=self._limit,
-                    collection=self._collection, assure=self._assure_permute)
+                    assure=self._assure_permute)

@@ -32,7 +32,7 @@ class Splitter(Node):
     may be provided.
     """
     def __init__(self, attr, attr_values=None, count=None, noslicing=False,
-                 collection=None, reverse=False, **kwargs):
+                 reverse=False, **kwargs):
         """
         Parameters
         ----------
@@ -56,22 +56,15 @@ class Splitter(Node):
           shared data between source and split datasets) even if it would
           be possible. By default slicing is performed whenever possible
           to reduce the memory footprint.
-        collection : {None, 'sa', 'fa'}
-          Specify the collection that contains the split-defining attribute. If
-          None the collections is auto-detected by searching the dataset
-          collections (sample attributes first). Alternatively, it is possible
-          to specified 'sa' (sample attribute) or 'fa' (feature attribute).
         reverse : bool
           If True, the order of datasets in the split is reversed, e.g.
           instead of (training, testing), (training, testing) will be spit
           out
         """
-        Node.__init__(self, **kwargs)
-        self.__splitattr = attr
+        Node.__init__(self, space=attr, **kwargs)
         self.__splitattr_values = attr_values
         self.__count = count
         self.__noslicing = noslicing
-        self.__collection = collection
         self.__reverse = reverse
 
 
@@ -92,10 +85,9 @@ class Splitter(Node):
           this particular dataset is the last one.
         """
         # localbinding
-        col_name = self.__collection
         noslicing = self.__noslicing
         count = self.__count
-        splattr = self.__splitattr
+        splattr = self.get_space()
 
         # special mode: no-splitting
         if splattr is None:

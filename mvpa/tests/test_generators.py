@@ -141,7 +141,7 @@ def test_attrpermute():
 
     # permute feature attrs
     ds.fa['ids'] = range(ds.shape[1])
-    permutation = AttributePermutator('ids', assure=True, collection='fa')
+    permutation = AttributePermutator('fa.ids', assure=True)
     pds = permutation(ds)
     assert_false(np.all(pds.fa.ids == ds.fa.ids))
 

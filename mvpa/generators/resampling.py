@@ -27,7 +27,6 @@ class Balancer(Node):
                  attr='targets',
                  count=1,
                  limit='chunks',
-                 collection=None,
                  apply_selection=False,
                  space='balanced_set',
                  **kwargs):
@@ -37,11 +36,6 @@ class Balancer(Node):
         attr : str
         count : int
         limit : None or str or dict
-        collection : {None, 'sa', 'fa'}
-          Specify the collection that contains the attributes. If
-          ``None`` the collection is auto-detected by searching the dataset
-          collections (sample attributes first). Alternatively, it is possible
-          to specified 'sa' (sample attribute) or 'fa' (feature attribute).
         apply_selection : bool
         """
         Node.__init__(self, space=space, **kwargs)
@@ -49,7 +43,6 @@ class Balancer(Node):
         self._attr = attr
         self.nruns = count
         self._limit = limit
-        self._collection = collection
         self._limit_filter = None
         self._apply_selection = apply_selection
 
@@ -57,7 +50,7 @@ class Balancer(Node):
     def _call(self, ds):
         # local binding
         amount = self._amount
-        attr, collection = ds.get_attr(self._attr, col=self._collection)
+        attr, collection = ds.get_attr(self._attr)
 
         # get filter if not set already (maybe from generate())
         if self._limit_filter is None:
@@ -145,7 +138,7 @@ class Balancer(Node):
     def generate(self, ds):
         """Generate the desired number of balanced datasets datasets."""
         # figure out filter for all runs at once
-        attr, collection = ds.get_attr(self._attr, col=self._collection)
+        attr, collection = ds.get_attr(self._attr)
         self._limit_filter = get_limit_filter(self._limit, collection)
         # permute as often as requested
         for i in xrange(self.nruns):
@@ -157,4 +150,4 @@ class Balancer(Node):
 
     def __str__(self):
         return _str(self, self._pattr, n=self.nruns, limit=self._limit,
-                    collection=self._collection, assure=self._assure_permute)
+                    assure=self._assure_permute)
