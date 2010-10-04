@@ -148,6 +148,41 @@ class Dataset(AttrDataset):
         return col
 
 
+    def _collection_id2obj(self, col):
+        if col == 'sa':
+            col = self.sa
+        elif col == 'fa':
+            col = self.fa
+        elif col == 'a':
+            col = self.a
+        else:
+            raise LookupError("Unknown collection '%s'. Possible values "
+                              "are: 'sa', 'fa', 'a'." % col)
+        return col
+
+
+    def set_attr(self, name, value):
+        """Set an attribute in a collection.
+
+        Parameters
+        ----------
+        name : str
+          Collection and attribute name. This has to be in the same format as
+          for ``get_attr()``.
+        value : array
+          Value of the attribute.
+        """
+        if '.' in name:
+            col, name = name.split('.')[0:2]
+            # translate collection names into collection
+            col = self._collection_id2obj(col)
+        else:
+            # auto-detect collection
+            col = self.find_collection(name)
+
+        col[name] = value
+
+
     def get_attr(self, name):
         """Return an attribute from a collection.
 
@@ -171,15 +206,7 @@ class Dataset(AttrDataset):
         if '.' in name:
             col, name = name.split('.')[0:2]
             # translate collection names into collection
-            if col == 'sa':
-                col = self.sa
-            elif col == 'fa':
-                col = self.fa
-            elif col == 'a':
-                col = self.a
-            else:
-                raise LookupError("Unknown collection '%s'. Possible values "
-                                  "are: 'sa', 'fa', 'a'." % col)
+            col = self._collection_id2obj(col)
         else:
             # auto-detect collection
             col = self.find_collection(name)
