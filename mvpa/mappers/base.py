@@ -318,6 +318,12 @@ class ChainMapper(ChainNode):
                 tdata = mapper.forward(tdata)
 
 
+    def untrain(self):
+        """Untrain all embedded mappers."""
+        for m in self:
+            m.untrain()
+
+
     def __repr__(self):
         s = ChainNode.__repr__(self)
         m_repr = '[%s]' % ', '.join([repr(m) for m in self])
