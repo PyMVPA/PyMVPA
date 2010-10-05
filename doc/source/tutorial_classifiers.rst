@@ -56,8 +56,8 @@ SVM with its default settings seems to perform slightly worse than the
 simple kNN-classifier. We'll get back to the classifiers shortly. Let's
 first look at the remaining part of this analysis.
 
-We already know that `~mvpa.clfs.transerror.TransferError` is used to compute
-the error function. So far we have used only the mean mismatch between actual
+We already know that `~mvpa.measures.base.CrossValidation` can be used to compute
+errors. So far we have used only the mean mismatch between actual
 targets and classifier predictions as the error function (which is the default).
 However, PyMVPA offers a number of alternative functions in the
 :mod:`mvpa.misc.errorfx` module, but it is also trivial to specify custom ones.
@@ -116,7 +116,7 @@ dataset. To set up a 12-fold leave-one-run-out cross-validation, we can
 make use of `~mvpa.datasets.splitters.NFoldSplitter`. By default it is
 going to select samples from one ``chunk`` at a time:
 
->>> cvte = CrossValidation(clf, NFoldPartitioner,
+>>> cvte = CrossValidation(clf, NFoldPartitioner(),
 ...                        errorfx=lambda p, t: np.mean(p == t))
 >>> cv_results = cvte(ds)
 >>> np.mean(cv_results)
@@ -149,23 +149,26 @@ the results of the cross-validation analysis a bit further.
 Returned value is actually a `~mvpa.datasets.base.Dataset` with the
 results for all cross-validation folds. Since our error function computes
 only a single scalar value for each fold the dataset only contain a single
-feature (in this case the accuracy), and a sample per each fold. Moreover,
-the dataset also offers a sample attribute that show which particular set
-of chunks formed the training and testing set per fold.
+feature (in this case the accuracy), and a sample per each fold.
 
->>> print cv_results.sa.cv_fold
-['1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->0.0'
- '0.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->1.0'
- '0.0,1.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->2.0'
- '0.0,1.0,2.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->3.0'
- '0.0,1.0,2.0,3.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->4.0'
- '0.0,1.0,2.0,3.0,4.0,6.0,7.0,8.0,9.0,10.0,11.0->5.0'
- '0.0,1.0,2.0,3.0,4.0,5.0,7.0,8.0,9.0,10.0,11.0->6.0'
- '0.0,1.0,2.0,3.0,4.0,5.0,6.0,8.0,9.0,10.0,11.0->7.0'
- '0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,9.0,10.0,11.0->8.0'
- '0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,10.0,11.0->9.0'
- '0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,11.0->10.0'
- '0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0->11.0']
+..
+  XXX disabled for now -- see tutorial_start for reason
+  Moreover, the dataset also offers a sample attribute that show which particular
+  set of chunks formed the training and testing set per fold.
+  .
+  >> print cv_results.sa.cvfold
+  ['1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->0.0'
+   '0.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->1.0'
+   '0.0,1.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->2.0'
+   '0.0,1.0,2.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->3.0'
+   '0.0,1.0,2.0,3.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->4.0'
+   '0.0,1.0,2.0,3.0,4.0,6.0,7.0,8.0,9.0,10.0,11.0->5.0'
+   '0.0,1.0,2.0,3.0,4.0,5.0,7.0,8.0,9.0,10.0,11.0->6.0'
+   '0.0,1.0,2.0,3.0,4.0,5.0,6.0,8.0,9.0,10.0,11.0->7.0'
+   '0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,9.0,10.0,11.0->8.0'
+   '0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,10.0,11.0->9.0'
+   '0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,11.0->10.0'
+   '0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0->11.0']
 
 
 We Need To Take A Closer Look
@@ -205,7 +208,7 @@ available in a dedicated collection of :term:`conditional attribute`\ s --
 analogous to ``sa`` and ``fa`` in datasets, it is named ``ca``. Let's see
 how it works:
 
->>> cvte = CrossValidation(clf, NFoldPartitioner,
+>>> cvte = CrossValidation(clf, NFoldPartitioner(),
 ...                        errorfx=lambda p, t: np.mean(p == t),
 ...                        enable_ca=['stats'])
 >>> cv_results = cvte(ds)
@@ -279,7 +282,7 @@ via its `~mvpa.clfs.transerror.ConfusionMatrix.plot()` method. If the
 confusions shall be used as input for further processing they can also be
 accessed in pure matrix format:
 
->>> print cvte.ca.tats.matrix
+>>> print cvte.ca.stats.matrix
 [[ 6  0  3  0  0  5  0  1]
  [ 0 10  0  0  0  0  0  0]
  [ 0  0  7  0  0  0  0  0]
