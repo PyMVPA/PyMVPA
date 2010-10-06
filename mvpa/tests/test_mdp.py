@@ -159,5 +159,5 @@ def test_llemapper():
                           [1., 1., 0.], [1., 1., 1.]]))
     pm = LLEMapper(3, output_dim=2)
     pm.train(ds)
-    fmapped = pm(ds)
+    fmapped = pm.forward(ds)
     assert_equal(fmapped.shape, (8, 2))

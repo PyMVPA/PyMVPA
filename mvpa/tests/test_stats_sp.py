@@ -19,6 +19,7 @@ from mvpa.clfs.stats import match_distribution, rv_semifrozen
 from mvpa.misc.stats import chisquare
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.datasets.base import dataset_wizard
+from mvpa.generators.permutation import AttributePermutator
 
 class StatsTestsScipy(unittest.TestCase):
     """Unittests for various statistics which use scipy"""
@@ -63,7 +64,8 @@ class StatsTestsScipy(unittest.TestCase):
         from mvpa.measures.corrcoef import CorrCoef
         ds = datasets['uni2small']
 
-        null = MCNullDist(permutations=10, tail='any')
+        permutator = AttributePermutator('targets', count=10)
+        null = MCNullDist(permutator, tail='any')
 
         assert_raises(ValueError, null.fit, CorrCoef(), ds)
         # cheat and map to numeric for this test
@@ -142,9 +144,9 @@ class StatsTestsScipy(unittest.TestCase):
     def test_negative_t(self):
         """Basic testing of the sign in p and t scores
         """
-        from mvpa.measures.base import FeaturewiseDatasetMeasure
+        from mvpa.measures.base import FeaturewiseMeasure
 
-        class BogusMeasure(FeaturewiseDatasetMeasure):
+        class BogusMeasure(FeaturewiseMeasure):
             """Just put high positive into first 2 features, and high
             negative into 2nd two
             """

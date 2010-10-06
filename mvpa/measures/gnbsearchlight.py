@@ -17,12 +17,12 @@ import numpy as np
 #from mvpa.base import warning, externals
 from mvpa.datasets.base import Dataset
 #from mvpa.clfs.gnb import GNB
-from mvpa.misc.errorfx import MeanMismatchErrorFx
+from mvpa.misc.errorfx import mean_mismatch_error
 from mvpa.measures.searchlight import BaseSearchlight
 from mvpa.base import externals, warning
 from mvpa.base.dochelpers import borrowkwargs
-#from mvpa.misc.param import Parameter
-#from mvpa.misc.state import ConditionalAttribute
+#from mvpa.base.param import Parameter
+#from mvpa.base.state import ConditionalAttribute
 #from mvpa.measures.base import Sensitivity
 
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
@@ -142,7 +142,7 @@ class GNBSearchlight(BaseSearchlight):
     _ATTRIBUTE_COLLECTIONS = ['params', 'ca']
 
     @borrowkwargs(BaseSearchlight, '__init__')
-    def __init__(self, gnb, splitter, qe, errorfx=MeanMismatchErrorFx(),
+    def __init__(self, gnb, splitter, qe, errorfx=mean_mismatch_error,
                  indexsum=None, **kwargs):
         """Initialize a GNBSearchlight
 
@@ -204,7 +204,7 @@ class GNBSearchlight(BaseSearchlight):
         ##     import numpy as np
         ##     from mvpa.clfs.gnb import GNB
         ##     from mvpa.datasets.splitters import NFoldSplitter
-        ##     from mvpa.misc.errorfx import MeanMismatchErrorFx
+        ##     from mvpa.misc.errorfx import mean_mismatch_error
         ##     #from mvpa.testing.datasets import datasets
         ##     from mvpa.datasets import Dataset
         ##     from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
@@ -230,12 +230,12 @@ class GNBSearchlight(BaseSearchlight):
         ##     gnb = GNB()
         ##     params = gnb.params
         ##     splitter = NFoldSplitter()
-        ##     errorfx = MeanMismatchErrorFx()
+        ##     errorfx = mean_mismatch_error
 
         if __debug__:
             time_start = time.time()
 
-        targets_sa_name = params.targets_attr
+        targets_sa_name = gnb.get_space()
         targets_sa = dataset.sa[targets_sa_name]
 
         if __debug__:
@@ -485,7 +485,7 @@ class GNBSearchlight(BaseSearchlight):
             if __debug__:
                 debug('SLC', "  Assessing accuracies")
 
-            if isinstance(errorfx, MeanMismatchErrorFx):
+            if errorfx is mean_mismatch_error:
                 results[isplit, :] = \
                     (predictions != targets[:, None]).sum(axis=0) \
                     / float(len(targets))
@@ -532,7 +532,7 @@ def sphere_gnbsearchlight(gnb, splitter, radius=1, center_ids=None,
     Notes
     -----
     If any `BaseSearchlight` is used as `SensitivityAnalyzer` one has to make
-    sure that the specified scalar `DatasetMeasure` returns large
+    sure that the specified scalar `Measure` returns large
     (absolute) values for high sensitivities and small (absolute) values
     for low sensitivities. Especially when using error functions usually
     low values imply high performance and therefore high sensitivity.

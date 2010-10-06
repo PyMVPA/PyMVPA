@@ -54,6 +54,7 @@ Analysis
    examples/sensanas
    examples/svdclf
    examples/permutation_test
+   examples/nested_cv
    examples/match_distribution
    examples/eventrelated
    examples/mdp_mnist

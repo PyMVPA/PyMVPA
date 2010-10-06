@@ -37,4 +37,5 @@ PyMVPA.org Sitemap
    mvpa_guidelines
    pdfmanual
    release_notes_0.5
+   release_notes_0.6
    workshops/2009-fall

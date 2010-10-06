@@ -16,7 +16,7 @@ to standardize the interface between other kernel machines.
 __docformat__ = 'restructuredtext'
 
 from mvpa.kernels.base import Kernel
-from mvpa.misc.param import Parameter
+from mvpa.base.param import Parameter
 
 #from mvpa.clfs.libsvmc import _svmc
 class _svmc(object):

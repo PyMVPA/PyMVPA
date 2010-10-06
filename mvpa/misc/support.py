@@ -541,3 +541,129 @@ def value2idx(val, x, solv='round'):
     x = np.abs(x)
     idx = np.argmin(x)
     return idx
+
+
+def mask2slice(mask):
+    """Convert a boolean mask vector into an equivalent slice (if possible).
+
+    Parameters
+    ----------
+    mask: boolean array
+      The mask.
+
+    Returns
+    -------
+    slice or boolean array
+      If possible the boolean mask is converted into a `slice`. If this is not
+      possible the unmodified boolean mask is returned.
+    """
+    # the filter should be a boolean array
+    # TODO Could be easily extended to also accept index arrays
+    if not len(mask):
+        raise ValueError("Got an empty mask.")
+    # get indices of non-zero filter elements
+    idx = mask.nonzero()[0]
+    idx_start = idx[0]
+    idx_end = idx[-1] + 1
+    idx_step = None
+    if len(idx) > 1:
+        # we need to figure out if there is a regular step-size
+        # between elements
+        stepsizes = np.unique(idx[1:] - idx[:-1])
+        if len(stepsizes) > 1:
+            # multiple step-sizes -> slicing is not possible -> return
+            # orginal filter
+            return mask
+        else:
+            idx_step = stepsizes[0]
+
+    sl = slice(idx_start, idx_end, idx_step)
+    if __debug__:
+        debug("SPL", "Boolean mask conversion to slice is possible (%s)." % sl)
+    return sl
+
+
+def get_limit_filter(limit, collection):
+    """Create a filter array from a limit definition.
+
+    Parameters
+    -----------
+    limit : None or str or dict
+      If ``None`` all elements wil be included in the filter. If an single
+      attribute name is given, its unique values will be used to define
+      chunks of data that are marked in the filter as unique integers. Finally,
+      if a dictionary is provided, its keys define attribute names and its
+      values (single value or sequence thereof) attribute value, where all
+      key-value combinations across all given items define a "selection" of
+      elements to be included in the filter (OR combination).
+    collection : Collection
+      Dataset attribute collection instance that contains all attributes
+      referenced in the limit specification, as well as defines the shape of
+      the filter.
+
+    Returns
+    -------
+    array
+      This array is either boolean, where a `True` elements represent including
+      in the filter, or the array is numerical, where it unqiue integer values
+      defines individual chunks of a filter.
+    """
+    attr_length = collection.attr_length
+
+    if limit is None:
+        # no limits
+        limit_filter = np.ones(attr_length, dtype='bool')
+    elif isinstance(limit, str):
+        # use the unique values of this attribute to permute each chunk
+        # individually
+        lattr = collection[limit]
+        lattr_data = lattr.value
+        limit_filter = np.zeros(attr_length, dtype='int')
+        for i, uv in enumerate(lattr.unique):
+            limit_filter[lattr_data == uv] = i
+    elif isinstance(limit, dict):
+        limit_filter = np.zeros(attr_length, dtype='bool')
+        for a in limit:
+            if isSequenceType(limit[a]):
+                for v in limit[a]:
+                    # enable the samples matching the value 'v' of the
+                    # current limit attribute 'a'
+                    limit_filter[collection[a].value == v] = True
+            else:
+                limit_filter[collection[a].value == limit[a]] = True
+    else:
+        raise RuntimeError("Unhandle condition")
+
+    return limit_filter
+
+
+def get_nelements_per_value(data):
+    """Returns the number of elements per unique value of some sequence.
+
+    Parameters
+    ----------
+    data : sequence
+      This can be any sequence. In addition also ArrayCollectables are supported
+      and this function will make use of any available pre-cached list of unique
+      values.
+
+    Returns
+    -------
+    dict with the number of elements (value) per unique value (key) in the
+    sequence.
+    """
+    if hasattr(data, 'unique'):
+        # if this is an ArrayAttribute save some time by using pre-cached unique
+        # values
+        uniquevalues = data.unique
+        values = data.value
+    else:
+        uniquevalues = np.unique(data)
+        values = data
+
+    # use dictionary to cope with arbitrary values
+    result = dict(zip(uniquevalues, [ 0 ] * len(uniquevalues)))
+    for l in values:
+        result[l] += 1
+
+    return result

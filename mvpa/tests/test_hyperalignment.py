@@ -19,6 +19,8 @@ from mvpa.algorithms.hyperalignment import Hyperalignment
 from mvpa.testing import sweepargs
 from mvpa.testing.datasets import datasets, get_random_rotation
 
+from mvpa.generators.partition import NFoldPartitioner
+
 # if you need some classifiers
 #from mvpa.testing.clfs import *
 
@@ -118,7 +120,6 @@ class HyperAlignmentTests(unittest.TestCase):
         print "Running swaroops test on data we don't have"
         #from mvpa.datasets.miscfx import zscore
         #from mvpa.featsel.helpers import FixedNElementTailSelector
-        #from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
         #   or just for lazy ones like yarik atm
         from mvpa.suite import *
         subj = ['cb', 'dm', 'hj', 'kd', 'kl', 'mh', 'ph', 'rb', 'se', 'sm']
@@ -194,9 +195,8 @@ class HyperAlignmentTests(unittest.TestCase):
         # within-subject classification
         within_acc = []
         clf = clfswh['multiclass', 'linear', 'NU_SVC'][0]
-        cvterr = CrossValidatedTransferError(
-            TransferError(clf),
-            splitter=NFoldSplitter(), enable_ca=['confusion'])
+        cvterr = CrossValidation(clf, NFoldPartitioner(),
+                                 enable_ca=['confusion'])
         for sd in mkdg_ds_fs:
             wsc = cvterr(sd)
             within_acc.append(1-np.mean(wsc))

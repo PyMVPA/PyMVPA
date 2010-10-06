@@ -25,8 +25,8 @@ import numpy as np
 from numpy import ones, zeros, sum, abs, isfinite, dot
 from mvpa.base import warning, externals
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
-from mvpa.misc.param import Parameter
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.param import Parameter
+from mvpa.base.state import ConditionalAttribute
 #from mvpa.measures.base import Sensitivity
 
 
@@ -139,7 +139,7 @@ class GNB(Classifier):
         """Train the classifier using `dataset` (`Dataset`).
         """
         params = self.params
-        targets_sa_name = params.targets_attr
+        targets_sa_name = self.get_space()
         targets_sa = dataset.sa[targets_sa_name]
 
         # get the dataset information into easy vars

@@ -44,7 +44,7 @@ from textwrap import TextWrapper
 
 # Although not used here -- included into interface
 from mvpa.misc.exceptions import UnknownStateError
-from mvpa.misc.attributes import IndexedCollectable, ConditionalAttribute
+from mvpa.base.attributes import IndexedCollectable, ConditionalAttribute
 from mvpa.base.dochelpers import enhanced_doc_string
 
 from mvpa.base import externals
@@ -440,7 +440,7 @@ class ConditionalAttributesCollection(Collection):
 
     def is_enabled(self, key):
         """Returns `True` if state `key` is enabled"""
-        return self[key].enabled
+        return key in self and self[key].enabled
 
 
     def is_active(self, key):
@@ -545,7 +545,7 @@ class ConditionalAttributesCollection(Collection):
         It might be handy to store set of enabled ca and then to restore
         it later on. It can be easily accomplished now::
 
-        >>> from mvpa.misc.state import ClassWithCollections, ConditionalAttribute
+        >>> from mvpa.base.state import ClassWithCollections, ConditionalAttribute
         >>> class Blah(ClassWithCollections):
         ...   bleh = ConditionalAttribute(enabled=False, doc='Example')
         ...

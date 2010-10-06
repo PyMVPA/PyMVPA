@@ -10,7 +10,7 @@
 
 
 from mvpa.mappers.flatten import mask_mapper
-from mvpa.mappers.base import FeatureSliceMapper
+from mvpa.mappers.slicing import FeatureSliceMapper
 
 from mvpa.testing.tools import assert_raises, assert_equal, assert_array_equal
 
@@ -66,7 +66,7 @@ def test_reverse_dense_array_mapper():
 
 
     # check that it doesn't accept wrong dataspace
-    assert_raises(ValueError, map_, np.arange(6))
+    assert_raises(ValueError, map_.forward, np.arange(6))
 
     rmapped2 = map_.reverse(np.arange(1,11).reshape(2,5))
     assert_equal(rmapped2.shape, (2,3,2))
@@ -78,7 +78,7 @@ def test_reverse_dense_array_mapper():
 
 def test_mapper_aliases():
     mm=mask_mapper(np.ones((3,4,2), dtype='bool'))
-    assert_array_equal(mm(np.ones((2,3,4,2))),
+    assert_array_equal(mm.forward(np.ones((2,3,4,2))),
                        mm.forward(np.ones((2,3,4,2))))
 
 

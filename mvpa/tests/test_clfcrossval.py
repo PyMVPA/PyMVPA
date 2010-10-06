@@ -10,9 +10,10 @@
 
 from mvpa.testing.tools import assert_equal, ok_, assert_array_equal
 
-from mvpa.datasets.splitters import NFoldSplitter
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
-from mvpa.clfs.transerror import TransferError
+from mvpa.base.node import ChainNode
+from mvpa.generators.partition import NFoldPartitioner
+from mvpa.generators.permutation import AttributePermutator
+from mvpa.measures.base import CrossValidation
 
 from mvpa.testing import *
 from mvpa.testing.datasets import pure_multivariate_signal, get_mv_pattern
@@ -35,12 +36,9 @@ class CrossValidationTests(unittest.TestCase):
                 [k for k in range(1, 7) for i in range(20)]).all())
         assert_equal(len(np.unique(data.sa.origids)), data.nsamples)
 
-        transerror = TransferError(sample_clf_nl)
-        cv = CrossValidatedTransferError(
-                transerror,
-                NFoldSplitter(cvtype=1),
-                enable_ca=['confusion', 'training_confusion',
-                               'samples_error'])
+        cv = CrossValidation(sample_clf_nl, NFoldPartitioner(),
+                enable_ca=['confusion', 'training_confusion'])
+#                               'samples_error'])
 
         results = cv(data)
         self.failUnless((results.samples < 0.2).all() and (results.samples >= 0.0).all())
@@ -48,13 +46,14 @@ class CrossValidationTests(unittest.TestCase):
         # TODO: test accessibility of {training_,}confusion{,s} of
         # CrossValidatedTransferError
 
-        self.failUnless(isinstance(cv.ca.samples_error, dict))
-        self.failUnless(len(cv.ca.samples_error) == data.nsamples)
-        # one value for each origid
-        assert_array_equal(sorted(cv.ca.samples_error.keys()),
-                           sorted(data.sa.origids))
-        for k, v in cv.ca.samples_error.iteritems():
-            self.failUnless(len(v) == 1)
+        # not yet implemented, and no longer this way
+        #self.failUnless(isinstance(cv.ca.samples_error, dict))
+        #self.failUnless(len(cv.ca.samples_error) == data.nsamples)
+        ## one value for each origid
+        #assert_array_equal(sorted(cv.ca.samples_error.keys()),
+        #                   sorted(data.sa.origids))
+        #for k, v in cv.ca.samples_error.iteritems():
+        #    self.failUnless(len(v) == 1)
 
 
     def test_noise_classification(self):
@@ -62,8 +61,7 @@ class CrossValidationTests(unittest.TestCase):
         data = get_mv_pattern(10)
 
         # do crossval with default errorfx and 'mean' combiner
-        transerror = TransferError(sample_clf_nl)
-        cv = CrossValidatedTransferError(transerror, NFoldSplitter(cvtype=1))
+        cv = CrossValidation(sample_clf_nl, NFoldPartitioner())
 
         # must return a scalar value
         result = cv(data)
@@ -71,29 +69,15 @@ class CrossValidationTests(unittest.TestCase):
         self.failUnless((result.samples < 0.05).all())
 
         # do crossval with permuted regressors
-        cv = CrossValidatedTransferError(transerror,
-                  NFoldSplitter(cvtype=1, permute_attr='targets',
-                                nrunspersplit=10) )
+        cv = CrossValidation(sample_clf_nl,
+                        ChainNode([NFoldPartitioner(),
+                            AttributePermutator('targets', count=10)],
+                                  space='partitions'))
         results = cv(data)
 
         # must be at chance level
         pmean = np.array(results).mean()
         self.failUnless( pmean < 0.58 and pmean > 0.42 )
-
-
-    def test_harvesting(self):
-        # get a dataset with a very high SNR
-        data = get_mv_pattern(10)
-        # do crossval with default errorfx and 'mean' combiner
-        transerror = TransferError(clfswh['linear'][0])
-        cv = CrossValidatedTransferError(
-                transerror,
-                NFoldSplitter(cvtype=1),
-                harvest_attribs=['transerror.clf.ca.training_time'])
-        result = cv(data)
-        ok_(cv.ca.harvested.has_key('transerror.clf.ca.training_time'))
-        assert_equal(len(cv.ca.harvested['transerror.clf.ca.training_time']),
-                     len(data.UC))
 
 
 

@@ -20,7 +20,7 @@ import numpy as np
 
 from mvpa.base.externals import exists, versions
 from mvpa.kernels.base import Kernel
-from mvpa.misc.param import Parameter
+from mvpa.base.param import Parameter
 
 if exists('shogun', raise_=True):
     import shogun.Kernel as sgk

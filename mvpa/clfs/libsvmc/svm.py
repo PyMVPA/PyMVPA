@@ -15,7 +15,7 @@ import numpy as np
 import operator
 
 from mvpa.base import warning
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 
 from mvpa.clfs.base import accepts_dataset_as_samples, \
      accepts_samples_as_dataset
@@ -123,7 +123,7 @@ class SVM(_SVM):
     def _train(self, dataset):
         """Train SVM
         """
-        targets_sa_name = self.params.targets_attr    # name of targets sa
+        targets_sa_name = self.get_space()    # name of targets sa
         targets_sa = dataset.sa[targets_sa_name] # actual targets sa
 
         # libsvm needs doubles
