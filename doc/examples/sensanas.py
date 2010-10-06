@@ -42,26 +42,26 @@ sensanas = {
                                                postproc=absolute_features()),
     'c) I-RELIEF': IterativeRelief(postproc=absolute_features()),
     'd) Splitting ANOVA (odd-even)':
-        SplitFeaturewiseMeasure(
-            OddEvenSplitter(),
-            OneWayAnova(postproc=absolute_features())),
+        RepeatedMeasure(
+            OneWayAnova(postproc=absolute_features()),
+            OddEvenPartitioner()),
     'e) Splitting SVM (odd-even)':
-        SplitFeaturewiseMeasure(
-            OddEvenSplitter(),
-            LinearNuSVMC().get_sensitivity_analyzer(postproc=absolute_features())),
+        RepeatedMeasure(
+            LinearNuSVMC().get_sensitivity_analyzer(postproc=absolute_features()),
+            OddEvenPartitioner()),
     'f) I-RELIEF Online':
         IterativeReliefOnline(postproc=absolute_features()),
     'g) Splitting ANOVA (nfold)':
-        SplitFeaturewiseMeasure(
-            NFoldSplitter(),
-            OneWayAnova(postproc=absolute_features())),
+        RepeatedMeasure(
+            OneWayAnova(postproc=absolute_features()),
+            NFoldPartitioner()),
     'h) Splitting SVM (nfold)':
-        SplitFeaturewiseMeasure(
-            NFoldSplitter(),
-            LinearNuSVMC().get_sensitivity_analyzer(postproc=absolute_features())),
-    'i) GNB Searchlight':
-        sphere_gnbsearchlight(GNB(), NFoldSplitter(cvtype=1),
-                              radius=0, errorfx=MeanAccuracyFx())
+        RepeatedMeasure(
+            LinearNuSVMC().get_sensitivity_analyzer(postproc=absolute_features()),
+            NFoldPartitioner()),
+#    'i) GNB Searchlight':
+#        sphere_gnbsearchlight(GNB(), NFoldSplitter(cvtype=1),
+#                              radius=0, errorfx=MeanAccuracyFx())
            }
 
 """Now, we are performing some a more or less standard preprocessing steps:
