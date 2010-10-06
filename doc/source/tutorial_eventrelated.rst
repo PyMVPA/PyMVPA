@@ -198,7 +198,7 @@ reasonably well, since only a generalizing classifier model is worth
 inspecting, as otherwise the assigned weights are meaningless.
 
 >>> sclf = SplitClassifier(LinearCSVMC(),
-...                        enable_ca=['confusion'])
+...                        enable_ca=['stats'])
 >>> sensana = sclf.get_sensitivity_analyzer()
 >>> sens = sensana(evds)
 
@@ -352,7 +352,8 @@ of PyMVPA for "multi-space" analysis. From the :ref:`previous tutorial part
 <chap_tutorial_searchlight>` we know how to do searchlight analyses and it was
 promised that there is more to it than what we already saw. And here it is:
 
->>> cvte = CrossValidation(LinearCSVMC(), NFoldPartitioner())
+>>> cvte = CrossValidation(LinearCSVMC(), NFoldPartitioner(),
+...                        postproc=mean_sample())
 >>> sl = Searchlight(cvte,
 ...                  IndexQueryEngine(voxel_indices=Sphere(1),
 ...                                   event_offsetidx=Sphere(2)),
