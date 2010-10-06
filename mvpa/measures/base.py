@@ -394,7 +394,7 @@ class CrossValidation(RepeatedMeasure):
             # also enable training stats in the learner
             # TODO this needs to become 'training_stats' whenever the
             # classifiers are ready
-            learner.ca.enable('training_confusion')
+            learner.ca.enable('training_stats')
 
 
     def _call(self, ds):
@@ -505,7 +505,7 @@ class TransferMeasure(Measure):
                 estimates = measure.ca.get('estimates', None))
             ca.stats = stats
         if ca.is_enabled('training_stats'):
-            ca.training_stats = measure.ca.training_confusion
+            ca.training_stats = measure.ca.training_stats
         return res
 
 

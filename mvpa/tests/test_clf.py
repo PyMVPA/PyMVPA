@@ -59,7 +59,7 @@ class ClassifiersTests(unittest.TestCase):
             chunks=[0, 1, 2,  2, 3])  # chunks
 
     def test_dummy(self):
-        clf = SameSignClassifier(enable_ca=['training_confusion'])
+        clf = SameSignClassifier(enable_ca=['training_stats'])
         clf.train(self.data_bin_1)
         self.failUnlessRaises(UnknownStateError, clf.ca.__getattribute__,
                               "predictions")
@@ -70,7 +70,7 @@ class ClassifiersTests(unittest.TestCase):
             self.failUnlessRaises(UnknownStateError,
                 clf.ca.__getattribute__, "trained_dataset")
 
-        self.failUnlessEqual(clf.ca.training_confusion.percent_correct,
+        self.failUnlessEqual(clf.ca.training_stats.percent_correct,
                              100,
                              msg="Dummy clf should train perfectly")
         self.failUnlessEqual(clf.predict(self.data_bin_1.samples),
@@ -105,21 +105,21 @@ class ClassifiersTests(unittest.TestCase):
     def test_boosted_state_propagation(self):
         bclf = CombinedClassifier(clfs=[self.clf_sign.clone(),
                                         self.clf_sign.clone()],
-                                  enable_ca=['training_confusion'])
+                                  enable_ca=['training_stats'])
 
         # check ca enabling propagation
-        self.failUnlessEqual(self.clf_sign.ca.is_enabled('training_confusion'),
+        self.failUnlessEqual(self.clf_sign.ca.is_enabled('training_stats'),
                              _ENFORCE_CA_ENABLED)
-        self.failUnlessEqual(bclf.clfs[0].ca.is_enabled('training_confusion'), True)
+        self.failUnlessEqual(bclf.clfs[0].ca.is_enabled('training_stats'), True)
 
         bclf2 = CombinedClassifier(clfs=[self.clf_sign.clone(),
                                          self.clf_sign.clone()],
                                   propagate_ca=False,
-                                  enable_ca=['training_confusion'])
+                                  enable_ca=['training_stats'])
 
-        self.failUnlessEqual(self.clf_sign.ca.is_enabled('training_confusion'),
+        self.failUnlessEqual(self.clf_sign.ca.is_enabled('training_stats'),
                              _ENFORCE_CA_ENABLED)
-        self.failUnlessEqual(bclf2.clfs[0].ca.is_enabled('training_confusion'),
+        self.failUnlessEqual(bclf2.clfs[0].ca.is_enabled('training_stats'),
                              _ENFORCE_CA_ENABLED)
 
 
@@ -272,7 +272,7 @@ class ClassifiersTests(unittest.TestCase):
         #ds2.samples[:] = 0.0             # all 0s
 
         clf.ca.change_temporarily(
-            enable_ca=['estimates', 'training_confusion'])
+            enable_ca=['estimates', 'training_stats'])
 
         # Good pukes are good ;-)
         # TODO XXX add
@@ -290,9 +290,9 @@ class ClassifiersTests(unittest.TestCase):
                     continue
                 # could we still get those?
                 _ = clf.summary()
-                cm = clf.ca.training_confusion
+                cm = clf.ca.training_stats
                 # If succeeded to train/predict (due to
-                # training_confusion) without error -- results better be
+                # training_stats) without error -- results better be
                 # at "chance"
                 continue
                 if 'ACC' in cm.stats:
@@ -308,11 +308,11 @@ class ClassifiersTests(unittest.TestCase):
     def test_split_classifier(self):
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
-                enable_ca=['confusion', 'training_confusion',
+                enable_ca=['stats', 'training_stats',
                                'feature_ids'])
         clf.train(ds)                   # train the beast
-        error = clf.ca.confusion.error
-        tr_error = clf.ca.training_confusion.error
+        error = clf.ca.stats.error
+        tr_error = clf.ca.training_stats.error
 
         clf2 = clf.clone()
         cv = CrossValidation(clf2, NFoldPartitioner(), postproc=mean_sample(),
@@ -331,10 +331,10 @@ class ClassifiersTests(unittest.TestCase):
                     " using CrossValidation. Got %s and %s"
                     % (tr_error, tr_cverror))
 
-        self.failUnlessEqual(clf.ca.confusion.percent_correct,
+        self.failUnlessEqual(clf.ca.stats.percent_correct,
                              100,
                              msg="Dummy clf should train perfectly")
-        self.failUnlessEqual(len(clf.ca.confusion.sets),
+        self.failUnlessEqual(len(clf.ca.stats.sets),
                              len(ds.UC),
                              msg="Should have 1 confusion per each split")
         self.failUnlessEqual(len(clf.clfs), len(ds.UC),
@@ -362,9 +362,9 @@ class ClassifiersTests(unittest.TestCase):
         clf2 = clf_.clone()
         ds = datasets['uni2medium']#self.data_bin_1
         clf = SplitClassifier(clf=clf_, #SameSignClassifier(),
-                enable_ca=['confusion', 'feature_ids'])
+                enable_ca=['stats', 'feature_ids'])
         clf.train(ds)                   # train the beast
-        error = clf.ca.confusion.error
+        error = clf.ca.stats.error
 
         cv = CrossValidation(clf2, NFoldPartitioner(), postproc=mean_sample(),
             enable_ca=['stats', 'training_stats'])
@@ -379,7 +379,7 @@ class ClassifiersTests(unittest.TestCase):
             self.failUnless(error < 0.25,
                 msg="clf should generalize more or less fine. "
                     "Got error %s" % error)
-        self.failUnlessEqual(len(clf.ca.confusion.sets), len(ds.UC),
+        self.failUnlessEqual(len(clf.ca.stats.sets), len(ds.UC),
             msg="Should have 1 confusion per each split")
         self.failUnlessEqual(len(clf.clfs), len(ds.UC),
             msg="Should have number of classifiers equal # of epochs")
@@ -393,7 +393,7 @@ class ClassifiersTests(unittest.TestCase):
         """
         ds = self.data_bin_1
         clf = SplitClassifier(clf=SameSignClassifier(),
-                enable_ca=['confusion', 'training_confusion'],
+                enable_ca=['stats', 'training_stats'],
                 harvest_attribs=['clf.ca.training_time'],
                 descr="DESCR")
         clf.train(ds)                   # train the beast
@@ -580,15 +580,15 @@ class ClassifiersTests(unittest.TestCase):
             clf.params.C = 1.0                 # reset C to be 1
 
         svm, svm2 = clf, clf.clone()
-        svm2.ca.enable(['training_confusion'])
+        svm2.ca.enable(['training_stats'])
 
         mclf = MulticlassClassifier(clf=svm,
-                                   enable_ca=['training_confusion'])
+                                   enable_ca=['training_stats'])
 
         svm2.train(datasets['uni2small'])
         mclf.train(datasets['uni2small'])
-        s1 = str(mclf.ca.training_confusion)
-        s2 = str(svm2.ca.training_confusion)
+        s1 = str(mclf.ca.training_stats)
+        s2 = str(svm2.ca.training_stats)
         self.failUnlessEqual(s1, s2,
             msg="Multiclass clf should provide same results as built-in "
                 "libsvm's %s. Got %s and %s" % (svm2, s1, s2))
@@ -647,7 +647,7 @@ class ClassifiersTests(unittest.TestCase):
         clf.ca.change_temporarily(enable_ca = ['estimates'],
                                       # ensure that it does do predictions
                                       # while training
-                                      disable_ca=['training_confusion'])
+                                      disable_ca=['training_stats'])
         clf_re = clf.clone()
         # TODO: .retrainable must have a callback to call smth like
         # _set_retrainable
@@ -827,12 +827,12 @@ class ClassifiersTests(unittest.TestCase):
             dataset_wizard(samples=np.array([ [0, 0.0],
                                       [1, 1] ]), targets=[-1, 1])]
 
-        clf.ca.change_temporarily(enable_ca = ['training_confusion'])
+        clf.ca.change_temporarily(enable_ca = ['training_stats'])
         for traindata in traindatas:
             clf.train(traindata)
-            self.failUnlessEqual(clf.ca.training_confusion.percent_correct, 100.0,
+            self.failUnlessEqual(clf.ca.training_stats.percent_correct, 100.0,
                 "Classifier %s must have 100%% correct learning on %s. Has %f" %
-                (`clf`, traindata.samples, clf.ca.training_confusion.percent_correct))
+                (`clf`, traindata.samples, clf.ca.training_stats.percent_correct))
 
             # and we must be able to predict every original sample thus
             for i in xrange(traindata.nsamples):
@@ -872,7 +872,7 @@ class ClassifiersTests(unittest.TestCase):
 
             #print "Using %s " % regr, error
             # Just validate that everything is ok
-            #self.failUnless(str(cv.ca.confusion) != "")
+            #self.failUnless(str(cv.ca.stats) != "")
 
 
 

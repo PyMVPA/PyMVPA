@@ -46,7 +46,7 @@ class RidgeReg(Classifier):
 
         # It does not make sense to calculate a confusion matrix for a
         # ridge regression
-        self.ca.enable('training_confusion', False)
+        self.ca.enable('training_stats', False)
 
         # verify that they specified lambda
         self.__lm = lm

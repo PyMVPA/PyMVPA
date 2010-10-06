@@ -144,7 +144,7 @@ class GPR(Classifier):
         # It does not make sense to calculate a confusion matrix for a GPR
         # XXX it does ;) it will be a RegressionStatistics actually ;-)
         # So if someone desires -- let him have it
-        # self.ca.enable('training_confusion', False)
+        # self.ca.enable('training_stats', False)
 
         # set kernel:
         if kernel is None:

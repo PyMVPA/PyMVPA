@@ -478,7 +478,7 @@ class SVM(_SVM):
 
         # Report on training
         if (__debug__ and 'SG__' in debug.active) or \
-           self.ca.is_enabled('training_confusion'):
+           self.ca.is_enabled('training_stats'):
             if __debug__:
                 debug("SG_", "Assessing predictions on training data")
             trained_targets = self.__svm.classify().get_labels()
@@ -498,8 +498,8 @@ class SVM(_SVM):
         # XXX For now it can be done only for regressions since labels need to
         #     be remapped and that becomes even worse if we use regression
         #     as a classifier so mapping happens upstairs
-        if self.__is_regression__ and self.ca.is_enabled('training_confusion'):
-            self.ca.training_confusion = self.__summary_class__(
+        if self.__is_regression__ and self.ca.is_enabled('training_stats'):
+            self.ca.training_stats = self.__summary_class__(
                 targets=targets_sa.value,
                 predictions=trained_targets)
 

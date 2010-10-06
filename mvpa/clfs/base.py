@@ -111,7 +111,7 @@ class Classifier(Learner):
     trained_dataset = ConditionalAttribute(enabled=False,
         doc="The dataset it has been trained on")
 
-    training_confusion = ConditionalAttribute(enabled=False,
+    training_stats = ConditionalAttribute(enabled=False,
         doc="Confusion matrix of learning performance")
 
     predictions = ConditionalAttribute(enabled=True,
@@ -253,8 +253,8 @@ class Classifier(Learner):
         if __debug__ and 'CHECK_TRAINED' in debug.active:
             self.__trainedidhash = dataset.idhash
 
-        if self.ca.is_enabled('training_confusion') and \
-               not self.ca.is_set('training_confusion'):
+        if self.ca.is_enabled('training_stats') and \
+               not self.ca.is_set('training_stats'):
             # we should not store predictions for training data,
             # it is confusing imho (yoh)
             self.ca.change_temporarily(
@@ -264,11 +264,11 @@ class Classifier(Learner):
                 # XXX think if there is a way to make this all
                 # efficient. For now, probably, retrainable
                 # classifiers have no chance but not to use
-                # training_confusion... sad
+                # training_stats... sad
                 self.__changedData_isset = False
             predictions = self.predict(dataset)
             self.ca.reset_changed_temporarily()
-            self.ca.training_confusion = self.__summary_class__(
+            self.ca.training_stats = self.__summary_class__(
                 targets=dataset.sa[self.get_space()].value,
                 predictions=predictions)
 
@@ -300,8 +300,8 @@ class Classifier(Learner):
                 s += ' #chunks:%d' % nchunks
 
             s += " #features:%d" % self.__trainednfeatures
-            if ca.is_set('training_confusion'):
-                s += ", training error:%.3g" % ca.training_confusion.error
+            if ca.is_set('training_stats'):
+                s += ", training error:%.3g" % ca.training_stats.error
         else:
             s += "\n not yet trained"
 

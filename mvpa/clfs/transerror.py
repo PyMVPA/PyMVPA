@@ -1244,8 +1244,8 @@ class ClassifierError(ClassWithCollections):
        be indicies of the array
     """
 
-    training_confusion = ConditionalAttribute(enabled=False,
-        doc="Proxy training_confusion from underlying classifier.")
+    training_stats = ConditionalAttribute(enabled=False,
+        doc="Proxy training_stats from underlying classifier.")
 
 
     def __init__(self, clf, labels=None, train=True, **kwargs):
@@ -1298,13 +1298,13 @@ class ClassifierError(ClassWithCollections):
                 #    warning('It seems that classifier %s was already trained' %
                 #            self.__clf + ' on dataset %s. Please inspect' \
                 #                % trainingdataset)
-                if self.ca.is_enabled('training_confusion'):
+                if self.ca.is_enabled('training_stats'):
                     self.__clf.ca.change_temporarily(
-                        enable_ca=['training_confusion'])
+                        enable_ca=['training_stats'])
                 self.__clf.train(trainingdataset)
-                if self.ca.is_enabled('training_confusion'):
-                    self.ca.training_confusion = \
-                        self.__clf.ca.training_confusion
+                if self.ca.is_enabled('training_stats'):
+                    self.ca.training_stats = \
+                        self.__clf.ca.training_stats
                     self.__clf.ca.reset_changed_temporarily()
 
         if self.__clf.ca.is_enabled('trained_targets') \
@@ -1383,7 +1383,7 @@ class ConfusionBasedError(ClassifierError):
     the case of SplitClassifier
     """
 
-    def __init__(self, clf, labels=None, confusion_state="training_confusion",
+    def __init__(self, clf, labels=None, confusion_state="training_stats",
                  **kwargs):
         """Initialization.
 
