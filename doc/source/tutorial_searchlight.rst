@@ -71,7 +71,7 @@ However, there is a difference between the two processing objects.
 a dataset with a single feature -- the accuracy or error rate, while
 :class:`~mvpa.measures.anova.OneWayAnova` returns a vector with one value
 per feature. The latter is called a
-:class:`~mvpa.measures.base.FeaturewiseDatasetMeasure`. But other than the
+:class:`~mvpa.measures.base.FeaturewiseMeasure`. But other than the
 number of features in the returned dataset there is not much of a difference. All
 measures in PyMVPA, for example, support an optional post-processing step.
 During instantiation of a measure an arbitrary mapper can be specified to be called
@@ -120,8 +120,7 @@ PyMVPA. We can load and preprocess datasets, we can set up a
 cross-validation procedure.
 
 >>> clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
->>> terr = TransferError(clf)
->>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter())
+>>> cvte = CrossValidation(clf, HalfPartitioner())
 
 The only thing left is that we have to split the dataset into all possible
 sphere neighborhoods that intersect with the brain. To achieve this, we

@@ -23,9 +23,11 @@ from mvpa.misc.data_generators import normal_feature_dataset
 from mvpa.clfs.libsvmc import SVM as lsSVM
 from mvpa.clfs.sg import SVM as sgSVM
 
-from mvpa.datasets.splitters import NFoldSplitter
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
-from mvpa.clfs.transerror import TransferError
+from mvpa.generators.splitters import Splitter
+from mvpa.generators.partition import NFoldPartitioner
+from mvpa.measures.base import CrossValidation, TransferMeasure, ProxyMeasure
+from mvpa.mappers.fx import BinaryFxNode
+from mvpa.misc.errorfx import mean_mismatch_error
 
 
 class SVMKernelTests(unittest.TestCase):
@@ -43,10 +45,8 @@ class SVMKernelTests(unittest.TestCase):
         ck = sgSVM(kernel=CachedKernel(kernel=RbfSGKernel(sigma=2)), C=1)
         sk = sgSVM(kernel=RbfSGKernel(sigma=2), C=1)
 
-        cv_c = CrossValidatedTransferError(TransferError(ck),
-                                           splitter=NFoldSplitter())
-        cv_s = CrossValidatedTransferError(TransferError(sk),
-                                           splitter=NFoldSplitter())
+        cv_c = CrossValidation(ck, NFoldPartitioner())
+        cv_s = CrossValidation(sk, NFoldPartitioner())
 
         #data = datasets['uni4large']
         P = 5000
@@ -90,13 +90,12 @@ class SVMKernelTests(unittest.TestCase):
         clf = sgSVM(svm_impl='libsvm', kernel=k, C=-1)
         clf_ = sgSVM(svm_impl='libsvm', kernel=ck, C=-1)
 
-        cvte = CrossValidatedTransferError(
-            TransferError(clf), NFoldSplitter())
-        cvte_ = CrossValidatedTransferError(
-            TransferError(clf_), NFoldSplitter())
+        cvte = CrossValidation(clf, NFoldPartitioner())
+        cvte_ = CrossValidation(clf_, NFoldPartitioner())
 
-        te = TransferError(clf)
-        te_ = TransferError(clf_)
+        postproc=BinaryFxNode(mean_mismatch_error, 'targets')
+        te = ProxyMeasure(clf, postproc=postproc)
+        te_ = ProxyMeasure(clf_, postproc=postproc)
 
         for r in xrange(2):
             ds1 = datasets['uni2medium']
@@ -116,8 +115,10 @@ class SVMKernelTests(unittest.TestCase):
             assert_array_equal(errs2, errs2_)
 
             ssel = np.round(datasets['uni2large'].samples[:5, 0]).astype(int)
-            terr = te(datasets['uni3small_test'][ssel], datasets['uni3small_train'][::2])
-            terr_ = te_(datasets['uni3small_test'][ssel], datasets['uni3small_train'][::2])
+            te.train(datasets['uni3small'][::2])
+            terr = np.asscalar(te(datasets['uni3small'][ssel]))
+            te_.train(datasets['uni3small'][::2])
+            terr_ = np.asscalar(te_(datasets['uni3small'][ssel]))
             ok_(~ck._recomputed)
             ok_(terr == terr_)
 
@@ -133,12 +134,10 @@ class SVMKernelTests(unittest.TestCase):
         clf = sgSVM(svm_impl='libsvm', kernel=k, C=-1)
         clf_ = sgSVM(svm_impl='libsvm', kernel=ck, C=-1)
 
-        cvte = CrossValidatedTransferError(
-            TransferError(clf), NFoldSplitter())
-        cvte_ = CrossValidatedTransferError(
-            TransferError(clf_), NFoldSplitter())
+        cvte = CrossValidation(clf, NFoldPartitioner())
+        cvte_ = CrossValidation(clf_, NFoldPartitioner())
 
-        ds = datasets['uni2large_test'].copy(deep=True)
+        ds = datasets['uni2large'].copy(deep=True)
         ok_(~('orig_ids' in ds.sa))     # assure that there are None
         ck.compute(ds)                  # so we initialize origids
         ok_('origids' in ds.sa)

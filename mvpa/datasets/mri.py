@@ -83,6 +83,11 @@ def _data2img(data, hdr=None, imgtype=None):
 
 
 def _img2data(src):
+    # break early of nothing has been given
+    # XXX feels a little strange to handle this so deep inside, but well...
+    if src is None:
+        return None
+
     excpt = None
     if externals.exists('nibabel'):
         # let's try whether we can get it done with nibabel
@@ -120,11 +125,9 @@ def _img2data(src):
             # pynifti provides it transposed
             return _get_txyz_shaped(data.T), img.header
 
-    # pending exception?
     if not excpt is None:
         raise excpt
 
-    # no clue what this was, but we cannot help with it
     return None
 
 
@@ -251,10 +254,10 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
     # create a dataset
     ds = Dataset(imgdata, sa=sa)
     if sprefix is None:
-        inspace = None
+        space = None
     else:
-        inspace = sprefix + '_indices'
-    ds = ds.get_mapped(FlattenMapper(shape=imgdata.shape[1:], inspace=inspace))
+        space = sprefix + '_indices'
+    ds = ds.get_mapped(FlattenMapper(shape=imgdata.shape[1:], space=space))
 
     # now apply the mask if any
     if not mask is None:
@@ -410,6 +413,3 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
         return None
     else:
         return imgdata, imghdr
-
-
-

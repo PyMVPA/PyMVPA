@@ -35,11 +35,11 @@ class WaveletMappersTests(unittest.TestCase):
 
         # create 3D instance (samples x timepoints x channels)
         bcm = BoxcarMapper(sp, ws)
-        d3d = bcm(d2d)
+        d3d = bcm.forward(d2d)
 
         # use wavelet mapper
         wdm = WaveletTransformationMapper()
-        d3d_wd = wdm(d3d)
+        d3d_wd = wdm.forward(d3d)
         d3d_swap = d3d.swapaxes(1,2)
 
         self.failUnlessRaises(ValueError, WaveletTransformationMapper,
@@ -54,9 +54,9 @@ class WaveletMappersTests(unittest.TestCase):
                                WaveletPacketMapper(dim=2))):
           for dd, dd_swap in ((d3d, d3d_swap),
                               (d2d, None)):
-            dd_wd = wdm(dd)
+            dd_wd = wdm.forward(dd)
             if dd_swap is not None:
-                dd_wd_swap = wdm_swap(dd_swap)
+                dd_wd_swap = wdm_swap.forward(dd_swap)
 
                 self.failUnless((dd_wd == dd_wd_swap.swapaxes(1,2)).all(),
                                 msg="We should have got same result with swapped "
@@ -90,11 +90,11 @@ class WaveletMappersTests(unittest.TestCase):
 
         # create 3D instance (samples x timepoints x channels)
         bcm = BoxcarMapper(sp, ws)
-        d3d = bcm(d2d)
+        d3d = bcm.forward(d2d)
 
         # use wavelet mapper
         wdm = WaveletPacketMapper(level=2, wavelet='sym2')
-        d3d_wd = wdm(d3d)
+        d3d_wd = wdm.forward(d3d)
 
         # Check dimensionality
         d3d_wds, d3ds = d3d_wd.shape, d3d.shape
@@ -137,7 +137,7 @@ class WaveletMappersTests(unittest.TestCase):
 
         # create 3D instance (samples x timepoints x channels)
         bcm = BoxcarMapper(sp, ws)
-        d3d = bcm(d2d)
+        d3d = bcm.forward(d2d)
 
         # use wavelet mapper
         for wdm, wdm_ in ((WaveletTransformationMapper(),

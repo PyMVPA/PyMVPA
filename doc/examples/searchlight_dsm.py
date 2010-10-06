@@ -47,7 +47,7 @@ dsm = DSMatrix(dataset.targets, 'confusion')
 # of a particular searchlight sphere across experimental
 # conditions), np.B. in this example between-condition
 # dissimilarity is also pearson's r (i.e., correlation distance)
-dsmetric = DSMDatasetMeasure(dsm, 'pearson', 'pearson')
+dsmetric = DSMMeasure(dsm, 'pearson', 'pearson')
  
 # setup searchlight with 5 mm radius and measure configured above
 sl = Searchlight(dsmetric, radius=5)

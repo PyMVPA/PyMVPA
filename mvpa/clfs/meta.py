@@ -27,14 +27,15 @@ import numpy as np
 from sets import Set
 
 from mvpa.misc.args import group_kwargs
-from mvpa.misc.param import Parameter
+from mvpa.base.param import Parameter
 
-from mvpa.datasets.splitters import NFoldSplitter
+from mvpa.generators.splitters import Splitter
+from mvpa.generators.partition import NFoldPartitioner
 from mvpa.datasets.miscfx import get_samples_by_attr
 from mvpa.misc.attrmap import AttributeMap
-from mvpa.misc.state import ConditionalAttribute, ClassWithCollections, \
+from mvpa.base.state import ConditionalAttribute, ClassWithCollections, \
      Harvestable
-from mvpa.mappers.base import FeatureSliceMapper
+from mvpa.mappers.slicing import FeatureSliceMapper
 
 from mvpa.clfs.base import Classifier
 from mvpa.clfs.distance import cartesian_distance
@@ -767,7 +768,7 @@ class TreeClassifier(ProxyClassifier):
         on a corresponding subset of samples.
         """
         # Local bindings
-        targets_sa_name = self.params.targets_attr    # name of targets sa
+        targets_sa_name = self.get_space()    # name of targets sa
         targets_sa = dataset.sa[targets_sa_name] # actual targets sa
         clf, clfs, index2group = self.clf, self.clfs, self._index2group
 
@@ -947,7 +948,7 @@ class BinaryClassifier(ProxyClassifier):
     def _train(self, dataset):
         """Train `BinaryClassifier`
         """
-        targets_sa_name = self.params.targets_attr
+        targets_sa_name = self.get_space()
         idlabels = [(x, +1) for x in get_samples_by_attr(dataset, targets_sa_name,
                                                          self.__poslabels)] + \
                     [(x, -1) for x in get_samples_by_attr(dataset, targets_sa_name,
@@ -1061,7 +1062,7 @@ class MulticlassClassifier(CombinedClassifier):
     def _train(self, dataset):
         """Train classifier
         """
-        targets_sa_name = self.params.targets_attr
+        targets_sa_name = self.get_space()
 
         # construct binary classifiers
         ulabels = dataset.sa[targets_sa_name].unique
@@ -1123,7 +1124,8 @@ class SplitClassifier(CombinedClassifier):
     #global_training_confusion = ConditionalAttribute(enabled=False,
     #    doc="Summary over training confusions acquired at each split")
 
-    def __init__(self, clf, splitter=NFoldSplitter(cvtype=1), **kwargs):
+    def __init__(self, clf, partitioner=NFoldPartitioner(),
+                 splitter=Splitter('partitions', count=2), **kwargs):
         """Initialize the instance
 
         Parameters
@@ -1144,13 +1146,14 @@ class SplitClassifier(CombinedClassifier):
                   "Please provide an instance of a splitter, not a type." \
                   " Got %s" % splitter
 
+        self.__partitioner = partitioner
         self.__splitter = splitter
 
 
     def _train(self, dataset):
         """Train `SplitClassifier`
         """
-        targets_sa_name = self.params.targets_attr
+        targets_sa_name = self.get_space()
 
         # generate pairs and corresponding classifiers
         bclfs = []
@@ -1169,7 +1172,7 @@ class SplitClassifier(CombinedClassifier):
 
         # for proper and easier debugging - first define classifiers and then
         # train them
-        for split in self.__splitter.splitcfg(dataset):
+        for split in self.__partitioner.get_partition_specs(dataset):
             if __debug__:
                 debug("CLFSPL_",
                       "Deepcopying %(clf)s for %(sclf)s",
@@ -1181,9 +1184,12 @@ class SplitClassifier(CombinedClassifier):
 
         self.ca.splits = []
 
-        for i, split in enumerate(self.__splitter(dataset)):
+        for i, pset in enumerate(self.__partitioner.generate(dataset)):
             if __debug__:
                 debug("CLFSPL", "Training classifier for split %d" % (i))
+
+            # split partitioned dataset
+            split = [d for d in self.__splitter.generate(pset)]
 
             if ca.is_enabled("splits"):
                 self.ca.splits.append(split)
@@ -1233,8 +1239,10 @@ class SplitClassifier(CombinedClassifier):
                 analyzer=self.__clf.get_sensitivity_analyzer(**slave_kwargs),
                 **kwargs)
 
+    partitioner = property(fget=lambda x:x.__partitioner,
+                        doc="Partitioner used by SplitClassifier")
     splitter = property(fget=lambda x:x.__splitter,
-                        doc="Splitter user by SplitClassifier")
+                        doc="Splitter used by SplitClassifier")
 
 
 class MappedClassifier(ProxyClassifier):
@@ -1283,6 +1291,18 @@ class MappedClassifier(ProxyClassifier):
         ProxyClassifier._train(self, wdataset)
 
 
+    def untrain(self):
+        """Untrain `FeatureSelectionClassifier`
+
+        Has to untrain any known classifier
+        """
+        # untrain the mapper
+        if self.__mapper is not None:
+            self.__mapper.untrain()
+        # let base class untrain as well
+        super(MappedClassifier, self).untrain()
+
+
     def _predict(self, dataset):
         """Predict using `MappedClassifier`
         """
@@ -1293,141 +1313,12 @@ class MappedClassifier(ProxyClassifier):
 
 
 
-class FeatureSelectionClassifier(ProxyClassifier):
-    """`ProxyClassifier` which uses some `FeatureSelection` prior training.
+class FeatureSelectionClassifier(MappedClassifier):
+    """This is nothing but a `MappedClassifier`.
 
-    `FeatureSelection` is used first to select features for the classifier to
-    use for prediction. Internally it would rely on MappedClassifier which
-    would use created MaskMapper.
-
-    TODO: think about removing overhead of retraining the same classifier if
-    feature selection was carried out with the same classifier already. It
-    has been addressed by adding .trained property to classifier, but now
-    we should expclitely use is_trained here if we want... need to think more
+    This class is only kept for (temporary) compatibility with old code.
     """
-
     __tags__ = [ 'does_feature_selection', 'meta' ]
-
-    __sa_class__ = FeatureSelectionClassifierSensitivityAnalyzer
-
-    def __init__(self, clf, feature_selection, testdataset=None, **kwargs):
-        """Initialize the instance
-
-        Parameters
-        ----------
-        clf : Classifier
-          classifier based on which mask classifiers is created
-        feature_selection : FeatureSelection
-          whatever `FeatureSelection` comes handy
-        testdataset : Dataset
-          optional dataset which would be given on call to feature_selection
-        """
-        ProxyClassifier.__init__(self, clf, **kwargs)
-
-        self.__maskclf = None
-        """Should become `MappedClassifier`(mapper=`MaskMapper`) later on."""
-
-        self.__feature_selection = feature_selection
-        """`FeatureSelection` to select the features prior training"""
-
-        self.__testdataset = testdataset
-        """`FeatureSelection` might like to use testdataset"""
-
-
-    def untrain(self):
-        """Untrain `FeatureSelectionClassifier`
-
-        Has to untrain any known classifier
-        """
-        if self.__feature_selection is not None:
-            self.__feature_selection.untrain()
-        if not self.trained:
-            return
-        if not self.__maskclf is None:
-            self.__maskclf.untrain()
-        super(FeatureSelectionClassifier, self).untrain()
-
-
-    def _train(self, dataset):
-        """Train `FeatureSelectionClassifier`
-        """
-        # temporarily enable selected_ids
-        self.__feature_selection.ca.change_temporarily(
-            enable_ca=["selected_ids"])
-
-        if __debug__:
-            debug("CLFFS", "Performing feature selection using %s" %
-                  self.__feature_selection + " on %s" % dataset)
-
-        selected = self.__feature_selection(dataset,
-                                            self.__testdataset)
-        # if __testdataset is None we get no tuple back, but just one
-        # dataset
-        if isinstance(selected, tuple):
-            (wdataset, tdataset) = selected
-        else:
-            wdataset = selected
-            tdataset = None
-
-        if __debug__:
-            add_ = ""
-            if "CLFFS_" in debug.active:
-                add_ = " Selected features: %s" % \
-                       self.__feature_selection.ca.selected_ids
-            debug("CLFFS", "%(fs)s selected %(nfeat)d out of " +
-                  "%(dsnfeat)d features.%(app)s",
-                  msgargs={'fs':self.__feature_selection,
-                           'nfeat':wdataset.nfeatures,
-                           'dsnfeat':dataset.nfeatures,
-                           'app':add_})
-
-        # create a mask to devise a mapper
-        # TODO -- think about making selected_ids a MaskMapper
-        mappermask = np.zeros(dataset.nfeatures, dtype='bool')
-        mappermask[self.__feature_selection.ca.selected_ids] = True
-        mapper = FeatureSliceMapper(mappermask, dshape=mappermask.shape)
-
-        self.__feature_selection.ca.reset_changed_temporarily()
-
-        # create and assign `MappedClassifier`
-        self.__maskclf = MappedClassifier(self.clf, mapper)
-        # we could have called self.__clf.train(dataset), but it would
-        # cause unnecessary masking
-        self.__maskclf.clf.train(wdataset)
-
-        # for the ease of access
-        # TODO see for ProxyClassifier
-        #self.ca._copy_ca_(self.__maskclf, deep=False)
-
-    def _get_feature_ids(self):
-        """Return used feature ids for `FeatureSelectionClassifier`
-
-        """
-        return self.__feature_selection.ca.selected_ids
-
-    def _predict(self, dataset):
-        """Predict using `FeatureSelectionClassifier`
-        """
-        clf = self.__maskclf
-        if self.ca.is_enabled('estimates'):
-            clf.ca.enable(['estimates'])
-
-        result = clf._predict(dataset)
-        # for the ease of access
-        self.ca._copy_ca_(clf, ['estimates'], deep=False)
-        return result
-
-    def set_test_dataset(self, testdataset):
-        """Set testing dataset to be used for feature selection
-        """
-        self.__testdataset = testdataset
-
-    maskclf = property(lambda x:x.__maskclf, doc="Used `MappedClassifier`")
-    feature_selection = property(lambda x:x.__feature_selection,
-                                 doc="Used `FeatureSelection`")
-
-    testdataset = property(fget=lambda x:x.__testdataset,
-                           fset=set_test_dataset)
 
 
 class RegressionAsClassifier(ProxyClassifier):
@@ -1508,7 +1399,7 @@ class RegressionAsClassifier(ProxyClassifier):
 
 
     def _train(self, dataset):
-        targets_sa_name = self.params.targets_attr
+        targets_sa_name = self.get_space()
         targets_sa = dataset.sa[targets_sa_name]
 
         # May be it is an advanced one needing training.

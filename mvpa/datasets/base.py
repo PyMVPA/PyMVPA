@@ -13,13 +13,15 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import copy
 
+from mvpa.base import warning
 from mvpa.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection, \
         SampleAttribute, FeatureAttribute, DatasetAttribute
 from mvpa.base.dataset import AttrDataset
 from mvpa.base.dataset import _expand_attribute
 from mvpa.misc.support import idhash as idhash_
-from mvpa.mappers.base import ChainMapper, FeatureSliceMapper
+from mvpa.mappers.base import ChainMapper
+from mvpa.mappers.slicing import FeatureSliceMapper
 from mvpa.mappers.flatten import mask_mapper, FlattenMapper
 
 if __debug__:
@@ -104,6 +106,112 @@ class Dataset(AttrDataset):
             ds._append_mapper(subsetmapper)
 
         return ds
+
+
+    def find_collection(self, attr):
+        """Lookup collection that contains an attribute of a given name.
+
+        Collections are search in the following order: sample attributes,
+        feature attributes, dataset attributes. The first collection
+        containing a matching attribute is returned.
+
+        Parameters
+        ----------
+        attr : str
+          Attribute name to be looked up.
+
+        Returns
+        -------
+        Collection
+          If not matching collection is found a LookupError exception is raised.
+        """
+        if attr in self.sa:
+            col = self.sa
+            if __debug__ and (attr in self.fa or attr in self.a):
+                warning("An attribute with name '%s' is also present "
+                        "in another attribute collection (fa=%s, a=%s) -- make "
+                        "sure that you got the right one (see ``col`` "
+                        "argument)." % (attr, attr in self.fa, attr in self.a))
+        elif attr in self.fa:
+            col = self.fa
+            if __debug__ and attr in self.a:
+                warning("An attribute with name '%s' is also present "
+                        "in the dataset attribute collection -- make sure "
+                        "that you got the right one (see ``col`` argument)."
+                        % (attr,))
+        elif attr in self.a:
+            col = self.a
+            # we don't need to warn here, since it wouldn't happen
+        else:
+            raise LookupError("Cannot find '%s' attribute in any dataset "
+                              "collection." % attr)
+        return col
+
+
+    def _collection_id2obj(self, col):
+        if col == 'sa':
+            col = self.sa
+        elif col == 'fa':
+            col = self.fa
+        elif col == 'a':
+            col = self.a
+        else:
+            raise LookupError("Unknown collection '%s'. Possible values "
+                              "are: 'sa', 'fa', 'a'." % col)
+        return col
+
+
+    def set_attr(self, name, value):
+        """Set an attribute in a collection.
+
+        Parameters
+        ----------
+        name : str
+          Collection and attribute name. This has to be in the same format as
+          for ``get_attr()``.
+        value : array
+          Value of the attribute.
+        """
+        if '.' in name:
+            col, name = name.split('.')[0:2]
+            # translate collection names into collection
+            col = self._collection_id2obj(col)
+        else:
+            # auto-detect collection
+            col = self.find_collection(name)
+
+        col[name] = value
+
+
+    def get_attr(self, name):
+        """Return an attribute from a collection.
+
+        A collection can be specified, but can also be auto-detected.
+
+        Parameters
+        ----------
+        name : str
+          Attribute name. The attribute name can also be prefixed with any valid
+          collection name ('sa', 'fa', or 'a') separated with a '.', e.g.
+          'sa.targets'. If no collection prefix is found auto-detection of the
+          collection is attempted.
+
+        Returns
+        -------
+        (attr, collection)
+          2-tuple: First element is the requested attribute and the second
+          element is the collection that contains the attribute. If no matching
+          attribute can be found a LookupError exception is raised.
+        """
+        if '.' in name:
+            col, name = name.split('.')[0:2]
+            # translate collection names into collection
+            col = self._collection_id2obj(col)
+        else:
+            # auto-detect collection
+            col = self.find_collection(name)
+
+        return (col[name], col)
 
 
     def item(self):
@@ -202,10 +310,10 @@ class Dataset(AttrDataset):
         if mask is None:
             if len(samples.shape) > 2:
                 # if we have multi-dim data
-                fm = FlattenMapper(shape=samples.shape[1:], inspace=space)
+                fm = FlattenMapper(shape=samples.shape[1:], space=space)
                 ds = ds.get_mapped(fm)
         else:
-            mm = mask_mapper(mask, inspace=space)
+            mm = mask_mapper(mask, space=space)
             ds = ds.get_mapped(mm)
 
         # apply generic mapper
@@ -291,3 +399,102 @@ class Dataset(AttrDataset):
 # convenience alias
 dataset_wizard = Dataset.from_wizard
 
+
+class HollowSamples(object):
+    """Samples container that doesn't store samples.
+
+    The purpose of this class is to provide an object that can be used as
+    ``samples`` in a Dataset, without having actual samples. Instead of storing
+    multiple samples it only maintains a IDs for samples and features it
+    pretends to contain.
+
+    Using this class in a dataset in conjuction will actual attributes, will
+    yield a lightweight dataset that is compatible with the majority of all
+    mappers and can be used to 'simulate' processing by mappers. The class
+    offers acces to the sample and feature IDs via its ``sid`` and ``fid``
+    members.
+    """
+    def __init__(self, shape=None, sid=None, fid=None, dtype=np.float):
+        """
+        Parameters
+        ----------
+        shape : 2-tuple or None
+          Shape of the pretend-sample array (nsamples x nfeatures). Can be
+          left out if both ``sid`` and ``fid`` are provided.
+        sid : 1d-array or None
+          Vector of sample IDs. Can be left out if ``shape`` is provided.
+        fid : 1d-array or None
+          Vector of feature IDs. Can be left out if ``shape`` is provided.
+        dtype : type or str
+          Pretend-datatype of the non-existing samples.
+        """
+        if shape is None and sid is None and fid is None:
+            raise ValueError("Either shape or ID vectors have to be given")
+        if not shape is None and not len(shape) == 2:
+            raise ValueError("Only two-dimensional shapes are supported")
+        if sid is None:
+            self.sid = np.arange(shape[0], dtype='uint')
+        else:
+            self.sid = sid
+        if fid is None:
+            self.fid = np.arange(shape[1], dtype='uint')
+        else:
+            self.fid = fid
+        self.dtype = dtype
+        # sanity check
+        if not shape is None and not len(self.sid) == shape[0] \
+                and not len(self.fid) == shape[1]:
+            raise ValueError("Provided ID vectors do not match given `shape`")
+
+
+    def __reduce__(self):
+        return (self.__class__,
+                ((len(self.sid), len(self.fid)),
+                 self.sid,
+                 self.fid,
+                 self.dtype))
+
+
+    @property
+    def shape(self):
+        return (len(self.sid), len(self.fid))
+
+
+    @property
+    def samples(self):
+        return np.zeros((len(self.sid), len(self.fid)), dtype=self.dtype)
+
+
+    def __array__(self, dtype=None):
+        # come up with a fake array of proper dtype
+        return np.zeros((len(self.sid), len(self.fid)), dtype=self.dtype)
+
+
+    def __getitem__(self, args):
+        if not isinstance(args, tuple):
+            args = (args,)
+
+        if len(args) > 2:
+            raise ValueError("Too many arguments (%i). At most there can be "
+                             "two arguments, one for samples selection and one "
+                             "for features selection" % len(args))
+
+        if len(args) == 1:
+            args = [args[0], slice(None)]
+        else:
+            args = [a for a in args]
+        # ints need to become lists to prevent silent dimensionality changes
+        # of the arrays when slicing
+        for i, a in enumerate(args):
+            if isinstance(a, int):
+                args[i] = [a]
+        # apply to vectors
+        sid = self.sid[args[0]]
+        fid = self.fid[args[1]]
+
+        return HollowSamples((len(sid), len(fid)), sid=sid, fid=fid,
+                             dtype=self.dtype)
+
+    def view(self):
+        """Return itself"""
+        return self

@@ -25,6 +25,7 @@ analysis.
    :maxdepth: 1
 
    datadb/tutorial_data
+   datadb//face_inversion_demo
    datadb/haxby2001
    datadb/mnist
 

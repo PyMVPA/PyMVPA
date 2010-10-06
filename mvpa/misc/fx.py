@@ -67,6 +67,31 @@ def double_gamma_hrf(t, A1=5.4, W1=5.2, K1=1.0, A2=10.8, W2=7.35, K2=0.35):
     return single_gamma_hrf(t, A1, W1, K1) - single_gamma_hrf(t, A2, W2, K2)
 
 
+def dual_gaussian(x, amp1=1.0, mean1=0.0, std1=1.0,
+                     amp2=1.0, mean2=0.0, std2=1.0):
+    """Sum of two Gaussians.
+
+    Parameters
+    ----------
+    x : array
+      Function argument
+    amp1: float
+      Amplitude parameter of the first Gaussian
+    mean1: float
+      Mean parameter of the first Gaussian
+    std1: float
+      Standard deviation parameter of the first Gaussian
+    amp2: float
+      Amplitude parameter of the second Gaussian
+    mean2: float
+      Mean parameter of the second Gaussian
+    std2: float
+      Standard deviation parameter of the second Gaussian
+    """
+    from scipy.stats import norm
+    return (amp1 * norm.pdf(x, mean1, std1)) + (amp2 * norm.pdf(x, mean2, std2))
+
+
 ##REF: Name was automagically refactored
 def least_sq_fit(fx, params, y, x=None, **kwargs):
     """Simple convenience wrapper around SciPy's optimize.leastsq.
@@ -131,3 +156,64 @@ def least_sq_fit(fx, params, y, x=None, **kwargs):
 
     # do fit
     return leastsq(efx, params)
+
+
+def fit2histogram(X, fx, params, nbins=20, x_range=None):
+    """Fit a function to multiple histograms.
+
+    First histogram is computed for each data row vector individually.
+    Afterwards a custom function is fitted to the binned data.
+
+    Parameters
+    ----------
+    X : array-like
+      Data (nsamples x nfeatures)
+    fx : functor
+      Function to be fitted. Its interface has to comply to the requirements
+      as for `least_sq_fit`.
+    params : tuple
+      Initial parameter values.
+    nbins : int
+      Number of histogram bins.
+    x_range : None or tuple
+      Range spanned by the histogram bins. By default the actual mininum and
+      maximum values of the data are used.
+
+    Returns
+    -------
+    tuple
+      (histograms (nsampels x nbins),
+       bin locations (left border),
+       bin width,
+       output of `least_sq_fit`)
+    """
+    if x_range is None:
+        # use global min max to ensure consistent bins across observations
+        xrange = (X.min(), X.max())
+
+    nobsrv = len(X)
+    # histograms per observation
+    H = []
+    bin_centers = None
+    bin_left = None
+    for obsrv in X:
+        hi = np.histogram(obsrv, bins=nbins, range=x_range)
+        if bin_centers is None:
+            bin_left = hi[1][:-1]
+            # round to take care of numerical instabilities
+            bin_width = np.abs(
+                            np.asscalar(
+                                np.unique(
+                                    np.round(bin_left - hi[1][1:],
+                                             decimals=6))))
+            bin_centers = bin_left + bin_width / 2
+        H.append(hi[0])
+
+    H = np.asarray(H)
+
+    return (H,
+            bin_left,
+            bin_width,
+            least_sq_fit(fx, params, H, bin_centers))
+
+

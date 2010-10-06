@@ -2,6 +2,7 @@
 #
 
 # You can set these variables from the command line.
+PYTHON        = python
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
@@ -37,8 +38,11 @@ generate-stamp:
 	mkdir -p $(BUILDDIR)
 	@MVPA_EXTERNALS_RAISE_EXCEPTION=off \
 		PYTHONPATH=$(CURDIR)/sphinxext:$(CURDIR)/..:$(PYTHONPATH) \
-		python sphinxext/autosummary/generate.py \
+		$(PYTHON) sphinxext/autosummary/generate.py \
 		-t $(CURDIR)/templates -o source/generated source/*.rst
+	# wipe everything that is not pymvpa to prevent suffering from the bugs
+	# of other in subsequent stages
+	find source/generated -type f ! -name 'mvpa*' -delete
 	@touch $@
 
 html: generate

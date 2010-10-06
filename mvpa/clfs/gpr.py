@@ -16,9 +16,9 @@ import numpy as np
 
 from mvpa.base import externals, warning
 
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
-from mvpa.misc.param import Parameter
+from mvpa.base.param import Parameter
 from mvpa.kernels.np import SquaredExponentialKernel, GeneralizedLinearKernel, \
      LinearKernel
 from mvpa.measures.base import Sensitivity
@@ -323,7 +323,7 @@ class GPR(Classifier):
         # GRP relies on numerical labels
         # yoh: yeah -- GPR now is purely regression so no conversion
         #      is necessary
-        train_labels = data.sa[params.targets_attr].value
+        train_labels = data.sa[self.get_space()].value
         self._train_labels = train_labels
 
         if not retrainable or _changedData['traindata'] \

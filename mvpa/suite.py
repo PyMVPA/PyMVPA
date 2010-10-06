@@ -32,6 +32,8 @@ from mvpa.base.externals import *
 from mvpa.base.info import *
 from mvpa.base.types import *
 from mvpa.base.verbosity import *
+from mvpa.base.param import *
+from mvpa.base.state import *
 
 if externals.exists('h5py'):
     from mvpa.base.hdf5 import *
@@ -42,7 +44,6 @@ else:
     from mvpa.base.report_dummy import Report
 
 
-from mvpa.algorithms.cvtranserror import *
 from mvpa.algorithms.hyperalignment import *
 
 from mvpa import clfs
@@ -84,14 +85,14 @@ from mvpa.datasets.base import *
 from mvpa.datasets.miscfx import *
 from mvpa.datasets.eep import *
 from mvpa.datasets.eventrelated import *
-# safe to import since multiple externals are handled inside
-from mvpa.datasets.mri import *
+if externals.exists('nifti') or externals.exists('nibabel') :
+    from mvpa.datasets.mri import *
 # make NiftiImage available for people
 if externals.exists('nifti'):
     from nifti import NiftiImage
 
-from mvpa.datasets import splitters
-from mvpa.datasets.splitters import *
+from mvpa.generators.partition import *
+from mvpa.generators.splitters import *
 
 from mvpa import featsel
 from mvpa.featsel.base import *
@@ -102,6 +103,7 @@ from mvpa.featsel.rfe import *
 from mvpa import mappers
 #from mvpa.mappers import *
 from mvpa.mappers.base import *
+from mvpa.mappers.slicing import *
 from mvpa.mappers.flatten import *
 from mvpa.mappers.prototype import *
 from mvpa.mappers.projection import *
@@ -146,8 +148,6 @@ if externals.exists('cPickle') and externals.exists('gzip'):
 from mvpa.misc.fsl import *
 from mvpa.misc.bv import *
 from mvpa.misc.bv.base import *
-from mvpa.misc.param import *
-from mvpa.misc.state import *
 from mvpa.misc.support import *
 from mvpa.misc.transformers import *
 

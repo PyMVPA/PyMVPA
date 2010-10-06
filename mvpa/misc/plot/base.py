@@ -16,9 +16,11 @@ externals._set_matplotlib_backend()
 import pylab as pl
 import numpy as np
 
+from mvpa.base.node import ChainNode
 from mvpa.misc.plot.tools import Pion, Pioff
 from mvpa.misc.attrmap import AttributeMap
-from mvpa.datasets.splitters import NFoldSplitter
+from mvpa.generators.splitters import Splitter
+from mvpa.generators.partition import NFoldPartitioner
 from mvpa.clfs.distance import squared_euclidean_distance
 from mvpa.datasets.miscfx import get_samples_by_attr
 
@@ -160,8 +162,10 @@ def plot_feature_hist(dataset, xlim=None, noticks=True,
     **kwargs
       Any additional arguments are passed to matplotlib's hist().
     """
-    lsplit = NFoldSplitter(1, attr=targets_attr)
-    csplit = NFoldSplitter(1, attr=chunks_attr)
+    lsplit = ChainNode([NFoldPartitioner(1, attr=targets_attr),
+                        Splitter('partitions', attr_values=[2])])
+    csplit = ChainNode([NFoldPartitioner(1, attr=chunks_attr),
+                        Splitter('partitions', attr_values=[2])])
 
     nrows = len(dataset.sa[targets_attr].unique)
     ncols = len(dataset.sa[chunks_attr].unique)
@@ -182,9 +186,9 @@ def plot_feature_hist(dataset, xlim=None, noticks=True,
     fig = 1
 
     # for all labels
-    for row, (_, ds) in enumerate(lsplit(dataset)):
+    for row, ds in enumerate(lsplit.generate(dataset)):
         if chunks_attr:
-            for col, (_, d) in enumerate(csplit(ds)):
+            for col, d in enumerate(csplit.generate(ds)):
 
                 pl.subplot(nrows, ncols, fig)
                 doplot(d.samples.ravel())
@@ -310,7 +314,7 @@ def plot_decision_boundary_2d(dataset, clf=None,
         clf.ca.enable('estimates')
 
         if targets is None:
-            targets = clf.params.targets_attr
+            targets = clf.get_space()
         # Lets reuse classifiers attrmap if it is good enough
         attrmap = clf._attrmap
         predictions = clf.predict(dataset)

@@ -22,7 +22,7 @@ from mvpa.base.dochelpers import handle_docstring, _rst, _rst_section, \
      _rst_indentstr
 
 from mvpa.clfs.base import Classifier
-from mvpa.misc.param import Parameter
+from mvpa.base.param import Parameter
 
 if __debug__:
     from mvpa.base import debug

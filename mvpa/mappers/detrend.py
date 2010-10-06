@@ -71,7 +71,7 @@ class PolyDetrendMapper(Mapper):
     >>> np.sum(np.abs(mds)) < 0.00001
     True
     """
-    def __init__(self, polyord=1, chunks_attr=None, opt_regs=None, inspace=None):
+    def __init__(self, polyord=1, chunks_attr=None, opt_regs=None, **kwargs):
         """
         Parameters
         ----------
@@ -97,7 +97,7 @@ class PolyDetrendMapper(Mapper):
           Optional list of sample attribute names that should be used as
           additional regressors.  One example would be to regress out motion
           parameters.
-        inspace : str or None
+        space : str or None
           If not None, a samples attribute of the same name is added to the
           mapped dataset that stores the coordinates of each sample in the
           space that is spanned by the polynomials. If an attribute of that
@@ -105,8 +105,6 @@ class PolyDetrendMapper(Mapper):
           as sample coordinates in the space that should be spanned by the
           polynomials.
         """
-        Mapper.__init__(self, inspace=inspace)
-
         self.__chunks_attr = chunks_attr
         self.__polyord = polyord
         self.__opt_reg = opt_regs
@@ -117,6 +115,9 @@ class PolyDetrendMapper(Mapper):
 
         # secret switch to perform in-place detrending
         self._secret_inplace_detrend = False
+
+        # need to init last to prevent base class puking
+        Mapper.__init__(self, **kwargs)
 
 
     def __repr__(self):
@@ -153,7 +154,7 @@ class PolyDetrendMapper(Mapper):
         tuple
           (real-world polycoords, scaled polycoords into [-1,1])
         """
-        inspace = self.get_inspace()
+        inspace = self.get_space()
         if chunk_slicer is None:
             nsamples = len(ds)
         else:
@@ -183,7 +184,7 @@ class PolyDetrendMapper(Mapper):
         chunks_attr = self.__chunks_attr
         polyord = self.__polyord
         opt_reg = self.__opt_reg
-        inspace = self.get_inspace()
+        inspace = self.get_space()
         self._polycoords = None
 
         # global detrending is desired
@@ -263,7 +264,7 @@ class PolyDetrendMapper(Mapper):
 
         # local binding
         regs = self._regs
-        inspace = self.get_inspace()
+        inspace = self.get_space()
         polycoords = self._polycoords
 
         # is it possible to map that dataset?
@@ -348,6 +349,6 @@ def poly_detrend(ds, **kwargs):
     dm = PolyDetrendMapper(**kwargs)
     dm._secret_inplace_detrend = True
     # map
-    mapped = dm(ds)
+    mapped = dm.forward(ds)
     # and append the mapper to the dataset
     mapped._append_mapper(dm)

@@ -17,7 +17,7 @@ if externals.exists('shogun', raise_=True):
     import shogun.Classifier
     _shogun_exposes_slavesvm_labels = externals.versions['shogun:rev'] < 4633
 
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 from mvpa.base.types import asobjarray
 from mvpa.measures.base import Sensitivity
 from mvpa.datasets.base import Dataset
@@ -115,7 +115,7 @@ class LinearSVMWeights(Sensitivity):
 
             if len(clf._attrmap):
                 sens_labels = clf._attrmap.to_literal(sens_labels, recurse=True)
-            ds.sa[clf.params.targets_attr] = sens_labels
+            ds.sa[clf.get_space()] = sens_labels
         self.ca.biases = biases
 
         return ds

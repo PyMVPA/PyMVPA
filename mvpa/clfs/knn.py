@@ -19,7 +19,7 @@ import numpy as np
 from mvpa.base import warning
 from mvpa.datasets.base import Dataset
 from mvpa.misc.support import indent_doc
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.clfs.distance import squared_euclidean_distance
@@ -117,7 +117,7 @@ class kNN(Classifier):
         self.__weights = None
 
         # create dictionary with an item for each condition
-        uniquelabels = data.sa[self.params.targets_attr].unique
+        uniquelabels = data.sa[self.get_space()].unique
         self.__votes_init = dict(zip(uniquelabels,
                                      [0] * len(uniquelabels)))
 
@@ -184,7 +184,7 @@ class kNN(Classifier):
         # local bindings
         _data = self.__data
 
-        targets_sa_name = self.params.targets_attr
+        targets_sa_name = self.get_space()
         targets_sa = _data.sa[targets_sa_name]
 
         labels = targets_sa.value
@@ -214,7 +214,7 @@ class kNN(Classifier):
         """
         # local bindings
         _data = self.__data
-        targets_sa_name = self.params.targets_attr
+        targets_sa_name = self.get_space()
         targets_sa = _data.sa[targets_sa_name]
 
         uniquelabels = targets_sa.unique

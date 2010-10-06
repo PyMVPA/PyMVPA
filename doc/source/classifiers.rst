@@ -129,7 +129,7 @@ Before looking at the different classifiers in more detail, it is important to
 mention another feature common to all of them. While their interface is simple,
 classifiers are in no way limited to report only predictions. All classifiers
 implement an additional interface: Objects of any class that are derived from
-:class:`~mvpa.misc.state.ClassWithCollections` have attributes (we refer to
+:class:`~mvpa.base.state.ClassWithCollections` have attributes (we refer to
 such attributes as conditional attributes), which are conditionally computed and
 stored by PyMVPA. Such conditional storage and access is handy if a variable of
 interest might consume a lot of memory or needs intensive computation, and not
@@ -152,14 +152,14 @@ information only for a trained classifier, attempt to access
 since the classifier has not seen the data yet and, thus, does not know the
 targets. In other words, it is not yet in the state to know anything about the
 targets. Any conditional attribute can be enabled or disabled on per instance basis at
-any time of the execution (see :class:`~mvpa.misc.state.ClassWithCollections`).
+any time of the execution (see :class:`~mvpa.base.state.ClassWithCollections`).
 
 To continue the last example, each classifier, or more precisely every
 stateful object, can be asked to report existing state-related attributes:
 
   >>> list_with_verbose_explanations = clf.ca.listing
 
-'clf.ca' is an instance of :class:`~mvpa.misc.state.ConditionalAttributesCollection` class
+'clf.ca' is an instance of :class:`~mvpa.base.state.ConditionalAttributesCollection` class
 which is a container for all conditional attributes of the given class. To access (query
 the value or set the value if state is enabled), and enable or disable you
 should operate on `ca` collection (which is different from version prior

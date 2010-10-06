@@ -16,8 +16,8 @@ from mvpa.base import warning, externals
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import ConvergenceError
-from mvpa.misc.param import Parameter
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.param import Parameter
+from mvpa.base.state import ConditionalAttribute
 from mvpa.datasets.base import Dataset
 
 __all__ = [ "SMLR", "SMLRWeights" ]
@@ -300,7 +300,7 @@ class SMLR(Classifier):
     def _train(self, dataset):
         """Train the classifier using `dataset` (`Dataset`).
         """
-        targets_sa_name = self.params.targets_attr    # name of targets sa
+        targets_sa_name = self.get_space()    # name of targets sa
         targets_sa = dataset.sa[targets_sa_name] # actual targets sa
 
         # Process the labels to turn into 1 of N encoding
@@ -534,7 +534,7 @@ class SMLRWeights(Sensitivity):
 
     By default SMLR provides multiple weights per feature (one per label in
     training dataset). By default, all weights are combined into a single
-    sensitivity value. Please, see the `FeaturewiseDatasetMeasure` constructor
+    sensitivity value. Please, see the `FeaturewiseMeasure` constructor
     arguments how to custmize this behavior.
     """
 
@@ -567,4 +567,4 @@ class SMLRWeights(Sensitivity):
         # limit the labels to the number of sensitivity sets, to deal
         # with the case of `fit_all_weights=False`
         return Dataset(weights,
-                       sa={clf.params.targets_attr: clf._ulabels[:len(weights)]})
+                       sa={clf.get_space(): clf._ulabels[:len(weights)]})

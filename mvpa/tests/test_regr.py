@@ -12,16 +12,14 @@ from mvpa.testing import *
 from mvpa.testing.clfs import *
 from mvpa.testing.datasets import dataset_wizard, datasets
 
-from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
-
-from mvpa.misc.errorfx import CorrErrorFx
+from mvpa.generators.partition import NFoldPartitioner, OddEvenPartitioner
+from mvpa.measures.base import CrossValidation
+from mvpa.misc.errorfx import corr_error
 
 from mvpa.clfs.meta import SplitClassifier
-from mvpa.clfs.transerror import TransferError
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.mappers.fx import mean_sample
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
 
 class RegressionsTests(unittest.TestCase):
@@ -43,29 +41,26 @@ class RegressionsTests(unittest.TestCase):
         # since we deal with regressions here
         ds.sa.targets = AttributeMap().to_numeric(ds.targets)
 
-        cve = CrossValidatedTransferError(
-            TransferError(regr),
-            splitter=NFoldSplitter(),
-            postproc=mean_sample(),
-            enable_ca=['training_confusion', 'confusion'])
+        cve = CrossValidation(regr, NFoldPartitioner(), postproc=mean_sample(),
+            errorfx=corr_error, enable_ca=['training_stats', 'stats'])
         # check the default
-        self.failUnless(isinstance(cve.transerror.errorfx,
-                                   CorrErrorFx))
+        #self.failUnless(cve.transerror.errorfx is corr_error)
+
         corr = np.asscalar(cve(ds).samples)
 
         # Our CorrErrorFx should never return NaN
         self.failUnless(not np.isnan(corr))
-        self.failUnless(corr == cve.ca.confusion.stats['CCe'])
+        self.failUnless(corr == cve.ca.stats.stats['CCe'])
 
         splitregr = SplitClassifier(
-            regr, splitter=OddEvenSplitter(),
+            regr, partitioner=OddEvenPartitioner(),
             enable_ca=['training_confusion', 'confusion'])
         splitregr.train(ds)
         split_corr = splitregr.ca.confusion.stats['CCe']
         split_corr_tr = splitregr.ca.training_confusion.stats['CCe']
 
         for confusion, error in (
-            (cve.ca.confusion, corr),
+            (cve.ca.stats, corr),
             (splitregr.ca.confusion, split_corr),
             (splitregr.ca.training_confusion, split_corr_tr),
             ):
@@ -113,10 +108,8 @@ class RegressionsTests(unittest.TestCase):
         # check if we get values set correctly
         clf.ca.change_temporarily(enable_ca=['estimates'])
         self.failUnlessRaises(UnknownStateError, clf.ca['estimates']._get)
-        cv = CrossValidatedTransferError(
-            TransferError(clf),
-            NFoldSplitter(),
-            enable_ca=['confusion', 'training_confusion'])
+        cv = CrossValidation(clf, NFoldPartitioner(),
+            enable_ca=['stats', 'training_stats'])
         ds = datasets['uni2small'].copy()
         # we want numeric labels to maintain the previous behavior, especially
         # since we deal with regressions here
