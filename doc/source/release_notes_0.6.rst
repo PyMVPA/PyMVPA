@@ -35,3 +35,9 @@ Release Notes -- PyMVPA 0.6
   all predictions as samples and assign the actual targets as a samples
   attribute. The post-processing node can subsequently compute arbitrary error
   values (total, or per-unique sample id, ...).
+
+* Feature selections are no longer a separate entity, but are implemented as
+  training procedures for `FeatureSliceMapper`. The most important effect is
+  that FeatureSliceMapper tries to perform slicing without copying whenever
+  possible. Note that any feature selection procedure has to be trained on a
+  dataset before it can be used -- otherwise it won't do the right thing(TM).
