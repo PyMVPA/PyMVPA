@@ -170,10 +170,10 @@ this example)
   array([0, 1])
 
   >>> print clf.ca
-  ca{distances training_time*+ predicting_time*+ training_confusion...}
+  ca{distances training_time*+ predicting_time*+ training_stats...}
   >>> clf.ca.enable('estimates')
   >>> print clf.ca
-  ca{distances training_time*+ predicting_time*+ training_confusion...}
+  ca{distances training_time*+ predicting_time*+ training_stats...}
   >>> clf.ca.disable('estimates')
 
 A string representation of the state collection mentioned above lists
@@ -224,7 +224,7 @@ custom error function can be specified (see `errorfx` argument).
 To compute the transfer error simply call the object with a validation dataset.
 The computed error value is returned.
 :class:`~mvpa.clfs.transerror.TransferError` also supports a conditional attribute
-`confusion` that contains the full confusion matrix of the predictions made on
+`stats` that contains the full confusion matrix of the predictions made on
 the validation dataset. The confusion matrix is disabled by default.
 
 If the :class:`~mvpa.clfs.transerror.TransferError` object is called with an
@@ -273,7 +273,7 @@ and some :class:`~mvpa.datasets.base.Dataset` `data`.
   >>> from mvpa.datasets.splitters import NFoldSplitter
   >>> cvterr = CrossValidatedTransferError(terr,
   ...                                      NFoldSplitter(cvtype=1),
-  ...                                      enable_ca=['confusion'])
+  ...                                      enable_ca=['stats'])
   >>> error = cvterr(data)
 
 
@@ -288,9 +288,9 @@ accompanied by various performance metrics.  For example, the 8-fold
 cross-validation of the dataset with 8 targets with the SMLR classifier produced
 the following confusion matrix::
 
-  >>> # Simple 'print cvterr.confusion' provides the same output
+  >>> # Simple 'print cvterr.stats' provides the same output
   >>> # without the description of abbreviations
-  >>> print cvterr.confusion.as_string(description=True) \
+  >>> print cvterr.stats.as_string(description=True) \
   ... # doctest: +SKIP
   --------.        3kHz  7kHz  12kHz 20kHz 30kHz song1 song2 song3 song4 song5
   predict.\targets 38    39    40    41    42    43    44    45    46    47
@@ -345,7 +345,7 @@ via the :meth:`~mvpa.clfs.transerror.ConfusionMatrix.plot` method of a
 :class:`~mvpa.clfs.transerror.ConfusionMatrix`::
 
   >>> import pylab as pl
-  >>> cvterr.confusion.plot() \
+  >>> cvterr.stats.plot() \
   ... # doctest: +SKIP
   >>> pl.show() \
   ... # doctest: +SKIP
@@ -561,7 +561,7 @@ method calls).  Consider the following code, which can be found in
   ...       sensitivity_analyzer=rfesvm_split.get_sensitivity_analyzer(),
   ...       transfer_error=ConfusionBasedError(
   ...          rfesvm_split,
-  ...          confusion_state="confusion"),
+  ...          confusion_state="stats"),
   ...          # and whose internal error we use
   ...       feature_selector=FractionTailSelector(
   ...                          0.2, mode='discard', tail='lower'),

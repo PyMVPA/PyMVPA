@@ -36,5 +36,5 @@ git grep -l mvpa | grep -v refactor | \
  -e "s,optsChunk,opts.chunk,g"
 
 ## Uncomment and move up any additional refactorings which needed
-#	-e 's,training_confusions,confusion,g'
+#	-e 's,training_stats,stats,g'
 

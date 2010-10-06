@@ -54,15 +54,15 @@ class RegressionsTests(unittest.TestCase):
 
         splitregr = SplitClassifier(
             regr, partitioner=OddEvenPartitioner(),
-            enable_ca=['training_confusion', 'confusion'])
+            enable_ca=['training_stats', 'stats'])
         splitregr.train(ds)
-        split_corr = splitregr.ca.confusion.stats['CCe']
-        split_corr_tr = splitregr.ca.training_confusion.stats['CCe']
+        split_corr = splitregr.ca.stats.stats['CCe']
+        split_corr_tr = splitregr.ca.training_stats.stats['CCe']
 
         for confusion, error in (
             (cve.ca.stats, corr),
-            (splitregr.ca.confusion, split_corr),
-            (splitregr.ca.training_confusion, split_corr_tr),
+            (splitregr.ca.stats, split_corr),
+            (splitregr.ca.training_stats, split_corr_tr),
             ):
             #TODO: test confusion statistics
             # Part of it for now -- CCe

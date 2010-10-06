@@ -53,7 +53,7 @@ class BLR(Classifier):
 
         # It does not make sense to calculate a confusion matrix for a
         # BLR:
-        self.ca.enable('training_confusion', False)
+        self.ca.enable('training_stats', False)
 
         # set the prior on w: N(0,sigma_p) , specifying the covariance
         # sigma_p on w:

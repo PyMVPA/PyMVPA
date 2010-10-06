@@ -103,8 +103,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         partitioner = NFoldPartitioner(count=nsplits)
         mclf = SplitClassifier(clf=clf,
                                partitioner=partitioner,
-                               enable_ca=['training_confusion',
-                                              'confusion'])
+                               enable_ca=['training_stats',
+                                              'stats'])
         sana = mclf.get_sensitivity_analyzer(# postproc=absolute_features(),
                                            enable_ca=["sensitivities"])
 
@@ -153,7 +153,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         assert_array_equal(sens_ulabels, ds.sa['targets'].unique)
 
         errors = [x.percent_correct
-                    for x in sana.clf.ca.confusion.matrices]
+                    for x in sana.clf.ca.stats.matrices]
 
         # lets go through all sensitivities and see if we selected the right
         # features
@@ -168,8 +168,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
             return
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            for conf_matrix in [sana.clf.ca.training_confusion] \
-                              + sana.clf.ca.confusion.matrices:
+            for conf_matrix in [sana.clf.ca.training_stats] \
+                              + sana.clf.ca.stats.matrices:
                 self.failUnless(
                     conf_matrix.percent_correct>=70,
                     msg="We must have trained on each one more or " \
@@ -265,7 +265,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
             SensitivityBasedFeatureSelection(
                 OneWayAnova(),
                 FractionTailSelector(0.5, mode='select', tail='upper')),
-            enable_ca=['training_confusion'])
+            enable_ca=['training_stats'])
 
         sana = mclf.get_sensitivity_analyzer(postproc=sumofabs_sample(),
                                            enable_ca=["sensitivities"])

@@ -37,13 +37,13 @@ class CrossValidationTests(unittest.TestCase):
         assert_equal(len(np.unique(data.sa.origids)), data.nsamples)
 
         cv = CrossValidation(sample_clf_nl, NFoldPartitioner(),
-                enable_ca=['confusion', 'training_confusion'])
+                enable_ca=['stats', 'training_stats'])
 #                               'samples_error'])
 
         results = cv(data)
         self.failUnless((results.samples < 0.2).all() and (results.samples >= 0.0).all())
 
-        # TODO: test accessibility of {training_,}confusion{,s} of
+        # TODO: test accessibility of {training_,}stats{,s} of
         # CrossValidatedTransferError
 
         # not yet implemented, and no longer this way
