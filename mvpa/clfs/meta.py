@@ -1105,23 +1105,23 @@ class SplitClassifier(CombinedClassifier):
 
     # TODO: unify with CrossValidatedTransferError which now uses
     # harvest_attribs to expose gathered attributes
-    confusion = ConditionalAttribute(enabled=False,
+    stats = ConditionalAttribute(enabled=False,
         doc="Resultant confusion whenever classifier trained " +
             "on 1 part and tested on 2nd part of each split")
 
     splits = ConditionalAttribute(enabled=False, doc=
        """Store the actual splits of the data. Can be memory expensive""")
 
-    # ??? couldn't be training_confusion since it has other meaning
+    # ??? couldn't be training_stats since it has other meaning
     #     here, BUT it is named so within CrossValidatedTransferError
     #     -- unify
     #  decided to go with overriding semantics tiny bit. For split
-    #     classifier training_confusion would correspond to summary
+    #     classifier training_stats would correspond to summary
     #     over training errors across all splits. Later on if need comes
-    #     we might want to implement global_training_confusion which would
+    #     we might want to implement global_training_stats which would
     #     correspond to overall confusion on full training dataset as it is
     #     done in base Classifier
-    #global_training_confusion = ConditionalAttribute(enabled=False,
+    #global_training_stats = ConditionalAttribute(enabled=False,
     #    doc="Summary over training confusions acquired at each split")
 
     def __init__(self, clf, partitioner=NFoldPartitioner(),
@@ -1162,11 +1162,11 @@ class SplitClassifier(CombinedClassifier):
         ca = self.ca
 
         clf_template = self.__clf
-        if ca.is_enabled('confusion'):
-            ca.confusion = clf_template.__summary_class__()
-        if ca.is_enabled('training_confusion'):
-            clf_template.ca.enable(['training_confusion'])
-            ca.training_confusion = clf_template.__summary_class__()
+        if ca.is_enabled('stats'):
+            ca.stats = clf_template.__summary_class__()
+        if ca.is_enabled('training_stats'):
+            clf_template.ca.enable(['training_stats'])
+            ca.training_stats = clf_template.__summary_class__()
 
         clf_hastestdataset = hasattr(clf_template, 'testdataset')
 
@@ -1206,23 +1206,23 @@ class SplitClassifier(CombinedClassifier):
             if clf_hastestdataset:
                 clf.testdataset = None
 
-            if ca.is_enabled("confusion"):
+            if ca.is_enabled("stats"):
                 predictions = clf.predict(split[1])
-                self.ca.confusion.add(split[1].sa[targets_sa_name].value,
+                self.ca.stats.add(split[1].sa[targets_sa_name].value,
                                           predictions,
                                           clf.ca.get('estimates', None))
                 if __debug__:
                     dact = debug.active
                     if 'CLFSPL_' in dact:
                         debug('CLFSPL_',
-                              'Split %d:\n%s' % (i, self.ca.confusion))
+                              'Split %d:\n%s' % (i, self.ca.stats))
                     elif 'CLFSPL' in dact:
                         debug('CLFSPL', 'Split %d error %.2f%%'
-                              % (i, self.ca.confusion.summaries[-1].error))
+                              % (i, self.ca.stats.summaries[-1].error))
 
-            if ca.is_enabled("training_confusion"):
+            if ca.is_enabled("training_stats"):
                 # XXX this is broken, as it cannot deal with not yet set ca
-                ca.training_confusion += clf.ca.training_confusion
+                ca.training_stats += clf.ca.training_stats
 
 
     @group_kwargs(prefixes=['slave_'], passthrough=True)
