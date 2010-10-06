@@ -127,7 +127,7 @@ class Learner(Node):
         """
         # TODO evaluate whether this should also reset the nodes collections, or
         # whether that should be done by a more general reset() method
-        pass
+        self.reset()
 
 
     def _pretrain(self, ds):
