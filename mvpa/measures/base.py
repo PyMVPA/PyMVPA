@@ -397,6 +397,12 @@ class CrossValidation(RepeatedMeasure):
             learner.ca.enable('training_confusion')
 
 
+    def _call(self, ds):
+        # always untrain to wipe out previous stats
+        self.untrain()
+        return super(CrossValidation, self)._call(ds)
+
+
     def _repetition_postcall(self, ds, node, result):
         # local binding
         ca = self.ca
