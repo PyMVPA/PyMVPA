@@ -34,6 +34,8 @@ from mvpa.base.types import *
 from mvpa.base.verbosity import *
 from mvpa.base.param import *
 from mvpa.base.state import *
+from mvpa.base.node import *
+from mvpa.base.learner import *
 
 if externals.exists('h5py'):
     from mvpa.base.hdf5 import *
@@ -82,6 +84,7 @@ from mvpa import datasets
 from mvpa.datasets import *
 # just to make testsuite happy
 from mvpa.datasets.base import *
+from mvpa.datasets.formats import *
 from mvpa.datasets.miscfx import *
 from mvpa.datasets.eep import *
 from mvpa.datasets.eventrelated import *
@@ -93,6 +96,8 @@ if externals.exists('nifti'):
 
 from mvpa.generators.partition import *
 from mvpa.generators.splitters import *
+from mvpa.generators.permutation import *
+from mvpa.generators.resampling import *
 
 from mvpa import featsel
 from mvpa.featsel.base import *
