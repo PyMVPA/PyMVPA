@@ -144,14 +144,14 @@ class GDA(Classifier):
                   + "min:max(data)=%f:%f" % (np.min(X), np.max(X)))
 
 
-    def untrain(self):
+    def _untrain(self):
         """Untrain classifier and reset all learnt params
         """
         self.means = None
         self.cov = None
         self.ulabels = None
         self.priors = None
-        super(GDA, self).untrain()
+        super(GDA, self)._untrain()
 
 
     @accepts_dataset_as_samples
@@ -181,10 +181,10 @@ class LDA(GDA):
     __tags__ = GDA.__tags__ + ['linear', 'lda']
 
 
-    def untrain(self):
+    def _untrain(self):
         self._w = None
         self._b = None
-        super(LDA, self).untrain()
+        super(LDA, self)._untrain()
 
 
     def _train(self, dataset):
@@ -221,12 +221,12 @@ class QDA(GDA):
 
     __tags__ = GDA.__tags__ + ['non-linear', 'qda']
 
-    def untrain(self):
+    def _untrain(self):
         # XXX theoretically we could use the same _w although with
         # different "content"
         self._icov = None
         self._b = None
-        super(QDA, self).untrain()
+        super(QDA, self)._untrain()
 
     def _train(self, dataset):
         super(QDA, self)._train(dataset)

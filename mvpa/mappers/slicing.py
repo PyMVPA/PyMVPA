@@ -58,9 +58,9 @@ class SampleSliceMapper(SliceMapper):
         # it couldn't be simpler
         return ds[self._slicearg]
 
-    def untrain(self):
+    def _untrain(self):
         self._slicearg = None
-        super(SliceMapper, self).untrain()
+        super(SliceMapper, self)._untrain()
 
 
 
@@ -198,10 +198,10 @@ class FeatureSliceMapper(SliceMapper):
             self._oshape = data[:, self._slicearg].shape[1:]
 
 
-    def untrain(self):
+    def _untrain(self):
         self._dshape = None
         self._oshape = None
-        super(FeatureSliceMapper, self).untrain()
+        super(FeatureSliceMapper, self)._untrain()
 
 
     def is_mergable(self, other):

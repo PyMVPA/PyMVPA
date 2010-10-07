@@ -255,7 +255,7 @@ class kNN(Classifier):
                votes
 
 
-    def untrain(self):
+    def _untrain(self):
         """Reset trained state"""
         self.__data = None
-        super(kNN, self).untrain()
+        super(kNN, self)._untrain()

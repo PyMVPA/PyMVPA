@@ -223,8 +223,8 @@ class LARS(Classifier):
         """The model object after training that will be used for
         predictions."""
 
-    def untrain(self):
-        super(LARS, self).untrain()
+    def _untrain(self):
+        super(LARS, self)._untrain()
         self._init_internals()
 
 

@@ -184,7 +184,7 @@ class BoostedClassifier(Classifier, Harvestable):
         if len(clfs)>0:
             self.__tags__ += self.__clfs[0].__tags__
 
-    def untrain(self):
+    def _untrain(self):
         """Untrain `BoostedClassifier`
 
         Has to untrain any known classifier
@@ -193,7 +193,7 @@ class BoostedClassifier(Classifier, Harvestable):
             return
         for clf in self.clfs:
             clf.untrain()
-        super(BoostedClassifier, self).untrain()
+        super(BoostedClassifier, self)._untrain()
 
     def get_sensitivity_analyzer(self, **kwargs):
         """Return an appropriate SensitivityAnalyzer"""
@@ -302,12 +302,12 @@ class ProxyClassifier(Classifier):
         return result
 
 
-    def untrain(self):
+    def _untrain(self):
         """Untrain ProxyClassifier
         """
         if not self.__clf is None:
             self.__clf.untrain()
-        super(ProxyClassifier, self).untrain()
+        super(ProxyClassifier, self)._untrain()
 
 
     @group_kwargs(prefixes=['slave_'], passthrough=True)
@@ -518,10 +518,10 @@ class ClassifierCombiner(PredictionsCombiner):
         """What conditional attributes of the classifiers to use"""
 
 
-    def untrain(self):
+    def _untrain(self):
         """It might be needed to untrain used classifier"""
         if self.__clf:
-            self.__clf.untrain()
+            self.__clf._untrain()
 
     def __call__(self, clfs, dataset):
         """
@@ -596,14 +596,14 @@ class CombinedClassifier(BoostedClassifier):
         return s
 
 
-    def untrain(self):
+    def _untrain(self):
         """Untrain `CombinedClassifier`
         """
         try:
             self.__combiner.untrain()
         except:
             pass
-        super(CombinedClassifier, self).untrain()
+        super(CombinedClassifier, self)._untrain()
 
 
     def _train(self, dataset):
@@ -839,10 +839,10 @@ class TreeClassifier(ProxyClassifier):
             clfs[gk].train(ds_group)
 
 
-    def untrain(self):
+    def _untrain(self):
         """Untrain TreeClassifier
         """
-        super(TreeClassifier, self).untrain()
+        super(TreeClassifier, self)._untrain()
         for clf in self.clfs.values():
             clf.untrain()
 
@@ -1291,7 +1291,7 @@ class MappedClassifier(ProxyClassifier):
         ProxyClassifier._train(self, wdataset)
 
 
-    def untrain(self):
+    def _untrain(self):
         """Untrain `FeatureSelectionClassifier`
 
         Has to untrain any known classifier
@@ -1300,7 +1300,7 @@ class MappedClassifier(ProxyClassifier):
         if self.__mapper is not None:
             self.__mapper.untrain()
         # let base class untrain as well
-        super(MappedClassifier, self).untrain()
+        super(MappedClassifier, self)._untrain()
 
 
     def _predict(self, dataset):

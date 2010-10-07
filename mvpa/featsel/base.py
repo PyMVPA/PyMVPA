@@ -44,12 +44,12 @@ class FeatureSelection(FeatureSliceMapper):
         return False
 
 
-    def untrain(self):
+    def _untrain(self):
         if __debug__:
             debug("FS_", "Untraining FS: %s" % self)
         self._safe_assign_slicearg(None)
         # ask base class to do its untrain
-        super(FeatureSelection, self).untrain()
+        super(FeatureSelection, self)._untrain()
 
 
 
@@ -118,12 +118,12 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         super(SensitivityBasedFeatureSelection, self)._train(dataset)
 
 
-    def untrain(self):
+    def _untrain(self):
         if __debug__:
             debug("FS_", "Untraining sensitivity-based FS: %s" % self)
         self.__sensitivity_analyzer.untrain()
         # ask base class to do its untrain
-        super(SensitivityBasedFeatureSelection, self).untrain()
+        super(SensitivityBasedFeatureSelection, self)._untrain()
 
     # make it accessible from outside
     sensitivity_analyzer = property(fget=lambda self:self.__sensitivity_analyzer,
@@ -190,13 +190,13 @@ class IterativeFeatureSelection(FeatureSelection):
         self._train_pmeasure = train_pmeasure
 
 
-    def untrain(self):
+    def _untrain(self):
         if __debug__:
             debug("FS_", "Untraining Iterative FS: %s" % self)
         self._fmeasure.untrain()
         self._pmeasure.untrain()
         # ask base class to do its untrain
-        super(IterativeFeatureSelection, self).untrain()
+        super(IterativeFeatureSelection, self)._untrain()
 
 
     def _evaluate_pmeasure(self, train, test):

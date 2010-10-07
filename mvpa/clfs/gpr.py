@@ -494,11 +494,10 @@ class GPR(Classifier):
             self._km_test_test = None
 
 
-    def untrain(self):
-        super(GPR, self).untrain()
+    def _untrain(self):
+        super(GPR, self)._untrain()
         # XXX might need to take special care for retrainable. later
         self._init_internals()
-        pass
 
 
     def set_hyperparameters(self, hyperparameter):
