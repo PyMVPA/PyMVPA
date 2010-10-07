@@ -17,7 +17,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.base import warning, externals
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.base.learner import FailedToTrainError, FailedToPredictError
 
