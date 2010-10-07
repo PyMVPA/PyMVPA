@@ -11,10 +11,10 @@
 from mvpa.testing import *
 from mvpa.testing.clfs import *
 from mvpa.testing.datasets import dataset_wizard, datasets
+from mvpa.base import externals
 
 from mvpa.generators.partition import NFoldPartitioner, OddEvenPartitioner
 from mvpa.measures.base import CrossValidation
-from mvpa.misc.errorfx import corr_error
 
 from mvpa.clfs.meta import SplitClassifier
 from mvpa.misc.exceptions import UnknownStateError
@@ -36,6 +36,10 @@ class RegressionsTests(unittest.TestCase):
     def test_regressions(self, regr):
         """Simple tests on regressions
         """
+        if not externals.exists('scipy'):
+            raise SkipTest
+        else:
+            from mvpa.misc.errorfx import corr_error
         ds = datasets['chirp_linear']
         # we want numeric labels to maintain the previous behavior, especially
         # since we deal with regressions here
