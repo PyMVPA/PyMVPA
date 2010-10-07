@@ -125,9 +125,16 @@ class Learner(Node):
     def untrain(self):
         """Reverts changes in the state of this node caused by previous training
         """
+        # call subclass untrain first to allow it to access current attributes
+        self._untrain()
         # TODO evaluate whether this should also reset the nodes collections, or
         # whether that should be done by a more general reset() method
         self.reset()
+
+
+    def _untrain(self):
+        # nothing by default
+        pass
 
 
     def _pretrain(self, ds):

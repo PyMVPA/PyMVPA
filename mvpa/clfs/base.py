@@ -465,7 +465,7 @@ class Classifier(Learner):
         """Either classifier was already trained"""
         return self.is_trained()
 
-    def untrain(self):
+    def _untrain(self):
         """Reset trained state"""
         # any previous apping is obsolete now
         self._attrmap.clear()
@@ -477,7 +477,9 @@ class Classifier(Learner):
         #    # ??? don't duplicate the code ;-)
         #    self.__idhashes = {'traindata': None, 'targets': None,
         #                       'testdata': None, 'testtraindata': None}
-        super(Classifier, self).reset()
+
+        # no need to do this, as the Leaner class is doing it anyway
+        #super(Classifier, self).reset()
 
 
     ##REF: Name was automagically refactored

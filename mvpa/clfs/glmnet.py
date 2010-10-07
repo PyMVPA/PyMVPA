@@ -279,10 +279,10 @@ class _GLMNET(Classifier):
         self.__last_lambda = None
         """Lambda obtained on the last step"""
 
-    def untrain(self):
-        super(_GLMNET, self).untrain()
+    def _untrain(self):
+        super(_GLMNET, self)._untrain()
         self._init_internals()
-        pass
+
 
     ##REF: Name was automagically refactored
     def _get_feature_ids(self):

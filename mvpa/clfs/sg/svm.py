@@ -609,8 +609,8 @@ class SVM(_SVM):
         return predictions
 
 
-    def untrain(self):
-        super(SVM, self).untrain()
+    def _untrain(self):
+        super(SVM, self)._untrain()
         # untrain/clean the kernel -- we might not allow to drag SWIG
         # instance around BUT XXX -- make it work fine with
         # CachedKernel -- we might not want to fully "untrain" in such

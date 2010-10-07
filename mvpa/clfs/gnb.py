@@ -200,14 +200,14 @@ class GNB(Classifier):
                   + "min:max(data)=%f:%f" % (np.min(X), np.max(X)))
 
 
-    def untrain(self):
+    def _untrain(self):
         """Untrain classifier and reset all learnt params
         """
         self.means = None
         self.variances = None
         self.ulabels = None
         self.priors = None
-        super(GNB, self).untrain()
+        super(GNB, self)._untrain()
 
 
     @accepts_dataset_as_samples

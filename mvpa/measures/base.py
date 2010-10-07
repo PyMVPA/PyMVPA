@@ -320,10 +320,10 @@ class RepeatedMeasure(Measure):
         return result
 
 
-    def untrain(self):
+    def _untrain(self):
         """Untrain this measure and the embedded node."""
         self._node.untrain()
-        super(RepeatedMeasure, self).untrain()
+        super(RepeatedMeasure, self)._untrain()
 
 
 
@@ -716,11 +716,13 @@ class Sensitivity(FeaturewiseMeasure):
         self.__clf = clf
 
 
-    def untrain(self):
+    def _untrain(self):
         """Untrain corresponding classifier for Sensitivity
         """
         if self.__clf is not None:
             self.__clf.untrain()
+        super(Sensitivity, self)._untrain()
+
 
     @property
     def feature_ids(self):
@@ -799,12 +801,14 @@ class CombinedFeaturewiseMeasure(FeaturewiseMeasure):
         return sensitivities
 
 
-    def untrain(self):
+    def _untrain(self):
         """Untrain CombinedFDM
         """
         if self.__analyzers is not None:
             for anal in self.__analyzers:
                 anal.untrain()
+        super(CombinedFeaturewiseMeasure, self)._untrain()
+
 
     ##REF: Name was automagically refactored
     def _set_analyzers(self, analyzers):
@@ -863,12 +867,13 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         """Analyzer to use for basic classifiers within boosted classifier"""
 
 
-    def untrain(self):
+    def _untrain(self):
         """Untrain BoostedClassifierSensitivityAnalyzer
         """
         if self.__analyzer is not None:
             self.__analyzer.untrain()
         self.__combined_analyzer.untrain()
+        super(BoostedClassifierSensitivityAnalyzer, self)._untrain()
 
 
     def _call(self, dataset):
@@ -930,8 +935,8 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
         """Analyzer to use for basic classifiers within boosted classifier"""
 
 
-    def untrain(self):
-        super(ProxyClassifierSensitivityAnalyzer, self).untrain()
+    def _untrain(self):
+        super(ProxyClassifierSensitivityAnalyzer, self)._untrain()
         if self.__analyzer is not None:
             self.__analyzer.untrain()
 
