@@ -120,7 +120,7 @@ def test_fsl_hox_queries():
 
     ok_(r_point['labels'] == r_voxel['labels'] ==
          [[{'index': 21, 'prob': 64,
-            'label': 'Lateral Occipital Cortex, superoir division'},
+            'label': 'Lateral Occipital Cortex, superior division'},
            {'index': 22, 'prob': 22,
             'label': 'Lateral Occipital Cortex, inferior division'}]])
     ok_(r_point['voxel_atlas'] == r_point['voxel_queried'] ==
