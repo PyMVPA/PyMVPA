@@ -20,7 +20,15 @@ from mvpa.misc.support import get_limit_filter, get_nelements_per_value
 
 
 class Balancer(Node):
-    """
+    """Generator to (repeatedly) select subsets of a dataset.
+
+    The Balancer can equalize the number of samples/features in a dataset, or
+    select an absolute number or fraction of all available data. Selection is
+    performed given a particular attribute and additionally can be limited to
+    a subset of the dataset defined by more complex criteria (see ``limit``
+    argument). The node can either "mark" elements as selected by adding a
+    corresponding attribute to the output dataset, or actually apply the
+    selection by returning a new dataset with only selected elements.
     """
     def __init__(self,
                  amount='equal',
@@ -33,10 +41,36 @@ class Balancer(Node):
         """
         Parameters
         ----------
+        amount : {'equal'} or int or float
+          Specify the amount of elements to be selected (within the current
+          ``limit``). The amount can be given as an integer value corresponding
+          to the absolute number of elements per unique attribute (see ``attr``)
+          value, as a float corresponding to the fraction of elements, or with
+          the keyword 'equal'. In the latter case the number of to be selected
+          elements is determined by the least number of available elements for
+          any given unique attribute value within the current limit.
         attr : str
+          Dataset attribute whose unique values define element classes that are
+          to be balanced in number.
         count : int
+          How many iterations to perform on ``generate()``.
         limit : None or str or dict
+          If ``None`` the whole dataset is considered as one. If an single
+          attribute name is given, its unique values will be used to define
+          chunks of data that are balanced individually. Finally, if a
+          dictionary is provided, its keys define attribute names and its values
+          (single value or sequence thereof) attribute value, where all
+          key-value combinations across all given items define a "selection" of
+          to-be-balanced samples or features.
         apply_selection : bool
+          Flag whether the balanced selection shall be applied, i.e. the output
+          dataset only contains selected elements. If False, the selection is
+          instead added as an attribute that merely marks selected elements (see
+          ``space`` argument).
+        space : str
+          Name of the selection marker attribute in the output dataset that is
+          created if the balanced selection is not applied to the output dataset
+          (see ``apply_selection`` argument).
         """
         Node.__init__(self, space=space, **kwargs)
         self._amount = amount
