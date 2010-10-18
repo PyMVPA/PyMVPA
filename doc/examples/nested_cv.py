@@ -30,30 +30,18 @@ the warehouse of available within PyMVPA.
 from mvpa.suite import *
 # increase verbosity a bit for now
 verbose.level = 3
-
-## # load PyMVPA example dataset
-## datapath = os.path.join(pymvpa_datadbroot,
-##                         'tutorial_data', 'tutorial_data', 'data')
-## attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
-## dataset = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
-##                        targets=attr.targets,
-##                        chunks=attr.chunks,
-##                        mask=os.path.join(datapath, 'mask_gray.nii.gz'))
-## # do chunkswise linear detrending on dataset
-## poly_detrend(dataset, chunks_attr='chunks')
-
-## # exclude the rest conditions from the dataset, since that should be
-## # quite different from the 'active' conditions, and make the computation
-## # below pointless
-## dataset = dataset[dataset.sa.targets != 'rest']
+# pre-seed RNG if you want to investigate the effects, thus
+# needing reproducible results
+#mvpa.seed(3)
 
 """
 For this simple example lets generate some fresh random data with 2
 relevant features and low SNR.
 """
 
-dataset = normal_feature_dataset(nlabels=2, nonbogus_features=[0, 1],
-                                 nfeatures=50, snr=3.0)
+dataset = normal_feature_dataset(perlabel=24, nlabels=2, nchunks=3,
+                                 nonbogus_features=[0, 1],
+                                 nfeatures=100, snr=3.0)
 
 """
 For the demonstration of model selection benefit, lets first compute
@@ -63,6 +51,7 @@ cross-validated error using simple and popular kNN.
 clf_sample = kNN()
 cv_sample = CrossValidation(clf_sample, NFoldPartitioner())
 
+verbose(1, "Estimating error using a sample classifier")
 error_sample = np.mean(cv_sample(dataset))
 
 """
@@ -70,7 +59,7 @@ For the convenience lets define a helpful function which we will use
 twice -- once within cross-validation, and once on the whole dataset
 """
 
-def select_best_clf(dataset, clfs):
+def select_best_clf(dataset_, clfs):
     """Select best model according to CVTE
 
     Helper function which we will use twice -- once for proper nested
@@ -79,7 +68,7 @@ def select_best_clf(dataset, clfs):
 
     Parameters
     ----------
-    dataset : Dataset
+    dataset_ : Dataset
     clfs : list of Classifiers
       Which classifiers to explore
 
@@ -93,7 +82,7 @@ def select_best_clf(dataset, clfs):
         # unfortunately we don't have ability to reassign clf atm
         # cv.transerror.clf = clf
         try:
-            error = np.mean(cv(dstrain))
+            error = np.mean(cv(dataset_))
         except LearnerError, e:
             # skip the classifier if data was not appropriate and it
             # failed to learn/predict at all
@@ -101,8 +90,8 @@ def select_best_clf(dataset, clfs):
         if best_error is None or error < best_error:
             best_clf = clf
             best_error = error
-        verbose(3, "Classifier %s cv error=%.2f" % (clf.descr, error))
-    verbose(2, "Selected the best out of %i classifiers %s with error %.2f"
+        verbose(4, "Classifier %s cv error=%.2f" % (clf.descr, error))
+    verbose(3, "Selected the best out of %i classifiers %s with error %.2f"
             % (len(clfs), best_clf.descr, best_error))
     return best_clf, best_error
 
@@ -113,10 +102,11 @@ eliminating model-selection bias
 
 best_clfs = {}
 confusion = ConfusionMatrix()
+verbose(1, "Estimating error using nested CV for model selection")
 partitioner = NFoldPartitioner()
 splitter = Splitter('partitions')
 for isplit, partitions in enumerate(partitioner.generate(dataset)):
-    verbose(1, "Processing split #%i" % isplit)
+    verbose(2, "Processing split #%i" % isplit)
     dstrain, dstest = list(splitter.generate(partitions))
     best_clf, best_error = select_best_clf(dstrain, clfswh['!gnpp'])
     best_clfs[best_clf.descr] = best_clfs.get(best_clf.descr, 0) + 1
@@ -135,10 +125,12 @@ we simply explore all available classifiers, providing all the data at
 once
 """
 
+
+verbose(1, "Estimating error via fishing expedition (best clf on entire dataset)")
 cheating_clf, cheating_error = select_best_clf(dataset, clfswh['!gnpp'])
 
 print """Errors:
- sample classifier: %.2f
+ sample classifier (kNN): %.2f
  model selection within cross-validation: %.2f
  model selection via fishing expedition: %.2f with %s
  """ % (error_sample, 1 - confusion.stats['ACC'],
