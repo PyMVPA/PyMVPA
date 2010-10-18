@@ -61,14 +61,23 @@ class Learner(Node):
         doc="Time (in seconds) it took to train the learner")
 
 
-    def __init__(self, **kwargs):
+    def __init__(self, auto_train=False, force_train=False, **kwargs):
         """
         Parameters
         ----------
+        auto_train : bool
+          Flag whether the learner will automatically train itself on the input
+          dataset when called untrained.
+        force_train : bool
+          Flag whether the learner will enforce training on the input dataset
+          upon every call.
         **kwargs
           All arguments are passed to the baseclass.
         """
         Node.__init__(self, **kwargs)
+        self.__istrained = False
+        self.__auto_train = auto_train
+        self.__forced_train = force_train
 
 
     def train(self, ds):
@@ -121,10 +130,17 @@ class Learner(Node):
         # and post-proc
         result = self._posttrain(ds)
 
+        # finally flag as trained
+        self._set_trained()
+
 
     def untrain(self):
         """Reverts changes in the state of this node caused by previous training
         """
+        # flag the learner as untrained
+        # important to do that before calling the implementation in the derived
+        # class, as it might decide that an object remains trained
+        self._set_trained(False)
         # call subclass untrain first to allow it to access current attributes
         self._untrain()
         # TODO evaluate whether this should also reset the nodes collections, or
@@ -155,7 +171,8 @@ class Learner(Node):
 
 
     def _train(self, ds):
-        raise NotImplementedError
+        # nothing by default
+        pass
 
 
     def _posttrain(self, ds):
@@ -173,3 +190,43 @@ class Learner(Node):
         None
         """
         pass
+
+
+    def _set_trained(self, status=True):
+        """Set the Learner's training status
+
+        Derived use this to set the Learner's status to trained (True) or
+        untrained (False).
+        """
+        self.__istrained = status
+
+
+    def __call__(self, ds):
+        # overwrite __call__ to perform a rigorous check whether the learner was
+        # trained before use and auto-train
+        if self.is_trained:
+            # already trained
+            if self.is_forcedtraining:
+                # but retraining is enforced
+                self.train(ds)
+        else:
+            # not trained
+            if self.is_autotraining:
+                # auto training requested
+                self.train(ds)
+            else:
+                # we always have to have trained before using a learner
+                raise RuntimeError("%s needs to be trained before it can be "
+                                   "used and auto training is disabled."
+                                   % str(self))
+        return super(Learner, self).__call__(ds)
+
+
+    is_trained = property(fget=lambda x:x.__istrained,
+                          doc="Whether the Learner is currently trained.")
+    is_autotraining = property(fget=lambda x:x.__auto_train,
+                          doc="Whether the Learner performs automatic training"
+                              "when called untrained.")
+    is_forcedtraining = property(fget=lambda x:x.__forced_train,
+                          doc="Whether the Learner enforces training upon every"
+                              "called.")

@@ -285,7 +285,7 @@ them again) looks like this:
   ...       TransferError(SMLR()),
   ...       OddEvenSplitter(),
   ...       harvest_attribs=\
-  ...        ['transerror.clf.get_sensitivity_analyzer(force_training=False)()'])
+  ...        ['transerror.clf.get_sensitivity_analyzer(force_train=False)()'])
   >>> merror = cv(dataset)
   >>> sensitivities = cv.ca.harvested.values()[0]
   >>> len(sensitivities)

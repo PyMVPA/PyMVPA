@@ -25,8 +25,11 @@ from mvpa.misc.transformers import sum_of_abs, max_of_abs
 
 class FxMapper(Mapper):
     """Apply a custom transformation to (groups of) samples or features.
-
     """
+
+    is_trained = True
+    """Indicate that this mapper is always trained."""
+
     def __init__(self, axis, fx, fxargs=None, uattrs=None,
                  attrfx='merge'):
         """
@@ -86,7 +89,8 @@ class FxMapper(Mapper):
 
 
     def _train(self, ds):
-        # right now it needs no training
+        # right now it needs no training, if anything is added here make sure to
+        # remove is_trained class attribute
         pass
 
 

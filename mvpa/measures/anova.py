@@ -51,7 +51,8 @@ class OneWayAnova(FeaturewiseMeasure):
         space : str
           What samples attribute to use as targets (labels).
         """
-        FeaturewiseMeasure.__init__(self, space=space, **kwargs)
+        # set auto-train flag since we have nothing special to be done
+        FeaturewiseMeasure.__init__(self, auto_train=True, space=space, **kwargs)
 
 
     def __repr__(self, prefixes=None):

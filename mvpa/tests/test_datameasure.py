@@ -270,7 +270,6 @@ class SensitivityAnalysersTests(unittest.TestCase):
         sana = mclf.get_sensitivity_analyzer(postproc=sumofabs_sample(),
                                            enable_ca=["sensitivities"])
         # and lets look at all sensitivities
-
         dataset = datasets['uni2medium']
         # and we get sensitivity analyzer which works on splits
         sens = sana(dataset)
@@ -302,7 +301,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         sana_split = svm.get_sensitivity_analyzer(
             split_weights=True, **kwargs)
         sana_full = svm.get_sensitivity_analyzer(
-            force_training=False, **kwargs)
+            force_train=False, **kwargs)
 
         # and lets look at all sensitivities
         ds2 = datasets['uni4large'].copy()

@@ -40,6 +40,9 @@ class NoisePerturbationSensitivity(FeaturewiseMeasure):
     -----
     The computed sensitivity map might have positive and negative values!
     """
+    is_trained = True
+    """Indicate that this measure is always trained."""
+
     def __init__(self, datameasure,
                  noise=np.random.normal):
         """

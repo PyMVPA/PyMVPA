@@ -150,6 +150,7 @@ class StatsTestsScipy(unittest.TestCase):
             """Just put high positive into first 2 features, and high
             negative into 2nd two
             """
+            is_trained = True
             def _call(self, dataset):
                 """just a little helper... pylint shut up!"""
                 res = np.random.normal(size=(dataset.nfeatures,))

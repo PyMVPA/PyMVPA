@@ -32,11 +32,12 @@ class Dataset(AttrDataset):
     __doc__ = AttrDataset.__doc__
 
     def get_mapped(self, mapper):
-        """Feed this dataset through a mapper (forward).
+        """Feed this dataset through a trained mapper (forward).
 
         Parameters
         ----------
         mapper : Mapper
+          This mapper instance has to be trained.
 
         Returns
         -------
@@ -276,7 +277,7 @@ class Dataset(AttrDataset):
           If provided it is assigned to the mapper instance that performs the
           initial flattening of the data.
         mapper : Mapper instance, optional
-          A (potentially trained) mapper instance that is used to forward-map
+          A trained mapper instance that is used to forward-map
           the already flattened and masked samples upon construction of the
           dataset. The mapper must have a simple feature space (samples x
           features) as output. Use a `ChainMapper` to achieve that, if
@@ -314,6 +315,7 @@ class Dataset(AttrDataset):
                 ds = ds.get_mapped(fm)
         else:
             mm = mask_mapper(mask, space=space)
+            mm.train(ds)
             ds = ds.get_mapped(mm)
 
         # apply generic mapper

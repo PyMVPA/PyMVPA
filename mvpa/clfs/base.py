@@ -25,6 +25,7 @@ from mvpa.misc.support import idhash
 from mvpa.base.state import ConditionalAttribute
 from mvpa.base.param import Parameter
 from mvpa.misc.attrmap import AttributeMap
+from mvpa.base.dochelpers import _str
 
 from mvpa.clfs.transerror import ConfusionMatrix, RegressionStatistics
 
@@ -177,7 +178,7 @@ class Classifier(Learner):
         if __debug__ and 'CLF_' in debug.active:
             return "%s / %s" % (repr(self), super(Classifier, self).__str__())
         else:
-            return repr(self)
+            return _str(self)
 
     def __repr__(self, prefixes=[]):
         return super(Classifier, self).__repr__(prefixes=prefixes)

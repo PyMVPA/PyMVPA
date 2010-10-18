@@ -66,6 +66,7 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
     def __init__(self,
                  sensitivity_analyzer,
                  feature_selector=FractionTailSelector(0.05),
+                 train_analyzer=True,
                  **kwargs
                  ):
         """Initialize feature selection
@@ -77,7 +78,10 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         feature_selector : Functor
           Given a sensitivity map it has to return the ids of those
           features that should be kept.
-
+        train_analyzer : bool
+          Flag whether to train the sensitivity analyzer on the input dataset
+          during train(). If False, the employed sensitivity measure has to be
+          already trained before.
         """
 
         # base init first
@@ -89,6 +93,8 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         self.__feature_selector = feature_selector
         """Functor which takes care about removing some features."""
 
+        self.__train_analyzer = train_analyzer
+
 
     def _train(self, dataset):
         """Select the most important features
@@ -98,6 +104,10 @@ class SensitivityBasedFeatureSelection(FeatureSelection):
         dataset : Dataset
           used to compute sensitivity maps
         """
+        # optionally train the analyzer first
+        if self.__train_analyzer:
+            self.__sensitivity_analyzer.train(dataset)
+
         sensitivity = self.__sensitivity_analyzer(dataset)
         """Compute the sensitivity map."""
 
