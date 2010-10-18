@@ -70,6 +70,30 @@ class SampleSliceMapper(SliceMapper):
 
 class FeatureSliceMapper(SliceMapper):
     """Mapper to select a subset of features.
+
+    Depending on the actual slicing argument two FeatureSliceMappers can be
+    merged in a number of ways: incremental selection (+=), union (&=) and
+    intersection (|=).  Were the former assumes that two feature selections are
+    applied subsequently, and the latter two assume that both slicings operate
+    on the set of input features.
+
+    Examples
+    --------
+    >>> from mvpa.datasets import *
+    >>> ds = Dataset([[1,2,3,4,5]])
+    >>> fs0 = FeatureSliceMapper([0,1,2,3])
+    >>> fs0(ds).samples
+    array([[1, 2, 3, 4]])
+
+    Merge two incremental selections: the resulting mapper performs a selection
+    that is equivalent to first applying one slicing and subsequently the next
+    slicing. In this scenario the slicing argument of the second mapper is
+    relative to the output feature space of the first mapper.
+
+    >>> fs1 = FeatureSliceMapper([0,2])
+    >>> fs0 += fs1
+    >>> fs0(ds).samples
+    array([[1, 3]])
     """
     def __init__(self, slicearg, dshape=None, oshape=None, filler=0, **kwargs):
         """
@@ -227,25 +251,25 @@ class FeatureSliceMapper(SliceMapper):
 
     def __iadd__(self, other):
         # the checker has to catch all awkward conditions
-        if not self.is_mergable(other):
-            raise ValueError("Mapper cannot be merged into target "
-                             "(got: '%s', target: '%s')."
-                             % (repr(other), repr(self)))
+        if not hasattr(other, 'is_mergable') or not self.is_mergable(other):
+            raise NotImplemented("Mapper cannot be merged into target "
+                                 "(got: '%s', target: '%s')."
+                                 % (other, self))
 
         # either replace non-slicing, or slice
         if isinstance(self._slicearg, slice) and self._slicearg == slice(None):
-            self._slicearg = other._slicearg
+            self._safe_assign_slicearg(other._slicearg)
             return self
         if isinstance(self._slicearg, list):
             # simply convert it into an array and proceed from there
-            self._slicearg = np.asanyarray(self._slicearg)
+            self._safe_assign_slicearg(np.asanyarray(self._slicearg))
         if self._slicearg.dtype.type is np.bool_:
             # simply convert it into an index array --prevents us from copying a
             # lot and allows for sliceargs such as [3,3,4,4,5,5]
-            self._slicearg = self._slicearg.nonzero()[0]
+            self._safe_assign_slicearg(self._slicearg.nonzero()[0])
             # do not return since it needs further processing
         if self._slicearg.dtype.char in np.typecodes['AllInteger']:
-            self._slicearg = self._slicearg[other._slicearg]
+            self._safe_assign_slicearg(self._slicearg[other._slicearg])
             return self
 
         raise RuntimeError("This should not happen. Undetected condition!")
