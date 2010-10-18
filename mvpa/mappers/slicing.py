@@ -32,10 +32,18 @@ class SliceMapper(Mapper):
         if isinstance(slicearg, int):
             slicearg = [slicearg]
         self._slicearg = slicearg
+        # if we got some sort of slicearg we assume that we are ready to go
+        if not slicearg is None:
+            self._set_trained()
 
 
     def __str__(self):
         return _str(self)
+
+
+    def _untrain(self):
+        self._slicearg = None
+        super(SliceMapper, self)._untrain()
 
 
 
@@ -57,10 +65,6 @@ class SampleSliceMapper(SliceMapper):
     def _call(self, ds):
         # it couldn't be simpler
         return ds[self._slicearg]
-
-    def _untrain(self):
-        self._slicearg = None
-        super(SliceMapper, self)._untrain()
 
 
 

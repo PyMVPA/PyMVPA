@@ -26,6 +26,8 @@ class CorrCoef(FeaturewiseMeasure):
 
     XXX: Explain me!
     """
+    is_trained = True
+    """Indicate that this measure is always trained."""
 
     def __init__(self, pvalue=False, attr='targets', **kwargs):
         """Initialize

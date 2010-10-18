@@ -33,6 +33,7 @@ from mvpa.generators.splitters import Splitter
 from mvpa.generators.partition import NFoldPartitioner
 from mvpa.datasets.miscfx import get_samples_by_attr
 from mvpa.misc.attrmap import AttributeMap
+from mvpa.base.dochelpers import _str
 from mvpa.base.state import ConditionalAttribute, ClassWithCollections, \
      Harvestable
 from mvpa.mappers.slicing import FeatureSliceMapper
@@ -1307,6 +1308,10 @@ class MappedClassifier(ProxyClassifier):
         """Predict using `MappedClassifier`
         """
         return ProxyClassifier._predict(self, self.__mapper.forward(dataset))
+
+
+    def __str__(self):
+        return _str(self, '%s-%s' % (self.mapper, self.clf))
 
 
     mapper = property(lambda x:x.__mapper, doc="Used mapper")

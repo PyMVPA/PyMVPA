@@ -36,6 +36,10 @@ class BaseSearchlight(Measure):
     roi_sizes = ConditionalAttribute(enabled=False,
         doc="Number of features in each ROI.")
 
+    is_trained = True
+    """Indicate that this measure is always trained."""
+
+
     @borrowkwargs(Measure, '__init__')
     def __init__(self, queryengine, roi_ids=None, nproc=None, **kwargs):
         """
@@ -54,7 +58,7 @@ class BaseSearchlight(Measure):
           In addition this class supports all keyword arguments of its
           base-class :class:`~mvpa.measures.base.Measure`.
       """
-        Measure.__init__(self, **(kwargs))
+        Measure.__init__(self, **kwargs)
 
         if nproc > 1 and not externals.exists('pprocess'):
             raise RuntimeError("The 'pprocess' module is required for "

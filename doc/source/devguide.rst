@@ -492,7 +492,7 @@ Classifier-based Sensitivity Analyzers
 A :class:`~mvpa.measures.base.Sensitivity` behaves exactly like its
 classifier-independent sibling, but additionally provides support for embedding
 the necessary classifier and handles its training upon request
-(boolean `force_training` keyword argument of the constructor). Access to the
+(boolean `force_train` keyword argument of the constructor). Access to the
 embedded classifier object is provided via the `clf` property.
 
 .. autoconditional: measures.base Sensitivity

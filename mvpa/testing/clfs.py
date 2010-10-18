@@ -86,6 +86,7 @@ class SillySensitivityAnalyzer(FeaturewiseMeasure):
     """Simple one which just returns xrange[-N/2, N/2], where N is the
     number of features
     """
+    is_trained = True
 
     def __init__(self, mult=1, **kwargs):
         FeaturewiseMeasure.__init__(self, **kwargs)

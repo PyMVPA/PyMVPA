@@ -29,7 +29,7 @@ from mvpa.misc.attrmap import AttributeMap
 from mvpa.misc.errorfx import mean_mismatch_error
 from mvpa.base.types import asobjarray
 
-from mvpa.base.dochelpers import enhanced_doc_string
+from mvpa.base.dochelpers import enhanced_doc_string, _str
 from mvpa.base import externals, warning
 from mvpa.clfs.stats import auto_null_dist
 from mvpa.base.dataset import AttrDataset
@@ -193,7 +193,7 @@ class ProxyMeasure(Measure):
     wrapper, instead of the measure itself.
     """
     def __init__(self, measure, **kwargs):
-        Measure.__init__(self, **kwargs)
+        Measure.__init__(self, auto_train=True, **kwargs)
         self.__measure = measure
 
 
@@ -226,6 +226,9 @@ class RepeatedMeasure(Measure):
     datasets = ConditionalAttribute(enabled=False, doc=
        """Store generated datasets for all repetitions. Can be memory expensive
        """)
+
+    is_trained = True
+    """Indicate that this measure is always trained."""
 
     def __init__(self,
                  node,
@@ -434,6 +437,9 @@ class TransferMeasure(Measure):
        """Optional summary statistics about the transfer performance""")
     training_stats = ConditionalAttribute(enabled=False, doc=
        """Summary statistics about the training status of the learner""")
+
+    is_trained = True
+    """Indicate that this measure is always trained."""
 
     def __init__(self, measure, splitter, **kwargs):
         """
@@ -647,19 +653,21 @@ class Sensitivity(FeaturewiseMeasure):
     should be listed in the list
     """
 
-    def __init__(self, clf, force_training=True, **kwargs):
+    def __init__(self, clf, force_train=True, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
 
         Parameters
         ----------
         clf : `Classifier`
           classifier to use.
-        force_training : bool
-          if classifier was already trained -- do not retrain
+        force_train : bool
+          Flag whether the learner will enforce training on the input dataset
+          upon every call.
         """
 
         """Does nothing special."""
-        FeaturewiseMeasure.__init__(self, **kwargs)
+        FeaturewiseMeasure.__init__(self, auto_train=True,
+                                    force_train=force_train, **kwargs)
 
         _LEGAL_CLFS = self._LEGAL_CLFS
         if len(_LEGAL_CLFS) > 0:
@@ -676,44 +684,52 @@ class Sensitivity(FeaturewiseMeasure):
         self.__clf = clf
         """Classifier used to computed sensitivity"""
 
-        self._force_training = force_training
-        """Either to force it to train"""
 
     def __repr__(self, prefixes=None):
         if prefixes is None:
             prefixes = []
         prefixes.append("clf=%s" % repr(self.clf))
-        if not self._force_training:
-            prefixes.append("force_training=%s" % self._force_training)
+        if not self.is_forcedtraining:
+            prefixes.append("force_train=%s" % self.is_forcedtraining)
         return super(Sensitivity, self).__repr__(prefixes=prefixes)
 
 
-    def __call__(self, dataset=None):
-        """Train classifier on `dataset` and then compute actual sensitivity.
+    @property
+    def is_trained(self):
+        return self.__clf.trained
 
-        If the classifier is already trained it is possible to extract the
-        sensitivities without passing a dataset.
-        """
-        # local bindings
-        clf = self.__clf
-        if not clf.trained or self._force_training:
-            if dataset is None:
-                raise ValueError, \
-                      "Training classifier to compute sensitivities requires " \
-                      "a dataset."
-            if __debug__:
-                debug("SA", "Training classifier %s %s" %
-                      (repr(clf),
-                       {False: "since it wasn't yet trained",
-                        True:  "although it was trained previously"}
-                       [clf.trained]))
-            clf.train(dataset)
+    #    """Train classifier on `dataset` and then compute actual sensitivity.
 
-        return FeaturewiseMeasure.__call__(self, dataset)
+    #    If the classifier is already trained it is possible to extract the
+    #    sensitivities without passing a dataset.
+    #    """
+    #    # local bindings
+    #    clf = self.__clf
+    #    if clf.trained:
+    #        self._set_trained()
+    #    elif self._force_training:
+    #        if dataset is None:
+    #            raise ValueError, \
+    #                  "Training classifier to compute sensitivities requires " \
+    #                  "a dataset."
+    #        self.train(dataset)
+
+    #    return FeaturewiseMeasure.__call__(self, dataset)
 
 
     def _set_classifier(self, clf):
         self.__clf = clf
+
+
+    def _train(self, dataset):
+        clf = self.__clf
+        if __debug__:
+            debug("SA", "Training classifier %s %s" %
+                  (clf,
+                   {False: "since it wasn't yet trained",
+                    True:  "although it was trained previously"}
+                   [clf.trained]))
+        return clf.train(dataset)
 
 
     def _untrain(self):
@@ -854,7 +870,7 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         Sensitivity.__init__(self, clf, **kwargs)
         if combined_analyzer is None:
             # sanitarize kwargs
-            kwargs.pop('force_training', None)
+            kwargs.pop('force_train', None)
             combined_analyzer = CombinedFeaturewiseMeasure(sa_attr=sa_attr,
                                                                   **kwargs)
         self.__combined_analyzer = combined_analyzer
@@ -897,7 +913,7 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
             analyzer.clf = clf
             # if clf was trained already - don't train again
             if clf.trained:
-                analyzer._force_training = False
+                analyzer._force_train = False
             analyzers.append(analyzer)
 
         self.__combined_analyzer.analyzers = analyzers
@@ -965,7 +981,7 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
 
         # if clf was trained already - don't train again
         if clfclf.trained:
-            analyzer._force_training = False
+            analyzer._force_train = False
 
         result = analyzer._call(dataset)
         self.ca.clf_sensitivities = result
@@ -1026,11 +1042,15 @@ class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
     slave classifier"""
 
     def _call(self, dataset):
+        # incoming dataset need to be forward mapped
+        dataset_mapped = self.clf.mapper(dataset)
+        if __debug__:
+            debug('SA', 'Mapped incoming dataset %s to %s'
+                        % (dataset_mapped, dataset))
         sens = super(MappedClassifierSensitivityAnalyzer,
-                     self)._call(dataset)
-        # `sens` is either 1D array, or Dataset
-        # XXX maybe it is always a dataset?
-        if isinstance(sens, AttrDataset):
-            return self.clf.mapper.reverse(sens)
-        else:
-            return self.clf.mapper.reverse1(sens)
+                     self)._call(dataset_mapped)
+        return self.clf.mapper.reverse(sens)
+
+
+    def __str__(self):
+        return _str(self, str(self.clf))

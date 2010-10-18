@@ -42,7 +42,7 @@ class FlattenMapper(Mapper):
           The shape of a single sample. If this argument is given the mapper
           is going to be fully configured and no training is necessary anymore.
         """
-        Mapper.__init__(self, **kwargs)
+        Mapper.__init__(self, auto_train=True, **kwargs)
         self.__origshape = None
         self.__nfeatures = None
         if not shape is None:
@@ -81,6 +81,8 @@ class FlattenMapper(Mapper):
         self.__origshape = shape
         # total number of features in a sample
         self.__nfeatures = np.prod(self.__origshape)
+        # flag the mapper as trained
+        self._set_trained()
 
 
     def _forward_data(self, data):

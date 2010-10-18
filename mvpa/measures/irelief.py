@@ -47,6 +47,9 @@ class IterativeRelief_Devel(FeaturewiseMeasure):
     exponential-like kernels. Support for linear kernel will be
     added later.
     """
+    is_trained = True
+    """Indicate that this measure doesn't have to be trained"""
+
     def __init__(self, threshold = 1.0e-2, kernel = None, kernel_width = 1.0,
                  w_guess = None, **kwargs):
         """Constructor of the IRELIEF class.
@@ -162,6 +165,9 @@ class IterativeReliefOnline_Devel(IterativeRelief_Devel):
     major goal of this current online implementation is reduction of
     computational complexity.
     """
+    is_trained = True
+    """Indicate that this measure doesn't have to be trained"""
+
 
     def __init__(self, a=5.0, permute=True, max_iter=3, **kwargs):
         """Constructor of the IRELIEF class.
@@ -270,6 +276,9 @@ class IterativeRelief(FeaturewiseMeasure):
     exponential-like kernels. Support for linear kernel will be
     added later.
     """
+    is_trained = True
+    """Indicate that this measure doesn't have to be trained"""
+
     def __init__(self, threshold=1.0e-2, kernel_width=1.0,
                  w_guess=None, **kwargs):
         """Constructor of the IRELIEF class.
@@ -374,6 +383,9 @@ class IterativeReliefOnline(IterativeRelief):
     (I-RELIEF-2 online), using weighted 1-norm and Exponential
     Kernel.
     """
+    is_trained = True
+    """Indicate that this measure doesn't have to be trained"""
+
 
     def __init__(self, a=10.0, permute=True, max_iter=3, **kwargs):
         """Constructor of the IRELIEF class.

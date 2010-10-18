@@ -35,6 +35,9 @@ class GLM(FeaturewiseMeasure):
     zstat = ConditionalAttribute(enabled=False,
         doc="Standardized parameter estimates (nfeatures x nparameters).")
 
+    is_trained = True
+    """Indicate that this measure is always trained."""
+
     def __init__(self, design, voi='pe', **kwargs):
         """
         Parameters
