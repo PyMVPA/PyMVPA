@@ -32,18 +32,6 @@ class FeatureSelection(FeatureSliceMapper):
         FeatureSliceMapper.__init__(self, None, **kwargs)
 
 
-    def is_mergable(self, other):
-        """Returns False
-
-        Unlike simple FeatureSliceMappers feature selection algorithms cannot
-        simply be merged. Although it is technical possible to merge actual
-        feature selection results, any retraining would yield unexpected
-        behavior, since the original training algorithm might have been replaced
-        by a Mapper merge.
-        """
-        return False
-
-
     def _untrain(self):
         if __debug__:
             debug("FS_", "Untraining FS: %s" % self)
