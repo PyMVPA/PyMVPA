@@ -17,7 +17,8 @@ from mvpa.testing.datasets import *
 from mvpa.base import externals, warning
 from mvpa.base.node import ChainNode
 from mvpa.datasets.base import Dataset
-from mvpa.featsel.base import SensitivityBasedFeatureSelection
+from mvpa.featsel.base import SensitivityBasedFeatureSelection, \
+        CombinedFeatureSelection
 from mvpa.featsel.helpers import FixedNElementTailSelector, \
                                  FractionTailSelector, RangeElementSelector
 
@@ -437,32 +438,17 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                 postproc=sumofabs_sample()),
                     RangeElementSelector(mode='select'))]
 
-        fs = CombinedFeatureSelection(fss, combiner='union',
-                                      enable_ca=['selected_ids',
-                                                     'selections_ids'])
+        fs = CombinedFeatureSelection(fss, method='union')
 
-        od = fs(self.dataset)
+        od_union = fs(self.dataset)
 
-        self.failUnless(fs.combiner == 'union')
-        self.failUnless(len(fs.ca.selections_ids))
-        self.failUnless(len(fs.ca.selections_ids) <= self.dataset.nfeatures)
-        # should store one set per methods
-        self.failUnless(len(fs.ca.selections_ids) == len(fss))
-        # no individual can be larger than union
-        for s in fs.ca.selections_ids:
-            self.failUnless(len(s) <= len(fs.ca.selected_ids))
+        self.failUnless(fs.method == 'union')
         # check output dataset
-        self.failUnless(od.nfeatures == len(fs.ca.selected_ids))
-        for i, id in enumerate(fs.ca.selected_ids):
-            self.failUnless((od.samples[:,i]
-                             == self.dataset.samples[:,id]).all())
-
+        self.failUnless(od_union.nfeatures <= self.dataset.nfeatures)
         # again for intersection
-        fs = CombinedFeatureSelection(fss, combiner='intersection',
-                                      enable_ca=['selected_ids',
-                                                     'selections_ids'])
-        # simply run it for now -- can't think of additional tests
-        od = fs(self.dataset)
+        fs = CombinedFeatureSelection(fss, method='intersection')
+        od_intersect = fs(self.dataset)
+        assert_true(od_intersect.nfeatures < od_union.nfeatures)
 
     def test_anova(self):
         """Additional aspects of OnewayAnova
