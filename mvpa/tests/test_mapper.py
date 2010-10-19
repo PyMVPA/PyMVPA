@@ -153,7 +153,6 @@ def test_subset():
             orig = copy(st)
             subsm = FeatureSliceMapper(sub)
             # should do copy-on-write for all important stuff!!
-            assert_true(orig.is_mergable(subsm))
             orig += subsm
             # test if selection did its job
             if i == 3:
@@ -177,6 +176,12 @@ def test_subset():
     # invalid ids
     #assert_false(subsm.is_valid_inid(-1))
     #assert_false(subsm.is_valid_inid(16))
+
+    # intended merge failures
+    fsm = FeatureSliceMapper(np.arange(16))
+    assert_equal(fsm.__iadd__(None), NotImplemented)
+    assert_equal(fsm.__iadd__(Dataset([2,3,4])), NotImplemented)
+
 
 def test_subset_filler():
     sm = FeatureSliceMapper(np.arange(3))
