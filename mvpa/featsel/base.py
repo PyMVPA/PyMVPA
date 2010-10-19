@@ -10,11 +10,13 @@
 
 __docformat__ = 'restructuredtext'
 
+import numpy as np
 from mvpa.featsel.helpers import FractionTailSelector, \
                                  NBackHistoryStopCrit, \
                                  BestDetector
 from mvpa.mappers.slicing import FeatureSliceMapper
 from mvpa.base.state import ConditionalAttribute
+from mvpa.generators.splitters import mask2slice
 
 if __debug__:
     from mvpa.base import debug
@@ -219,3 +221,71 @@ class IterativeFeatureSelection(FeatureSelection):
         return trainds, testds
 
 
+
+class CombinedFeatureSelection(FeatureSelection):
+    """Meta feature selection utilizing several embedded selection methods.
+
+    During training each embedded feature selection method is computed
+    individually. Afterwards all feature sets are combined by either taking the
+    union or intersection of all sets.
+    """
+    def __init__(self, selectors, method, **kwargs):
+        """
+        Parameters
+        ----------
+        selectors : list
+          FeatureSelection instances to run. Order is not important.
+        method : {'union', 'intersection'}
+          which method to be used to combine the feature selection set of
+          all computed methods.
+        """
+        FeatureSelection.__init__(self, auto_train=True, **kwargs)
+
+        self.__selectors = selectors
+        self.__method = method
+
+
+    def _untrain(self):
+        if __debug__:
+            debug("FS_", "Untraining combined FS: %s" % self)
+        for fs in self.__selectors:
+            fs.untrain()
+        # ask base class to do its untrain
+        super(CombinedFeatureSelection, self)._untrain()
+
+
+    def _train(self, ds):
+        # local binding
+        method = self.__method
+
+        # two major modes
+        if method == 'union':
+            # slice mask default: take none
+            mask = np.zeros(ds.shape[1], dtype=np.bool)
+            # method: OR
+            cfunc = np.logical_or
+        elif method == 'intersection':
+            # slice mask default: take all
+            mask = np.ones(ds.shape[1], dtype=np.bool)
+            # method: AND
+            cfunc = np.logical_and
+        else:
+            raise ValueError("Unknown combining method '%s'" % method)
+
+        for fs in self.__selectors:
+            # first: train all embedded selections
+            fs.train(ds)
+            # now get boolean mask of selections
+            fsmask = np.zeros(mask.shape, dtype=np.bool)
+            # use slicearg to select features
+            fsmask[fs._slicearg] = True
+            # merge with current global mask
+            mask = cfunc(mask, fsmask)
+
+        # turn the derived boolean mask into a slice if possible
+        slicearg = mask2slice(mask)
+        # and assign to baseclass, done
+        self._safe_assign_slicearg(slicearg)
+
+    method = property(fget=lambda self: self.__method)
+    selectors = property(fget=lambda self: self.__selectors)
