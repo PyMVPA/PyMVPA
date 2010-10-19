@@ -38,12 +38,51 @@ class SliceMapper(Mapper):
 
 
     def __str__(self):
-        return _str(self)
+        return _str(self, str(self._slicearg))
 
 
     def _untrain(self):
         self._slicearg = None
         super(SliceMapper, self)._untrain()
+
+
+    def __iadd__(self, other):
+        # our slicearg
+        this = self._slicearg
+        # if another slice mapper work on its slicearg
+        if isinstance(other, SliceMapper):
+            other = other._slicearg
+        # catch stupid arg
+        if not (isinstance(other, tuple) or isinstance(other, list) \
+                or isinstance(other, np.ndarray) or isinstance(other, slice)):
+            return NotImplemented
+        if isinstance(this, slice):
+            # we can always merge if the slicing arg can be sliced itself (i.e.
+            # it is not a slice-object... unless it doesn't really slice we do
+            # not want to expand slices into index lists to become mergable,
+            # since that would cause cheap view-based slicing to become
+            # expensive copy-based slicing
+            if this == slice(None):
+                # this one did nothing, just use the other and be done
+                self._safe_assign_slicearg(other)
+                return self
+            else:
+                # see comment above
+                return NotImplemented
+        # list or tuple are alike
+        if isinstance(this, list) or isinstance(this, tuple):
+            # simply convert it into an array and proceed from there
+            this = np.asanyarray(this)
+        if this.dtype.type is np.bool_:
+            # simply convert it into an index array --prevents us from copying a
+            # lot and allows for sliceargs such as [3,3,4,4,5,5]
+            this = this.nonzero()[0]
+        if this.dtype.char in np.typecodes['AllInteger']:
+            self._safe_assign_slicearg(this[other])
+            return self
+
+        # if we get here we got something the isn't supported
+        return NotImplemented
 
 
 
@@ -230,49 +269,6 @@ class FeatureSliceMapper(SliceMapper):
         self._dshape = None
         self._oshape = None
         super(FeatureSliceMapper, self)._untrain()
-
-
-    def is_mergable(self, other):
-        """Checks whether a mapper can be merged into this one.
-        """
-        if not isinstance(other, FeatureSliceMapper):
-            return False
-        # we can always merge if the slicing arg can be sliced itself (i.e. it
-        # is not a slice-object... unless it doesn't really slice
-        # we do not want to expand slices into index lists to become mergable,
-        # since that would cause cheap view-based slicing to become expensive
-        # copy-based slicing
-        if isinstance(self._slicearg, slice) \
-           and not self._slicearg == slice(None):
-            return False
-
-        return True
-
-
-    def __iadd__(self, other):
-        # the checker has to catch all awkward conditions
-        if not hasattr(other, 'is_mergable') or not self.is_mergable(other):
-            raise NotImplemented("Mapper cannot be merged into target "
-                                 "(got: '%s', target: '%s')."
-                                 % (other, self))
-
-        # either replace non-slicing, or slice
-        if isinstance(self._slicearg, slice) and self._slicearg == slice(None):
-            self._safe_assign_slicearg(other._slicearg)
-            return self
-        if isinstance(self._slicearg, list):
-            # simply convert it into an array and proceed from there
-            self._safe_assign_slicearg(np.asanyarray(self._slicearg))
-        if self._slicearg.dtype.type is np.bool_:
-            # simply convert it into an index array --prevents us from copying a
-            # lot and allows for sliceargs such as [3,3,4,4,5,5]
-            self._safe_assign_slicearg(self._slicearg.nonzero()[0])
-            # do not return since it needs further processing
-        if self._slicearg.dtype.char in np.typecodes['AllInteger']:
-            self._safe_assign_slicearg(self._slicearg[other._slicearg])
-            return self
-
-        raise RuntimeError("This should not happen. Undetected condition!")
 
 
 

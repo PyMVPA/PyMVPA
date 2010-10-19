@@ -62,9 +62,13 @@ class Dataset(AttrDataset):
         # is a chain mapper
         # merge slicer?
         lastmapper = self.a.mapper[-1]
-        if isinstance(lastmapper, FeatureSliceMapper) \
-           and lastmapper.is_mergable(mapper):
-            lastmapper += mapper
+        if isinstance(lastmapper, FeatureSliceMapper):
+            try:
+                # try whether mappers can be merged
+                lastmapper += mapper
+            except TypeError:
+                # append new one if not
+                self.a.mapper.append(mapper)
         else:
             self.a.mapper.append(mapper)
 
