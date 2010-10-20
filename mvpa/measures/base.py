@@ -259,9 +259,9 @@ class RepeatedMeasure(Measure):
 
         if self.ca.is_enabled("stats") and (not node.ca.has_key("stats") or
                                             not node.ca.is_enabled("stats")):
-            raise ValueError("'stats' conditional attribute was enabled, but "
-                             "the assigned node either doesn't support it, "
-                             "or it is disabled")
+            warning("'stats' conditional attribute was enabled, but "
+                    "the assigned node '%s' either doesn't support it, "
+                    "or it is disabled" % node)
         # precharge conditional attributes
         ca.datasets = []
 
@@ -284,7 +284,8 @@ class RepeatedMeasure(Measure):
             # store
             results.append(result)
 
-            if ca.is_enabled("stats"):
+            if ca.is_enabled("stats") and node.ca.has_key("stats") \
+               and node.ca.is_enabled("stats"):
                 if not ca.is_set('stats'):
                     # create empty stats container of matching type
                     ca.stats = node.ca['stats'].value.__class__()
