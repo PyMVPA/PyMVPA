@@ -246,8 +246,16 @@ def test_chainmapper():
     assert_equal(len(cm), 3)
 
     # check reproduction
-    cm_clone = eval(repr(cm))
-    assert_equal(repr(cm_clone), repr(cm))
+    if __debug__:
+        # debug mode needs special test as it enhances the repr output
+        # with module info and id() appendix for objects
+        import mvpa
+        cm_clone = eval(repr(cm))
+        assert_equal('#'.join(repr(cm_clone).split('#')[:-1]),
+                     '#'.join(repr(cm).split('#')[:-1]))
+    else:
+        cm_clone = eval(repr(cm))
+        assert_equal(repr(cm_clone), repr(cm))
 
     # what happens if we retrain the whole beast an same data as before
     cm.train(data)
