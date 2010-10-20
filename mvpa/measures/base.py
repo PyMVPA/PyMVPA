@@ -501,18 +501,24 @@ class TransferMeasure(Measure):
         # compute measure stats
         if ca.is_enabled('stats'):
             if not hasattr(measure, '__summary_class__'):
-                raise ValueError('%s has no __summary_class__ attribute -- '
-                                 'necessary for computing transfer stats'
-                                 % measure)
-            stats = measure.__summary_class__(
-                # hmm, might be unsupervised, i.e no targets...
-                targets=res.sa[measure.get_space()].value,
-                # XXX this should really accept the full dataset
-                predictions=res.samples[:, 0],
-                estimates = measure.ca.get('estimates', None))
-            ca.stats = stats
+                warning('%s has no __summary_class__ attribute -- '
+                        'necessary for computing transfer stats' % measure)
+            else:
+                stats = measure.__summary_class__(
+                    # hmm, might be unsupervised, i.e no targets...
+                    targets=res.sa[measure.get_space()].value,
+                    # XXX this should really accept the full dataset
+                    predictions=res.samples[:, 0],
+                    estimates = measure.ca.get('estimates', None))
+                ca.stats = stats
         if ca.is_enabled('training_stats'):
-            ca.training_stats = measure.ca.training_stats
+            if measure.ca.has_key("stats") and measure.ca.is_enabled("stats"):
+                ca.training_stats = measure.ca.training_stats
+            else:
+                warning("'training_stats' conditional attribute was enabled, "
+                        "but the assigned measure '%s' either doesn't support "
+                        "it, or it is disabled" % measure)
+
         return res
 
 
