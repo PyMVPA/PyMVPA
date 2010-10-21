@@ -396,8 +396,6 @@ class CrossValidation(RepeatedMeasure):
                 tm.ca.enable(ca)
         if self.ca.is_enabled('training_stats'):
             # also enable training stats in the learner
-            # TODO this needs to become 'training_stats' whenever the
-            # classifiers are ready
             learner.ca.enable('training_stats')
 
 
@@ -512,7 +510,8 @@ class TransferMeasure(Measure):
                     estimates = measure.ca.get('estimates', None))
                 ca.stats = stats
         if ca.is_enabled('training_stats'):
-            if measure.ca.has_key("stats") and measure.ca.is_enabled("stats"):
+            if measure.ca.has_key("training_stats") \
+               and measure.ca.is_enabled("training_stats"):
                 ca.training_stats = measure.ca.training_stats
             else:
                 warning("'training_stats' conditional attribute was enabled, "
