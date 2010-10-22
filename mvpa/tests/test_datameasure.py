@@ -364,9 +364,9 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.failUnlessEqual(len(splits), 2)
         self.failUnless(np.all([s.nsamples == ds.nsamples/4 for s in splits]))
         # should have used different samples
-        self.failUnless(np.any([splits[0][0].sa.origids != splits[1][0].sa.origids]))
+        self.failUnless(np.any([splits[0].sa.origids != splits[1].sa.origids]))
         # and should have got different sensitivities
-        self.failUnless(np.any(sens[0] != sens[1]))
+        self.failUnless(np.any(sens[0] != sens[3]))
 
 
         #skip_if_no_external('scipy')
