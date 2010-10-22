@@ -89,7 +89,7 @@ class HyperAlignmentTests(unittest.TestCase):
             if not noisy or cfg.getboolean('tests', 'labile', default='yes'):
                 # First compare correlations
                 self.failUnless(np.all(np.array(ndcss)
-                                       >= (0.95, 0.9)[int(noisy)]),
+                                       >= (0.9, 0.85)[int(noisy)]),
                         msg="Should have reconstructed original dataset more or"
                         " less. Got correlations %s in %s case."
                         % (ndcss, ('clean', 'noisy')[int(noisy)]))
