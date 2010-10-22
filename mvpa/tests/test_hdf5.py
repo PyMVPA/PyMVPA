@@ -58,11 +58,12 @@ def test_h5py_dataset_typecheck():
     ds = datasets['uni2small']
 
     _, fpath = tempfile.mkstemp('mvpa', 'test')
+    _, fpath2 = tempfile.mkstemp('mvpa', 'test')
 
-    h5save(fpath, [[1, 2, 3]])
-    assert_raises(ValueError, AttrDataset.from_hdf5, fpath)
+    h5save(fpath2, [[1, 2, 3]])
+    assert_raises(ValueError, AttrDataset.from_hdf5, fpath2)
     # this one just catches if there is such a group
-    assert_raises(ValueError, AttrDataset.from_hdf5, fpath, name='bogus')
+    assert_raises(ValueError, AttrDataset.from_hdf5, fpath2, name='bogus')
 
     hdf = h5py.File(fpath, 'w')
     ds = AttrDataset([1, 2, 3])
@@ -76,6 +77,7 @@ def test_h5py_dataset_typecheck():
 
     # cleanup and ignore stupidity
     os.remove(fpath)
+    os.remove(fpath2)
 
 
 def test_matfile_v73_compat():
