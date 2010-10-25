@@ -58,7 +58,7 @@ tmpfile="$logdir/tmp.log"
 logfile="$logdir/all.log"
 
 # Remove
-trap "rm -fr $logdir/pymvpa $logdir/tmp.log;" EXIT
+trap "rm -fr $logdir/PyMVPA $logdir/tmp.log;" EXIT
 
 mkdir -p "$logdir"
 
