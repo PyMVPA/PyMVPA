@@ -52,7 +52,14 @@ def test_h5py_datasets():
         assert_equal(sorted(ds.a.keys()), sorted(ds2.a.keys()))
         if 'mapper' in ds.a:
             # since we have no __equal__ do at least some comparison
-            assert_equal(repr(ds.a.mapper), repr(ds2.a.mapper))
+            if __debug__:
+                # debug mode needs special test as it enhances the repr output
+                # with module info and id() appendix for objects
+                assert_equal('#'.join(repr(ds.a.mapper).split('#')[:-1]),
+                             '#'.join(repr(ds2.a.mapper).split('#')[:-1]))
+            else:
+                assert_equal(repr(ds.a.mapper), repr(ds2.a.mapper))
+
 
 def test_h5py_dataset_typecheck():
     ds = datasets['uni2small']
