@@ -124,7 +124,7 @@ here.
 * Elefant_: Efficient Learning, Large-scale Inference, and Optimization
   Toolkit.  Multi-purpose open source library for machine learning.
 
-* MDP_
+* MDP_:
   Python data processing framework. MDP_ provides various algorithms.
   *PyMVPA makes use of MDP's PCA and ICA implementations.*
 
@@ -135,8 +135,9 @@ here.
   is heavily connected to SciPy and lots of functionality developed within
   NiPy becomes part of SciPy.
 
-* OpenMEEG_: Software package for low-frequency bio-electromagnetism including
-  the EEG/MEG forward and inverse problems. OpenMEEG includes Python bindings.
+* OpenMEEG_: Software package for low-frequency bio-electromagnetism
+  solving forward problems in the field of EEG and MEG.
+  OpenMEEG includes Python bindings.
 
 * Orange_: Powerful general-purpose data mining software. Orange also has Python
   bindings.
@@ -145,11 +146,14 @@ here.
 
 * `PyMGH/PyFSIO`_: Python IO library to for FreeSurfer's `.mgh` data format.
 
-* PyML_: PyML is an interactive object oriented framework for machine learning
+* PyML_: Interactive object oriented framework for machine learning
   written in Python. PyML focuses on SVMs and other kernel methods.
 
 * PyNIfTI_: Read and write NIfTI images from within Python.
   *PyMVPA uses PyNIfTI to access MRI datasets.*
+
+* `scikits.learn`_: Python module integrating classic machine learning
+  algorithms in the tightly-knit world of scientific Python packages.
 
 * Shogun_: Comprehensive machine learning toolbox with bindings to various
   programming languages.
@@ -168,4 +172,5 @@ here.
 .. _PROBID: http://www.brainmap.co.uk/probid.htm
 .. _PyMGH/PyFSIO: http://code.google.com/p/pyfsio
 .. _PyNIfTI: http://niftilib.sourceforge.net/pynifti
-.. _OpenMEEG: http://www-sop.inria.fr/odyssee/software/OpenMEEG
+.. _OpenMEEG: http://openmeeg.gforge.inria.fr
+.. _scikits.learn: http://scikit-learn.sourceforge.net
