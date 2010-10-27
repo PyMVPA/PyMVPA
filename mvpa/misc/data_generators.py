@@ -13,9 +13,6 @@ __docformat__ = 'restructuredtext'
 import os
 import numpy as np
 
-
-from sets import Set
-
 from mvpa.datasets.base import dataset_wizard, Dataset
 from mvpa import pymvpa_dataroot, pymvpa_datadbroot
 
