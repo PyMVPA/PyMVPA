@@ -24,8 +24,6 @@ __docformat__ = 'restructuredtext'
 import operator
 import numpy as np
 
-from sets import Set
-
 from mvpa.misc.args import group_kwargs
 from mvpa.misc.param import Parameter
 
@@ -135,9 +133,9 @@ class BoostedClassifier(Classifier, Harvestable):
         """Custom _get_feature_ids for `BoostedClassifier`
         """
         # return union of all used features by slave classifiers
-        feature_ids = Set([])
+        feature_ids = set([])
         for clf in self.__clfs:
-            feature_ids = feature_ids.union(Set(clf.ca.feature_ids))
+            feature_ids = feature_ids.union(set(clf.ca.feature_ids))
         return list(feature_ids)
 
 

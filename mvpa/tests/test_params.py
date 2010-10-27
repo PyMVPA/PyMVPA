@@ -11,7 +11,6 @@
 import unittest, copy
 
 import numpy as np
-from sets import Set
 
 from mvpa.datasets.base import dataset_wizard
 from mvpa.misc.state import ClassWithCollections, ConditionalAttribute
