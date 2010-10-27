@@ -24,8 +24,6 @@ __docformat__ = 'restructuredtext'
 import operator
 import numpy as N
 
-from sets import Set
-
 from mvpa.misc.args import group_kwargs
 from mvpa.mappers.mask import MaskMapper
 from mvpa.datasets.splitters import NFoldSplitter
@@ -126,9 +124,9 @@ class BoostedClassifier(Classifier, Harvestable):
         """Custom _getFeatureIds for `BoostedClassifier`
         """
         # return union of all used features by slave classifiers
-        feature_ids = Set([])
+        feature_ids = set([])
         for clf in self.__clfs:
-            feature_ids = feature_ids.union(Set(clf.feature_ids))
+            feature_ids = feature_ids.union(set(clf.feature_ids))
         return list(feature_ids)
 
 
@@ -842,8 +840,8 @@ class BinaryClassifier(ProxyClassifier):
         self._regressionIsBogus()
 
         # Handle labels
-        sposlabels = Set(poslabels) # so to remove duplicates
-        sneglabels = Set(neglabels) # so to remove duplicates
+        sposlabels = set(poslabels) # so to remove duplicates
+        sneglabels = set(neglabels) # so to remove duplicates
 
         # check if there is no overlap
         overlap = sposlabels.intersection(sneglabels)

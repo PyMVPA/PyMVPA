@@ -18,7 +18,6 @@ It was devised to provide conditional storage
 __docformat__ = 'restructuredtext'
 
 import operator, copy
-from sets import Set
 from textwrap import TextWrapper
 
 import numpy as N
@@ -710,8 +709,8 @@ class StateCollection(Collection):
         if not other is None:
             # lets take states which are enabled in other but not in
             # self
-            add_enable_states = list(Set(other.enabled).difference(
-                 Set(enable_states)).intersection(self.names))
+            add_enable_states = list(set(other.enabled).difference(
+                 set(enable_states)).intersection(self.names))
             if len(add_enable_states)>0:
                 if __debug__:
                     debug("ST",

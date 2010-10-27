@@ -11,7 +11,6 @@
 import unittest, copy
 
 import numpy as N
-from sets import Set
 
 from mvpa.datasets import Dataset
 from mvpa.misc.state import ClassWithCollections, StateVariable

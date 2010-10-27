@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for SVM classifier"""
 
-from sets import Set
-
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.clfs.meta import ProxyClassifier
 from mvpa.clfs.transerror import TransferError
@@ -44,8 +42,8 @@ class SVMTests(unittest.TestCase):
         #                     [nl_param_orig[k] for k in orig_keys],
         #   msg="New instance mustn't override values in previously created")
         ## and keys separately
-        #self.failUnlessEqual(Set(nl_clf.param._params.keys()),
-        #                     Set(orig_keys),
+        #self.failUnlessEqual(set(nl_clf.param._params.keys()),
+        #                     set(orig_keys),
         #   msg="New instance doesn't change set of parameters in original")
 
         # We must be able to deepcopy not yet trained SVMs now
