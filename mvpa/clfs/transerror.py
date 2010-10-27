@@ -14,7 +14,6 @@ import mvpa.support.copy as copy
 
 import numpy as np
 
-from sets import Set
 from StringIO import StringIO
 from math import log10, ceil
 
@@ -522,17 +521,17 @@ class ConfusionMatrix(SummaryStatistics):
         try:
             # figure out what labels we have
             labels = \
-                list(reduce(lambda x, y: x.union(Set(y[0]).union(Set(y[1]))),
+                list(reduce(lambda x, y: x.union(set(y[0]).union(set(y[1]))),
                             self.sets,
-                            Set(self.__labels)))
+                            set(self.__labels)))
         except:
             labels = self.__labels
 
         # Check labels_map if it was provided if it covers all the labels
         labels_map = self.__labels_map
         if labels_map is not None:
-            labels_set = Set(labels)
-            map_labels_set = Set(labels_map.values())
+            labels_set = set(labels)
+            map_labels_set = set(labels_map.values())
 
             if not map_labels_set.issuperset(labels_set):
                 warning("Provided labels_map %s is not coherent with labels "
@@ -834,13 +833,13 @@ class ConfusionMatrix(SummaryStatistics):
 
         if labels_order is not None:
             labels_order_filtered = filter(lambda x:x is not None, labels_order)
-            labels_order_filtered_set = Set(labels_order_filtered)
+            labels_order_filtered_set = set(labels_order_filtered)
             # Verify if all labels provided in labels
-            if Set(labels) == labels_order_filtered_set:
+            if set(labels) == labels_order_filtered_set:
                 # We were provided numerical (most probably) set
                 labels_plot = labels_order
             elif len(labels_rev) \
-                     and Set(labels_rev) == labels_order_filtered_set:
+                     and set(labels_rev) == labels_order_filtered_set:
                 # not clear if right whenever there were multiple labels
                 # mapped into the same
                 labels_plot = []
@@ -1310,8 +1309,8 @@ class ClassifierError(ClassWithCollections):
         if self.__clf.ca.is_enabled('trained_targets') \
                and not self.__clf.__is_regression__ \
                and not testdataset is None:
-            newlabels = Set(testdataset.sa[self.clf.get_space()].unique) \
-                        - Set(self.__clf.ca.trained_targets)
+            newlabels = set(testdataset.sa[self.clf.get_space()].unique) \
+                        - set(self.__clf.ca.trained_targets)
             if len(newlabels)>0:
                 warning("Classifier %s wasn't trained to classify labels %s" %
                         (self.__clf, newlabels) +

@@ -39,7 +39,6 @@ __docformat__ = 'restructuredtext'
 
 import operator
 import mvpa.support.copy as copy
-from sets import Set
 from textwrap import TextWrapper
 
 # Although not used here -- included into interface
@@ -484,8 +483,8 @@ class ConditionalAttributesCollection(Collection):
         if not other is None:
             # lets take ca which are enabled in other but not in
             # self
-            add_enable_ca = list(Set(other.enabled).difference(
-                 Set(enable_ca)).intersection(self.keys()))
+            add_enable_ca = list(set(other.enabled).difference(
+                 set(enable_ca)).intersection(self.keys()))
             if len(add_enable_ca)>0:
                 if __debug__:
                     debug("ST",
