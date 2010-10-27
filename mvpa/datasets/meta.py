@@ -12,7 +12,6 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from sets import Set
 import random
 from mvpa.datasets.mapped import MappedDataset
 

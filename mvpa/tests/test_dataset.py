@@ -11,7 +11,6 @@
 import unittest
 import random
 import numpy as N
-from sets import Set
 from mvpa.datasets import Dataset
 from mvpa.datasets.miscfx import zscore, aggregateFeatures
 from mvpa.mappers.mask import MaskMapper
@@ -195,7 +194,7 @@ class DatasetTests(unittest.TestCase):
 
         # select some samples removing some labels completely
         sel = data.selectSamples(data.idsbylabels([3, 4, 8, 9]))
-        self.failUnlessEqual(Set(sel.uniquelabels), Set([3, 4, 8, 9]))
+        self.failUnlessEqual(set(sel.uniquelabels), set([3, 4, 8, 9]))
         self.failUnless((sel.origids == [0, 1, 2, 3, 4, 5, 6, 8, 9]).all())
 
 

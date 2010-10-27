@@ -16,7 +16,6 @@ from verbosity import verbose, debug; debug.active = [1,2,3]; debug(1, "blah")
 __docformat__ = 'restructuredtext'
 
 from sys import stdout, stderr
-from sets import Set
 # GOALS
 #  any logger should be able
 #   to log into a file or stdout/stderr
@@ -241,7 +240,7 @@ class SetLogger(Logger):
         from mvpa.base import verbose
         self.__active = []
         registered_keys = self.__registered.keys()
-        for item in list(Set(active)):
+        for item in list(set(active)):
             if item == '':
                 continue
             if isinstance(item, basestring):
@@ -280,7 +279,7 @@ class SetLogger(Logger):
                           % item_
             self.__active += toactivate
 
-        self.__active = list(Set(self.__active)) # select just unique ones
+        self.__active = list(set(self.__active)) # select just unique ones
         self.__maxstrlength = max([len(str(x)) for x in self.__active] + [0])
         if len(self.__active):
             verbose(2, "Enabling debug handlers: %s" % `self.__active`)
@@ -373,7 +372,7 @@ if __debug__:
         Also strip .py at the end
         """
         base = basename(s).rstrip('py').rstrip('.')
-        if base in Set(['base', '__init__']):
+        if base in ['base', '__init__']:
             base = basename(dirname(s)) + '.' + base
         return base
 

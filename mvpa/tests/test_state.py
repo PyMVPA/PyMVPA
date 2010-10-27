@@ -11,7 +11,6 @@
 import unittest, copy
 
 import numpy as N
-from sets import Set
 
 from mvpa.base import externals
 
@@ -128,13 +127,13 @@ class StateTests(unittest.TestCase):
 
 
         proper.states.enable(['state2'])
-        self.failUnlessEqual(Set(proper.states.names), Set(['state1', 'state2']))
+        self.failUnlessEqual(set(proper.states.names), set(['state1', 'state2']))
         if __debug__ and 'ENFORCE_STATES_ENABLED' in debug.active:
             # skip testing since all states are on now
             return
         self.failUnless(proper.states.enabled == ['state2'])
 
-        self.failUnless(Set(proper2.states.enabled) == Set(['state1']))
+        self.failUnless(set(proper2.states.enabled) == set(['state1']))
 
         self.failUnlessRaises(AttributeError, proper.__getattribute__, 'state12')
 
@@ -148,10 +147,10 @@ class StateTests(unittest.TestCase):
         self.failUnless(str_.find('2 states:') != -1)
 
         # check if disable works
-        self.failUnless(Set(proper2.states.enabled), Set(['state1']))
+        self.failUnless(set(proper2.states.enabled), set(['state1']))
 
         proper2.states.disable("all")
-        self.failUnlessEqual(Set(proper2.states.enabled), Set())
+        self.failUnlessEqual(set(proper2.states.enabled), set())
 
         proper2.states.enable("all")
         self.failUnlessEqual(len(proper2.states.enabled), 2)
@@ -180,7 +179,7 @@ class StateTests(unittest.TestCase):
         self.failUnless(enabled_states != proper.states.enabled,
                         msg="New enabled states should differ from previous")
 
-        self.failUnless(Set(proper.states.enabled) == Set(['state1', 'state2']),
+        self.failUnless(set(proper.states.enabled) == set(['state1', 'state2']),
                         msg="Making sure that we enabled all states of interest")
 
         proper.states.enabled = enabled_states
@@ -201,16 +200,16 @@ class StateTests(unittest.TestCase):
         self.failUnlessEqual(proper.states.enabled, ["state2"])
         proper.states._changeTemporarily(
             enable_states=["state1"], other=properch)
-        self.failUnlessEqual(Set(proper.states.enabled),
-                             Set(["state1", "state2"]))
+        self.failUnlessEqual(set(proper.states.enabled),
+                             set(["state1", "state2"]))
         proper.states._resetEnabledTemporarily()
         self.failUnlessEqual(proper.states.enabled, ["state2"])
 
         # allow to enable disable without other instance
         proper.states._changeTemporarily(
             enable_states=["state1", "state2"])
-        self.failUnlessEqual(Set(proper.states.enabled),
-                             Set(["state1", "state2"]))
+        self.failUnlessEqual(set(proper.states.enabled),
+                             set(["state1", "state2"]))
         proper.states._resetEnabledTemporarily()
         self.failUnlessEqual(proper.states.enabled, ["state2"])
 
@@ -220,8 +219,8 @@ class StateTests(unittest.TestCase):
         Simple test if child gets state variables from the parent as well
         """
         proper = TestClassProperChild()
-        self.failUnlessEqual(Set(proper.states.names),
-                             Set(['state1', 'state2', 'state4']))
+        self.failUnlessEqual(set(proper.states.names),
+                             set(['state1', 'state2', 'state4']))
 
 
     def testStateVariables(self):
