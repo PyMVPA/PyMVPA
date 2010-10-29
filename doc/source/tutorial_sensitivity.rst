@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -69,10 +69,8 @@ We will use a simple cross-validation procedure with a linear support
 vector machine and we want a confusion matrix:
 
 >>> clf = LinearCSVMC()
->>> cvte = CrossValidatedTransferError(
-...             TransferError(clf),
-...             splitter=NFoldSplitter(),
-...             enable_ca=['confusion'])
+>>> cvte = CrossValidation(clf, NFoldPartitioner(),
+...                        enable_ca=['stats'])
 
 Ready, set, go!
 
@@ -80,9 +78,9 @@ Ready, set, go!
 
 That was surprisingly quick, wasn't it? But was it any good?
 
->>> print np.round(cvte.ca.confusion.stats['ACC%'], 1)
+>>> print np.round(cvte.ca.stats.stats['ACC%'], 1)
 26.0
->>> print cvte.ca.confusion.matrix
+>>> print cvte.ca.stats.matrix
 [[1 1 2 3 0 1 1 1]
  [1 2 2 0 2 2 3 1]
  [5 3 3 0 4 4 0 2]
@@ -124,6 +122,7 @@ dataset to perform the feature selection:
 .. Put slicing logic from Splitters also in these objects
 .. refactor them to return just one dataset
 
+>>> fsel.train(ds)
 >>> ds_p = fsel(ds)
 >>> print ds_p.shape
 (96, 500)
@@ -132,9 +131,9 @@ This is the dataset we wanted, so we can rerun the cross-validation and see
 if it helped:
 
 >>> results = cvte(ds_p)
->>> print np.round(cvte.ca.confusion.stats['ACC%'], 1)
+>>> print np.round(cvte.ca.stats.stats['ACC%'], 1)
 79.2
->>> print cvte.ca.confusion.matrix
+>>> print cvte.ca.stats.matrix
 [[ 5  0  3  0  0  3  0  2]
  [ 0 11  0  0  0  0  0  0]
  [ 0  0  7  0  0  1  0  0]
@@ -161,15 +160,16 @@ this binary problem
 
 >>> bin_demo = ds[np.array([i in ['bottle', 'shoe'] for i in ds.sa.targets])]
 >>> results = cvte(bin_demo)
->>> print np.round(cvte.ca.confusion.stats['ACC%'], 1)
+>>> print np.round(cvte.ca.stats.stats['ACC%'], 1)
 62.5
 
 Not much, but that doesn't surprise. Let's see what effect our ANOVA-based
 feature selection has
 
+>>> fsel.train(bin_demo)
 >>> bin_demo_p = fsel(bin_demo)
 >>> results = cvte(bin_demo_p)
->>> print cvte.ca.confusion.stats["ACC%"]
+>>> print cvte.ca.stats.stats["ACC%"]
 100.0
 
 Wow, that is a jump. Perfect classification performance, even though the
@@ -199,12 +199,10 @@ got a meta-classifier that can be used just as any other classifier. Most
 importantly we can plug it into a cross-validation procedure (almost
 identical to the one we had in the beginning).
 
->>> cvte = CrossValidatedTransferError(
-...             TransferError(fclf),
-...             splitter=NFoldSplitter(),
-...             enable_ca=['confusion'])
+>>> cvte = CrossValidation(fclf, NFoldPartitioner(),
+...                        enable_ca=['stats'])
 >>> results = cvte(bin_demo)
->>> print np.round(cvte.ca.confusion.stats['ACC%'], 1)
+>>> print np.round(cvte.ca.stats.stats['ACC%'], 1)
 70.8
 
 This is a lot worse and a lot closer to the truth -- or a so-called
@@ -213,9 +211,9 @@ We can now also run this improved procedure on our original 8-category
 dataset.
 
 >>> results = cvte(ds)
->>> print np.round(cvte.ca.confusion.stats['ACC%'], 1)
+>>> print np.round(cvte.ca.stats.stats['ACC%'], 1)
 78.1
->>> print cvte.ca.confusion.matrix
+>>> print cvte.ca.stats.matrix
 [[ 5  0  2  0  0  4  0  2]
  [ 0 10  0  0  0  0  0  0]
  [ 0  0  8  0  0  1  0  0]
@@ -246,12 +244,10 @@ feature selection to retain more.
 ...            OneWayAnova(),
 ...            FractionTailSelector(0.05, mode='select', tail='upper'))
 >>> fclf = FeatureSelectionClassifier(clf, fsel)
->>> cvte = CrossValidatedTransferError(
-...             TransferError(fclf),
-...             splitter=NFoldSplitter(),
-...             enable_ca=['confusion'])
+>>> cvte = CrossValidation(fclf, NFoldPartitioner(),
+...                        enable_ca=['stats'])
 >>> results = cvte(ds)
->>> print np.round(cvte.ca.confusion.stats['ACC%'], 1)
+>>> print np.round(cvte.ca.stats.stats['ACC%'], 1)
 70.8
 
 A drop of 8% in accuracy on about 4 times the number of features. This time
@@ -265,7 +261,7 @@ this *analyzer* we can simply ask the classifier to do it:
 
 >>> sensana = fclf.get_sensitivity_analyzer()
 >>> type(sensana)
-<class 'mvpa.measures.base.FeatureSelectionClassifierSensitivityAnalyzer'>
+<class 'mvpa.measures.base.MappedClassifierSensitivityAnalyzer'>
 
 As you can see, this even works for our meta-classifier. And again this
 analyzer is a :term:`processing object` that returns the desired sensitivity
@@ -313,11 +309,11 @@ from cross-validation splits of the data. Rectifying it is easy with a
 meta-measure. A meta-measure is analogous to a meta-classifier: a measure
 that takes a basic measure, adds a processing step to it and behaves like a
 measure itself. The meta-measure we want to use is
-:class:`~mvpa.measures.base.SplitFeaturewiseDatasetMeasure`.
+:class:`~mvpa.measures.base.SplitFeaturewiseMeasure`.
 
 >>> # alt: `sens = load_tutorial_results('res_haxby2001_splitsens_5pANOVA')`
 >>> sensana = fclf.get_sensitivity_analyzer(postproc=maxofabs_sample())
->>> cv_sensana = SplitFeaturewiseDatasetMeasure(NFoldSplitter(), sensana)
+>>> cv_sensana = RepeatedMeasure(sensana, NFoldPartitioner())
 >>> sens = cv_sensana(ds)
 >>> print sens.shape
 (12, 39912)
@@ -353,12 +349,12 @@ access the total performance of the underlying classifier. To again gain
 access to it, and get the sensitivities at the same time, we can twist the
 processing pipeline a bit.
 
->>> sclf = SplitClassifier(fclf, NFoldSplitter(), enable_ca=['confusion'])
+>>> sclf = SplitClassifier(fclf, enable_ca=['stats'])
 >>> cv_sensana = sclf.get_sensitivity_analyzer()
 >>> sens = cv_sensana(ds)
 >>> print sens.shape
 (336, 39912)
->>> print cv_sensana.clf.ca.confusion.matrix
+>>> print cv_sensana.clf.ca.stats.matrix
 [[ 5  0  3  0  0  3  0  1]
  [ 0  9  0  0  0  0  0  0]
  [ 0  2  4  0  0  1  0  0]
@@ -457,7 +453,7 @@ are going to go beyond spatial analyses and explore the time dimension.
 
      ~mvpa.measures.base.Sensitivity
      ~mvpa.featsel.base.SensitivityBasedFeatureSelection
-     ~mvpa.measures.base.SplitFeaturewiseDatasetMeasure
+     ~mvpa.measures.base.SplitFeaturewiseMeasure
      ~mvpa.clfs.meta.FeatureSelectionClassifier
      ~mvpa.clfs.meta.SplitClassifier
      ~mvpa.clfs.meta.TreeClassifier

@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import copy
 
-from mvpa.base import externals
+from mvpa.base import externals, cfg
 from mvpa.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection
 from mvpa.base.types import is_datasetlike
@@ -22,6 +22,11 @@ from mvpa.base.dochelpers import _str
 if __debug__:
     from mvpa.base import debug
 
+__REPR_STYLE__ = cfg.get('datasets', 'repr', 'full')
+
+if not __REPR_STYLE__ in ('full', 'str'):
+    raise ValueError, "Incorrect value %r for option datasets.repr." \
+          " Valid are 'full' and 'str'." % __REPR_STYLE__
 
 class AttrDataset(object):
     """Generic storage class for datasets with multiple attributes.
@@ -524,7 +529,7 @@ class AttrDataset(object):
         return self.__class__(samples, sa=sa, fa=fa, a=a)
 
 
-    def __repr__(self):
+    def __repr_full__(self):
         return "%s(%s, sa=%s, fa=%s, a=%s)" \
                 % (self.__class__.__name__,
                    repr(self.samples),
@@ -543,6 +548,8 @@ class AttrDataset(object):
         # include only collections that have content
         return _str(self, samplesstr, *cols)
 
+    __repr__ = {'full' : __repr_full__,
+                'str'  : __str__}[__REPR_STYLE__]
 
     def __array__(self, dtype=None):
         # another possibility would be converting .todense() for sparse data

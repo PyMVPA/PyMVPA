@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 79 -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -19,30 +19,25 @@ Git Repository
 Layout
 ------
 
-The git repository is structured by a number of branches.  Originally we
-followed the scheme, where each developer prefixed his/her branches with a
-unique string plus '/' (maybe initials or similar).  That is why currently
-there are:
-
-  :eo: Emanuele Olivetti
-  :mh: Michael Hanke
-  :per: Per B. Sederberg
-  :yoh: Yaroslav O. Halchenko
-
-At the moment, with availability of PyMVPA repository at github_, such
-convention slowly gets superseded with adopting a true distributed workflow:
+The git repository is structured by a number of branches and clones (forks) at
+github_.
 Anyone is welcome to fork the repository on github_ (just click on "Fork"
 button), and file a "Pull request" whenever he/she thinks that his changes are
 ready to be included (merged) into the main repository.  Alternatively, if you
-just want quickly submit a patch -- just email it to the mailing list.  You
-might take advantage of ``git format-patch`` command.
+just want quickly submit a patch -- just email it to the mailing list.
+Concise accompanying description is a plus. You might take advantage of
+``git format-patch`` command.
+
+.. _github: http://github.com/PyMVPA/PyMVPA/
+
+
+Branches
+--------
 
 Any developer can have an infinite number of branches. If the number of
 branches causes gitk output to exceed a usual 19" screen, the respective
 developer has to spend some bucks (or euros) on new screens for all others
 ;-)
-
-.. _github: http://github.com/hanke/PyMVPA/
 
 The main release branch is called *master*. This is a merge-only branch.
 Features finished or updated by some developer are merged from the
@@ -63,6 +58,18 @@ maintenance (as well as backport) releases should be gone under
 *dist/debian/security/lenny*).  Branch *dist/debian/dev* is dedicated for
 Debian packages of development snapshots.
 
+Besides *master*, *maint/...*, *dist/...* we are following the convention for
+additional prefixes for new branches:
+
+_bf/...
+  Bugfix branches -- should be simply deleted on remotes whenever accepted
+_tent/...
+  Tentative new features which might be adopted or not.  Whenever feature gets
+  adopted (merged into some *master*), corresponding HEAD of *_tent/* branch
+  should be tagged with a corresponding non-annotated *+tent/* tag
+
+Please do not base your work on *_tent/* branches of the others since those
+could be forcefully rebased without further notice.
 
 Commits
 -------
@@ -90,9 +97,14 @@ Merges
 ------
 
 For easy tracking of what changes were absorbed during merge, we
-advice to enable merge summary within git:
+advice to enable automagic inclusion of their log entries into the
+commit message of the merge::
 
-  git-config merge.summary true
+  git config merge.log true
+
+.. note::
+
+  `merge.log` superseeds deprecated x`merge.summary`
 
 
 Code
@@ -168,7 +180,7 @@ __str__
   if any), not necessarily *eval*\uable.
 
 .. note::
-   Classes derived from :class:`~mvpa.misc.state.ClassWithCollections` and
+   Classes derived from :class:`~mvpa.base.state.ClassWithCollections` and
    using `params` and `ca` collections for their need of parametrization
    (e.g. :class:`~mvpa.clfs.base.Classifier`) would obtain an acceptable
    definitions of `__repr__` and `__str__` automagically.
@@ -381,7 +393,7 @@ predicting_time     Time (in seconds) which took classifier to       Enabled
 predictions         Most recent set of predictions.                  Enabled
 trained_dataset     The dataset it has been trained on.              Disabled
 trained_targets     Set of unique labels it has been trained on.     Enabled
-training_confusion  Confusion matrix of learning performance.        Disabled
+training_stats      Confusion matrix of learning performance.        Disabled
 training_time       Time (in seconds) which took classifier to       Enabled
                     train.
 values              Internal classifier values the most recent       Disabled
@@ -420,39 +432,39 @@ Outstanding Questions:
     * when ca and when properties?
 
 
-Adding a new DatasetMeasure
----------------------------
+Adding a new Measure
+--------------------
 
 There are few possible base-classes for new measures (former sensitivity
-analyzers).  First, :class:`~mvpa.measures.base.DatasetMeasure` can directly be sub-classed. It is a base
+analyzers).  First, :class:`~mvpa.measures.base.Measure` can directly be sub-classed. It is a base
 class for any measure to be computed on a :class:`~mvpa.datasets.base.Dataset`. This is the more generic
 approach. In the most of the cases, measures are to be reported per each
-feature, thus :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure` should serve as a base class in those
+feature, thus :class:`~mvpa.measures.base.FeaturewiseMeasure` should serve as a base class in those
 cases. Furthermore, for measures that make use of some classifier and extract
 the sensitivities from it, :class:`~mvpa.measures.base.Sensitivity` (derived from
-:class:`~mvpa.measures.base.FeaturewiseDatasetMeasure`) is a more appropriate base-class, as it provides
+:class:`~mvpa.measures.base.FeaturewiseMeasure`) is a more appropriate base-class, as it provides
 some additional useful functionality for this use case (e.g. training a
 classifier if needed).
 
 .. TODO: deprecate transformers etc
 
-All measures (actually all objects based on :class:`~mvpa.measures.base.DatasetMeasure`)
+All measures (actually all objects based on :class:`~mvpa.measures.base.Measure`)
 support a `transformer` keyword argument to their constructor. The functor
 passed as its value is called with the to be returned results and its outcome
 is returned as the final results. By default no transformation is performed.
 
-If a :class:`~mvpa.measures.base.DatasetMeasure` computes a characteristic, were both large positive and
+If a :class:`~mvpa.measures.base.Measure` computes a characteristic, were both large positive and
 large negative values indicate high relevance, it should nevertheless *not*
 return absolute sensitivities, but set a default transformer instead that takes
 the absolute (e.g. plain `np.absolute` or a convinience wrapper Absolute_).
 
 To add a new measure implementation it is sufficient to create a new sub-class
-of :class:`~mvpa.measures.base.DatasetMeasure` (or :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure`, or :class:`~mvpa.measures.base.Sensitivity`) and add an
+of :class:`~mvpa.measures.base.Measure` (or :class:`~mvpa.measures.base.FeaturewiseMeasure`, or :class:`~mvpa.measures.base.Sensitivity`) and add an
 implementation of the `_call(dataset)` method. It will be called with an
-instance of :class:`~mvpa.datasets.base.Dataset`. :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure` (e.g. :class:`~mvpa.measures.base.Sensitivity` as well)
+instance of :class:`~mvpa.datasets.base.Dataset`. :class:`~mvpa.measures.base.FeaturewiseMeasure` (e.g. :class:`~mvpa.measures.base.Sensitivity` as well)
 has to return a vector of featurewise sensitivity scores.
 
-.. autoconditional: measures.base DatasetMeasure
+.. autoconditional: measures.base Measure
 
 Supported conditional attributes:
 
@@ -480,7 +492,7 @@ Classifier-based Sensitivity Analyzers
 A :class:`~mvpa.measures.base.Sensitivity` behaves exactly like its
 classifier-independent sibling, but additionally provides support for embedding
 the necessary classifier and handles its training upon request
-(boolean `force_training` keyword argument of the constructor). Access to the
+(boolean `force_train` keyword argument of the constructor). Access to the
 embedded classifier object is provided via the `clf` property.
 
 .. autoconditional: measures.base Sensitivity
@@ -556,12 +568,7 @@ Things to implement for the next release (Release goals)
     * Noise perturbation ->         -> mvpa.measures.noisepertrubation
     * meta-algorithms (splitting)   -> mvpa.measures
 
-   DatasetMeasure -> Measure (transformers)
-
-   FeaturewiseDatasetMeasure?
-
-   combiners to be absorbed withing transformers? and then gone?
-   {Classifier?}Sensitivity?
+   FeaturewiseMeasure?
 
   * Mappers::
       mvpa.mappers (AKA mvpa.projections mvpa.transformers)

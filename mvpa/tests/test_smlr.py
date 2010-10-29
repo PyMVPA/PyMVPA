@@ -64,7 +64,7 @@ class SMLRTests(unittest.TestCase):
 
         # now ask for the sensitivities WITHOUT having to pass the dataset
         # again
-        sens = clf.get_sensitivity_analyzer(force_training=False)()
+        sens = clf.get_sensitivity_analyzer(force_train=False)(None)
         self.failUnless(sens.shape == (len(data.UT) - 1, data.nfeatures))
 
 

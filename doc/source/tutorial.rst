@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -32,10 +32,12 @@ beyond what is touched by the tutorial. Typically, only the most important
 aspects will be mentioned and each building block in PyMVPA can be used in
 more flexible ways than what is shown. Enjoy the ride.
 
-To be able to run the code in this tutorial, you need to download the
-corresponding data from the PyMVPA website. Once downloaded, extract the
-tarball, open a terminal, go into the directory with the extracted tarball
-content and run: :command:`./start_tutorial_session.sh`.
+Through the course of the tutorial we would analyze :ref:`real BOLD fMRI data
+<datadb_tutorial_data>`. Therefore, to be able to run the code in this
+tutorial, you need to download the :ref:`corresponding data from the PyMVPA
+website <datadb_tutorial_data>`. Once downloaded, extract the tarball, open a
+terminal, go into the directory with the extracted tarball content and run:
+:command:`./start_tutorial_session.sh`.
 
 If you want to prevent yourself from re-typing all code snippets into the
 terminal window, you might want to investigate IPython's ``%cpaste``

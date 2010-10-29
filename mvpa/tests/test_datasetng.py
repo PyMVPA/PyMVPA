@@ -17,10 +17,11 @@ import tempfile
 import os
 
 
+from mvpa.base import cfg
 from mvpa.base.externals import versions
 from mvpa.base.types import is_datasetlike
 from mvpa.base.dataset import DatasetError, vstack, hstack
-from mvpa.datasets.base import dataset_wizard, Dataset
+from mvpa.datasets.base import dataset_wizard, Dataset, HollowSamples
 from mvpa.misc.data_generators import normal_feature_dataset
 import mvpa.support.copy as copy
 from mvpa.base.collections import \
@@ -133,6 +134,17 @@ def test_labelschunks_access():
     assert_array_equal(ds.targets, chunks)
     ok_(ds.targets is ds.sa.targets)
     ok_(ds.targets is ds.sa['targets'].value)
+
+    # test broadcasting
+    # but not for plain scalars
+    assert_raises(ValueError, ds.set_attr, 'sa.bc', 5)
+    # and not for plain plain str
+    assert_raises(TypeError, ds.set_attr, 'sa.bc', "mike")
+    # but for any iterable of len == 1
+    ds.set_attr('sa.bc', (5,))
+    ds.set_attr('sa.dc', ["mike"])
+    assert_array_equal(ds.sa.bc, [5] * len(ds))
+    assert_array_equal(ds.sa.dc, ["mike"] * len(ds))
 
 
 def test_ex_from_masked():
@@ -503,63 +515,6 @@ def test_labelpermutation_randomsampling():
     ok_(sample.get_nsamples_per_attr('targets').values() == [ 2, 2, 2, 2, 2 ])
     ok_((ds.sa['chunks'].unique == range(1, 6)).all())
 
-    # keep the orig labels
-    orig_labels = ds.targets.copy()
-
-    # also keep the orig dataset, but SHALLOW copy and leave everything
-    # else as a view!
-    ods = copy.copy(ds)
-
-    ds.permute_attr()
-    # by default, some permutation of targets should have happened
-    assert_false((ds.targets == orig_labels).all())
-
-    # but the original dataset should be unaffected
-    assert_array_equal(ods.targets, orig_labels)
-    # array subclass survives
-    ok_(isinstance(ods.samples, myarray))
-
-    # samples are really shared
-    ds.samples[0, 0] = 123456
-    assert_array_equal(ds.samples, ods.samples)
-
-    # and other samples attributes too
-    ds.chunks[0] = 9876
-    assert_array_equal(ds.chunks, ods.chunks)
-
-    # try to permute on custom target
-    ds = ods.copy()
-    otargets = ods.sa.targets.copy()
-    ds.sa['custom'] = ods.sa.targets.copy()
-    assert_array_equal(ds.sa.custom, otargets)
-    assert_array_equal(ds.sa.targets, otargets)
-
-    ds.permute_attr(attr='custom')
-    # original targets should still match
-    assert_array_equal(ds.sa.targets, otargets)
-    # but custom should get permuted
-    assert_false((ds.sa.custom == otargets).all())
-
-    #
-    # Test permutation among features
-    #
-    assert_raises(KeyError, ds.permute_attr,
-                  attr='roi') # wrong collection
-    ds = ods.copy()
-    ds.permute_attr(attr='lucky', chunks_attr='roi', col='fa')
-    # we should have not touched samples attributes
-    for sa in ds.sa.keys():
-        assert_array_equal(ds.sa[sa].value, ods.sa[sa].value)
-    # but we should have changed the roi
-    assert_false((ds.fa['lucky'].value == ods.fa['lucky'].value).all())
-    assert_array_equal(ds.fa['roi'].value, ods.fa['roi'].value)
-
-    # permute ROI as well without chunking (??? should we make
-    # chunks_attr=None by default?)
-    ds.permute_attr(attr='roi', chunks_attr=None, col='fa')
-    assert_false((ds.fa['roi'].value == ods.fa['roi'].value).all())
-
-
 
 def test_masked_featureselection():
     origdata = np.random.standard_normal((10, 2, 4, 3, 5)).view(myarray)
@@ -698,9 +653,9 @@ def test_idhash():
 
     origid = ds.idhash
     orig_labels = ds.targets #.copy()
-    ds.permute_attr()
+    ds.sa.targets = range(len(ds))
     ok_(origid != ds.idhash,
-        msg="Permutation also changes idhash")
+        msg="Chaging attribute also changes idhash")
 
     ds.targets = orig_labels
     ok_(origid == ds.idhash,
@@ -745,7 +700,17 @@ def test_repr():
                  sa={'targets': [0]},
                  fa={'targets': ['b', 'n']})
     ds_repr = repr(ds)
-    ok_(repr(eval(ds_repr)) == ds_repr)
+    cfg_repr = cfg.get('datasets', 'repr', 'full')
+    if cfg_repr == 'full':
+        try:
+            ok_(repr(eval(ds_repr)) == ds_repr)
+        except SyntaxError, e:
+            raise AssertionError, "%r cannot be evaluated" % ds_repr
+    elif cfg_repr == 'str':
+        ok_(str(ds) == ds_repr)
+    else:
+        raise AssertionError('Unknown kind of datasets.repr configuration %r'
+                             % cfg_repr)
 
 def test_str():
     args = ( np.arange(12, dtype=np.int8).reshape((4, 3)),
@@ -870,6 +835,20 @@ def test_dataset_summary():
         # TODO: actual test of what was returned; to do that properly
         #       RF the summary() so it is a dictionary
 
+        summaries = ['Sequence statistics']
+        if 'targets' in ds.sa and 'chunks' in ds.sa:
+            summaries += ['Summary for targets', 'Summary for chunks']
+
+        # By default we should get all kinds of summaries
+        if not 'Number of unique targets >' in s:
+            for summary in summaries:
+                ok_(summary in s)
+
+        # If we give "wrong" targets_attr we should see none of summaries
+        s2 = ds.summary(targets_attr='bogus')
+        for summary in summaries:
+            ok_(not summary in s2)
+
 def test_h5py_io():
     skip_if_no_external('h5py')
 
@@ -888,7 +867,31 @@ def test_h5py_io():
         assert_array_equal(ds.fa[attr].value, ds2.fa[attr].value)
     assert_true(len(ds.a.mapper), 2)
     # since we have no __equal__ do at least some comparison
-    assert_equal(repr(ds.a.mapper), repr(ds2.a.mapper))
+    if __debug__:
+        # debug mode needs special test as it enhances the repr output
+        # with module info and id() appendix for objects
+        assert_equal('#'.join(repr(ds.a.mapper).split('#')[:-1]),
+                     '#'.join(repr(ds2.a.mapper).split('#')[:-1]))
+    else:
+        assert_equal(repr(ds.a.mapper), repr(ds2.a.mapper))
+
 
     #cleanup temp dir
     shutil.rmtree(tempdir, ignore_errors=True)
+
+
+def test_hollow_samples():
+    sshape = (10,5)
+    ds = Dataset(HollowSamples(sshape, dtype=int),
+                 sa={'targets': np.tile(['one', 'two'], sshape[0] / 2)})
+    assert_equal(ds.shape, sshape)
+    assert_equal(ds.samples.dtype, int)
+    # should give us features [1,3] and samples [2,3,5]
+    mds = ds[[2,3,5], 1::2]
+    assert_array_equal(mds.samples.sid, [2,3,5])
+    assert_array_equal(mds.samples.fid, [1,3])
+    assert_equal(mds.shape, (3, 2))
+    assert_equal(ds.samples.dtype, mds.samples.dtype)
+    # orig should stay pristine
+    assert_equal(ds.samples.dtype, int)
+    assert_equal(ds.shape, sshape)

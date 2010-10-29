@@ -15,9 +15,10 @@ from mvpa.testing.clfs import *
 from mvpa.testing.datasets import *
 
 from mvpa.base import externals, warning
+from mvpa.base.node import ChainNode
 from mvpa.datasets.base import Dataset
-from mvpa.featsel.base import FeatureSelectionPipeline, \
-     SensitivityBasedFeatureSelection, CombinedFeatureSelection
+from mvpa.featsel.base import SensitivityBasedFeatureSelection, \
+        CombinedFeatureSelection
 from mvpa.featsel.helpers import FixedNElementTailSelector, \
                                  FractionTailSelector, RangeElementSelector
 
@@ -28,13 +29,17 @@ from mvpa.clfs.meta import SplitClassifier, MulticlassClassifier, \
 from mvpa.clfs.smlr import SMLR, SMLRWeights
 from mvpa.mappers.zscore import zscore
 from mvpa.mappers.fx import sumofabs_sample, absolute_features, FxMapper, \
-     maxofabs_sample
-from mvpa.datasets.splitters import NFoldSplitter, NoneSplitter
+     maxofabs_sample, BinaryFxNode
+from mvpa.generators.splitters import Splitter
+from mvpa.generators.partition import NFoldPartitioner
+from mvpa.generators.resampling import Balancer
 
+from mvpa.misc.errorfx import mean_mismatch_error
 from mvpa.misc.transformers import Absolute, \
      DistPValue
 
-from mvpa.measures.base import SplitFeaturewiseDatasetMeasure
+from mvpa.measures.base import Measure, \
+        TransferMeasure, RepeatedMeasure, CrossValidation
 from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
      IterativeRelief_Devel, IterativeReliefOnline_Devel
@@ -96,18 +101,18 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         # To don't waste too much time testing lets limit to 3 splits
         nsplits = 3
-        splitter = NFoldSplitter(count=nsplits)
+        partitioner = NFoldPartitioner(count=nsplits)
         mclf = SplitClassifier(clf=clf,
-                               splitter=splitter,
-                               enable_ca=['training_confusion',
-                                              'confusion'])
+                               partitioner=partitioner,
+                               enable_ca=['training_stats',
+                                              'stats'])
         sana = mclf.get_sensitivity_analyzer(# postproc=absolute_features(),
                                            enable_ca=["sensitivities"])
 
         ulabels = ds.uniquetargets
         nlabels = len(ulabels)
         # Can't rely on splitcfg since count-limit is done in __call__
-        assert(nsplits == len(list(splitter(ds))))
+        assert(nsplits == len(list(partitioner.generate(ds))))
         sens = sana(ds)
 
         # It should return either ...
@@ -149,7 +154,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         assert_array_equal(sens_ulabels, ds.sa['targets'].unique)
 
         errors = [x.percent_correct
-                    for x in sana.clf.ca.confusion.matrices]
+                    for x in sana.clf.ca.stats.matrices]
 
         # lets go through all sensitivities and see if we selected the right
         # features
@@ -164,8 +169,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
             return
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            for conf_matrix in [sana.clf.ca.training_confusion] \
-                              + sana.clf.ca.confusion.matrices:
+            for conf_matrix in [sana.clf.ca.training_stats] \
+                              + sana.clf.ca.stats.matrices:
                 self.failUnless(
                     conf_matrix.percent_correct>=70,
                     msg="We must have trained on each one more or " \
@@ -177,8 +182,8 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # Since  now we have per split and possibly per label -- lets just find
         # mean per each feature per label across splits
         sensm = FxMapper('samples', lambda x: np.sum(x),
-                         uattrs=['targets'])(sens)
-        sensgm = maxofabs_sample()(sensm)    # global max of abs of means
+                         uattrs=['targets']).forward(sens)
+        sensgm = maxofabs_sample().forward(sensm)    # global max of abs of means
 
         assert_equal(sensgm.shape[0], 1)
         assert_equal(sensgm.shape[1], ds.nfeatures)
@@ -208,7 +213,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 if lndim == 1: # just a single label
                     self.failUnless(label in ulabels)
 
-                    ilabel_all = np.where(ds.fa.targets == label)[0]
+                    ilabel_all = np.where(ds.fa.nonbogus_targets == label)[0]
                     # should have just 1 feature for the label
                     self.failUnlessEqual(len(ilabel_all), 1)
                     ilabel = ilabel_all[0]
@@ -222,7 +227,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                     # we should have highest (in abs) coefficients in
                     # those two labels
                     maxsensi2 = np.argsort(np.abs(sens1))[0][-2:]
-                    ilabel2 = [np.where(ds.fa.targets == l)[0][0]
+                    ilabel2 = [np.where(ds.fa.nonbogus_targets == l)[0][0]
                                     for l in label]
                     self.failUnlessEqual(
                         set(maxsensi2), set(ilabel2),
@@ -261,12 +266,11 @@ class SensitivityAnalysersTests(unittest.TestCase):
             SensitivityBasedFeatureSelection(
                 OneWayAnova(),
                 FractionTailSelector(0.5, mode='select', tail='upper')),
-            enable_ca=['training_confusion'])
+            enable_ca=['training_stats'])
 
         sana = mclf.get_sensitivity_analyzer(postproc=sumofabs_sample(),
                                            enable_ca=["sensitivities"])
         # and lets look at all sensitivities
-
         dataset = datasets['uni2medium']
         # and we get sensitivity analyzer which works on splits
         sens = sana(dataset)
@@ -298,7 +302,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         sana_split = svm.get_sensitivity_analyzer(
             split_weights=True, **kwargs)
         sana_full = svm.get_sensitivity_analyzer(
-            force_training=False, **kwargs)
+            force_train=False, **kwargs)
 
         # and lets look at all sensitivities
         ds2 = datasets['uni4large'].copy()
@@ -334,11 +338,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
     def test_split_featurewise_dataset_measure(self):
         ds = datasets['uni3small']
-        sana = SplitFeaturewiseDatasetMeasure(
-            analyzer=SMLR(
-              fit_all_weights=True).get_sensitivity_analyzer(),
-            splitter=NFoldSplitter(),
-            )
+        sana = RepeatedMeasure(
+            SMLR(fit_all_weights=True).get_sensitivity_analyzer(),
+            ChainNode([NFoldPartitioner(),
+                       Splitter('partitions', attr_values=[1])]))
 
         sens = sana(ds)
         # a sensitivity for each chunk and each label combination
@@ -349,23 +352,21 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # Lets try more complex example with 'boosting'
         ds = datasets['uni3medium']
         ds.init_origids('samples')
-        sana = SplitFeaturewiseDatasetMeasure(
-            analyzer=SMLR(
-              fit_all_weights=True).get_sensitivity_analyzer(),
-            splitter=NoneSplitter(npertarget=0.25, mode='first',
-                                  nrunspersplit=2),
-            enable_ca=['splits', 'sensitivities'])
+        sana = RepeatedMeasure(
+            SMLR(fit_all_weights=True).get_sensitivity_analyzer(),
+            Balancer(amount=0.25, count=2, apply_selection=True),
+            enable_ca=['datasets', 'repetition_results'])
         sens = sana(ds)
 
         assert_equal(sens.shape, (2 * len(ds.sa['targets'].unique),
                                   ds.nfeatures))
-        splits = sana.ca.splits
+        splits = sana.ca.datasets
         self.failUnlessEqual(len(splits), 2)
-        self.failUnless(np.all([s[0].nsamples == ds.nsamples/4 for s in splits]))
+        self.failUnless(np.all([s.nsamples == ds.nsamples/4 for s in splits]))
         # should have used different samples
-        self.failUnless(np.any([splits[0][0].sa.origids != splits[1][0].sa.origids]))
+        self.failUnless(np.any([splits[0].sa.origids != splits[1].sa.origids]))
         # and should have got different sensitivities
-        self.failUnless(np.any(sens[0] != sens[1]))
+        self.failUnless(np.any(sens[0] != sens[3]))
 
 
         #skip_if_no_external('scipy')
@@ -375,7 +376,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         #ds = datasets['uni2medium']
         #plain_sana = SVM().get_sensitivity_analyzer(
         #       transformer=DistPValue())
-        #boosted_sana = SplitFeaturewiseDatasetMeasure(
+        #boosted_sana = SplitFeaturewiseMeasure(
         #    analyzer=SVM().get_sensitivity_analyzer(
         #       transformer=DistPValue(fpp=0.05)),
         #    splitter=NoneSplitter(npertarget=0.8, mode='first', nrunspersplit=2),
@@ -437,38 +438,23 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                 postproc=sumofabs_sample()),
                     RangeElementSelector(mode='select'))]
 
-        fs = CombinedFeatureSelection(fss, combiner='union',
-                                      enable_ca=['selected_ids',
-                                                     'selections_ids'])
+        fs = CombinedFeatureSelection(fss, method='union')
 
-        od = fs(self.dataset)
+        od_union = fs(self.dataset)
 
-        self.failUnless(fs.combiner == 'union')
-        self.failUnless(len(fs.ca.selections_ids))
-        self.failUnless(len(fs.ca.selections_ids) <= self.dataset.nfeatures)
-        # should store one set per methods
-        self.failUnless(len(fs.ca.selections_ids) == len(fss))
-        # no individual can be larger than union
-        for s in fs.ca.selections_ids:
-            self.failUnless(len(s) <= len(fs.ca.selected_ids))
+        self.failUnless(fs.method == 'union')
         # check output dataset
-        self.failUnless(od.nfeatures == len(fs.ca.selected_ids))
-        for i, id in enumerate(fs.ca.selected_ids):
-            self.failUnless((od.samples[:,i]
-                             == self.dataset.samples[:,id]).all())
-
+        self.failUnless(od_union.nfeatures <= self.dataset.nfeatures)
         # again for intersection
-        fs = CombinedFeatureSelection(fss, combiner='intersection',
-                                      enable_ca=['selected_ids',
-                                                     'selections_ids'])
-        # simply run it for now -- can't think of additional tests
-        od = fs(self.dataset)
+        fs = CombinedFeatureSelection(fss, method='intersection')
+        od_intersect = fs(self.dataset)
+        assert_true(od_intersect.nfeatures < od_union.nfeatures)
 
     def test_anova(self):
         """Additional aspects of OnewayAnova
         """
         oa = OneWayAnova()
-        oa_custom = OneWayAnova(targets_attr='custom')
+        oa_custom = OneWayAnova(space='custom')
 
         ds = datasets['uni4large']
         ds_custom = Dataset(ds.samples, sa={'custom' : ds.targets})
@@ -484,6 +470,53 @@ class SensitivityAnalysersTests(unittest.TestCase):
         r_custom2 = oa_custom(ds_custom)
         self.failUnless(np.allclose(r.samples, r2.samples))
         self.failUnless(np.allclose(r_custom.samples, r_custom2.samples))
+
+
+    def test_transfer_measure(self):
+        # come up with my own measure that only checks if training data
+        # and test data are the same
+        class MyMeasure(Measure):
+            def _train(self, ds):
+                self._tds = ds
+            def _call(self, ds):
+                return Dataset(ds.samples == self._tds.samples)
+
+        tm = TransferMeasure(MyMeasure(), Splitter('chunks', count=2))
+        # result should not be all True (== identical)
+        assert_true((tm(self.dataset).samples == False).any())
+
+
+    def test_clf_transfer_measure(self):
+        # and now on a classifier
+        clf = SMLR()
+        enode = BinaryFxNode(mean_mismatch_error, 'targets')
+        tm = TransferMeasure(clf, Splitter('chunks', count=2),
+                             enable_ca=['stats'])
+        res = tm(self.dataset)
+        manual_error = np.mean(res.samples.squeeze() != res.sa.targets)
+        postproc_error = enode(res)
+        tm_err = TransferMeasure(clf, Splitter('chunks', count=2),
+                                 postproc=enode)
+        auto_error = tm_err(self.dataset)
+        ok_(manual_error == postproc_error.samples[0,0])
+
+
+    def test_pseudo_cv_measure(self):
+        clf = SMLR()
+        enode = BinaryFxNode(mean_mismatch_error, 'targets')
+        tm = TransferMeasure(clf, Splitter('partitions'), postproc=enode)
+        cvgen = NFoldPartitioner()
+        rm = RepeatedMeasure(tm, cvgen)
+        res = rm(self.dataset)
+        # one error per fold
+        assert_equal(res.shape, (len(self.dataset.sa['chunks'].unique), 1))
+
+        # we can do the same with Crossvalidation
+        cv = CrossValidation(clf, cvgen, enable_ca=['stats', 'training_stats',
+                                                    'datasets'])
+        res = cv(self.dataset)
+        assert_equal(res.shape, (len(self.dataset.sa['chunks'].unique), 1))
+
 
 def suite():
     return unittest.makeSuite(SensitivityAnalysersTests)

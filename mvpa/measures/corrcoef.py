@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""FeaturewiseDatasetMeasure of correlation with the labels."""
+"""FeaturewiseMeasure of correlation with the labels."""
 
 __docformat__ = 'restructuredtext'
 
@@ -18,14 +18,16 @@ if externals.exists('scipy', raise_=True):
     # TODO: implement corrcoef optionally without scipy, e.g. np.corrcoef
     from scipy.stats import pearsonr
 
-from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.measures.base import FeaturewiseMeasure
 from mvpa.datasets.base import Dataset
 
-class CorrCoef(FeaturewiseDatasetMeasure):
-    """`FeaturewiseDatasetMeasure` that performs correlation with labels
+class CorrCoef(FeaturewiseMeasure):
+    """`FeaturewiseMeasure` that performs correlation with labels
 
     XXX: Explain me!
     """
+    is_trained = True
+    """Indicate that this measure is always trained."""
 
     def __init__(self, pvalue=False, attr='targets', **kwargs):
         """Initialize
@@ -39,7 +41,7 @@ class CorrCoef(FeaturewiseDatasetMeasure):
           What attribut to correlate with
         """
         # init base classes first
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
+        FeaturewiseMeasure.__init__(self, **kwargs)
 
         self.__pvalue = int(pvalue)
         self.__attr = attr

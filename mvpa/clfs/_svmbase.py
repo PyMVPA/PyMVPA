@@ -22,7 +22,7 @@ from mvpa.base.dochelpers import handle_docstring, _rst, _rst_section, \
      _rst_indentstr
 
 from mvpa.clfs.base import Classifier
-from mvpa.misc.param import Parameter
+from mvpa.base.param import Parameter
 
 if __debug__:
     from mvpa.base import debug
@@ -133,9 +133,9 @@ class _SVM(Classifier):
             self._KNOWN_PARAMS = \
                  self._KNOWN_PARAMS[:] + list(add_params)
 
-        
+
         # Assign per-instance __tags__
-        self.__tags__ = self.__tags__[:]
+        self.__tags__ = self.__tags__[:] + [svm_impl]
 
         # Add corresponding internals
         if add_internals is not None:

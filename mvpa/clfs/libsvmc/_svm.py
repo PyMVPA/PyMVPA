@@ -28,10 +28,8 @@ if __debug__:
 def int_array(seq):
     size = len(seq)
     array = svmc.new_int(size)
-    i = 0
-    for item in seq:
+    for i, item in enumerate(seq):
         svmc.int_setitem(array, i, int(item))
-        i = i + 1
     return array
 
 
@@ -39,10 +37,8 @@ def int_array(seq):
 def double_array(seq):
     size = len(seq)
     array = svmc.new_double(size)
-    i = 0
-    for item in seq:
+    for i, item in enumerate(seq):
         svmc.double_setitem(array, i, item)
-        i = i + 1
     return array
 
 
@@ -58,14 +54,12 @@ def free_double_array(x):
         svmc.delete_double(x)
 
 
-##REF: Name was automagically refactored
 def int_array_to_list(x, n):
-    return map(svmc.int_getitem, [x]*n, range(n))
+    return [svmc.int_getitem(x, i) for i in xrange(n)]
 
 
-##REF: Name was automagically refactored
 def double_array_to_list(x, n):
-    return map(svmc.double_getitem, [x]*n, range(n))
+    return [svmc.double_getitem(x, i) for i in xrange(n)]
 
 
 class SVMParameter(object):

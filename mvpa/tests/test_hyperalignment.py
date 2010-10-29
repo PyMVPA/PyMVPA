@@ -19,6 +19,8 @@ from mvpa.algorithms.hyperalignment import Hyperalignment
 from mvpa.testing import sweepargs
 from mvpa.testing.datasets import datasets, get_random_rotation
 
+from mvpa.generators.partition import NFoldPartitioner
+
 # if you need some classifiers
 #from mvpa.testing.clfs import *
 
@@ -32,6 +34,7 @@ class HyperAlignmentTests(unittest.TestCase):
         ds4l = datasets['uni4large']
         # lets select for now only meaningful features
         ds_orig = ds4l[:, ds4l.a.nonbogus_features]
+        nf = ds_orig.nfeatures
         n = 5 # # of datasets to generate
         Rs, dss_rotated, dss_rotated_clean, random_shifts, random_scales \
             = [], [], [], [], []
@@ -69,17 +72,33 @@ class HyperAlignmentTests(unittest.TestCase):
 
             ds_norm = np.linalg.norm(dss[ref_ds].samples)
             nddss = []
+            ndcss = []
             ds_orig_Rref = np.dot(ds_orig.samples, Rs[ref_ds]) \
                            * random_scales[ref_ds] \
                            + random_shifts[ref_ds]
             for ds_back in dss_clean_back:
+                # if we used zscoring of common, we cannot rely
+                # that range/offset could be matched, so lets use
+                # corrcoef
+                ndcs = np.diag(np.corrcoef(ds_back.samples.T,
+                                           ds_orig_Rref.T)[nf:, :nf], k=0)
+                ndcss += [ndcs]
                 dds = ds_back.samples - ds_orig_Rref
                 ndds = np.linalg.norm(dds) / ds_norm
                 nddss += [ndds]
             if not noisy or cfg.getboolean('tests', 'labile', default='yes'):
-                self.failUnless(np.all(ndds <= (1e-10, 1e-2)[int(noisy)]),
-                    msg="Should have reconstructed original dataset more or"
-                        "less. Got normed differences %s in %s case."
+                # First compare correlations
+                self.failUnless(np.all(np.array(ndcss)
+                                       >= (0.9, 0.85)[int(noisy)]),
+                        msg="Should have reconstructed original dataset more or"
+                        " less. Got correlations %s in %s case."
+                        % (ndcss, ('clean', 'noisy')[int(noisy)]))
+                if not zscore_common:
+                    # only reasonable without zscoring
+                    self.failUnless(np.all(np.array(nddss)
+                                           <= (1e-10, 1e-2)[int(noisy)]),
+                        msg="Should have reconstructed original dataset more or"
+                        " less. Got normed differences %s in %s case."
                         % (nddss, ('clean', 'noisy')[int(noisy)]))
 
         # Lets see how well we do if asked to compute residuals
@@ -101,7 +120,6 @@ class HyperAlignmentTests(unittest.TestCase):
         print "Running swaroops test on data we don't have"
         #from mvpa.datasets.miscfx import zscore
         #from mvpa.featsel.helpers import FixedNElementTailSelector
-        #from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
         #   or just for lazy ones like yarik atm
         from mvpa.suite import *
         subj = ['cb', 'dm', 'hj', 'kd', 'kl', 'mh', 'ph', 'rb', 'se', 'sm']
@@ -177,9 +195,8 @@ class HyperAlignmentTests(unittest.TestCase):
         # within-subject classification
         within_acc = []
         clf = clfswh['multiclass', 'linear', 'NU_SVC'][0]
-        cvterr = CrossValidatedTransferError(
-            TransferError(clf),
-            splitter=NFoldSplitter(), enable_ca=['confusion'])
+        cvterr = CrossValidation(clf, NFoldPartitioner(),
+                                 enable_ca=['confusion'])
         for sd in mkdg_ds_fs:
             wsc = cvterr(sd)
             within_acc.append(1-np.mean(wsc))

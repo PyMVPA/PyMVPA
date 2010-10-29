@@ -13,6 +13,9 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import operator
 
+from mvpa.base import warning
+from mvpa.base.node import Node
+from mvpa.datasets import Dataset
 from mvpa.base.dochelpers import _str
 from mvpa.mappers.base import Mapper
 from mvpa.misc.support import array_whereequal
@@ -22,8 +25,11 @@ from mvpa.misc.transformers import sum_of_abs, max_of_abs
 
 class FxMapper(Mapper):
     """Apply a custom transformation to (groups of) samples or features.
-
     """
+
+    is_trained = True
+    """Indicate that this mapper is always trained."""
+
     def __init__(self, axis, fx, fxargs=None, uattrs=None,
                  attrfx='merge'):
         """
@@ -83,7 +89,8 @@ class FxMapper(Mapper):
 
 
     def _train(self, ds):
-        # right now it needs no training
+        # right now it needs no training, if anything is added here make sure to
+        # remove is_trained class attribute
         pass
 
 
@@ -176,6 +183,13 @@ class FxMapper(Mapper):
                 samples = ds.samples[selector]
             else:
                 samples = ds.samples[:, selector]
+
+            # check if there were any samples for such a combination,
+            # if not -- warning and skip the rest of the loop body
+            if not len(samples):
+                warning('There were no samples for combination %s. It might be '
+                        'a sign of a disbalanced dataset %s.' % (comb, ds))
+                continue
 
             fxed_samples = np.apply_along_axis(self.__fx, axis, samples,
                                               *self.__fxargs)
@@ -322,16 +336,20 @@ def _uniquemerge2literal(attrs):
     Returns
     -------
     Non-sequence arguments are passed as is. Sequences are converted into
-    a single item representation (see above) and returned.
+    a single item representation (see above) and returned.  None is returned
+    in case of an empty sequence.
     """
     # only do something if multiple items are given
     if not operator.isSequenceType(attrs):
         return attrs
     unq = np.unique(attrs)
-    if len(unq) > 1:
+    lunq = len(unq)
+    if lunq > 1:
         return '+'.join([str(l) for l in unq])
-    else:
+    elif lunq:                          # first entry (non
         return unq[0]
+    else:
+        return None
 
 
 def _orthogonal_permutations(a_dict):
@@ -374,3 +392,48 @@ def _product(iterable):
         result = [x+[y] for x in result for y in pool]
     for prod in result:
         yield tuple(prod)
+
+
+
+class BinaryFxNode(Node):
+    """Extract a dataset attribute and call a function with it and the samples.
+
+    This node takes a dataset's samples and a configurable attribute and passes
+    them to a custom callable. This node can be used to implement comparisons,
+    or error quantifications.
+
+    When called with a dataset the node returns a new dataset with the return
+    value of the callable as samples.
+    """
+    # TODO: Allow using feature attributes too
+    def __init__(self, fx, space, **kwargs):
+        """
+        Parameters
+        ----------
+        fx : callable
+          Callable that is passed with the dataset samples as first and
+          attribute values as second argument.
+        space : str
+          name of the sample attribute that contains the target values.
+        """
+        Node.__init__(self, space=space, **kwargs)
+        self.fx = fx
+
+
+    def _call(self, ds):
+        # extract samples and targets and pass them to the errorfx
+        targets = ds.sa[self.get_space()].value
+        # squeeze to remove bogus dimensions are prevent problems during
+        # comparision later on
+        values = np.atleast_1d(ds.samples.squeeze())
+        if not values.shape == targets.shape:
+            # if they have different shape numpy's broadcasting might introduce
+            # pointless stuff (compare individual features or yield a single
+            # boolean
+            raise ValueError("Trying to compute an error between data of "
+                             "different shape (%s vs. %s)."
+                             % (values.shape, targets.shape))
+        err = self.fx(values, targets)
+        if np.isscalar(err):
+            err = np.array(err, ndmin=2)
+        return Dataset(err)

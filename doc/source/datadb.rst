@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -24,7 +24,8 @@ analysis.
 .. toctree::
    :maxdepth: 1
 
-   datadb/demo_blockfmri
+   datadb/tutorial_data
+   datadb//face_inversion_demo
    datadb/haxby2001
    datadb/mnist
 

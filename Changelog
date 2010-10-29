@@ -11,7 +11,7 @@ Development Changelog
 This changelog only lists rather macroscopic changes to PyMVPA. The full VCS
 changelog is available here:
 
-  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary
+  http://github.com/PyMVPA/PyMVPA/commits/master
 
 In addition there is also a somewhat unconventional `visual changelog`_.
 
@@ -29,11 +29,37 @@ Unreleased changes
 
   * Many, many, many
   * For an overview of the most drastic changes :ref:`see constantly
-    enriching release notes for 0.5 <chap_release_notes_0.5>`
+    evolving release notes for 0.6 <chap_release_notes_0.6>`
 
 
 Releases
 ========
+
+* 0.5.0 (sometime in March 2010)
+
+  This is a special release, because it has never seen the general public.
+  A summary of fundamental changes introduced in this development version
+  can be seen in the :ref:`release notes <chap_release_notes_0.5>`.
+
+  Most notably, this version was to first to come with a comprehensive two-day
+  workshop/tutorial.
+
+* 0.4.5 (Fri, Oct 01 2010) (Total: 27 commits)
+
+  A bugfix release
+
+  * Fixed (13 BF commits):
+
+    - Compatible with LIBSVM >= 2.91 (Closes: #583018)
+    - No string exceptions raised (Python 2.6 compatibility)
+    - Setting of shrinking parameter in :mod:`~mvpa.clfs.sg` interface
+    - Deducing number of SVs for SVR (LIBSVM)
+    - Correction of significance in the tails of non-parametric
+      tests
+
+  * Miscellaneous:
+
+    - Development repository moved to http://github.com/PyMVPA/PyMVPA
 
 * 0.4.4 (Mon, Feb 2 2010) (Total: 144 commits)
 

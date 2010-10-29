@@ -10,25 +10,27 @@
 
 import numpy as np
 
-from mvpa.datasets.splitters import NFoldSplitter
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
+from mvpa.generators.partition import NFoldPartitioner
+from mvpa.generators.permutation import AttributePermutator
+from mvpa.generators.splitters import Splitter
 from mvpa.datasets.base import Dataset
-from mvpa.mappers.fx import maxofabs_sample, mean_sample
+from mvpa.mappers.base import ChainMapper
+from mvpa.mappers.fx import maxofabs_sample, mean_sample, BinaryFxNode
+from mvpa.misc.errorfx import mean_mismatch_error
 from mvpa.featsel.rfe import RFE
 from mvpa.featsel.base import \
-     SensitivityBasedFeatureSelection, \
-     FeatureSelectionPipeline
+     SensitivityBasedFeatureSelection
 from mvpa.featsel.helpers import \
      NBackHistoryStopCrit, FractionTailSelector, FixedErrorThresholdStopCrit, \
      MultiStopCrit, NStepsStopCrit, \
      FixedNElementTailSelector, BestDetector, RangeElementSelector
 
 from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier
-from mvpa.clfs.transerror import TransferError
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.clfs.stats import MCNullDist
+from mvpa.measures.base import ProxyMeasure, CrossValidation
 
-from mvpa.misc.state import UnknownStateError
+from mvpa.base.state import UnknownStateError
 
 from mvpa.testing import *
 from mvpa.testing.clfs import *
@@ -36,14 +38,8 @@ from mvpa.testing.datasets import datasets
 
 
 class RFETests(unittest.TestCase):
-
-    ##REF: Name was automagically refactored
     def get_data(self):
-        return datasets['uni2medium_train']
-
-    ##REF: Name was automagically refactored
-    def get_data_t(self):
-        return datasets['uni2medium_test']
+        return datasets['uni2medium']
 
 
     def test_best_detector(self):
@@ -224,47 +220,33 @@ class RFETests(unittest.TestCase):
                 feature_selector=FixedNElementTailSelector(2),
                 enable_ca=["sensitivity", "selected_ids"])
 
-        wdata = self.get_data()
-        tdata = self.get_data_t()
-        # XXX for now convert to numeric labels, but should better be taken
-        # care of during clf refactoring
-        am = AttributeMap()
-        wdata.targets = am.to_numeric(wdata.targets)
-        tdata.targets = am.to_numeric(tdata.targets)
+        data = self.get_data()
 
-        wdata_nfeatures = wdata.nfeatures
-        tdata_nfeatures = tdata.nfeatures
+        data_nfeatures = data.nfeatures
 
-        sdata, stdata = fe(wdata, tdata)
+        fe.train(data)
+        resds = fe(data)
 
         # fail if orig datasets are changed
-        self.failUnless(wdata.nfeatures == wdata_nfeatures)
-        self.failUnless(tdata.nfeatures == tdata_nfeatures)
+        self.failUnless(data.nfeatures == data_nfeatures)
 
         # silly check if nfeatures got a single one removed
-        self.failUnlessEqual(wdata.nfeatures, sdata.nfeatures+Nremove,
+        self.failUnlessEqual(data.nfeatures, resds.nfeatures+Nremove,
             msg="We had to remove just a single feature")
 
-        self.failUnlessEqual(tdata.nfeatures, stdata.nfeatures+Nremove,
-            msg="We had to remove just a single feature in testing as well")
-
-        self.failUnlessEqual(fe.ca.sensitivity.nfeatures, wdata_nfeatures,
+        self.failUnlessEqual(fe.ca.sensitivity.nfeatures, data_nfeatures,
             msg="Sensitivity have to have # of features equal to original")
 
-        self.failUnlessEqual(len(fe.ca.selected_ids), sdata.nfeatures,
-            msg="# of selected features must be equal the one in the result dataset")
 
 
     def test_feature_selection_pipeline(self):
         sens_ana = SillySensitivityAnalyzer()
 
-        wdata = self.get_data()
-        wdata_nfeatures = wdata.nfeatures
-        tdata = self.get_data_t()
-        tdata_nfeatures = tdata.nfeatures
+        data = self.get_data()
+        data_nfeatures = data.nfeatures
 
         # test silly one first ;-)
-        self.failUnlessEqual(sens_ana(wdata).samples[0,0], -int(wdata_nfeatures/2))
+        self.failUnlessEqual(sens_ana(data).samples[0,0], -int(data_nfeatures/2))
 
         # OLD: first remove 25% == 6, and then 4, total removing 10
         # NOW: test should be independent of the numerical number of features
@@ -277,25 +259,18 @@ class RFETests(unittest.TestCase):
                               ]
 
         # create a FeatureSelection pipeline
-        feat_sel_pipeline = FeatureSelectionPipeline(
-            feature_selections=feature_selections,
-            enable_ca=['nfeatures', 'selected_ids'])
+        feat_sel_pipeline = ChainMapper(feature_selections)
 
-        sdata, stdata = feat_sel_pipeline(wdata, tdata)
+        feat_sel_pipeline.train(data)
+        resds = feat_sel_pipeline(data)
 
-        self.failUnlessEqual(len(feat_sel_pipeline.feature_selections),
+        self.failUnlessEqual(len(feat_sel_pipeline),
                              len(feature_selections),
                              msg="Test the property feature_selections")
 
-        desired_nfeatures = int(np.ceil(wdata_nfeatures*0.75))
-        self.failUnlessEqual(feat_sel_pipeline.ca.nfeatures,
-                             [wdata_nfeatures, desired_nfeatures],
-                             msg="Test if nfeatures get assigned properly."
-                             " Got %s!=%s" % (feat_sel_pipeline.ca.nfeatures,
-                                              [wdata_nfeatures, desired_nfeatures]))
-
-        self.failUnlessEqual(list(feat_sel_pipeline.ca.selected_ids),
-                             range(int(wdata_nfeatures*0.25)+4, wdata_nfeatures))
+        desired_nfeatures = int(np.ceil(data_nfeatures*0.75))
+        self.failUnlessEqual([fe._oshape[0] for fe in feat_sel_pipeline],
+                             [desired_nfeatures, desired_nfeatures - 4])
 
 
     # TODO: should later on work for any clfs_with_sens
@@ -304,32 +279,32 @@ class RFETests(unittest.TestCase):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
         sens_ana = clf.get_sensitivity_analyzer(postproc=maxofabs_sample())
-        trans_error = TransferError(clf)
+        pmeasure = ProxyMeasure(clf, postproc=BinaryFxNode(mean_mismatch_error,
+                                                           'targets'))
         # because the clf is already trained when computing the sensitivity
         # map, prevent retraining for transfer error calculation
         # Use absolute of the svm weights as sensitivity
         rfe = RFE(sens_ana,
-                  trans_error,
-                  feature_selector=FixedNElementTailSelector(1),
-                  train_clf=False)
+                  pmeasure,
+                  Splitter('train'),
+                  fselector=FixedNElementTailSelector(1),
+                  train_pmeasure=False)
 
-        wdata = self.get_data()
-        wdata_nfeatures = wdata.nfeatures
-        tdata = self.get_data_t()
-        tdata_nfeatures = tdata.nfeatures
+        data = self.get_data()
+        data_nfeatures = data.nfeatures
 
-        sdata, stdata = rfe(wdata, tdata)
+        rfe.train(data)
+        resds = rfe(data)
 
         # fail if orig datasets are changed
-        self.failUnless(wdata.nfeatures == wdata_nfeatures)
-        self.failUnless(tdata.nfeatures == tdata_nfeatures)
+        self.failUnless(data.nfeatures == data_nfeatures)
 
         # check that the features set with the least error is selected
         if len(rfe.ca.errors):
             e = np.array(rfe.ca.errors)
-            self.failUnless(sdata.nfeatures == wdata_nfeatures - e.argmin())
+            self.failUnless(resds.nfeatures == data_nfeatures - e.argmin())
         else:
-            self.failUnless(sdata.nfeatures == wdata_nfeatures)
+            self.failUnless(resds.nfeatures == data_nfeatures)
 
         # silly check if nfeatures is in decreasing order
         nfeatures = np.array(rfe.ca.nfeatures).copy()
@@ -356,26 +331,24 @@ class RFETests(unittest.TestCase):
         dataset = datasets['uni2small']
         rfesvm_split = LinearCSVMC()
         fs = \
-            RFE(sensitivity_analyzer=rfesvm_split.get_sensitivity_analyzer(),
-                transfer_error=TransferError(rfesvm_split),
-                feature_selector=FractionTailSelector(
+            RFE(rfesvm_split.get_sensitivity_analyzer(),
+                ProxyMeasure(rfesvm_split,
+                             postproc=BinaryFxNode(mean_mismatch_error,
+                                                   'targets')),
+                Splitter('train'),
+                fselector=FractionTailSelector(
                     percent / 100.0,
                     mode='select', tail='upper'), update_sensitivity=True)
 
         clf = FeatureSelectionClassifier(
-            clf = LinearCSVMC(),
+            LinearCSVMC(),
             # on features selected via RFE
-            feature_selection = fs)
+            fs)
              # update sensitivity at each step (since we're not using the
              # same CLF as sensitivity analyzer)
-        clf.ca.enable('feature_ids')
 
-        cv = CrossValidatedTransferError(
-            TransferError(clf),
-            NFoldSplitter(cvtype=1),
-            postproc=mean_sample(),
-            enable_ca=['confusion'],
-            expose_testdataset=True)
+        cv = CrossValidation(clf, NFoldPartitioner(), postproc=mean_sample(),
+            enable_ca=['confusion'])
         #cv = SplitClassifier(clf)
         try:
             error = cv(dataset).samples.squeeze()
@@ -405,15 +378,11 @@ class RFETests(unittest.TestCase):
                     0.2, mode='discard', tail='lower'),
                 update_sensitivity=True))
 
-        splitter = NFoldSplitter(cvtype=1)
         no_permutations = 1000
-
-        cv = CrossValidatedTransferError(
-            TransferError(clf),
-            splitter,
-            null_dist=MCNullDist(permutations=no_permutations,
-                                 tail='left'),
-            enable_ca=['confusion'])
+        permutator = AttributePermutator('targets', count=no_permutations)
+        cv = CrossValidation(clf, NFoldPartitioner(),
+            null_dist=MCNullDist(permutator, tail='left'),
+            enable_ca=['stats'])
         error = cv(datasets['uni2small'])
         self.failUnless(error < 0.4)
         self.failUnless(cv.ca.null_prob < 0.05)

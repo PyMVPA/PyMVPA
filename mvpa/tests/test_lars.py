@@ -9,6 +9,8 @@
 """Unit tests for PyMVPA least angle regression (LARS) classifier"""
 
 from mvpa.testing import *
+skip_if_no_external('lars')
+
 from mvpa.testing.datasets import datasets
 
 from mvpa import cfg
@@ -63,7 +65,7 @@ class LARSTests(unittest.TestCase):
 
         # now ask for the sensitivities WITHOUT having to pass the dataset
         # again
-        sens = clf.get_sensitivity_analyzer(force_training=False)()
+        sens = clf.get_sensitivity_analyzer(force_train=False)()
 
         self.failUnless(sens.shape == (1, data.nfeatures))
 

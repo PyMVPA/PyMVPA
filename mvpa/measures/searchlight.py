@@ -20,13 +20,13 @@ from mvpa.base.dochelpers import borrowkwargs
 
 from mvpa.datasets import hstack
 from mvpa.support import copy
-from mvpa.mappers.base import FeatureSliceMapper
-from mvpa.measures.base import DatasetMeasure
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.mappers.slicing import FeatureSliceMapper
+from mvpa.measures.base import Measure
+from mvpa.base.state import ConditionalAttribute
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
 
 
-class BaseSearchlight(DatasetMeasure):
+class BaseSearchlight(Measure):
     """Base class for searchlights.
 
     The idea for a searchlight algorithm stems from a paper by
@@ -36,7 +36,11 @@ class BaseSearchlight(DatasetMeasure):
     roi_sizes = ConditionalAttribute(enabled=False,
         doc="Number of features in each ROI.")
 
-    @borrowkwargs(DatasetMeasure, '__init__')
+    is_trained = True
+    """Indicate that this measure is always trained."""
+
+
+    @borrowkwargs(Measure, '__init__')
     def __init__(self, queryengine, roi_ids=None, nproc=None, **kwargs):
         """
         Parameters
@@ -52,9 +56,9 @@ class BaseSearchlight(DatasetMeasure):
           external module.  If None -- all available cores will be used.
         **kwargs
           In addition this class supports all keyword arguments of its
-          base-class :class:`~mvpa.measures.base.DatasetMeasure`.
+          base-class :class:`~mvpa.measures.base.Measure`.
       """
-        DatasetMeasure.__init__(self, **(kwargs))
+        Measure.__init__(self, **kwargs)
 
         if nproc > 1 and not externals.exists('pprocess'):
             raise RuntimeError("The 'pprocess' module is required for "
@@ -291,7 +295,7 @@ class Searchlight(BaseSearchlight):
 @borrowkwargs(Searchlight, '__init__', exclude=['roi_ids'])
 def sphere_searchlight(datameasure, radius=1, center_ids=None,
                        space='voxel_indices', **kwargs):
-    """Creates a `Searchlight` to run a scalar `DatasetMeasure` on
+    """Creates a `Searchlight` to run a scalar `Measure` on
     all possible spheres of a certain size within a dataset.
 
     The idea for a searchlight algorithm stems from a paper by
@@ -314,12 +318,12 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
       coordinates of all features.
     **kwargs
       In addition this class supports all keyword arguments of its
-      base-class :class:`~mvpa.measures.base.DatasetMeasure`.
+      base-class :class:`~mvpa.measures.base.Measure`.
 
     Notes
     -----
     If `Searchlight` is used as `SensitivityAnalyzer` one has to make
-    sure that the specified scalar `DatasetMeasure` returns large
+    sure that the specified scalar `Measure` returns large
     (absolute) values for high sensitivities and small (absolute) values
     for low sensitivities. Especially when using error functions usually
     low values imply high performance and therefore high sensitivity.

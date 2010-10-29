@@ -513,7 +513,7 @@ if __name__ == "__main__":
     # for easy debugging
     import os
     from mvpa.base import cfg
-    impath = os.path.join('datadb', 'demo_blockfmri')
+    impath = os.path.join('datadb', 'tutorial_data')
     plot_lightbox(
         #background = NiftiImage('%s/anat.nii.gz' % impath),
         background = '%s/anat.nii.gz' % impath,

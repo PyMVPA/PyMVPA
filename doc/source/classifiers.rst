@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -129,7 +129,7 @@ Before looking at the different classifiers in more detail, it is important to
 mention another feature common to all of them. While their interface is simple,
 classifiers are in no way limited to report only predictions. All classifiers
 implement an additional interface: Objects of any class that are derived from
-:class:`~mvpa.misc.state.ClassWithCollections` have attributes (we refer to
+:class:`~mvpa.base.state.ClassWithCollections` have attributes (we refer to
 such attributes as conditional attributes), which are conditionally computed and
 stored by PyMVPA. Such conditional storage and access is handy if a variable of
 interest might consume a lot of memory or needs intensive computation, and not
@@ -152,14 +152,14 @@ information only for a trained classifier, attempt to access
 since the classifier has not seen the data yet and, thus, does not know the
 targets. In other words, it is not yet in the state to know anything about the
 targets. Any conditional attribute can be enabled or disabled on per instance basis at
-any time of the execution (see :class:`~mvpa.misc.state.ClassWithCollections`).
+any time of the execution (see :class:`~mvpa.base.state.ClassWithCollections`).
 
 To continue the last example, each classifier, or more precisely every
 stateful object, can be asked to report existing state-related attributes:
 
   >>> list_with_verbose_explanations = clf.ca.listing
 
-'clf.ca' is an instance of :class:`~mvpa.misc.state.ConditionalAttributesCollection` class
+'clf.ca' is an instance of :class:`~mvpa.base.state.ConditionalAttributesCollection` class
 which is a container for all conditional attributes of the given class. To access (query
 the value or set the value if state is enabled), and enable or disable you
 should operate on `ca` collection (which is different from version prior
@@ -170,10 +170,10 @@ this example)
   array([0, 1])
 
   >>> print clf.ca
-  ca{distances training_time*+ predicting_time*+ training_confusion...}
+  ca{distances training_time*+ predicting_time*+ training_stats...}
   >>> clf.ca.enable('estimates')
   >>> print clf.ca
-  ca{distances training_time*+ predicting_time*+ training_confusion...}
+  ca{distances training_time*+ predicting_time*+ training_stats...}
   >>> clf.ca.disable('estimates')
 
 A string representation of the state collection mentioned above lists
@@ -224,7 +224,7 @@ custom error function can be specified (see `errorfx` argument).
 To compute the transfer error simply call the object with a validation dataset.
 The computed error value is returned.
 :class:`~mvpa.clfs.transerror.TransferError` also supports a conditional attribute
-`confusion` that contains the full confusion matrix of the predictions made on
+`stats` that contains the full confusion matrix of the predictions made on
 the validation dataset. The confusion matrix is disabled by default.
 
 If the :class:`~mvpa.clfs.transerror.TransferError` object is called with an
@@ -273,7 +273,7 @@ and some :class:`~mvpa.datasets.base.Dataset` `data`.
   >>> from mvpa.datasets.splitters import NFoldSplitter
   >>> cvterr = CrossValidatedTransferError(terr,
   ...                                      NFoldSplitter(cvtype=1),
-  ...                                      enable_ca=['confusion'])
+  ...                                      enable_ca=['stats'])
   >>> error = cvterr(data)
 
 
@@ -288,9 +288,9 @@ accompanied by various performance metrics.  For example, the 8-fold
 cross-validation of the dataset with 8 targets with the SMLR classifier produced
 the following confusion matrix::
 
-  >>> # Simple 'print cvterr.confusion' provides the same output
+  >>> # Simple 'print cvterr.stats' provides the same output
   >>> # without the description of abbreviations
-  >>> print cvterr.confusion.as_string(description=True) \
+  >>> print cvterr.stats.as_string(description=True) \
   ... # doctest: +SKIP
   --------.        3kHz  7kHz  12kHz 20kHz 30kHz song1 song2 song3 song4 song5
   predict.\targets 38    39    40    41    42    43    44    45    46    47
@@ -345,7 +345,7 @@ via the :meth:`~mvpa.clfs.transerror.ConfusionMatrix.plot` method of a
 :class:`~mvpa.clfs.transerror.ConfusionMatrix`::
 
   >>> import pylab as pl
-  >>> cvterr.confusion.plot() \
+  >>> cvterr.stats.plot() \
   ... # doctest: +SKIP
   >>> pl.show() \
   ... # doctest: +SKIP
@@ -561,7 +561,7 @@ method calls).  Consider the following code, which can be found in
   ...       sensitivity_analyzer=rfesvm_split.get_sensitivity_analyzer(),
   ...       transfer_error=ConfusionBasedError(
   ...          rfesvm_split,
-  ...          confusion_state="confusion"),
+  ...          confusion_state="stats"),
   ...          # and whose internal error we use
   ...       feature_selector=FractionTailSelector(
   ...                          0.2, mode='discard', tail='lower'),

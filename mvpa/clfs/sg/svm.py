@@ -64,15 +64,16 @@ else:
 
 import operator
 
-from mvpa.misc.param import Parameter
+from mvpa.base.param import Parameter
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.base import warning
 
 from mvpa.clfs.base import accepts_dataset_as_samples, \
-     accepts_samples_as_dataset, FailedToTrainError
+     accepts_samples_as_dataset
+from mvpa.base.learner import FailedToTrainError
 from mvpa.clfs.meta import MulticlassClassifier
 from mvpa.clfs._svmbase import _SVM
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 from mvpa.measures.base import Sensitivity
 
 from sens import *
@@ -138,7 +139,7 @@ def _setdebug(obj, partname):
                 " reports" % externals.versions['shogun'])
 
 
-# Deprecated indeed in favor of kernels
+# Still in use by non-kernel classifiers, e.g. SVMOcas
 def _tosg(data):
     """Draft helper function to convert data we have into SG suitable format
 
@@ -236,7 +237,7 @@ class SVM(_SVM):
         Default implementation is 'libsvm'.
         """
 
-        
+
         svm_impl = kwargs.get('svm_impl', 'libsvm').lower()
         kwargs['svm_impl'] = svm_impl
 
@@ -257,6 +258,16 @@ class SVM(_SVM):
         self.__kernel_test = None
         self.__testdata = None
 
+        # remove kernel-based for some
+        # TODO RF: provide separate handling for non-kernel machines
+        if svm_impl in ['svmocas']:
+            if not (self.__kernel is None
+                    or self.__kernel.__kernel_name__ == 'linear'):
+                raise ValueError(
+                    "%s is inherently linear, thus provided kernel %s "
+                    "is of no effect" % (svm_impl, self.__kernel))
+            self.__tags__.pop(self.__tags__.index('kernel-based'))
+            self.__tags__.pop(self.__tags__.index('retrainable'))
 
     # TODO: integrate with kernel framework
     #def __condition_kernel(self, kernel):
@@ -284,7 +295,7 @@ class SVM(_SVM):
         params = self.params
         retrainable = self.params.retrainable
 
-        targets_sa_name = params.targets_attr    # name of targets sa
+        targets_sa_name = self.get_space()    # name of targets sa
         targets_sa = dataset.sa[targets_sa_name] # actual targets sa
 
         if retrainable:
@@ -336,8 +347,9 @@ class SVM(_SVM):
         if retrainable:
             _changedData['kernel_params'] = _changedData.get('kernel_params', False)
 
-        if not retrainable \
-               or _changedData['traindata'] or _changedData['kernel_params']:
+        # TODO: big RF to move non-kernel classifiers away
+        if 'kernel-based' in self.__tags__ and (not retrainable
+               or _changedData['traindata'] or _changedData['kernel_params']):
             # If needed compute or just collect arguments for SVM and for
             # the kernel
 
@@ -406,8 +418,12 @@ class SVM(_SVM):
                 self.__svm.set_epsilon(self.params.epsilon)
             elif self._svm_impl in ['krr']:
                 self.__svm = svm_impl_class(self.params.tau, self.__kernel, labels)
-            else:
+            elif 'kernel-based' in self.__tags__:
                 self.__svm = svm_impl_class(Cs[0], self.__kernel, labels)
+                self.__svm.set_epsilon(self.params.epsilon)
+            else:
+                traindata_sg = _tosg(dataset.samples)
+                self.__svm = svm_impl_class(Cs[0], traindata_sg, labels)
                 self.__svm.set_epsilon(self.params.epsilon)
 
             # Set shrinking
@@ -462,7 +478,7 @@ class SVM(_SVM):
 
         # Report on training
         if (__debug__ and 'SG__' in debug.active) or \
-           self.ca.is_enabled('training_confusion'):
+           self.ca.is_enabled('training_stats'):
             if __debug__:
                 debug("SG_", "Assessing predictions on training data")
             trained_targets = self.__svm.classify().get_labels()
@@ -482,8 +498,8 @@ class SVM(_SVM):
         # XXX For now it can be done only for regressions since labels need to
         #     be remapped and that becomes even worse if we use regression
         #     as a classifier so mapping happens upstairs
-        if self.__is_regression__ and self.ca.is_enabled('training_confusion'):
-            self.ca.training_confusion = self.__summary_class__(
+        if self.__is_regression__ and self.ca.is_enabled('training_stats'):
+            self.ca.training_stats = self.__summary_class__(
                 targets=targets_sa.value,
                 predictions=trained_targets)
 
@@ -491,7 +507,7 @@ class SVM(_SVM):
     # XXX actually this is the beast which started this evil conversion
     #     so -- make use of dataset here! ;)
     @accepts_samples_as_dataset
-    def _predict(self, data):
+    def _predict(self, dataset):
         """Predict values for the data
         """
 
@@ -506,11 +522,11 @@ class SVM(_SVM):
                 debug("SG__",
                       "Initializing SVMs kernel of %s with training/testing samples"
                       % self)
-            self.params.kernel.compute(self.__traindataset, data)
+            self.params.kernel.compute(self.__traindataset, dataset)
             self.__kernel_test = self.params.kernel.as_sg()._k
             # We can just reuse kernel used for training
             #self.__condition_kernel(self.__kernel)
-            
+
         else:
             if changed_testdata:
                 #if __debug__:
@@ -518,25 +534,31 @@ class SVM(_SVM):
                           #"Re-creating testing kernel of %s giving "
                           #"arguments %s" %
                           #(`self._kernel_type`, self.__kernel_args))
-                self.params.kernel.compute(self.__traindataset, data)
-                
+                self.params.kernel.compute(self.__traindataset, dataset)
+
                 #_setdebug(kernel_test, 'Kernels')
 
                 #_setdebug(kernel_test_custom, 'Kernels')
                 self.__kernel_test = self.params.kernel.as_raw_sg()
-                
+
             elif __debug__:
                 debug("SG__", "Re-using testing kernel")
 
         assert(self.__kernel_test is not None)
-        self.__svm.set_kernel(self.__kernel_test)
+
+        if 'kernel-based' in self.__tags__:
+            self.__svm.set_kernel(self.__kernel_test)
+            # doesn't do any good imho although on unittests helps tiny bit... hm
+            #self.__svm.init_kernel_optimization()
+            values_ = self.__svm.classify()
+        else:
+            testdata_sg = _tosg(dataset.samples)
+            self.__svm.set_features(testdata_sg)
+            values_ = self.__svm.classify()
 
         if __debug__:
             debug("SG_", "Classifying testing data")
 
-        # doesn't do any good imho although on unittests helps tiny bit... hm
-        #self.__svm.init_kernel_optimization()
-        values_ = self.__svm.classify()
         if values_ is None:
             raise RuntimeError, "We got empty list of values from %s" % self
 
@@ -549,7 +571,8 @@ class SVM(_SVM):
                 debug("SG__", "Re-assigning learing kernel. Repredicted is %s"
                       % repredicted)
             # return back original kernel
-            self.__svm.set_kernel(self.__kernel)
+            if 'kernel-based' in self.__tags__:
+                self.__svm.set_kernel(self.__kernel)
 
         if __debug__:
             debug("SG__", "Got values %s" % values)
@@ -559,6 +582,8 @@ class SVM(_SVM):
         else:
             if len(self._attrmap.keys()) == 2:
                 predictions = np.sign(values)
+                # since np.sign(0) == 0
+                predictions[predictions==0] = 1
             else:
                 predictions = values
 
@@ -584,8 +609,8 @@ class SVM(_SVM):
         return predictions
 
 
-    def untrain(self):
-        super(SVM, self).untrain()
+    def _untrain(self):
+        super(SVM, self)._untrain()
         # untrain/clean the kernel -- we might not allow to drag SWIG
         # instance around BUT XXX -- make it work fine with
         # CachedKernel -- we might not want to fully "untrain" in such
@@ -650,7 +675,7 @@ class SVM(_SVM):
                       "Shogun: Implementation %s doesn't handle multiclass " \
                       "data. Got labels %s. Use some other classifier" % \
                       (self._svm_impl,
-                       self.__traindataset.sa[self.params.targets_attr].unique)
+                       self.__traindataset.sa[self.get_space()].unique)
             if __debug__:
                 debug("SG_", "Using %s for multiclass data of %s" %
                       (svm_impl_class, self._svm_impl))
@@ -679,6 +704,8 @@ for name, item, params, descr in \
           "SVMLight regression http://svmlight.joachims.org/"),
          ('krr', "shogun.Regression.KRR", "('tau',), ('regression',)",
           "Kernel Ridge Regression"),
+         ('svmocas', "shogun.Classifier.SVMOcas", "('C',), ('binary', 'linear')",
+          "SVM with OCAS (Optimized Cutting Plane Algorithm) solver"),
          ]:
     if externals.exists('shogun.%s' % name):
         exec "SVM._KNOWN_IMPLEMENTATIONS[\"%s\"] = (%s, %s, \"%s\")" % (name, item, params, descr)

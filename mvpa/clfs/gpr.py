@@ -16,9 +16,9 @@ import numpy as np
 
 from mvpa.base import externals, warning
 
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
-from mvpa.misc.param import Parameter
+from mvpa.base.param import Parameter
 from mvpa.kernels.np import SquaredExponentialKernel, GeneralizedLinearKernel, \
      LinearKernel
 from mvpa.measures.base import Sensitivity
@@ -144,7 +144,7 @@ class GPR(Classifier):
         # It does not make sense to calculate a confusion matrix for a GPR
         # XXX it does ;) it will be a RegressionStatistics actually ;-)
         # So if someone desires -- let him have it
-        # self.ca.enable('training_confusion', False)
+        # self.ca.enable('training_stats', False)
 
         # set kernel:
         if kernel is None:
@@ -323,7 +323,7 @@ class GPR(Classifier):
         # GRP relies on numerical labels
         # yoh: yeah -- GPR now is purely regression so no conversion
         #      is necessary
-        train_labels = data.sa[params.targets_attr].value
+        train_labels = data.sa[self.get_space()].value
         self._train_labels = train_labels
 
         if not retrainable or _changedData['traindata'] \
@@ -494,11 +494,10 @@ class GPR(Classifier):
             self._km_test_test = None
 
 
-    def untrain(self):
-        super(GPR, self).untrain()
+    def _untrain(self):
+        super(GPR, self)._untrain()
         # XXX might need to take special care for retrainable. later
         self._init_internals()
-        pass
 
 
     def set_hyperparameters(self, hyperparameter):

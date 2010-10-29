@@ -15,9 +15,11 @@ from mvpa.testing.datasets import datasets
 from mvpa.tests.test_stats import *
 
 from scipy import signal
+from mvpa.clfs.stats import match_distribution, rv_semifrozen
 from mvpa.misc.stats import chisquare
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.datasets.base import dataset_wizard
+from mvpa.generators.permutation import AttributePermutator
 
 class StatsTestsScipy(unittest.TestCase):
     """Unittests for various statistics which use scipy"""
@@ -39,7 +41,7 @@ class StatsTestsScipy(unittest.TestCase):
 
     def test_chi_square_disbalanced(self):
         # test perfect "generalization"
-        tbl = np.array([[1,100], [1,100]])
+        tbl = np.array([[1, 100], [1, 100]])
         chi, p = chisquare(tbl, exp='indep_rows')
         self.failUnless(chi == 0)
         self.failUnless(p == 1)
@@ -62,7 +64,8 @@ class StatsTestsScipy(unittest.TestCase):
         from mvpa.measures.corrcoef import CorrCoef
         ds = datasets['uni2small']
 
-        null = MCNullDist(permutations=10, tail='any')
+        permutator = AttributePermutator('targets', count=10)
+        null = MCNullDist(permutator, tail='any')
 
         assert_raises(ValueError, null.fit, CorrCoef(), ds)
         # cheat and map to numeric for this test
@@ -75,14 +78,13 @@ class StatsTestsScipy(unittest.TestCase):
         p100 = null.p([100, 0, 0, 0, 0, 0])
         assert_array_almost_equal(pm100, p100)
 
-        # With 10 samples isn't that easy to get reliable sampling for
+        # With 10 samples it isn't that easy to get a reliable sampling for
         # non-parametric, so we can allow somewhat low significance
-        # ;-)
         self.failUnless(pm100[0] <= 0.1)
         self.failUnless(p100[0] <= 0.1)
 
-        self.failUnless(np.all(pm100[1:] >= 0.1))
-        self.failUnless(np.all(pm100[1:] >= 0.1))
+        self.failUnless(np.all(pm100[1:] > 0.05))
+        self.failUnless(np.all(p100[1:] > 0.05))
         # same test with just scalar measure/feature
         null.fit(CorrCoef(), ds[:, 0])
         p_100 = null.p(100)
@@ -100,8 +102,8 @@ class StatsTestsScipy(unittest.TestCase):
         m = OneWayAnova(null_dist=nd, enable_ca=['null_t'])
         score = m(ds)
 
-        score_nonbogus = np.mean(score.samples[:,ds.a.nonbogus_features])
-        score_bogus = np.mean(score.samples[:,ds.a.bogus_features])
+        score_nonbogus = np.mean(score.samples[:, ds.a.nonbogus_features])
+        score_bogus = np.mean(score.samples[:, ds.a.bogus_features])
         # plausability check
         self.failUnless(score_bogus < score_nonbogus)
 
@@ -124,7 +126,8 @@ class StatsTestsScipy(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             # Failed on c94ec26eb593687f25d8c27e5cfdc5917e352a69
             # with MVPA_SEED=833393575
-            self.failUnless((np.abs(m.ca.null_t[0][ds.a.nonbogus_features]) >= 5).all(),
+            self.failUnless(
+                (np.abs(m.ca.null_t[0][ds.a.nonbogus_features]) >= 5).all(),
                 msg="Nonbogus features should have high t-score. Got %s"
                 % (m.ca.null_t[0][ds.a.nonbogus_features]))
 
@@ -141,12 +144,13 @@ class StatsTestsScipy(unittest.TestCase):
     def test_negative_t(self):
         """Basic testing of the sign in p and t scores
         """
-        from mvpa.measures.base import FeaturewiseDatasetMeasure
+        from mvpa.measures.base import FeaturewiseMeasure
 
-        class BogusMeasure(FeaturewiseDatasetMeasure):
+        class BogusMeasure(FeaturewiseMeasure):
             """Just put high positive into first 2 features, and high
             negative into 2nd two
             """
+            is_trained = True
             def _call(self, dataset):
                 """just a little helper... pylint shut up!"""
                 res = np.random.normal(size=(dataset.nfeatures,))
@@ -157,7 +161,7 @@ class StatsTestsScipy(unittest.TestCase):
         nd = FixedNullDist(scipy.stats.norm(0, 0.1), tail='any')
         m = BogusMeasure(null_dist=nd, enable_ca=['null_t'])
         ds = datasets['uni2small']
-        score = m(ds)
+        _ = m(ds)
         t, p = m.ca.null_t, m.ca.null_prob
         self.failUnless((p>=0).all())
         self.failUnless((t[:2] > 0).all())
@@ -167,8 +171,6 @@ class StatsTestsScipy(unittest.TestCase):
     def test_match_distribution(self):
         """Some really basic testing for match_distribution
         """
-        from mvpa.clfs.stats import match_distribution, rv_semifrozen
-
         ds = datasets['uni2medium']      # large to get stable stats
         data = ds.samples[:, ds.a.bogus_features[0]]
         # choose bogus feature, which

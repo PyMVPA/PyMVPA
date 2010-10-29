@@ -25,8 +25,8 @@ import numpy as np
 from numpy import ones, zeros, sum, abs, isfinite, dot
 from mvpa.base import warning, externals
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
-from mvpa.misc.param import Parameter
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.param import Parameter
+from mvpa.base.state import ConditionalAttribute
 #from mvpa.measures.base import Sensitivity
 
 
@@ -130,16 +130,16 @@ class GNB(Classifier):
         elif prior == 'ratio':
             priors = np.squeeze(nsamples_per_class) / float(nsamples)
         else:
-            raise ValueError, \
-                  "No idea on how to handle '%s' way to compute priors" \
-                  % self.params.prior
+            raise ValueError(
+                "No idea on how to handle '%s' way to compute priors"
+                % self.params.prior)
         return priors
 
     def _train(self, dataset):
         """Train the classifier using `dataset` (`Dataset`).
         """
         params = self.params
-        targets_sa_name = params.targets_attr
+        targets_sa_name = self.get_space()
         targets_sa = dataset.sa[targets_sa_name]
 
         # get the dataset information into easy vars
@@ -170,6 +170,9 @@ class GNB(Classifier):
         non0labels = (nsamples_per_class.squeeze() != 0)
         means[non0labels] /= nsamples_per_class[non0labels]
 
+        # Store prior probabilities
+        self.priors = self._get_priors(nlabels, nsamples, nsamples_per_class)
+
         # Estimate variances
         # better loop than repmat! ;)
         for s, l in zip(X, labels):
@@ -185,9 +188,6 @@ class GNB(Classifier):
         else:
             variances[non0labels] /= nsamples_per_class[non0labels]
 
-        # Store prior probabilities
-        self.priors = self._get_priors(nlabels, nsamples, nsamples_per_class)
-
         # Precompute and store weighting coefficient for Gaussian
         if params.logprob:
             # it would be added to exponent
@@ -200,14 +200,14 @@ class GNB(Classifier):
                   + "min:max(data)=%f:%f" % (np.min(X), np.max(X)))
 
 
-    def untrain(self):
+    def _untrain(self):
         """Untrain classifier and reset all learnt params
         """
         self.means = None
         self.variances = None
         self.ulabels = None
         self.priors = None
-        super(GNB, self).untrain()
+        super(GNB, self)._untrain()
 
 
     @accepts_dataset_as_samples
