@@ -14,7 +14,6 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import mvpa.support.copy as copy
 from mvpa.base.dochelpers import enhanced_doc_string
-from sets import Set
 from re import sub
 from mvpa.base import warning
 
@@ -343,8 +342,8 @@ class ColumnData(dict):
             else:
                 # use stored order + newly added keys at the last columns
                 col_hdr = self._header_order + \
-                          list(Set(self.keys()).difference(
-                                                Set(self._header_order)))
+                          list(set(self.keys()).difference(
+                                                set(self._header_order)))
         else:
             if not len(header_order) == self.ncolumns:
                 raise ValueError, 'Header list does not match number of ' \
@@ -566,19 +565,19 @@ def labels2chunks(labels, method="alllabels", ignore_labels=None):
     chunks = []
     if ignore_labels is None:
         ignore_labels = []
-    alllabels = Set(labels).difference(Set(ignore_labels))
+    alllabels = set(labels).difference(set(ignore_labels))
     if method == 'alllabels':
-        seenlabels = Set()
+        seenlabels = set()
         lastlabel = None
         chunk = 0
         for label in labels:
             if label != lastlabel:
                 if seenlabels == alllabels:
                     chunk += 1
-                    seenlabels = Set()
+                    seenlabels = set()
                 lastlabel = label
                 if not label in ignore_labels:
-                    seenlabels.union_update([label])
+                    seenlabels.update([label])
             chunks.append(chunk)
         chunks = np.array(chunks)
         # fix up a bit the trailer

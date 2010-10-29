@@ -41,7 +41,7 @@ class TaskDirective(Directive):
 
     def run(self):
         ret = make_admonition(
-            exercise, self.name, [_('Exercise')], self.options,
+            exercise, self.name, ['Exercise'], self.options,
             self.content, self.lineno, self.content_offset, self.block_text,
             self.state, self.state_machine)
         if self.arguments:

@@ -22,8 +22,8 @@ import sys
 import numpy as np
 
 from mvpa import cfg, externals
-from mvpa.datasets import Dataset
-from mvpa.datasets.splitters import OddEvenSplitter
+from mvpa.datasets.base import Dataset, HollowSamples
+from mvpa.generators.partition import OddEvenPartitioner
 from mvpa.misc.data_generators import *
 
 __all__ = [ 'datasets', 'get_random_rotation', 'saveload_warehouse',
@@ -47,6 +47,9 @@ nonbogus_pool = np.random.permutation([0, 1, 3, 5])
 
 datasets = {}
 
+# use a partitioner to flag odd/even samples as training and test
+ttp = OddEvenPartitioner(space='train', count=1)
+
 for kind, spec in specs.iteritems():
     # set of univariate datasets
     for nlabels in [ 2, 3, 4 ]:
@@ -58,14 +61,8 @@ for kind, spec in specs.iteritems():
             nonbogus_features=nonbogus_features,
             **spec)
 
-        oes = OddEvenSplitter()
-        splits = [(train, test) for (train, test) in oes(dataset)]
-        for i, replication in enumerate( ['test', 'train'] ):
-            dataset_ = splits[0][i]
-            datasets["%s_%s" % (basename, replication)] = dataset_
-
         # full dataset
-        datasets[basename] = dataset
+        datasets[basename] = list(ttp.generate(dataset))[0]
 
     # sample 3D
     total = 2*spec['perlabel']
@@ -94,7 +91,7 @@ _dsinv.samples = np.hstack((_dsinv.samples,
 datasets['dumbinv'] = _dsinv
 
 # Datasets for regressions testing
-datasets['sin_modulated'] = multiple_chunks(sin_modulated, 4, 30, 1)
+datasets['sin_modulated'] = list(ttp.generate(multiple_chunks(sin_modulated, 4, 30, 1)))[0]
 # use the same full for training
 datasets['sin_modulated_train'] = datasets['sin_modulated']
 datasets['sin_modulated_test'] = sin_modulated(30, 1, flat=True)
@@ -105,6 +102,9 @@ datasets['chirp_linear_test'] = chirp_linear(20, 5, 2, 0.4, 0.1)
 
 datasets['wr1996'] = multiple_chunks(wr1996, 4, 50)
 datasets['wr1996_test'] = wr1996(50)
+
+datasets['hollow'] = Dataset(HollowSamples((40,20)),
+                             sa={'targets': np.tile(['one', 'two'], 20)})
 
 
 def saveload_warehouse():

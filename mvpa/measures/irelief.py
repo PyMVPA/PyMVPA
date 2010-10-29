@@ -7,7 +7,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""FeaturewiseDatasetMeasure performing multivariate Iterative RELIEF
+"""FeaturewiseMeasure performing multivariate Iterative RELIEF
 (I-RELIEF) algorithm.
 See : Y. Sun, Iterative RELIEF for Feature Weighting: Algorithms, Theories,
 and Applications, IEEE Trans. on Pattern Analysis and Machine Intelligence
@@ -19,7 +19,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.datasets import Dataset
-from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.measures.base import FeaturewiseMeasure
 from mvpa.kernels.np import ExponentialKernel
 from mvpa.clfs.distance import pnorm_w
 
@@ -27,8 +27,8 @@ if __debug__:
     from mvpa.base import debug
 
 
-class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
-    """`FeaturewiseDatasetMeasure` that performs multivariate I-RELIEF
+class IterativeRelief_Devel(FeaturewiseMeasure):
+    """`FeaturewiseMeasure` that performs multivariate I-RELIEF
     algorithm. Batch version allowing various kernels.
 
     UNDER DEVELOPMENT.
@@ -47,13 +47,16 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
     exponential-like kernels. Support for linear kernel will be
     added later.
     """
+    is_trained = True
+    """Indicate that this measure doesn't have to be trained"""
+
     def __init__(self, threshold = 1.0e-2, kernel = None, kernel_width = 1.0,
                  w_guess = None, **kwargs):
         """Constructor of the IRELIEF class.
 
         """
         # init base classes first
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
+        FeaturewiseMeasure.__init__(self, **kwargs)
 
         # Threshold in W changes (stopping criterion for irelief)
         self.threshold = threshold
@@ -142,7 +145,7 @@ class IterativeRelief_Devel(FeaturewiseDatasetMeasure):
 
 
 class IterativeReliefOnline_Devel(IterativeRelief_Devel):
-    """`FeaturewiseDatasetMeasure` that performs multivariate I-RELIEF
+    """`FeaturewiseMeasure` that performs multivariate I-RELIEF
     algorithm. Online version.
 
     UNDER DEVELOPMENT
@@ -162,6 +165,9 @@ class IterativeReliefOnline_Devel(IterativeRelief_Devel):
     major goal of this current online implementation is reduction of
     computational complexity.
     """
+    is_trained = True
+    """Indicate that this measure doesn't have to be trained"""
+
 
     def __init__(self, a=5.0, permute=True, max_iter=3, **kwargs):
         """Constructor of the IRELIEF class.
@@ -250,8 +256,8 @@ class IterativeReliefOnline_Devel(IterativeRelief_Devel):
 
 
 
-class IterativeRelief(FeaturewiseDatasetMeasure):
-    """`FeaturewiseDatasetMeasure` that performs multivariate I-RELIEF
+class IterativeRelief(FeaturewiseMeasure):
+    """`FeaturewiseMeasure` that performs multivariate I-RELIEF
     algorithm. Batch version.
 
     Batch I-RELIEF-2 feature weighting algorithm. Works for binary or
@@ -270,13 +276,16 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
     exponential-like kernels. Support for linear kernel will be
     added later.
     """
+    is_trained = True
+    """Indicate that this measure doesn't have to be trained"""
+
     def __init__(self, threshold=1.0e-2, kernel_width=1.0,
                  w_guess=None, **kwargs):
         """Constructor of the IRELIEF class.
 
         """
         # init base classes first
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
+        FeaturewiseMeasure.__init__(self, **kwargs)
 
         # Threshold in W changes (stopping criterion for irelief).
         self.threshold = threshold
@@ -367,13 +376,16 @@ class IterativeRelief(FeaturewiseDatasetMeasure):
 
 
 class IterativeReliefOnline(IterativeRelief):
-    """`FeaturewiseDatasetMeasure` that performs multivariate I-RELIEF
+    """`FeaturewiseMeasure` that performs multivariate I-RELIEF
     algorithm. Online version.
 
     This algorithm is exactly the one in the referenced paper
     (I-RELIEF-2 online), using weighted 1-norm and Exponential
     Kernel.
     """
+    is_trained = True
+    """Indicate that this measure doesn't have to be trained"""
+
 
     def __init__(self, a=10.0, permute=True, max_iter=3, **kwargs):
         """Constructor of the IRELIEF class.

@@ -6,14 +6,14 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""FeaturewiseDatasetMeasure performing a univariate ANOVA."""
+"""FeaturewiseMeasure performing a univariate ANOVA."""
 
 __docformat__ = 'restructuredtext'
 
 import numpy as np
 
 from mvpa.base import externals
-from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.measures.base import FeaturewiseMeasure
 from mvpa.base.dataset import vstack
 from mvpa.datasets.base import Dataset
 
@@ -28,8 +28,8 @@ from mvpa.datasets.base import Dataset
 #
 # and may be some others
 
-class OneWayAnova(FeaturewiseDatasetMeasure):
-    """`FeaturewiseDatasetMeasure` that performs a univariate ANOVA.
+class OneWayAnova(FeaturewiseMeasure):
+    """`FeaturewiseMeasure` that performs a univariate ANOVA.
 
     F-scores are computed for each feature as the standard fraction of between
     and within group variances. Groups are defined by samples with unique
@@ -44,24 +44,24 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
     from the 'fprob' feature attribute.
     """
 
-    def __init__(self, targets_attr='targets', **kwargs):
+    def __init__(self, space='targets', **kwargs):
         """
         Parameters
         ----------
-        targets_attr : str
+        space : str
           What samples attribute to use as targets (labels).
         """
-        self._targets_attr = targets_attr
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
+        # set auto-train flag since we have nothing special to be done
+        FeaturewiseMeasure.__init__(self, auto_train=True, space=space, **kwargs)
 
 
     def __repr__(self, prefixes=None):
         if prefixes is None:
             prefixes = []
-        if self._targets_attr != 'targets':
-            prefixes = prefixes + ['targets_attr=%r' % (self._targets_attr)]
+        if self.get_space() != 'targets':
+            prefixes = prefixes + ['targets_attr=%r' % (self.get_space())]
         return \
-            super(FeaturewiseDatasetMeasure, self).__repr__(prefixes=prefixes)
+            super(FeaturewiseMeasure, self).__repr__(prefixes=prefixes)
 
 
     def _call(self, dataset):
@@ -72,7 +72,7 @@ class OneWayAnova(FeaturewiseDatasetMeasure):
         # However, it got tweaked and optimized to better fit into PyMVPA.
 
         # number of groups
-        targets_sa = dataset.sa[self._targets_attr]
+        targets_sa = dataset.sa[self.get_space()]
         labels = targets_sa.value
         ul = targets_sa.unique
 
@@ -139,14 +139,14 @@ class CompoundOneWayAnova(OneWayAnova):
     def _call(self, dataset):
         """Computes featurewise f-scores using compound comparisons."""
 
-        targets_sa = dataset.sa[self._targets_attr]
+        targets_sa = dataset.sa[self.get_space()]
         orig_labels = targets_sa.value
         labels = orig_labels.copy()
 
         # Lets create a very shallow copy of a dataset with just
         # samples and targets_attr
         dataset_mod = Dataset(dataset.samples,
-                              sa={self._targets_attr : labels})
+                              sa={self.get_space() : labels})
         results = []
         for ul in targets_sa.unique:
             labels[orig_labels == ul] = 1
@@ -160,5 +160,5 @@ class CompoundOneWayAnova(OneWayAnova):
             results.append(f_ds)
 
         results = vstack(results)
-        results.sa[self._targets_attr] = targets_sa.unique
+        results.sa[self.get_space()] = targets_sa.unique
         return results

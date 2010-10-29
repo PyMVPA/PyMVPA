@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -21,8 +21,7 @@ part <chap_tutorial_start>`:
 >>> from tutorial_lib import *
 >>> ds = get_haxby2001_data()
 >>> clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
->>> terr = TransferError(clf)
->>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter(attr='runtype'))
+>>> cvte = CrossValidation(clf, HalfPartitioner(attr='runtype'))
 >>> cv_results = cvte(ds)
 >>> np.mean(cv_results)
 0.0625
@@ -45,8 +44,7 @@ If, for example, we want to try the popular :mod:`support vector machine <mvpa.c
 (SVM) on our example dataset it looks like this:
 
 >>> clf = LinearCSVMC()
->>> terr = TransferError(clf)
->>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter(attr='runtype'))
+>>> cvte = CrossValidation(clf, HalfPartitioner(attr='runtype'))
 >>> cv_results = cvte(ds)
 >>> np.mean(cv_results)
 0.1875
@@ -58,16 +56,16 @@ SVM with its default settings seems to perform slightly worse than the
 simple kNN-classifier. We'll get back to the classifiers shortly. Let's
 first look at the remaining part of this analysis.
 
-We already know that `~mvpa.clfs.transerror.TransferError` is used to compute
-the error function. So far we have used only the mean mismatch between actual
+We already know that `~mvpa.measures.base.CrossValidation` can be used to compute
+errors. So far we have used only the mean mismatch between actual
 targets and classifier predictions as the error function (which is the default).
 However, PyMVPA offers a number of alternative functions in the
 :mod:`mvpa.misc.errorfx` module, but it is also trivial to specify custom ones.
 For example, if we do not want to have error reported, but instead accuracy, we
 can do that:
 
->>> terr = TransferError(clf, errorfx=lambda p, t: np.mean(p == t))
->>> cvte = CrossValidatedTransferError(terr, splitter=HalfSplitter(attr='runtype'))
+>>> cvte = CrossValidation(clf, HalfPartitioner(attr='runtype'),
+...                        errorfx=lambda p, t: np.mean(p == t))
 >>> cv_results = cvte(ds)
 >>> np.mean(cv_results)
 0.8125
@@ -118,7 +116,8 @@ dataset. To set up a 12-fold leave-one-run-out cross-validation, we can
 make use of `~mvpa.datasets.splitters.NFoldSplitter`. By default it is
 going to select samples from one ``chunk`` at a time:
 
->>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
+>>> cvte = CrossValidation(clf, NFoldPartitioner(),
+...                        errorfx=lambda p, t: np.mean(p == t))
 >>> cv_results = cvte(ds)
 >>> np.mean(cv_results)
 0.78125
@@ -150,23 +149,26 @@ the results of the cross-validation analysis a bit further.
 Returned value is actually a `~mvpa.datasets.base.Dataset` with the
 results for all cross-validation folds. Since our error function computes
 only a single scalar value for each fold the dataset only contain a single
-feature (in this case the accuracy), and a sample per each fold. Moreover,
-the dataset also offers a sample attribute that show which particular set
-of chunks formed the training and testing set per fold.
+feature (in this case the accuracy), and a sample per each fold.
 
->>> print cv_results.sa.cv_fold
-['1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->0.0'
- '0.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->1.0'
- '0.0,1.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->2.0'
- '0.0,1.0,2.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->3.0'
- '0.0,1.0,2.0,3.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->4.0'
- '0.0,1.0,2.0,3.0,4.0,6.0,7.0,8.0,9.0,10.0,11.0->5.0'
- '0.0,1.0,2.0,3.0,4.0,5.0,7.0,8.0,9.0,10.0,11.0->6.0'
- '0.0,1.0,2.0,3.0,4.0,5.0,6.0,8.0,9.0,10.0,11.0->7.0'
- '0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,9.0,10.0,11.0->8.0'
- '0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,10.0,11.0->9.0'
- '0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,11.0->10.0'
- '0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0->11.0']
+..
+  XXX disabled for now -- see tutorial_start for reason
+  Moreover, the dataset also offers a sample attribute that show which particular
+  set of chunks formed the training and testing set per fold.
+  .
+  >> print cv_results.sa.cvfold
+  ['1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->0.0'
+   '0.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->1.0'
+   '0.0,1.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->2.0'
+   '0.0,1.0,2.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->3.0'
+   '0.0,1.0,2.0,3.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0->4.0'
+   '0.0,1.0,2.0,3.0,4.0,6.0,7.0,8.0,9.0,10.0,11.0->5.0'
+   '0.0,1.0,2.0,3.0,4.0,5.0,7.0,8.0,9.0,10.0,11.0->6.0'
+   '0.0,1.0,2.0,3.0,4.0,5.0,6.0,8.0,9.0,10.0,11.0->7.0'
+   '0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,9.0,10.0,11.0->8.0'
+   '0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,10.0,11.0->9.0'
+   '0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,11.0->10.0'
+   '0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0->11.0']
 
 
 We Need To Take A Closer Look
@@ -206,9 +208,9 @@ available in a dedicated collection of :term:`conditional attribute`\ s --
 analogous to ``sa`` and ``fa`` in datasets, it is named ``ca``. Let's see
 how it works:
 
->>> cvte = CrossValidatedTransferError(terr,
-...                                    splitter=NFoldSplitter(),
-...                                    enable_ca=['confusion'])
+>>> cvte = CrossValidation(clf, NFoldPartitioner(),
+...                        errorfx=lambda p, t: np.mean(p == t),
+...                        enable_ca=['stats'])
 >>> cv_results = cvte(ds)
 
 Via the ``enable_ca`` argument we triggered computing confusion tables for
@@ -218,7 +220,7 @@ procedure is available in the ``ca`` collection. Let's take a look (note
 that in the printed manual the output is truncated due to page width
 constraints -- please refer to the HTML-based version full the full matrix).
 
->>> print cvte.ca.confusion.as_string(description=True)
+>>> print cvte.ca.stats.as_string(description=True)
 ----------.
 predictions\targets     bottle         cat          chair          face         house        scissors    scrambledpix      shoe
             `------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------ P'   N'   FP   FN   PPV  NPV  TPR  SPC  FDR  MCC
@@ -280,7 +282,7 @@ via its `~mvpa.clfs.transerror.ConfusionMatrix.plot()` method. If the
 confusions shall be used as input for further processing they can also be
 accessed in pure matrix format:
 
->>> print cvte.ca.confusion.matrix
+>>> print cvte.ca.stats.matrix
 [[ 6  0  3  0  0  5  0  1]
  [ 0 10  0  0  0  0  0  0]
  [ 0  0  7  0  0  0  0  0]
@@ -324,8 +326,7 @@ spanned by the singular vectors of the training data, it would look like this:
 
 >>> baseclf = LinearCSVMC()
 >>> metaclf = MappedClassifier(baseclf, SVDMapper())
->>> terr = TransferError(metaclf)
->>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
+>>> cvte = CrossValidation(metaclf, NFoldPartitioner())
 >>> cv_results = cvte(ds)
 >>> print np.mean(cv_results)
 0.15625
@@ -352,8 +353,7 @@ and the rest is noise. We can easily check that with an appropriate mapper:
 
 >>> mapper = ChainMapper([SVDMapper(), FeatureSliceMapper(slice(None, 2))])
 >>> metaclf = MappedClassifier(baseclf, mapper)
->>> terr = TransferError(metaclf)
->>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
+>>> cvte = CrossValidation(metaclf, NFoldPartitioner())
 >>> cv_results = cvte(ds)
 >>> svm_err = np.mean(cv_results)
 >>> print round(svm_err, 2)
@@ -368,8 +368,7 @@ in the past.
 >>> baseclf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
 >>> mapper = ChainMapper([SVDMapper(), FeatureSliceMapper(slice(None, 2))])
 >>> metaclf = MappedClassifier(baseclf, mapper)
->>> terr = TransferError(metaclf)
->>> cvte = CrossValidatedTransferError(terr, splitter=NFoldSplitter())
+>>> cvte = CrossValidation(metaclf, NFoldPartitioner())
 >>> cv_results = cvte(ds)
 >>> np.mean(cv_results) < svm_err
 False

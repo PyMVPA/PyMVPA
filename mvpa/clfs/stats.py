@@ -13,7 +13,8 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.base import externals, warning
-from mvpa.misc.state import ClassWithCollections, ConditionalAttribute
+from mvpa.base.state import ClassWithCollections, ConditionalAttribute
+from mvpa.generators.permutation import AttributePermutator
 
 if __debug__:
     from mvpa.base import debug
@@ -187,7 +188,7 @@ class NullDist(ClassWithCollections):
         Returned values are determined left, right, or from any tail
         depending on the constructor setting.
 
-        In case a `FeaturewiseDatasetMeasure` was used to estimate the
+        In case a `FeaturewiseMeasure` was used to estimate the
         distribution the method returns an array. In that case `x` can be
         a scalar value or an array of a matching shape.
         """
@@ -201,7 +202,7 @@ class MCNullDist(NullDist):
     """Null-hypothesis distribution is estimated from randomly permuted data labels.
 
     The distribution is estimated by calling fit() with an appropriate
-    `DatasetMeasure` or `TransferError` instance and a training and a
+    `Measure` or `TransferError` instance and a training and a
     validation dataset (in case of a `TransferError`). For a customizable
     amount of cycles the training data labels are permuted and the
     corresponding measure computed. In case of a `TransferError` this is the
@@ -212,7 +213,7 @@ class MCNullDist(NullDist):
     i.e. fraction of the distribution that is lower or larger than some
     critical value.
 
-    This class also supports `FeaturewiseDatasetMeasure`. In that case `cdf()`
+    This class also supports `FeaturewiseMeasure`. In that case `cdf()`
     returns an array of featurewise probabilities/frequencies.
     """
 
@@ -226,58 +227,28 @@ class MCNullDist(NullDist):
     dist_samples = ConditionalAttribute(enabled=False,
                                  doc='Samples obtained for each permutation')
 
-    # XXX shouldn't we may be RF permute_attr into a Permutator class? ;)
-    def __init__(self, dist_class=Nonparametric, permutations=100,
-                 permute_attr='targets', chunks_attr=None,
-                 permute_col='sa', assure_permute=False, **kwargs):
+    def __init__(self, permutator, dist_class=Nonparametric, **kwargs):
         """Initialize Monte-Carlo Permutation Null-hypothesis testing
 
         Parameters
         ----------
+        permutator : Node
+          Node instance that generates permuted datasets.
         dist_class : class
           This can be any class which provides parameters estimate
           using `fit()` method to initialize the instance, and
           provides `cdf(x)` method for estimating value of x in CDF.
           All distributions from SciPy's 'stats' module can be used.
-        permutations : int
-          This many permutations of label will be performed to
-          determine the distribution under the null hypothesis.
-        permute_attr : str
-          Name of the samples attribute to permute. ('targets' by default)
-        chunks_attr : None or str
-          If not None, permutes labels within the chunks,
-          i.e. blocks of data having the same value of `chunks_attr`.
-        permute_col : str, optional
-          What collection `permute_attr` belongs to.
-        assure_permute : bool
-          Passed to func:`~mvpa.datasets.misc.permute_attr`. If True,
-          assures that targets are permuted, i.e. any one is different from
-          the original one
         """
         NullDist.__init__(self, **kwargs)
 
         self._dist_class = dist_class
         self._dist = []                 # actual distributions
 
-        self.__permutations = permutations
-        """Number of permutations to compute the estimate the null
-        distribution."""
-
-        self.permute_attr = permute_attr
-        self.chunks_attr = chunks_attr
-        self.assure_permute = assure_permute
-        self.permute_col = permute_col
+        self.__permutator = permutator
 
     def __repr__(self, prefixes=[]):
-        prefixes_ = ["permutations=%s" % self.__permutations]
-        if self.permute_attr != 'targets':
-            prefixes_ += ['attr=%r' % self.permute_attr]
-        if self.chunks_attr:
-            prefixes_ += ['chunks_attr=%r' % self.chunks_attr]
-        if self.permute_col != 'sa':
-            prefixes_ += ['permute_col=%r' % self.permute_col]
-        if self.assure_permute:
-            prefixes_ += ['assure_permute=%r' % self.assure_permute]
+        prefixes_ = ["%s" % self.__permutator]
         if self._dist_class != Nonparametric:
             prefixes_.insert(0, 'dist_class=%r' % (self._dist_class,))
         return super(MCNullDist, self).__repr__(
@@ -290,7 +261,7 @@ class MCNullDist(NullDist):
 
         Parameters
         ----------
-        measure: (`Featurewise`)`DatasetMeasure` or `TransferError`
+        measure: (`Featurewise`)`Measure` or `TransferError`
           TransferError instance used to compute all errors.
         wdata: `Dataset` which gets permuted and used to compute the
           measure/transfer error multiple times.
@@ -299,31 +270,25 @@ class MCNullDist(NullDist):
           working and validation dataset are passed onto it.
         """
         # TODO: place exceptions separately so we could avoid circular imports
-        from mvpa.clfs.base import LearnerError
+        from mvpa.base.learner import LearnerError
 
         dist_samples = []
         """Holds the values for randomized labels."""
 
         # estimate null-distribution
-        for p in xrange(self.__permutations):
+        # TODO this really needs to be more clever! If data samples are
+        # shuffled within a class it really makes no difference for the
+        # classifier, hence the number of permutations to estimate the
+        # null-distribution of transfer errors can be reduced dramatically
+        # when the *right* permutations (the ones that matter) are done.
+        for p, permuted_wdata in enumerate(self.__permutator.generate(wdata)):
             # new permutation all the time
             # but only permute the training data and keep the testdata constant
             #
             if __debug__:
                 debug('STATMC', "Doing %i permutations: %i" \
-                      % (self.__permutations, p+1), cr=True)
+                      % (self.__permutator.nruns, p+1), cr=True)
 
-            # TODO this really needs to be more clever! If data samples are
-            # shuffled within a class it really makes no difference for the
-            # classifier, hence the number of permutations to estimate the
-            # null-distribution of transfer errors can be reduced dramatically
-            # when the *right* permutations (the ones that matter) are done.
-            permuted_wdata = wdata.copy('shallow')
-            permuted_wdata.permute_attr(
-                attr=self.permute_attr,
-                chunks_attr=self.chunks_attr,
-                col=self.permute_col,
-                assure_permute=self.assure_permute)
 
             # decide on the arguments to measure
             if not vdata is None:
@@ -335,12 +300,12 @@ class MCNullDist(NullDist):
             # assume it has `TransferError` interface
             try:
                 res = measure(*measure_args)
+                res = np.asanyarray(res)
+                dist_samples.append(res)
             except LearnerError, e:
                 warning('Failed to obtain value from %s due to %s.  Measurement'
                         ' was skipped, which could lead to unstable and/or'
                         ' incorrect assessment of the null_dist' % (measure, e))
-            res = np.asanyarray(res)
-            dist_samples.append(res)
 
         if __debug__:
             debug('STATMC', '')

@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -28,7 +28,7 @@ are iterative algorithms that have to be trained on data before they can be
 used. In PyMVPA, all these transformations are :mod:`~mvpa.mappers`.
 
 Let's create a dummy dataset (5 samples, 12 features). This time we will use a
-new method to create the dataset, the `dataset_wizard`. Here it is fully
+new method to create the dataset, the ``dataset_wizard``. Here it is fully
 equivalent to a regular constructor call (i.e.  `~mvpa.datasets.base.Dataset`),
 but we will shortly see some nice convenience aspects.
 
@@ -82,7 +82,7 @@ True
 <ChainMapper: <Flatten>-<FeatureSlice>>
 
 Now the situation has changed: *two* new mappers appeared in the dataset -- a
-`~mvpa.mappers.base.ChainMapper` and a `~mvpa.mappers.base.FeatureSliceMapper`.
+`~mvpa.mappers.base.ChainMapper` and a `~mvpa.mappers.slicing.FeatureSliceMapper`.
 The latter describes (and actually performs) the slicing operation we just made,
 while the former encapsulates the two mappers into a processing pipeline.
 We can see that the mapper chain represents the processing history of the
@@ -103,10 +103,10 @@ can be feed with other data (as long as it is compatible with the mapper).
 >>> print fmapped
 [ 1  2  8 10]
 
-Although `subds` has less features than our input data, forward mapping applies
+Although ``subds`` has less features than our input data, forward mapping applies
 the same transformation that had been done to the dataset itself also to our
 test 4x3 array. The procedure yields a feature vector of the same shape as the
-one in `subds`. By looking at the forward-mapped data, we can verify that the
+one in ``subds``. By looking at the forward-mapped data, we can verify that the
 correct features have been chosen.
 
 
@@ -168,13 +168,13 @@ volume in the NIfTI image.
 >>> print np.unique(attr.chunks)
 [  0.   1.   2.   3.   4.   5.   6.   7.   8.   9.  10.  11.]
 
-`SampleAttributes` allows us to load this type of file, and access its
+:class:`~mvpa.misc.io.base.SampleAttributes` allows us to load this type of file, and access its
 content. We got 1452 label and chunk values, one for each volume. Moreover,
 we see that there are nine different conditions and 12 different chunks.
 
 Now we can load the fMRI data, as we have done before -- only loading
 voxels corresponding to a mask of ventral temporal cortex, and assign the
-samples attributes to the dataset. `fmri_dataset()` allows us to pass them
+samples attributes to the dataset. `~mvpa.datasets.mri.fmri_dataset()` allows us to pass them
 directly:
 
 >>> fds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),

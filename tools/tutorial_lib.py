@@ -34,7 +34,7 @@ def get_raw_haxby2001_data(path=os.path.join(tutorial_data_path, 'data'),
                           mask=mask)
         return ds
     else:
-        return load_datadb_demo_blockfmri(path=path, roi=roi)
+        return load_datadb_tutorial_data(path=path, roi=roi)
 
 
 def get_haxby2001_data(path=None, roi='vt'):
@@ -44,7 +44,7 @@ def get_haxby2001_data(path=None, roi='vt'):
         ds = get_raw_haxby2001_data(path, roi=roi)
 
     # do chunkswise linear detrending on dataset
-    poly_detrend(ds, polyord=1, chunks_attr='chunks', inspace='time_coords')
+    poly_detrend(ds, polyord=1, chunks_attr='chunks', space='time_coords')
 
     # mark the odd and even runs
     rnames = {0: 'even', 1: 'odd'}
@@ -70,7 +70,7 @@ def get_haxby2001_data_alternative(path=None, roi='vt'):
         ds = get_raw_haxby2001_data(path, roi=roi)
 
     # do chunkswise linear detrending on dataset
-    poly_detrend(ds, polyord=1, chunks_attr='chunks', inspace='time_coords')
+    poly_detrend(ds, polyord=1, chunks_attr='chunks', space='time_coords')
 
     # zscore dataset relative to baseline ('rest') mean
     zscore(ds, param_est=('targets', ['rest']))

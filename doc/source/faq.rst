@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -104,9 +104,9 @@ repository and preparing the patch. Here is a quick sketch of the workflow.
 
 First get the latest code::
 
-  git clone git://git.debian.org/git/pkg-exppsy/pymvpa.git
+  git clone git://github.com/PyMVPA/PyMVPA.git
 
-This will create a new `pymvpa` subdirectory, that contains the complete
+This will create a new `PyMVPA` subdirectory, that contains the complete
 repository. Enter this directory and run `gitk --all` to browse the full
 history and *all* branches that have ever been published.
 
@@ -136,7 +136,7 @@ comprehensive Git tutorial`_.
 When you are done with the new feature, you can prepare the patch for
 inclusion into PyMVPA. If you have done multiple commits you might want to
 squash them into a single patch containing the new feature. You can do this
-with `git-rebase`. In recent version `git-rebase` has an option
+with `git rebase`.  Any recent version of `git rebase` has an option
 `--interactive`, which allows you to easily pick, squash or even further edit
 any of the previous commits you have made. Rebase your local branch against
 the remote branch you started hacking on (`origin/master` in this example)::
@@ -145,10 +145,11 @@ the remote branch you started hacking on (`origin/master` in this example)::
 
 When you are done, you can generate the final patch file::
 
-  git-format-patch origin/master
+  git format-patch origin/master
 
 Above command will generate a file for each commit in you local branch that is
 not yet part of `origin/master`. The patch files can then be easily emailed.
+
 
 
 The manual is quite insufficient. When will you improve it?
@@ -284,7 +285,7 @@ them again) looks like this:
   ...       TransferError(SMLR()),
   ...       OddEvenSplitter(),
   ...       harvest_attribs=\
-  ...        ['transerror.clf.get_sensitivity_analyzer(force_training=False)()'])
+  ...        ['transerror.clf.get_sensitivity_analyzer(force_train=False)()'])
   >>> merror = cv(dataset)
   >>> sensitivities = cv.ca.harvested.values()[0]
   >>> len(sensitivities)

@@ -13,9 +13,6 @@ __docformat__ = 'restructuredtext'
 import os
 import numpy as np
 
-
-from sets import Set
-
 from mvpa.datasets.base import dataset_wizard, Dataset
 from mvpa import pymvpa_dataroot, pymvpa_datadbroot
 
@@ -135,8 +132,8 @@ def normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
 
     # If nonbogus was provided -- assign .a and .fa accordingly
     if nonbogus_features is not None:
-        ds.fa['targets'] = np.array([None]*nfeatures)
-        ds.fa.targets[nonbogus_features] = ['L%d' % i for i in range(nlabels)]
+        ds.fa['nonbogus_targets'] = np.array([None]*nfeatures)
+        ds.fa.nonbogus_targets[nonbogus_features] = ['L%d' % i for i in range(nlabels)]
         ds.a['nonbogus_features'] = nonbogus_features
         ds.a['bogus_features'] = [x for x in range(nfeatures)
                                   if not x in nonbogus_features]
@@ -145,7 +142,7 @@ def normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
     return ds
 
 ##REF: Name was automagically refactored
-def pure_multivariate_signal(patterns, signal2noise = 1.5, chunks=None):
+def pure_multivariate_signal(patterns, signal2noise = 1.5, chunks=None, targets=[0, 1]):
     """ Create a 2d dataset with a clear multivariate signal, but no
     univariate information.
 
@@ -171,7 +168,7 @@ def pure_multivariate_signal(patterns, signal2noise = 1.5, chunks=None):
     data[3*patterns:4*patterns, 0] += signal2noise
 
     # two conditions
-    regs = np.array(([0] * patterns) + ([1] * 2 * patterns) + ([0] * patterns))
+    regs = np.array((targets[0:1] * patterns) + (targets[1:2] * 2 * patterns) + (targets[0:1] * patterns))
 
     if chunks is None:
         chunks = range(len(data))
@@ -336,10 +333,9 @@ def load_example_fmri_dataset():
     return ds
 
 
-def load_datadb_demo_blockfmri(path=os.path.join(pymvpa_datadbroot,
-                                                 'demo_blockfmri',
-                                                 'demo_blockfmri'),
-                               roi='brain'):
+def load_datadb_tutorial_data(path=os.path.join(
+      pymvpa_datadbroot, 'tutorial_data', 'tutorial_data', 'data'),
+    roi='brain'):
     """Loads the block-design demo dataset from PyMVPA dataset DB.
 
     Parameters
@@ -380,6 +376,11 @@ def load_datadb_demo_blockfmri(path=os.path.join(pymvpa_datadbroot,
                       mask=mask)
     return ds
 
+
+load_datadb_demo_blockfmri = load_datadb_tutorial_data
+"""For backward compatibility with tutorial_lib which people might be
+   "using" already.  Deprecate entirely whenever tutorial_data gets updated.
+"""
 
 def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None):
     """Generate a dataset with samples being temporally autocorrelated noise.

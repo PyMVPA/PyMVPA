@@ -27,7 +27,8 @@ if externals.exists('elasticnet', raise_=True):
 
 # local imports
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
-     FailedToTrainError, FailedToPredictError
+        FailedToPredictError
+from mvpa.base.learner import FailedToTrainError
 from mvpa.measures.base import Sensitivity
 
 if __debug__:
@@ -111,7 +112,7 @@ class ENET(Classifier):
 
         # It does not make sense to calculate a confusion matrix for a
         # regression
-        self.ca.enable('training_confusion', False)
+        self.ca.enable('training_stats', False)
 
     def __repr__(self):
         """String summary of the object
@@ -128,7 +129,7 @@ class ENET(Classifier):
     def _train(self, data):
         """Train the classifier using `data` (`Dataset`).
         """
-        targets = data.sa[self.params.targets_attr].value[:, np.newaxis]
+        targets = data.sa[self.get_space()].value[:, np.newaxis]
         enet_kwargs = {}
         if self.__max_steps is not None:
             enet_kwargs['max.steps'] = self.__max_steps

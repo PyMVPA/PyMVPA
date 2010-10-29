@@ -17,6 +17,7 @@ from mvpa.base.dochelpers import _str, borrowkwargs
 from mvpa.mappers.base import accepts_dataset_as_samples, Mapper
 from mvpa.datasets.base import Dataset
 from mvpa.datasets.miscfx import get_nsamples_per_attr, get_samples_by_attr
+from mvpa.support import copy
 
 
 class ZScoreMapper(Mapper):
@@ -48,7 +49,7 @@ class ZScoreMapper(Mapper):
     Reverse-mapping is currently not implemented.
     """
     def __init__(self, params=None, param_est=None, chunks_attr='chunks',
-                 dtype='float64', inspace=None):
+                 dtype='float64', **kwargs):
         """
         Parameters
         ----------
@@ -72,10 +73,8 @@ class ZScoreMapper(Mapper):
         dtype : Numpy dtype, optional
           Target dtype that is used for upcasting, in case integer data is to be
           Z-scored.
-        inspace : None
-          Currently, this argument has no effect.
         """
-        Mapper.__init__(self, inspace=inspace)
+        Mapper.__init__(self, **kwargs)
 
         self.__chunks_attr = chunks_attr
         self.__params = params
@@ -220,14 +219,15 @@ class ZScoreMapper(Mapper):
         elif self._secret_inplace_zscore:
             mdata = data
         else:
-            mdata = data.copy()
+            # do not call .copy() directly, since it might not be an array
+            mdata = copy.deepcopy(data)
 
         self._zscore(mdata, *params['__all__'])
         return mdata
 
 
     def _compute_params(self, samples):
-        return (samples.mean(axis=0), samples.std(axis=0))
+        return (np.mean(samples, axis=0), np.std(samples, axis=0))
 
 
     def _zscore(self, samples, mean, std):
@@ -278,7 +278,7 @@ def zscore(ds, **kwargs):
     else:
         zm.train(Dataset(ds))
     # map
-    mapped = zm(ds)
+    mapped = zm.forward(ds)
     # and append the mapper to the dataset
     if isinstance(mapped, Dataset):
         mapped._append_mapper(zm)

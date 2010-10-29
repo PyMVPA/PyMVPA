@@ -248,7 +248,8 @@ class FSLProbabilisticAtlas(FSLAtlas):
                 maps = np.array(maps_dict.values())
                 return np.max(maps, axis=0)
 
-    def get_maps(self, target, axes_order='xyz', key_attr=None):
+    def get_maps(self, target, axes_order='xyz', key_attr=None,
+                 overlaps=None):
         """Return a dictionary of probability maps for the target
 
         Each key is a `Label` instance, and value is the probability map
@@ -264,6 +265,11 @@ class FSLProbabilisticAtlas(FSLAtlas):
           `Label` instance would be used as a key.  If some attribute
           provided (e.g. 'text', 'abbr', 'index'), corresponding
           attribute of the `Label` instance would be taken as a key.
+        overlaps : None or {'max'}
+          How to treat overlaps in maps.  If None, nothing is done and maps
+          might have overlaps.  If 'max', then maps would not overlap and
+          competing maps will be resolved based on maximal value (e.g. if
+          maps contain probabilities).
         """
         lev = self.levels[0]       # we have just 1 here
         if key_attr is None:
@@ -271,10 +277,33 @@ class FSLProbabilisticAtlas(FSLAtlas):
         else:
             key_gen = lambda x: getattr(x, key_attr)
 
-        return dict((key_gen(l),
-                     self.get_map(l.index, axes_order=axes_order))
-                    for l in lev.find(target, unique=False))
+        res = [[key_gen(l),
+                self.get_map(l.index, axes_order=axes_order)]
+               for l in lev.find(target, unique=False)]
 
+        if overlaps == 'max':
+            # not efficient since it places all maps back into a single
+            # ndarray... but well
+            maps = np.array([x[1] for x in res])
+            maximums = np.argmax(maps, axis=0)
+            overlaps = np.sum(maps != 0, axis=0)>1
+            # now lets go and infiltrate maps:
+            # and do silly loop since we will reassign
+            # the entries possibly
+            for i in xrange(len(res)):
+                n, m = res[i]
+                loosers = np.logical_and(overlaps, ~(maximums == i))
+                if len(loosers):
+                    # copy and modify
+                    m_new = m.copy()
+                    m_new[loosers] = 0
+                    res[i][1] = m_new
+        elif overlaps is None:
+            pass
+        else:
+            raise ValueError, \
+                  "Incorrect value of overlaps argument %s" % overlaps
+        return dict(res)
 
 class FSLLabelsAtlas(XMLBasedAtlas):
     """Not sure what this one was for"""

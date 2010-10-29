@@ -47,7 +47,7 @@ else:
 from numpy.testing import (
     assert_almost_equal, assert_approx_equal,
     assert_array_almost_equal, assert_array_equal, assert_array_less,
-    assert_string_equal)
+    assert_string_equal, dec)
 
 
 def skip_if_no_external(dep, ver_dep=None, min_version=None, max_version=None):

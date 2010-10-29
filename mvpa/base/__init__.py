@@ -196,6 +196,7 @@ if __debug__:
     debug.register('ID_IN_REPR', "Include id in __repr__")
     debug.register('CMDLINE', "Handling of command line parameters")
 
+    debug.register('NO',   "Nodes")
     debug.register('DG',   "Data generators")
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
     debug.register('LOOP', "Support's loop construct")
@@ -245,6 +246,8 @@ if __debug__:
     debug.register('COLR', "Collector for ca and classifier parameters")
     debug.register('ES',   "Element selectors")
 
+    debug.register('LRN',    "Base learners")
+    # TODO remove once everthing is a learner
     debug.register('CLF',    "Base Classifiers")
     debug.register('CLF_',   "Base Classifiers (verbose)")
     #debug.register('CLF_TB',
@@ -291,6 +294,7 @@ if __debug__:
     debug.register('GPR_WEIGHTS', "Track progress of GPRWeights computation")
     debug.register('KRN',     "Kernels module (mvpa.kernels)")
     debug.register('KRN_SG',  "Shogun kernels module (mvpa.kernels.sg)")
+    debug.register('SAL',     "Samples lookup (for cached kernels)")
     debug.register('MOD_SEL', "Model Selector (also makes openopt's iprint=0)")
     debug.register('OPENOPT', "OpenOpt toolbox verbose (iprint=1)")
 

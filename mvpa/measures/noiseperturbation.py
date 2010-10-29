@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""This is a `FeaturewiseDatasetMeasure` that uses a scalar `DatasetMeasure` and
+"""This is a `FeaturewiseMeasure` that uses a scalar `Measure` and
 selective noise perturbation to compute a sensitivity map.
 """
 
@@ -19,33 +19,36 @@ from mvpa.support.copy import deepcopy
 
 import numpy as np
 
-from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.measures.base import FeaturewiseMeasure
 from mvpa.datasets.base import Dataset
 
 
-class NoisePerturbationSensitivity(FeaturewiseDatasetMeasure):
+class NoisePerturbationSensitivity(FeaturewiseMeasure):
     """Sensitivity based on the effect of noise perturbation on a measure.
 
-    This is a `FeaturewiseDatasetMeasure` that uses a scalar `DatasetMeasure`
+    This is a `FeaturewiseMeasure` that uses a scalar `Measure`
     and selective noise perturbation to compute a sensitivity map.
 
-    First the scalar `DatasetMeasure` computed using the original dataset. Next
+    First the scalar `Measure` computed using the original dataset. Next
     the data measure is computed multiple times each with a single feature in
     the dataset perturbed by noise. The resulting difference in the
-    scalar `DatasetMeasure` is used as the sensitivity for the respective
+    scalar `Measure` is used as the sensitivity for the respective
     perturbed feature. Large differences are treated as an indicator of a
-    feature having great impact on the scalar `DatasetMeasure`.
+    feature having great impact on the scalar `Measure`.
 
     Notes
     -----
     The computed sensitivity map might have positive and negative values!
     """
+    is_trained = True
+    """Indicate that this measure is always trained."""
+
     def __init__(self, datameasure,
                  noise=np.random.normal):
         """
         Parameters
         ----------
-        datameasure : `DatasetMeasure`
+        datameasure : `Measure`
           Used to quantify the effect of noise perturbation.
         noise: Callable
           Used to generate noise. The noise generator has to return an 1d array
@@ -54,7 +57,7 @@ class NoisePerturbationSensitivity(FeaturewiseDatasetMeasure):
           `random` module.
         """
         # init base classes first
-        FeaturewiseDatasetMeasure.__init__(self)
+        FeaturewiseMeasure.__init__(self)
 
         self.__datameasure = datameasure
         self.__noise = noise

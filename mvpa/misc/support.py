@@ -82,69 +82,9 @@ def transform_with_boxcar(data, startpoints, boxlength, offset=0, fx=np.mean):
     return np.array( selected )
 
 
-##REF: Name was automagically refactored
-def _get_unique_length_n_combinations_lt3(data, n):
-    """Generates a list of lists containing all combinations of
-    elements of data of length 'n' without repetitions.
-
-    Parameters
-    ----------
-    data : list
-    n : int
-
-    This function is adapted from a Java version posted in some forum on
-    the web as an answer to the question 'How can I generate all possible
-    combinations of length n?'. Unfortunately I cannot remember which
-    forum it was.
-
-    Notes
-    -----
-    Implementation is broken for n>2
-    """
-
-    if n > 2:
-        raise ValueError, "_get_unique_length_n_combinations_lt3 " \
-              "is broken for n>2, hence should not be used directly."
-
-    # to be returned
-    combos = []
-
-    # local function that will be called recursively to collect the
-    # combination elements
-    def take(data, occupied, depth, taken):
-        for i, d in enumerate(data):
-            # only do something if this element hasn't been touch yet
-            if occupied[i] == False:
-                # see whether will reached the desired length
-                if depth < n-1:
-                    # flag the current element as touched
-                    occupied[i] = True
-                    # next level
-                    take(data, occupied, depth+1, taken + [d])
-                    # if the current element would be set 'free', it would
-                    # results in ALL combinations of elements (obeying order
-                    # of elements) and not just in the unique sets of
-                    # combinations (without order)
-                    #occupied[i] = False
-                else:
-                    # store the final combination
-                    combos.append(taken + [d])
-    # some kind of bitset that stores the status of each element
-    # (contained in combination or not)
-    occupied = [False] * len(data)
-    # get the combinations
-    take(data, occupied, 0, [])
-
-    # return the result
-    return combos
-
-##REF: Name was automagically refactored
 def xunique_combinations(L, n):
     """Generator of unique combinations form a list L of objects in
     groups of size n.
-
-    # XXX EO: I guess they are already sorted.
-    # XXX EO: It seems to work well for n>20 :)
 
     Parameters
     ----------
@@ -156,131 +96,39 @@ def xunique_combinations(L, n):
     Adopted from Li Daobing
     http://code.activestate.com/recipes/190465/
     (MIT license, according to activestate.com's policy)
+
+    Also good discussions on combinations/variations/permutations
+    with various implementations are available at
+    http://mail.python.org/pipermail/python-list/2004-October/286054.html
     """
-    if n==0: yield []
+    if n == 0:
+        yield []
     else:
         for i in xrange(len(L)-n+1):
-            for cc in xunique_combinations(L[i+1:],n-1):
+            for cc in xunique_combinations(L[i+1:], n-1):
                 yield [L[i]]+cc
 
-##REF: Name was automagically refactored
-def _get_unique_length_n_combinations_binary(L, n=None, sort=True):
-    """Find all subsets of data
+
+def unique_combinations(L, n, sort=False):
+    """Return unique combinations form a list L of objects in groups of size n.
 
     Parameters
     ----------
     L : list
       list of unique ids
-    n : None or int
-      If None, all possible subsets are returned. If n is specified (int),
-      then only the ones of the length n are returned
-    sort : bool
-      Either to sort the resultant sequence
+    n : int
+      length of the subsets to return
+    sort : bool, optional
+      if True -- result is sorted before returning
 
-    Adopted from Alex Martelli:
-    http://mail.python.org/pipermail/python-list/2001-January/067815.html
+    If you are intended to use only a small subset of possible
+    combinations, it is advised to use a generator
+    `xunique_combinations`.
     """
-    N = len(L)
-    if N > 20 and n == 1:
-        warning("getUniqueLengthNCombinations_binary should not be used for "
-                "large N")
-    result = []
-    for X in range(2**N):
-        x = [ L[i] for i in range(N) if X & (1L<<i) ]
-        if n is None or len(x) == n:
-            # yield x # if we wanted to use it as a generator
-            result.append(x)
-    result.sort()
-    # if __debug__ and n is not None:
-    #     # verify the result
-    #     # would need scipy... screw it
-    #     assert(len(result) == ...)
-    return result
-
-
-##REF: Name was automagically refactored
-def get_unique_length_n_combinations(L, n=None, sort=True):
-    """Find all subsets of data
-
-    Parameters
-    ----------
-    L : list
-      list of unique ids
-    n : None or int
-      If None, all possible subsets are returned. If n is specified (int),
-      then only the ones of the length n are returned
-
-    TODO: work out single stable implementation -- probably just by fixing
-    _get_unique_length_n_combinations_lt3
-    """
-    if n == 1:
-        return _get_unique_length_n_combinations_lt3(L, n)
-    elif n==None:
-        return _get_unique_length_n_combinations_binary(L, n, sort=True)
-    else:
-        # XXX EO: Is it safe to remove "list" and use generator
-        #         directly to save memory for large number of
-        #         combinations? It seems OK according to tests but
-        #         I'd like a second opinion.
-        # XXX EO: what about inserting a warning if number of
-        #         combinations > 10000? No one would run it...
-        return list(xunique_combinations(L, n))
-
-
-##REF: Name was automagically refactored
-def _get_unique_length_n_combinations_binary(L, n=None, sort=True):
-    """Find all subsets of data
-
-    Parameters
-    ----------
-    L : list
-      list of unique ids
-    n : None or int
-      If None, all possible subsets are returned. If n is specified (int),
-      then only the ones of the length n are returned
-    sort : bool
-      Either to sort the resultant sequence
-
-    Adopted from Alex Martelli:
-    http://mail.python.org/pipermail/python-list/2001-January/067815.html
-    """
-    N = len(L)
-    if N > 20 and n == 1:
-        warning("getUniqueLengthNCombinations_binary should not be used for "
-                "large N")
-    result = []
-    for X in range(2**N):
-        x = [ L[i] for i in range(N) if X & (1L<<i) ]
-        if n is None or len(x) == n:
-            # yield x # if we wanted to use it as a generator
-            result.append(x)
-    result.sort()
-    # if __debug__ and n is not None:
-    #     # verify the result
-    #     # would need scipy... screw it
-    #     assert(len(result) == ...)
-    return result
-
-
-##REF: Name was automagically refactored
-def get_unique_length_n_combinations(L, n=None, sort=True):
-    """Find all subsets of data
-
-    Parameters
-    ----------
-    L : list
-      list of unique ids
-    n : None or int
-      If None, all possible subsets are returned. If n is specified (int),
-      then only the ones of the length n are returned
-
-    TODO: work out single stable implementation -- probably just by fixing
-    _get_unique_length_n_combinations_lt3
-    """
-    if n == 1:
-        return _get_unique_length_n_combinations_lt3(L, n)
-    else:
-        return _get_unique_length_n_combinations_binary(L, n, sort=True)
+    res = list(xunique_combinations(L, n))
+    if sort:
+        res = sorted(res)
+    return res
 
 
 ##REF: Name was automagically refactored
@@ -436,7 +284,7 @@ class SmartVersion(Version):
         # Do ad-hoc comparison of strings
         i = 0
         s, o = self.version, other.version
-        regex_prerelease = re.compile('~|-?dev|-?rc|-?svn|-?pre', re.I)
+        regex_prerelease = re.compile('~|-?dev|-?rc|-?svn|-?pre|-?beta|-?alpha', re.I)
         for i in xrange(max(len(s), len(o))):
             if i < len(s): si = s[i]
             else: si = None
@@ -693,3 +541,129 @@ def value2idx(val, x, solv='round'):
     x = np.abs(x)
     idx = np.argmin(x)
     return idx
+
+
+def mask2slice(mask):
+    """Convert a boolean mask vector into an equivalent slice (if possible).
+
+    Parameters
+    ----------
+    mask: boolean array
+      The mask.
+
+    Returns
+    -------
+    slice or boolean array
+      If possible the boolean mask is converted into a `slice`. If this is not
+      possible the unmodified boolean mask is returned.
+    """
+    # the filter should be a boolean array
+    # TODO Could be easily extended to also accept index arrays
+    if not len(mask):
+        raise ValueError("Got an empty mask.")
+    # get indices of non-zero filter elements
+    idx = mask.nonzero()[0]
+    idx_start = idx[0]
+    idx_end = idx[-1] + 1
+    idx_step = None
+    if len(idx) > 1:
+        # we need to figure out if there is a regular step-size
+        # between elements
+        stepsizes = np.unique(idx[1:] - idx[:-1])
+        if len(stepsizes) > 1:
+            # multiple step-sizes -> slicing is not possible -> return
+            # orginal filter
+            return mask
+        else:
+            idx_step = stepsizes[0]
+
+    sl = slice(idx_start, idx_end, idx_step)
+    if __debug__:
+        debug("SPL", "Boolean mask conversion to slice is possible (%s)." % sl)
+    return sl
+
+
+def get_limit_filter(limit, collection):
+    """Create a filter array from a limit definition.
+
+    Parameters
+    -----------
+    limit : None or str or dict
+      If ``None`` all elements wil be included in the filter. If an single
+      attribute name is given, its unique values will be used to define
+      chunks of data that are marked in the filter as unique integers. Finally,
+      if a dictionary is provided, its keys define attribute names and its
+      values (single value or sequence thereof) attribute value, where all
+      key-value combinations across all given items define a "selection" of
+      elements to be included in the filter (OR combination).
+    collection : Collection
+      Dataset attribute collection instance that contains all attributes
+      referenced in the limit specification, as well as defines the shape of
+      the filter.
+
+    Returns
+    -------
+    array
+      This array is either boolean, where a `True` elements represent including
+      in the filter, or the array is numerical, where it unqiue integer values
+      defines individual chunks of a filter.
+    """
+    attr_length = collection.attr_length
+
+    if limit is None:
+        # no limits
+        limit_filter = np.ones(attr_length, dtype='bool')
+    elif isinstance(limit, str):
+        # use the unique values of this attribute to permute each chunk
+        # individually
+        lattr = collection[limit]
+        lattr_data = lattr.value
+        limit_filter = np.zeros(attr_length, dtype='int')
+        for i, uv in enumerate(lattr.unique):
+            limit_filter[lattr_data == uv] = i
+    elif isinstance(limit, dict):
+        limit_filter = np.zeros(attr_length, dtype='bool')
+        for a in limit:
+            if isSequenceType(limit[a]):
+                for v in limit[a]:
+                    # enable the samples matching the value 'v' of the
+                    # current limit attribute 'a'
+                    limit_filter[collection[a].value == v] = True
+            else:
+                limit_filter[collection[a].value == limit[a]] = True
+    else:
+        raise RuntimeError("Unhandle condition")
+
+    return limit_filter
+
+
+def get_nelements_per_value(data):
+    """Returns the number of elements per unique value of some sequence.
+
+    Parameters
+    ----------
+    data : sequence
+      This can be any sequence. In addition also ArrayCollectables are supported
+      and this function will make use of any available pre-cached list of unique
+      values.
+
+    Returns
+    -------
+    dict with the number of elements (value) per unique value (key) in the
+    sequence.
+    """
+    if hasattr(data, 'unique'):
+        # if this is an ArrayAttribute save some time by using pre-cached unique
+        # values
+        uniquevalues = data.unique
+        values = data.value
+    else:
+        uniquevalues = np.unique(data)
+        values = data
+
+    # use dictionary to cope with arbitrary values
+    result = dict(zip(uniquevalues, [ 0 ] * len(uniquevalues)))
+    for l in values:
+        result[l] += 1
+
+    return result

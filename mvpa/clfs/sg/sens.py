@@ -17,7 +17,7 @@ if externals.exists('shogun', raise_=True):
     import shogun.Classifier
     _shogun_exposes_slavesvm_labels = externals.versions['shogun:rev'] < 4633
 
-from mvpa.misc.state import ConditionalAttribute
+from mvpa.base.state import ConditionalAttribute
 from mvpa.base.types import asobjarray
 from mvpa.measures.base import Sensitivity
 from mvpa.datasets.base import Dataset
@@ -50,10 +50,15 @@ class LinearSVMWeights(Sensitivity):
     def __sg_helper(self, svm):
         """Helper function to compute sensitivity for a single given SVM"""
         bias = svm.get_bias()
-        svcoef = np.matrix(svm.get_alphas())
-        svnums = svm.get_support_vectors()
-        svs = self.clf.traindataset.samples[svnums,:]
-        res = (svcoef * svs).mean(axis=0).A1
+        # if it has get_w (linear ones like SVMOcas) -- use it,
+        # otherwise resort to recomputing
+        if hasattr(svm, 'get_w'):
+            res = svm.get_w()
+        else:
+            svcoef = np.matrix(svm.get_alphas())
+            svnums = svm.get_support_vectors()
+            svs = self.clf.traindataset.samples[svnums,:]
+            res = (svcoef * svs).mean(axis=0).A1
         return res, bias
 
 
@@ -110,7 +115,7 @@ class LinearSVMWeights(Sensitivity):
 
             if len(clf._attrmap):
                 sens_labels = clf._attrmap.to_literal(sens_labels, recurse=True)
-            ds.sa[clf.params.targets_attr] = sens_labels
+            ds.sa[clf.get_space()] = sens_labels
         self.ca.biases = biases
 
         return ds

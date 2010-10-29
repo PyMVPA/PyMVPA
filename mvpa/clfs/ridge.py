@@ -46,7 +46,7 @@ class RidgeReg(Classifier):
 
         # It does not make sense to calculate a confusion matrix for a
         # ridge regression
-        self.ca.enable('training_confusion', False)
+        self.ca.enable('training_stats', False)
 
         # verify that they specified lambda
         self.__lm = lm
@@ -84,7 +84,7 @@ class RidgeReg(Classifier):
             a = np.concatenate( \
                 (np.concatenate((data.samples, np.ones((data.nsamples, 1))), 1),
                     np.concatenate((Lambda, np.zeros((data.nfeatures, 1))), 1)))
-            b = np.concatenate((data.sa[self.params.targets_attr].value,
+            b = np.concatenate((data.sa[self.get_space()].value,
                                np.zeros(data.nfeatures)))
 
             # perform the least sq regression and save the weights

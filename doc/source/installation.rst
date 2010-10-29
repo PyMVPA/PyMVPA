@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -185,6 +185,16 @@ below). If there are no binary packages for your operating system or platform
 yet, you can build PyMVPA from source.  Please refer to `Building from Source`_
 for more information.
 
+.. note::
+
+  If you have difficulties deploying PyMVPA itself or third-party modules,
+  such as Shogun, on non Debian-based systems, we would advise you to give a
+  try to `NeuroDebian virtual machine`_ which would allow you to benefit from
+  Debian packaging of PyMVPA and its dependencies by running Debian in a
+  virtualized environment.
+
+.. _NeuroDebian virtual machine: http://neuro.debian.net/vm.html
+
 .. index:: binary packages
 .. index:: Debian
 
@@ -256,7 +266,8 @@ install PyNIfTI_. Download the corresponding installer from the website of the
 `zlib` library, so you also need to download and install it. A binary installer
 is available from the `GnuWin32 project`_. Install it in some arbitrary folder
 (just the binaries nothing else), find the `zlib1.dll` file in the `bin`
-subdirectory and move it in the Windows `system32` directory. Verify that it
+subdirectory and move it in the Windows `system32` (or `system` on 64-bit
+Windows 7) directory. Verify that it
 works by importing the `nifti` module in Python.
 
   >>> import nifti
@@ -439,22 +450,22 @@ Alternatively, one can also download a tarball of the latest development
 snapshot_ (i.e. the current state of the *master* branch of the PyMVPA source
 code repository).
 
-.. _snapshot:  http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=snapshot;h=refs/heads/master;sf=tgz
+.. _snapshot:  http://github.com/PyMVPA/PyMVPA/archives/master
 .. index:: Git, Git repository
 
 If you want to have access to both, the full PyMVPA history and the latest
 development code, you can use the PyMVPA Git_ repository, which is publicly
 available. To view the repository, please point your web browser to gitweb:
 
-  http://git.debian.org/?p=pkg-exppsy/pymvpa.git
+  http://github.com/PyMVPA/PyMVPA
 
 The gitweb browser also allows to download arbitrary development snapshots
 of PyMVPA. For a full clone (aka checkout) of the PyMVPA repository simply
 do:
 
-  :command:`git clone git://git.debian.org/git/pkg-exppsy/pymvpa.git`
+  :command:`git clone git://github.com/PyMVPA/PyMVPA.git`
 
-After a short while you will have a `pymvpa` directory below your current
+After a short while you will have a `PyMVPA` directory below your current
 working directory, that contains the PyMVPA repository.
 
 .. _Git: http://git.or.cz/

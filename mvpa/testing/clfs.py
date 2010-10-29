@@ -19,7 +19,7 @@ from mvpa.base import cfg
 # Base classes
 from mvpa.clfs.base import Classifier
 from mvpa.datasets.base import Dataset
-from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.measures.base import FeaturewiseMeasure
 
 #
 # first deal with classifiers which do not have external deps
@@ -82,13 +82,14 @@ class Less1Classifier(SameSignClassifier):
         return estimates
 
 
-class SillySensitivityAnalyzer(FeaturewiseDatasetMeasure):
+class SillySensitivityAnalyzer(FeaturewiseMeasure):
     """Simple one which just returns xrange[-N/2, N/2], where N is the
     number of features
     """
+    is_trained = True
 
     def __init__(self, mult=1, **kwargs):
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
+        FeaturewiseMeasure.__init__(self, **kwargs)
         self.__mult = mult
 
     def _call(self, dataset):

@@ -15,11 +15,15 @@ from numpy import array
 from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true, assert_array_equal
 
+from mvpa.testing.datasets import datasets
 from mvpa.mappers.flatten import FlattenMapper
-from mvpa.mappers.base import FeatureSliceMapper, ChainMapper
+from mvpa.mappers.base import ChainMapper
+from mvpa.mappers.slicing import FeatureSliceMapper, SampleSliceMapper, \
+        StripBoundariesSamples
 from mvpa.support.copy import copy
 from mvpa.datasets.base import Dataset
 from mvpa.base.collections import ArrayCollectable
+from mvpa.datasets.base import dataset_wizard
 
 # arbitrary ndarray subclass for testing
 class myarray(np.ndarray):
@@ -46,8 +50,8 @@ def test_flatten():
 
     # actually, there should be no difference between a plain FlattenMapper and
     # a chain that only has a FlattenMapper as the one element
-    for fm in [FlattenMapper(inspace='voxel'),
-               ChainMapper([FlattenMapper(inspace='voxel'),
+    for fm in [FlattenMapper(space='voxel'),
+               ChainMapper([FlattenMapper(space='voxel'),
                             FeatureSliceMapper(slice(None))])]:
         # not working if untrained
         assert_raises(RuntimeError,
@@ -149,7 +153,6 @@ def test_subset():
             orig = copy(st)
             subsm = FeatureSliceMapper(sub)
             # should do copy-on-write for all important stuff!!
-            assert_true(orig.is_mergable(subsm))
             orig += subsm
             # test if selection did its job
             if i == 3:
@@ -174,10 +177,34 @@ def test_subset():
     #assert_false(subsm.is_valid_inid(-1))
     #assert_false(subsm.is_valid_inid(16))
 
+    # intended merge failures
+    fsm = FeatureSliceMapper(np.arange(16))
+    assert_equal(fsm.__iadd__(None), NotImplemented)
+    assert_equal(fsm.__iadd__(Dataset([2,3,4])), NotImplemented)
+
+
+def test_subset_filler():
+    sm = FeatureSliceMapper(np.arange(3))
+    sm_f0 = FeatureSliceMapper(np.arange(3), filler=0)
+    sm_fm1 = FeatureSliceMapper(np.arange(3), filler=-1)
+    sm_fnan = FeatureSliceMapper(np.arange(3), filler=np.nan)
+    data = np.arange(12).astype(float).reshape((2, -1))
+
+    sm.train(data)
+    data_forwarded = sm.forward(data)
+
+    for m in (sm, sm_f0, sm_fm1, sm_fnan):
+        m.train(data)
+        assert_array_equal(data_forwarded, m.forward(data))
+
+    data_back_fm1 = sm_fm1.reverse(data_forwarded)
+    ok_(np.all(data_back_fm1[:, 3:] == -1))
+    data_back_fnan = sm_fnan.reverse(data_forwarded)
+    ok_(np.all(np.isnan(data_back_fnan[:, 3:])))
 
 def test_repr():
     # this time give mask only by its target length
-    sm = FeatureSliceMapper(slice(None), inspace='myspace')
+    sm = FeatureSliceMapper(slice(None), space='myspace')
 
     # check reproduction
     sm_clone = eval(repr(sm))
@@ -219,8 +246,16 @@ def test_chainmapper():
     assert_equal(len(cm), 3)
 
     # check reproduction
-    cm_clone = eval(repr(cm))
-    assert_equal(repr(cm_clone), repr(cm))
+    if __debug__:
+        # debug mode needs special test as it enhances the repr output
+        # with module info and id() appendix for objects
+        import mvpa
+        cm_clone = eval(repr(cm))
+        assert_equal('#'.join(repr(cm_clone).split('#')[:-1]),
+                     '#'.join(repr(cm).split('#')[:-1]))
+    else:
+        cm_clone = eval(repr(cm))
+        assert_equal(repr(cm_clone), repr(cm))
 
     # what happens if we retrain the whole beast an same data as before
     cm.train(data)
@@ -237,3 +272,22 @@ def test_chainmapper():
     # content as far it could be restored
     assert_array_equal(rdata[rdata > 0], data[rdata > 0])
     assert_equal(np.sum(rdata > 0), 8)
+
+
+def test_sampleslicemapper():
+    # this does nothing but Dataset.__getitem__ which is tested elsewhere -- but
+    # at least we run it
+    ds = datasets['uni2small']
+    ssm = SampleSliceMapper(slice(3, 8, 2))
+    sds = ssm(ds)
+    assert_equal(len(sds), 3)
+
+
+def test_strip_boundary():
+    ds = datasets['hollow']
+    ds.sa['btest'] = np.repeat([0,1], 20)
+    sn = StripBoundariesSamples('btest', 1, 2)
+    sds = sn(ds)
+    assert_equal(len(sds), len(ds) - 3)
+    for i in [19, 20, 21]:
+        assert_false(i in sds.samples.sid)

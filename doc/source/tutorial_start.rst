@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -16,7 +16,7 @@ Part 1: A Gentle Start
 
 The purpose of this first tutorial part is to make your familiar with a few basic
 properties and building blocks of PyMVPA. Let's have a slow start and compute a
-cross-validation analysis.
+:term:`cross-validation` analysis.
 
 Virtually every Python script starts with some ``import`` statements that load
 functionality provided elsewhere. We start this tutorial by importing some
@@ -28,11 +28,11 @@ and whose purpose we are going to see shortly.
 Getting the data
 ================
 
-As a first step we will load an fMRI dataset that is the first subject of the
+As a first step, we will load an fMRI dataset that is the first subject of the
 classic study of :ref:`Haxby et al. (2001) <HGF+01>`. For the sake of
 simplicity we are using a helper function that loads and pre-processes the data
-in a way similar to the original study. Later on we will get
-back to this point and look in greater detail at what was done, but for now it is
+in a way similar as the original authors did. Later on we will get
+back to this point and look at what was done in greater detail, but for now it is
 as simple as:
 
 >>> ds = get_haxby2001_data()
@@ -144,7 +144,7 @@ same dataset that it got trained with.
   the accuracy varies with different values of ``k``. Why is that?
 
 Instead, we are interested in the generalizability of the classifier on new,
-unseen data so we could, in principle, use it to label unlabeled data. Since
+unseen data so we could, in principle, use it to label unlabeled data. Because
 we only have a single dataset it needs to be split into (at least) two parts
 to achieve this. In the original study Haxby and colleagues split the dataset
 into pattern of activations from odd versus even-numbered runs. Our dataset
@@ -166,28 +166,31 @@ of the ``runtype`` attribute is either the string 'even' or 'odd'.
 >>> len(ds_split2)
 8
 
-To conveniently assess the generalization performance of a trained classifier
-model on new data, PyMVPA provides the `~mvpa.clfs.transerror.TransferError`
-class. It actually doesn't measure the accuracy, but by default the
-classification **error** (more precisely the fraction of misclassifications). A
-`~mvpa.clfs.transerror.TransferError` instance is created by simply providing a
-classifier that shall be trained on one dataset and tested against another. In
-this case, we are going to reuse our kNN classifier instance. Once created, the
-generalization error can be computed by calling the ``terr`` object with two
-datasets: The first argument is the :term:`testing dataset` and the second
-argument is the :term:`training dataset`. When training and testing is done,
-the fraction of misclassifications is returned. Again, please note that this is
-now an error, hence lower values represent more accurate classification.
+Now we could repeat the steps above: call ``train()`` with one dataset half and
+``predict()`` with the other, and compute the prediction accuracy manually.
+However, a more convenient way is to let the classifier do this for us.  Many
+objects in PyMVPA support a post-processing step that we can use to compute
+something from the actual results. The example below computes the *mean
+mismatch error* of classifier predictions and the *target* values stored in our
+dataset. To make this work, we do not call the classifier's ``predict()``
+method anymore, but "call" the classifier directly with the test dataset. This
+is a very common usage pattern in PyMVPA that we shall see a lot over the
+course of this tutorial.  Again, please note that we compute an error now,
+hence lower values represent more accurate classification.
 
->>> terr = TransferError(clf)
->>> terr(ds_split1, ds_split2)
+>>> clf.set_postproc(BinaryFxNode(mean_mismatch_error, 'targets'))
+>>> clf.train(ds_split2)
+>>> err = clf(ds_split1)
+>>> print np.asscalar(err)
 0.125
 
 In this case, our choice of which half of the dataset is used for training and
 which half for testing was completely arbitrary, hence we also estimate the
 transfer error after swapping the roles:
 
->>> terr(ds_split2, ds_split1)
+>>> clf.train(ds_split1)
+>>> err = clf(ds_split2)
+>>> print np.asscalar(err)
 0.0
 
 We see that on average the classifier error is really low, and we achieve an
@@ -207,33 +210,47 @@ sample groups by some criterion, and estimating the classifier performance by
 training it on the first dataset in a split and testing against the second
 dataset from the same split.
 
-PyMVPA provides a class to allow complete cross-validation procedures to run
-automatically, without the need for manual splitting of a dataset. Using the
-`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError` class a
-cross-validation is set up by specifying what measure should be computed on
-each dataset split, and how dataset splits shall be generated. The measure that
-is usually computed is the transfer error that we already looked at in the
-previous section. For dataset splitting PyMVPA provides various
-`~mvpa.datasets.splitters.Splitter` classes. To replicate our manual
-cross-validation, we can simply reuse the ``terr`` instance as our measure, and
-use a so-called `~mvpa.datasets.splitters.HalfSplitter` to generate the desired
-dataset splits. Note, that the splitter is instructed to use the ``runtype``
-attribute to determine which samples should form a dataset subset.
+PyMVPA provides a way to allow complete cross-validation procedures to run
+fully automatic, without the need for manual splitting of a dataset. Using the
+`~mvpa.measures.base.CrossValidation` class a cross-validation is set up by
+specifying what measure should be computed on each dataset split, and how
+dataset splits shall be generated. The measure that is usually computed is the
+transfer error that we already looked at in the previous section. The second
+element, a :term:`generator` for datasets, is another very common tool in
+PyMVPA. The following example uses
+`~mvpa.generators.partition.HalfPartitioner`, a generator that, when called
+with a dataset, marks all samples regarding their association with the first or
+second half of the dataset. This happens based on the values of a specified
+sample attribute -- in this case ``runtype`` -- much like the manual dataset
+splitting that we have performed earlier.
+`~mvpa.generators.partition.HalfPartitioner` will make sure to subsequently
+assign samples to both halves, i.e. samples of the first half in the first
+generated dataset, will be in the second half of the second generated dataset.
+With these two techniques we can replicate our manual cross-validation easily --
+reusing our existing classifier, but without the custom post-processing step.
 
->>> hspl = HalfSplitter(attr='runtype')
->>> cvte = CrossValidatedTransferError(terr, splitter=hspl)
+>>> # disable post-processing again
+>>> clf.set_postproc(None)
+>>> # dataset generator
+>>> hpart = HalfPartitioner(attr='runtype')
+>>> # complete cross-validation facility
+>>> cv = CrossValidation(clf, hpart)
 
 .. exercise::
 
-  Try calling the ``hspl`` object with our dataset. What happens? How can we
-  get the split datasets from it?
+  Try calling the ``hpart`` object with our dataset. What happens? Now try
+  passing the dataset to its ``generate()`` methods. What happens now?
+  Make yourself familiar with the concept of a Python generator. Investigate
+  what the code snippet ``list(xrange(5))`` does, and try to adapt it to the
+  ``HalfPartitioner``.
 
-Once the ``cvte`` object is created, it can be called with a dataset and
-will internally perform all splitting, as well as training and testing on each
-split generated by the splitter. Finally it will return the results of all
-cross-validation folds.
+Once the ``cv`` object is created, it can be called with a dataset, just like
+we did with the classifier before. It will internally perform all dataset
+partitioning, split each generated dataset into training and testing sets
+(based on the partitions), and train and test the classifier repeatedly.
+Finally it will return the results of all cross-validation folds.
 
->>> cv_results = cvte(ds)
+>>> cv_results = cv(ds)
 >>> np.mean(cv_results)
 0.0625
 
@@ -247,14 +264,17 @@ fold.
 array([[ 0.   ],
        [ 0.125]])
 
-The advantage of having a dataset as the return value (as opposed to a plain
-vector, or even a single number) is that we can easily attach additional
-information. In this case the dataset also contains some information about
-which samples (indicated by the respective attribute values used by the
-splitter) formed the training and testing datasets in each fold.
-
->>> print cv_results.sa.cv_fold
-['odd->even' 'even->odd']
+..
+  Disable for now as this doesn't work that way anymore. Look at RepeatedMeasure
+  for a related XXX...
+  The advantage of having a dataset as the return value (as opposed to a plain
+  vector, or even a single number) is that we can easily attach additional
+  information. In this case the dataset also contains some information about
+  which samples (indicated by the respective attribute values used by the
+  splitter) formed the training and testing datasets in each fold.
+  .
+  >>> print cv_results.sa.cvfolds
+  [0 1]
 
 This could be the end of a very simple introduction into cross-validation with
 PyMVPA. However, since we were cheating a bit in the beginning, we actually
@@ -284,10 +304,7 @@ References
    .. autosummary::
       :toctree: generated
 
-      ~mvpa.algorithms.cvtranserror.CrossValidatedTransferError
+      ~mvpa.measures.base.CrossValidation
       ~mvpa.datasets.base.Dataset
       ~mvpa.clfs.knn.kNN
-      mvpa.datasets.splitters
-      ~mvpa.clfs.transerror.TransferError
-
-
+      mvpa.generators.partition

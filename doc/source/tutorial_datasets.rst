@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -40,7 +40,7 @@ array([[ 1,  1, -1],
        [ 3,  1,  1],
        [ 4,  0, -1]])
 
-In the above example, every row vector in the `data` matrix becomes an
+In the above example, every row vector in the ``data`` matrix becomes an
 observation or a :term:`sample` in the dataset, and every column vector
 represents an individual variable or a :term:`feature`. The concepts of samples
 and features are essential for a dataset, hence we take a further, closer look.
@@ -88,7 +88,7 @@ For Samples
 
 In a dataset each :term:`sample` can have an arbitrary number of additional
 attributes. They are stored as vectors of the same length as the number of samples
-in a collection, and are accessible via the `sa` attribute. A collection is
+in a collection, and are accessible via the ``sa`` attribute. A collection is
 derived from a standard Python `dict`, and hence adding sample attributes
 works identical to adding elements to a dictionary:
 
@@ -115,7 +115,7 @@ accessed directly without repeated and expensive searches:
 array([ 0.,  1.,  3.])
 
 However, for most interactive uses of PyMVPA this type of access to attribute's
-`.value` is relatively cumbersome (too much typing), therefore collections offer direct
+``.value`` is relatively cumbersome (too much typing), therefore collections offer direct
 attribute access by name:
 
 >>> ds.sa.some_attr
@@ -154,10 +154,10 @@ For Features
 ------------
 
 :term:`Feature attribute`\ s are almost identical to :term:`sample attribute`\
-s the **only** difference is that instead of having one attribute value per
+s the *only* difference is that instead of having one attribute value per
 sample, feature attributes have one value per (guess what? ...) *feature*.
 Moreover, they are stored in a separate collection in the datasets that is
-called `fa`:
+called ``fa``:
 
 >>> ds.nfeatures
 3
@@ -175,7 +175,7 @@ feature, but for the dataset as a whole: so called :term:`dataset
 attribute`\s. Assigning such attributes and accessing them later on work in
 exactly the same way as for the other two types of attributes, except that dataset
 attributes are stored in their own collection which is accessible via the
-`a` property of the dataset.  However, in contrast to sample and feature
+``a`` property of the dataset.  However, in contrast to sample and feature
 attribute no constraints on the type or size are imposed -- anything can be
 stored. Let's store a list with all files in the current directory, just
 because we can:
@@ -280,7 +280,7 @@ features given by their indices.
 
   Try to select samples [0,1] and features [0,2,3] simultaneously using
   dataset slicing.  Now apply the same slicing to the samples array itself
-  (`ds.samples`) -- make sure that the result doesn't surprise you and find
+  (``ds.samples``) -- make sure that the result doesn't surprise you and find
   a pure NumPy way to achieve similar selection.
 
 
@@ -318,7 +318,7 @@ we first specify the path of the directory with the fMRI data.
 
 >>> path=os.path.join(tutorial_data_path, 'data')
 
-In the simplest case, we now let `fmri_dataset` do its job, by just
+In the simplest case, we now let `~mvpa.datasets.mri.fmri_dataset` do its job, by just
 pointing it to the fMRI data file. The data is stored as a NIfTI file that has
 all runs of the experiment concatenated into a single file.
 
@@ -341,7 +341,7 @@ algorithms that expect data to be a simple matrix.
 
 We just loaded all data from that NIfTI file, but usually we would be
 interested in a subset only, i.e. "brain voxels".
-`fmri_dataset` is capable of performing data masking. We just need to
+`~mvpa.datasets.mri.fmri_dataset` is capable of performing data masking. We just need to
 specify a mask image. Such mask image is generated in pretty much any fMRI
 analysis pipeline -- may it be a full-brain mask computed during
 skull-stripping, or an activation map from a functional localizer. We are going
@@ -364,18 +364,18 @@ Besides samples the dataset offers number of attributes that enhance the
 data with information that is present in the NIfTI image header in the file. Each sample has
 information about its volume id in the timeseries and the actual acquisition
 time (relative to the beginning of the file). Moreover, the original voxel
-index (sometimes referred to as `ijk`) for each feature is available too.
+index (sometimes referred to as ``ijk``) for each feature is available too.
 Finally, the dataset also contains information about the dimensionality
 of the input volumes, voxel size, and any other NIfTI-specific information
 since it also includes a dump of the full NIfTI image header.
 
 .. note::
    Previously (0.4.x versions and 0.5 development prior March 03, 2010),
-   PyMVPA exposed 4D (and 3D with degenerate 1st dimension) data in `tkji`
-   (corresponds to `tzyx` if volumes were axial slices in
+   PyMVPA exposed 4D (and 3D with degenerate 1st dimension) data in ``tkji``
+   (corresponds to ``tzyx`` if volumes were axial slices in
    neurologic convention) order of dimensions.  Now it uses more convenient
-   order `tijk` (corresponding to `txyz`), which will match the order exposed
-   by NiBabel (PyNIfTI and NiftiImage still expose them as `tkji`).
+   order ``tijk`` (corresponding to ``txyz``), which will match the order exposed
+   by NiBabel (PyNIfTI and NiftiImage still expose them as ``tkji``).
 
 >>> ds.sa.time_indices[:5]
 array([0, 1, 2, 3, 4])
@@ -413,11 +413,11 @@ all unwanted attributes. The Dataset class'
 >>> print stripped
 <Dataset: 1452x577@int16, <sa: time_coords>>
 
-We can see that all attributes besides `time_coords` have been filtered out.
-Setting the `deep` arguments to `False` causes the copy function to reuse the
+We can see that all attributes besides ``time_coords`` have been filtered out.
+Setting the ``deep`` arguments to ``False`` causes the copy function to reuse the
 data from the source dataset to generate the new stripped one, without
 duplicating all data in memory -- meaning both datasets now share the sample
-data and any change done to `ds` will also affect `stripped`.
+data and any change done to ``ds`` will also affect ``stripped``.
 
 
 Storage
@@ -445,14 +445,14 @@ HDF5 is a flexible format that also supports, for example, data
 compression. To enable it, you can pass additional arguments to
 `~mvpa.base.dataset.AttrDataset.save()` that are supported by
 `Group.create_dataset()`. Instead of using
-`~mvpa.base.dataset.AttrDataset.save()` one can also use the `h5save()`
+`~mvpa.base.dataset.AttrDataset.save()` one can also use the `~mvpa.base.hdf5.h5save()`
 function in a similar way. Saving the same dataset with maximum
 gzip-compression looks like this:
 
 >>> ds.save(os.path.join(tempdir, 'mydataset.gzipped.hdf5'), compression=9)
 >>> h5save(os.path.join(tempdir, 'mydataset.gzipped.hdf5'), ds, compression=9)
 
-Loading datasets from a file is easy too. `h5load()` takes a filename as
+Loading datasets from a file is easy too. `~mvpa.base.hdf5.h5load()` takes a filename as
 an argument and returns the stored dataset. Compressed data will be handled
 transparently.
 

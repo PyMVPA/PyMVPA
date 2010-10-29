@@ -13,16 +13,16 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as np
-from mvpa.measures.base import DatasetMeasure
+from mvpa.measures.base import Measure
 from mvpa.misc.stats import DSMatrix
 
-class DSMDatasetMeasure(DatasetMeasure):
-    """DSMDatasetMeasure creates a DatasetMeasure object
+class DSMMeasure(Measure):
+    """DSMMeasure creates a Measure object
        where metric can be one of 'euclidean', 'spearman', 'pearson'
        or 'confusion'"""
 
     def __init__(self, dsmatrix, dset_metric, output_metric='spearman'):
-        DatasetMeasure.__init__(self)
+        Measure.__init__(self)
 
         self.dsmatrix = dsmatrix
         self.dset_metric = dset_metric

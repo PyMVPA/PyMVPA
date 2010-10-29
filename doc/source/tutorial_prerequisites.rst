@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -99,7 +99,7 @@ basic Python programming to efficient scientific computing with Python.
 Tutorial Introductions Into General Python Programming
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-http://en.wikibooks.org/wiki/Non-Programmer's_Tutorial_for_Python_2.0
+http://en.wikibooks.org/wiki/Non-Programmer's_Tutorial_for_Python_2.6
 
   Basic from-scratch introduction into Python. This should give you the basics,
   even if you had *no* prior programming experience.
@@ -182,3 +182,4 @@ http://ipython.scipy.org/moin/Documentation
 
   IPython documentation page which references additional materials, such as
   the main IPython documentation which extensively covers features of IPython.
+
