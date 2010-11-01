@@ -36,7 +36,7 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'multiclass', 'non-linear', 'kernel-based', 'lars',
         'regression', 'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
-        'gnb']
+        'gnb', 'plr']
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
@@ -342,6 +342,11 @@ if externals.exists('scipy'):
 from mvpa.clfs.blr import BLR
 clfswh += BLR(descr="BLR()")
 
+#PLR
+from mvpa.clfs.plr import PLR
+clfswh += PLR(descr="PLR()")
+if externals.exists('scipy'):
+    clfswh += PLR(reduced=0.05, descr="PLR(reduced=0.01)")
 
 # SVM stuff
 
