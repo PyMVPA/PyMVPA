@@ -715,9 +715,9 @@ class ClassifiersTests(unittest.TestCase):
         # incorrect order of dimensions lead to equal samples [0, 1, 0]
         traindatas = [
             Dataset(samples=N.array([ [0, 0, 1.0],
-                                        [1, 0, 0] ]), labels=[-1, 1]),
+                                        [1, 0, 0] ]), labels=[0, 1]),
             Dataset(samples=N.array([ [0, 0.0],
-                                      [1, 1] ]), labels=[-1, 1])]
+                                      [1, 1] ]), labels=[0, 1])]
 
         clf.states._changeTemporarily(enable_states = ['training_confusion'])
         for traindata in traindatas:
