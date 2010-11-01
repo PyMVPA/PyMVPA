@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 import numpy as N
 
 from mvpa.misc.exceptions import ConvergenceError
-from mvpa.clfs.base import Classifier
+from mvpa.clfs.base import Classifier, FailedToTrainError
 
 if __debug__:
     from mvpa.base import debug
@@ -24,7 +24,9 @@ class PLR(Classifier):
     """Penalized logistic regression `Classifier`.
     """
 
-    def __init__(self, lm=1, criterion=1, reduced=False, maxiter=20, **kwargs):
+    _clf_internals = [ 'plr', 'binary', 'linear' ]
+
+    def __init__(self, lm=1, criterion=1, reduced=0.0, maxiter=20, **kwargs):
         """
         Initialize a penalized logistic regression analysis
 
@@ -33,8 +35,8 @@ class PLR(Classifier):
             the penalty term lambda.
           criterion : int
             the criterion applied to judge convergence.
-          reduced : Bool
-            if not False, the rank of the data is reduced before
+          reduced : float
+            if not 0, the rank of the data is reduced before
             performing the calculations. In that case, reduce is taken
             as the fraction of the first singular value, at which a
             dimension is not considered significant anymore. A
@@ -67,17 +69,22 @@ class PLR(Classifier):
         # Set up the environment for fitting the data
         X = data.samples.T
         d = data.labels
-        if not list(set(d)) == [0, 1]:
+        if set(d) != set([0, 1]):
             raise ValueError, \
-                  "Regressors for logistic regression should be [0,1]"
+                  "Regressors for logistic regression should be [0,1]. Got %s" \
+                  %(set(d),)
 
-        if self.__reduced:
+        if self.__reduced != 0 :
             # Data have reduced rank
             from scipy.linalg import svd
 
             # Compensate for reduced rank:
             # Select only the n largest eigenvectors
             U, S, V = svd(X.T)
+            if S[0] == 0:
+                raise FailedToTrainError(
+                    "Data provided to PLR seems to be degenerate -- "
+                    "0-th singular value is 0")
             S /= S[0]
             V = N.matrix(V[:, :N.max(N.where(S > self.__reduced)) + 1])
             # Map Data to the subspace spanned by the eigenvectors
