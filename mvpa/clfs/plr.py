@@ -14,7 +14,8 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.misc.exceptions import ConvergenceError
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
+     FailedToTrainError
 
 if __debug__:
     from mvpa.base import debug
@@ -24,7 +25,9 @@ class PLR(Classifier):
     """Penalized logistic regression `Classifier`.
     """
 
-    def __init__(self, lm=1, criterion=1, reduced=False, maxiter=20, **kwargs):
+    __tags__ = [ 'plr', 'binary', 'linear' ]
+
+    def __init__(self, lm=1, criterion=1, reduced=0.0, maxiter=20, **kwargs):
         """
         Initialize a penalized logistic regression analysis
 
@@ -34,8 +37,8 @@ class PLR(Classifier):
           the penalty term lambda.
         criterion : int
           the criterion applied to judge convergence.
-        reduced : Bool
-          if not False, the rank of the data is reduced before
+        reduced : float
+          if not 0, the rank of the data is reduced before
           performing the calculations. In that case, reduce is taken
           as the fraction of the first singular value, at which a
           dimension is not considered significant anymore. A
@@ -43,7 +46,6 @@ class PLR(Classifier):
         maxiter : int
           maximum number of iterations. If no convergence occurs
           after this number of iterations, an exception is raised.
-
         """
         # init base class first
         Classifier.__init__(self, **kwargs)
@@ -67,18 +69,23 @@ class PLR(Classifier):
         """
         # Set up the environment for fitting the data
         X = data.samples.T
-        d = data.sa[self.get_space()].value
-        if not list(set(d)) == [0, 1]:
+        d = self._attrmap.to_numeric(data.sa[self.get_space()].value)
+        if set(d) != set([0, 1]):
             raise ValueError, \
-                  "Regressors for logistic regression should be [0,1]"
+                  "Regressors for logistic regression should be [0,1]. Got %s" \
+                  %(set(d),)
 
-        if self.__reduced:
+        if self.__reduced != 0 :
             # Data have reduced rank
             from scipy.linalg import svd
 
             # Compensate for reduced rank:
             # Select only the n largest eigenvectors
             U, S, V = svd(X.T)
+            if S[0] == 0:
+                raise FailedToTrainError(
+                    "Data provided to PLR seems to be degenerate -- "
+                    "0-th singular value is 0")
             S /= S[0]
             V = np.matrix(V[:, :np.max(np.where(S > self.__reduced)) + 1])
             # Map Data to the subspace spanned by the eigenvectors
