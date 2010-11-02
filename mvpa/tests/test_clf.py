@@ -836,9 +836,9 @@ class ClassifiersTests(unittest.TestCase):
         # incorrect order of dimensions lead to equal samples [0, 1, 0]
         traindatas = [
             dataset_wizard(samples=np.array([ [0, 0, 1.0],
-                                        [1, 0, 0] ]), targets=[-1, 1]),
+                                        [1, 0, 0] ]), targets=[0, 1]),
             dataset_wizard(samples=np.array([ [0, 0.0],
-                                      [1, 1] ]), targets=[-1, 1])]
+                                      [1, 1] ]), targets=[0, 1])]
 
         clf.ca.change_temporarily(enable_ca = ['training_confusion'])
         for traindata in traindatas:

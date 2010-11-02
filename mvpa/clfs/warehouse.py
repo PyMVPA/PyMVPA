@@ -43,7 +43,7 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'regression', 'regression_based',
         'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
-        'gnb', 'rpy2', 'swig', 'skl', 'lda', 'qda' ]
+        'gnb', 'plr', 'rpy2', 'swig', 'skl', 'lda', 'qda' ]
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
@@ -376,6 +376,11 @@ from mvpa.clfs.blr import BLR
 clfswh += RegressionAsClassifier(BLR(descr="BLR()"),
                                  descr="BLR Classifier")
 
+#PLR
+from mvpa.clfs.plr import PLR
+clfswh += PLR(descr="PLR()")
+if externals.exists('scipy'):
+    clfswh += PLR(reduced=0.05, descr="PLR(reduced=0.01)")
 
 # SVM stuff
 
