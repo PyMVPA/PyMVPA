@@ -58,7 +58,7 @@ class Splitter(Node):
           to reduce the memory footprint.
         reverse : bool
           If True, the order of datasets in the split is reversed, e.g.
-          instead of (training, testing), (training, testing) will be spit
+          instead of (training, testing), (testing, training) will be spit
           out
         """
         Node.__init__(self, space=attr, **kwargs)
