@@ -135,16 +135,16 @@ class DSMatrix(object):
                             data_vectors[i] - data_vectors[j])
 
         elif (metric == 'spearman'):
-            dsmatrix = np.corrcoef(data_vectors)
-
-        elif (metric == 'pearson'):
-            #print 'Using Pearson correlation metric...'
+            #print 'Using Spearman rank-correlation metric...'
             # down rows
             for i in range(num_exem):
                 # across columns
                 for j in range(num_exem):
-                    dsmatrix[i, j] = 1 - st.pearsonr(
+                    dsmatrix[i, j] = 1 - st.spearmanr(
                         data_vectors[i,:], data_vectors[j,:])[0]
+
+        elif (metric == 'pearson'):
+            dsmatrix = np.corrcoef(data_vectors)
 
         elif (metric == 'confusion'):
             #print 'Using confusion correlation metric...'
