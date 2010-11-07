@@ -190,10 +190,10 @@ class ClassifiersTests(unittest.TestCase):
             lrn = lrn.clone()              # clone the beast
             lrn.params.seed = _random_seed # reuse the same seed
         lrn_ = lrn.clone()
+        lrn_.set_space('custom')
 
         te = CrossValidation(lrn, NFoldPartitioner())
-
-        te_ = CrossValidation(lrn_, NFoldPartitioner(), space='custom')
+        te_ = CrossValidation(lrn_, NFoldPartitioner())
         nclasses = 2 * (1 + int('multiclass' in lrn.__tags__))
         dsname = ('uni%dsmall' % nclasses,
                   'sin_modulated')[int(lrn.__is_regression__)]
