@@ -349,7 +349,7 @@ class CrossValidation(RepeatedMeasure):
 
     # TODO move conditional attributes from CVTE into this guy
     def __init__(self, learner, generator, errorfx=mean_mismatch_error,
-                 space='targets', **kwargs):
+                 **kwargs):
         """
         Parameters
         ----------
@@ -365,21 +365,14 @@ class CrossValidation(RepeatedMeasure):
         errorfx : callable
           Custom implementation of an error function. The callable needs to
           accept two arguments (1. predicted values, 2. target values).
-        space : str
-          Target space of the learner, i.e. the sample attribute it will be
-          trained on and tries to predict.
         """
         # compile the appropriate repeated measure to do cross-validation from
         # pieces
         if not errorfx is None:
             # error node -- postproc of transfer measure
-            enode = BinaryFxNode(errorfx, space)
+            enode = BinaryFxNode(errorfx, learner.get_space())
         else:
             enode = None
-
-        # enforce learner's space
-        # XXX maybe not in all cases?
-        learner.set_space(space)
 
         # transfer measure to wrap the learner
         # splitter used the output space of the generator to know what to split
