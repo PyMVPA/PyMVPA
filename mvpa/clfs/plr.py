@@ -14,8 +14,8 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.misc.exceptions import ConvergenceError
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples, \
-     FailedToTrainError
+from mvpa.base.learner import FailedToTrainError
+from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 
 if __debug__:
     from mvpa.base import debug
