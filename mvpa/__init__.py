@@ -27,7 +27,7 @@ The mvpa package contains the following subpackages and modules:
          `Yaroslav Halchenko <debian@onerussian.com>`__,
          `Per B. Sederberg <persed@princeton.edu>`__
 :requires: Python 2.4+
-:version: 0.5.0.dev
+:version: 0.6.0.dev
 :see: `The PyMVPA webpage <http://www.pymvpa.org>`__
 :see: `GIT Repository Browser <http://github.com/PyMVPA/PyMVPA>`__
 
@@ -45,7 +45,7 @@ The mvpa package contains the following subpackages and modules:
 __docformat__ = 'restructuredtext'
 
 # canonical PyMVPA version string
-__version__ = '0.5.0.dev'
+__version__ = '0.6.0.dev'
 
 import os
 import random

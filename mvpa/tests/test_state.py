@@ -12,7 +12,6 @@ import unittest
 import mvpa.support.copy as copy
 
 import numpy as np
-from sets import Set
 
 from mvpa.base import externals
 
@@ -133,13 +132,13 @@ class StateTests(unittest.TestCase):
 
 
         proper.ca.enable(['state2'])
-        self.failUnlessEqual(Set(proper.ca.keys()), Set(['state1', 'state2']))
+        self.failUnlessEqual(set(proper.ca.keys()), set(['state1', 'state2']))
         if __debug__ and 'ENFORCE_CA_ENABLED' in debug.active:
             # skip testing since all ca are on now
             return
         self.failUnless(proper.ca.enabled == ['state2'])
 
-        self.failUnless(Set(proper2.ca.enabled) == Set(['state1']))
+        self.failUnless(set(proper2.ca.enabled) == set(['state1']))
 
         self.failUnlessRaises(AttributeError, proper.__getattribute__, 'state12')
 
@@ -153,10 +152,10 @@ class StateTests(unittest.TestCase):
         self.failUnless(str_.find('2 ca:') != -1)
 
         # check if disable works
-        self.failUnless(Set(proper2.ca.enabled), Set(['state1']))
+        self.failUnless(set(proper2.ca.enabled), set(['state1']))
 
         proper2.ca.disable("all")
-        self.failUnlessEqual(Set(proper2.ca.enabled), Set())
+        self.failUnlessEqual(set(proper2.ca.enabled), set())
 
         proper2.ca.enable("all")
         self.failUnlessEqual(len(proper2.ca.enabled), 2)
@@ -185,7 +184,7 @@ class StateTests(unittest.TestCase):
         self.failUnless(enabled_ca != proper.ca.enabled,
                         msg="New enabled ca should differ from previous")
 
-        self.failUnless(Set(proper.ca.enabled) == Set(['state1', 'state2']),
+        self.failUnless(set(proper.ca.enabled) == set(['state1', 'state2']),
                         msg="Making sure that we enabled all ca of interest")
 
         proper.ca.enabled = enabled_ca
@@ -206,16 +205,16 @@ class StateTests(unittest.TestCase):
         self.failUnlessEqual(proper.ca.enabled, ["state2"])
         proper.ca.change_temporarily(
             enable_ca=["state1"], other=properch)
-        self.failUnlessEqual(Set(proper.ca.enabled),
-                             Set(["state1", "state2"]))
+        self.failUnlessEqual(set(proper.ca.enabled),
+                             set(["state1", "state2"]))
         proper.ca.reset_changed_temporarily()
         self.failUnlessEqual(proper.ca.enabled, ["state2"])
 
         # allow to enable disable without other instance
         proper.ca.change_temporarily(
             enable_ca=["state1", "state2"])
-        self.failUnlessEqual(Set(proper.ca.enabled),
-                             Set(["state1", "state2"]))
+        self.failUnlessEqual(set(proper.ca.enabled),
+                             set(["state1", "state2"]))
         proper.ca.reset_changed_temporarily()
         self.failUnlessEqual(proper.ca.enabled, ["state2"])
 
@@ -225,8 +224,8 @@ class StateTests(unittest.TestCase):
         Simple test if child gets conditional attributes from the parent as well
         """
         proper = TestClassProperChild()
-        self.failUnlessEqual(Set(proper.ca.keys()),
-                             Set(['state1', 'state2', 'state4']))
+        self.failUnlessEqual(set(proper.ca.keys()),
+                             set(['state1', 'state2', 'state4']))
 
 
     def test_state_variables(self):
