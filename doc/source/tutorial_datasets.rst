@@ -124,13 +124,27 @@ array([ 0.,  1.,  1.,  3.])
 Another purpose of the sample attribute collection is to preserve data
 integrity, by disallowing improper attributes:
 
-.. code-block:: python
+>>> ds.sa['invalid'] = 4
+Traceback (most recent call last):
+  File "/usr/lib/python2.6/doctest.py", line 1253, in __run
+    compileflags, 1) in test.globs
+  File "<doctest tutorial_datasets.rst[20]>", line 1, in <module>
+    ds.sa['invalid'] = 4
+  File "/home/test/pymvpa/mvpa/base/collections.py", line 459, in __setitem__
+    value = ArrayCollectable(value)
+  File "/home/test/pymvpa/mvpa/base/collections.py", line 171, in __init__
+    % self.__class__.__name__)
+ValueError: ArrayCollectable only takes sequences as value.
 
-  >> ds.sa['invalid'] = 4
-  ValueError: ArrayCollectable only takes sequences as value.
-  >> ds.sa['invalid'] = [ 1, 2, 3, 4, 5, 6 ]
-  ValueError: Collectable 'invalid' with length [6] does not match the required
-  length [4] of collection '<SampleAttributesCollection: some_attr>'.
+>>> ds.sa['invalid'] = [ 1, 2, 3, 4, 5, 6 ]
+Traceback (most recent call last):
+  File "/usr/lib/python2.6/doctest.py", line 1253, in __run
+    compileflags, 1) in test.globs
+  File "<doctest tutorial_datasets.rst[21]>", line 1, in <module>
+    ds.sa['invalid'] = [ 1, 2, 3, 4, 5, 6 ]
+  File "/home/test/pymvpa/mvpa/base/collections.py", line 468, in __setitem__
+    str(self)))
+ValueError: Collectable 'invalid' with length [6] does not match the required length [4] of collection '<SampleAttributesCollection: some_attr>'.
 
 But other than basic plausibility checks no further constraints on values of
 samples attributes exist. As long as the length of the attribute vector matches
@@ -301,7 +315,7 @@ created:
 >>> print subds.fa.responsible
 ['me' 'nobody']
 
-We see that both attributes are still there and, moreover, also here the
+We see that both attributes are still there and, moreover, also the
 appropriate subsets have been selected.
 
 
