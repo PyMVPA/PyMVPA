@@ -264,8 +264,8 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
         flatmask = ds.a.mapper.forward1(mask)
         # direct slicing is possible, and it is potentially more efficient,
         # so let's use it
-        #mapper = FeatureSliceMapper(flatmask)
-        #ds = ds.get_mapped(FeatureSliceMapper(flatmask))
+        #mapper = StaticFeatureSelection(flatmask)
+        #ds = ds.get_mapped(StaticFeatureSelection(flatmask))
         ds = ds[:, flatmask != 0]
 
     # load and store additional feature attributes

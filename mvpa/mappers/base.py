@@ -312,6 +312,10 @@ class ChainMapper(ChainNode):
         nmappers = len(self) - 1
         tdata = dataset
         for i, mapper in enumerate(self):
+            if __debug__:
+                debug('MAP',
+                      "Training child mapper (%i/%i) %s with %s-shaped input."
+                      % (i, nmappers, str(mapper), tdata.shape))
             mapper.train(tdata)
             # forward through all but the last mapper
             if i < nmappers:

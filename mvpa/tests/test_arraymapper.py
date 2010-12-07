@@ -10,7 +10,7 @@
 
 
 from mvpa.mappers.flatten import mask_mapper
-from mvpa.mappers.slicing import FeatureSliceMapper
+from mvpa.featsel.base import StaticFeatureSelection
 
 from mvpa.testing.tools import assert_raises, assert_equal, assert_array_equal
 
@@ -94,10 +94,10 @@ def test_selects():
     #assert_raises(IndexError, map_.select_out, [0,1,2,6])
 
     # remove 1,2
-    map_.append(FeatureSliceMapper([0,3,4]))
+    map_.append(StaticFeatureSelection([0,3,4]))
     assert_array_equal(map_.forward1(data), [0, 4, 5])
     # remove 1 more
-    map_.append(FeatureSliceMapper([0,2]))
+    map_.append(StaticFeatureSelection([0,2]))
     assert_array_equal(map_.forward1(data), [0, 5])
 
     # check if original mask wasn't perturbed

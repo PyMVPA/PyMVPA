@@ -86,10 +86,10 @@ look at a possible next step -- selecting a subset of interesting features:
 >>> 'mapper' in subds.a
 True
 >>> print subds.a.mapper
-<ChainMapper: <Flatten>-<FeatureSlice>>
+<ChainMapper: <Flatten>-<StaticFeatureSelection>>
 
 Now the situation has changed: *two* new mappers appeared in the dataset -- a
-`~mvpa.mappers.base.ChainMapper` and a `~mvpa.mappers.slicing.FeatureSliceMapper`.
+`~mvpa.mappers.base.ChainMapper` and a `~mvpa.featsel.base.StaticFeatureSelection`.
 The latter describes (and actually performs) the slicing operation we just made,
 while the former encapsulates the two mappers into a processing pipeline.
 We can see that the mapper chain represents the processing history of the
@@ -240,7 +240,7 @@ return it. Let's try:
 
 >>> detrended_fds = fds.get_mapped(detrender)
 >>> print detrended_fds.a.mapper
-<ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>>
+<ChainMapper: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>>
 
 ``detrended_fds`` is easily identifiable as a dataset that has been
 flattened, sliced, and linearily detrended.
@@ -286,7 +286,7 @@ mapper we have created above, but using less memory:
 >>> zscore(detrended_fds, param_est=('targets', ['rest']))
 >>> fds = detrended_fds
 >>> print fds.a.mapper
-<ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>-<ZScore>>
+<ChainMapper: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>-<ZScore>>
 
 .. exercise::
 
@@ -383,7 +383,7 @@ dataset from the beginning we can see how it works:
 >>> print subds
 <Dataset: 5x4@float64, <a: mapper>>
 >>> print subds.a.mapper
-<ChainMapper: <Flatten>-<FeatureSlice>>
+<ChainMapper: <Flatten>-<StaticFeatureSelection>>
 >>> subds.nfeatures
 4
 >>> revtest = np.arange(subds.nfeatures) + 10
@@ -408,7 +408,7 @@ But now let's look at our fMRI dataset again. Here the mapper chain is a little
 more complex:
 
 >>> print fds.a.mapper
-<ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>-<ZScore>-<Fx: fx=mean>>
+<ChainMapper: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>-<ZScore>-<Fx: fx=mean>>
 
 Initial flattening followed by mask, detrending, Z-scoring and finally
 averaging. We would reverse mapping do in this case? Let's test:
@@ -488,7 +488,7 @@ Now we are really ready for :ref:`part four of the tutorial <chap_tutorial_class
 
      ~mvpa.mappers
      ~mvpa.mappers.base.Mapper
-     ~mvpa.mappers.base.FeatureSliceMapper
+     ~mvpa.mappers.base.StaticFeatureSelection
      ~mvpa.mappers.flatten.FlattenMapper
      ~mvpa.mappers.fx.FxMapper
      ~mvpa.mappers.base.ChainMapper

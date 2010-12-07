@@ -18,8 +18,8 @@ from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
 from mvpa.testing.datasets import datasets
 from mvpa.mappers.flatten import FlattenMapper
 from mvpa.mappers.base import ChainMapper
-from mvpa.mappers.slicing import FeatureSliceMapper, SampleSliceMapper, \
-        StripBoundariesSamples
+from mvpa.featsel.base import StaticFeatureSelection
+from mvpa.mappers.slicing import SampleSliceMapper, StripBoundariesSamples
 from mvpa.support.copy import copy
 from mvpa.datasets.base import Dataset
 from mvpa.base.collections import ArrayCollectable
@@ -52,7 +52,7 @@ def test_flatten():
     # a chain that only has a FlattenMapper as the one element
     for fm in [FlattenMapper(space='voxel'),
                ChainMapper([FlattenMapper(space='voxel'),
-                            FeatureSliceMapper(slice(None))])]:
+                            StaticFeatureSelection(slice(None))])]:
         # not working if untrained
         assert_raises(RuntimeError,
                       fm.forward1,
@@ -119,11 +119,11 @@ def test_subset():
             [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47],
             [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]])
     # float array doesn't work
-    sm = FeatureSliceMapper(np.ones(16))
+    sm = StaticFeatureSelection(np.ones(16))
     assert_raises(IndexError, sm.forward, data)
 
     # full mask
-    sm = FeatureSliceMapper(slice(None))
+    sm = StaticFeatureSelection(slice(None))
     # should not change single samples
     assert_array_equal(sm.forward(data[0:1].copy()), data[0:1])
     # or multi-samples
@@ -135,9 +135,9 @@ def test_subset():
     assert_array_equal(sm.reverse(data.copy()), data)
 
     # identical mappers
-    sm_none = FeatureSliceMapper(slice(None))
-    sm_int = FeatureSliceMapper(np.arange(16))
-    sm_bool = FeatureSliceMapper(np.ones(16, dtype='bool'))
+    sm_none = StaticFeatureSelection(slice(None))
+    sm_int = StaticFeatureSelection(np.arange(16))
+    sm_bool = StaticFeatureSelection(np.ones(16, dtype='bool'))
     sms = [sm_none, sm_int, sm_bool]
 
     # test subsets
@@ -151,7 +151,7 @@ def test_subset():
         for i, sub in enumerate(subsets):
             # shallow copy
             orig = copy(st)
-            subsm = FeatureSliceMapper(sub)
+            subsm = StaticFeatureSelection(sub)
             # should do copy-on-write for all important stuff!!
             orig += subsm
             # test if selection did its job
@@ -178,16 +178,16 @@ def test_subset():
     #assert_false(subsm.is_valid_inid(16))
 
     # intended merge failures
-    fsm = FeatureSliceMapper(np.arange(16))
+    fsm = StaticFeatureSelection(np.arange(16))
     assert_equal(fsm.__iadd__(None), NotImplemented)
     assert_equal(fsm.__iadd__(Dataset([2,3,4])), NotImplemented)
 
 
 def test_subset_filler():
-    sm = FeatureSliceMapper(np.arange(3))
-    sm_f0 = FeatureSliceMapper(np.arange(3), filler=0)
-    sm_fm1 = FeatureSliceMapper(np.arange(3), filler=-1)
-    sm_fnan = FeatureSliceMapper(np.arange(3), filler=np.nan)
+    sm = StaticFeatureSelection(np.arange(3))
+    sm_f0 = StaticFeatureSelection(np.arange(3), filler=0)
+    sm_fm1 = StaticFeatureSelection(np.arange(3), filler=-1)
+    sm_fnan = StaticFeatureSelection(np.arange(3), filler=np.nan)
     data = np.arange(12).astype(float).reshape((2, -1))
 
     sm.train(data)
@@ -204,7 +204,7 @@ def test_subset_filler():
 
 def test_repr():
     # this time give mask only by its target length
-    sm = FeatureSliceMapper(slice(None), space='myspace')
+    sm = StaticFeatureSelection(slice(None), space='myspace')
 
     # check reproduction
     sm_clone = eval(repr(sm))
@@ -237,11 +237,11 @@ def test_chainmapper():
     cm.train(data)
 
     # a new mapper should appear when doing feature selection
-    cm.append(FeatureSliceMapper(range(1,16)))
+    cm.append(StaticFeatureSelection(range(1,16)))
     assert_equal(cm.forward1(data[0]).shape, (15,))
     assert_equal(len(cm), 2)
     # multiple slicing
-    cm.append(FeatureSliceMapper([9,14]))
+    cm.append(StaticFeatureSelection([9,14]))
     assert_equal(cm.forward1(data[0]).shape, (2,))
     assert_equal(len(cm), 3)
 

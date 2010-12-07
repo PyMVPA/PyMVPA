@@ -58,7 +58,7 @@ svdmapper = SVDMapper()
 SVD and then subselect the desired range of components."""
 
 get_SVD_sliced = lambda x: ChainMapper([svdmapper,
-                                        FeatureSliceMapper(x)])
+                                        StaticFeatureSelection(x)])
 
 """Now we can define a list of some classifiers: a simple one and several
 classifiers with built-in SVD transformation and selection of
