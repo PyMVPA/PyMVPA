@@ -38,7 +38,9 @@ class SliceMapper(Mapper):
 
 
     def __str__(self):
-        return _str(self, str(self._slicearg))
+        # with slicearg it can quickly get very unreadable
+        #return _str(self, str(self._slicearg))
+        return _str(self)
 
 
     def _untrain(self):
