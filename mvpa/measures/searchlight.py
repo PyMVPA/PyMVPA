@@ -20,7 +20,7 @@ from mvpa.base.dochelpers import borrowkwargs
 
 from mvpa.datasets import hstack
 from mvpa.support import copy
-from mvpa.mappers.slicing import FeatureSliceMapper
+from mvpa.featsel.base import StaticFeatureSelection
 from mvpa.measures.base import Measure
 from mvpa.base.state import ConditionalAttribute
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
@@ -121,7 +121,7 @@ class BaseSearchlight(Measure):
                 # there is an additional selection step that needs to be
                 # expressed by another mapper
                 mapper = copy.copy(dataset.a.mapper)
-                mapper.append(FeatureSliceMapper(self.__roi_ids,
+                mapper.append(StaticFeatureSelection(self.__roi_ids,
                                                  dshape=dataset.shape[1:]))
                 results.a['mapper'] = mapper
 

@@ -34,7 +34,6 @@ from mvpa.misc.attrmap import AttributeMap
 from mvpa.base.dochelpers import _str
 from mvpa.base.state import ConditionalAttribute, ClassWithCollections, \
      Harvestable
-from mvpa.mappers.slicing import FeatureSliceMapper
 
 from mvpa.clfs.base import Classifier
 from mvpa.clfs.distance import cartesian_distance

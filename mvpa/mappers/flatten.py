@@ -15,7 +15,7 @@ import numpy as np
 from mvpa.base.dochelpers import _str
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples, \
         ChainMapper
-from mvpa.mappers.slicing import FeatureSliceMapper
+from mvpa.featsel.base import StaticFeatureSelection
 from mvpa.misc.support import is_in_volume
 
 
@@ -167,7 +167,7 @@ class FlattenMapper(Mapper):
 
 
 def mask_mapper(mask=None, shape=None, space=None):
-    """Factory method to create a chain of Flatten+FeatureSlice Mappers
+    """Factory method to create a chain of Flatten+StaticFeatureSelection Mappers
 
     Parameters
     ----------
@@ -206,7 +206,7 @@ def mask_mapper(mask=None, shape=None, space=None):
     fm = FlattenMapper(shape=mask.shape, space=space)
     flatmask = fm.forward1(mask)
     mapper = ChainMapper([fm,
-                          FeatureSliceMapper(
+                          StaticFeatureSelection(
                               flatmask,
                               dshape=flatmask.shape,
                               oshape=(len(flatmask.nonzero()[0]),))])

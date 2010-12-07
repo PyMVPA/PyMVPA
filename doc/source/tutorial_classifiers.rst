@@ -351,7 +351,7 @@ procedure. Let's say we have heard rumors that only the first two dimensions
 of the space spanned by the SVD vectors cover the "interesting" variance
 and the rest is noise. We can easily check that with an appropriate mapper:
 
->>> mapper = ChainMapper([SVDMapper(), FeatureSliceMapper(slice(None, 2))])
+>>> mapper = ChainMapper([SVDMapper(), StaticFeatureSelection(slice(None, 2))])
 >>> metaclf = MappedClassifier(baseclf, mapper)
 >>> cvte = CrossValidation(metaclf, NFoldPartitioner())
 >>> cv_results = cvte(ds)
@@ -366,7 +366,7 @@ algorithm we can easily go back to the kNN classifier that has served us well
 in the past.
 
 >>> baseclf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
->>> mapper = ChainMapper([SVDMapper(), FeatureSliceMapper(slice(None, 2))])
+>>> mapper = ChainMapper([SVDMapper(), StaticFeatureSelection(slice(None, 2))])
 >>> metaclf = MappedClassifier(baseclf, mapper)
 >>> cvte = CrossValidation(metaclf, NFoldPartitioner())
 >>> cv_results = cvte(ds)
