@@ -27,8 +27,15 @@ reversible, others are not. Some are simple one-step computations, others
 are iterative algorithms that have to be trained on data before they can be
 used. In PyMVPA, all these transformations are :mod:`~mvpa.mappers`.
 
+.. note::
+
+  If you are an MDP_-user you probably have realized the similarity of MDP's
+  nodes and PyMVPA's mappers.
+
+.. _MDP: http://mdp-toolkit.sourceforge.net/
+
 Let's create a dummy dataset (5 samples, 12 features). This time we will use a
-new method to create the dataset, the ``dataset_wizard``. Here it is fully
+new method to create the dataset, the ``dataset_wizard``. Here it is, fully
 equivalent to a regular constructor call (i.e.  `~mvpa.datasets.base.Dataset`),
 but we will shortly see some nice convenience aspects.
 
@@ -246,7 +253,7 @@ While this will hopefully have solved the problem of temporal drifts in the
 data, we still have inhomogeneous voxel intensities, but there are many
 possible approaches to fix it. For this tutorial we are again following a
 simple one, and perform a feature-wise, chunk-wise Z-scoring of the data.  This
-has many advantages. First it is going to scale all features into approximately
+has many advantages. First, it is going to scale all features into approximately
 the same range, and also remove their mean.  The latter is quite important,
 since some classifiers cannot deal with not demeaned data. However, we are not
 going to perform a very simple Z-scoring removing the global mean, but use the
@@ -447,11 +454,11 @@ information about the original source NIfTI image.
 True
 
 PyMVPA offers `~mvpa.datasets.mri.map2nifti()`, a function to combine these
-two thing and convert any vector into the corresponding NIfTI image:
+two things and convert any vector into the corresponding NIfTI image:
 
 >>> nimg = map2nifti(fds, revtest)
 
-This image can now be safed to a file (e.g. ``nimg.save('mytest.nii.gz')``).
+This image can now be stored as a file (e.g. ``nimg.save('mytest.nii.gz')``).
 In this format it is now compatible with the vast majority of neuroimaging
 software.
 
@@ -463,7 +470,7 @@ software.
 
 There are much more mappers in PyMVPA than we could cover in the tutorial
 part. Some more will be used in other parts, but even more can be found the
-:mod:`~mvpa.mappers` module. Even though the all implement different
+:mod:`~mvpa.mappers` module. Even though they all implement different
 transformations, they can all be used in the same way, and can all be
 combined into a chain.
 
