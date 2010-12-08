@@ -34,14 +34,17 @@ verbose.level = 3
 # needing reproducible results
 #mvpa.seed(3)
 
+# To minimize divergence from code for >= 0.5
+np = N
+
 """
 For this simple example lets generate some fresh random data with 2
 relevant features and low SNR.
 """
 
-dataset = normal_feature_dataset(perlabel=24, nlabels=2, nchunks=3,
-                                 nonbogus_features=[0, 1],
-                                 nfeatures=100, snr=3.0)
+dataset = normalFeatureDataset(perlabel=24, nlabels=2, nchunks=3,
+                               nonbogus_features=[0, 1],
+                               nfeatures=100, snr=3.0)
 
 """
 For the demonstration of model selection benefit, lets first compute
@@ -111,9 +114,9 @@ for isplit, (dstrain, dstest) in enumerate(NFoldSplitter()(dataset)):
     best_clfs[best_clf.descr] = best_clfs.get(best_clf.descr, 0) + 1
     # now that we have the best classifier, lets assess its transfer
     # to the testing dataset while training on entire training
-    te = TransferError(best_clf, enable_ca=['confusion'])
+    te = TransferError(best_clf, enable_states=['confusion'])
     errors.append(te(dstest, dstrain))
-    confusion += te.ca.confusion
+    confusion += te.states.confusion
 
 """
 And for comparison, lets assess what would be the best performance if
