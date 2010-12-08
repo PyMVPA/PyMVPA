@@ -32,14 +32,25 @@ from mvpa.base import warning
 if __debug__:
     from mvpa.base import debug
 
-class DegenerateInputError(Exception):
+class LearnerError(Exception):
+    """Base class for exceptions thrown by the learners (classifiers,
+    regressions)"""
+    pass
+
+class DegenerateInputError(LearnerError):
     """Exception to be thrown by learners if input data is bogus, i.e. no
     features or samples"""
     pass
 
-class FailedToTrainError(Exception):
+class FailedToTrainError(LearnerError):
     """Exception to be thrown whenever classifier fails to learn for
     some reason"""
+    pass
+
+class FailedToPredictError(LearnerError):
+    """Exception to be thrown whenever classifier fails to provide predictions.
+    Usually happens if it was trained on degenerate data but without any complaints.
+    """
     pass
 
 class Classifier(ClassWithCollections):
