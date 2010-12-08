@@ -114,7 +114,7 @@ accessed directly without repeated and expensive searches:
 >>> ds.sa['some_attr'].unique
 array([ 0.,  1.,  3.])
 
-However, for most interactive uses of PyMVPA this type of access to attribute's
+However, for most interactive uses of PyMVPA this type of access to attributes'
 ``.value`` is relatively cumbersome (too much typing), therefore collections offer direct
 attribute access by name:
 
@@ -323,7 +323,7 @@ Loading fMRI data
 =================
 
 Enough of theoretical foreplay -- let's look at a concrete example of an
-fmri dataset. PyMVPA has several helper functions to load data from
+fMRI dataset. PyMVPA has several helper functions to load data from
 specialized formats, and the one for fMRI data is
 `~mvpa.datasets.mri.fmri_dataset()`. The example dataset we are going to
 look at is a single subject from Haxby et al. (2001) that we already
@@ -348,7 +348,7 @@ We can notice two things. First, it worked! Second, we get a
 two-dimensional dataset with 1452 samples (these are volumes in the NIfTI
 file), and over 160k features (these are voxels in the volume). The voxels
 are represented as a one-dimensional vector, and it seems that they have
-lost their association with the 3D-voxelspace. However, this is not the
+lost their association with the 3D-voxel-space. However, this is not the
 case, as we will see in the next chapter.  PyMVPA represents
 data in this simple format to make it compatible with a vast range of generic
 algorithms that expect data to be a simple matrix.
@@ -376,7 +376,7 @@ explore this dataset a little further.
 
 Besides samples the dataset offers number of attributes that enhance the
 data with information that is present in the NIfTI image header in the file. Each sample has
-information about its volume id in the timeseries and the actual acquisition
+information about its volume id in the time series and the actual acquisition
 time (relative to the beginning of the file). Moreover, the original voxel
 index (sometimes referred to as ``ijk``) for each feature is available too.
 Finally, the dataset also contains information about the dimensionality

@@ -16,7 +16,7 @@ Part 6: Looking Without Searching -- Sensitivity Analysis
 
 In the :ref:`previous tutorial part <chap_tutorial_searchlight>` we made a
 first attempt to localize information in the brain that is relevant to a
-particular classification analyses. While we were realatively successful,
+particular classification analyses. While we were relatively successful,
 we experienced some problems and also had to wait quite a bit. Here we want
 to look at another approach to localization. To get started, we pre-process
 the data as we have done before and perform volume averaging to get a
@@ -63,7 +63,7 @@ classifier will be the topic of this tutorial.
 However, if we want to inspect a trained classifier, we first have to train
 one. But hey, we have a full brain dataset here with almost 40k features.
 Will we be able to do that? Well, let's try (and hope that there is still a
-waranty on the machine you are running this on...).
+warranty on the machine you are running this on...).
 
 We will use a simple cross-validation procedure with a linear support
 vector machine and we want a confusion matrix:
@@ -119,16 +119,17 @@ for now. The :class:`~mvpa.featsel.base.SensitivityBasedFeatureSelection`
 instance is yet another :term:`processing object` that can be called with a
 dataset to perform the feature selection:
 
-.. Put slicing logic from Splitters also in these objects
-.. refactor them to return just one dataset
-
 >>> fsel.train(ds)
 >>> ds_p = fsel(ds)
 >>> print ds_p.shape
 (96, 500)
 
 This is the dataset we wanted, so we can rerun the cross-validation and see
-if it helped:
+if it helped. But first, take a step back and look at this code snippet again.
+There is an object that gets called with a dataset and returns a dataset. You
+cannot prevent noticing the striking similarity between a measure in PyMVPA or
+a mapper. And yes, feature selection procedures are also :term:`processing
+object`\ s and work just like measures or mappers. Now back to the analysis:
 
 >>> results = cvte(ds_p)
 >>> print np.round(cvte.ca.stats.stats['ACC%'], 1)
@@ -178,10 +179,12 @@ trained on all eight categories. I guess, it is obvious that our way of
 selecting features is somewhat fishy -- if not illegal. The ANOVA measure
 uses the full dataset to compute the F-scores, hence it determines which
 features show category differences in the whole dataset, including our
-suposed-to-be independent testing data. Once we have found these
+supposed-to-be independent testing data. Once we have found these
 differences, we are trying to rediscover them with a classifier. That we
-are able to do that is not only surprising. Moreover, the prediction
+are able to do that is not surprising. Moreover, the prediction
 accuracy and potentially also the created model are completely meaningless.
+
+
 
 Thanks For The Fish
 -------------------
@@ -230,10 +233,10 @@ confusion table also confirms this.
 Dissect The Classifier
 ----------------------
 
-But now back to our original goal: getting the classifier's oppinion about
+But now back to our original goal: getting the classifier's opinion about
 the importance of features in the dataset. With the approach we have used
 above, the classifier is trained on 500 features. We can only have its
-oppinion about those. Although this is just few times larger than a typical
+opinion about those. Although this is just few times larger than a typical
 searchlight sphere, we already have lifted the spatial constraint of
 searchlights -- these features can come from all over the brain.
 
@@ -288,7 +291,7 @@ are extracted for all these partial problems.
   categories.
 
 If you are not interested in this level of detail, we can combine the maps
-into one, as we have done with dataset samples before. A feasable
+into one, as we have done with dataset samples before. A feasible
 algorithm might be to take the per feature maximum of absolute
 sensitivities in any or the maps. The resulting map will be an indication
 of the importance of feature for *any* partial classification.
@@ -339,7 +342,7 @@ dataset splits.
 
 .. exercise::
 
-  Inspect the ``ov`` object. Acces that statistics map with the fraction
+  Inspect the ``ov`` object. Access that statistics map with the fraction
   of per-feature selections across all splits and project them back into
   the fMRI volume to investigate them.
 
@@ -378,7 +381,7 @@ access to its internal meta meta classifier that provides us with the
 confusion statistics. Yeah!
 
 While we are at it, it is worth mentioning that the scenario above can be
-further extendend. We could add more selection or pre-processing steps
+further extended. We could add more selection or pre-processing steps
 into the classifier, like projecting the data onto PCA components and
 limit the classifier to the first 10 components -- for each split. PyMVPA
 offers even more complex meta classifiers (e.g.
@@ -390,11 +393,11 @@ Closing Words
 -------------
 
 We have seen that sensitivity analyses are a useful approach to localize
-information that is less contraint and less demanding than a searchlight
+information that is less constrained and less demanding than a searchlight
 analysis.  Specifically, we can use it to discover signals that are
 distributed throughout the whole set of features (e.g. the full brain),
 but we could also perform an ROI-based analysis with it. It is less
-computantionally demanding as we only train the classifier on one set of
+computationally demanding as we only train the classifier on one set of
 features and not thousands, which results in a significant reduction of
 required CPU time.
 
@@ -402,7 +405,7 @@ However, there are also caveats. While sensitivities are a much more
 direct measure of feature importance as prediction accuracies are, being
 close to the bare metal of classifiers also has problems. Depending on the
 actual classification algorithm sensitivities might mean something
-completely different when compared across classififers. For example, the
+completely different when compared across classifiers. For example, the
 popular SVM algorithm solves the classification problem by identifying the
 data samples that are *most tricky* to model. The extracted sensitivities
 reflect this property. Other algorithms, such as "Gaussian Naive Bayes"
@@ -433,7 +436,7 @@ number of multivariate alternatives for features selection. There is an
 implementation of :term:`recursive feature selection`
 (:class:`~mvpa.featsel.rfe.RFE`), and also all classifier sensitivities
 can be used to select features. For classifiers where sensitivities cannot
-easibly be extracted PyMVPA provides a noise perturbation measure
+easily be extracted PyMVPA provides a noise perturbation measure
 (:class:`~mvpa.measures.noiseperturbation.NoisePerturbationSensitivity`;
 see :ref:`Hanson et al. (2004) <HMH04>` for an example application).
 

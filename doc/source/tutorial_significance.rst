@@ -33,7 +33,7 @@ at achieving as high generalization performance as possible.  Newly published
 methods often stipulate their advantage over existing ones by comparing their
 generalization performance on publicly available datasets with known
 characteristics (number of classes, independence of samples, actual presence
-of information of interest, etc).  Therefore, generalization performances
+of information of interest, etc.).  Therefore, generalization performances
 presented in statistical learning publications are usually high enough to
 obliterate even a slight chance that they could have been obtained  simply by
 chance.  For example, those classifiers trained on MNIST_ dataset of

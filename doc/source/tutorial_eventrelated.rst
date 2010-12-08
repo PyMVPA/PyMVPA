@@ -17,7 +17,7 @@ Part 7: "When Is The Signal" -- Event-related Data Analysis
 In all previous tutorial parts we have analyzed the same fMRI data. We
 analyzed it using a number of different strategies, but they all had one
 thing in common: A sample in each dataset was always a single fMRI volume.
-Sometimes, we have limited ourselfs to just a specific rgeion of interest,
+Sometimes, we have limited ourselves to just a specific region of interest,
 sometimes we averaged many fMRI volumes into a single one. In all cases,
 however, a feature always corresponded to a voxel in the fMRI volume and
 appeared only once in the dataset.
@@ -49,7 +49,7 @@ literature offers three principal techniques:
 
 1. Choose a single representative volume.
 2. Compress all relevant volumes into a single one (averaging).
-3. Consider the full event-related timeseries.
+3. Consider the full event-related time series.
 
 Obviously, only the third approach can possibly provide us with a temporal
 sensitivity profile, hence we will choose this path.
@@ -60,19 +60,19 @@ Event-related Pre-processing Is Not Event-related
 For an event-related analysis most of the processing is done on data
 samples that are somehow derived from a set of events. The rest of the data
 could be considered irrelevant. However, some preprocessing is only
-meaningful when performed on the full timeseries and not on the segmented
+meaningful when performed on the full time series and not on the segmented
 event samples. An example is the detrending that typically needs to be done
-on the original, continuous timeseries.
+on the original, continuous time series.
 
 In its current shape our dataset consists of 1452 samples that represent
 contiguous fMRI volumes. At this stage we can easily perform linear
 detrending. Again, we are going to do it per each experiment run (the
 dataset has runs encoded in the ``chunks`` sample attribute), since we do
-not assume a contiguous linear trend throughout the whole timeseries.
+not assume a contiguous linear trend throughout the whole time series.
 
 >>> poly_detrend(ds, polyord=1, chunks_attr='chunks')
 
-Let's make a copy of the detrended dataset that we can later on use for
+Let's make a copy of the de-trended dataset that we can later on use for
 some visualization.
 
 >>> orig_ds = ds.copy()
@@ -88,7 +88,7 @@ be interpreted as "activation scores". We are again doing it per each run.
 From Timeseries To Events
 -------------------------
 
-After detrending and normalization, we can now segment the timeseries into
+After detrending and normalization, we can now segment the time series into
 a set of events. To achieve this we have to compile a list of event
 definitions first. An event is defined by *onset*, *duration* and
 potentially a number of additional properties, such as stimulus condition
@@ -142,7 +142,7 @@ We can easily filter out all other events.
 >>> np.unique([e['duration'] for e in events])
 array([9])
 
-All of our events are of the same length, 9 consecutive fMRI volume. Later
+All of our events are of the same length, 9 consecutive fMRI volumes. Later
 on we want to view the temporal sensitivity profile from *before* until
 *after* the stimulation block, hence we should extend the duration of the
 events a bit.
@@ -153,7 +153,7 @@ events a bit.
 ...     ev['duration'] = event_duration
 
 The next and most important step is to actually segment the original
-timeseries dataset into event-related samples. PyMVPA offers
+time series dataset into event-related samples. PyMVPA offers
 :func:`~mvpa.datasets.eventrelated.eventrelated_dataset` as a function to
 perform this conversion. Let's just do it, it only needs the original
 dataset and our list of events.
@@ -188,13 +188,13 @@ conversion into events.
   you would expect?
 
 The rest of our analysis is business as usual and quickly done.  We want to
-perform a cross-validation analysis of a SVM classifier. We are not
+perform a cross-validation analysis of an SVM classifier. We are not
 primarily interested in its performance, but in the weights it assigns to
-the features. Remember, each feature is now voxel-timepoint, so we get a
+the features. Remember, each feature is now voxel-time-point, so we get a
 chance of looking at the spatio-temporal profile of classification relevant
 information in the data. We will nevertheless enable computing a confusion
 matrix, so we can assure ourselves that the classifier is performing
-reasonably well, since only a generalizing classifier model is worth
+reasonably well, because only a generalizing classifier model is worth
 inspecting, as otherwise the assigned weights are meaningless.
 
 >>> sclf = SplitClassifier(LinearCSVMC(),
@@ -214,8 +214,8 @@ inspecting, as otherwise the assigned weights are meaningless.
   sensitivity maps for all splits into a single map. Project this map into
   the original dataspace. What is the shape of that space? Store the
   projected map into a NIfTI file and inspect it using an MRI viewer.
-  Viewer needs to be capable of visualizing timeseries (hint: for FSLView
-  the timeseries image has to be opened first)!
+  Viewer needs to be capable of visualizing time series (hint: for FSLView
+  the time series image has to be opened first)!
 
 ..
 
@@ -225,7 +225,7 @@ A Plotting Example
 We have inspected the spatio-temporal profile of the sensitivities using
 some MRI viewer application, but we can also assemble an informative figure
 right here. Let's compose a figure that shows the original peri-stimulus
-timeseries, the effect of normalization, as well as the corresponding
+time series, the effect of normalization, as well as the corresponding
 sensitivity profile of the trained SVM classifier. We are going to do that
 for two example voxels, whose coordinates we might have derived from
 inspecting the full map.
@@ -236,8 +236,8 @@ The plotting will be done by the popular matplotlib_ package.
 
 .. _matplotlib: http://matplotlib.sourceforge.net/
 
-First, we plot the orginal signal after initial detrending. To do this, we
-apply the same timeseries segmentation to the original detrended dataset
+First, we plot the original signal after initial detrending. To do this, we
+apply the same time series segmentation to the original detrended dataset
 and plot the mean signal for all face and house events for both of our
 example voxels. The code below will create the plot using matplotlib's
 ``pylab`` interface (imported as ``pl``). If you are familiar with Matlab's
@@ -289,7 +289,7 @@ normalized data.
 >>> _ = pl.xlim((0,12))
 
 Finally, we plot the associated SVM weight profile for each peristimulus
-timepoint of both voxels. For easier selection we do a little trick and
+time-point of both voxels. For easier selection we do a little trick and
 reverse-map the sensitivity profile through the last mapper in the
 dataset's chain mapper (look at ``evds.a.mapper`` for the whole chain).
 This will reshape the sensitivities into ``cross-validation fold x volume x
@@ -335,7 +335,7 @@ If That Was Easy...
 -------------------
 
 This demo showed an event-related data analysis. Although we have performed
-it on fMRI data, an analogous analysis can be done for any timeseries-based
+it on fMRI data, an analogous analysis can be done for any time series based
 data in an almost identical fashion. Moreover, if a dataset has information
 about acquisition time (e.g. like the ones created by
 :func:`~mvpa.datasets.mri.fmri_dataset`)
@@ -366,9 +366,9 @@ some sort of searchlight, but it doesn't use
 utilizes :class:`~mvpa.measures.searchlight.Searchlight`. Yes, your are
 correct this is a spatio-temporal searchlight. The searchlight focus
 travels along all possible locations in our ventral temporal ROI, but at
-the same time also along the peristimulus time segment cover by the
+the same time also along the peristimulus time segment covered by the
 events. The spatial searchlight extent is the center voxel and its
-immediate neighbors and the temporal dimension comprises two timepoints in
+immediate neighbors and the temporal dimension comprises two time-points in
 each direction. The result is again a dataset. Its shape is compatible
 with the mapper of ``evds``, hence it can also be back-projected into the
 original 4D fMRI brain space.
