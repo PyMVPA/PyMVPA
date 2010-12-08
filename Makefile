@@ -384,7 +384,7 @@ testmanual: build testdocstrings
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 		MVPA_DATADB_ROOT=datadb \
-		$(NOSETESTS) --with-doctest --doctest-extension .rst \
+		$(NOSETESTS) -v --with-doctest --doctest-extension .rst \
 		             --doctest-tests doc/source
 
 testtutorial-%: build
