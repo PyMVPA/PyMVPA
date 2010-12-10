@@ -56,7 +56,7 @@ precmd=
 
 ds=`date +"20%y%m%d_%H%M%S"`
 topdir=$HOME/proj/pymvpa
-datadbdir=$topdir/pymvpa/datadb
+datadbdir=$topdir/datadb
 logdir="$topdir/logs/daily/pymvpa_tests-$ds"
 tmpfile="$logdir/tmp.log"
 logfile="$logdir/all.log"
