@@ -10,6 +10,9 @@
 #
 #                 Helper to run all the tests daily at night
 #
+# Depends:
+#   apt-get install   git mime-construct
+#   apt-get build-dep python-mvpa
 
 set -e
 
@@ -45,7 +48,8 @@ TESTS_ALL=`echo "${TESTS_BRANCHES[*]}" | tr ' ' '\n' | sort | uniq`
 # what branches to test
 BRANCHES="${!TESTS_BRANCHES[*]}"
 # where to send reports
-EMAILS='yoh@onerussian.com,michael.hanke@gmail.com'
+# hardcode in the bottom
+#EMAILS='yoh@onerussian.com,michael.hanke@gmail.com'
 
 precmd=
 #precmd="echo  C: "
@@ -111,6 +115,7 @@ export MVPA_TESTS_LABILE=no
 # Lets use backend allowing to draw without DISPLAY
 export MVPA_MATPLOTLIB_BACKEND=agg
 
+blogfiles=""
 # need to be a function to share global failed/succeded
 sweep()
 {
@@ -139,6 +144,8 @@ sweep()
     shashums_visited=
     for branch in $BRANCHES; do
         branch_has_problems=
+        blogfile="$logdir/${branch//\//_}.log"
+        {
         echo
         echo "I: ---------------{ Branch $branch }--------------"
         for action in checkout build ${TESTS_BRANCHES["$branch"]} clean; do
@@ -170,6 +177,8 @@ sweep()
             echo " D: Reporting WTF due to errors:"
             $precmd python -c 'import mvpa; print mvpa.wtf()'
         fi
+        } &> "$blogfile"
+        blogfiles+=" --file-attach $blogfile"
     done
     echo "I: Succeeded $succeeded actions, failed $failed actions."
     if [ "x$branches_with_problems" != x ]; then
@@ -187,4 +196,9 @@ sweep >| $logfile 2>&1
 #[ ! $failed = 0 ] && \
 # Email always since it is better to see that indeed everything is smooth
 # and to confirm that it is tested daily
-cat $logfile | mail -s "PyMVPA: daily testing: +$succeeded/-$failed" $EMAILS
+#cat $logfile | mail -s "PyMVPA: daily testing: +$succeeded/-$failed" $EMAILS
+
+# Email using mime-construct with results per branch in attachements
+mime-construct --to yoh@onerussian.com --to michael.hanke@gmail.com \
+    --subject  "PyMVPA: daily testing: +$succeeded/-$failed" \
+    --file "$logfile" $blogfiles
