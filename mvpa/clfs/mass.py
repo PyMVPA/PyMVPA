@@ -40,10 +40,11 @@ class MASSLearnerAdapter(Classifier):
 
     Examples
     --------
-    >>> from mvpa.testing.datasets import datasets
-    >>> mass_qda = MASSLearnerAdapter('qda', tags=['non-linear', 'multiclass'], enable_ca=['posterior'])
-    >>> mass_qda.train(datasets['uni2large_train'])
-    >>> mass_qda.predict(datasets['uni2large_test'])
+    >>> if externals.exists('mass'):
+    ...    from mvpa.testing.datasets import datasets
+    ...    mass_qda = MASSLearnerAdapter('qda', tags=['non-linear', 'multiclass'], enable_ca=['posterior'])
+    ...    mass_qda.train(datasets['uni2large'])
+    ...    mass_qda.predict(datasets['uni2large']) # doctest: +SKIP
     """
 
     __tags__ = ['mass', 'rpy2']
