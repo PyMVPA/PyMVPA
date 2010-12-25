@@ -378,8 +378,9 @@ class Classifier(ClassWithCollections):
         to do so
         """
         if dataset.nfeatures == 0 or dataset.nsamples == 0:
-            raise DegenerateInputError, \
-                  "Cannot train classifier on degenerate data %s" % dataset
+            raise DegenerateInputError(
+                "Cannot train classifier %s on degenerate data %s"
+                % (self, dataset))
         if __debug__:
             debug("CLF", "Training classifier %(clf)s on dataset %(dataset)s",
                   msgargs={'clf':self, 'dataset':dataset})
