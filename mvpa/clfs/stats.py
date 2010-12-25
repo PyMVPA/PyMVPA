@@ -268,6 +268,10 @@ class MCNullDist(NullDist):
         dist_samples = []
         """Holds the values for randomized labels."""
 
+        # Needs to be imported here upon demand due to circular imports
+        # TODO: place MC into a separate module
+        from mvpa.clfs.base import DegenerateInputError, FailedToTrainError
+
         # decide on the arguments to measure
         if not vdata is None:
             measure_args = [vdata, wdata]
@@ -275,6 +279,7 @@ class MCNullDist(NullDist):
             measure_args = [wdata]
 
         # estimate null-distribution
+        skipped = 0                     # # of skipped permutations
         for p in xrange(self.__permutations):
             # new permutation all the time
             # but only permute the training data and keep the testdata constant
@@ -292,10 +297,19 @@ class MCNullDist(NullDist):
 
             # compute and store the measure of this permutation
             # assume it has `TransferError` interface
-            dist_samples.append(measure(*measure_args))
+            try:
+                dist_samples.append(measure(*measure_args))
+            except (DegenerateInputError, FailedToTrainError), e:
+                if __debug__:
+                    debug('STATMC', " skipped", cr=True)
+                warning("Failed to estimate %s on %s, due to %s. "
+                        "Permutation %d skipped." %
+                        (measure, measure_args, e, p))
+                skipped += 1
+                continue
 
         if __debug__:
-            debug('STATMC', '')
+            debug('STATMC', ' Skipped: %d permutations' % skipped)
 
         # restore original labels
         wdata.permuteLabels(False, perchunk=False)
