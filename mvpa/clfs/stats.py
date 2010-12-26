@@ -305,6 +305,7 @@ class MCNullDist(NullDist):
         """Holds the values for randomized labels."""
 
         # estimate null-distribution
+        skipped = 0                     # # of skipped permutations
         for p in xrange(self.__permutations):
             # new permutation all the time
             # but only permute the training data and keep the testdata constant
@@ -336,14 +337,18 @@ class MCNullDist(NullDist):
             try:
                 res = measure(*measure_args)
             except LearnerError, e:
+                if __debug__:
+                    debug('STATMC', " skipped", cr=True)
                 warning('Failed to obtain value from %s due to %s.  Measurement'
                         ' was skipped, which could lead to unstable and/or'
                         ' incorrect assessment of the null_dist' % (measure, e))
+                skipped += 1
+                continue
             res = np.asanyarray(res)
             dist_samples.append(res)
 
         if __debug__:
-            debug('STATMC', '')
+            debug('STATMC', ' Skipped: %d permutations' % skipped)
 
 
         # store samples
