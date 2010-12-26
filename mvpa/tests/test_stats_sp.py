@@ -40,18 +40,18 @@ class StatsTestsScipy(unittest.TestCase):
 
         # test 'any' mode
         from mvpa.measures.corrcoef import CorrCoef
-        ds = datasets['uni2small']
+        ds = datasets['uni2medium']
 
-        null = MCNullDist(permutations=10, tail='any')
+        null = MCNullDist(permutations=20, tail='any')
         null.fit(CorrCoef(), ds)
 
         # 100 and -100 should both have zero probability on their respective
         # tails
-        pm100 = null.p([-100, 0, 0, 0, 0, 0])
-        p100 = null.p([100, 0, 0, 0, 0, 0])
+        pm100 = null.p([-100] + [0]*(ds.nfeatures-1))
+        p100 = null.p([100] + [0]*(ds.nfeatures-1))
         assert_array_almost_equal(pm100, p100)
 
-        # With 10 samples isn't that easy to get reliable sampling for
+        # With 20 samples isn't that easy to get reliable sampling for
         # non-parametric, so we can allow somewhat low significance
         # ;-)
         self.failUnless(pm100[0] <= 0.1)
