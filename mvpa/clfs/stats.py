@@ -281,6 +281,7 @@ class MCNullDist(NullDist):
         # classifier, hence the number of permutations to estimate the
         # null-distribution of transfer errors can be reduced dramatically
         # when the *right* permutations (the ones that matter) are done.
+        skipped = 0                     # # of skipped permutations
         for p, permuted_wdata in enumerate(self.__permutator.generate(wdata)):
             # new permutation all the time
             # but only permute the training data and keep the testdata constant
@@ -303,12 +304,16 @@ class MCNullDist(NullDist):
                 res = np.asanyarray(res)
                 dist_samples.append(res)
             except LearnerError, e:
+                if __debug__:
+                    debug('STATMC', " skipped", cr=True)
                 warning('Failed to obtain value from %s due to %s.  Measurement'
                         ' was skipped, which could lead to unstable and/or'
                         ' incorrect assessment of the null_dist' % (measure, e))
+                skipped += 1
+                continue
 
         if __debug__:
-            debug('STATMC', '')
+            debug('STATMC', ' Skipped: %d permutations' % skipped)
 
 
         # store samples
