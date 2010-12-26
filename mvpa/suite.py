@@ -81,6 +81,7 @@ from mvpa import datasets
 from mvpa.datasets import *
 # just to make testsuite happy
 from mvpa.datasets.base import *
+from mvpa.datasets.formats import *
 from mvpa.datasets.miscfx import *
 from mvpa.datasets.eep import *
 from mvpa.datasets.eventrelated import *
