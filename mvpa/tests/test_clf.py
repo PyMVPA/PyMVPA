@@ -58,6 +58,22 @@ class ClassifiersTests(unittest.TestCase):
             targets=[1, 1, 1, -1, -1], # labels
             chunks=[0, 1, 2,  2, 3])  # chunks
 
+    def _get_clf_ds(self, clf):
+        """Little helper to provide a dataset for classifier testing
+
+        For some classifiers (e.g. density modeling ones, such as QDA)
+        it is mandatory to provide enough samples to more or less adequately
+        model the distributions, thus "large" dataset would be provided
+        instead of the default medium.
+
+        Also choosing large one for the classifiers with
+        feature-selection since some feature selections might rely on
+        a % of features, which would be degenerate in a small dataset
+        """
+        return {True: 'medium',
+                False: 'large'}[
+            set(['lda', 'qda', 'feature_selection']).isdisjoint(clf.__tags__)]
+
     def test_dummy(self):
         clf = SameSignClassifier(enable_ca=['training_stats'])
         clf.train(self.data_bin_1)
@@ -159,7 +175,7 @@ class ClassifiersTests(unittest.TestCase):
 
         nclasses = 2 * (1 + int('multiclass' in clf.__tags__))
 
-        ds = datasets['uni%dmedium' % nclasses]
+        ds = datasets['uni%d%s' % (nclasses, self._get_clf_ds(clf))]
         try:
             cve = te(ds).samples.squeeze()
         except Exception, e:
@@ -360,7 +376,7 @@ class ClassifiersTests(unittest.TestCase):
     @sweepargs(clf_=clfswh['binary', '!meta'])
     def test_split_classifier_extended(self, clf_):
         clf2 = clf_.clone()
-        ds = datasets['uni2medium']#self.data_bin_1
+        ds = datasets['uni2%s' % self._get_clf_ds(clf2)]
         clf = SplitClassifier(clf=clf_, #SameSignClassifier(),
                 enable_ca=['stats', 'feature_ids'])
         clf.train(ds)                   # train the beast

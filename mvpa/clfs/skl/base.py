@@ -10,6 +10,8 @@
 
 __docformat__ = 'restructuredtext'
 
+import numpy as np
+
 from mvpa.base import warning, externals
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.base.learner import FailedToTrainError, FailedToPredictError, \
@@ -81,7 +83,7 @@ class SKLLearnerAdapter(Classifier):
         try:
             # train underlying learner
             self._skl_learner.fit(dataset.samples, targets)
-        except ValueError, e:
+        except (ValueError, np.linalg.LinAlgError), e:
             raise FailedToTrainError, \
                   "Failed to train %s on %s. Got '%s' during call to fit()." \
                   % (self, dataset, e)

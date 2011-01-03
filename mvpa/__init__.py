@@ -105,6 +105,9 @@ if externals.exists('scipy'):
 # And check if we aren't under IPython so we could pacify completion
 # a bit
 externals.exists('running ipython env', force=True, raise_=False)
+# Check for matplotlib so matplotlib backend becomes set according to
+# our configuration
+externals.exists('matplotlib', force=True, raise_=False)
 
 if __debug__:
     debug('RANDOM', 'Seeding RNG with %d' % _random_seed)
