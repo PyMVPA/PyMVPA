@@ -332,7 +332,7 @@ def __assign_matplotlib_version():
 
 def __check_pylab():
     """Check if matplotlib is there and then pylab"""
-    exists('matplotlib', raise_=True)
+    exists('matplotlib', raise_='always')
     import pylab as pl
 
 def __check_pylab_plottable():
@@ -341,7 +341,7 @@ def __check_pylab_plottable():
     Primary use in unittests
     """
     try:
-        exists('pylab', raise_=True)
+        exists('pylab', raise_='always')
         import pylab as pl
         fig = pl.figure()
         pl.plot([1,2], [1,2])
@@ -433,13 +433,13 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
           #'rpy': "__check_rpy()",
           'rpy2': "__check_rpy2()",
-          'lars': "exists('rpy2', raise_=True);" \
+          'lars': "exists('rpy2', raise_='always');" \
                   "import rpy2.robjects; rpy2.robjects.r.library('lars')",
-          'mass': "exists('rpy2', raise_=True);" \
+          'mass': "exists('rpy2', raise_='always');" \
                   "import rpy2.robjects; rpy2.robjects.r.library('MASS')",
-          'elasticnet': "exists('rpy2', raise_=True); "\
+          'elasticnet': "exists('rpy2', raise_='always'); "\
                   "import rpy2.robjects; rpy2.robjects.r.library('elasticnet')",
-          'glmnet': "exists('rpy2', raise_=True); " \
+          'glmnet': "exists('rpy2', raise_='always'); " \
                   "import rpy2.robjects; rpy2.robjects.r.library('glmnet')",
           'matplotlib': "__assign_matplotlib_version()",
           'pylab': "__check_pylab()",
@@ -486,6 +486,9 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
       performed.
     raise_ : boolean
       Whether to raise RuntimeError if dependency is missing.
+      If True, it is still conditioned on the global setting 
+      MVPA_EXTERNALS_RAISE_EXCEPTION, while would raise exception
+      if missing despite the configuration if 'always'.
     issueWarning : string or None or True
       If string, warning with given message would be thrown.
       If True, standard message would be used for the warning
@@ -499,6 +502,17 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
     # where to look in cfg
     cfgid = 'have ' + dep
 
+    # pre-handle raise_ according to the global settings and local argument
+    if isinstance(raise_, str):
+        if raise_.lower() == 'always':
+            raise_ = True
+        else:
+            raise ValueError("Unknown value of raise_=%s. "
+                             "Must be bool or 'always'" % raise_)
+    else: # must be bool conditioned on the global settings
+        raise_ = raise_ \
+                and cfg.getboolean('externals', 'raise exception', True)
+
     # prevent unnecessarry testing
     if cfg.has_option('externals', cfgid) \
        and not cfg.getboolean('externals', 'retest', default='no') \
@@ -508,9 +522,7 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
 
         # check whether an exception should be raised, even though the external
         # was already tested previously
-        if not cfg.getboolean('externals', cfgid) \
-               and raise_ \
-               and cfg.getboolean('externals', 'raise exception', True):
+        if not cfg.getboolean('externals', cfgid) and raise_:
             raise RuntimeError, "Required external '%s' was not found" % dep
         return cfg.getboolean('externals', cfgid)
 
@@ -551,8 +563,7 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
                   (dep, {True:'', False:' NOT'}[result], estr))
 
     if not result:
-        if raise_ \
-               and cfg.getboolean('externals', 'raise exception', True):
+        if raise_:
             raise RuntimeError, "Required external '%s' was not found" % dep
         if issueWarning is not None \
                and cfg.getboolean('externals', 'issue warning', True):

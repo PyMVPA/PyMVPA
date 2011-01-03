@@ -33,7 +33,7 @@ class KernelTests(unittest.TestCase):
 
     # mvpa.kernel stuff
     
-    def kernel_equiv(self, k1, k2, accuracy=None, relative_precision=0.7):
+    def kernel_equiv(self, k1, k2, accuracy=None, relative_precision=0.6):
         """Test how accurately two kernels agree
 
         Parameters
@@ -48,8 +48,8 @@ class KernelTests(unittest.TestCase):
           What proportion of leading digits in mantissa should match
           between k1 and k2 (effective only if `precision` is None).
         """
-        k1m = k1.as_np()._k
-        k2m = k2.as_np()._k
+        k1m = k1.as_np()._k.copy() #; k1.as_np()._k.setflags(write=0)
+        k2m = k2.as_np()._k.copy() #; k2.as_np()._k.setflags(write=0)
 
         # We should operate on mantissas (given exponents are the same) since
         # pure difference makes no sense to compare and we care about
@@ -93,9 +93,13 @@ class KernelTests(unittest.TestCase):
 
         diff = np.abs(k1m - k2m)
         dmax = diff.max()               # and maximal difference
+        dmax_index = np.unravel_index(np.argmax(diff), diff.shape)
 
         self.failUnless(dmax <= accuracy,
-                        '\n%s\nand\n%s\ndiffer by %s'%(k1, k2, dmax))
+                        '\n%s\nand\n%s\ndiffer by %s at %s:\n  %.15e\n  %.15e'
+                        % (k1, k2, dmax, dmax_index,
+                           k1.as_np()._k.__getitem__(dmax_index),
+                           k2.as_np()._k.__getitem__(dmax_index)))
 
         self.failUnless(np.all(k1m.astype('float32') == \
                               k2m.astype('float32')),
