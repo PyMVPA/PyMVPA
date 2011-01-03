@@ -184,6 +184,15 @@ def _recon_functype(hdf):
     obj = mod.__dict__[ft_name]
     return obj
 
+def _get_subclass_entry(cls, clss, exc_msg="", exc=NotImplementedError):
+    """In a list of tuples (cls, ...) return the entry for the first
+    occurrence of the class of which `cls` is a subclass of.
+    Otherwise raise `exc` with the given message"""
+
+    for clstuple in clss:
+        if issubclass(cls, clstuple[0]):
+            return clstuple
+    raise exc(exc_msg % locals())
 
 def _recon_customobj_customrecon(hdf, memo):
     """Reconstruct a custom object from HDF using a custom recontructor"""
@@ -229,11 +238,10 @@ def _recon_customobj_defaultrecon(hdf, memo):
     cls = mod.__dict__[cls_name]
 
     # create the object
-    if issubclass(cls, dict):
-        # use specialized __new__ if necessary or beneficial
-        obj = dict.__new__(cls)
-    else:
-        obj = object.__new__(cls)
+    # use specialized __new__ if necessary or beneficial
+    pcls, = _get_subclass_entry(cls, ((dict,), (list,), (object,)),
+                                "Do not know how to create instance of %(cls)s")
+    obj = pcls.__new__(cls)
 
     if 'state' in hdf:
         # insert the state of the object
@@ -246,16 +254,18 @@ def _recon_customobj_defaultrecon(hdf, memo):
 
     # do we process a container?
     if 'items' in hdf:
-        if issubclass(cls, dict):
-            # charge a dict itself
-            if __debug__:
-                debug('HDF5', "Populating dictionary object.")
-            obj.update(_hdf_dict_to_obj(hdf, memo))
-            if __debug__:
-                debug('HDF5', "Loaded %i items." % len(obj))
-        else:
-            raise NotImplementedError(
-                    "Unhandled container typ (got: '%s')." % cls)
+        # charge the items -- handling depends on the parent class
+        pcls, umeth, cfunc = _get_subclass_entry(
+            cls,
+            ((dict, 'update', _hdf_dict_to_obj),
+             (list, 'extend', _hdf_list_to_obj)),
+            "Unhandled container type (got: '%(cls)s').")
+        if __debug__:
+            debug('HDF5', "Populating %s object." % pcls)
+        getattr(obj, umeth)(cfunc(hdf, memo))
+        if __debug__:
+            debug('HDF5', "Loaded %i items." % len(obj))
+
     return obj
 
 
