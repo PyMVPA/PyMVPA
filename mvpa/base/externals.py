@@ -36,7 +36,7 @@ def __check_scipy():
     """Check if scipy is present an if it is -- store its version
     """
     import warnings
-    exists('numpy', raiseException=True)
+    exists('numpy', raiseException='always')
     # To don't allow any crappy warning to sneak in
     warnings.simplefilter('ignore', DeprecationWarning)
     try:
@@ -254,7 +254,7 @@ def __check_matplotlib():
 
 def __check_pylab():
     """Check if matplotlib is there and then pylab"""
-    exists('matplotlib', raiseException=True)
+    exists('matplotlib', raiseException='always')
     import pylab as P
 
 def __check_pylab_plottable():
@@ -263,7 +263,7 @@ def __check_pylab_plottable():
     Primary use in unittests
     """
     try:
-        exists('pylab', raiseException=True)
+        exists('pylab', raiseException='always')
         import pylab as P
         fig = P.figure()
         P.plot([1,2], [1,2])
@@ -335,9 +335,9 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.convert2SVMNode',
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
           'rpy': "__check_rpy()",
-          'lars': "exists('rpy', raiseException=True); import rpy; rpy.r.library('lars')",
-          'elasticnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('elasticnet')",
-          'glmnet': "exists('rpy', raiseException=True); import rpy; rpy.r.library('glmnet')",
+          'lars': "exists('rpy', raiseException='always'); import rpy; rpy.r.library('lars')",
+          'elasticnet': "exists('rpy', raiseException='always'); import rpy; rpy.r.library('elasticnet')",
+          'glmnet': "exists('rpy', raiseException='always'); import rpy; rpy.r.library('glmnet')",
           'matplotlib': "__check_matplotlib()",
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
@@ -374,8 +374,11 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
       force : boolean
         Whether to force the test even if it has already been
         performed.
-      raiseException : boolean
+      raiseException : boolean or 'always'
         Whether to raise RuntimeError if dependency is missing.
+        If True, it is still conditioned on the global setting 
+        MVPA_EXTERNALS_RAISE_EXCEPTION, while would raise exception
+        if missing despite the configuration if 'always'.
       issueWarning : string or None or True
         If string, warning with given message would be thrown.
         If True, standard message would be used for the warning
@@ -389,6 +392,17 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
     # where to look in cfg
     cfgid = 'have ' + dep
 
+    # pre-handle raiseException according to the global settings and local argument
+    if isinstance(raiseException, str):
+        if raiseException.lower() == 'always':
+            raiseException = True
+        else:
+            raise ValueError("Unknown value of raiseException=%s. "
+                             "Must be bool or 'always'" % raiseException)
+    else: # must be bool conditioned on the global settings
+        raiseException = raiseException \
+                and cfg.getboolean('externals', 'raise exception', True)
+
     # prevent unnecessarry testing
     if cfg.has_option('externals', cfgid) \
        and not cfg.getboolean('externals', 'retest', default='no') \
@@ -398,9 +412,7 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
 
         # check whether an exception should be raised, even though the external
         # was already tested previously
-        if not cfg.getboolean('externals', cfgid) \
-               and raiseException \
-               and cfg.getboolean('externals', 'raise exception', True):
+        if not cfg.getboolean('externals', cfgid) and raiseException:
             raise RuntimeError, "Required external '%s' was not found" % dep
         return cfg.getboolean('externals', cfgid)
 
@@ -450,8 +462,7 @@ def exists(dep, force=False, raiseException=False, issueWarning=None):
                   (dep, {True:'', False:' NOT'}[result], estr))
 
     if not result:
-        if raiseException \
-               and cfg.getboolean('externals', 'raise exception', True):
+        if raiseException:
             raise RuntimeError, "Required external '%s' was not found" % dep
         if issueWarning is not None \
                and cfg.getboolean('externals', 'issue warning', True):
