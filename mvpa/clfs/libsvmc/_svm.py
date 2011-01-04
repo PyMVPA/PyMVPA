@@ -398,7 +398,10 @@ class SVMModel:
             debug('CLF_', 'Destroying libsvm.SVMModel %s' % (`self`))
 
         try:
-            svmc.svm_destroy_model(self.model)
+            if svmc.__version__ < 300:
+                svmc.svm_destroy_model(self.model)
+            else:
+                svmc.svm_destroy_model_helper(self.model)
         except:
             # blind way to overcome problem of already deleted model and
             # "SVMModel instance has no attribute 'model'" in  ignored
