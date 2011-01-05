@@ -62,6 +62,7 @@ elif bind_libsvm == 'system':
     libsvmc_libraries += ['svm']
     if not sys.platform.startswith('win'):
         libsvmc_include_dirs += [
+            '/usr/include/libsvm-3.0/libsvm',
             '/usr/include/libsvm-2.0/libsvm',
             '/usr/include/libsvm',
             '/usr/local/include/libsvm',
