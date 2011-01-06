@@ -411,7 +411,8 @@ class ClassifiersTests(unittest.TestCase):
         """Basic tests for TreeClassifier
         """
         ds = datasets['uni4small']
-        clfs = clfswh['binary']         # pool of classifiers
+        # excluding PLR since that one can deal only with 0,1 labels ATM
+        clfs = clfswh['binary', '!plr']         # pool of classifiers
         # Lets permute so each time we try some different combination
         # of the classifiers
         clfs = [clfs[i] for i in N.random.permutation(len(clfs))]
