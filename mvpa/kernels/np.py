@@ -140,15 +140,16 @@ class GeneralizedLinearKernel(NumpyKernel):
     ## def __init__(self, Sigma_p=None, sigma_0=1.0, **kwargs):
     ##     """Initialize the linear kernel instance.
 
-    ##     :Parameters:
-    ##       Sigma_p : numpy.ndarray
-    ##         Covariance matrix of the Gaussian prior probability N(0,Sigma_p)
-    ##         on the weights of the linear regression.
-    ##         (Defaults to None)
-    ##       sigma_0 : float
-    ##         the standard deviation of the Gaussian prior N(0,sigma_0**2)
-    ##         of the intercept of the linear regression.
-    ##         (Deafults to 1.0)
+    ##     Parameters
+    ##     ----------
+    ##     Sigma_p : numpy.ndarray
+    ##       Covariance matrix of the Gaussian prior probability N(0,Sigma_p)
+    ##       on the weights of the linear regression.
+    ##       (Defaults to None)
+    ##     sigma_0 : float
+    ##       the standard deviation of the Gaussian prior N(0,sigma_0**2)
+    ##       of the intercept of the linear regression.
+    ##       (Deafults to 1.0)
     ##     """
     ##     # init base class first
     ##     NumpyKernel.__init__(self, **kwargs)
@@ -258,14 +259,15 @@ class ExponentialKernel(NumpyKernel):
     ## def __init__(self, length_scale=1.0, sigma_f = 1.0, **kwargs):
     ##     """Initialize an Exponential kernel instance.
 
-    ##     :Parameters:
-    ##       length_scale : float or numpy.ndarray
-    ##         the characteristic length-scale (or length-scales) of the
-    ##         phenomenon under investigation.
-    ##         (Defaults to 1.0)
-    ##       sigma_f : float
-    ##         Signal standard deviation.
-    ##         (Defaults to 1.0)
+    ##     Parameters
+    ##     ----------
+    ##     length_scale : float or numpy.ndarray
+    ##       the characteristic length-scale (or length-scales) of the
+    ##       phenomenon under investigation.
+    ##       (Defaults to 1.0)
+    ##     sigma_f : float
+    ##       Signal standard deviation.
+    ##       (Defaults to 1.0)
     ##     """
     ##     # init base class first
     ##     NumpyKernel.__init__(self, **kwargs)
