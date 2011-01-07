@@ -372,8 +372,9 @@ dt-%: build
 				| grep -v filter.py | grep -v channel.py | grep "$*")
 
 tm-%: build
-	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
+	@PYTHONPATH=.:$(TUT_DIR):$(CURDIR)/doc/examples:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
+		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 		MVPA_DATADB_ROOT=datadb \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 	                 --doctest-tests doc/source/$*.rst
