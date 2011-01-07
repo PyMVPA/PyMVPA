@@ -560,7 +560,9 @@ class ClassifiersTests(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             # just a dummy check to make sure everything is working
             self.failUnless(cvtrc != cvtc)
-            self.failUnless(cverror < 0.3)
+            self.failUnless(cverror < 0.3,
+                            msg="Got too high error = %s using %s"
+                            % (cverror, tclf))
 
         # TODO: whenever implemented
         tclf = TreeClassifier(clfs[0], {

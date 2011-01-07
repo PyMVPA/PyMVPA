@@ -372,8 +372,9 @@ dt-%: build
 				| grep -v filter.py | grep -v channel.py | grep "$*")
 
 tm-%: build
-	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
+	@PYTHONPATH=.:$(TUT_DIR):$(CURDIR)/doc/examples:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
+		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 		MVPA_DATADB_ROOT=datadb \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 	                 --doctest-tests doc/source/$*.rst
@@ -445,7 +446,7 @@ testapiref:
 
 # Check if there is no WARNINGs from sphinx
 testsphinx: htmldoc
-	{ grep -A1 system-message build/html/modref/*html && exit 1 || exit 0 ; }
+	{ grep -A1 system-message build/html/*html build/html/*/*html && exit 1 || exit 0 ; }
 
 # Check if stored cfg after whole suite is imported is safe to be
 # reloaded

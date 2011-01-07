@@ -280,7 +280,7 @@ latex_preamble = r"""
 # to link to related projects
 intersphinx_mapping = {'http://docs.python.org/': None,
                        'http://nipy.sourceforge.net/nipype': None,
-                       'http://nipy.sourceforge.net/nipy': None,
+                       'http://nipy.sourceforge.net/nipy/stable': None,
                        'http://h5py.alfven.org/docs': None,
                        'http://docs.scipy.org/doc/scipy/reference': None,
                        'http://docs.scipy.org/doc/numpy/': None,
