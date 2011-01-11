@@ -3,7 +3,7 @@ Section: python
 Priority: optional
 Maintainer: NeuroDebian team <team@neuro.debian.net>
 Uploaders: Michael Hanke <mih@debian.org>, Yaroslav Halchenko <debian@onerussian.com>
-Build-Depends: debhelper (>= 7.0.50~), swig, python-all-dev (>= 2.4), python-support (>= 0.6), python-numpy, libsvm-dev (>= 2.84.0), help2man, python-lxml, python-nifti, python-nose, python-h5py
+Build-Depends: debhelper (>= 7.0.50~), swig, python-all-dev (>= 2.4), python-support (>= 0.6), python-numpy, libsvm-dev (>= 2.84.0), help2man, python-lxml, python-nifti, python-nose, python-h5py, python-scipy
 Standards-Version: 3.9.1
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
