@@ -10,11 +10,11 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import warning
-from mvpa.misc.state import StateVariable
-from mvpa.misc.param import Parameter
+from mvpa.base.state import ConditionalAttribute
+from mvpa.base.param import Parameter
 from mvpa.base.types import asobjarray
 from mvpa.measures.base import Sensitivity
 from mvpa.datasets.base import Dataset
@@ -29,7 +29,7 @@ class LinearSVMWeights(Sensitivity):
     _ATTRIBUTE_COLLECTIONS = ['params']
 
     # XXX TODO: should become just as sa may be?
-    biases = StateVariable(enabled=True,
+    biases = ConditionalAttribute(enabled=True,
                            doc="Offsets of separating hyper-planes")
 
     split_weights = Parameter(False, allowedtype='bool',
@@ -54,11 +54,16 @@ class LinearSVMWeights(Sensitivity):
         # local bindings
         clf = self.clf
         model = clf.model
-        nr_class = model.nr_class
-        svm_labels = model.labels
 
         # Labels for sensitivities to be returned
         sens_labels = None
+
+        if clf.__is_regression__:
+            nr_class = None
+            svm_labels = None           # shouldn't bother to provide "targets" for regressions
+        else:
+            nr_class = model.nr_class
+            svm_labels = model.labels
 
         # No need to warn since now we by default we do not do
         # anything evil and provide labels -- so it is up for a user
@@ -68,11 +73,11 @@ class LinearSVMWeights(Sensitivity):
         #            (str(clf), nr_class) +
         #            " classes. Make sure that it is what you intended to do" )
 
-        svcoef = N.matrix(model.getSVCoef())
-        svs = N.matrix(model.getSV())
-        rhos = N.asarray(model.getRho())
+        svcoef = np.matrix(model.get_sv_coef())
+        svs = np.matrix(model.get_sv())
+        rhos = np.asarray(model.get_rho())
 
-        self.states.biases = rhos
+        self.ca.biases = rhos
         if self.params.split_weights:
             if nr_class != 2:
                 raise NotImplementedError, \
@@ -80,7 +85,7 @@ class LinearSVMWeights(Sensitivity):
                       " non-binary classification task"
             # libsvm might have different idea on the ordering
             # of labels, so we would need to map them back explicitely
-            ds_labels = list(dataset.sa['labels'].unique) # labels in the dataset
+            ds_labels = list(dataset.sa[clf.get_space()].unique) # labels in the dataset
             senses = [None for i in ds_labels]
             # first label is given positive value
             for i, (c, l) in enumerate( [(svcoef > 0, lambda x: x),
@@ -91,7 +96,7 @@ class LinearSVMWeights(Sensitivity):
                 senses[ds_labels.index(
                             clf._attrmap.to_literal(svm_labels[i]))] = \
                                 (l(svcoef[:, c_] * svs[c_, :])).A[0]
-            weights = N.array(senses)
+            weights = np.array(senses)
             sens_labels = svm_labels
         else:
             # XXX yoh: .mean() is effectively
@@ -99,30 +104,32 @@ class LinearSVMWeights(Sensitivity):
             # think). See more info on this topic in svm.py on how sv_coefs
             # are stored
             #
-            # First multiply SV coefficients with the actuall SVs to get
+            # First multiply SV coefficients with the actual SVs to get
             # weighted impact of SVs on decision, then for each feature
             # take mean across SVs to get a single weight value
             # per feature
-            if nr_class <= 2:
+            if nr_class is None or nr_class <= 2:
                 # as simple as this
                 weights = (svcoef * svs).A
-                # ??? First label seems corresponds to positive
-                sens_labels = [tuple(svm_labels[::-1])]
+                # and only in case of classification
+                if nr_class:
+                    # ??? First label seems corresponds to positive
+                    sens_labels = [tuple(svm_labels[::-1])]
             else:
                 # we need to compose correctly per each pair of classifiers.
-                # See docstring for getSVCoef for more details on internal
+                # See docstring for get_sv_coef for more details on internal
                 # structure of bloody storage
 
                 # total # of pairs
                 npairs = nr_class * (nr_class-1)/2
                 # # of SVs in each class
-                NSVs_perclass = model.getNSV()
+                NSVs_perclass = model.get_n_sv()
                 # indices where each class starts in each row of SVs
                 # name is after similar variable in libsvm internals
-                nz_start = N.cumsum([0] + NSVs_perclass[:-1])
+                nz_start = np.cumsum([0] + NSVs_perclass[:-1])
                 nz_end = nz_start + NSVs_perclass
                 # reserve storage
-                weights = N.zeros((npairs, svs.shape[1]))
+                weights = np.zeros((npairs, svs.shape[1]))
                 ipair = 0               # index of the pair
                 """
                 // classifier (i,j): coefficients with
@@ -132,7 +139,7 @@ class LinearSVMWeights(Sensitivity):
                 sens_labels = []
                 for i in xrange(nr_class):
                     for j in xrange(i+1, nr_class):
-                        weights[ipair, :] = N.asarray(
+                        weights[ipair, :] = np.asarray(
                             svcoef[j-1, nz_start[i]:nz_end[i]]
                             * svs[nz_start[i]:nz_end[i]]
                             +
@@ -145,24 +152,36 @@ class LinearSVMWeights(Sensitivity):
                         ipair += 1      # go to the next pair
                 assert(ipair == npairs)
 
-        if __debug__:
+        if __debug__ and 'SVM' in debug.active:
+            if nr_class:
+                nsvs = model.get_n_sv()
+            else:
+                nsvs = model.get_total_n_sv()
+            if clf.__is_regression__:
+                svm_type = clf._svm_impl # type of regression
+            else:
+                svm_type = '%d-class SVM(%s)' % (nr_class, clf._svm_impl)
             debug('SVM',
-                  "Extracting weights for %d-class SVM: #SVs=%s, " % \
-                  (nr_class, str(model.getNSV())) + \
+                  "Extracting weights for %s: #SVs=%s, " % \
+                  (svm_type, nsvs) + \
                   " SVcoefshape=%s SVs.shape=%s Rhos=%s." % \
                   (svcoef.shape, svs.shape, rhos) + \
-                  " Result: min=%f max=%f" % (N.min(weights), N.max(weights)))
+                  " Result: min=%f max=%f" % (np.min(weights), np.max(weights)))
 
-        # and we should have prepared the labels
-        assert(sens_labels is not None)
+        ds_kwargs = {}
+        if nr_class:          # for classification only
+            # and we should have prepared the labels
+            assert(sens_labels is not None)
 
-        if len(clf._attrmap):
-            if isinstance(sens_labels[0], tuple):
-                sens_labels = asobjarray(sens_labels)
-            sens_labels = clf._attrmap.to_literal(sens_labels, recurse=True)
+            if len(clf._attrmap):
+                if isinstance(sens_labels[0], tuple):
+                    sens_labels = asobjarray(sens_labels)
+                sens_labels = clf._attrmap.to_literal(sens_labels, recurse=True)
 
-        # NOTE: `weights` is already and always 2D
-        weights_ds = Dataset(weights, sa={'labels': sens_labels})
+            # NOTE: `weights` is already and always 2D
+            ds_kwargs = dict(sa={clf.get_space(): sens_labels})
+
+        weights_ds = Dataset(weights, **ds_kwargs)
         return weights_ds
 
     _customizeDocInherit = True

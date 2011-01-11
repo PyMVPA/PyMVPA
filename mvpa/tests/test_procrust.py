@@ -10,10 +10,11 @@
 
 
 import unittest
-import numpy as N
+import numpy as np
 from numpy.linalg import norm
 from mvpa.datasets.base import dataset_wizard
-from tests_warehouse import datasets, sweepargs, get_random_rotation
+from mvpa.testing import *
+from mvpa.testing.datasets import *
 from mvpa.mappers.procrustean import ProcrusteanMapper
 
 
@@ -32,12 +33,12 @@ class ProcrusteanMapperTests(unittest.TestCase):
             d = max(nf_s, nf_t)
             R = get_random_rotation(nf_s, nf_t, d_orig)
             if nf_s == nf_t:
-                adR = N.abs(1.0 - N.linalg.det(R))
+                adR = np.abs(1.0 - np.linalg.det(R))
                 self.failUnless(adR < 1e-10,
                                 "Determinant of rotation matrix should "
                                 "be 1. Got it 1+%g" % adR)
-                self.failUnless(norm(N.dot(R, R.T)
-                                     - N.eye(R.shape[0])) < 1e-10)
+                self.failUnless(norm(np.dot(R, R.T)
+                                     - np.eye(R.shape[0])) < 1e-10)
 
             for s, scaling in ((0.3, True), (1.0, False)):
                 pm = ProcrusteanMapper(scaling=scaling, oblique=oblique)
@@ -48,10 +49,10 @@ class ProcrusteanMapperTests(unittest.TestCase):
                 # Create source/target data
                 d = d_orig[:, :nf_s]
                 d_s = d + t1
-                d_t = N.dot(s * d, R) + t2
+                d_t = np.dot(s * d, R) + t2
 
                 # train bloody mapper(s)
-                ds = dataset_wizard(samples=d_s, labels=d_t)
+                ds = dataset_wizard(samples=d_s, targets=d_t)
                 pm.train(ds)
                 ## not possible with new interface
                 #pm2.train(d_s, d_t)
@@ -80,7 +81,7 @@ class ProcrusteanMapperTests(unittest.TestCase):
                             msg="We should have got reconstructed rotation+scaling "
                                 "perfectly. Now got d scale*R=%g" % dsR)
 
-                        self.failUnless(N.abs(s - pm._scale) < 1e-12,
+                        self.failUnless(np.abs(s - pm._scale) < 1e-12,
                             msg="We should have got reconstructed scale "
                                 "perfectly. Now got %g for %g" % (pm._scale, s))
 

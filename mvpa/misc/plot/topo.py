@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil; encoding: utf-8 -*-
+# emacs: -*- coding: utf-8; mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -13,23 +13,24 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import externals
 
-if externals.exists("pylab", raiseException=True):
-    import pylab as P
+if externals.exists("pylab", raise_=True):
+    import pylab as pl
     import matplotlib.numerix.ma as M
 
-if externals.exists("griddata", raiseException=True):
+if externals.exists("griddata", raise_=True):
     from mvpa.support.griddata import griddata
 
-if externals.exists("scipy", raiseException=True):
+if externals.exists("scipy", raise_=True):
     from scipy.optimize import leastsq
 
 
 # TODO : add optional plotting labels for the sensors
-def plotHeadTopography(topography, sensorlocations, plotsensors=False,
+##REF: Name was automagically refactored
+def plot_head_topography(topography, sensorlocations, plotsensors=False,
                        resolution=51, masked=True, plothead=True,
                        plothead_kwargs=None, **kwargs):
     """Plot distribution to a head surface, derived from some sensor locations.
@@ -50,7 +51,7 @@ def plotHeadTopography(topography, sensorlocations, plotsensors=False,
     plothead : bool
       If True, a head outline is plotted.
     plothead_kwargs : dict
-      Additional keyword arguments passed to `plotHeadOutline()`.
+      Additional keyword arguments passed to `plot_head_outline()`.
     resolution : int
       Number of surface samples along both x and y-axis.
     masked : bool
@@ -69,7 +70,7 @@ def plotHeadTopography(topography, sensorlocations, plotsensors=False,
             The colormap that makes the actual plot, a
             matplotlib.image.AxesImage instance.
           head
-            What is returned by `plotHeadOutline()`.
+            What is returned by `plot_head_outline()`.
           sensors
             The dots marking the electrodes, a matplotlib.lines.Line2d
             instance.
@@ -97,33 +98,33 @@ def plotHeadTopography(topography, sensorlocations, plotsensors=False,
     ss = ssh * 2.0                      # full-size
 
     # Generate a grid and interpolate using the griddata module
-    x = N.arange(cx - r, cx + r, ss) + ssh
-    y = N.arange(cy - r, cy + r, ss) + ssh
-    x, y = P.meshgrid(x, y)
+    x = np.arange(cx - r, cx + r, ss) + ssh
+    y = np.arange(cy - r, cy + r, ss) + ssh
+    x, y = pl.meshgrid(x, y)
 
     # project the sensor locations onto the sphere
-    sphere_center = N.array((cx, cy, cz))
+    sphere_center = np.array((cx, cy, cz))
     sproj = sensorlocations - sphere_center
-    sproj = r * sproj / N.c_[N.sqrt(N.sum(sproj ** 2, axis=1))]
+    sproj = r * sproj / np.c_[np.sqrt(np.sum(sproj ** 2, axis=1))]
     sproj += sphere_center
 
     # fit topology onto xy projection of sphere
     topo = griddata(sproj[:, 0], sproj[:, 1],
-            N.ravel(N.array(topography)), x, y)
+            np.ravel(np.array(topography)), x, y)
 
     # mask values outside the head
     if masked:
-        notinhead = N.greater_equal((x - cx) ** 2 + (y - cy) ** 2,
+        notinhead = np.greater_equal((x - cx) ** 2 + (y - cy) ** 2,
                                     (1.0 * r) ** 2)
         topo = M.masked_where(notinhead, topo)
 
     # show surface
-    map = P.imshow(topo, origin="lower", extent=(-r, r, -r, r), **kwargs)
-    P.axis('off')
+    map = pl.imshow(topo, origin="lower", extent=(-r, r, -r, r), **kwargs)
+    pl.axis('off')
 
     if plothead:
         # plot scaled head outline
-        head = plotHeadOutline(scale=r, shift=(cx/2.0, cy/2.0), **plothead_kwargs)
+        head = plot_head_outline(scale=r, shift=(cx/2.0, cy/2.0), **plothead_kwargs)
     else:
         head = None
 
@@ -135,14 +136,15 @@ def plotHeadTopography(topography, sensorlocations, plotsensors=False,
         zenum = [x[::-1] for x in enumerate(sproj[:, 2].tolist())]
         zenum.sort()
         indx = [ x[1] for x in zenum ]
-        sensors = P.plot(sproj[indx, 0] - cx/2.0, sproj[indx, 1] - cy/2.0, 'wo')
+        sensors = pl.plot(sproj[indx, 0] - cx/2.0, sproj[indx, 1] - cy/2.0, 'wo')
     else:
         sensors = None
 
     return map, head, sensors
 
 
-def plotHeadOutline(scale=1, shift=(0, 0), color='k', linewidth='5', **kwargs):
+##REF: Name was automagically refactored
+def plot_head_outline(scale=1, shift=(0, 0), color='k', linewidth='5', **kwargs):
     """Plots a simple outline of a head viewed from the top.
 
     The plot contains schematic representations of the nose and ears. The
@@ -170,51 +172,51 @@ def plotHeadOutline(scale=1, shift=(0, 0), color='k', linewidth='5', **kwargs):
 
     rmax = 0.5
     # factor used all the time
-    fac = 2 * N.pi * 0.01
+    fac = 2 * np.pi * 0.01
 
     # Koordinates for the ears
-    EarX1 =  -1 * N.array(
+    EarX1 =  -1 * np.array(
             [.497, .510, .518, .5299,
             .5419, .54, .547, .532, .510,
-            rmax * N.cos(fac * (54 + 42))])
-    EarY1 = N.array(
+            rmax * np.cos(fac * (54 + 42))])
+    EarY1 = np.array(
             [.0655, .0775, .0783, .0746, .0555,
             -.0055, -.0932, -.1313, -.1384,
-            rmax * N.sin(fac * (54 + 42))])
-    EarX2 = N.array(
-            [rmax * N.cos(fac * (54 + 42)),
+            rmax * np.sin(fac * (54 + 42))])
+    EarX2 = np.array(
+            [rmax * np.cos(fac * (54 + 42)),
             .510, .532, .547, .54, .5419,
             .5299, .518, .510, .497] )
-    EarY2 = N.array(
-            [rmax * N.sin(fac * (54 + 42)),
+    EarY2 = np.array(
+            [rmax * np.sin(fac * (54 + 42)),
             -.1384, -.1313, -.0932, -.0055,
             .0555, .0746, .0783, .0775, .0655] )
 
     # Coordinates for the Head
-    HeadX1 = N.fromfunction(
-            lambda x: rmax * N.cos(fac * (x + 2)), (21,))
-    HeadY1 = N.fromfunction(
-            lambda y: rmax * N.sin(fac * (y + 2)), (21,))
-    HeadX2 = N.fromfunction(
-            lambda x: rmax * N.cos(fac * (x + 28)), (21,))
-    HeadY2 = N.fromfunction(
-            lambda y: rmax * N.sin(fac * (y + 28)), (21,))
-    HeadX3 = N.fromfunction(
-            lambda x: rmax * N.cos(fac * (x + 54)), (43,))
-    HeadY3 = N.fromfunction(
-            lambda y: rmax * N.sin(fac * (y + 54)), (43,))
+    HeadX1 = np.fromfunction(
+            lambda x: rmax * np.cos(fac * (x + 2)), (21,))
+    HeadY1 = np.fromfunction(
+            lambda y: rmax * np.sin(fac * (y + 2)), (21,))
+    HeadX2 = np.fromfunction(
+            lambda x: rmax * np.cos(fac * (x + 28)), (21,))
+    HeadY2 = np.fromfunction(
+            lambda y: rmax * np.sin(fac * (y + 28)), (21,))
+    HeadX3 = np.fromfunction(
+            lambda x: rmax * np.cos(fac * (x + 54)), (43,))
+    HeadY3 = np.fromfunction(
+            lambda y: rmax * np.sin(fac * (y + 54)), (43,))
 
     # Coordinates for the Nose
-    NoseX = N.array([.18 * rmax, 0, -.18 * rmax])
-    NoseY = N.array([rmax - 0.004, rmax * 1.15, rmax - 0.004])
+    NoseX = np.array([.18 * rmax, 0, -.18 * rmax])
+    NoseY = np.array([rmax - 0.004, rmax * 1.15, rmax - 0.004])
 
     # Combine to one
-    X = N.concatenate((EarX2, HeadX1, NoseX, HeadX2, EarX1, HeadX3))
-    Y = N.concatenate((EarY2, HeadY1, NoseY, HeadY2, EarY1, HeadY3))
+    X = np.concatenate((EarX2, HeadX1, NoseX, HeadX2, EarX1, HeadX3))
+    Y = np.concatenate((EarY2, HeadY1, NoseY, HeadY2, EarY1, HeadY3))
 
     X *= 2 * scale
     Y *= 2 * scale
     X += shift[0]
     Y += shift[1]
 
-    return P.plot(X, Y, color=color, linewidth=linewidth)
+    return pl.plot(X, Y, color=color, linewidth=linewidth)

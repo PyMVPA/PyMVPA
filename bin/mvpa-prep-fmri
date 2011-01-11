@@ -26,7 +26,7 @@ import sys
 import os
 from subprocess import call
 
-import numpy as N
+import numpy as np
 
 from mvpa.misc.cmdline import parser, opt
 from mvpa.base import verbose, externals, error
@@ -41,7 +41,8 @@ _EXFUNC_CONV_DICT = {'last' :  lambda x: x-1,
                      'middle': lambda x: int(x/2)}
 """Dictionary to get exemplar volume given a literal string"""
 
-def prepParser(parser):
+##REF: Name was automagically refactored
+def prep_parser(parser):
     # use module docstring for help output
     parser.usage = "%s [OPTIONS] <fmri-data>\n\n" % sys.argv[0] + __doc__
     parser.version = "%prog " + mvpa.__version__
@@ -82,12 +83,12 @@ def prepParser(parser):
 def main():
     """
     """
-    prepParser(parser)
+    prep_parser(parser)
     (options, infiles) = parser.parse_args()
 
     # late import of pynifti to be able to get help output without a big
     # external dep.
-    externals.exists('nifti', raiseException=True)
+    externals.exists('nifti', raise_=True)
     from nifti import NiftiImage
 
     if len(infiles) > 1 or not len(infiles):
@@ -161,22 +162,22 @@ def main():
 
     if options.mcflirt_plots:
         verbose(2, "Plot motion parameters estimates")
-        externals.exists('pylab', raiseException=True)
+        externals.exists('pylab', raise_=True)
         mc = McFlirtParams(os.path.join(opath, 'func_mc.par'))
 
         for k, (title, fields, ylabel) in enumerate(
             (('Translation', ('x', 'y', 'z'), 'mm'),
              ('Rotation', ('rot1', 'rot2', 'rot3'), 'radians'))):
-            P.subplot(211+k)
-            P.title(title)
-            P.plot([0, timepoints], [0, 0], '0.6')
+            pl.subplot(211+k)
+            pl.title(title)
+            pl.plot([0, timepoints], [0, 0], '0.6')
             for dim in fields:
-                P.plot(mc[dim], label=dim)
-            P.legend()
-            P.axis('tight')
-            P.ylabel(ylabel)
+                pl.plot(mc[dim], label=dim)
+            pl.legend()
+            pl.axis('tight')
+            pl.ylabel(ylabel)
 
-        P.gcf().savefig(os.path.join(opath, 'func_mc.pdf'))
+        pl.gcf().savefig(os.path.join(opath, 'func_mc.pdf'))
 
     bet_call = \
         ' '.join(
@@ -198,7 +199,7 @@ def main():
     func_nim = NiftiImage(os.path.join(opath, 'func_mc'))
     # special case: single slice mask
     if len(mask_nim.extent) < 3:
-        func_nim.data[:, N.asarray([mask_nim.data]) == 0] = 0
+        func_nim.data[:, np.asarray([mask_nim.data]) == 0] = 0
     else:
         func_nim.data[:, mask_nim.data == 0] = 0
     func_nim.save()

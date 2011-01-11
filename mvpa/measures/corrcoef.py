@@ -6,28 +6,30 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""FeaturewiseDatasetMeasure of correlation with the labels."""
+"""FeaturewiseMeasure of correlation with the labels."""
 
 __docformat__ = 'restructuredtext'
 
 from mvpa.base import externals
 
-import numpy as N
+import numpy as np
 
-if externals.exists('scipy', raiseException=True):
-    # TODO: implement corrcoef optionally without scipy, e.g. N.corrcoef
+if externals.exists('scipy', raise_=True):
+    # TODO: implement corrcoef optionally without scipy, e.g. np.corrcoef
     from scipy.stats import pearsonr
 
-from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.measures.base import FeaturewiseMeasure
 from mvpa.datasets.base import Dataset
 
-class CorrCoef(FeaturewiseDatasetMeasure):
-    """`FeaturewiseDatasetMeasure` that performs correlation with labels
+class CorrCoef(FeaturewiseMeasure):
+    """`FeaturewiseMeasure` that performs correlation with labels
 
     XXX: Explain me!
     """
+    is_trained = True
+    """Indicate that this measure is always trained."""
 
-    def __init__(self, pvalue=False, attr='labels', **kwargs):
+    def __init__(self, pvalue=False, attr='targets', **kwargs):
         """Initialize
 
         Parameters
@@ -39,7 +41,7 @@ class CorrCoef(FeaturewiseDatasetMeasure):
           What attribut to correlate with
         """
         # init base classes first
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
+        FeaturewiseMeasure.__init__(self, **kwargs)
 
         self.__pvalue = int(pvalue)
         self.__attr = attr
@@ -49,13 +51,13 @@ class CorrCoef(FeaturewiseDatasetMeasure):
         """Computes featurewise scores."""
 
         attrdata = dataset.sa[self.__attr].value
-        if N.issubdtype(attrdata.dtype, 'c'):
+        if np.issubdtype(attrdata.dtype, 'c'):
             raise ValueError("Correlation coefficent measure is not meaningful "
                              "for datasets with literal labels.")
 
         samples = dataset.samples
         pvalue_index = self.__pvalue
-        result = N.empty((dataset.nfeatures,), dtype=float)
+        result = np.empty((dataset.nfeatures,), dtype=float)
 
         for ifeature in xrange(dataset.nfeatures):
             samples_ = samples[:, ifeature]
@@ -64,8 +66,8 @@ class CorrCoef(FeaturewiseDatasetMeasure):
             # Should be safe to assume 0 corr_coef (or 1 pvalue) if value
             # is actually NaN, although it might not be the case (covar of
             # 2 constants would be NaN although should be 1)
-            if N.isnan(corrv):
-                if N.var(samples_) == 0.0 and N.var(attrdata) == 0.0 \
+            if np.isnan(corrv):
+                if np.var(samples_) == 0.0 and np.var(attrdata) == 0.0 \
                    and len(samples_):
                     # constant terms
                     corrv = 1.0 - pvalue_index
@@ -73,4 +75,4 @@ class CorrCoef(FeaturewiseDatasetMeasure):
                     corrv = pvalue_index
             result[ifeature] = corrv
 
-        return Dataset(result[N.newaxis])
+        return Dataset(result[np.newaxis])

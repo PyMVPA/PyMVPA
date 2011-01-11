@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -98,7 +98,7 @@ train the selected features as we used to select them:
   ...  FeatureSelectionClassifier(
   ...      sample_linear_svm,
   ...      SensitivityBasedFeatureSelection(
-  ...         sample_linear_svm.getSensitivityAnalyzer(mapper=maxofabs_sample()),
+  ...         sample_linear_svm.get_sensitivity_analyzer(postproc=maxofabs_sample()),
   ...         FractionTailSelector(0.05, mode='select', tail='upper')),
   ...      descr="LinSVM on 5%(SVM)")
 
@@ -171,7 +171,7 @@ perform such an analysis:
   ...   # on features selected via RFE
   ...   feature_selection = RFE(
   ...       # based on sensitivity of a clf which does splitting internally
-  ...       sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
+  ...       sensitivity_analyzer=rfesvm_split.get_sensitivity_analyzer(),
   ...       transfer_error=ConfusionBasedError(
   ...          rfesvm_split,
   ...          confusion_state="confusion"),
@@ -193,7 +193,7 @@ transfer error on the testing part of the split. If a :class:`~mvpa.clfs.meta.Sp
 is later on asked to *predict* some new data, it uses (by default) the
 MaximalVote_ strategy to derive an answer.  A summary about the performance of
 a :class:`~mvpa.clfs.meta.SplitClassifier` internally on each split of the training dataset is
-available by accessing the `confusion` state variable.
+available by accessing the `confusion` conditional attribute.
 
 To summarize somewhat, RFE_ is just one method of feature selection, so we use a
 :class:`~mvpa.clfs.meta.FeatureSelectionClassifier` to facilitate this.  To parameterize the RFE

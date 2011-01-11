@@ -9,35 +9,40 @@
 """Unit tests for PyMVPA classifier cross-validation"""
 
 import unittest
-import numpy as N
+import numpy as np
 
 from mvpa.support.copy import copy
 
+from mvpa.base.dataset import vstack
 from mvpa.base import externals, warning
-from mvpa.datasets.splitters import OddEvenSplitter
+from mvpa.generators.partition import OddEvenPartitioner
+from mvpa.generators.permutation import AttributePermutator
+from mvpa.generators.splitters import Splitter
 
 from mvpa.clfs.meta import MulticlassClassifier
-from mvpa.clfs.transerror import \
-     TransferError, ConfusionMatrix, ConfusionBasedError
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
+from mvpa.clfs.transerror import ConfusionMatrix, ConfusionBasedError
+from mvpa.measures.base import CrossValidation, TransferMeasure
 
 from mvpa.clfs.stats import MCNullDist
 
 from mvpa.misc.exceptions import UnknownStateError
+from mvpa.misc.errorfx import mean_mismatch_error
+from mvpa.mappers.fx import mean_sample, BinaryFxNode
 
-from tests_warehouse import datasets, sweepargs
-from tests_warehouse_clfs import *
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
+from mvpa.testing.clfs import *
 
 class ErrorsTests(unittest.TestCase):
 
     def test_confusion_matrix(self):
-        data = N.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
+        data = np.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
         reg = [1,1,1,2,2,2,3,3,3]
         regl = [1,2,1,2,2,2,3,2,1]
         correct_cm = [[2,0,1],[1,3,1],[0,0,1]]
-        # Check if we are ok with any input type - either list, or N.array, or tuple
-        for t in [reg, tuple(reg), list(reg), N.array(reg)]:
-            for p in [regl, tuple(regl), list(regl), N.array(regl)]:
+        # Check if we are ok with any input type - either list, or np.array, or tuple
+        for t in [reg, tuple(reg), list(reg), np.array(reg)]:
+            for p in [regl, tuple(regl), list(regl), np.array(regl)]:
                 cm = ConfusionMatrix(targets=t, predictions=p)
                 # check table content
                 self.failUnless((cm.matrix == correct_cm).all())
@@ -45,7 +50,7 @@ class ErrorsTests(unittest.TestCase):
 
         # Do a bit more thorough checking
         cm = ConfusionMatrix()
-        self.failUnlessRaises(ZeroDivisionError, lambda x:x.percentCorrect, cm)
+        self.failUnlessRaises(ZeroDivisionError, lambda x:x.percent_correct, cm)
         """No samples -- raise exception"""
 
         cm.add(reg, regl)
@@ -55,14 +60,14 @@ class ErrorsTests(unittest.TestCase):
         self.failUnlessEqual(cm.matrix.shape, (3,3),
             msg="should be square matrix (len(reglabels) x len(reglabels)")
 
-        self.failUnlessRaises(ValueError, cm.add, reg, N.array([1]))
+        self.failUnlessRaises(ValueError, cm.add, reg, np.array([1]))
         """ConfusionMatrix must complaint if number of samples different"""
 
         # check table content
         self.failUnless((cm.matrix == correct_cm).all())
 
         # lets add with new labels (not yet known)
-        cm.add(reg, N.array([1,4,1,2,2,2,4,2,1]))
+        cm.add(reg, np.array([1,4,1,2,2,2,4,2,1]))
 
         self.failUnlessEqual(cm.labels, [1,2,3,4],
                              msg="We should have gotten 4th label")
@@ -76,12 +81,12 @@ class ErrorsTests(unittest.TestCase):
 
         # check pretty print
         # just a silly test to make sure that printing works
-        self.failUnless(len(cm.asstring(
+        self.failUnless(len(cm.as_string(
             header=True, summary=True,
             description=True))>100)
         self.failUnless(len(str(cm))>100)
         # and that it knows some parameters for printing
-        self.failUnless(len(cm.asstring(summary=True,
+        self.failUnless(len(cm.as_string(summary=True,
                                        header=False))>100)
 
         # lets check iadd -- just itself to itself
@@ -91,10 +96,10 @@ class ErrorsTests(unittest.TestCase):
         # lets check add -- just itself to itself
         cm2 = cm + cm
         self.failUnlessEqual(len(cm2.matrices), 8, msg="Must be 8 sets now")
-        self.failUnlessEqual(cm2.percentCorrect, cm.percentCorrect,
+        self.failUnlessEqual(cm2.percent_correct, cm.percent_correct,
                              msg="Percent of corrrect should remain the same ;-)")
 
-        self.failUnlessEqual(cm2.error, 1.0-cm.percentCorrect/100.0,
+        self.failUnlessEqual(cm2.error, 1.0-cm.percent_correct/100.0,
                              msg="Test if we get proper error value")
 
 
@@ -114,10 +119,12 @@ class ErrorsTests(unittest.TestCase):
         regl = [1,0,1,0]
         cm = ConfusionMatrix(targets=reg, predictions=regl)
         self.failUnless('ACC%         50' in str(cm))
+        skip_if_no_external('scipy')
+        self.failUnless(cm.stats['CHI^2'] == (0., 1.))
 
 
     def test_confusion_matrix_with_mappings(self):
-        data = N.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
+        data = np.array([1,2,1,2,2,2,3,2,1], ndmin=2).T
         reg = [1,1,1,2,2,2,3,3,3]
         regl = [1,2,1,2,2,2,3,2,1]
         correct_cm = [[2,0,1], [1,3,1], [0,0,1]]
@@ -132,27 +139,33 @@ class ErrorsTests(unittest.TestCase):
             self.failUnless(l in s)
 
 
-
     @sweepargs(l_clf=clfswh['linear', 'svm'])
     def test_confusion_based_error(self, l_clf):
-        train = datasets['uni2medium_train']
+        train = datasets['uni2medium']
+        train = train[train.sa.train == 1]
         # to check if we fail to classify for 3 labels
-        test3 = datasets['uni3medium_train']
+        test3 = datasets['uni3medium']
+        test3 = test3[test3.sa.train == 1]
         err = ConfusionBasedError(clf=l_clf)
-        terr = TransferError(clf=l_clf)
+        terr = TransferMeasure(l_clf, Splitter('train', attr_values=[1,1]),
+                               postproc=BinaryFxNode(mean_mismatch_error,
+                                                     'targets'))
 
         self.failUnlessRaises(UnknownStateError, err, None)
         """Shouldn't be able to access the state yet"""
 
         l_clf.train(train)
-        self.failUnlessEqual(err(None), terr(train),
-            msg="ConfusionBasedError should be equal to TransferError on" +
-                " traindataset")
+        e, te = err(None), terr(train)
+        te = np.asscalar(te)
+        self.failUnless(abs(e-te) < 1e-10,
+            msg="ConfusionBasedError (%.2g) should be equal to TransferError "
+                "(%.2g) on traindataset" % (e, te))
 
         # this will print nasty WARNING but it is ok -- it is just checking code
         # NB warnings are not printed while doing whole testing
         warning("Don't worry about the following warning.")
-        self.failIf(terr(test3) is None)
+        if 'multiclass' in l_clf.__tags__:
+            self.failIf(terr(test3) is None)
 
         # try copying the beast
         terr_copy = copy(terr)
@@ -162,42 +175,47 @@ class ErrorsTests(unittest.TestCase):
     def test_null_dist_prob(self, l_clf):
         train = datasets['uni2medium']
 
+        num_perm = 10
+        permutator = AttributePermutator('targets', count=num_perm)
         # define class to estimate NULL distribution of errors
         # use left tail of the distribution since we use MeanMatchFx as error
         # function and lower is better
-        terr = TransferError(clf=l_clf,
-                             null_dist=MCNullDist(permutations=10,
-                                                  tail='left'))
+        terr = TransferMeasure(
+            l_clf,
+            Splitter(None, count=2),
+            postproc=BinaryFxNode(mean_mismatch_error, 'targets'),
+            null_dist=MCNullDist(permutator,
+                                 tail='left'))
 
         # check reasonable error range
-        err = terr(train, train)
-        self.failUnless(err < 0.4)
+        err = terr(train)
+        self.failUnless(np.mean(err) < 0.4)
+
+        # Lets do the same for CVTE
+        cvte = CrossValidation(l_clf, OddEvenPartitioner(),
+            null_dist=MCNullDist(permutator,
+                                 tail='left',
+                                 enable_ca=['dist_samples']),
+            postproc=mean_sample())
+        cv_err = cvte(train)
 
         # check that the result is highly significant since we know that the
         # data has signal
-        null_prob = terr.states.null_prob
+        null_prob = terr.ca.null_prob
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(null_prob < 0.01,
+            self.failUnless(null_prob <= 0.1,
                 msg="Failed to check that the result is highly significant "
                     "(got %f) since we know that the data has signal"
                     % null_prob)
 
+            self.failUnless(cvte.ca.null_prob <= 0.1,
+                msg="Failed to check that the result is highly significant "
+                    "(got p(cvte)=%f) since we know that the data has signal"
+                    % cvte.ca.null_prob)
 
-    @sweepargs(l_clf=clfswh['linear', 'svm'])
-    def test_per_sample_error(self, l_clf):
-        train = datasets['uni2medium']
-        train.init_origids('samples')
-        terr = TransferError(clf=l_clf, enable_states=['samples_error'])
-        err = terr(train, train)
-        se = terr.states.samples_error
-
-        # one error per sample
-        self.failUnless(len(se) == train.nsamples)
-        # for this simple test it can only be correct or misclassified
-        # (boolean)
-        self.failUnless(
-            N.sum(N.array(se.values(), dtype='float') \
-                  - N.array(se.values(), dtype='b')) == 0)
+            # and we should be able to access the actual samples of the distribution
+            self.failUnlessEqual(len(cvte.null_dist.ca.dist_samples),
+                                 num_perm)
 
 
     @sweepargs(clf=clfswh['multiclass'])
@@ -205,45 +223,51 @@ class ErrorsTests(unittest.TestCase):
         """Test AUC computation
         """
         if isinstance(clf, MulticlassClassifier):
-            # TODO: handle those values correctly
-            return
-        clf.states.change_temporarily(enable_states = ['estimates'])
+            raise SkipTest, \
+                  "TODO: handle values correctly in MulticlassClassifier"
+        clf.ca.change_temporarily(enable_ca = ['estimates'])
+        if 'qda' in clf.__tags__:
+            # for reliable estimation of covariances, need sufficient
+            # sample size
+            ds_size = 'large'
+        else:
+            ds_size = 'small'
         # uni2 dataset with reordered labels
-        ds2 = datasets['uni2small'].copy()
+        ds2 = datasets['uni2' + ds_size].copy()
         # revert labels
-        ds2.sa['labels'].value = ds2.labels[::-1].copy()
+        ds2.sa['targets'].value = ds2.targets[::-1].copy()
         # same with uni3
-        ds3 = datasets['uni3small'].copy()
-        ul = ds3.sa['labels'].unique
-        nl = ds3.labels.copy()
+        ds3 = datasets['uni3' + ds_size].copy()
+        ul = ds3.sa['targets'].unique
+        nl = ds3.targets.copy()
         for l in xrange(3):
-            nl[ds3.labels == ul[l]] = ul[(l+1)%3]
-        ds3.sa.labels = nl
-        for ds in [datasets['uni2small'], ds2,
-                   datasets['uni3small'], ds3]:
-            cv = CrossValidatedTransferError(
-                TransferError(clf),
-                OddEvenSplitter(),
-                enable_states=['confusion', 'training_confusion'])
+            nl[ds3.targets == ul[l]] = ul[(l+1)%3]
+        ds3.sa.targets = nl
+        for ds in [datasets['uni2' + ds_size], ds2,
+                   datasets['uni3' + ds_size], ds3]:
+            cv = CrossValidation(clf, OddEvenPartitioner(),
+                enable_ca=['stats', 'training_stats'])
             cverror = cv(ds)
-            stats = cv.states.confusion.stats
-            Nlabels = len(ds.uniquelabels)
+            stats = cv.ca.stats.stats
+            Nlabels = len(ds.uniquetargets)
             # so we at least do slightly above chance
             self.failUnless(stats['ACC'] > 1.2 / Nlabels)
             auc = stats['AUC']
-            if (Nlabels == 2) or (Nlabels > 2 and auc[0] is not N.nan):
-                mauc = N.min(stats['AUC'])
+            if (Nlabels == 2) or (Nlabels > 2 and auc[0] is not np.nan):
+                mauc = np.min(stats['AUC'])
                 if cfg.getboolean('tests', 'labile', default='yes'):
                     self.failUnless(mauc > 0.55,
                          msg='All AUCs must be above chance. Got minimal '
                              'AUC=%.2g among %s' % (mauc, stats['AUC']))
-        clf.states.reset_changed_temporarily()
+        clf.ca.reset_changed_temporarily()
 
 
 
 
     def test_confusion_plot(self):
-        """Based on existing cell dataset results.
+        """Basic test of confusion plot
+
+        Based on existing cell dataset results.
 
         Let in for possible future testing, but is not a part of the
         unittests suite
@@ -253,12 +277,12 @@ class ErrorsTests(unittest.TestCase):
         ##rcmpl('text', usetex=True)
         ##rcmpl('font',  family='sans', style='normal', variant='normal',
         ##   weight='bold',  stretch='normal', size='large')
-        #import numpy as N
+        #import numpy as np
         #from mvpa.clfs.transerror import \
         #     TransferError, ConfusionMatrix, ConfusionBasedError
 
-        array = N.array
-        uint8 = N.uint8
+        array = np.array
+        uint8 = np.uint8
         sets = [
            (array([47, 39, 38, 43, 45, 41, 44, 40, 46, 42, 47, 39, 38, 43, 45, 41, 44,
                  40, 46, 42, 47, 39, 38, 43, 45, 41, 44, 40, 46, 42, 47, 39, 38, 43,
@@ -482,11 +506,11 @@ class ErrorsTests(unittest.TestCase):
             cm = ConfusionMatrix(sets=sets, labels_map=labels_map)
         except:
             self.fail()
-        self.failUnless('3kHz / 38' in cm.asstring())
+        self.failUnless('3kHz / 38' in cm.as_string())
 
         if externals.exists("pylab plottable"):
-            import pylab as P
-            P.figure()
+            import pylab as pl
+            pl.figure()
             labels_order = ("3kHz", "7kHz", "12kHz", "20kHz","30kHz", None,
                             "song1","song2","song3","song4","song5")
             #print cm
@@ -497,18 +521,15 @@ class ErrorsTests(unittest.TestCase):
             self.failUnless(cm._plotted_confusionmatrix[0,1] == cm.matrix[1,0])
             self.failUnless(cm._plotted_confusionmatrix[1,1] == cm.matrix[0,0])
             self.failUnless(cm._plotted_confusionmatrix[1,0] == cm.matrix[0,1])
-            P.close(fig)
+            pl.close(fig)
             fig, im, cb = cm.plot(labels=labels_order, numbers=True)
-            P.close(fig)
-            # P.show()
+            pl.close(fig)
+            # pl.show()
 
     def test_confusion_plot2(self):
-        """Based on a sample confusion which plots incorrectly
 
-        """
-
-        array = N.array
-        uint8 = N.uint8
+        array = np.array
+        uint8 = np.uint8
         sets = [(array([1, 2]), array([1, 1]),
                  array([[ 0.54343765,  0.45656235],
                         [ 0.92395853,  0.07604147]])),
@@ -537,16 +558,16 @@ class ErrorsTests(unittest.TestCase):
         except:
             self.fail()
         if externals.exists("pylab plottable"):
-            import pylab as P
-            #P.figure()
+            import pylab as pl
+            #pl.figure()
             #print cm
             fig, im, cb = cm.plot(origin='lower', numbers=True)
-            #P.plot()
+            #pl.plot()
             self.failUnless((cm._plotted_confusionmatrix == cm.matrix).all())
-            P.close(fig)
+            pl.close(fig)
             #fig, im, cb = cm.plot(labels=labels_order, numbers=True)
-            #P.close(fig)
-            #P.show()
+            #pl.close(fig)
+            #pl.show()
 
 
 def suite():

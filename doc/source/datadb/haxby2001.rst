@@ -55,7 +55,7 @@ mask*.nii.gz
 
 labels.txt
     A two-column text file with the stimulation condition and the corresponding
-    experimental run for each volume in the timeseries image. The labels are
+    experimental run for each volume in the timeseries image.  Labels are
     given in literal form (e.g. 'face').
 
 
@@ -67,10 +67,10 @@ Instructions
   >>> attrs = SampleAttributes(os.path.join(subjpath, 'labels.txt'),
   ...                          header=True)
   >>> ds = fmri_dataset(samples=os.path.join(subjpath, 'bold.nii.gz'),
-  ...                   labels=attrs.labels, chunks=attrs.chunks,
+  ...                   targets=attrs.labels, chunks=attrs.chunks,
   ...                   mask=os.path.join(subjpath, 'mask4_vt.nii.gz'))
   >>> print ds
-  <Dataset: 1452x577@int16, <sa: chunks,time_indices,labels,time_coords>, <fa: voxel_indices>, <a: mapper,voxel_eldim,voxel_dim,imghdr>>
+  <Dataset: 1452x577@int16, <sa: chunks,time_indices,targets,time_coords>, <fa: voxel_indices>, <a: mapper,voxel_eldim,voxel_dim,imghdr>>
 
 
 References

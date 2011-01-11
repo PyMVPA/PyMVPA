@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -104,9 +104,9 @@ repository and preparing the patch. Here is a quick sketch of the workflow.
 
 First get the latest code::
 
-  git clone git://git.debian.org/git/pkg-exppsy/pymvpa.git
+  git clone git://github.com/PyMVPA/PyMVPA.git
 
-This will create a new `pymvpa` subdirectory, that contains the complete
+This will create a new `PyMVPA` subdirectory, that contains the complete
 repository. Enter this directory and run `gitk --all` to browse the full
 history and *all* branches that have ever been published.
 
@@ -136,7 +136,7 @@ comprehensive Git tutorial`_.
 When you are done with the new feature, you can prepare the patch for
 inclusion into PyMVPA. If you have done multiple commits you might want to
 squash them into a single patch containing the new feature. You can do this
-with `git-rebase`. In recent version `git-rebase` has an option
+with `git rebase`.  Any recent version of `git rebase` has an option
 `--interactive`, which allows you to easily pick, squash or even further edit
 any of the previous commits you have made. Rebase your local branch against
 the remote branch you started hacking on (`origin/master` in this example)::
@@ -145,10 +145,11 @@ the remote branch you started hacking on (`origin/master` in this example)::
 
 When you are done, you can generate the final patch file::
 
-  git-format-patch origin/master
+  git format-patch origin/master
 
 Above command will generate a file for each commit in you local branch that is
 not yet part of `origin/master`. The patch files can then be easily emailed.
+
 
 
 The manual is quite insufficient. When will you improve it?
@@ -199,7 +200,7 @@ are sometime a problem, e.g. they will lead to numerical difficulties when
 z-scoring the features of a dataset (i.e. division by zero).
 
 The `mvpa.datasets.miscfx` module provides a convenience function
-`removeInvariantFeatures()` that strips such features from a dataset.
+`remove_invariant_features()` that strips such features from a dataset.
 
 
 .. index:: Block-averaging
@@ -210,19 +211,19 @@ How can I do :term:`block-averaging` of my block-design fMRI dataset?
 The easiest way is to use a mapper to transform/average the respective
 samples. Suppose you have a dataset:
 
-  >>> dataset = normalFeatureDataset()
+  >>> dataset = normal_feature_dataset()
   >>> print dataset
-  <Dataset: 100x4@float64, <sa: chunks,labels>>
+  <Dataset: 100x4@float64, <sa: chunks,targets>>
 
 Averaging all samples with the same label in each chunk individually is done
 by applying a mapper to the dataset.
 
   >>> from mvpa.mappers.fx import mean_group_sample
   >>>
-  >>> m = mean_group_sample(['labels', 'chunks'])
+  >>> m = mean_group_sample(['targets', 'chunks'])
   >>> mapped_dataset = dataset.get_mapped(m)
   >>> print mapped_dataset
-  <Dataset: 10x4@float64, <sa: chunks,labels>, <a: mapper>>
+  <Dataset: 10x4@float64, <sa: chunks,targets>, <a: mapper>>
 
 `mean_group_sample` creates an `FxMapper` that applies a function to
 every group of samples in each chunk individually and therefore yields
@@ -238,20 +239,20 @@ Data analysis
 How do I know which features were finally selected by a classifier doing feature selection?
 -------------------------------------------------------------------------------------------
 
-All classifier possess a state variable `feature_ids`. When enable, the
+All classifier possess a conditional attribute `feature_ids`. When enable, the
 classifier stores the ids of all features that were finally used to train
 the classifier.
 
   >>> clf = FeatureSelectionClassifier(
   ...           kNN(k=5),
   ...           SensitivityBasedFeatureSelection(
-  ...               SMLRWeights(SMLR(lm=1.0), mapper=maxofabs_sample()),
+  ...               SMLRWeights(SMLR(lm=1.0), postproc=maxofabs_sample()),
   ...               FixedNElementTailSelector(1, tail='upper', mode='select')),
-  ...           enable_states = ['feature_ids'])
+  ...           enable_ca = ['feature_ids'])
   >>> clf.train(dataset)
-  >>> final_dataset = dataset[:, clf.states.feature_ids]
+  >>> final_dataset = dataset[:, clf.ca.feature_ids]
   >>> print final_dataset
-  <Dataset: 100x1@float64, <sa: chunks,labels>>
+  <Dataset: 100x1@float64, <sa: chunks,targets>>
 
 In the above code snippet a kNN classifier is defined, that performs a feature
 selection step prior training. Features are selected according to the maximum
@@ -284,12 +285,12 @@ them again) looks like this:
   ...       TransferError(SMLR()),
   ...       OddEvenSplitter(),
   ...       harvest_attribs=\
-  ...        ['transerror.clf.getSensitivityAnalyzer(force_training=False)()'])
+  ...        ['transerror.clf.get_sensitivity_analyzer(force_train=False)()'])
   >>> merror = cv(dataset)
-  >>> sensitivities = cv.states.harvested.values()[0]
+  >>> sensitivities = cv.ca.harvested.values()[0]
   >>> len(sensitivities)
   2
-  >>> sensitivities[0].shape == (len(dataset.uniquelabels), dataset.nfeatures)
+  >>> sensitivities[0].shape == (len(dataset.uniquetargets), dataset.nfeatures)
   True
 
 First, we define an instance of
@@ -303,14 +304,14 @@ the classifier on each split is available via `transerror`. The rest is easy:
 :class:`~mvpa.clfs.transerror.TransferError` provides access to its classifier
 and any classifier can in turn generate an appropriate
 :class:`~mvpa.measures.base.Sensitivity` instance via
-`getSensitivityAnalyzer()`.  This generator method takes additional arguments
+`get_sensitivity_analyzer()`.  This generator method takes additional arguments
 to the constructor of the :class:`mvpa.measures.base.Sensitivity` class. In
 this case we want to prevent retraining the classifiers, as they will be
 trained anyway by the :class:`~mvpa.clfs.transerror.TransferError` instance
 they belong to.
 
 The return values of all code snippets defined in `harvest_attribs` are
-available in the `harvested` state variable. `harvested` is a dictionary where
+available in the `harvested` conditional attribute. `harvested` is a dictionary where
 the keys are the code snippets used to compute the value. As the key in this
 case is pretty long, we simply take the first (and only) value from the
 dictionary.  The value is actually a list of sensitivity datasets, one per

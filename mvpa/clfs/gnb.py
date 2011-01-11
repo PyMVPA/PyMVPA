@@ -8,21 +8,26 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Gaussian Naive Bayes Classifier
 
-   EXPERIMENTAL ;)
    Basic implementation of Gaussian Naive Bayes classifier.
+"""
+
+"""
+TODO: for now all estimates are allocated at the first level of GNB
+instance (e.g. self.priors, etc) -- move them deeper or into a
+corresponding "Collection"?
+The same for GNBSearchlight
 """
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from numpy import ones, zeros, sum, abs, isfinite, dot
 from mvpa.base import warning, externals
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
-from mvpa.misc.param import Parameter
-from mvpa.misc.state import StateVariable
+from mvpa.base.param import Parameter
+from mvpa.base.state import ConditionalAttribute
 #from mvpa.measures.base import Sensitivity
-#from mvpa.misc.transformers import SecondAxisMaxOfAbs # XXX ?
 
 
 if __debug__:
@@ -33,39 +38,40 @@ __all__ = [ "GNB" ]
 class GNB(Classifier):
     """Gaussian Naive Bayes `Classifier`.
 
-    GNB is a probabilistic classifier relying on Bayes rule to
+    `GNB` is a probabilistic classifier relying on Bayes rule to
     estimate posterior probabilities of labels given the data.  Naive
     assumption in it is an independence of the features, which allows
     to combine per-feature likelihoods by a simple product across
-    likelihoods of"independent" features.
+    likelihoods of "independent" features.
     See http://en.wikipedia.org/wiki/Naive_bayes for more information.
 
     Provided here implementation is "naive" on its own -- various
-    aspects could be improved, but has its own advantages:
+    aspects could be improved, but it has its own advantages:
 
-     - implementation is simple and straightforward
-     - no data copying while considering samples of specific class
-     - provides alternative ways to assess prior distribution of the
-       classes in the case of unbalanced sets of samples (see parameter
-       `prior`)
-     - makes use of NumPy broadcasting mechanism, so should be
-       relatively efficient
-     - should work for any dimensionality of samples
+    - implementation is simple and straightforward
+    - no data copying while considering samples of specific class
+    - provides alternative ways to assess prior distribution of the
+      classes in the case of unbalanced sets of samples (see parameter
+      `prior`)
+    - makes use of NumPy broadcasting mechanism, so should be
+      relatively efficient
+    - should work for any dimensionality of samples
 
-    GNB is listed both as linear and non-linear classifier, since
+    `GNB` is listed both as linear and non-linear classifier, since
     specifics of separating boundary depends on the data and/or
     parameters: linear separation is achieved whenever samples are
-    balanced (or prior='uniform') and features have the same variance
-    across different classes (i.e. if common_variance=True to enforce
-    this).
+    balanced (or ``prior='uniform'``) and features have the same
+    variance across different classes (i.e. if
+    ``common_variance=True`` to enforce this).
 
     Whenever decisions are made based on log-probabilities (parameter
-    logprob=True, which is the default), then state variable `values`
-    if enabled would also contain log-probabilities.  Also mention
-    that normalization by the evidence (P(data)) is disabled by
-    default since it has no impact per se on classification decision.
-    You might like set parameter normalize to True if you want to
-    access properly scaled probabilities in `values` state variable.
+    ``logprob=True``, which is the default), then conditional
+    attribute `values`, if enabled, would also contain
+    log-probabilities.  Also mention that normalization by the
+    evidence (P(data)) is disabled by default since it has no impact
+    per se on classification decision.  You might like to set
+    parameter normalize to True if you want to access properly scaled
+    probabilities in `values` conditional attribute.
     """
     # XXX decide when should we set corresponding internal,
     #     since it depends actually on the data -- no clear way,
@@ -75,6 +81,7 @@ class GNB(Classifier):
 
     common_variance = Parameter(False, allowedtype='bool',
              doc="""Use the same variance across all classes.""")
+
     prior = Parameter('laplacian_smoothing',
              allowedtype='basestring',
              choices=["laplacian_smoothing", "uniform", "ratio"],
@@ -84,6 +91,7 @@ class GNB(Classifier):
              doc="""Operate on log probabilities.  Preferable to avoid unneeded
              exponentiation and loose precision.
              If set, logprobs are stored in `values`""")
+
     normalize = Parameter(False, allowedtype='bool',
              doc="""Normalize (log)prob by P(data).  Requires probabilities thus
              for `logprob` case would require exponentiation of 'logprob's, thus
@@ -110,17 +118,35 @@ class GNB(Classifier):
         # Define internal state of classifier
         self._norm_weight = None
 
+    def _get_priors(self, nlabels, nsamples, nsamples_per_class):
+        """Return prior probabilities given data
+        """
+        prior = self.params.prior
+        if prior == 'uniform':
+            priors = np.ones((nlabels,))/nlabels
+        elif prior == 'laplacian_smoothing':
+            priors = (1+np.squeeze(nsamples_per_class)) \
+                          / (float(nsamples) + nlabels)
+        elif prior == 'ratio':
+            priors = np.squeeze(nsamples_per_class) / float(nsamples)
+        else:
+            raise ValueError(
+                "No idea on how to handle '%s' way to compute priors"
+                % self.params.prior)
+        return priors
+
     def _train(self, dataset):
         """Train the classifier using `dataset` (`Dataset`).
         """
         params = self.params
+        targets_sa_name = self.get_space()
+        targets_sa = dataset.sa[targets_sa_name]
 
         # get the dataset information into easy vars
         X = dataset.samples
-        labels = dataset.labels
-        self.ulabels = ulabels = dataset.uniquelabels
+        labels = targets_sa.value
+        self.ulabels = ulabels = targets_sa.unique
         nlabels = len(ulabels)
-        #params = self.params        # for quicker access
         label2index = dict((l, il) for il, l in enumerate(ulabels))
 
         # set the feature dimensions
@@ -128,11 +154,11 @@ class GNB(Classifier):
         s_shape = X.shape[1:]           # shape of a single sample
 
         self.means = means = \
-                     N.zeros((nlabels, ) + s_shape)
+                     np.zeros((nlabels, ) + s_shape)
         self.variances = variances = \
-                     N.zeros((nlabels, ) + s_shape)
+                     np.zeros((nlabels, ) + s_shape)
         # degenerate dimension are added for easy broadcasting later on
-        nsamples_per_class = N.zeros((nlabels,) + (1,)*len(s_shape))
+        nsamples_per_class = np.zeros((nlabels,) + (1,)*len(s_shape))
 
         # Estimate means and number of samples per each label
         for s, l in zip(X, labels):
@@ -144,6 +170,9 @@ class GNB(Classifier):
         non0labels = (nsamples_per_class.squeeze() != 0)
         means[non0labels] /= nsamples_per_class[non0labels]
 
+        # Store prior probabilities
+        self.priors = self._get_priors(nlabels, nsamples, nsamples_per_class)
+
         # Estimate variances
         # better loop than repmat! ;)
         for s, l in zip(X, labels):
@@ -153,45 +182,32 @@ class GNB(Classifier):
         ## Actually compute the variances
         if params.common_variance:
             # we need to get global std
-            cvar = N.sum(variances, axis=0)/nsamples # sum across labels
+            cvar = np.sum(variances, axis=0)/nsamples # sum across labels
             # broadcast the same variance across labels
             variances[:] = cvar
         else:
             variances[non0labels] /= nsamples_per_class[non0labels]
 
-        # Store prior probabilities
-        prior = params.prior
-        if prior == 'uniform':
-            self.priors = N.ones((nlabels,))/nlabels
-        elif prior == 'laplacian_smoothing':
-            self.priors = (1+N.squeeze(nsamples_per_class)) \
-                          / (float(nsamples) + nlabels)
-        elif prior == 'ratio':
-            self.priors = N.squeeze(nsamples_per_class) / float(nsamples)
-        else:
-            raise "No idea on how to handle '%s' way to compute priors" \
-                  % params.prior
-
         # Precompute and store weighting coefficient for Gaussian
         if params.logprob:
             # it would be added to exponent
-            self._norm_weight = -0.5 * N.log(2*N.pi*variances)
+            self._norm_weight = -0.5 * np.log(2*np.pi*variances)
         else:
-            self._norm_weight = 1.0/N.sqrt(2*N.pi*variances)
+            self._norm_weight = 1.0/np.sqrt(2*np.pi*variances)
 
         if __debug__ and 'GNB' in debug.active:
             debug('GNB', "training finished on data.shape=%s " % (X.shape, )
-                  + "min:max(data)=%f:%f" % (N.min(X), N.max(X)))
+                  + "min:max(data)=%f:%f" % (np.min(X), np.max(X)))
 
 
-    def untrain(self):
+    def _untrain(self):
         """Untrain classifier and reset all learnt params
         """
         self.means = None
         self.variances = None
         self.ulabels = None
         self.priors = None
-        super(GNB, self).untrain()
+        super(GNB, self)._untrain()
 
 
     @accepts_dataset_as_samples
@@ -201,8 +217,8 @@ class GNB(Classifier):
         params = self.params
         # argument of exponentiation
         scaled_distances = \
-            -0.5 * (((data - self.means[:, N.newaxis, ...])**2) \
-                          / self.variances[:, N.newaxis, ...])
+            -0.5 * (((data - self.means[:, np.newaxis, ...])**2) \
+                          / self.variances[:, np.newaxis, ...])
         if params.logprob:
             # if self.params.common_variance:
             # XXX YOH:
@@ -211,7 +227,8 @@ class GNB(Classifier):
             # simply discarded since it is common across features AND
             # classes
             # For completeness -- computing everything now even in logprob
-            lprob_csfs = self._norm_weight[:, N.newaxis, ...] + scaled_distances
+            lprob_csfs = self._norm_weight[:, np.newaxis, ...] \
+                         + scaled_distances
 
             # XXX for now just cut/paste with different operators, but
             #     could just bind them and reuse in the same equations
@@ -223,13 +240,14 @@ class GNB(Classifier):
             lprob_cs = lprob_csf.sum(axis=2)
 
             # Incorporate class probabilities:
-            prob_cs_cp = lprob_cs + N.log(self.priors[:, N.newaxis])
+            prob_cs_cp = lprob_cs + np.log(self.priors[:, np.newaxis])
 
         else:
             # Just a regular Normal distribution with per
             # feature/class mean and variances
             prob_csfs = \
-                 self._norm_weight[:, N.newaxis, ...] * N.exp(scaled_distances)
+                 self._norm_weight[:, np.newaxis, ...] \
+                 * np.exp(scaled_distances)
 
             # Naive part -- just a product of probabilities across features
             ## First we need to reshape to get class x samples x features
@@ -239,17 +257,17 @@ class GNB(Classifier):
             prob_cs = prob_csf.prod(axis=2)
 
             # Incorporate class probabilities:
-            prob_cs_cp = prob_cs * self.priors[:, N.newaxis]
+            prob_cs_cp = prob_cs * self.priors[:, np.newaxis]
 
         # Normalize by evidence P(data)
         if params.normalize:
             if params.logprob:
-                prob_cs_cp_real = N.exp(prob_cs_cp)
+                prob_cs_cp_real = np.exp(prob_cs_cp)
             else:
                 prob_cs_cp_real = prob_cs_cp
-            prob_s_cp_marginals = N.sum(prob_cs_cp_real, axis=0)
+            prob_s_cp_marginals = np.sum(prob_cs_cp_real, axis=0)
             if params.logprob:
-                prob_cs_cp -= N.log(prob_s_cp_marginals)
+                prob_cs_cp -= np.log(prob_s_cp_marginals)
             else:
                 prob_cs_cp /= prob_s_cp_marginals
 
@@ -258,11 +276,11 @@ class GNB(Classifier):
         predictions = [self.ulabels[c] for c in winners]
 
         # set to the probabilities per class
-        self.states.estimates = prob_cs_cp.T
+        self.ca.estimates = prob_cs_cp.T
 
         if __debug__ and 'GNB' in debug.active:
             debug('GNB', "predict on data.shape=%s min:max(data)=%f:%f " %
-                  (data.shape, N.min(data), N.max(data)))
+                  (data.shape, np.min(data), np.max(data)))
 
         return predictions
 
@@ -270,7 +288,7 @@ class GNB(Classifier):
     # XXX Later come up with some
     #     could be a simple t-test maps using distributions
     #     per each class
-    #def getSensitivityAnalyzer(self, **kwargs):
+    #def get_sensitivity_analyzer(self, **kwargs):
     #    """Returns a sensitivity analyzer for GNB."""
     #    return GNBWeights(self, **kwargs)
 

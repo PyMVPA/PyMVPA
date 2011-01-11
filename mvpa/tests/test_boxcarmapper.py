@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA Boxcar mapper"""
 
 
-import numpy as N
+import numpy as np
 
 from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true, assert_array_equal
@@ -19,8 +19,8 @@ from mvpa.datasets import Dataset
 
 
 def test_simpleboxcar():
-    data = N.atleast_2d(N.arange(10)).T
-    sp = N.arange(10)
+    data = np.atleast_2d(np.arange(10)).T
+    sp = np.arange(10)
 
     # check if stupid thing don't work
     assert_raises(ValueError, BoxcarMapper, sp, 0)
@@ -39,23 +39,23 @@ def test_simpleboxcar():
     # now something that should work
     nbox = 9
     boxlength = 2
-    sp = N.arange(nbox)
+    sp = np.arange(nbox)
     bcm = BoxcarMapper(sp, boxlength)
-    trans = bcm(data)
+    trans = bcm.forward(data)
     # check that is properly upcasts the dimensionality
     assert_equal(trans.shape, (nbox, boxlength) + data.shape[1:])
     # check actual values, squeezing the last dim for simplicity
-    assert_array_equal(trans.squeeze(), N.vstack((N.arange(9), N.arange(9)+1)).T)
+    assert_array_equal(trans.squeeze(), np.vstack((np.arange(9), np.arange(9)+1)).T)
 
 
     # now test for proper data shape
-    data = N.ones((10,3,4,2))
+    data = np.ones((10,3,4,2))
     sp = [ 2, 4, 3, 5 ]
-    trans = BoxcarMapper(sp, 4)(data)
+    trans = BoxcarMapper(sp, 4).forward(data)
     assert_equal(trans.shape, (4,4,3,4,2))
 
     # test reverse
-    data = N.arange(240).reshape(10, 3, 4, 2)
+    data = np.arange(240).reshape(10, 3, 4, 2)
     sp = [ 2, 4, 3, 5 ]
     boxlength = 2
     m = BoxcarMapper(sp, boxlength)
@@ -72,35 +72,35 @@ def test_simpleboxcar():
     assert_true((mr < 168).all())
 
     # check proper reconstruction of non-conflicting sample
-    assert_array_equal(mr[0].ravel(), N.arange(48, 72))
+    assert_array_equal(mr[0].ravel(), np.arange(48, 72))
 
     # check proper reconstruction of samples being part of multiple
     # mapped samples
-    assert_array_equal(mr[1].ravel(), N.arange(72, 96))
+    assert_array_equal(mr[1].ravel(), np.arange(72, 96))
 
     # test reverse of a single sample
-    singlesample = N.arange(48).reshape(2, 3, 4, 2)
+    singlesample = np.arange(48).reshape(2, 3, 4, 2)
     assert_array_equal(singlesample, m.reverse1(singlesample))
     # should not work for shape mismatch, but it does work and is useful when
     # reverse mapping sample attributes
     #assert_raises(ValueError, m.reverse, singlesample[0])
 
     # check broadcasting of 'raw' samples into proper boxcars on forward()
-    bc = m.forward1(N.arange(24).reshape(3, 4, 2))
-    assert_array_equal(bc, N.array(2 * [N.arange(24).reshape(3, 4, 2)]))
+    bc = m.forward1(np.arange(24).reshape(3, 4, 2))
+    assert_array_equal(bc, np.array(2 * [np.arange(24).reshape(3, 4, 2)]))
 
 
 def test_datasetmapping():
     # 6 samples, 4 features
-    data = N.arange(24).reshape(6,4)
+    data = np.arange(24).reshape(6,4)
     ds = Dataset(data,
-                 sa={'timepoints': N.arange(6),
+                 sa={'timepoints': np.arange(6),
                      'multidim': data.copy()},
-                 fa={'fid': N.arange(4)})
+                 fa={'fid': np.arange(4)})
     # with overlapping and non-overlapping boxcars
     startpoints = [0, 1, 4]
     boxlength = 2
-    bm = BoxcarMapper(startpoints, boxlength, inspace='boxy')
+    bm = BoxcarMapper(startpoints, boxlength, space='boxy')
     # train is critical
     bm.train(ds)
     mds = bm.forward(ds)
@@ -113,13 +113,13 @@ def test_datasetmapping():
                  (len(startpoints), boxlength, ds.nfeatures))
     assert_equal(mds.sa.timepoints.shape, (len(startpoints), boxlength))
     assert_array_equal(mds.sa.timepoints.flatten(),
-                       N.array([(s, s+1) for s in startpoints]).flatten())
+                       np.array([(s, s+1) for s in startpoints]).flatten())
     assert_array_equal(mds.sa.boxy_onsetidx, startpoints)
     # feature attributes also get rotated and broadcasted
     assert_array_equal(mds.fa.fid, [ds.fa.fid, ds.fa.fid])
     # and finally there is a new one
     assert_array_equal(mds.fa.boxy_offsetidx,
-                       N.repeat(N.arange(boxlength), 4).reshape(2,-1))
+                       np.repeat(np.arange(boxlength), 4).reshape(2,-1))
 
     # now see how it works on reverse()
     rds = bm.reverse(mds)
@@ -130,7 +130,7 @@ def test_datasetmapping():
     # some samples even might show up multiple times (when there are overlapping
     # boxcars
     assert_array_equal(rds.samples,
-                       N.array([[ 0,  1,  2,  3],
+                       np.array([[ 0,  1,  2,  3],
                                 [ 4,  5,  6,  7],
                                 [ 4,  5,  6,  7],
                                 [ 8,  9, 10, 11],

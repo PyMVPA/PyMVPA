@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 
-import numpy as N
+import numpy as np
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
 
 if __debug__:
@@ -52,7 +52,7 @@ class SimpleSOMMapper(Mapper):
         # init base class
         Mapper.__init__(self)
 
-        self.kshape = N.array(kshape, dtype='int')
+        self.kshape = np.array(kshape, dtype='int')
 
         if iradius is None:
             self.radius = self.kshape.max()
@@ -67,7 +67,7 @@ class SimpleSOMMapper(Mapper):
 
         # precompute whatever can be done
         # scalar for decay of learning rate and radius across all iterations
-        self.iter_scale = self.niter / N.log(self.radius)
+        self.iter_scale = self.niter / np.log(self.radius)
 
         # the internal kohonen layer
         self._K = None
@@ -84,60 +84,61 @@ class SimpleSOMMapper(Mapper):
         """
         # XXX initialize with clever default, e.g. plain of first two PCA
         # components
-        self._K = N.random.standard_normal(tuple(self.kshape) + (samples.shape[1],))
+        self._K = np.random.standard_normal(tuple(self.kshape) + (samples.shape[1],))
 
         # units weight vector deltas for batch training
         # (height x width x #features)
-        unit_deltas = N.zeros(self._K.shape, dtype='float')
+        unit_deltas = np.zeros(self._K.shape, dtype='float')
 
         # precompute distance kernel between elements in the Kohonen layer
         # that will remain constant throughout the training
         # (just compute one quadrant, as the distances are symmetric)
         # XXX maybe do other than squared Euclidean?
-        dqd = N.fromfunction(lambda x, y: (x**2 + y**2)**0.5,
+        dqd = np.fromfunction(lambda x, y: (x**2 + y**2)**0.5,
                              self.kshape, dtype='float')
 
         # for all iterations
         for it in xrange(1, self.niter + 1):
             # compute the neighborhood impact kernel for this iteration
             # has to be recomputed since kernel shrinks over time
-            k = self._computeInfluenceKernel(it, dqd)
+            k = self._compute_influence_kernel(it, dqd)
 
             # for all training vectors
             for s in samples:
                 # determine closest unit (as element coordinate)
-                b = self._getBMU(s)
+                b = self._get_bmu(s)
 
                 # train all units at once by unfolding the kernel (from the
                 # single quadrant that is precomputed), cutting it to the
                 # right shape and simply multiply it to the difference of target
                 # and all unit weights....
-                infl = N.vstack((
-                        N.hstack((
+                infl = np.vstack((
+                        np.hstack((
                             # upper left
                             k[b[0]:0:-1, b[1]:0:-1],
                             # upper right
                             k[b[0]:0:-1, :self.kshape[1] - b[1]])),
-                        N.hstack((
+                        np.hstack((
                             # lower left
                             k[:self.kshape[0] - b[0], b[1]:0:-1],
                             # lower right
                             k[:self.kshape[0] - b[0], :self.kshape[1] - b[1]]))
                                ))
-                unit_deltas += infl[:,:,N.newaxis] * (s - self._K)
+                unit_deltas += infl[:,:,np.newaxis] * (s - self._K)
 
             # apply cumulative unit deltas
             self._K += unit_deltas
 
             if __debug__:
                 debug("SOM", "Iteration %d/%d done: ||unit_deltas||=%g" %
-                      (it, self.niter, N.sqrt(N.sum(unit_deltas **2))))
+                      (it, self.niter, np.sqrt(np.sum(unit_deltas **2))))
 
             # reset unit deltas
             unit_deltas.fill(0.)
 
 
-    def _computeInfluenceKernel(self, iter, dqd):
+    ##REF: Name was automagically refactored
+    def _compute_influence_kernel(self, iter, dqd):
         """Compute the neighborhood kernel for some iteration.
 
         Parameters
@@ -149,13 +150,13 @@ class SimpleSOMMapper(Mapper):
           locations.
         """
         # compute radius decay for this iteration
-        curr_max_radius = self.radius * N.exp(-1.0 * iter / self.iter_scale)
+        curr_max_radius = self.radius * np.exp(-1.0 * iter / self.iter_scale)
 
         # same for learning rate
-        curr_lrate = self.lrate * N.exp(-1.0 * iter / self.iter_scale)
+        curr_lrate = self.lrate * np.exp(-1.0 * iter / self.iter_scale)
 
         # compute Gaussian influence kernel
-        infl = N.exp((-1.0 * dqd) / (2 * curr_max_radius * iter))
+        infl = np.exp((-1.0 * dqd) / (2 * curr_max_radius * iter))
         infl *= curr_lrate
 
         # hard-limit kernel to max radius
@@ -165,7 +166,8 @@ class SimpleSOMMapper(Mapper):
         return infl
 
 
-    def _getBMU(self, sample):
+    ##REF: Name was automagically refactored
+    def _get_bmu(self, sample):
         """Returns the ID of the best matching unit.
 
         'best' is determined as minimal squared Euclidean distance between
@@ -181,10 +183,10 @@ class SimpleSOMMapper(Mapper):
         tuple: (row, column)
         """
         # TODO expose distance function as parameter
-        loc = N.argmin(((self.K - sample) ** 2).sum(axis=2))
+        loc = np.argmin(((self.K - sample) ** 2).sum(axis=2))
 
         # assumes 2D Kohonen layer
-        return (N.divide(loc, self.kshape[1]), loc % self.kshape[1])
+        return (np.divide(loc, self.kshape[1]), loc % self.kshape[1])
 
 
     def _forward_data(self, data):
@@ -193,7 +195,7 @@ class SimpleSOMMapper(Mapper):
         Mapping is performs by simple determining the best matching Kohonen
         unit for each data sample.
         """
-        return N.array([self._getBMU(d) for d in data])
+        return np.array([self._get_bmu(d) for d in data])
 
 
     def _reverse_data(self, data):
@@ -201,7 +203,7 @@ class SimpleSOMMapper(Mapper):
         """
         # simple transform into appropriate array slicing and
         # return the associated Kohonen unit weights
-        return self.K[tuple(N.transpose(data))]
+        return self.K[tuple(np.transpose(data))]
 
 
     def __repr__(self):
@@ -215,7 +217,8 @@ class SimpleSOMMapper(Mapper):
         return s
 
 
-    def _accessKohonen(self):
+    ##REF: Name was automagically refactored
+    def _access_kohonen(self):
         """Provide access to the Kohonen layer.
 
         With some care.
@@ -228,4 +231,4 @@ class SimpleSOMMapper(Mapper):
         return self._K
 
 
-    K = property(fget=_accessKohonen)
+    K = property(fget=_access_kohonen)

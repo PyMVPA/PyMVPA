@@ -15,24 +15,23 @@ set and include important features successively.
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 from mvpa.support.copy import copy
-
-from mvpa.featsel.base import FeatureSelection
+from mvpa.featsel.base import StaticFeatureSelection, IterativeFeatureSelection
 from mvpa.featsel.helpers import NBackHistoryStopCrit, \
                                  FixedNElementTailSelector, \
                                  BestDetector
 
-from mvpa.misc.state import StateVariable
+from mvpa.base.state import ConditionalAttribute
 
 if __debug__:
     from mvpa.base import debug
 
 
-class IFS(FeatureSelection):
+class IFS(IterativeFeatureSelection):
     """Incremental feature search.
 
-    A scalar `DatasetMeasure` is computed multiple times on variations of a
+    A scalar `Measure` is computed multiple times on variations of a
     certain dataset. These measures are in turn used to incrementally select
     important features. Starting with an empty feature set the dataset measure
     is first computed for each single feature. A number of features is selected
@@ -46,82 +45,54 @@ class IFS(FeatureSelection):
     computed. This procedure is repeated until a given `StoppingCriterion`
     is reached.
     """
-
-    errors = StateVariable()
-
     def __init__(self,
-                 data_measure,
-                 transfer_error,
-                 bestdetector=BestDetector(),
-                 stopping_criterion=NBackHistoryStopCrit(BestDetector()),
-                 feature_selector=FixedNElementTailSelector(1,
-                                                            tail='upper',
-                                                            mode='select'),
-                 **kwargs
-                 ):
+                 fmeasure,
+                 pmeasure,
+                 splitter,
+                 fselector=FixedNElementTailSelector(1, tail='upper',
+                                                     mode='select'),
+                 **kwargs):
         """Initialize incremental feature search
 
         Parameters
         ----------
-        data_measure : DatasetMeasure
+        feature_measure : Measure
           Computed for each candidate feature selection. The measure has
           to compute a scalar value.
-        transfer_error : TransferError
+        performance_measure : Measure
           Compute against a test dataset for each incremental feature
           set.
-        bestdetector : Functor
-          Given a list of error values it has to return a boolean that
-          signals whether the latest error value is the total minimum.
-        stopping_criterion : Functor
-          Given a list of error values it has to return whether the
-          criterion is fulfilled.
+        splitter: Splitter
+          This splitter instance has to generate at least two dataset splits
+          when called with the input dataset. The first split serves as the
+          training dataset and the second as the evaluation dataset.
         """
         # bases init first
-        FeatureSelection.__init__(self, **kwargs)
-
-        self.__data_measure = data_measure
-        self.__transfer_error = transfer_error
-        self.__feature_selector = feature_selector
-        self.__bestdetector = bestdetector
-        self.__stopping_criterion = stopping_criterion
+        IterativeFeatureSelection.__init__(self, fmeasure, pmeasure, splitter,
+                                           fselector, **kwargs)
 
 
-    def __call__(self, dataset, testdataset):
-        """Proceed and select the features recursively eliminating less
-        important ones.
+    def _train(self, ds):
+        # local binding
+        fmeasure = self._fmeasure
+        fselector = self._fselector
+        scriterion = self._stopping_criterion
+        bestdetector = self._bestdetector
 
-        Parameters
-        ----------
-        dataset : Dataset
-          used to select features and train classifiers to determine the
-          transfer error.
-        testdataset : Dataset
-          used to test the trained classifer on a certain feature set
-          to determine the transfer error.
-
-        Returns
-        -------
-        A tuple with the dataset containing the feature subset of
-        `dataset` that had the lowest transfer error of all tested sets until
-        the stopping criterion was reached. The tuple also contains a dataset
-        with the corrsponding features from the `testdataset`.
-        """
+        # init
+        # Computed error for each tested features set.
         errors = []
-        """Computed error for each tested features set."""
-
         # feature candidate are all features in the pattern object
-        candidates = range( dataset.nfeatures )
-
+        candidates = range(ds.nfeatures)
         # initially empty list of selected features
         selected = []
-
         # results in here please
         results = None
 
         # as long as there are candidates left
         # the loop will most likely get broken earlier if the stopping
         # criterion is reached
-        while len( candidates ):
+        while len(candidates):
             # measures for all candidates
             measures = []
 
@@ -132,36 +103,54 @@ class IFS(FeatureSelection):
 
                 # take the new candidate and all already selected features
                 # select a new temporay feature subset from the dataset
-                # XXX assume MappedDataset and issue plain=True ??
-                tmp_dataset = \
-                        dataset[:, selected + [candidate]]
+                # slice the full dataset, because for the initial iteration
+                # steps this will be much mure effecient than splitting the
+                # full ds into train and test at first
+                fslm = StaticFeatureSelection(selected + [candidate])
+                fslm.train(ds)
+                candidate_ds = fslm(ds)
+                # activate the dataset splitter
+                dsgen = self._splitter.generate(candidate_ds)
+                # and derived the dataset part that is used for computing the selection
+                # criterion
+                trainds = dsgen.next()
+                # compute data measure on the training part of this feature set
+                measures.append(fmeasure(trainds))
 
-                # compute data measure on this feature set
-                measures.append(self.__data_measure(tmp_dataset))
+            # relies on ds.item() to work properly
+            measures = [np.asscalar(m) for m in measures]
 
-            measures = [N.asscalar(m) for m in measures]
             # Select promissing feature candidates (staging)
             # IDs are only applicable to the current set of feature candidates
-            tmp_staging_ids = self.__feature_selector(measures)
+            tmp_staging_ids = fselector(measures)
 
             # translate into real candidate ids
-            staging_ids = [ candidates[i] for i in tmp_staging_ids ]
+            staging_ids = [candidates[i] for i in tmp_staging_ids]
 
             # mark them as selected and remove from candidates
             selected += staging_ids
             for i in staging_ids:
                 candidates.remove(i)
 
-            # compute transfer error for the new set
-            # XXX assume MappedDataset and issue plain=True ??
-            error = self.__transfer_error(testdataset[:, selected],
-                                          dataset[:, selected])
-            errors.append(error)
+            # actually run the performance measure to estimate "quality" of
+            # selection
+            fslm = StaticFeatureSelection(selected)
+            fslm.train(ds)
+            selectedds = fslm(ds)
+            # split into train and test part
+            trainds, testds = self._get_traintest_ds(selectedds)
+            # evaluate and store
+            error = self._evaluate_pmeasure(trainds, testds)
+            errors.append(np.asscalar(error))
+            # intermediate cleanup, so the datasets do not hand around while
+            # the next candidate evaluation is computed
+            del trainds
+            del testds
 
             # Check if it is time to stop and if we got
             # the best result
-            stop = self.__stopping_criterion(errors)
-            isthebest = self.__bestdetector(errors)
+            stop = scriterion(errors)
+            isthebest = bestdetector(errors)
 
             if __debug__:
                 debug('IFSC',
@@ -171,15 +160,13 @@ class IFS(FeatureSelection):
                       cr=True, lf=True)
 
             if isthebest:
+                # announce desired features to the underlying slice mapper
                 # do copy to survive later selections
-                results = copy(selected)
+                self._safe_assign_slicearg(copy(selected))
 
             # leave the loop when the criterion is reached
             if stop:
                 break
 
         # charge state
-        self.states.errors = errors
-
-        # best dataset ever is returned
-        return dataset[:, results], testdataset[:, results]
+        self.ca.errors = errors

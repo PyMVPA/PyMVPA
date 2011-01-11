@@ -14,12 +14,12 @@ into PyMVPA.
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 import mdp
 
 from mvpa.base.dataset import DatasetAttributeExtractor
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
-from mvpa.misc.support import isInVolume
+from mvpa.misc.support import is_in_volume
 
 
 class MDPNodeMapper(Mapper):
@@ -42,7 +42,7 @@ class MDPNodeMapper(Mapper):
     MDPFlowWrapper for that. Moreover, it is not possible to perform
     incremental training of a node.
     """
-    def __init__(self, node, nodeargs=None, inspace=None):
+    def __init__(self, node, nodeargs=None, **kwargs):
         """
         Parameters
         ----------
@@ -73,7 +73,7 @@ class MDPNodeMapper(Mapper):
         if not len(node._train_seq) == 1:
             raise ValueError("MDPNodeMapper does not support MDP nodes with "
                              "multiple training phases.")
-        Mapper.__init__(self, inspace=inspace)
+        Mapper.__init__(self, **kwargs)
         self.__pristine_node = None
         self.node = node
         self.nodeargs = nodeargs
@@ -136,12 +136,12 @@ class MDPNodeMapper(Mapper):
 
     def _forward_data(self, data):
         args, kwargs = self._expand_args('exec', data)
-        return self.node.execute(N.atleast_2d(data), *args, **kwargs).squeeze()
+        return self.node.execute(np.atleast_2d(data), *args, **kwargs).squeeze()
 
 
     def _reverse_data(self, data):
         args, kwargs = self._expand_args('inv', data)
-        return self.node.inverse(N.atleast_2d(data), *args, **kwargs).squeeze()
+        return self.node.inverse(np.atleast_2d(data), *args, **kwargs).squeeze()
 
 
 
@@ -234,13 +234,13 @@ class MDPFlowMapper(Mapper):
     ...         mdp.nodes.FDANode())
     >>> mapper = MDPFlowMapper(flow,
     ...                        node_arguments=(None, None,
-    ...                        [DAE('sa', 'labels')]))
+    ...                        [DAE('sa', 'targets')]))
 
     Notes
     -----
     It is not possible to perform incremental training of the MDP flow. 
     """
-    def __init__(self, flow, node_arguments=None, inspace=None):
+    def __init__(self, flow, node_arguments=None, **kwargs):
         """
         Parameters
         ----------
@@ -253,13 +253,12 @@ class MDPFlowMapper(Mapper):
           the flow. If a node does not require additional arguments, None
           can be provided instead. Keyword arguments are currently not
           supported by mdp.Flow.
-        inspace : see base class
         """
         if not node_arguments is None and len(node_arguments) != len(flow):
             raise ValueError("Length of node_arguments (%i) does not match the "
                              "number of nodes in the flow (%i)."
                              % (len(node_arguments), len(flow)))
-        Mapper.__init__(self, inspace=inspace)
+        Mapper.__init__(self, **kwargs)
         self.__pristine_flow = None
         self.flow = flow
         self.node_arguments = node_arguments
@@ -311,8 +310,8 @@ class MDPFlowMapper(Mapper):
 
 
     def _forward_data(self, data):
-        return self.flow.execute(N.atleast_2d(data)).squeeze()
+        return self.flow.execute(np.atleast_2d(data)).squeeze()
 
 
     def _reverse_data(self, data):
-        return self.flow.inverse(N.atleast_2d(data)).squeeze()
+        return self.flow.inverse(np.atleast_2d(data)).squeeze()

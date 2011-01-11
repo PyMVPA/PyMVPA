@@ -160,12 +160,17 @@ class WTF(object):
 
     def _acquire_externals(self, out):
         # Test and list all dependencies:
-        sdeps = {True: [], False: []}
+        sdeps = {True: [], False: [], 'Error': []}
         for dep in sorted(externals._KNOWN):
-            sdeps[externals.exists(dep, force=False)] += [dep]
+            try:
+                sdeps[externals.exists(dep, force=False)] += [dep]
+            except:
+                sdeps['Error'] += [dep]
         out.write('EXTERNALS:\n')
         out.write(' Present:       %s\n' % ', '.join(sdeps[True]))
         out.write(' Absent:        %s\n' % ', '.join(sdeps[False]))
+        if len(sdeps['Error']):
+            out.write(' Errors in determining: %s\n' % ', '.join(sdeps['Error']))
 
         SV = ('.__version__', )              # standard versioning
         out.write(' Versions of critical externals:\n')
@@ -182,7 +187,7 @@ class WTF(object):
             ('openopt', 'openopt', SV),
             ('openopt', 'scikits.openopt', ('.openopt.__version__',)),
             ('pywt', None, SV),
-            ('rpy', None, ('.rpy_version',)),
+            #('rpy', None, ('.rpy_version',)),
             ('shogun', None, ('.Classifier.Version_get_version_release()',)),
             ):
             try:
@@ -198,16 +203,21 @@ class WTF(object):
                 sver = 'failed to query due to "%s"' % str(exc)
             out.write('  %-12s: %s\n' % (e, sver))
 
-        if externals.exists('matplotlib'):
-            import matplotlib
-            out.write(' Matplotlib backend: %s\n' % matplotlib.get_backend())
-
+        try:
+            if externals.exists('matplotlib'):
+                import matplotlib
+                out.write(' Matplotlib backend: %s\n'
+                          % matplotlib.get_backend())
+        except Exception, exc:
+            out.write(' Failed to determine backend of matplotlib due to "%s"'
+                      % str(exc))
     def _acquire_runtime(self, out):
         out.write("RUNTIME:\n")
         out.write(" PyMVPA Environment Variables:\n")
-        out.write('  '.join(['  %-20s: "%s"\n' % (str(k), str(v))
-                            for k, v in os.environ.iteritems()
-                            if (k.startswith('MVPA') or k.startswith('PYTHON'))]))
+        out.write('  ' + '  '.join(
+            ['%-20s: "%s"\n' % (str(k), str(v))
+             for k, v in os.environ.iteritems()
+             if (k.startswith('MVPA') or k.startswith('PYTHON'))]))
 
         out.write(" PyMVPA Runtime Configuration:\n")
         out.write('  ' + str(cfg).replace('\n', '\n  ').rstrip() + '\n')

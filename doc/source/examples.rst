@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -11,9 +11,9 @@
 
 .. _chap_examples:
 
-****************
-Examples Scripts
-****************
+****************************
+Example Analyses and Scripts
+****************************
 
 Each of the examples in this section is a stand-alone script containing all
 necessary code to run some analysis. All examples are shipped with PyMVPA and
@@ -47,15 +47,18 @@ Analysis
    examples/clfs_examples
    examples/gpr
    examples/gpr_model_selection0
+   examples/cachedkernel
    examples/searchlight_minimal
    examples/searchlight
    examples/searchlight_dsm
    examples/sensanas
    examples/svdclf
    examples/permutation_test
+   examples/nested_cv
    examples/match_distribution
    examples/eventrelated
    examples/mdp_mnist
+   examples/eyemovements
 
 
 Visualization
@@ -64,6 +67,7 @@ Visualization
 .. toctree::
 
    examples/erp_plot
+   examples/knn_plot
    examples/pylab_2d
    examples/topo_plot
    examples/som

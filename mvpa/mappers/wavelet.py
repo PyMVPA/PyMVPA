@@ -10,12 +10,12 @@
 
 from mvpa.base import externals
 
-if externals.exists('pywt', raiseException=True):
+if externals.exists('pywt', raise_=True):
     # import conditional to be able to import the whole module while building
     # the docs even if pywt is not installed
     import pywt
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import warning
 from mvpa.mappers.base import Mapper
@@ -69,7 +69,7 @@ class _WaveletMapper(Mapper):
 
 
     def _forward_data(self, data):
-        data = N.asanyarray(data)
+        data = np.asanyarray(data)
         self._inshape = data.shape
         self._intimepoints = data.shape[self._dim]
         res = self._wm_forward(data)
@@ -78,7 +78,7 @@ class _WaveletMapper(Mapper):
 
 
     def _reverse_data(self, data):
-        data = N.asanyarray(data)
+        data = np.asanyarray(data)
         return self._wm_reverse(data)
 
 
@@ -91,7 +91,8 @@ class _WaveletMapper(Mapper):
 
 
 
-def _getIndexes(shape, dim):
+##REF: Name was automagically refactored
+def _get_indexes(shape, dim):
     """Generator for coordinate tuples providing slice for all in `dim`
 
     XXX Somewhat sloppy implementation... but works...
@@ -139,7 +140,8 @@ class WaveletPacketMapper(_WaveletMapper):
 
     # XXX too much of duplications between such methods -- it begs
     #     refactoring
-    def __forwardSingleLevel(self, data):
+    ##REF: Name was automagically refactored
+    def __forward_single_level(self, data):
         if __debug__:
             debug('MAP', "Converting signal using DWP (single level)")
 
@@ -151,7 +153,7 @@ class WaveletPacketMapper(_WaveletMapper):
         dim = self._dim
 
         level_paths = None
-        for indexes in _getIndexes(data.shape, self._dim):
+        for indexes in _get_indexes(data.shape, self._dim):
             if __debug__:
                 debug('MAP_', " %s" % (indexes,), lf=False, cr=True)
             WP = pywt.WaveletPacket(
@@ -161,8 +163,8 @@ class WaveletPacketMapper(_WaveletMapper):
             level_nodes = WP.get_level(level)
             if level_paths is None:
                 # Needed for reconstruction
-                self.__level_paths = N.array([node.path for node in level_nodes])
-            level_datas = N.array([node.data for node in level_nodes])
+                self.__level_paths = np.array([node.path for node in level_nodes])
+            level_datas = np.array([node.data for node in level_nodes])
 
             if wp is None:
                 newdim = data.shape
@@ -170,18 +172,19 @@ class WaveletPacketMapper(_WaveletMapper):
                 if __debug__:
                     debug('MAP_', "Initializing storage of size %s for single "
                           "level (%d) mapping of data of size %s" % (newdim, level, data.shape))
-                wp = N.empty( tuple(newdim) )
+                wp = np.empty( tuple(newdim) )
 
             wp[indexes] = level_datas
 
         return wp
 
 
-    def __forwardMultipleLevels(self, data):
+    ##REF: Name was automagically refactored
+    def __forward_multiple_levels(self, data):
         wp = None
         levels_length = None                # total length at each level
         levels_lengths = None                # list of lengths per each level
-        for indexes in _getIndexes(data.shape, self._dim):
+        for indexes in _get_indexes(data.shape, self._dim):
             if __debug__:
                 debug('MAP_', " %s" % (indexes,), lf=False, cr=True)
             WP = pywt.WaveletPacket(
@@ -199,7 +202,7 @@ class WaveletPacketMapper(_WaveletMapper):
                 level_datas = [node.data for node in level_nodes]
 
                 level_lengths = [len(x) for x in level_datas]
-                level_length = N.sum(level_lengths)
+                level_length = np.sum(level_lengths)
 
                 if levels_lengths[level] is None:
                     levels_lengths[level] = level_lengths
@@ -215,16 +218,16 @@ class WaveletPacketMapper(_WaveletMapper):
                           "Levels of different samples should have same number of elements." \
                           " Got %d, was %d" % (level_length, levels_length[level])
 
-                level_data = N.hstack(level_datas)
+                level_data = np.hstack(level_datas)
                 levels_datas.append(level_data)
 
             # assert(len(data) == levels_length)
             # assert(len(data) >= Ntimepoints)
             if wp is None:
                 newdim = list(data.shape)
-                newdim[self._dim] = N.sum(levels_length)
-                wp = N.empty( tuple(newdim) )
-            wp[indexes] = N.hstack(levels_datas)
+                newdim[self._dim] = np.sum(levels_length)
+                wp = np.empty( tuple(newdim) )
+            wp[indexes] = np.hstack(levels_datas)
 
         self.levels_lengths, self.levels_length = levels_lengths, levels_length
         if __debug__:
@@ -238,14 +241,15 @@ class WaveletPacketMapper(_WaveletMapper):
             debug('MAP', "Converting signal using DWP")
 
         if self.__level is None:
-            return self.__forwardMultipleLevels(data)
+            return self.__forward_multiple_levels(data)
         else:
-            return self.__forwardSingleLevel(data)
+            return self.__forward_single_level(data)
 
     #
     # Reverse mapping
     #
-    def __reverseSingleLevel(self, wp):
+    ##REF: Name was automagically refactored
+    def __reverse_single_level(self, wp):
 
         # local bindings
         level_paths = self.__level_paths
@@ -257,9 +261,9 @@ class WaveletPacketMapper(_WaveletMapper):
 
         # prepare storage
         signal_shape = wp.shape[:1] + self._inshape[1:]
-        signal = N.zeros(signal_shape)
+        signal = np.zeros(signal_shape)
         Ntime_points = self._intimepoints
-        for indexes in _getIndexes(signal_shape,
+        for indexes in _get_indexes(signal_shape,
                                    self._dim):
             if __debug__:
                 debug('MAP_', " %s" % (indexes,), lf=False, cr=True)
@@ -289,7 +293,7 @@ class WaveletPacketMapper(_WaveletMapper):
                         "Please check for an update of 'pywt', or be careful "
                         "when interpreting the edges of the reverse mapped "
                         "data." % self.__class__.__name__)
-            return self.__reverseSingleLevel(data)
+            return self.__reverse_single_level(data)
 
 
 
@@ -304,7 +308,7 @@ class WaveletTransformationMapper(_WaveletMapper):
             debug('MAP', "Converting signal using DWT")
         wd = None
         coeff_lengths = None
-        for indexes in _getIndexes(data.shape, self._dim):
+        for indexes in _get_indexes(data.shape, self._dim):
             if __debug__:
                 debug('MAP_', " %s" % (indexes,), lf=False, cr=True)
             coeffs = pywt.wavedec(
@@ -315,25 +319,25 @@ class WaveletTransformationMapper(_WaveletMapper):
             # Silly Yarik embedds extraction of statistics right in place
             #stats = []
             #for coeff in coeffs:
-            #    stats_ = [N.std(coeff),
-            #              N.sqrt(N.dot(coeff, coeff)),
-            #              ]# + list(N.histogram(coeff, normed=True)[0]))
+            #    stats_ = [np.std(coeff),
+            #              np.sqrt(np.dot(coeff, coeff)),
+            #              ]# + list(np.histogram(coeff, normed=True)[0]))
             #    stats__ = list(coeff) + stats_[:]
-            #    stats__ += list(N.log(stats_))
-            #    stats__ += list(N.sqrt(stats_))
-            #    stats__ += list(N.array(stats_)**2)
-            #    stats__ += [  N.median(coeff), N.mean(coeff), scipy.stats.kurtosis(coeff) ]
+            #    stats__ += list(np.log(stats_))
+            #    stats__ += list(np.sqrt(stats_))
+            #    stats__ += list(np.array(stats_)**2)
+            #    stats__ += [  np.median(coeff), np.mean(coeff), scipy.stats.kurtosis(coeff) ]
             #    stats.append(stats__)
             #coeffs = stats
-            coeff_lengths_ = N.array([len(x) for x in coeffs])
+            coeff_lengths_ = np.array([len(x) for x in coeffs])
             if coeff_lengths is None:
                 coeff_lengths = coeff_lengths_
             assert((coeff_lengths == coeff_lengths_).all())
             if wd is None:
                 newdim = list(data.shape)
-                newdim[self._dim] = N.sum(coeff_lengths)
-                wd = N.empty( tuple(newdim) )
-            coeff = N.hstack(coeffs)
+                newdim[self._dim] = np.sum(coeff_lengths)
+                wd = np.empty( tuple(newdim) )
+            coeff = np.hstack(coeffs)
             wd[indexes] = coeff
         if __debug__:
             debug('MAP_', "")
@@ -346,24 +350,24 @@ class WaveletTransformationMapper(_WaveletMapper):
         if __debug__:
             debug('MAP', "Performing iDWT")
         signal = None
-        wd_offsets = [0] + list(N.cumsum(self.lengths))
-        Nlevels = len(self.lengths)
+        wd_offsets = [0] + list(np.cumsum(self.lengths))
+        nlevels = len(self.lengths)
         Ntime_points = self._intimepoints #len(time_points)
         # unfortunately sometimes due to padding iDWT would return longer
         # sequences, thus we just limit to the right ones
 
-        for indexes in _getIndexes(wd.shape, self._dim):
+        for indexes in _get_indexes(wd.shape, self._dim):
             if __debug__:
                 debug('MAP_', " %s" % (indexes,), lf=False, cr=True)
             wd_sample = wd[indexes]
-            wd_coeffs = [wd_sample[wd_offsets[i]:wd_offsets[i+1]] for i in xrange(Nlevels)]
+            wd_coeffs = [wd_sample[wd_offsets[i]:wd_offsets[i+1]] for i in xrange(nlevels)]
             # need to compose original list
             time_points = pywt.waverec(
                 wd_coeffs, wavelet=self._wavelet, mode=self._mode)
             if signal is None:
                 newdim = list(wd.shape)
                 newdim[self._dim] = Ntime_points
-                signal = N.empty(newdim)
+                signal = np.empty(newdim)
             signal[indexes] = time_points[:Ntime_points]
         if __debug__:
             debug('MAP_', "")

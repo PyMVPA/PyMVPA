@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -46,9 +46,15 @@ Python programs after a weekend of training.
 What Do I Need To Get Python Running
 ------------------------------------
 
-Any machine which has Python available can be used for PyMVPA-based
-processing. Any GNU/Linux distribution already comes with Python by
-default. The Python website offers `installers for Windows and MacOS X`_.
+PyMVPA code is compatible with Python 2.X series (more precisely >= 2.4).
+Python 3.x is not yet supported. For most stable performance we recommend
+Python 2.5 since that is the version we are using for the development, but,
+once again, 2.4 or 2.6 should be fine.
+
+Any machine which has Python 2.X available can be used for PyMVPA-based
+processing (see :ref:`Download section <chap_download>` on how to deploy
+PyMVPA on your system). Any GNU/Linux distribution already comes with Python
+by default. The Python website offers `installers for Windows and MacOS X`_.
 
 .. _installers for Windows and MacOS X: http://www.python.org/download
 
@@ -93,7 +99,7 @@ basic Python programming to efficient scientific computing with Python.
 Tutorial Introductions Into General Python Programming
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-http://en.wikibooks.org/wiki/Non-Programmer's_Tutorial_for_Python_2.0
+http://en.wikibooks.org/wiki/Non-Programmer's_Tutorial_for_Python_2.6
 
   Basic from-scratch introduction into Python. This should give you the basics,
   even if you had *no* prior programming experience.
@@ -176,3 +182,4 @@ http://ipython.scipy.org/moin/Documentation
 
   IPython documentation page which references additional materials, such as
   the main IPython documentation which extensively covers features of IPython.
+

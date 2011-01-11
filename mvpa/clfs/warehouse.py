@@ -11,7 +11,6 @@
 
 __docformat__ = 'restructuredtext'
 
-from sets import Set
 import operator
 
 # Define sets of classifiers
@@ -19,6 +18,7 @@ from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
      MulticlassClassifier, RegressionAsClassifier
 from mvpa.clfs.smlr import SMLR
 from mvpa.clfs.knn import kNN
+from mvpa.clfs.gda import LDA, QDA
 from mvpa.clfs.gnb import GNB
 from mvpa.kernels.np import LinearKernel, SquaredExponentialKernel, \
      GeneralizedLinearKernel
@@ -43,7 +43,7 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'regression', 'regression_based',
         'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
-        'gnb']
+        'gnb', 'plr', 'rpy2', 'swig', 'skl', 'lda', 'qda' ]
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
@@ -67,9 +67,9 @@ class Warehouse(object):
           matches={'binary':['regression']}, would allow to provide
           regressions also if 'binary' was requested
           """
-        self._known_tags = Set(known_tags)
+        self._known_tags = set(known_tags)
         self.__items = []
-        self.__keys = Set()
+        self.__keys = set()
         if matches is None:
             matches = {}
         self.__matches = matches
@@ -83,7 +83,7 @@ class Warehouse(object):
             args = []
 
         # lets remove optional modifier '!'
-        dargs = Set([str(x).lstrip('!') for x in args]).difference(
+        dargs = set([str(x).lstrip('!') for x in args]).difference(
             self._known_tags)
 
         if len(dargs)>0:
@@ -128,7 +128,7 @@ class Warehouse(object):
             if len(item.__tags__) == 0:
                 raise ValueError, "Cannot register %s " % item + \
                       "which has empty __tags__"
-            clf_internals = Set(item.__tags__)
+            clf_internals = set(item.__tags__)
             if clf_internals.issubset(self._known_tags):
                 self.__items.append(item)
                 self.__keys |= clf_internals
@@ -177,7 +177,7 @@ clfswh += \
 
 if externals.exists('libsvm'):
     from mvpa.clfs import libsvmc as libsvm
-    clfswh._known_tags.union_update(libsvm.SVM._KNOWN_IMPLEMENTATIONS.keys())
+    clfswh._known_tags.update(libsvm.SVM._KNOWN_IMPLEMENTATIONS.keys())
     clfswh += [libsvm.SVM(descr="libsvm.LinSVM(C=def)", probability=1),
              libsvm.SVM(
                  C=-10.0, descr="libsvm.LinSVM(C=10*def)", probability=1),
@@ -197,7 +197,7 @@ if externals.exists('libsvm'):
              ]
 
     # regressions
-    regrswh._known_tags.union_update(['EPSILON_SVR', 'NU_SVR'])
+    regrswh._known_tags.update(['EPSILON_SVR', 'NU_SVR'])
     regrswh += [libsvm.SVM(svm_impl='EPSILON_SVR', descr='libsvm epsilon-SVR'),
                 libsvm.SVM(svm_impl='NU_SVR', descr='libsvm nu-SVR')]
 
@@ -205,7 +205,7 @@ if externals.exists('shogun'):
     from mvpa.clfs import sg
     
     from mvpa.kernels.sg import LinearSGKernel, PolySGKernel, RbfSGKernel
-    clfswh._known_tags.union_update(sg.SVM._KNOWN_IMPLEMENTATIONS)
+    clfswh._known_tags.update(sg.SVM._KNOWN_IMPLEMENTATIONS)
 
     # some classifiers are not yet ready to be used out-of-the-box in
     # PyMVPA, thus we don't populate warehouse with their instances
@@ -239,23 +239,24 @@ if externals.exists('shogun'):
             sg.SVM(
                 C=1.0, descr="sg.LinSVM(C=1)/%s" % impl, svm_impl=impl),
             ]
-        clfswh += [
-            sg.SVM(kernel=RbfSGKernel(),
-                   descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
-#            sg.SVM(kernel=RbfSGKernel(),
-#                   descr="sg.RbfSVM(gamma=0.1)/%s"
-#                    % impl, svm_impl=impl, gamma=0.1),
-#           sg.SVM(descr="sg.SigmoidSVM()/%s"
-#                   % impl, svm_impl=impl, kernel=SigmoidSGKernel(),),
-            ]
+        if not impl in ['svmocas']:     # inherently linear only
+            clfswh += [
+                sg.SVM(kernel=RbfSGKernel(),
+                       descr="sg.RbfSVM()/%s" % impl, svm_impl=impl),
+    #            sg.SVM(kernel=RbfSGKernel(),
+    #                   descr="sg.RbfSVM(gamma=0.1)/%s"
+    #                    % impl, svm_impl=impl, gamma=0.1),
+    #           sg.SVM(descr="sg.SigmoidSVM()/%s"
+    #                   % impl, svm_impl=impl, kernel=SigmoidSGKernel(),),
+                ]
 
     _optional_regressions = []
-    if externals.exists('shogun.krr'):
+    if externals.exists('shogun.krr') and externals.versions['shogun'] >= '0.9':
         _optional_regressions += ['krr']
     for impl in ['libsvr'] + _optional_regressions:# \
         # XXX svrlight sucks in SG -- dont' have time to figure it out
         #+ ([], ['svrlight'])['svrlight' in sg.SVM._KNOWN_IMPLEMENTATIONS]:
-        regrswh._known_tags.union_update([impl])
+        regrswh._known_tags.update([impl])
         regrswh += [ sg.SVM(svm_impl=impl, descr='sg.LinSVMR()/%s' % impl),
                    #sg.SVM(svm_impl=impl, kernel_type='RBF',
                    #       descr='sg.RBFSVMR()/%s' % impl),
@@ -271,7 +272,8 @@ if externals.exists('lars'):
     from mvpa.clfs.lars import LARS
     for model in lars.known_models:
         # XXX create proper repository of classifiers!
-        lars_clf = LARS(descr="LARS(%s)" % model, model_type=model)
+        lars_clf = RegressionAsClassifier(LARS(descr="LARS(%s)" % model, model_type=model),
+                                          descr='LARS(model_type=%r) classifier' % model)
         clfswh += lars_clf
 
         # is a regression, too
@@ -281,12 +283,12 @@ if externals.exists('lars'):
         # clfswh += MulticlassClassifier(lars,
         #             descr='Multiclass %s' % lars.descr)
 
-## PBS: enet has some weird issue that causes it to fail.  GLMNET is
-## better anyway, so just use that instead
-## # enet from R via RPy
+## Still fails unittests battery although overhauled otherwise.
+## # enet from R via RPy2
 ## if externals.exists('elasticnet'):
 ##     from mvpa.clfs.enet import ENET
-##     clfswh += ENET(descr="RegressionAsClassifier(ENET())")
+##     clfswh += RegressionAsClassifier(ENET(),
+##                                      descr="RegressionAsClassifier(ENET())")
 ##     regrswh += ENET(descr="ENET()")
 
 # glmnet from R via RPy
@@ -294,6 +296,16 @@ if externals.exists('glmnet'):
     from mvpa.clfs.glmnet import GLMNET_C, GLMNET_R
     clfswh += GLMNET_C(descr="GLMNET_C()")
     regrswh += GLMNET_R(descr="GLMNET_R()")
+
+# LDA/QDA
+clfswh += LDA(descr='LDA()')
+clfswh += QDA(descr='QDA()')
+
+if externals.exists('skl'):
+    from scikits.learn.lda import LDA as sklLDA
+    from mvpa.clfs.skl.base import SKLLearnerAdapter
+    clfswh += SKLLearnerAdapter(sklLDA(), tags=['lda', 'linear', 'multiclass', 'binary'],
+                                descr='scikits.learn.LDA()_adapter')
 
 # kNN
 clfswh += kNN(k=5, descr="kNN(k=5)")
@@ -304,7 +316,7 @@ clfswh += \
         kNN(),
         SensitivityBasedFeatureSelection(
            SMLRWeights(SMLR(lm=1.0, implementation="C"),
-                       mapper=maxofabs_sample()),
+                       postproc=maxofabs_sample()),
            RangeElementSelector(mode='select')),
         descr="kNN on SMLR(lm=1) non-0")
 
@@ -347,14 +359,28 @@ if externals.exists('scipy'):
                    descr="GPR(kernel='sqexp')")
 
     # Add wrapped GPR as a classifier
-    clfswh += RegressionAsClassifier(
+    gprcb = RegressionAsClassifier(
         GPR(kernel=GeneralizedLinearKernel()), descr="GPRC(kernel='linear')")
+    # lets remove multiclass label from it
+    gprcb.__tags__.pop(gprcb.__tags__.index('multiclass'))
+    clfswh += gprcb
+
+    # and create a proper multiclass one
+    clfswh += MulticlassClassifier(
+        RegressionAsClassifier(
+            GPR(kernel=GeneralizedLinearKernel())),
+        descr="GPRCM(kernel='linear')")
 
 # BLR
 from mvpa.clfs.blr import BLR
 clfswh += RegressionAsClassifier(BLR(descr="BLR()"),
                                  descr="BLR Classifier")
 
+#PLR
+from mvpa.clfs.plr import PLR
+clfswh += PLR(descr="PLR()")
+if externals.exists('scipy'):
+    clfswh += PLR(reduced=0.05, descr="PLR(reduced=0.01)")
 
 # SVM stuff
 
@@ -370,7 +396,7 @@ if len(clfswh['linear', 'svm']) > 0:
              linearSVMC.clone(),
              SensitivityBasedFeatureSelection(
                 SMLRWeights(SMLR(lm=0.1, implementation="C"),
-                            mapper=maxofabs_sample()),
+                            postproc=maxofabs_sample()),
                 RangeElementSelector(mode='select')),
              descr="LinSVM on SMLR(lm=0.1) non-0")
 
@@ -380,7 +406,7 @@ if len(clfswh['linear', 'svm']) > 0:
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
                 SMLRWeights(SMLR(lm=1.0, implementation="C"),
-                            mapper=maxofabs_sample()),
+                            postproc=maxofabs_sample()),
                 RangeElementSelector(mode='select')),
             descr="LinSVM on SMLR(lm=1) non-0")
 
@@ -391,7 +417,7 @@ if len(clfswh['linear', 'svm']) > 0:
             RbfCSVMC(),
             SensitivityBasedFeatureSelection(
                SMLRWeights(SMLR(lm=1.0, implementation="C"),
-                           mapper=maxofabs_sample()),
+                           postproc=maxofabs_sample()),
                RangeElementSelector(mode='select')),
             descr="RbfSVM on SMLR(lm=1) non-0")
 
@@ -415,7 +441,7 @@ if len(clfswh['linear', 'svm']) > 0:
         FeatureSelectionClassifier(
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
-               linearSVMC.getSensitivityAnalyzer(mapper=maxofabs_sample()),
+               linearSVMC.get_sensitivity_analyzer(postproc=maxofabs_sample()),
                FractionTailSelector(0.05, mode='select', tail='upper')),
             descr="LinSVM on 5%(SVM)")
 
@@ -423,7 +449,7 @@ if len(clfswh['linear', 'svm']) > 0:
         FeatureSelectionClassifier(
             linearSVMC.clone(),
             SensitivityBasedFeatureSelection(
-               linearSVMC.getSensitivityAnalyzer(mapper=maxofabs_sample()),
+               linearSVMC.get_sensitivity_analyzer(postproc=maxofabs_sample()),
                FixedNElementTailSelector(50, mode='select', tail='upper')),
             descr="LinSVM on 50(SVM)")
 
@@ -452,7 +478,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(), #clfswh['LinearSVMC'][0],         # we train LinearSVM
     #    feature_selection = RFE(             # on features selected via RFE
     #        # based on sensitivity of a clf which does splitting internally
-    #        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
+    #        sensitivity_analyzer=rfesvm_split.get_sensitivity_analyzer(),
     #        transfer_error=ConfusionBasedError(
     #           rfesvm_split,
     #           confusion_state="confusion"),
@@ -469,7 +495,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(),                 # we train LinearSVM
     #    feature_selection = RFE(             # on features selected via RFE
     #        # based on sensitivity of a clf which does splitting internally
-    #        sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
+    #        sensitivity_analyzer=rfesvm_split.get_sensitivity_analyzer(),
     #        transfer_error=ConfusionBasedError(
     #           rfesvm_split,
     #           confusion_state="confusion"),
@@ -492,7 +518,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(),
     #    feature_selection = RFE(             # on features selected via RFE
     #        sensitivity_analyzer=\
-    #            rfesvm.getSensitivityAnalyzer(mapper=absolute_features()),
+    #            rfesvm.get_sensitivity_analyzer(postproc=absolute_features()),
     #        transfer_error=TransferError(rfesvm),
     #        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
     #        feature_selector=FractionTailSelector(
@@ -509,7 +535,7 @@ if len(clfswh['linear', 'svm']) > 0:
     #    clf = LinearCSVMC(),
     #    feature_selection = RFE(             # on features selected via RFE
     #        sensitivity_analyzer=\
-    #            rfesvm.getSensitivityAnalyzer(mapper=absolute_features()),
+    #            rfesvm.get_sensitivity_analyzer(postproc=absolute_features()),
     #        transfer_error=TransferError(rfesvm),
     #        stopping_criterion=FixedErrorThresholdStopCrit(0.05),
     #        feature_selector=FractionTailSelector(

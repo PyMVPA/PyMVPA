@@ -13,10 +13,11 @@ __docformat__ = 'restructuredtext'
 import os
 import tempfile
 import shutil
-import numpy as N
+import numpy as np
 import math
 
-def makeFlobs(pre=0, rise=5, fall=5, undershoot=5, undershootamp=0.3, 
+##REF: Name was automagically refactored
+def make_flobs(pre=0, rise=5, fall=5, undershoot=5, undershootamp=0.3, 
               nsamples=1, resolution=0.05, nsecs=-1, nbasisfns=2):
     """Wrapper around the FSL tool halfcosbasis.
 
@@ -111,7 +112,7 @@ def makeFlobs(pre=0, rise=5, fall=5, undershoot=5, undershootamp=0.3,
         raise RuntimeError, "Problem while running halfcosbasis."
 
     # read samples from file into an array
-    hrfs = N.fromfile( os.path.join( wdir, 'out', 'hrfsamps.txt' ),
+    hrfs = np.fromfile( os.path.join( wdir, 'out', 'hrfsamps.txt' ),
                        sep = ' ' )
 
     # reshape array to get one sample per row and 1d array only

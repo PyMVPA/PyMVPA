@@ -10,13 +10,13 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
-from mvpa.measures.base import FeaturewiseDatasetMeasure
-from mvpa.misc.state import StateVariable
+from mvpa.measures.base import FeaturewiseMeasure
+from mvpa.base.state import ConditionalAttribute
 from mvpa.datasets.base import Dataset
 
-class GLM(FeaturewiseDatasetMeasure):
+class GLM(FeaturewiseMeasure):
     """General linear model (GLM).
 
     Regressors can be defined in a design matrix and a linear fit of the data
@@ -29,11 +29,14 @@ class GLM(FeaturewiseDatasetMeasure):
     The measure is reported in a (nfeatures x nregressors)-shaped array.
     """
 
-    pe = StateVariable(enabled=False,
+    pe = ConditionalAttribute(enabled=False,
         doc="Parameter estimates (nfeatures x nparameters).")
 
-    zstat = StateVariable(enabled=False,
+    zstat = ConditionalAttribute(enabled=False,
         doc="Standardized parameter estimates (nfeatures x nparameters).")
+
+    is_trained = True
+    """Indicate that this measure is always trained."""
 
     def __init__(self, design, voi='pe', **kwargs):
         """
@@ -46,9 +49,9 @@ class GLM(FeaturewiseDatasetMeasure):
           measure. 'beta' are the parameter estimates and 'zstat' returns
           standardized parameter estimates.
         """
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
+        FeaturewiseMeasure.__init__(self, **kwargs)
         # store the design matrix as a such (no copying if already array)
-        self._design = N.asmatrix(design)
+        self._design = np.asmatrix(design)
 
         # what should be computed ('variable of interest')
         if not voi in ['pe', 'zstat']:
@@ -78,10 +81,10 @@ class GLM(FeaturewiseDatasetMeasure):
         betas = self._inv_design * dataset.samples
 
         # charge state
-        self.states.pe = pe = betas.T.A
+        self.ca.pe = pe = betas.T.A
 
         # if betas and no z-stats are desired return them right away
-        if not self._voi == 'pe' or self.states.is_enabled('zstat'):
+        if not self._voi == 'pe' or self.ca.is_enabled('zstat'):
             # compute residuals
             residuals = X * betas
             residuals -= dataset.samples
@@ -91,14 +94,14 @@ class GLM(FeaturewiseDatasetMeasure):
             # XXX next lines ignore off-diagonal elements and hence covariance
             # between regressors. The humble being writing these lines asks the
             # god of statistics for forgives, because it knows not what it does
-            diag_ip = N.diag(self._inv_ip)
+            diag_ip = np.diag(self._inv_ip)
             # (features x betas)
-            beta_vars = N.array([ r.var() * diag_ip for r in residuals.T ])
+            beta_vars = np.array([ r.var() * diag_ip for r in residuals.T ])
             # (parameter x feature)
-            zstat = pe / N.sqrt(beta_vars)
+            zstat = pe / np.sqrt(beta_vars)
 
             # charge state
-            self.states.zstat = zstat
+            self.ca.zstat = zstat
 
         if self._voi == 'pe':
             # return as (beta x feature)
@@ -110,5 +113,5 @@ class GLM(FeaturewiseDatasetMeasure):
             # we shall never get to this point
             raise ValueError, \
                   "Unknown variable of interest '%s'" % str(self._voi)
-        result.sa['regressor'] = N.arange(len(result))
+        result.sa['regressor'] = np.arange(len(result))
         return result

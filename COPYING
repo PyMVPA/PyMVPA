@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
 
 .. _chap_license:
 
@@ -14,8 +14,8 @@ documentation is covered by the MIT license.
 
   The MIT License
 
-  Copyright (c) 2006-2009 Michael Hanke
-                2007-2009 Yaroslav Halchenko
+  Copyright (c) 2006-2010 Michael Hanke
+                2007-2010 Yaroslav Halchenko
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -34,3 +34,52 @@ documentation is covered by the MIT license.
   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   THE SOFTWARE.
+
+
+==============
+3rd Party Code
+==============
+
+Some code distributed within PyMVPA was not developed by PyMVPA team, hence
+you should adhere to the copyright and license terms of respective authors if
+you are to use corresponding parts.
+
+LIBSVM
+------
+
+::
+
+  Files: 3rd/libsvm/*
+
+  BSD-3 License
+
+  Copyright (c) 2000-2009 Chih-Chung Chang and Chih-Jen Lin.
+
+
+NIPY
+----
+
+::
+
+   Files: mvpa/support/nipy/_*py, mvpa/tests/test_emp_null.py
+
+   BSD-3 License
+
+   Copyright (c) 2006-2010, NIPY Developers
+
+
+PDFBook
+-------
+
+::
+
+  Files: tools/pdfbook.c
+
+  GPL version 2 License
+
+  Copyright:
+    Tigran Aivazian <tigran at aivazian.fsnet.co.uk>
+    Jaap Eldering <eldering at a-eskwadraat.nl>
+    Roman Buchert <roman.buchert at arcor.de>
+    Pierre Francois <pf at romanliturgy.org>
+

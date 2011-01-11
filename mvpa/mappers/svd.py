@@ -10,8 +10,9 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
+from mvpa.base.dochelpers import borrowdoc
 from mvpa.mappers.base import accepts_dataset_as_samples
 from mvpa.mappers.projection import ProjectionMapper
 from mvpa.featsel.helpers import ElementSelector
@@ -23,6 +24,8 @@ if __debug__:
 class SVDMapper(ProjectionMapper):
     """Mapper to project data onto SVD components estimated from some dataset.
     """
+
+    @borrowdoc(ProjectionMapper)
     def __init__(self, **kwargs):
         """Initialize the SVDMapper
 
@@ -32,10 +35,12 @@ class SVDMapper(ProjectionMapper):
           All keyword arguments are passed to the ProjectionMapper
           constructor.
 
-            Note, that for the 'selector' argument this class also supports
-            passing a `ElementSelector` instance, which will be used to
-            determine the to be selected features, based on the singular
-            values of each component.
+        Notes
+        -----
+        For the 'selector' argument this class also supports
+        passing a `ElementSelector` instance, which will be used to
+        determine the to be selected features, based on the singular
+        values of each component.
         """
         ProjectionMapper.__init__(self, **kwargs)
 
@@ -48,11 +53,11 @@ class SVDMapper(ProjectionMapper):
         """Determine the projection matrix onto the SVD components from
         a 2D samples x feature data matrix.
         """
-        X = N.asmatrix(samples)
-        X = self._demeanData(X)
+        X = np.asmatrix(samples)
+        X = self._demean_data(X)
 
         # singular value decomposition
-        U, SV, Vh = N.linalg.svd(X, full_matrices=0)
+        U, SV, Vh = np.linalg.svd(X, full_matrices=0)
 
         # store the final matrix with the new basis vectors to project the
         # features onto the SVD components. And store its .H right away to
@@ -69,12 +74,14 @@ class SVDMapper(ProjectionMapper):
             # .norm might be somewhat expensive to compute
             if "MAP_" in debug.active:
                 debug("MAP_", "Mixing matrix has %s shape and norm=%f" %
-                      (self._proj.shape, N.linalg.norm(self._proj)))
+                      (self._proj.shape, np.linalg.norm(self._proj)))
 
 
-    def _computeRecon(self):
+    ##REF: Name was automagically refactored
+    def _compute_recon(self):
         """Since singular vectors are orthonormal, sufficient to take hermitian
         """
         return self._proj.H
+
 
     sv = property(fget=lambda self: self._sv, doc="Singular values")

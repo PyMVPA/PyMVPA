@@ -14,7 +14,7 @@ Searchlight on fMRI data
 .. index:: Searchlight
 
 The original idea of a spatial searchlight algorithm stems from a paper by
-:ref:`Kriegeskorte et al. (2006) <KGB06>`, and has subseqently been used in a
+:ref:`Kriegeskorte et al. (2006) <KGB06>`, and has subsequently been used in a
 number of studies. The most common use for a searchlight is to compute a full
 cross-validation analysis in each spherical region of interest (ROI) in the
 brain. This analysis yields a map of (typically) classification accuracies that
@@ -28,7 +28,7 @@ As always, we first have to import PyMVPA.
 from mvpa.suite import *
 
 """As searchlight analyses are usually quite expensive in term of computational
-ressources, we are going to enable some progress output, to entertain us while
+resources, we are going to enable some progress output to entertain us while
 we are waiting."""
 
 # enable debug output for searchlight call
@@ -36,7 +36,7 @@ if __debug__:
     debug.active += ["SLC"]
 
 """The next few calls load an fMRI dataset, while assigning associated class
-labels and chunks (experiment runs) to each volume in the 4D timeseries.  One
+targets and chunks (experiment runs) to each volume in the 4D timeseries.  One
 aspect is worth mentioning. When loading the fMRI data with
 :func:`~mvpa.datasets.mri.fmri_dataset()` additional feature attributes can be
 added, by providing a dictionary with names and source pairs to the `add_fa`
@@ -44,13 +44,14 @@ arguments. In this case we are loading a thresholded zstat-map of a category
 selectivity contrast for voxels ventral temporal cortex."""
 
 # data path
-datapath = os.path.join(pymvpa_datadbroot, 'demo_blockfmri', 'demo_blockfmri')
-# source of class labels and chunks definitions
+datapath = os.path.join(pymvpa_datadbroot,
+                        'tutorial_data', 'tutorial_data', 'data')
+# source of class targets and chunks definitions
 attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
 
 dataset = fmri_dataset(
                 samples=os.path.join(datapath, 'bold.nii.gz'),
-                labels=attr.labels,
+                targets=attr.targets,
                 chunks=attr.chunks,
                 mask=os.path.join(datapath, 'mask_brain.nii.gz'),
                 add_fa={'vt_thr_glm': os.path.join(datapath, 'mask_vt.nii.gz')})
@@ -61,32 +62,32 @@ to perform a few preprocessing steps (please note that the data was already
 motion-corrected). The first step is a chunk-wise (run-wise) removal of linear
 trends, typically caused by the acquisition equipment."""
 
-poly_detrend(dataset, polyord=1, chunks='chunks')
+poly_detrend(dataset, polyord=1, chunks_attr='chunks')
 
 """Now that the detrending is done, we can remove parts of the timeseries we
-are not interested in. For this example we are only considering volume acquired
-during stimulation block with images of houses and scrambled pictures, as well
+are not interested in. For this example we are only considering volumes acquired
+during a stimulation block with images of houses and scrambled pictures, as well
 as rest periods (for now). It is important to perform the detrending before
 this selection, as otherwise the equal spacing of fMRI volumes is no longer
 guaranteed."""
 
-dataset = dataset[N.array([l in ['rest', 'house', 'scrambledpix']
-                           for l in dataset.labels], dtype='bool')]
+dataset = dataset[np.array([l in ['rest', 'house', 'scrambledpix']
+                           for l in dataset.targets], dtype='bool')]
 
 """The final preprocessing step is data-normalization. This is a required step
-for many classification algorithm. it scales all features (voxels)
-approximately into the same range and removed the mean. In this example, we
+for many classification algorithms. It scales all features (voxels)
+into approximately the same range and removes the mean. In this example, we
 perform a chunk-wise normalization and compute standard deviation and mean for
 z-scoring based on the volumes corresponding to rest periods in the experiment.
 The resulting features could be interpreted as being voxel salience relative
 to 'rest'."""
 
-zscore(dataset, chunks='chunks', param_est=('labels', ['rest']), dtype='float32')
+zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']), dtype='float32')
 
 """After normalization is completed, we no longer need the 'rest'-samples and
 remove them."""
 
-dataset = dataset[dataset.sa.labels != 'rest']
+dataset = dataset[dataset.sa.targets != 'rest']
 
 """But now for the interesting part: Next we define the measure that shall be
 computed for each sphere. Theoretically, this can be anything, but here we
@@ -98,8 +99,7 @@ clf = LinearNuSVMC()
 
 # setup measure to be computed by Searchlight
 # cross-validated mean transfer using an N-fold dataset splitter
-cv = CrossValidatedTransferError(TransferError(clf),
-                                 NFoldSplitter())
+cv = CrossValidation(clf, NFoldPartitioner())
 
 """In this example, we do not want to compute full-brain accuracy maps, but
 instead limit ourselves to a specific subset of voxels. We'll select all voxel
@@ -111,14 +111,14 @@ location of all to be processed spheres."""
 # get ids of features that have a nonzero value
 center_ids = dataset.fa.vt_thr_glm.nonzero()[0]
 
-"""Finally, we can the searchlight. We'll perform the analysis for three
+"""Finally, we can run the searchlight. We'll perform the analysis for three
 different radii, each time computing an error for each sphere. To achieve this,
 we simply use the :func:`~mvpa.measures.searchlight.sphere_searchlight` class,
 which takes any :term:`processing object` and a radius as arguments. The
 :term:`processing object` has to compute the intended measure, when called with
 a dataset. The :func:`~mvpa.measures.searchlight.sphere_searchlight` object
-will do nothing more than generating small datasets for each sphere, feeding it
-to the processing object and storing the result."""
+will do nothing more than generate small datasets for each sphere, feeding them
+to the processing object, and storing the result."""
 
 # setup plotting parameters (not essential for the analysis itself)
 plot_args = {
@@ -127,7 +127,7 @@ plot_args = {
     'overlay_mask' : os.path.join(datapath, 'mask_vt.nii.gz'),
     'do_stretch_colors' : False,
     'cmap_bg' : 'gray',
-    'cmap_overlay' : 'autumn', # YlOrRd_r # P.cm.autumn
+    'cmap_overlay' : 'autumn', # YlOrRd_r # pl.cm.autumn
     'interactive' : cfg.getboolean('examples', 'interactive', True),
     }
 
@@ -139,10 +139,10 @@ for radius in [0, 1, 3]:
     Here we actually setup the spherical searchlight by configuring the
     radius, and our selection of sphere center coordinates. Moreover, via the
     `space` argument we can instruct the searchlight which feature attribute
-    shall be sued to determine the voxel neighborhood. By default,
+    shall be used to determine the voxel neighborhood. By default,
     :func:`~mvpa.datasets.mri.fmri_dataset()` creates a corresponding attribute
     called `voxel_indices`.  Using the `mapper` argument it is possible to
-    post-process the results computed for each sphere. Corss-validation will
+    post-process the results computed for each sphere. Cross-validation will
     compute an error value per each fold, but here we are only interested in
     the mean error across all folds. Finally, on multi-core machines `nproc`
     can be used to enabled parallelization by setting it to the number of
@@ -152,7 +152,7 @@ for radius in [0, 1, 3]:
 
     sl = sphere_searchlight(cv, radius=radius, space='voxel_indices',
                             center_ids=center_ids,
-                            mapper=mean_sample())
+                            postproc=mean_sample())
 
     """
     Since we care about efficiency, we are stripping all attributes from the
@@ -161,13 +161,13 @@ for radius in [0, 1, 3]:
     """
 
     ds = dataset.copy(deep=False,
-                      sa=['labels', 'chunks'],
+                      sa=['targets', 'chunks'],
                       fa=['voxel_indices'],
                       a=['mapper'])
 
     """
     Finally, we actually run the analysis. The result is returned as a
-    dataset. For the coming plotting, we are transforming the returned error
+    dataset. For the upcoming plots, we are transforming the returned error
     maps into accuracies.
     """
 
@@ -189,16 +189,16 @@ for radius in [0, 1, 3]:
     by the mask of ventral temproal cortex.
     """
 
-    fig = P.figure(figsize=(12, 4), facecolor='white')
+    fig = pl.figure(figsize=(12, 4), facecolor='white')
     subfig = plot_lightbox(overlay=niftiresults,
                            vlim=(0.5, None), slices=range(23,31),
                            fig=fig, **plot_args)
-    P.title('Accuracy distribution for radius %i' % radius)
+    pl.title('Accuracy distribution for radius %i' % radius)
 
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
-    P.show()
+    pl.show()
 
 """The following figures show the resulting accuracy maps for the slices
 covered by the ventral temporal cortex mask. Note that each voxel value

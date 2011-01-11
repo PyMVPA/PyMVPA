@@ -16,10 +16,10 @@ Example demonstrating a topography plot."""
 from mvpa.suite import *
 
 # Sanity check if we have griddata available
-externals.exists("griddata", raiseException=True)
+externals.exists("griddata", raise_=True)
 
 # EEG example splot
-P.subplot(1, 2, 1)
+pl.subplot(1, 2, 1)
 
 # load the sensor information from their definition file.
 # This file has sensor names, as well as their 3D coordinates
@@ -27,32 +27,32 @@ sensors=XAVRSensorLocations(os.path.join(pymvpa_dataroot, 'xavr1010.dat'))
 
 # make up some artifical topography
 # 'enable' to channels, all others set to off ;-)
-topo = N.zeros(len(sensors.names))
+topo = np.zeros(len(sensors.names))
 topo[sensors.names.index('O1')] = 1
 topo[sensors.names.index('F4')] = 1
 
 # plot with sensor locations shown
-plotHeadTopography(topo, sensors.locations(), plotsensors=True)
+plot_head_topography(topo, sensors.locations(), plotsensors=True)
 
 
 # MEG example plot
-P.subplot(1, 2, 2)
+pl.subplot(1, 2, 2)
 
 # load MEG sensor locations
 sensors=TuebingenMEGSensorLocations(
             os.path.join(pymvpa_dataroot, 'tueb_meg_coord.xyz'))
 
 # random values this time
-topo = N.random.randn(len(sensors.names))
+topo = np.random.randn(len(sensors.names))
 
 # plot without additional interpolation
-plotHeadTopography(topo, sensors.locations(),
+plot_head_topography(topo, sensors.locations(),
                    interpolation='nearest')
 
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
-    P.show()
+    pl.show()
 
 """
 The ouput of the provided example should look like

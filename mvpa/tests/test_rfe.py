@@ -8,56 +8,38 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA recursive feature elimination"""
 
-from sets import Set
+import numpy as np
 
-from mvpa.datasets.splitters import NFoldSplitter
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
+from mvpa.generators.partition import NFoldPartitioner
+from mvpa.generators.permutation import AttributePermutator
+from mvpa.generators.splitters import Splitter
 from mvpa.datasets.base import Dataset
-from mvpa.mappers.fx import maxofabs_sample, mean_sample
-from mvpa.measures.base import FeaturewiseDatasetMeasure
+from mvpa.mappers.base import ChainMapper
+from mvpa.mappers.fx import maxofabs_sample, mean_sample, BinaryFxNode
+from mvpa.misc.errorfx import mean_mismatch_error
 from mvpa.featsel.rfe import RFE
 from mvpa.featsel.base import \
-     SensitivityBasedFeatureSelection, \
-     FeatureSelectionPipeline
+     SensitivityBasedFeatureSelection
 from mvpa.featsel.helpers import \
      NBackHistoryStopCrit, FractionTailSelector, FixedErrorThresholdStopCrit, \
      MultiStopCrit, NStepsStopCrit, \
      FixedNElementTailSelector, BestDetector, RangeElementSelector
 
 from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier
-from mvpa.clfs.transerror import TransferError
-from mvpa.misc.transformers import Absolute
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.clfs.stats import MCNullDist
+from mvpa.measures.base import ProxyMeasure, CrossValidation
 
-from mvpa.misc.state import UnknownStateError
+from mvpa.base.state import UnknownStateError
 
-from tests_warehouse import *
-from tests_warehouse_clfs import *
-
-class SillySensitivityAnalyzer(FeaturewiseDatasetMeasure):
-    """Simple one which just returns xrange[-N/2, N/2], where N is the
-    number of features
-    """
-
-    def __init__(self, mult=1, **kwargs):
-        FeaturewiseDatasetMeasure.__init__(self, **kwargs)
-        self.__mult = mult
-
-    def _call(self, dataset):
-        """Train linear SVM on `dataset` and extract weights from classifier.
-        """
-        sens = self.__mult *( N.arange(dataset.nfeatures) - int(dataset.nfeatures/2) )
-        return Dataset(sens[N.newaxis])
+from mvpa.testing import *
+from mvpa.testing.clfs import *
+from mvpa.testing.datasets import datasets
 
 
 class RFETests(unittest.TestCase):
-
-    def getData(self):
-        return datasets['uni2medium_train']
-
-    def getDataT(self):
-        return datasets['uni2medium_test']
+    def get_data(self):
+        return datasets['uni2medium']
 
 
     def test_best_detector(self):
@@ -154,71 +136,71 @@ class RFETests(unittest.TestCase):
         """Test feature selector"""
         # remove 10% weekest
         selector = FractionTailSelector(0.1)
-        data = N.array([3.5, 10, 7, 5, -0.4, 0, 0, 2, 10, 9])
+        data = np.array([3.5, 10, 7, 5, -0.4, 0, 0, 2, 10, 9])
         # == rank [4, 5, 6, 7, 0, 3, 2, 9, 1, 8]
-        target10 = N.array([0, 1, 2, 3, 5, 6, 7, 8, 9])
-        target30 = N.array([0, 1, 2, 3, 7, 8, 9])
+        target10 = np.array([0, 1, 2, 3, 5, 6, 7, 8, 9])
+        target30 = np.array([0, 1, 2, 3, 7, 8, 9])
 
         self.failUnlessRaises(UnknownStateError,
-                              selector.states.__getattribute__, 'ndiscarded')
+                              selector.ca.__getattribute__, 'ndiscarded')
         self.failUnless((selector(data) == target10).all())
         selector.felements = 0.30      # discard 30%
         self.failUnless(selector.felements == 0.3)
         self.failUnless((selector(data) == target30).all())
-        self.failUnless(selector.states.ndiscarded == 3) # se 3 were discarded
+        self.failUnless(selector.ca.ndiscarded == 3) # se 3 were discarded
 
         selector = FixedNElementTailSelector(1)
         #                   0   1   2  3   4    5  6  7  8   9
-        data = N.array([3.5, 10, 7, 5, -0.4, 0, 0, 2, 10, 9])
+        data = np.array([3.5, 10, 7, 5, -0.4, 0, 0, 2, 10, 9])
         self.failUnless((selector(data) == target10).all())
 
         selector.nelements = 3
         self.failUnless(selector.nelements == 3)
         self.failUnless((selector(data) == target30).all())
-        self.failUnless(selector.states.ndiscarded == 3)
+        self.failUnless(selector.ca.ndiscarded == 3)
 
         # test range selector
         # simple range 'above'
         self.failUnless((RangeElementSelector(lower=0)(data) == \
-                         N.array([0,1,2,3,7,8,9])).all())
+                         np.array([0,1,2,3,7,8,9])).all())
 
         self.failUnless((RangeElementSelector(lower=0,
                                               inclusive=True)(data) == \
-                         N.array([0,1,2,3,5,6,7,8,9])).all())
+                         np.array([0,1,2,3,5,6,7,8,9])).all())
 
         self.failUnless((RangeElementSelector(lower=0, mode='discard',
                                               inclusive=True)(data) == \
-                         N.array([4])).all())
+                         np.array([4])).all())
 
         # simple range 'below'
         self.failUnless((RangeElementSelector(upper=2)(data) == \
-                         N.array([4,5,6])).all())
+                         np.array([4,5,6])).all())
 
         self.failUnless((RangeElementSelector(upper=2,
                                               inclusive=True)(data) == \
-                         N.array([4,5,6,7])).all())
+                         np.array([4,5,6,7])).all())
 
         self.failUnless((RangeElementSelector(upper=2, mode='discard',
                                               inclusive=True)(data) == \
-                         N.array([0,1,2,3,8,9])).all())
+                         np.array([0,1,2,3,8,9])).all())
 
 
         # ranges
         self.failUnless((RangeElementSelector(lower=2, upper=9)(data) == \
-                         N.array([0,2,3])).all())
+                         np.array([0,2,3])).all())
 
         self.failUnless((RangeElementSelector(lower=2, upper=9,
                                               inclusive=True)(data) == \
-                         N.array([0,2,3,7,9])).all())
+                         np.array([0,2,3,7,9])).all())
 
         self.failUnless((RangeElementSelector(upper=2, lower=9, mode='discard',
                                               inclusive=True)(data) ==
                          RangeElementSelector(lower=2, upper=9,
                                               inclusive=False)(data)).all())
 
-        # non-0 elements -- should be equivalent to N.nonzero()[0]
+        # non-0 elements -- should be equivalent to np.nonzero()[0]
         self.failUnless((RangeElementSelector()(data) == \
-                         N.nonzero(data)[0]).all())
+                         np.nonzero(data)[0]).all())
 
 
     # XXX put GPR back in after it gets fixed up
@@ -226,7 +208,7 @@ class RFETests(unittest.TestCase):
     def test_sensitivity_based_feature_selection(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = clf.getSensitivityAnalyzer(mapper=maxofabs_sample())
+        sens_ana = clf.get_sensitivity_analyzer(postproc=maxofabs_sample())
 
         # of features to remove
         Nremove = 2
@@ -236,49 +218,35 @@ class RFETests(unittest.TestCase):
         # Use absolute of the svm weights as sensitivity
         fe = SensitivityBasedFeatureSelection(sens_ana,
                 feature_selector=FixedNElementTailSelector(2),
-                enable_states=["sensitivity", "selected_ids"])
+                enable_ca=["sensitivity", "selected_ids"])
 
-        wdata = self.getData()
-        tdata = self.getDataT()
-        # XXX for now convert to numeric labels, but should better be taken
-        # care of during clf refactoring
-        am = AttributeMap()
-        wdata.labels = am.to_numeric(wdata.labels)
-        tdata.labels = am.to_numeric(tdata.labels)
+        data = self.get_data()
 
-        wdata_nfeatures = wdata.nfeatures
-        tdata_nfeatures = tdata.nfeatures
+        data_nfeatures = data.nfeatures
 
-        sdata, stdata = fe(wdata, tdata)
+        fe.train(data)
+        resds = fe(data)
 
         # fail if orig datasets are changed
-        self.failUnless(wdata.nfeatures == wdata_nfeatures)
-        self.failUnless(tdata.nfeatures == tdata_nfeatures)
+        self.failUnless(data.nfeatures == data_nfeatures)
 
         # silly check if nfeatures got a single one removed
-        self.failUnlessEqual(wdata.nfeatures, sdata.nfeatures+Nremove,
+        self.failUnlessEqual(data.nfeatures, resds.nfeatures+Nremove,
             msg="We had to remove just a single feature")
 
-        self.failUnlessEqual(tdata.nfeatures, stdata.nfeatures+Nremove,
-            msg="We had to remove just a single feature in testing as well")
-
-        self.failUnlessEqual(fe.states.sensitivity.nfeatures, wdata_nfeatures,
+        self.failUnlessEqual(fe.ca.sensitivity.nfeatures, data_nfeatures,
             msg="Sensitivity have to have # of features equal to original")
 
-        self.failUnlessEqual(len(fe.states.selected_ids), sdata.nfeatures,
-            msg="# of selected features must be equal the one in the result dataset")
 
 
     def test_feature_selection_pipeline(self):
         sens_ana = SillySensitivityAnalyzer()
 
-        wdata = self.getData()
-        wdata_nfeatures = wdata.nfeatures
-        tdata = self.getDataT()
-        tdata_nfeatures = tdata.nfeatures
+        data = self.get_data()
+        data_nfeatures = data.nfeatures
 
         # test silly one first ;-)
-        self.failUnlessEqual(sens_ana(wdata).samples[0,0], -int(wdata_nfeatures/2))
+        self.failUnlessEqual(sens_ana(data).samples[0,0], -int(data_nfeatures/2))
 
         # OLD: first remove 25% == 6, and then 4, total removing 10
         # NOW: test should be independent of the numerical number of features
@@ -291,25 +259,18 @@ class RFETests(unittest.TestCase):
                               ]
 
         # create a FeatureSelection pipeline
-        feat_sel_pipeline = FeatureSelectionPipeline(
-            feature_selections=feature_selections,
-            enable_states=['nfeatures', 'selected_ids'])
+        feat_sel_pipeline = ChainMapper(feature_selections)
 
-        sdata, stdata = feat_sel_pipeline(wdata, tdata)
+        feat_sel_pipeline.train(data)
+        resds = feat_sel_pipeline(data)
 
-        self.failUnlessEqual(len(feat_sel_pipeline.feature_selections),
+        self.failUnlessEqual(len(feat_sel_pipeline),
                              len(feature_selections),
                              msg="Test the property feature_selections")
 
-        desired_nfeatures = int(N.ceil(wdata_nfeatures*0.75))
-        self.failUnlessEqual(feat_sel_pipeline.states.nfeatures,
-                             [wdata_nfeatures, desired_nfeatures],
-                             msg="Test if nfeatures get assigned properly."
-                             " Got %s!=%s" % (feat_sel_pipeline.states.nfeatures,
-                                              [wdata_nfeatures, desired_nfeatures]))
-
-        self.failUnlessEqual(list(feat_sel_pipeline.states.selected_ids),
-                             range(int(wdata_nfeatures*0.25)+4, wdata_nfeatures))
+        desired_nfeatures = int(np.ceil(data_nfeatures*0.75))
+        self.failUnlessEqual([fe._oshape[0] for fe in feat_sel_pipeline],
+                             [desired_nfeatures, desired_nfeatures - 4])
 
 
     # TODO: should later on work for any clfs_with_sens
@@ -317,49 +278,49 @@ class RFETests(unittest.TestCase):
     def test_rfe(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
-        sens_ana = clf.getSensitivityAnalyzer(mapper=maxofabs_sample())
-        trans_error = TransferError(clf)
+        sens_ana = clf.get_sensitivity_analyzer(postproc=maxofabs_sample())
+        pmeasure = ProxyMeasure(clf, postproc=BinaryFxNode(mean_mismatch_error,
+                                                           'targets'))
         # because the clf is already trained when computing the sensitivity
         # map, prevent retraining for transfer error calculation
         # Use absolute of the svm weights as sensitivity
         rfe = RFE(sens_ana,
-                  trans_error,
-                  feature_selector=FixedNElementTailSelector(1),
-                  train_clf=False)
+                  pmeasure,
+                  Splitter('train'),
+                  fselector=FixedNElementTailSelector(1),
+                  train_pmeasure=False)
 
-        wdata = self.getData()
-        wdata_nfeatures = wdata.nfeatures
-        tdata = self.getDataT()
-        tdata_nfeatures = tdata.nfeatures
+        data = self.get_data()
+        data_nfeatures = data.nfeatures
 
-        sdata, stdata = rfe(wdata, tdata)
+        rfe.train(data)
+        resds = rfe(data)
 
         # fail if orig datasets are changed
-        self.failUnless(wdata.nfeatures == wdata_nfeatures)
-        self.failUnless(tdata.nfeatures == tdata_nfeatures)
+        self.failUnless(data.nfeatures == data_nfeatures)
 
         # check that the features set with the least error is selected
-        if len(rfe.states.errors):
-            e = N.array(rfe.states.errors)
-            self.failUnless(sdata.nfeatures == wdata_nfeatures - e.argmin())
+        if len(rfe.ca.errors):
+            e = np.array(rfe.ca.errors)
+            self.failUnless(resds.nfeatures == data_nfeatures - e.argmin())
         else:
-            self.failUnless(sdata.nfeatures == wdata_nfeatures)
+            self.failUnless(resds.nfeatures == data_nfeatures)
 
         # silly check if nfeatures is in decreasing order
-        nfeatures = N.array(rfe.states.nfeatures).copy()
+        nfeatures = np.array(rfe.ca.nfeatures).copy()
         nfeatures.sort()
-        self.failUnless( (nfeatures[::-1] == rfe.states.nfeatures).all() )
+        self.failUnless( (nfeatures[::-1] == rfe.ca.nfeatures).all() )
 
         # check if history has elements for every step
-        self.failUnless(Set(rfe.states.history)
-                        == Set(range(len(N.array(rfe.states.errors)))))
+        self.failUnless(set(rfe.ca.history)
+                        == set(range(len(np.array(rfe.ca.errors)))))
 
         # Last (the largest number) can be present multiple times even
         # if we remove 1 feature at a time -- just need to stop well
         # in advance when we have more than 1 feature left ;)
-        self.failUnless(rfe.states.nfeatures[-1]
-                        == len(N.where(rfe.states.history
-                                       ==max(rfe.states.history))[0]))
+        self.failUnless(rfe.ca.nfeatures[-1]
+                        == len(np.where(rfe.ca.history
+                                       ==max(rfe.ca.history))[0]))
 
         # XXX add a test where sensitivity analyser and transfer error do not
         # use the same classifier
@@ -370,26 +331,24 @@ class RFETests(unittest.TestCase):
         dataset = datasets['uni2small']
         rfesvm_split = LinearCSVMC()
         fs = \
-            RFE(sensitivity_analyzer=rfesvm_split.getSensitivityAnalyzer(),
-                transfer_error=TransferError(rfesvm_split),
-                feature_selector=FractionTailSelector(
+            RFE(rfesvm_split.get_sensitivity_analyzer(),
+                ProxyMeasure(rfesvm_split,
+                             postproc=BinaryFxNode(mean_mismatch_error,
+                                                   'targets')),
+                Splitter('train'),
+                fselector=FractionTailSelector(
                     percent / 100.0,
                     mode='select', tail='upper'), update_sensitivity=True)
 
         clf = FeatureSelectionClassifier(
-            clf = LinearCSVMC(),
+            LinearCSVMC(),
             # on features selected via RFE
-            feature_selection = fs)
+            fs)
              # update sensitivity at each step (since we're not using the
              # same CLF as sensitivity analyzer)
-        clf.states.enable('feature_ids')
 
-        cv = CrossValidatedTransferError(
-            TransferError(clf),
-            NFoldSplitter(cvtype=1),
-            mapper=mean_sample(),
-            enable_states=['confusion'],
-            expose_testdataset=True)
+        cv = CrossValidation(clf, NFoldPartitioner(), postproc=mean_sample(),
+            enable_ca=['confusion'])
         #cv = SplitClassifier(clf)
         try:
             error = cv(dataset).samples.squeeze()
@@ -399,7 +358,8 @@ class RFETests(unittest.TestCase):
         self.failUnless(error < 0.2)
 
 
-    def __testMatthiasQuestion(self):
+    ##REF: Name was automagically refactored
+    def __test_matthias_question(self):
         rfe_clf = LinearCSVMC(C=1)
 
         rfesvm_split = SplitClassifier(rfe_clf)
@@ -407,9 +367,9 @@ class RFETests(unittest.TestCase):
             FeatureSelectionClassifier(
             clf = LinearCSVMC(C=1),
             feature_selection = RFE(
-                sensitivity_analyzer = rfesvm_split.getSensitivityAnalyzer(
-                    combiner=FirstAxisMean,
-                    transformer=N.abs),
+                sensitivity_analyzer = rfesvm_split.get_sensitivity_analyzer(
+                    combiner=first_axis_mean,
+                    transformer=np.abs),
                 transfer_error=ConfusionBasedError(
                     rfesvm_split,
                     confusion_state="confusion"),
@@ -418,18 +378,14 @@ class RFETests(unittest.TestCase):
                     0.2, mode='discard', tail='lower'),
                 update_sensitivity=True))
 
-        splitter = NFoldSplitter(cvtype=1)
         no_permutations = 1000
-
-        cv = CrossValidatedTransferError(
-            TransferError(clf),
-            splitter,
-            null_dist=MCNullDist(permutations=no_permutations,
-                                 tail='left'),
-            enable_states=['confusion'])
+        permutator = AttributePermutator('targets', count=no_permutations)
+        cv = CrossValidation(clf, NFoldPartitioner(),
+            null_dist=MCNullDist(permutator, tail='left'),
+            enable_ca=['stats'])
         error = cv(datasets['uni2small'])
         self.failUnless(error < 0.4)
-        self.failUnless(cv.states.null_prob < 0.05)
+        self.failUnless(cv.ca.null_prob < 0.05)
 
 def suite():
     return unittest.makeSuite(RFETests)

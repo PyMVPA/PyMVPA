@@ -11,10 +11,10 @@
 __docformat__ = 'restructuredtext'
 
 
-import numpy as N
+import numpy as np
 from mvpa.base import externals
 
-if externals.exists("scipy", raiseException=True):
+if externals.exists("scipy", raise_=True):
     from scipy.linalg import lstsq
 
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
@@ -46,7 +46,7 @@ class RidgeReg(Classifier):
 
         # It does not make sense to calculate a confusion matrix for a
         # ridge regression
-        self.states.enable('training_confusion', False)
+        self.ca.enable('training_stats', False)
 
         # verify that they specified lambda
         self.__lm = lm
@@ -59,11 +59,11 @@ class RidgeReg(Classifier):
         """String summary of the object
         """
         if self.__lm is None:
-            return """Ridge(lm=.05*nfeatures, enable_states=%s)""" % \
-                (str(self.states.enabled))
+            return """Ridge(lm=.05*nfeatures, enable_ca=%s)""" % \
+                (str(self.ca.enabled))
         else:
-            return """Ridge(lm=%f, enable_states=%s)""" % \
-                (self.__lm, str(self.states.enabled))
+            return """Ridge(lm=%f, enable_ca=%s)""" % \
+                (self.__lm, str(self.ca.enabled))
 
 
     def _train(self, data):
@@ -75,16 +75,17 @@ class RidgeReg(Classifier):
             # determine the lambda matrix
             if self.__lm is None:
                 # Not specified, so calculate based on .05*nfeatures
-                Lambda = .05*data.nfeatures*N.eye(data.nfeatures)
+                Lambda = .05*data.nfeatures*np.eye(data.nfeatures)
             else:
                 # use the provided penalty
-                Lambda = self.__lm*N.eye(data.nfeatures)
+                Lambda = self.__lm*np.eye(data.nfeatures)
 
             # add the penalty term
-            a = N.concatenate( \
-                (N.concatenate((data.samples, N.ones((data.nsamples, 1))), 1),
-                    N.concatenate((Lambda, N.zeros((data.nfeatures, 1))), 1)))
-            b = N.concatenate((data.labels, N.zeros(data.nfeatures)))
+            a = np.concatenate( \
+                (np.concatenate((data.samples, np.ones((data.nsamples, 1))), 1),
+                    np.concatenate((Lambda, np.zeros((data.nfeatures, 1))), 1)))
+            b = np.concatenate((data.sa[self.get_space()].value,
+                               np.zeros(data.nfeatures)))
 
             # perform the least sq regression and save the weights
             self.w = lstsq(a, b)[0]
@@ -99,6 +100,9 @@ class RidgeReg(Classifier):
         Predict the output for the provided data.
         """
         # predict using the trained weights
-        return N.dot(N.concatenate((data, N.ones((len(data), 1))), 1),
+        pred = np.dot(np.concatenate((data, np.ones((len(data), 1))), 1),
                      self.w)
+        # estimates equal predictions in this case
+        self.ca.estimates = pred
+        return pred
 

@@ -10,14 +10,13 @@
 
 import unittest, copy
 
-import numpy as N
-from sets import Set
+import numpy as np
 
 from mvpa.datasets.base import dataset_wizard
-from mvpa.misc.state import ClassWithCollections, StateVariable
-from mvpa.misc.param import Parameter, KernelParameter
+from mvpa.base.state import ClassWithCollections, ConditionalAttribute
+from mvpa.base.param import Parameter, KernelParameter
 
-from tests_warehouse_clfs import SameSignClassifier
+from mvpa.testing.clfs import *
 
 class ParametrizedClassifier(SameSignClassifier):
     p1 = Parameter(1.0)
@@ -38,14 +37,14 @@ class SimpleClass(ClassWithCollections):
 class MixedClass(ClassWithCollections):
     C = Parameter(1.0, min=0, doc="C parameter")
     D = Parameter(3.0, min=0, doc="D parameter")
-    state1 = StateVariable(doc="bogus")
+    state1 = ConditionalAttribute(doc="bogus")
 
 class ParamsTests(unittest.TestCase):
 
     def test_blank(self):
         blank  = BlankClass()
 
-        self.failUnlessRaises(AttributeError, blank.__getattribute__, 'states')
+        self.failUnlessRaises(AttributeError, blank.__getattribute__, 'ca')
         self.failUnlessRaises(AttributeError, blank.__getattribute__, '')
 
     def test_simple(self):
@@ -83,7 +82,7 @@ class ParamsTests(unittest.TestCase):
         mixed  = MixedClass()
 
         self.failUnlessEqual(len(mixed.params.items()), 2)
-        self.failUnlessEqual(len(mixed.states.items()), 1)
+        self.failUnlessEqual(len(mixed.ca.items()), 1)
         self.failUnlessRaises(AttributeError, mixed.__getattribute__, 'kernel_params')
 
         self.failUnlessEqual(mixed.params.C, 1.0)
@@ -111,7 +110,7 @@ class ParamsTests(unittest.TestCase):
         clfe.kernel_params.kp2 = 201.0
         self.failUnlessEqual(clfe.kernel_params.kp2, 201.0)
         self.failUnlessEqual(clfe.kernel_params.is_set("kp2"), True)
-        clfe.train(dataset_wizard(samples=[[0,0]], labels=[1], chunks=[1]))
+        clfe.train(dataset_wizard(samples=[[0,0]], targets=[1], chunks=[1]))
         self.failUnlessEqual(clfe.kernel_params.is_set("kp2"), False)
         self.failUnlessEqual(clfe.kernel_params.is_set(), False)
         self.failUnlessEqual(clfe.params.is_set(), False)

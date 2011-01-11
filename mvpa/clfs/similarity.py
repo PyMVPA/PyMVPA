@@ -9,7 +9,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Similarity functions for prototype-based projection."""
 
-import numpy as N
+import numpy as np
 
 from mvpa.clfs.distance import squared_euclidean_distance
 
@@ -31,7 +31,7 @@ class Similarity(object):
 class SingleDimensionSimilarity(Similarity):
     """TODO
 
-    math:: e^{(-|data1_j-data2_j|_2)}``
+    .. math:: e^{(-|data1_j - data2_j|_2)}
 
     """
     def __init__(self, d=0, **kwargs):
@@ -48,7 +48,7 @@ class SingleDimensionSimilarity(Similarity):
 
     def computed(self, data1, data2=None):
         if data2 == None: data2 = data1
-        self.similarity_matrix = N.exp(-N.abs(data1[:, self.d],
+        self.similarity_matrix = np.exp(-np.abs(data1[:, self.d],
                                               data2[:, self.d]))
         return self.similarity_matrix
 
@@ -74,26 +74,26 @@ class StreamlineSimilarity(Similarity):
     def computed(self, data1, data2=None):
         if data2 == None:
             data2 = data1
-        self.distance_matrix = N.zeros((len(data1), len(data2)))
+        self.distance_matrix = np.zeros((len(data1), len(data2)))
 
         # setup helpers to pull out content of object-type arrays
-        if isinstance(data1, N.ndarray) and N.issubdtype(data1.dtype, N.object):
+        if isinstance(data1, np.ndarray) and np.issubdtype(data1.dtype, np.object):
             d1extract = _pass_obj_content
         else:
             d1extract = lambda x: x
 
-        if isinstance(data2, N.ndarray) and N.issubdtype(data2.dtype, N.object):
+        if isinstance(data2, np.ndarray) and np.issubdtype(data2.dtype, np.object):
             d2extract = _pass_obj_content
         else:
             d2extract = lambda x: x
 
-        # TODO: use N.fromfunction
+        # TODO: use np.fromfunction
         for i, d1 in enumerate(data1):
             for j, d2 in enumerate(data2):
                 self.distance_matrix[i,j] = self.distance(d1extract(data1[i]),
                                                           d2extract(data2[j]))
 
-        self.similarity_matrix = N.exp(-self.gamma*self.distance_matrix)
+        self.similarity_matrix = np.exp(-self.gamma*self.distance_matrix)
         return self.similarity_matrix
 
 

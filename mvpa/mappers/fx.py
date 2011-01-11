@@ -10,17 +10,26 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 import operator
 
+from mvpa.base import warning
+from mvpa.base.node import Node
+from mvpa.datasets import Dataset
+from mvpa.base.dochelpers import _str
 from mvpa.mappers.base import Mapper
 from mvpa.misc.support import array_whereequal
 from mvpa.base.dochelpers import borrowdoc
 
+from mvpa.misc.transformers import sum_of_abs, max_of_abs
+
 class FxMapper(Mapper):
     """Apply a custom transformation to (groups of) samples or features.
-
     """
+
+    is_trained = True
+    """Indicate that this mapper is always trained."""
+
     def __init__(self, axis, fx, fxargs=None, uattrs=None,
                  attrfx='merge'):
         """
@@ -75,8 +84,13 @@ class FxMapper(Mapper):
         return s.replace("(", '(%s, ' % ', '.join(sargs), 1)
 
 
+    def __str__(self):
+        return _str(self, fx=self.__fx.__name__)
+
+
     def _train(self, ds):
-        # right now it needs no training
+        # right now it needs no training, if anything is added here make sure to
+        # remove is_trained class attribute
         pass
 
 
@@ -85,15 +99,15 @@ class FxMapper(Mapper):
         if not self.__uattrs is None:
             raise RuntimeError("%s does not support forward-mapping of plain "
                                "data when data grouping based on attributes "
-                               "is requested" 
+                               "is requested"
                                % self.__class__.__name__)
         # apply fx along samples axis for each feature
         if self.__axis == 'samples':
-            mdata = N.apply_along_axis(self.__fx, 0, data, *self.__fxargs)
+            mdata = np.apply_along_axis(self.__fx, 0, data, *self.__fxargs)
         # apply fx along features axis for each sample
         elif self.__axis == 'features':
-            mdata = N.apply_along_axis(self.__fx, 1, data, *self.__fxargs)
-        return N.atleast_2d(mdata)
+            mdata = np.apply_along_axis(self.__fx, 1, data, *self.__fxargs)
+        return np.atleast_2d(mdata)
 
     @borrowdoc(Mapper)
     def _forward_dataset(self, ds):
@@ -110,7 +124,7 @@ class FxMapper(Mapper):
             mdata, sattrs = self._forward_dataset_grouped(ds)
             single_attr = False
 
-        samples = N.atleast_2d(mdata)
+        samples = np.atleast_2d(mdata)
 
         # return early if there is no attribute treatment desired
         if self.__attrfx is None:
@@ -137,7 +151,7 @@ class FxMapper(Mapper):
             if single_attr:
                 col[attr] = [a]
             else:
-                col[attr] = N.atleast_1d(a)
+                col[attr] = np.atleast_1d(a)
 
         return out
 
@@ -161,7 +175,7 @@ class FxMapper(Mapper):
                                 [col[attr].unique for attr in self.__uattrs]))
         # let it generate all combinations of unique elements in any attr
         for comb in _orthogonal_permutations(self.__attrcombs):
-            selector = reduce(N.multiply,
+            selector = reduce(np.multiply,
                                 [array_whereequal(col[attr].value, value)
                                  for attr, value in comb.iteritems()])
             # process the samples
@@ -170,7 +184,14 @@ class FxMapper(Mapper):
             else:
                 samples = ds.samples[:, selector]
 
-            fxed_samples = N.apply_along_axis(self.__fx, axis, samples,
+            # check if there were any samples for such a combination,
+            # if not -- warning and skip the rest of the loop body
+            if not len(samples):
+                warning('There were no samples for combination %s. It might be '
+                        'a sign of a disbalanced dataset %s.' % (comb, ds))
+                continue
+
+            fxed_samples = np.apply_along_axis(self.__fx, axis, samples,
                                               *self.__fxargs)
             mdata.append(fxed_samples)
             if not self.__attrfx is None:
@@ -181,9 +202,9 @@ class FxMapper(Mapper):
                     attrs[attr].append(fxed_attrs[i])
 
         if axis == 0:
-            mdata = N.vstack(mdata)
+            mdata = np.vstack(mdata)
         else:
-            mdata = N.vstack(N.transpose(mdata))
+            mdata = np.vstack(np.transpose(mdata))
         return mdata, attrs
 
 
@@ -216,7 +237,7 @@ def mean_sample(attrfx='merge'):
 
     Parameters
     ----------
-    attrfx : 'merge' or callable
+    attrfx : 'merge' or callable, optional
       Callable that is used to determine the sample attributes of the computed
       mean samples. By default this will be a string representation of all
       unique value of a particular attribute in any sample group. If there is
@@ -226,7 +247,7 @@ def mean_sample(attrfx='merge'):
     -------
     FxMapper instance.
     """
-    return FxMapper('samples', N.mean, attrfx=attrfx)
+    return FxMapper('samples', np.mean, attrfx=attrfx)
 
 
 def mean_group_sample(attrs, attrfx='merge'):
@@ -238,9 +259,9 @@ def mean_group_sample(attrs, attrfx='merge'):
     Parameters
     ----------
     attrs : list
-      List of sample attributes whos unique values will be used to identify the
+      List of sample attributes whose unique values will be used to identify the
       samples groups.
-    attrfx : 'merge' or callable
+    attrfx : 'merge' or callable, optional
       Callable that is used to determine the sample attributes of the computed
       mean samples. By default this will be a string representation of all
       unique value of a particular attribute in any sample group. If there is
@@ -250,7 +271,7 @@ def mean_group_sample(attrs, attrfx='merge'):
     -------
     FxMapper instance.
     """
-    return FxMapper('samples', N.mean, uattrs=attrs, attrfx=attrfx)
+    return FxMapper('samples', np.mean, uattrs=attrs, attrfx=attrfx)
 
 
 def mean_group_feature(attrs, attrfx='merge'):
@@ -264,7 +285,7 @@ def mean_group_feature(attrs, attrfx='merge'):
     attrs : list
       List of feature attributes whos unique values will be used to identify the
       feature groups.
-    attrfx : 'merge' or callable
+    attrfx : 'merge' or callable, optional
       Callable that is used to determine the feature attributes of the computed
       mean features. By default this will be a string representation of all
       unique value of a particular attribute in any feature group. If there is
@@ -274,7 +295,7 @@ def mean_group_feature(attrs, attrfx='merge'):
     -------
     FxMapper instance.
     """
-    return FxMapper('features', N.mean, uattrs=attrs, attrfx=attrfx)
+    return FxMapper('features', np.mean, uattrs=attrs, attrfx=attrfx)
 
 
 def absolute_features():
@@ -286,18 +307,18 @@ def absolute_features():
     -------
     FxMapper instance.
     """
-    return FxMapper('features', N.absolute, attrfx=None)
+    return FxMapper('features', np.absolute, attrfx=None)
 
 
 def sumofabs_sample():
     """Returns a mapper that returns the sum of absolute values of all samples.
     """
-    return FxMapper('samples', lambda x: N.abs(x).sum())
+    return FxMapper('samples', sum_of_abs)
 
 def maxofabs_sample():
     """Returns a mapper that finds max of absolute values of all samples.
     """
-    return FxMapper('samples', lambda x: N.abs(x).max())
+    return FxMapper('samples', max_of_abs)
 #
 # Utility functions
 #
@@ -315,16 +336,20 @@ def _uniquemerge2literal(attrs):
     Returns
     -------
     Non-sequence arguments are passed as is. Sequences are converted into
-    a single item representation (see above) and returned.
+    a single item representation (see above) and returned.  None is returned
+    in case of an empty sequence.
     """
     # only do something if multiple items are given
     if not operator.isSequenceType(attrs):
         return attrs
-    unq = N.unique(attrs)
-    if len(unq) > 1:
+    unq = np.unique(attrs)
+    lunq = len(unq)
+    if lunq > 1:
         return '+'.join([str(l) for l in unq])
-    else:
+    elif lunq:                          # first entry (non
         return unq[0]
+    else:
+        return None
 
 
 def _orthogonal_permutations(a_dict):
@@ -338,8 +363,8 @@ def _orthogonal_permutations(a_dict):
     The order is not defined, therefore the elements should be
     orthogonal to each other.
 
-    >>> for i in orthogonal_permutations({'a': [1,2,3], 'b': [4,5]}):
-            print i
+    >>> for i in _orthogonal_permutations({'a': [1,2,3], 'b': [4,5]}):
+    ...     print i
     {'a': 1, 'b': 4}
     {'a': 1, 'b': 5}
     {'a': 2, 'b': 4}
@@ -367,3 +392,48 @@ def _product(iterable):
         result = [x+[y] for x in result for y in pool]
     for prod in result:
         yield tuple(prod)
+
+
+
+class BinaryFxNode(Node):
+    """Extract a dataset attribute and call a function with it and the samples.
+
+    This node takes a dataset's samples and a configurable attribute and passes
+    them to a custom callable. This node can be used to implement comparisons,
+    or error quantifications.
+
+    When called with a dataset the node returns a new dataset with the return
+    value of the callable as samples.
+    """
+    # TODO: Allow using feature attributes too
+    def __init__(self, fx, space, **kwargs):
+        """
+        Parameters
+        ----------
+        fx : callable
+          Callable that is passed with the dataset samples as first and
+          attribute values as second argument.
+        space : str
+          name of the sample attribute that contains the target values.
+        """
+        Node.__init__(self, space=space, **kwargs)
+        self.fx = fx
+
+
+    def _call(self, ds):
+        # extract samples and targets and pass them to the errorfx
+        targets = ds.sa[self.get_space()].value
+        # squeeze to remove bogus dimensions are prevent problems during
+        # comparision later on
+        values = np.atleast_1d(ds.samples.squeeze())
+        if not values.shape == targets.shape:
+            # if they have different shape numpy's broadcasting might introduce
+            # pointless stuff (compare individual features or yield a single
+            # boolean
+            raise ValueError("Trying to compute an error between data of "
+                             "different shape (%s vs. %s)."
+                             % (values.shape, targets.shape))
+        err = self.fx(values, targets)
+        if np.isscalar(err):
+            err = np.array(err, ndmin=2)
+        return Dataset(err)

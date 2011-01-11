@@ -12,30 +12,31 @@ __docformat__ = 'restructuredtext'
 
 import mvpa.support.copy as copy
 
-import numpy as N
+import numpy as np
 
-from sets import Set
 from StringIO import StringIO
 from math import log10, ceil
 
 from mvpa.base import externals
 
-from mvpa.misc.errorfx import meanPowerFx, rootMeanPowerFx, RMSErrorFx, \
-     CorrErrorFx, CorrErrorPFx, RelativeRMSErrorFx, MeanMismatchErrorFx, \
-     AUCErrorFx
+from mvpa.misc.errorfx import mean_power_fx, root_mean_power_fx, rms_error, \
+     relative_rms_error, mean_mismatch_error, auc_error
 from mvpa.base import warning
 from mvpa.base.collections import Collectable
-from mvpa.misc.state import StateVariable, ClassWithCollections
-from mvpa.base.dochelpers import enhancedDocString, table2string
-from mvpa.clfs.stats import autoNullDist
+from mvpa.base.state import ConditionalAttribute, ClassWithCollections
+from mvpa.base.dochelpers import enhanced_doc_string, table2string
+from mvpa.clfs.stats import auto_null_dist
 
 if __debug__:
     from mvpa.base import debug
 
 if externals.exists('scipy'):
     from scipy.stats.stats import nanmean
+    from mvpa.misc.stats import chisquare
+    from mvpa.misc.errorfx import corr_error, corr_error_prob
 else:
     from mvpa.clfs.stats import nanmean
+    chisquare = None
 
 def _p2(x, prec=2):
     """Helper to print depending on the type nicely. For some
@@ -146,7 +147,8 @@ class SummaryStatistics(object):
         self._computed = False
 
 
-    def asstring(self, short=False, header=True, summary=True,
+    ##REF: Name was automagically refactored
+    def as_string(self, short=False, header=True, summary=True,
                  description=False):
         """'Pretty print' the matrix
 
@@ -175,7 +177,7 @@ class SummaryStatistics(object):
             description = ('CM' in debug.active)
         else:
             description = False
-        return self.asstring(short=False, header=True, summary=True,
+        return self.as_string(short=False, header=True, summary=True,
                              description=description)
 
 
@@ -273,13 +275,14 @@ class ROCCurve(object):
         # Handle degenerate cases politely
         if Nlabels < 2:
             warning("ROC was asked to be evaluated on data with %i"
-                    " labels which is a degenerate case.")
+                    " labels which is a degenerate case." % Nlabels)
             self._ROCs = []
             self._aucs = []
             return
 
         # take sets which have values in the shape we can handle
-        def _checkValues(set_):
+        ##REF: Name was automagically refactored
+        def _check_values(set_):
             """Check if values are 'acceptable'"""
             if len(set_)<3: return False
             x = set_[2]
@@ -287,7 +290,7 @@ class ROCCurve(object):
             if (x is None) or len(x) == 0: return False          # undefined
             for v in x:
                 try:
-                    if Nlabels <= 2 and N.isscalar(v):
+                    if Nlabels <= 2 and np.isscalar(v):
                         continue
                     if (isinstance(v, dict) or # not dict for pairs
                         ((Nlabels>=2) and len(v)!=Nlabels) # 1 per each label for multiclass
@@ -302,7 +305,7 @@ class ROCCurve(object):
                     return False
             return True
 
-        sets_wv = filter(_checkValues, sets)
+        sets_wv = filter(_check_values, sets)
         # check if all had values, if not -- complain
         Nsets_wv = len(sets_wv)
         if Nsets_wv > 0 and len(sets) != Nsets_wv:
@@ -320,27 +323,27 @@ class ROCCurve(object):
             # we will do inplace modification, thus go by index
             estimates = s[2]
             # we would need it to be a list to reassign element with a list
-            if isinstance(estimates, N.ndarray) and len(estimates.shape)==1:
+            if isinstance(estimates, np.ndarray) and len(estimates.shape)==1:
                 # XXX ??? so we are going away from inplace modifications?
                 estimates = list(estimates)
             rangev = None
             for i in xrange(len(estimates)):
                 v = estimates[i]
-                if N.isscalar(v):
+                if np.isscalar(v):
                     if Nlabels == 1:
                         # ensure the right dimensionality
-                        estimates[i] = N.array(v, ndmin=2)
+                        estimates[i] = np.array(v, ndmin=2)
                     elif Nlabels == 2:
                         def last_el(x):
                             """Helper function. Returns x if x is scalar, and
                             last element if x is not (ie list/tuple)"""
-                            if N.isscalar(x): return x
+                            if np.isscalar(x): return x
                             else:             return x[-1]
                         if rangev is None:
                             # we need to figure out min/max estimates
                             # to invert for the 0th label
                             estimates_ = [last_el(x) for x in estimates]
-                            rangev = N.min(estimates_) + N.max(estimates_)
+                            rangev = np.min(estimates_) + np.max(estimates_)
                         estimates[i] = [rangev - v, v]
                     else:
                         raise ValueError, \
@@ -351,29 +354,29 @@ class ROCCurve(object):
                           "Got %d estimates whenever there is %d labels" % \
                           (len(v), Nlabels)
             # reassign possibly adjusted estimates
-            sets_wv[iset] = (s[0], s[1], N.asarray(estimates))
+            sets_wv[iset] = (s[0], s[1], np.asarray(estimates))
 
 
         # we need to estimate ROC per each label
         # XXX order of labels might not correspond to the one among 'estimates'
         #     which were used to make a decision... check
-        ROCs, aucs = [], []             # 1 per label
+        rocs, aucs = [], []             # 1 per label
         for i,label in enumerate(labels):
             aucs_pl = []
             ROCs_pl = []
             for s in sets_wv:
-                targets_pl = (N.asanyarray(s[0]) == label).astype(int)
+                targets_pl = (np.asanyarray(s[0]) == label).astype(int)
                 # XXX we might unify naming between AUC/ROC
-                ROC = AUCErrorFx()
-                aucs_pl += [ROC([N.asanyarray(x)[i] for x in s[2]], targets_pl)]
+                ROC = auc_error
+                aucs_pl += [ROC([np.asanyarray(x)[i] for x in s[2]], targets_pl)]
                 ROCs_pl.append(ROC)
             if len(aucs_pl)>0:
-                ROCs += [ROCs_pl]
+                rocs += [ROCs_pl]
                 aucs += [nanmean(aucs_pl)]
-                #aucs += [N.mean(aucs_pl)]
+                #aucs += [np.mean(aucs_pl)]
 
         # store results within the object
-        self._ROCs =  ROCs
+        self._ROCs =  rocs
         self._aucs = aucs
         self.__computed = True
 
@@ -387,7 +390,8 @@ class ROCCurve(object):
 
 
     @property
-    def ROCs(self):
+    ##REF: Name was automagically refactored
+    def rocs(self):
         self._compute()
         return self._ROCs
 
@@ -398,29 +402,29 @@ class ROCCurve(object):
         TODO: make it friendly to labels given by values?
               should we also treat labels_map?
         """
-        externals.exists("pylab", raiseException=True)
-        import pylab as P
+        externals.exists("pylab", raise_=True)
+        import pylab as pl
 
         self._compute()
 
         labels = self._labels
-        # select only ROCs for the given label
-        ROCs = self.ROCs[label_index]
+        # select only rocs for the given label
+        rocs = self.rocs[label_index]
 
-        fig = P.gcf()
-        ax = P.gca()
+        fig = pl.gcf()
+        ax = pl.gca()
 
-        P.plot([0, 1], [0, 1], 'k:')
+        pl.plot([0, 1], [0, 1], 'k:')
 
-        for ROC in ROCs:
-            P.plot(ROC.fp, ROC.tp, linewidth=1)
+        for ROC in rocs:
+            pl.plot(ROC.fp, ROC.tp, linewidth=1)
 
-        P.axis((0.0, 1.0, 0.0, 1.0))
-        P.axis('scaled')
-        P.title('Label %s. Mean AUC=%.2f' % (label_index, self.aucs[label_index]))
+        pl.axis((0.0, 1.0, 0.0, 1.0))
+        pl.axis('scaled')
+        pl.title('Label %s. Mean AUC=%.2f' % (label_index, self.aucs[label_index]))
 
-        P.xlabel('False positive rate')
-        P.ylabel('True positive rate')
+        pl.xlabel('False positive rate')
+        pl.ylabel('True positive rate')
 
 
 class ConfusionMatrix(SummaryStatistics):
@@ -434,7 +438,7 @@ class ConfusionMatrix(SummaryStatistics):
     the constructor.
 
     Confusion matrix provides a set of performance statistics (use
-    asstring(description=True) for the description of abbreviations),
+    as_string(description=True) for the description of abbreviations),
     as well ROC curve (http://en.wikipedia.org/wiki/ROC_curve)
     plotting and analysis (AUC) in the limited set of problems:
     binary, multiclass 1-vs-all.
@@ -458,6 +462,7 @@ class ConfusionMatrix(SummaryStatistics):
         ('MCC', "Matthews Correlation Coefficient",
                 "MCC = (TP*TN - FP*FN)/sqrt(P N P' N')"),
         ('AUC', "Area under (AUC) curve", None),
+        ('CHI^2', "Chi-square of confusion matrix", None),
         ) + SummaryStatistics._STATS_DESCRIPTION
 
 
@@ -516,17 +521,17 @@ class ConfusionMatrix(SummaryStatistics):
         try:
             # figure out what labels we have
             labels = \
-                list(reduce(lambda x, y: x.union(Set(y[0]).union(Set(y[1]))),
+                list(reduce(lambda x, y: x.union(set(y[0]).union(set(y[1]))),
                             self.sets,
-                            Set(self.__labels)))
+                            set(self.__labels)))
         except:
             labels = self.__labels
 
         # Check labels_map if it was provided if it covers all the labels
         labels_map = self.__labels_map
         if labels_map is not None:
-            labels_set = Set(labels)
-            map_labels_set = Set(labels_map.values())
+            labels_set = set(labels)
+            map_labels_set = set(labels_map.values())
 
             if not map_labels_set.issuperset(labels_set):
                 warning("Provided labels_map %s is not coherent with labels "
@@ -553,12 +558,12 @@ class ConfusionMatrix(SummaryStatistics):
             debug("CM", "Got labels %s" % labels)
 
         # Create a matrix for all votes
-        mat_all = N.zeros( (Nsets, Nlabels, Nlabels), dtype=int )
+        mat_all = np.zeros( (Nsets, Nlabels, Nlabels), dtype=int )
 
         # create total number of samples of each label counts
         # just for convinience I guess since it can always be
         # computed from mat_all
-        counts_all = N.zeros( (Nsets, Nlabels) )
+        counts_all = np.zeros( (Nsets, Nlabels) )
 
         # reverse mapping from label into index in the list of labels
         rev_map = dict([ (x[1], x[0]) for x in enumerate(labels)])
@@ -570,22 +575,22 @@ class ConfusionMatrix(SummaryStatistics):
         # for now simply compute a sum of votes across different sets
         # we might do something more sophisticated later on, and this setup
         # should easily allow it
-        self.__matrix = N.sum(mat_all, axis=0)
-        self.__Nsamples = N.sum(self.__matrix, axis=0)
-        self.__Ncorrect = sum(N.diag(self.__matrix))
+        self.__matrix = np.sum(mat_all, axis=0)
+        self.__Nsamples = np.sum(self.__matrix, axis=0)
+        self.__Ncorrect = sum(np.diag(self.__matrix))
 
-        TP = N.diag(self.__matrix)
-        offdiag = self.__matrix - N.diag(TP)
+        TP = np.diag(self.__matrix)
+        offdiag = self.__matrix - np.diag(TP)
         stats = {
             '# of labels' : Nlabels,
             'TP' : TP,
-            'FP' : N.sum(offdiag, axis=1),
-            'FN' : N.sum(offdiag, axis=0)}
+            'FP' : np.sum(offdiag, axis=1),
+            'FN' : np.sum(offdiag, axis=0)}
 
-        stats['CORR']  = N.sum(TP)
+        stats['CORR']  = np.sum(TP)
         stats['TN']  = stats['CORR'] - stats['TP']
         stats['P']  = stats['TP'] + stats['FN']
-        stats['N']  = N.sum(stats['P']) - stats['P']
+        stats['N']  = np.sum(stats['P']) - stats['P']
         stats["P'"] = stats['TP'] + stats['FP']
         stats["N'"] = stats['TN'] + stats['FN']
         stats['TPR'] = stats['TP'] / (1.0*stats['P'])
@@ -597,16 +602,21 @@ class ConfusionMatrix(SummaryStatistics):
         stats['FDR'] = stats['FP'] / (1.0*stats["P'"])
         stats['SPC'] = (stats['TN']) / (1.0*stats['FP'] + stats['TN'])
 
-        MCC_denom = N.sqrt(1.0*stats['P']*stats['N']*stats["P'"]*stats["N'"])
+        MCC_denom = np.sqrt(1.0*stats['P']*stats['N']*stats["P'"]*stats["N'"])
         nz = MCC_denom!=0.0
-        stats['MCC'] = N.zeros(stats['TP'].shape)
+        stats['MCC'] = np.zeros(stats['TP'].shape)
         stats['MCC'][nz] = \
                  (stats['TP'] * stats['TN'] - stats['FP'] * stats['FN'])[nz] \
                   / MCC_denom[nz]
 
-        stats['ACC'] = N.sum(TP)/(1.0*N.sum(stats['P']))
+        stats['ACC'] = np.sum(TP)/(1.0*np.sum(stats['P']))
+        # TODO: STD of accuracy and corrected one according to
+        #    Nadeau and Bengio [50] 
         stats['ACC%'] = stats['ACC'] * 100.0
-
+        if chisquare:
+            # indep_rows to assure reasonable handling of disbalanced
+            # cases
+            stats['CHI^2'] = chisquare(self.__matrix, exp='indep_rows')
         #
         # ROC computation if available
         ROC = ROCCurve(labels=labels, sets=self.sets)
@@ -620,18 +630,19 @@ class ConfusionMatrix(SummaryStatistics):
             self.ROC = ROC
         else:
             # we don't want to provide ROC if it is bogus
-            stats['AUC'] = [N.nan] * Nlabels
+            stats['AUC'] = [np.nan] * Nlabels
             self.ROC = None
 
 
         # compute mean stats
         for k,v in stats.items():
-            stats['mean(%s)' % k] = N.mean(v)
+            stats['mean(%s)' % k] = np.mean(v)
 
         self._stats.update(stats)
 
 
-    def asstring(self, short=False, header=True, summary=True,
+    ##REF: Name was automagically refactored
+    def as_string(self, short=False, header=True, summary=True,
                  description=False):
         """'Pretty print' the matrix
 
@@ -733,11 +744,16 @@ class ConfusionMatrix(SummaryStatistics):
             # compute mean stats
             # XXX refactor to expose them in stats as well, as
             #     mean(FCC)
-            mean_stats = N.mean(N.array([stats[k] for k in stats_perpredict]),
+            mean_stats = np.mean(np.array([stats[k] for k in stats_perpredict]),
                                 axis=1)
             printed.append(['@lSummary \ Means:'] + underscores
                            + [_p2(stats['mean(%s)' % x])
                               for x in stats_perpredict])
+
+            if 'CHI^2' in self.stats:
+                chi2t = stats['CHI^2']
+                printed.append(['CHI^2'] + [_p2(chi2t[0])]
+                               + ['p:'] + ['%.2g' % chi2t[1]])
 
             for stat in stats_summary:
                 printed.append([stat] + [_p2(stats[stat])])
@@ -794,8 +810,8 @@ class ConfusionMatrix(SummaryStatistics):
          (fig, im, cb) -- figure, imshow, colorbar
         """
 
-        externals.exists("pylab", raiseException=True)
-        import pylab as P
+        externals.exists("pylab", raise_=True)
+        import pylab as pl
 
         self.compute()
         labels_order = labels
@@ -817,13 +833,13 @@ class ConfusionMatrix(SummaryStatistics):
 
         if labels_order is not None:
             labels_order_filtered = filter(lambda x:x is not None, labels_order)
-            labels_order_filtered_set = Set(labels_order_filtered)
+            labels_order_filtered_set = set(labels_order_filtered)
             # Verify if all labels provided in labels
-            if Set(labels) == labels_order_filtered_set:
+            if set(labels) == labels_order_filtered_set:
                 # We were provided numerical (most probably) set
                 labels_plot = labels_order
             elif len(labels_rev) \
-                     and Set(labels_rev) == labels_order_filtered_set:
+                     and set(labels_rev) == labels_order_filtered_set:
                 # not clear if right whenever there were multiple labels
                 # mapped into the same
                 labels_plot = []
@@ -840,8 +856,8 @@ class ConfusionMatrix(SummaryStatistics):
             labels_plot = labels
 
         # where we have Nones?
-        isempty = N.array([l is None for l in labels_plot])
-        non_empty = N.where(N.logical_not(isempty))[0]
+        isempty = np.array([l is None for l in labels_plot])
+        non_empty = np.where(np.logical_not(isempty))[0]
         # numbers of different entries
         NlabelsNN = len(non_empty)
         Nlabels = len(labels_plot)
@@ -851,7 +867,7 @@ class ConfusionMatrix(SummaryStatistics):
                   "Number of labels %d doesn't correspond the size" + \
                   " of a confusion matrix %s" % (NlabelsNN, matrix.shape)
 
-        confusionmatrix = N.zeros((Nlabels, Nlabels))
+        confusionmatrix = np.zeros((Nlabels, Nlabels))
         mask = confusionmatrix.copy()
         ticks = []
         tick_labels = []
@@ -871,14 +887,14 @@ class ConfusionMatrix(SummaryStatistics):
             else:
                 mask[i, :] = mask[:, i] = 1
 
-        confusionmatrix = N.ma.MaskedArray(confusionmatrix, mask=mask)
+        confusionmatrix = np.ma.MaskedArray(confusionmatrix, mask=mask)
 
         # turn off automatic update if interactive
-        if P.matplotlib.get_backend() == 'TkAgg':
-            P.ioff()
+        if pl.matplotlib.get_backend() == 'TkAgg':
+            pl.ioff()
 
-        fig = P.gcf()
-        ax = P.gca()
+        fig = pl.gcf()
+        ax = pl.gca()
         ax.axis('off')
 
         # some customization depending on the origin
@@ -899,43 +915,43 @@ class ConfusionMatrix(SummaryStatistics):
             numbers_kwargs_ = {'fontsize': 10,
                                'horizontalalignment': 'center',
                                'verticalalignment': 'center'}
-            maxv = float(N.max(confusionmatrix))
+            maxv = float(np.max(confusionmatrix))
             colors = [im.to_rgba(0), im.to_rgba(maxv)]
-            for i,j in zip(*N.logical_not(mask).nonzero()):
+            for i,j in zip(*np.logical_not(mask).nonzero()):
                 v = confusionmatrix[j, i]
                 # scale alpha non-linearly
                 if numbers_alpha is None:
                     alpha = 1.0
                 else:
                     # scale according to value
-                    alpha = 1 - N.array(1 - v / maxv) ** numbers_alpha
+                    alpha = 1 - np.array(1 - v / maxv) ** numbers_alpha
                 y = {'lower':j, 'upper':Nlabels-j-1}[origin]
                 numbers_kwargs_['color'] = colors[int(v<maxv/2)]
                 numbers_kwargs_.update(numbers_kwargs)
-                P.text(i+0.5, y+0.5, '%d' % v, alpha=alpha, **numbers_kwargs_)
+                pl.text(i+0.5, y+0.5, '%d' % v, alpha=alpha, **numbers_kwargs_)
 
-        maxv = N.max(confusionmatrix)
-        boundaries = N.linspace(0, maxv, N.min((maxv, 10)), True)
+        maxv = np.max(confusionmatrix)
+        boundaries = np.linspace(0, maxv, np.min((maxv, 10)), True)
 
         # Label axes
-        P.xlabel("targets")
-        P.ylabel("predictions")
+        pl.xlabel("targets")
+        pl.ylabel("predictions")
 
-        P.setp(axi, xticks=ticks, yticks=yticks,
+        pl.setp(axi, xticks=ticks, yticks=yticks,
                xticklabels=tick_labels, yticklabels=tick_labels)
 
         axi.xaxis.set_ticks_position(xticks_position)
         axi.xaxis.set_label_position(xticks_position)
 
         if xlabels_vertical:
-            P.setp(P.getp(axi, 'xticklabels'), rotation='vertical')
+            pl.setp(pl.getp(axi, 'xticklabels'), rotation='vertical')
 
         axcb = fig.add_axes([0.8, ybottom, 0.02, 0.7])
-        cb = P.colorbar(im, cax=axcb, format='%d', ticks = boundaries)
+        cb = pl.colorbar(im, cax=axcb, format='%d', ticks = boundaries)
 
-        if P.matplotlib.get_backend() == 'TkAgg':
-            P.ion()
-        P.draw()
+        if pl.matplotlib.get_backend() == 'TkAgg':
+            pl.ion()
+        pl.draw()
         # Store it primarily for testing
         self._plotted_confusionmatrix = confusionmatrix
         return fig, im, cb
@@ -953,11 +969,13 @@ class ConfusionMatrix(SummaryStatistics):
         return self.__labels
 
 
-    def getLabels_map(self):
+    ##REF: Name was automagically refactored
+    def get_labels_map(self):
         return self.__labels_map
 
 
-    def setLabels_map(self, val):
+    ##REF: Name was automagically refactored
+    def set_labels_map(self, val):
         if val is None or isinstance(val, dict):
             self.__labels_map = val
         else:
@@ -974,11 +992,12 @@ class ConfusionMatrix(SummaryStatistics):
 
 
     @property
-    def percentCorrect(self):
+    ##REF: Name was automagically refactored
+    def percent_correct(self):
         self.compute()
         return 100.0*self.__Ncorrect/sum(self.__Nsamples)
 
-    labels_map = property(fget=getLabels_map, fset=setLabels_map)
+    labels_map = property(fget=get_labels_map, fset=set_labels_map)
 
 
 class RegressionStatistics(SummaryStatistics):
@@ -1021,26 +1040,27 @@ class RegressionStatistics(SummaryStatistics):
         stats = {}
 
         funcs = {
-            'RMP_t': lambda p,t:rootMeanPowerFx(t),
-            'STD_t': lambda p,t:N.std(t),
-            'RMP_p': lambda p,t:rootMeanPowerFx(p),
-            'STD_p': lambda p,t:N.std(p),
-            'CCe': CorrErrorFx(),
-            'CCp': CorrErrorPFx(),
-            'RMSE': RMSErrorFx(),
-            'RMSE/RMP_t': RelativeRMSErrorFx()
+            'RMP_t': lambda p,t:root_mean_power_fx(t),
+            'STD_t': lambda p,t:np.std(t),
+            'RMP_p': lambda p,t:root_mean_power_fx(p),
+            'STD_p': lambda p,t:np.std(p),
+            'RMSE': rms_error,
+            'RMSE/RMP_t': relative_rms_error
             }
+        if externals.exists('scipy'):
+            funcs['CCe'] = corr_error
+            funcs['CCp'] = corr_error_prob
 
         for funcname, func in funcs.iteritems():
             funcname_all = funcname + '_all'
             stats[funcname_all] = []
             for i, (targets, predictions, estimates) in enumerate(sets):
                 stats[funcname_all] += [func(predictions, targets)]
-            stats[funcname_all] = N.array(stats[funcname_all])
-            stats[funcname] = N.mean(stats[funcname_all])
-            stats[funcname+'_std'] = N.std(stats[funcname_all])
-            stats[funcname+'_max'] = N.max(stats[funcname_all])
-            stats[funcname+'_min'] = N.min(stats[funcname_all])
+            stats[funcname_all] = np.array(stats[funcname_all])
+            stats[funcname] = np.mean(stats[funcname_all])
+            stats[funcname+'_std'] = np.std(stats[funcname_all])
+            stats[funcname+'_max'] = np.max(stats[funcname_all])
+            stats[funcname+'_min'] = np.min(stats[funcname_all])
 
         # create ``summary`` statistics, since some per-set statistics
         # might be uncomputable if a set contains just a single number
@@ -1080,57 +1100,58 @@ class RegressionStatistics(SummaryStatistics):
         -------
          (fig, im, cb) -- figure, imshow, colorbar
         """
-        externals.exists("pylab", raiseException=True)
-        import pylab as P
+        externals.exists("pylab", raise_=True)
+        import pylab as pl
 
         self.compute()
         # total number of plots
         nplots = plot + splot
 
         # turn off automatic update if interactive
-        if P.matplotlib.get_backend() == 'TkAgg':
-            P.ioff()
+        if pl.matplotlib.get_backend() == 'TkAgg':
+            pl.ioff()
 
-        fig = P.gcf()
-        P.clf()
+        fig = pl.gcf()
+        pl.clf()
         sps = []                        # subplots
 
         nplot = 0
         if plot:
             nplot += 1
-            sps.append(P.subplot(nplots, 1, nplot))
+            sps.append(pl.subplot(nplots, 1, nplot))
             xstart = 0
             lines = []
             for s in self.sets:
                 nsamples = len(s[0])
                 xend = xstart+nsamples
                 xs = xrange(xstart, xend)
-                lines += [P.plot(xs, s[0], 'b')]
-                lines += [P.plot(xs, s[1], 'r')]
+                lines += [pl.plot(xs, s[0], 'b')]
+                lines += [pl.plot(xs, s[1], 'r')]
                 # vertical line
-                P.plot([xend, xend], [N.min(s[0]), N.max(s[0])], 'k--')
+                pl.plot([xend, xend], [np.min(s[0]), np.max(s[0])], 'k--')
                 xstart = xend
             if len(lines)>1:
-                P.legend(lines[:2], ('Target', 'Prediction'))
+                pl.legend(lines[:2], ('Target', 'Prediction'))
             if plot_stats:
-                P.title(self.asstring(short='very'))
+                pl.title(self.as_string(short='very'))
 
         if splot:
             nplot += 1
-            sps.append(P.subplot(nplots, 1, nplot))
+            sps.append(pl.subplot(nplots, 1, nplot))
             for s in self.sets:
-                P.plot(s[0], s[1], 'o',
+                pl.plot(s[0], s[1], 'o',
                        markeredgewidth=0.2,
                        markersize=2)
-            P.gca().set_aspect('equal')
+            pl.gca().set_aspect('equal')
 
-        if P.matplotlib.get_backend() == 'TkAgg':
-            P.ion()
-        P.draw()
+        if pl.matplotlib.get_backend() == 'TkAgg':
+            pl.ion()
+        pl.draw()
 
         return fig, sps
 
-    def asstring(self, short=False, header=True,  summary=True,
+    ##REF: Name was automagically refactored
+    def as_string(self, short=False, header=True,  summary=True,
                  description=False):
         """'Pretty print' the statistics"""
 
@@ -1217,13 +1238,13 @@ class ClassifierError(ClassWithCollections):
     """Compute (or return) some error of a (trained) classifier on a dataset.
     """
 
-    confusion = StateVariable(enabled=False)
+    confusion = ConditionalAttribute(enabled=False)
     """TODO Think that labels might be also symbolic thus can't directly
        be indicies of the array
     """
 
-    training_confusion = StateVariable(enabled=False,
-        doc="Proxy training_confusion from underlying classifier.")
+    training_stats = ConditionalAttribute(enabled=False,
+        doc="Proxy training_stats from underlying classifier.")
 
 
     def __init__(self, clf, labels=None, train=True, **kwargs):
@@ -1250,7 +1271,7 @@ class ClassifierError(ClassWithCollections):
         """Either to train classifier if trainingdata is provided"""
 
 
-    __doc__ = enhancedDocString('ClassifierError', locals(), ClassWithCollections)
+    __doc__ = enhanced_doc_string('ClassifierError', locals(), ClassWithCollections)
 
 
     def __copy__(self):
@@ -1268,28 +1289,28 @@ class ClassifierError(ClassWithCollections):
                 # XXX can be pretty annoying if triggered inside an algorithm
                 # where it cannot be switched of, but retraining might be
                 # intended or at least not avoidable.
-                # Additonally isTrained docs say:
+                # Additonally is_trained docs say:
                 #   MUST BE USED WITH CARE IF EVER
                 #
                 # switching it off for now
-                #if self.__clf.isTrained(trainingdataset):
+                #if self.__clf.is_trained(trainingdataset):
                 #    warning('It seems that classifier %s was already trained' %
                 #            self.__clf + ' on dataset %s. Please inspect' \
                 #                % trainingdataset)
-                if self.states.is_enabled('training_confusion'):
-                    self.__clf.states.change_temporarily(
-                        enable_states=['training_confusion'])
+                if self.ca.is_enabled('training_stats'):
+                    self.__clf.ca.change_temporarily(
+                        enable_ca=['training_stats'])
                 self.__clf.train(trainingdataset)
-                if self.states.is_enabled('training_confusion'):
-                    self.states.training_confusion = \
-                        self.__clf.states.training_confusion
-                    self.__clf.states.reset_changed_temporarily()
+                if self.ca.is_enabled('training_stats'):
+                    self.ca.training_stats = \
+                        self.__clf.ca.training_stats
+                    self.__clf.ca.reset_changed_temporarily()
 
-        if self.__clf.states.is_enabled('trained_labels') \
+        if self.__clf.ca.is_enabled('trained_targets') \
                and not self.__clf.__is_regression__ \
                and not testdataset is None:
-            newlabels = Set(testdataset.sa['labels'].unique) \
-                        - Set(self.__clf.states.trained_labels)
+            newlabels = set(testdataset.sa[self.clf.get_space()].unique) \
+                        - set(self.__clf.ca.trained_targets)
             if len(newlabels)>0:
                 warning("Classifier %s wasn't trained to classify labels %s" %
                         (self.__clf, newlabels) +
@@ -1299,7 +1320,7 @@ class ClassifierError(ClassWithCollections):
         ### Here checking for if it was trained... might be a cause of trouble
         # XXX disabled since it is unreliable.. just rely on explicit
         # self.__train
-        #    if  not self.__clf.isTrained(trainingdataset):
+        #    if  not self.__clf.is_trained(trainingdataset):
         #        self.__clf.train(trainingdataset)
         #    elif __debug__:
         #        debug('CERR',
@@ -1351,171 +1372,17 @@ class ClassifierError(ClassWithCollections):
 
 
 
-class TransferError(ClassifierError):
-    """Compute the transfer error of a (trained) classifier on a dataset.
-
-    The actual error value is computed using a customizable error function.
-    Optionally the classifier can be trained by passing an additional
-    training dataset to the __call__() method.
-    """
-
-    null_prob = StateVariable(enabled=True,
-                    doc="Stores the probability of an error result under "
-                         "the NULL hypothesis")
-    samples_error = StateVariable(enabled=False,
-                        doc="Per sample errors computed by invoking the "
-                            "error function for each sample individually. "
-                            "Errors are available in a dictionary with each "
-                            "samples origid as key.")
-
-    def __init__(self, clf, errorfx=MeanMismatchErrorFx(), labels=None,
-                 null_dist=None, samples_idattr='origids', **kwargs):
-        """Initialization.
-
-        Parameters
-        ----------
-        clf : Classifier
-          Either trained or untrained classifier
-        errorfx: func, optional
-          Functor that computes a scalar error value from the vectors of
-          desired and predicted values (e.g. subclass of `ErrorFunction`)
-        labels : list, optional
-          If provided, should be a set of labels to add on top of the
-          ones present in testdata
-        null_dist : instance of distribution estimator, optional
-        samples_idattr : str, optional
-          What samples attribute to use to identify and store samples_errors
-          state variable
-        """
-        ClassifierError.__init__(self, clf, labels, **kwargs)
-        self.__errorfx = errorfx
-        self.__null_dist = autoNullDist(null_dist)
-        self.__samples_idattr = samples_idattr
-
-
-    __doc__ = enhancedDocString('TransferError', locals(), ClassifierError)
-
-
-    def __copy__(self):
-        """Performs deepcopying of the classifier."""
-        # TODO -- use ClassifierError.__copy__
-        out = TransferError.__new__(TransferError)
-        TransferError.__init__(out, self.clf.clone(),
-                               self.errorfx, self._labels)
-
-        return out
-
-    # XXX: TODO: unify naming? test/train or with ing both
-    def _call(self, testdataset, trainingdataset=None):
-        """Compute the transfer error for a certain test dataset.
-
-        If `trainingdataset` is not `None` the classifier is trained using the
-        provided dataset before computing the transfer error. Otherwise the
-        classifier is used in it's current state to make the predictions on
-        the test dataset.
-
-        Returns a scalar value of the transfer error.
-        """
-        # OPT: local binding
-        clf = self.clf
-        if testdataset is None:
-            # We cannot do anythin, but we can try to figure out WTF and
-            # warn the user accordingly in some usecases
-            import traceback as tb
-            filenames = [x[0] for x in tb.extract_stack(limit=100)]
-            rfe_matches = [f for f in filenames if f.endswith('/rfe.py')]
-            cv_matches = [f for f in filenames if
-                          f.endswith('cvtranserror.py')]
-            msg = ""
-            if len(rfe_matches) > 0 and len(cv_matches):
-                msg = " It is possible that you used RFE with stopping " \
-                      "criterion based on the TransferError and directly" \
-                      " from CrossValidatedTransferError, such approach" \
-                      " would require exposing testing dataset " \
-                      " to the classifier which might heavily bias " \
-                      " generalization performance estimate. If you are " \
-                      " sure to use it that way, create CVTE with " \
-                      " parameter expose_testdataset=True"
-            raise ValueError, "Transfer error call obtained None " \
-                  "as a dataset for testing.%s" % msg
-        #clf should handle dataset or samples
-        predictions = clf.predict(testdataset)
-        # compute confusion matrix
-        # Should it migrate into ClassifierError.__postcall?
-        # -> Probably not because other childs could estimate it
-        #  not from test/train datasets explicitely, see
-        #  `ConfusionBasedError`, wherestates. confusion is simply
-        #  bound to classifiers confusion matrix
-        states = self.states
-        if states.is_enabled('confusion'):
-            confusion = clf.__summary_class__(
-                #labels = self.labels,
-                targets = testdataset.sa.labels,
-                predictions = predictions,
-                estimates = clf.states.get('estimates', None))
-            try:
-                confusion.labels_map = testdataset.labels_map
-            except:
-                pass
-            states.confusion = confusion
-
-        if states.is_enabled('samples_error'):
-            samples_error = []
-            for i, p in enumerate(predictions):
-                samples_error.append(
-                    self.__errorfx([p], testdataset.sa.labels[i:i+1]))
-            testdataset.init_origids(
-                'samples', attr=self.__samples_idattr, mode='existing')
-            states.samples_error = dict(
-                zip(testdataset.sa[self.__samples_idattr].value,
-                    samples_error))
-
-        # compute error from desired and predicted values
-        error = self.__errorfx(predictions, testdataset.sa.labels)
-
-        return error
-
-
-    def _postcall(self, vdata, wdata=None, error=None):
-        """
-        """
-        # estimate the NULL distribution when functor and training data is
-        # given
-        if not self.__null_dist is None and not wdata is None:
-            # we need a matching transfer error instances (e.g. same error
-            # function), but we have to disable the estimation of the null
-            # distribution in that child to prevent infinite looping.
-            null_terr = copy.copy(self)
-            null_terr.__null_dist = None
-            self.__null_dist.fit(null_terr, wdata, vdata)
-
-
-        # get probability of error under NULL hypothesis if available
-        if not error is None and not self.__null_dist is None:
-            self.states.null_prob = self.__null_dist.p(error)
-
-
-    @property
-    def errorfx(self):
-        return self.__errorfx
-
-    @property
-    def null_dist(self):
-        return self.__null_dist
-
-
-
 class ConfusionBasedError(ClassifierError):
     """For a given classifier report an error based on internally
     computed error measure (given by some `ConfusionMatrix` stored in
-    some state variable of `Classifier`).
+    some conditional attribute of `Classifier`).
 
     This way we can perform feature selection taking as the error
     criterion either learning error, or transfer to splits error in
     the case of SplitClassifier
     """
 
-    def __init__(self, clf, labels=None, confusion_state="training_confusion",
+    def __init__(self, clf, labels=None, confusion_state="training_stats",
                  **kwargs):
         """Initialization.
 
@@ -1524,7 +1391,7 @@ class ConfusionBasedError(ClassifierError):
         clf : Classifier
           Either trained or untrained classifier
         confusion_state
-          Id of the state variable which stores `ConfusionMatrix`
+          Id of the conditional attribute which stores `ConfusionMatrix`
         labels : list
           if provided, should be a set of labels to add on top of the
           ones present in testdata
@@ -1534,24 +1401,24 @@ class ConfusionBasedError(ClassifierError):
         self.__confusion_state = confusion_state
         """What state to extract from"""
 
-        if not clf.states.has_key(confusion_state):
+        if not clf.ca.has_key(confusion_state):
             raise ValueError, \
-                  "State variable %s is not defined for classifier %r" % \
+                  "Conditional attribute %s is not defined for classifier %r" % \
                   (confusion_state, clf)
-        if not clf.states.is_enabled(confusion_state):
+        if not clf.ca.is_enabled(confusion_state):
             if __debug__:
                 debug('CERR', "Forcing state %s to be enabled for %r" %
                       (confusion_state, clf))
-            clf.states.enable(confusion_state)
+            clf.ca.enable(confusion_state)
 
 
-    __doc__ = enhancedDocString('ConfusionBasedError', locals(),
+    __doc__ = enhanced_doc_string('ConfusionBasedError', locals(),
                                 ClassifierError)
 
 
     def _call(self, testdata, trainingdata=None):
         """Extract transfer error. Nor testdata, neither trainingdata is used
         """
-        confusion = self.clf.states[self.__confusion_state].value
-        self.states.confusion = confusion
+        confusion = self.clf.ca[self.__confusion_state].value
+        self.ca.confusion = confusion
         return confusion.error

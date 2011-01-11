@@ -16,13 +16,13 @@ This examples shows a test of various classifiers on different datasets.
 
 from mvpa.suite import *
 
-# no MVPA warnings during whole testsuite
+# no MVPA warnings during this example
 warning.handlers = []
 
 def main():
 
     # fix seed or set to None for new each time
-    N.random.seed(44)
+    np.random.seed(44)
 
 
     # Load Haxby dataset example
@@ -30,18 +30,18 @@ def main():
                                           'attributes_literal.txt'))
     haxby8 = fmri_dataset(samples=os.path.join(pymvpa_dataroot,
                                                'bold.nii.gz'),
-                          labels=attrs.labels,
+                          targets=attrs.targets,
                           chunks=attrs.chunks,
                           mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
-    haxby8.samples = haxby8.samples.astype(N.float32)
+    haxby8.samples = haxby8.samples.astype(np.float32)
 
     # preprocess slightly
-    detrend(haxby8, perchunk=True, model='linear')
-    zscore(haxby8, perchunk=True, baselinelabels=['rest'],
-           targetdtype='float32')
-    haxby8_no0 = haxby8[haxby8.labels != 'rest']
+    poly_detrend(haxby8, chunks_attr='chunks', polyord=1)
+    zscore(haxby8, chunks_attr='chunks', param_est=('targets', 'rest'))
 
-    dummy2 = normalFeatureDataset(perlabel=30, nlabels=2,
+    haxby8_no0 = haxby8[haxby8.targets != 'rest']
+
+    dummy2 = normal_feature_dataset(perlabel=30, nlabels=2,
                                   nfeatures=100,
                                   nchunks=6, nonbogus_features=[11, 10],
                                   snr=3.0)
@@ -51,7 +51,7 @@ def main():
         ((dummy2,
           "Dummy 2-class univariate with 2 useful features out of 100"),
           clfswh[:]),
-        ((pureMultivariateSignal(8, 3),
+        ((pure_multivariate_signal(8, 3),
           "Dummy XOR-pattern"),
           clfswh['non-linear']),
         ((haxby8_no0,
@@ -70,34 +70,34 @@ def main():
             #cv = CrossValidatedTransferError(
             #         TransferError(clf),
             #         NFoldSplitter(),
-            #         enable_states=['confusion'])
+            #         enable_ca=['confusion'])
             #error = cv(dataset)
             #print cv.confusion
 
             # to report transfer error
-            confusion = ConfusionMatrix()#labels_map=dataset.labels_map)
+            confusion = ConfusionMatrix()
             times = []
             nf = []
             t0 = time.time()
-            clf.states.enable('feature_ids')
+            clf.ca.enable('feature_ids')
             for nfold, (training_ds, validation_ds) in \
                     enumerate(NFoldSplitter()(dataset)):
                 clf.train(training_ds)
-                nf.append(len(clf.states.feature_ids))
+                nf.append(len(clf.ca.feature_ids))
                 if nf[-1] == 0:
                     break
                 predictions = clf.predict(validation_ds.samples)
-                confusion.add(validation_ds.labels, predictions)
-                times.append([clf.states.training_time, clf.states.predicting_time])
+                confusion.add(validation_ds.targets, predictions)
+                times.append([clf.ca.training_time, clf.ca.predicting_time])
             if nf[-1] == 0:
                 print "no features were selected. skipped"
                 continue
             tfull = time.time() - t0
-            times = N.mean(times, axis=0)
-            nf = N.mean(nf)
+            times = np.mean(times, axis=0)
+            nf = np.mean(nf)
             # print "\n", confusion
             print "%5.1f%%   %-4d\t %.2fs  %.2fs   %.2fs" % \
-                  (confusion.percentCorrect, nf, times[0], times[1], tfull)
+                  (confusion.percent_correct, nf, times[0], times[1], tfull)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 .. -*- mode: rst -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
 
 
 The PyMVPA developers team currently consists of:
@@ -8,6 +8,7 @@ The PyMVPA developers team currently consists of:
 * `Yaroslav O. Halchenko`_, Dartmouth College, USA
 * `Per B. Sederberg`_, Princeton University, USA
 * `Emanuele Olivetti`_, Fondazione Bruno Kessler, Italy
+* `Scott Gorlin`_, MIT, USA
 
 .. _Michael Hanke: http://apsy.gse.uni-magdeburg.de/hanke
 .. _Yaroslav O. Halchenko: http://www.onerussian.com
@@ -20,7 +21,6 @@ valuable advice, code or documentation to PyMVPA:
 
 * `Greg Detre`_, Princeton University, USA
 * `Ingo Fründ`_, TU Berlin, Germany
-* `Scott Gorlin`_, MIT, USA
 * `Jyothi Swaroop Guntupalli`_, Dartmouth College, USA
 * `Valentin Haenel`_, TU Berlin, Germany
 * `Stephen José Hanson`_, Rutgers University, USA

@@ -142,11 +142,12 @@ class WarningLog(OnceLogger):
         OnceLogger.__call__(self, msgid, fullmsg, self.__maxcount)
 
 
-    def _setMaxCount(self, value):
+    ##REF: Name was automagically refactored
+    def _set_max_count(self, value):
         """Set maxcount for the warning"""
         self.__maxcount = value
 
-    maxcount = property(fget=lambda x:x.__maxcount, fset=_setMaxCount)
+    maxcount = property(fget=lambda x:x.__maxcount, fset=_set_max_count)
 
 # XXX what is 'bt'? Maybe more verbose name?
 if cfg.has_option('warnings', 'bt'):
@@ -180,7 +181,7 @@ if __debug__:
         handlers=cfg.get('debug', 'output', default='stdout').split(',')))
 
     # set some debugging matricses to report
-    # debug.registerMetric('vmem')
+    # debug.register_metric('vmem')
 
     # List agreed sets for debug
     debug.register('PY',   "No suppression of various warnings (numpy, scipy) etc.")
@@ -195,12 +196,14 @@ if __debug__:
     debug.register('ID_IN_REPR', "Include id in __repr__")
     debug.register('CMDLINE', "Handling of command line parameters")
 
+    debug.register('NO',   "Nodes")
     debug.register('DG',   "Data generators")
     debug.register('LAZY', "Miscelaneous 'lazy' evaluations")
     debug.register('LOOP', "Support's loop construct")
     debug.register('PLR',  "PLR call")
     debug.register('NBH',  "Neighborhood estimations")
     debug.register('SLC',  "Searchlight call")
+    debug.register('SLC_', "Searchlight call (verbose)")
     debug.register('SA',   "Sensitivity analyzers")
     debug.register('SOM',  "Self-organizing-maps (SOM)")
     debug.register('IRELIEF', "Various I-RELIEFs")
@@ -229,19 +232,22 @@ if __debug__:
                    "Checking in checking if clf was trained on given dataset")
     debug.register('CHECK_RETRAIN', "Checking in retraining/retesting")
     debug.register('CHECK_STABILITY', "Checking for numerical stability")
-    debug.register('ENFORCE_STATES_ENABLED', "Forcing all states to be enabled")
+    debug.register('ENFORCE_CA_ENABLED', "Forcing all ca to be enabled")
 
     debug.register('MAP',   "*Mapper")
     debug.register('MAP_',  "*Mapper (verbose)")
+    debug.register('ZSCM',  "ZScoreMapper")
 
     debug.register('COL',  "Generic Collectable")
     debug.register('COL_RED',  "__reduce__ of collectables")
     debug.register('UATTR', "Attributes with unique")
     debug.register('ST',   "State")
     debug.register('STV',  "State Variable")
-    debug.register('COLR', "Collector for states and classifier parameters")
+    debug.register('COLR', "Collector for ca and classifier parameters")
     debug.register('ES',   "Element selectors")
 
+    debug.register('LRN',    "Base learners")
+    # TODO remove once everthing is a learner
     debug.register('CLF',    "Base Classifiers")
     debug.register('CLF_',   "Base Classifiers (verbose)")
     #debug.register('CLF_TB',
@@ -286,13 +292,19 @@ if __debug__:
 
     debug.register('GPR',     "GPR")
     debug.register('GPR_WEIGHTS', "Track progress of GPRWeights computation")
-    debug.register('KERNEL',  "Kernels module")
+    debug.register('KRN',     "Kernels module (mvpa.kernels)")
+    debug.register('KRN_SG',  "Shogun kernels module (mvpa.kernels.sg)")
+    debug.register('SAL',     "Samples lookup (for cached kernels)")
     debug.register('MOD_SEL', "Model Selector (also makes openopt's iprint=0)")
     debug.register('OPENOPT', "OpenOpt toolbox verbose (iprint=1)")
 
     debug.register('SG',  "PyMVPA SG wrapping")
     debug.register('SG_', "PyMVPA SG wrapping verbose")
     debug.register('SG__', "PyMVPA SG wrapping debug")
+    debug.register('SG_GC', "For all entities enable highest level"
+                            " (garbage collector)")
+    debug.register('SG_LINENO', "Enable printing of the file:lineno"
+                                " where SG_ERROR occurred.")
     debug.register('SG_SVM', "Internal shogun debug output for SVM itself")
     debug.register('SG_FEATURES', "Internal shogun debug output for features")
     debug.register('SG_LABELS', "Internal shogun debug output for labels")
@@ -302,6 +314,7 @@ if __debug__:
 
     debug.register('IOH',    "IO Helpers")
     debug.register('IO_HAM', "Hamster")
+    debug.register('HDF5',   "HDF5 IO")
     debug.register('CM',   "Confusion matrix computation")
     debug.register('ROC',  "ROC analysis")
     debug.register('CROSSC', "Cross-validation call")
@@ -323,11 +336,11 @@ if __debug__:
 
     # Lets check if environment can tell us smth
     if cfg.has_option('general', 'debug'):
-        debug.setActiveFromString(cfg.get('general', 'debug'))
+        debug.set_active_from_string(cfg.get('general', 'debug'))
 
     # Lets check if environment can tell us smth
     if cfg.has_option('debug', 'metrics'):
-        debug.registerMetric(cfg.get('debug', 'metrics').split(","))
+        debug.register_metric(cfg.get('debug', 'metrics').split(","))
 
 
 

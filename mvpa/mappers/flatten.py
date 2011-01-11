@@ -10,12 +10,13 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base.dochelpers import _str
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples, \
-        ChainMapper, FeatureSliceMapper
-from mvpa.misc.support import isInVolume
+        ChainMapper
+from mvpa.featsel.base import StaticFeatureSelection
+from mvpa.misc.support import is_in_volume
 
 
 class FlattenMapper(Mapper):
@@ -41,7 +42,7 @@ class FlattenMapper(Mapper):
           The shape of a single sample. If this argument is given the mapper
           is going to be fully configured and no training is necessary anymore.
         """
-        Mapper.__init__(self, **kwargs)
+        Mapper.__init__(self, auto_train=True, **kwargs)
         self.__origshape = None
         self.__nfeatures = None
         if not shape is None:
@@ -79,7 +80,9 @@ class FlattenMapper(Mapper):
         # first axis is the samples-separating dimension
         self.__origshape = shape
         # total number of features in a sample
-        self.__nfeatures = N.prod(self.__origshape)
+        self.__nfeatures = np.prod(self.__origshape)
+        # flag the mapper as trained
+        self._set_trained()
 
 
     def _forward_data(self, data):
@@ -118,12 +121,12 @@ class FlattenMapper(Mapper):
             mds.fa[k] = self.forward1(mds.fa[k].value)
 
         # if there is no inspace return immediately
-        if self.get_inspace() is None:
+        if self.get_space() is None:
             return mds
         # otherwise create the coordinates as feature attributes
         else:
-            mds.fa[self.get_inspace()] = \
-                list(N.ndindex(dataset.samples[0].shape))
+            mds.fa[self.get_space()] = \
+                list(np.ndindex(dataset.samples[0].shape))
             return mds
 
 
@@ -149,7 +152,7 @@ class FlattenMapper(Mapper):
         # attribute collection needs to have a new length check
         mds.fa.set_length_check(mds.nfeatures)
         # now unflatten all feature attributes
-        inspace = self.get_inspace()
+        inspace = self.get_space()
         for k in mds.fa:
             # reverse map all attributes, but not the inspace indices, since the
             # did not come through this mapper and make not sense in inspace
@@ -163,8 +166,8 @@ class FlattenMapper(Mapper):
 
 
 
-def mask_mapper(mask=None, shape=None, inspace=None):
-    """Factory method to create a chain of Flatten+FeatureSlice Mappers
+def mask_mapper(mask=None, shape=None, space=None):
+    """Factory method to create a chain of Flatten+StaticFeatureSelection Mappers
 
     Parameters
     ----------
@@ -186,13 +189,13 @@ def mask_mapper(mask=None, shape=None, inspace=None):
                   "Either `shape` or `mask` have to be specified."
         else:
             # make full dataspace mask if nothing else is provided
-            mask = N.ones(shape, dtype='bool')
+            mask = np.ones(shape, dtype='bool')
     else:
         if not shape is None:
             # expand mask to span all dimensions but first one
             # necessary e.g. if only one slice from timeseries of volumes is
             # requested.
-            mask = N.array(mask, copy=False, subok=True, ndmin=len(shape))
+            mask = np.array(mask, copy=False, subok=True, ndmin=len(shape))
             # check for compatibility
             if not shape == mask.shape:
                 raise ValueError, \
@@ -200,8 +203,11 @@ def mask_mapper(mask=None, shape=None, inspace=None):
                     "compatible with the provided shape %s." \
                     % (mask.shape, shape)
 
-    fm = FlattenMapper(shape=mask.shape, inspace=inspace)
+    fm = FlattenMapper(shape=mask.shape, space=space)
     flatmask = fm.forward1(mask)
-    mapper = ChainMapper([fm, FeatureSliceMapper(flatmask,
-                                                 dshape=flatmask.shape)])
+    mapper = ChainMapper([fm,
+                          StaticFeatureSelection(
+                              flatmask,
+                              dshape=flatmask.shape,
+                              oshape=(len(flatmask.nonzero()[0]),))])
     return mapper

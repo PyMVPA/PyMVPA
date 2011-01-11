@@ -8,11 +8,15 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA least angle regression (LARS) classifier"""
 
+from mvpa.testing import *
+skip_if_no_external('lars')
+
+from mvpa.testing.datasets import datasets
+
 from mvpa import cfg
 from mvpa.clfs.lars import LARS
 from scipy.stats import pearsonr
-from tests_warehouse import *
-from mvpa.misc.data_generators import normalFeatureDataset
+from mvpa.misc.data_generators import normal_feature_dataset
 
 class LARSTests(unittest.TestCase):
 
@@ -31,7 +35,7 @@ class LARSTests(unittest.TestCase):
         # prediction has to be almost perfect
         # test with a correlation
         pre = clf.predict(data.samples)
-        cor = pearsonr(pre, data.labels)
+        cor = pearsonr(pre, data.targets)
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless(cor[0] > .8)
 
@@ -45,11 +49,11 @@ class LARSTests(unittest.TestCase):
 
         clf.train(data)
 
-        clf.states.enable('predictions')
+        clf.ca.enable('predictions')
 
         p = clf.predict(data.samples)
 
-        self.failUnless((p == clf.states.predictions).all())
+        self.failUnless((p == clf.ca.predictions).all())
 
 
     def test_lars_sensitivities(self):
@@ -61,7 +65,7 @@ class LARSTests(unittest.TestCase):
 
         # now ask for the sensitivities WITHOUT having to pass the dataset
         # again
-        sens = clf.getSensitivityAnalyzer(force_training=False)()
+        sens = clf.get_sensitivity_analyzer(force_train=False)()
 
         self.failUnless(sens.shape == (1, data.nfeatures))
 

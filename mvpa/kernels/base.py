@@ -20,12 +20,15 @@ Concerns:
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base.types import is_datasetlike
-from mvpa.misc.state import ClassWithCollections
-from mvpa.misc.param import Parameter
+from mvpa.base.state import ClassWithCollections
+from mvpa.base.param import Parameter
 from mvpa.misc.sampleslookup import SamplesLookup # required for CachedKernel
+
+if __debug__:
+    from mvpa.base import debug
 
 __all__ = ['Kernel', 'NumpyKernel', 'CustomKernel', 'PrecomputedKernel',
            'CachedKernel']
@@ -40,56 +43,62 @@ class Kernel(ClassWithCollections):
 
     This class should not be used directly, but rather use a subclass which
     enforces a consistent internal representation, such as a NumpyKernel.
-    
-    Conversion mechanisms
-    ---------------------
-    
-    Each kernel type should implement methods as necessary for the following two
-    methods to work:
 
-    kernel.as_np() # Return a new NumpyKernel object with internal Numpy kernel
-      This method can be generally inherited from the base Kernel class by 
+    Notes
+    -----
+    Conversion mechanisms: Each kernel type should implement methods
+    as necessary for the following two methods to work:
+
+    :meth:`~mvpa.kernels.Kernel.as_np`
+      *Return a new NumpyKernel object with internal Numpy kernel*.
+      This method can be generally inherited from the base Kernel class by
       creating a PrecomputedKernel from the raw numpy matrix, as implemented
       here.
-      
-    kernel.as_raw_np() # Return a raw Numpy array from this kernel
+
+    :meth:`~mvpa.kernels.Kernel.as_raw_np`
+      *Return a raw Numpy array from this kernel*.
       This method should behave identically to numpy.array(kernel), and in fact,
       defining either method (via defining Kernel.__array__) will be sufficient
       for both method calls to work.  See this source code for more details.
-    
+
     Other kernel types should implement similar mechanisms to convert numpy
     arrays to their own internal representations.  See `add_conversion` for a
     helper method, and examples in mvpa.kernels.sg
-    
+
     Assuming such `Kernel.as_*` methods exist, all kernel types should be
     seamlessly convertable amongst each other.
-    
-    Note that kernels are not meant to be 'functionally translateable' in the 
+
+    Note that kernels are not meant to be 'functionally translateable' in the
     sense that one kernel can be created, translated, then used to compute
     results in a new framework.  Rather, the results are meant to be
     exchangeable, hence the standard practice of using a precomputed kernel
     object to store the results in the new kernel type.
-    
+
     For example:
-    k = SomeShogunKernel()
-    k.compute(data1, data2)
-    
-    # Incorrect and unsupported use
-    k2 = k.as_cuda()
-    k2.compute(data3, data4) # Would require 'functional translation' to the new
-                             # backend, which is impossible
-    
-    # Correct use
-    someOtherAlgorithm(k.as_raw_cuda()) # Simply uses kernel results in CUDA
+
+    ::
+
+      k = SomeShogunKernel()
+      k.compute(data1, data2)
+
+      # Incorrect and unsupported use
+      k2 = k.as_cuda()
+      k2.compute(data3, data4) # Would require 'functional translation' to the new
+                               # backend, which is impossible
+
+      # Correct use
+      someOtherAlgorithm(k.as_raw_cuda()) # Simply uses kernel results in CUDA
     """
 
     _ATTRIBUTE_COLLECTIONS = ['params'] # enforce presence of params collections
 
-    # Define this per class: standard string describing kernel type, ie 
+    # Define this per class: standard string describing kernel type, ie
     # 'linear', or 'rbf', to help coordinate kernel types across backends
     __kernel_name__ = None
-    
+
     def __init__(self, *args, **kwargs):
+        """Base Kernel class has no parameters
+        """
         ClassWithCollections.__init__(self, *args, **kwargs)
         self._k = None
         """Implementation specific version of the kernel"""
@@ -132,10 +141,10 @@ class Kernel(ClassWithCollections):
 
     def as_raw_np(self):
         """Directly return this kernel as a numpy array"""
-        return N.array(self)
-    
+        return np.array(self)
+
     ############################################################################
-    
+
     def as_np(self):
         """Converts this kernel to a Numpy-based representation"""
         p = PrecomputedKernel(matrix=self.as_raw_np())
@@ -153,7 +162,7 @@ class Kernel(ClassWithCollections):
     @classmethod
     def add_conversion(cls, typename, methodfull, methodraw):
         """Adds methods to the Kernel class for new conversions
-        
+
         Parameters
         ----------
         typename : string
@@ -162,13 +171,13 @@ class Kernel(ClassWithCollections):
           Method which converts to the new kernel object class
         methodraw : function
           Method which returns a raw kernel
-        
+
         Examples
         --------
         Kernel.add_conversion('np', fullmethod, rawmethod)
         binds kernel.as_np() to fullmethod()
         binds kernel.as_raw_np() to rawmethod()
-        
+
         Can also be used on subclasses to override the default conversions
         """
         setattr(cls, 'as_%s'%typename, methodfull)
@@ -177,8 +186,8 @@ class Kernel(ClassWithCollections):
 class NumpyKernel(Kernel):
     """A Kernel object with internal representation as a 2d numpy array"""
 
-    _ATTRIBUTE_COLLECTIONS = Kernel._ATTRIBUTE_COLLECTIONS + ['states']
-    # enforce presence of params AND states collections for gradients etc
+    _ATTRIBUTE_COLLECTIONS = Kernel._ATTRIBUTE_COLLECTIONS + ['ca']
+    # enforce presence of params AND ca collections for gradients etc
 
     def __array__(self):
         # By definintion, a NumpyKernel's internal representation is an array
@@ -250,7 +259,7 @@ class PrecomputedKernel(NumpyKernel):
         """
         NumpyKernel.__init__(self, *args, **kwargs)
 
-        self._k = N.array(matrix)
+        self._k = np.array(matrix)
 
     def compute(self, *args, **kwargs):
         pass
@@ -258,32 +267,32 @@ class PrecomputedKernel(NumpyKernel):
 
 class CachedKernel(NumpyKernel):
     """Kernel which caches all data to avoid duplicate computation
-    
+
     This kernel is very useful for any analysis which will retrain or
     repredict the same data multiple times, as this kernel will avoid
     recalculating the kernel function.  Examples of such analyses include cross
     validation, bootstrapping, and model selection (assuming the kernel function
     itself does not change, e.g. when selecting for C in an SVM).
-    
+
     The kernel will automatically cache any new data sent through compute, and
     will be able to use this cache whenever a subset of this data is sent
     through compute again.  If new (uncached) data is sent through compute, then
     the cache is recreated from scratch.  Therefore, you should compute the
     kernel on the entire superset of your data before using this kernel
     normally (computing a new cache invalidates any previous cached data).
-    
+
     The cache is asymmetric for lhs and rhs, so compute(d1, d2) does not create
     a cache usable for compute(d2, d1).
     """
 
     # TODO: Figure out how to design objects like CrossValidation etc to
     # precompute this kernel automatically, making it transparent to the user
-    
+
     @property
     def __kernel_name__(self):
         """Allows checking name of subkernel"""
         return self._kernel.__kernel_name__
-    
+
     def __init__(self, kernel=None, *args, **kwargs):
         """Initialize `CachedKernel`
 
@@ -302,6 +311,10 @@ class CachedKernel(NumpyKernel):
     def _cache(self, ds1, ds2=None):
         """Initializes internal lookups + _kfull via caching the kernel matrix
         """
+        if __debug__ and 'KRN' in debug.active:
+            debug('KRN', "Caching %(inst)s for ds1=%(ds1)s, ds2=%(ds1)s"
+                  % dict(inst=self, ds1=ds1, ds2=ds2))
+
         self._lhsids = SamplesLookup(ds1)
         if (ds2 is None) or (ds2 is ds1):
             self._rhsids = self._lhsids
@@ -313,43 +326,57 @@ class CachedKernel(NumpyKernel):
         self._kfull = ckernel.as_raw_np()
         ckernel.cleanup()
         self._k = self._kfull
-        
+
         self._recomputed = True
         self.params.reset()
         # TODO: store params representation for later comparison
 
-    def compute(self, ds1, ds2=None):
+    def compute(self, ds1, ds2=None, force=False):
         """Automatically computes and caches the kernel or extracts the
         relevant part of a precached kernel into self._k
+
+        Parameters
+        ----------
+        force : bool
+          If True it forces re-caching of the kernel.  It is advised
+          to be used whenever explicitly pre-caching the kernel and
+          it is known that data was changed.
         """
+        if __debug__ and 'KRN' in debug.active:
+            debug('KRN', "Computing kernel %(inst)s on ds1=%(ds1)s, ds2=%(ds1)s"
+                  % dict(inst=self, ds1=ds1, ds2=ds2))
+
         # Flag lets us know whether cache was recomputed
         self._recomputed = False
-        
+
         #if self._ds_cached_info is not None:
         # Check either those ds1, ds2 are coming from the same
         # dataset as before
 
         # TODO: figure out if data were modified...
         # params_modified = True
-        changedData = False
+        changedData = False or force
         if len(self.params.which_set()) or changedData \
            or self._lhsids is None:
             self._cache(ds1, ds2)# hopefully this will never reset values, just
             # changed status
         else:
             # figure d1, d2
-            # TODO: find saner numpy way to select both rows and columns
             try:
                 lhsids = self._lhsids(ds1) #
                 if ds2 is None:
                     rhsids = lhsids
                 else:
                     rhsids = self._rhsids(ds2)
-                self._k = self._kfull.take(
-                    lhsids, axis=0).take(
-                    rhsids, axis=1)
+                self._k = self._kfull[np.ix_(lhsids, rhsids)]
             except KeyError:
                 self._cache(ds1, ds2)
+
+        if __debug__ and self._recomputed:
+            debug('KRN',
+                  "Kernel %(inst)s was recomputed on ds1=%(ds1)s, ds2=%(ds1)s"
+                  % dict(inst=self, ds1=ds1, ds2=ds2))
+
 
 __BOGUS_NOTES__ = """
 if ds1 is the "derived" dataset as it was computed on:
@@ -367,7 +394,7 @@ else:
       - different data ids
 
 
-ckernel = PrecomputedKernel(matrix=N.array([1,2,3]))
+ckernel = PrecomputedKernel(matrix=np.array([1,2,3]))
 ck = CachedKernel(kernel=ckernel)
 
 """

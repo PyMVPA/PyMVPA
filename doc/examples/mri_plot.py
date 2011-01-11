@@ -22,7 +22,7 @@ However, sometimes having a scriptable plotting facility within Python is
 desired. There are a number of candidate tools for this purpose (e.g. Mayavi_),
 but also PyMVPA itself offers some basic MRI plotting.
 
-.. _Mayavi: http://mayavi.sourceforge.net
+.. _Mayavi: http://code.enthought.com/projects/mayavi/
 
 In this example, we are showing a quick-and-dirty plot of a voxel-wise
 ANOVA measure, overlaid on the respective brain anatomy. Note that the plotting
@@ -37,20 +37,21 @@ elsewhere, hence we only provide the code here for the sake of completeness.
 from mvpa.suite import *
 
 # load PyMVPA example dataset
-datapath = os.path.join(pymvpa_datadbroot, 'demo_blockfmri', 'demo_blockfmri')
+datapath = os.path.join(pymvpa_datadbroot,
+                        'tutorial_data', 'tutorial_data', 'data')
 attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
 dataset = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
-                       labels=attr.labels,
+                       targets=attr.targets,
                        chunks=attr.chunks,
                        mask=os.path.join(datapath, 'mask_gray.nii.gz'))
 
 # do chunkswise linear detrending on dataset
-poly_detrend(dataset, chunks='chunks')
+poly_detrend(dataset, chunks_attr='chunks')
 
 # exclude the rest conditions from the dataset, since that should be
 # quite different from the 'active' conditions, and make the computation
 # below pointless
-dataset = dataset[dataset.sa.labels != 'rest']
+dataset = dataset[dataset.sa.targets != 'rest']
 
 # define sensitivity analyzer to compute ANOVA F-scores on the remaining
 # samples
@@ -74,7 +75,7 @@ mri_args = {
     'background_mask' : os.path.join(datapath, 'mask_brain.nii.gz'),
     'overlay_mask' : os.path.join(datapath, 'mask_gray.nii.gz'),
     'cmap_bg' : 'gray',
-    'cmap_overlay' : 'autumn', # YlOrRd_r # P.cm.autumn
+    'cmap_overlay' : 'autumn', # YlOrRd_r # pl.cm.autumn
     'interactive' : cfg.getboolean('examples', 'interactive', True),
     }
 

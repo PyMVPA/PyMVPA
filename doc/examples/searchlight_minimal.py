@@ -14,10 +14,10 @@ Minimal Searchlight Example
 .. index:: searchlight, cross-validation
 
 The term :class:`~mvpa.measures.searchlight.Searchlight` refers to an algorithm
-that runs a scalar :class:`~mvpa.measures.base.DatasetMeasure` on all possible
+that runs a scalar :class:`~mvpa.measures.base.Measure` on all possible
 spheres of a certain size within a dataset (that provides information about
 distances between feature locations).  The measure typically computed is a
-cross-validated transfer error (see :ref:`CrossValidatedTransferError
+cross-validation of a classifier performance (see :ref:`CrossValidation
 <cross-validation>`). The idea to use a searchlight as a sensitivity analyzer
 on fMRI datasets stems from :ref:`Kriegeskorte et al. (2006) <KGB06>`.
 
@@ -26,38 +26,35 @@ draft of a complete analysis.
 
 First import a necessary pieces of PyMVPA -- this time each bit individually.
 """
-from mvpa.datasets.base import dataset_wizard
-from mvpa.datasets.splitters import OddEvenSplitter
+
+import numpy as np
+
+from mvpa.generators.partition import OddEvenPartitioner
 from mvpa.clfs.svm import LinearCSVMC
-from mvpa.clfs.transerror import TransferError
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
-from mvpa.measures.searchlight import Searchlight
-from mvpa.misc.data_generators import normalFeatureDataset
+from mvpa.measures.base import CrossValidation
+from mvpa.measures.searchlight import sphere_searchlight
+from mvpa.testing.datasets import datasets
+from mvpa.mappers.fx import mean_sample
 
 """For the sake of simplicity, let's use a small artificial dataset."""
 
-# overcomplicated way to generate an example dataset
-ds = normalFeatureDataset(perlabel=10, nlabels=2, nchunks=2,
-                          nfeatures=10, nonbogus_features=[3, 7],
-                          snr=5.0)
-dataset = dataset_wizard(samples=ds.samples, labels=ds.labels,
-                  chunks=ds.chunks)
+# Lets just use our tiny 4D dataset from testing battery
+dataset = datasets['3dlarge']
 
 """Now it only takes three lines for a searchlight analysis."""
 
 # setup measure to be computed in each sphere (cross-validated
 # generalization error on odd/even splits)
-cv = CrossValidatedTransferError(
-         TransferError(LinearCSVMC()),
-         OddEvenSplitter())
+cv = CrossValidation(LinearCSVMC(), OddEvenPartitioner())
 
-# setup searchlight with 5 mm radius and measure configured above
-sl = Searchlight(cv, radius=5)
+# setup searchlight with 2 voxels radius and measure configured above
+sl = sphere_searchlight(cv, radius=2, space='myspace',
+                        postproc=mean_sample())
 
 # run searchlight on dataset
 sl_map = sl(dataset)
 
-print 'Best performing sphere error:', min(sl_map)
+print 'Best performing sphere error:', np.min(sl_map.samples)
 
 """
 If this analysis is done on a fMRI dataset using `NiftiDataset` the resulting

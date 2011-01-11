@@ -8,8 +8,14 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA GNB classifier"""
 
+import numpy as np
+
+from mvpa.testing import *
+from mvpa.testing.datasets import *
+
 from mvpa.clfs.gnb import GNB
-from tests_warehouse import *
+from mvpa.measures.base import TransferMeasure
+from mvpa.generators.splitters import Splitter
 
 class GNBTests(unittest.TestCase):
 
@@ -19,8 +25,7 @@ class GNBTests(unittest.TestCase):
         gnb_n = GNB(normalize=True)
         gnb_n_nc = GNB(normalize=True, common_variance=False)
 
-        ds_tr = datasets['uni2medium_train']
-        ds_te = datasets['uni2medium_test']
+        ds = datasets['uni2medium']
 
         # Generic silly coverage just to assure that it works in all
         # possible scenarios:
@@ -37,21 +42,19 @@ class GNBTests(unittest.TestCase):
                                prior=prior,
                                normalize=n,
                                logprob=ls,
-                               enable_states=es)
-                    gnb_.train(ds_tr)
-                    predictions = gnb_.predict(ds_te.samples)
+                               enable_ca=es)
+                    tm = TransferMeasure(gnb_, Splitter('train'))
+                    predictions = tm(ds).samples[:,0]
                     if tp is None:
                         tp = predictions
-                    self.failUnless((predictions == tp),
-                                    msg="%s failed to reproduce predictions" %
-                                    gnb_)
+                    assert_array_equal(predictions, tp)
                     # if normalized -- check if estimates are such
                     if n and 'estimates' in es:
-                        v = gnb_.states.estimates
+                        v = gnb_.ca.estimates
                         if ls:          # in log space -- take exp ;)
-                            v = N.exp(v)
-                        d1 = N.sum(v, axis=1) - 1.0
-                        self.failUnless(N.max(N.abs(d1)) < 1e-5)
+                            v = np.exp(v)
+                        d1 = np.sum(v, axis=1) - 1.0
+                        self.failUnless(np.max(np.abs(d1)) < 1e-5)
 
 def suite():
     return unittest.makeSuite(GNBTests)

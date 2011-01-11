@@ -25,40 +25,43 @@ from mvpa.suite import *
 # load PyMVPA example dataset
 attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes_literal.txt'))
 dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                       labels=attr.labels,
+                       targets=attr.targets,
                        chunks=attr.chunks,
                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 """As with classifiers it is easy to define a bunch of sensitivity
-analyzers. It is usually possible to simply call `getSensitivityAnalyzer()`
+analyzers. It is usually possible to simply call `get_sensitivity_analyzer()`
 on any classifier to get an instance of an appropriate sensitivity analyzer
 that uses this particular classifier to compute and extract sensitivity scores.
 """
 
 # define sensitivity analyzer
 sensanas = {
-    'a) ANOVA': OneWayAnova(mapper=absolute_features()),
-    'b) Linear SVM weights': LinearNuSVMC().getSensitivityAnalyzer(
-                                               mapper=absolute_features()),
-    'c) I-RELIEF': IterativeRelief(mapper=absolute_features()),
+    'a) ANOVA': OneWayAnova(postproc=absolute_features()),
+    'b) Linear SVM weights': LinearNuSVMC().get_sensitivity_analyzer(
+                                               postproc=absolute_features()),
+    'c) I-RELIEF': IterativeRelief(postproc=absolute_features()),
     'd) Splitting ANOVA (odd-even)':
-        SplitFeaturewiseDatasetMeasure(
-            OddEvenSplitter(),
-            OneWayAnova(mapper=absolute_features())),
+        RepeatedMeasure(
+            OneWayAnova(postproc=absolute_features()),
+            OddEvenPartitioner()),
     'e) Splitting SVM (odd-even)':
-        SplitFeaturewiseDatasetMeasure(
-            OddEvenSplitter(),
-            LinearNuSVMC().getSensitivityAnalyzer(mapper=absolute_features())),
+        RepeatedMeasure(
+            LinearNuSVMC().get_sensitivity_analyzer(postproc=absolute_features()),
+            OddEvenPartitioner()),
     'f) I-RELIEF Online':
-        IterativeReliefOnline(mapper=absolute_features()),
+        IterativeReliefOnline(postproc=absolute_features()),
     'g) Splitting ANOVA (nfold)':
-        SplitFeaturewiseDatasetMeasure(
-            NFoldSplitter(),
-            OneWayAnova(mapper=absolute_features())),
+        RepeatedMeasure(
+            OneWayAnova(postproc=absolute_features()),
+            NFoldPartitioner()),
     'h) Splitting SVM (nfold)':
-        SplitFeaturewiseDatasetMeasure(
-            NFoldSplitter(),
-            LinearNuSVMC().getSensitivityAnalyzer(mapper=absolute_features()))
+        RepeatedMeasure(
+            LinearNuSVMC().get_sensitivity_analyzer(postproc=absolute_features()),
+            NFoldPartitioner()),
+#    'i) GNB Searchlight':
+#        sphere_gnbsearchlight(GNB(), NFoldSplitter(cvtype=1),
+#                              radius=0, errorfx=MeanAccuracyFx())
            }
 
 """Now, we are performing some a more or less standard preprocessing steps:
@@ -66,24 +69,25 @@ detrending, selecting a subset of the experimental conditions, normalization
 of each feature to a standard mean and variance."""
 
 # do chunkswise linear detrending on dataset
-poly_detrend(dataset, polyord=1, chunks='chunks')
+poly_detrend(dataset, polyord=1, chunks_attr='chunks')
 
 # only use 'rest', 'shoe' and 'bottle' samples from dataset
-dataset = dataset[N.array([l in ['rest', 'shoe', 'bottle']
-                    for l in dataset.sa.labels], dtype='bool')]
+dataset = dataset[np.array([l in ['rest', 'shoe', 'bottle']
+                    for l in dataset.sa.targets], dtype='bool')]
 
 # zscore dataset relative to baseline ('rest') mean
-zscore(dataset, perchunk=True, baselinelabels=['rest'], targetdtype='float32')
+zscore(dataset, chunks_attr='chunks',
+       param_est=('targets', ['rest']), dtype='float32')
 
 # remove baseline samples from dataset for final analysis
-dataset = dataset[dataset.sa.labels != 'rest']
+dataset = dataset[dataset.sa.targets != 'rest']
 
 """Finally, we will loop over all defined analyzers and let them compute
 the sensitivity scores. The resulting vectors are then mapped back into the
 dataspace of the original fMRI samples, which are then plotted."""
 
 fig = 0
-P.figure(figsize=(14, 8))
+pl.figure(figsize=(14, 8))
 
 keys = sensanas.keys()
 keys.sort()
@@ -101,32 +105,32 @@ for s in keys:
 
     # map sensitivity map into original dataspace
     orig_smap = dataset.mapper.reverse1(smap)
-    masked_orig_smap = N.ma.masked_array(orig_smap, mask=orig_smap == 0)
+    masked_orig_smap = np.ma.masked_array(orig_smap, mask=orig_smap == 0)
 
     # make a new subplot for each classifier
     fig += 1
-    P.subplot(3, 3, fig)
+    pl.subplot(3, 3, fig)
 
-    P.title(s)
+    pl.title(s)
 
-    P.imshow(masked_orig_smap[0],
+    pl.imshow(masked_orig_smap[..., 0].T,
              interpolation='nearest',
              aspect=1.25,
-             cmap=P.cm.autumn)
+             cmap=pl.cm.autumn)
 
     # uniform scaling per base sensitivity analyzer
-    if s.count('ANOVA'):
-        P.clim(0, 30)
-    elif s.count('SVM'):
-        P.clim(0, 0.055)
-    else:
-        pass
+    ## if s.count('ANOVA'):
+    ##     pl.clim(0, 30)
+    ## elif s.count('SVM'):
+    ##     pl.clim(0, 0.055)
+    ## else:
+    ##     pass
 
-    P.colorbar(shrink=0.6)
+    pl.colorbar(shrink=0.6)
 
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
-    P.show()
+    pl.show()
 
 """
 Output of the example analysis:

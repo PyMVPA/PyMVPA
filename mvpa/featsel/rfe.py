@@ -10,14 +10,15 @@
 
 __docformat__ = 'restructuredtext'
 
+from mvpa.support.copy import copy
 from mvpa.clfs.transerror import ClassifierError
 from mvpa.measures.base import Sensitivity
-from mvpa.featsel.base import FeatureSelection
+from mvpa.featsel.base import IterativeFeatureSelection
 from mvpa.featsel.helpers import BestDetector, \
                                  NBackHistoryStopCrit, \
                                  FractionTailSelector
-from numpy import arange
-from mvpa.misc.state import StateVariable
+import numpy as np
+from mvpa.base.state import ConditionalAttribute
 
 if __debug__:
     from mvpa.base import debug
@@ -29,10 +30,10 @@ if __debug__:
 # actual selector, or a decorator around SensitivityEstimators
 
 
-class RFE(FeatureSelection):
+class RFE(IterativeFeatureSelection):
     """Recursive feature elimination.
 
-    A `FeaturewiseDatasetMeasure` is used to compute sensitivity maps given a
+    A `FeaturewiseMeasure` is used to compute sensitivity maps given a
     certain dataset. These sensitivity maps are in turn used to discard
     unimportant features. For each feature selection the transfer error on some
     testdatset is computed. This procedure is repeated until a given
@@ -51,100 +52,53 @@ class RFE(FeatureSelection):
       486--503.
     """
 
-    errors = StateVariable(
-        doc="History of errors through RFE")
-    nfeatures = StateVariable(
-        doc="History of # of features left")
-    history = StateVariable(
+    history = ConditionalAttribute(
         doc="Last step # when each feature was still present")
-    sensitivities = StateVariable(enabled=False,
+    sensitivities = ConditionalAttribute(enabled=False,
         doc="History of sensitivities (might consume too much memory")
 
     def __init__(self,
-                 sensitivity_analyzer,
-                 transfer_error,
-                 feature_selector=FractionTailSelector(0.05),
-                 bestdetector=BestDetector(),
-                 stopping_criterion=NBackHistoryStopCrit(BestDetector()),
-                 train_clf=None,
+                 fmeasure,
+                 pmeasure,
+                 splitter,
+                 fselector=FractionTailSelector(0.05),
                  update_sensitivity=True,
-                 **kargs
-                 ):
+                 **kwargs):
         # XXX Allow for multiple stopping criterions, e.g. error not decreasing
         # anymore OR number of features less than threshold
         """Initialize recursive feature elimination
 
         Parameters
         ----------
-        sensitivity_analyzer : FeaturewiseDatasetMeasure object
-        transfer_error : TransferError object
+        fmeasure : FeaturewiseMeasure
+        pmeasure : Measure
           used to compute the transfer error of a classifier based on a
           certain feature set on the test dataset.
           NOTE: If sensitivity analyzer is based on the same
           classifier as transfer_error is using, make sure you
           initialize transfer_error with train=False, otherwise
           it would train classifier twice without any necessity.
-        feature_selector : Functor
+        splitter: Splitter
+          This splitter instance has to generate at least two dataset splits
+          when called with the input dataset. The first split serves as the
+          training dataset and the second as the evaluation dataset.
+        fselector : Functor
           Given a sensitivity map it has to return the ids of those
           features that should be kept.
-        bestdetector : Functor
-          Given a list of error values it has to return a boolean that
-          signals whether the latest error value is the total minimum.
-        stopping_criterion : Functor
-          Given a list of error values it has to return whether the
-          criterion is fulfilled.
-        train_clf : bool
-          Flag whether the classifier in `transfer_error` should be
-          trained before computing the error. In general this is
-          required, but if the `sensitivity_analyzer` and
-          `transfer_error` share and make use of the same classifier it
-          can be switched off to save CPU cycles. Default `None` checks
-          if sensitivity_analyzer is based on a classifier and doesn't train
-          if so.
         update_sensitivity : bool
           If False the sensitivity map is only computed once and reused
           for each iteration. Otherwise the senstitivities are
           recomputed at each selection step.
         """
-
-        # base init first
-        FeatureSelection.__init__(self, **kargs)
-
-        self.__sensitivity_analyzer = sensitivity_analyzer
-        """Sensitivity analyzer used to call at each step."""
-
-        self.__transfer_error = transfer_error
-        """Compute transfer error for each feature set."""
-
-        self.__feature_selector = feature_selector
-        """Functor which takes care about removing some features."""
-
-        self.__stopping_criterion = stopping_criterion
-
-        self.__bestdetector = bestdetector
-
-        if train_clf is None:
-            self.__train_clf = isinstance(sensitivity_analyzer,
-                                          Sensitivity)
-        else:
-            self.__train_clf = train_clf
-            """Flag whether training classifier is required."""
+        # bases init first
+        IterativeFeatureSelection.__init__(self, fmeasure, pmeasure, splitter,
+                                           fselector, **kwargs)
 
         self.__update_sensitivity = update_sensitivity
         """Flag whether sensitivity map is recomputed for each step."""
 
-        # force clf training when sensitivities are not updated as otherwise
-        # shared classifiers are not retrained
-        if not self.__update_sensitivity \
-               and isinstance(self.__transfer_error, ClassifierError) \
-               and not self.__train_clf:
-            if __debug__:
-                debug("RFEC", "Forcing training of classifier since " +
-                      "sensitivities aren't updated at each step")
-            self.__train_clf = True
 
-
-    def __call__(self, dataset, testdataset):
+    def _train(self, ds):
         """Proceed and select the features recursively eliminating less
         important ones.
 
@@ -163,19 +117,22 @@ class RFE(FeatureSelection):
         dataset is the feature subset of the training data and the
         second the selection of the test dataset.
         """
+        # get the initial split into train and test
+        dataset, testdataset = self._get_traintest_ds(ds)
+
         errors = []
         """Computed error for each tested features set."""
 
-        states = self.states
-        states.nfeatures = []
+        ca = self.ca
+        ca.nfeatures = []
         """Number of features at each step. Since it is not used by the
-        algorithm it is stored directly in the state variable"""
+        algorithm it is stored directly in the conditional attribute"""
 
-        states.history = arange(dataset.nfeatures)
+        ca.history = np.arange(dataset.nfeatures)
         """Store the last step # when the feature was still present
         """
 
-        states.sensitivities = []
+        ca.sensitivities = []
 
         stop = False
         """Flag when RFE should be stopped."""
@@ -193,7 +150,7 @@ class RFE(FeatureSelection):
         step = 0
         """Counter how many selection step where done."""
 
-        orig_feature_ids = arange(dataset.nfeatures)
+        orig_feature_ids = np.arange(dataset.nfeatures)
         """List of feature Ids as per original dataset remaining at any given
         step"""
 
@@ -215,56 +172,51 @@ class RFE(FeatureSelection):
             # mark the features which are present at this step
             # if it brings anyb mentionable computational burden in the future,
             # only mark on removed features at each step
-            states.history[orig_feature_ids] = step
+            ca.history[orig_feature_ids] = step
 
             # Compute sensitivity map
             if self.__update_sensitivity or sensitivity == None:
-                sensitivity = self.__sensitivity_analyzer(wdataset)
+                sensitivity = self._fmeasure(wdataset)
                 if len(sensitivity) > 1:
                     raise ValueError(
-                            "REF cannot handle multiple sensitivities at once. "
+                            "RFE cannot handle multiple sensitivities at once. "
                             "'%s' returned %i sensitivities."
-                            % (self.__sensitivity_analyzer.__class__.__name__,
+                            % (self._fmeasure.__class__.__name__,
                                len(sensitivity)))
 
-            if states.is_enabled("sensitivities"):
-                states.sensitivities.append(sensitivity)
+            if ca.is_enabled("sensitivities"):
+                ca.sensitivities.append(sensitivity)
 
-            # do not retrain clf if not necessary
-            if self.__train_clf:
-                error = self.__transfer_error(wtestdataset, wdataset)
-            else:
-                error = self.__transfer_error(wtestdataset, None)
-
+            # get error for current feature set (handles optional retraining)
+            error = self._evaluate_pmeasure(wdataset, wtestdataset)
             # Record the error
-            errors.append(error)
+            errors.append(np.asscalar(error))
 
             # Check if it is time to stop and if we got
             # the best result
-            stop = self.__stopping_criterion(errors)
-            isthebest = self.__bestdetector(errors)
+            stop = self._stopping_criterion(errors)
+            isthebest = self._bestdetector(errors)
 
             nfeatures = wdataset.nfeatures
 
-            if states.is_enabled("nfeatures"):
-                states.nfeatures.append(wdataset.nfeatures)
+            if ca.is_enabled("nfeatures"):
+                ca.nfeatures.append(wdataset.nfeatures)
 
             # store result
             if isthebest:
-                results = (wdataset, wtestdataset)
                 result_selected_ids = orig_feature_ids
 
             if __debug__:
                 debug('RFEC',
                       "Step %d: nfeatures=%d error=%.4f best/stop=%d/%d " %
-                      (step, nfeatures, error, isthebest, stop))
+                      (step, nfeatures, np.asscalar(error), isthebest, stop))
 
             # stop if it is time to finish
             if nfeatures == 1 or stop:
                 break
 
             # Select features to preserve
-            selected_ids = self.__feature_selector(sensitivity)
+            selected_ids = self._fselector(sensitivity)
 
             if __debug__:
                 debug('RFEC_',
@@ -294,17 +246,16 @@ class RFE(FeatureSelection):
 
             # WARNING: THIS MUST BE THE LAST THING TO DO ON selected_ids
             selected_ids.sort()
-            if self.states.is_enabled("history") \
-                   or self.states.is_enabled('selected_ids'):
+            if self.ca.is_enabled("history") \
+                   or self.ca.is_enabled('selected_ids'):
                 orig_feature_ids = orig_feature_ids[selected_ids]
 
-
-            if hasattr(self.__transfer_error, "clf"):
-                self.__transfer_error.clf.untrain()
-        # charge state variables
-        self.states.errors = errors
-        self.states.selected_ids = result_selected_ids
-
-        # best dataset ever is returned
-        return results
-
+            # we already have the initial sensitivities, so even for a shared
+            # classifier we can cleanup here
+            self._pmeasure.untrain()
+        # charge conditional attributes
+        self.ca.errors = errors
+        self.ca.selected_ids = result_selected_ids
+        # announce desired features to the underlying slice mapper
+        # do copy to survive later selections
+        self._safe_assign_slicearg(copy(result_selected_ids))

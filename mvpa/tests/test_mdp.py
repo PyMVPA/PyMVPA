@@ -8,26 +8,24 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for basic mappers'''
 
-import numpy as N
+import numpy as np
+
+from mvpa.testing import *
+skip_if_no_external('mdp')
 
 from mvpa.base import externals
-if externals.exists('mdp', raiseException=True):
-    import mdp
-else:
-    raise RuntimeError, "Don't run me if no mdp is present"
+import mdp
 
 from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper, PCAMapper, \
         ICAMapper
 from mvpa.mappers.lle import LLEMapper
 from mvpa.datasets.base import Dataset
 from mvpa.base.dataset import DAE
-from mvpa.misc.data_generators import normalFeatureDataset
+from mvpa.misc.data_generators import normal_feature_dataset
 
-from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true,  assert_array_equal, assert_array_almost_equal
 
 def test_mdpnodemapper():
-    ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+    ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
 
     node = mdp.nodes.PCANode()
     mm = MDPNodeMapper(node, nodeargs={'stoptrain': ((), {'debug': True})})
@@ -60,14 +58,14 @@ def test_mdpnodemapper():
 
     # retraining has to work on a new dataset too, since we copy the node
     # internally
-    dsbig = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=10)
+    dsbig = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=10)
     mm.train(dsbig)
 
 
 def test_mdpflowmapper():
     flow = mdp.nodes.PCANode() + mdp.nodes.SFANode()
     fm = MDPFlowMapper(flow)
-    ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+    ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
 
     fm.train(ds)
     assert_false(fm.flow[0].is_training())
@@ -79,16 +77,16 @@ def test_mdpflowmapper():
 
 
 def test_mdpflow_additional_arguments():
-    if externals.versions['mdp'] < '2.5':
-        # we have no IdentityNode yet... is there analog?
-        return
-    ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+    skip_if_no_external('mdp', min_version='2.5')
+    # we have no IdentityNode yet... is there analog?
+
+    ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
     flow = mdp.nodes.PCANode() + mdp.nodes.IdentityNode() + mdp.nodes.FDANode()
     # this is what it would look like in MDP itself
     #flow.train([[ds.samples],
-    #            [[ds.samples, ds.sa.labels]]])
+    #            [[ds.samples, ds.sa.targets]]])
     assert_raises(ValueError, MDPFlowMapper, flow, node_arguments=[[],[]])
-    fm = MDPFlowMapper(flow, node_arguments = ([], [], [DAE('sa', 'labels')]))
+    fm = MDPFlowMapper(flow, node_arguments = ([], [], [DAE('sa', 'targets')]))
     fm.train(ds)
     fds = fm.forward(ds)
     assert_equal(ds.samples.shape, fds.samples.shape)
@@ -96,16 +94,16 @@ def test_mdpflow_additional_arguments():
     assert_array_almost_equal(ds.samples, rds.samples)
 
 def test_mdpflow_additional_arguments_nones():
-    if externals.versions['mdp'] < '2.5':
-        # we have no IdentityNode yet... is there analog?
-        return
-    ds = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+    skip_if_no_external('mdp', min_version='2.5')
+    # we have no IdentityNode yet... is there analog?
+
+    ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
     flow = mdp.nodes.PCANode() + mdp.nodes.IdentityNode() + mdp.nodes.FDANode()
     # this is what it would look like in MDP itself
     #flow.train([[ds.samples],
-    #            [[ds.samples, ds.sa.labels]]])
+    #            [[ds.samples, ds.sa.targets]]])
     assert_raises(ValueError, MDPFlowMapper, flow, node_arguments=[[],[]])
-    fm = MDPFlowMapper(flow, node_arguments = (None, None, [ds.sa.labels]))
+    fm = MDPFlowMapper(flow, node_arguments = (None, None, [ds.sa.targets]))
     fm.train(ds)
     fds = fm.forward(ds)
     assert_equal(ds.samples.shape, fds.samples.shape)
@@ -115,7 +113,7 @@ def test_mdpflow_additional_arguments_nones():
 
 def test_pcamapper():
     # data: 40 sample feature line in 20d space (40x20; samples x features)
-    ndlin = Dataset(N.concatenate([N.arange(40)
+    ndlin = Dataset(np.concatenate([np.arange(40)
                                for i in range(20)]).reshape(20,-1).T)
 
     pm = PCAMapper()
@@ -123,7 +121,7 @@ def test_pcamapper():
     assert_raises(mdp.NodeException, pm.train, ndlin)
     ndlin.samples = ndlin.samples.astype('float')
     ndlin_noise = ndlin.copy()
-    ndlin_noise.samples += N.random.random(size=ndlin.samples.shape)
+    ndlin_noise.samples += np.random.random(size=ndlin.samples.shape)
     # we have no variance for more than one PCA component, hence just one
     # actual non-zero eigenvalue
     assert_raises(mdp.NodeException, pm.train, ndlin)
@@ -138,29 +136,32 @@ def test_pcamapper():
 
 def test_icamapper():
     # data: 40 sample feature line in 2d space (40x2; samples x features)
-    samples = N.vstack([N.arange(40.) for i in range(2)]).T
+    samples = np.vstack([np.arange(40.) for i in range(2)]).T
     samples -= samples.mean()
-    samples +=  N.random.normal(size=samples.shape, scale=0.1)
+    samples +=  np.random.normal(size=samples.shape, scale=0.1)
     ndlin = Dataset(samples)
 
     pm = ICAMapper()
-    pm.train(ndlin.copy())
-    assert_equal(pm.proj.shape, (2, 2))
-
-    p = pm.forward(ndlin.copy())
-    assert_equal(p.shape, (40, 2))
-    # check that the mapped data can be fully recovered by 'reverse()'
-    assert_array_almost_equal(pm.reverse(p), ndlin)
+    try:
+        pm.train(ndlin.copy())
+        assert_equal(pm.proj.shape, (2, 2))
+        p = pm.forward(ndlin.copy())
+        assert_equal(p.shape, (40, 2))
+        # check that the mapped data can be fully recovered by 'reverse()'
+        assert_array_almost_equal(pm.reverse(p), ndlin)
+    except mdp.NodeException:
+        # do not puke if the ICA did not converge at all -- that is not our
+        # fault but MDP's
+        pass
 
 
 def test_llemapper():
-    if externals.versions['mdp'] < '2.4':
-        return
+    skip_if_no_external('mdp', min_version='2.4')
 
-    ds = Dataset(N.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
+    ds = Dataset(np.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
                           [1., 0., 0.], [0., 1., 1.], [1., 0., 1.],
                           [1., 1., 0.], [1., 1., 1.]]))
     pm = LLEMapper(3, output_dim=2)
     pm.train(ds)
-    fmapped = pm(ds)
+    fmapped = pm.forward(ds)
     assert_equal(fmapped.shape, (8, 2))

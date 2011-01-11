@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 79 -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -9,62 +9,116 @@
 
 .. _chap_devguide:
 
-***************************
-PyMVPA Developer Guidelines
-***************************
+********************
+Developer Guidelines
+********************
+
+Git Repository
+==============
+
+Layout
+------
+
+The git repository is structured by a number of branches and clones (forks) at
+github_.
+Anyone is welcome to fork the repository on github_ (just click on "Fork"
+button), and file a "Pull request" whenever he/she thinks that his changes are
+ready to be included (merged) into the main repository.  Alternatively, if you
+just want quickly submit a patch -- just email it to the mailing list.
+Concise accompanying description is a plus. You might take advantage of
+``git format-patch`` command.
+
+.. _github: http://github.com/PyMVPA/PyMVPA/
 
 
-Documentation
-=============
-
-Code Documentation
-------------------
-
-All documentation should be written using Numpy documentation conventions:
-
-  http://projects.scipy.org/numpy/wiki/CodingStyleGuidelines#docstring-standard
-
-
-Examples
+Branches
 --------
 
-Examples should be complete and stand-alone scripts located in `doc/examples`.
-If an example involves any kind of interactive step, it should honor the
-:envvar:`MVPA_EXAMPLES_INTERACTIVE` setting, to allow for automatic testing of
-all examples. In case of a matplotlib-based visualization such snippet should
-be sufficient::
+Any developer can have an infinite number of branches. If the number of
+branches causes gitk output to exceed a usual 19" screen, the respective
+developer has to spend some bucks (or euros) on new screens for all others
+;-)
 
-  from mvpa import cfg
-  if cfg.getboolean('examples', 'interactive', True):
-      P.show()
+The main release branch is called *master*. This is a merge-only branch.
+Features finished or updated by some developer are merged from the
+corresponding branch into *master*. At a certain point the current state of
+*master* is tagged -- a release is done.
 
-All examples are automatically converted into RsT documents for inclusion in the
-manual. Each of them is preprocessed in the following way:
+Only usable feature should end-up in *master*. Ideally *master* should be
+releasable at all times. Something must not be merged into master if *any* unit
+test fails.  Maintenance branches should be gone into *maint/epoch.major*
+branches (e.g. *maint/0.4*).
 
-* Any header till the first docstring is stripped.
-* Each top-level (non-assigned) docstring is taken as a text block in the
-  generated RsT source file. Such a docstring might appear anywhere in the
-  example, not just at the beginning. In this case, the code snippet is
-  properly split and the text block is inserted at the corresponding location.
-* All remaining lines are treated as code and inserted in the RsT source with
-  appropriate markup.
+Additionally, there are packaging branches (prefixed with *dist/*). They are
+labeled after the package target (e.g. *debian* for a Debian package). Releases
+are merged into the packaging branches, packaging get updated if necessary and
+the branch gets tagged when a package version is released.  Packaging
+maintenance (as well as backport) releases should be gone under
+*dist/target/flavor/codename* (e.g. *dist/debian/maint/lenny*,
+*dist/debian/security/lenny*).  Branch *dist/debian/dev* is dedicated for
+Debian packages of development snapshots.
 
-The first docstring in each example must have a proper section heading (with '='
-markup).
+Besides *master*, *maint/...*, *dist/...* we are following the convention for
+additional prefixes for new branches:
 
-Finally, each example should be added to the appropriate `toctree` in
-`doc/examples.rst`.
+_bf/...
+  Bugfix branches -- should be simply deleted on remotes whenever accepted
+_tent/...
+  Tentative new features which might be adopted or not.  Whenever feature gets
+  adopted (merged into some *master*), corresponding HEAD of *_tent/* branch
+  should be tagged with a corresponding non-annotated *+tent/* tag
+
+Please do not base your work on *_tent/* branches of the others since those
+could be forcefully rebased without further notice.
+
+Commits
+-------
+
+Please prefix all commit summaries with one (or more) of the following labels.
+This should help others to easily classify the commits into meaningful
+categories:
+
+  * *BF* : bug fix
+  * *RF* : refactoring
+  * *NF* : new feature
+  * *ENH* : enhancement of an existing feature/facility
+  * *BW* : addresses backward-compatibility
+  * *OPT* : optimization
+  * *BK* : breaks something and/or tests fail
+  * *PL* : making pylint happier
+  * *DOC*: for all kinds of documentation related commits
+
+.. _reST: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html
+.. _EmacsreST: http://docutils.sourceforge.net/docs/user/emacs.html
+.. _Pylint: http://packages.debian.org/unstable/python/pylint
 
 
-Code Formatting
-===============
+Merges
+------
+
+For easy tracking of what changes were absorbed during merge, we
+advice to enable automagic inclusion of their log entries into the
+commit message of the merge::
+
+  git config merge.log true
+
+.. note::
+
+  `merge.log` superseeds deprecated x`merge.summary`
+
+
+Code
+====
+
+Formatting
+----------
 
 pylint
    Code should be conformant with Pylint_ driven by config located at
-   `doc/misc/pylintrc <misc/pylintrc>`__.  It assumes camelback notation
-   (classes start with capitals, functions with lowercase) and indentation
-   using 4 spaces (i.e. no tabs) Variables are low-case and can have up to 2
-   _s. To engage, use 1 of 3 methods:
+   `doc/misc/pylintrc <misc/pylintrc>`__.  Previously we used camelBack
+   notation, but since 0.5.0.dev we decided to mainly follow PEP8_.  Provided
+   *pylintrc* file assures consistent coding style and also warns about obvious
+   errors in the code. To engage, use 1 of 3 methods:
 
    - place it in *~/.pylintrc* for user-wide installation
    - use within a call to pylint::
@@ -101,20 +155,36 @@ notes
    WiP
      Work in Progress: API and functionality might rapidly change
 
+.. _PEP8: http://www.python.org/dev/peps/pep-0008/
 
 
-Coding Conventions
-==================
+Docstrings
+----------
+
+All documentation should be written using NumPy_ documentation conventions:
+
+  http://projects.scipy.org/numpy/wiki/CodingStyleGuidelines#docstring-standard
+
+
+Classes
+-------
+
+Classes should define:
 
 __repr__
+  whenever possible, should be the string representation of the object which
+  could be digested with func:`eval` if necessary.
+__str__
   most of the classes should provide meaningful and concise summary
   over their identity (name + parameters + some summary over results
-  if any)
+  if any), not necessarily *eval*\uable.
 
+.. note::
+   Classes derived from :class:`~mvpa.base.state.ClassWithCollections` and
+   using `params` and `ca` collections for their need of parametrization
+   (e.g. :class:`~mvpa.clfs.base.Classifier`) would obtain an acceptable
+   definitions of `__repr__` and `__str__` automagically.
 
-
-Naming Conventions
-==================
 
 Function Arguments
 ------------------
@@ -143,8 +213,63 @@ dataset vs data
 
 
 
+Documentation
+=============
+
+Examples
+--------
+
+Examples should be complete and stand-alone scripts located in `doc/examples`.
+If an example involves any kind of interactive step, it should honor the
+:envvar:`MVPA_EXAMPLES_INTERACTIVE` setting, to allow for automatic testing of
+all examples. In case of a matplotlib-based visualization such snippet should
+be sufficient::
+
+  from mvpa import cfg
+  if cfg.getboolean('examples', 'interactive', True):
+      pl.show()
+
+All examples are automatically converted into RsT documents for inclusion in the
+manual. Each of them is preprocessed in the following way:
+
+* Any header till the first docstring is stripped.
+* Each top-level (non-assigned) docstring is taken as a text block in the
+  generated RsT source file. Such a docstring might appear anywhere in the
+  example, not just at the beginning. In this case, the code snippet is
+  properly split and the text block is inserted at the corresponding location.
+* All remaining lines are treated as code and inserted in the RsT source with
+  appropriate markup.
+
+The first docstring in each example must have a proper section heading (with '='
+markup).
+
+Finally, each example should be added to the appropriate `toctree` in
+`doc/examples.rst` and included into a test battery by adding it to
+`testexamples` rule within :file:`Makefile` in the toplevel directory of the
+source tree.
+
+
 Tests
 =====
+
+We are slowly moving toward utilizing `nose testing framework`_.  It allows to
+carry out not only unit testing, but also verify correctness of the code
+snippets provided in the docstrings and the manual.
+All unit tests are stored in :mod:`mvpa.tests`, and they make use of
+:mod:`mvpa.testing` which provides
+
+:mod:`~mvpa.testing.tools`
+  basic tools (imported wiithin :mod:`~mvpa.testing.__init__`)
+:mod:`~mvpa.testing.clfs`
+  some additional classifiers to be used in the unittests
+:mod:`~mvpa.testing.datasets`
+  pre-crafted datasets *warehouse* to be used in the tests
+:mod:`~mvpa.testing.sweepargs`
+  defines a custom decorator to allow running the same
+  unittest on a range of input values and later on nicely summarize the
+  detected failures
+
+While working on the project we adhere to the following rules:
 
 * Every more or less "interesting" bugfix should be accompanied by a
   unittest which might help to prevent it in the future refactoring
@@ -156,6 +281,47 @@ Tests
     >>> from mvpa import cfg
     >>> if cfg.getboolean('tests', 'labile', default='yes'):
     ...     pass
+
+* Every additional unit test submodule (or a unittest method itself) requiring
+  specific external being present should make use of
+  :func:`~mvpa.testing.tools.skip_if_no_external`, e.g.
+
+    >>> from mvpa.testing import *
+    >>> skip_if_no_external('numpy')
+
+
+Furthermore we encourage detailed docstrings for the classes, including
+*Examples* section with the demonstration of most typical use cases and aspects
+of the classes.  Those snippets are also part of the tests battery
+
+.. _`nose testing framework`: http://somethingaboutorange.com/mrl/projects/nose
+
+
+
+Changelog
+=========
+
+The PyMVPA changelog is located in the toplevel directory of the source tree
+in the `Changelog` file. The content of this file should be formated as
+restructured text to make it easy to put it into manual appendix and on the
+website.
+
+This changelog should neither replicate the VCS commit log nor the
+distribution packaging changelogs (e.g. debian/changelog). It should be
+focused on the user perspective and is intended to list rather macroscopic
+and/or important changes to the module, like feature additions or bugfixes in
+the algorithms with implications to the performance or validity of results.
+
+It may list references to 3rd party bug trackers, in case the reported bugs
+match the criteria listed above.
+
+Changelog entries should be tagged with the name of the developer(s) (mainly)
+involved in the modification -- initials are sufficient for people
+contributing regularly.
+
+Changelog entries should be added whenever something is ready to be merged
+into the master branch, not necessarily with a release already approaching.
+
 
 
 Extending PyMVPA
@@ -211,14 +377,14 @@ sub-class of :class:`~mvpa.clfs.base.Classifier` and add implementations of the 
 
 With this minimal implementation the classifier provides some useful
 functionality, by automatically storing some relevant information upon request
-in state variables.
+in conditional attributes.
 
-.. IncludeStates: clfs.base Classifier
+.. autoconditional: clfs.base Classifier
 
-Supported states:
+Supported conditional attributes:
 
 ================== ==============================================   =========
-    State Name      Description                                      Default
+       Name         Description                                      Default
 ------------------ ----------------------------------------------   ---------
 feature_ids         Feature IDS which were used for the actual       Disabled
                     training.
@@ -226,8 +392,8 @@ predicting_time     Time (in seconds) which took classifier to       Enabled
                     predict.
 predictions         Most recent set of predictions.                  Enabled
 trained_dataset     The dataset it has been trained on.              Disabled
-trained_labels      Set of unique labels it has been trained on.     Enabled
-training_confusion  Confusion matrix of learning performance.        Disabled
+trained_targets     Set of unique labels it has been trained on.     Enabled
+training_stats      Confusion matrix of learning performance.        Disabled
 training_time       Time (in seconds) which took classifier to       Enabled
                     train.
 values              Internal classifier values the most recent       Disabled
@@ -235,7 +401,7 @@ values              Internal classifier values the most recent       Disabled
 ================== ==============================================   =========
 
 If any intended functionality cannot be realized be implementing above methods.
-The :class:`~mvpa.clfs.base.Classifier` class offers some additionals methods that might be overriden
+The :class:`~mvpa.clfs.base.Classifier` class offers some additional methods that might be overridden
 by sub-classes. For all methods described below it is strongly recommended to
 call the base-class methods at the end of the implementation in the sub-class
 to preserve the full functionality.
@@ -250,7 +416,7 @@ to preserve the full functionality.
 
 `_prepredict(data)`
     Called with the data samples the classifier should do a prediction with,
-    just before the actual `_prediction()` call.
+    just before the actual `_predict()` call.
 
 `_postpredict(data, result)`
     Called with the data sample for which predictions were made and the
@@ -263,47 +429,49 @@ Source code files of all classifier implementations go into `mvpa/clfs/`.
 
 Outstanding Questions:
 
-    * when states and when properties?
+    * when ca and when properties?
 
 
-Adding a new DatasetMeasure
----------------------------
+Adding a new Measure
+--------------------
 
 There are few possible base-classes for new measures (former sensitivity
-analyzers).  First, :class:`~mvpa.measures.base.DatasetMeasure` can directly be sub-classed. It is a base
+analyzers).  First, :class:`~mvpa.measures.base.Measure` can directly be sub-classed. It is a base
 class for any measure to be computed on a :class:`~mvpa.datasets.base.Dataset`. This is the more generic
 approach. In the most of the cases, measures are to be reported per each
-feature, thus :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure` should serve as a base class in those
+feature, thus :class:`~mvpa.measures.base.FeaturewiseMeasure` should serve as a base class in those
 cases. Furthermore, for measures that make use of some classifier and extract
 the sensitivities from it, :class:`~mvpa.measures.base.Sensitivity` (derived from
-:class:`~mvpa.measures.base.FeaturewiseDatasetMeasure`) is a more appropriate base-class, as it provides
+:class:`~mvpa.measures.base.FeaturewiseMeasure`) is a more appropriate base-class, as it provides
 some additional useful functionality for this use case (e.g. training a
 classifier if needed).
 
-All measures (actually all objects based on :class:`~mvpa.measures.base.DatasetMeasure`)
+.. TODO: deprecate transformers etc
+
+All measures (actually all objects based on :class:`~mvpa.measures.base.Measure`)
 support a `transformer` keyword argument to their constructor. The functor
 passed as its value is called with the to be returned results and its outcome
 is returned as the final results. By default no transformation is performed.
 
-If a :class:`~mvpa.measures.base.DatasetMeasure` computes a characteristic, were both large positive and
+If a :class:`~mvpa.measures.base.Measure` computes a characteristic, were both large positive and
 large negative values indicate high relevance, it should nevertheless *not*
 return absolute sensitivities, but set a default transformer instead that takes
-the absolute (e.g. plain `N.absolute` or a convinience wrapper Absolute_).
+the absolute (e.g. plain `np.absolute` or a convinience wrapper Absolute_).
 
 To add a new measure implementation it is sufficient to create a new sub-class
-of :class:`~mvpa.measures.base.DatasetMeasure` (or :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure`, or :class:`~mvpa.measures.base.Sensitivity`) and add an
+of :class:`~mvpa.measures.base.Measure` (or :class:`~mvpa.measures.base.FeaturewiseMeasure`, or :class:`~mvpa.measures.base.Sensitivity`) and add an
 implementation of the `_call(dataset)` method. It will be called with an
-instance of :class:`~mvpa.datasets.base.Dataset`. :class:`~mvpa.measures.base.FeaturewiseDatasetMeasure` (e.g. :class:`~mvpa.measures.base.Sensitivity` as well)
+instance of :class:`~mvpa.datasets.base.Dataset`. :class:`~mvpa.measures.base.FeaturewiseMeasure` (e.g. :class:`~mvpa.measures.base.Sensitivity` as well)
 has to return a vector of featurewise sensitivity scores.
 
-.. IncludeStates: measures.base DatasetMeasure
+.. autoconditional: measures.base Measure
 
-Supported states:
+Supported conditional attributes:
 
 ================== ==============================================   =========
-    State Name      Description                                      Default
+       Name         Description                                      Default
 ------------------ ----------------------------------------------   ---------
-null_prob           State variable.                                  Enabled
+null_prob           Conditional attribute.                           Enabled
 raw_results         Computed results before applying any             Disabled
                     transformation algorithm.
 ================== ==============================================   =========
@@ -324,19 +492,19 @@ Classifier-based Sensitivity Analyzers
 A :class:`~mvpa.measures.base.Sensitivity` behaves exactly like its
 classifier-independent sibling, but additionally provides support for embedding
 the necessary classifier and handles its training upon request
-(boolean `force_training` keyword argument of the constructor). Access to the
+(boolean `force_train` keyword argument of the constructor). Access to the
 embedded classifier object is provided via the `clf` property.
 
-.. IncludeStates: measures.base Sensitivity
+.. autoconditional: measures.base Sensitivity
 
-Supported states:
+Supported conditional attributes:
 
 ================== ==============================================   =========
-    State Name      Description                                      Default
+       Name         Description                                      Default
 ------------------ ----------------------------------------------   ---------
 base_sensitivities  Stores basic sensitivities if the sensitivity    Disabled
                     relies on combining multiple ones.
-null_prob           State variable.                                  Enabled
+null_prob           Conditional attribute.                           Enabled
 raw_results         Computed results before applying any             Disabled
                     transformation algorithm.
 ================== ==============================================   =========
@@ -356,98 +524,6 @@ Adding a new Algorithm
 ----------------------
 
 go into `mvpa/algorithms/`
-
-
-
-Git Repository
-==============
-
-Layout
-------
-
-The repository is structured by a number of branches. Each developer should
-prefix his/her branches with a unique string plus '/' (maybe initials or
-similar). Currently there are:
-
-  :mh: Michael Hanke
-  :per: Per B. Sederberg
-  :yoh: Yaroslav Halchenko
-
-Each developer can have an infinite number of branches. If the number of
-branches causes gitk output to exceed a usual 19" screen, the respective
-developer has to spend some bucks (or euros) on new screens for all others
-;-)
-
-The main release branch is called *master*. This is a merge-only branch.
-Features finished or updated by some developer are merged from the
-corresponding branch into *master*. At a certain point the current state of
-*master* is tagged -- a release is done.
-
-Only usable feature should end-up in *master*. Ideally *master* should be
-releasable at all times. Something must not be merged into master if *any*
-unit test fails.
-
-Additionally, there are packaging branches. They are labeled after the package
-target (e.g. *debian* for a Debian package). Releases are merged into the
-packaging branches, packaging get updated if necessary and the branch gets
-tagged when a package version is released. Maintenance (as well as backport)
-releases should be gone under *maint/codename.flavor* (e.g. *maint/lenny*,
-*maint/lenny.security*, *maint/sarge.bpo*).
-
-
-Commits
--------
-
-Please prefix all commit summaries with one (or more) of the following labels.
-This should help others to easily classify the commits into meaningful
-categories:
-
-  * *BF* : bug fix
-  * *RF* : refactoring
-  * *NF* : new feature
-  * *BW* : addresses backward-compatibility
-  * *OPT* : optimization
-  * *BK* : breaks something and/or tests fail
-  * *PL* : making pylint happier
-  * *DOC*: for all kinds of documentation related commits
-
-.. _reST: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html
-.. _EmacsreST: http://docutils.sourceforge.net/docs/user/emacs.html
-.. _Pylint: http://packages.debian.org/unstable/python/pylint
-
-
-Merges
-------
-
-For easy tracking of what changes were absorbed during merge, we
-advice to enable merge summary within git:
-
-  git-config merge.summary true
-
-
-Changelog
-=========
-
-The PyMVPA changelog is located in the toplevel directory of the source tree
-in the `Changelog` file. The content of this file should be formated as
-restructured text to make it easy to put it into manual appendix and on the
-website.
-
-This changelog should neither replicate the VCS commit log nor the
-distribution packaging changelogs (e.g. debian/changelog). It should be
-focused on the user perspective and is intended to list rather macroscopic
-and/or important changes to the module, like feature additions or bugfixes in
-the algorithms with implications to the performance or validity of results.
-
-It may list references to 3rd party bugtrackers, in case the reported bugs
-match the criteria listed above.
-
-Changelog entries should be tagged with the name of the developer(s) (mainly)
-involved in the modification -- initials are sufficient for people
-contributing regularly.
-
-Changelog entries should be added whenever something is ready to be merged
-into the master branch, not necessarily with a release already approaching.
 
 
 
@@ -474,7 +550,7 @@ Things to implement for the next release (Release goals)
 
     class.HARVESTABLE={'blah' : ' some description'}
 
-    Add information on HARVESTABLE and StateVariable
+    Add information on HARVESTABLE and ConditionalAttribute
     Collectable -> Attribute
 
     base.attributes
@@ -492,12 +568,7 @@ Things to implement for the next release (Release goals)
     * Noise perturbation ->         -> mvpa.measures.noisepertrubation
     * meta-algorithms (splitting)   -> mvpa.measures
 
-   DatasetMeasure -> Measure (transformers)
-
-   FeaturewiseDatasetMeasure?
-
-   combiners to be absorbed withing transformers? and then gone?
-   {Classifier?}Sensitivity?
+   FeaturewiseMeasure?
 
   * Mappers::
       mvpa.mappers (AKA mvpa.projections mvpa.transformers)
@@ -517,7 +588,7 @@ Things to implement for the next release (Release goals)
       * RFE
       * IFS
 
-  * .mapper state variable
+  * .mapper conditional attribute
 
         mvpa.featsel (NB no featsel.featsel.featsel more than 4 times!)
         mvpa.featsel.rfe
@@ -571,27 +642,21 @@ Things to implement for the next release (Release goals)
   For binary:       1 value
       multiclass:   1 value, or N values
 
-* In a related issue, the predictions and values states of the classifiers need to have
-  a consitent format.  Currently, SVM returns a list of dictionaries for values and SMLR
-  returns a numpy ndarray.
+* In a related issue, the predictions and values ca of the classifiers need to have
+  a consistent format.  Currently, SVM returns a list of dictionaries for values and SMLR
+  returns a NumPy_ ndarray.
 
 
 
 Long and medium term TODOs (aka stuff that has been here forever)
 -----------------------------------------------------------------
 
- * Agree upon sensitivities returned by the classifiers. Now SMLR/libsvm.SVM
-   returns (nfeatures x X), (where X is either just 1 for binary problems, or
-   nclasses in full multiclass in SMLR, or nclasses-1 for libsvm(?) or not-full
-   SMLR). In case of  sg.SVM and GPR (I believe) it is just (nfeatures,).
-   MaskMapper puked on reverse in the first specification... think about
-   combiner -- should it or should not be there... etc
-
  * selected_ids -> implement via MaskMapper?
 
    yoh:
         it might be preferable to manipulate/expose MaskMapper instead
         of plain list of selected_ids within FeatureSelection classes
+
  * unify naming of working/testing
 
     * transerror.py for instance uses testdata/trainingdata
@@ -614,26 +679,19 @@ Long and medium term TODOs (aka stuff that has been here forever)
 
  * ConfusionBasedError -> InternalError ?
 
- * Think about how to deal with Transformers to serve them with
-    basic_analyzers... May be transformer can be a an argument for any
-    analyzer! Ha! Indeed... may be later
-
  * Renaming of the modules
    transerror.py -> errors.py
 
- * SVM: getSV and getSVCoef return very 'packed' presentation
-    whenever classifier is multiclass. Thus they have to be unpacked
-    before proper use (unless it is simply a binary classifier).
+ * SVM: get_sv and get_sv_coef return very 'packed' presentation
+   whenever classifier is multiclass. Thus they have to be unpacked
+   before proper use (unless it is simply a binary classifier).
 
  * Regression tests: for instance using sample dataset which we have
-    already, run doc/examples/searchlight.py and store output to
-    validate against. Probably the best would be to create a regression
-    test suite within unit tests which would load the dataset and run
-    various algorithms on it a verify the results against previousely
-    obtained (and dumped to the disk)
-
- * Agree on how to describe parameters to functions. Describe in
-   NOTES.coding.
+   already, run doc/examples/searchlight.py and store output to
+   validate against. Probably the best would be to create a regression
+   test suite within unit tests which would load the dataset and run
+   various algorithms on it a verify the results against previously
+   obtained (and dumped to the disk)
 
  * feature_selector -- may be we should return a tuple
    (selected_ids, discarded_ids)?
@@ -642,10 +700,7 @@ Long and medium term TODOs (aka stuff that has been here forever)
         Is there any use case for that? ElementSelector can 'select' and
         'discard' already. DO we need both simultaneously?
 
- * Basic documentation: Examples (more is better) describing various use cases
-    (everything in the cncre should be done in examples)
-
- *  Non-linear SVM RFE
+ * Non-linear SVM RFE
 
  *  ParameterOptimizer
     (might be also OptimizedClassifier which uses parameterOptimizer
@@ -653,9 +708,6 @@ Long and medium term TODOs (aka stuff that has been here forever)
     automatically optimizes its parameters. It is close in idea to
     classifier based on RFE)
 
-
-  in  --> data         -> dataShape
-  out --> features     ->
 
 
 Building a binary installer on MacOS X 10.5

@@ -8,6 +8,15 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 
+// Just to assure its availability even on older versions of libsvm
+// where no such preprocessor variable was available (when was it? ;))
+#ifndef LIBSVM_VERSION
+# define LIBSVM_VERSION 0
+#endif
+
+enum { __version__ = LIBSVM_VERSION };
+
+#if LIBSVM_VERSION < 300
 struct svm_model
 {
 	svm_parameter param;// parameter
@@ -28,6 +37,7 @@ struct svm_model
 	int free_sv;	// 1 if svm_model is created by svm_load_model
 					// 0 if svm_model is created by svm_train
 };
+#endif
 
 /* convert node matrix into a numpy array */
 static PyObject*
@@ -89,7 +99,7 @@ static PyObject* doubleppcarray2numpy_array(double** carray, int rows, int cols)
 /* rely on built-in facility to control verbose output
  * in the versions of libsvm >= 2.89
  */
-#if LIBSVM_VERSION && LIBSVM_VERSION >= 289
+#if LIBSVM_VERSION >= 289
 
 /* borrowed from original libsvm code */
 static void print_null(const char *s) {}
@@ -103,9 +113,15 @@ static void print_string_stdout(const char *s)
 /* provide convenience wrapper */
 void svm_set_verbosity(int verbosity_flag){
 	if (verbosity_flag)
+# if LIBSVM_VERSION < 291
 		svm_print_string = &print_string_stdout;
 	else
 		svm_print_string = &print_null;
+# else
+		svm_set_print_string_function(&print_string_stdout);
+	else
+		svm_set_print_string_function(&print_null);
+# endif
 }
 #endif
 
@@ -115,6 +131,8 @@ void svm_set_verbosity(int verbosity_flag){
 %{
 	import_array();
 %}
+
+enum { __version__ = LIBSVM_VERSION };
 
 enum { C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, NU_SVR }; /* svm_type */
 enum { LINEAR, POLY, RBF, SIGMOID, PRECOMPUTED };	/* kernel_type */
@@ -205,6 +223,7 @@ static PyObject* doubleppcarray2numpy_array(double** data, int rows, int cols);
 %array_functions(double,double)
 
 %inline %{
+
 struct svm_node *svm_node_array(int size)
 {
 	return (struct svm_node *)malloc(sizeof(struct svm_node)*size);
@@ -248,4 +267,12 @@ void svm_node_matrix_destroy(struct svm_node **matrix)
 	free(matrix);
 }
 
+#if LIBSVM_VERSION >= 300
+void svm_destroy_model_helper(svm_model* model_ptr)
+{
+    // yoh: Silence the blurber
+//	fprintf(stderr,"warning: svm_destroy_model is deprecated and should not be used. Please use svm_free_and_destroy_model(svm_model **model_ptr_ptr)\n");
+	svm_free_and_destroy_model(&model_ptr);
+}
+#endif
 %}

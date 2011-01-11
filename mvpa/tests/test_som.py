@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -10,7 +10,7 @@
 
 
 import unittest
-import numpy as N
+import numpy as np
 from mvpa import cfg
 from mvpa.mappers.som import SimpleSOMMapper
 from mvpa.datasets.base import dataset_wizard
@@ -18,7 +18,7 @@ from mvpa.datasets.base import dataset_wizard
 class SOMMapperTests(unittest.TestCase):
 
     def test_simple_som(self):
-        colors = N.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
+        colors = np.array([[0., 0., 0.], [0., 0., 1.], [0., 1., 0.],
                           [1., 0., 0.], [0., 1., 1.], [1., 0., 1.],
                           [1., 1., 0.], [1., 1., 1.]])
 
@@ -26,11 +26,11 @@ class SOMMapperTests(unittest.TestCase):
         som = SimpleSOMMapper((10, 5), 200, learning_rate=0.05)
 
         # no acces when nothing is there
-        self.failUnlessRaises(RuntimeError, som._accessKohonen)
+        self.failUnlessRaises(RuntimeError, som._access_kohonen)
 
         som.train(colors)
 
-        fmapped = som(colors)
+        fmapped = som.forward(colors)
         self.failUnless(fmapped.shape == (8, 2))
 
         # reverse mapping
@@ -39,7 +39,7 @@ class SOMMapperTests(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             # should approximately restore the input, but could fail
             # with bad initialisation
-            self.failUnless((N.round(rmapped) == colors).all())
+            self.failUnless((np.round(rmapped) == colors).all())
 
 
 def suite():

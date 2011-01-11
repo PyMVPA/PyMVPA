@@ -22,7 +22,7 @@ from mvpa.base.dochelpers import borrowkwargs
 if __debug__:
     from mvpa.base import debug
 
-if externals.exists('reportlab', raiseException=True):
+if externals.exists('reportlab', raise_=True):
     import reportlab as rl
     from reportlab.platypus import  SimpleDocTemplate, Paragraph, Spacer, Image
     from reportlab.lib.styles import getSampleStyleSheet
@@ -204,12 +204,12 @@ class Report(object):
           Passed to :class:`reportlab.platypus.Image` constructor
         """
 
-        if externals.exists('pylab', raiseException=True):
-            import pylab as P
-            figure = P.matplotlib.figure
+        if externals.exists('pylab', raise_=True):
+            import pylab as pl
+            figure = pl.matplotlib.figure
 
         if fig is None:
-            fig = P.gcf()
+            fig = pl.gcf()
 
         if isinstance(fig, figure.Figure):
             # Create directory if needed
@@ -262,9 +262,9 @@ class Report(object):
         so make sure to close all previous figures if you use
         figures() multiple times
         """
-        if externals.exists('pylab', raiseException=True):
-            import pylab as P
-        figs = P.matplotlib._pylab_helpers.Gcf.figs
+        if externals.exists('pylab', raise_=True):
+            import pylab as pl
+        figs = pl.matplotlib._pylab_helpers.Gcf.figs
         if __debug__ and not self in debug.handlers:
             debug('REP', "Saving all %d present figures" % len(figs))
         for fid, f in figs.iteritems():
@@ -309,7 +309,8 @@ class Report(object):
 
         pageinfo = self.name + " data"
 
-        def myFirstPage(canvas, doc):
+        ##REF: Name was automagically refactored
+        def my_first_page(canvas, doc):
             canvas.saveState()
             canvas.setFont(self.font, 16)
             canvas.drawCentredString(self.pagesize[0]/2.0,
@@ -319,7 +320,8 @@ class Report(object):
                               "First Page / %s" % pageinfo)
             canvas.restoreState()
 
-        def myLaterPages(canvas, doc):
+        ##REF: Name was automagically refactored
+        def my_later_pages(canvas, doc):
             canvas.saveState()
             canvas.setFont(self.font, 9)
             canvas.drawString(inch, 0.75 * inch,
@@ -337,6 +339,6 @@ class Report(object):
             debug("REP", "Saving the report into %s" % filename)
 
         doc.build(story,
-                  onFirstPage=myFirstPage,
-                  onLaterPages=myLaterPages)
+                  onFirstPage=my_first_page,
+                  onLaterPages=my_later_pages)
 

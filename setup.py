@@ -62,6 +62,7 @@ elif bind_libsvm == 'system':
     libsvmc_libraries += ['svm']
     if not sys.platform.startswith('win'):
         libsvmc_include_dirs += [
+            '/usr/include/libsvm-3.0/libsvm',
             '/usr/include/libsvm-2.0/libsvm',
             '/usr/include/libsvm',
             '/usr/local/include/libsvm',
@@ -107,7 +108,7 @@ if bind_libsvm:
 
 # define the setup
 setup(name         = 'pymvpa',
-      version      = '0.5.0.dev',
+      version      = '0.6.0.dev',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
@@ -134,6 +135,7 @@ setup(name         = 'pymvpa',
                        'mvpa.featsel',
                        'mvpa.kernels',
                        'mvpa.mappers',
+                       'mvpa.generators',
                        'mvpa.measures',
                        'mvpa.misc',
                        'mvpa.misc.bv',
@@ -141,6 +143,8 @@ setup(name         = 'pymvpa',
                        'mvpa.misc.io',
                        'mvpa.misc.plot',
                        'mvpa.support',
+                       'mvpa.support.nipy',
+                       'mvpa.support.ipython',
                        'mvpa.testing',
                        'mvpa.tests',
                        'mvpa.tests.badexternals',

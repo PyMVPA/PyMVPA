@@ -10,14 +10,14 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import warning, externals
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import ConvergenceError
-from mvpa.misc.param import Parameter
-from mvpa.misc.state import StateVariable
+from mvpa.base.param import Parameter
+from mvpa.base.state import ConditionalAttribute
 from mvpa.datasets.base import Dataset
 
 __all__ = [ "SMLR", "SMLRWeights" ]
@@ -26,8 +26,14 @@ __all__ = [ "SMLR", "SMLRWeights" ]
 _DEFAULT_IMPLEMENTATION = "Python"
 if externals.exists('ctypes'):
     # Uber-fast C-version of the stepwise regression
-    from mvpa.clfs.libsmlrc import stepwise_regression as _cStepwiseRegression
-    _DEFAULT_IMPLEMENTATION = "C"
+    try:
+        from mvpa.clfs.libsmlrc import stepwise_regression as _cStepwiseRegression
+        _DEFAULT_IMPLEMENTATION = "C"
+    except OSError, e:
+        warning("Failed to load fast implementation of SMLR.  May be you "
+                "forgotten to build it.  We will use much slower pure-Python "
+                "version. Original exception was %s" % (e,))
+        _cStepwiseRegression = None
 else:
     _cStepwiseRegression = None
     warning("SMLR implementation without ctypes is overwhelmingly slow."
@@ -43,7 +49,7 @@ def _label2oneofm(labels, ulabels):
     """
 
     # allocate for the new one-of-M labels
-    new_labels = N.zeros((len(labels), len(ulabels)))
+    new_labels = np.zeros((len(labels), len(ulabels)))
 
     # loop and convert to one-of-M
     for i, c in enumerate(ulabels):
@@ -147,7 +153,8 @@ class SMLR(Classifier):
         """The biases, will remain none if has_bias is False"""
 
 
-    def _pythonStepwiseRegression(self, w, X, XY, Xw, E,
+    ##REF: Name was automagically refactored
+    def _python_stepwise_regression(self, w, X, XY, Xw, E,
                                   auto_corr,
                                   lambda_over_2_auto_corr,
                                   S,
@@ -167,14 +174,14 @@ class SMLR(Classifier):
 
         # initialize the iterative optimization
         converged = False
-        incr = N.finfo(N.float).max
+        incr = np.finfo(np.float).max
         non_zero, basis, m, wasted_basis, cycles = 0, 0, 0, 0, 0
         sum2_w_diff, sum2_w_old, w_diff = 0.0, 0.0, 0.0
-        p_resamp = N.ones(w.shape, dtype=N.float)
+        p_resamp = np.ones(w.shape, dtype=np.float)
 
         if seed is not None:
             # set the random seed
-            N.random.seed(seed)
+            np.random.seed(seed)
 
             if __debug__:
                 debug("SMLR_", "random seed=%s" % seed)
@@ -185,13 +192,13 @@ class SMLR(Classifier):
             w_old = w[basis, m]
 
             # see if we're gonna update
-            if (w_old != 0) or N.random.rand() < p_resamp[basis, m]:
+            if (w_old != 0) or np.random.rand() < p_resamp[basis, m]:
                 # let's do it
                 # get the probability
                 P = E[:, m]/S
 
                 # set the gradient
-                grad = XY[basis, m] - N.dot(X[:, basis], P)
+                grad = XY[basis, m] - np.dot(X[:, basis], P)
 
                 # calculate the new weight with the Laplacian prior
                 w_new = w_old + grad/auto_corr[basis]
@@ -235,7 +242,7 @@ class SMLR(Classifier):
                     # update the expected values
                     w_diff = w_new - w_old
                     Xw[:, m] = Xw[:, m] + X[:, basis]*w_diff
-                    E_new_m = N.exp(Xw[:, m])
+                    E_new_m = np.exp(Xw[:, m])
                     S += E_new_m - E[:, m]
                     E[:, m] = E_new_m
 
@@ -249,17 +256,17 @@ class SMLR(Classifier):
                 sum2_w_old += w_old*w_old
 
             # update the class and basis
-            m = N.mod(m+1, w.shape[1])
+            m = np.mod(m+1, w.shape[1])
             if m == 0:
                 # we completed a cycle of labels
-                basis = N.mod(basis+1, nd)
+                basis = np.mod(basis+1, nd)
                 if basis == 0:
                     # we completed a cycle of features
                     cycles += 1
 
                     # assess convergence
-                    incr = N.sqrt(sum2_w_diff) / \
-                           (N.sqrt(sum2_w_old)+N.finfo(N.float).eps)
+                    incr = np.sqrt(sum2_w_diff) / \
+                           (np.sqrt(sum2_w_old)+np.finfo(np.float).eps)
 
                     # save the new weights
                     converged = incr < convergence_tol
@@ -293,9 +300,12 @@ class SMLR(Classifier):
     def _train(self, dataset):
         """Train the classifier using `dataset` (`Dataset`).
         """
+        targets_sa_name = self.get_space()    # name of targets sa
+        targets_sa = dataset.sa[targets_sa_name] # actual targets sa
+
         # Process the labels to turn into 1 of N encoding
-        uniquelabels = dataset.sa['labels'].unique
-        labels = _label2oneofm(dataset.sa.labels, uniquelabels)
+        uniquelabels = targets_sa.unique
+        labels = _label2oneofm(targets_sa.value, uniquelabels)
         self._ulabels = uniquelabels.copy()
 
         Y = labels
@@ -310,7 +320,7 @@ class SMLR(Classifier):
                 debug("SMLR_", "hstacking 1s for bias")
 
             # append the bias term to the features
-            X = N.hstack((X, N.ones((X.shape[0], 1), dtype=X.dtype)))
+            X = np.hstack((X, np.ones((X.shape[0], 1), dtype=X.dtype)))
 
         if self.params.implementation.upper() == 'C':
             _stepwise_regression = _cStepwiseRegression
@@ -320,18 +330,18 @@ class SMLR(Classifier):
                 if __debug__:
                     debug("SMLR_",
                           "Copying data to get it C_CONTIGUOUS/ALIGNED")
-                X = N.array(X, copy=True, dtype=N.double, order='C')
+                X = np.array(X, copy=True, dtype=np.double, order='C')
 
             # currently must be double for the C code
-            if X.dtype != N.double:
+            if X.dtype != np.double:
                 if __debug__:
                     debug("SMLR_", "Converting data to double")
                 # must cast to double
-                X = X.astype(N.double)
+                X = X.astype(np.double)
 
         # set the feature dimensions
         elif self.params.implementation.upper() == 'PYTHON':
-            _stepwise_regression = self._pythonStepwiseRegression
+            _stepwise_regression = self._python_stepwise_regression
         else:
             raise ValueError, \
                   "Unknown implementation %s of stepwise_regression" % \
@@ -347,15 +357,15 @@ class SMLR(Classifier):
             c_to_fit = M-1
 
         # Precompute what we can
-        auto_corr = ((M-1.)/(2.*M))*(N.sum(X*X, 0))
-        XY = N.dot(X.T, Y[:, :c_to_fit])
+        auto_corr = ((M-1.)/(2.*M))*(np.sum(X*X, 0))
+        XY = np.dot(X.T, Y[:, :c_to_fit])
         lambda_over_2_auto_corr = (self.params.lm/2.)/auto_corr
 
         # set starting values
-        w = N.zeros((nd, c_to_fit), dtype=N.double)
-        Xw = N.zeros((ns, c_to_fit), dtype=N.double)
-        E = N.ones((ns, c_to_fit), dtype=N.double)
-        S = M*N.ones(ns, dtype=N.double)
+        w = np.zeros((nd, c_to_fit), dtype=np.double)
+        Xw = np.zeros((ns, c_to_fit), dtype=np.double)
+        E = np.ones((ns, c_to_fit), dtype=np.double)
+        S = M*np.ones(ns, dtype=np.double)
 
         # set verbosity
         if __debug__:
@@ -396,8 +406,8 @@ class SMLR(Classifier):
         self.__weights_all = w
         self.__weights = w[:dataset.nfeatures, :]
 
-        if self.states.is_enabled('feature_ids'):
-            self.states.feature_ids = N.where(N.max(N.abs(w[:dataset.nfeatures, :]),
+        if self.ca.is_enabled('feature_ids'):
+            self.ca.feature_ids = np.where(np.max(np.abs(w[:dataset.nfeatures, :]),
                                              axis=1)>0)[0]
 
         # and a bias
@@ -408,17 +418,17 @@ class SMLR(Classifier):
             debug('SMLR', "train finished in %d cycles on data.shape=%s " %
                   (cycles, X.shape) +
                   "min:max(data)=%f:%f, got min:max(w)=%f:%f" %
-                  (N.min(X), N.max(X), N.min(w), N.max(w)))
+                  (np.min(X), np.max(X), np.min(w), np.max(w)))
 
     def _unsparsify_weights(self, samples, weights):
         """Unsparsify weights via least squares regression."""
         # allocate for the new weights
-        new_weights = N.zeros(weights.shape, dtype=N.double)
+        new_weights = np.zeros(weights.shape, dtype=np.double)
 
         # get the sample data we're predicting and the sum squared
         # total variance
         b = samples
-        sst = N.power(b - b.mean(0),2).sum(0)
+        sst = np.power(b - b.mean(0),2).sum(0)
 
         # loop over each column
         for i in range(weights.shape[1]):
@@ -431,22 +441,22 @@ class SMLR(Classifier):
             a = b[:,ind]
 
             # predict all the data with the non-zero features
-            betas = N.linalg.lstsq(a,b)[0]
+            betas = np.linalg.lstsq(a,b)[0]
 
             # determine the R^2 for each feature based on the sum
             # squared prediction error
-            f = N.dot(a,betas)
-            sse = N.power((b-f),2).sum(0)
-            rsquare = N.zeros(sse.shape,dtype=sse.dtype)
+            f = np.dot(a,betas)
+            sse = np.power((b-f),2).sum(0)
+            rsquare = np.zeros(sse.shape,dtype=sse.dtype)
             gind = sst>0
             rsquare[gind] = 1-(sse[gind]/sst[gind])
 
             # derrive new weights by combining the betas and weights
             # scaled by the rsquare
-            new_weights[:,i] = N.dot(w[ind],betas)*rsquare
+            new_weights[:,i] = np.dot(w[ind],betas)*rsquare
 
         # take the tails
-        tozero = N.abs(new_weights) < self.params.std_to_keep*N.std(new_weights)
+        tozero = np.abs(new_weights) < self.params.std_to_keep*np.std(new_weights)
         orig_zero = weights==0.0
         if orig_zero.sum() < tozero.sum():
             # should not end up with fewer than start
@@ -459,10 +469,11 @@ class SMLR(Classifier):
         return new_weights
 
 
-    def _getFeatureIds(self):
+    ##REF: Name was automagically refactored
+    def _get_feature_ids(self):
         """Return ids of the used features
         """
-        return N.where(N.max(N.abs(self.__weights), axis=1)>0)[0]
+        return np.where(np.max(np.abs(self.__weights), axis=1)>0)[0]
 
     @accepts_dataset_as_samples
     def _predict(self, data):
@@ -471,42 +482,43 @@ class SMLR(Classifier):
         # see if we are adding a bias term
         if self.params.has_bias:
             # append the bias term to the features
-            data = N.hstack((data,
-                             N.ones((data.shape[0], 1), dtype=data.dtype)))
+            data = np.hstack((data,
+                             np.ones((data.shape[0], 1), dtype=data.dtype)))
 
         # append the zeros column to the weights if necessary
         if self.params.fit_all_weights:
             w = self.__weights_all
         else:
-            w = N.hstack((self.__weights_all,
-                          N.zeros((self.__weights_all.shape[0], 1))))
+            w = np.hstack((self.__weights_all,
+                          np.zeros((self.__weights_all.shape[0], 1))))
 
         # determine the probability values for making the prediction
-        dot_prod = N.dot(data, w)
-        E = N.exp(dot_prod)
-        S = N.sum(E, 1)
+        dot_prod = np.dot(data, w)
+        E = np.exp(dot_prod)
+        S = np.sum(E, 1)
 
         if __debug__:
             debug('SMLR', "predict on data.shape=%s min:max(data)=%f:%f " %
-                  (`data.shape`, N.min(data), N.max(data)) +
+                  (`data.shape`, np.min(data), np.max(data)) +
                   "min:max(w)=%f:%f min:max(dot_prod)=%f:%f min:max(E)=%f:%f" %
-                  (N.min(w), N.max(w), N.min(dot_prod), N.max(dot_prod),
-                   N.min(E), N.max(E)))
+                  (np.min(w), np.max(w), np.min(dot_prod), np.max(dot_prod),
+                   np.min(E), np.max(E)))
 
-        values = E / S[:, N.newaxis].repeat(E.shape[1], axis=1)
-        self.states.estimates = values
+        values = E / S[:, np.newaxis].repeat(E.shape[1], axis=1)
+        self.ca.estimates = values
 
         # generate predictions
-        predictions = N.asarray([self._ulabels[N.argmax(vals)]
+        predictions = np.asarray([self._ulabels[np.argmax(vals)]
                                  for vals in values])
-        # no need to assign state variable here -- would be done
+        # no need to assign conditional attribute here -- would be done
         # in Classifier._postpredict anyway
         #self.predictions = predictions
 
         return predictions
 
 
-    def getSensitivityAnalyzer(self, **kwargs):
+    ##REF: Name was automagically refactored
+    def get_sensitivity_analyzer(self, **kwargs):
         """Returns a sensitivity analyzer for SMLR."""
         return SMLRWeights(self, **kwargs)
 
@@ -522,11 +534,11 @@ class SMLRWeights(Sensitivity):
 
     By default SMLR provides multiple weights per feature (one per label in
     training dataset). By default, all weights are combined into a single
-    sensitivity value. Please, see the `FeaturewiseDatasetMeasure` constructor
+    sensitivity value. Please, see the `FeaturewiseMeasure` constructor
     arguments how to custmize this behavior.
     """
 
-    biases = StateVariable(enabled=True,
+    biases = ConditionalAttribute(enabled=True,
                            doc="A 1-d ndarray of biases")
 
     _LEGAL_CLFS = [ SMLR ]
@@ -543,15 +555,16 @@ class SMLRWeights(Sensitivity):
         weights = clf.weights.T
 
         if clf.params.has_bias:
-            self.states.biases = clf.biases
+            self.ca.biases = clf.biases
 
         if __debug__:
             debug('SMLR',
                   "Extracting weights for %d-class SMLR" %
                   (len(weights) + 1) +
                   "Result: min=%f max=%f" %\
-                  (N.min(weights), N.max(weights)))
+                  (np.min(weights), np.max(weights)))
 
         # limit the labels to the number of sensitivity sets, to deal
         # with the case of `fit_all_weights=False`
-        return Dataset(weights, sa={'labels': clf._ulabels[:len(weights)]})
+        return Dataset(weights,
+                       sa={clf.get_space(): clf._ulabels[:len(weights)]})

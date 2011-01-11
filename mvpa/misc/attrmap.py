@@ -10,7 +10,7 @@
 
 
 from operator import isSequenceType
-import numpy as N
+import numpy as np
 
 class AttributeMap(object):
     # might be derived from dict, but do not see advantages right now,
@@ -50,7 +50,8 @@ class AttributeMap(object):
     >>> am.to_numeric(['eins', 'zwei', 'drei'])
     array([11, 22, 33])
     """
-    def __init__(self, map=None, mapnumeric=False):
+    def __init__(self, map=None, mapnumeric=False,
+                 collisions_resolution=None):
         """
         Parameters
         ----------
@@ -60,15 +61,25 @@ class AttributeMap(object):
           In some cases it is necessary to map numeric labels too, for
           instance when target labels should be from a specific set,
           e.g. (-1, +1).
+        collisions_resolution : None or {'tuple', 'lucky'}
+          How to resolve collisions on to_literal if multiple entries
+          map to the same value when custom map was provided.  If None
+          -- exception would get raise, if 'tuple' -- collided entries
+          are grouped into a tuple, if 'lucky' -- some last
+          encountered literal wins (i.e. arbitrary resolution).  This
+          parameter is in effect only when calling :meth:`to_literal`.
 
         Please see the class documentation for more information.
         """
         self.clear()
         self.mapnumeric = mapnumeric
+        self.collisions_resolution = collisions_resolution
+
         if not map is None:
             if not isinstance(map, dict):
                 raise ValueError("Custom map need to be a dict.")
             self._nmap = map
+        self._lmap = None               # pylint happiness
 
     def __repr__(self):
         """String representation of AttributeMap
@@ -78,6 +89,9 @@ class AttributeMap(object):
             args.append(repr(self._nmap)),
         if self.mapnumeric:
             args.append('mapnumeric=True')
+        if self.collisions_resolution:
+            args.append('collisions_resolution=%r'
+                        % (self.collisions_resolution,))
         return "%s(%s)"  % (self.__class__.__name__, ', '.join(args))
 
     def __len__(self):
@@ -130,18 +144,18 @@ class AttributeMap(object):
 
         Please see the class documentation for more information.
         """
-        attr = N.asanyarray(attr)
+        attr = np.asanyarray(attr)
 
         # no mapping if already numeric
-        if not N.issubdtype(attr.dtype, 'c') and not self.mapnumeric:
+        if not np.issubdtype(attr.dtype, 'c') and not self.mapnumeric:
             return attr
 
         if self._nmap is None:
             # sorted list of unique attr values
-            ua = N.unique(attr)
+            ua = np.unique(attr)
             self._nmap = dict(zip(ua, range(len(ua))))
         elif __debug__:
-            ua = N.unique(attr)
+            ua = np.unique(attr)
             mkeys = sorted(self._nmap.keys())
             if (ua != mkeys).any():
                 # maps to not match
@@ -151,10 +165,42 @@ class AttributeMap(object):
                         % (str(ua), str(mkeys)))
 
 
-        num = N.empty(attr.shape, dtype=N.int)
+        num = np.empty(attr.shape, dtype=np.int)
         for k, v in self._nmap.iteritems():
             num[attr == k] = v
         return num
+
+    def _get_lmap(self):
+        """Recomputes lmap from the stored _nmap
+        """
+        cr = self.collisions_resolution
+        if cr == 'lucky':
+            lmap = dict([(v, k) for k, v in self._nmap.iteritems()])
+        elif cr in [None, 'tuple']:
+            lmap = {}
+            counts = {}                     # is used for 'tuple' resolution
+            for k, v in self._nmap.iteritems():
+                count = counts.get(v, 0)
+                if count:               # we saw it already
+                    if cr is None:
+                        raise ValueError, \
+                            "Numeric value %r was already reverse mapped to " \
+                            "%r.  Now trying to remap into %r.  Please adjust" \
+                            " your mapping or change collissions_resolution" \
+                            " parameter" % (v, lmap[v], k)
+                    else:
+                        if count == 1:
+                            lmap[v] = (lmap[v], k)
+                        else:
+                            lmap[v] = lmap[v] + (k, ) # create new tuple
+                else:
+                    lmap[v] = k
+                counts[v] = count +1
+        else:
+            raise ValueError, \
+                  "Provided parameter collisions_resolution=%r is of unknown " \
+                  "value. See documentation for AttributeMapper" % (cr,)
+        return lmap
 
     def to_literal(self, attr, recurse=False):
         """Map numerical value back to literal ones.
@@ -175,7 +221,8 @@ class AttributeMap(object):
                                "Ever called to_numeric()?")
 
         if self._lmap is None:
-            self._lmap = dict([(v, k) for k, v in self._nmap.iteritems()])
+            self._lmap = self._get_lmap()
+
         lmap = self._lmap
 
         if isSequenceType(attr) and not isinstance(attr, str):
@@ -190,28 +237,28 @@ class AttributeMap(object):
             target_constr = attr.__class__
             # ndarrays are special since array is just a factory, and
             # ndarray takes shape as the first argument
-            isarray = issubclass(target_constr, N.ndarray)
+            isarray = issubclass(target_constr, np.ndarray)
             if isarray:
-                if attr.dtype is N.dtype('object'):
-                    target_constr = lambda x: N.array(x, dtype=object)
+                if attr.dtype is np.dtype('object'):
+                    target_constr = lambda x: np.array(x, dtype=object)
                 else:
                     # Otherwise no special handling
-                    target_constr = N.array
+                    target_constr = np.array
 
             # Perform lookup and store to the list
             resl = [lookupfx(k) for k in attr]
 
             # If necessary assure derived ndarray class type
             if isarray:
-                if attr.dtype is N.dtype('object'):
+                if attr.dtype is np.dtype('object'):
                     # we need first to create empty one and then
                     # assign items -- god bless numpy
-                    resa = N.empty(len(resl), dtype=attr.dtype)
+                    resa = np.empty(len(resl), dtype=attr.dtype)
                     resa[:] = resl
                 else:
                     resa = target_constr(resl)
 
-                if not (attr.__class__ is N.ndarray):
+                if not (attr.__class__ is np.ndarray):
                     # to accommodate subclasses of ndarray
                     res = resa.view(attr.__class__)
                 else:

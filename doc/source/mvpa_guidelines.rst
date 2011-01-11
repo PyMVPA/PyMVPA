@@ -2,7 +2,7 @@ When is fMRI data independent?
 
 To get independent chunks of data, the experiment itself has to be designed
 to allow for this partitioning. Ideally, an experiment is split into
-several :term:`run`\ s, where each run a like a mini-version of the whole
+several :term:`chunk`\ s, where each chunk is like a mini-version of the whole
 experiment. It contains all conditions, i.e. experimental manipulations of
 the independent variables. Another run of the experiment is basically
 another version of the mini-experiment, preferrably with a different

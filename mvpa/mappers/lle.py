@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; indent-tabs-mode: nil -*-
-#ex: set sts=4 ts=4 sw=4 et:
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the PyMVPA package for the
@@ -16,11 +16,11 @@ __docformat__ = 'restructuredtext'
 
 from mvpa.base import externals
 
-import numpy as N
+import numpy as np
 
 from mvpa.mappers.mdp_adaptor import MDPNodeMapper
 
-if externals.exists('mdp ge 2.4', raiseException=True):
+if externals.exists('mdp ge 2.4', raise_=True):
     import mdp
 
 
@@ -38,19 +38,18 @@ class LLEMapper(MDPNodeMapper):
     the corresponding MDP processing nodes). 1) An algorithm outlined in *An
     Introduction to Locally Linear Embedding* by L. Saul and S. Roweis, using
     improvements suggested in *Locally Linear Embedding for Classification* by
-    D. deRidder and R.P.W. Duin (aka `LLENode`) and 2) Hessian Locally Linear
+    D. deRidder and R.pl.W. Duin (aka `LLENode`) and 2) Hessian Locally Linear
     Embedding analysis based on algorithm outlined in *Hessian Eigenmaps: new
     locally linear embedding techniques for high-dimensional data* by C. Grimes
     and D. Donoho, 2003.
+
+    For more information see the MDP website at
+    http://mdp-toolkit.sourceforge.net
 
     Notes
     -----
     This mapper only provides forward-mapping functionality -- no reverse
     mapping is available.
-
-    See Also
-    --------
-    http://mdp-toolkit.sourceforge.net
     """
     def __init__(self, k, alg='LLE', nodeargs=None, **kwargs):
         """

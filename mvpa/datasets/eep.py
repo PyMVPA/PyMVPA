@@ -10,11 +10,11 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 from mvpa.datasets import Dataset
 from mvpa.misc.io import DataReader
 
-def eep_dataset(samples, labels=None, chunks=None):
+def eep_dataset(samples, targets=None, chunks=None):
     """Create a dataset using an EEP binary file as source.
 
     EEP files are used by *eeprobe* a software for analysing even-related
@@ -28,14 +28,14 @@ def eep_dataset(samples, labels=None, chunks=None):
     samples : str or EEPBin instance
       This is either a filename of an EEP file, or an EEPBin instance, providing
       the samples data in EEP format.
-    labels, chunks : sequence or scalar or None
+    targets, chunks : sequence or scalar or None
       Values are pass through to `Dataset.from_wizard()`. See its documentation
       for more information.
 
     Returns
     -------
     Dataset
-      Besides is usual attributes (e.g. labels, chunks, and a mapper). The
+      Besides is usual attributes (e.g. targets, chunks, and a mapper). The
       returned dataset also includes feature attributes associating each same
       with a channel (by id), and a specific timepoint -- based on information
       read from the EEP data.
@@ -52,7 +52,7 @@ def eep_dataset(samples, labels=None, chunks=None):
 
     # init dataset
     ds = Dataset.from_channeltimeseries(
-            eb.data, labels=labels, chunks=chunks, t0=eb.t0, dt=eb.dt,
+            eb.data, targets=targets, chunks=chunks, t0=eb.t0, dt=eb.dt,
             channelids=eb.channels)
     return ds
 
@@ -136,7 +136,7 @@ class EEPBin(DataReader):
             self._props['channels'] = hdr['channels'].split()
 
         self._data = \
-            N.reshape(N.fromfile(infile, dtype='f'), \
+            np.reshape(np.fromfile(infile, dtype='f'), \
                 (nsamples,
                  self._props['nchannels'],
                  self._props['ntimepoints']))

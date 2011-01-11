@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for attribute collections and their collectables'''
 
-import numpy as N
+import numpy as np
 import copy
 
 from mvpa.testing.tools import assert_raises, assert_false, assert_equal, \
@@ -46,7 +46,7 @@ def test_basic_collectable():
     assert_equal(e.__doc__, "This is a test")
 
     # shallow copy does not create a view of value array
-    c.value = N.arange(5)
+    c.value = np.arange(5)
     d = copy.copy(c)
     assert_false(d.value.base is c.value)
 
@@ -65,12 +65,12 @@ def test_array_collectable():
     c.name = 'somename'
     assert_raises(ValueError, c._set, 12345)
     assert_equal(c.value, None)
-    c.value = N.arange(5)
+    c.value = np.arange(5)
     assert_equal(c.name, 'somename')
-    assert_array_equal(c.value, N.arange(5))
+    assert_array_equal(c.value, np.arange(5))
 
     # immediate content
-    data = N.random.random(size=(3,10))
+    data = np.random.random(size=(3,10))
     c = ArrayCollectable(data.copy(), 'myname',
                          "This is a test", length=3)
     assert_equal(c.name, 'myname')
@@ -86,11 +86,11 @@ def test_array_collectable():
     assert_equal(e.__doc__, "This is a test")
 
     # cannot assign array of wrong length
-    assert_raises(ValueError, c._set, N.arange(5))
+    assert_raises(ValueError, c._set, np.arange(5))
     assert_equal(len(c), 3)
 
     # shallow copy DOES create a view of value array
-    c.value = N.arange(3)
+    c.value = np.arange(3)
     d = copy.copy(c)
     assert_true(d.value.base is c.value)
 
@@ -111,3 +111,7 @@ def test_collections():
 
     # names which are already present in dict interface
     assert_raises(ValueError, sa.__setitem__, 'values', range(5))
+
+    sa_c = copy.deepcopy(sa)
+    assert_equal(len(sa), len(sa_c))
+    assert_array_equal(sa.test, sa_c.test)

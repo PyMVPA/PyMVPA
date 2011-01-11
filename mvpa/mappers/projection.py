@@ -9,9 +9,9 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
-from mvpa.base.dochelpers import enhancedDocString
+from mvpa.base.dochelpers import enhanced_doc_string
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
 
 
@@ -60,6 +60,9 @@ class ProjectionMapper(Mapper):
         """
         Mapper.__init__(self)
 
+        # by default we want to wipe the feature attributes out during mapping
+        self._fa_filter = []
+
         self._selector = selector
         self._proj = None
         """Forward projection matrix."""
@@ -73,7 +76,7 @@ class ProjectionMapper(Mapper):
         self._offset_out = None
         """Offset (most often just mean) in the output space"""
 
-    __doc__ = enhancedDocString('ProjectionMapper', locals(), Mapper)
+    __doc__ = enhanced_doc_string('ProjectionMapper', locals(), Mapper)
 
 
     @accepts_dataset_as_samples
@@ -92,10 +95,11 @@ class ProjectionMapper(Mapper):
     def _posttrain(self, dataset):
         # perform component selection
         if self._selector is not None:
-            self.selectOut(self._selector)
+            self.select_out(self._selector)
 
 
-    def _demeanData(self, data):
+    ##REF: Name was automagically refactored
+    def _demean_data(self, data):
         """Helper which optionally demeans
         """
         if self._demean:
@@ -116,7 +120,7 @@ class ProjectionMapper(Mapper):
         # local binding
         demean = self._demean
 
-        d = N.asmatrix(data)
+        d = np.asmatrix(data)
 
         # Remove input offset if present
         if demean and self._offset_in is not None:
@@ -135,7 +139,7 @@ class ProjectionMapper(Mapper):
     def _reverse_data(self, data):
         if self._proj is None:
             raise RuntimeError, "Mapper needs to be trained before used."
-        d = N.asmatrix(data)
+        d = np.asmatrix(data)
         # Remove offset if present in output space
         if self._demean and self._offset_out is not None:
             d = d - self._offset_out
@@ -150,23 +154,25 @@ class ProjectionMapper(Mapper):
         return res
 
 
-    def _computeRecon(self):
+    ##REF: Name was automagically refactored
+    def _compute_recon(self):
         """Given that a projection is present -- compute reconstruction matrix.
         By default -- pseudoinverse of projection matrix.  Might be overridden
         in derived classes for efficiency.
         """
-        return N.linalg.pinv(self._proj)
+        return np.linalg.pinv(self._proj)
 
 
-    def _getRecon(self):
+    ##REF: Name was automagically refactored
+    def _get_recon(self):
         """Compute (if necessary) and return reconstruction matrix
         """
         # (re)build reconstruction matrix
         recon = self._recon
         if recon is None:
-            self._recon = recon = self._computeRecon()
+            self._recon = recon = self._compute_recon()
         return recon
 
 
     proj  = property(fget=lambda self: self._proj, doc="Projection matrix")
-    recon = property(fget=_getRecon, doc="Backprojection matrix")
+    recon = property(fget=_get_recon, doc="Backprojection matrix")

@@ -9,19 +9,18 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Script to provide anatomical labels for the voxels, or their statistics """
 
-import re, sys
+import re, sys, os
 
 import mvpa
 from mvpa.misc.cmdline import parser, opts, opt
 from mvpa.base import verbose, warning, externals
 
-if externals.exists('nifti', raiseException=True):
+if externals.exists('nifti', raise_=True):
     from nifti import NiftiImage
 
 if __debug__:
     from mvpa.base import debug
 
-# from rumba.tools.misc import *
 from mvpa.atlases.transformation import *
 
 from mvpa.atlases import Atlas, ReferencesAtlas, FSLProbabilisticAtlas, \
@@ -29,7 +28,7 @@ from mvpa.atlases import Atlas, ReferencesAtlas, FSLProbabilisticAtlas, \
 
 from optparse import OptionParser, Option
 
-import numpy as N
+import numpy as np
 #import numpy.linalg as la
 # to read in transformation matrix
 
@@ -40,7 +39,7 @@ except:
     pass
 
 
-def selectVoxelsFromVolumeIteratorNumPY(volFileName, lt=None, ut=None):
+def select_from_volume_iterator(volFileName, lt=None, ut=None):
     """
     Generator which returns value + coordinates with values of non-0 entries
     from the `volFileName`
@@ -64,9 +63,9 @@ def selectVoxelsFromVolumeIteratorNumPY(volFileName, lt=None, ut=None):
     elif lt is not None and ut is None:
         mask = volData >= lt
     else:
-        mask = N.logical_and(volData >= lt, volData <= ut)
+        mask = np.logical_and(volData >= lt, volData <= ut)
 
-    matchingVoxels = N.where(mask)
+    matchingVoxels = np.where(mask)
     # qf = volFile.qform
     # qfi = la.inv(qf)
     for ivoxel in xrange(len(matchingVoxels[0])):
@@ -78,9 +77,11 @@ def selectVoxelsFromVolumeIteratorNumPY(volFileName, lt=None, ut=None):
         yield (value, voxel[0], voxel[1], voxel[2], 0) #voxel[-4])
 
 
-def parsedCoordinatesIterator(
+def parsed_coordinates_iterator(
     parseString="^\s*(?P<x>\S+)[ \t,](?P<y>\S+)[ \t,](?P<z>\S+)\s*$",
-    inputStream=sys.stdin):
+    inputStream=sys.stdin,
+    ctype=float,
+    dtype=float):
     """Iterator to provide coordinates/values parsed from the string stream,
     most often from the stdin
     """
@@ -94,15 +95,16 @@ def parsedCoordinatesIterator(
                       % (line, parseString))
         else:
             r = match.groupdict()
-            if r.has_key('v'): v = float(r['v'])
+            if r.has_key('v'): v = dtype(r['v'])
             else:              v = 0.0
-            if r.has_key('t'): t = float(r['t'])
+            if r.has_key('t'): t = dtype(r['t'])
             else:              t = 0.0
-            yield (v, float(r['x']), float(r['y']), float(r['z']), t)
+            yield (v, ctype(r['x']), ctype(r['y']), ctype(r['z']), t)
 
 
 # XXX helper to process labels... move me
-def presentLabels(labels):
+##REF: Name was automagically refactored
+def present_labels(labels):
     if isinstance(labels, list):
         res = []
         for label in labels:
@@ -124,14 +126,27 @@ def presentLabels(labels):
 
 
 #def processCmdLine():
-parser.usage = "%s [OPTIONS] [input_file.nii.gz]" % sys.argv[0] + """
+parser.usage = """%(cmd)s [OPTIONS] [input_file.nii.gz]
+
 Examples:
 
-%s -s -A talairach-dist -d 10 -R Closest\ Gray -l Structure,Brodmann\ area  -cC mask.nii.gz
+> %(cmd)s -s -A talairach-dist -d 10 -R Closest\ Gray -l Structure,Brodmann\ area  -cC mask.nii.gz
 
 produces a summary per each structure and brodmann area, for each voxel
 looking within 10mm radius for the closest gray matter voxel.
-""" % (sys.argv[0], )
+
+Simpler, more reliable, and faster usage is by providing a
+corresponding atlas volume image registered to the volume at hands,
+e.g.:
+
+> %(cmd)s -f MNI-prob-bold.nii.gz -A MNI -s mask_vt.nii.gz
+> %(cmd)s -f HarvardOxford-cort-prob-bold.nii.gz -A HarvardOxford-Cortical -s mask_vt.nii.gz
+
+would provide summary over the MNI (or HarvardOxford-Cortical) atlas,
+.nii.gz of which were previously flirted (or fnirted) into the space of
+mask_vt.nii.gz and provided in '-f' argument.""" \
+% {'cmd': os.path.basename(sys.argv[0])}
+
 parser.version = "%prog " + mvpa.__version__
 
 # can't use due to conflict with -d (debug and distance)
@@ -157,6 +172,14 @@ parser.add_option("-A", "--atlas",
                   default="talairach", choices=KNOWN_ATLASES.keys(),
                   help="Atlas to use. Choices: %s"
                        % ', '.join(KNOWN_ATLASES.keys()))
+
+parser.add_option("-f", "--atlas-image-file",
+                  action="store", type="string", dest="atlasImageFile",
+                  default=None,
+                  help=r"Path to the data image for the corresponding atlas. "
+                       " Can be used to override default image if it was "
+                       " already resliced into a corresponding space (e.g."
+                       " subject)")
 
 parser.add_option("-i", "--input-coordinates-file",
                   action="store", type="string", dest="inputCoordFile",
@@ -220,6 +243,20 @@ parser.add_option("--uthr", "--upper-threshold",
                   default=None,
                   help="Upper threshold for voxels to output")
 
+parser.add_option("--count-thr", "--cthr",
+                  action="store", type=int, dest="countThreshold",
+                  default=1,
+                  help="Lowest number of voxels for area to be reported in summary")
+
+parser.add_option("--count-pthr", "--pthr",
+                  action="store", type=float, dest="countPercentThreshold",
+                  default=0.00001,
+                  help="Lowest percentage of voxels within an area to be reported in summary")
+
+parser.add_option("--suppress-none", "--sn",
+                  action="store_true", dest="suppressNone",
+                  help="Suppress reporting of voxels which found no labels (reported as None)")
+
 parser.add_option("--abbr", "--abbreviated-labels",
                   action="store_true", dest="abbreviatedLabels",
                   help="Manipulate with abbreviations for labels instead of"
@@ -271,10 +308,10 @@ parser.add_option("-t", "--talairach",
                   " Shortcut for '-I Talairach'")
 
 parser.add_option("-H", "--half-voxel-correction",
-                  action="store_false", dest="halfVoxelCorrection",
-                  default=True,
-                  help="Adjust coord by 0.5mm after transformation to " + \
-                  "Tal space. Please use -H to turn such adjustment off")
+                  action="store_true", dest="halfVoxelCorrection",
+                  default=False,
+                  help="Adjust coord by 0.5mm after transformation to "
+                  "Tal space.")
 
 parser.add_option("-r", "--relative-to-origin",
                   action="store_true", dest="coordRelativeToOrigin",
@@ -286,6 +323,11 @@ parser.add_option("--input-line-format",
                   action="store", type="string", dest="inputLineFormat",
                   default=r"^\s*(?P<x>\S+)[ \t,]+(?P<y>\S+)[ \t,]+(?P<z>\S+)\s*$",
                   help="Format of the input lines (if ASCII input is provided)")
+
+parser.add_option("--iv", "--input-voxels",
+                  action="store_true", dest="input_voxels",
+                  default=False,
+                  help="Input lines carry voxel indices (int), not coordinates.")
 
 # Specific atlas options
 # TODO : group into options groups
@@ -321,16 +363,27 @@ if len(infiles)>1:
 fileIn = None
 coordT = None
 niftiInput = None
+# define data type for coordinates
+if options.input_voxels:
+    ctype = int
+    query_voxel = True
+else:
+    ctype = float
+    query_voxel = False
+
 # Setup coordinates read-in
+volQForm = None
+
 #
 # compatibility with older talairachlabel
 if options.inputCoordFile:
     fileIn = file(options.inputCoordFile)
-    coordsIterator = parsedCoordinatesIterator(options.inputLineFormat,
-                                               fileIn)
+    coordsIterator = parsed_coordinates_iterator(
+        options.inputLineFormat, fileIn, ctype=ctype)
 # input is stdin
 elif len(infiles)==0:
-    coordsIterator = parsedCoordinatesIterator(options.inputLineFormat)
+    coordsIterator = parsed_coordinates_iterator(
+        options.inputLineFormat, ctype=ctype)
 else:
     if len(infiles)>1:
         print "Just a single file should be provided at the command line"
@@ -345,18 +398,20 @@ else:
             debug('ATL', "Yes it is")
         # if we got here -- it is a proper volume
         # XXX ask Michael to remove nasty warning message
-        coordsIterator = selectVoxelsFromVolumeIteratorNumPY(
+        coordsIterator = select_from_volume_iterator(
             infile, options.lowerThreshold, options.upperThreshold)
         assert(coordT is None)
         coordT = Linear(niftiInput.qform)
+        # lets store volumeQForm for possible conversion of voxels into coordinates
+        volQForm = coordT
         # previous iterator returns space coordinates
         options.coordRelativeToOrigin = True
     except:
         if __debug__:
             debug('ATL', "No it is not")
         fileIn = file(infile)
-        coordsIterator = parsedCoordinatesIterator(
-            options.inputLineFormat, fileIn)
+        coordsIterator = parsed_coordinates_iterator(
+            options.inputLineFormat, fileIn, ctype=ctype)
 
 
 # Open and initialize atlas lookup
@@ -365,11 +420,16 @@ if options.atlasFile is None:
         options.atlasPath = KNOWN_ATLASES[options.atlasName]
     options.atlasFile = options.atlasPath % ( {'name': options.atlasName} )
 
+akwargs_common = {}
+if options.atlasImageFile:
+    akwargs_common['image_file'] = options.atlasImageFile
+
 if not options.forbidDirectMapping \
        and niftiInput is not None and not options.transformationFile:
-    akwargs = {
-        'resolution': niftiInput.pixdim[0],
-        'query_voxel': True }
+    akwargs = {'resolution': niftiInput.pixdim[0]}
+    query_voxel = True   # if we can query directly by voxel, do so
+
+    akwargs.update(akwargs_common)
     verbose(1, "Will attempt direct mapping from input voxels into atlas "
                "voxels at resolution %.2f" % akwargs['resolution'])
 
@@ -382,24 +442,32 @@ if not options.forbidDirectMapping \
             " atlas in %s space. Use -I switch to override input space if"
             " it misspecified, or use -T to provide transformation. Trying"
             " to proceed" %(options.inputSpace, atlas.space), 1)
-        atlas.query_voxel = False
+        query_voxel = False
     elif not (niftiInput.qform == atlas._image.qform).all():
-        warning(
-            "Cannot do direct mapping between files with different qforms."
-            " Please provide original transformation (-T)."
-            "\n Input qform:\n%s\n Atlas qform: \n%s"
-            %(niftiInput.qform, atlas._image.qform), 1)
-        # reset variables
-        atlas.query_voxel = False
+        if options.atlasImageFile is None:
+            warning(
+                "Cannot do direct mapping between files with different qforms."
+                " Please provide original transformation (-T)."
+                "\n Input qform:\n%s\n Atlas qform: \n%s"
+                %(niftiInput.qform, atlas._image.qform), 1)
+            # reset ability to query by voxels
+            query_voxel = False
+        else:
+            warning(
+                "QForms are different between input image and "
+                "provided atlas image."
+                "\n Input qform of %s:\n%s\n Atlas qform of %s:\n%s"
+                %(infile, niftiInput.qform,
+                  options.atlasImageFile, atlas._image.qform), 1)
     else:
         coordT = None
 else:
-    atlas = Atlas(options.atlasFile)
+    atlas = Atlas(options.atlasFile, **akwargs_common)
 
 
 if isinstance(atlas, ReferencesAtlas):
     options.referenceLevel = options.referenceLevel.replace('/', ' ')
-    atlas.setReferenceLevel(options.referenceLevel)
+    atlas.set_reference_level(options.referenceLevel)
     atlas.distance = options.maxDistance
 else:
     options.showReferencedCoordinates = False
@@ -412,9 +480,9 @@ if isinstance(atlas, FSLProbabilisticAtlas):
 # Original talairachlabel assumed that if respective to origin -- voxels were
 # scaled already.
 #if options.coordInTalairachSpace:
-#   voxelSizeOriginal = N.array([1, 1, 1])
+#   voxelSizeOriginal = np.array([1, 1, 1])
 #else:
-#   voxelSizeOriginal = N.array([2, 2, 2])
+#   voxelSizeOriginal = np.array([2, 2, 2])
 
 if options.coordInTalairachSpace:
         options.inputSpace = "Talairach"
@@ -425,14 +493,14 @@ if not (options.inputSpace == atlas.space or
     raise XMLAtlasException("Unknown space '%s' which is not the same as atlas"
                             "space '%s' either" % ( inputSpace, atlas.space ))
 
-if atlas.query_voxel:
+if query_voxel:
     # we do direct mapping
     coordT = None
 else:
     verbose(2, "Chaining needed transformations")
     # by default -- no transformation
     if options.transformationFile:
-        externals.exists('scipy', raiseException=True)
+        externals.exists('scipy', raise_=True)
         from scipy.io import read_array
 
         transfMatrix = read_array(options.transformationFile)
@@ -447,13 +515,13 @@ else:
         if options.inputSpace == "Talairach":
             # assume that atlas is in Talairach space already
             voxelOriginOriginal = atlas.origin
-            voxelSizeOriginal = N.array([1, 1, 1])
+            voxelSizeOriginal = np.array([1, 1, 1])
         elif options.inputSpace == "MNI":
             # need to adjust for MNI origin as it was thought to be at
             # in terms of voxels
-            #voxelOriginOriginal = N.array([46, 64, 37])
-            voxelOriginOriginal = N.array([45, 63, 36])
-            voxelSizeOriginal = N.array([2.0, 2.0, 2.0])
+            #voxelOriginOriginal = np.array([46, 64, 37])
+            voxelOriginOriginal = np.array([45, 63, 36])
+            voxelSizeOriginal = np.array([2.0, 2.0, 2.0])
             warning("Assuming elderly sizes for MNI volumes with"
                        " origin %s and sizes %s" %\
                        ( `voxelOriginOriginal`, `voxelSizeOriginal`))
@@ -466,7 +534,7 @@ else:
 
         coordT = SpaceTransformation(origin=voxelOriginOriginal,
                                      voxelSize=voxelSizeOriginal,
-                                     toRealSpace=True, previous=coordT)
+                                     to_real_space=True, previous=coordT)
 
     # besides adjusting for different origin we need to transform into
     # Talairach space
@@ -475,32 +543,32 @@ else:
                    options.MNI2TalTransformation)
         # What transformation to use
         coordT = {"matthewbrett": MNI2Tal_MatthewBrett,
-                  "lancaster07fsl":  MNI2Tal_Lancaster07FSL,
-                  "lancaster07pooled":  MNI2Tal_Lancaster07pooled,
-                  "meyerlindenberg98":  MNI2Tal_MeyerLindenberg98,
-                  "yohflirt": MNI2Tal_YOHflirt
+                  "lancaster07fsl":  mni_to_tal_lancaster07_fsl,
+                  "lancaster07pooled":  mni_to_tal_lancaster07pooled,
+                  "meyerlindenberg98":  mni_to_tal_meyer_lindenberg98,
+                  "yohflirt": mni_to_tal_yohflirt
                   }\
                   [options.MNI2TalTransformation](previous=coordT)
 
     if options.inputSpace == "MNI" and options.halfVoxelCorrection:
-        originCorrection = N.array([0.5, 0.5, 0.5])
+        originCorrection = np.array([0.5, 0.5, 0.5])
     else:
         # perform transformation any way to convert to voxel space (integers)
         originCorrection = None
 
     # To be closer to what original talairachlabel did -- add 0.5 to each coord
     coordT = SpaceTransformation(origin=originCorrection, voxelSize=None,
-                                     toRealSpace=False, previous = coordT)
+                                     to_real_space=False, previous = coordT)
 
 if options.createSummary:
     summary = {}
     if options.levels is None:
-        options.levels = str(min(4, atlas.Nlevels-1))
+        options.levels = str(min(4, atlas.nlevels-1))
 if options.levels is None:
-    options.levels = range(atlas.Nlevels)
+    options.levels = range(atlas.nlevels)
 elif isinstance(options.levels, basestring):
     if options.levels == 'list':
-        print "Known levels and their indicies:\n" + atlas.levelsListing()
+        print "Known levels and their indicies:\n" + atlas.levels_listing()
         sys.exit(0)
     slevels = options.levels.split(',')
     options.levels = []
@@ -508,13 +576,13 @@ elif isinstance(options.levels, basestring):
         try:
             int_level = int(level)
         except:
-            if atlas.levels_dict.has_key(level):
-                int_level = atlas.levels_dict[level].index
+            if atlas.levels.has_key(level):
+                int_level = atlas.levels[level].index
             else:
                 raise RuntimeError(
                     "Unknown level '%s'. " % level +
                     "Known levels and their indicies:\n"
-                    + atlas.levelsListing())
+                    + atlas.levels_listing())
         options.levels += [int_level]
 else:
     raise ValueError("Don't know how to handle list of levels %s."
@@ -522,7 +590,7 @@ else:
 
 verbose(3, "Operating on following levels: %s" % options.levels)
 # assign levels to the atlas
-atlas.levels = options.levels
+atlas.default_levels = options.levels
 
 if options.outputFile:
     output = open(options.outputFile, 'w')
@@ -536,8 +604,16 @@ if options.dumpmapFile:
               "but input wasn't a volume"
         sys.exit(1)
     ni_dump = NiftiImage(infile)
-    ni_dump_data = N.zeros((len(options.levels),) + ni_dump.data.shape[:3])
+    ni_dump_data = np.zeros((len(options.levels),) + ni_dump.data.shape[:3])
 
+# Also check if we have provided voxels but not querying by voxels
+if options.input_voxels:
+    if coordT is not None:
+        raise NotImplementedError, \
+              "Cannot perform voxels querying having coordT defined"
+    if not query_voxel:
+        raise NotImplementedError, \
+              "query_voxel was reset to False, can't do queries by voxel"
 
 # Read coordinates
 numVoxels = 0
@@ -561,13 +637,16 @@ for c in coordsIterator:
     numVoxels += 1
 
     # Apply necessary transformations
-    coord = coord_orig = N.array(coord_orig)
+    coord = coord_orig = np.array(coord_orig)
 
     if coordT:
         coord = coordT[ coord_orig ]
 
     # Query label
-    voxel = atlas[ coord ]
+    if query_voxel:
+        voxel = atlas[coord]
+    else:
+        voxel = atlas(coord)
     voxel['coord_orig'] = coord_orig
     voxel['value'] = value
     voxel['t'] = t
@@ -576,7 +655,7 @@ for c in coordsIterator:
         voxel_labels = voxel["labels"]
         for i,ind in enumerate(options.levels):
             voxel_label = voxel_labels[i]
-            text = presentLabels(voxel_label)
+            text = present_labels(voxel_label)
             #if len(voxel_label):
             #   assert(voxel_label['index'] == ind)
             summaryIndex += text + " / "
@@ -614,7 +693,7 @@ for c in coordsIterator:
         if options.levels is None:
             options.levels = range(len(voxel['labels']))
 
-        labels = [presentLabels(voxel['labels'][i]) for i in options.levels]
+        labels = [present_labels(voxel['labels'][i]) for i in options.levels]
         out += ','.join(labels)
         #if options.abbreviatedLabels:
         #   out += ','.join([l.abbr for l in labels])
@@ -648,15 +727,16 @@ def statistics(values):
     N_ = len(values)
     if N_==0:
         return 0, None, None, None, None, ""
-    mean = N.mean(values)
-    std = N.std(values)
-    minv = N.min(values)
-    maxv = N.max(values)
+    mean = np.mean(values)
+    std = np.std(values)
+    minv = np.min(values)
+    maxv = np.max(values)
     ssummary = "[%3.2f : %3.2f] %3.2f+-%3.2f" % (minv, maxv, mean, std)
     return N_, mean, std, minv, maxv, ssummary
 
 
-def generateSummary(summary, output):
+##REF: Name was automagically refactored
+def get_summary(summary, output):
     """Output the summary
     """
     # Sort either by the name (then ascending) or by the number of
@@ -675,21 +755,34 @@ def generateSummary(summary, output):
 
     # may be I should have simply made a counter ;-)
     total = sum(map(lambda x:len(x['values']), summary.values()))
+    count_reported = 0
     for index in keys:
+        if index.rstrip(' /') == 'None' and options.suppressNone:
+            continue
         summary_ = summary[index]
         values = summary_['values']
         N, mean, std, minv, maxv, ssummary = statistics(values)
-        # print "N=", N
+        Npercent = 100.0*N/total
+        if N < options.countThreshold \
+               or Npercent < options.countPercentThreshold:
+            continue
+        count_reported += N
         msg = "%%%ds:" % maxkeylength
         output.write(msg % index)
         output.write("%4d/%4.1f%% items" \
-                     % (N, 100.0*N/total ))
+                     % (N, Npercent))
 
         if options.createSummary>1:
             output.write(" %s" % ssummary)
 
         if options.createSummary>2:
             output.write(" max at %s" % summary_['maxcoord'])
+            if options.showOriginalCoordinates and volQForm:
+                #import pydb
+                #pydb.debugger()
+                #coord = np.dot(volQForm, summary_['maxcoord']+[1])[:3]
+                coord = volQForm[summary_['maxcoord']]
+                output.write(" %r" % (tuple(coord),))
 
         if options.createSummary>3 and summary_.has_key('distances'):
             # if we got statistics over referenced voxels
@@ -708,13 +801,16 @@ def generateSummary(summary, output):
         except IOError:
             pass
     output.write("-----\n")
-    output.write("TOTAL: %d items\n" % total)
+    output.write("TOTAL: %d items" % count_reported)
+    if total != count_reported:
+        output.write(" (out of %i, %i were excluded)" % (total, total-count_reported))
+    output.write("\n")
 
 if options.createSummary:
     if numVoxels == 0:
         verbose(1, "No matching voxels were found.")
     else:
-        generateSummary(summary, output)
+        get_summary(summary, output)
 
 if options.outputFile:
     output.close()

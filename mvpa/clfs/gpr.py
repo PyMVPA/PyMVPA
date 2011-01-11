@@ -12,20 +12,20 @@
 __docformat__ = 'restructuredtext'
 
 
-import numpy as N
+import numpy as np
 
-from mvpa.base import externals
+from mvpa.base import externals, warning
 
-from mvpa.misc.state import StateVariable
+from mvpa.base.state import ConditionalAttribute
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
-from mvpa.misc.param import Parameter
+from mvpa.base.param import Parameter
 from mvpa.kernels.np import SquaredExponentialKernel, GeneralizedLinearKernel, \
      LinearKernel
 from mvpa.measures.base import Sensitivity
 from mvpa.misc.exceptions import InvalidHyperparameterError
 from mvpa.datasets import Dataset, dataset_wizard
 
-if externals.exists("scipy", raiseException=True):
+if externals.exists("scipy", raise_=True):
     from scipy.linalg import cho_solve as SLcho_solve
     from scipy.linalg import cholesky as SLcholesky
     import scipy.linalg as SL
@@ -37,16 +37,53 @@ if __debug__:
 
 # Some local bindings for bits of speed up
 from numpy import array, asarray
-Nlog = N.log
-Ndot = N.dot
-Ndiag = N.diag
-NLAcholesky = N.linalg.cholesky
-NLAsolve = N.linalg.solve
-NLAError = N.linalg.linalg.LinAlgError
-eps64 = N.finfo(N.float64).eps
+Nlog = np.log
+Ndot = np.dot
+Ndiag = np.diag
+NLAcholesky = np.linalg.cholesky
+NLAsolve = np.linalg.solve
+NLAError = np.linalg.linalg.LinAlgError
+eps64 = np.finfo(np.float64).eps
 
 # Some precomputed items. log is relatively expensive
-_halflog2pi = 0.5 * Nlog(2 * N.pi)
+_halflog2pi = 0.5 * Nlog(2 * np.pi)
+
+def _SLcholesky_autoreg(C, nsteps=None, **kwargs):
+    """Simple wrapper around cholesky to incrementally regularize the
+    matrix until successful computation.
+
+    For `nsteps` we boost diagonal 10-fold each time from the
+    'epsilon' of the respective dtype. If None -- would proceed until
+    reaching 1.
+    """
+    if nsteps is None:
+        nsteps = -int(np.floor(np.log10(np.finfo(float).eps)))
+    result = None
+    for step in xrange(nsteps):
+        epsilon_value = (10**step) * np.finfo(C.dtype).eps
+        epsilon = epsilon_value * np.eye(C.shape[0])
+        try:
+            result = SLcholesky(C + epsilon, lower=True)
+        except SLAError, e:
+            warning("Cholesky decomposition lead to failure: %s.  "
+                    "As requested, performing auto-regularization but "
+                    "for better control you might prefer to regularize "
+                    "yourself by providing lm parameter to GPR" % e)
+            if step < nsteps-1:
+                if __debug__:
+                    debug("GPR", "Failed to obtain cholesky on "
+                          "auto-regularization step %d value %g. Got %s."
+                          " Boosting lambda more to reg. C."
+                          % (step, epsilon_value, e))
+                continue
+            else:
+                raise
+
+    if result is None:
+        # no loop was done for some reason
+        result = SLcholesky(C, lower=True)
+
+    return result
 
 
 class GPR(Classifier):
@@ -54,13 +91,13 @@ class GPR(Classifier):
 
     """
 
-    predicted_variances = StateVariable(enabled=False,
+    predicted_variances = ConditionalAttribute(enabled=False,
         doc="Variance per each predicted value")
 
-    log_marginal_likelihood = StateVariable(enabled=False,
+    log_marginal_likelihood = ConditionalAttribute(enabled=False,
         doc="Log Marginal Likelihood")
 
-    log_marginal_likelihood_gradient = StateVariable(enabled=False,
+    log_marginal_likelihood_gradient = ConditionalAttribute(enabled=False,
         doc="Log Marginal Likelihood Gradient")
 
     __tags__ = [ 'gpr', 'regression', 'retrainable' ]
@@ -86,9 +123,10 @@ class GPR(Classifier):
     #    doc="Kernel object defining the covariance between instances. "
     #        "(Defaults to KernelSquaredExponential if None in arguments)")
 
-    lm = Parameter(0.0, min=0.0, allowedtype='float',
-                   doc="""The regularization term lambda.
-                   Increase this when the kernel matrix is not positive, definite.""")
+    lm = Parameter(None, min=0.0, allowedtype='None or float',
+        doc="""The regularization term lambda.
+        Increase this when the kernel matrix is not positive definite. If None,
+        some regularization will be provided upon necessity""")
 
 
     def __init__(self, kernel=None, **kwargs):
@@ -106,7 +144,7 @@ class GPR(Classifier):
         # It does not make sense to calculate a confusion matrix for a GPR
         # XXX it does ;) it will be a RegressionStatistics actually ;-)
         # So if someone desires -- let him have it
-        # self.states.enable('training_confusion', False)
+        # self.ca.enable('training_stats', False)
 
         # set kernel:
         if kernel is None:
@@ -127,7 +165,7 @@ class GPR(Classifier):
             if externals.exists('openopt'):
                 self.__tags__ += ['has_sensitivity']
 
-        # No need to initialize state variables. Unless they got set
+        # No need to initialize conditional attributes. Unless they got set
         # they would raise an exception self.predicted_variances =
         # None self.log_marginal_likelihood = None
         self._init_internals()
@@ -160,15 +198,15 @@ class GPR(Classifier):
 
     def compute_log_marginal_likelihood(self):
         """
-        Compute log marginal likelihood using self.train_fv and self.labels.
+        Compute log marginal likelihood using self.train_fv and self.targets.
         """
         if __debug__:
             debug("GPR", "Computing log_marginal_likelihood")
-        self.states.log_marginal_likelihood = \
+        self.ca.log_marginal_likelihood = \
                                  -0.5*Ndot(self._train_labels, self._alpha) - \
                                   Nlog(self._L.diagonal()).sum() - \
                                   self._km_train_train.shape[0] * _halflog2pi
-        return self.states.log_marginal_likelihood
+        return self.ca.log_marginal_likelihood
 
 
     def compute_gradient_log_marginal_likelihood(self):
@@ -187,22 +225,22 @@ class GPR(Classifier):
         # gradient again. COULD THIS BE TAKEN INTO ACCOUNT BY THE
         # NEW CACHED KERNEL INFRASTRUCTURE?
 
-        # self.Kinv = N.linalg.inv(self._C)
+        # self.Kinv = np.linalg.inv(self._C)
         # Faster:
-        Kinv = SLcho_solve(self._LL, N.eye(self._L.shape[0]))
+        Kinv = SLcho_solve(self._LL, np.eye(self._L.shape[0]))
 
-        alphalphaT = N.dot(self._alpha[:,None], self._alpha[None,:])
+        alphalphaT = np.dot(self._alpha[:,None], self._alpha[None,:])
         tmp = alphalphaT - Kinv
         # Pass tmp to __kernel and let it compute its gradient terms.
         # This scales up to huge number of hyperparameters:
         grad_LML_hypers = self.__kernel.compute_lml_gradient(
             tmp, self._train_fv)
-        grad_K_sigma_n = 2.0*self.params.sigma_noise*N.eye(tmp.shape[0])
+        grad_K_sigma_n = 2.0*self.params.sigma_noise*np.eye(tmp.shape[0])
         # Add the term related to sigma_noise:
-        # grad_LML_sigma_n = 0.5 * N.trace(N.dot(tmp,grad_K_sigma_n))
+        # grad_LML_sigma_n = 0.5 * np.trace(np.dot(tmp,grad_K_sigma_n))
         # Faster formula: tr(AB) = (A*B.T).sum()
         grad_LML_sigma_n = 0.5 * (tmp * (grad_K_sigma_n).T).sum()
-        lml_gradient = N.hstack([grad_LML_sigma_n, grad_LML_hypers])
+        lml_gradient = np.hstack([grad_LML_sigma_n, grad_LML_hypers])
         self.log_marginal_likelihood_gradient = lml_gradient
         return lml_gradient
 
@@ -212,24 +250,25 @@ class GPR(Classifier):
         hyperparameters are in logscale. This version use a more
         compact formula provided by Williams and Rasmussen book.
         """
-        # Kinv = N.linalg.inv(self._C)
+        # Kinv = np.linalg.inv(self._C)
         # Faster:
-        Kinv = SLcho_solve(self._LL, N.eye(self._L.shape[0]))
-        alphalphaT = N.dot(self._alpha[:,None], self._alpha[None,:])
+        Kinv = SLcho_solve(self._LL, np.eye(self._L.shape[0]))
+        alphalphaT = np.dot(self._alpha[:,None], self._alpha[None,:])
         tmp = alphalphaT - Kinv
         grad_LML_log_hypers = \
             self.__kernel.compute_lml_gradient_logscale(tmp, self._train_fv)
-        grad_K_log_sigma_n = 2.0 * self.params.sigma_noise ** 2 * N.eye(Kinv.shape[0])
+        grad_K_log_sigma_n = 2.0 * self.params.sigma_noise ** 2 * np.eye(Kinv.shape[0])
         # Add the term related to sigma_noise:
-        # grad_LML_log_sigma_n = 0.5 * N.trace(N.dot(tmp, grad_K_log_sigma_n))
+        # grad_LML_log_sigma_n = 0.5 * np.trace(np.dot(tmp, grad_K_log_sigma_n))
         # Faster formula: tr(AB) = (A * B.T).sum()
         grad_LML_log_sigma_n = 0.5 * (tmp * (grad_K_log_sigma_n).T).sum()
-        lml_gradient = N.hstack([grad_LML_log_sigma_n, grad_LML_log_hypers])
+        lml_gradient = np.hstack([grad_LML_log_sigma_n, grad_LML_log_hypers])
         self.log_marginal_likelihood_gradient = lml_gradient
         return lml_gradient
 
 
-    def getSensitivityAnalyzer(self, flavor='auto', **kwargs):
+    ##REF: Name was automagically refactored
+    def get_sensitivity_analyzer(self, flavor='auto', **kwargs):
         """Returns a sensitivity analyzer for GPR.
 
         Parameters
@@ -273,7 +312,8 @@ class GPR(Classifier):
         """
 
         # local bindings for faster lookup
-        retrainable = self.params.retrainable
+        params = self.params
+        retrainable = params.retrainable
         if retrainable:
             newkernel = False
             newL = False
@@ -281,7 +321,9 @@ class GPR(Classifier):
 
         self._train_fv = train_fv = data.samples
         # GRP relies on numerical labels
-        train_labels = self._attrmap.to_numeric(data.sa.labels)
+        # yoh: yeah -- GPR now is purely regression so no conversion
+        #      is necessary
+        train_labels = data.sa[self.get_space()].value
         self._train_labels = train_labels
 
         if not retrainable or _changedData['traindata'] \
@@ -302,14 +344,14 @@ class GPR(Classifier):
         if not retrainable or newkernel or _changedData['params']:
             if __debug__:
                 debug("GPR", "Computing L. sigma_noise=%g" \
-                             % self.params.sigma_noise)
+                             % params.sigma_noise)
             # XXX it seems that we do not need binding to object, but may be
             # commented out code would return?
             self._C = km_train_train + \
-                  self.params.sigma_noise ** 2 * \
-                  N.identity(km_train_train.shape[0], 'd')
+                  params.sigma_noise ** 2 * \
+                  np.identity(km_train_train.shape[0], 'd')
             # The following decomposition could raise
-            # N.linalg.linalg.LinAlgError because of numerical
+            # np.linalg.linalg.LinAlgError because of numerical
             # reasons, due to the too rapid decay of 'self._C'
             # eigenvalues. In that case we try adding a small constant
             # to self._C, e.g. epsilon=1.0e-20. It should be a form of
@@ -321,7 +363,7 @@ class GPR(Classifier):
             # Cholesky decomposition is provided by three different
             # NumPy/SciPy routines (fastest first):
             # 1) self._LL = scipy.linalg.cho_factor(self._C, lower=True)
-            #    self._L = L = N.tril(self._LL[0])
+            #    self._L = L = np.tril(self._LL[0])
             # 2) self._L = scipy.linalg.cholesky(self._C, lower=True)
             # 3) self._L = numpy.linalg.cholesky(self._C)
             # Even though 1 is the fastest we choose 2 since 1 does
@@ -331,13 +373,22 @@ class GPR(Classifier):
             # all the time.  I figured that if ever you were going to
             # use regularization, you would want to set it yourself
             # and use the same value for all folds of your data.
+            # YOH: Ideally so, but in real "use cases" some might have no
+            #      clue, also our unittests (actually clfs_examples) might
+            #      fail without any good reason.  So lets return a magic with
+            #      an option to forbid any regularization (if lm is None)
             try:
                 # apply regularization
-                epsilon = self.params.lm * N.eye(self._C.shape[0])
-                self._L = SLcholesky(self._C + epsilon, lower=True)
+                lm, C = params.lm, self._C
+                if lm is not None:
+                    epsilon = lm * np.eye(C.shape[0])
+                    self._L = SLcholesky(C + epsilon, lower=True)
+                else:
+                    # do 10 attempts to raise each time by 10
+                    self._L = _SLcholesky_autoreg(C, nsteps=None, lower=True)
                 self._LL = (self._L, True)
             except SLAError:
-                raise SLAError("Kernel matrix is not positive, definite.  " + \
+                raise SLAError("Kernel matrix is not positive, definite. "
                                "Try increasing the lm parameter.")
                 pass
             newL = True
@@ -345,26 +396,26 @@ class GPR(Classifier):
             if __debug__:
                 debug("GPR", "Not computing L since kernel, data and params "
                       "stayed the same")
-            L = self._L                 # reuse
 
         # XXX we leave _alpha being recomputed, although we could check
-        #   if newL or _changedData['labels']
+        #   if newL or _changedData['targets']
         #
         if __debug__:
             debug("GPR", "Computing alpha")
+        # L = self._L                 # reuse
         # self._alpha = NLAsolve(L.transpose(),
         #                              NLAsolve(L, train_labels))
         # Faster:
         self._alpha = SLcho_solve(self._LL, train_labels)
 
         # compute only if the state is enabled
-        if self.states.is_enabled('log_marginal_likelihood'):
+        if self.ca.is_enabled('log_marginal_likelihood'):
             self.compute_log_marginal_likelihood()
             pass
 
         if retrainable:
             # we must assign it only if it is retrainable
-            self.states.retrained = not newkernel or not newL
+            self.ca.retrained = not newkernel or not newL
 
         if __debug__:
             debug("GPR", "Done training")
@@ -378,7 +429,7 @@ class GPR(Classifier):
         Predict the output for the provided data.
         """
         retrainable = self.params.retrainable
-        states = self.states
+        ca = self.ca
 
         if not retrainable or self._changedData['testdata'] \
                or self._km_train_test is None:
@@ -388,18 +439,18 @@ class GPR(Classifier):
             km_train_test = asarray(self.__kernel)
             if retrainable:
                 self._km_train_test = km_train_test
-                states.repredicted = False
+                ca.repredicted = False
         else:
             if __debug__:
                 debug('GPR', "Not recomputing train test kernel matrix")
             km_train_test = self._km_train_test
-            states.repredicted = True
+            ca.repredicted = True
 
 
         predictions = Ndot(km_train_test.transpose(), self._alpha)
 
-        if states.is_enabled('predicted_variances'):
-            # do computation only if state variable was enabled
+        if ca.is_enabled('predicted_variances'):
+            # do computation only if conditional attribute was enabled
             if not retrainable or self._km_test_test is None \
                    or self._changedData['testdata']:
                 if __debug__:
@@ -418,35 +469,35 @@ class GPR(Classifier):
             L = self._L
             # v = NLAsolve(L, km_train_test)
             # Faster:
-            piv = N.arange(L.shape[0])
+            piv = np.arange(L.shape[0])
             v = SL.lu_solve((L.T, piv), km_train_test, trans=1)
             # self.predicted_variances = \
             #     Ndiag(km_test_test - Ndot(v.T, v)) \
             #     + self.sigma_noise**2
-            # Faster formula: N.diag(Ndot(v.T, v)) = (v**2).sum(0):
-            states.predicted_variances = Ndiag(km_test_test) - (v ** 2).sum(0) \
+            # Faster formula: np.diag(Ndot(v.T, v)) = (v**2).sum(0):
+            ca.predicted_variances = Ndiag(km_test_test) - (v ** 2).sum(0) \
                                        + self.params.sigma_noise ** 2
             pass
 
         if __debug__:
             debug("GPR", "Done predicting")
-        states.estimates = predictions
+        ca.estimates = predictions
         return predictions
 
 
-    def _setRetrainable(self, value, force=False):
+    ##REF: Name was automagically refactored
+    def _set_retrainable(self, value, force=False):
         """Internal function : need to set _km_test_test
         """
-        super(GPR, self)._setRetrainable(value, force)
+        super(GPR, self)._set_retrainable(value, force)
         if force or (value and value != self.params.retrainable):
             self._km_test_test = None
 
 
-    def untrain(self):
-        super(GPR, self).untrain()
+    def _untrain(self):
+        super(GPR, self)._untrain()
         # XXX might need to take special care for retrainable. later
         self._init_internals()
-        pass
 
 
     def set_hyperparameters(self, hyperparameter):
@@ -481,7 +532,7 @@ class GPRLinearWeights(Sensitivity):
     Note that the intercept is not computed.
     """
 
-    variances = StateVariable(enabled=False,
+    variances = ConditionalAttribute(enabled=False,
         doc="Variances of the weights (for GeneralizedLinearKernel)")
 
     _LEGAL_CLFS = [ GPR ]
@@ -502,19 +553,19 @@ class GPRLinearWeights(Sensitivity):
         weights = Ndot(Sigma_p,
                         Ndot(train_fv.T, clf._alpha))
 
-        if self.states.is_enabled('variances'):
+        if self.ca.is_enabled('variances'):
             # super ugly formulas that can be quite surely improved:
-            tmp = N.linalg.inv(clf._L)
+            tmp = np.linalg.inv(clf._L)
             Kyinv = Ndot(tmp.T, tmp)
             # XXX in such lengthy matrix manipulations you might better off
-            #     using N.matrix where * is a matrix product
-            self.states.variances = Ndiag(
+            #     using np.matrix where * is a matrix product
+            self.ca.variances = Ndiag(
                 Sigma_p -
                 Ndot(Sigma_p,
                       Ndot(train_fv.T,
                             Ndot(Kyinv,
                                   Ndot(train_fv, Sigma_p)))))
-        return Dataset(N.atleast_2d(weights))
+        return Dataset(np.atleast_2d(weights))
 
 
 if externals.exists('openopt'):
@@ -542,17 +593,17 @@ if externals.exists('openopt'):
                                 / clf._train_labels.std()
             # clf._train_fv = (clf._train_fv-clf._train_fv.mean(0)) \
             #                  /clf._train_fv.std(0)
-            ds = dataset_wizard(samples=clf._train_fv, labels=clf._train_labels)
-            clf.states.enable("log_marginal_likelihood")
+            ds = dataset_wizard(samples=clf._train_fv, targets=clf._train_labels)
+            clf.ca.enable("log_marginal_likelihood")
             ms = ModelSelector(clf, ds)
             # Note that some kernels does not have gradient yet!
             # XXX Make it initialize to clf's current hyperparameter values
             #     or may be add ability to specify starting points in the constructor
             sigma_noise_initial = 1.0e-5
             sigma_f_initial = 1.0
-            length_scale_initial = N.ones(ds.nfeatures)*1.0e4
-            # length_scale_initial = N.random.rand(ds.nfeatures)*1.0e4
-            hyp_initial_guess = N.hstack([sigma_noise_initial,
+            length_scale_initial = np.ones(ds.nfeatures)*1.0e4
+            # length_scale_initial = np.random.rand(ds.nfeatures)*1.0e4
+            hyp_initial_guess = np.hstack([sigma_noise_initial,
                                           sigma_f_initial,
                                           length_scale_initial])
             fixedHypers = array([0]*hyp_initial_guess.size, dtype=bool)
@@ -570,7 +621,7 @@ if externals.exists('openopt'):
                 debug("GPR",
                       "%s, train: shape %s, labels %s, min:max %g:%g, "
                       "sigma_noise %g, sigma_f %g" %
-                      (clf, clf._train_fv.shape, N.unique(clf._train_labels),
+                      (clf, clf._train_fv.shape, np.unique(clf._train_labels),
                        clf._train_fv.min(), clf._train_fv.max(),
                        ms.hyperparameters_best[0], ms.hyperparameters_best[1]))
 

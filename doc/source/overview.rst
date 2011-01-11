@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -32,7 +32,7 @@ has the label and associated experimental run of each volume in the dataset
  ...                                      'attributes_literal.txt'))
  >>> dataset = fmri_dataset(
  ...                samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
- ...                labels=attr.labels,
+ ...                targets=attr.targets,
  ...                chunks=attr.chunks,
  ...                mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
@@ -40,21 +40,18 @@ Perform linear detrending and afterwards zscore the timeseries of each voxel
 using the mean and standard deviation determined from *rest* volumes
 (all done for each experiment run individually).
 
- >>> dataset = poly_detrend(dataset, polyord=1, chunks='chunks')
- >>> dataset = zscore(dataset, param_est=('labels', ['rest']),
- ...                  dtype='float32')
+ >>> poly_detrend(dataset, polyord=1, chunks_attr='chunks')
+ >>> zscore(dataset, param_est=('targets', ['rest']), dtype='float32')
 
 Select a subset of two stimulation conditions from the whole dataset.
 
- >>> interesting = N.array([i in ['face', 'house'] for i in dataset.sa.labels])
+ >>> interesting = np.array([i in ['face', 'house'] for i in dataset.sa.targets])
  >>> dataset = dataset[interesting]
 
 Finally, setup the cross-validation procedure using an odd-even split of the
 dataset and a *SMLR* classifier -- and run it.
 
- >>> cv = CrossValidatedTransferError(
- ...           TransferError(SMLR()),
- ...           OddEvenSplitter())
+ >>> cv = CrossValidation(SMLR(), OddEvenPartitioner())
  >>> error = cv(dataset)
 
 Done. The mean error of classifier predictions on the test dataset across

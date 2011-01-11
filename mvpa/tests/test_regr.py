@@ -8,19 +8,19 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA Regressions"""
 
-from mvpa.datasets.splitters import NFoldSplitter, OddEvenSplitter
+from mvpa.testing import *
+from mvpa.testing.clfs import *
+from mvpa.testing.datasets import dataset_wizard, datasets
+from mvpa.base import externals
 
-from mvpa.misc.errorfx import CorrErrorFx
+from mvpa.generators.partition import NFoldPartitioner, OddEvenPartitioner
+from mvpa.measures.base import CrossValidation
 
 from mvpa.clfs.meta import SplitClassifier
-from mvpa.clfs.transerror import TransferError
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.mappers.fx import mean_sample
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 
-from tests_warehouse import *
-from tests_warehouse_clfs import *
 
 class RegressionsTests(unittest.TestCase):
 
@@ -36,41 +36,48 @@ class RegressionsTests(unittest.TestCase):
     def test_regressions(self, regr):
         """Simple tests on regressions
         """
+        if not externals.exists('scipy'):
+            raise SkipTest
+        else:
+            from mvpa.misc.errorfx import corr_error
         ds = datasets['chirp_linear']
         # we want numeric labels to maintain the previous behavior, especially
         # since we deal with regressions here
-        ds.sa.labels = AttributeMap().to_numeric(ds.labels)
+        ds.sa.targets = AttributeMap().to_numeric(ds.targets)
 
-        cve = CrossValidatedTransferError(
-            TransferError(regr, CorrErrorFx()),
-            splitter=NFoldSplitter(),
-            mapper=mean_sample(),
-            enable_states=['training_confusion', 'confusion'])
-        corr = cve(ds).samples.squeeze()
+        cve = CrossValidation(regr, NFoldPartitioner(), postproc=mean_sample(),
+            errorfx=corr_error, enable_ca=['training_stats', 'stats'])
+        # check the default
+        #self.failUnless(cve.transerror.errorfx is corr_error)
 
-        self.failUnless(corr == cve.states.confusion.stats['CCe'])
+        corr = np.asscalar(cve(ds).samples)
+
+        # Our CorrErrorFx should never return NaN
+        self.failUnless(not np.isnan(corr))
+        self.failUnless(corr == cve.ca.stats.stats['CCe'])
 
         splitregr = SplitClassifier(
-            regr, splitter=OddEvenSplitter(),
-            enable_states=['training_confusion', 'confusion'])
+            regr, partitioner=OddEvenPartitioner(),
+            enable_ca=['training_stats', 'stats'])
         splitregr.train(ds)
-        split_corr = splitregr.states.confusion.stats['CCe']
-        split_corr_tr = splitregr.states.training_confusion.stats['CCe']
+        split_corr = splitregr.ca.stats.stats['CCe']
+        split_corr_tr = splitregr.ca.training_stats.stats['CCe']
 
         for confusion, error in (
-            (cve.states.confusion, corr),
-            (splitregr.states.confusion, split_corr),
-            (splitregr.states.training_confusion, split_corr_tr),
+            (cve.ca.stats, corr),
+            (splitregr.ca.stats, split_corr),
+            (splitregr.ca.training_stats, split_corr_tr),
             ):
             #TODO: test confusion statistics
             # Part of it for now -- CCe
             for conf in confusion.summaries:
                 stats = conf.stats
-                self.failUnless(stats['CCe'] < 0.5)
+                if cfg.getboolean('tests', 'labile', default='yes'):
+                    self.failUnless(stats['CCe'] < 0.5)
                 self.failUnlessEqual(stats['CCe'], stats['Summary CCe'])
 
-            s0 = confusion.asstring(short=True)
-            s1 = confusion.asstring(short=False)
+            s0 = confusion.as_string(short=True)
+            s1 = confusion.as_string(short=False)
 
             for s in [s0, s1]:
                 self.failUnless(len(s) > 10,
@@ -86,37 +93,57 @@ class RegressionsTests(unittest.TestCase):
             #      p-value for such accident to have is verrrry tiny,
             #      so if regression works -- it better has at least 0.5 ;)
             #      otherwise fix it! ;)
-            #if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(confusion.stats['CCe'] < 0.5)
+            # YOH: not now -- issues with libsvr in SG and linear kernel
+            if cfg.getboolean('tests', 'labile', default='yes'):
+                self.failUnless(confusion.stats['CCe'] < 0.5)
 
         # just to check if it works fine
         split_predictions = splitregr.predict(ds.samples)
 
         # To test basic plotting
-        #import pylab as P
+        #import pylab as pl
         #cve.confusion.plot()
-        #P.show()
+        #pl.show()
 
     @sweepargs(clf=clfswh['regression'])
     def test_regressions_classifiers(self, clf):
         """Simple tests on regressions being used as classifiers
         """
         # check if we get values set correctly
-        clf.states.change_temporarily(enable_states=['estimates'])
-        self.failUnlessRaises(UnknownStateError, clf.states['estimates']._get)
-        cv = CrossValidatedTransferError(
-            TransferError(clf),
-            NFoldSplitter(),
-            enable_states=['confusion', 'training_confusion'])
+        clf.ca.change_temporarily(enable_ca=['estimates'])
+        self.failUnlessRaises(UnknownStateError, clf.ca['estimates']._get)
+        cv = CrossValidation(clf, NFoldPartitioner(),
+            enable_ca=['stats', 'training_stats'])
         ds = datasets['uni2small'].copy()
         # we want numeric labels to maintain the previous behavior, especially
         # since we deal with regressions here
-        ds.sa.labels = AttributeMap().to_numeric(ds.labels)
+        ds.sa.targets = AttributeMap().to_numeric(ds.targets)
         cverror = cv(ds)
 
-        self.failUnless(len(clf.states.estimates) == ds[ds.chunks == 1].nsamples)
-        clf.states.reset_changed_temporarily()
+        self.failUnless(len(clf.ca.estimates) == ds[ds.chunks == 1].nsamples)
+        clf.ca.reset_changed_temporarily()
 
+
+    @sweepargs(regr=regrswh['regression', 'has_sensitivity', '!gpr'])
+    def test_sensitivities(self, regr):
+        """Test "sensitivities" provided by regressions
+
+        Inspired by a snippet leading to segfault from Daniel Kimberg
+
+        lead to segfaults due to inappropriate access of SVs thinking
+        that it is a classification problem (libsvm keeps SVs at None
+        for those, although reports nr_class to be 2.
+        """
+        myds = dataset_wizard(samples=np.random.normal(size=(10,5)),
+                              targets=np.random.normal(size=10))
+        sa = regr.get_sensitivity_analyzer()
+        #try:
+        if True:
+            res = sa(myds)
+        #except Exception, e:
+        #    self.fail('Failed to obtain a sensitivity due to %r' % (e,))
+        self.failUnless(res.shape == (1, myds.nfeatures))
+        # TODO: extend the test -- checking for validity of sensitivities etc
 
 
 def suite():

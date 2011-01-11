@@ -20,7 +20,6 @@ if __debug__:
     debug.register('1', 'id 1')           # needed for testing
     debug.register('2', 'id 2')
 
-    from sets import Set
 
 ## XXX There must be smth analogous in python... don't know it yet
 # And it is StringIO
@@ -93,7 +92,7 @@ class VerboseOutputTest(unittest.TestCase):
     def test_verbose_negative(self):
         """Test if chokes on negative level"""
         self.failUnlessRaises( ValueError,
-                               verbose._setLevel, -10 )
+                               verbose._set_level, -10 )
 
     def test_no_lf(self):
         """Test if it works fine with no newline (LF) symbol"""
@@ -153,14 +152,14 @@ class VerboseOutputTest(unittest.TestCase):
             verbose.handlers = []           # so debug doesn't spoil it
             debug.active = ['.*']
             # we should have enabled all of them
-            self.failUnlessEqual(Set(debug.active),
-                                 Set(debug.registered.keys()))
+            self.failUnlessEqual(set(debug.active),
+                                 set(debug.registered.keys()))
             debug.active = ['S.*', 'CLF']
-            self.failUnlessEqual(Set(debug.active),
-                                 Set(filter(lambda x:x.startswith('S'),
+            self.failUnlessEqual(set(debug.active),
+                                 set(filter(lambda x:x.startswith('S'),
                                             debug.registered.keys())+['CLF']))
             debug.active = ['SG', 'CLF']
-            self.failUnlessEqual(Set(debug.active), Set(['SG', 'CLF']),
+            self.failUnlessEqual(set(debug.active), set(['SG', 'CLF']),
                                  msg="debug should do full line matching")
 
             debug.offsetbydepth = True

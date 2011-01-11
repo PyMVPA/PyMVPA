@@ -1,5 +1,5 @@
 .. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. ex: set sts=4 ts=4 sw=4 et tw=79:
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the PyMVPA package for the
@@ -110,7 +110,7 @@ The :class:`~mvpa.measures.anova.OneWayAnova` class provides a simple (and fast)
 univariate measure, that can be used for feature selection, although it is not
 a proper sensitivity measure. For each feature an individual F-score is
 computed as the fraction of between and within group variances. Groups are
-defined by samples with unique labels.
+defined by samples with unique targets.
 
 Higher F-scores indicate higher sensitivities, as with all other sensitivity
 analyzers.
@@ -130,7 +130,7 @@ types of *linear* support vector machines and report those weights.
 
 In contrast to the F-scores computed by an ANOVA, the weights can be positive
 or negative, with both extremes indicating higher sensitivities. To deal with
-this property all subclasses of :class:`~mvpa.measures.base.DatasetMeasure`
+this property all subclasses of :class:`~mvpa.measures.base.Measure`
 support a `mapper` arguments in the constructor.  A mapper is just some
 :class:`~mvpa.mappers.base.Mapper`, `forward_dataset()` method of which is
 called with the resultant sensitivity map as the argument.  In most of the
@@ -145,18 +145,18 @@ classification).
 
  >>> from mvpa.suite import *
  >>>
- >>> ds = normalFeatureDataset()
+ >>> ds = normal_feature_dataset()
  >>> print ds
- <Dataset: 100x4@float64, <sa: chunks,labels>>
+ <Dataset: 100x4@float64, <sa: chunks,targets>>
  >>>
  >>> clf = LinearCSVMC()
- >>> sensana = clf.getSensitivityAnalyzer()
+ >>> sensana = clf.get_sensitivity_analyzer()
  >>> sens = sensana(ds)
  >>> sens.shape
  (1, 4)
  >>> (sens.samples < 0).any()
  True
- >>> sensana_abs = clf.getSensitivityAnalyzer(mapper=absolute_features())
+ >>> sensana_abs = clf.get_sensitivity_analyzer(postproc=absolute_features())
  >>> (sensana_abs(ds).samples < 0).any()
  False
 
@@ -179,7 +179,7 @@ Other linear Classifier Weights
 
 Any linear classifier in PyMVPA can report its weights. The procedure is
 identical for all of them. As outlined in the example using linear SVM weights,
-simply call :meth:`~mvpa.clfs.base.Classifier.getSensitivityAnalyzer` on a
+simply call :meth:`~mvpa.clfs.base.Classifier.get_sensitivity_analyzer` on a
 classifier instance and you'll get an appropriate
 :class:`~mvpa.measures.base.Sensitivity` object. Additionally, it is possible
 to force (re)training of the underlying classifier or simply report the weights
@@ -199,7 +199,7 @@ Noise Perturbation
 Noise perturbation is a generic approach to determine feature sensitivity.  The
 sensitivity analyzer
 :class:`~mvpa.measures.noiseperturbation.NoisePerturbationSensitivity`)
-computes a scalar :class:`~mvpa.measures.base.DatasetMeasure` using the
+computes a scalar :class:`~mvpa.measures.base.Measure` using the
 original dataset. Afterwards, for each single feature a noise pattern is added
 to the respective feature and the dataset measure is recomputed. The
 sensitivity of each feature is the difference between the dataset measure of
@@ -208,7 +208,7 @@ algorithm is that adding noise to *important* features will impair a dataset
 measure like cross-validated classifier transfer error. However, adding noise
 to a feature that already only contains noise, will not change such a measure.
 
-Depending on the used scalar :class:`~mvpa.measures.base.DatasetMeasure` using
+Depending on the used scalar :class:`~mvpa.measures.base.Measure` using
 the sensitivity analyzer might be really CPU-intensive! Also depending on the
 measure, it might be necessary to use appropriate
 :mod:`~mvpa.misc.transformers` (see :mod:`~mvpa.misc.transformers` constructor
@@ -220,7 +220,7 @@ arguments) to ensure that higher values represent higher sensitivities.
 Meta Sensitivity Measures
 -------------------------
 
-Meta Sensitivity Measures are FeaturewiseDatasetMeasures that internally use
+Meta Sensitivity Measures are FeaturewiseMeasures that internally use
 one of the `Basic Sensitivity (and related Measures)`_ to compute their
 sensitivity scores.
 
@@ -232,7 +232,7 @@ Splitting Measures
 
 The SplittingFeaturewiseMeasure uses a
 :class:`~mvpa.datasets.splitters.Splitter` to generate dataset splits.  A
-FeaturewiseDatasetMeasure is then used to compute sensitivity maps for all
+FeaturewiseMeasure is then used to compute sensitivity maps for all
 these dataset splits. At the end a `combiner` function is called with all
 sensitivity maps to produce the final sensitivity map. By default the mean
 sensitivity maps across all splits is computed.

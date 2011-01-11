@@ -27,13 +27,13 @@ The mvpa package contains the following subpackages and modules:
          `Yaroslav Halchenko <debian@onerussian.com>`__,
          `Per B. Sederberg <persed@princeton.edu>`__
 :requires: Python 2.4+
-:version: 0.5.0.dev
+:version: 0.6.0.dev
 :see: `The PyMVPA webpage <http://www.pymvpa.org>`__
-:see: `GIT Repository Browser <http://git.debian.org/?p=pkg-exppsy/pymvpa.git;a=summary>`__
+:see: `GIT Repository Browser <http://github.com/PyMVPA/PyMVPA>`__
 
 :license: The MIT License <http://www.opensource.org/licenses/mit-license.php>
-:copyright: |copy| 2006-2009 Michael Hanke <michael.hanke@gmail.com>
-:copyright: |copy| 2007-2009 Yaroslav O. Halchenko <debian@onerussian.com>
+:copyright: |copy| 2006-2010 Michael Hanke <michael.hanke@gmail.com>
+:copyright: |copy| 2007-2010 Yaroslav O. Halchenko <debian@onerussian.com>
 
 :newfield contributor: Contributor, Contributors (Alphabetical Order)
 :contributor: `Emanuele Olivetti <emanuele@relativita.com>`__
@@ -45,11 +45,11 @@ The mvpa package contains the following subpackages and modules:
 __docformat__ = 'restructuredtext'
 
 # canonical PyMVPA version string
-__version__ = '0.5.0.dev'
+__version__ = '0.6.0.dev'
 
 import os
 import random
-import numpy as N
+import numpy as np
 from mvpa.base import cfg
 from mvpa.base import externals
 from mvpa.base.info import wtf
@@ -63,7 +63,7 @@ pymvpa_dataroot = \
 # it should be at this location
 pymvpa_datadbroot = \
         cfg.get('datadb', 'root',
-                default=os.path.join(os.curdir, 'data'))
+                default=os.path.join(os.curdir, 'datadb'))
 
 if not __debug__:
     try:
@@ -81,13 +81,13 @@ else:
 if cfg.has_option('general', 'seed'):
     _random_seed = cfg.getint('general', 'seed')
 else:
-    _random_seed = int(N.random.uniform()*(2**31-1))
+    _random_seed = int(np.random.uniform()*(2**31-1))
 
 def seed(random_seed):
     """Uniform and combined seeding of all relevant random number
     generators.
     """
-    N.random.seed(random_seed)
+    np.random.seed(random_seed)
     random.seed(random_seed)
 
 seed(_random_seed)
@@ -98,10 +98,16 @@ from mvpa.tests import run as test
 # PyMVPA is useless without numpy
 # Also, this check enforcing population of externals.versions
 # for possible later version checks, hence don't remove
-externals.exists('numpy', force=True, raiseException=True)
-# We might need to suppress the warnings so enforcing check here,
-# it is ok if it would fail
-externals.exists('scipy', force=True, raiseException=False)
+externals.exists('numpy', force=True, raise_=True)
+# We might need to suppress the warnings:
+if externals.exists('scipy'):
+    externals._suppress_scipy_warnings()
+# And check if we aren't under IPython so we could pacify completion
+# a bit
+externals.exists('running ipython env', force=True, raise_=False)
+# Check for matplotlib so matplotlib backend becomes set according to
+# our configuration
+externals.exists('matplotlib', force=True, raise_=False)
 
 if __debug__:
     debug('RANDOM', 'Seeding RNG with %d' % _random_seed)

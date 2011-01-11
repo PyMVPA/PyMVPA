@@ -8,27 +8,33 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA incremental feature search."""
 
+from mvpa.testing import *
+from mvpa.testing.clfs import *
+from mvpa.testing.datasets import datasets
+
+
+from mvpa.base.dataset import vstack
 from mvpa.datasets.base import Dataset
 from mvpa.featsel.ifs import IFS
-from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
-from mvpa.clfs.transerror import TransferError
-from mvpa.datasets.splitters import NFoldSplitter
+from mvpa.measures.base import CrossValidation, ProxyMeasure
+from mvpa.generators.partition import NFoldPartitioner
+from mvpa.generators.splitters import Splitter
 from mvpa.featsel.helpers import FixedNElementTailSelector
-from mvpa.mappers.fx import mean_sample
+from mvpa.mappers.fx import mean_sample, BinaryFxNode
+from mvpa.misc.errorfx import mean_mismatch_error
 
-from tests_warehouse import *
-from tests_warehouse_clfs import *
 
 
 class IFSTests(unittest.TestCase):
 
-    def getData(self):
-        data = N.random.standard_normal(( 100, 2, 2, 2 ))
-        labels = N.concatenate( ( N.repeat( 0, 50 ),
-                                  N.repeat( 1, 50 ) ) )
-        chunks = N.repeat( range(5), 10 )
-        chunks = N.concatenate( (chunks, chunks) )
-        return Dataset.from_wizard(samples=data, labels=labels, chunks=chunks)
+    ##REF: Name was automagically refactored
+    def get_data(self):
+        data = np.random.standard_normal(( 100, 2, 2, 2 ))
+        labels = np.concatenate( ( np.repeat( 0, 50 ),
+                                  np.repeat( 1, 50 ) ) )
+        chunks = np.repeat( range(5), 10 )
+        chunks = np.concatenate( (chunks, chunks) )
+        return Dataset.from_wizard(samples=data, targets=labels, chunks=chunks)
 
 
     # XXX just testing based on a single classifier. Not sure if
@@ -37,40 +43,48 @@ class IFSTests(unittest.TestCase):
     @sweepargs(svm=clfswh['has_sensitivity', '!meta'][:1])
     def test_ifs(self, svm):
 
-        # data measure and transfer error quantifier use the SAME clf!
-        trans_error = TransferError(svm)
-        data_measure = CrossValidatedTransferError(trans_error,
-                                                   NFoldSplitter(1),
-                                                   mapper=mean_sample())
+        # measure for feature selection criterion and performance assesment
+        # use the SAME clf!
+        errorfx = mean_mismatch_error
+        fmeasure = CrossValidation(svm, NFoldPartitioner(), postproc=mean_sample())
+        pmeasure = ProxyMeasure(svm, postproc=BinaryFxNode(errorfx, 'targets'))
 
-        ifs = IFS(data_measure,
-                  trans_error,
-                  feature_selector=\
+        ifs = IFS(fmeasure,
+                  pmeasure,
+                  Splitter('purpose', attr_values=['train', 'test']),
+                  fselector=\
                     # go for lower tail selection as data_measure will return
                     # errors -> low is good
                     FixedNElementTailSelector(1, tail='lower', mode='select'),
                   )
-        wdata = self.getData()
-        wdata_nfeatures = wdata.nfeatures
-        tdata = self.getData()
-        tdata_nfeatures = tdata.nfeatures
+        wdata = self.get_data()
+        wdata.sa['purpose'] = np.repeat('train', len(wdata))
+        tdata = self.get_data()
+        tdata.sa['purpose'] = np.repeat('test', len(tdata))
+        ds = vstack((wdata, tdata))
+        orig_nfeatures = ds.nfeatures
 
-        sdata, stdata = ifs(wdata, tdata)
+        ifs.train(ds)
+        resds = ifs(ds)
 
         # fail if orig datasets are changed
-        self.failUnless(wdata.nfeatures == wdata_nfeatures)
-        self.failUnless(tdata.nfeatures == tdata_nfeatures)
+        self.failUnless(ds.nfeatures == orig_nfeatures)
 
         # check that the features set with the least error is selected
-        self.failUnless(len(ifs.states.errors))
-        e = N.array(ifs.states.errors)
-        self.failUnless(sdata.nfeatures == e.argmin() + 1)
+        self.failUnless(len(ifs.ca.errors))
+        e = np.array(ifs.ca.errors)
+        self.failUnless(resds.nfeatures == e.argmin() + 1)
 
 
         # repeat with dataset where selection order is known
-        signal = datasets['dumb2']
-        sdata, stdata = ifs(signal, signal)
-        self.failUnless((sdata.samples[:,0] == signal.samples[:,0]).all())
+        wsignal = datasets['dumb2'].copy()
+        wsignal.sa['purpose'] = np.repeat('train', len(wsignal))
+        tsignal = datasets['dumb2'].copy()
+        tsignal.sa['purpose'] = np.repeat('test', len(tsignal))
+        signal = vstack((wsignal, tsignal))
+        ifs.train(signal)
+        resds = ifs(signal)
+        self.failUnless((resds.samples[:,0] == signal.samples[:,0]).all())
 
 
 def suite():

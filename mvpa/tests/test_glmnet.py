@@ -8,14 +8,18 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA least angle regression (ENET) classifier"""
 
+from mvpa.testing import *
+skip_if_no_external('glmnet')
+
+from mvpa.testing.datasets import *
+
 from mvpa import cfg
 from mvpa.clfs.glmnet import GLMNET_R,GLMNET_C
 
 #from scipy.stats import pearsonr
-# Lets use our CorrErrorFx which would be available even without scipy
-from mvpa.misc.errorfx import CorrErrorFx
-from tests_warehouse import *
-from mvpa.misc.data_generators import normalFeatureDataset
+# Lets use our corr_error which would be available even without scipy
+from mvpa.misc.errorfx import corr_error
+from mvpa.misc.data_generators import normal_feature_dataset
 
 from mvpa.testing.tools import assert_true, assert_equal, assert_array_equal
 
@@ -33,7 +37,7 @@ def test_glmnet_r():
     # prediction has to be almost perfect
     # test with a correlation
     pre = clf.predict(data.samples)
-    corerr = CorrErrorFx()(pre, data.labels)
+    corerr = corr_error(pre, data.targets)
     if cfg.getboolean('tests', 'labile', default='yes'):
         assert_true(corerr < .2)
 
@@ -43,14 +47,14 @@ def test_glmnet_c():
 
     # use GLMNET on binary problem
     clf = GLMNET_C()
-    clf.states.enable('estimates')
+    clf.ca.enable('estimates')
 
     clf.train(data)
 
     # test predictions
     pre = clf.predict(data.samples)
 
-    assert_array_equal(pre, data.labels)
+    assert_array_equal(pre, data.targets)
 
 def test_glmnet_state():
     #data = datasets['dumb2']
@@ -61,15 +65,15 @@ def test_glmnet_state():
 
     clf.train(data)
 
-    clf.states.enable('predictions')
+    clf.ca.enable('predictions')
 
     p = clf.predict(data.samples)
 
-    assert_array_equal(p, clf.states.predictions)
+    assert_array_equal(p, clf.ca.predictions)
 
 
 def test_glmnet_c_sensitivities():
-    data = normalFeatureDataset(perlabel=10, nlabels=2, nfeatures=4)
+    data = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
 
     # use GLMNET on binary problem
     clf = GLMNET_C()
@@ -77,10 +81,10 @@ def test_glmnet_c_sensitivities():
 
     # now ask for the sensitivities WITHOUT having to pass the dataset
     # again
-    sens = clf.getSensitivityAnalyzer(force_training=False)()
+    sens = clf.get_sensitivity_analyzer(force_train=False)()
 
     #failUnless(sens.shape == (data.nfeatures,))
-    assert_equal(sens.shape, (len(data.UL), data.nfeatures))
+    assert_equal(sens.shape, (len(data.UT), data.nfeatures))
 
 def test_glmnet_r_sensitivities():
     data = datasets['chirp_linear']
@@ -91,6 +95,6 @@ def test_glmnet_r_sensitivities():
 
     # now ask for the sensitivities WITHOUT having to pass the dataset
     # again
-    sens = clf.getSensitivityAnalyzer(force_training=False)()
+    sens = clf.get_sensitivity_analyzer(force_train=False)()
 
-    assert_equal(sens.shape, (data.nfeatures,))
+    assert_equal(sens.shape, (1, data.nfeatures))

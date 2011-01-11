@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import re, textwrap
 
 # for table2string
-import numpy as N
+import numpy as np
 from math import ceil
 from StringIO import StringIO
 from mvpa import cfg
@@ -171,7 +171,7 @@ def _parse_parameters(paramdoc):
     return result
 
 
-def enhancedDocString(item, *args, **kwargs):
+def enhanced_doc_string(item, *args, **kwargs):
     """Generate enhanced doc strings for various items.
 
     Parameters
@@ -195,7 +195,7 @@ def enhancedDocString(item, *args, **kwargs):
     if len(kwargs):
         if set(kwargs.keys()).issubset(set(['force_extend'])):
             raise ValueError, "Got unknown keyword arguments (smth among %s)" \
-                  " in enhancedDocString." % kwargs
+                  " in enhanced_doc_string." % kwargs
     force_extend = kwargs.get('force_extend', False)
     skip_params = kwargs.get('skip_params', [])
 
@@ -203,14 +203,14 @@ def enhancedDocString(item, *args, **kwargs):
     if isinstance(item, basestring):
         if len(args)<1 or not isinstance(args[0], dict):
             raise ValueError, \
-                  "Please provide locals for enhancedDocString of %s" % item
+                  "Please provide locals for enhanced_doc_string of %s" % item
         name = item
         lcl = args[0]
         args = args[1:]
     elif hasattr(item, "im_class"):
         # bound method
         raise NotImplementedError, \
-              "enhancedDocString is not yet implemented for methods"
+              "enhanced_doc_string is not yet implemented for methods"
     elif hasattr(item, "__name__"):
         name = item.__name__
         lcl = item.__dict__
@@ -228,8 +228,8 @@ def enhancedDocString(item, *args, **kwargs):
     rst_lvlmarkup = ["=", "-", "_"]
 
     # would then be called for any child... ok - ad hoc for SVM???
-    if hasattr(item, '_customizeDoc') and name=='SVM':
-        item._customizeDoc()
+    if hasattr(item, '_customize_doc') and name=='SVM':
+        item._customize_doc()
 
     initdoc = ""
     if lcl.has_key('__init__'):
@@ -250,12 +250,16 @@ def enhancedDocString(item, *args, **kwargs):
             initdoc = "Initialize instance of %s" % name
 
         initdoc, params, suffix = _split_out_parameters(initdoc)
-
-        if lcl.has_key('_paramsdoc'):
-            params += '\n' + handle_docstring(lcl['_paramsdoc'])
-
         params_list = _parse_parameters(params)
+
         known_params = set([i[0] for i in params_list])
+
+        # If there are additional ones:
+        if lcl.has_key('_paramsdoc'):
+            params_list += [i for i in lcl['_paramsdoc']
+                            if not (i[0] in known_params)]
+            known_params = set([i[0] for i in params_list])
+
         # no need for placeholders
         skip_params = set(skip_params + ['kwargs', '**kwargs'])
 
@@ -312,8 +316,8 @@ def enhancedDocString(item, *args, **kwargs):
                                  % name, rst_lvlmarkup[2]),
                   initdoc ]
 
-    # Add information about the states if available
-    if lcl.has_key('_statesdoc') and len(item._statesdoc):
+    # Add information about the ca if available
+    if lcl.has_key('_cadoc') and len(item._cadoc):
         # to don't conflict with Notes section if such was already
         # present
         lcldoc = lcl['__doc__'] or ''
@@ -321,9 +325,9 @@ def enhancedDocString(item, *args, **kwargs):
             section_name = _rst_section('Notes')
         else:
             section_name = '\n'         # just an additional newline
-        # no indent is necessary since states list must be already indented
-        docs += ['%s\nAvailable state variables:' % section_name,
-                 handle_docstring(item._statesdoc)]
+        # no indent is necessary since ca list must be already indented
+        docs += ['%s\nAvailable conditional attributes:' % section_name,
+                 handle_docstring(item._cadoc)]
 
     # Deprecated -- but actually we might like to have it in ipython
     # mode may be?
@@ -374,7 +378,7 @@ def table2string(table, out=None):
         table[i] += [''] * (Nelements_max - len(table_))
 
     # figure out lengths within each column
-    atable = N.asarray(table)
+    atable = np.asarray(table)
     markup_strip = re.compile('^@[lrc]')
     col_width = [ max( [len(markup_strip.sub('', x))
                         for x in column] ) for column in atable.T ]
@@ -414,6 +418,41 @@ def table2string(table, out=None):
         return value
 
 
+def _repr(obj, *args, **kwargs):
+    """Helper to get a structured __repr__ for all objects.
+
+    Parameters
+    ----------
+    obj : object
+      This will typically be `self` of the to be documented object.
+    *args, **kwargs : str
+      An arbitrary number of additional items. All of them must be of type
+      `str`. All items will be appended comma separated to the class name.
+      Keyword arguments will be appended as `key`=`value.
+
+    Returns
+    -------
+    str
+    """
+    cls_name = obj.__class__.__name__
+    truncate = cfg.get_as_dtype('verbose', 'truncate repr', int, default=200)
+    # -5 to take (...) into account
+    max_length = truncate - 5 - len(cls_name)
+    if max_length < 0:
+        max_length = 0
+    auto_repr = ', '.join(list(args)
+                   + ["%s=%s" % (k, v) for k, v in kwargs.iteritems()])
+
+    print max_length
+    if not truncate is None and len(auto_repr) > max_length:
+        auto_repr = auto_repr[:max_length] + '...'
+
+    # finally wrap in <> and return
+    # + instead of '%s' for bits of speedup
+
+    return "%s(%s)" % (cls_name, auto_repr)
+
+
 def _str(obj, *args, **kwargs):
     """Helper to get a structured __str__ for all objects.
 
@@ -436,32 +475,33 @@ def _str(obj, *args, **kwargs):
     -------
     str
     """
-    truncate = cfg.getAsDType('verbose', 'truncate str', int, default=200)
+    truncate = cfg.get_as_dtype('verbose', 'truncate str', int, default=200)
 
+    s = None
     if hasattr(obj, 'descr'):
         s = obj.descr
-    else:
-        s ='%s' % obj.__class__.__name__
+    if s is None:
+        s = obj.__class__.__name__
         auto_descr = ', '.join(list(args)
                        + ["%s=%s" % (k, v) for k, v in kwargs.iteritems()])
         if len(auto_descr):
-            s += ': %s' % auto_descr
+            s = s + ': ' + auto_descr
 
     if not truncate is None and len(s) > truncate - 5:
-        # take <...> into account
-        truncate -= 5
-        s = "%s..." % s[:truncate]
+        # -5 to take <...> into account
+        s = s[:truncate-5] + '...'
 
     if __debug__ and 'DS_ID' in debug.active:
         # in case there was nothing but the class name
-        if s[-1]:
-            s += ', id=%i' % id(obj)
-        else:
-            s += ' id=%i' % id(obj)
-
+        if len(s):
+            if s[-1]:
+                s += ','
+            s += ' '
+        s += 'id=%i' % id(obj)
 
     # finally wrap in <> and return
-    return '<%s>' % s
+    # + instead of '%s' for bits of speedup
+    return '<' + s + '>'
 
 
 def borrowdoc(cls, methodname=None):
@@ -547,8 +587,9 @@ def borrowkwargs(cls, methodname=None, exclude=None):
         skip_params = set(['kwargs', '**kwargs'] + skip_params)
 
         # combine two and filter out items to skip
-        aplist = [i for i in mplist + oplist
-                  if not i[0] in skip_params]
+        aplist = [i for i in mplist if not i[0] in skip_params]
+        aplist += [i for i in oplist
+                   if not i[0] in skip_params.union(known_params)]
 
         docstring = mpreamble
         if len(aplist):

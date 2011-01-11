@@ -12,20 +12,20 @@ Visualization of Data Projection Methods
 ========================================
 """
 
+from mvpa.support.pylab import pl
 from mvpa.misc.data_generators import noisy_2d_fx
 from mvpa.mappers.svd import SVDMapper
 from mvpa.mappers.mdp_adaptor import ICAMapper, PCAMapper
 from mvpa import cfg
 
-import pylab as P
-import numpy as N
 center = [10, 20]
 axis_range = 7
 
-def plotProjDir(p):
-    P.plot([0, p[0,0]], [0, p[0,1]],
+##REF: Name was automagically refactored
+def plot_proj_dir(p):
+    pl.plot([0, p[0,0]], [0, p[0,1]],
            linewidth=3, hold=True, color='y')
-    P.plot([0, p[1,0]], [0, p[1,1]],
+    pl.plot([0, p[1,0]], [0, p[1,1]],
            linewidth=3, hold=True, color='k')
 
 mappers = {
@@ -45,7 +45,7 @@ datasets = [
 ndatasets = len(datasets)
 nmappers = len(mappers.keys())
 
-P.figure(figsize=(8,8))
+pl.figure(figsize=(8,8))
 fig = 1
 
 for ds in datasets:
@@ -54,20 +54,20 @@ for ds in datasets:
 
         dproj = mapper.forward(ds.samples)
         mproj = mapper.proj
-        P.subplot(ndatasets, nmappers, fig)
+        pl.subplot(ndatasets, nmappers, fig)
         if fig <= 3:
-            P.title(mname)
-        P.axis('equal')
+            pl.title(mname)
+        pl.axis('equal')
 
-        P.scatter(ds.samples[:, 0] - center[0],
+        pl.scatter(ds.samples[:, 0] - center[0],
                   ds.samples[:, 1] - center[1],
-                  s=30, c=(ds.sa.labels) * 200)
-        plotProjDir(mproj)
+                  s=30, c=(ds.sa.targets) * 200)
+        plot_proj_dir(mproj)
         fig += 1
 
 
 if cfg.getboolean('examples', 'interactive', True):
-    P.show()
+    pl.show()
 
 """
 Output of the example:

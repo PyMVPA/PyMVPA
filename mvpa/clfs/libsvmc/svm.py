@@ -10,12 +10,12 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 import operator
 
 from mvpa.base import warning
-from mvpa.misc.state import StateVariable
+from mvpa.base.state import ConditionalAttribute
 
 from mvpa.clfs.base import accepts_dataset_as_samples, \
      accepts_samples_as_dataset
@@ -36,7 +36,7 @@ from mvpa.clfs.libsvmc._svmc import \
      PRECOMPUTED, ONE_CLASS
 
 def _data2ls(data):
-    return N.asarray(data).astype(float)
+    return np.asarray(data).astype(float)
 
 class SVM(_SVM):
     """Support Vector Machine Classifier.
@@ -44,9 +44,9 @@ class SVM(_SVM):
     This is a simple interface to the libSVM package.
     """
 
-    # Since this is internal feature of LibSVM, this state variable is present
+    # Since this is internal feature of LibSVM, this conditional attribute is present
     # here
-    probabilities = StateVariable(enabled=False,
+    probabilities = ConditionalAttribute(enabled=False,
         doc="Estimates of samples probabilities as provided by LibSVM")
 
     # TODO p is specific for SVR
@@ -123,11 +123,14 @@ class SVM(_SVM):
     def _train(self, dataset):
         """Train SVM
         """
+        targets_sa_name = self.get_space()    # name of targets sa
+        targets_sa = dataset.sa[targets_sa_name] # actual targets sa
+
         # libsvm needs doubles
         src = _data2ls(dataset)
 
         # libsvm cannot handle literal labels
-        labels = self._attrmap.to_numeric(dataset.sa.labels).tolist()
+        labels = self._attrmap.to_numeric(targets_sa.value).tolist()
 
         svmprob = _svm.SVMProblem(labels, src )
 
@@ -159,22 +162,22 @@ class SVM(_SVM):
         """Store SVM parameters in libSVM compatible format."""
 
         if self.params.has_key('C'):#svm_type in [_svm.svmc.C_SVC]:
-            Cs = self._getCvec(dataset)
+            Cs = self._get_cvec(dataset)
             if len(Cs)>1:
                 C0 = abs(Cs[0])
-                scale = 1.0/(C0)#*N.sqrt(C0))
+                scale = 1.0/(C0)#*np.sqrt(C0))
                 # so we got 1 C per label
-                uls = self._attrmap.to_numeric(dataset.sa['labels'].unique)
+                uls = self._attrmap.to_numeric(targets_sa.unique)
                 if len(Cs) != len(uls):
-                    raise ValueError, "SVM was parametrized with %d Cs but " \
+                    raise ValueError, "SVM was parameterized with %d Cs but " \
                           "there are %d labels in the dataset" % \
-                          (len(Cs), len(dataset.uniquelabels))
+                          (len(Cs), len(targets_sa.unique))
                 weight = [ c*scale for c in Cs ]
                 # All 3 need to be set to take an effect
-                libsvm_param._setParameter('weight', weight)
-                libsvm_param._setParameter('nr_weight', len(weight))
-                libsvm_param._setParameter('weight_label', uls)
-            libsvm_param._setParameter('C', Cs[0])
+                libsvm_param._set_parameter('weight', weight)
+                libsvm_param._set_parameter('nr_weight', len(weight))
+                libsvm_param._set_parameter('weight_label', uls)
+            libsvm_param._set_parameter('C', Cs[0])
 
         self.__model = _svm.SVMModel(svmprob, libsvm_param)
 
@@ -185,23 +188,23 @@ class SVM(_SVM):
         """
         # libsvm needs doubles
         src = _data2ls(data)
-        states = self.states
+        ca = self.ca
 
         predictions = [ self.model.predict(p) for p in src ]
 
-        if states.is_enabled('estimates'):
+        if ca.is_enabled('estimates'):
             if self.__is_regression__:
-                estimates = [ self.model.predictValuesRaw(p)[0] for p in src ]
+                estimates = [ self.model.predict_values_raw(p)[0] for p in src ]
             else:
-                # if 'trained_labels' are literal they have to be mapped
-                if N.issubdtype(self.states.trained_labels.dtype, 'c'):
-                    trained_labels = self._attrmap.to_numeric(
-                            self.states.trained_labels)
+                # if 'trained_targets' are literal they have to be mapped
+                if np.issubdtype(self.ca.trained_targets.dtype, 'c'):
+                    trained_targets = self._attrmap.to_numeric(
+                            self.ca.trained_targets)
                 else:
-                    trained_labels = self.states.trained_labels
-                nlabels = len(trained_labels)
+                    trained_targets = self.ca.trained_targets
+                nlabels = len(trained_targets)
                 # XXX We do duplicate work. model.predict calls
-                # predictValuesRaw internally and then does voting or
+                # predict_values_raw internally and then does voting or
                 # thresholding. So if speed becomes a factor we might
                 # want to move out logic from libsvm over here to base
                 # predictions on obtined values, or adjust libsvm to
@@ -210,28 +213,28 @@ class SVM(_SVM):
                     # Apperently libsvm reorders labels so we need to
                     # track (1,0) values instead of (0,1) thus just
                     # lets take negative reverse
-                    estimates = [ self.model.predictValues(p)[(trained_labels[1],
-                                                            trained_labels[0])]
+                    estimates = [ self.model.predict_values(p)[(trained_targets[1],
+                                                            trained_targets[0])]
                                for p in src ]
                     if len(estimates) > 0:
                         if __debug__:
                             debug("SVM",
                                   "Forcing estimates to be ndarray and reshaping"
                                   " them into 1D vector")
-                        estimates = N.asarray(estimates).reshape(len(estimates))
+                        estimates = np.asarray(estimates).reshape(len(estimates))
                 else:
                     # In multiclass we return dictionary for all pairs
                     # of labels, since libsvm does 1-vs-1 pairs
-                    estimates = [ self.model.predictValues(p) for p in src ]
-            states.estimates = estimates
+                    estimates = [ self.model.predict_values(p) for p in src ]
+            ca.estimates = estimates
 
-        if states.is_enabled("probabilities"):
+        if ca.is_enabled("probabilities"):
             # XXX Is this really necesssary? yoh don't think so since
-            # assignment to states is doing the same
-            #self.probabilities = [ self.model.predictProbability(p)
+            # assignment to ca is doing the same
+            #self.probabilities = [ self.model.predict_probability(p)
             #                       for p in src ]
             try:
-                states.probabilities = [ self.model.predictProbability(p)
+                ca.probabilities = [ self.model.predict_probability(p)
                                          for p in src ]
             except TypeError:
                 warning("Current SVM %s doesn't support probability " %
@@ -243,15 +246,15 @@ class SVM(_SVM):
         """Provide quick summary over the SVM classifier"""
         s = super(SVM, self).summary()
         if self.trained:
-            s += '\n # of SVs: %d' % self.__model.getTotalNSV()
+            s += '\n # of SVs: %d' % self.__model.get_total_n_sv()
             try:
                 prm = _svm.svmc.svm_model_param_get(self.__model.model)
                 C = _svm.svmc.svm_parameter_C_get(prm)
                 # extract information of how many SVs sit inside the margin,
                 # i.e. so called 'bounded SVs'
-                inside_margin = N.sum(
+                inside_margin = np.sum(
                     # take 0.99 to avoid rounding issues
-                    N.abs(self.__model.getSVCoef())
+                    np.abs(self.__model.get_sv_coef())
                           >= 0.99*_svm.svmc.svm_parameter_C_get(prm))
                 s += ' #bounded SVs:%d' % inside_margin
                 s += ' used C:%5g' % C
@@ -260,12 +263,12 @@ class SVM(_SVM):
         return s
 
 
-    def untrain(self):
+    def _untrain(self):
         """Untrain libsvm's SVM: forget the model
         """
         if __debug__ and "SVM" in debug.active:
             debug("SVM", "Untraining %s and destroying libsvm model" % self)
-        super(SVM, self).untrain()
+        super(SVM, self)._untrain()
         del self.__model
         self.__model = None
 

@@ -13,7 +13,7 @@ dedicated containers aka. `Collections`.
 __docformat__ = 'restructuredtext'
 
 import copy
-import numpy as N
+import numpy as np
 from operator import isSequenceType
 
 from mvpa.base.dochelpers import _str
@@ -193,6 +193,10 @@ class SequenceCollectable(Collectable):
         return self.value.__len__()
 
 
+    def __getitem__(self, key):
+        return self.value.__getitem__(key)
+
+
     def _set(self, val):
         # check if the new value has the desired length -- if length checking is
         # desired at all
@@ -217,10 +221,10 @@ class SequenceCollectable(Collectable):
             return None
         if self._unique_values is None:
             # XXX we might better use Set, but yoh recalls that
-            #     N.unique was more efficient. May be we should check
+            #     np.unique was more efficient. May be we should check
             #     on the the class and use Set only if we are not
             #     dealing with ndarray (or lists/tuples)
-            self._unique_values = N.unique(self.value)
+            self._unique_values = np.unique(self.value)
         return self._unique_values
 
 
@@ -255,7 +259,7 @@ class ArrayCollectable(SequenceCollectable):
     def _set(self, val):
         if not hasattr(val, 'view'):
             if isSequenceType(val):
-                val = N.asanyarray(val)
+                val = np.asanyarray(val)
             else:
                 raise ValueError("%s only takes ndarrays (or array-likes "
                                  "providing view(), or sequence that can "
@@ -329,12 +333,21 @@ class Collection(dict):
         """
         if isinstance(source, list):
             for a in source:
+                if isinstance(a, tuple):
+                    #list of tuples, e.g. from dict.items()
+                    name = a[0]
+                    value = a[1]
+                else:
+                    # list of collectables
+                    name = a.name
+                    value = a
+
                 if copyvalues is None:
-                    self[a.name] = a
+                    self[name] = value
                 elif copyvalues is 'shallow':
-                    self[a.name] = copy.copy(a)
+                    self[name] = copy.copy(value)
                 elif copyvalues is 'deep':
-                    self[a.name] = copy.deepcopy(a)
+                    self[name] = copy.deepcopy(value)
                 else:
                     raise ValueError("Unknown value ('%s') for copy argument."
                                      % copy)
@@ -406,6 +419,11 @@ class UniformLengthCollection(Collection):
         Collection.__init__(self, items)
 
 
+    def __reduce__(self):
+        return (self.__class__,
+                    (self.items(), self._uniform_length))
+
+
     def set_length_check(self, value):
         """
         Parameters
@@ -427,44 +445,47 @@ class UniformLengthCollection(Collection):
         item : IndexedCollectable
           or of derived class. Must have 'name' assigned.
         """
-        if not isinstance(value, SequenceCollectable):
-            # XXX should we check whether it is some other Collectable?
-            value = SequenceCollectable(value)
-        if self._uniform_length is None:
-            self._uniform_length = len(value)
-        elif not len(value.value) == self._uniform_length:
+        # local binding
+        ulength = self._uniform_length
+
+        # XXX should we check whether it is some other Collectable?
+        if not isinstance(value, ArrayCollectable):
+            # if it is only a single element iterable, attempt broadcasting
+            if isSequenceType(value) and len(value) == 1 \
+                    and not ulength is None:
+                if ulength > 1:
+                    # cannot use np.repeat, because it destroys dimensionality
+                    value = [value[0]] * ulength
+            value = ArrayCollectable(value)
+        if ulength is None:
+            ulength = len(value)
+        elif not len(value.value) == ulength:
             raise ValueError("Collectable '%s' with length [%i] does not match "
                              "the required length [%i] of collection '%s'."
                              % (key,
                                 len(value.value),
-                                self._uniform_length,
+                                ulength,
                                 str(self)))
         # tell the attribute to maintain the desired length
-        value.set_length_check(self._uniform_length)
+        value.set_length_check(ulength)
         Collection.__setitem__(self, key, value)
+
+
+    attr_length = property(fget=lambda self:self._uniform_length,
+                    doc="Uniform length of all attributes in a collection")
 
 
 
 class SampleAttributesCollection(UniformLengthCollection):
     """Container for attributes of samples (i.e. labels, chunks...)
     """
-    def __setitem__(self, key, value):
-        if not isinstance(value, ArrayCollectable):
-            # XXX should we check whether it is some other Collectable?
-            value = ArrayCollectable(value)
-        UniformLengthCollection.__setitem__(self, key, value)
-
+    pass
 
 
 class FeatureAttributesCollection(UniformLengthCollection):
     """Container for attributes of features
     """
-    def __setitem__(self, key, value):
-        if not isinstance(value, ArrayCollectable):
-            # XXX should we check whether it is some other Collectable?
-            value = ArrayCollectable(value)
-        UniformLengthCollection.__setitem__(self, key, value)
-
+    pass
 
 
 class DatasetAttributesCollection(Collection):

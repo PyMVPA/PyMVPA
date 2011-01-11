@@ -11,7 +11,7 @@
 Mappers are objects than can take data, either in a `Dataset`, or plain data
 arrays, and transform them in some specific way. There are no general
 limitations on what this transformation might be. it can be as simple as
-selecting a subset of data (e.g. `FeatureSliceMapper`) or more complex
+selecting a subset of data (e.g. `StaticFeatureSelection`) or more complex
 data projection (e.g. `PCAMapper`).
 
 Mapping algorithms might be unsupervised or supervised techniques, and any

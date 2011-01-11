@@ -10,12 +10,14 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import warning
 from mvpa.base.dochelpers import _str, borrowkwargs
 from mvpa.mappers.base import accepts_dataset_as_samples, Mapper
+from mvpa.datasets.base import Dataset
 from mvpa.datasets.miscfx import get_nsamples_per_attr, get_samples_by_attr
+from mvpa.support import copy
 
 
 class ZScoreMapper(Mapper):
@@ -46,8 +48,8 @@ class ZScoreMapper(Mapper):
 
     Reverse-mapping is currently not implemented.
     """
-    def __init__(self, params=None, param_est=None, chunks='chunks',
-                 dtype='float64', inspace=None):
+    def __init__(self, params=None, param_est=None, chunks_attr='chunks',
+                 dtype='float64', **kwargs):
         """
         Parameters
         ----------
@@ -64,19 +66,17 @@ class ZScoreMapper(Mapper):
           attribute as the first element, and a sequence of attribute values
           as the second element. If None, all samples will be used for parameter
           estimation.
-        chunks : str or None
+        chunks_attr : str or None
           If provided, it specifies the name of a samples attribute in the
           training data, unique values of which will be used to identify chunks of
           samples, and to perform individual Z-scoring within them.
         dtype : Numpy dtype, optional
           Target dtype that is used for upcasting, in case integer data is to be
           Z-scored.
-        inspace : None
-          Currently, this argument has no effect.
         """
-        Mapper.__init__(self, inspace=inspace)
+        Mapper.__init__(self, **kwargs)
 
-        self.__chunks = chunks
+        self.__chunks_attr = chunks_attr
         self.__params = params
         self.__param_est = param_est
         self.__params_dict = None
@@ -93,8 +93,8 @@ class ZScoreMapper(Mapper):
             add_args += ['params=%s' % repr(self.__params)]
         if self.__param_est is not None:
             add_args += ['param_est=%s' % repr(self.__param_est)]
-        if self.__chunks != 'chunks':
-            add_args += ['chunks=%s' % repr(self.__chunks)]
+        if self.__chunks_attr != 'chunks':
+            add_args += ['chunks_attr=%s' % repr(self.__chunks_attr)]
         if self.__dtype != 'float64':
             add_args += ['dtype=%s' % repr(self.__dtype)]
         if add_args:
@@ -109,7 +109,7 @@ class ZScoreMapper(Mapper):
 
     def _train(self, ds):
         # local binding
-        chunks = self.__chunks
+        chunks_attr = self.__chunks_attr
         params = self.__params
         param_est = self.__param_est
 
@@ -132,11 +132,11 @@ class ZScoreMapper(Mapper):
                 est_ids = slice(None)
 
             # now we can either do it one for all, or per chunk
-            if not chunks is None:
+            if not chunks_attr is None:
                 # per chunk estimate
                 params = {}
-                for c in ds.sa[chunks].unique:
-                    slicer = N.where(ds.sa[chunks].value == c)[0]
+                for c in ds.sa[chunks_attr].unique:
+                    slicer = np.where(ds.sa[chunks_attr].value == c)[0]
                     if not isinstance(est_ids, slice):
                         slicer = list(est_ids.intersection(set(slicer)))
                     params[c] = self._compute_params(ds.samples[slicer])
@@ -150,20 +150,20 @@ class ZScoreMapper(Mapper):
 
     def _forward_dataset(self, ds):
         # local binding
-        chunks = self.__chunks
+        chunks_attr = self.__chunks_attr
         dtype = self.__dtype
 
-        if __debug__ and not chunks is None \
-          and N.array(get_nsamples_per_attr(ds, chunks).values()).min() <= 2:
+        if __debug__ and not chunks_attr is None \
+          and np.array(get_nsamples_per_attr(ds, chunks_attr).values()).min() <= 2:
             warning("Z-scoring chunk-wise having a chunk with less than three "
                     "samples will set features in these samples to either zero "
                     "(with 1 sample in a chunk) "
                     "or -1/+1 (with 2 samples in a chunk).")
 
-        # auto-train the mapper if not yet done
-        if self.__params_dict is None:
-            self.train(ds)
         params = self.__params_dict
+        if params is None:
+            raise RuntimeError, \
+                  "ZScoreMapper needs to be trained before call to forward"
 
         if self._secret_inplace_zscore:
             mds = ds
@@ -171,8 +171,8 @@ class ZScoreMapper(Mapper):
             # shallow copy to put the new stuff in
             mds = ds.copy(deep=False)
 
-        # cast the data to float, since in-place operations below to not upcast!
-        if N.issubdtype(mds.samples.dtype, N.integer):
+        # cast the data to float, since in-place operations below do not upcast!
+        if np.issubdtype(mds.samples.dtype, np.integer):
             mds.samples = mds.samples.astype(dtype)
 
         if '__all__' in params:
@@ -180,13 +180,13 @@ class ZScoreMapper(Mapper):
             mds.samples = self._zscore(mds.samples, *params['__all__'])
         else:
             # per chunk z-scoring
-            for c in mds.sa[chunks].unique:
+            for c in mds.sa[chunks_attr].unique:
                 if not c in params:
                     raise RuntimeError(
                         "%s has no parameters for chunk '%s'. It probably "
                         "wasn't present in the training dataset!?"
                         % (self.__class__.__name__, c))
-                slicer = N.where(mds.sa[chunks].value == c)[0]
+                slicer = np.where(mds.sa[chunks_attr].value == c)[0]
                 mds.samples[slicer] = self._zscore(mds.samples[slicer],
                                                    *params[c])
 
@@ -194,41 +194,52 @@ class ZScoreMapper(Mapper):
 
 
     def _forward_data(self, data):
-        if not self.__chunks is None:
-            raise RuntimeError("%s cannot do chunk-wise Z-scoring of plain "
-                               "data since it was parameterized with chunks."
-                               % self)
+        if self.__chunks_attr is not None:
+            raise RuntimeError(
+                "%s cannot do chunk-wise Z-scoring of plain data "
+                "since it has to be parameterized with chunks_attr." % self)
+        if self.__param_est is not None:
+            raise RuntimeError("%s cannot do Z-scoring with estimating "
+                               "parameters on some attributes of plain"
+                               "data." % self)
 
         params = self.__params_dict
-
         if params is None:
-            raise RuntimeError("%s needs to be trained before use." % self)
+            raise RuntimeError, \
+                  "ZScoreMapper needs to be trained before call to forward"
 
         # mappers should not modify the input data
         # cast the data to float, since in-place operations below to not upcast!
-        if N.issubdtype(data.dtype, N.integer):
+        if np.issubdtype(data.dtype, np.integer):
+            if self._secret_inplace_zscore:
+                raise TypeError(
+                    "Cannot perform inplace z-scoring since data is of integer "
+                    "type. Please convert to float before calling zscore")
             mdata = data.astype(self.__dtype)
+        elif self._secret_inplace_zscore:
+            mdata = data
         else:
-            mdata = data.copy()
+            # do not call .copy() directly, since it might not be an array
+            mdata = copy.deepcopy(data)
 
         self._zscore(mdata, *params['__all__'])
         return mdata
 
 
     def _compute_params(self, samples):
-        return (samples.mean(axis=0), samples.std(axis=0))
+        return (np.mean(samples, axis=0), np.std(samples, axis=0))
 
 
     def _zscore(self, samples, mean, std):
         # de-mean
-        if N.isscalar(mean) or samples.shape[1] == len(mean):
+        if np.isscalar(mean) or samples.shape[1] == len(mean):
             samples -= mean
         else:
             raise RuntimeError("mean should be a per-feature vector. Got: %r"
                                % (mean,))
 
         # scale
-        if N.isscalar(std):
+        if np.isscalar(std):
             if std == 0:
                 samples[:] = 0
             else:
@@ -239,14 +250,14 @@ class ZScoreMapper(Mapper):
             else:
                 # check for invariant features
                 std_nz = std != 0
-                samples[:, std_nz] /= N.asanyarray(std)[std_nz]
+                samples[:, std_nz] /= np.asanyarray(std)[std_nz]
         return samples
 
 
 
 @borrowkwargs(ZScoreMapper, '__init__')
 def zscore(ds, **kwargs):
-    """In-place Z-scoring of a `Dataset`.
+    """In-place Z-scoring of a `Dataset` or `ndarray`.
 
     This function behaves identical to `ZScoreMapper`. The only difference is
     that the actual Z-scoring is done in-place -- potentially causing a
@@ -254,15 +265,20 @@ def zscore(ds, **kwargs):
 
     Parameters
     ----------
-    ds : Dataset
-      The dataset that will be Z-scored in-place.
+    ds : Dataset or ndarray
+      The data that will be Z-scored in-place.
     **kwargs
       For all other arguments, please see the documentation of `ZScoreMapper`.
     """
     zm = ZScoreMapper(**kwargs)
     zm._secret_inplace_zscore = True
+    # train
+    if isinstance(ds, Dataset):
+        zm.train(ds)
+    else:
+        zm.train(Dataset(ds))
     # map
-    mapped = zm(ds)
+    mapped = zm.forward(ds)
     # and append the mapper to the dataset
-    mapped._append_mapper(zm)
-    return mapped
+    if isinstance(mapped, Dataset):
+        mapped._append_mapper(zm)

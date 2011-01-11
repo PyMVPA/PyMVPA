@@ -16,7 +16,6 @@ from verbosity import verbose, debug; debug.active = [1,2,3]; debug(1, "blah")
 __docformat__ = 'restructuredtext'
 
 from sys import stdout, stderr
-from sets import Set
 # GOALS
 #  any logger should be able
 #   to log into a file or stdout/stderr
@@ -40,21 +39,22 @@ class Logger(object):
             handlers = [stdout]
         self.__close_handlers = []
         self.__handlers = []            # pylint friendliness
-        self._setHandlers(handlers)
+        self._set_handlers(handlers)
         self.__lfprev = True
         self.__crprev = 0               # number of symbols in previous cr-ed
 
     def __del__(self):
-        self._closeOpenedHandlers()
+        self._close_opened_handlers()
 
-    def _setHandlers(self, handlers):
+    ##REF: Name was automagically refactored
+    def _set_handlers(self, handlers):
         """Set list of handlers for the log.
 
         A handler can be opened files, stdout, stderr, or a string, which
         will be considered a filename to be opened for writing
         """
         handlers_ = []
-        self._closeOpenedHandlers()
+        self._close_opened_handlers()
         for handler in handlers:
             if isinstance(handler, basestring):
                 try:
@@ -71,13 +71,15 @@ class Logger(object):
             handlers_.append(handler)
         self.__handlers = handlers_
 
-    def _closeOpenedHandlers(self):
+    ##REF: Name was automagically refactored
+    def _close_opened_handlers(self):
         """Close opened handlers (such as opened logfiles
         """
         for handler in self.__close_handlers:
             handler.close()
 
-    def _getHandlers(self):
+    ##REF: Name was automagically refactored
+    def _get_handlers(self):
         """Return active handlers
         """
         return self.__handlers
@@ -128,7 +130,7 @@ class Logger(object):
 
         self.__lfprev = lf
 
-    handlers = property(fget=_getHandlers, fset=_setHandlers)
+    handlers = property(fget=_get_handlers, fset=_set_handlers)
     lfprev = property(fget=lambda self:self.__lfprev)
 
 
@@ -149,10 +151,11 @@ class LevelLogger(Logger):
         Logger.__init__(self, *args, **kwargs)
         self.__level = level            # damn pylint ;-)
         self.__indent = indent
-        self._setLevel(level)
-        self._setIndent(indent)
+        self._set_level(level)
+        self._set_indent(indent)
 
-    def _setLevel(self, level):
+    ##REF: Name was automagically refactored
+    def _set_level(self, level):
         """Set logging level
         """
         ilevel = int(level)
@@ -163,7 +166,8 @@ class LevelLogger(Logger):
         self.__level = ilevel
 
 
-    def _setIndent(self, indent):
+    ##REF: Name was automagically refactored
+    def _set_indent(self, indent):
         """Either to indent the lines based on message log level"""
         self.__indent = "%s" % indent
 
@@ -180,8 +184,8 @@ class LevelLogger(Logger):
                 msg = self.indent*level + msg
             Logger.__call__(self, msg, *args, **kwargs)
 
-    level = property(fget=lambda self: self.__level, fset=_setLevel)
-    indent = property(fget=lambda self: self.__indent, fset=_setIndent)
+    level = property(fget=lambda self: self.__level, fset=_set_level)
+    indent = property(fget=lambda self: self.__indent, fset=_set_indent)
 
 
 class OnceLogger(Logger):
@@ -235,11 +239,12 @@ class SetLogger(Logger):
         self.__printsetid = printsetid
         self.__registered = register    # all "registered" sets descriptions
         # which to output... pointless since __registered
-        self._setActive(active)
-        self._setPrintsetid(printsetid)
+        self._set_active(active)
+        self._set_printsetid(printsetid)
 
 
-    def _setActive(self, active):
+    ##REF: Name was automagically refactored
+    def _set_active(self, active):
         """Set active logging set
         """
         # just unique entries... we could have simply stored Set I guess,
@@ -247,7 +252,7 @@ class SetLogger(Logger):
         from mvpa.base import verbose
         self.__active = []
         registered_keys = self.__registered.keys()
-        for item in list(Set(active)):
+        for item in list(set(active)):
             if item == '':
                 continue
             if isinstance(item, basestring):
@@ -286,13 +291,14 @@ class SetLogger(Logger):
                           % item_
             self.__active += toactivate
 
-        self.__active = list(Set(self.__active)) # select just unique ones
+        self.__active = list(set(self.__active)) # select just unique ones
         self.__maxstrlength = max([len(str(x)) for x in self.__active] + [0])
         if len(self.__active):
             verbose(2, "Enabling debug handlers: %s" % `self.__active`)
 
 
-    def _setPrintsetid(self, printsetid):
+    ##REF: Name was automagically refactored
+    def _set_printsetid(self, printsetid):
         """Either to print set Id at each line"""
         self.__printsetid = printsetid
 
@@ -322,7 +328,8 @@ class SetLogger(Logger):
         self.__registered[setid] = description
 
 
-    def setActiveFromString(self, value):
+    ##REF: Name was automagically refactored
+    def set_active_from_string(self, value):
         """Given a string listing registered(?) setids, make then active
         """
         # somewhat evil but works since verbose must be initiated
@@ -345,8 +352,8 @@ class SetLogger(Logger):
 
 
     printsetid = property(fget=lambda self: self.__printsetid, \
-                          fset=_setPrintsetid)
-    active = property(fget=lambda self: self.__active, fset=_setActive)
+                          fset=_set_printsetid)
+    active = property(fget=lambda self: self.__active, fset=_set_active)
     registered = property(fget=lambda self: self.__registered)
 
 
@@ -358,19 +365,26 @@ if __debug__:
     from os import getpid
     from os.path import basename, dirname
 
-    def parseStatus(field='VmSize'):
+    __pymvpa_pid__ = getpid()
+    def parse_status(field='VmSize'):
         """Return stat information on current process.
 
         Usually it is needed to know where the memory is gone, that is
         why VmSize is the default for the field to spit out
+
         TODO: Spit out multiple fields. Use some better way than parsing proc
         """
-
-        fd = open('/proc/%d/status' % getpid())
-        lines = fd.readlines()
-        fd.close()
-        match = filter(lambda x:re.match('^%s:'%field, x), lines)[0].strip()
-        match = re.sub('[ \t]+', ' ', match)
+        regex = re.compile('^%s:' % field)
+        match = None
+        try:
+            for l in open('/proc/%d/status' % __pymvpa_pid__):
+                if regex.match(l):
+                    match = l.strip()
+                    break
+            if match:
+                match = re.sub('[ \t]+', ' ', match)
+        except IOError:
+            pass
         return match
 
     def mbasename(s):
@@ -378,8 +392,10 @@ if __debug__:
 
         Also strip .py at the end
         """
-        base = basename(s).rstrip('py').rstrip('.')
-        if base in Set(['base', '__init__']):
+        base = basename(s)
+        if base.endswith('.py'):
+            base = base[:-3]
+        if base in set(['base', '__init__']):
             base = basename(dirname(s)) + '.' + base
         return base
 
@@ -402,7 +418,7 @@ if __debug__:
         def __call__(self):
             ftb = traceback.extract_stack(limit=100)[:-2]
             entries = [[mbasename(x[0]), str(x[1])] for x in ftb]
-            entries = filter(lambda x:x[0] != 'unittest', entries)
+            entries = [ e for e in entries if e[0] != 'unittest' ]
 
             # lets make it more consize
             entries_out = [entries[0]]
@@ -458,13 +474,14 @@ if __debug__:
         """
 
         _known_metrics = {
-            'vmem' : lambda : parseStatus(field='VmSize'),
-            'pid' : lambda : parseStatus(field='Pid'),
+            # TODO: make up Windows-friendly version or pure Python platform
+            # independent version (probably just make use of psutil)
+            'vmem' : lambda : parse_status(field='VmSize'),
+            'pid' : lambda : parse_status(field='Pid'),
             'asctime' : time.asctime,
             'tb' : TraceBack(),
             'tbc' : TraceBack(collide=True),
             }
-
 
         def __init__(self, metrics=None, offsetbydepth=True, *args, **kwargs):
             """
@@ -491,7 +508,8 @@ if __debug__:
                 self._registerMetric(metric)
 
 
-        def registerMetric(self, func):
+        ##REF: Name was automagically refactored
+        def register_metric(self, func):
             """Register some metric to report
 
             func can be either a function call or a string which should
@@ -518,7 +536,7 @@ if __debug__:
             elif isinstance(func, list):
                 self.__metrics = []     # reset
                 for item in func:
-                    self.registerMetric(item)
+                    self.register_metric(item)
                 return
 
             if not func in self.__metrics:
@@ -561,11 +579,12 @@ if __debug__:
             SetLogger.__call__(self, setid, msg, *args, **kwargs)
 
 
-        def _setOffsetByDepth(self, b):
+        ##REF: Name was automagically refactored
+        def _set_offset_by_depth(self, b):
             self._offsetbydepth = b
 
         offsetbydepth = property(fget=lambda x:x._offsetbydepth,
-                                 fset=_setOffsetByDepth)
+                                 fset=_set_offset_by_depth)
 
         metrics = property(fget=lambda x:x.__metrics,
-                           fset=registerMetric)
+                           fset=register_metric)

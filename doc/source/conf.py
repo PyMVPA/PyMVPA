@@ -13,11 +13,16 @@
 # serve to show the default.
 
 import sys, os, re
-import numpy as N
+import numpy as np
 import mvpa
 
 try:
     import matplotlib
+    # Disable warning from matplotlib
+    import warnings
+    warnings.filterwarnings(
+        'ignore', 'This call to matplotlib.use() has no effect.*',
+        UserWarning)
     matplotlib.use('svg')
 except:
     pass
@@ -66,7 +71,7 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8'
 
 # The master toctree document.
-master_doc = 'contents'
+master_doc = 'sitemap'
 
 # General substitutions.
 project = 'PyMVPA'
@@ -124,7 +129,7 @@ default_role = "obj"	   # seems to be sufficient to provide basic hyperlinking
 pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
-#modindex_common_prefix = []
+modindex_common_prefix = []
 
 
 # -- Options for HTML output ---------------------------------------------------
@@ -150,7 +155,7 @@ html_theme_path = ['_themes']
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = 'pics/pymvpa_logo.jpg'
+#html_logo = 'pics/pymvpa_logo.jpg'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -212,7 +217,7 @@ latex_paper_size = 'a4'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('manual', 'PyMVPA-Manual.tex', 'PyMVPA Manual',
+  ('pdfmanual', 'PyMVPA-Manual.tex', 'PyMVPA Manual',
    'PyMVPA Authors',
    'manual'),
   ('devguide', 'PyMVPA-DevGuide.tex', 'PyMVPA Developer Guidelines',
@@ -275,8 +280,9 @@ latex_preamble = r"""
 # to link to related projects
 intersphinx_mapping = {'http://docs.python.org/': None,
                        'http://nipy.sourceforge.net/nipype': None,
-                       'http://nipy.sourceforge.net/nipy': None,
+                       'http://nipy.sourceforge.net/nipy/stable': None,
                        'http://h5py.alfven.org/docs': None,
                        'http://docs.scipy.org/doc/scipy/reference': None,
-                       'http://docs.scipy.org/doc/numpy/objects.inv': None,
+                       'http://docs.scipy.org/doc/numpy/': None,
+                       'http://matplotlib.sourceforge.net/': None,
                        }

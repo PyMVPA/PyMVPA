@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as N
+import numpy as np
 import textwrap
 import operator
 
@@ -22,7 +22,7 @@ from mvpa.base.dochelpers import handle_docstring, _rst, _rst_section, \
      _rst_indentstr
 
 from mvpa.clfs.base import Classifier
-from mvpa.misc.param import Parameter
+from mvpa.base.param import Parameter
 
 if __debug__:
     from mvpa.base import debug
@@ -105,7 +105,7 @@ class _SVM(Classifier):
     """Parameters which are specific to a given instantiation of SVM
     """
 
-    __tags__ = [ 'svm', 'kernel-based' ]
+    __tags__ = [ 'svm', 'kernel-based', 'swig' ]
 
     def __init__(self, **kwargs):
         """Init base class of SVMs. *Not to be publicly used*
@@ -133,9 +133,9 @@ class _SVM(Classifier):
             self._KNOWN_PARAMS = \
                  self._KNOWN_PARAMS[:] + list(add_params)
 
-        
+
         # Assign per-instance __tags__
-        self.__tags__ = self.__tags__[:]
+        self.__tags__ = self.__tags__[:] + [svm_impl]
 
         # Add corresponding internals
         if add_internals is not None:
@@ -225,16 +225,17 @@ class _SVM(Classifier):
                 if col[k].is_default: continue
                 res += "%s%s=%r" % (sep, k, col[k].value)
                 #sep = ', '
-        states = self.states
+        ca = self.ca
         for name, invert in ( ('enable', False), ('disable', True) ):
-            states_chosen = states._get_enabled(nondefault=False, invert=invert)
-            if len(states_chosen):
-                res += sep + "%s_states=%r" % (name, states_chosen)
+            ca_chosen = ca._get_enabled(nondefault=False, invert=invert)
+            if len(ca_chosen):
+                res += sep + "%s_ca=%r" % (name, ca_chosen)
 
         res += ")"
         return res
 
-    def _getCvec(self, data):
+    ##REF: Name was automagically refactored
+    def _get_cvec(self, data):
         """Estimate default and return scaled by it negative user's C values
         """
         if not self.params.has_key('C'):#svm_type in [_svm.svmc.C_SVC]:
@@ -249,21 +250,22 @@ class _SVM(Classifier):
         Cs = list(C[:])               # copy
         for i in xrange(len(Cs)):
             if Cs[i] < 0:
-                Cs[i] = self._getDefaultC(data.samples)*abs(Cs[i])
+                Cs[i] = self._get_default_c(data.samples)*abs(Cs[i])
                 if __debug__:
                     debug("SVM", "Default C for %s was computed to be %s" %
                           (C[i], Cs[i]))
 
         return Cs
 
-    def _getDefaultC(self, data):
+    ##REF: Name was automagically refactored
+    def _get_default_c(self, data):
         """Compute default C
 
         TODO: for non-linear SVMs
         """
 
         if self.params.kernel.__kernel_name__ == 'linear':
-            datasetnorm = N.mean(N.sqrt(N.sum(data*data, axis=1)))
+            datasetnorm = np.mean(np.sqrt(np.sum(data*data, axis=1)))
             if datasetnorm == 0:
                 warning("Obtained degenerate data with zero norm for training "
                         "of %s.  Scaling of C cannot be done." % self)
@@ -289,7 +291,7 @@ class _SVM(Classifier):
 
         ## TODO: Check validity of this w/ new kernels (ie sg.Rbf has sigma)
         #if self.kernel_params.has_key('gamma'):
-            #value = 1.0 / len(dataset.uniquelabels)
+            #value = 1.0 / len(dataset.uniquetargets)
             #if __debug__:
                 #debug("SVM", "Default Gamma is computed to be %f" % value)
         #else:
@@ -297,7 +299,8 @@ class _SVM(Classifier):
 
         #return value
 
-    def getSensitivityAnalyzer(self, **kwargs):
+    ##REF: Name was automagically refactored
+    def get_sensitivity_analyzer(self, **kwargs):
         """Returns an appropriate SensitivityAnalyzer."""
 
         sana = self._KNOWN_SENSITIVITIES.get(self.params.kernel.__kernel_name__,
@@ -311,7 +314,8 @@ class _SVM(Classifier):
 
 
     @classmethod
-    def _customizeDoc(cls):
+    ##REF: Name was automagically refactored
+    def _customize_doc(cls):
         #cdoc_old = cls.__doc__
         # Need to append documentation to __init__ method
         idoc_old = cls.__init__.__doc__
@@ -378,7 +382,7 @@ sensitivity.
         NOS.seen += cls._KNOWN_PARAMS# + cls._KNOWN_KERNEL_PARAMS
 
         idoc += '\n' + _rst_section('Parameters') + '\n' + '\n'.join(
-            [v.doc(indent='  ')
+            [v._paramdoc()
              for k,v in cls._SVM_PARAMS.iteritems()
              if k in NOS.seen])
 

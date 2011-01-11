@@ -8,33 +8,37 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA stats helpers"""
 
+from mvpa.testing import *
+from mvpa.testing.datasets import datasets
+
 from mvpa import cfg
 from mvpa.base import externals
 from mvpa.clfs.stats import MCNullDist, FixedNullDist, NullDist
+from mvpa.generators.permutation import AttributePermutator
 from mvpa.datasets import Dataset
 from mvpa.measures.glm import GLM
 from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
-from mvpa.misc.fx import doubleGammaHRF, singleGammaHRF
-from tests_warehouse import *
-from mvpa.testing.tools import assert_array_almost_equal, assert_array_equal, \
-assert_true, assert_equal
+from mvpa.misc.fx import double_gamma_hrf, single_gamma_hrf
+
 
 # Prepare few distributions to test
 #kwargs = {'permutations':10, 'tail':'any'}
-nulldist_sweep = [ MCNullDist(permutations=30, tail='any'),
-                   MCNullDist(permutations=30, tail='right')]
+permutator = AttributePermutator('targets', count=30)
+nulldist_sweep = [ MCNullDist(permutator, tail='any'),
+                   MCNullDist(permutator, tail='right')]
 
 if externals.exists('scipy'):
     from mvpa.support.stats import scipy
     from scipy.stats import f_oneway
     from mvpa.clfs.stats import rv_semifrozen
-    nulldist_sweep += [ MCNullDist(scipy.stats.norm, permutations=30,
+    nulldist_sweep += [ MCNullDist(permutator, scipy.stats.norm,
                                    tail='any'),
-                        MCNullDist(scipy.stats.norm, permutations=30,
+                        MCNullDist(permutator, scipy.stats.norm,
                                    tail='right'),
-                        MCNullDist(rv_semifrozen(scipy.stats.norm, loc=0),
-                                   permutations=30, tail='right'),
-                        MCNullDist(scipy.stats.expon, permutations=30,
+                        MCNullDist(permutator,
+                                   rv_semifrozen(scipy.stats.norm, loc=0),
+                                   tail='right'),
+                        MCNullDist(permutator, scipy.stats.expon,
                                    tail='right'),
                         FixedNullDist(scipy.stats.norm(0, 10.0), tail='any'),
                         FixedNullDist(scipy.stats.norm(0, 10.0), tail='right'),
@@ -57,17 +61,17 @@ class StatsTests(unittest.TestCase):
         # check reasonable output.
         # p-values for non-bogus features should significantly different,
         # while bogus (0) not
-        prob = null.p([20, 0, 0, 0, 0, N.nan])
+        prob = null.p([20, 0, 0, 0, 0, np.nan])
         # XXX this is labile! it also needs checking since the F-scores
         # of the MCNullDists using normal distribution are apparently not
         # distributed that way, hence the test often (if not always) fails.
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(N.abs(prob[0]) < 0.05,
+            self.failUnless(np.abs(prob[0]) < 0.05,
                             msg="Expected small p, got %g" % prob[0])
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless((N.abs(prob[1:]) > 0.05).all(),
+            self.failUnless((np.abs(prob[1:]) > 0.05).all(),
                             msg="Bogus features should have insignificant p."
-                            " Got %s" % (N.abs(prob[1:]),))
+                            " Got %s" % (np.abs(prob[1:]),))
 
         # has to have matching shape
         if not isinstance(null, FixedNullDist):
@@ -91,7 +95,7 @@ class StatsTests(unittest.TestCase):
         a, ac = m(ds), mc(ds)
 
         self.failUnless(a.shape == (1, ds.nfeatures))
-        self.failUnless(ac.shape == (len(ds.UL), ds.nfeatures))
+        self.failUnless(ac.shape == (len(ds.UT), ds.nfeatures))
 
         assert_array_equal(ac[0], ac[1])
         assert_array_equal(a, ac[1])
@@ -105,13 +109,13 @@ class StatsTests(unittest.TestCase):
         ac = mc(ds)
         if cfg.getboolean('tests', 'labile', default='yes'):
             # All non-bogus features must be high for a corresponding feature
-            self.failUnless((ac.samples[N.arange(4),
-                                        N.array(ds.a.nonbogus_features)] >= 1
+            self.failUnless((ac.samples[np.arange(4),
+                                        np.array(ds.a.nonbogus_features)] >= 1
                                         ).all())
         # All features should have slightly but different CompoundAnova
         # values. I really doubt that there will be a case when this
         # test would fail just to being 'labile'
-        self.failUnless(N.max(N.std(ac, axis=1))>0,
+        self.failUnless(np.max(np.std(ac, axis=1))>0,
                         msg='In compound anova, we should get different'
                         ' results for different labels. Got %s' % ac)
 

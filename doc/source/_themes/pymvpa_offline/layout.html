@@ -7,7 +7,7 @@
 
 {% block rootrellink %}
   <li><a href="{{ pathto('index') }}">PyMVPA Home</a> |&nbsp;</li>
-  <li><a href="{{ pathto('contents') }}">Documentation</a> &raquo;</li>
+  <li><a href="{{ pathto('sitemap') }}">Sitemap</a> &raquo;</li>
 {% endblock %}
 
 {%- block sidebarlogo %}
@@ -24,4 +24,6 @@
 {{ super() }}
 <p><a href="http://neuro.debian.net"><img
   src="_static/neurodebian.png" alt="NeuroDebian" /></a></p>
+<p><a href="http://www.nitrc.org/projects/pymvpa"><img
+  src="_static/nitrc.jpg" alt="NITRC-listed" /></a></p>
 {% endblock %}

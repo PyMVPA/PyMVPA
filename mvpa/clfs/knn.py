@@ -14,10 +14,13 @@ import sys
 # not worthy of externals checking
 _dict_has_key = sys.version_info >= (2, 5)
 
-import numpy as N
+import numpy as np
 
 from mvpa.base import warning
-from mvpa.misc.support import indentDoc
+from mvpa.datasets.base import Dataset
+from mvpa.misc.support import indent_doc
+from mvpa.base.state import ConditionalAttribute
+
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.clfs.distance import squared_euclidean_distance
 
@@ -48,6 +51,10 @@ class kNN(Classifier):
     calling predict().
 
     """
+
+    distances = ConditionalAttribute(enabled=False,
+        doc="Distances computed for each sample")
+
 
     __tags__ = ['knn', 'non-linear', 'binary', 'multiclass',
                       'notrain2predict' ]
@@ -91,7 +98,7 @@ class kNN(Classifier):
 
     def __str__(self):
         return "%s\n data: %s" % \
-            (Classifier.__str__(self), indentDoc(self.__data))
+            (Classifier.__str__(self), indent_doc(self.__data))
 
 
     def _train(self, data):
@@ -110,7 +117,7 @@ class kNN(Classifier):
         self.__weights = None
 
         # create dictionary with an item for each condition
-        uniquelabels = data.sa['labels'].unique
+        uniquelabels = data.sa[self.get_space()].unique
         self.__votes_init = dict(zip(uniquelabels,
                                      [0] * len(uniquelabels)))
 
@@ -122,7 +129,7 @@ class kNN(Classifier):
         Returns a list of class labels (one for each data sample).
         """
         # make sure we're talking about arrays
-        data = N.asarray(data)
+        data = np.asarray(data)
 
         # checks only in debug mode
         if __debug__:
@@ -137,6 +144,10 @@ class kNN(Classifier):
         # distances stored row-wise, ie. distances between test sample [0]
         # and all training samples will end up in row 0
         dists = self.__dfx(self.__data.samples, data).T
+        if self.ca.is_enabled('distances'):
+            # TODO: theoretically we should have used deepcopy for sa
+            #       here
+            self.ca.distances = Dataset(dists, fa=self.__data.sa.copy())
 
         # determine the k nearest neighbors per test sample
         knns = dists.argsort(axis=1)[:, :self.__k]
@@ -145,9 +156,9 @@ class kNN(Classifier):
         predicted = []
 
         if self.__voting == 'majority':
-            vfx = self.getMajorityVote
+            vfx = self.get_majority_vote
         elif self.__voting == 'weighted':
-            vfx = self.getWeightedVote
+            vfx = self.get_weighted_vote
         else:
             raise ValueError, "kNN told to perform unknown voting '%s'." \
                   % self.__voting
@@ -160,19 +171,24 @@ class kNN(Classifier):
 
         # store the predictions in the state. Relies on State._setitem to do
         # nothing if the relevant state member is not enabled
-        self.states.predictions = predicted
-        self.states.estimates = [r[1] for r in results]
+        self.ca.predictions = predicted
+        self.ca.estimates = np.array([r[1] for r in results])
 
         return predicted
 
 
-    def getMajorityVote(self, knn_ids):
+    ##REF: Name was automagically refactored
+    def get_majority_vote(self, knn_ids):
         """Simple voting by choosing the majority of class neighbors.
         """
         # local bindings
         _data = self.__data
-        labels = _data.labels
-        uniquelabels = _data.sa['labels'].unique
+
+        targets_sa_name = self.get_space()
+        targets_sa = _data.sa[targets_sa_name]
+
+        labels = targets_sa.value
+        uniquelabels = targets_sa.unique
 
         # number of occerences for each unique class in kNNs
         votes = self.__votes_init.copy()
@@ -192,12 +208,16 @@ class kNN(Classifier):
                 [votes[ul] for ul in uniquelabels] # transform into lists
 
 
-    def getWeightedVote(self, knn_ids):
+    ##REF: Name was automagically refactored
+    def get_weighted_vote(self, knn_ids):
         """Vote with classes weighted by the number of samples per class.
         """
         # local bindings
         _data = self.__data
-        uniquelabels = _data.sa['labels'].unique
+        targets_sa_name = self.get_space()
+        targets_sa = _data.sa[targets_sa_name]
+
+        uniquelabels = targets_sa.unique
 
         # Lazy evaluation
         if self.__weights is None:
@@ -205,7 +225,7 @@ class kNN(Classifier):
             # It seemed to Yarik that this has to be evaluated just once per
             # training dataset.
             #
-            self.__labels = labels = self.__data.sa.labels
+            self.__labels = labels = targets_sa.value
             Nlabels = len(labels)
             Nuniquelabels = len(uniquelabels)
 
@@ -231,11 +251,11 @@ class kNN(Classifier):
 
         # find the class with most votes
         # return votes as well to store them in the state
-        return uniquelabels[N.asarray(votes).argmax()], \
+        return uniquelabels[np.asarray(votes).argmax()], \
                votes
 
 
-    def untrain(self):
+    def _untrain(self):
         """Reset trained state"""
         self.__data = None
-        super(kNN, self).untrain()
+        super(kNN, self)._untrain()

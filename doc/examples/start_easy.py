@@ -22,27 +22,26 @@ from mvpa.suite import *
 attr = SampleAttributes(os.path.join(pymvpa_dataroot,
                         'attributes_literal.txt'))
 dataset = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                       labels=attr.labels, chunks=attr.chunks,
+                       targets=attr.targets, chunks=attr.chunks,
                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 # do chunkswise linear detrending on dataset
-poly_detrend(dataset, polyord=1, chunks='chunks')
+poly_detrend(dataset, polyord=1, chunks_attr='chunks')
 
 # zscore dataset relative to baseline ('rest') mean
-zscore(dataset, perchunk=True, baselinelabels=['rest'])
+zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']))
 
 # select class face and house for this demo analysis
 # would work with full datasets (just a little slower)
-dataset = dataset[N.array([l in ['face', 'house'] for l in dataset.sa.labels],
+dataset = dataset[np.array([l in ['face', 'house'] for l in dataset.sa.targets],
                           dtype='bool')]
 
 # setup cross validation procedure, using SMLR classifier
-cv = CrossValidatedTransferError(
-            TransferError(SMLR()),
-            OddEvenSplitter())
-# and run it
-error = N.mean(cv(dataset))
+cv = CrossValidation(SMLR(), OddEvenPartitioner())
 
-# UC: unique chunks, UL: unique labels
+# and run it
+error = np.mean(cv(dataset))
+
+# UC: unique chunks, UT: unique targets
 print "Error for %i-fold cross-validation on %i-class problem: %f" \
-      % (len(dataset.UC), len(dataset.UL), error)
+      % (len(dataset.UC), len(dataset.UT), error)

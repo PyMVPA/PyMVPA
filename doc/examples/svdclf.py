@@ -13,8 +13,9 @@ Classification of SVD-mapped Datasets
 
 .. index:: mapper, SVD, MappedClassifier
 
-Demonstrate the usage of a dataset mapper performing data projection onto
-singular value components within a cross-validation -- for *any* clasifier.
+Demonstrate the usage of a dataset mapper performing data projection
+onto singular value components within a cross-validation -- for *any*
+classifier.
 """
 
 from mvpa.suite import *
@@ -28,7 +29,7 @@ if __debug__:
 attr = SampleAttributes(os.path.join(pymvpa_dataroot,
                         'attributes_literal.txt'))
 dataset = fmri_dataset(os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
-                       labels=attr.labels, chunks=attr.chunks,
+                       targets=attr.targets, chunks=attr.chunks,
                        mask=os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
 
 #
@@ -36,36 +37,43 @@ dataset = fmri_dataset(os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
 #
 
 # do chunkswise linear detrending on dataset
-poly_detrend(dataset, polyord=1, chunks='chunks')
+poly_detrend(dataset, polyord=1, chunks_attr='chunks')
 
 # only use 'rest', 'cats' and 'scissors' samples from dataset
-dataset = dataset[N.array([ l in ['rest', 'cat', 'scissors']
-                    for l in dataset.labels], dtype='bool')]
+dataset = dataset[np.array([ l in ['rest', 'cat', 'scissors']
+                    for l in dataset.targets], dtype='bool')]
 
 # zscore dataset relative to baseline ('rest') mean
-zscore(dataset, perchunk=True, baselinelabels=['rest'], targetdtype='float32')
+zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']), dtype='float32')
 
 # remove baseline samples from dataset for final analysis
-dataset = dataset[dataset.sa.labels != 'rest']
+dataset = dataset[dataset.sa.targets != 'rest']
 
-# Specify the base classifier to be used
-# To parametrize the classifier to be used
-#   Clf = lambda *args:LinearCSVMC(C=-10, *args)
-# Just to assign a particular classifier class
+# Specify the class of a base classifier to be used
 Clf = LinearCSVMC
+# And create the instance of SVDMapper to be reused
+svdmapper = SVDMapper()
 
-# define some classifiers: a simple one and several classifiers with
-# built-in SVDs
+"""Lets create a generator of a `ChainMapper` which would first perform
+SVD and then subselect the desired range of components."""
+
+get_SVD_sliced = lambda x: ChainMapper([svdmapper,
+                                        StaticFeatureSelection(x)])
+
+"""Now we can define a list of some classifiers: a simple one and several
+classifiers with built-in SVD transformation and selection of
+corresponding SVD subspaces"""
+
 clfs = [('All orig.\nfeatures (%i)' % dataset.nfeatures, Clf()),
         ('All Comps\n(%i)' % (dataset.nsamples \
                  - (dataset.nsamples / len(dataset.UC)),),
-                        MappedClassifier(Clf(), SVDMapper())),
+                        MappedClassifier(Clf(), svdmapper)),
         ('First 5\nComp.', MappedClassifier(Clf(),
-                        SVDMapper(selector=range(5)))),
+                        get_SVD_sliced(slice(0, 5)))),
         ('First 30\nComp.', MappedClassifier(Clf(),
-                        SVDMapper(selector=range(30)))),
+                        get_SVD_sliced(slice(0, 30)))),
         ('Comp.\n6-30', MappedClassifier(Clf(),
-                        SVDMapper(selector=range(5,30))))]
+                        get_SVD_sliced(slice(5, 30))))]
 
 
 # run and visualize in barplot
@@ -74,22 +82,20 @@ labels = []
 
 for desc, clf in clfs:
     print desc
-    cv = CrossValidatedTransferError(
-            TransferError(clf),
-            NFoldSplitter(),
-            enable_states=['results'])
-    cv(dataset)
-
-    results.append(cv.states.results)
+    cv = CrossValidation(clf, NFoldPartitioner())
+    res = cv(dataset)
+    # there is only one 'feature' i.e. the error in the returned
+    # dataset
+    results.append(res.samples[:,0])
     labels.append(desc)
 
-plotBars(results, labels=labels,
+plot_bars(results, labels=labels,
          title='Linear C-SVM classification (cats vs. scissors)',
          ylabel='Mean classification error (N-1 cross-validation, 12-fold)',
          distance=0.5)
 
 if cfg.getboolean('examples', 'interactive', True):
-    P.show()
+    pl.show()
 
 """
 Output of the example analysis:

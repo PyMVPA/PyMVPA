@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Prototype-based Mapper."""
 
-import numpy as N
+import numpy as np
 
 from mvpa.mappers.base import accepts_dataset_as_samples
 from mvpa.mappers.projection import ProjectionMapper
@@ -47,7 +47,8 @@ class PrototypeMapper(ProjectionMapper):
         """Train PrototypeMapper
         """
 
-        self._proj = N.hstack([similarity.computed(samples, self.prototypes)
+        self._proj = np.hstack([similarity.computed(samples, self.prototypes)
                                for similarity in self.similarities])
-        debug("MAP", "projected data of shape %s: %s "
-                % (self._proj.shape, self._proj))
+        if __debug__:
+            debug("MAP", "projected data of shape %s: %s "
+                  % (self._proj.shape, self._proj))
