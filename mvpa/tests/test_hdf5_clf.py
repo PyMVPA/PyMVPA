@@ -11,6 +11,7 @@
 
 from mvpa.testing import *
 skip_if_no_external('h5py')
+skip_if_no_external('scipy')
 
 import numpy as np
 from mvpa.testing.datasets import datasets
