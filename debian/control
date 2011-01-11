@@ -1,8 +1,8 @@
 Source: pymvpa-snapshot
 Section: python
 Priority: optional
-Maintainer: Experimental Psychology Maintainers <pkg-exppsy-maintainers@lists.alioth.debian.org>
-Uploaders: Michael Hanke <michael.hanke@gmail.com>, Yaroslav Halchenko <debian@onerussian.com>
+Maintainer: NeuroDebian team <team@neuro.debian.net>
+Uploaders: Michael Hanke <mih@debian.org>, Yaroslav Halchenko <debian@onerussian.com>
 Build-Depends: cdbs, debhelper (>= 5.0.38), swig, python-all-dev (>= 2.4), python-support (>= 0.6), python-numpy-ext, libsvm-dev (>= 2.84.0), help2man, python-lxml, python-nifti, python-nose, python-h5py
 Standards-Version: 3.8.4
 Homepage: http://www.pymvpa.org
