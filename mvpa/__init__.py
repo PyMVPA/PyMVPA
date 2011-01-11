@@ -46,6 +46,8 @@ __docformat__ = 'restructuredtext'
 
 # canonical PyMVPA version string
 __version__ = '0.5.0.dev'
+# commit hash to be filled in by Git upon export/archive
+__hash__ = ' $Format:%H$ '.strip()
 
 import os
 import random
