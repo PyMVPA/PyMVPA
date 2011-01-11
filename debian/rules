@@ -2,6 +2,9 @@
 # -*- mode: makefile; coding: utf-8 -*-
 
 srcpkg = $(shell LC_ALL=C dpkg-parsechangelog | grep '^Source:' | cut -d ' ' -f 2,2)
+debver = $(shell LC_ALL=C dpkg-parsechangelog | grep '^Version:' | cut -d ' ' -f 2,2 )
+upstreamver = $(shell echo $(debver) | sed -e 's/-[^-]*$$//' )
+
 # this figures out the last merge point from 'master' into the 'dist' branch and
 # then described this commit relative to the last release tag (upstream/...)
 # If this should make any sense the local master branch must track remote
@@ -69,3 +72,14 @@ get-orig-source:
 	git archive --format=tar --prefix=$(srcpkg)-$(gitver)/ HEAD | \
 		gzip -9 > $(srcpkg)_$(gitver).orig.tar.gz
 
+# helper to create a new changelog entry for a development snapshot package
+# go with default changelog item for each new snapshot, but fire up editor
+# if there already was a changelog for this upstream version, as there is
+# probably something to say about this new Debian snapshot package release
+dev-changelog:
+	@if [ "$(gitver)" = "$(upstreamver)" ]; then \
+		dch -i --package pymvpa-snapshot ; \
+	else \
+		dch --newversion $(gitver)-1 --package pymvpa-snapshot \
+			--allow-lower-version "PyMVPA development snapshot." ; \
+	fi
