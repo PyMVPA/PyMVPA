@@ -10,6 +10,7 @@
 *.o
 *.a
 *.valgrind.out*
+.pc
 *~
 .coverage
 .nfs*
