@@ -1,1 +1,2 @@
 mvpa/__init__.py export-subst
+/debian export-ignore
