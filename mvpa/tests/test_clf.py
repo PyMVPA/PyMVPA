@@ -664,9 +664,10 @@ class ClassifiersTests(unittest.TestCase):
         clf.ca.reset_changed_temporarily()
 
 
-    @dec.skipif(True, "Yarik will look at this -- he promised.")
     @sweepargs(clf=clfswh['retrainable'])
     def test_retrainables(self, clf):
+        # Yarik will look at this -- he promised.
+        raise SkipTest
         # we need a copy since will tune its internals later on
         clf = clf.clone()
         clf.ca.change_temporarily(enable_ca = ['estimates'],
