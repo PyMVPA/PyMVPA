@@ -46,6 +46,10 @@ endif
 			rm $$so ; \
 		done
 
+override_dh_auto_clean:
+	dh_auto_clean
+	-rm -rf $(CURDIR)/build
+
 # make orig tarball from repository content
 get-orig-source:
 	# orig tarball, turn directory into something nicer
