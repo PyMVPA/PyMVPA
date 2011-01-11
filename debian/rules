@@ -12,65 +12,50 @@ upstreamver = $(shell echo $(debver) | sed -e 's/-[^-]*$$//' )
 gitver = $(shell [ -x /usr/bin/git ] && git describe --tags --match 'upstream/*' $$(git merge-base -a HEAD master) | sed -e 's,^upstream/,,' -e 's/\.dev/~dev/')
 
 
-include /usr/share/cdbs/1/rules/debhelper.mk
-DEB_PYTHON_SYSTEM = pysupport
-# for earlier cdbs versions
-DEB_PYTHON_MODULE_PACKAGE = python-mvpa-snapshot
-# for cdbs >= 0.4.54
-DEB_PYTHON_MODULE_PACKAGES = python-mvpa-snapshot python-mvpa-snapshot-lib
-include /usr/share/cdbs/1/class/python-distutils.mk
+# one ring to rule them all ...
+%:
+# need to enforce distutils, since we also have a makefile
+	dh $@ --buildsystem=python_distutils --builddirectory=build
 
-# enable the LIBSVM wrapper
-DEB_PYTHON_BUILD_ARGS += --with-libsvm
-DEB_PYTHON_INSTALL_ARGS_ALL += --with-libsvm
+override_dh_auto_build:
+	dh_auto_build -- --with-libsvm
+	$(MAKE) manpages
 
-clean::
-	$(MAKE) distclean
+# we run the test suite on the install 
+override_dh_auto_test:
 
-# run at install otherwise at build it tends to do them twice for some
-# reason
-install/python-mvpa-snapshot::
+override_dh_auto_install:
+	dh_auto_install -- --with-libsvm
+	# run unit tests here to actually check the deployed package
+	# whenever we don't have to build for python 2.5 anymore call
+	# python with -B and remove the find for pyc files
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	for buildver in $(shell pyversions -vr); do \
 		echo "I: Running PyMVPA unittests using python$$buildver"; \
-		cd $(CURDIR) && cd $(DEB_SRCDIR)/build/lib.*-$$buildver && \
-		ln -s $(CURDIR)/mvpa/data mvpa/ && \
-		MVPA_TESTS_LOWMEM=yes MVPA_TESTS_QUICK=yes MVPA_TESTS_LABILE=no PYTHONPATH=. \
-		$(call cdbs_python_binary,python$$buildver) mvpa/tests/main.py \
-		|| exit 1 ; [ -d mvpa/data ] && rm mvpa/data; \
+		cd $(CURDIR)/debian/tmp/usr/lib/python$$buildver/*-packages && \
+		PYTHONPATH=. MVPA_TESTS_LABILE=no MVPA_TESTS_LOWMEM=yes \
+		MVPA_TESTS_QUICK=yes python$$buildver mvpa/tests/__init__.py \
+		|| exit 1 ; find . -type f -name '*.pyc' -delete ; \
 	done
 endif
-
-install/python-mvpa-snapshot-lib::
-	# move libraries into the python-mvpa-snapshot-lib package
-	for lib in $$(find debian/python-mvpa-snapshot/usr -name '*.so'); do \
-	   sdir=$$(dirname $$lib) ; \
-	   tdir=debian/python-mvpa-snapshot-lib/$${sdir#*python-mvpa-snapshot/} ; \
-	   mkdir -p $$tdir ; \
-	   echo "Moving '$$lib' into '$$tdir'." ; \
-	   mv $$lib $$tdir ; \
-	done
-
-# we need to move libraries away first, hence dependence on -lib
-# Also without this step, movemodules from pysupport would not
-# move arch-indep part of the module under pyshared
-install/python-mvpa-snapshot:: install/python-mvpa-snapshot-lib
-
-binary-install/python-mvpa-snapshot-lib::
-	# assure that there is no mvpa module itself
-	# actually remove everything under ../share/.. since that is provided
-	# by python-mvpa. That prevents e.g. duplicate egg-info files.
-#	rm -rf debian/python-mvpa-lib/usr/share/python-support/python-mvpa-lib/*
-
-# install directly into package directory (despite multiple packages)
-DEB_DESTDIR = $(CURDIR)/debian/python-mvpa-snapshot
-
+	# and now move libraries into -lib package (account for snapshot name
+	# as well)
+	cd $(CURDIR)/debian/python-mvpa*-lib && \
+		for so in $$(find ../tmp -name '*.so'); do \
+			install -D $$so $${so#../tmp/*} ; \
+			rm $$so ; \
+		done
 
 # make orig tarball from repository content
 get-orig-source:
 	# orig tarball, turn directory into something nicer
 	git archive --format=tar --prefix=$(srcpkg)-$(gitver)/ HEAD | \
 		gzip -9 > $(srcpkg)_$(gitver).orig.tar.gz
+
+# same for dev snapshots, but here it produces a dev changelog entry first
+# that converts the source package name to -snapshot
+dev-source: dev-changelog get-orig-source
+	mv $(srcpkg)_$(gitver).orig.tar.gz ..
 
 # helper to create a new changelog entry for a development snapshot package
 # go with default changelog item for each new snapshot, but fire up editor
