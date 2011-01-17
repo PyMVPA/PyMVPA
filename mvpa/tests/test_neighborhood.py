@@ -137,6 +137,20 @@ def test_sphere_scaled():
     ok_(len(res) == 27)
 
 
+def test_hollowsphere_basic():
+    hs = ne.HollowSphere(1, 0)
+    assert_array_equal(hs((2, 1)),  [(1, 1), (2, 0), (2, 2), (3, 1)])
+    assert_array_equal(hs((1, )),   [(0,), (2,)])
+    assert_equal(len(hs((1,1,1))), 6)
+
+
+def test_hollowsphere_degenerate_neighborhood():
+    """Test either we sustain empty neighborhoods
+    """
+    hs = ne.HollowSphere(1, inner_radius=0, element_sizes=(3,3,3))
+    assert_equal(len(hs((1,1,1))), 0)
+
+
 def test_query_engine():
     data = np.arange(54)
     # indices in 3D
