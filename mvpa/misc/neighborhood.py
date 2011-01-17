@@ -13,6 +13,7 @@ from numpy import array
 import operator
 import sys
 
+from mvpa.base import warning
 from mvpa.base.dochelpers import borrowkwargs, borrowdoc
 from mvpa.clfs.distance import cartesian_distance
 
@@ -82,6 +83,14 @@ class Sphere(object):
         """Stored template of increments"""
         self._increments_ndim = None
         """Dimensionality of increments"""
+
+    def __repr__(self, prefixes=[]):
+        prefixes_ = ['radius=%r' % (self._radius,)] + prefixes
+        if self._element_sizes:
+            prefixes_.append('element_sizes=%r' % (self._element_sizes,))
+        if self._distance_func != cartesian_distance:
+            prefixes_.append('distance_func=%r' % self._distance_func)
+        return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
 
     # Properties to assure R/O behavior for now
     @property
@@ -176,8 +185,12 @@ class Sphere(object):
             #    raise ValueError("Sphere object has not been trained yet, use "
             #                     "train(dataset) first. ")
 
-        # function call
-        coord_array = (coordinate + self._increments)
+        if len(self._increments):
+            # function call
+            coord_array = (coordinate + self._increments)
+        else:
+            # if no increments -- no neighbors -- empty list
+            return []
 
         # XXX may be optionally provide extent checking?
         ## # now filter out illegal coordinates if they really are outside the
@@ -240,6 +253,9 @@ class HollowSphere(Sphere):
         Sphere.__init__(self, radius, **kwargs)
         self._inner_radius = inner_radius
 
+    def __repr__(self, prefixes=[]):
+        return super(HollowSphere, self).__repr__(
+            ['inner_radius=%r' % (self._inner_radius,)])
 
     # Properties to assure R/O behavior for now
     @property
@@ -272,10 +288,14 @@ class HollowSphere(Sphere):
         tentative_increments = np.array(list(np.ndindex(tuple(erange*2 + 1)))) \
                                - erange
         # Filter out the ones beyond the "sphere"
-        return array([x for x in tentative_increments
+        res = array([x for x in tentative_increments
                       if self._inner_radius
                       < self._distance_func(x * element_sizes, center)
                       <= self._radius])
+
+        if not len(res):
+            warning("%s defines no neighbors" % self)
+        return res
 
 
 class QueryEngineInterface(object):
