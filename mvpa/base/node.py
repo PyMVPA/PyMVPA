@@ -174,6 +174,8 @@ class Node(ClassWithCollections):
         return _str(self)
 
 
+    space = property(get_space, set_space,
+                     doc="Processing space name of this node")
 
 class ChainNode(Node):
     """Chain of nodes.
