@@ -66,13 +66,14 @@ def main():
         for clf in clfs_:
             print "  %-40s: "  % clf.descr,
             # Lets do splits/train/predict explicitely so we could track
-            # timing otherwise could be just
-            #cv = CrossValidatedTransferError(
-            #         TransferError(clf),
-            #         NFoldSplitter(),
-            #         enable_ca=['confusion'])
-            #error = cv(dataset)
-            #print cv.confusion
+            # timing per training/testing otherwise just set to False
+            do_explicit_splitting = True
+            if not do_explicit_splitting:
+                cv = CrossValidation(
+                    clf, NFoldPartitioner(), enable_ca=['stats'])
+                error = cv(dataset)
+                print cv.ca.stats
+                break
 
             # to report transfer error
             confusion = ConfusionMatrix()
