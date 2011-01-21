@@ -37,8 +37,8 @@ from numpy.linalg import norm
 from mvpa.atlases.transformation import SpaceTransformation, Linear
 from mvpa.misc.support import reuse_absolute_path
 
-if externals.exists('nifti', raise_=True):
-    from nifti import NiftiImage
+if externals.exists('nibabel', raise_=True):
+    import nibabel as nb
 
 from mvpa.base import warning
 if __debug__:
@@ -644,12 +644,16 @@ class PyMVPAAtlas(XMLBasedAtlas):
         imagefilename = reuse_absolute_path(self._filename, imagefilename)
 
         try:
-            self._image  = NiftiImage(imagefilename)
+            self._image  = nb.load(imagefilename)
         except RuntimeError, e:
             raise RuntimeError, \
                   " Cannot open file %s due to %s" % (imagefilename, e)
 
-        self._data = self._image.data
+        self._data = self._image.get_data()
+        # we get the data as x,y,z[,t] but we want to have the time axis first
+        # if any
+        if len(self._data.shape) == 4:
+            arr = np.rollaxis(self._data, -1)
 
         # remove bogus dimensions on top of 4th
         if len(self._data.shape[0:-4]) > 0:

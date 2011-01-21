@@ -11,21 +11,15 @@
 This module offers functions to import MRI data in the NIfTI format into
 PyMVPA, and export PyMVPA datasets back into NIfTI files.
 
-Currently two different backends for MRI fileformat IO are supported:
+The backend that is used forr MRI fileformats is NiBabel_
 
-- PyNIfTI_
-- NiBabel_
-
-In the future, NiBabel will allow access to other formats than NIfTI. However,
-while this is technically  already possible, it hasn't been tested yet.
-
-.. _PyNIfTI: http://niftilib.sourceforge.net/pynifti
 .. _NiBabel: http://nipy..sourceforge.net/nibabel
 """
 
 __docformat__ = 'restructuredtext'
 
 from mvpa.base import externals
+externals.exists('nibabel', raise_=True)
 
 import sys
 import numpy as np
@@ -46,40 +40,19 @@ from mvpa.base import warning
 
 def _data2img(data, hdr=None, imgtype=None):
     # input data is t,x,y,z
-    if externals.exists('nibabel'):
-        # let's try whether we can get it done with nibabel
-        import nibabel
-        if imgtype is None:
-            # default is NIfTI1
-            itype = nibabel.Nifti1Image
-        else:
-            itype = imgtype
-        if issubclass(itype, nibabel.spatialimages.SpatialImage) \
-           and (hdr is None or hasattr(hdr, 'get_data_dtype')):
-            # we can handle the desired image type and hdr with nibabel
-            # use of `None` for the affine should cause to pull it from
-            # the header
-            return itype(_get_xyzt_shaped(data), None, hdr)
-        # otherwise continue and see if there is hope ....
-    if externals.exists('nifti'):
-        # maybe pynifti can help
-        import nifti
-        if imgtype is None:
-            itype = nifti.NiftiImage
-        else:
-            itype = imgtype
-        if issubclass(itype, nifti.NiftiImage) \
-           and (hdr is None or isinstance(hdr, dict)):
-            # pynifti wants it transposed
-            return itype(_get_xyzt_shaped(data).T, hdr)
-
-    raise RuntimeError("Cannot convert data to an MRI image "
-                       "(backends: nibabel(%s), pynifti(%s). Got hdr='%s', "
-                       "imgtype='%s'."
-                       % (externals.exists('nibabel'),
-                          externals.exists('nifti'),
-                          hdr,
-                          imgtype))
+    # let's try whether we can get it done with nibabel
+    import nibabel
+    if imgtype is None:
+        # default is NIfTI1
+        itype = nibabel.Nifti1Image
+    else:
+        itype = imgtype
+    if issubclass(itype, nibabel.spatialimages.SpatialImage) \
+       and (hdr is None or hasattr(hdr, 'get_data_dtype')):
+        # we can handle the desired image type and hdr with nibabel
+        # use of `None` for the affine should cause to pull it from
+        # the header
+        return itype(_get_xyzt_shaped(data), None, hdr)
 
 
 def _img2data(src):
@@ -88,47 +61,20 @@ def _img2data(src):
     if src is None:
         return None
 
-    excpt = None
-    if externals.exists('nibabel'):
-        # let's try whether we can get it done with nibabel
-        import nibabel
-        if isinstance(src, str):
-            # filename
-            try:
-                img = nibabel.load(src)
-            except nibabel.spatialimages.ImageFileError, excpt:
-                # nibabel has some problem, but we might be lucky with
-                # pynifti below. if not, we have stored the exception
-                # and raise it below
-                img = None
-                pass
-        else:
-            # assume this is an image already
-            img = src
-        if isinstance(img, nibabel.spatialimages.SpatialImage):
-            # nibabel image, dissect and return pieces
-            return _get_txyz_shaped(img.get_data()), img.get_header()
-    if externals.exists('nifti'):
-        # maybe pynifti can help
-        import nifti
-        if isinstance(src, str):
-            # filename
-            img = nifti.NiftiImage(src)
-        else:
-            # assume this is an image already
-            img = src
-        if isinstance(img, nifti.NiftiImage):
-            if externals.exists('nifti ge 0.20090205.1'):
-                data = img.data
-            else:
-                data = img.asarray()
-            # pynifti provides it transposed
-            return _get_txyz_shaped(data.T), img.header
-
-    if not excpt is None:
-        raise excpt
-
-    return None
+    # let's try whether we can get it done with nibabel
+    import nibabel
+    if isinstance(src, str):
+        # filename
+        img = nibabel.load(src)
+    else:
+        # assume this is an image already
+        img = src
+    if isinstance(img, nibabel.spatialimages.SpatialImage):
+        # nibabel image, dissect and return pieces
+        return _get_txyz_shaped(img.get_data()), img.get_header()
+    else:
+        # no clue what it is
+        return None
 
 
 def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
@@ -299,20 +245,6 @@ def _get_voxdim(hdr):
 def _get_dt(hdr):
     """Get the TR of a fMRI timeseries from some image header format."""
     return hdr['pixdim'][4]
-
-
-def _get_data_form_pynifti_img(nim):
-    """Convenience function to extract the data array from a NiftiImage
-
-    This function will make use of advanced features of PyNIfTI to prevent
-    unnecessary copying if a sufficent version is available.
-    """
-    if externals.exists('nifti ge 0.20090205.1'):
-        data = nim.data
-    else:
-        data = nim.asarray()
-    # we want the data to be x,y,z,t
-    return data.T
 
 
 def _get_txyz_shaped(arr):

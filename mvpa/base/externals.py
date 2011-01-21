@@ -412,9 +412,6 @@ def __check_rpy2():
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
-          'nifti':'from nifti import NiftiImage as __',
-          'nifti ge 0.20090205.1':
-                'from nifti.clib import detachDataFromImage as __',
           'nibabel':'from nibabel import Nifti1Image as __',
           'ctypes':'import ctypes as __',
           'shogun':'__assign_shogun_version()',

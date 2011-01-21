@@ -13,7 +13,7 @@ import numpy as np
 
 from mvpa.testing import *
 
-skip_if_no_external('nifti')
+skip_if_no_external('nibabel')
 skip_if_no_external('lxml')
 
 from mvpa.base import externals

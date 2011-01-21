@@ -14,8 +14,8 @@ import os
 import numpy as np
 
 from mvpa.base import externals
-if externals.exists('nifti', raise_=True):
-    import nifti
+if externals.exists('nibabel', raise_=True):
+    import nibabel as nb
 
 
 class MelodicResults( object ):
@@ -29,12 +29,9 @@ class MelodicResults( object ):
         """
         self.__outputpath = path
         self.__icapath = os.path.join( path, 'filtered_func_data.ica' )
-        self.__ic = \
-            nifti.NiftiImage( os.path.join( self.__icapath,
-                                            'melodic_IC' ) )
+        self.__ic = nb.load(os.path.join( self.__icapath, 'melodic_IC' ) )
         self.__funcdata = \
-            nifti.NiftiImage( os.path.join( self.__outputpath,
-                                            'filtered_func_data' ) )
+            nb.load(os.path.join( self.__outputpath, 'filtered_func_data' ) )
         self.__tmodes = np.fromfile( os.path.join( self.__icapath,
                                                   'melodic_Tmodes' ),
                                     sep = ' ' ).reshape( self.tr, self.nic )
