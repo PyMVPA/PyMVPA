@@ -12,8 +12,8 @@
 
 from mvpa.base import externals
 
-if externals.exists('nifti', raise_=True):
-    from nifti import NiftiImage
+if externals.exists('nibabel', raise_=True):
+    import nibabel as nb
 
 import re
 import numpy as np
@@ -66,15 +66,15 @@ class FSLAtlas(XMLBasedAtlas):
 
         for imagefilename in imagefile_candidates:
             try:
-                ni_image_  = NiftiImage(imagefilename, load=False)
+                ni_image_  = nb.load(imagefilename)
             except RuntimeError, e:
                 raise RuntimeError, " Cannot open file " + imagefilename
 
-            resolution_ = ni_image_.pixdim[0]
+            resolution_ = ni_image_.get_header().get_zooms()[0]
             if resolution is None:
                 # select this one if the best
                 if ni_image is None or \
-                       resolution_ < ni_image.pixdim[0]:
+                       resolution_ < ni_image.get_header().get_zooms()[0]:
                     ni_image = ni_image_
                     self._image_file = imagefilename
             else:
@@ -96,9 +96,9 @@ class FSLAtlas(XMLBasedAtlas):
         if __debug__:
             debug('ATL__', "Loading atlas data from %s" % self._image_file)
         self._image = ni_image
-        self._resolution = ni_image.pixdim[0]
-        self._origin = np.abs(ni_image.header['qoffset']) * 1.0  # XXX
-        self._data   = self._image.data
+        self._resolution = ni_image.get_header().get_zooms()[0]
+        self._origin = np.abs(ni_image.get_header().get_qform()[:3,3])  # XXX
+        self._data   = self._image.get_data()
 
 
     def _load_metadata(self):
