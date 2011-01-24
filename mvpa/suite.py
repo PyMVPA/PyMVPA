@@ -88,11 +88,8 @@ from mvpa.datasets.formats import *
 from mvpa.datasets.miscfx import *
 from mvpa.datasets.eep import *
 from mvpa.datasets.eventrelated import *
-if externals.exists('nifti') or externals.exists('nibabel') :
+if externals.exists('nibabel') :
     from mvpa.datasets.mri import *
-# make NiftiImage available for people
-if externals.exists('nifti'):
-    from nifti import NiftiImage
 
 from mvpa.generators.partition import *
 from mvpa.generators.splitters import *
@@ -156,7 +153,7 @@ from mvpa.misc.bv.base import *
 from mvpa.misc.support import *
 from mvpa.misc.transformers import *
 
-if externals.exists("nifti"):
+if externals.exists("nibabel"):
     from mvpa.misc.fsl.melodic import *
 
 if externals.exists("pylab"):
@@ -182,7 +179,7 @@ if externals.exists("pywt"):
 if externals.exists("pylab"):
     import pylab as pl
 
-if externals.exists("lxml") and externals.exists("nifti"):
+if externals.exists("lxml") and externals.exists("nibabel"):
     from mvpa.atlases import *
 
 
