@@ -72,7 +72,8 @@ class PrototypeMapperTests(unittest.TestCase):
         self.pm2.train(self.samples)
         assert_array_equal(self.pm2.proj.shape, (self.samples.shape[0], self.pm2.prototypes.shape[0]*len(self.similarities)))
 
-    ##REF: Name was automagically refactored
+    # 2-nd portion of tests using a Dataset of streamlines
+
     def build_streamline_things(self):
         # Build a dataset having samples of different lengths. This is
         # trying to mimic a possible interface for streamlines
