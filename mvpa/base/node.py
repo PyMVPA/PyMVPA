@@ -10,10 +10,11 @@
 
 __docformat__ = 'restructuredtext'
 
+import time
 from mvpa.support import copy
 
 from mvpa.base.dochelpers import _str, _repr
-from mvpa.base.state import ClassWithCollections
+from mvpa.base.state import ClassWithCollections, ConditionalAttribute
 
 if __debug__:
     from mvpa.base import debug
@@ -31,6 +32,10 @@ class Node(ClassWithCollections):
     compute and store information about the input data that is "interesting" in
     the context of the corresponding processing in the output dataset.
     """
+
+    calling_time = ConditionalAttribute(enabled=True,
+        doc="Time (in seconds) it took to call the node")
+
     def __init__(self, space=None, postproc=None, **kwargs):
         """
         Parameters
@@ -65,9 +70,13 @@ class Node(ClassWithCollections):
         -------
         Dataset
         """
+        t0 = time.time()                # record the time when call initiated
+
         self._precall(ds)
         result = self._call(ds)
         result = self._postcall(ds, result)
+
+        self.ca.calling_time = time.time() - t0 # set the calling_time
         return result
 
 
@@ -165,6 +174,8 @@ class Node(ClassWithCollections):
         return _str(self)
 
 
+    space = property(get_space, set_space,
+                     doc="Processing space name of this node")
 
 class ChainNode(Node):
     """Chain of nodes.
