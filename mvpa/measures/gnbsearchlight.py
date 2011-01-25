@@ -154,10 +154,10 @@ class GNBSearchlight(BaseSearchlight):
           `GNB` classifier as the specification of what GNB parameters
           to use. Instance itself isn't used.
         generator : `Generator`
-          `Generator` to use to compute the error.
+          Some `Generator` to prepare partitions for cross-validation.
         errorfx : func, optional
           Functor that computes a scalar error value from the vectors of
-          desired and predicted values (e.g. subclass of `ErrorFunction`)
+          desired and predicted values (e.g. subclass of `ErrorFunction`).
         indexsum : ('sparse', 'fancy'), optional
           What use to compute sums over arbitrary columns.  'fancy'
           corresponds to regular fancy indexing over columns, whenever
@@ -312,11 +312,14 @@ class GNBSearchlight(BaseSearchlight):
         # labels
         combinations[:, 0] = labels_numeric
         for ipartition, (split1, split2) in enumerate(splits):
-            #split1, split2 = list(splitter.generate(ds_))
             combinations[split1.samples[:, 0], 1+ipartition] = 1
             combinations[split2.samples[:, 0], 1+ipartition] = 2
-            # TODO: check for over-sampling, i.e. the same sample twice here
-
+            # Check for over-sampling, i.e. no same sample used twice here
+            if not (len(np.unique(split1.samples[:, 0])) == len(split1) and
+                    len(np.unique(split2.samples[:, 0])) == len(split2)):
+                raise RuntimeError(
+                    "GNBSearchlight needs a partitioner which does not reuse "
+                    "the same the same samples more than once")
         # sample descriptions -- should be unique for
         # samples within the same block
         descriptions = [tuple(c) for c in combinations]
