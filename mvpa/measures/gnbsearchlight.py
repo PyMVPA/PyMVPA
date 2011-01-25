@@ -21,6 +21,8 @@ from mvpa.misc.errorfx import mean_mismatch_error
 from mvpa.measures.searchlight import BaseSearchlight
 from mvpa.base import externals, warning
 from mvpa.base.dochelpers import borrowkwargs
+from mvpa.generators.splitters import Splitter
+
 #from mvpa.base.param import Parameter
 #from mvpa.base.state import ConditionalAttribute
 #from mvpa.measures.base import Sensitivity
@@ -142,7 +144,7 @@ class GNBSearchlight(BaseSearchlight):
     _ATTRIBUTE_COLLECTIONS = ['params', 'ca']
 
     @borrowkwargs(BaseSearchlight, '__init__')
-    def __init__(self, gnb, splitter, qe, errorfx=mean_mismatch_error,
+    def __init__(self, gnb, generator, qe, errorfx=mean_mismatch_error,
                  indexsum=None, **kwargs):
         """Initialize a GNBSearchlight
 
@@ -151,11 +153,11 @@ class GNBSearchlight(BaseSearchlight):
         gnb : `GNB`
           `GNB` classifier as the specification of what GNB parameters
           to use. Instance itself isn't used.
-        splitter : `Splitter`
-          `Splitter` to use to compute the error.
+        generator : `Generator`
+          Some `Generator` to prepare partitions for cross-validation.
         errorfx : func, optional
           Functor that computes a scalar error value from the vectors of
-          desired and predicted values (e.g. subclass of `ErrorFunction`)
+          desired and predicted values (e.g. subclass of `ErrorFunction`).
         indexsum : ('sparse', 'fancy'), optional
           What use to compute sums over arbitrary columns.  'fancy'
           corresponds to regular fancy indexing over columns, whenever
@@ -167,7 +169,7 @@ class GNBSearchlight(BaseSearchlight):
         BaseSearchlight.__init__(self, qe, **kwargs)
 
         self._errorfx = errorfx
-        self._splitter = splitter
+        self._generator = generator
         self._gnb = gnb
 
         if indexsum is None:
@@ -186,6 +188,16 @@ class GNBSearchlight(BaseSearchlight):
             raise NotImplementedError, "For now only nproc=1 (or None for " \
                   "autodetection) is supported by GNBSearchlight"
 
+    def __repr__(self, prefixes=[]):
+        prefixes_ = ['gnb=%r' % self._gnb,
+                     'generator=%r' % self._generator,
+                     'qe=%r' % self._qe]
+        if not self._errorfx is mean_mismatch_error:
+            prefixes_ += ['errorfx=%r' % self._errorfx]
+        if self._indexsum is not None:
+            prefixes_ += ['indexsum=%r' % self._indexsum]
+        return super(GNBSearchlight, self).__repr__(
+            prefixes=prefixes_ + prefixes)
 
     def _sl_call(self, dataset, roi_ids, nproc):
         """Call to GNBSearchlight
@@ -193,19 +205,19 @@ class GNBSearchlight(BaseSearchlight):
         # Local bindings
         gnb = self._gnb
         params = gnb.params
-        splitter = self._splitter
+        generator = self._generator
         errorfx = self._errorfx
         qe = self._qe
 
         ## if False:
-        ##     class A(object):
+        ##     class A(Learner):
         ##         pass
         ##     self = A()
         ##     import numpy as np
         ##     from mvpa.clfs.gnb import GNB
-        ##     from mvpa.datasets.splitters import NFoldSplitter
+        ##     from mvpa.generators.partition import NFoldPartitioner
         ##     from mvpa.misc.errorfx import mean_mismatch_error
-        ##     #from mvpa.testing.datasets import datasets
+        ##     from mvpa.testing.datasets import datasets as tdatasets
         ##     from mvpa.datasets import Dataset
         ##     from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
         ##     from mvpa.clfs.distance import absmin_distance
@@ -216,20 +228,21 @@ class GNBSearchlight(BaseSearchlight):
         ##         # XXX is it that ugly?
         ##         debug.active.pop(debug.active.index('SLC_'))
         ##         debug.metrics += ['reltime']
-        ##     dataset = datasets['3dlarge']
+        ##     dataset = tdatasets['3dlarge'].copy()
+        ##     dataset.fa['voxel_indices'] = dataset.fa.myspace
         ##     sphere = Sphere(radius=1,
         ##                     distance_func=absmin_distance)
         ##     qe = IndexQueryEngine(myspace=sphere)
 
         ##     # Fracisco's data
-        ##     dataset = ds_fp
+        ##     #dataset = ds_fp
         ##     qe = IndexQueryEngine(voxel_indices=sphere)
 
         ##     qe.train(dataset)
         ##     roi_ids = np.arange(dataset.nfeatures)
         ##     gnb = GNB()
         ##     params = gnb.params
-        ##     splitter = NFoldSplitter()
+        ##     generator = NFoldPartitioner()
         ##     errorfx = mean_mismatch_error
 
         if __debug__:
@@ -264,33 +277,27 @@ class GNBSearchlight(BaseSearchlight):
         # statistics per each feature within a block of the samples
         # which always come together in splits -- most often it is a
         # (chunk, label) combination, but since we simply use a
-        # splitter -- who knows! Therefore lets figure out what are
+        # generator -- who knows! Therefore lets figure out what are
         # those blocks and operate on them instead of original samples.
         #
         # After additional thinking about this -- probably it would be
         # just minor additional improvements (ie not worth it) but
-        # since it is coded already -- let it me so
+        # since it is coded already -- let it be so
 
-        # 1. Query splitter for the splits we will have
+        # 1. Query generator for the splits we will have
         if __debug__:
             debug('SLC',
-                  'Phase 1. Initializing splits using %s on %s'
-                  % (splitter, dataset))
-        # check the splitter -- splitcfg isn't sufficient
-        # TODO: RF splitters so we could reliably obtain the configuration
-        #       splitcfg just returns what to split into the other in terms
-        #       of chunks... and we need actual indicies
-        if splitter.permute_attr is not None:
-            raise NotImplementedError, \
-                  "Splitters which permute targets aren't supported here"
+                  'Phase 1. Initializing partitions using %s on %s'
+                  % (generator, dataset))
+
         # Lets just create a dummy ds which will store for us actual sample
         # indicies
         # XXX we could make it even more lightweight I guess...
         dataset_indicies = Dataset(np.arange(nsamples), sa=dataset.sa)
-        splits = list(splitter(dataset_indicies))
+        splitter = Splitter(attr=generator.get_space())
+        splits = list(tuple(splitter.generate(ds_))
+                      for ds_ in generator.generate(dataset_indicies))
         nsplits = len(splits)
-        assert(len(splits[0]) == 2)     # assure that we have only 2
-                                        # splits here for cvte
 
         # 2. Figure out the new 'chunks x labels' blocks of combinations
         #    of samples
@@ -304,9 +311,15 @@ class GNBSearchlight(BaseSearchlight):
         combinations = np.ones((nsamples, 1+nsplits), dtype=int)*-1
         # labels
         combinations[:, 0] = labels_numeric
-        for isplit, (split1, split2) in enumerate(splits):
-            combinations[split1.samples[:, 0], 1+isplit] = 1
-            combinations[split2.samples[:, 0], 1+isplit] = 2
+        for ipartition, (split1, split2) in enumerate(splits):
+            combinations[split1.samples[:, 0], 1+ipartition] = 1
+            combinations[split2.samples[:, 0], 1+ipartition] = 2
+            # Check for over-sampling, i.e. no same sample used twice here
+            if not (len(np.unique(split1.samples[:, 0])) == len(split1) and
+                    len(np.unique(split2.samples[:, 0])) == len(split2)):
+                raise RuntimeError(
+                    "GNBSearchlight needs a partitioner which does not reuse "
+                    "the same the same samples more than once")
         # sample descriptions -- should be unique for
         # samples within the same block
         descriptions = [tuple(c) for c in combinations]
@@ -503,7 +516,7 @@ class GNBSearchlight(BaseSearchlight):
 
 
 @borrowkwargs(GNBSearchlight, '__init__', exclude=['roi_ids'])
-def sphere_gnbsearchlight(gnb, splitter, radius=1, center_ids=None,
+def sphere_gnbsearchlight(gnb, generator, radius=1, center_ids=None,
                           space='voxel_indices', *args, **kwargs):
     """Creates a `GNBSearchlight` to assess :term:`cross-validation`
     classification performance of GNB on all possible spheres of a
@@ -544,5 +557,5 @@ def sphere_gnbsearchlight(gnb, splitter, radius=1, center_ids=None,
     kwa = {space: Sphere(radius)}
     qe = IndexQueryEngine(**kwa)
     # init the searchlight with the queryengine
-    return GNBSearchlight(gnb, splitter, qe,
+    return GNBSearchlight(gnb, generator, qe,
                           roi_ids=center_ids, *args, **kwargs)
