@@ -48,13 +48,13 @@ class SearchlightTests(unittest.TestCase):
 
         skwargs = dict(radius=1, enable_ca=['roi_sizes', 'raw_results'])
         sls = [sphere_searchlight(cv, **skwargs),
-               #GNBSearchlight(gnb, NFoldSplitter(cvtype=1))
-               sphere_gnbsearchlight(gnb, NFoldSplitter(cvtype=1),
+               #GNBSearchlight(gnb, NFoldPartitioner(cvtype=1))
+               sphere_gnbsearchlight(gnb, NFoldPartitioner(cvtype=1),
                                      indexsum='fancy', **skwargs)
                ]
 
         if externals.exists('scipy'):
-            sls += [ sphere_gnbsearchlight(gnb, NFoldSplitter(cvtype=1),
+            sls += [ sphere_gnbsearchlight(gnb, NFoldPartitioner(cvtype=1),
                                            indexsum='sparse', **skwargs)]
 
         # Just test nproc whenever common_variance is True

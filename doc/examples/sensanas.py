@@ -59,9 +59,9 @@ sensanas = {
         RepeatedMeasure(
             LinearNuSVMC().get_sensitivity_analyzer(postproc=absolute_features()),
             NFoldPartitioner()),
-#    'i) GNB Searchlight':
-#        sphere_gnbsearchlight(GNB(), NFoldSplitter(cvtype=1),
-#                              radius=0, errorfx=MeanAccuracyFx())
+    'i) GNB Searchlight':
+        sphere_gnbsearchlight(GNB(), NFoldPartitioner(cvtype=1),
+                              radius=0, errorfx=mean_match_accuracy)
            }
 
 """Now, we are performing some a more or less standard preprocessing steps:
