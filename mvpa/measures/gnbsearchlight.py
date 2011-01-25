@@ -188,6 +188,16 @@ class GNBSearchlight(BaseSearchlight):
             raise NotImplementedError, "For now only nproc=1 (or None for " \
                   "autodetection) is supported by GNBSearchlight"
 
+    def __repr__(self, prefixes=[]):
+        prefixes_ = ['gnb=%r' % self._gnb,
+                     'generator=%r' % self._generator,
+                     'qe=%r' % self._qe]
+        if not self._errorfx is mean_mismatch_error:
+            prefixes_ += ['errorfx=%r' % self._errorfx]
+        if self._indexsum is not None:
+            prefixes_ += ['indexsum=%r' % self._indexsum]
+        return super(GNBSearchlight, self).__repr__(
+            prefixes=prefixes_ + prefixes)
 
     def _sl_call(self, dataset, roi_ids, nproc):
         """Call to GNBSearchlight
