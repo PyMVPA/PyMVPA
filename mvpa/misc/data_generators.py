@@ -367,7 +367,7 @@ def load_datadb_tutorial_data(path=os.path.join(
         nimg = nb.load(os.path.join(path, 'mask_hoc.nii.gz'))
         tmpmask = np.zeros(nimg.get_shape(), dtype='bool')
         for r in roi:
-            tmpmask = np.logical_or(tmpmask, nimg.data == r)
+            tmpmask = np.logical_or(tmpmask, nimg.get_data() == r)
         mask = nb.Nifti1Image(tmpmask.astype(int), nimg.get_affine(),
                               nimg.get_header())
     else:
