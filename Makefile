@@ -18,7 +18,7 @@ DATA_UPLOAD_URI=data.pymvpa.org:/home/www/data.pymvpa.org/www/datasets
 DATA_URI=data.pymvpa.org::datadb
 SWARMTOOL_DIR=tools/codeswarm
 SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
-RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g
+RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g --exclude prev/
 RSYNC_OPTS_UP=-rzlhv --delete
 # -p --chmod=Dg+s,g+rw,o+rX
 
