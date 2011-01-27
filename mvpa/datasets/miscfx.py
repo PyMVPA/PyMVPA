@@ -497,8 +497,9 @@ class SequenceStats(dict):
                " from set %s\n" % (len(seq), utargets) + \
                "Counter-balance table for orders up to %d:\n" % order \
                + table2string(t)
-        sout += "Correlations: min=%.2g max=%.2g mean=%.2g sum(abs)=%.2g" \
-                % (min(corr), max(corr), np.mean(corr), sumabscorr)
+        if len(corr):
+            sout += "Correlations: min=%.2g max=%.2g mean=%.2g sum(abs)=%.2g" \
+                    % (min(corr), max(corr), np.mean(corr), sumabscorr)
         self._str_stats = sout
 
 
