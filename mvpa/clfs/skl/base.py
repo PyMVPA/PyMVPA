@@ -62,7 +62,10 @@ class SKLLearnerAdapter(Classifier):
     def __repr__(self):
         """String representation of `SKLLearnerWrapper`
         """
-        return Classifier.__repr__(self, prefixes=[repr(self._skl_learner)])
+        prefixes = [repr(self._skl_learner)]
+        if self.__tags__ != ['skl']:
+            prefixes += ['tags=%r' % [t for t in self.__tags__ if t != 'skl']]
+        return Classifier.__repr__(self, prefixes=prefixes)
 
 
     def _train(self, dataset):
