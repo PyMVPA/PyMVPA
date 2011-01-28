@@ -58,6 +58,14 @@ labels.txt
     experimental run for each volume in the timeseries image.  Labels are
     given in literal form (e.g. 'face').
 
+.. note::
+
+   Data for the run (chunk) 8 of subject 5 was corrupted and therefore
+   should not be used for the analyses.  In the 'labels.txt' file all
+   samples in that chunk are marked as 'rest' condition.
+   (Acknowledgement goes to MS Al-Rawi who reminded us about this
+   non-disclosed 'feature' of the dataset)
+
 
 Instructions
 ============
