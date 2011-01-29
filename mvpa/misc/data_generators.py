@@ -12,8 +12,6 @@ __docformat__ = 'restructuredtext'
 
 import numpy as N
 
-from sets import Set
-
 from mvpa.datasets import Dataset
 
 if __debug__:
@@ -209,7 +207,7 @@ def normalFeatureDataset__(dataset=None, labels=None, nchunks=None,
 
         for chunk in ds.uniquechunks:
             chunkids = ds.idsbychunks(chunk) # samples in this chunk
-            ids = list(Set(chunkids).intersection(Set(labelids)))
+            ids = list(set(chunkids).intersection(set(labelids)))
             chunkvalue = N.random.uniform() # random number to decide either
                                         # to 'activate' the voxel
             for id_ in ids:

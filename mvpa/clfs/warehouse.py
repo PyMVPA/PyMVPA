@@ -11,7 +11,6 @@
 
 __docformat__ = 'restructuredtext'
 
-from sets import Set
 import operator
 
 # Define sets of classifiers
@@ -37,7 +36,7 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'multiclass', 'non-linear', 'kernel-based', 'lars',
         'regression', 'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
-        'gnb']
+        'gnb', 'plr']
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
@@ -60,9 +59,9 @@ class Warehouse(object):
             matches={'binary':['regression']}, would allow to provide
             regressions also if 'binary' was requested
             """
-        self._known_tags = Set(known_tags)
+        self._known_tags = set(known_tags)
         self.__items = []
-        self.__keys = Set()
+        self.__keys = set()
         if matches is None:
             matches = {}
         self.__matches = matches
@@ -76,7 +75,7 @@ class Warehouse(object):
             args = []
 
         # lets remove optional modifier '!'
-        dargs = Set([str(x).lstrip('!') for x in args]).difference(
+        dargs = set([str(x).lstrip('!') for x in args]).difference(
             self._known_tags)
 
         if len(dargs)>0:
@@ -121,7 +120,7 @@ class Warehouse(object):
             if len(item._clf_internals) == 0:
                 raise ValueError, "Cannot register %s " % item + \
                       "which has empty _clf_internals"
-            clf_internals = Set(item._clf_internals)
+            clf_internals = set(item._clf_internals)
             if clf_internals.issubset(self._known_tags):
                 self.__items.append(item)
                 self.__keys |= clf_internals
@@ -170,7 +169,7 @@ clfswh += \
 
 if externals.exists('libsvm'):
     from mvpa.clfs import libsvmc as libsvm
-    clfswh._known_tags.union_update(libsvm.SVM._KNOWN_IMPLEMENTATIONS.keys())
+    clfswh._known_tags.update(libsvm.SVM._KNOWN_IMPLEMENTATIONS.keys())
     clfswh += [libsvm.SVM(descr="libsvm.LinSVM(C=def)", probability=1),
              libsvm.SVM(
                  C=-10.0, descr="libsvm.LinSVM(C=10*def)", probability=1),
@@ -190,7 +189,7 @@ if externals.exists('libsvm'):
              ]
 
     # regressions
-    regrswh._known_tags.union_update(['EPSILON_SVR', 'NU_SVR'])
+    regrswh._known_tags.update(['EPSILON_SVR', 'NU_SVR'])
     regrswh += [libsvm.SVM(svm_impl='EPSILON_SVR', descr='libsvm epsilon-SVR',
                          regression=True),
               libsvm.SVM(svm_impl='NU_SVR', descr='libsvm nu-SVR',
@@ -198,7 +197,7 @@ if externals.exists('libsvm'):
 
 if externals.exists('shogun'):
     from mvpa.clfs import sg
-    clfswh._known_tags.union_update(sg.SVM._KNOWN_IMPLEMENTATIONS)
+    clfswh._known_tags.update(sg.SVM._KNOWN_IMPLEMENTATIONS)
 
     # some classifiers are not yet ready to be used out-of-the-box in
     # PyMVPA, thus we don't populate warehouse with their instances
@@ -247,7 +246,7 @@ if externals.exists('shogun'):
     for impl in ['libsvr'] + _optional_regressions:# \
         # XXX svrlight sucks in SG -- dont' have time to figure it out
         #+ ([], ['svrlight'])['svrlight' in sg.SVM._KNOWN_IMPLEMENTATIONS]:
-        regrswh._known_tags.union_update([impl])
+        regrswh._known_tags.update([impl])
         regrswh += [ sg.SVM(svm_impl=impl, descr='sg.LinSVMR()/%s' % impl,
                           regression=True),
                    #sg.SVM(svm_impl=impl, kernel_type='RBF',
@@ -343,6 +342,11 @@ if externals.exists('scipy'):
 from mvpa.clfs.blr import BLR
 clfswh += BLR(descr="BLR()")
 
+#PLR
+from mvpa.clfs.plr import PLR
+clfswh += PLR(descr="PLR()")
+if externals.exists('scipy'):
+    clfswh += PLR(reduced=0.05, descr="PLR(reduced=0.01)")
 
 # SVM stuff
 

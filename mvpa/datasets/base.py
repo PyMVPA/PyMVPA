@@ -15,8 +15,6 @@ import random
 import mvpa.support.copy as copy
 import numpy as N
 
-from sets import Set
-
 # Sooner or later Dataset would become ClassWithCollections as well, but for
 # now just an object -- thus commenting out tentative changes
 #
@@ -295,7 +293,7 @@ class Dataset(object):
             # need to compose labels_map
             if labels_.dtype.char == 'S': # or not labels_map_known:
                 # Create mapping
-                ulabels = list(Set(labels_))
+                ulabels = list(set(labels_))
                 ulabels.sort()
                 labels_map = dict([ (x[1], x[0]) for x in enumerate(ulabels) ])
                 if __debug__:
@@ -528,9 +526,9 @@ class Dataset(object):
                 transitions += new_transitions
                 lastseen = current
 
-        transitions = Set(transitions)
+        transitions = set(transitions)
         if revert:
-            transitions = Set(range(nsamples)).difference(transitions)
+            transitions = set(range(nsamples)).difference(transitions)
 
         # postprocess
         transitions = N.array(list(transitions))
@@ -928,8 +926,8 @@ class Dataset(object):
                     # check if we are not dealing with colliding
                     # mapping, since it is problematic and might lead
                     # to various complications
-                    if (len(Set(slm.keys())) != len(Set(slm.values()))) or \
-                       (len(Set(olm.keys())) != len(Set(olm.values()))):
+                    if (len(set(slm.keys())) != len(set(slm.values()))) or \
+                       (len(set(olm.keys())) != len(set(olm.values()))):
                         warning("Adding datasets where multiple labels "
                                 "mapped to the same ID is not recommended. "
                                 "Please check the outcome. Original mappings "
@@ -1301,15 +1299,15 @@ class Dataset(object):
                     s = [ s ]
 
                 if indx_sel is None:
-                    indx_sel = Set(s)
+                    indx_sel = set(s)
                 else:
                     # To be consistent
-                    #if not isinstance(indx_sel, Set):
-                    #    indx_sel = Set(indx_sel)
+                    #if not isinstance(indx_sel, set):
+                    #    indx_sel = set(indx_sel)
                     indx_sel = indx_sel.intersection(s)
 
-            # if we got Set -- convert
-            if isinstance(indx_sel, Set):
+            # if we got set -- convert
+            if isinstance(indx_sel, set):
                 indx_sel = list(indx_sel)
 
             # sort for the sake of sanity
@@ -1576,8 +1574,8 @@ class Dataset(object):
         Checks for the validity of the mapping -- values should cover
         all existing labels in the dataset
         """
-        values = Set(lm.values())
-        labels = Set(self.uniquelabels)
+        values = set(lm.values())
+        labels = set(self.uniquelabels)
         if not values.issuperset(labels):
             raise ValueError, \
                   "Provided mapping %s has some existing labels (out of %s) " \

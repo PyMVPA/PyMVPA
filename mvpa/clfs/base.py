@@ -32,14 +32,25 @@ from mvpa.base import warning
 if __debug__:
     from mvpa.base import debug
 
-class DegenerateInputError(Exception):
+class LearnerError(Exception):
+    """Base class for exceptions thrown by the learners (classifiers,
+    regressions)"""
+    pass
+
+class DegenerateInputError(LearnerError):
     """Exception to be thrown by learners if input data is bogus, i.e. no
     features or samples"""
     pass
 
-class FailedToTrainError(Exception):
+class FailedToTrainError(LearnerError):
     """Exception to be thrown whenever classifier fails to learn for
     some reason"""
+    pass
+
+class FailedToPredictError(LearnerError):
+    """Exception to be thrown whenever classifier fails to provide predictions.
+    Usually happens if it was trained on degenerate data but without any complaints.
+    """
     pass
 
 class Classifier(ClassWithCollections):
@@ -367,8 +378,9 @@ class Classifier(ClassWithCollections):
         to do so
         """
         if dataset.nfeatures == 0 or dataset.nsamples == 0:
-            raise DegenerateInputError, \
-                  "Cannot train classifier on degenerate data %s" % dataset
+            raise DegenerateInputError(
+                "Cannot train classifier %s on degenerate data %s"
+                % (self, dataset))
         if __debug__:
             debug("CLF", "Training classifier %(clf)s on dataset %(dataset)s",
                   msgargs={'clf':self, 'dataset':dataset})

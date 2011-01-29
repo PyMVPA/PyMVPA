@@ -14,7 +14,6 @@ first argument since they are bound to Dataset class in the trailer.
 
 __docformat__ = 'restructuredtext'
 
-from sets import Set
 from operator import isSequenceType
 
 import numpy as N
@@ -102,7 +101,7 @@ def zscore(dataset, mean=None, std=None,
     if baselinelabels is None:
         statids = None
     else:
-        statids = Set(dataset.idsbylabels(baselinelabels))
+        statids = set(dataset.idsbylabels(baselinelabels))
 
     # for the sake of speed yoh didn't simply create a list
     # [True]*dataset.nsamples to provide easy selection of everything
@@ -110,7 +109,7 @@ def zscore(dataset, mean=None, std=None,
         for c in dataset.uniquechunks:
             slicer = N.where(dataset.chunks == c)[0]
             if not statids is None:
-                statslicer = list(statids.intersection(Set(slicer)))
+                statslicer = list(statids.intersection(set(slicer)))
                 dataset.samples[slicer] = doit(dataset.samples[slicer],
                                                mean, std,
                                                dataset.samples[statslicer])

@@ -8,8 +8,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA recursive feature elimination"""
 
-from sets import Set
-
 from mvpa.datasets.splitters import NFoldSplitter
 from mvpa.algorithms.cvtranserror import CrossValidatedTransferError
 from mvpa.datasets.masked import MaskedDataset
@@ -341,8 +339,8 @@ class RFETests(unittest.TestCase):
         self.failUnless( (nfeatures[::-1] == rfe.nfeatures).all() )
 
         # check if history has elements for every step
-        self.failUnless(Set(rfe.history)
-                        == Set(range(len(N.array(rfe.errors)))))
+        self.failUnless(set(rfe.history)
+                        == set(range(len(N.array(rfe.errors)))))
 
         # Last (the largest number) can be present multiple times even
         # if we remove 1 feature at a time -- just need to stop well

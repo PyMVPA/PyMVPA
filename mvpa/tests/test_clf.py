@@ -411,7 +411,8 @@ class ClassifiersTests(unittest.TestCase):
         """Basic tests for TreeClassifier
         """
         ds = datasets['uni4small']
-        clfs = clfswh['binary']         # pool of classifiers
+        # excluding PLR since that one can deal only with 0,1 labels ATM
+        clfs = clfswh['binary', '!plr']         # pool of classifiers
         # Lets permute so each time we try some different combination
         # of the classifiers
         clfs = [clfs[i] for i in N.random.permutation(len(clfs))]
@@ -454,7 +455,9 @@ class ClassifiersTests(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             # just a dummy check to make sure everything is working
             self.failUnless(cvtrc != cvtc)
-            self.failUnless(cverror < 0.3)
+            self.failUnless(cverror < 0.3,
+                            msg="Got too high error = %s using %s"
+                            % (cverror, tclf))
 
         # TODO: whenever implemented
         tclf = TreeClassifier(clfs[0], {
@@ -715,9 +718,9 @@ class ClassifiersTests(unittest.TestCase):
         # incorrect order of dimensions lead to equal samples [0, 1, 0]
         traindatas = [
             Dataset(samples=N.array([ [0, 0, 1.0],
-                                        [1, 0, 0] ]), labels=[-1, 1]),
+                                        [1, 0, 0] ]), labels=[0, 1]),
             Dataset(samples=N.array([ [0, 0.0],
-                                      [1, 1] ]), labels=[-1, 1])]
+                                      [1, 1] ]), labels=[0, 1])]
 
         clf.states._changeTemporarily(enable_states = ['training_confusion'])
         for traindata in traindatas:
