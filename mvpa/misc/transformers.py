@@ -263,7 +263,10 @@ class DistPValue(ClassWithCollections):
         ndims = len(shape_orig)
 
         # XXX for now deal with numpy deprecation hell locally:
-        hist_kwargs = ({}, {'new': False})[externals.versions['numpy'] > (1,1)]
+        # numpy > 1.4 deprecates the new kwarg
+        hist_kwargs = {}
+        if externals.versions['numpy'] < '1.4':
+            hist_kwargs = {'new': False}
 
         # XXX May be just utilize OverAxis transformer?
         if ndims > 2:
