@@ -250,11 +250,11 @@ class DistPValue(ClassWithCollections):
         shape_orig = x.shape
         ndims = len(shape_orig)
 
-        # XXX for now deal with numpy deprecation hell locally:
-        # numpy > 1.4 deprecates the new kwarg
-        hist_kwargs = {}
-        if externals.versions['numpy'] < '1.4':
-            hist_kwargs = {'new': False}
+        # (very) old numpy had different format of returned bins --
+        # there were not edges but center points.  We care here about
+        # center points, so we will transform edge points into center
+        # points for newer versions of numpy
+        numpy_center_points = externals.versions['numpy'] < (1, 1)
 
         # XXX May be just utilize OverAxis transformer?
         if ndims > 2:
@@ -290,10 +290,11 @@ class DistPValue(ClassWithCollections):
                 indexes = N.arange(Nxx)
                 """What features belong to Null-distribution"""
                 while True:
-                    Nhist = N.histogram(xxx, bins=nbins, normed=False,
-                                        **hist_kwargs)
-                    pdf = Nhist[0].astype(float)/Nxxx
-                    bins = Nhist[1]
+                    hist, bins = N.histogram(xxx, bins=nbins, normed=False)
+                    pdf = hist.astype(float)/Nxxx
+                    if not numpy_center_points:
+                        # if we obtain edge points for bins -- take centers
+                        bins = 0.5 * (bins[0:-1] + bins[1:])
                     bins_halfstep = (bins[1] - bins[2])/2.0
 
                     # theoretical CDF
