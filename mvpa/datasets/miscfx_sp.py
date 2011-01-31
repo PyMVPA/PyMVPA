@@ -14,6 +14,7 @@ __docformat__ = 'restructuredtext'
 from mvpa.base import externals
 
 import numpy as N
+np = N                      # just for easy merging of changes into >=0.5
 
 from operator import isSequenceType
 
@@ -25,6 +26,15 @@ if externals.exists('scipy', raiseException=True):
     from scipy.linalg import lstsq
     from scipy.special import legendre
 
+    def legendre_(n, x):
+        # Scipy 0.8.0 (and possibly later) has regression of reporting
+        # 'inf's for negative boundary. Lets guard against it for now
+        leg = legendre(n)
+        r = leg(x)
+        infs = np.isinf(r)
+        if np.any(infs):
+            r[infs] = leg(x[infs] + 1e-10) # offset to try to overcome problems
+        return r
 
 @datasetmethod
 def detrend(dataset, perchunk=False, model='linear',
@@ -147,7 +157,7 @@ def __detrend_regress(dataset, perchunk=True, polyord=None, opt_reg=None):
                 # create each polyord with the value for that chunk
                 for n in range(polyord[n] + 1):
                     newreg = N.zeros((dataset.nsamples, 1))
-                    newreg[cinds, 0] = legendre(n)(x)
+                    newreg[cinds, 0] = legendre_(n, x)
                     reg.append(newreg)
     else:
         # take out mean over entire dataset
@@ -157,7 +167,7 @@ def __detrend_regress(dataset, perchunk=True, polyord=None, opt_reg=None):
             # create the timespan
             x = N.linspace(-1, 1, dataset.nsamples)
             for n in range(polyord[0] + 1):
-                reg.append(legendre(n)(x)[:, N.newaxis])
+                reg.append(legendre_(n, x)[:, N.newaxis])
 
     # see if add in optional regs
     if not opt_reg is None:
