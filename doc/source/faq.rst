@@ -239,18 +239,19 @@ Data analysis
 How do I know which features were finally selected by a classifier doing feature selection?
 -------------------------------------------------------------------------------------------
 
-All classifier possess a conditional attribute `feature_ids`. When enable, the
-classifier stores the ids of all features that were finally used to train
-the classifier.
+All feature selection classifier use a built-in mapper to slice datasets.
+This mapper can be queried for selected features, or simply used to apply
+the same feature selection to other datasets.
 
   >>> clf = FeatureSelectionClassifier(
   ...           kNN(k=5),
   ...           SensitivityBasedFeatureSelection(
   ...               SMLRWeights(SMLR(lm=1.0), postproc=maxofabs_sample()),
-  ...               FixedNElementTailSelector(1, tail='upper', mode='select')),
-  ...           enable_ca = ['feature_ids'])
+  ...               FixedNElementTailSelector(1, tail='upper', mode='select')))
   >>> clf.train(dataset)
-  >>> final_dataset = dataset[:, clf.ca.feature_ids]
+  >>> len(clf.mapper.slicearg)
+  1
+  >>> final_dataset = clf.mapper.forward(dataset)
   >>> print final_dataset
   <Dataset: 100x1@float64, <sa: chunks,targets>>
 

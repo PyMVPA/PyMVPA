@@ -86,6 +86,7 @@ class SliceMapper(Mapper):
         # if we get here we got something the isn't supported
         return NotImplemented
 
+    slicearg = property(fget=lambda self:self._slicearg)
 
 
 class SampleSliceMapper(SliceMapper):
