@@ -69,9 +69,15 @@ class ClassifiersTests(unittest.TestCase):
         feature-selection since some feature selections might rely on
         a % of features, which would be degenerate in a small dataset
         """
-        return {True: 'medium',
-                False: 'large'}[
-            set(['lda', 'qda', 'feature_selection']).isdisjoint(clf.__tags__)]
+        # unfortunately python 2.5 doesn't have 'isdisjoint'
+        #return {True: 'medium',
+        #        False: 'large'}[
+        #    set(['lda', 'qda', 'feature_selection']).isdisjoint(clf.__tags__)]
+        if 'lda' in clf.__tags__ or 'qda' in clf.__tags__ \
+                or 'feature_selection' in clf.__tags__:
+            return 'large'
+        else:
+            return 'medium'
 
     def test_dummy(self):
         clf = SameSignClassifier(enable_ca=['training_confusion'])
