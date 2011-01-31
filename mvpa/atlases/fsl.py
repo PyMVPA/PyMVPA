@@ -16,6 +16,7 @@ if externals.exists('nibabel', raise_=True):
     import nibabel as nb
 
 import re
+import os.path
 import numpy as np
 
 from mvpa.misc.support import reuse_absolute_path
@@ -66,6 +67,9 @@ class FSLAtlas(XMLBasedAtlas):
 
         for imagefilename in imagefile_candidates:
             try:
+                if not os.path.exists(imagefilename):
+                    # try with extension if filename doesn't exist
+                    imagefilename += '.nii.gz'
                 ni_image_  = nb.load(imagefilename)
             except RuntimeError, e:
                 raise RuntimeError, " Cannot open file " + imagefilename
@@ -98,7 +102,8 @@ class FSLAtlas(XMLBasedAtlas):
         self._image = ni_image
         self._resolution = ni_image.get_header().get_zooms()[0]
         self._origin = np.abs(ni_image.get_header().get_qform()[:3,3])  # XXX
-        self._data   = self._image.get_data()
+        # want to have volume axis first
+        self._data   = np.rollaxis(self._image.get_data(), -1)
 
 
     def _load_metadata(self):
@@ -180,7 +185,7 @@ class FSLProbabilisticAtlas(FSLAtlas):
         level = 0
         resultLabels = []
         for index, area in enumerate(self._levels[level]):
-            prob =  int(self._data[index, c[2], c[1], c[0]])
+            prob =  int(self._data[index, c[0], c[1], c[2]])
             if prob > self.thr:
                 resultLabels += [dict(index=index,
                                       #id=
@@ -229,12 +234,11 @@ class FSLProbabilisticAtlas(FSLAtlas):
         """
         if isinstance(target, int):
             res = self._data[target]
+            # since we no longer support pynifti all is XYZ
             if axes_order == 'xyz':
-                # ATM we store/access in zyx (kji) order, so we would need
-                # to swap
-                return res.T
-            elif axes_order == 'zyx':
                 return res
+            elif axes_order == 'zyx':
+                return res.T
             else:
                 raise ValueError, \
                       "Unknown axes_order=%r provided" % (axes_order,)

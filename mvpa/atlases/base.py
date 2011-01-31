@@ -139,8 +139,8 @@ class XMLBasedAtlas(BaseAtlas):
         self._image = None
         self._load_images()
         if self._image is not None:
-            self._extent = np.abs(np.asanyarray(self._image.extent[0:3]))
-            self._voxdim = np.asanyarray(self._image.voxdim)
+            self._extent = np.abs(np.asanyarray(self._image.get_shape()[0:3]))
+            self._voxdim = np.asanyarray(self._image.get_header().get_zooms())
             self.relativeToOrigin = True
         # Assign transformation to get into voxel coordinates,
         # spaceT will be set accordingly
@@ -224,7 +224,7 @@ class XMLBasedAtlas(BaseAtlas):
         self._coordT = coordT           # lets store for debugging etc
         if self._image is not None:
             # Combine with the image's qform
-            coordT = Linear(np.linalg.inv(self._image.qform),
+            coordT = Linear(np.linalg.inv(self._image.get_header().get_qform()),
                             previous=coordT)
         self._spaceT = SpaceTransformation(
             previous=coordT, to_real_space=False)
