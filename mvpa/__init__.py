@@ -54,6 +54,14 @@ from mvpa.base import cfg
 from mvpa.base import externals
 from mvpa.base.info import wtf
 
+# commit hash to be filled in by Git upon export/archive
+hashfilename = os.path.join(os.path.dirname(__file__), 'COMMIT_HASH')
+__hash__ = ''
+if os.path.exists(hashfilename):
+    hashfile = open(hashfilename, 'r')
+    __hash__ = hashfile.read().strip()
+    hashfile.close()
+
 # locate data root -- data might not be installed, but if it is, it should be at
 # this location
 pymvpa_dataroot = \

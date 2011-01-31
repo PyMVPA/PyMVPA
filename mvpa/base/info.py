@@ -113,6 +113,7 @@ class WTF(object):
     def _acquire_sources(self, out):
         out.write("PyMVPA:\n")
         out.write(" Version:       %s\n" % mvpa.__version__)
+        out.write(" Hash:          %s\n" % mvpa.__hash__)
         out.write(" Path:          %s\n" % mvpa.__file__)
 
         # Try to obtain git information if available
