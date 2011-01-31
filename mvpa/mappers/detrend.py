@@ -19,8 +19,11 @@ if externals.exists('scipy', raise_=True):
     from scipy.special import legendre
 
     def legendre_(n, x):
-        # Scipy 0.8.0 (and possibly later) has regression of reporting
-        # 'inf's for negative boundary. Lets guard against it for now
+        """Helper to avoid problems with scipy 0.8.0 returning inf for -1
+
+        Scipy 0.8.0 (and possibly later) has regression of reporting
+        'inf's for negative boundary. Lets guard against it for now
+        """
         leg = legendre(n)
         r = leg(x)
         infs = np.isinf(r)
