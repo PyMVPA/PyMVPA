@@ -10,6 +10,7 @@
 
 import unittest
 import sys
+import numpy as np
 
 from mvpa import _random_seed, cfg
 from mvpa.base import externals, warning
@@ -30,12 +31,6 @@ def main():
     # and make global test suite
     ts = unittest.TestSuite(suites.values())
 
-    # no MVPA warnings during whole testsuite
-    warning.handlers = []
-
-    # No python warnings (like ctypes version for slmr)
-    import warnings
-    warnings.simplefilter('ignore')
 
     class TextTestRunnerPyMVPA(unittest.TextTestRunner):
         """Extend TextTestRunner to print out random seed which was
@@ -47,10 +42,29 @@ def main():
                 sys.exit(1)
             return result
 
+    verbosity = int(cfg.get('tests', 'verbosity', default=1))
+
+    if verbosity < 3:
+        # no MVPA warnings during whole testsuite (but restore handlers later on)
+        handler_backup = warning.handlers
+        warning.handlers = []
+
+        # No python warnings (like ctypes version for slmr)
+        import warnings
+        warnings.simplefilter('ignore')
+
+        # No numpy
+        np_errsettings = np.geterr()
+        np.seterr(**dict([(x, 'ignore') for x in np_errsettings]))
+    
+
     # finally run it
-    TextTestRunnerPyMVPA(
-            verbosity=int(cfg.get('tests', 'verbosity', default=1))
-                ).run(ts)
+    TextTestRunnerPyMVPA(verbosity=verbosity).run(ts)
+
+    if verbosity < 3:
+        # restore warning handlers
+        warning.handlers = handler_backup                                                                                                                                                                                                                                                    
+        np.seterr(np_errsettings)
 
 
 if __name__ == '__main__':
