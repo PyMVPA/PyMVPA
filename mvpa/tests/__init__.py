@@ -186,4 +186,4 @@ def run(limit=None, verbosity=None):
     if verbosity < 3:
         # restore warning handlers
         warning.handlers = handler_backup
-        np.seterr(np_errsettings)
+        np.seterr(**np_errsettings)
