@@ -35,6 +35,31 @@ Unreleased changes
 Releases
 ========
 
+* 0.4.6 (Tue, Feb 01 2011) (Total: 20 commits)
+
+  A bugfix release
+
+  * Fixed (few BF commits):
+
+    - Compatibility with numpy 1.5.1 (histogram) and scipy 0.8.0
+      (workaround for a regression in legendre)
+    - Compatibility with libsvm 3.0
+    - :class:`~mvpa.clfs.plr.PLR` robustification
+
+  * Enhancements
+
+    - Enforce suppression of numpy warnings while running unittests.
+      Also setting verbosity >= 3 enables all warnings (Python, NumPy,
+      and PyMVPA)
+    - :file:`doc/examples/nested_cv.py` example (adopted from 0.5)
+    - Introduced base class :class:`~mvpa.clfs.base.LearnerError` for
+      classifiers' exceptions (adopted from 0.5)
+    - Adjusted example data to live upto nibabel's warranty of NIfTI
+      standard-compliance
+    - More robust operation of MC iterations -- skip iterations where
+      classifier experienced difficulties and raise an exception
+      (e.g. due to degenerate data)
+
 * 0.4.5 (Fri, Oct 01 2010) (Total: 27 commits)
 
   A bugfix release
