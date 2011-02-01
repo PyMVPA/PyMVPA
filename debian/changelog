@@ -1,3 +1,11 @@
+pymvpa (0.4.6-1) unstable; urgency=low
+
+  * Upstream bugfix release:
+    - Compatible with libsvm 3.0 (Closes: #608844)
+  * Exclude objects.inv from being compressed (Closes: #608765)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 01 Feb 2011 13:34:24 -0500
+
 pymvpa (0.4.5-1) experimental; urgency=low
 
   * Upstream bugfix release -- just few bugfixes since 0.4.5~dev23-2

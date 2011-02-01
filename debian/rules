@@ -71,7 +71,7 @@ binary-install/python-mvpa-lib::
 DEB_DESTDIR = $(CURDIR)/debian/python-mvpa
 # immediately useable documentation
 # and exemplar data (they are small excerpts anyways)
-DEB_COMPRESS_EXCLUDE := .py .pdf .html .css .jpg .txt .js .json .rtc .par .bin
+DEB_COMPRESS_EXCLUDE := .py .pdf .html .css .jpg .txt .js .json .rtc .par .bin objects.inv
 # -doc package contents
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 DEB_INSTALL_DOCS_python-mvpa-doc := build/html
