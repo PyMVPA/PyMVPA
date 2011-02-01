@@ -27,7 +27,7 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 News
 ====
 
-PyMVPA 0.4.5 is out [01 Oct 2010]
+PyMVPA 0.4.6 is out [01 Feb 2011]
   This release brings a set of bug fixes. See the
   :ref:`changelog <chap_changelog>` for details.
 
