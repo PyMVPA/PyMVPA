@@ -64,7 +64,7 @@ def main():
     if verbosity < 3:
         # restore warning handlers
         warning.handlers = handler_backup                                                                                                                                                                                                                                                    
-        np.seterr(np_errsettings)
+        np.seterr(**np_errsettings)
 
 
 if __name__ == '__main__':
