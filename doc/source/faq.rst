@@ -277,46 +277,31 @@ How do I extract sensitivities from a classifier used within a cross-validation?
    each data split, the most elegant solution is probably a :class:`~mvpa.clfs.meta.SplitClassifier`...
    ...BUT no yet
 
-:class:`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError` provides an
-interface to access any classifier-related information: `harvest_attribs`.
-Harvesting the sensitivities computed by all classifiers (without recomputing
-them again) looks like this:
+In various parts of PyMVPA it is possible to extract information from inside
+loops via callbacks. To extract sensitivities from inside a cross-validation
+analysis, without unnecessary retraining of the classifier one only needs to
+write a corresponding callback function. here is a sketch:
 
-  >>> cv = CrossValidatedTransferError(
-  ...       TransferError(SMLR()),
-  ...       OddEvenSplitter(),
-  ...       harvest_attribs=\
-  ...        ['transerror.clf.get_sensitivity_analyzer(force_train=False)()'])
+  >>> sensitivities = []
+  >>> def store_me(data, node, result):
+  ...     sens = node.measure.get_sensitivity_analyzer(force_train=False)(data)
+  ...     sensitivities.append(sens)
+  >>>
+  >>> cv = CrossValidation(SMLR(), OddEvenPartitioner(), callback=store_me)
   >>> merror = cv(dataset)
-  >>> sensitivities = cv.ca.harvested.values()[0]
   >>> len(sensitivities)
   2
   >>> sensitivities[0].shape == (len(dataset.uniquetargets), dataset.nfeatures)
   True
 
-First, we define an instance of
-:class:`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError` that uses an
-`~mvpa.clfs.smlr.SMLR` classifier to perform the cross-validation on odd-even
-splits of a dataset.  The important piece is the definition of the
-`harvest_attribs`.  It takes a list of code snippets that will be executed in
-the local context of the cross-validation function. The
-:class:`~mvpa.clfs.transerror.TransferError` instance used to train and test
-the classifier on each split is available via `transerror`. The rest is easy:
-:class:`~mvpa.clfs.transerror.TransferError` provides access to its classifier
-and any classifier can in turn generate an appropriate
-:class:`~mvpa.measures.base.Sensitivity` instance via
-`get_sensitivity_analyzer()`.  This generator method takes additional arguments
-to the constructor of the :class:`mvpa.measures.base.Sensitivity` class. In
-this case we want to prevent retraining the classifiers, as they will be
-trained anyway by the :class:`~mvpa.clfs.transerror.TransferError` instance
-they belong to.
-
-The return values of all code snippets defined in `harvest_attribs` are
-available in the `harvested` conditional attribute. `harvested` is a dictionary where
-the keys are the code snippets used to compute the value. As the key in this
-case is pretty long, we simply take the first (and only) value from the
-dictionary.  The value is actually a list of sensitivity datasets, one per
-split. In each dataset we have, in this case, a per class sensitivity vector.
+First we set up a container (a list) to store the sensitivies for a
+cross-validation folds. next is the callback: It takes three arguments, as
+described in the documentation of :class:`~mvpa.measures.base.RepeatedMeasure`.
+The second argument is the node that is evaluated inside the loop. For a
+cross-validation this is a  :class:`~mvpa.measures.base.TransferMeasure` that
+exposes its internal classifier via the ``measure`` property. The rest is
+straightforward. We contruct a sensitivity analyzer and pass the input dataset.
+Finally, we store the returned sensitivities.
 
 
 .. _faq_literal_labels:
