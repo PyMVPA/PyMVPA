@@ -9,6 +9,7 @@
 """Unit test interface for PyMVPA"""
 
 import unittest
+import numpy as np
 from mvpa import _random_seed, cfg
 from mvpa.base import externals, warning
 
@@ -136,7 +137,8 @@ def run(limit=None, verbosity=None):
         'niftidataset'.
       verbosity: None | int
         Verbosity of unittests execution. If None, controlled by PyMVPA
-        configuration tests/verbosity
+        configuration tests/verbosity.  Values higher than 2 enable all Python, 
+        NumPy and PyMVPA warnings
     """
     if __debug__:
         from mvpa.base import debug
@@ -152,13 +154,6 @@ def run(limit=None, verbosity=None):
     else:
         ts = unittest.TestSuite([suites[s] for s in limit])
 
-    # no MVPA warnings during whole testsuite (but restore handlers later on)
-    handler_backup = warning.handlers
-    warning.handlers = []
-
-    # No python warnings (like ctypes version for slmr)
-    import warnings
-    warnings.simplefilter('ignore')
 
     class TextTestRunnerPyMVPA(unittest.TextTestRunner):
         """Extend TextTestRunner to print out random seed which was
@@ -172,8 +167,23 @@ def run(limit=None, verbosity=None):
     if verbosity is None:
         verbosity = int(cfg.get('tests', 'verbosity', default=1))
 
+    if verbosity < 3:
+        # no MVPA warnings during whole testsuite (but restore handlers later on)
+        handler_backup = warning.handlers
+        warning.handlers = []
+
+        # No python warnings (like ctypes version for slmr)
+        import warnings
+        warnings.simplefilter('ignore')
+
+        # No numpy
+        np_errsettings = np.geterr()
+        np.seterr(**dict([(x, 'ignore') for x in np_errsettings]))
+
     # finally run it
     TextTestRunnerPyMVPA(verbosity=verbosity).run(ts)
 
-    # restore warning handlers
-    warning.handlers = handler_backup
+    if verbosity < 3:
+        # restore warning handlers
+        warning.handlers = handler_backup
+        np.seterr(**np_errsettings)

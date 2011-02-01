@@ -24,7 +24,7 @@ from mvpa.datasets.miscfx import detrend
 class MiscDatasetFxSpTests(unittest.TestCase):
 
     def testDetrend(self):
-        thr = 1e-10;                    # threshold for comparison
+        thr = 1e-9;                    # threshold for comparison
         samples = N.array( [[1.0, 2, 3, 3, 2, 1],
                             [-2.0, -4, -6, -6, -4, -2]], ndmin=2 ).T
 
