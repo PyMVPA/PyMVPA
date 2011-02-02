@@ -9,9 +9,6 @@ PyMVPA User Manual
 
    intro
    installation
-   datasets
    mappers
-   classifiers
    measures
-   featsel
    misc
