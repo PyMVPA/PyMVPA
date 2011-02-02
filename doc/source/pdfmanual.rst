@@ -23,10 +23,7 @@ The PDF version of the manual is available for download_.
    installation
    tutorial
    overview
-   datasets
-   classifiers
    measures
-   featsel
    misc
    examples
    faq
