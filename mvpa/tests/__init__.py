@@ -171,7 +171,7 @@ def run_tests_using_nose(limit=None, verbosity=1, exit_=False):
     tests = collect_unit_tests(verbosity=verbosity) + nosetests
 
     config = nose.config.Config(
-        verbosity=verbosity,
+        verbosity=max(0, verbosity-1),
         plugins=nose.plugins.DefaultPluginManager())
     if limit is None:
         # Lets see if we aren't missing any:
@@ -205,8 +205,8 @@ def run(limit=None, verbosity=None, exit_=False):
       'niftidataset'.
     verbosity : None or int
       Verbosity of unittests execution. If None, controlled by PyMVPA
-      configuration tests/verbosity.  Values higher than 2 enable all Python,
-      NumPy and PyMVPA warnings
+      configuration tests/verbosity.  Values >=3 enable all Python,
+      and PyMVPA warnings, >=4 adds NumPy warnings, >=5 -- nose debug info.
     exit_ : bool, optional
       Either to exit with an error code upon the completion.
     """
@@ -241,14 +241,17 @@ def run(limit=None, verbosity=None, exit_=False):
         import warnings
         warnings.simplefilter('ignore')
 
-        # No numpy
+    if verbosity < 4:
+        # No NumPy
         np_errsettings = np.geterr()
         np.seterr(**dict([(x, 'ignore') for x in np_errsettings]))
 
     try:
         if externals.exists('nose'):
             # Lets just use nose
-            run_tests_using_nose(limit=limit, verbosity=verbosity, exit_=exit_)
+            run_tests_using_nose(limit=limit,
+                                 verbosity=verbosity,
+                                 exit_=exit_)
         else:
             print("T: Warning -- major bulk of tests is skipped since nose "
                   "is unavailable")
@@ -280,6 +283,9 @@ def run(limit=None, verbosity=None, exit_=False):
     if verbosity < 3:
         # restore warning handlers
         warning.handlers = handler_backup
+
+    if verbosity < 4:
+        # restore numpy settings
         np.seterr(**np_errsettings)
 
 
