@@ -9,6 +9,7 @@
 """Unit test interface for PyMVPA"""
 
 import unittest
+import numpy as np
 from mvpa import _random_seed, cfg
 from mvpa.base import externals, warning
 
@@ -204,7 +205,8 @@ def run(limit=None, verbosity=None, exit_=False):
       'niftidataset'.
     verbosity : None or int
       Verbosity of unittests execution. If None, controlled by PyMVPA
-      configuration tests/verbosity
+      configuration tests/verbosity.  Values higher than 2 enable all Python,
+      NumPy and PyMVPA warnings
     exit_ : bool, optional
       Either to exit with an error code upon the completion.
     """
@@ -224,17 +226,24 @@ def run(limit=None, verbosity=None, exit_=False):
             print('T: Testing for availability of external software packages.')
 
     # So we could see all warnings about missing dependencies
+    maxcount = warning.maxcount
     warning.maxcount = 1000
+
     # fully test of externals
     externals.test_all_dependencies(verbosity=max(0, verbosity-1))
 
-    # no MVPA warnings during whole testsuite (but restore handlers later on)
-    handler_backup = warning.handlers
-    warning.handlers = []
+    if verbosity < 3:
+        # no MVPA warnings during whole testsuite (but restore handlers later on)
+        handler_backup = warning.handlers
+        warning.handlers = []
 
-    # No python warnings (like ctypes version for slmr)
-    import warnings
-    warnings.simplefilter('ignore')
+        # No python warnings (like ctypes version for slmr)
+        import warnings
+        warnings.simplefilter('ignore')
+
+        # No numpy
+        np_errsettings = np.geterr()
+        np.seterr(**dict([(x, 'ignore') for x in np_errsettings]))
 
     try:
         if externals.exists('nose'):
@@ -262,14 +271,17 @@ def run(limit=None, verbosity=None, exit_=False):
                     if not result.wasSuccessful():
                         print "MVPA_SEED=%s" % _random_seed
 
-            if verbosity is None:
-                verbosity = int(cfg.get('tests', 'verbosity', default=1))
-
             # finally run it
             TextTestRunnerPyMVPA(verbosity=verbosity).run(ts)
     finally:
         # restore warning handlers
+        warning.maxcount = maxcount
+
+    if verbosity < 3:
+        # restore warning handlers
         warning.handlers = handler_backup
+        np.seterr(**np_errsettings)
+
 
 # to avoid nosetests running the beasts defined in this file
 __test__ = False
