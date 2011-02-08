@@ -42,6 +42,12 @@ experiments.
   DOI: http://dx.doi.org/10.1002/hbm.20243
 
 
+.. _CSM+10:
+
+**Clithero, J. A., Smith, D. V., Carter, R. M. & Huettel, S. A.** (2010). Within- and cross-participant classifiers reveal different neural coding of information. *NeuroImage*.
+  DOI: http://dx.doi.org/10.1016/j.neuroimage.2010.03.057
+
+
 .. _Coh94:
 
 **Cohen, J.** (1994). The earth is round (p< 0.05). *American Psychologist*, *49*, 997–1003.
@@ -50,6 +56,12 @@ experiments.
   Keywords: :keyword:`hypothesis testing`
 
   URL: http://www.citeulike.org/user/mdreid/article/2643653
+
+
+.. _CAS+10:
+
+**Cohen, J. R., Asarnow, R. F., Sabb, F. W., Bilder, R. M., Bookheimer, S. Y., Knowlton, B. J. & Poldrack, R. A.** (2010). Decoding developmental differences and individual variability in response inhibition through predictive analyses across individuals. *Frontiers in Human Neuroscience*, *4:47*.
+  DOI: http://dx.doi.org/10.3389/fnhum.2010.00047
 
 
 .. _Dem06:
@@ -85,6 +97,12 @@ experiments.
   DOI: http://dx.doi.org/10.3389/neuro.11.014.2009
 
 
+.. _GWC10:
+
+**Gilliam, T., Wilson, R. C. & Clark, J. A.** (2010). Scribe Identification in Medieval English Manuscripts.  Proceedings of the International Conference on Pattern Recognition.
+  URL: ftp://ftp.computer.org/press/outgoing/proceedings/juan/icpr10b/data/4109b880.pdf
+
+
 .. _GE03:
 
 **Guyon, I. & Elisseeff, A.** (2003). An Introduction to Variable and Feature Selection. *Journal of Machine Learning*, *3*, 1157–1182.
@@ -93,10 +111,12 @@ experiments.
 
 .. _HHH+10:
 
-**Hanke, M., Halchenko, Y. O., Haxby, J. V. & Pollmann, S.** (accepted). Statistical learning analysis in neuroscience: aiming for transparency. *Frontiers in Neuroscience*.
+**Hanke, M., Halchenko, Y. O., Haxby, J. V. & Pollmann, S.** (2010). Statistical learning analysis in neuroscience: aiming for transparency. *Frontiers in Neuroscience*, *4*, 38–43.
   *Focused review article emphasizing the role of transparency to facilitate
   adoption and evaluation of statistical learning techniques in neuroimaging
   research.*
+
+  DOI: http://dx.doi.org/10.3389/neuro.01.007.2010
 
 
 .. _HHS+latest:
@@ -206,7 +226,7 @@ experiments.
 
 .. _KFS+09:
 
-**Kienzle, W., Franz, M. O., Schölkopf, B. & Wichmann, F. A.** (in press). Center-surround patterns emerge as optimal predictors for human saccade targets. *Journal of Vision*.
+**Kienzle, W., Franz, M. O., Schölkopf, B. & Wichmann, F. A.** (In press). Center-surround patterns emerge as optimal predictors for human saccade targets. *Journal of Vision*.
   *This paper offers an approach to make sense out of feature sensitivities of
   non-linear classifiers.*
 
@@ -246,6 +266,12 @@ experiments.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2005.01.048
 
 
+.. _LaC10:
+
+**Laconte, S. M.** (2010). Decoding fMRI brain states in real-time. *Neuroimage*.
+  DOI: http://dx.doi.org/10.1016/j.neuroimage.2010.06.052
+
+
 .. _LBB+98:
 
 **Lecun, Y., Bottou, L., Bengio, Y. & Haffner, P.** (1998). Gradient-based learning applied to document recognition. *Proceedings of the IEEE*, *86*, 2278–2324.
@@ -257,6 +283,10 @@ experiments.
   DOI: http://dx.doi.org/10.1109/5.726791
 
 
+.. _LB10:
+
+**Legge, D. & Badii, A.** (2010). An Application of Pattern Matching for the Adjustment of Quality of Service Metrics. The International Conference on Emerging Network Intelligence.
+
 .. _MHH10:
 
 **Manelis, A., Hanson, C. & Hanson, S. J.** (2010). Implicit memory for object locations depends on reactivation of encoding-related brain regions. *Human Brain Mapping*.
@@ -265,9 +295,17 @@ experiments.
   DOI: http://dx.doi.org/10.1002/hbm.20992
 
 
+.. _MBL+10:
+
+**Margulies, D. S., Böttger, J., Long, X., Lv, Y., Kelly, C., Schäfer, A., Goldhahn, D., Abbushi, A., Milham, M. P., Lohmann, G. & Villringer, A.** (2010). Resting developments: a review of fMRI post-processing methodologies for spontaneous brain activity. *Magnetic Resonance Materials in Physics, Biology and Medicine*, *23*, 289–307.
+  DOI: http://dx.doi.org/10.1007/s10334-010-0228-5
+
+
 .. _MKE10:
 
 **Meyer, K., Kaplan, J. T., Essex, R., Webber, C., Damasio, H. & Damasio, A.** (2010). Predicting visual stimuli based on activity in auditory cortices. *Nature Neuroscience*.
+  DOI: http://dx.doi.org/10.1038/nn.2533
+
 
 .. _MHN+04:
 
@@ -308,6 +346,10 @@ experiments.
   DOI: http://dx.doi.org/10.1162/jocn.2007.19.11.1735
 
 
+.. _OVG+10:
+
+**Olivetti, E., Veeramachaneni, S., Greiner, S. & Avesani, P.** (2010). Brain Connectivity Analysis by Reduction to Pair Classification. The 2nd IAPR International Workshop on Cognitive Information Processing.
+
 .. _PMB09:
 
 **Pereira, F., Mitchell, T. & Botvinick, M.** (2009). Machine learning classifiers and fMRI: A tutorial overview. *NeuroImage*, *45*, 199–209.
@@ -344,6 +386,12 @@ experiments.
   Keywords: :keyword:`statistical learning`, :keyword:`kernel methods`, :keyword:`error estimation`
 
 
+.. _Shi10:
+
+**Shiffrin, R.** (2010). Perspectives on Modeling in Cognitive Science. *Topics in Cognitive Science*, *2*, 736–750.
+  DOI: http://dx.doi.org/10.1111/j.1756-8765.2010.01092.x
+
+
 .. _SS09:
 
 **Spacek, M. & Swindale, N.** (2009). Python in Neuroscience. *The Neuromorphic Engineer*.
@@ -352,7 +400,7 @@ experiments.
 
 .. _SET+09:
 
-**Sun, D., van Erp, T. G., Thompson, P. M., Bearden, C. E., Daley, M., Kushan, L., Hardt, M. E., Nuechterlein, K. H., Toga, A. W. & Cannon, T. D.** (2009). Elucidating an MRI-Based Neuroanatomic Biomarker for Psychosis: Classification Analysis Using Probabilistic Brain Atlas and Machine Learning Algorithms. *Biological Psychiatry*.
+**Sun, D., van Erp, T. G., Thompson, P. M., Bearden, C. E., Daley, M., Kushan, L., Hardt, M. E., Nuechterlein, K. H., Toga, A. W. & Cannon, T. D.** (2009). Elucidating an MRI-Based Neuroanatomic Biomarker for Psychosis: Classification Analysis Using Probabilistic Brain Atlas and Machine Learning Algorithms. *Biological Psychiatry*, *66*, 1055–1060.
   *First published study employing PyMVPA for MRI-based analysis of Psychosis.*
 
   Keywords: :keyword:`PyMVPA`, :keyword:`psychosis`, :keyword:`MRI`
@@ -392,6 +440,12 @@ experiments.
   Keywords: :keyword:`support vector machine`, :keyword:`SVM`, :keyword:`group analysis`
 
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2007.03.072
+
+
+.. _WTB+10:
+
+**Woolgar, A., Thompson, R., Bor, D. & Duncan, J.** (2010). Multi-voxel coding of stimuli, rules, and responses in human frontoparietal cortex. *Neuroimage*.
+  DOI: http://dx.doi.org/10.1016/j.neuroimage.2010.04.035
 
 
 .. _Wri09:
