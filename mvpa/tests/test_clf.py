@@ -203,6 +203,20 @@ class ClassifiersTests(unittest.TestCase):
         clf.states._resetEnabledTemporarily()
 
 
+    # TODO: sg - remove our limitations, meta -- also
+    @sweepargs(clf=clfswh['!sg', '!plr', '!meta'])
+    def test_single_class(self, clf):
+        """Test if binary and multiclass can handle single class training/testing
+        """
+        ds = datasets['uni2small']['labels', (0,)]
+        try:
+            err = TransferError(clf)(
+                datasets['uni2small_test']['labels', (0,)],
+                datasets['uni2small_train']['labels', (0,)])
+        except Exception, e:
+            self.fail(str(e))
+        self.failUnless(err == 0.)
+
     # TODO: validate for regressions as well!!!
     def testSplitClassifier(self):
         ds = self.data_bin_1
