@@ -139,8 +139,10 @@ class GNB(Classifier):
             nsamples_per_class[il] += 1
             means[il] += s
 
+        # helped function - squash all dimensions but 1
+        squash = lambda x: N.atleast_1d(x.squeeze())
         ## Actually compute the means
-        non0labels = (nsamples_per_class.squeeze() != 0)
+        non0labels = (squash(nsamples_per_class) != 0)
         means[non0labels] /= nsamples_per_class[non0labels]
 
         # Estimate variances
@@ -163,10 +165,10 @@ class GNB(Classifier):
         if prior == 'uniform':
             self.priors = N.ones((nlabels,))/nlabels
         elif prior == 'laplacian_smoothing':
-            self.priors = (1+N.squeeze(nsamples_per_class)) \
+            self.priors = (1+squash(nsamples_per_class)) \
                           / (float(nsamples) + nlabels)
         elif prior == 'ratio':
-            self.priors = N.squeeze(nsamples_per_class) / float(nsamples)
+            self.priors = squash(nsamples_per_class) / float(nsamples)
         else:
             raise ValueError(
                 "No idea on how to handle '%s' way to compute priors"
