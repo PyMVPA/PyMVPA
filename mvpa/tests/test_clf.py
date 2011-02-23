@@ -666,6 +666,8 @@ class ClassifiersTests(unittest.TestCase):
 
     @sweepargs(clf=clfswh['retrainable'])
     def test_retrainables(self, clf):
+        # XXX we agreed to not worry about this for the initial 0.6 release
+        raise SkipTest
         # we need a copy since will tune its internals later on
         clf = clf.clone()
         clf.ca.change_temporarily(enable_ca = ['estimates'],
