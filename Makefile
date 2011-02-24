@@ -526,18 +526,9 @@ deb-dev-autochangelog: check-debian
 deb-mergedev:
 	git merge --no-commit origin/dist/debian/dev
 
-orig-src: distclean debian-clean
-	# clean existing dist dir first to have a single source tarball to process
-	-rm -rf dist
-	# let python create the source tarball
-	# enable libsvm to get all sources!
-	$(PYTHON) setup.py sdist --formats=gztar
-	# rename to proper Debian orig source tarball and move upwards
-	# to keep it out of the Debian diff
-	tbname=$$(basename $$(ls -1 dist/*tar.gz)) ; ln -s $${tbname} ../pymvpa-snapshot_$(DEV_VERSION).orig.tar.gz
-	mv dist/*tar.gz ..
-	# clean leftover
-	rm MANIFEST
+orig-src:
+	git archive --format=tar --prefix=pymvpa-$(SETUPPY_VERSION)/ HEAD | \
+		gzip -9 > pymvpa_$(SETUPPY_VERSION).orig.tar.gz
 
 devel-src: check-nodirty
 	-rm -rf dist
