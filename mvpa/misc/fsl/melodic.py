@@ -24,32 +24,59 @@ class MelodicResults( object ):
     Only important information is available (important as judged by the
     author).
     """
-    def __init__( self, path ):
+    def __init__( self, path, fext='.nii.gz'):
         """Reads all information from the given MELODIC output path.
         """
-        self.__outputpath = path
-        self.__icapath = os.path.join( path, 'filtered_func_data.ica' )
-        self.__ic = nb.load(os.path.join( self.__icapath, 'melodic_IC' ) )
-        self.__funcdata = \
-            nb.load(os.path.join( self.__outputpath, 'filtered_func_data' ) )
-        self.__tmodes = np.fromfile( os.path.join( self.__icapath,
-                                                  'melodic_Tmodes' ),
-                                    sep = ' ' ).reshape( self.tr, self.nic )
-        self.__smodes = np.fromfile( os.path.join( self.__icapath,
-                                                  'melodic_Smodes' ),
-                                    sep = ' ' )
-        self.__icstats = np.fromfile( os.path.join( self.__icapath,
-                                                   'melodic_ICstats' ),
-                                     sep = ' ' ).reshape( self.nic, 4 )
+        self._fext = fext
+        rpath = None
+        lookup = ['', 'filtered_func_data.ica']
+        for lu in lookup:
+            if os.path.exists(os.path.join(path, lu, 'melodic_IC' + fext)):
+                rpath = os.path.join(path, lu)
+                break
+        if rpath is None:
+            raise ValueError("Cannot find Melodic results at '%s'" % path)
+        else:
+            self._rpath = rpath
+        self._ic = nb.load(os.path.join(rpath, 'melodic_IC' + fext))
+        self._mask = nb.load(os.path.join(rpath, 'mask' + fext))
+        self._tmodes = np.loadtxt(os.path.join(rpath, 'melodic_Tmodes' ))
+        self._smodes = np.loadtxt(os.path.join(rpath, 'melodic_Smodes'))
+        self._icstats = np.loadtxt(os.path.join(rpath, 'melodic_ICstats'))
+
+
+    def _get_stat(self, type, ic):
+        # melodic's IC number is one-based, we do zero-based
+        img = nb.load(os.path.join(self._rpath, 'stats',
+                                   '%s%i' % (type, ic + 1) + self._fext))
+        return img.get_data()
+
+    def get_probmap(self, ic):
+        return self._get_stat('probmap_', ic)
+
+    def get_thresh_zstat(self, ic):
+        return self._get_stat('thresh_zstat', ic)
+
+    def get_tmodes(self):
+        ns = self.smodes.shape[1]
+        if ns > 1:
+            # in multisession ICA melodic creates rank-1 approximation of a
+            # timeseries from all sessions and stores them in the first column
+            return self._tmodes.T[::ns+1]
+        else:
+            return self._tmodes.T
+
+    def get_raw_tmodes(self):
+        return self._tmodes
 
     # properties
-    path     = property( fget=lambda self: self.__respath )
-    ic       = property( fget=lambda self: self.__ic )
-    nic      = property( fget=lambda self: self.ic.extent[3] )
-    funcdata = property( fget=lambda self: self.__funcdata )
-    tr       = property( fget=lambda self: self.funcdata.extent[3] )
-    tmodes   = property( fget=lambda self: self.__tmodes )
-    smodes   = property( fget=lambda self: self.__smodes )
-    icastats = property( fget=lambda self: self.__icstats )
-    relvar_per_ic  = property( fget=lambda self: self.__icstats[:, 0] )
-    truevar_per_ic = property( fget=lambda self: self.__icstats[:, 1] )
+    path     = property(fget=lambda self: self._rpath )
+    ic       = property(fget=lambda self: np.rollaxis(self._ic.get_data(), -1))
+    mask     = property(fget=lambda self: self._mask.get_data())
+    nic      = property(fget=lambda self: self._ic.get_shape()[3])
+    extent   = property(fget=lambda self: self._ic.get_shape()[:3])
+    tmodes   = property(fget=get_tmodes)
+    smodes   = property(fget=lambda self: self._smodes.T )
+    icstats = property(fget=lambda self: self._icstats )
+    relvar_per_ic  = property(fget=lambda self: self._icstats[:, 0])
+    truevar_per_ic = property(fget=lambda self: self._icstats[:, 1])
