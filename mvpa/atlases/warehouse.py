@@ -46,7 +46,7 @@ def Atlas(filename=None, name=None, *args, **kwargs):
 
     try:
         # Just to guestimate what atlas that is
-        tempAtlas = XMLBasedAtlas(filename=filename) #, *args, **kwargs)
+        tempAtlas = XMLBasedAtlas(filename=filename, load_maps=False) #, *args, **kwargs)
         version = tempAtlas.version
         atlas_source = None
         for cls in [PyMVPAAtlas, FSLAtlas]:

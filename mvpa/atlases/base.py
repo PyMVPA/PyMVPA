@@ -87,7 +87,7 @@ class XMLBasedAtlas(BaseAtlas):
 
     def __init__(self, filename=None,
                  resolution=None, image_file=None,
-                 coordT=None, default_levels=None):
+                 coordT=None, default_levels=None, load_maps=True):
         """
         Parameters
         ----------
@@ -104,6 +104,8 @@ class XMLBasedAtlas(BaseAtlas):
           Optional transformation to apply first
         default_levels : None or slice or list of int
           What levels by default to operate on
+        load_maps : bool
+          Load spatial maps for the atlas.
         """
         BaseAtlas.__init__(self)
 
@@ -138,12 +140,13 @@ class XMLBasedAtlas(BaseAtlas):
 
         # Load and post-process images
         self._image = None
-        self._load_images()
-        if self._image is not None:
-            # Get extent and voxel dimensions, limiting to 3D
-            self._extent = np.abs(np.asanyarray(self._image.get_shape()[:3]))
-            self._voxdim = np.asanyarray(self._image.get_header().get_zooms()[:3])
-            self.relativeToOrigin = True
+        if load_maps:
+            self._load_images()
+            if self._image is not None:
+                # Get extent and voxel dimensions, limiting to 3D
+                self._extent = np.abs(np.asanyarray(self._image.get_shape()[:3]))
+                self._voxdim = np.asanyarray(self._image.get_header().get_zooms()[:3])
+                self.relativeToOrigin = True
         # Assign transformation to get into voxel coordinates,
         # spaceT will be set accordingly
         self.set_coordT(coordT)
