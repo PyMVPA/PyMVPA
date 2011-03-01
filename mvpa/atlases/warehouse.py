@@ -45,7 +45,8 @@ def Atlas(filename=None, name=None, *args, **kwargs):
             raise ValueError, "Provide only filename or name"
 
     try:
-        tempAtlas = XMLBasedAtlas(filename=filename, *args, **kwargs)
+        # Just to guestimate what atlas that is
+        tempAtlas = XMLBasedAtlas(filename=filename) #, *args, **kwargs)
         version = tempAtlas.version
         atlas_source = None
         for cls in [PyMVPAAtlas, FSLAtlas]:
