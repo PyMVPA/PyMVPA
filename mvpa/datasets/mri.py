@@ -82,7 +82,7 @@ def _data2img(data, hdr=None, imgtype=None):
                           imgtype))
 
 
-def _img2data(src):
+def _img2data(src, scale_data=True):
     excpt = None
     if externals.exists('nibabel'):
         # let's try whether we can get it done with nibabel
@@ -117,6 +117,17 @@ def _img2data(src):
                 data = img.data
             else:
                 data = img.asarray()
+            # Get scaled data
+            if img is not None and scale_data:
+                if img.slope and not (img.slope == 1.0 and img.intercept == 0.0):
+                    if __debug__:
+                        debug('DS_NIFTI', 'Scaling the data from %s' % (src,))
+                    data = img.getScaledData()
+                else:
+                    # Do nothing -- just debug message
+                    if __debug__:
+                        debug('DS_NIFTI', 'Although scaling was requested, data from %s'
+                              ' has no scaling parameters set -- thus no scaling' % (src,))
             # pynifti provides it transposed
             return _get_txyz_shaped(data.T), img.header
 
@@ -141,6 +152,11 @@ def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
       instance -- takes its samples for mapping.
     imghdr : dict
       Image header data. If None, the header is taken from `dataset`.
+    imgtype : None or a class
+      if None, then depending on either nibabel or pynifti are available
+      would choose the corresponding storage.  If not None (e.g. subclass of
+      :class:`nibabel.spatialimages.SpatialImage` it would be used for the
+      instance with mapped data
 
     Returns
     -------
@@ -167,7 +183,8 @@ def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
 
 
 def fmri_dataset(samples, targets=None, chunks=None, mask=None,
-                 sprefix='voxel', tprefix='time', add_fa=None,):
+                 sprefix='voxel', tprefix='time', add_fa=None,
+                 scale_data=True):
     """Create a dataset from an fMRI timeseries image.
 
     The timeseries image serves as the samples data, with each volume becoming
@@ -224,17 +241,23 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
       as feature attributes in the dataset. The dictionary key serves as the
       feature attribute name. Each value might be of any type supported by the
       'mask' argument of this function.
+    scale_data : bool
+      NIfTI header specifies scl_slope and scl_inter for scaling and
+      offsetting the data.  If pynifti is used as the backend (when nibabel
+      is N/A), with `scale_data`=True (default) those will get applied
+      to the data (change in behavior post 0.4.6).
 
     Returns
     -------
     Dataset
     """
     # load the samples
-    imgdata, imghdr = _load_anyimg(samples, ensure=True, enforce_dim=4)
+    imgdata, imghdr = _load_anyimg(samples, ensure=True, enforce_dim=4,
+                                   scale_data=scale_data)
 
     # figure out what the mask is, but only handle known cases, the rest
     # goes directly into the mapper which maybe knows more
-    maskimg = _load_anyimg(mask)
+    maskimg = _load_anyimg(mask, scale_data=scale_data)
     if maskimg is None:
         pass
     else:
@@ -268,7 +291,8 @@ def fmri_dataset(samples, targets=None, chunks=None, mask=None,
     # load and store additional feature attributes
     if not add_fa is None:
         for fattr in add_fa:
-            value = _load_anyimg(add_fa[fattr], ensure=True)[0]
+            value = _load_anyimg(add_fa[fattr], ensure=True,
+                                 scale_data=scale_data)[0]
             ds.fa[fattr] = ds.a.mapper.forward1(value)
 
     # store interesting props in the dataset
@@ -328,7 +352,7 @@ def _get_xyzt_shaped(arr):
     return arr
 
 
-def _load_anyimg(src, ensure=False, enforce_dim=None):
+def _load_anyimg(src, ensure=False, enforce_dim=None, scale_data=True):
     """Load/access NIfTI data from files or instances.
 
     Parameters
@@ -340,6 +364,11 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
     enforce_dim : int or None
       If not None, it is the dimensionality of the data to be enforced,
       commonly 4D for the data, and 3D for the mask in case of fMRI.
+    scale_data : bool
+      NIfTI header specifies scl_slope and scl_inter for scaling and
+      offsetting the data.  If pynifti is used as the backend (when nibabel
+      is N/A), with `scale_data`=True (default) those will get applied
+      to the data (change in behavior post 0.4.6).
 
     Returns
     -------
@@ -361,7 +390,10 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
         # load from a list of given entries
         if enforce_dim is not None: enforce_dim_ = enforce_dim - 1
         else:                       enforce_dim_ = None
-        srcs = [_load_anyimg(s, ensure=ensure, enforce_dim=enforce_dim_)
+        if __debug__:
+            debug('DS_NIFTI', 'Loading from a sequence of sources: %s' % (src,))
+        srcs = [_load_anyimg(s, ensure=ensure, enforce_dim=enforce_dim_,
+                             scale_data=scale_data)
                 for s in src]
         if __debug__:
             # lets check if they all have the same dimensionality
@@ -373,11 +405,17 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
         # Combine them all into a single beast
         # will be t,x,y,z
         imgdata = np.array([s[0] for s in srcs])
-        imghdr = srcs[0][1]
+        imghdr = srcs[0][1].copy()
+        # And since they all could have varying scl_* - reset those
+        if isinstance(imghdr, dict):    # must be pynifti's header
+            imghdr['scl_slope'] = 1.
+            imghdr['scl_inter'] = 0.
+        else: # nibabel
+            imghdr.set_slope_inter(1., 0.)
     else:
         # try opening the beast; this might yield none in case of an unsupported
         # argument and is handled accordingly below
-        data = _img2data(src)
+        data = _img2data(src, scale_data=scale_data)
         if not data is None:
             imgdata = data[0]
             imghdr = data[1]
