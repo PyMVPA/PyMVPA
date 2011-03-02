@@ -267,6 +267,67 @@ def test_er_nifti_dataset_mapping():
     assert_array_equal(np.rollaxis(rmapped, 0, 4).T, expected)
 
 
+class TestsWithoutNibabel(unittest.TestCase):
+
+    @classmethod
+    def setup_class(klass):
+        klass.have_nibabel = externals.exists('nibabel')
+        cfg.set('externals', 'have nibabel', '0')
+        klass.filename = mktemp('mvpa', 'test_scl_nifti') + '.nii.gz'
+
+    @classmethod
+    def teardown_class(klass):
+        cfg.set('externals', 'have nibabel', str(klass.have_nibabel))
+        os.remove(klass.filename)
+
+    def test_nifti_scaling_data(self):
+        """Test if scaled data loads correctly
+
+        Is relevant only for pynifti interface -- nibabel always does scaling
+        """
+        if not externals.exists('nifti'):
+            raise SkipTest('No pynifti available')
+        from nifti import NiftiImage
+
+        # We first need to construct such one
+        orig_filename = os.path.join(pymvpa_dataroot,'mask.nii.gz')
+        ni = NiftiImage(orig_filename)
+        orig_value = ni.data[0, 3, 4]    # this is from pynifti so indexes inverted
+        ni.data[0, 3, 4] = 5             # magic number
+        # Modify the header
+        hdr = ni.header
+        hdr['scl_slope'] = 15
+        hdr['scl_inter'] = 100
+        ni.header = hdr
+        ni.save(self.filename)
+
+        # Load generated file with slope and intercept defined
+        ds_scaled = fmri_dataset(self.filename, targets=1) # by default should scale
+        ds_scaled_multi = fmri_dataset([self.filename, orig_filename], targets=1)
+        ds_raw = fmri_dataset(self.filename, targets=1, scale_data=False) # by default should scale
+
+        # TODO: wow that is ugly -- we need better mechanism
+        fid = [tuple(x) for x in list(ds_scaled.fa.voxel_indices)].index((4,3,0))
+
+        assert_equal(ds_scaled.samples[0, fid], 175)
+        assert_equal(ds_scaled_multi.samples[1, fid], orig_value)
+        assert_equal(ds_scaled_multi.samples[0, fid], 175)
+
+        assert_equal(ds_raw.samples[0, fid], 5)
+
+        # In a ds obtained from a single volume -- scl_ are maintained
+        assert_equal(ds_scaled.a.imghdr['scl_slope'], 15.0)
+        assert_equal(ds_scaled.a.imghdr['scl_inter'], 100)
+
+        # And reset in a group
+        assert_equal(ds_scaled_multi.a.imghdr['scl_slope'], 1.0)
+        assert_equal(ds_scaled_multi.a.imghdr['scl_inter'], 0)
+
+        assert_equal(ds_raw.a.imghdr['scl_slope'], 15.0)
+        assert_equal(ds_raw.a.imghdr['scl_inter'], 100)
+
+
+
 def test_nifti_dataset_from3_d():
     """Test NiftiDataset based on 3D volume(s)
     """
