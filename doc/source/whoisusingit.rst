@@ -22,8 +22,8 @@ Who Is Using It?
   comment at the bottom of this page, if you want to be listed here as well.
 
 
-Institutions Where PyMVPA Is Used
-=================================
+Institutions Where PyMVPA Is Known To Be Used
+=============================================
 
 * Department of Psychological and Brain Sciences, **Dartmouth College**, USA
 * Thayer School of Engineering, **Dartmouth College**, USA
@@ -41,11 +41,15 @@ Institutions Where PyMVPA Is Used
 * Center for Functional Neuroimaging, **University of Pennsylvania**, USA
 * Brain & Creativity Institute, **University of Southern California**, USA
 * Imaging Research Center, **University of Texas at Austin**, USA
+* Department of Psychiatry, **University of Wisconsin, Madison**, USA
 * Department of Psychology, **Yale University**, USA
 
 
 Studies employing PyMVPA
 ========================
+
+* :ref:`Meyer et al., Cerebral Cortex (2011) <MKE+11>`: Seeing Touch Is
+  Correlated with Content-Specific Activity in Primary Somatosensory Cortex.
 
 * :ref:`Woolgar et al., NeuroImage (2010) <WTB+10>`: Multi-voxel coding of
   stimuli, rules, and responses in human frontoparietal cortex.
@@ -79,6 +83,10 @@ Studies employing PyMVPA
 
 Articles referring to PyMVPA
 ============================
+
+* :ref:`Schackman et al., Nature Reviews Neuroscience (2011) <SSS+11>`. The
+  integration of negative affect, pain and cognitive control in the cingulate
+  cortex.
 
 * :ref:`Margulies et al., Magnetic Resonance Materials in Physics, Biology and
   Medicine (2010) <MBL+10>`: Resting developments: a review of fMRI

@@ -301,6 +301,12 @@ experiments.
   DOI: http://dx.doi.org/10.1007/s10334-010-0228-5
 
 
+.. _MKE+11:
+
+**Meyer, K., Kaplan, J. T., Essex, R., Damasio, H. & Damasio, A.** (2011). Seeing Touch Is Correlated with Content-Specific Activity in Primary Somatosensory Cortex. *Cerebral Cortex*.
+  DOI: http://dx.doi.org/10.1093/cercor/bhq289
+
+
 .. _MKE10:
 
 **Meyer, K., Kaplan, J. T., Essex, R., Webber, C., Damasio, H. & Damasio, A.** (2010). Predicting visual stimuli based on activity in auditory cortices. *Nature Neuroscience*.
@@ -384,6 +390,12 @@ experiments.
   (e.g. error bounds)*
 
   Keywords: :keyword:`statistical learning`, :keyword:`kernel methods`, :keyword:`error estimation`
+
+
+.. _SSS+11:
+
+**Shackman, A. J., Salomons, T. V., Slagter, H. A., Fox, A. S., Winter, J. J. & Davidson, R. J.** (2011). The integration of negative affect, pain and cognitive control in the cingulate cortex. *Nature Reviews Neuroscience*, *12*, 154–167.
+  DOI: http://dx.doi.org/10.1038/nrn2994
 
 
 .. _Shi10:
