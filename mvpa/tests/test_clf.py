@@ -587,11 +587,18 @@ class ClassifiersTests(unittest.TestCase):
                             msg="Got too high error = %s using %s"
                             % (cverror, tclf))
 
-        # TODO: whenever implemented
+        # Test trailing nodes with no classifier
         tclf = TreeClassifier(clfs[0], {
-            'L0' : (('L0',), clfs[1]),
-            'L1+2+3' : (('L1', 'L2', 'L3'),    clfs[2])})
-        # TEST ME
+            'L0' : (('L0',), None),
+            'L1+2+3' : (('L1', 'L2', 'L3'), clfswh['multiclass'][0])})
+
+        cv = CrossValidatedTransferError(
+            TransferError(tclf),
+            OddEvenSplitter(),
+            postproc=mean_sample(),
+            enable_ca=['confusion', 'training_confusion'])
+        cverror = np.asscalar(cv(ds))
+        self.failUnless(cverror<0.2)
 
 
     @sweepargs(clf=clfswh[:])
