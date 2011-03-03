@@ -9,7 +9,7 @@ upstreamver = $(shell echo $(debver) | sed -e 's/-[^-]*$$//' )
 # then described this commit relative to the last release tag (upstream/...)
 # If this should make any sense the local master branch must track remote
 # master.
-gitver = $(shell [ -x /usr/bin/git ] && git describe --tags --match 'upstream/*' $$(git merge-base -a HEAD master) | sed -e 's,^upstream/,,' -e 's/\.dev/~dev/')
+gitver = $(shell [ -x /usr/bin/git ] && git describe --tags --match 'upstream/*' $$(git merge-base -a HEAD master) | sed -e 's,^upstream/,,' -e 's/\.dev/~dev/' -e 's/\.rc/~rc/')
 
 
 # one ring to rule them all ...
