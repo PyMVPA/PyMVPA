@@ -1,2 +1,3 @@
 mvpa/COMMIT_HASH export-subst
 /debian export-ignore
+/.gitattributes export-ignore
