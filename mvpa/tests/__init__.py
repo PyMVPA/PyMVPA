@@ -83,6 +83,8 @@ def collect_test_suites(verbosity=1):
     tests = collect_unit_tests(verbosity=verbosity)
     # import all test modules
     for t in tests:
+        # TODO: exclude tests which fail to import: e.g. on Windows
+        # could get WindowsError due to missing msvcr90.dll
         exec 'import mvpa.tests.' + t
 
     # instantiate all tests suites and return dict of them (with ID as key)
