@@ -162,3 +162,30 @@ def test_fsl_hox_queries():
 
     # we should still cover the same set of voxels
     assert_array_equal(np.max(maps_ab, axis=0), np.max(maps_max_ab, axis=0))
+
+# Basic testing of Talairach atlases in its original space
+def test_pymvpa_talairach():
+    skip_if_no_external('atlas_pymvpa')
+
+    atl = Atlas(name='talairach')
+    atld = Atlas(name='talairach-dist',
+                 reference_level='Closest Gray',
+                 distance=10)
+
+    p = [-22, -40, 8]
+    pl  = atl.label_point(p)
+    pld = atld.label_point(p)
+
+    ok_(np.any(pl['voxel_queried'] != pld['voxel_queried']))
+    ok_(pld['distance'] >0)
+    # Common labels
+    for l in pl, pld:
+        assert_equal(l['labels'][0]['label'].text, 'Left Cerebrum')
+        assert_equal(l['labels'][1]['label'].text, 'Sub-lobar')
+
+    # different ones
+    assert_equal(pl['labels'][3]['label'].text, 'Cerebro-Spinal Fluid')
+    assert_equal(pld['labels'][3]['label'].text, 'Gray Matter')
+
+    assert_equal(pl['labels'][4]['label'].text, 'None')
+    assert_equal(pld['labels'][4]['label'].text, 'Caudate Tail')
