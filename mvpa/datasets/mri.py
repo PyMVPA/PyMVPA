@@ -140,7 +140,7 @@ def _img2data(src, scale_data=True):
 
 
 def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
-    """Maps data(sets) into the original dataspace and wraps it in a NiftiImage.
+    """Maps data(sets) into the original dataspace and wraps it in an Image object.
 
     Parameters
     ----------
@@ -150,12 +150,13 @@ def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
       The data to be wrapped into NiftiImage. If None (default), it
       would wrap samples of the current dataset. If it is a Dataset
       instance -- takes its samples for mapping.
-    imghdr : dict
-      Image header data. If None, the header is taken from `dataset`.
+    imghdr : None or dict
+      Image header data. If None: the header is taken from `dataset`
+      and for pynifti backend scl_* fields get reset.
     imgtype : None or a class
       if None, then depending on either nibabel or pynifti are available
       would choose the corresponding storage.  If not None (e.g. subclass of
-      :class:`nibabel.spatialimages.SpatialImage` it would be used for the
+      :class:`nibabel.spatialimages.SpatialImage`) it would be used for the
       instance with mapped data
 
     Returns
@@ -176,6 +177,10 @@ def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
     if imghdr is None:
         if 'imghdr' in dataset.a:
             imghdr = dataset.a.imghdr
+            if isinstance(imghdr, dict): # PyNIFTI header
+                imghdr = imghdr.copy()
+                imghdr['scl_slope'] = 1.
+                imghdr['scl_inter'] = 0.
         elif __debug__:
             debug('DS_NIFTI', 'No image header found. Using defaults.')
 

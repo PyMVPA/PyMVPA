@@ -326,6 +326,17 @@ class TestsWithoutNibabel(unittest.TestCase):
         assert_equal(ds_raw.a.imghdr['scl_slope'], 15.0)
         assert_equal(ds_raw.a.imghdr['scl_inter'], 100)
 
+        # Verify that map2nifti resets the scl_ fields:
+        ni0 = map2nifti(ds_scaled, ds_raw.samples)
+        assert_equal(ni0.header['scl_slope'], 1.0)
+        assert_equal(ni0.header['scl_inter'], 0.)
+        # but original remains untouched
+        assert_equal(ds_scaled.a.imghdr['scl_slope'], 15.0)
+        assert_equal(ds_scaled.a.imghdr['scl_inter'], 100)
+
+        # and data remains the same
+        # (check just in case of evil "pynifti got brains")
+        assert_equal(ni0.data[0, 0, 3, 4], 5)
 
 
 def test_nifti_dataset_from3_d():
