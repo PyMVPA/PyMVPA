@@ -151,6 +151,13 @@ def getNiftiData(nim):
     else:
         return nim.asarray()
 
+def _get_safe_header(nids):
+    """Given *NiftiDataset, returns a copy of NIfTI header with reset scl_ fields
+    """
+    hdr = nids.niftihdr.copy()
+    hdr['scl_slope'] = 1.
+    hdr['scl_inter'] = 0.
+    return hdr
 
 class NiftiDataset(MappedDataset):
     """Dataset loading its samples from a NIfTI image or file.
@@ -248,7 +255,8 @@ class NiftiDataset(MappedDataset):
     def map2Nifti(self, data=None):
         """Maps a data vector into the dataspace and wraps it with a
         NiftiImage. The header data of this object is used to initialize
-        the new NiftiImage.
+        the new NiftiImage (scl_slope and scl_inter are reset to 1.0 and
+        0.0 accordingly).
 
         :Parameters:
           data : ndarray or Dataset
@@ -262,7 +270,8 @@ class NiftiDataset(MappedDataset):
             # ease users life
             data = data.samples
         dsarray = self.mapper.reverse(data)
-        return NiftiImage(dsarray, self.niftihdr)
+
+        return NiftiImage(dsarray, _get_safe_header(self))
 
 
     def getDt(self):
@@ -445,7 +454,8 @@ class ERNiftiDataset(EventDataset):
     def map2Nifti(self, data=None):
         """Maps a data vector into the dataspace and wraps it with a
         NiftiImage. The header data of this object is used to initialize
-        the new NiftiImage.
+        the new NiftiImage (scl_slope and scl_inter are reset to 1.0 and
+        0.0 accordingly).
 
         .. note::
           Only the features corresponding to voxels are mapped back -- not
@@ -472,7 +482,7 @@ class ERNiftiDataset(EventDataset):
         else:
             pass
 
-        return NiftiImage(mr, self.niftihdr)
+        return NiftiImage(mr, _get_safe_header(self))
 
 
     niftihdr = property(fget=lambda self: self._dsattr['niftihdr'],
