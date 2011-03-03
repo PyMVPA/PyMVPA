@@ -108,7 +108,7 @@ if bind_libsvm:
 
 # define the setup
 setup(name         = 'pymvpa',
-      version      = '0.6.0~rc1',
+      version      = '0.6.0~rc2',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
