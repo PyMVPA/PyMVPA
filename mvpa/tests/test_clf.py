@@ -330,16 +330,17 @@ class ClassifiersTests(unittest.TestCase):
         clf.ca.reset_changed_temporarily()
 
 
-    # TODO: sg - remove our limitations, meta -- also
-    @sweepargs(clf=clfswh['!sg', '!plr', '!meta'])
+    # TODO: sg - remove our limitations, meta, lda, qda and skl -- also
+    @sweepargs(clf=clfswh['!sg', '!plr', '!meta', '!lda', '!qda'])
     def test_single_class(self, clf):
         """Test if binary and multiclass can handle single class training/testing
         """
-        ds = datasets['uni2small']['labels', (0,)]
+        ds = datasets['uni2small']
+        ds = ds[ds.sa.targets == 'L0']  #  only 1 label
+        assert(ds.sa['targets'].unique == ['L0'])
+        dstr, dste = list(OddEvenSplitter()(ds))[0]
         try:
-            err = TransferError(clf)(
-                datasets['uni2small_test']['labels', (0,)],
-                datasets['uni2small_train']['labels', (0,)])
+            err = TransferError(clf)(dste, dstr)
         except Exception, e:
             self.fail(str(e))
         self.failUnless(err == 0.)
