@@ -38,9 +38,6 @@ class SearchlightTests(unittest.TestCase):
         Test of GNBSearchlight anyways requires a ground-truth
         comparison to the generic version, so we are doing sweepargs here
         """
-        # XXX after running at 1 million times we now know that gnb_searchlight
-        # is totally broken
-        raise SkipTest
         # compute N-1 cross-validation for each sphere
         # YOH: unfortunately sample_clf_lin is not guaranteed
         #      to provide exactly the same results due to inherent
@@ -51,13 +48,13 @@ class SearchlightTests(unittest.TestCase):
 
         skwargs = dict(radius=1, enable_ca=['roi_sizes', 'raw_results'])
         sls = [sphere_searchlight(cv, **skwargs),
-               #GNBSearchlight(gnb, NFoldSplitter(cvtype=1))
-               sphere_gnbsearchlight(gnb, NFoldSplitter(cvtype=1),
+               #GNBSearchlight(gnb, NFoldPartitioner(cvtype=1))
+               sphere_gnbsearchlight(gnb, NFoldPartitioner(cvtype=1),
                                      indexsum='fancy', **skwargs)
                ]
 
         if externals.exists('scipy'):
-            sls += [ sphere_gnbsearchlight(gnb, NFoldSplitter(cvtype=1),
+            sls += [ sphere_gnbsearchlight(gnb, NFoldPartitioner(cvtype=1),
                                            indexsum='sparse', **skwargs)]
 
         # Just test nproc whenever common_variance is True

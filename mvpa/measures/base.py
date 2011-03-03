@@ -233,6 +233,7 @@ class RepeatedMeasure(Measure):
     def __init__(self,
                  node,
                  generator,
+                 callback=None,
                  **kwargs):
         """
         Parameters
@@ -243,11 +244,18 @@ class RepeatedMeasure(Measure):
         generator : Node
           Generator to yield a dataset for each measure run. The number of
           datasets returned by the node determines the number of runs.
+        callback : functor
+          Optional callback to extract information from inside the main loop of
+          the measure. The callback is called with the input 'data', the 'node'
+          instance that is evaluated repeatedly and the 'result' of a single
+          evaluation -- passed as named arguments (see labels in quotes) for
+          every iteration, directly after evaluating the node.
         """
         Measure.__init__(self, **kwargs)
 
         self._node = node
         self._generator = generator
+        self._callback = callback
 
 
     def _call(self, ds):
@@ -273,6 +281,9 @@ class RepeatedMeasure(Measure):
                 ca.datasets.append(sds)
             # run the beast
             result = node(sds)
+            # callback
+            if not self._callback is None:
+                self._callback(data=sds, node=node, result=result)
             # subclass postprocessing
             result = self._repetition_postcall(sds, node, result)
             if space:
@@ -512,6 +523,8 @@ class TransferMeasure(Measure):
                         "it, or it is disabled" % measure)
 
         return res
+
+    measure = property(fget=lambda self:self.__measure)
 
 
 

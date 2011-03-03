@@ -144,7 +144,7 @@ sweep()
     shashums_visited=
     for branch in $BRANCHES; do
         branch_has_problems=
-        blogfile="$logdir/${branch//\//_}.log"
+        blogfile="$logdir/${branch//\//_}.txt"
         {
         echo
         echo "I: ---------------{ Branch $branch }--------------"

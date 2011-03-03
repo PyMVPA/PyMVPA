@@ -829,15 +829,17 @@ def test_other_samples_dtypes():
 
 
 def test_dataset_summary():
-    for ds in datasets.itervalues():
+    for ds in datasets.values() + [Dataset(np.array([None], dtype=object))]:
         s = ds.summary()
         ok_(s.startswith(str(ds)[1:-1])) # we strip surrounding '<...>'
         # TODO: actual test of what was returned; to do that properly
         #       RF the summary() so it is a dictionary
 
-        summaries = ['Sequence statistics']
-        if 'targets' in ds.sa and 'chunks' in ds.sa:
-            summaries += ['Summary for targets', 'Summary for chunks']
+        summaries = []
+        if 'targets' in ds.sa:
+            summaries += ['Sequence statistics']
+            if 'chunks' in ds.sa:
+                summaries += ['Summary for targets', 'Summary for chunks']
 
         # By default we should get all kinds of summaries
         if not 'Number of unique targets >' in s:

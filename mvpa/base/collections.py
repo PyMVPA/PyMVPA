@@ -12,7 +12,7 @@ dedicated containers aka. `Collections`.
 
 __docformat__ = 'restructuredtext'
 
-import copy
+import copy, re
 import numpy as np
 from operator import isSequenceType
 
@@ -52,6 +52,9 @@ class Collectable(object):
         doc : str
           Documentation about the purpose of this collectable.
         """
+        if doc is not None:
+            # to prevent newlines in the docstring
+            doc = re.sub('[\n ]+', ' ', doc)
         self.__doc__ = doc
         self.__name = name
         self._value = None

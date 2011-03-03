@@ -13,7 +13,7 @@ import numpy as np
 
 from mvpa.testing import *
 
-if not externals.exists('nifti') and not externals.exists('nibabel'):
+if not externals.exists('nibabel'):
     raise SkipTest
 
 from mvpa import pymvpa_dataroot
@@ -71,17 +71,11 @@ def test_nifti_dataset():
 
 def test_fmridataset():
     # full-blown fmri dataset testing
-    if externals.exists('nibabel'):
-        import nibabel
-        maskimg = nibabel.load(os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
-        data = maskimg.get_data().copy()
-        data[data>0] = np.arange(1, np.sum(data) + 1)
-        maskimg = nibabel.Nifti1Image(data, None, maskimg.get_header())
-    else:
-        import nifti
-        maskimg = nifti.NiftiImage(os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
-        # assign some values we can check later on
-        maskimg.data.T[maskimg.data.T>0] = np.arange(1, np.sum(maskimg.data) + 1)
+    import nibabel
+    maskimg = nibabel.load(os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+    data = maskimg.get_data().copy()
+    data[data>0] = np.arange(1, np.sum(data) + 1)
+    maskimg = nibabel.Nifti1Image(data, None, maskimg.get_header())
     attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
     ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'bold.nii.gz'),
                       targets=attr.targets, chunks=attr.chunks,
@@ -114,18 +108,11 @@ def test_nifti_mapper():
 
     # test mapping of ndarray
     vol = map2nifti(data, np.ones((294912,), dtype='int16'))
-    if externals.exists('nibabel'):
-        assert_equal(vol.get_shape(), (128, 96, 24))
-        assert_true((vol.get_data() == 1).all())
-        # test mapping of the dataset
-        vol = map2nifti(data)
-        assert_equal(vol.get_shape(), (128, 96, 24, 2))
-    else:
-        assert_equal(vol.data.shape, (24, 96, 128))
-        assert_true((vol.data == 1).all())
-        # test mapping of the dataset
-        vol = map2nifti(data)
-        assert_equal(vol.data.shape, (2, 24, 96, 128))
+    assert_equal(vol.get_shape(), (128, 96, 24))
+    assert_true((vol.get_data() == 1).all())
+    # test mapping of the dataset
+    vol = map2nifti(data)
+    assert_equal(vol.get_shape(), (128, 96, 24, 2))
 
 
 def test_multiple_calls():
@@ -182,20 +169,12 @@ def test_er_nifti_dataset():
 
     # map back into voxel space, should ignore addtional features
     nim = map2nifti(ds)
-    if externals.exists('nibabel'):
-        # origsamples has t,x,y,z
-        assert_equal(nim.get_shape(), origsamples.shape[1:] + (len(ds) * 4,))
-        # check shape of a single sample
-        nim = map2nifti(ds, ds.samples[0])
-        # pynifti image has [t,]z,y,x
-        assert_equal(nim.get_shape(), (40, 20, 1, 4))
-    else:
-        # origsamples has t,x,y,z but pynifti image has [t,]z,y,x
-        assert_equal(nim.data.T.shape, origsamples.shape[1:] + (len(ds) * 4,))
-        # check shape of a single sample
-        nim = map2nifti(ds, ds.samples[0])
-        # pynifti image has [t,]z,y,x
-        assert_equal(nim.data.T.shape, (40, 20, 1, 4))
+    # origsamples has t,x,y,z
+    assert_equal(nim.get_shape(), origsamples.shape[1:] + (len(ds) * 4,))
+    # check shape of a single sample
+    nim = map2nifti(ds, ds.samples[0])
+    # pynifti image has [t,]z,y,x
+    assert_equal(nim.get_shape(), (40, 20, 1, 4))
 
     # and now with masking
     ds = fmri_dataset(tssrc, mask=masrc)
@@ -220,14 +199,9 @@ def test_er_nifti_dataset_mapping():
     # t,z,y,x
     samples = np.arange(120).reshape((5,) + sample_size)
     dsmask = np.arange(24).reshape(sample_size) % 2
-    if externals.exists('nibabel'):
-        import nibabel
-        tds = fmri_dataset(nibabel.Nifti1Image(samples.T, None),
-                           mask=nibabel.Nifti1Image(dsmask.T, None))
-    else:
-        import nifti
-        tds = fmri_dataset(nifti.NiftiImage(samples),
-                           mask=nifti.NiftiImage(dsmask))
+    import nibabel
+    tds = fmri_dataset(nibabel.Nifti1Image(samples.T, None),
+                       mask=nibabel.Nifti1Image(dsmask.T, None))
     ds = eventrelated_dataset(
             tds,
             events=[Event(onset=0, duration=2, label=1,
@@ -276,18 +250,11 @@ def test_nifti_dataset_from3_d():
     ds = fmri_dataset(masrc, mask=masrc, targets=1)
     assert_equal(len(ds), 1)
 
-    if externals.exists('nibabel'):
-        import nibabel
-        plain_data = nibabel.load(masrc).get_data()
-        # Lets check if mapping back works as well
-        assert_array_equal(plain_data,
-                           map2nifti(ds).get_data().reshape(plain_data.shape))
-    else:
-        import nifti
-        plain_data = nifti.NiftiImage(masrc).data
-        # Lets check if mapping back works as well
-        assert_array_equal(plain_data,
-                           map2nifti(ds).data.reshape(plain_data.shape))
+    import nibabel
+    plain_data = nibabel.load(masrc).get_data()
+    # Lets check if mapping back works as well
+    assert_array_equal(plain_data,
+                       map2nifti(ds).get_data().reshape(plain_data.shape))
 
     # test loading from a list of filenames
 

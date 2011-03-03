@@ -18,6 +18,19 @@ if externals.exists('scipy', raise_=True):
     # if we construct the polynomials ourselves, we wouldn't need scipy here
     from scipy.special import legendre
 
+    def legendre_(n, x):
+        """Helper to avoid problems with scipy 0.8.0 returning inf for -1
+
+        Scipy 0.8.0 (and possibly later) has regression of reporting
+        'inf's for negative boundary. Lets guard against it for now
+        """
+        leg = legendre(n)
+        r = leg(x)
+        infs = np.isinf(r)
+        if np.any(infs):
+            r[infs] = leg(x[infs] + 1e-10) # offset to try to overcome problems
+        return r
+
 from mvpa.base.dochelpers import _str, borrowkwargs
 from mvpa.mappers.base import Mapper
 
@@ -194,7 +207,7 @@ class PolyDetrendMapper(Mapper):
             # create the timespan
             self._polycoords, polycoords_scaled = self._get_polycoords(ds, None)
             for n in range(polyord + 1):
-                reg.append(legendre(n)(polycoords_scaled)[:, np.newaxis])
+                reg.append(legendre_(n, polycoords_scaled)[:, np.newaxis])
         # chunk-wise detrending is desired
         else:
              # get the unique chunks
@@ -234,7 +247,7 @@ class PolyDetrendMapper(Mapper):
                 # create each polyord with the value for that chunk
                 for n in range(polyord[n] + 1):
                     newreg = np.zeros((len(ds), 1))
-                    newreg[cinds, 0] = legendre(n)(polycoords_scaled)
+                    newreg[cinds, 0] = legendre_(n, polycoords_scaled)
                     reg.append(newreg)
 
         # if we don't handle in inspace, there is no need to store polycoords

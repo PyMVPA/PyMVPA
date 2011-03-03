@@ -12,10 +12,11 @@
 
 from mvpa.base import externals
 
-if externals.exists('nifti', raise_=True):
-    from nifti import NiftiImage
+if externals.exists('nibabel', raise_=True):
+    import nibabel as nb
 
 import re
+import os.path
 import numpy as np
 
 from mvpa.misc.support import reuse_absolute_path
@@ -66,15 +67,18 @@ class FSLAtlas(XMLBasedAtlas):
 
         for imagefilename in imagefile_candidates:
             try:
-                ni_image_  = NiftiImage(imagefilename, load=False)
+                if not os.path.exists(imagefilename):
+                    # try with extension if filename doesn't exist
+                    imagefilename += '.nii.gz'
+                ni_image_  = nb.load(imagefilename)
             except RuntimeError, e:
                 raise RuntimeError, " Cannot open file " + imagefilename
 
-            resolution_ = ni_image_.pixdim[0]
+            resolution_ = ni_image_.get_header().get_zooms()[0]
             if resolution is None:
                 # select this one if the best
                 if ni_image is None or \
-                       resolution_ < ni_image.pixdim[0]:
+                       resolution_ < ni_image.get_header().get_zooms()[0]:
                     ni_image = ni_image_
                     self._image_file = imagefilename
             else:
@@ -96,9 +100,13 @@ class FSLAtlas(XMLBasedAtlas):
         if __debug__:
             debug('ATL__', "Loading atlas data from %s" % self._image_file)
         self._image = ni_image
-        self._resolution = ni_image.pixdim[0]
-        self._origin = np.abs(ni_image.header['qoffset']) * 1.0  # XXX
-        self._data   = self._image.data
+        self._resolution = ni_image.get_header().get_zooms()[0]
+        self._origin = np.abs(ni_image.get_header().get_qform()[:3,3])  # XXX
+
+        self._data   = self._image.get_data()
+        if len(self._data.shape) == 4:
+            # want to have volume axis first
+            self._data = np.rollaxis(self._data, -1)
 
 
     def _load_metadata(self):
@@ -180,7 +188,7 @@ class FSLProbabilisticAtlas(FSLAtlas):
         level = 0
         resultLabels = []
         for index, area in enumerate(self._levels[level]):
-            prob =  int(self._data[index, c[2], c[1], c[0]])
+            prob =  int(self._data[index, c[0], c[1], c[2]])
             if prob > self.thr:
                 resultLabels += [dict(index=index,
                                       #id=
@@ -229,12 +237,11 @@ class FSLProbabilisticAtlas(FSLAtlas):
         """
         if isinstance(target, int):
             res = self._data[target]
+            # since we no longer support pynifti all is XYZ
             if axes_order == 'xyz':
-                # ATM we store/access in zyx (kji) order, so we would need
-                # to swap
-                return res.T
-            elif axes_order == 'zyx':
                 return res
+            elif axes_order == 'zyx':
+                return res.T
             else:
                 raise ValueError, \
                       "Unknown axes_order=%r provided" % (axes_order,)

@@ -41,3 +41,6 @@ Release Notes -- PyMVPA 0.6
   that SliceMapper tries to perform slicing without copying whenever
   possible. Note that any feature selection procedure has to be trained on a
   dataset before it can be used -- otherwise it won't do the right thing(TM).
+
+* There is no dependency on PyNIfTI for any functionality anymore. It has been
+  replaced by NiBabel (http://nipy.org/nibabel).
