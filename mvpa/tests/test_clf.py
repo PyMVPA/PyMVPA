@@ -424,7 +424,7 @@ class ClassifiersTests(unittest.TestCase):
     def testTreeClassifier(self):
         """Basic tests for TreeClassifier
         """
-        ds = datasets['uni4small']
+        ds = datasets['uni4medium']
         # excluding PLR since that one can deal only with 0,1 labels ATM
         clfs = clfswh['binary', '!plr']         # pool of classifiers
         # Lets permute so each time we try some different combination
@@ -482,7 +482,10 @@ class ClassifiersTests(unittest.TestCase):
             OddEvenSplitter(),
             enable_states=['confusion', 'training_confusion'])
         cverror = cv(ds)
-        self.failUnless(cverror<0.2)
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless(cverror < 0.3,
+                            msg="Got too high error = %s using %s"
+                            % (cverror, tclf))
 
 
     @sweepargs(clf=clfswh[:])
