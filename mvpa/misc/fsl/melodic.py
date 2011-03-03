@@ -77,6 +77,11 @@ class MelodicResults( object ):
     extent   = property(fget=lambda self: self._ic.get_shape()[:3])
     tmodes   = property(fget=get_tmodes)
     smodes   = property(fget=lambda self: self._smodes.T )
-    icstats = property(fget=lambda self: self._icstats )
+    icstats = property(fget=lambda self: self._icstats,
+            doc="""Per component statistics.
+
+The first two values (from a set of four per component) correspond to the
+explained variance of the component in the set of extracted components and
+two the total variance in the whole dataset.""")
     relvar_per_ic  = property(fget=lambda self: self._icstats[:, 0])
     truevar_per_ic = property(fget=lambda self: self._icstats[:, 1])
