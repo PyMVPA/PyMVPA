@@ -329,6 +329,17 @@ class NiftiDatasetTests(unittest.TestCase):
         self.failUnlessEqual(ds_raw.niftihdr['scl_slope'], 15.0)
         self.failUnlessEqual(ds_raw.niftihdr['scl_inter'], 100)
 
+        # Verify that map2nifti resets the scl_ fields:
+        ni0 = ds_scaled.map2Nifti(ds_raw.samples)
+        self.failUnlessEqual(ni0.header['scl_slope'], 1.0)
+        self.failUnlessEqual(ni0.header['scl_inter'], 0.)
+        # but original remains untouched
+        self.failUnlessEqual(ds_scaled.niftihdr['scl_slope'], 15.0)
+        self.failUnlessEqual(ds_scaled.niftihdr['scl_inter'], 100)
+
+        # and data remains the same
+        # (check just in case of evil "pynifti got brains")
+        self.failUnlessEqual(ni0.data[0, 0, 3, 4], 5)
         os.remove(filename)
 
 def suite():
