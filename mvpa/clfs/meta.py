@@ -672,6 +672,23 @@ class TreeClassifier(ProxyClassifier):
                  male female monkey dog
                   1      2    3      4
 
+    If it is desired to have a trailing node with a single label and
+    thus without any classification, such as in
+
+                       SVM
+                      /   \
+                     g1   g2
+                     /     \
+                    1     SVM
+                          /  \
+                         2    3
+
+    then just specify None as the classifier to use::
+
+        TreeClassifier(SVM(),
+           {'g1':  ((1,), None),
+            'g2':  ((1,2,3,4), SVM())})
+
     """
 
     _DEV__doc = """
@@ -826,14 +843,24 @@ class TreeClassifier(ProxyClassifier):
         #     since then it would lead to undetermined prediction (which
         #     might be not a bad thing altogether...)
         for gk in groups.iterkeys():
-            # select samples per each group
-            ids = get_samples_by_attr(dataset, targets_sa_name, groups_labels[gk])
-            ds_group = dataset[ids]
-            if __debug__:
-                debug('CLFTREE', "Training %(clf)s for group %(gk)s on %(ds)s",
-                      msgargs=dict(clf=clfs[gk], gk=gk, ds=ds_group))
-            # and train corresponding slave clf
-            clfs[gk].train(ds_group)
+            clf = clfs[gk]
+            group_labels = groups_labels[gk]
+            if clf is None: # Trailing node
+                if len(group_labels) != 1:
+                    raise ValueError(
+                        "Trailing nodes with no classifier assigned must have "
+                        "only a single label associated. Got %s defined in "
+                        "group %r of %s"
+                        % (group_labels, gk, self))
+            else:
+                # select samples per each group
+                ids = get_samples_by_attr(dataset, targets_sa_name, groups_labels[gk])
+                ds_group = dataset[ids]
+                if __debug__:
+                    debug('CLFTREE', "Training %(clf)s for group %(gk)s on %(ds)s",
+                          msgargs=dict(clf=clfs[gk], gk=gk, ds=ds_group))
+                # and train corresponding slave clf
+                clf.train(ds_group)
 
 
     def untrain(self):
@@ -841,18 +868,18 @@ class TreeClassifier(ProxyClassifier):
         """
         super(TreeClassifier, self).untrain()
         for clf in self.clfs.values():
-            clf.untrain()
+            if clf is not None:
+                clf.untrain()
 
 
     def _predict(self, dataset):
         """
         """
         # Local bindings
-        clfs, index2group = self.clfs, self._index2group
+        clfs, index2group, groups = self.clfs, self._index2group, self._groups
         clf_predictions = np.asanyarray(ProxyClassifier._predict(self, dataset))
         # assure that predictions are indexes, ie int
         clf_predictions = clf_predictions.astype(int)
-
         # now for predictions pointing to specific groups go into
         # corresponding one
         # defer initialization since dtype would depend on predictions
@@ -865,11 +892,14 @@ class TreeClassifier(ProxyClassifier):
                 debug('CLFTREE',
                       'Predicting for group %s using %s on %d samples' %
                       (gk, clf_, np.sum(group_indexes)))
-            p = clf_.predict(dataset[group_indexes])
-            if predictions is None:
-                predictions = np.zeros((len(dataset),),
-                                      dtype=np.asanyarray(p).dtype)
-            predictions[group_indexes] = p
+            if clf_ is None:
+                predictions[group_indexes] = groups[gk][0] # our only label
+            else:
+                p = clf_.predict(dataset[group_indexes])
+                if predictions is None:
+                    predictions = np.zeros((len(dataset),),
+                                          dtype=np.asanyarray(p).dtype)
+                predictions[group_indexes] = p
         return predictions
 
 
