@@ -3,7 +3,7 @@ Section: python
 Priority: optional
 Maintainer: NeuroDebian team <team@neuro.debian.net>
 Uploaders: Michael Hanke <mih@debian.org>, Yaroslav Halchenko <debian@onerussian.com>
-Build-Depends: debhelper (>= 7.0.50~), swig, python-all-dev (>= 2.4), python-support (>= 0.6), python-numpy, libsvm-dev (>= 2.84.0), help2man, python-lxml, python-nifti, python-nose, python-h5py, python-scipy
+Build-Depends: debhelper (>= 7.0.50~), swig, python-all-dev (>= 2.4), python-support (>= 0.6), python-numpy, libsvm-dev (>= 2.84.0), help2man, python-lxml, python-nibabel, python-nose, python-h5py, python-scipy
 Standards-Version: 3.9.1
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
@@ -15,7 +15,7 @@ Architecture: all
 Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-mvpa-snapshot-lib(>= ${source:Version})
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
-Recommends: python-nifti, python-psyco, python-mdp, python-scipy, shogun-python-modular, python-pywt, python-matplotlib, python-reportlab, python-h5py
+Recommends: python-nibabel, python-psyco, python-mdp, python-scipy, shogun-python-modular, python-pywt, python-matplotlib, python-reportlab, python-h5py
 Suggests: fslview, fsl, python-nose, python-lxml, python-scikits-openopt, python-rpy, python-mvpa-doc
 Conflicts: python-mvpa
 Description: multivariate pattern analysis with Python
