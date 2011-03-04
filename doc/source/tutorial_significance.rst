@@ -451,16 +451,3 @@ References
   *Historical excurse into the life of 10 prominent statisticians of XXth century
   and their scientific contributions.*
 
-.. only:: html
-
-  .. autosummary::
-     :toctree: generated
-
-     ~numpy.ndarray
-     ~numpy.random
-     ~scipy.stats.distributions.norm
-     ~mvpa.clfs.stats.Nonparametric
-     ~mvpa.clfs.stats.rv_semifrozen
-     ~mvpa.clfs.stats.FixedNullDist
-     ~mvpa.clfs.stats.MCNullDist
-

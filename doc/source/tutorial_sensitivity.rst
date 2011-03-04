@@ -445,26 +445,3 @@ However, interpreting the results might not always be straight-forward. In
 the :ref:`next tutorial part <chap_tutorial_eventrelated>` we will set out
 to take away another constraint of all our previously performed analyses. We
 are going to go beyond spatial analyses and explore the time dimension.
-
-.. only:: html
-
-  References
-  ==========
-
-  .. autosummary::
-     :toctree: generated
-
-     ~mvpa.measures.base.Sensitivity
-     ~mvpa.featsel.base.SensitivityBasedFeatureSelection
-     ~mvpa.measures.base.SplitFeaturewiseMeasure
-     ~mvpa.clfs.meta.FeatureSelectionClassifier
-     ~mvpa.clfs.meta.SplitClassifier
-     ~mvpa.clfs.meta.TreeClassifier
-     ~mvpa.clfs.gnb.GNB
-     ~mvpa.datasets.splitters.NFoldSplitter
-     ~mvpa.misc.support.MapOverlap
-     ~mvpa.mappers.fx.FxMapper
-     ~mvpa.misc.transformers.l1_normed
-     ~mvpa.misc.transformers.l2_normed
-     ~mvpa.featsel.rfe.RFE
-     ~mvpa.measures.noiseperturbation.NoisePerturbationSensitivity

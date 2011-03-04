@@ -297,14 +297,3 @@ References
 
 :ref:`Hastie et al. (2009) <HTF09>`
   *Comprehensive reference of statistical learning methods.*
-
-
-.. only:: html
-
-   .. autosummary::
-      :toctree: generated
-
-      ~mvpa.measures.base.CrossValidation
-      ~mvpa.datasets.base.Dataset
-      ~mvpa.clfs.knn.kNN
-      mvpa.generators.partition
