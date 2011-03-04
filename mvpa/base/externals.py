@@ -104,6 +104,9 @@ def __assign_mdp_version():
         ver += '-dev'
     versions['mdp'] = SmartVersion(ver)
 
+def __assign_nibabel_version():
+    import nibabel
+    versions['nibabel'] = SmartVersion(nibabel.__version__)
 
 def __check_pywt(features=None):
     """Check for available functionality within pywt
@@ -412,7 +415,7 @@ def __check_rpy2():
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
-          'nibabel':'from nibabel import Nifti1Image as __',
+          'nibabel':'__assign_nibabel_version()',
           'ctypes':'import ctypes as __',
           'shogun':'__assign_shogun_version()',
           'shogun.krr': '__assign_shogun_version(); import shogun.Regression as __; x=__.KRR',
