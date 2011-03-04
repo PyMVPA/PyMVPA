@@ -10,7 +10,6 @@
 
 import os
 import numpy as np
-from tempfile import mktemp
 
 from mvpa import cfg
 from mvpa.testing import *
@@ -343,12 +342,12 @@ def test_nifti_dataset_from3_d():
 #            pass
 #    self.failUnless(ids_out == ids_roi)
 
-def test_assumptions_on_nibabel_behavior():
+@with_tempfile(suffix='.nii.gz')
+def test_assumptions_on_nibabel_behavior(filename):
     if not externals.exists('nibabel'):
         raise SkipTest('No nibabel available')
-    import nibabel as nb
-    filename = mktemp('mvpa', 'test_nibabel_behavior') + '.nii.gz'
 
+    import nibabel as nb
     masrc = os.path.join(pymvpa_dataroot, 'mask.nii.gz')
     ni = nb.load(masrc)
     hdr = ni.get_header()
@@ -395,4 +394,3 @@ def test_assumptions_on_nibabel_behavior():
             assert_equal(slope, 1.0)
             assert_equal(inter, 0)
 
-    os.remove(filename)

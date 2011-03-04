@@ -10,35 +10,24 @@
 
 import os
 import unittest
-from tempfile import mktemp
 
+from mvpa.testing.tools import *
 from mvpa.base.info import wtf
 
-class TestBases(unittest.TestCase):
+@with_tempfile()
+def test_wtf(filename):
+    """Very basic testing -- just to see if it doesn't crash"""
 
-    def test_wtf(self):
-        """Very basic testing -- just to see if it doesn't crash"""
+    sinfo = str(wtf())
+    sinfo_excludes = str(wtf(exclude=['process']))
+    ok_(len(sinfo) > len(sinfo_excludes))
+    ok_(not 'Process Info' in sinfo_excludes)
 
-        sinfo = str(wtf())
-        sinfo_excludes = str(wtf(exclude=['process']))
-        self.failUnless(len(sinfo) > len(sinfo_excludes))
-        self.failUnless(not 'Process Info' in sinfo_excludes)
-
-        # check if we could store and load it back
-        filename = mktemp('mvpa', 'test')
-        wtf(filename)
-        try:
-            sinfo_from_file = '\n'.join(open(filename, 'r').readlines())
-        except Exception, e:
-            self.fail('Testing of loading from a stored a file has failed: %r'
-                      % (e,))
-        os.remove(filename)
-
-
-def suite():
-    return unittest.makeSuite(TestBases)
-
-
-if __name__ == '__main__':
-    import runner
-
+    # check if we could store and load it back
+    wtf(filename)
+    try:
+        sinfo_from_file = '\n'.join(open(filename, 'r').readlines())
+    except Exception, e:
+        raise AssertionError(
+            'Testing of loading from a stored a file has failed: %r'
+            % (e,))

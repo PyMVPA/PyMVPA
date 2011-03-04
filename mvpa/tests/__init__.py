@@ -26,7 +26,6 @@ def collect_unit_tests(verbosity=1):
     tests = [
         # Basic data structures/manipulators
         'test_externals',
-        'test_base',
         'test_dochelpers',
         'test_som',
         'test_state',
@@ -96,6 +95,7 @@ def collect_nose_tests(verbosity=1):
     """
     tests = [
         # Basic data structures/manipulators
+        'test_base',
         'test_collections',
         'test_attrmap',
 
