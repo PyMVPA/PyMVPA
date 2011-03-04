@@ -166,7 +166,8 @@ class FFTResampleMapper(Mapper):
 
 @borrowkwargs(FFTResampleMapper, '__init__')
 def fft_resample(ds, num, **kwargs):
-    """
+    """FFT-based resampling.
+
     Parameters
     ----------
     ds : Dataset

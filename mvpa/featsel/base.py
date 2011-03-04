@@ -182,8 +182,7 @@ class FeatureSelection(SliceMapper):
 
 
 class StaticFeatureSelection(FeatureSelection):
-    """
-
+    """Feature selection by static slicing argument.
     """
     def __init__(self, slicearg, dshape=None, oshape=None, **kwargs):
         """
