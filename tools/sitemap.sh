@@ -3,7 +3,7 @@
 # Generate a XML sitemap to make the search engines love the website.
 #
 
-baseurl="http://www.pymvpa.org"
+baseurl="http://v04.pymvpa.org"
 siteroot="build/website"
 
 cat << EOT
