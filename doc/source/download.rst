@@ -25,25 +25,27 @@ Binary packages are available for:
     Backports for Debian and Ubuntu releases are available from the
     `NeuroDebian project`_.
 
-* RPM-based GNU/Linux distributions (:ref:`installation instructions <install_rpm>`)
-    RPM packages are provided through the `OpenSUSE Build Service`_. It offers
-    package repositories and `1-click-installations`_. Currently, we offer RPMs
-    for:
-
-    * CentOS_ 5
-    * Fedora_ 9 (and later releases)
-    * OpenSUSE_ 11.0 (and later releases)
-    * RedHat_ Enterprise Linux 5
+..
+  * RPM-based GNU/Linux distributions (:ref:`installation instructions <install_rpm>`)
+      RPM packages are provided through the `OpenSUSE Build Service`_. It offers
+      package repositories and `1-click-installations`_. Currently, we offer RPMs
+      for:
+  
+      * CentOS_ 5
+      * Fedora_ 9 (and later releases)
+      * OpenSUSE_ 11.0 (and later releases)
+      * RedHat_ Enterprise Linux 5
+  
+  * Windows (:ref:`installation instructions <install_win>`)
+      An installer for Python 2.5 is available from the `download area`_.
 
 * MacOS X (:ref:`installation instructions <install_macos>`)
     PyMVPA is available from the MacPorts_ framework.
 
-* Windows (:ref:`installation instructions <install_win>`)
-    An installer for Python 2.5 is available from the `download area`_.
-
 If there are no binary packages for your particular operating system or
 platform, you need to compile your own. The manual contains :ref:`instructions
-<buildfromsource>` to build PyMVPA in various environments.
+<buildfromsource>` to build PyMVPA in various environments (Windows, Fedora,
+OpenSuse, ...).
 
 .. _MacPorts: http://www.macports.org/ports.php?by=name&substr=pymvpa
 .. _official Debian package: http://packages.debian.org/python-mvpa

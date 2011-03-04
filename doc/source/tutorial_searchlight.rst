@@ -280,16 +280,3 @@ implementation go beyond what we looked at in this tutorial. It is not only
 possible to run *spatial* searchlights, but multiple spaces can be
 considered simultaneously. We will get back to these more advanced topics later
 on.
-
-
-
-.. only:: html
-
-  References
-  ==========
-
-  .. autosummary::
-     :toctree: generated
-
-     ~mvpa.measures.searchlight.Searchlight
-     ~mvpa.measures.searchlight.sphere_searchlight

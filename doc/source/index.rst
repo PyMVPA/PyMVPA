@@ -105,7 +105,7 @@ full text of the license.
 Authors & Contributors
 ======================
 
-.. include:: authors.rst
+.. include:: authors.txt
 
 
 Similar or Related Projects
@@ -174,3 +174,8 @@ here.
 .. _PyNIfTI: http://niftilib.sourceforge.net/pynifti
 .. _OpenMEEG: http://openmeeg.gforge.inria.fr
 .. _scikits.learn: http://scikit-learn.sourceforge.net
+
+.. toctree::
+   :hidden:
+
+   manual

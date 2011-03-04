@@ -397,14 +397,3 @@ After you are done and want to tidy up after yourself, you can easily remove
 unneeded generated files from within Python:
 
 >>> os.unlink('ersl.nii')
-
-
-.. only:: html
-
-  References
-  ==========
-
-  .. autosummary::
-     :toctree: generated
-
-     ~mvpa.datasets.eventrelated.eventrelated_dataset
