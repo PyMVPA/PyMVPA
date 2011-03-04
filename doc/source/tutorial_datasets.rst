@@ -475,18 +475,3 @@ transparently.
 True
 >>> # cleanup the temporary directory, and everything it includes
 >>> shutil.rmtree(tempdir, ignore_errors=True)
-
-
-.. only:: html
-
-  References
-  ==========
-
-  .. autosummary::
-     :toctree: generated
-
-     ~mvpa.datasets.base.Dataset
-     ~mvpa.datasets.mri.fmri_dataset
-     ~mvpa.base.collections.ArrayCollectable
-     ~mvpa.base.hdf5.h5save
-     ~mvpa.base.hdf5.h5load

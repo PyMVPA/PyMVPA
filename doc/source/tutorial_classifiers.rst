@@ -399,14 +399,3 @@ possible approach to this question is the topic of the :ref:`next tutorial part
      Try doing the Z-Scoring before computing the mean samples per category.
      What happens to the generalization performance of the classifier?
      ANSWER: It becomes 100%!
-
-
-.. only:: html
-
-  References
-  ==========
-
-  .. autosummary::
-     :toctree: generated
-
-     ~mvpa.clfs.base.Classifier
