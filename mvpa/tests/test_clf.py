@@ -334,9 +334,14 @@ class ClassifiersTests(unittest.TestCase):
         ds = datasets['uni2small']
         ds = ds[ds.sa.targets == 'L0']  #  only 1 label
         assert(ds.sa['targets'].unique == ['L0'])
-        dstr, dste = list(OddEvenSplitter()(ds))[0]
+
+        ds_ = list(OddEvenPartitioner().generate(ds))[0]
+        # Here is our "nice" 0.6 substitute for TransferError:
+        trerr = TransferMeasure(clf, Splitter('train'),
+                                postproc=BinaryFxNode(mean_mismatch_error,
+                                                      'targets'))
         try:
-            err = TransferError(clf)(dste, dstr)
+            err = np.asscalar(trerr(ds_))
         except Exception, e:
             self.fail(str(e))
         self.failUnless(err == 0.)
@@ -590,11 +595,10 @@ class ClassifiersTests(unittest.TestCase):
             'L0' : (('L0',), None),
             'L1+2+3' : (('L1', 'L2', 'L3'), clfswh['multiclass'][0])})
 
-        cv = CrossValidatedTransferError(
-            TransferError(tclf),
-            OddEvenSplitter(),
-            postproc=mean_sample(),
-            enable_ca=['confusion', 'training_confusion'])
+        cv = CrossValidation(tclf,
+                             OddEvenPartitioner(),
+                             postproc=mean_sample(),
+                             enable_ca=['stats', 'training_stats'])
         cverror = np.asscalar(cv(ds))
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless(cverror < 0.3,
