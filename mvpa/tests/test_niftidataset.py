@@ -92,19 +92,21 @@ def test_fmridataset():
     assert_array_equal(sorted(ds.fa.keys()),
             ['myintmask', 'subj1_indices'])
     assert_array_equal(sorted(ds.a.keys()),
-            ['imghdr', 'mapper', 'subj1_dim', 'subj1_eldim'])
+            ['imghdr', 'imgtype', 'mapper', 'subj1_dim', 'subj1_eldim'])
     # vol extent
     assert_equal(ds.a.subj1_dim, (40, 20, 1))
     # check time
     assert_equal(ds.sa.time_coords[-1], 3627.5)
     # non-zero mask values
     assert_array_equal(ds.fa.myintmask, np.arange(1, ds.nfeatures + 1))
+    # we know that imgtype must be:
+    ok_(ds.a.imgtype is nibabel.Nifti1Image)
 
-
-
-def test_nifti_mapper():
+@with_tempfile()
+def test_nifti_mapper(filename):
     """Basic testing of map2Nifti
     """
+    import nibabel
     data = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d.nii.gz'),
                         targets=[1,2])
 
@@ -115,6 +117,34 @@ def test_nifti_mapper():
     # test mapping of the dataset
     vol = map2nifti(data)
     assert_equal(vol.get_shape(), (128, 96, 24, 2))
+    ok_(isinstance(vol, data.a.imgtype))
+
+    # test providing custom imgtypes
+    vol = map2nifti(data, imgtype=nibabel.Nifti1Pair)
+    ok_(isinstance(vol, nibabel.Nifti1Pair))
+
+    # Lets generate a dataset using an alternative format (MINC)
+    # and see if type persists
+    volminc = nibabel.MincImage(vol.get_data(),
+                                vol.get_affine(),
+                                vol.get_header())
+    ok_(isinstance(volminc, nibabel.MincImage))
+    dsminc = fmri_dataset(volminc, targets=1)
+    ok_(dsminc.a.imgtype is nibabel.MincImage)
+    ok_(isinstance(dsminc.a.imghdr, nibabel.minc.MincImage.header_class))
+
+    # Lets test if we could save/load now into Analyze volume/dataset
+    if externals.versions['nibabel'] < '1.1.0':
+        raise SkipTest('nibabel prior 1.1.0 had an issue with types comprehension')
+    volanal = map2nifti(dsminc, imgtype=nibabel.AnalyzeImage) # MINC has no 'save' capability
+    ok_(isinstance(volanal, nibabel.AnalyzeImage))
+    volanal.to_filename(filename)
+    dsanal = fmri_dataset(filename, targets=1)
+    # this one is tricky since it might become Spm2AnalyzeImage
+    ok_('AnalyzeImage' in str(dsanal.a.imgtype))
+    ok_('AnalyzeHeader' in str(dsanal.a.imghdr.__class__))
+    volanal_ = map2nifti(dsanal)
+    ok_(isinstance(volanal_, dsanal.a.imgtype)) # type got preserved
 
 
 def test_multiple_calls():
