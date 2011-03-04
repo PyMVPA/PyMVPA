@@ -9,7 +9,7 @@ PDF_DIR=$(BUILDDIR)/pdf
 LATEX_DIR=$(BUILDDIR)/latex
 WWW_DIR=$(BUILDDIR)/website
 SWARM_DIR=$(BUILDDIR)/swarm
-WWW_UPLOAD_URI=www.pymvpa.org:/home/www/www.pymvpa.org/pymvpa
+WWW_UPLOAD_URI=www.pymvpa.org:/home/www/v04.pymvpa.org/pymvpa
 DATA_URI=apsy.gse.uni-magdeburg.de:/home/hanke/public_html/software/pymvpa/data
 SWARMTOOL_DIR=tools/codeswarm
 SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
@@ -210,6 +210,7 @@ website-stamp: mkdir-WWW_DIR apidoc htmldoc pdfdoc
 	touch $@
 
 upload-website: website
+	chmod a+rX -R $(WWW_DIR)
 	rsync -rzlhvp --delete --chmod=Dg+s,g+rw $(WWW_DIR)/* $(WWW_UPLOAD_URI)/
 
 upload-htmldoc: htmldoc
