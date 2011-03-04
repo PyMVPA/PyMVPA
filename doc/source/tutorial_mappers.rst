@@ -475,20 +475,3 @@ transformations, they can all be used in the same way, and can all be
 combined into a chain.
 
 Now we are really ready for :ref:`part four of the tutorial <chap_tutorial_classifiers>`.
-
-
-
-.. only:: html
-
-  References
-  ==========
-
-  .. autosummary::
-     :toctree: generated
-
-     ~mvpa.mappers
-     ~mvpa.mappers.base.Mapper
-     ~mvpa.mappers.base.StaticFeatureSelection
-     ~mvpa.mappers.flatten.FlattenMapper
-     ~mvpa.mappers.fx.FxMapper
-     ~mvpa.mappers.base.ChainMapper
