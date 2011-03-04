@@ -16,7 +16,7 @@ Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-mvpa-snapshot-
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Recommends: python-nibabel, python-psyco, python-mdp, python-scipy, shogun-python-modular, python-pywt, python-matplotlib, python-reportlab, python-h5py
-Suggests: fslview, fsl, python-nose, python-lxml, python-scikits-openopt, python-rpy, python-mvpa-doc
+Suggests: fslview, fsl, python-nose, python-lxml, python-openopt, python-rpy2, python-mvpa-doc, python-scikits-learn
 Conflicts: python-mvpa
 Description: multivariate pattern analysis with Python
  Python module to ease pattern classification analyses of large
@@ -30,7 +30,7 @@ Description: multivariate pattern analysis with Python
  While it is not limited to neuroimaging data (e.g. fMRI, or EEG) it
  is eminently suited for such datasets.
  .
- This is a package of a development snaphot. The latest released version is
+ This is a package of a development snapshot. The latest released version is
  provided by the python-mvpa package.
 
 
@@ -45,5 +45,5 @@ Description: low-level implementations and bindings for PyMVPA
  implementation of an SMLR classifier and custom Python bindings for the LIBSVM
  library.
  .
- This is a package of a development snaphot. The latest released version is
+ This is a package of a development snapshot. The latest released version is
  provided by the python-mvpa-lib package.
