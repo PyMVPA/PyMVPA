@@ -121,14 +121,17 @@ class GNB(Classifier):
     def _get_priors(self, nlabels, nsamples, nsamples_per_class):
         """Return prior probabilities given data
         """
+        # helper function - squash all dimensions but 1
+        squash = lambda x: np.atleast_1d(x.squeeze())
+
         prior = self.params.prior
         if prior == 'uniform':
             priors = np.ones((nlabels,))/nlabels
         elif prior == 'laplacian_smoothing':
-            priors = (1+np.squeeze(nsamples_per_class)) \
+            priors = (1+squash(nsamples_per_class)) \
                           / (float(nsamples) + nlabels)
         elif prior == 'ratio':
-            priors = np.squeeze(nsamples_per_class) / float(nsamples)
+            priors = squash(nsamples_per_class) / float(nsamples)
         else:
             raise ValueError(
                 "No idea on how to handle '%s' way to compute priors"
@@ -166,8 +169,10 @@ class GNB(Classifier):
             nsamples_per_class[il] += 1
             means[il] += s
 
+        # helper function - squash all dimensions but 1
+        squash = lambda x: np.atleast_1d(x.squeeze())
         ## Actually compute the means
-        non0labels = (nsamples_per_class.squeeze() != 0)
+        non0labels = (squash(nsamples_per_class) != 0)
         means[non0labels] /= nsamples_per_class[non0labels]
 
         # Store prior probabilities

@@ -326,6 +326,21 @@ class ClassifiersTests(unittest.TestCase):
         clf.ca.reset_changed_temporarily()
 
 
+    # TODO: sg - remove our limitations, meta, lda, qda and skl -- also
+    @sweepargs(clf=clfswh['!sg', '!plr', '!meta', '!lda', '!qda'])
+    def test_single_class(self, clf):
+        """Test if binary and multiclass can handle single class training/testing
+        """
+        ds = datasets['uni2small']
+        ds = ds[ds.sa.targets == 'L0']  #  only 1 label
+        assert(ds.sa['targets'].unique == ['L0'])
+        dstr, dste = list(OddEvenSplitter()(ds))[0]
+        try:
+            err = TransferError(clf)(dste, dstr)
+        except Exception, e:
+            self.fail(str(e))
+        self.failUnless(err == 0.)
+
     # TODO: validate for regressions as well!!!
     def test_split_classifier(self):
         ds = self.data_bin_1
@@ -524,7 +539,7 @@ class ClassifiersTests(unittest.TestCase):
     def test_tree_classifier(self):
         """Basic tests for TreeClassifier
         """
-        ds = datasets['uni4small']
+        ds = datasets['uni4medium']
         clfs = clfswh['binary']         # pool of classifiers
         # Lets permute so each time we try some different combination
         # of the classifiers
@@ -570,11 +585,21 @@ class ClassifiersTests(unittest.TestCase):
                             msg="Got too high error = %s using %s"
                             % (cverror, tclf))
 
-        # TODO: whenever implemented
+        # Test trailing nodes with no classifier
         tclf = TreeClassifier(clfs[0], {
-            'L0' : (('L0',), clfs[1]),
-            'L1+2+3' : (('L1', 'L2', 'L3'),    clfs[2])})
-        # TEST ME
+            'L0' : (('L0',), None),
+            'L1+2+3' : (('L1', 'L2', 'L3'), clfswh['multiclass'][0])})
+
+        cv = CrossValidatedTransferError(
+            TransferError(tclf),
+            OddEvenSplitter(),
+            postproc=mean_sample(),
+            enable_ca=['confusion', 'training_confusion'])
+        cverror = np.asscalar(cv(ds))
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless(cverror < 0.3,
+                            msg="Got too high error = %s using %s"
+                            % (cverror, tclf))
 
 
     @sweepargs(clf=clfswh[:])
