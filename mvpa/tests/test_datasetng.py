@@ -330,6 +330,19 @@ def test_ds_deepcopy():
     #ok_(np.any(ds.uniquetargets != ds_.uniquetargets))
     #ok_(np.any(ds.uniquechunks != ds_.uniquechunks))
 
+@sweepargs(dsp=datasets.items())
+def test_ds_array(dsp):
+    # When dataset
+    dsname, ds = dsp
+    if dsname != 'hollow':
+        ok_(np.asarray(ds) is ds.samples,
+            msg="Must have been the same on %s=%s" % dsp)
+    else:
+        ok_(np.asarray(ds) is not ds.samples,
+            msg="Should have not been the same on %s=%s" % dsp)
+    ok_(np.array(ds) is not ds.samples,
+        msg="Copy should have been created on array(), %s=%s" % dsp)
+
 
 def test_mergeds():
     data0 = Dataset.from_wizard(np.ones((5, 5)), targets=1)
