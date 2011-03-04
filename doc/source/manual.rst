@@ -9,6 +9,12 @@ PyMVPA User Manual
 
    intro
    installation
-   mappers
-   measures
+   support
+   tutorial
+   examples
    misc
+   faq
+   glossary
+   changelog
+   references
+   legal
