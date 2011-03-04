@@ -123,7 +123,7 @@ def with_tempfile(*targs, **tkwargs):
                 debug('TEST', 'Running %s with temporary filename %s'
                       % (func.__name__, filename))
             try:
-                func(filename, *arg, **kw)
+                func(*(arg + (filename,)), **kw)
             finally:
                 try:
                     os.unlink(filename)
