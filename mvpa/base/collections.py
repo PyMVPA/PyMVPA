@@ -401,7 +401,7 @@ class Collection(dict):
 
 
     def __str__(self):
-        return _str(self, ','.join([str(k) for k in self.keys()]))
+        return _str(self, ','.join([str(k) for k in sorted(self.keys())]))
 
 
 

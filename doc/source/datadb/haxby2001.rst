@@ -78,7 +78,7 @@ Instructions
   ...                   targets=attrs.labels, chunks=attrs.chunks,
   ...                   mask=os.path.join(subjpath, 'mask4_vt.nii.gz'))
   >>> print ds
-  <Dataset: 1452x577@int16, <sa: chunks,time_indices,targets,time_coords>, <fa: voxel_indices>, <a: mapper,voxel_eldim,voxel_dim,imghdr>>
+  <Dataset: 1452x577@int16, <sa: chunks,targets,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>>
 
 
 References
