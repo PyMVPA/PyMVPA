@@ -42,7 +42,7 @@ from mvpa.mappers.array import DenseArrayMapper
 from mvpa.base import warning
 
 
-def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
+def getNiftiFromAnySource(src, ensure=False, enforce_dim=None, scale_data=True):
     """Load/access NIfTI data from files or instances.
 
     :Parameters:
@@ -53,6 +53,10 @@ def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
       enforce_dim : int or None
         If not None, it is the dimensionality of the data to be enforced,
         commonly 4D for the data, and 3D for the mask in case of fMRI.
+      scale_data : bool
+        NIfTI header specifies scl_slope and scl_inter for scaling and
+        offsetting the data.  By default those will get applied to the data
+        (change in behavior post 0.4.6).
 
     :Returns:
       NiftiImage | None
@@ -78,6 +82,8 @@ def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
         # load from a list of given entries
         if enforce_dim is not None: enforce_dim_ = enforce_dim - 1
         else:                       enforce_dim_ = None
+        if __debug__:
+            debug('DS_NIFTI', 'Loading from a sequence of sources: %s' % (src,))
         srcs = [getNiftiFromAnySource(s, ensure=ensure,
                                       enforce_dim=enforce_dim_)
                 for s in src]
@@ -89,8 +95,11 @@ def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
                       "Input volumes contain variable number of dimensions:" \
                       " %s" % (shapes,)
         # Combine them all into a single beast
-        nifti = NiftiImage(N.array([s.asarray() for s in srcs]),
-                           srcs[0].header)
+        # And since they all could have varying scl_* - reset those
+        hdr = srcs[0].header
+        hdr['scl_slope'] = 1.
+        hdr['scl_inter'] = 0.
+        nifti = NiftiImage(N.array([s.asarray() for s in srcs]), hdr)
     elif ensure:
         raise ValueError, "Cannot load NIfTI from %s" % (src,)
 
@@ -118,6 +127,16 @@ def getNiftiFromAnySource(src, ensure=False, enforce_dim=None):
                       (new_shape, shape, src))
             nifti.data.shape = new_shape
 
+    if nifti is not None and scale_data:
+        if nifti.slope and not (nifti.slope == 1.0 and nifti.intercept == 0.0):
+            if __debug__:
+                debug('DS_NIFTI', 'Scaling the data from %s' % (src,))
+            nifti.data = nifti.getScaledData()
+        else:
+            # Do nothing -- just debug message
+            if __debug__:
+                debug('DS_NIFTI', 'Although scaling was requested, data from %s'
+                      ' has no scaling parameters set -- thus no scaling' % (src,))
     return nifti
 
 
@@ -132,6 +151,13 @@ def getNiftiData(nim):
     else:
         return nim.asarray()
 
+def _get_safe_header(nids):
+    """Given *NiftiDataset, returns a copy of NIfTI header with reset scl_ fields
+    """
+    hdr = nids.niftihdr.copy()
+    hdr['scl_slope'] = 1.
+    hdr['scl_inter'] = 0.
+    return hdr
 
 class NiftiDataset(MappedDataset):
     """Dataset loading its samples from a NIfTI image or file.
@@ -155,7 +181,7 @@ class NiftiDataset(MappedDataset):
     # XXX: Every dataset should really have an example of howto instantiate
     #      it (necessary parameters).
     def __init__(self, samples=None, mask=None, dsattr=None,
-                 enforce_dim=4, **kwargs):
+                 enforce_dim=4, scale_data=True, **kwargs):
         """
         :Parameters:
           samples: str | NiftiImage
@@ -166,6 +192,10 @@ class NiftiDataset(MappedDataset):
           enforce_dim : int or None
             If not None, it is the dimensionality of the data to be enforced,
             commonly 4D for the data, and 3D for the mask in case of fMRI.
+          scale_data : bool
+            NIfTI header specifies scl_slope and scl_inter for scaling and
+            offsetting the data.  By default those will get applied to the data
+            (change in behavior post 0.4.6).
         """
         # if in copy constructor mode
         if not dsattr is None and dsattr.has_key('mapper'):
@@ -182,7 +212,8 @@ class NiftiDataset(MappedDataset):
 
         # load the samples
         niftisamples = getNiftiFromAnySource(samples, ensure=True,
-                                             enforce_dim=enforce_dim)
+                                             enforce_dim=enforce_dim,
+                                             scale_data=scale_data)
         samples = niftisamples.data
 
         # do not put the whole NiftiImage in the dict as this will most
@@ -195,7 +226,7 @@ class NiftiDataset(MappedDataset):
 
         # figure out what the mask is, but onyl handle known cases, the rest
         # goes directly into the mapper which maybe knows more
-        niftimask = getNiftiFromAnySource(mask)
+        niftimask = getNiftiFromAnySource(mask, scale_data=scale_data)
         if niftimask is None:
             pass
         elif isinstance(niftimask, N.ndarray):
@@ -224,7 +255,8 @@ class NiftiDataset(MappedDataset):
     def map2Nifti(self, data=None):
         """Maps a data vector into the dataspace and wraps it with a
         NiftiImage. The header data of this object is used to initialize
-        the new NiftiImage.
+        the new NiftiImage (scl_slope and scl_inter are reset to 1.0 and
+        0.0 accordingly).
 
         :Parameters:
           data : ndarray or Dataset
@@ -238,7 +270,8 @@ class NiftiDataset(MappedDataset):
             # ease users life
             data = data.samples
         dsarray = self.mapper.reverse(data)
-        return NiftiImage(dsarray, self.niftihdr)
+
+        return NiftiImage(dsarray, _get_safe_header(self))
 
 
     def getDt(self):
@@ -317,16 +350,17 @@ class ERNiftiDataset(EventDataset):
     boxcar.
     """
     def __init__(self, samples=None, events=None, mask=None, evconv=False,
-                 storeoffset=False, tr=None, enforce_dim=4, **kwargs):
+                 storeoffset=False, tr=None, enforce_dim=4,
+                 scale_data=True, **kwargs):
         """
-        :Paramaters:
+        :Parameters:
           mask: str | NiftiImage | ndarray
             Filename of a NIfTI image or a `NiftiImage` instance or an ndarray
             of appropriate shape.
           evconv: bool
             Convert event definitions using `onset` and `duration` in some
             temporal unit into #sample notation.
-          storeoffset: Bool
+          storeoffset: bool
             Whether to store temproal offset information when converting
             Events into descrete time. Only considered when evconv == True.
           tr: float
@@ -335,6 +369,10 @@ class ERNiftiDataset(EventDataset):
           enforce_dim : int or None
             If not None, it is the dimensionality of the data to be enforced,
             commonly 4D for the data, and 3D for the mask in case of fMRI.
+          scale_data : bool
+            NIfTI header specifies scl_slope and scl_inter for scaling and
+            offsetting the data.  By default those will get applied to the data
+            (change in behavior post 0.4.6).
         """
         # check if we are in copy constructor mode
         if events is None:
@@ -343,7 +381,8 @@ class ERNiftiDataset(EventDataset):
             return
 
         nifti = getNiftiFromAnySource(samples, ensure=True,
-                                      enforce_dim=enforce_dim)
+                                      enforce_dim=enforce_dim,
+                                      scale_data=scale_data)
         # no copying
         samples = nifti.data
 
@@ -400,7 +439,7 @@ class ERNiftiDataset(EventDataset):
             # plain array can be passed on to base class
             pass
         else:
-            mask_nim = getNiftiFromAnySource(mask)
+            mask_nim = getNiftiFromAnySource(mask, scale_data=scale_data)
             if not mask_nim is None:
                 mask = getNiftiData(mask_nim)
             else:
@@ -415,7 +454,8 @@ class ERNiftiDataset(EventDataset):
     def map2Nifti(self, data=None):
         """Maps a data vector into the dataspace and wraps it with a
         NiftiImage. The header data of this object is used to initialize
-        the new NiftiImage.
+        the new NiftiImage (scl_slope and scl_inter are reset to 1.0 and
+        0.0 accordingly).
 
         .. note::
           Only the features corresponding to voxels are mapped back -- not
@@ -442,7 +482,7 @@ class ERNiftiDataset(EventDataset):
         else:
             pass
 
-        return NiftiImage(mr, self.niftihdr)
+        return NiftiImage(mr, _get_safe_header(self))
 
 
     niftihdr = property(fget=lambda self: self._dsattr['niftihdr'],

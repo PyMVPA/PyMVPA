@@ -108,11 +108,11 @@ if bind_libsvm:
 
 # define the setup
 setup(name         = 'pymvpa',
-      version      = '0.4.6',
+      version      = '0.4.7',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
-      url          = 'http://www.pymvpa.org',
+      url          = 'http://v04.pymvpa.org',
       description  = 'Multivariate pattern analysis',
       long_description = \
           "PyMVPA is a Python module intended to ease pattern classification " \

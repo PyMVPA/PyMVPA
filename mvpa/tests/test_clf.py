@@ -203,6 +203,20 @@ class ClassifiersTests(unittest.TestCase):
         clf.states._resetEnabledTemporarily()
 
 
+    # TODO: sg - remove our limitations, meta -- also
+    @sweepargs(clf=clfswh['!sg', '!plr', '!meta'])
+    def test_single_class(self, clf):
+        """Test if binary and multiclass can handle single class training/testing
+        """
+        ds = datasets['uni2small']['labels', (0,)]
+        try:
+            err = TransferError(clf)(
+                datasets['uni2small_test']['labels', (0,)],
+                datasets['uni2small_train']['labels', (0,)])
+        except Exception, e:
+            self.fail(str(e))
+        self.failUnless(err == 0.)
+
     # TODO: validate for regressions as well!!!
     def testSplitClassifier(self):
         ds = self.data_bin_1
@@ -410,7 +424,7 @@ class ClassifiersTests(unittest.TestCase):
     def testTreeClassifier(self):
         """Basic tests for TreeClassifier
         """
-        ds = datasets['uni4small']
+        ds = datasets['uni4medium']
         # excluding PLR since that one can deal only with 0,1 labels ATM
         clfs = clfswh['binary', '!plr']         # pool of classifiers
         # Lets permute so each time we try some different combination
@@ -459,11 +473,19 @@ class ClassifiersTests(unittest.TestCase):
                             msg="Got too high error = %s using %s"
                             % (cverror, tclf))
 
-        # TODO: whenever implemented
+        # Test trailing nodes with no classifier
         tclf = TreeClassifier(clfs[0], {
-            'L0' : (('L0',), clfs[1]),
-            'L1+2+3' : ((1, 2, 3),    clfs[2])})
-        # TEST ME
+            'L0' : ((0,), None),
+            'L1+2+3' : ((1, 2, 3), clfswh['multiclass'][0])})
+        cv = CrossValidatedTransferError(
+            TransferError(tclf),
+            OddEvenSplitter(),
+            enable_states=['confusion', 'training_confusion'])
+        cverror = cv(ds)
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless(cverror < 0.3,
+                            msg="Got too high error = %s using %s"
+                            % (cverror, tclf))
 
 
     @sweepargs(clf=clfswh[:])

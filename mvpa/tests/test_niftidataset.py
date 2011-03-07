@@ -9,8 +9,9 @@
 """Unit tests for PyMVPA nifti dataset"""
 
 import unittest
-import os.path
+import os
 import numpy as N
+from tempfile import mktemp
 
 from mvpa import pymvpa_dataroot
 from mvpa.datasets.nifti import *
@@ -286,6 +287,60 @@ class NiftiDatasetTests(unittest.TestCase):
                 pass
         self.failUnless(ids_out == ids_roi)
 
+    def testNiftiScalingData(self):
+        """Test if loading scaled data works correctly
+
+        Is relevant only for pynifti interface -- nibabel always does scaling
+        """
+        # We first need to construct such one
+        orig_filename = os.path.join(pymvpa_dataroot,'mask.nii.gz')
+        filename = mktemp('mvpa', 'test_scl_nifti') + '.nii.gz'
+        ni = NiftiImage(orig_filename)
+        orig_value = ni.data[0, 3, 4]
+        ni.data[0, 3, 4] = 5             # magic number
+        # Modify the header
+        hdr = ni.header
+        hdr['scl_slope'] = 15
+        hdr['scl_inter'] = 100
+        ni.header = hdr
+        ni.save(filename)
+
+        # Load generated file with slope and intercept defined
+        ds_scaled = NiftiDataset(filename, labels=1) # by default should scale
+        ds_scaled_multi = NiftiDataset([orig_filename, filename], labels=1)
+        ds_raw = NiftiDataset(filename, labels=1, scale_data=False) # by default should scale
+
+        fid = ds_scaled.mapper.getOutId([0,3,4]) # Feature ID for that coordinate above
+
+        self.failUnlessEqual(ds_scaled.samples[0, fid], 175)
+        self.failUnlessEqual(ds_scaled_multi.samples[0, fid], orig_value)
+        self.failUnlessEqual(ds_scaled_multi.samples[1, fid], 175)
+
+        self.failUnlessEqual(ds_raw.samples[0, fid], 5)
+
+        # In a ds obtained from a single volume -- scl_ are maintained
+        self.failUnlessEqual(ds_scaled.niftihdr['scl_slope'], 15.0)
+        self.failUnlessEqual(ds_scaled.niftihdr['scl_inter'], 100)
+
+        # And reset in a group
+        self.failUnlessEqual(ds_scaled_multi.niftihdr['scl_slope'], 1.0)
+        self.failUnlessEqual(ds_scaled_multi.niftihdr['scl_inter'], 0)
+
+        self.failUnlessEqual(ds_raw.niftihdr['scl_slope'], 15.0)
+        self.failUnlessEqual(ds_raw.niftihdr['scl_inter'], 100)
+
+        # Verify that map2nifti resets the scl_ fields:
+        ni0 = ds_scaled.map2Nifti(ds_raw.samples)
+        self.failUnlessEqual(ni0.header['scl_slope'], 1.0)
+        self.failUnlessEqual(ni0.header['scl_inter'], 0.)
+        # but original remains untouched
+        self.failUnlessEqual(ds_scaled.niftihdr['scl_slope'], 15.0)
+        self.failUnlessEqual(ds_scaled.niftihdr['scl_inter'], 100)
+
+        # and data remains the same
+        # (check just in case of evil "pynifti got brains")
+        self.failUnlessEqual(ni0.data[0, 0, 3, 4], 5)
+        os.remove(filename)
 
 def suite():
     return unittest.makeSuite(NiftiDatasetTests)
