@@ -32,31 +32,62 @@ __author__ = 'Yaroslav Halchenko'
 __copyright__ = 'Copyright (c) 2011 Yaroslav Halchenko'
 __license__ = 'MIT'
 
-import sys, nibabel as nb
+import sys
 from mvpa.base.dochelpers import table2string
+from mvpa.base import verbose, debug
+from mvpa.misc.cmdline import parser, opts
 
-def ap(l, format):
+parser.usage = """Usage: %s [options] [infile1] [infile2] ...""" % sys.argv[0]
+parser.option_groups = [opts.common]
+
+#try:
+import nibabel as nib
+#if verbose.level < 3:
+# suppress nibabel blurb
+nib.imageglobals.log_level = 31
+# unfortunately it seems to have no effect on any ways incorrect
+# "scl_slope" is 0.0; should !=0 and be finite; setting "scl_slope" to 1
+
+def ap(l, format, sep=', '):
     """Little helper to enforce consistency"""
     ls = [format % x for x in l]
-    return ', '.join(ls)
+    return sep.join(ls)
 
-files = sys.argv[1:]
+(options, files) = parser.parse_args()
+
+# files = sys.argv[1:]
 maxfnlen = max([len(f) for f in files])
 t = []
 for f in files:
-    vol = nb.load(f)
-    h = vol.get_header()
-    row = []
-    row += ["%%-%ds" % maxfnlen % f,
-            str(h.get_data_dtype()),
-            '@l[%s]' %ap(h.get_data_shape(), '%3g'),
-            '@lres: %s' % ap(h.get_zooms(), '%.2g')
-            ]
+    row = ["%%-%ds" % maxfnlen % f]
+    verbose(2, "Loading %s" % f)
+    try:
+        vol = nib.load(f)
+        h = vol.get_header()
+    except Exception, e:
+        row += ['failed']
+        t.append(row)
+        verbose(2, "Failed to gather information due to %s" % str(e))
+        continue
+    row += [ str(h.get_data_dtype()),
+             '@l[%s]' %ap(h.get_data_shape(), '%3g'),
+             '@l%s' % ap(h.get_zooms(), '%.2f', 'x') ]
+    # Slope
     if (h.has_data_slope or h.has_data_intercept) \
        and h.get_slope_inter() != (1.0, 0.0):
-        row += ['@lslope,inter: %s' % ap(h.get_slope_inter(), '%.2g')]
+        row += ['@l*%.2g+%.1g' % h.get_slope_inter()]
     else:
         row += [ '' ]
+
+    if (len(h.extensions)):
+        row += ['@l#exts: %d' % len(h.extensions)]
+    else:
+        row += [ '' ]
+
+    if (h.get_qform() != h.get_sform()).any():
+        row += ['sform']
+    else:
+        row += ['']
     t.append(row)
 
 print(table2string(t))
