@@ -45,6 +45,7 @@ import nibabel as nib
 #if verbose.level < 3:
 # suppress nibabel blurb
 nib.imageglobals.log_level = 31
+nib.imageglobals.error_level = 31
 # unfortunately it seems to have no effect on any ways incorrect
 # "scl_slope" is 0.0; should !=0 and be finite; setting "scl_slope" to 1
 
@@ -84,10 +85,14 @@ for f in files:
     else:
         row += [ '' ]
 
-    if (h.get_qform() != h.get_sform()).any():
-        row += ['sform']
-    else:
-        row += ['']
+    try:
+        if (h.get_qform() != h.get_sform()).any():
+            row += ['sform']
+        else:
+            row += ['']
+    except Exception, e:
+        verbose(2, "Failed to obtain qform or sform due to %s" % str(e))
+        row += ['error']
     t.append(row)
 
 print(table2string(t))
