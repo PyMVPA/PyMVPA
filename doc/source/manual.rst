@@ -9,9 +9,12 @@ PyMVPA User Manual
 
    intro
    installation
-   datasets
-   mappers
-   classifiers
-   measures
-   featsel
+   support
+   tutorial
+   examples
    misc
+   faq
+   glossary
+   changelog
+   references
+   legal

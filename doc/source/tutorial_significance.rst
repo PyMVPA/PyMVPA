@@ -222,7 +222,7 @@ dataset:
 >>> # alt: `ds = load_tutorial_results('ds_haxby2001')`
 >>> ds = get_haxby2001_data(roi='vt')
 >>> print ds.summary()
-Dataset: 16x577@float64, <sa: chunks,time_indices,runtype,targets,time_coords>, <fa: voxel_indices>, <a: mapper,voxel_eldim,voxel_dim,imghdr>
+Dataset: 16x577@float64, <sa: chunks,runtype,targets,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>
 stats: mean=11.5788 std=13.7772 var=189.811 min=-49.5554 max=97.292
 <BLANKLINE>
 Counts of targets in each chunk:
@@ -450,17 +450,4 @@ References
 :ref:`Wright, D. (2009) <Wri09>`
   *Historical excurse into the life of 10 prominent statisticians of XXth century
   and their scientific contributions.*
-
-.. only:: html
-
-  .. autosummary::
-     :toctree: generated
-
-     ~numpy.ndarray
-     ~numpy.random
-     ~scipy.stats.distributions.norm
-     ~mvpa.clfs.stats.Nonparametric
-     ~mvpa.clfs.stats.rv_semifrozen
-     ~mvpa.clfs.stats.FixedNullDist
-     ~mvpa.clfs.stats.MCNullDist
 

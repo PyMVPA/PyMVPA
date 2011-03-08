@@ -301,16 +301,18 @@ def summary(dataset, stats=True, lstats='auto', sstats='auto', idhash=False,
 
     ## Possibly summarize attributes listed as having unique
     if stats:
-        # TODO -- avg per chunk?
-        # XXX We might like to use scipy.stats.describe to get
-        # quick summary statistics (mean/range/skewness/kurtosis)
-        if dataset.nfeatures:
-            s += "%sstats: mean=%g std=%g var=%g min=%g max=%g\n" % \
-                 (ssep, np.mean(samples), np.std(samples),
-                  np.var(samples), np.min(samples), np.max(samples))
+        if np.issctype(samples.dtype):
+            # TODO -- avg per chunk?
+            # XXX We might like to use scipy.stats.describe to get
+            # quick summary statistics (mean/range/skewness/kurtosis)
+            if dataset.nfeatures:
+                s += "%sstats: mean=%g std=%g var=%g min=%g max=%g\n" % \
+                     (ssep, np.mean(samples), np.std(samples),
+                      np.var(samples), np.min(samples), np.max(samples))
+            else:
+                s += "%sstats: dataset has no features\n" % ssep
         else:
-            s += "%sstats: dataset has no features\n" % ssep
-
+            s += "%sstats: no stats for dataset of '%s' dtype" % (ssep, samples.dtype)
     if lstats:
         try:
             s += dataset.summary_targets(

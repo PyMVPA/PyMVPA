@@ -10,9 +10,9 @@
 
 import os
 import unittest
-from tempfile import mktemp
 import numpy as np
 
+from mvpa.testing.tools import *
 from mvpa.misc.io.hamster import *
 
 class HamsterHelperTests(unittest.TestCase):
@@ -35,7 +35,8 @@ class HamsterHelperTests(unittest.TestCase):
         self.failUnless(`hh` == "Hamster(fuga='123', h1=123, z=[123])")
 
 
-    def test_simple_storage(self):
+    @with_tempfile()
+    def test_simple_storage(self, filename):
         ex1 = """eins zwei drei
         0 1 2
         3 4 5
@@ -52,7 +53,6 @@ class HamsterHelperTests(unittest.TestCase):
         self.failUnless(hamster.asdict() == total_dict)
         self.failUnless(set(hamster.registered) == set(['ex1', 'd', 'boo']))
 
-        filename = mktemp('mvpa', 'test')
         filename_gz = filename + '.gz'
         filename_bogusgz = filename + '_bogus.gz'
 
@@ -95,7 +95,6 @@ class HamsterHelperTests(unittest.TestCase):
         self.failUnless(hamster.boo is hamster2.boo)
 
         # cleanup
-        os.remove(filename)
         os.remove(filename_gz)
         os.remove(filename_bogusgz)
 

@@ -548,7 +548,17 @@ class AttrDataset(object):
     __repr__ = {'full' : __repr_full__,
                 'str'  : __str__}[__REPR_STYLE__]
 
-    def __array__(self, dtype=None):
+    def __array__(self, *args):
+        """Provide an 'array' view or copy over dataset.samples
+
+        Parameters
+        ----------
+        dtype: type, optional
+          If provided, passed to .samples.__array__() call
+
+        *args to mimique numpy.ndarray.__array__ behavior which relies
+        on the actual number of arguments
+        """
         # another possibility would be converting .todense() for sparse data
         # but that might easily kill the machine ;-)
         if not hasattr(self.samples, '__array__'):
@@ -556,7 +566,7 @@ class AttrDataset(object):
                 "This AttrDataset instance cannot be used like a Numpy array "
                 "since its data-container does not provide an '__array__' "
                 "methods. Container type is %s." % type(self.samples))
-        return self.samples.__array__(dtype)
+        return self.samples.__array__(*args)
 
 
     def __len__(self):
