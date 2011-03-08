@@ -304,8 +304,9 @@ clfswh += QDA(descr='QDA()')
 if externals.exists('skl'):
     from scikits.learn.lda import LDA as sklLDA
     from mvpa.clfs.skl.base import SKLLearnerAdapter
-    clfswh += SKLLearnerAdapter(sklLDA(), tags=['lda', 'linear', 'multiclass', 'binary'],
-                                descr='scikits.learn.LDA()_adapter')
+    clfswh += SKLLearnerAdapter(sklLDA(),
+                                tags=['lda', 'linear', 'multiclass', 'binary'],
+                                descr='skl.LDA()')
 
 # kNN
 clfswh += kNN(k=5, descr="kNN(k=5)")

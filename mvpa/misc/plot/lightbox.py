@@ -20,10 +20,11 @@ from mvpa.misc.plot.tools import Pion, Pioff, mpl_backend_isinteractive
 if __debug__:
     from mvpa.base import debug
 
-if externals.exists('nifti'):
-    from nifti import NiftiImage
+if externals.exists('nibabel'):
+    import nibabel as nb
+    from nibabel.spatialimages import SpatialImage
 else:
-    class NiftiImage(object):
+    class SpatialImage(object):
         """Just a helper to allow plot_lightbox be used even if no
         nifti module available for plotting regular 2D/3D images
         (ndarrays)"""
@@ -45,7 +46,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
     """Very basic plotting of 3D data with interactive thresholding.
 
     `background`/`overlay` and corresponding masks could be nifti
-    files names or `NiftiImage` objects, or 3D `ndarrays`. If no mask
+    files names or `SpatialImage` objects, or 3D `ndarrays`. If no mask
     is provided, only non-0 elements are plotted.
 
     Notes
@@ -98,35 +99,39 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
     """
 
     def handle_arg(arg):
-        """Helper which would read in NiftiImage if necessary
+        """Helper which would read in SpatialImage if necessary
         """
         if isinstance(arg, basestring):
-            arg = NiftiImage(arg)
-            argshape = arg.data.shape
+            arg = nb.load(arg)
+            argshape = arg.get_shape()
             # Assure that we have 3D (at least)
             if len(argshape)<3:
-                arg.data = arg.data.reshape((1,)*(3-len(argshape)) + argshape)
+                arg = nb.Nifti1Image(
+                        arg.get_data().reshape((1,)*(3-len(argshape)) + argshape),
+                        arg.get_affine(),
+                        arg.get_header())
         if isinstance(arg, np.ndarray):
             if len(arg.shape) != 3:
                 raise ValueError, "For now just handling 3D volumes"
         return arg
 
     bg = handle_arg(background)
-    if isinstance(bg, NiftiImage):
+    if isinstance(bg, SpatialImage):
         # figure out aspect
         # fov = (np.array(bg.header['pixdim']) * bg.header['dim'])[3:0:-1]
         # aspect = fov[1]/fov[2]
         # just scale by voxel-size ratio (extent is disabled)
-        aspect = bg.header['pixdim'][2] / bg.header['pixdim'][1]
+        bg_hdr = bg.get_header()
+        aspect = bg_hdr.get_zooms()[2] / bg_hdr.get_zooms()[1]
 
-        bg = bg.data #[..., ::-1, ::-1] # XXX custom for now
+        bg = bg.get_data() #[..., ::-1, ::-1] # XXX custom for now
     else:
         aspect = 1.0
 
     if bg is not None:
         bg_mask = handle_arg(background_mask)
-        if isinstance(bg_mask, NiftiImage):
-            bg_mask = bg_mask.data #[..., ::-1, ::-1] # XXX
+        if isinstance(bg_mask, SpatialImage):
+            bg_mask = bg_mask.get_data() #[..., ::-1, ::-1] # XXX
         if bg_mask is not None:
             bg_mask = bg_mask != 0
         else:
@@ -135,12 +140,12 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
     func = handle_arg(overlay)
 
     if func is not None:
-        if isinstance(func, NiftiImage):
-            func = func.data #[..., ::-1, :] # XXX
+        if isinstance(func, SpatialImage):
+            func = func.get_data() #[..., ::-1, :] # XXX
 
         func_mask = handle_arg(overlay_mask)
-        if isinstance(func_mask, NiftiImage):
-            func_mask = func_mask.data #[..., ::-1, :] # XXX
+        if isinstance(func_mask, SpatialImage):
+            func_mask = func_mask.get_data() #[..., ::-1, :] # XXX
         if func_mask is not None:
             func_mask = func_mask != 0
         else:
@@ -151,8 +156,8 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
         if v is not None:
             if v.ndim > 3:
                 # we could squeeze out first bogus dimensions
-                if np.all(np.array(v.shape[:v.ndim-3]) == 1):
-                    v.shape = v.shape[v.ndim-3:]
+                if np.all(np.array(v.shape[3:]) == 1):
+                    v.shape = v.shape[:3]
                 else:
                     raise ValueError, \
                           "Original shape of some data is %s whenever we " \
@@ -518,7 +523,7 @@ if __name__ == "__main__":
         #background = NiftiImage('%s/anat.nii.gz' % impath),
         background = '%s/anat.nii.gz' % impath,
         background_mask = None,
-        overlay = NiftiImage('%s/bold.nii.gz' % impath).data.squeeze()[0],
+        overlay = nb.loadf('%s/bold.nii.gz' % impath).get_data().T[0],
         overlay_mask = '%s/mask_brain.nii.gz' % impath,
         #
         do_stretch_colors = False,

@@ -24,9 +24,9 @@ if __debug__:
 
 if externals.exists('reportlab', raise_=True):
     import reportlab as rl
-    from reportlab.platypus import  SimpleDocTemplate, Paragraph, Spacer, Image
-    from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.lib.units import inch
+    import reportlab.platypus as rplp
+    import reportlab.lib.styles as rpls
+    import reportlab.lib.units as rplu
 
     # Actually current reportlab's Image can't deal directly with .pdf images
     # Lets use png for now
@@ -128,7 +128,7 @@ class Report(object):
         self.__nfigures = 0
 
         try:
-            styles = getSampleStyleSheet()
+            styles = rpls.getSampleStyleSheet()
             self.style = styles.byName[style]
         except KeyError:
             raise ValueError, \
@@ -148,9 +148,9 @@ class Report(object):
         if self.author is not None:
             owner += '   Author: %s' % self.author
 
-        return [ Spacer(1, 0.8*inch),
-                 Paragraph("Generated on " + date, self.style),
-                 Paragraph(owner, self.style)] + self.__flowbreak
+        return [ rplp.Spacer(1, 0.8*rplu.inch),
+                 rplp.Paragraph("Generated on " + date, self.style),
+                 rplp.Paragraph(owner, self.style)] + self.__flowbreak
 
 
     def clear(self):
@@ -166,7 +166,7 @@ class Report(object):
             debug("REP", "Adding xml '%s'" % line.strip())
         if style is None:
             style = self.style
-        self._story.append(Paragraph(line, style=style))
+        self._story.append(rplp.Paragraph(line, style=style))
 
     # Can't use here since Report isn't yet defined at this point
     #@borrowkwargs(Report, 'xml')
@@ -238,7 +238,7 @@ class Report(object):
         if __debug__ and not self in debug.handlers:
             debug("REP", "Adding figure '%s'" % fig)
 
-        im = Image(fig, **kwargs)
+        im = rplp.Image(fig, **kwargs)
 
         # If the inherent or provided width/height are too large -- shrink down
         imsize = (im.drawWidth, im.drawHeight)
@@ -272,9 +272,9 @@ class Report(object):
 
     @property
     def __flowbreak(self):
-        return [Spacer(1, 0.2*inch),
-                Paragraph("-" * 150, self.style),
-                Spacer(1, 0.2*inch)]
+        return [rplp.Spacer(1, 0.2*rplu.inch),
+                rplp.Paragraph("-" * 150, self.style),
+                rplp.Spacer(1, 0.2*rplu.inch)]
 
     def flowbreak(self):
         """Just a marker for the break of the flow
@@ -316,7 +316,7 @@ class Report(object):
             canvas.drawCentredString(self.pagesize[0]/2.0,
                                      self.pagesize[1]-108, title)
             canvas.setFont(self.font, 9)
-            canvas.drawString(inch, 0.75 * inch,
+            canvas.drawString(rplu.inch, 0.75 * rplu.inch,
                               "First Page / %s" % pageinfo)
             canvas.restoreState()
 
@@ -324,12 +324,12 @@ class Report(object):
         def my_later_pages(canvas, doc):
             canvas.saveState()
             canvas.setFont(self.font, 9)
-            canvas.drawString(inch, 0.75 * inch,
+            canvas.drawString(rplu.inch, 0.75 * rplu.inch,
                               "Page %d %s" % (doc.page, pageinfo))
             canvas.restoreState()
 
         filename = self._filename + ".pdf"
-        doc = SimpleDocTemplate(filename)
+        doc = rplp.SimpleDocTemplate(filename)
 
         story = self._story
         if add_preamble:

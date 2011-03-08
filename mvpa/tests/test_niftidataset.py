@@ -8,12 +8,13 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA nifti dataset"""
 
-import os.path
+import os
 import numpy as np
 
+from mvpa import cfg
 from mvpa.testing import *
 
-if not externals.exists('nifti') and not externals.exists('nibabel'):
+if not externals.exists('nibabel'):
     raise SkipTest
 
 from mvpa import pymvpa_dataroot
@@ -71,17 +72,11 @@ def test_nifti_dataset():
 
 def test_fmridataset():
     # full-blown fmri dataset testing
-    if externals.exists('nibabel'):
-        import nibabel
-        maskimg = nibabel.load(os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
-        data = maskimg.get_data().copy()
-        data[data>0] = np.arange(1, np.sum(data) + 1)
-        maskimg = nibabel.Nifti1Image(data, None, maskimg.get_header())
-    else:
-        import nifti
-        maskimg = nifti.NiftiImage(os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
-        # assign some values we can check later on
-        maskimg.data.T[maskimg.data.T>0] = np.arange(1, np.sum(maskimg.data) + 1)
+    import nibabel
+    maskimg = nibabel.load(os.path.join(pymvpa_dataroot, 'mask.nii.gz'))
+    data = maskimg.get_data().copy()
+    data[data>0] = np.arange(1, np.sum(data) + 1)
+    maskimg = nibabel.Nifti1Image(data, None, maskimg.get_header())
     attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
     ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'bold.nii.gz'),
                       targets=attr.targets, chunks=attr.chunks,
@@ -96,36 +91,59 @@ def test_fmridataset():
     assert_array_equal(sorted(ds.fa.keys()),
             ['myintmask', 'subj1_indices'])
     assert_array_equal(sorted(ds.a.keys()),
-            ['imghdr', 'mapper', 'subj1_dim', 'subj1_eldim'])
+            ['imghdr', 'imgtype', 'mapper', 'subj1_dim', 'subj1_eldim'])
     # vol extent
     assert_equal(ds.a.subj1_dim, (40, 20, 1))
     # check time
     assert_equal(ds.sa.time_coords[-1], 3627.5)
     # non-zero mask values
     assert_array_equal(ds.fa.myintmask, np.arange(1, ds.nfeatures + 1))
+    # we know that imgtype must be:
+    ok_(ds.a.imgtype is nibabel.Nifti1Image)
 
-
-
-def test_nifti_mapper():
+@with_tempfile()
+def test_nifti_mapper(filename):
     """Basic testing of map2Nifti
     """
+    import nibabel
     data = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d.nii.gz'),
                         targets=[1,2])
 
     # test mapping of ndarray
     vol = map2nifti(data, np.ones((294912,), dtype='int16'))
-    if externals.exists('nibabel'):
-        assert_equal(vol.get_shape(), (128, 96, 24))
-        assert_true((vol.get_data() == 1).all())
-        # test mapping of the dataset
-        vol = map2nifti(data)
-        assert_equal(vol.get_shape(), (128, 96, 24, 2))
-    else:
-        assert_equal(vol.data.shape, (24, 96, 128))
-        assert_true((vol.data == 1).all())
-        # test mapping of the dataset
-        vol = map2nifti(data)
-        assert_equal(vol.data.shape, (2, 24, 96, 128))
+    assert_equal(vol.get_shape(), (128, 96, 24))
+    assert_true((vol.get_data() == 1).all())
+    # test mapping of the dataset
+    vol = map2nifti(data)
+    assert_equal(vol.get_shape(), (128, 96, 24, 2))
+    ok_(isinstance(vol, data.a.imgtype))
+
+    # test providing custom imgtypes
+    vol = map2nifti(data, imgtype=nibabel.Nifti1Pair)
+    ok_(isinstance(vol, nibabel.Nifti1Pair))
+
+    # Lets generate a dataset using an alternative format (MINC)
+    # and see if type persists
+    volminc = nibabel.MincImage(vol.get_data(),
+                                vol.get_affine(),
+                                vol.get_header())
+    ok_(isinstance(volminc, nibabel.MincImage))
+    dsminc = fmri_dataset(volminc, targets=1)
+    ok_(dsminc.a.imgtype is nibabel.MincImage)
+    ok_(isinstance(dsminc.a.imghdr, nibabel.minc.MincImage.header_class))
+
+    # Lets test if we could save/load now into Analyze volume/dataset
+    if externals.versions['nibabel'] < '1.1.0':
+        raise SkipTest('nibabel prior 1.1.0 had an issue with types comprehension')
+    volanal = map2nifti(dsminc, imgtype=nibabel.AnalyzeImage) # MINC has no 'save' capability
+    ok_(isinstance(volanal, nibabel.AnalyzeImage))
+    volanal.to_filename(filename)
+    dsanal = fmri_dataset(filename, targets=1)
+    # this one is tricky since it might become Spm2AnalyzeImage
+    ok_('AnalyzeImage' in str(dsanal.a.imgtype))
+    ok_('AnalyzeHeader' in str(dsanal.a.imghdr.__class__))
+    volanal_ = map2nifti(dsanal)
+    ok_(isinstance(volanal_, dsanal.a.imgtype)) # type got preserved
 
 
 def test_multiple_calls():
@@ -182,20 +200,12 @@ def test_er_nifti_dataset():
 
     # map back into voxel space, should ignore addtional features
     nim = map2nifti(ds)
-    if externals.exists('nibabel'):
-        # origsamples has t,x,y,z
-        assert_equal(nim.get_shape(), origsamples.shape[1:] + (len(ds) * 4,))
-        # check shape of a single sample
-        nim = map2nifti(ds, ds.samples[0])
-        # pynifti image has [t,]z,y,x
-        assert_equal(nim.get_shape(), (40, 20, 1, 4))
-    else:
-        # origsamples has t,x,y,z but pynifti image has [t,]z,y,x
-        assert_equal(nim.data.T.shape, origsamples.shape[1:] + (len(ds) * 4,))
-        # check shape of a single sample
-        nim = map2nifti(ds, ds.samples[0])
-        # pynifti image has [t,]z,y,x
-        assert_equal(nim.data.T.shape, (40, 20, 1, 4))
+    # origsamples has t,x,y,z
+    assert_equal(nim.get_shape(), origsamples.shape[1:] + (len(ds) * 4,))
+    # check shape of a single sample
+    nim = map2nifti(ds, ds.samples[0])
+    # pynifti image has [t,]z,y,x
+    assert_equal(nim.get_shape(), (40, 20, 1, 4))
 
     # and now with masking
     ds = fmri_dataset(tssrc, mask=masrc)
@@ -220,14 +230,9 @@ def test_er_nifti_dataset_mapping():
     # t,z,y,x
     samples = np.arange(120).reshape((5,) + sample_size)
     dsmask = np.arange(24).reshape(sample_size) % 2
-    if externals.exists('nibabel'):
-        import nibabel
-        tds = fmri_dataset(nibabel.Nifti1Image(samples.T, None),
-                           mask=nibabel.Nifti1Image(dsmask.T, None))
-    else:
-        import nifti
-        tds = fmri_dataset(nifti.NiftiImage(samples),
-                           mask=nifti.NiftiImage(dsmask))
+    import nibabel
+    tds = fmri_dataset(nibabel.Nifti1Image(samples.T, None),
+                       mask=nibabel.Nifti1Image(dsmask.T, None))
     ds = eventrelated_dataset(
             tds,
             events=[Event(onset=0, duration=2, label=1,
@@ -276,18 +281,11 @@ def test_nifti_dataset_from3_d():
     ds = fmri_dataset(masrc, mask=masrc, targets=1)
     assert_equal(len(ds), 1)
 
-    if externals.exists('nibabel'):
-        import nibabel
-        plain_data = nibabel.load(masrc).get_data()
-        # Lets check if mapping back works as well
-        assert_array_equal(plain_data,
-                           map2nifti(ds).get_data().reshape(plain_data.shape))
-    else:
-        import nifti
-        plain_data = nifti.NiftiImage(masrc).data
-        # Lets check if mapping back works as well
-        assert_array_equal(plain_data,
-                           map2nifti(ds).data.reshape(plain_data.shape))
+    import nibabel
+    plain_data = nibabel.load(masrc).get_data()
+    # Lets check if mapping back works as well
+    assert_array_equal(plain_data,
+                       map2nifti(ds).get_data().reshape(plain_data.shape))
 
     # test loading from a list of filenames
 
@@ -343,3 +341,56 @@ def test_nifti_dataset_from3_d():
 #        except ValueError:
 #            pass
 #    self.failUnless(ids_out == ids_roi)
+
+@with_tempfile(suffix='.nii.gz')
+def test_assumptions_on_nibabel_behavior(filename):
+    if not externals.exists('nibabel'):
+        raise SkipTest('No nibabel available')
+
+    import nibabel as nb
+    masrc = os.path.join(pymvpa_dataroot, 'mask.nii.gz')
+    ni = nb.load(masrc)
+    hdr = ni.get_header()
+    data = ni.get_data()
+    assert(hdr.get_data_dtype() == 'int16') # we deal with int file
+
+    dataf = data.astype(float)
+    dataf_dtype = dataf.dtype
+    dataf[1,1,0] = 123 + 1./3
+
+    # and if we specify float64 as the datatype we should be in better
+    # position
+    hdr64 = hdr.copy()
+    hdr64.set_data_dtype('float64')
+
+    for h,t,d in ((hdr, 'int16', 2),
+                  (hdr64, 'float64', 166)):
+        # we can only guarantee 2-digits precision while converting
+        # into int16? weird
+        # but infinite precision for float64 since data and file
+        # formats match
+        nif = nb.Nifti1Image(dataf, None, h)
+        # Header takes over and instructs to keep it int despite dtype
+        assert_equal(nif.get_header().get_data_dtype(), t)
+        # but does not cast the data (yet?) into int16 (in case of t==int16)
+        assert_equal(nif.get_data().dtype, dataf_dtype)
+        # nor changes somehow within dataf
+        assert_equal(dataf.dtype, dataf_dtype)
+
+        # save it back to the file and load
+        nif.to_filename(filename)
+        nif_ = nb.load(filename)
+        dataf_ = nif_.get_data()
+        assert_equal(nif_.get_header().get_data_dtype(), t)
+        assert_equal(dataf_.dtype, dataf_dtype)
+        assert_array_almost_equal(dataf_, dataf, decimal=d)
+        # TEST scale/intercept to be changed
+        slope, inter = nif_.get_header().get_slope_inter()
+        if t == 'int16':
+            # it should have rescaled the data
+            assert_not_equal(slope, 1.0)
+            assert_not_equal(inter, 0)
+        else:
+            assert_equal(slope, 1.0)
+            assert_equal(inter, 0)
+

@@ -1,5 +1,6 @@
 all:: pymvpa_logo.jpg download_icon.jpg tutorial_icon.jpg \
       documentation_icon.jpg support_icon.jpg movie_icon.jpg \
+      pymvpa_icon.jpg \
       pics
 
 # where the rendered images should go
@@ -10,7 +11,7 @@ STATICDIR = ../source/_static
 ICON_SVG_BASE = pymvpa_icons
 ICON_HEIGHT = $(shell inkscape -z -f $(ICON_SVG_BASE).svg -H)
 ICON_WIDTH = $(shell inkscape -z -f $(ICON_SVG_BASE).svg -W)
-ICON_NUMBER = 5
+ICON_NUMBER = 6
 
 # PICS_IGNORE must contain a rule for grep
 PICS_IGNORE ?= "$(ICON_SVG_BASE)"
@@ -91,6 +92,11 @@ support_icon.png: $(ICON_SVG_BASE).svg
 movie_icon.png: $(ICON_SVG_BASE).svg
 	inkscape -z -f $(ICON_SVG_BASE).svg -e $@ \
 		--export-area=$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 4" | bc):0:$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 5" | bc):$(ICON_HEIGHT)
+	$(MAKE) ignore-$@
+
+pymvpa_icon.png: $(ICON_SVG_BASE).svg
+	inkscape -z -f $(ICON_SVG_BASE).svg -e $@ \
+		--export-area=$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 5" | bc):$(shell echo "$(ICON_HEIGHT) * 0.463/4.211" | bc):$(shell echo "$(ICON_WIDTH) / $(ICON_NUMBER) * 6" | bc):$(ICON_HEIGHT)
 	$(MAKE) ignore-$@
 
 .PHONY: all pics

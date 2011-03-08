@@ -23,6 +23,7 @@ mvpa.atlases.base module contains support for various atlases
 
 """
 
+import os.path as osp
 from mvpa.base import externals
 
 if externals.exists('lxml', raise_=True):
@@ -37,8 +38,8 @@ from numpy.linalg import norm
 from mvpa.atlases.transformation import SpaceTransformation, Linear
 from mvpa.misc.support import reuse_absolute_path
 
-if externals.exists('nifti', raise_=True):
-    from nifti import NiftiImage
+if externals.exists('nibabel', raise_=True):
+    import nibabel as nb
 
 from mvpa.base import warning
 if __debug__:
@@ -86,7 +87,7 @@ class XMLBasedAtlas(BaseAtlas):
 
     def __init__(self, filename=None,
                  resolution=None, image_file=None,
-                 coordT=None, default_levels=None):
+                 coordT=None, default_levels=None, load_maps=True):
         """
         Parameters
         ----------
@@ -103,6 +104,8 @@ class XMLBasedAtlas(BaseAtlas):
           Optional transformation to apply first
         default_levels : None or slice or list of int
           What levels by default to operate on
+        load_maps : bool
+          Load spatial maps for the atlas.
         """
         BaseAtlas.__init__(self)
 
@@ -137,11 +140,13 @@ class XMLBasedAtlas(BaseAtlas):
 
         # Load and post-process images
         self._image = None
-        self._load_images()
-        if self._image is not None:
-            self._extent = np.abs(np.asanyarray(self._image.extent[0:3]))
-            self._voxdim = np.asanyarray(self._image.voxdim)
-            self.relativeToOrigin = True
+        if load_maps:
+            self._load_images()
+            if self._image is not None:
+                # Get extent and voxel dimensions, limiting to 3D
+                self._extent = np.abs(np.asanyarray(self._image.get_shape()[:3]))
+                self._voxdim = np.asanyarray(self._image.get_header().get_zooms()[:3])
+                self.relativeToOrigin = True
         # Assign transformation to get into voxel coordinates,
         # spaceT will be set accordingly
         self.set_coordT(coordT)
@@ -224,7 +229,7 @@ class XMLBasedAtlas(BaseAtlas):
         self._coordT = coordT           # lets store for debugging etc
         if self._image is not None:
             # Combine with the image's qform
-            coordT = Linear(np.linalg.inv(self._image.qform),
+            coordT = Linear(np.linalg.inv(self._image.get_header().get_qform()),
                             previous=coordT)
         self._spaceT = SpaceTransformation(
             previous=coordT, to_real_space=False)
@@ -431,7 +436,7 @@ class Label(object):
         return self.__index
 
     def __repr__(self):
-        return "Label(%s%s, coord=%r, count=%s, index=%s)" % \
+        return "Label(%r%s, coord=%r, count=%r, index=%r)" % \
                (self.text,
                 (', abbr=%s' % repr(self.__abbr), '')[int(self.__abbr is None)],
                 self.coord, self.count, self.__index)
@@ -644,12 +649,24 @@ class PyMVPAAtlas(XMLBasedAtlas):
         imagefilename = reuse_absolute_path(self._filename, imagefilename)
 
         try:
-            self._image  = NiftiImage(imagefilename)
+            self._image = None
+            for ext in ['', '.nii.gz']:
+                try:
+                    self._image  = nb.load(imagefilename + ext)
+                    break
+                except Exception, e:
+                    pass
+            if self._image is None:
+                raise e
         except RuntimeError, e:
             raise RuntimeError, \
                   " Cannot open file %s due to %s" % (imagefilename, e)
 
-        self._data = self._image.data
+        self._data = self._image.get_data()
+        # we get the data as x,y,z[,t] but we want to have the time axis first
+        # if any
+        if len(self._data.shape) == 4:
+            self._data = np.rollaxis(self._data, -1)
 
         # remove bogus dimensions on top of 4th
         if len(self._data.shape[0:-4]) > 0:
@@ -737,7 +754,7 @@ class LabelsAtlas(PyMVPAAtlas):
                     "Unknown index or description for level %d" % level)
 
             resultIndex =  int(self._data[ level_.index, \
-                                            c[2], c[1], c[0] ])
+                                            c[0], c[1], c[2] ])
 
             resultLevels += [ {'index': level_.index,
                                'id': level_.description,
@@ -758,7 +775,7 @@ class ReferencesAtlas(PyMVPAAtlas):
     (closest Gray, etc) in another atlas.
     """
 
-    def __init__(self, distance=0, *args, **kwargs):
+    def __init__(self, distance=0, reference_level=None, *args, **kwargs):
         """Initialize `ReferencesAtlas`
         """
         PyMVPAAtlas.__init__(self, *args, **kwargs)
@@ -779,7 +796,9 @@ class ReferencesAtlas(PyMVPAAtlas):
             raise XMLAtlasException(
                 "Reference and original atlases should be in the same space")
 
-        self.__referenceLevel = None
+        self.__referenceLevel = None    # pylint shut up
+        if reference_level is not None:
+            self.set_reference_level(reference_level)
         self.set_distance(distance)
 
     __doc__ = enhanced_doc_string('ReferencesAtlas', locals(), PyMVPAAtlas)
@@ -818,7 +837,7 @@ class ReferencesAtlas(PyMVPAAtlas):
         c = self._check_range(c)
 
         # obtain coordinates of the closest voxel
-        cref = self._data[ self.__referenceLevel.indexes, c[2], c[1], c[0] ]
+        cref = self._data[ self.__referenceLevel.indexes, c[0], c[1], c[2] ]
         dist = norm( (cref - c) * self.voxdim )
         if __debug__:
             debug('ATL__', "Closest referenced point for %r is "
@@ -858,4 +877,5 @@ class ReferencesAtlas(PyMVPAAtlas):
         self.__distance = distance
 
     distance = property(fget=lambda self:self.__distance, fset=set_distance)
+    reference_level = property(fget=lambda self:self.__referenceLevel, fset=set_reference_level)
 

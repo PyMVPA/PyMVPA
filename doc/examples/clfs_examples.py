@@ -65,40 +65,48 @@ def main():
                 "#features\t train  predict full" % datasetdescr
         for clf in clfs_:
             print "  %-40s: "  % clf.descr,
-            # Lets do splits/train/predict explicitely so we could track
-            # timing otherwise could be just
-            #cv = CrossValidatedTransferError(
-            #         TransferError(clf),
-            #         NFoldSplitter(),
-            #         enable_ca=['confusion'])
-            #error = cv(dataset)
-            #print cv.confusion
+            # Let's prevent failures of the entire script if some particular
+            # classifier is not appropriate for the data
+            try:
+                # Change to False if you want to use CrossValidation
+                # helper, instead of going through splits manually to
+                # track training/prediction time of the classifiers
+                do_explicit_splitting = True
+                if not do_explicit_splitting:
+                    cv = CrossValidation(
+                        clf, NFoldPartitioner(), enable_ca=['stats', 'calling_time'])
+                    error = cv(dataset)
+                    # print cv.ca.stats
+                    print "%5.1f%%      -    \t   -       -    %.2fs" \
+                          % (cv.ca.stats.percent_correct, cv.ca.calling_time)
+                    continue
 
-            # to report transfer error
-            confusion = ConfusionMatrix()
-            times = []
-            nf = []
-            t0 = time.time()
-            clf.ca.enable('feature_ids')
-            for nfold, (training_ds, validation_ds) in \
-                    enumerate(NFoldSplitter()(dataset)):
-                clf.train(training_ds)
-                nf.append(len(clf.ca.feature_ids))
-                if nf[-1] == 0:
-                    break
-                predictions = clf.predict(validation_ds.samples)
-                confusion.add(validation_ds.targets, predictions)
-                times.append([clf.ca.training_time, clf.ca.predicting_time])
-            if nf[-1] == 0:
-                print "no features were selected. skipped"
-                continue
-            tfull = time.time() - t0
-            times = np.mean(times, axis=0)
-            nf = np.mean(nf)
-            # print "\n", confusion
-            print "%5.1f%%   %-4d\t %.2fs  %.2fs   %.2fs" % \
-                  (confusion.percent_correct, nf, times[0], times[1], tfull)
+                # To report transfer error (and possibly some other metrics)
+                confusion = ConfusionMatrix()
+                times = []
+                nf = []
+                t0 = time.time()
+                #TODO clf.ca.enable('nfeatures')
+                partitioner = NFoldPartitioner()
+                for nfold, ds in enumerate(partitioner.generate(dataset)):
+                    (training_ds, validation_ds) = tuple(
+                        Splitter(attr=partitioner.space).generate(ds))
+                    clf.train(training_ds)
+                    #TODO nf.append(clf.ca.nfeatures)
+                    predictions = clf.predict(validation_ds.samples)
+                    confusion.add(validation_ds.targets, predictions)
+                    times.append([clf.ca.training_time, clf.ca.predicting_time])
 
+                tfull = time.time() - t0
+                times = np.mean(times, axis=0)
+                #TODO nf = np.mean(nf)
+                # print confusion
+                #TODO print "%5.1f%%   %-4d\t %.2fs  %.2fs   %.2fs" % \
+                print "%5.1f%%       -   \t %.2fs  %.2fs   %.2fs" % \
+                      (confusion.percent_correct, times[0], times[1], tfull)
+                #TODO      (confusion.percent_correct, nf, times[0], times[1], tfull)
+            except LearnerError, e:
+                print " skipped due to '%s'" % e
 
 if __name__ == "__main__":
     main()
