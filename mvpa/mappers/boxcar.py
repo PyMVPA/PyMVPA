@@ -210,12 +210,7 @@ class BoxcarMapper(Mapper):
                                 data.shape[1],
                                 self.boxlength))
 
-        # need to take care of the special case when the first axis is of length
-        # one, in that case it would be squashed away
-        if data.shape[0] == 1:
-            return np.concatenate(data)[np.newaxis]
-        else:
-            return np.concatenate(data)
+        return np.concatenate(data)
 
 
     def _reverse_dataset(self, dataset):
