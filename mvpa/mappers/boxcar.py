@@ -228,13 +228,12 @@ class BoxcarMapper(Mapper):
         mds.fa.set_length_check(mds.nfeatures)
         # map old feature attributes -- which simply is taken the first one
         # and kill the inspace attribute, since it 
-        inspace = self.get_space() + '_offsetidx'
+        inspace = self.get_space()
         for k in dataset.fa:
-            if k != inspace:
+            if inspace is None or k != (inspace + '_offsetidx'):
                 mds.fa[k] = dataset.fa[k].value[0]
         # reverse-map old sample attributes
-        inspace = self.get_space() + '_onsetidx'
         for k in dataset.sa:
-            if k != inspace:
+            if inspace is None or k != (inspace + '_onsetidx'):
                 mds.sa[k] = self._reverse_data(dataset.sa[k].value)
         return mds
