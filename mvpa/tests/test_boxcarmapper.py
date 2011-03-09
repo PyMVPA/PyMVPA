@@ -81,6 +81,16 @@ def test_simpleboxcar():
     # test reverse of a single sample
     singlesample = np.arange(48).reshape(2, 3, 4, 2)
     assert_array_equal(singlesample, m.reverse1(singlesample))
+    # now in a dataset
+    ds = Dataset([singlesample])
+    assert_equal(ds.shape, (1,) + singlesample.shape)
+    # after reverse mapping the 'sample axis' should vanish and the original 3d
+    # shape of the samples should be restored
+    assert_equal(ds.shape[1:], m.reverse(ds).shape)
+    # multiple samples should just be concatenated along the samples axis
+    ds = Dataset([singlesample, singlesample])
+    assert_equal((np.prod(ds.shape[:2]),) + singlesample.shape[1:],
+                 m.reverse(ds).shape)
     # should not work for shape mismatch, but it does work and is useful when
     # reverse mapping sample attributes
     #assert_raises(ValueError, m.reverse, singlesample[0])
