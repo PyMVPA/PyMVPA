@@ -60,7 +60,7 @@ labels.txt
 
 .. note::
 
-   Data for the run (chunk) 8 of subject 5 was corrupted and therefore
+   Data for the run 9 (chunk 8) of subject 5 was corrupted and therefore
    should not be used for the analyses.  In the 'labels.txt' file all
    samples in that chunk are marked as 'rest' condition.
    (Acknowledgement goes to MS Al-Rawi who reminded us about this
