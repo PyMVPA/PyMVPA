@@ -217,7 +217,9 @@ class Partitioner(Node):
 class OddEvenPartitioner(Partitioner):
     """Create odd and even partitions based on a sample attribute.
 
-    The partitioner yields two sets: first (odd, even) and second (even, odd).
+    The partitioner yields two datasets. In the first set all odd chunks are
+    labeled '1' and all even runs are labeled '2'. In the second set the
+    assignment is reversed (odd: '2', even: '1').
     """
     def __init__(self, usevalues=False, **kwargs):
         """
@@ -254,8 +256,9 @@ class OddEvenPartitioner(Partitioner):
 class HalfPartitioner(Partitioner):
     """Partition a dataset into two halves of the sample attribute.
 
-    The partitioner yields two sets: first (1st half, 2nd half) and second
-    (2nd half, 1st half).
+    The partitioner yields two datasets. In the first set second half of
+    chunks are labeled '1' and the first half labeled '2'. In the second set the
+    assignment is reversed (1st half: '1', 2nd half: '2').
     """
     def _get_partition_specs(self, uniqueattrs):
         """
@@ -273,8 +276,7 @@ class NGroupPartitioner(Partitioner):
     """Partition a dataset into N-groups of the sample attribute.
 
     For example, NGroupPartitioner(2) is the same as the HalfPartitioner and
-    yields two splits: first (1st half, 2nd half) and second (2nd half,
-    1st half).
+    yields exactly the same partitions and labeling patterns.
     """
     def __init__(self, ngroups=4, **kwargs):
         """
@@ -316,11 +318,11 @@ class NGroupPartitioner(Partitioner):
 class CustomPartitioner(Partitioner):
     """Partition a dataset using an arbitrary custom rule.
 
-    The partitioner is configured by passing a custom rule (`splitrule`) to its
+    The partitioner is configured by passing a custom rule (``splitrule``) to its
     constructor. Such a rule is basically a sequence of partition definitions.
-    Every single element in this sequence results in excatly one partition set.
+    Every single element in this sequence results in exactly one partition set.
     Each element is another sequence of attribute values whose corresponding
-    samples shall go into a particular partion.
+    samples shall go into a particular partition.
 
     Examples
     --------
@@ -335,6 +337,10 @@ class CustomPartitioner(Partitioner):
     and 6.
 
     >>> ptr = CustomPartitioner([(None, [0, 1, 2]), ([1,2], [3], [5, 6])])
+
+    The numeric labels of all partitions correspond to their position in the
+    ``splitrule`` of a particular set. Note that the actual labels start with
+    '1' as all unselected elements are labeled '0'.
     """
     def __init__(self, splitrule, **kwargs):
         """
@@ -360,19 +366,19 @@ class CustomPartitioner(Partitioner):
 class NFoldPartitioner(Partitioner):
     """Generic N-fold data partitioner.
 
-    Given a dataset with N chunks, with cvtype=1 (which is default), it would
+    Given a dataset with N chunks, with ``cvtype``=1 (which is default), it would
     generate N partition sets, where each chunk is sequentially taken out (with
     replacement) to form a second partition, while all other samples together
     form the first partition.  Example, if there are 4 chunks, partition sets
-    for cvtype=1 are::
+    for ``cvtype``=1 are::
 
         [[1, 2, 3], [0]]
         [[0, 2, 3], [1]]
         [[0, 1, 3], [2]]
         [[0, 1, 2], [3]]
 
-    If cvtype>1, then all possible combinations of cvtype number of
-    chunks are taken out, so for cvtype=2 in previous example yields::
+    If ``cvtype``>1, then all possible combinations of ``cvtype`` number of
+    chunks are taken out, so for ``cvtype``=2 in previous example yields::
 
         [[2, 3], [0, 1]]
         [[1, 3], [0, 2]]
@@ -380,6 +386,9 @@ class NFoldPartitioner(Partitioner):
         [[0, 3], [1, 2]]
         [[0, 2], [1, 3]]
         [[0, 1], [2, 3]]
+
+    Note that the "taken-out" partition is always labeled '2' while the
+    remaining elements are labeled '1'.
     """
     def __init__(self, cvtype = 1, **kwargs):
         """
