@@ -15,6 +15,8 @@ import numpy as np
 from mvpa.base import externals, warning
 from mvpa.base.state import ClassWithCollections, ConditionalAttribute
 from mvpa.generators.permutation import AttributePermutator
+from mvpa.base.types import is_datasetlike
+from mvpa.datasets import Dataset
 
 if __debug__:
     from mvpa.base import debug
@@ -183,7 +185,7 @@ class NullDist(ClassWithCollections):
         raise NotImplementedError
 
 
-    def p(self, x, **kwargs):
+    def p(self, x, return_tails=False, **kwargs):
         """Returns the p-value for values of `x`.
         Returned values are determined left, right, or from any tail
         depending on the constructor setting.
@@ -192,8 +194,19 @@ class NullDist(ClassWithCollections):
         distribution the method returns an array. In that case `x` can be
         a scalar value or an array of a matching shape.
         """
-        return _pvalue(x, self.cdf, self.__tail, **kwargs)
-
+        peas = _pvalue(x, self.cdf, self.__tail, return_tails=return_tails,
+                       **kwargs)
+        if is_datasetlike(x):
+            # return the p-values in a dataset as well and assign the input
+            # dataset attributes to the return dataset too
+            pds = x.copy(deep=False)
+            if return_tails:
+                pds.samples = peas[0]
+                return pds, peas[1]
+            else:
+                pds.samples = peas
+                return pds
+        return peas
 
     tail = property(fget=lambda x:x.__tail, fset=_set_tail)
 
@@ -255,7 +268,7 @@ class MCNullDist(NullDist):
             prefixes=prefixes_ + prefixes)
 
 
-    def fit(self, measure, wdata, vdata=None):
+    def fit(self, measure, ds):
         """Fit the distribution by performing multiple cycles which repeatedly
         permuted labels in the training dataset.
 
@@ -263,11 +276,8 @@ class MCNullDist(NullDist):
         ----------
         measure: (`Featurewise`)`Measure` or `TransferError`
           TransferError instance used to compute all errors.
-        wdata: `Dataset` which gets permuted and used to compute the
+        ds: `Dataset` which gets permuted and used to compute the
           measure/transfer error multiple times.
-        vdata: `Dataset` used for validation.
-          If provided measure is assumed to be a `TransferError` and
-          working and validation dataset are passed onto it.
         """
         # TODO: place exceptions separately so we could avoid circular imports
         from mvpa.base.learner import LearnerError
@@ -282,7 +292,7 @@ class MCNullDist(NullDist):
         # null-distribution of transfer errors can be reduced dramatically
         # when the *right* permutations (the ones that matter) are done.
         skipped = 0                     # # of skipped permutations
-        for p, permuted_wdata in enumerate(self.__permutator.generate(wdata)):
+        for p, permuted_ds in enumerate(self.__permutator.generate(ds)):
             # new permutation all the time
             # but only permute the training data and keep the testdata constant
             #
@@ -290,19 +300,11 @@ class MCNullDist(NullDist):
                 debug('STATMC', "Doing %i permutations: %i" \
                       % (self.__permutator.nruns, p+1), cr=True)
 
-
-            # decide on the arguments to measure
-            if not vdata is None:
-                measure_args = [vdata, permuted_wdata]
-            else:
-                measure_args = [permuted_wdata]
-
             # compute and store the measure of this permutation
             # assume it has `TransferError` interface
             try:
-                res = measure(*measure_args)
-                res = np.asanyarray(res)
-                dist_samples.append(res)
+                res = measure(permuted_ds)
+                dist_samples.append(res.samples)
             except LearnerError, e:
                 if __debug__:
                     debug('STATMC', " skipped", cr=True)
@@ -316,8 +318,13 @@ class MCNullDist(NullDist):
             debug('STATMC', ' Skipped: %d permutations' % skipped)
 
 
-        # store samples
-        self.ca.dist_samples = dist_samples = np.asarray(dist_samples)
+        # store samples as (npermutations x nsamples x nfeatures)
+        dist_samples = np.asanyarray(dist_samples)
+        # for the ca storage use a dataset with
+        # (nsamples x nfeatures x npermutations) to make it compatible with the
+        # result dataset of the measure
+        self.ca.dist_samples = Dataset(np.rollaxis(dist_samples,
+                                       0, len(dist_samples.shape)))
 
         # fit distribution per each element
 
@@ -335,7 +342,7 @@ class MCNullDist(NullDist):
         dist = []
         for samples in dist_samples_rs.T:
             params = self._dist_class.fit(samples)
-            if __debug__ and 'STAT' in debug.active:
+            if __debug__ and 'STAT__' in debug.active:
                 debug('STAT', 'Estimated parameters for the %s are %s'
                       % (self._dist_class, str(params)))
             dist.append(self._dist_class(*params))

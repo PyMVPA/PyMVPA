@@ -100,7 +100,7 @@ class Measure(Learner):
         # estimate the NULL distribution when functor is given
         if not self.__null_dist is None:
             if __debug__:
-                debug("SA_", "Estimating NULL distribution using %s"
+                debug("STAT", "Estimating NULL distribution using %s"
                       % self.__null_dist)
 
             # we need a matching measure instance, but we have to disable
@@ -118,7 +118,6 @@ class Measure(Learner):
 
         # post-processing
         result = super(Measure, self)._postcall(dataset, result)
-
         if not self.__null_dist is None:
             if self.ca.is_enabled('null_t'):
                 # get probability under NULL hyp, but also request
@@ -134,11 +133,11 @@ class Measure(Learner):
                 #       not here
                 tail = self.null_dist.tail
                 if tail == 'left':
-                    acdf = np.abs(null_prob)
+                    acdf = np.abs(null_prob.samples)
                 elif tail == 'right':
-                    acdf = 1.0 - np.abs(null_prob)
+                    acdf = 1.0 - np.abs(null_prob.samples)
                 elif tail in ['any', 'both']:
-                    acdf = 1.0 - np.clip(np.abs(null_prob), 0, 0.5)
+                    acdf = 1.0 - np.clip(np.abs(null_prob.samples), 0, 0.5)
                 else:
                     raise RuntimeError, 'Unhandled tail %s' % tail
                 # We need to clip to avoid non-informative inf's ;-)
@@ -153,7 +152,9 @@ class Measure(Learner):
                 # assure that we deal with arrays:
                 null_t = np.array(null_t, ndmin=1, copy=False)
                 null_t[~null_right_tail] *= -1.0 # revert sign for negatives
-                self.ca.null_t = null_t          # store
+                null_t_ds = null_prob.copy(deep=False)
+                null_t_ds.samples = null_t
+                self.ca.null_t = null_t_ds          # store as a Dataset
             else:
                 # get probability of result under NULL hypothesis if available
                 # and don't request tail information
