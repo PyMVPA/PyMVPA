@@ -354,11 +354,12 @@ te-%: build
 	 || { echo "failed:"; cat temp-$@.log; rm -f temp-$@.log; exit 1; }
 	@rm -f temp-$@.log
 
-testexamples: te-svdclf te-smlr te-searchlight te-sensanas te-pylab_2d \
-              te-curvefitting te-projections te-kerneldemo te-clfs_examples \
+testexamples: te-svdclf te-smlr te-sensanas te-pylab_2d \
+              te-curvefitting te-projections te-kerneldemo \
               te-erp_plot te-match_distribution te-permutation_test \
               te-searchlight_minimal te-smlr te-start_easy te-topo_plot \
-              te-gpr te-gpr_model_selection0 te-mri_plot
+              te-gpr te-gpr_model_selection0 te-mri_plot te-searchlight \
+              te-clfs_examples
 
 testdocstrings: dt-mvpa
 
