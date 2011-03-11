@@ -36,13 +36,13 @@ class Repeater(Node):
           in the yielded datasets.
         """
         Node.__init__(self, space=space, **kwargs)
-        self.count = count
+        self.nruns = count
 
 
     def generate(self, ds):
         """Generate the desired number of repetitions."""
         space = self.get_space()
-        for i in xrange(self.count):
+        for i in xrange(self.nruns):
             out = ds.copy(deep=False)
             out.a[space] = i
             yield out
