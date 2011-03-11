@@ -16,6 +16,9 @@ from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
 
 from mvpa.mappers.boxcar import BoxcarMapper
 from mvpa.datasets import Dataset
+from mvpa.mappers.flatten import FlattenMapper
+from mvpa.mappers.base import ChainMapper
+
 
 
 def test_simpleboxcar():
@@ -101,8 +104,8 @@ def test_simpleboxcar():
 
 
 def test_datasetmapping():
-    # 6 samples, 4 features
-    data = np.arange(24).reshape(6,4)
+    # 6 samples, 4X2 features
+    data = np.arange(48).reshape(6,4,2)
     ds = Dataset(data,
                  sa={'timepoints': np.arange(6),
                      'multidim': data.copy()},
@@ -120,7 +123,7 @@ def test_datasetmapping():
     # multidimensional attributes
     assert_equal(sorted(mds.sa.keys()), ['boxy_onsetidx'] + sorted(ds.sa.keys()))
     assert_equal(mds.sa.multidim.shape,
-                 (len(startpoints), boxlength, ds.nfeatures))
+            (len(startpoints), boxlength) + ds.shape[1:])
     assert_equal(mds.sa.timepoints.shape, (len(startpoints), boxlength))
     assert_array_equal(mds.sa.timepoints.flatten(),
                        np.array([(s, s+1) for s in startpoints]).flatten())
@@ -139,13 +142,30 @@ def test_datasetmapping():
     # some samples even might show up multiple times (when there are overlapping
     # boxcars
     assert_array_equal(rds.samples,
-                       np.array([[ 0,  1,  2,  3],
-                                [ 4,  5,  6,  7],
-                                [ 4,  5,  6,  7],
-                                [ 8,  9, 10, 11],
-                                [16, 17, 18, 19],
-                                [20, 21, 22, 23]]))
+                       np.array([[[ 0,  1], [ 2,  3], [ 4,  5], [ 6,  7]],
+                                 [[ 8,  9], [10, 11], [12, 13], [14, 15]],
+                                 [[ 8,  9], [10, 11], [12, 13], [14, 15]],
+                                 [[16, 17], [18, 19], [20, 21], [22, 23]],
+                                 [[32, 33], [34, 35], [36, 37], [38, 39]],
+                                 [[40, 41], [42, 43], [44, 45], [46, 47]]]))
     assert_array_equal(rds.sa.timepoints, [0, 1, 1, 2, 4, 5])
     assert_array_equal(rds.sa.multidim, ds.sa.multidim[rds.sa.timepoints])
     # but feature attributes should be fully recovered
     assert_array_equal(rds.fa.fid, ds.fa.fid)
+
+    # popular dataset configuration (double flatten + boxcar)
+    cm= ChainMapper([FlattenMapper(), bm, FlattenMapper()])
+    cm.train(ds)
+    bflat = ds.get_mapped(cm)
+    assert_equal(bflat.shape, (len(startpoints), boxlength * np.prod(ds.shape[1:])))
+    # add attributes
+    bflat.fa['testfa'] = np.arange(bflat.nfeatures)
+    bflat.sa['testsa'] = np.arange(bflat.nsamples)
+    # now try to go back
+    bflatrev = bflat.mapper.reverse(bflat)
+    # data should be same again, as far as the boxcars match
+    assert_array_equal(ds.samples[:2], bflatrev.samples[:2])
+    assert_array_equal(ds.samples[-2:], bflatrev.samples[-2:])
+    # feature axis should match
+    assert_equal(ds.shape[1:], bflatrev.shape[1:])
+
