@@ -190,7 +190,7 @@ directly:
 >>> fds.shape
 (1452, 577)
 >>> print fds.sa
-<SampleAttributesCollection: chunks,time_indices,targets,time_coords>
+<SampleAttributesCollection: chunks,targets,time_coords,time_indices>
 
 We got the dataset that we already know from the last part, but this time
 is also has information about chunks and targets.
