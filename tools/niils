@@ -36,27 +36,23 @@ import sys
 from mvpa.base.dochelpers import table2string
 from mvpa.base import verbose, debug
 from mvpa.misc.cmdline import parser, opts
-
-parser.usage = """Usage: %s [options] [infile1] [infile2] ...""" % sys.argv[0]
-parser.option_groups = [opts.common]
-
-#try:
 import nibabel as nib
-#if verbose.level < 3:
-# suppress nibabel blurb
-nib.imageglobals.log_level = 31
-nib.imageglobals.error_level = 31
-# unfortunately it seems to have no effect on any ways incorrect
-# "scl_slope" is 0.0; should !=0 and be finite; setting "scl_slope" to 1
+
 
 def ap(l, format, sep=', '):
     """Little helper to enforce consistency"""
     ls = [format % x for x in l]
     return sep.join(ls)
 
-(options, files) = parser.parse_args()
 
-# files = sys.argv[1:]
+parser.usage = """Usage: %s [options] [infile1] [infile2] ...""" % sys.argv[0]
+parser.option_groups = [opts.common]
+
+(options, files) = parser.parse_args()
+if verbose.level < 3:
+    # suppress nibabel format-compliance warnings
+    nib.imageglobals.logger.level = 50
+
 maxfnlen = max([len(f) for f in files])
 t = []
 for f in files:
