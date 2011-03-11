@@ -19,6 +19,40 @@ from mvpa.base.dochelpers import _str, _repr
 from mvpa.misc.support import get_limit_filter, get_nelements_per_value
 
 
+class Repeater(Node):
+    """Node that yields the same dataset for a certain number of repetitions.
+
+    Each yielded dataset has a dataset attribute that identifies the iteration
+    (see the ``space`` setting).
+    """
+    def __init__(self, count, space='repetitons', **kwargs):
+        """
+        Parameters
+        ----------
+        count : int
+          Positive integer that set the numbed of repetitions.
+        space : str
+          The name of the dataset attribute that will hold the actual repetiton
+          in the yielded datasets.
+        """
+        Node.__init__(self, space=space, **kwargs)
+        self.count = count
+
+
+    def generate(self, ds):
+        """Generate the desired number of repetitions."""
+        space = self.get_space()
+        for i in xrange(self.count):
+            out = ds.copy(deep=False)
+            out.a[space] = i
+            yield out
+
+
+    def __str__(self):
+        return _str(self, self.count)
+
+
+
 class Balancer(Node):
     """Generator to (repeatedly) select subsets of a dataset.
 
