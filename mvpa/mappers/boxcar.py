@@ -169,15 +169,8 @@ class BoxcarMapper(Mapper):
             mds.sa[k] = self._forward_data(dataset.sa[k].value)
         # create the box offset attribute if space name is given
         if self.get_space():
-            if len(msamp.shape) > 2:
-                # each new feature attribute should have the shape of a single
-                # sample otherwise subsequent flattening wouldn't work
-                mds.fa[self.get_space() + '_offsetidx'] = \
-                        np.repeat(np.arange(mds.nfeatures, dtype='int'),
-                                 np.prod(msamp.shape[2:])).reshape(msamp[0].shape)
-            else:
-                mds.fa[self.get_space() + '_offsetidx'] = \
-                        np.arange(mds.nfeatures, dtype='int')
+            mds.fa[self.get_space() + '_offsetidx'] = np.arange(self.boxlength,
+                                                                dtype='int')
             mds.sa[self.get_space() + '_onsetidx'] = self.startpoints.copy()
         return mds
 
