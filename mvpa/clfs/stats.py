@@ -173,7 +173,7 @@ class NullDist(ClassWithCollections):
         self.__tail = tail
 
 
-    def fit(self, measure, wdata, vdata=None):
+    def fit(self, measure, ds):
         """Implement to fit the distribution to the data."""
         raise NotImplementedError
 
@@ -240,7 +240,8 @@ class MCNullDist(NullDist):
     dist_samples = ConditionalAttribute(enabled=False,
                                  doc='Samples obtained for each permutation')
 
-    def __init__(self, permutator, dist_class=Nonparametric, **kwargs):
+    def __init__(self, permutator, dist_class=Nonparametric, measure=None,
+                 **kwargs):
         """Initialize Monte-Carlo Permutation Null-hypothesis testing
 
         Parameters
@@ -252,11 +253,15 @@ class MCNullDist(NullDist):
           using `fit()` method to initialize the instance, and
           provides `cdf(x)` method for estimating value of x in CDF.
           All distributions from SciPy's 'stats' module can be used.
+        measure : Measure or None
+          Optional measure that is used to compute results on permuted
+          data. If None, a measure needs to be passed to ``fit()``.
         """
         NullDist.__init__(self, **kwargs)
 
         self._dist_class = dist_class
         self._dist = []                 # actual distributions
+        self._measure = measure
 
         self.__permutator = permutator
 
@@ -274,13 +279,22 @@ class MCNullDist(NullDist):
 
         Parameters
         ----------
-        measure: (`Featurewise`)`Measure` or `TransferError`
-          TransferError instance used to compute all errors.
+        measure: Measure or None
+          A measure used to compute the results from shuffled data. Can be None
+          if a measure instance has been provided to the constructor.
         ds: `Dataset` which gets permuted and used to compute the
           measure/transfer error multiple times.
         """
         # TODO: place exceptions separately so we could avoid circular imports
         from mvpa.base.learner import LearnerError
+
+        # prefer the already assigned measure over anything the was passed to
+        # the function.
+        # XXX that is a bit awkward but is necessary to keep the code changes
+        # in the rest of PyMVPA minimal till this behavior become mandatory
+        if not self._measure is None:
+            measure = self._measure
+            measure.untrain()
 
         dist_samples = []
         """Holds the values for randomized labels."""
@@ -422,7 +436,7 @@ class FixedNullDist(NullDist):
         self._dist = dist
 
 
-    def fit(self, measure, wdata, vdata=None):
+    def fit(self, measure, ds):
         """Does nothing since the distribution is already fixed."""
         pass
 
