@@ -274,6 +274,24 @@ def mean_group_sample(attrs, attrfx='merge'):
     return FxMapper('samples', np.mean, uattrs=attrs, attrfx=attrfx)
 
 
+def mean_feature(attrfx='merge'):
+    """Returns a mapper that computes the mean feature of a dataset.
+
+    Parameters
+    ----------
+    attrfx : 'merge' or callable, optional
+      Callable that is used to determine the feature attributes of the computed
+      mean features. By default this will be a string representation of all
+      unique value of a particular attribute in any feature group. If there is
+      only a single value in a group it will be used as the new attribute value.
+
+    Returns
+    -------
+    FxMapper instance.
+    """
+    return FxMapper('features', np.mean, attrfx=attrfx)
+
+
 def mean_group_feature(attrs, attrfx='merge'):
     """Returns a mapper that computes the mean features of unique feature groups.
 
