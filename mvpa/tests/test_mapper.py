@@ -44,6 +44,10 @@ def test_flatten():
                             [1, 0, 0], [1, 0, 1], [1, 0, 2], [1, 0, 3],
                             [1, 1, 0], [1, 1, 1], [1, 1, 2], [1, 1, 3]])
 
+    # test only flattening the first two dimensions
+    fm_max = FlattenMapper(maxdims=2)
+    fm_max.train(data)
+    assert_equal(fm_max(data).shape, (4, 4, 4))
 
     # array subclass survives
     ok_(isinstance(data, myarray))

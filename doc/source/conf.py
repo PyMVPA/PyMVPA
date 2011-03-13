@@ -223,9 +223,9 @@ latex_documents = [
   ('devguide', 'PyMVPA-DevGuide.tex', 'PyMVPA Developer Guidelines',
    'PyMVPA Authors',
    'manual'),
-  ('modref', 'PyMVPA-Reference.tex', 'PyMVPA Reference',
-   'PyMVPA Authors',
-   'manual'),
+#  ('modref', 'PyMVPA-Reference.tex', 'PyMVPA Reference',
+#   'PyMVPA Authors',
+#   'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
