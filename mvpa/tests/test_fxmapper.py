@@ -82,6 +82,24 @@ def test_featuregroup_mapper():
     # FAs should simply remain the same
     assert_array_equal(mds.sa.chunks, np.arange(3))
 
+    # now without grouping
+    m = mean_feature()
+    # forwarding just the samples should yield the same result
+    assert_array_equal(m.forward(ds.samples),
+                       m.forward(ds).samples)
+
+    # And when operating on a dataset with >1D samples, then operate
+    # only across "features", i.e. 1st dimension
+    ds = Dataset(np.arange(24).reshape(3,2,2,2))
+    mapped = ds.get_mapped(m)
+    assert_array_equal(m.forward(ds.samples),
+                       mapped.samples)
+    assert_array_equal(mapped.samples.shape, (3, 2, 2))
+    assert_array_equal(mapped.samples, np.mean(ds.samples, axis=1))
+    # and still could map back? ;) not ATM, so just to ensure consistency
+    assert_raises(NotImplementedError,
+                  mapped.a.mapper.reverse, mapped.samples)
+
 
 def test_fxmapper():
     origdata = np.arange(24).reshape(3,8)
