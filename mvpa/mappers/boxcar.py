@@ -169,15 +169,8 @@ class BoxcarMapper(Mapper):
             mds.sa[k] = self._forward_data(dataset.sa[k].value)
         # create the box offset attribute if space name is given
         if self.get_space():
-            if len(msamp.shape) > 2:
-                # each new feature attribute should have the shape of a single
-                # sample otherwise subsequent flattening wouldn't work
-                mds.fa[self.get_space() + '_offsetidx'] = \
-                        np.repeat(np.arange(mds.nfeatures, dtype='int'),
-                                 np.prod(msamp.shape[2:])).reshape(msamp[0].shape)
-            else:
-                mds.fa[self.get_space() + '_offsetidx'] = \
-                        np.arange(mds.nfeatures, dtype='int')
+            mds.fa[self.get_space() + '_offsetidx'] = np.arange(self.boxlength,
+                                                                dtype='int')
             mds.sa[self.get_space() + '_onsetidx'] = self.startpoints.copy()
         return mds
 
@@ -210,12 +203,7 @@ class BoxcarMapper(Mapper):
                                 data.shape[1],
                                 self.boxlength))
 
-        # need to take care of the special case when the first axis is of length
-        # one, in that case it would be squashed away
-        if data.shape[0] == 1:
-            return np.concatenate(data)[np.newaxis]
-        else:
-            return np.concatenate(data)
+        return np.concatenate(data)
 
 
     def _reverse_dataset(self, dataset):
@@ -228,13 +216,12 @@ class BoxcarMapper(Mapper):
         mds.fa.set_length_check(mds.nfeatures)
         # map old feature attributes -- which simply is taken the first one
         # and kill the inspace attribute, since it 
-        inspace = self.get_space() + '_offsetidx'
+        inspace = self.get_space()
         for k in dataset.fa:
-            if k != inspace:
+            if inspace is None or k != (inspace + '_offsetidx'):
                 mds.fa[k] = dataset.fa[k].value[0]
         # reverse-map old sample attributes
-        inspace = self.get_space() + '_onsetidx'
         for k in dataset.sa:
-            if k != inspace:
+            if inspace is None or k != (inspace + '_onsetidx'):
                 mds.sa[k] = self._reverse_data(dataset.sa[k].value)
         return mds

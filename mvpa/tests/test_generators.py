@@ -14,12 +14,12 @@ import numpy as np
 from mvpa.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, assert_raises, assert_almost_equal
 
-from mvpa.datasets import dataset_wizard
+from mvpa.datasets import dataset_wizard, Dataset
 from mvpa.generators.splitters import Splitter
 from mvpa.base.node import ChainNode
 from mvpa.generators.partition import OddEvenPartitioner
 from mvpa.generators.permutation import AttributePermutator
-from mvpa.generators.resampling import Balancer
+from mvpa.generators.resampling import Balancer, Repeater
 from mvpa.misc.support import get_nelements_per_value
 
 
@@ -191,3 +191,12 @@ def test_balancer():
     res = bal(ds)
     assert_equal(get_nelements_per_value(res.fa.one).values(),
                  [4] * 2)
+
+
+def test_repeater():
+    reps = 4
+    r = Repeater(reps, space='OMG')
+    dsl = [ds for ds in r.generate(Dataset([0,1]))]
+    assert_equal(len(dsl), reps)
+    for i, ds in enumerate(dsl):
+        assert_equal(ds.a.OMG, i)

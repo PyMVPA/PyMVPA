@@ -218,6 +218,8 @@ class ChainNode(Node):
                            i + 1, len(self),
                            str(n)))
             mp = n(mp)
+        if __debug__:
+            debug('MAP', "%s: output (%s)" % (self.__class__.__name__, mp.shape))
         return mp
 
 
