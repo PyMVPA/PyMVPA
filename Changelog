@@ -27,13 +27,27 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
-  * Many, many, many
-  * For an overview of the most drastic changes :ref:`see constantly
-    evolving release notes for 0.6 <chap_release_notes_0.6>`
+* Various improvements and increased flexibility of null distribution
+  estimation of Measures.
+* Numerous documentation fixes.
+* All attribute are now reported in sorted order when printing a dataset.
+* Bugfixes regarding the interaction of FlattenMapper and BoxcarMapper that
+  affected event-related analyses.
+* Added a `Repeater` node to yield a dataset multiple times.
 
 
 Releases
 ========
+
+* 0.6.0~rc2 (Thu, Mar 3 2011)
+
+  * Various fixes in the mvpa.atlas module.
+
+* 0.6.0~rc1 (Thu, Feb 24 2011)
+
+  * Many, many, many
+  * For an overview of the most drastic changes :ref:`see constantly
+    evolving release notes for 0.6 <chap_release_notes_0.6>`
 
 * 0.5.0 (sometime in March 2010)
 
