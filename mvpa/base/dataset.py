@@ -349,51 +349,26 @@ class AttrDataset(object):
         fa : list or None
           List of attributes in the feature attributes collection to include in
           the copy of the dataset. If `None` all attributes are considered If
-          an empty list is given, all attributes are stripped from the copy..
+          an empty list is given, all attributes are stripped from the copy.
         a : list or None
           List of attributes in the dataset attributes collection to include in
           the copy of the dataset. If `None` all attributes are considered If
-          an empty list is given, all attributes are stripped from the copy..
+          an empty list is given, all attributes are stripped from the copy.
         memo : dict
           Developers only: This argument is only useful if copy() is called
           inside the __deepcopy__() method and refers to the dict-argument
           `memo` in the Python documentation.
         """
         if deep:
-            copyvalues = 'deep'
             samples = copy.deepcopy(self.samples, memo)
         else:
             samples = self.samples.view()
-            copyvalues = 'shallow'
-
-        # first we create new collections of the right type for each of the
-        # three essential collections of a dataset
-        sanew = self.sa.__class__(length=self.samples.shape[0])
-        # filter the attributes if necessary
-        if sa is None:
-            saorig = self.sa
-        else:
-            saorig = dict([(k, v) for k, v in self.sa.iteritems() if k in sa])
-        sanew.update(saorig, copyvalues=copyvalues)
-
-        # filter the attributes if necessary
-        if fa is None:
-            faorig = self.fa
-        else:
-            faorig = dict([(k, v) for k, v in self.fa.iteritems() if k in fa])
-        fanew = self.fa.__class__(length=self.samples.shape[1])
-        fanew.update(faorig, copyvalues=copyvalues)
-
-        # filter the attributes if necessary
-        if a is None:
-            aorig = self.a
-        else:
-            aorig = dict([(k, v) for k, v in self.a.iteritems() if k in a])
-        anew = self.a.__class__()
-        anew.update(aorig, copyvalues=copyvalues)
 
         # call the generic init
-        out = self.__class__(samples, sa=sanew, fa=fanew, a=anew)
+        out = self.__class__(samples,
+                             sa=self.sa.copy(a=sa, deep=deep, memo=memo),
+                             fa=self.fa.copy(a=fa, deep=deep, memo=memo),
+                             a =self.a.copy(a=a,   deep=deep, memo=memo))
         return out
 
 
