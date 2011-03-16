@@ -227,13 +227,17 @@ def one_minus_correlation(X, Y):
     X: 2D-array
     Y: 2D-array
 
-    Example:
+    Examples
+    --------
 
-      >>> X = np.random.rand(20,80)
-      >>> Y = np.random.rand(5,80)
-      >>> C = one_minus_correlation(X, Y)
-      >>> print C.shape
-      (20, 5)
+    >>> import numpy as np
+    >>> from mvpa.clfs.distance import one_minus_correlation
+    >>> X = np.random.rand(20,80)
+    >>> Y = np.random.rand(5,80)
+    >>> C = one_minus_correlation(X, Y)
+    >>> print C.shape
+    (20, 5)
+
     """
     # check if matrices have same number of columns
     if __debug__:
