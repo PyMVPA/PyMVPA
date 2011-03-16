@@ -14,6 +14,7 @@ from mvpa.testing.datasets import *
 
 from mvpa.datasets import Dataset
 from mvpa.base import externals
+from mvpa.clfs.transerror import ConfusionMatrix
 from mvpa.measures.searchlight import sphere_searchlight, Searchlight
 from mvpa.measures.gnbsearchlight import sphere_gnbsearchlight,\
      GNBSearchlight
@@ -113,6 +114,37 @@ class SearchlightTests(unittest.TestCase):
         # test if we graciously puke if center_ids are out of bounds
         dataset0 = self.dataset[:, :50] # so we have no 50th feature
         self.failUnlessRaises(IndexError, sl, dataset0)
+
+
+    def test_partial_searchlight_with_confusion_matrix(self):
+        ds = self.dataset
+        # compute N-1 cross-validation for each sphere
+        cm = ConfusionMatrix(labels=ds.UT)
+        cv = CrossValidation(
+            sample_clf_lin, NFoldPartitioner(),
+            # we have to assure that matrix does not get flatted by
+            # first vstack in cv and then hstack in searchlight --
+            # thus 2 leading dimensions
+            # TODO: RF? make searchlight/crossval smarter?
+            errorfx=lambda *a: cm(*a)[None, None,:])
+        # contruct diameter 2 (or just radius 1) searchlight
+        sl = sphere_searchlight(cv, radius=1, center_ids=[3, 5, 50])
+
+        # our regular searchlight -- to compare results
+        cv_gross = CrossValidation(sample_clf_lin, NFoldPartitioner())
+        sl_gross = sphere_searchlight(cv_gross, radius=1, center_ids=[3, 5, 50])
+
+        # run searchlights
+        res = sl(ds)
+        res_gross = sl_gross(ds)
+
+        # only two spheres but error for all CV-folds and complete confusion matrix
+        assert_equal(res.shape, (len(ds.UC), 3, len(ds.UT), len(ds.UT)))
+        assert_equal(res_gross.shape, (len(ds.UC), 3))
+
+        print res.samples
+        print res_gross.samples
+
 
     def test_chi_square_searchlight(self):
         # only do partial to save time
