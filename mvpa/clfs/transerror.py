@@ -550,7 +550,16 @@ class ConfusionMatrix(SummaryStatistics):
         self.__labels_map_rev = labels_map_rev
 
         labels.sort()
-        self.__labels = labels          # store the recomputed labels
+
+        if self.__labels is None or not len(self.__labels):
+            self.__labels = labels          # just store the recomputed labels
+        else:
+            # we should append them to already known ones
+            # Otherwise order of labels known before might be altered
+            add_labels = [x for x in labels if not (x in self.__labels)]
+            if len(add_labels):
+                self.__labels += add_labels
+            labels = self.__labels      # and us them later on
 
         Nlabels, Nsets = len(labels), len(self.sets)
 
