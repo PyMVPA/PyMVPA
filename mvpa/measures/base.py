@@ -22,6 +22,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import mvpa.support.copy as copy
 
+from mvpa.base.node import Node
 from mvpa.base.learner import Learner
 from mvpa.base.state import ConditionalAttribute
 from mvpa.misc.args import group_kwargs
@@ -374,15 +375,20 @@ class CrossValidation(RepeatedMeasure):
           IMPORTANT: The ``space`` of this generator determines the attribute
           that will be used to split all generated datasets into training and
           testing sets.
-        errorfx : callable
+        errorfx : Node or callable
           Custom implementation of an error function. The callable needs to
-          accept two arguments (1. predicted values, 2. target values).
+          accept two arguments (1. predicted values, 2. target values).  If not
+          a Node, it gets wrapped into a `BinaryFxNode`.
         """
         # compile the appropriate repeated measure to do cross-validation from
         # pieces
         if not errorfx is None:
             # error node -- postproc of transfer measure
-            enode = BinaryFxNode(errorfx, learner.get_space())
+            if isinstance(errorfx, Node):
+                enode = errorfx
+            else:
+                # wrap into BinaryFxNode
+                enode = BinaryFxNode(errorfx, learner.get_space())
         else:
             enode = None
 
