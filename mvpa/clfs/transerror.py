@@ -494,6 +494,49 @@ class ConfusionMatrix(SummaryStatistics):
         """Resultant confusion matrix"""
 
 
+    def __call__(self, predictions, targets, estimates=None, store=False):
+        """Computes confusion matrix (counts)
+
+        It would rely on previously provided 'labels' to define columns/rows
+        of the matrix to assure consistency across multiple invocations.
+
+        Parameters
+        ----------
+        store : bool, optional
+          By default, this function does not modify an existing
+          instance of the ConfusionMatrix, and is just used merely to
+          provide a resultant confusion matrix.  If 'store' set to
+          True, provided set of predictions and targets would be added
+          to the sets.
+
+        Returns
+        -------
+        numpy.ndarray
+           counts of hits with rows -- predictions, columns -- targets
+        """
+        labels = self.__labels
+        if labels is None or not len(labels):
+            raise RuntimeError("ConfusionMatrix must have labels assigned prior"
+                               "__call__()")
+        # verify that we know all the labels
+        labels_set = set(labels)
+        if not (labels_set.issuperset(targets)
+                and labels_set.issuperset(predictions)):
+            raise ValueError("Known labels %r does not include some labels "
+                             "found in predictions %r or targets %r provided"
+                             % (labels_set, set(predictions), set(targets)))
+
+        Nlabels = len(labels_set)
+        cm = np.zeros( (Nlabels, Nlabels), dtype=int )
+
+        rev_map = dict([ (x[1], x[0]) for x in enumerate(labels)])
+        for t,p in zip(targets, predictions):
+            cm[rev_map[p], rev_map[t]] += 1
+
+        if store:
+            self.add(targets=targets, predictions=predictions, estimates=estimates)
+        return cm
+
     # XXX might want to remove since summaries does the same, just without
     #     supplying labels
     @property
