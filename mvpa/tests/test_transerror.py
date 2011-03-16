@@ -201,21 +201,24 @@ class ErrorsTests(unittest.TestCase):
 
         # check that the result is highly significant since we know that the
         # data has signal
-        null_prob = terr.ca.null_prob
+        null_prob = np.asscalar(terr.ca.null_prob)
+
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless(null_prob <= 0.1,
                 msg="Failed to check that the result is highly significant "
                     "(got %f) since we know that the data has signal"
                     % null_prob)
 
-            self.failUnless(cvte.ca.null_prob <= 0.1,
+            self.failUnless(np.asscalar(cvte.ca.null_prob) <= 0.1,
                 msg="Failed to check that the result is highly significant "
                     "(got p(cvte)=%f) since we know that the data has signal"
-                    % cvte.ca.null_prob)
+                    % np.asscalar(cvte.ca.null_prob))
 
-            # and we should be able to access the actual samples of the distribution
-            self.failUnlessEqual(len(cvte.null_dist.ca.dist_samples),
-                                 num_perm)
+        # we should be able to access the actual samples of the distribution
+        # yoh: why it is 3D really?
+        self.failUnlessEqual(len(cvte.null_dist.ca.dist_samples),
+                             num_perm)
+
 
 
     @sweepargs(clf=clfswh['multiclass'])
