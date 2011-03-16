@@ -16,6 +16,7 @@ import operator
 
 from mvpa.base import warning
 from mvpa.base.state import ConditionalAttribute
+from mvpa.base.learner import FailedToTrainError
 
 from mvpa.clfs.base import accepts_dataset_as_samples, \
      accepts_samples_as_dataset
@@ -179,7 +180,10 @@ class SVM(_SVM):
                 libsvm_param._set_parameter('weight_label', uls)
             libsvm_param._set_parameter('C', Cs[0])
 
-        self.__model = _svm.SVMModel(svmprob, libsvm_param)
+        try:
+            self.__model = _svm.SVMModel(svmprob, libsvm_param)
+        except Exception, e:
+            raise FailedToTrainError(str(e))
 
 
     @accepts_samples_as_dataset
