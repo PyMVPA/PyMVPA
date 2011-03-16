@@ -441,7 +441,7 @@ class BinaryFxNode(Node):
     def _call(self, ds):
         # extract samples and targets and pass them to the errorfx
         targets = ds.sa[self.get_space()].value
-        # squeeze to remove bogus dimensions are prevent problems during
+        # squeeze to remove bogus dimensions and prevent problems during
         # comparision later on
         values = np.atleast_1d(ds.samples.squeeze())
         if not values.shape == targets.shape:
