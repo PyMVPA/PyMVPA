@@ -177,6 +177,10 @@ class Node(ClassWithCollections):
     space = property(get_space, set_space,
                      doc="Processing space name of this node")
 
+    postproc = property(get_postproc, set_postproc,
+                        doc="Node to perform post-processing of results")
+
+
 class ChainNode(Node):
     """Chain of nodes.
 
