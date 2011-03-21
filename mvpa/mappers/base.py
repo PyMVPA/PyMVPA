@@ -153,13 +153,13 @@ class Mapper(Learner):
                         % (data.shape, self))
             return self._forward_dataset(data)
         else:
+            if hasattr(data, 'ndim') and data.ndim < 2:
+                raise ValueError(
+                    'Mapper.forward() only support mapping of data with '
+                    'at least two dimensions, where the first axis '
+                    'separates samples/observations. Consider using '
+                    'Mapper.forward1() instead.')
             if __debug__:
-                if hasattr(data, 'ndim') and data.ndim < 2:
-                    raise ValueError(
-                        'Mapper.forward() only support mapping of data with '
-                        'at least two dimensions, where the first axis '
-                        'separates samples/observations. Consider using '
-                        'Mapper.forward1() instead.')
                 debug('MAP', "Forward-map data through '%s'." % (self))
             return self._forward_data(data)
 
