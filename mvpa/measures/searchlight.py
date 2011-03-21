@@ -132,46 +132,10 @@ class BaseSearchlight(Measure):
         return results
 
 
-    def _proc_block(self, block, ds, measure):
-        """Little helper to capture the parts of the computation that can be
-        parallelized
+    def _sl_call(self, dataset, roi_ids, nproc):
+        """Classical generic searchlight implementation
         """
-        if __debug__:
-            debug_slc_ = 'SLC_' in debug.active
-
-        if self.ca.is_enabled('roi_sizes'):
-            roi_sizes = []
-        else:
-            roi_sizes = None
-        results = []
-        # put rois around all features in the dataset and compute the
-        # measure within them
-        for i, f in enumerate(block):
-            # retrieve the feature ids of all features in the ROI from the query
-            # engine
-            roi_fids = self._qe[f]
-
-            if __debug__ and  debug_slc_:
-                debug('SLC_', 'For %r query returned ids %r' % (f, roi_fids))
-
-            # slice the dataset
-            roi = ds[:, roi_fids]
-
-            # compute the datameasure and store in results
-            results.append(measure(roi))
-
-            # store the size of the roi dataset
-            if not roi_sizes is None:
-                roi_sizes.append(roi.nfeatures)
-
-            if __debug__:
-                debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
-                    % (len(block),
-                       f+1,
-                       roi.nfeatures,
-                       float(i+1)/len(block)*100,), cr=True)
-
-        return results, roi_sizes
+        raise NotImplementedError("Must be implemented in the derived classes")
 
 
 class Searchlight(BaseSearchlight):
@@ -238,13 +202,19 @@ class Searchlight(BaseSearchlight):
             results, roi_sizes = \
                     self._proc_block(roi_ids, dataset, self.__datameasure)
 
-        if __debug__:
-            debug('SLC', '')
+        if __debug__ and 'SLC' in debug.active:
+            debug('SLC', '')            # just newline
+            resshape = len(results) and np.asanyarray(results[0]).shape or 'N/A'
+            debug('SLC', ' hstacking %d results of shape %s'
+                  % (len(results), resshape))
 
         # but be careful: this call also serves as conversion from parallel maps
         # to regular lists!
         # this uses the Dataset-hstack
         results = hstack(results)
+
+        if __debug__:
+            debug('SLC', " hstacked shape %s" % (results.shape,))
 
         return results, roi_sizes
 

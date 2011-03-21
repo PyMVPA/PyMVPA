@@ -138,6 +138,31 @@ class ErrorsTests(unittest.TestCase):
         for l in lm.keys():
             self.failUnless(l in s)
 
+    def test_confusion_call(self):
+        # Also tests for the consistency of the labels as
+        # either provided or collected by ConfusionMatrix through its lifetime
+        self.failUnlessRaises(RuntimeError, ConfusionMatrix(), [1], [1])
+        self.failUnlessRaises(ValueError, ConfusionMatrix(labels=[2]), [1], [1])
+        # Now lets test proper matrix and either we obtain the same
+        t = ['ho', 'ho', 'ho', 'fa', 'fa', 'ho', 'ho']
+        p = ['ho','ho', 'ho', 'ho', 'fa', 'fa', 'fa']
+        cm1 = ConfusionMatrix(labels=['ho', 'fa'])
+        cm2 = ConfusionMatrix(labels=['fa', 'ho'])
+        assert_array_equal(cm1(p, t), [[3, 1], [2, 1]])
+        assert_array_equal(cm2(p, t), [[1, 2], [1, 3]]) # reverse order of labels
+
+        cm1_ = ConfusionMatrix(labels=['ho', 'fa'], sets=[(t,p)])
+        assert_array_equal(cm1(p, t), cm1_.matrix) # both should be identical
+        # Lets provoke "mother" CM to get to know more labels which could get ahead
+        # of the known ones
+        cm1.add(['ho', 'aa'], ['ho', 'aa'])
+        # compare and cause recomputation so .__labels get reassigned
+        assert_equal(cm1.labels, ['ho', 'fa', 'aa'])
+        assert_array_equal(cm1(p, t), [[3, 1, 0], [2, 1, 0], [0, 0, 0]])
+        assert_equal(len(cm1.sets), 1)  # just 1 must be known atm from above add
+        assert_array_equal(cm1(p, t, store=True), [[3, 1, 0], [2, 1, 0], [0, 0, 0]])
+        assert_equal(len(cm1.sets), 2)  # and now 2
+        assert_array_equal(cm1(p + ['ho', 'aa'], t + ['ho', 'aa']), cm1.matrix)
 
     @sweepargs(l_clf=clfswh['linear', 'svm'])
     def test_confusion_based_error(self, l_clf):
@@ -201,21 +226,24 @@ class ErrorsTests(unittest.TestCase):
 
         # check that the result is highly significant since we know that the
         # data has signal
-        null_prob = terr.ca.null_prob
+        null_prob = np.asscalar(terr.ca.null_prob)
+
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless(null_prob <= 0.1,
                 msg="Failed to check that the result is highly significant "
                     "(got %f) since we know that the data has signal"
                     % null_prob)
 
-            self.failUnless(cvte.ca.null_prob <= 0.1,
+            self.failUnless(np.asscalar(cvte.ca.null_prob) <= 0.1,
                 msg="Failed to check that the result is highly significant "
                     "(got p(cvte)=%f) since we know that the data has signal"
-                    % cvte.ca.null_prob)
+                    % np.asscalar(cvte.ca.null_prob))
 
-            # and we should be able to access the actual samples of the distribution
-            self.failUnlessEqual(len(cvte.null_dist.ca.dist_samples),
-                                 num_perm)
+        # we should be able to access the actual samples of the distribution
+        # yoh: why it is 3D really?
+        self.failUnlessEqual(len(cvte.null_dist.ca.dist_samples),
+                             num_perm)
+
 
 
     @sweepargs(clf=clfswh['multiclass'])

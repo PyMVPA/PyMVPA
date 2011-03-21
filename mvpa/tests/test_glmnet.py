@@ -81,7 +81,7 @@ def test_glmnet_c_sensitivities():
 
     # now ask for the sensitivities WITHOUT having to pass the dataset
     # again
-    sens = clf.get_sensitivity_analyzer(force_train=False)()
+    sens = clf.get_sensitivity_analyzer(force_train=False)(None)
 
     #failUnless(sens.shape == (data.nfeatures,))
     assert_equal(sens.shape, (len(data.UT), data.nfeatures))
@@ -95,6 +95,6 @@ def test_glmnet_r_sensitivities():
 
     # now ask for the sensitivities WITHOUT having to pass the dataset
     # again
-    sens = clf.get_sensitivity_analyzer(force_train=False)()
+    sens = clf.get_sensitivity_analyzer(force_train=False)(None)
 
     assert_equal(sens.shape, (1, data.nfeatures))
