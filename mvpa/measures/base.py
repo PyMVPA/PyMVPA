@@ -381,8 +381,14 @@ class CrossValidation(RepeatedMeasure):
           a Node, it gets wrapped into a `BinaryFxNode`.
         splitter : Splitter or None
           A Splitter instance to split the dataset into training and testing
-          part. If None, a default splitter is auto-generated using the
-          ``space`` setting of the ``generator``.
+          part. The first split will be used for training and the second for
+          testing -- all other splits will be ignored. If None, a default
+          splitter is auto-generated using the ``space`` setting of the
+          ``generator``. The default splitter is configured to return the
+          ``1``-labeled partition of the input dataset at first, and the
+          ``2``-labeled partition second. This behavior corresponds to most
+          Partitioners that label the taken-out portion ``2`` and the remainder
+          with ``1``.
         """
         # compile the appropriate repeated measure to do cross-validation from
         # pieces
@@ -397,7 +403,13 @@ class CrossValidation(RepeatedMeasure):
             enode = None
 
         if splitter is None:
-            splitter = Splitter(generator.get_space())
+            # default splitter splits into "1" and "2" partition.
+            # that will effectively ignore 'deselected' samples (e.g. by
+            # Balancer). It is done this way (and not by ignoring '0' samples
+            # because it is guaranteed to yield two splits) and is more likely
+            # to fail in visible ways if the attribute does not have 0,1,2
+            # values at all (i.e. a literal train/test/spareforlater attribute)
+            splitter = Splitter(generator.get_space(), attr_values=(1,2))
         # transfer measure to wrap the learner
         # splitter used the output space of the generator to know what to split
         tm = TransferMeasure(learner, splitter, postproc=enode)
