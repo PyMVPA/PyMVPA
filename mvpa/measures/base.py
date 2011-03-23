@@ -361,7 +361,7 @@ class CrossValidation(RepeatedMeasure):
 
     # TODO move conditional attributes from CVTE into this guy
     def __init__(self, learner, generator, errorfx=mean_mismatch_error,
-                 **kwargs):
+                 splitter=None, **kwargs):
         """
         Parameters
         ----------
@@ -377,6 +377,10 @@ class CrossValidation(RepeatedMeasure):
         errorfx : callable
           Custom implementation of an error function. The callable needs to
           accept two arguments (1. predicted values, 2. target values).
+        splitter : Splitter or None
+          A Splitter instance to split the dataset into training and testing
+          part. If None, a default splitter is auto-generated using the
+          ``space`` setting of the ``generator``.
         """
         # compile the appropriate repeated measure to do cross-validation from
         # pieces
@@ -386,10 +390,11 @@ class CrossValidation(RepeatedMeasure):
         else:
             enode = None
 
+        if splitter is None:
+            splitter = Splitter(generator.get_space())
         # transfer measure to wrap the learner
         # splitter used the output space of the generator to know what to split
-        tm = TransferMeasure(learner, Splitter(generator.get_space()),
-                postproc=enode)
+        tm = TransferMeasure(learner, splitter, postproc=enode)
 
         # and finally the repeated measure to perform the x-val
         RepeatedMeasure.__init__(self, tm, generator, space='sa.cvfolds',
