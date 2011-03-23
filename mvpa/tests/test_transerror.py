@@ -242,7 +242,12 @@ class ErrorsTests(unittest.TestCase):
 
         # we should be able to access the actual samples of the distribution
         # yoh: why it is 3D really?
-        self.failUnlessEqual(len(cvte.null_dist.ca.dist_samples),
+        # mih: because these are the distribution samples for the ONE error
+        #      collapsed into ONE value across all folds. It will also be
+        #      3d if the return value of the measure isn't a scalar and it is
+        #      not collapsed across folds. it simply corresponds to the shape
+        #      of the output dataset of the respective measure (+1 axis)
+        self.failUnlessEqual(cvte.null_dist.ca.dist_samples.shape[2],
                              num_perm)
 
 
