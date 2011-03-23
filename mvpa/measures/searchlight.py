@@ -276,9 +276,10 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
     datameasure : callable
       Any object that takes a :class:`~mvpa.datasets.base.Dataset`
       and returns some measure when called.
-    radius : float
+    radius : int
       All features within this radius around the center will be part
-      of a sphere.
+      of a sphere. Radius is in grid-indices, i.e. ``1`` corresponds
+      to all immediate neighbors, regardless of the physical distance.
     center_ids : list of int
       List of feature ids (not coordinates) the shall serve as sphere
       centers. By default all features will be used (it is passed
