@@ -408,6 +408,9 @@ class FixedNullDist(NullDist):
 
     All distributions from SciPy's 'stats' module can be used with this class.
 
+    Examples
+    --------
+
     >>> import numpy as np
     >>> from scipy import stats
     >>> from mvpa.clfs.stats import FixedNullDist
@@ -422,6 +425,7 @@ class FixedNullDist(NullDist):
     >>> dist = FixedNullDist(stats.norm(loc=2, scale=4), tail='right')
     >>> dist.p(np.arange(5))
     array([ 0.69146246,  0.59870633,  0.5       ,  0.40129367,  0.30853754])
+
     """
     def __init__(self, dist, **kwargs):
         """
@@ -739,6 +743,7 @@ if externals.exists('scipy'):
 
         Examples
         --------
+        >>> from mvpa.clfs.stats import match_distribution
         >>> data = np.random.normal(size=(1000,1));
         >>> matches = match_distribution(
         ...   data,
@@ -747,6 +752,7 @@ if externals.exists('scipy'):
         ...                             'loc': 0.0,
         ...                             'args': (10,)})],
         ...   nsamples=30, test='p-roc', p=0.05)
+
         """
 
         # Handle parameters

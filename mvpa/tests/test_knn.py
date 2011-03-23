@@ -58,10 +58,9 @@ class KNNTests(unittest.TestCase):
         self.failUnless(clf.ca.distances.shape == (80,160))
 
         self.failUnless(not clf.ca.distances.fa is train.sa)
-        # XXX if we revert to deepcopy for that state following test
-        # should fail
-        self.failUnless(clf.ca.distances.fa['chunks'] is train.sa['chunks'])
-        self.failUnless(clf.ca.distances.fa.chunks is train.sa.chunks)
+        # Those are deep-copied now by default so they should not be the same
+        self.failUnless(not (clf.ca.distances.fa['chunks'] is train.sa['chunks']))
+        self.failUnless(not (clf.ca.distances.fa.chunks is train.sa.chunks))
 
 def suite():
     return unittest.makeSuite(KNNTests)
