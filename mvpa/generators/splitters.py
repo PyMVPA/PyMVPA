@@ -36,11 +36,8 @@ class Splitter(Node):
         """
         Parameters
         ----------
-        attr : str or None
+        attr : str
           Typically the sample or feature attribute used to determine splits.
-          If set to ``None`` no splitting is performed, but the input dataset
-          is yielded as often as indicated by the ``count`` argument. ``count``
-          has to be a positive integer in this case.
         attr_values : list
           If not None, this is a list of value of the ``attr`` used to determine
           the splits. The order of values in this list defines the order of the
@@ -89,16 +86,6 @@ class Splitter(Node):
         count = self.__count
         splattr = self.get_space()
 
-        # special mode: no-splitting
-        if splattr is None:
-            if count is None:
-                raise ValueError("%s: attr=None is only supported with a "
-                                 "positive ``count`` argument." % str(self))
-            for i in xrange(count):
-                # simply yield the input dataset
-                yield ds
-            # nothing else to do
-            return
 
         # get attribute and source collection from dataset
         splattr, collection = ds.get_attr(splattr)

@@ -16,6 +16,7 @@ from mvpa.support.copy import copy
 from mvpa.base.dataset import vstack
 from mvpa.base import externals, warning
 from mvpa.generators.partition import OddEvenPartitioner
+from mvpa.generators.resampling import Repeater
 from mvpa.generators.permutation import AttributePermutator
 from mvpa.generators.splitters import Splitter
 
@@ -182,7 +183,7 @@ class ErrorsTests(unittest.TestCase):
         # function and lower is better
         terr = TransferMeasure(
             l_clf,
-            Splitter(None, count=2),
+            Repeater(count=2),
             postproc=BinaryFxNode(mean_mismatch_error, 'targets'),
             null_dist=MCNullDist(permutator,
                                  tail='left'))
