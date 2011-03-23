@@ -32,13 +32,13 @@ class Splitter(Node):
     may be provided.
     """
     def __init__(self, attr, attr_values=None, count=None, noslicing=False,
-                 reverse=False, **kwargs):
+                 reverse=False, ignore_values=None, **kwargs):
         """
         Parameters
         ----------
         attr : str
           Typically the sample or feature attribute used to determine splits.
-        attr_values : list
+        attr_values : tuple
           If not None, this is a list of value of the ``attr`` used to determine
           the splits. The order of values in this list defines the order of the
           resulting splits. It is possible to specify a particular value
@@ -56,10 +56,15 @@ class Splitter(Node):
         reverse : bool
           If True, the order of datasets in the split is reversed, e.g.
           instead of (training, testing), (training, testing) will be spit
-          out
+          out.
+        ignore_values : tuple
+          If not None, this is a list of value of the ``attr`` the shall be
+          ignored when determining the splits. This settings also affects
+          any specified ``attr_values``.
         """
         Node.__init__(self, space=attr, **kwargs)
         self.__splitattr_values = attr_values
+        self.__splitattr_ignore = ignore_values
         self.__count = count
         self.__noslicing = noslicing
         self.__reverse = reverse
@@ -85,7 +90,7 @@ class Splitter(Node):
         noslicing = self.__noslicing
         count = self.__count
         splattr = self.get_space()
-
+        ignore = self.__splitattr_ignore
 
         # get attribute and source collection from dataset
         splattr, collection = ds.get_attr(splattr)
@@ -93,6 +98,9 @@ class Splitter(Node):
         cfgs = self.__splitattr_values
         if cfgs is None:
             cfgs = splattr.unique
+        if not ignore is None:
+            # remove to be ignored bits
+            cfgs = [c for c in cfgs if not c in ignore]
         n_cfgs = len(cfgs)
 
         if self.__reverse:
