@@ -40,13 +40,13 @@ class Node(ClassWithCollections):
         """
         Parameters
         ----------
-        space: str
+        space: str, optional
           Name of the 'processing space'. The actual meaning of this argument
           heavily depends on the sub-class implementation. In general, this is
           a trigger that tells the node to compute and store information about
           the input data that is "interesting" in the context of the
           corresponding processing in the output dataset.
-        postproc : Node instance
+        postproc : Node instance, optional
           Node to perform post-processing of results. This node is applied
           in `__call__()` to perform a final processing step on the to be
           result dataset. If None, nothing is done.
@@ -176,6 +176,10 @@ class Node(ClassWithCollections):
 
     space = property(get_space, set_space,
                      doc="Processing space name of this node")
+
+    postproc = property(get_postproc, set_postproc,
+                        doc="Node to perform post-processing of results")
+
 
 class ChainNode(Node):
     """Chain of nodes.

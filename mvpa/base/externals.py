@@ -302,7 +302,11 @@ def __check_openopt():
     return
 
 def __check_skl():
-    import scikits.learn as _
+    import scikits.learn as skl
+    if skl.__doc__.strip() == "":
+        raise ImportError("Verify your installation of scikits.learn. "
+                          "Its docstring is empty -- could be that only -lib "
+                          "was installed without the native Python modules")
 
 def _set_matplotlib_backend():
     """Check if we have custom backend to set and it is different

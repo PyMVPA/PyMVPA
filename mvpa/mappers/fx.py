@@ -274,6 +274,24 @@ def mean_group_sample(attrs, attrfx='merge'):
     return FxMapper('samples', np.mean, uattrs=attrs, attrfx=attrfx)
 
 
+def sum_sample(attrfx='merge'):
+    """Returns a mapper that computes the sum sample of a dataset.
+
+    Parameters
+    ----------
+    attrfx : 'merge' or callable, optional
+      Callable that is used to determine the sample attributes of the computed
+      sum samples. By default this will be a string representation of all
+      unique value of a particular attribute in any sample group. If there is
+      only a single value in a group it will be used as the new attribute value.
+
+    Returns
+    -------
+    FxMapper instance.
+    """
+    return FxMapper('samples', np.sum, attrfx=attrfx)
+
+
 def mean_feature(attrfx='merge'):
     """Returns a mapper that computes the mean feature of a dataset.
 
@@ -441,7 +459,7 @@ class BinaryFxNode(Node):
     def _call(self, ds):
         # extract samples and targets and pass them to the errorfx
         targets = ds.sa[self.get_space()].value
-        # squeeze to remove bogus dimensions are prevent problems during
+        # squeeze to remove bogus dimensions and prevent problems during
         # comparision later on
         values = np.atleast_1d(ds.samples.squeeze())
         if not values.shape == targets.shape:
