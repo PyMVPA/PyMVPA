@@ -34,7 +34,7 @@ from mvpa.base.dochelpers import enhanced_doc_string, _str
 from mvpa.base import externals, warning
 from mvpa.clfs.stats import auto_null_dist
 from mvpa.base.dataset import AttrDataset
-from mvpa.datasets import Dataset, vstack
+from mvpa.datasets import Dataset, vstack, hstack
 from mvpa.mappers.fx import BinaryFxNode
 from mvpa.generators.splitters import Splitter
 
@@ -236,6 +236,7 @@ class RepeatedMeasure(Measure):
                  node,
                  generator,
                  callback=None,
+                 concat_as='samples',
                  **kwargs):
         """
         Parameters
@@ -252,12 +253,18 @@ class RepeatedMeasure(Measure):
           instance that is evaluated repeatedly and the 'result' of a single
           evaluation -- passed as named arguments (see labels in quotes) for
           every iteration, directly after evaluating the node.
+        concat_as : {'samples', 'features'}
+          Along which axis to concatenate result dataset from all iterations.
+          By default, results are 'vstacked' as multiple samples in the output
+          dataset. Setting this argument to 'features' will change this to
+          'hstacking' along the feature axis.
         """
         Measure.__init__(self, **kwargs)
 
         self._node = node
         self._generator = generator
         self._callback = callback
+        self._concat_as = concat_as
 
 
     def _call(self, ds):
@@ -266,6 +273,7 @@ class RepeatedMeasure(Measure):
         node = self._node
         ca = self.ca
         space = self.get_space()
+        concat_as = self._concat_as
 
         if self.ca.is_enabled("stats") and (not node.ca.has_key("stats") or
                                             not node.ca.is_enabled("stats")):
@@ -309,7 +317,12 @@ class RepeatedMeasure(Measure):
         self.ca.repetition_results = results
 
         # stack all results into a single Dataset
-        results = vstack(results)
+        if concat_as == 'samples':
+            results = vstack(results)
+        elif concat_as == 'features':
+            results = hstack(results)
+        else:
+            raise ValueError("Unkown concatenation mode '%s'" % concat_as)
         # no need to store the raw results, since the Measure class will
         # automatically store them in a CA
         return results
