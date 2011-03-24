@@ -518,6 +518,24 @@ class SensitivityAnalysersTests(unittest.TestCase):
         assert_equal(res.shape, (len(self.dataset.sa['chunks'].unique), 1))
 
 
+    def test_repeated_features(self):
+        print self.dataset
+        print self.dataset.fa.nonbogus_targets
+        class CountFeatures(Measure):
+            is_trained = True
+            def _call(self, ds):
+                return ds.nfeatures
+
+        cf = CountFeatures()
+        spl = Splitter('fa.nonbogus_targets')
+        nsplits = len(list(spl.generate(self.dataset)))
+        assert_equal(nsplits, 3)
+        rm = RepeatedMeasure(cf, spl, concat_as='features')
+        res = rm(self.dataset)
+        assert_equal(res.shape, (1, nsplits))
+        assert_array_equal(res.samples[0], [18,1,1])
+
+
 def suite():
     return unittest.makeSuite(SensitivityAnalysersTests)
 
