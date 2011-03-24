@@ -17,6 +17,8 @@ from mvpa.base.node import Node
 from mvpa.base import warning
 from mvpa.misc.support import mask2slice
 
+if __debug__:
+    from mvpa.base import debug
 
 class Splitter(Node):
     """Generator node for dataset splitting.
@@ -98,19 +100,36 @@ class Splitter(Node):
         cfgs = self.__splitattr_values
         if cfgs is None:
             cfgs = splattr.unique
+        if __debug__:
+            debug('SPL', 'Determined %i split specifications' % len(cfgs))
         if not ignore is None:
             # remove to be ignored bits
             cfgs = [c for c in cfgs if not c in ignore]
+            if __debug__:
+                debug('SPL',
+                      '%i split specifications left after removing ignored ones'
+                      % len(cfgs))
         n_cfgs = len(cfgs)
 
         if self.__reverse:
+            if __debug__:
+                debug('SPL', 'Reversing split order')
             cfgs = cfgs[::-1]
 
         # split the data
         for isplit, split in enumerate(cfgs):
             if not count is None and isplit >= count:
                 # number of max splits is reached
+                if __debug__:
+                    debug('SPL',
+                          'Discard remaining splits as maximum of %i is reached'
+                          % count)
                 break
+            # safeguard against 'split' being `None` -- in which case a single
+            # boolean would be the result of the comparision below, and not
+            # a boolean vector from element-wise comparision
+            if split is None:
+                split = [None]
             # boolean mask is 'selected' samples for this split
             filter_ = splattr_data == split
 
@@ -123,8 +142,12 @@ class Splitter(Node):
                 filter_ = mask2slice(filter_)
 
             if collection is ds.sa:
+                if __debug__:
+                    debug('SPL', 'Split along samples axis')
                 split_ds = ds[filter_]
             elif collection is ds.fa:
+                if __debug__:
+                    debug('SPL', 'Split along feature axis')
                 split_ds = ds[:, filter_]
             else:
                 RuntimeError("This should never happen.")
