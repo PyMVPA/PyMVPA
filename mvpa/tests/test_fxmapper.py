@@ -99,6 +99,10 @@ def test_featuregroup_mapper():
     # and still could map back? ;) not ATM, so just to ensure consistency
     assert_raises(NotImplementedError,
                   mapped.a.mapper.reverse, mapped.samples)
+    # but it should also work with standard 2d sample arrays
+    ds = Dataset(np.arange(24).reshape(3,8))
+    mapped = ds.get_mapped(m)
+    assert_array_equal(mapped.samples.shape, (3, 1))
 
 
 def test_fxmapper():

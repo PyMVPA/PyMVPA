@@ -107,6 +107,10 @@ class FxMapper(Mapper):
         # apply fx along features axis for each sample
         elif self.__axis == 'features':
             mdata = np.apply_along_axis(self.__fx, 1, data, *self.__fxargs)
+            if len(mdata.shape) == 1:
+                # in case we only have a scalar per sample we need to transpose
+                # it properly, to keep the length of the samples axis intact
+                mdata = np.atleast_2d(mdata).T
         return np.atleast_2d(mdata)
 
     @borrowdoc(Mapper)
