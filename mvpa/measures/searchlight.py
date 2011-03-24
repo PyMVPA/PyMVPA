@@ -48,9 +48,11 @@ class BaseSearchlight(Measure):
         queryengine : QueryEngine
           Engine to use to discover the "neighborhood" of each feature.
           See :class:`~mvpa.misc.neighborhood.QueryEngine`.
-        roi_ids : None or list of int
+        roi_ids : None or list(int) or str
           List of feature ids (not coordinates) the shall serve as sphere
-          centers. By default all features will be used.
+          centers. Alternatively, this can be the name of a feature attribute
+          of the input dataset, whose non-zero values determine the feature
+          ids. By default all features will be used.
         nproc : None or int
           How many processes to use for computation.  Requires `pprocess`
           external module.  If None -- all available cores will be used.
@@ -67,7 +69,8 @@ class BaseSearchlight(Measure):
                                "to 1 (got nproc=%i)" % nproc)
 
         self._qe = queryengine
-        if roi_ids is not None and not len(roi_ids):
+        if roi_ids is not None and not isinstance(roi_ids, str) \
+                and not len(roi_ids):
             raise ValueError, \
                   "Cannot run searchlight on an empty list of roi_ids"
         self.__roi_ids = roi_ids
@@ -94,7 +97,9 @@ class BaseSearchlight(Measure):
 
         # decide whether to run on all possible center coords or just a provided
         # subset
-        if self.__roi_ids is not None:
+        if isinstance(self.__roi_ids, str):
+            roi_ids = dataset.fa[self.__roi_ids].value.nonzero()[0]
+        elif self.__roi_ids is not None:
             roi_ids = self.__roi_ids
             # safeguard against stupidity
             if __debug__:
@@ -282,8 +287,10 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
       to all immediate neighbors, regardless of the physical distance.
     center_ids : list of int
       List of feature ids (not coordinates) the shall serve as sphere
-      centers. By default all features will be used (it is passed
-      roi_ids argument for Searchlight).
+      centers. Alternatively, this can be the name of a feature attribute
+      of the input dataset, whose non-zero values determine the feature
+      ids.  By default all features will be used (it is passed as ``roi_ids``
+      argument of Searchlight).
     space : str
       Name of a feature attribute of the input dataset that defines the spatial
       coordinates of all features.

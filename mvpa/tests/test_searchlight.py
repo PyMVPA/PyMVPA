@@ -100,21 +100,29 @@ class SearchlightTests(unittest.TestCase):
             self.failUnless(dmax <= 1e-13)
 
     def test_partial_searchlight_with_full_report(self):
+        ds = self.dataset.copy()
+        center_ids = np.zeros(ds.nfeatures, dtype='bool')
+        center_ids[[3,50]] = True
+        ds.fa['center_ids'] = center_ids
         # compute N-1 cross-validation for each sphere
         cv = CrossValidation(sample_clf_lin, NFoldPartitioner())
         # contruct diameter 1 (or just radius 0) searchlight
-        sl = sphere_searchlight(cv, radius=0,
-                         center_ids=[3,50])
-
-        # run searchlight
-        results = sl(self.dataset)
-
-        # only two spheres but error for all CV-folds
-        self.failUnlessEqual(results.shape, (len(self.dataset.UC), 2))
-
+        # one time give center ids as a list, the other one takes it from the
+        # dataset itself
+        sls = (sphere_searchlight(cv, radius=0, center_ids=[3,50]),
+               sphere_searchlight(cv, radius=0, center_ids='center_ids'))
+        for sl in sls:
+            # run searchlight
+            results = sl(ds)
+            # only two spheres but error for all CV-folds
+            self.failUnlessEqual(results.shape, (len(self.dataset.UC), 2))
         # test if we graciously puke if center_ids are out of bounds
-        dataset0 = self.dataset[:, :50] # so we have no 50th feature
-        self.failUnlessRaises(IndexError, sl, dataset0)
+        dataset0 = ds[:, :50] # so we have no 50th feature
+        self.failUnlessRaises(IndexError, sls[0], dataset0)
+        # but it should be fine on the one that gets the ids from the dataset
+        # itself
+        results = sl(dataset0)
+        assert_equal(results.nfeatures, 1)
 
 
     def test_partial_searchlight_with_confusion_matrix(self):
