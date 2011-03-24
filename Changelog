@@ -27,22 +27,31 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
-* Various improvements and increased flexibility of null distribution
-  estimation of Measures.
-* Numerous documentation fixes.
-* All attribute are now reported in sorted order when printing a dataset.
-* Bugfixes regarding the interaction of FlattenMapper and BoxcarMapper that
-  affected event-related analyses.
-* Added a `Repeater` node to yield a dataset multiple times. Consequently, the
-  "nosplitting" mode of `Splitter` got removed at the same time.
-* `fmri_dataset` now also stores the input image type.
-* `Crossvalidation` can now take a custom `Splitter` instance. Moreover, the
-  default splitter of CrossValidation is more robust in terms of number and
-  type of created splits for common usage patterns (i.e. together with
-  partitioners).
-* `CrossValidation` takes any custom Node as ``errorfx`` argument.
-* `ConfusionMatrix` can now be used as an ``errorfx`` in Crossvalidation.
-* A `Node`s postproc is now accessible as a property.
+  * Fixes
+
+    - Bugfixes regarding the interaction of FlattenMapper and BoxcarMapper that
+      affected event-related analyses.
+    - Splitter now handles attribute value `None` for splitting properly.
+
+  * Enhancements
+
+    - Various improvements and increased flexibility of null distribution
+      estimation of Measures.
+    - Numerous documentation fixes.
+    - All attribute are now reported in sorted order when printing a dataset.
+    - Added a `Repeater` node to yield a dataset multiple times. Consequently, the
+      "nosplitting" mode of `Splitter` got removed at the same time.
+    - `fmri_dataset` now also stores the input image type.
+    - `Crossvalidation` can now take a custom `Splitter` instance. Moreover, the
+      default splitter of CrossValidation is more robust in terms of number and
+      type of created splits for common usage patterns (i.e. together with
+      partitioners).
+    - `CrossValidation` takes any custom Node as ``errorfx`` argument.
+    - `ConfusionMatrix` can now be used as an ``errorfx`` in Crossvalidation.
+    - A `Node`s postproc is now accessible as a property.
+    - `RepeatedMeasure` has a new 'concat_as' argument that allows results to be
+      concatenated along the feature axis. The default behavior, stacking as
+      multiple samples, is unchanged.
 
 
 Releases
