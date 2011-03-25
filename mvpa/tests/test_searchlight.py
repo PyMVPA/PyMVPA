@@ -123,6 +123,12 @@ class SearchlightTests(unittest.TestCase):
         # itself
         results = sl(dataset0)
         assert_equal(results.nfeatures, 1)
+        # check whether roi_seeds are correct
+        sl = sphere_searchlight(lambda x: np.vstack((x.fa.roi_seed, x.samples)),
+                                radius=1, add_center_fa=True, center_ids=[12])
+        res = sl(ds)
+        assert_array_equal(res.samples[1:, res.samples[0].astype('bool')].squeeze(),
+                           ds.samples[:, 12])
 
 
     def test_partial_searchlight_with_confusion_matrix(self):
