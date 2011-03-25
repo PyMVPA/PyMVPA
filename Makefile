@@ -252,12 +252,13 @@ website-stamp: mkdir-WWW_DIR htmldoc pdfdoc
 upload-website:
 	$(MAKE) website SPHINXOPTS='-D html_theme=pymvpa_online'
 	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI)/
+	git update-ref refs/heads/website-updates/www HEAD
 
 upload-htmldoc:
 	$(MAKE) htmldoc SPHINXOPTS='-D html_theme=pymvpa_online'
 	chmod a+rX -R $(HTML_DIR)
 	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI)/
-
+	git update-ref refs/heads/website-updates/www-html HEAD
 
 upload-website-dev:
 	sed -i -e "s,http://disqus.com/forums/pymvpa/,http://disqus.com/forums/pymvpa-dev/,g" \
