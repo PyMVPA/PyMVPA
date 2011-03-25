@@ -52,6 +52,8 @@ Unreleased changes
     - `RepeatedMeasure` has a new 'concat_as' argument that allows results to be
       concatenated along the feature axis. The default behavior, stacking as
       multiple samples, is unchanged.
+    - `Searchlight` now has the ability to mark the center/seed of an ROI in
+      with a feature attribute in the generated datasets.
 
 
 Releases

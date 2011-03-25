@@ -153,19 +153,31 @@ class Searchlight(BaseSearchlight):
     """
 
     @borrowkwargs(BaseSearchlight, '__init__')
-    def __init__(self, datameasure, *args, **kwargs):
+    def __init__(self, datameasure, queryengine, add_center_fa=False, **kwargs):
         """
         Parameters
         ----------
         datameasure : callable
           Any object that takes a :class:`~mvpa.datasets.base.Dataset`
           and returns some measure when called.
+        add_center_fa : bool or str
+          If True or a string, each searchlight ROI dataset will have a boolean
+          vector as a feature attribute that indicates the feature that is the
+          seed (e.g. sphere center) for the respective ROI. If True, the
+          attribute is named 'roi_seed', the provided string is used as the name
+          otherwise.
         **kwargs
           In addition this class supports all keyword arguments of its
           base-class :class:`~mvpa.measures.searchlight.BaseSearchlight`.
         """
-        BaseSearchlight.__init__(self, *args, **kwargs)
+        BaseSearchlight.__init__(self, queryengine, **kwargs)
         self.__datameasure = datameasure
+        if isinstance(add_center_fa, str):
+            self.__add_center_fa = add_center_fa
+        elif add_center_fa:
+            self.__add_center_fa = 'roi_seed'
+        else:
+            self.__add_center_fa = False
 
 
     def _sl_call(self, dataset, roi_ids, nproc):
@@ -250,6 +262,12 @@ class Searchlight(BaseSearchlight):
             # slice the dataset
             roi = ds[:, roi_fids]
 
+            if self.__add_center_fa:
+                # add fa to indicate ROI seed if requested
+                roi_seed = np.zeros(roi.nfeatures, dtype='bool')
+                roi_seed[roi_fids.index(f)] = True
+                roi.fa[self.__add_center_fa] = roi_seed
+
             # compute the datameasure and store in results
             results.append(measure(roi))
 
@@ -313,7 +331,8 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
     kwa = {space: Sphere(radius)}
     qe = IndexQueryEngine(**kwa)
     # init the searchlight with the queryengine
-    return Searchlight(datameasure, qe, roi_ids=center_ids, **kwargs)
+    return Searchlight(datameasure, queryengine=qe, roi_ids=center_ids,
+                       **kwargs)
 
 
 #class OptimalSearchlight( object ):
