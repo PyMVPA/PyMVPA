@@ -186,16 +186,17 @@ class Searchlight(BaseSearchlight):
         # compute
         if nproc > 1:
             # split all target ROIs centers into `nproc` equally sized blocks
-            roi_blocks = np.array_split(roi_ids, nproc)
+            nproc_needed = min(len(roi_ids), nproc)
+            roi_blocks = np.array_split(roi_ids, nproc_needed)
 
             # the next block sets up the infrastructure for parallel computing
             # this can easily be changed into a ParallelPython loop, if we
             # decide to have a PP job server in PyMVPA
             import pprocess
-            p_results = pprocess.Map(limit=nproc)
+            p_results = pprocess.Map(limit=nproc_needed)
             if __debug__:
                 debug('SLC', "Starting off child processes for nproc=%i"
-                      % nproc)
+                      % nproc_needed)
             compute = p_results.manage(
                         pprocess.MakeParallel(self._proc_block))
             for block in roi_blocks:
