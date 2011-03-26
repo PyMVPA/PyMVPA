@@ -91,6 +91,7 @@ from mvpa.datasets.eventrelated import *
 if externals.exists('nibabel') :
     from mvpa.datasets.mri import *
 
+from mvpa.generators.base import *
 from mvpa.generators.partition import *
 from mvpa.generators.splitters import *
 from mvpa.generators.permutation import *

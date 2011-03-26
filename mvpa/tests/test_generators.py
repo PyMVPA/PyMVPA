@@ -17,9 +17,10 @@ from mvpa.testing.tools import ok_, assert_array_equal, assert_true, \
 from mvpa.datasets import dataset_wizard, Dataset
 from mvpa.generators.splitters import Splitter
 from mvpa.base.node import ChainNode
-from mvpa.generators.partition import OddEvenPartitioner
+from mvpa.generators.partition import OddEvenPartitioner, NFoldPartitioner
 from mvpa.generators.permutation import AttributePermutator
-from mvpa.generators.resampling import Balancer, Repeater
+from mvpa.generators.base import  Repeater, Sifter
+from mvpa.generators.resampling import Balancer
 from mvpa.misc.support import get_nelements_per_value
 
 
@@ -200,3 +201,21 @@ def test_repeater():
     assert_equal(len(dsl), reps)
     for i, ds in enumerate(dsl):
         assert_equal(ds.a.OMG, i)
+
+def test_sifter():
+    # somewhat duplicating the doctest
+    ds = Dataset(samples=np.arange(8).reshape((4,2)),
+                 sa={'chunks':   [ 0 ,  1 ,  2 ,  3 ],
+                     'targets':  ['c', 'c', 'p', 'p']})
+    par = ChainNode([NFoldPartitioner(cvtype=2, attr='chunks'),
+                     Sifter([('partitions', 2),
+                             ('targets', ['c', 'p'])])
+                     ])
+    dss = list(par.generate(ds))
+    assert_equal(len(dss), 4)
+    for ds_ in dss:
+        testing = ds[ds_.sa.partitions == 2]
+        assert_array_equal(np.unique(testing.sa.targets), ['c', 'p'])
+        # and we still have both targets  present in training
+        training = ds[ds_.sa.partitions == 1]
+        assert_array_equal(np.unique(training.sa.targets), ['c', 'p'])
