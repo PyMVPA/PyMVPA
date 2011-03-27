@@ -9,14 +9,13 @@
 """Unit tests for PyMVPA simple report facility"""
 
 import unittest, os, shutil
-from tempfile import mktemp
 
 from mvpa.base import verbose, externals
 
 from mvpa.base.report_dummy import Report as DummyReport
 _test_classes = [ DummyReport ]
 
-from mvpa.testing import sweepargs
+from mvpa.testing import sweepargs, with_tempfile
 
 if externals.exists('reportlab', raise_=False):
     from mvpa.base.report import Report
@@ -101,11 +100,11 @@ class ReportTest(unittest.TestCase):
         pass
 
 
+    @with_tempfile()
     @sweepargs(rc=_test_classes)
-    def test_basic(self, rc):
+    def test_basic(self, dirname, rc):
         """Test all available reports, real or dummy for just working
         """
-        dirname = mktemp('mvpa', 'test_report')
         self.aux_basic(dirname, rc)
         # cleanup
         shutil.rmtree(dirname, ignore_errors=True)

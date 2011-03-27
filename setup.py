@@ -62,6 +62,7 @@ elif bind_libsvm == 'system':
     libsvmc_libraries += ['svm']
     if not sys.platform.startswith('win'):
         libsvmc_include_dirs += [
+            '/usr/include/libsvm-3.0/libsvm',
             '/usr/include/libsvm-2.0/libsvm',
             '/usr/include/libsvm',
             '/usr/local/include/libsvm',
@@ -107,7 +108,7 @@ if bind_libsvm:
 
 # define the setup
 setup(name         = 'pymvpa',
-      version      = '0.6.0.dev',
+      version      = '0.6.0~rc2',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
@@ -129,6 +130,7 @@ setup(name         = 'pymvpa',
                        'mvpa.clfs',
                        'mvpa.clfs.libsmlrc',
                        'mvpa.clfs.libsvmc',
+                       'mvpa.clfs.skl',
                        'mvpa.clfs.sg',
                        'mvpa.datasets',
                        'mvpa.featsel',
@@ -148,7 +150,8 @@ setup(name         = 'pymvpa',
                        'mvpa.tests',
                        'mvpa.tests.badexternals',
                        ],
-      data_files = [('mvpa/data',
+      data_files = [('mvpa', ['mvpa/COMMIT_HASH']),
+                    ('mvpa/data',
                      [f for f in glob(os.path.join('mvpa', 'data', '*'))
                          if os.path.isfile(f)]),
                     ('mvpa/data/bv',

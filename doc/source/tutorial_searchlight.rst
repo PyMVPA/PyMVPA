@@ -58,24 +58,23 @@ If the code snippet above is of no surprise then you probably got the basic
 idea. We created an object instance ``aov`` being a
 :class:`~mvpa.measures.anova.OneWayAnova`. This instance is subsequently
 *called* with a dataset and yields the F-scores wrapped into a
-:class:`~mvpa.datasets.base.Dataset`. Where have we seen this before?
-Right!  This one differs little from a call to
-:class:`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError`.
-Both are objects that get instantiated (potentially with some custom
-arguments) and yield the results in a dataset when called with an input
-dataset. This is called a :term:`processing object` and is a common
-concept in PyMVPA.
+:class:`~mvpa.datasets.base.Dataset`. Where have we seen this before?  Right!
+This one differs little from a call to
+:class:`~mvpa.measures.base.CrossValidation`.  Both are objects that get
+instantiated (potentially with some custom arguments) and yield the results in
+a dataset when called with an input dataset. This is called a :term:`processing
+object` and is a common concept in PyMVPA.
 
 However, there is a difference between the two processing objects.
-:class:`~mvpa.algorithms.cvtranserror.CrossValidatedTransferError` returns
-a dataset with a single feature -- the accuracy or error rate, while
-:class:`~mvpa.measures.anova.OneWayAnova` returns a vector with one value
-per feature. The latter is called a
-:class:`~mvpa.measures.base.FeaturewiseMeasure`. But other than the
-number of features in the returned dataset there is not much of a difference. All
+:class:`~mvpa.measures.base.CrossValidation` returns a dataset with a single
+feature -- the accuracy or error rate, while
+:class:`~mvpa.measures.anova.OneWayAnova` returns a vector with one value per
+feature. The latter is called a
+:class:`~mvpa.measures.base.FeaturewiseMeasure`. But other than the number of
+features in the returned dataset there is not much of a difference. All
 measures in PyMVPA, for example, support an optional post-processing step.
-During instantiation of a measure an arbitrary mapper can be specified to be called
-internally to forward-map the results before they are returned. If, for
+During instantiation of a measure an arbitrary mapper can be specified to be
+called internally to forward-map the results before they are returned. If, for
 some reason, the F-scores need to be scaled into the interval [0,1], an
 :class:`~mvpa.mappers.fx.FxMapper` can be used to achieve that:
 
@@ -94,7 +93,7 @@ some reason, the F-scores need to be scaled into the interval [0,1], an
   Map the F-scores back into a brain volume and look at their distribution
   in the ventral temporal ROI.
 
-Now that we know how to compute featurewise F-scores we can start worrying
+Now that we know how to compute feature-wise F-scores we can start worrying
 about them. Our original goal was to decipher information that is encoded
 in the multivariate pattern of brain activation. But now we are using an
 ANOVA, a **univariate** measure, to localize important voxels? There must
@@ -181,7 +180,7 @@ is more the two standard deviations lower than chance.
 
 >>> frac_lower = np.round(np.mean(sphere_errors < chance_level - 2 * res_std), 3)
 
-So in almost 10% of all spheres the error is subtantially lower than what
+So in almost 10% of all spheres the error is substantially lower than what
 we would expect for random guessing of the classifier -- that is more than
 3000 spheres!
 
@@ -276,21 +275,8 @@ will offers some alternatives that are more gentle in this respect.
 .. _multiple comparisons: http://en.wikipedia.org/wiki/Multiple_comparisons
 
 Despite these limitations a searchlight analysis can be a valuable
-exporative tool if used appropriately. The capabilities of PyMVPA's searchlight
+explorative tool if used appropriately. The capabilities of PyMVPA's searchlight
 implementation go beyond what we looked at in this tutorial. It is not only
 possible to run *spatial* searchlights, but multiple spaces can be
 considered simultaneously. We will get back to these more advanced topics later
 on.
-
-
-
-.. only:: html
-
-  References
-  ==========
-
-  .. autosummary::
-     :toctree: generated
-
-     ~mvpa.measures.searchlight.Searchlight
-     ~mvpa.measures.searchlight.sphere_searchlight

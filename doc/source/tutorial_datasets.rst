@@ -114,7 +114,7 @@ accessed directly without repeated and expensive searches:
 >>> ds.sa['some_attr'].unique
 array([ 0.,  1.,  3.])
 
-However, for most interactive uses of PyMVPA this type of access to attribute's
+However, for most interactive uses of PyMVPA this type of access to attributes'
 ``.value`` is relatively cumbersome (too much typing), therefore collections offer direct
 attribute access by name:
 
@@ -124,13 +124,27 @@ array([ 0.,  1.,  1.,  3.])
 Another purpose of the sample attribute collection is to preserve data
 integrity, by disallowing improper attributes:
 
-.. code-block:: python
+>>> ds.sa['invalid'] = 4
+Traceback (most recent call last):
+  File "/usr/lib/python2.6/doctest.py", line 1253, in __run
+    compileflags, 1) in test.globs
+  File "<doctest tutorial_datasets.rst[20]>", line 1, in <module>
+    ds.sa['invalid'] = 4
+  File "/home/test/pymvpa/mvpa/base/collections.py", line 459, in __setitem__
+    value = ArrayCollectable(value)
+  File "/home/test/pymvpa/mvpa/base/collections.py", line 171, in __init__
+    % self.__class__.__name__)
+ValueError: ArrayCollectable only takes sequences as value.
 
-  >> ds.sa['invalid'] = 4
-  ValueError: ArrayCollectable only takes sequences as value.
-  >> ds.sa['invalid'] = [ 1, 2, 3, 4, 5, 6 ]
-  ValueError: Collectable 'invalid' with length [6] does not match the required
-  length [4] of collection '<SampleAttributesCollection: some_attr>'.
+>>> ds.sa['invalid'] = [ 1, 2, 3, 4, 5, 6 ]
+Traceback (most recent call last):
+  File "/usr/lib/python2.6/doctest.py", line 1253, in __run
+    compileflags, 1) in test.globs
+  File "<doctest tutorial_datasets.rst[21]>", line 1, in <module>
+    ds.sa['invalid'] = [ 1, 2, 3, 4, 5, 6 ]
+  File "/home/test/pymvpa/mvpa/base/collections.py", line 468, in __setitem__
+    str(self)))
+ValueError: Collectable 'invalid' with length [6] does not match the required length [4] of collection '<SampleAttributesCollection: some_attr>'.
 
 But other than basic plausibility checks no further constraints on values of
 samples attributes exist. As long as the length of the attribute vector matches
@@ -301,7 +315,7 @@ created:
 >>> print subds.fa.responsible
 ['me' 'nobody']
 
-We see that both attributes are still there and, moreover, also here the
+We see that both attributes are still there and, moreover, also the
 appropriate subsets have been selected.
 
 
@@ -309,7 +323,7 @@ Loading fMRI data
 =================
 
 Enough of theoretical foreplay -- let's look at a concrete example of an
-fmri dataset. PyMVPA has several helper functions to load data from
+fMRI dataset. PyMVPA has several helper functions to load data from
 specialized formats, and the one for fMRI data is
 `~mvpa.datasets.mri.fmri_dataset()`. The example dataset we are going to
 look at is a single subject from Haxby et al. (2001) that we already
@@ -334,7 +348,7 @@ We can notice two things. First, it worked! Second, we get a
 two-dimensional dataset with 1452 samples (these are volumes in the NIfTI
 file), and over 160k features (these are voxels in the volume). The voxels
 are represented as a one-dimensional vector, and it seems that they have
-lost their association with the 3D-voxelspace. However, this is not the
+lost their association with the 3D-voxel-space. However, this is not the
 case, as we will see in the next chapter.  PyMVPA represents
 data in this simple format to make it compatible with a vast range of generic
 algorithms that expect data to be a simple matrix.
@@ -362,7 +376,7 @@ explore this dataset a little further.
 
 Besides samples the dataset offers number of attributes that enhance the
 data with information that is present in the NIfTI image header in the file. Each sample has
-information about its volume id in the timeseries and the actual acquisition
+information about its volume id in the time series and the actual acquisition
 time (relative to the beginning of the file). Moreover, the original voxel
 index (sometimes referred to as ``ijk``) for each feature is available too.
 Finally, the dataset also contains information about the dimensionality
@@ -400,7 +414,7 @@ hence worth devoting the whole :ref:`next tutorial chapter
 <chap_tutorial_mappers>` to it.
 
 >>> print ds.a.mapper
-<ChainMapper: <Flatten>-<FeatureSlice>>
+<ChainMapper: <Flatten>-<StaticFeatureSelection>>
 
 Having all these attributes being part of a dataset is often a useful thing
 to have, but in some cases (e.g. when it comes to efficiency, and/or very
@@ -461,18 +475,3 @@ transparently.
 True
 >>> # cleanup the temporary directory, and everything it includes
 >>> shutil.rmtree(tempdir, ignore_errors=True)
-
-
-.. only:: html
-
-  References
-  ==========
-
-  .. autosummary::
-     :toctree: generated
-
-     ~mvpa.datasets.base.Dataset
-     ~mvpa.datasets.mri.fmri_dataset
-     ~mvpa.base.collections.ArrayCollectable
-     ~mvpa.base.hdf5.h5save
-     ~mvpa.base.hdf5.h5load

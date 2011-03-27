@@ -110,7 +110,7 @@ Instructions
   >>> print ds.a.voxel_eldim
   (3.5, 3.75, 3.75)
   >>> print ds.a.mapper
-  <ChainMapper: <Flatten>-<FeatureSlice>>
+  <ChainMapper: <Flatten>-<StaticFeatureSelection>>
   >>> print ds.uniquetargets
   ['bottle' 'cat' 'chair' 'face' 'house' 'rest' 'scissors' 'scrambledpix'
    'shoe']
@@ -125,3 +125,16 @@ objects in ventral temporal cortex. Science 293, 2425–2430.
 
 
 .. _FSL: http://www.fmrib.ox.ac.uk/fsl
+
+
+Changelog
+=========
+
+0.2
+
+  * Updated tutorial code to work with PyMVPA 0.6
+  * Removed dependency on PyNIfTI and use NiBabel instead.
+
+0.1
+
+  * Initial release.

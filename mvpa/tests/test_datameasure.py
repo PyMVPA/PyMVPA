@@ -382,13 +382,13 @@ class SensitivityAnalysersTests(unittest.TestCase):
         #    splitter=NoneSplitter(npertarget=0.8, mode='first', nrunspersplit=2),
         #    enable_ca=['splits', 'sensitivities'])
         ## lets create feature selector
-        #fsel = RangeElementSelector(upper=0.05, lower=0.95, inclusive=True)
+        #fsel = RangeElementSelector(upper=0.1, lower=0.9, inclusive=True)
 
         #sanas = dict(plain=plain_sana, boosted=boosted_sana)
         #for k,sana in sanas.iteritems():
         #    clf = FeatureSelectionClassifier(SVM(),
         #                SensitivityBasedFeatureSelection(sana, fsel),
-        #                descr='SVM on p=0.01(both tails) using %s' % k)
+        #                descr='SVM on p=0.2(both tails) using %s' % k)
         #    ce = CrossValidatedTransferError(TransferError(clf),
         #                                     NFoldSplitter())
         #    error = ce(ds)
@@ -516,6 +516,24 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                                     'datasets'])
         res = cv(self.dataset)
         assert_equal(res.shape, (len(self.dataset.sa['chunks'].unique), 1))
+
+
+    def test_repeated_features(self):
+        print self.dataset
+        print self.dataset.fa.nonbogus_targets
+        class CountFeatures(Measure):
+            is_trained = True
+            def _call(self, ds):
+                return ds.nfeatures
+
+        cf = CountFeatures()
+        spl = Splitter('fa.nonbogus_targets')
+        nsplits = len(list(spl.generate(self.dataset)))
+        assert_equal(nsplits, 3)
+        rm = RepeatedMeasure(cf, spl, concat_as='features')
+        res = rm(self.dataset)
+        assert_equal(res.shape, (1, nsplits))
+        assert_array_equal(res.samples[0], [18,1,1])
 
 
 def suite():

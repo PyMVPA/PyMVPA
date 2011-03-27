@@ -17,6 +17,8 @@ from mvpa.base.node import Node
 from mvpa.base import warning
 from mvpa.misc.support import mask2slice
 
+if __debug__:
+    from mvpa.base import debug
 
 class Splitter(Node):
     """Generator node for dataset splitting.
@@ -32,16 +34,13 @@ class Splitter(Node):
     may be provided.
     """
     def __init__(self, attr, attr_values=None, count=None, noslicing=False,
-                 reverse=False, **kwargs):
+                 reverse=False, ignore_values=None, **kwargs):
         """
         Parameters
         ----------
-        attr : str or None
+        attr : str
           Typically the sample or feature attribute used to determine splits.
-          If set to ``None`` no splitting is performed, but the input dataset
-          is yielded as often as indicated by the ``count`` argument. ``count``
-          has to be a positive integer in this case.
-        attr_values : list
+        attr_values : tuple
           If not None, this is a list of value of the ``attr`` used to determine
           the splits. The order of values in this list defines the order of the
           resulting splits. It is possible to specify a particular value
@@ -58,11 +57,16 @@ class Splitter(Node):
           to reduce the memory footprint.
         reverse : bool
           If True, the order of datasets in the split is reversed, e.g.
-          instead of (training, testing), (testing, training) will be spit
-          out
+          instead of (training, testing), (training, testing) will be spit
+          out.
+        ignore_values : tuple
+          If not None, this is a list of value of the ``attr`` the shall be
+          ignored when determining the splits. This settings also affects
+          any specified ``attr_values``.
         """
         Node.__init__(self, space=attr, **kwargs)
         self.__splitattr_values = attr_values
+        self.__splitattr_ignore = ignore_values
         self.__count = count
         self.__noslicing = noslicing
         self.__reverse = reverse
@@ -88,17 +92,7 @@ class Splitter(Node):
         noslicing = self.__noslicing
         count = self.__count
         splattr = self.get_space()
-
-        # special mode: no-splitting
-        if splattr is None:
-            if count is None:
-                raise ValueError("%s: attr=None is only supported with a "
-                                 "positive ``count`` argument." % str(self))
-            for i in xrange(count):
-                # simply yield the input dataset
-                yield ds
-            # nothing else to do
-            return
+        ignore = self.__splitattr_ignore
 
         # get attribute and source collection from dataset
         splattr, collection = ds.get_attr(splattr)
@@ -106,16 +100,36 @@ class Splitter(Node):
         cfgs = self.__splitattr_values
         if cfgs is None:
             cfgs = splattr.unique
+        if __debug__:
+            debug('SPL', 'Determined %i split specifications' % len(cfgs))
+        if not ignore is None:
+            # remove to be ignored bits
+            cfgs = [c for c in cfgs if not c in ignore]
+            if __debug__:
+                debug('SPL',
+                      '%i split specifications left after removing ignored ones'
+                      % len(cfgs))
         n_cfgs = len(cfgs)
 
         if self.__reverse:
+            if __debug__:
+                debug('SPL', 'Reversing split order')
             cfgs = cfgs[::-1]
 
         # split the data
         for isplit, split in enumerate(cfgs):
             if not count is None and isplit >= count:
                 # number of max splits is reached
+                if __debug__:
+                    debug('SPL',
+                          'Discard remaining splits as maximum of %i is reached'
+                          % count)
                 break
+            # safeguard against 'split' being `None` -- in which case a single
+            # boolean would be the result of the comparision below, and not
+            # a boolean vector from element-wise comparision
+            if split is None:
+                split = [None]
             # boolean mask is 'selected' samples for this split
             filter_ = splattr_data == split
 
@@ -128,8 +142,12 @@ class Splitter(Node):
                 filter_ = mask2slice(filter_)
 
             if collection is ds.sa:
+                if __debug__:
+                    debug('SPL', 'Split along samples axis')
                 split_ds = ds[filter_]
             elif collection is ds.fa:
+                if __debug__:
+                    debug('SPL', 'Split along feature axis')
                 split_ds = ds[:, filter_]
             else:
                 RuntimeError("This should never happen.")

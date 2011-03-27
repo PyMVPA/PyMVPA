@@ -18,7 +18,7 @@ DATA_UPLOAD_URI=data.pymvpa.org:/home/www/data.pymvpa.org/www/datasets
 DATA_URI=data.pymvpa.org::datadb
 SWARMTOOL_DIR=tools/codeswarm
 SWARMTOOL_DIRFULL=$(CURDIR)/$(SWARMTOOL_DIR)
-RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g
+RSYNC_OPTS=-az -H --no-perms --no-owner --verbose --progress --no-g --exclude prev/
 RSYNC_OPTS_UP=-rzlhv --delete
 # -p --chmod=Dg+s,g+rw,o+rX
 
@@ -252,12 +252,13 @@ website-stamp: mkdir-WWW_DIR htmldoc pdfdoc
 upload-website:
 	$(MAKE) website SPHINXOPTS='-D html_theme=pymvpa_online'
 	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI)/
+	git update-ref refs/heads/website-updates/www HEAD
 
 upload-htmldoc:
 	$(MAKE) htmldoc SPHINXOPTS='-D html_theme=pymvpa_online'
 	chmod a+rX -R $(HTML_DIR)
 	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI)/
-
+	git update-ref refs/heads/website-updates/www-html HEAD
 
 upload-website-dev:
 	sed -i -e "s,http://disqus.com/forums/pymvpa/,http://disqus.com/forums/pymvpa-dev/,g" \
@@ -354,11 +355,12 @@ te-%: build
 	 || { echo "failed:"; cat temp-$@.log; rm -f temp-$@.log; exit 1; }
 	@rm -f temp-$@.log
 
-testexamples: te-svdclf te-smlr te-searchlight te-sensanas te-pylab_2d \
-              te-curvefitting te-projections te-kerneldemo te-clfs_examples \
+testexamples: te-svdclf te-smlr te-sensanas te-pylab_2d \
+              te-curvefitting te-projections te-kerneldemo \
               te-erp_plot te-match_distribution te-permutation_test \
               te-searchlight_minimal te-smlr te-start_easy te-topo_plot \
-              te-gpr te-gpr_model_selection0 te-mri_plot
+              te-gpr te-gpr_model_selection0 te-mri_plot te-searchlight \
+              te-clfs_examples
 
 testdocstrings: dt-mvpa
 
@@ -372,8 +374,9 @@ dt-%: build
 				| grep -v filter.py | grep -v channel.py | grep "$*")
 
 tm-%: build
-	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
+	@PYTHONPATH=.:$(TUT_DIR):$(CURDIR)/doc/examples:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
+		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 		MVPA_DATADB_ROOT=datadb \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 	                 --doctest-tests doc/source/$*.rst
@@ -384,7 +387,7 @@ testmanual: build testdocstrings
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 		MVPA_DATADB_ROOT=datadb \
-		$(NOSETESTS) --with-doctest --doctest-extension .rst \
+		$(NOSETESTS) -v --with-doctest --doctest-extension .rst \
 		             --doctest-tests doc/source
 
 testtutorial-%: build
@@ -445,7 +448,7 @@ testapiref:
 
 # Check if there is no WARNINGs from sphinx
 testsphinx: htmldoc
-	{ grep -A1 system-message build/html/modref/*html && exit 1 || exit 0 ; }
+	{ grep -A1 system-message build/html/*html build/html/*/*html && exit 1 || exit 0 ; }
 
 # Check if stored cfg after whole suite is imported is safe to be
 # reloaded
@@ -525,18 +528,9 @@ deb-dev-autochangelog: check-debian
 deb-mergedev:
 	git merge --no-commit origin/dist/debian/dev
 
-orig-src: distclean debian-clean
-	# clean existing dist dir first to have a single source tarball to process
-	-rm -rf dist
-	# let python create the source tarball
-	# enable libsvm to get all sources!
-	$(PYTHON) setup.py sdist --formats=gztar
-	# rename to proper Debian orig source tarball and move upwards
-	# to keep it out of the Debian diff
-	tbname=$$(basename $$(ls -1 dist/*tar.gz)) ; ln -s $${tbname} ../pymvpa-snapshot_$(DEV_VERSION).orig.tar.gz
-	mv dist/*tar.gz ..
-	# clean leftover
-	rm MANIFEST
+orig-src:
+	git archive --format=tar --prefix=pymvpa-$(SETUPPY_VERSION)/ HEAD | \
+		gzip -9 > pymvpa_$(SETUPPY_VERSION).orig.tar.gz
 
 devel-src: check-nodirty
 	-rm -rf dist

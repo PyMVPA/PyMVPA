@@ -17,8 +17,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 from mvpa.support.copy import copy
-from mvpa.mappers.slicing import FeatureSliceMapper
-from mvpa.featsel.base import IterativeFeatureSelection
+from mvpa.featsel.base import StaticFeatureSelection, IterativeFeatureSelection
 from mvpa.featsel.helpers import NBackHistoryStopCrit, \
                                  FixedNElementTailSelector, \
                                  BestDetector
@@ -107,7 +106,7 @@ class IFS(IterativeFeatureSelection):
                 # slice the full dataset, because for the initial iteration
                 # steps this will be much mure effecient than splitting the
                 # full ds into train and test at first
-                fslm = FeatureSliceMapper(selected + [candidate])
+                fslm = StaticFeatureSelection(selected + [candidate])
                 fslm.train(ds)
                 candidate_ds = fslm(ds)
                 # activate the dataset splitter
@@ -135,7 +134,7 @@ class IFS(IterativeFeatureSelection):
 
             # actually run the performance measure to estimate "quality" of
             # selection
-            fslm = FeatureSliceMapper(selected)
+            fslm = StaticFeatureSelection(selected)
             fslm.train(ds)
             selectedds = fslm(ds)
             # split into train and test part

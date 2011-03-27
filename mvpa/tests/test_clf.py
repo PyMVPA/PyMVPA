@@ -58,6 +58,28 @@ class ClassifiersTests(unittest.TestCase):
             targets=[1, 1, 1, -1, -1], # labels
             chunks=[0, 1, 2,  2, 3])  # chunks
 
+    def _get_clf_ds(self, clf):
+        """Little helper to provide a dataset for classifier testing
+
+        For some classifiers (e.g. density modeling ones, such as QDA)
+        it is mandatory to provide enough samples to more or less adequately
+        model the distributions, thus "large" dataset would be provided
+        instead of the default medium.
+
+        Also choosing large one for the classifiers with
+        feature-selection since some feature selections might rely on
+        a % of features, which would be degenerate in a small dataset
+        """
+        # unfortunately python 2.5 doesn't have 'isdisjoint'
+        #return {True: 'medium',
+        #        False: 'large'}[
+        #    set(['lda', 'qda', 'feature_selection']).isdisjoint(clf.__tags__)]
+        if 'lda' in clf.__tags__ or 'qda' in clf.__tags__ \
+                or 'feature_selection' in clf.__tags__:
+            return 'large'
+        else:
+            return 'medium'
+
     def test_dummy(self):
         clf = SameSignClassifier(enable_ca=['training_stats'])
         clf.train(self.data_bin_1)
@@ -159,7 +181,7 @@ class ClassifiersTests(unittest.TestCase):
 
         nclasses = 2 * (1 + int('multiclass' in clf.__tags__))
 
-        ds = datasets['uni%dmedium' % nclasses]
+        ds = datasets['uni%d%s' % (nclasses, self._get_clf_ds(clf))]
         try:
             cve = te(ds).samples.squeeze()
         except Exception, e:
@@ -190,10 +212,10 @@ class ClassifiersTests(unittest.TestCase):
             lrn = lrn.clone()              # clone the beast
             lrn.params.seed = _random_seed # reuse the same seed
         lrn_ = lrn.clone()
+        lrn_.set_space('custom')
 
         te = CrossValidation(lrn, NFoldPartitioner())
-
-        te_ = CrossValidation(lrn_, NFoldPartitioner(), space='custom')
+        te_ = CrossValidation(lrn_, NFoldPartitioner())
         nclasses = 2 * (1 + int('multiclass' in lrn.__tags__))
         dsname = ('uni%dsmall' % nclasses,
                   'sin_modulated')[int(lrn.__is_regression__)]
@@ -304,6 +326,26 @@ class ClassifiersTests(unittest.TestCase):
         clf.ca.reset_changed_temporarily()
 
 
+    # TODO: sg - remove our limitations, meta, lda, qda and skl -- also
+    @sweepargs(clf=clfswh['!sg', '!plr', '!meta', '!lda', '!qda'])
+    def test_single_class(self, clf):
+        """Test if binary and multiclass can handle single class training/testing
+        """
+        ds = datasets['uni2small']
+        ds = ds[ds.sa.targets == 'L0']  #  only 1 label
+        assert(ds.sa['targets'].unique == ['L0'])
+
+        ds_ = list(OddEvenPartitioner().generate(ds))[0]
+        # Here is our "nice" 0.6 substitute for TransferError:
+        trerr = TransferMeasure(clf, Splitter('train'),
+                                postproc=BinaryFxNode(mean_mismatch_error,
+                                                      'targets'))
+        try:
+            err = np.asscalar(trerr(ds_))
+        except Exception, e:
+            self.fail(str(e))
+        self.failUnless(err == 0.)
+
     # TODO: validate for regressions as well!!!
     def test_split_classifier(self):
         ds = self.data_bin_1
@@ -360,7 +402,7 @@ class ClassifiersTests(unittest.TestCase):
     @sweepargs(clf_=clfswh['binary', '!meta'])
     def test_split_classifier_extended(self, clf_):
         clf2 = clf_.clone()
-        ds = datasets['uni2medium']#self.data_bin_1
+        ds = datasets['uni2%s' % self._get_clf_ds(clf2)]
         clf = SplitClassifier(clf=clf_, #SameSignClassifier(),
                 enable_ca=['stats', 'feature_ids'])
         clf.train(ds)                   # train the beast
@@ -502,7 +544,7 @@ class ClassifiersTests(unittest.TestCase):
     def test_tree_classifier(self):
         """Basic tests for TreeClassifier
         """
-        ds = datasets['uni4small']
+        ds = datasets['uni4medium']
         clfs = clfswh['binary']         # pool of classifiers
         # Lets permute so each time we try some different combination
         # of the classifiers
@@ -544,13 +586,24 @@ class ClassifiersTests(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             # just a dummy check to make sure everything is working
             self.failUnless(cvtrc != cvtc)
-            self.failUnless(cverror < 0.3)
+            self.failUnless(cverror < 0.3,
+                            msg="Got too high error = %s using %s"
+                            % (cverror, tclf))
 
-        # TODO: whenever implemented
+        # Test trailing nodes with no classifier
         tclf = TreeClassifier(clfs[0], {
-            'L0' : (('L0',), clfs[1]),
-            'L1+2+3' : (('L1', 'L2', 'L3'),    clfs[2])})
-        # TEST ME
+            'L0' : (('L0',), None),
+            'L1+2+3' : (('L1', 'L2', 'L3'), clfswh['multiclass'][0])})
+
+        cv = CrossValidation(tclf,
+                             OddEvenPartitioner(),
+                             postproc=mean_sample(),
+                             enable_ca=['stats', 'training_stats'])
+        cverror = np.asscalar(cv(ds))
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            self.failUnless(cverror < 0.3,
+                            msg="Got too high error = %s using %s"
+                            % (cverror, tclf))
 
 
     @sweepargs(clf=clfswh[:])
@@ -640,9 +693,10 @@ class ClassifiersTests(unittest.TestCase):
         clf.ca.reset_changed_temporarily()
 
 
-    @dec.skipif(True, "Yarik will look at this -- he promised.")
     @sweepargs(clf=clfswh['retrainable'])
     def test_retrainables(self, clf):
+        # XXX we agreed to not worry about this for the initial 0.6 release
+        raise SkipTest
         # we need a copy since will tune its internals later on
         clf = clf.clone()
         clf.ca.change_temporarily(enable_ca = ['estimates'],
@@ -824,9 +878,9 @@ class ClassifiersTests(unittest.TestCase):
         # incorrect order of dimensions lead to equal samples [0, 1, 0]
         traindatas = [
             dataset_wizard(samples=np.array([ [0, 0, 1.0],
-                                        [1, 0, 0] ]), targets=[-1, 1]),
+                                        [1, 0, 0] ]), targets=[0, 1]),
             dataset_wizard(samples=np.array([ [0, 0.0],
-                                      [1, 1] ]), targets=[-1, 1])]
+                                      [1, 1] ]), targets=[0, 1])]
 
         clf.ca.change_temporarily(enable_ca = ['training_stats'])
         for traindata in traindatas:

@@ -168,7 +168,7 @@ faster and easier than it has ever been before.
 Authors & Contributors
 ======================
 
-.. include:: authors.rst
+.. include:: authors.txt
 
 
 How to cite PyMVPA

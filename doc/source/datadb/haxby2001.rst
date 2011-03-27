@@ -58,6 +58,14 @@ labels.txt
     experimental run for each volume in the timeseries image.  Labels are
     given in literal form (e.g. 'face').
 
+.. note::
+
+   Data for the run 9 (chunk 8) of subject 5 was corrupted and therefore
+   should not be used for the analyses.  In the 'labels.txt' file all
+   samples in that chunk are marked as 'rest' condition.
+   (Acknowledgement goes to MS Al-Rawi who reminded us about this
+   non-disclosed 'feature' of the dataset)
+
 
 Instructions
 ============
@@ -70,7 +78,7 @@ Instructions
   ...                   targets=attrs.labels, chunks=attrs.chunks,
   ...                   mask=os.path.join(subjpath, 'mask4_vt.nii.gz'))
   >>> print ds
-  <Dataset: 1452x577@int16, <sa: chunks,time_indices,targets,time_coords>, <fa: voxel_indices>, <a: mapper,voxel_eldim,voxel_dim,imghdr>>
+  <Dataset: 1452x577@int16, <sa: chunks,targets,time_coords,time_indices>, <fa: voxel_indices>, <a: imghdr,imgtype,mapper,voxel_dim,voxel_eldim>>
 
 
 References

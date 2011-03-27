@@ -100,7 +100,7 @@ However, :envvar:`MVPA_VERBOSE_OUTPUT` `= stdout` becomes::
     [verbose]
     output = stdout
 
-Any lenght of variable name is allowed, e.g. `MVPA_SEC1_LONG_VARIABLE_NAME=1`
+Any lenght of variable name is allowed, e.g. ``MVPA_SEC1_LONG_VARIABLE_NAME=1``
 becomes::
 
     [sec1]
@@ -146,12 +146,14 @@ Progress Tracking
 
 There are 3 types of messages PyMVPA can produce:
 
- verbose_
+verbose_
    regular informative messages about generic actions being performed
- debug_
+
+debug_
    messages about the progress of computation, manipulation on data
    structures
- warning_
+
+warning_
     messages which are reported by mvpa if something goes a little
     unexpected but not critical
 
@@ -181,15 +183,15 @@ appear on standard error output, as well as in the file ``/tmp/2``.
 PyMVPA output redirection though has no effect on external libraries debug
 output if corresponding debug_ target is enabled
 
- shogun
+shogun
    debug output (if any of internal ``SG_`` debug_ targets is enabled)
    appears on standard output
 
- SMLR
+SMLR
    debug output (if ``SMLR_`` debug_ target is enabled) appears on standard
    output
 
- LIBSVM
+LIBSVM
    debug output (if ``LIBSVM`` debug_ target is enabled) appears on
    standard error
 
@@ -237,11 +239,11 @@ level:
 
 The following verbosity levels are supported:
 
-  :0: nothing besides errors
-  :1: high level stuff -- top level operation or file operations
-  :2: cmdline handling
-  :3: n.a.
-  :4: computation/algorithm relevant thing
+:0: nothing besides errors
+:1: high level stuff -- top level operation or file operations
+:2: cmdline handling
+:3: n.a.
+:4: computation/algorithm relevant thing
 
 
 .. index:: warning
@@ -297,18 +299,23 @@ ids to be enabled (reported):
 Besides printing debug messages, it is also possible to print some
 metric. You can define new metrics or select predefined ones:
 
- vmem
+vmem
   (Linux specific): amount of virtual memory consumed by the task
- pid
+
+pid
   (Linux specific): PID of the process
- reltime
+
+reltime
   How many seconds passed since previous debug printout
- asctime
+
+asctime
   Time stamp
- tb
+
+tb
   Traceback (``module1:line_number1[,line_number2...]>module2:line_number..``)
   where this debug statement was requested
- tbc
+
+tbc
   Concise traceback printout -- prefix common with the previous
   invocation is replaced with ``...``
 
@@ -389,13 +396,6 @@ the performance of a randomly initialized classifier). Therefore, in some cases,
 specific unit tests might fail when running the full test battery. To exclude
 these test cases (and only those where non-deterministic behavior immanent) one
 can use the :envvar:`MVPA_TESTS_LABILE` configuration and set it to 'off'.
-
-
-Others
-------
-(to be written)
-
-.. put information about IO helpers, external bindings, etc here
 
 
 .. index:: FSL, detrending, motion correction

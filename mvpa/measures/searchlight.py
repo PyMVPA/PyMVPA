@@ -20,7 +20,7 @@ from mvpa.base.dochelpers import borrowkwargs
 
 from mvpa.datasets import hstack
 from mvpa.support import copy
-from mvpa.mappers.slicing import FeatureSliceMapper
+from mvpa.featsel.base import StaticFeatureSelection
 from mvpa.measures.base import Measure
 from mvpa.base.state import ConditionalAttribute
 from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
@@ -48,9 +48,11 @@ class BaseSearchlight(Measure):
         queryengine : QueryEngine
           Engine to use to discover the "neighborhood" of each feature.
           See :class:`~mvpa.misc.neighborhood.QueryEngine`.
-        roi_ids : None or list of int
-          List of feature ids (not coordinates) the shall serve as sphere
-          centers. By default all features will be used.
+        roi_ids : None or list(int) or str
+          List of feature ids (not coordinates) the shall serve as ROI seeds
+          (e.g. sphere centers). Alternatively, this can be the name of a
+          feature attribute of the input dataset, whose non-zero values
+          determine the feature ids. By default all features will be used.
         nproc : None or int
           How many processes to use for computation.  Requires `pprocess`
           external module.  If None -- all available cores will be used.
@@ -67,7 +69,8 @@ class BaseSearchlight(Measure):
                                "to 1 (got nproc=%i)" % nproc)
 
         self._qe = queryengine
-        if roi_ids is not None and not len(roi_ids):
+        if roi_ids is not None and not isinstance(roi_ids, str) \
+                and not len(roi_ids):
             raise ValueError, \
                   "Cannot run searchlight on an empty list of roi_ids"
         self.__roi_ids = roi_ids
@@ -94,7 +97,9 @@ class BaseSearchlight(Measure):
 
         # decide whether to run on all possible center coords or just a provided
         # subset
-        if self.__roi_ids is not None:
+        if isinstance(self.__roi_ids, str):
+            roi_ids = dataset.fa[self.__roi_ids].value.nonzero()[0]
+        elif self.__roi_ids is not None:
             roi_ids = self.__roi_ids
             # safeguard against stupidity
             if __debug__:
@@ -121,8 +126,8 @@ class BaseSearchlight(Measure):
                 # there is an additional selection step that needs to be
                 # expressed by another mapper
                 mapper = copy.copy(dataset.a.mapper)
-                mapper.append(FeatureSliceMapper(self.__roi_ids,
-                                                 dshape=dataset.shape[1:]))
+                mapper.append(StaticFeatureSelection(roi_ids,
+                                                     dshape=dataset.shape[1:]))
                 results.a['mapper'] = mapper
 
         # charge state
@@ -132,46 +137,10 @@ class BaseSearchlight(Measure):
         return results
 
 
-    def _proc_block(self, block, ds, measure):
-        """Little helper to capture the parts of the computation that can be
-        parallelized
+    def _sl_call(self, dataset, roi_ids, nproc):
+        """Classical generic searchlight implementation
         """
-        if __debug__:
-            debug_slc_ = 'SLC_' in debug.active
-
-        if self.ca.is_enabled('roi_sizes'):
-            roi_sizes = []
-        else:
-            roi_sizes = None
-        results = []
-        # put rois around all features in the dataset and compute the
-        # measure within them
-        for i, f in enumerate(block):
-            # retrieve the feature ids of all features in the ROI from the query
-            # engine
-            roi_fids = self._qe[f]
-
-            if __debug__ and  debug_slc_:
-                debug('SLC_', 'For %r query returned ids %r' % (f, roi_fids))
-
-            # slice the dataset
-            roi = ds[:, roi_fids]
-
-            # compute the datameasure and store in results
-            results.append(measure(roi))
-
-            # store the size of the roi dataset
-            if not roi_sizes is None:
-                roi_sizes.append(roi.nfeatures)
-
-            if __debug__:
-                debug('SLC', "Doing %i ROIs: %i (%i features) [%i%%]" \
-                    % (len(block),
-                       f+1,
-                       roi.nfeatures,
-                       float(i+1)/len(block)*100,), cr=True)
-
-        return results, roi_sizes
+        raise NotImplementedError("Must be implemented in the derived classes")
 
 
 class Searchlight(BaseSearchlight):
@@ -184,19 +153,31 @@ class Searchlight(BaseSearchlight):
     """
 
     @borrowkwargs(BaseSearchlight, '__init__')
-    def __init__(self, datameasure, *args, **kwargs):
+    def __init__(self, datameasure, queryengine, add_center_fa=False, **kwargs):
         """
         Parameters
         ----------
         datameasure : callable
           Any object that takes a :class:`~mvpa.datasets.base.Dataset`
           and returns some measure when called.
+        add_center_fa : bool or str
+          If True or a string, each searchlight ROI dataset will have a boolean
+          vector as a feature attribute that indicates the feature that is the
+          seed (e.g. sphere center) for the respective ROI. If True, the
+          attribute is named 'roi_seed', the provided string is used as the name
+          otherwise.
         **kwargs
           In addition this class supports all keyword arguments of its
           base-class :class:`~mvpa.measures.searchlight.BaseSearchlight`.
         """
-        BaseSearchlight.__init__(self, *args, **kwargs)
+        BaseSearchlight.__init__(self, queryengine, **kwargs)
         self.__datameasure = datameasure
+        if isinstance(add_center_fa, str):
+            self.__add_center_fa = add_center_fa
+        elif add_center_fa:
+            self.__add_center_fa = 'roi_seed'
+        else:
+            self.__add_center_fa = False
 
 
     def _sl_call(self, dataset, roi_ids, nproc):
@@ -205,16 +186,17 @@ class Searchlight(BaseSearchlight):
         # compute
         if nproc > 1:
             # split all target ROIs centers into `nproc` equally sized blocks
-            roi_blocks = np.array_split(roi_ids, nproc)
+            nproc_needed = min(len(roi_ids), nproc)
+            roi_blocks = np.array_split(roi_ids, nproc_needed)
 
             # the next block sets up the infrastructure for parallel computing
             # this can easily be changed into a ParallelPython loop, if we
             # decide to have a PP job server in PyMVPA
             import pprocess
-            p_results = pprocess.Map(limit=nproc)
+            p_results = pprocess.Map(limit=nproc_needed)
             if __debug__:
                 debug('SLC', "Starting off child processes for nproc=%i"
-                      % nproc)
+                      % nproc_needed)
             compute = p_results.manage(
                         pprocess.MakeParallel(self._proc_block))
             for block in roi_blocks:
@@ -238,13 +220,19 @@ class Searchlight(BaseSearchlight):
             results, roi_sizes = \
                     self._proc_block(roi_ids, dataset, self.__datameasure)
 
-        if __debug__:
-            debug('SLC', '')
+        if __debug__ and 'SLC' in debug.active:
+            debug('SLC', '')            # just newline
+            resshape = len(results) and np.asanyarray(results[0]).shape or 'N/A'
+            debug('SLC', ' hstacking %d results of shape %s'
+                  % (len(results), resshape))
 
         # but be careful: this call also serves as conversion from parallel maps
         # to regular lists!
         # this uses the Dataset-hstack
         results = hstack(results)
+
+        if __debug__:
+            debug('SLC', " hstacked shape %s" % (results.shape,))
 
         return results, roi_sizes
 
@@ -274,6 +262,12 @@ class Searchlight(BaseSearchlight):
 
             # slice the dataset
             roi = ds[:, roi_fids]
+
+            if self.__add_center_fa:
+                # add fa to indicate ROI seed if requested
+                roi_seed = np.zeros(roi.nfeatures, dtype='bool')
+                roi_seed[roi_fids.index(f)] = True
+                roi.fa[self.__add_center_fa] = roi_seed
 
             # compute the datameasure and store in results
             results.append(measure(roi))
@@ -306,13 +300,16 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
     datameasure : callable
       Any object that takes a :class:`~mvpa.datasets.base.Dataset`
       and returns some measure when called.
-    radius : float
+    radius : int
       All features within this radius around the center will be part
-      of a sphere.
+      of a sphere. Radius is in grid-indices, i.e. ``1`` corresponds
+      to all immediate neighbors, regardless of the physical distance.
     center_ids : list of int
       List of feature ids (not coordinates) the shall serve as sphere
-      centers. By default all features will be used (it is passed
-      roi_ids argument for Searchlight).
+      centers. Alternatively, this can be the name of a feature attribute
+      of the input dataset, whose non-zero values determine the feature
+      ids.  By default all features will be used (it is passed as ``roi_ids``
+      argument of Searchlight).
     space : str
       Name of a feature attribute of the input dataset that defines the spatial
       coordinates of all features.
@@ -335,7 +332,8 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
     kwa = {space: Sphere(radius)}
     qe = IndexQueryEngine(**kwa)
     # init the searchlight with the queryengine
-    return Searchlight(datameasure, qe, roi_ids=center_ids, **kwargs)
+    return Searchlight(datameasure, queryengine=qe, roi_ids=center_ids,
+                       **kwargs)
 
 
 #class OptimalSearchlight( object ):
