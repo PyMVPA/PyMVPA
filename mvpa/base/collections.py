@@ -12,11 +12,11 @@ dedicated containers aka. `Collections`.
 
 __docformat__ = 'restructuredtext'
 
-import copy
+import copy, re
 import numpy as np
 from operator import isSequenceType
 
-from mvpa.base.dochelpers import _str
+from mvpa.base.dochelpers import _str, borrowdoc
 
 if __debug__:
     # we could live without, but it would be nicer with it
@@ -52,6 +52,9 @@ class Collectable(object):
         doc : str
           Documentation about the purpose of this collectable.
         """
+        if doc is not None:
+            # to prevent newlines in the docstring
+            doc = re.sub('[\n ]+', ' ', doc)
         self.__doc__ = doc
         self.__name = name
         self._value = None
@@ -68,6 +71,12 @@ class Collectable(object):
         copied.value = copy.copy(self.value)
         return copied
 
+    ## def __deepcopy__(self, memo=None):
+    ##     # preserve attribute type
+    ##     copied = self.__class__(name=self.name, doc=self.__doc__)
+    ##     # get a deepcopy of the old data!
+    ##     copied._value = copy.deepcopy(self._value, memo)
+    ##     return copied
 
     def _get(self):
         return self._value
@@ -296,6 +305,62 @@ class Collection(dict):
         if not items is None:
             self.update(items)
 
+    def copy(self, deep=True, a=None, memo=None):
+        """Create a copy of a collection.
+
+        By default this is going to return a deep copy of the
+        collection, hence no data would be shared between the original
+        dataset and its copy.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+          If False, a shallow copy of the collection is return instead. The copy
+          contains only views of the values.
+        a : list or None
+          List of attributes to include in the copy of the dataset. If
+          `None` all attributes are considered. If an empty list is
+          given, all attributes are stripped from the copy.
+        memo : dict
+          Developers only: This argument is only useful if copy() is called
+          inside the __deepcopy__() method and refers to the dict-argument
+          `memo` in the Python documentation.
+        """
+
+        # create the new collections of the right type derived classes
+        # might like to assure correct setting of additional
+        # attributes such as self._attr_length
+        anew = self.__class__()
+
+        # filter the attributes if necessary
+        if a is None:
+            aorig = self
+        else:
+            aorig = dict([(k, v) for k, v in self.iteritems() if k in a])
+
+        # XXX copyvalues defaults to None which provides capability to
+        #     just bind values (not even 'copy').  Might it need be
+        #     desirable here?
+        anew.update(aorig, copyvalues=deep and 'deep' or 'shallow',
+                    memo=memo)
+
+        if __debug__ and __mvpadebug__ and 'COL' in debug.active:
+            debug("COL", "Copied %s into %s using args deep=%r a=%r"
+                  % (self, anew, deep, a))
+            #if 'state2' in str(self):
+            #    import pydb; pydb.debugger()
+        return anew
+
+    # XXX If enabled, then overrides dict.__reduce* leading to conditional
+    #     attributes loosing their documentations in copying etc.
+    #
+    #def __copy__(self):
+    #    return self.copy(deep=False)
+    #
+    #
+    #def __deepcopy__(self, memo=None):
+    #    return self.copy(deep=True, memo=memo)
+
 
     def __setitem__(self, key, value):
         """Add a new Collectable to the collection
@@ -324,12 +389,19 @@ class Collection(dict):
         _object_setitem(self, key, value)
 
 
-    def update(self, source, copyvalues=None):
+    def update(self, source, copyvalues=None, memo=None):
         """
         Parameters
         ----------
         source : list, Collection, dict
         copyvalues : None, shallow, deep
+          If None, values will simply be bound to the collection items'
+          values thus sharing the same instance. 'shallow' and 'deep' copies use
+          'copy' and 'deepcopy' correspondingly.
+        memo : dict
+          Developers only: This argument is only useful if copy() is called
+          inside the __deepcopy__() method and refers to the dict-argument
+          `memo` in the Python documentation.
         """
         if isinstance(source, list):
             for a in source:
@@ -347,7 +419,7 @@ class Collection(dict):
                 elif copyvalues is 'shallow':
                     self[name] = copy.copy(value)
                 elif copyvalues is 'deep':
-                    self[name] = copy.deepcopy(value)
+                    self[name] = copy.deepcopy(value, memo)
                 else:
                     raise ValueError("Unknown value ('%s') for copy argument."
                                      % copy)
@@ -366,7 +438,7 @@ class Collection(dict):
                 elif copyvalues is 'shallow':
                     self[k] = copy.copy(v)
                 elif copyvalues is 'deep':
-                    self[k] = copy.deepcopy(v)
+                    self[k] = copy.deepcopy(v, memo)
                 else:
                     raise ValueError("Unknown value ('%s') for copy argument."
                                      % copy)
@@ -398,7 +470,7 @@ class Collection(dict):
 
 
     def __str__(self):
-        return _str(self, ','.join([str(k) for k in self.keys()]))
+        return _str(self, ','.join([str(k) for k in sorted(self.keys())]))
 
 
 
@@ -422,6 +494,18 @@ class UniformLengthCollection(Collection):
     def __reduce__(self):
         return (self.__class__,
                     (self.items(), self._uniform_length))
+
+    @borrowdoc(Collection)
+    def copy(self, *args, **kwargs):
+        # Create a generic copy of the collection
+        anew = super(UniformLengthCollection, self).copy(*args, **kwargs)
+
+        # if it had any attributes assigned, those should have set
+        # attr_length already, otherwise lets assure that we copy the
+        # correct one into the new instance
+        if self.attr_length is not None and anew.attr_length is None:
+            anew.set_length_check(self.attr_length)
+        return anew
 
 
     def set_length_check(self, value):

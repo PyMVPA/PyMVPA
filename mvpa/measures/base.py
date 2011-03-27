@@ -22,6 +22,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import mvpa.support.copy as copy
 
+from mvpa.base.node import Node
 from mvpa.base.learner import Learner
 from mvpa.base.state import ConditionalAttribute
 from mvpa.misc.args import group_kwargs
@@ -33,7 +34,7 @@ from mvpa.base.dochelpers import enhanced_doc_string, _str
 from mvpa.base import externals, warning
 from mvpa.clfs.stats import auto_null_dist
 from mvpa.base.dataset import AttrDataset
-from mvpa.datasets import Dataset, vstack
+from mvpa.datasets import Dataset, vstack, hstack
 from mvpa.mappers.fx import BinaryFxNode
 from mvpa.generators.splitters import Splitter
 
@@ -100,7 +101,7 @@ class Measure(Learner):
         # estimate the NULL distribution when functor is given
         if not self.__null_dist is None:
             if __debug__:
-                debug("SA_", "Estimating NULL distribution using %s"
+                debug("STAT", "Estimating NULL distribution using %s"
                       % self.__null_dist)
 
             # we need a matching measure instance, but we have to disable
@@ -118,7 +119,6 @@ class Measure(Learner):
 
         # post-processing
         result = super(Measure, self)._postcall(dataset, result)
-
         if not self.__null_dist is None:
             if self.ca.is_enabled('null_t'):
                 # get probability under NULL hyp, but also request
@@ -134,11 +134,11 @@ class Measure(Learner):
                 #       not here
                 tail = self.null_dist.tail
                 if tail == 'left':
-                    acdf = np.abs(null_prob)
+                    acdf = np.abs(null_prob.samples)
                 elif tail == 'right':
-                    acdf = 1.0 - np.abs(null_prob)
+                    acdf = 1.0 - np.abs(null_prob.samples)
                 elif tail in ['any', 'both']:
-                    acdf = 1.0 - np.clip(np.abs(null_prob), 0, 0.5)
+                    acdf = 1.0 - np.clip(np.abs(null_prob.samples), 0, 0.5)
                 else:
                     raise RuntimeError, 'Unhandled tail %s' % tail
                 # We need to clip to avoid non-informative inf's ;-)
@@ -153,7 +153,9 @@ class Measure(Learner):
                 # assure that we deal with arrays:
                 null_t = np.array(null_t, ndmin=1, copy=False)
                 null_t[~null_right_tail] *= -1.0 # revert sign for negatives
-                self.ca.null_t = null_t          # store
+                null_t_ds = null_prob.copy(deep=False)
+                null_t_ds.samples = null_t
+                self.ca.null_t = null_t_ds          # store as a Dataset
             else:
                 # get probability of result under NULL hypothesis if available
                 # and don't request tail information
@@ -233,6 +235,8 @@ class RepeatedMeasure(Measure):
     def __init__(self,
                  node,
                  generator,
+                 callback=None,
+                 concat_as='samples',
                  **kwargs):
         """
         Parameters
@@ -243,11 +247,24 @@ class RepeatedMeasure(Measure):
         generator : Node
           Generator to yield a dataset for each measure run. The number of
           datasets returned by the node determines the number of runs.
+        callback : functor
+          Optional callback to extract information from inside the main loop of
+          the measure. The callback is called with the input 'data', the 'node'
+          instance that is evaluated repeatedly and the 'result' of a single
+          evaluation -- passed as named arguments (see labels in quotes) for
+          every iteration, directly after evaluating the node.
+        concat_as : {'samples', 'features'}
+          Along which axis to concatenate result dataset from all iterations.
+          By default, results are 'vstacked' as multiple samples in the output
+          dataset. Setting this argument to 'features' will change this to
+          'hstacking' along the feature axis.
         """
         Measure.__init__(self, **kwargs)
 
         self._node = node
         self._generator = generator
+        self._callback = callback
+        self._concat_as = concat_as
 
 
     def _call(self, ds):
@@ -256,6 +273,7 @@ class RepeatedMeasure(Measure):
         node = self._node
         ca = self.ca
         space = self.get_space()
+        concat_as = self._concat_as
 
         if self.ca.is_enabled("stats") and (not node.ca.has_key("stats") or
                                             not node.ca.is_enabled("stats")):
@@ -273,6 +291,9 @@ class RepeatedMeasure(Measure):
                 ca.datasets.append(sds)
             # run the beast
             result = node(sds)
+            # callback
+            if not self._callback is None:
+                self._callback(data=sds, node=node, result=result)
             # subclass postprocessing
             result = self._repetition_postcall(sds, node, result)
             if space:
@@ -296,7 +317,12 @@ class RepeatedMeasure(Measure):
         self.ca.repetition_results = results
 
         # stack all results into a single Dataset
-        results = vstack(results)
+        if concat_as == 'samples':
+            results = vstack(results)
+        elif concat_as == 'features':
+            results = hstack(results)
+        else:
+            raise ValueError("Unkown concatenation mode '%s'" % concat_as)
         # no need to store the raw results, since the Measure class will
         # automatically store them in a CA
         return results
@@ -349,7 +375,7 @@ class CrossValidation(RepeatedMeasure):
 
     # TODO move conditional attributes from CVTE into this guy
     def __init__(self, learner, generator, errorfx=mean_mismatch_error,
-                 space='targets', **kwargs):
+                 splitter=None, **kwargs):
         """
         Parameters
         ----------
@@ -362,29 +388,44 @@ class CrossValidation(RepeatedMeasure):
           IMPORTANT: The ``space`` of this generator determines the attribute
           that will be used to split all generated datasets into training and
           testing sets.
-        errorfx : callable
+        errorfx : Node or callable
           Custom implementation of an error function. The callable needs to
-          accept two arguments (1. predicted values, 2. target values).
-        space : str
-          Target space of the learner, i.e. the sample attribute it will be
-          trained on and tries to predict.
+          accept two arguments (1. predicted values, 2. target values).  If not
+          a Node, it gets wrapped into a `BinaryFxNode`.
+        splitter : Splitter or None
+          A Splitter instance to split the dataset into training and testing
+          part. The first split will be used for training and the second for
+          testing -- all other splits will be ignored. If None, a default
+          splitter is auto-generated using the ``space`` setting of the
+          ``generator``. The default splitter is configured to return the
+          ``1``-labeled partition of the input dataset at first, and the
+          ``2``-labeled partition second. This behavior corresponds to most
+          Partitioners that label the taken-out portion ``2`` and the remainder
+          with ``1``.
         """
         # compile the appropriate repeated measure to do cross-validation from
         # pieces
         if not errorfx is None:
             # error node -- postproc of transfer measure
-            enode = BinaryFxNode(errorfx, space)
+            if isinstance(errorfx, Node):
+                enode = errorfx
+            else:
+                # wrap into BinaryFxNode
+                enode = BinaryFxNode(errorfx, learner.get_space())
         else:
             enode = None
 
-        # enforce learner's space
-        # XXX maybe not in all cases?
-        learner.set_space(space)
-
+        if splitter is None:
+            # default splitter splits into "1" and "2" partition.
+            # that will effectively ignore 'deselected' samples (e.g. by
+            # Balancer). It is done this way (and not by ignoring '0' samples
+            # because it is guaranteed to yield two splits) and is more likely
+            # to fail in visible ways if the attribute does not have 0,1,2
+            # values at all (i.e. a literal train/test/spareforlater attribute)
+            splitter = Splitter(generator.get_space(), attr_values=(1,2))
         # transfer measure to wrap the learner
         # splitter used the output space of the generator to know what to split
-        tm = TransferMeasure(learner, Splitter(generator.get_space()),
-                postproc=enode)
+        tm = TransferMeasure(learner, splitter, postproc=enode)
 
         # and finally the repeated measure to perform the x-val
         RepeatedMeasure.__init__(self, tm, generator, space='sa.cvfolds',
@@ -519,6 +560,8 @@ class TransferMeasure(Measure):
                         "it, or it is disabled" % measure)
 
         return res
+
+    measure = property(fget=lambda self:self.__measure)
 
 
 

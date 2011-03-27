@@ -71,7 +71,7 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8'
 
 # The master toctree document.
-master_doc = 'sitemap'
+master_doc = 'index'
 
 # General substitutions.
 project = 'PyMVPA'
@@ -223,9 +223,9 @@ latex_documents = [
   ('devguide', 'PyMVPA-DevGuide.tex', 'PyMVPA Developer Guidelines',
    'PyMVPA Authors',
    'manual'),
-  ('modref', 'PyMVPA-Reference.tex', 'PyMVPA Reference',
-   'PyMVPA Authors',
-   'manual'),
+#  ('modref', 'PyMVPA-Reference.tex', 'PyMVPA Reference',
+#   'PyMVPA Authors',
+#   'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -280,7 +280,7 @@ latex_preamble = r"""
 # to link to related projects
 intersphinx_mapping = {'http://docs.python.org/': None,
                        'http://nipy.sourceforge.net/nipype': None,
-                       'http://nipy.sourceforge.net/nipy': None,
+                       'http://nipy.sourceforge.net/nipy/stable': None,
                        'http://h5py.alfven.org/docs': None,
                        'http://docs.scipy.org/doc/scipy/reference': None,
                        'http://docs.scipy.org/doc/numpy/': None,

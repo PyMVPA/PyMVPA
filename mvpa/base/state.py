@@ -44,7 +44,7 @@ from textwrap import TextWrapper
 # Although not used here -- included into interface
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.base.attributes import IndexedCollectable, ConditionalAttribute
-from mvpa.base.dochelpers import enhanced_doc_string
+from mvpa.base.dochelpers import enhanced_doc_string, borrowdoc
 
 from mvpa.base import externals
 # XXX local rename is due but later on
@@ -106,6 +106,14 @@ class Collection(BaseCollection):
         #if __debug__ and 'COL_RED' in debug.active:
         #    debug('COL_RED', 'Returning %s for %s' % (res, self))
         return res
+
+
+    @borrowdoc(BaseCollection)
+    def copy(self, *args, **kwargs):
+        # Create a generic copy of the collection
+        anew = super(Collection, self).copy(*args, **kwargs)
+        anew.name = self.name
+        return anew
 
 
     def __str__(self):

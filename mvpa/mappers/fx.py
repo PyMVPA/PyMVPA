@@ -107,6 +107,10 @@ class FxMapper(Mapper):
         # apply fx along features axis for each sample
         elif self.__axis == 'features':
             mdata = np.apply_along_axis(self.__fx, 1, data, *self.__fxargs)
+            if len(mdata.shape) == 1:
+                # in case we only have a scalar per sample we need to transpose
+                # it properly, to keep the length of the samples axis intact
+                mdata = np.atleast_2d(mdata).T
         return np.atleast_2d(mdata)
 
     @borrowdoc(Mapper)
@@ -274,6 +278,42 @@ def mean_group_sample(attrs, attrfx='merge'):
     return FxMapper('samples', np.mean, uattrs=attrs, attrfx=attrfx)
 
 
+def sum_sample(attrfx='merge'):
+    """Returns a mapper that computes the sum sample of a dataset.
+
+    Parameters
+    ----------
+    attrfx : 'merge' or callable, optional
+      Callable that is used to determine the sample attributes of the computed
+      sum samples. By default this will be a string representation of all
+      unique value of a particular attribute in any sample group. If there is
+      only a single value in a group it will be used as the new attribute value.
+
+    Returns
+    -------
+    FxMapper instance.
+    """
+    return FxMapper('samples', np.sum, attrfx=attrfx)
+
+
+def mean_feature(attrfx='merge'):
+    """Returns a mapper that computes the mean feature of a dataset.
+
+    Parameters
+    ----------
+    attrfx : 'merge' or callable, optional
+      Callable that is used to determine the feature attributes of the computed
+      mean features. By default this will be a string representation of all
+      unique value of a particular attribute in any feature group. If there is
+      only a single value in a group it will be used as the new attribute value.
+
+    Returns
+    -------
+    FxMapper instance.
+    """
+    return FxMapper('features', np.mean, attrfx=attrfx)
+
+
 def mean_group_feature(attrs, attrfx='merge'):
     """Returns a mapper that computes the mean features of unique feature groups.
 
@@ -423,7 +463,7 @@ class BinaryFxNode(Node):
     def _call(self, ds):
         # extract samples and targets and pass them to the errorfx
         targets = ds.sa[self.get_space()].value
-        # squeeze to remove bogus dimensions are prevent problems during
+        # squeeze to remove bogus dimensions and prevent problems during
         # comparision later on
         values = np.atleast_1d(ds.samples.squeeze())
         if not values.shape == targets.shape:

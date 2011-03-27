@@ -351,7 +351,7 @@ def load_datadb_tutorial_data(path=os.path.join(
       before, but the union of a ROIs is taken to produce the final mask.
       If None, no masking is performed.
     """
-    from nifti import NiftiImage
+    import nibabel as nb
     from mvpa.datasets.mri import fmri_dataset
     from mvpa.misc.io import SampleAttributes
     if roi is None:
@@ -359,15 +359,17 @@ def load_datadb_tutorial_data(path=os.path.join(
     elif isinstance(roi, str):
         mask = os.path.join(path, 'mask_' + roi + '.nii.gz')
     elif isinstance(roi, int):
-        nimg = NiftiImage(os.path.join(path, 'mask_hoc.nii.gz'))
-        tmpmask = nimg.data == roi
-        mask = NiftiImage(tmpmask.astype(int), nimg.header)
+        nimg = nb.load(os.path.join(path, 'mask_hoc.nii.gz'))
+        tmpmask = nimg.get_data() == roi
+        mask = nb.Nifti1Image(tmpmask.astype(int), nimg.get_affine(),
+                              nimg.get_header())
     elif isinstance(roi, tuple) or isinstance(roi, list):
-        nimg = NiftiImage(os.path.join(path, 'mask_hoc.nii.gz'))
-        tmpmask = np.zeros(nimg.data.shape, dtype='bool')
+        nimg = nb.load(os.path.join(path, 'mask_hoc.nii.gz'))
+        tmpmask = np.zeros(nimg.get_shape(), dtype='bool')
         for r in roi:
-            tmpmask = np.logical_or(tmpmask, nimg.data == r)
-        mask = NiftiImage(tmpmask.astype(int), nimg.header)
+            tmpmask = np.logical_or(tmpmask, nimg.get_data() == r)
+        mask = nb.Nifti1Image(tmpmask.astype(int), nimg.get_affine(),
+                              nimg.get_header())
     else:
         raise ValueError("Got something as mask that I cannot handle.")
     attr = SampleAttributes(os.path.join(path, 'attributes.txt'))

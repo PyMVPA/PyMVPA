@@ -12,8 +12,14 @@ Primarily the ones from nose.tools
 """
 __docformat__ = 'restructuredtext'
 
+import os
+import tempfile
 import unittest
+
 from mvpa.base import externals
+
+if __debug__:
+    from mvpa.base import debug
 
 if externals.exists('nose'):
     # We use nose now
@@ -47,7 +53,7 @@ else:
 from numpy.testing import (
     assert_almost_equal, assert_approx_equal,
     assert_array_almost_equal, assert_array_equal, assert_array_less,
-    assert_string_equal, dec)
+    assert_string_equal)
 
 
 def skip_if_no_external(dep, ver_dep=None, min_version=None, max_version=None):
@@ -84,3 +90,46 @@ def skip_if_no_external(dep, ver_dep=None, min_version=None, max_version=None):
               "Maximal version %s of %s is required. Present version is %s" \
               ". Test was skipped." \
               % (min_version, ver_dep, externals.versions[ver_dep])
+
+
+def with_tempfile(*targs, **tkwargs):
+    """Decorator function to provide a temporary file name and remove it at the end.
+
+    All arguments are passed into the call to tempfile.mktemp(), and
+    resultant temporary filename is passed as the first argument into
+    the test.  If no 'prefix' argument is provided, it will be
+    constructed using module and function names ('.' replaced with
+    '_').
+
+    Example use::
+
+        @with_tempfile()
+        def test_write(tfile):
+            open(tfile, 'w').write('silly test')
+    """
+
+    def decorate(func):
+        def newfunc(*arg, **kw):
+            if len(targs)<2 and not 'prefix' in tkwargs:
+                try:
+                    tkwargs['prefix'] = 'tempfile_%s.%s' \
+                                        % (func.__module__, func.func_name)
+                except:
+                    # well -- if something wrong just proceed with defaults
+                    pass
+
+            filename = tempfile.mktemp(*targs, **tkwargs)
+            if __debug__:
+                debug('TEST', 'Running %s with temporary filename %s'
+                      % (func.__name__, filename))
+            try:
+                func(*(arg + (filename,)), **kw)
+            finally:
+                try:
+                    os.unlink(filename)
+                except OSError:
+                    pass
+        newfunc = make_decorator(func)(newfunc)
+        return newfunc
+
+    return decorate

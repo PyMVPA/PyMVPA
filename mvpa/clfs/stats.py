@@ -15,6 +15,8 @@ import numpy as np
 from mvpa.base import externals, warning
 from mvpa.base.state import ClassWithCollections, ConditionalAttribute
 from mvpa.generators.permutation import AttributePermutator
+from mvpa.base.types import is_datasetlike
+from mvpa.datasets import Dataset
 
 if __debug__:
     from mvpa.base import debug
@@ -171,7 +173,7 @@ class NullDist(ClassWithCollections):
         self.__tail = tail
 
 
-    def fit(self, measure, wdata, vdata=None):
+    def fit(self, measure, ds):
         """Implement to fit the distribution to the data."""
         raise NotImplementedError
 
@@ -183,7 +185,7 @@ class NullDist(ClassWithCollections):
         raise NotImplementedError
 
 
-    def p(self, x, **kwargs):
+    def p(self, x, return_tails=False, **kwargs):
         """Returns the p-value for values of `x`.
         Returned values are determined left, right, or from any tail
         depending on the constructor setting.
@@ -192,8 +194,19 @@ class NullDist(ClassWithCollections):
         distribution the method returns an array. In that case `x` can be
         a scalar value or an array of a matching shape.
         """
-        return _pvalue(x, self.cdf, self.__tail, **kwargs)
-
+        peas = _pvalue(x, self.cdf, self.__tail, return_tails=return_tails,
+                       **kwargs)
+        if is_datasetlike(x):
+            # return the p-values in a dataset as well and assign the input
+            # dataset attributes to the return dataset too
+            pds = x.copy(deep=False)
+            if return_tails:
+                pds.samples = peas[0]
+                return pds, peas[1]
+            else:
+                pds.samples = peas
+                return pds
+        return peas
 
     tail = property(fget=lambda x:x.__tail, fset=_set_tail)
 
@@ -227,7 +240,8 @@ class MCNullDist(NullDist):
     dist_samples = ConditionalAttribute(enabled=False,
                                  doc='Samples obtained for each permutation')
 
-    def __init__(self, permutator, dist_class=Nonparametric, **kwargs):
+    def __init__(self, permutator, dist_class=Nonparametric, measure=None,
+                 **kwargs):
         """Initialize Monte-Carlo Permutation Null-hypothesis testing
 
         Parameters
@@ -239,11 +253,15 @@ class MCNullDist(NullDist):
           using `fit()` method to initialize the instance, and
           provides `cdf(x)` method for estimating value of x in CDF.
           All distributions from SciPy's 'stats' module can be used.
+        measure : Measure or None
+          Optional measure that is used to compute results on permuted
+          data. If None, a measure needs to be passed to ``fit()``.
         """
         NullDist.__init__(self, **kwargs)
 
         self._dist_class = dist_class
         self._dist = []                 # actual distributions
+        self._measure = measure
 
         self.__permutator = permutator
 
@@ -255,22 +273,28 @@ class MCNullDist(NullDist):
             prefixes=prefixes_ + prefixes)
 
 
-    def fit(self, measure, wdata, vdata=None):
+    def fit(self, measure, ds):
         """Fit the distribution by performing multiple cycles which repeatedly
         permuted labels in the training dataset.
 
         Parameters
         ----------
-        measure: (`Featurewise`)`Measure` or `TransferError`
-          TransferError instance used to compute all errors.
-        wdata: `Dataset` which gets permuted and used to compute the
+        measure: Measure or None
+          A measure used to compute the results from shuffled data. Can be None
+          if a measure instance has been provided to the constructor.
+        ds: `Dataset` which gets permuted and used to compute the
           measure/transfer error multiple times.
-        vdata: `Dataset` used for validation.
-          If provided measure is assumed to be a `TransferError` and
-          working and validation dataset are passed onto it.
         """
         # TODO: place exceptions separately so we could avoid circular imports
         from mvpa.base.learner import LearnerError
+
+        # prefer the already assigned measure over anything the was passed to
+        # the function.
+        # XXX that is a bit awkward but is necessary to keep the code changes
+        # in the rest of PyMVPA minimal till this behavior become mandatory
+        if not self._measure is None:
+            measure = self._measure
+            measure.untrain()
 
         dist_samples = []
         """Holds the values for randomized labels."""
@@ -281,7 +305,8 @@ class MCNullDist(NullDist):
         # classifier, hence the number of permutations to estimate the
         # null-distribution of transfer errors can be reduced dramatically
         # when the *right* permutations (the ones that matter) are done.
-        for p, permuted_wdata in enumerate(self.__permutator.generate(wdata)):
+        skipped = 0                     # # of skipped permutations
+        for p, permuted_ds in enumerate(self.__permutator.generate(ds)):
             # new permutation all the time
             # but only permute the training data and keep the testdata constant
             #
@@ -289,30 +314,31 @@ class MCNullDist(NullDist):
                 debug('STATMC', "Doing %i permutations: %i" \
                       % (self.__permutator.nruns, p+1), cr=True)
 
-
-            # decide on the arguments to measure
-            if not vdata is None:
-                measure_args = [vdata, permuted_wdata]
-            else:
-                measure_args = [permuted_wdata]
-
             # compute and store the measure of this permutation
             # assume it has `TransferError` interface
             try:
-                res = measure(*measure_args)
-                res = np.asanyarray(res)
-                dist_samples.append(res)
+                res = measure(permuted_ds)
+                dist_samples.append(res.samples)
             except LearnerError, e:
+                if __debug__:
+                    debug('STATMC', " skipped", cr=True)
                 warning('Failed to obtain value from %s due to %s.  Measurement'
                         ' was skipped, which could lead to unstable and/or'
                         ' incorrect assessment of the null_dist' % (measure, e))
+                skipped += 1
+                continue
 
         if __debug__:
-            debug('STATMC', '')
+            debug('STATMC', ' Skipped: %d permutations' % skipped)
 
 
-        # store samples
-        self.ca.dist_samples = dist_samples = np.asarray(dist_samples)
+        # store samples as (npermutations x nsamples x nfeatures)
+        dist_samples = np.asanyarray(dist_samples)
+        # for the ca storage use a dataset with
+        # (nsamples x nfeatures x npermutations) to make it compatible with the
+        # result dataset of the measure
+        self.ca.dist_samples = Dataset(np.rollaxis(dist_samples,
+                                       0, len(dist_samples.shape)))
 
         # fit distribution per each element
 
@@ -330,7 +356,7 @@ class MCNullDist(NullDist):
         dist = []
         for samples in dist_samples_rs.T:
             params = self._dist_class.fit(samples)
-            if __debug__ and 'STAT' in debug.active:
+            if __debug__ and 'STAT__' in debug.active:
                 debug('STAT', 'Estimated parameters for the %s are %s'
                       % (self._dist_class, str(params)))
             dist.append(self._dist_class(*params))
@@ -382,6 +408,9 @@ class FixedNullDist(NullDist):
 
     All distributions from SciPy's 'stats' module can be used with this class.
 
+    Examples
+    --------
+
     >>> import numpy as np
     >>> from scipy import stats
     >>> from mvpa.clfs.stats import FixedNullDist
@@ -396,6 +425,7 @@ class FixedNullDist(NullDist):
     >>> dist = FixedNullDist(stats.norm(loc=2, scale=4), tail='right')
     >>> dist.p(np.arange(5))
     array([ 0.69146246,  0.59870633,  0.5       ,  0.40129367,  0.30853754])
+
     """
     def __init__(self, dist, **kwargs):
         """
@@ -410,7 +440,7 @@ class FixedNullDist(NullDist):
         self._dist = dist
 
 
-    def fit(self, measure, wdata, vdata=None):
+    def fit(self, measure, ds):
         """Does nothing since the distribution is already fixed."""
         pass
 
@@ -713,6 +743,7 @@ if externals.exists('scipy'):
 
         Examples
         --------
+        >>> from mvpa.clfs.stats import match_distribution
         >>> data = np.random.normal(size=(1000,1));
         >>> matches = match_distribution(
         ...   data,
@@ -721,6 +752,7 @@ if externals.exists('scipy'):
         ...                             'loc': 0.0,
         ...                             'args': (10,)})],
         ...   nsamples=30, test='p-roc', p=0.05)
+
         """
 
         # Handle parameters

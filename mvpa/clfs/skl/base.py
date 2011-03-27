@@ -10,6 +10,8 @@
 
 __docformat__ = 'restructuredtext'
 
+import numpy as np
+
 from mvpa.base import warning, externals
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.base.learner import FailedToTrainError, FailedToPredictError, \
@@ -60,7 +62,10 @@ class SKLLearnerAdapter(Classifier):
     def __repr__(self):
         """String representation of `SKLLearnerWrapper`
         """
-        return Classifier.__repr__(self, prefixes=[repr(self._skl_learner)])
+        prefixes = [repr(self._skl_learner)]
+        if self.__tags__ != ['skl']:
+            prefixes += ['tags=%r' % [t for t in self.__tags__ if t != 'skl']]
+        return Classifier.__repr__(self, prefixes=prefixes)
 
 
     def _train(self, dataset):
@@ -81,7 +86,7 @@ class SKLLearnerAdapter(Classifier):
         try:
             # train underlying learner
             self._skl_learner.fit(dataset.samples, targets)
-        except ValueError, e:
+        except (ValueError, np.linalg.LinAlgError), e:
             raise FailedToTrainError, \
                   "Failed to train %s on %s. Got '%s' during call to fit()." \
                   % (self, dataset, e)

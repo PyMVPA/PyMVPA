@@ -145,8 +145,7 @@ class kNN(Classifier):
         # and all training samples will end up in row 0
         dists = self.__dfx(self.__data.samples, data).T
         if self.ca.is_enabled('distances'):
-            # TODO: theoretically we should have used deepcopy for sa
-            #       here
+            # .sa.copy() now does deepcopying by default
             self.ca.distances = Dataset(dists, fa=self.__data.sa.copy())
 
         # determine the k nearest neighbors per test sample

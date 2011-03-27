@@ -9,6 +9,7 @@
 """Unit test interface for PyMVPA"""
 
 import unittest
+import numpy as np
 from mvpa import _random_seed, cfg
 from mvpa.base import externals, warning
 
@@ -25,7 +26,6 @@ def collect_unit_tests(verbosity=1):
     tests = [
         # Basic data structures/manipulators
         'test_externals',
-        'test_base',
         'test_dochelpers',
         'test_som',
         'test_state',
@@ -82,6 +82,8 @@ def collect_test_suites(verbosity=1):
     tests = collect_unit_tests(verbosity=verbosity)
     # import all test modules
     for t in tests:
+        # TODO: exclude tests which fail to import: e.g. on Windows
+        # could get WindowsError due to missing msvcr90.dll
         exec 'import mvpa.tests.' + t
 
     # instantiate all tests suites and return dict of them (with ID as key)
@@ -93,6 +95,7 @@ def collect_nose_tests(verbosity=1):
     """
     tests = [
         # Basic data structures/manipulators
+        'test_base',
         'test_collections',
         'test_attrmap',
 
@@ -171,7 +174,7 @@ def run_tests_using_nose(limit=None, verbosity=1, exit_=False):
     tests = collect_unit_tests(verbosity=verbosity) + nosetests
 
     config = nose.config.Config(
-        verbosity=verbosity,
+        verbosity=max(0, verbosity-1),
         plugins=nose.plugins.DefaultPluginManager())
     if limit is None:
         # Lets see if we aren't missing any:
@@ -205,7 +208,8 @@ def run(limit=None, verbosity=None, exit_=False):
       'niftidataset'.
     verbosity : None or int
       Verbosity of unittests execution. If None, controlled by PyMVPA
-      configuration tests/verbosity
+      configuration tests/verbosity.  Values >=3 enable all Python,
+      and PyMVPA warnings, >=4 adds NumPy warnings, >=5 -- nose debug info.
     exit_ : bool, optional
       Either to exit with an error code upon the completion.
     """
@@ -225,22 +229,32 @@ def run(limit=None, verbosity=None, exit_=False):
             print('T: Testing for availability of external software packages.')
 
     # So we could see all warnings about missing dependencies
+    maxcount = warning.maxcount
     warning.maxcount = 1000
+
     # fully test of externals
     externals.test_all_dependencies(verbosity=max(0, verbosity-1))
 
-    # no MVPA warnings during whole testsuite (but restore handlers later on)
-    handler_backup = warning.handlers
-    warning.handlers = []
+    if verbosity < 3:
+        # no MVPA warnings during whole testsuite (but restore handlers later on)
+        handler_backup = warning.handlers
+        warning.handlers = []
 
-    # No python warnings (like ctypes version for slmr)
-    import warnings
-    warnings.simplefilter('ignore')
+        # No python warnings (like ctypes version for slmr)
+        import warnings
+        warnings.simplefilter('ignore')
+
+    if verbosity < 4:
+        # No NumPy
+        np_errsettings = np.geterr()
+        np.seterr(**dict([(x, 'ignore') for x in np_errsettings]))
 
     try:
         if externals.exists('nose'):
             # Lets just use nose
-            run_tests_using_nose(limit=limit, verbosity=verbosity, exit_=exit_)
+            run_tests_using_nose(limit=limit,
+                                 verbosity=verbosity,
+                                 exit_=exit_)
         else:
             print("T: Warning -- major bulk of tests is skipped since nose "
                   "is unavailable")
@@ -263,14 +277,20 @@ def run(limit=None, verbosity=None, exit_=False):
                     if not result.wasSuccessful():
                         print "MVPA_SEED=%s" % _random_seed
 
-            if verbosity is None:
-                verbosity = int(cfg.get('tests', 'verbosity', default=1))
-
             # finally run it
             TextTestRunnerPyMVPA(verbosity=verbosity).run(ts)
     finally:
         # restore warning handlers
+        warning.maxcount = maxcount
+
+    if verbosity < 3:
+        # restore warning handlers
         warning.handlers = handler_backup
+
+    if verbosity < 4:
+        # restore numpy settings
+        np.seterr(**np_errsettings)
+
 
 # to avoid nosetests running the beasts defined in this file
 __test__ = False

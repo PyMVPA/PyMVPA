@@ -27,8 +27,15 @@ reversible, others are not. Some are simple one-step computations, others
 are iterative algorithms that have to be trained on data before they can be
 used. In PyMVPA, all these transformations are :mod:`~mvpa.mappers`.
 
+.. note::
+
+  If you are an MDP_-user you probably have realized the similarity of MDP's
+  nodes and PyMVPA's mappers.
+
+.. _MDP: http://mdp-toolkit.sourceforge.net/
+
 Let's create a dummy dataset (5 samples, 12 features). This time we will use a
-new method to create the dataset, the ``dataset_wizard``. Here it is fully
+new method to create the dataset, the ``dataset_wizard``. Here it is, fully
 equivalent to a regular constructor call (i.e.  `~mvpa.datasets.base.Dataset`),
 but we will shortly see some nice convenience aspects.
 
@@ -79,10 +86,10 @@ look at a possible next step -- selecting a subset of interesting features:
 >>> 'mapper' in subds.a
 True
 >>> print subds.a.mapper
-<ChainMapper: <Flatten>-<FeatureSlice>>
+<ChainMapper: <Flatten>-<StaticFeatureSelection>>
 
 Now the situation has changed: *two* new mappers appeared in the dataset -- a
-`~mvpa.mappers.base.ChainMapper` and a `~mvpa.mappers.slicing.FeatureSliceMapper`.
+`~mvpa.mappers.base.ChainMapper` and a `~mvpa.featsel.base.StaticFeatureSelection`.
 The latter describes (and actually performs) the slicing operation we just made,
 while the former encapsulates the two mappers into a processing pipeline.
 We can see that the mapper chain represents the processing history of the
@@ -117,7 +124,7 @@ Now we have pretty much all the pieces that we need to perform a full
 cross-validation analysis. Remember, in :ref:`part one of the tutorial
 <chap_tutorial_start>` we cheated a bit, by using a magic function to load the
 preprocessed fMRI data. This time we are more prepared. We know how to
-load fMRI data from timeseries images, we know how to add and access
+load fMRI data from time series images, we know how to add and access
 attributes in a dataset, we know how to slice datasets, and we know that
 we can manipulate datasets with mappers.
 
@@ -183,7 +190,7 @@ directly:
 >>> fds.shape
 (1452, 577)
 >>> print fds.sa
-<SampleAttributesCollection: chunks,time_indices,targets,time_coords>
+<SampleAttributesCollection: chunks,targets,time_coords,time_indices>
 
 We got the dataset that we already know from the last part, but this time
 is also has information about chunks and targets.
@@ -198,7 +205,7 @@ also know that the signal is not fully homogeneous throughout the brain.
 All these artifacts carry a lot of variance that is (hopefully) unrelated
 to the experiment design, and we should try to remove it to present the
 classifier with the cleanest signal possible. There are countless ways to
-preprocess the data to try to achieve this goal. Some keywords are:
+pre-process the data to try to achieve this goal. Some keywords are:
 high/low/band-pass filtering, de-spiking, motion-correcting, intensity
 normalization, and so on. In this tutorial, we keep it simple. The data we
 have just loaded is already motion corrected. For every experiment that is
@@ -208,9 +215,9 @@ longer than a few minutes, as in this case, temporal trend removal, or
 Detrending
 ----------
 PyMVPA provides functionality to remove polynomial trends from the data,
-meaning that polynomials are fitted to the timeseries and only what is not
+meaning that polynomials are fitted to the time series and only what is not
 explained by them remains in the dataset. In the case of linear detrending,
-this means fitting a straight line to the timeseries of each voxel via linear
+this means fitting a straight line to the time series of each voxel via linear
 regression and taking the residuals as the new feature values. Detrending can
 be seen as a type of data transformation, hence in PyMVPA it is implemented as
 a mapper.
@@ -220,7 +227,7 @@ a mapper.
 What we have just created is a mapper that will perform chunk-wise linear
 (1st-order polynomial) detrending. Chunk-wise detrending is desirable,
 since our data stems from 12 different runs, and the assumption of a
-continous linear trend across all runs is not appropriate. The mapper is
+continuous linear trend across all runs is not appropriate. The mapper is
 going to use the ``chunks`` attribute to identify the chunks in the
 dataset.
 
@@ -233,10 +240,10 @@ return it. Let's try:
 
 >>> detrended_fds = fds.get_mapped(detrender)
 >>> print detrended_fds.a.mapper
-<ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>>
+<ChainMapper: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>>
 
 ``detrended_fds`` is easily identifiable as a dataset that has been
-flattened, sliced, and linearily detrended.
+flattened, sliced, and linearly detrended.
 
 
 Normalization
@@ -246,13 +253,13 @@ While this will hopefully have solved the problem of temporal drifts in the
 data, we still have inhomogeneous voxel intensities, but there are many
 possible approaches to fix it. For this tutorial we are again following a
 simple one, and perform a feature-wise, chunk-wise Z-scoring of the data.  This
-has many advantages. First it is going to scale all features into approximately
+has many advantages. First, it is going to scale all features into approximately
 the same range, and also remove their mean.  The latter is quite important,
 since some classifiers cannot deal with not demeaned data. However, we are not
 going to perform a very simple Z-scoring removing the global mean, but use the
 *rest* condition samples of the data to estimate mean and standard deviation.
 Scaling features using these parameters yields a score corresponding to the
-per-timepoint voxel intensity difference from the *rest* average.
+per time-point voxel intensity difference from the *rest* average.
 
 This type of data :term:`normalization` is, you guessed it, also
 implemented as a mapper:
@@ -279,7 +286,7 @@ mapper we have created above, but using less memory:
 >>> zscore(detrended_fds, param_est=('targets', ['rest']))
 >>> fds = detrended_fds
 >>> print fds.a.mapper
-<ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>-<ZScore>>
+<ChainMapper: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>-<ZScore>>
 
 .. exercise::
 
@@ -297,8 +304,8 @@ dataset:
 (864, 577)
 
 
-Computing *Patterns Of Activiation*
------------------------------------
+Computing *Patterns Of Activation*
+----------------------------------
 
 The last preprocessing step, we need to replicate, is computing the
 actual *patterns of activation*. In the original study Haxby and colleagues
@@ -376,7 +383,7 @@ dataset from the beginning we can see how it works:
 >>> print subds
 <Dataset: 5x4@float64, <a: mapper>>
 >>> print subds.a.mapper
-<ChainMapper: <Flatten>-<FeatureSlice>>
+<ChainMapper: <Flatten>-<StaticFeatureSelection>>
 >>> subds.nfeatures
 4
 >>> revtest = np.arange(subds.nfeatures) + 10
@@ -401,7 +408,7 @@ But now let's look at our fMRI dataset again. Here the mapper chain is a little
 more complex:
 
 >>> print fds.a.mapper
-<ChainMapper: <Flatten>-<FeatureSlice>-<PolyDetrend: ord=1>-<ZScore>-<Fx: fx=mean>>
+<ChainMapper: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>-<ZScore>-<Fx: fx=mean>>
 
 Initial flattening followed by mask, detrending, Z-scoring and finally
 averaging. We would reverse mapping do in this case? Let's test:
@@ -413,11 +420,11 @@ averaging. We would reverse mapping do in this case? Let's test:
 >>> rmapped.shape
 (40, 64, 64)
 
-What happens is excatly what we expect: The initial one-dimensional vector
+What happens is exactly what we expect: The initial one-dimensional vector
 is passed backwards through the mapper chain. Reverting a group-based
 averaging doesn't make much sense for a single vector, hence it is ignored.
 Same happens for Z-Scoring and temporal detrending. However, for all
-remaining mappers the transformations are reverse. First un-masked, and
+remaining mappers the transformations are reverse. First unmasked, and
 then reshaped into the original dimensionality -- the brain volume.
 
 We can check that this is really the case by only reverse-mapping through
@@ -447,11 +454,11 @@ information about the original source NIfTI image.
 True
 
 PyMVPA offers `~mvpa.datasets.mri.map2nifti()`, a function to combine these
-two thing and convert any vector into the corresponding NIfTI image:
+two things and convert any vector into the corresponding NIfTI image:
 
 >>> nimg = map2nifti(fds, revtest)
 
-This image can now be safed to a file (e.g. ``nimg.save('mytest.nii.gz')``).
+This image can now be stored as a file (e.g. ``nimg.save('mytest.nii.gz')``).
 In this format it is now compatible with the vast majority of neuroimaging
 software.
 
@@ -463,25 +470,8 @@ software.
 
 There are much more mappers in PyMVPA than we could cover in the tutorial
 part. Some more will be used in other parts, but even more can be found the
-:mod:`~mvpa.mappers` module. Even though the all implement different
+:mod:`~mvpa.mappers` module. Even though they all implement different
 transformations, they can all be used in the same way, and can all be
 combined into a chain.
 
 Now we are really ready for :ref:`part four of the tutorial <chap_tutorial_classifiers>`.
-
-
-
-.. only:: html
-
-  References
-  ==========
-
-  .. autosummary::
-     :toctree: generated
-
-     ~mvpa.mappers
-     ~mvpa.mappers.base.Mapper
-     ~mvpa.mappers.base.FeatureSliceMapper
-     ~mvpa.mappers.flatten.FlattenMapper
-     ~mvpa.mappers.fx.FxMapper
-     ~mvpa.mappers.base.ChainMapper

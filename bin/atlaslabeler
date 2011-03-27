@@ -15,8 +15,8 @@ import mvpa
 from mvpa.misc.cmdline import parser, opts, opt
 from mvpa.base import verbose, warning, externals
 
-if externals.exists('nifti', raise_=True):
-    from nifti import NiftiImage
+if externals.exists('nibabel', raise_=True):
+    import nibabel as nb
 
 if __debug__:
     from mvpa.base import debug
@@ -44,18 +44,19 @@ def select_from_volume_iterator(volFileName, lt=None, ut=None):
     Generator which returns value + coordinates with values of non-0 entries
     from the `volFileName`
 
-    :Returns:
-     tuple with 0th entry value, the others are voxel coordinates
+    Returns
+    -------
+    tuple with 0th entry value, the others are voxel coordinates
     More effective than previous loopy iteration since uses numpy's where
-    function,    but for now is limited only to non-0 voxels selection
+    function, but for now is limited only to non-0 voxels selection
     """
     try:
-        volFile = NiftiImage(volFileName)
+        volFile = nb.load(volFileName)
     except:
         raise IOError("Cannot open image file %s" % volFileName)
 
-    volData = volFile.data
-    voxdim = volFile.voxdim
+    volData = volFile.get_data()
+    voxdim = volFile.get_header().get_zooms()[:3]
     if lt is None and ut is None:
         mask = volData != 0.0
     elif lt is None and ut is not None:
@@ -66,15 +67,11 @@ def select_from_volume_iterator(volFileName, lt=None, ut=None):
         mask = np.logical_and(volData >= lt, volData <= ut)
 
     matchingVoxels = np.where(mask)
-    # qf = volFile.qform
-    # qfi = la.inv(qf)
-    for ivoxel in xrange(len(matchingVoxels[0])):
-        # in reverse order since numpy struct has order t, z, y, x
-        voxel = ( matchingVoxels[2][ivoxel],
-                  matchingVoxels[1][ivoxel],
-                  matchingVoxels[0][ivoxel] )
-        value = volData[ voxel[-1], voxel[-2], voxel[-3] ]
-        yield (value, voxel[0], voxel[1], voxel[2], 0) #voxel[-4])
+    for e in zip(volData[matchingVoxels], *matchingVoxels):
+        e_ = tuple(e)
+        if len(e_) < 5:
+            e_ = e_ + (0,) # add time=0
+        yield  e_
 
 
 def parsed_coordinates_iterator(
@@ -389,30 +386,33 @@ else:
         print "Just a single file should be provided at the command line"
         sys.exit(1)
     infile = infiles[0]
-# got a volume/file to process
+    # got a volume/file to process
+    if __debug__:
+        debug('ATL', "Testing if 0th element in the list a volume")
+    niftiInput = None
     try:
-        if __debug__:
-            debug('ATL', "Testing if 0th element in the list a volume")
-        niftiInput = NiftiImage(infile)
+        niftiInput = nb.load(infile)
         if __debug__:
             debug('ATL', "Yes it is")
+    except Exception, e:
+        if __debug__:
+            debug('ATL', "No it is not due to %s. Trying to parse the file" % e)
+
+    if niftiInput:
         # if we got here -- it is a proper volume
         # XXX ask Michael to remove nasty warning message
         coordsIterator = select_from_volume_iterator(
             infile, options.lowerThreshold, options.upperThreshold)
         assert(coordT is None)
-        coordT = Linear(niftiInput.qform)
+        coordT = Linear(niftiInput.get_header().get_qform())
         # lets store volumeQForm for possible conversion of voxels into coordinates
         volQForm = coordT
         # previous iterator returns space coordinates
         options.coordRelativeToOrigin = True
-    except:
-        if __debug__:
-            debug('ATL', "No it is not")
+    else:
         fileIn = file(infile)
         coordsIterator = parsed_coordinates_iterator(
             options.inputLineFormat, fileIn, ctype=ctype)
-
 
 # Open and initialize atlas lookup
 if options.atlasFile is None:
@@ -426,7 +426,7 @@ if options.atlasImageFile:
 
 if not options.forbidDirectMapping \
        and niftiInput is not None and not options.transformationFile:
-    akwargs = {'resolution': niftiInput.pixdim[0]}
+    akwargs = {'resolution': niftiInput.get_header().get_zooms()[0]}
     query_voxel = True   # if we can query directly by voxel, do so
 
     akwargs.update(akwargs_common)
@@ -443,13 +443,13 @@ if not options.forbidDirectMapping \
             " it misspecified, or use -T to provide transformation. Trying"
             " to proceed" %(options.inputSpace, atlas.space), 1)
         query_voxel = False
-    elif not (niftiInput.qform == atlas._image.qform).all():
+    elif not (niftiInput.get_header().get_qform() == atlas._image.get_header().get_qform()).all():
         if options.atlasImageFile is None:
             warning(
                 "Cannot do direct mapping between files with different qforms."
                 " Please provide original transformation (-T)."
                 "\n Input qform:\n%s\n Atlas qform: \n%s"
-                %(niftiInput.qform, atlas._image.qform), 1)
+                %(niftiInput.get_header().get_qform(), atlas._image.get_header().get_qform), 1)
             # reset ability to query by voxels
             query_voxel = False
         else:
@@ -457,8 +457,8 @@ if not options.forbidDirectMapping \
                 "QForms are different between input image and "
                 "provided atlas image."
                 "\n Input qform of %s:\n%s\n Atlas qform of %s:\n%s"
-                %(infile, niftiInput.qform,
-                  options.atlasImageFile, atlas._image.qform), 1)
+                %(infile, niftiInput.get_header().get_qform(),
+                  options.atlasImageFile, atlas._image.get_header().get_qform()), 1)
     else:
         coordT = None
 else:
@@ -603,8 +603,8 @@ if options.dumpmapFile:
         raise RuntimeError, "You asked to dump indexes into the volume, " \
               "but input wasn't a volume"
         sys.exit(1)
-    ni_dump = NiftiImage(infile)
-    ni_dump_data = np.zeros((len(options.levels),) + ni_dump.data.shape[:3])
+    ni_dump = nb.load(infile)
+    ni_dump_data = np.zeros(ni_dump.get_header().get_data_shape()[:3] + (len(options.levels),))
 
 # Also check if we have provided voxels but not querying by voxels
 if options.input_voxels:
@@ -707,7 +707,7 @@ for c in coordsIterator:
 
     if options.dumpmapFile:
         try:
-            ni_dump_data[:, coord_orig[-1], coord_orig[-2], coord_orig[-3]] = \
+            ni_dump_data[coord_orig[0], coord_orig[1], coord_orig[2]] = \
               [voxel['labels'][i]['label'].index
                for i,ind in enumerate(options.levels)]
         except Exception, e:
@@ -719,8 +719,8 @@ if fileIn:
     fileIn.close()
 
 if options.dumpmapFile:
-    ni_dump = NiftiImage(ni_dump_data, ni_dump.header)
-    ni_dump.save(options.dumpmapFile)
+    ni_dump = nb.Nifti1Image(ni_dump_data, None, ni_dump.get_header())
+    ni_dump.to_filename(options.dumpmapFile)
 
 
 def statistics(values):

@@ -104,6 +104,9 @@ def __assign_mdp_version():
         ver += '-dev'
     versions['mdp'] = SmartVersion(ver)
 
+def __assign_nibabel_version():
+    import nibabel
+    versions['nibabel'] = SmartVersion(nibabel.__version__)
 
 def __check_pywt(features=None):
     """Check for available functionality within pywt
@@ -299,7 +302,11 @@ def __check_openopt():
     return
 
 def __check_skl():
-    import scikits.learn as _
+    import scikits.learn as skl
+    if skl.__doc__.strip() == "":
+        raise ImportError("Verify your installation of scikits.learn. "
+                          "Its docstring is empty -- could be that only -lib "
+                          "was installed without the native Python modules")
 
 def _set_matplotlib_backend():
     """Check if we have custom backend to set and it is different
@@ -332,7 +339,7 @@ def __assign_matplotlib_version():
 
 def __check_pylab():
     """Check if matplotlib is there and then pylab"""
-    exists('matplotlib', raise_=True)
+    exists('matplotlib', raise_='always')
     import pylab as pl
 
 def __check_pylab_plottable():
@@ -341,7 +348,7 @@ def __check_pylab_plottable():
     Primary use in unittests
     """
     try:
-        exists('pylab', raise_=True)
+        exists('pylab', raise_='always')
         import pylab as pl
         fig = pl.figure()
         pl.plot([1,2], [1,2])
@@ -412,10 +419,7 @@ def __check_rpy2():
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
-          'nifti':'from nifti import NiftiImage as __',
-          'nifti ge 0.20090205.1':
-                'from nifti.clib import detachDataFromImage as __',
-          'nibabel':'from nibabel import Nifti1Image as __',
+          'nibabel':'__assign_nibabel_version()',
           'ctypes':'import ctypes as __',
           'shogun':'__assign_shogun_version()',
           'shogun.krr': '__assign_shogun_version(); import shogun.Regression as __; x=__.KRR',
@@ -433,13 +437,13 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'pywt wp reconstruct fixed': "__check_pywt(['wp reconstruct fixed'])",
           #'rpy': "__check_rpy()",
           'rpy2': "__check_rpy2()",
-          'lars': "exists('rpy2', raise_=True);" \
+          'lars': "exists('rpy2', raise_='always');" \
                   "import rpy2.robjects; rpy2.robjects.r.library('lars')",
-          'mass': "exists('rpy2', raise_=True);" \
+          'mass': "exists('rpy2', raise_='always');" \
                   "import rpy2.robjects; rpy2.robjects.r.library('MASS')",
-          'elasticnet': "exists('rpy2', raise_=True); "\
+          'elasticnet': "exists('rpy2', raise_='always'); "\
                   "import rpy2.robjects; rpy2.robjects.r.library('elasticnet')",
-          'glmnet': "exists('rpy2', raise_=True); " \
+          'glmnet': "exists('rpy2', raise_='always'); " \
                   "import rpy2.robjects; rpy2.robjects.r.library('glmnet')",
           'matplotlib': "__assign_matplotlib_version()",
           'pylab': "__check_pylab()",
@@ -486,6 +490,9 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
       performed.
     raise_ : boolean
       Whether to raise RuntimeError if dependency is missing.
+      If True, it is still conditioned on the global setting 
+      MVPA_EXTERNALS_RAISE_EXCEPTION, while would raise exception
+      if missing despite the configuration if 'always'.
     issueWarning : string or None or True
       If string, warning with given message would be thrown.
       If True, standard message would be used for the warning
@@ -499,6 +506,17 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
     # where to look in cfg
     cfgid = 'have ' + dep
 
+    # pre-handle raise_ according to the global settings and local argument
+    if isinstance(raise_, str):
+        if raise_.lower() == 'always':
+            raise_ = True
+        else:
+            raise ValueError("Unknown value of raise_=%s. "
+                             "Must be bool or 'always'" % raise_)
+    else: # must be bool conditioned on the global settings
+        raise_ = raise_ \
+                and cfg.getboolean('externals', 'raise exception', True)
+
     # prevent unnecessarry testing
     if cfg.has_option('externals', cfgid) \
        and not cfg.getboolean('externals', 'retest', default='no') \
@@ -508,9 +526,7 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
 
         # check whether an exception should be raised, even though the external
         # was already tested previously
-        if not cfg.getboolean('externals', cfgid) \
-               and raise_ \
-               and cfg.getboolean('externals', 'raise exception', True):
+        if not cfg.getboolean('externals', cfgid) and raise_:
             raise RuntimeError, "Required external '%s' was not found" % dep
         return cfg.getboolean('externals', cfgid)
 
@@ -551,8 +567,7 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
                   (dep, {True:'', False:' NOT'}[result], estr))
 
     if not result:
-        if raise_ \
-               and cfg.getboolean('externals', 'raise exception', True):
+        if raise_:
             raise RuntimeError, "Required external '%s' was not found" % dep
         if issueWarning is not None \
                and cfg.getboolean('externals', 'issue warning', True):

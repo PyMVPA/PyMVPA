@@ -74,9 +74,9 @@ This example reuses the SVM classifier we have create before, and
 yields exactly what we expect from the previous result.
 
 The details of the cross-validation procedure are also heavily
-customizable. We have seen that a `~mvpa.datasets.splitters.Splitter` is
+customizable. We have seen that a `~mvpa.generators.partition.Partitioner` is
 used to generate training and testing dataset for each cross-validation
-fold. So far we have only used `~mvpa.datasets.splitters.HalfSplitter` to
+fold. So far we have only used `~mvpa.generators.partition.HalfPartitioner` to
 divide the dataset into odd and even runs (based on our custom sample
 attribute ``runtype``). However, in general it is more common to perform so
 called leave-one-out cross-validation, where *one* independent part of a
@@ -113,7 +113,7 @@ following code snippet should be plausible:
 Instead of two samples per category in the whole dataset, now we have one
 sample per category, per experiment run, hence 96 samples in the whole
 dataset. To set up a 12-fold leave-one-run-out cross-validation, we can
-make use of `~mvpa.datasets.splitters.NFoldSplitter`. By default it is
+make use of `~mvpa.generators.partition.NFoldPartitioner`. By default it is
 going to select samples from one ``chunk`` at a time:
 
 >>> cvte = CrossValidation(clf, NFoldPartitioner(),
@@ -146,7 +146,7 @@ the results of the cross-validation analysis a bit further.
  [ 1.   ]
  [ 0.625]]
 
-Returned value is actually a `~mvpa.datasets.base.Dataset` with the
+The returned value is actually a `~mvpa.datasets.base.Dataset` with the
 results for all cross-validation folds. Since our error function computes
 only a single scalar value for each fold the dataset only contain a single
 feature (in this case the accuracy), and a sample per each fold.
@@ -293,9 +293,7 @@ accessed in pure matrix format:
  [ 2  0  0  0  0  1  0 10]]
 
 The classifier confusions are just an example of the general mechanism of
-conditional attribute that is supported by many objects in PyMVPA. The
-docstring of `~mvpa.algorithms.cvtranserror.CrossValidatedTransferError`
-and others lists more information that can be enabled on demand.
+conditional attribute that is supported by many objects in PyMVPA.
 
 
 Meta-Classifiers To Make Complex Stuff Simple
@@ -351,7 +349,7 @@ procedure. Let's say we have heard rumors that only the first two dimensions
 of the space spanned by the SVD vectors cover the "interesting" variance
 and the rest is noise. We can easily check that with an appropriate mapper:
 
->>> mapper = ChainMapper([SVDMapper(), FeatureSliceMapper(slice(None, 2))])
+>>> mapper = ChainMapper([SVDMapper(), StaticFeatureSelection(slice(None, 2))])
 >>> metaclf = MappedClassifier(baseclf, mapper)
 >>> cvte = CrossValidation(metaclf, NFoldPartitioner())
 >>> cv_results = cvte(ds)
@@ -366,7 +364,7 @@ algorithm we can easily go back to the kNN classifier that has served us well
 in the past.
 
 >>> baseclf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
->>> mapper = ChainMapper([SVDMapper(), FeatureSliceMapper(slice(None, 2))])
+>>> mapper = ChainMapper([SVDMapper(), StaticFeatureSelection(slice(None, 2))])
 >>> metaclf = MappedClassifier(baseclf, mapper)
 >>> cvte = CrossValidation(metaclf, NFoldPartitioner())
 >>> cv_results = cvte(ds)
@@ -401,14 +399,3 @@ possible approach to this question is the topic of the :ref:`next tutorial part
      Try doing the Z-Scoring before computing the mean samples per category.
      What happens to the generalization performance of the classifier?
      ANSWER: It becomes 100%!
-
-
-.. only:: html
-
-  References
-  ==========
-
-  .. autosummary::
-     :toctree: generated
-
-     ~mvpa.clfs.base.Classifier

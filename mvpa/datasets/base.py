@@ -21,7 +21,7 @@ from mvpa.base.dataset import AttrDataset
 from mvpa.base.dataset import _expand_attribute
 from mvpa.misc.support import idhash as idhash_
 from mvpa.mappers.base import ChainMapper
-from mvpa.mappers.slicing import FeatureSliceMapper
+from mvpa.featsel.base import StaticFeatureSelection
 from mvpa.mappers.flatten import mask_mapper, FlattenMapper
 
 if __debug__:
@@ -62,7 +62,7 @@ class Dataset(AttrDataset):
         # is a chain mapper
         # merge slicer?
         lastmapper = self.a.mapper[-1]
-        if isinstance(lastmapper, FeatureSliceMapper):
+        if isinstance(lastmapper, StaticFeatureSelection):
             try:
                 # try whether mappers can be merged
                 lastmapper += mapper
@@ -101,7 +101,7 @@ class Dataset(AttrDataset):
             # slice samples and feature axis at the same time. Moreover, the
             # mvpa.base.dataset.Dataset has no clue about mappers and should
             # be fully functional without them.
-            subsetmapper = FeatureSliceMapper(args[1],
+            subsetmapper = StaticFeatureSelection(args[1],
                                               dshape=self.samples.shape[1:])
             # do not-act forward mapping to charge the output shape of the
             # slice mapper without having it to train on a full dataset (which

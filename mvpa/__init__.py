@@ -45,7 +45,7 @@ The mvpa package contains the following subpackages and modules:
 __docformat__ = 'restructuredtext'
 
 # canonical PyMVPA version string
-__version__ = '0.6.0.dev'
+__version__ = '0.6.0~rc2'
 
 import os
 import random
@@ -53,6 +53,14 @@ import numpy as np
 from mvpa.base import cfg
 from mvpa.base import externals
 from mvpa.base.info import wtf
+
+# commit hash to be filled in by Git upon export/archive
+hashfilename = os.path.join(os.path.dirname(__file__), 'COMMIT_HASH')
+__hash__ = ''
+if os.path.exists(hashfilename):
+    hashfile = open(hashfilename, 'r')
+    __hash__ = hashfile.read().strip()
+    hashfile.close()
 
 # locate data root -- data might not be installed, but if it is, it should be at
 # this location
@@ -105,6 +113,9 @@ if externals.exists('scipy'):
 # And check if we aren't under IPython so we could pacify completion
 # a bit
 externals.exists('running ipython env', force=True, raise_=False)
+# Check for matplotlib so matplotlib backend becomes set according to
+# our configuration
+externals.exists('matplotlib', force=True, raise_=False)
 
 if __debug__:
     debug('RANDOM', 'Seeding RNG with %d' % _random_seed)
