@@ -121,7 +121,7 @@ class Hyperalignment(ClassWithCollections):
         if params.zscore_common:
             zscore(commonspace, chunks_attr=None)
         data_mapped = [np.asanyarray(ds) for ds in datasets]
-        zscore(data_mapped[ref_ds],chunks_attr=None)
+        #zscore(data_mapped[ref_ds],chunks_attr=None)
         for i, (m, ds) in enumerate(zip(mappers, datasets)):
             if __debug__:
                 debug('HPAL_', "Level 1: ds #%i" % i)
@@ -133,10 +133,12 @@ class Hyperalignment(ClassWithCollections):
             ds_new.targets = commonspace
             #ZSC zscore(ds, chunks_attr=None)
             m.train(ds_new)
-            data_mapped[i] = m.forward(np.asanyarray(ds_new)) 
+            ds_ = m.forward(np.asanyarray(ds_new))
+            zscore(ds_, chunks_attr=None)
+            data_mapped[i] = ds_ 
 
             if residuals is not None:
-                residuals[0, i] = np.linalg.norm(data_temp - commonspace)
+                residuals[0, i] = np.linalg.norm(ds_ - commonspace)
 
             ## if ds_mapped == []:
             ##     ds_mapped = [zscore(m.forward(d), chunks_attr=None)]
@@ -165,9 +167,11 @@ class Hyperalignment(ClassWithCollections):
                 zscore(ds_new, chunks_attr=None)
                 ds_new.targets = ds_temp #commonspace #PRJ ds_temp
                 m.train(ds_new) # ds_temp)
-                data_mapped[i] = m.forward(np.asanyarray(ds_new))
+                ds_ =  m.forward(np.asanyarray(ds_new))
+                zscore(ds_, chunks_attr=None)
+                data_mapped[i] = ds_
                 if residuals is not None:
-                    residuals[1+loop, i] = np.linalg.norm(data_mapped - commonspace)
+                    residuals[1+loop, i] = np.linalg.norm(ds_ - commonspace)
 
                 #ds_mapped[i] = zscore( m.forward(ds_temp), chunks_attr=None)
 
