@@ -8,6 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA searchlight algorithm"""
 
+import numpy.random as rnd
+
 from mvpa.testing import *
 from mvpa.testing.clfs import *
 from mvpa.testing.datasets import *
@@ -35,7 +37,8 @@ class SearchlightTests(unittest.TestCase):
         self.dataset.fa['voxel_indices'] = self.dataset.fa.myspace
 
     @sweepargs(common_variance=('True', 'False'))
-    def test_spatial_searchlight(self, common_variance):
+    @sweepargs(do_roi=(False, True))
+    def test_spatial_searchlight(self, common_variance=True, do_roi=False):
         """Tests both generic and GNBSearchlight
         Test of GNBSearchlight anyways requires a ground-truth
         comparison to the generic version, so we are doing sweepargs here
@@ -48,7 +51,26 @@ class SearchlightTests(unittest.TestCase):
         gnb = GNB(common_variance=common_variance)
         cv = CrossValidation(gnb, NFoldPartitioner())
 
+        ds = datasets['3dsmall'].copy()
+        ds.fa['voxel_indices'] = ds.fa.myspace
+
         skwargs = dict(radius=1, enable_ca=['roi_sizes', 'raw_results'])
+
+        if do_roi:
+            # select some random set of features
+            nroi = rnd.randint(ds.nfeatures)
+            # and lets compute the full one as well once again so we have a reference
+            # which will be excluded itself from comparisons but values will be compared
+            # for selected roi_id
+            sl_all = sphere_gnbsearchlight(gnb, NFoldPartitioner(cvtype=1),
+                                           **skwargs)
+            result_all = sl_all(ds)
+            # select random features
+            roi_ids = rnd.permutation(range(ds.nfeatures))[:nroi]
+            skwargs['center_ids'] = roi_ids
+        else:
+            nroi = ds.nfeatures
+
         sls = [sphere_searchlight(cv, **skwargs),
                #GNBSearchlight(gnb, NFoldPartitioner(cvtype=1))
                sphere_gnbsearchlight(gnb, NFoldPartitioner(cvtype=1),
@@ -64,15 +86,13 @@ class SearchlightTests(unittest.TestCase):
             sls += [sphere_searchlight(cv, nproc=2, **skwargs)]
 
         all_results = []
-        ds = datasets['3dsmall'].copy()
-        ds.fa['voxel_indices'] = ds.fa.myspace
         for sl in sls:
             # run searchlight
             results = sl(ds)
             all_results.append(results)
 
             # check for correct number of spheres
-            self.failUnless(results.nfeatures == 106)
+            self.failUnless(results.nfeatures == nroi)
             # and measures (one per xfold)
             self.failUnless(len(results) == len(ds.UC))
 
@@ -84,12 +104,23 @@ class SearchlightTests(unittest.TestCase):
             self.failUnless(len(np.unique(mean_errors) > 3))
 
             # check resonable sphere sizes
-            self.failUnless(len(sl.ca.roi_sizes) == 106)
-            self.failUnless(max(sl.ca.roi_sizes) == 7)
-            self.failUnless(min(sl.ca.roi_sizes) == 4)
+            self.failUnless(len(sl.ca.roi_sizes) == nroi)
+            if do_roi:
+                # for roi we should relax conditions a bit
+                self.failUnless(max(sl.ca.roi_sizes) <= 7)
+                self.failUnless(min(sl.ca.roi_sizes) >= 4)
+            else:
+                self.failUnless(max(sl.ca.roi_sizes) == 7)
+                self.failUnless(min(sl.ca.roi_sizes) == 4)
 
             # check base-class state
-            self.failUnlessEqual(sl.ca.raw_results.nfeatures, 106)
+            self.failUnlessEqual(sl.ca.raw_results.nfeatures, nroi)
+
+            # Test if we got results correctly for 'selected' roi ids
+            if do_roi:
+                assert_array_equal(result_all[:, roi_ids], results)
+
+
 
         if len(all_results) > 1:
             # if we had multiple searchlights, we can check either they all
@@ -98,6 +129,7 @@ class SearchlightTests(unittest.TestCase):
             dresults = np.abs(aresults - aresults.mean(axis=0))
             dmax = np.max(dresults)
             self.failUnless(dmax <= 1e-13)
+
 
     def test_partial_searchlight_with_full_report(self):
         ds = self.dataset.copy()

@@ -268,7 +268,10 @@ class GNBSearchlight(BaseSearchlight):
         ulabels_numeric = [label2index[l] for l in ulabels]
         # set the feature dimensions
         nsamples = len(X)
+        nrois = len(roi_ids)
         s_shape = X.shape[1:]           # shape of a single sample
+        # The shape of results
+        r_shape = (nrois,) + X.shape[2:]
 
         #
         # Everything toward optimization ;)
@@ -353,7 +356,7 @@ class GNBSearchlight(BaseSearchlight):
         nsamples_per_class = np.zeros((nlabels,) + (1,)*len(s_shape))
 
         # results
-        results = np.zeros((nsplits,) + s_shape)
+        results = np.zeros((nsplits,) + r_shape)
 
         block_counts = np.zeros((nblocks,))
         block_labels = [None] * nblocks
@@ -374,7 +377,6 @@ class GNBSearchlight(BaseSearchlight):
 
         # 4. Lets deduce all neighbors... might need to be RF into the
         #    parallel part later on
-        nrois = len(roi_ids)
         if __debug__:
             debug('SLC',
                   'Phase 4. Deducing neighbors information for %i ROIs'
