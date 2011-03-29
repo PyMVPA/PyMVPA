@@ -239,6 +239,9 @@ class MCNullDist(NullDist):
 
     dist_samples = ConditionalAttribute(enabled=False,
                                  doc='Samples obtained for each permutation')
+    skipped = ConditionalAttribute(enabled=True,
+                  doc='# of the samples which were skipped because '
+                      'measure has failed to evaluated at them')
 
     def __init__(self, permutator, dist_class=Nonparametric, measure=None,
                  **kwargs):
@@ -327,6 +330,8 @@ class MCNullDist(NullDist):
                         ' incorrect assessment of the null_dist' % (measure, e))
                 skipped += 1
                 continue
+
+        self.ca.skipped = skipped
 
         if __debug__:
             debug('STATMC', ' Skipped: %d permutations' % skipped)
