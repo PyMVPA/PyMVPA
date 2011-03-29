@@ -379,7 +379,8 @@ def table2string(table, out=None):
 
     # figure out lengths within each column
     atable = np.asarray(table)
-    markup_strip = re.compile('^@[lrc]')
+    # eat whole entry while computing width for @w (for wide)
+    markup_strip = re.compile('^@([lrc]|w.*)')
     col_width = [ max( [len(markup_strip.sub('', x))
                         for x in column] ) for column in atable.T ]
     string = ""
@@ -390,15 +391,15 @@ def table2string(table, out=None):
             if item.startswith('@'):
                 align = item[1]
                 item = item[2:]
-                if not align in ['l', 'r', 'c']:
-                    raise ValueError, 'Unknown alignment %s. Known are l,r,c'
+                if not align in ['l', 'r', 'c', 'w']:
+                    raise ValueError, 'Unknown alignment %s. Known are l,r,c' % align
             else:
                 align = 'c'
 
-            NspacesL = ceil((col_width[j] - len(item))/2.0)
-            NspacesR = col_width[j] - NspacesL - len(item)
+            NspacesL = max(ceil((col_width[j] - len(item))/2.0), 0)
+            NspacesR = max(col_width[j] - NspacesL - len(item), 0)
 
-            if align == 'c':
+            if align in ['w', 'c']:
                 pass
             elif align == 'l':
                 NspacesL, NspacesR = 0, NspacesL + NspacesR
