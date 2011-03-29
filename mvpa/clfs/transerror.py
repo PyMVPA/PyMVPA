@@ -33,24 +33,26 @@ if __debug__:
 if externals.exists('scipy'):
     from scipy.stats.stats import nanmean
     from mvpa.misc.stats import chisquare
+    from scipy.stats import linregress, friedmanchisquare
     from mvpa.misc.errorfx import corr_error, corr_error_prob
 else:
     from mvpa.clfs.stats import nanmean
     chisquare = None
+    linregress = None
 
-def _p2(x, prec=2):
+def _p2(x, prec=2, formatting=''):
     """Helper to print depending on the type nicely. For some
     reason %.2g for 100 prints exponential form which is ugly
     """
     if isinstance(x, int):
-        return "%d" % x
+        s = "%d" % x
     elif isinstance(x, float):
         s = ("%%.%df" % prec % x).rstrip('0').rstrip('.').lstrip()
         if s == '':
             s = '0'
-        return s
     else:
-        return "%s" % x
+        s = "%s" % x
+    return formatting + s
 
 
 
@@ -65,8 +67,8 @@ class SummaryStatistics(object):
 
     _STATS_DESCRIPTION = (
         ('# of sets',
-         'number of target/prediction sets which were provided',
-         None), )
+         'number of target/prediction sets which were provided. ', None),
+        )
 
 
     def __init__(self, targets=None, predictions=None, estimates=None, sets=None):
@@ -463,6 +465,11 @@ class ConfusionMatrix(SummaryStatistics):
                 "MCC = (TP*TN - FP*FN)/sqrt(P N P' N')"),
         ('AUC', "Area under (AUC) curve", None),
         ('CHI^2', "Chi-square of confusion matrix", None),
+        ('LOE(ACC)', 'linear order effect in ACC across sets. ', None),
+        ## ('Friedman(TPR)',
+        ##  'Friedman Chi^2 test of TPRs consistencies across sets. ', None),
+        ## ('Friedman(CM)',
+        ##  'Friedman Chi^2 test of full CM (normalized) consistencies across sets. ', None),
         ) + SummaryStatistics._STATS_DESCRIPTION
 
 
@@ -663,12 +670,35 @@ class ConfusionMatrix(SummaryStatistics):
 
         stats['ACC'] = np.sum(TP)/(1.0*np.sum(stats['P']))
         # TODO: STD of accuracy and corrected one according to
-        #    Nadeau and Bengio [50] 
+        #    Nadeau and Bengio [50]
         stats['ACC%'] = stats['ACC'] * 100.0
         if chisquare:
             # indep_rows to assure reasonable handling of disbalanced
             # cases
             stats['CHI^2'] = chisquare(self.__matrix, exp='indep_rows')
+        if linregress and Nsets > 3:
+            # Lets see if there is possible order effect in accuracy
+            # (e.g. it goes down through splits)
+
+            # simple linear regression
+            ACC_per_set = [np.sum(np.diag(m))/np.sum(m).astype(float)
+                           for m in mat_all]
+            stats['LOE(ACC):slope'], stats['LOE(ACC):inter'], \
+                stats['LOE(ACC):r'], stats['LOE(ACC):p'], _ = \
+                linregress(np.arange(Nsets), ACC_per_set)
+
+            TPRs_per_set = [np.diag(m)/np.sum(m, axis=0).astype(float)
+                            for m in mat_all]
+            # Confusion ratios (both TPs or FPs)
+            # we want to divide each column but sum in the column
+            CM_per_set = [np.ravel(m/np.sum(m, axis=0).astype(float)[None, :])
+                          for m in mat_all]
+
+            ## stats['Friedman(TPR):chi^2'], stats['Friedman(TPR):p'] = \
+            ##                               friedmanchisquare(*TPRs_per_set)
+            ## stats['Friedman(CM):chi^2'], stats['Friedman(CM):p'] = \
+            ##                              friedmanchisquare(*CM_per_set)
+
         #
         # ROC computation if available
         ROC = ROCCurve(labels=labels, sets=self.sets)
@@ -749,6 +779,7 @@ class ConfusionMatrix(SummaryStatistics):
         if self.ROC is not None: stats_perpredict += [ 'AUC' ]
         stats_pertarget = ['P', 'N', 'TP', 'TN']
         stats_summary = ['ACC', 'ACC%', '# of sets']
+        # 'Friedman(TPR):p', 'Friedman(CM):p'
 
 
         #prefixlen = Nlabelsmax + 2 + Ndigitsmax + 1
@@ -805,10 +836,20 @@ class ConfusionMatrix(SummaryStatistics):
             if 'CHI^2' in self.stats:
                 chi2t = stats['CHI^2']
                 printed.append(['CHI^2'] + [_p2(chi2t[0])]
-                               + ['p:'] + ['%.2g' % chi2t[1]])
+                               + ['@wp=%.2g' % chi2t[1]])
 
             for stat in stats_summary:
-                printed.append([stat] + [_p2(stats[stat])])
+                if stat in stats:
+                    printed.append([stat] + [_p2(stats[stat])])
+
+            if 'LOE(ACC):inter' in stats:
+                # Inject into sets line
+                printed[-1] += [
+                    '@w ACC(i) = %(LOE(ACC):inter).2g%(LOE(ACC):slope)+.2g*i'
+                    % stats +
+                    ' p=' + _p2(stats['LOE(ACC):p']) +
+                    ' r=' + _p2(stats['LOE(ACC):r']) +
+                    ' r^2=' + _p2(stats['LOE(ACC):r']**2)]
 
         table2string(printed, out)
 

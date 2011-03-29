@@ -542,7 +542,11 @@ class ErrorsTests(unittest.TestCase):
             cm = ConfusionMatrix(sets=sets, labels_map=labels_map)
         except:
             self.fail()
-        self.failUnless('3kHz / 38' in cm.as_string())
+
+        cms = str(cm)
+        self.failUnless('3kHz / 38' in cms)
+        if externals.exists("scipy"):
+            self.failUnless('ACC(i) = 0.82-0.012*i p=0.12 r=-0.59 r^2=0.35' in cms)
 
         if externals.exists("pylab plottable"):
             import pylab as pl
@@ -593,6 +597,7 @@ class ErrorsTests(unittest.TestCase):
             cm = ConfusionMatrix(sets=sets)
         except:
             self.fail()
+
         if externals.exists("pylab plottable"):
             import pylab as pl
             #pl.figure()
