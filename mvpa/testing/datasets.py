@@ -77,6 +77,9 @@ for kind, spec in specs.iteritems():
     mask[1, 3, 2] = 0
     ds = Dataset.from_wizard(samples=data, targets=labels, chunks=chunks,
                              mask=mask, space='myspace')
+    # and to stress tests on manipulating sa/fa possibly containing
+    # attributes of dtype object
+    ds.sa['test_object'] = [['a'], [1, 2]] * (ds.nsamples/2)
     datasets['3d%s' % kind] = ds
 
 

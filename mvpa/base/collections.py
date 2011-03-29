@@ -268,7 +268,13 @@ class ArrayCollectable(SequenceCollectable):
     def _set(self, val):
         if not hasattr(val, 'view'):
             if isSequenceType(val):
-                val = np.asanyarray(val)
+                try:
+                    val = np.asanyarray(val)
+                except ValueError, e:
+                    if "setting an array element with a sequence" in str(e):
+                        val = np.asanyarray(val, dtype=object)
+                    else:
+                        raise
             else:
                 raise ValueError("%s only takes ndarrays (or array-likes "
                                  "providing view(), or sequence that can "

@@ -690,6 +690,16 @@ def test_arrayattributes():
     ds.chunks = chunks
     ok_(isinstance(ds.chunks, np.ndarray))
 
+    # we should allow assigning somewhat more complex
+    # iterables -- use ndarray of dtype object then
+    # and possibly spit out a warning
+    ds.sa['complex_list'] = [[], [1], [1, 2], []]
+    ok_(ds.sa.complex_list.dtype == object)
+
+    # but incorrect length should still fail
+    assert_raises(ValueError, ds.sa.__setitem__,
+                  'complex_list2', [[], [1], [1, 2]])
+
 
 def test_repr():
     attr_repr = "SampleAttribute(name='TestAttr', doc='my own test', " \
