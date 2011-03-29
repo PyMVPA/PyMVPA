@@ -16,7 +16,7 @@ from mvpa.support.copy import copy
 from mvpa.base.dataset import vstack
 from mvpa.base import externals, warning
 from mvpa.generators.partition import OddEvenPartitioner
-from mvpa.generators.resampling import Repeater
+from mvpa.generators.base import Repeater
 from mvpa.generators.permutation import AttributePermutator
 from mvpa.generators.splitters import Splitter
 
