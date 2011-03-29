@@ -247,8 +247,10 @@ class ErrorsTests(unittest.TestCase):
         #      3d if the return value of the measure isn't a scalar and it is
         #      not collapsed across folds. it simply corresponds to the shape
         #      of the output dataset of the respective measure (+1 axis)
+        # Some permutations could have been skipped since classifier failed
+        # to train due to degenerate situation etc, thus accounting for them
         self.failUnlessEqual(cvte.null_dist.ca.dist_samples.shape[2],
-                             num_perm)
+                             num_perm - cvte.null_dist.ca.skipped)
 
 
 
