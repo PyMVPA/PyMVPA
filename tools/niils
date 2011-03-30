@@ -53,42 +53,47 @@ if verbose.level < 3:
     # suppress nibabel format-compliance warnings
     nib.imageglobals.logger.level = 50
 
-maxfnlen = max([len(f) for f in files])
-t = []
-for f in files:
-    row = ["%%-%ds" % maxfnlen % f]
-    verbose(2, "Loading %s" % f)
-    try:
-        vol = nib.load(f)
-        h = vol.get_header()
-    except Exception, e:
-        row += ['failed']
-        t.append(row)
-        verbose(2, "Failed to gather information due to %s" % str(e))
-        continue
-    row += [ str(h.get_data_dtype()),
-             '@l[%s]' %ap(h.get_data_shape(), '%3g'),
-             '@l%s' % ap(h.get_zooms(), '%.2f', 'x') ]
-    # Slope
-    if (h.has_data_slope or h.has_data_intercept) \
-       and h.get_slope_inter() != (1.0, 0.0):
-        row += ['@l*%.2g+%.1g' % h.get_slope_inter()]
-    else:
-        row += [ '' ]
+if len(files):
+    maxfnlen = max([len(f) for f in files])
 
-    if (len(h.extensions)):
-        row += ['@l#exts: %d' % len(h.extensions)]
-    else:
-        row += [ '' ]
-
-    try:
-        if (h.get_qform() != h.get_sform()).any():
-            row += ['sform']
+    t = []
+    for f in files:
+        row = ["%%-%ds" % maxfnlen % f]
+        verbose(2, "Loading %s" % f)
+        try:
+            vol = nib.load(f)
+            h = vol.get_header()
+        except Exception, e:
+            row += ['failed']
+            t.append(row)
+            verbose(2, "Failed to gather information due to %s" % str(e))
+            continue
+        row += [ str(h.get_data_dtype()),
+                 '@l[%s]' %ap(h.get_data_shape(), '%3g'),
+                 '@l%s' % ap(h.get_zooms(), '%.2f', 'x') ]
+        # Slope
+        if (h.has_data_slope or h.has_data_intercept) \
+           and h.get_slope_inter() != (1.0, 0.0):
+            row += ['@l*%.3g+%.3g' % h.get_slope_inter()]
         else:
-            row += ['']
-    except Exception, e:
-        verbose(2, "Failed to obtain qform or sform due to %s" % str(e))
-        row += ['error']
-    t.append(row)
+            row += [ '' ]
 
-print(table2string(t))
+        if (hasattr(h, 'extensions') and len(h.extensions)):
+            row += ['@l#exts: %d' % len(h.extensions)]
+        else:
+            row += [ '' ]
+
+        try:
+            if (h.get_qform() != h.get_sform()).any():
+                row += ['sform']
+            else:
+                row += ['']
+        except Exception, e:
+            verbose(2, "Failed to obtain qform or sform for %s due to %s" % (h, e))
+            if isinstance(h, nib.AnalyzeHeader):
+                row += ['']
+            else:
+                row += ['error']
+        t.append(row)
+
+    print(table2string(t))
