@@ -95,6 +95,8 @@ def seed(random_seed):
     """Uniform and combined seeding of all relevant random number
     generators.
     """
+    if __debug__:
+        debug('INIT', 'Resetting RNG to %s' % random_seed)
     np.random.seed(random_seed)
     random.seed(random_seed)
 
