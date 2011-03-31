@@ -58,7 +58,7 @@ class SearchlightTests(unittest.TestCase):
 
         if do_roi:
             # select some random set of features
-            nroi = rnd.randint(ds.nfeatures)
+            nroi = rnd.randint(1, ds.nfeatures)
             # and lets compute the full one as well once again so we have a reference
             # which will be excluded itself from comparisons but values will be compared
             # for selected roi_id
