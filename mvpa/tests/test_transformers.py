@@ -127,7 +127,7 @@ class TransformerTests(unittest.TestCase):
             self.failUnless(distPValue.ca.positives_recovered[0] > 10)
             self.failUnless((np.array(distPValue.ca.positives_recovered) +
                              np.array(distPValue.ca.nulldist_number) == ndb + ndu).all())
-            self.failUnless(distPValue.ca.positives_recovered[1] == 0)
+            self.failUnlessEqual(distPValue.ca.positives_recovered[1], 0)
 
 
 def suite():
