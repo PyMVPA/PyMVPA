@@ -16,6 +16,7 @@ import os
 import tempfile
 import unittest
 
+import mvpa
 from mvpa.base import externals
 
 if __debug__:
@@ -129,6 +130,34 @@ def with_tempfile(*targs, **tkwargs):
                     os.unlink(filename)
                 except OSError:
                     pass
+        newfunc = make_decorator(func)(newfunc)
+        return newfunc
+
+    return decorate
+
+
+def reseed_rng():
+    """Decorator to assure the use of MVPA_SEED while running the test
+
+    It resets random number generators (both python and numpy) to the
+    initial value of the seed value which was set while importing
+    :mod:`mvpa`, which could be controlled through
+    configuration/environment.
+
+    Examples
+    --------
+
+        @reseed_rng()
+        def test_random():
+            import numpy.random as rnd
+            print rnd.randint(100)
+
+    """
+
+    def decorate(func):
+        def newfunc(*arg, **kwargs):
+            mvpa.seed(mvpa._random_seed)
+            return func(*arg, **kwargs)
         newfunc = make_decorator(func)(newfunc)
         return newfunc
 
