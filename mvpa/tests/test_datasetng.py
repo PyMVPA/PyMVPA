@@ -23,6 +23,7 @@ from mvpa.base.types import is_datasetlike
 from mvpa.base.dataset import DatasetError, vstack, hstack
 from mvpa.datasets.base import dataset_wizard, Dataset, HollowSamples
 from mvpa.misc.data_generators import normal_feature_dataset
+from mvpa.testing import reseed_rng
 import mvpa.support.copy as copy
 from mvpa.base.collections import \
      SampleAttributesCollection, FeatureAttributesCollection, \
@@ -147,6 +148,7 @@ def test_labelschunks_access():
     assert_array_equal(ds.sa.dc, ["mike"] * len(ds))
 
 
+@reseed_rng()
 def test_ex_from_masked():
     ds = Dataset.from_wizard(samples=np.atleast_2d(np.arange(5)).view(myarray),
                              targets=1, chunks=1)
@@ -205,6 +207,7 @@ def test_shape_conversion():
     assert_array_equal(ds.samples, [range(12), range(12, 24)])
 
 
+@reseed_rng()
 def test_multidim_attrs():
     samples = np.arange(24).reshape(2, 3, 4)
     # have a dataset with two samples -- mapped from 2d into 1d
@@ -511,7 +514,7 @@ def test_combined_samplesfeature_selection():
     ok_(isinstance(single.samples, myarray))
 
 
-
+@reseed_rng()
 def test_labelpermutation_randomsampling():
     ds = Dataset.from_wizard(np.ones((5, 10)),     targets=range(5), chunks=1)
     for i in xrange(1, 5):
@@ -528,7 +531,7 @@ def test_labelpermutation_randomsampling():
     ok_(sample.get_nsamples_per_attr('targets').values() == [ 2, 2, 2, 2, 2 ])
     ok_((ds.sa['chunks'].unique == range(1, 6)).all())
 
-
+@reseed_rng()
 def test_masked_featureselection():
     origdata = np.random.standard_normal((10, 2, 4, 3, 5)).view(myarray)
     data = Dataset.from_wizard(origdata, targets=2, chunks=2)
@@ -570,6 +573,7 @@ def test_masked_featureselection():
     assert_array_equal(unmasked[:, [0, 37, 119]], sel.samples)
 
 
+@reseed_rng()
 def test_origmask_extraction():
     origdata = np.random.standard_normal((10, 2, 4, 3))
     data = Dataset.from_wizard(origdata, targets=2, chunks=2)
@@ -579,6 +583,7 @@ def test_origmask_extraction():
     ok_(sel.samples.shape[1] == 1)
 
 
+@reseed_rng()
 def test_feature_masking():
     mask = np.zeros((5, 3), dtype='bool')
     mask[2, 1] = True

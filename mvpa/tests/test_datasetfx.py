@@ -9,7 +9,7 @@
 """Unit tests for PyMVPA miscelaneouse functions operating on datasets"""
 
 import unittest
-from mvpa.testing.tools import ok_, assert_equal, assert_array_equal
+from mvpa.testing.tools import ok_, assert_equal, assert_array_equal, reseed_rng
 
 import numpy as np
 
@@ -33,6 +33,7 @@ class MiscDatasetFxTests(unittest.TestCase):
         assert_array_equal(ag_data.samples[:, 0], [2, 7, 12, 17])
 
 
+    @reseed_rng()
     def test_invar_features_removal(self):
         r = np.random.normal(size=(3,1))
         ds = dataset_wizard(samples=np.hstack((np.zeros((3,2)), r)),
@@ -86,6 +87,7 @@ class MiscDatasetFxTests(unittest.TestCase):
             self.failUnless(np.all(ds.samples == ds_data),
                 msg="Function %s should have not modified original dataset" % f)
 
+    @reseed_rng()
     def test_sequence_stat(self):
         """Test sequence statistics
         """

@@ -199,6 +199,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     @sweepargs(lrn=clfswh['!meta']+regrswh['!meta'])
+    @reseed_rng()
     def test_custom_targets(self, lrn):
         """Simple test if a learner could cope with custom sa not targets
         """
@@ -541,6 +542,7 @@ class ClassifiersTests(unittest.TestCase):
                     sample_clf_reg)
 
 
+    @reseed_rng()
     def test_tree_classifier(self):
         """Basic tests for TreeClassifier
         """

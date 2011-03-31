@@ -20,6 +20,7 @@ from mvpa.measures.base import CrossValidation
 
 class PerturbationSensitivityAnalyzerTests(unittest.TestCase):
 
+    @reseed_rng()
     def setUp(self):
         data = np.random.standard_normal(( 100, 3, 4, 2 ))
         labels = np.concatenate( ( np.repeat( 0, 50 ),

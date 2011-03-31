@@ -22,6 +22,7 @@ def teardown():
     # Clear list of warning filters
     warnings.resetwarnings()
 
+@reseed_rng()
 def test_efdr():
     # generate the data
     n = 100000

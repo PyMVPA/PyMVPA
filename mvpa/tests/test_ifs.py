@@ -41,6 +41,7 @@ class IFSTests(unittest.TestCase):
     # should test for every known classifier since we are simply
     # testing IFS algorithm - not sensitivities
     @sweepargs(svm=clfswh['has_sensitivity', '!meta'][:1])
+    @reseed_rng()
     def test_ifs(self, svm):
 
         # measure for feature selection criterion and performance assesment

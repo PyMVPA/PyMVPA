@@ -110,7 +110,7 @@ def test_mdpflow_additional_arguments_nones():
     rds = fm.reverse(fds)
     assert_array_almost_equal(ds.samples, rds.samples)
 
-
+@reseed_rng()
 def test_pcamapper():
     # data: 40 sample feature line in 20d space (40x20; samples x features)
     ndlin = Dataset(np.concatenate([np.arange(40)
@@ -134,6 +134,7 @@ def test_pcamapper():
     assert_array_almost_equal(pm.reverse(p), ndlin)
 
 
+@reseed_rng()
 def test_icamapper():
     # data: 40 sample feature line in 2d space (40x2; samples x features)
     samples = np.vstack([np.arange(40.) for i in range(2)]).T
