@@ -241,7 +241,7 @@ Summary \ Means:     ------------  ------------  ------------  ------------  ---
        CHI^2            442.67          p:          2e-58
         ACC              0.78
         ACC%            78.12
-     # of sets            12
+     # of sets            12       ACC(i) = 0.87-0.015*i p=0.3 r=-0.33 r^2=0.11
 <BLANKLINE>
 Statistics computed in 1-vs-rest fashion per each target.
 Abbreviations (for details see http://en.wikipedia.org/wiki/ROC_curve):
