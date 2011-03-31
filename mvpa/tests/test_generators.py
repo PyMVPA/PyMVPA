@@ -12,7 +12,8 @@
 import numpy as np
 
 from mvpa.testing.tools import ok_, assert_array_equal, assert_true, \
-        assert_false, assert_equal, assert_raises, assert_almost_equal
+        assert_false, assert_equal, assert_raises, assert_almost_equal, \
+        reseed_rng
 
 from mvpa.datasets import dataset_wizard, Dataset
 from mvpa.generators.splitters import Splitter
@@ -31,6 +32,7 @@ def give_data():
                           chunks=[ i/10 for i in range(100)])
 
 
+@reseed_rng()
 def test_splitter():
     ds = give_data()
     # split with defaults
@@ -80,6 +82,7 @@ def test_splitter():
     assert_equal(len(splits), 80)
 
 
+@reseed_rng()
 def test_partitionmapper():
     ds = give_data()
     oep = OddEvenPartitioner()
@@ -91,6 +94,7 @@ def test_partitionmapper():
         assert_equal(len(p), len(ds))
 
 
+@reseed_rng()
 def test_attrpermute():
     ds = give_data()
     ds.sa['ids'] = range(len(ds))
@@ -147,6 +151,7 @@ def test_attrpermute():
     assert_false(np.all(pds.fa.ids == ds.fa.ids))
 
 
+@reseed_rng()
 def test_balancer():
     ds = give_data()
     # only mark the selection in an attribute

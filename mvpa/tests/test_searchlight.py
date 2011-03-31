@@ -38,6 +38,7 @@ class SearchlightTests(unittest.TestCase):
 
     @sweepargs(common_variance=('True', 'False'))
     @sweepargs(do_roi=(False, True))
+    @reseed_rng()
     def test_spatial_searchlight(self, common_variance=True, do_roi=False):
         """Tests both generic and GNBSearchlight
         Test of GNBSearchlight anyways requires a ground-truth
@@ -97,7 +98,10 @@ class SearchlightTests(unittest.TestCase):
             self.failUnless(len(results) == len(ds.UC))
 
             # check for chance-level performance across all spheres
-            self.failUnless(0.4 < results.samples.mean() < 0.6)
+            # makes sense only if number of features was big enough
+            # to get some stable estimate of mean
+            if not do_roi or nroi > 20:
+                self.failUnless(0.4 < results.samples.mean() < 0.6)
 
             mean_errors = results.samples.mean(axis=0)
             # that we do get different errors ;)

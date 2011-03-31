@@ -20,10 +20,11 @@ from mvpa.generators.splitters import Splitter
 from mvpa.generators.partition import *
 
 from mvpa.testing.tools import ok_, assert_array_equal, assert_true, \
-        assert_false, assert_equal
+        assert_false, assert_equal, reseed_rng
 
 class SplitterTests(unittest.TestCase):
 
+    @reseed_rng()
     def setUp(self):
         self.data = dataset_wizard(np.random.normal(size=(100,10)),
                             targets=[ i%4 for i in range(100) ],

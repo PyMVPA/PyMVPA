@@ -140,7 +140,7 @@ class StatsTestsScipy(unittest.TestCase):
                             m.ca.null_prob[0, ds.a.bogus_features],
                             score.samples[0][ds.a.bogus_features])))
 
-
+    @reseed_rng()
     def test_negative_t(self):
         """Basic testing of the sign in p and t scores
         """
@@ -266,7 +266,7 @@ class StatsTestsScipy(unittest.TestCase):
         assert_array_almost_equal(f, f_sp[0:1])
 
 
-
+    @reseed_rng()
     def test_glm(self):
         """Test GLM
         """

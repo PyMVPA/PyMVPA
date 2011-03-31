@@ -116,6 +116,7 @@ class KernelTests(unittest.TestCase):
         self.failUnless((lk._k == 30).all(),
                         "Failure computing LinearKernel")
 
+    @reseed_rng()
     def test_precomputed_kernel(self):
         """Statistic Kernels"""
         d = np.random.randn(50, 50)
@@ -124,6 +125,7 @@ class KernelTests(unittest.TestCase):
         self.failUnless((d == nk._k).all(),
                         'Failure setting and retrieving PrecomputedKernel data')
 
+    @reseed_rng()
     def test_cached_kernel(self):
         nchunks = 5
         n = 50*nchunks
@@ -174,7 +176,8 @@ class KernelTests(unittest.TestCase):
         # Not clear if this is just for CustomKernels as there are some
         # remaining innaccuracies in others, but this might be due to other
         # sources of noise.  In all cases float32 should be identical
-            
+
+        @reseed_rng()
         def test_sg_conversions(self):
             nk = PrecomputedKernel(matrix=np.random.randn(50, 50))
             nk.compute()
@@ -188,6 +191,7 @@ class KernelTests(unittest.TestCase):
                              sk.as_raw_np().astype('float32')).all(),
                             'Failure converting arrays between NP as SG')
             
+        @reseed_rng()
         def test_linear_sg(self):
             d1 = np.random.randn(105, 32)
             d2 = np.random.randn(41, 32)
@@ -199,6 +203,7 @@ class KernelTests(unittest.TestCase):
             
             self.kernel_equiv(nk, sk)
             
+        @reseed_rng()
         def test_poly_sg(self):
             d1 = np.random.randn(105, 32)
             d2 = np.random.randn(41, 32)
@@ -213,6 +218,7 @@ class KernelTests(unittest.TestCase):
                 
                 self.kernel_equiv(nk, sk)
                 
+        @reseed_rng()
         def test_rbf_sg(self):
             d1 = np.random.randn(105, 32)
             d2 = np.random.randn(41, 32)
@@ -227,6 +233,7 @@ class KernelTests(unittest.TestCase):
                 
                 self.kernel_equiv(nk, sk)
                 
+        @reseed_rng()
         def test_custom_sg(self):
             lk = sgK.LinearSGKernel()
             cl = sgK.CustomSGKernel(sgK.sgk.LinearKernel)

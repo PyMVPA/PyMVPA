@@ -28,6 +28,7 @@ class TransformerTests(unittest.TestCase):
         self.d1 = np.array([ 1,  0, -1, -2, -3])
         self.d2 = np.array([ 2.3,  0, -1, 2, -30, 1])
 
+    @reseed_rng()
     def test_absolute(self):
         # generate 100 values (gaussian noise mean -1000 -> all negative)
         out = Absolute(np.random.normal(-1000, size=100))
@@ -92,7 +93,7 @@ class TransformerTests(unittest.TestCase):
         for d in overnorm.T:
             self.failUnless(np.abs(np.linalg.norm(d) - 1.0)<0.00001)
 
-
+    @reseed_rng()
     def test_dist_p_value(self):
         """Basic testing of DistPValue"""
         if not externals.exists('scipy'):

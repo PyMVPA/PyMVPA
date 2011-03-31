@@ -39,6 +39,7 @@ class SVMKernelTests(unittest.TestCase):
         clf.predict(d)
         pass
 
+    @reseed_rng()
     def test_cache_speedup(self):
         skip_if_no_external('shogun', ver_dep='shogun:rev', min_version=4455)
 

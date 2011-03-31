@@ -36,6 +36,7 @@ class HamsterHelperTests(unittest.TestCase):
 
 
     @with_tempfile()
+    @reseed_rng()
     def test_simple_storage(self, filename):
         ex1 = """eins zwei drei
         0 1 2
@@ -98,6 +99,7 @@ class HamsterHelperTests(unittest.TestCase):
         os.remove(filename_gz)
         os.remove(filename_bogusgz)
 
+    @reseed_rng()
     def test_assignment(self):
         ex1 = """eins zwei drei
         0 1 2

@@ -16,7 +16,7 @@ from mvpa.base import cfg
 from mvpa.algorithms.hyperalignment import Hyperalignment
 
 # Somewhat slow but provides all needed ;)
-from mvpa.testing import sweepargs
+from mvpa.testing import sweepargs, reseed_rng
 from mvpa.testing.datasets import datasets, get_random_rotation
 
 from mvpa.generators.partition import NFoldPartitioner
@@ -29,6 +29,7 @@ class HyperAlignmentTests(unittest.TestCase):
 
     @sweepargs(zscore_common=(False, True))
     @sweepargs(ref_ds=(None, 3))
+    @reseed_rng()
     def test_basic_functioning(self, ref_ds, zscore_common):
         # get a dataset with some prominent trends in it
         ds4l = datasets['uni4large']
