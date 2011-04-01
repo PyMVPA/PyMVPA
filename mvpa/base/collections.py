@@ -468,11 +468,10 @@ class Collection(dict):
         except KeyError:
             _object_setattr(self, key, value)
 
-
+    # TODO: unify with the rest of __repr__ handling
     def __repr__(self):
-        return "%s(items=%s)" \
-                  % (self.__class__.__name__,
-                     repr(self.values()))
+        return "%s(items=%r)" \
+                  % (self.__class__.__name__, self.values())
 
 
     def __str__(self):

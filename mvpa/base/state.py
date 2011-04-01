@@ -44,7 +44,7 @@ from textwrap import TextWrapper
 # Although not used here -- included into interface
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.base.attributes import IndexedCollectable, ConditionalAttribute
-from mvpa.base.dochelpers import enhanced_doc_string, borrowdoc
+from mvpa.base.dochelpers import enhanced_doc_string, borrowdoc, _repr_attrs
 
 from mvpa.base import externals
 # XXX local rename is due but later on
@@ -979,13 +979,12 @@ class ClassWithCollections(object):
 
         Parameters
         ----------
-        fullname : bool
-          Either to include full name of the module
         prefixes : list of str
           What other prefixes to prepend to list of arguments
+        fullname : bool
+          Either to include full name of the module
         """
-        if prefixes is None:
-            prefixes = []
+        prefixes = prefixes or []
         prefixes = prefixes[:]          # copy list
         id_str = ""
         module_str = ""
@@ -1010,13 +1009,13 @@ class ClassWithCollections(object):
             prefixes += collection._cls_repr()
 
         # Description if present
-        descr = self.__descr
-        if descr is not None:
-            prefixes.append("descr=%r" % descr)
+        prefixes += _repr_attrs(self, ['descr'])
 
-        return "%s%s(%s)%s" % (module_str, self.__class__.__name__,
+        out = "%s%s(%s)%s" % (module_str, self.__class__.__name__,
                                ', '.join(prefixes), id_str)
-
+        # To possibly debug mass repr/str-fication
+        # print str(self), ' REPR: ', out
+        return out
 
     descr = property(lambda self: self.__descr,
                      doc="Description of the object if any")

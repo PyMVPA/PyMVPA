@@ -47,18 +47,18 @@ class FlattenMapper(Mapper):
           The maximum number of dimensions to flatten (starting with the first).
           If None, all axes will be flattened.
         """
-        Mapper.__init__(self, auto_train=True, **kwargs)
-        self.__origshape = None
+        # by default auto train
+        kwargs['auto_train'] = kwargs.get('auto_train', True)
+        Mapper.__init__(self, **kwargs)
+        self.__origshape = None         # pylint pacifier
         self.__maxdims = maxdims
         if not shape is None:
             self._train_with_shape(shape)
 
-
-    def __repr__(self):
-        s = Mapper.__repr__(self)
-        m_repr = 'shape=%s' % repr(self.__origshape)
-        return s.replace("(", "(%s, " % m_repr, 1)
-
+    def __repr__(self, prefixes=[]):
+        return super(FlattenMapper, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['shape', 'maxdims']))
 
     def __str__(self):
         return _str(self)
@@ -182,7 +182,8 @@ class FlattenMapper(Mapper):
             del mds.fa[inspace]
         return mds
 
-
+    shape = property(fget=lambda self:self.__origshape)
+    maxdims = property(fget=lambda self:self.__maxdims)
 
 def mask_mapper(mask=None, shape=None, space=None):
     """Factory method to create a chain of Flatten+StaticFeatureSelection Mappers

@@ -14,7 +14,7 @@ import numpy as np
 
 from mvpa.base.node import Node
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
-from mvpa.base.dochelpers import _str
+from mvpa.base.dochelpers import _str, _repr_attrs
 from mvpa.generators.splitters import mask2slice
 
 
@@ -35,6 +35,11 @@ class SliceMapper(Mapper):
         # if we got some sort of slicearg we assume that we are ready to go
         if not slicearg is None:
             self._set_trained()
+
+    def __repr__(self, prefixes=[]):
+        return super(SliceMapper, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['slicearg']))
 
 
     def __str__(self):

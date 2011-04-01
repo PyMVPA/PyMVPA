@@ -230,12 +230,6 @@ class Mapper(Learner):
         return self.forward(ds)
 
 
-    def __repr__(self):
-        return "%s(space=%s)" \
-                % (self.__class__.__name__,
-                   repr(self.get_space()))
-
-
 
 class ChainMapper(ChainNode):
     """Class that amends ChainNode with a mapper-like interface.
@@ -349,14 +343,8 @@ class ChainMapper(ChainNode):
             m.untrain()
 
 
-    def __repr__(self):
-        s = ChainNode.__repr__(self)
-        m_repr = '[%s]' % ', '.join([repr(m) for m in self])
-        return s.replace("(", "(%s, " % m_repr, 1)
-
-
     def __str__(self):
-        return _str(self, '-'.join([str(n) for n in self]).replace('Mapper', ''))
+        return super(ChainMapper, self).__str__().replace('Mapper', '')
 
 
 # XXX implement a 'CombinedMapper' (analog to ex-CombinedFeatureSelection) that

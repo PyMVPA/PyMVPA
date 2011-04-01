@@ -180,9 +180,6 @@ class Classifier(Learner):
         else:
             return _str(self)
 
-    def __repr__(self, prefixes=[]):
-        return super(Classifier, self).__repr__(prefixes=prefixes)
-
 
     def _pretrain(self, dataset):
         """Functionality prior to training
