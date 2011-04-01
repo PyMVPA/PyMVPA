@@ -115,6 +115,9 @@ def generate_testing_datasets(specs):
 
     return datasets
 
+# avoid treating it as a test by nose
+generate_testing_datasets.__test__ = False
+
 def saveload_warehouse():
     """Store all warehouse datasets into HDF5 and reload them.
     """
