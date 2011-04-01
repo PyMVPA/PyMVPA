@@ -418,6 +418,17 @@ def table2string(table, out=None):
         out.close()
         return value
 
+def _repr_attrs(obj, attrs, default=None, error_value='ERROR'):
+    """Helper to obtain a list of formatted attributes different from
+    the default
+    """
+    out = []
+    for a in attrs:
+        v = getattr(obj, a, error_value)
+        if not v is default:
+            out.append('%s=%r' % (a, v))
+    return out
+
 
 def _repr(obj, *args, **kwargs):
     """Helper to get a structured __repr__ for all objects.
