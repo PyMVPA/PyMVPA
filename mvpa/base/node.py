@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import time
 from mvpa.support import copy
 
-from mvpa.base.dochelpers import _str, _repr
+from mvpa.base.dochelpers import _str, _repr, _repr_attrs
 from mvpa.base.state import ClassWithCollections, ConditionalAttribute
 
 if __debug__:
@@ -174,6 +174,11 @@ class Node(ClassWithCollections):
         return _str(self)
 
 
+    def __repr__(self, prefixes=[]):
+        return super(Node, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['space', 'postproc']))
+
     space = property(get_space, set_space,
                      doc="Processing space name of this node")
 
@@ -287,5 +292,13 @@ class ChainNode(Node):
             return sliced
 
 
+    def __repr__(self, prefixes=[]):
+        return super(ChainNode, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['nodes']))
+
+
     def __str__(self):
         return _str(self, '-'.join([str(n) for n in self]))
+
+    nodes = property(fget=lambda self:self._nodes)

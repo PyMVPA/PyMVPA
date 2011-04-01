@@ -30,7 +30,7 @@ from mvpa.misc.attrmap import AttributeMap
 from mvpa.misc.errorfx import mean_mismatch_error
 from mvpa.base.types import asobjarray
 
-from mvpa.base.dochelpers import enhanced_doc_string, _str
+from mvpa.base.dochelpers import enhanced_doc_string, _str, _repr_attrs
 from mvpa.base import externals, warning
 from mvpa.clfs.stats import auto_null_dist
 from mvpa.base.dataset import AttrDataset
@@ -95,6 +95,15 @@ class Measure(Learner):
 
     __doc__ = enhanced_doc_string('Measure', locals(),
                                   Learner)
+
+    def __repr__(self, prefixes=[]):
+        """String representation of a `Measure`
+
+        Includes only arguments which differ from default ones
+        """
+        return super(Measure, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['null_dist']))
 
 
     def _precall(self, ds):
@@ -164,21 +173,6 @@ class Measure(Learner):
         return result
 
 
-    def __repr__(self, prefixes=None):
-        """String representation of a `Measure`
-
-        Includes only arguments which differ from default ones
-        """
-        if prefixes is None:
-            prefixes = []
-        prefixes = prefixes[:]
-        if self.get_postproc() is not None:
-            prefixes.append("postproc=%s" % self.get_postproc())
-        if self.__null_dist is not None:
-            prefixes.append("null_dist=%s" % self.__null_dist)
-        return super(Measure, self).__repr__(prefixes=prefixes)
-
-
     @property
     def null_dist(self):
         """Return Null Distribution estimator"""
@@ -195,7 +189,9 @@ class ProxyMeasure(Measure):
     wrapper, instead of the measure itself.
     """
     def __init__(self, measure, **kwargs):
-        Measure.__init__(self, auto_train=True, **kwargs)
+        # by default auto train
+        kwargs['auto_train'] = kwargs.get('auto_train', True)
+        Measure.__init__(self, **kwargs)
         self.__measure = measure
 
 
@@ -715,8 +711,9 @@ class Sensitivity(FeaturewiseMeasure):
         """
 
         """Does nothing special."""
-        FeaturewiseMeasure.__init__(self, auto_train=True,
-                                    force_train=force_train, **kwargs)
+        # by default auto train
+        kwargs['auto_train'] = kwargs.get('auto_train', True)
+        FeaturewiseMeasure.__init__(self, force_train=force_train, **kwargs)
 
         _LEGAL_CLFS = self._LEGAL_CLFS
         if len(_LEGAL_CLFS) > 0:
@@ -732,15 +729,6 @@ class Sensitivity(FeaturewiseMeasure):
 
         self.__clf = clf
         """Classifier used to computed sensitivity"""
-
-
-    def __repr__(self, prefixes=None):
-        if prefixes is None:
-            prefixes = []
-        prefixes.append("clf=%s" % repr(self.clf))
-        if not self.is_forcedtraining:
-            prefixes.append("force_train=%s" % self.is_forcedtraining)
-        return super(Sensitivity, self).__repr__(prefixes=prefixes)
 
 
     @property
