@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base.dochelpers import _str
+from mvpa.base.dochelpers import _str, _repr_attrs
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples, \
         ChainMapper
 from mvpa.featsel.base import StaticFeatureSelection
