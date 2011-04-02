@@ -44,6 +44,13 @@ class Dataset(AttrDataset):
         Dataset
           The forward-mapped dataset.
         """
+        # if we use .forward, no postcall is called... is that
+        #  desired?  doesn't seem to have major impact on unittests
+        #  BUT since postcall might change dimensionality/meaning of
+        #  data, it would not be any longer reversible; more over
+        #  since chain of .forwards do not invoke postcalls, also
+        #  forward would lead to different behavior
+        #mds = mapper(self)
         mds = mapper.forward(self)
         mds._append_mapper(mapper)
         return mds
