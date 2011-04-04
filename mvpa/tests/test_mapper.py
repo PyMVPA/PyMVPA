@@ -13,7 +13,7 @@ import numpy as np
 from numpy import array
 
 from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true, assert_array_equal
+        assert_true, assert_array_equal, nodebug
 
 from mvpa.testing.datasets import datasets
 from mvpa.mappers.flatten import FlattenMapper
@@ -206,6 +206,7 @@ def test_subset_filler():
     data_back_fnan = sm_fnan.reverse(data_forwarded)
     ok_(np.all(np.isnan(data_back_fnan[:, 3:])))
 
+@nodebug(['ID_IN_REPR', 'MODULE_IN_REPR'])
 def test_repr():
     # this time give mask only by its target length
     sm = StaticFeatureSelection(slice(None), space='myspace')
@@ -214,7 +215,7 @@ def test_repr():
     sm_clone = eval(repr(sm))
     assert_equal(repr(sm_clone), repr(sm))
 
-
+@nodebug(['ID_IN_REPR', 'MODULE_IN_REPR'])
 def test_chainmapper():
     # the chain needs at lest one mapper
     assert_raises(ValueError, ChainMapper, [])
