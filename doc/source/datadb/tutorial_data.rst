@@ -110,7 +110,7 @@ Instructions
   >>> print ds.a.voxel_eldim
   (3.5, 3.75, 3.75)
   >>> print ds.a.mapper
-  <ChainMapper: <Flatten>-<StaticFeatureSelection>>
+  <Chain: <Flatten>-<StaticFeatureSelection>>
   >>> print ds.uniquetargets
   ['bottle' 'cat' 'chair' 'face' 'house' 'rest' 'scissors' 'scrambledpix'
    'shoe']
