@@ -879,6 +879,7 @@ def test_dataset_summary():
         for summary in summaries:
             ok_(not summary in s2)
 
+@nodebug(['ID_IN_REPR', 'MODULE_IN_REPR'])
 def test_h5py_io():
     skip_if_no_external('h5py')
 
