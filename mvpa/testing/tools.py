@@ -162,3 +162,42 @@ def reseed_rng():
         return newfunc
 
     return decorate
+
+
+def nodebug(entries=None):
+    """Decorator to temporarily turn off some debug targets
+
+    Parameters
+    ----------
+    entries : None or list of string, optional
+      If None, all debug entries get turned off.  Otherwise only provided
+      ones
+    """
+
+    def decorate(func):
+        def newfunc(*arg, **kwargs):
+            if __debug__:
+                from mvpa.base import debug
+                # store a copy
+                old_active = debug.active[:]
+                if entries is None:
+                    # turn them all off
+                    debug.active = []
+                else:
+                    for e in entries:
+                        if e in debug.active:
+                            debug.active.remove(e)
+            try:
+                res = func(*arg, **kwargs)
+                return res
+            finally:
+                # we should return the debug states to the original
+                # state regardless either test passes or not!
+                if __debug__:
+                    # turn debug targets back on
+                    debug.active = old_active
+
+        newfunc = make_decorator(func)(newfunc)
+        return newfunc
+
+    return decorate
