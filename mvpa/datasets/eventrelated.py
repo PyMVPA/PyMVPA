@@ -159,7 +159,7 @@ def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
     >>> 'mapper' in ds.a
     False
     >>> print eds.a.mapper
-    <ChainMapper: <Boxcar: bl=4>-<Flatten>>
+    <Chain: <Boxcar: bl=4>-<Flatten>>
 
     And now the same conversion, but with events specified as real time. This is
     on possible if the input dataset contains a sample attribute with the
