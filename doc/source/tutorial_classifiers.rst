@@ -267,6 +267,7 @@ Abbreviations (for details see http://en.wikipedia.org/wiki/ROC_curve):
       MCC = (TP*TN - FP*FN)/sqrt(P N P' N')
  AUC: Area under (AUC) curve
  CHI^2: Chi-square of confusion matrix
+ LOE(ACC): linear order effect in ACC across sets
  # of sets: number of target/prediction sets which were provided
 <BLANKLINE>
 
