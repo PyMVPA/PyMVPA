@@ -465,11 +465,11 @@ class ConfusionMatrix(SummaryStatistics):
                 "MCC = (TP*TN - FP*FN)/sqrt(P N P' N')"),
         ('AUC', "Area under (AUC) curve", None),
         ('CHI^2', "Chi-square of confusion matrix", None),
-        ('LOE(ACC)', 'linear order effect in ACC across sets. ', None),
+        ('LOE(ACC)', "Linear Order Effect in ACC across sets", None),
         ## ('Friedman(TPR)',
-        ##  'Friedman Chi^2 test of TPRs consistencies across sets. ', None),
+        ##  "Friedman CHI^2 test of TPRs consistencies across sets", None),
         ## ('Friedman(CM)',
-        ##  'Friedman Chi^2 test of full CM (normalized) consistencies across sets. ', None),
+        ##  "Friedman CHI^2 test of full CM (normalized) consistencies across sets", None),
         ) + SummaryStatistics._STATS_DESCRIPTION
 
 
