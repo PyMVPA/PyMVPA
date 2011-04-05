@@ -86,7 +86,7 @@ some reason, the F-scores need to be scaled into the interval [0,1], an
 >>> print f.samples.max()
 1.0
 
-.. map2nifti(ds, f).save('results/res_haxby2001_fscore_vt.nii.gz')
+.. map2nifti(ds, f).to_filename('results/res_haxby2001_fscore_vt.nii.gz')
 
 .. exercise::
 
@@ -171,7 +171,7 @@ hard to comprehend we have to resort to some statistics.
 >>> # we deal with errors here, hence 1.0 minus
 >>> chance_level = 1.0 - (1.0 / len(ds.uniquetargets))
 
-.. map2nifti(ds, 1.0 - sphere_errors).save('results/res_haxby2001_sl_avgacc_roi0.nii.gz')
+.. map2nifti(ds, 1.0 - sphere_errors).to_filename('results/res_haxby2001_sl_avgacc_roi0.nii.gz')
 
 As you'll see, the mean empirical error is just barely below the chance level.
 However, we would not expect a signal for perfect classification
@@ -199,7 +199,7 @@ we would expect for random guessing of the classifier -- that is more than
   a brain overlay in your favorite viewer (hint: you might want to store
   accuracies instead of errors, if your viewer cannot visualize the lower
   tail of the distribution:
-  ``map2nifti(ds, 1.0 - sphere_errors).save('sl.nii.gz')``).
+  ``map2nifti(ds, 1.0 - sphere_errors).to_filename('sl.nii.gz')``).
   Did looking at the image change your mind?
 
 ..
@@ -237,11 +237,11 @@ let's do another one, but this time on a more familiar ROI -- the full brain.
 
 .. h5save('results/ds_haxby2001_alt_brain.hdf5', ds)
 .. h5save('results/res_haxby2001_sl_avgacc_r0_brain.hdf5', r0)
-.. map2nifti(ds, 1.0 - r0.samples[0]).save('results/res_haxby2001_sl_avgacc_r0_brain.nii.gz')
+.. map2nifti(ds, 1.0 - r0.samples[0]).to_filename('results/res_haxby2001_sl_avgacc_r0_brain.nii.gz')
 .. h5save('results/res_haxby2001_sl_avgacc_r1_brain.hdf5', r1)
-.. map2nifti(ds, 1.0 - r1.samples[0]).save('results/res_haxby2001_sl_avgacc_r1_brain.nii.gz')
+.. map2nifti(ds, 1.0 - r1.samples[0]).to_filename('results/res_haxby2001_sl_avgacc_r1_brain.nii.gz')
 .. h5save('results/res_haxby2001_sl_avgacc_r3_brain.hdf5', r3)
-.. map2nifti(ds, 1.0 - r3.samples[0]).save('results/res_haxby2001_sl_avgacc_r3_brain.nii.gz')
+.. map2nifti(ds, 1.0 - r3.samples[0]).to_filename('results/res_haxby2001_sl_avgacc_r3_brain.nii.gz')
 
 You have now performed a number of searchlight analyses, investigated the
 results and probably tried to interpret them. What conclusions did you draw

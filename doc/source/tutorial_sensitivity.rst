@@ -304,7 +304,7 @@ of the importance of feature for *any* partial classification.
   the searchlight maps of different radii from the :ref:`previous tutorial
   part <chap_tutorial_searchlight>`.
 
-.. map2nifti(ds, sens_comb).save('results/res_haxby2001_sens_maxofabs_5pANOVA.nii.gz')
+.. map2nifti(ds, sens_comb).to_filename('results/res_haxby2001_sens_maxofabs_5pANOVA.nii.gz')
 
 You might have noticed some imperfection in our recent approach to compute
 a full-brain sensitivity map. We derived it from the full dataset, and not
