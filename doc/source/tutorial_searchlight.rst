@@ -245,13 +245,15 @@ let's do another one, but this time on a more familiar ROI -- the full brain.
 
 You have now performed a number of searchlight analyses, investigated the
 results and probably tried to interpret them. What conclusions did you draw
-from these analyses in terms of the neuroscientific aspects. What have you
+from these analyses in terms of the neuroscientific aspects? What have you
 learned about object representation in the brain? In this case we have run
-8-way classification analyses and we have looked at the average error rate
-of thousands of sphere-shaped ROIs in the brain. In some spheres the
-classifier could perform perfect classification, i.e. it could predict all
+8-way classification analyses and have looked at the average error rate across
+all conditions of thousands of sphere-shaped ROIs in the brain. In some spheres the
+classifier could perform well, i.e. it could predict all
 samples equally well. However, this only applies to a handful of over 30k
-spheres we have tested. For the vast majority we observe errors somewhere
+spheres we have tested, and does not unveil either classifier was capable of
+classifying *all* of the conditions or just some.  For the vast majority
+we observe errors somewhere
 between the theoretical chance level and zero and we don't know what caused
 the error to decrease. We don't even know which samples get misclassified.
 
@@ -260,7 +262,8 @@ that there is a way out of this dilemma. We can look at the confusion
 matrix of a classifier to get a lot more information that is otherwise
 hidden. However, we cannot reasonably do this for thousands of searchlight
 spheres. It becomes obvious that a searchlight analysis is probably not the
-end of a data exploration, as it raises more questions than it answers.
+end of a data exploration but rather a crude take off,
+as it raises more questions than it answers.
 
 Moreover, a searchlight cannot detect signals that extend beyond a small
 local neighborhood. This property effectively limits the scope of analyses
@@ -275,7 +278,7 @@ will offers some alternatives that are more gentle in this respect.
 .. _multiple comparisons: http://en.wikipedia.org/wiki/Multiple_comparisons
 
 Despite these limitations a searchlight analysis can be a valuable
-explorative tool if used appropriately. The capabilities of PyMVPA's searchlight
+exploratory tool if used appropriately. The capabilities of PyMVPA's searchlight
 implementation go beyond what we looked at in this tutorial. It is not only
 possible to run *spatial* searchlights, but multiple spaces can be
 considered simultaneously. We will get back to these more advanced topics later
