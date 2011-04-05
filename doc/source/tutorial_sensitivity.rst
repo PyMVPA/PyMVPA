@@ -46,7 +46,7 @@ searchlight analysis only offers an approximate localization. First, it is
 smeared by the overlapping spheres and second the sphere-shaped ROIs
 probably do not reflect the true shape and extent of functional subregions
 in the brain. Therefore, it mixes and matches things that might not belong
-together. It would be much nicer if we would be able to obtain a
+together. It would be much nicer if we were able to obtain a
 per-feature measure, where each value can really be attributed to the
 respective feature and not just to an area surrounding it.
 
@@ -66,7 +66,8 @@ Will we be able to do that? Well, let's try (and hope that there is still a
 warranty on the machine you are running this on...).
 
 We will use a simple cross-validation procedure with a linear support
-vector machine and we want a confusion matrix:
+vector machine.  We will also be interested in summary statistics of the
+classification, a confusion matrix in our case of classification:
 
 >>> clf = LinearCSVMC()
 >>> cvte = CrossValidation(clf, NFoldPartitioner(),
@@ -90,10 +91,10 @@ That was surprisingly quick, wasn't it? But was it any good?
  [0 1 4 3 2 1 7 3]
  [2 0 0 1 1 2 0 4]]
 
-Well, the accuracy is not exactly chance, but the confusion matrix doesn't
-seem to have any visible diagonal. It looks like, although we can easily
-train a support vector machine on the full brain dataset, it doesn't learn
-anything useful. At least we are in the lucky situation to already know
+Well, the accuracy is not exactly at a chance level, but the confusion matrix doesn't
+seem to have any prominent diagonal. It looks like, although we can easily
+train a support vector machine on the full brain dataset, it cannot construct
+a reliably predicting model.  At least we are in the lucky situation to already know
 that there is some signal in the data, hence we can attribute this failure
 to the classifier. In most situations it would be as likely that there is
 actually no signal in the data...
@@ -101,7 +102,7 @@ actually no signal in the data...
 Often people claim that classification performance improves with :term:`feature
 selection`. If we can reduce the dataset to the important ones, the
 classifier wouldn't have to deal with all the noise anymore. A simple
-approach would be to compute an full-brain ANOVA and only go with the
+approach would be to compute a full-brain ANOVA and only go with the
 voxels that show some level of variance between categories. From the
 :ref:`previous tutorial part <chap_tutorial_searchlight>` we know how to
 compute the desired F-scores and could use them to manually select features
@@ -113,7 +114,7 @@ feature selectors:
 ...            FixedNElementTailSelector(500, mode='select', tail='upper'))
 
 The code snippet above configures such a selector. It uses an ANOVA measure
-to select those features that correspond to the 500 highest F-scores. There
+to select 500 features with the highest F-scores. There
 are a lot more ways to perform the selection, but we will go with this one
 for now. The :class:`~mvpa.featsel.base.SensitivityBasedFeatureSelection`
 instance is yet another :term:`processing object` that can be called with a
@@ -150,7 +151,7 @@ the ANOVA-selected features were the right ones.
 
 .. exercise::
 
-  If you are not yet screaming and or started composing an email to the
+  If you are not yet screaming or started composing an email to the
   PyMVPA mailing list pointing to a major problem in the tutorial, you need
   to reconsider what we have just done. Why is this wrong?
 
@@ -180,9 +181,10 @@ selecting features is somewhat fishy -- if not illegal. The ANOVA measure
 uses the full dataset to compute the F-scores, hence it determines which
 features show category differences in the whole dataset, including our
 supposed-to-be independent testing data. Once we have found these
-differences, we are trying to rediscover them with a classifier. That we
-are able to do that is not surprising. Moreover, the prediction
-accuracy and potentially also the created model are completely meaningless.
+differences, we are trying to rediscover them with a classifier.  Being able
+to do that is not surprising, and precisely constitutes the *double-dipping*
+procedure. As a result, obtained prediction
+accuracy and the created model potentially are completely meaningless.
 
 
 
@@ -197,7 +199,7 @@ the training dataset **only**. The PyMVPA way of doing this is via a
 
 This is a :term:`meta-classifier` and it just needs two things: A basic
 classifier to do the actual classification work and a feature selection
-object. We can simple re-use the object instances we already had. Now we
+object. We can simply re-use the object instances we already had. Now we
 got a meta-classifier that can be used just as any other classifier. Most
 importantly we can plug it into a cross-validation procedure (almost
 identical to the one we had in the beginning).
@@ -210,7 +212,7 @@ identical to the one we had in the beginning).
 
 This is a lot worse and a lot closer to the truth -- or a so-called
 :term:`unbiased estimate` of the generalizability of the classifier model.
-We can now also run this improved procedure on our original 8-category
+Now we can also run this improved procedure on our original 8-category
 dataset.
 
 >>> results = cvte(ds)
@@ -240,7 +242,7 @@ opinion about those. Although this is just few times larger than a typical
 searchlight sphere, we already have lifted the spatial constraint of
 searchlights -- these features can come from all over the brain.
 
-However, we still want to judge more feature, so we are changing the
+However, we still want to consider more features, so we are changing the
 feature selection to retain more.
 
 >>> fsel = SensitivityBasedFeatureSelection(
@@ -256,8 +258,8 @@ feature selection to retain more.
 A drop of 8% in accuracy on about 4 times the number of features. This time
 we asked for the top 5% of F-scores.
 
-But how do we get the weight, finally? In PyMVPA (almost) each classifier
-is accompanied with a so-called :term:`sensitivity analyzer`. This is an
+But how do we get the weight, finally? In PyMVPA many classifiers
+are accompanied with so-called :term:`sensitivity analyzer`\ s. This is an
 object that knows how to get them from a particular classifier type (since
 each classification algorithm hides them in different places). To create
 this *analyzer* we can simply ask the classifier to do it:
@@ -280,7 +282,7 @@ when called with a dataset.
 .. h5save('results/res_haxby2001_sens_5pANOVA.hdf5', sens)
 
 Why do we get 28 sensitivity maps from the classifier? The support vector
-machine is an algorithm for binary classification problems. To be able to deal
+machine is constructs a model for binary classification problems. To be able to deal
 with this 8-category dataset, the data is internally split into all
 possible binary problems (there are exactly 28 of them). The sensitivities
 are extracted for all these partial problems.
@@ -294,7 +296,7 @@ If you are not interested in this level of detail, we can combine the maps
 into one, as we have done with dataset samples before. A feasible
 algorithm might be to take the per feature maximum of absolute
 sensitivities in any or the maps. The resulting map will be an indication
-of the importance of feature for *any* partial classification.
+of the importance of feature for *some* partial classification.
 
 >>> sens_comb = sens.get_mapped(maxofabs_sample())
 
@@ -375,7 +377,7 @@ each of the dataset splits separately. It can effectively perform a
 cross-validation analysis internally, and we ask it to compute a confusion
 matrix of it. The next step is to get a sensitivity analyzer for this meta
 meta classifier (this time no post-processing). Once we have got that, we
-can run the analysis, we get all sensitivity maps from all internally
+can run the analysis and obtain sensitivity maps from all internally
 trained classifiers. Moreover, the meta sensitivity analyzer also allows
 access to its internal meta meta classifier that provides us with the
 confusion statistics. Yeah!
@@ -402,9 +404,9 @@ features and not thousands, which results in a significant reduction of
 required CPU time.
 
 However, there are also caveats. While sensitivities are a much more
-direct measure of feature importance as prediction accuracies are, being
+direct measure of feature importance in the constructed model, being
 close to the bare metal of classifiers also has problems. Depending on the
-actual classification algorithm sensitivities might mean something
+actual classification algorithm and data preprocessing sensitivities might mean something
 completely different when compared across classifiers. For example, the
 popular SVM algorithm solves the classification problem by identifying the
 data samples that are *most tricky* to model. The extracted sensitivities
