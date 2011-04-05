@@ -414,7 +414,7 @@ hence worth devoting the whole :ref:`next tutorial chapter
 <chap_tutorial_mappers>` to it.
 
 >>> print ds.a.mapper
-<ChainMapper: <Flatten>-<StaticFeatureSelection>>
+<Chain: <Flatten>-<StaticFeatureSelection>>
 
 Having all these attributes being part of a dataset is often a useful thing
 to have, but in some cases (e.g. when it comes to efficiency, and/or very
