@@ -178,7 +178,7 @@ the last two items in the chain mapper that have been added during the
 conversion into events.
 
 >>> print evds.a.mapper[-2:]
-<ChainMapper: <Boxcar: bl=13>-<Flatten>>
+<Chain: <Boxcar: bl=13>-<Flatten>>
 
 .. exercise::
 
