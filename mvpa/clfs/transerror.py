@@ -67,7 +67,7 @@ class SummaryStatistics(object):
 
     _STATS_DESCRIPTION = (
         ('# of sets',
-         'number of target/prediction sets which were provided. ', None),
+         'number of target/prediction sets which were provided', None),
         )
 
 
