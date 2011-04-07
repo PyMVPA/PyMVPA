@@ -191,6 +191,9 @@ def __assign_nipy_version():
     import nipy
     versions['nipy'] = SmartVersion(nipy.__version__)
 
+def __check_nipy_neurospin():
+    import nipy.neurospin
+
 def __check_weave():
     """Apparently presence of scipy is not sufficient since some
     versions experience problems. E.g. in Sep,Oct 2008 lenny's weave
@@ -470,6 +473,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'pprocess': "__check_pprocess()",
           'h5py': "import h5py as __",
           'nipy': "__assign_nipy_version()",
+          'nipy.neurospin': "__check_nipy_neurospin()",
           }
 
 

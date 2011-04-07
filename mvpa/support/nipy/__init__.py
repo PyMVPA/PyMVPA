@@ -28,7 +28,7 @@ from mvpa.base import externals
 
 # NiPy code requires scipy
 externals.exists('scipy', raise_=True)
-if externals.exists('nipy'):
+if externals.exists('nipy.neurospin'):
     # Import those interesting ones from nipy
     from nipy.neurospin.utils import emp_null
 else:
