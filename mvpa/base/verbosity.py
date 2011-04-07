@@ -85,7 +85,7 @@ class Logger(object):
         return self.__handlers
 
 
-    def __call__(self, msg, lf=True, cr=False, *args, **kwargs):
+    def __call__(self, msg, args=None, lf=True, cr=False, **kwargs):
         """Write msg to each of the handlers.
 
         It can append a newline (lf = Line Feed) or return
@@ -95,6 +95,10 @@ class Logger(object):
         it appends a newline (lf = Line Feed) since most commonly each
         call is a separate message
         """
+
+        if args is not None:
+            msg = msg % args
+
         if kwargs.has_key('msgargs'):
             msg = msg % kwargs['msgargs']
 
