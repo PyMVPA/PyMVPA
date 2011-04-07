@@ -14,7 +14,7 @@ import operator
 import sys
 
 from mvpa.base import warning
-from mvpa.base.dochelpers import borrowkwargs, borrowdoc
+from mvpa.base.dochelpers import borrowkwargs, borrowdoc, _repr_attrs, _repr
 from mvpa.clfs.distance import cartesian_distance
 
 from mvpa.misc.support import idhash as idhash_
@@ -305,6 +305,9 @@ class QueryEngineInterface(object):
     working with QueryEngine instances
     """
 
+    def __repr__(self, prefixes=[]):
+        return _repr(self, *prefixes)
+
     def train(self, dataset):
         raise NotImplementedError
 
@@ -354,6 +357,11 @@ class QueryEngine(QueryEngineInterface):
         self._queryobjs = kwargs
         self._queryattrs = {}
 
+
+    def __repr__(self, prefixes=[]):
+        return super(QueryEngine, self).__repr__(
+            prefixes=prefixes
+            + ['%s=%r' % v for v in self._queryobjs.iteritems()])
 
     def train(self, dataset):
         # reset first
@@ -405,8 +413,15 @@ class IndexQueryEngine(QueryEngine):
         """Precrafted indexes to cover ':' situation within ix_"""
         self._searcharray = None
         """Actual searcharray"""
-        self.sorted = True
+        self.sorted = sorted
         """Either to sort the query results"""
+
+
+    def __repr__(self, prefixes=[]):
+        return super(IndexQueryEngine, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['sorted'], default=True))
+
 
     def _train(self, dataset):
         # local binding
@@ -540,20 +555,26 @@ class CachedQueryEngine(QueryEngineInterface):
     collision! Thus consider it EXPERIMENTAL for now.
     """
 
-    def __init__(self, qe):
+    def __init__(self, queryengine):
         """
         Parameters
         ----------
-        qe : QueryEngine
+        queryengine : QueryEngine
           Results of which engine to cache
         """
         super(CachedQueryEngine, self).__init__()
-        self._qe = qe
+        self._queryengine = queryengine
         self._trained_ds_fa_hash = None
         """Will give information about either dataset's FA were changed
         """
         self._lookup_ids = None
         self._lookup = None
+
+    def __repr__(self, prefixes=[]):
+        return super(CachedQueryEngine, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['qe']))
+
 
     def train(self, dataset):
         """'Train' `CachedQueryEngine`.
@@ -570,7 +591,7 @@ class CachedQueryEngine(QueryEngineInterface):
         if self._trained_ds_fa_hash is None:
             # First time is called
             self._trained_ds_fa_hash = ds_fa_hash
-            self._qe.train(dataset)     # train the qe
+            self._queryengine.train(dataset)     # train the queryengine
             self._lookup_ids = [None] * dataset.nfeatures # lookup for query_byid
             self._lookup = {}           # generic lookup
         elif self._trained_ds_fa_hash != ds_fa_hash:
@@ -592,7 +613,7 @@ class CachedQueryEngine(QueryEngineInterface):
     def query_byid(self, fid):
         v = self._lookup_ids[fid]
         if v is None:
-            self._lookup_ids[fid] = v = self._qe.query_byid(fid)
+            self._lookup_ids[fid] = v = self._queryengine.query_byid(fid)
         return v
 
     @borrowdoc(QueryEngineInterface)
@@ -600,5 +621,7 @@ class CachedQueryEngine(QueryEngineInterface):
         k = idhash_(kwargs.items())
         v = self._lookup.get(k, None)
         if v is None:
-            self._lookup[k] = v = self._qe.query(**kwargs)
+            self._lookup[k] = v = self._queryengine.query(**kwargs)
         return v
+
+    queryengine = property(fget=lambda self: self._queryengine)

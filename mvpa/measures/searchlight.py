@@ -16,7 +16,7 @@ if __debug__:
 import numpy as np
 
 from mvpa.base import externals, warning
-from mvpa.base.dochelpers import borrowkwargs
+from mvpa.base.dochelpers import borrowkwargs, _repr_attrs
 
 from mvpa.datasets import hstack
 from mvpa.support import copy
@@ -68,20 +68,30 @@ class BaseSearchlight(Measure):
                                "install python-pprocess, or reduce `nproc` "
                                "to 1 (got nproc=%i)" % nproc)
 
-        self._qe = queryengine
+        self._queryengine = queryengine
         if roi_ids is not None and not isinstance(roi_ids, str) \
                 and not len(roi_ids):
             raise ValueError, \
                   "Cannot run searchlight on an empty list of roi_ids"
         self.__roi_ids = roi_ids
-        self._nproc = nproc
+        self.nproc = nproc
+
+
+    def __repr__(self, prefixes=[]):
+        """String representation of a `Measure`
+
+        Includes only arguments which differ from default ones
+        """
+        return super(BaseSearchlight, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['queryengine', 'roi_ids', 'nproc']))
 
 
     def _call(self, dataset):
         """Perform the ROI search.
         """
         # local binding
-        nproc = self._nproc
+        nproc = self.nproc
 
         if nproc is None and externals.exists('pprocess'):
             import pprocess
@@ -93,7 +103,7 @@ class BaseSearchlight(Measure):
                         % externals.versions['pprocess'])
                 nproc = 1
         # train the queryengine
-        self._qe.train(dataset)
+        self._queryengine.train(dataset)
 
         # decide whether to run on all possible center coords or just a provided
         # subset
@@ -142,6 +152,9 @@ class BaseSearchlight(Measure):
         """
         raise NotImplementedError("Must be implemented in the derived classes")
 
+    queryengine = property(fget=lambda self: self._queryengine)
+    roi_ids = property(fget=lambda self: self.__roi_ids)
+
 
 class Searchlight(BaseSearchlight):
     """The implementation of a generic searchlight measure.
@@ -178,6 +191,13 @@ class Searchlight(BaseSearchlight):
             self.__add_center_fa = 'roi_seed'
         else:
             self.__add_center_fa = False
+
+    def __repr__(self, prefixes=[]):
+        return super(Searchlight, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['datameasure'])
+            + _repr_attrs(self, ['add_center_fa'], default=False)
+            )
 
 
     def _sl_call(self, dataset, roi_ids, nproc):
@@ -255,7 +275,7 @@ class Searchlight(BaseSearchlight):
         for i, f in enumerate(block):
             # retrieve the feature ids of all features in the ROI from the query
             # engine
-            roi_fids = self._qe[f]
+            roi_fids = self._queryengine[f]
 
             if __debug__ and  debug_slc_:
                 debug('SLC_', 'For %r query returned ids %r' % (f, roi_fids))
@@ -285,6 +305,8 @@ class Searchlight(BaseSearchlight):
 
         return results, roi_sizes
 
+    datameasure = property(fget=lambda self: self.__datameasure)
+    add_center_fa = property(fget=lambda self: self.__add_center_fa)
 
 @borrowkwargs(Searchlight, '__init__', exclude=['roi_ids'])
 def sphere_searchlight(datameasure, radius=1, center_ids=None,
