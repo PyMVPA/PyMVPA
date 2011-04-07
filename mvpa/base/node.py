@@ -120,7 +120,7 @@ class Node(ClassWithCollections):
         if not self.__postproc is None:
             if __debug__:
                 debug("NO",
-                      "Applying post-processing node %s" % self.__postproc)
+                      "Applying post-processing node %s", (self.__postproc,))
             result = self.__postproc(result)
 
         return result
@@ -222,13 +222,13 @@ class ChainNode(Node):
         mp = ds
         for i, n in enumerate(self):
             if __debug__:
-                debug('MAP', "%s: input (%s) -> node (%i/%i): '%s'"
-                        % (self.__class__.__name__, mp.shape,
-                           i + 1, len(self),
-                           str(n)))
+                debug('MAP', "%s: input (%s) -> node (%i/%i): '%s'",
+                      (self.__class__.__name__, mp.shape,
+                       i + 1, len(self),
+                       n))
             mp = n(mp)
         if __debug__:
-            debug('MAP', "%s: output (%s)" % (self.__class__.__name__, mp.shape))
+            debug('MAP', "%s: output (%s)", (self.__class__.__name__, mp.shape))
         return mp
 
 
@@ -244,10 +244,9 @@ class ChainNode(Node):
         """
         first_node = self[startnode]
         if __debug__:
-            debug('MAP', "%s: input (%s) -> generator (%i/%i): '%s'"
-                    % (self.__class__.__name__, ds.shape,
-                       startnode + 1, len(self),
-                       str(first_node)))
+            debug('MAP', "%s: input (%s) -> generator (%i/%i): '%s'",
+                  (self.__class__.__name__, ds.shape,
+                   startnode + 1, len(self), first_node))
         # let the first node generator as many datasets as it wants
         for gds in first_node.generate(ds):
             if startnode == len(self) - 1:
