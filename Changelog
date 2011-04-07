@@ -9,9 +9,9 @@ Development Changelog
 *********************
 
 This changelog only lists rather macroscopic changes to PyMVPA. The full VCS
-changelog is available here:
+changelog for 0.5.x series of PyMVPA is available here:
 
-  http://github.com/PyMVPA/PyMVPA/commits/master
+  https://github.com/PyMVPA/PyMVPA/commits/maint%2F0.5
 
 In addition there is also a somewhat unconventional `visual changelog`_.
 
@@ -34,6 +34,27 @@ Unreleased changes
 
 Releases
 ========
+
+* 0.4.7 (Tue, Mar 07 2011) (Total: 12 commits)
+
+  A bugfix release
+
+  * Fixed
+
+    - Addressed the issue with input NIfTI files having scl_* fields
+      set: it could result in incorrect analyses and
+      map2nifti-produced NIfTI files.  Now input files account for
+      scaling/offset if scl_ fields direct to do so. Moreover upon
+      map2nifti, those fields get reset.
+    - :file:`doc/examples/searchlight_minimal.py` - best error is the
+      minimal one
+
+  * Enhancements
+
+    - :class:`~mvpa.clfs.gnb.GNB` can now tolerate training datasets
+      with a single label
+    - :class:`~mvpa.clfs.meta.TreeClassifier` can have trailing nodes
+      with no classifier assigned
 
 * 0.4.6 (Tue, Feb 01 2011) (Total: 20 commits)
 
