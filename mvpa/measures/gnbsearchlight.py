@@ -20,7 +20,7 @@ from mvpa.datasets.base import Dataset
 from mvpa.misc.errorfx import mean_mismatch_error
 from mvpa.measures.searchlight import BaseSearchlight
 from mvpa.base import externals, warning
-from mvpa.base.dochelpers import borrowkwargs
+from mvpa.base.dochelpers import borrowkwargs, _repr_attrs
 from mvpa.generators.splitters import Splitter
 
 #from mvpa.base.param import Parameter
@@ -184,30 +184,27 @@ class GNBSearchlight(BaseSearchlight):
                 indexsum = 'fancy'
         self._indexsum = indexsum
 
-        if not self._nproc in (None, 1):
+        if not self.nproc in (None, 1):
             raise NotImplementedError, "For now only nproc=1 (or None for " \
                   "autodetection) is supported by GNBSearchlight"
 
     def __repr__(self, prefixes=[]):
-        prefixes_ = ['gnb=%r' % self._gnb,
-                     'generator=%r' % self._generator,
-                     'qe=%r' % self._qe]
-        if not self._errorfx is mean_mismatch_error:
-            prefixes_ += ['errorfx=%r' % self._errorfx]
-        if self._indexsum is not None:
-            prefixes_ += ['indexsum=%r' % self._indexsum]
         return super(GNBSearchlight, self).__repr__(
-            prefixes=prefixes_ + prefixes)
+            prefixes=prefixes
+            + _repr_attrs(self, ['gnb', 'generator'])
+            + _repr_attrs(self, ['errorfx'], default=mean_mismatch_error)
+            + _repr_attrs(self, ['indexsum'])
+            )
 
     def _sl_call(self, dataset, roi_ids, nproc):
         """Call to GNBSearchlight
         """
         # Local bindings
-        gnb = self._gnb
+        gnb = self.gnb
         params = gnb.params
-        generator = self._generator
-        errorfx = self._errorfx
-        qe = self._qe
+        generator = self.generator
+        errorfx = self.errorfx
+        qe = self.queryengine
 
         ## if False:
         ##     class A(Learner):
@@ -516,6 +513,10 @@ class GNBSearchlight(BaseSearchlight):
 
         return Dataset(results), roi_sizes
 
+    gnb = property(fget=lambda self: self._gnb)
+    generator = property(fget=lambda self: self._generator)
+    errorfx = property(fget=lambda self: self._errorfx)
+    indexsum = property(fget=lambda self: self._indexsum)
 
 @borrowkwargs(GNBSearchlight, '__init__', exclude=['roi_ids'])
 def sphere_gnbsearchlight(gnb, generator, radius=1, center_ids=None,
