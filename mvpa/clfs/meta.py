@@ -266,7 +266,7 @@ class ProxyClassifier(Classifier):
                           is self.clf.ca['retrained']):
             if __debug__:
                 debug("CLFPRX",
-                      "Rebinding conditional attributes from slave clf %s" % self.clf)
+                      "Rebinding conditional attributes from slave clf %s", (self.clf,))
             self.ca['retrained'] = self.clf.ca['retrained']
             self.ca['repredicted'] = self.clf.ca['repredicted']
 
@@ -829,8 +829,7 @@ class TreeClassifier(ProxyClassifier):
 
         # train primary classifier
         if __debug__:
-            debug('CLFTREE', "Training primary %(clf)s on %(ds)s",
-                  msgargs=dict(clf=clf, ds=ds_group))
+            debug('CLFTREE', "Training primary %s on %s", (clf, ds_group))
         clf.train(ds_group)
 
         # ??? should we obtain values for anything?
@@ -858,8 +857,8 @@ class TreeClassifier(ProxyClassifier):
                 ids = get_samples_by_attr(dataset, targets_sa_name, groups_labels[gk])
                 ds_group = dataset[ids]
                 if __debug__:
-                    debug('CLFTREE', "Training %(clf)s for group %(gk)s on %(ds)s",
-                          msgargs=dict(clf=clfs[gk], gk=gk, ds=ds_group))
+                    debug('CLFTREE', "Training %s for group %s on %s",
+                          (clfs[gk], gk, ds_group))
                 # and train corresponding slave clf
                 clf.train(ds_group)
 
@@ -891,7 +890,7 @@ class TreeClassifier(ProxyClassifier):
             group_indexes = (clf_predictions == pred_group)
             if __debug__:
                 debug('CLFTREE',
-                      'Predicting for group %s using %s on %d samples' %
+                      'Predicting for group %s using %s on %d samples',
                       (gk, clf_, np.sum(group_indexes)))
             if clf_ is None:
                 predictions[group_indexes] = groups[gk][0] # our only label
@@ -995,19 +994,17 @@ class BinaryClassifier(ProxyClassifier):
             datasetselected = dataset.copy(deep=False)   # no selection is needed
             if __debug__:
                 debug('CLFBIN',
-                      "Created shallow copy with %d samples for binary " %
-                      (dataset.nsamples) +
-                      " classification among labels %s/+1 and %s/-1" %
-                      (self.__poslabels, self.__neglabels))
+                      "Created shallow copy with %d samples for binary "
+                      "classification among labels %s/+1 and %s/-1",
+                      (dataset.nsamples, self.__poslabels, self.__neglabels))
         else:
             datasetselected = dataset[[ x[0] for x in idlabels ]]
             if __debug__:
                 debug('CLFBIN',
-                      "Selected %d samples out of %d samples for binary " %
-                      (len(idlabels), dataset.nsamples) +
-                      " classification among labels %s/+1 and %s/-1" %
-                      (self.__poslabels, self.__neglabels) +
-                      ". Selected %s" % datasetselected)
+                      "Selected %d samples out of %d samples for binary "
+                      "classification among labels %s/+1 and %s/-1. Selected %s",
+                      (len(idlabels), dataset.nsamples,
+                       self.__poslabels, self.__neglabels, datasetselected))
 
         # adjust the labels
         datasetselected.sa[targets_sa_name].value = [ x[1] for x in idlabels ]
@@ -1105,7 +1102,7 @@ class MulticlassClassifier(CombinedClassifier):
                             clf,
                             poslabels=[ulabels[i]], neglabels=[ulabels[j]]))
             if __debug__:
-                debug("CLFMC", "Created %d binary classifiers for %d labels" %
+                debug("CLFMC", "Created %d binary classifiers for %d labels",
                       (len(biclfs), len(ulabels)))
 
             self.clfs = biclfs
@@ -1202,10 +1199,8 @@ class SplitClassifier(CombinedClassifier):
         # train them
         for split in self.__partitioner.get_partition_specs(dataset):
             if __debug__:
-                debug("CLFSPL_",
-                      "Deepcopying %(clf)s for %(sclf)s",
-                      msgargs={'clf':clf_template,
-                               'sclf':self})
+                debug("CLFSPL_", "Deepcopying %s for %s",
+                      (clf_template, self))
             clf = clf_template.clone()
             bclfs.append(clf)
         self.clfs = bclfs
@@ -1214,7 +1209,7 @@ class SplitClassifier(CombinedClassifier):
 
         for i, pset in enumerate(self.__partitioner.generate(dataset)):
             if __debug__:
-                debug("CLFSPL", "Training classifier for split %d" % (i))
+                debug("CLFSPL", "Training classifier for split %d", (i,))
 
             # split partitioned dataset
             split = [d for d in self.__splitter.generate(pset)]
@@ -1242,11 +1237,11 @@ class SplitClassifier(CombinedClassifier):
                 if __debug__:
                     dact = debug.active
                     if 'CLFSPL_' in dact:
-                        debug('CLFSPL_',
-                              'Split %d:\n%s' % (i, self.ca.stats))
+                        debug('CLFSPL_', 'Split %d:\n%s',
+                              (i, self.ca.stats))
                     elif 'CLFSPL' in dact:
-                        debug('CLFSPL', 'Split %d error %.2f%%'
-                              % (i, self.ca.stats.summaries[-1].error))
+                        debug('CLFSPL', 'Split %d error %.2f%%',
+                              (i, self.ca.stats.summaries[-1].error))
 
             if ca.is_enabled("training_stats"):
                 # XXX this is broken, as it cannot deal with not yet set ca
@@ -1495,10 +1490,8 @@ class RegressionAsClassifier(ProxyClassifier):
 
         predictions = attrmap.to_literal(np.argmin(distances, axis=1))
         if __debug__:
-            debug("CLF_", "Converted regression distances %(distances)s "
-                  "into labels %(predictions)s for %(self_)s",
-                      msgargs={'distances':distances, 'predictions':predictions,
-                               'self_': self})
+            debug("CLF_", "Converted regression distances %s "
+                  "into labels %s for %s", (distances, predictions, self))
 
         return predictions
 

@@ -61,7 +61,7 @@ class Collectable(object):
         if not value is None:
             self._set(value)
         if __debug__ and __mvpadebug__:
-            debug("COL", "Initialized %r" % self)
+            debug("COL", "Initialized %r", (self,))
 
 
     def __copy__(self):
@@ -87,9 +87,7 @@ class Collectable(object):
             # Since this call is quite often, don't convert
             # values to strings here, rely on passing them
             # withing msgargs
-            debug("COL",
-                  "Setting %(self)s to %(val)s ",
-                  msgargs={'self':self, 'val':val})
+            debug("COL", "Setting %s to %s ", (self, val))
         self._value = val
 
 
@@ -351,8 +349,8 @@ class Collection(dict):
                     memo=memo)
 
         if __debug__ and __mvpadebug__ and 'COL' in debug.active:
-            debug("COL", "Copied %s into %s using args deep=%r a=%r"
-                  % (self, anew, deep, a))
+            debug("COL", "Copied %s into %s using args deep=%r a=%r",
+                  (self, anew, deep, a))
             #if 'state2' in str(self):
             #    import pydb; pydb.debugger()
         return anew
