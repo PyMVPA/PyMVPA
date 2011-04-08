@@ -28,6 +28,16 @@ class ReportTest(unittest.TestCase):
     """Just basic testing of reports -- pretty much that nothing fails
     """
 
+    def setUp(self):
+        # preserve handlers/level for verbose
+        self.__oldverbosehandlers = verbose.handlers
+        self.__oldverbose_level = verbose.level
+
+
+    def tearDown(self):
+        verbose.handlers = self.__oldverbosehandlers
+        verbose.level = self.__oldverbose_level
+
     ##REF: Name was automagically refactored
     def aux_basic(self, dirname, rc):
         """Helper function -- to assure that all filehandlers
@@ -40,7 +50,6 @@ class ReportTest(unittest.TestCase):
                     path=dirname)
         isdummy = isinstance(report, DummyReport)
 
-        ohandlers = verbose.handlers
         verbose.handlers = [report]
         verbose.level = 3
         verbose(1, "Starting")
@@ -96,7 +105,6 @@ class ReportTest(unittest.TestCase):
             pl.close('all')
             pl.ion()
 
-        verbose.handlers = ohandlers
         pass
 
 

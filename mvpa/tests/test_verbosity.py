@@ -47,6 +47,7 @@ class VerboseOutputTest(unittest.TestCase):
 
         # set verbose to 4th level
         self.__oldverbosehandlers = verbose.handlers
+        self.__oldverbose_level = verbose.level
         verbose.handlers = []           # so debug doesn't spoil it
         verbose.level = 4
         if __debug__:
@@ -64,6 +65,7 @@ class VerboseOutputTest(unittest.TestCase):
             debug.handlers = self.__olddebughandlers
             debug.offsetbydepth = True
         verbose.handlers = self.__oldverbosehandlers
+        verbose.level = self.__oldverbose_level
         self.sout.close()
 
 
