@@ -185,6 +185,7 @@ if __debug__:
 
     # List agreed sets for debug
     debug.register('PY',   "No suppression of various warnings (numpy, scipy) etc.")
+    debug.register('VERBOSE', "Verbose control debugging")
     debug.register('DBG',  "Debug output itself")
     debug.register('DOCH', "Doc helpers")
     debug.register('INIT', "Just sequence of inits")
