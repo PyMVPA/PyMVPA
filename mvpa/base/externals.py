@@ -192,7 +192,7 @@ def __assign_nipy_version():
     versions['nipy'] = SmartVersion(nipy.__version__)
 
 def __check_nipy_neurospin():
-    import nipy.neurospin
+    from nipy.neurospin.utils import emp_nul
 
 def __check_weave():
     """Apparently presence of scipy is not sufficient since some
