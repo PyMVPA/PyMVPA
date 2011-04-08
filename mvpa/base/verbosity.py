@@ -162,6 +162,13 @@ class LevelLogger(Logger):
     def _set_level(self, level):
         """Set logging level
         """
+        if __debug__:
+            try:
+                from mvpa.base import debug
+                debug('VERBOSE', 'Setting verbosity to %r from %r',
+                      (self.__level, level))
+            except:
+                pass
         ilevel = int(level)
         if ilevel < 0:
             raise ValueError, \
