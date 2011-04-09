@@ -569,12 +569,12 @@ if __debug__:
                 # be statefull as RelativeTime
                 return
 
+            msg_ = ' / '.join([str(x()) for x in self.__metrics])
+
+            if len(msg_)>0:
+                msg_ = "{%s}" % msg_
+
             if len(msg) > 0:
-                msg_ = ' / '.join([str(x()) for x in self.__metrics])
-
-                if len(msg_)>0:
-                    msg_ = "{%s}" % msg_
-
                 # determine blank offset using backstacktrace
                 if self._offsetbydepth:
                     level = len(traceback.extract_stack())-2
@@ -586,8 +586,12 @@ if __debug__:
                     msg += "  !!!2LONG!!!. From %s" % str(tb[0])
 
                 msg = "DBG%s:%s%s" % (msg_, " "*level, msg)
+                SetLogger.__call__(self, setid, msg, *args, **kwargs)
+            else:
+                msg = msg_
+                Logger.__call__(self, msg, *args, **kwargs)
 
-            SetLogger.__call__(self, setid, msg, *args, **kwargs)
+
 
 
         ##REF: Name was automagically refactored
