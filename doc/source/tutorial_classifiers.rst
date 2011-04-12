@@ -238,10 +238,10 @@ Per target:          ------------  ------------  ------------  ------------  ---
          TP               6             10            7             12            12            6             12            10
          TN               69            65            68            63            63            69            63            65
 Summary \ Means:     ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------ 12 68.25 2.62 2.62 0.81 0.96 0.78 0.96 0.19 0.67
-       CHI^2            442.67          p:          2e-58
+       CHI^2            442.67       p=2e-58
         ACC              0.78
         ACC%            78.12
-     # of sets            12
+     # of sets            12       ACC(i) = 0.87-0.015*i p=0.3 r=-0.33 r^2=0.11
 <BLANKLINE>
 Statistics computed in 1-vs-rest fashion per each target.
 Abbreviations (for details see http://en.wikipedia.org/wiki/ROC_curve):
@@ -267,6 +267,7 @@ Abbreviations (for details see http://en.wikipedia.org/wiki/ROC_curve):
       MCC = (TP*TN - FP*FN)/sqrt(P N P' N')
  AUC: Area under (AUC) curve
  CHI^2: Chi-square of confusion matrix
+ LOE(ACC): Linear Order Effect in ACC across sets
  # of sets: number of target/prediction sets which were provided
 <BLANKLINE>
 
@@ -399,14 +400,3 @@ possible approach to this question is the topic of the :ref:`next tutorial part
      Try doing the Z-Scoring before computing the mean samples per category.
      What happens to the generalization performance of the classifier?
      ANSWER: It becomes 100%!
-
-
-.. only:: html
-
-  References
-  ==========
-
-  .. autosummary::
-     :toctree: generated
-
-     ~mvpa.clfs.base.Classifier

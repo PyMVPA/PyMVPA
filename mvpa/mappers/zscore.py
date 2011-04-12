@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.base import warning
-from mvpa.base.dochelpers import _str, borrowkwargs
+from mvpa.base.dochelpers import _str, borrowkwargs, _repr_attrs
 from mvpa.mappers.base import accepts_dataset_as_samples, Mapper
 from mvpa.datasets.base import Dataset
 from mvpa.datasets.miscfx import get_nsamples_per_attr, get_samples_by_attr
@@ -86,21 +86,11 @@ class ZScoreMapper(Mapper):
         self._secret_inplace_zscore = False
 
 
-    def __repr__(self):
-        s = super(ZScoreMapper, self).__repr__()
-        add_args = []
-        if self.__params is not None:
-            add_args += ['params=%s' % repr(self.__params)]
-        if self.__param_est is not None:
-            add_args += ['param_est=%s' % repr(self.__param_est)]
-        if self.__chunks_attr != 'chunks':
-            add_args += ['chunks_attr=%s' % repr(self.__chunks_attr)]
-        if self.__dtype != 'float64':
-            add_args += ['dtype=%s' % repr(self.__dtype)]
-        if add_args:
-            return s.replace("(", '(%s, ' % ", ".join(add_args))
-        else:
-            return s
+    def __repr__(self, prefixes=[]):
+        return super(ZScoreMapper, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['params', 'param_est', 'chunks_attr'])
+            + _repr_attrs(self, ['dtype'], default='float64'))
 
 
     def __str__(self):
@@ -253,6 +243,10 @@ class ZScoreMapper(Mapper):
                 samples[:, std_nz] /= np.asanyarray(std)[std_nz]
         return samples
 
+    params = property(fget=lambda self:self.__params)
+    param_est = property(fget=lambda self:self.__param_est)
+    chunks_attr = property(fget=lambda self:self.__chunks_attr)
+    dtype = property(fget=lambda self:self.__dtype)
 
 
 @borrowkwargs(ZScoreMapper, '__init__')

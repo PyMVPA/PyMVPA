@@ -20,7 +20,7 @@ from mvpa.datasets.base import Dataset
 from mvpa.misc.errorfx import mean_mismatch_error
 from mvpa.measures.searchlight import BaseSearchlight
 from mvpa.base import externals, warning
-from mvpa.base.dochelpers import borrowkwargs
+from mvpa.base.dochelpers import borrowkwargs, _repr_attrs
 from mvpa.generators.splitters import Splitter
 
 #from mvpa.base.param import Parameter
@@ -184,30 +184,27 @@ class GNBSearchlight(BaseSearchlight):
                 indexsum = 'fancy'
         self._indexsum = indexsum
 
-        if not self._nproc in (None, 1):
+        if not self.nproc in (None, 1):
             raise NotImplementedError, "For now only nproc=1 (or None for " \
                   "autodetection) is supported by GNBSearchlight"
 
     def __repr__(self, prefixes=[]):
-        prefixes_ = ['gnb=%r' % self._gnb,
-                     'generator=%r' % self._generator,
-                     'qe=%r' % self._qe]
-        if not self._errorfx is mean_mismatch_error:
-            prefixes_ += ['errorfx=%r' % self._errorfx]
-        if self._indexsum is not None:
-            prefixes_ += ['indexsum=%r' % self._indexsum]
         return super(GNBSearchlight, self).__repr__(
-            prefixes=prefixes_ + prefixes)
+            prefixes=prefixes
+            + _repr_attrs(self, ['gnb', 'generator'])
+            + _repr_attrs(self, ['errorfx'], default=mean_mismatch_error)
+            + _repr_attrs(self, ['indexsum'])
+            )
 
     def _sl_call(self, dataset, roi_ids, nproc):
         """Call to GNBSearchlight
         """
         # Local bindings
-        gnb = self._gnb
+        gnb = self.gnb
         params = gnb.params
-        generator = self._generator
-        errorfx = self._errorfx
-        qe = self._qe
+        generator = self.generator
+        errorfx = self.errorfx
+        qe = self.queryengine
 
         ## if False:
         ##     class A(Learner):
@@ -268,7 +265,10 @@ class GNBSearchlight(BaseSearchlight):
         ulabels_numeric = [label2index[l] for l in ulabels]
         # set the feature dimensions
         nsamples = len(X)
+        nrois = len(roi_ids)
         s_shape = X.shape[1:]           # shape of a single sample
+        # The shape of results
+        r_shape = (nrois,) + X.shape[2:]
 
         #
         # Everything toward optimization ;)
@@ -353,7 +353,7 @@ class GNBSearchlight(BaseSearchlight):
         nsamples_per_class = np.zeros((nlabels,) + (1,)*len(s_shape))
 
         # results
-        results = np.zeros((nsplits,) + s_shape)
+        results = np.zeros((nsplits,) + r_shape)
 
         block_counts = np.zeros((nblocks,))
         block_labels = [None] * nblocks
@@ -374,7 +374,6 @@ class GNBSearchlight(BaseSearchlight):
 
         # 4. Lets deduce all neighbors... might need to be RF into the
         #    parallel part later on
-        nrois = len(roi_ids)
         if __debug__:
             debug('SLC',
                   'Phase 4. Deducing neighbors information for %i ROIs'
@@ -514,6 +513,10 @@ class GNBSearchlight(BaseSearchlight):
 
         return Dataset(results), roi_sizes
 
+    gnb = property(fget=lambda self: self._gnb)
+    generator = property(fget=lambda self: self._generator)
+    errorfx = property(fget=lambda self: self._errorfx)
+    indexsum = property(fget=lambda self: self._indexsum)
 
 @borrowkwargs(GNBSearchlight, '__init__', exclude=['roi_ids'])
 def sphere_gnbsearchlight(gnb, generator, radius=1, center_ids=None,

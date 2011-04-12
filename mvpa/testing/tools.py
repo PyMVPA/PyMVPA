@@ -12,8 +12,15 @@ Primarily the ones from nose.tools
 """
 __docformat__ = 'restructuredtext'
 
+import os
+import tempfile
 import unittest
+
+import mvpa
 from mvpa.base import externals
+
+if __debug__:
+    from mvpa.base import debug
 
 if externals.exists('nose'):
     # We use nose now
@@ -84,3 +91,113 @@ def skip_if_no_external(dep, ver_dep=None, min_version=None, max_version=None):
               "Maximal version %s of %s is required. Present version is %s" \
               ". Test was skipped." \
               % (min_version, ver_dep, externals.versions[ver_dep])
+
+
+def with_tempfile(*targs, **tkwargs):
+    """Decorator function to provide a temporary file name and remove it at the end.
+
+    All arguments are passed into the call to tempfile.mktemp(), and
+    resultant temporary filename is passed as the first argument into
+    the test.  If no 'prefix' argument is provided, it will be
+    constructed using module and function names ('.' replaced with
+    '_').
+
+    Example use::
+
+        @with_tempfile()
+        def test_write(tfile):
+            open(tfile, 'w').write('silly test')
+    """
+
+    def decorate(func):
+        def newfunc(*arg, **kw):
+            if len(targs)<2 and not 'prefix' in tkwargs:
+                try:
+                    tkwargs['prefix'] = 'tempfile_%s.%s' \
+                                        % (func.__module__, func.func_name)
+                except:
+                    # well -- if something wrong just proceed with defaults
+                    pass
+
+            filename = tempfile.mktemp(*targs, **tkwargs)
+            if __debug__:
+                debug('TEST', 'Running %s with temporary filename %s'
+                      % (func.__name__, filename))
+            try:
+                func(*(arg + (filename,)), **kw)
+            finally:
+                try:
+                    os.unlink(filename)
+                except OSError:
+                    pass
+        newfunc = make_decorator(func)(newfunc)
+        return newfunc
+
+    return decorate
+
+
+def reseed_rng():
+    """Decorator to assure the use of MVPA_SEED while running the test
+
+    It resets random number generators (both python and numpy) to the
+    initial value of the seed value which was set while importing
+    :mod:`mvpa`, which could be controlled through
+    configuration/environment.
+
+    Examples
+    --------
+
+        @reseed_rng()
+        def test_random():
+            import numpy.random as rnd
+            print rnd.randint(100)
+
+    """
+
+    def decorate(func):
+        def newfunc(*arg, **kwargs):
+            mvpa.seed(mvpa._random_seed)
+            return func(*arg, **kwargs)
+        newfunc = make_decorator(func)(newfunc)
+        return newfunc
+
+    return decorate
+
+
+def nodebug(entries=None):
+    """Decorator to temporarily turn off some debug targets
+
+    Parameters
+    ----------
+    entries : None or list of string, optional
+      If None, all debug entries get turned off.  Otherwise only provided
+      ones
+    """
+
+    def decorate(func):
+        def newfunc(*arg, **kwargs):
+            if __debug__:
+                from mvpa.base import debug
+                # store a copy
+                old_active = debug.active[:]
+                if entries is None:
+                    # turn them all off
+                    debug.active = []
+                else:
+                    for e in entries:
+                        if e in debug.active:
+                            debug.active.remove(e)
+            try:
+                res = func(*arg, **kwargs)
+                return res
+            finally:
+                # we should return the debug states to the original
+                # state regardless either test passes or not!
+                if __debug__:
+                    # turn debug targets back on
+                    debug.active = old_active
+
+        newfunc = make_decorator(func)(newfunc)
+        return newfunc
+
+    return decorate

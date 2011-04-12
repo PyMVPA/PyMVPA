@@ -125,6 +125,7 @@ class RegressionsTests(unittest.TestCase):
 
 
     @sweepargs(regr=regrswh['regression', 'has_sensitivity', '!gpr'])
+    @reseed_rng()
     def test_sensitivities(self, regr):
         """Test "sensitivities" provided by regressions
 

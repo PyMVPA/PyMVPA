@@ -69,9 +69,8 @@ class IndexedCollectable(Collectable):
         Collectable.__init__(self, *args, **kwargs)
 
         if __debug__ and 'COL' in debug.active:
-            debug("COL",
-                  "Initialized new IndexedCollectable #%d:%s %r"
-                  % (index, self.name, self))
+            debug("COL", "Initialized new IndexedCollectable #%d:%s %r",
+                  (index, self.name, self))
 
     # XXX shows how indexing was screwed up -- not copied etc
     #def __copy__(self):
@@ -100,11 +99,9 @@ class IndexedCollectable(Collectable):
         """
         if __debug__: # Since this call is quite often, don't convert
             # values to strings here, rely on passing them # withing
-            debug("COL",
-                  "%(istr)s %(self)s to %(val)s ",
-                  msgargs={'istr':{True: 'Initializing',
-                                   False: 'Setting'}[init],
-                           'self':self, 'val':val})
+            debug("COL", "%s %s to %s ",
+                  ({True: 'Initializing', False: 'Setting'}[init],
+                   self, val))
         self._value = val
         self._isset = True
 
@@ -117,7 +114,7 @@ class IndexedCollectable(Collectable):
     def reset(self):
         """Simply reset the flag"""
         if __debug__ and self._isset:
-            debug("COL", "Reset %s to being non-modified" % self.name)
+            debug("COL", "Reset %s to being non-modified", (self.name,))
         self._isset = False
 
 
@@ -192,9 +189,8 @@ class ConditionalAttribute(IndexedCollectable):
             # self._value = val
             IndexedCollectable._set(self, val)
         elif __debug__:
-            debug("COL",
-                  "Not setting disabled %(self)s to %(val)s ",
-                  msgargs={'self':self, 'val':val})
+            debug("COL", "Not setting disabled %s to %s ",
+                  (self, val))
 
 
     def reset(self):
@@ -212,7 +208,7 @@ class ConditionalAttribute(IndexedCollectable):
             # Do nothing since it is already in proper state
             return
         if __debug__:
-            debug("STV", "%s %s" %
+            debug("STV", "%s %s",
                   ({True: 'Enabling', False: 'Disabling'}[value],
                    self))
         self.__enabled = value

@@ -39,7 +39,7 @@ for b in origin/maint/0.4; do
     TESTS_BRANCHES["$b"]="$TESTS_COMMON testapiref"
 done
 # development branches
-for b in origin/master origin/maint/0.5 yarikoptic/master hanke/master; do
+for b in origin/master yarikoptic/master hanke/master; do
     TESTS_BRANCHES["$b"]="$TESTS_COMMON testdatadb testourcfg testdocstrings"
 done
 # all known tests

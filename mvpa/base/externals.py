@@ -104,6 +104,9 @@ def __assign_mdp_version():
         ver += '-dev'
     versions['mdp'] = SmartVersion(ver)
 
+def __assign_nibabel_version():
+    import nibabel
+    versions['nibabel'] = SmartVersion(nibabel.__version__)
 
 def __check_pywt(features=None):
     """Check for available functionality within pywt
@@ -187,6 +190,9 @@ def __check_shogun(bottom_version, custom_versions=[]):
 def __assign_nipy_version():
     import nipy
     versions['nipy'] = SmartVersion(nipy.__version__)
+
+def __check_nipy_neurospin():
+    from nipy.neurospin.utils import emp_nul
 
 def __check_weave():
     """Apparently presence of scipy is not sufficient since some
@@ -299,7 +305,11 @@ def __check_openopt():
     return
 
 def __check_skl():
-    import scikits.learn as _
+    import scikits.learn as skl
+    if skl.__doc__.strip() == "":
+        raise ImportError("Verify your installation of scikits.learn. "
+                          "Its docstring is empty -- could be that only -lib "
+                          "was installed without the native Python modules")
 
 def _set_matplotlib_backend():
     """Check if we have custom backend to set and it is different
@@ -412,7 +422,7 @@ def __check_rpy2():
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
-          'nibabel':'from nibabel import Nifti1Image as __',
+          'nibabel':'__assign_nibabel_version()',
           'ctypes':'import ctypes as __',
           'shogun':'__assign_shogun_version()',
           'shogun.krr': '__assign_shogun_version(); import shogun.Regression as __; x=__.KRR',
@@ -463,6 +473,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'pprocess': "__check_pprocess()",
           'h5py': "import h5py as __",
           'nipy': "__assign_nipy_version()",
+          'nipy.neurospin': "__check_nipy_neurospin()",
           }
 
 

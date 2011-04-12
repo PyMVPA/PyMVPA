@@ -12,7 +12,7 @@ import numpy as np
 import copy
 
 from mvpa.testing.tools import assert_raises, assert_false, assert_equal, \
-    assert_true,  assert_array_equal, assert_array_almost_equal
+    assert_true,  assert_array_equal, assert_array_almost_equal, reseed_rng
 
 from mvpa.base.collections import Collectable, ArrayCollectable, \
         SampleAttributesCollection
@@ -54,6 +54,7 @@ def test_basic_collectable():
     assert_raises(ValueError, c._set_name, "_underscore")
 
 
+@reseed_rng()
 def test_array_collectable():
     c = ArrayCollectable()
 

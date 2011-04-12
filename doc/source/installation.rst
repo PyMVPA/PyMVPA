@@ -59,10 +59,8 @@ Must Have
 The following software packages are required or PyMVPA will not work at all.
 
   Python_ 2.4 with ctypes_ 1.0.1 or a later Python 2.X release
-    With some modifications PyMVPA could probably work with Python 2.3, but as
-    it is quite old already and Python 2.4 is widely available there should be
-    no need to do this.  Python 2.5 is preferable release since that is the
-    version we use for PyMVPA development.  Python 3.X is not yet supported.
+    Python 2.6 is preferable release since that is the version we use for PyMVPA
+    development.  Python 3.X is not yet supported.
   NumPy_
     PyMVPA makes extensive use of NumPy to store and handle data. There is no
     way around it.
@@ -71,7 +69,7 @@ The following software packages are required or PyMVPA will not work at all.
 .. _NumPy: http://numpy.scipy.org/
 .. _ctypes: http://python.net/crew/theller/ctypes/
 
-.. index:: recommended software, SciPy, PyNIfTI, Shogun, R, RPy
+.. index:: recommended software, SciPy, NiBabel, Shogun, R, RPy
 
 
 Strong Recommendations
@@ -87,16 +85,15 @@ they are available on a particular target platform.
     regression classifier code. However, the SciPy package provides a lot of
     functionality that might be relevant in the context of PyMVPA, e.g.
     IO support for Matlab .mat files.
-  PyNIfTI_ (>= 0.20081017.1): access to NIfTI files
+  NiBabel_: access to NIfTI files
     PyMVPA provides a convenient wrapper for datasets stored in the NIfTI
-    format, that internally uses PyNIfTI. If you don't need that, PyNIfTI is
+    format, that internally uses NiBabel. If you don't need that, NiBabel is
     not necessary, but otherwise it makes it really easy to read from and write
     to NIfTI images. All dataset types dealing with NIfTI data will not be
-    available without a functional PyNIfTI installation. Since PyMVPA 0.4.0
-    at least PyNIfTI version 0.20081017.1 (or later) is required.
+    available without a functional NiBabel installation.
 
 .. _SciPy: http://www.scipy.org/
-.. _PyNIfTI: http://niftilib.sourceforge.net/pynifti/
+.. _NiBabel: http://nipy.sourceforge.net/nibabel/
 
 
 .. index:: suggested software, IPython, FSL, AFNI, LIBSVM, matplotlib, hlcuster
@@ -149,13 +146,9 @@ using PyMVPA.
     a large variety of raster and vector formats (e.g. SVG), and thus, is ideal
     to produce publication quality figures. The examples shipped with PyMVPA
     show a number of possibilities how to use matplotlib for data visualization.
-  hcluster_: generating, visualizing, and analyzing hierarchical clusters
-    This module is a nice addition to SciPy_ and can be used to perform cluster
-    analyses and plot dendrograms of their results.
 
 .. _Shogun: http://www.shogun-toolbox.org
 .. _LIBSVM: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
-.. _hcluster: http://code.google.com/p/scipy-cluster/
 .. _matplotlib: http://matplotlib.sourceforge.net/
 .. _IPython: http://ipython.scipy.org
 .. _Five Minutes with IPython: http://showmedo.com/videos/series?name=CnluURUTV
@@ -179,9 +172,8 @@ Installing Binary Packages
    Ubuntu is no excuse ;-)
 
 The easiest way to obtain PyMVPA is to use pre-built binary packages.
-Currently we provide such packages or installers for the Debian/Ubuntu family,
-several RPM-based GNU/Linux distributions, MacOS X and 32-bit Windows (see
-below). If there are no binary packages for your operating system or platform
+Currently we provide such packages or installers for the Debian/Ubuntu family
+(see below). If there are no binary packages for your operating system or platform
 yet, you can build PyMVPA from source.  Please refer to `Building from Source`_
 for more information.
 
@@ -204,7 +196,7 @@ for more information.
 Debian
 ------
 
-PyMVPA is available as an `official Debian package`_ (`python-mvpa`;
+PyMVPA is available as an `official Debian package`_ (``python-mvpa``;
 since *lenny*). The documentation is provided by the optional
 `python-mvpa-doc` package. To install PyMVPA simply do::
 
@@ -220,12 +212,12 @@ Debian backports and inofficial Ubuntu packages
 -----------------------------------------------
 
 Backports for the current Debian stable release and binary packages for recent
-Ubuntu releases are available from a `Debian Neuroscience Repository`_.
+Ubuntu releases are available from a `NeuroDebian Repository`_.
 Please read the `package repository instructions`_ to learn about
 how to obtain them. Otherwise install as you would do with any other Debian
 package.
 
-.. _Debian Neuroscience Repository: http://neuro.debian.net
+.. _NeuroDebian Repository: http://neuro.debian.net
 .. _package repository instructions: http://neuro.debian.net/#how-to-use-this-repository
 
 .. index:: Windows, Windows installer
@@ -261,16 +253,10 @@ install some additional software. First and foremost install SciPy_ -- download
 from the same page where you also got the NumPy installer.
 
 If you want to use PyMVPA to analyze fMRI datasets, you probably also want to
-install PyNIfTI_. Download the corresponding installer from the website of the
-`NIfTI libraries`_ and install it. PyNIfTI does not come with the required
-`zlib` library, so you also need to download and install it. A binary installer
-is available from the `GnuWin32 project`_. Install it in some arbitrary folder
-(just the binaries nothing else), find the `zlib1.dll` file in the `bin`
-subdirectory and move it in the Windows `system32` (or `system` on 64-bit
-Windows 7) directory. Verify that it
-works by importing the `nifti` module in Python.
+install NiBabel_. Download the corresponding installer from the website of the
+and install it. Verify that it works by importing the `nibabel` module in Python.
 
-  >>> import nifti
+  >>> import nibabel
   >>>
 
 Another piece of software you might want to install is matplotlib_. The project
@@ -283,7 +269,6 @@ With this set of packages you should be able to run most of the PyMVPA examples
 which are shipped with the source code in the `doc/examples` directory.
 
 .. _SciPy download page: http://scipy.org/Download
-.. _NIfTI libraries: http://niftilib.sourceforge.net/
 .. _GnuWin32 project: http://gnuwin32.sourceforge.net/
 
 .. index:: MacOS X
@@ -346,7 +331,7 @@ these changes to take effect.
 Once MacPorts is installed and your environment is properly configured, PyMVPA is
 installed using a single command::
 
-  > $ sudo port install py25-pymvpa +scipy +pynifti +hcluster +libsvm
+  > $ sudo port install py25-pymvpa +scipy +nibabel +hcluster +libsvm
   > +matplotlib +pywavelet
 
 The `+foo` arguments add support within PyMVPA for these packages. For a full
@@ -376,50 +361,50 @@ If no error messages appear, you have succesfully installed PyMVPA.
 .. index:: OpenSUSE
 .. _install_rpm:
 
-
-RPM-based GNU/Linux Distributions
----------------------------------
-
-To install one of the RPM packages provided through the `OpenSUSE Build
-Service`_, first download it from the `OpenSUSE software website`_.
-
-.. note::
-
-   This site does not only offer OpenSUSE packages, but also binaries for other
-   distributions, including: CentOS 5, Fedora 9-12, RedHat Enterprise Linux 5,
-   OpenSUSE 11.0 up to 11.2.
-
-Once downloaded, open a console and invoke (the example command refers to
-PyMVPA 0.4.4)::
-
-  rpm -i python-mvpa-0.4.4-1.1.i386.rpm
-
-The OpenSUSE website also offers `1-click-installations`_ for distributions
-supporting it.
-
-A more convenient way to install PyMVPA and automatically receive software
-updates is to included one of the RPM-package repositories in the system's
-package management configuration. For e.g. OpenSUSE 11.0, simply use Yast to add
-another repository, using the following URL:
-
-  http://download.opensuse.org/repositories/home:/hankem:/suse/openSUSE_11.0/
-
-For other distributions use the respective package managers (e.g. Yum) to setup
-the repository URL.  The repositories include all core dependencies of PyMVPA
-(usually Numpy and PyNIfTI), if they are not available from other repositories
-of the respective distribution. There are two different repository groups, one
-for `SUSE-related packages`_ and another one for `Fedora, Redhat
-and CentOS-related packages`_.
-
-Please note that on Redhat and CentOS systems you will also have to enable the
-`Extra Packages for Enterprise Linux (EPEL)`_ repository.
-
-.. _Extra Packages for Enterprise Linux (EPEL): http://fedoraproject.org/wiki/EPEL
-.. _SUSE-related packages: http://download.opensuse.org/repositories/home:/hankem:/suse/
-.. _Fedora, Redhat and CentOS-related packages: http://download.opensuse.org/repositories/home://hankem://rh5/
-.. _1-click-installations: http://software.opensuse.org/search?baseproject=ALL&p=1&q=python-mvpa
-.. _OpenSUSE software website: http://software.opensuse.org/search?baseproject=ALL&p=1&q=python-mvpa
-.. _OpenSUSE Build Service: https://build.opensuse.org/
+..
+  RPM-based GNU/Linux Distributions
+  ---------------------------------
+  
+  To install one of the RPM packages provided through the `OpenSUSE Build
+  Service`_, first download it from the `OpenSUSE software website`_.
+  
+  .. note::
+  
+     This site does not only offer OpenSUSE packages, but also binaries for other
+     distributions, including: CentOS 5, Fedora 9-12, RedHat Enterprise Linux 5,
+     OpenSUSE 11.0 up to 11.2.
+  
+  Once downloaded, open a console and invoke (the example command refers to
+  PyMVPA 0.4.4)::
+  
+    rpm -i python-mvpa-0.4.4-1.1.i386.rpm
+  
+  The OpenSUSE website also offers `1-click-installations`_ for distributions
+  supporting it.
+  
+  A more convenient way to install PyMVPA and automatically receive software
+  updates is to included one of the RPM-package repositories in the system's
+  package management configuration. For e.g. OpenSUSE 11.0, simply use Yast to add
+  another repository, using the following URL:
+  
+    http://download.opensuse.org/repositories/home:/hankem:/suse/openSUSE_11.0/
+  
+  For other distributions use the respective package managers (e.g. Yum) to setup
+  the repository URL.  The repositories include all core dependencies of PyMVPA
+  (usually Numpy and PyNIfTI), if they are not available from other repositories
+  of the respective distribution. There are two different repository groups, one
+  for `SUSE-related packages`_ and another one for `Fedora, Redhat
+  and CentOS-related packages`_.
+  
+  Please note that on Redhat and CentOS systems you will also have to enable the
+  `Extra Packages for Enterprise Linux (EPEL)`_ repository.
+  
+  .. _Extra Packages for Enterprise Linux (EPEL): http://fedoraproject.org/wiki/EPEL
+  .. _SUSE-related packages: http://download.opensuse.org/repositories/home:/hankem:/suse/
+  .. _Fedora, Redhat and CentOS-related packages: http://download.opensuse.org/repositories/home://hankem://rh5/
+  .. _1-click-installations: http://software.opensuse.org/search?baseproject=ALL&p=1&q=python-mvpa
+  .. _OpenSUSE software website: http://software.opensuse.org/search?baseproject=ALL&p=1&q=python-mvpa
+  .. _OpenSUSE Build Service: https://build.opensuse.org/
 
 .. _buildfromsource:
 .. index:: building from source, source package, MacOS X
@@ -510,12 +495,6 @@ build by default anymore. However, it is still shipped with PyMVPA and can be
 enabled at build time. To be able to do this you need to have SWIG_ installed on
 your system.
 
-PyMVPA needs a patched LIBSVM version, as the original distribution generates
-a huge amount of debugging messages and therefore makes the console and PyMVPA
-output almost unusable. Debian (since lenny: 2.84.0-1) and Ubuntu (since gutsy)
-already include the patched version. For all other systems a minimal copy of
-the patched sources is included in the PyMVPA source package (`3rd/libsvm`).
-
 If you do not have a proper LIBSVM_ package, you can build the library from 
 the copy of the code that is shipped with PyMVPA. To do this, simply invoke::
 
@@ -527,7 +506,8 @@ detect that LIBSVM_ is available and builds the LIBSVM wrapper module for you.
 If your system provides an appropriate LIBSVM_ version, you need to have the
 development files (headers and library) installed. Depending on where you
 installed them, it might be necessary to specify the full path to that location
-with the `--include-dirs`, `--library-dirs` and `--swig` options. Now add the '--with-libsvm' flag when building PyMVPA::
+with the `--include-dirs`, `--library-dirs` and `--swig` options. Now add the
+'--with-libsvm' flag when building PyMVPA::
 
   python setup.py build_ext --with-libsvm \
       [ -I<LIBSVM_INCLUDEDIR> -L<LIBSVM_LIBDIR> ]
@@ -558,7 +538,7 @@ previous commands from):
 .. note::
 
    This procedure also always builds the LIBSVM_ extension and therefore also
-   requires the patched LIBSVM version and SWIG to be available.
+   requires LIBSVM and SWIG to be available.
 
 
 .. index:: building on Windows
@@ -568,7 +548,7 @@ Windows
 -------
 
 On Windows the whole situation is a little more tricky, as the system doesn't
-come with a compiler by default. Nevertheless, it is easily possible to build
+come with a compiler by default. Nevertheless, it is possible to build
 PyMVPA from source. One could use the Microsoft compiler that comes with Visual
 Studio to do it, but as this is commercial software and not everybody has
 access to it, we will outline a way that exclusively involves free and open
@@ -641,30 +621,6 @@ Now, install the following required packages:
 
 Now you can simply compile and install PyMVPA, as outlined above, in the
 general build instructions (or alternatively using the method with LIBSVM).
-
-If you have problems compiling the NIfTI libraries and PyNIfTI on OpenSUSE, try
-the following: Download the `nifticlib` source tarball, extract it and run
-`make` in the top-level source directory. Be sure to install the `zlib-devel`
-package before. Now, download the `pynifti` source tarball extract it, and edit
-`setup.py`. Change the line::
-
-  libraries = [ 'niftiio' ],
-
-to::
-
-  libraries = [ 'niftiio', 'znz', 'z' ],
-
-as mentioned in the PyNIfTI installation instructions. This is necessary, as
-the above approach does only generate static NIfTI libraries which are not
-properly linked with all dependencies. Now, compile PyNIfTI with::
-
-  python setup.py build_ext -I <path_to_nifti>/include \
-      -L <path_to_nifti>/lib --swig-opts="-I<path_to_nifti>/include"
-
-where `<path_to_nifti>` is the directory that contains the extracted
-`nifticlibs` sources. Finally, install PyNIfTI with::
-
-  sudo python setup.py install
 
 If you want to run the PyMVPA examples including the ones that make use of the
 plotting capabilities of `matplotlib` you need to install of few more packages

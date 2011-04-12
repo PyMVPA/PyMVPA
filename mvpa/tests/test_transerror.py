@@ -16,6 +16,7 @@ from mvpa.support.copy import copy
 from mvpa.base.dataset import vstack
 from mvpa.base import externals, warning
 from mvpa.generators.partition import OddEvenPartitioner
+from mvpa.generators.base import Repeater
 from mvpa.generators.permutation import AttributePermutator
 from mvpa.generators.splitters import Splitter
 
@@ -138,6 +139,31 @@ class ErrorsTests(unittest.TestCase):
         for l in lm.keys():
             self.failUnless(l in s)
 
+    def test_confusion_call(self):
+        # Also tests for the consistency of the labels as
+        # either provided or collected by ConfusionMatrix through its lifetime
+        self.failUnlessRaises(RuntimeError, ConfusionMatrix(), [1], [1])
+        self.failUnlessRaises(ValueError, ConfusionMatrix(labels=[2]), [1], [1])
+        # Now lets test proper matrix and either we obtain the same
+        t = ['ho', 'ho', 'ho', 'fa', 'fa', 'ho', 'ho']
+        p = ['ho','ho', 'ho', 'ho', 'fa', 'fa', 'fa']
+        cm1 = ConfusionMatrix(labels=['ho', 'fa'])
+        cm2 = ConfusionMatrix(labels=['fa', 'ho'])
+        assert_array_equal(cm1(p, t), [[3, 1], [2, 1]])
+        assert_array_equal(cm2(p, t), [[1, 2], [1, 3]]) # reverse order of labels
+
+        cm1_ = ConfusionMatrix(labels=['ho', 'fa'], sets=[(t,p)])
+        assert_array_equal(cm1(p, t), cm1_.matrix) # both should be identical
+        # Lets provoke "mother" CM to get to know more labels which could get ahead
+        # of the known ones
+        cm1.add(['ho', 'aa'], ['ho', 'aa'])
+        # compare and cause recomputation so .__labels get reassigned
+        assert_equal(cm1.labels, ['ho', 'fa', 'aa'])
+        assert_array_equal(cm1(p, t), [[3, 1, 0], [2, 1, 0], [0, 0, 0]])
+        assert_equal(len(cm1.sets), 1)  # just 1 must be known atm from above add
+        assert_array_equal(cm1(p, t, store=True), [[3, 1, 0], [2, 1, 0], [0, 0, 0]])
+        assert_equal(len(cm1.sets), 2)  # and now 2
+        assert_array_equal(cm1(p + ['ho', 'aa'], t + ['ho', 'aa']), cm1.matrix)
 
     @sweepargs(l_clf=clfswh['linear', 'svm'])
     def test_confusion_based_error(self, l_clf):
@@ -182,7 +208,7 @@ class ErrorsTests(unittest.TestCase):
         # function and lower is better
         terr = TransferMeasure(
             l_clf,
-            Splitter(None, count=2),
+            Repeater(count=2),
             postproc=BinaryFxNode(mean_mismatch_error, 'targets'),
             null_dist=MCNullDist(permutator,
                                  tail='left'))
@@ -201,21 +227,31 @@ class ErrorsTests(unittest.TestCase):
 
         # check that the result is highly significant since we know that the
         # data has signal
-        null_prob = terr.ca.null_prob
+        null_prob = np.asscalar(terr.ca.null_prob)
+
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.failUnless(null_prob <= 0.1,
                 msg="Failed to check that the result is highly significant "
                     "(got %f) since we know that the data has signal"
                     % null_prob)
 
-            self.failUnless(cvte.ca.null_prob <= 0.1,
+            self.failUnless(np.asscalar(cvte.ca.null_prob) <= 0.1,
                 msg="Failed to check that the result is highly significant "
                     "(got p(cvte)=%f) since we know that the data has signal"
-                    % cvte.ca.null_prob)
+                    % np.asscalar(cvte.ca.null_prob))
 
-            # and we should be able to access the actual samples of the distribution
-            self.failUnlessEqual(len(cvte.null_dist.ca.dist_samples),
-                                 num_perm)
+        # we should be able to access the actual samples of the distribution
+        # yoh: why it is 3D really?
+        # mih: because these are the distribution samples for the ONE error
+        #      collapsed into ONE value across all folds. It will also be
+        #      3d if the return value of the measure isn't a scalar and it is
+        #      not collapsed across folds. it simply corresponds to the shape
+        #      of the output dataset of the respective measure (+1 axis)
+        # Some permutations could have been skipped since classifier failed
+        # to train due to degenerate situation etc, thus accounting for them
+        self.failUnlessEqual(cvte.null_dist.ca.dist_samples.shape[2],
+                             num_perm - cvte.null_dist.ca.skipped)
+
 
 
     @sweepargs(clf=clfswh['multiclass'])
@@ -506,7 +542,11 @@ class ErrorsTests(unittest.TestCase):
             cm = ConfusionMatrix(sets=sets, labels_map=labels_map)
         except:
             self.fail()
-        self.failUnless('3kHz / 38' in cm.as_string())
+
+        cms = str(cm)
+        self.failUnless('3kHz / 38' in cms)
+        if externals.exists("scipy"):
+            self.failUnless('ACC(i) = 0.82-0.012*i p=0.12 r=-0.59 r^2=0.35' in cms)
 
         if externals.exists("pylab plottable"):
             import pylab as pl
@@ -557,6 +597,7 @@ class ErrorsTests(unittest.TestCase):
             cm = ConfusionMatrix(sets=sets)
         except:
             self.fail()
+
         if externals.exists("pylab plottable"):
             import pylab as pl
             #pl.figure()

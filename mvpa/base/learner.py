@@ -14,6 +14,7 @@ import time
 from mvpa.base.node import Node
 from mvpa.base.state import ConditionalAttribute
 from mvpa.base.types import is_datasetlike
+from mvpa.base.dochelpers import _repr_attrs
 
 if __debug__:
     from mvpa.base import debug
@@ -75,10 +76,15 @@ class Learner(Node):
           All arguments are passed to the baseclass.
         """
         Node.__init__(self, **kwargs)
-        self.__istrained = False
+        self.__is_trained = False
         self.__auto_train = auto_train
-        self.__forced_train = force_train
+        self.__force_train = force_train
 
+
+    def __repr__(self, prefixes=[]):
+        return super(Learner, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['auto_train', 'force_train'], default=False))
 
     def train(self, ds):
         """
@@ -198,7 +204,7 @@ class Learner(Node):
         Derived use this to set the Learner's status to trained (True) or
         untrained (False).
         """
-        self.__istrained = status
+        self.__is_trained = status
 
 
     def __call__(self, ds):
@@ -206,12 +212,12 @@ class Learner(Node):
         # trained before use and auto-train
         if self.is_trained:
             # already trained
-            if self.is_forcedtraining:
+            if self.force_train:
                 # but retraining is enforced
                 self.train(ds)
         else:
             # not trained
-            if self.is_autotraining:
+            if self.auto_train:
                 # auto training requested
                 self.train(ds)
             else:
@@ -222,11 +228,11 @@ class Learner(Node):
         return super(Learner, self).__call__(ds)
 
 
-    is_trained = property(fget=lambda x:x.__istrained,
+    is_trained = property(fget=lambda x:x.__is_trained,
                           doc="Whether the Learner is currently trained.")
-    is_autotraining = property(fget=lambda x:x.__auto_train,
+    auto_train = property(fget=lambda x:x.__auto_train,
                           doc="Whether the Learner performs automatic training"
                               "when called untrained.")
-    is_forcedtraining = property(fget=lambda x:x.__forced_train,
+    force_train = property(fget=lambda x:x.__force_train,
                           doc="Whether the Learner enforces training upon every"
                               "called.")

@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import time
 from mvpa.support import copy
 
-from mvpa.base.dochelpers import _str, _repr
+from mvpa.base.dochelpers import _str, _repr, _repr_attrs
 from mvpa.base.state import ClassWithCollections, ConditionalAttribute
 
 if __debug__:
@@ -40,13 +40,13 @@ class Node(ClassWithCollections):
         """
         Parameters
         ----------
-        space: str
+        space: str, optional
           Name of the 'processing space'. The actual meaning of this argument
           heavily depends on the sub-class implementation. In general, this is
           a trigger that tells the node to compute and store information about
           the input data that is "interesting" in the context of the
           corresponding processing in the output dataset.
-        postproc : Node instance
+        postproc : Node instance, optional
           Node to perform post-processing of results. This node is applied
           in `__call__()` to perform a final processing step on the to be
           result dataset. If None, nothing is done.
@@ -120,7 +120,7 @@ class Node(ClassWithCollections):
         if not self.__postproc is None:
             if __debug__:
                 debug("NO",
-                      "Applying post-processing node %s" % self.__postproc)
+                      "Applying post-processing node %s", (self.__postproc,))
             result = self.__postproc(result)
 
         return result
@@ -174,8 +174,17 @@ class Node(ClassWithCollections):
         return _str(self)
 
 
+    def __repr__(self, prefixes=[]):
+        return super(Node, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['space', 'postproc']))
+
     space = property(get_space, set_space,
                      doc="Processing space name of this node")
+
+    postproc = property(get_postproc, set_postproc,
+                        doc="Node to perform post-processing of results")
+
 
 class ChainNode(Node):
     """Chain of nodes.
@@ -213,11 +222,13 @@ class ChainNode(Node):
         mp = ds
         for i, n in enumerate(self):
             if __debug__:
-                debug('MAP', "%s: input (%s) -> node (%i/%i): '%s'"
-                        % (self.__class__.__name__, mp.shape,
-                           i + 1, len(self),
-                           str(n)))
+                debug('MAP', "%s: input (%s) -> node (%i/%i): '%s'",
+                      (self.__class__.__name__, mp.shape,
+                       i + 1, len(self),
+                       n))
             mp = n(mp)
+        if __debug__:
+            debug('MAP', "%s: output (%s)", (self.__class__.__name__, mp.shape))
         return mp
 
 
@@ -233,10 +244,9 @@ class ChainNode(Node):
         """
         first_node = self[startnode]
         if __debug__:
-            debug('MAP', "%s: input (%s) -> generator (%i/%i): '%s'"
-                    % (self.__class__.__name__, ds.shape,
-                       startnode + 1, len(self),
-                       str(first_node)))
+            debug('MAP', "%s: input (%s) -> generator (%i/%i): '%s'",
+                  (self.__class__.__name__, ds.shape,
+                   startnode + 1, len(self), first_node))
         # let the first node generator as many datasets as it wants
         for gds in first_node.generate(ds):
             if startnode == len(self) - 1:
@@ -281,5 +291,13 @@ class ChainNode(Node):
             return sliced
 
 
+    def __repr__(self, prefixes=[]):
+        return super(ChainNode, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['nodes']))
+
+
     def __str__(self):
         return _str(self, '-'.join([str(n) for n in self]))
+
+    nodes = property(fget=lambda self:self._nodes)

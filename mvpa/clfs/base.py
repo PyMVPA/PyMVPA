@@ -180,9 +180,6 @@ class Classifier(Learner):
         else:
             return _str(self)
 
-    def __repr__(self, prefixes=[]):
-        return super(Classifier, self).__repr__(prefixes=prefixes)
-
 
     def _pretrain(self, dataset):
         """Functionality prior to training
@@ -204,7 +201,7 @@ class Classifier(Learner):
                 # if we don't know what was changed we need to figure
                 # them out
                 if __debug__:
-                    debug('CLF_', "IDHashes are %s" % (__idhashes))
+                    debug('CLF_', "IDHashes are %s", (__idhashes,))
 
                 # Look at the data if any was changed
                 for key, data_ in (('traindata', dataset.samples),
@@ -215,7 +212,7 @@ class Classifier(Learner):
                     if __invalidatedChangedData.get(key, False):
                         if __debug__ and not _changedData[key]:
                             debug('CLF_', 'Found that idhash for %s was '
-                                  'invalidated by retraining' % key)
+                                  'invalidated by retraining', (key,))
                         _changedData[key] = True
 
                 # Look at the parameters
@@ -227,8 +224,8 @@ class Classifier(Learner):
                 self.__invalidatedChangedData = {} # reset it on training
 
                 if __debug__:
-                    debug('CLF_', "Obtained _changedData is %s"
-                          % (self._changedData))
+                    debug('CLF_', "Obtained _changedData is %s",
+                          (self._changedData,))
 
 
     def _posttrain(self, dataset):
@@ -321,7 +318,7 @@ class Classifier(Learner):
         TODO: think about proper re-implementation, without enrollment of deepcopy
         """
         if __debug__:
-            debug("CLF", "Cloning %s#%s" % (self, id(self)))
+            debug("CLF", "Cloning %s#%s", (self, id(self)))
         try:
             return deepcopy(self)
         except:
@@ -362,8 +359,8 @@ class Classifier(Learner):
                 _changedData['testdata'] = \
                                         self.__was_data_changed('testdata', data)
                 if __debug__:
-                    debug('CLF_', "prepredict: Obtained _changedData is %s"
-                          % (_changedData))
+                    debug('CLF_', "prepredict: Obtained _changedData is %s",
+                          (_changedData,))
 
 
     def _postpredict(self, dataset, result):
@@ -390,8 +387,8 @@ class Classifier(Learner):
         ## ??? yoh: changed to asany from as without exhaustive check
         data = np.asanyarray(dataset.samples)
         if __debug__:
-            debug("CLF", "Predicting classifier %(clf)s on ds %(dataset)s",
-                msgargs={'clf':self, 'dataset':dataset})
+            debug("CLF", "Predicting classifier %s on ds %s",
+                  (self, dataset))
 
         # remember the time when started computing predictions
         t0 = time.time()
@@ -593,9 +590,9 @@ class Classifier(Learner):
                 __trained[key] = entry
 
         if __debug__ and changed:
-            debug('CLF_', "Changed %s from %s to %s.%s"
-                      % (key, __idhashes[key], idhash_,
-                         ('','updated')[int(update)]))
+            debug('CLF_', "Changed %s from %s to %s.%s",
+                  (key, __idhashes[key], idhash_,
+                   ('','updated')[int(update)]))
         if update:
             __idhashes[key] = idhash_
 

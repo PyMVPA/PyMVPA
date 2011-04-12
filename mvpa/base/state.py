@@ -44,7 +44,7 @@ from textwrap import TextWrapper
 # Although not used here -- included into interface
 from mvpa.misc.exceptions import UnknownStateError
 from mvpa.base.attributes import IndexedCollectable, ConditionalAttribute
-from mvpa.base.dochelpers import enhanced_doc_string
+from mvpa.base.dochelpers import enhanced_doc_string, borrowdoc, _repr_attrs
 
 from mvpa.base import externals
 # XXX local rename is due but later on
@@ -106,6 +106,14 @@ class Collection(BaseCollection):
         #if __debug__ and 'COL_RED' in debug.active:
         #    debug('COL_RED', 'Returning %s for %s' % (res, self))
         return res
+
+
+    @borrowdoc(BaseCollection)
+    def copy(self, *args, **kwargs):
+        # Create a generic copy of the collection
+        anew = super(Collection, self).copy(*args, **kwargs)
+        anew.name = self.name
+        return anew
 
 
     def __str__(self):
@@ -488,10 +496,9 @@ class ConditionalAttributesCollection(Collection):
             if len(add_enable_ca)>0:
                 if __debug__:
                     debug("ST",
-                          "Adding ca %s from %s to be enabled temporarily" %
-                          (add_enable_ca, other_) +
-                          " since they are not enabled in %s" %
-                          (self))
+                          "Adding ca %s from %s to be enabled temporarily "
+                          "since they are not enabled in %s",
+                          (add_enable_ca, other_, self))
                 enable_ca += add_enable_ca
 
         # Lets go one by one enabling only disabled once... but could be as
@@ -614,8 +621,8 @@ class AttributesCollector(type):
         if __debug__:
             debug(
                 "COLR",
-                "AttributesCollector call for %s.%s, where bases=%s, dict=%s " \
-                % (cls, name, bases, dict))
+                "AttributesCollector call for %s.%s, where bases=%s, dict=%s ",
+                (cls, name, bases, dict))
 
         super(AttributesCollector, cls).__init__(name, bases, dict)
 
@@ -650,7 +657,7 @@ class AttributesCollector(type):
                     continue
                 if __debug__: # XXX RF:  and "COLR" in debug.active:
                     debug("COLR",
-                          "Collect collections %s for %s from %s" %
+                          "Collect collections %s for %s from %s",
                           (newcollections, cls, base))
                 for col, collection in newcollections.iteritems():
                     if collections.has_key(col):
@@ -661,8 +668,8 @@ class AttributesCollector(type):
 
         if __debug__:
             debug("COLR",
-                  "Creating ConditionalAttributesCollection template %s with collections %s"
-                  % (cls, collections.keys()))
+                  "Creating ConditionalAttributesCollection template %s "
+                  "with collections %s", (cls, collections.keys()))
 
         # if there is an explicit
         if hasattr(cls, "_ATTRIBUTE_COLLECTIONS"):
@@ -737,12 +744,12 @@ class AttributesCollector(type):
                                     for x in collections['ca'].listing])
                 cadoc += "\n\n(Conditional attributes enabled by default suffixed with `+`)"
             if __debug__:
-                debug("COLR", "Assigning __cadoc to be %s" % cadoc)
+                debug("COLR", "Assigning __cadoc to be %s", (cadoc,))
             setattr(cls, "_cadoc", cadoc)
 
         if paramsdoc != "":
             if __debug__ and 'COLR' in debug.active:
-                debug("COLR", "Assigning __paramsdoc to be %s" % paramsdoc)
+                debug("COLR", "Assigning __paramsdoc to be %s", (paramsdoc,))
             setattr(cls, "_paramsdoc", paramsdoc)
 
         if len(paramsdoc) or cadoc != "":
@@ -806,8 +813,8 @@ class ClassWithCollections(object):
         if __debug__:
             descr = kwargs.get('descr', None)
             debug("COL", "ClassWithCollections.__new__ was done "
-                  "for %s#%s with descr=%s" \
-                  % (s__class__.__name__, id(self), descr))
+                  "for %s#%s with descr=%s",
+                  (s__class__.__name__, id(self), descr))
 
         return self
 
@@ -868,8 +875,8 @@ class ClassWithCollections(object):
             #              + " Valid parameters are %s" % known_params
         if __debug__:
             debug("COL", "ClassWithCollections.__init__ was done "
-                  "for %s#%s with descr=%s" \
-                  % (self.__class__.__name__, id(self), descr))
+                  "for %s#%s with descr=%s",
+                  (self.__class__.__name__, id(self), descr))
 
 
     #__doc__ = enhanced_doc_string('ClassWithCollections', locals())
@@ -971,13 +978,12 @@ class ClassWithCollections(object):
 
         Parameters
         ----------
-        fullname : bool
-          Either to include full name of the module
         prefixes : list of str
           What other prefixes to prepend to list of arguments
+        fullname : bool
+          Either to include full name of the module
         """
-        if prefixes is None:
-            prefixes = []
+        prefixes = prefixes or []
         prefixes = prefixes[:]          # copy list
         id_str = ""
         module_str = ""
@@ -1002,13 +1008,13 @@ class ClassWithCollections(object):
             prefixes += collection._cls_repr()
 
         # Description if present
-        descr = self.__descr
-        if descr is not None:
-            prefixes.append("descr=%r" % descr)
+        prefixes += _repr_attrs(self, ['descr'])
 
-        return "%s%s(%s)%s" % (module_str, self.__class__.__name__,
+        out = "%s%s(%s)%s" % (module_str, self.__class__.__name__,
                                ', '.join(prefixes), id_str)
-
+        # To possibly debug mass repr/str-fication
+        # print str(self), ' REPR: ', out
+        return out
 
     descr = property(lambda self: self.__descr,
                      doc="Description of the object if any")

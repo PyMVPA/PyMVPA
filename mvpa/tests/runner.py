@@ -42,6 +42,8 @@
 
 """
 
+__test__ = False
+
 import unittest
 import sys
 

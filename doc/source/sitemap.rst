@@ -9,7 +9,6 @@ PyMVPA.org Sitemap
 
    whoisusingit
    download
-   tutorial
    manual
    datadb
    examples
@@ -26,16 +25,15 @@ PyMVPA.org Sitemap
 .. Files which are not directly mentioned in any toctree but
    nevertheless included
 
-.. toctree::
+..
+    toctree::
    :hidden:
-
    authors
    devguide
    docoverview
    index
    modref
    mvpa_guidelines
-   pdfmanual
    release_notes_0.5
    release_notes_0.6
    workshops/2009-fall

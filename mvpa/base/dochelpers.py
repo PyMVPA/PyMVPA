@@ -379,7 +379,8 @@ def table2string(table, out=None):
 
     # figure out lengths within each column
     atable = np.asarray(table)
-    markup_strip = re.compile('^@[lrc]')
+    # eat whole entry while computing width for @w (for wide)
+    markup_strip = re.compile('^@([lrc]|w.*)')
     col_width = [ max( [len(markup_strip.sub('', x))
                         for x in column] ) for column in atable.T ]
     string = ""
@@ -390,15 +391,15 @@ def table2string(table, out=None):
             if item.startswith('@'):
                 align = item[1]
                 item = item[2:]
-                if not align in ['l', 'r', 'c']:
-                    raise ValueError, 'Unknown alignment %s. Known are l,r,c'
+                if not align in ['l', 'r', 'c', 'w']:
+                    raise ValueError, 'Unknown alignment %s. Known are l,r,c' % align
             else:
                 align = 'c'
 
-            NspacesL = ceil((col_width[j] - len(item))/2.0)
-            NspacesR = col_width[j] - NspacesL - len(item)
+            NspacesL = max(ceil((col_width[j] - len(item))/2.0), 0)
+            NspacesR = max(col_width[j] - NspacesL - len(item), 0)
 
-            if align == 'c':
+            if align in ['w', 'c']:
                 pass
             elif align == 'l':
                 NspacesL, NspacesR = 0, NspacesL + NspacesR
@@ -416,6 +417,17 @@ def table2string(table, out=None):
         value = out.getvalue()
         out.close()
         return value
+
+def _repr_attrs(obj, attrs, default=None, error_value='ERROR'):
+    """Helper to obtain a list of formatted attributes different from
+    the default
+    """
+    out = []
+    for a in attrs:
+        v = getattr(obj, a, error_value)
+        if not v is default:
+            out.append('%s=%r' % (a, v))
+    return out
 
 
 def _repr(obj, *args, **kwargs):

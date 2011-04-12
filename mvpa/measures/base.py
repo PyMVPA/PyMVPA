@@ -22,6 +22,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import mvpa.support.copy as copy
 
+from mvpa.base.node import Node
 from mvpa.base.learner import Learner
 from mvpa.base.state import ConditionalAttribute
 from mvpa.misc.args import group_kwargs
@@ -29,11 +30,11 @@ from mvpa.misc.attrmap import AttributeMap
 from mvpa.misc.errorfx import mean_mismatch_error
 from mvpa.base.types import asobjarray
 
-from mvpa.base.dochelpers import enhanced_doc_string, _str
+from mvpa.base.dochelpers import enhanced_doc_string, _str, _repr_attrs
 from mvpa.base import externals, warning
 from mvpa.clfs.stats import auto_null_dist
 from mvpa.base.dataset import AttrDataset
-from mvpa.datasets import Dataset, vstack
+from mvpa.datasets import Dataset, vstack, hstack
 from mvpa.mappers.fx import BinaryFxNode
 from mvpa.generators.splitters import Splitter
 
@@ -95,12 +96,21 @@ class Measure(Learner):
     __doc__ = enhanced_doc_string('Measure', locals(),
                                   Learner)
 
+    def __repr__(self, prefixes=[]):
+        """String representation of a `Measure`
+
+        Includes only arguments which differ from default ones
+        """
+        return super(Measure, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['null_dist']))
+
 
     def _precall(self, ds):
         # estimate the NULL distribution when functor is given
         if not self.__null_dist is None:
             if __debug__:
-                debug("SA_", "Estimating NULL distribution using %s"
+                debug("STAT", "Estimating NULL distribution using %s"
                       % self.__null_dist)
 
             # we need a matching measure instance, but we have to disable
@@ -118,7 +128,6 @@ class Measure(Learner):
 
         # post-processing
         result = super(Measure, self)._postcall(dataset, result)
-
         if not self.__null_dist is None:
             if self.ca.is_enabled('null_t'):
                 # get probability under NULL hyp, but also request
@@ -134,11 +143,11 @@ class Measure(Learner):
                 #       not here
                 tail = self.null_dist.tail
                 if tail == 'left':
-                    acdf = np.abs(null_prob)
+                    acdf = np.abs(null_prob.samples)
                 elif tail == 'right':
-                    acdf = 1.0 - np.abs(null_prob)
+                    acdf = 1.0 - np.abs(null_prob.samples)
                 elif tail in ['any', 'both']:
-                    acdf = 1.0 - np.clip(np.abs(null_prob), 0, 0.5)
+                    acdf = 1.0 - np.clip(np.abs(null_prob.samples), 0, 0.5)
                 else:
                     raise RuntimeError, 'Unhandled tail %s' % tail
                 # We need to clip to avoid non-informative inf's ;-)
@@ -153,28 +162,15 @@ class Measure(Learner):
                 # assure that we deal with arrays:
                 null_t = np.array(null_t, ndmin=1, copy=False)
                 null_t[~null_right_tail] *= -1.0 # revert sign for negatives
-                self.ca.null_t = null_t          # store
+                null_t_ds = null_prob.copy(deep=False)
+                null_t_ds.samples = null_t
+                self.ca.null_t = null_t_ds          # store as a Dataset
             else:
                 # get probability of result under NULL hypothesis if available
                 # and don't request tail information
                 self.ca.null_prob = self.__null_dist.p(result)
 
         return result
-
-
-    def __repr__(self, prefixes=None):
-        """String representation of a `Measure`
-
-        Includes only arguments which differ from default ones
-        """
-        if prefixes is None:
-            prefixes = []
-        prefixes = prefixes[:]
-        if self.get_postproc() is not None:
-            prefixes.append("postproc=%s" % self.get_postproc())
-        if self.__null_dist is not None:
-            prefixes.append("null_dist=%s" % self.__null_dist)
-        return super(Measure, self).__repr__(prefixes=prefixes)
 
 
     @property
@@ -193,7 +189,9 @@ class ProxyMeasure(Measure):
     wrapper, instead of the measure itself.
     """
     def __init__(self, measure, **kwargs):
-        Measure.__init__(self, auto_train=True, **kwargs)
+        # by default auto train
+        kwargs['auto_train'] = kwargs.get('auto_train', True)
+        Measure.__init__(self, **kwargs)
         self.__measure = measure
 
 
@@ -234,6 +232,7 @@ class RepeatedMeasure(Measure):
                  node,
                  generator,
                  callback=None,
+                 concat_as='samples',
                  **kwargs):
         """
         Parameters
@@ -250,12 +249,18 @@ class RepeatedMeasure(Measure):
           instance that is evaluated repeatedly and the 'result' of a single
           evaluation -- passed as named arguments (see labels in quotes) for
           every iteration, directly after evaluating the node.
+        concat_as : {'samples', 'features'}
+          Along which axis to concatenate result dataset from all iterations.
+          By default, results are 'vstacked' as multiple samples in the output
+          dataset. Setting this argument to 'features' will change this to
+          'hstacking' along the feature axis.
         """
         Measure.__init__(self, **kwargs)
 
         self._node = node
         self._generator = generator
         self._callback = callback
+        self._concat_as = concat_as
 
 
     def _call(self, ds):
@@ -264,6 +269,7 @@ class RepeatedMeasure(Measure):
         node = self._node
         ca = self.ca
         space = self.get_space()
+        concat_as = self._concat_as
 
         if self.ca.is_enabled("stats") and (not node.ca.has_key("stats") or
                                             not node.ca.is_enabled("stats")):
@@ -307,7 +313,12 @@ class RepeatedMeasure(Measure):
         self.ca.repetition_results = results
 
         # stack all results into a single Dataset
-        results = vstack(results)
+        if concat_as == 'samples':
+            results = vstack(results)
+        elif concat_as == 'features':
+            results = hstack(results)
+        else:
+            raise ValueError("Unkown concatenation mode '%s'" % concat_as)
         # no need to store the raw results, since the Measure class will
         # automatically store them in a CA
         return results
@@ -360,7 +371,7 @@ class CrossValidation(RepeatedMeasure):
 
     # TODO move conditional attributes from CVTE into this guy
     def __init__(self, learner, generator, errorfx=mean_mismatch_error,
-                 **kwargs):
+                 splitter=None, **kwargs):
         """
         Parameters
         ----------
@@ -373,22 +384,44 @@ class CrossValidation(RepeatedMeasure):
           IMPORTANT: The ``space`` of this generator determines the attribute
           that will be used to split all generated datasets into training and
           testing sets.
-        errorfx : callable
+        errorfx : Node or callable
           Custom implementation of an error function. The callable needs to
-          accept two arguments (1. predicted values, 2. target values).
+          accept two arguments (1. predicted values, 2. target values).  If not
+          a Node, it gets wrapped into a `BinaryFxNode`.
+        splitter : Splitter or None
+          A Splitter instance to split the dataset into training and testing
+          part. The first split will be used for training and the second for
+          testing -- all other splits will be ignored. If None, a default
+          splitter is auto-generated using the ``space`` setting of the
+          ``generator``. The default splitter is configured to return the
+          ``1``-labeled partition of the input dataset at first, and the
+          ``2``-labeled partition second. This behavior corresponds to most
+          Partitioners that label the taken-out portion ``2`` and the remainder
+          with ``1``.
         """
         # compile the appropriate repeated measure to do cross-validation from
         # pieces
         if not errorfx is None:
             # error node -- postproc of transfer measure
-            enode = BinaryFxNode(errorfx, learner.get_space())
+            if isinstance(errorfx, Node):
+                enode = errorfx
+            else:
+                # wrap into BinaryFxNode
+                enode = BinaryFxNode(errorfx, learner.get_space())
         else:
             enode = None
 
+        if splitter is None:
+            # default splitter splits into "1" and "2" partition.
+            # that will effectively ignore 'deselected' samples (e.g. by
+            # Balancer). It is done this way (and not by ignoring '0' samples
+            # because it is guaranteed to yield two splits) and is more likely
+            # to fail in visible ways if the attribute does not have 0,1,2
+            # values at all (i.e. a literal train/test/spareforlater attribute)
+            splitter = Splitter(generator.get_space(), attr_values=(1,2))
         # transfer measure to wrap the learner
         # splitter used the output space of the generator to know what to split
-        tm = TransferMeasure(learner, Splitter(generator.get_space()),
-                postproc=enode)
+        tm = TransferMeasure(learner, splitter, postproc=enode)
 
         # and finally the repeated measure to perform the x-val
         RepeatedMeasure.__init__(self, tm, generator, space='sa.cvfolds',
@@ -678,8 +711,9 @@ class Sensitivity(FeaturewiseMeasure):
         """
 
         """Does nothing special."""
-        FeaturewiseMeasure.__init__(self, auto_train=True,
-                                    force_train=force_train, **kwargs)
+        # by default auto train
+        kwargs['auto_train'] = kwargs.get('auto_train', True)
+        FeaturewiseMeasure.__init__(self, force_train=force_train, **kwargs)
 
         _LEGAL_CLFS = self._LEGAL_CLFS
         if len(_LEGAL_CLFS) > 0:
@@ -695,15 +729,6 @@ class Sensitivity(FeaturewiseMeasure):
 
         self.__clf = clf
         """Classifier used to computed sensitivity"""
-
-
-    def __repr__(self, prefixes=None):
-        if prefixes is None:
-            prefixes = []
-        prefixes.append("clf=%s" % repr(self.clf))
-        if not self.is_forcedtraining:
-            prefixes.append("force_train=%s" % self.is_forcedtraining)
-        return super(Sensitivity, self).__repr__(prefixes=prefixes)
 
 
     @property

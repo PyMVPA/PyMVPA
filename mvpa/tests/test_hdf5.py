@@ -30,6 +30,7 @@ class HDFDemo(object):
 class CustomOldStyle:
     pass
 
+@nodebug(['ID_IN_REPR', 'MODULE_IN_REPR'])
 def test_h5py_datasets():
     # this one stores and reloads all datasets in the warehouse
     rc_ds = saveload_warehouse()

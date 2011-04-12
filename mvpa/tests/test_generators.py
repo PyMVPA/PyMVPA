@@ -12,13 +12,15 @@
 import numpy as np
 
 from mvpa.testing.tools import ok_, assert_array_equal, assert_true, \
-        assert_false, assert_equal, assert_raises, assert_almost_equal
+        assert_false, assert_equal, assert_raises, assert_almost_equal, \
+        reseed_rng
 
-from mvpa.datasets import dataset_wizard
+from mvpa.datasets import dataset_wizard, Dataset
 from mvpa.generators.splitters import Splitter
 from mvpa.base.node import ChainNode
-from mvpa.generators.partition import OddEvenPartitioner
+from mvpa.generators.partition import OddEvenPartitioner, NFoldPartitioner
 from mvpa.generators.permutation import AttributePermutator
+from mvpa.generators.base import  Repeater, Sifter
 from mvpa.generators.resampling import Balancer
 from mvpa.misc.support import get_nelements_per_value
 
@@ -30,6 +32,7 @@ def give_data():
                           chunks=[ i/10 for i in range(100)])
 
 
+@reseed_rng()
 def test_splitter():
     ds = give_data()
     # split with defaults
@@ -79,6 +82,7 @@ def test_splitter():
     assert_equal(len(splits), 80)
 
 
+@reseed_rng()
 def test_partitionmapper():
     ds = give_data()
     oep = OddEvenPartitioner()
@@ -90,6 +94,7 @@ def test_partitionmapper():
         assert_equal(len(p), len(ds))
 
 
+@reseed_rng()
 def test_attrpermute():
     ds = give_data()
     ds.sa['ids'] = range(len(ds))
@@ -146,6 +151,7 @@ def test_attrpermute():
     assert_false(np.all(pds.fa.ids == ds.fa.ids))
 
 
+@reseed_rng()
 def test_balancer():
     ds = give_data()
     # only mark the selection in an attribute
@@ -191,3 +197,30 @@ def test_balancer():
     res = bal(ds)
     assert_equal(get_nelements_per_value(res.fa.one).values(),
                  [4] * 2)
+
+
+def test_repeater():
+    reps = 4
+    r = Repeater(reps, space='OMG')
+    dsl = [ds for ds in r.generate(Dataset([0,1]))]
+    assert_equal(len(dsl), reps)
+    for i, ds in enumerate(dsl):
+        assert_equal(ds.a.OMG, i)
+
+def test_sifter():
+    # somewhat duplicating the doctest
+    ds = Dataset(samples=np.arange(8).reshape((4,2)),
+                 sa={'chunks':   [ 0 ,  1 ,  2 ,  3 ],
+                     'targets':  ['c', 'c', 'p', 'p']})
+    par = ChainNode([NFoldPartitioner(cvtype=2, attr='chunks'),
+                     Sifter([('partitions', 2),
+                             ('targets', ['c', 'p'])])
+                     ])
+    dss = list(par.generate(ds))
+    assert_equal(len(dss), 4)
+    for ds_ in dss:
+        testing = ds[ds_.sa.partitions == 2]
+        assert_array_equal(np.unique(testing.sa.targets), ['c', 'p'])
+        # and we still have both targets  present in training
+        training = ds[ds_.sa.partitions == 1]
+        assert_array_equal(np.unique(training.sa.targets), ['c', 'p'])

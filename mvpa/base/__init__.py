@@ -185,7 +185,9 @@ if __debug__:
 
     # List agreed sets for debug
     debug.register('PY',   "No suppression of various warnings (numpy, scipy) etc.")
+    debug.register('VERBOSE', "Verbose control debugging")
     debug.register('DBG',  "Debug output itself")
+    debug.register('STDOUT', "To decorate stdout with debug metrics")
     debug.register('DOCH', "Doc helpers")
     debug.register('INIT', "Just sequence of inits")
     debug.register('RANDOM', "Random number generation")
@@ -342,6 +344,35 @@ if __debug__:
     if cfg.has_option('debug', 'metrics'):
         debug.register_metric(cfg.get('debug', 'metrics').split(","))
 
+    if 'STDOUT' in debug.active:
+        # Lets decorate sys.stdout to possibly figure out what brings
+        # the noise
+
+        class _pymvpa_stdout_debug(object):
+            """
+
+            Kudos to CODEHEAD
+            http://codingrecipes.com/decorating-pythons-sysstdout
+            for this design pattern
+            """
+
+            def __init__(self, sys):
+                self.stdout = sys.stdout
+                sys.stdout = self
+                self._inhere = False
+                self._newline = True
+
+            def write(self, txt):
+                try:
+                    if not self._inhere and self._newline:
+                        self._inhere = True
+                        debug('STDOUT', "", lf=False, cr=False)
+                    self.stdout.write(txt)
+                    self._newline = txt.endswith('\n')
+                finally:
+                    self._inhere = False
+
+        _out = _pymvpa_stdout_debug(sys)
 
 
 if __debug__:

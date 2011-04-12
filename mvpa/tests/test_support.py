@@ -122,6 +122,7 @@ class SupportFxTests(unittest.TestCase):
         self.failUnless((mo.ovstats_map == [1,0,2./3,1./3]).all())
 
 
+    @reseed_rng()
     @sweepargs(pair=[(np.random.normal(size=(10,20)), np.random.normal(size=(10,20))),
                      ([1,2,3,0], [1,3,2,0]),
                      ((1,2,3,1), (1,3,2,1))])
@@ -151,6 +152,7 @@ class SupportFxTests(unittest.TestCase):
             self.failUnlessEqual(len(i), len(i_con))
             self.failUnless(np.all(i == i_con))
 
+    @reseed_rng()
     def test_correlation(self):
         # data: 20 samples, 80 features
         X = np.random.rand(20,80)

@@ -16,7 +16,7 @@ import operator
 from mvpa.base import warning
 from mvpa.base.node import Node
 from mvpa.datasets import Dataset
-from mvpa.base.dochelpers import _str
+from mvpa.base.dochelpers import _str, _repr_attrs
 from mvpa.mappers.base import Mapper
 from mvpa.misc.support import array_whereequal
 from mvpa.base.dochelpers import borrowdoc
@@ -67,22 +67,14 @@ class FxMapper(Mapper):
             self.__attrfx = attrfx
 
 
-    # TODO YOH: think about convenience functions/args or use magic
-    #           of ClassWithCollections + Parameter?
-    #      as for convenient (but pylint/convention unfriendly way)
-    #      see meta-clfs
     @borrowdoc(Mapper)
-    def __repr__(self):
-        s = super(FxMapper, self).__repr__()
-        sargs = ["axis=%r, fx=%r" % (self.__axis, self.__fx)]
-        if self.__fxargs != ():
-            sargs += ['fxargs=%r' % (self.__fxargs,)]
-        if self.__uattrs is not None:
-            sargs += ['uattrs=%r' % (self.__uattrs,)]
-        if self.__attrfx != 'merge':    # if not default
-            sargs += ['attrfx=%r' % (self.__attrfx,)]
-        return s.replace("(", '(%s, ' % ', '.join(sargs), 1)
-
+    def __repr__(self, prefixes=[]):
+        return super(FxMapper, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['axis', 'fx', 'uattrs'])
+            + _repr_attrs(self, ['fxargs'], default=())
+            + _repr_attrs(self, ['attrfx'], default='merge')
+            )
 
     def __str__(self):
         return _str(self, fx=self.__fx.__name__)
@@ -107,6 +99,10 @@ class FxMapper(Mapper):
         # apply fx along features axis for each sample
         elif self.__axis == 'features':
             mdata = np.apply_along_axis(self.__fx, 1, data, *self.__fxargs)
+            if len(mdata.shape) == 1:
+                # in case we only have a scalar per sample we need to transpose
+                # it properly, to keep the length of the samples axis intact
+                mdata = np.atleast_2d(mdata).T
         return np.atleast_2d(mdata)
 
     @borrowdoc(Mapper)
@@ -227,6 +223,11 @@ class FxMapper(Mapper):
                                     for attr in ds.fa]))
         return mdata, attrs
 
+    axis = property(fget=lambda self:self.__axis)
+    fx = property(fget=lambda self:self.__fx)
+    fxargs = property(fget=lambda self:self.__fxargs)
+    uattrs = property(fget=lambda self:self.__uattrs)
+    attrfx = property(fget=lambda self:self.__attrfx)
 
 #
 # Convenience functions to create some useful mapper with less complexity
@@ -272,6 +273,42 @@ def mean_group_sample(attrs, attrfx='merge'):
     FxMapper instance.
     """
     return FxMapper('samples', np.mean, uattrs=attrs, attrfx=attrfx)
+
+
+def sum_sample(attrfx='merge'):
+    """Returns a mapper that computes the sum sample of a dataset.
+
+    Parameters
+    ----------
+    attrfx : 'merge' or callable, optional
+      Callable that is used to determine the sample attributes of the computed
+      sum samples. By default this will be a string representation of all
+      unique value of a particular attribute in any sample group. If there is
+      only a single value in a group it will be used as the new attribute value.
+
+    Returns
+    -------
+    FxMapper instance.
+    """
+    return FxMapper('samples', np.sum, attrfx=attrfx)
+
+
+def mean_feature(attrfx='merge'):
+    """Returns a mapper that computes the mean feature of a dataset.
+
+    Parameters
+    ----------
+    attrfx : 'merge' or callable, optional
+      Callable that is used to determine the feature attributes of the computed
+      mean features. By default this will be a string representation of all
+      unique value of a particular attribute in any feature group. If there is
+      only a single value in a group it will be used as the new attribute value.
+
+    Returns
+    -------
+    FxMapper instance.
+    """
+    return FxMapper('features', np.mean, attrfx=attrfx)
 
 
 def mean_group_feature(attrs, attrfx='merge'):
@@ -423,7 +460,7 @@ class BinaryFxNode(Node):
     def _call(self, ds):
         # extract samples and targets and pass them to the errorfx
         targets = ds.sa[self.get_space()].value
-        # squeeze to remove bogus dimensions are prevent problems during
+        # squeeze to remove bogus dimensions and prevent problems during
         # comparision later on
         values = np.atleast_1d(ds.samples.squeeze())
         if not values.shape == targets.shape:

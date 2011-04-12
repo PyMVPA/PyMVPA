@@ -107,7 +107,7 @@ def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
 
     An event definition is a dictionary that contains ``onset`` (as sample index
     in the input dataset), ``duration`` (as number of consecutive samples after
-    the onset), as well as an arbitrary number of additonal attributes.
+    the onset), as well as an arbitrary number of additional attributes.
 
     Alternatively, ``onset`` and ``duration`` may also be given as real time
     stamps (or durations). In this case a to be specified samples attribute in
@@ -159,7 +159,7 @@ def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
     >>> 'mapper' in ds.a
     False
     >>> print eds.a.mapper
-    <ChainMapper: <Boxcar: bl=4>-<Flatten>>
+    <Chain: <Boxcar: bl=4>-<Flatten>>
 
     And now the same conversion, but with events specified as real time. This is
     on possible if the input dataset contains a sample attribute with the
@@ -196,7 +196,7 @@ def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
             # rescue the real onset into a new attribute
             ev['orig_onset'] = ev['onset']
             ev['orig_duration'] = ev['duration']
-            # figure out how many sample we need
+            # figure out how many samples we need
             ev['duration'] = \
                     len(tvec[idx:][tvec[idx:] < ev['onset'] + ev['duration']])
             # new onset is sample index
@@ -229,7 +229,7 @@ def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
     bcm.train(ds)
     ds = ds.get_mapped(bcm)
     # at last reflatten the dataset
-    # could we add some meaningful attribute during this mapping, i.e. would 
+    # could we add some meaningful attribute during this mapping, i.e. would
     # assigning 'inspace' do something good?
     ds = ds.get_mapped(FlattenMapper(shape=ds.samples.shape[1:]))
     # add samples attributes for the events, simply dump everything as a samples
@@ -241,7 +241,7 @@ def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
             # under new `eprefix` name
             ds.sa[eprefix + '_' + a] = ds.sa[a]
         if a in ['onset', 'duration']:
-            # special case: we want the non-descrete, original onset and
+            # special case: we want the non-discrete, original onset and
             # duration
             if not time_attr is None:
                 # but only if there was a conversion happining, since otherwise

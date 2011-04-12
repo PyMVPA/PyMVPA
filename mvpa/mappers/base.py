@@ -148,15 +148,19 @@ class Mapper(Learner):
           appropriate.
         """
         if is_datasetlike(data):
+            if __debug__:
+                debug('MAP', "Forward-map %s-shaped dataset through '%s'."
+                        % (data.shape, self))
             return self._forward_dataset(data)
         else:
+            if hasattr(data, 'ndim') and data.ndim < 2:
+                raise ValueError(
+                    'Mapper.forward() only support mapping of data with '
+                    'at least two dimensions, where the first axis '
+                    'separates samples/observations. Consider using '
+                    'Mapper.forward1() instead.')
             if __debug__:
-                if hasattr(data, 'ndim') and data.ndim < 2:
-                    raise ValueError(
-                        'Mapper.forward() only support mapping of data with '
-                        'at least two dimensions, where the first axis '
-                        'separates samples/observations. Consider using '
-                        'Mapper.forward1() instead.')
+                debug('MAP', "Forward-map data through '%s'." % (self))
             return self._forward_data(data)
 
 
@@ -168,9 +172,13 @@ class Mapper(Learner):
         be used. but `forward()` handles them.
         """
         if isinstance(data, np.ndarray):
-            return self.forward(data[np.newaxis])[0]
+            data = data[np.newaxis]
         else:
-            return self.forward(np.array([data]))[0]
+            data = np.array([data])
+        if __debug__:
+            debug('MAP', "Forward-map single %s-shaped sample through '%s'."
+                    % (data.shape[1:], self))
+        return self.forward(data)[0]
 
 
 
@@ -187,8 +195,13 @@ class Mapper(Learner):
           attributes if necessary.
         """
         if is_datasetlike(data):
+            if __debug__:
+                debug('MAP', "Reverse-map %s-shaped dataset through '%s'."
+                        % (data.shape, self))
             return self._reverse_dataset(data)
         else:
+            if __debug__:
+                debug('MAP', "Reverse-map data through '%s'." % (self))
             return self._reverse_data(data)
 
 
@@ -200,19 +213,21 @@ class Mapper(Learner):
         `reverse()` handles them.
         """
         if isinstance(data, np.ndarray):
-            return self.reverse(data[np.newaxis])[0]
+            data = data[np.newaxis]
         else:
-            return self.reverse(np.array([data]))[0]
+            data = np.array([data])
+        if __debug__:
+            debug('MAP', "Reverse-map single %s-shaped sample through '%s'."
+                    % (data.shape[1:], self))
+        mapped = self.reverse(data)[0]
+        if __debug__:
+            debug('MAP', "Mapped single %s-shaped sample to %s."
+                    % (data.shape[1:], mapped.shape))
+        return mapped
 
 
     def _call(self, ds):
         return self.forward(ds)
-
-
-    def __repr__(self):
-        return "%s(space=%s)" \
-                % (self.__class__.__name__,
-                   repr(self.get_space()))
 
 
 
@@ -279,7 +294,7 @@ class ChainMapper(ChainNode):
             try:
                 if __debug__:
                     debug('MAP',
-                          "Reversing single %s-shaped input though '%s'."
+                          "Reversing single %s-shaped input though chain node '%s'."
                            % (mp.shape, str(m)))
                 mp = m.reverse1(mp)
             except NotImplementedError:
@@ -315,7 +330,7 @@ class ChainMapper(ChainNode):
             if __debug__:
                 debug('MAP',
                       "Training child mapper (%i/%i) %s with %s-shaped input."
-                      % (i, nmappers, str(mapper), tdata.shape))
+                      % (i + 1, nmappers + 1, str(mapper), tdata.shape))
             mapper.train(tdata)
             # forward through all but the last mapper
             if i < nmappers:
@@ -328,14 +343,8 @@ class ChainMapper(ChainNode):
             m.untrain()
 
 
-    def __repr__(self):
-        s = ChainNode.__repr__(self)
-        m_repr = '[%s]' % ', '.join([repr(m) for m in self])
-        return s.replace("(", "(%s, " % m_repr, 1)
-
-
     def __str__(self):
-        return _str(self, '-'.join([str(n) for n in self]).replace('Mapper', ''))
+        return super(ChainMapper, self).__str__().replace('Mapper', '')
 
 
 # XXX implement a 'CombinedMapper' (analog to ex-CombinedFeatureSelection) that

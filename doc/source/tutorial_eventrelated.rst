@@ -42,13 +42,13 @@ stimulation blocks. In other words, we want to perform a sensitivity
 analysis revealing the spatial temporal distribution of
 classification-relevant information.
 
-In this kind of analysis, we consider each stimulation block en
+In this kind of analysis, we consider each stimulation block an
 :term:`event` and we need to create a representative sample for every one
 of them. In the context of an event-related fMRI classification analysis the
 literature offers three principal techniques:
 
 1. Choose a single representative volume.
-2. Compress all relevant volumes into a single one (averaging).
+2. Compress all relevant volumes into a single one (averaging or parametric fit).
 3. Consider the full event-related time series.
 
 Obviously, only the third approach can possibly provide us with a temporal
@@ -143,7 +143,7 @@ We can easily filter out all other events.
 array([9])
 
 All of our events are of the same length, 9 consecutive fMRI volumes. Later
-on we want to view the temporal sensitivity profile from *before* until
+on we would like to view the temporal sensitivity profile from *before* until
 *after* the stimulation block, hence we should extend the duration of the
 events a bit.
 
@@ -178,7 +178,7 @@ the last two items in the chain mapper that have been added during the
 conversion into events.
 
 >>> print evds.a.mapper[-2:]
-<ChainMapper: <Boxcar: bl=13>-<Flatten>>
+<Chain: <Boxcar: bl=13>-<Flatten>>
 
 .. exercise::
 
@@ -187,15 +187,16 @@ conversion into events.
   reverse map multiple samples at once and compare the result. Is this what
   you would expect?
 
-The rest of our analysis is business as usual and quickly done.  We want to
+The rest of our analysis is business as usual and is quickly done.  We want to
 perform a cross-validation analysis of an SVM classifier. We are not
 primarily interested in its performance, but in the weights it assigns to
 the features. Remember, each feature is now voxel-time-point, so we get a
 chance of looking at the spatio-temporal profile of classification relevant
-information in the data. We will nevertheless enable computing a confusion
+information in the data. We will nevertheless enable computing of a confusion
 matrix, so we can assure ourselves that the classifier is performing
-reasonably well, because only a generalizing classifier model is worth
-inspecting, as otherwise the assigned weights are meaningless.
+reasonably well, because only a  generalizing model is worth
+inspecting, as otherwise it overfits and the assigned weights
+could be meaningless.
 
 >>> sclf = SplitClassifier(LinearCSVMC(),
 ...                        enable_ca=['stats'])
@@ -204,7 +205,7 @@ inspecting, as otherwise the assigned weights are meaningless.
 
 .. exercise::
 
-  Check that the classifier works on an acceptable performance level. Is it
+  Check that the classifier achieves an acceptable accuracy. Is it
   enough above chance level to allow for an interpretation of the
   sensitivities?
 
@@ -217,7 +218,6 @@ inspecting, as otherwise the assigned weights are meaningless.
   Viewer needs to be capable of visualizing time series (hint: for FSLView
   the time series image has to be opened first)!
 
-..
 
 A Plotting Example
 ------------------
@@ -288,7 +288,7 @@ normalized data.
 >>> _ = pl.axhline(linestyle='--', color='0.6')
 >>> _ = pl.xlim((0,12))
 
-Finally, we plot the associated SVM weight profile for each peristimulus
+Finally, we plot the associated SVM weight profile for each peri-stimulus
 time-point of both voxels. For easier selection we do a little trick and
 reverse-map the sensitivity profile through the last mapper in the
 dataset's chain mapper (look at ``evds.a.mapper`` for the whole chain).
@@ -311,7 +311,7 @@ voxel features``.
 >>> _ = pl.xlabel('Peristimulus volumes')
 
 That was it. Perhaps you are scared by the amount of code. Please note that
-it could have done shorter, but this way allows to plot any other voxel
+it could have been done shorter, but this way allows to plot any other voxel
 coordinate combination as well. matplotlib allows to stored this figure in
 SVG_ format that allows for convenient post-processing in Inkscape_ -- a
 publication quality figure is only minutes away.
@@ -328,7 +328,7 @@ publication quality figure is only minutes away.
 .. exercise::
 
   What can we say about the properties of the example voxel's signal from
-  the peristimulus plot?
+  the peri-stimulus plot?
 
 
 If That Was Easy...
@@ -376,7 +376,7 @@ original 4D fMRI brain space.
 :class:`~mvpa.measures.searchlight.Searchlight` is a powerful class that
 allows for complex runtime ROI generation. In this case it uses an
 :class:`~mvpa.misc.neighborhood.IndexQueryEngine` to look at certain
-feature attributes in the dataset to compose sphere-shaped ROIs and two
+feature attributes in the dataset to compose sphere-shaped ROIs in two
 spaces at the same time. This approach is very flexible and can be
 extended with additional query engines to algorithms of almost arbitrary
 complexity.
@@ -397,14 +397,3 @@ After you are done and want to tidy up after yourself, you can easily remove
 unneeded generated files from within Python:
 
 >>> os.unlink('ersl.nii')
-
-
-.. only:: html
-
-  References
-  ==========
-
-  .. autosummary::
-     :toctree: generated
-
-     ~mvpa.datasets.eventrelated.eventrelated_dataset

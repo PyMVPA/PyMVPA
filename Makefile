@@ -252,12 +252,13 @@ website-stamp: mkdir-WWW_DIR htmldoc pdfdoc
 upload-website:
 	$(MAKE) website SPHINXOPTS='-D html_theme=pymvpa_online'
 	rsync $(RSYNC_OPTS_UP) $(WWW_DIR)/* $(WWW_UPLOAD_URI)/
+	git update-ref refs/heads/website-updates/www HEAD
 
 upload-htmldoc:
 	$(MAKE) htmldoc SPHINXOPTS='-D html_theme=pymvpa_online'
 	chmod a+rX -R $(HTML_DIR)
 	rsync $(RSYNC_OPTS_UP) $(HTML_DIR)/* $(WWW_UPLOAD_URI)/
-
+	git update-ref refs/heads/website-updates/www-html HEAD
 
 upload-website-dev:
 	sed -i -e "s,http://disqus.com/forums/pymvpa/,http://disqus.com/forums/pymvpa-dev/,g" \
@@ -354,11 +355,12 @@ te-%: build
 	 || { echo "failed:"; cat temp-$@.log; rm -f temp-$@.log; exit 1; }
 	@rm -f temp-$@.log
 
-testexamples: te-svdclf te-smlr te-searchlight te-sensanas te-pylab_2d \
-              te-curvefitting te-projections te-kerneldemo te-clfs_examples \
+testexamples: te-svdclf te-smlr te-sensanas te-pylab_2d \
+              te-curvefitting te-projections te-kerneldemo \
               te-erp_plot te-match_distribution te-permutation_test \
               te-searchlight_minimal te-smlr te-start_easy te-topo_plot \
-              te-gpr te-gpr_model_selection0 te-mri_plot
+              te-gpr te-gpr_model_selection0 te-mri_plot te-searchlight \
+              te-clfs_examples
 
 testdocstrings: dt-mvpa
 

@@ -108,10 +108,10 @@ class StatsTestsScipy(unittest.TestCase):
         self.failUnless(score_bogus < score_nonbogus)
 
         # [0] because the first axis is len == 0
-        null_prob_nonbogus = m.ca.null_prob[0][ds.a.nonbogus_features]
-        null_prob_bogus = m.ca.null_prob[0][ds.a.bogus_features]
+        null_prob_nonbogus = m.ca.null_prob[0, ds.a.nonbogus_features]
+        null_prob_bogus = m.ca.null_prob[0, ds.a.bogus_features]
 
-        self.failUnless((null_prob_nonbogus < 0.05).all(),
+        self.failUnless((null_prob_nonbogus.samples < 0.05).all(),
             msg="Nonbogus features should have a very unlikely value. Got %s"
                 % null_prob_nonbogus)
 
@@ -127,20 +127,20 @@ class StatsTestsScipy(unittest.TestCase):
             # Failed on c94ec26eb593687f25d8c27e5cfdc5917e352a69
             # with MVPA_SEED=833393575
             self.failUnless(
-                (np.abs(m.ca.null_t[0][ds.a.nonbogus_features]) >= 5).all(),
+                (np.abs(m.ca.null_t[0, ds.a.nonbogus_features]) >= 5).all(),
                 msg="Nonbogus features should have high t-score. Got %s"
-                % (m.ca.null_t[0][ds.a.nonbogus_features]))
+                % (m.ca.null_t[0, ds.a.nonbogus_features]))
 
-            bogus_min = min(np.abs(m.ca.null_t[0][ds.a.bogus_features]))
+            bogus_min = min(np.abs(m.ca.null_t.samples[0][ds.a.bogus_features]))
             self.failUnless(bogus_min < 4,
                 msg="Some bogus features should have low t-score of %g."
                     "Got (t,p,sens):%s"
                     % (bogus_min,
-                        zip(m.ca.null_t[0][ds.a.bogus_features],
-                            m.ca.null_prob[0][ds.a.bogus_features],
+                        zip(m.ca.null_t[0, ds.a.bogus_features],
+                            m.ca.null_prob[0, ds.a.bogus_features],
                             score.samples[0][ds.a.bogus_features])))
 
-
+    @reseed_rng()
     def test_negative_t(self):
         """Basic testing of the sign in p and t scores
         """
@@ -156,16 +156,16 @@ class StatsTestsScipy(unittest.TestCase):
                 res = np.random.normal(size=(dataset.nfeatures,))
                 res[0] = res[1] = 100
                 res[2] = res[3] = -100
-                return res
+                return Dataset([res])
 
         nd = FixedNullDist(scipy.stats.norm(0, 0.1), tail='any')
         m = BogusMeasure(null_dist=nd, enable_ca=['null_t'])
         ds = datasets['uni2small']
         _ = m(ds)
         t, p = m.ca.null_t, m.ca.null_prob
-        self.failUnless((p>=0).all())
-        self.failUnless((t[:2] > 0).all())
-        self.failUnless((t[2:4] < 0).all())
+        self.failUnless((p.samples>=0).all())
+        self.failUnless((t.samples[0,:2] > 0).all())
+        self.failUnless((t.samples[0,2:4] < 0).all())
 
 
     def test_match_distribution(self):
@@ -266,7 +266,7 @@ class StatsTestsScipy(unittest.TestCase):
         assert_array_almost_equal(f, f_sp[0:1])
 
 
-
+    @reseed_rng()
     def test_glm(self):
         """Test GLM
         """

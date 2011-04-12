@@ -12,12 +12,14 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base.dochelpers import _str
+from mvpa.base.dochelpers import _str, _repr_attrs
 from mvpa.mappers.base import Mapper, accepts_dataset_as_samples, \
         ChainMapper
 from mvpa.featsel.base import StaticFeatureSelection
 from mvpa.misc.support import is_in_volume
 
+if __debug__:
+    from mvpa.base import debug
 
 class FlattenMapper(Mapper):
     """Reshaping mapper that flattens multidimensional arrays into 1D vectors.
@@ -34,26 +36,29 @@ class FlattenMapper(Mapper):
     At present this mapper is only designed (and tested) to work with C-ordered
     arrays.
     """
-    def __init__(self, shape=None, **kwargs):
+    def __init__(self, shape=None, maxdims=None, **kwargs):
         """
         Parameters
         ----------
         shape : tuple
           The shape of a single sample. If this argument is given the mapper
           is going to be fully configured and no training is necessary anymore.
+        maxdims : int or None
+          The maximum number of dimensions to flatten (starting with the first).
+          If None, all axes will be flattened.
         """
-        Mapper.__init__(self, auto_train=True, **kwargs)
-        self.__origshape = None
-        self.__nfeatures = None
+        # by default auto train
+        kwargs['auto_train'] = kwargs.get('auto_train', True)
+        Mapper.__init__(self, **kwargs)
+        self.__origshape = None         # pylint pacifier
+        self.__maxdims = maxdims
         if not shape is None:
             self._train_with_shape(shape)
 
-
-    def __repr__(self):
-        s = Mapper.__repr__(self)
-        m_repr = 'shape=%s' % repr(self.__origshape)
-        return s.replace("(", "(%s, " % m_repr, 1)
-
+    def __repr__(self, prefixes=[]):
+        return super(FlattenMapper, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['shape', 'maxdims']))
 
     def __str__(self):
         return _str(self)
@@ -79,8 +84,6 @@ class FlattenMapper(Mapper):
         # infer the sample shape from the data under the assumption that the
         # first axis is the samples-separating dimension
         self.__origshape = shape
-        # total number of features in a sample
-        self.__nfeatures = np.prod(self.__origshape)
         # flag the mapper as trained
         self._set_trained()
 
@@ -91,23 +94,27 @@ class FlattenMapper(Mapper):
         nsamples = data.shape[0]
         sshape = data.shape[1:]
         oshape = self.__origshape
-        nfeatures = self.__nfeatures
 
         if oshape is None:
             raise RuntimeError("FlattenMapper needs to be trained before it "
                                "can be used.")
+        # at least the first feature axis has to match match
+        if oshape[0] != sshape[0]:
+            raise ValueError("FlattenMapper has not been trained for data "
+                             "shape '%s' (known only '%s')."
+                             % (str(sshape), str(oshape)))
+        ## input matches the shape of a single sample
+        #if sshape == oshape:
+        #    return data.reshape(nsamples, -1)
+        ## the first part of the shape matches (e.g. some additional axes present)
+        #elif sshape[:len(oshape)] == oshape:
+        if not self.__maxdims is None:
+            maxdim = min(len(oshape), self.__maxdims)
+        else:
+            maxdim = len(oshape)
+        # flatten the pieces the mapper knows about and preserve the rest
+        return data.reshape((nsamples, -1) + sshape[maxdim:])
 
-        # input matches the shape of a single sample
-        if sshape == oshape:
-            return data.reshape(nsamples, -1)
-        # the first part of the shape matches (e.g. some additional axes present)
-        elif sshape[:len(oshape)] == oshape:
-            # flatten the pieces the mapper knows about and preserve the rest
-            return data.reshape((nsamples, -1) + sshape[len(oshape):])
-
-        raise ValueError("FlattenMapper has not been trained for data "
-                         "shape '%s' (known only '%s')."
-                         % (str(sshape), str(oshape)))
 
 
     def _forward_dataset(self, dataset):
@@ -116,9 +123,26 @@ class FlattenMapper(Mapper):
         mds = super(FlattenMapper, self)._forward_dataset(dataset)
         # attribute collection needs to have a new length check
         mds.fa.set_length_check(mds.nfeatures)
-        # now flatten all feature attributes
-        for k in mds.fa:
-            mds.fa[k] = self.forward1(mds.fa[k].value)
+        # we need to duplicate all existing feature attribute, as each original
+        # feature is now spread across the new feature axis
+        # take all "additional" axes after the actual feature axis and count
+        # elements a sample -- if not axis exists this will be 1
+        for k in dataset.fa:
+            attr = dataset.fa[k].value
+            # the maximmum number of axis to flatten in the attr
+            if not self.__maxdims is None:
+                maxdim = min(len(self.__origshape), self.__maxdims)
+            else:
+                maxdim = len(self.__origshape)
+            multiplier = mds.nfeatures \
+                    / np.prod(attr.shape[:maxdim])
+            if __debug__:
+                debug('MAP_', "Broadcasting fa '%s' %s %d times" 
+                        % (k, attr.shape, multiplier))
+            # broadcast as many times as necessary to get 'matching dimensions'
+            bced = np.repeat(attr, multiplier, axis=0)
+            # now reshape as many dimensions as the mapper knows about
+            mds.fa[k] = bced.reshape((-1,) + bced.shape[maxdim:])
 
         # if there is no inspace return immediately
         if self.get_space() is None:
@@ -136,13 +160,7 @@ class FlattenMapper(Mapper):
         nsamples = data.shape[0]
         sshape = data.shape[1:]
         oshape = self.__origshape
-        nfeatures = self.__nfeatures
-        return data.reshape((nsamples,) + sshape[:-1] + oshape)
-
-        # XXX anything we cannot reverse-map?
-        raise ValueError("FlattenMapper has not been trained for data "
-                         "with shape '%s', but '%s'."
-                         % (str(dshape[1:]), (nfeatures,)))
+        return data.reshape((nsamples,) + oshape + sshape[1:])
 
 
     def _reverse_dataset(self, dataset):
@@ -164,7 +182,8 @@ class FlattenMapper(Mapper):
             del mds.fa[inspace]
         return mds
 
-
+    shape = property(fget=lambda self:self.__origshape)
+    maxdims = property(fget=lambda self:self.__maxdims)
 
 def mask_mapper(mask=None, shape=None, space=None):
     """Factory method to create a chain of Flatten+StaticFeatureSelection Mappers

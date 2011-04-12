@@ -71,7 +71,7 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8'
 
 # The master toctree document.
-master_doc = 'sitemap'
+master_doc = 'index'
 
 # General substitutions.
 project = 'PyMVPA'
@@ -223,9 +223,9 @@ latex_documents = [
   ('devguide', 'PyMVPA-DevGuide.tex', 'PyMVPA Developer Guidelines',
    'PyMVPA Authors',
    'manual'),
-  ('modref', 'PyMVPA-Reference.tex', 'PyMVPA Reference',
-   'PyMVPA Authors',
-   'manual'),
+#  ('modref', 'PyMVPA-Reference.tex', 'PyMVPA Reference',
+#   'PyMVPA Authors',
+#   'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

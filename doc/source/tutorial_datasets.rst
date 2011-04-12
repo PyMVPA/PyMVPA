@@ -414,7 +414,7 @@ hence worth devoting the whole :ref:`next tutorial chapter
 <chap_tutorial_mappers>` to it.
 
 >>> print ds.a.mapper
-<ChainMapper: <Flatten>-<StaticFeatureSelection>>
+<Chain: <Flatten>-<StaticFeatureSelection>>
 
 Having all these attributes being part of a dataset is often a useful thing
 to have, but in some cases (e.g. when it comes to efficiency, and/or very
@@ -475,18 +475,3 @@ transparently.
 True
 >>> # cleanup the temporary directory, and everything it includes
 >>> shutil.rmtree(tempdir, ignore_errors=True)
-
-
-.. only:: html
-
-  References
-  ==========
-
-  .. autosummary::
-     :toctree: generated
-
-     ~mvpa.datasets.base.Dataset
-     ~mvpa.datasets.mri.fmri_dataset
-     ~mvpa.base.collections.ArrayCollectable
-     ~mvpa.base.hdf5.h5save
-     ~mvpa.base.hdf5.h5load

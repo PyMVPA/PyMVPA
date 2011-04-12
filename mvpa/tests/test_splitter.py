@@ -20,10 +20,11 @@ from mvpa.generators.splitters import Splitter
 from mvpa.generators.partition import *
 
 from mvpa.testing.tools import ok_, assert_array_equal, assert_true, \
-        assert_false, assert_equal
+        assert_false, assert_equal, reseed_rng
 
 class SplitterTests(unittest.TestCase):
 
+    @reseed_rng()
     def setUp(self):
         self.data = dataset_wizard(np.random.normal(size=(100,10)),
                             targets=[ i%4 for i in range(100) ],
@@ -190,17 +191,20 @@ class SplitterTests(unittest.TestCase):
         # check fully customized split with working and validation set specified
         cs = CustomPartitioner([([0,3,4],[5,9])])
         # we want to discared the unselected partition of the data, hence attr_value
-        spl = Splitter(attr='partitions', attr_values=[1,2])
-        splits = [ list(spl.generate(p)) for p in cs.generate(self.data) ]
-        self.failUnless(len(splits) == 1)
+        # these two splitters should do exactly the same thing
+        splitters = (Splitter(attr='partitions', attr_values=[1,2]),
+                     Splitter(attr='partitions', ignore_values=(0,)))
+        for spl in splitters:
+            splits = [ list(spl.generate(p)) for p in cs.generate(self.data) ]
+            self.failUnless(len(splits) == 1)
 
-        for i,p in enumerate(splits):
-            self.failUnless( len(p) == 2 )
-            self.failUnless( p[0].nsamples == 30 )
-            self.failUnless( p[1].nsamples == 20 )
+            for i,p in enumerate(splits):
+                self.failUnless( len(p) == 2 )
+                self.failUnless( p[0].nsamples == 30 )
+                self.failUnless( p[1].nsamples == 20 )
 
-        self.failUnless((splits[0][1].sa['chunks'].unique == [5, 9]).all())
-        self.failUnless((splits[0][0].sa['chunks'].unique == [0, 3, 4]).all())
+            self.failUnless((splits[0][1].sa['chunks'].unique == [5, 9]).all())
+            self.failUnless((splits[0][0].sa['chunks'].unique == [0, 3, 4]).all())
 
 
     def test_label_splitter(self):

@@ -9,14 +9,13 @@
 """Unit tests for PyMVPA simple report facility"""
 
 import unittest, os, shutil
-from tempfile import mktemp
 
 from mvpa.base import verbose, externals
 
 from mvpa.base.report_dummy import Report as DummyReport
 _test_classes = [ DummyReport ]
 
-from mvpa.testing import sweepargs
+from mvpa.testing import sweepargs, with_tempfile
 
 if externals.exists('reportlab', raise_=False):
     from mvpa.base.report import Report
@@ -28,6 +27,16 @@ if __debug__:
 class ReportTest(unittest.TestCase):
     """Just basic testing of reports -- pretty much that nothing fails
     """
+
+    def setUp(self):
+        # preserve handlers/level for verbose
+        self.__oldverbosehandlers = verbose.handlers
+        self.__oldverbose_level = verbose.level
+
+
+    def tearDown(self):
+        verbose.handlers = self.__oldverbosehandlers
+        verbose.level = self.__oldverbose_level
 
     ##REF: Name was automagically refactored
     def aux_basic(self, dirname, rc):
@@ -41,7 +50,6 @@ class ReportTest(unittest.TestCase):
                     path=dirname)
         isdummy = isinstance(report, DummyReport)
 
-        ohandlers = verbose.handlers
         verbose.handlers = [report]
         verbose.level = 3
         verbose(1, "Starting")
@@ -97,15 +105,14 @@ class ReportTest(unittest.TestCase):
             pl.close('all')
             pl.ion()
 
-        verbose.handlers = ohandlers
         pass
 
 
+    @with_tempfile()
     @sweepargs(rc=_test_classes)
-    def test_basic(self, rc):
+    def test_basic(self, dirname, rc):
         """Test all available reports, real or dummy for just working
         """
-        dirname = mktemp('mvpa', 'test_report')
         self.aux_basic(dirname, rc)
         # cleanup
         shutil.rmtree(dirname, ignore_errors=True)

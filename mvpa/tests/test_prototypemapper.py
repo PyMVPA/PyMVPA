@@ -18,7 +18,8 @@ from mvpa.datasets import Dataset
 from mvpa.clfs.similarity import StreamlineSimilarity
 from mvpa.clfs.distance import corouge
 
-from mvpa.testing.tools import assert_array_equal, assert_array_almost_equal
+from mvpa.testing.tools import assert_array_equal, assert_array_almost_equal, \
+     reseed_rng
 
 import random
 
@@ -31,6 +32,7 @@ class PrototypeMapperTests(unittest.TestCase):
         pass
 
     ##REF: Name was automagically refactored
+    @reseed_rng()
     def build_vector_based_pm(self):
         # samples: 40 samples in 20d space (40x20; samples x features)
         self.samples = np.random.rand(40,20)
@@ -74,6 +76,7 @@ class PrototypeMapperTests(unittest.TestCase):
 
     # 2-nd portion of tests using a Dataset of streamlines
 
+    @reseed_rng()
     def build_streamline_things(self):
         # Build a dataset having samples of different lengths. This is
         # trying to mimic a possible interface for streamlines

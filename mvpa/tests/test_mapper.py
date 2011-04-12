@@ -13,7 +13,7 @@ import numpy as np
 from numpy import array
 
 from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
-        assert_true, assert_array_equal
+        assert_true, assert_array_equal, nodebug
 
 from mvpa.testing.datasets import datasets
 from mvpa.mappers.flatten import FlattenMapper
@@ -44,6 +44,10 @@ def test_flatten():
                             [1, 0, 0], [1, 0, 1], [1, 0, 2], [1, 0, 3],
                             [1, 1, 0], [1, 1, 1], [1, 1, 2], [1, 1, 3]])
 
+    # test only flattening the first two dimensions
+    fm_max = FlattenMapper(maxdims=2)
+    fm_max.train(data)
+    assert_equal(fm_max(data).shape, (4, 4, 4))
 
     # array subclass survives
     ok_(isinstance(data, myarray))
@@ -202,6 +206,7 @@ def test_subset_filler():
     data_back_fnan = sm_fnan.reverse(data_forwarded)
     ok_(np.all(np.isnan(data_back_fnan[:, 3:])))
 
+@nodebug(['ID_IN_REPR', 'MODULE_IN_REPR'])
 def test_repr():
     # this time give mask only by its target length
     sm = StaticFeatureSelection(slice(None), space='myspace')
@@ -210,7 +215,7 @@ def test_repr():
     sm_clone = eval(repr(sm))
     assert_equal(repr(sm_clone), repr(sm))
 
-
+@nodebug(['ID_IN_REPR', 'MODULE_IN_REPR'])
 def test_chainmapper():
     # the chain needs at lest one mapper
     assert_raises(ValueError, ChainMapper, [])

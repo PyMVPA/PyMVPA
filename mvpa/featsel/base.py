@@ -16,6 +16,7 @@ from mvpa.featsel.helpers import FractionTailSelector, \
                                  BestDetector
 from mvpa.mappers.slicing import SliceMapper
 from mvpa.mappers.base import accepts_dataset_as_samples
+from mvpa.base.dochelpers import _repr_attrs
 from mvpa.base.state import ConditionalAttribute
 from mvpa.generators.splitters import mask2slice
 
@@ -64,12 +65,10 @@ class FeatureSelection(SliceMapper):
         self.filler = filler
 
 
-    def __repr__(self):
-        s = super(FeatureSelection, self).__repr__()
-        return s.replace("(",
-                         "(slicearg=%s, dshape=%s, "
-                          % (repr(self._slicearg), repr(self._dshape)),
-                         1)
+    def __repr__(self, prefixes=[]):
+        return super(FeatureSelection, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['filler'], default=0))
 
 
     def _forward_data(self, data):
@@ -182,8 +181,7 @@ class FeatureSelection(SliceMapper):
 
 
 class StaticFeatureSelection(FeatureSelection):
-    """
-
+    """Feature selection by static slicing argument.
     """
     def __init__(self, slicearg, dshape=None, oshape=None, **kwargs):
         """
@@ -209,6 +207,10 @@ class StaticFeatureSelection(FeatureSelection):
         self.__orig_slicearg = slicearg
         self._safe_assign_slicearg(slicearg)
 
+    def __repr__(self, prefixes=[]):
+        return super(FeatureSelection, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['dshape', 'oshape']))
 
     @accepts_dataset_as_samples
     def _train(self, ds):
@@ -228,6 +230,8 @@ class StaticFeatureSelection(FeatureSelection):
         super(FeatureSelection, self)._untrain()
 
 
+    dshape = property(fget=lambda self: self._dshape)
+    oshape = property(fget=lambda self: self._oshape)
 
 class SensitivityBasedFeatureSelection(FeatureSelection):
     """Feature elimination.
@@ -425,7 +429,9 @@ class CombinedFeatureSelection(FeatureSelection):
           which method to be used to combine the feature selection set of
           all computed methods.
         """
-        FeatureSelection.__init__(self, auto_train=True, **kwargs)
+        # by default -- auto_train
+        kwargs['auto_train'] = kwargs.get('auto_train', True)
+        FeatureSelection.__init__(self, **kwargs)
 
         self.__selectors = selectors
         self.__method = method

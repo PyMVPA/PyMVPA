@@ -86,7 +86,7 @@ look at a possible next step -- selecting a subset of interesting features:
 >>> 'mapper' in subds.a
 True
 >>> print subds.a.mapper
-<ChainMapper: <Flatten>-<StaticFeatureSelection>>
+<Chain: <Flatten>-<StaticFeatureSelection>>
 
 Now the situation has changed: *two* new mappers appeared in the dataset -- a
 `~mvpa.mappers.base.ChainMapper` and a `~mvpa.featsel.base.StaticFeatureSelection`.
@@ -190,7 +190,7 @@ directly:
 >>> fds.shape
 (1452, 577)
 >>> print fds.sa
-<SampleAttributesCollection: chunks,time_indices,targets,time_coords>
+<SampleAttributesCollection: chunks,targets,time_coords,time_indices>
 
 We got the dataset that we already know from the last part, but this time
 is also has information about chunks and targets.
@@ -240,7 +240,7 @@ return it. Let's try:
 
 >>> detrended_fds = fds.get_mapped(detrender)
 >>> print detrended_fds.a.mapper
-<ChainMapper: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>>
+<Chain: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>>
 
 ``detrended_fds`` is easily identifiable as a dataset that has been
 flattened, sliced, and linearly detrended.
@@ -286,7 +286,7 @@ mapper we have created above, but using less memory:
 >>> zscore(detrended_fds, param_est=('targets', ['rest']))
 >>> fds = detrended_fds
 >>> print fds.a.mapper
-<ChainMapper: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>-<ZScore>>
+<Chain: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>-<ZScore>>
 
 .. exercise::
 
@@ -383,7 +383,7 @@ dataset from the beginning we can see how it works:
 >>> print subds
 <Dataset: 5x4@float64, <a: mapper>>
 >>> print subds.a.mapper
-<ChainMapper: <Flatten>-<StaticFeatureSelection>>
+<Chain: <Flatten>-<StaticFeatureSelection>>
 >>> subds.nfeatures
 4
 >>> revtest = np.arange(subds.nfeatures) + 10
@@ -408,7 +408,7 @@ But now let's look at our fMRI dataset again. Here the mapper chain is a little
 more complex:
 
 >>> print fds.a.mapper
-<ChainMapper: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>-<ZScore>-<Fx: fx=mean>>
+<Chain: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>-<ZScore>-<Fx: fx=mean>>
 
 Initial flattening followed by mask, detrending, Z-scoring and finally
 averaging. We would reverse mapping do in this case? Let's test:
@@ -475,20 +475,3 @@ transformations, they can all be used in the same way, and can all be
 combined into a chain.
 
 Now we are really ready for :ref:`part four of the tutorial <chap_tutorial_classifiers>`.
-
-
-
-.. only:: html
-
-  References
-  ==========
-
-  .. autosummary::
-     :toctree: generated
-
-     ~mvpa.mappers
-     ~mvpa.mappers.base.Mapper
-     ~mvpa.mappers.base.StaticFeatureSelection
-     ~mvpa.mappers.flatten.FlattenMapper
-     ~mvpa.mappers.fx.FxMapper
-     ~mvpa.mappers.base.ChainMapper

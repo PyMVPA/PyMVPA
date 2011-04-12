@@ -62,6 +62,10 @@ if os.path.exists(hashfilename):
     __hash__ = hashfile.read().strip()
     hashfile.close()
 
+#
+# Data paths
+#
+
 # locate data root -- data might not be installed, but if it is, it should be at
 # this location
 pymvpa_dataroot = \
@@ -73,6 +77,11 @@ pymvpa_datadbroot = \
         cfg.get('datadb', 'root',
                 default=os.path.join(os.curdir, 'datadb'))
 
+
+#
+# Debugging and optimization
+#
+
 if not __debug__:
     try:
         import psyco
@@ -83,8 +92,11 @@ if not __debug__:
 else:
     # Controllable seeding of random number generator
     from mvpa.base import debug
-
     debug('INIT', 'mvpa')
+
+#
+# RNG seeding
+#
 
 if cfg.has_option('general', 'seed'):
     _random_seed = cfg.getint('general', 'seed')
@@ -95,13 +107,23 @@ def seed(random_seed):
     """Uniform and combined seeding of all relevant random number
     generators.
     """
+    if __debug__:
+        debug('RANDOM', 'Reseeding RNGs with %s' % random_seed)
     np.random.seed(random_seed)
     random.seed(random_seed)
 
 seed(_random_seed)
 
+#
+# Testing
+#
+
 # import the main unittest interface
 from mvpa.tests import run as test
+
+#
+# Externals-dependent tune ups
+#
 
 # PyMVPA is useless without numpy
 # Also, this check enforcing population of externals.versions
@@ -117,9 +139,9 @@ externals.exists('running ipython env', force=True, raise_=False)
 # our configuration
 externals.exists('matplotlib', force=True, raise_=False)
 
-if __debug__:
-    debug('RANDOM', 'Seeding RNG with %d' % _random_seed)
-    debug('INIT', 'mvpa end')
+#
+# Hooks
+#
 
 # Attach custom top-level exception handler
 if cfg.getboolean('debug', 'wtf', default=False):
@@ -139,3 +161,5 @@ if cfg.getboolean('debug', 'wtf', default=False):
         return ret
     sys.excepthook = _pymvpa_excepthook
 
+if __debug__:
+    debug('INIT', 'mvpa end')
