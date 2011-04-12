@@ -27,6 +27,12 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
+
+Releases
+========
+
+* 0.6.0~rc3 (Thu, Apr 12 2011)
+
   * Fixes
 
     - Bugfixes regarding the interaction of FlattenMapper and BoxcarMapper that
@@ -54,10 +60,6 @@ Unreleased changes
       multiple samples, is unchanged.
     - `Searchlight` now has the ability to mark the center/seed of an ROI in
       with a feature attribute in the generated datasets.
-
-
-Releases
-========
 
 * 0.6.0~rc2 (Thu, Mar 3 2011)
 
