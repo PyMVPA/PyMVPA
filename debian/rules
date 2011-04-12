@@ -46,6 +46,9 @@ endif
 			rm $$so ; \
 		done
 
+override_dh_installchangelogs:
+	dh_installchangelogs Changelog
+
 override_dh_auto_clean:
 	dh_auto_clean
 	-rm -rf $(CURDIR)/build
