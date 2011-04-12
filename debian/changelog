@@ -1,3 +1,16 @@
+pymvpa-snapshot (0.6.0~rc3-1) UNRELEASED; urgency=low
+
+  * PyMVPA development snapshot.
+  * Includes upstream changelog now.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 12 Apr 2011 12:08:15 -0400
+
+pymvpa-snapshot (0.6.0~rc2-1) UNRELEASED; urgency=low
+
+  * PyMVPA development snapshot.
+
+ -- Michael Hanke <mih@debian.org>  Thu, 03 Mar 2011 16:06:46 -0500
+
 pymvpa (0.4.3-2) unstable; urgency=low
 
   [ Sandro Tosi ]
