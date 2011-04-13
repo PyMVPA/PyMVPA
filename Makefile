@@ -64,16 +64,7 @@ debian-build:
 build: build-stamp
 build-stamp: $(build_depends)
 	python setup.py config --noisy
-	python setup.py build
-# to overcome the issue of not-installed svmc.so
-	for ext in _svmc smlrc; do \
-		ln -sf ../../../build/lib.$(DISTUTILS_PLATFORM)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
-		mvpa/clfs/lib$${ext#_*}/; \
-		ln -sf ../../../build/lib.$(DISTUTILS_PLATFORM)-$(PYVER)/mvpa/clfs/lib$${ext#_*}/$${ext}.so \
-		mvpa/clfs/lib$${ext#_*}/$${ext}.dylib; \
-		done
-	touch $@
-
+	python setup.py build_ext --inplace
 
 #
 # Cleaning
