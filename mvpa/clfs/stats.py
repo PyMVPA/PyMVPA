@@ -841,6 +841,11 @@ if externals.exists('scipy'):
                                              loc=loc_, scale=scale_, args=args_)
                 else:
                     dist_opt = dist_gen_
+
+                if __debug__:
+                    debug('STAT__',
+                          'Fitting %s distribution %r on data of size %s',
+                          (dist_name, dist_opt, data_selected.shape))
                 dist_params = dist_opt.fit(data_selected)
                 if __debug__:
                     debug('STAT__',
@@ -862,19 +867,19 @@ if externals.exists('scipy'):
                     NotImplementedError), e:#Exception, e:
                 if __debug__:
                     debug('STAT__',
-                          'Testing for %s distribution failed due to %s'
-                          % (d, str(e)))
+                          'Testing for %s distribution failed due to %s',
+                          (d, e))
                 continue
 
             if p > p_thr and not np.isnan(D):
                 results += [ (D, dist_gen, dist_name, dist_params) ]
                 if __debug__:
                     debug('STAT_',
-                          'Testing for %s dist.: %s' % (dist_name, res_sum))
+                          'Tested %s distribution: %s', (dist_name, res_sum))
             else:
                 if __debug__:
-                    debug('STAT__', 'Cannot consider %s dist. with %s'
-                          % (d, res_sum))
+                    debug('STAT__', 'Cannot consider %s dist. with %s',
+                          (d, res_sum))
                 continue
 
         # sort in ascending order, so smaller is better
