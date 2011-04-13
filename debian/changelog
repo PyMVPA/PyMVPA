@@ -1,3 +1,13 @@
+pymvpa (0.4.7-2) unstable; urgency=low
+
+  * Few fixes absorbed from upstream:
+    - [d16ca22] BF: compatible with libsvm 3.10 -- assure present
+      stab for svm_destroy_model
+    - [9d1dc0c] RF: use build_ext --inplace instead of adhoc 
+      symlinking of extensions
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 12 Apr 2011 20:12:01 -0400
+
 pymvpa (0.4.7-1) unstable; urgency=low
 
   * Upstream bugfix release: NIfTI scaling issue
