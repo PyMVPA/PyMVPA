@@ -799,7 +799,15 @@ if externals.exists('scipy'):
         try:
             scipy_ind = distributions.index('scipy')
             distributions.pop(scipy_ind)
-            distributions += scipy.stats.distributions.__all__
+            sp_dists = scipy.stats.distributions.__all__
+            sp_version = externals.versions['scipy']
+            if sp_version >= '0.9.0':
+                for d_ in ['ncf']:
+                    if d_ in sp_dists:
+                        warning("Not considering %s distribution because of "
+                                "known issues in scipy %s" % (d_, sp_version))
+                        _ = sp_dists.pop(sp_dists.index(d_))
+            distributions += sp_dists
         except ValueError:
             pass
 
@@ -833,6 +841,11 @@ if externals.exists('scipy'):
                                              loc=loc_, scale=scale_, args=args_)
                 else:
                     dist_opt = dist_gen_
+
+                if __debug__:
+                    debug('STAT__',
+                          'Fitting %s distribution %r on data of size %s',
+                          (dist_name, dist_opt, data_selected.shape))
                 dist_params = dist_opt.fit(data_selected)
                 if __debug__:
                     debug('STAT__',
@@ -854,19 +867,19 @@ if externals.exists('scipy'):
                     NotImplementedError), e:#Exception, e:
                 if __debug__:
                     debug('STAT__',
-                          'Testing for %s distribution failed due to %s'
-                          % (d, str(e)))
+                          'Testing for %s distribution failed due to %s',
+                          (d, e))
                 continue
 
             if p > p_thr and not np.isnan(D):
                 results += [ (D, dist_gen, dist_name, dist_params) ]
                 if __debug__:
                     debug('STAT_',
-                          'Testing for %s dist.: %s' % (dist_name, res_sum))
+                          'Tested %s distribution: %s', (dist_name, res_sum))
             else:
                 if __debug__:
-                    debug('STAT__', 'Cannot consider %s dist. with %s'
-                          % (d, res_sum))
+                    debug('STAT__', 'Cannot consider %s dist. with %s',
+                          (d, res_sum))
                 continue
 
         # sort in ascending order, so smaller is better
