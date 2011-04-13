@@ -208,7 +208,14 @@ void svm_predict_values(const struct svm_model *model, const struct svm_node *x,
 double svm_predict(const struct svm_model *model, const struct svm_node *x);
 double svm_predict_probability(const struct svm_model *model, const struct svm_node *x, double* prob_estimates);
 
+%inline %{
+/* Just for bloody compatibility with deprecated method, which would
+ not be used any ways, but declaring it for newer versions should allow to
+ build across different versions without patching */
+#if LIBSVM_VERSION >= 310
 void svm_destroy_model(struct svm_model *model);
+#endif
+%}
 /* Not necessary: the weight vector is (de)allocated at python-part
    void svm_destroy_param(struct svm_parameter *param); */
 
