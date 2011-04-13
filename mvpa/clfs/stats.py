@@ -741,7 +741,15 @@ if externals.exists('scipy'):
         try:
             scipy_ind = distributions.index('scipy')
             distributions.pop(scipy_ind)
-            distributions += scipy.stats.distributions.__all__
+            sp_dists = scipy.stats.distributions.__all__
+            sp_version = externals.versions['scipy']
+            if sp_version >= '0.9.0':
+                for d_ in ['ncf']:
+                    if d_ in sp_dists:
+                        warning("Not considering %s distribution because of "
+                                "known issues in scipy %s" % (d_, sp_version))
+                        _ = sp_dists.pop(sp_dists.index(d_))
+            distributions += sp_dists
         except ValueError:
             pass
 
