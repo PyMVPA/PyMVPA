@@ -98,7 +98,15 @@ class Mapper(Learner):
         ----------
         dataset : Dataset-like
         """
+        if __debug__:
+            debug('MAP_', "Forward-map %s-shaped samples in dataset with '%s'."
+                        % (dataset.samples.shape, self))
         msamples = self._forward_data(dataset.samples)
+        if __debug__:
+            debug('MAP_', "Make shallow copy of to-be-forward-mapped dataset "
+                    "and assigned forward-mapped samples ({sf}a_filters: "
+                    "%s, %s, %s)." % (self._sa_filter, self._fa_filter,
+                                      self._a_filter))
         mds = dataset.copy(deep=False,
                            sa=self._sa_filter,
                            fa=self._fa_filter,
@@ -119,7 +127,15 @@ class Mapper(Learner):
         ----------
         dataset : Dataset-like
         """
+        if __debug__:
+            debug('MAP_', "Reverse-map %s-shaped samples in dataset with '%s'."
+                        % (dataset.samples.shape, self))
         msamples = self._reverse_data(dataset.samples)
+        if __debug__:
+            debug('MAP_', "Make shallow copy of to-be-reverse-mapped dataset "
+                    "and assigned reverse-mapped samples ({sf}a_filters: "
+                    "%s, %s, %s)." % (self._sa_filter, self._fa_filter,
+                                      self._a_filter))
         mds = dataset.copy(deep=False,
                            sa=self._sa_filter,
                            fa=self._fa_filter,
