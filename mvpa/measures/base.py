@@ -194,6 +194,12 @@ class ProxyMeasure(Measure):
         Measure.__init__(self, **kwargs)
         self.__measure = measure
 
+    def __repr__(self, prefixes=[]):
+        """String representation of a `ProxyMeasure`
+        """
+        return super(ProxyMeasure, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['measure']))
 
     def _train(self, ds):
         self.measure.train(ds)
@@ -261,6 +267,13 @@ class RepeatedMeasure(Measure):
         self._generator = generator
         self._callback = callback
         self._concat_as = concat_as
+
+    def __repr__(self, prefixes=[]):
+        return super(RepeatedMeasure, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['node', 'generator', 'callback'])
+            + _repr_attrs(self, ['concat_as'], default='samples')
+            )
 
 
     def _call(self, ds):
@@ -352,6 +365,11 @@ class RepeatedMeasure(Measure):
         super(RepeatedMeasure, self)._untrain()
 
 
+    node = property(fget=lambda self: self._node)
+    generator = property(fget=lambda self: self._generator)
+    callback = property(fget=lambda self: self._callback)
+    concat_as = property(fget=lambda self: self._concat_as)
+
 
 class CrossValidation(RepeatedMeasure):
     """Cross-validate a learner's transfer on datasets.
@@ -423,8 +441,9 @@ class CrossValidation(RepeatedMeasure):
         # splitter used the output space of the generator to know what to split
         tm = TransferMeasure(learner, splitter, postproc=enode)
 
+        space = kwargs.pop('space', 'sa.cvfolds')
         # and finally the repeated measure to perform the x-val
-        RepeatedMeasure.__init__(self, tm, generator, space='sa.cvfolds',
+        RepeatedMeasure.__init__(self, tm, generator, space=space,
                                  **kwargs)
 
         for ca in ['stats', 'training_stats']:
@@ -434,6 +453,14 @@ class CrossValidation(RepeatedMeasure):
         if self.ca.is_enabled('training_stats'):
             # also enable training stats in the learner
             learner.ca.enable('training_stats')
+
+    def __repr__(self, prefixes=[]):
+        return super(CrossValidation, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['learner', 'splitter'])
+            + _repr_attrs(self, ['errorfx'], default=mean_mismatch_error)
+            + _repr_attrs(self, ['space'], default='sa.cvfolds')
+            )
 
 
     def _call(self, ds):
@@ -457,6 +484,12 @@ class CrossValidation(RepeatedMeasure):
 
     transfermeasure = property(fget=lambda self:self._node)
 
+    # XXX Well, those properties are defined to match available
+    # attributes to constructor arguments.  Unfortunately our
+    # hierarchy/API is not ideal at this point
+    learner = property(fget=lambda self: self.transfermeasure.measure)
+    splitter = property(fget=lambda self: self.transfermeasure.splitter)
+    errorfx = property(fget=lambda self: self.transfermeasure.postproc)
 
 
 class TransferMeasure(Measure):
@@ -492,6 +525,13 @@ class TransferMeasure(Measure):
         Measure.__init__(self, **kwargs)
         self.__measure = measure
         self.__splitter = splitter
+
+
+    def __repr__(self, prefixes=[]):
+        return super(TransferMeasure, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['measure', 'splitter'])
+            )
 
 
     def _call(self, ds):
@@ -558,6 +598,7 @@ class TransferMeasure(Measure):
         return res
 
     measure = property(fget=lambda self:self.__measure)
+    splitter = property(fget=lambda self:self.__splitter)
 
 
 
@@ -574,12 +615,6 @@ class FeaturewiseMeasure(Measure):
 
     def __init__(self, **kwargs):
         Measure.__init__(self, **kwargs)
-
-    def __repr__(self, prefixes=None):
-        if prefixes is None:
-            prefixes = []
-        return \
-            super(FeaturewiseMeasure, self).__repr__(prefixes=prefixes)
 
 
     def _postcall(self, dataset, result):
@@ -675,12 +710,19 @@ class StaticMeasure(Measure):
         self.__measure = measure
         self.__bias = bias
 
+    def __repr__(self, prefixes=[]):
+        return super(StaticMeasure, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['measure', 'bias'])
+            )
+
     def _call(self, dataset):
         """Returns assigned sensitivity
         """
         return self.__measure
 
     #XXX Might need to move into ConditionalAttribute?
+    measure = property(fget=lambda self:self.__measure)
     bias = property(fget=lambda self:self.__bias)
 
 
@@ -729,6 +771,14 @@ class Sensitivity(FeaturewiseMeasure):
 
         self.__clf = clf
         """Classifier used to computed sensitivity"""
+
+
+    def __repr__(self, prefixes=[]):
+        return super(Sensitivity, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['clf'])
+            + _repr_attrs(self, ['force_train'], default=True)
+            )
 
 
     @property
@@ -819,6 +869,13 @@ class CombinedFeaturewiseMeasure(FeaturewiseMeasure):
         self.__analyzers = analyzers
         """List of analyzers to use"""
 
+
+    def __repr__(self, prefixes=[]):
+        return super(CombinedFeaturewiseMeasure, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['analyzers'])
+            + _repr_attrs(self, ['sa_attr'], default='combinations')
+            )
 
     def _call(self, dataset):
         sensitivities = []
@@ -913,11 +970,20 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         self.__combined_analyzer = combined_analyzer
         """Combined analyzer to use"""
 
+        # XXX where do we get _slave_kwargs from here?
         if analyzer is not None and len(self._slave_kwargs):
             raise ValueError, \
                   "Provide either analyzer of slave_* arguments, not both"
         self.__analyzer = analyzer
         """Analyzer to use for basic classifiers within boosted classifier"""
+
+
+    ## def __repr__(self, prefixes=[]):
+    ##     return super(BoostedClassifierSensitivityAnalyzer, self).__repr__(
+    ##         prefixes=prefixes
+    ##         + _repr_attrs(self, ['clf', 'analyzer', 'combined_analyzer'])
+    ##         + _repr_attrs(self, ['sa_attr'], default='combinations')
+    ##         )
 
 
     def _untrain(self):
