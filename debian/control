@@ -19,9 +19,9 @@ Recommends: python-nibabel, python-psyco, python-mdp, python-scipy, shogun-pytho
 Suggests: fslview, fsl, python-nose, python-lxml, python-openopt, python-rpy2, python-mvpa-doc, python-scikits-learn
 Conflicts: python-mvpa
 Description: multivariate pattern analysis with Python
- Python module to ease pattern classification analyses of large
- datasets. It provides high-level abstraction of typical processing
- steps (e.g. data preparation, classification, feature selection,
+ PyMVPA eases pattern classification analyses of large datasets, with an
+ accent on neuroimaging. It provides high-level abstraction of typical
+ processing steps (e.g. data preparation, classification, feature selection,
  generalization testing), a number of implementations of some popular
  algorithms (e.g. kNN, Ridge Regressions, Sparse Multinomial Logistic
  Regression), and bindings to external machine learning libraries (libsvm,
