@@ -19,7 +19,6 @@ from mvpa.base import externals
 
 if externals.exists("pylab", raise_=True):
     import pylab as pl
-    import matplotlib.numerix.ma as M
 
 if externals.exists("griddata", raise_=True):
     from mvpa.support.griddata import griddata
@@ -27,6 +26,10 @@ if externals.exists("griddata", raise_=True):
 if externals.exists("scipy", raise_=True):
     from scipy.optimize import leastsq
 
+if externals.versions['numpy'] > '1.1.0':
+    from numpy import ma
+else:
+    from matplotlib.numerix import ma
 
 # TODO : add optional plotting labels for the sensors
 ##REF: Name was automagically refactored
@@ -116,7 +119,7 @@ def plot_head_topography(topography, sensorlocations, plotsensors=False,
     if masked:
         notinhead = np.greater_equal((x - cx) ** 2 + (y - cy) ** 2,
                                     (1.0 * r) ** 2)
-        topo = M.masked_where(notinhead, topo)
+        topo = ma.masked_where(notinhead, topo)
 
     # show surface
     map = pl.imshow(topo, origin="lower", extent=(-r, r, -r, r), **kwargs)
