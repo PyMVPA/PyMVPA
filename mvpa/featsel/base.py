@@ -230,8 +230,8 @@ class StaticFeatureSelection(FeatureSelection):
         super(FeatureSelection, self)._untrain()
 
 
-    dshape = property(fget=lambda self: self._dshape)
-    oshape = property(fget=lambda self: self._oshape)
+    dshape = property(fget=lambda self: self.__orig_dshape)
+    oshape = property(fget=lambda self: self.__orig_oshape)
 
 class SensitivityBasedFeatureSelection(FeatureSelection):
     """Feature elimination.
