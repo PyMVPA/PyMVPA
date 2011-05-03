@@ -92,6 +92,7 @@ build: build-stamp
 build-stamp: $(build_depends)
 	$(PYTHON) setup.py config --noisy
 	$(PYTHON) setup.py build_ext --inplace
+	touch $@
 
 
 #
