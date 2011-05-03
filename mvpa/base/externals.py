@@ -11,6 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 import os
+import numpy as np                      # NumPy is required anyways
 
 from mvpa.base import warning
 from mvpa import cfg
@@ -550,21 +551,28 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
         # Exceptions which are silently caught while running tests for externals
         _caught_exceptions = [ImportError, AttributeError, RuntimeError]
 
-        estr = ''
         try:
-            exec _KNOWN[dep]
-            result = True
-        except tuple(_caught_exceptions), e:
-            estr = ". Caught exception was: " + str(e)
-        except Exception, e:
-            # Add known ones by their names so we don't need to
-            # actually import anything manually to get those classes
-            if e.__class__.__name__ in ['RPy_Exception', 'RRuntimeError',
-                                        'RPy_RException']:
-                _caught_exceptions += [e.__class__]
+            # Suppress NumPy warnings while testing for externals
+            olderr = np.seterr(all="ignore")
+
+            estr = ''
+            try:
+                exec _KNOWN[dep]
+                result = True
+            except tuple(_caught_exceptions), e:
                 estr = ". Caught exception was: " + str(e)
-            else:
-                raise
+            except Exception, e:
+                # Add known ones by their names so we don't need to
+                # actually import anything manually to get those classes
+                if e.__class__.__name__ in ['RPy_Exception', 'RRuntimeError',
+                                            'RPy_RException']:
+                    _caught_exceptions += [e.__class__]
+                    estr = ". Caught exception was: " + str(e)
+                else:
+                    raise
+        finally:
+            # And restore warnings
+            np.seterr(**olderr)
 
         if __debug__:
             debug('EXT', "Presence of %s is%s verified%s" %
