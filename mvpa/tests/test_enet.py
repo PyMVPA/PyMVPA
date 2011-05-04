@@ -65,7 +65,7 @@ class ENETTests(unittest.TestCase):
 
         # now ask for the sensitivities WITHOUT having to pass the dataset
         # again
-        sens = clf.get_sensitivity_analyzer(force_train=False)()
+        sens = clf.get_sensitivity_analyzer(force_train=False)(None)
 
         self.failUnless(sens.shape == (data.nfeatures,))
 
