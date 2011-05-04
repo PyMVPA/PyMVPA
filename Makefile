@@ -294,31 +294,41 @@ ut-%: build
 
 unittest: build
 	@echo "I: Running unittests (without optimization nor debug output)"
-	PYTHONPATH=.:$(PYTHONPATH) $(PYTHON) mvpa/tests/__init__.py
+	PYTHONPATH=.:$(PYTHONPATH) \
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		$(PYTHON) mvpa/tests/__init__.py
 
 
 # test if PyMVPA is working if optional externals are missing
 unittest-badexternals: build
 	@echo "I: Running unittests under assumption of missing optional externals."
-	@PYTHONPATH=mvpa/tests/badexternals:.:$(PYTHONPATH) $(PYTHON) mvpa/tests/__init__.py 2>&1 \
-	| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
-              -e 'WARNING:.*SMLR.* implementation'
+	@PYTHONPATH=mvpa/tests/badexternals:.:$(PYTHONPATH) \
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		$(PYTHON) mvpa/tests/__init__.py 2>&1 \
+		| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
+		          -e 'WARNING:.*SMLR.* implementation'
 
 # only non-labile tests
 unittest-nonlabile: build
 	@echo "I: Running only non labile unittests. None of them should ever fail."
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/__init__.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no \
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		$(PYTHON) mvpa/tests/__init__.py
 
 # test if no errors would result if we force enabling of all ca
 unittest-ca: build
 	@echo "I: Running unittests with all ca enabled."
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=ENFORCE_CA_ENABLED $(PYTHON) mvpa/tests/__init__.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=ENFORCE_CA_ENABLED \
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		$(PYTHON) mvpa/tests/__init__.py
 
 # Run unittests with optimization on -- helps to catch unconditional
 # debug calls
 unittest-optimization: build
 	@echo "I: Running unittests with $(PYTHON) -O."
-	@PYTHONPATH=.:$(PYTHONPATH) $(PYTHON) -O mvpa/tests/__init__.py
+	@PYTHONPATH=.:$(PYTHONPATH) \
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		$(PYTHON) -O mvpa/tests/__init__.py
 
 # Run unittests with all debug ids and some metrics (crossplatform ones) on.
 #   That does:
@@ -329,9 +339,10 @@ unittest-debug: SHELL=/bin/bash
 unittest-debug: build
 	@echo "I: Running unittests with debug output. No progress output."
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
-       $(PYTHON) mvpa/tests/__init__.py 2>&1 \
-       |  sed -n -e '/^[=-]\{60,\}$$/,$$p'; \
-	   exit $${PIPESTATUS[0]}	# reaquire status of 1st command, works only in bash!
+		MVPA_MATPLOTLIB_BACKEND=agg \
+		$(PYTHON) mvpa/tests/__init__.py 2>&1 \
+		|  sed -n -e '/^[=-]\{60,\}$$/,$$p'; \
+		exit $${PIPESTATUS[0]}	# reaquire status of 1st command, works only in bash!
 
 
 # Run all unittests
