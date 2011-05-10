@@ -15,7 +15,8 @@ from mvpa.testing.datasets import datasets
 from mvpa.tests.test_stats import *
 
 from scipy import signal
-from mvpa.clfs.stats import match_distribution, rv_semifrozen
+from mvpa.clfs.stats import match_distribution, rv_semifrozen, \
+     plot_distribution_matches
 from mvpa.misc.stats import chisquare
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.datasets.base import dataset_wizard
@@ -213,6 +214,13 @@ class StatsTestsScipy(unittest.TestCase):
                         # and it should be at least in the first
                         # 30 best matching ;-)
                         self.failUnless(inorm <= 30)
+                    # Test plotting only once
+                    if loc is None and externals.exists("pylab plottable"):
+                        import pylab as pl
+                        fig = pl.figure()
+                        plot_distribution_matches(data, matched, legend=1, nbest=5)
+                        #pl.show()
+                        pl.close(fig)
 
     def test_r_dist_stability(self):
         """Test either rdist distribution performs nicely
