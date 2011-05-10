@@ -947,7 +947,10 @@ if externals.exists('scipy'):
             list of lines
             """
 
-            hist = pl.hist(data, nbins, normed=1, align='center')
+            # API changed since v0.99.0-641-ga7c2231
+            halign = externals.versions['matplotlib'] >= '1.0.0' \
+                     and 'mid' or 'center'
+            hist = pl.hist(data, nbins, normed=1, align=halign)
             data_range = [np.min(data), np.max(data)]
 
             # x's
