@@ -459,8 +459,11 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 else:
                     range_ = (minv, maxv)
                 H = np.histogram(func_masked, range=range_, bins=31)
-                H2 = pl.hist(func_masked, bins=H[1], align='center',
-                            facecolor='#FFFFFF', hold=True)
+                # API changed since v0.99.0-641-ga7c2231
+                halign = externals.versions['matplotlib'] >= '1.0.0' \
+                         and 'mid' or 'center'
+                H2 = pl.hist(func_masked, bins=H[1], align=halign,
+                             facecolor='#FFFFFF', hold=True)
                 for a, kwparams in add_dist2hist:
                     dbin = (H[1][1] - H[1][0])
                     pl.plot(H2[1], [a(x) * dbin for x in H2[1]], **kwparams)
