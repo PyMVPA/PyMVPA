@@ -23,7 +23,8 @@ from mvpa.misc.errorfx import mean_power_fx, root_mean_power_fx, rms_error, \
      relative_rms_error, mean_mismatch_error, auc_error
 from mvpa.base import warning
 from mvpa.base.collections import Collectable
-from mvpa.base.state import ConditionalAttribute, ClassWithCollections
+from mvpa.base.state import ConditionalAttribute, ClassWithCollections, \
+     UnknownStateError
 from mvpa.base.dochelpers import enhanced_doc_string, table2string
 from mvpa.clfs.stats import auto_null_dist
 
@@ -116,7 +117,13 @@ class SummaryStatistics(object):
 
         # extract value if necessary
         if isinstance(estimates, Collectable):
-            estimates = estimates.value
+            try:
+                estimates = estimates.value
+            except UnknownStateError, e:
+                estimates = None        # reset to None to be safe below
+                if __debug__:
+                    debug('CM', "Cannot get yet uncollected estimates from %s",
+                          estimates)
 
         if estimates is not None and len(targets) != len(estimates):
             raise ValueError, \
