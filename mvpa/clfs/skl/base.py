@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 from mvpa.base import warning, externals
+from mvpa.base.dochelpers import _repr_attrs
 from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa.base.learner import FailedToTrainError, FailedToPredictError, \
         DegenerateInputError
@@ -33,12 +34,14 @@ class SKLLearnerAdapter(Classifier):
 
     Examples
     --------
-    
+
+    TODO
     """
 
     __tags__ = ['skl']
 
-    def __init__(self, skl_learner, tags=None, **kwargs):
+    def __init__(self, skl_learner, tags=None, enforce_dim=None,
+                 **kwargs):
         """
         Parameters
         ----------
@@ -46,13 +49,18 @@ class SKLLearnerAdapter(Classifier):
           Existing instance of a learner from skl.  It should
           implement `fit` and `predict`.  If `predict_proba` is
           available in the interface, then conditional attribute
-          `predict_proba` becomes available as well
+          `probabilities` becomes available as well
         tags : list of string
-          What additional tags to attach to this classifier.  Tags are
+          What additional tags to attach to this learner.  Tags are
           used in the queries to classifier or regression warehouses.
+        enforce_dim : None or int, optional
+          If not None, it would enforce given dimensionality for
+          ``predict`` call, if all other trailing dimensions are
+          degenerate.
         """
 
         self._skl_learner = skl_learner
+        self.enforce_dim = enforce_dim
         if tags:
             # So we make a per-instance copy
             self.__tags__ = self.__tags__ + tags
@@ -65,6 +73,7 @@ class SKLLearnerAdapter(Classifier):
         prefixes = [repr(self._skl_learner)]
         if self.__tags__ != ['skl']:
             prefixes += ['tags=%r' % [t for t in self.__tags__ if t != 'skl']]
+        prefixes += _repr_attrs(self, ['enforce_dim'])
         return Classifier.__repr__(self, prefixes=prefixes)
 
 
@@ -79,6 +88,7 @@ class SKLLearnerAdapter(Classifier):
             if not dataset.nsamples > len(targets_sa.unique):
                 raise DegenerateInputError, \
                       "LDA requires # of samples exceeding # of classes"
+
         # we better map into numeric labels if it is not a regression
         if not 'regression' in self.__tags__:
             targets = self._attrmap.to_numeric(targets)
@@ -102,15 +112,23 @@ class SKLLearnerAdapter(Classifier):
                   "Failed to predict %s on data of shape %s. Got '%s' during" \
                   " call to predict()." % (self, data.shape, e)
 
+        if self.enforce_dim:
+            res_dim = len(res.shape)
+            if res_dim > self.enforce_dim:
+                # would throw meaningful exception if not possible
+                res = res.reshape(res.shape[:self.enforce_dim])
+            elif res_dim < self.enforce_dim:
+                # broadcast
+                res = res.reshape(res.shape + (1,)* (self.enforce_dim - res_dim))
         # Estimate estimates after predict, so if something goes
         # wrong, above exception handling occurs
-        if self.ca.is_enabled('estimates'):
+        if self.ca.is_enabled('probabilities'):
             if hasattr(self._skl_learner, 'predict_proba'):
                 # Duplication of computation, since in many scenarios
                 # predict() calls predict_proba()
-                self.ca.estimates = self._skl_learner.predict_proba(data)
+                self.ca.probabilities = self._skl_learner.predict_proba(data)
             else:
                 warning("%s has no predict_proba() defined, so no probability"
                         " estimates could be extracted" % self._skl_learner)
-
+        self.ca.estimates = res
         return res
