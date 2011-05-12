@@ -308,6 +308,13 @@ if externals.exists('skl'):
                                 tags=['lda', 'linear', 'multiclass', 'binary'],
                                 descr='skl.LDA()')
 
+    from scikits.learn.pls import PLSRegression as sklPLSRegression
+    # somewhat silly use of PLS, but oh well
+    regrswh += SKLLearnerAdapter(sklPLSRegression(n_components=1),
+                                 tags=['linear', 'regression'],
+                                 enforce_dim=1,
+                                 descr='skl.PLSRegression_1d()')
+
 # kNN
 clfswh += kNN(k=5, descr="kNN(k=5)")
 clfswh += kNN(k=5, voting='majority', descr="kNN(k=5, voting='majority')")
