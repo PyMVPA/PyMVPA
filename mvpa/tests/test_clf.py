@@ -187,12 +187,13 @@ class ClassifiersTests(unittest.TestCase):
         except Exception, e:
             self.fail("Failed with %s" % e)
 
-        if nclasses > 2 and \
-               ('on 5%(' in clf.descr or 'regression_based' in clf.__tags__):
-            # skip those since they are barely applicable/testable here
-            return
-
         if cfg.getboolean('tests', 'labile', default='yes'):
+            if nclasses > 2 and \
+                   ((clf.descr is not None and 'on 5%(' in clf.descr)
+                    or 'regression_based' in clf.__tags__):
+                # skip those since they are barely applicable/testable here
+                raise SkipTest("Skip testing of cve on %s" % clf)
+
             self.failUnless(cve < 0.25, # TODO: use multinom distribution
                             msg="Got transfer error %g on %s with %d labels"
                             % (cve, ds, len(ds.UT)))
@@ -918,7 +919,9 @@ class ClassifiersTests(unittest.TestCase):
             nlabels = len(ds.uniquetargets)
             if nlabels == 2 \
                and cfg.getboolean('tests', 'labile', default='yes'):
-                self.failUnless(error < 0.3)
+                self.failUnless(error < 0.3,
+                                msg="Got error %.2f on %s dataset"
+                                % (error, dsname))
 
             # Check if does not puke on repr and str
             self.failUnless(str(clf) != "")
