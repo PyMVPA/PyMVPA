@@ -73,7 +73,7 @@ if len(files):
                  '@l%s' % ap(h.get_zooms(), '%.2f', 'x') ]
         # Slope
         if (h.has_data_slope or h.has_data_intercept) \
-           and h.get_slope_inter() != (1.0, 0.0):
+           and not h.get_slope_inter() in [(1.0, 0.0), (None, None)]:
             row += ['@l*%.3g+%.3g' % h.get_slope_inter()]
         else:
             row += [ '' ]
