@@ -107,7 +107,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
             # Assure that we have 3D (at least)
             if len(argshape)<3:
                 arg = nb.Nifti1Image(
-                        arg.get_data().reshape((1,)*(3-len(argshape)) + argshape),
+                        arg.get_data().reshape(argshape + (1,)*(3-len(argshape))),
                         arg.get_affine(),
                         arg.get_header())
         if isinstance(arg, np.ndarray):
@@ -124,14 +124,15 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
         bg_hdr = bg.get_header()
         aspect = bg_hdr.get_zooms()[2] / bg_hdr.get_zooms()[1]
 
-        bg = bg.get_data() #[..., ::-1, ::-1] # XXX custom for now
+        bg = bg.get_data()
     else:
         aspect = 1.0
 
+    bg_mask = None
     if bg is not None:
         bg_mask = handle_arg(background_mask)
         if isinstance(bg_mask, SpatialImage):
-            bg_mask = bg_mask.get_data() #[..., ::-1, ::-1] # XXX
+            bg_mask = bg_mask.get_data()
         if bg_mask is not None:
             bg_mask = bg_mask != 0
         else:
@@ -141,7 +142,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
 
     if func is not None:
         if isinstance(func, SpatialImage):
-            func = func.get_data() #[..., ::-1, :] # XXX
+            func = func.get_data()
 
         func_mask = handle_arg(overlay_mask)
         if isinstance(func_mask, SpatialImage):
@@ -315,7 +316,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                 self.fig = pl.figure(facecolor='white',
                                     figsize=(4*ncolumns, 4*nrows))
             fig = self.fig
-
+            fig.clf()
             #
             # how to threshold images
             thresholder = lambda x: np.logical_and(x>=vlim[0],
@@ -331,23 +332,25 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                                      frame_on=False)
                 self.slices_ax.append(ax)
                 ax.axison = False
-                slice_bg = bg[islice]
+                slice_bg_nvoxels = None
+                if bg is not None:
+                    slice_bg = bg[:, :, islice]
 
-                slice_bg_ = np.ma.masked_array(slice_bg,
-                                              mask=np.logical_not(bg_mask[islice]))
-                                              #slice_bg<=0)
-                slice_bg_nvoxels = len(slice_bg_.nonzero()[0])
-                if __debug__:
-                    debug('PLLB', "Plotting %i background elements in slice %i"
-                          % (slice_bg_nvoxels, islice))
+                    slice_bg_ = np.ma.masked_array(slice_bg,
+                                                  mask=np.logical_not(bg_mask[:, :, islice]))
+                                                  #slice_bg<=0)
+                    slice_bg_nvoxels = len(slice_bg_.nonzero()[0])
+                    if __debug__:
+                        debug('PLLB', "Plotting %i background elements in slice %i"
+                              % (slice_bg_nvoxels, islice))
 
-                slice_sl  = func[islice]
+                slice_sl  = func[:, :, islice]
 
                 in_thresh = thresholder(slice_sl)
                 out_thresh = np.logical_not(in_thresh)
                 slice_sl_ = np.ma.masked_array(slice_sl,
                                 mask=np.logical_or(out_thresh,
-                                                  np.logical_not(func_mask[islice])))
+                                                  np.logical_not(func_mask[:, :, islice])))
 
                 slice_func_nvoxels = len(slice_sl_.nonzero()[0])
                 if __debug__:
@@ -360,14 +363,14 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
 
                 # paste a blank white background first, since otherwise
                 # recent matplotlib screws up those masked imshows
-                im = ax.imshow(np.ones(slice_sl_.shape),
+                im = ax.imshow(np.ones(slice_sl_.shape).T,
                                cmap=bg_cmap,
                                **kwargs)
                 im.set_clim((0,1))
 
                 # ax.clim((0,1))
                 if slice_bg_nvoxels:
-                    ax.imshow(slice_bg_,
+                    ax.imshow(slice_bg_.T,
                              # let's stay close to the ugly truth ;-)
                              #interpolation='bilinear',
                              interpolation='nearest',
@@ -375,10 +378,11 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                              **kwargs)
 
                 if slice_func_nvoxels:
-                    im = ax.imshow(slice_sl_,
+                    alpha = slice_bg_nvoxels and 0.9 or 1.0
+                    im = ax.imshow(slice_sl_.T,
                                    interpolation='nearest',
                                    cmap=func_cmap,
-                                   alpha=0.8,
+                                   alpha=alpha,
                                    **kwargs)
                     im.set_clim(*clim)
                     im0 = im
@@ -477,7 +481,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
                         face.set_facecolor(color)
 
 
-            fig.subplots_adjust(left=0.01, right=0.95, hspace=0.01)
+            fig.subplots_adjust(left=0.01, right=0.95, hspace=0.25)
             # , bottom=0.01
             if ncolumns - int(bool(add_info) or bool(add_hist)) < 2:
                 fig.subplots_adjust(wspace=0.4)
@@ -521,12 +525,12 @@ if __name__ == "__main__":
     # for easy debugging
     import os
     from mvpa.base import cfg
-    impath = os.path.join('datadb', 'tutorial_data')
+    impath = os.path.join('datadb', 'tutorial_data', 'tutorial_data', 'data')
     plot_lightbox(
         #background = NiftiImage('%s/anat.nii.gz' % impath),
         background = '%s/anat.nii.gz' % impath,
         background_mask = None,
-        overlay = nb.loadf('%s/bold.nii.gz' % impath).get_data().T[0],
+        overlay = nb.load('%s/example_bold.nii.gz' % impath), #.get_data(),
         overlay_mask = '%s/mask_brain.nii.gz' % impath,
         #
         do_stretch_colors = False,
@@ -550,3 +554,4 @@ if __name__ == "__main__":
         )
 
     pl.show()
+
