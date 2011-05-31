@@ -359,3 +359,13 @@ def noisy_2d_fx(size_per_fx, dfx, sfx, center, noise_std=1):
     samples += N.array(center)
 
     return Dataset(samples=samples, labels=labels)
+
+
+def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
+                            x_min=-2.0, x_max=3.0, sigma=0.2):
+    """A straight line with some Gaussian noise.
+    """
+    x = N.linspace(start=x_min, stop=x_max, num=size)
+    noise = N.random.randn(size)*sigma
+    y = x * slope + intercept + noise
+    return Dataset(samples=x.reshape((-1, 1)), labels=y)
