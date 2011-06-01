@@ -250,6 +250,10 @@ class ProxyClassifier(Classifier):
         return super(ProxyClassifier, self).__repr__(
             ["clf=%s" % repr(self.__clf)] + prefixes)
 
+    def __str__(self, *args, **kwargs):
+        return super(ProxyClassifier, self).__str__(
+            str(self.__clf), *args, **kwargs)
+
     def summary(self):
         s = super(ProxyClassifier, self).summary()
         if self.trained:
@@ -763,6 +767,10 @@ class TreeClassifier(ProxyClassifier):
         prefix = "groups=%s" % repr(self._groups)
         return super(TreeClassifier, self).__repr__([prefix] + prefixes)
 
+    def __str__(self, *args, **kwargs):
+        return super(TreeClassifier, self).__str__(
+            ', '.join(['%s: %s' % i for i in self.clfs.iteritems()]),
+            *args, **kwargs)
 
     def summary(self):
         """Provide summary for the `TreeClassifier`.
@@ -893,13 +901,14 @@ class TreeClassifier(ProxyClassifier):
                       'Predicting for group %s using %s on %d samples',
                       (gk, clf_, np.sum(group_indexes)))
             if clf_ is None:
-                predictions[group_indexes] = groups[gk][0] # our only label
+                p = groups[gk][0] # our only label
             else:
                 p = clf_.predict(dataset[group_indexes])
-                if predictions is None:
-                    predictions = np.zeros((len(dataset),),
-                                          dtype=np.asanyarray(p).dtype)
-                predictions[group_indexes] = p
+
+            if predictions is None:
+                predictions = np.zeros((len(dataset),),
+                                       dtype=np.asanyarray(p).dtype)
+            predictions[group_indexes] = p
         return predictions
 
 
