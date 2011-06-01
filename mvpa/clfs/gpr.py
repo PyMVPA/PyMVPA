@@ -162,8 +162,10 @@ class GPR(Classifier):
             self.__tags__ += ['linear']
         else:
             self.__tags__ += ['non-linear']
-            if externals.exists('openopt'):
-                self.__tags__ += ['has_sensitivity']
+
+        if externals.exists('openopt') \
+               and not 'has_sensitivity' in self.__tags__:
+            self.__tags__ += ['has_sensitivity']
 
         # No need to initialize conditional attributes. Unless they got set
         # they would raise an exception self.predicted_variances =
