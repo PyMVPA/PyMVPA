@@ -174,11 +174,11 @@ class Classifier(Learner):
     def __is_regression__(self):
         return 'regression' in self.__tags__
 
-    def __str__(self):
+    def __str__(self, *args, **kwargs):
         if __debug__ and 'CLF_' in debug.active:
             return "%s / %s" % (repr(self), super(Classifier, self).__str__())
         else:
-            return _str(self)
+            return _str(self, *args, **kwargs)
 
 
     def _pretrain(self, dataset):
