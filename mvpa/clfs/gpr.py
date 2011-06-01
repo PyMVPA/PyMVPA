@@ -117,8 +117,10 @@ class GPR(Classifier):
             self._clf_internals += ['linear']
         else:
             self._clf_internals += ['non-linear']
-            if externals.exists('openopt'):
-                self._clf_internals += ['has_sensitivity']
+
+        if externals.exists('openopt') \
+               and not 'has_sensitivity' in self._clf_internals:
+            self._clf_internals += ['has_sensitivity']
 
         # No need to initialize state variables. Unless they got set
         # they would raise an exception self.predicted_variances =
