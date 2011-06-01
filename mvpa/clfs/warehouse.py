@@ -171,9 +171,8 @@ clfswh += [ SMLR(lm=0.1, implementation="C", descr="SMLR(lm=0.1)"),
           ]
 
 clfswh += \
-     [ MulticlassClassifier(clfswh['smlr'][0],
-                            descr='Pairs+maxvote multiclass on ' + \
-                            clfswh['smlr'][0].descr) ]
+     [ MulticlassClassifier(SMLR(lm=0.1),
+                            descr='Pairs+maxvote multiclass on SMLR(lm=0.1)') ]
 
 if externals.exists('libsvm'):
     from mvpa.clfs import libsvmc as libsvm
