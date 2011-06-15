@@ -31,6 +31,25 @@ Unreleased changes
 Releases
 ========
 
+* 0.6.0~rc4 (Wed, Jun 14 2011)
+
+  * Fixes
+
+    - Finished transition to :mod:`nibabel` conventions in `plot_lightbox`
+    - Addressed :mod:`matplotlib.hist` API change
+    - Various adjustments in the tests batteries (:mod:`nibabel` 1.1.0
+      compatibility, etc)
+
+  * New functionality
+
+    -  Explicit new argument ``flatten`` to from_wizard -- default
+       behavior changed if mapper was provided as well
+
+  * Enhancements
+
+    - Elaborated ``__str__`` and ``__repr__`` for some Classifiers and
+      Measures
+
 * 0.6.0~rc3 (Thu, Apr 12 2011)
 
   * Fixes
