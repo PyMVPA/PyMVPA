@@ -611,7 +611,7 @@ class ClassifiersTests(unittest.TestCase):
         # That is why we use separate pool of classifiers here
         clfs_mc = clfswh['multiclass']         # pool of classifiers
         clfs_mc = [clfs_mc[i] for i in np.random.permutation(len(clfs_mc))
-                   if not '%' in str(clfs[i])]
+                   if not '%' in str(clfs_mc[i])]
 
         tclf = TreeClassifier(clfs_mc[0], {
             'L0' : (('L0',), None),
