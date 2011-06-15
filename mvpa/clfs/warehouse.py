@@ -171,9 +171,8 @@ clfswh += [ SMLR(lm=0.1, implementation="C", descr="SMLR(lm=0.1)"),
           ]
 
 clfswh += \
-     [ MulticlassClassifier(clfswh['smlr'][0],
-                            descr='Pairs+maxvote multiclass on ' + \
-                            clfswh['smlr'][0].descr) ]
+     [ MulticlassClassifier(SMLR(lm=0.1),
+                            descr='Pairs+maxvote multiclass on SMLR(lm=0.1)') ]
 
 if externals.exists('libsvm'):
     from mvpa.clfs import libsvmc as libsvm
@@ -307,6 +306,31 @@ if externals.exists('skl'):
     clfswh += SKLLearnerAdapter(sklLDA(),
                                 tags=['lda', 'linear', 'multiclass', 'binary'],
                                 descr='skl.LDA()')
+
+    if externals.versions['skl'] >= '0.8':
+        from scikits.learn.pls import PLSRegression as sklPLSRegression
+        # somewhat silly use of PLS, but oh well
+        regrswh += SKLLearnerAdapter(sklPLSRegression(n_components=1),
+                                     tags=['linear', 'regression'],
+                                     enforce_dim=1,
+                                     descr='skl.PLSRegression_1d()')
+
+    if externals.versions['skl'] >= '0.6.0':
+        from scikits.learn.linear_model import \
+             LARS as sklLARS, LassoLARS as sklLassoLARS
+        _lars_tags = ['lars', 'linear', 'regression', 'does_feature_selection']
+
+        _lars = SKLLearnerAdapter(sklLARS(),
+                                  tags=_lars_tags,
+                                  descr='skl.LARS()')
+
+        _lasso_lars = SKLLearnerAdapter(sklLassoLARS(),
+                                        tags=_lars_tags,
+                                        descr='skl.LassoLARS()')
+
+        regrswh += [_lars, _lasso_lars]
+        clfswh += [RegressionAsClassifier(_lars, descr="skl.LARS_C()"),
+                   RegressionAsClassifier(_lasso_lars, descr="skl.LassoLARS_C()")]
 
 # kNN
 clfswh += kNN(k=5, descr="kNN(k=5)")

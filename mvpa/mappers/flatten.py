@@ -128,6 +128,8 @@ class FlattenMapper(Mapper):
         # take all "additional" axes after the actual feature axis and count
         # elements a sample -- if not axis exists this will be 1
         for k in dataset.fa:
+            if __debug__:
+                debug('MAP_', "Forward-mapping fa '%s'." % k)
             attr = dataset.fa[k].value
             # the maximmum number of axis to flatten in the attr
             if not self.__maxdims is None:

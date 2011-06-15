@@ -263,6 +263,8 @@ class ChainNode(Node):
     #
     def append(self, node):
         """Append a node to the chain."""
+        # XXX and if a node is a ChainMapper itself -- should we just
+        # may be loop and add all the entries?
         self._nodes.append(node)
 
 

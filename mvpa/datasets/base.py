@@ -259,7 +259,7 @@ class Dataset(AttrDataset):
 
     @classmethod
     def from_wizard(cls, samples, targets=None, chunks=None, mask=None,
-                    mapper=None, space=None):
+                    mapper=None, flatten=None, space=None):
         """Convenience method to create dataset.
 
         Datasets can be created from N-dimensional samples. Data arrays with
@@ -284,15 +284,19 @@ class Dataset(AttrDataset):
           The shape of the array has to correspond to the shape of a single
           sample (shape(samples)[1:] == shape(mask)). Its non-zero elements
           are used to mask the input data.
+        mapper : Mapper instance, optional
+          A trained mapper instance that is used to forward-map
+          possibly already flattened (see flatten) and masked samples
+          upon construction of the dataset. The mapper must have a
+          simple feature space (samples x features) as output. Use a
+          `ChainMapper` to achieve that, if necessary.
+        flatten : None or bool, optional
+          If None (default) and no mapper provided, data would get flattened.
+          Bool value would instruct explicitly either to flatten before
+          possibly passing into the mapper if no mask is given.
         space : str, optional
           If provided it is assigned to the mapper instance that performs the
           initial flattening of the data.
-        mapper : Mapper instance, optional
-          A trained mapper instance that is used to forward-map
-          the already flattened and masked samples upon construction of the
-          dataset. The mapper must have a simple feature space (samples x
-          features) as output. Use a `ChainMapper` to achieve that, if
-          necessary.
 
         Returns
         -------
@@ -320,8 +324,10 @@ class Dataset(AttrDataset):
         ds = cls(samples, sa=sa_items)
         # apply mask through mapper
         if mask is None:
-            if len(samples.shape) > 2:
-                # if we have multi-dim data
+            # if we have multi-dim data
+            if len(samples.shape) > 2 and \
+                   ((flatten is None and mapper is None) # auto case
+                    or flatten):                         # bool case
                 fm = FlattenMapper(shape=samples.shape[1:], space=space)
                 ds = ds.get_mapped(fm)
         else:

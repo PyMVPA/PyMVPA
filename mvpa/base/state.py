@@ -322,7 +322,7 @@ class ParameterCollection(Collection):
             # list only params with not default values
             if self[k].is_default:
                 continue
-            prefixes.append("%s=%s" % (k, self[k].value))
+            prefixes.append("%s=%r" % (k, self[k].value))
         return prefixes
 
 

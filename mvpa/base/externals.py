@@ -11,6 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 import os
+import numpy as np                      # NumPy is required anyways
 
 from mvpa.base import warning
 from mvpa import cfg
@@ -194,6 +195,14 @@ def __assign_nipy_version():
 def __check_nipy_neurospin():
     from nipy.neurospin.utils import emp_nul
 
+def __assign_skl_version():
+    import scikits.learn as skl
+    if skl.__doc__.strip() == "":
+        raise ImportError("Verify your installation of scikits.learn. "
+                          "Its docstring is empty -- could be that only -lib "
+                          "was installed without the native Python modules")
+    versions['skl'] = SmartVersion(skl.__version__)
+
 def __check_weave():
     """Apparently presence of scipy is not sufficient since some
     versions experience problems. E.g. in Sep,Oct 2008 lenny's weave
@@ -304,12 +313,6 @@ def __check_openopt():
     import scikits.openopt as _
     return
 
-def __check_skl():
-    import scikits.learn as skl
-    if skl.__doc__.strip() == "":
-        raise ImportError("Verify your installation of scikits.learn. "
-                          "Its docstring is empty -- could be that only -lib "
-                          "was installed without the native Python modules")
 
 def _set_matplotlib_backend():
     """Check if we have custom backend to set and it is different
@@ -452,7 +455,7 @@ _KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
           'openopt': "__check_openopt()",
-          'skl': "__check_skl()",
+          'skl': "__assign_skl_version()",
           'mdp': "__assign_mdp_version()",
           'mdp ge 2.4': "from mdp.nodes import LLENode as __",
           'sg_fixedcachesize': "__check_shogun(3043, [2456])",
@@ -550,21 +553,28 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
         # Exceptions which are silently caught while running tests for externals
         _caught_exceptions = [ImportError, AttributeError, RuntimeError]
 
-        estr = ''
         try:
-            exec _KNOWN[dep]
-            result = True
-        except tuple(_caught_exceptions), e:
-            estr = ". Caught exception was: " + str(e)
-        except Exception, e:
-            # Add known ones by their names so we don't need to
-            # actually import anything manually to get those classes
-            if e.__class__.__name__ in ['RPy_Exception', 'RRuntimeError',
-                                        'RPy_RException']:
-                _caught_exceptions += [e.__class__]
+            # Suppress NumPy warnings while testing for externals
+            olderr = np.seterr(all="ignore")
+
+            estr = ''
+            try:
+                exec _KNOWN[dep]
+                result = True
+            except tuple(_caught_exceptions), e:
                 estr = ". Caught exception was: " + str(e)
-            else:
-                raise
+            except Exception, e:
+                # Add known ones by their names so we don't need to
+                # actually import anything manually to get those classes
+                if e.__class__.__name__ in ['RPy_Exception', 'RRuntimeError',
+                                            'RPy_RException']:
+                    _caught_exceptions += [e.__class__]
+                    estr = ". Caught exception was: " + str(e)
+                else:
+                    raise
+        finally:
+            # And restore warnings
+            np.seterr(**olderr)
 
         if __debug__:
             debug('EXT', "Presence of %s is%s verified%s" %
@@ -602,6 +612,7 @@ versions._KNOWN.update({
     'reportlab' : __check_reportlab,
     'pprocess' : __check_pprocess,
     'rpy2' : __check_rpy2,
+    'skl' : __assign_skl_version,
     'shogun' : __assign_shogun_version,
     'shogun:rev' : __assign_shogun_version,
     'shogun:full' : __assign_shogun_version,

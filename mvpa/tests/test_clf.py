@@ -187,12 +187,13 @@ class ClassifiersTests(unittest.TestCase):
         except Exception, e:
             self.fail("Failed with %s" % e)
 
-        if nclasses > 2 and \
-               ('on 5%(' in clf.descr or 'regression_based' in clf.__tags__):
-            # skip those since they are barely applicable/testable here
-            return
-
         if cfg.getboolean('tests', 'labile', default='yes'):
+            if nclasses > 2 and \
+                   ((clf.descr is not None and 'on 5%(' in clf.descr)
+                    or 'regression_based' in clf.__tags__):
+                # skip those since they are barely applicable/testable here
+                raise SkipTest("Skip testing of cve on %s" % clf)
+
             self.failUnless(cve < 0.25, # TODO: use multinom distribution
                             msg="Got transfer error %g on %s with %d labels"
                             % (cve, ds, len(ds.UT)))
@@ -328,7 +329,7 @@ class ClassifiersTests(unittest.TestCase):
 
 
     # TODO: sg - remove our limitations, meta, lda, qda and skl -- also
-    @sweepargs(clf=clfswh['!sg', '!plr', '!meta', '!lda', '!qda'])
+    @sweepargs(clf=clfswh['!sg', '!plr', '!meta', '!lda', '!qda', '!glmnet'])
     def test_single_class(self, clf):
         """Test if binary and multiclass can handle single class training/testing
         """
@@ -547,10 +548,19 @@ class ClassifiersTests(unittest.TestCase):
         """Basic tests for TreeClassifier
         """
         ds = datasets['uni4medium']
+        # make it simple of the beast -- take only informative ones
+        # because classifiers for the tree are selected randomly, so
+        # performance varies a lot and we just need to check on
+        # correct operation
+        ds = ds[:, ds.fa.nonbogus_targets != [None]]
+
         clfs = clfswh['binary']         # pool of classifiers
         # Lets permute so each time we try some different combination
-        # of the classifiers
-        clfs = [clfs[i] for i in np.random.permutation(len(clfs))]
+        # of the classifiers but exclude those operating on %s of
+        # features since we might not have enough for that
+        clfs = [clfs[i] for i in np.random.permutation(len(clfs))
+                if not '%' in str(clfs[i])]
+
         # Test conflicting definition
         tclf = TreeClassifier(clfs[0], {
             'L0+2' : (('L0', 'L2'), clfs[1]),
@@ -585,6 +595,7 @@ class ClassifiersTests(unittest.TestCase):
 
         cvtrc = cv.ca.training_stats
         cvtc = cv.ca.stats
+
         if cfg.getboolean('tests', 'labile', default='yes'):
             # just a dummy check to make sure everything is working
             self.failUnless(cvtrc != cvtc)
@@ -593,9 +604,18 @@ class ClassifiersTests(unittest.TestCase):
                             % (cverror, tclf))
 
         # Test trailing nodes with no classifier
-        tclf = TreeClassifier(clfs[0], {
+
+        # NB: It is necessary that the same classifier was not used at
+        # different nodes, since it would be re-trained for a new set
+        # of targets, thus leading to incorrect behavior/high error.
+        # That is why we use separate pool of classifiers here
+        clfs_mc = clfswh['multiclass']         # pool of classifiers
+        clfs_mc = [clfs_mc[i] for i in np.random.permutation(len(clfs_mc))
+                   if not '%' in str(clfs[i])]
+
+        tclf = TreeClassifier(clfs_mc[0], {
             'L0' : (('L0',), None),
-            'L1+2+3' : (('L1', 'L2', 'L3'), clfswh['multiclass'][0])})
+            'L1+2+3' : (('L1', 'L2', 'L3'), clfs_mc[1])})
 
         cv = CrossValidation(tclf,
                              OddEvenPartitioner(),
@@ -918,7 +938,9 @@ class ClassifiersTests(unittest.TestCase):
             nlabels = len(ds.uniquetargets)
             if nlabels == 2 \
                and cfg.getboolean('tests', 'labile', default='yes'):
-                self.failUnless(error < 0.3)
+                self.failUnless(error < 0.3,
+                                msg="Got error %.2f on %s dataset"
+                                % (error, dsname))
 
             # Check if does not puke on repr and str
             self.failUnless(str(clf) != "")

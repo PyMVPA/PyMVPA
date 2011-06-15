@@ -278,6 +278,12 @@ def test_chainmapper():
     assert_array_equal(rdata[rdata > 0], data[rdata > 0])
     assert_equal(np.sum(rdata > 0), 8)
 
+    # Lets construct a dataset with mapper assigned and see
+    # if sub-selecting a feature adjusts trailing StaticFeatureSelection
+    # appropriately
+    ds_subsel = Dataset.from_wizard(data, mapper=cm)[:, 1]
+    tail_sfs = ds_subsel.a.mapper[-1]
+    assert_equal(repr(tail_sfs), 'StaticFeatureSelection(slicearg=array([14]))')
 
 def test_sampleslicemapper():
     # this does nothing but Dataset.__getitem__ which is tested elsewhere -- but
