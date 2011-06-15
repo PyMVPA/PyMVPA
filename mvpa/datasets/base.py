@@ -292,7 +292,7 @@ class Dataset(AttrDataset):
           `ChainMapper` to achieve that, if necessary.
         flatten : None or bool, optional
           If None (default) and no mapper provided, data would get flattened.
-          Bool value would instruct explicitly instruct either to flatten before
+          Bool value would instruct explicitly either to flatten before
           possibly passing into the mapper if no mask is given.
         space : str, optional
           If provided it is assigned to the mapper instance that performs the
