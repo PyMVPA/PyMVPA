@@ -48,6 +48,12 @@ Institutions Where PyMVPA Is Known To Be Used
 Studies employing PyMVPA
 ========================
 
+* :ref:`Kubilius et al., Psychological Science (In press, 2011) <KWO11>`:
+  Emergence of perceptual gestalts in the human visual cortex: The case of the
+  configural superiority effect.  Complete suite of sources from stimuli
+  delivery (PsychoPy) to data analysis (PyMVPA) is available from
+  https://bitbucket.org/qbilius/confsup/src
+
 * :ref:`Meyer et al., Cerebral Cortex (2011) <MKE+11>`: Seeing Touch Is
   Correlated with Content-Specific Activity in Primary Somatosensory Cortex.
 
