@@ -255,6 +255,12 @@ experiments.
   DOI: http://dx.doi.org/10.1109/TPAMI.2005.127
 
 
+.. _KWO11:
+
+**Kubilius, J., Wagemans, J. & Op de Beeck, H.** (2011). Emergence of perceptual gestalts in the human visual cortex: The case of the configural superiority effect. *Psychological Science*, *in press*.
+  Keywords: :keyword:`pymvpa`, :keyword:`fMRI`
+
+
 .. _LSC+05:
 
 **LaConte, S., Strother, S., Cherkassky, V., Anderson, J. & Hu, X.** (2005). Support vector machines for temporal classification of block design fMRI data. *NeuroImage*, *26*, 317–329.
