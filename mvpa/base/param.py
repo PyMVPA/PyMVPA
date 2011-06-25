@@ -101,7 +101,12 @@ class Parameter(IndexedCollectable):
 
     def __reduce__(self):
         icr = IndexedCollectable.__reduce__(self)
-        res = (self.__class__, (self.__default, self._ro) + icr[1], icr[2])
+        # Collect all possible additional properties which were passed
+        # to the constructor
+        state = dict([(k, getattr(self, k)) for k in self._additional_props])
+        state['_additional_props'] = self._additional_props
+        state.update(icr[2])
+        res = (self.__class__, (self.__default, self._ro) + icr[1], state)
         #if __debug__ and 'COL_RED' in debug.active:
         #    debug('COL_RED', 'Returning %s for %s' % (res, self))
         return res
