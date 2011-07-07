@@ -54,7 +54,14 @@ def mean_mismatch_error(predicted, target):
     Both 'predicted' and 'target' can be either scalars or sequences,
     but have to be of the same length.
     """
-    return np.mean( predicted != target )
+    # XXX should we enforce consistent dimensionality and type?
+    #     e.g. now lists would lead to incorrect results, and
+    #     comparisons of arrays of different lengths would also
+    #     tolerate input and produce some incorrect value as output
+    #     error
+    #  np.equal , np.not_equal -- prohibited -- those do not work on literal labels! uff
+    #  so lets use == and != assuring dealing with arrays
+    return np.mean( np.asanyarray(predicted) != target )
 
 
 def mismatch_error(predicted, target):
@@ -63,7 +70,7 @@ def mismatch_error(predicted, target):
     Both 'predicted' and 'target' can be either scalars or sequences,
     but have to be of the same length.
     """
-    return np.sum( predicted != target )
+    return np.sum( np.asanyarray(predicted) != target )
 
 
 def match_accuracy(predicted, target):
@@ -72,7 +79,7 @@ def match_accuracy(predicted, target):
     Both 'predicted' and 'target' can be either scalars or sequences,
     but have to be of the same length.
     """
-    return np.sum( predicted == target )
+    return np.sum( np.asanyarray(predicted) == target )
 
 def mean_match_accuracy(predicted, target):
     """Computes mean of number of matches between some target and some
@@ -80,7 +87,7 @@ def mean_match_accuracy(predicted, target):
     Both 'predicted' and 'target' can be either scalars or sequences,
     but have to be of the same length.
     """
-    return np.mean( predicted == target )
+    return np.mean( np.asanyarray(predicted) == target )
 
 
 def auc_error(predicted, target):
