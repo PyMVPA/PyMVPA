@@ -120,6 +120,10 @@ class RFE(IterativeFeatureSelection):
         # get the initial split into train and test
         dataset, testdataset = self._get_traintest_ds(ds)
 
+        if __debug__:
+            debug('RFEC',
+                  "Initiating RFE with training on %s and testing using %s",
+                  (dataset, testdataset))
         errors = []
         """Computed error for each tested features set."""
 
@@ -256,6 +260,11 @@ class RFE(IterativeFeatureSelection):
         # charge conditional attributes
         self.ca.errors = errors
         self.ca.selected_ids = result_selected_ids
+        if __debug__:
+            debug('RFEC',
+                  "Selected %d features: %s",
+                  (len(result_selected_ids), result_selected_ids))
+
         # announce desired features to the underlying slice mapper
         # do copy to survive later selections
         self._safe_assign_slicearg(copy(result_selected_ids))
