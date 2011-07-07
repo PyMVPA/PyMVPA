@@ -295,6 +295,9 @@ class RepeatedMeasure(Measure):
         # run the node an all generated datasets
         results = []
         for i, sds in enumerate(generator.generate(ds)):
+            if __debug__:
+                debug('REPM', "%d-th iteration of %s on %s",
+                      (i, self, sds))
             if ca.is_enabled("datasets"):
                 # store dataset in ca
                 ca.datasets.append(sds)

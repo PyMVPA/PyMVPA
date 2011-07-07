@@ -319,7 +319,7 @@ if __debug__:
     debug.register('HDF5',   "HDF5 IO")
     debug.register('CM',   "Confusion matrix computation")
     debug.register('ROC',  "ROC analysis")
-    debug.register('CROSSC', "Cross-validation call")
+    debug.register('REPM', "Repeated measure (e.g. super-class of CrossValidation)")
     debug.register('CERR', "Various ClassifierErrors")
 
     debug.register('HPAL',   "Hyperalignment")
