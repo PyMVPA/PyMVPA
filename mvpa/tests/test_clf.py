@@ -32,7 +32,7 @@ from mvpa.base.learner import DegenerateInputError, FailedToTrainError, \
 from mvpa.clfs.meta import CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \
-     TreeClassifier, RegressionAsClassifier
+     TreeClassifier, RegressionAsClassifier, MaximalVote
 from mvpa.measures.base import TransferMeasure, ProxyMeasure, CrossValidation
 from mvpa.mappers.flatten import mask_mapper
 from mvpa.misc.attrmap import AttributeMap
@@ -660,13 +660,36 @@ class ClassifiersTests(unittest.TestCase):
         mclf = MulticlassClassifier(clf=svm,
                                    enable_ca=['training_stats'])
 
-        svm2.train(datasets['uni2small'])
-        mclf.train(datasets['uni2small'])
+        # with explicit MaximalVote with the conditional attributes
+        # enabled
+        mclf_mv = MulticlassClassifier(clf=svm,
+                                       combiner=MaximalVote(enable_ca=['estimates', 'predictions']),
+                                       enable_ca=['training_stats'])
+
+        for clf_ in svm2, mclf, mclf_mv:
+            clf_.train(datasets['uni2small'])
         s1 = str(mclf.ca.training_stats)
         s2 = str(svm2.ca.training_stats)
+        s3 = str(mclf_mv.ca.training_stats)
         self.failUnlessEqual(s1, s2,
             msg="Multiclass clf should provide same results as built-in "
                 "libsvm's %s. Got %s and %s" % (svm2, s1, s2))
+        self.failUnlessEqual(s1, s3,
+            msg="%s should have used maxvote resolver by default"
+                "so results should have been identical. Got %s and %s"
+                % (mclf, s1, s3))
+
+        assert_equal(len(mclf_mv.combiner.ca.estimates),
+                     len(mclf_mv.combiner.ca.predictions))
+
+        # They should have came from assessing training_stats ca being
+        # enabled
+        # recompute accuracy on predictions for training_stats
+        training_acc = np.sum(mclf_mv.combiner.ca.predictions ==
+                              datasets['uni2small'].targets) \
+                              / float(len(datasets['uni2small']))
+        # should match
+        assert_equal(mclf_mv.ca.training_stats.stats['ACC'], training_acc)
 
         svm2.untrain()
 
