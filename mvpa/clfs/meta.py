@@ -1320,6 +1320,9 @@ class MappedClassifier(ProxyClassifier):
 
         # for train() we have to provide dataset -- not just samples to train!
         wdataset = dataset.get_mapped(self.__mapper)
+        if __debug__:
+            debug('CLF', "Training %s having mapped dataset into %s",
+                  (self, wdataset))
         ProxyClassifier._train(self, wdataset)
 
 
