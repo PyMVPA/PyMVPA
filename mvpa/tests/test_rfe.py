@@ -10,6 +10,7 @@
 
 import numpy as np
 
+from mvpa.generators.base import Repeater
 from mvpa.generators.partition import NFoldPartitioner
 from mvpa.generators.permutation import AttributePermutator
 from mvpa.generators.splitters import Splitter
@@ -17,6 +18,7 @@ from mvpa.datasets.base import Dataset
 from mvpa.mappers.base import ChainMapper
 from mvpa.mappers.fx import maxofabs_sample, mean_sample, BinaryFxNode
 from mvpa.misc.errorfx import mean_mismatch_error
+from mvpa.misc.data_generators import normal_feature_dataset
 from mvpa.featsel.rfe import RFE
 from mvpa.featsel.base import \
      SensitivityBasedFeatureSelection
@@ -34,6 +36,7 @@ from mvpa.base.state import UnknownStateError
 
 from mvpa.testing import *
 from mvpa.testing.clfs import *
+from mvpa.testing.tools import reseed_rng
 from mvpa.testing.datasets import datasets
 
 
@@ -275,55 +278,82 @@ class RFETests(unittest.TestCase):
 
     # TODO: should later on work for any clfs_with_sens
     @sweepargs(clf=clfswh['has_sensitivity', '!meta'][:1])
+    @reseed_rng()
     def test_rfe(self, clf):
 
         # sensitivity analyser and transfer error quantifier use the SAME clf!
         sens_ana = clf.get_sensitivity_analyzer(postproc=maxofabs_sample())
         pmeasure = ProxyMeasure(clf, postproc=BinaryFxNode(mean_mismatch_error,
                                                            'targets'))
-        # because the clf is already trained when computing the sensitivity
-        # map, prevent retraining for transfer error calculation
-        # Use absolute of the svm weights as sensitivity
-        rfe = RFE(sens_ana,
-                  pmeasure,
-                  Splitter('train'),
-                  fselector=FixedNElementTailSelector(1),
-                  train_pmeasure=False)
+        cvmeasure = CrossValidation(clf, NFoldPartitioner(),
+                                    errorfx=mean_mismatch_error,
+                                    postproc=mean_sample())
 
-        data = self.get_data()
-        data_nfeatures = data.nfeatures
 
-        rfe.train(data)
-        resds = rfe(data)
+        # explore few recipes
+        for rfe, data in [
+            # because the clf is already trained when computing the sensitivity
+            # map, prevent retraining for transfer error calculation
+            # Use absolute of the svm weights as sensitivity
+            (RFE(sens_ana,
+                pmeasure,
+                Splitter('train'),
+                fselector=FixedNElementTailSelector(1),
+                train_pmeasure=False),
+             self.get_data()),
+            # use cross-validation within training to get error for the stopping point
+            # but use full training data to derive sensitivity
+            (RFE(sens_ana,
+                 cvmeasure,
+                 Repeater(2),            # give the same full dataset to sens_ana and cvmeasure
+                 fselector=FractionTailSelector(
+                     0.70,
+                     mode='select', tail='upper'),
+                train_pmeasure=True),
+             normal_feature_dataset(perlabel=20, nchunks=5, nfeatures=200,
+                                    nonbogus_features=[0, 1], snr=1.5))
+            ]:
+            # prep data
+            # data = datasets['uni2medium']
+            data_nfeatures = data.nfeatures
 
-        # fail if orig datasets are changed
-        self.failUnless(data.nfeatures == data_nfeatures)
+            rfe.train(data)
+            resds = rfe(data)
 
-        # check that the features set with the least error is selected
-        if len(rfe.ca.errors):
-            e = np.array(rfe.ca.errors)
-            self.failUnless(resds.nfeatures == data_nfeatures - e.argmin())
-        else:
-            self.failUnless(resds.nfeatures == data_nfeatures)
+            # fail if orig datasets are changed
+            self.failUnless(data.nfeatures == data_nfeatures)
 
-        # silly check if nfeatures is in decreasing order
-        nfeatures = np.array(rfe.ca.nfeatures).copy()
-        nfeatures.sort()
-        self.failUnless( (nfeatures[::-1] == rfe.ca.nfeatures).all() )
+            # check that the features set with the least error is selected
+            if len(rfe.ca.errors):
+                e = np.array(rfe.ca.errors)
+                if isinstance(rfe._fselector, FixedNElementTailSelector):
+                    self.failUnless(resds.nfeatures == data_nfeatures - e.argmin())
+                else:
+                    # in this case we can even check if we had actual
+                    # going down/up trend... although -- why up???
+                    imin = np.argmin(e)
+                    self.failUnless( 1 < imin < len(e) - 1 )
+            else:
+                self.failUnless(resds.nfeatures == data_nfeatures)
 
-        # check if history has elements for every step
-        self.failUnless(set(rfe.ca.history)
-                        == set(range(len(np.array(rfe.ca.errors)))))
+            # silly check if nfeatures is in decreasing order
+            nfeatures = np.array(rfe.ca.nfeatures).copy()
+            nfeatures.sort()
+            self.failUnless( (nfeatures[::-1] == rfe.ca.nfeatures).all() )
 
-        # Last (the largest number) can be present multiple times even
-        # if we remove 1 feature at a time -- just need to stop well
-        # in advance when we have more than 1 feature left ;)
-        self.failUnless(rfe.ca.nfeatures[-1]
-                        == len(np.where(rfe.ca.history
-                                       ==max(rfe.ca.history))[0]))
+            # check if history has elements for every step
+            self.failUnless(set(rfe.ca.history)
+                            == set(range(len(np.array(rfe.ca.errors)))))
 
-        # XXX add a test where sensitivity analyser and transfer error do not
-        # use the same classifier
+            # Last (the largest number) can be present multiple times even
+            # if we remove 1 feature at a time -- just need to stop well
+            # in advance when we have more than 1 feature left ;)
+            self.failUnless(rfe.ca.nfeatures[-1]
+                            == len(np.where(rfe.ca.history
+                                           ==max(rfe.ca.history))[0]))
+
+            # XXX add a test where sensitivity analyser and transfer error do not
+            # use the same classifier
 
 
     def test_james_problem(self):
@@ -357,6 +387,37 @@ class RFETests(unittest.TestCase):
                       'feature selection. Got exception: %s' % (e,))
         self.failUnless(error < 0.2)
 
+    def test_kimberley_problem(self):
+        rfesvm_split = LinearCSVMC()
+        debug.active = ['RFEC.*']
+        fs = \
+           RFE(rfesvm_split.get_sensitivity_analyzer(),
+               ProxyMeasure(rfesvm_split,
+                            postproc=BinaryFxNode(mean_mismatch_error, 'targets')),
+               Splitter('chunks'),
+               fselector=FractionTailSelector(
+                   0.70,
+                   mode='select', tail='upper'),
+               stopping_criterion=NBackHistoryStopCrit(BestDetector(), 10),
+               update_sensitivity=True)
+        clf = FeatureSelectionClassifier(
+            LinearCSVMC(),
+            # on features selected via RFE
+            fs)
+        # update sensitivity at each step (since we're not using the
+        # same CLF as sensitivity analyzer)
+        #cv = SplitClassifier(clf)
+        cvte = CrossValidation(clf, NFoldPartitioner(),
+                               errorfx=lambda p, t: np.mean(p == t),
+                               postproc=mean_sample(),
+                               enable_ca=['confusion', 'stats'])
+        ds = datasets['uni2large'].copy()
+        ds = ds[ds.chunks < 4]
+        ds.samples += 0.5*np.random.normal(size=ds.samples.shape)
+        #ds = hstack((ds, ds))
+        cv_results=cvte(ds)
+        print np.mean(cv_results)
+        print cvte.ca.stats.matrix
 
     ##REF: Name was automagically refactored
     def __test_matthias_question(self):
