@@ -378,12 +378,12 @@ class MaximalVote(PredictionsCombiner):
     estimates = ConditionalAttribute(enabled=False,
         doc="Estimates keep counts across classifiers for each label/sample")
 
-    def __init__(self):
-        """XXX Might get a parameter to use raw decision estimates if
-        voting is not unambigous (ie two classes have equal number of
-        votes
-        """
-        PredictionsCombiner.__init__(self)
+    # TODO: Might get a parameter to use raw decision estimates if
+    # voting is not unambigous (ie two classes have equal number of
+    # votes
+
+    def __init__(self, **kwargs):
+        PredictionsCombiner.__init__(self, **kwargs)
 
 
     def __call__(self, clfs, dataset):
