@@ -11,13 +11,14 @@
 import numpy as np
 
 from mvpa.generators.base import Repeater
-from mvpa.generators.partition import NFoldPartitioner
+from mvpa.generators.partition import NFoldPartitioner, OddEvenPartitioner
 from mvpa.generators.permutation import AttributePermutator
 from mvpa.generators.splitters import Splitter
 from mvpa.datasets.base import Dataset
 from mvpa.mappers.base import ChainMapper
-from mvpa.mappers.fx import maxofabs_sample, mean_sample, BinaryFxNode
+from mvpa.mappers.fx import maxofabs_sample, mean_sample, BinaryFxNode, FxMapper
 from mvpa.misc.errorfx import mean_mismatch_error
+from mvpa.misc.transformers import l2_normed
 from mvpa.misc.data_generators import normal_feature_dataset
 from mvpa.featsel.rfe import RFE
 from mvpa.featsel.base import \
@@ -28,6 +29,7 @@ from mvpa.featsel.helpers import \
      FixedNElementTailSelector, BestDetector, RangeElementSelector
 
 from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier
+from mvpa.clfs.transerror import ConfusionBasedError
 from mvpa.misc.attrmap import AttributeMap
 from mvpa.clfs.stats import MCNullDist
 from mvpa.measures.base import ProxyMeasure, CrossValidation
@@ -289,6 +291,7 @@ class RFETests(unittest.TestCase):
                                     errorfx=mean_mismatch_error,
                                     postproc=mean_sample())
 
+        rfesvm_split = SplitClassifier(clf, OddEvenPartitioner())
 
         # explore few recipes
         for rfe, data in [
@@ -311,6 +314,22 @@ class RFETests(unittest.TestCase):
                      mode='select', tail='upper'),
                 train_pmeasure=True),
              normal_feature_dataset(perlabel=20, nchunks=5, nfeatures=200,
+                                    nonbogus_features=[0, 1], snr=1.5)),
+            # use cross-validation (via SplitClassifier) and get mean
+            # of normed sensitivities across those splits
+            (RFE(rfesvm_split.get_sensitivity_analyzer(
+                    postproc=ChainMapper([ FxMapper('features', l2_normed),
+                                           FxMapper('samples', np.mean),
+                                           FxMapper('samples', np.abs)])),
+                 ConfusionBasedError(rfesvm_split, confusion_state='stats'),
+                 Repeater(2),             #  we will use the same full cv-training dataset
+                 fselector=FractionTailSelector(
+                     0.50,
+                     mode='select', tail='upper'),
+                 stopping_criterion=NBackHistoryStopCrit(BestDetector(), 10),
+                 train_pmeasure=False,    # we just extract it from existing confusion
+                 update_sensitivity=True),
+             normal_feature_dataset(perlabel=28, nchunks=7, nfeatures=200,
                                     nonbogus_features=[0, 1], snr=1.5))
             ]:
             # prep data
