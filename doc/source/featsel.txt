@@ -53,9 +53,11 @@ code/classification algorithms presented here can be found in
 `mvpa/clfs/warehouse.py`_.
 
 More formally, a :class:`~mvpa.clfs.meta.FeatureSelectionClassifier` is a meta-classifier.  That is, it
-is not a classifier itself -- it can take any *slave* :class:`~mvpa.clfs.base.Classifier`, perform some
-feature selection in advance, select those features, and then train the
-provided *slave* :class:`~mvpa.clfs.base.Classifier` on those features.  Externally, however, it looks
+is not a classifier itself -- it can take any *slave*
+:class:`~mvpa.clfs.base.Classifier` and a
+:class:`mvpa.featsel.base.FeatureSelection`.  When trained on a dataset, it first performs the
+`feature_selection`, and then trains the
+provided *slave* `clf` on those selected features.  Externally, however, it looks
 like a :class:`~mvpa.clfs.base.Classifier`, in that it fulfills the specialization of the Classifier
 base class.  The following are the relevant arguments to the constructor of
 such a :class:`~mvpa.clfs.base.Classifier`:
@@ -65,9 +67,6 @@ such a :class:`~mvpa.clfs.base.Classifier`:
 
 `feature_selection`: FeatureSelection_
   whatever feature selection is considered best
-
-`testdataset`: :class:`~mvpa.datasets.base.Dataset` (optional)
-  dataset which would be given on call to feature_selection
 
 .. index:: FeatureSelection
 
@@ -108,9 +107,8 @@ training dataset:  it is not possible to select features using the entire
 dataset, re-train a classifier on a subset of the original data (but using only
 the selected features) and then test on a held-out testing dataset.  This
 results in an obvious positive bias in classification performance.  PyMVPA
-allows for easy dataset splitting, however, so creating independent training
-and testing datasets is easily accomplished, for instance using an
-:class:`~mvpa.datasets.splitters.NFoldSplitter`, :class:`~mvpa.datasets.splitters.OddEvenSplitter`, etc.
+allows for easy dataset partitioning and splitting, however, so creating independent training
+and testing datasets is easily accomplished.
 
 .. fill in end of last paragraph with suggestions for how to take in an entire
    original dataset and split it:  should we just do a cross-validated outer
@@ -126,29 +124,29 @@ Recursive Feature Elimination
 =============================
 
 Recursive feature elimination
-(RFE_, applied to fMRI data in (:ref:`Hanson et al., 2008 <HH08>`))
+(RFE_, applied to fMRI data using SVM in (:ref:`Hanson et al., 2008 <HH08>`))
 is a technique that falls under the larger
 umbrella of feature selection. Recursive feature elimination specifically
 attempts to reduce the number of selected features used for classification in
 the following way:
 
-* A classifier is trained on a subset of the data and features are ranked
-  according to an arbitrary metric.
+* An arbitrary feature ranking/weighting (usually classifier's
+  sensitivity/weights) is performed on a subset of the data.
 
 * Some amount of those features is either selected or discarded according to a
   pre-selected rule.
 
-* The classifier is retrained and features are once again ranked; this process
-  continues until some criterion determined \textit{a priori} (such as
-  classification error) is reached.
+* Above steps are repeated until some criterion determined \textit{a priori}
+  (such as classification error) is reached.
 
 * One or more classifiers trained only on the final set of selected features
   are used on a generalization dataset and performance is calculated.
 
 PyMVPA's flexible framework allows each of these steps to take place within a
-small block of code. To actually perform recursive feature elimination, we
-consider two separate analysis scenarios that deal with a pre-selected training
-dataset:
+small block of code.  Flexible parametrization allows to explore quite a
+variety of possible specific RFE_ recipes. To actually perform recursive
+feature elimination, we consider two separate analysis scenarios that deal
+with a pre-selected training dataset:
 
 * We split the training dataset into an arbitrary number of independent
   datasets and perform RFE on each of these; the sensitivity analysis of
@@ -164,29 +162,40 @@ dataset:
 We will concentrate on the second approach.  The following code can be used to
 perform such an analysis:
 
-  >>> rfesvm_split = SplitClassifier(LinearCSVMC())
+  >>> rfesvm_split = SplitClassifier(LinearCSVMC(), OddEvenPartitioner())
+  >>> # design an RFE feature selection to be used with a classifier
+  >>> rfe = RFE(rfesvm_split.get_sensitivity_analyzer(
+  ...              # take sensitivities per each split, L2 norm, mean, abs them
+  ...              postproc=ChainMapper([ FxMapper('features', l2_normed),
+  ...                                     FxMapper('samples', np.mean),
+  ...                                     FxMapper('samples', np.abs)])),
+  ...           # use the error stored in the confusion matrix of split classifier
+  ...           ConfusionBasedError(rfesvm_split, confusion_state='stats'),
+  ...           # we just extract error from confusion, so need to split dataset
+  ...           Repeater(2),
+  ...           # select 50% of the best on each step
+  ...           fselector=FractionTailSelector(
+  ...               0.50,
+  ...               mode='select', tail='upper'),
+  ...           # and stop whenever error didn't improve for up to 10 steps
+  ...           stopping_criterion=NBackHistoryStopCrit(BestDetector(), 10),
+  ...           # we just extract it from existing confusion
+  ...           train_pmeasure=False,
+  ...           # but we do want to update sensitivities on each step
+  ...           update_sensitivity=True)
   >>> clf = \
   ...  FeatureSelectionClassifier(
-  ...   clf = LinearCSVMC(),
+  ...   LinearCSVMC(),
   ...   # on features selected via RFE
-  ...   feature_selection = RFE(
-  ...       # based on sensitivity of a clf which does splitting internally
-  ...       sensitivity_analyzer=rfesvm_split.get_sensitivity_analyzer(),
-  ...       transfer_error=ConfusionBasedError(
-  ...          rfesvm_split,
-  ...          confusion_state="confusion"),
-  ...          # and whose internal error we use
-  ...       feature_selector=FractionTailSelector(
-  ...                          0.2, mode='discard', tail='lower'),
-  ...                          # remove 20% of features at each step
-  ...       update_sensitivity=True),
-  ...       # update sensitivity at each step
+  ...   rfe,
+  ...   # custom description
   ...   descr='LinSVM+RFE(splits_avg)' )
+
 
 The code above introduces the :class:`~mvpa.clfs.meta.SplitClassifier`, which in this case is yet
 another *meta-classifier* that takes in a :class:`~mvpa.clfs.base.Classifier` (in this case a
-LinearCSVMC_) and an arbitrary :class:`~mvpa.datasets.splitters.Splitter` object, so that the dataset can be
-split in whatever way the user desires.  Prior to training, the
+LinearCSVMC_) and an arbitrary :class:`~mvpa.generators.partition.Partitioner` object, so that the dataset can be
+partitioned to be split in whatever way the user desires.  Prior to training, the
 :class:`~mvpa.clfs.meta.SplitClassifier` splits the training dataset, dedicates a separate classifier
 to each split, trains each on the training part of the split, and then computes
 transfer error on the testing part of the split. If a :class:`~mvpa.clfs.meta.SplitClassifier` instance
@@ -199,18 +208,24 @@ To summarize somewhat, RFE_ is just one method of feature selection, so we use a
 :class:`~mvpa.clfs.meta.FeatureSelectionClassifier` to facilitate this.  To parameterize the RFE
 process, we refer above to the following:
 
-`sensitivity_analyzer`
+`fmeasure`
   in this case just the default from a linear C-SVM (the SVM weights), taken as
   an average over all splits (in accordance with scenario 2 as above)
 
-`transfer_error`
+`pmeasure`
   confusion-based error that relies on the confusion matrices computed during
   splitting of the dataset by the :class:`~mvpa.clfs.meta.SplitClassifier`; this is used to provide a
   value that can be compared against a stopping criterion to stop eliminating
   features
 
-`feature_selector`
-  in this example we simply discard the 20% of features deemed least important
+`splitter`
+  defines how to split the dataset into two parts: one for training
+  `fmeasure` and another one for assessing `pmeasure`.  In our case we rely on
+  `SplitClassifier` to provide both, so no splitting is necessary so we just
+  repeat dataset twice
+
+`fselector`
+  in this example we simply discard the 50% of features deemed least important
 
 `update_sensitivity`
   true to retrain the classifiers each time we eliminate features; should be
