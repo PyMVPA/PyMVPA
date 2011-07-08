@@ -50,6 +50,45 @@ class RFE(IterativeFeatureSelection):
       full brain support vector machines for object recognition:
       there is no "face identification area". Neural Computation, 20,
       486--503.
+
+    Examples
+    --------
+
+    There are multiple possible ways to design an RFE.  Here is one
+    example which would rely on a SplitClassifier to extract
+    sensitivities and provide estimate of performance (error)
+
+    >>> # Lazy import
+    >>> from mvpa.suite import *
+    >>> rfesvm_split = SplitClassifier(LinearCSVMC(), OddEvenPartitioner())
+    >>> # design an RFE feature selection to be used with a classifier
+    >>> rfe = RFE(rfesvm_split.get_sensitivity_analyzer(
+    ...              # take sensitivities per each split, L2 norm, mean, abs them
+    ...              postproc=ChainMapper([ FxMapper('features', l2_normed),
+    ...                                     FxMapper('samples', np.mean),
+    ...                                     FxMapper('samples', np.abs)])),
+    ...           # use the error stored in the confusion matrix of split classifier
+    ...           ConfusionBasedError(rfesvm_split, confusion_state='stats'),
+    ...           # we just extract error from confusion, so need to split dataset
+    ...           Repeater(2),
+    ...           # select 50% of the best on each step
+    ...           fselector=FractionTailSelector(
+    ...               0.50,
+    ...               mode='select', tail='upper'),
+    ...           # and stop whenever error didn't improve for up to 10 steps
+    ...           stopping_criterion=NBackHistoryStopCrit(BestDetector(), 10),
+    ...           # we just extract it from existing confusion
+    ...           train_pmeasure=False,
+    ...           # but we do want to update sensitivities on each step
+    ...           update_sensitivity=True)
+    >>> clf = \
+    ...  FeatureSelectionClassifier(
+    ...   LinearCSVMC(),
+    ...   # on features selected via RFE
+    ...   rfe,
+    ...   # custom description
+    ...   descr='LinSVM+RFE(splits_avg)' )
+
     """
 
     history = ConditionalAttribute(
