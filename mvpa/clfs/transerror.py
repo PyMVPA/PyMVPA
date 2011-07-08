@@ -205,7 +205,7 @@ class SummaryStatistics(object):
     def __add__(self, other):
         """Add two `SummaryStatistics`s
         """
-        result = copy.copy(self)
+        result = copy.deepcopy(self)
         result += other
         return result
 
