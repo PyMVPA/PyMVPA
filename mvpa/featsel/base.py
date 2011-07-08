@@ -337,6 +337,10 @@ class IterativeFeatureSelection(FeatureSelection):
                  stopping_criterion=NBackHistoryStopCrit(BestDetector()),
                  bestdetector=BestDetector(),
                  train_pmeasure=True,
+                 # XXX should we may be guard splitter so we do not end up
+                 # with inappropriate one for the use, i.e. which
+                 # generates more than 2 splits
+                 # guard_splitter=True,
                  **kwargs
                  ):
         """
@@ -410,6 +414,14 @@ class IterativeFeatureSelection(FeatureSelection):
         testds = dsgen.next()
         return trainds, testds
 
+    # access properties
+    fmeasure = property(fget=lambda self: self._fmeasure)
+    pmeasure = property(fget=lambda self: self._pmeasure)
+    splitter = property(fget=lambda self: self._splitter)
+    fselector = property(fget=lambda self: self._fselector)
+    stopping_criterion = property(fget=lambda self: self._stopping_criterion)
+    bestdetector = property(fget=lambda self: self._bestdetector)
+    train_pmeasure = property(fget=lambda self: self._train_pmeasure)
 
 
 class CombinedFeatureSelection(FeatureSelection):
