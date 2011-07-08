@@ -104,6 +104,23 @@ class ErrorsTests(unittest.TestCase):
                              msg="Test if we get proper error value")
 
 
+    def test_confusion_matrix_addition(self):
+        """Test confusions addition inconsistent results (GH #51)
+
+        Was fixed by deepcopying instead of copying in __add__
+        """
+        cm1 = ConfusionMatrix(sets=[[np.array((1,2)), np.array((1,2))]])
+        cm2 = ConfusionMatrix(sets=[[np.array((3,2)), np.array((3,2))]])
+        assert_array_equal(cm1.stats['P'], [1, 1])
+        assert_array_equal(cm2.stats['P'], [1, 1])
+
+        # actual bug scenario -- results would be different
+        r1 = (cm1 + cm2).stats['P']
+        r2 = (cm1 + cm2).stats['P']
+        assert_array_equal(r1, r2)
+        assert_array_equal(r1, [1, 2, 1])
+
+
     def test_degenerate_confusion(self):
         # We must not just puke -- some testing splits might
         # have just a single target label
