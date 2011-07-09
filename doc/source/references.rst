@@ -301,6 +301,14 @@ experiments.
   DOI: http://dx.doi.org/10.1002/hbm.20992
 
 
+.. _MRH11:
+
+**Manelis, A., Reder, L. M. & Hanson, S. J.** (2011). Dynamic Changes In The Medial Temporal Lobe During Incidental Learning Of Object–Location Associations. *Cerebral Cortex*.
+  Keywords: :keyword:`pymvpa`, :keyword:`fMRI`
+
+  DOI: http://dx.doi.org/10.1093/cercor/bhr151
+
+
 .. _MBL+10:
 
 **Margulies, D. S., Böttger, J., Long, X., Lv, Y., Kelly, C., Schäfer, A., Goldhahn, D., Abbushi, A., Milham, M. P., Lohmann, G. & Villringer, A.** (2010). Resting developments: a review of fMRI post-processing methodologies for spontaneous brain activity. *Magnetic Resonance Materials in Physics, Biology and Medicine*, *23*, 289–307.
