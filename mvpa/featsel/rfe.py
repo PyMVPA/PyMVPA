@@ -81,13 +81,12 @@ class RFE(IterativeFeatureSelection):
     ...           train_pmeasure=False,
     ...           # but we do want to update sensitivities on each step
     ...           update_sensitivity=True)
-    >>> clf = \
-    ...  FeatureSelectionClassifier(
-    ...   LinearCSVMC(),
-    ...   # on features selected via RFE
-    ...   rfe,
-    ...   # custom description
-    ...   descr='LinSVM+RFE(splits_avg)' )
+    >>> clf = FeatureSelectionClassifier(
+    ...           LinearCSVMC(),
+    ...           # on features selected via RFE
+    ...           rfe,
+    ...           # custom description
+    ...           descr='LinSVM+RFE(splits_avg)' )
 
     """
 
