@@ -21,7 +21,7 @@ classifier.
 from mvpa.suite import *
 
 if __debug__:
-    debug.active += ["CROSSC"]
+    debug.active += ["REPM"]
 
 #
 # load PyMVPA example dataset
