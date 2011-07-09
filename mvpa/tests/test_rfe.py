@@ -406,37 +406,6 @@ class RFETests(unittest.TestCase):
                       'feature selection. Got exception: %s' % (e,))
         self.failUnless(error < 0.2)
 
-    def test_kimberley_problem(self):
-        rfesvm_split = LinearCSVMC()
-        debug.active = ['RFEC.*']
-        fs = \
-           RFE(rfesvm_split.get_sensitivity_analyzer(),
-               ProxyMeasure(rfesvm_split,
-                            postproc=BinaryFxNode(mean_mismatch_error, 'targets')),
-               Splitter('chunks'),
-               fselector=FractionTailSelector(
-                   0.70,
-                   mode='select', tail='upper'),
-               stopping_criterion=NBackHistoryStopCrit(BestDetector(), 10),
-               update_sensitivity=True)
-        clf = FeatureSelectionClassifier(
-            LinearCSVMC(),
-            # on features selected via RFE
-            fs)
-        # update sensitivity at each step (since we're not using the
-        # same CLF as sensitivity analyzer)
-        #cv = SplitClassifier(clf)
-        cvte = CrossValidation(clf, NFoldPartitioner(),
-                               errorfx=lambda p, t: np.mean(p == t),
-                               postproc=mean_sample(),
-                               enable_ca=['confusion', 'stats'])
-        ds = datasets['uni2large'].copy()
-        ds = ds[ds.chunks < 4]
-        ds.samples += 0.5*np.random.normal(size=ds.samples.shape)
-        #ds = hstack((ds, ds))
-        cv_results=cvte(ds)
-        print np.mean(cv_results)
-        print cvte.ca.stats.matrix
 
     ##REF: Name was automagically refactored
     def __test_matthias_question(self):
