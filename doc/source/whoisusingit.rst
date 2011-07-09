@@ -54,6 +54,10 @@ Studies employing PyMVPA
   delivery (PsychoPy) to data analysis (PyMVPA) is available from
   https://bitbucket.org/qbilius/confsup/src
 
+* :ref:`Manelis et al., Cerebral Cortex (2011) <MRH11>`: Dynamic Changes In
+  The Medial Temporal Lobe During Incidental Learning Of Object–Location
+  Associations.
+
 * :ref:`Meyer et al., Cerebral Cortex (2011) <MKE+11>`: Seeing Touch Is
   Correlated with Content-Specific Activity in Primary Somatosensory Cortex.
 
