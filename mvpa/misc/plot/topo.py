@@ -19,7 +19,7 @@ from mvpa.base import externals
 
 if externals.exists("pylab", raiseException=True):
     import pylab as P
-    import matplotlib.numerix.ma as M
+    import numpy.ma as M
 
 if externals.exists("griddata", raiseException=True):
     from mvpa.support.griddata import griddata
