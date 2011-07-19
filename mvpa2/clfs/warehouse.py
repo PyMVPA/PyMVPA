@@ -14,27 +14,27 @@ __docformat__ = 'restructuredtext'
 import operator
 
 # Define sets of classifiers
-from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
+from mvpa2.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
      MulticlassClassifier, RegressionAsClassifier
-from mvpa.clfs.smlr import SMLR
-from mvpa.clfs.knn import kNN
-from mvpa.clfs.gda import LDA, QDA
-from mvpa.clfs.gnb import GNB
-from mvpa.kernels.np import LinearKernel, SquaredExponentialKernel, \
+from mvpa2.clfs.smlr import SMLR
+from mvpa2.clfs.knn import kNN
+from mvpa2.clfs.gda import LDA, QDA
+from mvpa2.clfs.gnb import GNB
+from mvpa2.kernels.np import LinearKernel, SquaredExponentialKernel, \
      GeneralizedLinearKernel
 
 # Helpers
-from mvpa.base import externals, cfg
-from mvpa.measures.anova import OneWayAnova
-from mvpa.mappers.fx import absolute_features, maxofabs_sample
-from mvpa.clfs.smlr import SMLRWeights
-from mvpa.featsel.helpers import FractionTailSelector, \
+from mvpa2.base import externals, cfg
+from mvpa2.measures.anova import OneWayAnova
+from mvpa2.mappers.fx import absolute_features, maxofabs_sample
+from mvpa2.clfs.smlr import SMLRWeights
+from mvpa2.featsel.helpers import FractionTailSelector, \
     FixedNElementTailSelector, RangeElementSelector
 
-from mvpa.featsel.base import SensitivityBasedFeatureSelection
+from mvpa2.featsel.base import SensitivityBasedFeatureSelection
 
 # Kernels
-from mvpa.kernels.libsvm import LinearLSKernel, RbfLSKernel, \
+from mvpa2.kernels.libsvm import LinearLSKernel, RbfLSKernel, \
      PolyLSKernel, SigmoidLSKernel
 
 _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
@@ -175,7 +175,7 @@ clfswh += \
                             descr='Pairs+maxvote multiclass on SMLR(lm=0.1)') ]
 
 if externals.exists('libsvm'):
-    from mvpa.clfs import libsvmc as libsvm
+    from mvpa2.clfs import libsvmc as libsvm
     clfswh._known_tags.update(libsvm.SVM._KNOWN_IMPLEMENTATIONS.keys())
     clfswh += [libsvm.SVM(descr="libsvm.LinSVM(C=def)", probability=1),
              libsvm.SVM(
@@ -201,9 +201,9 @@ if externals.exists('libsvm'):
                 libsvm.SVM(svm_impl='NU_SVR', descr='libsvm nu-SVR')]
 
 if externals.exists('shogun'):
-    from mvpa.clfs import sg
+    from mvpa2.clfs import sg
     
-    from mvpa.kernels.sg import LinearSGKernel, PolySGKernel, RbfSGKernel
+    from mvpa2.kernels.sg import LinearSGKernel, PolySGKernel, RbfSGKernel
     clfswh._known_tags.update(sg.SVM._KNOWN_IMPLEMENTATIONS)
 
     # some classifiers are not yet ready to be used out-of-the-box in
@@ -263,12 +263,12 @@ if externals.exists('shogun'):
 
 if len(clfswh['svm', 'linear']) > 0:
     # if any SVM implementation is known, import default ones
-    from mvpa.clfs.svm import *
+    from mvpa2.clfs.svm import *
 
 # lars from R via RPy
 if externals.exists('lars'):
-    import mvpa.clfs.lars as lars
-    from mvpa.clfs.lars import LARS
+    import mvpa2.clfs.lars as lars
+    from mvpa2.clfs.lars import LARS
     for model in lars.known_models:
         # XXX create proper repository of classifiers!
         lars_clf = RegressionAsClassifier(LARS(descr="LARS(%s)" % model, model_type=model),
@@ -285,14 +285,14 @@ if externals.exists('lars'):
 ## Still fails unittests battery although overhauled otherwise.
 ## # enet from R via RPy2
 ## if externals.exists('elasticnet'):
-##     from mvpa.clfs.enet import ENET
+##     from mvpa2.clfs.enet import ENET
 ##     clfswh += RegressionAsClassifier(ENET(),
 ##                                      descr="RegressionAsClassifier(ENET())")
 ##     regrswh += ENET(descr="ENET()")
 
 # glmnet from R via RPy
 if externals.exists('glmnet'):
-    from mvpa.clfs.glmnet import GLMNET_C, GLMNET_R
+    from mvpa2.clfs.glmnet import GLMNET_C, GLMNET_R
     clfswh += GLMNET_C(descr="GLMNET_C()")
     regrswh += GLMNET_R(descr="GLMNET_R()")
 
@@ -302,7 +302,7 @@ clfswh += QDA(descr='QDA()')
 
 if externals.exists('skl'):
     from scikits.learn.lda import LDA as sklLDA
-    from mvpa.clfs.skl.base import SKLLearnerAdapter
+    from mvpa2.clfs.skl.base import SKLLearnerAdapter
     clfswh += SKLLearnerAdapter(sklLDA(),
                                 tags=['lda', 'linear', 'multiclass', 'binary'],
                                 descr='skl.LDA()')
@@ -377,7 +377,7 @@ clfswh += \
 
 # GPR
 if externals.exists('scipy'):
-    from mvpa.clfs.gpr import GPR
+    from mvpa2.clfs.gpr import GPR
 
     regrswh += GPR(kernel=LinearKernel(), descr="GPR(kernel='linear')")
     regrswh += GPR(kernel=SquaredExponentialKernel(),
@@ -397,12 +397,12 @@ if externals.exists('scipy'):
         descr="GPRCM(kernel='linear')")
 
 # BLR
-from mvpa.clfs.blr import BLR
+from mvpa2.clfs.blr import BLR
 clfswh += RegressionAsClassifier(BLR(descr="BLR()"),
                                  descr="BLR Classifier")
 
 #PLR
-from mvpa.clfs.plr import PLR
+from mvpa2.clfs.plr import PLR
 clfswh += PLR(descr="PLR()")
 if externals.exists('scipy'):
     clfswh += PLR(reduced=0.05, descr="PLR(reduced=0.01)")
@@ -480,11 +480,11 @@ if len(clfswh['linear', 'svm']) > 0:
 
 
     ### Imports which are specific to RFEs
-    # from mvpa.datasets.splitters import OddEvenSplitter
-    # from mvpa.clfs.transerror import TransferError
-    # from mvpa.featsel.rfe import RFE
-    # from mvpa.featsel.helpers import FixedErrorThresholdStopCrit
-    # from mvpa.clfs.transerror import ConfusionBasedError
+    # from mvpa2.datasets.splitters import OddEvenSplitter
+    # from mvpa2.clfs.transerror import TransferError
+    # from mvpa2.featsel.rfe import RFE
+    # from mvpa2.featsel.helpers import FixedErrorThresholdStopCrit
+    # from mvpa2.clfs.transerror import ConfusionBasedError
 
     # SVM with unbiased RFE -- transfer-error to another splits, or in
     # other terms leave-1-out error on the same dataset

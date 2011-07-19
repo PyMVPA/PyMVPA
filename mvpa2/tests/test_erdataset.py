@@ -8,11 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for the event-related dataset'''
 
-from mvpa.testing import *
-from mvpa.datasets import dataset_wizard
-from mvpa.mappers.flatten import FlattenMapper
-from mvpa.mappers.boxcar import BoxcarMapper
-from mvpa.datasets.eventrelated import find_events, eventrelated_dataset
+from mvpa2.testing import *
+from mvpa2.datasets import dataset_wizard
+from mvpa2.mappers.flatten import FlattenMapper
+from mvpa2.mappers.boxcar import BoxcarMapper
+from mvpa2.datasets.eventrelated import find_events, eventrelated_dataset
 
 
 def test_erdataset():

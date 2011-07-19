@@ -10,36 +10,36 @@
 
 import numpy as np
 
-from mvpa.generators.base import Repeater
-from mvpa.generators.partition import NFoldPartitioner, OddEvenPartitioner
-from mvpa.generators.permutation import AttributePermutator
-from mvpa.generators.splitters import Splitter
-from mvpa.datasets.base import Dataset
-from mvpa.mappers.base import ChainMapper
-from mvpa.mappers.fx import maxofabs_sample, mean_sample, BinaryFxNode, FxMapper
-from mvpa.misc.errorfx import mean_mismatch_error
-from mvpa.misc.transformers import l2_normed
-from mvpa.misc.data_generators import normal_feature_dataset
-from mvpa.featsel.rfe import RFE
-from mvpa.featsel.base import \
+from mvpa2.generators.base import Repeater
+from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
+from mvpa2.generators.permutation import AttributePermutator
+from mvpa2.generators.splitters import Splitter
+from mvpa2.datasets.base import Dataset
+from mvpa2.mappers.base import ChainMapper
+from mvpa2.mappers.fx import maxofabs_sample, mean_sample, BinaryFxNode, FxMapper
+from mvpa2.misc.errorfx import mean_mismatch_error
+from mvpa2.misc.transformers import l2_normed
+from mvpa2.misc.data_generators import normal_feature_dataset
+from mvpa2.featsel.rfe import RFE
+from mvpa2.featsel.base import \
      SensitivityBasedFeatureSelection
-from mvpa.featsel.helpers import \
+from mvpa2.featsel.helpers import \
      NBackHistoryStopCrit, FractionTailSelector, FixedErrorThresholdStopCrit, \
      MultiStopCrit, NStepsStopCrit, \
      FixedNElementTailSelector, BestDetector, RangeElementSelector
 
-from mvpa.clfs.meta import FeatureSelectionClassifier, SplitClassifier
-from mvpa.clfs.transerror import ConfusionBasedError
-from mvpa.misc.attrmap import AttributeMap
-from mvpa.clfs.stats import MCNullDist
-from mvpa.measures.base import ProxyMeasure, CrossValidation
+from mvpa2.clfs.meta import FeatureSelectionClassifier, SplitClassifier
+from mvpa2.clfs.transerror import ConfusionBasedError
+from mvpa2.misc.attrmap import AttributeMap
+from mvpa2.clfs.stats import MCNullDist
+from mvpa2.measures.base import ProxyMeasure, CrossValidation
 
-from mvpa.base.state import UnknownStateError
+from mvpa2.base.state import UnknownStateError
 
-from mvpa.testing import *
-from mvpa.testing.clfs import *
-from mvpa.testing.tools import reseed_rng
-from mvpa.testing.datasets import datasets
+from mvpa2.testing import *
+from mvpa2.testing.clfs import *
+from mvpa2.testing.tools import reseed_rng
+from mvpa2.testing.datasets import datasets
 
 
 class RFETests(unittest.TestCase):

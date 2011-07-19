@@ -13,10 +13,10 @@
 __docformat__ = 'restructuredtext'
 
 
-from mvpa.base import warning
+from mvpa2.base import warning
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 def _dummy(*args, **kwargs):
     pass

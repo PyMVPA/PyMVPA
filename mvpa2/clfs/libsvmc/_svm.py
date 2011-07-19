@@ -16,13 +16,13 @@ import re, copy
 
 import numpy as np
 
-from mvpa.clfs.libsvmc import _svmc as svmc
-from mvpa.clfs.libsvmc._svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
+from mvpa2.clfs.libsvmc import _svmc as svmc
+from mvpa2.clfs.libsvmc._svmc import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, \
                                   NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
                                   PRECOMPUTED
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 ##REF: Name was automagically refactored
 def int_array(seq):

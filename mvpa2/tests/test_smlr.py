@@ -10,11 +10,11 @@
 
 import numpy as np
 
-from mvpa.testing import *
-from mvpa.testing.datasets import datasets
+from mvpa2.testing import *
+from mvpa2.testing.datasets import datasets
 
-from mvpa.clfs.smlr import SMLR
-from mvpa.misc.data_generators import normal_feature_dataset
+from mvpa2.clfs.smlr import SMLR
+from mvpa2.misc.data_generators import normal_feature_dataset
 
 
 class SMLRTests(unittest.TestCase):

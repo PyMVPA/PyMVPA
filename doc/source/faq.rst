@@ -67,13 +67,13 @@ I am tired of writing these endless import blocks. Any alternative?
 Sure. Instead of individually importing all pieces that are required
 by a script, you can import them all at once. A simple:
 
-  >>> import mvpa.suite as mvpa
+  >>> import mvpa2.suite as mvpa2
 
 makes everything directly accessible through the mvpa namespace, e.g.
-`mvpa.datasets.base.Dataset` becomes `mvpa.Dataset`. Really lazy people
+`mvpa2.datasets.base.Dataset` becomes `mvpa2.Dataset`. Really lazy people
 can even do:
 
-  >>> from mvpa.suite import *
+  >>> from mvpa2.suite import *
 
 However, as always there is a price to pay for this convenience. In contrast
 to the individual imports there is some initial performance and memory cost. In
@@ -177,7 +177,7 @@ Please see the :ref:`data_formats` section.
 What if there is no special file format for some particular datatype?
 ---------------------------------------------------------------------
 
-With the :class:`~mvpa.misc.io.hamster.Hamster` class, PyMVPA
+With the :class:`~mvpa2.misc.io.hamster.Hamster` class, PyMVPA
 supports storing *any* kind of serializable data into a
 (compressed) file (see the class documentation for a trivial
 usage example). The facility is particularly useful for storing
@@ -199,7 +199,7 @@ timeseries image. Such invariant features (i.e. features with zero variance)
 are sometime a problem, e.g. they will lead to numerical difficulties when
 z-scoring the features of a dataset (i.e. division by zero).
 
-The `mvpa.datasets.miscfx` module provides a convenience function
+The `mvpa2.datasets.miscfx` module provides a convenience function
 `remove_invariant_features()` that strips such features from a dataset.
 
 
@@ -218,7 +218,7 @@ samples. Suppose you have a dataset:
 Averaging all samples with the same label in each chunk individually is done
 by applying a mapper to the dataset.
 
-  >>> from mvpa.mappers.fx import mean_group_sample
+  >>> from mvpa2.mappers.fx import mean_group_sample
   >>>
   >>> m = mean_group_sample(['targets', 'chunks'])
   >>> mapped_dataset = dataset.get_mapped(m)
@@ -274,7 +274,7 @@ How do I extract sensitivities from a classifier used within a cross-validation?
 
 .. The answer depends on size of the classification problem and the used
    classifier. If you can afford to keep a copy of the trained classifier for
-   each data split, the most elegant solution is probably a :class:`~mvpa.clfs.meta.SplitClassifier`...
+   each data split, the most elegant solution is probably a :class:`~mvpa2.clfs.meta.SplitClassifier`...
    ...BUT no yet
 
 In various parts of PyMVPA it is possible to extract information from inside
@@ -296,9 +296,9 @@ write a corresponding callback function. here is a sketch:
 
 First we set up a container (a list) to store the sensitivies for a
 cross-validation folds. next is the callback: It takes three arguments, as
-described in the documentation of :class:`~mvpa.measures.base.RepeatedMeasure`.
+described in the documentation of :class:`~mvpa2.measures.base.RepeatedMeasure`.
 The second argument is the node that is evaluated inside the loop. For a
-cross-validation this is a  :class:`~mvpa.measures.base.TransferMeasure` that
+cross-validation this is a  :class:`~mvpa2.measures.base.TransferMeasure` that
 exposes its internal classifier via the ``measure`` property. The rest is
 straightforward. We contruct a sensitivity analyzer and pass the input dataset.
 Finally, we store the returned sensitivities.

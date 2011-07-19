@@ -19,15 +19,15 @@ import random
 
 import numpy as np
 
-from mvpa.base.dataset import datasetmethod
-from mvpa.datasets.base import Dataset
-from mvpa.base.dochelpers import table2string
-from mvpa.misc.support import get_nelements_per_value
+from mvpa2.base.dataset import datasetmethod
+from mvpa2.datasets.base import Dataset
+from mvpa2.base.dochelpers import table2string
+from mvpa2.misc.support import get_nelements_per_value
 
-from mvpa.base import externals, warning
+from mvpa2.base import externals, warning
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 @datasetmethod

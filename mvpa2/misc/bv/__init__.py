@@ -9,10 +9,10 @@
 """Import helper for Brain Voyager"""
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.misc.bv')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.misc.bv')
 
-from mvpa.misc.bv.base import *
+from mvpa2.misc.bv.base import *
 
 if __debug__:
-    debug('INIT', 'mvpa.misc.bv end')
+    debug('INIT', 'mvpa2.misc.bv end')

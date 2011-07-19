@@ -12,12 +12,12 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base import warning
-from mvpa.base.dochelpers import _str, borrowkwargs, _repr_attrs
-from mvpa.mappers.base import accepts_dataset_as_samples, Mapper
-from mvpa.datasets.base import Dataset
-from mvpa.datasets.miscfx import get_nsamples_per_attr, get_samples_by_attr
-from mvpa.support import copy
+from mvpa2.base import warning
+from mvpa2.base.dochelpers import _str, borrowkwargs, _repr_attrs
+from mvpa2.mappers.base import accepts_dataset_as_samples, Mapper
+from mvpa2.datasets.base import Dataset
+from mvpa2.datasets.miscfx import get_nsamples_per_attr, get_samples_by_attr
+from mvpa2.support import copy
 
 
 class ZScoreMapper(Mapper):

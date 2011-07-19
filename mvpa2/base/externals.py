@@ -13,12 +13,12 @@ __docformat__ = 'restructuredtext'
 import os
 import numpy as np                      # NumPy is required anyways
 
-from mvpa.base import warning
+from mvpa2.base import warning
 from mvpa import cfg
-from mvpa.misc.support import SmartVersion
+from mvpa2.misc.support import SmartVersion
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 class _VersionsChecker(dict):
     """Helper class to check the versions of the available externals
@@ -146,7 +146,7 @@ def __check_pywt(features=None):
 def __check_libsvm_verbosity_control():
     """Check for available verbose control functionality
     """
-    import mvpa.clfs.libsvmc._svmc as _svmc
+    import mvpa2.clfs.libsvmc._svmc as _svmc
     try:
         _svmc.svm_set_verbosity(0)
     except:
@@ -255,7 +255,7 @@ def __check_weave():
 
 def __check_atlas_family(family):
     # XXX I guess pylint will dislike it a lot
-    from mvpa.atlases.warehouse import KNOWN_ATLAS_FAMILIES
+    from mvpa2.atlases.warehouse import KNOWN_ATLAS_FAMILIES
     names, pathpattern = KNOWN_ATLAS_FAMILIES[family]
     filename = pathpattern % {'name':names[0]}
     if not os.path.exists(filename):
@@ -423,7 +423,7 @@ def __check_rpy2():
                 r("suppressPackageStartupMessages(library(%r))" % libname)
 
 # contains list of available (optional) external classifier extensions
-_KNOWN = {'libsvm':'import mvpa.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
+_KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
           'nibabel':'__assign_nibabel_version()',
           'ctypes':'import ctypes as __',

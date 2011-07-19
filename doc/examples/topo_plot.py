@@ -13,7 +13,7 @@ Generating Topography plots
 
 Example demonstrating a topography plot."""
 
-from mvpa.suite import *
+from mvpa2.suite import *
 
 # Sanity check if we have griddata available
 externals.exists("griddata", raise_=True)

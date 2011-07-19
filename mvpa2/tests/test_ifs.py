@@ -8,20 +8,20 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA incremental feature search."""
 
-from mvpa.testing import *
-from mvpa.testing.clfs import *
-from mvpa.testing.datasets import datasets
+from mvpa2.testing import *
+from mvpa2.testing.clfs import *
+from mvpa2.testing.datasets import datasets
 
 
-from mvpa.base.dataset import vstack
-from mvpa.datasets.base import Dataset
-from mvpa.featsel.ifs import IFS
-from mvpa.measures.base import CrossValidation, ProxyMeasure
-from mvpa.generators.partition import NFoldPartitioner
-from mvpa.generators.splitters import Splitter
-from mvpa.featsel.helpers import FixedNElementTailSelector
-from mvpa.mappers.fx import mean_sample, BinaryFxNode
-from mvpa.misc.errorfx import mean_mismatch_error
+from mvpa2.base.dataset import vstack
+from mvpa2.datasets.base import Dataset
+from mvpa2.featsel.ifs import IFS
+from mvpa2.measures.base import CrossValidation, ProxyMeasure
+from mvpa2.generators.partition import NFoldPartitioner
+from mvpa2.generators.splitters import Splitter
+from mvpa2.featsel.helpers import FixedNElementTailSelector
+from mvpa2.mappers.fx import mean_sample, BinaryFxNode
+from mvpa2.misc.errorfx import mean_mismatch_error
 
 
 

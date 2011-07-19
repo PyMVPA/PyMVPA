@@ -17,24 +17,24 @@ export PyMVPA datasets back into data formats supported by NiBabel_.
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.base import externals
+from mvpa2.base import externals
 externals.exists('nibabel', raise_=True)
 
 import sys
 import numpy as np
-from mvpa.support.copy import deepcopy
-from mvpa.misc.support import Event
-from mvpa.base.collections import DatasetAttribute
-from mvpa.base.dataset import _expand_attribute
+from mvpa2.support.copy import deepcopy
+from mvpa2.misc.support import Event
+from mvpa2.base.collections import DatasetAttribute
+from mvpa2.base.dataset import _expand_attribute
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
-from mvpa.datasets.base import Dataset
-from mvpa.mappers.fx import _uniquemerge2literal
-from mvpa.mappers.flatten import FlattenMapper
-from mvpa.mappers.boxcar import BoxcarMapper
-from mvpa.base import warning
+from mvpa2.datasets.base import Dataset
+from mvpa2.mappers.fx import _uniquemerge2literal
+from mvpa2.mappers.flatten import FlattenMapper
+from mvpa2.mappers.boxcar import BoxcarMapper
+from mvpa2.base import warning
 
 
 def _data2img(data, hdr=None, imgtype=None):

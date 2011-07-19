@@ -9,8 +9,8 @@
 """Import helper for PyMVPA algorithms."""
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.algorithms')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.algorithms')
 
 if __debug__:
-    debug('INIT', 'mvpa.algorithms end')
+    debug('INIT', 'mvpa2.algorithms end')

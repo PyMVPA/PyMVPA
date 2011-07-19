@@ -14,12 +14,12 @@ __docformat__ = 'restructuredtext'
 
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.kernels')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.kernels')
 
 # Just base kernel implementations
-from mvpa.kernels.base import *
+from mvpa2.kernels.base import *
 
 
 if __debug__:
-    debug('INIT', 'mvpa.kernels end')
+    debug('INIT', 'mvpa2.kernels end')

@@ -12,10 +12,10 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base import externals
-from mvpa.measures.base import FeaturewiseMeasure
-from mvpa.base.dataset import vstack
-from mvpa.datasets.base import Dataset
+from mvpa2.base import externals
+from mvpa2.measures.base import FeaturewiseMeasure
+from mvpa2.base.dataset import vstack
+from mvpa2.datasets.base import Dataset
 
 # TODO: Extend with access to functionality from scipy.stats?
 # For binary:

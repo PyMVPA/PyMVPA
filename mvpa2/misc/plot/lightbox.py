@@ -14,11 +14,11 @@ import pylab as pl
 import numpy as np
 import matplotlib as mpl
 
-from mvpa.base import warning, externals
-from mvpa.misc.plot.tools import Pion, Pioff, mpl_backend_isinteractive
+from mvpa2.base import warning, externals
+from mvpa2.misc.plot.tools import Pion, Pioff, mpl_backend_isinteractive
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 if externals.exists('nibabel'):
     import nibabel as nb
@@ -524,7 +524,7 @@ def plot_lightbox(background=None, background_mask=None, cmap_bg='gray',
 if __name__ == "__main__":
     # for easy debugging
     import os
-    from mvpa.base import cfg
+    from mvpa2.base import cfg
     impath = os.path.join('datadb', 'tutorial_data', 'tutorial_data', 'data')
     plot_lightbox(
         #background = NiftiImage('%s/anat.nii.gz' % impath),

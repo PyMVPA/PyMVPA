@@ -17,13 +17,13 @@ Option name should be camelbacked version of .dest for the option.
 
 __docformat__ = 'restructuredtext'
 
-import mvpa
+import mvpa2
 
 # TODO? all options (opt*) might migrate to respective module? discuss
 from optparse import OptionParser, Option, OptionGroup, OptionConflictError
 
 # needed for verboseCallback
-from mvpa.base import verbose, externals
+from mvpa2.base import verbose, externals
 
 class Options(object):
     """Just a convenience placeholder for all available options
@@ -119,7 +119,7 @@ opt.verbose = \
 commonopts_list = [opt.verbose, opt.help]
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
     ##REF: Name was automagically refactored
     def _debug_callback(option, optstr, value, parser):

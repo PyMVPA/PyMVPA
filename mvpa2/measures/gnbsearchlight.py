@@ -14,23 +14,23 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 #from numpy import ones, zeros, sum, abs, isfinite, dot
-#from mvpa.base import warning, externals
-from mvpa.datasets.base import Dataset
-#from mvpa.clfs.gnb import GNB
-from mvpa.misc.errorfx import mean_mismatch_error
-from mvpa.measures.searchlight import BaseSearchlight
-from mvpa.base import externals, warning
-from mvpa.base.dochelpers import borrowkwargs, _repr_attrs
-from mvpa.generators.splitters import Splitter
+#from mvpa2.base import warning, externals
+from mvpa2.datasets.base import Dataset
+#from mvpa2.clfs.gnb import GNB
+from mvpa2.misc.errorfx import mean_mismatch_error
+from mvpa2.measures.searchlight import BaseSearchlight
+from mvpa2.base import externals, warning
+from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
+from mvpa2.generators.splitters import Splitter
 
-#from mvpa.base.param import Parameter
-#from mvpa.base.state import ConditionalAttribute
-#from mvpa.measures.base import Sensitivity
+#from mvpa2.base.param import Parameter
+#from mvpa2.base.state import ConditionalAttribute
+#from mvpa2.measures.base import Sensitivity
 
-from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
+from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
     import time as time
 
 if externals.exists('scipy'):
@@ -127,10 +127,10 @@ def lastdim_columnsums_spmatrix(a, inds, out):
 class GNBSearchlight(BaseSearchlight):
     """Efficient implementation of Gaussian Naive Bayes `Searchlight`.
 
-    This implementation takes advantage that :class:`~mvpa.clfs.gnb.GNB` is
+    This implementation takes advantage that :class:`~mvpa2.clfs.gnb.GNB` is
     "naive" in its reliance on massive univariate conditional
     probabilities of each feature given a target class.  Plain
-    :class:`~mvpa.measures.searchlight.Searchlight` analysis approach
+    :class:`~mvpa2.measures.searchlight.Searchlight` analysis approach
     asks for the same information over again and over again for
     the same feature in multiple "lights".  So it becomes possible to
     drastically cut running time of a Searchlight by pre-computing basic
@@ -211,16 +211,16 @@ class GNBSearchlight(BaseSearchlight):
         ##         pass
         ##     self = A()
         ##     import numpy as np
-        ##     from mvpa.clfs.gnb import GNB
-        ##     from mvpa.generators.partition import NFoldPartitioner
-        ##     from mvpa.misc.errorfx import mean_mismatch_error
-        ##     from mvpa.testing.datasets import datasets as tdatasets
-        ##     from mvpa.datasets import Dataset
-        ##     from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
-        ##     from mvpa.clfs.distance import absmin_distance
+        ##     from mvpa2.clfs.gnb import GNB
+        ##     from mvpa2.generators.partition import NFoldPartitioner
+        ##     from mvpa2.misc.errorfx import mean_mismatch_error
+        ##     from mvpa2.testing.datasets import datasets as tdatasets
+        ##     from mvpa2.datasets import Dataset
+        ##     from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
+        ##     from mvpa2.clfs.distance import absmin_distance
         ##     import time
         ##     if __debug__:
-        ##         from mvpa.base import debug
+        ##         from mvpa2.base import debug
         ##         debug.active += ['SLC.*']
         ##         # XXX is it that ugly?
         ##         debug.active.pop(debug.active.index('SLC_'))
@@ -543,7 +543,7 @@ def sphere_gnbsearchlight(gnb, generator, radius=1, center_ids=None,
       coordinates of all features.
     **kwargs
       In addition this class supports all keyword arguments of
-      :class:`~mvpa.measures.gnbsearchlight.GNBSearchlight`.
+      :class:`~mvpa2.measures.gnbsearchlight.GNBSearchlight`.
 
     Notes
     -----

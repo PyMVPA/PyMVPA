@@ -12,9 +12,9 @@
 import unittest
 import numpy as np
 
-from mvpa.mappers.svd import SVDMapper
-from mvpa.testing import reseed_rng
-from mvpa.support.copy import deepcopy
+from mvpa2.mappers.svd import SVDMapper
+from mvpa2.testing import reseed_rng
+from mvpa2.support.copy import deepcopy
 
 
 class SVDMapperTests(unittest.TestCase):

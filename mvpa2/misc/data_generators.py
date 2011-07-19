@@ -13,11 +13,11 @@ __docformat__ = 'restructuredtext'
 import os
 import numpy as np
 
-from mvpa.datasets.base import dataset_wizard, Dataset
+from mvpa2.datasets.base import dataset_wizard, Dataset
 from mvpa import pymvpa_dataroot, pymvpa_datadbroot
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 ##REF: Name was automagically refactored
 def multiple_chunks(func, n_chunks, *args, **kwargs):
@@ -29,7 +29,7 @@ def multiple_chunks(func, n_chunks, *args, **kwargs):
 
     Returns
     -------
-    ds : `mvpa.datasets.base.Dataset`
+    ds : `mvpa2.datasets.base.Dataset`
     """
     for chunk in xrange(n_chunks):
         ds_ = func(*args, **kwargs)
@@ -322,8 +322,8 @@ def linear1d_gaussian_noise(size=100, slope=0.5, intercept=1.0,
 
 def load_example_fmri_dataset():
     """Load minimal fMRI dataset that is shipped with PyMVPA."""
-    from mvpa.datasets.mri import fmri_dataset
-    from mvpa.misc.io import SampleAttributes
+    from mvpa2.datasets.mri import fmri_dataset
+    from mvpa2.misc.io import SampleAttributes
 
     attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes.txt'))
     ds = fmri_dataset(samples=os.path.join(pymvpa_dataroot, 'bold.nii.gz'),
@@ -352,8 +352,8 @@ def load_datadb_tutorial_data(path=os.path.join(
       If None, no masking is performed.
     """
     import nibabel as nb
-    from mvpa.datasets.mri import fmri_dataset
-    from mvpa.misc.io import SampleAttributes
+    from mvpa2.datasets.mri import fmri_dataset
+    from mvpa2.misc.io import SampleAttributes
     if roi is None:
         mask = None
     elif isinstance(roi, str):

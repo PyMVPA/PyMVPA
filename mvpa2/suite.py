@@ -11,181 +11,181 @@
 If you don't like to specify exact location of any particular
 functionality within PyMVPA, please simply::
 
-  from mvpa.suite import *
+  from mvpa2.suite import *
 
 or
 
-  import mvpa.suite
+  import mvpa2.suite
 
 """
 
 __docformat__ = 'restructuredtext'
 
 
-from mvpa import *
+from mvpa2 import *
 
-from mvpa.base import *
-from mvpa.base.collections import *
-from mvpa.base.config import *
-from mvpa.base.dataset import *
-from mvpa.base.externals import *
-from mvpa.base.info import *
-from mvpa.base.types import *
-from mvpa.base.verbosity import *
-from mvpa.base.param import *
-from mvpa.base.state import *
-from mvpa.base.node import *
-from mvpa.base.learner import *
+from mvpa2.base import *
+from mvpa2.base.collections import *
+from mvpa2.base.config import *
+from mvpa2.base.dataset import *
+from mvpa2.base.externals import *
+from mvpa2.base.info import *
+from mvpa2.base.types import *
+from mvpa2.base.verbosity import *
+from mvpa2.base.param import *
+from mvpa2.base.state import *
+from mvpa2.base.node import *
+from mvpa2.base.learner import *
 
 if externals.exists('h5py'):
-    from mvpa.base.hdf5 import *
+    from mvpa2.base.hdf5 import *
 
 if externals.exists('reportlab'):
-    from mvpa.base.report import *
+    from mvpa2.base.report import *
 else:
-    from mvpa.base.report_dummy import Report
+    from mvpa2.base.report_dummy import Report
 
 
-from mvpa.algorithms.hyperalignment import *
+from mvpa2.algorithms.hyperalignment import *
 
-from mvpa import clfs
-from mvpa.clfs.distance import *
-from mvpa.clfs.base import *
-from mvpa.clfs.meta import *
-from mvpa.clfs.knn import *
+from mvpa2 import clfs
+from mvpa2.clfs.distance import *
+from mvpa2.clfs.base import *
+from mvpa2.clfs.meta import *
+from mvpa2.clfs.knn import *
 if externals.exists('lars'):
-    from mvpa.clfs.lars import *
+    from mvpa2.clfs.lars import *
 if externals.exists('elasticnet'):
-    from mvpa.clfs.enet import *
+    from mvpa2.clfs.enet import *
 if externals.exists('glmnet'):
-    from mvpa.clfs.glmnet import *
+    from mvpa2.clfs.glmnet import *
 if externals.exists('skl'):
     import scikits.learn as skl
-    from mvpa.clfs.skl import *
-from mvpa.clfs.smlr import *
-from mvpa.clfs.blr import *
-from mvpa.clfs.gnb import *
-from mvpa.clfs.stats import *
-from mvpa.clfs.similarity import *
+    from mvpa2.clfs.skl import *
+from mvpa2.clfs.smlr import *
+from mvpa2.clfs.blr import *
+from mvpa2.clfs.gnb import *
+from mvpa2.clfs.stats import *
+from mvpa2.clfs.similarity import *
 if externals.exists('libsvm') or externals.exists('shogun'):
-    from mvpa.clfs.svm import *
-from mvpa.clfs.transerror import *
-from mvpa.clfs.warehouse import *
+    from mvpa2.clfs.svm import *
+from mvpa2.clfs.transerror import *
+from mvpa2.clfs.warehouse import *
 
-from mvpa import kernels
-from mvpa.kernels.base import *
-from mvpa.kernels.np import *
+from mvpa2 import kernels
+from mvpa2.kernels.base import *
+from mvpa2.kernels.np import *
 if externals.exists('libsvm'):
-    from mvpa.kernels.libsvm import *
+    from mvpa2.kernels.libsvm import *
 if externals.exists('shogun'):
-    from mvpa.kernels.sg import *
+    from mvpa2.kernels.sg import *
 
-from mvpa import datasets
-from mvpa.datasets import *
+from mvpa2 import datasets
+from mvpa2.datasets import *
 # just to make testsuite happy
-from mvpa.datasets.base import *
-from mvpa.datasets.formats import *
-from mvpa.datasets.miscfx import *
-from mvpa.datasets.eep import *
-from mvpa.datasets.eventrelated import *
+from mvpa2.datasets.base import *
+from mvpa2.datasets.formats import *
+from mvpa2.datasets.miscfx import *
+from mvpa2.datasets.eep import *
+from mvpa2.datasets.eventrelated import *
 if externals.exists('nibabel') :
-    from mvpa.datasets.mri import *
+    from mvpa2.datasets.mri import *
 
-from mvpa.generators.base import *
-from mvpa.generators.partition import *
-from mvpa.generators.splitters import *
-from mvpa.generators.permutation import *
-from mvpa.generators.resampling import *
+from mvpa2.generators.base import *
+from mvpa2.generators.partition import *
+from mvpa2.generators.splitters import *
+from mvpa2.generators.permutation import *
+from mvpa2.generators.resampling import *
 
-from mvpa import featsel
-from mvpa.featsel.base import *
-from mvpa.featsel.helpers import *
-from mvpa.featsel.ifs import *
-from mvpa.featsel.rfe import *
+from mvpa2 import featsel
+from mvpa2.featsel.base import *
+from mvpa2.featsel.helpers import *
+from mvpa2.featsel.ifs import *
+from mvpa2.featsel.rfe import *
 
-from mvpa import mappers
-#from mvpa.mappers import *
-from mvpa.mappers.base import *
-from mvpa.mappers.slicing import *
-from mvpa.mappers.flatten import *
-from mvpa.mappers.prototype import *
-from mvpa.mappers.projection import *
-from mvpa.mappers.svd import *
-from mvpa.mappers.procrustean import *
-from mvpa.mappers.boxcar import *
-from mvpa.mappers.fx import *
-from mvpa.mappers.som import *
-from mvpa.mappers.zscore import *
+from mvpa2 import mappers
+#from mvpa2.mappers import *
+from mvpa2.mappers.base import *
+from mvpa2.mappers.slicing import *
+from mvpa2.mappers.flatten import *
+from mvpa2.mappers.prototype import *
+from mvpa2.mappers.projection import *
+from mvpa2.mappers.svd import *
+from mvpa2.mappers.procrustean import *
+from mvpa2.mappers.boxcar import *
+from mvpa2.mappers.fx import *
+from mvpa2.mappers.som import *
+from mvpa2.mappers.zscore import *
 if externals.exists('scipy'):
-    from mvpa.mappers.detrend import *
-    from mvpa.mappers.filters import *
+    from mvpa2.mappers.detrend import *
+    from mvpa2.mappers.filters import *
 if externals.exists('mdp'):
-    from mvpa.mappers.mdp_adaptor import *
+    from mvpa2.mappers.mdp_adaptor import *
 if externals.exists('mdp ge 2.4'):
-    from mvpa.mappers.lle import *
+    from mvpa2.mappers.lle import *
 
-from mvpa import measures
-from mvpa.measures.anova import *
-from mvpa.measures.glm import *
-from mvpa.measures.irelief import *
-from mvpa.measures.base import *
-from mvpa.measures.noiseperturbation import *
-from mvpa.misc.neighborhood import *
-from mvpa.measures.searchlight import *
-from mvpa.measures.gnbsearchlight import *
-from mvpa.measures.corrstability import *
+from mvpa2 import measures
+from mvpa2.measures.anova import *
+from mvpa2.measures.glm import *
+from mvpa2.measures.irelief import *
+from mvpa2.measures.base import *
+from mvpa2.measures.noiseperturbation import *
+from mvpa2.misc.neighborhood import *
+from mvpa2.measures.searchlight import *
+from mvpa2.measures.gnbsearchlight import *
+from mvpa2.measures.corrstability import *
 
-from mvpa.support.copy import *
-from mvpa.misc.fx import *
-from mvpa.misc.attrmap import *
-from mvpa.misc.errorfx import *
-from mvpa.misc.cmdline import *
-from mvpa.misc.data_generators import *
-from mvpa.misc.exceptions import *
-from mvpa.misc import *
-from mvpa.misc.io import *
-from mvpa.misc.io.base import *
-from mvpa.misc.io.meg import *
+from mvpa2.support.copy import *
+from mvpa2.misc.fx import *
+from mvpa2.misc.attrmap import *
+from mvpa2.misc.errorfx import *
+from mvpa2.misc.cmdline import *
+from mvpa2.misc.data_generators import *
+from mvpa2.misc.exceptions import *
+from mvpa2.misc import *
+from mvpa2.misc.io import *
+from mvpa2.misc.io.base import *
+from mvpa2.misc.io.meg import *
 if externals.exists('cPickle') and externals.exists('gzip'):
-    from mvpa.misc.io.hamster import *
-from mvpa.misc.fsl import *
-from mvpa.misc.bv import *
-from mvpa.misc.bv.base import *
-from mvpa.misc.support import *
-from mvpa.misc.transformers import *
+    from mvpa2.misc.io.hamster import *
+from mvpa2.misc.fsl import *
+from mvpa2.misc.bv import *
+from mvpa2.misc.bv.base import *
+from mvpa2.misc.support import *
+from mvpa2.misc.transformers import *
 
 if externals.exists("nibabel"):
-    from mvpa.misc.fsl.melodic import *
+    from mvpa2.misc.fsl.melodic import *
 
 if externals.exists("pylab"):
-    from mvpa.misc.plot import *
-    from mvpa.misc.plot.erp import *
+    from mvpa2.misc.plot import *
+    from mvpa2.misc.plot.erp import *
     if externals.exists(['griddata', 'scipy']):
-        from mvpa.misc.plot.topo import *
-    from mvpa.misc.plot.lightbox import plot_lightbox
+        from mvpa2.misc.plot.topo import *
+    from mvpa2.misc.plot.lightbox import plot_lightbox
 
 if externals.exists("scipy"):
-    from mvpa.support.stats import scipy
-    from mvpa.measures.corrcoef import *
-    from mvpa.measures.ds import *
-    from mvpa.clfs.ridge import *
-    from mvpa.clfs.plr import *
-    from mvpa.misc.stats import *
-    from mvpa.clfs.gpr import *
-    from mvpa.support.nipy import *
+    from mvpa2.support.stats import scipy
+    from mvpa2.measures.corrcoef import *
+    from mvpa2.measures.ds import *
+    from mvpa2.clfs.ridge import *
+    from mvpa2.clfs.plr import *
+    from mvpa2.misc.stats import *
+    from mvpa2.clfs.gpr import *
+    from mvpa2.support.nipy import *
 
 if externals.exists("pywt"):
-    from mvpa.mappers.wavelet import *
+    from mvpa2.mappers.wavelet import *
 
 if externals.exists("pylab"):
     import pylab as pl
 
 if externals.exists("lxml") and externals.exists("nibabel"):
-    from mvpa.atlases import *
+    from mvpa2.atlases import *
 
 
 if externals.exists("running ipython env"):
-    from mvpa.support.ipython import *
+    from mvpa2.support.ipython import *
     ipy_activate_pymvpa_goodies()
 
 def suite_stats():
@@ -243,7 +243,7 @@ def suite_stats():
                             self[tk] = {}
                         if check_path:
                             mpath = _get_path(e)
-                            if mvpa_str in mpath or mpath.startswith('mvpa.'):
+                            if mvpa_str in mpath or mpath.startswith('mvpa2.'):
                                 self[tk][k] = e
                             else:
                                 self['foreign'][k] = e

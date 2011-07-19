@@ -12,11 +12,11 @@
 __docformat__ = 'restructuredtext'
 
 import sys
-from mvpa.base import externals
+from mvpa2.base import externals
 
 if externals.exists('griddata', raise_=True):
     if __debug__:
-        from mvpa.base import debug
+        from mvpa2.base import debug
 
     try:
         if sys.version_info[:2] >= (2, 5):

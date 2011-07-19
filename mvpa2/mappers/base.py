@@ -13,13 +13,13 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import copy
 
-from mvpa.base.learner import Learner
-from mvpa.base.node import ChainNode
-from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
-from mvpa.base.dochelpers import _str
+from mvpa2.base.learner import Learner
+from mvpa2.base.node import ChainNode
+from mvpa2.base.types import is_datasetlike, accepts_dataset_as_samples
+from mvpa2.base.dochelpers import _str
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class Mapper(Learner):

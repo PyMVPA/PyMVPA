@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import os
 
-from mvpa.base import externals
+from mvpa2.base import externals
 
 _d_geti_ = dict.__getitem__
 _d_seti_ = dict.__setitem__
@@ -25,7 +25,7 @@ if externals.exists('cPickle', raise_=True) and \
     import cPickle, gzip
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 class Hamster(object):
     """Simple container class with basic IO capabilities.

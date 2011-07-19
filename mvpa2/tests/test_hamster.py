@@ -12,8 +12,8 @@ import os
 import unittest
 import numpy as np
 
-from mvpa.testing.tools import *
-from mvpa.misc.io.hamster import *
+from mvpa2.testing.tools import *
+from mvpa2.misc.io.hamster import *
 
 class HamsterHelperTests(unittest.TestCase):
 

@@ -11,13 +11,13 @@
 __docformat__ = 'restructuredtext'
 
 import time
-from mvpa.base.node import Node
-from mvpa.base.state import ConditionalAttribute
-from mvpa.base.types import is_datasetlike
-from mvpa.base.dochelpers import _repr_attrs
+from mvpa2.base.node import Node
+from mvpa2.base.state import ConditionalAttribute
+from mvpa2.base.types import is_datasetlike
+from mvpa2.base.dochelpers import _repr_attrs
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class LearnerError(Exception):

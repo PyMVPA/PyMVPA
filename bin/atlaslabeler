@@ -11,19 +11,19 @@
 
 import re, sys, os
 
-import mvpa
-from mvpa.misc.cmdline import parser, opts, opt
-from mvpa.base import verbose, warning, externals
+import mvpa2
+from mvpa2.misc.cmdline import parser, opts, opt
+from mvpa2.base import verbose, warning, externals
 
 if externals.exists('nibabel', raise_=True):
     import nibabel as nb
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
-from mvpa.atlases.transformation import *
+from mvpa2.atlases.transformation import *
 
-from mvpa.atlases import Atlas, ReferencesAtlas, FSLProbabilisticAtlas, \
+from mvpa2.atlases import Atlas, ReferencesAtlas, FSLProbabilisticAtlas, \
      KNOWN_ATLASES, KNOWN_ATLAS_FAMILIES, XMLAtlasException
 
 from optparse import OptionParser, Option
@@ -144,7 +144,7 @@ would provide summary over the MNI (or HarvardOxford-Cortical) atlas,
 mask_vt.nii.gz and provided in '-f' argument.""" \
 % {'cmd': os.path.basename(sys.argv[0])}
 
-parser.version = "%prog " + mvpa.__version__
+parser.version = "%prog " + mvpa2.__version__
 
 # can't use due to conflict with -d (debug and distance)
 #parser.option_groups = [opts.common]

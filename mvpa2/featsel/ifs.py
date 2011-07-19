@@ -16,16 +16,16 @@ set and include important features successively.
 __docformat__ = 'restructuredtext'
 
 import numpy as np
-from mvpa.support.copy import copy
-from mvpa.featsel.base import StaticFeatureSelection, IterativeFeatureSelection
-from mvpa.featsel.helpers import NBackHistoryStopCrit, \
+from mvpa2.support.copy import copy
+from mvpa2.featsel.base import StaticFeatureSelection, IterativeFeatureSelection
+from mvpa2.featsel.helpers import NBackHistoryStopCrit, \
                                  FixedNElementTailSelector, \
                                  BestDetector
 
-from mvpa.base.state import ConditionalAttribute
+from mvpa2.base.state import ConditionalAttribute
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class IFS(IterativeFeatureSelection):

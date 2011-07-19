@@ -12,7 +12,7 @@
 __docformat__ = 'restructuredtext'
 
 import sys
-from mvpa.base import externals
+from mvpa2.base import externals
 
 __all__ = ['pl']
 

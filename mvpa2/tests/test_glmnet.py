@@ -8,20 +8,20 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA least angle regression (ENET) classifier"""
 
-from mvpa.testing import *
+from mvpa2.testing import *
 skip_if_no_external('glmnet')
 
-from mvpa.testing.datasets import *
+from mvpa2.testing.datasets import *
 
 from mvpa import cfg
-from mvpa.clfs.glmnet import GLMNET_R,GLMNET_C
+from mvpa2.clfs.glmnet import GLMNET_R,GLMNET_C
 
 #from scipy.stats import pearsonr
 # Lets use our corr_error which would be available even without scipy
-from mvpa.misc.errorfx import corr_error
-from mvpa.misc.data_generators import normal_feature_dataset
+from mvpa2.misc.errorfx import corr_error
+from mvpa2.misc.data_generators import normal_feature_dataset
 
-from mvpa.testing.tools import assert_true, assert_equal, assert_array_equal
+from mvpa2.testing.tools import assert_true, assert_equal, assert_array_equal
 
 def test_glmnet_r():
     # not the perfect dataset with which to test, but

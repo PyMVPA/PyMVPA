@@ -13,11 +13,11 @@ __docformat__ = 'restructuredtext'
 from math import floor
 import numpy as np
 
-from mvpa.base.dataset import AttrDataset
-from mvpa.base.state import ClassWithCollections, ConditionalAttribute
+from mvpa2.base.dataset import AttrDataset
+from mvpa2.base.state import ClassWithCollections, ConditionalAttribute
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 #
 # Functors to be used for FeatureSelection

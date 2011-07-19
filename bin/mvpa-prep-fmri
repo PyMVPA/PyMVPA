@@ -28,12 +28,12 @@ from subprocess import call
 
 import numpy as np
 
-from mvpa.misc.cmdline import parser, opt
-from mvpa.base import verbose, externals, error
-import mvpa
+from mvpa2.misc.cmdline import parser, opt
+from mvpa2.base import verbose, externals, error
+import mvpa2
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 _EXFUNC_CONV_DICT = {'last' :  lambda x: x-1,
@@ -45,7 +45,7 @@ _EXFUNC_CONV_DICT = {'last' :  lambda x: x-1,
 def prep_parser(parser):
     # use module docstring for help output
     parser.usage = "%s [OPTIONS] <fmri-data>\n\n" % sys.argv[0] + __doc__
-    parser.version = "%prog " + mvpa.__version__
+    parser.version = "%prog " + mvpa2.__version__
 
     parser.add_option(opt.verbose)
     parser.add_option(opt.help)

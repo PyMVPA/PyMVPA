@@ -10,7 +10,7 @@
 
 
 import unittest
-from mvpa.base.config import ConfigManager
+from mvpa2.base.config import ConfigManager
 
 class ConfigTests(unittest.TestCase):
 

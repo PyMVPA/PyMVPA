@@ -10,11 +10,11 @@
 
 import numpy as np
 
-from mvpa.testing import *
-from mvpa.testing.datasets import pure_multivariate_signal
+from mvpa2.testing import *
+from mvpa2.testing.datasets import pure_multivariate_signal
 
-from mvpa.clfs.knn import kNN
-from mvpa.clfs.distance import one_minus_correlation
+from mvpa2.clfs.knn import kNN
+from mvpa2.clfs.distance import one_minus_correlation
 
 class KNNTests(unittest.TestCase):
 

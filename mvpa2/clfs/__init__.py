@@ -10,7 +10,7 @@
 
 Module Organization
 ===================
-mvpa.clfs module contains various classifiers
+mvpa2.clfs module contains various classifiers
 
 :group Base: base
 :group Meta Classifiers: meta
@@ -24,8 +24,8 @@ __docformat__ = 'restructuredtext'
 
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.clfs')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.clfs')
 
 if __debug__:
-    debug('INIT', 'mvpa.clfs end')
+    debug('INIT', 'mvpa2.clfs end')

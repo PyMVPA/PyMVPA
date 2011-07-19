@@ -13,10 +13,10 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.measures.base import FeaturewiseMeasure
+from mvpa2.measures.base import FeaturewiseMeasure
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class PLS(FeaturewiseMeasure):

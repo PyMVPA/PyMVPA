@@ -245,7 +245,7 @@ If done, verify that everything went fine by opening a command prompt and start
 Python by typing `python` and hit enter. Now you should see the Python prompt.
 Import the mvpa module, which should cause no error messages.
 
-  >>> import mvpa
+  >>> import mvpa2
   >>>
 
 Although you have a working installation already, most likely you want to
@@ -352,7 +352,7 @@ MacPorts has the ability of installing several Python versions at a time, the
 Upon success, open a terminal window and start Python by typing `python` and
 hit return. Now try to import the PyMVPA module by doing:
 
-  >>> import mvpa
+  >>> import mvpa2
   >>>
 
 If no error messages appear, you have succesfully installed PyMVPA.

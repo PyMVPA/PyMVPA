@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.base import externals
+from mvpa2.base import externals
 
 if externals.exists('scipy', raise_=True):
     import scipy.stats as st

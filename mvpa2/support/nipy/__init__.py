@@ -21,10 +21,10 @@ or a local copy from _'ed file.
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.support.nipy start')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.support.nipy start')
 
-from mvpa.base import externals
+from mvpa2.base import externals
 
 # NiPy code requires scipy
 externals.exists('scipy', raise_=True)
@@ -37,5 +37,5 @@ else:
 __all__ = ['emp_null']
 
 if __debug__:
-    debug('INIT', 'mvpa.support end')
+    debug('INIT', 'mvpa2.support end')
 

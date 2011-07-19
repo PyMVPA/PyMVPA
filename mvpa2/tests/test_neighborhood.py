@@ -12,13 +12,13 @@ import os
 import numpy as np
 from numpy import array
 
-from mvpa.datasets.base import Dataset
-import mvpa.misc.neighborhood as ne
-from mvpa.clfs.distance import *
+from mvpa2.datasets.base import Dataset
+import mvpa2.misc.neighborhood as ne
+from mvpa2.clfs.distance import *
 
-from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
+from mvpa2.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_array_equal
-from mvpa.testing.datasets import datasets
+from mvpa2.testing.datasets import datasets
 
 def test_distances():
     a = np.array([3,8])

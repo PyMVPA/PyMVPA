@@ -15,7 +15,7 @@ depending on the availability of external libraries. By default LIBSVM
 implementation is chosen by default, but in any case both libraries
 are available through importing from this module::
 
- > from mvpa.clfs.svm import sg, libsvm
+ > from mvpa2.clfs.svm import sg, libsvm
  > help(sg.SVM)
  > help(libsvm.SVM)
 
@@ -26,11 +26,11 @@ parameterization and available kernels and implementations.
 __docformat__ = 'restructuredtext'
 
 # take care of conditional import of external classifiers
-from mvpa.base import warning, cfg, externals
+from mvpa2.base import warning, cfg, externals
 from _svmbase import _SVM
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 # SVM implementation to be used "by default"
 SVM = None
@@ -51,31 +51,31 @@ if __debug__:
     debug('SVM', 'SVM backend is %s' % _svm_backend)
 
 if externals.exists('shogun'):
-    from mvpa.clfs import sg
+    from mvpa2.clfs import sg
     SVM = sg.SVM
     # Somewhat cruel hack -- define "SVM" family of kernels as binds
     # to specific default SVM implementation
     # XXX might need RF
-    from mvpa.kernels import sg as ksg
+    from mvpa2.kernels import sg as ksg
     LinearSVMKernel = ksg.LinearSGKernel
     RbfSVMKernel = ksg.RbfSGKernel
 
     #if not 'LinearCSVMC' in locals():
-    #    from mvpa.clfs.sg.svm import *
+    #    from mvpa2.clfs.sg.svm import *
 
 if externals.exists('libsvm'):
     # By default for now we want simply to import all SVMs from libsvm
-    from mvpa.clfs import libsvmc as libsvm
+    from mvpa2.clfs import libsvmc as libsvm
     _NuSVM = libsvm.SVM
     if _svm_backend == 'libsvm' or SVM is None:
         if __debug__ and _svm_backend != 'libsvm' and SVM is None:
             debug('SVM', 'SVM backend %s was not found, so using libsvm'
                   % _svm_backend)
         SVM = libsvm.SVM
-        from mvpa.kernels import libsvm as kls
+        from mvpa2.kernels import libsvm as kls
         LinearSVMKernel = kls.LinearLSKernel
         RbfSVMKernel = kls.RbfLSKernel
-    #from mvpa.clfs.libsvm.svm import *
+    #from mvpa2.clfs.libsvm.svm import *
 
 if SVM is None:
     warning("None of SVM implementation libraries was found")

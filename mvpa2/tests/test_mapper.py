@@ -12,18 +12,18 @@ import numpy as np
 # for repr
 from numpy import array
 
-from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
+from mvpa2.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true, assert_array_equal, nodebug
 
-from mvpa.testing.datasets import datasets
-from mvpa.mappers.flatten import FlattenMapper
-from mvpa.mappers.base import ChainMapper
-from mvpa.featsel.base import StaticFeatureSelection
-from mvpa.mappers.slicing import SampleSliceMapper, StripBoundariesSamples
-from mvpa.support.copy import copy
-from mvpa.datasets.base import Dataset
-from mvpa.base.collections import ArrayCollectable
-from mvpa.datasets.base import dataset_wizard
+from mvpa2.testing.datasets import datasets
+from mvpa2.mappers.flatten import FlattenMapper
+from mvpa2.mappers.base import ChainMapper
+from mvpa2.featsel.base import StaticFeatureSelection
+from mvpa2.mappers.slicing import SampleSliceMapper, StripBoundariesSamples
+from mvpa2.support.copy import copy
+from mvpa2.datasets.base import Dataset
+from mvpa2.base.collections import ArrayCollectable
+from mvpa2.datasets.base import dataset_wizard
 
 # arbitrary ndarray subclass for testing
 class myarray(np.ndarray):
@@ -254,7 +254,7 @@ def test_chainmapper():
     if __debug__:
         # debug mode needs special test as it enhances the repr output
         # with module info and id() appendix for objects
-        import mvpa
+        import mvpa2
         cm_clone = eval(repr(cm))
         assert_equal('#'.join(repr(cm_clone).split('#')[:-1]),
                      '#'.join(repr(cm).split('#')[:-1]))

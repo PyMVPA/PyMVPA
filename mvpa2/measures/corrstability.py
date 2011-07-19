@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.measures.base import FeaturewiseMeasure
+from mvpa2.measures.base import FeaturewiseMeasure
 
 class CorrStability(FeaturewiseMeasure):
     """`FeaturewiseMeasure` that assesses feature stability

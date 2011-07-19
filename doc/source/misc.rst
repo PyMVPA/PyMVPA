@@ -15,7 +15,7 @@
 Miscellaneous
 *************
 
-.. automodule:: mvpa.misc
+.. automodule:: mvpa2.misc
 
 .. only:: html
 
@@ -124,7 +124,7 @@ such setting, i.e. neither config files nor environment variables defined it,
 the `default` values is returned. Please see the documentation of
 `ConfigManager`_ for its full functionality.
 
-.. _ConfigManager: api/mvpa.base.config.ConfigManager-class.html
+.. _ConfigManager: api/mvpa2.base.config.ConfigManager-class.html
 
 
 .. index:: config file
@@ -158,9 +158,9 @@ warning_
     unexpected but not critical
 
 
-.. _verbose: api/mvpa.misc-module.html#verbose
-.. _debug: api/mvpa.misc-module.html#debug
-.. _warning: api/mvpa.misc-module.html#warning
+.. _verbose: api/mvpa2.misc-module.html#verbose
+.. _debug: api/mvpa2.misc-module.html#debug
+.. _warning: api/mvpa2.misc-module.html#warning
 
 
 .. index:: redirecting output
@@ -202,7 +202,7 @@ specified at run time, thus it is impossible to redirect verbose or debug from
 the start of the program:
 
   >>> import sys
-  >>> from mvpa.base import verbose
+  >>> from mvpa2.base import verbose
   >>> from StringIO import StringIO
   >>> stringout = StringIO()
   >>> verbose.handlers = [sys.stdout, stringout]
@@ -338,10 +338,10 @@ the internal logic, thus enabled when full test suite is ran.
    also way to specify the level for the message so we could provide
    more debugging information if desired.
 
-.. _opt.verbose: api/mvpa.misc.cmdline-module.html#opt.verbose
-.. _optDebug: api/mvpa.misc.cmdline-module.html#optDebug
-.. _base module sources: api/mvpa.base-pysrc.html
-.. _Recursive Feature Elimination call: api/mvpa.featsel.rfe.RFE-class.html#__call__
+.. _opt.verbose: api/mvpa2.misc.cmdline-module.html#opt.verbose
+.. _optDebug: api/mvpa2.misc.cmdline-module.html#optDebug
+.. _base module sources: api/mvpa2.base-pysrc.html
+.. _Recursive Feature Elimination call: api/mvpa2.featsel.rfe.RFE-class.html#__call__
 
 
 PyMVPA Status Summary
@@ -349,7 +349,7 @@ PyMVPA Status Summary
 
 While reporting found bugs, it is advised to provide information about the
 operating system/environment and availability of PyMVPA externals.  Please use
-:func:`~mvpa.base.info.wtf` to collect such useful information to be included
+:func:`~mvpa2.base.info.wtf` to collect such useful information to be included
 with the bug reports.
 
 Alternatively, same printout can be obtained upon not handled exception
@@ -423,11 +423,11 @@ motion-aware data detrending:
   >>> import numpy as np
   >>>
   >>> # some dummy dataset
-  >>> from mvpa.datasets import Dataset
+  >>> from mvpa2.datasets import Dataset
   >>> ds = Dataset(samples=np.random.normal(size=(19, 3)))
   >>>
   >>> # load motion correction output
-  >>> from mvpa.misc.fsl.base import McFlirtParams
+  >>> from mvpa2.misc.fsl.base import McFlirtParams
   >>> mc = McFlirtParams(path.join('mvpa', 'data', 'bold_mc.par'))
   >>>
   >>> # simple plot using pylab (use pylab.show() or pylab.savefig()
@@ -439,13 +439,13 @@ motion-aware data detrending:
   ...     ds.sa['mc_' + param] = mc[param]
   >>>
   >>> # detrend some dataset with mc params as additonal regressors
-  >>> from mvpa.mappers.detrend import poly_detrend
+  >>> from mvpa2.mappers.detrend import poly_detrend
   >>> res = poly_detrend(ds, opt_regs=['mc_x', 'mc_y', 'mc_z',
   ...                                  'mc_rot1', 'mc_rot2', 'mc_rot3'])
   >>> # 'res' contains all regressors and their associated weights
 
-All FSL bindings are located in the `mvpa.misc.fsl`_ module.
+All FSL bindings are located in the `mvpa2.misc.fsl`_ module.
 
 .. _FSL: http://www.fmrib.ox.ac.uk
-.. _mvpa.misc.fsl: api/mvpa.misc.fsl-module.html
+.. _mvpa2.misc.fsl: api/mvpa2.misc.fsl-module.html
 

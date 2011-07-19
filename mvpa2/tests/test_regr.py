@@ -8,18 +8,18 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA Regressions"""
 
-from mvpa.testing import *
-from mvpa.testing.clfs import *
-from mvpa.testing.datasets import dataset_wizard, datasets
-from mvpa.base import externals
+from mvpa2.testing import *
+from mvpa2.testing.clfs import *
+from mvpa2.testing.datasets import dataset_wizard, datasets
+from mvpa2.base import externals
 
-from mvpa.generators.partition import NFoldPartitioner, OddEvenPartitioner
-from mvpa.measures.base import CrossValidation
+from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
+from mvpa2.measures.base import CrossValidation
 
-from mvpa.clfs.meta import SplitClassifier
-from mvpa.misc.exceptions import UnknownStateError
-from mvpa.misc.attrmap import AttributeMap
-from mvpa.mappers.fx import mean_sample
+from mvpa2.clfs.meta import SplitClassifier
+from mvpa2.misc.exceptions import UnknownStateError
+from mvpa2.misc.attrmap import AttributeMap
+from mvpa2.mappers.fx import mean_sample
 
 
 class RegressionsTests(unittest.TestCase):
@@ -39,7 +39,7 @@ class RegressionsTests(unittest.TestCase):
         if not externals.exists('scipy'):
             raise SkipTest
         else:
-            from mvpa.misc.errorfx import corr_error
+            from mvpa2.misc.errorfx import corr_error
         ds = datasets['chirp_linear']
         # we want numeric labels to maintain the previous behavior, especially
         # since we deal with regressions here

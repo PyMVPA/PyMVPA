@@ -38,10 +38,10 @@ __docformat__ = 'restructuredtext'
 import types
 import numpy as np
 import h5py
-from mvpa.base.types import asobjarray
+from mvpa2.base.types import asobjarray
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 # Comment: H5Py defines H5Error
 class HDF5ConversionError(Exception):

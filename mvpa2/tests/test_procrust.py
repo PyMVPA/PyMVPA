@@ -12,10 +12,10 @@
 import unittest
 import numpy as np
 from numpy.linalg import norm
-from mvpa.datasets.base import dataset_wizard
-from mvpa.testing import *
-from mvpa.testing.datasets import *
-from mvpa.mappers.procrustean import ProcrusteanMapper
+from mvpa2.datasets.base import dataset_wizard
+from mvpa2.testing import *
+from mvpa2.testing.datasets import *
+from mvpa2.mappers.procrustean import ProcrusteanMapper
 
 
 class ProcrusteanMapperTests(unittest.TestCase):

@@ -15,7 +15,7 @@
 Datasets
 ********
 
-.. automodule:: mvpa.datasets
+.. automodule:: mvpa2.datasets
 
 
 .. only:: html
@@ -49,19 +49,19 @@ learned by a classifier.  Moreover, samples can be grouped into so-called
 :term:`chunk`\ s, where each chunk is assumed to be statistically independent
 from all other data chunks.
 
-The foundation of PyMVPA's data handling is the :class:`~mvpa.datasets.base.Dataset` class. Basically, this
+The foundation of PyMVPA's data handling is the :class:`~mvpa2.datasets.base.Dataset` class. Basically, this
 class stores data samples, sample attributes and dataset attributes.  By
 definition, sample attributes assign a value to each data sample (e.g. targets,
 or chunks) and dataset attributes are additional information or functionality
 that apply to the whole dataset.
 
-Most likely the :class:`~mvpa.datasets.base.Dataset` class will not be used directly, but through one
+Most likely the :class:`~mvpa2.datasets.base.Dataset` class will not be used directly, but through one
 of the derived classes. However, it is perfectly possible to use it directly.
 In the simplest case a dataset can be constructed by specifying some
 data samples and the corresponding class labels.
 
   >>> import numpy as np
-  >>> from mvpa.datasets import dataset_wizard
+  >>> from mvpa2.datasets import dataset_wizard
   >>> data = dataset_wizard(samples=np.random.normal(size=(10,5)), targets=1)
   >>> print data
   <Dataset: 10x5@float64, <sa: targets>>
@@ -86,7 +86,7 @@ attribute:
 
 The *data samples* themselves are stored as a two-dimensional matrix
 where each row vector is a `sample` and each column vector contains
-the values of a `feature` across all `samples`. The :class:`~mvpa.datasets.base.Dataset` class
+the values of a `feature` across all `samples`. The :class:`~mvpa2.datasets.base.Dataset` class
 provides access to the samples matrix via the `samples` property.
 
   >>> data.samples.shape
@@ -94,7 +94,7 @@ provides access to the samples matrix via the `samples` property.
   >>> data.shape
   (10, 5)
 
-The :class:`~mvpa.datasets.base.Dataset` class itself can only deal with 2d sample matrices. However,
+The :class:`~mvpa2.datasets.base.Dataset` class itself can only deal with 2d sample matrices. However,
 PyMVPA provides a very easy way to deal with data where each data sample is
 more than a 1d vector: `Data Mapping`_
 
@@ -104,7 +104,7 @@ more than a 1d vector: `Data Mapping`_
 Data Mapping
 ============
 
-It was already mentioned that the :class:`~mvpa.datasets.base.Dataset` class cannot deal with data samples
+It was already mentioned that the :class:`~mvpa2.datasets.base.Dataset` class cannot deal with data samples
 that are more than simple vectors. This could be a problem in cases where the
 data has a higher dimensionality, e.g. functional brain-imaging data where
 each data sample is typically a three-dimensional volume.
@@ -119,7 +119,7 @@ In PyMVPA this is done by mappers that transform data samples from their
 original *dataspace* into the so-called *features space*. In the above
 neuro-imaging example the *dataspace* is three-dimensional and the *feature
 space* always refers to the 2d `samples x features` representation that is
-required by the :class:`~mvpa.datasets.base.Dataset` class. In the context of mappers the dataspace is
+required by the :class:`~mvpa2.datasets.base.Dataset` class. In the context of mappers the dataspace is
 sometimes also referred to as *in-space* (i.e. the initial data that goes into
 the mapper) while the feature space is labeled as *out-space* (i.e. the mapper
 output when doing forward mapping).
@@ -130,18 +130,18 @@ information about dataspace metrics and feature neighbourhood, but all mappers
 are able to do reverse mapping from feature space into the original dataspace.
 
 Usually one does not have to deal with mappers directly. PyMVPA provides some
-convenience subclasses of :class:`~mvpa.datasets.base.Dataset` that automatically perform the necessary
+convenience subclasses of :class:`~mvpa2.datasets.base.Dataset` that automatically perform the necessary
 mapping operations internally.
 
 .. index:: MaskedDataset
 
 For an introduction into to concept of a dataset with mapping capabilities
-we can take a look at the :class:`~mvpa.datasets.masked.MaskedDataset` class. This dataset class works
-almost exactly like the basic :class:`~mvpa.datasets.base.Dataset` class, except that it provides some
+we can take a look at the :class:`~mvpa2.datasets.masked.MaskedDataset` class. This dataset class works
+almost exactly like the basic :class:`~mvpa2.datasets.base.Dataset` class, except that it provides some
 additional methods and is more flexible with respect to the format of the
 sample data. A masked dataset can be created just like a normal dataset.
 
-However, unlike :class:`~mvpa.datasets.base.Dataset` the :class:`~mvpa.datasets.masked.MaskedDataset` class can deal with sample
+However, unlike :class:`~mvpa2.datasets.base.Dataset` the :class:`~mvpa2.datasets.masked.MaskedDataset` class can deal with sample
 data arrays with more than two dimensions. More precisely it handles arrays of
 any dimensionality. The only assumption that is made is that the first axis
 of a sample array separates the sample data points. In the above example we
@@ -152,9 +152,9 @@ therefore have 5 samples, where each sample is a 3x4 plane.
 If we look at the self-description of the created dataset we can see that it
 doesn't tell us about 3x4 plane, but simply 12 features. That is because
 internally the sample array is automatically reshaped into the aforementioned
-2d matrix representation of the :class:`~mvpa.datasets.base.Dataset` class. However, the information about
+2d matrix representation of the :class:`~mvpa2.datasets.base.Dataset` class. However, the information about
 the original dataspace is not lost, but kept inside the mapper used by
-:class:`~mvpa.datasets.masked.MaskedDataset`. Two useful methods of :class:`~mvpa.datasets.masked.MaskedDataset` make use of the mapper:
+:class:`~mvpa2.datasets.masked.MaskedDataset`. Two useful methods of :class:`~mvpa2.datasets.masked.MaskedDataset` make use of the mapper:
 `mapForward()` and `mapReverse()`. The former can be used to transform
 additional data from dataspace into the feature space and the latter performs
 the same in the opposite direction.
@@ -196,13 +196,13 @@ or perform some common action
 ================ ============ ================
 Attribute        Abbreviation Definition class
 ---------------- ------------ ----------------
-samples          S            :class:`~mvpa.datasets.base.Dataset`
-targets          T            :class:`~mvpa.datasets.base.Dataset`
-uniquetargets    UT           :class:`~mvpa.datasets.base.Dataset`
-chunks           C            :class:`~mvpa.datasets.base.Dataset`
-uniquechunks     UC           :class:`~mvpa.datasets.base.Dataset`
-origids          I            :class:`~mvpa.datasets.base.Dataset`
-samples_original O            :class:`~mvpa.datasets.mapped.MappedDataset`
+samples          S            :class:`~mvpa2.datasets.base.Dataset`
+targets          T            :class:`~mvpa2.datasets.base.Dataset`
+uniquetargets    UT           :class:`~mvpa2.datasets.base.Dataset`
+chunks           C            :class:`~mvpa2.datasets.base.Dataset`
+uniquechunks     UC           :class:`~mvpa2.datasets.base.Dataset`
+origids          I            :class:`~mvpa2.datasets.base.Dataset`
+samples_original O            :class:`~mvpa2.datasets.mapped.MappedDataset`
 ================ ============ ================
 
 
@@ -214,20 +214,20 @@ Data Formats
 ============
 
 The concept of mappers in conjunction with the functionality provided by the
-:class:`~mvpa.datasets.base.Dataset` class, makes it very easy to create new dataset types with support
+:class:`~mvpa2.datasets.base.Dataset` class, makes it very easy to create new dataset types with support
 for specialized data types and formats. The following is a non-exhaustive list
 of data formats currently supported by PyMVPA (for additional formats take a
-look at the subclasses of :class:`~mvpa.datasets.base.Dataset`):
+look at the subclasses of :class:`~mvpa2.datasets.base.Dataset`):
 
 * NumPy arrays
 
   PyMVPA builds its dataset facilities on NumPy arrays. Basically, anything
   that can be converted into a NumPy array can also be converted into a
   dataset. Together with the corresponding targets, NumPy arrays can simply be
-  passed to the :class:`~mvpa.datasets.base.Dataset` constructor to create a dataset. With arrays it is
-  possible to use the classes :class:`~mvpa.datasets.base.Dataset`, :class:`~mvpa.datasets.mapped.MappedDataset` (to combine the samples
-  with any custom mapping algorithm) or :class:`~mvpa.datasets.masked.MaskedDataset` (readily provides a
-  :class:`~mvpa.mappers.array.DenseArrayMapper`).
+  passed to the :class:`~mvpa2.datasets.base.Dataset` constructor to create a dataset. With arrays it is
+  possible to use the classes :class:`~mvpa2.datasets.base.Dataset`, :class:`~mvpa2.datasets.mapped.MappedDataset` (to combine the samples
+  with any custom mapping algorithm) or :class:`~mvpa2.datasets.masked.MaskedDataset` (readily provides a
+  :class:`~mvpa2.mappers.array.DenseArrayMapper`).
 
 * Plain text
 
@@ -237,13 +237,13 @@ look at the subclasses of :class:`~mvpa.datasets.base.Dataset`):
 * NIfTI/Analyze images
 
   PyMVPA provides a specialized dataset for MRI data in the NIfTI format.
-  :class:`~mvpa.datasets.nifti.NiftiDataset` uses PyNIfTI_ to read the data and automatically configures an
-  appropriate :class:`~mvpa.mappers.array.DenseArrayMapper` with metric information read from the NIfTI
+  :class:`~mvpa2.datasets.nifti.NiftiDataset` uses PyNIfTI_ to read the data and automatically configures an
+  appropriate :class:`~mvpa2.mappers.array.DenseArrayMapper` with metric information read from the NIfTI
   file header.
 
 * EEP binary files
 
-  Another special dataset type is :class:`~mvpa.datasets.eep.EEPDataset`. It reads data from binary EEP
+  Another special dataset type is :class:`~mvpa2.datasets.eep.EEPDataset`. It reads data from binary EEP
   file (written by eeprobe_)
 
 
@@ -276,7 +276,7 @@ describe signal similarities between training and validation datasets.
    with it in our documentation, and we need to improve ours too!
 
 With the splitter classes derived from the base
-:class:`~mvpa.datasets.splitters.Splitter`,
+:class:`~mvpa2.datasets.splitters.Splitter`,
 PyMVPA makes dataset splitting easy. All dataset
 splitters in PyMVPA are implemented as Python generators, meaning that when
 called with a dataset once, they return one dataset split per iteration and
@@ -286,12 +286,12 @@ as of e.g. the Python `xrange()` function.
 .. index:: working data, validation data
 
 To perform data splitting for the already mentioned cross-validation, PyMVPA
-provides the  :class:`~mvpa.datasets.splitters.NFoldSplitter` class. It implements a method to generate
+provides the  :class:`~mvpa2.datasets.splitters.NFoldSplitter` class. It implements a method to generate
 arbitrary N-M splits, where N is the number of different chunks in a dataset
 and M is any non-negative integer smaller than np. Doing a leave-one-out split
 of our example dataset looks like this:
 
-  >>> from mvpa.datasets.splitters import NFoldSplitter
+  >>> from mvpa2.datasets.splitters import NFoldSplitter
   >>> data = dataset_wizard(samples=np.random.normal(size=(10,5)),
   ...                       targets=1, chunks=range(10))
   >>> splitter = NFoldSplitter(cvtype=1)   # Do N-1
@@ -316,7 +316,7 @@ In the first split, the working dataset contains nine chunks of the original
 dataset and the validation set contains the remaining chunk.
 
 Behavior of the splitters can be heavily customized by additional arguments to
-the constructor (see :class:`~mvpa.datasets.splitters.Splitter` for extended
+the constructor (see :class:`~mvpa2.datasets.splitters.Splitter` for extended
 help on the arguments).  For instance, in the analysis in fMRI data it might
 be important to assure that samples in the training and testing parts of the
 split are not neighboring samples (unless it is otherwise assured by the

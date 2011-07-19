@@ -11,16 +11,16 @@
 import unittest
 import numpy as np
 
-from mvpa.base import externals
+from mvpa2.base import externals
 
-from mvpa.misc.transformers import Absolute, one_minus, rank_order, \
+from mvpa2.misc.transformers import Absolute, one_minus, rank_order, \
      reverse_rank_order, l1_normed, l2_normed, OverAxis, \
      DistPValue, first_axis_sum_not_zero
 
-from mvpa.testing import *
-from mvpa.testing.datasets import datasets
+from mvpa2.testing import *
+from mvpa2.testing.datasets import datasets
 
-from mvpa.base import cfg
+from mvpa2.base import cfg
 
 class TransformerTests(unittest.TestCase):
 

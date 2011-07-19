@@ -24,32 +24,32 @@ __docformat__ = 'restructuredtext'
 import operator
 import numpy as np
 
-from mvpa.misc.args import group_kwargs
-from mvpa.base.param import Parameter
+from mvpa2.misc.args import group_kwargs
+from mvpa2.base.param import Parameter
 
-from mvpa.generators.splitters import Splitter
-from mvpa.generators.partition import NFoldPartitioner
-from mvpa.datasets.miscfx import get_samples_by_attr
-from mvpa.misc.attrmap import AttributeMap
-from mvpa.base.dochelpers import _str
-from mvpa.base.state import ConditionalAttribute, ClassWithCollections, \
+from mvpa2.generators.splitters import Splitter
+from mvpa2.generators.partition import NFoldPartitioner
+from mvpa2.datasets.miscfx import get_samples_by_attr
+from mvpa2.misc.attrmap import AttributeMap
+from mvpa2.base.dochelpers import _str
+from mvpa2.base.state import ConditionalAttribute, ClassWithCollections, \
      Harvestable
 
-from mvpa.clfs.base import Classifier
-from mvpa.clfs.distance import cartesian_distance
-from mvpa.misc.transformers import first_axis_mean
+from mvpa2.clfs.base import Classifier
+from mvpa2.clfs.distance import cartesian_distance
+from mvpa2.misc.transformers import first_axis_mean
 
-from mvpa.measures.base import \
+from mvpa2.measures.base import \
     BoostedClassifierSensitivityAnalyzer, ProxyClassifierSensitivityAnalyzer, \
     MappedClassifierSensitivityAnalyzer, \
     FeatureSelectionClassifierSensitivityAnalyzer, \
     RegressionAsClassifierSensitivityAnalyzer, \
     BinaryClassifierSensitivityAnalyzer
 
-from mvpa.base import warning
+from mvpa2.base import warning
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class BoostedClassifier(Classifier, Harvestable):
@@ -736,7 +736,7 @@ class TreeClassifier(ProxyClassifier):
           Classifier to separate between the groups
         groups : dict of meta-label: tuple of (tuple of labels, classifier)
           Defines the groups of labels and their classifiers.
-          See :class:`~mvpa.clfs.meta.TreeClassifier` for example
+          See :class:`~mvpa2.clfs.meta.TreeClassifier` for example
         """
 
         # Basic initialization

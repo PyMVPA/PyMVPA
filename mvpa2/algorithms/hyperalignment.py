@@ -16,19 +16,19 @@ it gets properly referenced...
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.support.copy import deepcopy
+from mvpa2.support.copy import deepcopy
 
 import numpy as np
 
-from mvpa.base.state import ConditionalAttribute, ClassWithCollections
-from mvpa.base.param import Parameter
-from mvpa.misc.transformers import grand_mean
-from mvpa.mappers.procrustean import ProcrusteanMapper
-from mvpa.datasets import dataset_wizard, Dataset
-from mvpa.mappers.zscore import zscore
+from mvpa2.base.state import ConditionalAttribute, ClassWithCollections
+from mvpa2.base.param import Parameter
+from mvpa2.misc.transformers import grand_mean
+from mvpa2.mappers.procrustean import ProcrusteanMapper
+from mvpa2.datasets import dataset_wizard, Dataset
+from mvpa2.mappers.zscore import zscore
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class Hyperalignment(ClassWithCollections):
@@ -48,7 +48,7 @@ class Hyperalignment(ClassWithCollections):
     # constructor should accept
     alignment = Parameter(ProcrusteanMapper(), # might provide allowedtype
             doc="""... XXX If `None` (default) an instance of
-            :class:`~mvpa.mappers.procrustean.ProcrusteanMapper` is
+            :class:`~mvpa2.mappers.procrustean.ProcrusteanMapper` is
             used.""")
 
     level2_niter = Parameter(1, allowedtype='int', min=0,

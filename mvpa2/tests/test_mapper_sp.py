@@ -10,12 +10,12 @@
 
 import numpy as np
 
-from mvpa.testing.tools import *
+from mvpa2.testing.tools import *
 
 skip_if_no_external('scipy')
 
-from mvpa.datasets import Dataset, dataset_wizard
-from mvpa.mappers.detrend import PolyDetrendMapper, poly_detrend
+from mvpa2.datasets import Dataset, dataset_wizard
+from mvpa2.mappers.detrend import PolyDetrendMapper, poly_detrend
 
 def test_polydetrend():
     samples_forwhole = np.array( [[1.0, 2, 3, 4, 5, 6],

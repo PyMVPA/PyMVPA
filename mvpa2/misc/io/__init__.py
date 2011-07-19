@@ -9,10 +9,10 @@
 """Import helper for IO helpers"""
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.misc.io')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.misc.io')
 
-from mvpa.misc.io.base import *
+from mvpa2.misc.io.base import *
 
 if __debug__:
-    debug('INIT', 'mvpa.misc.io end')
+    debug('INIT', 'mvpa2.misc.io end')

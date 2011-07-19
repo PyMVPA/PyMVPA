@@ -12,12 +12,12 @@ __docformat__ = 'restructuredtext'
 
 
 import numpy as np
-from mvpa.base import externals
+from mvpa2.base import externals
 
 if externals.exists("scipy", raise_=True):
     from scipy.linalg import lstsq
 
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
 
 class RidgeReg(Classifier):
     """Ridge regression `Classifier`.

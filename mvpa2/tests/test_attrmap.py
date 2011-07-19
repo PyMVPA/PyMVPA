@@ -9,10 +9,10 @@
 
 import numpy as np
 
-from mvpa.testing.tools import assert_raises, ok_, assert_false, assert_equal, \
+from mvpa2.testing.tools import assert_raises, ok_, assert_false, assert_equal, \
      assert_array_equal
 
-from mvpa.misc.attrmap import AttributeMap
+from mvpa2.misc.attrmap import AttributeMap
 
 
 def test_attrmap():

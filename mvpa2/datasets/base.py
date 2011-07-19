@@ -13,19 +13,19 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import copy
 
-from mvpa.base import warning
-from mvpa.base.collections import SampleAttributesCollection, \
+from mvpa2.base import warning
+from mvpa2.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection, \
         SampleAttribute, FeatureAttribute, DatasetAttribute
-from mvpa.base.dataset import AttrDataset
-from mvpa.base.dataset import _expand_attribute
-from mvpa.misc.support import idhash as idhash_
-from mvpa.mappers.base import ChainMapper
-from mvpa.featsel.base import StaticFeatureSelection
-from mvpa.mappers.flatten import mask_mapper, FlattenMapper
+from mvpa2.base.dataset import AttrDataset
+from mvpa2.base.dataset import _expand_attribute
+from mvpa2.misc.support import idhash as idhash_
+from mvpa2.mappers.base import ChainMapper
+from mvpa2.featsel.base import StaticFeatureSelection
+from mvpa2.mappers.flatten import mask_mapper, FlattenMapper
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class Dataset(AttrDataset):
@@ -106,7 +106,7 @@ class Dataset(AttrDataset):
             # functionality between the Dataset.__getitem__ and the mapper.
             # However, __getitem__ is sometimes more efficient, since it can
             # slice samples and feature axis at the same time. Moreover, the
-            # mvpa.base.dataset.Dataset has no clue about mappers and should
+            # mvpa2.base.dataset.Dataset has no clue about mappers and should
             # be fully functional without them.
             subsetmapper = StaticFeatureSelection(args[1],
                                               dshape=self.samples.shape[1:])

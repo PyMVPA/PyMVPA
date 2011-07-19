@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base import externals
+from mvpa2.base import externals
 
 class TuebingenMEG(object):
     """Reader for MEG data from line-based textfile format.

@@ -12,14 +12,14 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base import externals, warning
-from mvpa.base.state import ClassWithCollections, ConditionalAttribute
-from mvpa.generators.permutation import AttributePermutator
-from mvpa.base.types import is_datasetlike
-from mvpa.datasets import Dataset
+from mvpa2.base import externals, warning
+from mvpa2.base.state import ClassWithCollections, ConditionalAttribute
+from mvpa2.generators.permutation import AttributePermutator
+from mvpa2.base.types import is_datasetlike
+from mvpa2.datasets import Dataset
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class Nonparametric(object):
@@ -289,7 +289,7 @@ class MCNullDist(NullDist):
           measure/transfer error multiple times.
         """
         # TODO: place exceptions separately so we could avoid circular imports
-        from mvpa.base.learner import LearnerError
+        from mvpa2.base.learner import LearnerError
 
         # prefer the already assigned measure over anything the was passed to
         # the function.
@@ -418,7 +418,7 @@ class FixedNullDist(NullDist):
 
     >>> import numpy as np
     >>> from scipy import stats
-    >>> from mvpa.clfs.stats import FixedNullDist
+    >>> from mvpa2.clfs.stats import FixedNullDist
     >>>
     >>> dist = FixedNullDist(stats.norm(loc=2, scale=4), tail='left')
     >>> dist.p(2)
@@ -528,7 +528,7 @@ class AdaptiveNormal(AdaptiveNullDist):
 
 
 if externals.exists('scipy'):
-    from mvpa.support.stats import scipy
+    from mvpa2.support.stats import scipy
     from scipy.stats import kstest
     """
     Thoughts:
@@ -748,7 +748,7 @@ if externals.exists('scipy'):
 
         Examples
         --------
-        >>> from mvpa.clfs.stats import match_distribution
+        >>> from mvpa2.clfs.stats import match_distribution
         >>> data = np.random.normal(size=(1000,1));
         >>> matches = match_distribution(
         ...   data,

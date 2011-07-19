@@ -10,10 +10,10 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.misc.io import ColumnData
+from mvpa2.misc.io import ColumnData
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class BrainVoyagerRTC(ColumnData):

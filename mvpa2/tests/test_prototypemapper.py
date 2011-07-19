@@ -11,20 +11,20 @@
 
 import unittest
 import numpy as np
-from mvpa.mappers.prototype import PrototypeMapper
-from mvpa.kernels.np import ExponentialKernel, SquaredExponentialKernel
+from mvpa2.mappers.prototype import PrototypeMapper
+from mvpa2.kernels.np import ExponentialKernel, SquaredExponentialKernel
 
-from mvpa.datasets import Dataset
-from mvpa.clfs.similarity import StreamlineSimilarity
-from mvpa.clfs.distance import corouge
+from mvpa2.datasets import Dataset
+from mvpa2.clfs.similarity import StreamlineSimilarity
+from mvpa2.clfs.distance import corouge
 
-from mvpa.testing.tools import assert_array_equal, assert_array_almost_equal, \
+from mvpa2.testing.tools import assert_array_equal, assert_array_almost_equal, \
      reseed_rng
 
 import random
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 class PrototypeMapperTests(unittest.TestCase):
 

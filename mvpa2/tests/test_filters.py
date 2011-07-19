@@ -9,13 +9,13 @@
 '''Tests for filter mappers'''
 
 
-from mvpa.testing import *
+from mvpa2.testing import *
 skip_if_no_external('scipy')
 
 import numpy as np
 
-from mvpa.datasets import Dataset, vstack
-from mvpa.mappers.filters import FFTResampleMapper
+from mvpa2.datasets import Dataset, vstack
+from mvpa2.mappers.filters import FFTResampleMapper
 
 def test_resample():
     time = np.linspace(0, 2*np.pi, 100)

@@ -14,24 +14,24 @@ import numpy as np
 
 import operator
 
-from mvpa.base import warning
-from mvpa.base.state import ConditionalAttribute
-from mvpa.base.learner import FailedToTrainError
+from mvpa2.base import warning
+from mvpa2.base.state import ConditionalAttribute
+from mvpa2.base.learner import FailedToTrainError
 
-from mvpa.clfs.base import accepts_dataset_as_samples, \
+from mvpa2.clfs.base import accepts_dataset_as_samples, \
      accepts_samples_as_dataset
-from mvpa.clfs._svmbase import _SVM
+from mvpa2.clfs._svmbase import _SVM
 
-from mvpa.clfs.libsvmc import _svm
-from mvpa.kernels.libsvm import LinearLSKernel
+from mvpa2.clfs.libsvmc import _svm
+from mvpa2.kernels.libsvm import LinearLSKernel
 from sens import LinearSVMWeights
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 # we better expose those since they are mentioned in docstrings
 # although pylint would not be happy
-from mvpa.clfs.libsvmc._svmc import \
+from mvpa2.clfs.libsvmc._svmc import \
      C_SVC, NU_SVC, EPSILON_SVR, \
      NU_SVR, LINEAR, POLY, RBF, SIGMOID, \
      PRECOMPUTED, ONE_CLASS

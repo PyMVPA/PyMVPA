@@ -12,13 +12,13 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base import warning, externals
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
-from mvpa.measures.base import Sensitivity
-from mvpa.misc.exceptions import ConvergenceError
-from mvpa.base.param import Parameter
-from mvpa.base.state import ConditionalAttribute
-from mvpa.datasets.base import Dataset
+from mvpa2.base import warning, externals
+from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa2.measures.base import Sensitivity
+from mvpa2.misc.exceptions import ConvergenceError
+from mvpa2.base.param import Parameter
+from mvpa2.base.state import ConditionalAttribute
+from mvpa2.datasets.base import Dataset
 
 __all__ = [ "SMLR", "SMLRWeights" ]
 
@@ -27,7 +27,7 @@ _DEFAULT_IMPLEMENTATION = "Python"
 if externals.exists('ctypes'):
     # Uber-fast C-version of the stepwise regression
     try:
-        from mvpa.clfs.libsmlrc import stepwise_regression as _cStepwiseRegression
+        from mvpa2.clfs.libsmlrc import stepwise_regression as _cStepwiseRegression
         _DEFAULT_IMPLEMENTATION = "C"
     except OSError, e:
         warning("Failed to load fast implementation of SMLR.  May be you "
@@ -40,7 +40,7 @@ else:
             " You are strongly advised to install python-ctypes")
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 def _label2oneofm(labels, ulabels):
     """Convert labels to one-of-M form.

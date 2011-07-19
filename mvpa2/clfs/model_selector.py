@@ -13,8 +13,8 @@ __docformat__ = 'restructuredtext'
 
 
 import numpy as np
-from mvpa.base import externals
-from mvpa.misc.exceptions import InvalidHyperparameterError
+from mvpa2.base import externals
+from mvpa2.misc.exceptions import InvalidHyperparameterError
 
 if externals.exists("scipy", raise_=True):
     import scipy.linalg as SL
@@ -27,7 +27,7 @@ if externals.exists("openopt", raise_=True):
         from scikits.openopt import NLP
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 def _openopt_debug():
     # shut up or make verbose OpenOpt

@@ -10,14 +10,14 @@
 
 import numpy as np
 
-from mvpa.testing import *
-from mvpa.testing.clfs import *
-from mvpa.testing.datasets import *
+from mvpa2.testing import *
+from mvpa2.testing.clfs import *
+from mvpa2.testing.datasets import *
 
-from mvpa.generators.partition import NFoldPartitioner
-from mvpa.datasets.miscfx import get_nsamples_per_attr
-from mvpa.clfs.meta import ProxyClassifier
-from mvpa.measures.base import CrossValidation
+from mvpa2.generators.partition import NFoldPartitioner
+from mvpa2.datasets.miscfx import get_nsamples_per_attr
+from mvpa2.clfs.meta import ProxyClassifier
+from mvpa2.measures.base import CrossValidation
 
 class SVMTests(unittest.TestCase):
 
@@ -49,7 +49,7 @@ class SVMTests(unittest.TestCase):
         #   msg="New instance doesn't change set of parameters in original")
 
         # We must be able to deepcopy not yet trained SVMs now
-        import mvpa.support.copy as copy
+        import mvpa2.support.copy as copy
         try:
             nl_clf.untrain()
             nl_clf_copy = copy.deepcopy(nl_clf)

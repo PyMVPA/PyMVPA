@@ -22,10 +22,10 @@ import sys
 import numpy as np
 
 from mvpa import cfg, externals
-from mvpa.datasets.base import Dataset, HollowSamples
-from mvpa.generators.partition import OddEvenPartitioner
-from mvpa.misc.data_generators import *
-from mvpa.testing.tools import reseed_rng
+from mvpa2.datasets.base import Dataset, HollowSamples
+from mvpa2.generators.partition import OddEvenPartitioner
+from mvpa2.misc.data_generators import *
+from mvpa2.testing.tools import reseed_rng
 
 __all__ = [ 'datasets', 'get_random_rotation', 'saveload_warehouse',
             'pure_multivariate_signal']
@@ -122,7 +122,7 @@ def saveload_warehouse():
     """Store all warehouse datasets into HDF5 and reload them.
     """
     import h5py
-    from mvpa.base.hdf5 import obj2hdf, hdf2obj
+    from mvpa2.base.hdf5 import obj2hdf, hdf2obj
 
     tempdir = tempfile.mkdtemp()
 

@@ -12,13 +12,13 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base.dochelpers import borrowdoc
-from mvpa.mappers.base import accepts_dataset_as_samples
-from mvpa.mappers.projection import ProjectionMapper
-from mvpa.featsel.helpers import ElementSelector
+from mvpa2.base.dochelpers import borrowdoc
+from mvpa2.mappers.base import accepts_dataset_as_samples
+from mvpa2.mappers.projection import ProjectionMapper
+from mvpa2.featsel.helpers import ElementSelector
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class SVDMapper(ProjectionMapper):

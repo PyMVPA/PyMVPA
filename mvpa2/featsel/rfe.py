@@ -10,18 +10,18 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.support.copy import copy
-from mvpa.clfs.transerror import ClassifierError
-from mvpa.measures.base import Sensitivity
-from mvpa.featsel.base import IterativeFeatureSelection
-from mvpa.featsel.helpers import BestDetector, \
+from mvpa2.support.copy import copy
+from mvpa2.clfs.transerror import ClassifierError
+from mvpa2.measures.base import Sensitivity
+from mvpa2.featsel.base import IterativeFeatureSelection
+from mvpa2.featsel.helpers import BestDetector, \
                                  NBackHistoryStopCrit, \
                                  FractionTailSelector
 import numpy as np
-from mvpa.base.state import ConditionalAttribute
+from mvpa2.base.state import ConditionalAttribute
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 # TODO: Abs value of sensitivity should be able to rule RFE
 # Often it is what abs value of the sensitivity is what matters.
@@ -59,7 +59,7 @@ class RFE(IterativeFeatureSelection):
     sensitivities and provide estimate of performance (error)
 
     >>> # Lazy import
-    >>> from mvpa.suite import *
+    >>> from mvpa2.suite import *
     >>> rfesvm_split = SplitClassifier(LinearCSVMC(), OddEvenPartitioner())
     >>> # design an RFE feature selection to be used with a classifier
     >>> rfe = RFE(rfesvm_split.get_sensitivity_analyzer(

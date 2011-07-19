@@ -8,15 +8,15 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA least angle regression (LARS) classifier"""
 
-from mvpa.testing import *
+from mvpa2.testing import *
 skip_if_no_external('lars')
 
-from mvpa.testing.datasets import datasets
+from mvpa2.testing.datasets import datasets
 
 from mvpa import cfg
-from mvpa.clfs.lars import LARS
+from mvpa2.clfs.lars import LARS
 from scipy.stats import pearsonr
-from mvpa.misc.data_generators import normal_feature_dataset
+from mvpa2.misc.data_generators import normal_feature_dataset
 
 class LARSTests(unittest.TestCase):
 

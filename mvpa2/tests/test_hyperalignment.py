@@ -11,18 +11,18 @@
 import unittest
 import numpy as np
 
-from mvpa.base import cfg
+from mvpa2.base import cfg
 # See other tests and test_procrust.py for some example on what to do ;)
-from mvpa.algorithms.hyperalignment import Hyperalignment
+from mvpa2.algorithms.hyperalignment import Hyperalignment
 
 # Somewhat slow but provides all needed ;)
-from mvpa.testing import sweepargs, reseed_rng
-from mvpa.testing.datasets import datasets, get_random_rotation
+from mvpa2.testing import sweepargs, reseed_rng
+from mvpa2.testing.datasets import datasets, get_random_rotation
 
-from mvpa.generators.partition import NFoldPartitioner
+from mvpa2.generators.partition import NFoldPartitioner
 
 # if you need some classifiers
-#from mvpa.testing.clfs import *
+#from mvpa2.testing.clfs import *
 
 class HyperAlignmentTests(unittest.TestCase):
 
@@ -119,10 +119,10 @@ class HyperAlignmentTests(unittest.TestCase):
     def _test_on_swaroop_data(self):
         #
         print "Running swaroops test on data we don't have"
-        #from mvpa.datasets.miscfx import zscore
-        #from mvpa.featsel.helpers import FixedNElementTailSelector
+        #from mvpa2.datasets.miscfx import zscore
+        #from mvpa2.featsel.helpers import FixedNElementTailSelector
         #   or just for lazy ones like yarik atm
-        from mvpa.suite import *
+        from mvpa2.suite import *
         subj = ['cb', 'dm', 'hj', 'kd', 'kl', 'mh', 'ph', 'rb', 'se', 'sm']
         ds = []
         for sub in subj:

@@ -11,13 +11,13 @@
 import unittest, re
 import numpy as np
 
-from mvpa.testing import *
+from mvpa2.testing import *
 
 skip_if_no_external('nibabel')
 skip_if_no_external('lxml')
 
-from mvpa.base import externals
-from mvpa.atlases import *
+from mvpa2.base import externals
+from mvpa2.atlases import *
 
 import os
 from mvpa import pymvpa_dataroot

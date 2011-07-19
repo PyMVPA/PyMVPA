@@ -11,15 +11,15 @@
 import unittest
 import numpy as np
 
-from mvpa.testing.datasets import datasets
-from mvpa.base.node import ChainNode
-from mvpa.datasets.base import dataset_wizard, Dataset
-from mvpa.generators.partition import NFoldPartitioner
-from mvpa.mappers.slicing import StripBoundariesSamples
-from mvpa.generators.splitters import Splitter
-from mvpa.generators.partition import *
+from mvpa2.testing.datasets import datasets
+from mvpa2.base.node import ChainNode
+from mvpa2.datasets.base import dataset_wizard, Dataset
+from mvpa2.generators.partition import NFoldPartitioner
+from mvpa2.mappers.slicing import StripBoundariesSamples
+from mvpa2.generators.splitters import Splitter
+from mvpa2.generators.partition import *
 
-from mvpa.testing.tools import ok_, assert_array_equal, assert_true, \
+from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, reseed_rng
 
 class SplitterTests(unittest.TestCase):

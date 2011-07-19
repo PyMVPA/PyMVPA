@@ -14,16 +14,16 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base import externals, warning
+from mvpa2.base import externals, warning
 
-from mvpa.base.state import ConditionalAttribute
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
-from mvpa.base.param import Parameter
-from mvpa.kernels.np import SquaredExponentialKernel, GeneralizedLinearKernel, \
+from mvpa2.base.state import ConditionalAttribute
+from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa2.base.param import Parameter
+from mvpa2.kernels.np import SquaredExponentialKernel, GeneralizedLinearKernel, \
      LinearKernel
-from mvpa.measures.base import Sensitivity
-from mvpa.misc.exceptions import InvalidHyperparameterError
-from mvpa.datasets import Dataset, dataset_wizard
+from mvpa2.measures.base import Sensitivity
+from mvpa2.misc.exceptions import InvalidHyperparameterError
+from mvpa2.datasets import Dataset, dataset_wizard
 
 if externals.exists("scipy", raise_=True):
     from scipy.linalg import cho_solve as SLcho_solve
@@ -33,7 +33,7 @@ if externals.exists("scipy", raise_=True):
     SLAError = SL.basic.LinAlgError
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 # Some local bindings for bits of speed up
 from numpy import array, asarray
@@ -572,7 +572,7 @@ class GPRLinearWeights(Sensitivity):
 
 if externals.exists('openopt'):
 
-    from mvpa.clfs.model_selector import ModelSelector
+    from mvpa2.clfs.model_selector import ModelSelector
 
     class GPRWeights(Sensitivity):
         """`SensitivityAnalyzer` that reports the weights GPR trained

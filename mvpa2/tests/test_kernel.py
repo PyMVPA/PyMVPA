@@ -10,18 +10,18 @@
 
 import numpy as np
 
-from mvpa.testing import *
-from mvpa.testing.datasets import datasets
+from mvpa2.testing import *
+from mvpa2.testing.datasets import datasets
 
-from mvpa.base.externals import exists
-from mvpa.datasets import Dataset
-from mvpa.clfs.distance import squared_euclidean_distance, \
+from mvpa2.base.externals import exists
+from mvpa2.datasets import Dataset
+from mvpa2.clfs.distance import squared_euclidean_distance, \
      pnorm_w, pnorm_w_python
 
-import mvpa.kernels.np as npK
-from mvpa.kernels.base import PrecomputedKernel, CachedKernel
+import mvpa2.kernels.np as npK
+from mvpa2.kernels.base import PrecomputedKernel, CachedKernel
 try:
-    import mvpa.kernels.sg as sgK
+    import mvpa2.kernels.sg as sgK
     _has_sg = True
 except RuntimeError:
     _has_sg = False
@@ -31,7 +31,7 @@ class KernelTests(unittest.TestCase):
     """Test bloody kernels
     """
 
-    # mvpa.kernel stuff
+    # mvpa2.kernel stuff
     
     def kernel_equiv(self, k1, k2, accuracy=None, relative_precision=0.6):
         """Test how accurately two kernels agree
@@ -257,7 +257,7 @@ class KernelTests(unittest.TestCase):
             self.failUnless(np.all(poly.as_np()._k == custom.as_np()._k),
                             'CustomSGKernel does not agree with Poly')
 
-    # Older kernel stuff (ie not mvpa.kernel) - perhaps refactor?
+    # Older kernel stuff (ie not mvpa2.kernel) - perhaps refactor?
     def test_euclid_dist(self):
         """Euclidean distance kernel testing"""
 

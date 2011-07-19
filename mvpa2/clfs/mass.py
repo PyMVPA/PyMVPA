@@ -9,17 +9,17 @@
 """Generic wrappers for learners (classifiers) provided by R's MASS
 
 Highly experimental and ad-hoc -- primary use was to verify LDA/QDA
-results, thus not included in the mvpa.suite ATM.
+results, thus not included in the mvpa2.suite ATM.
 """
 
 __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base import warning, externals
-from mvpa.base.state import ConditionalAttribute
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
-from mvpa.base.learner import FailedToTrainError, FailedToPredictError
+from mvpa2.base import warning, externals
+from mvpa2.base.state import ConditionalAttribute
+from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa2.base.learner import FailedToTrainError, FailedToPredictError
 
 
 # do conditional to be able to build module reference
@@ -29,7 +29,7 @@ if externals.exists('mass', raise_=True):
     RRuntimeError = rpy2.robjects.rinterface.RRuntimeError
     r = rpy2.robjects.r
     r.library('MASS')
-    from mvpa.support.rpy2_addons import Rrx, Rrx2
+    from mvpa2.support.rpy2_addons import Rrx, Rrx2
 
 
 class MASSLearnerAdapter(Classifier):
@@ -41,7 +41,7 @@ class MASSLearnerAdapter(Classifier):
     Examples
     --------
     >>> if externals.exists('mass'):
-    ...    from mvpa.testing.datasets import datasets
+    ...    from mvpa2.testing.datasets import datasets
     ...    mass_qda = MASSLearnerAdapter('qda', tags=['non-linear', 'multiclass'], enable_ca=['posterior'])
     ...    mass_qda.train(datasets['uni2large'])
     ...    mass_qda.predict(datasets['uni2large']) # doctest: +SKIP

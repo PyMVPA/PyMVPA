@@ -18,7 +18,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 from numpy import trapz
 
-from mvpa.base import externals
+from mvpa2.base import externals
 
 # Various helper functions
 ##REF: Name was automagically refactored
@@ -166,7 +166,7 @@ else:
         """Computes p-value of correlation between the target and the predicted
         values.
         """
-        from mvpa.base import warning
+        from mvpa2.base import warning
         warning("p-value for correlation is implemented only when scipy is "
                 "available. Bogus value -1.0 is returned otherwise")
         return -1.0

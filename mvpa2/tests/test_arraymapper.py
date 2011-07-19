@@ -9,10 +9,10 @@
 """Unit tests for PyMVPA dense array mapper"""
 
 
-from mvpa.mappers.flatten import mask_mapper
-from mvpa.featsel.base import StaticFeatureSelection
+from mvpa2.mappers.flatten import mask_mapper
+from mvpa2.featsel.base import StaticFeatureSelection
 
-from mvpa.testing.tools import assert_raises, assert_equal, assert_array_equal
+from mvpa2.testing.tools import assert_raises, assert_equal, assert_array_equal
 
 import numpy as np
 

@@ -8,8 +8,8 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Tests for the dataset implementation'''
 
-from mvpa.testing import *
-from mvpa.testing.datasets import datasets
+from mvpa2.testing import *
+from mvpa2.testing.datasets import datasets
 
 import numpy as np
 import shutil
@@ -17,15 +17,15 @@ import tempfile
 import os
 
 
-from mvpa.base import cfg
-from mvpa.base.externals import versions
-from mvpa.base.types import is_datasetlike
-from mvpa.base.dataset import DatasetError, vstack, hstack
-from mvpa.datasets.base import dataset_wizard, Dataset, HollowSamples
-from mvpa.misc.data_generators import normal_feature_dataset
-from mvpa.testing import reseed_rng
-import mvpa.support.copy as copy
-from mvpa.base.collections import \
+from mvpa2.base import cfg
+from mvpa2.base.externals import versions
+from mvpa2.base.types import is_datasetlike
+from mvpa2.base.dataset import DatasetError, vstack, hstack
+from mvpa2.datasets.base import dataset_wizard, Dataset, HollowSamples
+from mvpa2.misc.data_generators import normal_feature_dataset
+from mvpa2.testing import reseed_rng
+import mvpa2.support.copy as copy
+from mvpa2.base.collections import \
      SampleAttributesCollection, FeatureAttributesCollection, \
      DatasetAttributesCollection, ArrayCollectable, SampleAttribute, \
      Collectable

@@ -34,7 +34,7 @@ preprocessing, and estimate ANOVA scores. This has already been described
 elsewhere, hence we only provide the code here for the sake of completeness.
 """
 
-from mvpa.suite import *
+from mvpa2.suite import *
 
 # load PyMVPA example dataset
 datapath = os.path.join(pymvpa_datadbroot,

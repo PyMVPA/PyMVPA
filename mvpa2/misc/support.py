@@ -17,12 +17,12 @@ import re, os
 from distutils.version import Version
 from types import StringType, TupleType, ListType
 
-from mvpa.base import warning
-from mvpa.support.copy import copy, deepcopy
+from mvpa2.base import warning
+from mvpa2.support.copy import copy, deepcopy
 from operator import isSequenceType
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 ##REF: Name was automagically refactored

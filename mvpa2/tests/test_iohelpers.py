@@ -13,13 +13,13 @@ import unittest
 from tempfile import mkstemp
 import numpy as np
 
-from mvpa.testing.tools import ok_
+from mvpa2.testing.tools import ok_
 
 from mvpa import pymvpa_dataroot
-from mvpa.datasets.eventrelated import find_events
-from mvpa.misc.io import *
-from mvpa.misc.fsl import *
-from mvpa.misc.bv import BrainVoyagerRTC
+from mvpa2.datasets.eventrelated import find_events
+from mvpa2.misc.io import *
+from mvpa2.misc.fsl import *
+from mvpa2.misc.bv import BrainVoyagerRTC
 
 
 class IOHelperTests(unittest.TestCase):

@@ -10,15 +10,15 @@
 
 import numpy as np
 
-from mvpa.testing import *
-from mvpa.testing.datasets import *
+from mvpa2.testing import *
+from mvpa2.testing.datasets import *
 
 skip_if_no_external('elasticnet')
 
 from mvpa import cfg
-from mvpa.clfs.enet import ENET
+from mvpa2.clfs.enet import ENET
 from scipy.stats import pearsonr
-from mvpa.misc.data_generators import normal_feature_dataset
+from mvpa2.misc.data_generators import normal_feature_dataset
 
 class ENETTests(unittest.TestCase):
 

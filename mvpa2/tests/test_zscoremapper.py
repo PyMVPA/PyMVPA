@@ -9,17 +9,17 @@
 """Unit tests for PyMVPA ZScore mapper"""
 
 
-from mvpa.base import externals
+from mvpa2.base import externals
 
-from mvpa.support.copy import deepcopy
+from mvpa2.support.copy import deepcopy
 import numpy as np
 
-from mvpa.datasets.base import dataset_wizard
-from mvpa.mappers.zscore import ZScoreMapper, zscore
-from mvpa.testing.tools import assert_array_almost_equal, assert_array_equal, \
+from mvpa2.datasets.base import dataset_wizard
+from mvpa2.mappers.zscore import ZScoreMapper, zscore
+from mvpa2.testing.tools import assert_array_almost_equal, assert_array_equal, \
         assert_equal, assert_raises, ok_, nodebug
 
-from mvpa.testing.datasets import datasets
+from mvpa2.testing.datasets import datasets
 
 def test_mapper_vs_zscore():
     """Test by comparing to results of elderly z-score function

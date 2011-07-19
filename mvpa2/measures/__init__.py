@@ -26,8 +26,8 @@ Also many classifiers natively provide sensitivity estimators via the call to
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.measures')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.measures')
 
 if __debug__:
-    debug('INIT', 'mvpa.measures end')
+    debug('INIT', 'mvpa2.measures end')

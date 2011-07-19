@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Import helper for PyMVPA support modules
 
-mvpa.support is destined to contain temporary "fixes" to external modules
+mvpa2.support is destined to contain temporary "fixes" to external modules
 (Python, scipy), which are known to be fixed in the recent releases but are not
 present in comodity distributions.
 
@@ -17,7 +17,7 @@ Example could be copy module."""
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.support start')
-    debug('INIT', 'mvpa.support end')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.support start')
+    debug('INIT', 'mvpa2.support end')
 

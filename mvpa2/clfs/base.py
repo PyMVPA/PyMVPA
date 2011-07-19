@@ -13,26 +13,26 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.support.copy import deepcopy
+from mvpa2.support.copy import deepcopy
 
 import time
 
-from mvpa.base.types import is_datasetlike, accepts_dataset_as_samples
-from mvpa.measures.base import Measure
-from mvpa.base.learner import Learner, FailedToPredictError
-from mvpa.datasets.base import Dataset
-from mvpa.misc.support import idhash
-from mvpa.base.state import ConditionalAttribute
-from mvpa.base.param import Parameter
-from mvpa.misc.attrmap import AttributeMap
-from mvpa.base.dochelpers import _str
+from mvpa2.base.types import is_datasetlike, accepts_dataset_as_samples
+from mvpa2.measures.base import Measure
+from mvpa2.base.learner import Learner, FailedToPredictError
+from mvpa2.datasets.base import Dataset
+from mvpa2.misc.support import idhash
+from mvpa2.base.state import ConditionalAttribute
+from mvpa2.base.param import Parameter
+from mvpa2.misc.attrmap import AttributeMap
+from mvpa2.base.dochelpers import _str
 
-from mvpa.clfs.transerror import ConfusionMatrix, RegressionStatistics
+from mvpa2.clfs.transerror import ConfusionMatrix, RegressionStatistics
 
-from mvpa.base import warning
+from mvpa2.base import warning
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 __all__ = [ 'Classifier',
             'accepts_dataset_as_samples', 'accepts_samples_as_dataset']
@@ -101,7 +101,7 @@ class Classifier(Learner):
     # Additionally Michael thinks ATM that additional information might be
     # necessary in some situations (e.g. reasonably predefined parameter range,
     # minimal iteration stepsize, ...), therefore the value to each key should
-    # also be a dict or we should use mvpa.base.param.Parameter'...
+    # also be a dict or we should use mvpa2.base.param.Parameter'...
 
     trained_targets = ConditionalAttribute(enabled=True,
         doc="Set of unique targets it has been trained on")

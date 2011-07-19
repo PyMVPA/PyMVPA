@@ -12,9 +12,9 @@ import os
 import numpy as np
 
 # later replace with
-from mvpa.suite import *
+from mvpa2.suite import *
 
-tutorial_data_path = mvpa.cfg.get('location', 'tutorial data', default=os.path.curdir)
+tutorial_data_path = mvpa2.cfg.get('location', 'tutorial data', default=os.path.curdir)
 
 def get_raw_haxby2001_data(path=os.path.join(tutorial_data_path, 'data'),
                            roi='vt'):

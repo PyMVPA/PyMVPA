@@ -17,9 +17,9 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import mdp
 
-from mvpa.base.dataset import DatasetAttributeExtractor
-from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
-from mvpa.misc.support import is_in_volume
+from mvpa2.base.dataset import DatasetAttributeExtractor
+from mvpa2.mappers.base import Mapper, accepts_dataset_as_samples
+from mvpa2.misc.support import is_in_volume
 
 
 class MDPNodeMapper(Mapper):
@@ -228,8 +228,8 @@ class MDPFlowMapper(Mapper):
     Examples
     --------
     >>> import mdp
-    >>> from mvpa.mappers.mdp_adaptor import MDPFlowMapper
-    >>> from mvpa.base.dataset import DAE
+    >>> from mvpa2.mappers.mdp_adaptor import MDPFlowMapper
+    >>> from mvpa2.base.dataset import DAE
     >>> flow = (mdp.nodes.PCANode() + mdp.nodes.IdentityNode() +
     ...         mdp.nodes.FDANode())
     >>> mapper = MDPFlowMapper(flow,

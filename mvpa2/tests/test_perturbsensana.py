@@ -9,13 +9,13 @@
 """Unit tests for PyMVPA perturbation sensitivity analyzer."""
 
 import numpy as np
-from mvpa.testing import *
-from mvpa.testing.clfs import *
+from mvpa2.testing import *
+from mvpa2.testing.clfs import *
 
-from mvpa.datasets.base import Dataset
-from mvpa.measures.noiseperturbation import NoisePerturbationSensitivity
-from mvpa.generators.partition import NFoldPartitioner
-from mvpa.measures.base import CrossValidation
+from mvpa2.datasets.base import Dataset
+from mvpa2.measures.noiseperturbation import NoisePerturbationSensitivity
+from mvpa2.generators.partition import NFoldPartitioner
+from mvpa2.measures.base import CrossValidation
 
 
 class PerturbationSensitivityAnalyzerTests(unittest.TestCase):

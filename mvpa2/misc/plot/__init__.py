@@ -6,16 +6,16 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Import helper for miscellaneous PyMVPA plotting functions (mvpa.misc.plot)"""
+"""Import helper for miscellaneous PyMVPA plotting functions (mvpa2.misc.plot)"""
 
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.misc.plot start')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.misc.plot start')
 
-from mvpa.misc.plot.base import *
+from mvpa2.misc.plot.base import *
 
 if __debug__:
-    debug('INIT', 'mvpa.misc.plot end')
+    debug('INIT', 'mvpa2.misc.plot end')
 

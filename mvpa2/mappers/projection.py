@@ -11,12 +11,12 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base.dochelpers import enhanced_doc_string
-from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
+from mvpa2.base.dochelpers import enhanced_doc_string
+from mvpa2.mappers.base import Mapper, accepts_dataset_as_samples
 
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class ProjectionMapper(Mapper):

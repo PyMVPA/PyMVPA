@@ -12,10 +12,10 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base.node import Node
-from mvpa.mappers.base import Mapper, accepts_dataset_as_samples
-from mvpa.base.dochelpers import _str, _repr_attrs
-from mvpa.generators.splitters import mask2slice
+from mvpa2.base.node import Node
+from mvpa2.mappers.base import Mapper, accepts_dataset_as_samples
+from mvpa2.base.dochelpers import _str, _repr_attrs
+from mvpa2.generators.splitters import mask2slice
 
 
 class SliceMapper(Mapper):

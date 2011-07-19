@@ -11,10 +11,10 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.base import externals, warning, cfg
+from mvpa2.base import externals, warning, cfg
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 if externals.exists('scipy', raise_=True):
     import scipy

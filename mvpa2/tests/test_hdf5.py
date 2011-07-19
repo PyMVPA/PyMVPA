@@ -10,8 +10,8 @@
 
 import numpy as np
 
-from mvpa.testing import *
-from mvpa.testing.datasets import datasets, saveload_warehouse
+from mvpa2.testing import *
+from mvpa2.testing.datasets import datasets, saveload_warehouse
 
 skip_if_no_external('h5py')
 import h5py
@@ -19,10 +19,10 @@ import h5py
 import os
 import tempfile
 
-from mvpa.base.dataset import AttrDataset, save
-from mvpa.base.hdf5 import h5save, h5load, obj2hdf, HDF5ConversionError
-from mvpa.misc.data_generators import load_example_fmri_dataset
-from mvpa.mappers.fx import mean_sample
+from mvpa2.base.dataset import AttrDataset, save
+from mvpa2.base.hdf5 import h5save, h5load, obj2hdf, HDF5ConversionError
+from mvpa2.misc.data_generators import load_example_fmri_dataset
+from mvpa2.mappers.fx import mean_sample
 
 class HDFDemo(object):
     pass

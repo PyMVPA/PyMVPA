@@ -27,12 +27,12 @@ cross-validation while selecting the best performing classifier from
 the warehouse of available within PyMVPA.
 """
 
-from mvpa.suite import *
+from mvpa2.suite import *
 # increase verbosity a bit for now
 verbose.level = 3
 # pre-seed RNG if you want to investigate the effects, thus
 # needing reproducible results
-#mvpa.seed(3)
+#mvpa2.seed(3)
 
 """
 For this simple example lets generate some fresh random data with 2

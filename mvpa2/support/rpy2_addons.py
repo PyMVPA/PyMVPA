@@ -11,10 +11,10 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.base.externals import exists, versions
+from mvpa2.base.externals import exists, versions
 
 #if __debug__:
-#    from mvpa.base import debug
+#    from mvpa2.base import debug
 
 __all__ = []
 

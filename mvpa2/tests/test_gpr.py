@@ -8,18 +8,18 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA GPR."""
 
-from mvpa.base import externals
-from mvpa.misc import data_generators
-from mvpa.misc.attrmap import AttributeMap
-from mvpa.kernels.np import GeneralizedLinearKernel
-from mvpa.clfs.gpr import GPR
+from mvpa2.base import externals
+from mvpa2.misc import data_generators
+from mvpa2.misc.attrmap import AttributeMap
+from mvpa2.kernels.np import GeneralizedLinearKernel
+from mvpa2.clfs.gpr import GPR
 
-from mvpa.testing import *
-from mvpa.testing.datasets import datasets
-from mvpa.testing.tools import assert_array_equal, assert_array_almost_equal
+from mvpa2.testing import *
+from mvpa2.testing.datasets import datasets
+from mvpa2.testing.tools import assert_array_equal, assert_array_almost_equal
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class GPRTests(unittest.TestCase):

@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA dochelpers"""
 
-from mvpa.base.dochelpers import single_or_plural, borrowdoc, borrowkwargs
+from mvpa2.base.dochelpers import single_or_plural, borrowdoc, borrowkwargs
 
 import unittest
 
@@ -128,7 +128,7 @@ class DochelpersTests(unittest.TestCase):
 
     def test_searchlight_doc(self):
         # Searchlight __doc__ revealed issue of multiple enable_ca
-        from mvpa.measures.searchlight import Searchlight
+        from mvpa2.measures.searchlight import Searchlight
         sldoc = Searchlight.__init__.__doc__
         self.failUnlessEqual(sldoc.count('enable_ca'), 1)
         self.failUnlessEqual(sldoc.count('disable_ca'), 1)

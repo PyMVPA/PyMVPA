@@ -40,7 +40,7 @@ and custom ndarray subclasses. All of these examples should work with a
 dataset. It should be noted that the samples container is stored *as-is* in the
 dataset (unless it was a list that got converted into an array):
 
-  >>> from mvpa.suite import *
+  >>> from mvpa2.suite import *
   >>> import scipy.sparse as sparse
   >>> mat = sparse.csc_matrix((10000, 20000))
   >>> sparse_ds = Dataset(mat)
@@ -57,12 +57,12 @@ dataset (unless it was a list that got converted into an array):
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.datasets')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.datasets')
 
 # nothing in here that works without the base class
-from mvpa.datasets.base import Dataset, dataset_wizard
-from mvpa.base.dataset import hstack, vstack
+from mvpa2.datasets.base import Dataset, dataset_wizard
+from mvpa2.base.dataset import hstack, vstack
 
 if __debug__:
-    debug('INIT', 'mvpa.datasets end')
+    debug('INIT', 'mvpa2.datasets end')

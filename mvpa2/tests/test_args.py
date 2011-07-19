@@ -9,10 +9,10 @@
 """Unit tests for PyMVPA args helpers"""
 
 import unittest
-from mvpa.misc.args import *
+from mvpa2.misc.args import *
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 class ArgsHelpersTest(unittest.TestCase):
 

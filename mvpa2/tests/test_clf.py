@@ -10,33 +10,33 @@
 
 import numpy as np
 
-from mvpa.testing import *
-from mvpa.testing import _ENFORCE_CA_ENABLED
+from mvpa2.testing import *
+from mvpa2.testing import _ENFORCE_CA_ENABLED
 
-from mvpa.testing.datasets import *
-from mvpa.testing.clfs import *
+from mvpa2.testing.datasets import *
+from mvpa2.testing.clfs import *
 
-from mvpa.support.copy import deepcopy
-from mvpa.base import externals
+from mvpa2.support.copy import deepcopy
+from mvpa2.base import externals
 
-from mvpa.datasets.base import dataset_wizard
-from mvpa.generators.partition import NFoldPartitioner, OddEvenPartitioner
-from mvpa.generators.permutation import AttributePermutator
-from mvpa.generators.splitters import Splitter
+from mvpa2.datasets.base import dataset_wizard
+from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
+from mvpa2.generators.permutation import AttributePermutator
+from mvpa2.generators.splitters import Splitter
 
-from mvpa.misc.exceptions import UnknownStateError
-from mvpa.misc.errorfx import mean_mismatch_error
+from mvpa2.misc.exceptions import UnknownStateError
+from mvpa2.misc.errorfx import mean_mismatch_error
 
-from mvpa.base.learner import DegenerateInputError, FailedToTrainError, \
+from mvpa2.base.learner import DegenerateInputError, FailedToTrainError, \
         FailedToPredictError
-from mvpa.clfs.meta import CombinedClassifier, \
+from mvpa2.clfs.meta import CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      SplitClassifier, MappedClassifier, FeatureSelectionClassifier, \
      TreeClassifier, RegressionAsClassifier, MaximalVote
-from mvpa.measures.base import TransferMeasure, ProxyMeasure, CrossValidation
-from mvpa.mappers.flatten import mask_mapper
-from mvpa.misc.attrmap import AttributeMap
-from mvpa.mappers.fx import mean_sample, BinaryFxNode
+from mvpa2.measures.base import TransferMeasure, ProxyMeasure, CrossValidation
+from mvpa2.mappers.flatten import mask_mapper
+from mvpa2.misc.attrmap import AttributeMap
+from mvpa2.mappers.fx import mean_sample, BinaryFxNode
 
 
 # What exceptions to allow while testing degenerate cases.
@@ -462,9 +462,9 @@ class ClassifiersTests(unittest.TestCase):
 
 
     def test_feature_selection_classifier(self):
-        from mvpa.featsel.base import \
+        from mvpa2.featsel.base import \
              SensitivityBasedFeatureSelection
-        from mvpa.featsel.helpers import \
+        from mvpa2.featsel.helpers import \
              FixedNElementTailSelector
 
         # should give lowest weight to the feature with lowest index
@@ -513,9 +513,9 @@ class ClassifiersTests(unittest.TestCase):
         self.failUnlessEqual(clf011.predict(testdata3.samples), res110)
 
     def test_feature_selection_classifier_with_regression(self):
-        from mvpa.featsel.base import \
+        from mvpa2.featsel.base import \
              SensitivityBasedFeatureSelection
-        from mvpa.featsel.helpers import \
+        from mvpa2.featsel.helpers import \
              FixedNElementTailSelector
         if sample_clf_reg is None:
             # none regression was found, so nothing to test

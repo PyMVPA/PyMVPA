@@ -11,23 +11,23 @@
 import numpy as np
 from time import time
 
-from mvpa.testing import *
-from mvpa.testing.datasets import datasets
+from mvpa2.testing import *
+from mvpa2.testing.datasets import datasets
 skip_if_no_external('shogun')
 
-from mvpa.kernels.base import CachedKernel
-from mvpa.kernels.sg import RbfSGKernel, LinearSGKernel
+from mvpa2.kernels.base import CachedKernel
+from mvpa2.kernels.sg import RbfSGKernel, LinearSGKernel
 
-from mvpa.misc.data_generators import normal_feature_dataset
+from mvpa2.misc.data_generators import normal_feature_dataset
 
-from mvpa.clfs.libsvmc import SVM as lsSVM
-from mvpa.clfs.sg import SVM as sgSVM
+from mvpa2.clfs.libsvmc import SVM as lsSVM
+from mvpa2.clfs.sg import SVM as sgSVM
 
-from mvpa.generators.splitters import Splitter
-from mvpa.generators.partition import NFoldPartitioner
-from mvpa.measures.base import CrossValidation, TransferMeasure, ProxyMeasure
-from mvpa.mappers.fx import BinaryFxNode
-from mvpa.misc.errorfx import mean_mismatch_error
+from mvpa2.generators.splitters import Splitter
+from mvpa2.generators.partition import NFoldPartitioner
+from mvpa2.measures.base import CrossValidation, TransferMeasure, ProxyMeasure
+from mvpa2.mappers.fx import BinaryFxNode
+from mvpa2.misc.errorfx import mean_mismatch_error
 
 
 class SVMKernelTests(unittest.TestCase):
@@ -144,7 +144,7 @@ class SVMKernelTests(unittest.TestCase):
         ok_('origids' in ds.sa)
         ds2 = ds.copy(deep=True)
         ds2.samples = np.zeros(ds2.shape)
-        from mvpa.base.dataset import vstack
+        from mvpa2.base.dataset import vstack
         ds_vstacked = vstack((ds2, ds))
         # should complaint now since there would not be unique
         # samples' origids

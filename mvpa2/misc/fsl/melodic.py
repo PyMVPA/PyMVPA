@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import os
 import numpy as np
 
-from mvpa.base import externals
+from mvpa2.base import externals
 if externals.exists('nibabel', raise_=True):
     import nibabel as nb
 

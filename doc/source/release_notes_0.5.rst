@@ -57,7 +57,7 @@ Critical API Changes
 * ``perchunk=bool`` (in zscore/detrend) got refactored into ``chunks_attr=None
   or string`` to specify on which sample attribute to operate.
 
-* internally and as provided by mvpa.suite, `numpy` is imported as `np`, and
+* internally and as provided by mvpa2.suite, `numpy` is imported as `np`, and
   `pylab` is imported as `pl`
 
 General Changes

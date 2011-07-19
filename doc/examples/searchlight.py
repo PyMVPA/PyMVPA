@@ -25,7 +25,7 @@ at how this type of analysis can be conducted in PyMVPA.
 As always, we first have to import PyMVPA.
 """
 
-from mvpa.suite import *
+from mvpa2.suite import *
 
 """As searchlight analyses are usually quite expensive in term of computational
 resources, we are going to enable some progress output to entertain us while
@@ -38,7 +38,7 @@ if __debug__:
 """The next few calls load an fMRI dataset, while assigning associated class
 targets and chunks (experiment runs) to each volume in the 4D timeseries.  One
 aspect is worth mentioning. When loading the fMRI data with
-:func:`~mvpa.datasets.mri.fmri_dataset()` additional feature attributes can be
+:func:`~mvpa2.datasets.mri.fmri_dataset()` additional feature attributes can be
 added, by providing a dictionary with names and source pairs to the `add_fa`
 arguments. In this case we are loading a thresholded zstat-map of a category
 selectivity contrast for voxels ventral temporal cortex."""
@@ -113,10 +113,10 @@ center_ids = dataset.fa.vt_thr_glm.nonzero()[0]
 
 """Finally, we can run the searchlight. We'll perform the analysis for three
 different radii, each time computing an error for each sphere. To achieve this,
-we simply use the :func:`~mvpa.measures.searchlight.sphere_searchlight` class,
+we simply use the :func:`~mvpa2.measures.searchlight.sphere_searchlight` class,
 which takes any :term:`processing object` and a radius as arguments. The
 :term:`processing object` has to compute the intended measure, when called with
-a dataset. The :func:`~mvpa.measures.searchlight.sphere_searchlight` object
+a dataset. The :func:`~mvpa2.measures.searchlight.sphere_searchlight` object
 will do nothing more than generate small datasets for each sphere, feeding them
 to the processing object, and storing the result."""
 
@@ -140,7 +140,7 @@ for radius in [0, 1, 3]:
     radius, and our selection of sphere center coordinates. Moreover, via the
     `space` argument we can instruct the searchlight which feature attribute
     shall be used to determine the voxel neighborhood. By default,
-    :func:`~mvpa.datasets.mri.fmri_dataset()` creates a corresponding attribute
+    :func:`~mvpa2.datasets.mri.fmri_dataset()` creates a corresponding attribute
     called `voxel_indices`.  Using the `mapper` argument it is possible to
     post-process the results computed for each sphere. Cross-validation will
     compute an error value per each fold, but here we are only interested in

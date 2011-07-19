@@ -11,7 +11,7 @@
 Module Organization
 ===================
 
-mvpa.base module contains various modules which are used through out
+mvpa2.base module contains various modules which are used through out
 PyMVPA code, and are generic building blocks
 
 :group Basic: externals, config, verbosity, dochelpers
@@ -21,8 +21,8 @@ __docformat__ = 'restructuredtext'
 
 
 import sys, os
-from mvpa.base.config import ConfigManager
-from mvpa.base.verbosity import LevelLogger, OnceLogger
+from mvpa2.base.config import ConfigManager
+from mvpa2.base.verbosity import LevelLogger, OnceLogger
 
 #
 # Setup verbose and debug outputs
@@ -173,7 +173,7 @@ warning = WarningLog(
 
 
 if __debug__:
-    from mvpa.base.verbosity import DebugLogger
+    from mvpa2.base.verbosity import DebugLogger
     # NOTE: all calls to debug must be preconditioned with
     # if __debug__:
 
@@ -294,8 +294,8 @@ if __debug__:
 
     debug.register('GPR',     "GPR")
     debug.register('GPR_WEIGHTS', "Track progress of GPRWeights computation")
-    debug.register('KRN',     "Kernels module (mvpa.kernels)")
-    debug.register('KRN_SG',  "Shogun kernels module (mvpa.kernels.sg)")
+    debug.register('KRN',     "Kernels module (mvpa2.kernels)")
+    debug.register('KRN_SG',  "Shogun kernels module (mvpa2.kernels.sg)")
     debug.register('SAL',     "Samples lookup (for cached kernels)")
     debug.register('MOD_SEL', "Model Selector (also makes openopt's iprint=0)")
     debug.register('OPENOPT', "OpenOpt toolbox verbose (iprint=1)")
@@ -376,4 +376,4 @@ if __debug__:
 
 
 if __debug__:
-    debug('INIT', 'mvpa.base end')
+    debug('INIT', 'mvpa2.base end')

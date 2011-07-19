@@ -13,14 +13,14 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import copy
 
-from mvpa.base import externals, cfg
-from mvpa.base.collections import SampleAttributesCollection, \
+from mvpa2.base import externals, cfg
+from mvpa2.base.collections import SampleAttributesCollection, \
         FeatureAttributesCollection, DatasetAttributesCollection
-from mvpa.base.types import is_datasetlike
-from mvpa.base.dochelpers import _str
+from mvpa2.base.types import is_datasetlike
+from mvpa2.base.dochelpers import _str
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 __REPR_STYLE__ = cfg.get('datasets', 'repr', 'full')
 
@@ -70,7 +70,7 @@ class AttrDataset(object):
     The simplest way to create a dataset is from a 2D array.
 
     >>> import numpy as np
-    >>> from mvpa.datasets import *
+    >>> from mvpa2.datasets import *
     >>> samples = np.arange(12).reshape((4,3))
     >>> ds = AttrDataset(samples)
     >>> ds.nsamples
@@ -574,7 +574,7 @@ class AttrDataset(object):
                 "Missing 'h5py' package -- saving is not possible.")
 
         import h5py
-        from mvpa.base.hdf5 import hdf2obj
+        from mvpa2.base.hdf5 import hdf2obj
 
         # look if we got an hdf file instance already
         if isinstance(source, h5py.highlevel.File):
@@ -824,7 +824,7 @@ def save(dataset, destination, name=None, compression=None):
         raise RuntimeError("Missing 'h5py' package -- saving is not possible.")
 
     import h5py
-    from mvpa.base.hdf5 import obj2hdf
+    from mvpa2.base.hdf5 import obj2hdf
 
     # look if we got an hdf file instance already
     if isinstance(destination, h5py.highlevel.File):

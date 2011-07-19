@@ -9,23 +9,23 @@
 '''Tests for storage of classifiers in HDF5'''
 
 
-from mvpa.testing import *
+from mvpa2.testing import *
 skip_if_no_external('h5py')
 skip_if_no_external('scipy')
 
 import numpy as np
-from mvpa.testing.datasets import datasets
-from mvpa.clfs.base import Classifier
-from mvpa.generators.splitters import Splitter
-from mvpa.measures.base import TransferMeasure
-from mvpa.misc.errorfx import corr_error, mean_mismatch_error
-from mvpa.mappers.fx import BinaryFxNode
+from mvpa2.testing.datasets import datasets
+from mvpa2.clfs.base import Classifier
+from mvpa2.generators.splitters import Splitter
+from mvpa2.measures.base import TransferMeasure
+from mvpa2.misc.errorfx import corr_error, mean_mismatch_error
+from mvpa2.mappers.fx import BinaryFxNode
 
-from mvpa.clfs.warehouse import clfswh, regrswh
+from mvpa2.clfs.warehouse import clfswh, regrswh
 
 import tempfile
 
-from mvpa.base.hdf5 import h5save, h5load, obj2hdf
+from mvpa2.base.hdf5 import h5save, h5load, obj2hdf
 
 
 @sweepargs(lrn=clfswh[:] + regrswh[:])

@@ -15,7 +15,7 @@
 Feature Selection
 *****************
 
-.. automodule:: mvpa.measures
+.. automodule:: mvpa2.measures
 
 
 .. only:: html
@@ -45,24 +45,24 @@ algorithmic fashion.
 .. index:: FeatureSelectionClassifier
 
 PyMVPA's flexible framework allows various feature selection methods to take
-place within a small block of code.  :class:`~mvpa.clfs.meta.FeatureSelectionClassifier` extends the
+place within a small block of code.  :class:`~mvpa2.clfs.meta.FeatureSelectionClassifier` extends the
 basic classifier framework to allow for the use of arbitrary methods of feature
 selection according to whatever ranking metric, feature selection criteria, and
 stopping criterion the user chooses for a given application.  Examples of the
 code/classification algorithms presented here can be found in
-`mvpa/clfs/warehouse.py`_.
+`mvpa2/clfs/warehouse.py`_.
 
-More formally, a :class:`~mvpa.clfs.meta.FeatureSelectionClassifier` is a meta-classifier.  That is, it
+More formally, a :class:`~mvpa2.clfs.meta.FeatureSelectionClassifier` is a meta-classifier.  That is, it
 is not a classifier itself -- it can take any *slave*
-:class:`~mvpa.clfs.base.Classifier` and a
-:class:`mvpa.featsel.base.FeatureSelection`.  When trained on a dataset, it first performs the
+:class:`~mvpa2.clfs.base.Classifier` and a
+:class:`mvpa2.featsel.base.FeatureSelection`.  When trained on a dataset, it first performs the
 `feature_selection`, and then trains the
 provided *slave* `clf` on those selected features.  Externally, however, it looks
-like a :class:`~mvpa.clfs.base.Classifier`, in that it fulfills the specialization of the Classifier
+like a :class:`~mvpa2.clfs.base.Classifier`, in that it fulfills the specialization of the Classifier
 base class.  The following are the relevant arguments to the constructor of
-such a :class:`~mvpa.clfs.base.Classifier`:
+such a :class:`~mvpa2.clfs.base.Classifier`:
 
-`clf`: :class:`~mvpa.clfs.base.Classifier`
+`clf`: :class:`~mvpa2.clfs.base.Classifier`
   classifier based on which mask classifiers is created
 
 `feature_selection`: FeatureSelection_
@@ -78,9 +78,9 @@ them.  It is crucial to note that, in PyMVPA, the way in which features are
 selected (in this example by keeping only 5% of them) is wholly independent of
 the way features are ranked (in this example, by using a one-way ANOVA).
 Feature selection using this method could be accomplished using the following
-code (from `mvpa/clfs/warehouse.py`_):
+code (from `mvpa2/clfs/warehouse.py`_):
 
-  >>> from mvpa.suite import *
+  >>> from mvpa2.suite import *
   >>> FeatureSelection = SensitivityBasedFeatureSelection(
   ...     OneWayAnova(),
   ...     FractionTailSelector(0.05, mode='select', tail='upper'))
@@ -192,20 +192,20 @@ perform such an analysis:
   ...   descr='LinSVM+RFE(splits_avg)' )
 
 
-The code above introduces the :class:`~mvpa.clfs.meta.SplitClassifier`, which in this case is yet
-another *meta-classifier* that takes in a :class:`~mvpa.clfs.base.Classifier` (in this case a
-LinearCSVMC_) and an arbitrary :class:`~mvpa.generators.partition.Partitioner` object, so that the dataset can be
+The code above introduces the :class:`~mvpa2.clfs.meta.SplitClassifier`, which in this case is yet
+another *meta-classifier* that takes in a :class:`~mvpa2.clfs.base.Classifier` (in this case a
+LinearCSVMC_) and an arbitrary :class:`~mvpa2.generators.partition.Partitioner` object, so that the dataset can be
 partitioned to be split in whatever way the user desires.  Prior to training, the
-:class:`~mvpa.clfs.meta.SplitClassifier` splits the training dataset, dedicates a separate classifier
+:class:`~mvpa2.clfs.meta.SplitClassifier` splits the training dataset, dedicates a separate classifier
 to each split, trains each on the training part of the split, and then computes
-transfer error on the testing part of the split. If a :class:`~mvpa.clfs.meta.SplitClassifier` instance
+transfer error on the testing part of the split. If a :class:`~mvpa2.clfs.meta.SplitClassifier` instance
 is later on asked to *predict* some new data, it uses (by default) the
 MaximalVote_ strategy to derive an answer.  A summary about the performance of
-a :class:`~mvpa.clfs.meta.SplitClassifier` internally on each split of the training dataset is
+a :class:`~mvpa2.clfs.meta.SplitClassifier` internally on each split of the training dataset is
 available by accessing the `confusion` conditional attribute.
 
 To summarize somewhat, RFE_ is just one method of feature selection, so we use a
-:class:`~mvpa.clfs.meta.FeatureSelectionClassifier` to facilitate this.  To parameterize the RFE
+:class:`~mvpa2.clfs.meta.FeatureSelectionClassifier` to facilitate this.  To parameterize the RFE
 process, we refer above to the following:
 
 `fmeasure`
@@ -214,7 +214,7 @@ process, we refer above to the following:
 
 `pmeasure`
   confusion-based error that relies on the confusion matrices computed during
-  splitting of the dataset by the :class:`~mvpa.clfs.meta.SplitClassifier`; this is used to provide a
+  splitting of the dataset by the :class:`~mvpa2.clfs.meta.SplitClassifier`; this is used to provide a
   value that can be compared against a stopping criterion to stop eliminating
   features
 
@@ -239,12 +239,12 @@ analysis scenarios have been presented, along with enough requisite knowledge
 that the user can plug in whatever classifiers, error metrics, or sensitivity
 measures are most appropriate for the task at hand.
 
-.. _RFE: api/mvpa.featsel.rfe.RFE-class.html
+.. _RFE: api/mvpa2.featsel.rfe.RFE-class.html
 
-.. _MaximalVote: api/mvpa.clfs.meta.MaximalVote-class.html
-.. _FeatureSelection: api/mvpa.featsel.base.FeatureSelection-class.html
-.. _LinearCSVMC: api/mvpa.clfs.svm.LinearCSVMC-class.html
-.. _mvpa/clfs/warehouse.py: api/mvpa.clfs.warehouse-pysrc.html
+.. _MaximalVote: api/mvpa2.clfs.meta.MaximalVote-class.html
+.. _FeatureSelection: api/mvpa2.featsel.base.FeatureSelection-class.html
+.. _LinearCSVMC: api/mvpa2.clfs.svm.LinearCSVMC-class.html
+.. _mvpa2/clfs/warehouse.py: api/mvpa2.clfs.warehouse-pysrc.html
 
 
 .. index:: incremental feature search, IFS
@@ -257,7 +257,7 @@ IFS_
 
 (to be written)
 
-.. _IFS: api/mvpa.featsel.ifs.IFS-class.html
+.. _IFS: api/mvpa2.featsel.ifs.IFS-class.html
 
 .. What are the practical differences (besides speed) between RFE and IFS?
 

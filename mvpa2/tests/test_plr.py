@@ -10,9 +10,9 @@
 
 import numpy as np
 
-from mvpa.clfs.plr import PLR
-from mvpa.testing import *
-from mvpa.testing.datasets import datasets
+from mvpa2.clfs.plr import PLR
+from mvpa2.testing import *
+from mvpa2.testing.datasets import datasets
 
 
 class PLRTests(unittest.TestCase):

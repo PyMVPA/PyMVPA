@@ -11,12 +11,12 @@
 import unittest, re
 from StringIO import StringIO
 
-from mvpa.base.verbosity import OnceLogger
+from mvpa2.base.verbosity import OnceLogger
 
-from mvpa.base import verbose, error
+from mvpa2.base import verbose, error
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
     debug.register('1', 'id 1')           # needed for testing
     debug.register('2', 'id 2')
 

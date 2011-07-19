@@ -10,7 +10,7 @@
 
 Module Organization
 ===================
-mvpa.atlases module contains support for various atlases
+mvpa2.atlases module contains support for various atlases
 
 :group Base Implementations: base
 :group Atlases from FSL: fsl
@@ -21,12 +21,12 @@ __docformat__ = 'restructuredtext'
 
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.atlases')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.atlases')
 
-from mvpa.atlases.base import LabelsAtlas, ReferencesAtlas, XMLAtlasException
-from mvpa.atlases.fsl import FSLProbabilisticAtlas
-from mvpa.atlases.warehouse import Atlas, KNOWN_ATLASES, KNOWN_ATLAS_FAMILIES
+from mvpa2.atlases.base import LabelsAtlas, ReferencesAtlas, XMLAtlasException
+from mvpa2.atlases.fsl import FSLProbabilisticAtlas
+from mvpa2.atlases.warehouse import Atlas, KNOWN_ATLASES, KNOWN_ATLAS_FAMILIES
 
 if __debug__:
-    debug('INIT', 'mvpa.atlases end')
+    debug('INIT', 'mvpa2.atlases end')
