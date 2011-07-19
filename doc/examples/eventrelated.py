@@ -19,7 +19,7 @@ analysis of multi-volume samples. It starts as usual by loading PyMVPA and
 the fMRI dataset.
 """
 
-from mvpa.suite import *
+from mvpa2.suite import *
 
 ds = load_datadb_tutorial_data(roi=(36,38,39,40))
 
@@ -109,10 +109,10 @@ for ev in events:
 Now we get to the core of an event-related analysis. We turn our existing
 timeseries datasets into one with samples of timeseries segments.
 
-PyMVPA offers :func:`~mvpa.datasets.eventrelated.eventrelated_dataset()`
+PyMVPA offers :func:`~mvpa2.datasets.eventrelated.eventrelated_dataset()`
 to perform this conversion -- given a list of events and a dataset with
 samples that are sorted by time. If a dataset has information about
-acquisition time :func:`~mvpa.datasets.eventrelated.eventrelated_dataset()`
+acquisition time :func:`~mvpa2.datasets.eventrelated.eventrelated_dataset()`
 can also convert event-definition in real time.
 
 """

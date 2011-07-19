@@ -11,10 +11,10 @@
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.clfs.skl')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.clfs.skl')
 
-from mvpa.clfs.skl.base import SKLLearnerAdapter
+from mvpa2.clfs.skl.base import SKLLearnerAdapter
 
 if __debug__:
-    debug('INIT', 'mvpa.clfs.skl end')
+    debug('INIT', 'mvpa2.clfs.skl end')

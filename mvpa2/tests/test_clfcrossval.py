@@ -8,16 +8,16 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA classifier cross-validation"""
 
-from mvpa.testing.tools import assert_equal, ok_, assert_array_equal
+from mvpa2.testing.tools import assert_equal, ok_, assert_array_equal
 
-from mvpa.base.node import ChainNode
-from mvpa.generators.partition import NFoldPartitioner
-from mvpa.generators.permutation import AttributePermutator
-from mvpa.measures.base import CrossValidation
+from mvpa2.base.node import ChainNode
+from mvpa2.generators.partition import NFoldPartitioner
+from mvpa2.generators.permutation import AttributePermutator
+from mvpa2.measures.base import CrossValidation
 
-from mvpa.testing import *
-from mvpa.testing.datasets import pure_multivariate_signal, get_mv_pattern
-from mvpa.testing.clfs import *
+from mvpa2.testing import *
+from mvpa2.testing.datasets import pure_multivariate_signal, get_mv_pattern
+from mvpa2.testing.clfs import *
 
 class CrossValidationTests(unittest.TestCase):
 

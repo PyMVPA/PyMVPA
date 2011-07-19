@@ -180,9 +180,9 @@ __str__
   if any), not necessarily *eval*\uable.
 
 .. note::
-   Classes derived from :class:`~mvpa.base.state.ClassWithCollections` and
+   Classes derived from :class:`~mvpa2.base.state.ClassWithCollections` and
    using `params` and `ca` collections for their need of parametrization
-   (e.g. :class:`~mvpa.clfs.base.Classifier`) would obtain an acceptable
+   (e.g. :class:`~mvpa2.clfs.base.Classifier`) would obtain an acceptable
    definitions of `__repr__` and `__str__` automagically.
 
 
@@ -190,7 +190,7 @@ Function Arguments
 ------------------
 
 dataset vs data
-  Ones which are supposed to be derived from :class:`~mvpa.datasets.base.Dataset` class should
+  Ones which are supposed to be derived from :class:`~mvpa2.datasets.base.Dataset` class should
   have suffix (or whole name) ``dataset``. In contrast, if argument is
   expected to be simply a NumPy_ array, suffix should be ``data``. For
   example::
@@ -255,16 +255,16 @@ Tests
 We are slowly moving toward utilizing `nose testing framework`_.  It allows to
 carry out not only unit testing, but also verify correctness of the code
 snippets provided in the docstrings and the manual.
-All unit tests are stored in :mod:`mvpa.tests`, and they make use of
-:mod:`mvpa.testing` which provides
+All unit tests are stored in :mod:`mvpa2.tests`, and they make use of
+:mod:`mvpa2.testing` which provides
 
-:mod:`~mvpa.testing.tools`
-  basic tools (imported wiithin :mod:`~mvpa.testing.__init__`)
-:mod:`~mvpa.testing.clfs`
+:mod:`~mvpa2.testing.tools`
+  basic tools (imported wiithin :mod:`~mvpa2.testing.__init__`)
+:mod:`~mvpa2.testing.clfs`
   some additional classifiers to be used in the unittests
-:mod:`~mvpa.testing.datasets`
+:mod:`~mvpa2.testing.datasets`
   pre-crafted datasets *warehouse* to be used in the tests
-:mod:`~mvpa.testing.sweepargs`
+:mod:`~mvpa2.testing.sweepargs`
   defines a custom decorator to allow running the same
   unittest on a range of input values and later on nicely summarize the
   detected failures
@@ -284,9 +284,9 @@ While working on the project we adhere to the following rules:
 
 * Every additional unit test submodule (or a unittest method itself) requiring
   specific external being present should make use of
-  :func:`~mvpa.testing.tools.skip_if_no_external`, e.g.
+  :func:`~mvpa2.testing.tools.skip_if_no_external`, e.g.
 
-    >>> from mvpa.testing import *
+    >>> from mvpa2.testing import *
     >>> skip_if_no_external('numpy')
 
 
@@ -339,7 +339,7 @@ Adding an External Dependency
 
 Introducing new external dependencies should be done in a completely optional
 fashion. This includes both build-dependencies and runtime dependencies.
-With `mvpa.base.externals` PyMVPA provides a simple framework to test the
+With `mvpa2.base.externals` PyMVPA provides a simple framework to test the
 availability of certain external components and publish the results of the
 tests throughout PyMVPA.
 
@@ -351,27 +351,27 @@ Adding a new Dataset type
  * only new subclasses of MappedDataset + new Mappers (all other as
    improvements into the Dataset base class)?
 
-go into `mvpa/datasets/`
+go into `mvpa2/datasets/`
 
 
 Adding a new Classifier
 -----------------------
 
 To add a new classifier implementation it is sufficient to create a new
-sub-class of :class:`~mvpa.clfs.base.Classifier` and add implementations of the following methods:
+sub-class of :class:`~mvpa2.clfs.base.Classifier` and add implementations of the following methods:
 
 `__init__(**kwargs)`
     Additional arguments and keyword arguments may be added, but the base-class
     contructor has to be called with `**kwargs`!
 
 `_train(dataset)`
-    Has to train the classifier when it is called with a :class:`~mvpa.datasets.base.Dataset`. Successive
+    Has to train the classifier when it is called with a :class:`~mvpa2.datasets.base.Dataset`. Successive
     calls to this methods always have to train the classifier on the respective
     datasets. An eventually existing prior training status has to be cleared
     automatically. Nothing is returned.
 
 `_predict(data)`
-    Unlike `_train()` the method is not called with a :class:`~mvpa.datasets.base.Dataset` instance, but
+    Unlike `_train()` the method is not called with a :class:`~mvpa2.datasets.base.Dataset` instance, but
     with any sequence of data samples (e.g. arrays). It has to return a
     sequence of predictions, one for each data sample.
 
@@ -401,17 +401,17 @@ values              Internal classifier values the most recent       Disabled
 ================== ==============================================   =========
 
 If any intended functionality cannot be realized be implementing above methods.
-The :class:`~mvpa.clfs.base.Classifier` class offers some additional methods that might be overridden
+The :class:`~mvpa2.clfs.base.Classifier` class offers some additional methods that might be overridden
 by sub-classes. For all methods described below it is strongly recommended to
 call the base-class methods at the end of the implementation in the sub-class
 to preserve the full functionality.
 
 `_pretrain(dataset)`
-    Called with the :class:`~mvpa.datasets.base.Dataset` instance that shall be trained with, but before
+    Called with the :class:`~mvpa2.datasets.base.Dataset` instance that shall be trained with, but before
     the actual training is performed.
 
 `_posttrain(dataset)`
-    Called with the :class:`~mvpa.datasets.base.Dataset` instance the classifier was trained on, just after
+    Called with the :class:`~mvpa2.datasets.base.Dataset` instance the classifier was trained on, just after
     training was performed.
 
 `_prepredict(data)`
@@ -423,7 +423,7 @@ to preserve the full functionality.
     resulting predictions themselves.
 
 
-Source code files of all classifier implementations go into `mvpa/clfs/`.
+Source code files of all classifier implementations go into `mvpa2/clfs/`.
 
 
 
@@ -436,32 +436,32 @@ Adding a new Measure
 --------------------
 
 There are few possible base-classes for new measures (former sensitivity
-analyzers).  First, :class:`~mvpa.measures.base.Measure` can directly be sub-classed. It is a base
-class for any measure to be computed on a :class:`~mvpa.datasets.base.Dataset`. This is the more generic
+analyzers).  First, :class:`~mvpa2.measures.base.Measure` can directly be sub-classed. It is a base
+class for any measure to be computed on a :class:`~mvpa2.datasets.base.Dataset`. This is the more generic
 approach. In the most of the cases, measures are to be reported per each
-feature, thus :class:`~mvpa.measures.base.FeaturewiseMeasure` should serve as a base class in those
+feature, thus :class:`~mvpa2.measures.base.FeaturewiseMeasure` should serve as a base class in those
 cases. Furthermore, for measures that make use of some classifier and extract
-the sensitivities from it, :class:`~mvpa.measures.base.Sensitivity` (derived from
-:class:`~mvpa.measures.base.FeaturewiseMeasure`) is a more appropriate base-class, as it provides
+the sensitivities from it, :class:`~mvpa2.measures.base.Sensitivity` (derived from
+:class:`~mvpa2.measures.base.FeaturewiseMeasure`) is a more appropriate base-class, as it provides
 some additional useful functionality for this use case (e.g. training a
 classifier if needed).
 
 .. TODO: deprecate transformers etc
 
-All measures (actually all objects based on :class:`~mvpa.measures.base.Measure`)
+All measures (actually all objects based on :class:`~mvpa2.measures.base.Measure`)
 support a `transformer` keyword argument to their constructor. The functor
 passed as its value is called with the to be returned results and its outcome
 is returned as the final results. By default no transformation is performed.
 
-If a :class:`~mvpa.measures.base.Measure` computes a characteristic, were both large positive and
+If a :class:`~mvpa2.measures.base.Measure` computes a characteristic, were both large positive and
 large negative values indicate high relevance, it should nevertheless *not*
 return absolute sensitivities, but set a default transformer instead that takes
 the absolute (e.g. plain `np.absolute` or a convinience wrapper Absolute_).
 
 To add a new measure implementation it is sufficient to create a new sub-class
-of :class:`~mvpa.measures.base.Measure` (or :class:`~mvpa.measures.base.FeaturewiseMeasure`, or :class:`~mvpa.measures.base.Sensitivity`) and add an
+of :class:`~mvpa2.measures.base.Measure` (or :class:`~mvpa2.measures.base.FeaturewiseMeasure`, or :class:`~mvpa2.measures.base.Sensitivity`) and add an
 implementation of the `_call(dataset)` method. It will be called with an
-instance of :class:`~mvpa.datasets.base.Dataset`. :class:`~mvpa.measures.base.FeaturewiseMeasure` (e.g. :class:`~mvpa.measures.base.Sensitivity` as well)
+instance of :class:`~mvpa2.datasets.base.Dataset`. :class:`~mvpa2.measures.base.FeaturewiseMeasure` (e.g. :class:`~mvpa2.measures.base.Sensitivity` as well)
 has to return a vector of featurewise sensitivity scores.
 
 .. autoconditional: measures.base Measure
@@ -477,7 +477,7 @@ raw_results         Computed results before applying any             Disabled
 ================== ==============================================   =========
 
 Source code files of all sensitivity analyzer implementations go into
-`mvpa/measures/`.
+`mvpa2/measures/`.
 
 
 Classifier-independent Sensitivity Analyzers
@@ -489,7 +489,7 @@ Nothing special.
 Classifier-based Sensitivity Analyzers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A :class:`~mvpa.measures.base.Sensitivity` behaves exactly like its
+A :class:`~mvpa2.measures.base.Sensitivity` behaves exactly like its
 classifier-independent sibling, but additionally provides support for embedding
 the necessary classifier and handles its training upon request
 (boolean `force_train` keyword argument of the constructor). Access to the
@@ -512,18 +512,18 @@ raw_results         Computed results before applying any             Disabled
 
 Outstanding Questions:
 
-  * What is a :class:`mvpa.measures.base.ProxyClassifierSensitivityAnalyzer` useful for?
+  * What is a :class:`mvpa2.measures.base.ProxyClassifierSensitivityAnalyzer` useful for?
   * Shouldn't there be a `sensitivities` state?
 
 
-.. _Absolute: api/mvpa.misc.transformers-module.html#Absolute
+.. _Absolute: api/mvpa2.misc.transformers-module.html#Absolute
 
 
 
 Adding a new Algorithm
 ----------------------
 
-go into `mvpa/algorithms/`
+go into `mvpa2/algorithms/`
 
 
 
@@ -564,14 +564,14 @@ Things to implement for the next release (Release goals)
 
   * Sensitivity analyzers (maybe: featurewise measures)
     * Classifier sensitivities (SVM, SMLR) -> respective classifiers
-    * ANOVA                         -> mvpa.measures.anova
-    * Noise perturbation ->         -> mvpa.measures.noisepertrubation
-    * meta-algorithms (splitting)   -> mvpa.measures
+    * ANOVA                         -> mvpa2.measures.anova
+    * Noise perturbation ->         -> mvpa2.measures.noisepertrubation
+    * meta-algorithms (splitting)   -> mvpa2.measures
 
    FeaturewiseMeasure?
 
   * Mappers::
-      mvpa.mappers (AKA mvpa.projections mvpa.transformers)
+      mvpa2.mappers (AKA mvpa2.projections mvpa2.transformers)
 
     * Along with PCA/ICA mappers, we should add a PLS mapper::
 
@@ -590,9 +590,9 @@ Things to implement for the next release (Release goals)
 
   * .mapper conditional attribute
 
-        mvpa.featsel (NB no featsel.featsel.featsel more than 4 times!)
-        mvpa.featsel.rfe
-        mvpa.featsel.ifs
+        mvpa2.featsel (NB no featsel.featsel.featsel more than 4 times!)
+        mvpa2.featsel.rfe
+        mvpa2.featsel.ifs
 
   * several base classes with framework infrastructure (Harvester,
     ClassWithCollections, virtual properties, ...)
@@ -674,7 +674,7 @@ Long and medium term TODOs (aka stuff that has been here forever)
    way, but things should be done. Or may be via proper implementation of
    __reduce__ etc
 
- * mvpa.misc.warning may be should use stock python warnings module instead of
+ * mvpa2.misc.warning may be should use stock python warnings module instead of
    custom one?
 
  * ConfusionBasedError -> InternalError ?

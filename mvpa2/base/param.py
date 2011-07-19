@@ -13,10 +13,10 @@ __docformat__ = 'restructuredtext'
 import re
 import textwrap
 import numpy as np
-from mvpa.base.state import IndexedCollectable
+from mvpa2.base.state import IndexedCollectable
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 _whitespace_re = re.compile('\n\s+|^\s+')
 

@@ -8,19 +8,19 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA Wavelet mappers"""
 
-from mvpa.testing import *
-from mvpa.testing.datasets import datasets
+from mvpa2.testing import *
+from mvpa2.testing.datasets import datasets
 skip_if_no_external('pywt')
 
-from mvpa.base import externals
+from mvpa2.base import externals
 
 import unittest
-from mvpa.support.copy import deepcopy
+from mvpa2.support.copy import deepcopy
 import numpy as np
 
-from mvpa.mappers.boxcar import BoxcarMapper
-from mvpa.mappers.wavelet import *
-from mvpa.datasets import Dataset
+from mvpa2.mappers.boxcar import BoxcarMapper
+from mvpa2.mappers.wavelet import *
+from mvpa2.datasets import Dataset
 
 
 class WaveletMappersTests(unittest.TestCase):
@@ -128,7 +128,7 @@ class WaveletMappersTests(unittest.TestCase):
         """Good just to compare if I didn't screw up anything... treat
         it as a regression test
         """
-        import mvpa.mappers.wavelet_ as wavelet_
+        import mvpa2.mappers.wavelet_ as wavelet_
 
         ds = datasets['uni2medium']
         d2d = ds.samples

@@ -11,19 +11,19 @@
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 import numpy as np
 
-from mvpa.base import externals, warning
-from mvpa.base.dochelpers import borrowkwargs, _repr_attrs
+from mvpa2.base import externals, warning
+from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
 
-from mvpa.datasets import hstack
-from mvpa.support import copy
-from mvpa.featsel.base import StaticFeatureSelection
-from mvpa.measures.base import Measure
-from mvpa.base.state import ConditionalAttribute
-from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
+from mvpa2.datasets import hstack
+from mvpa2.support import copy
+from mvpa2.featsel.base import StaticFeatureSelection
+from mvpa2.measures.base import Measure
+from mvpa2.base.state import ConditionalAttribute
+from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 
 
 class BaseSearchlight(Measure):
@@ -47,7 +47,7 @@ class BaseSearchlight(Measure):
         ----------
         queryengine : QueryEngine
           Engine to use to discover the "neighborhood" of each feature.
-          See :class:`~mvpa.misc.neighborhood.QueryEngine`.
+          See :class:`~mvpa2.misc.neighborhood.QueryEngine`.
         roi_ids : None or list(int) or str
           List of feature ids (not coordinates) the shall serve as ROI seeds
           (e.g. sphere centers). Alternatively, this can be the name of a
@@ -58,7 +58,7 @@ class BaseSearchlight(Measure):
           external module.  If None -- all available cores will be used.
         **kwargs
           In addition this class supports all keyword arguments of its
-          base-class :class:`~mvpa.measures.base.Measure`.
+          base-class :class:`~mvpa2.measures.base.Measure`.
       """
         Measure.__init__(self, **kwargs)
 
@@ -171,7 +171,7 @@ class Searchlight(BaseSearchlight):
         Parameters
         ----------
         datameasure : callable
-          Any object that takes a :class:`~mvpa.datasets.base.Dataset`
+          Any object that takes a :class:`~mvpa2.datasets.base.Dataset`
           and returns some measure when called.
         add_center_fa : bool or str
           If True or a string, each searchlight ROI dataset will have a boolean
@@ -181,7 +181,7 @@ class Searchlight(BaseSearchlight):
           otherwise.
         **kwargs
           In addition this class supports all keyword arguments of its
-          base-class :class:`~mvpa.measures.searchlight.BaseSearchlight`.
+          base-class :class:`~mvpa2.measures.searchlight.BaseSearchlight`.
         """
         BaseSearchlight.__init__(self, queryengine, **kwargs)
         self.__datameasure = datameasure
@@ -320,7 +320,7 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
     Parameters
     ----------
     datameasure : callable
-      Any object that takes a :class:`~mvpa.datasets.base.Dataset`
+      Any object that takes a :class:`~mvpa2.datasets.base.Dataset`
       and returns some measure when called.
     radius : int
       All features within this radius around the center will be part
@@ -337,7 +337,7 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
       coordinates of all features.
     **kwargs
       In addition this class supports all keyword arguments of its
-      base-class :class:`~mvpa.measures.base.Measure`.
+      base-class :class:`~mvpa2.measures.base.Measure`.
 
     Notes
     -----

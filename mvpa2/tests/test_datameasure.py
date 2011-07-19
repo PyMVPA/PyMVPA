@@ -10,38 +10,38 @@
 
 import numpy as np
 
-from mvpa.testing import *
-from mvpa.testing.clfs import *
-from mvpa.testing.datasets import *
+from mvpa2.testing import *
+from mvpa2.testing.clfs import *
+from mvpa2.testing.datasets import *
 
-from mvpa.base import externals, warning
-from mvpa.base.node import ChainNode
-from mvpa.datasets.base import Dataset
-from mvpa.featsel.base import SensitivityBasedFeatureSelection, \
+from mvpa2.base import externals, warning
+from mvpa2.base.node import ChainNode
+from mvpa2.datasets.base import Dataset
+from mvpa2.featsel.base import SensitivityBasedFeatureSelection, \
         CombinedFeatureSelection
-from mvpa.featsel.helpers import FixedNElementTailSelector, \
+from mvpa2.featsel.helpers import FixedNElementTailSelector, \
                                  FractionTailSelector, RangeElementSelector
 
-from mvpa.featsel.rfe import RFE
+from mvpa2.featsel.rfe import RFE
 
-from mvpa.clfs.meta import SplitClassifier, MulticlassClassifier, \
+from mvpa2.clfs.meta import SplitClassifier, MulticlassClassifier, \
      FeatureSelectionClassifier
-from mvpa.clfs.smlr import SMLR, SMLRWeights
-from mvpa.mappers.zscore import zscore
-from mvpa.mappers.fx import sumofabs_sample, absolute_features, FxMapper, \
+from mvpa2.clfs.smlr import SMLR, SMLRWeights
+from mvpa2.mappers.zscore import zscore
+from mvpa2.mappers.fx import sumofabs_sample, absolute_features, FxMapper, \
      maxofabs_sample, BinaryFxNode
-from mvpa.generators.splitters import Splitter
-from mvpa.generators.partition import NFoldPartitioner
-from mvpa.generators.resampling import Balancer
+from mvpa2.generators.splitters import Splitter
+from mvpa2.generators.partition import NFoldPartitioner
+from mvpa2.generators.resampling import Balancer
 
-from mvpa.misc.errorfx import mean_mismatch_error
-from mvpa.misc.transformers import Absolute, \
+from mvpa2.misc.errorfx import mean_mismatch_error
+from mvpa2.misc.transformers import Absolute, \
      DistPValue
 
-from mvpa.measures.base import Measure, \
+from mvpa2.measures.base import Measure, \
         TransferMeasure, RepeatedMeasure, CrossValidation
-from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
-from mvpa.measures.irelief import IterativeRelief, IterativeReliefOnline, \
+from mvpa2.measures.anova import OneWayAnova, CompoundOneWayAnova
+from mvpa2.measures.irelief import IterativeRelief, IterativeReliefOnline, \
      IterativeRelief_Devel, IterativeReliefOnline_Devel
 
 
@@ -51,7 +51,7 @@ _MEASURES_2_SWEEP = [ OneWayAnova(),
                       IterativeRelief_Devel(), IterativeReliefOnline_Devel()
                       ]
 if externals.exists('scipy'):
-    from mvpa.measures.corrcoef import CorrCoef
+    from mvpa2.measures.corrcoef import CorrCoef
     _MEASURES_2_SWEEP += [ CorrCoef(),
                            # that one is good when small... handle later
                            #CorrCoef(pvalue=True)

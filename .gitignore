@@ -27,9 +27,9 @@ data/haxby8x6
 debian/*.debhelper
 debian/*.substvars
 debian/files
-debian/python-mvpa/*
-mvpa/*/*/*.dylib
-mvpa/*/*/*.so
+debian/python-mvpa2/*
+mvpa2/*/*/*.dylib
+mvpa2/*/*/*.so
 profile.out
 svmc_wrap.cpp
 tests/.noseids

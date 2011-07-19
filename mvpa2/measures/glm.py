@@ -12,9 +12,9 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.measures.base import FeaturewiseMeasure
-from mvpa.base.state import ConditionalAttribute
-from mvpa.datasets.base import Dataset
+from mvpa2.measures.base import FeaturewiseMeasure
+from mvpa2.base.state import ConditionalAttribute
+from mvpa2.datasets.base import Dataset
 
 class GLM(FeaturewiseMeasure):
     """General linear model (GLM).

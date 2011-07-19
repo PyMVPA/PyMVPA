@@ -11,10 +11,10 @@
 
 import numpy as np
 
-from mvpa.clfs.distance import squared_euclidean_distance
+from mvpa2.clfs.distance import squared_euclidean_distance
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 class Similarity(object):
     """Similarity function base class.

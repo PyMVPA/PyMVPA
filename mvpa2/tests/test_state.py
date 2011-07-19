@@ -9,19 +9,19 @@
 """Unit tests for PyMVPA State parent class"""
 
 import unittest
-import mvpa.support.copy as copy
+import mvpa2.support.copy as copy
 
 import numpy as np
 
-from mvpa.base import externals
+from mvpa2.base import externals
 
-from mvpa.base.state import ConditionalAttribute, ClassWithCollections, \
+from mvpa2.base.state import ConditionalAttribute, ClassWithCollections, \
      ParameterCollection, _def_sep
-from mvpa.base.param import *
-from mvpa.misc.exceptions import UnknownStateError
+from mvpa2.base.param import *
+from mvpa2.misc.exceptions import UnknownStateError
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 class TestClassEmpty(ClassWithCollections):
     pass

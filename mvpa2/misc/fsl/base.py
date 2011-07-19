@@ -12,11 +12,11 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.misc.io import ColumnData
-from mvpa.misc.support import Event
+from mvpa2.misc.io import ColumnData
+from mvpa2.misc.support import Event
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class FslEV3(ColumnData):

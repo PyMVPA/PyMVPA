@@ -10,12 +10,12 @@
 
 import numpy as np
 
-from mvpa.testing import *
-from mvpa.testing.datasets import *
+from mvpa2.testing import *
+from mvpa2.testing.datasets import *
 
-from mvpa.clfs.gnb import GNB
-from mvpa.measures.base import TransferMeasure
-from mvpa.generators.splitters import Splitter
+from mvpa2.clfs.gnb import GNB
+from mvpa2.measures.base import TransferMeasure
+from mvpa2.generators.splitters import Splitter
 
 class GNBTests(unittest.TestCase):
 

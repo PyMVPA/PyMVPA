@@ -12,18 +12,18 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base import externals
+from mvpa2.base import externals
 if externals.exists('shogun', raise_=True):
     import shogun.Classifier
     _shogun_exposes_slavesvm_labels = externals.versions['shogun:rev'] < 4633
 
-from mvpa.base.state import ConditionalAttribute
-from mvpa.base.types import asobjarray
-from mvpa.measures.base import Sensitivity
-from mvpa.datasets.base import Dataset
+from mvpa2.base.state import ConditionalAttribute
+from mvpa2.base.types import asobjarray
+from mvpa2.measures.base import Sensitivity
+from mvpa2.datasets.base import Dataset
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class LinearSVMWeights(Sensitivity):

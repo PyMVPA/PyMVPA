@@ -10,19 +10,19 @@
 
 import unittest, os, shutil
 
-from mvpa.base import verbose, externals
+from mvpa2.base import verbose, externals
 
-from mvpa.base.report_dummy import Report as DummyReport
+from mvpa2.base.report_dummy import Report as DummyReport
 _test_classes = [ DummyReport ]
 
-from mvpa.testing import sweepargs, with_tempfile
+from mvpa2.testing import sweepargs, with_tempfile
 
 if externals.exists('reportlab', raise_=False):
-    from mvpa.base.report import Report
+    from mvpa2.base.report import Report
     _test_classes += [ Report ]
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 class ReportTest(unittest.TestCase):
     """Just basic testing of reports -- pretty much that nothing fails

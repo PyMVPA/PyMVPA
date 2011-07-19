@@ -10,19 +10,19 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.base import externals
+from mvpa2.base import externals
 externals._set_matplotlib_backend()
 
 import pylab as pl
 import numpy as np
 
-from mvpa.base.node import ChainNode
-from mvpa.misc.plot.tools import Pion, Pioff
-from mvpa.misc.attrmap import AttributeMap
-from mvpa.generators.splitters import Splitter
-from mvpa.generators.partition import NFoldPartitioner
-from mvpa.clfs.distance import squared_euclidean_distance
-from mvpa.datasets.miscfx import get_samples_by_attr
+from mvpa2.base.node import ChainNode
+from mvpa2.misc.plot.tools import Pion, Pioff
+from mvpa2.misc.attrmap import AttributeMap
+from mvpa2.generators.splitters import Splitter
+from mvpa2.generators.partition import NFoldPartitioner
+from mvpa2.clfs.distance import squared_euclidean_distance
+from mvpa2.datasets.miscfx import get_samples_by_attr
 
 
 ##REF: Name was automagically refactored
@@ -278,9 +278,9 @@ def plot_decision_boundary_2d(dataset, clf=None,
     """
 
     if False:
-        ## from mvpa.misc.data_generators import *
-        ## from mvpa.clfs.svm import *
-        ## from mvpa.clfs.knn import *
+        ## from mvpa2.misc.data_generators import *
+        ## from mvpa2.clfs.svm import *
+        ## from mvpa2.clfs.knn import *
         ## ds = dumb_feature_binary_dataset()
         dataset = normal_feature_dataset(nfeatures=2, nchunks=5,
                                          snr=10, nlabels=4, means=[ [0,1], [1,0], [1,1], [0,0] ])

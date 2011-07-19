@@ -12,17 +12,17 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.base import externals
+from mvpa2.base import externals
 
 import sys
 import numpy as np
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
-from mvpa.datasets.base import Dataset
-from mvpa.base import warning
-from mvpa.misc.attrmap import AttributeMap
+from mvpa2.datasets.base import Dataset
+from mvpa2.base import warning
+from mvpa2.misc.attrmap import AttributeMap
 
 # LightSVM :
 

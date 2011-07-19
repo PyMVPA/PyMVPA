@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Unit test for PyMVPA mvpa.suite() of being loading ok"""
+"""Unit test for PyMVPA mvpa2.suite() of being loading ok"""
 
 import inspect
 import re
@@ -19,13 +19,13 @@ class SuiteTest(unittest.TestCase):
         """Test if we are loading fine
         """
         try:
-            exec "from mvpa.suite import *"
+            exec "from mvpa2.suite import *"
         except Exception, e:
-            self.fail(msg="Cannot import everything from mvpa.suite."
+            self.fail(msg="Cannot import everything from mvpa2.suite."
                       "Getting %s" % e)
 
     def test_docstrings(self):
-        from mvpa.suite import suite_stats
+        from mvpa2.suite import suite_stats
         # Lets do compliance checks
         # Get gross information on what we have in general
         gs = suite_stats()

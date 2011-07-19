@@ -11,8 +11,8 @@
 import os
 import unittest
 
-from mvpa.testing.tools import *
-from mvpa.base.info import wtf
+from mvpa2.testing.tools import *
+from mvpa2.base.info import wtf
 
 @with_tempfile()
 def test_wtf(filename):

@@ -45,14 +45,14 @@ The mvpa package contains the following subpackages and modules:
 __docformat__ = 'restructuredtext'
 
 # canonical PyMVPA version string
-__version__ = '0.6.0~rc3'
+__version__ = '2.0.0'
 
 import os
 import random
 import numpy as np
-from mvpa.base import cfg
-from mvpa.base import externals
-from mvpa.base.info import wtf
+from mvpa2.base import cfg
+from mvpa2.base import externals
+from mvpa2.base.info import wtf
 
 # commit hash to be filled in by Git upon export/archive
 hashfilename = os.path.join(os.path.dirname(__file__), 'COMMIT_HASH')
@@ -87,11 +87,11 @@ if not __debug__:
         import psyco
         psyco.profile()
     except ImportError:
-        from mvpa.base import verbose
+        from mvpa2.base import verbose
         verbose(2, "Psyco online compilation is not enabled")
 else:
     # Controllable seeding of random number generator
-    from mvpa.base import debug
+    from mvpa2.base import debug
     debug('INIT', 'mvpa')
 
 #
@@ -119,7 +119,7 @@ seed(_random_seed)
 #
 
 # import the main unittest interface
-from mvpa.tests import run as test
+from mvpa2.tests import run as test
 
 #
 # Externals-dependent tune ups

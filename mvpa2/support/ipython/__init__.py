@@ -11,13 +11,13 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.base import externals, cfg
+from mvpa2.base import externals, cfg
 if externals.exists('running ipython env', raise_=True):
     from IPython.ipapi import get as ipget
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.support.ipython start')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.support.ipython start')
 
 __all__ = ['ipy_activate_pymvpa_goodies']
 
@@ -36,11 +36,11 @@ def ipy_activate_pymvpa_goodies():
         pass
 
     if cfg.getboolean('ipython', 'complete collections attributes', True):
-        from mvpa.support.ipython.ipy_pymvpa_completer \
+        from mvpa2.support.ipython.ipy_pymvpa_completer \
              import activate as ipy_completer_activate
         ipy_completer_activate()
 
 
 if __debug__:
-    debug('INIT', 'mvpa.support.ipython end')
+    debug('INIT', 'mvpa2.support.ipython end')
 

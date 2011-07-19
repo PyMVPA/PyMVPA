@@ -15,12 +15,12 @@ __docformat__ = 'restructuredtext'
 import os
 from datetime import datetime
 
-import mvpa
-from mvpa.base import externals, verbose
-from mvpa.base.dochelpers import borrowkwargs
+import mvpa2
+from mvpa2.base import externals, verbose
+from mvpa2.base.dochelpers import borrowkwargs
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 if externals.exists('reportlab', raise_=True):
     import reportlab as rl
@@ -144,7 +144,7 @@ class Report(object):
         """
         date = datetime.today().isoformat(' ')
 
-        owner = 'PyMVPA v. %s' % mvpa.__version__
+        owner = 'PyMVPA v. %s' % mvpa2.__version__
         if self.author is not None:
             owner += '   Author: %s' % self.author
 

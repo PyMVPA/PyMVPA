@@ -8,10 +8,10 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA ridge regression classifier"""
 
-from mvpa.clfs.ridge import RidgeReg
+from mvpa2.clfs.ridge import RidgeReg
 from scipy.stats import pearsonr
-from mvpa.testing import *
-from mvpa.testing.datasets import datasets
+from mvpa2.testing import *
+from mvpa2.testing.datasets import datasets
 
 class RidgeRegTests(unittest.TestCase):
 

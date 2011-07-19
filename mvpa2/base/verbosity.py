@@ -164,7 +164,7 @@ class LevelLogger(Logger):
         """
         if __debug__:
             try:
-                from mvpa.base import debug
+                from mvpa2.base import debug
                 debug('VERBOSE', 'Setting verbosity to %r from %r',
                       (self.__level, level))
             except:
@@ -260,7 +260,7 @@ class SetLogger(Logger):
         """
         # just unique entries... we could have simply stored Set I guess,
         # but then smth like debug.active += ["BLAH"] would not work
-        from mvpa.base import verbose
+        from mvpa2.base import verbose
         self.__active = []
         registered_keys = self.__registered.keys()
         for item in list(set(active)):
@@ -552,7 +552,7 @@ if __debug__:
 
             if not func in self.__metrics:
                 try:
-                    from mvpa.base import debug
+                    from mvpa2.base import debug
                     debug("DBG", "Registering metric %s" % func)
                     self.__metrics.append(func)
                 except:

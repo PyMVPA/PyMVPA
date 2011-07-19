@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 # system imports
 import numpy as np
 
-import mvpa.base.externals as externals
+import mvpa2.base.externals as externals
 
 # do conditional to be able to build module reference
 if externals.exists('glmnet', raise_=True):
@@ -22,18 +22,18 @@ if externals.exists('glmnet', raise_=True):
     RRuntimeError = rpy2.robjects.rinterface.RRuntimeError
     r = rpy2.robjects.r
     r.library('glmnet')
-    from mvpa.support.rpy2_addons import Rrx2
+    from mvpa2.support.rpy2_addons import Rrx2
 
 # local imports
-from mvpa.base import warning
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
-from mvpa.base.learner import FailedToTrainError
-from mvpa.measures.base import Sensitivity
-from mvpa.base.param import Parameter
-from mvpa.datasets.base import Dataset
+from mvpa2.base import warning
+from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa2.base.learner import FailedToTrainError
+from mvpa2.measures.base import Sensitivity
+from mvpa2.base.param import Parameter
+from mvpa2.datasets.base import Dataset
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 def _label2indlist(labels, ulabels):
     """Convert labels to list of unique label indicies starting at 1.

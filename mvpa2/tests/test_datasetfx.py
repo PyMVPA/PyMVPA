@@ -9,17 +9,17 @@
 """Unit tests for PyMVPA miscelaneouse functions operating on datasets"""
 
 import unittest
-from mvpa.testing.tools import ok_, assert_equal, assert_array_equal, reseed_rng
+from mvpa2.testing.tools import ok_, assert_equal, assert_array_equal, reseed_rng
 
 import numpy as np
 
-from mvpa.base import externals
-from mvpa.datasets.base import dataset_wizard
-from mvpa.datasets.miscfx import remove_invariant_features, coarsen_chunks, \
+from mvpa2.base import externals
+from mvpa2.datasets.base import dataset_wizard
+from mvpa2.datasets.miscfx import remove_invariant_features, coarsen_chunks, \
         aggregate_features, SequenceStats
 
 
-from mvpa.misc.data_generators import normal_feature_dataset
+from mvpa2.misc.data_generators import normal_feature_dataset
 
 class MiscDatasetFxTests(unittest.TestCase):
 

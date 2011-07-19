@@ -11,8 +11,8 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as np
-from mvpa.datasets import Dataset
-from mvpa.misc.io import DataReader
+from mvpa2.datasets import Dataset
+from mvpa2.misc.io import DataReader
 
 def eep_dataset(samples, targets=None, chunks=None):
     """Create a dataset using an EEP binary file as source.

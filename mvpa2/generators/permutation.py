@@ -13,9 +13,9 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base.node import Node
-from mvpa.base.dochelpers import _str, _repr
-from mvpa.misc.support import get_limit_filter
+from mvpa2.base.node import Node
+from mvpa2.base.dochelpers import _str, _repr
+from mvpa2.misc.support import get_limit_filter
 
 
 class AttributePermutator(Node):

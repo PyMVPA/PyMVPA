@@ -8,17 +8,17 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA stats helpers"""
 
-from mvpa.testing import *
-from mvpa.testing.datasets import datasets
+from mvpa2.testing import *
+from mvpa2.testing.datasets import datasets
 
 from mvpa import cfg
-from mvpa.base import externals
-from mvpa.clfs.stats import MCNullDist, FixedNullDist, NullDist
-from mvpa.generators.permutation import AttributePermutator
-from mvpa.datasets import Dataset
-from mvpa.measures.glm import GLM
-from mvpa.measures.anova import OneWayAnova, CompoundOneWayAnova
-from mvpa.misc.fx import double_gamma_hrf, single_gamma_hrf
+from mvpa2.base import externals
+from mvpa2.clfs.stats import MCNullDist, FixedNullDist, NullDist
+from mvpa2.generators.permutation import AttributePermutator
+from mvpa2.datasets import Dataset
+from mvpa2.measures.glm import GLM
+from mvpa2.measures.anova import OneWayAnova, CompoundOneWayAnova
+from mvpa2.misc.fx import double_gamma_hrf, single_gamma_hrf
 
 
 # Prepare few distributions to test
@@ -28,9 +28,9 @@ nulldist_sweep = [ MCNullDist(permutator, tail='any'),
                    MCNullDist(permutator, tail='right')]
 
 if externals.exists('scipy'):
-    from mvpa.support.stats import scipy
+    from mvpa2.support.stats import scipy
     from scipy.stats import f_oneway
-    from mvpa.clfs.stats import rv_semifrozen
+    from mvpa2.clfs.stats import rv_semifrozen
     nulldist_sweep += [ MCNullDist(permutator, scipy.stats.norm,
                                    tail='any'),
                         MCNullDist(permutator, scipy.stats.norm,

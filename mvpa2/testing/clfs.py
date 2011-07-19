@@ -14,23 +14,23 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 
 # Some global imports useful through out unittests
-from mvpa.base import cfg
+from mvpa2.base import cfg
 
 # Base classes
-from mvpa.clfs.base import Classifier
-from mvpa.datasets.base import Dataset
-from mvpa.measures.base import FeaturewiseMeasure
+from mvpa2.clfs.base import Classifier
+from mvpa2.datasets.base import Dataset
+from mvpa2.measures.base import FeaturewiseMeasure
 
 #
 # first deal with classifiers which do not have external deps
 #
-from mvpa.clfs.base import Classifier
-from mvpa.clfs.smlr import SMLR
-from mvpa.clfs.knn import *
+from mvpa2.clfs.base import Classifier
+from mvpa2.clfs.smlr import SMLR
+from mvpa2.clfs.knn import *
 
-from mvpa.clfs.warehouse import clfswh, regrswh
-from mvpa.base import externals
-from mvpa.base.types import accepts_dataset_as_samples
+from mvpa2.clfs.warehouse import clfswh, regrswh
+from mvpa2.base import externals
+from mvpa2.base.types import accepts_dataset_as_samples
 
 __all__ = ['clfswh', 'regrswh', 'Classifier', 'SameSignClassifier',
            'Less1Classifier', 'sample_clf_nl', 'sample_clf_lin',
@@ -38,7 +38,7 @@ __all__ = ['clfswh', 'regrswh', 'Classifier', 'SameSignClassifier',
 
 # if have ANY svm implementation
 if externals.exists('libsvm') or externals.exists('shogun'):
-    from mvpa.clfs.svm import *
+    from mvpa2.clfs.svm import *
     __all__ += ['LinearCSVMC']
     if externals.exists('libsvm'):
         __all__ += ['libsvm', 'LinearNuSVMC']

@@ -16,9 +16,9 @@ import platform as pl
 from tempfile import mkstemp
 from StringIO import StringIO
 
-import mvpa
-from mvpa.base import externals, cfg
-from mvpa.base.dochelpers import borrowkwargs
+import mvpa2
+from mvpa2.base import externals, cfg
+from mvpa2.base.dochelpers import borrowkwargs
 
 def _t2s(t):
     res = []
@@ -42,7 +42,7 @@ def get_pymvpa_gitversion():
     None or str
       Version of PyMVPA according to git.
     """
-    gitpath = os.path.join(os.path.dirname(mvpa.__file__), os.path.pardir)
+    gitpath = os.path.join(os.path.dirname(mvpa2.__file__), os.path.pardir)
     gitpathgit = os.path.join(gitpath, '.git')
     if not os.path.exists(gitpathgit):
         return None
@@ -112,21 +112,21 @@ class WTF(object):
 
     def _acquire_sources(self, out):
         out.write("PyMVPA:\n")
-        out.write(" Version:       %s\n" % mvpa.__version__)
-        out.write(" Hash:          %s\n" % mvpa.__hash__)
-        out.write(" Path:          %s\n" % mvpa.__file__)
+        out.write(" Version:       %s\n" % mvpa2.__version__)
+        out.write(" Hash:          %s\n" % mvpa2.__hash__)
+        out.write(" Path:          %s\n" % mvpa2.__file__)
 
         # Try to obtain git information if available
         out.write(" Version control (GIT):\n")
         try:
-            gitpath = os.path.join(os.path.dirname(mvpa.__file__), os.path.pardir)
+            gitpath = os.path.join(os.path.dirname(mvpa2.__file__), os.path.pardir)
             gitpathgit = os.path.join(gitpath, '.git')
             if os.path.exists(gitpathgit):
                 for scmd, cmd in [
                     ('Status', ['status']),
                     ('Reference', 'show-ref -h HEAD'.split(' ')),
-                    ('Difference from last release %s' % mvpa.__version__,
-                     ['diff', '--shortstat', 'upstream/%s...' % mvpa.__version__])]:
+                    ('Difference from last release %s' % mvpa2.__version__,
+                     ['diff', '--shortstat', 'upstream/%s...' % mvpa2.__version__])]:
                     try:
                         (tmpd, tmpn) = mkstemp('mvpa', 'git')
                         retcode = subprocess.call(['git',

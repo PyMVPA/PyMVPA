@@ -10,22 +10,22 @@
 
 import numpy.random as rnd
 
-from mvpa.testing import *
-from mvpa.testing.clfs import *
-from mvpa.testing.datasets import *
+from mvpa2.testing import *
+from mvpa2.testing.clfs import *
+from mvpa2.testing.datasets import *
 
-from mvpa.datasets import Dataset
-from mvpa.base import externals
-from mvpa.clfs.transerror import ConfusionMatrix
-from mvpa.measures.searchlight import sphere_searchlight, Searchlight
-from mvpa.measures.gnbsearchlight import sphere_gnbsearchlight,\
+from mvpa2.datasets import Dataset
+from mvpa2.base import externals
+from mvpa2.clfs.transerror import ConfusionMatrix
+from mvpa2.measures.searchlight import sphere_searchlight, Searchlight
+from mvpa2.measures.gnbsearchlight import sphere_gnbsearchlight,\
      GNBSearchlight
 
-from mvpa.misc.neighborhood import IndexQueryEngine, Sphere
-from mvpa.generators.partition import NFoldPartitioner
-from mvpa.generators.permutation import AttributePermutator
-from mvpa.measures.base import CrossValidation
-from mvpa.clfs.gnb import GNB
+from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
+from mvpa2.generators.partition import NFoldPartitioner
+from mvpa2.generators.permutation import AttributePermutator
+from mvpa2.measures.base import CrossValidation
+from mvpa2.clfs.gnb import GNB
 
 
 class SearchlightTests(unittest.TestCase):
@@ -169,8 +169,8 @@ class SearchlightTests(unittest.TestCase):
 
     def test_partial_searchlight_with_confusion_matrix(self):
         ds = self.dataset
-        from mvpa.clfs.stats import MCNullDist
-        from mvpa.mappers.fx import mean_sample, sum_sample
+        from mvpa2.clfs.stats import MCNullDist
+        from mvpa2.mappers.fx import mean_sample, sum_sample
 
         # compute N-1 cross-validation for each sphere
         cm = ConfusionMatrix(labels=ds.UT)
@@ -248,7 +248,7 @@ class SearchlightTests(unittest.TestCase):
         if not externals.exists('scipy'):
             return
 
-        from mvpa.misc.stats import chisquare
+        from mvpa2.misc.stats import chisquare
 
         cv = CrossValidation(sample_clf_lin, NFoldPartitioner(),
                 enable_ca=['stats'])

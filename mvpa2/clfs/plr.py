@@ -13,12 +13,12 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.misc.exceptions import ConvergenceError
-from mvpa.base.learner import FailedToTrainError
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa2.misc.exceptions import ConvergenceError
+from mvpa2.base.learner import FailedToTrainError
+from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class PLR(Classifier):

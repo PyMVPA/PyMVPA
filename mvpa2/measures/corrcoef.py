@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.base import externals
+from mvpa2.base import externals
 
 import numpy as np
 
@@ -18,8 +18,8 @@ if externals.exists('scipy', raise_=True):
     # TODO: implement corrcoef optionally without scipy, e.g. np.corrcoef
     from scipy.stats import pearsonr
 
-from mvpa.measures.base import FeaturewiseMeasure
-from mvpa.datasets.base import Dataset
+from mvpa2.measures.base import FeaturewiseMeasure
+from mvpa2.datasets.base import Dataset
 
 class CorrCoef(FeaturewiseMeasure):
     """`FeaturewiseMeasure` that performs correlation with labels

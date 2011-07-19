@@ -11,7 +11,7 @@
 import numpy as np
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 class SamplesLookup(object):
     """Map to translate sample origids into unique indices.

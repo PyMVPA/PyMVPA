@@ -15,13 +15,13 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base import externals
+from mvpa2.base import externals
 
 if externals.exists("pylab", raise_=True):
     import pylab as pl
 
 if externals.exists("griddata", raise_=True):
-    from mvpa.support.griddata import griddata
+    from mvpa2.support.griddata import griddata
 
 if externals.exists("scipy", raise_=True):
     from scipy.optimize import leastsq

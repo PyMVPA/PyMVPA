@@ -10,9 +10,9 @@
 
 import os.path
 
-from mvpa.testing import *
+from mvpa2.testing import *
 from mvpa import pymvpa_dataroot
-from mvpa.misc.io.meg import TuebingenMEG
+from mvpa2.misc.io.meg import TuebingenMEG
 
 class MEGTests(unittest.TestCase):
 

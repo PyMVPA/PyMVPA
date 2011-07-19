@@ -46,9 +46,9 @@ x,y = np.meshgrid(x1, x2);
 feat_test = np.array((np.ravel(x), np.ravel(y)))
 
 """Now load PyMVPA and convert the data into a proper
-:class:`~mvpa.datasets.base.Dataset`."""
+:class:`~mvpa2.datasets.base.Dataset`."""
 
-from mvpa.suite import *
+from mvpa2.suite import *
 
 # create the pymvpa dataset from the labeled features
 patternsPos = dataset_wizard(samples=feat_pos.T, targets=1)

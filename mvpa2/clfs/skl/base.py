@@ -12,10 +12,10 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base import warning, externals
-from mvpa.base.dochelpers import _repr_attrs
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
-from mvpa.base.learner import FailedToTrainError, FailedToPredictError, \
+from mvpa2.base import warning, externals
+from mvpa2.base.dochelpers import _repr_attrs
+from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa2.base.learner import FailedToTrainError, FailedToPredictError, \
         DegenerateInputError
 
 

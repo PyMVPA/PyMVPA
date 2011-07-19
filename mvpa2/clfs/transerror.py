@@ -10,34 +10,34 @@
 
 __docformat__ = 'restructuredtext'
 
-import mvpa.support.copy as copy
+import mvpa2.support.copy as copy
 
 import numpy as np
 
 from StringIO import StringIO
 from math import log10, ceil
 
-from mvpa.base import externals
+from mvpa2.base import externals
 
-from mvpa.misc.errorfx import mean_power_fx, root_mean_power_fx, rms_error, \
+from mvpa2.misc.errorfx import mean_power_fx, root_mean_power_fx, rms_error, \
      relative_rms_error, mean_mismatch_error, auc_error
-from mvpa.base import warning
-from mvpa.base.collections import Collectable
-from mvpa.base.state import ConditionalAttribute, ClassWithCollections, \
+from mvpa2.base import warning
+from mvpa2.base.collections import Collectable
+from mvpa2.base.state import ConditionalAttribute, ClassWithCollections, \
      UnknownStateError
-from mvpa.base.dochelpers import enhanced_doc_string, table2string
-from mvpa.clfs.stats import auto_null_dist
+from mvpa2.base.dochelpers import enhanced_doc_string, table2string
+from mvpa2.clfs.stats import auto_null_dist
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 if externals.exists('scipy'):
     from scipy.stats.stats import nanmean
-    from mvpa.misc.stats import chisquare
+    from mvpa2.misc.stats import chisquare
     from scipy.stats import linregress, friedmanchisquare
-    from mvpa.misc.errorfx import corr_error, corr_error_prob
+    from mvpa2.misc.errorfx import corr_error, corr_error_prob
 else:
-    from mvpa.clfs.stats import nanmean
+    from mvpa2.clfs.stats import nanmean
     chisquare = None
     linregress = None
 

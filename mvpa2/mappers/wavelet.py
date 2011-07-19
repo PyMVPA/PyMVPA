@@ -8,7 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Wavelet mappers"""
 
-from mvpa.base import externals
+from mvpa2.base import externals
 
 if externals.exists('pywt', raise_=True):
     # import conditional to be able to import the whole module while building
@@ -17,11 +17,11 @@ if externals.exists('pywt', raise_=True):
 
 import numpy as np
 
-from mvpa.base import warning
-from mvpa.mappers.base import Mapper
+from mvpa2.base import warning
+from mvpa2.mappers.base import Mapper
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 # WaveletPacket and WaveletTransformation mappers share lots of common
 # functionality at the moment

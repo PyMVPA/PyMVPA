@@ -14,11 +14,11 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base.state import ConditionalAttribute
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa2.base.state import ConditionalAttribute
+from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
 
 if __debug__:
-    from mvpa.misc import debug
+    from mvpa2.misc import debug
 
 
 class BLR(Classifier):
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     pylab.close("all")
     pylab.ion()
 
-    from mvpa.misc.data_generators import linear_awgn
+    from mvpa2.misc.data_generators import linear_awgn
 
     train_size = 10
     test_size = 100

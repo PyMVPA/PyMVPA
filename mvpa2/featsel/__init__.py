@@ -21,8 +21,8 @@ Brief Description of Available Methods
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.featsel')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.featsel')
 
 if __debug__:
-    debug('INIT', 'mvpa.featsel end')
+    debug('INIT', 'mvpa2.featsel end')

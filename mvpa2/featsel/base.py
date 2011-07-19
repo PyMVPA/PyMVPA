@@ -11,17 +11,17 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as np
-from mvpa.featsel.helpers import FractionTailSelector, \
+from mvpa2.featsel.helpers import FractionTailSelector, \
                                  NBackHistoryStopCrit, \
                                  BestDetector
-from mvpa.mappers.slicing import SliceMapper
-from mvpa.mappers.base import accepts_dataset_as_samples
-from mvpa.base.dochelpers import _repr_attrs
-from mvpa.base.state import ConditionalAttribute
-from mvpa.generators.splitters import mask2slice
+from mvpa2.mappers.slicing import SliceMapper
+from mvpa2.mappers.base import accepts_dataset_as_samples
+from mvpa2.base.dochelpers import _repr_attrs
+from mvpa2.base.state import ConditionalAttribute
+from mvpa2.generators.splitters import mask2slice
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class FeatureSelection(SliceMapper):
@@ -35,7 +35,7 @@ class FeatureSelection(SliceMapper):
 
     Examples
     --------
-    >>> from mvpa.datasets import *
+    >>> from mvpa2.datasets import *
     >>> ds = Dataset([[1,2,3,4,5]])
     >>> fs0 = StaticFeatureSelection([0,1,2,3])
     >>> fs0(ds).samples

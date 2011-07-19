@@ -14,13 +14,13 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base.collections import Collectable
+from mvpa2.base.collections import Collectable
 
-from mvpa.misc.exceptions import UnknownStateError
-import mvpa.support.copy as copy
+from mvpa2.misc.exceptions import UnknownStateError
+import mvpa2.support.copy as copy
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 

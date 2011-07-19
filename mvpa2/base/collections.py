@@ -16,12 +16,12 @@ import copy, re
 import numpy as np
 from operator import isSequenceType
 
-from mvpa.base.dochelpers import _str, borrowdoc
+from mvpa2.base.dochelpers import _str, borrowdoc
 
 if __debug__:
     # we could live without, but it would be nicer with it
     try:
-        from mvpa.base import debug
+        from mvpa2.base import debug
         __mvpadebug__ = True
     except ImportError:
         __mvpadebug__ = False

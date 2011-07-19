@@ -12,8 +12,8 @@
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.generators')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.generators')
 
 if __debug__:
-    debug('INIT', 'mvpa.generators end')
+    debug('INIT', 'mvpa2.generators end')

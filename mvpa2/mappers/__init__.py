@@ -19,7 +19,7 @@ mapper might implement a training step that has to be run before it can be used.
 
 .. note::
 
-  Classifiers from the `mvpa.clfs` module could also be considered mappers as
+  Classifiers from the `mvpa2.clfs` module could also be considered mappers as
   well, but they all are supervised, and only provide ND->1D mapping (from data
   samples onto the target labels), most of the time without the possibility for
   reverse transformation.
@@ -30,7 +30,7 @@ Modes Of Operation
 
 Training
   All mappers can be trained by passing a training dataset to their
-  :meth:`~mvpa.mappers.base.Mapper.train()` method. Mappers that do not need to
+  :meth:`~mvpa2.mappers.base.Mapper.train()` method. Mappers that do not need to
   be trained will silently ignore this call. Mappers do not modify training
   datasets.
 
@@ -43,11 +43,11 @@ Forward-mapping
   manually and only the copy should be given to the mapper.
 
   Forward-mapping is possible via two different methods:
-  `~mvpa.mappers.base.Mapper.forward()` takes either a `Dataset`, or an at least
+  `~mvpa2.mappers.base.Mapper.forward()` takes either a `Dataset`, or an at least
   two-dimensional data array. In the latter case, the first axis is assumed to
   separate between samples, as in a dataset. The method will return the
   transformation result in the same format: either a dataset, or an array with
-  at least two dimensions.  `~mvpa.mappers.base.Mapper.forward1()` on the other
+  at least two dimensions.  `~mvpa2.mappers.base.Mapper.forward1()` on the other
   hand only takes plain data arrays that have to be of the same shape as a
   *single* sample in the dataset that the mapper has been trained on. It will
   also return a plain data array.
@@ -55,8 +55,8 @@ Forward-mapping
 Reverse-mapping
   If a mapper supports reversing a transformation, dataset and plain data
   arrays can be reverse-mapped with the corresponding methdod.
-  `~mvpa.mappers.base.Mapper.reverse()` and
-  `~mvpa.mappers.base.Mapper.reverse1()` behave analogous to the respective
+  `~mvpa2.mappers.base.Mapper.reverse()` and
+  `~mvpa2.mappers.base.Mapper.reverse1()` behave analogous to the respective
   forward-mapping functions, and also have the same requirement for their input
   data.
 """
@@ -64,14 +64,14 @@ Reverse-mapping
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.mappers')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.mappers')
 
-# do not pull them all -- we have mvpa.suite for that
-#from mvpa.mappers.mask import MaskMapper
-#from mvpa.mappers.svd import SVDMapper
-#from mvpa.mappers.boxcar import BoxcarMapper
-#from mvpa.mappers.array import DenseArrayMapper
+# do not pull them all -- we have mvpa2.suite for that
+#from mvpa2.mappers.mask import MaskMapper
+#from mvpa2.mappers.svd import SVDMapper
+#from mvpa2.mappers.boxcar import BoxcarMapper
+#from mvpa2.mappers.array import DenseArrayMapper
 
 if __debug__:
-    debug('INIT', 'mvpa.mappers end')
+    debug('INIT', 'mvpa2.mappers end')

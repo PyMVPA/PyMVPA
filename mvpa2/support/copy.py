@@ -23,4 +23,4 @@ if sys.version_info[:2] >= (2, 6):
     copy = _copy.copy
     deepcopy = _copy.deepcopy
 else:
-    from mvpa.support._copy import copy, deepcopy
+    from mvpa2.support._copy import copy, deepcopy

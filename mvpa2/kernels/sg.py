@@ -18,9 +18,9 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base.externals import exists, versions
-from mvpa.kernels.base import Kernel
-from mvpa.base.param import Parameter
+from mvpa2.base.externals import exists, versions
+from mvpa2.kernels.base import Kernel
+from mvpa2.base.param import Parameter
 
 if exists('shogun', raise_=True):
     import shogun.Kernel as sgk
@@ -35,7 +35,7 @@ else:
     sgk.PolyKernel = None
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 class SGKernel(Kernel):
     """A Kernel object with internal representation in Shogun"""

@@ -9,15 +9,15 @@
 """Wraper for the stepwise_regression function for SMLR."""
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.clfs.libsmlrc')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.clfs.libsmlrc')
 
 import numpy as np
 import ctypes as C
 import os
 import sys
 
-from mvpa.clfs.libsmlrc.ctypes_helper import extend_args, c_darray
+from mvpa2.clfs.libsmlrc.ctypes_helper import extend_args, c_darray
 
 # connect to library that's in this directory
 if sys.platform == 'win32':
@@ -54,5 +54,5 @@ def stepwise_regression(*args):
     return func(*arglist)
 
 if __debug__:
-    debug('INIT', 'mvpa.clfs.libsmlrc end')
+    debug('INIT', 'mvpa2.clfs.libsmlrc end')
 

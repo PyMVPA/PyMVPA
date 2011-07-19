@@ -11,7 +11,7 @@
 import unittest
 import numpy as np
 from mvpa import _random_seed, cfg
-from mvpa.base import externals, warning
+from mvpa2.base import externals, warning
 
 
 def collect_unit_tests(verbosity=1):
@@ -84,10 +84,10 @@ def collect_test_suites(verbosity=1):
     for t in tests:
         # TODO: exclude tests which fail to import: e.g. on Windows
         # could get WindowsError due to missing msvcr90.dll
-        exec 'import mvpa.tests.' + t
+        exec 'import mvpa2.tests.' + t
 
     # instantiate all tests suites and return dict of them (with ID as key)
-    return dict([(t[5:], eval('mvpa.tests.' + t + '.suite()')) for t in tests ])
+    return dict([(t[5:], eval('mvpa2.tests.' + t + '.suite()')) for t in tests ])
 
 
 def collect_nose_tests(verbosity=1):
@@ -187,9 +187,9 @@ def run_tests_using_nose(limit=None, verbosity=1, exit_=False):
             if len(not_tested):
                 print("T: Warning -- following test files were found but will "
                       "not be tested: %s" % ', '.join(not_tested))
-        config.testNames = ['mvpa.tests.' + nt for nt in tests]
+        config.testNames = ['mvpa2.tests.' + nt for nt in tests]
     else:
-        config.testNames = ['mvpa.tests.' + nt for nt in tests
+        config.testNames = ['mvpa2.tests.' + nt for nt in tests
                             if nt[5:] in limit]
 
     # run the tests
@@ -204,7 +204,7 @@ def run(limit=None, verbosity=None, exit_=False):
     limit : None or list
       If None, the full test suite is run. Alternatively, a list with test IDs
       can be provides. IDs are the base filenames of the test implementation,
-      e.g. the ID for the suite in 'mvpa/tests/test_niftidataset.py' is
+      e.g. the ID for the suite in 'mvpa2/tests/test_niftidataset.py' is
       'niftidataset'.
     verbosity : None or int
       Verbosity of unittests execution. If None, controlled by PyMVPA
@@ -214,7 +214,7 @@ def run(limit=None, verbosity=None, exit_=False):
       Either to exit with an error code upon the completion.
     """
     if __debug__:
-        from mvpa.base import debug
+        from mvpa2.base import debug
         # Lets add some targets which provide additional testing
         debug.active += ['CHECK_.*']
 

@@ -12,15 +12,15 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base import warning
-from mvpa.base.state import ConditionalAttribute
-from mvpa.base.param import Parameter
-from mvpa.base.types import asobjarray
-from mvpa.measures.base import Sensitivity
-from mvpa.datasets.base import Dataset
+from mvpa2.base import warning
+from mvpa2.base.state import ConditionalAttribute
+from mvpa2.base.param import Parameter
+from mvpa2.base.types import asobjarray
+from mvpa2.measures.base import Sensitivity
+from mvpa2.datasets.base import Dataset
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 class LinearSVMWeights(Sensitivity):
     """`SensitivityAnalyzer` for the LIBSVM implementation of a linear SVM.

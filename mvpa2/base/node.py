@@ -11,13 +11,13 @@
 __docformat__ = 'restructuredtext'
 
 import time
-from mvpa.support import copy
+from mvpa2.support import copy
 
-from mvpa.base.dochelpers import _str, _repr, _repr_attrs
-from mvpa.base.state import ClassWithCollections, ConditionalAttribute
+from mvpa2.base.dochelpers import _str, _repr, _repr_attrs
+from mvpa2.base.state import ClassWithCollections, ConditionalAttribute
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 class Node(ClassWithCollections):
     """Common processing object.

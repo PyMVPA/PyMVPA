@@ -14,7 +14,7 @@
 Part 2: Dataset Basics and Concepts
 ***********************************
 
-A `~mvpa.datasets.base.Dataset` is the basic data container in PyMVPA. It
+A `~mvpa2.datasets.base.Dataset` is the basic data container in PyMVPA. It
 serves as the primary form of input data storage, but also as container for
 more complex results returned by some algorithm. In this tutorial part we will
 take a look at what a dataset consists of, and how it works.
@@ -97,11 +97,11 @@ works identical to adding elements to a dictionary:
 ['some_attr']
 
 However, sample attributes are not directly stored as plain data, but for
-various reasons as a so-called `~mvpa.base.collections.Collectable` that in
+various reasons as a so-called `~mvpa2.base.collections.Collectable` that in
 turn embeds a NumPy array with the actual attribute:
 
 >>> type(ds.sa['some_attr'])
-<class 'mvpa.base.collections.ArrayCollectable'>
+<class 'mvpa2.base.collections.ArrayCollectable'>
 >>> ds.sa['some_attr'].value
 array([ 0.,  1.,  1.,  3.])
 
@@ -130,9 +130,9 @@ Traceback (most recent call last):
     compileflags, 1) in test.globs
   File "<doctest tutorial_datasets.rst[20]>", line 1, in <module>
     ds.sa['invalid'] = 4
-  File "/home/test/pymvpa/mvpa/base/collections.py", line 459, in __setitem__
+  File "/home/test/pymvpa/mvpa2/base/collections.py", line 459, in __setitem__
     value = ArrayCollectable(value)
-  File "/home/test/pymvpa/mvpa/base/collections.py", line 171, in __init__
+  File "/home/test/pymvpa/mvpa2/base/collections.py", line 171, in __init__
     % self.__class__.__name__)
 ValueError: ArrayCollectable only takes sequences as value.
 
@@ -142,7 +142,7 @@ Traceback (most recent call last):
     compileflags, 1) in test.globs
   File "<doctest tutorial_datasets.rst[21]>", line 1, in <module>
     ds.sa['invalid'] = [ 1, 2, 3, 4, 5, 6 ]
-  File "/home/test/pymvpa/mvpa/base/collections.py", line 468, in __setitem__
+  File "/home/test/pymvpa/mvpa2/base/collections.py", line 468, in __setitem__
     str(self)))
 ValueError: Collectable 'invalid' with length [6] does not match the required length [4] of collection '<SampleAttributesCollection: some_attr>'.
 
@@ -325,14 +325,14 @@ Loading fMRI data
 Enough of theoretical foreplay -- let's look at a concrete example of an
 fMRI dataset. PyMVPA has several helper functions to load data from
 specialized formats, and the one for fMRI data is
-`~mvpa.datasets.mri.fmri_dataset()`. The example dataset we are going to
+`~mvpa2.datasets.mri.fmri_dataset()`. The example dataset we are going to
 look at is a single subject from Haxby et al. (2001) that we already
 loaded in part one of this tutorial. For more convenience, and less typing
 we first specify the path of the directory with the fMRI data.
 
 >>> path=os.path.join(tutorial_data_path, 'data')
 
-In the simplest case, we now let `~mvpa.datasets.mri.fmri_dataset` do its job, by just
+In the simplest case, we now let `~mvpa2.datasets.mri.fmri_dataset` do its job, by just
 pointing it to the fMRI data file. The data is stored as a NIfTI file that has
 all runs of the experiment concatenated into a single file.
 
@@ -355,7 +355,7 @@ algorithms that expect data to be a simple matrix.
 
 We just loaded all data from that NIfTI file, but usually we would be
 interested in a subset only, i.e. "brain voxels".
-`~mvpa.datasets.mri.fmri_dataset` is capable of performing data masking. We just need to
+`~mvpa2.datasets.mri.fmri_dataset` is capable of performing data masking. We just need to
 specify a mask image. Such mask image is generated in pretty much any fMRI
 analysis pipeline -- may it be a full-brain mask computed during
 skull-stripping, or an activation map from a functional localizer. We are going
@@ -421,7 +421,7 @@ to have, but in some cases (e.g. when it comes to efficiency, and/or very
 large datasets) one might want to have a leaner dataset with just the
 information that is really necessary. One way to achieve this, is to strip
 all unwanted attributes. The Dataset class'
-:meth:`~mvpa.base.dataset.AttrDataset.copy()` method can help with that.
+:meth:`~mvpa2.base.dataset.AttrDataset.copy()` method can help with that.
 
 >>> stripped = ds.copy(deep=False, sa=['time_coords'], fa=[], a=[])
 >>> print stripped
@@ -448,7 +448,7 @@ of this format is also used by recent versions of Matlab to store data.
 
 For HDF5 support PyMVPA depends on the h5py_ package. If it is available,
 any dataset can be saved to a file by simply calling
-`~mvpa.base.dataset.AttrDataset.save()` with the desired filename.
+`~mvpa2.base.dataset.AttrDataset.save()` with the desired filename.
 
 >>> import tempfile, shutil
 >>> # create a temporary directory
@@ -457,16 +457,16 @@ any dataset can be saved to a file by simply calling
 
 HDF5 is a flexible format that also supports, for example, data
 compression. To enable it, you can pass additional arguments to
-`~mvpa.base.dataset.AttrDataset.save()` that are supported by
+`~mvpa2.base.dataset.AttrDataset.save()` that are supported by
 `Group.create_dataset()`. Instead of using
-`~mvpa.base.dataset.AttrDataset.save()` one can also use the `~mvpa.base.hdf5.h5save()`
+`~mvpa2.base.dataset.AttrDataset.save()` one can also use the `~mvpa2.base.hdf5.h5save()`
 function in a similar way. Saving the same dataset with maximum
 gzip-compression looks like this:
 
 >>> ds.save(os.path.join(tempdir, 'mydataset.gzipped.hdf5'), compression=9)
 >>> h5save(os.path.join(tempdir, 'mydataset.gzipped.hdf5'), ds, compression=9)
 
-Loading datasets from a file is easy too. `~mvpa.base.hdf5.h5load()` takes a filename as
+Loading datasets from a file is easy too. `~mvpa2.base.hdf5.h5load()` takes a filename as
 an argument and returns the stored dataset. Compressed data will be handled
 transparently.
 

@@ -13,14 +13,14 @@ from numpy import array
 import operator
 import sys
 
-from mvpa.base import warning
-from mvpa.base.dochelpers import borrowkwargs, borrowdoc, _repr_attrs, _repr
-from mvpa.clfs.distance import cartesian_distance
+from mvpa2.base import warning
+from mvpa2.base.dochelpers import borrowkwargs, borrowdoc, _repr_attrs, _repr
+from mvpa2.clfs.distance import cartesian_distance
 
-from mvpa.misc.support import idhash as idhash_
+from mvpa2.misc.support import idhash as idhash_
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 class Sphere(object):
     """N-Dimensional hypersphere.
@@ -69,7 +69,7 @@ class Sphere(object):
           Sizes of elements in each dimension.  If None, it is equivalent
           to 1s in all dimensions.
         distance_func : None or lambda
-          Distance function to use (choose one from `mvpa.clfs.distance`).
+          Distance function to use (choose one from `mvpa2.clfs.distance`).
           If None, cartesian_distance to be used.
         """
         self._radius = radius

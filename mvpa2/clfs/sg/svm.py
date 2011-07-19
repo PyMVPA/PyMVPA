@@ -26,14 +26,14 @@ import numpy as np
 from mvpa import _random_seed
 
 # Rely on SG
-from mvpa.base import externals, warning
+from mvpa2.base import externals, warning
 if externals.exists('shogun', raise_=True):
     import shogun.Features
     import shogun.Classifier
     import shogun.Regression
     #import shogun.Kernel
     import shogun.Library
-    from mvpa.kernels.sg import SGKernel, LinearSGKernel
+    from mvpa2.kernels.sg import SGKernel, LinearSGKernel
     # set the default kernel here, to be able to import this module
     # when building the docs without SG
     _default_kernel_class_ = LinearSGKernel
@@ -64,22 +64,22 @@ else:
 
 import operator
 
-from mvpa.base.param import Parameter
-from mvpa.misc.attrmap import AttributeMap
-from mvpa.base import warning
+from mvpa2.base.param import Parameter
+from mvpa2.misc.attrmap import AttributeMap
+from mvpa2.base import warning
 
-from mvpa.clfs.base import accepts_dataset_as_samples, \
+from mvpa2.clfs.base import accepts_dataset_as_samples, \
      accepts_samples_as_dataset
-from mvpa.base.learner import FailedToTrainError
-from mvpa.clfs.meta import MulticlassClassifier
-from mvpa.clfs._svmbase import _SVM
-from mvpa.base.state import ConditionalAttribute
-from mvpa.measures.base import Sensitivity
+from mvpa2.base.learner import FailedToTrainError
+from mvpa2.clfs.meta import MulticlassClassifier
+from mvpa2.clfs._svmbase import _SVM
+from mvpa2.base.state import ConditionalAttribute
+from mvpa2.measures.base import Sensitivity
 
 from sens import *
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 def seed(random_seed):

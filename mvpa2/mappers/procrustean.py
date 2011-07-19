@@ -12,12 +12,12 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.mappers.projection import ProjectionMapper
-from mvpa.datasets import Dataset
-from mvpa.featsel.helpers import ElementSelector
+from mvpa2.mappers.projection import ProjectionMapper
+from mvpa2.datasets import Dataset
+from mvpa2.featsel.helpers import ElementSelector
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class ProcrusteanMapper(ProjectionMapper):

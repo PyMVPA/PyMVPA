@@ -11,8 +11,8 @@
 import unittest
 
 from mvpa import cfg
-from mvpa.base import externals
-from mvpa.support import copy
+from mvpa2.base import externals
+from mvpa2.support import copy
 
 class TestExternals(unittest.TestCase):
 

@@ -13,15 +13,15 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 import operator
 
-from mvpa.base import warning
-from mvpa.base.node import Node
-from mvpa.datasets import Dataset
-from mvpa.base.dochelpers import _str, _repr_attrs
-from mvpa.mappers.base import Mapper
-from mvpa.misc.support import array_whereequal
-from mvpa.base.dochelpers import borrowdoc
+from mvpa2.base import warning
+from mvpa2.base.node import Node
+from mvpa2.datasets import Dataset
+from mvpa2.base.dochelpers import _str, _repr_attrs
+from mvpa2.mappers.base import Mapper
+from mvpa2.misc.support import array_whereequal
+from mvpa2.base.dochelpers import borrowdoc
 
-from mvpa.misc.transformers import sum_of_abs, max_of_abs
+from mvpa2.misc.transformers import sum_of_abs, max_of_abs
 
 class FxMapper(Mapper):
     """Apply a custom transformation to (groups of) samples or features.

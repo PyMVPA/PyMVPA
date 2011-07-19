@@ -13,8 +13,8 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as np
-from mvpa.measures.base import Measure
-from mvpa.misc.stats import DSMatrix
+from mvpa2.measures.base import Measure
+from mvpa2.misc.stats import DSMatrix
 
 class DSMMeasure(Measure):
     """DSMMeasure creates a Measure object

@@ -15,7 +15,7 @@ TODOs:
 
 Module Organization
 ===================
-mvpa.atlases.base module contains support for various atlases
+mvpa2.atlases.base module contains support for various atlases
 
 :group Base: BaseAtlas XMLBasedAtlas Label Level LabelsLevel
 :group Talairach: PyMVPAAtlas LabelsAtlas ReferencesAtlas
@@ -24,26 +24,26 @@ mvpa.atlases.base module contains support for various atlases
 """
 
 import os.path as osp
-from mvpa.base import externals
+from mvpa2.base import externals
 
 if externals.exists('lxml', raise_=True):
     from lxml import etree, objectify
 
-from mvpa.base.dochelpers import enhanced_doc_string
+from mvpa2.base.dochelpers import enhanced_doc_string
 
 import re
 import numpy as np
 from numpy.linalg import norm
 
-from mvpa.atlases.transformation import SpaceTransformation, Linear
-from mvpa.misc.support import reuse_absolute_path
+from mvpa2.atlases.transformation import SpaceTransformation, Linear
+from mvpa2.misc.support import reuse_absolute_path
 
 if externals.exists('nibabel', raise_=True):
     import nibabel as nb
 
-from mvpa.base import warning
+from mvpa2.base import warning
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 def check_range(coord, range):
@@ -787,7 +787,7 @@ class ReferencesAtlas(PyMVPAAtlas):
         referenceAtlasName = self.header["reference-atlas"].text
 
         # uff -- another evil import but we better use the factory method
-        from mvpa.atlases.warehouse import Atlas
+        from mvpa2.atlases.warehouse import Atlas
         self.__referenceAtlas = Atlas(filename=reuse_absolute_path(
             self._filename, referenceAtlasName))
 

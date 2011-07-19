@@ -10,10 +10,10 @@
 
 
 import numpy as np
-from mvpa.mappers.fx import *
-from mvpa.datasets.base import dataset_wizard, Dataset
+from mvpa2.mappers.fx import *
+from mvpa2.datasets.base import dataset_wizard, Dataset
 
-from mvpa.testing.tools import *
+from mvpa2.testing.tools import *
 
 
 def test_samplesgroup_mapper():
@@ -121,8 +121,8 @@ def test_fxmapper():
 
 
 def test_features01():
-    from mvpa.testing.datasets import datasets
-    from mvpa.measures.anova import OneWayAnova
+    from mvpa2.testing.datasets import datasets
+    from mvpa2.measures.anova import OneWayAnova
     # TODO: might be worth creating appropriate factory
     #       help in mappers/fx
     aov = OneWayAnova(

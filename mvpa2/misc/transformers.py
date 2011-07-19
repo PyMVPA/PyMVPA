@@ -18,11 +18,11 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base import externals, warning
-from mvpa.base.state import ConditionalAttribute, ClassWithCollections
+from mvpa2.base import externals, warning
+from mvpa2.base.state import ConditionalAttribute, ClassWithCollections
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 def Absolute(x):
@@ -249,7 +249,7 @@ class DistPValue(ClassWithCollections):
 
 
     def __call__(self, x):
-        from mvpa.support.stats import scipy
+        from mvpa2.support.stats import scipy
         import scipy.stats as stats
 
         # some local bindings

@@ -8,10 +8,10 @@ import warnings
 
 import numpy as np
 
-from mvpa.base import cfg
-from mvpa.testing import *
+from mvpa2.base import cfg
+from mvpa2.testing import *
 skip_if_no_external('scipy')
-from mvpa.support.nipy import emp_null
+from mvpa2.support.nipy import emp_null
 #from emp_null import ENN
 
 def setup():

@@ -10,7 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.base import externals
+from mvpa2.base import externals
 
 externals.exists("pylab", raise_=True)
 import pylab as pl

@@ -15,8 +15,8 @@ import pylab as pl
 import numpy as np
 import matplotlib as mpl
 
-from mvpa.base import warning
-from mvpa.mappers.boxcar import BoxcarMapper
+from mvpa2.base import warning
+from mvpa2.mappers.boxcar import BoxcarMapper
 
 #
 # Few helper functions

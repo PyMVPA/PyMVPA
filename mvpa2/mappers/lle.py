@@ -14,11 +14,11 @@ This is a wrapper class around the corresponding MDP nodes LLE and HLLE
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.base import externals
+from mvpa2.base import externals
 
 import numpy as np
 
-from mvpa.mappers.mdp_adaptor import MDPNodeMapper
+from mvpa2.mappers.mdp_adaptor import MDPNodeMapper
 
 if externals.exists('mdp ge 2.4', raise_=True):
     import mdp

@@ -12,11 +12,11 @@ import unittest, copy
 
 import numpy as np
 
-from mvpa.datasets.base import dataset_wizard
-from mvpa.base.state import ClassWithCollections, ConditionalAttribute
-from mvpa.base.param import Parameter, KernelParameter
+from mvpa2.datasets.base import dataset_wizard
+from mvpa2.base.state import ClassWithCollections, ConditionalAttribute
+from mvpa2.base.param import Parameter, KernelParameter
 
-from mvpa.testing.clfs import *
+from mvpa2.testing.clfs import *
 
 class ParametrizedClassifier(SameSignClassifier):
     p1 = Parameter(1.0)

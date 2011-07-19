@@ -12,15 +12,15 @@ disk."""
 __docformat__ = 'restructuredtext'
 
 import numpy as np
-import mvpa.support.copy as copy
-from mvpa.base.dochelpers import enhanced_doc_string
+import mvpa2.support.copy as copy
+from mvpa2.base.dochelpers import enhanced_doc_string
 from re import sub
-from mvpa.base import warning
+from mvpa2.base import warning
 
-from mvpa.misc.support import Event
+from mvpa2.misc.support import Event
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 __all__ = ['DataReader', 'ColumnData', 'SampleAttributes',
            'SensorLocations', 'XAVRSensorLocations',

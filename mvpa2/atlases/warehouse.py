@@ -10,8 +10,8 @@
 
 import os
 
-from mvpa.atlases.base import *
-from mvpa.atlases.fsl import *
+from mvpa2.atlases.base import *
+from mvpa2.atlases.fsl import *
 
 
 KNOWN_ATLAS_FAMILIES = {
@@ -80,7 +80,7 @@ def Atlas(filename=None, name=None, *args, **kwargs):
 
 
 if __name__ == '__main__':
-    from mvpa.base import verbose
+    from mvpa2.base import verbose
     verbose.level = 10
     for name in [
         #'data/talairach_atlas.xml',

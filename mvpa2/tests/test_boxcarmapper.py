@@ -11,13 +11,13 @@
 
 import numpy as np
 
-from mvpa.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
+from mvpa2.testing.tools import ok_, assert_raises, assert_false, assert_equal, \
         assert_true, assert_array_equal
 
-from mvpa.mappers.boxcar import BoxcarMapper
-from mvpa.datasets import Dataset
-from mvpa.mappers.flatten import FlattenMapper
-from mvpa.mappers.base import ChainMapper
+from mvpa2.mappers.boxcar import BoxcarMapper
+from mvpa2.datasets import Dataset
+from mvpa2.mappers.flatten import FlattenMapper
+from mvpa2.mappers.base import ChainMapper
 
 
 

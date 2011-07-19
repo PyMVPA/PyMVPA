@@ -14,10 +14,10 @@ import sys
 import traceback as tbm
 
 from mvpa import cfg
-from mvpa.testing.tools import SkipTest
+from mvpa2.testing.tools import SkipTest
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 __all__ = [ 'sweepargs' ]
 
@@ -34,8 +34,8 @@ def sweepargs(**kwargs):
     So this decorator aims to do that
     """
 
-    from mvpa.clfs.base import Classifier
-    from mvpa.base.state import ClassWithCollections
+    from mvpa2.clfs.base import Classifier
+    from mvpa2.base.state import ClassWithCollections
 
     def unittest_method(method):
         def do_sweep(*args_, **kwargs_):

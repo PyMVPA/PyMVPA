@@ -16,18 +16,18 @@ _dict_has_key = sys.version_info >= (2, 5)
 
 import numpy as np
 
-from mvpa.base import warning
-from mvpa.datasets.base import Dataset
-from mvpa.misc.support import indent_doc
-from mvpa.base.state import ConditionalAttribute
+from mvpa2.base import warning
+from mvpa2.datasets.base import Dataset
+from mvpa2.misc.support import indent_doc
+from mvpa2.base.state import ConditionalAttribute
 
-from mvpa.clfs.base import Classifier, accepts_dataset_as_samples
-from mvpa.clfs.distance import squared_euclidean_distance
+from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
+from mvpa2.clfs.distance import squared_euclidean_distance
 
 __all__ = [ 'kNN' ]
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class kNN(Classifier):

@@ -8,17 +8,17 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA SpAM."""
 
-from mvpa.misc import data_generators
+from mvpa2.misc import data_generators
 
-from mvpa.testing import *
-from mvpa.testing.datasets import datasets
+from mvpa2.testing import *
+from mvpa2.testing.datasets import datasets
 
 
 def test_basic():
     """Disabled the test since we have no SpAM yet
     """
     raise SkipTest, "skipped SPaM since no SPaM"
-    from mvpa.clfs.spam import SpAM
+    from mvpa2.clfs.spam import SpAM
 
     dataset = datasets['sin_modulated']
     clf = SpAM()

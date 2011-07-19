@@ -12,10 +12,10 @@ import os.path
 import numpy as np
 
 from mvpa import pymvpa_dataroot
-from mvpa.base import externals
-from mvpa.datasets.eep import eep_dataset, EEPBin
+from mvpa2.base import externals
+from mvpa2.datasets.eep import eep_dataset, EEPBin
 
-from mvpa.testing.tools import assert_equal, assert_true, \
+from mvpa2.testing.tools import assert_equal, assert_true, \
      assert_array_almost_equal
 
 def test_eep_load():

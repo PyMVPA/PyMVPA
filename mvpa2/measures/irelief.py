@@ -18,13 +18,13 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.datasets import Dataset
-from mvpa.measures.base import FeaturewiseMeasure
-from mvpa.kernels.np import ExponentialKernel
-from mvpa.clfs.distance import pnorm_w
+from mvpa2.datasets import Dataset
+from mvpa2.measures.base import FeaturewiseMeasure
+from mvpa2.kernels.np import ExponentialKernel
+from mvpa2.clfs.distance import pnorm_w
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class IterativeRelief_Devel(FeaturewiseMeasure):

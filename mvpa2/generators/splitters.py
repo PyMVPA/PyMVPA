@@ -13,12 +13,12 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base.node import Node
-from mvpa.base import warning
-from mvpa.misc.support import mask2slice
+from mvpa2.base.node import Node
+from mvpa2.base import warning
+from mvpa2.misc.support import mask2slice
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 class Splitter(Node):
     """Generator node for dataset splitting.

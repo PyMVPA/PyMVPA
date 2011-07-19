@@ -12,15 +12,15 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base import externals
+from mvpa2.base import externals
 if externals.exists('scipy', raise_=True):
     from scipy.signal import resample
 
-from mvpa.base.dochelpers import _str, borrowkwargs
-from mvpa.mappers.base import Mapper
-from mvpa.datasets import Dataset
-from mvpa.base.dataset import vstack
-from mvpa.generators.splitters import Splitter
+from mvpa2.base.dochelpers import _str, borrowkwargs
+from mvpa2.mappers.base import Mapper
+from mvpa2.datasets import Dataset
+from mvpa2.base.dataset import vstack
+from mvpa2.generators.splitters import Splitter
 
 
 class FFTResampleMapper(Mapper):

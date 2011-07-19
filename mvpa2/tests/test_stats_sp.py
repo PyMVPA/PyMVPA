@@ -8,18 +8,18 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA stats helpers -- those requiring scipy"""
 
-from mvpa.testing import *
+from mvpa2.testing import *
 skip_if_no_external('scipy')
 
-from mvpa.testing.datasets import datasets
-from mvpa.tests.test_stats import *
+from mvpa2.testing.datasets import datasets
+from mvpa2.tests.test_stats import *
 
 from scipy import signal
-from mvpa.clfs.stats import match_distribution, rv_semifrozen
-from mvpa.misc.stats import chisquare
-from mvpa.misc.attrmap import AttributeMap
-from mvpa.datasets.base import dataset_wizard
-from mvpa.generators.permutation import AttributePermutator
+from mvpa2.clfs.stats import match_distribution, rv_semifrozen
+from mvpa2.misc.stats import chisquare
+from mvpa2.misc.attrmap import AttributeMap
+from mvpa2.datasets.base import dataset_wizard
+from mvpa2.generators.permutation import AttributePermutator
 
 class StatsTestsScipy(unittest.TestCase):
     """Unittests for various statistics which use scipy"""
@@ -61,7 +61,7 @@ class StatsTestsScipy(unittest.TestCase):
         skip_if_no_external('scipy')
 
         # test 'any' mode
-        from mvpa.measures.corrcoef import CorrCoef
+        from mvpa2.measures.corrcoef import CorrCoef
         ds = datasets['uni2medium']
 
         permutator = AttributePermutator('targets', count=20)
@@ -144,7 +144,7 @@ class StatsTestsScipy(unittest.TestCase):
     def test_negative_t(self):
         """Basic testing of the sign in p and t scores
         """
-        from mvpa.measures.base import FeaturewiseMeasure
+        from mvpa2.measures.base import FeaturewiseMeasure
 
         class BogusMeasure(FeaturewiseMeasure):
             """Just put high positive into first 2 features, and high
@@ -216,7 +216,7 @@ class StatsTestsScipy(unittest.TestCase):
                     # Test plotting only once
                     if loc is None and externals.exists("pylab plottable"):
                         import pylab as pl
-                        from mvpa.clfs.stats import plot_distribution_matches
+                        from mvpa2.clfs.stats import plot_distribution_matches
                         fig = pl.figure()
                         plot_distribution_matches(data, matched, legend=1, nbest=5)
                         #pl.show()

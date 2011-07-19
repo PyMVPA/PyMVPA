@@ -9,10 +9,10 @@
 """Unit tests for PyMVPA cmdline helpers"""
 
 import unittest
-from mvpa.misc.cmdline import *
+from mvpa2.misc.cmdline import *
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 class CmdlineHelpersTest(unittest.TestCase):
 
@@ -22,7 +22,7 @@ class CmdlineHelpersTest(unittest.TestCase):
         for member in  [#'_verbose_callback',
                         'parser', 'opt', 'opts']:
             self.failUnless(globals_.has_key(member),
-                msg="We must have imported %s from mvpa.misc.cmdline!" % member)
+                msg="We must have imported %s from mvpa2.misc.cmdline!" % member)
 
 def suite():
     return unittest.makeSuite(CmdlineHelpersTest)

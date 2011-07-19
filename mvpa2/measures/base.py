@@ -20,26 +20,26 @@ has to be in some iterable container.
 __docformat__ = 'restructuredtext'
 
 import numpy as np
-import mvpa.support.copy as copy
+import mvpa2.support.copy as copy
 
-from mvpa.base.node import Node
-from mvpa.base.learner import Learner
-from mvpa.base.state import ConditionalAttribute
-from mvpa.misc.args import group_kwargs
-from mvpa.misc.attrmap import AttributeMap
-from mvpa.misc.errorfx import mean_mismatch_error
-from mvpa.base.types import asobjarray
+from mvpa2.base.node import Node
+from mvpa2.base.learner import Learner
+from mvpa2.base.state import ConditionalAttribute
+from mvpa2.misc.args import group_kwargs
+from mvpa2.misc.attrmap import AttributeMap
+from mvpa2.misc.errorfx import mean_mismatch_error
+from mvpa2.base.types import asobjarray
 
-from mvpa.base.dochelpers import enhanced_doc_string, _str, _repr_attrs
-from mvpa.base import externals, warning
-from mvpa.clfs.stats import auto_null_dist
-from mvpa.base.dataset import AttrDataset
-from mvpa.datasets import Dataset, vstack, hstack
-from mvpa.mappers.fx import BinaryFxNode
-from mvpa.generators.splitters import Splitter
+from mvpa2.base.dochelpers import enhanced_doc_string, _str, _repr_attrs
+from mvpa2.base import externals, warning
+from mvpa2.clfs.stats import auto_null_dist
+from mvpa2.base.dataset import AttrDataset
+from mvpa2.datasets import Dataset, vstack, hstack
+from mvpa2.mappers.fx import BinaryFxNode
+from mvpa2.generators.splitters import Splitter
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class Measure(Learner):

@@ -11,18 +11,18 @@
 
 import numpy as np
 
-from mvpa.testing.tools import ok_, assert_array_equal, assert_true, \
+from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
         assert_false, assert_equal, assert_raises, assert_almost_equal, \
         reseed_rng
 
-from mvpa.datasets import dataset_wizard, Dataset
-from mvpa.generators.splitters import Splitter
-from mvpa.base.node import ChainNode
-from mvpa.generators.partition import OddEvenPartitioner, NFoldPartitioner
-from mvpa.generators.permutation import AttributePermutator
-from mvpa.generators.base import  Repeater, Sifter
-from mvpa.generators.resampling import Balancer
-from mvpa.misc.support import get_nelements_per_value
+from mvpa2.datasets import dataset_wizard, Dataset
+from mvpa2.generators.splitters import Splitter
+from mvpa2.base.node import ChainNode
+from mvpa2.generators.partition import OddEvenPartitioner, NFoldPartitioner
+from mvpa2.generators.permutation import AttributePermutator
+from mvpa2.generators.base import  Repeater, Sifter
+from mvpa2.generators.resampling import Balancer
+from mvpa2.misc.support import get_nelements_per_value
 
 
 def give_data():

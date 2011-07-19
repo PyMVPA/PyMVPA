@@ -10,7 +10,7 @@
 
 """
 
-from mvpa.base import externals
+from mvpa2.base import externals
 
 if externals.exists('nibabel', raise_=True):
     import nibabel as nb
@@ -19,13 +19,13 @@ import re
 import os.path
 import numpy as np
 
-from mvpa.misc.support import reuse_absolute_path
-from mvpa.base.dochelpers import enhanced_doc_string
+from mvpa2.misc.support import reuse_absolute_path
+from mvpa2.base.dochelpers import enhanced_doc_string
 
-from mvpa.atlases.base import XMLBasedAtlas, LabelsLevel
+from mvpa2.atlases.base import XMLBasedAtlas, LabelsLevel
 
 if __debug__:
-	from mvpa.base import debug
+	from mvpa2.base import debug
 
 #
 # Atlases from FSL
@@ -216,7 +216,7 @@ class FSLProbabilisticAtlas(FSLAtlas):
     def find(self, *args, **kwargs):
         """Just a shortcut to the only level.
 
-        See :class:`~mvpa.atlases.base.Level.find` for more info
+        See :class:`~mvpa2.atlases.base.Level.find` for more info
         """
         return self.levels[0].find(*args, **kwargs)
 

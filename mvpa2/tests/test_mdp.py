@@ -10,18 +10,18 @@
 
 import numpy as np
 
-from mvpa.testing import *
+from mvpa2.testing import *
 skip_if_no_external('mdp')
 
-from mvpa.base import externals
+from mvpa2.base import externals
 import mdp
 
-from mvpa.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper, PCAMapper, \
+from mvpa2.mappers.mdp_adaptor import MDPNodeMapper, MDPFlowMapper, PCAMapper, \
         ICAMapper
-from mvpa.mappers.lle import LLEMapper
-from mvpa.datasets.base import Dataset
-from mvpa.base.dataset import DAE
-from mvpa.misc.data_generators import normal_feature_dataset
+from mvpa2.mappers.lle import LLEMapper
+from mvpa2.datasets.base import Dataset
+from mvpa2.base.dataset import DAE
+from mvpa2.misc.data_generators import normal_feature_dataset
 
 
 def test_mdpnodemapper():

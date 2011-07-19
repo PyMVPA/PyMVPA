@@ -14,18 +14,18 @@ import numpy as np
 import textwrap
 import operator
 
-from mvpa.support.copy import deepcopy
+from mvpa2.support.copy import deepcopy
 
-from mvpa.base import warning
-from mvpa.kernels.base import Kernel
-from mvpa.base.dochelpers import handle_docstring, _rst, _rst_section, \
+from mvpa2.base import warning
+from mvpa2.kernels.base import Kernel
+from mvpa2.base.dochelpers import handle_docstring, _rst, _rst_section, \
      _rst_indentstr
 
-from mvpa.clfs.base import Classifier
-from mvpa.base.param import Parameter
+from mvpa2.clfs.base import Classifier
+from mvpa2.base.param import Parameter
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class _SVM(Classifier):

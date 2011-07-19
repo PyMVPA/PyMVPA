@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import numpy as np
 from operator import isSequenceType
 
-from mvpa.base import externals
+from mvpa2.base import externals
 if externals.exists('scipy', raise_=True):
     # if we construct the polynomials ourselves, we wouldn't need scipy here
     from scipy.special import legendre
@@ -31,8 +31,8 @@ if externals.exists('scipy', raise_=True):
             r[infs] = leg(x[infs] + 1e-10) # offset to try to overcome problems
         return r
 
-from mvpa.base.dochelpers import _str, borrowkwargs
-from mvpa.mappers.base import Mapper
+from mvpa2.base.dochelpers import _str, borrowkwargs
+from mvpa2.mappers.base import Mapper
 
 
 class PolyDetrendMapper(Mapper):
@@ -69,8 +69,8 @@ class PolyDetrendMapper(Mapper):
 
     Examples
     --------
-    >>> from mvpa.datasets import dataset_wizard
-    >>> from mvpa.mappers.detrend import PolyDetrendMapper
+    >>> from mvpa2.datasets import dataset_wizard
+    >>> from mvpa2.mappers.detrend import PolyDetrendMapper
     >>> samples = np.array([[1.0, 2, 3, 3, 2, 1],
     ...                    [-2.0, -4, -6, -6, -4, -2]]).T
     >>> chunks = [0, 0, 0, 1, 1, 1]

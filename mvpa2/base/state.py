@@ -38,20 +38,20 @@ TODO:
 __docformat__ = 'restructuredtext'
 
 import operator
-import mvpa.support.copy as copy
+import mvpa2.support.copy as copy
 from textwrap import TextWrapper
 
 # Although not used here -- included into interface
-from mvpa.misc.exceptions import UnknownStateError
-from mvpa.base.attributes import IndexedCollectable, ConditionalAttribute
-from mvpa.base.dochelpers import enhanced_doc_string, borrowdoc, _repr_attrs
+from mvpa2.misc.exceptions import UnknownStateError
+from mvpa2.base.attributes import IndexedCollectable, ConditionalAttribute
+from mvpa2.base.dochelpers import enhanced_doc_string, borrowdoc, _repr_attrs
 
-from mvpa.base import externals
+from mvpa2.base import externals
 # XXX local rename is due but later on
-from mvpa.base.collections import Collection as BaseCollection
+from mvpa2.base.collections import Collection as BaseCollection
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
     # XXX
     # To debug references on top level -- useful to keep around for now,
     # don't remove until refactoring is complete
@@ -551,7 +551,7 @@ class ConditionalAttributesCollection(Collection):
         It might be handy to store set of enabled ca and then to restore
         it later on. It can be easily accomplished now::
 
-        >>> from mvpa.base.state import ClassWithCollections, ConditionalAttribute
+        >>> from mvpa2.base.state import ClassWithCollections, ConditionalAttribute
         >>> class Blah(ClassWithCollections):
         ...   bleh = ConditionalAttribute(enabled=False, doc='Example')
         ...
@@ -890,7 +890,7 @@ class ClassWithCollections(object):
             if key in known_attribs:
                 clsstr = str(self.__class__)
                 # Skip some False positives
-                if 'mvpa.datasets' in clsstr and 'Dataset' in clsstr and \
+                if 'mvpa2.datasets' in clsstr and 'Dataset' in clsstr and \
                        (key in ['targets', 'chunks', 'samples', 'mapper']):
                     return
                 colname = known_attribs[key]

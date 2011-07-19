@@ -22,13 +22,13 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base.types import is_datasetlike
-from mvpa.base.state import ClassWithCollections
-from mvpa.base.param import Parameter
-from mvpa.misc.sampleslookup import SamplesLookup # required for CachedKernel
+from mvpa2.base.types import is_datasetlike
+from mvpa2.base.state import ClassWithCollections
+from mvpa2.base.param import Parameter
+from mvpa2.misc.sampleslookup import SamplesLookup # required for CachedKernel
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 __all__ = ['Kernel', 'NumpyKernel', 'CustomKernel', 'PrecomputedKernel',
            'CachedKernel']
@@ -49,13 +49,13 @@ class Kernel(ClassWithCollections):
     Conversion mechanisms: Each kernel type should implement methods
     as necessary for the following two methods to work:
 
-    :meth:`~mvpa.kernels.Kernel.as_np`
+    :meth:`~mvpa2.kernels.Kernel.as_np`
       *Return a new NumpyKernel object with internal Numpy kernel*.
       This method can be generally inherited from the base Kernel class by
       creating a PrecomputedKernel from the raw numpy matrix, as implemented
       here.
 
-    :meth:`~mvpa.kernels.Kernel.as_raw_np`
+    :meth:`~mvpa2.kernels.Kernel.as_raw_np`
       *Return a raw Numpy array from this kernel*.
       This method should behave identically to numpy.array(kernel), and in fact,
       defining either method (via defining Kernel.__array__) will be sufficient
@@ -63,7 +63,7 @@ class Kernel(ClassWithCollections):
 
     Other kernel types should implement similar mechanisms to convert numpy
     arrays to their own internal representations.  See `add_conversion` for a
-    helper method, and examples in mvpa.kernels.sg
+    helper method, and examples in mvpa2.kernels.sg
 
     Assuming such `Kernel.as_*` methods exist, all kernel types should be
     seamlessly convertable amongst each other.

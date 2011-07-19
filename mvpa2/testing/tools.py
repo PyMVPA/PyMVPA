@@ -16,11 +16,11 @@ import os
 import tempfile
 import unittest
 
-import mvpa
-from mvpa.base import externals
+import mvpa2
+from mvpa2.base import externals
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 if externals.exists('nose'):
     # We use nose now
@@ -156,7 +156,7 @@ def reseed_rng():
 
     def decorate(func):
         def newfunc(*arg, **kwargs):
-            mvpa.seed(mvpa._random_seed)
+            mvpa2.seed(mvpa2._random_seed)
             return func(*arg, **kwargs)
         newfunc = make_decorator(func)(newfunc)
         return newfunc
@@ -177,7 +177,7 @@ def nodebug(entries=None):
     def decorate(func):
         def newfunc(*arg, **kwargs):
             if __debug__:
-                from mvpa.base import debug
+                from mvpa2.base import debug
                 # store a copy
                 old_active = debug.active[:]
                 if entries is None:

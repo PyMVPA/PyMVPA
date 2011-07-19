@@ -17,10 +17,10 @@ __docformat__ = 'restructuredtext'
 #       If we would have that, we could make use of them in kNN.
 
 import numpy as np
-from mvpa.base import externals
+from mvpa2.base import externals
 
 if __debug__:
-    from mvpa.base import debug, warning
+    from mvpa2.base import debug, warning
 
 
 def cartesian_distance(a, b):
@@ -231,7 +231,7 @@ def one_minus_correlation(X, Y):
     --------
 
     >>> import numpy as np
-    >>> from mvpa.clfs.distance import one_minus_correlation
+    >>> from mvpa2.clfs.distance import one_minus_correlation
     >>> X = np.random.rand(20,80)
     >>> Y = np.random.rand(5,80)
     >>> C = one_minus_correlation(X, Y)

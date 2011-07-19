@@ -12,14 +12,14 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base.dochelpers import _str, _repr_attrs
-from mvpa.mappers.base import Mapper, accepts_dataset_as_samples, \
+from mvpa2.base.dochelpers import _str, _repr_attrs
+from mvpa2.mappers.base import Mapper, accepts_dataset_as_samples, \
         ChainMapper
-from mvpa.featsel.base import StaticFeatureSelection
-from mvpa.misc.support import is_in_volume
+from mvpa2.featsel.base import StaticFeatureSelection
+from mvpa2.misc.support import is_in_volume
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 class FlattenMapper(Mapper):
     """Reshaping mapper that flattens multidimensional arrays into 1D vectors.

@@ -14,13 +14,13 @@ import random
 
 import numpy as np
 
-from mvpa.base.node import Node
-from mvpa.base.collections import \
+from mvpa2.base.node import Node
+from mvpa2.base.collections import \
      SampleAttributesCollection, FeatureAttributesCollection
-from mvpa.base.dochelpers import _str, _repr
+from mvpa2.base.dochelpers import _str, _repr
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 class Repeater(Node):
     """Node that yields the same dataset for a certain number of repetitions.
@@ -66,9 +66,9 @@ class Sifter(Node):
     combinations of two chunks while being interested only in the
     combinations where both targets are present.
 
-    >>> from mvpa.datasets import Dataset
-    >>> from mvpa.generators.partition import NFoldPartitioner
-    >>> from mvpa.base.node import ChainNode
+    >>> from mvpa2.datasets import Dataset
+    >>> from mvpa2.generators.partition import NFoldPartitioner
+    >>> from mvpa2.base.node import ChainNode
     >>> ds = Dataset(samples=np.arange(8).reshape((4,2)),
     ...              sa={'chunks':   [ 0 ,  1 ,  2 ,  3 ],
     ...                  'targets':  ['c', 'c', 'p', 'p']})

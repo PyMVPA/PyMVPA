@@ -12,12 +12,12 @@ __docformat__ = 'restructuredtext'
 
 import copy
 import numpy as np
-from mvpa.misc.support import Event, value2idx
-from mvpa.base.dataset import _expand_attribute
-from mvpa.mappers.fx import _uniquemerge2literal
-from mvpa.mappers.flatten import FlattenMapper
-from mvpa.mappers.boxcar import BoxcarMapper
-from mvpa.base import warning
+from mvpa2.misc.support import Event, value2idx
+from mvpa2.base.dataset import _expand_attribute
+from mvpa2.mappers.fx import _uniquemerge2literal
+from mvpa2.mappers.flatten import FlattenMapper
+from mvpa2.mappers.boxcar import BoxcarMapper
+from mvpa2.base import warning
 
 
 def find_events(**kwargs):
@@ -101,7 +101,7 @@ def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
     time-series based dataset (actually, it don't have to be time series, but
     could also be any other type of ordered samples). Boxcar-shaped event
     samples, potentially spanning multiple input samples can be automatically
-    extracted using :class:`~mvpa.misc.support.Event` definition lists.  For
+    extracted using :class:`~mvpa2.misc.support.Event` definition lists.  For
     each event all samples covering that particular event are used to form the
     corresponding sample.
 
@@ -132,7 +132,7 @@ def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
       'closest' to absolute closest sample.
     eprefix : str or None
       If not None, this prefix is used to name additional attributes generated
-      by the underlying `~mvpa.mappers.boxcar.BoxcarMapper`. If it is set to
+      by the underlying `~mvpa2.mappers.boxcar.BoxcarMapper`. If it is set to
       None, no additional attributes will be created.
 
     Returns
@@ -147,7 +147,7 @@ def eventrelated_dataset(ds, events=None, time_attr=None, match='prev',
     <example_eventrelated>` showing a spatio-temporal analysis of fMRI data
     that involves this function.
 
-    >>> from mvpa.datasets import Dataset
+    >>> from mvpa2.datasets import Dataset
     >>> ds = Dataset(np.random.randn(10, 25))
     >>> events = [{'onset': 2, 'duration': 4},
     ...           {'onset': 4, 'duration': 4}]

@@ -15,10 +15,10 @@ to standardize the interface between other kernel machines.
 
 __docformat__ = 'restructuredtext'
 
-from mvpa.kernels.base import Kernel
-from mvpa.base.param import Parameter
+from mvpa2.kernels.base import Kernel
+from mvpa2.base.param import Parameter
 
-#from mvpa.clfs.libsvmc import _svmc
+#from mvpa2.clfs.libsvmc import _svmc
 class _svmc(object):
     """Locally defining constants for LibSVM to avoid circular import.
     """

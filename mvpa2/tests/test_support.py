@@ -8,15 +8,15 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA serial feature inclusion algorithm"""
 
-from mvpa.testing import *
-from mvpa.misc.support import *
-from mvpa.base.types import asobjarray
-from mvpa.testing import *
-from mvpa.testing.datasets import get_mv_pattern, datasets
-from mvpa.testing.clfs import *
-from mvpa.clfs.distance import one_minus_correlation
+from mvpa2.testing import *
+from mvpa2.misc.support import *
+from mvpa2.base.types import asobjarray
+from mvpa2.testing import *
+from mvpa2.testing.datasets import get_mv_pattern, datasets
+from mvpa2.testing.clfs import *
+from mvpa2.clfs.distance import one_minus_correlation
 
-from mvpa.support.copy import deepcopy
+from mvpa2.support.copy import deepcopy
 
 class SupportFxTests(unittest.TestCase):
 

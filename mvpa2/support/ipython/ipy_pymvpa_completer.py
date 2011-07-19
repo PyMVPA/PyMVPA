@@ -9,7 +9,7 @@
 """Attributes-aware tab completion.
 
 This module provides a custom tab-completer that intelligently reveals the names
-of attributes in the :class:`~mvpa.base.collections.Collection`\s of PyMVPA.
+of attributes in the :class:`~mvpa2.base.collections.Collection`\s of PyMVPA.
 
 Activation
 ==========
@@ -37,7 +37,7 @@ It is a rip-off from IPython's ipy_traits_completer.py
 
 #############################################################################
 # External imports
-import mvpa.base.collections as col
+import mvpa2.base.collections as col
 
 # IPython imports
 from IPython.ipapi import TryNext, get as ipget
@@ -90,7 +90,7 @@ def activate():
 #############################################################################
 if __name__ == '__main__':
     # Testing/debugging, can be done only under interactive IPython session
-    from mvpa.datasets.base import dataset_wizard
+    from mvpa2.datasets.base import dataset_wizard
     t = dataset_wizard([1, 2, 3], targets=1, chunks=2)
 
     ip = ipget().IP

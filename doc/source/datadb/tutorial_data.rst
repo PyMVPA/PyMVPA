@@ -96,7 +96,7 @@ tutorial_lib.py
 Instructions
 ============
 
-  >>> from mvpa.suite import *
+  >>> from mvpa2.suite import *
   >>> datapath = os.path.join(pymvpa_datadbroot, 'tutorial_data',
   ...                         'tutorial_data', 'data')
   >>> attrs = SampleAttributes(os.path.join(datapath, 'attributes.txt'))

@@ -13,14 +13,14 @@ selective noise perturbation to compute a sensitivity map.
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
-from mvpa.support.copy import deepcopy
+from mvpa2.support.copy import deepcopy
 
 import numpy as np
 
-from mvpa.measures.base import FeaturewiseMeasure
-from mvpa.datasets.base import Dataset
+from mvpa2.measures.base import FeaturewiseMeasure
+from mvpa2.datasets.base import Dataset
 
 
 class NoisePerturbationSensitivity(FeaturewiseMeasure):

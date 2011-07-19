@@ -18,9 +18,9 @@ from math import ceil
 from StringIO import StringIO
 from mvpa import cfg
 
-from mvpa.base.externals import versions, exists
+from mvpa2.base.externals import versions, exists
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 __add_init2doc = False
 __in_ipython = exists('running ipython env')

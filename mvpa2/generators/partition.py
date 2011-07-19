@@ -12,12 +12,12 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base.node import Node
-from mvpa.datasets.miscfx import coarsen_chunks
-import mvpa.misc.support as support
+from mvpa2.base.node import Node
+from mvpa2.datasets.miscfx import coarsen_chunks
+import mvpa2.misc.support as support
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 class Partitioner(Node):

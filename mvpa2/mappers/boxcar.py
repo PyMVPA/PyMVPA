@@ -12,12 +12,12 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.mappers.base import Mapper
-from mvpa.clfs.base import accepts_dataset_as_samples
-from mvpa.base.dochelpers import _str
+from mvpa2.mappers.base import Mapper
+from mvpa2.clfs.base import accepts_dataset_as_samples
+from mvpa2.base.dochelpers import _str
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 class BoxcarMapper(Mapper):
     """Mapper to combine multiple samples into a single sample.

@@ -11,28 +11,28 @@
 import unittest
 import numpy as np
 
-from mvpa.support.copy import copy
+from mvpa2.support.copy import copy
 
-from mvpa.base.dataset import vstack
-from mvpa.base import externals, warning
-from mvpa.generators.partition import OddEvenPartitioner
-from mvpa.generators.base import Repeater
-from mvpa.generators.permutation import AttributePermutator
-from mvpa.generators.splitters import Splitter
+from mvpa2.base.dataset import vstack
+from mvpa2.base import externals, warning
+from mvpa2.generators.partition import OddEvenPartitioner
+from mvpa2.generators.base import Repeater
+from mvpa2.generators.permutation import AttributePermutator
+from mvpa2.generators.splitters import Splitter
 
-from mvpa.clfs.meta import MulticlassClassifier
-from mvpa.clfs.transerror import ConfusionMatrix, ConfusionBasedError
-from mvpa.measures.base import CrossValidation, TransferMeasure
+from mvpa2.clfs.meta import MulticlassClassifier
+from mvpa2.clfs.transerror import ConfusionMatrix, ConfusionBasedError
+from mvpa2.measures.base import CrossValidation, TransferMeasure
 
-from mvpa.clfs.stats import MCNullDist
+from mvpa2.clfs.stats import MCNullDist
 
-from mvpa.misc.exceptions import UnknownStateError
-from mvpa.misc.errorfx import mean_mismatch_error
-from mvpa.mappers.fx import mean_sample, BinaryFxNode
+from mvpa2.misc.exceptions import UnknownStateError
+from mvpa2.misc.errorfx import mean_mismatch_error
+from mvpa2.mappers.fx import mean_sample, BinaryFxNode
 
-from mvpa.testing import *
-from mvpa.testing.datasets import datasets
-from mvpa.testing.clfs import *
+from mvpa2.testing import *
+from mvpa2.testing.datasets import datasets
+from mvpa2.testing.clfs import *
 
 class ErrorsTests(unittest.TestCase):
 
@@ -331,7 +331,7 @@ class ErrorsTests(unittest.TestCase):
         ##rcmpl('font',  family='sans', style='normal', variant='normal',
         ##   weight='bold',  stretch='normal', size='large')
         #import numpy as np
-        #from mvpa.clfs.transerror import \
+        #from mvpa2.clfs.transerror import \
         #     TransferError, ConfusionMatrix, ConfusionBasedError
 
         array = np.array

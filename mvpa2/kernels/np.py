@@ -23,13 +23,13 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-from mvpa.base.state import ConditionalAttribute
-from mvpa.base.param import Parameter
-from mvpa.misc.exceptions import InvalidHyperparameterError
-from mvpa.clfs.distance import squared_euclidean_distance
-from mvpa.kernels.base import NumpyKernel
+from mvpa2.base.state import ConditionalAttribute
+from mvpa2.base.param import Parameter
+from mvpa2.misc.exceptions import InvalidHyperparameterError
+from mvpa2.clfs.distance import squared_euclidean_distance
+from mvpa2.kernels.base import NumpyKernel
 if __debug__:
-    from mvpa.base import debug, warning
+    from mvpa2.base import debug, warning
 
 # Simple stuff
 

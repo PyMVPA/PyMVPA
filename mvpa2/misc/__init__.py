@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa.base import debug
-    debug('INIT', 'mvpa.misc start')
-    debug('INIT', 'mvpa.misc end')
+    from mvpa2.base import debug
+    debug('INIT', 'mvpa2.misc start')
+    debug('INIT', 'mvpa2.misc end')
 

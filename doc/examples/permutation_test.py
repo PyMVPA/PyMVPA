@@ -15,12 +15,12 @@ Monte-Carlo testing of Classifier-based Analyses
 
 It is often desirable to be able to make statements like *"Performance is
 significantly above chance-level"* and to help with that PyMVPA supports *Null*
-hypothesis (aka *H0*) testing for any :class:`~mvpa.measures.base.Measure`.
+hypothesis (aka *H0*) testing for any :class:`~mvpa2.measures.base.Measure`.
 Measures take an optional constructor argument ``null_dist`` that can be used
-to provide an instance of some :class:`~mvpa.clfs.stats.NullDist` estimator.
+to provide an instance of some :class:`~mvpa2.clfs.stats.NullDist` estimator.
 If the properties of the expected *Null* distribution are known a-priori, it is
 possible to use any distribution specified in SciPy's ``stats`` module for this
-purpose (see e.g. :class:`~mvpa.clfs.stats.FixedNullDist`).
+purpose (see e.g. :class:`~mvpa2.clfs.stats.FixedNullDist`).
 
 However, as with other applications of statistics in classifier-based analyses
 there is the problem that we typically do not know the distribution of a
@@ -51,7 +51,7 @@ some relevant signal.
 """
 
 # lazy import
-from mvpa.suite import *
+from mvpa2.suite import *
 
 # enable progress output for MC estimation
 if __debug__:
@@ -74,7 +74,7 @@ fold of the cross-validation. A partitioned dataset is basically the same as the
 original dataset, but has an additional samples attribute that indicates whether
 particular samples will be the *part* of the data that is used for training the
 classifier, or for testing it. By default, the
-:class:`~mvpa.generators.partition.NFoldPartitioner` will create a sample
+:class:`~mvpa2.generators.partition.NFoldPartitioner` will create a sample
 attribute ``partitions`` that will label one :term:`chunk` in each fold
 differently from all others (hence mark it as taken-out for testing).
 """
@@ -84,7 +84,7 @@ partitioner = NFoldPartitioner()
 """
 We need two pieces for the Monte Carlo shuffling. The first of them is
 an instance of an
-:class:`~mvpa.generators.permutation.AttributePermutator` that will
+:class:`~mvpa2.generators.permutation.AttributePermutator` that will
 permute the target attribute of the dataset for each iteration.  We
 will instruct it to perform 200 permutations. In a real analysis the
 number of permutations should be larger to get stable estimates.
@@ -95,7 +95,7 @@ permutator = AttributePermutator('targets', count=200)
 """
 The second mandatory piece for a Monte-Carlo-style estimation of
 the *Null* distribution is the actual "estimator".
-:class:`~mvpa.clfs.stats.MCNullDist` will use the
+:class:`~mvpa2.clfs.stats.MCNullDist` will use the
 constructed ``permutator`` to shuffle the targets and later on report
 p-value from the left tail of the *Null* distribution, because we are
 going to compute errors and are interested in them being *lower* than
