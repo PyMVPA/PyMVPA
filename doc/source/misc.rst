@@ -62,8 +62,8 @@ is imported. It can be used from any script like this:
   >>> from mvpa import cfg
 
 By default the config manager reads settings from two config files (if any of
-them exists). The first is a file named `.pymvpa.cfg` and located in the
-user's home directory.  The second is `pymvpa.cfg` in the current directory.
+them exists). The first is a file named `.pymvpa2.cfg` and located in the
+user's home directory.  The second is `pymvpa2.cfg` in the current directory.
 Please note, that settings found in the second file override the ones in the
 first.
 
@@ -78,7 +78,7 @@ look like this::
 It consists of a section `general` containing a single setting `verbose`,
 which is set to `1`. PyMVPA recognizes a number of such sections and
 configuration variables. A full list is shown at the end of this section and
-is also available in the source package (`doc/examples/pymvpa.cfg`).
+is also available in the source package (`doc/examples/pymvpa2.cfg`).
 
 .. _Python's ConfigParser: http://docs.python.org/lib/module-ConfigParser.html
 
@@ -130,10 +130,10 @@ the `default` values is returned. Please see the documentation of
 .. index:: config file
 
 The source tarballs includes an example configuration file
-(`doc/examples/pymvpa.cfg`) with the comprehensive list of settings recognized
+(`doc/examples/pymvpa2.cfg`) with the comprehensive list of settings recognized
 by PyMVPA itself:
 
-.. literalinclude:: ../examples/pymvpa.cfg
+.. literalinclude:: ../examples/pymvpa2.cfg
    :language: ini
 
 

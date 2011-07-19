@@ -24,8 +24,8 @@ class ConfigManager(SafeConfigParser):
 
     Configuration files (INI syntax) in multiple location are passed when the
     class is instantiated or whenever `Config.reload()` is called later on.
-    By default it looks for a config file named `pymvpa.cfg` in the current
-    directory and `.pymvpa.cfg` in the user's home directory. Moreover, the
+    By default it looks for a config file named `pymvpa2.cfg` in the current
+    directory and `.pymvpa2.cfg` in the user's home directory. Moreover, the
     constructor takes an optional argument with a list of additional file names
     to parse.
 
@@ -98,8 +98,8 @@ class ConfigManager(SafeConfigParser):
         """
         # listof filenames to parse (custom plus some standard ones)
         filenames = self.__cfg_filenames \
-                    + ['pymvpa.cfg',
-                       os.path.join(os.path.expanduser('~'), '.pymvpa.cfg')]
+                    + ['pymvpa2.cfg',
+                       os.path.join(os.path.expanduser('~'), '.pymvpa2.cfg')]
 
         # read local and user-specific config
         files = self.read(filenames)
