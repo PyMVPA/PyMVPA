@@ -22,7 +22,7 @@ Miscellaneous
    Related API documentation
    =========================
 
-   .. currentmodule:: mvpa
+   .. currentmodule:: mvpa2
    .. autosummary::
       :toctree: generated
 
@@ -56,10 +56,10 @@ facility can be used to control some aspects of the behavior of PyMVPA
 itself, as well as to store and query custom configuration items, e.g. to
 control one's own analysis scripts.
 
-An instance of this configuration manager is loaded whenever the `mvpa` module
+An instance of this configuration manager is loaded whenever the `mvpa2` module
 is imported. It can be used from any script like this:
 
-  >>> from mvpa import cfg
+  >>> from mvpa2 import cfg
 
 By default the config manager reads settings from two config files (if any of
 them exists). The first is a file named `.pymvpa2.cfg` and located in the
@@ -428,7 +428,7 @@ motion-aware data detrending:
   >>>
   >>> # load motion correction output
   >>> from mvpa2.misc.fsl.base import McFlirtParams
-  >>> mc = McFlirtParams(path.join('mvpa', 'data', 'bold_mc.par'))
+  >>> mc = McFlirtParams(path.join('mvpa2', 'data', 'bold_mc.par'))
   >>>
   >>> # simple plot using pylab (use pylab.show() or pylab.savefig()
   >>> # afterwards)
