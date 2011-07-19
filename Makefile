@@ -134,7 +134,7 @@ clean:
 		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
 	-@rm -rf dist *report
-	-@rm -f *-stamp *_report.pdf *_report.log pymvpa.cfg
+	-@rm -f *-stamp *_report.pdf *_report.log pymvpa2.cfg
 
 # this target should put the source tree into shape for building the source
 # distribution
@@ -453,21 +453,21 @@ testsphinx: htmldoc
 # reloaded
 testcfg: build
 	@echo "I: Running test to check that stored configuration is acceptable."
-	-@rm -f pymvpa.cfg
-	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c 'from mvpa2.suite import *; cfg.save("pymvpa.cfg");'
+	-@rm -f pymvpa2.cfg
+	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c 'from mvpa2.suite import *; cfg.save("pymvpa2.cfg");'
 	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c 'from mvpa2.suite import *;'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa2/tests/__init__.py
 	@echo "+I: Check all known dependencies and store them"
 	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c \
-	  'from mvpa2.suite import *; mvpa2.base.externals.test_all_dependencies(force=False); cfg.save("pymvpa.cfg");'
+	  'from mvpa2.suite import *; mvpa2.base.externals.test_all_dependencies(force=False); cfg.save("pymvpa2.cfg");'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa2/tests/__init__.py
-	-@rm -f pymvpa.cfg
+	-@rm -f pymvpa2.cfg
 
 testourcfg: build
 	@echo "+I: Run non-labile testing to verify safety of shipped configuration"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPACONFIG=doc/examples/pymvpa.cfg MVPA_TESTS_LABILE=no $(PYTHON) mvpa2/tests/__init__.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPACONFIG=doc/examples/pymvpa2.cfg MVPA_TESTS_LABILE=no $(PYTHON) mvpa2/tests/__init__.py
 
 
 test: unittests testmanual testsuite testexamples testcfg testourcfg

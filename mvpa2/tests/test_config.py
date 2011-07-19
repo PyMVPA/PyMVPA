@@ -18,7 +18,7 @@ class ConfigTests(unittest.TestCase):
         cfg = ConfigManager()
 
         # does nothing so far, but will be used to test the default
-        # configuration from doc/examples/pymvpa.cfg
+        # configuration from doc/examples/pymvpa2.cfg
 
         # query for some non-existing option and check if default is returned
         query = cfg.get('dasgibtsdochnicht', 'neegarnicht', default='required')
