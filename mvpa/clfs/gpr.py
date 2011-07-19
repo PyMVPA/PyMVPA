@@ -480,7 +480,7 @@ class GPRLinearWeights(Sensitivity):
 
         if self.states.isEnabled('variances'):
             # super ugly formulas that can be quite surely improved:
-            tmp = N.linalg.inv(self._L)
+            tmp = N.linalg.inv(clf._L)
             Kyinv = Ndot(tmp.T, tmp)
             # XXX in such lengthy matrix manipulations you might better off
             #     using N.matrix where * is a matrix product
