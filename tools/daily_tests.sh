@@ -175,7 +175,10 @@ sweep()
         if [ "x$branch_has_problems" != x ]; then
             branches_with_problems+="\n  $branch: $branch_has_problems"
             echo " D: Reporting WTF due to errors:"
-            $precmd python -c 'import mvpa2; print mvpa2.wtf()'
+            # allow for both existing API versions
+            $precmd python -c 'import mvpa2; print mvpa2.wtf()' || \
+                $precmd python -c 'import mvpa; print mvpa.wtf()'
+
         fi
         } &> "$blogfile"
         blogfiles+=" --file-attach $blogfile"
