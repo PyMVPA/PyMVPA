@@ -225,7 +225,7 @@ If an example involves any kind of interactive step, it should honor the
 all examples. In case of a matplotlib-based visualization such snippet should
 be sufficient::
 
-  from mvpa import cfg
+  from mvpa2 import cfg
   if cfg.getboolean('examples', 'interactive', True):
       pl.show()
 
@@ -278,7 +278,7 @@ While working on the project we adhere to the following rules:
   performance, which is turn is randomly initialized) should be made conditional
   like this:
 
-    >>> from mvpa import cfg
+    >>> from mvpa2 import cfg
     >>> if cfg.getboolean('tests', 'labile', default='yes'):
     ...     pass
 

@@ -11,7 +11,7 @@
 
 import unittest
 import numpy as np
-from mvpa import cfg
+from mvpa2 import cfg
 from mvpa2.mappers.som import SimpleSOMMapper
 from mvpa2.datasets.base import dataset_wizard
 

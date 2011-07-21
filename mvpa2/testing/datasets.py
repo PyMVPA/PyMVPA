@@ -21,7 +21,7 @@ import traceback as tbm
 import sys
 import numpy as np
 
-from mvpa import cfg, externals
+from mvpa2 import cfg, externals
 from mvpa2.datasets.base import Dataset, HollowSamples
 from mvpa2.generators.partition import OddEvenPartitioner
 from mvpa2.misc.data_generators import *

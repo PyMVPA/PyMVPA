@@ -210,7 +210,7 @@ class ClassifiersTests(unittest.TestCase):
         # would use the same value.  Currently we have such stochastic
         # behavior in SMLR
         if 'seed' in lrn.params:
-            from mvpa import _random_seed
+            from mvpa2 import _random_seed
             lrn = lrn.clone()              # clone the beast
             lrn.params.seed = _random_seed # reuse the same seed
         lrn_ = lrn.clone()

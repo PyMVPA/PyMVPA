@@ -49,7 +49,7 @@ import sys
 
 from os import environ
 
-from mvpa import _random_seed
+from mvpa2 import _random_seed
 profilelevel = None
 
 if environ.has_key('PROFILELEVEL'):

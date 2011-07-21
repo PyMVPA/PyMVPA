@@ -13,7 +13,7 @@ skip_if_no_external('glmnet')
 
 from mvpa2.testing.datasets import *
 
-from mvpa import cfg
+from mvpa2 import cfg
 from mvpa2.clfs.glmnet import GLMNET_R,GLMNET_C
 
 #from scipy.stats import pearsonr

@@ -14,7 +14,7 @@ import os
 import numpy as np                      # NumPy is required anyways
 
 from mvpa2.base import warning
-from mvpa import cfg
+from mvpa2 import cfg
 from mvpa2.misc.support import SmartVersion
 
 if __debug__:

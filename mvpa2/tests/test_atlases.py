@@ -20,7 +20,7 @@ from mvpa2.base import externals
 from mvpa2.atlases import *
 
 import os
-from mvpa import pymvpa_dataroot
+from mvpa2 import pymvpa_dataroot
 
 """Basic tests for support of atlases such as the ones
 shipped with FSL

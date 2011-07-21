@@ -10,7 +10,7 @@
 
 import unittest
 import numpy as np
-from mvpa import _random_seed, cfg
+from mvpa2 import _random_seed, cfg
 from mvpa2.base import externals, warning
 
 
