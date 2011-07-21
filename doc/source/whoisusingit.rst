@@ -48,6 +48,10 @@ Institutions Where PyMVPA Is Known To Be Used
 Studies employing PyMVPA
 ========================
 
+* :ref:`Carlin et al., Cerebral Cortex (In press, 2011) <CRK+11>`:
+  Direction-Sensitive Codes for Observed Head Turns in Human Superior Temporal
+  Sulcus.
+
 * :ref:`Kubilius et al., Psychological Science (In press, 2011) <KWO11>`:
   Emergence of perceptual gestalts in the human visual cortex: The case of the
   configural superiority effect.  Complete suite of sources from stimuli

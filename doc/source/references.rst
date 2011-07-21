@@ -30,6 +30,14 @@ experiments.
   URL: http://www.ncbi.nlm.nih.gov/pubmed/19938211
 
 
+.. _CRK+11:
+
+**Carlin, J. D., Rowe, J. B., Kriegeskorte, N., Thompson, R. & Calder, A. J.** (2011). Direction-Sensitive Codes for Observed Head Turns in Human Superior Temporal Sulcus. *Cerebral Cortex*, **, .
+  Keywords: :keyword:`pymvpa`, :keyword:`fMRI`, :keyword:`searchlight`
+
+  DOI: http://dx.doi.org/10.1093/cercor/bhr061
+
+
 .. _CPL+06:
 
 **Chen, X., Pereira, F., Lee, W., Strother, S. & Mitchell, T.** (2006). Exploring predictive and reproducible modeling with the single-subject FIAC dataset. *Human Brain Mapping*, *27*, 452–461.
