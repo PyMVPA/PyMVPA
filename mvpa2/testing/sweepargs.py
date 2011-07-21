@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import sys
 import traceback as tbm
 
-from mvpa import cfg
+from mvpa2 import cfg
 from mvpa2.testing.tools import SkipTest
 
 if __debug__:

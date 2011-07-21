@@ -11,13 +11,13 @@
 import os
 import numpy as np
 
-from mvpa import cfg
+from mvpa2 import cfg
 from mvpa2.testing import *
 
 if not externals.exists('nibabel'):
     raise SkipTest
 
-from mvpa import pymvpa_dataroot
+from mvpa2 import pymvpa_dataroot
 from mvpa2.datasets.mri import fmri_dataset, _load_anyimg, map2nifti
 from mvpa2.datasets.eventrelated import eventrelated_dataset
 from mvpa2.misc.fsl import FslEV3

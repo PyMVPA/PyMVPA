@@ -14,7 +14,7 @@ import os
 import numpy as np
 
 from mvpa2.datasets.base import dataset_wizard, Dataset
-from mvpa import pymvpa_dataroot, pymvpa_datadbroot
+from mvpa2 import pymvpa_dataroot, pymvpa_datadbroot
 
 if __debug__:
     from mvpa2.base import debug

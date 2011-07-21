@@ -11,7 +11,7 @@
 from mvpa2.testing import *
 from mvpa2.testing.datasets import datasets
 
-from mvpa import cfg
+from mvpa2 import cfg
 from mvpa2.base import externals
 from mvpa2.clfs.stats import MCNullDist, FixedNullDist, NullDist
 from mvpa2.generators.permutation import AttributePermutator

@@ -15,7 +15,7 @@ from mvpa2.testing.datasets import *
 
 skip_if_no_external('elasticnet')
 
-from mvpa import cfg
+from mvpa2 import cfg
 from mvpa2.clfs.enet import ENET
 from scipy.stats import pearsonr
 from mvpa2.misc.data_generators import normal_feature_dataset

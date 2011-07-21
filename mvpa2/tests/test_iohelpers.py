@@ -15,7 +15,7 @@ import numpy as np
 
 from mvpa2.testing.tools import ok_
 
-from mvpa import pymvpa_dataroot
+from mvpa2 import pymvpa_dataroot
 from mvpa2.datasets.eventrelated import find_events
 from mvpa2.misc.io import *
 from mvpa2.misc.fsl import *

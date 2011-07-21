@@ -16,7 +16,7 @@ import re, textwrap
 import numpy as np
 from math import ceil
 from StringIO import StringIO
-from mvpa import cfg
+from mvpa2 import cfg
 
 from mvpa2.base.externals import versions, exists
 if __debug__:

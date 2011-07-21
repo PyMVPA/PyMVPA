@@ -13,7 +13,7 @@ skip_if_no_external('lars')
 
 from mvpa2.testing.datasets import datasets
 
-from mvpa import cfg
+from mvpa2 import cfg
 from mvpa2.clfs.lars import LARS
 from scipy.stats import pearsonr
 from mvpa2.misc.data_generators import normal_feature_dataset

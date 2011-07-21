@@ -10,7 +10,7 @@
 
 import unittest
 
-from mvpa import cfg
+from mvpa2 import cfg
 from mvpa2.base import externals
 from mvpa2.support import copy
 

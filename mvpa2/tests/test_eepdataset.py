@@ -11,7 +11,7 @@
 import os.path
 import numpy as np
 
-from mvpa import pymvpa_dataroot
+from mvpa2 import pymvpa_dataroot
 from mvpa2.base import externals
 from mvpa2.datasets.eep import eep_dataset, EEPBin
 
