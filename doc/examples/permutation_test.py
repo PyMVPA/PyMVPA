@@ -124,7 +124,7 @@ err = cv(ds)
 
 """
 Now we have a usual cross-validation error and ``cv`` stores
-:term:`conditional attribute`s such as confusion matrices:
+:term:`conditional attribute`s such as confusion matrices`:
 """
 
 print 'CV-error:', 1 - cv.ca.stats.stats['ACC']
