@@ -196,13 +196,13 @@ for more information.
 Debian
 ------
 
-PyMVPA is available as an `official Debian package`_ (``python-mvpa``;
-since *lenny*). The documentation is provided by the optional
-`python-mvpa-doc` package. To install PyMVPA simply do::
+PyMVPA is available as an `official Debian package`_ (``python-mvpa2`` or
+``python-mvpa`` for the previous stable release). The documentation is provided
+by the optional `python-mvpa2-doc` package. To install PyMVPA simply do::
 
-  sudo aptitude install python-mvpa
+  sudo aptitude install python-mvpa2
 
-.. _official Debian package: http://packages.debian.org/python-mvpa
+.. _official Debian package: http://packages.debian.org/python-mvpa2
 
 .. index:: backports, Debian, Ubuntu
 .. _install_debianbackports:
