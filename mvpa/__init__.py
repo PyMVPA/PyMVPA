@@ -45,7 +45,7 @@ The mvpa package contains the following subpackages and modules:
 __docformat__ = 'restructuredtext'
 
 # canonical PyMVPA version string
-__version__ = '0.6.0~rc3'
+__version__ = '0.6.0~rc4'
 
 import os
 import random
