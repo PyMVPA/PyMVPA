@@ -19,6 +19,8 @@ import mvpa2.base.externals as externals
 if externals.exists('lars', raise_=True):
     import rpy2.robjects
     import rpy2.robjects.numpy2ri
+    if hasattr(rpy2.robjects.numpy2ri,'activate'):
+        rpy2.robjects.numpy2ri.activate()
     RRuntimeError = rpy2.robjects.rinterface.RRuntimeError
     r = rpy2.robjects.r
     r.library('lars')
