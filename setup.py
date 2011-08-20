@@ -123,7 +123,7 @@ setup(name         = 'pymvpa2',
           "PyMVPA is truly free software (in every respect) and " \
           "additionally requires nothing but free-software to run.",
       # please maintain alphanumeric order
-      packages     = [ 'mvpa',
+      packages     = [ 'mvpa2',
                        'mvpa2.algorithms',
                        'mvpa2.atlases',
                        'mvpa2.base',
@@ -150,12 +150,12 @@ setup(name         = 'pymvpa2',
                        'mvpa2.tests',
                        'mvpa2.tests.badexternals',
                        ],
-      data_files = [('mvpa', ['mvpa2/COMMIT_HASH']),
+      data_files = [('mvpa2', ['mvpa2/COMMIT_HASH']),
                     ('mvpa2/data',
-                     [f for f in glob(os.path.join('mvpa', 'data', '*'))
+                     [f for f in glob(os.path.join('mvpa2', 'data', '*'))
                          if os.path.isfile(f)]),
                     ('mvpa2/data/bv',
-                     [f for f in glob(os.path.join('mvpa', 'data', 'bv', '*'))
+                     [f for f in glob(os.path.join('mvpa2', 'data', 'bv', '*'))
                          if os.path.isfile(f)])],
       scripts      = glob(os.path.join('bin', '*')),
       ext_modules  = ext_modules
