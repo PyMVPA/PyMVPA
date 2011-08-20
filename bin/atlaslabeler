@@ -441,7 +441,7 @@ if not options.forbidDirectMapping \
             "Cannot do direct mapping between input image in %s space and"
             " atlas in %s space. Use -I switch to override input space if"
             " it misspecified, or use -T to provide transformation. Trying"
-            " to proceed" %(options.inputSpace, atlas.space), 1)
+            " to proceed" %(options.inputSpace, atlas.space))
         query_voxel = False
     elif not (niftiInput.get_header().get_qform() == atlas._image.get_header().get_qform()).all():
         if options.atlasImageFile is None:
