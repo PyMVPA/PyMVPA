@@ -213,12 +213,21 @@ class Learner(Node):
         if self.is_trained:
             # already trained
             if self.force_train:
+                if __debug__:
+                    debug('LRN', "Forcing training of %s on %s",
+                          (self, ds))
                 # but retraining is enforced
                 self.train(ds)
+            elif __debug__:
+                debug('LRN', "Skipping training of already trained %s on %s",
+                      (self, ds))
         else:
             # not trained
             if self.auto_train:
                 # auto training requested
+                if __debug__:
+                    debug('LRN', "Auto-training %s on %s",
+                          (self, ds))
                 self.train(ds)
             else:
                 # we always have to have trained before using a learner
