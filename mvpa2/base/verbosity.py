@@ -377,6 +377,7 @@ if __debug__:
     from os.path import basename, dirname
 
     __pymvpa_pid__ = getpid()
+
     def parse_status(field='VmSize'):
         """Return stat information on current process.
 
@@ -397,6 +398,21 @@ if __debug__:
         except IOError:
             pass
         return match
+
+    try:
+        # we prefer to use psutil if available
+        # and let's stay away from "externals" module for now
+        from psutil import Process
+        __pymvpa_process__ = Process(__pymvpa_pid__)
+
+        def get_vmem():
+            mi = __pymvpa_process__.get_memory_info()
+            vms = mi.vms/1024
+            rss = mi.rss/1024
+            return "RSS/VMS: %d/%d KB" % (rss, vms)
+
+    except ImportError:
+        get_vmem = lambda: parse_status(field='VmSize')
 
     def mbasename(s):
         """Custom function to include directory name if filename is too common
@@ -487,8 +503,8 @@ if __debug__:
         _known_metrics = {
             # TODO: make up Windows-friendly version or pure Python platform
             # independent version (probably just make use of psutil)
-            'vmem' : lambda : parse_status(field='VmSize'),
-            'pid' : lambda : parse_status(field='Pid'),
+            'vmem' : get_vmem,
+            'pid' : getpid, # lambda : parse_status(field='Pid'),
             'asctime' : time.asctime,
             'tb' : TraceBack(),
             'tbc' : TraceBack(collide=True),
