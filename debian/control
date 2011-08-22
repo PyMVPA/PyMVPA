@@ -14,7 +14,7 @@ Architecture: all
 Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-mvpa-snapshot-lib(>= ${source:Version})
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
-Recommends: python-nibabel, python-psyco, python-mdp, python-scipy, shogun-python-modular, python-pywt, python-matplotlib, python-reportlab, python-h5py
+Recommends: python-nibabel, python-psyco, python-mdp, python-scipy, shogun-python-modular, python-pywt, python-matplotlib, python-reportlab, python-h5py, python-psutil
 Suggests: fslview, fsl, python-nose, python-lxml, python-openopt, python-rpy2, python-mvpa-doc, python-scikits-learn
 Conflicts: python-mvpa
 Description: multivariate pattern analysis with Python
