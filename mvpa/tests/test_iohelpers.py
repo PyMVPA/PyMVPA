@@ -8,12 +8,13 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA IO helpers"""
 
+import re
 import os
 import unittest
 from tempfile import mkstemp
 import numpy as np
 
-from mvpa.testing.tools import ok_
+from mvpa.testing.tools import ok_, assert_equal
 
 from mvpa import pymvpa_dataroot
 from mvpa.datasets.eventrelated import find_events
@@ -228,6 +229,31 @@ class IOHelperTests(unittest.TestCase):
 
         self.failUnless(glm.mat.shape == (850, 6))
         self.failUnless(len(glm.ppheights) == 6)
+
+    def test_read_fsl_design(self):
+        fname = os.path.join(pymvpa_dataroot,
+                             'sample_design.fsf')
+        # use our function
+        design = read_fsl_design(fname)
+        # and just load manually to see either we match fine
+        set_lines = [x for x in open(fname).readlines()
+                     if x.startswith('set ')]
+        assert_equal(len(set_lines), len(design))
+
+        # figure out which one is missing
+        """TODO: would require the same special treatment for _files fields
+        re_set = re.compile("set ([^)]*\)).*")
+        for line in set_lines:
+            key = re_set.search(line).groups()[0]
+            if not key in design:
+                raise AssertionError(
+                    "Key %s was not found in read FSL design" % key)
+        key_list = [' '.join(l.split(None,2)[1:2]) for l in set_lines]
+        for k in set(key_list):
+            if len([key for key in key_list if key == k]) == 2:
+                raise AssertionError(
+                    "Got the non-unique beast %s" % k)
+                    """
 
 def suite():
     return unittest.makeSuite(IOHelperTests)
