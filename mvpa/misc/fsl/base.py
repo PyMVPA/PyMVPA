@@ -269,7 +269,7 @@ def read_fsl_design(fsf_file):
             continue
 
         # strip leading TCL 'set'
-        key, value = line.split()[1:]
+        key, value = line.split(None, 2)[1:]
 
         # fixup the 'y-' thing
         if value == 'y-':
