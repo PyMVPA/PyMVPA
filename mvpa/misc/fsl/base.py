@@ -42,7 +42,7 @@ class FslEV3(ColumnData):
     def getNEVs(self):
         """Returns the number of EVs in the file.
         """
-        return self.getNRows()
+        return self.nrows
 
 
     def getEV(self, evid):
@@ -178,6 +178,7 @@ class FslGLMDesign(object):
 
         # open the file compressed or not
         if fname.endswith('.gz'):
+            import gzip
             fh = gzip.open(fname, 'r')
         else:
             fh = open(fname, 'r')
