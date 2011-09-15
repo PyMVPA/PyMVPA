@@ -976,6 +976,49 @@ class ClassifiersTests(unittest.TestCase):
             # Just validate that everything is ok
             #self.failUnless(str(cv.ca.stats) != "")
 
+    def _test_gideon_weird_case(self):
+        """'The utter collapse' -- communicated by Peter J. Kohler
+
+        Desire to collapse all samples per each category in training
+        and testing sets, thus resulting only in a single
+        sample/category per training and per testing.  As it is now,
+        CrossValidation on MappedClassifier would not work
+
+        observations: chance distribution obviously gets wide, but
+        also gets skewed to anti-learning on nfolds like 4.
+        
+        """
+        from mvpa2.mappers.fx import mean_group_sample
+        from mvpa2.clfs.knn import kNN
+        clf = kNN()
+        print "HERE"
+        ds = datasets['uni2large'].copy()
+        ds = ds[ds.sa.chunks < 9]
+        accs = []
+        for i in xrange(10):          # # of random samples
+            ds.samples = np.random.randn(*ds.shape)
+            if False: # this would have been a native way IF we allowed change of number of samples
+                clf2 = MappedClassifier(clf=kNN(), #clf,
+                                        mapper=mean_group_sample(['targets', 'partitions']))
+                cv = CrossValidation(clf2, NFoldPartitioner(4), postproc=None,
+                                     enable_ca=['stats'])
+                print cv(ds)
+            else:
+                from mvpa2.clfs.transerror import ConfusionMatrix
+                partitioner = NFoldPartitioner(6)
+                meaner = mean_group_sample(['targets', 'partitions'])
+                cm = ConfusionMatrix()
+                te = TransferMeasure(clf, Splitter('partitions'),
+                                     postproc=BinaryFxNode(mean_mismatch_error,
+                                                           'targets'),
+                                     enable_ca = ['stats']
+                                     )
+                for part in partitioner.generate(ds):
+                    ds_meaned = meaner(part)
+                    error = np.asscalar(te(ds_meaned))
+                    cm += te.ca.stats
+                print i, cm.stats['ACC']
+                accs.append(cm.stats['ACC'])
 
 
 def suite():
