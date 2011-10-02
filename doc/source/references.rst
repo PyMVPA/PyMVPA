@@ -232,6 +232,14 @@ experiments.
   DOI: http://dx.doi.org/10.1038/nn1444
 
 
+.. _KKO+11:
+
+**Kaunitz, L. N., Kamienkowski, J. E., Olivetti, E., Murphy, B., Avesani, P. & Melcher, D. P.** (2011). Intercepting the first pass: rapid categorization is suppressed for unseen stimuli. *Frontiers in Perception Science*, *2*, 198.
+  Keywords: :keyword:`pymvpa`, :keyword:`eeg`
+
+  DOI: http://dx.doi.org/10.3389/fpsyg.2011.00198
+
+
 .. _KFS+09:
 
 **Kienzle, W., Franz, M. O., Schölkopf, B. & Wichmann, F. A.** (In press). Center-surround patterns emerge as optimal predictors for human saccade targets. *Journal of Vision*.
