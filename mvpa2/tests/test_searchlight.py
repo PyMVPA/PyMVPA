@@ -14,7 +14,7 @@ from mvpa2.testing import *
 from mvpa2.testing.clfs import *
 from mvpa2.testing.datasets import *
 
-from mvpa2.datasets import Dataset
+from mvpa2.datasets import Dataset, hstack
 from mvpa2.base import externals
 from mvpa2.clfs.transerror import ConfusionMatrix
 from mvpa2.measures.searchlight import sphere_searchlight, Searchlight
@@ -22,7 +22,8 @@ from mvpa2.measures.gnbsearchlight import sphere_gnbsearchlight,\
      GNBSearchlight
 
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
-from mvpa2.generators.partition import NFoldPartitioner
+from mvpa2.misc.errorfx import corr_error
+from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.measures.base import CrossValidation
 from mvpa2.clfs.gnb import GNB
@@ -290,6 +291,50 @@ class SearchlightTests(unittest.TestCase):
                           nproc=1)(ds)
         assert_array_equal(res.samples,
                            [['0+2', '1+3', '0+2+4', '1+3+5', '2+4', '3+5']])
+
+    #@sweepargs(regr=regrswh[:])
+    def test_regression_with_additional_sa(self):
+        regr = regrswh[:][0]
+        ds = datasets['3dsmall'].copy()
+        ds.fa['voxel_indices'] = ds.fa.myspace
+
+        # Create a new sample attribute which will be used along with
+        # every searchlight
+        ds.sa['beh'] = np.random.normal(size=(ds.nsamples,2))
+
+        # and now for fun -- lets create custom linar regression
+        # targets out of some random feature and beh linearly combined
+        rfeature = np.random.randint(ds.nfeatures)
+        ds.sa.targets = np.dot(
+            np.hstack((ds.sa.beh,
+                       ds.samples[:, rfeature:rfeature+1])),
+            np.array([0.3, 0.2, 0.3]))
+
+        class CrossValidationWithBeh(CrossValidation):
+            """An adapter for regular CV which would hstack
+               sa.beh to the searchlighting ds"""
+            def _call(self, ds):
+                return CrossValidation._call(
+                    self,
+                    Dataset(np.hstack((ds, ds.sa.beh)),
+                            sa=ds.sa))
+        cvbeh = CrossValidationWithBeh(regr, OddEvenPartitioner(),
+                                       errorfx=corr_error)
+        # regular cv
+        cv = CrossValidation(regr, OddEvenPartitioner(),
+                             errorfx=corr_error)
+
+        slbeh = sphere_searchlight(cvbeh, radius=1)
+        slmapbeh = slbeh(ds)
+        sl = sphere_searchlight(cv, radius=1)
+        slmap = sl(ds)
+
+        assert_equal(slmap.shape, (2, ds.nfeatures))
+        # SL which had access to beh should have got for sure better
+        # results especially in the vicinity of the chosen feature...
+        ok_(np.all(slmapbeh.samples[:, sl.queryengine.query_byid(rfeature)] <=
+                   slmap.samples[:, sl.queryengine.query_byid(rfeature)]))
+        # elsewhere they should tend to be better but not guaranteed
 
 def suite():
     return unittest.makeSuite(SearchlightTests)
