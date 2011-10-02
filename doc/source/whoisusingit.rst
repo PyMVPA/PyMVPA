@@ -48,11 +48,14 @@ Institutions Where PyMVPA Is Known To Be Used
 Studies employing PyMVPA
 ========================
 
-* :ref:`Carlin et al., Cerebral Cortex (In press, 2011) <CRK+11>`:
+* :ref:`Kaunitz et al., Frontiers in Perception Science (2011) <KKO+11>`:
+  Intercepting the first pass: rapid categorization is suppressed for unseen stimuli.
+
+* :ref:`Carlin et al., Cerebral Cortex (2011) <CRK+11>`:
   Direction-Sensitive Codes for Observed Head Turns in Human Superior Temporal
   Sulcus.
 
-* :ref:`Kubilius et al., Psychological Science (In press, 2011) <KWO11>`:
+* :ref:`Kubilius et al., Psychological Science (2011) <KWO11>`:
   Emergence of perceptual gestalts in the human visual cortex: The case of the
   configural superiority effect.  Complete suite of sources from stimuli
   delivery (PsychoPy) to data analysis (PyMVPA) is available from
