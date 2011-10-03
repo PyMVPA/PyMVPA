@@ -325,7 +325,7 @@ SVM/SVR definition is dependent on specifying kernel, implementation
 type, and parameters for each of them which vary depending on the
 choices made.
 
-Desired implementation is specified in `svm_impl` argument. Here
+Desired implementation is specified in ``svm_impl`` argument. Here
 is the list if implementations known to this class, along with
 specific to them parameters (described below among the rest of
 parameters), and what tasks it is capable to deal with
@@ -364,7 +364,7 @@ parameters), and what tasks it is capable to deal with
         # Describe kernels
         idoc += """
 
-Kernel choice is specified as a kernel instance with kwargument 'kernel`.
+Kernel choice is specified as a kernel instance with kwargument ``kernel``.
 Some kernels (e.g. Linear) might allow computation of per feature
 sensitivity.
 
