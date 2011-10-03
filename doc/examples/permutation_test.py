@@ -34,7 +34,7 @@ One approach to deal with this situation is to *estimate* the *Null*
 distribution using permutation testing. The *Null* distribution is then
 estimated by computing the measure of interest multiple times using original
 data samples but with permuted targets.  Since quite often the exploration of
-all permutations is infeasible, Monte-Carlo testing (see :ref:`Nichols
+all permutations is unfeasible, Monte-Carlo testing (see :ref:`Nichols
 et al. (2006) <NH02>`) allows to obtain stable estimate with only a
 limited number of random permutations.
 
@@ -166,7 +166,7 @@ expected chance-level and the empirical error value is in the far left tail,
 thus unlikely to belong to *Null* distribution, and hence the low p-value.
 
 This could be the end, but sometimes one needs to have a closer look. Let's say your
-data is not that homogeneous. Let's say that some :term:`chunks` may be very
+data is not that homogeneous. Let's say that some :term:`chunk <Chunk>` may be very
 different from others. You might want to look at the error value probability for
 specific cross-validation folds. Sounds complicated? Luckily it is very simple.
 It only needs a tiny change in the cross-validation setup -- the removal of the

@@ -59,7 +59,7 @@ class Partitioner(Node):
           Sample attribute used to determine splits.
         space : str
           Name of the to be created sample attribute defining the partitions.
-          In addition, a dataset attribute named '`space`_set' will be added
+          In addition, a dataset attribute named '``space``\_set' will be added
           to each output dataset, indicating the number of the partition set
           it corresponds to.
         """
@@ -366,11 +366,11 @@ class CustomPartitioner(Partitioner):
 class NFoldPartitioner(Partitioner):
     """Generic N-fold data partitioner.
 
-    Given a dataset with N chunks, with ``cvtype``=1 (which is default), it would
-    generate N partition sets, where each chunk is sequentially taken out (with
-    replacement) to form a second partition, while all other samples together
-    form the first partition.  Example, if there are 4 chunks, partition sets
-    for ``cvtype``=1 are::
+    Given a dataset with N chunks, with ``cvtype`` = 1 (which is default), it
+    would generate N partition sets, where each chunk is sequentially taken out
+    (with replacement) to form a second partition, while all other samples
+    together form the first partition.  Example, if there are 4 chunks, partition
+    sets for ``cvtype`` = 1 are::
 
         [[1, 2, 3], [0]]
         [[0, 2, 3], [1]]
@@ -378,7 +378,7 @@ class NFoldPartitioner(Partitioner):
         [[0, 1, 2], [3]]
 
     If ``cvtype``>1, then all possible combinations of ``cvtype`` number of
-    chunks are taken out, so for ``cvtype``=2 in previous example yields::
+    chunks are taken out, so for ``cvtype`` = 2 in previous example yields::
 
         [[2, 3], [0, 1]]
         [[1, 3], [0, 2]]
