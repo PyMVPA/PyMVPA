@@ -535,6 +535,28 @@ class SensitivityAnalysersTests(unittest.TestCase):
         assert_equal(res.shape, (1, nsplits))
         assert_array_equal(res.samples[0], [18,1,1])
 
+    def test_custom_combined_selectors(self):
+        """Test combination of the selectors in a single function
+        """
+
+        def custom_tail_selector(seq):
+            seq1 = FractionTailSelector(0.01, mode='discard', tail='upper')(seq)
+            seq2 = FractionTailSelector(0.05, mode='select', tail='upper')(seq)
+            return list(set(seq1).intersection(seq2))
+
+        seq = np.arange(100)
+        seq_ = custom_tail_selector(seq)
+
+        assert_array_equal(sorted(seq_), [95, 96, 97, 98])
+        # verify that this function could be used in place of the selector
+        fs = SensitivityBasedFeatureSelection(
+                    OneWayAnova(),
+                    custom_tail_selector)
+        ds = datasets['3dsmall']
+        fs.train(ds)          # XXX: why needs to be trained here explicitly?
+        ds_ = fs(ds)
+        assert_equal(ds_.nfeatures, int(ds.nfeatures * 0.04))
+
 
 def suite():
     return unittest.makeSuite(SensitivityAnalysersTests)
