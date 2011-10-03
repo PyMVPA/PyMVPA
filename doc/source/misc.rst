@@ -28,7 +28,6 @@ Miscellaneous
 
       atlases
       misc.args
-      misc.attributes
       misc.attrmap
       misc.cmdline
       misc.data_generators
@@ -36,9 +35,7 @@ Miscellaneous
       misc.exceptions
       misc.fx
       misc.neighborhood
-      misc.param
       misc.sampleslookup
-      misc.state
       misc.stats
       misc.support
       misc.transformers
