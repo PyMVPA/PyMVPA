@@ -59,7 +59,7 @@ Studies employing PyMVPA
   Emergence of perceptual gestalts in the human visual cortex: The case of the
   configural superiority effect.  Complete suite of sources from stimuli
   delivery (PsychoPy) to data analysis (PyMVPA) is available from
-  https://bitbucket.org/qbilius/confsup/src
+  https://bitbucket.org/qbilius/confsup
 
 * :ref:`Manelis et al., Cerebral Cortex (2011) <MRH11>`: Dynamic Changes In
   The Medial Temporal Lobe During Incidental Learning Of Object–Location

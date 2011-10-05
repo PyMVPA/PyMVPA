@@ -276,6 +276,8 @@ experiments.
 **Kubilius, J., Wagemans, J. & Op de Beeck, H.** (2011). Emergence of perceptual gestalts in the human visual cortex: The case of the configural superiority effect. *Psychological Science*, *in press*.
   Keywords: :keyword:`pymvpa`, :keyword:`fMRI`
 
+  DOI: http://dx.doi.org/10.1177/0956797611417000
+
 
 .. _LSC+05:
 
