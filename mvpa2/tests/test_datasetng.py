@@ -880,14 +880,12 @@ def test_dataset_summary():
             ok_(not summary in s2)
 
 @nodebug(['ID_IN_REPR', 'MODULE_IN_REPR'])
-def test_h5py_io():
+@with_tempfile(suffix='.hdf5')
+def test_h5py_io(dsfile):
     skip_if_no_external('h5py')
-    # TODO: assure removal even if test fails
-    tempdir = tempfile.mkdtemp()
 
     # store random dataset to file
     ds = datasets['3dlarge']
-    dsfile = os.path.join(tempdir, 'plain.hdf5')
     ds.save(dsfile)
 
     # reload and check for identity
@@ -913,9 +911,6 @@ def test_h5py_io():
         #assert_equal('#'.join(repr(ds.a.mapper).split('#')[:-1]),
         #             '#'.join(repr(ds2.a.mapper).split('#')[:-1]))
         pass
-
-    #cleanup temp dir
-    shutil.rmtree(tempdir, ignore_errors=True)
 
 
 def test_hollow_samples():
