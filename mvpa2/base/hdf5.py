@@ -483,6 +483,11 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             debug('HDF5', "Store '%s' (ref: %i) in [%s/%s]"
                           % (type(obj), obj_id, hdf.name, name))
         # the real action is here
+        if is_scalar and 'compression' in kwargs:
+            # recent (>= 2.0.0) h5py is strict not allowing
+            # compression to be set for scalar types
+            kwargs = dict([(k, v) for (k, v) in kwargs.iteritems()
+                           if k != 'compression'])
         hdf.create_dataset(name, None, None, obj, **kwargs)
         if not noid and not is_scalar:
             # objref for scalar items would be overkill
