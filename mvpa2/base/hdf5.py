@@ -103,6 +103,12 @@ def hdf2obj(hdf, memo=None):
         if 'is_scalar' in hdf.attrs:
             # extract the scalar from the 0D array
             obj = hdf[()]
+            # and coerce it back into the native Python type if necessary
+            if issubclass(type(obj), np.generic):
+                obj = np.asscalar(obj)
+        elif 'is_numpy_scalar' in hdf.attrs:
+            # extract the scalar from the 0D array as is
+            obj = hdf[()]
         else:
             # read array-dataset into an array
             obj = np.empty(hdf.shape, hdf.dtype)
@@ -476,6 +482,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
     # right away
     if np.isscalar(obj) or isinstance(obj, np.ndarray):
         is_scalar = np.isscalar(obj)
+        is_numpy_scalar = issubclass(type(obj), np.generic)
         if name is None:
             # HDF5 cannot handle datasets without a name
             name = '__unnamed__'
@@ -499,7 +506,10 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         if is_obj_array:
             # we need to confess the true origin
             hdf[name].attrs.create('is_objarray', True)
-        if is_scalar:
+        # handle scalars giving numpy scalars different flag
+        if is_numpy_scalar:
+            hdf[name].attrs.create('is_numpy_scalar', True)
+        elif is_scalar:
             hdf[name].attrs.create('is_scalar', True)
         return
 
