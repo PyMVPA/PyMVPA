@@ -425,9 +425,7 @@ def _repr_attrs(obj, attrs, default=None, error_value='ERROR'):
     out = []
     for a in attrs:
         v = getattr(obj, a, error_value)
-        # reloaded from hdf5 scalars might differ in type: e.g. bool
-        # vs np.bool_ so the identity check (is) is not sufficient
-        if not (v is default or (np.isscalar(default) and default == v)):
+        if not v is default:
             out.append('%s=%r' % (a, v))
     return out
 
