@@ -882,30 +882,37 @@ def test_dataset_summary():
 @nodebug(['ID_IN_REPR', 'MODULE_IN_REPR'])
 def test_h5py_io():
     skip_if_no_external('h5py')
-
+    # TODO: assure removal even if test fails
     tempdir = tempfile.mkdtemp()
 
     # store random dataset to file
     ds = datasets['3dlarge']
-    ds.save(os.path.join(tempdir, 'plain.hdf5'))
+    dsfile = os.path.join(tempdir, 'plain.hdf5')
+    ds.save(dsfile)
 
     # reload and check for identity
-    ds2 = Dataset.from_hdf5(os.path.join(tempdir, 'plain.hdf5'))
+    ds2 = Dataset.from_hdf5(dsfile)
     assert_array_equal(ds.samples, ds2.samples)
     for attr in ds.sa:
         assert_array_equal(ds.sa[attr].value, ds2.sa[attr].value)
     for attr in ds.fa:
         assert_array_equal(ds.fa[attr].value, ds2.fa[attr].value)
     assert_true(len(ds.a.mapper), 2)
+
     # since we have no __equal__ do at least some comparison
+    assert_equal(repr(ds.a.mapper), repr(ds2.a.mapper))
+
     if __debug__:
         # debug mode needs special test as it enhances the repr output
         # with module info and id() appendix for objects
-        assert_equal('#'.join(repr(ds.a.mapper).split('#')[:-1]),
-                     '#'.join(repr(ds2.a.mapper).split('#')[:-1]))
-    else:
-        assert_equal(repr(ds.a.mapper), repr(ds2.a.mapper))
-
+        #
+        # INCORRECT slicing (:-1) since without any hash it results in
+        # empty list -- moreover we seems of not reporting ids with #
+        # any longer
+        #
+        #assert_equal('#'.join(repr(ds.a.mapper).split('#')[:-1]),
+        #             '#'.join(repr(ds2.a.mapper).split('#')[:-1]))
+        pass
 
     #cleanup temp dir
     shutil.rmtree(tempdir, ignore_errors=True)
