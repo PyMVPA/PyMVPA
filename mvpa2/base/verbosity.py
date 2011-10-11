@@ -406,13 +406,22 @@ if __debug__:
         __pymvpa_process__ = Process(__pymvpa_pid__)
 
         def get_vmem():
+            """Return a string summary about utilization of virtual memory
+
+            Generic implementation using psutil
+            """
             mi = __pymvpa_process__.get_memory_info()
             vms = mi.vms/1024
             rss = mi.rss/1024
             return "RSS/VMS: %d/%d KB" % (rss, vms)
 
     except ImportError:
-        get_vmem = lambda: parse_status(field='VmSize')
+        def get_vmem():
+            """Return a string summary about utilization of virtual memory
+
+            Deprecated implementation which relied on parsing proc/PID/status
+            """
+            return parse_status(field='VmSize')
 
     def mbasename(s):
         """Custom function to include directory name if filename is too common
