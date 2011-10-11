@@ -62,7 +62,7 @@ def test_h5py_clfs(lrn):
             ['regression' in lrn.__tags__]
     ds = datasets[dsname]
     splitter = Splitter('train')
-    postproc=BinaryFxNode(errorfx, 'targets')
+    postproc = BinaryFxNode(errorfx, 'targets')
     te = TransferMeasure(lrn, splitter, postproc=postproc)
     te_ = TransferMeasure(lrn_, splitter, postproc=postproc)
 
