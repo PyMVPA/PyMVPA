@@ -196,13 +196,13 @@ for more information.
 Debian
 ------
 
-PyMVPA is available as an `official Debian package`_ (``python-mvpa``;
-since *lenny*). The documentation is provided by the optional
-`python-mvpa-doc` package. To install PyMVPA simply do::
+PyMVPA is available as an `official Debian package`_ (``python-mvpa2`` or
+``python-mvpa`` for the previous stable release). The documentation is provided
+by the optional `python-mvpa2-doc` package. To install PyMVPA simply do::
 
-  sudo aptitude install python-mvpa
+  sudo aptitude install python-mvpa2
 
-.. _official Debian package: http://packages.debian.org/python-mvpa
+.. _official Debian package: http://packages.debian.org/python-mvpa2
 
 .. index:: backports, Debian, Ubuntu
 .. _install_debianbackports:
@@ -245,7 +245,7 @@ If done, verify that everything went fine by opening a command prompt and start
 Python by typing `python` and hit enter. Now you should see the Python prompt.
 Import the mvpa module, which should cause no error messages.
 
-  >>> import mvpa
+  >>> import mvpa2
   >>>
 
 Although you have a working installation already, most likely you want to
@@ -352,7 +352,7 @@ MacPorts has the ability of installing several Python versions at a time, the
 Upon success, open a terminal window and start Python by typing `python` and
 hit return. Now try to import the PyMVPA module by doing:
 
-  >>> import mvpa
+  >>> import mvpa2
   >>>
 
 If no error messages appear, you have succesfully installed PyMVPA.

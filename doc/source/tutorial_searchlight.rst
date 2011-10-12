@@ -56,27 +56,27 @@ relatively painless:
 
 If the code snippet above is of no surprise then you probably got the basic
 idea. We created an object instance ``aov`` being a
-:class:`~mvpa.measures.anova.OneWayAnova`. This instance is subsequently
+:class:`~mvpa2.measures.anova.OneWayAnova`. This instance is subsequently
 *called* with a dataset and yields the F-scores wrapped into a
-:class:`~mvpa.datasets.base.Dataset`. Where have we seen this before?  Right!
+:class:`~mvpa2.datasets.base.Dataset`. Where have we seen this before?  Right!
 This one differs little from a call to
-:class:`~mvpa.measures.base.CrossValidation`.  Both are objects that get
+:class:`~mvpa2.measures.base.CrossValidation`.  Both are objects that get
 instantiated (potentially with some custom arguments) and yield the results in
 a dataset when called with an input dataset. This is called a :term:`processing
 object` and is a common concept in PyMVPA.
 
 However, there is a difference between the two processing objects.
-:class:`~mvpa.measures.base.CrossValidation` returns a dataset with a single
+:class:`~mvpa2.measures.base.CrossValidation` returns a dataset with a single
 feature -- the accuracy or error rate, while
-:class:`~mvpa.measures.anova.OneWayAnova` returns a vector with one value per
+:class:`~mvpa2.measures.anova.OneWayAnova` returns a vector with one value per
 feature. The latter is called a
-:class:`~mvpa.measures.base.FeaturewiseMeasure`. But other than the number of
+:class:`~mvpa2.measures.base.FeaturewiseMeasure`. But other than the number of
 features in the returned dataset there is not much of a difference. All
 measures in PyMVPA, for example, support an optional post-processing step.
 During instantiation of a measure an arbitrary mapper can be specified to be
 called internally to forward-map the results before they are returned. If, for
 some reason, the F-scores need to be scaled into the interval [0,1], an
-:class:`~mvpa.mappers.fx.FxMapper` can be used to achieve that:
+:class:`~mvpa2.mappers.fx.FxMapper` can be used to achieve that:
 
 >>> aov = OneWayAnova(
 ...         postproc=FxMapper('features',
@@ -123,7 +123,7 @@ cross-validation procedure.
 
 The only thing left is that we have to split the dataset into all possible
 sphere neighborhoods that intersect with the brain. To achieve this, we
-can use :func:`~mvpa.measures.searchlight.sphere_searchlight`:
+can use :func:`~mvpa2.measures.searchlight.sphere_searchlight`:
 
 >>> sl = sphere_searchlight(cvte, radius=3, postproc=mean_sample())
 

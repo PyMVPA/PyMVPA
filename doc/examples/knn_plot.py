@@ -24,13 +24,13 @@ import numpy as np
 
 """
 
-import mvpa
-from mvpa.base import cfg
-from mvpa.misc.data_generators import *
-from mvpa.clfs.knn import kNN
-from mvpa.misc.plot import *
+import mvpa2
+from mvpa2.base import cfg
+from mvpa2.misc.data_generators import *
+from mvpa2.clfs.knn import kNN
+from mvpa2.misc.plot import *
 
-mvpa.seed(0)                            # to reproduce the plot
+mvpa2.seed(0)                            # to reproduce the plot
 
 dataset_kwargs = dict(nfeatures=2, nchunks=10,
     snr=2, nlabels=4, means=[ [0,1], [1,0], [1,1], [0,0] ])

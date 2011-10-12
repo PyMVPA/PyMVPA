@@ -48,8 +48,8 @@ What Do I Need To Get Python Running
 
 PyMVPA code is compatible with Python 2.X series (more precisely >= 2.4).
 Python 3.x is not yet supported. For most stable performance we recommend
-Python 2.5 since that is the version we are using for the development, but,
-once again, 2.4 or 2.6 should be fine.
+Python 2.6 since that is the version we are using for the development, but,
+once again, anything from 2.5 to 2.7 should be fine.
 
 Any machine which has Python 2.X available can be used for PyMVPA-based
 processing (see :ref:`Download section <chap_download>` on how to deploy

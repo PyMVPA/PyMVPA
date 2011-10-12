@@ -33,9 +33,9 @@ __copyright__ = 'Copyright (c) 2011 Yaroslav Halchenko'
 __license__ = 'MIT'
 
 import sys
-from mvpa.base.dochelpers import table2string
-from mvpa.base import verbose, debug
-from mvpa.misc.cmdline import parser, opts
+from mvpa2.base.dochelpers import table2string
+from mvpa2.base import verbose, debug
+from mvpa2.misc.cmdline import parser, opts
 import nibabel as nib
 
 

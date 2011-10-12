@@ -21,9 +21,8 @@ The PDF version of the manual is available for download_.
 
    intro
    installation
-   tutorial
    overview
-   measures
+   tutorial
    misc
    examples
    faq

@@ -21,7 +21,7 @@ taken for the example of actual computation to be done.  Run
 options.
 """
 
-from mvpa.suite import *
+from mvpa2.suite import *
 
 
 def main():

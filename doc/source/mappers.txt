@@ -15,7 +15,7 @@
 Mappers
 *******
 
-.. automodule:: mvpa.mappers
+.. automodule:: mvpa2.mappers
 
 
 .. only:: html
@@ -23,7 +23,7 @@ Mappers
   Related API documentation
   =========================
 
-  .. currentmodule:: mvpa.mappers
+  .. currentmodule:: mvpa2.mappers
   .. autosummary::
      :toctree: generated
 

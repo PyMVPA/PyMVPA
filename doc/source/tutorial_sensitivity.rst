@@ -116,7 +116,7 @@ feature selectors:
 The code snippet above configures such a selector. It uses an ANOVA measure
 to select 500 features with the highest F-scores. There
 are a lot more ways to perform the selection, but we will go with this one
-for now. The :class:`~mvpa.featsel.base.SensitivityBasedFeatureSelection`
+for now. The :class:`~mvpa2.featsel.base.SensitivityBasedFeatureSelection`
 instance is yet another :term:`processing object` that can be called with a
 dataset to perform the feature selection:
 
@@ -193,7 +193,7 @@ Thanks For The Fish
 
 To implement an ANOVA-based feature selection *properly* we have to do it on
 the training dataset **only**. The PyMVPA way of doing this is via a
-:class:`~mvpa.clfs.meta.FeatureSelectionClassifier`:
+:class:`~mvpa2.clfs.meta.FeatureSelectionClassifier`:
 
 >>> fclf = FeatureSelectionClassifier(clf, fsel)
 
@@ -266,7 +266,7 @@ this *analyzer* we can simply ask the classifier to do it:
 
 >>> sensana = fclf.get_sensitivity_analyzer()
 >>> type(sensana)
-<class 'mvpa.measures.base.MappedClassifierSensitivityAnalyzer'>
+<class 'mvpa2.measures.base.MappedClassifierSensitivityAnalyzer'>
 
 As you can see, this even works for our meta-classifier. And again this
 analyzer is a :term:`processing object` that returns the desired sensitivity
@@ -275,7 +275,7 @@ when called with a dataset.
 >>> # alt: `sens = load_tutorial_results('res_haxby2001_sens_5pANOVA')`
 >>> sens = sensana(ds)
 >>> type(sens)
-<class 'mvpa.datasets.base.Dataset'>
+<class 'mvpa2.datasets.base.Dataset'>
 >>> print sens.shape
 (28, 39912)
 
@@ -314,7 +314,7 @@ from cross-validation splits of the data. Rectifying it is easy with a
 meta-measure. A meta-measure is analogous to a meta-classifier: a measure
 that takes a basic measure, adds a processing step to it and behaves like a
 measure itself. The meta-measure we want to use is
-:class:`~mvpa.measures.base.SplitFeaturewiseMeasure`.
+:class:`~mvpa2.measures.base.SplitFeaturewiseMeasure`.
 
 >>> # alt: `sens = load_tutorial_results('res_haxby2001_splitsens_5pANOVA')`
 >>> sensana = fclf.get_sensitivity_analyzer(postproc=maxofabs_sample())
@@ -328,7 +328,7 @@ measure itself. The meta-measure we want to use is
 We re-create our basic sensitivity analyzer, this time automatically
 applying the post-processing step that combines the sensitivity maps for
 all partial classifications. Finally, we plug it into the meta-measure that
-uses an :class:`~mvpa.datasets.splitters.NFoldSplitter` to split the
+uses an :class:`~mvpa2.datasets.splitters.NFoldSplitter` to split the
 dataset. Afterwards, we can run the analyzer and we get another dataset,
 this time with a sensitivity map per each cross-validation split.
 
@@ -338,7 +338,7 @@ the stability of the ANOVA feature selection instead.
 >>> ov = MapOverlap()
 >>> overlap_fraction = ov(sens.samples > 0)
 
-With the :class:`~mvpa.misc.support.MapOverlap` helper we can easily
+With the :class:`~mvpa2.misc.support.MapOverlap` helper we can easily
 compute the fraction of features that have non-zero sensitivities in all
 dataset splits.
 
@@ -370,8 +370,8 @@ processing pipeline a bit.
  [ 2  0  0  0  0  2  0 10]]
 
 I guess that deserves some explanation. We wrap our
-:class:`~mvpa.clfs.meta.FeatureSelectionClassifier` with a new thing, a
-:class:`~mvpa.clfs.meta.SplitClassifier`. This is another meta classifier
+:class:`~mvpa2.clfs.meta.FeatureSelectionClassifier` with a new thing, a
+:class:`~mvpa2.clfs.meta.SplitClassifier`. This is another meta classifier
 that performs splitting of a dataset and runs training (and prediction) on
 each of the dataset splits separately. It can effectively perform a
 cross-validation analysis internally, and we ask it to compute a confusion
@@ -387,7 +387,7 @@ further extended. We could add more selection or pre-processing steps
 into the classifier, like projecting the data onto PCA components and
 limit the classifier to the first 10 components -- for each split. PyMVPA
 offers even more complex meta classifiers (e.g.
-:class:`~mvpa.clfs.meta.TreeClassifier`) that might be very helpful in some
+:class:`~mvpa2.clfs.meta.TreeClassifier`) that might be very helpful in some
 analysis scenarios.
 
 
@@ -411,7 +411,7 @@ completely different when compared across classifiers. For example, the
 popular SVM algorithm solves the classification problem by identifying the
 data samples that are *most tricky* to model. The extracted sensitivities
 reflect this property. Other algorithms, such as "Gaussian Naive Bayes"
-(:class:`~mvpa.clfs.gnb.GNB`) make assumptions about the distribution of
+(:class:`~mvpa2.clfs.gnb.GNB`) make assumptions about the distribution of
 the samples in each category. GNB sensitivities *might* look completely
 different, even if both classifiers perform at comparable accuracy levels.
 Note, however, that these properties can also be used to address related
@@ -421,9 +421,9 @@ It should also be noted that sensitivities can not be directly compared to
 each other, even if they stem from the same algorithm and are just
 computed on different dataset splits. In an analysis one would have to
 normalize them first. PyMVPA offers, for example,
-:func:`~mvpa.misc.transformers.l1_normed` and
-:func:`~mvpa.misc.transformers.l2_normed` that can be used in conjunction
-with :class:`~mvpa.mappers.fx.FxMapper` to do that as a post-processing
+:func:`~mvpa2.misc.transformers.l1_normed` and
+:func:`~mvpa2.misc.transformers.l2_normed` that can be used in conjunction
+with :class:`~mvpa2.mappers.fx.FxMapper` to do that as a post-processing
 step.
 
 In this tutorial part we also touched the surface of another important
@@ -436,10 +436,10 @@ features will be retained that show some signal on their own. If that
 turns out to be a problem for a particular analysis, PyMVPA offers a
 number of multivariate alternatives for features selection. There is an
 implementation of :term:`recursive feature selection`
-(:class:`~mvpa.featsel.rfe.RFE`), and also all classifier sensitivities
+(:class:`~mvpa2.featsel.rfe.RFE`), and also all classifier sensitivities
 can be used to select features. For classifiers where sensitivities cannot
 easily be extracted PyMVPA provides a noise perturbation measure
-(:class:`~mvpa.measures.noiseperturbation.NoisePerturbationSensitivity`;
+(:class:`~mvpa2.measures.noiseperturbation.NoisePerturbationSensitivity`;
 see :ref:`Hanson et al. (2004) <HMH04>` for an example application).
 
 With these building blocks it is possible to run fairly complex analyses.

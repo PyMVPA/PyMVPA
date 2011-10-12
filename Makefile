@@ -118,11 +118,11 @@ clean:
 	-@rm -f $(DOCSRC_DIR)/examples/*.rst
 # clean all bits and pieces
 	-@rm -f MANIFEST
-	-@rm -f mvpa/clfs/lib*/*.so \
-		mvpa/clfs/lib*/*.dylib \
-		mvpa/clfs/lib*/*_wrap.* \
-		mvpa/clfs/lib*/*c.py \
-		mvpa/tests/*.{prof,pstats,kcache}
+	-@rm -f mvpa2/clfs/lib*/*.so \
+		mvpa2/clfs/lib*/*.dylib \
+		mvpa2/clfs/lib*/*_wrap.* \
+		mvpa2/clfs/lib*/*c.py \
+		mvpa2/tests/*.{prof,pstats,kcache}
 	@find . -name '*.py[co]' \
 		 -o -name '*,cover' \
 		 -o -name '.coverage' \
@@ -134,7 +134,7 @@ clean:
 		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
 	-@rm -rf dist *report
-	-@rm -f *-stamp *_report.pdf *_report.log pymvpa.cfg
+	-@rm -f *-stamp *_report.pdf *_report.log pymvpa2.cfg
 
 # this target should put the source tree into shape for building the source
 # distribution
@@ -220,9 +220,9 @@ apidoc-stamp: build
 	touch $@
 
 # this takes some minutes !!
-profile: build mvpa/tests/__init__.py
+profile: build mvpa2/tests/__init__.py
 	@echo "I: Profiling unittests"
-	@PYTHONPATH=.:$(PYTHONPATH) tools/profile -K  -O $(PROFILE_FILE) mvpa/tests/__init__.py
+	@PYTHONPATH=.:$(PYTHONPATH) tools/profile -K  -O $(PROFILE_FILE) mvpa2/tests/__init__.py
 
 
 #
@@ -292,19 +292,19 @@ upload-datadb-descriptions:
 #
 
 ut-%: build
-	@PYTHONPATH=.:$(PYTHONPATH) $(NOSETESTS) --nocapture mvpa/tests/test_$*.py
+	@PYTHONPATH=.:$(PYTHONPATH) $(NOSETESTS) --nocapture mvpa2/tests/test_$*.py
 
 unittest: build
 	@echo "I: Running unittests (without optimization nor debug output)"
-	$(MPLPYTHON) mvpa/tests/__init__.py
+	$(MPLPYTHON) mvpa2/tests/__init__.py
 
 
 # test if PyMVPA is working if optional externals are missing
 unittest-badexternals: build
 	@echo "I: Running unittests under assumption of missing optional externals."
-	@PYTHONPATH=mvpa/tests/badexternals:.:$(PYTHONPATH) \
+	@PYTHONPATH=mvpa2/tests/badexternals:.:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
-		$(PYTHON) mvpa/tests/__init__.py 2>&1 \
+		$(PYTHON) mvpa2/tests/__init__.py 2>&1 \
 		| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
 		          -e 'WARNING:.*SMLR.* implementation'
 
@@ -312,19 +312,19 @@ unittest-badexternals: build
 unittest-nonlabile: build
 	@echo "I: Running only non labile unittests. None of them should ever fail."
 	@MVPA_TESTS_LABILE=no \
-		$(MPLPYTHON) mvpa/tests/__init__.py
+		$(MPLPYTHON) mvpa2/tests/__init__.py
 
 # test if no errors would result if we force enabling of all ca
 unittest-ca: build
 	@echo "I: Running unittests with all ca enabled."
 	@MVPA_DEBUG=ENFORCE_CA_ENABLED \
-		$(MPLPYTHON) mvpa/tests/__init__.py
+		$(MPLPYTHON) mvpa2/tests/__init__.py
 
 # Run unittests with optimization on -- helps to catch unconditional
 # debug calls
 unittest-optimization: build
 	@echo "I: Running unittests with $(PYTHON) -O."
-	@$(MPLPYTHON) -O mvpa/tests/__init__.py
+	@$(MPLPYTHON) -O mvpa2/tests/__init__.py
 
 # Run unittests with all debug ids and some metrics (crossplatform ones) on.
 #   That does:
@@ -335,7 +335,7 @@ unittest-debug: SHELL=/bin/bash
 unittest-debug: build
 	@echo "I: Running unittests with debug output. No progress output."
 	@MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
-		$(MPLPYTHON) mvpa/tests/__init__.py 2>&1 \
+		$(MPLPYTHON) mvpa2/tests/__init__.py 2>&1 \
 		|  sed -n -e '/^[=-]\{60,\}$$/,$$p'; \
 		exit $${PIPESTATUS[0]}	# reaquire status of 1st command, works only in bash!
 
@@ -417,12 +417,12 @@ testdatadb: build
 		             --doctest-tests doc/source/datadb/*.rst
 
 # Check if everything (with few exclusions) is imported in unitests is
-# known to the mvpa.suite()
+# known to the mvpa2.suite()
 # XXX remove \|spam whenever clfs.spam gets available
 testsuite:
 	@echo "I: Running full testsuite"
 	@tfile=`mktemp -u testsuiteXXXXXXX`; \
-	 git grep -h '^\W*from mvpa.*import' mvpa/tests | \
+	 git grep -h '^\W*from mvpa2.*import' mvpa2/tests | \
 	 grep -v '^\W*#' | \
 	 sed -e 's/^.*from *\(mvpa[^ ]*\) im.*/from \1 import/g' | \
 	 sort | uniq | \
@@ -431,8 +431,8 @@ testsuite:
 			 -e 'mvpa\.misc\.args' \
 			 -e 'mvpa\.clfs\.\(libsvmc\|sg\|spam\)' \
 	| while read i; do \
-	 grep -q "^ *$$i" mvpa/suite.py || \
-	 { echo "E: '$$i' is missing from mvpa.suite()"; touch "$$tfile"; }; \
+	 grep -q "^ *$$i" mvpa2/suite.py || \
+	 { echo "E: '$$i' is missing from mvpa2.suite()"; touch "$$tfile"; }; \
 	 done; \
 	 [ -f "$$tfile" ] && { rm -f "$$tfile"; exit 1; } || :
 
@@ -441,7 +441,7 @@ testapiref:
 	@echo "I: epydoc support is depricated -- so, nothing to test"
 # testapiref: apidoc
 # 	@for tf in doc/*.rst; do \
-# 	 out=$$(for f in `grep api/mvpa $$tf | sed -e 's|.*\(api/mvpa.*html\).*|\1|g' `; do \
+# 	 out=$$(for f in `grep api/mvpa $$tf | sed -e 's|.*\(api/mvpa2.*html\).*|\1|g' `; do \
 # 	  ff=build/html/$$f; [ ! -f $$ff ] && echo "E: $$f missing!"; done; ); \
 # 	 [ "x$$out" == "x" ] || echo -e "$$tf:\n$$out"; done
 
@@ -453,21 +453,21 @@ testsphinx: htmldoc
 # reloaded
 testcfg: build
 	@echo "I: Running test to check that stored configuration is acceptable."
-	-@rm -f pymvpa.cfg
-	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c 'from mvpa.suite import *; cfg.save("pymvpa.cfg");'
-	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c 'from mvpa.suite import *;'
+	-@rm -f pymvpa2.cfg
+	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c 'from mvpa2.suite import *; cfg.save("pymvpa2.cfg");'
+	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c 'from mvpa2.suite import *;'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/__init__.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa2/tests/__init__.py
 	@echo "+I: Check all known dependencies and store them"
 	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c \
-	  'from mvpa.suite import *; mvpa.base.externals.test_all_dependencies(force=False); cfg.save("pymvpa.cfg");'
+	  'from mvpa2.suite import *; mvpa2.base.externals.test_all_dependencies(force=False); cfg.save("pymvpa2.cfg");'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/__init__.py
-	-@rm -f pymvpa.cfg
+	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa2/tests/__init__.py
+	-@rm -f pymvpa2.cfg
 
 testourcfg: build
 	@echo "+I: Run non-labile testing to verify safety of shipped configuration"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPACONFIG=doc/examples/pymvpa.cfg MVPA_TESTS_LABILE=no $(PYTHON) mvpa/tests/__init__.py
+	@PYTHONPATH=.:$(PYTHONPATH) MVPACONFIG=doc/examples/pymvpa2.cfg MVPA_TESTS_LABILE=no $(PYTHON) mvpa2/tests/__init__.py
 
 
 test: unittests testmanual testsuite testexamples testcfg testourcfg
@@ -481,7 +481,7 @@ $(COVERAGE_REPORT): build
 	@echo "I: Generating coverage data and report. Takes awhile. No progress output."
 	@{ \
 	  export PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL; \
-	  python-coverage -x mvpa/tests/__init__.py >/dev/null 2>&1; \
+	  python-coverage -x mvpa2/tests/__init__.py >/dev/null 2>&1; \
 	  python-coverage -r -i -o /usr,/var >| $(COVERAGE_REPORT); \
 	  grep -v '100%$$' $(COVERAGE_REPORT); \
 	  python-coverage -a -i -o /usr,/var ; }
@@ -514,7 +514,7 @@ check-debian-version: check-debian
 
 embed-dev-version: check-nodirty
 	# change upstream version
-	sed -i -e "s/$(SETUPPY_VERSION)/$(DEV_VERSION)/g" setup.py mvpa/__init__.py
+	sed -i -e "s/$(SETUPPY_VERSION)/$(DEV_VERSION)/g" setup.py mvpa2/__init__.py
 	# change package name
 	sed -i -e "s/= 'pymvpa',/= 'pymvpa-snapshot',/g" setup.py
 

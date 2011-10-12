@@ -18,7 +18,7 @@ This example also shows an example usage of confusion matrices and how two
 classifers can be combined.
 """
 
-from mvpa.suite import *
+from mvpa2.suite import *
 
 if __debug__:
     debug.active.append('SMLR_')

@@ -29,7 +29,7 @@ The following code shows the 'classic' color mapping example, i.e. the
 SOM will map a number of colors into a rectangular area.
 """
 
-from mvpa.suite import *
+from mvpa2.suite import *
 
 """
 First, we define some colors as RGB values from the interval (0,1),
