@@ -69,7 +69,7 @@ Doing it the PyMVPA way
 
 import pylab as pl
 from mpl_toolkits.mplot3d import Axes3D
-from mvpa.suite import *
+from mvpa2.suite import *
 
 """
 

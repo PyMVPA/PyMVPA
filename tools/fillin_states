@@ -20,8 +20,8 @@ from optparse import OptionParser
 from os import environ, path
 from textwrap import wrap
 
-from mvpa.base import verbose
-from mvpa.misc.cmdline import parser, opts
+from mvpa2.base import verbose
+from mvpa2.misc.cmdline import parser, opts
 
 parser.usage = """Usage: %s [options] infile outfile...""" % sys.argv[0]
 parser.option_groups = [opts.common]
@@ -53,7 +53,7 @@ while i < len(inlines):
         verbose(2, "Line: %s" % line)
         d = reg_res.groupdict()
         # import asked module
-        exec "from mvpa.%s import %s as Victim" % (d['path'], d['cls'])
+        exec "from mvpa2.%s import %s as Victim" % (d['path'], d['cls'])
 
         ca = Victim._collections_template['ca'].items
         keys = ca.keys()

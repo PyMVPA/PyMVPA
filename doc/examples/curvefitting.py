@@ -21,10 +21,10 @@ First, importing the necessary pieces:
 import numpy as np
 from scipy.stats import norm
 
-from mvpa.support.pylab import pl
-from mvpa.misc.plot import plot_err_line, plot_bars
-from mvpa.misc.fx import *
-from mvpa import cfg
+from mvpa2.support.pylab import pl
+from mvpa2.misc.plot import plot_err_line, plot_bars
+from mvpa2.misc.fx import *
+from mvpa2 import cfg
 
 """
 BOLD-Response parameters

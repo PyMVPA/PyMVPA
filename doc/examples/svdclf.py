@@ -18,7 +18,7 @@ onto singular value components within a cross-validation -- for *any*
 classifier.
 """
 
-from mvpa.suite import *
+from mvpa2.suite import *
 
 if __debug__:
     debug.active += ["REPM"]

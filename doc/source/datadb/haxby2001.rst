@@ -70,7 +70,7 @@ labels.txt
 Instructions
 ============
 
-  >>> from mvpa.suite import *
+  >>> from mvpa2.suite import *
   >>> subjpath = os.path.join(pymvpa_datadbroot, 'haxby2001', 'subj1')
   >>> attrs = SampleAttributes(os.path.join(subjpath, 'labels.txt'),
   ...                          header=True)

@@ -20,7 +20,7 @@ generated figure shows sensitivity maps computed by six sensitivity analyzers.
 We start by loading PyMVPA and the example fMRI dataset.
 """
 
-from mvpa.suite import *
+from mvpa2.suite import *
 
 # load PyMVPA example dataset
 attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'attributes_literal.txt'))

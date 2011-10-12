@@ -22,11 +22,11 @@ Entry Point
 .. autosummary::
    :toctree: generated
 
-   mvpa
+   mvpa2
 
 
 .. the rest of the modules are relative to the top-level
-.. currentmodule:: mvpa
+.. currentmodule:: mvpa2
 
 Basic Facilities
 =================
