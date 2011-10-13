@@ -56,7 +56,7 @@ class ReportTest(unittest.TestCase):
         verbose(2, "Level 2")
 
         if not isdummy:
-            self.failUnless(len(report._story) == 2,
+            self.assertTrue(len(report._story) == 2,
                             msg="We should have got some lines from verbose")
 
         if __debug__:
@@ -66,7 +66,7 @@ class ReportTest(unittest.TestCase):
             debug.active = ['TEST'] + debug.active
             debug('TEST', "Testing report as handler for debug")
             if not isdummy:
-                self.failUnless(len(report._story) == 4,
+                self.assertTrue(len(report._story) == 4,
                             msg="We should have got some lines from debug")
             debug.active = oactive
             debug.handlers = odhandlers
@@ -88,7 +88,7 @@ class ReportTest(unittest.TestCase):
             report.figures()
 
             if not isdummy:
-                self.failUnless(
+                self.assertTrue(
                     len(report._story) == clen+2,
                     msg="We should have got some lines from figures")
 

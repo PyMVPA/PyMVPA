@@ -38,7 +38,7 @@ class ENETTests(unittest.TestCase):
         pre = clf.predict(data.samples)
         cor = pearsonr(pre, data.targets)
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(cor[0] > .8)
+            self.assertTrue(cor[0] > .8)
 
     def test_enet_state(self):
         #data = datasets['dumb2']
@@ -53,7 +53,7 @@ class ENETTests(unittest.TestCase):
 
         p = clf.predict(data.samples)
 
-        self.failUnless((p == clf.ca.predictions).all())
+        self.assertTrue((p == clf.ca.predictions).all())
 
 
     def test_enet_sensitivities(self):
@@ -67,7 +67,7 @@ class ENETTests(unittest.TestCase):
         # again
         sens = clf.get_sensitivity_analyzer(force_train=False)(None)
 
-        self.failUnless(sens.shape == (data.nfeatures,))
+        self.assertTrue(sens.shape == (data.nfeatures,))
 
 
 def suite():

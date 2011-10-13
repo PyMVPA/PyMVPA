@@ -22,7 +22,7 @@ class ConfigTests(unittest.TestCase):
 
         # query for some non-existing option and check if default is returned
         query = cfg.get('dasgibtsdochnicht', 'neegarnicht', default='required')
-        self.failUnless(query == 'required')
+        self.assertTrue(query == 'required')
 
 
 

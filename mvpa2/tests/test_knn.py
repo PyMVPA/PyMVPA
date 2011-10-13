@@ -38,8 +38,8 @@ class KNNTests(unittest.TestCase):
         mean_mv_perf = np.mean(mv_perf)
         mean_uv_perf = np.mean(uv_perf)
 
-        self.failUnless( mean_mv_perf > 0.9 )
-        self.failUnless( mean_uv_perf < mean_mv_perf )
+        self.assertTrue( mean_mv_perf > 0.9 )
+        self.assertTrue( mean_uv_perf < mean_mv_perf )
 
 
     def test_knn_state(self):
@@ -53,14 +53,14 @@ class KNNTests(unittest.TestCase):
 
         p = clf.predict(test.samples)
 
-        self.failUnless(p == clf.ca.predictions)
-        self.failUnless(np.array(clf.ca.estimates).shape == (80,2))
-        self.failUnless(clf.ca.distances.shape == (80,160))
+        self.assertTrue(p == clf.ca.predictions)
+        self.assertTrue(np.array(clf.ca.estimates).shape == (80,2))
+        self.assertTrue(clf.ca.distances.shape == (80,160))
 
-        self.failUnless(not clf.ca.distances.fa is train.sa)
+        self.assertTrue(not clf.ca.distances.fa is train.sa)
         # Those are deep-copied now by default so they should not be the same
-        self.failUnless(not (clf.ca.distances.fa['chunks'] is train.sa['chunks']))
-        self.failUnless(not (clf.ca.distances.fa.chunks is train.sa.chunks))
+        self.assertTrue(not (clf.ca.distances.fa['chunks'] is train.sa['chunks']))
+        self.assertTrue(not (clf.ca.distances.fa.chunks is train.sa.chunks))
 
 def suite():
     return unittest.makeSuite(KNNTests)

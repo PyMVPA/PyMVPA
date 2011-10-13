@@ -26,12 +26,12 @@ class SOMMapperTests(unittest.TestCase):
         som = SimpleSOMMapper((10, 5), 200, learning_rate=0.05)
 
         # no acces when nothing is there
-        self.failUnlessRaises(RuntimeError, som._access_kohonen)
+        self.assertRaises(RuntimeError, som._access_kohonen)
 
         som.train(colors)
 
         fmapped = som.forward(colors)
-        self.failUnless(fmapped.shape == (8, 2))
+        self.assertTrue(fmapped.shape == (8, 2))
 
         # reverse mapping
         rmapped = som.reverse(fmapped)
@@ -39,7 +39,7 @@ class SOMMapperTests(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             # should approximately restore the input, but could fail
             # with bad initialisation
-            self.failUnless((np.round(rmapped) == colors).all())
+            self.assertTrue((np.round(rmapped) == colors).all())
 
 
 def suite():

@@ -25,15 +25,15 @@ class MEGTests(unittest.TestCase):
         meg = TuebingenMEG(os.path.join(pymvpa_dataroot, 'tueb_meg.dat.gz'))
 
         # check basics
-        self.failUnless(meg.channelids == ['BG1', 'MLC11', 'EEG02'])
-        self.failUnless(meg.ntimepoints == 814)
-        self.failUnless(meg.nsamples == 4)
+        self.assertTrue(meg.channelids == ['BG1', 'MLC11', 'EEG02'])
+        self.assertTrue(meg.ntimepoints == 814)
+        self.assertTrue(meg.nsamples == 4)
         # check correct axis order (samples x channels x timepoints)
-        self.failUnless(meg.data.shape == (4, 3, 814))
+        self.assertTrue(meg.data.shape == (4, 3, 814))
 
         # check few values
-        self.failUnless(meg.data[0, 1, 4] == -2.318207982e-14)
-        self.failUnless(meg.data[3, 0, 808] == -4.30692876e-12)
+        self.assertTrue(meg.data[0, 1, 4] == -2.318207982e-14)
+        self.assertTrue(meg.data[3, 0, 808] == -4.30692876e-12)
 
 
 def suite():

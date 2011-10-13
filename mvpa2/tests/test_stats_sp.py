@@ -30,30 +30,30 @@ class StatsTestsScipy(unittest.TestCase):
         # test equal distribution
         tbl = np.array([[5, 5], [5, 5]])
         chi, p = chisquare(tbl, exp=exp)
-        self.failUnless( chi == 0.0 )
-        self.failUnless( p == 1.0 )
+        self.assertTrue( chi == 0.0 )
+        self.assertTrue( p == 1.0 )
 
         # test perfect "generalization"
         tbl = np.array([[4, 0], [0, 4]])
         chi, p = chisquare(tbl, exp=exp)
-        self.failUnless(chi == 8.0)
-        self.failUnless(p < 0.05)
+        self.assertTrue(chi == 8.0)
+        self.assertTrue(p < 0.05)
 
     def test_chi_square_disbalanced(self):
         # test perfect "generalization"
         tbl = np.array([[1, 100], [1, 100]])
         chi, p = chisquare(tbl, exp='indep_rows')
-        self.failUnless(chi == 0)
-        self.failUnless(p == 1)
+        self.assertTrue(chi == 0)
+        self.assertTrue(p == 1)
 
         chi, p = chisquare(tbl, exp='uniform')
-        self.failUnless(chi > 194)
-        self.failUnless(p < 1e-10)
+        self.assertTrue(chi > 194)
+        self.assertTrue(p < 1e-10)
 
         # by default lets do uniform
         chi_, p_ = chisquare(tbl)
-        self.failUnless(chi == chi_)
-        self.failUnless(p == p_)
+        self.assertTrue(chi == chi_)
+        self.assertTrue(p == p_)
 
 
     def test_null_dist_prob_any(self):
@@ -80,11 +80,11 @@ class StatsTestsScipy(unittest.TestCase):
 
         # With 20 samples it isn't that easy to get a reliable sampling for
         # non-parametric, so we can allow somewhat low significance
-        self.failUnless(pm100[0] <= 0.1)
-        self.failUnless(p100[0] <= 0.1)
+        self.assertTrue(pm100[0] <= 0.1)
+        self.assertTrue(p100[0] <= 0.1)
 
-        self.failUnless(np.all(pm100[1:] > 0.05))
-        self.failUnless(np.all(p100[1:] > 0.05))
+        self.assertTrue(np.all(pm100[1:] > 0.05))
+        self.assertTrue(np.all(p100[1:] > 0.05))
         # same test with just scalar measure/feature
         null.fit(CorrCoef(), ds[:, 0])
         p_100 = null.p(100)
@@ -105,18 +105,18 @@ class StatsTestsScipy(unittest.TestCase):
         score_nonbogus = np.mean(score.samples[:, ds.a.nonbogus_features])
         score_bogus = np.mean(score.samples[:, ds.a.bogus_features])
         # plausability check
-        self.failUnless(score_bogus < score_nonbogus)
+        self.assertTrue(score_bogus < score_nonbogus)
 
         # [0] because the first axis is len == 0
         null_prob_nonbogus = m.ca.null_prob[0, ds.a.nonbogus_features]
         null_prob_bogus = m.ca.null_prob[0, ds.a.bogus_features]
 
-        self.failUnless((null_prob_nonbogus.samples < 0.05).all(),
+        self.assertTrue((null_prob_nonbogus.samples < 0.05).all(),
             msg="Nonbogus features should have a very unlikely value. Got %s"
                 % null_prob_nonbogus)
 
         # the others should be a lot larger
-        self.failUnless(np.mean(np.abs(null_prob_bogus)) >
+        self.assertTrue(np.mean(np.abs(null_prob_bogus)) >
                         np.mean(np.abs(null_prob_nonbogus)))
 
         if isinstance(nd, MCNullDist):
@@ -126,13 +126,13 @@ class StatsTestsScipy(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             # Failed on c94ec26eb593687f25d8c27e5cfdc5917e352a69
             # with MVPA_SEED=833393575
-            self.failUnless(
+            self.assertTrue(
                 (np.abs(m.ca.null_t[0, ds.a.nonbogus_features]) >= 5).all(),
                 msg="Nonbogus features should have high t-score. Got %s"
                 % (m.ca.null_t[0, ds.a.nonbogus_features]))
 
             bogus_min = min(np.abs(m.ca.null_t.samples[0][ds.a.bogus_features]))
-            self.failUnless(bogus_min < 4,
+            self.assertTrue(bogus_min < 4,
                 msg="Some bogus features should have low t-score of %g."
                     "Got (t,p,sens):%s"
                     % (bogus_min,
@@ -163,9 +163,9 @@ class StatsTestsScipy(unittest.TestCase):
         ds = datasets['uni2small']
         _ = m(ds)
         t, p = m.ca.null_t, m.ca.null_prob
-        self.failUnless((p.samples>=0).all())
-        self.failUnless((t.samples[0,:2] > 0).all())
-        self.failUnless((t.samples[0,2:4] < 0).all())
+        self.assertTrue((p.samples>=0).all())
+        self.assertTrue((t.samples[0,:2] > 0).all())
+        self.assertTrue((t.samples[0,2:4] < 0).all())
 
 
     def test_match_distribution(self):
@@ -178,17 +178,17 @@ class StatsTestsScipy(unittest.TestCase):
 
         # Lets test ad-hoc rv_semifrozen
         floc = rv_semifrozen(scipy.stats.norm, loc=0).fit(data)
-        self.failUnless(floc[0] == 0)
+        self.assertTrue(floc[0] == 0)
 
         fscale = rv_semifrozen(scipy.stats.norm, scale=1.0).fit(data)
-        self.failUnless(fscale[1] == 1)
+        self.assertTrue(fscale[1] == 1)
 
         flocscale = rv_semifrozen(scipy.stats.norm, loc=0, scale=1.0).fit(data)
-        self.failUnless(flocscale[1] == 1 and flocscale[0] == 0)
+        self.assertTrue(flocscale[1] == 1 and flocscale[0] == 0)
 
         full = scipy.stats.norm.fit(data)
         for res in [floc, fscale, flocscale, full]:
-            self.failUnless(len(res) == 2)
+            self.assertTrue(len(res) == 2)
 
         data_mean = np.mean(data)
         for loc in [None, data_mean]:
@@ -207,12 +207,12 @@ class StatsTestsScipy(unittest.TestCase):
                 if test == 'p-roc':
                     if cfg.getboolean('tests', 'labile', default='yes'):
                         # we can guarantee that only for norm_fixed
-                        self.failUnless('norm' in names)
-                        self.failUnless('norm_fixed' in names)
+                        self.assertTrue('norm' in names)
+                        self.assertTrue('norm_fixed' in names)
                         inorm = names.index('norm_fixed')
                         # and it should be at least in the first
                         # 30 best matching ;-)
-                        self.failUnless(inorm <= 30)
+                        self.assertTrue(inorm <= 30)
                     # Test plotting only once
                     if loc is None and externals.exists("pylab plottable"):
                         import pylab as pl
@@ -259,7 +259,7 @@ class StatsTestsScipy(unittest.TestCase):
                       ' loss of precision. Exception was %s' % e)
 
         v = scipy.stats.rdist(10000, 0, 1).cdf([-0.1])
-        self.failUnless(v>=0, v<=1)
+        self.assertTrue(v>=0, v<=1)
 
 
     def test_anova_compliance(self):
@@ -316,30 +316,30 @@ class StatsTestsScipy(unittest.TestCase):
         betas = glm(data)
 
         # betas for each feature and each regressor
-        self.failUnless(betas.shape == (X.shape[1], data.nfeatures))
+        self.assertTrue(betas.shape == (X.shape[1], data.nfeatures))
 
-        self.failUnless(np.absolute(betas.samples[1] - baseline < 10).all(),
+        self.assertTrue(np.absolute(betas.samples[1] - baseline < 10).all(),
             msg="baseline betas should be huge and around 800")
 
-        self.failUnless(betas.samples[0,0] > betas[0,1],
+        self.assertTrue(betas.samples[0,0] > betas[0,1],
             msg="feature (with signal) beta should be larger than for noise")
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(np.absolute(betas[0,1]) < 0.5)
-            self.failUnless(np.absolute(betas[0,0]) > 1.0)
+            self.assertTrue(np.absolute(betas[0,1]) < 0.5)
+            self.assertTrue(np.absolute(betas[0,0]) > 1.0)
 
 
         # check GLM zscores
         glm = GLM(X, voi='zstat')
         zstats = glm(data)
 
-        self.failUnless(zstats.shape == betas.shape)
+        self.assertTrue(zstats.shape == betas.shape)
 
-        self.failUnless((zstats.samples[1] > 1000).all(),
+        self.assertTrue((zstats.samples[1] > 1000).all(),
                 msg='constant zstats should be huge')
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(np.absolute(betas[0,0]) > betas[0,1],
+            self.assertTrue(np.absolute(betas[0,0]) > betas[0,1],
                 msg='with signal should have higher zstats')
 
 
@@ -349,10 +349,10 @@ class StatsTestsScipy(unittest.TestCase):
         after possibly a monkey patch
         """
         bdist = scipy.stats.binom(100, 0.5)
-        self.failUnless(bdist.ppf(1.0) == 100)
-        self.failUnless(bdist.ppf(0.9) <= 60)
-        self.failUnless(bdist.ppf(0.5) == 50)
-        self.failUnless(bdist.ppf(0) == -1)
+        self.assertTrue(bdist.ppf(1.0) == 100)
+        self.assertTrue(bdist.ppf(0.9) <= 60)
+        self.assertTrue(bdist.ppf(0.5) == 50)
+        self.assertTrue(bdist.ppf(0) == -1)
 
 
 def suite():

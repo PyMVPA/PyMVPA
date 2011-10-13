@@ -36,7 +36,7 @@ class SMLRTests(unittest.TestCase):
         # have here -- there is no solution which would pass through
         # (0,0)
         predictions = clf.predict(data.samples)
-        self.failUnless((predictions == data.targets).all())
+        self.assertTrue((predictions == data.targets).all())
 
 
     def test_smlr_state(self):
@@ -51,8 +51,8 @@ class SMLRTests(unittest.TestCase):
 
         p = np.asarray(clf.predict(data.samples))
 
-        self.failUnless((p == clf.ca.predictions).all())
-        self.failUnless(np.array(clf.ca.estimates).shape[0] == np.array(p).shape[0])
+        self.assertTrue((p == clf.ca.predictions).all())
+        self.assertTrue(np.array(clf.ca.estimates).shape[0] == np.array(p).shape[0])
 
 
     def test_smlr_sensitivities(self):
@@ -65,7 +65,7 @@ class SMLRTests(unittest.TestCase):
         # now ask for the sensitivities WITHOUT having to pass the dataset
         # again
         sens = clf.get_sensitivity_analyzer(force_train=False)(None)
-        self.failUnless(sens.shape == (len(data.UT) - 1, data.nfeatures))
+        self.assertTrue(sens.shape == (len(data.UT) - 1, data.nfeatures))
 
 
 def suite():

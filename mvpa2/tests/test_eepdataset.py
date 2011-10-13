@@ -48,25 +48,25 @@ def test_eep_bin():
 #         ds = eep_dataset(os.path.join(pymvpa_dataroot, 'eep.bin'),
 #                          targets=[1, 2])
 #         channelids = np.array(ds.a.channelids).copy()
-#         self.failUnless(np.round(ds.samplingrate) == 500.0)
+#         self.assertTrue(np.round(ds.samplingrate) == 500.0)
 # 
 #         if not externals.exists('scipy'):
 #             return
 # 
 #         # should puke when called with nothing
-#         self.failUnlessRaises(ValueError, ds.resample)
+#         self.assertRaises(ValueError, ds.resample)
 # 
 #         # now for real -- should divide nsamples into half
 #         rds = ds.resample(sr=250, inplace=False)
 #         # We should have not changed anything
-#         self.failUnless(np.round(ds.samplingrate) == 500.0)
+#         self.assertTrue(np.round(ds.samplingrate) == 500.0)
 # 
 #         # by default do 'inplace' resampling
 #         ds.resample(sr=250)
 #         for d in [rds, ds]:
-#             self.failUnless(np.round(d.samplingrate) == 250)
-#             self.failUnless(d.nsamples == 2)
-#             self.failUnless(np.abs((d.a.dt - 1.0/250)/d.a.dt)<1e-5)
-#             self.failUnless(np.all(d.a.channelids == channelids))
+#             self.assertTrue(np.round(d.samplingrate) == 250)
+#             self.assertTrue(d.nsamples == 2)
+#             self.assertTrue(np.abs((d.a.dt - 1.0/250)/d.a.dt)<1e-5)
+#             self.assertTrue(np.all(d.a.channelids == channelids))
 #             # lets now see if we still have a mapper
-#             self.failUnless(d.O.shape == (2, len(channelids), 2))
+#             self.assertTrue(d.O.shape == (2, len(channelids), 2))

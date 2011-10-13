@@ -41,8 +41,8 @@ def test_nifti_dataset():
     #check that mapper honours elementsize
     #nb22 = np.array([i for i in data.a.mapper.getNeighborIn((1, 1, 1), 2.2)])
     #nb20 = np.array([i for i in data.a.mapper.getNeighborIn((1, 1, 1), 2.0)])
-    #self.failUnless(nb22.shape[0] == 7)
-    #self.failUnless(nb20.shape[0] == 5)
+    #self.assertTrue(nb22.shape[0] == 7)
+    #self.assertTrue(nb20.shape[0] == 5)
 
     merged = ds.copy()
     merged.append(ds)
@@ -326,10 +326,10 @@ def test_nifti_dataset_from3_d():
 #    ids_roi = ds_roi.a.mapper.getNeighbors(
 #                    ds_roi.a.mapper.getOutId((12, 20, 40)),
 #                    radius=20)
-#    self.failUnless(len(ids_roi) == 4)
+#    self.assertTrue(len(ids_roi) == 4)
 #
 #    # Trying to request feature outside of the mask
-#    self.failUnlessRaises(ValueError,
+#    self.assertRaises(ValueError,
 #                          ds_roi.a.mapper.getOutId,
 #                          (12, 20, 37))
 #
@@ -340,7 +340,7 @@ def test_nifti_dataset_from3_d():
 #            ids_out.append(ds_roi.a.mapper.getOutId(id_in))
 #        except ValueError:
 #            pass
-#    self.failUnless(ids_out == ids_roi)
+#    self.assertTrue(ids_out == ids_roi)
 
 @with_tempfile(suffix='.nii.gz')
 def test_assumptions_on_nibabel_behavior(filename):

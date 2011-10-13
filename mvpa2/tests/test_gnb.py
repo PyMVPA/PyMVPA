@@ -54,7 +54,7 @@ class GNBTests(unittest.TestCase):
                         if ls:          # in log space -- take exp ;)
                             v = np.exp(v)
                         d1 = np.sum(v, axis=1) - 1.0
-                        self.failUnless(np.max(np.abs(d1)) < 1e-5)
+                        self.assertTrue(np.max(np.abs(d1)) < 1e-5)
 
 def suite():
     return unittest.makeSuite(GNBTests)

@@ -83,22 +83,22 @@ class ClassifiersTests(unittest.TestCase):
     def test_dummy(self):
         clf = SameSignClassifier(enable_ca=['training_stats'])
         clf.train(self.data_bin_1)
-        self.failUnlessRaises(UnknownStateError, clf.ca.__getattribute__,
+        self.assertRaises(UnknownStateError, clf.ca.__getattribute__,
                               "predictions")
         """Should have no predictions after training. Predictions
         state should be explicitely disabled"""
 
         if not _ENFORCE_CA_ENABLED:
-            self.failUnlessRaises(UnknownStateError,
+            self.assertRaises(UnknownStateError,
                 clf.ca.__getattribute__, "trained_dataset")
 
-        self.failUnlessEqual(clf.ca.training_stats.percent_correct,
+        self.assertEqual(clf.ca.training_stats.percent_correct,
                              100,
                              msg="Dummy clf should train perfectly")
-        self.failUnlessEqual(clf.predict(self.data_bin_1.samples),
+        self.assertEqual(clf.predict(self.data_bin_1.samples),
                              list(self.data_bin_1.targets))
 
-        self.failUnlessEqual(len(clf.ca.predictions),
+        self.assertEqual(len(clf.ca.predictions),
             self.data_bin_1.nsamples,
             msg="Trained classifier stores predictions by default")
 
@@ -116,10 +116,10 @@ class ClassifiersTests(unittest.TestCase):
         bclf = CombinedClassifier(clfs=[self.clf_sign.clone(),
                                         self.clf_sign.clone()])
 
-        self.failUnlessEqual(list(bclf.predict(self.data_bin_1.samples)),
+        self.assertEqual(list(bclf.predict(self.data_bin_1.samples)),
                              list(self.data_bin_1.targets),
                              msg="Boosted classifier should work")
-        self.failUnlessEqual(bclf.predict(self.data_bin_1.samples),
+        self.assertEqual(bclf.predict(self.data_bin_1.samples),
                              self.clf_sign.predict(self.data_bin_1.samples),
                              msg="Boosted classifier should have the same as regular")
 
@@ -130,18 +130,18 @@ class ClassifiersTests(unittest.TestCase):
                                   enable_ca=['training_stats'])
 
         # check ca enabling propagation
-        self.failUnlessEqual(self.clf_sign.ca.is_enabled('training_stats'),
+        self.assertEqual(self.clf_sign.ca.is_enabled('training_stats'),
                              _ENFORCE_CA_ENABLED)
-        self.failUnlessEqual(bclf.clfs[0].ca.is_enabled('training_stats'), True)
+        self.assertEqual(bclf.clfs[0].ca.is_enabled('training_stats'), True)
 
         bclf2 = CombinedClassifier(clfs=[self.clf_sign.clone(),
                                          self.clf_sign.clone()],
                                   propagate_ca=False,
                                   enable_ca=['training_stats'])
 
-        self.failUnlessEqual(self.clf_sign.ca.is_enabled('training_stats'),
+        self.assertEqual(self.clf_sign.ca.is_enabled('training_stats'),
                              _ENFORCE_CA_ENABLED)
-        self.failUnlessEqual(bclf2.clfs[0].ca.is_enabled('training_stats'),
+        self.assertEqual(bclf2.clfs[0].ca.is_enabled('training_stats'),
                              _ENFORCE_CA_ENABLED)
 
 
@@ -162,11 +162,11 @@ class ClassifiersTests(unittest.TestCase):
         orig_labels = ds.targets[:]
         bclf1.train(ds)
 
-        self.failUnless(bclf1.predict(testdata) ==
+        self.assertTrue(bclf1.predict(testdata) ==
                         [['sp', 'sn'], ['sp', 'sn'], ['sp', 'sn'],
                          ['dn', 'dp'], ['dn', 'dp']])
 
-        self.failUnless((ds.targets == orig_labels).all(),
+        self.assertTrue((ds.targets == orig_labels).all(),
                         msg="BinaryClassifier should not alter labels")
 
 
@@ -177,7 +177,7 @@ class ClassifiersTests(unittest.TestCase):
         """
         te = CrossValidation(clf, NFoldPartitioner(), postproc=mean_sample())
         # check the default
-        #self.failUnless(te.transerror.errorfx is mean_mismatch_error)
+        #self.assertTrue(te.transerror.errorfx is mean_mismatch_error)
 
         nclasses = 2 * (1 + int('multiclass' in clf.__tags__))
 
@@ -194,7 +194,7 @@ class ClassifiersTests(unittest.TestCase):
                 # skip those since they are barely applicable/testable here
                 raise SkipTest("Skip testing of cve on %s" % clf)
 
-            self.failUnless(cve < 0.25, # TODO: use multinom distribution
+            self.assertTrue(cve < 0.25, # TODO: use multinom distribution
                             msg="Got transfer error %g on %s with %d labels"
                             % (cve, ds, len(ds.UT)))
 
@@ -225,7 +225,7 @@ class ClassifiersTests(unittest.TestCase):
         ds_ = ds.copy()
         ds_.sa['custom'] = ds_.sa['targets']
         ds_.sa.pop('targets')
-        self.failUnless('targets' in ds.sa,
+        self.assertTrue('targets' in ds.sa,
                         msg="'targets' should remain in original ds")
 
         try:
@@ -255,10 +255,10 @@ class ClassifiersTests(unittest.TestCase):
             isreg = lrn.__is_regression__
             # ^ is XOR so we shouldn't get get those sa's in
             # regressions at all
-            self.failUnless(('custom' in s_.sa) ^ isreg)
-            self.failUnless(('targets' in s.sa) ^ isreg)
-            self.failUnless(not 'targets' in s_.sa)
-            self.failUnless(not 'custom' in s.sa)
+            self.assertTrue(('custom' in s_.sa) ^ isreg)
+            self.assertTrue(('targets' in s.sa) ^ isreg)
+            self.assertTrue(not 'targets' in s_.sa)
+            self.assertTrue(not 'custom' in s.sa)
             if not 'smlr' in lrn.__tags__ or \
                cfg.getboolean('tests', 'labile', default='yes'):
                 assert_array_almost_equal(s.samples, s_.samples)
@@ -269,14 +269,14 @@ class ClassifiersTests(unittest.TestCase):
         """Basic testing of the clf summary
         """
         summary1 = clf.summary()
-        self.failUnless('not yet trained' in summary1)
+        self.assertTrue('not yet trained' in summary1)
         # Need 2 different datasets for regressions/classifiers
         dsname = ('uni2small', 'sin_modulated')[int(clf.__is_regression__)]
         clf.train(datasets[dsname])
         summary = clf.summary()
         # It should get bigger ;)
-        self.failUnless(len(summary) > len(summary1))
-        self.failUnless(not 'not yet trained' in summary)
+        self.assertTrue(len(summary) > len(summary1))
+        self.assertTrue(not 'not yet trained' in summary)
 
 
     @sweepargs(clf=clfswh[:] + regrswh[:])
@@ -320,9 +320,9 @@ class ClassifiersTests(unittest.TestCase):
                 # at "chance"
                 continue
                 if 'ACC' in cm.stats:
-                    self.failUnlessEqual(cm.stats['ACC'], 0.5)
+                    self.assertEqual(cm.stats['ACC'], 0.5)
                 else:
-                    self.failUnless(np.isnan(cm.stats['CCe']))
+                    self.assertTrue(np.isnan(cm.stats['CCe']))
             except tuple(_degenerate_allowed_exceptions):
                 pass
         clf.ca.reset_changed_temporarily()
@@ -346,7 +346,7 @@ class ClassifiersTests(unittest.TestCase):
             err = np.asscalar(trerr(ds_))
         except Exception, e:
             self.fail(str(e))
-        self.failUnless(err == 0.)
+        self.assertTrue(err == 0.)
 
     # TODO: validate for regressions as well!!!
     def test_split_classifier(self):
@@ -365,25 +365,25 @@ class ClassifiersTests(unittest.TestCase):
         cverror = cverror.samples.squeeze()
         tr_cverror = cv.ca.training_stats.error
 
-        self.failUnlessEqual(error, cverror,
+        self.assertEqual(error, cverror,
                 msg="We should get the same error using split classifier as"
                     " using CrossValidation. Got %s and %s"
                     % (error, cverror))
 
-        self.failUnlessEqual(tr_error, tr_cverror,
+        self.assertEqual(tr_error, tr_cverror,
                 msg="We should get the same training error using split classifier as"
                     " using CrossValidation. Got %s and %s"
                     % (tr_error, tr_cverror))
 
-        self.failUnlessEqual(clf.ca.stats.percent_correct,
+        self.assertEqual(clf.ca.stats.percent_correct,
                              100,
                              msg="Dummy clf should train perfectly")
-        self.failUnlessEqual(len(clf.ca.stats.sets),
+        self.assertEqual(len(clf.ca.stats.sets),
                              len(ds.UC),
                              msg="Should have 1 confusion per each split")
-        self.failUnlessEqual(len(clf.clfs), len(ds.UC),
+        self.assertEqual(len(clf.clfs), len(ds.UC),
                              msg="Should have number of classifiers equal # of epochs")
-        self.failUnlessEqual(clf.predict(ds.samples), list(ds.targets),
+        self.assertEqual(clf.predict(ds.samples), list(ds.targets),
                              msg="Should classify correctly")
 
         # feature_ids must be list of lists, and since it is not
@@ -393,8 +393,8 @@ class ClassifiersTests(unittest.TestCase):
         #  used features across slave classifiers. That makes
         #  semantics clear. If you need to get deeper -- use upcoming
         #  harvesting facility ;-)
-        # self.failUnlessEqual(len(clf.feature_ids), len(ds.uniquechunks))
-        # self.failUnless(np.array([len(ids)==ds.nfeatures
+        # self.assertEqual(len(clf.feature_ids), len(ds.uniquechunks))
+        # self.assertTrue(np.array([len(ids)==ds.nfeatures
         #                         for ids in clf.feature_ids]).all())
 
         # Just check if we get it at all ;-)
@@ -414,20 +414,20 @@ class ClassifiersTests(unittest.TestCase):
             enable_ca=['stats', 'training_stats'])
         cverror = cv(ds).samples.squeeze()
 
-        self.failUnless(abs(error-cverror)<0.01,
+        self.assertTrue(abs(error-cverror)<0.01,
                 msg="We should get the same error using split classifier as"
                     " using CrossValidation. Got %s and %s"
                     % (error, cverror))
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(error < 0.25,
+            self.assertTrue(error < 0.25,
                 msg="clf should generalize more or less fine. "
                     "Got error %s" % error)
-        self.failUnlessEqual(len(clf.ca.stats.sets), len(ds.UC),
+        self.assertEqual(len(clf.ca.stats.sets), len(ds.UC),
             msg="Should have 1 confusion per each split")
-        self.failUnlessEqual(len(clf.clfs), len(ds.UC),
+        self.assertEqual(len(clf.clfs), len(ds.UC),
             msg="Should have number of classifiers equal # of epochs")
-        #self.failUnlessEqual(clf.predict(ds.samples), list(ds.targets),
+        #self.assertEqual(clf.predict(ds.samples), list(ds.targets),
         #                     msg="Should classify correctly")
 
 
@@ -442,10 +442,10 @@ class ClassifiersTests(unittest.TestCase):
                 descr="DESCR")
         clf.train(ds)                   # train the beast
         # Number of harvested items should be equal to number of chunks
-        self.failUnlessEqual(
+        self.assertEqual(
             len(clf.ca.harvested['clf.ca.training_time']), len(ds.UC))
         # if we can blame multiple inheritance and ClassWithCollections.__init__
-        self.failUnlessEqual(clf.descr, "DESCR")
+        self.assertEqual(clf.descr, "DESCR")
 
 
     def test_mapped_classifier(self):
@@ -458,7 +458,7 @@ class ClassifiersTests(unittest.TestCase):
             clf = MappedClassifier(clf=self.clf_sign,
                                    mapper=mask_mapper(np.array(mask,
                                                               dtype=bool)))
-            self.failUnlessEqual(clf.predict(samples), res)
+            self.assertEqual(clf.predict(samples), res)
 
 
     def test_feature_selection_classifier(self):
@@ -498,19 +498,19 @@ class ClassifiersTests(unittest.TestCase):
         self.clf_sign.ca.change_temporarily(enable_ca=['estimates'])
         clf011.train(traindata)
 
-        self.failUnlessEqual(clf011.predict(testdata3.samples), res011)
+        self.assertEqual(clf011.predict(testdata3.samples), res011)
         # just silly test if we get values assigned in the 'ProxyClassifier'
-        self.failUnless(len(clf011.ca.estimates) == len(res110),
+        self.assertTrue(len(clf011.ca.estimates) == len(res110),
                         msg="We need to pass values into ProxyClassifier")
         self.clf_sign.ca.reset_changed_temporarily()
 
-        self.failUnlessEqual(clf011.mapper._oshape, (2,))
+        self.assertEqual(clf011.mapper._oshape, (2,))
         "Feature selection classifier had to be trained on 2 features"
 
         # first classifier -- last feature should be discarded
         clf011 = FeatureSelectionClassifier(self.clf_sign, feat_sel_rev)
         clf011.train(traindata)
-        self.failUnlessEqual(clf011.predict(testdata3.samples), res110)
+        self.assertEqual(clf011.predict(testdata3.samples), res110)
 
     def test_feature_selection_classifier_with_regression(self):
         from mvpa2.featsel.base import \
@@ -565,14 +565,14 @@ class ClassifiersTests(unittest.TestCase):
         tclf = TreeClassifier(clfs[0], {
             'L0+2' : (('L0', 'L2'), clfs[1]),
             'L2+3' : (('L2', 'L3'), clfs[2])})
-        self.failUnlessRaises(ValueError, tclf.train, ds)
+        self.assertRaises(ValueError, tclf.train, ds)
         """Should raise exception since label 2 is in both"""
 
         # Test insufficient definition
         tclf = TreeClassifier(clfs[0], {
             'L0+5' : (('L0', 'L5'), clfs[1]),
             'L2+3' : (('L2', 'L3'),       clfs[2])})
-        self.failUnlessRaises(ValueError, tclf.train, ds)
+        self.assertRaises(ValueError, tclf.train, ds)
         """Should raise exception since no group for L1"""
 
         # proper definition now
@@ -590,16 +590,16 @@ class ClassifiersTests(unittest.TestCase):
             self.fail(msg="Could not obtain repr for TreeClassifier")
 
         # Test accessibility of .clfs
-        self.failUnless(tclf.clfs['L0+1'] is clfs[1])
-        self.failUnless(tclf.clfs['L2+3'] is clfs[2])
+        self.assertTrue(tclf.clfs['L0+1'] is clfs[1])
+        self.assertTrue(tclf.clfs['L2+3'] is clfs[2])
 
         cvtrc = cv.ca.training_stats
         cvtc = cv.ca.stats
 
         if cfg.getboolean('tests', 'labile', default='yes'):
             # just a dummy check to make sure everything is working
-            self.failUnless(cvtrc != cvtc)
-            self.failUnless(cverror < 0.3,
+            self.assertTrue(cvtrc != cvtc)
+            self.assertTrue(cverror < 0.3,
                             msg="Got too high error = %s using %s"
                             % (cverror, tclf))
 
@@ -623,7 +623,7 @@ class ClassifiersTests(unittest.TestCase):
                              enable_ca=['stats', 'training_stats'])
         cverror = np.asscalar(cv(ds))
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(cverror < 0.3,
+            self.assertTrue(cverror < 0.3,
                             msg="Got too high error = %s using %s"
                             % (cverror, tclf))
 
@@ -640,7 +640,7 @@ class ClassifiersTests(unittest.TestCase):
         _ = cv(ds)
         #print clf.descr, clf.values[0]
         # basic test either we get 1 set of values per each sample
-        self.failUnlessEqual(len(clf.ca.estimates), ds.nsamples/2)
+        self.assertEqual(len(clf.ca.estimates), ds.nsamples/2)
 
         clf.ca.reset_changed_temporarily()
 
@@ -671,10 +671,10 @@ class ClassifiersTests(unittest.TestCase):
         s1 = str(mclf.ca.training_stats)
         s2 = str(svm2.ca.training_stats)
         s3 = str(mclf_mv.ca.training_stats)
-        self.failUnlessEqual(s1, s2,
+        self.assertEqual(s1, s2,
             msg="Multiclass clf should provide same results as built-in "
                 "libsvm's %s. Got %s and %s" % (svm2, s1, s2))
-        self.failUnlessEqual(s1, s3,
+        self.assertEqual(s1, s3,
             msg="%s should have used maxvote resolver by default"
                 "so results should have been identical. Got %s and %s"
                 % (mclf, s1, s3))
@@ -693,19 +693,19 @@ class ClassifiersTests(unittest.TestCase):
 
         svm2.untrain()
 
-        self.failUnless(svm2.trained == False,
+        self.assertTrue(svm2.trained == False,
             msg="Un-Trained SVM should be untrained")
 
-        self.failUnless(np.array([x.trained for x in mclf.clfs]).all(),
+        self.assertTrue(np.array([x.trained for x in mclf.clfs]).all(),
             msg="Trained Boosted classifier should have all primary classifiers trained")
-        self.failUnless(mclf.trained,
+        self.assertTrue(mclf.trained,
             msg="Trained Boosted classifier should be marked as trained")
 
         mclf.untrain()
 
-        self.failUnless(not mclf.trained,
+        self.assertTrue(not mclf.trained,
                         msg="UnTrained Boosted classifier should not be trained")
-        self.failUnless(not np.array([x.trained for x in mclf.clfs]).any(),
+        self.assertTrue(not np.array([x.trained for x in mclf.clfs]).any(),
             msg="UnTrained Boosted classifier should have no primary classifiers trained")
 
         if oldC is not None:
@@ -729,11 +729,11 @@ class ClassifiersTests(unittest.TestCase):
         clf.train(traindata)
         predicts = clf.predict(testdata.samples)
         # values should be different from predictions for SVMs we have
-        self.failUnless(np.any(predicts != clf.ca.estimates))
+        self.assertTrue(np.any(predicts != clf.ca.estimates))
 
         if knows_probabilities and clf.ca.is_set('probabilities'):
             # XXX test more thoroughly what we are getting here ;-)
-            self.failUnlessEqual( len(clf.ca.probabilities),
+            self.assertEqual( len(clf.ca.probabilities),
                                   len(testdata.samples)  )
         clf.ca.reset_changed_temporarily()
 
@@ -775,7 +775,7 @@ class ClassifiersTests(unittest.TestCase):
 
         # Just check for correctness of retraining
         err_1 = np.asscalar(trerr(ds))
-        self.failUnless(err_1<0.3,
+        self.assertTrue(err_1<0.3,
             msg="We should test here on easy dataset. Got error of %s" % err_1)
         values_1 = clf.ca.estimates[:]
         # some times retraining gets into deeper optimization ;-)
@@ -793,17 +793,17 @@ class ClassifiersTests(unittest.TestCase):
                 debug('TEST', "Retraining stats: errors %g %g corr %g "
                       "with old error %g corr %g" %
                   (err, err_re, corr, err_1, corr_old))
-            self.failUnless(clf_re.ca.retrained == retrain,
+            self.assertTrue(clf_re.ca.retrained == retrain,
                             ("Must fully train",
                              "Must retrain instead of full training")[retrain])
-            self.failUnless(clf_re.ca.repredicted == retest,
+            self.assertTrue(clf_re.ca.repredicted == retest,
                             ("Must fully test",
                              "Must retest instead of full testing")[retest])
-            self.failUnless(corr > corrcoef_eps,
+            self.assertTrue(corr > corrcoef_eps,
               msg="Result must be close to the one without retraining."
                   " Got corrcoef=%s" % (corr))
             if closer:
-                self.failUnless(
+                self.assertTrue(
                     corr >= corr_old,
                     msg="Result must be closer to current without retraining"
                     " than to old one. Got corrcoef=%s" % (corr_old))
@@ -842,7 +842,7 @@ class ClassifiersTests(unittest.TestCase):
         permute = AttributePermutator('targets', assure=True)
         oldlabels = dstrain.targets[:]
         dstrain = permute(dstrain)
-        self.failUnless((oldlabels != dstrain.targets).any(),
+        self.assertTrue((oldlabels != dstrain.targets).any(),
             msg="We should succeed at permutting -- now got the same targets")
         ds = vstack((dstrain, dstest))
         batch_test()
@@ -850,7 +850,7 @@ class ClassifiersTests(unittest.TestCase):
         # Change labels in testing
         oldlabels = dstest.targets[:]
         dstest = permute(dstest)
-        self.failUnless((oldlabels != dstest.targets).any(),
+        self.assertTrue((oldlabels != dstest.targets).any(),
             msg="We should succeed at permutting -- now got the same targets")
         ds = vstack((dstrain, dstest))
         batch_test()
@@ -860,7 +860,7 @@ class ClassifiersTests(unittest.TestCase):
         if not clf.__class__.__name__ in ['GPR']: # on GPR everything depends on the data ;-)
             oldsamples = dstrain.samples.copy()
             dstrain.samples[:] += dstrain.samples*0.05
-            self.failUnless((oldsamples != dstrain.samples).any())
+            self.assertTrue((oldsamples != dstrain.samples).any())
             ds = vstack((dstrain, dstest))
             batch_test(retest=False)
         clf.ca.reset_changed_temporarily()
@@ -868,16 +868,16 @@ class ClassifiersTests(unittest.TestCase):
         # test retrain()
         # TODO XXX  -- check validity
         clf_re.retrain(dstrain);
-        self.failUnless(clf_re.ca.retrained)
+        self.assertTrue(clf_re.ca.retrained)
         clf_re.retrain(dstrain, labels=True);
-        self.failUnless(clf_re.ca.retrained)
+        self.assertTrue(clf_re.ca.retrained)
         clf_re.retrain(dstrain, traindataset=True);
-        self.failUnless(clf_re.ca.retrained)
+        self.assertTrue(clf_re.ca.retrained)
 
         # test repredict()
         clf_re.repredict(dstest.samples);
-        self.failUnless(clf_re.ca.repredicted)
-        self.failUnlessRaises(RuntimeError, clf_re.repredict,
+        self.assertTrue(clf_re.ca.repredicted)
+        self.assertRaises(RuntimeError, clf_re.repredict,
                               dstest.samples, labels=True)
         """for now retesting with anything changed makes no sense"""
         clf_re._set_retrainable(False)
@@ -892,17 +892,17 @@ class ClassifiersTests(unittest.TestCase):
             traindata_copy = deepcopy(traindata) # full copy of dataset
             for clf in clf_:
                 clf.train(traindata)
-                self.failUnless(
+                self.assertTrue(
                    (traindata.samples == traindata_copy.samples).all(),
                    "Training of a classifier shouldn't change original dataset")
 
             # TODO: enforce uniform return from predict??
             #predicted = clf.predict(traindata.samples)
-            #self.failUnless(isinstance(predicted, np.ndarray))
+            #self.assertTrue(isinstance(predicted, np.ndarray))
 
         # Just simple test that all of them are syntaxed correctly
-        self.failUnless(str(clf) != "")
-        self.failUnless(repr(clf) != "")
+        self.assertTrue(str(clf) != "")
+        self.assertTrue(repr(clf) != "")
 
         # TODO: unify str and repr for all classifiers
 
@@ -930,7 +930,7 @@ class ClassifiersTests(unittest.TestCase):
         clf.ca.change_temporarily(enable_ca = ['training_stats'])
         for traindata in traindatas:
             clf.train(traindata)
-            self.failUnlessEqual(clf.ca.training_stats.percent_correct, 100.0,
+            self.assertEqual(clf.ca.training_stats.percent_correct, 100.0,
                 "Classifier %s must have 100%% correct learning on %s. Has %f" %
                 (`clf`, traindata.samples, clf.ca.training_stats.percent_correct))
 
@@ -938,7 +938,7 @@ class ClassifiersTests(unittest.TestCase):
             for i in xrange(traindata.nsamples):
                 sample = traindata.samples[i,:]
                 predicted = clf.predict([sample])
-                self.failUnlessEqual([predicted], traindata.targets[i],
+                self.assertEqual([predicted], traindata.targets[i],
                     "We must be able to predict sample %s using " % sample +
                     "classifier %s" % `clf`)
         clf.ca.reset_changed_temporarily()
@@ -961,20 +961,20 @@ class ClassifiersTests(unittest.TestCase):
             nlabels = len(ds.uniquetargets)
             if nlabels == 2 \
                and cfg.getboolean('tests', 'labile', default='yes'):
-                self.failUnless(error < 0.3,
+                self.assertTrue(error < 0.3,
                                 msg="Got error %.2f on %s dataset"
                                 % (error, dsname))
 
             # Check if does not puke on repr and str
-            self.failUnless(str(clf) != "")
-            self.failUnless(repr(clf) != "")
+            self.assertTrue(str(clf) != "")
+            self.assertTrue(repr(clf) != "")
 
-            self.failUnlessEqual(clf.ca.distances.shape,
+            self.assertEqual(clf.ca.distances.shape,
                                  (ds.nsamples / 2, nlabels))
 
             #print "Using %s " % regr, error
             # Just validate that everything is ok
-            #self.failUnless(str(cv.ca.stats) != "")
+            #self.assertTrue(str(cv.ca.stats) != "")
 
     def _test_gideon_weird_case(self):
         """'The utter collapse' -- communicated by Peter J. Kohler

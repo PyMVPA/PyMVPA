@@ -37,7 +37,7 @@ class LARSTests(unittest.TestCase):
         pre = clf.predict(data.samples)
         cor = pearsonr(pre, data.targets)
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(cor[0] > .8)
+            self.assertTrue(cor[0] > .8)
 
     def test_lars_state(self):
         #data = datasets['dumb2']
@@ -53,7 +53,7 @@ class LARSTests(unittest.TestCase):
 
         p = clf.predict(data.samples)
 
-        self.failUnless((p == clf.ca.predictions).all())
+        self.assertTrue((p == clf.ca.predictions).all())
 
 
     def test_lars_sensitivities(self):
@@ -67,7 +67,7 @@ class LARSTests(unittest.TestCase):
         # again
         sens = clf.get_sensitivity_analyzer(force_train=False)(None)
 
-        self.failUnless(sens.shape == (1, data.nfeatures))
+        self.assertTrue(sens.shape == (1, data.nfeatures))
 
 
 def suite():

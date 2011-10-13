@@ -95,13 +95,13 @@ class KernelTests(unittest.TestCase):
         dmax = diff.max()               # and maximal difference
         dmax_index = np.unravel_index(np.argmax(diff), diff.shape)
 
-        self.failUnless(dmax <= accuracy,
+        self.assertTrue(dmax <= accuracy,
                         '\n%s\nand\n%s\ndiffer by %s at %s:\n  %.15e\n  %.15e'
                         % (k1, k2, dmax, dmax_index,
                            k1.as_np()._k.__getitem__(dmax_index),
                            k2.as_np()._k.__getitem__(dmax_index)))
 
-        self.failUnless(np.all(k1m.astype('float32') == \
+        self.assertTrue(np.all(k1m.astype('float32') == \
                               k2m.astype('float32')),
                         '\n%s\nand\n%s\nare unequal as float32'%(k1, k2))
 
@@ -111,9 +111,9 @@ class KernelTests(unittest.TestCase):
         d1 = Dataset(np.asarray([range(5)]*10, dtype=float))
         lk = npK.LinearKernel()
         lk.compute(d1)
-        self.failUnless(lk._k.shape == (10, 10),
+        self.assertTrue(lk._k.shape == (10, 10),
                         "Failure computing LinearKernel (Size mismatch)")
-        self.failUnless((lk._k == 30).all(),
+        self.assertTrue((lk._k == 30).all(),
                         "Failure computing LinearKernel")
 
     @reseed_rng()
@@ -122,7 +122,7 @@ class KernelTests(unittest.TestCase):
         d = np.random.randn(50, 50)
         nk = PrecomputedKernel(matrix=d)
         nk.compute()
-        self.failUnless((d == nk._k).all(),
+        self.assertTrue((d == nk._k).all(),
                         'Failure setting and retrieving PrecomputedKernel data')
 
     @reseed_rng()
@@ -139,7 +139,7 @@ class KernelTests(unittest.TestCase):
         ck = CachedKernel(kernel=npK.RbfKernel(sigma=1.5))
         ck.compute(d) # Initial cache of all data
         
-        self.failUnless(ck._recomputed,
+        self.assertTrue(ck._recomputed,
                         'CachedKernel was not initially computed')
         
         # Try some splitting
@@ -153,20 +153,20 @@ class KernelTests(unittest.TestCase):
         # Test what happens when a parameter changes
         ck.params.sigma = 3.5
         ck.compute(d)
-        self.failUnless(ck._recomputed,
+        self.assertTrue(ck._recomputed,
                         "CachedKernel doesn't recompute on kernel change")
         rk.params.sigma = 3.5
         rk.compute(d)
-        self.failUnless(np.all(rk._k == ck._k),
+        self.assertTrue(np.all(rk._k == ck._k),
                         'Cached and rbf kernels disagree after kernel change')
         
         # Now test handling new data
         d2 = Dataset(np.random.randn(32, 43))
         ck.compute(d2)
-        self.failUnless(ck._recomputed,
+        self.assertTrue(ck._recomputed,
                         "CachedKernel did not automatically recompute new data")
         ck.compute(d)
-        self.failUnless(ck._recomputed,
+        self.assertTrue(ck._recomputed,
                         "CachedKernel did not recompute old data which had\n" +\
                         "previously been computed, but had the cache overriden")
 
@@ -187,7 +187,7 @@ class KernelTests(unittest.TestCase):
             sk = nk.as_sg()
             sk.compute()
             # CustomKernels interally store as float32 ??
-            self.failUnless((nk._k.astype('float32') == \
+            self.assertTrue((nk._k.astype('float32') == \
                              sk.as_raw_np().astype('float32')).all(),
                             'Failure converting arrays between NP as SG')
             
@@ -252,9 +252,9 @@ class KernelTests(unittest.TestCase):
             poly.compute(d)
             custom.compute(d)
 
-            self.failUnless(np.all(lk.as_np()._k == cl.as_np()._k),
+            self.assertTrue(np.all(lk.as_np()._k == cl.as_np()._k),
                             'CustomSGKernel does not agree with Linear')
-            self.failUnless(np.all(poly.as_np()._k == custom.as_np()._k),
+            self.assertTrue(np.all(poly.as_np()._k == custom.as_np()._k),
                             'CustomSGKernel does not agree with Poly')
 
     # Older kernel stuff (ie not mvpa2.kernel) - perhaps refactor?
@@ -270,7 +270,7 @@ class KernelTests(unittest.TestCase):
         # feature (i.e. column), but distance is between samples (i.e. rows)
         # current behavior is:
         true_size = (5, 5)
-        self.failUnless(ed.shape == true_size)
+        self.assertTrue(ed.shape == true_size)
 
         # slow version to compute distance matrix
         ed_manual = np.zeros(true_size, 'd')
@@ -280,30 +280,30 @@ class KernelTests(unittest.TestCase):
                 ed_manual[i,j] = ((data[i,:] - data[j,:] )** 2).sum()
         ed_manual[ed_manual < 0] = 0
 
-        self.failUnless(np.diag(ed_manual).sum() < 0.0000000001)
-        self.failUnless(np.diag(ed).sum() < 0.0000000001)
+        self.assertTrue(np.diag(ed_manual).sum() < 0.0000000001)
+        self.assertTrue(np.diag(ed).sum() < 0.0000000001)
 
         # let see whether Kernel does the same
-        self.failUnless((ed - ed_manual).sum() < 0.0000001)
+        self.assertTrue((ed - ed_manual).sum() < 0.0000001)
 
 
     def test_pnorm_w(self):
         data0 = datasets['uni4large'].samples.T
         weight = np.abs(data0[11, :60])
 
-        self.failUnlessRaises(ValueError, pnorm_w_python,
+        self.assertRaises(ValueError, pnorm_w_python,
                               data0[:10,:2], p=1.2, heuristic='buga')
-        self.failUnlessRaises(ValueError, pnorm_w_python,
+        self.assertRaises(ValueError, pnorm_w_python,
                               data0[:10,:2], weight=weight)
 
-        self.failUnlessRaises(ValueError, pnorm_w_python,
+        self.assertRaises(ValueError, pnorm_w_python,
                               data0[:10,:2], data0[:10, :3],
                               weight=weight)
-        self.failUnlessRaises(ValueError, pnorm_w,
+        self.assertRaises(ValueError, pnorm_w,
                               data0[:10,:2], data0[:10, :3],
                               weight=weight)
 
-        self.failUnlessRaises(ValueError, pnorm_w,
+        self.assertRaises(ValueError, pnorm_w,
                               data0[:10,:2], weight=weight)
 
         # some sanity checks
@@ -336,7 +336,7 @@ class KernelTests(unittest.TestCase):
                                     use_sq_euclidean=False, **kwargs)
                      for h in ('auto', 'samples', 'features')]):
                     dnorm = np.linalg.norm(d2 - d, 'fro')
-                    self.failUnless(dnorm/d0norm < 1e-7,
+                    self.assertTrue(dnorm/d0norm < 1e-7,
                         msg="Failed comparison of different implementations on "
                             "data #%d, implementation #%d, p=%s. "
                             "Norm of the difference is %g"

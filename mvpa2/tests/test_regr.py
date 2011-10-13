@@ -28,7 +28,7 @@ class RegressionsTests(unittest.TestCase):
     def test_non_regressions(self, ml):
         """Test If binary regression-based  classifiers have proper tag
         """
-        self.failUnless(('binary' in ml.__tags__) != ml.__is_regression__,
+        self.assertTrue(('binary' in ml.__tags__) != ml.__is_regression__,
             msg="Inconsistent tagging with binary and regression features"
                 " detected in %s having %r" % (ml, ml.__tags__))
 
@@ -48,13 +48,13 @@ class RegressionsTests(unittest.TestCase):
         cve = CrossValidation(regr, NFoldPartitioner(), postproc=mean_sample(),
             errorfx=corr_error, enable_ca=['training_stats', 'stats'])
         # check the default
-        #self.failUnless(cve.transerror.errorfx is corr_error)
+        #self.assertTrue(cve.transerror.errorfx is corr_error)
 
         corr = np.asscalar(cve(ds).samples)
 
         # Our CorrErrorFx should never return NaN
-        self.failUnless(not np.isnan(corr))
-        self.failUnless(corr == cve.ca.stats.stats['CCe'])
+        self.assertTrue(not np.isnan(corr))
+        self.assertTrue(corr == cve.ca.stats.stats['CCe'])
 
         splitregr = SplitClassifier(
             regr, partitioner=OddEvenPartitioner(),
@@ -73,18 +73,18 @@ class RegressionsTests(unittest.TestCase):
             for conf in confusion.summaries:
                 stats = conf.stats
                 if cfg.getboolean('tests', 'labile', default='yes'):
-                    self.failUnless(stats['CCe'] < 0.5)
-                self.failUnlessEqual(stats['CCe'], stats['Summary CCe'])
+                    self.assertTrue(stats['CCe'] < 0.5)
+                self.assertEqual(stats['CCe'], stats['Summary CCe'])
 
             s0 = confusion.as_string(short=True)
             s1 = confusion.as_string(short=False)
 
             for s in [s0, s1]:
-                self.failUnless(len(s) > 10,
+                self.assertTrue(len(s) > 10,
                                 msg="We should get some string representation "
                                 "of regression summary. Got %s" % s)
             if cfg.getboolean('tests', 'labile', default='yes'):
-                self.failUnless(error < 0.2,
+                self.assertTrue(error < 0.2,
                             msg="Regressions should perform well on a simple "
                             "dataset. Got correlation error of %s " % error)
 
@@ -95,7 +95,7 @@ class RegressionsTests(unittest.TestCase):
             #      otherwise fix it! ;)
             # YOH: not now -- issues with libsvr in SG and linear kernel
             if cfg.getboolean('tests', 'labile', default='yes'):
-                self.failUnless(confusion.stats['CCe'] < 0.5)
+                self.assertTrue(confusion.stats['CCe'] < 0.5)
 
         # just to check if it works fine
         split_predictions = splitregr.predict(ds.samples)
@@ -111,7 +111,7 @@ class RegressionsTests(unittest.TestCase):
         """
         # check if we get values set correctly
         clf.ca.change_temporarily(enable_ca=['estimates'])
-        self.failUnlessRaises(UnknownStateError, clf.ca['estimates']._get)
+        self.assertRaises(UnknownStateError, clf.ca['estimates']._get)
         cv = CrossValidation(clf, NFoldPartitioner(),
             enable_ca=['stats', 'training_stats'])
         ds = datasets['uni2small'].copy()
@@ -120,7 +120,7 @@ class RegressionsTests(unittest.TestCase):
         ds.sa.targets = AttributeMap().to_numeric(ds.targets)
         cverror = cv(ds)
 
-        self.failUnless(len(clf.ca.estimates) == ds[ds.chunks == 1].nsamples)
+        self.assertTrue(len(clf.ca.estimates) == ds[ds.chunks == 1].nsamples)
         clf.ca.reset_changed_temporarily()
 
 
@@ -143,7 +143,7 @@ class RegressionsTests(unittest.TestCase):
             res = sa(myds)
         #except Exception, e:
         #    self.fail('Failed to obtain a sensitivity due to %r' % (e,))
-        self.failUnless(res.shape == (1, myds.nfeatures))
+        self.assertTrue(res.shape == (1, myds.nfeatures))
         # TODO: extend the test -- checking for validity of sensitivities etc
 
 

@@ -66,10 +66,10 @@ class StatsTests(unittest.TestCase):
         # of the MCNullDists using normal distribution are apparently not
         # distributed that way, hence the test often (if not always) fails.
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(np.abs(prob[0]) < 0.05,
+            self.assertTrue(np.abs(prob[0]) < 0.05,
                             msg="Expected small p, got %g" % prob[0])
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless((np.abs(prob[1:]) > 0.05).all(),
+            self.assertTrue((np.abs(prob[1:]) > 0.05).all(),
                             msg="Bogus features should have insignificant p."
                             " Got %s" % (np.abs(prob[1:]),))
 
@@ -77,7 +77,7 @@ class StatsTests(unittest.TestCase):
         if not isinstance(null, FixedNullDist):
             # Fixed dist is univariate ATM so it doesn't care
             # about dimensionality and gives 1 output value
-            self.failUnlessRaises(ValueError, null.p, [5, 3, 4])
+            self.assertRaises(ValueError, null.p, [5, 3, 4])
 
 
     def test_anova(self):
@@ -94,8 +94,8 @@ class StatsTests(unittest.TestCase):
         # simple OneWayAnova
         a, ac = m(ds), mc(ds)
 
-        self.failUnless(a.shape == (1, ds.nfeatures))
-        self.failUnless(ac.shape == (len(ds.UT), ds.nfeatures))
+        self.assertTrue(a.shape == (1, ds.nfeatures))
+        self.assertTrue(ac.shape == (len(ds.UT), ds.nfeatures))
 
         assert_array_equal(ac[0], ac[1])
         assert_array_equal(a, ac[1])
@@ -109,13 +109,13 @@ class StatsTests(unittest.TestCase):
         ac = mc(ds)
         if cfg.getboolean('tests', 'labile', default='yes'):
             # All non-bogus features must be high for a corresponding feature
-            self.failUnless((ac.samples[np.arange(4),
+            self.assertTrue((ac.samples[np.arange(4),
                                         np.array(ds.a.nonbogus_features)] >= 1
                                         ).all())
         # All features should have slightly but different CompoundAnova
         # values. I really doubt that there will be a case when this
         # test would fail just to being 'labile'
-        self.failUnless(np.max(np.std(ac, axis=1))>0,
+        self.assertTrue(np.max(np.std(ac, axis=1))>0,
                         msg='In compound anova, we should get different'
                         ' results for different labels. Got %s' % ac)
 

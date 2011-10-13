@@ -35,10 +35,10 @@ class ProcrusteanMapperTests(unittest.TestCase):
             R = get_random_rotation(nf_s, nf_t, d_orig)
             if nf_s == nf_t:
                 adR = np.abs(1.0 - np.linalg.det(R))
-                self.failUnless(adR < 1e-10,
+                self.assertTrue(adR < 1e-10,
                                 "Determinant of rotation matrix should "
                                 "be 1. Got it 1+%g" % adR)
-                self.failUnless(norm(np.dot(R, R.T)
+                self.assertTrue(norm(np.dot(R, R.T)
                                      - np.eye(R.shape[0])) < 1e-10)
 
             for s, scaling in ((0.3, True), (1.0, False)):
@@ -60,16 +60,16 @@ class ProcrusteanMapperTests(unittest.TestCase):
 
                 ## verify that both created the same transformation
                 #npm2proj = norm(pm.proj - pm2.proj)
-                #self.failUnless(npm2proj <= 1e-10,
+                #self.assertTrue(npm2proj <= 1e-10,
                 #                msg="Got transformation different by norm %g."
                 #                " Had to be less than 1e-10" % npm2proj)
-                #self.failUnless(norm(pm._offset_in - pm2._offset_in) <= 1e-10)
-                #self.failUnless(norm(pm._offset_out - pm2._offset_out) <= 1e-10)
+                #self.assertTrue(norm(pm._offset_in - pm2._offset_in) <= 1e-10)
+                #self.assertTrue(norm(pm._offset_out - pm2._offset_out) <= 1e-10)
 
                 # do forward transformation on the same source data
                 d_s_f = pm.forward(d_s)
 
-                self.failUnlessEqual(d_s_f.shape, d_t.shape,
+                self.assertEqual(d_s_f.shape, d_t.shape,
                     msg="Mapped shape should be identical to the d_t")
 
                 dsf = d_s_f - d_t
@@ -78,15 +78,15 @@ class ProcrusteanMapperTests(unittest.TestCase):
                     dsR = norm(s*R - pm.proj)
 
                     if not oblique:
-                        self.failUnless(dsR <= 1e-12,
+                        self.assertTrue(dsR <= 1e-12,
                             msg="We should have got reconstructed rotation+scaling "
                                 "perfectly. Now got d scale*R=%g" % dsR)
 
-                        self.failUnless(np.abs(s - pm._scale) < 1e-12,
+                        self.assertTrue(np.abs(s - pm._scale) < 1e-12,
                             msg="We should have got reconstructed scale "
                                 "perfectly. Now got %g for %g" % (pm._scale, s))
 
-                    self.failUnless(ndsf <= 1e-12,
+                    self.assertTrue(ndsf <= 1e-12,
                       msg="%s: Failed to get to the target space correctly."
                         " normed error=%g" % (sdim, ndsf))
 
@@ -96,7 +96,7 @@ class ProcrusteanMapperTests(unittest.TestCase):
                 dsfr = d_s_f_r - d_s
                 ndsfr = norm(dsfr)/norm(d_s)
                 if full_test:
-                    self.failUnless(ndsfr <= 1e-12,
+                    self.assertTrue(ndsfr <= 1e-12,
                       msg="%s: Failed to reconstruct into source space correctly."
                         " normed error=%g" % (sdim, ndsfr))
 

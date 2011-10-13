@@ -21,7 +21,7 @@ class CmdlineHelpersTest(unittest.TestCase):
         globals_ = globals()
         for member in  [#'_verbose_callback',
                         'parser', 'opt', 'opts']:
-            self.failUnless(globals_.has_key(member),
+            self.assertTrue(globals_.has_key(member),
                 msg="We must have imported %s from mvpa2.misc.cmdline!" % member)
 
 def suite():

@@ -26,12 +26,12 @@ class CrossValidationTests(unittest.TestCase):
         data = get_mv_pattern(3)
         data.init_origids('samples')
 
-        self.failUnless( data.nsamples == 120 )
-        self.failUnless( data.nfeatures == 2 )
-        self.failUnless(
+        self.assertTrue( data.nsamples == 120 )
+        self.assertTrue( data.nfeatures == 2 )
+        self.assertTrue(
             (data.sa.targets == \
                 [0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0] * 6).all())
-        self.failUnless(
+        self.assertTrue(
             (data.sa.chunks == \
                 [k for k in range(1, 7) for i in range(20)]).all())
         assert_equal(len(np.unique(data.sa.origids)), data.nsamples)
@@ -41,19 +41,19 @@ class CrossValidationTests(unittest.TestCase):
 #                               'samples_error'])
 
         results = cv(data)
-        self.failUnless((results.samples < 0.2).all() and (results.samples >= 0.0).all())
+        self.assertTrue((results.samples < 0.2).all() and (results.samples >= 0.0).all())
 
         # TODO: test accessibility of {training_,}stats{,s} of
         # CrossValidatedTransferError
 
         # not yet implemented, and no longer this way
-        #self.failUnless(isinstance(cv.ca.samples_error, dict))
-        #self.failUnless(len(cv.ca.samples_error) == data.nsamples)
+        #self.assertTrue(isinstance(cv.ca.samples_error, dict))
+        #self.assertTrue(len(cv.ca.samples_error) == data.nsamples)
         ## one value for each origid
         #assert_array_equal(sorted(cv.ca.samples_error.keys()),
         #                   sorted(data.sa.origids))
         #for k, v in cv.ca.samples_error.iteritems():
-        #    self.failUnless(len(v) == 1)
+        #    self.assertTrue(len(v) == 1)
 
 
     def test_noise_classification(self):
@@ -66,7 +66,7 @@ class CrossValidationTests(unittest.TestCase):
         # must return a scalar value
         result = cv(data)
         # must be perfect
-        self.failUnless((result.samples < 0.05).all())
+        self.assertTrue((result.samples < 0.05).all())
 
         # do crossval with permuted regressors
         cv = CrossValidation(sample_clf_nl,
@@ -77,7 +77,7 @@ class CrossValidationTests(unittest.TestCase):
 
         # must be at chance level
         pmean = np.array(results).mean()
-        self.failUnless( pmean < 0.58 and pmean > 0.42 )
+        self.assertTrue( pmean < 0.58 and pmean > 0.42 )
 
 
 

@@ -69,12 +69,12 @@ class IFSTests(unittest.TestCase):
         resds = ifs(ds)
 
         # fail if orig datasets are changed
-        self.failUnless(ds.nfeatures == orig_nfeatures)
+        self.assertTrue(ds.nfeatures == orig_nfeatures)
 
         # check that the features set with the least error is selected
-        self.failUnless(len(ifs.ca.errors))
+        self.assertTrue(len(ifs.ca.errors))
         e = np.array(ifs.ca.errors)
-        self.failUnless(resds.nfeatures == e.argmin() + 1)
+        self.assertTrue(resds.nfeatures == e.argmin() + 1)
 
 
         # repeat with dataset where selection order is known
@@ -85,7 +85,7 @@ class IFSTests(unittest.TestCase):
         signal = vstack((wsignal, tsignal))
         ifs.train(signal)
         resds = ifs(signal)
-        self.failUnless((resds.samples[:,0] == signal.samples[:,0]).all())
+        self.assertTrue((resds.samples[:,0] == signal.samples[:,0]).all())
 
 
 def suite():

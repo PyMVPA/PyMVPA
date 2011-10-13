@@ -42,9 +42,9 @@ class WaveletMappersTests(unittest.TestCase):
         d3d_wd = wdm.forward(d3d)
         d3d_swap = d3d.swapaxes(1,2)
 
-        self.failUnlessRaises(ValueError, WaveletTransformationMapper,
+        self.assertRaises(ValueError, WaveletTransformationMapper,
                               wavelet='bogus')
-        self.failUnlessRaises(ValueError, WaveletTransformationMapper,
+        self.assertRaises(ValueError, WaveletTransformationMapper,
                               mode='bogus')
 
         # use wavelet mapper
@@ -58,25 +58,25 @@ class WaveletMappersTests(unittest.TestCase):
             if dd_swap is not None:
                 dd_wd_swap = wdm_swap.forward(dd_swap)
 
-                self.failUnless((dd_wd == dd_wd_swap.swapaxes(1,2)).all(),
+                self.assertTrue((dd_wd == dd_wd_swap.swapaxes(1,2)).all(),
                                 msg="We should have got same result with swapped "
                                 "dimensions and explicit mentioining of it. "
                                 "Got %s and %s" % (dd_wd, dd_wd_swap))
 
             # some sanity checks
-            self.failUnless(dd_wd.shape[0] == dd.shape[0])
+            self.assertTrue(dd_wd.shape[0] == dd.shape[0])
 
             if not isinstance(wdm, WaveletPacketMapper):
                 # we can do reverse only for DWT
                 dd_rev = wdm.reverse(dd_wd)
                 # inverse transform might be not exactly as the
                 # input... but should be very close ;-)
-                self.failUnlessEqual(dd_rev.shape, dd.shape,
+                self.assertEqual(dd_rev.shape, dd.shape,
                                      msg="Shape should be the same after iDWT")
 
                 diff = np.linalg.norm(dd - dd_rev)
                 ornorm = np.linalg.norm(dd)
-                self.failUnless(diff/ornorm < 1e-10)
+                self.assertTrue(diff/ornorm < 1e-10)
 
 
     def test_simple_wp1_level(self):
@@ -98,10 +98,10 @@ class WaveletMappersTests(unittest.TestCase):
 
         # Check dimensionality
         d3d_wds, d3ds = d3d_wd.shape, d3d.shape
-        self.failUnless(len(d3d_wds) == len(d3ds)+1)
-        self.failUnless(d3d_wds[1] * d3d_wds[2] >= d3ds[1])
-        self.failUnless(d3d_wds[0] == d3ds[0])
-        self.failUnless(d3d_wds[-1] == d3ds[-1])
+        self.assertTrue(len(d3d_wds) == len(d3ds)+1)
+        self.assertTrue(d3d_wds[1] * d3d_wds[2] >= d3ds[1])
+        self.assertTrue(d3d_wds[0] == d3ds[0])
+        self.assertTrue(d3d_wds[-1] == d3ds[-1])
         #print d2d.shape, d3d.shape, d3d_wd.shape
 
         if externals.exists('pywt wp reconstruct'):
@@ -111,16 +111,16 @@ class WaveletMappersTests(unittest.TestCase):
 
             # inverse transform might be not exactly as the
             # input... but should be very close ;-)
-            self.failUnlessEqual(d3d_rev.shape, d3d.shape,
+            self.assertEqual(d3d_rev.shape, d3d.shape,
                                  msg="Shape should be the same after iDWT")
 
             diff = np.linalg.norm(d3d - d3d_rev)
             ornorm = np.linalg.norm(d3d)
 
             skip_if_no_external('pywt wp reconstruct fixed')
-            self.failUnless(diff/ornorm < 1e-10)
+            self.assertTrue(diff/ornorm < 1e-10)
         else:
-            self.failUnlessRaises(NotImplementedError, wdm.reverse, d3d_wd)
+            self.assertRaises(NotImplementedError, wdm.reverse, d3d_wd)
 
 
     ##REF: Name was automagically refactored
@@ -147,7 +147,7 @@ class WaveletMappersTests(unittest.TestCase):
             d3d_wd = wdm(d3d)
             d3d_wd_ = wdm_(d3d)
 
-            self.failUnless((d3d_wd == d3d_wd_).all(),
+            self.assertTrue((d3d_wd == d3d_wd_).all(),
                 msg="We should have got same result with old and new code. "
                     "Got %s and %s" % (d3d_wd, d3d_wd_))
 

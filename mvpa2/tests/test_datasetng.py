@@ -604,7 +604,7 @@ def test_feature_masking():
 
     # check sugarings
     # XXX put me back
-    #self.failUnless(np.all(data.I == data.origids))
+    #self.assertTrue(np.all(data.I == data.origids))
     assert_array_equal(data.C, data.chunks)
     assert_array_equal(data.UC, np.unique(data.chunks))
     assert_array_equal(data.T, data.targets)
