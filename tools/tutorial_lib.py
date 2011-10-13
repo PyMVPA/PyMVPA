@@ -20,14 +20,14 @@ def get_raw_haxby2001_data(path=os.path.join(tutorial_data_path, 'data'),
                            roi='vt'):
     if roi is 0:
         # this means something special in the searchlight tutorial
-        nimg = NiftiImage(os.path.join(path, 'mask_hoc.nii.gz'))
-        nimg_brain = NiftiImage(os.path.join(path, 'mask_brain.nii.gz'))
-        tmpmask = nimg.data == roi
+        nimg = nb.load(os.path.join(path, 'mask_hoc.nii.gz'))
+        nimg_brain = nb.load(os.path.join(path, 'mask_brain.nii.gz'))
+        tmpmask = nimg.get_data() == roi
         # trim it down to the lower anterior quadrant
-        tmpmask[tmpmask.shape[0]/2:] = False
+        tmpmask[:, :, tmpmask.shape[-1]/2:] = False
         tmpmask[:, :tmpmask.shape[1]/2] = False
-        tmpmask[nimg_brain.data > 0] = False
-        mask = NiftiImage(tmpmask.astype(int), nimg.header)
+        tmpmask[nimg_brain.get_data() > 0] = False
+        mask = nb.Nifti1Image(tmpmask.astype(int), None, nimg.get_header())
         attr = SampleAttributes(os.path.join(path, 'attributes.txt'))
         ds = fmri_dataset(samples=os.path.join(path, 'bold.nii.gz'),
                           targets=attr.targets, chunks=attr.chunks,
