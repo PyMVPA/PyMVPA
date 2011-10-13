@@ -206,7 +206,7 @@ if externals.exists('shogun'):
     from mvpa2.kernels.sg import LinearSGKernel, PolySGKernel, RbfSGKernel
     clfswh._known_tags.update(sg.SVM._KNOWN_IMPLEMENTATIONS)
 
-    # some classifiers are not yet ready to be used out-of-the-box in
+    # TODO: some classifiers are not yet ready to be used out-of-the-box in
     # PyMVPA, thus we don't populate warehouse with their instances
     bad_classifiers = [
         'mpd',  # was segfault, now non-training on testcases, and XOR.
@@ -220,6 +220,7 @@ if externals.exists('shogun'):
         'svrlight', # fails to 'generalize' as a binary classifier
                     # after 'binning'
         'krr', # fails to generalize
+        'svmocas', # fails to generalize
         'libsvr'                        # XXXregr removing regressions as classifiers
         ]
     if not externals.exists('sg_fixedcachesize'):
