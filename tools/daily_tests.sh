@@ -40,7 +40,7 @@ for b in origin/maint/0.4; do
 done
 # development branches
 for b in origin/master yarikoptic/master hanke/master; do
-    TESTS_BRANCHES["$b"]="$TESTS_COMMON testdatadb testourcfg testdocstrings"
+    TESTS_BRANCHES["$b"]="$TESTS_COMMON testdatadb testourcfg testdocstrings testmvpa-prep-fmri"
 done
 # all known tests
 TESTS_ALL=`echo "${TESTS_BRANCHES[*]}" | tr ' ' '\n' | sort | uniq`
