@@ -88,10 +88,6 @@ start_tutorial_session.sh
   Helper shell script to start an interactive session within IPython
   to proceed with the tutorial code.
 
-tutorial_lib.py
-  Helper Python module used through out the tutorial to avoid
-  presenting sequences of common operations (e.g. loading data)
-  multiple times.
 
 Instructions
 ============
@@ -129,6 +125,11 @@ objects in ventral temporal cortex. Science 293, 2425–2430.
 
 Changelog
 =========
+
+0.3
+
+  * Removed tutorial_lib.py which is superseeded by using
+    mvpa2.tutorial_suite
 
 0.2
 

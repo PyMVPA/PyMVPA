@@ -39,7 +39,7 @@ new method to create the dataset, the ``dataset_wizard``. Here it is, fully
 equivalent to a regular constructor call (i.e.  `~mvpa2.datasets.base.Dataset`),
 but we will shortly see some nice convenience aspects.
 
->>> from tutorial_lib import *
+>>> from mvpa2.tutorial_suite import *
 >>> ds = dataset_wizard(np.ones((5, 12)))
 >>> ds.shape
 (5, 12)

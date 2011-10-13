@@ -36,7 +36,7 @@ recreate our preprocessed demo dataset. The code is taken verbatim from the
 :ref:`previous tutorial part <chap_tutorial_classifiers>` and should raise
 no questions. We get a dataset with one sample per category per run.
 
->>> from tutorial_lib import *
+>>> from mvpa2.tutorial_suite import *
 >>> # alt: `ds = load_tutorial_results('ds_haxby2001')`
 >>> ds = get_haxby2001_data(roi='vt')
 >>> ds.shape
