@@ -458,30 +458,32 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
     #
     # Ugly special case of arrays of objects
     #
-    if isinstance(obj, np.ndarray) and obj.dtype == np.object:
-        if not len(obj.shape):
-            # even worse: 0d array
-            # we store 0d object arrays just by content
-            if __debug__:
-                debug('HDF5', "0d array(object) -> object")
-            obj = obj[()]
-        else:
-            # proper arrays can become lists
-            if __debug__:
-                debug('HDF5', "array(objects) -> list(objects)")
-            obj = list(obj)
-            # make sure we don't ref this temporary list object
-            noid = True
-        # flag that we messed with the original type
-        is_obj_array = True
-    else:
-        # puh, thanks!
-        is_obj_array = False
+    is_objarray = False                # assume the bright side ;-)
+    is_ndarray = isinstance(obj, np.ndarray)
+    if is_ndarray:
+        if obj.dtype == np.object:
+            if not len(obj.shape):
+                # even worse: 0d array
+                # we store 0d object arrays just by content
+                if __debug__:
+                    debug('HDF5', "0d array(object) -> object")
+                obj = obj[()]
+            else:
+                # proper arrays can become lists
+                if __debug__:
+                    debug('HDF5', "array(objects) -> list(objects)")
+                obj = list(obj)
+                # make sure we don't ref this temporary list object
+                noid = True
+            # flag that we messed with the original type
+            is_objarray = True
+            # and re-estimate the content's nd-array-ness
+            is_ndarray = isinstance(obj, np.ndarray)
 
     # if it is something that can go directly into HDF5, put it there
     # right away
-    if np.isscalar(obj) or isinstance(obj, np.ndarray):
-        is_scalar = np.isscalar(obj)
+    is_scalar = np.isscalar(obj)
+    if is_scalar or is_ndarray:
         is_numpy_scalar = issubclass(type(obj), np.generic)
         if name is None:
             # HDF5 cannot handle datasets without a name
@@ -490,9 +492,11 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             debug('HDF5', "Store '%s' (ref: %i) in [%s/%s]"
                           % (type(obj), obj_id, hdf.name, name))
         # the real action is here
-        if is_scalar and 'compression' in kwargs:
+        if 'compression' in kwargs \
+               and (is_scalar or (is_ndarray and not len(obj.shape))):
             # recent (>= 2.0.0) h5py is strict not allowing
-            # compression to be set for scalar types
+            # compression to be set for scalar types or anything with
+            # shape==() ... TODO: check about is_objarrays ;-)
             kwargs = dict([(k, v) for (k, v) in kwargs.iteritems()
                            if k != 'compression'])
         hdf.create_dataset(name, None, None, obj, **kwargs)
@@ -503,7 +507,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             memo[obj_id] = obj
             if __debug__:
                 debug('HDF5', "Record objref in memo-dict (%i)" % obj_id)
-        if is_obj_array:
+        if is_objarray:
             # we need to confess the true origin
             hdf[name].attrs.create('is_objarray', True)
         # handle scalars giving numpy scalars different flag
@@ -538,7 +542,7 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         # we also note that we processed this object
         memo[obj_id] = obj
 
-    if is_obj_array:
+    if is_objarray:
         # we need to confess the true origin
         grp.attrs.create('is_objarray', True)
 
