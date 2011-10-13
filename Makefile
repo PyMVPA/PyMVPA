@@ -373,7 +373,7 @@ dt-%: build
 				| grep -v filter.py | grep -v channel.py | grep "$*")
 
 tm-%: build
-	@PYTHONPATH=.:$(TUT_DIR):$(CURDIR)/doc/examples:$(PYTHONPATH) \
+	@PYTHONPATH=.:$(CURDIR)/doc/examples:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 		MVPA_DATADB_ROOT=datadb \
@@ -382,7 +382,7 @@ tm-%: build
 
 testmanual: build testdocstrings
 	@echo "I: Testing code samples found in documentation"
-	@PYTHONPATH=.:$(TUT_DIR):$(PYTHONPATH) \
+	@PYTHONPATH=.:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 		MVPA_DATADB_ROOT=datadb \
@@ -391,7 +391,7 @@ testmanual: build testdocstrings
 
 testtutorial-%: build
 	@echo "I: Testing code samples found in tutorial part $*"
-	@PYTHONPATH=.:$(TUT_DIR):$(PYTHONPATH) \
+	@PYTHONPATH=.:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \

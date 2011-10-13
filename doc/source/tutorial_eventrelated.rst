@@ -28,7 +28,7 @@ This is a common thing to do, for example, in ERP-analyses of EEG data.
 Here we are going to employ a similar approach in our well-known example
 data -- this time selecting a subset of ventral temporal regions.
 
->>> from tutorial_lib import *
+>>> from mvpa2.tutorial_suite import *
 >>> ds = get_raw_haxby2001_data(roi=(36,38,39,40))
 >>> print ds.shape
 (1452, 941)

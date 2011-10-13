@@ -22,7 +22,7 @@ to look at another approach to localization. To get started, we pre-process
 the data as we have done before and perform volume averaging to get a
 single sample per stimulus category and original experiment session.
 
->>> from tutorial_lib import *
+>>> from mvpa2.tutorial_suite import *
 >>> # alt: `ds = load_tutorial_results('ds_haxby2001_blkavg_brain')`
 >>> ds = get_raw_haxby2001_data(roi='brain')
 >>> print ds.shape

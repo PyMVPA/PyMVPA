@@ -218,7 +218,7 @@ To allow for easy inspection of dataset to prevent such obvious confounds,
 `Dataset`) was constructed.  Lets have yet another look at our 8-categories
 dataset:
 
->>> from tutorial_lib import *
+>>> from mvpa2.tutorial_suite import *
 >>> # alt: `ds = load_tutorial_results('ds_haxby2001')`
 >>> ds = get_haxby2001_data(roi='vt')
 >>> print ds.summary()

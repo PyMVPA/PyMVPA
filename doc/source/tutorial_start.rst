@@ -23,7 +23,7 @@ functionality provided elsewhere. We start this tutorial by importing some
 little helpers (including all of PyMVPA) we are going to use in the tutorial,
 and whose purpose we are going to see shortly.
 
->>> from tutorial_lib import *
+>>> from mvpa2.tutorial_suite import *
 
 Getting the data
 ================

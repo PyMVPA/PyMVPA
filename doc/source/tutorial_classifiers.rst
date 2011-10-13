@@ -18,7 +18,7 @@ This is already the second time that we will engage in a classification
 analysis, so let's first recap what we did before in the :ref:`first tutorial
 part <chap_tutorial_start>`:
 
->>> from tutorial_lib import *
+>>> from mvpa2.tutorial_suite import *
 >>> ds = get_haxby2001_data()
 >>> clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
 >>> cvte = CrossValidation(clf, HalfPartitioner(attr='runtype'))

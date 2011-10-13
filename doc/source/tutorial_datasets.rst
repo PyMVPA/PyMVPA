@@ -22,7 +22,7 @@ take a look at what a dataset consists of, and how it works.
 In the simplest case, a dataset only contains *data* that is a matrix of
 numerical values.
 
->>> from tutorial_lib import *
+>>> from mvpa2.tutorial_suite import *
 >>> data = [[  1,  1, -1],
 ...         [  2,  0,  0],
 ...         [  3,  1,  1],
