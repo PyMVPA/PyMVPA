@@ -469,6 +469,18 @@ testourcfg: build
 	@echo "+I: Run non-labile testing to verify safety of shipped configuration"
 	@PYTHONPATH=.:$(PYTHONPATH) MVPACONFIG=doc/examples/pymvpa2.cfg MVPA_TESTS_LABILE=no $(PYTHON) mvpa2/tests/__init__.py
 
+testmvpa-prep-fmri:
+	@echo "+I: Smoke test the functionality of the mvpa-prep-fmri script"
+	@td=`(mktemp -d)`; trap "rm -rf $$td" exit; \
+	ln -s $(CURDIR)/mvpa2/data/example4d.nii.gz $$td/; \
+	cd $$td; \
+	PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
+		$(CURDIR)/bin/mvpa-prep-fmri -p -e first -s T -b '-f 0.4' example4d.nii.gz; \
+	[ -e $$td/T ] \
+	&& [ -e $$td/T/func_mc.pdf ] \
+	&& [ -e $$td/T/func_mc.nii.gz ] \
+	&& head -1 $$td/T/func_mc.par | grep -q '0  0  0' \
+
 
 test: unittests testmanual testsuite testexamples testcfg testourcfg
 
