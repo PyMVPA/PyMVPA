@@ -111,19 +111,6 @@ def auc_error(predicted, target):
 if externals.exists('scipy'):
     from scipy.stats import pearsonr
 
-    def corr_error(predicted, target):
-        """Computes the correlation between the target and the
-        predicted values. Resultant value is the 1 - correlation
-        coefficient, so minimization leads to the best value (at 0).
-
-        In case of NaN correlation (no variance in predictors or
-        targets) result output error is 1.0.
-        """
-        r = pearsonr(predicted, target)[0]
-        if np.isnan(r):
-            r = 0.0
-        return 1.0 - r
-
     def correlation(predicted, target):
         """Computes the correlation between the target and the
         predicted values.
@@ -171,6 +158,16 @@ else:
                 "available. Bogus value -1.0 is returned otherwise")
         return -1.0
 
+
+def corr_error(predicted, target):
+    """Computes the correlation between the target and the
+    predicted values. Resultant value is the 1 - correlation
+    coefficient, so minimization leads to the best value (at 0).
+
+    In case of NaN correlation (no variance in predictors or
+    targets) result output error is 1.0.
+    """
+    return 1 - correlation(predicted, target)
 
 def relative_rms_error(predicted, target):
     """Ratio between RMSE and root mean power of target output.
