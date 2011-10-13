@@ -58,7 +58,7 @@ class GPRTests(unittest.TestCase):
         sa_ms(dataset)
         lml_ms = clf.ca.log_marginal_likelihood
 
-        self.failUnless(lml_ms > lml)
+        self.assertTrue(lml_ms > lml)
 
 
 

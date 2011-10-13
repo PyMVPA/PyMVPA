@@ -39,12 +39,12 @@ class MiscDatasetFxTests(unittest.TestCase):
         ds = dataset_wizard(samples=np.hstack((np.zeros((3,2)), r)),
                      targets=1)
 
-        self.failUnless(ds.nfeatures == 3)
+        self.assertTrue(ds.nfeatures == 3)
 
         dsc = remove_invariant_features(ds)
 
-        self.failUnless(dsc.nfeatures == 1)
-        self.failUnless((dsc.samples == r).all())
+        self.assertTrue(dsc.nfeatures == 1)
+        self.assertTrue((dsc.samples == r).all())
 
 
     def test_coarsen_chunks(self):
@@ -54,25 +54,25 @@ class MiscDatasetFxTests(unittest.TestCase):
             (len(chunks),1)), targets=[1]*8, chunks=chunks)
         coarsen_chunks(ds, nchunks=2)
         chunks1 = coarsen_chunks(chunks, nchunks=2)
-        self.failUnless((chunks1 == ds.chunks).all())
-        self.failUnless((chunks1 == np.asarray([0,0,0,0,1,1,1,1])).all())
+        self.assertTrue((chunks1 == ds.chunks).all())
+        self.assertTrue((chunks1 == np.asarray([0,0,0,0,1,1,1,1])).all())
 
         ds2 = dataset_wizard(samples=np.arange(len(chunks)).reshape(
             (len(chunks),1)), targets=[1]*8, chunks=range(len(chunks)))
         coarsen_chunks(ds2, nchunks=2)
-        self.failUnless((chunks1 == ds.chunks).all())
+        self.assertTrue((chunks1 == ds.chunks).all())
 
     def test_binds(self):
         ds = normal_feature_dataset()
         ds_data = ds.samples.copy()
         ds_chunks = ds.chunks.copy()
-        self.failUnless(np.all(ds.samples == ds_data)) # sanity check
+        self.assertTrue(np.all(ds.samples == ds_data)) # sanity check
 
         funcs = ['coarsen_chunks']
 
         for f in funcs:
             eval('ds.%s()' % f)
-            self.failUnless(np.any(ds.samples != ds_data) or
+            self.assertTrue(np.any(ds.samples != ds_data) or
                             np.any(ds.chunks != ds_chunks),
                 msg="We should have modified original dataset with %s" % f)
             ds.samples = ds_data.copy()
@@ -82,9 +82,9 @@ class MiscDatasetFxTests(unittest.TestCase):
         for f in ['aggregate_features', 'remove_invariant_features',
                   'get_samples_per_chunk_target']:
             res = eval('ds.%s()' % f)
-            self.failUnless(res is not None,
+            self.assertTrue(res is not None,
                 msg='We should have got result from function %s' % f)
-            self.failUnless(np.all(ds.samples == ds_data),
+            self.assertTrue(np.all(ds.samples == ds_data),
                 msg="Function %s should have not modified original dataset" % f)
 
     @reseed_rng()
@@ -117,9 +117,9 @@ class MiscDatasetFxTests(unittest.TestCase):
             ulabels = r['utargets']
             nlabels = len(r['utargets'])
             cbcounts = r['cbcounts']
-            self.failUnlessEqual(len(cbcounts), order)
+            self.assertEqual(len(cbcounts), order)
             for cb in cbcounts:
-                self.failUnlessEqual(np.asarray(cb).shape, (nlabels, nlabels))
+                self.assertEqual(np.asarray(cb).shape, (nlabels, nlabels))
             # Check if str works fine
             sr = str(r)
             # TODO: check the content

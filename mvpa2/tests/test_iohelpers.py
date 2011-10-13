@@ -39,31 +39,31 @@ class IOHelperTests(unittest.TestCase):
         d = ColumnData(fpath, header=True)
 
         # check header (sort because order in dict is unpredictable)
-        self.failUnless(sorted(d.keys()) == ['drei','eins','zwei'])
+        self.assertTrue(sorted(d.keys()) == ['drei','eins','zwei'])
 
-        self.failUnless(d['eins'] == [0, 3])
-        self.failUnless(d['zwei'] == [1, 4])
-        self.failUnless(d['drei'] == [2, 5])
+        self.assertTrue(d['eins'] == [0, 3])
+        self.assertTrue(d['zwei'] == [1, 4])
+        self.assertTrue(d['drei'] == [2, 5])
 
         # make a copy
         d2 = ColumnData(d)
 
         # check if identical
-        self.failUnless(sorted(d2.keys()) == ['drei','eins','zwei'])
-        self.failUnless(d2['eins'] == [0, 3])
-        self.failUnless(d2['zwei'] == [1, 4])
-        self.failUnless(d2['drei'] == [2, 5])
+        self.assertTrue(sorted(d2.keys()) == ['drei','eins','zwei'])
+        self.assertTrue(d2['eins'] == [0, 3])
+        self.assertTrue(d2['zwei'] == [1, 4])
+        self.assertTrue(d2['drei'] == [2, 5])
 
         # now merge back
         d += d2
 
         # same columns?
-        self.failUnless(sorted(d.keys()) == ['drei','eins','zwei'])
+        self.assertTrue(sorted(d.keys()) == ['drei','eins','zwei'])
 
         # but more data
-        self.failUnlessEqual(d['eins'], [0, 3, 0, 3])
-        self.failUnlessEqual(d['zwei'], [1, 4, 1, 4])
-        self.failUnlessEqual(d['drei'], [2, 5, 2, 5])
+        self.assertEqual(d['eins'], [0, 3, 0, 3])
+        self.assertEqual(d['zwei'], [1, 4, 1, 4])
+        self.assertEqual(d['drei'], [2, 5, 2, 5])
 
         # test file write
         # TODO: check if correct
@@ -72,13 +72,13 @@ class IOHelperTests(unittest.TestCase):
 
         # test sample selection
         dsel = d.select_samples([0, 2])
-        self.failUnlessEqual(dsel['eins'], [0, 0])
-        self.failUnlessEqual(dsel['zwei'], [1, 1])
-        self.failUnlessEqual(dsel['drei'], [2, 2])
+        self.assertEqual(dsel['eins'], [0, 0])
+        self.assertEqual(dsel['zwei'], [1, 1])
+        self.assertEqual(dsel['drei'], [2, 2])
 
         # test if order is read from file when available
         d3 = ColumnData(fpath)
-        self.failUnlessEqual(d3._header_order, header_order)
+        self.assertEqual(d3._header_order, header_order)
 
         # add another column -- should be appended as the last column
         # while storing
@@ -86,7 +86,7 @@ class IOHelperTests(unittest.TestCase):
         d3.tofile(fpath)
 
         d4 = ColumnData(fpath)
-        self.failUnlessEqual(d4._header_order, header_order + ['four'])
+        self.assertEqual(d4._header_order, header_order + ['four'])
 
         # cleanup and ignore stupidity
         try:
@@ -128,15 +128,15 @@ class IOHelperTests(unittest.TestCase):
         d = FslEV3(fpath)
 
         # check header (sort because order in dict is unpredictable)
-        self.failUnless(sorted(d.keys()) == \
+        self.assertTrue(sorted(d.keys()) == \
             ['durations','intensities','onsets'])
 
-        self.failUnless(d['onsets'] == [0.0, 13.89, 16.0])
-        self.failUnless(d['durations'] == [2.0, 2.0, 2.0])
-        self.failUnless(d['intensities'] == [1.0, 1.0, 0.5])
+        self.assertTrue(d['onsets'] == [0.0, 13.89, 16.0])
+        self.assertTrue(d['durations'] == [2.0, 2.0, 2.0])
+        self.assertTrue(d['intensities'] == [1.0, 1.0, 0.5])
 
-        self.failUnless(d.nevs == 3)
-        self.failUnless(d.get_ev(1) == (13.89, 2.0, 1.0))
+        self.assertTrue(d.nevs == 3)
+        self.assertTrue(d.get_ev(1) == (13.89, 2.0, 1.0))
         # cleanup and ignore stupidity
         try:
             os.remove(fpath)
@@ -145,44 +145,44 @@ class IOHelperTests(unittest.TestCase):
 
         d = FslEV3(os.path.join(pymvpa_dataroot, 'fslev3.txt'))
         ev = d.to_events()
-        self.failUnless(len(ev) == 3)
-        self.failUnless([e['duration'] for e in ev] == [9] * 3)
-        self.failUnless([e['onset'] for e in ev] == [6, 21, 35])
-        self.failUnless([e['features'] for e in ev] == [[1],[1],[1]])
+        self.assertTrue(len(ev) == 3)
+        self.assertTrue([e['duration'] for e in ev] == [9] * 3)
+        self.assertTrue([e['onset'] for e in ev] == [6, 21, 35])
+        self.assertTrue([e['features'] for e in ev] == [[1],[1],[1]])
 
         ev = d.to_events(label='face', chunk=0, crap=True)
         ev[0]['label'] = 'house'
-        self.failUnless(len(ev) == 3)
-        self.failUnless([e['duration'] for e in ev] == [9] * 3)
-        self.failUnless([e['onset'] for e in ev] == [6, 21, 35])
-        self.failUnless([e['features'] for e in ev] == [[1],[1],[1]])
-        self.failUnless([e['label'] for e in ev] == ['house', 'face', 'face'])
-        self.failUnless([e['chunk'] for e in ev] == [0]*3)
-        self.failUnless([e['crap'] for e in ev] == [True]*3)
+        self.assertTrue(len(ev) == 3)
+        self.assertTrue([e['duration'] for e in ev] == [9] * 3)
+        self.assertTrue([e['onset'] for e in ev] == [6, 21, 35])
+        self.assertTrue([e['features'] for e in ev] == [[1],[1],[1]])
+        self.assertTrue([e['label'] for e in ev] == ['house', 'face', 'face'])
+        self.assertTrue([e['chunk'] for e in ev] == [0]*3)
+        self.assertTrue([e['crap'] for e in ev] == [True]*3)
 
 
     def test_fsl_ev2(self):
         attr = SampleAttributes(os.path.join(pymvpa_dataroot, 'smpl_attr.txt'))
 
         # check header (sort because order in dict is unpredictable)
-        self.failUnless(sorted(attr.keys()) == \
+        self.assertTrue(sorted(attr.keys()) == \
             ['chunks','targets'])
 
-        self.failUnless(attr.nsamples == 3)
+        self.assertTrue(attr.nsamples == 3)
 
     def test_bv_rtc(self):
         """Simple testing of reading RTC files from BrainVoyager"""
 
         attr = BrainVoyagerRTC(os.path.join(pymvpa_dataroot, 'bv', 'smpl_model.rtc'))
-        self.failUnlessEqual(attr.ncolumns, 4, "We must have 4 colums")
-        self.failUnlessEqual(attr.nrows, 147, "We must have 147 rows")
+        self.assertEqual(attr.ncolumns, 4, "We must have 4 colums")
+        self.assertEqual(attr.nrows, 147, "We must have 147 rows")
 
-        self.failUnlessEqual(attr._header_order,
+        self.assertEqual(attr._header_order,
                 ['l_60 B', 'r_60 B', 'l_80 B', 'r_80 B'],
                 "We must got column names correctly")
-        self.failUnless(len(attr.r_60_B) == attr.nrows,
+        self.assertTrue(len(attr.r_60_B) == attr.nrows,
                 "We must have got access to column by property")
-        self.failUnless(attr.toarray() != None,
+        self.assertTrue(attr.toarray() != None,
                 "We must have got access to column by property")
 
     def testdesign2labels(self):
@@ -196,39 +196,39 @@ class IOHelperTests(unittest.TestCase):
 
         nsilence0 = Nsilence(labels0)
         nsilence = Nsilence(labels)
-        self.failUnless(nsilence0 < nsilence,
+        self.assertTrue(nsilence0 < nsilence,
                         "We must have more silence if thr is higher")
-        self.failUnlessEqual(len(labels), attr.nrows,
+        self.assertEqual(len(labels), attr.nrows,
                         "We must have the same number of labels as rows")
-        self.failUnlessRaises(ValueError, design2labels, attr,
+        self.assertRaises(ValueError, design2labels, attr,
                         baseline_label='silence', func=lambda x:x>-1.0)
 
 
     def testlabels2chunks(self):
         attr = BrainVoyagerRTC(os.path.join(pymvpa_dataroot, 'bv', 'smpl_model.rtc'))
         labels = design2labels(attr, baseline_label='silence')
-        self.failUnlessRaises(ValueError, labels2chunks, labels, 'bugga')
+        self.assertRaises(ValueError, labels2chunks, labels, 'bugga')
         chunks = labels2chunks(labels)
-        self.failUnlessEqual(len(labels), len(chunks))
+        self.assertEqual(len(labels), len(chunks))
         # we must got them in sorted order
         chunks_sorted = np.sort(chunks)
-        self.failUnless((chunks == chunks_sorted).all())
+        self.assertTrue((chunks == chunks_sorted).all())
         # for this specific one we must have just 4 chunks
-        self.failUnless((np.unique(chunks) == range(4)).all())
+        self.assertTrue((np.unique(chunks) == range(4)).all())
 
 
     def test_sensor_locations(self):
         sl = XAVRSensorLocations(os.path.join(pymvpa_dataroot, 'xavr1010.dat'))
 
         for var in ['names', 'pos_x', 'pos_y', 'pos_z']:
-            self.failUnless(len(eval('sl.' + var)) == 31)
+            self.assertTrue(len(eval('sl.' + var)) == 31)
 
 
     def test_fsl_glm_design(self):
         glm = FslGLMDesign(os.path.join(pymvpa_dataroot, 'glm.mat'))
 
-        self.failUnless(glm.mat.shape == (850, 6))
-        self.failUnless(len(glm.ppheights) == 6)
+        self.assertTrue(glm.mat.shape == (850, 6))
+        self.assertTrue(len(glm.ppheights) == 6)
 
     def test_read_fsl_design(self):
         fname = os.path.join(pymvpa_dataroot,

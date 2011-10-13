@@ -94,32 +94,32 @@ class SearchlightTests(unittest.TestCase):
             all_results.append(results)
             print `sl`
             # check for correct number of spheres
-            self.failUnless(results.nfeatures == nroi)
+            self.assertTrue(results.nfeatures == nroi)
             # and measures (one per xfold)
-            self.failUnless(len(results) == len(ds.UC))
+            self.assertTrue(len(results) == len(ds.UC))
 
             # check for chance-level performance across all spheres
             # makes sense only if number of features was big enough
             # to get some stable estimate of mean
             if not do_roi or nroi > 20:
-                self.failUnless(0.4 < results.samples.mean() < 0.6)
+                self.assertTrue(0.4 < results.samples.mean() < 0.6)
 
             mean_errors = results.samples.mean(axis=0)
             # that we do get different errors ;)
-            self.failUnless(len(np.unique(mean_errors) > 3))
+            self.assertTrue(len(np.unique(mean_errors) > 3))
 
             # check resonable sphere sizes
-            self.failUnless(len(sl.ca.roi_sizes) == nroi)
+            self.assertTrue(len(sl.ca.roi_sizes) == nroi)
             if do_roi:
                 # for roi we should relax conditions a bit
-                self.failUnless(max(sl.ca.roi_sizes) <= 7)
-                self.failUnless(min(sl.ca.roi_sizes) >= 4)
+                self.assertTrue(max(sl.ca.roi_sizes) <= 7)
+                self.assertTrue(min(sl.ca.roi_sizes) >= 4)
             else:
-                self.failUnless(max(sl.ca.roi_sizes) == 7)
-                self.failUnless(min(sl.ca.roi_sizes) == 4)
+                self.assertTrue(max(sl.ca.roi_sizes) == 7)
+                self.assertTrue(min(sl.ca.roi_sizes) == 4)
 
             # check base-class state
-            self.failUnlessEqual(sl.ca.raw_results.nfeatures, nroi)
+            self.assertEqual(sl.ca.raw_results.nfeatures, nroi)
 
             # Test if we got results correctly for 'selected' roi ids
             if do_roi:
@@ -133,7 +133,7 @@ class SearchlightTests(unittest.TestCase):
             aresults = np.array([a.samples for a in all_results])
             dresults = np.abs(aresults - aresults.mean(axis=0))
             dmax = np.max(dresults)
-            self.failUnless(dmax <= 1e-13)
+            self.assertTrue(dmax <= 1e-13)
 
 
     def test_partial_searchlight_with_full_report(self):
@@ -152,10 +152,10 @@ class SearchlightTests(unittest.TestCase):
             # run searchlight
             results = sl(ds)
             # only two spheres but error for all CV-folds
-            self.failUnlessEqual(results.shape, (len(self.dataset.UC), 2))
+            self.assertEqual(results.shape, (len(self.dataset.UC), 2))
         # test if we graciously puke if center_ids are out of bounds
         dataset0 = ds[:, :50] # so we have no 50th feature
-        self.failUnlessRaises(IndexError, sls[0], dataset0)
+        self.assertRaises(IndexError, sls[0], dataset0)
         # but it should be fine on the one that gets the ids from the dataset
         # itself
         results = sl(dataset0)
@@ -264,7 +264,7 @@ class SearchlightTests(unittest.TestCase):
 
         # run searchlight
         results = sl(self.dataset)
-        self.failUnless(results.nfeatures == 2)
+        self.assertTrue(results.nfeatures == 2)
 
 
     def test_1d_multispace_searchlight(self):

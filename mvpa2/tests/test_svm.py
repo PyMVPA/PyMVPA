@@ -40,11 +40,11 @@ class SVMTests(unittest.TestCase):
         # using SG... commenting out for now
         # for some reason order is not preserved thus dictionaries are not
         # the same any longer -- lets compare values
-        #self.failUnlessEqual([nl_clf.param._params[k] for k in orig_keys],
+        #self.assertEqual([nl_clf.param._params[k] for k in orig_keys],
         #                     [nl_param_orig[k] for k in orig_keys],
         #   msg="New instance mustn't override values in previously created")
         ## and keys separately
-        #self.failUnlessEqual(set(nl_clf.param._params.keys()),
+        #self.assertEqual(set(nl_clf.param._params.keys()),
         #                     set(orig_keys),
         #   msg="New instance doesn't change set of parameters in original")
 
@@ -80,11 +80,11 @@ class SVMTests(unittest.TestCase):
         mean_uv_perf = np.mean(uv_perf)
 
         # non-linear CLF has to be close to perfect
-        self.failUnless( mean_mv_perf > 0.9 )
+        self.assertTrue( mean_mv_perf > 0.9 )
         # linear CLF cannot learn this problem!
-        self.failUnless( mean_mv_perf > mean_mv_lin_perf )
+        self.assertTrue( mean_mv_perf > mean_mv_lin_perf )
         # univariate has insufficient information
-        self.failUnless( mean_uv_perf < mean_mv_perf )
+        self.assertTrue( mean_uv_perf < mean_mv_perf )
 
 
     # XXX for now works only with linear... think it through -- should
@@ -144,15 +144,15 @@ class SVMTests(unittest.TestCase):
 
         # Actual tests
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(tpr_1 > 0.25,
+            self.assertTrue(tpr_1 > 0.25,
                             msg="Without disballance we should have some "
                             "hits, but got TPR=%.3f" % tpr_1)
 
-            self.failUnless(tpr_2 < 0.25,
+            self.assertTrue(tpr_2 < 0.25,
                             msg="With disballance we should have almost no "
                             "hits for minor, but got TPR=%.3f" % tpr_2)
 
-            self.failUnless(tpr_3 > 0.25,
+            self.assertTrue(tpr_3 > 0.25,
                             msg="With disballanced data but ratio-based Cs "
                             "we should have some hits for minor, but got "
                             "TPR=%.3f" % tpr_3)
@@ -164,15 +164,15 @@ class SVMTests(unittest.TestCase):
         """
 
         if externals.exists('libsvm') or externals.exists('shogun'):
-            self.failUnlessRaises(TypeError, libsvm.SVM, C=1.0, nu=2.3)
+            self.assertRaises(TypeError, libsvm.SVM, C=1.0, nu=2.3)
 
         if externals.exists('libsvm'):
-            self.failUnlessRaises(TypeError, libsvm.SVM,  C=1.0, nu=2.3)
-            self.failUnlessRaises(TypeError, LinearNuSVMC, C=2.3)
-            self.failUnlessRaises(TypeError, LinearCSVMC, nu=2.3)
+            self.assertRaises(TypeError, libsvm.SVM,  C=1.0, nu=2.3)
+            self.assertRaises(TypeError, LinearNuSVMC, C=2.3)
+            self.assertRaises(TypeError, LinearCSVMC, nu=2.3)
 
         if externals.exists('shogun'):
-            self.failUnlessRaises(TypeError, sg.SVM, C=10, kernel_type='RBF',
+            self.assertRaises(TypeError, sg.SVM, C=10, kernel_type='RBF',
                                   coef0=3)
 
 def suite():

@@ -72,7 +72,7 @@ class VerboseOutputTest(unittest.TestCase):
     def test_verbose_above(self):
         """Test if it doesn't output at higher levels"""
         verbose(5, self.msg)
-        self.failUnlessEqual(self.sout.getvalue(), "")
+        self.assertEqual(self.sout.getvalue(), "")
 
 
     def test_verbose_below(self):
@@ -80,7 +80,7 @@ class VerboseOutputTest(unittest.TestCase):
         by default with spaces
         """
         verbose(2, self.msg)
-        self.failUnlessEqual(self.sout.getvalue(),
+        self.assertEqual(self.sout.getvalue(),
                              "  %s\n" % self.msg)
 
     def test_verbose_indent(self):
@@ -88,12 +88,12 @@ class VerboseOutputTest(unittest.TestCase):
         """
         verbose.indent = "."
         verbose(2, self.msg)
-        self.failUnlessEqual(self.sout.getvalue(), "..%s\n" % self.msg)
+        self.assertEqual(self.sout.getvalue(), "..%s\n" % self.msg)
         verbose.indent = " "            # restore
 
     def test_verbose_negative(self):
         """Test if chokes on negative level"""
-        self.failUnlessRaises( ValueError,
+        self.assertRaises( ValueError,
                                verbose._set_level, -10 )
 
     def test_no_lf(self):
@@ -102,7 +102,7 @@ class VerboseOutputTest(unittest.TestCase):
         verbose(2, " continue ", lf=False)
         verbose(2, "end")
         verbose(0, "new %s" % self.msg)
-        self.failUnlessEqual(self.sout.getvalue(),
+        self.assertEqual(self.sout.getvalue(),
                              "  %s continue end\nnew %s\n" % \
                              (self.msg, self.msg))
 
@@ -115,24 +115,24 @@ class VerboseOutputTest(unittest.TestCase):
         verbose(1, " finish")
         target = '\r  %s\r              \rrewrite' % self.msg + \
                  '\r       \rrewrite 2 add finish\n'
-        self.failUnlessEqual(self.sout.getvalue(), target)
+        self.assertEqual(self.sout.getvalue(), target)
 
     def test_once_logger(self):
         """Test once logger"""
         self.once("X", self.msg)
         self.once("X", self.msg)
-        self.failUnlessEqual(self.sout.getvalue(), self.msg+"\n")
+        self.assertEqual(self.sout.getvalue(), self.msg+"\n")
 
         self.once("Y", "XXX", 2)
         self.once("Y", "XXX", 2)
         self.once("Y", "XXX", 2)
-        self.failUnlessEqual(self.sout.getvalue(), self.msg+"\nXXX\nXXX\n")
+        self.assertEqual(self.sout.getvalue(), self.msg+"\nXXX\nXXX\n")
 
 
     def test_error(self):
         """Test error message"""
         error(self.msg, critical=False) # should not exit
-        self.failUnless(self.sout.getvalue().startswith("ERROR"))
+        self.assertTrue(self.sout.getvalue().startswith("ERROR"))
 
 
     if __debug__:
@@ -141,12 +141,12 @@ class VerboseOutputTest(unittest.TestCase):
             debug.active = ['1', '2', 'SLC']
             # do not offset for this test
             debug('SLC', self.msg, lf=False)
-            self.failUnlessRaises(ValueError, debug, 3, 'bugga')
+            self.assertRaises(ValueError, debug, 3, 'bugga')
             #Should complain about unknown debug id
             svalue = self.sout.getvalue()
             regexp = "\[SLC\] DBG(?:{.*})?: %s" % self.msg
             rematch = re.match(regexp, svalue)
-            self.failUnless(rematch, msg="Cannot match %s with regexp %s" %
+            self.assertTrue(rematch, msg="Cannot match %s with regexp %s" %
                             (svalue, regexp))
 
 
@@ -154,14 +154,14 @@ class VerboseOutputTest(unittest.TestCase):
             verbose.handlers = []           # so debug doesn't spoil it
             debug.active = ['.*']
             # we should have enabled all of them
-            self.failUnlessEqual(set(debug.active),
+            self.assertEqual(set(debug.active),
                                  set(debug.registered.keys()))
             debug.active = ['S.*', 'CLF']
-            self.failUnlessEqual(set(debug.active),
+            self.assertEqual(set(debug.active),
                                  set(filter(lambda x:x.startswith('S'),
                                             debug.registered.keys())+['CLF']))
             debug.active = ['SG', 'CLF']
-            self.failUnlessEqual(set(debug.active), set(['SG', 'CLF']),
+            self.assertEqual(set(debug.active), set(['SG', 'CLF']),
                                  msg="debug should do full line matching")
 
             debug.offsetbydepth = True

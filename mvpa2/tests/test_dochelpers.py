@@ -15,9 +15,9 @@ import unittest
 class DochelpersTests(unittest.TestCase):
 
     def test_basic(self):
-        self.failUnlessEqual(single_or_plural('a', 'b', 1), 'a')
-        self.failUnlessEqual(single_or_plural('a', 'b', 0), 'b')
-        self.failUnlessEqual(single_or_plural('a', 'b', 123), 'b')
+        self.assertEqual(single_or_plural('a', 'b', 1), 'a')
+        self.assertEqual(single_or_plural('a', 'b', 0), 'b')
+        self.assertEqual(single_or_plural('a', 'b', 123), 'b')
 
     def test_borrow_doc(self):
 
@@ -37,8 +37,8 @@ class DochelpersTests(unittest.TestCase):
             def met2(self):
                 pass
 
-        self.failUnlessEqual(B.met1.__doc__, A.met1.__doc__)
-        self.failUnlessEqual(B.met2.__doc__, A.met1.__doc__)
+        self.assertEqual(B.met1.__doc__, A.met1.__doc__)
+        self.assertEqual(B.met2.__doc__, A.met1.__doc__)
 
 
     def test_borrow_kwargs(self):
@@ -105,33 +105,33 @@ class DochelpersTests(unittest.TestCase):
                     """
                     pass
 
-        self.failUnless('B.met1 doc' in B.met1.__doc__)
+        self.assertTrue('B.met1 doc' in B.met1.__doc__)
         for m in (B.met1,
                   B.met_nodoc,
                   B.met_nodockwargs,
                   B.met_excludes):
             docstring = m.__doc__
-            self.failUnless('Parameters' in docstring)
-            self.failUnless(not '*kwargs' in docstring,
+            self.assertTrue('Parameters' in docstring)
+            self.assertTrue(not '*kwargs' in docstring,
                 msg="We shouldn't carry kwargs in docstring now,"
                     "Got %r for %s" % (docstring, m))
-            self.failUnless('kp2 ' in docstring)
-            self.failUnless((('kp1 ' in docstring)
+            self.assertTrue('kp2 ' in docstring)
+            self.assertTrue((('kp1 ' in docstring)
                                  ^ (m == B.met_excludes)))
             # indentation should have been squashed properly
-            self.failUnless(not '   ' in docstring)
+            self.assertTrue(not '   ' in docstring)
 
         # some additional checks to see if we are not loosing anything
-        self.failUnless('Some postamble' in B.met1.__doc__)
-        self.failUnless('B.met_nodockwargs' in B.met_nodockwargs.__doc__)
-        self.failUnless('boguse' in B.met_excludes.__doc__)
+        self.assertTrue('Some postamble' in B.met1.__doc__)
+        self.assertTrue('B.met_nodockwargs' in B.met_nodockwargs.__doc__)
+        self.assertTrue('boguse' in B.met_excludes.__doc__)
 
     def test_searchlight_doc(self):
         # Searchlight __doc__ revealed issue of multiple enable_ca
         from mvpa2.measures.searchlight import Searchlight
         sldoc = Searchlight.__init__.__doc__
-        self.failUnlessEqual(sldoc.count('enable_ca'), 1)
-        self.failUnlessEqual(sldoc.count('disable_ca'), 1)
+        self.assertEqual(sldoc.count('enable_ca'), 1)
+        self.assertEqual(sldoc.count('disable_ca'), 1)
 
 
 # TODO: more unittests

@@ -25,7 +25,7 @@ class PLRTests(unittest.TestCase):
         clf.train(data)
 
         # prediction has to be perfect
-        self.failUnless((clf.predict(data.samples) == data.targets).all())
+        self.assertTrue((clf.predict(data.samples) == data.targets).all())
 
     def test_plr_state(self):
         data = datasets['dumb2']
@@ -39,8 +39,8 @@ class PLRTests(unittest.TestCase):
 
         p = clf.predict(data.samples)
 
-        self.failUnless((p == clf.ca.predictions).all())
-        self.failUnless(np.array(clf.ca.estimates).shape == np.array(p).shape)
+        self.assertTrue((p == clf.ca.predictions).all())
+        self.assertTrue(np.array(clf.ca.estimates).shape == np.array(p).shape)
 
 
 def suite():

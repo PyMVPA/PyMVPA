@@ -33,13 +33,13 @@ class TransformerTests(unittest.TestCase):
         # generate 100 values (gaussian noise mean -1000 -> all negative)
         out = Absolute(np.random.normal(-1000, size=100))
 
-        self.failUnless(out.min() >= 0)
-        self.failUnless(len(out) == 100)
+        self.assertTrue(out.min() >= 0)
+        self.assertTrue(len(out) == 100)
 
     def test_absolute2(self):
         target = self.d1
         out = one_minus(np.arange(5))
-        self.failUnless((out == target).all())
+        self.assertTrue((out == target).all())
 
     def test_first_axis_sum_not_zero(self):
         src = [[ 1, -22.9, 6.8, 0],
@@ -48,7 +48,7 @@ class TransformerTests(unittest.TestCase):
                [0, 0, 0, 0.0]]
         target = np.array([ 3, 2, 1, 0])
         out = first_axis_sum_not_zero(src)
-        self.failUnless((out == target).all())
+        self.assertTrue((out == target).all())
         
     def test_rank_order(self):
         nelements = len(self.d2)
@@ -56,20 +56,20 @@ class TransformerTests(unittest.TestCase):
         outr = reverse_rank_order(self.d2)
         uout = np.unique(out)
         uoutr = np.unique(outr)
-        self.failUnless((uout == np.arange(nelements)).all(),
+        self.assertTrue((uout == np.arange(nelements)).all(),
                         msg="We should get all indexes. Got just %s" % uout)
-        self.failUnless((uoutr == np.arange(nelements)).all(),
+        self.assertTrue((uoutr == np.arange(nelements)).all(),
                         msg="We should get all indexes. Got just %s" % uoutr)
-        self.failUnless((out+outr+1 == nelements).all())
-        self.failUnless((out == [ 0,  3,  4,  1,  5,  2]).all())
+        self.assertTrue((out+outr+1 == nelements).all())
+        self.assertTrue((out == [ 0,  3,  4,  1,  5,  2]).all())
 
     def test_l2_norm(self):
         out = l2_normed(self.d2)
-        self.failUnless(np.abs(np.sum(out*out)-1.0) < 1e-10)
+        self.assertTrue(np.abs(np.sum(out*out)-1.0) < 1e-10)
 
     def test_l1_norm(self):
         out = l1_normed(self.d2)
-        self.failUnless(np.abs(np.sum(np.abs(out))-1.0) < 1e-10)
+        self.assertTrue(np.abs(np.sum(np.abs(out))-1.0) < 1e-10)
 
 
     def test_over_axis(self):
@@ -79,19 +79,19 @@ class TransformerTests(unittest.TestCase):
         for axis in [None, 0, 1, 2]:
             oversum = OverAxis(np.sum, axis=axis)(data)
             sum_ = np.sum(data, axis=axis)
-            self.failUnless(np.all(sum_ == oversum))
+            self.assertTrue(np.all(sum_ == oversum))
 
         # Transformer which doesn't modify dimensionality of the data
         data = data.reshape((6, -1))
         overnorm = OverAxis(l2_normed, axis=1)(data)
-        self.failUnless(np.linalg.norm(overnorm)!=1.0)
+        self.assertTrue(np.linalg.norm(overnorm)!=1.0)
         for d in overnorm:
-            self.failUnless(np.abs(np.linalg.norm(d) - 1.0)<0.00001)
+            self.assertTrue(np.abs(np.linalg.norm(d) - 1.0)<0.00001)
 
         overnorm = OverAxis(l2_normed, axis=0)(data)
-        self.failUnless(np.linalg.norm(overnorm)!=1.0)
+        self.assertTrue(np.linalg.norm(overnorm)!=1.0)
         for d in overnorm.T:
-            self.failUnless(np.abs(np.linalg.norm(d) - 1.0)<0.00001)
+            self.assertTrue(np.abs(np.linalg.norm(d) - 1.0)<0.00001)
 
     @reseed_rng()
     def test_dist_p_value(self):
@@ -120,14 +120,14 @@ class TransformerTests(unittest.TestCase):
         x = np.vstack((x, np.random.normal(size=x.shape))).T
         for distPValue in (DistPValue(), DistPValue(fpp=0.05)):
             result = distPValue(x)
-            self.failUnless((result>=0).all)
-            self.failUnless((result<=1).all)
+            self.assertTrue((result>=0).all)
+            self.assertTrue((result<=1).all)
 
         if cfg.getboolean('tests', 'labile', default='yes'):
-            self.failUnless(distPValue.ca.positives_recovered[0] > 10)
-            self.failUnless((np.array(distPValue.ca.positives_recovered) +
+            self.assertTrue(distPValue.ca.positives_recovered[0] > 10)
+            self.assertTrue((np.array(distPValue.ca.positives_recovered) +
                              np.array(distPValue.ca.nulldist_number) == ndb + ndu).all())
-            self.failUnlessEqual(distPValue.ca.positives_recovered[1], 0)
+            self.assertEqual(distPValue.ca.positives_recovered[1], 0)
 
 
 def suite():

@@ -35,27 +35,27 @@ class SVDMapperTests(unittest.TestCase):
         # train SVD
         pm.train(self.ndlin)
 
-        self.failUnlessEqual(pm.proj.shape, (20, 20))
+        self.assertEqual(pm.proj.shape, (20, 20))
 
         # now project data into PCA space
         p = pm.forward(self.ndlin)
 
         # only first eigenvalue significant
-        self.failUnless(pm.sv[:1] > 1.0)
-        self.failUnless((pm.sv[1:] < 0.0001).all())
+        self.assertTrue(pm.sv[:1] > 1.0)
+        self.assertTrue((pm.sv[1:] < 0.0001).all())
 
         # only variance of first component significant
         var = p.var(axis=0)
 
        # test that only one component has variance
-        self.failUnless(var[:1] > 1.0)
-        self.failUnless((var[1:] < 0.0001).all())
+        self.assertTrue(var[:1] > 1.0)
+        self.assertTrue((var[1:] < 0.0001).all())
 
         # check that the mapped data can be fully recovered by 'reverse()'
         pr = pm.reverse(p)
 
-        self.failUnlessEqual(pr.shape, (40,20))
-        self.failUnless(np.abs(pm.reverse(p) - self.ndlin).sum() < 0.0001)
+        self.assertEqual(pr.shape, (40,20))
+        self.assertTrue(np.abs(pm.reverse(p) - self.ndlin).sum() < 0.0001)
 
 
     @reseed_rng()
@@ -65,11 +65,11 @@ class SVDMapperTests(unittest.TestCase):
         pm.train(self.largefeat)
 
         # mixing matrix cannot be square
-        self.failUnlessEqual(pm.proj.shape, (40, 10))
+        self.assertEqual(pm.proj.shape, (40, 10))
 
         # only first singular value significant
-        self.failUnless(pm.sv[:1] > 10)
-        self.failUnless((pm.sv[1:] < 10).all())
+        self.assertTrue(pm.sv[:1] > 10)
+        self.assertTrue((pm.sv[1:] < 10).all())
 
         # now project data into SVD space
         p = pm.forward(self.largefeat)
@@ -78,13 +78,13 @@ class SVDMapperTests(unittest.TestCase):
         var = p.var(axis=0)
 
         # test that only one component has variance
-        self.failUnless(var[:1] > 1.0)
-        self.failUnless((var[1:] < 0.0001).all())
+        self.assertTrue(var[:1] > 1.0)
+        self.assertTrue((var[1:] < 0.0001).all())
 
         # check that the mapped data can be fully recovered by 'reverse()'
         rp = pm.reverse(p)
-        self.failUnlessEqual(rp.shape, self.largefeat.shape)
-        self.failUnless((np.round(rp) == self.largefeat).all())
+        self.assertEqual(rp.shape, self.largefeat.shape)
+        self.assertTrue((np.round(rp) == self.largefeat).all())
 
         # copy mapper
         pm2 = deepcopy(pm)
@@ -93,10 +93,10 @@ class SVDMapperTests(unittest.TestCase):
         data = np.random.normal(size=(98,40))
         data_f = pm.forward(data)
 
-        self.failUnlessEqual(data_f.shape, (98,10))
+        self.assertEqual(data_f.shape, (98,10))
 
         data_r = pm.reverse(data_f)
-        self.failUnlessEqual(data_r.shape, (98,40))
+        self.assertEqual(data_r.shape, (98,40))
 
 
 

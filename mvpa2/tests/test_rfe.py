@@ -51,67 +51,67 @@ class RFETests(unittest.TestCase):
         bd = BestDetector()
 
         # for empty history -- no best
-        self.failUnless(bd([]) == False)
+        self.assertTrue(bd([]) == False)
         # we got the best if we have just 1
-        self.failUnless(bd([1]) == True)
+        self.assertTrue(bd([1]) == True)
         # we got the best if we have the last minimal
-        self.failUnless(bd([1, 0.9, 0.8]) == True)
+        self.assertTrue(bd([1, 0.9, 0.8]) == True)
 
         # test for alternative func
         bd = BestDetector(func=max)
-        self.failUnless(bd([0.8, 0.9, 1.0]) == True)
-        self.failUnless(bd([0.8, 0.9, 1.0]+[0.9]*9) == False)
-        self.failUnless(bd([0.8, 0.9, 1.0]+[0.9]*10) == False)
+        self.assertTrue(bd([0.8, 0.9, 1.0]) == True)
+        self.assertTrue(bd([0.8, 0.9, 1.0]+[0.9]*9) == False)
+        self.assertTrue(bd([0.8, 0.9, 1.0]+[0.9]*10) == False)
 
         # test to detect earliest and latest minimum
         bd = BestDetector(lastminimum=True)
-        self.failUnless(bd([3, 2, 1, 1, 1, 2, 1]) == True)
+        self.assertTrue(bd([3, 2, 1, 1, 1, 2, 1]) == True)
         bd = BestDetector()
-        self.failUnless(bd([3, 2, 1, 1, 1, 2, 1]) == False)
+        self.assertTrue(bd([3, 2, 1, 1, 1, 2, 1]) == False)
 
 
     def test_n_back_history_stop_crit(self):
         """Test stopping criterion"""
         stopcrit = NBackHistoryStopCrit()
         # for empty history -- no best but just go
-        self.failUnless(stopcrit([]) == False)
+        self.assertTrue(stopcrit([]) == False)
         # should not stop if we got 10 more after minimal
-        self.failUnless(stopcrit(
+        self.assertTrue(stopcrit(
             [1, 0.9, 0.8]+[0.9]*(stopcrit.steps-1)) == False)
         # should stop if we got 10 more after minimal
-        self.failUnless(stopcrit(
+        self.assertTrue(stopcrit(
             [1, 0.9, 0.8]+[0.9]*stopcrit.steps) == True)
 
         # test for alternative func
         stopcrit = NBackHistoryStopCrit(BestDetector(func=max))
-        self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*9) == False)
-        self.failUnless(stopcrit([0.8, 0.9, 1.0]+[0.9]*10) == True)
+        self.assertTrue(stopcrit([0.8, 0.9, 1.0]+[0.9]*9) == False)
+        self.assertTrue(stopcrit([0.8, 0.9, 1.0]+[0.9]*10) == True)
 
         # test to detect earliest and latest minimum
         stopcrit = NBackHistoryStopCrit(BestDetector(lastminimum=True))
-        self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == False)
+        self.assertTrue(stopcrit([3, 2, 1, 1, 1, 2, 1]) == False)
         stopcrit = NBackHistoryStopCrit(steps=4)
-        self.failUnless(stopcrit([3, 2, 1, 1, 1, 2, 1]) == True)
+        self.assertTrue(stopcrit([3, 2, 1, 1, 1, 2, 1]) == True)
 
 
     def test_fixed_error_threshold_stop_crit(self):
         """Test stopping criterion"""
         stopcrit = FixedErrorThresholdStopCrit(0.5)
 
-        self.failUnless(stopcrit([]) == False)
-        self.failUnless(stopcrit([0.8, 0.9, 0.5]) == False)
-        self.failUnless(stopcrit([0.8, 0.9, 0.4]) == True)
+        self.assertTrue(stopcrit([]) == False)
+        self.assertTrue(stopcrit([0.8, 0.9, 0.5]) == False)
+        self.assertTrue(stopcrit([0.8, 0.9, 0.4]) == True)
         # only last error has to be below to stop
-        self.failUnless(stopcrit([0.8, 0.4, 0.6]) == False)
+        self.assertTrue(stopcrit([0.8, 0.4, 0.6]) == False)
 
 
     def test_n_steps_stop_crit(self):
         """Test stopping criterion"""
         stopcrit = NStepsStopCrit(2)
 
-        self.failUnless(stopcrit([]) == False)
-        self.failUnless(stopcrit([0.8, 0.9]) == True)
-        self.failUnless(stopcrit([0.8]) == False)
+        self.assertTrue(stopcrit([]) == False)
+        self.assertTrue(stopcrit([0.8, 0.9]) == True)
+        self.assertTrue(stopcrit([0.8]) == False)
 
 
     def test_multi_stop_crit(self):
@@ -121,20 +121,20 @@ class RFETests(unittest.TestCase):
 
         # default 'or' mode
         # nback triggers
-        self.failUnless(stopcrit([1, 0.9, 0.8]+[0.9]*4) == True)
+        self.assertTrue(stopcrit([1, 0.9, 0.8]+[0.9]*4) == True)
         # threshold triggers
-        self.failUnless(stopcrit([1, 0.9, 0.2]) == True)
+        self.assertTrue(stopcrit([1, 0.9, 0.2]) == True)
 
         # alternative 'and' mode
         stopcrit = MultiStopCrit([FixedErrorThresholdStopCrit(0.5),
                                   NBackHistoryStopCrit(steps=4)],
                                  mode = 'and')
         # nback triggers not
-        self.failUnless(stopcrit([1, 0.9, 0.8]+[0.9]*4) == False)
+        self.assertTrue(stopcrit([1, 0.9, 0.8]+[0.9]*4) == False)
         # threshold triggers not
-        self.failUnless(stopcrit([1, 0.9, 0.2]) == False)
+        self.assertTrue(stopcrit([1, 0.9, 0.2]) == False)
         # only both satisfy
-        self.failUnless(stopcrit([1, 0.9, 0.4]+[0.4]*4) == True)
+        self.assertTrue(stopcrit([1, 0.9, 0.4]+[0.4]*4) == True)
 
 
     def test_feature_selector(self):
@@ -146,65 +146,65 @@ class RFETests(unittest.TestCase):
         target10 = np.array([0, 1, 2, 3, 5, 6, 7, 8, 9])
         target30 = np.array([0, 1, 2, 3, 7, 8, 9])
 
-        self.failUnlessRaises(UnknownStateError,
+        self.assertRaises(UnknownStateError,
                               selector.ca.__getattribute__, 'ndiscarded')
-        self.failUnless((selector(data) == target10).all())
+        self.assertTrue((selector(data) == target10).all())
         selector.felements = 0.30      # discard 30%
-        self.failUnless(selector.felements == 0.3)
-        self.failUnless((selector(data) == target30).all())
-        self.failUnless(selector.ca.ndiscarded == 3) # se 3 were discarded
+        self.assertTrue(selector.felements == 0.3)
+        self.assertTrue((selector(data) == target30).all())
+        self.assertTrue(selector.ca.ndiscarded == 3) # se 3 were discarded
 
         selector = FixedNElementTailSelector(1)
         #                   0   1   2  3   4    5  6  7  8   9
         data = np.array([3.5, 10, 7, 5, -0.4, 0, 0, 2, 10, 9])
-        self.failUnless((selector(data) == target10).all())
+        self.assertTrue((selector(data) == target10).all())
 
         selector.nelements = 3
-        self.failUnless(selector.nelements == 3)
-        self.failUnless((selector(data) == target30).all())
-        self.failUnless(selector.ca.ndiscarded == 3)
+        self.assertTrue(selector.nelements == 3)
+        self.assertTrue((selector(data) == target30).all())
+        self.assertTrue(selector.ca.ndiscarded == 3)
 
         # test range selector
         # simple range 'above'
-        self.failUnless((RangeElementSelector(lower=0)(data) == \
+        self.assertTrue((RangeElementSelector(lower=0)(data) == \
                          np.array([0,1,2,3,7,8,9])).all())
 
-        self.failUnless((RangeElementSelector(lower=0,
+        self.assertTrue((RangeElementSelector(lower=0,
                                               inclusive=True)(data) == \
                          np.array([0,1,2,3,5,6,7,8,9])).all())
 
-        self.failUnless((RangeElementSelector(lower=0, mode='discard',
+        self.assertTrue((RangeElementSelector(lower=0, mode='discard',
                                               inclusive=True)(data) == \
                          np.array([4])).all())
 
         # simple range 'below'
-        self.failUnless((RangeElementSelector(upper=2)(data) == \
+        self.assertTrue((RangeElementSelector(upper=2)(data) == \
                          np.array([4,5,6])).all())
 
-        self.failUnless((RangeElementSelector(upper=2,
+        self.assertTrue((RangeElementSelector(upper=2,
                                               inclusive=True)(data) == \
                          np.array([4,5,6,7])).all())
 
-        self.failUnless((RangeElementSelector(upper=2, mode='discard',
+        self.assertTrue((RangeElementSelector(upper=2, mode='discard',
                                               inclusive=True)(data) == \
                          np.array([0,1,2,3,8,9])).all())
 
 
         # ranges
-        self.failUnless((RangeElementSelector(lower=2, upper=9)(data) == \
+        self.assertTrue((RangeElementSelector(lower=2, upper=9)(data) == \
                          np.array([0,2,3])).all())
 
-        self.failUnless((RangeElementSelector(lower=2, upper=9,
+        self.assertTrue((RangeElementSelector(lower=2, upper=9,
                                               inclusive=True)(data) == \
                          np.array([0,2,3,7,9])).all())
 
-        self.failUnless((RangeElementSelector(upper=2, lower=9, mode='discard',
+        self.assertTrue((RangeElementSelector(upper=2, lower=9, mode='discard',
                                               inclusive=True)(data) ==
                          RangeElementSelector(lower=2, upper=9,
                                               inclusive=False)(data)).all())
 
         # non-0 elements -- should be equivalent to np.nonzero()[0]
-        self.failUnless((RangeElementSelector()(data) == \
+        self.assertTrue((RangeElementSelector()(data) == \
                          np.nonzero(data)[0]).all())
 
 
@@ -233,13 +233,13 @@ class RFETests(unittest.TestCase):
         resds = fe(data)
 
         # fail if orig datasets are changed
-        self.failUnless(data.nfeatures == data_nfeatures)
+        self.assertTrue(data.nfeatures == data_nfeatures)
 
         # silly check if nfeatures got a single one removed
-        self.failUnlessEqual(data.nfeatures, resds.nfeatures+Nremove,
+        self.assertEqual(data.nfeatures, resds.nfeatures+Nremove,
             msg="We had to remove just a single feature")
 
-        self.failUnlessEqual(fe.ca.sensitivity.nfeatures, data_nfeatures,
+        self.assertEqual(fe.ca.sensitivity.nfeatures, data_nfeatures,
             msg="Sensitivity have to have # of features equal to original")
 
 
@@ -251,7 +251,7 @@ class RFETests(unittest.TestCase):
         data_nfeatures = data.nfeatures
 
         # test silly one first ;-)
-        self.failUnlessEqual(sens_ana(data).samples[0,0], -int(data_nfeatures/2))
+        self.assertEqual(sens_ana(data).samples[0,0], -int(data_nfeatures/2))
 
         # OLD: first remove 25% == 6, and then 4, total removing 10
         # NOW: test should be independent of the numerical number of features
@@ -269,12 +269,12 @@ class RFETests(unittest.TestCase):
         feat_sel_pipeline.train(data)
         resds = feat_sel_pipeline(data)
 
-        self.failUnlessEqual(len(feat_sel_pipeline),
+        self.assertEqual(len(feat_sel_pipeline),
                              len(feature_selections),
                              msg="Test the property feature_selections")
 
         desired_nfeatures = int(np.ceil(data_nfeatures*0.75))
-        self.failUnlessEqual([fe._oshape[0] for fe in feat_sel_pipeline],
+        self.assertEqual([fe._oshape[0] for fe in feat_sel_pipeline],
                              [desired_nfeatures, desired_nfeatures - 4])
 
 
@@ -340,34 +340,34 @@ class RFETests(unittest.TestCase):
             resds = rfe(data)
 
             # fail if orig datasets are changed
-            self.failUnless(data.nfeatures == data_nfeatures)
+            self.assertTrue(data.nfeatures == data_nfeatures)
 
             # check that the features set with the least error is selected
             if len(rfe.ca.errors):
                 e = np.array(rfe.ca.errors)
                 if isinstance(rfe._fselector, FixedNElementTailSelector):
-                    self.failUnless(resds.nfeatures == data_nfeatures - e.argmin())
+                    self.assertTrue(resds.nfeatures == data_nfeatures - e.argmin())
                 else:
                     # in this case we can even check if we had actual
                     # going down/up trend... although -- why up???
                     imin = np.argmin(e)
-                    self.failUnless( 1 < imin < len(e) - 1 )
+                    self.assertTrue( 1 < imin < len(e) - 1 )
             else:
-                self.failUnless(resds.nfeatures == data_nfeatures)
+                self.assertTrue(resds.nfeatures == data_nfeatures)
 
             # silly check if nfeatures is in decreasing order
             nfeatures = np.array(rfe.ca.nfeatures).copy()
             nfeatures.sort()
-            self.failUnless( (nfeatures[::-1] == rfe.ca.nfeatures).all() )
+            self.assertTrue( (nfeatures[::-1] == rfe.ca.nfeatures).all() )
 
             # check if history has elements for every step
-            self.failUnless(set(rfe.ca.history)
+            self.assertTrue(set(rfe.ca.history)
                             == set(range(len(np.array(rfe.ca.errors)))))
 
             # Last (the largest number) can be present multiple times even
             # if we remove 1 feature at a time -- just need to stop well
             # in advance when we have more than 1 feature left ;)
-            self.failUnless(rfe.ca.nfeatures[-1]
+            self.assertTrue(rfe.ca.nfeatures[-1]
                             == len(np.where(rfe.ca.history
                                            ==max(rfe.ca.history))[0]))
 
@@ -404,7 +404,7 @@ class RFETests(unittest.TestCase):
         except Exception, e:
             self.fail('CrossValidation cannot handle classifier with RFE '
                       'feature selection. Got exception: %s' % (e,))
-        self.failUnless(error < 0.2)
+        self.assertTrue(error < 0.2)
 
 
     ##REF: Name was automagically refactored
@@ -433,8 +433,8 @@ class RFETests(unittest.TestCase):
             null_dist=MCNullDist(permutator, tail='left'),
             enable_ca=['stats'])
         error = cv(datasets['uni2small'])
-        self.failUnless(error < 0.4)
-        self.failUnless(cv.ca.null_prob < 0.05)
+        self.assertTrue(error < 0.4)
+        self.assertTrue(cv.ca.null_prob < 0.05)
 
 def suite():
     return unittest.makeSuite(RFETests)

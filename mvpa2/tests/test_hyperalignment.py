@@ -65,7 +65,7 @@ class HyperAlignmentTests(unittest.TestCase):
         for noisy, dss in ((False, dss_rotated_clean),
                            (True, dss_rotated)):
             mappers = ha(dss)
-            self.failUnlessEqual(ref_ds, ha.ca.choosen_ref_ds)
+            self.assertEqual(ref_ds, ha.ca.choosen_ref_ds)
             # Map data back
 
             dss_clean_back = [m.forward(ds_)
@@ -89,14 +89,14 @@ class HyperAlignmentTests(unittest.TestCase):
                 nddss += [ndds]
             if not noisy or cfg.getboolean('tests', 'labile', default='yes'):
                 # First compare correlations
-                self.failUnless(np.all(np.array(ndcss)
+                self.assertTrue(np.all(np.array(ndcss)
                                        >= (0.9, 0.85)[int(noisy)]),
                         msg="Should have reconstructed original dataset more or"
                         " less. Got correlations %s in %s case."
                         % (ndcss, ('clean', 'noisy')[int(noisy)]))
                 if not zscore_common:
                     # only reasonable without zscoring
-                    self.failUnless(np.all(np.array(nddss)
+                    self.assertTrue(np.all(np.array(nddss)
                                            <= (1e-10, 1e-2)[int(noisy)]),
                         msg="Should have reconstructed original dataset more or"
                         " less. Got normed differences %s in %s case."
@@ -106,12 +106,12 @@ class HyperAlignmentTests(unittest.TestCase):
         ha = Hyperalignment(ref_ds=ref_ds, level2_niter=2,
                             enable_ca=['residual_errors'])
         mappers = ha(dss_rotated_clean)
-        self.failUnless(np.all(ha.ca.residual_errors.sa.levels ==
+        self.assertTrue(np.all(ha.ca.residual_errors.sa.levels ==
                               ['1', '2:0', '2:1', '3']))
         rerrors = ha.ca.residual_errors.samples
         # just basic tests:
-        self.failUnlessEqual(rerrors[0, ref_ds], 0)
-        self.failUnlessEqual(rerrors.shape, (4, n))
+        self.assertEqual(rerrors[0, ref_ds], 0)
+        self.assertEqual(rerrors.shape, (4, n))
         pass
 
 

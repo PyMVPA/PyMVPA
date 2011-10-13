@@ -21,13 +21,13 @@ class ArgsHelpersTest(unittest.TestCase):
         kwargs = {'a':1, 'slave_a':3, 'slave_z':4, 'slave_slave_z':5, 'c':3}
 
         res = split_kwargs(kwargs, ['slave_'])
-        self.failUnless(res.has_key('slave_') and res.has_key(''))
-        self.failUnless(res['slave_'] == {'a':3, 'z':4, 'slave_z':5})
-        self.failUnless(res[''] == {'a':1, 'c':3})
+        self.assertTrue(res.has_key('slave_') and res.has_key(''))
+        self.assertTrue(res['slave_'] == {'a':3, 'z':4, 'slave_z':5})
+        self.assertTrue(res[''] == {'a':1, 'c':3})
 
         res = split_kwargs(kwargs)
-        self.failUnless(res.keys() == [''])
-        self.failUnless(res[''] == kwargs)
+        self.assertTrue(res.keys() == [''])
+        self.assertTrue(res[''] == kwargs)
 
 
     def test_decorator(self):
@@ -70,8 +70,8 @@ class ArgsHelpersTest(unittest.TestCase):
                 return 124
 
         c1 = C1(slave_p1=1, p1=2)
-        self.failUnless(c1.method() == 123)
-        self.failUnless(c1.method_decorated() == 124)
+        self.assertTrue(c1.method() == 123)
+        self.assertTrue(c1.method_decorated() == 124)
 
 
 def suite():

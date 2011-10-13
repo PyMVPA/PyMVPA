@@ -37,12 +37,12 @@ class TestExternals(unittest.TestCase):
         # paranoid check
         # since order can't be guaranteed, lets check
         # each item after sorting
-        self.failUnlessEqual(sorted(self.cfgstr.split('\n')),
+        self.assertEqual(sorted(self.cfgstr.split('\n')),
                              sorted(str(cfg).split('\n')))
 
 
     def test_externals(self):
-        self.failUnlessRaises(ValueError, externals.exists, 'BoGuS')
+        self.assertRaises(ValueError, externals.exists, 'BoGuS')
 
 
     def test_externals_no_double_invocation(self):
@@ -59,13 +59,13 @@ class TestExternals(unittest.TestCase):
         externals._KNOWN['checker'] = 'checker.check()'
         externals.__dict__['checker'] = checker
         externals.exists('checker')
-        self.failUnlessEqual(checker.checked, 1)
+        self.assertEqual(checker.checked, 1)
         externals.exists('checker')
-        self.failUnlessEqual(checker.checked, 1)
+        self.assertEqual(checker.checked, 1)
         externals.exists('checker', force=True)
-        self.failUnlessEqual(checker.checked, 2)
+        self.assertEqual(checker.checked, 2)
         externals.exists('checker')
-        self.failUnlessEqual(checker.checked, 2)
+        self.assertEqual(checker.checked, 2)
 
         # restore original externals
         externals.__dict__.pop('checker')
@@ -76,10 +76,10 @@ class TestExternals(unittest.TestCase):
         # always fails
         externals._KNOWN['checker2'] = 'raise ImportError'
 
-        self.failUnless(not externals.exists('checker2'),
+        self.assertTrue(not externals.exists('checker2'),
                         msg="Should be False on 1st invocation")
 
-        self.failUnless(not externals.exists('checker2'),
+        self.assertTrue(not externals.exists('checker2'),
                         msg="Should be False on 2nd invocation as well")
 
         externals._KNOWN.pop('checker2')

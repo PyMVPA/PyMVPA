@@ -71,14 +71,14 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # compute scores
         f = dsm(data)
         # check if nothing evil is done to dataset
-        self.failUnless(np.all(data.samples == datass))
-        self.failUnless(f.shape == (1, data.nfeatures))
-        self.failUnless(abs(f.samples[0, 1]) <= 1e-12, # some small value
+        self.assertTrue(np.all(data.samples == datass))
+        self.assertTrue(f.shape == (1, data.nfeatures))
+        self.assertTrue(abs(f.samples[0, 1]) <= 1e-12, # some small value
             msg="Failed test with value %g instead of != 0.0" % f.samples[0, 1])
-        self.failUnless(f[0] > 0.1)     # some reasonably large value
+        self.assertTrue(f[0] > 0.1)     # some reasonably large value
 
         # we should not have NaNs
-        self.failUnless(not np.any(np.isnan(f)))
+        self.assertTrue(not np.any(np.isnan(f)))
 
 
 
@@ -134,15 +134,15 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 req_nsamples += [ nsplits ]
 
         # # of features should correspond
-        self.failUnlessEqual(sens.shape[1], ds.nfeatures)
+        self.assertEqual(sens.shape[1], ds.nfeatures)
         # # of samples/sensitivities should also be reasonable
-        self.failUnless(sens.shape[0] in req_nsamples)
+        self.assertTrue(sens.shape[0] in req_nsamples)
 
         # Check if labels are present
-        self.failUnless('splits' in sens.sa)
-        self.failUnless('targets' in sens.sa)
+        self.assertTrue('splits' in sens.sa)
+        self.assertTrue('targets' in sens.sa)
         # should be 1D -- otherwise dtype object
-        self.failUnless(sens.sa.targets.ndim == 1)
+        self.assertTrue(sens.sa.targets.ndim == 1)
 
         sens_ulabels = sens.sa['targets'].unique
         # Some labels might be pairs(tuples) so ndarray would be of
@@ -171,7 +171,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         if cfg.getboolean('tests', 'labile', default='yes'):
             for conf_matrix in [sana.clf.ca.training_stats] \
                               + sana.clf.ca.stats.matrices:
-                self.failUnless(
+                self.assertTrue(
                     conf_matrix.percent_correct>=70,
                     msg="We must have trained on each one more or " \
                     "less correctly. Got %f%% correct on %d labels" %
@@ -193,7 +193,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         if cfg.getboolean('tests', 'labile', default='yes'):
 
-            self.failUnlessEqual(
+            self.assertEqual(
                 set(selected), set(ds.a.nonbogus_features),
                 msg="At the end we should have selected the right features. "
                 "Chose %s whenever nonbogus are %s"
@@ -211,15 +211,15 @@ class SensitivityAnalysersTests(unittest.TestCase):
                 # XXX whole lndim comparison should be gone after
                 #     things get fixed and we arrive here with a tuple!
                 if lndim == 1: # just a single label
-                    self.failUnless(label in ulabels)
+                    self.assertTrue(label in ulabels)
 
                     ilabel_all = np.where(ds.fa.nonbogus_targets == label)[0]
                     # should have just 1 feature for the label
-                    self.failUnlessEqual(len(ilabel_all), 1)
+                    self.assertEqual(len(ilabel_all), 1)
                     ilabel = ilabel_all[0]
 
                     maxsensi = np.argmax(sens1) # index of max sensitivity
-                    self.failUnlessEqual(maxsensi, ilabel,
+                    self.assertEqual(maxsensi, ilabel,
                         "Maximal sensitivity for %s was found in %i whenever"
                         " original feature was %i for nonbogus features %s"
                         % (labels1, maxsensi, ilabel, ds.a.nonbogus_features))
@@ -229,7 +229,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                     maxsensi2 = np.argsort(np.abs(sens1))[0][-2:]
                     ilabel2 = [np.where(ds.fa.nonbogus_targets == l)[0][0]
                                     for l in label]
-                    self.failUnlessEqual(
+                    self.assertEqual(
                         set(maxsensi2), set(ilabel2),
                         "Maximal sensitivity for %s was found in %s whenever"
                         " original features were %s for nonbogus features %s"
@@ -242,11 +242,11 @@ class SensitivityAnalysersTests(unittest.TestCase):
                     # We already know (if we haven't failed in previous test),
                     # that those 2 were the strongest -- so check only signs
                     """
-                    self.failUnless(
+                    self.assertTrue(
                         sens1.samples[0, ilabel2[0]]<0,
                         "With %i classes in pair %s got feature %i for %r >= 0"
                         % (nlabels, label, ilabel2[0], label[0]))
-                    self.failUnless(sens1.samples[0, ilabel2[1]]>0,
+                    self.assertTrue(sens1.samples[0, ilabel2[1]]>0,
                         "With %i classes in pair %s got feature %i for %r <= 0"
                         % (nlabels, label, ilabel2[1], label[1]))
                 else:
@@ -274,7 +274,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         dataset = datasets['uni2medium']
         # and we get sensitivity analyzer which works on splits
         sens = sana(dataset)
-        self.failUnlessEqual(sens.shape, (1, dataset.nfeatures))
+        self.assertEqual(sens.shape, (1, dataset.nfeatures))
 
 
 
@@ -287,7 +287,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # for now we can do only linear SVM, so lets check if we raise
         # a concern
         svmnl = clfswh['non-linear', 'svm'][0]
-        self.failUnlessRaises(NotImplementedError,
+        self.assertRaises(NotImplementedError,
                               svmnl.get_sensitivity_analyzer)
 
 
@@ -312,14 +312,14 @@ class SensitivityAnalysersTests(unittest.TestCase):
         senssplit = sana_split(ds2)
         sensfull = sana_full(ds2)
 
-        self.failUnlessEqual(senssplit.shape, (2, ds2.nfeatures))
-        self.failUnlessEqual(sensfull.shape,  (1, ds2.nfeatures))
+        self.assertEqual(senssplit.shape, (2, ds2.nfeatures))
+        self.assertEqual(sensfull.shape,  (1, ds2.nfeatures))
 
         # just to verify that we split properly and if we reconstruct
         # manually we obtain the same
         dmap = (-1 * senssplit.samples[1]  + senssplit.samples[0]) \
                - sensfull.samples
-        self.failUnless((np.abs(dmap) <= 1e-10).all())
+        self.assertTrue((np.abs(dmap) <= 1e-10).all())
         #print "____"
         #print senssplit
         #print SMLR().get_sensitivity_analyzer(combiner=None)(ds2)
@@ -330,7 +330,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # otherwise, but we do it on purpose here
         handlers = warning.handlers
         warning.handlers = []
-        self.failUnlessRaises(NotImplementedError,
+        self.assertRaises(NotImplementedError,
                               sana_split, datasets['uni3medium'])
         # reenable the warnings
         warning.handlers = handlers
@@ -361,12 +361,12 @@ class SensitivityAnalysersTests(unittest.TestCase):
         assert_equal(sens.shape, (2 * len(ds.sa['targets'].unique),
                                   ds.nfeatures))
         splits = sana.ca.datasets
-        self.failUnlessEqual(len(splits), 2)
-        self.failUnless(np.all([s.nsamples == ds.nsamples/4 for s in splits]))
+        self.assertEqual(len(splits), 2)
+        self.assertTrue(np.all([s.nsamples == ds.nsamples/4 for s in splits]))
         # should have used different samples
-        self.failUnless(np.any([splits[0].sa.origids != splits[1].sa.origids]))
+        self.assertTrue(np.any([splits[0].sa.origids != splits[1].sa.origids]))
         # and should have got different sensitivities
-        self.failUnless(np.any(sens[0] != sens[3]))
+        self.assertTrue(np.any(sens[0] != sens[3]))
 
 
         #skip_if_no_external('scipy')
@@ -442,9 +442,9 @@ class SensitivityAnalysersTests(unittest.TestCase):
 
         od_union = fs(self.dataset)
 
-        self.failUnless(fs.method == 'union')
+        self.assertTrue(fs.method == 'union')
         # check output dataset
-        self.failUnless(od_union.nfeatures <= self.dataset.nfeatures)
+        self.assertTrue(od_union.nfeatures <= self.dataset.nfeatures)
         # again for intersection
         fs = CombinedFeatureSelection(fss, method='intersection')
         od_intersect = fs(self.dataset)
@@ -460,16 +460,16 @@ class SensitivityAnalysersTests(unittest.TestCase):
         ds_custom = Dataset(ds.samples, sa={'custom' : ds.targets})
 
         r = oa(ds)
-        self.failUnlessRaises(KeyError, oa_custom, ds)
+        self.assertRaises(KeyError, oa_custom, ds)
         r_custom = oa_custom(ds_custom)
 
-        self.failUnless(np.allclose(r.samples, r_custom.samples))
+        self.assertTrue(np.allclose(r.samples, r_custom.samples))
 
         # we should get the same results on subsequent runs
         r2 = oa(ds)
         r_custom2 = oa_custom(ds_custom)
-        self.failUnless(np.allclose(r.samples, r2.samples))
-        self.failUnless(np.allclose(r_custom.samples, r_custom2.samples))
+        self.assertTrue(np.allclose(r.samples, r2.samples))
+        self.assertTrue(np.allclose(r_custom.samples, r_custom2.samples))
 
 
     def test_transfer_measure(self):
