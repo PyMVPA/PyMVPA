@@ -193,6 +193,10 @@ sweep()
     echo "I: Exiting. Logfile $logfile"
 }
 
+# Prepare the environment a bit more:
+#  bet is needed for one of the tests
+[ -e /etc/fsl/fsl.sh ] && source /etc/fsl/fsl.sh
+
 sweep >| $logfile 2>&1
 
 # Email only if any test has failed
