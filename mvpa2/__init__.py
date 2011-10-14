@@ -130,8 +130,18 @@ from mvpa2.tests import run as test
 # for possible later version checks, hence don't remove
 externals.exists('numpy', force=True, raise_=True)
 # We might need to suppress the warnings:
+
+# If instructed -- no python or numpy warnings (like ctypes version
+# for slmr), e.g. for during doctests
+if cfg.getboolean('warnings', 'suppress', default=False):
+    import warnings
+    warnings.simplefilter('ignore')
+    # NumPy
+    np.seterr(**dict([(x, 'ignore') for x in np.geterr()]))
+
 if externals.exists('scipy'):
     externals._suppress_scipy_warnings()
+
 # And check if we aren't under IPython so we could pacify completion
 # a bit
 externals.exists('running ipython env', force=True, raise_=False)
