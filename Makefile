@@ -368,6 +368,7 @@ dt-%: build
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_EXTERNALS_RAISE_EXCEPTION=off \
 		MVPA_DATADB_ROOT=datadb \
+		MVPA_WARNINGS_SUPPRESS=1 \
 		$(NOSETESTS) --with-doctest \
 			$(shell git grep -l __docformat__ | grep '^mvpa' \
 				| grep -v filter.py | grep -v channel.py | grep "$*")
@@ -377,6 +378,7 @@ tm-%: build
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 		MVPA_DATADB_ROOT=datadb \
+		MVPA_WARNINGS_SUPPRESS=1 \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 	                 --doctest-tests doc/source/$*.rst
 
@@ -386,6 +388,7 @@ testmanual: build testdocstrings
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 		MVPA_DATADB_ROOT=datadb \
+		MVPA_WARNINGS_SUPPRESS=1 \
 		$(NOSETESTS) -v --with-doctest --doctest-extension .rst \
 		             --doctest-tests doc/source
 
@@ -394,6 +397,7 @@ testtutorial-%: build
 	@PYTHONPATH=.:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
+		MVPA_WARNINGS_SUPPRESS=1 \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 		             --doctest-tests doc/source/tutorial_$**.rst
 
@@ -413,6 +417,7 @@ testdatadb: build
 	@PYTHONPATH=.:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_DATADB_ROOT=datadb \
+		MVPA_WARNINGS_SUPPRESS=1 \
 		$(NOSETESTS) --with-doctest --doctest-extension .rst \
 		             --doctest-tests doc/source/datadb/*.rst
 
