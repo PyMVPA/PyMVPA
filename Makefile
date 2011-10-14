@@ -364,6 +364,7 @@ testexamples: te-svdclf te-smlr te-sensanas te-pylab_2d \
 testdocstrings: dt-mvpa
 
 dt-%: build
+	@echo "I: Doctesting $*"
 	@PYTHONPATH=.:$(PYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_EXTERNALS_RAISE_EXCEPTION=off \
