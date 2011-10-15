@@ -113,10 +113,10 @@ the interface of `Python's ConfigParser`_ it has a few convenience functions
 mostly to allow for a default value in case no setting was found. For example:
 
   >>> cfg.getboolean('warnings', 'suppress', default=False)
-  False
+  True
 
 queries the config manager whether warnings should be suppressed (i.e. if
-there is a variable `suppress` in section `warnings`). In case, there is now
+there is a variable `suppress` in section `warnings`). In case, there is no
 such setting, i.e. neither config files nor environment variables defined it,
 the `default` values is returned. Please see the documentation of
 `ConfigManager`_ for its full functionality.
