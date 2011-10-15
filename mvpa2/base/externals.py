@@ -407,6 +407,19 @@ def __check_rpy():
         def input1(*args): return "1"      # which is "1: abort (with core dump, if enabled)"
         rpy.set_rpy_input(input1)
 
+def _R_library(libname):
+    import rpy2.robjects as ro
+
+    try:
+        if not tuple(ro.r(
+            "suppressMessages(suppressWarnings(require(%r, quiet=TRUE)))"
+            % libname))[0]:
+            raise ImportError("It seems that R cannot load library %r"
+                              % libname)
+    except Exception, e:
+        raise ImportError("Failed to load R library %r due to %s"
+                          % (libname, e))
+
 def __check_rpy2():
     """Check either rpy2 is available and also set it for the sane execution
     """
@@ -419,8 +432,7 @@ def __check_rpy2():
 
     # To shut R up while it is importing libraries to do not ruin out
     # doctests
-    r.library = lambda libname: \
-                r("suppressPackageStartupMessages(library(%r))" % libname)
+    r.library = _R_library
 
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
