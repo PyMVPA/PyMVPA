@@ -481,6 +481,7 @@ testmvpa-prep-fmri:
 	ln -s $(CURDIR)/mvpa2/data/example4d.nii.gz $$td/; \
 	cd $$td; \
 	PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
+		MVPA_MATPLOTLIB_BACKEND=agg \
 		$(CURDIR)/bin/mvpa-prep-fmri -p -e first -s T -b '-f 0.4' example4d.nii.gz; \
 	[ -e $$td/T ] \
 	&& [ -e $$td/T/func_mc.pdf ] \
