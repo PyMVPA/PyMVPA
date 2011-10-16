@@ -61,9 +61,9 @@ Instructions
   >>> train = datasets['train']
   >>> test = datasets['test']
   >>> print train
-  <Dataset: 60000x784@uint8, <sa: labels>, <a: mapper>>
+  <Dataset: 60000x784@uint8, <sa: labels>>
   >>> print test
-  <Dataset: 10000x784@uint8, <sa: labels>, <a: mapper>>
+  <Dataset: 10000x784@uint8, <sa: labels>>
   >>> # assign a mapper able to recreate 28x28 pixel image arrays
   >>> test.a.mapper = FlattenMapper(shape=(28, 28))
   >>> test.mapper.reverse(test).shape
