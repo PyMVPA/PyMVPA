@@ -26,10 +26,12 @@ import sys
 import os
 from subprocess import call
 
+# Import mvpa2 first so it could augment matplotlib backend if necessary
+import mvpa2
+
 import numpy as np
 import pylab as pl
 
-import mvpa2
 from mvpa2.base import verbose, externals, error
 from mvpa2.misc.cmdline import parser, opt
 from mvpa2.misc.fsl import McFlirtParams
