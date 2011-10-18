@@ -30,6 +30,14 @@ experiments.
   URL: http://www.ncbi.nlm.nih.gov/pubmed/19938211
 
 
+.. _CRK+11:
+
+**Carlin, J. D., Rowe, J. B., Kriegeskorte, N., Thompson, R. & Calder, A. J.** (2011). Direction-Sensitive Codes for Observed Head Turns in Human Superior Temporal Sulcus. *Cerebral Cortex*, **, .
+  Keywords: :keyword:`pymvpa`, :keyword:`fMRI`, :keyword:`searchlight`
+
+  DOI: http://dx.doi.org/10.1093/cercor/bhr061
+
+
 .. _CPL+06:
 
 **Chen, X., Pereira, F., Lee, W., Strother, S. & Mitchell, T.** (2006). Exploring predictive and reproducible modeling with the single-subject FIAC dataset. *Human Brain Mapping*, *27*, 452–461.
@@ -224,6 +232,14 @@ experiments.
   DOI: http://dx.doi.org/10.1038/nn1444
 
 
+.. _KKO+11:
+
+**Kaunitz, L. N., Kamienkowski, J. E., Olivetti, E., Murphy, B., Avesani, P. & Melcher, D. P.** (2011). Intercepting the first pass: rapid categorization is suppressed for unseen stimuli. *Frontiers in Perception Science*, *2*, 198.
+  Keywords: :keyword:`pymvpa`, :keyword:`eeg`
+
+  DOI: http://dx.doi.org/10.3389/fpsyg.2011.00198
+
+
 .. _KFS+09:
 
 **Kienzle, W., Franz, M. O., Schölkopf, B. & Wichmann, F. A.** (In press). Center-surround patterns emerge as optimal predictors for human saccade targets. *Journal of Vision*.
@@ -253,6 +269,14 @@ experiments.
   Keywords: :keyword:`sparse multinomial logistic regression`, :keyword:`SMLR`
 
   DOI: http://dx.doi.org/10.1109/TPAMI.2005.127
+
+
+.. _KWO11:
+
+**Kubilius, J., Wagemans, J. & Op de Beeck, H.** (2011). Emergence of perceptual gestalts in the human visual cortex: The case of the configural superiority effect. *Psychological Science*, *in press*.
+  Keywords: :keyword:`pymvpa`, :keyword:`fMRI`
+
+  DOI: http://dx.doi.org/10.1177/0956797611417000
 
 
 .. _LSC+05:
@@ -293,6 +317,14 @@ experiments.
   Keywords: :keyword:`PyMVPA`, :keyword:`implicit memory`, :keyword:`fMRI`
 
   DOI: http://dx.doi.org/10.1002/hbm.20992
+
+
+.. _MRH11:
+
+**Manelis, A., Reder, L. M. & Hanson, S. J.** (2011). Dynamic Changes In The Medial Temporal Lobe During Incidental Learning Of Object–Location Associations. *Cerebral Cortex*.
+  Keywords: :keyword:`pymvpa`, :keyword:`fMRI`
+
+  DOI: http://dx.doi.org/10.1093/cercor/bhr151
 
 
 .. _MBL+10:

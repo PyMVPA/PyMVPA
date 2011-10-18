@@ -15,7 +15,7 @@ Example showing some possibilities of data exploration
 (i.e. to 'smell' data).
 """
 
-from mvpa.suite import *
+from mvpa2.suite import *
 
 # load example fmri dataset
 ds = load_example_fmri_dataset()

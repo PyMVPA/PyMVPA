@@ -18,10 +18,10 @@ onto singular value components within a cross-validation -- for *any*
 classifier.
 """
 
-from mvpa.suite import *
+from mvpa2.suite import *
 
 if __debug__:
-    debug.active += ["CROSSC"]
+    debug.active += ["REPM"]
 
 #
 # load PyMVPA example dataset
@@ -81,7 +81,7 @@ results = []
 labels = []
 
 for desc, clf in clfs:
-    print desc
+    print desc.replace('\n', ' ')
     cv = CrossValidation(clf, NFoldPartitioner())
     res = cv(dataset)
     # there is only one 'feature' i.e. the error in the returned

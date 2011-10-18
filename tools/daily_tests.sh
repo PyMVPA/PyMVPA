@@ -39,8 +39,8 @@ for b in origin/maint/0.4; do
     TESTS_BRANCHES["$b"]="$TESTS_COMMON testapiref"
 done
 # development branches
-for b in origin/master origin/maint/0.5 yarikoptic/master hanke/master; do
-    TESTS_BRANCHES["$b"]="$TESTS_COMMON testdatadb testourcfg testdocstrings"
+for b in origin/master yarikoptic/master hanke/master; do
+    TESTS_BRANCHES["$b"]="$TESTS_COMMON testdatadb testourcfg testdocstrings testmvpa-prep-fmri"
 done
 # all known tests
 TESTS_ALL=`echo "${TESTS_BRANCHES[*]}" | tr ' ' '\n' | sort | uniq`
@@ -175,7 +175,10 @@ sweep()
         if [ "x$branch_has_problems" != x ]; then
             branches_with_problems+="\n  $branch: $branch_has_problems"
             echo " D: Reporting WTF due to errors:"
-            $precmd python -c 'import mvpa; print mvpa.wtf()'
+            # allow for both existing API versions
+            $precmd python -c 'import mvpa2; print mvpa2.wtf()' || \
+                $precmd python -c 'import mvpa; print mvpa.wtf()'
+
         fi
         } &> "$blogfile"
         blogfiles+=" --file-attach $blogfile"
@@ -189,6 +192,10 @@ sweep()
     echo "I:" $(date)
     echo "I: Exiting. Logfile $logfile"
 }
+
+# Prepare the environment a bit more:
+#  bet is needed for one of the tests
+[ -e /etc/fsl/fsl.sh ] && source /etc/fsl/fsl.sh
 
 sweep >| $logfile 2>&1
 

@@ -88,15 +88,11 @@ start_tutorial_session.sh
   Helper shell script to start an interactive session within IPython
   to proceed with the tutorial code.
 
-tutorial_lib.py
-  Helper Python module used through out the tutorial to avoid
-  presenting sequences of common operations (e.g. loading data)
-  multiple times.
 
 Instructions
 ============
 
-  >>> from mvpa.suite import *
+  >>> from mvpa2.suite import *
   >>> datapath = os.path.join(pymvpa_datadbroot, 'tutorial_data',
   ...                         'tutorial_data', 'data')
   >>> attrs = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
@@ -110,7 +106,7 @@ Instructions
   >>> print ds.a.voxel_eldim
   (3.5, 3.75, 3.75)
   >>> print ds.a.mapper
-  <ChainMapper: <Flatten>-<StaticFeatureSelection>>
+  <Chain: <Flatten>-<StaticFeatureSelection>>
   >>> print ds.uniquetargets
   ['bottle' 'cat' 'chair' 'face' 'house' 'rest' 'scissors' 'scrambledpix'
    'shoe']
@@ -129,6 +125,11 @@ objects in ventral temporal cortex. Science 293, 2425–2430.
 
 Changelog
 =========
+
+0.3
+
+  * Removed tutorial_lib.py which is superseeded by using
+    mvpa2.tutorial_suite
 
 0.2
 

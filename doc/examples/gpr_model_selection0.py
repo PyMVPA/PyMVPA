@@ -21,7 +21,7 @@ Gaussian Process Regression (GPR) on a simple 1D example.
 __docformat__ = 'restructuredtext'
 
 import numpy as np
-from mvpa.suite import *
+from mvpa2.suite import *
 import pylab as pl
 
 # Generate train and test dataset:

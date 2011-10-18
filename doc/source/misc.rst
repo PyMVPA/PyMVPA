@@ -15,20 +15,19 @@
 Miscellaneous
 *************
 
-.. automodule:: mvpa.misc
+.. automodule:: mvpa2.misc
 
 .. only:: html
 
    Related API documentation
    =========================
 
-   .. currentmodule:: mvpa
+   .. currentmodule:: mvpa2
    .. autosummary::
       :toctree: generated
 
       atlases
       misc.args
-      misc.attributes
       misc.attrmap
       misc.cmdline
       misc.data_generators
@@ -36,9 +35,7 @@ Miscellaneous
       misc.exceptions
       misc.fx
       misc.neighborhood
-      misc.param
       misc.sampleslookup
-      misc.state
       misc.stats
       misc.support
       misc.transformers
@@ -56,14 +53,14 @@ facility can be used to control some aspects of the behavior of PyMVPA
 itself, as well as to store and query custom configuration items, e.g. to
 control one's own analysis scripts.
 
-An instance of this configuration manager is loaded whenever the `mvpa` module
+An instance of this configuration manager is loaded whenever the `mvpa2` module
 is imported. It can be used from any script like this:
 
-  >>> from mvpa import cfg
+  >>> from mvpa2 import cfg
 
 By default the config manager reads settings from two config files (if any of
-them exists). The first is a file named `.pymvpa.cfg` and located in the
-user's home directory.  The second is `pymvpa.cfg` in the current directory.
+them exists). The first is a file named `.pymvpa2.cfg` and located in the
+user's home directory.  The second is `pymvpa2.cfg` in the current directory.
 Please note, that settings found in the second file override the ones in the
 first.
 
@@ -78,7 +75,7 @@ look like this::
 It consists of a section `general` containing a single setting `verbose`,
 which is set to `1`. PyMVPA recognizes a number of such sections and
 configuration variables. A full list is shown at the end of this section and
-is also available in the source package (`doc/examples/pymvpa.cfg`).
+is also available in the source package (`doc/examples/pymvpa2.cfg`).
 
 .. _Python's ConfigParser: http://docs.python.org/lib/module-ConfigParser.html
 
@@ -116,24 +113,24 @@ the interface of `Python's ConfigParser`_ it has a few convenience functions
 mostly to allow for a default value in case no setting was found. For example:
 
   >>> cfg.getboolean('warnings', 'suppress', default=False)
-  False
+  True
 
 queries the config manager whether warnings should be suppressed (i.e. if
-there is a variable `suppress` in section `warnings`). In case, there is now
+there is a variable `suppress` in section `warnings`). In case, there is no
 such setting, i.e. neither config files nor environment variables defined it,
 the `default` values is returned. Please see the documentation of
 `ConfigManager`_ for its full functionality.
 
-.. _ConfigManager: api/mvpa.base.config.ConfigManager-class.html
+.. _ConfigManager: api/mvpa2.base.config.ConfigManager-class.html
 
 
 .. index:: config file
 
 The source tarballs includes an example configuration file
-(`doc/examples/pymvpa.cfg`) with the comprehensive list of settings recognized
+(`doc/examples/pymvpa2.cfg`) with the comprehensive list of settings recognized
 by PyMVPA itself:
 
-.. literalinclude:: ../examples/pymvpa.cfg
+.. literalinclude:: ../examples/pymvpa2.cfg
    :language: ini
 
 
@@ -158,9 +155,9 @@ warning_
     unexpected but not critical
 
 
-.. _verbose: api/mvpa.misc-module.html#verbose
-.. _debug: api/mvpa.misc-module.html#debug
-.. _warning: api/mvpa.misc-module.html#warning
+.. _verbose: api/mvpa2.misc-module.html#verbose
+.. _debug: api/mvpa2.misc-module.html#debug
+.. _warning: api/mvpa2.misc-module.html#warning
 
 
 .. index:: redirecting output
@@ -202,7 +199,7 @@ specified at run time, thus it is impossible to redirect verbose or debug from
 the start of the program:
 
   >>> import sys
-  >>> from mvpa.base import verbose
+  >>> from mvpa2.base import verbose
   >>> from StringIO import StringIO
   >>> stringout = StringIO()
   >>> verbose.handlers = [sys.stdout, stringout]
@@ -338,10 +335,10 @@ the internal logic, thus enabled when full test suite is ran.
    also way to specify the level for the message so we could provide
    more debugging information if desired.
 
-.. _opt.verbose: api/mvpa.misc.cmdline-module.html#opt.verbose
-.. _optDebug: api/mvpa.misc.cmdline-module.html#optDebug
-.. _base module sources: api/mvpa.base-pysrc.html
-.. _Recursive Feature Elimination call: api/mvpa.featsel.rfe.RFE-class.html#__call__
+.. _opt.verbose: api/mvpa2.misc.cmdline-module.html#opt.verbose
+.. _optDebug: api/mvpa2.misc.cmdline-module.html#optDebug
+.. _base module sources: api/mvpa2.base-pysrc.html
+.. _Recursive Feature Elimination call: api/mvpa2.featsel.rfe.RFE-class.html#__call__
 
 
 PyMVPA Status Summary
@@ -349,7 +346,7 @@ PyMVPA Status Summary
 
 While reporting found bugs, it is advised to provide information about the
 operating system/environment and availability of PyMVPA externals.  Please use
-:func:`~mvpa.base.info.wtf` to collect such useful information to be included
+:func:`~mvpa2.base.info.wtf` to collect such useful information to be included
 with the bug reports.
 
 Alternatively, same printout can be obtained upon not handled exception
@@ -423,12 +420,12 @@ motion-aware data detrending:
   >>> import numpy as np
   >>>
   >>> # some dummy dataset
-  >>> from mvpa.datasets import Dataset
+  >>> from mvpa2.datasets import Dataset
   >>> ds = Dataset(samples=np.random.normal(size=(19, 3)))
   >>>
   >>> # load motion correction output
-  >>> from mvpa.misc.fsl.base import McFlirtParams
-  >>> mc = McFlirtParams(path.join('mvpa', 'data', 'bold_mc.par'))
+  >>> from mvpa2.misc.fsl.base import McFlirtParams
+  >>> mc = McFlirtParams(path.join('mvpa2', 'data', 'bold_mc.par'))
   >>>
   >>> # simple plot using pylab (use pylab.show() or pylab.savefig()
   >>> # afterwards)
@@ -439,13 +436,13 @@ motion-aware data detrending:
   ...     ds.sa['mc_' + param] = mc[param]
   >>>
   >>> # detrend some dataset with mc params as additonal regressors
-  >>> from mvpa.mappers.detrend import poly_detrend
+  >>> from mvpa2.mappers.detrend import poly_detrend
   >>> res = poly_detrend(ds, opt_regs=['mc_x', 'mc_y', 'mc_z',
   ...                                  'mc_rot1', 'mc_rot2', 'mc_rot3'])
   >>> # 'res' contains all regressors and their associated weights
 
-All FSL bindings are located in the `mvpa.misc.fsl`_ module.
+All FSL bindings are located in the `mvpa2.misc.fsl`_ module.
 
 .. _FSL: http://www.fmrib.ox.ac.uk
-.. _mvpa.misc.fsl: api/mvpa.misc.fsl-module.html
+.. _mvpa2.misc.fsl: api/mvpa2.misc.fsl-module.html
 

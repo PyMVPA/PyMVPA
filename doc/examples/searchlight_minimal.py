@@ -13,8 +13,8 @@ Minimal Searchlight Example
 
 .. index:: searchlight, cross-validation
 
-The term :class:`~mvpa.measures.searchlight.Searchlight` refers to an algorithm
-that runs a scalar :class:`~mvpa.measures.base.Measure` on all possible
+The term :class:`~mvpa2.measures.searchlight.Searchlight` refers to an algorithm
+that runs a scalar :class:`~mvpa2.measures.base.Measure` on all possible
 spheres of a certain size within a dataset (that provides information about
 distances between feature locations).  The measure typically computed is a
 cross-validation of a classifier performance (see :ref:`CrossValidation
@@ -29,12 +29,12 @@ First import a necessary pieces of PyMVPA -- this time each bit individually.
 
 import numpy as np
 
-from mvpa.generators.partition import OddEvenPartitioner
-from mvpa.clfs.svm import LinearCSVMC
-from mvpa.measures.base import CrossValidation
-from mvpa.measures.searchlight import sphere_searchlight
-from mvpa.testing.datasets import datasets
-from mvpa.mappers.fx import mean_sample
+from mvpa2.generators.partition import OddEvenPartitioner
+from mvpa2.clfs.svm import LinearCSVMC
+from mvpa2.measures.base import CrossValidation
+from mvpa2.measures.searchlight import sphere_searchlight
+from mvpa2.testing.datasets import datasets
+from mvpa2.mappers.fx import mean_sample
 
 """For the sake of simplicity, let's use a small artificial dataset."""
 

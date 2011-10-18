@@ -17,25 +17,25 @@ from IPython import ipapi
 # so consider yourself warned!
 import ipy_defaults
 
-import mvpa
+import mvpa2
 
 def main():
     ip = ipapi.get()
 
     # PyMVPA specific
-    ip.ex('import mvpa')
+    ip.ex('import mvpa2')
 
     # and now the whole suite
     # but no, since ipython segfaults (tested with version 0.8.4)
     # the whole things seems to be related to RPy and friends
     # running the same command after IPython startup is completed
     # is no problem, though.
-    #ip.ex('from mvpa.suite import *')
+    #ip.ex('from mvpa2.suite import *')
 
     print """
 ###########################
 # Welcome to PyMVPA %s #
 ###########################
-""" % mvpa.__version__
+""" % mvpa2.__version__
 
 main()

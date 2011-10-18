@@ -21,7 +21,7 @@ mailing list (preferred) or contact the authors on IRC:
 
 :Mailing list: pkg-exppsy-pymvpa@lists.alioth.debian.org [subscription_,
                archive_]
-:IRC: #exppsy on OFTC
+:IRC: #neurodebian on OFTC
 
 All users should subscribe to the mailing list. PyMVPA is still a young project
 that is under heavy development. Significant modifications (hopefully
@@ -43,7 +43,7 @@ via the `issue tracker`_ -- just click the "Create Issue" button, describe
 your problem, and submit.  If your are using a Debian package of PyMVPA, you
 can alternatively use the :command:`reportbug` command.  We would appreciate
 if in your bug report you would include the output of call to
-:func:`mvpa.wtf()<mvpa.base.info.wtf>`, which summarizes the details of your
+:func:`mvpa2.wtf()<mvpa2.base.info.wtf>`, which summarizes the details of your
 system.
 
 If you spot an error in the documentation, simply leave a comment at the

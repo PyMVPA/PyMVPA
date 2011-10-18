@@ -10,7 +10,7 @@
 
 #echo "./tests/crossval.py" | \
 #echo "tests/test_algorithms.py" | \
-#echo "mvpa/datasets/mapper.py" | \
+#echo "mvpa2/datasets/mapper.py" | \
 find -iname '*.py' | \
 	while read fname; do
 		grep -q  'This package is distributed in the hope' $fname || continue
@@ -33,6 +33,6 @@ find -iname '*.py' | \
 done
 
 exit 0
-problematic: mvpa/misc/fsl/__init__.py -- removed header completely for some reason...
+problematic: mvpa2/misc/fsl/__init__.py -- removed header completely for some reason...
  tests/test_algorithms.py os gone!
-mvpa/datasets/mapper.py is gone
+mvpa2/datasets/mapper.py is gone
