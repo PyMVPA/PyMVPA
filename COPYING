@@ -61,7 +61,7 @@ NIPY
 
 ::
 
-   Files: mvpa/support/nipy/_*py, mvpa/tests/test_emp_null.py
+   Files: mvpa2/support/nipy/_*py, mvpa2/tests/test_emp_null.py
 
    BSD-3 License
 

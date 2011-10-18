@@ -9,9 +9,9 @@ Development Changelog
 *********************
 
 This changelog only lists rather macroscopic changes to PyMVPA. The full VCS
-changelog is available here:
+changelog for 0.5.x series of PyMVPA is available here:
 
-  http://github.com/PyMVPA/PyMVPA/commits/master
+  https://github.com/PyMVPA/PyMVPA/commits/maint%2F0.5
 
 In addition there is also a somewhat unconventional `visual changelog`_.
 
@@ -27,20 +27,55 @@ Unreleased changes
   Changes described here are not yet released, but available from VCS
   repository.
 
+
+Releases
+========
+
+* 0.6.0~rc4 (Wed, Jun 14 2011)
+
   * Fixes
 
-    - Bugfixes regarding the interaction of FlattenMapper and BoxcarMapper that
-      affected event-related analyses.
-    - Splitter now handles attribute value `None` for splitting properly.
+    - Finished transition to :mod:`nibabel` conventions in `plot_lightbox`
+    - Addressed :mod:`matplotlib.hist` API change
+    - Various adjustments in the tests batteries (:mod:`nibabel` 1.1.0
+      compatibility, etc)
+
+  * New functionality
+
+    -  Explicit new argument ``flatten`` to from_wizard -- default
+       behavior changed if mapper was provided as well
 
   * Enhancements
 
+    - Elaborated ``__str__`` and ``__repr__`` for some Classifiers and
+      Measures
+
+* 0.6.0~rc3 (Thu, Apr 12 2011)
+
+  * Fixes
+
+    - Bugfixes regarding the interaction of FlattenMapper and
+      BoxcarMapper that affected event-related analyses.
+    - `Splitter` now handles attribute value `None` for splitting
+      properly.
+    - `GNBSearchlight` handling of  ``roi_ids``.
+    - More robust detection of mod:`scikits.learn` and :mod:`nipy`
+      externals.
+
+  * New functionality
+
+    - Added a `Repeater` node to yield a dataset multiple times and
+      `Sifter` node to exclude some datasets. Consequently, the
+      "nosplitting" mode of `Splitter` got removed at the same time.
+    - :file:`tools/niils` -- little tool to list details
+      (dimensionality, scaling, etc) of the files in nibabel-supported formats.
+
+  * Enhancements
+
+    - Numerous documentation fixes.
     - Various improvements and increased flexibility of null distribution
       estimation of Measures.
-    - Numerous documentation fixes.
     - All attribute are now reported in sorted order when printing a dataset.
-    - Added a `Repeater` node to yield a dataset multiple times. Consequently, the
-      "nosplitting" mode of `Splitter` got removed at the same time.
     - `fmri_dataset` now also stores the input image type.
     - `Crossvalidation` can now take a custom `Splitter` instance. Moreover, the
       default splitter of CrossValidation is more robust in terms of number and
@@ -48,16 +83,48 @@ Unreleased changes
       partitioners).
     - `CrossValidation` takes any custom Node as ``errorfx`` argument.
     - `ConfusionMatrix` can now be used as an ``errorfx`` in Crossvalidation.
-    - A `Node`s postproc is now accessible as a property.
+    - ``LOE(ACC): Linear Order Effect in ACC`` was added to
+      `ConfusionMatrix` to detect trends in performances across
+      splits.
+    - A `Node`\ s postproc is now accessible as a property.
     - `RepeatedMeasure` has a new 'concat_as' argument that allows results to be
       concatenated along the feature axis. The default behavior, stacking as
       multiple samples, is unchanged.
     - `Searchlight` now has the ability to mark the center/seed of an ROI in
       with a feature attribute in the generated datasets.
+    - ``debug`` takes ``args`` parameter for delayed string
+      comprehensions.  It should reduce run-time impact of ``debug()``
+      calls in regular, non ``-O`` mode of Python operation.
+    - String summaries and representations (provided by ``__str__``
+      and ``__repr__``) were made more exhaustive and more coherent.
+      Additional properties to access initial constructor arguments
+      were added to variety of classes.
 
+  * Internal changes
 
-Releases
-========
+    - New debug target ``STDOUT`` to allow attaching metrics
+      (e.g. traceback, timestamps) to regular output printed to stdout
+    - New set of decorators to help with unittests
+
+      - ``@nodebug`` to disable specific debug targets for the duration
+        of the test.
+      - ``@reseed_rng`` to guarantee consistent random data given
+        initial seeding.
+      - ``@with_tempfile`` to provide a tempfile name which would get
+        removed upon completion (test success or failure)
+
+    - Dropping daily testing of ``maint/0.5`` branch -- RIP.
+    - `Collection`\ s were provided with adequate ``(deep|)copy``.
+      And `Dataset` was refactored to use `Collection`\ s ``copy``
+      method.
+    - ``update-*`` Makefile rules automatically should fast-forward
+      corresponding ``website-updates`` branch
+    - `MVPA_TESTS_VERBOSITY` controls also :mod:`numpy` warnings now.
+    - `Dataset.__array__` provides original array instead of copy
+      (unless dtype is provided)
+
+  Also adapts changes from 0.4.6 and 0.4.7 (see corresponding
+  changelogs).
 
 * 0.6.0~rc2 (Thu, Mar 3 2011)
 
@@ -77,6 +144,27 @@ Releases
 
   Most notably, this version was to first to come with a comprehensive two-day
   workshop/tutorial.
+
+* 0.4.7 (Tue, Mar 07 2011) (Total: 12 commits)
+
+  A bugfix release
+
+  * Fixed
+
+    - Addressed the issue with input NIfTI files having scl_* fields
+      set: it could result in incorrect analyses and
+      map2nifti-produced NIfTI files.  Now input files account for
+      scaling/offset if scl_ fields direct to do so. Moreover upon
+      map2nifti, those fields get reset.
+    - :file:`doc/examples/searchlight_minimal.py` - best error is the
+      minimal one
+
+  * Enhancements
+
+    - :class:`~mvpa.clfs.gnb.GNB` can now tolerate training datasets
+      with a single label
+    - :class:`~mvpa.clfs.meta.TreeClassifier` can have trailing nodes
+      with no classifier assigned
 
 * 0.4.6 (Tue, Feb 01 2011) (Total: 20 commits)
 

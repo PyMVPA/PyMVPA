@@ -75,7 +75,7 @@ terms found in the literature to the terminology used in this manual.
     actual (target) class.  Each cell provides a count of how many
     :term:`sample`\s of the target class were (mis)classifier into the
     corresponding class.  In PyMVPA instances of
-    :class:`~mvpa.clfs.transerror.ConfusionMatrix` class provide not only
+    :class:`~mvpa2.clfs.transerror.ConfusionMatrix` class provide not only
     confusion matrix itself but a bulk of additional statistics.
 
   Dataset

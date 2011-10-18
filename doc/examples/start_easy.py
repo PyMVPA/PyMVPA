@@ -16,7 +16,7 @@ with no fancy additions whatsoever.
 """
 
 # get PyMVPA running
-from mvpa.suite import *
+from mvpa2.suite import *
 
 # load PyMVPA example dataset
 attr = SampleAttributes(os.path.join(pymvpa_dataroot,

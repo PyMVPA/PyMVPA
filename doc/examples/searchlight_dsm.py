@@ -21,7 +21,7 @@ is based on representational similarity analysis (RSA) as presented in
 First import all necessary parts of PyMVPA.
 """
 
-from mvpa.suite import *
+from mvpa2.suite import *
 
 """Create a small artificial dataset."""
 

@@ -36,7 +36,7 @@ recreate our preprocessed demo dataset. The code is taken verbatim from the
 :ref:`previous tutorial part <chap_tutorial_classifiers>` and should raise
 no questions. We get a dataset with one sample per category per run.
 
->>> from tutorial_lib import *
+>>> from mvpa2.tutorial_suite import *
 >>> # alt: `ds = load_tutorial_results('ds_haxby2001')`
 >>> ds = get_haxby2001_data(roi='vt')
 >>> ds.shape
@@ -56,27 +56,27 @@ relatively painless:
 
 If the code snippet above is of no surprise then you probably got the basic
 idea. We created an object instance ``aov`` being a
-:class:`~mvpa.measures.anova.OneWayAnova`. This instance is subsequently
+:class:`~mvpa2.measures.anova.OneWayAnova`. This instance is subsequently
 *called* with a dataset and yields the F-scores wrapped into a
-:class:`~mvpa.datasets.base.Dataset`. Where have we seen this before?  Right!
+:class:`~mvpa2.datasets.base.Dataset`. Where have we seen this before?  Right!
 This one differs little from a call to
-:class:`~mvpa.measures.base.CrossValidation`.  Both are objects that get
+:class:`~mvpa2.measures.base.CrossValidation`.  Both are objects that get
 instantiated (potentially with some custom arguments) and yield the results in
 a dataset when called with an input dataset. This is called a :term:`processing
 object` and is a common concept in PyMVPA.
 
 However, there is a difference between the two processing objects.
-:class:`~mvpa.measures.base.CrossValidation` returns a dataset with a single
+:class:`~mvpa2.measures.base.CrossValidation` returns a dataset with a single
 feature -- the accuracy or error rate, while
-:class:`~mvpa.measures.anova.OneWayAnova` returns a vector with one value per
+:class:`~mvpa2.measures.anova.OneWayAnova` returns a vector with one value per
 feature. The latter is called a
-:class:`~mvpa.measures.base.FeaturewiseMeasure`. But other than the number of
+:class:`~mvpa2.measures.base.FeaturewiseMeasure`. But other than the number of
 features in the returned dataset there is not much of a difference. All
 measures in PyMVPA, for example, support an optional post-processing step.
 During instantiation of a measure an arbitrary mapper can be specified to be
 called internally to forward-map the results before they are returned. If, for
 some reason, the F-scores need to be scaled into the interval [0,1], an
-:class:`~mvpa.mappers.fx.FxMapper` can be used to achieve that:
+:class:`~mvpa2.mappers.fx.FxMapper` can be used to achieve that:
 
 >>> aov = OneWayAnova(
 ...         postproc=FxMapper('features',
@@ -86,7 +86,7 @@ some reason, the F-scores need to be scaled into the interval [0,1], an
 >>> print f.samples.max()
 1.0
 
-.. map2nifti(ds, f).save('results/res_haxby2001_fscore_vt.nii.gz')
+.. map2nifti(ds, f).to_filename('results/res_haxby2001_fscore_vt.nii.gz')
 
 .. exercise::
 
@@ -123,7 +123,7 @@ cross-validation procedure.
 
 The only thing left is that we have to split the dataset into all possible
 sphere neighborhoods that intersect with the brain. To achieve this, we
-can use :func:`~mvpa.measures.searchlight.sphere_searchlight`:
+can use :func:`~mvpa2.measures.searchlight.sphere_searchlight`:
 
 >>> sl = sphere_searchlight(cvte, radius=3, postproc=mean_sample())
 
@@ -171,7 +171,7 @@ hard to comprehend we have to resort to some statistics.
 >>> # we deal with errors here, hence 1.0 minus
 >>> chance_level = 1.0 - (1.0 / len(ds.uniquetargets))
 
-.. map2nifti(ds, 1.0 - sphere_errors).save('results/res_haxby2001_sl_avgacc_roi0.nii.gz')
+.. map2nifti(ds, 1.0 - sphere_errors).to_filename('results/res_haxby2001_sl_avgacc_roi0.nii.gz')
 
 As you'll see, the mean empirical error is just barely below the chance level.
 However, we would not expect a signal for perfect classification
@@ -199,7 +199,7 @@ we would expect for random guessing of the classifier -- that is more than
   a brain overlay in your favorite viewer (hint: you might want to store
   accuracies instead of errors, if your viewer cannot visualize the lower
   tail of the distribution:
-  ``map2nifti(ds, 1.0 - sphere_errors).save('sl.nii.gz')``).
+  ``map2nifti(ds, 1.0 - sphere_errors).to_filename('sl.nii.gz')``).
   Did looking at the image change your mind?
 
 ..
@@ -237,21 +237,23 @@ let's do another one, but this time on a more familiar ROI -- the full brain.
 
 .. h5save('results/ds_haxby2001_alt_brain.hdf5', ds)
 .. h5save('results/res_haxby2001_sl_avgacc_r0_brain.hdf5', r0)
-.. map2nifti(ds, 1.0 - r0.samples[0]).save('results/res_haxby2001_sl_avgacc_r0_brain.nii.gz')
+.. map2nifti(ds, 1.0 - r0.samples[0]).to_filename('results/res_haxby2001_sl_avgacc_r0_brain.nii.gz')
 .. h5save('results/res_haxby2001_sl_avgacc_r1_brain.hdf5', r1)
-.. map2nifti(ds, 1.0 - r1.samples[0]).save('results/res_haxby2001_sl_avgacc_r1_brain.nii.gz')
+.. map2nifti(ds, 1.0 - r1.samples[0]).to_filename('results/res_haxby2001_sl_avgacc_r1_brain.nii.gz')
 .. h5save('results/res_haxby2001_sl_avgacc_r3_brain.hdf5', r3)
-.. map2nifti(ds, 1.0 - r3.samples[0]).save('results/res_haxby2001_sl_avgacc_r3_brain.nii.gz')
+.. map2nifti(ds, 1.0 - r3.samples[0]).to_filename('results/res_haxby2001_sl_avgacc_r3_brain.nii.gz')
 
 You have now performed a number of searchlight analyses, investigated the
 results and probably tried to interpret them. What conclusions did you draw
-from these analyses in terms of the neuroscientific aspects. What have you
+from these analyses in terms of the neuroscientific aspects? What have you
 learned about object representation in the brain? In this case we have run
-8-way classification analyses and we have looked at the average error rate
-of thousands of sphere-shaped ROIs in the brain. In some spheres the
-classifier could perform perfect classification, i.e. it could predict all
+8-way classification analyses and have looked at the average error rate across
+all conditions of thousands of sphere-shaped ROIs in the brain. In some spheres the
+classifier could perform well, i.e. it could predict all
 samples equally well. However, this only applies to a handful of over 30k
-spheres we have tested. For the vast majority we observe errors somewhere
+spheres we have tested, and does not unveil either classifier was capable of
+classifying *all* of the conditions or just some.  For the vast majority
+we observe errors somewhere
 between the theoretical chance level and zero and we don't know what caused
 the error to decrease. We don't even know which samples get misclassified.
 
@@ -260,7 +262,8 @@ that there is a way out of this dilemma. We can look at the confusion
 matrix of a classifier to get a lot more information that is otherwise
 hidden. However, we cannot reasonably do this for thousands of searchlight
 spheres. It becomes obvious that a searchlight analysis is probably not the
-end of a data exploration, as it raises more questions than it answers.
+end of a data exploration but rather a crude take off,
+as it raises more questions than it answers.
 
 Moreover, a searchlight cannot detect signals that extend beyond a small
 local neighborhood. This property effectively limits the scope of analyses
@@ -275,7 +278,7 @@ will offers some alternatives that are more gentle in this respect.
 .. _multiple comparisons: http://en.wikipedia.org/wiki/Multiple_comparisons
 
 Despite these limitations a searchlight analysis can be a valuable
-explorative tool if used appropriately. The capabilities of PyMVPA's searchlight
+exploratory tool if used appropriately. The capabilities of PyMVPA's searchlight
 implementation go beyond what we looked at in this tutorial. It is not only
 possible to run *spatial* searchlights, but multiple spaces can be
 considered simultaneously. We will get back to these more advanced topics later

@@ -25,7 +25,7 @@ This transformation can be as simple as selecting a subset of data, or as
 complex as a multi-stage preprocessing pipeline. Some transformations are
 reversible, others are not. Some are simple one-step computations, others
 are iterative algorithms that have to be trained on data before they can be
-used. In PyMVPA, all these transformations are :mod:`~mvpa.mappers`.
+used. In PyMVPA, all these transformations are :mod:`~mvpa2.mappers`.
 
 .. note::
 
@@ -36,10 +36,10 @@ used. In PyMVPA, all these transformations are :mod:`~mvpa.mappers`.
 
 Let's create a dummy dataset (5 samples, 12 features). This time we will use a
 new method to create the dataset, the ``dataset_wizard``. Here it is, fully
-equivalent to a regular constructor call (i.e.  `~mvpa.datasets.base.Dataset`),
+equivalent to a regular constructor call (i.e.  `~mvpa2.datasets.base.Dataset`),
 but we will shortly see some nice convenience aspects.
 
->>> from tutorial_lib import *
+>>> from mvpa2.tutorial_suite import *
 >>> ds = dataset_wizard(np.ones((5, 12)))
 >>> ds.shape
 (5, 12)
@@ -66,7 +66,7 @@ We see that the resulting dataset looks identical to the one above, but this tim
 it got created from a 3D samples array (i.e. five samples, where each is a 4x3
 matrix). Somehow this 3D array got transformed into a 2D samples array in the
 dataset. This magic behavior is unveiled by observing that the dataset's mapper
-is a `~mvpa.mappers.flatten.FlattenMapper`.
+is a `~mvpa2.mappers.flatten.FlattenMapper`.
 
 The purpose of this mapper is precisely what we have just observed: reshaping
 data arrays into 2D. It does it by preserving the first axis (in PyMVPA datasets
@@ -86,10 +86,10 @@ look at a possible next step -- selecting a subset of interesting features:
 >>> 'mapper' in subds.a
 True
 >>> print subds.a.mapper
-<ChainMapper: <Flatten>-<StaticFeatureSelection>>
+<Chain: <Flatten>-<StaticFeatureSelection>>
 
 Now the situation has changed: *two* new mappers appeared in the dataset -- a
-`~mvpa.mappers.base.ChainMapper` and a `~mvpa.featsel.base.StaticFeatureSelection`.
+`~mvpa2.mappers.base.ChainMapper` and a `~mvpa2.featsel.base.StaticFeatureSelection`.
 The latter describes (and actually performs) the slicing operation we just made,
 while the former encapsulates the two mappers into a processing pipeline.
 We can see that the mapper chain represents the processing history of the
@@ -175,13 +175,13 @@ volume in the NIfTI image.
 >>> print np.unique(attr.chunks)
 [  0.   1.   2.   3.   4.   5.   6.   7.   8.   9.  10.  11.]
 
-:class:`~mvpa.misc.io.base.SampleAttributes` allows us to load this type of file, and access its
+:class:`~mvpa2.misc.io.base.SampleAttributes` allows us to load this type of file, and access its
 content. We got 1452 label and chunk values, one for each volume. Moreover,
 we see that there are nine different conditions and 12 different chunks.
 
 Now we can load the fMRI data, as we have done before -- only loading
 voxels corresponding to a mask of ventral temporal cortex, and assign the
-samples attributes to the dataset. `~mvpa.datasets.mri.fmri_dataset()` allows us to pass them
+samples attributes to the dataset. `~mvpa2.datasets.mri.fmri_dataset()` allows us to pass them
 directly:
 
 >>> fds = fmri_dataset(samples=os.path.join(datapath, 'bold.nii.gz'),
@@ -234,13 +234,13 @@ dataset.
 We have seen that we could simply forward-map our dataset with this mapper.
 However, if we want to have the mapper present in the datasets processing
 history breadcrumb track, we can use its
-`~mvpa.datasets.base.Dataset.get_mapped()` method. This method will cause
+`~mvpa2.datasets.base.Dataset.get_mapped()` method. This method will cause
 the dataset to map a shallow copy of itself with the given mapper, and
 return it. Let's try:
 
 >>> detrended_fds = fds.get_mapped(detrender)
 >>> print detrended_fds.a.mapper
-<ChainMapper: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>>
+<Chain: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>>
 
 ``detrended_fds`` is easily identifiable as a dataset that has been
 flattened, sliced, and linearly detrended.
@@ -277,16 +277,16 @@ We will have the original data, the detrended data, and the Z-scored data,
 but typically we are only interested in the final processing stage. The
 reduce the memory footprint, both mappers have siblings that perform the
 same processing, but without copying the data. For
-`~mvpa.mappers.detrend.PolyDetrendMapper` this is
-`~mvpa.mappers.detrend.poly_detrend()`, and for
-`~mvpa.mappers.zscore.ZScoreMapper` this is
-`~mvpa.mappers.zscore.zscore()`. The following call will do the same as the
+`~mvpa2.mappers.detrend.PolyDetrendMapper` this is
+`~mvpa2.mappers.detrend.poly_detrend()`, and for
+`~mvpa2.mappers.zscore.ZScoreMapper` this is
+`~mvpa2.mappers.zscore.zscore()`. The following call will do the same as the
 mapper we have created above, but using less memory:
 
 >>> zscore(detrended_fds, param_est=('targets', ['rest']))
 >>> fds = detrended_fds
 >>> print fds.a.mapper
-<ChainMapper: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>-<ZScore>>
+<Chain: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>-<ZScore>>
 
 .. exercise::
 
@@ -324,16 +324,16 @@ both run-types is belongs to:
 
 The rest is trivial. For cases like this -- applying a function (i.e. mean)
 to a set of groups of samples (all combinations of stimulus category and
-run-type) -- PyMVPA has `~mvpa.mappers.fx.FxMapper`. it comes with a number
+run-type) -- PyMVPA has `~mvpa2.mappers.fx.FxMapper`. it comes with a number
 of convenience functions. The one we need here is
-`~mvpa.mappers.fx.mean_group_sample()`. It takes a list of sample attributes,
+`~mvpa2.mappers.fx.mean_group_sample()`. It takes a list of sample attributes,
 determines all possible combinations of its unique values, selects dataset
 samples corresponding to these combinations, and averages them. Finally,
 since this is also a mapper, a new dataset with mean samples is returned:
 
 >>> averager = mean_group_sample(['targets', 'runtype'])
 >>> type(averager)
-<class 'mvpa.mappers.fx.FxMapper'>
+<class 'mvpa2.mappers.fx.FxMapper'>
 >>> fds = fds.get_mapped(averager)
 >>> fds.shape
 (16, 577)
@@ -377,13 +377,13 @@ less there is a little shortcut that does exactly the same:
 (5, 4, 3)
 
 It is important to realize that reverse-mapping not only works with a single
-mapper, but also with a `~mvpa.mappers.base.ChainMapper`. Going back to our demo
+mapper, but also with a `~mvpa2.mappers.base.ChainMapper`. Going back to our demo
 dataset from the beginning we can see how it works:
 
 >>> print subds
 <Dataset: 5x4@float64, <a: mapper>>
 >>> print subds.a.mapper
-<ChainMapper: <Flatten>-<StaticFeatureSelection>>
+<Chain: <Flatten>-<StaticFeatureSelection>>
 >>> subds.nfeatures
 4
 >>> revtest = np.arange(subds.nfeatures) + 10
@@ -408,7 +408,7 @@ But now let's look at our fMRI dataset again. Here the mapper chain is a little
 more complex:
 
 >>> print fds.a.mapper
-<ChainMapper: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>-<ZScore>-<Fx: fx=mean>>
+<Chain: <Flatten>-<StaticFeatureSelection>-<PolyDetrend: ord=1>-<ZScore>-<Fx: fx=mean>>
 
 Initial flattening followed by mask, detrending, Z-scoring and finally
 averaging. We would reverse mapping do in this case? Let's test:
@@ -434,9 +434,9 @@ the first two mappers in the chain and compare the result:
 >>> (rmapped == rmapped_partial).all()
 True
 
-In case you are wondering: The `~mvpa.mappers.base.ChainMapper` behaves
+In case you are wondering: The `~mvpa2.mappers.base.ChainMapper` behaves
 like a regular Python list. We have just selected the first two mappers in
-the list as another `~mvpa.mappers.base.ChainMapper` and used that one for
+the list as another `~mvpa2.mappers.base.ChainMapper` and used that one for
 reverse-mapping.
 
 
@@ -453,7 +453,7 @@ information about the original source NIfTI image.
 >>> 'imghdr' in fds.a
 True
 
-PyMVPA offers `~mvpa.datasets.mri.map2nifti()`, a function to combine these
+PyMVPA offers `~mvpa2.datasets.mri.map2nifti()`, a function to combine these
 two things and convert any vector into the corresponding NIfTI image:
 
 >>> nimg = map2nifti(fds, revtest)
@@ -470,7 +470,7 @@ software.
 
 There are much more mappers in PyMVPA than we could cover in the tutorial
 part. Some more will be used in other parts, but even more can be found the
-:mod:`~mvpa.mappers` module. Even though they all implement different
+:mod:`~mvpa2.mappers` module. Even though they all implement different
 transformations, they can all be used in the same way, and can all be
 combined into a chain.
 

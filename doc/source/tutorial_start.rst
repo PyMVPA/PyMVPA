@@ -23,7 +23,7 @@ functionality provided elsewhere. We start this tutorial by importing some
 little helpers (including all of PyMVPA) we are going to use in the tutorial,
 and whose purpose we are going to see shortly.
 
->>> from tutorial_lib import *
+>>> from mvpa2.tutorial_suite import *
 
 Getting the data
 ================
@@ -60,7 +60,7 @@ the actual features of this dataset, and hence we have 577 of them.
 577
 
 We can also access the information via the
-`~mvpa.base.dataset.AttrDataset.shape` property of the dataset:
+`~mvpa2.base.dataset.AttrDataset.shape` property of the dataset:
 
 >>> print ds.shape
 (16, 577)
@@ -100,7 +100,7 @@ this dataset is a :term:`classifier`. This time we will not use a magic
 function to help us, but will create the classifier ourselves. The original study
 employed a so-called 1-nearest-neighbor classifier, using correlation as a
 distance measure. In PyMVPA this type of classifier is provided by the
-`~mvpa.clfs.knn.kNN` class, that makes it possible to specify the desired
+`~mvpa2.clfs.knn.kNN` class, that makes it possible to specify the desired
 parameters.
 
 >>> clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
@@ -212,18 +212,18 @@ dataset from the same split.
 
 PyMVPA provides a way to allow complete cross-validation procedures to run
 fully automatic, without the need for manual splitting of a dataset. Using the
-`~mvpa.measures.base.CrossValidation` class a cross-validation is set up by
+`~mvpa2.measures.base.CrossValidation` class a cross-validation is set up by
 specifying what measure should be computed on each dataset split, and how
 dataset splits shall be generated. The measure that is usually computed is the
 transfer error that we already looked at in the previous section. The second
 element, a :term:`generator` for datasets, is another very common tool in
 PyMVPA. The following example uses
-`~mvpa.generators.partition.HalfPartitioner`, a generator that, when called
+`~mvpa2.generators.partition.HalfPartitioner`, a generator that, when called
 with a dataset, marks all samples regarding their association with the first or
 second half of the dataset. This happens based on the values of a specified
 sample attribute -- in this case ``runtype`` -- much like the manual dataset
 splitting that we have performed earlier.
-`~mvpa.generators.partition.HalfPartitioner` will make sure to subsequently
+`~mvpa2.generators.partition.HalfPartitioner` will make sure to subsequently
 assign samples to both halves, i.e. samples of the first half in the first
 generated dataset, will be in the second half of the second generated dataset.
 With these two techniques we can replicate our manual cross-validation easily --

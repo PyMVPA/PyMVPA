@@ -15,7 +15,7 @@
 Measures
 ********
 
-.. automodule:: mvpa.measures
+.. automodule:: mvpa2.measures
 
 
 .. only:: html
@@ -47,7 +47,7 @@ procedure.
 First, the impact of each individual feature on a classification has to be
 determined.  The resulting map reflects the sensitivities of all features with
 respect to a certain decision and, therefore, algorithms generating these maps
-are summarized as :class:`~mvpa.measures.base.Sensitivity` in PyMVPA.
+are summarized as :class:`~mvpa2.measures.base.Sensitivity` in PyMVPA.
 
 .. index:: feature selection
 
@@ -78,15 +78,15 @@ datasets.
 Sensitivity Measures
 ====================
 
-It was already mentioned that a :class:`~mvpa.measures.base.Sensitivity`
+It was already mentioned that a :class:`~mvpa2.measures.base.Sensitivity`
 computes a featurewise score that indicates how much interesting signal each
 feature contains -- hoping that this score somehow correlates with the impact
 of the features on a classifier's decision for a certain problem.
 
 Every sensitivity analyzer object computes a one-dimensional array with the
 respective score for every feature, when called with a
-:class:`~mvpa.datasets.base.Dataset`. Due to this common behavior all
-:class:`~mvpa.measures.base.Sensitivity` types are interchangeable and can be
+:class:`~mvpa2.datasets.base.Dataset`. Due to this common behavior all
+:class:`~mvpa2.measures.base.Sensitivity` types are interchangeable and can be
 combined with any other algorithm requiring a sensitivity analyzer.
 
 By convention higher sensitivity values indicate more interesting features.
@@ -106,7 +106,7 @@ Basic Sensitivity (and related Measures)
 ANOVA
 ^^^^^
 
-The :class:`~mvpa.measures.anova.OneWayAnova` class provides a simple (and fast)
+The :class:`~mvpa2.measures.anova.OneWayAnova` class provides a simple (and fast)
 univariate measure, that can be used for feature selection, although it is not
 a proper sensitivity measure. For each feature an individual F-score is
 computed as the fraction of between and within group variances. Groups are
@@ -124,26 +124,26 @@ Linear SVM Weights
 
 The featurewise weights of a trained support vector machine are another
 possible sensitivity measure.  The
-:class:`mvpa.clfs.libsvmc.sens.LinearSVMWeights` and
-:class:`mvpa.clfs.sg.sens.LinearSVMWeights` classes can internally train all
+:class:`mvpa2.clfs.libsvmc.sens.LinearSVMWeights` and
+:class:`mvpa2.clfs.sg.sens.LinearSVMWeights` classes can internally train all
 types of *linear* support vector machines and report those weights.
 
 In contrast to the F-scores computed by an ANOVA, the weights can be positive
 or negative, with both extremes indicating higher sensitivities. To deal with
-this property all subclasses of :class:`~mvpa.measures.base.Measure`
+this property all subclasses of :class:`~mvpa2.measures.base.Measure`
 support a `mapper` arguments in the constructor.  A mapper is just some
-:class:`~mvpa.mappers.base.Mapper`, `forward_dataset()` method of which is
+:class:`~mvpa2.mappers.base.Mapper`, `forward_dataset()` method of which is
 called with the resultant sensitivity map as the argument.  In most of the
 cases you would like just to apply some simple transformation function (taking absolution values
 etc) or a bit more advanced where you would like to combine some sensitivities
 (e.g. per class) into a single measure.  For that purpose
-:class:`mvpa.mappers.fx.FxMapper` was created and some convenience factory
+:class:`mvpa2.mappers.fx.FxMapper` was created and some convenience factory
 methods where provided for most common operations.  So in the example below we
 will use `maxofabs_sample()` which will return a mapper giving maximal absolute value among
 multiple sensitivities (in our case it is just a single one for binary
 classification).
 
- >>> from mvpa.suite import *
+ >>> from mvpa2.suite import *
  >>>
  >>> ds = normal_feature_dataset()
  >>> print ds
@@ -163,7 +163,7 @@ classification).
 Above example shows how to use an existing classifier instance to report
 sensitivity values (a linear SVM in this case). The computed sensitivity vector
 contains one element for each feature in the dataset.
-:mod:`~mvpa.misc.transformers` can be used to post-process the sensitivity
+:mod:`~mvpa2.misc.transformers` can be used to post-process the sensitivity
 scores, e.g. reporting absolute values for feature selection purposes, instead
 of raw sensitivities.
 
@@ -179,15 +179,15 @@ Other linear Classifier Weights
 
 Any linear classifier in PyMVPA can report its weights. The procedure is
 identical for all of them. As outlined in the example using linear SVM weights,
-simply call :meth:`~mvpa.clfs.base.Classifier.get_sensitivity_analyzer` on a
+simply call :meth:`~mvpa2.clfs.base.Classifier.get_sensitivity_analyzer` on a
 classifier instance and you'll get an appropriate
-:class:`~mvpa.measures.base.Sensitivity` object. Additionally, it is possible
+:class:`~mvpa2.measures.base.Sensitivity` object. Additionally, it is possible
 to force (re)training of the underlying classifier or simply report the weights
 computed during a previous training run.
 
 Examples of other classifier-based linear sensitivity analyzers are:
-:class:`~mvpa.clfs.smlr.SMLRWeights` and
-:class:`~mvpa.clfs.gpr.GPRLinearWeights`.
+:class:`~mvpa2.clfs.smlr.SMLRWeights` and
+:class:`~mvpa2.clfs.gpr.GPRLinearWeights`.
 
 
 .. index:: noise perturbation, measure
@@ -198,8 +198,8 @@ Noise Perturbation
 
 Noise perturbation is a generic approach to determine feature sensitivity.  The
 sensitivity analyzer
-:class:`~mvpa.measures.noiseperturbation.NoisePerturbationSensitivity`)
-computes a scalar :class:`~mvpa.measures.base.Measure` using the
+:class:`~mvpa2.measures.noiseperturbation.NoisePerturbationSensitivity`)
+computes a scalar :class:`~mvpa2.measures.base.Measure` using the
 original dataset. Afterwards, for each single feature a noise pattern is added
 to the respective feature and the dataset measure is recomputed. The
 sensitivity of each feature is the difference between the dataset measure of
@@ -208,10 +208,10 @@ algorithm is that adding noise to *important* features will impair a dataset
 measure like cross-validated classifier transfer error. However, adding noise
 to a feature that already only contains noise, will not change such a measure.
 
-Depending on the used scalar :class:`~mvpa.measures.base.Measure` using
+Depending on the used scalar :class:`~mvpa2.measures.base.Measure` using
 the sensitivity analyzer might be really CPU-intensive! Also depending on the
 measure, it might be necessary to use appropriate
-:mod:`~mvpa.misc.transformers` (see :mod:`~mvpa.misc.transformers` constructor
+:mod:`~mvpa2.misc.transformers` (see :mod:`~mvpa2.misc.transformers` constructor
 arguments) to ensure that higher values represent higher sensitivities.
 
 
@@ -231,10 +231,10 @@ Splitting Measures
 ^^^^^^^^^^^^^^^^^^
 
 The SplittingFeaturewiseMeasure uses a
-:class:`~mvpa.datasets.splitters.Splitter` to generate dataset splits.  A
+:class:`~mvpa2.datasets.splitters.Splitter` to generate dataset splits.  A
 FeaturewiseMeasure is then used to compute sensitivity maps for all
 these dataset splits. At the end a `combiner` function is called with all
 sensitivity maps to produce the final sensitivity map. By default the mean
 sensitivity maps across all splits is computed.
 
-.. _SplitFeaturewiseMeasure: api/mvpa.measures.splitmeasure.SplitFeaturewiseMeasure-class.html
+.. _SplitFeaturewiseMeasure: api/mvpa2.measures.splitmeasure.SplitFeaturewiseMeasure-class.html

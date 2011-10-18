@@ -25,7 +25,7 @@ build: 3rd
 
 installer: 3rd build
 # now build the installer
-	python setup.py bdist_wininst --bitmap doc\pics\logo.bmp
+	python setup.py bdist_wininst --bitmap doc\source\pics\logo.bmp
 
 
 configure-inplace-use:

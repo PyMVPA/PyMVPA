@@ -14,4 +14,4 @@
 make clean
 make || exit 125 # skip commits where build is broken
 
-PYTHONPATH=$PWD nosetests mvpa/tests/test_datameasure.py:SensitivityAnalysersTests.testBasic
+PYTHONPATH=$PWD nosetests mvpa2/tests/test_datameasure.py:SensitivityAnalysersTests.testBasic
