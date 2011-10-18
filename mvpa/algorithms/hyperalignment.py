@@ -119,6 +119,12 @@ class Hyperalignment(ClassWithCollections):
         # Level 1 (first)
         commonspace = np.asanyarray(datasets[ref_ds])
         if params.zscore_common:
+            if np.issubdtype(commonspace.dtype, int):
+                if __debug__:
+                    debug('HPAL_',
+                          "Converting commonspace into floats before zscoring")
+                # assure float type
+                commonspace = commonspace.astype(float)
             zscore(commonspace, chunks_attr=None)
         data_mapped = [np.asanyarray(ds) for ds in datasets]
         #zscore(data_mapped[ref_ds],chunks_attr=None)
