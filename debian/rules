@@ -19,7 +19,7 @@ gitver = $(shell [ -x /usr/bin/git ] && git describe --tags --match 'upstream/*'
 
 override_dh_auto_build:
 	dh_auto_build -- --with-libsvm
-	$(MAKE) manpages
+	# $(MAKE) manpages
 
 # we run the test suite on the install 
 override_dh_auto_test:
@@ -45,6 +45,9 @@ endif
 			install -D $$so $${so#../tmp/*} ; \
 			rm $$so ; \
 		done
+	: # temporarily (for this Debian release) remove cmdline tools and
+	: # their manpages
+	find debian -wholename */bin -o -wholename */man | xargs -r rm -rf
 
 override_dh_installchangelogs:
 	dh_installchangelogs Changelog

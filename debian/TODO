@@ -1,1 +1,2 @@
-Nothing at the moment.
+* Reincarnate the tools -- removed meanwhile to avoid conflicts but
+   allowing coinstallation with python-mvpa package
