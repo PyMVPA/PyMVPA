@@ -246,7 +246,9 @@ class SVM(_SVM):
 
         self.__svm = None
         """Holds the trained svm."""
-
+        self.__svm_apply = None
+        """Compatibility convenience to bind to the classify/apply method
+           of __svm"""
         # Need to store original data...
         # TODO: keep 1 of them -- just __traindata or __traindataset
         # For now it is needed for computing sensitivities
@@ -426,6 +428,11 @@ class SVM(_SVM):
                 self.__svm = svm_impl_class(Cs[0], traindata_sg, labels)
                 self.__svm.set_epsilon(self.params.epsilon)
 
+            # To stay compatible with versions across API changes in sg 1.0.0
+            self.__svm_apply = externals.versions['shogun'] >= '1' \
+                               and self.__svm.apply \
+                               or  self.__svm.classify # the last one for old API
+
             # Set shrinking
             if 'shrinking' in params:
                 shrinking = params.shrinking
@@ -481,7 +488,7 @@ class SVM(_SVM):
            self.ca.is_enabled('training_stats'):
             if __debug__:
                 debug("SG_", "Assessing predictions on training data")
-            trained_targets = self.__svm.classify().get_labels()
+            trained_targets = self.__svm_apply().get_labels()
 
         else:
             trained_targets = None
@@ -550,11 +557,11 @@ class SVM(_SVM):
             self.__svm.set_kernel(self.__kernel_test)
             # doesn't do any good imho although on unittests helps tiny bit... hm
             #self.__svm.init_kernel_optimization()
-            values_ = self.__svm.classify()
+            values_ = self.__svm_apply()
         else:
             testdata_sg = _tosg(dataset.samples)
             self.__svm.set_features(testdata_sg)
-            values_ = self.__svm.classify()
+            values_ = self.__svm_apply()
 
         if __debug__:
             debug("SG_", "Classifying testing data")
@@ -637,6 +644,7 @@ class SVM(_SVM):
                     if self.__svm is not None:
                         del self.__svm
                         self.__svm = None
+                        self.__svm_apply = None
 
                     if self.__traindata is not None:
                         # Let in for easy demonstration of the memory leak in shogun
