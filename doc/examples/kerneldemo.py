@@ -15,11 +15,11 @@ This is an example demonstrating various kernel implementation in PyMVPA.
 """
 
 import numpy as np
-from mvpa.support.pylab import pl
+from mvpa2.support.pylab import pl
 
-#from mvpa.suite import *
-from mvpa.base import cfg
-from mvpa.kernels.np import *
+#from mvpa2.suite import *
+from mvpa2.base import cfg
+from mvpa2.kernels.np import *
 
 
 # np.random.seed(1)

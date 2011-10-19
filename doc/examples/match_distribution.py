@@ -15,7 +15,7 @@ This is an example demonstrating discovery of the distribution
 facility.
 """
 
-from mvpa.suite import *
+from mvpa2.suite import *
 
 verbose.level = 2
 if __debug__:

@@ -18,7 +18,7 @@ This is already the second time that we will engage in a classification
 analysis, so let's first recap what we did before in the :ref:`first tutorial
 part <chap_tutorial_start>`:
 
->>> from tutorial_lib import *
+>>> from mvpa2.tutorial_suite import *
 >>> ds = get_haxby2001_data()
 >>> clf = kNN(k=1, dfx=one_minus_correlation, voting='majority')
 >>> cvte = CrossValidation(clf, HalfPartitioner(attr='runtype'))
@@ -40,7 +40,7 @@ replicate the :ref:`Haxby et al. (2001) <HGF+01>`, but what if we want to
 try a different algorithm? In this case a nice feature of PyMVPA comes into
 play. All classifiers implement a common interface that makes them easily
 exchangeable without the need to adapt any other part of the analysis code.
-If, for example, we want to try the popular :mod:`support vector machine <mvpa.clfs.svm>`
+If, for example, we want to try the popular :mod:`support vector machine <mvpa2.clfs.svm>`
 (SVM) on our example dataset it looks like this:
 
 >>> clf = LinearCSVMC()
@@ -56,11 +56,11 @@ SVM with its default settings seems to perform slightly worse than the
 simple kNN-classifier. We'll get back to the classifiers shortly. Let's
 first look at the remaining part of this analysis.
 
-We already know that `~mvpa.measures.base.CrossValidation` can be used to compute
+We already know that `~mvpa2.measures.base.CrossValidation` can be used to compute
 errors. So far we have used only the mean mismatch between actual
 targets and classifier predictions as the error function (which is the default).
 However, PyMVPA offers a number of alternative functions in the
-:mod:`mvpa.misc.errorfx` module, but it is also trivial to specify custom ones.
+:mod:`mvpa2.misc.errorfx` module, but it is also trivial to specify custom ones.
 For example, if we do not want to have error reported, but instead accuracy, we
 can do that:
 
@@ -74,9 +74,9 @@ This example reuses the SVM classifier we have create before, and
 yields exactly what we expect from the previous result.
 
 The details of the cross-validation procedure are also heavily
-customizable. We have seen that a `~mvpa.generators.partition.Partitioner` is
+customizable. We have seen that a `~mvpa2.generators.partition.Partitioner` is
 used to generate training and testing dataset for each cross-validation
-fold. So far we have only used `~mvpa.generators.partition.HalfPartitioner` to
+fold. So far we have only used `~mvpa2.generators.partition.HalfPartitioner` to
 divide the dataset into odd and even runs (based on our custom sample
 attribute ``runtype``). However, in general it is more common to perform so
 called leave-one-out cross-validation, where *one* independent part of a
@@ -113,7 +113,7 @@ following code snippet should be plausible:
 Instead of two samples per category in the whole dataset, now we have one
 sample per category, per experiment run, hence 96 samples in the whole
 dataset. To set up a 12-fold leave-one-run-out cross-validation, we can
-make use of `~mvpa.generators.partition.NFoldPartitioner`. By default it is
+make use of `~mvpa2.generators.partition.NFoldPartitioner`. By default it is
 going to select samples from one ``chunk`` at a time:
 
 >>> cvte = CrossValidation(clf, NFoldPartitioner(),
@@ -131,7 +131,7 @@ So far we have just looked at the mean accuracy or error. Let's investigate
 the results of the cross-validation analysis a bit further.
 
 >>> type(cv_results)
-<class 'mvpa.datasets.base.Dataset'>
+<class 'mvpa2.datasets.base.Dataset'>
 >>> print cv_results.samples
 [[ 0.75 ]
  [ 0.875]
@@ -146,7 +146,7 @@ the results of the cross-validation analysis a bit further.
  [ 1.   ]
  [ 0.625]]
 
-The returned value is actually a `~mvpa.datasets.base.Dataset` with the
+The returned value is actually a `~mvpa2.datasets.base.Dataset` with the
 results for all cross-validation folds. Since our error function computes
 only a single scalar value for each fold the dataset only contain a single
 feature (in this case the accuracy), and a sample per each fold.
@@ -279,7 +279,7 @@ including average accuracy.
 
 Especially for multi-class datasets the matrix quickly becomes
 incomprehensible. For these cases the confusion matrix can also be plotted
-via its `~mvpa.clfs.transerror.ConfusionMatrix.plot()` method. If the
+via its `~mvpa2.clfs.transerror.ConfusionMatrix.plot()` method. If the
 confusions shall be used as input for further processing they can also be
 accessed in pure matrix format:
 
@@ -315,7 +315,7 @@ its own, but uses another classifier to do the actual work. In addition,
 the meta-classifier adds another processing step that is performed before
 the actual :term:`base-classifier` sees the data.
 
-An example of such meta-classifier is `~mvpa.clfs.meta.MappedClassifier`.
+An example of such meta-classifier is `~mvpa2.clfs.meta.MappedClassifier`.
 Its purpose is simple: Apply a mapper to both training and testing data
 before it is passed on to the internal base-classifier. With this technique
 it is possible to implement arbitrary pre-processing within a
@@ -332,8 +332,8 @@ spanned by the singular vectors of the training data, it would look like this:
 
 First we notice that little has been changed in the code and the results --
 the error is slightly reduced, but still comparable. The critical line is
-the second, where we create the `~mvpa.clfs.meta.MappedClassifier` from the
-SVM classifier instance, and a `~mvpa.mappers.svd.SVDMapper` that
+the second, where we create the `~mvpa2.clfs.meta.MappedClassifier` from the
+SVM classifier instance, and a `~mvpa2.mappers.svd.SVDMapper` that
 implements `singular value decomposition`_ as a mapper.
 
 .. exercise::
@@ -344,7 +344,7 @@ implements `singular value decomposition`_ as a mapper.
 .. _singular value decomposition: http://en.wikipedia.org/wiki/Singular_value_decomposition
 
 We know that mappers can be combined into complex processing pipelines, and
-since `~mvpa.clfs.meta.MappedClassifier` takes any mapper as argument, we
+since `~mvpa2.clfs.meta.MappedClassifier` takes any mapper as argument, we
 can implement arbitrary preprocessing steps within the cross-validation
 procedure. Let's say we have heard rumors that only the first two dimensions
 of the space spanned by the SVD vectors cover the "interesting" variance

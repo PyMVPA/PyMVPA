@@ -214,11 +214,11 @@ strikingly convincing or too provocative.  Possible obvious problems could be:
    in a specific location or the actual order of targets
 
 To allow for easy inspection of dataset to prevent such obvious confounds,
-:func:`~mvpa.datasets.miscfx.summary` function (also a method of any
+:func:`~mvpa2.datasets.miscfx.summary` function (also a method of any
 `Dataset`) was constructed.  Lets have yet another look at our 8-categories
 dataset:
 
->>> from tutorial_lib import *
+>>> from mvpa2.tutorial_suite import *
 >>> # alt: `ds = load_tutorial_results('ds_haxby2001')`
 >>> ds = get_haxby2001_data(roi='vt')
 >>> print ds.summary()
@@ -268,7 +268,7 @@ conditions.  In this case we had only two instances of each label in the
 dataset due to the averaging of samples across blocks, so it would be more
 informative to look at the original sequence.  To do so avoiding loading a
 complete dataset we would simply provide the stimuli sequence to
-:class:`~mvpa.clfs.miscfx.SequenceStats` for the analysis:
+:class:`~mvpa2.clfs.miscfx.SequenceStats` for the analysis:
 
 >>> attributes_filename = os.path.join(tutorial_data_path, 'data', 'attributes.txt')
 >>> attr = SampleAttributes(attributes_filename)
@@ -347,7 +347,7 @@ Some sources of confounds might be hard to detect or to eliminate:
 .. exercise::
 
    Inspect the arguments of generic interface of all splitters
-   :class:`~mvpa.datasets.splitters.Splitter` for a possible workaround in the
+   :class:`~mvpa2.datasets.splitters.Splitter` for a possible workaround in the
    case of dis-balanced targets.
 
 Therefore, before the analysis on the actual fMRI data, it might be worth
@@ -373,7 +373,7 @@ fixed, to estimated parametric, to non-parametric permutation testing.
 Unfortunately not a single way provides an ultimate testing facility to be
 applied blindly to any chosen problem without investigating the
 appropriateness of the data at hand (see previous section).  Every kind of
-:class:`~mvpa.measures.base.Measure` provides an easy way to trigger
+:class:`~mvpa2.measures.base.Measure` provides an easy way to trigger
 assessment of *statistical significance* by specifying ``null_dist`` parameter
 with a distribution estimator.  After a given measure is computed, the
 corresponding p-value(s) for the returned value(s) could be accessed at

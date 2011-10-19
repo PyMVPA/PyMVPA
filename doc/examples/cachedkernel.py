@@ -20,7 +20,7 @@ recomputation of the same kernel values on different splits of the
 data.  Depending on the data it might provide considerable speed-ups.
 """
 
-from mvpa.suite import *
+from mvpa2.suite import *
 from time import time
 
 """The next few calls load an fMRI dataset and do basic preprocessing."""

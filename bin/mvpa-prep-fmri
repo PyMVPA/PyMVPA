@@ -26,14 +26,18 @@ import sys
 import os
 from subprocess import call
 
-import numpy as np
+# Import mvpa2 first so it could augment matplotlib backend if necessary
+import mvpa2
 
-from mvpa.misc.cmdline import parser, opt
-from mvpa.base import verbose, externals, error
-import mvpa
+import numpy as np
+import pylab as pl
+
+from mvpa2.base import verbose, externals, error
+from mvpa2.misc.cmdline import parser, opt
+from mvpa2.misc.fsl import McFlirtParams
 
 if __debug__:
-    from mvpa.base import debug
+    from mvpa2.base import debug
 
 
 _EXFUNC_CONV_DICT = {'last' :  lambda x: x-1,
@@ -45,7 +49,7 @@ _EXFUNC_CONV_DICT = {'last' :  lambda x: x-1,
 def prep_parser(parser):
     # use module docstring for help output
     parser.usage = "%s [OPTIONS] <fmri-data>\n\n" % sys.argv[0] + __doc__
-    parser.version = "%prog " + mvpa.__version__
+    parser.version = "%prog " + mvpa2.__version__
 
     parser.add_option(opt.verbose)
     parser.add_option(opt.help)
@@ -88,8 +92,8 @@ def main():
 
     # late import of pynifti to be able to get help output without a big
     # external dep.
-    externals.exists('nifti', raise_=True)
-    from nifti import NiftiImage
+    externals.exists('nibabel', raise_=True)
+    import nibabel as nb
 
     if len(infiles) > 1 or not len(infiles):
         error("%s needs exactly one input fMRI image as argument. "
@@ -119,11 +123,14 @@ def main():
         verbose(2, "Using output path '%s'" % opath)
 
     verbose(2, "Load image file from '%s'" % func_fname)
-    func_nim = NiftiImage(func_fname, load=True)
+    func_nim = nb.load(func_fname)
+    func_nim_hdr = func_nim.get_header()
+    func_nim_data = func_nim.get_data()
+    func_nim_shape = func_nim_data.shape
 
     # process exfunc option
     exfunc = options.exfunc.lower()
-    timepoints = func_nim.timepoints
+    timepoints = len(func_nim_shape) > 3 and func_nim_shape[3] or 1
     if exfunc in _EXFUNC_CONV_DICT.keys():
         exfuncid = _EXFUNC_CONV_DICT[exfunc](timepoints)
     else:
@@ -138,11 +145,11 @@ def main():
               "range 0 .. %d. Got %d." % (timepoints-1, exfuncid))
 
     verbose(2, "Extract volume %i as example volume" % exfuncid)
-    ef_nim = NiftiImage(func_nim.data[exfuncid], func_nim.header)
-    ef_nim.save(os.path.join(opath, 'example_func' + nii_ext))
+    ef_nim = nb.Nifti1Image(func_nim_data[..., exfuncid], None, func_nim_hdr)
+    ef_nim.to_filename(os.path.join(opath, 'example_func' + nii_ext))
 
     # close input file -- will operate on motion-corrected one later on
-    del func_nim
+    del func_nim, func_nim_data, func_nim_hdr
 
     mcflirt_call = \
         ' '.join(
@@ -195,14 +202,20 @@ def main():
 
 
     verbose(2, "Threshold image background using brain mask")
-    mask_nim = NiftiImage(os.path.join(opath, 'example_func_brain_mask'))
-    func_nim = NiftiImage(os.path.join(opath, 'func_mc'))
+    mask_nim = nb.load(os.path.join(opath, 'example_func_brain_mask' + nii_ext))
+    mask_nim_data = mask_nim.get_data()
+    func_nim_filename = os.path.join(opath, 'func_mc' + nii_ext)
+    func_nim = nb.load(func_nim_filename)
+    func_nim_data = func_nim.get_data()
     # special case: single slice mask
-    if len(mask_nim.extent) < 3:
-        func_nim.data[:, np.asarray([mask_nim.data]) == 0] = 0
-    else:
-        func_nim.data[:, mask_nim.data == 0] = 0
-    func_nim.save()
+    #if len(mask_nim_data.shape) < 3:
+    #    func_nim_data[:, np.asarray([mask_nim.data]) == 0] = 0
+    #else:
+    # I think with xyzt ordering we don't really need special handling
+    func_nim_data[mask_nim_data == 0] = 0
+    # yoh: NO I don't like (or just don't know how) nibabel API ;)
+    nb.Nifti1Image(
+        func_nim_data, None, func_nim.get_header()).to_filename(func_nim_filename)
 
 
 if __name__ == '__main__':

@@ -16,7 +16,7 @@ plot various time-locked data types. This example uses MEG data and therefore
 generates an ERF-plot.
 """
 
-from mvpa.suite import *
+from mvpa2.suite import *
 
 # load data
 meg = TuebingenMEG(os.path.join(pymvpa_dataroot, 'tueb_meg.dat.gz'))

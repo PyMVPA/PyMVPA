@@ -26,7 +26,7 @@ As usual we start by importing all of PyMVPA:
 from matplotlib import rc
 rc('text', usetex=True)
 
-from mvpa.suite import *
+from mvpa2.suite import *
 
 """
 The next lines build two datasets using one of PyMVPA's data

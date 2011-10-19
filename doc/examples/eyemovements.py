@@ -26,7 +26,7 @@ textfile. These attributes indicate which image was shown, whether it was
 showing a male or female face, and wether it was upright or inverted.
 """
 
-from mvpa.suite import *
+from mvpa2.suite import *
 
 # where is the data
 datapath = os.path.join(pymvpa_datadbroot,
@@ -55,7 +55,7 @@ ds = fft_resample(raw_ds, 100, window='hann',
                   chunks_attr='trial', attr_strategy='sample')
 
 """
-Now we can use a :class:`~mvpa.mappers.boxcar.BoxcarMapper` to turn each
+Now we can use a :class:`~mvpa2.mappers.boxcar.BoxcarMapper` to turn each
 trial-timeseries into an individual sample. We know that each sample consists
 of 100 timepoints. After the dataset is mapped we can add all per-trial
 attributes into the sample attribute collection.
@@ -83,7 +83,7 @@ ds.samples[ds.sa.orient == 1, :, 1] = \
 """
 The current dataset has 100 two-dimensional features, the X and Y
 coordinate for each of the hundred timepoints. We use a
-:class:`~mvpa.mappers.flatten.FlattenMapper` to convert each sample into a
+:class:`~mvpa2.mappers.flatten.FlattenMapper` to convert each sample into a
 one-dimensionl vector (of length 200). However, we also keep the original
 dataset, because it will allow us to perform some plotting much easier.
 """
@@ -115,7 +115,7 @@ fds.sa['chunks'] = chunks
 Now everything is set and we can proceed to the classification analysis. We
 are using a support vector machine that is going to be trained on the
 ``orient`` attribute, indicating trials with upright and inverted faces. We are
-going to perform the analysis with a :class:`~mvpa.clfs.meta.SplitClassifier`,
+going to perform the analysis with a :class:`~mvpa2.clfs.meta.SplitClassifier`,
 because we are also interested in the temporal sensitivity profile. That one is
 easily accessible via the corresponding sensitivity analyzer.
 """
@@ -131,7 +131,7 @@ print mclf.ca.confusion
 """
 The 8-fold cross-validation shows a trial-wise classification accuracy of
 over 80%. Now we can take a look at the sensitivity. We use the
-:class:`~mvpa.mappers.flatten.FlattenMapper` that is stored in the dataset to
+:class:`~mvpa2.mappers.flatten.FlattenMapper` that is stored in the dataset to
 unmangle X and Y coordinate vectors in the sensitivity array.
 """
 
@@ -223,7 +223,7 @@ pl.xlim(0,100)
 pl.axhline(y=0, color='0.6', ls='--')
 pl.xlabel('Timepoints')
 
-from mvpa.base import cfg
+from mvpa2.base import cfg
 if cfg.getboolean('examples', 'interactive', True):
     # show all the cool figures
     pl.show()

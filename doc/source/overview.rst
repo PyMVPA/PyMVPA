@@ -22,7 +22,7 @@ should simply give you an idea how PyMVPA feels like.
 
 First import the whole PyMVPA module:
 
- >>> from mvpa.suite import *
+ >>> from mvpa2.suite import *
 
 Now, load the dataset from a NIfTI file. An additional 2-column textfile
 has the label and associated experimental run of each volume in the dataset

@@ -12,11 +12,11 @@ Visualization of Data Projection Methods
 ========================================
 """
 
-from mvpa.support.pylab import pl
-from mvpa.misc.data_generators import noisy_2d_fx
-from mvpa.mappers.svd import SVDMapper
-from mvpa.mappers.mdp_adaptor import ICAMapper, PCAMapper
-from mvpa import cfg
+from mvpa2.support.pylab import pl
+from mvpa2.misc.data_generators import noisy_2d_fx
+from mvpa2.mappers.svd import SVDMapper
+from mvpa2.mappers.mdp_adaptor import ICAMapper, PCAMapper
+from mvpa2 import cfg
 
 center = [10, 20]
 axis_range = 7
