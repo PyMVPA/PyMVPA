@@ -31,6 +31,25 @@ Unreleased changes
 Releases
 ========
 
+* 2.0.0~rc5 (???, Oct ?? 2011)
+
+  * **Major**: to allow easy co-existence of stable PyMVPA 0.4.x, 0.6
+    development ``mvpa`` module was renamed into mod:`mvpa2`.
+
+  * Fixes
+
+    - compatible with the new Shogun 1.x series
+    - compatible with the new h5py 2.x series
+    - mvpa-prep-fmri -- various compatibility fixes and smoke testing
+    - deepcopying :class:`SummaryStatistics` during __add__
+
+  * Enhancements
+
+    - tutorial uses :mod:`mvpa2.tutorial_suite` now
+    - better suppression of R warnings when needed
+    - internal attributes of many classes were exposed as properties
+    - more unification of ``__repr__`` for many classes
+
 * 0.6.0~rc4 (Wed, Jun 14 2011)
 
   * Fixes
