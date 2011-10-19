@@ -1,4 +1,4 @@
-Source: pymvpa-snapshot
+Source: pymvpa2
 Section: python
 Priority: optional
 Maintainer: NeuroDebian team <team@neuro.debian.net>
@@ -9,14 +9,13 @@ Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
 Vcs-Git: git://git.debian.org/git/pkg-exppsy/pymvpa.git
 
-Package: python-mvpa-snapshot
+Package: python-mvpa2
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-mvpa-snapshot-lib(>= ${source:Version})
+Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-mvpa2-lib(>= ${source:Version})
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Recommends: python-nibabel, python-psyco, python-mdp, python-scipy, shogun-python-modular, python-pywt, python-matplotlib, python-reportlab, python-h5py, python-psutil
-Suggests: fslview, fsl, python-nose, python-lxml, python-openopt, python-rpy2, python-mvpa-doc, python-scikits-learn
-Conflicts: python-mvpa
+Suggests: fslview, fsl, python-nose, python-lxml, python-openopt, python-rpy2, python-mvpa2-doc, python-sklearn
 Description: multivariate pattern analysis with Python
  PyMVPA eases pattern classification analyses of large datasets, with an
  accent on neuroimaging. It provides high-level abstraction of typical
@@ -29,11 +28,11 @@ Description: multivariate pattern analysis with Python
  While it is not limited to neuroimaging data (e.g. fMRI, or EEG) it
  is eminently suited for such datasets.
  .
- This is a package of a development snapshot. The latest released version is
- provided by the python-mvpa package.
+ This is a package of PyMVPA v.2.  Previously released stable version
+ is provided by the python-mvpa package.
 
 
-Package: python-mvpa-snapshot-lib
+Package: python-mvpa2-lib
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}, python-numpy
 Provides: ${python:Provides}

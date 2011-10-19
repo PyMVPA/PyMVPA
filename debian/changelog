@@ -1,18 +1,25 @@
-pymvpa-snapshot (0.6.0~rc4-1) unstable; urgency=low
+pymvpa2 (2.0.0~rc5-1) unstable; urgency=low
+
+  * mvpa module was renamed into mvpa2 to allow co-installability with
+    stable mvpa 0.4.x (hence source package name change)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 19 Oct 2011 14:18:14 -0400
+
+pymvpa-snapshot (0.6.0~rc4-1) neurodebian; urgency=low
 
   * PyMVPA development snapshot.
   * Pruned unneeded now XS-DM-Upload-Allowed.
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 14 Jun 2011 21:03:07 -0400
 
-pymvpa-snapshot (0.6.0~rc3-1) UNRELEASED; urgency=low
+pymvpa-snapshot (0.6.0~rc3-1) neurodebian; urgency=low
 
   * PyMVPA development snapshot.
   * Includes upstream changelog now.
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 12 Apr 2011 12:08:15 -0400
 
-pymvpa-snapshot (0.6.0~rc2-1) UNRELEASED; urgency=low
+pymvpa-snapshot (0.6.0~rc2-1) neurodebian; urgency=low
 
   * PyMVPA development snapshot.
 
