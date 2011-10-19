@@ -2,6 +2,7 @@ pymvpa2 (2.0.0~rc5-1) unstable; urgency=low
 
   * mvpa module was renamed into mvpa2 to allow co-installability with
     stable mvpa 0.4.x (hence source package name change)
+  * Bump Standards-Version to 3.9.2 -- no changes necessary
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 19 Oct 2011 14:18:14 -0400
 
