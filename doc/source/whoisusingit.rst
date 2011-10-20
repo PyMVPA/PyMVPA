@@ -48,6 +48,13 @@ Institutions Where PyMVPA Is Known To Be Used
 Studies employing PyMVPA
 ========================
 
+* :ref:`Haxby et al., Neuron (2011) <HGC+11>`:
+  A Common, High-Dimensional Model of the Representational Space in Human Ventral Temporal Cortex.
+
+  `Data <http://data.pymvpa.org/datasets/haxby2011-hyper>` used for the analyses in
+  the paper and `PyMVPA analysis script <https://github.com/HaxbyLab/paper-haxby2011-hyper>`__
+  are available
+
 * :ref:`Kaunitz et al., Frontiers in Perception Science (2011) <KKO+11>`:
   Intercepting the first pass: rapid categorization is suppressed for unseen stimuli.
 
@@ -57,9 +64,10 @@ Studies employing PyMVPA
 
 * :ref:`Kubilius et al., Psychological Science (2011) <KWO11>`:
   Emergence of perceptual gestalts in the human visual cortex: The case of the
-  configural superiority effect.  Complete suite of sources from stimuli
-  delivery (PsychoPy) to data analysis (PyMVPA) is available from
-  https://bitbucket.org/qbilius/confsup
+  configural superiority effect.
+
+  `Complete suite of sources from stimuli delivery (PsychoPy) to data analysis (PyMVPA) <https://bitbucket.org/qbilius/confsup>`__
+  is available
 
 * :ref:`Manelis et al., Cerebral Cortex (2011) <MRH11>`: Dynamic Changes In
   The Medial Temporal Lobe During Incidental Learning Of Object–Location
