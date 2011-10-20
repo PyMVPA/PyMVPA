@@ -119,23 +119,32 @@ class Hyperalignment(ClassWithCollections):
         # Level 1 (first)
         commonspace = np.asanyarray(datasets[ref_ds])
         if params.zscore_common:
+            if np.issubdtype(commonspace.dtype, int):
+                if __debug__:
+                    debug('HPAL_',
+                          "Converting commonspace into floats before zscoring")
+                # assure float type
+                commonspace = commonspace.astype(float)
             zscore(commonspace, chunks_attr=None)
         data_mapped = [np.asanyarray(ds) for ds in datasets]
-        for i, (m, data) in enumerate(zip(mappers, data_mapped)):
+        #zscore(data_mapped[ref_ds],chunks_attr=None)
+        for i, (m, ds) in enumerate(zip(mappers, datasets)):
             if __debug__:
                 debug('HPAL_', "Level 1: ds #%i" % i)
             if i == ref_ds:
                 continue
-            #ZSC zscore(data, chunks_attr=None)
-            ds = dataset_wizard(samples=data, targets=commonspace)
+            #ZSC\
+            ds_new = ds.copy()
+            zscore(ds_new, chunks_attr=None);
+            ds_new.targets = commonspace
             #ZSC zscore(ds, chunks_attr=None)
-            m.train(ds)
-            data_temp = m.forward(data)
-            #ZSC zscore(data_temp, chunks_attr=None)
-            data_mapped[i] = data_temp
+            m.train(ds_new)
+            ds_ = m.forward(np.asanyarray(ds_new))
+            zscore(ds_, chunks_attr=None)
+            data_mapped[i] = ds_ 
 
             if residuals is not None:
-                residuals[0, i] = np.linalg.norm(data_temp - commonspace)
+                residuals[0, i] = np.linalg.norm(ds_ - commonspace)
 
             ## if ds_mapped == []:
             ##     ds_mapped = [zscore(m.forward(d), chunks_attr=None)]
@@ -150,50 +159,47 @@ class Hyperalignment(ClassWithCollections):
 
         # update commonspace to mean of ds_mapped
         commonspace = params.combiner2(data_mapped)
-        if params.zscore_common:
-            zscore(commonspace, chunks_attr=None)
-
+        #if params.zscore_common:
+        #zscore(commonspace, chunks_attr=None)
         # Level 2 -- might iterate multiple times
         for loop in xrange(params.level2_niter):
             for i, (m, ds) in enumerate(zip(mappers, datasets)):
                 if __debug__:
                     debug('HPAL_', "Level 2 (%i-th iteration): ds #%i" % (loop, i))
 
-                ## ds_temp = zscore( (commonspace*ndatasets - ds_mapped[i])
-                ##                   /(ndatasets-1), chunks_attr=None )
+                ds_temp = (commonspace*ndatasets - data_mapped[i])/(ndatasets-1)
+                zscore(ds_temp, chunks_attr=None)
                 ds_new = ds.copy()
-                #ZSC zscore(ds_new, chunks_attr=None)
-                #PRJ ds_temp = (commonspace*ndatasets - ds_mapped[i])/(ndatasets-1)
-                #ZSC zscore(ds_temp, chunks_attr=None)
-                ds_new.targets = commonspace #PRJ ds_temp
+                zscore(ds_new, chunks_attr=None)
+                ds_new.targets = ds_temp #commonspace #PRJ ds_temp
                 m.train(ds_new) # ds_temp)
-                data_mapped[i] = m.forward(np.asanyarray(ds))
+                ds_ =  m.forward(np.asanyarray(ds_new))
+                zscore(ds_, chunks_attr=None)
+                data_mapped[i] = ds_
                 if residuals is not None:
-                    residuals[1+loop, i] = np.linalg.norm(data_mapped - commonspace)
+                    residuals[1+loop, i] = np.linalg.norm(ds_ - commonspace)
 
                 #ds_mapped[i] = zscore( m.forward(ds_temp), chunks_attr=None)
 
             commonspace = params.combiner2(data_mapped)
-            if params.zscore_common:
-                zscore(commonspace, chunks_attr=None)
+            #if params.zscore_common:
+                #zscore(commonspace, chunks_attr=None)
 
         # Level 3 (last) to params.levels
         for i, (m, ds) in enumerate(zip(mappers, datasets)):
             if __debug__:
                 debug('HPAL_', "Level 3: ds #%i" % i)
 
-            ## ds_temp = zscore( (commonspace*ndatasets - ds_mapped[i])
-            ##                   /(ndatasets-1), chunks_attr=None )
             ds_new = ds.copy()     # shallow copy so we could assign new labels
-            #ZSC zscore(ds_new, chunks_attr=None)
-            #PRJ ds_temp = (commonspace*ndatasets - ds_mapped[i])/(ndatasets-1)
-            #ZSC zscore(ds_temp, chunks_attr=None)
-            ds_new.targets = commonspace #PRJ ds_temp#
+            zscore(ds_new, chunks_attr=None)
+            ds_temp = (commonspace*ndatasets - data_mapped[i])/(ndatasets-1)
+            zscore(ds_temp, chunks_attr=None)
+            ds_new.targets = ds_temp#commonspace #PRJ ds_temp#
             m.train(ds_new) #ds_temp)
-
+            data_mapped[i] = m.forward(np.asanyarray(ds_new))
             if residuals is not None:
                 data_mapped = m.forward(ds_new)
                 residuals[-1, i] = np.linalg.norm(data_mapped - commonspace)
-
+        
         return mappers
 
