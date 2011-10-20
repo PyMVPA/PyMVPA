@@ -138,3 +138,17 @@ def test_zscore():
     zm = ZScoreMapper(params={0: (2,1), 1: (12,1)})
     zm.train(ds)                        # train
     assert_array_almost_equal(zm.forward(ds), np.transpose([check + check]))
+
+    # And just a smoke test for warnings reporting whenever # of
+    # samples per chunk is low.
+    # on 1 sample per chunk
+    zds1 = ZScoreMapper(chunks_attr='chunks', auto_train=True)(
+        ds[[0, -1]])
+    ok_(np.all(zds1.samples == 0))   # they all should be 0
+    # on 2 samples per chunk
+    zds2 = ZScoreMapper(chunks_attr='chunks', auto_train=True)(
+        ds[[0, 1, -10, -1]])
+    assert_array_equal(np.unique(zds2.samples), [-1., 1]) # they all should be -1 or 1
+    # on 3 samples per chunk -- different warning
+    ZScoreMapper(chunks_attr='chunks', auto_train=True)(
+        ds[[0, 1, 2, -3, -2, -1]])

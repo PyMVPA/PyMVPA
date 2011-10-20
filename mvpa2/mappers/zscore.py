@@ -143,12 +143,21 @@ class ZScoreMapper(Mapper):
         chunks_attr = self.__chunks_attr
         dtype = self.__dtype
 
-        if __debug__ and not chunks_attr is None \
-          and np.array(get_nsamples_per_attr(ds, chunks_attr).values()).min() <= 2:
-            warning("Z-scoring chunk-wise having a chunk with less than three "
-                    "samples will set features in these samples to either zero "
-                    "(with 1 sample in a chunk) "
-                    "or -1/+1 (with 2 samples in a chunk).")
+        if __debug__ and not chunks_attr is None:
+            nsamples_per_chunk = get_nsamples_per_attr(ds, chunks_attr)
+            min_nsamples_per_chunk = np.min(nsamples_per_chunk.values())
+            if min_nsamples_per_chunk in range(3, 6):
+                warning("Z-scoring chunk-wise having a chunk with only "
+                        "%d samples is 'discouraged'. "
+                        "You have chunks with following number of samples: %s"
+                        % (min_nsamples_per_chunk, nsamples_per_chunk,))
+            if min_nsamples_per_chunk <= 2:
+                warning("Z-scoring chunk-wise having a chunk with less "
+                        "than three samples will set features in these "
+                        "samples to either zero (with 1 sample in a chunk) "
+                        "or -1/+1 (with 2 samples in a chunk). "
+                        "You have chunks with following number of samples: %s"
+                        % (nsamples_per_chunk,))
 
         params = self.__params_dict
         if params is None:
