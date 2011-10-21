@@ -198,8 +198,7 @@ class Hyperalignment(ClassWithCollections):
             m.train(ds_new) #ds_temp)
             data_mapped[i] = m.forward(np.asanyarray(ds_new))
             if residuals is not None:
-                data_mapped = m.forward(ds_new)
-                residuals[-1, i] = np.linalg.norm(data_mapped - commonspace)
-        
+                residuals[-1, i] = np.linalg.norm(data_mapped[i] - commonspace)
+
         return mappers
 
