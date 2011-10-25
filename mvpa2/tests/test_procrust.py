@@ -43,7 +43,7 @@ class ProcrusteanMapperTests(unittest.TestCase):
 
             for s, scaling in ((0.3, True), (1.0, False)):
                 pm = ProcrusteanMapper(scaling=scaling, oblique=oblique)
-                pm2 = ProcrusteanMapper(scaling=scaling, oblique=oblique)
+                # pm2 = ProcrusteanMapper(scaling=scaling, oblique=oblique)
 
                 t1, t2 = d_orig[23, 1], d_orig[22, 1]
 
