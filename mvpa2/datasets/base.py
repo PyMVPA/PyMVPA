@@ -473,6 +473,8 @@ class HollowSamples(object):
                  self.fid,
                  self.dtype))
 
+    def copy(self, deep=True):
+        return deep and copy.deepcopy(self) or copy.copy(self)
 
     @property
     def shape(self):
