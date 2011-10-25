@@ -18,6 +18,7 @@ from mvpa2.datasets.base import dataset_wizard
 from mvpa2.mappers.zscore import ZScoreMapper, zscore
 from mvpa2.testing.tools import assert_array_almost_equal, assert_array_equal, \
         assert_equal, assert_raises, ok_, nodebug
+from mvpa2.misc.support import idhash
 
 from mvpa2.testing.datasets import datasets
 
@@ -37,8 +38,21 @@ def test_mapper_vs_zscore():
 
         zsm = ZScoreMapper(chunks_attr=None)
         assert_raises(RuntimeError, zsm.forward, ds1.samples)
+        idhashes = (idhash(ds1), idhash(ds1.samples))
         zsm.train(ds1)
+        idhashes_train = (idhash(ds1), idhash(ds1.samples))
+        assert_equal(idhashes, idhashes_train)
+
+        # forward dataset
+        ds1z_ds = zsm.forward(ds1)
+        idhashes_forwardds = (idhash(ds1), idhash(ds1.samples))
+        # must not modify samples in place!
+        assert_equal(idhashes, idhashes_forwardds)
+
+        # forward samples explicitly
         ds1z = zsm.forward(ds1.samples)
+        idhashes_forward = (idhash(ds1), idhash(ds1.samples))
+        assert_equal(idhashes, idhashes_forward)
 
         zscore(ds2, chunks_attr=None)
         assert_array_almost_equal(ds1z, ds2.samples)
