@@ -70,8 +70,8 @@ class ProcrusteanMapper(ProjectionMapper):
     def __repr__(self):
         s = ProjectionMapper.__repr__(self).rstrip(' )')
         if not s[-1] == '(': s += ', '
-        s += "scaling=%d, reflection=%d, reduction=%d, " \
-             "oblique=%s, oblique_rcond=%g)" % \
+        s += "scaling=%r, reflection=%r, reduction=%r, " \
+             "oblique=%r, oblique_rcond=%r)" % \
              (self._scaling, self._reflection, self._reduction,
               self._oblique, self._oblique_rcond)
         return s
