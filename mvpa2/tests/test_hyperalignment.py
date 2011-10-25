@@ -54,13 +54,12 @@ class HyperAlignmentTests(unittest.TestCase):
         # now lets compose derived datasets by using some random
         # rotation(s)
         for i in xrange(n):
-            if i == ref_ds:
-                # Do not rotate the target space so we could check later on
-                # if we transform back nicely
-                R = np.eye(ds_orig.nfeatures)
-            else:
-                R = get_random_rotation(ds_orig.nfeatures)
-            R = np.eye(ds_orig.nfeatures)
+            ## if False: # i == ref_ds:
+            #     # Do not rotate the target space so we could check later on
+            #     # if we transform back nicely
+            #     R = np.eye(ds_orig.nfeatures)
+            ## else:
+            R = get_random_rotation(ds_orig.nfeatures)
 
             Rs.append(R)
             ds_ = ds_orig.copy()
@@ -71,9 +70,9 @@ class HyperAlignmentTests(unittest.TestCase):
             ds_.samples = np.dot(ds_orig.samples, R) * random_scales[-1] \
                           + random_shifts[-1]
 
-            if (zscore_common or zscore_all):
-                # for later on testing of "precise" reconstruction
-                zscore(ds_, chunks_attr=None)
+            ## if (zscore_common or zscore_all):
+            ##     # for later on testing of "precise" reconstruction
+            ##     zscore(ds_, chunks_attr=None)
 
             dss_rotated_clean.append(ds_)
 
@@ -125,17 +124,37 @@ class HyperAlignmentTests(unittest.TestCase):
                 ndds = np.linalg.norm(dds) / ds_norm
                 nddss += [ndds]
             snoisy = ('clean', 'noisy')[int(noisy)]
-            if not noisy or cfg.getboolean('tests', 'labile', default='yes'):
+            do_labile = cfg.getboolean('tests', 'labile', default='yes')
+            if not noisy or do_labile:
                 # First compare correlations
                 self.assertTrue(np.all(np.array(ndcss)
                                        >= (0.9, 0.85)[int(noisy)]),
                         msg="Should have reconstructed original dataset more or"
                         " less. Got correlations %s in %s case."
                         % (ndcss, snoisy))
-                self.assertTrue(nddss[ref_ds] <= (1e-10, 1e-2)[int(noisy)],
-                        msg="Should have reconstructed original dataset more or"
-                        " less. Got normed differences %s in %s case."
+                if not (zscore_all or zscore_common):
+                    # if we didn't zscore -- all of them should be really close
+                    self.assertTrue(np.all(np.array(nddss)
+                                       <= (1e-10, 1e-1)[int(noisy)]),
+                        msg="Should have reconstructed original dataset well "
+                        "without zscoring. Got normed differences %s in %s case."
                         % (nddss, snoisy))
+                elif do_labile:
+                    # otherwise they all should be somewhat close
+                    #print snoisy, ref_ds,  nddss
+                    self.assertTrue(np.all(np.array(nddss) >= nddss[ref_ds]),
+                        msg="Should have reconstructed orig_ds best of all. "
+                        "Got normed differences %s in %s case with ref_ds=%d."
+                        % (nddss, snoisy, ref_ds))
+                    self.assertTrue(np.all(np.array(nddss)
+                                           <= (.2, 3)[int(noisy)]),
+                        msg="Should have reconstructed original dataset more or"
+                        " less for all. Got normed differences %s in %s case."
+                        % (nddss, snoisy))
+                    self.assertTrue(np.all(nddss[ref_ds] <= .05),
+                        msg="Should have reconstructed original dataset quite "
+                        "well even with zscoring. Got normed differences %s "
+                        "in %s case." % (nddss, snoisy))
 
         # Lets see how well we do if asked to compute residuals
         ha = Hyperalignment(ref_ds=ref_ds, level2_niter=2,
