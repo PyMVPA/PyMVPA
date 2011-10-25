@@ -169,6 +169,8 @@ class ZScoreMapper(Mapper):
         else:
             # shallow copy to put the new stuff in
             mds = ds.copy(deep=False)
+            # but deepcopy the samples since _zscore would modify inplace
+            mds.samples = mds.samples.copy()
 
         # cast the data to float, since in-place operations below do not upcast!
         if np.issubdtype(mds.samples.dtype, np.integer):
