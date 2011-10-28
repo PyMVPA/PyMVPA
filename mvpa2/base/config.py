@@ -97,9 +97,24 @@ class ConfigManager(SafeConfigParser):
         """Re-read settings from all configured locations.
         """
         # listof filenames to parse (custom plus some standard ones)
+        homedir = os.path.expanduser('~')
+        user_configfile = os.path.join(homedir, '.pymvpa2.cfg')
+        user_configfile_old = os.path.join(homedir, '.pymvpa.cfg')
         filenames = self.__cfg_filenames \
-                    + ['pymvpa2.cfg',
-                       os.path.join(os.path.expanduser('~'), '.pymvpa2.cfg')]
+                    + ['pymvpa2.cfg', user_configfile]
+
+        # Check if config for previous version exists, we need to
+        # warn users since they might need to copy it over
+        if not os.path.exists(user_configfile) and \
+            os.path.exists(user_configfile_old):
+            # but we can't use our 'warning' since it would not be
+            # defined yet and import here would be circular
+            # so use stock Python one
+            from warnings import warn
+            warn("You seems to have a configuration file %s for previous "
+                 "version of PyMVPA but lacking configuration for PyMVPA2. "
+                 "Consider copying it into %s"
+                 % (user_configfile_old, user_configfile))
 
         # read local and user-specific config
         files = self.read(filenames)
