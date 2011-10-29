@@ -78,7 +78,10 @@ if externals.exists('glmnet'):
     from mvpa2.clfs.glmnet import *
 __sdebug('clfs skl')
 if externals.exists('skl'):
-    import scikits.learn as skl
+    if externals.version['skl'] >= '0.9':
+        import sklearn as skl
+    else:
+        import scikits.learn as skl
     from mvpa2.clfs.skl import *
 __sdebug('clfs smlr')
 from mvpa2.clfs.smlr import *
