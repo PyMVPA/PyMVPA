@@ -28,6 +28,7 @@ if __debug__ and 'SUITE' in debug.active:
     __sdebug = lambda msg: debug('SUITE', "%s" % msg)
 else:
     __sdebug = lambda *args: None
+__sdebug.__doc__ = "Shortcut to output debug messages for suite imports"
 
 __sdebug('base')
 from mvpa2.base import *
