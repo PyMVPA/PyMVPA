@@ -196,11 +196,15 @@ def __check_nipy_neurospin():
     from nipy.neurospin.utils import emp_nul
 
 def __assign_skl_version():
-    import scikits.learn as skl
-    if skl.__doc__.strip() == "":
-        raise ImportError("Verify your installation of scikits.learn. "
-                          "Its docstring is empty -- could be that only -lib "
-                          "was installed without the native Python modules")
+    try:
+        import sklearn as skl
+    except ImportError:
+        # Let's try older space
+        import scikits.learn as skl
+        if skl.__doc__ is None or skl.__doc__.strip() == "":
+            raise ImportError("Verify your installation of scikits.learn. "
+                              "Its docstring is empty -- could be that only -lib "
+                              "was installed without the native Python modules")
     versions['skl'] = SmartVersion(skl.__version__)
 
 def __check_weave():
