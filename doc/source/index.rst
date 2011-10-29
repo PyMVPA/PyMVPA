@@ -152,7 +152,7 @@ here.
 * PyNIfTI_: Read and write NIfTI images from within Python.
   *PyMVPA uses PyNIfTI to access MRI datasets.*
 
-* `scikits.learn`_: Python module integrating classic machine learning
+* `scikit-learn`_: Python module integrating classic machine learning
   algorithms in the tightly-knit world of scientific Python packages.
 
 * Shogun_: Comprehensive machine learning toolbox with bindings to various
@@ -173,7 +173,7 @@ here.
 .. _PyMGH/PyFSIO: http://code.google.com/p/pyfsio
 .. _PyNIfTI: http://niftilib.sourceforge.net/pynifti
 .. _OpenMEEG: http://openmeeg.gforge.inria.fr
-.. _scikits.learn: http://scikit-learn.sourceforge.net
+.. _scikit-learn: http://scikit-learn.org
 
 .. toctree::
    :hidden:

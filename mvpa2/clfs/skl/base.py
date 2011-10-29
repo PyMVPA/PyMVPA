@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Generic wrappers for learners (classifiers) provided by scikits.learn"""
+"""Generic wrappers for learners (classifiers) provided by scikit-learn (AKA sklearn)"""
 
 __docformat__ = 'restructuredtext'
 
