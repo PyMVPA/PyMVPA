@@ -332,19 +332,28 @@ if externals.exists('skl'):
                               _skl_api09 and 'Lars' or 'LARS')
         sklLassoLARS = _skl_import('linear_model',
                                    _skl_api09 and 'LassoLars' or 'LassoLARS')
+        sklElasticNet = _skl_import('linear_model', 'ElasticNet')
         _lars_tags = ['lars', 'linear', 'regression', 'does_feature_selection']
 
         _lars = SKLLearnerAdapter(sklLARS(),
                                   tags=_lars_tags,
                                   descr='skl.LARS()')
 
-        _lasso_lars = SKLLearnerAdapter(sklLassoLARS(),
+        _lasso_lars = SKLLearnerAdapter(sklLassoLARS(alpha=0.1),
                                         tags=_lars_tags,
                                         descr='skl.LassoLARS()')
 
-        regrswh += [_lars, _lasso_lars]
+        _elastic_net = SKLLearnerAdapter(
+            sklElasticNet(alpha=.1, rho=.3),
+            tags=['enet', 'regression', 'linear', # 'has_sensitivity',
+                 'does_feature_selection'],
+            descr='skl.ElasticNet()')
+
+        regrswh += [_lars, _lasso_lars, _elastic_net]
         clfswh += [RegressionAsClassifier(_lars, descr="skl.LARS_C()"),
-                   RegressionAsClassifier(_lasso_lars, descr="skl.LassoLARS_C()")]
+                   RegressionAsClassifier(_lasso_lars, descr="skl.LassoLARS_C()"),
+                   RegressionAsClassifier(_elastic_net, descr="skl.ElasticNet_C()"),
+                   ]
 
 # kNN
 clfswh += kNN(k=5, descr="kNN(k=5)")
