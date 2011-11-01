@@ -339,12 +339,12 @@ if externals.exists('skl'):
                                   tags=_lars_tags,
                                   descr='skl.LARS()')
 
-        _lasso_lars = SKLLearnerAdapter(sklLassoLARS(alpha=0.1),
+        _lasso_lars = SKLLearnerAdapter(sklLassoLARS(alpha=0.01),
                                         tags=_lars_tags,
                                         descr='skl.LassoLARS()')
 
         _elastic_net = SKLLearnerAdapter(
-            sklElasticNet(alpha=.1, rho=.3),
+            sklElasticNet(alpha=.01, rho=.3),
             tags=['enet', 'regression', 'linear', # 'has_sensitivity',
                  'does_feature_selection'],
             descr='skl.ElasticNet()')
