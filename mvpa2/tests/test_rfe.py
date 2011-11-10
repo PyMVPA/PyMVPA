@@ -396,14 +396,28 @@ class RFETests(unittest.TestCase):
              # update sensitivity at each step (since we're not using the
              # same CLF as sensitivity analyzer)
 
+        class StoreResults(object):
+            def __init__(self):
+                self.storage = []
+            def __call__(self, data, node, result):
+                self.storage.append((node.measure.mapper.ca.history,
+                                     node.measure.mapper.ca.errors)),
+
+        cv_storage = StoreResults()
         cv = CrossValidation(clf, NFoldPartitioner(), postproc=mean_sample(),
-            enable_ca=['confusion'])
+                             callback=cv_storage,
+                             enable_ca=['confusion'])
         #cv = SplitClassifier(clf)
         try:
             error = cv(dataset).samples.squeeze()
         except Exception, e:
             self.fail('CrossValidation cannot handle classifier with RFE '
                       'feature selection. Got exception: %s' % (e,))
+
+        assert(len(cv_storage.storage) == len(dataset.sa['chunks'].unique))
+        assert(len(cv_storage.storage[0]) == 2)
+        assert(len(cv_storage.storage[0][0]) == dataset.nfeatures)
+
         self.assertTrue(error < 0.2)
 
 
