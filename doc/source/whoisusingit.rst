@@ -52,6 +52,9 @@ Studies employing PyMVPA
   regional-average activation and multivoxel pattern information tell
   complementary stories
 
+* :ref:`Carlin et al., Current Biology (2011) <CCK+11>`: A head view-invariant
+  representation of gaze direction in anterior superior temporal sulcus
+
 * :ref:`Kaunitz et al., Frontiers in Perception Science (2011) <KKO+11>`:
   Intercepting the first pass: rapid categorization is suppressed for unseen stimuli.
 
