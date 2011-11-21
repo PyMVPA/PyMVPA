@@ -30,6 +30,12 @@ experiments.
   URL: http://www.ncbi.nlm.nih.gov/pubmed/19938211
 
 
+.. _CCK+11:
+
+**Carlin, J. D., Calder, A. J., Kriegeskorte, N., Nili, H. & Rowe, J. B.** (2011). A head view-invariant representation of gaze direction in anterior superior temporal sulcus. *Curr Biol*, *21*, 1817–21.
+  DOI: http://dx.doi.org/10.1016/j.cub.2011.09.025
+
+
 .. _CRK+11:
 
 **Carlin, J. D., Rowe, J. B., Kriegeskorte, N., Thompson, R. & Calder, A. J.** (2011). Direction-Sensitive Codes for Observed Head Turns in Human Superior Temporal Sulcus. *Cerebral Cortex*, **, .
