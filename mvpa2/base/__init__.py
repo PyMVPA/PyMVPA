@@ -274,6 +274,8 @@ if __debug__:
     debug.register('FS_',    "FeatureSelections (verbose)")
     debug.register('FSPL',   "FeatureSelectionPipeline")
 
+    debug.register('KNN',    "kNN")
+
     debug.register('SVM',    "SVM")
     debug.register('SVM_',   "SVM (verbose)")
     debug.register('LIBSVM', "Internal libsvm output")
