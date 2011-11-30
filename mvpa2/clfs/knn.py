@@ -41,9 +41,16 @@ class kNN(Classifier):
     and the labels of this neighboring samples are fed into a voting
     function to determine the labels of the test sample.
 
-    Training a kNN classifier is extremely quick, as no actuall training
+    Training a kNN classifier is extremely quick, as no actual training
     is performed as the training dataset is simply stored in the
     classifier. All computations are done during classifier prediction.
+
+    Ties
+    ----
+
+    In case if voting procedure results in a tie, it is broken by
+    choosing a class with minimal mean distance to the corresponding
+    k-neighbors.
 
     Notes
     -----
@@ -75,7 +82,7 @@ class kNN(Classifier):
           determines vote) and 'weighted' (votes are weighted according to the
           relative frequencies of each class in the training data).
         **kwargs
-          Additonal arguments are passed to the base class.
+          Additional arguments are passed to the base class.
         """
 
         # init base class first
@@ -85,9 +92,10 @@ class kNN(Classifier):
         self.__dfx = dfx
         self.__voting = voting
         self.__data = None
+        self.__weights = None
 
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=[]): # pylint: disable-msg=W0102
         """Representation of the object
         """
         return super(kNN, self).__repr__(
@@ -96,9 +104,9 @@ class kNN(Classifier):
             + prefixes)
 
 
-    def __str__(self):
-        return "%s\n data: %s" % \
-            (Classifier.__str__(self), indent_doc(self.__data))
+    ## def __str__(self):
+    ##     return "%s\n data: %s" % \
+    ##         (Classifier.__str__(self), indent_doc(self.__data))
 
 
     def _train(self, data):
@@ -107,6 +115,10 @@ class kNN(Classifier):
         For kNN it is degenerate -- just stores the data.
         """
         self.__data = data
+        labels = data.sa[self.get_space()].value
+        uniquelabels = data.sa[self.get_space()].unique
+        Nuniquelabels = len(uniquelabels)
+
         if __debug__:
             if str(data.samples.dtype).startswith('uint') \
                 or str(data.samples.dtype).startswith('int'):
@@ -114,12 +126,26 @@ class kNN(Classifier):
                         "Overflow on arithmetic operations might result in"+\
                         " errors. Please convert dataset's samples into" +\
                         " floating datatype if any error is reported.")
-        self.__weights = None
+        if self.__voting == 'weighted':
+            self.__labels = labels.copy()
+            Nlabels = len(labels)
+
+            # TODO: To get proper speed up for the next line only,
+            #       histogram should be computed
+            #       via sorting + counting "same" elements while reducing.
+            #       Guaranteed complexity is NlogN whenever now it is N^2
+            # compute the relative proportion of samples belonging to each
+            # class (do it in one loop to improve speed and reduce readability
+            weights = \
+                [ 1.0 - ((labels == label).sum() / Nlabels) \
+                    for label in uniquelabels ]
+            self.__weights = dict(zip(uniquelabels, weights))
+        else:
+            self.__weights = None
 
         # create dictionary with an item for each condition
-        uniquelabels = data.sa[self.get_space()].unique
         self.__votes_init = dict(zip(uniquelabels,
-                                     [0] * len(uniquelabels)))
+                                     [0] * Nuniquelabels))
 
 
     @accepts_dataset_as_samples
@@ -129,7 +155,12 @@ class kNN(Classifier):
         Returns a list of class labels (one for each data sample).
         """
         # make sure we're talking about arrays
-        data = np.asarray(data)
+        data = np.asanyarray(data)
+
+        targets_sa_name = self.get_space()
+        targets_sa = self.__data.sa[targets_sa_name]
+        labels = targets_sa.value
+        uniquelabels = targets_sa.unique
 
         # checks only in debug mode
         if __debug__:
@@ -141,7 +172,7 @@ class kNN(Classifier):
                                   "not match the classifier."
 
         # compute the distance matrix between training and test data with
-        # distances stored row-wise, ie. distances between test sample [0]
+        # distances stored row-wise, i.e. distances between test sample [0]
         # and all training samples will end up in row 0
         dists = self.__dfx(self.__data.samples, data).T
         if self.ca.is_enabled('distances'):
@@ -151,110 +182,65 @@ class kNN(Classifier):
         # determine the k nearest neighbors per test sample
         knns = dists.argsort(axis=1)[:, :self.__k]
 
-        # predicted class labels will go here
-        predicted = []
+        # predictions and votes for all samples
+        all_votes, predictions = [], []
+        for inns, nns in enumerate(knns):
+            votes = self.__votes_init.copy()
+            # TODO: optimize!
+            for nn in nns:
+                votes[labels[nn]] += 1
 
-        if self.__voting == 'majority':
-            vfx = self.get_majority_vote
-        elif self.__voting == 'weighted':
-            vfx = self.get_weighted_vote
-        else:
-            raise ValueError, "kNN told to perform unknown voting '%s'." \
-                  % self.__voting
+            # optionally weight votes
+            if self.__voting == 'majority':
+                pass
+            elif self.__voting == 'weighted':
+                # TODO: optimize!
+                for ul in uniquelabels:
+                    votes[ul] *= self.__weights[ul]
+            else:
+                raise ValueError, "kNN told to perform unknown voting '%s'." \
+                      % self.__voting
 
-        # perform voting
-        results = [vfx(knn) for knn in knns]
+            # reverse dictionary items and sort them to get the
+            # winners
+            # It would be more expensive than just to look for
+            # the maximum, but this piece should be the least
+            # cpu-intensive while distances computation should consume
+            # the most. Also it would allow to look and brake the ties
+            votes_reversed = sorted([(v, k) for k, v in votes.iteritems()],
+                                    reverse=True)
+            # check for ties
+            max_vote, max_vote_label = votes_reversed[0]
 
-        # extract predictions
-        predicted = [r[0] for r in results]
+            if len(votes_reversed) > 1 and max_vote == votes_reversed[1][0]:
+                # figure out all ties and brake them based on the mean
+                # distance
+                # TODO: theoretically we could brake out of the loop earlier
+                ties = [x[1] for x in votes_reversed if x[0] == max_vote]
+
+                # compute mean distances to the corresponding clouds
+                # restrict analysis only to k-nn's
+                nns_labels = labels[nns]
+                nns_dists = dists[inns][nns]
+                ties_dists = [np.mean(nns_dists[nns_labels == t]) for t in ties]
+                max_vote_label = ties[np.argmin(ties_dists)]
+                if __debug__:
+                    debug('KNN',
+                          'Ran into the ties: %s with votes: %s, dists: %s, max_vote %r',
+                          (ties, votes_reversed, ties_dists, max_vote_label))
+
+            all_votes.append(votes)
+            predictions.append(max_vote_label)
 
         # store the predictions in the state. Relies on State._setitem to do
         # nothing if the relevant state member is not enabled
-        self.ca.predictions = predicted
-        self.ca.estimates = np.array([r[1] for r in results])
+        self.ca.predictions = predictions
+        self.ca.estimates = all_votes # np.array([r[1] for r in results])
 
-        return predicted
-
-
-    ##REF: Name was automagically refactored
-    def get_majority_vote(self, knn_ids):
-        """Simple voting by choosing the majority of class neighbors.
-        """
-        # local bindings
-        _data = self.__data
-
-        targets_sa_name = self.get_space()
-        targets_sa = _data.sa[targets_sa_name]
-
-        labels = targets_sa.value
-        uniquelabels = targets_sa.unique
-
-        # number of occerences for each unique class in kNNs
-        votes = self.__votes_init.copy()
-        for nn in knn_ids:
-            votes[labels[nn]] += 1
-
-        # find the class with most votes
-        # return votes as well to store them in the state
-        if _dict_has_key:
-            # approx 5% faster implementation than below
-            maxvotes = max(votes.iteritems(), key=lambda x:x[1])[0]
-        else:
-            # no key keyword for max in elderly versions
-            maxvotes = max([(v, k) for k, v in votes.iteritems()])[1]
-
-        return maxvotes, \
-                [votes[ul] for ul in uniquelabels] # transform into lists
-
-
-    ##REF: Name was automagically refactored
-    def get_weighted_vote(self, knn_ids):
-        """Vote with classes weighted by the number of samples per class.
-        """
-        # local bindings
-        _data = self.__data
-        targets_sa_name = self.get_space()
-        targets_sa = _data.sa[targets_sa_name]
-
-        uniquelabels = targets_sa.unique
-
-        # Lazy evaluation
-        if self.__weights is None:
-            #
-            # It seemed to Yarik that this has to be evaluated just once per
-            # training dataset.
-            #
-            self.__labels = labels = targets_sa.value
-            Nlabels = len(labels)
-            Nuniquelabels = len(uniquelabels)
-
-            # TODO: To get proper speed up for the next line only,
-            #       histogram should be computed
-            #       via sorting + counting "same" elements while reducing.
-            #       Guaranteed complexity is NlogN whenever now it is N^2
-            # compute the relative proportion of samples belonging to each
-            # class (do it in one loop to improve speed and reduce readability
-            self.__weights = \
-                [ 1.0 - ((labels == label).sum() / Nlabels) \
-                    for label in uniquelabels ]
-            self.__weights = dict(zip(uniquelabels, self.__weights))
-
-        labels = self.__labels
-        # number of occerences for each unique class in kNNs
-        votes = self.__votes_init.copy()
-        for nn in knn_ids:
-            votes[labels[nn]] += 1
-
-        # weight votes
-        votes = [ self.__weights[ul] * votes[ul] for ul in uniquelabels]
-
-        # find the class with most votes
-        # return votes as well to store them in the state
-        return uniquelabels[np.asarray(votes).argmax()], \
-               votes
-
+        return predictions
 
     def _untrain(self):
         """Reset trained state"""
         self.__data = None
+        self.__weights = None
         super(kNN, self)._untrain()

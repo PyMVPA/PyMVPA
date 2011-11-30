@@ -54,7 +54,8 @@ class KNNTests(unittest.TestCase):
         p = clf.predict(test.samples)
 
         self.assertTrue(p == clf.ca.predictions)
-        self.assertTrue(np.array(clf.ca.estimates).shape == (80,2))
+        self.assertTrue(len(clf.ca.estimates) == 80)
+        self.assertTrue(set(clf.ca.estimates[0].keys()) == set(test.targets))
         self.assertTrue(clf.ca.distances.shape == (80,160))
 
         self.assertTrue(not clf.ca.distances.fa is train.sa)
