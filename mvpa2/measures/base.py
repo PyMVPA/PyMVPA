@@ -814,8 +814,9 @@ class Sensitivity(FeaturewiseMeasure):
     def _train(self, dataset):
         clf = self.__clf
         if __debug__:
-            debug("SA", "Training classifier %s %s" %
+            debug("SA", "Training classifier %s on %s %s",
                   (clf,
+                   dataset,
                    {False: "since it wasn't yet trained",
                     True:  "although it was trained previously"}
                    [clf.trained]))
