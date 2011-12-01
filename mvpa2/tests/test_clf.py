@@ -378,6 +378,10 @@ class ClassifiersTests(unittest.TestCase):
         self.assertEqual(clf.ca.stats.percent_correct,
                              100,
                              msg="Dummy clf should train perfectly")
+        # CV and SplitClassifier should get the same confusion matrices
+        assert_array_equal(clf.ca.stats.matrix,
+                           cv.ca.stats.matrix)
+
         self.assertEqual(len(clf.ca.stats.sets),
                              len(ds.UC),
                              msg="Should have 1 confusion per each split")
