@@ -70,7 +70,7 @@ class SMLR(Classifier):
 
     __tags__ = [ 'smlr', 'linear', 'has_sensitivity', 'binary',
                  'multiclass', 'does_feature_selection',
-                 'random_tie_braking']
+                 'random_tie_breaking']
     # XXX: later 'kernel-based'?
 
     lm = Parameter(.1, min=1e-10, allowedtype='float',
@@ -422,7 +422,7 @@ class SMLR(Classifier):
                 if len(ties):
                     warning("SMLR: detected ties in categories %s.  Small "
                             "amount of noise will be injected into result "
-                            "estimates upon prediction to brake the ties"
+                            "estimates upon prediction to break the ties"
                             % self._ulabels[ties])
                     self.__ties = ties
                     ## w_non0 = np.nonzero(w)

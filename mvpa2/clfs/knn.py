@@ -206,16 +206,16 @@ class kNN(Classifier):
             # It would be more expensive than just to look for
             # the maximum, but this piece should be the least
             # cpu-intensive while distances computation should consume
-            # the most. Also it would allow to look and brake the ties
+            # the most. Also it would allow to look and break the ties
             votes_reversed = sorted([(v, k) for k, v in votes.iteritems()],
                                     reverse=True)
             # check for ties
             max_vote, max_vote_label = votes_reversed[0]
 
             if len(votes_reversed) > 1 and max_vote == votes_reversed[1][0]:
-                # figure out all ties and brake them based on the mean
+                # figure out all ties and break them based on the mean
                 # distance
-                # TODO: theoretically we could brake out of the loop earlier
+                # TODO: theoretically we could break out of the loop earlier
                 ties = [x[1] for x in votes_reversed if x[0] == max_vote]
 
                 # compute mean distances to the corresponding clouds
