@@ -19,19 +19,20 @@ from mvpa2.testing.clfs import *
 
 from mvpa2.base.dataset import vstack
 
-## from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
+from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
 from mvpa2.generators.splitters import Splitter
 
 from mvpa2.clfs.meta import CombinedClassifier, \
      BinaryClassifier, MulticlassClassifier, \
      MaximalVote
-from mvpa2.measures.base import TransferMeasure ##, ProxyMeasure, CrossValidation
+from mvpa2.measures.base import TransferMeasure, CrossValidation
 from mvpa2.mappers.fx import mean_sample, BinaryFxNode
 from mvpa2.misc.errorfx import mean_mismatch_error
 
 
 
 # Generate test data for testing ties
+#mvpa2._random_seed = 2#982220910
 @reseed_rng()
 def get_dsties1():
     ds = datasets['uni2small'].copy()
@@ -39,7 +40,7 @@ def get_dsties1():
     tied_samples = ds.targets == dtarget
     ds2 = ds[tied_samples].copy(deep=True)
     # add similar noise to both ties
-    noise_level = 0.01
+    noise_level = 0.2
     ds2.samples += \
                   np.random.normal(size=ds2.shape)*noise_level
     ds[tied_samples].samples += \
@@ -51,6 +52,9 @@ def get_dsties1():
     return ds
 _dsties1 = get_dsties1()
 
+#from mvpa2.clfs.smlr import SMLR
+#clf=SMLR(lm=1.0, fit_all_weights=True, enable_ca=['estimates'])
+#if True:
 @sweepargs(clf=clfswh['multiclass'])
 def test_multiclass_ties(clf):
     ds = _dsties1
@@ -61,14 +65,24 @@ def test_multiclass_ties(clf):
     ds_.samples[ds.a.ties_idx[0]] = ds.samples[ds.a.ties_idx[1]]
     ok_(np.any(ds_.samples != ds.samples))
 
+    clf_ = clf.clone()
     clf = clf.clone()
-    clf.ca.enable('estimates')
+    clf.ca.enable(['estimates', 'predictions'])
+    clf_.ca.enable(['estimates', 'predictions'])
     te = TransferMeasure(clf, Splitter('train'),
                             postproc=BinaryFxNode(mean_mismatch_error,
                                                   'targets'),
                             enable_ca=['stats'])
-    #te = CrossValidation(clf, NFoldPartitioner(), postproc=mean_sample(),
-    #                    enable_ca=['stats'])
+    te_ = TransferMeasure(clf_, Splitter('train'),
+                            postproc=BinaryFxNode(mean_mismatch_error,
+                                                  'targets'),
+                            enable_ca=['stats'])
+
+    te = CrossValidation(clf, NFoldPartitioner(), postproc=mean_sample(),
+                        enable_ca=['stats'])
+    te_ = CrossValidation(clf_, NFoldPartitioner(), postproc=mean_sample(),
+                        enable_ca=['stats'])
+
     error = te(ds)
     matrix = te.ca.stats.matrix
 
@@ -77,15 +91,25 @@ def test_multiclass_ties(clf):
     ties_indices = [te.ca.stats.labels.index(c) for c in ds.a.ties]
     hits = np.diag(te.ca.stats.matrix)[ties_indices]
 
-
     # First check is to see if we swap data between tied labels we
     # are getting the same results if we permute labels accordingly,
     # i.e. that tie resolution is not dependent on the labels order
     # but rather on the data
-    te(ds_)
-    matrix_swapped = te.ca.stats.matrix
-    assert_array_equal(hits,
-                       np.diag(matrix_swapped)[ties_indices[::-1]])
+    te_(ds_)
+    matrix_swapped = te_.ca.stats.matrix
+
+    if False: #0 in hits:
+        print clf, matrix, matrix_swapped
+        print clf.ca.estimates[:, 2] - clf.ca.estimates[:,0]
+        #print clf.ca.estimates
+
+    ok_(not (np.array_equal(matrix, matrix_swapped) and 0 in hits))
+
+    # this check is valid only if ties are not broken randomly
+    # like it is the case with SMLR
+    if not 'random_tie_braking' in clf.__tags__:
+        assert_array_equal(hits,
+                           np.diag(matrix_swapped)[ties_indices[::-1]])
 
     # Second check is to just see if we didn't get an obvious bias and
     # got 0 in one of the hits, although it is labile
