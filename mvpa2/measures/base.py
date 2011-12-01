@@ -730,6 +730,18 @@ class StaticMeasure(Measure):
 
 
 
+def _dont_force_slaves(slave_kwargs={}):
+    """Helper to reset force_train in sensitivities with slaves
+    """
+    # We should not (or even must not in case of SplitCLF) force
+    # training of slave analyzers since they would be trained
+    # anyways by the Boosted analyzer's train
+    # TODO: consider at least a warning whenever it is provided
+    # and is True
+    slave_kwargs = slave_kwargs or {}   # make new instance of default empty one
+    slave_kwargs['force_train'] = slave_kwargs.get('force_train', False)
+    return slave_kwargs
+
 #
 # Flavored implementations of FeaturewiseMeasures
 

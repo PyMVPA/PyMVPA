@@ -44,7 +44,8 @@ from mvpa2.measures.base import \
     MappedClassifierSensitivityAnalyzer, \
     FeatureSelectionClassifierSensitivityAnalyzer, \
     RegressionAsClassifierSensitivityAnalyzer, \
-    BinaryClassifierSensitivityAnalyzer
+    BinaryClassifierSensitivityAnalyzer, \
+    _dont_force_slaves
 
 from mvpa2.base import warning
 
@@ -1258,7 +1259,7 @@ class SplitClassifier(CombinedClassifier):
 
 
     @group_kwargs(prefixes=['slave_'], passthrough=True)
-    def get_sensitivity_analyzer(self, slave_kwargs, **kwargs):
+    def get_sensitivity_analyzer(self, slave_kwargs={}, **kwargs):
         """Return an appropriate SensitivityAnalyzer for `SplitClassifier`
 
         Parameters
@@ -1268,7 +1269,8 @@ class SplitClassifier(CombinedClassifier):
         """
         return BoostedClassifierSensitivityAnalyzer(
                 self, sa_attr='splits',
-                analyzer=self.__clf.get_sensitivity_analyzer(**slave_kwargs),
+                analyzer=self.__clf.get_sensitivity_analyzer(
+                    **_dont_force_slaves(slave_kwargs)),
                 **kwargs)
 
     partitioner = property(fget=lambda x:x.__partitioner,
