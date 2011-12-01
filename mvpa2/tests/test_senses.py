@@ -11,34 +11,41 @@
 import numpy as np
 
 from mvpa2.testing import *
-from mvpa2.testing import _ENFORCE_CA_ENABLED
-
-from mvpa2.datasets.base import dataset_wizard
 from mvpa2.misc.data_generators import normal_feature_dataset
 from mvpa2.generators.partition import NFoldPartitioner
 from mvpa2.clfs.meta import SplitClassifier
 from mvpa2.clfs.smlr import SMLR
 
-class SensitivityTests(unittest.TestCase):
+@reseed_rng()
+def test_splitclf_sensitivities():
+    datasets = [normal_feature_dataset(perlabel=100, nlabels=2,
+                                       nfeatures=4,
+                                       nonbogus_features=[0, i+1],
+                                       snr=1, nchunks=2)
+                for i in xrange(2)]
 
-    def setUp(self):
-        self.dataset = normal_feature_dataset(perlabel=100, nlabels=2,
-                                              nfeatures=10,
-                                              nonbogus_features=[0,1],
-                                              snr=0.3, nchunks=2)
-        #zscore(dataset, chunks_attr='chunks')
+    sclf = SplitClassifier(SMLR(),
+                           NFoldPartitioner())
+    analyzer = sclf.get_sensitivity_analyzer()
 
-    def test_split_clf(self):
-        # set up the classifier
-        sclf = SplitClassifier(SMLR(),
-                               NFoldPartitioner())
+    senses1 = analyzer(datasets[0])
+    senses2 = analyzer(datasets[1])
 
-        analyzer = sclf.get_sensitivity_analyzer()
-
-        senses = analyzer(self.dataset)
-
+    for senses in senses1, senses2:
         # This should be False when comparing two folds
-        assert_false(np.allclose(senses.samples[0],senses.samples[2]))
+        assert_false(np.allclose(senses.samples[0],
+                                 senses.samples[2]))
+        assert_false(np.allclose(senses.samples[1],
+                                 senses.samples[3]))
+    # Moreover with new data we should have got different results
+    # (i.e. it must retrained correctly)
+    for s1, s2 in zip(senses1, senses2):
+        assert_false(np.allclose(s1, s2))
+
+    # and we should have "selected" "correct" voxels
+    for i, senses in enumerate((senses1, senses2)):
+        assert_equal(set(np.argsort(np.max(np.abs(senses), axis=0))[-2:]),
+                     set((0, i+1)))
 
 
 if __name__ == '__main__':
