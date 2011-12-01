@@ -208,7 +208,7 @@ class ErrorsTests(unittest.TestCase):
         # NB warnings are not printed while doing whole testing
         warning("Don't worry about the following warning.")
         if 'multiclass' in l_clf.__tags__:
-            self.failIf(terr(test3) is None)
+            self.assertFalse(terr(test3) is None)
 
         # try copying the beast
         terr_copy = copy(terr)
