@@ -15,7 +15,7 @@ from mvpa2.support.copy import copy
 
 from mvpa2.base.dataset import vstack
 from mvpa2.base import externals, warning
-from mvpa2.generators.partition import OddEvenPartitioner
+from mvpa2.generators.partition import OddEvenPartitioner, NFoldPartitioner
 from mvpa2.generators.base import Repeater
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.generators.splitters import Splitter
@@ -627,6 +627,50 @@ class ErrorsTests(unittest.TestCase):
             #pl.close(fig)
             #pl.show()
 
+    @reseed_rng()
+    def test_confusionmatrix_nulldist(self):
+        from mvpa2.clfs.gnb import GNB
+
+        class ConfusionMatrixError(object):
+            """Custom error "function"
+            """
+            def __init__(self, labels=None):
+                self.labels = labels
+            def __call__(self, predictions, targets):
+                cm = ConfusionMatrix(labels=list(self.labels),
+                                     targets=targets, predictions=predictions)
+                ## print cm.matrix
+                # We have to add a degenerate leading dimension
+                # so we could separate them into separate 'samples'
+                return cm.matrix[None, :]
+
+        from mvpa2.misc.data_generators import normal_feature_dataset
+        ds = normal_feature_dataset(snr=2., perlabel=33, nchunks=3,
+                                    nonbogus_features=[0,1], nfeatures=2)
+
+        clf = GNB()
+        num_perm = 10
+        permutator = AttributePermutator('targets',
+                                         limit='chunks',
+                                         count=num_perm)
+        cv = CrossValidation(
+            clf, NFoldPartitioner(),
+            errorfx=ConfusionMatrixError(labels=ds.sa['targets'].unique),
+            postproc=mean_sample(),
+            null_dist=MCNullDist(permutator,
+                                 tail='right', # because we now look at accuracy not error
+                                 enable_ca=['dist_samples']),
+            enable_ca=['stats'])
+        cmatrix = cv(ds)
+        ## print cmatrix.samples
+        cvnp = cv.ca.null_prob.samples
+        ## print cvnp
+        self.assertTrue(cvnp.shape, (2, 2))
+        # diagonal p is low -- we have signal after all
+        self.assertTrue(np.all(np.diag(cvnp) < 0.15))
+        # off diagonals are high
+        self.assertTrue(cvnp[0,1] > 0.85)
+        self.assertTrue(cvnp[1,0] > 0.85)
 
 def suite():
     return unittest.makeSuite(ErrorsTests)
