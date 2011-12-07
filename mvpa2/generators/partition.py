@@ -404,3 +404,44 @@ class NFoldPartitioner(Partitioner):
     def _get_partition_specs(self, uniqueattrs):
         return [(None, i) for i in \
                  support.xunique_combinations(uniqueattrs, self.__cvtype)]
+
+
+from mvpa2.misc.support import xunique_combinations
+
+class ExcludeTargetsCombinationsPartitioner(Node):
+    """Given a pre-generated partitioning XXX
+
+    TODO 4 Swaroop -- provide documentation
+    """
+    def __init__(self, k,
+                 targets_attr,
+                 partitions_attr='partitions',
+                 partitions_keep=2,    # default for testing partition
+                 partition_assign=3, # assign one which Splitter doesn't even get to
+                 **kwargs):
+        Node.__init__(self, **kwargs)
+        self._k = k
+        self._targets_attr = targets_attr
+        self._partitions_attr = partitions_attr
+        self._partitions_keep = partitions_keep
+        self._partition_assign = partition_assign
+
+    def generate(self, ds):
+        orig_partitioning = ds.sa[self._partitions_attr].value.copy()
+        targets = ds.sa[self._targets_attr].value
+
+        testing_part = orig_partitioning == self._partitions_keep
+        nontesting_part = np.logical_not(testing_part)
+
+        utargets = np.unique(targets[testing_part])
+        for combination in xunique_combinations(utargets, self._k):
+            partitioning = orig_partitioning.copy()
+            combination_matches = [ t in combination for t in targets ]
+            combination_nonmatches = np.logical_not(combination_matches)
+
+            partitioning[np.logical_and(testing_part, combination_nonmatches)] = self._partition_assign
+            partitioning[np.logical_and(nontesting_part, combination_matches)] = self._partition_assign
+            pds = ds.copy(deep=False)
+            pds.sa[self.space] = partitioning
+            yield pds
+
