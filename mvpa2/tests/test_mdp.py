@@ -166,3 +166,13 @@ def test_llemapper():
     pm.train(ds)
     fmapped = pm.forward(ds)
     assert_equal(fmapped.shape, (8, 2))
+
+def test_nodeargs():
+   skip_if_no_external('mdp', min_version='2.4')
+
+   for svd_val in [True, False]:
+       pcm = PCAMapper(alg='PCA', nodeargs={"svd": svd_val})
+       assert_equal(pcm.node.svd, svd_val)
+   for output_dim in [0.0, 0.5, 0.95, 0.99, 10, 50, 100]:
+       pcm = PCAMapper(alg='PCA', nodeargs={"output_dim": output_dim})
+       assert_equal(pcm.node.output_dim, output_dim)
