@@ -23,7 +23,7 @@ from mvpa2.datasets.base import Dataset
 from mvpa2.base.dataset import DAE
 from mvpa2.misc.data_generators import normal_feature_dataset
 
-
+@reseed_rng()
 def test_mdpnodemapper():
     ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
 
@@ -167,12 +167,26 @@ def test_llemapper():
     fmapped = pm.forward(ds)
     assert_equal(fmapped.shape, (8, 2))
 
+@reseed_rng()
 def test_nodeargs():
-   skip_if_no_external('mdp', min_version='2.4')
+    skip_if_no_external('mdp', min_version='2.4')
+    ds = normal_feature_dataset(perlabel=10, nlabels=2, nfeatures=4)
 
-   for svd_val in [True, False]:
-       pcm = PCAMapper(alg='PCA', nodeargs={"svd": svd_val})
-       assert_equal(pcm.node.svd, svd_val)
-   for output_dim in [0.0, 0.5, 0.95, 0.99, 10, 50, 100]:
-       pcm = PCAMapper(alg='PCA', nodeargs={"output_dim": output_dim})
-       assert_equal(pcm.node.output_dim, output_dim)
+    for svd_val in [True, False]:
+        pcm = PCAMapper(alg='PCA', svd=svd_val)
+        assert_equal(pcm.node.svd, svd_val)
+        pcm.train(ds)
+        assert_equal(pcm.node.svd, svd_val)
+    for output_dim in [0.5, 0.95, 0.99, 10, 50, 100]:
+        pcm = PCAMapper(alg='PCA', output_dim=output_dim)
+        for i in range(2):              # so we also test on trained one
+            if isinstance(output_dim, float):
+                assert_equal(pcm.node.desired_variance, output_dim)
+            else:
+                assert_equal(pcm.node.output_dim, output_dim)
+            pcm.train(ds)
+            if isinstance(output_dim, float):
+                assert_not_equal(pcm.node.output_dim, output_dim)
+                # some dimensions are chosen
+                assert_true(pcm.node.output_dim > 0)
+
