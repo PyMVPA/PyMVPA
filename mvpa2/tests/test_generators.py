@@ -18,7 +18,8 @@ from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
 from mvpa2.datasets import dataset_wizard, Dataset
 from mvpa2.generators.splitters import Splitter
 from mvpa2.base.node import ChainNode
-from mvpa2.generators.partition import OddEvenPartitioner, NFoldPartitioner
+from mvpa2.generators.partition import OddEvenPartitioner, NFoldPartitioner, \
+     ExcludeTargetsCombinationsPartitioner
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.generators.base import  Repeater, Sifter
 from mvpa2.generators.resampling import Balancer
@@ -224,3 +225,26 @@ def test_sifter():
         # and we still have both targets  present in training
         training = ds[ds_.sa.partitions == 1]
         assert_array_equal(np.unique(training.sa.targets), ['c', 'p'])
+
+def test_exclude_targets_combinations():
+    partitioner = ChainNode([NFoldPartitioner(),
+                             ExcludeTargetsCombinationsPartitioner(
+                                 k=2,
+                                 targets_attr='targets',
+                                 space='partitions')],
+                            space='partitions')
+    from mvpa2.misc.data_generators import normal_feature_dataset
+    ds = normal_feature_dataset(snr=0., nlabels=4, perlabel=3, nchunks=3,
+                                nonbogus_features=[0,1,2,3], nfeatures=4)
+    partitions = list(partitioner.generate(ds))
+    assert_equal(len(partitions), 3 * 6)
+    splitter = Splitter('partitions')
+    combs = []
+    comb_chunks = []
+    for p in partitions:
+        trds, teds = list(splitter.generate(p))[:2]
+        comb = tuple(np.unique(teds.targets))
+        combs.append(comb)
+        comb_chunks.append(comb + tuple(np.unique(teds.chunks)))
+    assert_equal(len(set(combs)), 6)         # just 6 possible combinations of 2 out of 4
+    assert_equal(len(set(comb_chunks)), 3*6) # all unique
