@@ -639,38 +639,44 @@ class ErrorsTests(unittest.TestCase):
             def __call__(self, predictions, targets):
                 cm = ConfusionMatrix(labels=list(self.labels),
                                      targets=targets, predictions=predictions)
-                ## print cm.matrix
+                #print cm.matrix
                 # We have to add a degenerate leading dimension
                 # so we could separate them into separate 'samples'
                 return cm.matrix[None, :]
 
         from mvpa2.misc.data_generators import normal_feature_dataset
-        ds = normal_feature_dataset(snr=2., perlabel=33, nchunks=3,
-                                    nonbogus_features=[0,1], nfeatures=2)
+        for snr in [0., 2.,]:
+            ds = normal_feature_dataset(snr=snr, perlabel=42, nchunks=3,
+                                        nonbogus_features=[0,1], nfeatures=2)
 
-        clf = GNB()
-        num_perm = 10
-        permutator = AttributePermutator('targets',
-                                         limit='chunks',
-                                         count=num_perm)
-        cv = CrossValidation(
-            clf, NFoldPartitioner(),
-            errorfx=ConfusionMatrixError(labels=ds.sa['targets'].unique),
-            postproc=mean_sample(),
-            null_dist=MCNullDist(permutator,
-                                 tail='right', # because we now look at accuracy not error
-                                 enable_ca=['dist_samples']),
-            enable_ca=['stats'])
-        cmatrix = cv(ds)
-        ## print cmatrix.samples
-        cvnp = cv.ca.null_prob.samples
-        ## print cvnp
-        self.assertTrue(cvnp.shape, (2, 2))
-        # diagonal p is low -- we have signal after all
-        self.assertTrue(np.all(np.diag(cvnp) < 0.15))
-        # off diagonals are high
-        self.assertTrue(cvnp[0,1] > 0.85)
-        self.assertTrue(cvnp[1,0] > 0.85)
+            clf = GNB()
+            num_perm = 50
+            permutator = AttributePermutator('targets',
+                                             limit='chunks',
+                                             count=num_perm)
+            cv = CrossValidation(
+                clf, NFoldPartitioner(),
+                errorfx=ConfusionMatrixError(labels=ds.sa['targets'].unique),
+                postproc=mean_sample(),
+                null_dist=MCNullDist(permutator,
+                                     tail='right', # because we now look at accuracy not error
+                                     enable_ca=['dist_samples']),
+                enable_ca=['stats'])
+            cmatrix = cv(ds)
+            #print "Result:\n", cmatrix.samples
+            cvnp = cv.ca.null_prob.samples
+            #print cvnp
+            self.assertTrue(cvnp.shape, (2, 2))
+            if snr == 0.:
+                # all p should be high since no signal
+                assert_array_less(0.05, cvnp)
+            else:
+                # diagonal p is low -- we have signal after all
+                assert_array_less(np.diag(cvnp), 0.05)
+                # off diagonals are high p since for them we would
+                # need to look at the other tail
+                assert_array_less(0.9,
+                                  cvnp[(np.array([0,1]), np.array([1,0]))])
 
 def suite():
     return unittest.makeSuite(ErrorsTests)
