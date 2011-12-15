@@ -354,6 +354,12 @@ class StatsTestsScipy(unittest.TestCase):
         self.assertTrue(bdist.ppf(0.5) == 50)
         self.assertTrue(bdist.ppf(0) == -1)
 
+    def test_right_tail(self):
+        # Test if we are getting "correct" p-value for right tail in
+        # "interesting" cases
+        # TODO:  some of it is done in
+        #   test_transerror.py:ErrorsTests.test_confusionmatrix_nulldist
+        pass
 
 def suite():
     """Create the suite"""
