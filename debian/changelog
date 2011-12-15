@@ -1,3 +1,9 @@
+pymvpa2 (2.0.0~rc5-2) UNRELEASED; urgency=low
+
+  * Removed conflict with python-mvpa-lib
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 15 Dec 2011 18:32:02 -0500
+
 pymvpa2 (2.0.0~rc5-1) unstable; urgency=low
 
   * mvpa module was renamed into mvpa2 to allow co-installability with
