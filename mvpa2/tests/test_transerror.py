@@ -668,16 +668,17 @@ class ErrorsTests(unittest.TestCase):
             cvnp = cv.ca.null_prob.samples
             #print cvnp
             self.assertTrue(cvnp.shape, (2, 2))
-            if snr == 0.:
-                # all p should be high since no signal
-                assert_array_less(0.05, cvnp)
-            else:
-                # diagonal p is low -- we have signal after all
-                assert_array_less(np.diag(cvnp), 0.05)
-                # off diagonals are high p since for them we would
-                # need to look at the other tail
-                assert_array_less(0.9,
-                                  cvnp[(np.array([0,1]), np.array([1,0]))])
+            if cfg.getboolean('tests', 'labile', default='yes'):
+                if snr == 0.:
+                    # all p should be high since no signal
+                    assert_array_less(0.05, cvnp)
+                else:
+                    # diagonal p is low -- we have signal after all
+                    assert_array_less(np.diag(cvnp), 0.05)
+                    # off diagonals are high p since for them we would
+                    # need to look at the other tail
+                    assert_array_less(0.9,
+                                      cvnp[(np.array([0,1]), np.array([1,0]))])
 
 def suite():
     return unittest.makeSuite(ErrorsTests)
