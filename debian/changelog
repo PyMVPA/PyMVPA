@@ -1,5 +1,6 @@
-pymvpa2 (2.0.0~rc5-2) UNRELEASED; urgency=low
+pymvpa2 (2.0.0~rc6-1) UNRELEASED; urgency=low
 
+  * Fresh release-candidate test-build
   * Removed conflict with python-mvpa-lib
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 15 Dec 2011 18:32:02 -0500
