@@ -628,6 +628,7 @@ class ErrorsTests(unittest.TestCase):
             #pl.show()
 
     @reseed_rng()
+    @labile(3, 1)
     def test_confusionmatrix_nulldist(self):
         from mvpa2.clfs.gnb import GNB
 
