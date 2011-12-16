@@ -228,20 +228,25 @@ def labile(niter=3, nfailures=1):
             for i in xrange(niter):
                 try:
                     ret = func(*arg, **kwargs)
+                    #if not nfailed:
                     break
                 except AssertionError, e:
                     nfailed += 1
+                    if __debug__:
+                        debug('TEST', "Upon %i-th run, test %s failed with %s",
+                              (i, func.__name__, e))
+
                     if nfailed > nfailures:
                         if __debug__:
                             debug('TEST', "Ran %s %i times. Got %d failures, "
                                   "while was allowed %d "
-                                  "-- re-throwing the last failure %s"
-                                  % (func.__name__, i+1, nfailed, nfailures, e))
+                                  "-- re-throwing the last failure %s",
+                                  (func.__name__, i+1, nfailed, nfailures, e))
                         exc_info = sys.exc_info()
                         raise exc_info[1], None, exc_info[2]
             if __debug__:
-                debug('TEST', "Ran %s %i times. Got %d failures."
-                      % (func.__name__, i+1, nfailed))
+                debug('TEST', "Ran %s %i times. Got %d failures.",
+                      (func.__name__, i+1, nfailed))
             return ret
         newfunc = make_decorator(func)(newfunc)
         return newfunc
