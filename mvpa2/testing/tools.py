@@ -12,7 +12,7 @@ Primarily the ones from nose.tools
 """
 __docformat__ = 'restructuredtext'
 
-import os
+import os, sys
 import tempfile
 import unittest
 
@@ -203,3 +203,48 @@ def nodebug(entries=None):
         return newfunc
 
     return decorate
+
+
+def labile(niter=3, nfailures=1):
+    """Decorator for labile tests -- runs multiple times
+
+    Let's reduce probability of random failures but re-running the
+    test multiple times allowing to fail few in a row.  Makes sense
+    only for tests which run on random data, so usually decorated with
+    reseed_rng.  Otherwise it is unlikely that result would change if
+    algorithms are deterministic and operate on the same data
+
+    Parameters
+    ----------
+    niter: int, optional
+      How many iterations to run maximum
+    nfailures: int, optional
+      How many failures to allow
+
+    """
+    def decorate(func):
+        def newfunc(*arg, **kwargs):
+            nfailed, i = 0, 0           # define i just in case
+            for i in xrange(niter):
+                try:
+                    ret = func(*arg, **kwargs)
+                    break
+                except AssertionError, e:
+                    nfailed += 1
+                    if nfailed > nfailures:
+                        if __debug__:
+                            debug('TEST', "Ran %s %i times. Got %d failures, "
+                                  "while was allowed %d "
+                                  "-- re-throwing the last failure %s"
+                                  % (func.__name__, i+1, nfailed, nfailures, e))
+                        exc_info = sys.exc_info()
+                        raise exc_info[1], None, exc_info[2]
+            if __debug__:
+                debug('TEST', "Ran %s %i times. Got %d failures."
+                      % (func.__name__, i+1, nfailed))
+            return ret
+        newfunc = make_decorator(func)(newfunc)
+        return newfunc
+    assert(niter > nfailures)
+    return decorate
+            
