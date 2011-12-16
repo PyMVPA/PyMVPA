@@ -293,6 +293,7 @@ class SearchlightTests(unittest.TestCase):
                            [['0+2', '1+3', '0+2+4', '1+3+5', '2+4', '3+5']])
 
     #@sweepargs(regr=regrswh[:])
+    @reseed_rng()
     def test_regression_with_additional_sa(self):
         regr = regrswh[:][0]
         ds = datasets['3dsmall'].copy()
@@ -332,8 +333,10 @@ class SearchlightTests(unittest.TestCase):
         assert_equal(slmap.shape, (2, ds.nfeatures))
         # SL which had access to beh should have got for sure better
         # results especially in the vicinity of the chosen feature...
-        ok_(np.all(slmapbeh.samples[:, sl.queryengine.query_byid(rfeature)] <=
-                   slmap.samples[:, sl.queryengine.query_byid(rfeature)]))
+        features = sl.queryengine.query_byid(rfeature)
+        assert_array_lequal(slmapbeh.samples[:, features],
+                            slmap.samples[:, features])
+
         # elsewhere they should tend to be better but not guaranteed
 
 def suite():
