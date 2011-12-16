@@ -268,7 +268,13 @@ class SmartVersion(Version):
         self.version = version_to_tuple(vstring)
 
     def __str__(self):
-        return self.vstring
+        try:
+            return self.vstring
+        except AttributeError:
+            # Version.__init__ doesn't take care about assigning
+            # .vstring if None is given, so let's just treat as it is
+            # an empty string
+            return ""
 
     def __cmp__(self, other):
         if isinstance(other, (StringType, TupleType, ListType)):
