@@ -12,8 +12,12 @@ import unittest
 import numpy as np
 
 from mvpa2.base import cfg
+from mvpa2.datasets.base import Dataset
+
 # See other tests and test_procrust.py for some example on what to do ;)
 from mvpa2.algorithms.hyperalignment import Hyperalignment
+from mvpa2.mappers.zscore import zscore
+from mvpa2.misc.support import idhash
 
 # Somewhat slow but provides all needed ;)
 from mvpa2.testing import sweepargs, reseed_rng
@@ -27,22 +31,36 @@ from mvpa2.generators.partition import NFoldPartitioner
 class HyperAlignmentTests(unittest.TestCase):
 
 
+    @sweepargs(zscore_all=(False, True))
     @sweepargs(zscore_common=(False, True))
-    @sweepargs(ref_ds=(None, 3))
+    @sweepargs(ref_ds=(None, 2))
     @reseed_rng()
-    def test_basic_functioning(self, ref_ds, zscore_common):
+    def test_basic_functioning(self, ref_ds, zscore_common, zscore_all):
+        ha = Hyperalignment(ref_ds=ref_ds,
+                            zscore_all=zscore_all,
+                            zscore_common=zscore_common)
+        if ref_ds is None:
+            ref_ds = 0                      # by default should be this one
+
         # get a dataset with some prominent trends in it
         ds4l = datasets['uni4large']
         # lets select for now only meaningful features
         ds_orig = ds4l[:, ds4l.a.nonbogus_features]
         nf = ds_orig.nfeatures
-        n = 5 # # of datasets to generate
+        n = 4 # # of datasets to generate
         Rs, dss_rotated, dss_rotated_clean, random_shifts, random_scales \
             = [], [], [], [], []
+
         # now lets compose derived datasets by using some random
         # rotation(s)
         for i in xrange(n):
+            ## if False: # i == ref_ds:
+            #     # Do not rotate the target space so we could check later on
+            #     # if we transform back nicely
+            #     R = np.eye(ds_orig.nfeatures)
+            ## else:
             R = get_random_rotation(ds_orig.nfeatures)
+
             Rs.append(R)
             ds_ = ds_orig.copy()
             # reusing random data from dataset itself
@@ -51,21 +69,37 @@ class HyperAlignmentTests(unittest.TestCase):
             random_noise = ds4l.samples[:, ds4l.a.bogus_features[:4]]
             ds_.samples = np.dot(ds_orig.samples, R) * random_scales[-1] \
                           + random_shifts[-1]
+
+            ## if (zscore_common or zscore_all):
+            ##     # for later on testing of "precise" reconstruction
+            ##     zscore(ds_, chunks_attr=None)
+
             dss_rotated_clean.append(ds_)
 
             ds_ = ds_.copy()
             ds_.samples = ds_.samples + 0.1 * random_noise
             dss_rotated.append(ds_)
 
-        ha = Hyperalignment(ref_ds=ref_ds, zscore_common=zscore_common)
-        if ref_ds is None:
-            ref_ds = 0                      # by default should be this one
         # Lets test two scenarios -- in one with no noise -- we should get
         # close to perfect reconstruction.  If noise was added -- not so good
         for noisy, dss in ((False, dss_rotated_clean),
                            (True, dss_rotated)):
+            # to verify that original datasets didn't get changed by
+            # Hyperalignment store their idhashes of samples
+            idhashes = [idhash(ds.samples) for ds in dss]
+            idhashes_targets = [idhash(ds.targets) for ds in dss]
+
             mappers = ha(dss)
+
+            idhashes_ = [idhash(ds.samples) for ds in dss]
+            idhashes_targets_ = [idhash(ds.targets) for ds in dss]
+            self.assertEqual(idhashes, idhashes_,
+                msg="Hyperalignment must not change original data.")
+            self.assertEqual(idhashes_targets, idhashes_targets_,
+                msg="Hyperalignment must not change original data targets.")
+
             self.assertEqual(ref_ds, ha.ca.choosen_ref_ds)
+
             # Map data back
 
             dss_clean_back = [m.forward(ds_)
@@ -77,6 +111,8 @@ class HyperAlignmentTests(unittest.TestCase):
             ds_orig_Rref = np.dot(ds_orig.samples, Rs[ref_ds]) \
                            * random_scales[ref_ds] \
                            + random_shifts[ref_ds]
+            if zscore_common or zscore_all:
+                zscore(Dataset(ds_orig_Rref), chunks_attr=None)
             for ds_back in dss_clean_back:
                 # if we used zscoring of common, we cannot rely
                 # that range/offset could be matched, so lets use
@@ -87,20 +123,38 @@ class HyperAlignmentTests(unittest.TestCase):
                 dds = ds_back.samples - ds_orig_Rref
                 ndds = np.linalg.norm(dds) / ds_norm
                 nddss += [ndds]
-            if not noisy or cfg.getboolean('tests', 'labile', default='yes'):
+            snoisy = ('clean', 'noisy')[int(noisy)]
+            do_labile = cfg.getboolean('tests', 'labile', default='yes')
+            if not noisy or do_labile:
                 # First compare correlations
                 self.assertTrue(np.all(np.array(ndcss)
                                        >= (0.9, 0.85)[int(noisy)]),
                         msg="Should have reconstructed original dataset more or"
                         " less. Got correlations %s in %s case."
-                        % (ndcss, ('clean', 'noisy')[int(noisy)]))
-                if not zscore_common:
-                    # only reasonable without zscoring
+                        % (ndcss, snoisy))
+                if not (zscore_all or zscore_common):
+                    # if we didn't zscore -- all of them should be really close
                     self.assertTrue(np.all(np.array(nddss)
-                                           <= (1e-10, 1e-2)[int(noisy)]),
+                                       <= (1e-10, 1e-1)[int(noisy)]),
+                        msg="Should have reconstructed original dataset well "
+                        "without zscoring. Got normed differences %s in %s case."
+                        % (nddss, snoisy))
+                elif do_labile:
+                    # otherwise they all should be somewhat close
+                    #print snoisy, ref_ds,  nddss
+                    self.assertTrue(np.all(np.array(nddss) >= nddss[ref_ds]),
+                        msg="Should have reconstructed orig_ds best of all. "
+                        "Got normed differences %s in %s case with ref_ds=%d."
+                        % (nddss, snoisy, ref_ds))
+                    self.assertTrue(np.all(np.array(nddss)
+                                           <= (.2, 3)[int(noisy)]),
                         msg="Should have reconstructed original dataset more or"
-                        " less. Got normed differences %s in %s case."
-                        % (nddss, ('clean', 'noisy')[int(noisy)]))
+                        " less for all. Got normed differences %s in %s case."
+                        % (nddss, snoisy))
+                    self.assertTrue(np.all(nddss[ref_ds] <= .05),
+                        msg="Should have reconstructed original dataset quite "
+                        "well even with zscoring. Got normed differences %s "
+                        "in %s case." % (nddss, snoisy))
 
         # Lets see how well we do if asked to compute residuals
         ha = Hyperalignment(ref_ds=ref_ds, level2_niter=2,
@@ -112,10 +166,8 @@ class HyperAlignmentTests(unittest.TestCase):
         # just basic tests:
         self.assertEqual(rerrors[0, ref_ds], 0)
         self.assertEqual(rerrors.shape, (4, n))
-        pass
 
 
-    ##REF: Name was automagically refactored
     def _test_on_swaroop_data(self):
         #
         print "Running swaroops test on data we don't have"
@@ -179,7 +231,7 @@ class HyperAlignmentTests(unittest.TestCase):
                 samples=sub+'_mkdg.nii.gz', targets=md_labels,
                 chunks=np.repeat(range(8), 192), mask=sub+'_mask_vt.nii.gz'))
 
-        m=mean_group_sample(['targets', 'chunks'])
+        m = mean_group_sample(['targets', 'chunks'])
 
         mkdg_ds = [ds_.get_mapped(m) for ds_ in mkdg_ds]
         mkdg_ds = [ds_[ds_.sa.targets != -1] for ds_ in mkdg_ds]

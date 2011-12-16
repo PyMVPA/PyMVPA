@@ -196,11 +196,15 @@ def __check_nipy_neurospin():
     from nipy.neurospin.utils import emp_nul
 
 def __assign_skl_version():
-    import scikits.learn as skl
-    if skl.__doc__.strip() == "":
-        raise ImportError("Verify your installation of scikits.learn. "
-                          "Its docstring is empty -- could be that only -lib "
-                          "was installed without the native Python modules")
+    try:
+        import sklearn as skl
+    except ImportError:
+        # Let's try older space
+        import scikits.learn as skl
+        if skl.__doc__ is None or skl.__doc__.strip() == "":
+            raise ImportError("Verify your installation of scikits.learn. "
+                              "Its docstring is empty -- could be that only -lib "
+                              "was installed without the native Python modules")
     versions['skl'] = SmartVersion(skl.__version__)
 
 def __check_weave():
@@ -296,13 +300,24 @@ def __check_rv_discrete_ppf():
 def __check_in_ipython():
     # figure out if ran within IPython
     if '__IPYTHON__' in globals()['__builtins__']:
-        try:
-            from IPython import Release
-            versions['ipython'] = SmartVersion(Release.version)
-        except:
-            pass
         return
     raise RuntimeError, "Not running in IPython session"
+
+def __assign_ipython_version():
+    ipy_version = None
+    try:
+        # Development post 0.11 version finally carries
+        # conventional one
+        import IPython
+        ipy_version = IPython.__version__
+    except:
+        try:
+            from IPython import Release
+            ipy_version = Release.version
+        except:
+            pass
+        pass
+    versions['ipython'] = SmartVersion(ipy_version)
 
 def __check_openopt():
     try:
@@ -482,6 +497,7 @@ _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'lxml': "from lxml import objectify as __",
           'atlas_pymvpa': "__check_atlas_family('pymvpa')",
           'atlas_fsl': "__check_atlas_family('fsl')",
+          'ipython': "__assign_ipython_version()",
           'running ipython env': "__check_in_ipython()",
           'reportlab': "__check_reportlab()",
           'nose': "import nose as __",
@@ -620,7 +636,7 @@ versions._KNOWN.update({
     'nipy' : __assign_nipy_version,
     'matplotlib': __assign_matplotlib_version,
     'mdp' : __assign_mdp_version,
-    'ipython' : __check_in_ipython,
+    'ipython' : __assign_ipython_version,
     'reportlab' : __check_reportlab,
     'pprocess' : __check_pprocess,
     'rpy2' : __check_rpy2,

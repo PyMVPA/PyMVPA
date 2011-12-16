@@ -30,6 +30,12 @@ experiments.
   URL: http://www.ncbi.nlm.nih.gov/pubmed/19938211
 
 
+.. _CCK+11:
+
+**Carlin, J. D., Calder, A. J., Kriegeskorte, N., Nili, H. & Rowe, J. B.** (2011). A head view-invariant representation of gaze direction in anterior superior temporal sulcus. *Curr Biol*, *21*, 1817–21.
+  DOI: http://dx.doi.org/10.1016/j.cub.2011.09.025
+
+
 .. _CRK+11:
 
 **Carlin, J. D., Rowe, J. B., Kriegeskorte, N., Thompson, R. & Calder, A. J.** (2011). Direction-Sensitive Codes for Observed Head Turns in Human Superior Temporal Sulcus. *Cerebral Cortex*, **, .
@@ -206,6 +212,12 @@ experiments.
   DOI: http://dx.doi.org/10.1371/journal.pmed.0020124
 
 
+.. _JP11:
+
+**Jimura, K. & Poldrack, R.** (2011). Analyses of regional-average activation and multivoxel pattern information tell complementary stories. *Neuropsychologia*.
+  DOI: http://dx.doi.org/10.1016/j.neuropsychologia.2011.11.007
+
+
 .. _JL09:
 
 **Jurica, P. & van Leeuwen, C.** (2009). OMPC: an open-source MATLAB-to-Python compiler. *Frontiers in Neuroinformatics*, *3*, 5.
@@ -273,7 +285,7 @@ experiments.
 
 .. _KWO11:
 
-**Kubilius, J., Wagemans, J. & Op de Beeck, H.** (2011). Emergence of perceptual gestalts in the human visual cortex: The case of the configural superiority effect. *Psychological Science*, *in press*.
+**Kubilius, J., Wagemans, J. & Beeck, H. O. d.** (2011). Emergence of perceptual gestalts in the human visual cortex: The case of the configural superiority effect. *Psychological Science*, *in press*.
   Keywords: :keyword:`pymvpa`, :keyword:`fMRI`
 
   DOI: http://dx.doi.org/10.1177/0956797611417000
@@ -392,6 +404,12 @@ experiments.
 
 **Pereira, F., Mitchell, T. & Botvinick, M.** (2009). Machine learning classifiers and fMRI: A tutorial overview. *NeuroImage*, *45*, 199–209.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2008.11.007
+
+
+.. _PSR11:
+
+**Pernet, C. R., Sajda, P. & Rousselet, G. A.** (2011). Single-trial analyses: why bother?. *Front Psychol*, *2*, 322.
+  DOI: http://dx.doi.org/10.3389/fpsyg.2011.00322
 
 
 .. _PP07:

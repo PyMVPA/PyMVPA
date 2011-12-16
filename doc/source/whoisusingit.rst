@@ -48,6 +48,13 @@ Institutions Where PyMVPA Is Known To Be Used
 Studies employing PyMVPA
 ========================
 
+* :ref:`Jimura and Poldrack, Neuropsychologia (2011) <JP11>`: Analyses of
+  regional-average activation and multivoxel pattern information tell
+  complementary stories
+
+* :ref:`Carlin et al., Current Biology (2011) <CCK+11>`: A head view-invariant
+  representation of gaze direction in anterior superior temporal sulcus
+
 * :ref:`Kaunitz et al., Frontiers in Perception Science (2011) <KKO+11>`:
   Intercepting the first pass: rapid categorization is suppressed for unseen stimuli.
 
@@ -101,7 +108,10 @@ Studies employing PyMVPA
 Articles referring to PyMVPA
 ============================
 
-* :ref:`Schackman et al., Nature Reviews Neuroscience (2011) <SSS+11>`. The
+* :ref:`Pernet et al., Front. Psychology (2011) <PSR11>`. Single-trial analyses: why bother?
+
+
+* :ref:`Schackman et al., Nature Reviews Neuroscience (2011) <SSS+11>`: The
   integration of negative affect, pain and cognitive control in the cingulate
   cortex.
 

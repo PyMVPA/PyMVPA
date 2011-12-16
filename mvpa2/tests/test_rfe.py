@@ -348,10 +348,14 @@ class RFETests(unittest.TestCase):
                 if isinstance(rfe._fselector, FixedNElementTailSelector):
                     self.assertTrue(resds.nfeatures == data_nfeatures - e.argmin())
                 else:
-                    # in this case we can even check if we had actual
-                    # going down/up trend... although -- why up???
                     imin = np.argmin(e)
-                    self.assertTrue( 1 < imin < len(e) - 1 )
+                    if 'does_feature_selection' in clf.__tags__:
+                        # if clf is smart it might figure it out right away
+                        self.assertLess( imin, len(e) )
+                    else:
+                        # in this case we can even check if we had actual
+                        # going down/up trend... although -- why up???
+                        self.assertTrue( 1 < imin < len(e) - 1 )
             else:
                 self.assertTrue(resds.nfeatures == data_nfeatures)
 
@@ -396,14 +400,87 @@ class RFETests(unittest.TestCase):
              # update sensitivity at each step (since we're not using the
              # same CLF as sensitivity analyzer)
 
+        class StoreResults(object):
+            def __init__(self):
+                self.storage = []
+            def __call__(self, data, node, result):
+                self.storage.append((node.measure.mapper.ca.history,
+                                     node.measure.mapper.ca.errors)),
+
+        cv_storage = StoreResults()
         cv = CrossValidation(clf, NFoldPartitioner(), postproc=mean_sample(),
-            enable_ca=['confusion'])
+                             callback=cv_storage,
+                             enable_ca=['confusion']) # TODO -- it is stats
         #cv = SplitClassifier(clf)
         try:
             error = cv(dataset).samples.squeeze()
         except Exception, e:
             self.fail('CrossValidation cannot handle classifier with RFE '
                       'feature selection. Got exception: %s' % (e,))
+
+        assert(len(cv_storage.storage) == len(dataset.sa['chunks'].unique))
+        assert(len(cv_storage.storage[0]) == 2)
+        assert(len(cv_storage.storage[0][0]) == dataset.nfeatures)
+
+        self.assertTrue(error < 0.2)
+
+
+    def test_james_problem_multiclass(self):
+        percent = 80
+        dataset = datasets['uni4large']
+        #dataset = dataset[:, dataset.a.nonbogus_features]
+        
+        rfesvm_split = LinearCSVMC()
+        fs = \
+            RFE(rfesvm_split.get_sensitivity_analyzer(
+            postproc=ChainMapper([
+                #FxMapper('features', l2_normed),
+                #FxMapper('samples', np.mean),
+                #FxMapper('samples', np.abs)
+                FxMapper('features', lambda x: np.argsort(np.abs(x))),
+                #maxofabs_sample()
+                mean_sample()
+                ])),
+                ProxyMeasure(rfesvm_split,
+                             postproc=BinaryFxNode(mean_mismatch_error,
+                                                   'targets')),
+                Splitter('train'),
+                fselector=FractionTailSelector(
+                    percent / 100.0,
+                    mode='select', tail='upper'), update_sensitivity=True)
+
+        clf = FeatureSelectionClassifier(
+            LinearCSVMC(),
+            # on features selected via RFE
+            fs)
+             # update sensitivity at each step (since we're not using the
+             # same CLF as sensitivity analyzer)
+
+        class StoreResults(object):
+            def __init__(self):
+                self.storage = []
+            def __call__(self, data, node, result):
+                self.storage.append((node.measure.mapper.ca.history,
+                                     node.measure.mapper.ca.errors)),
+
+        cv_storage = StoreResults()
+        cv = CrossValidation(clf, NFoldPartitioner(), postproc=mean_sample(),
+                             callback=cv_storage,
+                             enable_ca=['stats'])
+        #cv = SplitClassifier(clf)
+        try:
+            error = cv(dataset).samples.squeeze()
+        except Exception, e:
+            self.fail('CrossValidation cannot handle classifier with RFE '
+                      'feature selection. Got exception: %s' % (e,))
+        #print "ERROR: ", error
+        #print cv.ca.stats
+        assert(len(cv_storage.storage) == len(dataset.sa['chunks'].unique))
+        assert(len(cv_storage.storage[0]) == 2)
+        assert(len(cv_storage.storage[0][0]) == dataset.nfeatures)
+        #print "non bogus features",  dataset.a.nonbogus_features
+        #print cv_storage.storage
+
         self.assertTrue(error < 0.2)
 
 

@@ -50,6 +50,8 @@ together. It would be much nicer if we were able to obtain a
 per-feature measure, where each value can really be attributed to the
 respective feature and not just to an area surrounding it.
 
+.. _chap_magic_feature_selection:
+
 It's A Kind Of Magic
 --------------------
 

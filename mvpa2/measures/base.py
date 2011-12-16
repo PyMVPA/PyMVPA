@@ -730,6 +730,18 @@ class StaticMeasure(Measure):
 
 
 
+def _dont_force_slaves(slave_kwargs={}):
+    """Helper to reset force_train in sensitivities with slaves
+    """
+    # We should not (or even must not in case of SplitCLF) force
+    # training of slave analyzers since they would be trained
+    # anyways by the Boosted analyzer's train
+    # TODO: consider at least a warning whenever it is provided
+    # and is True
+    slave_kwargs = slave_kwargs or {}   # make new instance of default empty one
+    slave_kwargs['force_train'] = slave_kwargs.get('force_train', False)
+    return slave_kwargs
+
 #
 # Flavored implementations of FeaturewiseMeasures
 
@@ -814,8 +826,9 @@ class Sensitivity(FeaturewiseMeasure):
     def _train(self, dataset):
         clf = self.__clf
         if __debug__:
-            debug("SA", "Training classifier %s %s" %
+            debug("SA", "Training classifier %s on %s %s",
                   (clf,
+                   dataset,
                    {False: "since it wasn't yet trained",
                     True:  "although it was trained previously"}
                    [clf.trained]))
@@ -947,7 +960,6 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
                  analyzer=None,
                  combined_analyzer=None,
                  sa_attr='lrn_index',
-                 slave_kwargs={},
                  **kwargs):
         """Initialize Sensitivity Analyzer for `BoostedClassifier`
 
@@ -965,6 +977,16 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
           Arguments to pass to created analyzer if analyzer is None
         """
         Sensitivity.__init__(self, clf, **kwargs)
+
+        if analyzer is not None and len(self._slave_kwargs):
+            raise ValueError, \
+                  "Provide either analyzer of slave_* arguments, not both"
+
+        # Do not force_train slave sensitivity since the dataset might
+        # be inappropriate -- rely on the classifier being trained by
+        # the extraction by the meta classifier itself
+        self._slave_kwargs = _dont_force_slaves(self._slave_kwargs)
+
         if combined_analyzer is None:
             # sanitarize kwargs
             kwargs.pop('force_train', None)
@@ -973,10 +995,6 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         self.__combined_analyzer = combined_analyzer
         """Combined analyzer to use"""
 
-        # XXX where do we get _slave_kwargs from here?
-        if analyzer is not None and len(self._slave_kwargs):
-            raise ValueError, \
-                  "Provide either analyzer of slave_* arguments, not both"
         self.__analyzer = analyzer
         """Analyzer to use for basic classifiers within boosted classifier"""
 
@@ -1048,10 +1066,15 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
         """Initialize Sensitivity Analyzer for `BoostedClassifier`
         """
         Sensitivity.__init__(self, clf, **kwargs)
-
+        # _slave_kwargs is assigned due to assign=True in @group_kwargs
         if analyzer is not None and len(self._slave_kwargs):
             raise ValueError, \
                   "Provide either analyzer of slave_* arguments, not both"
+
+        # Do not force_train slave sensitivity since the dataset might
+        # be inappropriate -- rely on the classifier being trained by
+        # the extraction by the meta classifier itself
+        self._slave_kwargs = _dont_force_slaves(self._slave_kwargs)
 
         self.__analyzer = analyzer
         """Analyzer to use for basic classifiers within boosted classifier"""
@@ -1160,3 +1183,4 @@ class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
 
     def __str__(self):
         return _str(self, str(self.clf))
+

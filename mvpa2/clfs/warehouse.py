@@ -40,7 +40,7 @@ from mvpa2.kernels.libsvm import LinearLSKernel, RbfLSKernel, \
 _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'smlr', 'does_feature_selection', 'has_sensitivity',
         'multiclass', 'non-linear', 'kernel-based', 'lars',
-        'regression', 'regression_based',
+        'regression', 'regression_based', 'random_tie_breaking',
         'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
         'gnb', 'plr', 'rpy2', 'swig', 'skl', 'lda', 'qda' ]
@@ -272,8 +272,10 @@ if externals.exists('lars'):
     from mvpa2.clfs.lars import LARS
     for model in lars.known_models:
         # XXX create proper repository of classifiers!
-        lars_clf = RegressionAsClassifier(LARS(descr="LARS(%s)" % model, model_type=model),
-                                          descr='LARS(model_type=%r) classifier' % model)
+        lars_clf = RegressionAsClassifier(
+            LARS(descr="LARS(%s)" % model,
+                 model_type=model),
+            descr='LARS(model_type=%r) classifier' % model)
         clfswh += lars_clf
 
         # is a regression, too
@@ -302,14 +304,23 @@ clfswh += LDA(descr='LDA()')
 clfswh += QDA(descr='QDA()')
 
 if externals.exists('skl'):
-    from scikits.learn.lda import LDA as sklLDA
+    _skl_version = externals.versions['skl']
+    _skl_api09 = _skl_version >= '0.9'
+    def _skl_import(submod, class_):
+        if _skl_api09:
+            submod_ = __import__('sklearn.%s' % submod, fromlist=[submod])
+        else:
+            submod_ = __import__('scikits.learn.%s' % submod, fromlist=[submod])
+        return getattr(submod_, class_)
+
+    sklLDA = _skl_import('lda', 'LDA')
     from mvpa2.clfs.skl.base import SKLLearnerAdapter
     clfswh += SKLLearnerAdapter(sklLDA(),
                                 tags=['lda', 'linear', 'multiclass', 'binary'],
                                 descr='skl.LDA()')
 
-    if externals.versions['skl'] >= '0.8':
-        from scikits.learn.pls import PLSRegression as sklPLSRegression
+    if _skl_version >= '0.8':
+        sklPLSRegression = _skl_import('pls', 'PLSRegression')
         # somewhat silly use of PLS, but oh well
         regrswh += SKLLearnerAdapter(sklPLSRegression(n_components=1),
                                      tags=['linear', 'regression'],
@@ -317,21 +328,32 @@ if externals.exists('skl'):
                                      descr='skl.PLSRegression_1d()')
 
     if externals.versions['skl'] >= '0.6.0':
-        from scikits.learn.linear_model import \
-             LARS as sklLARS, LassoLARS as sklLassoLARS
+        sklLARS = _skl_import('linear_model',
+                              _skl_api09 and 'Lars' or 'LARS')
+        sklLassoLARS = _skl_import('linear_model',
+                                   _skl_api09 and 'LassoLars' or 'LassoLARS')
+        sklElasticNet = _skl_import('linear_model', 'ElasticNet')
         _lars_tags = ['lars', 'linear', 'regression', 'does_feature_selection']
 
         _lars = SKLLearnerAdapter(sklLARS(),
                                   tags=_lars_tags,
                                   descr='skl.LARS()')
 
-        _lasso_lars = SKLLearnerAdapter(sklLassoLARS(),
+        _lasso_lars = SKLLearnerAdapter(sklLassoLARS(alpha=0.01),
                                         tags=_lars_tags,
                                         descr='skl.LassoLARS()')
 
-        regrswh += [_lars, _lasso_lars]
+        _elastic_net = SKLLearnerAdapter(
+            sklElasticNet(alpha=.01, rho=.3),
+            tags=['enet', 'regression', 'linear', # 'has_sensitivity',
+                 'does_feature_selection'],
+            descr='skl.ElasticNet()')
+
+        regrswh += [_lars, _lasso_lars, _elastic_net]
         clfswh += [RegressionAsClassifier(_lars, descr="skl.LARS_C()"),
-                   RegressionAsClassifier(_lasso_lars, descr="skl.LassoLARS_C()")]
+                   RegressionAsClassifier(_lasso_lars, descr="skl.LassoLARS_C()"),
+                   RegressionAsClassifier(_elastic_net, descr="skl.ElasticNet_C()"),
+                   ]
 
 # kNN
 clfswh += kNN(k=5, descr="kNN(k=5)")

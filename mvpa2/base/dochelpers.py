@@ -244,7 +244,9 @@ def enhanced_doc_string(item, *args, **kwargs):
                                    func.func_code.co_varnames)
 
         if __debug__ and not extend_args:
-            debug('DOCH', 'Not extending parameters for __init__ of  %s' % name)
+            debug('DOCH',
+                  'Not extending parameters for __init__ of  %s',
+                  (name,))
 
         if initdoc is None:
             initdoc = "Initialize instance of %s" % name

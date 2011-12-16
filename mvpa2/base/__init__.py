@@ -274,6 +274,8 @@ if __debug__:
     debug.register('FS_',    "FeatureSelections (verbose)")
     debug.register('FSPL',   "FeatureSelectionPipeline")
 
+    debug.register('KNN',    "kNN")
+
     debug.register('SVM',    "SVM")
     debug.register('SVM_',   "SVM (verbose)")
     debug.register('LIBSVM', "Internal libsvm output")
@@ -332,6 +334,8 @@ if __debug__:
 
     debug.register('REP',    "Reports")
     debug.register('REP_',   "Reports (verbose)")
+
+    debug.register('SUITE',  "Import of mvpa2.suite")
 
     debug.register('ATTRREFER', "Debugging of top-level attribute referencing, "
                    "needed for current refactoring carried out in tent/flexds")

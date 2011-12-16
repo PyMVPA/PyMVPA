@@ -21,6 +21,34 @@ from mvpa2.datasets import Dataset
 if __debug__:
     from mvpa2.base import debug
 
+if externals.exists('scipy'):
+    import scipy.stats.distributions as ssd
+
+    def _auto_rcdf(dist):
+        dist_check = dist
+
+        # which to check for continuous/discrete
+        if isinstance(dist, ssd.rv_frozen):
+            dist_check = dist.dist
+        if isinstance(dist_check, ssd.rv_discrete):
+            # we need to count the exact matches
+            rcdf = lambda x, *args: 1 - dist.cdf(x, *args) + dist.pmf(x, *args)
+        elif isinstance(dist_check, ssd.rv_continuous):
+            # for continuous it is just as good
+            rcdf = lambda x, *args: 1 - dist.cdf(x, *args)
+        elif isinstance(dist_check, Nonparametric):
+            rcdf = dist.rcdf
+        else:
+            raise ValueError("Do not know how to get 'right cdf' for %s" % (dist,))
+        return rcdf
+
+else:
+    def _auto_rcdf(dist):
+        if isinstance(dist, Nonparametric):
+            rcdf = dist.rcdf
+        else:
+            raise ValueError("Do not know how to get 'right cdf' for %s" % (dist,))
+        return rcdf
 
 class Nonparametric(object):
     """Non-parametric 1d distribution -- derives cdf based on stored values.
@@ -56,14 +84,12 @@ class Nonparametric(object):
     def fit(dist_samples):
         return [dist_samples]
 
-
-    def cdf(self, x):
-        """Returns the cdf value at `x`.
+    def _cdf(self, x, operator):
+        """Helper function to compute cdf proper or reverse (i.e. going from the right tail)
         """
-        dist_samples = self._dist_samples
-        res = np.vectorize(lambda v:(dist_samples <= v).mean())(x)
+        res = operator(x)
         if self._correction == 'clip':
-            nsamples = len(dist_samples)
+            nsamples = len(self._dist_samples)
             np.clip(res, 1.0/(nsamples+2), (nsamples+1.0)/(nsamples+2), res)
         elif self._correction is None:
             pass
@@ -74,7 +100,23 @@ class Nonparametric(object):
         return res
 
 
-def _pvalue(x, cdf_func, tail, return_tails=False, name=None):
+    def cdf(self, x):
+        """Returns the cdf value at `x`.
+        """
+        return self._cdf(x,
+                         np.vectorize(lambda v: (self._dist_samples <= v).mean()))
+
+    def rcdf(self, x):
+        """Returns cdf of reversed distribution (i.e. if integrating from right tail)
+
+        Necessary for hypothesis testing in the right tail.
+        It is really just a 1 - cdf(x) + pmf(x) == sf(x)+pmf(x) for a discrete distribution
+        """
+        return self._cdf(x,
+                         np.vectorize(lambda v: (self._dist_samples >= v).mean()))
+
+
+def _pvalue(x, cdf_func, rcdf_func, tail, return_tails=False, name=None):
     """Helper function to return p-value(x) given cdf and tail
 
     Parameters
@@ -95,43 +137,55 @@ def _pvalue(x, cdf_func, tail, return_tails=False, name=None):
     if is_scalar:
         x = [x]
 
-    cdf = cdf_func(x)
+    def stability_assurance(cdf):
+        if __debug__ and 'CHECK_STABILITY' in debug.active:
+            cdf_min, cdf_max = np.min(cdf), np.max(cdf)
+            if cdf_min < 0 or cdf_max > 1.0:
+                s = ('', ' for %s' % name)[int(name is not None)]
+                warning('Stability check of cdf %s failed%s. Min=%s, max=%s' % \
+                        (cdf_func, s, cdf_min, cdf_max))
 
-    if __debug__ and 'CHECK_STABILITY' in debug.active:
-        cdf_min, cdf_max = np.min(cdf), np.max(cdf)
-        if cdf_min < 0 or cdf_max > 1.0:
-            s = ('', ' for %s' % name)[int(name is not None)]
-            warning('Stability check of cdf %s failed%s. Min=%s, max=%s' % \
-                  (cdf_func, s, cdf_min, cdf_max))
+    if tail == 'left':
+        pvalues = cdf_func(x)
+        if return_tails:
+            right_tail = np.zeros(pvalues.shape, dtype=bool)
+        stability_assurance(pvalues)
+    elif tail == 'right':
+        pvalues = rcdf_func(x)
+        if return_tails:
+            right_tail = np.ones(pvalues.shape, dtype=bool)
+        stability_assurance(pvalues)
+    elif tail in ('any', 'both'):
+        pvalues = cdf_func(x)
+        right_tail = (pvalues >= 0.5)
+
+        if np.any(right_tail):
+            # we must compute them all first ATM since otherwise
+            # it would not work for "multiple" features with independent
+            # distributions
+            rcdf = rcdf_func(x)
+            # and then assign the "interesting" ones
+            pvalues[right_tail] = rcdf[right_tail]
+        if tail == 'both':
+            # we need report the area under both tails
+            # XXX this is only meaningful for symmetric distributions
+            pvalues *= 2
 
     # no escape but to assure that CDF is in the right range. Some
     # distributions from scipy tend to jump away from [0,1]
-    cdf = np.clip(cdf, 0, 1.0)
-
-    if tail == 'left':
-        if return_tails:
-            right_tail = np.zeros(cdf.shape, dtype=bool)
-    elif tail == 'right':
-        cdf = 1 - cdf
-        if return_tails:
-            right_tail = np.ones(cdf.shape, dtype=bool)
-    elif tail in ('any', 'both'):
-        right_tail = (cdf >= 0.5)
-        cdf[right_tail] = 1.0 - cdf[right_tail]
-        if tail == 'both':
-            # we need report the area under both tails
-            # XXX this is only meaningful for symetric distributions
-            cdf *= 2
+    # yoh: made inplace operation whenever RF into this function
+    np.clip(pvalues, 0, 1.0, pvalues)
 
     # Assure that NaNs didn't get significant value
-    cdf[np.isnan(x)] = 1.0
-    if is_scalar: res = cdf[0]
-    else:         res = cdf
+    pvalues[np.isnan(x)] = 1.0
+
+    if is_scalar:
+        pvalues = pvalues[0]
 
     if return_tails:
-        return (res, right_tail)
+        return (pvalues, right_tail)
     else:
-        return res
+        return pvalues
 
 
 class NullDist(ClassWithCollections):
@@ -180,7 +234,13 @@ class NullDist(ClassWithCollections):
 
     def cdf(self, x):
         """Implementations return the value of the cumulative distribution
-        function (left or right tail dpending on the setting).
+        function.
+        """
+        raise NotImplementedError
+
+    def rcdf(self, x):
+        """Implementations return the value of the reverse cumulative distribution
+        function.
         """
         raise NotImplementedError
 
@@ -194,7 +254,7 @@ class NullDist(ClassWithCollections):
         distribution the method returns an array. In that case `x` can be
         a scalar value or an array of a matching shape.
         """
-        peas = _pvalue(x, self.cdf, self.__tail, return_tails=return_tails,
+        peas = _pvalue(x, self.cdf, self.rcdf, self.__tail, return_tails=return_tails,
                        **kwargs)
         if is_datasetlike(x):
             # return the p-values in a dataset as well and assign the input
@@ -368,7 +428,7 @@ class MCNullDist(NullDist):
         self._dist = dist
 
 
-    def cdf(self, x):
+    def _cdf(self, x, cdf_func):
         """Return value of the cumulative distribution function at `x`.
         """
         if self._dist is None:
@@ -392,8 +452,19 @@ class MCNullDist(NullDist):
                   % (len(self._dist), len(x))
 
         # extract cdf values per each element
-        cdfs = [ dist.cdf(v) for v, dist in zip(x, self._dist) ]
+        if cdf_func == 'cdf':
+            cdfs = [ dist.cdf(v) for v, dist in zip(x, self._dist) ]
+        elif cdf_func == 'rcdf':
+            cdfs = [ _auto_rcdf(dist)(v) for v, dist in zip(x, self._dist) ]
+        else:
+            raise ValueError
         return np.array(cdfs).reshape(xshape)
+
+    def cdf(self, x):
+        return self._cdf(x, 'cdf')
+
+    def rcdf(self, x):
+        return self._cdf(x, 'rcdf')
 
 
     def clean(self):
@@ -443,7 +514,9 @@ class FixedNullDist(NullDist):
         NullDist.__init__(self, **kwargs)
 
         self._dist = dist
-
+        # assign corresponding rcdf overloading NotImplemented one of
+        # base class
+        self.rcdf = _auto_rcdf(dist)
 
     def fit(self, measure, ds):
         """Does nothing since the distribution is already fixed."""
@@ -530,6 +603,7 @@ class AdaptiveNormal(AdaptiveNullDist):
 if externals.exists('scipy'):
     from mvpa2.support.stats import scipy
     from scipy.stats import kstest
+
     """
     Thoughts:
 
@@ -781,7 +855,8 @@ if externals.exists('scipy'):
         p_thr = kwargs.get('p', 0.05)
         if test == 'p-roc':
             tail = kwargs.get('tail', 'both')
-            data_p = _pvalue(data, Nonparametric(data).cdf, tail)
+            npd = Nonparametric(data)
+            data_p = _pvalue(data, npd.cdf, npd.rcdf, tail)
             data_p_thr = np.abs(data_p) <= p_thr
             true_positives = np.sum(data_p_thr)
             if true_positives == 0:
@@ -799,7 +874,7 @@ if externals.exists('scipy'):
         try:
             scipy_ind = distributions.index('scipy')
             distributions.pop(scipy_ind)
-            sp_dists = scipy.stats.distributions.__all__
+            sp_dists = ssd.__all__
             sp_version = externals.versions['scipy']
             if sp_version >= '0.9.0':
                 for d_ in ['ncf']:
@@ -853,8 +928,9 @@ if externals.exists('scipy'):
                           % (dist_params, dist_name))
                 if test == 'p-roc':
                     cdf_func = lambda x: dist_gen_.cdf(x, *dist_params)
+                    rcdf_func = _auto_rcdf(dist_gen_)
                     # We need to compare detection under given p
-                    cdf_p = np.abs(_pvalue(data, cdf_func, tail, name=dist_gen))
+                    cdf_p = np.abs(_pvalue(data, cdf_func, rcdf_func, tail, name=dist_gen))
                     cdf_p_thr = cdf_p <= p_thr
                     D, p = (np.sum(np.abs(data_p_thr - cdf_p_thr))*1.0/true_positives, 1)
                     if __debug__:
@@ -965,10 +1041,11 @@ if externals.exists('scipy'):
 
             p_thr = p
 
-            data_p = _pvalue(data, nonparam.cdf, tail)
+            data_p = _pvalue(data, nonparam.cdf, nonparam.rcdf, tail)
             data_p_thr = (data_p <= p_thr).ravel()
 
-            x_p = _pvalue(x, Nonparametric(data).cdf, tail)
+            npd = Nonparametric(data)
+            x_p = _pvalue(x, npd.cdf, npd.rcdf, tail)
             x_p_thr = np.abs(x_p) <= p_thr
             # color bars which pass thresholding in red
             for thr, bar_ in zip(x_p_thr[expand_tails:], hist[2]):
@@ -984,17 +1061,17 @@ if externals.exists('scipy'):
             for i in xrange(min(nbest, len(matches))):
                 D, dist_gen, dist_name, params = matches[i]
                 dist = getattr(scipy.stats, dist_gen)(*params)
-
+                rcdf = _auto_rcdf(dist)
                 label = '%s' % (dist_name)
                 if legend > 1:
                     label += '(D=%.2f)' % (D)
 
-                xcdf_p = np.abs(_pvalue(x, dist.cdf, tail))
+                xcdf_p = np.abs(_pvalue(x, dist.cdf, rcdf, tail))
                 xcdf_p_thr = (xcdf_p <= p_thr).ravel()
 
                 if p is not None and legend > 2:
                     # We need to compare detection under given p
-                    data_cdf_p = np.abs(_pvalue(data, dist.cdf, tail))
+                    data_cdf_p = np.abs(_pvalue(data, dist.cdf, rcdf, tail))
                     data_cdf_p_thr = (data_cdf_p <= p_thr).ravel()
 
                     # true positives

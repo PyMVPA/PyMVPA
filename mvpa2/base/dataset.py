@@ -441,6 +441,8 @@ class AttrDataset(object):
         # for simultaneous slicing of numpy arrays we should
         # distinguish the case when one of the args is a slice, so no
         # ix_ is needed
+        if __debug__:
+            debug('DS_', "Selecting feature/samples of %s" % str(self.samples.shape))
         if isinstance(self.samples, np.ndarray):
             if np.any([isinstance(a, slice) for a in args]):
                 samples = self.samples[args[0], args[1]]
@@ -459,7 +461,8 @@ class AttrDataset(object):
             # features subset
             if not args[1] is slice(None):
                 samples = samples[:, args[1]]
-
+        if __debug__:
+            debug('DS_', "Selected feature/samples %s" % str(self.samples.shape))
         # and now for the attributes -- we want to maintain the type of the
         # collections
         sa = self.sa.__class__(length=samples.shape[0])

@@ -24,6 +24,13 @@ __docformat__ = 'restructuredtext'
 
 from mvpa2 import *
 
+if __debug__ and 'SUITE' in debug.active:
+    __sdebug = lambda msg: debug('SUITE', "%s" % msg)
+else:
+    __sdebug = lambda *args: None
+__sdebug.__doc__ = "Shortcut to output debug messages for suite imports"
+
+__sdebug('base')
 from mvpa2.base import *
 from mvpa2.base.collections import *
 from mvpa2.base.config import *
@@ -37,41 +44,59 @@ from mvpa2.base.state import *
 from mvpa2.base.node import *
 from mvpa2.base.learner import *
 
+__sdebug('h5py')
 if externals.exists('h5py'):
     from mvpa2.base.hdf5 import *
 
+__sdebug('reportlab')
 if externals.exists('reportlab'):
     from mvpa2.base.report import *
 else:
     from mvpa2.base.report_dummy import Report
 
-
+__sdebug('algorithms')
 from mvpa2.algorithms.hyperalignment import *
 
+__sdebug('clfs')
 from mvpa2 import clfs
+__sdebug('clfs distance')
 from mvpa2.clfs.distance import *
+__sdebug('clfs base')
 from mvpa2.clfs.base import *
+__sdebug('clfs meta')
 from mvpa2.clfs.meta import *
+__sdebug('clfs kNN')
 from mvpa2.clfs.knn import *
+__sdebug('clfs lars')
 if externals.exists('lars'):
     from mvpa2.clfs.lars import *
+__sdebug('clfs enet')
 if externals.exists('elasticnet'):
     from mvpa2.clfs.enet import *
+__sdebug('clfs glmnet')
 if externals.exists('glmnet'):
     from mvpa2.clfs.glmnet import *
+__sdebug('clfs skl')
 if externals.exists('skl'):
-    import scikits.learn as skl
+    if externals.versions['skl'] >= '0.9':
+        import sklearn as skl
+    else:
+        import scikits.learn as skl
     from mvpa2.clfs.skl import *
+__sdebug('clfs smlr')
 from mvpa2.clfs.smlr import *
 from mvpa2.clfs.blr import *
 from mvpa2.clfs.gnb import *
 from mvpa2.clfs.stats import *
 from mvpa2.clfs.similarity import *
 if externals.exists('libsvm') or externals.exists('shogun'):
+    __sdebug('clfs svm')
     from mvpa2.clfs.svm import *
 from mvpa2.clfs.transerror import *
+__sdebug('clfs warehouse')
 from mvpa2.clfs.warehouse import *
 
+__sdebug('kernels')
 from mvpa2 import kernels
 from mvpa2.kernels.base import *
 from mvpa2.kernels.np import *
@@ -80,6 +105,7 @@ if externals.exists('libsvm'):
 if externals.exists('shogun'):
     from mvpa2.kernels.sg import *
 
+__sdebug('datasets')
 from mvpa2 import datasets
 from mvpa2.datasets import *
 # just to make testsuite happy
@@ -91,18 +117,21 @@ from mvpa2.datasets.eventrelated import *
 if externals.exists('nibabel') :
     from mvpa2.datasets.mri import *
 
+__sdebug('generators')
 from mvpa2.generators.base import *
 from mvpa2.generators.partition import *
 from mvpa2.generators.splitters import *
 from mvpa2.generators.permutation import *
 from mvpa2.generators.resampling import *
 
+__sdebug('featsel')
 from mvpa2 import featsel
 from mvpa2.featsel.base import *
 from mvpa2.featsel.helpers import *
 from mvpa2.featsel.ifs import *
 from mvpa2.featsel.rfe import *
 
+__sdebug('mappers')
 from mvpa2 import mappers
 #from mvpa2.mappers import *
 from mvpa2.mappers.base import *
@@ -124,6 +153,7 @@ if externals.exists('mdp'):
 if externals.exists('mdp ge 2.4'):
     from mvpa2.mappers.lle import *
 
+__sdebug('measures')
 from mvpa2 import measures
 from mvpa2.measures.anova import *
 from mvpa2.measures.glm import *
@@ -135,6 +165,7 @@ from mvpa2.measures.searchlight import *
 from mvpa2.measures.gnbsearchlight import *
 from mvpa2.measures.corrstability import *
 
+__sdebug('misc')
 from mvpa2.support.copy import *
 from mvpa2.misc.fx import *
 from mvpa2.misc.attrmap import *
@@ -154,6 +185,7 @@ from mvpa2.misc.bv.base import *
 from mvpa2.misc.support import *
 from mvpa2.misc.transformers import *
 
+__sdebug("nibabel")
 if externals.exists("nibabel"):
     from mvpa2.misc.fsl.melodic import *
 
@@ -164,6 +196,7 @@ if externals.exists("pylab"):
         from mvpa2.misc.plot.topo import *
     from mvpa2.misc.plot.lightbox import plot_lightbox
 
+__sdebug("scipy dependents")
 if externals.exists("scipy"):
     from mvpa2.support.stats import scipy
     from mvpa2.measures.corrcoef import *
@@ -174,16 +207,20 @@ if externals.exists("scipy"):
     from mvpa2.clfs.gpr import *
     from mvpa2.support.nipy import *
 
+__sdebug("mappers wavelet")
 if externals.exists("pywt"):
     from mvpa2.mappers.wavelet import *
 
+__sdebug("pylab")
 if externals.exists("pylab"):
     import pylab as pl
 
+__sdebug("atlases")
 if externals.exists("lxml") and externals.exists("nibabel"):
     from mvpa2.atlases import *
 
 
+__sdebug("ipython goodies")
 if externals.exists("running ipython env"):
     from mvpa2.support.ipython import *
     ipy_activate_pymvpa_goodies()
@@ -273,3 +310,5 @@ def suite_stats():
             return s
 
     return EnvironmentStatistics(globals())
+
+__sdebug("THE END of mvpa2.suite imports")

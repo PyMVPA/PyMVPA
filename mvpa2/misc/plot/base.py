@@ -27,7 +27,7 @@ from mvpa2.datasets.miscfx import get_samples_by_attr
 
 ##REF: Name was automagically refactored
 def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
-                fmt='o', perc_sigchg=False, baseline=None):
+                fmt='o', perc_sigchg=False, baseline=None, **kwargs):
     """Make a line plot with errorbars on the data points.
 
     Parameters
@@ -59,6 +59,8 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
       Baseline used for converting values into percent signal changes.
       If `None` and `perc_sigchg` is `True`, the absolute of the mean of the
       first feature (i.e. [:,0]) will be used as a baseline.
+    **kwargs
+      Additional arguments are passed on to errorbar().
 
 
     Examples
@@ -87,8 +89,75 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
     if len(data.shape) < 2:
         data = np.atleast_2d(data)
 
+    return plot_err_line_missing(data.T, x=x, errtype=errtype, curves=curves,
+                                 linestyle=linestyle, fmt=fmt,
+                                 perc_sigchg=perc_sigchg, baseline=baseline,
+                                 **kwargs)
+
+
+def plot_err_line_missing(data, x=None, errtype='ste', curves=None,
+        linestyle='--', fmt='o', perc_sigchg=False, baseline=None, **kwargs):
+    """Make a line plot with errorbars on the data points.
+
+    This is essentially the same function as plot_err_line(), but it expects
+    the data transposed and tolerates an unequal number of samples, per data
+    point.
+
+    Parameters
+    ----------
+    data : sequence of sequences
+      First axis will appear as x-axis in the plot. Along the second axis are
+      the sample. Each data point may have a different number of samples.
+    x : sequence
+      Value to be used as 'x-values' corresponding to the elements of
+      the 2nd axis id `data`. If `None`, a sequence of ascending integers
+      will be generated.
+    errtype : 'ste' or 'std'
+      Type of error value to be computed per datapoint: 'ste' --
+      standard error of the mean, 'std' -- standard deviation.
+    curves : None or list of tuple(x, y)
+      Each tuple represents an additional curve, with x and y coordinates of
+      each point on the curve.
+    linestyle : str or None
+      matplotlib linestyle argument. Applied to either the additional
+      curve or a the line connecting the datapoints. Set to 'None' to
+      disable the line completely.
+    fmt : str
+      matplotlib plot style argument to be applied to the data points
+      and errorbars.
+    perc_sigchg : bool
+      If `True` the plot will show percent signal changes relative to a
+      baseline.
+    baseline : float or None
+      Baseline used for converting values into percent signal changes.
+      If `None` and `perc_sigchg` is `True`, the absolute of the mean of the
+      first feature (i.e. [:,0]) will be used as a baseline.
+    **kwargs
+      Additional arguments are passed on to errorbar().
+
+    Examples
+    --------
+    Make a dataset with 20 samples from a full sinus wave period,
+    computed 100 times with individual noise pattern.
+
+    >>> x = np.linspace(0, np.pi * 2, 20)
+    >>> data = np.vstack([np.sin(x)] * 30)
+    >>> data += np.random.normal(size=data.shape)
+
+    Now, plot mean data points with error bars, plus a high-res
+    version of the original sinus wave.
+
+    >>> x_hd = np.linspace(0, np.pi * 2, 200)
+    >>> elines = plot_err_line(data, x, curves=[(x_hd, np.sin(x_hd))])
+    >>> # pl.show()
+
+    Returns
+    -------
+    list
+      Of lines which were plotted.
+    """
     # compute mean signal course
-    md = data.mean(axis=0)
+    md = np.array([np.mean(i) for i in data])
 
     if baseline is None:
         baseline = np.abs(md[0])
@@ -97,9 +166,7 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
         md /= baseline
         md -= 1.0
         md *= 100.0
-        # not in-place to keep original data intact
-        data = data / baseline
-        data *= 100.0
+        data = [np.array(i) / baseline * 100 for i in data]
 
     # compute matching datapoint locations on x-axis
     if x is None:
@@ -127,15 +194,16 @@ def plot_err_line(data, x=None, errtype='ste', curves=None, linestyle='--',
 
     # compute error per datapoint
     if errtype == 'ste':
-        err = data.std(axis=0) / np.sqrt(len(data))
+        err = [np.std(i) / np.sqrt(len(i)) for i in data]
     elif errtype == 'std':
-        err = data.std(axis=0)
+        err = [np.std(i) for i in data]
     else:
         raise ValueError, "Unknown error type '%s'" % errtype
 
     # plot datapoints with error bars
-    lines.append(pl.errorbar(x, md, err, fmt=fmt, linestyle=linestyle))
+    lines.append(pl.errorbar(x, md, err, fmt=fmt, linestyle=linestyle, **kwargs))
     return lines
+
 
 
 

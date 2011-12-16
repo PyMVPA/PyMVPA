@@ -18,6 +18,7 @@ from mvpa2.datasets.base import dataset_wizard
 from mvpa2.mappers.zscore import ZScoreMapper, zscore
 from mvpa2.testing.tools import assert_array_almost_equal, assert_array_equal, \
         assert_equal, assert_raises, ok_, nodebug
+from mvpa2.misc.support import idhash
 
 from mvpa2.testing.datasets import datasets
 
@@ -37,8 +38,21 @@ def test_mapper_vs_zscore():
 
         zsm = ZScoreMapper(chunks_attr=None)
         assert_raises(RuntimeError, zsm.forward, ds1.samples)
+        idhashes = (idhash(ds1), idhash(ds1.samples))
         zsm.train(ds1)
+        idhashes_train = (idhash(ds1), idhash(ds1.samples))
+        assert_equal(idhashes, idhashes_train)
+
+        # forward dataset
+        ds1z_ds = zsm.forward(ds1)
+        idhashes_forwardds = (idhash(ds1), idhash(ds1.samples))
+        # must not modify samples in place!
+        assert_equal(idhashes, idhashes_forwardds)
+
+        # forward samples explicitly
         ds1z = zsm.forward(ds1.samples)
+        idhashes_forward = (idhash(ds1), idhash(ds1.samples))
+        assert_equal(idhashes, idhashes_forward)
 
         zscore(ds2, chunks_attr=None)
         assert_array_almost_equal(ds1z, ds2.samples)
@@ -138,3 +152,17 @@ def test_zscore():
     zm = ZScoreMapper(params={0: (2,1), 1: (12,1)})
     zm.train(ds)                        # train
     assert_array_almost_equal(zm.forward(ds), np.transpose([check + check]))
+
+    # And just a smoke test for warnings reporting whenever # of
+    # samples per chunk is low.
+    # on 1 sample per chunk
+    zds1 = ZScoreMapper(chunks_attr='chunks', auto_train=True)(
+        ds[[0, -1]])
+    ok_(np.all(zds1.samples == 0))   # they all should be 0
+    # on 2 samples per chunk
+    zds2 = ZScoreMapper(chunks_attr='chunks', auto_train=True)(
+        ds[[0, 1, -10, -1]])
+    assert_array_equal(np.unique(zds2.samples), [-1., 1]) # they all should be -1 or 1
+    # on 3 samples per chunk -- different warning
+    ZScoreMapper(chunks_attr='chunks', auto_train=True)(
+        ds[[0, 1, 2, -3, -2, -1]])

@@ -11,6 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as np
+#import scipy.linalg as spl
 
 from mvpa2.base.dochelpers import borrowdoc
 from mvpa2.mappers.base import accepts_dataset_as_samples
@@ -35,12 +36,6 @@ class SVDMapper(ProjectionMapper):
           All keyword arguments are passed to the ProjectionMapper
           constructor.
 
-        Notes
-        -----
-        For the 'selector' argument this class also supports
-        passing a `ElementSelector` instance, which will be used to
-        determine the to be selected features, based on the singular
-        values of each component.
         """
         ProjectionMapper.__init__(self, **kwargs)
 
@@ -58,6 +53,7 @@ class SVDMapper(ProjectionMapper):
 
         # singular value decomposition
         U, SV, Vh = np.linalg.svd(X, full_matrices=0)
+        #U, SV, Vh = spl.svd(X, full_matrices=0)
 
         # store the final matrix with the new basis vectors to project the
         # features onto the SVD components. And store its .H right away to

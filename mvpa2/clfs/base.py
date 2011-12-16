@@ -387,6 +387,10 @@ class Classifier(Learner):
         ## ??? yoh: changed to asany from as without exhaustive check
         data = np.asanyarray(dataset.samples)
         if __debug__:
+            # Verify that we have no NaN/Inf's which we do not "support" ATM
+            if not np.all(np.isfinite(data)):
+                raise ValueError(
+                    "Some input data for predict is not finite (NaN or Inf)")
             debug("CLF", "Predicting classifier %s on ds %s",
                   (self, dataset))
 
