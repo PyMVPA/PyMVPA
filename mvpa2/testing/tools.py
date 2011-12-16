@@ -228,8 +228,10 @@ def labile(niter=3, nfailures=1):
             for i in xrange(niter):
                 try:
                     ret = func(*arg, **kwargs)
-                    #if not nfailed:
-                    break
+                    if i + 1 - nfailed  >= niter - nfailures:
+                        # so we know already that we wouldn't go over
+                        # nfailures
+                        break
                 except AssertionError, e:
                     nfailed += 1
                     if __debug__:
@@ -252,4 +254,4 @@ def labile(niter=3, nfailures=1):
         return newfunc
     assert(niter > nfailures)
     return decorate
-            
+
