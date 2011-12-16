@@ -56,6 +56,8 @@ from numpy.testing import (
     assert_array_almost_equal, assert_array_equal, assert_array_less,
     assert_string_equal)
 
+def assert_array_lequal(x, y):
+    assert_array_less(-y, -x)
 
 def skip_if_no_external(dep, ver_dep=None, min_version=None, max_version=None):
     """Raise SkipTest if external is missing
