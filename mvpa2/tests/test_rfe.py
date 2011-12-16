@@ -351,7 +351,7 @@ class RFETests(unittest.TestCase):
                     imin = np.argmin(e)
                     if 'does_feature_selection' in clf.__tags__:
                         # if clf is smart it might figure it out right away
-                        self.assertLess( imin, len(e) )
+                        assert_array_less( imin, len(e) )
                     else:
                         # in this case we can even check if we had actual
                         # going down/up trend... although -- why up???
