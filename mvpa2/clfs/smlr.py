@@ -12,6 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
+from mvpa2 import _random_seed
 from mvpa2.base import warning, externals
 from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa2.measures.base import Sensitivity
@@ -121,7 +122,7 @@ class SMLR(Classifier):
                      the estimates of tied categories.
                      Set to False to avoid this behavior""")
 
-    seed = Parameter(None, allowedtype='None or int',
+    seed = Parameter(_random_seed, allowedtype='None or int',
              doc="""Seed to be used to initialize random generator, might be
              used to replicate the run""")
 
