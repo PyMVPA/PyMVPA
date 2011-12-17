@@ -101,6 +101,7 @@ def test_fmridataset():
     # we know that imgtype must be:
     ok_(ds.a.imgtype is nibabel.Nifti1Image)
 
+@skip_if_no_external('scipy')
 @with_tempfile(suffix='.img')
 def test_nifti_mapper(filename):
     """Basic testing of map2Nifti
