@@ -101,11 +101,12 @@ def test_fmridataset():
     # we know that imgtype must be:
     ok_(ds.a.imgtype is nibabel.Nifti1Image)
 
-@skip_if_no_external('scipy')
 @with_tempfile(suffix='.img')
 def test_nifti_mapper(filename):
     """Basic testing of map2Nifti
     """
+    skip_if_no_external('scipy')
+
     import nibabel
     data = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d.nii.gz'),
                         targets=[1,2])
