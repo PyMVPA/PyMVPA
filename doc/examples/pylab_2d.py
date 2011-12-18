@@ -62,6 +62,7 @@ provided by the PyMVPA dataset warehouse.
 
 # 30 samples per condition, SNR 2
 ds_nl = pure_multivariate_signal(30, 2)
+l1 = ds_nl.sa['targets'].unique[1]
 
 datasets = {'linear': ds_lin, 'non-linear': ds_nl}
 
@@ -129,8 +130,9 @@ for id, ds in datasets.iteritems():
             # use the prediction
             res = np.asarray(pre)
         elif 'Nearest-Ne' in c:
-            # Use the votes
-            res = clf.ca.estimates[:, 1] / np.sum(clf.ca.estimates, axis=1)
+            # Use the dictionaries with votes
+            res = np.array([e[l1] for e in clf.ca.estimates]) \
+                  / np.sum([e.values() for e in clf.ca.estimates], axis=1)
         elif c == 'Logistic Regression':
             # get out the values used for the prediction
             res = np.asarray(clf.ca.estimates)
