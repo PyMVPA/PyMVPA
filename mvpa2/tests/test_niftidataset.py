@@ -105,6 +105,8 @@ def test_fmridataset():
 def test_nifti_mapper(filename):
     """Basic testing of map2Nifti
     """
+    skip_if_no_external('scipy')
+
     import nibabel
     data = fmri_dataset(samples=os.path.join(pymvpa_dataroot,'example4d.nii.gz'),
                         targets=[1,2])
