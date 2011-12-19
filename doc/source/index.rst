@@ -101,6 +101,11 @@ full text of the license.
 .. _appendix of the manual: manual.html#license
 
 
+How to cite PyMVPA
+==================
+
+.. include:: howtocite.txt
+
 
 Authors & Contributors
 ======================
