@@ -58,9 +58,9 @@ Studies employing PyMVPA
 * :ref:`Haxby et al., Neuron (2011) <HGC+11>`:
   A Common, High-Dimensional Model of the Representational Space in Human Ventral Temporal Cortex.
 
-  `Data <http://data.pymvpa.org/datasets/haxby2011-hyper>` used for the analyses in
-  the paper and `PyMVPA analysis script <https://github.com/HaxbyLab/paper-haxby2011-hyper>`__
-  are available
+..  `Data <http://data.pymvpa.org/datasets/haxby2011-hyper>` used for the analyses in
+..  the paper and `PyMVPA analysis script <https://github.com/HaxbyLab/paper-haxby2011-hyper>`__
+..  are available
 
 * :ref:`Kaunitz et al., Frontiers in Perception Science (2011) <KKO+11>`:
   Intercepting the first pass: rapid categorization is suppressed for unseen stimuli.
