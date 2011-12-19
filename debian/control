@@ -58,7 +58,7 @@ Description: low-level implementations and bindings for PyMVPA v. 2
 Package: python-mvpa2-doc
 Architecture: all
 Section: doc
-Depends: ${misc:Depends}, libjs-jquery
+Depends: ${misc:Depends}, libjs-jquery, libjs-underscore
 Suggests: python-mvpa2
 Description: documentation and examples for PyMVPA v. 2
  This is an add-on package for the PyMVPA framework. It provides a
