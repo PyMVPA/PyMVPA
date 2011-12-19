@@ -190,6 +190,12 @@ experiments.
   DOI: http://dx.doi.org/10.1126/science.1063736
 
 
+.. _HGC+11:
+
+**Haxby, J. V., Guntupalli, J. S., Connolly, A. C., Halchenko, Y. O., Conroy, B. R., Gobbini, M. I., Hanke, M. & Ramadge, P. J.** (2011). A Common, High-Dimensional Model of the Representational Space in Human Ventral Temporal Cortex. *Neuron*, *72*, 404–416.
+  DOI: http://dx.doi.org/10.1016/j.neuron.2011.08.026
+
+
 .. _HR06:
 
 **Haynes, J. & Rees, G.** (2006). Decoding mental states from brain activity in humans. *Nature Reviews Neuroscience*, *7*, 523–534.
