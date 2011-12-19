@@ -148,11 +148,10 @@ def reseed_rng():
 
     Examples
     --------
-
-        @reseed_rng()
-        def test_random():
-            import numpy.random as rnd
-            print rnd.randint(100)
+    >>> @reseed_rng()
+    ... def test_random():
+    ...     import numpy.random as rnd
+    ...     print rnd.randint(100)
 
     """
 
