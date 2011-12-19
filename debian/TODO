@@ -1,2 +1,5 @@
 * Reincarnate the tools -- removed meanwhile to avoid conflicts but
    allowing coinstallation with python-mvpa package
+
+* RF (unify) to use libjs-sphinxdoc and dh_sphinxdoc (introduced
+  in 1.0.7+dfsg-1 of sphinx, so would require a backport for ND)
