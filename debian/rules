@@ -11,6 +11,9 @@ upstreamver = $(shell echo $(debver) | sed -e 's/-[^-]*$$//' )
 # master.
 gitver = $(shell [ -x /usr/bin/git ] && git describe --tags --match 'upstream/*' $$(git merge-base -a HEAD master) | sed -e 's,^upstream/,,' -e 's/\.dev/~dev/' -e 's/\.rc/~rc/')
 
+doc: doc-stamp
+doc-stamp:
+
 
 # one ring to rule them all ...
 %:
@@ -20,6 +23,11 @@ gitver = $(shell [ -x /usr/bin/git ] && git describe --tags --match 'upstream/*'
 override_dh_auto_build:
 	dh_auto_build -- --with-libsvm
 	# $(MAKE) manpages
+ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
+	$(MAKE) doc
+	-rm build/html/_static/jquery.js
+endif
+
 
 # we run the test suite on the install 
 override_dh_auto_test:
@@ -79,3 +87,7 @@ dev-changelog:
 		dch --newversion $(gitver)-1 --package pymvpa-snapshot \
 			--allow-lower-version "PyMVPA development snapshot." ; \
 	fi
+
+## immediately useable documentation and exemplar scripts/data
+override_dh_compress:
+	dh_compress -X.py -X.html -X.pdf -X.css -X.jpg -X.txt -X.js -X.json -X.rtc -Xobjects.inv

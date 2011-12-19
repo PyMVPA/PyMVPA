@@ -3,6 +3,7 @@ pymvpa2 (2.0.0-1) unstable; urgency=low
   * Long-awaited upstream release of mvpa2
   * Removed conflict with python-mvpa-lib -- both python-mvpa and python-mvpa2
     must be co-installable now
+  * Reincrarnated -doc package providing HTML documentation
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 15 Dec 2011 18:32:02 -0500
 
