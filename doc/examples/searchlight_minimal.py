@@ -13,12 +13,13 @@ Minimal Searchlight Example
 
 .. index:: searchlight, cross-validation
 
-The term :class:`~mvpa2.measures.searchlight.Searchlight` refers to an algorithm
-that runs a scalar :class:`~mvpa2.measures.base.Measure` on all possible
-spheres of a certain size within a dataset (that provides information about
-distances between feature locations).  The measure typically computed is a
-cross-validation of a classifier performance (see :ref:`CrossValidation
-<cross-validation>`). The idea to use a searchlight as a sensitivity analyzer
+The term :class:`~mvpa2.measures.searchlight.Searchlight` refers to an
+algorithm that runs a scalar :class:`~mvpa2.measures.base.Measure` on
+all possible spheres of a certain size within a dataset (that provides
+information about distances between feature locations).  The measure
+typically computed is a cross-validation of a classifier performance
+(see :ref:`CrossValidation <sec_tutorial_crossvalidation>` section in
+the tutorial). The idea to use a searchlight as a sensitivity analyzer
 on fMRI datasets stems from :ref:`Kriegeskorte et al. (2006) <KGB06>`.
 
 A searchlight analysis is can be easily performed. This examples shows a minimal
