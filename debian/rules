@@ -11,10 +11,6 @@ upstreamver = $(shell echo $(debver) | sed -e 's/-[^-]*$$//' )
 # master.
 gitver = $(shell [ -x /usr/bin/git ] && git describe --tags --match 'upstream/*' $$(git merge-base -a HEAD master) | sed -e 's,^upstream/,,' -e 's/\.dev/~dev/' -e 's/\.rc/~rc/')
 
-doc: doc-stamp
-doc-stamp:
-
-
 # one ring to rule them all ...
 %:
 # need to enforce distutils, since we also have a makefile
@@ -24,8 +20,8 @@ override_dh_auto_build:
 	dh_auto_build -- --with-libsvm
 	# $(MAKE) manpages
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
-	$(MAKE) doc
-	-rm build/html/_static/jquery.js
+	$(MAKE) htmldoc
+	-rm build/html/_static/jquery.js /usr/share/javascript/underscore/underscore.js
 endif
 
 
@@ -61,6 +57,7 @@ override_dh_installchangelogs:
 	dh_installchangelogs Changelog
 
 override_dh_auto_clean:
+	$(MAKE) clean
 	dh_auto_clean
 	-rm -rf $(CURDIR)/build
 

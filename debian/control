@@ -13,7 +13,7 @@ Build-Depends: debhelper (>= 7.0.50~),
                libsvm-dev (>= 2.84.0),
                help2man,
                python-sphinx,
-               graphviz,
+               graphviz, inkscape, imagemagick, bc
 Standards-Version: 3.9.2
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
