@@ -174,7 +174,7 @@ class HyperAlignmentTests(unittest.TestCase):
         #from mvpa2.datasets.miscfx import zscore
         #from mvpa2.featsel.helpers import FixedNElementTailSelector
         #   or just for lazy ones like yarik atm
-        from mvpa2.suite import *
+        #enable to test from mvpa2.suite import *
         subj = ['cb', 'dm', 'hj', 'kd', 'kl', 'mh', 'ph', 'rb', 'se', 'sm']
         ds = []
         for sub in subj:
