@@ -10,14 +10,14 @@
 #include <Python.h>
 
 DL_EXPORT(int)
-stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
-			int X_rows, int X_cols, double X[X_rows][X_cols],
-			int XY_rows, int XY_cols, double XY[XY_rows][XY_cols],
-			int Xw_rows, int Xw_cols, double Xw[Xw_rows][Xw_cols],
-			int E_rows, int E_cols, double E[E_rows][E_cols],
-			int ac_rows, double ac[ac_rows],
-			int lm_2_ac_rows, double lm_2_ac[lm_2_ac_rows],
-			int S_rows, double S[S_rows],
+stepwise_regression(int w_rows, int w_cols, double **w,
+			int X_rows, int X_cols, double **X,
+			int XY_rows, int XY_cols, double **XY,
+			int Xw_rows, int Xw_cols, double **Xw,
+			int E_rows, int E_cols, double **E,
+			int ac_rows, double *ac,
+			int lm_2_ac_rows, double *lm_2_ac,
+			int S_rows, double *S,
 			int M,
 			int maxiter,
 			double convergence_tol,
@@ -46,6 +46,10 @@ stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
   // get the num features and num classes
   int nd = w_rows;
   int ns = E_rows;
+  long cycle;
+  int basis;
+  int m;
+  float rval;
 
   // loop indexes
   int i = 0;
@@ -70,10 +74,10 @@ stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
   srand (seed);
 
   // loop over cycles
-  long cycle = 0;
-  int basis = 0;
-  int m = 0;
-  float rval = 0;
+  cycle = 0;
+  basis = 0;
+  m = 0;
+  rval = 0;
   i = 0;
   for (cycle=0; cycle<maxiter; cycle++)
   {
