@@ -10,14 +10,14 @@
 #include <Python.h>
 
 DL_EXPORT(int)
-stepwise_regression(int w_rows, int w_cols, double **w,
-			int X_rows, int X_cols, double **X,
-			int XY_rows, int XY_cols, double **XY,
-			int Xw_rows, int Xw_cols, double **Xw,
-			int E_rows, int E_cols, double **E,
-			int ac_rows, double *ac,
-			int lm_2_ac_rows, double *lm_2_ac,
-			int S_rows, double *S,
+stepwise_regression(int w_rows, int w_cols, double w[],
+			int X_rows, int X_cols, double X[],
+			int XY_rows, int XY_cols, double XY[],
+			int Xw_rows, int Xw_cols, double Xw[],
+			int E_rows, int E_cols, double E[],
+			int ac_rows, double ac[],
+			int lm_2_ac_rows, double lm_2_ac[],
+			int S_rows, double S[],
 			int M,
 			int maxiter,
 			double convergence_tol,
@@ -43,13 +43,14 @@ stepwise_regression(int w_rows, int w_cols, double **w,
   double sum2_w_diff;
   double sum2_w_old;
 
+  long cycle = 0;
+  int basis = 0;
+  int m = 0;
+  float rval = 0;
+
   // get the num features and num classes
   int nd = w_rows;
   int ns = E_rows;
-  long cycle;
-  int basis;
-  int m;
-  float rval;
 
   // loop indexes
   int i = 0;
@@ -74,10 +75,7 @@ stepwise_regression(int w_rows, int w_cols, double **w,
   srand (seed);
 
   // loop over cycles
-  cycle = 0;
-  basis = 0;
-  m = 0;
-  rval = 0;
+
   i = 0;
   for (cycle=0; cycle<maxiter; cycle++)
   {
@@ -94,7 +92,7 @@ stepwise_regression(int w_rows, int w_cols, double **w,
       for (m=0; m<w_cols; m++)
       {
 	// get the starting weight
-	w_old = w[basis][m];
+	w_old = w[w_cols*basis+m];
 
 	// set the p_resamp if it's the first cycle
 	if (cycle == 0)
@@ -110,11 +108,11 @@ stepwise_regression(int w_rows, int w_cols, double **w,
 	  XdotP = 0.0;
 	  for (i=0; i<ns; i++)
 	  {
-	    XdotP += X[i][basis] * E[i][m]/S[i];
+	    XdotP += X[X_cols*i+basis] * E[E_cols*i+m]/S[i];
 	  }
 
 	  // get the gradient
-	  grad = XY[basis][m] - XdotP;
+	  grad = XY[XY_cols*basis+m] - XdotP;
 
 	  // set the new weight
 	  w_new = w_old + grad/ac[basis];
@@ -191,14 +189,14 @@ stepwise_regression(int w_rows, int w_cols, double **w,
 	    w_diff = w_new - w_old;
 	    for (i=0; i<ns; i++)
 	    {
-	      Xw[i][m] += X[i][basis]*w_diff;
-	      E_new_m = exp(Xw[i][m]);
-	      S[i] += E_new_m - E[i][m];
-	      E[i][m] = E_new_m;
+	      Xw[Xw_cols*i+m] += X[X_cols*i+basis]*w_diff;
+	      E_new_m = exp(Xw[Xw_cols*i+m]);
+	      S[i] += E_new_m - E[E_cols*i+m];
+	      E[E_cols*i+m] = E_new_m;
 	    }
 
 	    // update the weight
-	    w[basis][m] = w_new;
+	    w[w_cols*basis+m] = w_new;
 
 	    // keep track of the sqrt sum squared diffs
 	    sum2_w_diff += w_diff*w_diff;
