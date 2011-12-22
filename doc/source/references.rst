@@ -426,6 +426,12 @@ experiments.
   DOI: http://dx.doi.org/10.1093/cercor/bhk020
 
 
+.. _RC12:
+
+**Raizada, R. D. & Connolly, A. C.** (In press). What makes different people's representations alike: neural similarity-space solves the problem of across-subject fMRI decoding. *Journal of Cognitive Neuroscience*.
+  URL: http://raizadalab.org/publications.html
+
+
 .. _SMM+08:
 
 **Sato, J. R., Mourão-Miranda, J., Martin, M. d. G. M., Amaro, E., Morettin, P. A. & Brammer, M. J.** (2008). The impact of functional connectivity changes on support vector machines mapping of fMRI data. *Journal of Neuroscience Methods*, *172*, 94–104.

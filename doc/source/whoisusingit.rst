@@ -48,6 +48,11 @@ Institutions Where PyMVPA Is Known To Be Used
 Studies employing PyMVPA
 ========================
 
+* :ref:`Raizada and Connolly, Cognitive Neuroscience (In press) <RC12>`: What
+  makes different people's representations alike: neural similarity-space
+  solves the problem of across-subject fMRI decoding.
+  `Preprint PDF and code <http://raizadalab.org/publications.html>`__ are available
+
 * :ref:`Jimura and Poldrack, Neuropsychologia (2011) <JP11>`: Analyses of
   regional-average activation and multivoxel pattern information tell
   complementary stories
