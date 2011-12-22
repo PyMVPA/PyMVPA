@@ -1,3 +1,10 @@
+pymvpa2 (2.0.0-3) unstable; urgency=low
+
+  * Add up_robust_doc_building to the patch queue series
+    (really Closes: #652903)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 22 Dec 2011 10:38:37 -0500
+
 pymvpa2 (2.0.0-2) unstable; urgency=low
 
   * up_robust_doc_building patch to point HOME to build/ directory
