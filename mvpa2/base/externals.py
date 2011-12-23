@@ -217,7 +217,12 @@ def __check_weave():
     Following simple snippet checks compilation of the basic code using
     weave
     """
-    from scipy import weave
+    try:
+        from scipy import weave
+    except OSError, e:
+        raise ImportError(
+            "Weave cannot be used due to failure to import because of %s"
+            % e)
     from scipy.weave import converters, build_tools
     import numpy as np
     # to shut weave up
