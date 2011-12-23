@@ -11,10 +11,16 @@ upstreamver = $(shell echo $(debver) | sed -e 's/-[^-]*$$//' )
 # master.
 gitver = $(shell [ -x /usr/bin/git ] && git describe --tags --match 'upstream/*' $$(git merge-base -a HEAD master) | sed -e 's,^upstream/,,' -e 's/\.dev/~dev/' -e 's/\.rc/~rc/')
 
+export HOME=$(CURDIR)/build
+
 # one ring to rule them all ...
 %:
 # need to enforce distutils, since we also have a makefile
 	dh $@ --buildsystem=python_distutils --builddirectory=build
+
+override_dh_auto_configure:
+	dh_auto_configure
+	mkdir -p $(CURDIR)/build
 
 override_dh_auto_build:
 	dh_auto_build -- --with-libsvm

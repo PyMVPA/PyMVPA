@@ -1,3 +1,10 @@
+pymvpa2 (2.0.0-4) unstable; urgency=low
+
+  * debian/rules: export HOME=$(CURDIR)/build to assure rw $HOME for every
+    aspect of package building (finally Closes:#652903)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 22 Dec 2011 23:03:26 -0500
+
 pymvpa2 (2.0.0-3) unstable; urgency=low
 
   * Add up_robust_doc_building to the patch queue series
