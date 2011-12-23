@@ -55,6 +55,12 @@ stepwise_regression(int w_rows, int w_cols, double w[],
   // loop indexes
   int i = 0;
 
+  // pointers to elements to avoid explicit indexing
+  double* Sp = (double*) NULL;
+  double* Ep = (double*) NULL;
+  double* Xp = (double*) NULL;
+  double* Xwp = (double*) NULL;
+
   // prob of resample each weight
   // allocate everything in heap -- not on stack
   float** p_resamp = (float **)calloc(w_rows, sizeof(float*));
@@ -106,9 +112,12 @@ stepwise_regression(int w_rows, int w_cols, double w[],
 	{
 	  // calc the probability
 	  XdotP = 0.0;
-	  for (i=0; i<ns; i++)
+	  for (i=0, Xp=X+basis, Ep=E+m;
+	       i<ns; i++)
 	  {
-	    XdotP += X[X_cols*i+basis] * E[E_cols*i+m]/S[i];
+	    XdotP += (*Xp) * (*Ep)/S[i];
+	    Xp += X_cols;
+	    Ep += E_cols;
 	  }
 
 	  // get the gradient
@@ -187,12 +196,17 @@ stepwise_regression(int w_rows, int w_cols, double w[],
 	  {
 	    // update the expected values
 	    w_diff = w_new - w_old;
-	    for (i=0; i<ns; i++)
+	    for (Sp=S, Xp=X+basis, Ep=E+m, Xwp=Xw+m;
+		 Sp<S+S_rows; Sp++)
 	    {
-	      Xw[Xw_cols*i+m] += X[X_cols*i+basis]*w_diff;
-	      E_new_m = exp(Xw[Xw_cols*i+m]);
-	      S[i] += E_new_m - E[E_cols*i+m];
-	      E[E_cols*i+m] = E_new_m;
+	      (*Xwp) += (*Xp)*w_diff;
+	      E_new_m = exp(*Xwp);
+	      *Sp += E_new_m - *Ep;
+	      *Ep = E_new_m;
+
+	      Xp += X_cols;
+	      Ep += E_cols;
+	      Xwp += Xw_cols;
 	    }
 
 	    // update the weight
