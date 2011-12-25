@@ -354,7 +354,11 @@ def test_assumptions_on_nibabel_behavior(filename):
     ni = nb.load(masrc)
     hdr = ni.get_header()
     data = ni.get_data()
-    assert(hdr.get_data_dtype() == 'int16') # we deal with int file
+    # operate in the native endianness so that symbolic type names (e.g. 'int16')
+    # remain the same across platforms
+    if hdr.endianness == nb.volumeutils.swapped_code:
+        hdr = hdr.as_byteswapped()
+    assert_equal(hdr.get_data_dtype(), 'int16') # we deal with int file
 
     dataf = data.astype(float)
     dataf_dtype = dataf.dtype
