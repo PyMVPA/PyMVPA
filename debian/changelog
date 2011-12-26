@@ -1,3 +1,10 @@
+pymvpa2 (2.0.0-5) UNRELEASED; urgency=low
+
+  * Fixed FTBFS due to test failure in test_niftidataset on big-endians.
+    Patch: 0001-BF-assure-native-endianness-in-test_assumptions_on_n.patch
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 26 Dec 2011 14:20:38 -0500
+
 pymvpa2 (2.0.0-4) unstable; urgency=low
 
   * debian/rules: export HOME=$(CURDIR)/build to assure rw $HOME for every
