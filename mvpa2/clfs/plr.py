@@ -25,7 +25,7 @@ class PLR(Classifier):
     """Penalized logistic regression `Classifier`.
     """
 
-    __tags__ = [ 'plr', 'binary', 'linear' ]
+    __tags__ = [ 'plr', 'binary', 'linear', 'has_sensitivity' ]
 
     def __init__(self, lm=1, criterion=1, reduced=0.0, maxiter=20, **kwargs):
         """
@@ -166,3 +166,40 @@ class PLR(Classifier):
 
         return predictions
 
+    def get_sensitivity_analyzer(self, **kwargs):
+        """Returns a sensitivity analyzer for PLR."""
+        return PLRWeights(self, **kwargs)
+
+
+
+from mvpa2.base.state import ConditionalAttribute
+from mvpa2.base.types import asobjarray
+from mvpa2.measures.base import Sensitivity
+from mvpa2.datasets.base import Dataset
+
+
+class PLRWeights(Sensitivity):
+    """`Sensitivity` reporting linear weights of PLR"""
+
+    biases = ConditionalAttribute(enabled=True,
+                                  doc="A 1-d ndarray of biases")
+
+    _LEGAL_CLFS = [ PLR ]
+
+    def _call(self, dataset=None):
+        """Extract weights from PLR classifier.
+
+        PLR always has weights available, so nothing has to be computed here.
+        """
+        clf = self.clf
+        attrmap = clf._attrmap
+        # labels (values of the corresponding space) which were used
+        # for mapping Here we rely on the fact that they are sorted
+        # originally (just an arange())
+        labels = attrmap.values()
+        self.ca.biases = clf.offset
+
+        return Dataset(clf.w.T,
+                       sa={clf.get_space():
+                           attrmap.to_literal(asobjarray([tuple(sorted(labels))]),
+                                              recurse=True)})
