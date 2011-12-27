@@ -27,7 +27,7 @@ override_dh_auto_build:
 	# $(MAKE) manpages
 ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 	$(MAKE) htmldoc
-	-rm build/html/_static/jquery.js /usr/share/javascript/underscore/underscore.js
+	-rm build/html/_static/jquery.js build/html/_static/underscore.js
 endif
 
 
