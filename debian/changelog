@@ -4,6 +4,7 @@ pymvpa2 (2.0.0-5) unstable; urgency=low
     Patch: 0001-BF-assure-native-endianness-in-test_assumptions_on_n.patch
   * Fixed oblivious typo of removing system-installed underscore.js
     leading to stall and thus FTBFS on Debian build hosts
+  * Run unittests with verbose output for easy troubleshooting of FTBFSs
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 27 Dec 2011 16:26:12 -0500
 
