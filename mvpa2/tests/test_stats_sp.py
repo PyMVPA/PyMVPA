@@ -62,7 +62,9 @@ class StatsTestsScipy(unittest.TestCase):
 
         # test 'any' mode
         from mvpa2.measures.corrcoef import CorrCoef
-        ds = datasets['uni2medium']
+        # we will reassign targets later on, so let's operate on a
+        # copy
+        ds = datasets['uni2medium'].copy()
 
         permutator = AttributePermutator('targets', count=20)
         null = MCNullDist(permutator, tail='any')
