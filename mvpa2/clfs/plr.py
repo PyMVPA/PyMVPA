@@ -193,13 +193,17 @@ class PLRWeights(Sensitivity):
         """
         clf = self.clf
         attrmap = clf._attrmap
-        # labels (values of the corresponding space) which were used
-        # for mapping Here we rely on the fact that they are sorted
-        # originally (just an arange())
-        labels = attrmap.values()
+
+        if attrmap:
+            # labels (values of the corresponding space) which were used
+            # for mapping Here we rely on the fact that they are sorted
+            # originally (just an arange())
+            labels_num = attrmap.values()
+            labels = attrmap.to_literal(asobjarray([tuple(sorted(labels_num))]),
+                                        recurse=True)
+        else:
+            labels = [(0, 1)]           # we just had our good old numeric ones
         self.ca.biases = clf.offset
 
-        return Dataset(clf.w.T,
-                       sa={clf.get_space():
-                           attrmap.to_literal(asobjarray([tuple(sorted(labels))]),
-                                              recurse=True)})
+        ds = Dataset(clf.w.T, sa={clf.get_space(): labels})
+        return ds
