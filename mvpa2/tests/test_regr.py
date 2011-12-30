@@ -124,6 +124,10 @@ class RegressionsTests(unittest.TestCase):
         clf.ca.reset_changed_temporarily()
 
 
+    # yoh: Here LARS pukes on some seeds, e.g. MVPA_SEED=665157742
+    # conditioned that test_regressions was ran.  I could not spot
+    # anything "stateful" on our Python side, and I guess it is
+    # a problem of R's implementation
     @sweepargs(regr=regrswh['regression', 'has_sensitivity', '!gpr'])
     @reseed_rng()
     def test_sensitivities(self, regr):
