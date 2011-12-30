@@ -133,10 +133,10 @@ class PLR(Classifier):
             # We have computed in rank reduced space ->
             # Project to original space
             self.w = V * w[:-1]
-            self.offset = w[-1]
+            self.bias = w[-1]
         else:
             self.w = w[:-1]
-            self.offset = w[-1]
+            self.bias = w[-1]
 
 
     def __f(self, y):
@@ -156,7 +156,7 @@ class PLR(Classifier):
         data = np.matrix(np.asarray(data))
 
         # get the values and then predictions
-        values = np.ravel(self.__f(self.offset + data * self.w))
+        values = np.ravel(self.__f(self.bias + data * self.w))
         predictions = values > 0.5
 
         # save the state if desired, relying on State._setitem_ to
@@ -181,9 +181,6 @@ from mvpa2.datasets.base import Dataset
 class PLRWeights(Sensitivity):
     """`Sensitivity` reporting linear weights of PLR"""
 
-    biases = ConditionalAttribute(enabled=True,
-                                  doc="A 1-d ndarray of biases")
-
     _LEGAL_CLFS = [ PLR ]
 
     def _call(self, dataset=None):
@@ -203,7 +200,7 @@ class PLRWeights(Sensitivity):
                                         recurse=True)
         else:
             labels = [(0, 1)]           # we just had our good old numeric ones
-        self.ca.biases = clf.offset
 
-        ds = Dataset(clf.w.T, sa={clf.get_space(): labels})
+        ds = Dataset(clf.w.T, sa={clf.get_space(): labels,
+                                  'biases' : [clf.bias]})
         return ds

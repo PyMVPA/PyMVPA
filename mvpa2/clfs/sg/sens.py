@@ -31,9 +31,6 @@ class LinearSVMWeights(Sensitivity):
     on a given `Dataset`.
     """
 
-    biases = ConditionalAttribute(enabled=True,
-                           doc="Offsets of separating hyperplanes")
-
     def __init__(self, clf, **kwargs):
         """Initialize the analyzer with the classifier it shall use.
 
@@ -116,6 +113,6 @@ class LinearSVMWeights(Sensitivity):
             if len(clf._attrmap):
                 sens_labels = clf._attrmap.to_literal(sens_labels, recurse=True)
             ds.sa[clf.get_space()] = sens_labels
-        self.ca.biases = biases
+        ds.sa['biases'] = biases
 
         return ds

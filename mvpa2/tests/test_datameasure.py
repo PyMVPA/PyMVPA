@@ -114,7 +114,10 @@ class SensitivityAnalysersTests(unittest.TestCase):
         # Can't rely on splitcfg since count-limit is done in __call__
         assert(nsplits == len(list(partitioner.generate(ds))))
         sens = sana(ds)
-
+        # TODO: those few do not expose biases
+        if not len(set(clf.__tags__).intersection(('lars', 'glmnet', 'gpr' ))):
+            assert('biases' in sens.sa)
+            print sens.sa.biases
         # It should return either ...
         #  nlabels * nsplits
         req_nsamples = [ nlabels * nsplits ]

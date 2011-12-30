@@ -577,9 +577,6 @@ class SMLRWeights(Sensitivity):
     arguments how to custmize this behavior.
     """
 
-    biases = ConditionalAttribute(enabled=True,
-                           doc="A 1-d ndarray of biases")
-
     _LEGAL_CLFS = [ SMLR ]
 
 
@@ -593,9 +590,6 @@ class SMLRWeights(Sensitivity):
         # (as usual)
         weights = clf.weights.T
 
-        if clf.params.has_bias:
-            self.ca.biases = clf.biases
-
         if __debug__:
             debug('SMLR',
                   "Extracting weights for %d-class SMLR" %
@@ -605,5 +599,10 @@ class SMLRWeights(Sensitivity):
 
         # limit the labels to the number of sensitivity sets, to deal
         # with the case of `fit_all_weights=False`
-        return Dataset(weights,
-                       sa={clf.get_space(): clf._ulabels[:len(weights)]})
+        ds = Dataset(weights,
+                     sa={clf.get_space(): clf._ulabels[:len(weights)]})
+
+        if clf.params.has_bias:
+            ds.sa['biases'] = clf.biases
+        return ds
+
