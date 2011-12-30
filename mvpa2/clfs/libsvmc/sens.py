@@ -28,10 +28,6 @@ class LinearSVMWeights(Sensitivity):
 
     _ATTRIBUTE_COLLECTIONS = ['params']
 
-    # XXX TODO: should become just as sa may be?
-    biases = ConditionalAttribute(enabled=True,
-                           doc="Offsets of separating hyper-planes")
-
     split_weights = Parameter(False, allowedtype='bool',
                   doc="If binary classification either to sum SVs per each "
                       "class separately.  Note: be careful with interpretation"
@@ -77,7 +73,6 @@ class LinearSVMWeights(Sensitivity):
         svs = np.matrix(model.get_sv())
         rhos = np.asarray(model.get_rho())
 
-        self.ca.biases = rhos
         if self.params.split_weights:
             if nr_class != 2:
                 raise NotImplementedError, \
@@ -182,6 +177,7 @@ class LinearSVMWeights(Sensitivity):
             ds_kwargs = dict(sa={clf.get_space(): sens_labels})
 
         weights_ds = Dataset(weights, **ds_kwargs)
+        weights_ds.sa['biases'] = rhos
         return weights_ds
 
     _customizeDocInherit = True
