@@ -269,9 +269,9 @@ class SensitivityAnalysersTests(unittest.TestCase):
             enable_ca=['training_stats'])
 
         sana = mclf.get_sensitivity_analyzer(postproc=sumofabs_sample(),
-                                           enable_ca=["sensitivities"])
+                                             enable_ca=["sensitivities"])
         # and lets look at all sensitivities
-        dataset = datasets['uni2medium']
+        dataset = datasets['uni2small']
         # and we get sensitivity analyzer which works on splits
         sens = sana(dataset)
         self.assertEqual(sens.shape, (1, dataset.nfeatures))
