@@ -89,6 +89,8 @@ def dual_gaussian(x, amp1=1.0, mean1=0.0, std1=1.0,
       Standard deviation parameter of the second Gaussian
     """
     from scipy.stats import norm
+    if std1 <= 0 or std2 <= 0:
+        return np.nan
     return (amp1 * norm.pdf(x, mean1, std1)) + (amp2 * norm.pdf(x, mean2, std2))
 
 
@@ -163,6 +165,12 @@ def fit2histogram(X, fx, params, nbins=20, x_range=None):
 
     First histogram is computed for each data row vector individually.
     Afterwards a custom function is fitted to the binned data.
+
+    TODO
+    ----
+
+    - ATM requires multiple "samples" although it would be as useful with 1, and it pukes if we add that
+      single rudimentary dimension
 
     Parameters
     ----------
