@@ -1,3 +1,12 @@
+pymvpa2 (2.0.0-6) unstable; urgency=low
+
+  * Fixed FTBFS due to sphinx API changes braking old copy of autosummary.
+    System-wide autosummary should be used now for sphinx >= 1.1.2
+    (Closes: #658593). Thanks to Jakub Wilk and Julian Taylor for help
+    Patch: up_sphinx_1.1.2_autosummary
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 07 Feb 2012 11:16:39 -0500
+
 pymvpa2 (2.0.0-5) unstable; urgency=low
 
   * Fixed FTBFS due to test failure in test_niftidataset on big-endians.
