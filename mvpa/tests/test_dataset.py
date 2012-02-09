@@ -413,6 +413,13 @@ class DatasetTests(unittest.TestCase):
         zscore(data, baselinelabels=[0, 1])
         self.failUnless((samples == data.samples+1.0).all())
 
+    def test_zscore_reportedfailure(self):
+        dataset = Dataset(samples=N.arange( 20 ).reshape( (4, 5) ),
+                          labels=1,
+                          chunks=1)
+        zscore(dataset, mean=0, std=1, #N.ones(dataset.nfeatures),
+               perchunk=True,   pervoxel=True,
+               targetdtype="float32")
 
     def testAggregation(self):
         data = Dataset(samples=N.arange( 20 ).reshape( (4, 5) ),

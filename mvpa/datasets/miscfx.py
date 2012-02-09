@@ -92,6 +92,12 @@ def zscore(dataset, mean=None, std=None,
 
         # do the z-scoring
         if pervoxel:
+            # Assure std being an array
+            if N.isscalar(std):
+                std = N.ones(samples.shape[1])
+            else:
+                # and so we don't perform list comparison to 0
+                std = N.asanyarray(std)
             samples[:, std != 0] /= std[std != 0]
         else:
             samples /= std
