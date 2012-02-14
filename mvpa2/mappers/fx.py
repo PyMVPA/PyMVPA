@@ -287,8 +287,10 @@ def mean_sample(attrfx='merge'):
 def mean_group_sample(attrs, attrfx='merge'):
     """Returns a mapper that computes the mean samples of unique sample groups.
 
-    The sample groups are identified by the unique combination of all values of
-    a set of provided sample attributes.
+    The sample groups are identified by the unique combination of all
+    values of a set of provided sample attributes.  Order of output
+    samples might differ from original and correspond to sorted order
+    of corresponding `attrs`.
 
     Parameters
     ----------
@@ -348,7 +350,9 @@ def mean_group_feature(attrs, attrfx='merge'):
     """Returns a mapper that computes the mean features of unique feature groups.
 
     The feature groups are identified by the unique combination of all values of
-    a set of provided feature attributes.
+    a set of provided feature attributes.  Order of output
+    features might differ from original and correspond to sorted order
+    of corresponding `attrs`.
 
     Parameters
     ----------
