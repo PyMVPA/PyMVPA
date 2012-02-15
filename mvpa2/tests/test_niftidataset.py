@@ -160,7 +160,7 @@ def test_multiple_calls():
 
 def test_er_nifti_dataset():
     # setup data sources
-    tssrc = os.path.join(pymvpa_dataroot, 'bold.nii.gz')
+    tssrc = os.path.join(pymvpa_dataroot, u'bold.nii.gz')
     evsrc = os.path.join(pymvpa_dataroot, 'fslev3.txt')
     masrc = os.path.join(pymvpa_dataroot, 'mask.nii.gz')
     evs = FslEV3(evsrc).to_events()
