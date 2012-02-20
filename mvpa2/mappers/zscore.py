@@ -234,6 +234,7 @@ class ZScoreMapper(Mapper):
     def _zscore(self, samples, mean, std):
         # de-mean
         if np.isscalar(mean) or samples.shape[1] == len(mean):
+            mean = np.asanyarray(mean)  # assure array
             samples -= mean
         else:
             raise RuntimeError("mean should be a per-feature vector. Got: %r"
@@ -246,6 +247,7 @@ class ZScoreMapper(Mapper):
             else:
                 samples /= std
         else:
+            std = np.asanyarray(std)
             if samples.shape[1] != len(std):
                 raise RuntimeError("std should be a per-feature vector.")
             else:
