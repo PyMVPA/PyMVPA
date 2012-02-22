@@ -1,0 +1,44 @@
+import numpy as np
+from mvpa2.algorithms.hyperalignment import Hyperalignment
+from mvpa2.measures.base import Measure
+from scipy.linalg import LinAlgError
+    
+class HyperalignmentMeasure(Measure):
+    is_trained=True
+    def __init__(self, nsubjs=11, scale=0.0, **kwargs):
+        Measure.__init__(self, **kwargs)
+        self.nsubjs = nsubjs
+        self.scale = scale
+        
+    def __call__(self, dataset):
+        # create the dissimilarity matrix for the data in the input dataset
+        ds = []
+        nsamples = dataset.nsamples/self.nsubjs
+        seed_index = np.where(dataset.fa.roi_seed)
+        dist = np.sum(np.abs(dataset.fa.voxel_indices-dataset.fa.voxel_indices[seed_index]), axis=1)
+        dist = np.exp(-(self.scale*dist/np.float(max(dist)) )**2)
+        dataset.samples = dataset.samples*dist
+        for i in range(self.nsubjs):
+            ds.append(dataset[0+i*nsamples:nsamples*(i+1),])
+        for ref_ds in range(self.nsubjs):
+            try:
+                hyper = Hyperalignment(zscore_common=True, ref_ds = ref_ds)
+                mappers = hyper(datasets=ds)
+                mappers = [ np.squeeze(m.proj[:,seed_index]) for m in mappers]
+                break
+            except LinAlgError:
+                print "SVD didn't converge. Trying with a new reference: %i" %(ref_ds+1)
+                print "Nevermind, this is not a good idea for searchlight hyperalignment"
+                raise
+                break
+                if ref_ds == self.nsubjs-1:
+                    mappers = []
+                    print "SVD didn't converge with any reference. We are screwed :("
+                    raise
+                
+            else:
+                print "We are Screwed..."
+        
+        # Extract only the row/column corresponding to the center voxel
+        return {'proj':mappers,'ids':dataset.fa.index}
+
