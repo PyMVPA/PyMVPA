@@ -217,7 +217,12 @@ def __check_weave():
     Following simple snippet checks compilation of the basic code using
     weave
     """
-    from scipy import weave
+    try:
+        from scipy import weave
+    except OSError, e:
+        raise ImportError(
+            "Weave cannot be used due to failure to import because of %s"
+            % e)
     from scipy.weave import converters, build_tools
     import numpy as np
     # to shut weave up
@@ -300,13 +305,24 @@ def __check_rv_discrete_ppf():
 def __check_in_ipython():
     # figure out if ran within IPython
     if '__IPYTHON__' in globals()['__builtins__']:
-        try:
-            from IPython import Release
-            versions['ipython'] = SmartVersion(Release.version)
-        except:
-            pass
         return
     raise RuntimeError, "Not running in IPython session"
+
+def __assign_ipython_version():
+    ipy_version = None
+    try:
+        # Development post 0.11 version finally carries
+        # conventional one
+        import IPython
+        ipy_version = IPython.__version__
+    except:
+        try:
+            from IPython import Release
+            ipy_version = Release.version
+        except:
+            pass
+        pass
+    versions['ipython'] = SmartVersion(ipy_version)
 
 def __check_openopt():
     try:
@@ -486,6 +502,7 @@ _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'lxml': "from lxml import objectify as __",
           'atlas_pymvpa': "__check_atlas_family('pymvpa')",
           'atlas_fsl': "__check_atlas_family('fsl')",
+          'ipython': "__assign_ipython_version()",
           'running ipython env': "__check_in_ipython()",
           'reportlab': "__check_reportlab()",
           'nose': "import nose as __",
@@ -624,7 +641,7 @@ versions._KNOWN.update({
     'nipy' : __assign_nipy_version,
     'matplotlib': __assign_matplotlib_version,
     'mdp' : __assign_mdp_version,
-    'ipython' : __check_in_ipython,
+    'ipython' : __assign_ipython_version,
     'reportlab' : __check_reportlab,
     'pprocess' : __check_pprocess,
     'rpy2' : __check_rpy2,

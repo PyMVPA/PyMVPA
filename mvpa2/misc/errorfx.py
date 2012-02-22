@@ -146,7 +146,7 @@ else:
                        np.reshape(target, l))[0,1]
         if np.isnan(r):
             r = 0.0
-        return 1.0 - r
+        return r
 
 
     def corr_error_prob(predicted, target):

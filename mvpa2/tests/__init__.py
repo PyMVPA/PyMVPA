@@ -109,6 +109,9 @@ def collect_nose_tests(verbosity=1):
         'test_eepdataset',
         'test_erdataset',
 
+        # Classifiers
+        'test_multiclf',
+
         # Misc supporting
         'test_neighborhood',
         'test_stats',
@@ -133,6 +136,7 @@ def collect_nose_tests(verbosity=1):
         'test_glmnet',
         'test_kernel',
         'test_svmkernels',
+        'test_senses',
 
         # Algorithms
         'test_emp_null',

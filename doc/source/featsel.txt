@@ -8,54 +8,40 @@
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 
-.. index:: feature selection
+.. index:: Feature Selection
 .. _chap_featsel:
 
 *****************
 Feature Selection
 *****************
 
-.. automodule:: mvpa2.measures
 
-
-.. only:: html
-
-   Related API documentation
-   =========================
-
-   .. currentmodule:: mvpa
-   .. autosummary::
-      :toctree: generated
-
-      featsel.base
-      featsel.ifs
-      featsel.rfe
-      featsel.helpers
-
-
-
-*This section has been contributed by James M. Hughes.*
+*This section has been originally contributed by James M. Hughes.*
 
 It is often the case in machine learning problems that we wish to reduce a
 feature space of high dimensionality into something more manageable by
 selecting only those features that contribute most to classification
 performance.  Feature selection methods attempt to achieve this goal in an
-algorithmic fashion.
+algorithmic fashion.  This section is a complement to Tutorial sections
+:ref:`chap_tutorial_classifiers` and :ref:`chap_tutorial_sensitivity` aiming
+to also cover additional topics, such as RFE_.
 
 .. index:: FeatureSelectionClassifier
 
 PyMVPA's flexible framework allows various feature selection methods to take
-place within a small block of code.  :class:`~mvpa2.clfs.meta.FeatureSelectionClassifier` extends the
+place within a small block of code.
+:class:`~mvpa2.clfs.meta.FeatureSelectionClassifier` (which in mvpa2 is just a
+wrapper around :class:`~mvpa2.clfs.meta.MappedClassifier`) extends the
 basic classifier framework to allow for the use of arbitrary methods of feature
 selection according to whatever ranking metric, feature selection criteria, and
 stopping criterion the user chooses for a given application.  Examples of the
 code/classification algorithms presented here can be found in
-`mvpa2/clfs/warehouse.py`_.
+:mod:`~mvpa2.clfs.warehouse`.
 
 More formally, a :class:`~mvpa2.clfs.meta.FeatureSelectionClassifier` is a meta-classifier.  That is, it
 is not a classifier itself -- it can take any *slave*
 :class:`~mvpa2.clfs.base.Classifier` and a
-:class:`mvpa2.featsel.base.FeatureSelection`.  When trained on a dataset, it first performs the
+:class:`~mvpa2.featsel.base.FeatureSelection`.  When trained on a dataset, it first performs the
 `feature_selection`, and then trains the
 provided *slave* `clf` on those selected features.  Externally, however, it looks
 like a :class:`~mvpa2.clfs.base.Classifier`, in that it fulfills the specialization of the Classifier
@@ -81,7 +67,7 @@ Feature selection using this method could be accomplished using the following
 code (from `mvpa2/clfs/warehouse.py`_):
 
   >>> from mvpa2.suite import *
-  >>> FeatureSelection = SensitivityBasedFeatureSelection(
+  >>> fs = SensitivityBasedFeatureSelection(
   ...     OneWayAnova(),
   ...     FractionTailSelector(0.05, mode='select', tail='upper'))
 
@@ -100,13 +86,15 @@ train the selected features as we used to select them:
   ...         sample_linear_svm.get_sensitivity_analyzer(postproc=maxofabs_sample()),
   ...         FractionTailSelector(0.05, mode='select', tail='upper')),
   ...      descr="LinSVM on 5%(SVM)")
+  >>> print clf
+  <LinSVM on 5%(SVM)>
 
 It bears mentioning at this point that caution must be exercised when selecting
 features.  The process of feature selection must be performed on an independent
-training dataset:  it is not possible to select features using the entire
+training dataset:  it would be incorrect to select features using the entire
 dataset, re-train a classifier on a subset of the original data (but using only
 the selected features) and then test on a held-out testing dataset.  This
-results in an obvious positive bias in classification performance.  PyMVPA
+results in an obvious positive bias in classification performance (see :ref:`chap_magic_feature_selection`).  PyMVPA
 allows for easy dataset partitioning and splitting, however, so creating independent training
 and testing datasets is easily accomplished.
 
@@ -165,10 +153,10 @@ perform such an analysis:
   >>> rfesvm_split = SplitClassifier(LinearCSVMC(), OddEvenPartitioner())
   >>> # design an RFE feature selection to be used with a classifier
   >>> rfe = RFE(rfesvm_split.get_sensitivity_analyzer(
-  ...              # take sensitivities per each split, L2 norm, mean, abs them
-  ...              postproc=ChainMapper([ FxMapper('features', l2_normed),
-  ...                                     FxMapper('samples', np.mean),
-  ...                                     FxMapper('samples', np.abs)])),
+  ...           # take sensitivities per each split, L2 norm, mean, abs them
+  ...           postproc=ChainMapper([ FxMapper('features', l2_normed),
+  ...                                  FxMapper('samples', np.mean),
+  ...                                  FxMapper('samples', np.abs)])),
   ...           # use the error stored in the confusion matrix of split classifier
   ...           ConfusionBasedError(rfesvm_split, confusion_state='stats'),
   ...           # we just extract error from confusion, so need to split dataset
@@ -182,7 +170,8 @@ perform such an analysis:
   ...           # we just extract it from existing confusion
   ...           train_pmeasure=False,
   ...           # but we do want to update sensitivities on each step
-  ...           update_sensitivity=True)
+  ...           update_sensitivity=True,
+  ...           enable_ca=['errors'])
   >>> clf = \
   ...  FeatureSelectionClassifier(
   ...   LinearCSVMC(),
@@ -190,7 +179,12 @@ perform such an analysis:
   ...   rfe,
   ...   # custom description
   ...   descr='LinSVM+RFE(splits_avg)' )
-
+  >>> # Just an example of application
+  >>> from mvpa2.misc.data_generators import normal_feature_dataset
+  >>> ds = normal_feature_dataset(perlabel=20, nlabels=2, nfeatures=100, snr=0.5)
+  >>> clf.train(ds)
+  >>> # See how errors go down and possibly back up while removing the features
+  >>> print zip(rfe.ca.nfeatures, rfe.ca.errors)   # doctest: +SKIP
 
 The code above introduces the :class:`~mvpa2.clfs.meta.SplitClassifier`, which in this case is yet
 another *meta-classifier* that takes in a :class:`~mvpa2.clfs.base.Classifier` (in this case a
@@ -202,7 +196,7 @@ transfer error on the testing part of the split. If a :class:`~mvpa2.clfs.meta.S
 is later on asked to *predict* some new data, it uses (by default) the
 MaximalVote_ strategy to derive an answer.  A summary about the performance of
 a :class:`~mvpa2.clfs.meta.SplitClassifier` internally on each split of the training dataset is
-available by accessing the `confusion` conditional attribute.
+available by accessing the `stats` conditional attribute.
 
 To summarize somewhat, RFE_ is just one method of feature selection, so we use a
 :class:`~mvpa2.clfs.meta.FeatureSelectionClassifier` to facilitate this.  To parameterize the RFE
@@ -239,7 +233,7 @@ analysis scenarios have been presented, along with enough requisite knowledge
 that the user can plug in whatever classifiers, error metrics, or sensitivity
 measures are most appropriate for the task at hand.
 
-.. _RFE: api/mvpa2.featsel.rfe.RFE-class.html
+.. _RFE: generated/mvpa2.featsel.rfe.RFE.html
 
 .. _MaximalVote: api/mvpa2.clfs.meta.MaximalVote-class.html
 .. _FeatureSelection: api/mvpa2.featsel.base.FeatureSelection-class.html
@@ -260,4 +254,22 @@ IFS_
 .. _IFS: api/mvpa2.featsel.ifs.IFS-class.html
 
 .. What are the practical differences (besides speed) between RFE and IFS?
+
+.. automodule:: mvpa2.measures
+
+.. only:: html
+
+   Related API documentation
+   =========================
+
+   .. currentmodule:: mvpa
+   .. autosummary::
+      :toctree: generated
+
+      featsel.base
+      featsel.ifs
+      featsel.rfe
+      featsel.helpers
+
+
 

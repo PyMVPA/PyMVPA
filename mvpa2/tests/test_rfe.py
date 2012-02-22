@@ -348,10 +348,14 @@ class RFETests(unittest.TestCase):
                 if isinstance(rfe._fselector, FixedNElementTailSelector):
                     self.assertTrue(resds.nfeatures == data_nfeatures - e.argmin())
                 else:
-                    # in this case we can even check if we had actual
-                    # going down/up trend... although -- why up???
                     imin = np.argmin(e)
-                    self.assertTrue( 1 < imin < len(e) - 1 )
+                    if 'does_feature_selection' in clf.__tags__:
+                        # if clf is smart it might figure it out right away
+                        assert_array_less( imin, len(e) )
+                    else:
+                        # in this case we can even check if we had actual
+                        # going down/up trend... although -- why up???
+                        self.assertTrue( 1 < imin < len(e) - 1 )
             else:
                 self.assertTrue(resds.nfeatures == data_nfeatures)
 

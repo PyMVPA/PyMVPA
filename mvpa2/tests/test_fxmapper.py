@@ -8,13 +8,15 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA SampleGroup mapper"""
 
+from mvpa2.testing import sweepargs
+from mvpa2.testing.datasets import datasets
+from mvpa2.measures.anova import OneWayAnova
 
 import numpy as np
 from mvpa2.mappers.fx import *
 from mvpa2.datasets.base import dataset_wizard, Dataset
 
 from mvpa2.testing.tools import *
-
 
 def test_samplesgroup_mapper():
     data = np.arange(24).reshape(8,3)
@@ -121,8 +123,6 @@ def test_fxmapper():
 
 
 def test_features01():
-    from mvpa2.testing.datasets import datasets
-    from mvpa2.measures.anova import OneWayAnova
     # TODO: might be worth creating appropriate factory
     #       help in mappers/fx
     aov = OneWayAnova(
@@ -132,3 +132,51 @@ def test_features01():
     f = aov(datasets['uni2small'])
     ok_((f.samples != 1.0).any())
     ok_(f.samples.max() == 1.0)
+
+@sweepargs(f=dir(np))
+def test_fx_native_calls(f):
+    import inspect
+
+    ds = datasets['uni2small']
+    if f in ['size', 'rollaxis']:
+        # really not appropriate ones here to test
+        return
+    try:
+        f_ = getattr(np, f)
+        if 'axis' != inspect.getargs(f_.__code__).args[1]:
+            # if 'axis' is not the 2nd arg -- skip
+            return
+    except:
+        return
+
+    # so we got a function which has 'axis' arugment
+    for naxis in (0, 1): # check on both axes
+        for do_group in (False, True): # test with
+                                       # groupping and without
+            kwargs = dict(attrfx='merge')
+            if do_group:
+                if naxis == 0:
+                    kwargs['uattrs'] = ('targets', 'chunks')
+                else:
+                    kwargs['uattrs'] = ('nonbogus_targets',)
+
+            axis = ('samples', 'features')[naxis]
+            def custom(data):
+                """So we could enforce apply_along_axis
+                """
+                # always 0 since it would be the job for apply_along_axis
+                return f_(data, axis=0)
+            try:
+                m2 = FxMapper(axis, custom, **kwargs)
+                dsm2 = ds.get_mapped(m2)
+            except:
+                # We assume that our previous implementation should work ;-)
+                continue
+
+            m1 = FxMapper(axis, f_, **kwargs)
+            dsm1 = ds.get_mapped(m1)
+
+            assert_array_equal(dsm1.samples, dsm2.samples)
+            assert_array_equal(dsm1.targets, dsm2.targets)
+            assert_array_equal(dsm1.chunks, dsm2.chunks)
+            assert_array_equal(dsm1.fa.nonbogus_targets, dsm2.fa.nonbogus_targets)

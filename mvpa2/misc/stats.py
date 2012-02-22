@@ -203,8 +203,7 @@ class DSMatrix(object):
 
         vector_form[vector_form == -1] = 0
 
-        vector_form = np.asarray(vector_form)
-        self.vector_form = vector_form[0]
+        self.vector_form = np.asarray(vector_form)
 
         return self.vector_form
 

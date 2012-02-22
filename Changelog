@@ -9,29 +9,58 @@ Development Changelog
 *********************
 
 This changelog only lists rather macroscopic changes to PyMVPA. The full VCS
-changelog for 0.5.x series of PyMVPA is available here:
+changelog for 2.x series of PyMVPA is available here:
 
-  https://github.com/PyMVPA/PyMVPA/commits/maint%2F0.5
+  https://github.com/PyMVPA/PyMVPA/commits/master
+
+.. note::
+   You could find relevant information on 0.4.x series at
+   http://v04.pymvpa.org .
 
 In addition there is also a somewhat unconventional `visual changelog`_.
 
 .. _visual changelog: http://www.pymvpa.org/history.html
 
-'Closes' statement IDs refer to the Debian bug tracking system and can be
-queried by visiting the URL::
+'Closes' and 'Fixes' statement IDs refer to the Debian and Github bug
+tracking systems accordingly and can be queried by visiting the URLs::
 
-  http://bugs.debian.org/<bug id>
+  http://bugs.debian.org/<closed bug id>
 
-
-Unreleased changes
-  Changes described here are not yet released, but available from VCS
-  repository.
+  https://github.com/PyMVPA/PyMVPA/issues/<fixed bug id>
 
 
 Releases
 ========
 
-* 2.0.0~rc5 (???, Oct ?? 2011)
+* 2.0.0 (Mon, Dec 19 2011)
+
+  This release aggregates all the changes occurred between official
+  releases in 0.4 series and various snapshot releases (in 0.5 and 0.6
+  series).  To get better overview of high level changes see
+  :ref:`release notes for 0.5 <chap_release_notes_0.5>` and :ref:`0.6
+  <chap_release_notes_0.6>` as well as summaries of release candidates
+  below
+
+  * Fixes (23 BF commits)
+
+    - significance level in the right tail was fixed to include the
+      value tested -- otherwise resulted in optimistic bias (or
+      absurdly high significance in improbable case if all estimates
+      having the same value)
+    - compatible with the upcoming IPython 0.12 and renamed sklearn
+      (Fixes #57)
+    - do not double-train ``slave`` classifiers while assessing
+      sensitivities (Fixes #53)
+
+  * Enhancements (30 ENH + 3 NF commits)
+
+    - resolving voting ties in kNN based on mean distance, and
+      randomly in SMLR
+    - :class:`kNN`\'s ``ca.estimates`` now contains dictionaries with
+      votes for each class
+    - consistent zscoring in :class:`Hyperalignment`
+
+* 2.0.0~rc5 (Wed, Oct 19 2011)
 
   * **Major**: to allow easy co-existence of stable PyMVPA 0.4.x, 0.6
     development ``mvpa`` module was renamed into mod:`mvpa2`.
@@ -170,10 +199,10 @@ Releases
 
   * Fixed
 
-    - Addressed the issue with input NIfTI files having scl_* fields
+    - Addressed the issue with input NIfTI files having ``scl_`` fields
       set: it could result in incorrect analyses and
       map2nifti-produced NIfTI files.  Now input files account for
-      scaling/offset if scl_ fields direct to do so. Moreover upon
+      scaling/offset if ``scl_`` fields direct to do so. Moreover upon
       map2nifti, those fields get reset.
     - :file:`doc/examples/searchlight_minimal.py` - best error is the
       minimal one

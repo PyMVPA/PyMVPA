@@ -12,6 +12,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
+from mvpa2 import _random_seed
 from mvpa2.base import warning, externals
 from mvpa2.clfs.base import Classifier, accepts_dataset_as_samples
 from mvpa2.measures.base import Sensitivity
@@ -69,8 +70,9 @@ class SMLR(Classifier):
     """
 
     __tags__ = [ 'smlr', 'linear', 'has_sensitivity', 'binary',
-                       'multiclass', 'does_feature_selection' ]
-                     # XXX: later 'kernel-based'?
+                 'multiclass', 'does_feature_selection',
+                 'random_tie_breaking']
+    # XXX: later 'kernel-based'?
 
     lm = Parameter(.1, min=1e-10, allowedtype='float',
              doc="""The penalty term lambda.  Larger values will give rise to
@@ -112,7 +114,15 @@ class SMLR(Classifier):
              stepwise_regression. C version brings significant speedup thus is
              the default one.""")
 
-    seed = Parameter(None, allowedtype='None or int',
+    ties = Parameter('random', allowedtype='string',
+                     doc="""Resolve ties which could occur.  At the moment
+                     only obvious ties resulting in identical weights
+                     per two classes are detected and resolved
+                     randomly by injecting small amount of noise into
+                     the estimates of tied categories.
+                     Set to False to avoid this behavior""")
+
+    seed = Parameter(_random_seed, allowedtype='None or int',
              doc="""Seed to be used to initialize random generator, might be
              used to replicate the run""")
 
@@ -402,6 +412,31 @@ class SMLR(Classifier):
             # unsparsify
             w = self._unsparsify_weights(X, w)
 
+        # resolve ties if present
+        self.__ties = None
+        if self.params.ties:
+            if self.params.ties == 'random':
+                # check if there is a tie showing itself as absent
+                # difference between two w's
+                wdot = np.dot(w.T, -w)
+                ties = np.where(np.max(np.abs(wdot), axis=0) == 0)[0]
+                if len(ties):
+                    warning("SMLR: detected ties in categories %s.  Small "
+                            "amount of noise will be injected into result "
+                            "estimates upon prediction to break the ties"
+                            % self._ulabels[ties])
+                    self.__ties = ties
+                    ## w_non0 = np.nonzero(w)
+                    ## w_non0_max = np.max(np.abs(w[w_non0]))
+                    ## w_non0_idx = np.unique(w_non0[0])
+                    ## w_non0_len = len(w_non0_idx)
+                    ## for f_idx in np.where(ties)[0]:
+                    ##     w[w_non0_idx, f_idx] += \
+                    ##          0.001 * np.random.normal(size=(w_non0_len,))
+            else:
+                raise ValueError("Do not know how to treat ties=%r"
+                                 % (self.params.ties,))
+
         # save the weights
         self.__weights_all = w
         self.__weights = w[:dataset.nfeatures, :]
@@ -495,6 +530,11 @@ class SMLR(Classifier):
         # determine the probability values for making the prediction
         dot_prod = np.dot(data, w)
         E = np.exp(dot_prod)
+        if self.__ties is not None:
+            # 1e-5 should be adequate since anyways this is done
+            # already after exponentiation
+            E[:, self.__ties] += \
+                 1e-5 * np.random.normal(size=(len(E), len(self.__ties)))
         S = np.sum(E, 1)
 
         if __debug__:
@@ -503,8 +543,7 @@ class SMLR(Classifier):
                   "min:max(w)=%f:%f min:max(dot_prod)=%f:%f min:max(E)=%f:%f" %
                   (np.min(w), np.max(w), np.min(dot_prod), np.max(dot_prod),
                    np.min(E), np.max(E)))
-
-        values = E / S[:, np.newaxis].repeat(E.shape[1], axis=1)
+        values = E / S[:, np.newaxis] #.repeat(E.shape[1], axis=1)
         self.ca.estimates = values
 
         # generate predictions
@@ -538,9 +577,6 @@ class SMLRWeights(Sensitivity):
     arguments how to custmize this behavior.
     """
 
-    biases = ConditionalAttribute(enabled=True,
-                           doc="A 1-d ndarray of biases")
-
     _LEGAL_CLFS = [ SMLR ]
 
 
@@ -554,9 +590,6 @@ class SMLRWeights(Sensitivity):
         # (as usual)
         weights = clf.weights.T
 
-        if clf.params.has_bias:
-            self.ca.biases = clf.biases
-
         if __debug__:
             debug('SMLR',
                   "Extracting weights for %d-class SMLR" %
@@ -566,5 +599,10 @@ class SMLRWeights(Sensitivity):
 
         # limit the labels to the number of sensitivity sets, to deal
         # with the case of `fit_all_weights=False`
-        return Dataset(weights,
-                       sa={clf.get_space(): clf._ulabels[:len(weights)]})
+        ds = Dataset(weights,
+                     sa={clf.get_space(): clf._ulabels[:len(weights)]})
+
+        if clf.params.has_bias:
+            ds.sa['biases'] = clf.biases
+        return ds
+

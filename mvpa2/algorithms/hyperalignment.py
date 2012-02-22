@@ -47,7 +47,8 @@ class Hyperalignment(ClassWithCollections):
     # Lets use built-in facilities to specify parameters which
     # constructor should accept
     alignment = Parameter(ProcrusteanMapper(), # might provide allowedtype
-            doc="""... XXX If `None` (default) an instance of
+            doc="""The multidimensional transformation mapper. If
+            `None` (default) an instance of
             :class:`~mvpa2.mappers.procrustean.ProcrusteanMapper` is
             used.""")
 

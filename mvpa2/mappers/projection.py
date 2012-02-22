@@ -43,17 +43,11 @@ class ProjectionMapper(Mapper):
 
     _DEV__doc__ = """Think about renaming `demean`, may be `translation`?"""
 
-    def __init__(self, selector=None, demean=True):
+    def __init__(self, demean=True):
         """Initialize the ProjectionMapper
 
         Parameters
         ----------
-        selector : None or list
-          Which components (i.e. columns of the projection matrix)
-          should be used for mapping. If `selector` is `None` all
-          components are used. If a list is provided, all list
-          elements are treated as component ids and the respective
-          components are selected (all others are discarded).
         demean : bool
           Either data should be demeaned while computing
           projections and applied back while doing reverse()
@@ -63,7 +57,6 @@ class ProjectionMapper(Mapper):
         # by default we want to wipe the feature attributes out during mapping
         self._fa_filter = []
 
-        self._selector = selector
         self._proj = None
         """Forward projection matrix."""
         self._recon = None
@@ -90,12 +83,6 @@ class ProjectionMapper(Mapper):
         """
         if self._demean:
             self._offset_in = samples.mean(axis=0)
-
-
-    def _posttrain(self, dataset):
-        # perform component selection
-        if self._selector is not None:
-            self.select_out(self._selector)
 
 
     ##REF: Name was automagically refactored

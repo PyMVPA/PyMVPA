@@ -15,7 +15,7 @@ from mvpa2.support.copy import copy
 
 from mvpa2.base.dataset import vstack
 from mvpa2.base import externals, warning
-from mvpa2.generators.partition import OddEvenPartitioner
+from mvpa2.generators.partition import OddEvenPartitioner, NFoldPartitioner
 from mvpa2.generators.base import Repeater
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.generators.splitters import Splitter
@@ -208,7 +208,7 @@ class ErrorsTests(unittest.TestCase):
         # NB warnings are not printed while doing whole testing
         warning("Don't worry about the following warning.")
         if 'multiclass' in l_clf.__tags__:
-            self.failIf(terr(test3) is None)
+            self.assertFalse(terr(test3) is None)
 
         # try copying the beast
         terr_copy = copy(terr)
@@ -627,6 +627,58 @@ class ErrorsTests(unittest.TestCase):
             #pl.close(fig)
             #pl.show()
 
+    @reseed_rng()
+    @labile(3, 1)
+    def test_confusionmatrix_nulldist(self):
+        from mvpa2.clfs.gnb import GNB
+
+        class ConfusionMatrixError(object):
+            """Custom error "function"
+            """
+            def __init__(self, labels=None):
+                self.labels = labels
+            def __call__(self, predictions, targets):
+                cm = ConfusionMatrix(labels=list(self.labels),
+                                     targets=targets, predictions=predictions)
+                #print cm.matrix
+                # We have to add a degenerate leading dimension
+                # so we could separate them into separate 'samples'
+                return cm.matrix[None, :]
+
+        from mvpa2.misc.data_generators import normal_feature_dataset
+        for snr in [0., 2.,]:
+            ds = normal_feature_dataset(snr=snr, perlabel=42, nchunks=3,
+                                        nonbogus_features=[0,1], nfeatures=2)
+
+            clf = GNB()
+            num_perm = 50
+            permutator = AttributePermutator('targets',
+                                             limit='chunks',
+                                             count=num_perm)
+            cv = CrossValidation(
+                clf, NFoldPartitioner(),
+                errorfx=ConfusionMatrixError(labels=ds.sa['targets'].unique),
+                postproc=mean_sample(),
+                null_dist=MCNullDist(permutator,
+                                     tail='right', # because we now look at accuracy not error
+                                     enable_ca=['dist_samples']),
+                enable_ca=['stats'])
+            cmatrix = cv(ds)
+            #print "Result:\n", cmatrix.samples
+            cvnp = cv.ca.null_prob.samples
+            #print cvnp
+            self.assertTrue(cvnp.shape, (2, 2))
+            if cfg.getboolean('tests', 'labile', default='yes'):
+                if snr == 0.:
+                    # all p should be high since no signal
+                    assert_array_less(0.05, cvnp)
+                else:
+                    # diagonal p is low -- we have signal after all
+                    assert_array_less(np.diag(cvnp), 0.05)
+                    # off diagonals are high p since for them we would
+                    # need to look at the other tail
+                    assert_array_less(0.9,
+                                      cvnp[(np.array([0,1]), np.array([1,0]))])
 
 def suite():
     return unittest.makeSuite(ErrorsTests)

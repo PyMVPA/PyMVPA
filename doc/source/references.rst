@@ -30,6 +30,12 @@ experiments.
   URL: http://www.ncbi.nlm.nih.gov/pubmed/19938211
 
 
+.. _CCK+11:
+
+**Carlin, J. D., Calder, A. J., Kriegeskorte, N., Nili, H. & Rowe, J. B.** (2011). A head view-invariant representation of gaze direction in anterior superior temporal sulcus. *Curr Biol*, *21*, 1817–21.
+  DOI: http://dx.doi.org/10.1016/j.cub.2011.09.025
+
+
 .. _CRK+11:
 
 **Carlin, J. D., Rowe, J. B., Kriegeskorte, N., Thompson, R. & Calder, A. J.** (2011). Direction-Sensitive Codes for Observed Head Turns in Human Superior Temporal Sulcus. *Cerebral Cortex*, **, .
@@ -184,6 +190,12 @@ experiments.
   DOI: http://dx.doi.org/10.1126/science.1063736
 
 
+.. _HGC+11:
+
+**Haxby, J. V., Guntupalli, J. S., Connolly, A. C., Halchenko, Y. O., Conroy, B. R., Gobbini, M. I., Hanke, M. & Ramadge, P. J.** (2011). A Common, High-Dimensional Model of the Representational Space in Human Ventral Temporal Cortex. *Neuron*, *72*, 404–416.
+  DOI: http://dx.doi.org/10.1016/j.neuron.2011.08.026
+
+
 .. _HR06:
 
 **Haynes, J. & Rees, G.** (2006). Decoding mental states from brain activity in humans. *Nature Reviews Neuroscience*, *7*, 523–534.
@@ -204,6 +216,12 @@ experiments.
   Keywords: :keyword:`hypothesis testing`
 
   DOI: http://dx.doi.org/10.1371/journal.pmed.0020124
+
+
+.. _JP11:
+
+**Jimura, K. & Poldrack, R.** (2011). Analyses of regional-average activation and multivoxel pattern information tell complementary stories. *Neuropsychologia*.
+  DOI: http://dx.doi.org/10.1016/j.neuropsychologia.2011.11.007
 
 
 .. _JL09:
@@ -273,7 +291,7 @@ experiments.
 
 .. _KWO11:
 
-**Kubilius, J., Wagemans, J. & Op de Beeck, H.** (2011). Emergence of perceptual gestalts in the human visual cortex: The case of the configural superiority effect. *Psychological Science*, *in press*.
+**Kubilius, J., Wagemans, J. & Beeck, H. O. d.** (2011). Emergence of perceptual gestalts in the human visual cortex: The case of the configural superiority effect. *Psychological Science*, *in press*.
   Keywords: :keyword:`pymvpa`, :keyword:`fMRI`
 
   DOI: http://dx.doi.org/10.1177/0956797611417000
@@ -394,12 +412,24 @@ experiments.
   DOI: http://dx.doi.org/10.1016/j.neuroimage.2008.11.007
 
 
+.. _PSR11:
+
+**Pernet, C. R., Sajda, P. & Rousselet, G. A.** (2011). Single-trial analyses: why bother?. *Front Psychol*, *2*, 322.
+  DOI: http://dx.doi.org/10.3389/fpsyg.2011.00322
+
+
 .. _PP07:
 
 **Pessoa, L. & Padmala, S.** (2007). Decoding near-threshold perception of fear from distributed single-trial brain activation. *Cerebral Cortex*, *17*, 691–701.
   *Analysis of slow event-related fMRI data using patter classification techniques.*
 
   DOI: http://dx.doi.org/10.1093/cercor/bhk020
+
+
+.. _RC12:
+
+**Raizada, R. D. & Connolly, A. C.** (In press). What makes different people's representations alike: neural similarity-space solves the problem of across-subject fMRI decoding. *Journal of Cognitive Neuroscience*.
+  URL: http://raizadalab.org/publications.html
 
 
 .. _SMM+08:

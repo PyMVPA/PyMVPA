@@ -32,13 +32,15 @@ clean:
 	-rm -rf $(BUILDDIR) source/generated source/examples
 	-rm generate-stamp
 
+SPHINXEXT_PATH=$(shell python -c 'import sphinx; from distutils.version import LooseVersion; print LooseVersion(sphinx.__version__) < "1.1.2" and "sphinxext" or "/usr/share/pyshared/sphinx/ext"')
+#SPHINXEXT_PATH=sphinxext
 
 generate: generate-stamp
 generate-stamp:
 	mkdir -p $(BUILDDIR)
 	@MVPA_EXTERNALS_RAISE_EXCEPTION=off \
 		PYTHONPATH=$(CURDIR)/sphinxext:$(CURDIR)/..:$(PYTHONPATH) \
-		$(PYTHON) sphinxext/autosummary/generate.py \
+		$(PYTHON) $(SPHINXEXT_PATH)/autosummary/generate.py \
 		-t $(CURDIR)/templates -o source/generated source/*.rst
 	# wipe everything that is not pymvpa to prevent suffering from the bugs
 	# of other in subsequent stages

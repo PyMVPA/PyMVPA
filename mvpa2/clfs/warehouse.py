@@ -40,7 +40,7 @@ from mvpa2.kernels.libsvm import LinearLSKernel, RbfLSKernel, \
 _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'smlr', 'does_feature_selection', 'has_sensitivity',
         'multiclass', 'non-linear', 'kernel-based', 'lars',
-        'regression', 'regression_based',
+        'regression', 'regression_based', 'random_tie_breaking',
         'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
         'gnb', 'plr', 'rpy2', 'swig', 'skl', 'lda', 'qda' ]

@@ -10,14 +10,14 @@
 #include <Python.h>
 
 DL_EXPORT(int)
-stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
-			int X_rows, int X_cols, double X[X_rows][X_cols],
-			int XY_rows, int XY_cols, double XY[XY_rows][XY_cols],
-			int Xw_rows, int Xw_cols, double Xw[Xw_rows][Xw_cols],
-			int E_rows, int E_cols, double E[E_rows][E_cols],
-			int ac_rows, double ac[ac_rows],
-			int lm_2_ac_rows, double lm_2_ac[lm_2_ac_rows],
-			int S_rows, double S[S_rows],
+stepwise_regression(int w_rows, int w_cols, double w[],
+			int X_rows, int X_cols, double X[],
+			int XY_rows, int XY_cols, double XY[],
+			int Xw_rows, int Xw_cols, double Xw[],
+			int E_rows, int E_cols, double E[],
+			int ac_rows, double ac[],
+			int lm_2_ac_rows, double lm_2_ac[],
+			int S_rows, double S[],
 			int M,
 			int maxiter,
 			double convergence_tol,
@@ -43,12 +43,23 @@ stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
   double sum2_w_diff;
   double sum2_w_old;
 
+  long cycle = 0;
+  int basis = 0;
+  int m = 0;
+  float rval = 0;
+
   // get the num features and num classes
   int nd = w_rows;
   int ns = E_rows;
 
   // loop indexes
   int i = 0;
+
+  // pointers to elements to avoid explicit indexing
+  double* Sp = (double*) NULL;
+  double* Ep = (double*) NULL;
+  double* Xp = (double*) NULL;
+  double* Xwp = (double*) NULL;
 
   // prob of resample each weight
   // allocate everything in heap -- not on stack
@@ -70,10 +81,7 @@ stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
   srand (seed);
 
   // loop over cycles
-  long cycle = 0;
-  int basis = 0;
-  int m = 0;
-  float rval = 0;
+
   i = 0;
   for (cycle=0; cycle<maxiter; cycle++)
   {
@@ -90,7 +98,7 @@ stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
       for (m=0; m<w_cols; m++)
       {
 	// get the starting weight
-	w_old = w[basis][m];
+	w_old = w[w_cols*basis+m];
 
 	// set the p_resamp if it's the first cycle
 	if (cycle == 0)
@@ -104,13 +112,16 @@ stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 	{
 	  // calc the probability
 	  XdotP = 0.0;
-	  for (i=0; i<ns; i++)
+	  for (i=0, Xp=X+basis, Ep=E+m;
+	       i<ns; i++)
 	  {
-	    XdotP += X[i][basis] * E[i][m]/S[i];
+	    XdotP += (*Xp) * (*Ep)/S[i];
+	    Xp += X_cols;
+	    Ep += E_cols;
 	  }
 
 	  // get the gradient
-	  grad = XY[basis][m] - XdotP;
+	  grad = XY[XY_cols*basis+m] - XdotP;
 
 	  // set the new weight
 	  w_new = w_old + grad/ac[basis];
@@ -185,16 +196,21 @@ stepwise_regression(int w_rows, int w_cols, double w[w_rows][w_cols],
 	  {
 	    // update the expected values
 	    w_diff = w_new - w_old;
-	    for (i=0; i<ns; i++)
+	    for (Sp=S, Xp=X+basis, Ep=E+m, Xwp=Xw+m;
+		 Sp<S+S_rows; Sp++)
 	    {
-	      Xw[i][m] += X[i][basis]*w_diff;
-	      E_new_m = exp(Xw[i][m]);
-	      S[i] += E_new_m - E[i][m];
-	      E[i][m] = E_new_m;
+	      (*Xwp) += (*Xp)*w_diff;
+	      E_new_m = exp(*Xwp);
+	      *Sp += E_new_m - *Ep;
+	      *Ep = E_new_m;
+
+	      Xp += X_cols;
+	      Ep += E_cols;
+	      Xwp += Xw_cols;
 	    }
 
 	    // update the weight
-	    w[basis][m] = w_new;
+	    w[w_cols*basis+m] = w_new;
 
 	    // keep track of the sqrt sum squared diffs
 	    sum2_w_diff += w_diff*w_diff;

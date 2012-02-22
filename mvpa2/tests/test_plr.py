@@ -33,6 +33,10 @@ class PLRTests(unittest.TestCase):
         clf = PLR()
 
         clf.train(data)
+        # Also get "sensitivity".  Was introduced to check a bug with
+        # processing dataset with numeric labels
+        sa = clf.get_sensitivity_analyzer()
+        sens = sa(data)
 
         clf.ca.enable('estimates')
         clf.ca.enable('predictions')

@@ -238,6 +238,7 @@ if __debug__:
 
     debug.register('MAP',   "*Mapper")
     debug.register('MAP_',  "*Mapper (verbose)")
+    debug.register('FX',    "FxMapper")
     debug.register('ZSCM',  "ZScoreMapper")
 
     debug.register('COL',  "Generic Collectable")
@@ -273,6 +274,8 @@ if __debug__:
     debug.register('FS',     "FeatureSelections")
     debug.register('FS_',    "FeatureSelections (verbose)")
     debug.register('FSPL',   "FeatureSelectionPipeline")
+
+    debug.register('KNN',    "kNN")
 
     debug.register('SVM',    "SVM")
     debug.register('SVM_',   "SVM (verbose)")
