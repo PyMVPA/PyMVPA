@@ -25,7 +25,7 @@ class PLR(Classifier):
     """Penalized logistic regression `Classifier`.
     """
 
-    __tags__ = [ 'plr', 'binary', 'linear' ]
+    __tags__ = [ 'plr', 'binary', 'linear', 'has_sensitivity' ]
 
     def __init__(self, lm=1, criterion=1, reduced=0.0, maxiter=20, **kwargs):
         """
@@ -133,10 +133,10 @@ class PLR(Classifier):
             # We have computed in rank reduced space ->
             # Project to original space
             self.w = V * w[:-1]
-            self.offset = w[-1]
+            self.bias = w[-1]
         else:
             self.w = w[:-1]
-            self.offset = w[-1]
+            self.bias = w[-1]
 
 
     def __f(self, y):
@@ -156,7 +156,7 @@ class PLR(Classifier):
         data = np.matrix(np.asarray(data))
 
         # get the values and then predictions
-        values = np.ravel(self.__f(self.offset + data * self.w))
+        values = np.ravel(self.__f(self.bias + data * self.w))
         predictions = values > 0.5
 
         # save the state if desired, relying on State._setitem_ to
@@ -166,3 +166,41 @@ class PLR(Classifier):
 
         return predictions
 
+    def get_sensitivity_analyzer(self, **kwargs):
+        """Returns a sensitivity analyzer for PLR."""
+        return PLRWeights(self, **kwargs)
+
+
+
+from mvpa2.base.state import ConditionalAttribute
+from mvpa2.base.types import asobjarray
+from mvpa2.measures.base import Sensitivity
+from mvpa2.datasets.base import Dataset
+
+
+class PLRWeights(Sensitivity):
+    """`Sensitivity` reporting linear weights of PLR"""
+
+    _LEGAL_CLFS = [ PLR ]
+
+    def _call(self, dataset=None):
+        """Extract weights from PLR classifier.
+
+        PLR always has weights available, so nothing has to be computed here.
+        """
+        clf = self.clf
+        attrmap = clf._attrmap
+
+        if attrmap:
+            # labels (values of the corresponding space) which were used
+            # for mapping Here we rely on the fact that they are sorted
+            # originally (just an arange())
+            labels_num = attrmap.values()
+            labels = attrmap.to_literal(asobjarray([tuple(sorted(labels_num))]),
+                                        recurse=True)
+        else:
+            labels = [(0, 1)]           # we just had our good old numeric ones
+
+        ds = Dataset(clf.w.T, sa={clf.get_space(): labels,
+                                  'biases' : [clf.bias]})
+        return ds

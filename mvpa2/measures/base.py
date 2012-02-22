@@ -67,9 +67,6 @@ class Measure(Learner):
 
     """
 
-    raw_results = ConditionalAttribute(enabled=False,
-        doc="Computed results before applying any " +
-            "transformation algorithm")
     null_prob = ConditionalAttribute(enabled=True)
     """Stores the probability of a measure under the NULL hypothesis"""
     null_t = ConditionalAttribute(enabled=False)
@@ -124,8 +121,6 @@ class Measure(Learner):
     def _postcall(self, dataset, result):
         """Some postprocessing on the result
         """
-        self.ca.raw_results = result
-
         # post-processing
         result = super(Measure, self)._postcall(dataset, result)
         if not self.__null_dist is None:
@@ -611,33 +606,8 @@ class FeaturewiseMeasure(Measure):
     Should behave like a Measure.
     """
 
-    # MH: why isn't this piece in the Sensitivity class?
-    base_sensitivities = ConditionalAttribute(enabled=False,
-        doc="Stores basic sensitivities if the sensitivity " +
-            "relies on combining multiple ones")
-
-    def __init__(self, **kwargs):
-        Measure.__init__(self, **kwargs)
-
-
     def _postcall(self, dataset, result):
         """Adjusts per-feature-measure for computed `result`
-
-
-        TODO: overlaps in what it does heavily with
-         CombinedSensitivityAnalyzer, thus this one might make use of
-         CombinedSensitivityAnalyzer yoh thinks, and here
-         base_sensitivities doesn't sound appropriate.
-         MH: There is indeed some overlap, but also significant differences.
-             This one operates on a single sensana and combines over second
-             axis, CombinedFeaturewiseMeasure uses first axis.
-             Additionally, 'Sensitivity' base class is
-             FeaturewiseMeasures which would have to be changed to
-             CombinedFeaturewiseMeasure to deal with stuff like
-             SMLRWeights that return multiple sensitivity values by default.
-             Not sure if unification of both (and/or removal of functionality
-             here does not lead to an overall more complicated situation,
-             without any real gain -- after all this one works ;-)
         """
         # This method get the 'result' either as a 1D array, or as a Dataset
         # everything else is illegal
@@ -648,46 +618,7 @@ class FeaturewiseMeasure(Measure):
                                "their results as 1D array, or as a Dataset "
                                "(error made by: '%s')." % repr(self))
 
-        if len(result.shape) > 1:
-            n_base = len(result)
-            """Number of base sensitivities"""
-            if self.ca.is_enabled('base_sensitivities'):
-                b_sensitivities = []
-                if not self.ca.has_key('biases'):
-                    biases = None
-                else:
-                    biases = self.ca.biases
-                    if len(self.ca.biases) != n_base:
-                        warning("Number of biases %d differs from number "
-                                "of base sensitivities %d which could happen "
-                                "when measure is collided across labels."
-                                % (len(self.ca.biases), n_base))
-                for i in xrange(n_base):
-                    if not biases is None:
-                        if n_base > 1 and len(biases) == 1:
-                            # The same bias for all bases
-                            bias = biases[0]
-                        else:
-                            bias = biases[i]
-                    else:
-                        bias = None
-                    b_sensitivities = StaticMeasure(
-                        measure = result[i],
-                        bias = bias)
-                self.ca.base_sensitivities = b_sensitivities
-
-        # XXX Remove when "sensitivity-return-dataset" transition is done
-        if __debug__ \
-           and not isinstance(result, AttrDataset) and not len(result.shape) == 1:
-            warning("FeaturewiseMeasures-related post-processing "
-                    "of '%s' doesn't return a Dataset, or 1D-array."
-                    % self.__class__.__name__)
-
-        # call base class postcall
-        result = Measure._postcall(self, dataset, result)
-
-        return result
-
+        return Measure._postcall(self, dataset, result)
 
 
 class StaticMeasure(Measure):
@@ -729,6 +660,18 @@ class StaticMeasure(Measure):
     bias = property(fget=lambda self:self.__bias)
 
 
+
+def _dont_force_slaves(slave_kwargs={}):
+    """Helper to reset force_train in sensitivities with slaves
+    """
+    # We should not (or even must not in case of SplitCLF) force
+    # training of slave analyzers since they would be trained
+    # anyways by the Boosted analyzer's train
+    # TODO: consider at least a warning whenever it is provided
+    # and is True
+    slave_kwargs = slave_kwargs or {}   # make new instance of default empty one
+    slave_kwargs['force_train'] = slave_kwargs.get('force_train', False)
+    return slave_kwargs
 
 #
 # Flavored implementations of FeaturewiseMeasures
@@ -814,8 +757,9 @@ class Sensitivity(FeaturewiseMeasure):
     def _train(self, dataset):
         clf = self.__clf
         if __debug__:
-            debug("SA", "Training classifier %s %s" %
+            debug("SA", "Training classifier %s on %s %s",
                   (clf,
+                   dataset,
                    {False: "since it wasn't yet trained",
                     True:  "although it was trained previously"}
                    [clf.trained]))
@@ -947,7 +891,6 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
                  analyzer=None,
                  combined_analyzer=None,
                  sa_attr='lrn_index',
-                 slave_kwargs={},
                  **kwargs):
         """Initialize Sensitivity Analyzer for `BoostedClassifier`
 
@@ -965,6 +908,16 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
           Arguments to pass to created analyzer if analyzer is None
         """
         Sensitivity.__init__(self, clf, **kwargs)
+
+        if analyzer is not None and len(self._slave_kwargs):
+            raise ValueError, \
+                  "Provide either analyzer of slave_* arguments, not both"
+
+        # Do not force_train slave sensitivity since the dataset might
+        # be inappropriate -- rely on the classifier being trained by
+        # the extraction by the meta classifier itself
+        self._slave_kwargs = _dont_force_slaves(self._slave_kwargs)
+
         if combined_analyzer is None:
             # sanitarize kwargs
             kwargs.pop('force_train', None)
@@ -973,10 +926,6 @@ class BoostedClassifierSensitivityAnalyzer(Sensitivity):
         self.__combined_analyzer = combined_analyzer
         """Combined analyzer to use"""
 
-        # XXX where do we get _slave_kwargs from here?
-        if analyzer is not None and len(self._slave_kwargs):
-            raise ValueError, \
-                  "Provide either analyzer of slave_* arguments, not both"
         self.__analyzer = analyzer
         """Analyzer to use for basic classifiers within boosted classifier"""
 
@@ -1048,10 +997,15 @@ class ProxyClassifierSensitivityAnalyzer(Sensitivity):
         """Initialize Sensitivity Analyzer for `BoostedClassifier`
         """
         Sensitivity.__init__(self, clf, **kwargs)
-
+        # _slave_kwargs is assigned due to assign=True in @group_kwargs
         if analyzer is not None and len(self._slave_kwargs):
             raise ValueError, \
                   "Provide either analyzer of slave_* arguments, not both"
+
+        # Do not force_train slave sensitivity since the dataset might
+        # be inappropriate -- rely on the classifier being trained by
+        # the extraction by the meta classifier itself
+        self._slave_kwargs = _dont_force_slaves(self._slave_kwargs)
 
         self.__analyzer = analyzer
         """Analyzer to use for basic classifiers within boosted classifier"""
@@ -1160,3 +1114,4 @@ class MappedClassifierSensitivityAnalyzer(ProxyClassifierSensitivityAnalyzer):
 
     def __str__(self):
         return _str(self, str(self.clf))
+

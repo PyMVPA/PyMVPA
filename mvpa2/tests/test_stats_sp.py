@@ -62,7 +62,9 @@ class StatsTestsScipy(unittest.TestCase):
 
         # test 'any' mode
         from mvpa2.measures.corrcoef import CorrCoef
-        ds = datasets['uni2medium']
+        # we will reassign targets later on, so let's operate on a
+        # copy
+        ds = datasets['uni2medium'].copy()
 
         permutator = AttributePermutator('targets', count=20)
         null = MCNullDist(permutator, tail='any')
@@ -163,9 +165,9 @@ class StatsTestsScipy(unittest.TestCase):
         ds = datasets['uni2small']
         _ = m(ds)
         t, p = m.ca.null_t, m.ca.null_prob
-        self.assertTrue((p.samples>=0).all())
-        self.assertTrue((t.samples[0,:2] > 0).all())
-        self.assertTrue((t.samples[0,2:4] < 0).all())
+        assert_array_less(-1e-30, p.samples) # just that all >= 0
+        assert_array_less(0, t.samples[0, :2])
+        assert_array_less(t.samples[0, 2:4], 0)
 
 
     def test_match_distribution(self):
@@ -354,6 +356,12 @@ class StatsTestsScipy(unittest.TestCase):
         self.assertTrue(bdist.ppf(0.5) == 50)
         self.assertTrue(bdist.ppf(0) == -1)
 
+    def test_right_tail(self):
+        # Test if we are getting "correct" p-value for right tail in
+        # "interesting" cases
+        # TODO:  some of it is done in
+        #   test_transerror.py:ErrorsTests.test_confusionmatrix_nulldist
+        pass
 
 def suite():
     """Create the suite"""

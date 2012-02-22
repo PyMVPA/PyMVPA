@@ -244,7 +244,9 @@ def enhanced_doc_string(item, *args, **kwargs):
                                    func.func_code.co_varnames)
 
         if __debug__ and not extend_args:
-            debug('DOCH', 'Not extending parameters for __init__ of  %s' % name)
+            debug('DOCH',
+                  'Not extending parameters for __init__ of  %s',
+                  (name,))
 
         if initdoc is None:
             initdoc = "Initialize instance of %s" % name
@@ -425,7 +427,7 @@ def _repr_attrs(obj, attrs, default=None, error_value='ERROR'):
     out = []
     for a in attrs:
         v = getattr(obj, a, error_value)
-        if not v is default:
+        if not (v is default or isinstance(v, basestring) and v == default):
             out.append('%s=%r' % (a, v))
     return out
 

@@ -10,12 +10,17 @@
 
 __docformat__ = 'restructuredtext'
 
-import numpy as np
+import itertools
+import math
+import random
 import re, os
 
 # for SmartVersion
 from distutils.version import Version
 from types import StringType, TupleType, ListType
+
+import numpy as np
+#import numpy.random as npr
 
 from mvpa2.base import warning
 from mvpa2.support.copy import copy, deepcopy
@@ -107,6 +112,99 @@ def xunique_combinations(L, n):
         for i in xrange(len(L)-n+1):
             for cc in xunique_combinations(L[i+1:], n-1):
                 yield [L[i]]+cc
+
+def __xrandom_unique_combinations(L, n, k=None):
+    """Generator of unique combinations form a list L of objects in
+    groups of size n produced in random order
+
+    "Elegant" but incorrect since pretty much samples the "tail"
+
+    Parameters
+    ----------
+    L : list
+      list of unique ids
+    n : int
+      grouping size
+    k : int or None, optional
+      limit number of combinations.  All of combinations are produced
+      if k is None (default)
+
+    Based on xunique_combinations adopted from Li Daobing
+    http://code.activestate.com/recipes/190465/
+    (MIT license, according to activestate.com's policy)
+    """
+    if k is not None:
+        # Just a helper for convenient limiting
+        g = xrandom_unique_combinations(L, n)
+        for i in xrange(k):
+            yield next(g)
+    elif n == 0:
+        yield []
+    else:
+        for i in npr.permutation(len(L)-n+1):
+            for cc in xrandom_unique_combinations(
+                npr.permutation(L[i+1:]), n-1):
+                yield [L[i]]+cc
+
+
+def ncombinations(n, k):
+    """
+    A fast way to calculate binomial coefficients by Andrew Dalke
+
+    Source: http://stackoverflow.com/questions/3025162/statistics-combinations-in-python/3025194
+
+    Alternative implementations:
+       scipy.misc.comb() -- approximation
+    """
+    if 0 <= k <= n:
+        ntok = 1
+        ktok = 1
+        for t in xrange(1, min(k, n - k) + 1):
+            ntok *= n
+            ktok *= t
+            n -= 1
+        return ntok // ktok
+    else:
+        return 0
+
+
+def xrandom_unique_combinations(L, n, k=None):
+    """Generator of unique combinations form a list L of objects in
+    groups of size n produced in random order
+
+    Parameters
+    ----------
+    L : list
+      list of unique ids
+    n : int
+      grouping size
+    k : int or None
+      limit number of combinations.  All of combinations are produced
+      if k is None (default)
+
+    """
+    ncomb = ncombinations(len(L), n)
+    if k is None:
+        k = ncomb
+
+    if ncomb < 1e6 or k > math.sqrt(ncomb):
+        # so there is no sense really to mess with controlling for
+        # non-repeats -- we can pre-generate all of them and just
+        # choose needed number of random samples
+        for s in random.sample(list(itertools.combinations(L, n)), k):
+            yield list(s)
+    else:
+        # Let's cycle through permutations while tracking
+        # repeats
+        seen = set()
+        indexes = range(len(L)) # switch to indices so we could
+                                # reliably hash them
+        while len(seen) < min(k, ncomb):
+            np.random.shuffle(indexes)
+            sample = tuple(sorted(indexes[:n]))
+            if not (sample in seen):
+                yield [L[x] for x in sample]
+                seen.add(sample)
 
 
 def unique_combinations(L, n, sort=False):
@@ -268,7 +366,13 @@ class SmartVersion(Version):
         self.version = version_to_tuple(vstring)
 
     def __str__(self):
-        return self.vstring
+        try:
+            return self.vstring
+        except AttributeError:
+            # Version.__init__ doesn't take care about assigning
+            # .vstring if None is given, so let's just treat as it is
+            # an empty string
+            return ""
 
     def __cmp__(self, other):
         if isinstance(other, (StringType, TupleType, ListType)):

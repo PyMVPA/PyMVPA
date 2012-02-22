@@ -36,6 +36,10 @@ class Node(ClassWithCollections):
     calling_time = ConditionalAttribute(enabled=True,
         doc="Time (in seconds) it took to call the node")
 
+    raw_results = ConditionalAttribute(enabled=False,
+        doc="Computed results before invoking postproc. " +
+            "Stored only if postproc is not None.")
+
     def __init__(self, space=None, postproc=None, **kwargs):
         """
         Parameters
@@ -121,6 +125,8 @@ class Node(ClassWithCollections):
             if __debug__:
                 debug("NO",
                       "Applying post-processing node %s", (self.__postproc,))
+            self.ca.raw_results = result
+
             result = self.__postproc(result)
 
         return result

@@ -28,7 +28,7 @@ Critical API Changes
 ====================
 
 * `.states` -> `.ca` (for conditional attributes).  All attributes stored in
-  collections (parameters for Classifiers in `.params`, states in `.ca`)
+  collections (parameters for Classifiers in ``.params``, states in ``.ca``)
   should be accessed not at top level of the object but through a collection.
 
 * Dataset: behaves more like a NumPy array.  No specialized Dataset classes,
@@ -37,7 +37,7 @@ Critical API Changes
   - MaskedDataset -> `dataset_wizard`
   - NiftiDataset -> `fmri_dataset`
   - ERNiftiDataset -> `fmri_dataset` + `eventrelated_dataset` (see
-    :ref:`event-related analysis example <example_eventrelated_>`)
+    :ref:`event-related analysis example <example_eventrelated>`)
 
 * MRI volumes: 3,4D volumes (and coordinates) are exposed with following order
   of axes: t,x,y,z.  Previously we followed a convention of t,z,y,x order of
@@ -66,10 +66,6 @@ General Changes
 Datasets
 ========
 
-Interface changes
------------------
-
-
 Sparse data support
 -------------------
 
@@ -82,6 +78,3 @@ Splitters
 * `permute` -> `permute_attr`, so if you had `permute=True`, use
   `attr='targets'` if you like to permute targets
 
-
-Classifiers
-===========

@@ -12,7 +12,7 @@ Primarily the ones from nose.tools
 """
 __docformat__ = 'restructuredtext'
 
-import os
+import os, sys
 import tempfile
 import unittest
 
@@ -56,6 +56,8 @@ from numpy.testing import (
     assert_array_almost_equal, assert_array_equal, assert_array_less,
     assert_string_equal)
 
+def assert_array_lequal(x, y):
+    assert_array_less(-y, -x)
 
 def skip_if_no_external(dep, ver_dep=None, min_version=None, max_version=None):
     """Raise SkipTest if external is missing
@@ -146,11 +148,10 @@ def reseed_rng():
 
     Examples
     --------
-
-        @reseed_rng()
-        def test_random():
-            import numpy.random as rnd
-            print rnd.randint(100)
+    >>> @reseed_rng()
+    ... def test_random():
+    ...     import numpy.random as rnd
+    ...     print rnd.randint(100)
 
     """
 
@@ -201,3 +202,55 @@ def nodebug(entries=None):
         return newfunc
 
     return decorate
+
+
+def labile(niter=3, nfailures=1):
+    """Decorator for labile tests -- runs multiple times
+
+    Let's reduce probability of random failures but re-running the
+    test multiple times allowing to fail few in a row.  Makes sense
+    only for tests which run on random data, so usually decorated with
+    reseed_rng.  Otherwise it is unlikely that result would change if
+    algorithms are deterministic and operate on the same data
+
+    Parameters
+    ----------
+    niter: int, optional
+      How many iterations to run maximum
+    nfailures: int, optional
+      How many failures to allow
+
+    """
+    def decorate(func):
+        def newfunc(*arg, **kwargs):
+            nfailed, i = 0, 0           # define i just in case
+            for i in xrange(niter):
+                try:
+                    ret = func(*arg, **kwargs)
+                    if i + 1 - nfailed  >= niter - nfailures:
+                        # so we know already that we wouldn't go over
+                        # nfailures
+                        break
+                except AssertionError, e:
+                    nfailed += 1
+                    if __debug__:
+                        debug('TEST', "Upon %i-th run, test %s failed with %s",
+                              (i, func.__name__, e))
+
+                    if nfailed > nfailures:
+                        if __debug__:
+                            debug('TEST', "Ran %s %i times. Got %d failures, "
+                                  "while was allowed %d "
+                                  "-- re-throwing the last failure %s",
+                                  (func.__name__, i+1, nfailed, nfailures, e))
+                        exc_info = sys.exc_info()
+                        raise exc_info[1], None, exc_info[2]
+            if __debug__:
+                debug('TEST', "Ran %s %i times. Got %d failures.",
+                      (func.__name__, i+1, nfailed))
+            return ret
+        newfunc = make_decorator(func)(newfunc)
+        return newfunc
+    assert(niter > nfailures)
+    return decorate
+

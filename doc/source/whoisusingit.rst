@@ -48,6 +48,18 @@ Institutions Where PyMVPA Is Known To Be Used
 Studies employing PyMVPA
 ========================
 
+* :ref:`Raizada and Connolly, Cognitive Neuroscience (In press) <RC12>`: What
+  makes different people's representations alike: neural similarity-space
+  solves the problem of across-subject fMRI decoding.
+  `Preprint PDF and code <http://raizadalab.org/publications.html>`__ are available
+
+* :ref:`Jimura and Poldrack, Neuropsychologia (2011) <JP11>`: Analyses of
+  regional-average activation and multivoxel pattern information tell
+  complementary stories
+
+* :ref:`Carlin et al., Current Biology (2011) <CCK+11>`: A head view-invariant
+  representation of gaze direction in anterior superior temporal sulcus
+
 * :ref:`Kaunitz et al., Frontiers in Perception Science (2011) <KKO+11>`:
   Intercepting the first pass: rapid categorization is suppressed for unseen stimuli.
 
@@ -57,9 +69,9 @@ Studies employing PyMVPA
 
 * :ref:`Kubilius et al., Psychological Science (2011) <KWO11>`:
   Emergence of perceptual gestalts in the human visual cortex: The case of the
-  configural superiority effect.  Complete suite of sources from stimuli
-  delivery (PsychoPy) to data analysis (PyMVPA) is available from
-  https://bitbucket.org/qbilius/confsup
+  configural superiority effect.
+  `Complete suite of sources from stimuli delivery (PsychoPy) to data analysis (PyMVPA) <https://bitbucket.org/qbilius/confsup>`__
+  is available
 
 * :ref:`Manelis et al., Cerebral Cortex (2011) <MRH11>`: Dynamic Changes In
   The Medial Temporal Lobe During Incidental Learning Of Object–Location
@@ -101,7 +113,10 @@ Studies employing PyMVPA
 Articles referring to PyMVPA
 ============================
 
-* :ref:`Schackman et al., Nature Reviews Neuroscience (2011) <SSS+11>`. The
+* :ref:`Pernet et al., Front. Psychology (2011) <PSR11>`. Single-trial analyses: why bother?
+
+
+* :ref:`Schackman et al., Nature Reviews Neuroscience (2011) <SSS+11>`: The
   integration of negative affect, pain and cognitive control in the cingulate
   cortex.
 

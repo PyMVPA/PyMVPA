@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as np
-import operator
+import operator, inspect
 
 from mvpa2.base import warning
 from mvpa2.base.node import Node
@@ -22,6 +22,9 @@ from mvpa2.misc.support import array_whereequal
 from mvpa2.base.dochelpers import borrowdoc
 
 from mvpa2.misc.transformers import sum_of_abs, max_of_abs
+
+if __debug__:
+    from mvpa2.base import debug
 
 class FxMapper(Mapper):
     """Apply a custom transformation to (groups of) samples or features.
@@ -85,6 +88,39 @@ class FxMapper(Mapper):
         # remove is_trained class attribute
         pass
 
+    def __smart_apply_along_axis(self, data):
+        # because apply_along_axis could be very much slower than a
+        # direct invocation of native functions capable of operating
+        # along specific axis, let's make it smarter for those we know
+        # could do that.
+        fx = None
+        naxis = {'samples': 0, 'features': 1}[self.__axis]
+        try:
+            # if first argument is 'axis' -- just proceed with a native call
+            if inspect.getargs(self.__fx.__code__).args[1] == 'axis':
+                fx = self.__fx
+            elif __debug__:
+                debug('FX', "Will apply %s via apply_along_axis",
+                          (self.__fx))
+        except Exception, e:
+            if __debug__:
+                debug('FX',
+                      "Failed to deduce either %s has 'axis' argument: %s",
+                      (self.__fx, repr(e)))
+            pass
+
+        if fx is not None:
+            if __debug__:
+                debug('FX', "Applying %s directly to data giving axis=%d",
+                      (self.__fx, naxis))
+            mdata = fx(data, naxis, *self.__fxargs)
+        else:
+            # either failed to deduce signature or just didn't
+            # have 'axis' second
+            # apply fx along naxis for each sample/feature
+            mdata = np.apply_along_axis(self.__fx, naxis, data, *self.__fxargs)
+        assert(mdata.ndim in (data.ndim, data.ndim-1))
+        return mdata
 
     @borrowdoc(Mapper)
     def _forward_data(self, data):
@@ -93,12 +129,10 @@ class FxMapper(Mapper):
                                "data when data grouping based on attributes "
                                "is requested"
                                % self.__class__.__name__)
-        # apply fx along samples axis for each feature
-        if self.__axis == 'samples':
-            mdata = np.apply_along_axis(self.__fx, 0, data, *self.__fxargs)
-        # apply fx along features axis for each sample
-        elif self.__axis == 'features':
-            mdata = np.apply_along_axis(self.__fx, 1, data, *self.__fxargs)
+
+        mdata = self.__smart_apply_along_axis(data)
+
+        if self.__axis == 'features':
             if len(mdata.shape) == 1:
                 # in case we only have a scalar per sample we need to transpose
                 # it properly, to keep the length of the samples axis intact
@@ -187,8 +221,7 @@ class FxMapper(Mapper):
                         'a sign of a disbalanced dataset %s.' % (comb, ds))
                 continue
 
-            fxed_samples = np.apply_along_axis(self.__fx, axis, samples,
-                                              *self.__fxargs)
+            fxed_samples = self.__smart_apply_along_axis(samples)
             mdata.append(fxed_samples)
             if not self.__attrfx is None:
                 # and now all samples attributes
@@ -254,8 +287,10 @@ def mean_sample(attrfx='merge'):
 def mean_group_sample(attrs, attrfx='merge'):
     """Returns a mapper that computes the mean samples of unique sample groups.
 
-    The sample groups are identified by the unique combination of all values of
-    a set of provided sample attributes.
+    The sample groups are identified by the unique combination of all
+    values of a set of provided sample attributes.  Order of output
+    samples might differ from original and correspond to sorted order
+    of corresponding `attrs`.
 
     Parameters
     ----------
@@ -315,7 +350,9 @@ def mean_group_feature(attrs, attrfx='merge'):
     """Returns a mapper that computes the mean features of unique feature groups.
 
     The feature groups are identified by the unique combination of all values of
-    a set of provided feature attributes.
+    a set of provided feature attributes.  Order of output
+    features might differ from original and correspond to sorted order
+    of corresponding `attrs`.
 
     Parameters
     ----------

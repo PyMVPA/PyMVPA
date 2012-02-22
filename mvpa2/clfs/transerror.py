@@ -500,8 +500,11 @@ class ConfusionMatrix(SummaryStatistics):
 
         if labels == None:
             labels = []
+
         self.__labels = labels
         """List of known labels"""
+        self.__labels_in_custom_order = bool(len(labels))
+        """So we know later on either we could resort them"""
         self.__labels_map = labels_map
         """Mapping from original into given labels"""
         self.__matrix = None
@@ -584,6 +587,7 @@ class ConfusionMatrix(SummaryStatistics):
         except:
             labels = self.__labels
 
+
         # Check labels_map if it was provided if it covers all the labels
         labels_map = self.__labels_map
         if labels_map is not None:
@@ -616,7 +620,10 @@ class ConfusionMatrix(SummaryStatistics):
             add_labels = [x for x in labels if not (x in self.__labels)]
             if len(add_labels):
                 self.__labels += add_labels
-            labels = self.__labels      # and us them later on
+            labels = self.__labels      # and use them later on
+
+            if not self.__labels_in_custom_order:
+                labels.sort()
 
         Nlabels, Nsets = len(labels), len(self.sets)
 

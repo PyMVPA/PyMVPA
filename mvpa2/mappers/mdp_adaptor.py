@@ -52,7 +52,7 @@ class MDPNodeMapper(Mapper):
         nodeargs : dict
           Dictionary for additional arguments for all calls to the MDP
           node. The dictionary key's meaning is as follows:
-
+          
           'train'
             Arguments for calls to `Node.train()`
           'stoptrain'
@@ -61,13 +61,16 @@ class MDPNodeMapper(Mapper):
             Arguments for calls to `Node.execute()`
           'inv'
             Arguments for calls to `Node.inverse()`
-
+          
           The value for each item is always a 2-tuple, consisting of a
           tuple (for the arguments), and a dictionary (for keyword
           arguments), i.e.  ((), {}). Both, tuple and dictionary have to be
           provided even if they are empty.
-        inspace : see base class
+        space : see base class
         """
+        # NOTE: trailing spaces in above docstring must not be pruned
+        # for correct parsing
+
         # TODO: starting from MDP2.5 this check should become:
         # TODO:   if node.has_multiple_training_phases():      
         if not len(node._train_seq) == 1:
@@ -157,7 +160,7 @@ class PCAMapper(MDPNodeMapper):
           Which MDP implementation of a PCA to use.
         nodeargs : None or dict
           Arguments passed to the MDP node in various stages of its lifetime.
-          See the baseclass for more details.
+          See the :class:`MDPNodeMapper` for more details.
         **kwargs
           Additional constructor arguments for the MDP node.
         """
