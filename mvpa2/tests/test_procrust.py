@@ -21,8 +21,9 @@ from mvpa2.mappers.procrustean import ProcrusteanMapper
 class ProcrusteanMapperTests(unittest.TestCase):
 
     @sweepargs(oblique=(False,True))
+    @sweepargs(svd=('numpy','scipy','dgesvd'))
     @reseed_rng()
-    def test_simple(self, oblique):
+    def test_simple(self, svd, oblique):
         d_orig = datasets['uni2large'].samples
         d_orig2 = datasets['uni4large'].samples
         for sdim, nf_s, nf_t, full_test \
@@ -42,7 +43,7 @@ class ProcrusteanMapperTests(unittest.TestCase):
                                      - np.eye(R.shape[0])) < 1e-10)
 
             for s, scaling in ((0.3, True), (1.0, False)):
-                pm = ProcrusteanMapper(scaling=scaling, oblique=oblique)
+                pm = ProcrusteanMapper(scaling=scaling, oblique=oblique, svd=svd)
                 # pm2 = ProcrusteanMapper(scaling=scaling, oblique=oblique)
 
                 t1, t2 = d_orig[23, 1], d_orig[22, 1]
