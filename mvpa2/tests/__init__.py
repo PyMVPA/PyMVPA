@@ -153,6 +153,7 @@ def collect_nose_tests(verbosity=1):
 
         # Misc
         'test_misc',
+        'test_usecases',
         ]
 
     if not cfg.getboolean('tests', 'lowmem', default='no'):
