@@ -150,6 +150,9 @@ def collect_nose_tests(verbosity=1):
         # Measures
         'test_transerror',
         'test_datameasure',
+
+        # Misc
+        'test_misc',
         ]
 
     if not cfg.getboolean('tests', 'lowmem', default='no'):
