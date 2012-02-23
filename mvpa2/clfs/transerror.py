@@ -470,6 +470,8 @@ class ConfusionMatrix(SummaryStatistics):
         ('FDR', 'false discovery rate', 'FDR = FP / (FP + TP)'),
         ('MCC', "Matthews Correlation Coefficient",
                 "MCC = (TP*TN - FP*FN)/sqrt(P N P' N')"),
+        ('F1',  'F1 score',
+                "F1 = 2TP / (P + P') = 2TP / (2TP + FP + FN)"),
         ('AUC', "Area under (AUC) curve", None),
         ('CHI^2', "Chi-square of confusion matrix", None),
         ('LOE(ACC)', "Linear Order Effect in ACC across sets", None),
@@ -674,6 +676,7 @@ class ConfusionMatrix(SummaryStatistics):
         stats['NPV'] = stats['TN'] / (1.0*stats["N'"])
         stats['FDR'] = stats['FP'] / (1.0*stats["P'"])
         stats['SPC'] = (stats['TN']) / (1.0*stats['FP'] + stats['TN'])
+        stats['F1'] = 2.*stats['TP'] / (stats["P"] + stats["P'"])
 
         MCC_denom = np.sqrt(1.0*stats['P']*stats['N']*stats["P'"]*stats["N'"])
         nz = MCC_denom!=0.0
@@ -788,7 +791,7 @@ class ConfusionMatrix(SummaryStatistics):
         res = ""
 
         stats_perpredict = ["P'", "N'", 'FP', 'FN', 'PPV', 'NPV', 'TPR',
-                            'SPC', 'FDR', 'MCC']
+                            'SPC', 'FDR', 'MCC', 'F1']
         # print AUC only if ROC was computed
         if self.ROC is not None: stats_perpredict += [ 'AUC' ]
         stats_pertarget = ['P', 'N', 'TP', 'TN']
