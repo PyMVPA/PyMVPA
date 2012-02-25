@@ -170,6 +170,25 @@ def _parse_parameters(paramdoc):
               (paramdoc, result))
     return result
 
+def get_docstring_split(f):
+    """Given a function, break it up into portions
+
+    Parameters
+    ----------
+    f : function
+
+    Returns
+    -------
+
+    (initial doc string, params (as list of tuples), suffix string)
+    """
+
+    if not hasattr(f, '__doc__') or f.__doc__ in (None, ""):
+        return None, None, None
+    initdoc, params, suffix = _split_out_parameters(
+        f.__doc__)
+    params_list = _parse_parameters(params)
+    return initdoc, params_list, suffix
 
 def enhanced_doc_string(item, *args, **kwargs):
     """Generate enhanced doc strings for various items.
