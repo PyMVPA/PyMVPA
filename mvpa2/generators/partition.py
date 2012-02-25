@@ -431,7 +431,7 @@ class NFoldPartitioner(Partitioner):
 
     If ``cvtype`` is large enough generating prohibitively large
     number of combinations, provide ``count`` to limit number of
-    combinations and provide ``select_strategy`` = 'random'.
+    combinations and provide ``selection_strategy`` = 'random'.
     """
 
     _DEV__doc__ = """
