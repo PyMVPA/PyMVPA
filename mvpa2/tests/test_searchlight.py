@@ -50,6 +50,11 @@ class SearchlightTests(unittest.TestCase):
         ds = datasets['3dsmall'].copy()
         ds.fa['voxel_indices'] = ds.fa.myspace
 
+        # To assure that users do not run into incorrect operation due to overflows
+        ds.samples += 5000
+        ds.samples *= 1000
+        ds.samples = ds.samples.astype(np.int16)
+
         # compute N-1 cross-validation for each sphere
         # YOH: unfortunately sample_clf_lin is not guaranteed
         #      to provide exactly the same results due to inherent

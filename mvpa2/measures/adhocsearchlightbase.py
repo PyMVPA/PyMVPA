@@ -353,6 +353,12 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         nsamples_pb = np.zeros((nblocks,))
         labels_pb = [None] * nblocks
 
+        if np.issubdtype(X.dtype, np.int):
+            # might result in overflow e.g. while taking .square which
+            # would result in negative variances etc, thus to be on a
+            # safe side -- convert to float
+            X = X.astype(float)
+
         X2 = np.square(X)
         # silly way for now
         for l, s, s2, ib in zip(labels_numeric, X, X2, sample2block):
