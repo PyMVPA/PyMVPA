@@ -30,6 +30,22 @@ class SplitterTests(unittest.TestCase):
                             targets=[ i%4 for i in range(100) ],
                             chunks=[ i/10 for i in range(100)])
 
+    def test_splitattr_deprecation(self):
+        # Just a smoke test -- remove for 2.1 release
+        nfs = NFoldPartitioner()
+        _ = nfs.splitattr
+
+    def test_reprs(self):
+        # very very basic test to see that there is no errors in reprs
+        # of partitioners
+        import mvpa2.generators.partition as mgp
+        for sclass in (x for x in dir(mgp) if x.endswith('Partitioner')):
+            args = (1,)
+            if sclass == 'ExcludeTargetsCombinationsPartitioner':
+                args += (1,1)
+            pclass = getattr(mgp, sclass)
+            r = repr(pclass(*args))
+            assert_false('ERROR' in r)
 
     def test_simplest_cv_pat_gen(self):
         # create the generator

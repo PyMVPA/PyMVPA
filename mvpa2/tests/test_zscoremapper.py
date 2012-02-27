@@ -166,3 +166,22 @@ def test_zscore():
     # on 3 samples per chunk -- different warning
     ZScoreMapper(chunks_attr='chunks', auto_train=True)(
         ds[[0, 1, 2, -3, -2, -1]])
+
+    # test if std provided as a list not as an array is handled
+    # properly -- should zscore all features (not just first/none
+    # as it was before)
+    ds = dataset_wizard(np.arange(32).reshape((8,-1)),
+                        targets=range(8), chunks=[0] * 8)
+    means = [0, 1, -10, 10]
+    std0 = np.std(ds[:, 0])             # std deviation of first one
+    stds = [std0, 10, .1, 1]
+
+    zm = ZScoreMapper(params=(means, stds),
+                      auto_train=True)
+    dsz = zm(ds)
+
+    assert_array_equal((np.mean(ds, axis=0) - np.asanyarray(means))/np.array(stds),
+                       np.mean(dsz, axis=0))
+
+    assert_array_equal(np.std(ds, axis=0)/np.array(stds),
+                       np.std(dsz, axis=0))
