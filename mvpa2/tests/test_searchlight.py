@@ -37,6 +37,8 @@ class SearchlightTests(unittest.TestCase):
         # the searchlight
         self.dataset.fa['voxel_indices'] = self.dataset.fa.myspace
 
+    #def _test_searchlights(self, ds, sls, roi_ids, result_all):
+
     @sweepargs(common_variance=(True, False))
     @sweepargs(do_roi=(False, True))
     @reseed_rng()
@@ -45,6 +47,9 @@ class SearchlightTests(unittest.TestCase):
         Test of GNBSearchlight anyways requires a ground-truth
         comparison to the generic version, so we are doing sweepargs here
         """
+        ds = datasets['3dsmall'].copy()
+        ds.fa['voxel_indices'] = ds.fa.myspace
+
         # compute N-1 cross-validation for each sphere
         # YOH: unfortunately sample_clf_lin is not guaranteed
         #      to provide exactly the same results due to inherent
@@ -52,9 +57,6 @@ class SearchlightTests(unittest.TestCase):
         #      and pure Python
         gnb = GNB(common_variance=common_variance)
         cv = CrossValidation(gnb, NFoldPartitioner())
-
-        ds = datasets['3dsmall'].copy()
-        ds.fa['voxel_indices'] = ds.fa.myspace
 
         skwargs = dict(radius=1, enable_ca=['roi_sizes', 'raw_results'])
 
@@ -64,7 +66,8 @@ class SearchlightTests(unittest.TestCase):
             # and lets compute the full one as well once again so we have a reference
             # which will be excluded itself from comparisons but values will be compared
             # for selected roi_id
-            sl_all = sphere_gnbsearchlight(gnb, NFoldPartitioner(cvtype=1),
+            sl_all = sphere_gnbsearchlight(gnb,
+                                           NFoldPartitioner(cvtype=1),
                                            **skwargs)
             result_all = sl_all(ds)
             # select random features
@@ -72,6 +75,8 @@ class SearchlightTests(unittest.TestCase):
             skwargs['center_ids'] = roi_ids
         else:
             nroi = ds.nfeatures
+            roi_ids = np.arange(nroi)
+            result_all = None
 
         sls = [sphere_searchlight(cv, **skwargs),
                #GNBSearchlight(gnb, NFoldPartitioner(cvtype=1))
@@ -87,6 +92,10 @@ class SearchlightTests(unittest.TestCase):
         if externals.exists('pprocess') and common_variance:
             sls += [sphere_searchlight(cv, nproc=2, **skwargs)]
 
+        # Provide the dataset and all those searchlights for testing
+        #self._test_searchlights(ds, sls, roi_ids, result_all)
+        #nroi = len(roi_ids)
+        #do_roi = nroi != ds.nfeatures
         all_results = []
         for sl in sls:
             # run searchlight
@@ -124,7 +133,6 @@ class SearchlightTests(unittest.TestCase):
             # Test if we got results correctly for 'selected' roi ids
             if do_roi:
                 assert_array_equal(result_all[:, roi_ids], results)
-
 
 
         if len(all_results) > 1:
