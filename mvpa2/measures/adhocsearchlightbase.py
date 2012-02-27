@@ -334,37 +334,38 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         #
 
         # sums and sums of squares per each block
-        sums = np.zeros((nblocks, ) + s_shape)
+        sums_pb = np.zeros((nblocks, ) + s_shape)
         # sums of squares
-        sums2 = np.zeros((nblocks, ) + s_shape)
+        sums2_pb = np.zeros((nblocks, ) + s_shape)
 
-        # per each label:
-        means = np.zeros((nlabels, ) + s_shape)
+        # per each label: to be (re)computed within each loop split
+        sums_pl = np.zeros((nlabels, ) + s_shape)
+        means_pl = np.zeros((nlabels, ) + s_shape)
         # means of squares for stddev computation
-        means2 = np.zeros((nlabels, ) + s_shape)
-        variances = np.zeros((nlabels, ) + s_shape)
+        sums2_pl = np.zeros((nlabels, ) + s_shape)
+        variances_pl = np.zeros((nlabels, ) + s_shape)
         # degenerate dimension are added for easy broadcasting later on
-        nsamples_per_class = np.zeros((nlabels,) + (1,)*len(s_shape))
+        nsamples_pl = np.zeros((nlabels,) + (1,)*len(s_shape))
 
         # results
         results = np.zeros((nsplits,) + r_shape)
 
-        block_counts = np.zeros((nblocks,))
-        block_labels = [None] * nblocks
+        nsamples_pb = np.zeros((nblocks,))
+        labels_pb = [None] * nblocks
 
         X2 = np.square(X)
         # silly way for now
         for l, s, s2, ib in zip(labels_numeric, X, X2, sample2block):
-            sums[ib] += s
-            sums2[ib] += s2
-            block_counts[ib] += 1
-            if block_labels[ib] is None:
-                block_labels[ib] = l
+            sums_pb[ib] += s
+            sums2_pb[ib] += s2
+            nsamples_pb[ib] += 1
+            if labels_pb[ib] is None:
+                labels_pb[ib] = l
             else:
-                assert(block_labels[ib] == l)
-        block_labels = np.asanyarray(block_labels)
+                assert(labels_pb[ib] == l)
+        labels_pb = np.asanyarray(labels_pb)
         # additional silly tests for paranoid
-        assert(block_labels.dtype.kind is 'i')
+        assert(labels_pb.dtype.kind is 'i')
 
         # 4. Lets deduce all neighbors... might need to be RF into the
         #    parallel part later on
@@ -415,19 +416,21 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
             # Let's collect stats summaries
             training_nsamples = 0
             for il, l in enumerate(ulabels_numeric):
-                bis_il = training_bis[block_labels[training_bis] == l]
-                nsamples_per_class[il] = N_float = \
-                                         float(np.sum(block_counts[bis_il]))
+                bis_il = training_bis[labels_pb[training_bis] == l]
+                nsamples_pl[il] = N_float = \
+                                         float(np.sum(nsamples_pb[bis_il]))
                 training_nsamples += N_float
                 if N_float == 0.0:
-                    variances[il] = means[il] = means2[il] = 0.
+                    variances_pl[il] = sums_pl[il] \
+                        = means_pl[il] = sums2_pl[il] = 0.
                 else:
-                    means[il] = np.sum(sums[bis_il], axis=0) / N_float
+                    sums_pl[il] = np.sum(sums_pb[bis_il], axis=0)
+                    means_pl[il] = sums_pl[il] / N_float
                     # Not yet normed
-                    means2[il] = np.sum(sums2[bis_il], axis=0)
+                    sums2_pl[il] = np.sum(sums2_pb[bis_il], axis=0)
 
-            ## Actually compute the non-0 variances
-            non0labels = (nsamples_per_class.squeeze() != 0)
+            ## Actually compute the non-0 variances_pl
+            non0labels = (nsamples_pl.squeeze() != 0)
             if np.all(non0labels):
                 # For a possible tiny speed up avoiding copying and
                 # using (no) slicing
@@ -436,10 +439,10 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
             # That is the GNB specificity
             predictions = self._sl_call_on_a_split(
                 split, X, X2,           # X2 might light to go
-                nsamples_per_class,
-                training_nsamples,      # GO? == np.sum(nsamples_per_class)
+                nsamples_pl,
+                training_nsamples,      # GO? == np.sum(nsamples_pl)
                 non0labels,
-                means, means2, variances,
+                sums_pl, means_pl, sums2_pl, variances_pl,
                 nroi_fids, roi_fids,    # passing nroi_fids as well since in 'sparse' way it has no 'length'
                 indexsum_fx,
                 )

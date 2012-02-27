@@ -13,20 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
-#from numpy import ones, zeros, sum, abs, isfinite, dot
-#from mvpa2.base import warning, externals
-from mvpa2.datasets.base import Dataset
-#from mvpa2.clfs.gnb import GNB
-from mvpa2.misc.errorfx import mean_mismatch_error
-from mvpa2.measures.searchlight import BaseSearchlight
-from mvpa2.base import externals, warning
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
-from mvpa2.generators.splitters import Splitter
-
-#from mvpa2.base.param import Parameter
-#from mvpa2.base.state import ConditionalAttribute
-#from mvpa2.measures.base import Sensitivity
-
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 
 from mvpa2.measures.adhocsearchlightbase import SimpleStatBaseSearchlight
@@ -84,9 +71,9 @@ class GNBSearchlight(SimpleStatBaseSearchlight):
 
     def _sl_call_on_a_split(self,
                             split, X, X2,
-                            nsamples_per_class, training_nsamples,
+                            nsamples_pl, training_nsamples,
                             non0labels,
-                            means, means2, variances,
+                            sums_pl, means_pl, sums2_pl, variances_pl,
                             nroi_fids, roi_fids,
                             indexsum_fx):
         """Call to GNBSearchlight
@@ -95,26 +82,26 @@ class GNBSearchlight(SimpleStatBaseSearchlight):
         gnb = self.gnb
         params = gnb.params
 
-        nlabels = len(nsamples_per_class)
+        nlabels = len(nsamples_pl)
 
         if params.common_variance:
-            variances[:] = \
-                np.sum(means2 - nsamples_per_class*np.square(means),
+            variances_pl[:] = \
+                np.sum(sums2_pl - nsamples_pl*np.square(means_pl), # XXX OPT may be it is more effective to (sums_pl * means_pl)?
                        axis=0) \
                 / training_nsamples
         else:
-            variances[non0labels] = \
-                (means2 - nsamples_per_class*np.square(means))[non0labels] \
-                / nsamples_per_class[non0labels]
+            variances_pl[non0labels] = \
+                (sums2_pl - nsamples_pl*np.square(means_pl))[non0labels] \
+                / nsamples_pl[non0labels]
 
         # assign priors
         priors = gnb._get_priors(
-            nlabels, training_nsamples, nsamples_per_class)
+            nlabels, training_nsamples, nsamples_pl)
 
         # proceed in a way we have in GNB code with logprob=True,
         # i.e. operating within the exponents -- should lead to some
         # performance advantage
-        norm_weight = -0.5 * np.log(2*np.pi*variances)
+        norm_weight = -0.5 * np.log(2*np.pi*variances_pl)
         # last added dimension would be for ROIs
         logpriors = np.log(priors[:, np.newaxis, np.newaxis])
 
@@ -128,8 +115,8 @@ class GNBSearchlight(SimpleStatBaseSearchlight):
 
         # argument of exponentiation
         scaled_distances = \
-             -0.5 * (((data - means[:, np.newaxis, ...])**2) \
-                     / variances[:, np.newaxis, ...])
+             -0.5 * (((data - means_pl[:, np.newaxis, ...])**2) \
+                     / variances_pl[:, np.newaxis, ...])
 
         # incorporate the normalization from normals
         lprob_csfs = norm_weight[:, np.newaxis, ...] + scaled_distances
