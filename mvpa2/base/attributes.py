@@ -164,8 +164,11 @@ class ConditionalAttribute(IndexedCollectable):
 
     def __reduce__(self):
         icr = IndexedCollectable.__reduce__(self)
-        icr[2].update({'_ConditionalAttribute__enabled' : self.__enabled})
-        res = (icr[0], (self._defaultenabled,) + icr[1], icr[2])
+        icr[2].update({'_defaultenabled' : self._defaultenabled,
+                       '_value': self._value})
+        # kill the value from Collectable, because we have to put it in the dict
+        # to prevent loosing it during reconstruction when the CA is disabled
+        res = (icr[0], (self.__enabled, icr[1][0], None) + icr[1][2:], icr[2])
         #if __debug__ and 'COL_RED' in debug.active:
         #    debug('COL_RED', 'Returning %s for %s' % (res, self))
         return res
