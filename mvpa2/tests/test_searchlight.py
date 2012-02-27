@@ -92,7 +92,7 @@ class SearchlightTests(unittest.TestCase):
             # run searchlight
             results = sl(ds)
             all_results.append(results)
-            print `sl`
+            #print `sl`
             # check for correct number of spheres
             self.assertTrue(results.nfeatures == nroi)
             # and measures (one per xfold)
