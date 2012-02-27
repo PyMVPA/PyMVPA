@@ -85,17 +85,15 @@ class GNBSearchlight(SimpleStatBaseSearchlight):
     def _sl_call_on_a_split(self,
                             split, X, X2,
                             nsamples_per_class, training_nsamples,
-                            labels_numeric, non0labels,
+                            non0labels,
                             means, means2, variances,
                             nroi_fids, roi_fids,
-                            indexsum_fx,
-                            results_isplit):
+                            indexsum_fx):
         """Call to GNBSearchlight
         """
         # Local bindings
         gnb = self.gnb
         params = gnb.params
-        errorfx = self.errorfx
 
         nlabels = len(nsamples_per_class)
 
@@ -127,7 +125,6 @@ class GNBSearchlight(SimpleStatBaseSearchlight):
         # and for that we first need to compute corresponding
         # probabilities (or may be un
         data = X[split[1].samples[:, 0]]
-        targets = labels_numeric[split[1].samples[:, 0]]
 
         # argument of exponentiation
         scaled_distances = \
@@ -154,21 +151,8 @@ class GNBSearchlight(SimpleStatBaseSearchlight):
         predictions = lprob_cs_cp_sl.argmax(axis=0)
         # no need to map back [self.ulabels[c] for c in winners]
         #predictions = winners
-        # assess the errors
-        if __debug__:
-            debug('SLC', "  Assessing accuracies")
 
-        if errorfx is mean_mismatch_error:
-            results_isplit[:] = \
-                (predictions != targets[:, None]).sum(axis=0) \
-                / float(len(targets))
-        else:
-            # somewhat silly but a way which allows to use pre-crafted
-            # error functions without a chance to screw up
-            for i, fpredictions in enumerate(predictions.T):
-                results_isplit[i] = errorfx(fpredictions, targets)
-
-        return
+        return predictions
 
     gnb = property(fget=lambda self: self._gnb)
 

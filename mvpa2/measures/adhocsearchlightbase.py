@@ -197,6 +197,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         # Local bindings
         generator = self.generator
         qe = self.queryengine
+        errorfx = self.errorfx
 
         ## if False:
         ##     class A(Learner):
@@ -433,16 +434,31 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
                 non0labels = slice(None)
 
             # That is the GNB specificity
-            self._sl_call_on_a_split(
+            predictions = self._sl_call_on_a_split(
                 split, X, X2,           # X2 might light to go
                 nsamples_per_class,
                 training_nsamples,      # GO? == np.sum(nsamples_per_class)
-                labels_numeric, non0labels,
+                non0labels,
                 means, means2, variances,
                 nroi_fids, roi_fids,    # passing nroi_fids as well since in 'sparse' way it has no 'length'
                 indexsum_fx,
-                results[isplit] # for in-place assignment of results
                 )
+
+            # assess the errors
+            if __debug__:
+                debug('SLC', "  Assessing accuracies")
+
+            targets = labels_numeric[split[1].samples[:, 0]]
+            if errorfx is mean_mismatch_error:
+                results[isplit, :] = \
+                    (predictions != targets[:, None]).sum(axis=0) \
+                    / float(len(targets))
+            else:
+                # somewhat silly but a way which allows to use pre-crafted
+                # error functions without a chance to screw up
+                for i, fpredictions in enumerate(predictions.T):
+                    results[isplit, i] = errorfx(fpredictions, targets)
+
 
         if __debug__:
             debug('SLC', "%s._call() is done in %.3g sec" %
