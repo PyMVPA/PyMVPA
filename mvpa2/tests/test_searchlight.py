@@ -36,18 +36,27 @@ class SearchlightTests(unittest.TestCase):
         # give the feature coord a more common name, matching the default of
         # the searchlight
         self.dataset.fa['voxel_indices'] = self.dataset.fa.myspace
+        self._tested_pprocess = False
 
     #def _test_searchlights(self, ds, sls, roi_ids, result_all):
 
-    @sweepargs(common_variance=(True, False))
+    @sweepargs(lrn_SL_partitioner=
+               [(GNB(common_variance=v, descr='GNB'),
+                 sphere_gnbsearchlight,
+                 NFoldPartitioner(cvtype=1))
+                 for v in (True, False)]
+               )
     @sweepargs(do_roi=(False, True))
     @reseed_rng()
-    def test_spatial_searchlight(self, common_variance=True, do_roi=False):
-        """Tests both generic and GNBSearchlight
-        Test of GNBSearchlight anyways requires a ground-truth
+    def test_spatial_searchlight(self, lrn_SL_partitioner, do_roi=False):
+        """Tests both generic and ad-hoc searchlights (e.g. GNBSearchlight)
+        Test of and adhoc searchlight anyways requires a ground-truth
         comparison to the generic version, so we are doing sweepargs here
         """
+        lrn, SL, partitioner = lrn_SL_partitioner
         ds = datasets['3dsmall'].copy()
+        # TODO -- test multiclass here
+        # e.g. by ds[6:18].T += 2
         ds.fa['voxel_indices'] = ds.fa.myspace
 
         # To assure that users do not run into incorrect operation due to overflows
@@ -60,8 +69,7 @@ class SearchlightTests(unittest.TestCase):
         #      to provide exactly the same results due to inherent
         #      iterative process.  Therefore lets use something quick
         #      and pure Python
-        gnb = GNB(common_variance=common_variance)
-        cv = CrossValidation(gnb, NFoldPartitioner())
+        cv = CrossValidation(lrn, partitioner)
 
         skwargs = dict(radius=1, enable_ca=['roi_sizes', 'raw_results'])
 
@@ -71,9 +79,7 @@ class SearchlightTests(unittest.TestCase):
             # and lets compute the full one as well once again so we have a reference
             # which will be excluded itself from comparisons but values will be compared
             # for selected roi_id
-            sl_all = sphere_gnbsearchlight(gnb,
-                                           NFoldPartitioner(cvtype=1),
-                                           **skwargs)
+            sl_all = SL(lrn, partitioner, **skwargs)
             result_all = sl_all(ds)
             # select random features
             roi_ids = rnd.permutation(range(ds.nfeatures))[:nroi]
@@ -85,17 +91,17 @@ class SearchlightTests(unittest.TestCase):
 
         sls = [sphere_searchlight(cv, **skwargs),
                #GNBSearchlight(gnb, NFoldPartitioner(cvtype=1))
-               sphere_gnbsearchlight(gnb, NFoldPartitioner(cvtype=1),
-                                     indexsum='fancy', **skwargs)
+               SL(lrn, partitioner, indexsum='fancy', **skwargs)
                ]
 
         if externals.exists('scipy'):
-            sls += [ sphere_gnbsearchlight(gnb, NFoldPartitioner(cvtype=1),
-                                           indexsum='sparse', **skwargs)]
+            sls += [ SL(lrn, partitioner, indexsum='sparse', **skwargs)]
 
         # Just test nproc whenever common_variance is True
-        if externals.exists('pprocess') and common_variance:
+        # TODO
+        if externals.exists('pprocess') and not self._tested_pprocess:
             sls += [sphere_searchlight(cv, nproc=2, **skwargs)]
+            self._tested_pprocess = True
 
         # Provide the dataset and all those searchlights for testing
         #self._test_searchlights(ds, sls, roi_ids, result_all)
