@@ -68,19 +68,41 @@ class GNBSearchlight(SimpleStatBaseSearchlight):
     def _get_space(self):
         return self.gnb.get_space()
 
+    def _reserve_pl_stats_space(self, shape):
+        # per each label: to be (re)computed within each loop split
+        # Let's try to reuse the memory though
+        self.__sums_pl = np.zeros(shape)
+        self.__means_pl = np.zeros(shape)
+        # means of squares for stddev computation
+        self.__sums2_pl = np.zeros(shape)
+        self.__variances_pl = np.zeros(shape)
+        # degenerate dimension are added for easy broadcasting later on
+        self.__nsamples_pl = np.zeros(shape[:1] + (1,)*(len(shape)-1))
+
 
     def _sl_call_on_a_split(self,
-                            split, X, X2,
-                            nsamples_pl, training_nsamples,
-                            non0labels,
-                            sums_pl, means_pl, sums2_pl, variances_pl,
+                            split, X,
+                            training_sis, testing_sis,
                             nroi_fids, roi_fids,
-                            indexsum_fx):
+                            indexsum_fx,
+                            labels_numeric,
+                            ):
         """Call to GNBSearchlight
         """
         # Local bindings
         gnb = self.gnb
         params = gnb.params
+
+        sums_pl = self.__sums_pl
+        sums2_pl = self.__sums2_pl
+        means_pl = self.__means_pl
+        variances_pl = self.__variances_pl
+        nsamples_pl = self.__nsamples_pl
+
+        training_nsamples, non0labels = \
+            self._compute_stats_pl(training_sis,
+                                   nsamples_pl, sums_pl, means_pl,
+                                   sums2_pl, variances_pl)
 
         nlabels = len(nsamples_pl)
 
@@ -138,7 +160,9 @@ class GNBSearchlight(SimpleStatBaseSearchlight):
         # no need to map back [self.ulabels[c] for c in winners]
         #predictions = winners
 
-        return predictions
+        targets = labels_numeric[testing_sis]
+
+        return targets, predictions
 
     gnb = property(fget=lambda self: self._gnb)
 
