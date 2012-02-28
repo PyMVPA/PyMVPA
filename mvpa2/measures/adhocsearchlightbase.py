@@ -191,6 +191,96 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
     def _get_space(self):
         raise NotImplementedError("Must be implemented in derived classes")
 
+    def _untrain(self):
+        super(SimpleStatBaseSearchlight, self)._untrain()
+        self.__subs_pb = self.__sums2_pb = \
+            self.__nsamples_pb = self.__labels_pb = None
+
+
+    def _compute_pb_stats(self, labels_numeric,
+                          X, shape):
+        #
+        # reusable containers which should stay of the same size
+        #
+        nblocks = shape[0]
+
+        # sums and sums of squares per each block
+        self.__sums_pb = sums_pb = np.zeros(shape)
+        # sums of squares
+        self.__sums2_pb = sums2_pb = np.zeros(shape)
+
+        self.__nsamples_pb = nsamples_pb = np.zeros((nblocks,))
+        labels_pb = [None] * nblocks
+
+        if np.issubdtype(X.dtype, np.int):
+            # might result in overflow e.g. while taking .square which
+            # would result in negative variances etc, thus to be on a
+            # safe side -- convert to float
+            X = X.astype(float)
+
+        X2 = np.square(X)
+        # silly way for now
+        for l, s, s2, ib in zip(labels_numeric, X, X2, self.__sample2block):
+            sums_pb[ib] += s
+            sums2_pb[ib] += s2
+            nsamples_pb[ib] += 1
+            if labels_pb[ib] is None:
+                labels_pb[ib] = l
+            else:
+                assert(labels_pb[ib] == l)
+
+        self.__labels_pb = np.asanyarray(labels_pb)
+        # additional silly tests for paranoid
+        assert(self.__labels_pb.dtype.kind is 'i')
+
+
+    def _compute_stats_pl(self,
+        sis, nsamples_pl, sums_pl, means_pl, sums2_pl, variances_pl):
+        """
+        Uses blocked stats to get stats across given samples' indexes
+        (might be training or testing)
+
+        Parameters
+        ----------
+        sis : array of int
+          Indexes of samples
+        *args:
+          In-place containers
+        """
+        # local bindings
+        nsamples_pb = self.__nsamples_pb
+        labels_pb = self.__labels_pb
+        sums_pb = self.__sums_pb
+        sums2_pb = self.__sums2_pb
+
+        # convert to blocks training split
+        bis = np.unique(self.__sample2block[sis])
+
+        # Let's collect stats summaries
+        nsamples = 0
+        for il, l in enumerate(self.__ulabels_numeric):
+            bis_il = bis[labels_pb[bis] == l]
+            nsamples_pl[il] = N_float = \
+                                     float(np.sum(nsamples_pb[bis_il]))
+            nsamples += N_float
+            if N_float == 0.0:
+                variances_pl[il] = sums_pl[il] \
+                    = means_pl[il] = sums2_pl[il] = 0.
+            else:
+                sums_pl[il] = np.sum(sums_pb[bis_il], axis=0)
+                means_pl[il] = sums_pl[il] / N_float
+                sums2_pl[il] = np.sum(sums2_pb[bis_il], axis=0)
+
+        ## Actually compute the non-0 variances_pl
+        non0labels = (nsamples_pl.squeeze() != 0)
+        if np.all(non0labels):
+            # For a possible tiny speed up avoiding copying and
+            # using (no) slicing
+            non0labels = slice(None)
+
+        return nsamples, non0labels
+
+
     def _sl_call(self, dataset, roi_ids, nproc):
         """Call to SimpleStatBaseSearchlight
         """
@@ -255,7 +345,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         nlabels = len(ulabels)
         label2index = dict((l, il) for il, l in enumerate(ulabels))
         labels_numeric = np.array([label2index[l] for l in labels])
-        ulabels_numeric = [label2index[l] for l in ulabels]
+        self.__ulabels_numeric = [label2index[l] for l in ulabels]
         # set the feature dimensions
         nsamples = len(X)
         nrois = len(roi_ids)
@@ -321,7 +411,8 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         nblocks = len(udescriptions)
         description2block = dict([(d, i) for i, d in enumerate(udescriptions)])
         # Indices for samples to point to their block
-        sample2block = np.array([description2block[d] for d in descriptions])
+        self.__sample2block = sample2block = \
+            np.array([description2block[d] for d in descriptions])
 
         # 3. Compute statistics per each block
         #
@@ -329,49 +420,15 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
             debug('SLC',
                   'Phase 3. Computing statistics for %i blocks' % (nblocks,))
 
-        #
-        # reusable containers which should stay of the same size
-        #
+        self._compute_pb_stats(labels_numeric, X, (nblocks,) + s_shape)
 
-        # sums and sums of squares per each block
-        sums_pb = np.zeros((nblocks, ) + s_shape)
-        # sums of squares
-        sums2_pb = np.zeros((nblocks, ) + s_shape)
-
-        # per each label: to be (re)computed within each loop split
-        sums_pl = np.zeros((nlabels, ) + s_shape)
-        means_pl = np.zeros((nlabels, ) + s_shape)
-        # means of squares for stddev computation
-        sums2_pl = np.zeros((nlabels, ) + s_shape)
-        variances_pl = np.zeros((nlabels, ) + s_shape)
-        # degenerate dimension are added for easy broadcasting later on
-        nsamples_pl = np.zeros((nlabels,) + (1,)*len(s_shape))
+        # derived classes might decide differently on what they
+        # actually need, so defer reserving the space and computing
+        # stats to them
+        self._reserve_pl_stats_space((nlabels, ) + s_shape)
 
         # results
         results = np.zeros((nsplits,) + r_shape)
-
-        nsamples_pb = np.zeros((nblocks,))
-        labels_pb = [None] * nblocks
-
-        if np.issubdtype(X.dtype, np.int):
-            # might result in overflow e.g. while taking .square which
-            # would result in negative variances etc, thus to be on a
-            # safe side -- convert to float
-            X = X.astype(float)
-
-        X2 = np.square(X)
-        # silly way for now
-        for l, s, s2, ib in zip(labels_numeric, X, X2, sample2block):
-            sums_pb[ib] += s
-            sums2_pb[ib] += s2
-            nsamples_pb[ib] += 1
-            if labels_pb[ib] is None:
-                labels_pb[ib] = l
-            else:
-                assert(labels_pb[ib] == l)
-        labels_pb = np.asanyarray(labels_pb)
-        # additional silly tests for paranoid
-        assert(labels_pb.dtype.kind is 'i')
 
         # 4. Lets deduce all neighbors... might need to be RF into the
         #    parallel part later on
@@ -408,6 +465,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         if __debug__:
             debug('SLC', 'Phase 5. Major loop' )
 
+
         for isplit, split in enumerate(splits):
             if __debug__:
                 debug('SLC', ' Split %i out of %i' % (isplit, nsplits))
@@ -415,49 +473,25 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
             # with
             # sample_indicies
             training_sis = split[0].samples[:, 0]
-            # convert to blocks training split
-            training_bis = np.unique(sample2block[training_sis])
-
-
-            # Let's collect stats summaries
-            training_nsamples = 0
-            for il, l in enumerate(ulabels_numeric):
-                bis_il = training_bis[labels_pb[training_bis] == l]
-                nsamples_pl[il] = N_float = \
-                                         float(np.sum(nsamples_pb[bis_il]))
-                training_nsamples += N_float
-                if N_float == 0.0:
-                    variances_pl[il] = sums_pl[il] \
-                        = means_pl[il] = sums2_pl[il] = 0.
-                else:
-                    sums_pl[il] = np.sum(sums_pb[bis_il], axis=0)
-                    means_pl[il] = sums_pl[il] / N_float
-                    # Not yet normed
-                    sums2_pl[il] = np.sum(sums2_pb[bis_il], axis=0)
-
-            ## Actually compute the non-0 variances_pl
-            non0labels = (nsamples_pl.squeeze() != 0)
-            if np.all(non0labels):
-                # For a possible tiny speed up avoiding copying and
-                # using (no) slicing
-                non0labels = slice(None)
+            testing_sis = split[1].samples[:, 0]
 
             # That is the GNB specificity
-            predictions = self._sl_call_on_a_split(
-                split, X, X2,           # X2 might light to go
-                nsamples_pl,
-                training_nsamples,      # GO? == np.sum(nsamples_pl)
-                non0labels,
-                sums_pl, means_pl, sums2_pl, variances_pl,
-                nroi_fids, roi_fids,    # passing nroi_fids as well since in 'sparse' way it has no 'length'
+            targets, predictions = self._sl_call_on_a_split(
+                split, X,               # X2 might light to go
+                training_sis, testing_sis,
+                ## training_nsamples,      # GO? == np.sum(nsamples_pl)
+                ## training_non0labels,
+                ## sums_pl, means_pl, sums2_pl, variances_pl,
+                # passing nroi_fids as well since in 'sparse' way it has no 'length'
+                nroi_fids, roi_fids,
                 indexsum_fx,
+                labels_numeric,
                 )
 
             # assess the errors
             if __debug__:
                 debug('SLC', "  Assessing accuracies")
 
-            targets = labels_numeric[split[1].samples[:, 0]]
             if errorfx is mean_mismatch_error:
                 results[isplit, :] = \
                     (predictions != targets[:, None]).sum(axis=0) \
