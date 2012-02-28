@@ -86,12 +86,11 @@ class GNBSearchlight(SimpleStatBaseSearchlight):
 
         if params.common_variance:
             variances_pl[:] = \
-                np.sum(sums2_pl - nsamples_pl*np.square(means_pl), # XXX OPT may be it is more effective to (sums_pl * means_pl)?
-                       axis=0) \
+                np.sum(sums2_pl - sums_pl * means_pl, axis=0) \
                 / training_nsamples
         else:
             variances_pl[non0labels] = \
-                (sums2_pl - nsamples_pl*np.square(means_pl))[non0labels] \
+                (sums2_pl - sums_pl * means_pl)[non0labels] \
                 / nsamples_pl[non0labels]
 
         # assign priors
