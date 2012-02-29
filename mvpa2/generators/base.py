@@ -90,6 +90,22 @@ class Sifter(Node):
 
     >>> print par
     <ChainNode: <NFoldPartitioner>-<Sifter: partitions=2, targets=['c', 'p']>>
+
+    Additionally, e.g. for cases with cvtype > 2, if balancing is
+    needed to be guaranteed (and other generated partitions
+    discarded), specification could carry a dict with 'uvalues'
+    and 'balanced' keys, e.g.:
+
+    >>> par = ChainNode([NFoldPartitioner(cvtype=2, attr='chunks'),
+    ...                  Sifter([('partitions', 2),
+    ...                          ('targets', dict(uvalues=['c', 'p'],
+    ...                                           balanced=True))])
+    ...                 ], space='partitions')
+
+    N.B. In this example it is equivalent to the previous definition
+    since things are guaranteed to be balanced with cvtype=2 and 2
+    unique values requested.
+
     >>> for ds_ in par.generate(ds):
     ...     testing = ds[ds_.sa.partitions == 2]
     ...     print list(zip(testing.sa.chunks, testing.sa.targets))
@@ -104,12 +120,13 @@ class Sifter(Node):
         Parameters
         ----------
         includes : list
-          List of tuples rules (attribute, unique_values) where all
-          listed 'unique_values' must be present in the dataset.
+          List of tuples rules (attribute, uvalues) where all
+          listed 'uvalues' must be present in the dataset.
           Matching samples or features get selected to proceed to the
           next rule in the list.  If at some point not all listed
           values of the attribute are present, dataset does not pass
           through the 'Sifter'.
+          uvalues might also be a `dict`, see example above.
         """
         Node.__init__(self, *args, **kwargs)
         self._includes = includes
@@ -121,9 +138,7 @@ class Sifter(Node):
         sa_mask = np.ones(ds.nsamples, dtype=bool)
         fa_mask = np.ones(ds.nfeatures, dtype=bool)
         # Check the dataset against the rules
-        for attrname, uvalues in self._includes:
-            # just to assure consistency in order and type
-            uvalues = np.unique(np.atleast_1d(uvalues))
+        for attrname, crit in self._includes:
             attr, col = ds.get_attr(attrname)
 
             # figure out which mask and adjust accordingly
@@ -139,22 +154,62 @@ class Sifter(Node):
 
             uvalues_ = np.unique(attr[mask])
 
-            # do matching and reset those not matching
-            mask[np.array([not a in uvalues for a in attr.value])] = False
+            if not isinstance(crit, dict):
+                # so that just a list of unique values to be present specified
+                crit = {'uvalues': crit}
 
-            # exit if resultant attributes do no match
-            uvalues_selected = np.unique(attr[mask])
-            #if 'control' in uvalues:
-            #    raise ValueError
-            if not (np.all(uvalues_selected == uvalues) and len(uvalues_selected)):
-                if __debug__ and 'SPL' in debug.active:
-                    debug('SPL',
-                          'Skipping dataset %s because selection using %s '
-                          'attribute resulted in the set of values %s while '
-                          'needing %s'
-                          % (ds, attrname, uvalues_selected, uvalues))
-                return
-            # print attrname, attr.value, uvalues, uvalues_selected, mask
+            # now it is specified as dictionary with more restrictions
+            # XXX sorted/reverse here is just to guarantee that
+            #     "uvalues" goes before "balanced".  If we get more
+            #     cases -- put proper order here
+            for crit_k in sorted(crit.keys(), reverse=True):
+                crit_v = crit[crit_k]
+                if crit_k.lower() == 'uvalues':
+                    # Check if all of those values are present
+
+                    # just to assure consistency in order and type
+                    uvalues = np.unique(np.atleast_1d(crit_v))
+
+                    # do matching and reset those not matching
+                    mask[np.array([not a in uvalues for a in attr.value])] = False
+
+                    # exit if resultant attributes do no match
+                    uvalues_selected = np.unique(attr[mask])
+                    #if 'control' in uvalues:
+                    #    raise ValueError
+                    if not (np.all(uvalues_selected == uvalues) and len(uvalues_selected)):
+                        if __debug__ and 'SPL' in debug.active:
+                            debug('SPL',
+                                  'Skipping dataset %s because selection using %s '
+                                  'attribute resulted in the set of values %s while '
+                                  'needing %s'
+                                  % (ds, attrname, uvalues_selected, uvalues))
+                        return
+
+                elif crit_k.lower() == 'balanced':
+                    # guarantee that in the given category
+                    # TODO: check once again if order of evaluation of
+                    # these restrictions matters
+                    values_selected = attr[mask]
+                    counts = dict((k, 0) for k in np.unique(values_selected))
+                    for v in values_selected:
+                        counts[v] += 1
+
+                    # bool() to guarantee booleans
+                    same_counts = bool(len(np.unique(counts.values())) == 1)
+                    crit_v = bool(crit_v)
+
+                    if crit_v != same_counts:
+                        if __debug__ and 'SPL' in debug.active:
+                            debug('SPL',
+                                  'Skipping dataset %s because selection using %s '
+                                  'attribute resulted same_counts=%s while balanced=%s'
+                                  % (ds, attrname, same_counts, crit_v))
+                        return
+                else:
+                    raise ValueError("Unknown key %s in definition of %s"
+                                     % (crit_k, self)) 
+                    # print attrname, attr.value, uvalues, uvalues_selected, mask
 
         yield ds
 
