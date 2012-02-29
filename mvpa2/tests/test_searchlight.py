@@ -81,8 +81,8 @@ class SearchlightTests(unittest.TestCase):
         if sllrn is None:               
             sllrn = lrn
         ds = datasets['3dsmall'].copy()
-        # TODO -- test multiclass here
-        # e.g. by ds[6:18].T += 2
+        # Let's test multiclass here, so boost # of labels
+        ds[6:18].T += 2
         ds.fa['voxel_indices'] = ds.fa.myspace
 
         # To assure that users do not run into incorrect operation due to overflows
@@ -123,8 +123,7 @@ class SearchlightTests(unittest.TestCase):
         if externals.exists('scipy'):
             sls += [ SL(sllrn, partitioner, indexsum='sparse', **skwargs)]
 
-        # Just test nproc whenever common_variance is True
-        # TODO
+        # Test nproc just once
         if externals.exists('pprocess') and not self._tested_pprocess:
             sls += [sphere_searchlight(cv, nproc=2, **skwargs)]
             self._tested_pprocess = True
@@ -155,7 +154,9 @@ class SearchlightTests(unittest.TestCase):
             # makes sense only if number of features was big enough
             # to get some stable estimate of mean
             if not do_roi or nroi > 20:
-                self.assertTrue(0.4 < results.samples.mean() < 0.6)
+                # was for binary, somewhat labile with M1NN
+                #self.assertTrue(0.4 < results.samples.mean() < 0.6)
+                self.assertTrue(0.68 < results.samples.mean() < 0.82)
 
             mean_errors = results.samples.mean(axis=0)
             # that we do get different errors ;)
