@@ -10,23 +10,30 @@
 
 import numpy.random as rnd
 
+import mvpa2
 from mvpa2.testing import *
 from mvpa2.testing.clfs import *
 from mvpa2.testing.datasets import *
 
 from mvpa2.datasets import Dataset, hstack
 from mvpa2.base import externals
+from mvpa2.mappers.base import ChainMapper
+from mvpa2.mappers.fx import mean_group_sample
 from mvpa2.clfs.transerror import ConfusionMatrix
 from mvpa2.measures.searchlight import sphere_searchlight, Searchlight
-from mvpa2.measures.gnbsearchlight import sphere_gnbsearchlight,\
+from mvpa2.measures.gnbsearchlight import sphere_gnbsearchlight, \
      GNBSearchlight
+from mvpa2.clfs.gnb import GNB
+
+from mvpa2.measures.nnsearchlight import sphere_m1nnsearchlight, \
+     M1NNSearchlight
+from mvpa2.clfs.knn import kNN
 
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 from mvpa2.misc.errorfx import corr_error
 from mvpa2.generators.partition import NFoldPartitioner, OddEvenPartitioner
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.measures.base import CrossValidation
-from mvpa2.clfs.gnb import GNB
 
 
 class SearchlightTests(unittest.TestCase):
@@ -40,20 +47,39 @@ class SearchlightTests(unittest.TestCase):
 
     #def _test_searchlights(self, ds, sls, roi_ids, result_all):
 
-    @sweepargs(lrn_SL_partitioner=
-               [(GNB(common_variance=v, descr='GNB'),
+    @sweepargs(lrn_sllrn_SL_partitioner=
+               [(GNB(common_variance=v, descr='GNB'), None,
                  sphere_gnbsearchlight,
                  NFoldPartitioner(cvtype=1))
-                 for v in (True, False)]
+                 for v in (True, False)] +
+               # Mean 1 NN searchlights
+               [(ChainMapper(
+                   [mean_group_sample(['targets', 'partitions']),
+                    kNN(1)], space='targets', descr='M1NN'),
+                 kNN(1),
+                 sphere_m1nnsearchlight,
+                 NFoldPartitioner(0.5, selection_strategy='random', count=20)),
+                # the same but with NFold(1) partitioner since it still should work
+                (ChainMapper(
+                   [mean_group_sample(['targets', 'partitions']),
+                    kNN(1)], space='targets', descr='NF-M1NN'),
+                 kNN(1),
+                 sphere_m1nnsearchlight,
+                 NFoldPartitioner(1)),
+                ]
                )
     @sweepargs(do_roi=(False, True))
     @reseed_rng()
-    def test_spatial_searchlight(self, lrn_SL_partitioner, do_roi=False):
+    def test_spatial_searchlight(self, lrn_sllrn_SL_partitioner, do_roi=False):
         """Tests both generic and ad-hoc searchlights (e.g. GNBSearchlight)
         Test of and adhoc searchlight anyways requires a ground-truth
         comparison to the generic version, so we are doing sweepargs here
         """
-        lrn, SL, partitioner = lrn_SL_partitioner
+        lrn, sllrn, SL, partitioner = lrn_sllrn_SL_partitioner
+        # e.g. for M1NN we need plain kNN(1) for m1nnsl, but to imitate m1nn
+        #      "learner" we must use a chainmapper atm
+        if sllrn is None:               
+            sllrn = lrn
         ds = datasets['3dsmall'].copy()
         # TODO -- test multiclass here
         # e.g. by ds[6:18].T += 2
@@ -79,7 +105,7 @@ class SearchlightTests(unittest.TestCase):
             # and lets compute the full one as well once again so we have a reference
             # which will be excluded itself from comparisons but values will be compared
             # for selected roi_id
-            sl_all = SL(lrn, partitioner, **skwargs)
+            sl_all = SL(sllrn, partitioner, **skwargs)
             result_all = sl_all(ds)
             # select random features
             roi_ids = rnd.permutation(range(ds.nfeatures))[:nroi]
@@ -91,11 +117,11 @@ class SearchlightTests(unittest.TestCase):
 
         sls = [sphere_searchlight(cv, **skwargs),
                #GNBSearchlight(gnb, NFoldPartitioner(cvtype=1))
-               SL(lrn, partitioner, indexsum='fancy', **skwargs)
+               SL(sllrn, partitioner, indexsum='fancy', **skwargs)
                ]
 
         if externals.exists('scipy'):
-            sls += [ SL(lrn, partitioner, indexsum='sparse', **skwargs)]
+            sls += [ SL(sllrn, partitioner, indexsum='sparse', **skwargs)]
 
         # Just test nproc whenever common_variance is True
         # TODO
@@ -110,14 +136,21 @@ class SearchlightTests(unittest.TestCase):
         all_results = []
         for sl in sls:
             # run searchlight
+            mvpa2.seed()                # reseed rng again for m1nnsl
             results = sl(ds)
             all_results.append(results)
             #print `sl`
             # check for correct number of spheres
             self.assertTrue(results.nfeatures == nroi)
             # and measures (one per xfold)
-            self.assertTrue(len(results) == len(ds.UC))
-
+            if partitioner.cvtype == 1:
+                self.assertTrue(len(results) == len(ds.UC))
+            elif partitioner.cvtype == 0.5:
+                # here we had 4 unique chunks, so 6 combinations
+                # even though 20 max was specified for NFold
+                self.assertTrue(len(results) == 6)
+            else:
+                raise RuntimeError("Unknown yet type of partitioner to check")
             # check for chance-level performance across all spheres
             # makes sense only if number of features was big enough
             # to get some stable estimate of mean

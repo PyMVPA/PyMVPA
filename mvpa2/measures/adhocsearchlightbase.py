@@ -260,7 +260,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
 
         # Let's collect stats summaries
         nsamples = 0
-        for il, l in enumerate(self.__ulabels_numeric):
+        for il, l in enumerate(self._ulabels_numeric):
             bis_il = bis[pb.labels[bis] == l]
             pl.nsamples[il] = N_float = \
                                      float(np.sum(pb.nsamples[bis_il]))
@@ -347,7 +347,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         nlabels = len(ulabels)
         label2index = dict((l, il) for il, l in enumerate(ulabels))
         labels_numeric = np.array([label2index[l] for l in labels])
-        self.__ulabels_numeric = [label2index[l] for l in ulabels]
+        self._ulabels_numeric = [label2index[l] for l in ulabels]
         # set the feature dimensions
         nsamples = len(X)
         nrois = len(roi_ids)
