@@ -122,6 +122,10 @@ def lastdim_columnsums_spmatrix(a, inds, out):
     sums = np.asarray((sps.csr_matrix(ar) * inds_s).todense())
     out[:] = sums.reshape(in_shape+(n_sums,))
 
+class _STATS:
+    """Just a dummy container to group/access stats
+    """
+    pass
 
 class SimpleStatBaseSearchlight(BaseSearchlight):
     """TODO
@@ -180,6 +184,8 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
             raise NotImplementedError, "For now only nproc=1 (or None for " \
                   "autodetection) is supported by GNBSearchlight"
 
+        self.__pb = None            # statistics per each block/label
+
     def __repr__(self, prefixes=[]):
         return super(SimpleStatBaseSearchlight, self).__repr__(
             prefixes=prefixes
@@ -193,8 +199,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
 
     def _untrain(self):
         super(SimpleStatBaseSearchlight, self)._untrain()
-        self.__subs_pb = self.__sums2_pb = \
-            self.__nsamples_pb = self.__labels_pb = None
+        self.__pb = None
 
 
     def _compute_pb_stats(self, labels_numeric,
@@ -203,14 +208,15 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         # reusable containers which should stay of the same size
         #
         nblocks = shape[0]
+        pb = self.__pb = _STATS()
 
         # sums and sums of squares per each block
-        self.__sums_pb = sums_pb = np.zeros(shape)
+        pb.sums = np.zeros(shape)
         # sums of squares
-        self.__sums2_pb = sums2_pb = np.zeros(shape)
+        pb.sums2 = np.zeros(shape)
 
-        self.__nsamples_pb = nsamples_pb = np.zeros((nblocks,))
-        labels_pb = [None] * nblocks
+        pb.nsamples = np.zeros((nblocks,))
+        pb.labels = [None] * nblocks
 
         if np.issubdtype(X.dtype, np.int):
             # might result in overflow e.g. while taking .square which
@@ -221,21 +227,20 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         X2 = np.square(X)
         # silly way for now
         for l, s, s2, ib in zip(labels_numeric, X, X2, self.__sample2block):
-            sums_pb[ib] += s
-            sums2_pb[ib] += s2
-            nsamples_pb[ib] += 1
-            if labels_pb[ib] is None:
-                labels_pb[ib] = l
+            pb.sums[ib] += s
+            pb.sums2[ib] += s2
+            pb.nsamples[ib] += 1
+            if pb.labels[ib] is None:
+                pb.labels[ib] = l
             else:
-                assert(labels_pb[ib] == l)
+                assert(pb.labels[ib] == l)
 
-        self.__labels_pb = np.asanyarray(labels_pb)
+        pb.labels = np.asanyarray(pb.labels)
         # additional silly tests for paranoid
-        assert(self.__labels_pb.dtype.kind is 'i')
+        assert(pb.labels.dtype.kind is 'i')
 
 
-    def _compute_stats_pl(self,
-        sis, nsamples_pl, sums_pl, means_pl, sums2_pl, variances_pl):
+    def _compute_pl_stats(self, sis, pl):
         """
         Uses blocked stats to get stats across given samples' indexes
         (might be training or testing)
@@ -247,11 +252,8 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         *args:
           In-place containers
         """
-        # local bindings
-        nsamples_pb = self.__nsamples_pb
-        labels_pb = self.__labels_pb
-        sums_pb = self.__sums_pb
-        sums2_pb = self.__sums2_pb
+        # local binding
+        pb = self.__pb
 
         # convert to blocks training split
         bis = np.unique(self.__sample2block[sis])
@@ -259,20 +261,20 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         # Let's collect stats summaries
         nsamples = 0
         for il, l in enumerate(self.__ulabels_numeric):
-            bis_il = bis[labels_pb[bis] == l]
-            nsamples_pl[il] = N_float = \
-                                     float(np.sum(nsamples_pb[bis_il]))
+            bis_il = bis[pb.labels[bis] == l]
+            pl.nsamples[il] = N_float = \
+                                     float(np.sum(pb.nsamples[bis_il]))
             nsamples += N_float
             if N_float == 0.0:
-                variances_pl[il] = sums_pl[il] \
-                    = means_pl[il] = sums2_pl[il] = 0.
+                pl.variances[il] = pl.sums[il] \
+                    = pl.means[il] = pl.sums2[il] = 0.
             else:
-                sums_pl[il] = np.sum(sums_pb[bis_il], axis=0)
-                means_pl[il] = sums_pl[il] / N_float
-                sums2_pl[il] = np.sum(sums2_pb[bis_il], axis=0)
+                pl.sums[il] = np.sum(pb.sums[bis_il], axis=0)
+                pl.means[il] = pl.sums[il] / N_float
+                pl.sums2[il] = np.sum(pb.sums2[bis_il], axis=0)
 
-        ## Actually compute the non-0 variances_pl
-        non0labels = (nsamples_pl.squeeze() != 0)
+        ## Actually compute the non-0 pl.variances
+        non0labels = (pl.nsamples.squeeze() != 0)
         if np.all(non0labels):
             # For a possible tiny speed up avoiding copying and
             # using (no) slicing
@@ -432,6 +434,9 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
 
         # 4. Lets deduce all neighbors... might need to be RF into the
         #    parallel part later on
+        # TODO: needs OPT since this is the step consuming 50% of time
+        #       or more allow to cache them entirely so this would
+        #       not be an unnecessary burden during permutation testing
         if __debug__:
             debug('SLC',
                   'Phase 4. Deducing neighbors information for %i ROIs'
@@ -479,9 +484,9 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
             targets, predictions = self._sl_call_on_a_split(
                 split, X,               # X2 might light to go
                 training_sis, testing_sis,
-                ## training_nsamples,      # GO? == np.sum(nsamples_pl)
+                ## training_nsamples,      # GO? == np.sum(pl.nsamples)
                 ## training_non0labels,
-                ## sums_pl, means_pl, sums2_pl, variances_pl,
+                ## pl.sums, pl.means, pl.sums2, pl.variances,
                 # passing nroi_fids as well since in 'sparse' way it has no 'length'
                 nroi_fids, roi_fids,
                 indexsum_fx,
