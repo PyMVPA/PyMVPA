@@ -16,7 +16,8 @@ import numpy as np
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
 
-from mvpa2.measures.adhocsearchlightbase import SimpleStatBaseSearchlight
+from mvpa2.measures.adhocsearchlightbase import \
+     SimpleStatBaseSearchlight, _STATS
 
 if __debug__:
     from mvpa2.base import debug
@@ -56,6 +57,7 @@ class GNBSearchlight(SimpleStatBaseSearchlight):
         SimpleStatBaseSearchlight.__init__(self, generator, qe, **kwargs)
 
         self._gnb = gnb
+        self.__pl_train = None
 
 
     def __repr__(self, prefixes=[]):
@@ -68,16 +70,21 @@ class GNBSearchlight(SimpleStatBaseSearchlight):
     def _get_space(self):
         return self.gnb.get_space()
 
+    def _untrain(self):
+        super(GNBSearchlight, self)._untrain()
+        self.__pl_train = None
+
     def _reserve_pl_stats_space(self, shape):
         # per each label: to be (re)computed within each loop split
         # Let's try to reuse the memory though
-        self.__sums_pl = np.zeros(shape)
-        self.__means_pl = np.zeros(shape)
+        pl = self.__pl_train = _STATS()
+        pl.sums = np.zeros(shape)
+        pl.means = np.zeros(shape)
         # means of squares for stddev computation
-        self.__sums2_pl = np.zeros(shape)
-        self.__variances_pl = np.zeros(shape)
+        pl.sums2 = np.zeros(shape)
+        pl.variances = np.zeros(shape)
         # degenerate dimension are added for easy broadcasting later on
-        self.__nsamples_pl = np.zeros(shape[:1] + (1,)*(len(shape)-1))
+        pl.nsamples = np.zeros(shape[:1] + (1,)*(len(shape)-1))
 
 
     def _sl_call_on_a_split(self,
@@ -93,36 +100,31 @@ class GNBSearchlight(SimpleStatBaseSearchlight):
         gnb = self.gnb
         params = gnb.params
 
-        sums_pl = self.__sums_pl
-        sums2_pl = self.__sums2_pl
-        means_pl = self.__means_pl
-        variances_pl = self.__variances_pl
-        nsamples_pl = self.__nsamples_pl
+        pl = self.__pl_train # we want to reuse the same storage across
+                             # splits
 
         training_nsamples, non0labels = \
-            self._compute_stats_pl(training_sis,
-                                   nsamples_pl, sums_pl, means_pl,
-                                   sums2_pl, variances_pl)
+            self._compute_pl_stats(training_sis, pl)
 
-        nlabels = len(nsamples_pl)
+        nlabels = len(pl.nsamples)
 
         if params.common_variance:
-            variances_pl[:] = \
-                np.sum(sums2_pl - sums_pl * means_pl, axis=0) \
+            pl.variances[:] = \
+                np.sum(pl.sums2 - pl.sums * pl.means, axis=0) \
                 / training_nsamples
         else:
-            variances_pl[non0labels] = \
-                (sums2_pl - sums_pl * means_pl)[non0labels] \
-                / nsamples_pl[non0labels]
+            pl.variances[non0labels] = \
+                (pl.sums2 - pl.sums * pl.means)[non0labels] \
+                / pl.nsamples[non0labels]
 
         # assign priors
         priors = gnb._get_priors(
-            nlabels, training_nsamples, nsamples_pl)
+            nlabels, training_nsamples, pl.nsamples)
 
         # proceed in a way we have in GNB code with logprob=True,
         # i.e. operating within the exponents -- should lead to some
         # performance advantage
-        norm_weight = -0.5 * np.log(2*np.pi*variances_pl)
+        norm_weight = -0.5 * np.log(2*np.pi*pl.variances)
         # last added dimension would be for ROIs
         logpriors = np.log(priors[:, np.newaxis, np.newaxis])
 
@@ -136,8 +138,8 @@ class GNBSearchlight(SimpleStatBaseSearchlight):
 
         # argument of exponentiation
         scaled_distances = \
-             -0.5 * (((data - means_pl[:, np.newaxis, ...])**2) \
-                     / variances_pl[:, np.newaxis, ...])
+             -0.5 * (((data - pl.means[:, np.newaxis, ...])**2) \
+                     / pl.variances[:, np.newaxis, ...])
 
         # incorporate the normalization from normals
         lprob_csfs = norm_weight[:, np.newaxis, ...] + scaled_distances
