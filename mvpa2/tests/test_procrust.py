@@ -12,16 +12,22 @@
 import unittest
 import numpy as np
 from numpy.linalg import norm
+from mvpa2.base import externals
 from mvpa2.datasets.base import dataset_wizard
 from mvpa2.testing import *
 from mvpa2.testing.datasets import *
 from mvpa2.mappers.procrustean import ProcrusteanMapper
 
+svds = ['numpy']
+if externals.exists('ctypes'):
+    svds += ['dgesvd']
+if externals.exists('scipy'):
+    svds += ['scipy']
 
 class ProcrusteanMapperTests(unittest.TestCase):
 
     @sweepargs(oblique=(False,True))
-    @sweepargs(svd=('numpy','scipy','dgesvd'))
+    @sweepargs(svd=['dgesvd'])
     @reseed_rng()
     def test_simple(self, svd, oblique):
         d_orig = datasets['uni2large'].samples
