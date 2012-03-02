@@ -653,7 +653,7 @@ versions._KNOWN.update({
 
 
 ##REF: Name was automagically refactored
-def test_all_dependencies(force=False, verbosity=1):
+def check_all_dependencies(force=False, verbosity=1):
     """
     Test for all known dependencies.
 
@@ -675,4 +675,3 @@ def test_all_dependencies(force=False, verbosity=1):
                      % [ k[5:] for k in cfg.options('externals')
                             if k.startswith('have') \
                             and cfg.getboolean('externals', k) == True ])
-

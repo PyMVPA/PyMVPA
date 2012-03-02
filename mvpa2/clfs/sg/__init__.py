@@ -11,10 +11,16 @@
 __docformat__ = 'restructuredtext'
 
 if __debug__:
-    from mvpa2.base import debug
+    from mvpa2.base import debug, externals
     debug('INIT', 'mvpa2.clfs.sg')
 
-from mvpa2.clfs.sg.svm import SVM
+def setup_module(module):
+    if not externals.exists('shogun'):
+        from nose.plugins.skip import SkipTest
+        raise SkipTest
+
+if externals.exists('shogun'):
+    from mvpa2.clfs.sg.svm import SVM
 
 if __debug__:
     debug('INIT', 'mvpa2.clfs.sg end')
