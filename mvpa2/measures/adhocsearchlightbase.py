@@ -143,8 +143,10 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
 
     @borrowkwargs(BaseSearchlight, '__init__')
     def __init__(self, generator, qe, errorfx=mean_mismatch_error,
-                 indexsum=None, **kwargs):
-        """Initialize a GNBSearchlight
+                 indexsum=None,
+                 reuse_neighbors=False,
+                 **kwargs):
+        """Initialize the base class for "naive" searchlight classifiers
 
         Parameters
         ----------
@@ -160,6 +162,10 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
           corresponds to regular fancy indexing over columns, whenever
           in 'sparse', product of sparse matrices is used (usually
           faster, so is default if `scipy` is available).
+        reuse_neighbors : bool, optional
+          Compute neighbors information only once, thus allowing for
+          efficient reuse on subsequent calls where dataset's feature
+          attributes remain the same (e.g. during permutation testing)
         """
 
         # init base class first
@@ -168,6 +174,8 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         self._errorfx = errorfx
         self._generator = generator
 
+        # TODO: move into _call since resetting over default None
+        #       obscures __repr__
         if indexsum is None:
             if externals.exists('scipy'):
                 indexsum = 'sparse'
@@ -185,6 +193,10 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
                   "autodetection) is supported by GNBSearchlight"
 
         self.__pb = None            # statistics per each block/label
+        self.__reuse_neighbors = reuse_neighbors
+
+        # Storage to be used for neighborhood information
+        self.__roi_fids = None
 
     def __repr__(self, prefixes=[]):
         return super(SimpleStatBaseSearchlight, self).__repr__(
@@ -192,6 +204,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
             + _repr_attrs(self, ['generator'])
             + _repr_attrs(self, ['errorfx'], default=mean_mismatch_error)
             + _repr_attrs(self, ['indexsum'])
+            + _repr_attrs(self, ['reuse_neighbors'], default=False)
             )
 
     def _get_space(self):
@@ -437,34 +450,58 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         # TODO: needs OPT since this is the step consuming 50% of time
         #       or more allow to cache them entirely so this would
         #       not be an unnecessary burden during permutation testing
-        if __debug__:
-            debug('SLC',
-                  'Phase 4. Deducing neighbors information for %i ROIs'
-                  % (nrois,))
-        roi_fids = [qe.query_byid(f) for f in roi_ids]
-        nroi_fids = len(roi_fids)
-        # makes sense to waste precious ms only if ca is enabled
-        if self.ca.is_enabled('roi_sizes'):
-            roi_sizes = [len(x) for x in roi_fids]
+        if not self.reuse_neighbors or self.__roi_fids is None:
+            if __debug__:
+                debug('SLC',
+                      'Phase 4. Deducing neighbors information for %i ROIs'
+                      % (nrois,))
+            roi_fids = [qe.query_byid(f) for f in roi_ids]
+
         else:
-            roi_sizes = []
+            if __debug__:
+                debug('SLC',
+                      'Phase 4. Reusing neighbors information for %i ROIs'
+                      % (nrois,))
+            roi_fids = self.__roi_fids
+
+        roi_sizes = []
+        if isinstance(roi_fids, list):
+            nroi_fids = len(roi_fids)
+            if self.ca.is_enabled('roi_sizes'):
+                roi_sizes = [len(x) for x in roi_fids]
+        elif externals.exists('scipy') and isinstance(roi_fids, sps.spmatrix):
+            nroi_fids = roi_fids.shape[0]
+            if self.ca.is_enabled('roi_sizes'):
+                # very expensive operation, so better not to ask over again
+                # roi_sizes = [roi_fids.getrow(r).nnz for r in range(nroi_fids)]
+                warning("Since 'sparse' trick is used, extracting sizes of "
+                        "roi's are expensive at this point.  Get them from the "
+                        ".ca value of the original instance before "
+                        "calling again and using reuse_neighbors")
+        else:
+            raise RuntimeError("Should not be reachable")
 
         indexsum = self._indexsum
         if indexsum == 'sparse':
-            if __debug__:
-                debug('SLC',
-                      'Phase 4b. Converting neighbors to sparse matrix '
-                      'representation')
-            # convert to "sparse representation" where column j contains
-            # 1s only at the roi_fids[j] indices
-            roi_fids = inds_to_coo(roi_fids,
-                                   shape=(dataset.nfeatures, nroi_fids))
+            if not self.reuse_neighbors or self.__roi_fids is None:
+                if __debug__:
+                    debug('SLC',
+                          'Phase 4b. Converting neighbors to sparse matrix '
+                          'representation')
+                # convert to "sparse representation" where column j contains
+                # 1s only at the roi_fids[j] indices
+                roi_fids = inds_to_coo(roi_fids,
+                                       shape=(dataset.nfeatures, nroi_fids))
             indexsum_fx = lastdim_columnsums_spmatrix
         elif indexsum == 'fancy':
             indexsum_fx = lastdim_columnsums_fancy_indexing
         else:
             raise ValueError, \
                   "Do not know how to deal with indexsum=%s" % indexsum
+
+        # Store roi_fids
+        if self.reuse_neighbors and self.__roi_fids is None:
+            self.__roi_fids = roi_fids
 
         # 5. Lets do actual "splitting" and "classification"
         if __debug__:
@@ -517,3 +554,4 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
     generator = property(fget=lambda self: self._generator)
     errorfx = property(fget=lambda self: self._errorfx)
     indexsum = property(fget=lambda self: self._indexsum)
+    reuse_neighbors = property(fget=lambda self: self.__reuse_neighbors)

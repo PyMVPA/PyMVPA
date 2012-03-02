@@ -78,7 +78,7 @@ class SearchlightTests(unittest.TestCase):
         lrn, sllrn, SL, partitioner = lrn_sllrn_SL_partitioner
         # e.g. for M1NN we need plain kNN(1) for m1nnsl, but to imitate m1nn
         #      "learner" we must use a chainmapper atm
-        if sllrn is None:               
+        if sllrn is None:
             sllrn = lrn
         ds = datasets['3dsmall'].copy()
         # Let's test multiclass here, so boost # of labels
@@ -179,7 +179,6 @@ class SearchlightTests(unittest.TestCase):
             if do_roi:
                 assert_array_equal(result_all[:, roi_ids], results)
 
-
         if len(all_results) > 1:
             # if we had multiple searchlights, we can check either they all
             # gave the same result (they should have)
@@ -187,6 +186,17 @@ class SearchlightTests(unittest.TestCase):
             dresults = np.abs(aresults - aresults.mean(axis=0))
             dmax = np.max(dresults)
             self.assertTrue(dmax <= 1e-13)
+
+        # Test the searchlight's reuse of neighbors
+        for indexsum in ['fancy'] + (
+            externals.exists('scipy') and ['sparse'] or []):
+            sl = SL(sllrn, partitioner, indexsum='fancy',
+                    reuse_neighbors=True, **skwargs)
+            mvpa2.seed()
+            result1 = sl(ds)
+            mvpa2.seed()
+            result2 = sl(ds)                # must be faster
+            assert_array_equal(result1, result2)
 
 
     def test_partial_searchlight_with_full_report(self):
