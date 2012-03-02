@@ -27,7 +27,7 @@ if externals.exists('scipy'):
 class ProcrusteanMapperTests(unittest.TestCase):
 
     @sweepargs(oblique=(False,True))
-    @sweepargs(svd=['dgesvd'])
+    @sweepargs(svd=svds)
     @reseed_rng()
     def test_simple(self, svd, oblique):
         d_orig = datasets['uni2large'].samples
