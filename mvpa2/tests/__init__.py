@@ -13,6 +13,73 @@ import numpy as np
 from mvpa2 import _random_seed, cfg
 from mvpa2.base import externals, warning
 
+# # init to make tests into a package
+# # Test callable
+# from numpy.testing import Tester
+# test = Tester().test
+# del Tester
+
+_sys_settings = {}
+
+def _get_verbosity(verbosity):
+    if verbosity is None:
+        return int(cfg.get('tests', 'verbosity', default=1))
+    return verbosity
+
+def setup_module(module, verbosity=None):
+    "set up test fixtures for testing"
+
+    if __debug__:
+        from mvpa2.base import debug
+        # Lets add some targets which provide additional testing
+        debug.active += ['CHECK_.*']
+
+    verbosity = _get_verbosity(verbosity)
+
+    # provide people with a hint about the warnings that might show up in a
+    # second
+    if verbosity:
+        print("T: MVPA_SEED=%s" % _random_seed)
+        if verbosity > 1:
+            print('T: Testing for availability of external software packages.')
+
+    # fully test of externals
+    externals.test_all_dependencies(verbosity=max(0, verbosity-1))
+
+    # So we could see all warnings about missing dependencies
+    _sys_settings['maxcount'] = warning.maxcount
+    warning.maxcount = 1000
+
+    if verbosity < 3:
+        # no MVPA warnings during whole testsuite (but restore handlers later on)
+        _sys_settings['handlers'] = warning.handlers
+        warning.handlers = []
+
+        # No python warnings (like ctypes version for slmr)
+        import warnings
+        warnings.simplefilter('ignore')
+
+    if verbosity < 4:
+        # No NumPy
+        _sys_settings['np_errsettings'] = np.geterr()
+        np.seterr(**dict([(x, 'ignore') for x in _sys_settings['np_errsettings']]))
+
+
+def teardown_module(module, verbosity=None):
+    "tear down test fixtures"
+    verbosity = _get_verbosity(verbosity)
+
+    # restore warning handlers
+    warning.maxcount = _sys_settings['maxcount']
+
+    if verbosity < 3:
+        # restore warning handlers
+        warning.handlers = _sys_settings['handlers']
+
+    if verbosity < 4:
+        # restore numpy settings
+        np.seterr(**_sys_settings['np_errsettings'])
+
 
 def collect_unit_tests(verbosity=1):
     """Runs over all tests it knows and composes a dictionary with test suite
@@ -221,41 +288,8 @@ def run(limit=None, verbosity=None, exit_=False):
     exit_ : bool, optional
       Either to exit with an error code upon the completion.
     """
-    if __debug__:
-        from mvpa2.base import debug
-        # Lets add some targets which provide additional testing
-        debug.active += ['CHECK_.*']
 
-    if verbosity is None:
-        verbosity = int(cfg.get('tests', 'verbosity', default=1))
-
-    # provide people with a hint about the warnings that might show up in a
-    # second
-    if verbosity:
-        print("T: MVPA_SEED=%s" % _random_seed)
-        if verbosity > 1:
-            print('T: Testing for availability of external software packages.')
-
-    # So we could see all warnings about missing dependencies
-    maxcount = warning.maxcount
-    warning.maxcount = 1000
-
-    # fully test of externals
-    externals.test_all_dependencies(verbosity=max(0, verbosity-1))
-
-    if verbosity < 3:
-        # no MVPA warnings during whole testsuite (but restore handlers later on)
-        handler_backup = warning.handlers
-        warning.handlers = []
-
-        # No python warnings (like ctypes version for slmr)
-        import warnings
-        warnings.simplefilter('ignore')
-
-    if verbosity < 4:
-        # No NumPy
-        np_errsettings = np.geterr()
-        np.seterr(**dict([(x, 'ignore') for x in np_errsettings]))
+    setup_module(__module__, verbosity)
 
     try:
         if externals.exists('nose'):
@@ -288,19 +322,12 @@ def run(limit=None, verbosity=None, exit_=False):
             # finally run it
             TextTestRunnerPyMVPA(verbosity=verbosity).run(ts)
     finally:
-        # restore warning handlers
-        warning.maxcount = maxcount
-
-    if verbosity < 3:
-        # restore warning handlers
-        warning.handlers = handler_backup
-
-    if verbosity < 4:
-        # restore numpy settings
-        np.seterr(**np_errsettings)
+        teardown_module(__module__, verbosity)
 
 
 # to avoid nosetests running the beasts defined in this file
+run_tests_using_nose.__test__ = False
+run.__test__ = False
 __test__ = False
 
 if __name__ == "__main__":
