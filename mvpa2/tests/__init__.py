@@ -44,7 +44,7 @@ def setup_module(module, verbosity=None):
             print('T: Testing for availability of external software packages.')
 
     # fully test of externals
-    externals.test_all_dependencies(verbosity=max(0, verbosity-1))
+    externals.check_all_dependencies(verbosity=max(0, verbosity-1))
 
     # So we could see all warnings about missing dependencies
     _sys_settings['maxcount'] = warning.maxcount
@@ -236,6 +236,7 @@ def run_tests_using_nose(limit=None, verbosity=1, exit_=False):
           unittests need to be cleaned and unified first
     """
     nosetests = collect_nose_tests(verbosity=verbosity)
+    verbosity = _get_verbosity(verbosity)
 
     if not externals.exists('nose'):
         warning("You do not have python-nose installed.  Some unittests were "
@@ -289,7 +290,7 @@ def run(limit=None, verbosity=None, exit_=False):
       Either to exit with an error code upon the completion.
     """
 
-    setup_module(__module__, verbosity)
+    setup_module(None, verbosity)
 
     try:
         if externals.exists('nose'):
@@ -322,7 +323,7 @@ def run(limit=None, verbosity=None, exit_=False):
             # finally run it
             TextTestRunnerPyMVPA(verbosity=verbosity).run(ts)
     finally:
-        teardown_module(__module__, verbosity)
+        teardown_module(None, verbosity)
 
 
 # to avoid nosetests running the beasts defined in this file
