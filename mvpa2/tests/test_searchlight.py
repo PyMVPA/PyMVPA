@@ -198,7 +198,49 @@ class SearchlightTests(unittest.TestCase):
             result2 = sl(ds)                # must be faster
             assert_array_equal(result1, result2)
 
+    def test_adhocsearchlight_perm_testing(self):
+        # just a smoke test pretty much
+        ds = datasets['3dmedium'].copy()
+        #ds.samples += np.random.normal(size=ds.samples.shape)*10
+        mvpa2.seed()
+        ds.fa['voxel_indices'] = ds.fa.myspace
+        from mvpa2.mappers.fx import mean_sample
+        from mvpa2.clfs.stats import MCNullDist
+        permutator = AttributePermutator('targets', count=8,
+                                         limit='chunks')
+        distr_est = MCNullDist(permutator, tail='left',
+                               enable_ca=['dist_samples'])
+        slargs = (kNN(1),
+                  NFoldPartitioner(0.5,
+                                   selection_strategy='random',
+                                   count=9))
+        slkwargs = dict(radius=1, postproc=mean_sample())
 
+        sl_nodistr = sphere_m1nnsearchlight(*slargs, **slkwargs)
+        sl = sphere_m1nnsearchlight(
+            *slargs,
+            null_dist=distr_est,
+            enable_ca=['null_t'],
+            reuse_neighbors=True,
+            **slkwargs
+            )
+        mvpa2.seed()
+        res_nodistr = sl_nodistr(ds)
+        mvpa2.seed()
+        res = sl(ds)
+        # verify that we at least got the same main result
+        # ah (yoh) -- null dist is estimated before the main
+        # estimate so we can't guarantee correspondence :-/
+        # assert_array_equal(res_nodistr, res)
+        # only resemblance (TODO, may be we want to get/setstate
+        # for rng before null_dist.fit?)
+
+        # and dimensions correspond
+        assert_array_equal(distr_est.ca.dist_samples.shape,
+                           (1, ds.nfeatures, 8))
+        assert_array_equal(sl.ca.null_t.samples.shape,
+                           (1, ds.nfeatures))
+        
     def test_partial_searchlight_with_full_report(self):
         ds = self.dataset.copy()
         center_ids = np.zeros(ds.nfeatures, dtype='bool')
