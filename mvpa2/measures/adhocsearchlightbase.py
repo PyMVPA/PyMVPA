@@ -470,7 +470,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
             if self.ca.is_enabled('roi_sizes'):
                 roi_sizes = [len(x) for x in roi_fids]
         elif externals.exists('scipy') and isinstance(roi_fids, sps.spmatrix):
-            nroi_fids = roi_fids.shape[0]
+            nroi_fids = roi_fids.shape[1]
             if self.ca.is_enabled('roi_sizes'):
                 # very expensive operation, so better not to ask over again
                 # roi_sizes = [roi_fids.getrow(r).nnz for r in range(nroi_fids)]
