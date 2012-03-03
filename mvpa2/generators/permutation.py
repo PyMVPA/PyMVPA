@@ -17,6 +17,7 @@ from mvpa2.base.node import Node
 from mvpa2.base.dochelpers import _str, _repr
 from mvpa2.misc.support import get_limit_filter
 
+from mvpa2.support.utils import deprecated
 
 class AttributePermutator(Node):
     """Node to permute one a more attributes in a dataset.
@@ -28,7 +29,7 @@ class AttributePermutator(Node):
     multiple permutations.
 
     This node only permutes dataset attributes, dataset samples are no affected.
-    The permuted output dataset shared the samples container with the input
+    The permuted output dataset shares the samples container with the input
     dataset.
     """
     def __init__(self, attr, count=1, limit=None, assure=False, **kwargs):
@@ -40,7 +41,7 @@ class AttributePermutator(Node):
           attribute names, in which case the *identical* shuffling is applied to
           all listed attributes.
         count : int
-          Number of permutations to yielded by .generate()
+          Number of permutations to be yielded by .generate()
         limit : None or str or dict
           If ``None`` all attribute values will be permuted. If an single
           attribute name is given, its unique values will be used to define
@@ -57,7 +58,8 @@ class AttributePermutator(Node):
         """
         Node.__init__(self, **kwargs)
         self._pattr = attr
-        self.nruns = count
+
+        self.count = count
         self._limit = limit
         self._pcfg = None
         self._assure_permute = assure
@@ -146,7 +148,7 @@ class AttributePermutator(Node):
         # figure out permutation setup once for all runs
         self._pcfg = self._get_pcfg(ds)
         # permute as often as requested
-        for i in xrange(self.nruns):
+        for i in xrange(self.count):
             yield self(ds)
 
         # reset permutation setup to do the right thing upon next call to object
@@ -154,5 +156,23 @@ class AttributePermutator(Node):
 
 
     def __str__(self):
-        return _str(self, self._pattr, n=self.nruns, limit=self._limit,
+        return _str(self, self._pattr, n=self.count, limit=self._limit,
                     assure=self._assure_permute)
+
+    def __repr__(self, prefixes=[]):
+        return super(AttributePermutator, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['attr'])
+            + _repr_attrs(self, ['count'], default=1)
+            + _repr_attrs(self, ['limit'])
+            + _repr_attrs(self, ['assure'], default=False)
+            )
+
+    @property
+    @deprecated("to be removed in 2.1 -- use .count instead")
+    def nruns(self):
+        return self.count
+
+    attr = property(fget=lambda self: self._pattr)
+    limit = property(fget=lambda self: self._limit)
+    assure = property(fget=lambda self: self._assure_permute)
