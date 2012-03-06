@@ -115,6 +115,23 @@ class ParamsTests(unittest.TestCase):
         self.assertEqual(clfe.kernel_params.is_set(), False)
         self.assertEqual(clfe.params.is_set(), False)
 
+    def test_incorrect_parameter_error(self):
+        # Just a sample class
+        from mvpa2.generators.partition import NFoldPartitioner
+        try:
+            spl = NFoldPartitioner(1, incorrect=None)
+            raise AssertionError("Must have failed with an exception here "
+                                 "due to incorrect parameter")
+        except Exception, e:
+            estr = str(e)
+        self.assertTrue(not "calling_time" in estr,
+             msg="must give valid parameters for partitioner, "
+                 "not .ca's. Got: \n\t%r" % estr)
+        # sample parameters which should be present
+        for p in 'count', 'disable_ca', 'postproc':
+            self.assertTrue(p in estr)
+
+
 def suite():
     return unittest.makeSuite(ParamsTests)
 

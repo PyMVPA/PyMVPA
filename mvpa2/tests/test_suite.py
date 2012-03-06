@@ -12,6 +12,7 @@ import inspect
 import re
 import unittest
 
+from mvpa2.base.dochelpers import get_docstring_split
 
 class SuiteTest(unittest.TestCase):
 
@@ -51,6 +52,11 @@ class SuiteTest(unittest.TestCase):
                     missing1.append(k)
 
                 if hasattr(i, '__init__') and not c in ['objects']:
+                    # Smoke test get_docstring_split which would be used
+                    # if someone specifies incorrect keyword argument
+                    _ = get_docstring_split(i.__init__)
+                    #if not None in _:
+                    #    print [x[0] for x in _[1]]
                     si = i.__init__.__doc__
                     k += '.__init__'
                     if si is None or si == "":
