@@ -15,6 +15,7 @@ from mvpa2.misc.fx import dual_gaussian, dual_positive_gaussian, fit2histogram
 @reseed_rng()
 @sweepargs(f=(dual_gaussian, dual_positive_gaussian))
 def test_dual_gaussian(f):
+    skip_if_no_external('scipy')
     data = np.random.normal(size=(100, 1))
 
     histfit = fit2histogram(np.repeat(data[None, :], 2, axis=0),
