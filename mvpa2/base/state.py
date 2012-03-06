@@ -44,7 +44,8 @@ from textwrap import TextWrapper
 # Although not used here -- included into interface
 from mvpa2.misc.exceptions import UnknownStateError
 from mvpa2.base.attributes import IndexedCollectable, ConditionalAttribute
-from mvpa2.base.dochelpers import enhanced_doc_string, borrowdoc, _repr_attrs
+from mvpa2.base.dochelpers import enhanced_doc_string, borrowdoc, _repr_attrs, \
+     get_docstring_split
 
 from mvpa2.base import externals
 # XXX local rename is due but later on
@@ -850,11 +851,17 @@ class ClassWithCollections(object):
                 else:
                     known_params = reduce(
                        lambda x,y:x+y,
-                       [x.keys() for x in collections.itervalues()], [])
-                    raise TypeError, \
-                          "Unexpected keyword argument %s=%s for %s." \
-                           % (arg, argument, self) \
-                          + " Valid parameters are %s" % known_params
+                        [x.keys()
+                         for x in collections.itervalues()
+                         if not isinstance(x, ConditionalAttributesCollection)
+                         ], [])
+                    _, kwargs_list, _ = get_docstring_split(self.__init__)
+                    known_params = sorted(known_params
+                                          + [x[0] for x in kwargs_list])
+                    raise TypeError(
+                        "Unexpected keyword argument %s=%s for %s."
+                        % (arg, argument, self)
+                        + "\n\tValid parameters are: %s" % ', '.join(known_params))
 
             ## Initialize other base classes
             ##  commented out since it seems to be of no use for now

@@ -223,21 +223,21 @@ constraints -- please refer to the HTML-based version full the full matrix).
 >>> print cvte.ca.stats.as_string(description=True)
 ----------.
 predictions\targets     bottle         cat          chair          face         house        scissors    scrambledpix      shoe
-            `------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------ P'   N'   FP   FN   PPV  NPV  TPR  SPC  FDR  MCC
-       bottle             6             0             3             0             0             5             0             1       15   75    9    6   0.4 0.92  0.5 0.88  0.6 0.34
-        cat               0             10            0             0             0             0             0             0       10   67    0    2    1  0.97 0.83   1    0  0.79
-       chair              0             0             7             0             0             0             0             0        7   73    0    5    1  0.93 0.58   1    0  0.66
-        face              0             2             0             12            0             0             0             0       14   63    2    0  0.86   1    1  0.97 0.14  0.8
-       house              0             0             0             0             12            0             0             0       12   63    0    0    1    1    1    1    0  0.87
-      scissors            2             0             1             0             0             6             0             0        9   75    3    6  0.67 0.92  0.5 0.96 0.33 0.48
-    scrambledpix          2             0             1             0             0             0             12            1       16   63    4    0  0.75   1    1  0.94 0.25 0.75
-        shoe              2             0             0             0             0             1             0             10      13   67    3    2  0.77 0.97 0.83 0.96 0.23 0.69
+            `------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------ P'   N'   FP   FN   PPV  NPV  TPR  SPC  FDR  MCC  F1
+       bottle             6             0             3             0             0             5             0             1       15   75    9    6   0.4 0.92  0.5 0.88  0.6 0.34 0.44
+        cat               0             10            0             0             0             0             0             0       10   67    0    2    1  0.97 0.83   1    0  0.79 0.91
+       chair              0             0             7             0             0             0             0             0        7   73    0    5    1  0.93 0.58   1    0  0.66 0.74
+        face              0             2             0             12            0             0             0             0       14   63    2    0  0.86   1    1  0.97 0.14  0.8 0.92
+       house              0             0             0             0             12            0             0             0       12   63    0    0    1    1    1    1    0  0.87   1
+      scissors            2             0             1             0             0             6             0             0        9   75    3    6  0.67 0.92  0.5 0.96 0.33 0.48 0.57
+    scrambledpix          2             0             1             0             0             0             12            1       16   63    4    0  0.75   1    1  0.94 0.25 0.75 0.86
+        shoe              2             0             0             0             0             1             0             10      13   67    3    2  0.77 0.97 0.83 0.96 0.23 0.69  0.8
 Per target:          ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------
          P                12            12            12            12            12            12            12            12
          N                84            84            84            84            84            84            84            84
          TP               6             10            7             12            12            6             12            10
          TN               69            65            68            63            63            69            63            65
-Summary \ Means:     ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------ 12 68.25 2.62 2.62 0.81 0.96 0.78 0.96 0.19 0.67
+Summary \ Means:     ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------ 12 68.25 2.62 2.62 0.81 0.96 0.78 0.96 0.19 0.67 0.78
        CHI^2            442.67       p=2e-58
         ACC              0.78
         ACC%            78.12
@@ -265,6 +265,8 @@ Abbreviations (for details see http://en.wikipedia.org/wiki/ROC_curve):
       FDR = FP / (FP + TP)
  MCC: Matthews Correlation Coefficient
       MCC = (TP*TN - FP*FN)/sqrt(P N P' N')
+ F1 : F1 score
+      F1 = 2TP / (P + P') = 2TP / (2TP + FP + FN)
  AUC: Area under (AUC) curve
  CHI^2: Chi-square of confusion matrix
  LOE(ACC): Linear Order Effect in ACC across sets

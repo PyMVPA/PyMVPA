@@ -1,9 +1,16 @@
 """ctypes wrapper for LAPACK svd implementation - DGESVD"""
 import numpy
-from ctypes import *
+
+from mvpa2.base import externals
+
+if externals.exists('ctypes', raise_=True):
+    from ctypes import cdll, c_char, c_int, c_double, c_void_p, byref
+
 from numpy.linalg import LinAlgError
 
 lapacklib = cdll.LoadLibrary('liblapack.so')
+
+__all__ = ['svd']
 
 def svd(a, full_matrices=True, algo='svd', **kwargs):
     """ ctypes warpepr for LAPACK SVD (DGESVD)
