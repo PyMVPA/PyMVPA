@@ -221,7 +221,8 @@ class Hyperalignment(ClassWithCollections):
 
             #ds_new = ds.copy()     # shallow copy so we could assign new labels
             #zscore(ds_new, chunks_attr=None)
-            ds_temp = (commonspace*ndatasets - data_mapped[i])/(ndatasets-1)
+            ds_temp = commonspace
+            #ds_temp = (commonspace*ndatasets - data_mapped[i])/(ndatasets-1)
             if params.zscore_common:
                 zscore(ds_temp, chunks_attr=None)
             ds_new.targets = ds_temp #commonspace #PRJ ds_temp#
