@@ -265,7 +265,7 @@ def test_scattered_neighborhoods():
     coords = range(50)
 
     scoords, sidx = ne.scatter_neighborhoods(sphere, coords, sort=True,
-                                             deterministic=True)
+                                             deterministic=False)
     # for this specific case of 1d coordinates the coords and idx should be
     # identical
     assert_array_equal(scoords, sidx)
