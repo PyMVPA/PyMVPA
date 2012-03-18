@@ -37,7 +37,7 @@ class SearchlightTests(unittest.TestCase):
         # the searchlight
         self.dataset.fa['voxel_indices'] = self.dataset.fa.myspace
 
-    @sweepargs(common_variance=('True', 'False'))
+    @sweepargs(common_variance=(True, False))
     @sweepargs(do_roi=(False, True))
     @reseed_rng()
     def test_spatial_searchlight(self, common_variance=True, do_roi=False):
@@ -92,7 +92,7 @@ class SearchlightTests(unittest.TestCase):
             # run searchlight
             results = sl(ds)
             all_results.append(results)
-            print `sl`
+            #print `sl`
             # check for correct number of spheres
             self.assertTrue(results.nfeatures == nroi)
             # and measures (one per xfold)

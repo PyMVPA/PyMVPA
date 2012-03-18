@@ -93,6 +93,31 @@ def dual_gaussian(x, amp1=1.0, mean1=0.0, std1=1.0,
         return np.nan
     return (amp1 * norm.pdf(x, mean1, std1)) + (amp2 * norm.pdf(x, mean2, std2))
 
+def dual_positive_gaussian(x, amp1=1.0, mean1=0.0, std1=1.0,
+                           amp2=1.0, mean2=0.0, std2=1.0):
+    """Sum of two non-negative Gaussians
+
+    Parameters
+    ----------
+    x : array
+      Function argument
+    amp1: float
+      Amplitude parameter of the first Gaussian
+    mean1: float
+      Mean parameter of the first Gaussian
+    std1: float
+      Standard deviation parameter of the first Gaussian
+    amp2: float
+      Amplitude parameter of the second Gaussian
+    mean2: float
+      Mean parameter of the second Gaussian
+    std2: float
+      Standard deviation parameter of the second Gaussian
+    """
+    if amp1 < 0 or amp2 < 0:
+        return np.nan
+    return dual_gaussian(x, amp1, mean1, std1, amp2, mean2, std2)
+
 
 ##REF: Name was automagically refactored
 def least_sq_fit(fx, params, y, x=None, **kwargs):

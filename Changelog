@@ -28,9 +28,15 @@ tracking systems accordingly and can be queried by visiting the URLs::
 
   https://github.com/PyMVPA/PyMVPA/issues/<fixed bug id>
 
-
 Releases
 ========
+
+* 2.1.0 (unreleased)
+
+  * Enhancements
+
+    - Add :func:`~mvpa.misc.neighborhood.scatter_neighborhood` to aid
+      sparse sampling of spaces.
 
 * 2.0.0 (Mon, Dec 19 2011)
 
