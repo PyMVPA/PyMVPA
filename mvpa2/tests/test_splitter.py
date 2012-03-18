@@ -20,7 +20,7 @@ from mvpa2.generators.splitters import Splitter
 from mvpa2.generators.partition import *
 
 from mvpa2.testing.tools import ok_, assert_array_equal, assert_true, \
-        assert_false, assert_equal, reseed_rng
+        assert_false, assert_equal, assert_not_equal, reseed_rng
 
 class SplitterTests(unittest.TestCase):
 
@@ -185,6 +185,55 @@ class SplitterTests(unittest.TestCase):
             return list(spl.generate(dat))
         s20 = NGroupPartitioner(20)
         self.assertRaises(ValueError,splitcall,s20,self.data)
+
+    @reseed_rng()
+    def test_nfold_random_counted_selection_partitioner(self):
+        # Lets get somewhat extensive but complete one and see if
+        # everything is legit. 0.5 must correspond to 50%, in our case
+        # 5 out of 10 unique chunks
+        split_partitions = [
+            tuple(x.sa.partitions)
+            for x in NFoldPartitioner(0.5).generate(self.data)]
+        # 252 is # of combinations of 5 from 10
+        assert_equal(len(split_partitions), 252)
+
+        # verify that all of them are unique
+        assert_equal(len(set(split_partitions)), 252)
+
+        # now let's limit our query
+        kwargs = dict(count=10, selection_strategy='random')
+        split10_partitions = [
+            tuple(x.sa.partitions)
+            for x in NFoldPartitioner(5, **kwargs).generate(self.data)]
+        split10_partitions_ = [
+            tuple(x.sa.partitions)
+            for x in NFoldPartitioner(0.5, **kwargs).generate(self.data)]
+        # to make sure that I deal with sets of tuples correctly:
+        assert_equal(len(set(split10_partitions)), 10)
+        assert_equal(len(split10_partitions), 10)
+        assert_equal(len(split10_partitions_), 10)
+        # and they must differ (same ones are possible but very very unlikely)
+        assert_not_equal(split10_partitions, split10_partitions_)
+        # but every one of them must be within known exhaustive set
+        assert_equal(set(split_partitions).intersection(split10_partitions),
+                     set(split10_partitions))
+        assert_equal(set(split_partitions).intersection(split10_partitions_),
+                     set(split10_partitions_))
+
+    @reseed_rng()
+    def test_nfold_random_counted_selection_partitioner_huge(self):
+        # Just test that it completes in a reasonable time and does
+        # not blow up as if would do if it was not limited by count
+        kwargs = dict(count=10)
+        ds = dataset_wizard(np.arange(1000).reshape((-1, 1)),
+                            targets=range(1000),
+                            chunks=range(500)*2)
+        split_partitions_random = [
+            tuple(x.sa.partitions)
+            for x in NFoldPartitioner(100,  selection_strategy='random',
+                                      **kwargs).generate(ds)]
+        assert_equal(len(split_partitions_random), 10) # we get just 10
+
 
     def test_custom_split(self):
         #simulate half splitter

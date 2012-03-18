@@ -425,30 +425,72 @@ class NFoldPartitioner(Partitioner):
 
     Note that the "taken-out" partition is always labeled '2' while the
     remaining elements are labeled '1'.
+
+    If ``cvtype`` is a float in the range from 0 to 1, it specifies
+    the ratio of present unique values to be taken.
+
+    If ``cvtype`` is large enough generating prohibitively large
+    number of combinations, provide ``count`` to limit number of
+    combinations and provide ``selection_strategy`` = 'random'.
     """
+
+    _DEV__doc__ = """
+    Might want to make it smarter and implement generate() generator?
+    Especially for the cases which use xrandom_unique_combinations
+
+    All needed machinery is there
+    """
+
     def __init__(self, cvtype=1, **kwargs):
         """
         Parameters
         ----------
-        cvtype : int
-          Type of leave-one-out scheme: N-(cvtype)
+        cvtype : int, float
+          Type of leave-one-out scheme: N-(cvtype).  float value
+          (0..1) specifies ratio of samples to be taken into the
+          combination (e.g. 0.5 for 50%) given a dataset
         """
         Partitioner.__init__(self, **kwargs)
+        if isinstance(cvtype, float):
+            # some checks
+            if not (0 < cvtype < 1):
+                raise ValueError("Float value for cvtype must be within range "
+                                 "(0, 1), excluding boundaries. Got %r."
+                                 % cvtype)
         self.cvtype = cvtype
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=[]): #pylint: disable-msg=W0102
         return super(NFoldPartitioner, self).__repr__(
             prefixes=prefixes
             + _repr_attrs(self, ['cvtype'], default=1))
 
 
     def _get_partition_specs(self, uniqueattrs):
-        return [(None, i) for i in \
-                 support.xunique_combinations(uniqueattrs, self.cvtype)]
+        if isinstance(self.cvtype, float):
+            n = int(self.cvtype * len(uniqueattrs))
+        else:
+            n = self.cvtype
+        if self.count is None \
+           or self.selection_strategy != 'random' \
+           or self.count >= support.ncombinations(len(uniqueattrs), n):
+            # all combinations were requested so no need for
+            # randomization
+            combs = support.xunique_combinations(uniqueattrs, n)
+        else:
+            # due to selection_strategy=random they would be also
+            # reshuffled by super class later on but that should be ok
+            combs = support.xrandom_unique_combinations(uniqueattrs, n,
+                                                        self.count)
 
+        if self.count is None or self.selection_strategy != 'random':
+            # we are doomed to return all of them
+            return [(None, i) for i in combs]
+        else:
+            # It makes sense to limit number of returned combinations
+            # right away
+            return [(None, i) for ind, i in enumerate(combs)
+                    if ind < self.count]
 
-from mvpa2.misc.support import xunique_combinations, \
-     unique_combinations, xrandom_unique_combinations
 
 class ExcludeTargetsCombinationsPartitioner(Node):
     """Given a pre-generated partitioning XXX
@@ -496,7 +538,7 @@ class ExcludeTargetsCombinationsPartitioner(Node):
         nontesting_part = np.logical_not(testing_part)
 
         utargets = np.unique(targets[testing_part])
-        for combination in xunique_combinations(utargets, self.k):
+        for combination in support.xunique_combinations(utargets, self.k):
             partitioning = orig_partitioning.copy()
             combination_matches = [ t in combination for t in targets ]
             combination_nonmatches = np.logical_not(combination_matches)
@@ -510,4 +552,3 @@ class ExcludeTargetsCombinationsPartitioner(Node):
             pds = ds.copy(deep=False)
             pds.sa[self.space] = partitioning
             yield pds
-
