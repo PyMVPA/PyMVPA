@@ -625,3 +625,68 @@ class CachedQueryEngine(QueryEngineInterface):
         return v
 
     queryengine = property(fget=lambda self: self._queryengine)
+
+
+
+def scatter_neighborhoods(neighbor_gen, coords, sort=True, deterministic=False):
+    """Scatter neighborhoods over a coordinate list.
+
+    Neighborhood seeds (or centers) are placed on coordinates drawn from a
+    provided list so that no seed is part of any other neighborhood. Depending
+    on the actual shape and size of the neighborhoods, their elements can be
+    overlapping, only the seeds (or centers) are guaranteed to be
+    non-overlapping with any other neighborhood. This can be used to perform
+    sparse sampling of a given space.
+
+    Parameters
+    ==========
+
+    neighbor_gen : neighborhood generator
+      Callable that return a list of neighborhood element coordinates, when
+      called with a seed coordinate (cf. Sphere)
+    coords : list
+      List of candidate corrdinates that can serve as neighborhood seeds or
+      elements.
+    sort : bool
+      If True, return values are sorted to match the order of the input
+      coordinate list.
+    deterministic : bool
+      If true, performs seed placement using an OrderedDict (available in
+      Python 2.7 or later) to guarantee deterministic placement of neighborhood
+      seeds in consecutive runs with identical input arguments.
+
+    Returns
+    =======
+    coordinates, indices
+      Two lists are returned. The first list contains the choosen seed
+      coordinates (a subset of the input coordinates), the second list
+      contains the indices of the respecitive seeds coordinates in the input
+      coordinate list.
+    """
+    hasher = dict
+    if deterministic:
+        from collections import OrderedDict
+        hasher = OrderedDict
+    # put coordinates into a dict for fast lookup
+    try:
+        # quick test to check whether the given coords are hashable. If not,
+        # this test avoids a potentially long list zipping
+        _ = {coords[0]: None}
+        lookup = hasher(zip(coords, xrange(len(coords))))
+    except TypeError:
+        # maybe not hashable?
+        lookup = hasher(zip([tuple(c) for c in coords], xrange(len(coords))))
+
+    seeds = []
+    while len(lookup):
+        # get any remaining coordinate
+        # with OrderedDict popitem will return the last inserted item by default
+        seed, idx = lookup.popitem()
+        # remove all coordinates in the neighborhood
+        _ = [lookup.pop(c, None) for c in neighbor_gen(seed)]
+        # store seed
+        seeds.append((seed, idx))
+    if sort:
+        seeds = sorted(seeds, cmp=lambda x, y: cmp(x[1], y[1]))
+    # unzip coords and idx again
+    return zip(*seeds)

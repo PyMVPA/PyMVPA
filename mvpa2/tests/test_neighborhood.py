@@ -258,3 +258,18 @@ def test_cached_query_engine():
     # unfortunately we are not catching those
     #ds2.fa.myspace = ds2.fa.myspace*3
     #assert_raises(ValueError, qec.train, ds2)
+
+def test_scattered_neighborhoods():
+    radius = 1
+    sphere = ne.Sphere(radius)
+    coords = range(50)
+
+    scoords, sidx = ne.scatter_neighborhoods(sphere, coords, sort=True,
+                                             deterministic=True)
+    # for this specific case of 1d coordinates the coords and idx should be
+    # identical
+    assert_array_equal(scoords, sidx)
+    # minimal difference of successive coordinates must be larger than the
+    # radius of the spheres. Test only works for 1d coords and sorted return
+    # values
+    assert(np.diff(scoords).min() > radius)
