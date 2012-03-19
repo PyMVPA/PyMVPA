@@ -15,9 +15,10 @@ class HyperalignmentMeasure(Measure):
         ds = []
         nsamples = dataset.nsamples/self.nsubjs
         seed_index = np.where(dataset.fa.roi_seed)
-        dist = np.sum(np.abs(dataset.fa.voxel_indices-dataset.fa.voxel_indices[seed_index]), axis=1)
-        dist = np.exp(-(self.scale*dist/np.float(max(dist)) )**2)
-        dataset.samples = dataset.samples*dist
+        if self.scale>0.0:
+            dist = np.sum(np.abs(dataset.fa.voxel_indices-dataset.fa.voxel_indices[seed_index]), axis=1)
+            dist = np.exp(-(self.scale*dist/np.float(max(dist)) )**2)
+            dataset.samples = dataset.samples*dist
         for i in range(self.nsubjs):
             ds.append(dataset[0+i*nsamples:nsamples*(i+1),])
         for ref_ds in range(self.nsubjs):
