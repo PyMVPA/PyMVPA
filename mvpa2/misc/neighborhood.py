@@ -12,6 +12,7 @@ import numpy as np
 from numpy import array
 import operator
 import sys
+import itertools
 
 from mvpa2.base import warning
 from mvpa2.base.dochelpers import borrowkwargs, borrowdoc, _repr_attrs, _repr
@@ -628,7 +629,7 @@ class CachedQueryEngine(QueryEngineInterface):
 
 
 
-def scatter_neighborhoods(neighbor_gen, coords, sort=True, deterministic=False):
+def scatter_neighborhoods(neighbor_gen, coords, deterministic=False):
     """Scatter neighborhoods over a coordinate list.
 
     Neighborhood seeds (or centers) are placed on coordinates drawn from a
@@ -647,9 +648,6 @@ def scatter_neighborhoods(neighbor_gen, coords, sort=True, deterministic=False):
     coords : list
       List of candidate corrdinates that can serve as neighborhood seeds or
       elements.
-    sort : bool
-      If True, return values are sorted to match the order of the input
-      coordinate list.
     deterministic : bool
       If true, performs seed placement using an OrderedDict (available in
       Python 2.7 or later) to guarantee deterministic placement of neighborhood
@@ -660,22 +658,27 @@ def scatter_neighborhoods(neighbor_gen, coords, sort=True, deterministic=False):
     coordinates, indices
       Two lists are returned. The first list contains the choosen seed
       coordinates (a subset of the input coordinates), the second list
-      contains the indices of the respecitive seeds coordinates in the input
-      coordinate list.
+      contains the indices of the respective seeds coordinates in the input
+      coordinate list. If particular coordinates are present multiple times
+      the index list will contain all indices corresponding to these
+      cooridnates.
     """
     hasher = dict
     if deterministic:
         from collections import OrderedDict
         hasher = OrderedDict
+
     # put coordinates into a dict for fast lookup
     try:
         # quick test to check whether the given coords are hashable. If not,
         # this test avoids a potentially long list zipping
         _ = {coords[0]: None}
-        lookup = hasher(zip(coords, xrange(len(coords))))
+        lookup = hasher()
+        _ = [lookup.setdefault(c, list()).append(i) for i, c in enumerate(coords)]
     except TypeError:
-        # maybe not hashable?
-        lookup = hasher(zip([tuple(c) for c in coords], xrange(len(coords))))
+        # maybe coords not hashable?
+        lookup = hasher()
+        _ = [lookup.setdefault(tuple(c), list()).append(i) for i, c in enumerate(coords)]
 
     seeds = []
     while len(lookup):
@@ -686,7 +689,8 @@ def scatter_neighborhoods(neighbor_gen, coords, sort=True, deterministic=False):
         _ = [lookup.pop(c, None) for c in neighbor_gen(seed)]
         # store seed
         seeds.append((seed, idx))
-    if sort:
-        seeds = sorted(seeds, cmp=lambda x, y: cmp(x[1], y[1]))
     # unzip coords and idx again
-    return zip(*seeds)
+    coords, idx = zip(*seeds)
+    # we need a flat idx list
+    idx = list(itertools.chain.from_iterable(idx))
+    return coords, idx
