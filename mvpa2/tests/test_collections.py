@@ -17,6 +17,10 @@ from mvpa2.testing.tools import assert_raises, assert_false, assert_equal, \
 from mvpa2.base.collections import Collectable, ArrayCollectable, \
         SampleAttributesCollection
 
+from mvpa2.base.attributes import ConditionalAttribute
+from mvpa2.base.node import Node
+from mvpa2.measures.base import Measure, RepeatedMeasure
+from mvpa2.clfs.transerror import ConfusionMatrix
 
 def test_basic_collectable():
     c = Collectable()
@@ -116,3 +120,38 @@ def test_collections():
     sa_c = copy.deepcopy(sa)
     assert_equal(len(sa), len(sa_c))
     assert_array_equal(sa.test, sa_c.test)
+
+
+class TestNodeOffDefault(Node):
+   test = ConditionalAttribute(enabled=False, doc="OffTest")
+   stats = ConditionalAttribute(enabled=False, doc="OffStats")
+
+class TestNodeOnDefault(Node):
+   test = ConditionalAttribute(enabled=True, doc="OnTest")
+   stats = ConditionalAttribute(enabled=True, doc="OnStats")
+
+
+def test_conditional_attr():
+    import copy
+    import cPickle
+    for node in (TestNodeOnDefault(enable_ca=['test', 'stats']),
+                 TestNodeOffDefault(enable_ca=['test', 'stats'])):
+        node.ca.test = range(5)
+        node.ca.stats = ConfusionMatrix(labels=['one', 'two'])
+        node.ca.stats.add(('one', 'two', 'one', 'two'),
+                    ('one', 'two', 'two', 'one'))
+        node.ca.stats.compute()
+
+        dc_node = copy.deepcopy(node)
+        assert_array_equal(node.ca.enabled, dc_node.ca.enabled)
+        assert(node.ca['test'].enabled)
+        assert(node.ca['stats'].enabled)
+        assert_array_equal(node.ca['test'].value, dc_node.ca['test'].value)
+        assert_array_equal(node.ca['stats'].value.matrix, dc_node.ca['stats'].value.matrix)
+
+        # check whether values survive pickling
+        pickled = cPickle.dumps(node)
+        up_node = cPickle.loads(pickled)
+        assert_array_equal(up_node.ca['test'].value, range(5))
+        assert_array_equal(up_node.ca['stats'].value.matrix, node.ca['stats'].value.matrix)
+
