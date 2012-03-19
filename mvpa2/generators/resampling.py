@@ -55,7 +55,7 @@ class Balancer(Node):
         count : int
           How many iterations to perform on ``generate()``.
         limit : None or str or dict
-          If ``None`` the whole dataset is considered as one. If an single
+          If ``None`` the whole dataset is considered as one. If a single
           attribute name is given, its unique values will be used to define
           chunks of data that are balanced individually. Finally, if a
           dictionary is provided, its keys define attribute names and its values
