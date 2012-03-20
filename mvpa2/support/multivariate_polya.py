@@ -6,10 +6,9 @@ See: http://en.wikipedia.org/wiki/Multivariate_P%C3%B3lya_distribution
 """
 
 import numpy as np
-from scipy import factorial, comb as binomial_coefficient
+from scipy import factorial
 from scipy.special import gamma, gammaln
-from numpy.random import dirichlet
-from logvar import logmean
+
 
 def multivariate_polya(x, alpha):
     """Multivariate Pólya PDF. Basic implementation.
@@ -24,18 +23,6 @@ def multivariate_polya(x, alpha):
     for i in range(len(x)):
         likelihood /= factorial(x[i])
         likelihood *= gamma(x[i] + alpha[i]) / gamma(alpha[i])
-    return likelihood
-
-def multivariate_polya_vectorized(x,alpha):
-    """Multivariate Pólya PDF. Vectorized implementation.
-    """
-    x = np.atleast_1d(x)
-    alpha = np.atleast_1d(alpha)
-    assert(x.size==alpha.size)
-    N = x.sum()
-    A = alpha.sum()
-    likelihood = factorial(N) / factorial(x).prod() * gamma(A) / gamma(N + A)
-    likelihood *= (gamma(x + alpha) / gamma(alpha)).prod()
     return likelihood
 
 
@@ -53,23 +40,11 @@ def log_multivariate_polya_vectorized(X, alpha):
     return log_likelihood
 
 
-def log_multivariate_polya_mc(X, alpha, iterations=1e5):
-    """Montecarlo estimation of the log-likelihood of the Dirichlet
-    compound multinomial (DCM) distribution, a.k.a. the multivariate
-    Polya distribution.
-    """
-    Theta = dirichlet(alpha, size=int(iterations))
-    logp_Hs = gammaln(X.sum() + 1) - gammaln(X + 1).sum()
-    logp_Hs += (X * np.log(Theta)).sum(1)
-
-    return logmean(logp_Hs)
-    
-
 if __name__ == '__main__':
 
     import numpy as np
     np.random.seed(0)
-    
+
     # x = np.array([1,2,2,1])
     # x = np.array([6,0,0,0])
     # alpha = np.array([1,1,1,1])

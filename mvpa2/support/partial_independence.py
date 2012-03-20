@@ -4,10 +4,8 @@ Analytical solution + montecarlo checks.
 """
 
 import numpy as np
-from numpy.random import dirichlet
 from multivariate_polya import log_multivariate_polya_vectorized as log_multivariate_polya
 from scipy.special import gammaln
-from logvar import logmean
 
 def compute_logp_independent_block(X, alpha=None):
     """Compute the analytical log likelihood of a matrix under the
@@ -37,16 +35,6 @@ def compute_logp_H(X, psi, alpha=None):
             logp_H += compute_logp_independent_block(X[np.ix_(group,group)],
                                                      alpha[np.ix_(group,group)].sum(0)) # should we use sum(0) or mean(0)? or else?
     return logp_H
-
-
-def compute_logp_independent_block_mc(X, alpha=None, iterations=1e5):
-    """Compute the montecarlo log likelihood of a matrix under the
-    assumption of independence.
-    """
-    if alpha is None: alpha = np.ones(X.shape[1])
-    Theta = dirichlet(alpha, size=int(iterations)).T
-    logp_ibs = gammaln(X.sum(1)+1).sum() - gammaln(X+1).sum(1).sum() + (np.log(Theta[:,None,:])*X[:,:,None]).sum(1).sum(0) # log(\prod(one Multinomial pdf for each row))
-    return logmean(logp_ibs)
 
 
 if __name__ == '__main__':
@@ -84,7 +72,7 @@ if __name__ == '__main__':
     alpha = np.ones(X.shape)
     print "alpha:"
     print alpha
-    
+
     logp_H = compute_logp_H(X, psi, alpha)
 
     print "Analytical estimate:", logp_H
