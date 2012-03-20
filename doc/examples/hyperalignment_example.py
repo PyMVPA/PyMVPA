@@ -41,7 +41,7 @@ Select nf voxels in each subject based on a simple
 OneWayAnova() with proper cross-validation.
 """
 
-nf = 30
+nf = 100
 fselector = FixedNElementTailSelector(nf, tail='upper', mode='select',sort=False)
 sbfs = SensitivityBasedFeatureSelection(OneWayAnova(), fselector,
                                         enable_ca=['sensitivities'])
@@ -54,7 +54,7 @@ cvte = CrossValidation(clf, NFoldPartitioner(attr='subject'),
 
 """
 Loading the preprocessed Face & Object datasets 
-[Ref: Haxby et. al. Neuron 2011]
+:ref:`Haxby et al. (2011) <HGC+11>`
 """
 
 print "Loading the data..."
@@ -78,6 +78,9 @@ print "Stimulus categories:", ds_all[0].UT
 Between subject classification using anatomically aligned data
 --------------------------------------------------------------
 
+Performing between-subject classification with MNI-aligned voxels.
+Note that we use average F-Scores to select the same nf voxels across subjects
+
 """
 
 bsc_mni_results = []
@@ -88,14 +91,14 @@ for test_run in range(nruns):
 
     anova = OneWayAnova()
     fscores = [anova(sd) for sd in ds_train]
-
-    """
-    Repeat between-subject classification with MNI-aligned voxels.
-    Note that we use average F-Scores to select the same nf voxels across subjects
-    """
-
     fscores_mni = np.mean(np.asarray(vstack(fscores)), axis=0)
+    
+    """
+    Selecting voxels based on ANOVA of our training data.
+    """
+
     ds_fs_mni = [sd[:,fselector(fscores_mni)] for i,sd in enumerate(ds_test)]
+    
     for i,sd in enumerate(ds_fs_mni):
         sd.sa['subject'] = np.repeat(i,sd.nsamples)
     ds_fs_mni = vstack(ds_fs_mni)
@@ -197,3 +200,57 @@ print "Average between-subject classfication accuracy (Anatomically aligned):",
 print np.mean(bsc_mni_results),"+/-",np.std(np.mean(bsc_mni_results,axis=1))/np.sqrt(nsubjs-1)
 print "Average between-subject classfication accuracy (Hyperaligned):",
 print np.mean(bsc_hyper_results),"+/-",np.std(np.mean(bsc_hyper_results,axis=1))/np.sqrt(nsubjs-1)
+
+"""
+Comparing similarity structures
+-------------------------------
+
+To get a better understanding of how hyperalignment transforms the structure 
+of the data, here we compare three different similarity structures. 
+These are respectively:
+1. Average similarity structure of the aligned data.
+2. Similarity structure of the averaged hyperaligned data.
+3. Similarity structure of the averaged anatomically-aligned data.
+
+First, we run hyperalignment on full dataset without worrying about data-folding.
+"""
+
+anova = OneWayAnova()
+fscores = [anova(sd) for sd in ds_all]
+fscores = np.mean(np.asarray(vstack(fscores)), axis=0)
+ds_fs = [sd[:,fselector(fscores_mni)] for i,sd in enumerate(ds_all)]
+hyper = Hyperalignment()
+mappers = hyper(datasets=ds_fs)
+ds_hyper = [ mappers[i].forward(ds_) for i,ds_ in enumerate(ds_fs)]
+sm_orig = [np.corrcoef(sd.get_mapped(mean_group_sample(['targets'])).samples) for sd in ds_hyper]
+ds_hyper = vstack(ds_hyper)
+ds_fs = vstack(ds_fs)
+
+"""
+We then plot the respective similarity strucures.
+"""
+
+pl.subplot(1,3,1)
+pl.imshow(np.mean(np.asarray(sm_orig),axis=0),vmin=-1.0, vmax=1.0, interpolation='nearest')
+pl.xticks(range(ncats), ds_all[0].UT, size='small')
+pl.yticks(range(ncats), ds_all[0].UT, size='small')
+pl.ylim((6.5,-0.5))
+pl.subplot(1,3,2)
+pl.imshow(np.corrcoef(ds_hyper.get_mapped(mean_group_sample(['targets']))),vmin=-1.0, vmax=1.0, interpolation='nearest')
+pl.xticks(range(ncats), ds_all[0].UT, size='small')
+pl.yticks(range(ncats), ds_all[0].UT, size='small')
+pl.ylim((6.5,-0.5))
+pl.subplot(1,3,3)
+pl.imshow(np.corrcoef(ds_fs.get_mapped(mean_group_sample(['targets']))),vmin=-1.0, vmax=1.0, interpolation='nearest')
+pl.xticks(range(ncats), ds_all[0].UT, size='small')
+pl.yticks(range(ncats), ds_all[0].UT, size='small')
+pl.ylim((6.5,-0.5))
+pl.show()
+
+"""
+We can clearly see that the first two similairty structures are almost identical, 
+even though the first one is derived from the average of individual subject 
+similarity strucutes, and the second one using the average subject data. 
+The similarity structure of the average subject data using anatomical alignment alone
+preserved a coarse strucute but failed to capture the finer-scale structure.
+"""
