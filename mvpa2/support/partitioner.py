@@ -1,7 +1,6 @@
 """Generate all partitions of a set.
 
-Author: Anton Vredegoor
-Copyright 2010
+Copyright 2010 Anton Vredegoor
 License: MIT
 See http://code.activestate.com/recipes/577211-generate-the-partitions-of-a-set-by-index/
 """
@@ -22,7 +21,7 @@ class Partition:
         L =  self.unrank_rgf(i)
         result = self.as_set_partition(L)
         return result
-    
+
     def __len__(self):
         return self.table[self.m,0]
 
@@ -62,13 +61,3 @@ class Partition:
                 L[i] = r / v + 1
                 r  %= v
         return L
-
-def test():
-    S = set(range(4))
-    P = Partition(S)
-    print len(P)
-    for x in P:
-         print x
-
-if __name__ == '__main__':
-    test() 
