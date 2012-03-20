@@ -264,7 +264,7 @@ def test_scattered_neighborhoods():
     sphere = ne.Sphere(radius)
     coords = range(50)
 
-    scoords, sidx = ne.scatter_neighborhoods(sphere, coords, sort=True,
+    scoords, sidx = ne.scatter_neighborhoods(sphere, coords,
                                              deterministic=False)
     # for this specific case of 1d coordinates the coords and idx should be
     # identical
@@ -273,3 +273,12 @@ def test_scattered_neighborhoods():
     # radius of the spheres. Test only works for 1d coords and sorted return
     # values
     assert(np.diff(scoords).min() > radius)
+
+    # now the same for the case where a particular coordinate appears multiple
+    # times
+    coords = range(10) + range(10)
+    scoords, sidx = ne.scatter_neighborhoods(sphere, coords,
+                                             deterministic=False)
+    sidx = sorted(sidx)
+    assert_array_equal(scoords, sidx[:5])
+    assert_array_equal(scoords, [i - 10 for i in sidx[5:]])
