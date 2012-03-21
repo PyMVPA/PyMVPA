@@ -35,8 +35,12 @@ Releases
 
   * Enhancements
 
-    - Add :func:`~mvpa.misc.neighborhood.scatter_neighborhood` to aid
+    - Add :func:`~mvpa2.misc.neighborhood.scatter_neighborhood` to aid
       sparse sampling of spaces.
+    - Add :class:`~mvpa2.clfs.transerror.ConfusionMatrixError` to compute
+      confusion matrices with a error function interface (e.g. for
+      CrossValidation(errorfx=...). This class existed for a long time, but
+      was hidden in the unit tests.
 
 * 2.0.0 (Mon, Dec 19 2011)
 
