@@ -47,6 +47,13 @@ Releases
       are necessary as an intermediate result and further processing with
       other nodes is desired.
 
+  * New functionality
+
+    - Add :class:`~mvpa2.clfs.transerror.BayesConfusionHypothesis` to perform
+      Bayesian hypothesis testing of multi-class confusion statistics. This is
+      useful to assess the likelihood of a particular (or all possible)
+      grouping of classes being distinguishable.
+
 * 2.0.0 (Mon, Dec 19 2011)
 
   This release aggregates all the changes occurred between official

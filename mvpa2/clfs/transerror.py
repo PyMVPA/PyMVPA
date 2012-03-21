@@ -1210,6 +1210,65 @@ class Confusion(Node):
         return out
 
 
+class BayesConfusionHypothesis(Node):
+    """Bayesian hypothesis testing on confusion matrices.
+
+    For multi-class classification a single accuracy value is often not a
+    meaningful performance measure -- or at least hard to interpret. This class
+    allows for convenient Bayesian hypothesis testing of confusion matrices.
+    It computes the likelihood of discriminibility of any partitions of
+    classes given a confusion matrix.
+
+    The returned dataset contains a single feature (the log likelihood of
+    a hypothesis) and as many samples as possible partitions of classes.
+    The actual partition configurations are stored in a sample attribute
+    of nested lists. The top-level list contains discriminable groups of
+    classes, whereas the second level lists contain groups of classes that
+    cannot be discriminated under a given hypothesis. For example::
+
+      [[0, 1], [2], [3, 4, 5]]
+
+    This hypothesis represent the state where class 0 and 1 cannot be
+    distinguish from each other, but both 0 and 1 together can be distinguished
+    from class 2 and the group of 3, 4, and 5 -- where classes from the later
+    group cannot be distinguished from one another.
+    """
+    def __init__(self, alpha=None, labels_attr='predictions',
+                 space='hypothesis', **kwargs):
+        """
+        Parameters
+        ==========
+        alpha : array
+          Bayesian hyper-prior alpha (in a multivariate-Dirichlet sense)
+        labels_attr : str
+          Name of the sample attribute in the input dataset that contains
+          the class labels corresponding to the confusion matrix rows.
+        space : str
+          Name of the sample attribute in the output dataset where the
+          hypothesis partition configurations will be stored.
+        **kwargs
+          All remaining argments will be passed on to the Node base-class.
+        """
+        Node.__init__(self, space=space, **kwargs)
+        self._alpha = alpha
+        self._labels_attr = labels_attr
+
+    def _call(self, ds):
+        from mvpa2.support.bayes.partitioner import Partition
+        from mvpa2.support.bayes.partial_independence import compute_logp_H
+
+        logp_Hs = []
+        partitions = Partition(range(len(ds)))
+        for psi in partitions:
+            logp_H = compute_logp_H(ds.samples, psi, self._alpha)
+            logp_Hs.append(logp_H)
+
+        out = Dataset(logp_Hs,
+                      sa={self.get_space():
+                            list(Partition(ds.sa[self._labels_attr].value))})
+        return out
+
+
 class RegressionStatistics(SummaryStatistics):
     """Class to contain information and display on regression results.
 
