@@ -31,226 +31,309 @@ Analysis setup
 
 from mvpa2.suite import *
 
+"""
+We start by loading preprocessed datasets of 10 subjects with BOLD-responses
+of stimulation with face and object images (:ref:`Haxby et al., 2011 <HGC+11>`).
+Each dataset, after preprocessing, has one sample per category and run for each
+of the eight runs and seven stimulus categories. Individual subject brains have
+been aligned anatomically using a 12 dof linear transformation.
+"""
 
-"""Using a Linear SVM classifier for all classifications."""
+print "Loading data..."
+filepath = os.path.join(pymvpa_datadbroot,
+                        'hyperalignment_tutorial_data',
+                        'hyperalignment_tutorial_data.hdf5.gz')
+ds_all = h5load(filepath)
+# zscore all datasets individually
+_ = [zscore(ds) for ds in ds_all]
+# inject the subject ID into all datasets
+for i,sd in enumerate(ds_all):
+    sd.sa['subject'] = np.repeat(i, len(sd))
+# number of subjects
+nsubjs = len(ds_all)
+# number of categories
+ncats = len(ds_all[0].UT)
+# number of run
+nruns = len(ds_all[0].UC)
+print "Per-subject dataset: %i samples with %i features" % ds_all[0].shape
+print "Stimulus categories:", ', '.join(ds_all[0].UT)
 
+
+"""
+Now we'll create a couple of building blocks for the intended analyses. We'll
+use a linear SVM classifier, and perform feature selection with a simple one-way
+ANOVA selecting the ``nf`` highest scoring features.
+
+"""
+
+# use same classifier
 clf = LinearCSVMC()
 
-"""
-Select nf voxels in each subject based on a simple
-OneWayAnova() with proper cross-validation.
-"""
-
+# feature selection helpers
 nf = 100
-fselector = FixedNElementTailSelector(nf, tail='upper', mode='select',sort=False)
+fselector = FixedNElementTailSelector(nf, tail='upper',
+                                      mode='select',sort=False)
 sbfs = SensitivityBasedFeatureSelection(OneWayAnova(), fselector,
                                         enable_ca=['sensitivities'])
-fsclf = FeatureSelectionClassifier( clf, sbfs)
-fscvte = CrossValidation(fsclf, NFoldPartitioner(), errorfx=mean_match_accuracy,
-            postproc=mean_sample())
-
-cvte = CrossValidation(clf, NFoldPartitioner(attr='subject'), 
-            errorfx=mean_match_accuracy)
-
-"""
-Loading the preprocessed Face & Object datasets 
-:ref:`Haxby et al. (2011) <HGC+11>`
-"""
-
-print "Loading the data..."
-filepath = os.path.join(pymvpa_datadbroot, 'hyperalignment_tutorial_data', 
-    "hyperalignment_tutorial_data.hdf5.gz")
-ds_all = h5load(filepath)
-
-"""
-This is a list of 10 datasets corresponding to 10 subjects.
-Each dataset, after preprocessing, has 7 samples per run for each of 8runs.
-"""
-
-nsubjs = len(ds_all)
-ncats = len(ds_all[0].UT)
-nruns = len(ds_all[0].UC)
-print "A subject's dataset:"
-print ds_all[0]
-print "Stimulus categories:", ds_all[0].UT
-
-"""
-Between subject classification using anatomically aligned data
---------------------------------------------------------------
-
-Performing between-subject classification with MNI-aligned voxels.
-Note that we use average F-Scores to select the same nf voxels across subjects
-
-"""
-
-bsc_mni_results = []
-for test_run in range(nruns):
-    # partitioner + splitter?
-    ds_train = [sd[sd.sa.chunks != test_run,:] for sd in ds_all]
-    ds_test = [sd[sd.sa.chunks == test_run,:] for sd in ds_all]
-
-    anova = OneWayAnova()
-    fscores = [anova(sd) for sd in ds_train]
-    fscores_mni = np.mean(np.asarray(vstack(fscores)), axis=0)
-    
-    """
-    Selecting voxels based on ANOVA of our training data.
-    """
-
-    ds_fs_mni = [sd[:,fselector(fscores_mni)] for i,sd in enumerate(ds_test)]
-    
-    for i,sd in enumerate(ds_fs_mni):
-        sd.sa['subject'] = np.repeat(i,sd.nsamples)
-    ds_fs_mni = vstack(ds_fs_mni)
-    bsc_mni_results.append( cvte(ds_fs_mni))
-
-bsc_mni_results = hstack(bsc_mni_results)
-
-
-"""
-Between subject classification with Hyperalignment(TM)
-------------------------------------------------------
-
-For each test run, we extract the data from all subjects excluding
-the test run, and perform ANOVA-based voxel selection. We then perform
-Hyperalignment of these selected voxels from all the subjects.
-"""
-
-bsc_hyper_results = []
-for test_run in range(nruns):
-    # partitioner + splitter?
-    ds_train = [sd[sd.sa.chunks != test_run,:] for sd in ds_all]
-    ds_test = [sd[sd.sa.chunks == test_run,:] for sd in ds_all]
-
-    anova = OneWayAnova()
-    fscores = [anova(sd) for sd in ds_train]
-
-    """
-    Selecting voxels based on ANOVA of our training data.
-    """
-
-    # sensitivitybasedfeatureselection?
-    ds_fs = [sd[:,fselector(fscores[i])] for i,sd in enumerate(ds_train)]
-
-    """
-    Setting up Hyperalignment with default parameters.
-    """
-
-    hyper = Hyperalignment()
-
-    """
-    Computing hyperalignment parameters is as simple as calling 
-    hyperalignment class with a list of datasets with same number of samples.
-    This returns a list of mappers corresponding to subjects in the same order
-    as the list of datasets we passed in.
-    """
-
-    mappers = hyper(datasets=ds_fs)
-
-    """
-    Applying hyperalignment parameters is similar to applying any mapper in 
-    PyMVPA. We start by selecting the voxels that we used to derive the hyperalignment
-    parameters.
-    """
-
-    ds_fs = [sd[:,fselector(fscores[i])] for i,sd in enumerate(ds_test)]
-
-    """
-    We apply the tranformations by running the test dataset through forward() function of the mapper.
-    """
-
-    ds_hyper_all = [ mappers[i].forward(ds_) for i,ds_ in enumerate(ds_fs)]
-
-    """
-    Now, we have a list of datasets corrsponding to our subjects which are now all in a common space 
-    derived from the training data.
-    """
-
-    for i,sd in enumerate(ds_hyper_all):
-        sd.sa['subject'] = np.repeat(i, len(sd))
-    ds_hyper_all = vstack(ds_hyper_all)
-    bsc_hyper_results.append(cvte(ds_hyper_all))
-
-bsc_hyper_results = hstack(bsc_hyper_results)
+# create classifier with automatic feature selection
+fsclf = FeatureSelectionClassifier(clf, sbfs)
 
 """
 Within-subject classification
 -----------------------------
 
-Performing within-subject classification using a Anova based 
-FeatureSelectionClassifier
+We start off by running a cross-validated classification analysis for every
+subject's dataset individually. Data folding will be performed by leaving out
+one run to serve as the testing dataset. ANOVA-based features selection will be
+performed automatically on the training dataset.
 """
 
-#Within-subject classification
-wsc = []
-print "Performing within-subject classification"
-wsc = [ fscvte(sd) for sd in ds_all]
-wsc = hstack(wsc)
+print "Performing within-subject classification...",
+wsc_start_time = time.time()
+cv = CrossValidation(fsclf,
+                     NFoldPartitioner(attr='chunks'),
+                     errorfx=mean_match_accuracy)
+# store results in a sequence
+wsc_results = [cv(sd) for sd in ds_all]
+wsc_results = vstack(wsc_results)
+print "done after %.1f seconds" % (time.time() - wsc_start_time,)
+
+
+"""
+Between-subject classification using anatomically aligned data
+--------------------------------------------------------------
+
+For between-subject classification with MNI-aligned voxels, we can stack up
+all individual datasets into a single one, as (anatomical!) feature
+correspondence is given. The crossvalidation analysis using the feature
+selection classifier will automatically perform the desired ANOVA-based feature
+selection on every training dataset partition. However, data folding will now
+be done by leaving out a complete subject for testing.
+
+"""
+
+print "Performing between-subject classification (anatomically aligned)...",
+ds_mni = vstack(ds_all)
+mni_start_time = time.time()
+cv = CrossValidation(fsclf,
+                     NFoldPartitioner(attr='subject'),
+                     errorfx=mean_match_accuracy)
+bsc_mni_results = cv(ds_mni)
+print "done after %.1f seconds" % (time.time() - mni_start_time,)
+
+"""
+Between-subject classification with Hyperalignment(TM)
+------------------------------------------------------
+
+Between-subject classification using Hyperalignment is very similar
+to the previous analysis. However, now we no longer assume feature
+correspondence (or aren't satisfied with anatomical alignment anymore).
+Consequently, we have to transform the individual datasets into a common space
+before performing the classification analysis. To avoid introducing
+circularity problems to the analysis, we perform leave-one-run-out
+data folding manually, and train Hyperalignment only on the training
+dataset partitions. Subsequently, we will apply the derived transformation
+to the full datasets, stack them up across individual subjects, as before,
+and run the classification analysis. ANOVA-based feature selection is done
+in the same way as before (but also manually).
+"""
+
+print "Performing between-subject classification (hyperaligned)...",
+hyper_start_time = time.time()
+bsc_hyper_results = []
+# same cross-validation over subjects as before
+cv = CrossValidation(clf, NFoldPartitioner(attr='subject'), 
+                     errorfx=mean_match_accuracy)
+
+# leave-one-run-out for hyperalignment training
+for test_run in range(nruns):
+    # split in training and testing set
+    ds_train = [sd[sd.sa.chunks != test_run,:] for sd in ds_all]
+    ds_test = [sd[sd.sa.chunks == test_run,:] for sd in ds_all]
+
+    # manual feature selection for every individual dataset in the list
+    anova = OneWayAnova()
+    fscores = [anova(sd) for sd in ds_train]
+    featsels = [StaticFeatureSelection(fselector(fscore)) for fscore in fscores]
+    ds_train_fs = [featsels[i].forward(sd) for i, sd in enumerate(ds_train)]
+
+    """
+    Perform hyperalignment on the training data with default parameters.
+    Computing hyperalignment parameters is as simple as calling the
+    hyperalignment object with a list of datasets. All datasets must have the
+    same number of samples and time-locked responses are assumed.
+    Hyperalignment returns a list of mappers corresponding to subjects in the
+    same order as the list of datasets we passed in.
+    """
+
+    hyper = Hyperalignment()
+    hypmaps = hyper(datasets=ds_train_fs)
+
+    """
+    Applying hyperalignment parameters is similar to applying any mapper in
+    PyMVPA. We start by selecting the voxels that we used to derive the
+    hyperalignment parameters. And then apply the hyperalignment parameters
+    by running the test dataset through the forward() function of the mapper.
+    """
+
+    ds_test_fs = [featsels[i].forward(sd) for i, sd in enumerate(ds_test)]
+    ds_hyper = [ hypmaps[i].forward(sd) for i, sd in enumerate(ds_test_fs)]
+
+    """
+    Now, we have a list of datasets with feature correspondence in a common
+    space derived from the training data. Just as in the between-subject
+    analyses of anatomically aligned data we can stack them all up and run the
+    crossvalidation analysis.
+    """
+
+    ds_hyper = vstack(ds_hyper)
+    # zscore each subject individually after transformation for optimal
+    # performance
+    zscore(ds_hyper, chunks_attr='subject')
+    res_cv = cv(ds_hyper)
+    bsc_hyper_results.append(res_cv)
+
+bsc_hyper_results = hstack(bsc_hyper_results)
+print "done after %.1f seconds" % (time.time() - hyper_start_time,)
 
 """
 Comparing the results
 ---------------------
 
-Reporting the results of within-subject and between-subject classification analyses.
+Performance
+^^^^^^^^^^^
+
+First we take a look at the classification performance (or accuracy) of all
+three analysis approaches.
 """
 
-print "Average within subject classification accuracy:",
-print np.mean(wsc),"+/-",np.std(wsc) / np.sqrt(nsubjs - 1)
-print "Average between-subject classfication accuracy (Anatomically aligned):",
-print np.mean(bsc_mni_results),"+/-",np.std(np.mean(bsc_mni_results,axis=1))/np.sqrt(nsubjs-1)
-print "Average between-subject classfication accuracy (Hyperaligned):",
-print np.mean(bsc_hyper_results),"+/-",np.std(np.mean(bsc_hyper_results,axis=1))/np.sqrt(nsubjs-1)
+print "Avg. within-subject classification accuracy: %.2f +/-%.3f" \
+        % (np.mean(wsc_results),
+           np.std(wsc_results) / np.sqrt(nsubjs - 1))
+print "Avg. between-subject classification accuracy (anatomically aligned): %.2f +/-%.3f" \
+        % (np.mean(bsc_mni_results),
+           np.std(np.mean(bsc_mni_results, axis=1)) / np.sqrt(nsubjs - 1))
+print "Avg. between-subject classification accuracy (hyperaligned): %.2f +/-%.3f" \
+        % (np.mean(bsc_hyper_results),
+           np.std(np.mean(bsc_hyper_results, axis=1)) / np.sqrt(nsubjs - 1))
 
 """
-Comparing similarity structures
--------------------------------
+The output of this demo looks like this::
 
-To get a better understanding of how hyperalignment transforms the structure 
-of the data, here we compare three different similarity structures. 
+ Loading data...
+ Per-subject dataset: 56 samples with 3509 features
+ Stimulus categories: Chair, DogFace, FemaleFace, House, MaleFace, MonkeyFace, Shoe
+ Performing within-subject classification... done after 4.1 seconds
+ Performing between-subject classification (anatomically aligned)... done after 3.5 seconds
+ Performing between-subject classification (hyperaligned)... done after 9.8 seconds
+ Avg. within-subject classification accuracy: 0.57 +/-0.063
+ Avg. between-subject classification accuracy (anatomically aligned): 0.42 +/-0.035
+ Avg. between-subject classification accuracy (hyperaligned): 0.62 +/-0.045
+
+It is obvious that the between-subject classification using anatomically
+aligned data has significantly worse performance when compared to
+within-subject classification. Clearly the group classification model is
+inferior to individual classifiers fitted to a particular subject's data.
+However, a group classifier trained on hyperaligned data is performing at least
+as good as the within-subject classifiers -- possibly even slightly better due
+to the increased size of the training dataset.
+
+
+Similarity structures
+^^^^^^^^^^^^^^^^^^^^^
+
+To get a better understanding of how hyperalignment transforms the structure
+of the data, we compare the similarity structures of the corresponding input
+datasets of all three analysis above (and one in addition).
+
 These are respectively:
-1. Average similarity structure of the aligned data.
-2. Similarity structure of the averaged hyperaligned data.
-3. Similarity structure of the averaged anatomically-aligned data.
 
-First, we run hyperalignment on full dataset without worrying about data-folding.
+1. Average similarity structure of the individual data.
+2. Similarity structure of the averaged hyperaligned data.
+3. Average similarity structure of the individual data after hyperalignment.
+4. Similarity structure of the averaged anatomically-aligned data.
+
+Similarity structure in this case is the correlation matrix of multivariate
+response patterns for all seven stimulus categories in the datasets. For
+the sake of simplicity, all similarity structures are computed on the full
+dataset without data folding.
 """
 
+# feature selection as above
 anova = OneWayAnova()
 fscores = [anova(sd) for sd in ds_all]
 fscores = np.mean(np.asarray(vstack(fscores)), axis=0)
-ds_fs = [sd[:,fselector(fscores_mni)] for i,sd in enumerate(ds_all)]
+# apply to full datasets
+ds_fs = [sd[:,fselector(fscores)] for i,sd in enumerate(ds_all)]
+#run hyperalignment on full datasets
 hyper = Hyperalignment()
 mappers = hyper(datasets=ds_fs)
 ds_hyper = [ mappers[i].forward(ds_) for i,ds_ in enumerate(ds_fs)]
-sm_orig = [np.corrcoef(sd.get_mapped(mean_group_sample(['targets'])).samples) for sd in ds_hyper]
+# similarity of original data samples
+sm_orig = [np.corrcoef(
+                sd.get_mapped(
+                    mean_group_sample(['targets'])).samples)
+                        for sd in ds_fs]
+# mean across subjects
+sm_orig_mean = np.mean(sm_orig, axis=0)
+# same individual average but this time for hyperaligned data
+sm_hyper_mean = np.mean(
+                    [np.corrcoef(
+                        sd.get_mapped(mean_group_sample(['targets'])).samples)
+                            for sd in ds_hyper], axis=0)
+# similarity for averaged hyperaligned data
 ds_hyper = vstack(ds_hyper)
+sm_hyper = np.corrcoef(ds_hyper.get_mapped(mean_group_sample(['targets'])))
+# similarity for averaged anatomically aligned data
 ds_fs = vstack(ds_fs)
+sm_anat = np.corrcoef(ds_fs.get_mapped(mean_group_sample(['targets'])))
 
 """
 We then plot the respective similarity strucures.
 """
 
-pl.subplot(1,3,1)
-pl.imshow(np.mean(np.asarray(sm_orig),axis=0),vmin=-1.0, vmax=1.0, interpolation='nearest')
-pl.xticks(range(ncats), ds_all[0].UT, size='small')
-pl.yticks(range(ncats), ds_all[0].UT, size='small')
-pl.ylim((6.5,-0.5))
-pl.subplot(1,3,2)
-pl.imshow(np.corrcoef(ds_hyper.get_mapped(mean_group_sample(['targets']))),vmin=-1.0, vmax=1.0, interpolation='nearest')
-pl.xticks(range(ncats), ds_all[0].UT, size='small')
-pl.yticks(range(ncats), ds_all[0].UT, size='small')
-pl.ylim((6.5,-0.5))
-pl.subplot(1,3,3)
-pl.imshow(np.corrcoef(ds_fs.get_mapped(mean_group_sample(['targets']))),vmin=-1.0, vmax=1.0, interpolation='nearest')
-pl.xticks(range(ncats), ds_all[0].UT, size='small')
-pl.yticks(range(ncats), ds_all[0].UT, size='small')
-pl.ylim((6.5,-0.5))
-pl.show()
+# class labels should be in more meaningful order for visualization
+# (human faces, animals faces, objects)
+intended_label_order = [2,4,1,5,3,0,6]
+labels = ds_all[0].UT
+labels = labels[intended_label_order]
+
+pl.figure(figsize=(6,6))
+# plot all three similarity structures
+for i, sm_t in enumerate((
+    (sm_orig_mean, "Average within-subject\nsimilarity"),
+    (sm_anat, "Similarity of group average\ndata (anatomically aligned)"),
+    (sm_hyper_mean, "Average within-subject\nsimilarity (hyperaligned data)"),
+    (sm_hyper, "Similarity of group average\ndata (hyperaligned)"),
+                      )):
+    sm, title = sm_t
+    # reorder matrix columns to match label order
+    sm = sm[intended_label_order][:,intended_label_order]
+    pl.subplot(2, 2, i+1)
+    pl.imshow(sm, vmin=-1.0, vmax=1.0, interpolation='nearest')
+    pl.colorbar(shrink=.4, ticks=[-1,0,1])
+    pl.title(title, size=12)
+    ylim = pl.ylim()
+    pl.xticks(range(ncats), labels, size='small', stretch='ultra-condensed',
+              rotation=45)
+    pl.yticks(range(ncats), labels, size='small', stretch='ultra-condensed',
+              rotation=45)
+    pl.ylim(ylim)
+
+if cfg.getboolean('examples', 'interactive', True):
+    # show all the cool figures
+    pl.show()
 
 """
-We can clearly see that the first two similairty structures are almost identical, 
-even though the first one is derived from the average of individual subject 
-similarity strucutes, and the second one using the average subject data. 
-The similarity structure of the average subject data using anatomical alignment alone
-preserved a coarse strucute but failed to capture the finer-scale structure.
+.. figure:: ../pics/ex_hyperalignment_similarity.*
+
+   Fig. 1: Correlation of category-specific response patterns using the 100 most
+   informative voxels (based on ANOVA F-score ranking).
+
+We can clearly see that averaging anatomically aligned data has a negative
+effect on the similarity structure, as the fine category structure is diminished
+and only the coarse structure (faces vs. objects) is preserved. Moreover, we can
+see that after hyperalignment the average similarity structure of individual
+data is essentially identical to the similarity structure of averaged data --
+reflecting the feature correspondence in the common high-dimensional space.
 """
