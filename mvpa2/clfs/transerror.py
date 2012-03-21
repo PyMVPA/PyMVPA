@@ -23,6 +23,7 @@ from mvpa2.base.node import Node
 from mvpa2.misc.errorfx import mean_power_fx, root_mean_power_fx, rms_error, \
      relative_rms_error, mean_mismatch_error, auc_error
 from mvpa2.base import warning
+from mvpa2.datasets import Dataset
 from mvpa2.base.collections import Collectable
 from mvpa2.base.state import ConditionalAttribute, ClassWithCollections, \
      UnknownStateError
@@ -1136,6 +1137,77 @@ class ConfusionMatrixError(object):
         # We have to add a degenerate leading dimension
         # so we could separate them into separate 'samples'
         return cm.matrix[None, :]
+
+
+class Confusion(Node):
+    """Compute a confusion matrix from predictions and targets (Node interface)
+
+    This class is very similar to ``ConfusionMatrix`` and
+    ``ConfusionMatrixError``.  However, in contrast to these this class can be
+    used in any place that accepts ``Nodes`` -- most importantly others node's
+    ``postproc`` functionality. This makes it very straightforward to compute
+    confusion matrices from classifier output as an intermediate result and
+    continue processing with other nodes. A sketch of a cross-validation setup
+    using this functionality looks like this::
+
+      CrossValidation(some_classifier,
+                      some_partitioner,
+                      errorfx=None,
+                      postproc=Confusion())
+
+    It is vital to set ``errorfx`` to ``None`` to preserve raw classifier
+    prediction values in the output dataset to allow for proper data aggregation
+    in a confusion matrix.
+    """
+    def __init__(self, attr='targets', labels=None, add_confusion_obj=False,
+                 **kwargs):
+        """
+        Parameters
+        ==========
+        attr : str
+          Sample attribute name where classification target values are stored
+          for each prediction.
+        labels : list or None
+          Optional list of labels to compute a confusion matrix for. This can be
+          useful if a particular  prediction dataset doesn't have all
+          theoretically possible labels as targets.
+        add_confusion_obj : bool
+          If True, the ConfusionMatrix object will be added to the output
+          dataset as attribute 'confusion_obj', i.e. ds.a.confusion_obj
+        **kwargs
+          All remaining argments will be passed on to the Node base-class.
+        """
+        Node.__init__(self, **kwargs)
+        self._labels = labels
+        self._target_attr = attr
+        self._add_confusion_obj = add_confusion_obj
+
+    def _call(self, ds):
+        if not len(ds.shape) == 2 and ds.shape[1] == 1:
+            raise ValueError("Confusion cannot deal with multi-dimensional "
+                             "predictions, got shape %s." % ds.shape[1:])
+        # MH: we could also make it iterate over individual chunks and create
+        # matrix sets -- but not sure if there is a use case for the Node
+        # interface
+        # compute the confusion matrix
+        cm = ConfusionMatrix(labels=list(self._labels),
+                             predictions=ds.samples[:,0],
+                             targets=ds.sa[self._target_attr].value)
+        # figure out where to store the labels
+        # by default the confusion matrix in the Dataset will look just like
+        # a printed ConfusionMatrix
+        if self.get_space() is None:
+            fa_attr = 'targets'
+            sa_attr = 'predictions'
+        else:
+            sa_attr = fa_attr = self.get_space()
+        out = Dataset(cm.matrix,
+                      sa={sa_attr: cm.labels},
+                      fa={fa_attr: cm.labels})
+        if self._add_confusion_obj:
+            out.a['confusion_obj'] = cm
+
+        return out
 
 
 class RegressionStatistics(SummaryStatistics):
