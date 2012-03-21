@@ -631,20 +631,7 @@ class ErrorsTests(unittest.TestCase):
     @labile(3, 1)
     def test_confusionmatrix_nulldist(self):
         from mvpa2.clfs.gnb import GNB
-
-        class ConfusionMatrixError(object):
-            """Custom error "function"
-            """
-            def __init__(self, labels=None):
-                self.labels = labels
-            def __call__(self, predictions, targets):
-                cm = ConfusionMatrix(labels=list(self.labels),
-                                     targets=targets, predictions=predictions)
-                #print cm.matrix
-                # We have to add a degenerate leading dimension
-                # so we could separate them into separate 'samples'
-                return cm.matrix[None, :]
-
+        from mvpa2.clfs.transerror import ConfusionMatrixError
         from mvpa2.misc.data_generators import normal_feature_dataset
         for snr in [0., 2.,]:
             ds = normal_feature_dataset(snr=snr, perlabel=42, nchunks=3,
