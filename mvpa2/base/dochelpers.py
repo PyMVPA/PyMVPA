@@ -394,7 +394,9 @@ def table2string(table, out=None):
         out = StringIO()
 
     # equalize number of elements in each row
-    Nelements_max = max(len(x) for x in table)
+    Nelements_max = len(table) \
+                    and max(len(x) for x in table)
+
     for i, table_ in enumerate(table):
         table[i] += [''] * (Nelements_max - len(table_))
 
