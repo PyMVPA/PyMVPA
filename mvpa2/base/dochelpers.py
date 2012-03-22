@@ -476,7 +476,7 @@ def _repr(obj, *args, **kwargs):
     auto_repr = ', '.join(list(args)
                    + ["%s=%s" % (k, v) for k, v in kwargs.iteritems()])
 
-    print max_length
+
     if not truncate is None and len(auto_repr) > max_length:
         auto_repr = auto_repr[:max_length] + '...'
 
