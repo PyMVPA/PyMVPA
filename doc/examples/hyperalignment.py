@@ -31,6 +31,8 @@ Analysis setup
 
 from mvpa2.suite import *
 
+verbose.level = 2
+
 """
 We start by loading preprocessed datasets of 10 subjects with BOLD-responses
 of stimulation with face and object images (:ref:`Haxby et al., 2011 <HGC+11>`).
@@ -39,7 +41,7 @@ of the eight runs and seven stimulus categories. Individual subject brains have
 been aligned anatomically using a 12 dof linear transformation.
 """
 
-print "Loading data..."
+verbose(1, "Loading data...")
 filepath = os.path.join(pymvpa_datadbroot,
                         'hyperalignment_tutorial_data',
                         'hyperalignment_tutorial_data.hdf5.gz')
@@ -55,8 +57,9 @@ nsubjs = len(ds_all)
 ncats = len(ds_all[0].UT)
 # number of run
 nruns = len(ds_all[0].UC)
-print "Per-subject dataset: %i samples with %i features" % ds_all[0].shape
-print "Stimulus categories:", ', '.join(ds_all[0].UT)
+verbose(2, "%d subjects" % len(ds_all))
+verbose(2, "Per-subject dataset: %i samples with %i features" % ds_all[0].shape)
+verbose(2, "Stimulus categories: %s" % ', '.join(ds_all[0].UT))
 
 
 """
@@ -85,10 +88,11 @@ Within-subject classification
 We start off by running a cross-validated classification analysis for every
 subject's dataset individually. Data folding will be performed by leaving out
 one run to serve as the testing dataset. ANOVA-based features selection will be
-performed automatically on the training dataset.
+performed automatically on training dataset and applied to testing dataset.
 """
 
-print "Performing within-subject classification...",
+verbose(1, "Performing classification analyses...")
+verbose(2, "within-subject...", cr=False, lf=False)
 wsc_start_time = time.time()
 cv = CrossValidation(fsclf,
                      NFoldPartitioner(attr='chunks'),
@@ -96,7 +100,7 @@ cv = CrossValidation(fsclf,
 # store results in a sequence
 wsc_results = [cv(sd) for sd in ds_all]
 wsc_results = vstack(wsc_results)
-print "done after %.1f seconds" % (time.time() - wsc_start_time,)
+verbose(2, " done in %.1f seconds" % (time.time() - wsc_start_time,))
 
 
 """
@@ -112,14 +116,14 @@ be done by leaving out a complete subject for testing.
 
 """
 
-print "Performing between-subject classification (anatomically aligned)...",
+verbose(2, "between-subject (anatomically aligned)...", cr=False, lf=False)
 ds_mni = vstack(ds_all)
 mni_start_time = time.time()
 cv = CrossValidation(fsclf,
                      NFoldPartitioner(attr='subject'),
                      errorfx=mean_match_accuracy)
 bsc_mni_results = cv(ds_mni)
-print "done after %.1f seconds" % (time.time() - mni_start_time,)
+verbose(2, "done in %.1f seconds" % (time.time() - mni_start_time,))
 
 """
 Between-subject classification with Hyperalignment(TM)
@@ -138,7 +142,7 @@ and run the classification analysis. ANOVA-based feature selection is done
 in the same way as before (but also manually).
 """
 
-print "Performing between-subject classification (hyperaligned)...",
+verbose(2, "between-subject (hyperaligned)...", cr=False, lf=False)
 hyper_start_time = time.time()
 bsc_hyper_results = []
 # same cross-validation over subjects as before
@@ -194,7 +198,7 @@ for test_run in range(nruns):
     bsc_hyper_results.append(res_cv)
 
 bsc_hyper_results = hstack(bsc_hyper_results)
-print "done after %.1f seconds" % (time.time() - hyper_start_time,)
+verbose(2, "done in %.1f seconds" % (time.time() - hyper_start_time,))
 
 """
 Comparing the results
@@ -207,28 +211,32 @@ First we take a look at the classification performance (or accuracy) of all
 three analysis approaches.
 """
 
-print "Avg. within-subject classification accuracy: %.2f +/-%.3f" \
+verbose(1, "Average classification accuracies:")
+verbose(2, "within-subject: %.2f +/-%.3f"
         % (np.mean(wsc_results),
-           np.std(wsc_results) / np.sqrt(nsubjs - 1))
-print "Avg. between-subject classification accuracy (anatomically aligned): %.2f +/-%.3f" \
+           np.std(wsc_results) / np.sqrt(nsubjs - 1)))
+verbose(2, "between-subject (anatomically aligned): %.2f +/-%.3f"
         % (np.mean(bsc_mni_results),
-           np.std(np.mean(bsc_mni_results, axis=1)) / np.sqrt(nsubjs - 1))
-print "Avg. between-subject classification accuracy (hyperaligned): %.2f +/-%.3f" \
+           np.std(np.mean(bsc_mni_results, axis=1)) / np.sqrt(nsubjs - 1)))
+verbose(2, "between-subject (hyperaligned): %.2f +/-%.3f" \
         % (np.mean(bsc_hyper_results),
-           np.std(np.mean(bsc_hyper_results, axis=1)) / np.sqrt(nsubjs - 1))
+           np.std(np.mean(bsc_hyper_results, axis=1)) / np.sqrt(nsubjs - 1)))
 
 """
 The output of this demo looks like this::
 
  Loading data...
- Per-subject dataset: 56 samples with 3509 features
- Stimulus categories: Chair, DogFace, FemaleFace, House, MaleFace, MonkeyFace, Shoe
- Performing within-subject classification... done after 4.1 seconds
- Performing between-subject classification (anatomically aligned)... done after 3.5 seconds
- Performing between-subject classification (hyperaligned)... done after 9.8 seconds
- Avg. within-subject classification accuracy: 0.57 +/-0.063
- Avg. between-subject classification accuracy (anatomically aligned): 0.42 +/-0.035
- Avg. between-subject classification accuracy (hyperaligned): 0.62 +/-0.045
+  10 subjects
+  Per-subject dataset: 56 samples with 3509 features
+  Stimulus categories: Chair, DogFace, FemaleFace, House, MaleFace, MonkeyFace, Shoe
+ Performing classification analyses...
+  within-subject... done in 4.3 seconds
+  between-subject (anatomically aligned)...done after 3.2 seconds
+  between-subject (hyperaligned)...done in 10.5 seconds
+ Average classification accuracies:
+  within-subject: 0.57 +/-0.063
+  between-subject (anatomically aligned): 0.42 +/-0.035
+  between-subject (hyperaligned): 0.62 +/-0.046
 
 It is obvious that the between-subject classification using anatomically
 aligned data has significantly worse performance when compared to
