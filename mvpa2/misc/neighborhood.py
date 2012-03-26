@@ -573,7 +573,7 @@ class CachedQueryEngine(QueryEngineInterface):
     def __repr__(self, prefixes=[]):
         return super(CachedQueryEngine, self).__repr__(
             prefixes=prefixes
-            + _repr_attrs(self, ['qe']))
+            + _repr_attrs(self, ['queryengine']))
 
 
     def train(self, dataset):
