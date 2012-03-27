@@ -16,7 +16,8 @@ import copy
 from mvpa2.base.learner import Learner
 from mvpa2.base.node import ChainNode
 from mvpa2.base.types import is_datasetlike, accepts_dataset_as_samples
-from mvpa2.base.dochelpers import _str
+from mvpa2.base.dochelpers import _str, _repr_attrs
+from mvpa2.base.dochelpers import borrowdoc
 
 if __debug__:
     from mvpa2.base import debug
@@ -363,6 +364,66 @@ class ChainMapper(ChainNode):
         return super(ChainMapper, self).__str__().replace('Mapper', '')
 
 
-# XXX implement a 'CombinedMapper' (analog to ex-CombinedFeatureSelection) that
-# can a dataset to multiple child-mappers and hstacks the results into a single
-# output dataset
+
+class CombinedMapper(Mapper):
+    """Mapper to pass a dataset on to a set of mappers and combine there output.
+
+    Output combination or aggregation is currently done by hstacking or
+    vstacking the resulting datasets.
+    """
+
+    def __init__(self, mappers, combine_axis, **kwargs):
+        """
+        Parameters
+        ----------
+        mappers : list
+        combine_axis : ['h', 'v']
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from mvpa2.mappers.base import CombinedMapper
+        >>> from mvpa2.featsel.base import StaticFeatureSelection
+        >>> from mvpa2.datasets import Dataset
+        >>> mp = CombinedMapper([StaticFeatureSelection([1,2]),
+        ...                      StaticFeatureSelection([2,3])],
+        ...                     combine_axis='h')
+        >>> mp.is_trained = True
+        >>> ds = Dataset(np.arange(12).reshape(3,4))
+        >>> out = mp(ds)
+        >>> out.samples
+        array([[ 1,  2,  2,  3],
+               [ 5,  6,  6,  7],
+               [ 9, 10, 10, 11]])
+        """
+        Mapper.__init__(self, **kwargs)
+        self._mappers = mappers
+        self._combine_axis = combine_axis
+
+    @borrowdoc(Mapper)
+    def __repr__(self, prefixes=[]):
+        return super(CombinedMapper, self).__repr__(
+                prefixes=prefixes
+                    + _repr_attrs(self, ['mappers', 'combine_axis']))
+
+    def __str__(self):
+        return _str(self)
+
+    def _train(self, ds):
+        for mapper in self._mappers:
+            mapper.train(ds)
+
+    def _untrain(self):
+        for mapper in self._mappers:
+            mapper.untrain()
+
+    @borrowdoc(Mapper)
+    def _forward_dataset(self, ds):
+        from mvpa2.datasets import hstack, vstack
+        mapped_ds = [mapper.forward(ds) for mapper in self._mappers]
+        stacker = {'h': hstack, 'v': vstack}
+        out = stacker[self._combine_axis](mapped_ds)
+        return out
+
+    mappers = property(fget=lambda self:self._mappers)
+
