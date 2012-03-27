@@ -41,6 +41,8 @@ Releases
       confusion matrices with a error function interface (e.g. for
       CrossValidation(errorfx=...). This class existed for a long time, but
       was hidden in the unit tests.
+    - Add :class:`~mvpa2.mappers.fxy.FxyMapper` to perform arbitrary
+      computations involving two datasets.
 
 * 2.0.0 (Mon, Dec 19 2011)
 
