@@ -57,6 +57,7 @@ Analysis
    examples/nested_cv
    examples/match_distribution
    examples/eventrelated
+   examples/hyperalignment
    examples/mdp_mnist
    examples/eyemovements
 

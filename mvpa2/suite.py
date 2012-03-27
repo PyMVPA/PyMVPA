@@ -143,6 +143,7 @@ from mvpa2.mappers.svd import *
 from mvpa2.mappers.procrustean import *
 from mvpa2.mappers.boxcar import *
 from mvpa2.mappers.fx import *
+from mvpa2.mappers.fxy import *
 from mvpa2.mappers.som import *
 from mvpa2.mappers.zscore import *
 if externals.exists('scipy'):
