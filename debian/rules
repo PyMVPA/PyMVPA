@@ -61,6 +61,10 @@ endif
 	: # their manpages
 	find debian -wholename */bin -o -wholename */man | xargs -r rm -rf
 
+override_dh_pysupport:
+	dh_pysupport
+	if [ -x /usr/bin/dh_numpy ]; then dh_numpy; fi
+
 override_dh_installchangelogs:
 	dh_installchangelogs Changelog
 
