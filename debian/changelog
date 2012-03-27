@@ -2,6 +2,8 @@ pymvpa2 (2.0.1-1) unstable; urgency=low
 
   * Fresh upstream release
     - all debian/patches were upstreamed
+  * debian/copyright updated for DEP5 v1.0
+  * debian/control -- policy boosted to 3.9.3 (no changes)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 27 Mar 2012 09:47:23 -0400
 

@@ -14,10 +14,11 @@ Build-Depends: debhelper (>= 7.0.50~),
                help2man,
                python-sphinx,
                graphviz, inkscape, imagemagick, bc
-Standards-Version: 3.9.2
+Standards-Version: 3.9.3
 Homepage: http://www.pymvpa.org
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/pymvpa.git
 Vcs-Git: git://git.debian.org/git/pkg-exppsy/pymvpa.git
+
 
 Package: python-mvpa2
 Architecture: all
@@ -54,6 +55,7 @@ Description: low-level implementations and bindings for PyMVPA v. 2
  .
  This is a package of a development snapshot. The latest released version is
  provided by the python-mvpa-lib package.
+
 
 Package: python-mvpa2-doc
 Architecture: all

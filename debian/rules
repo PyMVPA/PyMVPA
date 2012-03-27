@@ -31,8 +31,9 @@ ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 endif
 
 
-# we run the test suite on the install 
+# we run the test suite on the install
 override_dh_auto_test:
+	: # Tests will be ran later on against installed version
 
 override_dh_auto_install:
 	dh_auto_install -- --with-libsvm

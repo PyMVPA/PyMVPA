@@ -1,32 +1,16 @@
-Format-Specification: http://wiki.debian.org/Proposals/CopyrightFormat
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: PyMVPA
-Upstream-Source-Location: http://pkg-exppsy.alioth.debian.org/pymvpa
+Upstream-Contact: pkg-exppsy-pymvpa@lists.alioth.debian.org
+Source: https://github.com/PyMVPA/PyMVPA
+
 
 Files: *
 Copyright: Copyright,
-    2006-2011, Michael Hanke <michael.hanke@gmail.com>
-    2007-2011, Yaroslav Halchenko <debian@onerussian.com>
+    2006-2012, Michael Hanke <michael.hanke@gmail.com>
+    2007-2012, Yaroslav Halchenko <debian@onerussian.com>
     2007-2009, Per B. Sederberg <persed@princeton.edu>
          2008, Emanuele Olivetti <emanuele@relativita.com>
 License: Expat
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files (the "Software"), to deal
-  in the Software without restriction, including without limitation the rights
-  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-  copies of the Software, and to permit persons to whom the Software is
-  furnished to do so, subject to the following conditions:
-  .
-  The above copyright notice and this permission notice shall be included in
-  all copies or substantial portions of the Software.
-  .
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-  THE SOFTWARE.
-
 
 Files: debian/*
 Copyright: Copyright 2006-2011,
@@ -44,7 +28,7 @@ License: BSD-3
   the respective packages are used as dependencies. This copy of the libsvm
   code is, however, left in place, as it does not hurt and does not justify
   repackaging of the upstream sources.
-
+  .
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
   are met:
@@ -79,3 +63,23 @@ Copyright:
 License: GPL-2
   On Debian GNU/Linux systems, the complete text of the GPL-2 License
   can be found in `/usr/share/common-licenses/GPL-2'.
+
+
+License: Expat
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+  .
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+  .
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
