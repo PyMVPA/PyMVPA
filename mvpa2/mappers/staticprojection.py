@@ -48,7 +48,7 @@ class StaticProjectionMapper(ProjectionMapper):
 
 
     def _compute_recon(self):
-        """Since singular vectors are orthonormal, sufficient to take hermitian
+        """Computing the inverse of the projection matrix for reverse
         """
         return np.linalg.pinv(self._proj)
 
