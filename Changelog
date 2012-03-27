@@ -43,6 +43,8 @@ Releases
       was hidden in the unit tests.
     - Add :class:`~mvpa2.mappers.fxy.FxyMapper` to perform arbitrary
       computations involving two datasets.
+    - Add :class:`~mvpa2.mappers.base.CombinedMapper` to run a dataset through
+      a set of mappers and combine their outputs.
 
 * 2.0.0 (Mon, Dec 19 2011)
 
