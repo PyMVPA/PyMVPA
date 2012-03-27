@@ -160,7 +160,7 @@ def test_multiple_calls():
 
 def test_er_nifti_dataset():
     # setup data sources
-    tssrc = os.path.join(pymvpa_dataroot, 'bold.nii.gz')
+    tssrc = os.path.join(pymvpa_dataroot, u'bold.nii.gz')
     evsrc = os.path.join(pymvpa_dataroot, 'fslev3.txt')
     masrc = os.path.join(pymvpa_dataroot, 'mask.nii.gz')
     evs = FslEV3(evsrc).to_events()
@@ -354,7 +354,11 @@ def test_assumptions_on_nibabel_behavior(filename):
     ni = nb.load(masrc)
     hdr = ni.get_header()
     data = ni.get_data()
-    assert(hdr.get_data_dtype() == 'int16') # we deal with int file
+    # operate in the native endianness so that symbolic type names (e.g. 'int16')
+    # remain the same across platforms
+    if hdr.endianness == nb.volumeutils.swapped_code:
+        hdr = hdr.as_byteswapped()
+    assert_equal(hdr.get_data_dtype(), 'int16') # we deal with int file
 
     dataf = data.astype(float)
     dataf_dtype = dataf.dtype

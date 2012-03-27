@@ -170,6 +170,25 @@ def _parse_parameters(paramdoc):
               (paramdoc, result))
     return result
 
+def get_docstring_split(f):
+    """Given a function, break it up into portions
+
+    Parameters
+    ----------
+    f : function
+
+    Returns
+    -------
+
+    (initial doc string, params (as list of tuples), suffix string)
+    """
+
+    if not hasattr(f, '__doc__') or f.__doc__ in (None, ""):
+        return None, None, None
+    initdoc, params, suffix = _split_out_parameters(
+        f.__doc__)
+    params_list = _parse_parameters(params)
+    return initdoc, params_list, suffix
 
 def enhanced_doc_string(item, *args, **kwargs):
     """Generate enhanced doc strings for various items.
@@ -375,7 +394,9 @@ def table2string(table, out=None):
         out = StringIO()
 
     # equalize number of elements in each row
-    Nelements_max = max(len(x) for x in table)
+    Nelements_max = len(table) \
+                    and max(len(x) for x in table)
+
     for i, table_ in enumerate(table):
         table[i] += [''] * (Nelements_max - len(table_))
 
@@ -427,7 +448,7 @@ def _repr_attrs(obj, attrs, default=None, error_value='ERROR'):
     out = []
     for a in attrs:
         v = getattr(obj, a, error_value)
-        if not v is default:
+        if not (v is default or isinstance(v, basestring) and v == default):
             out.append('%s=%r' % (a, v))
     return out
 
@@ -457,7 +478,7 @@ def _repr(obj, *args, **kwargs):
     auto_repr = ', '.join(list(args)
                    + ["%s=%s" % (k, v) for k, v in kwargs.iteritems()])
 
-    print max_length
+
     if not truncate is None and len(auto_repr) > max_length:
         auto_repr = auto_repr[:max_length] + '...'
 

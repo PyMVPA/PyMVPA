@@ -41,9 +41,11 @@ _KNOWN_INTERNALS = [ 'knn', 'binary', 'svm', 'linear',
         'smlr', 'does_feature_selection', 'has_sensitivity',
         'multiclass', 'non-linear', 'kernel-based', 'lars',
         'regression', 'regression_based', 'random_tie_breaking',
+        'non-deterministic', 'needs_population',
         'libsvm', 'sg', 'meta', 'retrainable', 'gpr',
         'notrain2predict', 'ridge', 'blr', 'gnpp', 'enet', 'glmnet',
-        'gnb', 'plr', 'rpy2', 'swig', 'skl', 'lda', 'qda' ]
+        'gnb', 'plr', 'rpy2', 'swig', 'skl', 'lda', 'qda',
+        'random-forest', 'extra-trees']
 
 class Warehouse(object):
     """Class to keep known instantiated classifiers
@@ -319,6 +321,38 @@ if externals.exists('skl'):
                                 tags=['lda', 'linear', 'multiclass', 'binary'],
                                 descr='skl.LDA()')
 
+    if _skl_version >= '0.10':
+        # Out of Bag Estimates
+        sklRandomForestClassifier = _skl_import('ensemble', 'RandomForestClassifier')
+        clfswh += SKLLearnerAdapter(sklRandomForestClassifier(),
+                                     tags=['random-forest', 'linear', 'non-linear',
+                                           'binary', 'multiclass',
+                                           'non-deterministic', 'needs_population',],
+                                     descr='skl.RandomForestClassifier()')
+
+        sklRandomForestRegression = _skl_import('ensemble', 'RandomForestRegressor')
+        regrswh += SKLLearnerAdapter(sklRandomForestRegression(),
+                                     tags=['random-forest', 'linear', 'non-linear',
+                                           'regression',
+                                           'non-deterministic', 'needs_population',],
+                                     descr='skl.RandomForestRegression()')
+
+
+        sklExtraTreesClassifier = _skl_import('ensemble', 'ExtraTreesClassifier')
+        clfswh += SKLLearnerAdapter(sklExtraTreesClassifier(),
+                                     tags=['extra-trees', 'linear', 'non-linear',
+                                           'binary', 'multiclass',
+                                           'non-deterministic', 'needs_population',],
+                                     descr='skl.ExtraTreesClassifier()')
+
+        sklExtraTreesRegression = _skl_import('ensemble', 'ExtraTreesRegressor')
+        regrswh += SKLLearnerAdapter(sklExtraTreesRegression(),
+                                     tags=['extra-trees', 'linear', 'non-linear',
+                                           'regression',
+                                           'non-deterministic', 'needs_population',],
+                                     descr='skl.ExtraTreesRegression()')
+
+
     if _skl_version >= '0.8':
         sklPLSRegression = _skl_import('pls', 'PLSRegression')
         # somewhat silly use of PLS, but oh well
@@ -328,20 +362,20 @@ if externals.exists('skl'):
                                      descr='skl.PLSRegression_1d()')
 
     if externals.versions['skl'] >= '0.6.0':
-        sklLARS = _skl_import('linear_model',
+        sklLars = _skl_import('linear_model',
                               _skl_api09 and 'Lars' or 'LARS')
-        sklLassoLARS = _skl_import('linear_model',
+        sklLassoLars = _skl_import('linear_model',
                                    _skl_api09 and 'LassoLars' or 'LassoLARS')
         sklElasticNet = _skl_import('linear_model', 'ElasticNet')
         _lars_tags = ['lars', 'linear', 'regression', 'does_feature_selection']
 
-        _lars = SKLLearnerAdapter(sklLARS(),
+        _lars = SKLLearnerAdapter(sklLars(),
                                   tags=_lars_tags,
-                                  descr='skl.LARS()')
+                                  descr='skl.Lars()')
 
-        _lasso_lars = SKLLearnerAdapter(sklLassoLARS(alpha=0.01),
+        _lasso_lars = SKLLearnerAdapter(sklLassoLars(alpha=0.01),
                                         tags=_lars_tags,
-                                        descr='skl.LassoLARS()')
+                                        descr='skl.LassoLars()')
 
         _elastic_net = SKLLearnerAdapter(
             sklElasticNet(alpha=.01, rho=.3),
@@ -350,10 +384,19 @@ if externals.exists('skl'):
             descr='skl.ElasticNet()')
 
         regrswh += [_lars, _lasso_lars, _elastic_net]
-        clfswh += [RegressionAsClassifier(_lars, descr="skl.LARS_C()"),
-                   RegressionAsClassifier(_lasso_lars, descr="skl.LassoLARS_C()"),
+        clfswh += [RegressionAsClassifier(_lars, descr="skl.Lars_C()"),
+                   RegressionAsClassifier(_lasso_lars, descr="skl.LassoLars_C()"),
                    RegressionAsClassifier(_elastic_net, descr="skl.ElasticNet_C()"),
                    ]
+
+    if _skl_version >= '0.10':
+        sklLassoLarsIC = _skl_import('linear_model', 'LassoLarsIC')
+        _lasso_lars_ic = SKLLearnerAdapter(sklLassoLarsIC(),
+                                           tags=_lars_tags,
+                                           descr='skl.LassoLarsIC()')
+        regrswh += [_lasso_lars_ic]
+        clfswh += [RegressionAsClassifier(_lasso_lars_ic,
+                                          descr='skl.LassoLarsIC_C()')]
 
 # kNN
 clfswh += kNN(k=5, descr="kNN(k=5)")

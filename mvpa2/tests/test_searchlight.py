@@ -37,7 +37,7 @@ class SearchlightTests(unittest.TestCase):
         # the searchlight
         self.dataset.fa['voxel_indices'] = self.dataset.fa.myspace
 
-    @sweepargs(common_variance=('True', 'False'))
+    @sweepargs(common_variance=(True, False))
     @sweepargs(do_roi=(False, True))
     @reseed_rng()
     def test_spatial_searchlight(self, common_variance=True, do_roi=False):
@@ -92,7 +92,7 @@ class SearchlightTests(unittest.TestCase):
             # run searchlight
             results = sl(ds)
             all_results.append(results)
-            print `sl`
+            #print `sl`
             # check for correct number of spheres
             self.assertTrue(results.nfeatures == nroi)
             # and measures (one per xfold)
@@ -338,6 +338,39 @@ class SearchlightTests(unittest.TestCase):
                             slmap.samples[:, features])
 
         # elsewhere they should tend to be better but not guaranteed
+
+    def test_usecase_concordancesl(self):
+        import numpy as np
+        from mvpa2.base.dataset import vstack
+        from mvpa2.mappers.fx import mean_sample
+
+        # Take our sample 3d dataset
+        ds1 = datasets['3dsmall'].copy(deep=True)
+        ds1.fa['voxel_indices'] = ds1.fa.myspace
+        ds1.sa['subject'] = [1]  # not really necessary -- but let's for clarity
+        ds1 = mean_sample()(ds1) # so we get just a single representative sample
+
+        def corr12(ds):
+            corr = np.corrcoef(ds.samples)
+            assert(corr.shape == (2,2)) # for paranoid ones
+            return corr[0, 1]
+
+        for nsc,  thr, thr_mean in (
+            (0,   1.0, 1.0),
+            (0.1, 0.3, 0.8)):   # just a bit of noise
+            ds2 = ds1.copy(deep=True)    # make a copy for the 2nd subject
+            ds2.sa['subject'] = [2]
+            ds2.samples += nsc * np.random.normal(size=ds1.shape)
+
+            # make sure that both have the same voxel indices
+            assert(np.all(ds1.fa.voxel_indices == ds2.fa.voxel_indices))
+            ds_both = vstack((ds1, ds2))# join 2 images into a single dataset
+                                        # with .sa.subject distinguishing both
+
+            sl = sphere_searchlight(corr12, radius=2)
+            slmap = sl(ds_both)
+            ok_(np.all(slmap.samples >= thr))
+            ok_(np.mean(slmap.samples) >= thr)
 
 def suite():
     return unittest.makeSuite(SearchlightTests)

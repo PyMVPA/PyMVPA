@@ -27,13 +27,13 @@ The mvpa package contains the following subpackages and modules:
          `Yaroslav Halchenko <debian@onerussian.com>`__,
          `Per B. Sederberg <persed@princeton.edu>`__
 :requires: Python 2.4+
-:version: 2.0.0
+:version: 2.0.1
 :see: `The PyMVPA webpage <http://www.pymvpa.org>`__
 :see: `GIT Repository Browser <http://github.com/PyMVPA/PyMVPA>`__
 
 :license: The MIT License <http://www.opensource.org/licenses/mit-license.php>
-:copyright: |copy| 2006-2011 Michael Hanke <michael.hanke@gmail.com>
-:copyright: |copy| 2007-2011 Yaroslav O. Halchenko <debian@onerussian.com>
+:copyright: |copy| 2006-2012 Michael Hanke <michael.hanke@gmail.com>
+:copyright: |copy| 2007-2012 Yaroslav O. Halchenko <debian@onerussian.com>
 
 :newfield contributor: Contributor, Contributors (Alphabetical Order)
 :contributor: `Emanuele Olivetti <emanuele@relativita.com>`__
@@ -45,7 +45,7 @@ The mvpa package contains the following subpackages and modules:
 __docformat__ = 'restructuredtext'
 
 # canonical PyMVPA version string
-__version__ = '2.0.0'
+__version__ = '2.0.1'
 
 import os
 import random
@@ -95,24 +95,10 @@ else:
     debug('INIT', 'mvpa')
 
 #
-# RNG seeding
+# RNGs control
 #
 
-if cfg.has_option('general', 'seed'):
-    _random_seed = cfg.getint('general', 'seed')
-else:
-    _random_seed = int(np.random.uniform()*(2**31-1))
-
-def seed(random_seed):
-    """Uniform and combined seeding of all relevant random number
-    generators.
-    """
-    if __debug__:
-        debug('RANDOM', 'Reseeding RNGs with %s' % random_seed)
-    np.random.seed(random_seed)
-    random.seed(random_seed)
-
-seed(_random_seed)
+from mvpa2._random import _random_seed, seed
 
 #
 # Testing

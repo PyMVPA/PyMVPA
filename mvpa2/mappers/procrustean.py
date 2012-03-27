@@ -11,13 +11,14 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as np
-
+from mvpa2.base import externals
 from mvpa2.mappers.projection import ProjectionMapper
 from mvpa2.datasets import Dataset
 from mvpa2.featsel.helpers import ElementSelector
 
 if __debug__:
     from mvpa2.base import debug
+
 
 
 class ProcrusteanMapper(ProjectionMapper):
@@ -28,7 +29,7 @@ class ProcrusteanMapper(ProjectionMapper):
     _DEV__doc__ = """Possibly revert back to inherit from ProjectionMapper"""
 
     def __init__(self, scaling=True, reflection=True, reduction=True,
-                 oblique=False, oblique_rcond=-1, **kwargs):
+                 oblique=False, oblique_rcond=-1, svd='numpy', **kwargs):
         """Initialize the ProcrusteanMapper
 
         Parameters
@@ -49,6 +50,8 @@ class ProcrusteanMapper(ProjectionMapper):
         oblique_rcond : float
           Cutoff for 'small' singular values to regularize the inverse. See
           :class:`~numpy.linalg.lstsq` for more information.
+        svd : string (numpy, scipy, dgesvd), optional
+          Implementation of SVD to use.  dgesvd requires ctypes to be available.
         **kwargs
           To be passed to ProjectionMapper
         """
@@ -63,7 +66,7 @@ class ProcrusteanMapper(ProjectionMapper):
         self._oblique_rcond = oblique_rcond
         self._scale = None
         """Estimated scale"""
-
+        self._svd = svd
 
     # XXX we should just use beautiful ClassWithCollections everywhere... makes
     # life so easier... for now -- manual
@@ -166,8 +169,21 @@ class ProcrusteanMapper(ProjectionMapper):
         else:
             # Orthogonal transformation
             # figure out optimal rotation
-            U, s, Vh = np.linalg.svd(np.dot(target.T, source),
-                                    full_matrices=False)
+            if self._svd == 'numpy':
+                U, s, Vh = np.linalg.svd(np.dot(target.T, source),
+                               full_matrices=False)
+            elif self._svd == 'scipy':
+                # would raise exception if not present
+                externals.exists('scipy', raise_=True)
+                import scipy
+                U, s, Vh = scipy.linalg.svd(np.dot(target.T, source),
+                               full_matrices=False)
+            elif self._svd == 'dgesvd':
+                from mvpa2.support.lapack_svd import svd as dgesvd
+                U, s, Vh = dgesvd(np.dot(target.T, source),
+                                    full_matrices=True, algo='svd')
+            else:
+                raise ValueError('Unknown type of svd %r'%(self._svd))
             T = np.dot(Vh.T, U.T)
 
             if not self._reflection:

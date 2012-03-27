@@ -129,7 +129,7 @@ def hdf2obj(hdf, memo=None):
         elif mod_name != '__builtin__':
             # Custom objects default reconstructor
             cls_name = hdf.attrs['class']
-            if cls_name in ('function', 'type'):
+            if cls_name in ('function', 'type', 'builtin_function_or_method'):
                 # Functions and types
                 obj = _recon_functype(hdf)
             else:

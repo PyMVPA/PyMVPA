@@ -199,6 +199,8 @@ class ClassifiersTests(unittest.TestCase):
                             % (cve, ds, len(ds.UT)))
 
 
+    # yoh: I guess we have skipped meta constructs because they would
+    #      need targets attribute specified in both slave and wrapper
     @sweepargs(lrn=clfswh['!meta']+regrswh['!meta'])
     @reseed_rng()
     def test_custom_targets(self, lrn):
@@ -418,10 +420,11 @@ class ClassifiersTests(unittest.TestCase):
             enable_ca=['stats', 'training_stats'])
         cverror = cv(ds).samples.squeeze()
 
-        self.assertTrue(abs(error-cverror)<0.01,
-                msg="We should get the same error using split classifier as"
-                    " using CrossValidation. Got %s and %s"
-                    % (error, cverror))
+        if not 'non-deterministic' in clf.__tags__:
+            self.assertTrue(abs(error-cverror)<0.01,
+                    msg="We should get the same error using split classifier as"
+                        " using CrossValidation. Got %s and %s"
+                        % (error, cverror))
 
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.assertTrue(error < 0.25,
@@ -657,7 +660,6 @@ class ClassifiersTests(unittest.TestCase):
         if clf.params.has_key('C') and clf.params.C<0:
             oldC = clf.params.C
             clf.params.C = 1.0                 # reset C to be 1
-
         svm, svm2 = clf, clf.clone()
         svm2.ca.enable(['training_stats'])
 
@@ -915,7 +917,7 @@ class ClassifiersTests(unittest.TestCase):
     #    svmocas -- segfaults -- reported to mailing list
     #    GNB, LDA, QDA -- cannot train since 1 sample isn't sufficient
     #    to assess variance
-    @sweepargs(clf=clfswh['!smlr', '!knn', '!gnb', '!lda', '!qda', '!lars', '!meta', '!ridge'])
+    @sweepargs(clf=clfswh['!smlr', '!knn', '!gnb', '!lda', '!qda', '!lars', '!meta', '!ridge', '!needs_population'])
     def test_correct_dimensions_order(self, clf):
         """To check if known/present Classifiers are working properly
         with samples being first dimension. Started to worry about
@@ -980,49 +982,100 @@ class ClassifiersTests(unittest.TestCase):
             # Just validate that everything is ok
             #self.assertTrue(str(cv.ca.stats) != "")
 
-    def _test_gideon_weird_case(self):
-        """'The utter collapse' -- communicated by Peter J. Kohler
+    @reseed_rng()
+    def test_gideon_weird_case(self):
+        """Test if MappedClassifier could handle a mapper altering number of samples
+
+        'The utter collapse' -- communicated by Peter J. Kohler
 
         Desire to collapse all samples per each category in training
         and testing sets, thus resulting only in a single
-        sample/category per training and per testing.  As it is now,
-        CrossValidation on MappedClassifier would not work
+        sample/category per training and per testing.
 
-        observations: chance distribution obviously gets wide, but
-        also gets skewed to anti-learning on nfolds like 4.
-        
+        It is a peculiar scenario which pin points the problem that so
+        far mappers assumed not to change number of samples
         """
         from mvpa2.mappers.fx import mean_group_sample
         from mvpa2.clfs.knn import kNN
-        clf = kNN()
-        print "HERE"
+        from mvpa2.mappers.base import ChainMapper
         ds = datasets['uni2large'].copy()
-        ds = ds[ds.sa.chunks < 9]
+        #ds = ds[ds.sa.chunks < 9]
         accs = []
-        for i in xrange(10):          # # of random samples
+        k = 1                           # for kNN
+        nf = 1                          # for NFoldPartitioner
+        for i in xrange(1):          # # of random runs
             ds.samples = np.random.randn(*ds.shape)
-            if False: # this would have been a native way IF we allowed change of number of samples
-                clf2 = MappedClassifier(clf=kNN(), #clf,
+            #
+            # There are 3 ways to accomplish needed goal
+            #
+
+            # 0. Hard way: overcome the problem by manually
+            #    pre-splitting/meaning in a loop
+            from mvpa2.clfs.transerror import ConfusionMatrix
+            partitioner = NFoldPartitioner(nf)
+            meaner = mean_group_sample(['targets', 'partitions'])
+            cm = ConfusionMatrix()
+            te = TransferMeasure(kNN(k), Splitter('partitions'),
+                                 postproc=BinaryFxNode(mean_mismatch_error,
+                                                       'targets'),
+                                 enable_ca = ['stats']
+                                 )
+            errors = []
+            for part in partitioner.generate(ds):
+                ds_meaned = meaner(part)
+                errors.append(np.asscalar(te(ds_meaned)))
+                cm += te.ca.stats
+            #print i, cm.stats['ACC']
+            accs.append(cm.stats['ACC'])
+
+
+            if False: # not yet working -- see _tent/allow_ch_nsamples
+                      # branch for attempt to make it work
+                # 1. This is a "native way" IF we allow change of number
+                #    of samples via _call to be done by MappedClassifier
+                #    while operating solely on the mapped dataset
+                clf2 = MappedClassifier(clf=kNN(k), #clf,
                                         mapper=mean_group_sample(['targets', 'partitions']))
-                cv = CrossValidation(clf2, NFoldPartitioner(4), postproc=None,
+                cv = CrossValidation(clf2, NFoldPartitioner(nf), postproc=None,
                                      enable_ca=['stats'])
-                print cv(ds)
-            else:
-                from mvpa2.clfs.transerror import ConfusionMatrix
-                partitioner = NFoldPartitioner(6)
-                meaner = mean_group_sample(['targets', 'partitions'])
-                cm = ConfusionMatrix()
-                te = TransferMeasure(clf, Splitter('partitions'),
-                                     postproc=BinaryFxNode(mean_mismatch_error,
-                                                           'targets'),
-                                     enable_ca = ['stats']
-                                     )
-                for part in partitioner.generate(ds):
-                    ds_meaned = meaner(part)
-                    error = np.asscalar(te(ds_meaned))
-                    cm += te.ca.stats
-                print i, cm.stats['ACC']
-                accs.append(cm.stats['ACC'])
+                # meaning all should be ok since we should have ballanced
+                # sets across all chunks here
+                errors_native = cv(ds)
+
+                self.assertEqual(np.max(np.abs(errors_native.samples[:,0] - errors)),
+                                 0)
+
+            # 2. Work without fixes to MappedClassifier allowing
+            #    change of # of samples
+            #
+            # CrossValidation will operate on a chain mapper which
+            # would perform necessary meaning first before dealing with
+            # kNN cons: .stats would not be exposed since ChainMapper
+            # doesn't expose them from ChainMapper (yet)
+            if __debug__ and 'ENFORCE_CA_ENABLED' in debug.active:
+                raise SkipTest("Known to fail while trying to enable "
+                               "training_stats for the ChainMapper")
+            cv2 = CrossValidation(ChainMapper([mean_group_sample(['targets', 'partitions']),
+                                               kNN(k)],
+                                              space='targets'),
+                                  NFoldPartitioner(nf),
+                                  postproc=None)
+            errors_native2 = cv2(ds)
+
+            self.assertEqual(np.max(np.abs(errors_native2.samples[:,0] - errors)),
+                             0)
+
+            # All of the ways should provide the same results
+            #print i, np.max(np.abs(errors_native.samples[:,0] - errors)), \
+            #      np.max(np.abs(errors_native2.samples[:,0] - errors))
+
+        if False: # just to investigate the distribution if we have enough iterations
+            import pylab as pl
+            uaccs = np.unique(accs)
+            step = np.asscalar(np.unique(np.round(uaccs[1:] - uaccs[:-1], 4)))
+            bins = np.linspace(0., 1., np.round(1./step+1))
+            xx = pl.hist(accs, bins=bins, align='left')
+            pl.xlim((0. - step/2, 1.+step/2))
 
 
 def suite():

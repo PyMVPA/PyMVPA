@@ -12,6 +12,9 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 
+from mvpa2.base.dochelpers import _repr_attrs
+from mvpa2.support.utils import deprecated
+
 from mvpa2.base.node import Node
 from mvpa2.datasets.miscfx import coarsen_chunks
 import mvpa2.misc.support as support
@@ -65,12 +68,24 @@ class Partitioner(Node):
         """
         Node.__init__(self, space=space, **kwargs)
         # pylint happyness block
-        self.__splitattr = attr
+        self.__attr = attr
         # we don't check it, thus no reason to make it private.
         # someone might find it useful to change post creation
         # TODO utilize such (or similar) policy through out the code
         self.count = count
         self._set_selection_strategy(selection_strategy)
+
+
+    def __repr__(self, prefixes=[]):
+        # Here we are jumping over Node's __repr__ since
+        # it would enforce placing space
+        return super(Node, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['count'])
+            + _repr_attrs(self, ['selection_strategy'], default='equidistant')
+            + _repr_attrs(self, ['attr'], default='chunks')
+            + _repr_attrs(self, ['space'], default='partitions')
+            )
 
 
     def _set_selection_strategy(self, strategy):
@@ -129,7 +144,7 @@ class Partitioner(Node):
         none_specs = 0
         cum_filter = None
 
-        splitattr_data = ds.sa[self.__splitattr].value
+        splitattr_data = ds.sa[self.__attr].value
         # for each partition in this set
         for spec in specs:
             if spec is None:
@@ -170,7 +185,7 @@ class Partitioner(Node):
         list(lists)
         """
         # list (#splits) of lists (#partitions)
-        cfgs = self._get_partition_specs(ds.sa[self.__splitattr].unique)
+        cfgs = self._get_partition_specs(ds.sa[self.__attr].unique)
 
         # Select just some splits if desired
         count, n_cfgs = self.count, len(cfgs)
@@ -207,10 +222,14 @@ class Partitioner(Node):
 
         return cfgs
 
+    @property
+    @deprecated("to be removed in PyMVPA 2.1; use .attr instead")
+    def splitattr(self):
+        return self.attr
 
     selection_strategy = property(fget=lambda self:self.__selection_strategy,
                         fset=_set_selection_strategy)
-    splitattr = property(fget=lambda self:self.__splitattr)
+    attr = property(fget=lambda self: self.__attr)
 
 
 
@@ -236,6 +255,10 @@ class OddEvenPartitioner(Partitioner):
         Partitioner.__init__(self, **(kwargs))
         self.__usevalues = usevalues
 
+    def __repr__(self, prefixes=[]):
+        return super(OddEvenPartitioner, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['usevalues'], default=False))
 
     def _get_partition_specs(self, uniqueattrs):
         """
@@ -251,6 +274,8 @@ class OddEvenPartitioner(Partitioner):
             return [(None, uniqueattrs[np.arange(len(uniqueattrs)) %2 == True]),
                     (None, uniqueattrs[np.arange(len(uniqueattrs)) %2 == False])]
 
+
+    usevalues = property(fget=lambda self: self.__usevalues)
 
 
 class HalfPartitioner(Partitioner):
@@ -289,6 +314,11 @@ class NGroupPartitioner(Partitioner):
         self.__ngroups = ngroups
 
 
+    def __repr__(self, prefixes=[]):
+        return super(NGroupPartitioner, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['ngroups'], default=4))
+
     def _get_partition_specs(self, uniqueattrs):
         """
         Returns
@@ -313,6 +343,7 @@ class NGroupPartitioner(Partitioner):
                        for i in range(self.__ngroups)]
         return split_list
 
+    ngroups = property(fget=lambda self: self.__ngroups)
 
 
 class CustomPartitioner(Partitioner):
@@ -350,7 +381,13 @@ class CustomPartitioner(Partitioner):
           Custom partition set specs.
         """
         Partitioner.__init__(self, **(kwargs))
-        self.__splitrule = splitrule
+        self.splitrule = splitrule
+
+
+    def __repr__(self, prefixes=[]):
+        return super(CustomPartitioner, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['splitrule']))
 
 
     def _get_partition_specs(self, uniqueattrs):
@@ -359,8 +396,7 @@ class CustomPartitioner(Partitioner):
         -------
         whatever was provided in splitrule argument
         """
-        return self.__splitrule
-
+        return self.splitrule
 
 
 class NFoldPartitioner(Partitioner):
@@ -389,29 +425,86 @@ class NFoldPartitioner(Partitioner):
 
     Note that the "taken-out" partition is always labeled '2' while the
     remaining elements are labeled '1'.
+
+    If ``cvtype`` is a float in the range from 0 to 1, it specifies
+    the ratio of present unique values to be taken.
+
+    If ``cvtype`` is large enough generating prohibitively large
+    number of combinations, provide ``count`` to limit number of
+    combinations and provide ``selection_strategy`` = 'random'.
     """
-    def __init__(self, cvtype = 1, **kwargs):
+
+    _DEV__doc__ = """
+    Might want to make it smarter and implement generate() generator?
+    Especially for the cases which use xrandom_unique_combinations
+
+    All needed machinery is there
+    """
+
+    def __init__(self, cvtype=1, **kwargs):
         """
         Parameters
         ----------
-        cvtype : int
-          Type of leave-one-out scheme: N-(cvtype)
+        cvtype : int, float
+          Type of leave-one-out scheme: N-(cvtype).  float value
+          (0..1) specifies ratio of samples to be taken into the
+          combination (e.g. 0.5 for 50%) given a dataset
         """
         Partitioner.__init__(self, **kwargs)
-        self.__cvtype = cvtype
+        if isinstance(cvtype, float):
+            # some checks
+            if not (0 < cvtype < 1):
+                raise ValueError("Float value for cvtype must be within range "
+                                 "(0, 1), excluding boundaries. Got %r."
+                                 % cvtype)
+        self.cvtype = cvtype
+
+    def __repr__(self, prefixes=[]): #pylint: disable-msg=W0102
+        return super(NFoldPartitioner, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['cvtype'], default=1))
 
 
     def _get_partition_specs(self, uniqueattrs):
-        return [(None, i) for i in \
-                 support.xunique_combinations(uniqueattrs, self.__cvtype)]
+        if isinstance(self.cvtype, float):
+            n = int(self.cvtype * len(uniqueattrs))
+        else:
+            n = self.cvtype
+        if self.count is None \
+           or self.selection_strategy != 'random' \
+           or self.count >= support.ncombinations(len(uniqueattrs), n):
+            # all combinations were requested so no need for
+            # randomization
+            combs = support.xunique_combinations(uniqueattrs, n)
+        else:
+            # due to selection_strategy=random they would be also
+            # reshuffled by super class later on but that should be ok
+            combs = support.xrandom_unique_combinations(uniqueattrs, n,
+                                                        self.count)
 
+        if self.count is None or self.selection_strategy != 'random':
+            # we are doomed to return all of them
+            return [(None, i) for i in combs]
+        else:
+            # It makes sense to limit number of returned combinations
+            # right away
+            return [(None, i) for ind, i in enumerate(combs)
+                    if ind < self.count]
 
-from mvpa2.misc.support import xunique_combinations
 
 class ExcludeTargetsCombinationsPartitioner(Node):
     """Given a pre-generated partitioning XXX
 
     TODO 4 Swaroop -- provide documentation
+    Example
+    -------
+
+        partitioner = ChainNode([NFoldPartitioner(),
+                             ExcludeTargetsCombinationsPartitioner(
+                                 k=2,
+                                 targets_attr='targets',
+                                 space='partitions')],
+                            space='partitions')
     """
     def __init__(self, k,
                  targets_attr,
@@ -420,28 +513,42 @@ class ExcludeTargetsCombinationsPartitioner(Node):
                  partition_assign=3, # assign one which Splitter doesn't even get to
                  **kwargs):
         Node.__init__(self, **kwargs)
-        self._k = k
-        self._targets_attr = targets_attr
-        self._partitions_attr = partitions_attr
-        self._partitions_keep = partitions_keep
-        self._partition_assign = partition_assign
+        self.k = k
+        self.targets_attr = targets_attr
+        self.partitions_attr = partitions_attr
+        self.partitions_keep = partitions_keep
+        self.partition_assign = partition_assign
+
+    def __repr__(self, prefixes=[]):
+        # Here we are jumping over Node's __repr__ since
+        # it would enforce placing space
+        return super(ExcludeTargetsCombinationsPartitioner, self).__repr__(
+            prefixes=prefixes
+            + _repr_attrs(self, ['k', 'targets_attr'])
+            + _repr_attrs(self, ['partitions_attr'], default='partitions')
+            + _repr_attrs(self, ['partitions_keep'], default=2)
+            + _repr_attrs(self, ['partition_assign'], default=3)
+            )
 
     def generate(self, ds):
-        orig_partitioning = ds.sa[self._partitions_attr].value.copy()
-        targets = ds.sa[self._targets_attr].value
+        orig_partitioning = ds.sa[self.partitions_attr].value.copy()
+        targets = ds.sa[self.targets_attr].value
 
-        testing_part = orig_partitioning == self._partitions_keep
+        testing_part = orig_partitioning == self.partitions_keep
         nontesting_part = np.logical_not(testing_part)
 
         utargets = np.unique(targets[testing_part])
-        for combination in xunique_combinations(utargets, self._k):
+        for combination in support.xunique_combinations(utargets, self.k):
             partitioning = orig_partitioning.copy()
             combination_matches = [ t in combination for t in targets ]
             combination_nonmatches = np.logical_not(combination_matches)
 
-            partitioning[np.logical_and(testing_part, combination_nonmatches)] = self._partition_assign
-            partitioning[np.logical_and(nontesting_part, combination_matches)] = self._partition_assign
+            partitioning[np.logical_and(testing_part,
+                                        combination_nonmatches)] \
+                        = self.partition_assign
+            partitioning[np.logical_and(nontesting_part,
+                                        combination_matches)] \
+                        = self.partition_assign
             pds = ds.copy(deep=False)
             pds.sa[self.space] = partitioning
             yield pds
-

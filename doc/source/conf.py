@@ -16,6 +16,11 @@ import sys, os, re
 import numpy as np
 import mvpa2
 
+# We need to know sphinx version for decisions below
+import sphinx
+from distutils.version import LooseVersion
+sphinx_version = LooseVersion(sphinx.__version__)
+
 try:
     import matplotlib
     # Disable warning from matplotlib
@@ -48,14 +53,17 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.ifconfig',
               'sphinx.ext.inheritance_diagram',
               'sphinx.ext.pngmath',
-              # we have a local copy of autosummary from the unreleased sphinx
-              # 1.0 -- reason: the 0.6 extension creates half-empty summaries
-              'autosummary',
               # we have a local copy of the extension, imported from NumPy 1.3
               # this also includes the docscrape* extensions
               'numpydoc',
               # finally our own little thingie to display tasks
               'exercise_directive']
+
+# we have a local copy of autosummary from the unreleased sphinx
+# 1.0 -- reason: the 0.6 extension creates half-empty summaries
+extensions += [sphinx_version < '1.1.2'
+               and 'autosummary'
+               or 'sphinx.ext.autosummary']
 
 # the following doesn't work with sphinx < 1.0, but will make a separate
 # sphinx-autogen run obsolete in the future
@@ -75,7 +83,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'PyMVPA'
-copyright = '2006-2010, PyMVPA Authors'
+copyright = '2006-2012, PyMVPA Authors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

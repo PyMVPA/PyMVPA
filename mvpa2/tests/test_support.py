@@ -89,6 +89,25 @@ class SupportFxTests(unittest.TestCase):
                         [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]] )
 
 
+    @reseed_rng()
+    def test_xrandom_unique_combinations(self):
+        for n in [4, 5, 10]:
+            limit = 4
+            limited = list(xrandom_unique_combinations(range(n), 3, limit))
+            self.assertEqual(len(limited), limit)
+            # See if we would obtain the same
+            for k in [1, 2, 3, int(n/2), n]:
+                all_random = list(xrandom_unique_combinations(range(n), k))
+                all_ = list(xunique_combinations(range(n), k))
+                self.assertEqual(sorted(all_random), sorted(all_))
+
+        # test that we are not sampling the same space -- two
+        # consecutive samples within large number very unlikely not
+        # have more than few overlapping samples
+        c1, c2 = xrandom_unique_combinations(range(1000), 10, 2)
+        self.assertTrue(len(set(c1).intersection(c2)) < 2)
+
+
     def test_break_points(self):
         items_cont = [0, 0, 0, 1, 1, 1, 3, 3, 2]
         items_noncont = [0, 0, 1, 1, 0, 3, 2]

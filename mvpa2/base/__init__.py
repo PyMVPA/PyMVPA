@@ -238,6 +238,7 @@ if __debug__:
 
     debug.register('MAP',   "*Mapper")
     debug.register('MAP_',  "*Mapper (verbose)")
+    debug.register('FX',    "FxMapper")
     debug.register('ZSCM',  "ZScoreMapper")
 
     debug.register('COL',  "Generic Collectable")

@@ -290,20 +290,21 @@ class ROCCurve(object):
             return
 
         # take sets which have values in the shape we can handle
-        ##REF: Name was automagically refactored
         def _check_values(set_):
             """Check if values are 'acceptable'"""
-            if len(set_)<3: return False
-            x = set_[2]
+            if len(set_)<3:
+                return False
+            x = set_[2]                 # estimates
             # TODO: OPT: need optimization
-            if (x is None) or len(x) == 0: return False          # undefined
+            if (x is None) or len(x) == 0:
+                return False          # undefined
             for v in x:
                 try:
                     if Nlabels <= 2 and np.isscalar(v):
                         continue
                     if (isinstance(v, dict) or # not dict for pairs
-                        ((Nlabels>=2) and len(v)!=Nlabels) # 1 per each label for multiclass
-                        ): return False
+                        ((Nlabels >= 2) and len(v) != Nlabels)): # 1 per each label for multiclass
+                        return False
                 except Exception, e:
                     # Something else which is not supported, like
                     # in shogun interface we don't yet extract values per each label or
@@ -314,11 +315,11 @@ class ROCCurve(object):
                     return False
             return True
 
-        sets_wv = filter(_check_values, sets)
-        # check if all had values, if not -- complain
+        sets_wv = [x for x in sets if _check_values(x)]
+        # check if all had estimates, if not -- complain
         Nsets_wv = len(sets_wv)
         if Nsets_wv > 0 and len(sets) != Nsets_wv:
-            warning("Only %d sets have values assigned from %d sets. "
+            warning("Only %d sets have estimates assigned from %d sets. "
                     "ROC estimates might be incorrect." %
                     (Nsets_wv, len(sets)))
         # bring all values to the same 'shape':
@@ -328,7 +329,7 @@ class ROCCurve(object):
         # yoh: apparently it caused problems whenever we had just a single
         #      unique label in the sets. Introduced handling for
         #      NLabels == 1
-        for iset,s in enumerate(sets_wv):
+        for iset, s in enumerate(sets_wv):
             # we will do inplace modification, thus go by index
             estimates = s[2]
             # we would need it to be a list to reassign element with a list
@@ -470,6 +471,8 @@ class ConfusionMatrix(SummaryStatistics):
         ('FDR', 'false discovery rate', 'FDR = FP / (FP + TP)'),
         ('MCC', "Matthews Correlation Coefficient",
                 "MCC = (TP*TN - FP*FN)/sqrt(P N P' N')"),
+        ('F1',  'F1 score',
+                "F1 = 2TP / (P + P') = 2TP / (2TP + FP + FN)"),
         ('AUC', "Area under (AUC) curve", None),
         ('CHI^2', "Chi-square of confusion matrix", None),
         ('LOE(ACC)', "Linear Order Effect in ACC across sets", None),
@@ -674,6 +677,7 @@ class ConfusionMatrix(SummaryStatistics):
         stats['NPV'] = stats['TN'] / (1.0*stats["N'"])
         stats['FDR'] = stats['FP'] / (1.0*stats["P'"])
         stats['SPC'] = (stats['TN']) / (1.0*stats['FP'] + stats['TN'])
+        stats['F1'] = 2.*stats['TP'] / (stats["P"] + stats["P'"])
 
         MCC_denom = np.sqrt(1.0*stats['P']*stats['N']*stats["P'"]*stats["N'"])
         nz = MCC_denom!=0.0
@@ -788,7 +792,7 @@ class ConfusionMatrix(SummaryStatistics):
         res = ""
 
         stats_perpredict = ["P'", "N'", 'FP', 'FN', 'PPV', 'NPV', 'TPR',
-                            'SPC', 'FDR', 'MCC']
+                            'SPC', 'FDR', 'MCC', 'F1']
         # print AUC only if ROC was computed
         if self.ROC is not None: stats_perpredict += [ 'AUC' ]
         stats_pertarget = ['P', 'N', 'TP', 'TN']
