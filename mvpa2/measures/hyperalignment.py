@@ -3,6 +3,8 @@ from mvpa2.algorithms.hyperalignment import Hyperalignment
 from mvpa2.measures.base import Measure
 from mvpa2.featsel.base import StaticFeatureSelection
 from mvpa2.datasets import Dataset
+from mvpa2.mappers.base import ChainMapper
+from mvpa2.mappers.staticprojection import StaticProjectionMapper
 from scipy.linalg import LinAlgError
     
 class HyperalignmentMeasure(Measure):
@@ -29,7 +31,7 @@ class HyperalignmentMeasure(Measure):
                 hyper = Hyperalignment(zscore_common=True, ref_ds = ref_ds)
                 mappers = hyper(datasets=ds)
                 # Extract only the row/column corresponding to the center voxel
-                mappers = [ np.squeeze(m.proj[:,seed_index]) for m in mappers]
+                mappers = [ StaticProjectionMapper(proj=np.asarray([np.squeeze(m.proj[:,seed_index])]).T) for m in mappers]
                 break
             except LinAlgError:
                 print "SVD didn't converge. Trying with a new reference: %i" %(ref_ds+1)
@@ -44,5 +46,7 @@ class HyperalignmentMeasure(Measure):
                 print "We are Screwed..."
         
         
-        return Dataset(samples=np.asanyarray([{'proj':mapper,'fsel':StaticFeatureSelection(dataset.fa[self._index_attr].value)} for mapper in mappers]))
-
+        #return Dataset(samples=np.asanyarray([{'proj':mapper,'fsel':StaticFeatureSelection(dataset.fa[self._index_attr].value)} for mapper in mappers]))
+        return Dataset(samples=np.asanyarray([{'proj': ChainMapper([StaticFeatureSelection(dataset.fa[self._index_attr].value), mapper])} for mapper in mappers]))
+        # To return such that chain mappers are not combined across feature-dimension (which is apparently dim 2)
+        #return Dataset( samples=np.asanyarray([[ ChainMapper([StaticFeatureSelection(dataset.fa[self._index_attr].value), mapper]) for mapper in mappers ]]).swapaxes(0,1) )
