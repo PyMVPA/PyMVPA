@@ -543,18 +543,6 @@ Things to implement for the next release (Release goals)
    Numeric parameters can be part of .params Collection now, so they are
    joined together.
 
-* Provide sufficient documentation about internal variable naming to make
-  Harvester/Harvesting functionality usable. Currently the user is supposed
-  to know, how a particular *local* variable is called to be able to harvest
-  e.g. `feature_ids` of classifiers over cross-validation folds::
-
-    class.HARVESTABLE={'blah' : ' some description'}
-
-    Add information on HARVESTABLE and ConditionalAttribute
-    Collectable -> Attribute
-
-    base.attributes
-
 * Restructure code base (incl. renaming and moving pieces)
 
   Let's use the following list to come up with a nice structure for all
