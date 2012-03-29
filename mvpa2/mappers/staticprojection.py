@@ -33,8 +33,7 @@ class StaticProjectionMapper(ProjectionMapper):
           constructor.
 
         """
-        ProjectionMapper.__init__(self,  **kwargs)
-        self._Learner__auto_train=True
+        ProjectionMapper.__init__(self,  auto_train=True, **kwargs)
         self._proj = proj
 
     def _train(self, dummyds):
