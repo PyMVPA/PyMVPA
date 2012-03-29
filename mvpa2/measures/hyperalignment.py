@@ -9,11 +9,19 @@ from scipy.linalg import LinAlgError
     
 class HyperalignmentMeasure(Measure):
     is_trained=True
-    def __init__(self, ndatasets=11, scale=0.0, index_attr='index', **kwargs):
+    def __init__(self, ndatasets=11, scale=0.0, index_attr='index', 
+                zscore_common=True, combiner1=None, combiner2=None, **kwargs):
         Measure.__init__(self, **kwargs)
         self.ndatasets = ndatasets
         self.scale = scale
         self._index_attr = index_attr
+        self.zscore_common = zscore_common
+        if combiner1 is None:
+            combiner1 = lambda x,y: 0.5*(x+y)
+        if combiner2 is None:
+            combiner2 = lambda l: np.mean(l, axis=0)
+        self.combiner1 = combiner1
+        self.combiner2 = combiner2
         
     def __call__(self, dataset):
         # create the dissimilarity matrix for the data in the input dataset
@@ -28,7 +36,8 @@ class HyperalignmentMeasure(Measure):
             ds.append(dataset[0+i*nsamples:nsamples*(i+1),])
         for ref_ds in range(self.ndatasets):
             try:
-                hyper = Hyperalignment(zscore_common=True, ref_ds = ref_ds)
+                hyper = Hyperalignment(zscore_common=self.zscore_common, combiner1=self.combiner1,
+                                        combiner2=self.combiner2, ref_ds = ref_ds)
                 mappers = hyper(datasets=ds)
                 # Extract only the row/column corresponding to the center voxel
                 mappers = [ StaticProjectionMapper(proj=np.asarray([np.squeeze(m.proj[:,seed_index])]).T) for m in mappers]
