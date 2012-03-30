@@ -438,23 +438,6 @@ class ClassifiersTests(unittest.TestCase):
         #                     msg="Should classify correctly")
 
 
-
-    def test_harvesting(self):
-        """Basic testing of harvesting based on SplitClassifier
-        """
-        ds = self.data_bin_1
-        clf = SplitClassifier(clf=SameSignClassifier(),
-                enable_ca=['stats', 'training_stats'],
-                harvest_attribs=['clf.ca.training_time'],
-                descr="DESCR")
-        clf.train(ds)                   # train the beast
-        # Number of harvested items should be equal to number of chunks
-        self.assertEqual(
-            len(clf.ca.harvested['clf.ca.training_time']), len(ds.UC))
-        # if we can blame multiple inheritance and ClassWithCollections.__init__
-        self.assertEqual(clf.descr, "DESCR")
-
-
     def test_mapped_classifier(self):
         samples = np.array([ [ 0,  0, -1], [ 1, 0, 1],
                             [-1, -1,  1], [-1, 0, 1],
