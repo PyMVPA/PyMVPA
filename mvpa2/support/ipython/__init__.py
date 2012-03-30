@@ -12,7 +12,7 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa2.base import externals, cfg
-if externals.exists('running ipython env', raise_=True):
+if externals.exists('running ipython env'):
     ipython_version = externals.versions['ipython']
     if ipython_version >= '0.11~':
         # TODO

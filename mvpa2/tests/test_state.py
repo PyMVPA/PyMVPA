@@ -321,7 +321,8 @@ class StateTests(unittest.TestCase):
                                doc="Testing")
             sv.enabled = not v
             sv_dc = copy.deepcopy(sv)
-            self.assertEqual(sv.enabled, sv_dc.enabled)
+            if not (__debug__ and 'ENFORCE_CA_ENABLED' in debug.active):
+                self.assertEqual(sv.enabled, sv_dc.enabled)
             self.assertEqual(sv.name, sv_dc.name)
             self.assertEqual(sv._instance_index, sv_dc._instance_index)
 

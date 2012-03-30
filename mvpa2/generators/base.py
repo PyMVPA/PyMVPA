@@ -53,7 +53,7 @@ class Repeater(Node):
 
 
     def __str__(self):
-        return _str(self, self.count)
+        return _str(self, str(self.nruns))
 
 
 class Sifter(Node):

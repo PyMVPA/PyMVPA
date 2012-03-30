@@ -14,6 +14,7 @@ skip_if_no_external('h5py')
 skip_if_no_external('scipy')
 
 import numpy as np
+from mvpa2.base import cfg
 from mvpa2.testing.datasets import datasets
 from mvpa2.clfs.base import Classifier
 from mvpa2.generators.splitters import Splitter
@@ -46,6 +47,7 @@ def test_h5py_clfs(lrn):
 
     try:
         lrn_ = h5load(f.name)
+        pass
     except Exception, e:
         raise AssertionError, \
               "Failed to load due to %r" % (e,)
@@ -69,7 +71,6 @@ def test_h5py_clfs(lrn):
     error = te(ds)
     error_ = te_(ds)
 
-    assert_array_equal(error, error_)
 
     if len(set(['swig', 'rpy2']).intersection(lrn.__tags__)):
         raise SkipTest("Trained swigged and R-interfaced classifiers can't "
@@ -98,7 +99,20 @@ def test_h5py_clfs(lrn):
     # now lets do predict and manually compute error
     predictions = lrn__.predict(ds[ds.sa.train == 2].samples)
     error__ = errorfx(predictions, ds[ds.sa.train == 2].sa.targets)
-    assert_array_equal(error, error__)
+
+    if 'non-deterministic' in lrn_.__tags__:
+        # might be different... let's allow to vary quite a bit
+        # and new error should be no more than twice the old one
+        # (better than no check at all)
+        # TODO: smarter check, since 'twice' is quite coarse
+        #       especially if original error happens to be 0 ;)
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            ok_(np.asscalar(error_) <= 2*np.asscalar(error))
+            ok_(np.asscalar(error__) <= 2*np.asscalar(error))
+    else:
+        # must match precisely
+        assert_array_equal(error, error_)
+        assert_array_equal(error, error__)
 
     # TODO: verify ca's
 

@@ -12,15 +12,13 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 from mvpa2.base import externals
-if externals.exists('scipy', raise_=True):
-    import scipy
-from mvpa2.support.lapack_svd import svd as dgesvd
 from mvpa2.mappers.projection import ProjectionMapper
 from mvpa2.datasets import Dataset
 from mvpa2.featsel.helpers import ElementSelector
 
 if __debug__:
     from mvpa2.base import debug
+
 
 
 class ProcrusteanMapper(ProjectionMapper):
@@ -53,7 +51,7 @@ class ProcrusteanMapper(ProjectionMapper):
           Cutoff for 'small' singular values to regularize the inverse. See
           :class:`~numpy.linalg.lstsq` for more information.
         svd : string (numpy, scipy, dgesvd), optional
-          Implementation of SVD to use
+          Implementation of SVD to use.  dgesvd requires ctypes to be available.
         **kwargs
           To be passed to ProjectionMapper
         """
@@ -175,9 +173,13 @@ class ProcrusteanMapper(ProjectionMapper):
                 U, s, Vh = np.linalg.svd(np.dot(target.T, source),
                                full_matrices=False)
             elif self._svd == 'scipy':
-                 U, s, Vh = scipy.linalg.svd(np.dot(target.T, source),
+                # would raise exception if not present
+                externals.exists('scipy', raise_=True)
+                import scipy
+                U, s, Vh = scipy.linalg.svd(np.dot(target.T, source),
                                full_matrices=False)
             elif self._svd == 'dgesvd':
+                from mvpa2.support.lapack_svd import svd as dgesvd
                 U, s, Vh = dgesvd(np.dot(target.T, source),
                                     full_matrices=True, algo='svd')
             else:
