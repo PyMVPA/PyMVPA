@@ -136,8 +136,22 @@ class BaseSearchlight(Measure):
                 # there is an additional selection step that needs to be
                 # expressed by another mapper
                 mapper = copy.copy(dataset.a.mapper)
-                mapper.append(StaticFeatureSelection(roi_ids,
-                                                     dshape=dataset.shape[1:]))
+                
+                # NNO if the orignal mapper has no append (because it's not a
+                # chainmapper, for example), we make our own chainmapper.
+                #
+                # THe original code was:
+                # mapper.append(StaticFeatureSelection(roi_ids,
+                #                                     dshape=dataset.shape[1:])) 
+                feat_sel_mapper=StaticFeatureSelection(roi_ids,
+                                                     dshape=dataset.shape[1:])
+                if 'append' in dir(mapper):
+                    mapper.append(feat_sel_mapper)
+                else:
+                    from mappers.base import ChainMapper
+                    mapper = ChainMapper([dataset.a.mapper,
+                                          feat_sel_mapper])
+                    
                 results.a['mapper'] = mapper
 
         # charge state
