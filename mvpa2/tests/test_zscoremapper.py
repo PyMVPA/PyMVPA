@@ -180,8 +180,8 @@ def test_zscore():
                       auto_train=True)
     dsz = zm(ds)
 
-    assert_array_equal((np.mean(ds, axis=0) - np.asanyarray(means))/np.array(stds),
-                       np.mean(dsz, axis=0))
+    assert_array_almost_equal((np.mean(ds, axis=0) - np.asanyarray(means))/np.array(stds),
+                              np.mean(dsz, axis=0))
 
-    assert_array_equal(np.std(ds, axis=0)/np.array(stds),
-                       np.std(dsz, axis=0))
+    assert_array_almost_equal(np.std(ds, axis=0)/np.array(stds),
+                              np.std(dsz, axis=0))

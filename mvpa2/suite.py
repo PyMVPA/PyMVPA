@@ -32,6 +32,7 @@ __sdebug.__doc__ = "Shortcut to output debug messages for suite imports"
 
 __sdebug('base')
 from mvpa2.base import *
+from mvpa2.base.attributes import *
 from mvpa2.base.collections import *
 from mvpa2.base.config import *
 from mvpa2.base.dataset import *

@@ -394,7 +394,9 @@ def table2string(table, out=None):
         out = StringIO()
 
     # equalize number of elements in each row
-    Nelements_max = max(len(x) for x in table)
+    Nelements_max = len(table) \
+                    and max(len(x) for x in table)
+
     for i, table_ in enumerate(table):
         table[i] += [''] * (Nelements_max - len(table_))
 
@@ -476,7 +478,7 @@ def _repr(obj, *args, **kwargs):
     auto_repr = ', '.join(list(args)
                    + ["%s=%s" % (k, v) for k, v in kwargs.iteritems()])
 
-    print max_length
+
     if not truncate is None and len(auto_repr) > max_length:
         auto_repr = auto_repr[:max_length] + '...'
 

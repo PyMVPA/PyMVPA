@@ -229,7 +229,8 @@ class ChainNode(Node):
         for i, n in enumerate(self):
             if __debug__:
                 debug('MAP', "%s: input (%s) -> node (%i/%i): '%s'",
-                      (self.__class__.__name__, mp.shape,
+                      (self.__class__.__name__,
+                       hasattr(mp, 'shape') and mp.shape or '???',
                        i + 1, len(self),
                        n))
             mp = n(mp)

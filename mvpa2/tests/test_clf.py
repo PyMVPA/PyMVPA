@@ -199,6 +199,8 @@ class ClassifiersTests(unittest.TestCase):
                             % (cve, ds, len(ds.UT)))
 
 
+    # yoh: I guess we have skipped meta constructs because they would
+    #      need targets attribute specified in both slave and wrapper
     @sweepargs(lrn=clfswh['!meta']+regrswh['!meta'])
     @reseed_rng()
     def test_custom_targets(self, lrn):
@@ -418,10 +420,11 @@ class ClassifiersTests(unittest.TestCase):
             enable_ca=['stats', 'training_stats'])
         cverror = cv(ds).samples.squeeze()
 
-        self.assertTrue(abs(error-cverror)<0.01,
-                msg="We should get the same error using split classifier as"
-                    " using CrossValidation. Got %s and %s"
-                    % (error, cverror))
+        if not 'non-deterministic' in clf.__tags__:
+            self.assertTrue(abs(error-cverror)<0.01,
+                    msg="We should get the same error using split classifier as"
+                        " using CrossValidation. Got %s and %s"
+                        % (error, cverror))
 
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.assertTrue(error < 0.25,
@@ -433,23 +436,6 @@ class ClassifiersTests(unittest.TestCase):
             msg="Should have number of classifiers equal # of epochs")
         #self.assertEqual(clf.predict(ds.samples), list(ds.targets),
         #                     msg="Should classify correctly")
-
-
-
-    def test_harvesting(self):
-        """Basic testing of harvesting based on SplitClassifier
-        """
-        ds = self.data_bin_1
-        clf = SplitClassifier(clf=SameSignClassifier(),
-                enable_ca=['stats', 'training_stats'],
-                harvest_attribs=['clf.ca.training_time'],
-                descr="DESCR")
-        clf.train(ds)                   # train the beast
-        # Number of harvested items should be equal to number of chunks
-        self.assertEqual(
-            len(clf.ca.harvested['clf.ca.training_time']), len(ds.UC))
-        # if we can blame multiple inheritance and ClassWithCollections.__init__
-        self.assertEqual(clf.descr, "DESCR")
 
 
     def test_mapped_classifier(self):
@@ -657,7 +643,6 @@ class ClassifiersTests(unittest.TestCase):
         if clf.params.has_key('C') and clf.params.C<0:
             oldC = clf.params.C
             clf.params.C = 1.0                 # reset C to be 1
-
         svm, svm2 = clf, clf.clone()
         svm2.ca.enable(['training_stats'])
 
@@ -915,7 +900,7 @@ class ClassifiersTests(unittest.TestCase):
     #    svmocas -- segfaults -- reported to mailing list
     #    GNB, LDA, QDA -- cannot train since 1 sample isn't sufficient
     #    to assess variance
-    @sweepargs(clf=clfswh['!smlr', '!knn', '!gnb', '!lda', '!qda', '!lars', '!meta', '!ridge'])
+    @sweepargs(clf=clfswh['!smlr', '!knn', '!gnb', '!lda', '!qda', '!lars', '!meta', '!ridge', '!needs_population'])
     def test_correct_dimensions_order(self, clf):
         """To check if known/present Classifiers are working properly
         with samples being first dimension. Started to worry about

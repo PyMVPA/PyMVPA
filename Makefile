@@ -170,10 +170,16 @@ references:
 	@echo "I: Generating references"
 	tools/bib2rst_ref.py
 
-htmldoc: examples2rst build pics
+# Since mpl doesn't take env variables
+mpl-stamp: build
+	echo "backend : Agg" >| $(CURDIR)/build/matplotlibrc
+	touch $@
+
+htmldoc: examples2rst build pics mpl-stamp
 	@echo "I: Creating an HTML version of documentation"
 	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off \
 		PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
+		MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build \
 		$(MAKE) html BUILDDIR=$(BUILDDIR) SPHINXOPTS="$(SPHINXOPTS)"
 	cd $(HTML_DIR)/generated && ln -sf ../_static
 	cd $(HTML_DIR)/examples && ln -sf ../_static
@@ -182,10 +188,11 @@ htmldoc: examples2rst build pics
 	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
 
 pdfdoc: examples2rst build pics pdfdoc-stamp
-pdfdoc-stamp:
+pdfdoc-stamp: mpl-stamp
 	@echo "I: Creating a PDF version of documentation"
 	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off \
 		PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
+		MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build \
 		$(MAKE) latex BUILDDIR=$(BUILDDIR) SPHINXOPTS="$(SPHINXOPTS)"
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
 	touch $@
@@ -466,7 +473,7 @@ testcfg: build
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa2/tests/__init__.py
 	@echo "+I: Check all known dependencies and store them"
 	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c \
-	  'from mvpa2.suite import *; mvpa2.base.externals.test_all_dependencies(force=False); cfg.save("pymvpa2.cfg");'
+	  'from mvpa2.suite import *; mvpa2.base.externals.check_all_dependencies(force=False); cfg.save("pymvpa2.cfg");'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
 	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa2/tests/__init__.py
 	-@rm -f pymvpa2.cfg
