@@ -568,6 +568,14 @@ class ClassifiersTests(unittest.TestCase):
         clfs = [clfs[i] for i in np.random.permutation(len(clfs))
                 if not '%' in str(clfs[i])]
 
+        # NB: It is necessary that the same classifier was not used at
+        # different nodes, since it would be re-trained for a new set
+        # of targets, thus leading to incorrect behavior/high error.
+        #
+        # Clone only those few leading ones which we will use
+        # throughout the test
+        clfs = [clf.clone() for clf in clfs[:4]]
+
         # Test conflicting definition
         tclf = TreeClassifier(clfs[0], {
             'L0+2' : (('L0', 'L2'), clfs[1]),
@@ -612,13 +620,12 @@ class ClassifiersTests(unittest.TestCase):
 
         # Test trailing nodes with no classifier
 
-        # NB: It is necessary that the same classifier was not used at
-        # different nodes, since it would be re-trained for a new set
-        # of targets, thus leading to incorrect behavior/high error.
         # That is why we use separate pool of classifiers here
+        # (that is probably old/not-needed since switched to use clones)
         clfs_mc = clfswh['multiclass']         # pool of classifiers
         clfs_mc = [clfs_mc[i] for i in np.random.permutation(len(clfs_mc))
                    if not '%' in str(clfs_mc[i])]
+        clfs_mc = [clf.clone() for clf in clfs_mc[:4]] # and clones again
 
         tclf = TreeClassifier(clfs_mc[0], {
             'L0' : (('L0',), None),
