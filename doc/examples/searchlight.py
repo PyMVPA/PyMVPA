@@ -46,6 +46,9 @@ selectivity contrast for voxels ventral temporal cortex."""
 # data path
 datapath = os.path.join(pymvpa_datadbroot,
                         'tutorial_data', 'tutorial_data', 'data')
+# NNO
+datapath = '/Users/nick/Downloads/tutorial_data/data'
+
 # source of class targets and chunks definitions
 attr = SampleAttributes(os.path.join(datapath, 'attributes.txt'))
 
@@ -56,6 +59,7 @@ dataset = fmri_dataset(
                 mask=os.path.join(datapath, 'mask_brain.nii.gz'),
                 add_fa={'vt_thr_glm': os.path.join(datapath, 'mask_vt.nii.gz')})
 
+print "loaded"
 """The dataset is now loaded and contains all brain voxels as features, and all
 volumes as samples. To precondition this data for the intended analysis we have
 to perform a few preprocessing steps (please note that the data was already
