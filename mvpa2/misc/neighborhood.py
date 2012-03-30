@@ -396,7 +396,6 @@ class IndexQueryEngine(QueryEngine):
     - repr
     """
 
-    @borrowkwargs(QueryEngine, '__init__')
     def __init__(self, sorted=True, **kwargs):
         """
         Parameters
