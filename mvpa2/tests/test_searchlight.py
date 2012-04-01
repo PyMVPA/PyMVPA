@@ -355,8 +355,9 @@ class SearchlightTests(unittest.TestCase):
             assert(corr.shape == (2,2)) # for paranoid ones
             return corr[0, 1]
 
-        for nsc, thr in ((0, 1.0),
-                         (0.1, 0.6)):   # just a bit of noise
+        for nsc,  thr, thr_mean in (
+            (0,   1.0, 1.0),
+            (0.1, 0.3, 0.8)):   # just a bit of noise
             ds2 = ds1.copy(deep=True)    # make a copy for the 2nd subject
             ds2.sa['subject'] = [2]
             ds2.samples += nsc * np.random.normal(size=ds1.shape)
@@ -369,6 +370,7 @@ class SearchlightTests(unittest.TestCase):
             sl = sphere_searchlight(corr12, radius=2)
             slmap = sl(ds_both)
             ok_(np.all(slmap.samples >= thr))
+            ok_(np.mean(slmap.samples) >= thr)
 
 def suite():
     return unittest.makeSuite(SearchlightTests)

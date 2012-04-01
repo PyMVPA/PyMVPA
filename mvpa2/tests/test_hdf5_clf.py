@@ -14,6 +14,7 @@ skip_if_no_external('h5py')
 skip_if_no_external('scipy')
 
 import numpy as np
+from mvpa2.base import cfg
 from mvpa2.testing.datasets import datasets
 from mvpa2.clfs.base import Classifier
 from mvpa2.generators.splitters import Splitter
@@ -103,8 +104,11 @@ def test_h5py_clfs(lrn):
         # might be different... let's allow to vary quite a bit
         # and new error should be no more than twice the old one
         # (better than no check at all)
-        ok_(np.asscalar(error_) <= 2*np.asscalar(error))
-        ok_(np.asscalar(error__) <= 2*np.asscalar(error))
+        # TODO: smarter check, since 'twice' is quite coarse
+        #       especially if original error happens to be 0 ;)
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            ok_(np.asscalar(error_) <= 2*np.asscalar(error))
+            ok_(np.asscalar(error__) <= 2*np.asscalar(error))
     else:
         # must match precisely
         assert_array_equal(error, error_)
