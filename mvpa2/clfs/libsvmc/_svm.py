@@ -108,7 +108,7 @@ class SVMParameter(object):
 
         def __del__(self):
             if __debug__:
-                debug('CLF_', 'Destroying libsvm._SVMCParameter %s' % str(self))
+                debug('SVM_', 'Destroying libsvm._SVMCParameter %s' % str(self))
             free_int_array(svmc.svm_parameter_weight_label_get(self.param))
             free_double_array(svmc.svm_parameter_weight_get(self.param))
             svmc.delete_svm_parameter(self.param)
@@ -157,7 +157,7 @@ class SVMParameter(object):
 
     def __del__(self):
         if __debug__:
-            debug('CLF_', 'Destroying libsvm.SVMParameter %s' % str(self))
+            debug('SVM_', 'Destroying libsvm.SVMParameter %s' % str(self))
         self._clear_svmc_params()
 
     ##REF: Name was automagically refactored
@@ -248,7 +248,7 @@ class SVMProblem:
 
     def __del__(self):
         if __debug__:
-            debug('CLF_', 'Destroying libsvm.SVMProblem %s' % `self`)
+            debug('SVM_', 'Destroying libsvm.SVMProblem %s' % `self`)
 
         svmc.delete_svm_problem(self.prob)
         svmc.delete_double(self.y_array)
