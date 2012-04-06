@@ -119,7 +119,7 @@ _DEF = "\n[Default: %default]"
 #
 # set default version string, otherwise '--version' option is not enabled
 # can be overwritten later on by assigning to `parser.version`
-parser = OptionParser(version="%prog",
+parser = OptionParser(version=mvpa2.__version__, # "%prog"
                       add_help_option=False,
                       conflict_handler="error")
 
