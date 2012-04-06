@@ -83,7 +83,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'PyMVPA'
-copyright = '2006-2010, PyMVPA Authors'
+copyright = '2006-2012, PyMVPA Authors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -248,6 +248,10 @@ latex_logo = 'pics/pymvpa_logo.pdf'
 latex_preamble = r"""
 \usepackage{enumitem}
 \setdescription{style=nextline,font=\normalfont}
+
+% to get proper single quotes
+% source: http://stackoverflow.com/questions/5757630/sphinx-pdf-output-apostrophes-in-python-source-are-replaced-by-right-single-quo
+\usepackage{upquote}
 
 % more table of contents
 \setcounter{tocdepth}{3}
