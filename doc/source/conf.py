@@ -249,6 +249,10 @@ latex_preamble = r"""
 \usepackage{enumitem}
 \setdescription{style=nextline,font=\normalfont}
 
+% to get proper single quotes
+% source: http://stackoverflow.com/questions/5757630/sphinx-pdf-output-apostrophes-in-python-source-are-replaced-by-right-single-quo
+\usepackage{upquote}
+
 % more table of contents
 \setcounter{tocdepth}{3}
 
