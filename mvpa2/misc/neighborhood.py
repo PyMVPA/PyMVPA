@@ -396,7 +396,6 @@ class IndexQueryEngine(QueryEngine):
     - repr
     """
 
-    @borrowkwargs(QueryEngine, '__init__')
     def __init__(self, sorted=True, **kwargs):
         """
         Parameters
@@ -573,7 +572,7 @@ class CachedQueryEngine(QueryEngineInterface):
     def __repr__(self, prefixes=[]):
         return super(CachedQueryEngine, self).__repr__(
             prefixes=prefixes
-            + _repr_attrs(self, ['qe']))
+            + _repr_attrs(self, ['queryengine']))
 
 
     def train(self, dataset):
@@ -618,7 +617,40 @@ class CachedQueryEngine(QueryEngineInterface):
 
     @borrowdoc(QueryEngineInterface)
     def query(self, **kwargs):
-        k = idhash_(kwargs.items())
+        def to_hashable(x):
+            """Convert x to something which dict wouldn't mind"""
+            import operator
+            try:
+                # silly attempt
+                d = {x: None}
+                return x
+            except TypeError:
+                pass
+
+            if isinstance(x, dict):
+                # keys are already hashable
+                # and sort for deterministic order
+                return tuple((k, to_hashable(v))
+                             for (k, v) in sorted(x.iteritems()))
+            elif operator.isSequenceType(x):
+                return tuple(i for i in x)
+            elif np.isscalar(x):
+                return x
+            return x   # and then wait for the report for it to be added
+
+        # idhash_ is somewhat inappropriate since also relies on id
+        # (which we should allow to differ) but ATM failing to hash
+        # ndarrays etc
+        # k = idhash_(kwargs.items())
+
+        # So let's use verbose version of the beastie (could have been
+        # also as simple as __repr__ but afraid that order could be
+        # changing etc).  This simple function should be sufficient
+        # for our typical use, otherwise we might like to use hashing
+        # facilities provided by joblib but for paranoid we would
+        # still need to store actual values to resolve collisions
+        # which would boil down to the same scenario
+        k = to_hashable(kwargs)
         v = self._lookup.get(k, None)
         if v is None:
             self._lookup[k] = v = self._queryengine.query(**kwargs)

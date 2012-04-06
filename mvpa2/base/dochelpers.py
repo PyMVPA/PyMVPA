@@ -255,6 +255,8 @@ def enhanced_doc_string(item, *args, **kwargs):
         func = lcl['__init__']
         initdoc = func.__doc__
 
+        skip_params += lcl.get('__init__doc__exclude__', [])
+
         # either to extend arguments
         # do only if kwargs is one of the arguments
         # in python 2.5 args are no longer in co_names but in varnames
@@ -394,7 +396,9 @@ def table2string(table, out=None):
         out = StringIO()
 
     # equalize number of elements in each row
-    Nelements_max = max(len(x) for x in table)
+    Nelements_max = len(table) \
+                    and max(len(x) for x in table)
+
     for i, table_ in enumerate(table):
         table[i] += [''] * (Nelements_max - len(table_))
 
@@ -539,6 +543,13 @@ def _str(obj, *args, **kwargs):
 
 def borrowdoc(cls, methodname=None):
     """Return a decorator to borrow docstring from another `cls`.`methodname`
+
+    It should not be used for __init__ methods of classes derived from
+    ClassWithCollections since __doc__'s of those are handled by the
+    AttributeCollector anyways.
+
+    Common use is to borrow a docstring from the class's method for an
+    adapter function (e.g. sphere_searchlight borrows from Searchlight)
 
     Examples
     --------
