@@ -38,6 +38,7 @@ Recommends:
          python-scipy,
          python-sklearn,
          shogun-python-modular,
+         liblapack-dev,
 Suggests:
          fslview, fsl,
          python-mvpa2-doc,
