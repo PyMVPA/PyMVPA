@@ -21,36 +21,99 @@ taken for the example of actual computation to be done.  Run
 options.
 """
 
-from mvpa2.suite import *
+# Import minimal needed amount to get process going so we could
+# QUICKLY parse and verify command line arguments
+import mvpa2
+from mvpa2.base import *
+from mvpa2.misc.cmdline import *
 
-
-def main():
-    """ Wrapped into a function call for easy profiling later on
-    """
-
-    parser.usage = """\
-    %s [options] <NIfTI samples> <targets+blocks> <NIfTI mask> [<output>]
+def parse_cmdline():
+    parser.usage = """
+    %s [options] <NIfTI samples> <targets+blocks> <NIfTI mask> [<output_prefix>]
 
     where targets+blocks is a text file that lists the class label and the
     associated block of each data sample/volume as a tuple of two integer
     values (separated by a single space). -- one tuple per line.""" \
     % sys.argv[0]
 
-    parser.option_groups = [opts.SVM, opts.KNN, opts.general, opts.common]
+    opts.add('preproc', [opt.zscore,
+                         opt.baseline_conditions,
+                         opt.exclude_conditions,
+                         opt.targets_sa,
+                         opt.chunks_sa,
+                         #opt.tr,
+                         #opt.detrend,
+                         ], "Preprocessing options")
+
+    parser.option_groups = [opts.SVM, opts.KNN, opts.general, opts.preproc, opts.common]
 
     # Set a set of available classifiers for this example
-    opt.clf.choices=['knn', 'lin_nu_svmc', 'rbf_nu_svmc']
-    opt.clf.default='lin_nu_svmc'
+    opt.clf.choices=['gnb', 'm1nn', 'knn', 'lin_nu_svmc', 'rbf_nu_svmc']
+    opt.clf.default='m1nn' # Fast and reasonably powerful
 
-    parser.add_options([opt.clf, opt.zscore])
+    parser.add_options([
+        opt.clf,
+        Option("--dataset-summary",
+               action="store_true", dest="print_dataset_summary",
+               help="Print dataset summary after preprocessing"),
+        Option("--generic-searchlight",
+               action="store_true", dest="use_generic_searchlight",
+               help="For GNB and M1NN ad-hoc efficient searchlight "
+               "implementations are used by default.  This option "
+               "would enforce use of a generic searchlight")
+        ])
 
     (options, files) = parser.parse_args()
+    return files, options               # more logical order
+
+
+def validate_options(files, options):
+    """Let's verify provided options and do some basic checks
+
+    So we could fail earlier than later
+    """
+
+    # Let's spit out all errors at once -- it is annoying to redo
+    bad_options_msgs = []
+
+    if options.baseline_conditions:
+        if len(options.baseline_conditions) > 1:
+            bad_options_msgs.append(
+                "--baseline-conditions must list only a single condition")
 
     if not len(files) in [3, 4]:
-        parser.error("Please provide 3 or 4 files in the command line")
-        sys.exit(1)
+        bad_options_msgs.append("Please provide 3 or 4 files in the command line")
+    else:
+        # Quickly check provided files for obvious problems,
+        # e.g. different dimensionality
+        try:
+            import nibabel as nib
+            nis = [nib.load(f).get_header() for f in (files[0], files[2])]
+        except Exception, e:
+            bad_options_msgs.append(
+                "Failed to open input volumes. Error was: %s" % e)
+        else:
+            shapes = [ni.get_data_shape() for ni in nis]
+            # First one should have at least the same # of dimensions
+            #if shapes[1]
+
+    if bad_options_msgs:
+        sys.stderr.write("There were errors in options specification:"
+                         + '\n E: '.join([''] + bad_options_msgs)
+                         + '\n')
+        raise SystemExit(1)
+
+
+def run_analysis(files, options):
+    # Finally import the rest of the suite
+    verbose(1, "Importing PyMVPA v. %s suite" % mvpa2.__version__)
+
+    import numpy as np
+    import mvpa2.suite as mv
+
 
     verbose(1, "Loading data")
+    verbose(3, "Files:  %s" % '\n     '.join([''] +files))
 
     # data filename
     dfile = files[0]
@@ -68,58 +131,106 @@ def main():
     # TODO: We need some generic helper to read conditions stored in some
     #       common formats
     verbose(2, "Reading conditions from file %s" % cfile)
-    attrs = SampleAttributes(cfile, literallabels=True)
+    attrs = mv.SampleAttributes(cfile, literallabels=True)
 
     verbose(2, "Loading volume file %s" % dfile)
-    data = fmri_dataset(dfile,
-                         targets=attrs.targets,
-                         chunks=attrs.chunks,
-                         mask=mfile)
+    data = mv.fmri_dataset(dfile,
+                           targets=attrs.targets,
+                           chunks=attrs.chunks,
+                           mask=mfile)
 
-    # do not try to classify baseline condition
-    # XXX this is only valid for our haxby8 example dataset and should
-    # probably be turned into a proper --baselinelabel option that can
-    # be used for zscoring as well.
-    data = data[data.targets != 'rest']
+
+    verbose(1, "Preprocessing")
+    verbose(2, "Options: %s" % options)
+
+    # Exclude some conditions if requested
+    if options.exclude_conditions:
+        bmask = np.ones(len(data), dtype=bool)
+        for sa, values in options.exclude_conditions:
+            for v in values:
+                bmask_v = data.sa[sa].value == v
+                if not np.sum(bmask_v):
+                    warning("Listed value %r was not found in .sa.%s"
+                            % (v, sa))
+                bmask &= ~bmask_v
+        verbose(2, "Excluding %d samples matching the exclude_conditions=%s"
+                % (np.sum(np.logical_not(bmask)), options.exclude_conditions))
+        data = data[bmask]
 
     if options.zscore:
         verbose(1, "Zscoring data samples")
-        zscore(data, chunks_attr='chunks', dtype='float32')
+        # TODO: verify if enforcing dtype here is needed/desired
+        mv.zscore(data, chunks_attr=options.chunks_sa,
+                  param_est=options.baseline_conditions,
+                  dtype='float32')
 
-    if options.clf == 'knn':
-        clf = kNN(k=options.knearestdegree)
-    elif options.clf == 'lin_nu_svmc':
-        clf = LinearNuSVMC(nu=options.svm_nu)
-    elif options.clf == 'rbf_nu_svmc':
-        clf = RbfNuSVMC(nu=options.svm_nu)
-    else:
-        raise ValueError, 'Unknown classifier type: %s' % `options.clf`
-    verbose(3, "Using '%s' classifier" % options.clf)
+    if verbose.level > 2 or options.print_dataset_summary:
+        verbose(1, data.summary())
 
     verbose(1, "Computing")
 
-    verbose(3, "Assigning a measure to be CrossValidation")
-    # compute N-1 cross-validation with the selected classifier in each sphere
-    cv = CrossValidation(clf, NFoldPartitioner(cvtype=options.crossfolddegree))
+    if options.clf in ['gnb', 'm1nn'] and not options.use_generic_searchlight:
+        # Ad-hoc searchlights
+        #if options.clf == 'gnb':
+        raise NotImplementedError('TODO')
+    else:
+        if options.clf == 'gnb':
+            # TODO: options for parameters
+            clf = mv.M1NN()
+        elif options.clf == 'gnb':
+            # TODO: options for parameters
+            clf = mv.GNB()
+        elif options.clf == 'knn':
+            clf = mv.kNN(k=options.knearestdegree)
+        elif options.clf == 'lin_nu_svmc':
+            clf = mv.LinearNuSVMC(nu=options.svm_nu)
+        elif options.clf == 'rbf_nu_svmc':
+            clf = mv.RbfNuSVMC(nu=options.svm_nu)
+        else:
+            raise ValueError, 'Unknown classifier type: %s' % `options.clf`
 
-    verbose(3, "Generating Searchlight instance")
-    # contruct searchlight with 5mm radius
-    # this assumes that the spatial pixdim values in the source NIfTI file
-    # are specified in mm
-    sl = sphere_searchlight(cv, radius=options.radius)
+        clf.space = options.targets_sa
+
+        verbose(2, "Using '%s' classifier" % options.clf)
+
+        verbose(3, "Assigning a measure to be CrossValidation")
+        # compute N-1 cross-validation with the selected classifier in
+        # each sphere
+        cv = mv.CrossValidation(clf,
+                                NFoldPartitioner(cvtype=options.crossfolddegree))
+
+        verbose(3, "Generating a generic Searchlight instance")
+        # contruct searchlight with 5mm radius
+        # this assumes that the spatial pixdim values in the source NIfTI file
+        # are specified in mm
+        sl = sphere_searchlight(cv, radius=options.radius)
 
     # run searchlight
-    verbose(3, "Running searchlight on loaded data")
+    verbose(3, "Running the searchlight on loaded data")
     results = sl(data)
 
     if not ofile is None:
         # map the result vector back into a nifti image
-        rimg = map2nifti(data, results)
+        rimg = mv.map2nifti(data, results)
 
         # save to file
         rimg.save(ofile)
     else:
         print results
+
+
+def main(files=None, options=None):
+    """ Wrapped into a function call for easy profiling later on
+    """
+    # If files or options were not specified
+    if files is None or options is None:
+        files, options = parse_cmdline()
+    elif files or options:
+        raise ValueError("Please specify both files and options, "
+                         "or none of them, so they are parsed from "
+                         "the command line")
+    validate_options(files, options)
+    run_analysis(files, options)
 
 if __name__ == "__main__":
     main()
