@@ -1,3 +1,11 @@
+pymvpa2 (2.0.1-2) UNRELEASED; urgency=low
+
+  * debian/control
+    - unwrapped Depends/Recommends and sorted
+    - moved python-lxml and python-sklearn into Recommends
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 06 Apr 2012 17:27:21 -0400
+
 pymvpa2 (2.0.1-1) unstable; urgency=low
 
   * Fresh upstream release

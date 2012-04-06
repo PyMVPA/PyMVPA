@@ -22,11 +22,30 @@ Vcs-Git: git://git.debian.org/git/pkg-exppsy/pymvpa.git
 
 Package: python-mvpa2
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-mvpa2-lib(>= ${source:Version})
+Depends: ${misc:Depends}, ${python:Depends},
+         python-mvpa2-lib(>= ${source:Version}),
+         python-numpy,
+Recommends:
+         python-h5py,
+         python-lxml,
+         python-matplotlib,
+         python-mdp,
+         python-nibabel,
+         python-psutil,
+         python-psyco,
+         python-pywt,
+         python-reportlab,
+         python-scipy,
+         python-sklearn,
+         shogun-python-modular,
+Suggests:
+         fslview, fsl,
+         python-mvpa2-doc,
+         python-nose,
+         python-openopt,
+         python-rpy2,
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
-Recommends: python-nibabel, python-psyco, python-mdp, python-scipy, shogun-python-modular, python-pywt, python-matplotlib, python-reportlab, python-h5py, python-psutil
-Suggests: fslview, fsl, python-nose, python-lxml, python-openopt, python-rpy2, python-mvpa2-doc, python-sklearn
 Description: multivariate pattern analysis with Python v. 2
  PyMVPA eases pattern classification analyses of large datasets, with an
  accent on neuroimaging. It provides high-level abstraction of typical
@@ -45,7 +64,8 @@ Description: multivariate pattern analysis with Python v. 2
 
 Package: python-mvpa2-lib
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}, python-numpy
+Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends},
+         python-numpy
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Description: low-level implementations and bindings for PyMVPA v. 2
