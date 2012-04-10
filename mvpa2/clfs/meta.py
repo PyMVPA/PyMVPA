@@ -831,7 +831,8 @@ class TreeClassifier(ProxyClassifier):
 
         # train primary classifier
         if __debug__:
-            debug('CLFTREE', "Training primary %s on %s", (clf, ds_group))
+            debug('CLFTREE', "Training primary %s on %s with targets %s",
+                  (clf, ds_group, ds_group.sa[targets_sa_name].unique))
         clf.train(ds_group)
 
         # ??? should we obtain values for anything?
@@ -880,8 +881,13 @@ class TreeClassifier(ProxyClassifier):
         # Local bindings
         clfs, index2group, groups = self.clfs, self._index2group, self._groups
         clf_predictions = np.asanyarray(ProxyClassifier._predict(self, dataset))
+        if __debug__:
+                debug('CLFTREE',
+                      'Predictions %s',
+                      (clf_predictions))
         # assure that predictions are indexes, ie int
         clf_predictions = clf_predictions.astype(int)
+
         # now for predictions pointing to specific groups go into
         # corresponding one
         # defer initialization since dtype would depend on predictions

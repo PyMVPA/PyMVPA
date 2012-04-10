@@ -42,6 +42,9 @@ class GNBSearchlight(SimpleStatBaseSearchlight):
     over generic Searchlight with GNB go to Francisco Pereira.
     """
 
+    # TODO: implement parallelization (see #67) and then uncomment
+    __init__doc__exclude__ = ['nproc']
+
     @borrowkwargs(SimpleStatBaseSearchlight, '__init__')
     def __init__(self, gnb, generator, qe, **kwargs):
         """Initialize a GNBSearchlight
