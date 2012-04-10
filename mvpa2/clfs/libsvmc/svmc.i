@@ -274,12 +274,15 @@ void svm_node_matrix_destroy(struct svm_node **matrix)
 	free(matrix);
 }
 
-#if LIBSVM_VERSION >= 300
-void svm_destroy_model_helper(svm_model* model_ptr)
+void svm_destroy_model_helper(svm_model *model_ptr)
 {
+#if LIBSVM_VERSION >= 300
     // yoh: Silence the blurber
-//	fprintf(stderr,"warning: svm_destroy_model is deprecated and should not be used. Please use svm_free_and_destroy_model(svm_model **model_ptr_ptr)\n");
+	// fprintf(stderr, "warning: svm_destroy_model is deprecated and should not be used. Please use svm_free_and_destroy_model(svm_model **model_ptr_ptr)\n");
 	svm_free_and_destroy_model(&model_ptr);
-}
+#else
+	svm_destroy_model(model_ptr);
 #endif
+}
+
 %}

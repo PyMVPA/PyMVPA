@@ -49,7 +49,6 @@ class OptionGroups(object):
     def add(self, name, l, doc):
         self._d[name] = (doc, l)
 
-    ##REF: Name was automagically refactored
     def _get_group(self, name):
         try:
             doc, l = self._d[name]
@@ -72,6 +71,43 @@ class OptionGroups(object):
         return object.__getattribute__(self, index)
 
 
+def split_comma_semicolon_lists(s, dtype=None):
+    """TODO
+    Parameters
+    ----------
+    s
+      Input string
+    dtype: optional
+      Data type to impose upon values
+    """
+    res = []
+    for x in s.split(";"):
+        if not ':' in x:
+            raise ValueError("Each entry must be in the form key:values,"
+                             " e.g. 'targets:rest'")
+        key, s_values = x.split(':', 1)
+        values = s_values.split(',')
+        if dtype is not None:
+            values = [dtype(v) for v in values]
+        res.append((key, values))
+    return res
+
+
+# Some local helpers
+
+def _FORMAT(s):
+    """Helper to provide uniform appearance for formats in cmdline options
+    """
+    return ". Specified as %r" % s
+
+def _EXAMPLE(s):
+    """Helper to provide uniform appearance for examples in cmdline options
+    """
+    return ", e.g. %r" % s
+
+_DEF = "\n[Default: %default]"
+
+
 # TODO: try to make groups definition somewhat lazy, since now
 # whenever a group is created, those parameters are already known by
 # parser, although might not be listed in the list of used and not by
@@ -83,7 +119,7 @@ class OptionGroups(object):
 #
 # set default version string, otherwise '--version' option is not enabled
 # can be overwritten later on by assigning to `parser.version`
-parser = OptionParser(version="%prog",
+parser = OptionParser(version=mvpa2.__version__, # "%prog"
                       add_help_option=False,
                       conflict_handler="error")
 
@@ -91,10 +127,11 @@ parser = OptionParser(version="%prog",
 opt = Options()
 opts = OptionGroups(parser)
 
+
 #
-# Verbosity options
+# Callbacks to tune up the output or cause specific actions to be
+# taken
 #
-##REF: Name was automagically refactored
 def _verbose_callback(option, optstr, value, parser):
     """Callback for -v|--verbose cmdline option
     """
@@ -103,6 +140,17 @@ def _verbose_callback(option, optstr, value, parser):
     verbose.level = value
     optstr = optstr                     # pylint shut up
     setattr(parser.values, option.dest, value)
+
+def _split_comma_semicolon_lists_callback(option, optstr, value, parser):
+    """Callback to split provided values
+    """
+    if value is None:
+        return None
+    if __debug__:
+        debug("CMDLINE", "Splitting %s for %s" % (value, optstr))
+    value_split = split_comma_semicolon_lists(value)
+    setattr(parser.values, option.dest, value_split)
+
 
 opt.help = \
     Option("-h", "--help", "--sos",
@@ -113,7 +161,7 @@ opt.verbose = \
     Option("-v", "--verbose", "--verbosity",
            action="callback", callback=_verbose_callback, nargs=1,
            type="int", dest="verbose", default=0,
-           help="Verbosity level of output")
+           help="Verbosity level of output" + _DEF)
 """Pre-cooked `optparse`'s option to specify verbose level"""
 
 commonopts_list = [opt.verbose, opt.help]
@@ -146,9 +194,9 @@ if __debug__:
                       action="callback", callback=_debug_callback,
                       nargs=1,
                       type="string", dest="debug", default="",
-                      help="Debug entries to report. " +
-                      "Run with '-d list' to get a list of " +
-                      "registered entries")
+                      help="Debug entries to report. "
+                      "Run with '-d list' to get a list of "
+                      "registered entries" + _DEF)
 
     commonopts_list.append(optDebug)
 
@@ -160,41 +208,38 @@ opts.add("common", commonopts_list, "Common generic options")
 opt.clf = \
     Option("--clf",
            type="choice", dest="clf",
-           choices=['knn', 'svm', 'ridge', 'gpr', 'smlr'], default='svm',
-           help="Type of classifier to be used. Default: svm")
+           choices=['gnb', 'knn', 'svm', 'ridge', 'gpr', 'smlr'], default='svm',
+           help="Type of classifier to be used" + _DEF)
 
 opt.radius = \
     Option("-r", "--radius",
            action="store", type="float", dest="radius",
-           default=5.0,
-           help="Radius to be used (eg for the searchlight). Default: 5.0")
+           default=2.0,
+           help="Radius to be used (eg for the searchlight)" + _DEF)
 
 
 opt.knearestdegree = \
     Option("-k", "--k-nearest",
            action="store", type="int", dest="knearestdegree", default=3,
-           help="Degree of k-nearest classifier. Default: 3")
+           help="Degree of k-nearest classifier" + _DEF)
 
 opts.add('KNN', [opt.radius, opt.knearestdegree], "Specification of kNN")
 
 
 opt.svm_C = \
     Option("-C", "--svm-C",
-           action="store", type="float", dest="svm_C", default=1.0,
-           help="C parameter for soft-margin C-SVM classification. " \
-                "Default: 1.0")
+           action="store", type="float", dest="svm_C", default=-1.0,
+           help="C parameter for soft-margin C-SVM classification" + _DEF)
 
 opt.svm_nu = \
     Option("--nu", "--svm-nu",
            action="store", type="float", dest="svm_nu", default=0.1,
-           help="nu parameter for soft-margin nu-SVM classification. " \
-                "Default: 0.1")
+           help="nu parameter for soft-margin nu-SVM classification" + _DEF)
 
 opt.svm_gamma = \
     Option("--gamma", "--svm-gamma",
            action="store", type="float", dest="svm_gamma", default=1.0,
-           help="gamma parameter for Gaussian kernel of RBF SVM. " \
-                "Default: 1.0")
+           help="gamma parameter for Gaussian kernel of RBF SVM" + _DEF)
 
 opts.add('SVM', [opt.svm_nu, opt.svm_C, opt.svm_gamma], "SVM specification")
 
@@ -202,14 +247,14 @@ opt.do_sweep = \
              Option("--sweep",
                     action="store_true", dest="do_sweep",
                     default=False,
-                    help="Sweep through various classifiers")
+                    help="Sweep through various classifiers" + _DEF)
 
-# Crossvalidation options
+# Cross-validation options
 
 opt.crossfolddegree = \
     Option("-c", "--crossfold",
-           action="store", type="int", dest="crossfolddegree", default=1,
-           help="Degree of N-fold crossfold. Default: 1")
+           action="store", type="float", dest="crossfolddegree", default=1,
+           help="Degree of N-fold crossfold" + _DEF)
 
 opts.add('general', [opt.crossfolddegree], "Generalization estimates")
 
@@ -218,18 +263,66 @@ opts.add('general', [opt.crossfolddegree], "Generalization estimates")
 
 opt.zscore = \
     Option("--zscore",
-           action="store_true", dest="zscore", default=0,
-           help="Enable zscoring of dataset samples. Default: Off")
+           action="store_true", dest="zscore", default=False,
+           help="zscore dataset samples" + _DEF)
+
+opt.mean_group_sample = \
+    Option("--mean-group-sample", default=False,
+           action="store_true", dest="mean_group_sample",
+           help="Collapse samples in each group (chunks and samples, "
+           "or specify --chunks-sa, and --targets-sa)" + _DEF)
+
+opt.baseline_conditions = \
+    Option('-b', "--baseline-conditions",
+           action="callback", nargs=1, type="string", default="",
+           callback=_split_comma_semicolon_lists_callback,
+           dest="baseline_conditions",
+           help="Baseline conditions (used for zscoring)"
+                + _FORMAT("sa:value1,value2,...")
+                + _EXAMPLE('targets:rest') + _DEF)
+
+opt.exclude_conditions = \
+    Option('-e', "--exclude-conditions",
+           action="callback", nargs=1, type="string", default="",
+           callback=_split_comma_semicolon_lists_callback,
+           dest="exclude_conditions",
+           help="Which conditions to exclude from the analysis "
+                "(but would be present during preprocessing (e.g. zscoring)"
+                + _FORMAT("sa1:value1,value2,...;sa2:value1,value2,...")
+                + _EXAMPLE('targets:rest;trials:bad') + _DEF)
+
+opt.include_conditions = \
+    Option('-i', "--include-conditions",
+           action="callback", nargs=1, type="string", default="",
+           callback=_split_comma_semicolon_lists_callback,
+           dest="include_conditions",
+           help="Which conditions exclusively to analyze "
+                "(but all would be present during preprocessing (e.g. zscoring)"
+                + _FORMAT("sa1:value1,value2,...;sa2:value1,value2,...")
+                + _EXAMPLE('targets:rest;trials:bad') + _DEF)
+
+opt.targets_sa = \
+    Option('-T', "--targets-sa",
+           action="store", dest="targets_sa", default="targets",
+           help="Which sample attribute would be used for (classification)"
+                " analysis" + _DEF)
+
+opt.chunks_sa = \
+    Option("--chunks-sa",
+           action="store", dest="chunks_sa", default="chunks",
+           help="Which sample attribute would be used to describe"
+                "samples grouping information for partitioning" + _DEF)
+
 
 opt.tr = \
     Option("--tr",
            action="store", dest="tr", default=2.0, type='float',
-           help="fMRI volume repetition time. Default: 2.0")
+           help="fMRI volume repetition time" + _DEF)
 
 opt.detrend = \
     Option("--detrend",
            action="store_true", dest="detrend", default=0,
-           help="Do linear detrending. Default: Off")
+           help="Do linear detrending" + _DEF)
 
 opts.add('preproc', [opt.zscore, opt.tr, opt.detrend], "Preprocessing options")
 
@@ -279,15 +372,15 @@ if externals.exists('pywt'):
             Option("-w", "--wavelet-family", callback=_wavelet_family_callback,
                    action="callback", type="string", dest="wavelet_family",
                    default='-1',
-                   help="Wavelet family: string or index among the available. " +
-                   "Run with '-w list' to see available families")
+                   help="Wavelet family: string or index among the available. "
+                   "Run with '-w list' to see available families" + _DEF)
 
     opt.wavelet_decomposition = \
             Option("-W", "--wavelet-decomposition",
                    action="store", type="choice", dest="wavelet_decomposition",
                    default='dwt', choices=['dwt', 'dwp'],
-                   help="Wavelet decomposition: discrete wavelet transform "+
-                   "(dwt) or packet (dwp)")
+                   help="Wavelet decomposition: discrete wavelet transform "
+                   "(dwt) or packet (dwp)" + _DEF)
 
     opts.add('wavelet', [opt.wavelet_family, opt.wavelet_decomposition],
              "Wavelets mappers")
@@ -298,12 +391,12 @@ if externals.exists('pywt'):
 opt.boxlength = \
     Option("--boxlength",
            action="store", dest="boxlength", default=1, type='int',
-           help="Length of the box in volumes (integer). Default: 1")
+           help="Length of the box in volumes (integer)" + _DEF)
 
 opt.boxoffset = \
     Option("--boxoffset",
            action="store", dest="boxoffset", default=0, type='int',
-           help="Offset of the box from the event onset in volumes. Default: 0")
+           help="Offset of the box from the event onset in volumes" + _DEF)
 
 opts.add('box', [opt.boxlength, opt.boxoffset], "Box options")
 
@@ -313,14 +406,14 @@ opts.add('box', [opt.boxlength, opt.boxoffset], "Box options")
 opt.chunk = \
     Option("--chunk",
            action="store", dest="chunk", default='0',
-           help="Id of the data chunk. Default: 0")
+           help="Id of the data chunk" + _DEF)
 
 opt.chunkLimits = \
     Option("--chunklimits",
            action="store", dest="chunklimits", default=None,
            help="Limit processing to a certain chunk of data given by start " \
                 "and end volume number (including lower, excluding upper " \
-                "limit). Numbering starts with zero.")
+                "limit). Numbering starts with zero" + _DEF)
 
 opts.add('chunk', [opt.chunk, opt.chunkLimits],
          "Chunk options AKA Sample attributes XXX")
