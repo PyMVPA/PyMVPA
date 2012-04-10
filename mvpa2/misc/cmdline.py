@@ -214,7 +214,7 @@ opt.clf = \
 opt.radius = \
     Option("-r", "--radius",
            action="store", type="float", dest="radius",
-           default=5.0,
+           default=2.0,
            help="Radius to be used (eg for the searchlight)" + _DEF)
 
 
@@ -263,8 +263,14 @@ opts.add('general', [opt.crossfolddegree], "Generalization estimates")
 
 opt.zscore = \
     Option("--zscore",
-           action="store_true", dest="zscore", default=0,
-           help="Enable zscoring of dataset samples" + _DEF)
+           action="store_true", dest="zscore", default=False,
+           help="zscore dataset samples" + _DEF)
+
+opt.mean_group_sample = \
+    Option("--mean-group-sample", default=False,
+           action="store_true", dest="mean_group_sample",
+           help="Collapse samples in each group (chunks and samples, "
+           "or specify --chunks-sa, and --targets-sa)" + _DEF)
 
 opt.baseline_conditions = \
     Option('-b', "--baseline-conditions",
@@ -285,6 +291,16 @@ opt.exclude_conditions = \
                 + _FORMAT("sa1:value1,value2,...;sa2:value1,value2,...")
                 + _EXAMPLE('targets:rest;trials:bad') + _DEF)
 
+opt.include_conditions = \
+    Option('-i', "--include-conditions",
+           action="callback", nargs=1, type="string", default="",
+           callback=_split_comma_semicolon_lists_callback,
+           dest="include_conditions",
+           help="Which conditions exclusively to analyze "
+                "(but all would be present during preprocessing (e.g. zscoring)"
+                + _FORMAT("sa1:value1,value2,...;sa2:value1,value2,...")
+                + _EXAMPLE('targets:rest;trials:bad') + _DEF)
+
 opt.targets_sa = \
     Option('-T', "--targets-sa",
            action="store", dest="targets_sa", default="targets",
@@ -293,7 +309,7 @@ opt.targets_sa = \
 
 opt.chunks_sa = \
     Option("--chunks-sa",
-           action="store", dest="space_sa", default="chunks",
+           action="store", dest="chunks_sa", default="chunks",
            help="Which sample attribute would be used to describe"
                 "samples grouping information for partitioning" + _DEF)
 
