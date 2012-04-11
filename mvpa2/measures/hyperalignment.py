@@ -6,7 +6,8 @@ from mvpa2.datasets import Dataset
 from mvpa2.mappers.base import ChainMapper
 from mvpa2.mappers.staticprojection import StaticProjectionMapper
 from scipy.linalg import LinAlgError
-    
+from mvpa2.measures.rsm import RSMMeasure
+
 class HyperalignmentMeasure(Measure):
     is_trained=True
     def __init__(self, ndatasets=11, scale=0.0, index_attr='index', 
@@ -61,6 +62,7 @@ class HyperalignmentMeasure(Measure):
                 print "We are Screwed..."
         
         #return Dataset(samples=np.asanyarray([{'proj':mapper,'fsel':StaticFeatureSelection(dataset.fa[self._index_attr].value)} for mapper in mappers]))
-        return Dataset(samples=np.asanyarray([{'proj': ChainMapper([StaticFeatureSelection(dataset.fa[self._index_attr].value), mapper])} for mapper in mappers]))
+        return Dataset(samples=np.asanyarray([{'proj': ChainMapper([StaticFeatureSelection(dataset.fa[self._index_attr].value), mapper]), 
+                        'bsc_rsm': bsc_rsm} for mapper in mappers]))
         # To return such that chain mappers are not combined across feature-dimension (which is apparently dim 2)
         #return Dataset( samples=np.asanyarray([[ ChainMapper([StaticFeatureSelection(dataset.fa[self._index_attr].value), mapper]) for mapper in mappers ]]).swapaxes(0,1) )
