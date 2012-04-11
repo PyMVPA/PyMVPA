@@ -115,7 +115,10 @@ def test_multiclass_ties(clf):
 
     # this check is valid only if ties are not broken randomly
     # like it is the case with SMLR
-    if not 'random_tie_breaking' in clf.__tags__:
+    if not ('random_tie_breaking' in clf.__tags__
+            or  # since __tags__ would not go that high up e.g. in
+                # <knn on SMLR non-0>
+            'SMLR' in str(clf)):
         assert_array_equal(hits,
                            np.diag(matrix_swapped)[ties_indices[::-1]])
 

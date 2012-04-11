@@ -37,6 +37,18 @@ class SearchlightTests(unittest.TestCase):
         # the searchlight
         self.dataset.fa['voxel_indices'] = self.dataset.fa.myspace
 
+    # https://github.com/PyMVPA/PyMVPA/issues/67
+    # https://github.com/PyMVPA/PyMVPA/issues/69
+    def test_gnbsearchlight_doc(self):
+        # Test either we excluded nproc from the docstrings
+        ok_(not 'nproc' in GNBSearchlight.__init__.__doc__)
+        ok_(not 'nproc' in GNBSearchlight.__doc__)
+        ok_(not 'nproc' in sphere_gnbsearchlight.__doc__)
+        # but present elsewhere
+        ok_(    'nproc' in sphere_searchlight.__doc__)
+        ok_(    'nproc' in Searchlight.__init__.__doc__)
+
+
     @sweepargs(common_variance=(True, False))
     @sweepargs(do_roi=(False, True))
     @reseed_rng()
@@ -355,8 +367,9 @@ class SearchlightTests(unittest.TestCase):
             assert(corr.shape == (2,2)) # for paranoid ones
             return corr[0, 1]
 
-        for nsc, thr in ((0, 1.0),
-                         (0.1, 0.6)):   # just a bit of noise
+        for nsc,  thr, thr_mean in (
+            (0,   1.0, 1.0),
+            (0.1, 0.3, 0.8)):   # just a bit of noise
             ds2 = ds1.copy(deep=True)    # make a copy for the 2nd subject
             ds2.sa['subject'] = [2]
             ds2.samples += nsc * np.random.normal(size=ds1.shape)
@@ -369,6 +382,7 @@ class SearchlightTests(unittest.TestCase):
             sl = sphere_searchlight(corr12, radius=2)
             slmap = sl(ds_both)
             ok_(np.all(slmap.samples >= thr))
+            ok_(np.mean(slmap.samples) >= thr)
 
 def suite():
     return unittest.makeSuite(SearchlightTests)
