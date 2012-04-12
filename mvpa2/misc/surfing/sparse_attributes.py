@@ -2,7 +2,7 @@ import cPickle as pickle
 import volgeom
 from collections import Mapping
 
-class SparseROIAttributes(object):
+class SparseAttributes(object):
     def __init__(self,sa_labels):
         self._sa_labels=list(sa_labels)
         self.sa=dict()
@@ -56,7 +56,7 @@ class SparseROIAttributes(object):
                 (len(self.sa), len(self._sa_labels), self._sa_labels))
         
 
-class SparseVolumeMasks(SparseROIAttributes):
+class SparseVolumeAttributes(SparseAttributes):
     def __init__(self,sa_labels,volgeom):
         super(self.__class__,self).__init__(sa_labels)
         self.a['volgeom']=volgeom
@@ -161,7 +161,7 @@ def from_file(fn):
             
 def _test_roi():
     vg=volgeom.VolGeom(None,None)
-    ra=SparseVolumeMasks(["voxel_ids","center_distances"],vg)
+    ra=SparseVolumeAttributes(["voxel_ids","center_distances"],vg)
     ra.add_roi_dict(1,dict(voxel_ids=[1,2],center_distances=[.2,.3]))
     ra.add_roi_dict(2,dict(voxel_ids=[3,4,5],center_distances=[.2,.3,.5]))
     
