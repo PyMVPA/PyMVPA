@@ -7,7 +7,6 @@ Created on Feb 11, 2012
 '''
 
 import numpy as np, os, collections, networkx as nx, datetime, time, utils, heapq, afni_suma_1d, math
-import surf_fs_asc
 
 class Surface(object):
     '''Cortical surface mesh
@@ -113,7 +112,7 @@ class Surface(object):
                     pv=self._v[p]
                     qv=self._v[q]
                     
-                    # writing this out seems a bit quicker - but have to check
+                    # writing this out seems a bit quicker - but have to test
                     sqdist=((pv[0]-qv[0])*(pv[0]-qv[0])
                            +(pv[1]-qv[1])*(pv[1]-qv[1])
                            +(pv[2]-qv[2])*(pv[2]-qv[2]))
@@ -398,11 +397,13 @@ class Surface(object):
         ''' 
         return self._nf
     
-    def mapico_2hires(self,highres,epsilon=.0001):
+    def mapicosahedron_to_high_resolution(self,highres,epsilon=.001):
         nx=self.nv()
         ny=highres.nv()
         
         def getld(n):
+            # a mapicosahedron surface with LD linear divisions has
+            # N=10*LD^2+2 nodes 
             ld=((nx-2)/10)**2
             if ld!=int(ld):
                 raise ValueError("Not from mapicosahedron with %d nodes" % n)
@@ -425,14 +426,14 @@ class Surface(object):
             mind=ds[minpos]**.5
             
             if not epsilon is None and mind>epsilon:
-                raise ValueError("Not found near node for node %i (distance %f > %f" %
+                raise ValueError("Not found near node for node %i (min distance %f > %f)" %
                                  i, mind, epsilon)
             mapping[i]=minpos
             
         return mapping
             
         
-    
+'''    
 
 def _test_distance():
     d='/Users/nick/Downloads/fingerdata-0.2/glm/'
@@ -460,7 +461,7 @@ def _test_l2h():
     fns=map(lambda x : pat % x, lds)
     s_lo, s_hi=map(surf_fs_asc.read,fns)
     
-    mapping=s_lo.mapico_2hires(s_hi)
+    mapping=s_lo.mapicosahedron_to_high_resolution(s_hi)
     print mapping
        
     
@@ -474,7 +475,7 @@ if __name__ == '__main__':
     
     
     
-    '''
+ 
     rs=[10,20,30,40]
     
     for r in rs:
