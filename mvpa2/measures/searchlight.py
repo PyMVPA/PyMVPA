@@ -40,7 +40,6 @@ class BaseSearchlight(Measure):
     """Indicate that this measure is always trained."""
 
 
-    @borrowkwargs(Measure, '__init__')
     def __init__(self, queryengine, roi_ids=None, nproc=None, **kwargs):
         """
         Parameters
@@ -179,7 +178,6 @@ class Searchlight(BaseSearchlight):
     interest, which is ran at each spatial location.
     """
 
-    @borrowkwargs(BaseSearchlight, '__init__')
     def __init__(self, datameasure, queryengine, add_center_fa=False, **kwargs):
         """
         Parameters
