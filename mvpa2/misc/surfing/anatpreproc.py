@@ -3,15 +3,16 @@ Created on Jan 29, 2012
 
 @author: nick
 
-Purpose: anatomical preprocessing for surface-based voxel selection (using AFNI/SUMA)
+Purpose: anatomical preprocessing for surface-based voxel selection
 Provides functionality to:
-- convert freesurfer surfaces to AFNI/SUMA format (using SUMA_Make_Spec_FS
+- convert freesurfer surfaces to AFNI/SUMA format (using SUMA_Make_Spec_FS)
 - resample surfaces to standard topology (using MapIcosahedron)
 - generate additional surfaces by averaging existing ones
 - find the transformation from freesurfer 
 - make SUMA specification files, and see_suma* shell scripts
-At the moment (Jan 2012) we assume the users knows what he is doing and
-do not check any input arguments
+
+At the moment we assume a processing stream with freesurfer for surface 
+reconstruction, and AFNI/SUMA for coregistration and visualization.
 
 If EPIs from multiple sessions are aligned, this script should use different directories 
 for refdir for each session, otherwise naming conflicts may occur
@@ -25,7 +26,7 @@ def getdefaults():
     d={ #  options that must be set properly
        'sid':'s88',    # subject id
        'surfdir': rootdir+'fs/s88/surf/', # freesurfer surface directory
-       'ld': '16+96', # (list of) number of linear divisions for mapicoshedron
+       'ld': '9+18+36+72+144', # (list of) number of linear divisions for mapicoshedron
        'refdir': rootdir+'refB', # output directory (called reference directory because surfaces and volumes share the same reference)
        'anatvol':rootdir+'glm/anat_al+orig', # anatomical file assumed in correspondence with EPI data
        'steps':'all', # one or more of: toafni+mapico+moresurfs+align+makespec
@@ -557,99 +558,11 @@ def suma_makespec(indir, surfprefix, fnout=None):
     return lines    
     
 def average_fs_asc_surfs(fn1,fn2,fnout):
+    '''averages two surfaces'''
     surf1=surf_fs_asc.read(fn1)
     surf2=surf_fs_asc.read(fn2)
     surfavg=surf1*.5+surf2*.5
     surf_fs_asc.write(surfavg, fnout, overwrite=True)
-        
-                 
-def _OLD_average_fs_asc_surfs(fn1,fn2,fnout):
-    ''' Computes the node-wise average of two Freesurfer ASCII surface files
-    At the moment we just parse the file; hopefully in the feature we can use numpy or scipy'''
-    def _readsurf(fn):
-            
-        f=open(fn)
-        d=f.read()
-        f.close()
-        
-        s=d.split('\n')
-        
-        for i in xrange(len(s)):
-            if not s[i].startswith('#'):
-                break
-        nvnf=s[i].split(' ')
-        nv=int(nvnf[0])
-        nf=int(nvnf[1])
-        
-        surf=dict(nv=nv,nf=nf)
-        
-        pos=i+1
-        xyzs=[]
-        for i in xrange(pos,pos+nv):
-            line=re.sub('[\s]+',' ',s[i]) # remove multiple whitespaces, convert to single space
-            xyz=[float(v) for i,v in enumerate(line.split(" ")) if i<3]
-            xyzs.append(xyz)
-        '''
-        xyzs=[  [float(v) for i,v in enumerate(line.split(" ")) if i<3] 
-              for line in [re.sub('[\s]+',' ',s[i])]  # line = re.sub(...) 
-              for i in xrange(pos,pos+nv) ]     
-        '''    
-        surf['xyzs']=xyzs
-        
-        pos+=nv
-        faces=[]
-        for i in xrange(pos,pos+nf):
-            line=re.sub('[\s]+',' ',s[i])
-            face=[float(v) for i,v in enumerate(line.split(" ")) if i<3]
-            faces.append(face)
-        
-        surf['faces']=faces
-        return surf
-    
-    s1=_readsurf(fn1)
-    s2=_readsurf(fn2)
-    c1=s1['xyzs']
-    c2=s2['xyzs']
-    f1=s1['faces']
-    f2=s2['faces']
-    
-    sfns=[os.path.split(f)[1] for f in [fn1,fn2,fnout]] # short file names
-    
-    if f1!=f2:
-        raise Exception("Non matching topology for %s and %s" % (sfns[0],sfns[1]))
-    
-    nv=len(c1)
-    nf=len(f1)
-    if nv!=len(c2):
-        raise Exception("Not matching number of nodes for %s and %s" % (sfns[0],sfns[1]))
-    '''
-    c=c1
-    for i in xrange(nv):
-        for j in xrange(3):
-            c[i][j]=.5*(c1[i][j]+c2[i][j])
-    '''
-    c=[ [.5*(c1[i][j]+c2[i][j]) for j in xrange(3)] for i in xrange(nv) ]        
-    
-    f=open(fnout,'w')
-    f.write('# Created %s by averaging %s and %s\n' % 
-             (str(datetime.datetime.now()), sfns[0], sfns[1]))
-    
-    f.write('%d %d' % (nv,nf))
-    f.write('\n')
-    
-    coordlines="\n".join(['%s 0' % " ".join(['%f' % c for c in xyz]) 
-                          for xyz in c])
-    facelines="\n".join(['%s 0' % " ".join(['%d' % c for c in face]) 
-                          for face in f1])
-    
-    f.write(coordlines)
-    f.write("\n")
-    f.write(facelines)
-    f.write("\n")
-    
-    d=os.path.split(fnout)[0]
-    
-    print "Averaged %s and %s -> %s    (in %s)" % (sfns[0],sfns[1],sfns[2],d)
     
 def _get_hemis_icolds(config):
     '''returns the icolds (as a list of integers) and the hemispheres (as a list of single characters)'''
