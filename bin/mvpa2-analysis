@@ -12,6 +12,7 @@
 
 # Import minimal needed amount to get process going so we could
 # QUICKLY parse and verify command line arguments
+import glob
 import mvpa2
 from mvpa2.base import *
 from mvpa2.misc.cmdline import *
@@ -51,13 +52,19 @@ def parse_cmdline():
     parser.add_options([
         opt.clf,
 
+        ## Will deduce automagically
+        ## Option("--attrfile-has-header",
+        ##        action="store_true", dest="attrfile_has_header",
+        ##        help="Provided attributes file carries header in the "
+        ##        "first line.  All attributes will become .sa's"),
+
         Option("--analysis",
                type="choice", dest="analysis", default='preprocess',
                choices=['crossvalidation', 'searchlight', 'preprocess'],
                help="Type of analysis to perform on data"),
 
         # TODO
-        #  - mask for seachlight ids if not full brain mask is desired to be analyzed
+        #  - mask for searchlight ids if not full brain mask is desired to be analyzed
 
         Option("--dataset-summary",
                action="store_true", dest="print_dataset_summary",
@@ -87,6 +94,10 @@ def parse_cmdline():
     return files, options               # more logical order
 
 
+def get_files(filename_pattern):
+    return sorted(glob.glob(filename_pattern))
+
+
 def validate_options(files, options):
     """Let's verify provided options and do some basic checks
 
@@ -113,7 +124,8 @@ def validate_options(files, options):
         # e.g. different dimensionality
         try:
             import nibabel as nib
-            nis = [nib.load(f).get_header() for f in (files[0], files[2])]
+            nis = [nib.load(f).get_header()
+                   for f in get_files(files[0]) + [files[2]]]
         except Exception, e:
             bad_options_msgs.append(
                 "Failed to open input volumes. Error was: %s" % e)
@@ -121,6 +133,7 @@ def validate_options(files, options):
             shapes = [ni.get_data_shape() for ni in nis]
             # First one should have at least the same # of dimensions
             #if shapes[1]
+            # TODO
 
     if bad_options_msgs:
         sys.stderr.write("There were errors in options specification:"
@@ -165,16 +178,27 @@ def run_analysis(files, options):
         # TODO: We need some generic helper to read conditions stored in some
         #       common formats
         verbose(2, "Reading conditions from file %s" % cfile)
-        attrs = mv.SampleAttributes(cfile, literallabels=True)
+        if len(open(cfile).readline().split()) > 2:
+            verbose(3, "Detected more than 3 columns, assuming present header")
+            attrs = mv.ColumnData(cfile, header=True)
+        else:
+            attrs = mv.SampleAttributes(cfile, literallabels=True)
 
-        verbose(2, "Loading volume file %s" % dfile)
-        data = mv.fmri_dataset(dfile,
+        # dfile could be a glob pattern
+        dfiles = get_files(dfile) # sorted(glob.glob(dfile))
+        verbose(2, "Loading %d volume files %s" % (len(dfiles), ', '.join(dfiles)))
+        data = mv.fmri_dataset(dfiles,
                                targets=attrs.targets,
                                chunks=attrs.chunks,
                                mask=mfile)
 
-        verbose(1, "Preprocessing")
+        # Assign possible additional attributes
+        if len(attrs) > 2:
+            for k, v in attrs.iteritems():
+                if not k in data.sa:
+                    data.sa[k] = v
 
+        verbose(1, "Preprocessing")
 
         # First z-score since baseline condition might be removed
         # later on in exclude/include_conditions handling
