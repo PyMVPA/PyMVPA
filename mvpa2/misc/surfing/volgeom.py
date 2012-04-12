@@ -333,7 +333,7 @@ class VolGeom():
         img=ni.Nifti1Image(np.reshape(data,self.shape()),self._img.get_affine())
         return img
 
-def from_nifti_filename(fn):
+def from_nifti_file(fn):
     '''
     Parameters
     ----------
@@ -373,7 +373,7 @@ if __name__ == '__main__':
     fn=d+"rall_vol00.nii"
     surffn=d+"ico100_lh.smoothwm_al.asc"
     Surface=surf_fs_asc.read(surffn)
-    vg=from_nifti_filename(fn)
+    vg=from_nifti_file(fn)
     
     data=np.zeros(vg.shape())
     
@@ -411,7 +411,7 @@ if __name__ == '__main__':
     ijk=np.asarray([[i,j,k]],dtype=int)
     
     
-    vg=from_nifti_filename(fn)
+    vg=from_nifti_file(fn)
     linX=vg.ijk2lin(ijk)
     print "lin %r %r (or %r) " % (linidx, linX, vg.nv()-linidx)
      
@@ -451,7 +451,7 @@ if __name__ == '__mainX__':
     fnout=d+"__test9b.nii"
     #surffn=d+"../ref/ico100_lh.pial_al.asc"
     surffn=d+"../ref/ico100_lh.smoothwm_al.asc"
-    v=from_nifti_filename(fn)
+    v=from_nifti_file(fn)
     print "started"
     
     

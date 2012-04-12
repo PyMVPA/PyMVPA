@@ -520,9 +520,7 @@ class VoxelSelector():
             It has at least a key sparse_volmasks._VOXIDXSLABEL which maps to
             the linear voxel indices. It may also have 'distances' (distance from
             center node along the cortex)  and 'gmpositions' (relative position in
-            the gray matter)
-            
-            If     
+            the gray matter) 
         
         '''
         

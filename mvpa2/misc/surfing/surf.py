@@ -7,6 +7,7 @@ Created on Feb 11, 2012
 '''
 
 import numpy as np, os, collections, networkx as nx, datetime, time, utils, heapq, afni_suma_1d, math
+import surf_fs_asc
 
 class Surface(object):
     '''Cortical surface mesh
@@ -397,11 +398,39 @@ class Surface(object):
         ''' 
         return self._nf
     
-    def mapping2highres(self,highres):
-        vx=self.nv()
-        vy=highres.nv()
+    def mapico_2hires(self,highres,epsilon=.0001):
+        nx=self.nv()
+        ny=highres.nv()
         
+        def getld(n):
+            ld=((nx-2)/10)**2
+            if ld!=int(ld):
+                raise ValueError("Not from mapicosahedron with %d nodes" % n)
+            return int(ld)
+             
         
+        ldx, ldy=getld(nx), getld(ny)
+        
+        if ldx>ldy:
+            raise ValueError("Other surface has fewer nodes (%d) than this one (%d)" %
+                             nx, ny)
+        
+        mapping=dict()
+        x=self.v()
+        y=highres.v()
+        for i in xrange(nx):
+            ds=np.sum((x[i,:]-y)**2,axis=1)
+            minpos=np.argmin(ds)
+            
+            mind=ds[minpos]**.5
+            
+            if not epsilon is None and mind>epsilon:
+                raise ValueError("Not found near node for node %i (distance %f > %f" %
+                                 i, mind, epsilon)
+            mapping[i]=minpos
+            
+        return mapping
+            
         
     
 
@@ -422,11 +451,23 @@ def _test_distance():
     
     afni_suma_1d.write(fnout, data)
     
+def _test_l2h():
+    d=utils._get_fingerdata_dir() + "qref/" 
     
+    pat=d+'ico%d_lh.intermediate_al.asc'
+    lds=[9,72]
+    
+    fns=map(lambda x : pat % x, lds)
+    s_lo, s_hi=map(surf_fs_asc.read,fns)
+    
+    mapping=s_lo.mapico_2hires(s_hi)
+    print mapping
+       
     
 
 if __name__ == '__main__':
-    _test_distance()
+    #_test_distance()
+    _test_l2h()
     pass#_test_project()
     
     
