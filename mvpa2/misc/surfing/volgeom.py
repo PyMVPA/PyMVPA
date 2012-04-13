@@ -277,6 +277,15 @@ class VolGeom():
         
         nv=self.nv()
         return np.logical_and(0<=lin,lin<nv)
+    
+    def empty_nifti_img(self,nt=1):
+        sh=self.shape()
+        sh4d=(sh[0],sh[1],sh[2],nt)
+        
+        data=np.zeros(sh4d)
+        img=ni.Nifti1Image(data,self.affine())
+        return img
+        
         
     def _testlindices(self):
         '''just for testing'''

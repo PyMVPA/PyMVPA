@@ -397,28 +397,45 @@ class Surface(object):
         ''' 
         return self._nf
     
-    def mapicosahedron_to_high_resolution(self,highres,epsilon=.001):
+    def map_to_high_resolution_surf(self,highres,epsilon=.001,accept_only_icosahedron=False):
         nx=self.nv()
         ny=highres.nv()
         
-        def getld(n):
-            # a mapicosahedron surface with LD linear divisions has
-            # N=10*LD^2+2 nodes 
-            ld=((nx-2)/10)**2
-            if ld!=int(ld):
-                raise ValueError("Not from mapicosahedron with %d nodes" % n)
-            return int(ld)
-             
-        
-        ldx, ldy=getld(nx), getld(ny)
-        
-        if ldx>ldy:
-            raise ValueError("Other surface has fewer nodes (%d) than this one (%d)" %
-                             nx, ny)
+        if accept_only_icosahedron:
+            def getld(n):
+                # a mapicosahedron surface with LD linear divisions has
+                # N=10*LD^2+2 nodes 
+                ld=((nx-2)/10)**2
+                if ld!=int(ld):
+                    raise ValueError("Not from mapicosahedron with %d nodes" % n)
+                return int(ld)
+                 
+            ldx,ldy=map(getld,(nx,ny))
+            r=ldy/ldx # ratio
+            
+            if int(r)!=r:
+                raise ValueError("ico linear divisions for high res surface (%d)"
+                                 "should be multiple of that for low res surface (%d)",
+                                 (ldy,ldx))
         
         mapping=dict()
         x=self.v()
         y=highres.v()
+        
+        # shortcut in case the surfaces are the same
+        # if this fails, then we just continue normally
+        if self.same_topology(highres):
+            d=np.sum((x-y)**2,axis=1)**.5
+            
+            if all(d<epsilon):
+                for i in xrange(nx):
+                    mapping[i]=i
+                return mapping
+        
+        if nx>ny:
+            raise ValueError("Other surface has fewer nodes (%d) than this one (%d)" %
+                             nx, ny)
+        
         for i in xrange(nx):
             ds=np.sum((x[i,:]-y)**2,axis=1)
             minpos=np.argmin(ds)
