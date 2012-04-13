@@ -32,9 +32,6 @@ class SparseAttributes(object):
         
         self.sa[roi_label]=roi_attrs
         
-        if not roi_attrs is None:
-            self._sa_nonempty_keys.append(roi_label)
-        
     def add(self,roi_label,roi_attrs):
         if roi_label in self.sa.keys():
             raise ValueError("name clash: key %s already present" % roi_label)
@@ -44,7 +41,7 @@ class SparseAttributes(object):
         return list(self._sa_labels)
     
     def keys(self):
-        return [k for k in self.all_keys() if not k is None]
+        return filter(lambda x : not self.sa[x] is None, self.all_keys())
     
     def all_keys(self):
         return self.sa.keys()
@@ -189,7 +186,6 @@ def to_file(fn,a):
         pickle.dump(a, f, protocol=pickle.HIGHEST_PROTOCOL)
         
 def from_file(fn):
-    print "Loading from %s" % fn
     with open(fn) as f:
         r=pickle.load(f)
     return r

@@ -1,13 +1,16 @@
-import volsurf
-import mvpa2.misc.surfing.sparse_attributes as sparse_attributes
-import utils
-import mvpa2.misc.surfing.volgeom as volgeom
-import surf_fs_asc
-import numpy as np
+
 import time
 import collections
 import operator
+
 import nibabel as ni
+import numpy as np
+
+import volsurf
+import mvpa2.misc.surfing.sparse_attributes as sparse_attributes
+import mvpa2.misc.surfing.volgeom as volgeom
+import utils
+import surf_fs_asc
 
 LINEAR_VOXEL_INDICES="lin_vox_idxs"
 CENTER_DISTANCES="center_distances"
@@ -15,7 +18,8 @@ GREY_MATTER_POSITION="grey_matter_position"
 
 if __debug__:
     from mvpa2.base import debug
-    debug.register("SVS","Surface-based voxel selection (a.k.a. 'surfing')")
+    if not "SVS" in debug.registered:
+        debug.register("SVS","Surface-based voxel selection (a.k.a. 'surfing')")
 
 class VoxelSelector():
     '''
@@ -377,7 +381,7 @@ def voxel_selection(vol_surf,surf_srcs,radius,srcs=None,start=0.,stop=1.,steps=1
                 node2volume_attributes=sparse_attributes.SparseVolumeAttributes(sa_labels,vol_surf._volgeom)
             
             # store attribtues results
-            node2volume_attributes.add_roi_dict(src, attrs)
+            node2volume_attributes.add(src, attrs)
             
             if etastep and (i%etastep==0 or i==n-1) and n2v:
                 if __debug__:
@@ -439,7 +443,6 @@ def run_voxelselection(epifn,whitefn,pialfn,srcfn,radius,srcs=None,start=0,stop=
         of the surrounding voxels.
     '''
     
-    
     # read volume geometry
     vg=volgeom.from_nifti_file(epifn)
     
@@ -452,8 +455,6 @@ def run_voxelselection(epifn,whitefn,pialfn,srcfn,radius,srcs=None,start=0,stop=
     # make a volume surface instance
     vs=volsurf.VolSurf(vg,whitesurf,pialsurf)
     
-    # find mapping from nodes to enclosing voxels
-    print "Running  voxel selection"
     # run voxel selection
     sel=voxel_selection(vs, srcsurf, radius, srcs, start, stop, steps, distancemetric, intermediateat, etastep)
     
