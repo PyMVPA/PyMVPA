@@ -218,9 +218,7 @@ def read(fn,itemifsingletonlist=True):
 def write(fnout,dset,form='binary'):
     fn=os.path.split(fnout)[1]
     dset['filename']=fn
-    
     niml.write(fnout, dset, form, dset2rawniml)
-    
 
 def _test_dset():
     d='/Users/nick/Downloads/fingerdata-0.2/glm/'
