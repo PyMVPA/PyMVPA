@@ -1,7 +1,21 @@
+import volsurf
+import mvpa2.misc.surfing.sparse_attributes as sparse_attributes
+import utils
+import mvpa2.misc.surfing.volgeom as volgeom
+import surf_fs_asc
+import numpy as np
+import time
+import collections
+import operator
+import nibabel as ni
 
-_CENTER_IDS="center_ids"
-_CENTER_DISTANCES="center_distances"
-_GREY_MATTER_POSITION="grey_matter_position"
+LINEAR_VOXEL_INDICES="lin_vox_idxs"
+CENTER_DISTANCES="center_distances"
+GREY_MATTER_POSITION="grey_matter_position"
+
+if __debug__:
+    from mvpa2.base import debug
+    debug.register("SVS","Surface-based voxel selection (a.k.a. 'surfing')")
 
 class VoxelSelector():
     '''
@@ -77,7 +91,7 @@ class VoxelSelector():
         if count is None:
             return voxprops
         
-        distkey=sparse_volmasks._VOXDISTLABEL
+        distkey=CENTER_DISTANCES
         if not distkey in voxprops:
             raise KeyError("voxprops has no distance key %s in it - cannot select voxels" % distkey)
         allds=voxprops[distkey]
@@ -128,50 +142,8 @@ class VoxelSelector():
         
         return voxprops
         
-   
-    def select_multiple(self,srcs=None,etastep=None):
-        '''
-        Voxel selection for multiple center nodes
         
-        Parameters
-        ----------
-        srcs: array-like
-            Indices of center nodes to be used as searchlight center.
-            If None, then all center nodes are used as a center.
-        etastep: int or None
-            After how many searchlights the the estimated remaining time 
-            are printed.
-            If None, then no messages are printed.
-        
-        Returns
-        -------
-        n2vs: sparse_volmasks.SparseVolMask
-            node to voxel properties mapping, as represented in a set of 
-            sparse volume masks.
-        '''
-        
-        if srcs is None:
-            srcs=np.arange(len(self._n2v))
-            
-        n=len(srcs)
-        visitorder=list(np.random.permutation(n)) # for better ETA estimate
-        
-        tstart=time.time()
-        
-        n2vs=sparse_volmasks.SparseVolMask()
-        
-        for i,order in enumerate(visitorder):
-            src=srcs[order]
-            n2v=self.select_one(src)
-            
-            n2vs.addroi_fromdict(src, n2v)
-        
-            if etastep and (i%etastep==0 or i==n-1) and n2v:
-                utils.eta(tstart, float(i+1)/n, '%d/%d: %d' % (i,n,src))
-            
-        return n2vs
-        
-    def select_one(self,src): 
+    def disc_voxel_attributes(self,src): 
         '''
         Voxel selection for single center node
         
@@ -194,8 +166,10 @@ class VoxelSelector():
         
         if not src in n2v or n2v[src] is None:
             # no voxels associated with this node, skip
-            print "Skipping %d" % src
-            voxaround=[]
+            if __debug__:
+                debug("SVS", "Skipping node #%d (no voxels associated)" % src)
+            
+            voxel_attributes=[]
         else:            
             radius_mm=optimizer.get_start()
             radius=self._targetradius
@@ -206,16 +180,16 @@ class VoxelSelector():
                 allvxdist=self.nodes2voxel_attributes(around_n2d,n2v)
                 
                 if not allvxdist:
-                    voxaround=[]
+                    voxel_attributes=[]
                             
                 if self._fixedradius:
                     # select all voxels
-                    voxaround=self._select_approx(allvxdist, count=None)
+                    voxel_attributes=self._select_approx(allvxdist, count=None)
                 else:
                     # select only certain number
-                    voxaround=self._select_approx(allvxdist, count=radius)
+                    voxel_attributes=self._select_approx(allvxdist, count=radius)
                 
-                if voxaround is None:
+                if voxel_attributes is None:
                     # coult not find enough voxels, stay in loop and try again 
                     # with bigger radius
                     radius_mm=optimizer.get_next()
@@ -223,12 +197,12 @@ class VoxelSelector():
                     break
                 
         
-        if voxaround:
+        if voxel_attributes:
             # found at least one voxel; update our ioptimizer
-            maxradius=voxaround['distances'][-1]
+            maxradius=voxel_attributes[CENTER_DISTANCES][-1]
             optimizer.set_final(maxradius)
                 
-        return voxaround
+        return voxel_attributes
             
     def nodes2voxel_attributes(self,n2d,n2v,distancesummary=min):
         '''
@@ -305,16 +279,120 @@ class VoxelSelector():
             vdp_tup=zip(*vdp) # unzip triples into three lists
         
         vdp_tps=(np.int32,np.float32,np.float32)
-        vdp_labels=(_CENTER_IDS,_CENTER_DISTANCES,_GREY_MATTER_POSITION)
+        vdp_labels=(LINEAR_VOXEL_INDICES,CENTER_DISTANCES,GREY_MATTER_POSITION)
         
         voxel_attributes=dict()
         for i in xrange(3):
-            voxel_attributes[vdp_labels[i]]=np.asarray(vdp_tup[i],dtype=vtp_tps[i])
+            voxel_attributes[vdp_labels[i]]=np.asarray(vdp_tup[i],dtype=vdp_tps[i])
 
         return voxel_attributes
 
+def voxel_selection(vol_surf,surf_srcs,radius,srcs=None,start=0.,stop=1.,steps=10,distancemetric='dijkstra',intermediateat=.5,etastep=1):
+        '''
+        Voxel selection for multiple center nodes
+        
+        Parameters
+        ----------
+        srcs: array-like
+            Indices of center nodes to be used as searchlight center.
+            If None, then all center nodes are used as a center.
+        etastep: int or None
+            After how many searchlights the the estimated remaining time 
+            are printed.
+            If None, then no messages are printed.
+        
+        Returns
+        -------
+        n2vs: sparse_volmasks.SparseVolMask
+            node to voxel properties mapping, as represented in a set of 
+            sparse volume masks.
+        '''
+    
+            
+        # outer and inner surface
+        surf_pial=vol_surf._pial
+        surf_white=vol_surf._white
+        
+        # construc the intermediate surface, which is used to measure distances
+        surf_intermediate=surf_pial*intermediateat+surf_white*(1-intermediateat)
+        
+        if __debug__:
+            debug('SVS',"Generated high-res intermediate surface: %d nodes, %d faces" % 
+                  (surf_intermediate.nv(), surf_intermediate.nf()))
+            
+        
+        # find a mapping from nondes in surf_srcs to those in intermediate surface
+        src2intermediate=surf_srcs.map_to_high_resolution_surf(surf_intermediate)
+        
+        if __debug__:
+            debug('SVS',"Found mapping from source to high-res surface:"
+                  " %d nodes, %d faces" % 
+                  (surf_srcs.nv(), surf_srcs.nf()))
+        
+        # if no sources are given, then visit all ndoes
+        if srcs is None:
+            srcs=np.arange(len(surf_srcs.nv()))
+        
+        n=len(srcs)
+        
+        if __debug__:
+            debug('SVS',"Surface-based voxel selection for %d centers:" % n)
+        
+        
+        # visit in random order, for for better ETA estimate
+        visitorder=list(np.random.permutation(len(srcs))) 
+                
+        # construct mapping from nodes to enclosing voxels
+        n2v=vol_surf.node2voxels()
+        
+        if __debug__:
+            debug('SVS',"Generated mapping from nodes to intersecting voxels:")
+        
+        # build voxel selector
+        voxel_selector=VoxelSelector(radius, surf_intermediate, n2v, distancemetric)
+        
+        if __debug__:
+            debug('SVS',"Instantiated voxel selector")
+        
+        
+        # structure to keep output data
+        node2volume_attributes=None
+        
+        # keep track of time
+        tstart=time.time()
+        
+        # walk over all nodes
+        for i,order in enumerate(visitorder):
+            # source node on surf_srcs
+            src=srcs[order]
+            
+            # corresponding node on high-resolution intermediate surface
+            intermediate=src2intermediate[src]
+            
+            # find voxel attribues for this node
+            attrs=voxel_selector.disc_voxel_attributes(intermediate)
+            
+            if node2volume_attributes is None:
+                sa_labels=attrs.keys()
+                node2volume_attributes=sparse_attributes.SparseVolumeAttributes(sa_labels,vol_surf._volgeom)
+            
+            # store attribtues results
+            node2volume_attributes.add_roi_dict(src, attrs)
+            
+            if etastep and (i%etastep==0 or i==n-1) and n2v:
+                if __debug__:
+                    msg=utils.eta(tstart, float(i+1)/n, '%d/%d (node #%d->#%d)' % (i+1,n,src,intermediate),show=False)
+                    if __debug__:
+                        debug('SVS',msg)
+        
+        
+        
+        return node2volume_attributes
+    
 
-def run_voxelselection(epifn,whitefn,pialfn,radius,srcs=None,start=0,stop=1,steps=10,require_center_in_gm=False,distancemetric='dijkstra',intermediateat=.5,etastep=1):
+
+
+def run_voxelselection(epifn,whitefn,pialfn,srcfn,radius,srcs=None,start=0,stop=1,steps=10,distancemetric='dijkstra',intermediateat=.5,etastep=1):
     '''Wrapper function that is supposed to make voxel selection 
     on the surface easy.
     
@@ -325,8 +403,11 @@ def run_voxelselection(epifn,whitefn,pialfn,radius,srcs=None,start=0,stop=1,step
         At the moment only nifti (.nii) files are supported
     whitefn: str
         Filename of white matter surface. Only .asc files at the moment
-    whitefn: str
+    pialfn: str
         Filename of pial surface. Only .asc files at the moment
+    srcfn: str
+        Filename of surface with searchlight centers, possibly with fewer nodes
+        than pialfn and whitefn.
     radius: int or float
         Searchlight radius with number of voxels (if int) or maximum distance
         from searchlight center in metric units (if float)
@@ -342,9 +423,6 @@ def run_voxelselection(epifn,whitefn,pialfn,radius,srcs=None,start=0,stop=1,step
         Only select voxels that are 'truly' in between the white and pial matter.
         Specifically, each voxel's position is projected on the line connecting pial-
         white matter pairs, and only voxels in between 'start' and 'stop' are selected    
-    require_center_in_gm: bool (default: False)
-        Accept only voxels that fall in the grey matter. Not well tested at the moment,
-        use is currently discouraged 
     distancemetric: str
         Distance metric between nodes. 'euclidian' or 'dijksta'
     intermediateat: float (default: .5)
@@ -363,31 +441,22 @@ def run_voxelselection(epifn,whitefn,pialfn,radius,srcs=None,start=0,stop=1,step
     
     
     # read volume geometry
-    vg=volgeom.from_nifti_filename(epifn)
+    vg=volgeom.from_nifti_file(epifn)
     
     # read surfaces
     whitesurf=surf_fs_asc.read(whitefn)
     pialsurf=surf_fs_asc.read(pialfn)
+    srcsurf=surf_fs_asc.read(srcfn)
     
-    # compute itnermediate surface
-    intermediatesurf=whitesurf*(1-intermediateat)+pialsurf*intermediateat
     
     # make a volume surface instance
-    vs=VolSurf(vg,whitesurf,pialsurf)
+    vs=volsurf.VolSurf(vg,whitesurf,pialsurf)
     
     # find mapping from nodes to enclosing voxels
-    n2v=vs.node2voxels(steps, start, stop, require_center_in_gm)
-    
-    # make a voxel selection instance
-    voxsel=VoxelSelector(radius, intermediatesurf, n2v, distancemetric)
-    
+    print "Running  voxel selection"
     # run voxel selection
-    sel=voxsel.select_multiple(srcs, etastep)
+    sel=voxel_selection(vs, srcsurf, radius, srcs, start, stop, steps, distancemetric, intermediateat, etastep)
     
-    # store the volgemoetry results in the selection results
-    sel.setvolgeom(vg)
-    
-
     return sel
 
 
@@ -435,3 +504,54 @@ class _RadiusOptimizer():
     
     def __repr__(self):
         return 'radius is %f, %d steps' % (self._curradius, self._count) 
+    
+
+    
+if __name__ == "__main__":
+    #from mvpa2.tutorial_suite import * 
+    
+    if __debug__:
+        debug.active += ["SVS"]
+    
+    
+    d='%s/qref/' % utils._get_fingerdata_dir()
+    epifn=d+"../glm/rall_vol00.nii"
+    
+    ld=36 # mapicosahedron linear divisions
+    smallld=9
+    hemi='l'
+    nodecount=10*smallld**2+2
+    
+    pialfn=d+"ico%d_%sh.pial_al.asc" % (ld,hemi)
+    whitefn=d+"ico%d_%sh.smoothwm_al.asc" % (ld,hemi)
+    intermediatefn=d+"ico%d_%sh.intermediate_al.asc" % (smallld,hemi)
+    
+    fnoutprefix=d+"_voxsel1_ico%d_%sh_" % (ld,hemi)
+    radius=100 # 100 voxels per searchlight
+    srcs=range(nodecount) # use all nodes as a center
+    
+    attr=run_voxelselection(epifn, whitefn, pialfn, intermediatefn, radius, srcs)
+    
+    vg=attr.a['volgeom']
+    
+    nv=vg.nv()
+    datalin=np.zeros((nv,1))
+
+    mp=attr.get_attr_mapping('lin_vox_idxs')
+    for k,idxs in mp.iteritems():
+        if idxs is not None:
+            datalin[idxs]+=1
+    
+    datars=np.reshape(datalin, vg.shape())
+    
+    img=ni.Nifti1Image(datars,vg.affine())
+    
+    fnout=d+"__test_n2v4.nii"
+    img.to_filename(fnout)
+    
+    attrfn=d+"voxsel.pickle"
+    sparse_attributes.to_file(attrfn, attr)
+    
+    print fnout
+    print attrfn
+    

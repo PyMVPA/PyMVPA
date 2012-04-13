@@ -15,7 +15,7 @@ and surface-based multi-voxel pattern analysis. Neuroimage, 56(2), pp. 593-600
 '''
 
 import surf, volgeom, collections, surf_fs_asc, numpy as np, utils, time, nibabel as ni, operator, random
-import sparse_volmasks, afni_niml_dset, cPickle as pickle
+import sparse_attributes, afni_niml_dset, cPickle as pickle
 import collections
 
 class VolSurf():

@@ -284,11 +284,11 @@ def eta(starttime,progress,msg=None,show=True):
     
     f=lambda t:str(datetime.timedelta(seconds=t))
     
+    fullmsg='%s, took %s, remaining %s' % (msg, f(took), f(eta))
     if show:
-        fullmsg='%s, took %s, remaining %s' % (msg, f(took), f(eta))
         print fullmsg
-    
-    return eta
+
+    return fullmsg
 
 
 def _get_fingerdata_dir():
