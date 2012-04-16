@@ -44,7 +44,6 @@ and surface-based multi-voxel pattern analysis. Neuroimage, 56(2), pp. 593-600
 from mvpa2.tutorial_suite import * 
 from mvpa2.datasets.mri import fmri_dataset
 from mvpa2.misc.surfing import utils, volsurf, afni_niml_dset, afni_niml, sparse_attributes, surf_fs_asc, volgeom, surf_voxel_selection
-from mvpa2.clfs.svm import LinearCSVMC
 from mvpa2.measures.base import CrossValidation
 from mvpa2.generators.partition import NFoldPartitioner
 from mvpa2.mappers.fx import mean_sample
