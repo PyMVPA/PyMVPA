@@ -296,7 +296,7 @@ def _get_fingerdata_dir():
     dirs=['/Users/nick/Downloads',
           '/apps/nicksurfing/testdata']
     
-    indir='fingerdata-0.2'
+    indir='fingerdata-0.3'
     
     for d in dirs:
         fullpath='%s/%s/' % (d, indir)

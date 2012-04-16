@@ -24,7 +24,7 @@ from mvpa2.featsel.base import StaticFeatureSelection
 from mvpa2.measures.base import Measure
 from mvpa2.base.state import ConditionalAttribute
 from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
-
+from mvpa2.mappers.base import ChainMapper
 
 class BaseSearchlight(Measure):
     """Base class for searchlights.
@@ -147,7 +147,6 @@ class BaseSearchlight(Measure):
                 if 'append' in dir(mapper):
                     mapper.append(feat_sel_mapper)
                 else:
-                    from mappers.base import ChainMapper
                     mapper = ChainMapper([dataset.a.mapper,
                                           feat_sel_mapper])
                     

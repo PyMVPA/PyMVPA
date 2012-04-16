@@ -1,3 +1,18 @@
+'''
+Functionality for surface-based voxel selection
+
+Created on Feb 13, 2012
+
+@author: nick
+
+References
+----------
+NN Oosterhof, T Wiestler, PE Downing (2011). A comparison of volume-based 
+and surface-based multi-voxel pattern analysis. Neuroimage, 56(2), pp. 593-600
+
+'Surfing' toolbox: http://surfing.sourceforge.net 
+(and the associated documentation)
+'''
 
 import time
 import collections
@@ -350,23 +365,24 @@ def voxel_selection(vol_surf,surf_srcs,radius,srcs=None,start=0.,stop=1.,steps=1
         n2v=vol_surf.node2voxels()
         
         if __debug__:
-            debug('SVS',"Generated mapping from nodes to intersecting voxels:")
+            debug('SVS',"Generated mapping from nodes to intersecting voxels.")
         
         # build voxel selector
         voxel_selector=VoxelSelector(radius, surf_intermediate, n2v, distancemetric)
         
         if __debug__:
-            debug('SVS',"Instantiated voxel selector")
+            debug('SVS',"Instantiated voxel selector (radius %r)" % radius)
         
         
-        # structure to keep output data
+        # structure to keep output data. Initialize with None, then 
+        # make a sparse_attributes instance when we know what the attribtues are
         node2volume_attributes=None
         
         # keep track of time
         tstart=time.time()
         
         # walk over all nodes
-        for i,order in enumerate(visitorder):
+        for i, order in enumerate(visitorder):
             # source node on surf_srcs
             src=srcs[order]
             
@@ -376,14 +392,16 @@ def voxel_selection(vol_surf,surf_srcs,radius,srcs=None,start=0.,stop=1.,steps=1
             # find voxel attribues for this node
             attrs=voxel_selector.disc_voxel_attributes(intermediate)
             
-            if node2volume_attributes is None:
+            # first time that attributes are set, get the labels return from the voxel_selector
+            # to initiate the attribtues instance
+            if attrs and node2volume_attributes is None:
                 sa_labels=attrs.keys()
                 node2volume_attributes=sparse_attributes.SparseVolumeAttributes(sa_labels,vol_surf._volgeom)
             
             # store attribtues results
             node2volume_attributes.add(src, attrs)
             
-            if etastep and (i%etastep==0 or i==n-1) and n2v:
+            if etastep and (i%etastep==0 or i==n-1):
                 if __debug__:
                     msg=utils.eta(tstart, float(i+1)/n, '%d/%d (node #%d->#%d)' % (i+1,n,src,intermediate),show=False)
                     if __debug__:
