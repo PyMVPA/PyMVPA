@@ -23,7 +23,7 @@ uses Freesurfer and AFNI/SUMA (for the pipeline, see the documentation at
 http://surfing.sourceforge.net for details). Specifically, the command used to 
 produce the surfaces used here is:
 
-python mvpa2/misc/surfing/anatpreproc.py -e glm/epiref.nii -r pyref -datadir fs/s88 -l 
+python mvpa2/misc/surfing/anatpreproc.py -e glm/epiref.nii -r pyref -d fs/s88 -l 
 4+8+16+32+64+128
 
 The example here consists of two steps:
@@ -89,7 +89,16 @@ number of nodes.
 
 It is crucial here that highres_ld is a multiple of lowres_ld, so that
 all nodes in the low-res surface have a corresponding node (i.e., with the same,
-or almost the same, spatial coordinate) on the high-res surface.  
+or almost the same, spatial coordinate) on the high-res surface.
+
+Choice of lowres_ld and highres_ld is somewhat arbitary and always application
+specific. For highres_ld a value of at least 64 may be advisable as this 
+ensures enough anatomical detail is available to select voxels in the grey
+matter accurately. For lowres_ld, a low number may be advisable for functional
+or information-based connectivity analyses; e.g. lowres_ld=8 means there
+are 2*(10*8^2+2)=1284 nodes across the two hemispheres, and thus 823686 unique
+pairs of nodes. A higher number for lowres_ld may be  suited for single-center
+searchlight analyses.  
 """  
 lowres_ld=32
 
@@ -220,7 +229,7 @@ print voxsel
 Load functional data for running the searchlight,
 and make it into an fmri_dataset
 """
-epi_data_fn='%s/../glm/rall4D.nii' % datadir
+epi_data_fn='%s/../glm/rall_4D_nibabel.nii' % datadir
 nsamples=32
 targetnames=['index','middle']
 targets=[targetnames[i % 2] for i in xrange(nsamples)]

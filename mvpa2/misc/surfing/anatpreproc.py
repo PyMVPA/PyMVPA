@@ -26,7 +26,7 @@ def getdefaults():
     d={ #  options that must be set properly
        'sid':'s88',    # subject id
        'surfdir': rootdir+'fs/s88/surf/', # freesurfer surface directory
-       'ld': '9+18+36+72+144', # (list of) number of linear divisions for mapicoshedron
+       'ld': '4+8+16+32+64+128', # (list of) number of linear divisions for mapicoshedron
        'refdir': rootdir+'refB', # output directory (called reference directory because surfaces and volumes share the same reference)
        'anatvol':rootdir+'glm/anat_al+orig', # anatomical file assumed in correspondence with EPI data
        'steps':'all', # one or more of: toafni+mapico+moresurfs+align+makespec
