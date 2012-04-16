@@ -1,18 +1,8 @@
-'''
-Functionality for surface-based voxel selection
-
-Created on Feb 13, 2012
+"""
+Associate volume geometry with surface meshes
 
 @author: nick
-
-References
-----------
-NN Oosterhof, T Wiestler, PE Downing (2011). A comparison of volume-based 
-and surface-based multi-voxel pattern analysis. Neuroimage, 56(2), pp. 593-600
-
-'Surfing' toolbox: http://surfing.sourceforge.net 
-(and the associated documentation)
-'''
+"""
 
 import surf, volgeom, collections, surf_fs_asc, numpy as np, utils, time, nibabel as ni, operator, random
 import sparse_attributes, afni_niml_dset, cPickle as pickle
