@@ -47,3 +47,6 @@ doc/source/examples
 doc/source/generated
 /datadb
 _nno
+.DS_Store
+.project
+.pydevproject
