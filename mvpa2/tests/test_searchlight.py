@@ -159,12 +159,22 @@ class SearchlightTests(unittest.TestCase):
         # one time give center ids as a list, the other one takes it from the
         # dataset itself
         sls = (sphere_searchlight(cv, radius=0, center_ids=[3,50]),
-               sphere_searchlight(cv, radius=0, center_ids='center_ids'))
+               sphere_searchlight(None, radius=0, center_ids=[3,50]),
+               sphere_searchlight(cv, radius=0, center_ids='center_ids'),
+               )
         for sl in sls:
+            # assure that we could set cv post constructor
+            if sl.datameasure is None:
+                sl.datameasure = cv
             # run searchlight
             results = sl(ds)
             # only two spheres but error for all CV-folds
             self.assertEqual(results.shape, (len(self.dataset.UC), 2))
+            # Test if results hold if we "set" a "new" datameasure
+            sl.datameasure = CrossValidation(sample_clf_lin, NFoldPartitioner())
+            results2 = sl(ds)
+            assert_array_equal(results, results2)
+
         # test if we graciously puke if center_ids are out of bounds
         dataset0 = ds[:, :50] # so we have no 50th feature
         self.assertRaises(IndexError, sls[0], dataset0)
