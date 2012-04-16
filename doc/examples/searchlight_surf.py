@@ -31,22 +31,33 @@ The example here consists of two steps:
 on the surface, a set of neighboring voxels); 
 (2) running a searchlight based on the voxel selection
 
-@author nick
+References
+----------
+NN Oosterhof, T Wiestler, PE Downing (2011). A comparison of volume-based 
+and surface-based multi-voxel pattern analysis. Neuroimage, 56(2), pp. 593-600
+
+'Surfing' toolbox: http://surfing.sourceforge.net 
+(and the associated documentation)
 """
 
 """First import all the ingredients"""
-from mvpa2.tutorial_suite import * 
+#from mvpa2.tutorial_suite import * 
 from mvpa2.datasets.mri import fmri_dataset
 from mvpa2.misc.surfing import utils, volsurf, afni_niml_dset, afni_niml, sparse_attributes, surf_fs_asc, volgeom, surf_voxel_selection
+from mvpa2.clfs.svm import LinearCSVMC
+from mvpa2.measures.base import CrossValidation
+from mvpa2.generators.partition import NFoldPartitioner
+from mvpa2.mappers.fx import mean_sample
 
 """To store voxel selection results (for later re-use), we use pickle"""
 import cPickle as pickle
 import nibabel as ni
+import numpy as np
 
 if __debug__:
     from mvpa2.base import debug
     if not "SVS" in debug.registered:
-        debug.register("SVS","Surface-based voxel selection (a.node_idx.a. 'surfing')")
+        debug.register("SVS","Surface-based voxel selection (a.k.a. 'surfing')")
     debug.active += ["SVS","SLC"]
     
 """
