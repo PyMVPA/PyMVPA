@@ -339,14 +339,13 @@ def voxel_selection(vol_surf,surf_srcs,radius,srcs=None,start=0.,stop=1.,steps=1
             debug('SVS',"Generated high-res intermediate surface: %d nodes, %d faces" % 
                   (surf_intermediate.nv(), surf_intermediate.nf()))
             
+        if __debug__:
+            debug('SVS',"Looking for mapping from source to high-res surface:"
+                  " %d nodes, %d faces" % 
+                  (surf_srcs.nv(), surf_srcs.nf()))
         
         # find a mapping from nondes in surf_srcs to those in intermediate surface
         src2intermediate=surf_srcs.map_to_high_resolution_surf(surf_intermediate)
-        
-        if __debug__:
-            debug('SVS',"Found mapping from source to high-res surface:"
-                  " %d nodes, %d faces" % 
-                  (surf_srcs.nv(), surf_srcs.nf()))
         
         # if no sources are given, then visit all ndoes
         if srcs is None:
@@ -355,7 +354,7 @@ def voxel_selection(vol_surf,surf_srcs,radius,srcs=None,start=0.,stop=1.,steps=1
         n=len(srcs)
         
         if __debug__:
-            debug('SVS',"Surface-based voxel selection for %d centers:" % n)
+            debug('SVS',"Performing surface-based voxel selection for %d centers." % n)
         
         
         # visit in random order, for for better ETA estimate
