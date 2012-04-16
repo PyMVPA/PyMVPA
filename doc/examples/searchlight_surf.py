@@ -36,8 +36,8 @@ on the surface, a set of neighboring voxels);
 
 """First import all the ingredients"""
 from mvpa2.tutorial_suite import * 
-from datasets.mri import fmri_dataset
-from misc.surfing import utils, volsurf, afni_niml_dset, afni_niml, sparse_attributes, surf_fs_asc, volgeom, surf_voxel_selection
+from mvpa2.datasets.mri import fmri_dataset
+from mvpa2.misc.surfing import utils, volsurf, afni_niml_dset, afni_niml, sparse_attributes, surf_fs_asc, volgeom, surf_voxel_selection
 
 """To store voxel selection results (for later re-use), we use pickle"""
 import cPickle as pickle
