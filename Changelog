@@ -28,9 +28,23 @@ tracking systems accordingly and can be queried by visiting the URLs::
 
   https://github.com/PyMVPA/PyMVPA/issues/<fixed bug id>
 
-
 Releases
 ========
+
+* 2.1.0 (unreleased)
+
+  * Enhancements
+
+    - Add :func:`~mvpa2.misc.neighborhood.scatter_neighborhood` to aid
+      sparse sampling of spaces.
+    - Add :class:`~mvpa2.clfs.transerror.ConfusionMatrixError` to compute
+      confusion matrices with a error function interface (e.g. for
+      CrossValidation(errorfx=...). This class existed for a long time, but
+      was hidden in the unit tests.
+    - Add :class:`~mvpa2.mappers.fxy.FxyMapper` to perform arbitrary
+      computations involving two datasets.
+    - Add :class:`~mvpa2.mappers.base.CombinedMapper` to run a dataset through
+      a set of mappers and combine their outputs.
 
 * 2.0.1 (Tue, Mar 27 2012)
 
