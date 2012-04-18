@@ -8,6 +8,11 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 
+// Compatibility layer for Python3
+#if PY_MAJOR_VERSION >= 3
+# define PyInt_AS_LONG PyLong_AS_LONG
+#endif
+
 // Just to assure its availability even on older versions of libsvm
 // where no such preprocessor variable was available (when was it? ;))
 #ifndef LIBSVM_VERSION
