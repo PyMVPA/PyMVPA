@@ -331,8 +331,8 @@ unittest-nonlabile: build
 
 unittest-py3: build3
 	@echo "I: Running py3-compatible unittests. None of them should ever fail."
-	@MVPA_TESTS_LABILE=no MVPA_TESTS_QUICK=yes MVPA_TESTS_LOWMEM=yes \
-		$(MPLPYTHON3) $(BUILD3DIR)/mvpa2/tests/__init__.py
+	@cd $(BUILD3DIR) && MVPA_TESTS_LABILE=no MVPA_TESTS_QUICK=yes \
+		MVPA_TESTS_LOWMEM=yes $(MPLPYTHON3) mvpa2/tests/__init__.py
 
 # test if no errors would result if we force enabling of all ca
 unittest-ca: build
