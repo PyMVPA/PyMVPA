@@ -454,11 +454,22 @@ def __check_rpy2():
     # doctests
     r.library = _R_library
 
+def __check_liblapack_so():
+    """Check either we could load liblapack.so library via ctypes
+    """
+    from ctypes import cdll
+    try:
+        lapacklib = cdll.LoadLibrary('liblapack.so')
+    except OSError, e:
+        # reraise with exception type we catch/handle while testing externals
+        raise RuntimeError("Failed to import liblapack.so: %s" % e)
+
 # contains list of available (optional) external classifier extensions
 _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'libsvm verbosity control':'__check_libsvm_verbosity_control();',
           'nibabel':'__assign_nibabel_version()',
           'ctypes':'import ctypes as __',
+          'liblapack.so': "__check_liblapack_so()",
           'shogun':'__assign_shogun_version()',
           'shogun.krr': '__assign_shogun_version(); import shogun.Regression as __; x=__.KRR',
           'shogun.mpd': '__assign_shogun_version(); import shogun.Classifier as __; x=__.MPDSVM',
