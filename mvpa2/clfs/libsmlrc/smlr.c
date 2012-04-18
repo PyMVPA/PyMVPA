@@ -9,6 +9,11 @@
 
 #include <Python.h>
 
+/* Workaround for Python 3, which does not define the DL_EXPORT macro any more */
+#ifndef DL_EXPORT     /* declarations for DLL import/export */
+#define DL_EXPORT(RTYPE) RTYPE
+#endif
+
 DL_EXPORT(int)
 stepwise_regression(int w_rows, int w_cols, double w[],
 			int X_rows, int X_cols, double X[],
