@@ -26,6 +26,7 @@ RSYNC_OPTS_UP=-rzlhv --delete
 # The Python executable to be used
 #
 PYTHON = python
+PYTHON3 = python3
 # Assure non-interactive Matplotlib and provide local paths helper
 MPLPYTHON = PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg $(PYTHON)
 NOSETESTS = $(PYTHON) $(shell which nosetests)
@@ -96,6 +97,11 @@ build-stamp: $(build_depends)
 	$(PYTHON) setup.py build_ext --inplace
 	touch $@
 
+build3: build3-stamp
+build3-stamp: $(build_depends)
+	$(PYTHON3) setup.py config --noisy
+	$(PYTHON3) setup.py build_ext --inplace
+	touch $@
 
 #
 # Cleaning
@@ -134,7 +140,7 @@ clean:
 		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
 	-@rm -rf dist *report
-	-@rm -f *-stamp *_report.pdf *_report.log pymvpa2.cfg
+	-@rm -f *-stamp *_report.pdf *_report.log __pycache__ pymvpa2.cfg
 
 # this target should put the source tree into shape for building the source
 # distribution
