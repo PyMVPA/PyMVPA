@@ -1,6 +1,7 @@
 PROFILE_FILE=$(CURDIR)/$(BUILDDIR)/main.pstats
 COVERAGE_REPORT=$(CURDIR)/$(BUILDDIR)/coverage
 BUILDDIR=$(CURDIR)/build
+BUILD3DIR=$(CURDIR)/build/py3k
 HTML_DIR=$(BUILDDIR)/html
 DOC_DIR=$(CURDIR)/doc
 TUT_DIR=$(CURDIR)/datadb/tutorial_data/tutorial_data
@@ -29,6 +30,7 @@ PYTHON = python
 PYTHON3 = python3
 # Assure non-interactive Matplotlib and provide local paths helper
 MPLPYTHON = PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg $(PYTHON)
+MPLPYTHON3 = PYTHONPATH=$(BUILD3DIR):$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg $(PYTHON3)
 NOSETESTS = $(PYTHON) $(shell which nosetests)
 
 #
@@ -326,6 +328,11 @@ unittest-nonlabile: build
 	@echo "I: Running only non labile unittests. None of them should ever fail."
 	@MVPA_TESTS_LABILE=no \
 		$(MPLPYTHON) mvpa2/tests/__init__.py
+
+unittest-py3: build3
+	@echo "I: Running py3-compatible unittests. None of them should ever fail."
+	@MVPA_TESTS_LABILE=no MVPA_TESTS_QUICK=yes MVPA_TESTS_LOWMEM=yes \
+		$(MPLPYTHON3) $(BUILD3DIR)/mvpa2/tests/__init__.py
 
 # test if no errors would result if we force enabling of all ca
 unittest-ca: build
