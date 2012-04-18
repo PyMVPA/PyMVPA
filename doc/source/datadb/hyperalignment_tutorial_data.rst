@@ -54,8 +54,8 @@ Instructions
 ============
 
   >>> from mvpa2.suite import *
-  >>> filepath = os.path.join(pymvpa_datadbroot, 'hyperalignment_tutorial_data', 
-    "hyperalignment_tutorial_data.hdf5.gz")
+  >>> filepath = os.path.join(pymvpa_datadbroot, 'hyperalignment_tutorial_data',
+  ...                         "hyperalignment_tutorial_data.hdf5.gz")
   >>> datasets = h5load(filepath)
   >>> print len(datasets)
   10
