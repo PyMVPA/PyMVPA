@@ -139,8 +139,8 @@ clean:
 		 -o -iname '*_flymake.*' \
 		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
-	-@rm -rf dist *report
-	-@rm -f *-stamp *_report.pdf *_report.log __pycache__ pymvpa2.cfg
+	-@rm -rf dist *report __pycache__
+	-@rm -f *-stamp *_report.pdf *_report.log pymvpa2.cfg
 
 # this target should put the source tree into shape for building the source
 # distribution
