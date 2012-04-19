@@ -12,7 +12,7 @@ import lib2to3.main
 from io import StringIO
 
 
-EXTRA_2TO3_FLAGS = {}
+EXTRA_2TO3_FLAGS = {'*': '-x import'}
 
 BASE = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
 TEMP = os.path.normpath(os.path.join(BASE, '_py3k'))
