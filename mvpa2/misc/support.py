@@ -17,14 +17,12 @@ import re, os, sys
 
 # for SmartVersion
 from distutils.version import Version
-from types import StringType, TupleType, ListType
 
 import numpy as np
 #import numpy.random as npr
 
 from mvpa2.base import warning
 from mvpa2.support.copy import copy, deepcopy
-from operator import isSequenceType
 
 if __debug__:
     from mvpa2.base import debug
@@ -377,7 +375,7 @@ class SmartVersion(Version):
             return ""
 
     def __cmp__(self, other):
-        if isinstance(other, (StringType, TupleType, ListType)):
+        if isinstance(other, (str, tuple, list)):
             other = SmartVersion(other)
         elif isinstance(other, SmartVersion):
             pass
@@ -773,3 +771,4 @@ def get_nelements_per_value(data):
         result[l] += 1
 
     return result
+

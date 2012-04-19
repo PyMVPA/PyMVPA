@@ -233,6 +233,16 @@ def suite_stats():
 
     glbls = globals()
     import types
+    # Compatibility layer for Python3
+    try: 
+        from io import FileIO as BuiltinFileType
+    except ImportError:
+        BuiltinFileType = types.FileType
+
+    try:
+        from types import ClassType as OldStyleClassType
+    except ImportError:
+        OldStyleClassType = type(None)
 
     def _get_path(e):
         """Figure out basic path for the beast... probably there is already smth which could do that for me
@@ -244,7 +254,7 @@ def suite_stats():
         elif hasattr(e, '__path__'):
             return e.__path__[0]
         elif hasattr(e, '__module__'):
-            if isinstance(e.__module__, types.StringType):
+            if isinstance(e.__module__, str):
                 return e.__module__
             else:
                 return _get_path(e.__module__)
@@ -262,17 +272,17 @@ def suite_stats():
             for k, e in d.iteritems():
                 found = False
                 for ty, tk, check_path in (
-                    (types.ListType, "lists", False),
-                    (types.StringType, "strings", False),
-                    (types.UnicodeType, "strings", False),
-                    (types.FileType, "files", False),
+                    (list, "lists", False),
+                    (str, "strings", False),
+                    (unicode, "strings", False),
+                    (BuiltinFileType, "files", False),
                     (types.BuiltinFunctionType, None, True),
                     (types.BuiltinMethodType, None, True),
                     (types.ModuleType, "modules", True),
-                    (types.ClassType, "classes", True),
-                    (types.TypeType, "types", True),
+                    (OldStyleClassType, "classes", True),
+                    (type, "types", True),
                     (types.LambdaType, "functions", True),
-                    (types.ObjectType, "objects", True),
+                    (object, "objects", True),
                     ):
                     if isinstance(e, ty):
                         found = True
