@@ -648,8 +648,8 @@ class AttributesCollector(type):
         # TODO
 
         for base in bases:
-            if hasattr(base, "__metaclass__") and \
-                   base.__metaclass__ == AttributesCollector:
+            if hasattr(base, "__class__") and \
+                   base.__class__ == AttributesCollector:
                 # TODO take care about overriding one from super class
                 # for state in base.ca:
                 #    if state[0] =
