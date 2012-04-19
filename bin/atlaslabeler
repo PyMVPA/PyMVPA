@@ -374,7 +374,7 @@ volQForm = None
 #
 # compatibility with older talairachlabel
 if options.inputCoordFile:
-    fileIn = file(options.inputCoordFile)
+    fileIn = open(options.inputCoordFile)
     coordsIterator = parsed_coordinates_iterator(
         options.inputLineFormat, fileIn, ctype=ctype)
 # input is stdin
@@ -410,7 +410,7 @@ else:
         # previous iterator returns space coordinates
         options.coordRelativeToOrigin = True
     else:
-        fileIn = file(infile)
+        fileIn = open(infile)
         coordsIterator = parsed_coordinates_iterator(
             options.inputLineFormat, fileIn, ctype=ctype)
 
