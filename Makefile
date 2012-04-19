@@ -331,6 +331,7 @@ unittest-nonlabile: build
 
 unittest-py3: build3
 	@echo "I: Running py3-compatible unittests. None of them should ever fail."
+	-@rm -f build3-stamp
 	@cd $(BUILD3DIR) && MVPA_TESTS_LABILE=no MVPA_TESTS_QUICK=yes \
 		MVPA_TESTS_LOWMEM=yes $(MPLPYTHON3) mvpa2/tests/__init__.py
 
