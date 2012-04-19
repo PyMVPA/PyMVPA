@@ -212,7 +212,7 @@ def random_samples(dataset, npertarget, targets_attr='targets'):
     targets = satargets.value
     for i, r in enumerate(utargets):
         # get the list of pattern ids for this class
-        sample += random.sample((targets == r).nonzero()[0], npertarget[i] )
+        sample += random.sample(list((targets == r).nonzero()[0]), npertarget[i] )
 
     return dataset[sample]
 
