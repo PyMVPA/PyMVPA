@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as np
-from operator import isSequenceType
+from mvpa2.base.types import isSequenceType
 
 from mvpa2.base import externals
 if externals.exists('scipy', raise_=True):

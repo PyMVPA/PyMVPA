@@ -9,8 +9,8 @@
 """Helper to map literal attribute to numerical ones (and back)"""
 
 
-from operator import isSequenceType
 import numpy as np
+from mvpa2.base.types import isSequenceType
 
 class AttributeMap(object):
     # might be derived from dict, but do not see advantages right now,

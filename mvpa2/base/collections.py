@@ -14,9 +14,9 @@ __docformat__ = 'restructuredtext'
 
 import copy, re
 import numpy as np
-from operator import isSequenceType
 
 from mvpa2.base.dochelpers import _str, borrowdoc
+from mvpa2.base.types import isSequenceType
 
 if __debug__:
     # we could live without, but it would be nicer with it

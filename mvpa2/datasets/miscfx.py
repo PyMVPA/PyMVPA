@@ -14,7 +14,6 @@ first argument since they are bound to Dataset class in the trailer.
 
 __docformat__ = 'restructuredtext'
 
-from operator import isSequenceType
 import random
 
 import numpy as np
@@ -25,6 +24,7 @@ from mvpa2.base.dochelpers import table2string
 from mvpa2.misc.support import get_nelements_per_value
 
 from mvpa2.base import externals, warning
+from mvpa2.base.types import isSequenceType
 
 if __debug__:
     from mvpa2.base import debug
