@@ -51,3 +51,11 @@ def asobjarray(x):
     res = np.empty(len(x), dtype=object)
     res[:] = x
     return res
+
+# compatibility layer for Python3
+try:
+    from operator import isSequenceType
+except ImportError:
+    def isSequenceType(inst):
+        import collections
+        return isinstance(inst, collections.Sequence)
