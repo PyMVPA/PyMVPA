@@ -365,7 +365,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                   ds.nfeatures))
         splits = sana.ca.datasets
         self.assertEqual(len(splits), 2)
-        self.assertTrue(np.all([s.nsamples == ds.nsamples/4 for s in splits]))
+        self.assertTrue(np.all([s.nsamples == ds.nsamples//4 for s in splits]))
         # should have used different samples
         self.assertTrue(np.any([splits[0].sa.origids != splits[1].sa.origids]))
         # and should have got different sensitivities
