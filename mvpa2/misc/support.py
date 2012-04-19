@@ -23,6 +23,7 @@ import numpy as np
 
 from mvpa2.base import warning
 from mvpa2.support.copy import copy, deepcopy
+from mvpa2.base.types import isSequenceType
 
 if __debug__:
     from mvpa2.base import debug
@@ -402,7 +403,7 @@ class SmartVersion(Version):
                 if x is None:
                     if isinstance(y, int):
                         return -mult #  we got '.1' suffix
-                    if isinstance(y, StringType):
+                    if isinstance(y, str):
                         if (regex_prerelease.match(y)):
                             return mult        # so we got something to signal
                                                # pre-release, so first one won
@@ -416,8 +417,8 @@ class SmartVersion(Version):
                     if not isinstance(y, int):
                         return mult
                     return mult*cmp(x, y) # both are ints
-                elif isinstance(x, StringType):
-                    if isinstance(y, StringType):
+                elif isinstance(x, str):
+                    if isinstance(y, str):
                         return mult*cmp(x,y)
         return 0
 
