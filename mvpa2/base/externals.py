@@ -29,7 +29,7 @@ class _VersionsChecker(dict):
         dict.__init__(self, *args, **kwargs)
 
     def __getitem__(self, key):
-        if not self.has_key(key):
+        if key not in self:
             if key in self._KNOWN:
                 # run registered procedure to obtain versions
                 self._KNOWN[key]()
@@ -587,7 +587,7 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
     # default to 'not found'
     result = False
 
-    if not _KNOWN.has_key(dep):
+    if dep not in _KNOWN:
         raise ValueError, "%s is not a known dependency key." % (dep)
     else:
         # try and load the specific dependency
