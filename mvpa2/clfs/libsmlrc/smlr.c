@@ -9,6 +9,92 @@
 
 #include <Python.h>
 
+/* Following code is for compatibility with Python3
+   Example taken from: http://docs.python.org/py3k/howto/cporting.html#module-initialization-and-state
+*/
+
+struct module_state {
+    PyObject *error;
+};
+
+#if PY_MAJOR_VERSION >= 3
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#else
+#define GETSTATE(m) (&_state)
+static struct module_state _state;
+#endif
+
+static PyObject *
+error_out(PyObject *m) {
+    struct module_state *st = GETSTATE(m);
+    PyErr_SetString(st->error, "Error!");
+    return NULL;
+}
+
+static PyMethodDef smlr_methods[] = {
+    {"error_out", (PyCFunction)error_out, METH_NOARGS, NULL},
+    {NULL, NULL}
+};
+
+#if PY_MAJOR_VERSION >= 3
+
+static int smlr_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(GETSTATE(m)->error);
+    return 0;
+}
+
+static int smlr_clear(PyObject *m) {
+    Py_CLEAR(GETSTATE(m)->error);
+    return 0;
+}
+
+
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "smlr",
+        NULL,
+        sizeof(struct module_state),
+        smlr_methods,
+        NULL,
+        smlr_traverse,
+        smlr_clear,
+        NULL
+};
+
+#define INITERROR return NULL
+
+PyObject *
+PyInit_smlr(void)
+
+#else
+#define INITERROR return
+
+void
+initsmlr(void)
+#endif
+{
+#if PY_MAJOR_VERSION >= 3
+    PyObject *module = PyModule_Create(&moduledef);
+#else
+    PyObject *module = Py_InitModule("smlr", smlr_methods);
+#endif
+
+    if (module == NULL)
+        INITERROR;
+    struct module_state *st = GETSTATE(module);
+
+    st->error = PyErr_NewException("smlr.Error", NULL, NULL);
+    if (st->error == NULL) {
+        Py_DECREF(module);
+        INITERROR;
+    }
+
+#if PY_MAJOR_VERSION >= 3
+    return module;
+#endif
+}
+/* End of Python 3 compatibility layer */ 
+
 /* Workaround for Python 3, which does not define the DL_EXPORT macro any more */
 #ifndef DL_EXPORT     /* declarations for DLL import/export */
 #define DL_EXPORT(RTYPE) RTYPE
@@ -256,12 +342,14 @@ stepwise_regression(int w_rows, int w_cols, double w[],
   return cycle;
 }
 
+/* I am unsure if the following is still needed after
+   the changes due to Python 3 compatibility */
 /* make dummy module definition to satisfy distutils on win32
  * which cannot compile non-extension libraries
  */
-PyMODINIT_FUNC initsmlrc(void)
+/*PyMODINIT_FUNC initsmlrc(void)
 {
         Py_InitModule3("smlrc", NULL, "");
 }
-
+*/
 
