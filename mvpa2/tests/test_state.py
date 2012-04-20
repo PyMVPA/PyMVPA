@@ -281,7 +281,7 @@ class StateTests(unittest.TestCase):
             return
 
         # validate that string representation of the object is valid and consistent
-        a_str = `a`
+        a_str = repr(a)
         try:
             import test_state
             exec "a2=%s" % a_str
@@ -289,13 +289,13 @@ class StateTests(unittest.TestCase):
             self.fail(msg="Failed to generate an instance out of "
                       "representation %s. Got exception: %s" % (a_str, e))
 
-        a2_str = `a2`
+        a2_str = repr(a2)
         self.assertTrue(a2_str == a_str,
             msg="Generated object must have the same repr. Got %s and %s" %
             (a_str, a2_str))
 
         # Test at least that repr of collection is of correct syntax
-        aparams_str = `a.params`
+        aparams_str = repr(a.params)
         try:
             import test_state
             exec "aparams2=%s" % aparams_str
