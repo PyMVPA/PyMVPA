@@ -335,6 +335,12 @@ unittest-py3: build3
 	@cd $(BUILD3DIR) && MVPA_TESTS_LABILE=no MVPA_TESTS_QUICK=yes \
 		MVPA_TESTS_LOWMEM=yes $(MPLPYTHON3) mvpa2/tests/__init__.py
 
+unittest-py3warn: build
+	@echo "I: Running unittests with py3 warnings. None of them should ever fail."
+	@MVPA_TESTS_LABILE=no MVPA_TESTS_QUICK=yes \
+		MVPA_TESTS_LOWMEM=yes $(MPLPYTHON) -3 mvpa2/tests/__init__.py
+
+
 # test if no errors would result if we force enabling of all ca
 unittest-ca: build
 	@echo "I: Running unittests with all ca enabled."
