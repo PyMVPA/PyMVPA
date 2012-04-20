@@ -333,4 +333,4 @@ run.__test__ = False
 __test__ = False
 
 if __name__ == "__main__":
-    run(exit_=True)
+    run(exit_=True, verbosity=3)
