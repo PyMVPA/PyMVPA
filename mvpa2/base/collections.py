@@ -227,11 +227,16 @@ class SequenceCollectable(Collectable):
         if self.value is None:
             return None
         if self._unique_values is None:
-            # XXX we might better use Set, but yoh recalls that
-            #     np.unique was more efficient. May be we should check
-            #     on the the class and use Set only if we are not
-            #     dealing with ndarray (or lists/tuples)
-            self._unique_values = np.unique(self.value)
+            # get a 1-D array
+            arrvalue = np.asarray(self.value).ravel()
+            # check if we have None somewhere
+            nones = np.equal(arrvalue, None)
+            if nones.any():
+                uniques = np.unique(arrvalue[nones == False])
+                # put back one None
+                self._unique_values = np.insert(uniques, 0, None)
+            else:
+                self._unique_values = np.unique(arrvalue)
         return self._unique_values
 
 
