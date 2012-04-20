@@ -61,7 +61,7 @@ class BaseSearchlight(Measure):
       """
         Measure.__init__(self, **kwargs)
 
-        if nproc > 1 and not externals.exists('pprocess'):
+        if nproc is not None and nproc > 1 and not externals.exists('pprocess'):
             raise RuntimeError("The 'pprocess' module is required for "
                                "multiprocess searchlights. Please either "
                                "install python-pprocess, or reduce `nproc` "
@@ -202,7 +202,7 @@ class Searchlight(BaseSearchlight):
         """Classical generic searchlight implementation
         """
         # compute
-        if nproc > 1:
+        if nproc is not None and nproc > 1:
             # split all target ROIs centers into `nproc` equally sized blocks
             nproc_needed = min(len(roi_ids), nproc)
             roi_blocks = np.array_split(roi_ids, nproc_needed)
