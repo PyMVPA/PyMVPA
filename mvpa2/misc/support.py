@@ -386,6 +386,12 @@ class SmartVersion(Version):
             raise ValueError("Do not know how to treat version %s"
                              % str(other))
 
+        if sys.version >= '3':
+            def cmp(a, b):
+                """Compatibility with Python3 -- regular (deprecated
+                in 3) cmp operation should be sufficient for our needs"""
+                return (a > b) - (a < b)
+
         # Do ad-hoc comparison of strings
         i = 0
         s, o = self.version, other.version
@@ -421,6 +427,13 @@ class SmartVersion(Version):
                     if isinstance(y, str):
                         return mult*cmp(x,y)
         return 0
+
+    if sys.version >= '3':
+        # version.py logic in python3 does not rely on deprecated
+        # __cmp__ but renames it into _cmp  and wraps in those various
+        # comparators...  thus our good old __cmp__ should be ok for our
+        # purposes here
+        _cmp = __cmp__
 
 ##REF: Name was automagically refactored
 def get_break_points(items, contiguous=True):
