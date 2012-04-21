@@ -62,7 +62,6 @@ endif
 #
 
 PYVER := $(shell $(PYTHON) -V 2>&1 | cut -d ' ' -f 2,2 | cut -d '.' -f 1,2)
-DISTUTILS_PLATFORM := $(shell $(PYTHON) -c "import distutils.util; print distutils.util.get_platform()")
 
 #
 # Little helpers
