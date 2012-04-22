@@ -1,3 +1,5 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 '''
 General support for cortical surface meshes
 
@@ -6,16 +8,20 @@ Created on Feb 11, 2012
 @author: nick
 '''
 
-import numpy as np, os, collections, networkx as nx, datetime, time, utils, heapq, afni_suma_1d, math
+# yoh: nick, do you have any preference to have trailing whitespace
+#      lines through out the code or would be it be ok to remove them?
+
+import numpy as np, os, collections, networkx as nx, datetime, time, utils, \
+       heapq, afni_suma_1d, math
 
 class Surface(object):
     '''Cortical surface mesh
     
-    A surface consists of a set of vertices (each with a x, y, and z coordinate)
+    A surface consists of a set of vertices (each with an x, y, and z coordinate)
     and a set of faces (triangles; each has three indices referring to the vertices
     that make up the triangles)
     
-    In the present implementation new surfaces should be made using the __init__ 
+    In the present implementation new surfaces should be made using the __init__
     constructor; internal fields should not be changed manually
     
     Parameters
@@ -70,7 +76,7 @@ class Surface(object):
         '''
         
         if not hasattr(self,'_n2f'):
-            # run the first time this function is called            
+            # run the first time this function is called
             n2f=collections.defaultdict(set)
             for i in xrange(self._nf):
                 fi=self._f[i]
@@ -82,7 +88,7 @@ class Surface(object):
         return self._n2f
     
     def nbrs(self):
-        '''Finds the neighbours for each node and their (Euclidian) distance. 
+        '''Finds the neighbours for each node and their (Euclidian) distance.
         
         Returns
         -------
@@ -361,6 +367,9 @@ class Surface(object):
         return Surface(v=self._v*other,f=self._f)
     
     # return copies of internal values
+    # yoh: is it intentional to return copies instead of just
+    #      original arrays?  why?
+    #
     def v(self): 
         '''
         Returns
@@ -378,8 +387,12 @@ class Surface(object):
             Qx3 coordinates for Q vertices
         ''' 
         return np.array(self._f)
-    
-    def nv(self): 
+
+    # yoh: would you mind if they become @property
+    #      and spelled out fully, i.e. nvertices, nfaces
+    #      to stay coherent with Dataset.nfeatures, .nsamples?
+    #      and I guess the same for above v, f?
+    def nv(self):
         '''
         Returns
         -------
@@ -451,7 +464,9 @@ class Surface(object):
             
         
 '''    
-
+#  yoh: tests would be nearly mandatory and should go under mvpa2/tests
+#       so why not start by refactoring these with some rudimentary example
+#       files if necessary under mvpa2/data?
 def _test_distance():
     d='/Users/nick/Downloads/fingerdata-0.2/glm/'
     fn=d+"rall_vol00.nii"
@@ -488,11 +503,6 @@ if __name__ == '__main__':
     _test_l2h()
     pass#_test_project()
     
-    
-    
-    
-    
- 
     rs=[10,20,30,40]
     
     for r in rs:
