@@ -8,6 +8,8 @@ pymvpa (0.4.8-1) unstable; urgency=low
   * Removed not needed XS-DM-Upload-Allowed
   * Removed shogun-python-modular from Build-Depends due to its
     uninstallability
+  * set -e for every loop to FTBFS upon errors (Closes: #655649)
+    (Thanks Jakub again)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 23 Apr 2012 23:19:48 -0400
 

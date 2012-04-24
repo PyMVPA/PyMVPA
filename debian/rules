@@ -28,7 +28,7 @@ clean::
 # reason
 install/python-mvpa::
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	for buildver in $(cdbs_python_build_versions); do \
+	set -e; for buildver in $(cdbs_python_build_versions); do \
 		echo "I: Running PyMVPA unittests using python$$buildver"; \
         cd $(CURDIR) && cd $(DEB_SRCDIR)/build/lib.*-$$buildver && \
 		ln -s $(CURDIR)/mvpa/data mvpa/ && \
@@ -48,7 +48,7 @@ install/python-mvpa-doc::
 
 install/python-mvpa-lib::
 	# move libraries into the python-mvpa-lib package
-	for lib in $$(find debian/python-mvpa/usr -name '*.so'); do \
+	set -e; for lib in $$(find debian/python-mvpa/usr -name '*.so'); do \
 	   sdir=$$(dirname $$lib) ; \
 	   tdir=debian/python-mvpa-lib/$${sdir#*python-mvpa/} ; \
 	   mkdir -p $$tdir ; \
