@@ -33,6 +33,23 @@ Unreleased changes
 Releases
 ========
 
+* 0.4.8 (Tue, Apr 23 2012) (Total: 14 commits)
+
+  A bugfix release
+
+  * Fixed
+
+    - Compatibility with libsvm 3.10, shogun >= 1.0 (Closes: #655643)
+    - import ma directly from numpy
+    - :class:`GPRLinearWeights` -- correct access to weights
+    - :class:`FslEV3` -- gzip import and getNEVs
+    - :func:`read_fsl_design` -- correct splitting of the fields
+    - :func:`score` -- assure std to be an array during application
+
+  * RF
+
+    - extensions are built inplace
+
 * 0.4.7 (Tue, Mar 07 2011) (Total: 12 commits)
 
   A bugfix release
