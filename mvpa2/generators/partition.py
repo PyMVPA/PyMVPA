@@ -493,11 +493,19 @@ class NFoldPartitioner(Partitioner):
 
 
 class ExcludeTargetsCombinationsPartitioner(Node):
-    """Given a pre-generated partitioning XXX
-
-    TODO 4 Swaroop -- provide documentation
+    """Given a pre-generated partitioning
+    this generates a second-level partitioning by selecting
+    all possible combinations of k-targets from all targets
+    and excludes samples with the selected k-targets from 
+    training dataseti for each combination.
+    A simple example would be: for a dataset with 3 classes with 
+    one sample per class, k=2 gives 3 combination partitions 
+    with 2 samples for testing and one sample for training (since
+    it excludes the 2 selected target samples) per partition.
+    
     Example
     -------
+        Using in conjunction with a NFoldPartitioner()
 
         partitioner = ChainNode([NFoldPartitioner(),
                              ExcludeTargetsCombinationsPartitioner(
