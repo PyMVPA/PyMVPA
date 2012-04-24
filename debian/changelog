@@ -4,6 +4,8 @@ pymvpa (0.4.8-1) unstable; urgency=low
     - Fixes compatibility with libsvm 3.10 and shogun >= 1.0
       (Closes: #655643) (Thanks Jakub Wilk for report and Colin Watson
       for the tentative patch)
+  * Bump Standards-Version to 3.9.3 -- no changes are due
+  * Removed not needed XS-DM-Upload-Allowed
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 23 Apr 2012 23:19:48 -0400
 
