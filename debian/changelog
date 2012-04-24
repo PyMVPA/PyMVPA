@@ -12,6 +12,7 @@ pymvpa (0.4.8-1) unstable; urgency=low
     (Thanks Jakub again)
   * Added debian/upstream with a publication reference
   * Adjusted debian/copyright: DEP-5 compliance, removed bibtex reference
+  * Added a call to dh_numpy (where present) to provide numpy-abi depends
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 23 Apr 2012 23:19:48 -0400
 

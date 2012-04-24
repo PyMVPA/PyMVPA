@@ -37,6 +37,7 @@ ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 		rm mvpa/data; \
     done
 endif
+	[ -x /usr/bin/dh_numpy ] && dh_numpy || :
 
 build/python-mvpa-doc:: doc
 
