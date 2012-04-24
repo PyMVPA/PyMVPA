@@ -10,6 +10,8 @@ pymvpa (0.4.8-1) unstable; urgency=low
     uninstallability
   * set -e for every loop to FTBFS upon errors (Closes: #655649)
     (Thanks Jakub again)
+  * Added debian/upstream with a publication reference
+  * Adjusted debian/copyright: DEP-5 compliance, removed bibtex reference
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 23 Apr 2012 23:19:48 -0400
 

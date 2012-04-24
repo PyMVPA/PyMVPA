@@ -1,28 +1,12 @@
-Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=135
-Name: PyMVPA
-Source: http://www.pymvpa.org
-        http://github.com/PyMVPA/PyMVPA
-X-References-bib:
-  @Article{ pymvpa,
-      author = "Michael Hanke and Yaroslav O. Halchenko and
-                Per B. Sederberg and Emanuele Olivetti and Ingo Fründ and
-                Jochem W. Rieger and Christoph S. Herrmann and James V. Haxby
-                and Stephen José Hanson and Stefan Pollmann",
-      title = "{PyMVPA}: A Unifying Approach to the Analysis of Neuroscientific Data",
-      journal = "Frontiers in Neuroinformatics",
-      year = "2009",
-      volume = "3",
-      number = "3",
-      doi = "10.3389/neuro.11.003.2009",
-      url = "http://dx.doi.org/10.3389/neuro.11.003.2009",
-      note = "PMC2638552"
-  }
-
+Format-Specification: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0
+Upstream-Name: PyMVPA
+Upstream-Contact: pkg-exppsy-pymvpa@lists.alioth.debian.org
+Source: http://github.com/PyMVPA/PyMVPA
 
 Files: *
 Copyright:
-  2006-2010, Michael Hanke <michael.hanke@gmail.com>
-  2007-2010, Yaroslav Halchenko <debian@onerussian.com>
+  2006-2012, Michael Hanke <michael.hanke@gmail.com>
+  2007-2012, Yaroslav Halchenko <debian@onerussian.com>
   2007-2009, Per B. Sederberg <persed@princeton.edu>
        2008, Emanuele Olivetti <emanuele@relativita.com>
 License: Expat

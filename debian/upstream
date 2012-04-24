@@ -1,0 +1,12 @@
+Name: pymvpa
+Reference:
+ - Author: Michael Hanke and Yaroslav O. Halchenko and Per B. Sederberg and Stephen Jos{\'e} Hanson and James V. Haxby and Stefan Pollmann
+   Title: 'PyMVPA: A Python toolbox for multivariate pattern analysis of fMRI data'
+   Journal: Neuroinformatics
+   Volume: 7
+   Number: 1
+   Pages: 37--53
+   Year: 2009
+   URL: http://dx.doi.org/10.1007/s12021-008-9041-y
+   DOI: 10.1007/s12021-008-9041-y
+   PMID: 19184561
