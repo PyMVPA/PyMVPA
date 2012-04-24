@@ -6,6 +6,8 @@ pymvpa (0.4.8-1) unstable; urgency=low
       for the tentative patch)
   * Bump Standards-Version to 3.9.3 -- no changes are due
   * Removed not needed XS-DM-Upload-Allowed
+  * Removed shogun-python-modular from Build-Depends due to its
+    uninstallability
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 23 Apr 2012 23:19:48 -0400
 
