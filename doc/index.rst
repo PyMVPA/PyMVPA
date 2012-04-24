@@ -27,11 +27,10 @@ Alioth_, a service that is kindly provided by the `Debian project`_.
 News
 ====
 
-PyMVPA 0.4.7 is out [07 Mar 2011]
-  This release brings a set of bug fixes, including an important fix
-  for dealing with multiple NIfTI files having different
-  scale/intercept set . See the :ref:`changelog <chap_changelog>` for
-  details.
+PyMVPA 0.4.8 is out [24 Apr 2012]
+  This release brings a set of bug fixes, including compatibility with
+  recent shogun (>=1.0) and libsvm >= 3.10. See the :ref:`changelog
+  <chap_changelog>` for details.
 
 .. raw:: html
 
