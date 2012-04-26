@@ -69,7 +69,7 @@ class StateTests(unittest.TestCase):
 
         self.assertRaises(AttributeError, empty.__getattribute__, 'ca')
 
-        self.assertEqual(blank.ca.items(), [])
+        self.assertEqual(list(blank.ca.items()), [])
         self.assertEqual(len(blank.ca), 0)
         self.assertTrue(blank.ca.enabled == [])
         self.assertRaises(AttributeError, blank.__getattribute__, 'dummy')
@@ -283,13 +283,19 @@ class StateTests(unittest.TestCase):
         # validate that string representation of the object is valid and consistent
         a_str = repr(a)
         try:
-            import test_state
-            exec "a2=%s" % a_str
-        except Exception, e:
+            import mvpa2.tests.test_state as test_state
+            exec("a2=%s" % a_str)
+        except Exception as e:
             self.fail(msg="Failed to generate an instance out of "
                       "representation %s. Got exception: %s" % (a_str, e))
 
-        a2_str = repr(a2)
+        # For specifics of difference in exec keyword from exec() function in
+        # python3 see
+        # http://stackoverflow.com/questions/6561482/why-did-python-3-changes-to-exec-break-this-code
+        # which mandates us to use exec here around repr so it gets access to
+        # above a2 placed into locals()
+        exec('a2_str_=repr(a2)')
+        a2_str = locals()['a2_str_']       # crazy ha?  it must not be a2_str either
         self.assertTrue(a2_str == a_str,
             msg="Generated object must have the same repr. Got %s and %s" %
             (a_str, a2_str))
@@ -297,9 +303,9 @@ class StateTests(unittest.TestCase):
         # Test at least that repr of collection is of correct syntax
         aparams_str = repr(a.params)
         try:
-            import test_state
-            exec "aparams2=%s" % aparams_str
-        except Exception, e:
+            import mvpa2.tests.test_state as test_state
+            exec("aparams2=%s" % aparams_str)
+        except Exception as e:
             self.fail(msg="Failed to generate an instance out of "
                       "representation  %s of params. Got exception: %s" % (aparams_str, e))
 
