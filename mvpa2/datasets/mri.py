@@ -121,6 +121,9 @@ def map2nifti(dataset, data=None, imghdr=None, imgtype=None):
                       'No image type found in %s. Using default Nifti1Image.'
                       % (dataset.a))
 
+    # Augment header if data dsarray dtype could not be represented
+    # with imghdr.get_data_dtype()
+
     if issubclass(imgtype, nibabel.spatialimages.SpatialImage) \
        and (imghdr is None or hasattr(imghdr, 'get_data_dtype')):
         # we can handle the desired image type and hdr with nibabel
@@ -316,20 +319,18 @@ def _load_anyimg(src, ensure=False, enforce_dim=None):
     if (isinstance(src, list) or isinstance(src, tuple)) \
             and len(src)>0:
         # load from a list of given entries
-        if enforce_dim is not None: enforce_dim_ = enforce_dim - 1
-        else:                       enforce_dim_ = None
-        srcs = [_load_anyimg(s, ensure=ensure, enforce_dim=enforce_dim_)
+        srcs = [_load_anyimg(s, ensure=ensure, enforce_dim=enforce_dim)
                 for s in src]
         if __debug__:
             # lets check if they all have the same dimensionality
-            shapes = [s[0].shape for s in srcs]
+            # besides the leading one
+            shapes = [s[0].shape[1:] for s in srcs]
             if not np.all([s == shapes[0] for s in shapes]):
-                raise ValueError, \
-                      "Input volumes contain variable number of dimensions:" \
-                      " %s" % (shapes,)
+                raise ValueError(
+                      "Input volumes vary in their shapes: %s" % (shapes,))
         # Combine them all into a single beast
         # will be t,x,y,z
-        imgdata = np.array([s[0] for s in srcs])
+        imgdata = np.vstack([s[0] for s in srcs])
         imghdr, imgtype = srcs[0][1:3]
     else:
         # try opening the beast; this might yield none in case of an unsupported
