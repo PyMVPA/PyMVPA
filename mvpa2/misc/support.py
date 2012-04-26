@@ -391,6 +391,11 @@ class SmartVersion(Version):
                 """Compatibility with Python3 -- regular (deprecated
                 in 3) cmp operation should be sufficient for our needs"""
                 return (a > b) - (a < b)
+        else:
+            # having above cmp overloads builtin cmp for this function so we
+            # need manually rebind it or just resort to above cmp in general
+            # (why not?)
+            from __builtin__ import cmp
 
         # Do ad-hoc comparison of strings
         i = 0
