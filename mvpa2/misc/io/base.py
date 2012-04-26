@@ -85,7 +85,7 @@ class ColumnData(dict):
         ----------
         source : str or dict
           If values is given as a string all data is read from the
-          file and additonal keyword arguments can be sued to
+          file and additonal keyword arguments can be used to
           customize the read procedure. If a dictionary is passed
           a deepcopy is performed.
         header : bool or list of str

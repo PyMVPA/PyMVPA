@@ -168,3 +168,15 @@ def test_recursion():
     assert_equal(type(obj[2]), type(lobj[2]))
     ok_(obj[3] is obj)
     ok_(lobj[3] is lobj)
+
+@with_tempfile()
+def test_h5save_mkdir(dirname):
+    # create deeper directory name
+    filename = os.path.join(dirname, 'a', 'b', 'c', 'test_file.hdf5')
+    assert_raises(IOError, h5save, filename, {}, mkdir=False)
+
+    # And create by default
+    h5save(filename, {})
+    ok_(os.path.exists(filename))
+    d = h5load(filename)
+    assert_equal(d, {})

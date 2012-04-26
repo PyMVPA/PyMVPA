@@ -12,12 +12,12 @@ Primarily the ones from nose.tools
 """
 __docformat__ = 'restructuredtext'
 
-import os, sys
+import glob, os, sys, shutil
 import tempfile
 import unittest
 
 import mvpa2
-from mvpa2.base import externals
+from mvpa2.base import externals, warning
 
 if __debug__:
     from mvpa2.base import debug
@@ -128,10 +128,26 @@ def with_tempfile(*targs, **tkwargs):
             try:
                 func(*(arg + (filename,)), **kw)
             finally:
-                try:
-                    os.unlink(filename)
-                except OSError:
-                    pass
+                # glob here for all files with the same name (-suffix)
+                # would be useful whenever we requested .img filename,
+                # and function creates .hdr as well
+                lsuffix = len(tkwargs.get('suffix', ''))
+                filename_ = lsuffix and filename[:-lsuffix] or filename
+                filenames = glob.glob(filename_ + '*')
+                if len(filename_) < 3 or len(filenames) > 5:
+                    # For paranoid yoh who stepped into this already ones ;-)
+                    warning("It is unlikely that it was intended to remove all"
+                            " files matching %r. Skipping" % filename_)
+                    return
+                for f in filenames:
+                    try:
+                        # Can also be a directory
+                        if os.path.isdir(f):
+                            shutil.rmtree(f)
+                        else:
+                            os.unlink(f)
+                    except OSError:
+                        pass
         newfunc = make_decorator(func)(newfunc)
         return newfunc
 
