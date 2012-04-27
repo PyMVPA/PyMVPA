@@ -24,7 +24,7 @@ from mvpa2.base.dochelpers import table2string
 from mvpa2.misc.support import get_nelements_per_value
 
 from mvpa2.base import externals, warning
-from mvpa2.base.types import isSequenceType
+from mvpa2.base.types import is_sequence_type
 
 if __debug__:
     from mvpa2.base import debug
@@ -238,7 +238,7 @@ def get_samples_by_attr(dataset, attr, values, sort=True):
     """Return indices of samples given a list of attributes
     """
 
-    if not isSequenceType(values) \
+    if not is_sequence_type(values) \
            or isinstance(values, basestring):
         values = [ values ]
 

@@ -16,7 +16,7 @@ import copy, re
 import numpy as np
 
 from mvpa2.base.dochelpers import _str, borrowdoc
-from mvpa2.base.types import isSequenceType
+from mvpa2.base.types import is_sequence_type
 
 if __debug__:
     # we could live without, but it would be nicer with it
@@ -270,7 +270,7 @@ class ArrayCollectable(SequenceCollectable):
 
     def _set(self, val):
         if not hasattr(val, 'view'):
-            if isSequenceType(val):
+            if is_sequence_type(val):
                 try:
                     val = np.asanyarray(val)
                 except ValueError, e:
@@ -543,7 +543,7 @@ class UniformLengthCollection(Collection):
         # XXX should we check whether it is some other Collectable?
         if not isinstance(value, ArrayCollectable):
             # if it is only a single element iterable, attempt broadcasting
-            if isSequenceType(value) and len(value) == 1 \
+            if is_sequence_type(value) and len(value) == 1 \
                     and not ulength is None:
                 if ulength > 1:
                     # cannot use np.repeat, because it destroys dimensionality

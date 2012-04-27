@@ -54,9 +54,13 @@ def asobjarray(x):
 
 # compatibility layer for Python3
 try:
-    from operator import isSequenceType
+    from operator import isSequenceType as is_sequence_type
 except ImportError:
-    def isSequenceType(inst):
+    def is_sequence_type(inst):
+        """Return True if an instance is of an iterable type
+
+        Verified by wrapping with iter() call
+        """
         try:
             _ = iter(inst)
             return True

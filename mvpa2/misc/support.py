@@ -23,7 +23,7 @@ import numpy as np
 
 from mvpa2.base import warning
 from mvpa2.support.copy import copy, deepcopy
-from mvpa2.base.types import isSequenceType
+from mvpa2.base.types import is_sequence_type
 
 if __debug__:
     from mvpa2.base import debug
@@ -747,7 +747,7 @@ def get_limit_filter(limit, collection):
     elif isinstance(limit, dict):
         limit_filter = np.zeros(attr_length, dtype='bool')
         for a in limit:
-            if isSequenceType(limit[a]):
+            if is_sequence_type(limit[a]):
                 for v in limit[a]:
                     # enable the samples matching the value 'v' of the
                     # current limit attribute 'a'

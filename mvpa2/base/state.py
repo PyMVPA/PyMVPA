@@ -37,7 +37,7 @@ TODO:
 #      names of Collectables are actually the keys in Collections
 __docformat__ = 'restructuredtext'
 
-import operator
+from mvpa2.base.types import is_sequence_type
 import mvpa2.support.copy as copy
 from textwrap import TextWrapper
 
@@ -265,7 +265,7 @@ class Collection(BaseCollection):
                     if missingok:
                         return
                     raise
-        elif operator.isSequenceType(key):
+        elif is_sequence_type(key):
             for item in key:
                 self._action(item, func, missingok=missingok, **kwargs)
         else:
