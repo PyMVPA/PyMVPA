@@ -57,5 +57,8 @@ try:
     from operator import isSequenceType
 except ImportError:
     def isSequenceType(inst):
-        import collections
-        return isinstance(inst, collections.Sequence)
+        try:
+            _ = iter(inst)
+            return True
+        except:
+            return False
