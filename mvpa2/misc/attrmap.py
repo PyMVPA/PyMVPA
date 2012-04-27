@@ -10,7 +10,7 @@
 
 
 import numpy as np
-from mvpa2.base.types import isSequenceType
+from mvpa2.base.types import is_sequence_type
 
 class AttributeMap(object):
     # might be derived from dict, but do not see advantages right now,
@@ -225,7 +225,7 @@ class AttributeMap(object):
 
         lmap = self._lmap
 
-        if isSequenceType(attr) and not isinstance(attr, str):
+        if is_sequence_type(attr) and not isinstance(attr, str):
             # Choose lookup function
             if recurse:
                 lookupfx = lambda x: self.to_literal(x, recurse=True)

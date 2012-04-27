@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as np
-from mvpa2.base.types import isSequenceType
+from mvpa2.base.types import is_sequence_type
 
 from mvpa2.base import externals
 if externals.exists('scipy', raise_=True):
@@ -215,7 +215,7 @@ class PolyDetrendMapper(Mapper):
 
             # Process the polyord to be a list with length of the number of
             # chunks
-            if not isSequenceType(polyord):
+            if not is_sequence_type(polyord):
                 # repeat to be proper length
                 polyord = [polyord] * len(uchunks)
             elif not chunks_attr is None and len(polyord) != len(uchunks):

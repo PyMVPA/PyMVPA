@@ -11,7 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import operator
+from mvpa2.base.types import is_sequence_type
 
 # Define sets of classifiers
 from mvpa2.clfs.meta import FeatureSelectionClassifier, SplitClassifier, \
@@ -120,7 +120,7 @@ class Warehouse(object):
         return result
 
     def __iadd__(self, item):
-        if operator.isSequenceType(item):
+        if is_sequence_type(item):
             for item_ in item:
                 self.__iadd__(item_)
         else:
