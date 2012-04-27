@@ -16,6 +16,8 @@ import glob, os, sys, shutil
 import tempfile
 import unittest
 
+import numpy as np
+
 import mvpa2
 from mvpa2.base import externals, warning
 
@@ -292,7 +294,9 @@ def assert_objectarray_equal(x, y, xorig=None, yorig=None):
             # we will try harder comparing each element the same way
             # and also enforcing equal dtype
             for x_, y_ in zip(x, y):
-                assert(x_.dtype == y_.dtype)
+                assert(type(x_) == type(y_))
+                if isinstance(x_, np.ndarray):
+                    assert(x_.dtype == y_.dtype)
                 assert_objectarray_equal(x_, y_, xorig, yorig)
         except Exception, e:
             if not isinstance(e, AssertionError):
