@@ -425,9 +425,9 @@ class Collection(dict):
 
                 if copyvalues is None:
                     self[name] = value
-                elif copyvalues is 'shallow':
+                elif copyvalues == 'shallow':
                     self[name] = copy.copy(value)
-                elif copyvalues is 'deep':
+                elif copyvalues == 'deep':
                     self[name] = copy.deepcopy(value, memo)
                 else:
                     raise ValueError("Unknown value ('%s') for copy argument."
@@ -444,9 +444,9 @@ class Collection(dict):
                 # add the attribute with optional docs
                 if copyvalues is None:
                     self[k] = v
-                elif copyvalues is 'shallow':
+                elif copyvalues == 'shallow':
                     self[k] = copy.copy(v)
-                elif copyvalues is 'deep':
+                elif copyvalues == 'deep':
                     self[k] = copy.deepcopy(v, memo)
                 else:
                     raise ValueError("Unknown value ('%s') for copy argument."
