@@ -292,9 +292,9 @@ def summary(dataset, stats=True, lstats='auto', sstats='auto', idhash=False,
         s += '\nID-Hashes: %s' % dataset.idhash
 
     # Deduce if necessary lstats and sstats
-    if lstats is 'auto':
+    if lstats == 'auto':
         lstats = (targets_attr in sa) and (chunks_attr in sa)
-    if sstats is 'auto':
+    if sstats == 'auto':
         sstats = (targets_attr in sa)
 
     ssep = (' ', '\n')[lstats]
