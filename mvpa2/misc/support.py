@@ -249,7 +249,12 @@ def idhash(val):
     elif isinstance(val, dict):
         val = tuple(val.items())
     try:
-        res += ":%s" % hash(buffer(val))
+        if sys.version_info[0] >= 3:
+            # TODO: bytes is just a workaround and is slower
+            # Anyway -- research joblib for hashing
+            res += ":%s" % hash(bytes(val))
+        else:
+            res += ":%s" % hash(buffer(val))
     except:
         try:
             res += ":%s" % hash(val)
