@@ -157,7 +157,7 @@ class PLR(Classifier):
 
         # get the values and then predictions
         values = np.ravel(self.__f(self.bias + data * self.w))
-        predictions = values > 0.5
+        predictions = (values > 0.5).astype(int)
 
         # save the state if desired, relying on State._setitem_ to
         # decide if we will actually save the values
