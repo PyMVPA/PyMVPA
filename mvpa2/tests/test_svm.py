@@ -163,15 +163,14 @@ class SVMTests(unittest.TestCase):
         """Test if we raise exceptions on incorrect specifications
         """
 
-        if externals.exists('libsvm') or externals.exists('shogun'):
-            self.assertRaises(TypeError, libsvm.SVM, C=1.0, nu=2.3)
-
         if externals.exists('libsvm'):
+            self.assertRaises(TypeError, libsvm.SVM, C=1.0, nu=2.3)
             self.assertRaises(TypeError, libsvm.SVM,  C=1.0, nu=2.3)
             self.assertRaises(TypeError, LinearNuSVMC, C=2.3)
             self.assertRaises(TypeError, LinearCSVMC, nu=2.3)
 
         if externals.exists('shogun'):
+            self.assertRaises(TypeError, sg.SVM, C=1.0, nu=2.3)
             self.assertRaises(TypeError, sg.SVM, C=10, kernel_type='RBF',
                                   coef0=3)
 
