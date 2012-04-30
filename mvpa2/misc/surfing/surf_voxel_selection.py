@@ -393,13 +393,14 @@ def voxel_selection(vol_surf,surf_srcs,radius,srcs=None,start=0.,stop=1.,steps=1
             
             # first time that attributes are set, get the labels return from the voxel_selector
             # to initiate the attribtues instance
-            if attrs and node2volume_attributes is None:
-                sa_labels=attrs.keys()
-                node2volume_attributes=sparse_attributes.SparseVolumeAttributes(sa_labels,vol_surf._volgeom)
+            if attrs: 
+                if  node2volume_attributes is None:
+                    sa_labels=attrs.keys()
+                    node2volume_attributes=sparse_attributes.SparseVolumeAttributes(sa_labels,vol_surf._volgeom)
             
-            # store attribtues results
-            node2volume_attributes.add(src, attrs)
-            
+                # store attribtues results
+                node2volume_attributes.add(src, attrs)
+                
             if etastep and (i%etastep==0 or i==n-1):
                 if __debug__:
                     msg=utils.eta(tstart, float(i+1)/n, '%d/%d (node #%d->#%d)' % (i+1,n,src,intermediate),show=False)

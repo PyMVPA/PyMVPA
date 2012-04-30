@@ -90,7 +90,8 @@ class VolGeom():
             ijk[:,i]=v[:]
             lin-=v*f
         
-        ijk[outsidemsk,:]=self.shape()
+        
+        ijk[outsidemsk,:]=self.shape()[:3]
         
         return ijk
     
@@ -134,7 +135,8 @@ class VolGeom():
         
         # assign value of shape, which should give an out of bounds exception
         # if this value is actually used to index voxels in the volume
-        sh=self.shape()
+        sh=self.shape()[:3]
+        
         ijk[outsidemsk,:]=sh
         return ijk
     
