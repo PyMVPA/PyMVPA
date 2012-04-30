@@ -7,11 +7,11 @@ import os, subprocess, time, datetime, collections
 
 def as_list(v):
     '''makes this a singleton list if the input is not a list'''
-    if type(v) not in [list,tuple]:
-        v=[v]
+    if type(v) not in [list, tuple]:
+        v = [v]
     return v
 
-def file_contains_string(fn,s):
+def file_contains_string(fn, s):
     '''Returns whether a file contains a string
     
     Parameters
@@ -25,10 +25,10 @@ def file_contains_string(fn,s):
     -------
     True iff the file name fn contains s
     '''
-    f=open(fn)
-    c=f.read()
-    return c.find(s)>=0
-    
+    f = open(fn)
+    c = f.read()
+    return c.find(s) >= 0
+
 
 def afni_fileparts(fn):
     '''File parts for afni filenames.
@@ -57,32 +57,32 @@ def afni_fileparts(fn):
       .HEAD
     
     '''
-    
-    tail,head=os.path.split(fn)
 
-    s=head.split('+')
-    name=s[0]
-    orient='+'+s[1] if len(s)==2  else ''
-    
-    afniorients=['+orig','+tlrc','+acpc']
-    ext=None
+    tail, head = os.path.split(fn)
+
+    s = head.split('+')
+    name = s[0]
+    orient = '+' + s[1] if len(s) == 2  else ''
+
+    afniorients = ['+orig', '+tlrc', '+acpc']
+    ext = None
     for a in afniorients:
         if orient.startswith(a):
             #ext=orient[len(a):]
-            orient=a
-            ext=".HEAD"
+            orient = a
+            ext = ".HEAD"
             #if ext=='.':
             #    ext=''
-            
+
     if ext is None:
-        s=name.split(".")
-        if len(s)>1:
-            ext="."+".".join(s[1:])
-            name=s[0]
+        s = name.split(".")
+        if len(s) > 1:
+            ext = "." + ".".join(s[1:])
+            name = s[0]
         else:
-            ext=''
-        
-    return tail,name,orient,ext
+            ext = ''
+
+    return tail, name, orient, ext
 
 def afni_fileexists(fn):
     '''
@@ -96,35 +96,35 @@ def afni_fileexists(fn):
     bool
         True iff fn exists as AFNI file
     '''
-    p,n,o,e=afni_fileparts(fn)
-        
+    p, n, o, e = afni_fileparts(fn)
+
     if o:
-        return os.path.isfile('%s/%s%s.HEAD'%(p,n,o))
+        return os.path.isfile('%s/%s%s.HEAD' % (p, n, o))
     else:
-        return (e in ['.nii','.nii.gz']) and os.path.isfile(fn) 
-    
-def run_matlabcommand(matlabcmd,env=None,indir='.'):
+        return (e in ['.nii', '.nii.gz']) and os.path.isfile(fn)
+
+def run_matlabcommand(matlabcmd, env=None, indir='.'):
     '''wrapper to run a single matlab command in the shell'''
-    
+
     if env is None:
-        env=os.environ
+        env = os.environ
 
     # ensure matlabcmd ends with semicolon        
-    lastchar=matlabcmd.strip()[-1];
-    if lastchar not in [',',';']:
-        matlabcmd+=';'
-    
-    cmd='cd %s;matlab -nosplash -nodisplay -r "%sexit"' % (indir,matlabcmd)
-    run_cmds(cmd,env)
+    lastchar = matlabcmd.strip()[-1];
+    if lastchar not in [',', ';']:
+        matlabcmd += ';'
 
-def run_cmds(cmds,env=None,dryrun=False):
+    cmd = 'cd %s;matlab -nosplash -nodisplay -r "%sexit"' % (indir, matlabcmd)
+    run_cmds(cmd, env)
+
+def run_cmds(cmds, env=None, dryrun=False):
     '''exectute a list of commands in the shell'''
     if env is None:
-        env=os.environ
-    
+        env = os.environ
+
     # if cmds is just one command, make a singleton list    
-    cmds=as_list(cmds)
-    
+    cmds = as_list(cmds)
+
     # run each command    
     for cmd in cmds:
         print("** Will execute the following commands:")
@@ -132,9 +132,9 @@ def run_cmds(cmds,env=None,dryrun=False):
             print '** - %s' % c
         if not dryrun:
             print("**>> Starting now:")
-            
-            subprocess.call(cmd,env=os.environ,shell=True)
-            
+
+            subprocess.call(cmd, env=os.environ, shell=True)
+
             print("**<< ... completed execution")
             """
             [this doesn't work well']
@@ -154,10 +154,10 @@ def run_cmds(cmds,env=None,dryrun=False):
             else:
                 print("**<< ... completed execution")
             """
-            
+
     return
 
-def which(f,env=None):
+def which(f, env=None):
     '''Finds the full path to a file in the path
     
     Parameters
@@ -174,18 +174,18 @@ def which(f,env=None):
         Full path of 'f' if 'f' is executable and in the path, 'f' itself 
         if 'f' is a path, None otherwise
     '''
-    if env==None:
-        env=os.environ
-    
+    if env == None:
+        env = os.environ
+
     def is_executable(fullpath):
-        return os.path.exists(fullpath) and os.access(fullpath,os.X_OK)
-    
-    [p,n]=os.path.split(f)
-    if p: 
+        return os.path.exists(fullpath) and os.access(fullpath, os.X_OK)
+
+    [p, n] = os.path.split(f)
+    if p:
         return f
     else:
         for path in env['PATH'].split(os.pathsep):
-            fullfn=os.path.join(path,n)
+            fullfn = os.path.join(path, n)
             if is_executable(fullfn):
                 return fullfn
         return None
@@ -204,9 +204,9 @@ def tictoc():
         def __init__(self):
             self.tic()
         def tic(self):
-            self.t=time.time()
-        def toc(self,msg=None):
-            print "Time elapsed: %.3f s" % float((time.time()-self.t))
+            self.t = time.time()
+        def toc(self, msg=None):
+            print "Time elapsed: %.3f s" % float((time.time() - self.t))
         def tt(self):
             self.toc()
             self.tic()
@@ -225,9 +225,9 @@ def hist(vs):
     h : dict
         'h[i]==j' means that 'i' occurs 'j' times in 'vs' (with 'j'>0)
     '''
-    v2count=collections.defaultdict(lambda:0)
+    v2count = collections.defaultdict(lambda:0)
     for v in vs:
-        v2count[v]+=1
+        v2count[v] += 1
     return v2count
 
 def flatten(l, ltypes=(list, tuple)):
@@ -251,7 +251,7 @@ def flatten(l, ltypes=(list, tuple)):
         i += 1
     return ltype(l)
 
-def eta(starttime,progress,msg=None,show=True):
+def eta(starttime, progress, msg=None, show=True):
     '''Simple linear extrapolation to estimate how much time is needed 
     to complete a task.
     
@@ -274,17 +274,17 @@ def eta(starttime,progress,msg=None,show=True):
     Note
     ----
     ETA refers to estimated time of arrival
-    '''  
+    '''
     if msg is None:
-        msg=""
-    
-    now=time.time()
-    took=now-starttime
-    eta=-1 if progress==0 else took*(1-progress)/progress
-    
-    f=lambda t:str(datetime.timedelta(seconds=t))
-    
-    fullmsg='%s, took %s, remaining %s' % (msg, f(took), f(eta))
+        msg = ""
+
+    now = time.time()
+    took = now - starttime
+    eta = -1 if progress == 0 else took * (1 - progress) / progress
+
+    f = lambda t:str(datetime.timedelta(seconds=t))
+
+    fullmsg = '%s, took %s, remaining %s' % (msg, f(took), f(eta))
     if show:
         print fullmsg
 
@@ -292,28 +292,27 @@ def eta(starttime,progress,msg=None,show=True):
 
 
 def _get_fingerdata_dir():
-    
-    dirs=['/Users/nick/Downloads',
+
+    dirs = ['/Users/nick/Downloads',
           '/apps/nicksurfing/testdata']
-    
-    indir='fingerdata-0.3'
-    
+
+    indir = 'fingerdata-0.3'
+
     for d in dirs:
-        fullpath='%s/%s/' % (d, indir)
-        
+        fullpath = '%s/%s/' % (d, indir)
+
         if os.path.exists(fullpath):
             return fullpath
-        
+
     raise ValueError('Directory for fingerdata not found')
-    
-        
-    
-    
-    
+
+
+
+
+
 if __name__ == '__main__':
-    fn="my/dir/file.nii"
-    fn='/Users/nick/Downloads/fingerdata-0.2/sef/anat_al+orig.HEAD'
-    p=afni_fileparts(fn)
+    fn = "my/dir/file.nii"
+    fn = '/Users/nick/Downloads/fingerdata-0.2/sef/anat_al+orig.HEAD'
+    p = afni_fileparts(fn)
     print afni_fileexists(fn)
-    
-    
+

@@ -93,7 +93,7 @@ These surfaces were resampled using AFNI's MapIcosahedron; ld refers to
 the number of linear divisions of the 'large' triangles of the original
 icosahedron (ld=x means there are 10*x**2+2 nodes and 20*x**2 triangles).
 """
-highres_ld=64
+highres_ld = 64
 
 pial_surf_fn = os.path.join(datadir, "ico%d_%sh.pial_al.asc"
                                      % (highres_ld, hemi))
@@ -120,7 +120,7 @@ are 2*(10*8^2+2)=1284 nodes across the two hemispheres, and thus 823686 unique
 pairs of nodes. A higher number for lowres_ld may be  suited for single-center
 searchlight analyses.
 """
-lowres_ld=32
+lowres_ld = 32
 
 intermediate_surf_fn = os.path.join(datadir, "ico%d_%sh.intermediate_al.asc"
                                              % (lowres_ld, hemi))
@@ -135,7 +135,7 @@ Note that "a fixed number of voxels" in this context actually means an
 approximation, in that on average that number of voxels is selected but the
 actual number will vary slightly
 """
-radius=100
+radius = 100
 
 """
 Set the prefix for output
@@ -168,12 +168,12 @@ src_ids = range(node_count)
 Make a volsurf instance, which is useful for mapping between surface
 and volume locations
 """
-vs=volsurf.VolSurf(vg,white_surf,pial_surf)
+vs = volsurf.VolSurf(vg, white_surf, pial_surf)
 
 """
 Run voxel selection...
 """
-voxsel=surf_voxel_selection.voxel_selection(vs, intermediate_surf, radius, src_ids)\
+voxsel = surf_voxel_selection.voxel_selection(vs, intermediate_surf, radius, src_ids)\
 
 print "Voxel selection results:"
 print voxsel
@@ -182,7 +182,7 @@ print voxsel
 >>>General attributes: ['volgeom']
 ...and save voxel selection results.
 """
-sparse_attributes.to_file(voxel_selection_fn_prefix+".pickle", voxsel)
+sparse_attributes.to_file(voxel_selection_fn_prefix + ".pickle", voxsel)
 """
 The following just generates some files as a sanity check; they are not
 necessary for a typical voxel selection pipeline.
@@ -191,57 +191,57 @@ necessary for a typical voxel selection pipeline.
 We use linear indexing (akin to FlattenMapper), then reshape
 our data to make it 3D
 """
-vg=voxsel.a['volgeom']
-voxel_count=vg.nv()
+vg = voxsel.a['volgeom']
+voxel_count = vg.nv()
 
-vol_data_lin=np.zeros((voxel_count,1)) # use linear voxel indexing
+vol_data_lin = np.zeros((voxel_count, 1)) # use linear voxel indexing
 
-vol_map=voxsel.get_attr_mapping('lin_vox_idxs')
-for node_idx,voxel_idxs in vol_map.iteritems():
+vol_map = voxsel.get_attr_mapping('lin_vox_idxs')
+for node_idx, voxel_idxs in vol_map.iteritems():
     if voxel_idxs is not None:
-        vol_data_lin[voxel_idxs]+=1
+        vol_data_lin[voxel_idxs] += 1
 
-vol_data_sub=np.reshape(vol_data_lin, vg.shape()) # 3D shape
+vol_data_sub = np.reshape(vol_data_lin, vg.shape()) # 3D shape
 
-img=ni.Nifti1Image(vol_data_sub,vg.affine())
-img.to_filename(voxel_selection_fn_prefix+".nii")
+img = ni.Nifti1Image(vol_data_sub, vg.affine())
+img.to_filename(voxel_selection_fn_prefix + ".nii")
 
 """
 Generate another mapping from node indices to the distances of
 each voxel to the center. Here we are concerned with the maximal
 distance (i.e. radius in millimeters) of each searchlight).
 """
-surf_data=np.zeros((node_count,2))
+surf_data = np.zeros((node_count, 2))
 
-radius_map=voxsel.get_attr_mapping('center_distances')
+radius_map = voxsel.get_attr_mapping('center_distances')
 for node_idx, distances in radius_map.iteritems():
     if distances is not None:
-        surf_data[node_idx,0]=max(distances)
-        surf_data[node_idx,1]=sum(distances)/len(distances)
+        surf_data[node_idx, 0] = max(distances)
+        surf_data[node_idx, 1] = sum(distances) / len(distances)
 
 
-surf_dset=dict(data=surf_data,labels=["max_d","mean_d"])
-afni_niml_dset.write(voxel_selection_fn_prefix+"_full.niml.dset", surf_dset)
+surf_dset = dict(data=surf_data, labels=["max_d", "mean_d"])
+afni_niml_dset.write(voxel_selection_fn_prefix + "_full.niml.dset", surf_dset)
 """
 Do exactly the same thing, but now we write a sparse dataset that only contains
 data for nodes that have voxels associated with them (some nodes are outside
 the functional volume and have no voxels associated with them).
 """
-nonempty_nodes=voxsel.keys()
-nonempty_node_count=len(nonempty_nodes)
+nonempty_nodes = voxsel.keys()
+nonempty_node_count = len(nonempty_nodes)
 
-surf_data_sparse=np.zeros((nonempty_node_count,2))
+surf_data_sparse = np.zeros((nonempty_node_count, 2))
 
-radius_map=voxsel.get_attr_mapping('center_distances')
+radius_map = voxsel.get_attr_mapping('center_distances')
 for i, node_idx in enumerate(nonempty_nodes):
-    distances=radius_map[node_idx]
+    distances = radius_map[node_idx]
 
-    surf_data_sparse[i,0]=max(distances)
-    surf_data_sparse[i,1]=sum(distances)/len(distances)
+    surf_data_sparse[i, 0] = max(distances)
+    surf_data_sparse[i, 1] = sum(distances) / len(distances)
 
 
-surf_dset_sparse=dict(data=surf_data_sparse,labels=["max_d","mean_d"],node_indices=nonempty_nodes)
-afni_niml_dset.write(voxel_selection_fn_prefix+"_sparse.niml.dset", surf_dset_sparse)
+surf_dset_sparse = dict(data=surf_data_sparse, labels=["max_d", "mean_d"], node_indices=nonempty_nodes)
+afni_niml_dset.write(voxel_selection_fn_prefix + "_sparse.niml.dset", surf_dset_sparse)
 
 """
 Delete the voxel selection results, then reload them from disk
@@ -249,19 +249,19 @@ Delete the voxel selection results, then reload them from disk
 del voxsel
 
 print "Loading voxel selection data from disk:"
-voxsel=sparse_attributes.from_file(voxel_selection_fn_prefix+".pickle")
+voxsel = sparse_attributes.from_file(voxel_selection_fn_prefix + ".pickle")
 print voxsel
 
 """
 Load functional data for running the searchlight,
 and make it into an fmri_dataset
 """
-epi_data_fn='%s/../glm/rall_4D_nibabel.nii' % datadir
-nsamples=32
-targetnames=['index','middle']
-targets=[targetnames[i % 2] for i in xrange(nsamples)]
-chunks=[i / 4 for i in xrange(nsamples)]
-ds=fmri_dataset(samples=epi_data_fn, targets=targets,
+epi_data_fn = '%s/../glm/rall_4D_nibabel.nii' % datadir
+nsamples = 32
+targetnames = ['index', 'middle']
+targets = [targetnames[i % 2] for i in xrange(nsamples)]
+chunks = [i / 4 for i in xrange(nsamples)]
+ds = fmri_dataset(samples=epi_data_fn, targets=targets,
                 chunks=chunks)
 
 
@@ -270,8 +270,8 @@ As in the volume-based searchlight example, set up
 a classifier and cross-validation
 """
 clf = LinearCSVMC()
-cvte=CrossValidation(clf,NFoldPartitioner(),
-                     errorfx=lambda p, t: np.mean(p==t),
+cvte = CrossValidation(clf, NFoldPartitioner(),
+                     errorfx=lambda p, t: np.mean(p == t),
                      enable_ca=['stats'])
 
 
@@ -279,10 +279,10 @@ cvte=CrossValidation(clf,NFoldPartitioner(),
 """
 Set up the searchlight
 """
-nbrhood=voxsel.get_neighborhood()
-center_ids=voxsel.keys() # these are only nodes with voxels associated
+nbrhood = voxsel.get_neighborhood()
+center_ids = voxsel.keys() # these are only nodes with voxels associated
 
-searchlight=sparse_attributes.searchlight(cvte, nbrhood,
+searchlight = sparse_attributes.searchlight(cvte, nbrhood,
                                            postproc=mean_sample(),
                                            center_ids=center_ids)
 """
@@ -298,7 +298,7 @@ sds = ds.copy(deep=False,
 """
 Run the searchlight
 """
-sl_dset=searchlight(sds)
+sl_dset = searchlight(sds)
 
 """
 For visualization of results, make a NIML dset that can be viewed
@@ -306,11 +306,11 @@ by AFNI. Results are transposed because in NIML, rows correspond
 to nodes (features) and columns to datapoints (samples)
 """
 
-surf_sl_dset=dict(data=np.asarray(sl_dset).transpose(),
+surf_sl_dset = dict(data=np.asarray(sl_dset).transpose(),
                   node_indices=center_ids)
 
 afni_niml_dset.write(searchlight_fn_prefix + "_%dvx.niml.dset" % radius,
                      surf_sl_dset)
 
 print ("To view results, cd to '%s' and run ./%sh_ico%d_seesuma.sh" %
-       (datadir,hemi,lowres_ld))
+       (datadir, hemi, lowres_ld))
