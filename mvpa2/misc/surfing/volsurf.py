@@ -44,7 +44,7 @@ class VolSurf():
         self._white=white
         
     def __repr__(self):
-        r=("volgeom: %r\npial: %rwhite:%r\nintermediate:%r\neps:%r" %
+        r=("volgeom: %r\npial: %rwhite:%r" %
                 (self._volgeom,self._pial,self._white))
         return r 
         
@@ -124,6 +124,7 @@ class VolSurf():
             surf=self._pial*pialweight+self._white*whiteweight
             
             surf_xyz=surf.v() # coordinates
+            print surf_xyz.shape
             lin_vox=volgeom.xyz2lin(surf_xyz) # linear indices of voxels containing nodes
             
             is_vox_in_vol=volgeom.lininvol(lin_vox) # which of these voxels are actually in the volume

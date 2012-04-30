@@ -19,6 +19,7 @@ for refdir for each session, otherwise naming conflicts may occur
 '''
 
 import os, fnmatch, datetime, re, argparse, utils, surf_fs_asc
+from mvpa2.misc.surfing.utils import afni_fileparts
 
 def getdefaults():
     '''set up default parameters - for testing now'''
@@ -86,7 +87,7 @@ def augmentconfig(c):
         config['steps']='toafni+mapico+moresurfs+skullstrip+align+makespec'
     
     if c['identity']:
-        c['expvol_ss']=c['anatval_ss']=False
+        c['expvol_ss']=c['anatval_ss']=c['AddEdge']=False
     else:
         hasanatvol='anatvol' in config and config['anatvol']
         hasepivol='epivol' in config and config['epivol']
@@ -390,15 +391,15 @@ def run_alignment(config,env):
     else:
         print '%s already exists - skipping Warp' % svalignedfn
     
+    utils.run_cmds(cmds,env)
+    cmds=[]
+    
     # nuke afni headers
     headernukefns=['%s+orig.HEAD' % f for f in [ssalprefix, alprefix]]
     headernukefields=['ALLINEATE_MATVEC_B2S_000000',
                       'ALLINEATE_MATVEC_S2B_000000',
                       'WARPDRIVE_MATVEC_FOR_000000',
                       'WARPDRIVE_MATVEC_INV_000000']
-    
-    utils.run_cmds(cmds,env)
-    cmds=[]
     
     for fn in headernukefns:
         for field in headernukefields:
@@ -417,8 +418,35 @@ def run_alignment(config,env):
             #    print "Not in %s: %s" % (fullfn, refitcmd)
             cmd='cd "%s"; m=`grep "%s" %s | wc -w`; if [ $m -eq 0 ]; then %s; else echo "File %s seems already 3drefitted"; fi' % (refdir, refitcmd, fn, refitcmd, fn)
             cmds.append(cmd)
+    
+    # run AddEdge so that volumes can be inspected visually for alignment
+    if config['AddEdge']:
+        basedset=volsin[1]
+        [d,n,o,e]=afni_fileparts(basedset)
+        if 'nii' in e:
+            o='+orig'
+            cmds.append('cd %s; 3dcopy %s.nii %s%s' % (refdir,n,n,o))
             
-                   
+        dset='%s+orig.HEAD' % alprefix
+        n_dset=afni_fileparts(dset)[2]
+        
+        addedge_fns=['_ae.ExamineList.log']
+        
+        exts=['HEAD','BRIK']
+        postfixes=['e3','ec',n_dset+'_ec']
+        
+        addedge_fns.extend(['%s_%s+orig.%s' % (n, postfix, ext) 
+                            for postfix in postfixes
+                            for ext in exts])
+        
+        addegde_pathfns=map(lambda x:os.path.join(refdir,x),addedge_fns)
+        
+        if config['overwrite']:
+            for fn in addegde_pathfns:
+                if os.path.exists(fn):
+                    cmds.append('rm "%s"' % pathfn)
+            
+        cmds.append('cd %s; \@AddEdge %s%s %s' % (refdir,n,o,dset))
     
     # because AFNI uses RAI orientation but Freesurfer LPI, make a new 
     # affine transformation matrix in which the signs of
@@ -609,6 +637,8 @@ def getoptions():
     parser.add_argument("--surfvol_ss",default='yes',choices=yesno,help='Skull strip SurfVol volume ([yes],no)')
     parser.add_argument('--aea_opts',default='-cmass cmass+xyz -big_move',help="Options given to align_epi_anat, e.g. -big_move")
     parser.add_argument('-I','--identity',action="store_true", default=False,help="Use identity transformation between SurfVol and anat/epivol (no alignment)")
+    parser.add_argument('-A','--AddEdge',action="store_true", default=False,help="Run AddEdge on aligned volumes")
+
     # for testing
     if True:
         args=None
