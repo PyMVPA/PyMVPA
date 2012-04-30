@@ -441,11 +441,11 @@ def run_alignment(config,env):
         
         addegde_pathfns=map(lambda x:os.path.join(refdir,x),addedge_fns)
         
-        if config['overwrite']:
-            for fn in addegde_pathfns:
-                if os.path.exists(fn):
-                    cmds.append('rm "%s"' % pathfn)
-            
+        # for now just delete all files    
+        for fn in addegde_pathfns:
+            if os.path.exists(fn):
+                cmds.append('rm "%s"' % fn)
+        
         cmds.append('cd %s; \@AddEdge %s%s %s' % (refdir,n,o,dset))
     
     # because AFNI uses RAI orientation but Freesurfer LPI, make a new 

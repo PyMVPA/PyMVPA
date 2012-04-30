@@ -133,7 +133,26 @@ class SparseVolumeAttributes(SparseAttributes):
     """
     def get_volgeom(self):
         return self.a['volgeom']
+    
+    def get_niftiimage_mask(self,voxel_ids_label='lin_vox_idxs'):
+        vg=self.get_volgeom()
+        shape=vg.shape()[:3]
         
+        linmask=np.zeros(shape=(vg.nv(),),dtype=np.int8)
+        print self
+        map=self.get_attr_mapping(voxel_ids_label)
+        for key in self.keys():
+            linmask[map[key]]=True
+        
+        print linmask
+        
+        print shape
+        mask=np.reshape(linmask, shape)
+        
+        print mask
+        
+        img=ni.Nifti1Image(mask,vg.affine())
+        return img
 
 class SparseNeighborhood():
     """
