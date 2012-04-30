@@ -27,14 +27,14 @@ import mvpa2.misc.surfing.volgeom as volgeom
 import utils
 import surf_fs_asc
 
-LINEAR_VOXEL_INDICES="lin_vox_idxs"
-CENTER_DISTANCES="center_distances"
-GREY_MATTER_POSITION="grey_matter_position"
+LINEAR_VOXEL_INDICES = "lin_vox_idxs"
+CENTER_DISTANCES = "center_distances"
+GREY_MATTER_POSITION = "grey_matter_position"
 
 if __debug__:
     from mvpa2.base import debug
     if not "SVS" in debug.registered:
-        debug.register("SVS","Surface-based voxel selection (a.k.a. 'surfing')")
+        debug.register("SVS", "Surface-based voxel selection (a.k.a. 'surfing')")
 
 class VoxelSelector():
     '''
@@ -58,27 +58,27 @@ class VoxelSelector():
         Distance measure used to define distances between nodes on the surface. 
         Currently supports 'dijkstra' and 'euclidian'     
     '''
-    
-    def __init__(self,radius,surf,n2v,distancemetric='dijkstra'):
-        tp=type(radius)
+
+    def __init__(self, radius, surf, n2v, distancemetric='dijkstra'):
+        tp = type(radius)
         if tp is int: # fixed number of voxels
-            self._fixedradius=False
+            self._fixedradius = False
             # use a (very arbitary) way to estimate how big the radius should
             # be initally to select the required number of voxels
-            initradius_mm=.001+1.5*float(radius)**.5  
+            initradius_mm = .001 + 1.5 * float(radius) ** .5
         elif tp is float: # fixed metric radius
-            self._fixedradius=True
-            initradius_mm=radius
+            self._fixedradius = True
+            initradius_mm = radius
         else:
             raise TypeError("Illegal type for radius: expected int or float")
-        self._targetradius=radius # radius to achieve (float or int)
-        self._initradius_mm=initradius_mm # initial radius in mm
-        self._optimizer=_RadiusOptimizer(initradius_mm) 
-        self._distancemetric=distancemetric # }
-        self._surf=surf                     # } save input
-        self._n2v=n2v                       # }
-    
-    def _select_approx(self,voxprops,count=None):
+        self._targetradius = radius # radius to achieve (float or int)
+        self._initradius_mm = initradius_mm # initial radius in mm
+        self._optimizer = _RadiusOptimizer(initradius_mm)
+        self._distancemetric = distancemetric # }
+        self._surf = surf                     # } save input
+        self._n2v = n2v                       # }
+
+    def _select_approx(self, voxprops, count=None):
         '''
         Select approximately a certain number of voxels.
         
@@ -105,64 +105,64 @@ class VoxelSelector():
         Distances are only computed along the surface; the relative position of 
         a voxel within the gray matter is ignored. Therefore, multiple voxels
         can have the same distance from a center node. See node2voxels
-        ''' 
-        
+        '''
+
         if count is None:
             return voxprops
-        
-        distkey=CENTER_DISTANCES
+
+        distkey = CENTER_DISTANCES
         if not distkey in voxprops:
             raise KeyError("voxprops has no distance key %s in it - cannot select voxels" % distkey)
-        allds=voxprops[distkey]
-        
+        allds = voxprops[distkey]
+
         #assert sorted(allds)==allds #that's what voxprops should give us 
-        
-        n=len(allds)
-        
-        if n<count or n==0:
+
+        n = len(allds)
+
+        if n < count or n == 0:
             return None
-                
+
         # here, a 'chunk' is a set of voxels at the same distance. voxels are selected in chunks
         # with increasing distance. either all voxels in a chunk are selected or none.
-        curchunk=[]
-        prevd=allds[0]
-        chunkcount=1
+        curchunk = []
+        prevd = allds[0]
+        chunkcount = 1
         for i in xrange(n):
-            d=allds[i] # distance  
-            if i>0 and prevd!=d:
-                if i>=count: # we're done, use the chunk we have now
+            d = allds[i] # distance  
+            if i > 0 and prevd != d:
+                if i >= count: # we're done, use the chunk we have now
                     break
-                curchunk=[i] # start a new chunk
-                chunkcount+=1
+                curchunk = [i] # start a new chunk
+                chunkcount += 1
             else:
                 curchunk.append(i)
-            
-            prevd=d
-        
+
+            prevd = d
+
         # see if the last chunk should be added or not to be as close as 
         # possible to count
-        firstpos=curchunk[0]
-        lastpos=curchunk[-1]
-                
+        firstpos = curchunk[0]
+        lastpos = curchunk[-1]
+
         # difference in distance between desired count and positions
-        delta=(count-firstpos) - (lastpos-count)
-        if delta>0:
+        delta = (count - firstpos) - (lastpos - count)
+        if delta > 0:
             # lastpos is closer to count
-            cutpos=lastpos+1
-        elif delta<0:
+            cutpos = lastpos + 1
+        elif delta < 0:
             # firstpos is closer to count
-            cutpos=firstpos
+            cutpos = firstpos
         else:
             # it's a tie, choose quasi-randomly based on chunkcount
-            cutpos=firstpos if chunkcount%2==0 else (lastpos+1) 
-        
+            cutpos = firstpos if chunkcount % 2 == 0 else (lastpos + 1)
+
         for k in voxprops.keys():
-            voxprops[k]=voxprops[k][:cutpos]
-        
+            voxprops[k] = voxprops[k][:cutpos]
+
         return voxprops
-        
-        
-    def disc_voxel_attributes(self,src): 
+
+
+    def disc_voxel_attributes(self, src):
         '''
         Voxel selection for single center node
         
@@ -179,51 +179,51 @@ class VoxelSelector():
             Has at least a key 'distances'.
             Each of voxprops[key] should be list-like of equal length.
         '''
-        optimizer=self._optimizer
-        surf=self._surf
-        n2v=self._n2v
-        
+        optimizer = self._optimizer
+        surf = self._surf
+        n2v = self._n2v
+
         if not src in n2v or n2v[src] is None:
             # no voxels associated with this node, skip
             if __debug__:
                 debug("SVS", "Skipping node #%d (no voxels associated)" % src)
-            
-            voxel_attributes=[]
-        else:            
-            radius_mm=optimizer.get_start()
-            radius=self._targetradius
-            
+
+            voxel_attributes = []
+        else:
+            radius_mm = optimizer.get_start()
+            radius = self._targetradius
+
             while True:
-                around_n2d=surf.circlearound_n2d(src,radius_mm,self._distancemetric)
-                
-                allvxdist=self.nodes2voxel_attributes(around_n2d,n2v)
-                
+                around_n2d = surf.circlearound_n2d(src, radius_mm, self._distancemetric)
+
+                allvxdist = self.nodes2voxel_attributes(around_n2d, n2v)
+
                 if not allvxdist:
-                    voxel_attributes=[]
-                            
+                    voxel_attributes = []
+
                 if self._fixedradius:
                     # select all voxels
-                    voxel_attributes=self._select_approx(allvxdist, count=None)
+                    voxel_attributes = self._select_approx(allvxdist, count=None)
                 else:
                     # select only certain number
-                    voxel_attributes=self._select_approx(allvxdist, count=radius)
-                
+                    voxel_attributes = self._select_approx(allvxdist, count=radius)
+
                 if voxel_attributes is None:
                     # coult not find enough voxels, stay in loop and try again 
                     # with bigger radius
-                    radius_mm=optimizer.get_next()
+                    radius_mm = optimizer.get_next()
                 else:
                     break
-                
-        
+
+
         if voxel_attributes:
             # found at least one voxel; update our ioptimizer
-            maxradius=voxel_attributes[CENTER_DISTANCES][-1]
+            maxradius = voxel_attributes[CENTER_DISTANCES][-1]
             optimizer.set_final(maxradius)
-                
+
         return voxel_attributes
-            
-    def nodes2voxel_attributes(self,n2d,n2v,distancesummary=min):
+
+    def nodes2voxel_attributes(self, n2d, n2v, distancesummary=min):
         '''
         Computes voxel distances 
         
@@ -257,56 +257,56 @@ class VoxelSelector():
             the gray matter) 
         
         '''
-        
-        
+
+
         '''takes the node to distance mapping n2d, and the node to voxel mapping n2v,
         and returns a pair of lists with voxel indices and distances
         If a voxel is associated with multiple nodes (i.e. n2d[i] and n2d[j] are not disjunct
         for i!=j, then the voxel with minimum value for distance is taken'''
-        
-        
-        
-        
+
+
+
+
         # mapping from voxel indices to all distances
-        v2dps=collections.defaultdict(set)
+        v2dps = collections.defaultdict(set)
 
         # get node indices and associated (distance, grey matter positions) 
         for nd, d in n2d.iteritems():
             if nd in n2v:
-                vps=n2v[nd] # all voxels associated with this node
+                vps = n2v[nd] # all voxels associated with this node
                 if not vps is None:
-                    for vx,pos in vps.items():
-                        v2dps[vx].add((d,pos)) # associate voxel with tuple of distance and relative position
-            
+                    for vx, pos in vps.items():
+                        v2dps[vx].add((d, pos)) # associate voxel with tuple of distance and relative position
+
 
         # converts a tuple (vx, set([(d0,p0),(d1,p1),...]) to a triple (vx,pM,dM)
         # where dM is the minimum across all d*
-        def unpack_dp(vx,dp,distancesummary=distancesummary):
-            d,p=distancesummary(dp) # implicit sort by first elemnts first, i.e. distance
-            return vx,d,p            
-        
+        def unpack_dp(vx, dp, distancesummary=distancesummary):
+            d, p = distancesummary(dp) # implicit sort by first elemnts first, i.e. distance
+            return vx, d, p
+
 
         # make triples of (voxel index, distance to center node, relative position in grey matter)            
-        vdp=[unpack_dp(vx,dp) for vx,dp in v2dps.iteritems()] 
+        vdp = [unpack_dp(vx, dp) for vx, dp in v2dps.iteritems()]
 
         # sort triples by distance to center node
         vdp.sort(key=operator.itemgetter(1))
-        
+
         if not vdp:
-            vdp_tup=([],[],[]) # empty
+            vdp_tup = ([], [], []) # empty
         else:
-            vdp_tup=zip(*vdp) # unzip triples into three lists
-        
-        vdp_tps=(np.int32,np.float32,np.float32)
-        vdp_labels=(LINEAR_VOXEL_INDICES,CENTER_DISTANCES,GREY_MATTER_POSITION)
-        
-        voxel_attributes=dict()
+            vdp_tup = zip(*vdp) # unzip triples into three lists
+
+        vdp_tps = (np.int32, np.float32, np.float32)
+        vdp_labels = (LINEAR_VOXEL_INDICES, CENTER_DISTANCES, GREY_MATTER_POSITION)
+
+        voxel_attributes = dict()
         for i in xrange(3):
-            voxel_attributes[vdp_labels[i]]=np.asarray(vdp_tup[i],dtype=vdp_tps[i])
+            voxel_attributes[vdp_labels[i]] = np.asarray(vdp_tup[i], dtype=vdp_tps[i])
 
         return voxel_attributes
 
-def voxel_selection(vol_surf,surf_srcs,radius,srcs=None,start=0.,stop=1.,steps=10,distancemetric='dijkstra',intermediateat=.5,etastep=1):
+def voxel_selection(vol_surf, surf_srcs, radius, srcs=None, start=0., stop=1., steps=10, distancemetric='dijkstra', intermediateat=.5, etastep=1):
         '''
         Voxel selection for multiple center nodes
         
@@ -326,95 +326,95 @@ def voxel_selection(vol_surf,surf_srcs,radius,srcs=None,start=0.,stop=1.,steps=1
             node to voxel properties mapping, as represented in a set of 
             sparse volume masks.
         '''
-    
-            
+
+
         # outer and inner surface
-        surf_pial=vol_surf._pial
-        surf_white=vol_surf._white
-        
+        surf_pial = vol_surf._pial
+        surf_white = vol_surf._white
+
         # construc the intermediate surface, which is used to measure distances
-        surf_intermediate=surf_pial*intermediateat+surf_white*(1-intermediateat)
-        
+        surf_intermediate = surf_pial * intermediateat + surf_white * (1 - intermediateat)
+
         if __debug__:
-            debug('SVS',"Generated high-res intermediate surface: %d nodes, %d faces" % 
+            debug('SVS', "Generated high-res intermediate surface: %d nodes, %d faces" %
                   (surf_intermediate.nv(), surf_intermediate.nf()))
-            
+
         if __debug__:
-            debug('SVS',"Looking for mapping from source to high-res surface:"
-                  " %d nodes, %d faces" % 
+            debug('SVS', "Looking for mapping from source to high-res surface:"
+                  " %d nodes, %d faces" %
                   (surf_srcs.nv(), surf_srcs.nf()))
-        
+
         # find a mapping from nondes in surf_srcs to those in intermediate surface
-        src2intermediate=surf_srcs.map_to_high_resolution_surf(surf_intermediate)
-        
+        src2intermediate = surf_srcs.map_to_high_resolution_surf(surf_intermediate)
+
         # if no sources are given, then visit all ndoes
         if srcs is None:
-            srcs=np.arange(len(surf_srcs.nv()))
-        
-        n=len(srcs)
-        
+            srcs = np.arange(len(surf_srcs.nv()))
+
+        n = len(srcs)
+
         if __debug__:
-            debug('SVS',"Performing surface-based voxel selection for %d centers." % n)
-        
-        
+            debug('SVS', "Performing surface-based voxel selection for %d centers." % n)
+
+
         # visit in random order, for for better ETA estimate
-        visitorder=list(np.random.permutation(len(srcs))) 
-                
+        visitorder = list(np.random.permutation(len(srcs)))
+
         # construct mapping from nodes to enclosing voxels
-        n2v=vol_surf.node2voxels()
-        
+        n2v = vol_surf.node2voxels()
+
         if __debug__:
-            debug('SVS',"Generated mapping from nodes to intersecting voxels.")
-        
+            debug('SVS', "Generated mapping from nodes to intersecting voxels.")
+
         # build voxel selector
-        voxel_selector=VoxelSelector(radius, surf_intermediate, n2v, distancemetric)
-        
+        voxel_selector = VoxelSelector(radius, surf_intermediate, n2v, distancemetric)
+
         if __debug__:
-            debug('SVS',"Instantiated voxel selector (radius %r)" % radius)
-        
-        
+            debug('SVS', "Instantiated voxel selector (radius %r)" % radius)
+
+
         # structure to keep output data. Initialize with None, then 
         # make a sparse_attributes instance when we know what the attribtues are
-        node2volume_attributes=None
-        
+        node2volume_attributes = None
+
         # keep track of time
-        tstart=time.time()
-        
+        tstart = time.time()
+
         # walk over all nodes
         for i, order in enumerate(visitorder):
             # source node on surf_srcs
-            src=srcs[order]
-            
+            src = srcs[order]
+
             # corresponding node on high-resolution intermediate surface
-            intermediate=src2intermediate[src]
-            
+            intermediate = src2intermediate[src]
+
             # find voxel attribues for this node
-            attrs=voxel_selector.disc_voxel_attributes(intermediate)
-            
+            attrs = voxel_selector.disc_voxel_attributes(intermediate)
+
             # first time that attributes are set, get the labels return from the voxel_selector
             # to initiate the attribtues instance
-            if attrs: 
+            if attrs:
                 if  node2volume_attributes is None:
-                    sa_labels=attrs.keys()
-                    node2volume_attributes=sparse_attributes.SparseVolumeAttributes(sa_labels,vol_surf._volgeom)
-            
+                    sa_labels = attrs.keys()
+                    node2volume_attributes = sparse_attributes.SparseVolumeAttributes(sa_labels, vol_surf._volgeom)
+
                 # store attribtues results
                 node2volume_attributes.add(src, attrs)
-                
-            if etastep and (i%etastep==0 or i==n-1):
+
+            if etastep and (i % etastep == 0 or i == n - 1):
                 if __debug__:
-                    msg=utils.eta(tstart, float(i+1)/n, '%d/%d (node #%d->#%d)' % (i+1,n,src,intermediate),show=False)
+                    msg = utils.eta(tstart, float(i + 1) / n, '%d/%d (node #%d->#%d)' % (i + 1, n, src, intermediate), show=False)
                     if __debug__:
-                        debug('SVS',msg)
-        
-        
-        
+                        debug('SVS', msg)
+
+
+
         return node2volume_attributes
-    
 
 
 
-def run_voxelselection(epifn,whitefn,pialfn,srcfn,radius,srcs=None,start=0,stop=1,steps=10,distancemetric='dijkstra',intermediateat=.5,etastep=1):
+
+def run_voxelselection(epifn, whitefn, pialfn, srcfn, radius, srcs=None, start=0, stop=1, steps=10, distancemetric='dijkstra', intermediateat=.5, etastep=1):
     '''Wrapper function that is supposed to make voxel selection 
     on the surface easy.
     
@@ -460,22 +460,22 @@ def run_voxelselection(epifn,whitefn,pialfn,srcfn,radius,srcs=None,start=0,stop=
         Voxel selection results, that associates, which each node, the indices
         of the surrounding voxels.
     '''
-    
+
     # read volume geometry
-    vg=volgeom.from_nifti_file(epifn)
-    
+    vg = volgeom.from_nifti_file(epifn)
+
     # read surfaces
-    whitesurf=surf_fs_asc.read(whitefn)
-    pialsurf=surf_fs_asc.read(pialfn)
-    srcsurf=surf_fs_asc.read(srcfn)
-    
-    
+    whitesurf = surf_fs_asc.read(whitefn)
+    pialsurf = surf_fs_asc.read(pialfn)
+    srcsurf = surf_fs_asc.read(srcfn)
+
+
     # make a volume surface instance
-    vs=volsurf.VolSurf(vg,whitesurf,pialsurf)
-    
+    vs = volsurf.VolSurf(vg, whitesurf, pialsurf)
+
     # run voxel selection
-    sel=voxel_selection(vs, srcsurf, radius, srcs, start, stop, steps, distancemetric, intermediateat, etastep)
-    
+    sel = voxel_selection(vs, srcsurf, radius, srcs, start, stop, steps, distancemetric, intermediateat, etastep)
+
     return sel
 
 
@@ -500,77 +500,76 @@ class _RadiusOptimizer():
     
     
     '''
-    def __init__(self,initradius):
+    def __init__(self, initradius):
         '''new instance, with certain initial radius'''
-        self._initradius=initradius
-        self._initmult=1.5
-        
+        self._initradius = initradius
+        self._initmult = 1.5
+
     def get_start(self):
         '''get an (initial) radius for a new searchlight.'''
-        self._curradius=self._initradius
-        self._count=0
+        self._curradius = self._initradius
+        self._count = 0
         return self._curradius
-        
+
     def get_next(self):
         '''get a new (better=larger) radius for the current searchlight'''
-        self._count+=1
-        self._curradius*=self._initmult
+        self._count += 1
+        self._curradius *= self._initmult
         return self._curradius
-        
-    def set_final(self,finalradius):
+
+    def set_final(self, finalradius):
         '''to tell what the final radius was that satisfied the number of required voxels'''
         pass
-    
-    def __repr__(self):
-        return 'radius is %f, %d steps' % (self._curradius, self._count) 
-    
 
-    
+    def __repr__(self):
+        return 'radius is %f, %d steps' % (self._curradius, self._count)
+
+
+
 if __name__ == "__main__":
     #from mvpa2.tutorial_suite import * 
-    
+
     if __debug__:
         debug.active += ["SVS"]
-    
-    
-    d='%s/qref/' % utils._get_fingerdata_dir()
-    epifn=d+"../glm/rall_vol00.nii"
-    
-    ld=36 # mapicosahedron linear divisions
-    smallld=9
-    hemi='l'
-    nodecount=10*smallld**2+2
-    
-    pialfn=d+"ico%d_%sh.pial_al.asc" % (ld,hemi)
-    whitefn=d+"ico%d_%sh.smoothwm_al.asc" % (ld,hemi)
-    intermediatefn=d+"ico%d_%sh.intermediate_al.asc" % (smallld,hemi)
-    
-    fnoutprefix=d+"_voxsel1_ico%d_%sh_" % (ld,hemi)
-    radius=100 # 100 voxels per searchlight
-    srcs=range(nodecount) # use all nodes as a center
-    
-    attr=run_voxelselection(epifn, whitefn, pialfn, intermediatefn, radius, srcs)
-    
-    vg=attr.a['volgeom']
-    
-    nv=vg.nv()
-    datalin=np.zeros((nv,1))
 
-    mp=attr.get_attr_mapping('lin_vox_idxs')
-    for k,idxs in mp.iteritems():
+
+    d = '%s/qref/' % utils._get_fingerdata_dir()
+    epifn = d + "../glm/rall_vol00.nii"
+
+    ld = 36 # mapicosahedron linear divisions
+    smallld = 9
+    hemi = 'l'
+    nodecount = 10 * smallld ** 2 + 2
+
+    pialfn = d + "ico%d_%sh.pial_al.asc" % (ld, hemi)
+    whitefn = d + "ico%d_%sh.smoothwm_al.asc" % (ld, hemi)
+    intermediatefn = d + "ico%d_%sh.intermediate_al.asc" % (smallld, hemi)
+
+    fnoutprefix = d + "_voxsel1_ico%d_%sh_" % (ld, hemi)
+    radius = 100 # 100 voxels per searchlight
+    srcs = range(nodecount) # use all nodes as a center
+
+    attr = run_voxelselection(epifn, whitefn, pialfn, intermediatefn, radius, srcs)
+
+    vg = attr.a['volgeom']
+
+    nv = vg.nv()
+    datalin = np.zeros((nv, 1))
+
+    mp = attr.get_attr_mapping('lin_vox_idxs')
+    for k, idxs in mp.iteritems():
         if idxs is not None:
-            datalin[idxs]+=1
-    
-    datars=np.reshape(datalin, vg.shape())
-    
-    img=ni.Nifti1Image(datars,vg.affine())
-    
-    fnout=d+"__test_n2v4.nii"
+            datalin[idxs] += 1
+
+    datars = np.reshape(datalin, vg.shape())
+
+    img = ni.Nifti1Image(datars, vg.affine())
+
+    fnout = d + "__test_n2v4.nii"
     img.to_filename(fnout)
-    
-    attrfn=d+"voxsel.pickle"
+
+    attrfn = d + "voxsel.pickle"
     sparse_attributes.to_file(attrfn, attr)
-    
+
     print fnout
     print attrfn
-    
