@@ -16,6 +16,7 @@ from mvpa2.mappers.projection import ProjectionMapper
 from mvpa2.datasets import Dataset
 from mvpa2.featsel.helpers import ElementSelector
 
+from mvpa2.base import warning
 if __debug__:
     from mvpa2.base import debug
 
@@ -66,6 +67,11 @@ class ProcrusteanMapper(ProjectionMapper):
         self._oblique_rcond = oblique_rcond
         self._scale = None
         """Estimated scale"""
+        if svd == 'dgesvd' and not externals.exists('liblapack.so'):
+            warning("Reverting choice of svd for ProcrusteanMapper to be default "
+                    "'numpy' since liblapack.so seems not to be available for "
+                    "'dgesvd'")
+            svd = 'numpy'
         self._svd = svd
 
     # XXX we should just use beautiful ClassWithCollections everywhere... makes

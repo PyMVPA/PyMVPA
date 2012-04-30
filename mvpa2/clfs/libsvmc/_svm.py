@@ -108,7 +108,7 @@ class SVMParameter(object):
 
         def __del__(self):
             if __debug__:
-                debug('CLF_', 'Destroying libsvm._SVMCParameter %s' % str(self))
+                debug('SVM_', 'Destroying libsvm._SVMCParameter %s' % str(self))
             free_int_array(svmc.svm_parameter_weight_label_get(self.param))
             free_double_array(svmc.svm_parameter_weight_get(self.param))
             svmc.delete_svm_parameter(self.param)
@@ -157,7 +157,7 @@ class SVMParameter(object):
 
     def __del__(self):
         if __debug__:
-            debug('CLF_', 'Destroying libsvm.SVMParameter %s' % str(self))
+            debug('SVM_', 'Destroying libsvm.SVMParameter %s' % str(self))
         self._clear_svmc_params()
 
     ##REF: Name was automagically refactored
@@ -248,7 +248,7 @@ class SVMProblem:
 
     def __del__(self):
         if __debug__:
-            debug('CLF_', 'Destroying libsvm.SVMProblem %s' % `self`)
+            debug('SVM_', 'Destroying libsvm.SVMProblem %s' % `self`)
 
         svmc.delete_svm_problem(self.prob)
         svmc.delete_double(self.y_array)
@@ -408,16 +408,15 @@ class SVMModel:
 
     def __del__(self):
         if __debug__:
-            debug('CLF_', 'Destroying libsvm.SVMModel %s' % (`self`))
-
+            debug('SVM_', 'Destroying libsvm v. %s SVMModel %s'
+                  % (svmc.__version__, `self`))
         try:
-            if svmc.__version__ < 300:
-                svmc.svm_destroy_model(self.model)
-            else:
-                svmc.svm_destroy_model_helper(self.model)
-        except:
+            svmc.svm_destroy_model_helper(self.model)
+        except Exception, e:
             # blind way to overcome problem of already deleted model and
             # "SVMModel instance has no attribute 'model'" in  ignored
+            if __debug__:
+                debug('SVM_', 'Failed to destroy libsvm.SVMModel due to %s' % (e,))
             pass
 
 
