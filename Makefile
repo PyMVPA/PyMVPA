@@ -28,7 +28,7 @@ RSYNC_OPTS_UP=-rzlhv --delete
 PYTHON = python
 # Assure non-interactive Matplotlib and provide local paths helper
 MPLPYTHONPATH = PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg
-MPLPYTHON = $MPLPYTHONPATH $(PYTHON)
+MPLPYTHON = $(MPLPYTHONPATH) $(PYTHON)
 NOSETESTS = $(PYTHON) $(shell which nosetests)
 
 #
