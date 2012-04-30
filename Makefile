@@ -27,7 +27,8 @@ RSYNC_OPTS_UP=-rzlhv --delete
 #
 PYTHON = python
 # Assure non-interactive Matplotlib and provide local paths helper
-MPLPYTHON = PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg $(PYTHON)
+MPLPYTHONPATH = PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg
+MPLPYTHON = $(MPLPYTHONPATH) $(PYTHON)
 NOSETESTS = $(PYTHON) $(shell which nosetests)
 
 #
@@ -170,10 +171,16 @@ references:
 	@echo "I: Generating references"
 	tools/bib2rst_ref.py
 
-htmldoc: examples2rst build pics
+# Since mpl doesn't take env variables
+mpl-stamp: build
+	echo "backend : Agg" >| $(CURDIR)/build/matplotlibrc
+	touch $@
+
+htmldoc: examples2rst build pics mpl-stamp
 	@echo "I: Creating an HTML version of documentation"
 	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off \
 		PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
+		MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build \
 		$(MAKE) html BUILDDIR=$(BUILDDIR) SPHINXOPTS="$(SPHINXOPTS)"
 	cd $(HTML_DIR)/generated && ln -sf ../_static
 	cd $(HTML_DIR)/examples && ln -sf ../_static
@@ -182,10 +189,11 @@ htmldoc: examples2rst build pics
 	cp $(DOCSRC_DIR)/pics/history_splash.png $(HTML_DIR)/_images/
 
 pdfdoc: examples2rst build pics pdfdoc-stamp
-pdfdoc-stamp:
+pdfdoc-stamp: mpl-stamp
 	@echo "I: Creating a PDF version of documentation"
 	cd $(DOC_DIR) && MVPA_EXTERNALS_RAISE_EXCEPTION=off \
 		PYTHONPATH=$(CURDIR):$(PYTHONPATH) \
+		MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build \
 		$(MAKE) latex BUILDDIR=$(BUILDDIR) SPHINXOPTS="$(SPHINXOPTS)"
 	cd $(LATEX_DIR) && $(MAKE) all-pdf
 	touch $@
@@ -348,11 +356,15 @@ unittests: unittest-nonlabile unittest unittest-badexternals \
 
 te-%: build
 	@echo -n "I: Testing example $*: "
-	@MVPA_EXAMPLES_INTERACTIVE=no \
-	 $(MPLPYTHON) doc/examples/$*.py >| temp-$@.log 2>&1 \
-	 && echo "passed" \
-	 || { echo "failed:"; cat temp-$@.log; rm -f temp-$@.log; exit 1; }
-	@rm -f temp-$@.log
+	@[ -z "$$MVPA_TESTS_LOGDIR" ]  \
+	&& logfile=temp-$@.log   \
+	|| { mkdir -p $$MVPA_TESTS_LOGDIR; logfile=$$MVPA_TESTS_LOGDIR/$@.log; }; \
+	MVPA_EXAMPLES_INTERACTIVE=no \
+	 $(MPLPYTHONPATH) /usr/bin/time $(PYTHON) doc/examples/$*.py >| $$logfile 2>&1 \
+	 && { echo "passed";  ex=0; } \
+	 || { echo "failed:"; ex=1; cat $$logfile; }; \
+    [ -z "$$MVPA_TESTS_LOGDIR" ] && rm -f $$logfile || : ; \
+	exit $$ex
 
 testexamples: te-svdclf te-smlr te-sensanas te-pylab_2d \
               te-curvefitting te-projections te-kerneldemo \
@@ -596,7 +608,8 @@ bdist_mpkg: 3rd
 fetch-data:
 	@echo "I: fetching data from datadb"
 	@rsync $(RSYNC_OPTS) $(DATA_URI)/tutorial_data $(DATA_URI)/mnist \
-		$(DATA_URI)/face_inversion_demo datadb
+		$(DATA_URI)/face_inversion_demo datadb \
+        $(DATA_URI)/hyperalignment_tutorial_data \
 	@for ds in datadb/*; do \
 		echo " I: looking at $$ds"; \
 		cd $(CURDIR)/$${ds} && \
