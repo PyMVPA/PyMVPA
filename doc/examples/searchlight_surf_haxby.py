@@ -55,13 +55,13 @@ selectivity contrast for voxels ventral temporal cortex."""
 
 # data path
 datapath = os.path.join(pymvpa_datadbroot,
-                        'tutorial_data', 'tutorial_data', 'subj1', 'surfing')
+                        'tutorial_data', 'tutorial_data', 'data', 'surfing')
 
 """First set up surface stuff"""
-epi_ref_fn = os.path.join(datapath, 'bold_mean.nii')
+epi_ref_fn = os.path.join(datapath, '..', 'bold_mean.nii')
 
 """
-We're concerned with the left hemisphere only
+We're concerned with the left hemisphere only.
 """
 hemi = 'l'
 
@@ -98,7 +98,7 @@ are 2*(10*8^2+2)=1284 nodes across the two hemispheres, and thus 823686 unique
 pairs of nodes. A higher number for lowres_ld may be  suited for single-center
 searchlight analyses.
 """
-lowres_ld=32 # was 16, 32 or 64 is reasonable
+lowres_ld = 32 # was 16, 32 or 64 is reasonable
 
 intermediate_surf_fn = os.path.join(datapath, "ico%d_%sh.intermediate_al.asc"
                                              % (lowres_ld, hemi))
@@ -173,11 +173,12 @@ From now on we simply follow the example in searchlight.py.
 First we load and preprocess the data. Note that we use the 
 mask that came from the voxel selection.
 """
-attr = ColumnData(os.path.join(datapath, '..', 'labels.txt'))
+attr = SampleAttributes(os.path.join(datapath, '..', 'attributes.txt'))
+
 
 dataset = fmri_dataset(
                 samples=os.path.join(datapath, '..', 'bold.nii.gz'),
-                targets=attr.labels,
+                targets=attr.targets,
                 chunks=attr.chunks,
                 mask=mask)
                 
@@ -195,7 +196,7 @@ dataset = dataset[dataset.sa.targets != 'rest']
 Define classifier and crossvalidation
 """
 
-clf = LinearNuSVMC()
+clf = LinearCSVMC()
 
 cv = CrossValidation(clf, NFoldPartitioner(),
                      errorfx=lambda p, t: np.mean(p == t),
@@ -221,8 +222,11 @@ to nodes (features) and columns to datapoints (samples)
 surf_sl_dset = dict(data=np.asarray(sl_dset).transpose(),
                   node_indices=center_ids)
 
-afni_niml_dset.write(searchlight_fn_prefix + '.niml.dset', surf_sl_dset)
+dset_fn=searchlight_fn_prefix + '.niml.dset'
 
-print ("To view results, cd to '%s' and run ./%sh_ico%d_seesuma.sh" %
-       (datapath, hemi, lowres_ld))
+afni_niml_dset.write(dset_fn, surf_sl_dset)
+
+print ("To view results, cd to '%s' and run ./%sh_ico%d_seesuma.sh,"
+       "click on 'dset', and select %s" %
+       (datapath, hemi, lowres_ld, dset_fn))
 

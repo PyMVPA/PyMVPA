@@ -23,13 +23,19 @@ uses Freesurfer and AFNI/SUMA (for the pipeline, see the documentation at
 http://surfing.sourceforge.net for details). Specifically, the command used to
 produce the surfaces used here is::
 
-  python mvpa2/misc/surfing/anatpreproc.py -e glm/epiref.nii -r pyref -d fs/s88 \
-         -l 4+8+16+32+64+128
+  python mvpa2/misc/surfing/anatpreproc.py -e bold_mean.nii -A -r surfing \
+  -d subj1/subj1
+         
+where bold_mean.nii is an averaged bold image from bold.nii.gz, subj1/subj1
+the output directory from Freesurfer's recon-all, and surfing the directory
+in which aligned volumes and surfaces are being stored.
 
 The example here consists of two steps:
 (1) voxel selection using cortical surfaces (which associates, with each node
 on the surface, a set of neighboring voxels);
 (2) running a searchlight based on the voxel selection
+
+In this example we use the Haxby 2001 tutorial dataset subj1-2010.01.14.tar.gz  
 
 References
 ----------
