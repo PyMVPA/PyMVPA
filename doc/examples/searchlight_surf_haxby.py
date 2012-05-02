@@ -71,7 +71,7 @@ These surfaces were resampled using AFNI's MapIcosahedron; ld refers to
 the number of linear divisions of the 'large' triangles of the original
 icosahedron (ld=x means there are 10*x**2+2 nodes and 20*x**2 triangles).
 """
-highres_ld=32 # was 64
+highres_ld=128 # was 64 or 128 is reasonable
 
 pial_surf_fn = os.path.join(datapath, "ico%d_%sh.pial_al.asc"
                                      % (highres_ld, hemi))
@@ -98,7 +98,7 @@ are 2*(10*8^2+2)=1284 nodes across the two hemispheres, and thus 823686 unique
 pairs of nodes. A higher number for lowres_ld may be  suited for single-center
 searchlight analyses.
 """
-lowres_ld=32 # was 32
+lowres_ld=32 # was 16, 32 or 64 is reasonable
 
 intermediate_surf_fn = os.path.join(datapath, "ico%d_%sh.intermediate_al.asc"
                                              % (lowres_ld, hemi))
@@ -140,28 +140,39 @@ Make a volsurf instance, which is useful for mapping between surface
 and volume locations
 """
 vs=volsurf.VolSurf(vg,white_surf,pial_surf)
-print vs
+
 """
-Run voxel selection...
+Use all centers and run voxel selection...
 """
 nv=intermediate_surf.nv()
 src_ids=range(nv)
 voxsel=surf_voxel_selection.voxel_selection(vs, intermediate_surf, radius, src_ids)
 
-print "Voxel selection results:"
-print voxsel
-
-voxel_ids_label='lin_vox_idxs'
-#small_voxsel, small_keys, mask_img=voxsel.minimal_mask_mapping(voxel_ids_label)
-#nbrhood = voxsel.get_neighborhood()
-#mm=voxsel.mask_key_mapping()
-
+"""
+For MVPA, use all centers that have voxels associated with them.
+In this example that means all centers, but in the case of partial 
+volume coverage there may be center nodes without voxels
+"""
 center_ids = voxsel.keys()
-mask=voxsel.get_niftiimage_mask()
-nbrhood = voxsel.get_neighborhood(mask)
+"""
+Define the mask, which contains all voxels that are selected at least once
+during voxel selection (If there are fewer voxels selected than there are 
+nodes, then the mask is extended to ensure we have sufficient 'features' 
+in the dataset. Based on the mask we define the neighboorhood, which takes
+the masking operation into account. 
 
+The voxel_ids_label argument is optional 
+and defaults to "lin_vox_idxs". 
+"""
+voxel_ids_label='lin_vox_idxs'
+mask=voxsel.get_niftiimage_mask(voxel_ids_label=voxel_ids_label)
+nbrhood = voxsel.get_neighborhood(mask,voxel_ids_label=voxel_ids_label)
 
-# source of class targets and chunks definitions
+"""
+From now on we simply follow the example in searchlight.py.
+First we load and preprocess the data. Note that we use the 
+mask that came from the voxel selection.
+"""
 attr = ColumnData(os.path.join(datapath, '..', 'labels.txt'))
 
 dataset = fmri_dataset(
@@ -169,60 +180,22 @@ dataset = fmri_dataset(
                 targets=attr.labels,
                 chunks=attr.chunks,
                 mask=mask)
-
-print "dataset loaded"                
-
-"""The dataset is now loaded and contains all brain voxels as features, and all
-volumes as samples. To precondition this data for the intended analysis we have
-to perform a few preprocessing steps (please note that the data was already
-motion-corrected). The first step is a chunk-wise (run-wise) removal of linear
-trends, typically caused by the acquisition equipment."""
+                
 
 poly_detrend(dataset, polyord=1, chunks_attr='chunks')
-
-print "detrended"
-
-"""Now that the detrending is done, we can remove parts of the timeseries we
-are not interested in. For this example we are only considering volumes acquired
-during a stimulation block with images of houses and scrambled pictures, as well
-as rest periods (for now). It is important to perform the detrending before
-this selection, as otherwise the equal spacing of fMRI volumes is no longer
-guaranteed."""
 
 dataset = dataset[np.array([l in ['rest', 'house', 'scrambledpix']
                            for l in dataset.targets], dtype='bool')]
 
-"""The final preprocessing step is data-normalization. This is a required step
-for many classification algorithms. It scales all features (voxels)
-into approximately the same range and removes the mean. In this example, we
-perform a chunk-wise normalization and compute standard deviation and mean for
-z-scoring based on the volumes corresponding to rest periods in the experiment.
-The resulting features could be interpreted as being voxel salience relative
-to 'rest'."""
-
 zscore(dataset, chunks_attr='chunks', param_est=('targets', ['rest']), dtype='float32')
-
-print "zscores dataset"
-
-"""After normalization is completed, we no longer need the 'rest'-samples and
-remove them."""
 
 dataset = dataset[dataset.sa.targets != 'rest']
 
-print "Masked dataset"
+"""
+Define classifier and crossvalidation
+"""
 
-
-"""But now for the interesting part: Next we define the measure that shall be
-computed for each sphere. Theoretically, this can be anything, but here we
-choose to compute a full leave-one-out cross-validation using a linear Nu-SVM
-classifier."""
-
-# choose classifier
 clf = LinearNuSVMC()
-
-# setup measure to be computed by Searchlight
-# cross-validated mean transfer using an N-fold dataset splitter
-#cv = CrossValidation(clf, NFoldPartitioner())
 
 cv = CrossValidation(clf, NFoldPartitioner(),
                      errorfx=lambda p, t: np.mean(p == t),
@@ -230,7 +203,9 @@ cv = CrossValidation(clf, NFoldPartitioner(),
 
 
 
-print "Going to run searchlight"
+"""
+The interesting part: define and run the searchlight
+"""
 searchlight = sparse_attributes.searchlight(cv, nbrhood,
                                            postproc=mean_sample(),
                                            center_ids=center_ids)
