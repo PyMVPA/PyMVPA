@@ -124,7 +124,7 @@ class VolSurf():
             surf = self._pial * pialweight + self._white * whiteweight
 
             surf_xyz = surf.v() # coordinates
-            print surf_xyz.shape
+            
             lin_vox = volgeom.xyz2lin(surf_xyz) # linear indices of voxels containing nodes
 
             is_vox_in_vol = volgeom.lininvol(lin_vox) # which of these voxels are actually in the volume

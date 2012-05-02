@@ -214,6 +214,9 @@ class SparseVolumeAttributes(SparseAttributes):
         return img
 
 '''
+
+    NNO the following is *old* code
+    
     def mask_key_mapping(self, voxel_ids_label='lin_vox_idxs'):
         center_ids = self.keys() # these are only nodes with voxels associated
         idxs = np.nonzero(self.get_linear_mask())[0]
@@ -353,8 +356,6 @@ class SparseNeighborhood():
     def __call__(self, coordinate):
         c_ijk = np.asanyarray(coordinate)[np.newaxis]
 
-        print "coordinates %r %r" % (coordinate, c_ijk)
-
         if not c_ijk.shape == (1, 3):
             raise ValueError('Coordinate should be an length-3 iterable')
 
@@ -363,8 +364,6 @@ class SparseNeighborhood():
             return tuple()
 
         c_lin = vg.ijk2lin(c_ijk)
-
-        print "lin coordinates %r " % (c_lin)
 
         if not c_lin in self._attr.keys(): # no nodes associated
             print "Not in keys!"
