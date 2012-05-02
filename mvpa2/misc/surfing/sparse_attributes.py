@@ -16,7 +16,7 @@ This class is intended for general use of storing sparse attributes
 associated with keys in a dictionary. 
 
 Instantiation requires a set of labels (called sa_labels to mimick Dataset)
-and every entry added has to support  
+and every entry added has to be a dict with the keys matching sa_labels.  
 '''
 class SparseAttributes(object):
     def __init__(self, sa_labels):
@@ -89,8 +89,6 @@ class SparseAttributes(object):
 
 
 
-
-
 class SparseVolumeAttributes(SparseAttributes):
     """
     Sparse attributes with volume geometry. 
@@ -112,8 +110,11 @@ class SparseVolumeAttributes(SparseAttributes):
     
     Parameters
     ==========
+    mask
+        volume mask (usually from get_niftiimage_mask)
     voxel_ids_label
         label of voxel ids of neighboors
+    
     
     Returns
     =======
@@ -122,8 +123,35 @@ class SparseVolumeAttributes(SparseAttributes):
         neighbors for searchlight centers stored in this instance
     """
 
-    def get_neighborhood(self, voxel_ids_label='lin_vox_idxs'):
-        return SparseNeighborhood(self, voxel_ids_label)
+    def get_neighborhood(self, mask=None, voxel_ids_label='lin_vox_idxs'):
+        if mask:
+            # take into account that masking means we have
+            # to translate our center ids. We do so by creating a fresh
+            # attribute mapping
+
+            tp = type(mask)
+            if not tp is np.ndarray:
+                mask = mask.get_data()
+
+            vg = self.get_volgeom()
+            nv = vg.nv()
+            mask = np.reshape(mask, (nv,))
+            mask_idxs = np.nonzero(mask)[0]
+            center_ids = self.keys() # these are only nodes with voxels associated
+
+            if len(mask_idxs) < len(center_ids):
+                raise ValueError("Too many center ids (%r > %r" %
+                                    (len(mask_idxs), len(center_ids)))
+
+            attr = SparseVolumeAttributes([voxel_ids_label], vg)
+            for i, center_id in enumerate(center_ids):
+                vs = self.get(center_id, voxel_ids_label)
+                attr.add(mask_idxs[i], {voxel_ids_label:vs})
+
+        else:
+            attr = self
+
+        return SparseNeighborhood(attr, voxel_ids_label)
 
     """
     Returns
@@ -134,25 +162,166 @@ class SparseVolumeAttributes(SparseAttributes):
     def get_volgeom(self):
         return self.a['volgeom']
 
-    def get_niftiimage_mask(self, voxel_ids_label='lin_vox_idxs'):
+    """
+    Returns
+    =======
+    volgeom: volgem.VolGeom
+        volume geometry stored in this instance
+    """
+
+
+    def get_linear_mask(self, voxel_ids_label='lin_vox_idxs', auto_grow=True):
+        # if auto_grow=True, then we add enough positive values to the mask 
+        # so that it reaches at least the number of self.keys().
+        # This  is necessary when it is used in a searchlight
+        vg = self.get_volgeom()
+
+        linmask = np.zeros(shape=(vg.nv(),), dtype=np.int8)
+
+        keys = self.keys()
+        map = self.get_attr_mapping(voxel_ids_label)
+        for key in keys:
+            linmask[map[key]] = 1
+
+        nmask = np.sum(linmask)
+        nkeys = len(keys)
+        delta = nkeys - nmask
+
+        if auto_grow and delta > 0:
+            # not enough values in the mask, have to add
+            if nkeys > vg.nv():
+                raise ValueError("%r keys but volume has too few voxels (%r)" %
+                                 nkeys, vg.nv())
+            print "Adding %r more" % delta
+            for k in xrange(vg.nv()):
+                if not linmask[k]:
+                    linmask[k] = 2
+                    delta -= 1
+                if delta == 0:
+                    break
+
+        return linmask
+
+
+    def get_niftiimage_mask(self, voxel_ids_label='lin_vox_idxs', auto_grow=True):
         vg = self.get_volgeom()
         shape = vg.shape()[:3]
 
-        linmask = np.zeros(shape=(vg.nv(),), dtype=np.int8)
-        print self
-        map = self.get_attr_mapping(voxel_ids_label)
-        for key in self.keys():
-            linmask[map[key]] = True
-
-        print linmask
-
-        print shape
+        linmask = self.get_linear_mask(voxel_ids_label, auto_grow)
         mask = np.reshape(linmask, shape)
-
-        print mask
 
         img = ni.Nifti1Image(mask, vg.affine())
         return img
+
+'''
+    def mask_key_mapping(self, voxel_ids_label='lin_vox_idxs'):
+        center_ids = self.keys() # these are only nodes with voxels associated
+        idxs = np.nonzero(self.get_linear_mask())[0]
+
+        vg = self.get_volgeom()
+        map = SparseVolumeAttributes([voxel_ids_label], vg)
+        for i, center_id in enumerate(center_ids):
+            vs = self.get(center_id, voxel_ids_label)
+            map.add(idxs[i], {voxel_ids_label:vs})
+
+        return map
+
+
+    def minimal_mask_mapping(self, voxel_ids_label='lin_vox_idxs'):
+        """
+        Finds a minimal mapping for a searchlight attribute mapping,
+        and returns an associated mask
+        
+        small_map, small_keys, mask_img=minimal_mask_mapping(voxel_ids_label)
+        
+        Parameters
+        ==========
+        voxel_ids_label: str
+            label by which voxel ids are stored
+        
+        Returns
+        =======
+        small_map: SparseVolumeAttributes
+        small_keys
+        mask_img
+        """
+
+        # find which voxels are mapped at least once
+
+
+        # we have sources ('s') that are usually the node indices of 
+        # searchlight centrs; and targets ('t') that are usually voxel 
+        # indices in a searchlight
+
+        # in a minimal, both sources and targets go from 0..(ns-1) and
+        # 0..(nt-1), respectively. 
+
+        # NNO todo: at the moment using keys() or get_niftiimage-mask
+        # (and potential others) are unsuitable to use. Have to think
+        # how to adopt this so that they remain fully useable even
+        # after changing the mapping 
+        vg = self.get_volgeom()
+
+        def minimalize(rng):
+            n = len(rng)
+            big2small = dict()
+            for s, b in enumerate(rng):
+                big2small[b] = s
+            return (rng, n, big2small)
+
+        s_rng, s_n, s_big2small = minimalize(self.keys())
+
+        linmask = self.get_linear_mask(voxel_ids_label)
+        linidxs = list(np.nonzero(linmask)[0])
+
+        delta = s_n - len(linidxs)
+        if delta > 0:
+            # in the voxel mask there are fewer voxels than there are nodes
+            # Have to add dummy voxels
+            for k in xrange(vg.nv()):
+                if not k in linidxs:
+                    linidxs.append(k)
+                    delta -= 1
+                if delta == 0:
+                    break
+
+        t_rng, t_n, t_big2small = minimalize(linidxs)
+
+        # ensure we have enough voxels
+        if s_n > vg.nv():
+            raise ValueError("Mode nodes (%r) than voxels (%r)" %
+                             (s_n, vg.nv()))
+        s_big2small = dict()
+        for s, b in enumerate(s_rng):
+            s_big2small[b] = s
+
+        t_rng = np.nonzero(linmask)[0]
+        t_big2small = dict()
+        for s, b in enumerate(t_rng):
+            t_big2small[b] = s
+
+        bigmap = self.get_attr_mapping(voxel_ids_label)
+        smallmap = SparseVolumeAttributes([voxel_ids_label], vg)
+
+        for s_k in s_rng:
+            """
+            t_vs=[t_big2small[b] for b in bigmap[s_k]]
+            t_ar=np.asarray(t_vs)
+            smallmap.add(s_big2small[s_k], {voxel_ids_label:t_ar})
+            """
+            smallmap.add(s_big2small[s_k], {voxel_ids_label:bigmap[s_k]})
+
+        mask_array = np.zeros(shape=(vg.nv(),), dtype=np.int8)
+        for linidx in linidxs:
+            mask_array[linidx] = 1
+
+        mask_img = ni.Nifti1Image(np.reshape(mask_array, vg.shape()[:3]),
+                                vg.affine())
+
+        return smallmap, s_rng, mask_img
+
+'''
+
 
 class SparseNeighborhood():
     """
@@ -184,6 +353,8 @@ class SparseNeighborhood():
     def __call__(self, coordinate):
         c_ijk = np.asanyarray(coordinate)[np.newaxis]
 
+        print "coordinates %r %r" % (coordinate, c_ijk)
+
         if not c_ijk.shape == (1, 3):
             raise ValueError('Coordinate should be an length-3 iterable')
 
@@ -193,7 +364,10 @@ class SparseNeighborhood():
 
         c_lin = vg.ijk2lin(c_ijk)
 
+        print "lin coordinates %r " % (c_lin)
+
         if not c_lin in self._attr.keys(): # no nodes associated
+            print "Not in keys!"
             return tuple()
 
         if len(c_lin) != 1:
@@ -270,9 +444,6 @@ def from_file(fn):
         r = pickle.load(f)
     return r
 
-def _sayhello():
-    print "hello"
-
 
 def _test_roi():
     sa = SparseAttributes(["lin_vox_idxs", "center_distances"])
@@ -298,11 +469,38 @@ def _test_roi():
         print "%r -> distances=%r, idxs==%r)" % (k, v, it[k])
 
 if __name__ == "__main__":
-    _test_roi()
+    #_test_roi()
 
+    d = '/Users/nick/Downloads/fingerdata-0.3/pyref/'
+    fn = d + 'voxsel_ico32_lh.pickle'
 
+    attr = from_file(fn)
+    vg = attr.get_volgeom()
 
+    a = attr.minimal_mask_mapping()
 
+    if False:
+        voxel_ids_label = 'lin_vox_idxs'
+        linmask = attr.get_linear_mask(voxel_ids_label)
+
+        rng = np.nonzero(linmask)
+        big2small = dict()
+        small2big = dict()
+        for s, b in enumerate(rng[0]):
+            small2big[s] = b
+            big2small[b] = s
+
+        bigmap = attr.get_attr_mapping(voxel_ids_label)
+        bigkeys = attr.keys()
+
+        smallmap = dict()
+        for bigk in bigkeys:
+            print bigk
+
+            smallk = big2small[bigk]
+            bigvs = bigmap[bigk]
+            smallv = [big2small[v] for v in bigvs]
+            smallmap[smallk] = smallv
 
 
 
