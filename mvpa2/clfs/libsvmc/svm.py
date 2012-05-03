@@ -201,7 +201,8 @@ class SVM(_SVM):
                 estimates = [ self.model.predict_values_raw(p)[0] for p in src ]
             else:
                 # if 'trained_targets' are literal they have to be mapped
-                if np.issubdtype(self.ca.trained_targets.dtype, 'c'):
+                if ( np.issubdtype(self.ca.trained_targets.dtype, 'c') or
+                     np.issubdtype(self.ca.trained_targets.dtype, 'U') ):
                     trained_targets = self._attrmap.to_numeric(
                             self.ca.trained_targets)
                 else:
