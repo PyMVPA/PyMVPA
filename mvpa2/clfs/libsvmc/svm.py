@@ -24,7 +24,7 @@ from mvpa2.clfs._svmbase import _SVM
 
 from mvpa2.clfs.libsvmc import _svm
 from mvpa2.kernels.libsvm import LinearLSKernel
-from sens import LinearSVMWeights
+from mvpa2.clfs.libsvmc.sens import LinearSVMWeights
 
 if __debug__:
     from mvpa2.base import debug
