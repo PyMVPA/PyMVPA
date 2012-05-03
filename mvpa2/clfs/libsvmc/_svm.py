@@ -486,4 +486,4 @@ class SVMModel:
     def get_rho(self):
         """Return constant(s) in decision function(s) (if multi-class)"""
         return double_array_to_list(svmc.svm_model_rho_get(self.model),
-                                self.nr_class * (self.nr_class-1)/2)
+                                self.nr_class * (self.nr_class-1)//2)
