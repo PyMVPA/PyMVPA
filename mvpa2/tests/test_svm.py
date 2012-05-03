@@ -108,7 +108,7 @@ class SVMTests(unittest.TestCase):
         # disballanced set
         # lets overpopulate label 0
         times = 20
-        ds_ = ds[(range(ds.nsamples) + range(ds.nsamples/2) * times)]
+        ds_ = ds[(range(ds.nsamples) + range(ds.nsamples//2) * times)]
         ds_.samples = ds_.samples + \
                       0.5 * np.random.normal(size=(ds_.samples.shape))
         spl = get_nsamples_per_attr(ds_, 'targets') #_.samplesperlabel

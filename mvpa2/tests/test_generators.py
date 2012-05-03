@@ -30,7 +30,7 @@ def give_data():
     # 100x10, 10 chunks, 4 targets
     return dataset_wizard(np.random.normal(size=(100,10)),
                           targets=[ i%4 for i in range(100) ],
-                          chunks=[ i/10 for i in range(100)])
+                          chunks=[ i//10 for i in range(100)])
 
 
 @reseed_rng()
