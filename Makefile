@@ -325,7 +325,7 @@ ut-%: build
 
 unittest: build
 	@echo "I: Running unittests (without optimization nor debug output)"
-	$cd $(TEST_DIR) && (MPLPYTHON) mvpa2/tests/__init__.py
+	@cd $(TEST_DIR) && $(MPLPYTHON) mvpa2/tests/__init__.py
 
 
 # test if PyMVPA is working if optional externals are missing
