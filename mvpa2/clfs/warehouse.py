@@ -177,7 +177,7 @@ clfswh += \
                             descr='Pairs+maxvote multiclass on SMLR(lm=0.1)') ]
 
 if externals.exists('libsvm'):
-    from mvpa2.clfs import libsvmc as libsvm
+    from mvpa2.clfs.libsvmc import svm as libsvm
     clfswh._known_tags.update(libsvm.SVM._KNOWN_IMPLEMENTATIONS.keys())
     clfswh += [libsvm.SVM(descr="libsvm.LinSVM(C=def)", probability=1),
              libsvm.SVM(
