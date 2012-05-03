@@ -132,6 +132,9 @@ class AttributeMap(object):
             for k, v in self._nmap:
                 yield k, v
 
+    # Py3 Compatibility method to keep lib2to3 happy
+    items = iteritems
+    
     def to_numeric(self, attr):
         """Map literal attribute values to numerical ones.
 
