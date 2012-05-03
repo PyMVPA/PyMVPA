@@ -75,7 +75,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.assertTrue(f.shape == (1, data.nfeatures))
         self.assertTrue(abs(f.samples[0, 1]) <= 1e-12, # some small value
             msg="Failed test with value %g instead of != 0.0" % f.samples[0, 1])
-        self.assertTrue(f[0] > 0.1)     # some reasonably large value
+        self.assertTrue(f.samples[0,0] > 0.1)     # some reasonably large value
 
         # we should not have NaNs
         self.assertTrue(not np.any(np.isnan(f)))
