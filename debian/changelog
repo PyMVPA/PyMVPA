@@ -1,3 +1,12 @@
+pymvpa (0.4.8-2) UNRELEASED; urgency=low
+
+  * debian/upstream:
+     - Use UTF-8 string in "Author" field because BibTeX is also UTF-8
+       aware but tasks pages rendering is not TeX-syntax enabled
+     - add eprint
+
+ -- Andreas Tille <tille@debian.org>  Mon, 07 May 2012 16:10:10 +0200
+
 pymvpa (0.4.8-1) unstable; urgency=low
 
   * Upstream bugfix release:
