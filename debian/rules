@@ -78,4 +78,4 @@ ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 DEB_INSTALL_DOCS_python-mvpa-doc := build/html
 DEB_INSTALL_EXAMPLES_python-mvpa-doc := doc/examples/*
 endif
-
+DEB_INSTALL_DOCS += debian/upstream
