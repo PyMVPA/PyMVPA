@@ -45,3 +45,56 @@ def _test_mcasey20120222():
 
     errors = cvte(ds)
 
+
+@reseed_rng()
+def test_sifter_superord_usecase():
+    from mvpa2.misc.data_generators import normal_feature_dataset
+    from mvpa2.clfs.svm import LinearCSVMC            # fast one to use for tests
+    from mvpa2.measures.base import CrossValidation
+
+    from mvpa2.base.node import ChainNode
+    from mvpa2.generators.partition import NFoldPartitioner
+    from mvpa2.generators.base import  Sifter
+
+    # Let's simulate the beast -- 6 categories total groupped into 3
+    # super-ordinate, and actually without any 'superordinate' effect
+    # since subordinate categories independent
+    ds = normal_feature_dataset(nlabels=6,
+                                snr=100,   # pure signal! ;)
+                                perlabel=30,
+                                nfeatures=6,
+                                nonbogus_features=range(6),
+                                nchunks=5)
+    ds.sa['subord'] = ds.sa.targets.copy()
+    ds.sa['superord'] = ['super%d' % (int(i[1])%3,)
+                         for i in ds.targets]   # 3 superord categories
+    # let's override original targets just to be sure that we aren't relying on them
+    ds.targets[:] = 0
+
+    npart = ChainNode([
+    ## so we split based on superord
+        NFoldPartitioner(len(ds.sa['superord'].unique),
+                         attr='subord'),
+        ## so it should select only those splits where we took 1 from
+        ## each of the superord categories leaving things in balance
+        Sifter([('partitions', 2),
+                ('superord',
+                 { 'uvalues': ds.sa['superord'].unique,
+                   'balanced': True})
+                 ]),
+                   ], space='partitions')
+
+    # and then do your normal where clf is space='superord'
+    clf = LinearCSVMC(space='superord')
+    cvte_regular = CrossValidation(clf, NFoldPartitioner(),
+                                   errorfx=lambda p,t: np.mean(p==t))
+    cvte_super = CrossValidation(clf, npart, errorfx=lambda p,t: np.mean(p==t))
+
+    accs_regular = cvte_regular(ds)
+    accs_super = cvte_super(ds)
+
+    # With sifting we should get only 2^3 = 8 splits
+    assert(len(accs_super) == 8)
+    # I don't think that this would ever fail, so not marking it labile
+    assert(np.mean(accs_regular) > .8)
+    assert(np.mean(accs_super)   < .6)
