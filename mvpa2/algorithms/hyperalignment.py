@@ -47,6 +47,7 @@ class Hyperalignment(ClassWithCollections):
     # Lets use built-in facilities to specify parameters which
     # constructor should accept
     alignment = Parameter(ProcrusteanMapper(), # might provide allowedtype
+            allowedtype='basestring',
             doc="""The multidimensional transformation mapper. If
             `None` (default) an instance of
             :class:`~mvpa2.mappers.procrustean.ProcrusteanMapper` is
@@ -221,7 +222,8 @@ class Hyperalignment(ClassWithCollections):
 
             #ds_new = ds.copy()     # shallow copy so we could assign new labels
             #zscore(ds_new, chunks_attr=None)
-            ds_temp = (commonspace*ndatasets - data_mapped[i])/(ndatasets-1)
+            ds_temp = commonspace
+            #ds_temp = (commonspace*ndatasets - data_mapped[i])/(ndatasets-1)
             if params.zscore_common:
                 zscore(ds_temp, chunks_attr=None)
             ds_new.targets = ds_temp #commonspace #PRJ ds_temp#

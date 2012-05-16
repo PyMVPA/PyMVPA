@@ -390,19 +390,24 @@ def run_analysis(files, options):
     verbose(1, "Estimating the measure on loaded data")
     verbose(2, "Measure: %r" % measure)
 
+    t0 = time.time()
     results = measure(data)
+    results.a['proccessing_time'] = time.time() - t0
 
     if not ofile is None:
         verbose(1, "Storing results using prefix %r" % ofile)
         print np.histogram(results.samples)
+
+        # We could "always" save to HDF5, which also would assure
+        # that we have output directory
+        mv.h5save(ofile + 'results.hdf5', results, mkdir=True)
+
         # TODO: some might not be mapped to Nifti that easily
         # map the result vector back into a nifti image
         rimg = mv.map2nifti(data, results)
         # save to file
         rimg.to_filename(ofile + 'results.nii.gz')
 
-        # but we could "always" save to HDF5
-        mv.h5save(ofile + 'results.hdf5', results)
     else:
         verbose(1, "Results:\n%r" % results)
 

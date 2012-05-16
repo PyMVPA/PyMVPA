@@ -18,6 +18,7 @@ from StringIO import StringIO
 from math import log10, ceil
 
 from mvpa2.base import externals
+from mvpa2.base.node import Node
 
 from mvpa2.misc.errorfx import mean_power_fx, root_mean_power_fx, rms_error, \
      relative_rms_error, mean_mismatch_error, auc_error
@@ -1109,6 +1110,32 @@ class ConfusionMatrix(SummaryStatistics):
         return 100.0*self.__Ncorrect/sum(self.__Nsamples)
 
     labels_map = property(fget=get_labels_map, fset=set_labels_map)
+
+
+class ConfusionMatrixError(object):
+    """Compute confusion matrix as an "error function"
+
+    This class can be used to compute confusion matrices from classifier
+    output inside cross-validation fold without the ``stats`` conditional
+    attribute. Simply pass an instance of this class to the ``errorfx``
+    argument of ``CrossValidation``.
+    """
+    def __init__(self, labels=None):
+        """
+        Parameters
+        ==========
+        labels : list
+          Class labels for confusion matrix columns/rows
+        """
+        self.labels = labels
+
+    def __call__(self, predictions, targets):
+        cm = ConfusionMatrix(labels=list(self.labels),
+                             targets=targets, predictions=predictions)
+        #print cm.matrix
+        # We have to add a degenerate leading dimension
+        # so we could separate them into separate 'samples'
+        return cm.matrix[None, :]
 
 
 class RegressionStatistics(SummaryStatistics):

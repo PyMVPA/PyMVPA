@@ -270,3 +270,32 @@ def labile(niter=3, nfailures=1):
     assert(niter > nfailures)
     return decorate
 
+
+def assert_objectarray_equal(x, y, xorig=None, yorig=None):
+    """Wrapper around assert_array_equal to compare object arrays
+
+    See http://projects.scipy.org/numpy/ticket/2117
+    for the original report on oddity of dtype object arrays comparisons
+    """
+    try:
+        assert_array_equal(x, y)
+    except AssertionError, e:
+        if not ((x.dtype == object) and (y.dtype == object)):
+            raise
+        # pass inside original arrays for a meaningful assertion
+        # failure msg
+        if xorig is None:
+            xorig = x
+        if yorig is None:
+            yorig = y
+        try:
+            # we will try harder comparing each element the same way
+            # and also enforcing equal dtype
+            for x_, y_ in zip(x, y):
+                assert(x_.dtype == y_.dtype)
+                assert_objectarray_equal(x_, y_, xorig, yorig)
+        except Exception, e:
+            if not isinstance(e, AssertionError):
+                raise AssertionError("%r != %r, thus %s != %s" %
+                                     (x, y, xorig, yorig))
+            raise
