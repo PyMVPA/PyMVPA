@@ -493,31 +493,50 @@ class NFoldPartitioner(Partitioner):
 
 
 class ExcludeTargetsCombinationsPartitioner(Node):
-    """Given a pre-generated partitioning
-    this generates a second-level partitioning by selecting
-    all possible combinations of k-targets from all targets
-    and excludes samples with the selected k-targets from 
-    training dataseti for each combination.
-    A simple example would be: for a dataset with 3 classes with 
-    one sample per class, k=2 gives 3 combination partitions 
-    with 2 samples for testing and one sample for training (since
-    it excludes the 2 selected target samples) per partition.
-    
-    Example
-    -------
-        Using in conjunction with a NFoldPartitioner()
+    """Exclude combinations for a given partition from other partitions
 
-        partitioner = ChainNode([NFoldPartitioner(),
-                             ExcludeTargetsCombinationsPartitioner(
-                                 k=2,
-                                 targets_attr='targets',
-                                 space='partitions')],
-                            space='partitions')
+    Given a pre-generated partitioning this generates new partitions
+    by selecting all possible combinations of k-targets from all
+    targets and excluding samples with the selected k-targets from
+    training partition for each combination.
+
+    A simple example would be:
+
+    Examples
+    --------
+
+    For a dataset with 3 classes with one sample per class, k=2 gives
+    3 combination partitions with 2 samples for testing and one sample
+    for training (since it excludes the 2 selected target samples) per
+    partition.
+
+    >>> from mvpa2.base.node import ChainNode
+    >>> partitioner = ChainNode([NFoldPartitioner(),
+    ...                          ExcludeTargetsCombinationsPartitioner(
+    ...                             k=2,
+    ...                             targets_attr='targets',
+    ...                             space='partitions')],
+    ...                         space='partitions')
+
+
+    While cross-validating across subjects (e.g. working with
+    hyperaligned data), to avoid significant bias due to matching
+    trial-order effects instead of categorical boundaries, it is
+    important to exclude from training chunks with the order matching
+    the ones in testing.
+
+    >>> partitioner = ChainNode([NFoldPartitioner(attr='subject'),
+    ...                          ExcludeTargetsCombinationsPartitioner(
+    ...                             k=1,
+    ...                             targets_attr='chunks',
+    ...                             space='partitions')],
+    ...                         space='partitions')
+
     """
     def __init__(self, k,
                  targets_attr,
                  partitions_attr='partitions',
-                 partitions_keep=2,    # default for testing partition
+                 partitions_keep=2,  # default for testing partition
                  partition_assign=3, # assign one which Splitter doesn't even get to
                  **kwargs):
         Node.__init__(self, **kwargs)
