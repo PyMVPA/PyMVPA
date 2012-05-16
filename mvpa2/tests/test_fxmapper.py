@@ -169,14 +169,14 @@ def test_fx_native_calls(f):
             try:
                 m2 = FxMapper(axis, custom, **kwargs)
                 dsm2 = ds.get_mapped(m2)
-            except:
+            except Exception, e:
                 # We assume that our previous implementation should work ;-)
                 continue
 
             m1 = FxMapper(axis, f_, **kwargs)
             dsm1 = ds.get_mapped(m1)
 
-            assert_array_equal(dsm1.samples, dsm2.samples)
-            assert_array_equal(dsm1.targets, dsm2.targets)
-            assert_array_equal(dsm1.chunks, dsm2.chunks)
-            assert_array_equal(dsm1.fa.nonbogus_targets, dsm2.fa.nonbogus_targets)
+            assert_objectarray_equal(dsm1.samples, dsm2.samples)
+            assert_objectarray_equal(dsm1.targets, dsm2.targets)
+            assert_objectarray_equal(dsm1.chunks, dsm2.chunks)
+            assert_objectarray_equal(dsm1.fa.nonbogus_targets, dsm2.fa.nonbogus_targets)

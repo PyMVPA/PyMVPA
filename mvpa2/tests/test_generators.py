@@ -213,12 +213,49 @@ def test_sifter():
     ds = Dataset(samples=np.arange(8).reshape((4,2)),
                  sa={'chunks':   [ 0 ,  1 ,  2 ,  3 ],
                      'targets':  ['c', 'c', 'p', 'p']})
-    par = ChainNode([NFoldPartitioner(cvtype=2, attr='chunks'),
+    for sift_targets_definition in (['c', 'p'],
+                                    dict(uvalues=['c', 'p'])):
+        par = ChainNode([NFoldPartitioner(cvtype=2, attr='chunks'),
+                         Sifter([('partitions', 2),
+                                 ('targets', sift_targets_definition)])
+                         ])
+        dss = list(par.generate(ds))
+        assert_equal(len(dss), 4)
+        for ds_ in dss:
+            testing = ds[ds_.sa.partitions == 2]
+            assert_array_equal(np.unique(testing.sa.targets), ['c', 'p'])
+            # and we still have both targets  present in training
+            training = ds[ds_.sa.partitions == 1]
+            assert_array_equal(np.unique(training.sa.targets), ['c', 'p'])
+
+def test_sifter_with_balancing():
+    # extended previous test which was already
+    # "... somewhat duplicating the doctest"
+    ds = Dataset(samples=np.arange(12).reshape((-1, 2)),
+                 sa={'chunks':   [ 0 ,  1 ,  2 ,  3 ,  4,   5 ],
+                     'targets':  ['c', 'c', 'c', 'p', 'p', 'p']})
+
+    # Without sifter -- just to assure that we do get all of them
+    # i.e. 6*5*4*3/(4!) = 15
+    par = ChainNode([NFoldPartitioner(cvtype=4, attr='chunks')])
+    assert_equal(len(list(par.generate(ds))), 15)
+
+    # so we will take 4 chunks out of available 7, but would care only
+    # about those partitions where we have balanced number of 'c' and 'p'
+    # entries
+    assert_raises(ValueError,
+                  lambda x: list(Sifter([('targets', dict(wrong=1))]).generate(x)),
+                  ds)
+
+    par = ChainNode([NFoldPartitioner(cvtype=4, attr='chunks'),
                      Sifter([('partitions', 2),
-                             ('targets', ['c', 'p'])])
+                             ('targets',
+                              dict(uvalues=['c', 'p'],
+                                   balanced=True))])
                      ])
     dss = list(par.generate(ds))
-    assert_equal(len(dss), 4)
+    # print [ x[x.sa.partitions==2].sa.targets for x in dss ]
+    assert_equal(len(dss), 9)
     for ds_ in dss:
         testing = ds[ds_.sa.partitions == 2]
         assert_array_equal(np.unique(testing.sa.targets), ['c', 'p'])
