@@ -27,7 +27,8 @@ RSYNC_OPTS_UP=-rzlhv --delete
 #
 PYTHON = python
 # Assure non-interactive Matplotlib and provide local paths helper
-MPLPYTHON = PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg $(PYTHON)
+MPLPYTHONPATH = PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg
+MPLPYTHON = $(MPLPYTHONPATH) $(PYTHON)
 NOSETESTS = $(PYTHON) $(shell which nosetests)
 
 #
@@ -355,11 +356,15 @@ unittests: unittest-nonlabile unittest unittest-badexternals \
 
 te-%: build
 	@echo -n "I: Testing example $*: "
-	@MVPA_EXAMPLES_INTERACTIVE=no \
-	 $(MPLPYTHON) doc/examples/$*.py >| temp-$@.log 2>&1 \
-	 && echo "passed" \
-	 || { echo "failed:"; cat temp-$@.log; rm -f temp-$@.log; exit 1; }
-	@rm -f temp-$@.log
+	@[ -z "$$MVPA_TESTS_LOGDIR" ]  \
+	&& logfile=temp-$@.log   \
+	|| { mkdir -p $$MVPA_TESTS_LOGDIR; logfile=$$MVPA_TESTS_LOGDIR/$@.log; }; \
+	MVPA_EXAMPLES_INTERACTIVE=no \
+	 $(MPLPYTHONPATH) /usr/bin/time $(PYTHON) doc/examples/$*.py >| $$logfile 2>&1 \
+	 && { echo "passed";  ex=0; } \
+	 || { echo "failed:"; ex=1; cat $$logfile; }; \
+    [ -z "$$MVPA_TESTS_LOGDIR" ] && rm -f $$logfile || : ; \
+	exit $$ex
 
 testexamples: te-svdclf te-smlr te-sensanas te-pylab_2d \
               te-curvefitting te-projections te-kerneldemo \
