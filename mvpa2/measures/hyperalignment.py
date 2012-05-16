@@ -6,17 +6,31 @@ from mvpa2.datasets import Dataset
 from mvpa2.mappers.base import ChainMapper
 from mvpa2.mappers.staticprojection import StaticProjectionMapper
 from scipy.linalg import LinAlgError
-    
+from mvpa2.measures.rsm import RSMMeasure
+
 class HyperalignmentMeasure(Measure):
     is_trained=True
-    def __init__(self, ndatasets=11, scale=0.0, index_attr='index', **kwargs):
+    def __init__(self, ndatasets=11, scale=0.0, index_attr='index', 
+                zscore_common=True, combiner1=None, combiner2=None, rsa=True, full_matrix=False, **kwargs):
         Measure.__init__(self, **kwargs)
         self.ndatasets = ndatasets
         self.scale = scale
         self._index_attr = index_attr
+        self.zscore_common = zscore_common
+        self.rsa = rsa
+        self.full_matrix = full_matrix
+        if combiner1 is None:
+            combiner1 = lambda x,y: 0.5*(x+y)
+        if combiner2 is None:
+            combiner2 = lambda l: np.mean(l, axis=0)
+        self.combiner1 = combiner1
+        self.combiner2 = combiner2
         
     def __call__(self, dataset):
-        # create the dissimilarity matrix for the data in the input dataset
+        # compute rsm if requested
+        if self.rsa:
+            rsm = RSMMeasure(dset_metric=None, nsubjs=self.ndatasets, compare_ave=True, k=1)
+            bsc_rsm = np.mean(rsm(dataset))
         ds = []
         nsamples = dataset.nsamples/self.ndatasets
         seed_index = np.where(dataset.fa.roi_seed)
@@ -28,10 +42,12 @@ class HyperalignmentMeasure(Measure):
             ds.append(dataset[0+i*nsamples:nsamples*(i+1),])
         for ref_ds in range(self.ndatasets):
             try:
-                hyper = Hyperalignment(zscore_common=True, ref_ds = ref_ds)
+                hyper = Hyperalignment(zscore_common=self.zscore_common, combiner1=self.combiner1,
+                                        combiner2=self.combiner2, ref_ds = ref_ds)
                 mappers = hyper(datasets=ds)
-                # Extract only the row/column corresponding to the center voxel
-                mappers = [ StaticProjectionMapper(proj=np.asarray([np.squeeze(m.proj[:,seed_index])]).T) for m in mappers]
+                # Extract only the row/column corresponding to the center voxel if full_matrix is False
+                if not self.full_matrix:
+                    mappers = [ StaticProjectionMapper(proj=np.asarray([np.squeeze(m.proj[:,seed_index])]).T) for m in mappers]
                 break
             except LinAlgError:
                 print "SVD didn't converge. Trying with a new reference: %i" %(ref_ds+1)
@@ -45,8 +61,8 @@ class HyperalignmentMeasure(Measure):
             else:
                 print "We are Screwed..."
         
-        
         #return Dataset(samples=np.asanyarray([{'proj':mapper,'fsel':StaticFeatureSelection(dataset.fa[self._index_attr].value)} for mapper in mappers]))
-        return Dataset(samples=np.asanyarray([{'proj': ChainMapper([StaticFeatureSelection(dataset.fa[self._index_attr].value), mapper])} for mapper in mappers]))
+        return Dataset(samples=np.asanyarray([{'proj': ChainMapper([StaticFeatureSelection(dataset.fa[self._index_attr].value), mapper]), 
+                        'bsc_rsm': bsc_rsm} for mapper in mappers]))
         # To return such that chain mappers are not combined across feature-dimension (which is apparently dim 2)
         #return Dataset( samples=np.asanyarray([[ ChainMapper([StaticFeatureSelection(dataset.fa[self._index_attr].value), mapper]) for mapper in mappers ]]).swapaxes(0,1) )

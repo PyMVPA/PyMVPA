@@ -21,7 +21,7 @@ import copy
 class RSMMeasure(Measure):
     """RSMMeasure creates a DatasetMeasure object
        where metric can be one of 'euclidean', 'spearman', 'pearson'
-       or 'confusion' and nsubjs has to be number of subject
+       or 'confusion' and nsubjs has to be number of subjects
        and compare_ave flag determines whether to correlate with
        average of all other subjects or just one-to-one
        k should be 0 to n 0-to use DSM including diagonal 
@@ -30,7 +30,6 @@ class RSMMeasure(Measure):
     def __init__(self, dset_metric, nsubjs, compare_ave, k, **kwargs):
         Measure.__init__(self,  **kwargs)
 
-        #self.dsmatrix = dsmatrix
         self.dset_metric = dset_metric
         self.dset_dsm = []
         self.nsubjs = nsubjs
@@ -43,8 +42,14 @@ class RSMMeasure(Measure):
         rsm_all = []
         nsubjs = self.nsubjs
         # create the dissimilarity matrix for each subject's data in the input dataset
+        ''' TODO: How to handle Nan? should we uncomment the workarounds?
+        '''
         for i in xrange(nsubjs):
-            self.dset_dsm = np.corrcoef(dataset.samples[i*dataset.nsamples/nsubjs:((i+1)*dataset.nsamples/nsubjs),:])
+            if self.dset_metric == 'pearson':
+                self.dset_dsm = np.corrcoef(dataset.samples[i*dataset.nsamples/nsubjs:((i+1)*dataset.nsamples/nsubjs),:])
+            else:
+                self.dset_dsm = DSMatrix(dataset.samples[i*dataset.nsamples/nsubjs:((i+1)*dataset.nsamples/nsubjs),:], self.dset_metric)
+                self.dset_dsm = self.dset_dsm.full_matrix
             orig_dsmatrix = copy.deepcopy(np.matrix(self.dset_dsm))
             #orig_dsmatrix[np.isnan(orig_dsmatrix)] = 0
             #orig_dsmatrix[orig_dsmatrix == 0] = -2
