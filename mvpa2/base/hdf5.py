@@ -651,7 +651,7 @@ def h5save(filename, data, name=None, mode='w', mkdir=True, **kwargs):
     """
     if mkdir:
         target_dir = osp.dirname(filename)
-        if not osp.exists(target_dir):
+        if target_dir is not '' and not osp.exists(target_dir):
             os.makedirs(target_dir)
     hdf = h5py.File(filename, mode)
     hdf.attrs.create('__pymvpa_hdf5_version__', 1)
