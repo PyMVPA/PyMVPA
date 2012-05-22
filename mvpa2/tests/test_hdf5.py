@@ -180,3 +180,12 @@ def test_h5save_mkdir(dirname):
     ok_(os.path.exists(filename))
     d = h5load(filename)
     assert_equal(d, {})
+
+    # And that we can still just save into a file in current directory
+    # Let's be safe and assure going back to the original directory
+    cwd = os.getcwd()
+    try:
+        os.chdir(dirname)
+        h5save("TEST.hdf5", [1,2,3])
+    finally:
+        os.chdir(cwd)
