@@ -53,16 +53,17 @@ class VerboseOutputTest(unittest.TestCase):
         if __debug__:
             self.__olddebughandlers = debug.handlers
             self.__olddebugactive = debug.active
+            self.__olddebugmetrics = debug.metrics
             debug.active = ['1', '2', 'SLC']
             debug.handlers = [self.sout]
             debug.offsetbydepth = False
-
         verbose.handlers = [self.sout]
 
     def tearDown(self):
         if __debug__:
             debug.active = self.__olddebugactive
             debug.handlers = self.__olddebughandlers
+            debug.metrics = self.__olddebugmetrics
             debug.offsetbydepth = True
         verbose.handlers = self.__oldverbosehandlers
         verbose.level = self.__oldverbose_level
@@ -139,6 +140,7 @@ class VerboseOutputTest(unittest.TestCase):
         def test_debug(self):
             verbose.handlers = []           # so debug doesn't spoil it
             debug.active = ['1', '2', 'SLC']
+            debug.metrics = debug._known_metrics.keys()
             # do not offset for this test
             debug('SLC', self.msg, lf=False)
             self.assertRaises(ValueError, debug, 3, 'bugga')
@@ -148,6 +150,13 @@ class VerboseOutputTest(unittest.TestCase):
             rematch = re.match(regexp, svalue)
             self.assertTrue(rematch, msg="Cannot match %s with regexp %s" %
                             (svalue, regexp))
+            # find metrics
+            self.assertTrue('RSS/VMS:' in svalue,
+                            msg="Cannot find vmem metric in " + svalue)
+            self.assertTrue('>test_verbosity:' in svalue,
+                            msg="Cannot find tbc metric in " + svalue)
+            self.assertTrue(' sec' in svalue,
+                            msg="Cannot find tbc metric in " + svalue)
 
 
         def test_debug_rgexp(self):
