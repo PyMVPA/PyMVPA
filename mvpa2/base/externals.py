@@ -523,6 +523,7 @@ _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'h5py': "import h5py as __",
           'nipy': "__assign_nipy_version()",
           'nipy.neurospin': "__check_nipy_neurospin()",
+          'statsmodels': 'import statsmodels.api as __',
           }
 
 
