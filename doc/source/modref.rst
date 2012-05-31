@@ -160,7 +160,7 @@ Measures: Searchlights and Sensitivties
    measures.corrcoef
    measures.corrstability
    measures.ds
-   measures.glm
+   measures.statsmodels_adaptor
    measures.gnbsearchlight
    measures.irelief
    measures.noiseperturbation
