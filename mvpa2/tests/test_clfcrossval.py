@@ -80,6 +80,14 @@ class CrossValidationTests(unittest.TestCase):
         self.assertTrue( pmean < 0.58 and pmean > 0.42 )
 
 
+    def test_unpartitioned_cv(self):
+        data = get_mv_pattern(10)
+        # only one big chunk
+        data.sa.chunks[:] = 1
+        cv = CrossValidation(sample_clf_nl, NFoldPartitioner())
+        # need to fail, because it can't be split into training and testing
+        assert_raises(ValueError, cv, data)
+
 
 def suite():
     return unittest.makeSuite(CrossValidationTests)
