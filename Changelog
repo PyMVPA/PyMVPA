@@ -33,6 +33,11 @@ Releases
 
 * 2.1.0 (unreleased)
 
+  * Fixes
+
+    - :func:`~mvpa2.misc.support.mask2slice` failed to convert an array of
+      ``False`` values into ``slice(None, 0, None)`` (Fixes #56).
+
   * Enhancements
 
     - Add :func:`~mvpa2.misc.neighborhood.scatter_neighborhood` to aid
