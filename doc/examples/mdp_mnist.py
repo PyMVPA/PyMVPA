@@ -20,10 +20,11 @@ MDP-style classification
 
 """
 
-import cPickle
+import os
 import mdp
-import gzip
 import numpy as np
+from mvpa2.base.hdf5 import h5load
+from mvpa2 import pymvpa_datadbroot
 
 class DigitsIterator:
     def __init__(self, digits, labels):
@@ -36,28 +37,34 @@ class DigitsIterator:
             yield self.digits[i*ll/frac:(i+1)*ll/frac], \
                   self.targets[i*ll/frac:(i+1)*ll/frac]
 
-data = cPickle.load(gzip.open('mnist.pickle.gz'))
-for k in ['traindata', 'testdata']:
-    data[k] = data[k].reshape(-1, 28 * 28)
+def load_data():
+    data = h5load(os.path.join(pymvpa_datadbroot, 'mnist', "mnist.hdf5"))
+    traindata = data['train'].samples
+    trainlabels = data['train'].sa.labels
+    testdata = data['test'].samples
+    testlabels = data['test'].sa.labels
+    return traindata, trainlabels, testdata, testlabels
+
+traindata, trainlabels, testdata, testlabels = load_data()
 
 fdaclf = (mdp.nodes.WhiteningNode(output_dim=10, dtype='d') +
           mdp.nodes.PolynomialExpansionNode(2) +
           mdp.nodes.FDANode(output_dim=9) +
-          mdp.nodes.GaussianClassifierNode())
+          mdp.nodes.GaussianClassifier())
 
 fdaclf.verbose = True
 
-fdaclf.train([[data['traindata']],
+fdaclf.train([[traindata],
                None,
-               DigitsIterator(data['traindata'],
-                              data['trainlabels']),
-               DigitsIterator(data['traindata'],
-                              data['trainlabels'])
+               DigitsIterator(traindata,
+                              trainlabels),
+               DigitsIterator(traindata,
+                              trainlabels)
                ])
 
-feature_space = fdaclf[:-1](data['testdata'])
+feature_space = fdaclf[:-1](testdata)
 guess = fdaclf[-1].label(feature_space)
-err = 1 - np.mean(guess == data['testlabels'])
+err = 1 - np.mean(guess == testlabels)
 print 'Test error:', err
 
 """
@@ -83,14 +90,14 @@ available only from version 0.99
 
 """
 
-data = cPickle.load(gzip.open('mnist.pickle.gz'))
+traindata, trainlabels, testdata, testlabels = load_data()
 train = dataset_wizard(
-        data['traindata'],
-        targets=data['trainlabels'],
+        traindata,
+        targets=trainlabels,
         chunks='train')
 test = dataset_wizard(
-        data['testdata'],
-        targets=data['testlabels'],
+        testdata,
+        targets=testlabels,
         chunks='test')
 # merge the datasets into on
 ds = vstack((train, test))
@@ -106,7 +113,7 @@ pl.figure(figsize=(2, 5))
 for i, id_ in enumerate(examples):
     ax = pl.subplot(2, 5, i+1)
     ax.axison = False
-    pl.imshow(data['traindata'][id_].T, cmap=pl.cm.gist_yarg,
+    pl.imshow(traindata[id_].reshape(28, 28).T, cmap=pl.cm.gist_yarg,
              interpolation='nearest', aspect='equal')
 
 pl.subplots_adjust(left=0, right=1, bottom=0, top=1,
