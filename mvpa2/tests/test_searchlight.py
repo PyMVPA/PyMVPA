@@ -68,7 +68,8 @@ class SearchlightTests(unittest.TestCase):
         ds = datasets['3dsmall'].copy()
         ds.fa['voxel_indices'] = ds.fa.myspace
 
-        skwargs = dict(radius=1, enable_ca=['roi_sizes', 'raw_results'])
+        skwargs = dict(radius=1, enable_ca=['roi_sizes', 'raw_results',
+                                            'roi_feature_ids'])
 
         if do_roi:
             # select some random set of features
@@ -122,6 +123,9 @@ class SearchlightTests(unittest.TestCase):
 
             # check resonable sphere sizes
             self.assertTrue(len(sl.ca.roi_sizes) == nroi)
+            self.assertTrue(len(sl.ca.roi_feature_ids) == nroi)
+            for i, fids in enumerate(sl.ca.roi_feature_ids):
+                self.assertTrue(len(fids) == sl.ca.roi_sizes[i])
             if do_roi:
                 # for roi we should relax conditions a bit
                 self.assertTrue(max(sl.ca.roi_sizes) <= 7)
