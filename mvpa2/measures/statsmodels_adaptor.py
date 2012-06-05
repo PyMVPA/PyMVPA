@@ -133,9 +133,9 @@ class UnivariateStatsModels(FeaturewiseMeasure):
         res : {'params', 'tvalues', ...} or 1d array or 2d array or callable
           Variable of interest that should be reported as feature-wise
           measure. If a str, the corresponding attribute of the model fit result
-          class is returned (e.g. 'tvalues'). If a 1d-array, it is passed on
+          class is returned (e.g. 'tvalues'). If a 1d-array, it is passed
           to the fit result class' ``t_test()`` function as a t-contrast vector.
-          If a 2d-array, it is passed on to the ``f_test()`` function as a
+          If a 2d-array, it is passed to the ``f_test()`` function as a
           constrast matrix. If both latter cases a number of common test
           statistics are return in the rows of the result dataset. A description
           is available in the 'descr' sample attribute. Any other datatype
