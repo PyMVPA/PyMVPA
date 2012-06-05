@@ -21,15 +21,13 @@ if __debug__:
 
 
 class LearnerError(Exception):
-    """Base class for exceptions thrown by the learners
-
-    (classifiers, regressions)
+    """Base class for exceptions thrown by the Learners
     """
     pass
 
 
 class DegenerateInputError(LearnerError):
-    """Learner exception thrown if input data is bogus
+    """Learner exception thrown if input data is not bogus
 
     i.e. no features or samples
     """
@@ -105,7 +103,7 @@ class Learner(Node):
         # TODO remove first condition if all Learners get only datasets
         if got_ds and (ds.nfeatures == 0 or len(ds) == 0):
             raise DegenerateInputError(
-                    "Cannot train classifier on degenerate data %s" % ds)
+                    "Cannot train learner on degenerate data %s" % ds)
         if __debug__:
             debug("LRN", "Training learner %(lrn)s on dataset %(dataset)s",
                   msgargs={'lrn':self, 'dataset': ds})
@@ -237,7 +235,7 @@ class Learner(Node):
         return super(Learner, self).__call__(ds)
 
 
-    is_trained = property(fget=lambda x:x.__is_trained,
+    is_trained = property(fget=lambda x:x.__is_trained, fset=_set_trained,
                           doc="Whether the Learner is currently trained.")
     auto_train = property(fget=lambda x:x.__auto_train,
                           doc="Whether the Learner performs automatic training"

@@ -37,6 +37,18 @@ class SearchlightTests(unittest.TestCase):
         # the searchlight
         self.dataset.fa['voxel_indices'] = self.dataset.fa.myspace
 
+    # https://github.com/PyMVPA/PyMVPA/issues/67
+    # https://github.com/PyMVPA/PyMVPA/issues/69
+    def test_gnbsearchlight_doc(self):
+        # Test either we excluded nproc from the docstrings
+        ok_(not 'nproc' in GNBSearchlight.__init__.__doc__)
+        ok_(not 'nproc' in GNBSearchlight.__doc__)
+        ok_(not 'nproc' in sphere_gnbsearchlight.__doc__)
+        # but present elsewhere
+        ok_(    'nproc' in sphere_searchlight.__doc__)
+        ok_(    'nproc' in Searchlight.__init__.__doc__)
+
+
     @sweepargs(common_variance=(True, False))
     @sweepargs(do_roi=(False, True))
     @reseed_rng()
@@ -147,12 +159,22 @@ class SearchlightTests(unittest.TestCase):
         # one time give center ids as a list, the other one takes it from the
         # dataset itself
         sls = (sphere_searchlight(cv, radius=0, center_ids=[3,50]),
-               sphere_searchlight(cv, radius=0, center_ids='center_ids'))
+               sphere_searchlight(None, radius=0, center_ids=[3,50]),
+               sphere_searchlight(cv, radius=0, center_ids='center_ids'),
+               )
         for sl in sls:
+            # assure that we could set cv post constructor
+            if sl.datameasure is None:
+                sl.datameasure = cv
             # run searchlight
             results = sl(ds)
             # only two spheres but error for all CV-folds
             self.assertEqual(results.shape, (len(self.dataset.UC), 2))
+            # Test if results hold if we "set" a "new" datameasure
+            sl.datameasure = CrossValidation(sample_clf_lin, NFoldPartitioner())
+            results2 = sl(ds)
+            assert_array_equal(results, results2)
+
         # test if we graciously puke if center_ids are out of bounds
         dataset0 = ds[:, :50] # so we have no 50th feature
         self.assertRaises(IndexError, sls[0], dataset0)
@@ -355,8 +377,9 @@ class SearchlightTests(unittest.TestCase):
             assert(corr.shape == (2,2)) # for paranoid ones
             return corr[0, 1]
 
-        for nsc, thr in ((0, 1.0),
-                         (0.1, 0.6)):   # just a bit of noise
+        for nsc,  thr, thr_mean in (
+            (0,   1.0, 1.0),
+            (0.1, 0.3, 0.8)):   # just a bit of noise
             ds2 = ds1.copy(deep=True)    # make a copy for the 2nd subject
             ds2.sa['subject'] = [2]
             ds2.samples += nsc * np.random.normal(size=ds1.shape)
@@ -369,6 +392,7 @@ class SearchlightTests(unittest.TestCase):
             sl = sphere_searchlight(corr12, radius=2)
             slmap = sl(ds_both)
             ok_(np.all(slmap.samples >= thr))
+            ok_(np.mean(slmap.samples) >= thr)
 
 def suite():
     return unittest.makeSuite(SearchlightTests)

@@ -33,6 +33,11 @@ Releases
 
 * 2.1.0 (unreleased)
 
+  * Fixes
+
+    - :func:`~mvpa2.misc.support.mask2slice` failed to convert an array of
+      ``False`` values into ``slice(None, 0, None)`` (Fixes #56).
+
   * Enhancements
 
     - Add :func:`~mvpa2.misc.neighborhood.scatter_neighborhood` to aid
@@ -53,6 +58,57 @@ Releases
       Bayesian hypothesis testing of multi-class confusion statistics. This is
       useful to assess the likelihood of a particular (or all possible)
       grouping of classes being distinguishable.
+    - Add :class:`~mvpa2.mappers.fxy.FxyMapper` to perform arbitrary
+      computations involving two datasets.
+    - Add :class:`~mvpa2.mappers.base.CombinedMapper` to run a dataset through
+      a set of mappers and combine their outputs.
+
+* 2.0.1 (Tue, Mar 27 2012)
+
+  Primarily a bugfix release
+
+  * Fixes (21 BF commits)
+
+    - hdf5 storage -- handle loading of objects with bound
+      ``builtin_function_or_method``
+    - use system-wide ``autosummary/generate.py`` for sphinx >= 1.1.2
+	  (Closes: #658593)
+    - :class:`ConditionalAttribute` should not loose value in deepcopy
+	  when default off (Fixes #63)
+    - correct handling of scalar mean/std values for :class:`ZScoreMapper`
+    - MRI data import via _img2data now works with unicode
+	  filenames (Fixes #60)
+    - should work with IPython >= 0.11 now (Fixes #59)
+    - various small fixes to improve tests and functionality
+    - fix :class:`SMLR` segfaults on Windows (Thanks cgohlke for the patch)
+
+  * Enhancements (29 ENH, OPT, and NF commits)
+
+    - :class:`FxMapper` calls functions natively (instead of a slow
+      row/column at a time) if they carry ``axis`` as the 2nd argument.
+      Provides tremendous speed up for :func:`mean_sample` etc.
+    - :func:`xrandom_unique_combinations` generator for random unique
+      combinations
+    - :func:`dual_gaussian` made more robust by not handling negative
+      values for the standard deviations
+    - :func:`dual_positive_gaussian`
+    - expose "sensitivities" for :class:`PLR`
+    - :class:`NFoldSplitter` float option for ``cvtype`` and
+      intelligent behavior on 'random' limited by 'count' given a
+      large number of folds
+    - few additional learners from :mod:`sklearn` to the warehouses:
+      ExtraTrees, RandomForest, LassoLarsIC
+    - ``__repr__`` for :class:`Partitioner`s
+	- new performance metric -- F1 score -- in the confusion matrix
+      summary stats
+    - :class:`CachedQueryEngine` does not rely now on id but on the
+      exact value of the query parameters (converted to hashable
+      types). Before it could behave incorrectly on rare occasions.
+
+  * API changes
+
+    - deprecating ``.splitattr`` if favor of ``.attr`` in
+      :class:`Partitioner`
 
 * 2.0.0 (Mon, Dec 19 2011)
 

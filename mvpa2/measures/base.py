@@ -263,10 +263,11 @@ class RepeatedMeasure(Measure):
         self._callback = callback
         self._concat_as = concat_as
 
-    def __repr__(self, prefixes=[]):
+    def __repr__(self, prefixes=[], exclude=[]):
         return super(RepeatedMeasure, self).__repr__(
             prefixes=prefixes
-            + _repr_attrs(self, ['node', 'generator', 'callback'])
+            + _repr_attrs(self, [x for x in ['node', 'generator', 'callback']
+                                 if not x in exclude])
             + _repr_attrs(self, ['concat_as'], default='samples')
             )
 
@@ -457,7 +458,11 @@ class CrossValidation(RepeatedMeasure):
             prefixes=prefixes
             + _repr_attrs(self, ['learner', 'splitter'])
             + _repr_attrs(self, ['errorfx'], default=mean_mismatch_error)
-            + _repr_attrs(self, ['space'], default='sa.cvfolds')
+            + _repr_attrs(self, ['space'], default='sa.cvfolds'),
+            # Since it is the constructor which generates and passes
+            # node=TransferMeasure, it must not be present in __repr__ of CV
+            # TODO: clear up hierarchy
+            exclude=('node',)
             )
 
 
@@ -547,6 +552,12 @@ class TransferMeasure(Measure):
         dsgen = splitter.generate(ds)
         dstrain = dsgen.next()
 
+        if not len(dstrain):
+            raise ValueError(
+                "Got empty training dataset from splitting in TransferMeasure. "
+                "Unique values of input split attribute are: %s)" \
+                % (ds.sa[splitter.get_space()].unique))
+
         if space:
             # get unique chunks for training set
             train_chunks = ','.join([str(i)
@@ -560,6 +571,11 @@ class TransferMeasure(Measure):
 
         # run with second
         dstest = dsgen.next()
+        if not len(dstest):
+            raise ValueError(
+                "Got empty testing dataset from splitting in TransferMeasure. "
+                "Unique values of input split attribute are: %s)" \
+                % (ds.sa[splitter.get_space()].unique))
         if space:
             # get unique chunks for testing set
             test_chunks = ','.join([str(i)

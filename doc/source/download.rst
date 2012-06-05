@@ -21,7 +21,7 @@ Binary packages
 Binary packages are available for:
 
 * Debian and Ubuntu (:ref:`installation instructions <install_debian>`)
-    PyMVPA is an `official Debian package`_ (``python-mvpa``).
+    `Official Debian package`_ (``python-mvpa2``).
     Backports for Debian and Ubuntu releases are available from the
     `NeuroDebian project`_.
 
@@ -36,19 +36,28 @@ Binary packages are available for:
       * OpenSUSE_ 11.0 (and later releases)
       * RedHat_ Enterprise Linux 5
   
-  * Windows (:ref:`installation instructions <install_win>`)
-      An installer for Python 2.5 is available from the `download area`_.
+  * MacOS X (:ref:`installation instructions <install_macos>`)
+      PyMVPA is available from the MacPorts_ framework (at the moment only
+      previous 0.4 series.  .
 
-* MacOS X (:ref:`installation instructions <install_macos>`)
-    PyMVPA is available from the MacPorts_ framework.
+* Windows (:ref:`installation instructions <install_win>`) An installer for
+    Python 2.6 is available from the `github download area`_.  Also installers
+    of PyMVPA for Python 2.5, 2.6 and 2.7 are available from the `Unofficial
+    Windows binaries collection of Christoph Gohlke`_.
 
 If there are no binary packages for your particular operating system or
-platform, you need to compile your own. The manual contains :ref:`instructions
-<buildfromsource>` to build PyMVPA in various environments (Windows, Fedora,
-OpenSuse, ...).
+platform, you have two opportunities.  You could compile PyMVPA (which is not
+strictly necessary anyways unless you need to use SVM or SMLR). The manual
+contains :ref:`instructions <buildfromsource>` to build PyMVPA in various
+environments (Windows, Fedora, OpenSuse, ...).  Alternatively you could use
+`NeuroDebian Virtual Appliance`_ which allows in a matter of minutes to get a
+full featured (Neuro)Debian GNU/Linux distribution running **on top** of your
+system, thus providing easy access to over 30,000 software products many of
+which are related to machine learning and neuroscience.
 
+.. _NeuroDebian Virtual Appliance: http://neuro.debian.net/vm.html
 .. _MacPorts: http://www.macports.org/ports.php?by=name&substr=pymvpa
-.. _official Debian package: http://packages.debian.org/python-mvpa
+.. _official Debian package: http://packages.debian.org/python-mvpa2
 .. _NeuroDebian project: http://neuro.debian.net
 .. _OpenSUSE: http://download.opensuse.org/repositories/home:/hankem:/suse/
 .. _CentOS: http://download.opensuse.org/repositories/home:/hankem:/rh5/
@@ -85,6 +94,8 @@ and on how to :ref:`build PyMVPA from source <buildfromsource>` are provided
 in the manual.
 
 
-.. _download area: http://alioth.debian.org/frs/?group_id=30954
+.. _download area: https://github.com/PyMVPA/PyMVPA/tags
+.. _github download area: https://github.com/PyMVPA/PyMVPA/downloads
 .. _Git: http://git.or.cz/
 .. _snapshot: http://github.com/PyMVPA/PyMVPA/archives/master
+.. _Unofficial Windows binaries collection of Christoph Gohlke: http://www.lfd.uci.edu/~gohlke/pythonlibs/

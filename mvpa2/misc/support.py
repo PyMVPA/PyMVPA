@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import itertools
 import math
 import random
-import re, os
+import re, os, sys
 
 # for SmartVersion
 from distutils.version import Version
@@ -187,10 +187,12 @@ def xrandom_unique_combinations(L, n, k=None):
     if k is None:
         k = ncomb
 
-    if ncomb < 1e6 or k > math.sqrt(ncomb):
+    if (ncomb < 1e6 or k > math.sqrt(ncomb)) \
+           and sys.version_info[:2] >= (2, 6):
         # so there is no sense really to mess with controlling for
         # non-repeats -- we can pre-generate all of them and just
         # choose needed number of random samples
+        # Python2.5 doesn't have itertools.combinations
         for s in random.sample(list(itertools.combinations(L, n)), k):
             yield list(s)
     else:
@@ -667,6 +669,8 @@ def mask2slice(mask):
         raise ValueError("Got an empty mask.")
     # get indices of non-zero filter elements
     idx = mask.nonzero()[0]
+    if not len(idx):
+        return slice(0)
     idx_start = idx[0]
     idx_end = idx[-1] + 1
     idx_step = None

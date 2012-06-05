@@ -32,8 +32,7 @@ from mvpa2.generators.partition import NFoldPartitioner
 from mvpa2.datasets.miscfx import get_samples_by_attr
 from mvpa2.misc.attrmap import AttributeMap
 from mvpa2.base.dochelpers import _str
-from mvpa2.base.state import ConditionalAttribute, ClassWithCollections, \
-     Harvestable
+from mvpa2.base.state import ConditionalAttribute, ClassWithCollections
 
 from mvpa2.clfs.base import Classifier
 from mvpa2.clfs.distance import cartesian_distance
@@ -53,14 +52,13 @@ if __debug__:
     from mvpa2.base import debug
 
 
-class BoostedClassifier(Classifier, Harvestable):
+class BoostedClassifier(Classifier):
     """Classifier containing the farm of other classifiers.
 
     Should rarely be used directly. Use one of its childs instead
     """
 
     # should not be needed if we have prediction_estimates upstairs
-    # raw_predictions should be handled as Harvestable???
     raw_predictions = ConditionalAttribute(enabled=False,
         doc="Predictions obtained from each classifier")
 
@@ -69,7 +67,6 @@ class BoostedClassifier(Classifier, Harvestable):
 
 
     def __init__(self, clfs=None, propagate_ca=True,
-                 harvest_attribs=None, copy_attribs='copy',
                  **kwargs):
         """Initialize the instance.
 
@@ -90,7 +87,6 @@ class BoostedClassifier(Classifier, Harvestable):
             clfs = []
 
         Classifier.__init__(self, **kwargs)
-        Harvestable.__init__(self, harvest_attribs, copy_attribs)
 
         self.__clfs = None
         """Pylint friendly definition of __clfs"""
@@ -124,9 +120,6 @@ class BoostedClassifier(Classifier, Harvestable):
         Harvest over the trained classifiers if it was asked to so
         """
         Classifier._posttrain(self, dataset)
-        if self.ca.is_enabled('harvested'):
-            for clf in self.__clfs:
-                self._harvest(locals())
         if self.params.retrainable:
             self.__changedData_isset = False
 
@@ -838,7 +831,8 @@ class TreeClassifier(ProxyClassifier):
 
         # train primary classifier
         if __debug__:
-            debug('CLFTREE', "Training primary %s on %s", (clf, ds_group))
+            debug('CLFTREE', "Training primary %s on %s with targets %s",
+                  (clf, ds_group, ds_group.sa[targets_sa_name].unique))
         clf.train(ds_group)
 
         # ??? should we obtain values for anything?
@@ -887,8 +881,13 @@ class TreeClassifier(ProxyClassifier):
         # Local bindings
         clfs, index2group, groups = self.clfs, self._index2group, self._groups
         clf_predictions = np.asanyarray(ProxyClassifier._predict(self, dataset))
+        if __debug__:
+                debug('CLFTREE',
+                      'Predictions %s',
+                      (clf_predictions))
         # assure that predictions are indexes, ie int
         clf_predictions = clf_predictions.astype(int)
+
         # now for predictions pointing to specific groups go into
         # corresponding one
         # defer initialization since dtype would depend on predictions
@@ -1138,8 +1137,6 @@ class SplitClassifier(CombinedClassifier):
           all: map sets of labels into 2 categories...
     """
 
-    # TODO: unify with CrossValidatedTransferError which now uses
-    # harvest_attribs to expose gathered attributes
     stats = ConditionalAttribute(enabled=False,
         doc="Resultant confusion whenever classifier trained " +
             "on 1 part and tested on 2nd part of each split")
