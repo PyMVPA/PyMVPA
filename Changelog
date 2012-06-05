@@ -40,7 +40,7 @@ Releases
 
   * Enhancements
 
-    - All searchlight implementations can now optimally store the IDs of all
+    - All searchlight implementations can now optionally store the IDs of all
       features for each generated ROI (conditional attr. ``roi_feature_ids``)
     - Add :func:`~mvpa2.misc.neighborhood.scatter_neighborhood` to aid
       sparse sampling of spaces.
