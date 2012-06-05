@@ -147,7 +147,7 @@ class SVM(_SVM):
                 argname = paramname
             else:
                 if __debug__:
-                    debug("SVM_", "Skipping parameter %s since it is not known"
+                    debug("SVM_", "Skipping parameter %s since it is not known "
                           "to libsvm" % paramname)
                 continue
             args.append( (argname, param.value) )

@@ -32,6 +32,7 @@ __sdebug.__doc__ = "Shortcut to output debug messages for suite imports"
 
 __sdebug('base')
 from mvpa2.base import *
+from mvpa2.base.attributes import *
 from mvpa2.base.collections import *
 from mvpa2.base.config import *
 from mvpa2.base.dataset import *
@@ -143,6 +144,7 @@ from mvpa2.mappers.svd import *
 from mvpa2.mappers.procrustean import *
 from mvpa2.mappers.boxcar import *
 from mvpa2.mappers.fx import *
+from mvpa2.mappers.fxy import *
 from mvpa2.mappers.som import *
 from mvpa2.mappers.zscore import *
 if externals.exists('scipy'):
@@ -184,6 +186,7 @@ from mvpa2.misc.bv import *
 from mvpa2.misc.bv.base import *
 from mvpa2.misc.support import *
 from mvpa2.misc.transformers import *
+from mvpa2.misc.dcov import dCOV, dcorcoef
 
 __sdebug("nibabel")
 if externals.exists("nibabel"):

@@ -40,7 +40,6 @@ class BaseSearchlight(Measure):
     """Indicate that this measure is always trained."""
 
 
-    @borrowkwargs(Measure, '__init__')
     def __init__(self, queryengine, roi_ids=None, nproc=None, **kwargs):
         """
         Parameters
@@ -165,7 +164,6 @@ class Searchlight(BaseSearchlight):
     interest, which is ran at each spatial location.
     """
 
-    @borrowkwargs(BaseSearchlight, '__init__')
     def __init__(self, datameasure, queryengine, add_center_fa=False, **kwargs):
         """
         Parameters
@@ -184,7 +182,7 @@ class Searchlight(BaseSearchlight):
           base-class :class:`~mvpa2.measures.searchlight.BaseSearchlight`.
         """
         BaseSearchlight.__init__(self, queryengine, **kwargs)
-        self.__datameasure = datameasure
+        self.datameasure = datameasure
         if isinstance(add_center_fa, str):
             self.__add_center_fa = add_center_fa
         elif add_center_fa:
@@ -305,7 +303,14 @@ class Searchlight(BaseSearchlight):
 
         return results, roi_sizes
 
-    datameasure = property(fget=lambda self: self.__datameasure)
+
+    def __set_datameasure(self, datameasure):
+        """Set the datameasure"""
+        self.untrain()
+        self.__datameasure = datameasure
+
+    datameasure = property(fget=lambda self: self.__datameasure,
+                           fset=__set_datameasure)
     add_center_fa = property(fget=lambda self: self.__add_center_fa)
 
 @borrowkwargs(Searchlight, '__init__', exclude=['roi_ids'])

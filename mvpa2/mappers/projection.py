@@ -43,7 +43,7 @@ class ProjectionMapper(Mapper):
 
     _DEV__doc__ = """Think about renaming `demean`, may be `translation`?"""
 
-    def __init__(self, demean=True):
+    def __init__(self, demean=True, **kwargs):
         """Initialize the ProjectionMapper
 
         Parameters
@@ -52,7 +52,7 @@ class ProjectionMapper(Mapper):
           Either data should be demeaned while computing
           projections and applied back while doing reverse()
         """
-        Mapper.__init__(self)
+        Mapper.__init__(self, **kwargs)
 
         # by default we want to wipe the feature attributes out during mapping
         self._fa_filter = []

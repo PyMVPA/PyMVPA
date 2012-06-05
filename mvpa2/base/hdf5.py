@@ -38,6 +38,10 @@ __docformat__ = 'restructuredtext'
 import types
 import numpy as np
 import h5py
+
+import os
+import os.path as osp
+
 from mvpa2.base.types import asobjarray
 
 if __debug__:
@@ -620,8 +624,8 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
         _seqitems_to_hdf(pieces[1], args, memo, **kwargs)
 
 
-def h5save(filename, data, name=None, mode='w', **kwargs):
-    """Stores arbitray data in an HDF5 file.
+def h5save(filename, data, name=None, mode='w', mkdir=True, **kwargs):
+    """Stores arbitrary data in an HDF5 file.
 
     This is a convenience wrapper around `obj2hdf()`. Please see its
     documentation for more details -- especially the warnings!!
@@ -639,10 +643,16 @@ def h5save(filename, data, name=None, mode='w', **kwargs):
     mode : {'r', 'r+', 'w', 'w-', 'a'}
       IO mode of the HDF5 file. See `h5py.File` documentation for more
       information.
+    mkdir : bool, optional
+      Create target directory if it does not exist yet.
     **kwargs
       All additional arguments will be passed to `h5py.Group.create_dataset`.
       This could, for example, be `compression='gzip'`.
     """
+    if mkdir:
+        target_dir = osp.dirname(filename)
+        if target_dir and not osp.exists(target_dir):
+            os.makedirs(target_dir)
     hdf = h5py.File(filename, mode)
     hdf.attrs.create('__pymvpa_hdf5_version__', 1)
     try:

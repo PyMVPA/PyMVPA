@@ -27,13 +27,13 @@ The mvpa package contains the following subpackages and modules:
          `Yaroslav Halchenko <debian@onerussian.com>`__,
          `Per B. Sederberg <persed@princeton.edu>`__
 :requires: Python 2.4+
-:version: 2.0.0
+:version: 2.0.1
 :see: `The PyMVPA webpage <http://www.pymvpa.org>`__
 :see: `GIT Repository Browser <http://github.com/PyMVPA/PyMVPA>`__
 
 :license: The MIT License <http://www.opensource.org/licenses/mit-license.php>
-:copyright: |copy| 2006-2011 Michael Hanke <michael.hanke@gmail.com>
-:copyright: |copy| 2007-2011 Yaroslav O. Halchenko <debian@onerussian.com>
+:copyright: |copy| 2006-2012 Michael Hanke <michael.hanke@gmail.com>
+:copyright: |copy| 2007-2012 Yaroslav O. Halchenko <debian@onerussian.com>
 
 :newfield contributor: Contributor, Contributors (Alphabetical Order)
 :contributor: `Emanuele Olivetti <emanuele@relativita.com>`__
@@ -45,7 +45,7 @@ The mvpa package contains the following subpackages and modules:
 __docformat__ = 'restructuredtext'
 
 # canonical PyMVPA version string
-__version__ = '2.0.0'
+__version__ = '2.0.1'
 
 import os
 import random

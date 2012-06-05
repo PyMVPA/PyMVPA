@@ -19,7 +19,7 @@ from mvpa2.testing.datasets import *
 from mvpa2.mappers.procrustean import ProcrusteanMapper
 
 svds = ['numpy']
-if externals.exists('ctypes'):
+if externals.exists('liblapack.so'):
     svds += ['dgesvd']
 if externals.exists('scipy'):
     svds += ['scipy']

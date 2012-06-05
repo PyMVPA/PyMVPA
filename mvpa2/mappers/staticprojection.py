@@ -33,11 +33,10 @@ class StaticProjectionMapper(ProjectionMapper):
           constructor.
 
         """
-        ProjectionMapper.__init__(self, **kwargs)
-
+        ProjectionMapper.__init__(self,  auto_train=True, **kwargs)
         self._proj = proj
 
-    def _train(self):
+    def _train(self, dummyds):
         """Do Nothing
         """
         if __debug__:
@@ -48,7 +47,7 @@ class StaticProjectionMapper(ProjectionMapper):
 
 
     def _compute_recon(self):
-        """Since singular vectors are orthonormal, sufficient to take hermitian
+        """Computing the inverse of the projection matrix for reverse
         """
         return np.linalg.pinv(self._proj)
 
