@@ -37,6 +37,9 @@ Releases
 
     - :func:`~mvpa2.misc.support.mask2slice` failed to convert an array of
       ``False`` values into ``slice(None, 0, None)`` (Fixes #56).
+    - A number of fixes to the HDF5 IO code that ignored parts of an object's
+      state when custom __reduce__() implementations were used (Fixes #42),
+      and had problems storing metaclass types (Fixes #78).
 
   * Enhancements
 
