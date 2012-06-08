@@ -204,6 +204,20 @@ def _get_subclass_entry(cls, clss, exc_msg="", exc=NotImplementedError):
             return clstuple
     raise exc(exc_msg % locals())
 
+def _update_obj_state_from_hdf(obj, hdf, memo):
+    if 'state' in hdf:
+        # insert the state of the object
+        if __debug__:
+            debug('HDF5', "Populating instance state.")
+        if hasattr(obj, '__setstate__'):
+            state = hdf2obj(hdf['state'], memo)
+            obj.__setstate__(state)
+        else:
+            state = _hdf_dict_to_obj(hdf['state'], memo)
+            obj.__dict__.update(state)
+        if __debug__:
+            debug('HDF5', "Updated %i state items." % len(state))
+
 def _recon_customobj_customrecon(hdf, memo):
     """Reconstruct a custom object from HDF using a custom recontructor"""
     # we found something that has some special idea about how it wants
@@ -241,7 +255,8 @@ def _recon_customobj_customrecon(hdf, memo):
 
     # reconstruct
     obj = recon(*recon_args)
-    # TODO Handle potentially avialable state settings
+    # insert any stored object state
+    _update_obj_state_from_hdf(obj, hdf, memo)
     return obj
 
 
@@ -268,15 +283,8 @@ def _recon_customobj_defaultrecon(hdf, memo):
     pcls, = _get_subclass_entry(cls, ((dict,), (list,), (object,)),
                                 "Do not know how to create instance of %(cls)s")
     obj = pcls.__new__(cls)
-
-    if 'state' in hdf:
-        # insert the state of the object
-        if __debug__:
-            debug('HDF5', "Populating instance state.")
-        state = _hdf_dict_to_obj(hdf['state'], memo)
-        obj.__dict__.update(state)
-        if __debug__:
-            debug('HDF5', "Updated %i state items." % len(state))
+    # insert any stored object state
+    _update_obj_state_from_hdf(obj, hdf, memo)
 
     # do we process a container?
     if 'items' in hdf:
