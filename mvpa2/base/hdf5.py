@@ -604,24 +604,24 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
                              noid=True, **kwargs)
             grp['items'].attrs.create('__keys_in_tuple__', 1)
 
-        # pull all remaining data from the default __reduce__
-        if not pieces is None and len(pieces) > 2:
-            # there is something in the state
-            state = pieces[2]
-            if __debug__:
-                debug('HDF5', "Store object state (%i items)." % len(state))
-            # need to set noid since state dict is unique to an object
-            obj2hdf(grp, state, name='state', memo=memo, noid=True,
-                    **kwargs)
     else:
         if __debug__:
-            debug('HDF5', "Use custom __reduce__: (%i arguments)."
+            debug('HDF5', "Use custom __reduce__ for storage: (%i arguments)."
                           % len(pieces[1]))
-        # XXX handle custom reduce
         grp.attrs.create('recon', pieces[0].__name__)
         grp.attrs.create('module', pieces[0].__module__)
         args = grp.create_group('rcargs')
         _seqitems_to_hdf(pieces[1], args, memo, **kwargs)
+
+    # pull all remaining data from __reduce__
+    if not pieces is None and len(pieces) > 2:
+        # there is something in the state
+        state = pieces[2]
+        if __debug__:
+            debug('HDF5', "Store object state (%i items)." % len(state))
+        # need to set noid since state dict is unique to an object
+        obj2hdf(grp, state, name='state', memo=memo, noid=True,
+                **kwargs)
 
 
 def h5save(filename, data, name=None, mode='w', mkdir=True, **kwargs):
