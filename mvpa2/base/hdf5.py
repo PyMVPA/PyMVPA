@@ -571,6 +571,9 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             src_module = obj.__class__.__module__
 
         cls_name = obj.__class__.__name__
+        # special case: metaclass types NOT instance of a class with metaclass
+        if hasattr(obj, '__metaclass__') and hasattr(obj, '__base__'):
+            cls_name = 'type'
 
         if src_module != '__builtin__':
             if hasattr(obj, '__name__'):
