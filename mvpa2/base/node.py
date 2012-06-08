@@ -56,6 +56,9 @@ class Node(ClassWithCollections):
           result dataset. If None, nothing is done.
         """
         ClassWithCollections.__init__(self, **kwargs)
+        debug("NO",
+              "Init node '%s' (space: '%s', postproc: '%s')",
+              (self.__class__.__name__, space, str(postproc)))
         self.set_space(space)
         self.set_postproc(postproc)
 
