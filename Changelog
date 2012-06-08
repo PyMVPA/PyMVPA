@@ -50,6 +50,15 @@ Releases
       computations involving two datasets.
     - Add :class:`~mvpa2.mappers.base.CombinedMapper` to run a dataset through
       a set of mappers and combine their outputs.
+    - Add :class:`~mvpa2.measures.statsmodels.UnivariateStatsModels` a wrapper
+      for using models from the StatsModels package as a
+      FeaturewiseMeasure.
+
+  * API changes
+
+    - deprecating ``GLM`` that is now implemented with UnivariateStatsModels.
+      This deprecated GLM class no longer supports the ``zstat`` calculation,
+      and none of its previous condtional attributes are available anymore.
 
 * 2.0.1 (Tue, Mar 27 2012)
 
