@@ -17,8 +17,9 @@ import numpy as np
 
 from mvpa2.base import externals, warning
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
+from mvpa2.base.types import is_datasetlike
 
-from mvpa2.datasets import hstack
+from mvpa2.datasets import hstack, Dataset
 from mvpa2.support import copy
 from mvpa2.featsel.base import StaticFeatureSelection
 from mvpa2.measures.base import Measure
@@ -295,6 +296,8 @@ class Searchlight(BaseSearchlight):
             # compute the datameasure and store in results
             res = measure(roi)
             if self.ca.is_enabled('roi_feature_ids'):
+                if not is_datasetlike(res):
+                    res = Dataset(np.atleast_1d(res))
                 # add roi feature ids to intermediate result dataset for later
                 # aggregation
                 res.a['roi_feature_ids'] = roi_fids
