@@ -3,7 +3,7 @@ Experimental support for AFNI NIML annotation files
 
 Created on Feb 19, 2012
 
-@author: nick
+@author: Nikolaas. N. Oosterhof (nikolaas.oosterhof@unitn.it)
 '''
 
 import afni_niml as niml, afni_niml_dset as dset, numpy as np

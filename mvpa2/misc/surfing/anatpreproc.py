@@ -273,7 +273,7 @@ def run_skullstrip(config, env):
             fullfn = '%s/%s' % (refdir, shortfn) # with path
             if (os.path.abspath(a_p) != os.path.abspath(refdir)
                     and (config['overwrite'] or not os.path.exists(fullfn))):
-                cmds.append('cd %s;3dcopy -overwrite -prefix ./%s %s' % (shortfn, fullfn))
+                cmds.append('cd %s;3dcopy -overwrite -prefix ./%s %s' % (a_p, shortfn, fullfn))
                 print "No skull strip needed, will copy %s to %s" % (fullfn, volfn)
             else:
                 "No overwriting necessary, using %s (which should be %s)" % (volfn, fullfn)

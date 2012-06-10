@@ -5,7 +5,7 @@ which is based on niml.h
 
 Created on Feb 16, 2012
 
-@author: nick
+@author: Nikolaas. N. Oosterhof (nikolaas.oosterhof@unitn.it)
 '''
 import numpy as np, sys
 
@@ -225,7 +225,4 @@ def findonetype(tps):
 
     return None
 
-if __name__ == '__main__':
-    dt = np.dtype(int)
-    x = byteorder_from_niform('binary.lsbfirst', dt)
 

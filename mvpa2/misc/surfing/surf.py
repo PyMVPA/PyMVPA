@@ -11,7 +11,7 @@ Created on Feb 11, 2012
 # yoh: nick, do you have any preference to have trailing whitespace
 #      lines through out the code or would be it be ok to remove them?
 
-import numpy as np, os, collections, networkx as nx, datetime, time, utils, \
+import numpy as np, os, collections, datetime, time,  \
        heapq, afni_suma_1d, math
 
 class Surface(object):
@@ -19,7 +19,7 @@ class Surface(object):
     
     A surface consists of a set of vertices (each with an x, y, and z coordinate)
     and a set of faces (triangles; each has three indices referring to the vertices
-    that make up the triangles)
+    that make up a triangle)
     
     In the present implementation new surfaces should be made using the __init__
     constructor; internal fields should not be changed manually
@@ -96,6 +96,8 @@ class Surface(object):
             A dict "nbrs" so that "nbrs[i]=n2d" contains the distances from node i
             to the neighbours of node "i" in "n2d". "n2d" is, in turn, a dict 
             so that "n2d[k]=d" is the distance "d" from node "i" to node "j".
+            In other words, nbrs[i][j]=d means that the distance from node i
+            to node j is d. It holds that nbrs[i][j]=nbrs[j][i].
         
         Note
         ----
@@ -198,7 +200,7 @@ class Surface(object):
 
         nbrs=self.nbrs()
         
-        # algoritm from wikipedia
+        # algoritm from wikipedia (http://en.wikipedia.org/wiki/Dijkstra's_algorithm)
         while candidates:
             d,i=heapq.heappop(candidates) # distance and index of current candidate
             
@@ -357,15 +359,91 @@ class Surface(object):
     
     def __add__(self,other):
         '''coordinate-wise addition of two surfaces with the same topology'''
-        if not self.same_topology(other):
-            raise Exception("Different topologies")
-       
-        return Surface(v=self._v+other._v,f=self._f,check=False)
+        if isinstance(other, Surface):
+            if not self.same_topology(other):
+                raise Exception("Different topologies - cannot add")
+            vother=other._v
+        else:
+            vother=other
+           
+        return Surface(v=self._v+vother,f=self._f,check=False)
     
     def __mul__(self,other):
         '''coordinate-wise scaling'''
+        
         return Surface(v=self._v*other,f=self._f)
     
+    def rotate(self, theta, center=None, unit='rad'):
+        if unit.startswith('rad'):
+            fac=1.
+        elif unit.startswith('deg'):
+            fac=math.pi/180.
+        else:
+            raise ValueError('Illegal unit for rotation: %r' % unit)
+        
+        theta=map(lambda x:x*fac, theta)
+        
+        cx,cy,cz = np.cos(theta)
+        sx,sy,sz = np.sin(theta)
+        
+        # rotation matrix *in row-first order*
+        # in other words, we compute v*R' 
+        m=np.asarray([[cy*cz,-cy*sz,sy],
+                      [cx*sz+sx*sy*cz,cx*cz-sx*sy*sz,-sx*cy],
+                      [sx*sz-cx*sy*cz,sx*cz+cx*sy*sz,cx*cy]])
+        '''
+        m=np.asarray([[cx*cz - sx*cy*sz, cx*sz + sx*cy*cz, sx*sy],
+                     [-sx*cz - cx*cy*sz, -sx*sz + cx*cy*cz, cx*sy],
+                     [sy*sz, -sy*cz, cy]])
+        '''
+        
+        if center is None:
+            center=0
+        center=np.reshape(np.asarray(center),(1,-1))
+        
+        
+        v_rotate=center+np.dot(self._v-center,m)
+        
+        return Surface(v=v_rotate,f=self._f)
+    
+    def center_of_mass(self):
+        return np.mean(self.v(),axis=0)
+    
+    def merge(self, *others):
+        all=[self]
+        all.extend(list(others))
+        n=len(all)
+        
+        def border_positions(xs,f):
+            # positions of transitiions between surface
+            # f should return number of relevant values (nodes or vertices) 
+            n=len(xs)
+            
+            fxs=map(f, all)
+            
+            positions=[0]
+            for i in xrange(n):
+                positions.append(positions[i]+fxs[i])
+                
+            zeros_arr=np.zeros((positions[-1],xs[0].v().shape[1]))    
+            return positions, zeros_arr
+            
+        
+        pos_v, all_v=border_positions(all, lambda x:x.nv())
+        pos_f, all_f=border_positions(all, lambda x:x.nf())
+        
+        print pos_f
+        
+        for i in xrange(n):
+            all_v[pos_v[i]:pos_v[i+1],:]=all[i].v()
+            all_f[pos_f[i]:pos_f[i+1],:]=all[i].f()+pos_v[i]
+            
+        return Surface(v=all_v, f=all_f)
+        
+        
+        
+        
+        
     # return copies of internal values
     # yoh: is it intentional to return copies instead of just
     #      original arrays?  why?
@@ -467,53 +545,5 @@ class Surface(object):
 #  yoh: tests would be nearly mandatory and should go under mvpa2/tests
 #       so why not start by refactoring these with some rudimentary example
 #       files if necessary under mvpa2/data?
-def _test_distance():
-    d='/Users/nick/Downloads/fingerdata-0.2/glm/'
-    fn=d+"rall_vol00.nii"
-    fnout=d+"__test8.1D"
-    surffn1=d+"../myref/ico100_lh.pial_al.asc"
-    import surf_fs_asc
-    Surface=surf_fs_asc.read(surffn1)     
-    centernode=43523
+'''
     
-    ds=Surface.dijkstra_distance(centernode)
-    nv=Surface.nv()
-    data=np.zeros((nv,1))
-    for i,d in ds.iteritems():
-        data[i]=d
-    
-    afni_suma_1d.write(fnout, data)
-    
-def _test_l2h():
-    d=utils._get_fingerdata_dir() + "qref/" 
-    
-    pat=d+'ico%d_lh.intermediate_al.asc'
-    lds=[9,72]
-    
-    fns=map(lambda x : pat % x, lds)
-    s_lo, s_hi=map(surf_fs_asc.read,fns)
-    
-    mapping=s_lo.mapicosahedron_to_high_resolution(s_hi)
-    print mapping
-       
-    
-
-if __name__ == '__main__':
-    #_test_distance()
-    _test_l2h()
-    pass#_test_project()
-    
-    rs=[10,20,30,40]
-    
-    for r in rs:
-        ss=s.sub_surface(c,r)
-        t=ss.pairdistances(cutoff=cutoff)
-        print '%d (%d nodes): %r' % (r, ss._nv, t)
-    
-    fnout=d+"__test.asc"
-    ss.write(fnout,True)
-    
-    print s
-    print s+s
-    print s*.5+s*.5
-    '''

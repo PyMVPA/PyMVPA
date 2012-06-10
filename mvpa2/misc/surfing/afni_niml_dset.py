@@ -5,7 +5,7 @@ preprocessed data), statistical maps or searchlight results.
 
 Created on Feb 19, 2012
 
-@author: nick
+@author: Nikolaas. N. Oosterhof (nikolaas.oosterhof@unitn.it)
 '''
 
 import afni_niml, random, numpy as np, afni_niml_types as types, os, time, sys, afni_niml as niml
