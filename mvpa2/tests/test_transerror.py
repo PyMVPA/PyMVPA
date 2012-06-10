@@ -667,6 +667,44 @@ class ErrorsTests(unittest.TestCase):
                     assert_array_less(0.9,
                                       cvnp[(np.array([0,1]), np.array([1,0]))])
 
+
+def test_confusion_as_node():
+    from mvpa2.misc.data_generators import normal_feature_dataset
+    from mvpa2.clfs.gnb import GNB
+    from mvpa2.clfs.transerror import Confusion
+    ds = normal_feature_dataset(snr=2.0, perlabel=42, nchunks=3,
+                                nonbogus_features=[0,1], nfeatures=2)
+    clf = GNB()
+    cv = CrossValidation(
+        clf, NFoldPartitioner(),
+        errorfx=None,
+        postproc=Confusion(labels=ds.UT),
+        enable_ca=['stats'])
+    res = cv(ds)
+    # needs to be identical to CA
+    assert_array_equal(res.samples, cv.ca.stats.matrix)
+    assert_array_equal(res.sa.predictions, ds.UT)
+    assert_array_equal(res.fa.targets, ds.UT)
+
+    from mvpa2.clfs.transerror import BayesConfusionHypothesis
+    from mvpa2.base.node import ChainNode
+    # same again, but this time with Bayesian hypothesis testing at the end
+    cv = CrossValidation(
+        clf, NFoldPartitioner(),
+        errorfx=None,
+        postproc=ChainNode((Confusion(labels=ds.UT),
+                            BayesConfusionHypothesis())))
+    res = cv(ds)
+    # only two possible hypothesis with two classes
+    assert_equals(len(res), 2)
+    # the first hypothesis is the can't discriminate anything
+    assert_equal(len(res.sa.hypothesis[0]), 1)
+    assert_equal(len(res.sa.hypothesis[0][0]), 2)
+    # and the hypothesis is actually less likely than the other one
+    # (both classes can be distinguished)
+    assert(np.e**res.samples[0,0] < np.e**res.samples[1,0])
+
+
 def suite():
     return unittest.makeSuite(ErrorsTests)
 
