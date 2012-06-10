@@ -98,6 +98,11 @@ def write(surf, fn, overwrite=False, comment=None):
     comment : str
         Comments to add to 'fn'
     '''
+    
+    if isinstance(surf,str) and isinstance(fn,Surface):
+        surf,fn=fn,surf
+        print "Swap"
+    
     if not overwrite and os.path.exists(fn):
         raise Exception("File already exists: %s" % fn)
 
@@ -120,46 +125,28 @@ def write(surf, fn, overwrite=False, comment=None):
     f.write("\n".join(s))
     f.close()
 
-if __name__ == '__main__':
-    '''for testing'''
-    d = '/Users/nick/Downloads/fingerdata-0.2/ref/'
-    fn = d + 'ico100_lh.pial_al.asc'
-
-    s = read(fn)
-    c = 66666
-    r = 15
-
-    #print ss
-    cutoff = 10
-
-    #ss=s.subsurface(c,r)
-    #print ss
-
-
-    #t=s.pairdistances(cutoff=cutoff)
-    nv = s._nv
-
-    cs = range(0, nv - 1, 10000)
-    tt = utils.tictoc()
-
-    allds = np.zeros((nv, 2))
-
-    for i, c in enumerate(cs):
-        ds = s.circlearound_n2d(c, r, metric='d')
-        for j, dj in ds.iteritems():
-            allds[j, 0] = dj
-            allds[j, 1] += 1
-
-    idxs = np.nonzero(allds[:, 0])[0]
-    subds = allds[idxs, :]
-
-    fnout = d + "__test7.1D"
-    afni_suma_1d.write(fnout, subds, idxs)
-
-    fnout = d + "__test7.niml.dset"
-    dset = dict(data=subds, node_indices=idxs)
-
-    afni_niml_dset.write(fnout, dset, 'binary')
-
-    print fnout
-
+if __name__=="__main__":
+    d='/Users/nick/organized/211_ak12_andy/ref/ab00/'
+    surffn=d+'ico32_lh.pial_al.asc'
+    s=read(surffn)
+    
+    
+    
+    for i in xrange(9):
+        cm=s.center_of_mass()
+        print cm
+        
+        cm=None
+        
+        #cm=[100,100,100]
+        
+        theta=[0,0,0]
+        theta[2]=i*45.
+        theta[1]=i*45.
+        r=s.rotate(theta,unit='deg',center=cm)
+        fnout=d+'_s_%d.asc' % i
+        
+        m=s.merge(r,r)
+        
+        write(m,fnout,overwrite=True)
+    

@@ -3,7 +3,7 @@ General AFNI NIML I/O support
 
 Created on Feb 16, 2012
 
-@author: nick
+@author: Nikolaas. N. Oosterhof (nikolaas.oosterhof@unitn.it)
 '''
 import re, numpy as np, afni_niml_types as types, random, os, time, sys, base64, afni_niml_dset as dset, copy
 
@@ -246,10 +246,6 @@ def _header2string(p, keyfirst=['dset_type', 'self_idcode', 'filename', 'data_ty
     rs = map(lambda x : '   %s="%s"' % x, kvs)
     return "\n".join(rs)
 
-def _test_annot():
-    pass
-
-
 def read(fn, itemifsingletonlist=True, postfunction=None):
     f = open(fn)
     s = f.read()
@@ -274,50 +270,3 @@ def write(fnout, niml, form='binary', prefunction=None):
     f.write(s)
     f.close()
 
-if __name__ == '__main__':
-
-    d = '/Users/nick/Downloads/fingerdata-0.2/fs/s88/surf/SUMA/'
-    fn = d + 'lh.aparc.a2005s.annot.niml.dset'
-    fnout = d + '__o.niml.dset'
-    f = open(fn)
-    s = f.read()
-    f.close()
-
-    raw = string2rawniml(s)
-    print raw
-
-    setnewidcode(raw)
-    #raw[0]['self_idcode']=getnewidcode()
-    print raw
-    s = rawniml2string(raw, 'text')
-
-
-
-
-    f = open(fnout, 'w')
-    f.write(s)
-    f.close()
-    print fnout
-    '''
-    # end here
-    
-    s=rawniml2string(p)
-    print
-    print s
-    
-    f=open(fnout,'w')
-    f.write(s)
-    f.close()
-    '''
-    #qq=ph(p[0][2])
-
-    #print qq[1][0]
-    #print qq[1][1]
-    #qq=_parse_nameheaderbody(p[0][2])
-    #print qq
-    #string2rawniml(p[0][2])
-    #string2rawniml(qq[1][1])
-
-
-    #print m.groups()[2]
-    #print m

@@ -1,13 +1,12 @@
 '''
-Very simple AFNI 1D support
+Very simple AFNI 1D support (only writing, at the moment)
 
 Created on Feb 12, 2012
 
-@author: nick
+@author: Nikolaas. N. Oosterhof (nikolaas.oosterhof@unitn.it)
 '''
 
 import numpy as np
-import utils
 
 def write(fnout, data, nodeidxs=None):
 
@@ -35,10 +34,3 @@ def write(fnout, data, nodeidxs=None):
 
     np.savetxt(fnout, data, fmt, ' ')
 
-
-if __name__ == '__main__':
-    d = '%s/ref/' % utils._get_fingerdata_dir()
-    fn = d + '__test.1D'
-
-    data = np.array([[1, 2], [3, 4], [5, 6]])
-    d = write(fn, data)

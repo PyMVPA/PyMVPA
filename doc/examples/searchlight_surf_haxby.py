@@ -158,7 +158,7 @@ center_ids = voxsel.keys()
 Define the mask, which contains all voxels that are selected at least once
 during voxel selection (If there are fewer voxels selected than there are 
 nodes, then the mask is extended to ensure we have sufficient 'features' 
-in the dataset. Based on the mask we define the neighboorhood, which takes
+in the dataset). Based on the mask we define the neighboorhood, which takes
 the masking operation into account. 
 
 The voxel_ids_label argument is optional 
