@@ -693,7 +693,7 @@ def scatter_neighborhoods(neighbor_gen, coords, deterministic=False):
       contains the indices of the respective seeds coordinates in the input
       coordinate list. If particular coordinates are present multiple times
       the index list will contain all indices corresponding to these
-      cooridnates.
+      coordinates.
     """
     hasher = dict
     if deterministic:
