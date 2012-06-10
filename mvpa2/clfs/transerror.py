@@ -1124,7 +1124,7 @@ class ConfusionMatrixError(object):
     def __init__(self, labels=None):
         """
         Parameters
-        ==========
+        ----------
         labels : list
           Class labels for confusion matrix columns/rows
         """
@@ -1163,7 +1163,7 @@ class Confusion(Node):
                  **kwargs):
         """
         Parameters
-        ==========
+        ----------
         attr : str
           Sample attribute name where classification target values are stored
           for each prediction.
@@ -1237,7 +1237,7 @@ class BayesConfusionHypothesis(Node):
                  space='hypothesis', **kwargs):
         """
         Parameters
-        ==========
+        ----------
         alpha : array
           Bayesian hyper-prior alpha (in a multivariate-Dirichlet sense)
         labels_attr : str
