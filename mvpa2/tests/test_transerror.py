@@ -686,6 +686,8 @@ def test_confusion_as_node():
     assert_array_equal(res.sa.predictions, ds.UT)
     assert_array_equal(res.fa.targets, ds.UT)
 
+    skip_if_no_external('scipy')
+
     from mvpa2.clfs.transerror import BayesConfusionHypothesis
     from mvpa2.base.node import ChainNode
     # same again, but this time with Bayesian hypothesis testing at the end
