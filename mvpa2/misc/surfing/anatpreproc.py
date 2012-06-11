@@ -133,6 +133,8 @@ def augmentconfig(c):
 
         yesno2bool(c, 'expvol_ss')
         yesno2bool(c, 'isepi')
+        yesno2bool(c, 'AddEdge')
+        
 
     pathvars = ['anatvol', 'expvol', 'epivol', 'refdir', 'surfdir']
     for pathvar in pathvars:
@@ -448,28 +450,33 @@ def run_alignment(config, env):
         [d, n, o, e] = afni_fileparts(basedset)
         if 'nii' in e:
             o = '+orig'
-            cmds.append('cd %s; 3dcopy %s.nii %s%s' % (refdir, n, n, o))
+            if overwrite or not os.path.exists('%s/%s+orig.HEAD' % refdir, n):
+                cmds.append('cd %s; 3dcopy -overwrite %s.nii %s%s' % (refdir, n, n, o))
 
         dset = '%s+orig.HEAD' % alprefix
-        n_dset = afni_fileparts(dset)[2]
+        n_dset = afni_fileparts(dset)[1]
 
         addedge_fns = ['_ae.ExamineList.log']
+        
+        print n, n_dset, dset
 
         exts = ['HEAD', 'BRIK']
-        postfixes = ['e3', 'ec', n_dset + '_ec']
+        addedge_rootfns=['%s_%s+orig' % (n, postfix)
+                            for postfix in ['e3', 'ec', n_dset + '_ec']]
+        addedge_rootfns.extend(['%s_%s+orig' % (n_dset, postfix)
+                            for postfix in ['e3', 'ec']])
 
-        addedge_fns.extend(['%s_%s+orig.%s' % (n, postfix, ext)
-                            for postfix in postfixes
-                            for ext in exts])
-
+        addedge_fns=['%s.%s' % (fn, e) for fn in addedge_rootfns for e in exts]
+        
         addegde_pathfns = map(lambda x:os.path.join(refdir, x), addedge_fns)
 
-        # for now just delete all files    
-        for fn in addegde_pathfns:
-            if os.path.exists(fn):
-                cmds.append('rm "%s"' % fn)
-
-        cmds.append('cd %s; \@AddEdge %s%s %s' % (refdir, n, o, dset))
+        addegde_exists=map(os.path.exists, addegde_pathfns)
+        if overwrite or not all(addegde_exists):
+            if overwrite:
+                cmds.extend(map(lambda fn : 'rm "%s"' % fn, addegde_pathfns))
+            cmds.append('cd %s; \@AddEdge %s%s %s' % (refdir, n, o, dset))
+        else:
+            print "AddEdge seems to have been run already"
 
     # because AFNI uses RAI orientation but Freesurfer LPI, make a new 
     # affine transformation matrix in which the signs of
@@ -661,7 +668,7 @@ def getoptions():
     parser.add_argument("--expvol_ss", default='yes', choices=yesno, help='Skull strip experimental volume ([yes],no)')
     parser.add_argument('--aea_opts', default='-cmass cmass+xyz -big_move', help="Options given to align_epi_anat, e.g. -big_move")
     parser.add_argument('-I', '--identity', action="store_true", default=False, help="Use identity transformation between SurfVol and anat/epivol (no alignment)")
-    parser.add_argument('-A', '--AddEdge', action="store_true", default=False, help="Run AddEdge on aligned volumes")
+    parser.add_argument('-A', '--AddEdge', default='yes', choices=yesno, help="Run AddEdge on aligned volumes")
 
     # for testing
     if True:
