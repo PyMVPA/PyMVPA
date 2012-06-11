@@ -1,10 +1,21 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the PyMVPA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Partial independence model: one margin fixed (rows margin).
 
-Analytical solution + montecarlo checks.
+Analytical solution + Monte-Carlo checks.
 """
 
 import numpy as np
 from multivariate_polya import log_multivariate_polya_vectorized as log_multivariate_polya
+
+from mvpa2.base import externals
+externals.exists('scipy', raise_=True)
 from scipy.special import gammaln
 
 def compute_logp_independent_block(X, alpha=None):
