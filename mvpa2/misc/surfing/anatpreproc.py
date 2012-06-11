@@ -233,7 +233,7 @@ def run_moresurfs(config, env):
                     print "%s already exists" % fns[2]
 
 def run_skullstrip(config, env):
-    
+
     if config['identity']:
         return
 
@@ -242,104 +242,55 @@ def run_skullstrip(config, env):
     cmds = []
     if not os.path.exists(refdir):
         cmds.append('mkdir %(refdir)s' % config)
-    
-    sumadir=config['sumadir']
-    sid=config['sid']
-    
+
+    sumadir = config['sumadir']
+    sid = config['sid']
+
     # process the surfvol anatomical.
     # because it's already skull stripped by freesurfer
     # simply copy it over; rename brain.nii to surfvol_ss 
-    surfvol_srcs=['%s/%s' % (sumadir,fn) 
+    surfvol_srcs = ['%s/%s' % (sumadir, fn)
                   for fn in ['brain.nii',
                              '%s_SurfVol+orig.HEAD' % sid]]
 
-    surfvol_trgs=['%s/%s' % (refdir,fn) 
+    surfvol_trgs = ['%s/%s' % (refdir, fn)
                   for fn in ['%s_SurfVol_ss+orig.HEAD' % sid,
                              '%s_SurfVol+orig.HEAD' % sid]]
-    
+
     for src, trg in zip(surfvol_srcs, surfvol_trgs):
         if os.path.exists(trg) and not overwrite:
             print '%s already exists' % trg
         else:
-            t_p, t_n, t_o, t_e=utils.afni_fileparts(trg)
-            trg_short='%s%s' % (t_n, t_o)
-            cmds.append('cd "%s"; 3dcopy -overwrite %s ./%s' % 
+            t_p, t_n, t_o, t_e = utils.afni_fileparts(trg)
+            trg_short = '%s%s' % (t_n, t_o)
+            cmds.append('cd "%s"; 3dcopy -overwrite %s ./%s' %
                         (refdir, src, trg_short))
-    
+
     # process experimental volume. 
-    expvol_src=config['expvol']
-    do_ss=config['expvol_ss']
-    [e_p,e_n,e_o,e_e]=utils.afni_fileparts(expvol_src)
-    
+    expvol_src = config['expvol']
+    do_ss = config['expvol_ss']
+    [e_p, e_n, e_o, e_e] = utils.afni_fileparts(expvol_src)
+
     if do_ss:
-        expvol_trg_prefix='%s%s' % (e_n, config['sssuffix'])
-        cmd='3dSkullStrip'
-        input='-input'
+        expvol_trg_prefix = '%s%s' % (e_n, config['sssuffix'])
+        cmd = '3dSkullStrip'
+        input = '-input'
     else:
-        expvol_trg_prefix=e_n
-        cmd='3dbucket'
-        input=''
-    
+        expvol_trg_prefix = e_n
+        cmd = '3dbucket'
+        input = ''
+
     if 'nii' in e_e:
         if overwrite or not utils.afni_fileexists('%s/%s+orig.HEAD' % (refdir, e_n)):
             print "Converting %s from NIFTI to AFNI format" % e_n
-            cmds.append('cd "%s"; 3dcopy %s ./%s+orig' % (refdir, expvol_src, e_n))  
-        
+            cmds.append('cd "%s"; 3dcopy %s ./%s+orig' % (refdir, expvol_src, e_n))
+
     if overwrite or not utils.afni_fileexists('%s/%s+orig.HEAD' % (refdir, expvol_trg_prefix)):
         cmds.append('cd "%s";%s -overwrite -prefix ./%s+orig %s %s+orig' % (refdir, cmd, expvol_trg_prefix, input, e_n))
     else:
         print "%s already exists" % expvol_trg_prefix
 
     utils.run_cmds(cmds, env)
-
-
-def _run_skullstrip(config, env):
-    if config['identity']:
-        return
-
-    overwrite = config['overwrite']
-    cmds = []
-    if not os.path.exists(config['refdir']):
-        cmds.append('mkdir %(refdir)s' % config)
-
-    # two volumes may have to be stripped: the input anatomical, and the surfvol.
-    # put them in a list here and process them similarly
-    
-    # As of June 2012 we use brain.nii, whcih is an already skull stripped version 
-    # of the anatomical.
-    surfvol = '%(sumadir)s/brain.nii' % config
-
-    allvols = [surfvol, config['expvol']]
-    allvols_ss = [False, config['expvol_ss']] # skulls strip?
-    allvols_ss_out=['%(sid)s_SurfVol_ss+orig.HEAD' % config, None]
-
-    refdir = config['refdir']
-    # run skull strip if necessary for both volumes
-    for k, volfn in enumerate(allvols):
-        print "Considering skull strip for %s" % volfn
-        volss = allvols_ss[k]
-
-        [a_p, a_n, a_o, a_e] = utils.afni_fileparts(volfn)
-        if volss: # skull strip?
-            volfn_ss = allvols_ss_out[k] or '%s_ss%s%s' % (a_n, a_o, a_e) # no path, insert '_ss' infix
-            if overwrite or not utils.afni_fileexists('%s/%s' % (refdir, volfn_ss)):
-                cmds.append('cd "%s";3dSkullStrip -overwrite -prefix ./%s -input %s' % (refdir, volfn_ss, volfn))
-                print "Will apply skull strip to %s to get %s/%s" % (volfn, refdir, volfn_ss)
-            else:
-                print "Skull stripped version of %s already exists as %s" % (volfn, volfn_ss)
-
-        else: # copy to refdir if does not exist yet
-            shortvolfn='%s%s%s' % (a_n, a_o, a_e)
-            refvolfn='%s/%s' % (refdir,shortvolfn)
-            
-            volfn_out=allvols_ss_out[k] or '%s%s%s' % (a_n, a_o, a_e)
-            if os.path.exists(volfn_out) and not overwrite:
-                "No overwriting necessary, using %s (which should be %s)" % (volfn_out, shortvolfn)
-            else:
-                cmds.append('cd "%s";3dbucket -overwrite -prefix ./%s %s' % (refdir, volfn_out, volfn))
-                print "No skull strip needed, will copy %s to %s" % (volfn, volfn_out)
-
-    utils.run_cmds(cmds)
 
 def run_alignment(config, env):
     '''Aligns anat (which is assumed to be aligned with EPI data) to Freesurfer SurfVol
@@ -350,7 +301,7 @@ def run_alignment(config, env):
     overwrite = config['overwrite']
     alignsuffix = config['al2expsuffix']
     refdir = config['refdir']
-    
+
     cmds = []
     if not os.path.exists(config['refdir']):
         cmds.append('mkdir %(refdir)s' % config)
@@ -359,13 +310,13 @@ def run_alignment(config, env):
     # put them in a list here and process them similarly
     surfvol = '%(refdir)s/%(sid)s_SurfVol+orig.HEAD' % config
     surfvol_ss = '%(refdir)s/%(sid)s_SurfVol_ss+orig.HEAD' % config
-    
-    e_p,e_n,_,_=utils.afni_fileparts(config['expvol'])
+
+    e_p, e_n, _, _ = utils.afni_fileparts(config['expvol'])
     if config['expvol_ss']:
-        e_n='%s%s' % (e_n, config['sssuffix'])
-    expvol='%s/%s+orig.HEAD' % (refdir, e_n)
-        
-    volsin=[surfvol_ss, expvol]
+        e_n = '%s%s' % (e_n, config['sssuffix'])
+    expvol = '%s/%s+orig.HEAD' % (refdir, e_n)
+
+    volsin = [surfvol_ss, expvol]
     for volin in volsin:
         if not os.path.exists(volin):
             raise ValueError('File %s does not exist' % volin)
