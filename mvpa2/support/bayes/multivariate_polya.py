@@ -6,7 +6,7 @@ See: http://en.wikipedia.org/wiki/Multivariate_P%C3%B3lya_distribution
 """
 
 import numpy as np
-from scipy import factorial
+from scipy.misc import factorial
 from scipy.special import gamma, gammaln
 
 
