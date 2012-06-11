@@ -26,10 +26,7 @@ def getdefaults():
     rootdir = '/Users/nick/Downloads/fingerdata-0.2/'
     d = { #  options that must be set properly
        'sid':'s88', # subject id
-       'surfdir': rootdir + 'fs/s88/surf/', # freesurfer surface directory
        'ld': '4+8+16+32+64+128', # (list of) number of linear divisions for mapicoshedron
-       'refdir': rootdir + 'refB', # output directory (called reference directory because surfaces and volumes share the same reference)
-       'anatvol':rootdir + 'glm/anat_al+orig', # anatomical file assumed in correspondence with EPI data
        'steps':'all', # one or more of: toafni+mapico+moresurfs+align+makespec
                       # or 'all' to run all steps
 
@@ -39,9 +36,9 @@ def getdefaults():
        'mi_icopat':'ico%d_', # pattern for icosehedron output; placeholder is for ld
        'usenifti':False, # maybe provide some nifti support in the future
        'expvol_ss':True,
-       'surfvol_ss':True,
        'verbose':True,
        'al2expsuffix':'_al2exp',
+       'sssuffix':'_ss'
        }
 
     return d
@@ -135,7 +132,6 @@ def augmentconfig(c):
             d[k] = b
 
         yesno2bool(c, 'expvol_ss')
-        yesno2bool(c, 'surfvol_ss')
         yesno2bool(c, 'isepi')
 
     pathvars = ['anatvol', 'expvol', 'epivol', 'refdir', 'surfdir']
@@ -237,6 +233,67 @@ def run_moresurfs(config, env):
                     print "%s already exists" % fns[2]
 
 def run_skullstrip(config, env):
+    
+    if config['identity']:
+        return
+
+    overwrite = config['overwrite']
+    refdir = config['refdir']
+    cmds = []
+    if not os.path.exists(refdir):
+        cmds.append('mkdir %(refdir)s' % config)
+    
+    sumadir=config['sumadir']
+    sid=config['sid']
+    
+    # process the surfvol anatomical.
+    # because it's already skull stripped by freesurfer
+    # simply copy it over; rename brain.nii to surfvol_ss 
+    surfvol_srcs=['%s/%s' % (sumadir,fn) 
+                  for fn in ['brain.nii',
+                             '%s_SurfVol+orig.HEAD' % sid]]
+
+    surfvol_trgs=['%s/%s' % (refdir,fn) 
+                  for fn in ['%s_SurfVol_ss+orig.HEAD' % sid,
+                             '%s_SurfVol+orig.HEAD' % sid]]
+    
+    for src, trg in zip(surfvol_srcs, surfvol_trgs):
+        if os.path.exists(trg) and not overwrite:
+            print '%s already exists' % trg
+        else:
+            t_p, t_n, t_o, t_e=utils.afni_fileparts(trg)
+            trg_short='%s%s' % (t_n, t_o)
+            cmds.append('cd "%s"; 3dcopy -overwrite %s ./%s' % 
+                        (refdir, src, trg_short))
+    
+    # process experimental volume. 
+    expvol_src=config['expvol']
+    do_ss=config['expvol_ss']
+    [e_p,e_n,e_o,e_e]=utils.afni_fileparts(expvol_src)
+    
+    if do_ss:
+        expvol_trg_prefix='%s%s' % (e_n, config['sssuffix'])
+        cmd='3dSkullStrip'
+        input='-input'
+    else:
+        expvol_trg_prefix=e_n
+        cmd='3dbucket'
+        input=''
+    
+    if 'nii' in e_e:
+        if overwrite or not utils.afni_fileexists('%s/%s+orig.HEAD' % (refdir, e_n)):
+            print "Converting %s from NIFTI to AFNI format" % e_n
+            cmds.append('cd "%s"; 3dcopy %s ./%s+orig' % (refdir, expvol_src, e_n))  
+        
+    if overwrite or not utils.afni_fileexists('%s/%s+orig.HEAD' % (refdir, expvol_trg_prefix)):
+        cmds.append('cd "%s";%s -overwrite -prefix ./%s+orig %s %s+orig' % (refdir, cmd, expvol_trg_prefix, input, e_n))
+    else:
+        print "%s already exists" % expvol_trg_prefix
+
+    utils.run_cmds(cmds, env)
+
+
+def _run_skullstrip(config, env):
     if config['identity']:
         return
 
@@ -247,36 +304,40 @@ def run_skullstrip(config, env):
 
     # two volumes may have to be stripped: the input anatomical, and the surfvol.
     # put them in a list here and process them similarly
-    surfvol = '%(sumadir)s/%(sid)s_SurfVol+orig.HEAD' % config
+    
+    # As of June 2012 we use brain.nii, whcih is an already skull stripped version 
+    # of the anatomical.
+    surfvol = '%(sumadir)s/brain.nii' % config
 
     allvols = [surfvol, config['expvol']]
-    allvols_ss = [config[s] for s in ['surfvol_ss', 'expvol_ss']] # skulls strip?
+    allvols_ss = [False, config['expvol_ss']] # skulls strip?
+    allvols_ss_out=['%(sid)s_SurfVol_ss+orig.HEAD' % config, None]
 
     refdir = config['refdir']
     # run skull strip if necessary for both volumes
-    for k in xrange(len(allvols)):
-        volfn = allvols[k]
+    for k, volfn in enumerate(allvols):
         print "Considering skull strip for %s" % volfn
         volss = allvols_ss[k]
 
         [a_p, a_n, a_o, a_e] = utils.afni_fileparts(volfn)
         if volss: # skull strip?
-            volfn_ss = '%s_ss%s%s' % (a_n, a_o, a_e) # no path, insert '_ss' infix
+            volfn_ss = allvols_ss_out[k] or '%s_ss%s%s' % (a_n, a_o, a_e) # no path, insert '_ss' infix
             if overwrite or not utils.afni_fileexists('%s/%s' % (refdir, volfn_ss)):
-                cmds.append('cd %s;3dSkullStrip -overwrite -prefix ./%s -input %s' % (refdir, volfn_ss, volfn))
+                cmds.append('cd "%s";3dSkullStrip -overwrite -prefix ./%s -input %s' % (refdir, volfn_ss, volfn))
                 print "Will apply skull strip to %s to get %s/%s" % (volfn, refdir, volfn_ss)
             else:
                 print "Skull stripped version of %s already exists as %s" % (volfn, volfn_ss)
 
         else: # copy to refdir if does not exist yet
-            shortfn = '%s%s%s' % (a_n, a_o, a_e)  # without path
-            fullfn = '%s/%s' % (refdir, shortfn) # with path
-            if (os.path.abspath(a_p) != os.path.abspath(refdir)
-                    and (config['overwrite'] or not os.path.exists(fullfn))):
-                cmds.append('cd %s;3dcopy -overwrite -prefix ./%s %s' % (a_p, shortfn, fullfn))
-                print "No skull strip needed, will copy %s to %s" % (fullfn, volfn)
+            shortvolfn='%s%s%s' % (a_n, a_o, a_e)
+            refvolfn='%s/%s' % (refdir,shortvolfn)
+            
+            volfn_out=allvols_ss_out[k] or '%s%s%s' % (a_n, a_o, a_e)
+            if os.path.exists(volfn_out) and not overwrite:
+                "No overwriting necessary, using %s (which should be %s)" % (volfn_out, shortvolfn)
             else:
-                "No overwriting necessary, using %s (which should be %s)" % (volfn, fullfn)
+                cmds.append('cd "%s";3dbucket -overwrite -prefix ./%s %s' % (refdir, volfn_out, volfn))
+                print "No skull strip needed, will copy %s to %s" % (volfn, volfn_out)
 
     utils.run_cmds(cmds)
 
@@ -287,19 +348,34 @@ def run_alignment(config, env):
     to estimate the alignment, then applies this transformation to the non-skull-stripped
     SurfVol and also to the surfaces. Some alignment headers will be nuked'''
     overwrite = config['overwrite']
+    alignsuffix = config['al2expsuffix']
+    refdir = config['refdir']
+    
     cmds = []
     if not os.path.exists(config['refdir']):
         cmds.append('mkdir %(refdir)s' % config)
 
     # two volumes may have to be stripped: the inpput anatomical, and the surfvol.
     # put them in a list here and process them similarly
-    surfvol = '%(sumadir)s/%(sid)s_SurfVol+orig.HEAD' % config
+    surfvol = '%(refdir)s/%(sid)s_SurfVol+orig.HEAD' % config
+    surfvol_ss = '%(refdir)s/%(sid)s_SurfVol_ss+orig.HEAD' % config
+    
+    e_p,e_n,_,_=utils.afni_fileparts(config['expvol'])
+    if config['expvol_ss']:
+        e_n='%s%s' % (e_n, config['sssuffix'])
+    expvol='%s/%s+orig.HEAD' % (refdir, e_n)
+        
+    volsin=[surfvol_ss, expvol]
+    for volin in volsin:
+        if not os.path.exists(volin):
+            raise ValueError('File %s does not exist' % volin)
+    '''    
 
     allvols = [surfvol, config['expvol']]
     allvols_ss = [config[s] for s in ['surfvol_ss', 'expvol_ss']] # skulls strip?
     myvolsin = []
 
-    refdir = config['refdir']
+    
 
     alignsuffix = config['al2expsuffix']
     volsin = [] # keeps the 2 output files (surfvol, experimental vol) used for alignment 
@@ -333,7 +409,7 @@ def run_alignment(config, env):
                 raise Exception("Did not find volume for %s" % volfn)
         volsin.append(volfn_in)
     # our two volumes are skull stripped now; run alignment
-
+    '''
 
     # _,a_n,_,_=utils.afni_fileparts(volsin[0]) # surfvol input name
     a_n = utils.afni_fileparts(volsin[0])[1] # surfvol input root name
@@ -609,6 +685,8 @@ def run_all(config, env):
     for step in steps:
         if step in step2func:
             step2func[step](config, env)
+        else:
+            raise ValueError('Step not recognized: %r' % step)
 
     # this may be a security hazard - but we trust the input
     return cmds
@@ -630,7 +708,6 @@ def getoptions():
     parser.add_argument("-o", "--overwrite", action='store_true', default=False, help="Overwrite existing files")
     parser.add_argument('--hemi', default='l+r', choices=['l', 'r', 'l+r'], help='Hemispheres to process ([l+r]')
     parser.add_argument("--expvol_ss", default='yes', choices=yesno, help='Skull strip experimental volume ([yes],no)')
-    parser.add_argument("--surfvol_ss", default='yes', choices=yesno, help='Skull strip SurfVol volume ([yes],no)')
     parser.add_argument('--aea_opts', default='-cmass cmass+xyz -big_move', help="Options given to align_epi_anat, e.g. -big_move")
     parser.add_argument('-I', '--identity', action="store_true", default=False, help="Use identity transformation between SurfVol and anat/epivol (no alignment)")
     parser.add_argument('-A', '--AddEdge', action="store_true", default=False, help="Run AddEdge on aligned volumes")

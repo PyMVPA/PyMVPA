@@ -124,15 +124,100 @@ def write(surf, fn, overwrite=False, comment=None):
     f = open(fn, 'w')
     f.write("\n".join(s))
     f.close()
+    
+def inflated_hemi_pairs_reposition(surf_left, surf_right, touching_side, min_distance=10.):
+    touching_side=touching_side[0].lower()
+    
+    mn, mx=np.min, np.max
+    #min=-1, max=1
+    side2dimsigns=dict(m=(0,-1),i=(1,1),s=(1,-1),a=(2,1),p=(2,-1))
+    
+    dim, rotatesign=side2dimsigns[touching_side]
+    if dim==0:
+        rotate_axis=None
+    else:
+        rotate_axis=dim #1+((dim+1) % 2)
+        rotate_angle=90
+    
+    surfs=[surf_left, surf_right]
+    nsurfs=len(surfs)    
+    hemisigns=[1,-1]
+    if not rotate_axis is None:
+        theta=[0]*3
+        
+        for i in xrange(nsurfs):
+            theta[rotate_axis]=rotate_angle*hemisigns[i]*rotatesign
+            surfs[i]=surfs[i].rotate(theta,unit='deg')
+            print "Rotating"
+    
+    for i in xrange(nsurfs):
+        hemisign=hemisigns[i]
+        sign=rotatesign*hemisign
+        print "dim", dim, rotate_axis
+        print np.min(surfs[i].v(),axis=0)
+        print np.max(surfs[i].v(),axis=0)
+        
+        
+        coords=surfs[i].v()
+        
+        
+        """xtreme=np.min(coords[:,0]*hemisign)
+        
+        delta=np.zeros((1,3))
+        delta[0,0]=hemisign*(xtreme-min_distance*.5)
+        surfs[i]=surfs[i]+(-delta)
+        """
+        xtreme=np.min(coords[:,0]*-hemisign)
+        
+        delta=np.zeros((1,3))
+        delta[0,0]=hemisign*(xtreme-min_distance*.5)
+        surfs[i]=surfs[i]+(delta)
+        
+        print np.min(surfs[i].v(),axis=0), delta
+        print np.max(surfs[i].v(),axis=0)
+    
+    return tuple(surfs)
+    
+            
+            
+            
+        
+    
+    
+    
+    
+    
+    
+        
+        
+    
+    
+    
+        
 
 if __name__=="__main__":
     d='/Users/nick/organized/211_ak12_andy/ref/ab00/'
-    surffn=d+'ico32_lh.pial_al.asc'
-    s=read(surffn)
+    #surffn=d+'ico32_lh.pial_al.asc'
     
     
+    #surffn2=d+'ico32_rh.pial_al.asc'
     
-    for i in xrange(9):
+    surffn=d+'ico32_lh.inflated_al.asc'
+    surffn2=d+'ico32_rh.inflated_al.asc'
+    
+    
+    p=read(surffn)
+    q=read(surffn2)
+    
+    for touching in 'msiap':
+        pr,qr=inflated_hemi_pairs_reposition(p,q,touching)
+    
+        fnout=d+'_' + touching + 'bh.asc'
+    
+        both=pr.merge(qr)
+        write(fnout,both,overwrite=True)
+        
+    for i in []:
         cm=s.center_of_mass()
         print cm
         
