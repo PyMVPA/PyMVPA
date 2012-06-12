@@ -18,10 +18,12 @@ from mvpa2.datasets.base import Dataset
 from mvpa2.algorithms.hyperalignment import Hyperalignment
 from mvpa2.mappers.zscore import zscore
 from mvpa2.misc.support import idhash
+from mvpa2.misc.data_generators import distort_dataset
+from mvpa2.misc.fx import get_random_rotation
 
 # Somewhat slow but provides all needed ;)
 from mvpa2.testing import sweepargs, reseed_rng
-from mvpa2.testing.datasets import datasets, get_random_rotation
+from mvpa2.testing.datasets import datasets
 
 from mvpa2.generators.partition import NFoldPartitioner
 
@@ -59,16 +61,12 @@ class HyperAlignmentTests(unittest.TestCase):
             #     # if we transform back nicely
             #     R = np.eye(ds_orig.nfeatures)
             ## else:
-            R = get_random_rotation(ds_orig.nfeatures)
-
-            Rs.append(R)
-            ds_ = ds_orig.copy()
+            ds_ = distort_dataset(ds_orig, scale_fac=100, shift_fac=10)
+            Rs.append(ds_.a.random_rotation)
             # reusing random data from dataset itself
-            random_scales += [ds_orig.samples[i, 3] * 100]
-            random_shifts += [ds_orig.samples[i+10] * 10]
+            random_scales += [ds_.a.random_scale]
+            random_shifts += [ds_.a.random_shift]
             random_noise = ds4l.samples[:, ds4l.a.bogus_features[:4]]
-            ds_.samples = np.dot(ds_orig.samples, R) * random_scales[-1] \
-                          + random_shifts[-1]
 
             ## if (zscore_common or zscore_all):
             ##     # for later on testing of "precise" reconstruction
