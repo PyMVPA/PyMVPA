@@ -154,7 +154,7 @@ class Hyperalignment(ClassWithCollections):
 
 
     def train(self, datasets):
-        """Derive a coomon feature space from a series of datasets.
+        """Derive a common feature space from a series of datasets.
 
         Parameters
         ----------
