@@ -126,6 +126,10 @@ def write(surf, fn, overwrite=False, comment=None):
     f.close()
 
 def hemi_pairs_reposition(surf_left, surf_right, touching_side, min_distance=10.):
+    '''touching side should be 'm','i','s','a', or 'p'
+    returns a tuple of left and right hemispheres that can be viewed together
+    and have a space of min_distance in between them'''
+    
     touching_side = touching_side[0].lower()
 
     mn, mx = np.min, np.max
