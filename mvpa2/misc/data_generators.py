@@ -443,7 +443,7 @@ def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None):
     return fds
 
 
-def distort_dataset(ds, scale_fac=100., shift_fac=10.):
+def random_affine_transformation(ds, scale_fac=100., shift_fac=10.):
     """Distort a dataset by random scale, shift, and rotation.
 
     The original data samples are transformed by applying a random rotation,
