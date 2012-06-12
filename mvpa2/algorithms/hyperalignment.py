@@ -65,10 +65,10 @@ class Hyperalignment(ClassWithCollections):
     --------
     >>> # get some example data
     >>> from mvpa2.testing.datasets import datasets
-    >>> from mvpa2.misc.data_generators import distort_dataset
+    >>> from mvpa2.misc.data_generators import random_affine_transformation
     >>> ds4l = datasets['uni4large']
     >>> # generate a number of distorted variants of this data
-    >>> dss = [distort_dataset(ds4l) for i in xrange(4)]
+    >>> dss = [random_affine_transformation(ds4l) for i in xrange(4)]
     >>> ha = Hyperalignment()
     >>> mappers = ha(dss)
     >>> len(mappers)
