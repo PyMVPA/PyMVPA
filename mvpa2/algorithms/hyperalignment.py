@@ -6,15 +6,19 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Hyperalignment of functional data to the common space
+"""Transformation of individual feature spaces into a common space
 
-References: TODO...
+The :class:`Hyperalignment` class in this module implements an algorithm
+published in :ref:`Haxby et al., Neuron (2011) <HGC+11>` *A common,
+high-dimensional model of the representational space in human ventral temporal
+cortex.*
 
-see SMLR code for example on how to embed the reference so in future
-it gets properly referenced...
 """
 
 __docformat__ = 'restructuredtext'
+
+# don't leak the world
+__all__ = ['Hyperalignment']
 
 from mvpa2.support.copy import deepcopy
 
@@ -32,21 +36,65 @@ if __debug__:
 
 
 class Hyperalignment(ClassWithCollections):
-    """ ...
+    """Align the features across multiple datasets into a common feature space.
 
-    Given a set of datasets (may be just data) provide mapping of
-    features into a common space
+    This is a three-level algorithm. In the first level, a series of input
+    datasets is projected into a common feature space using a configurable
+    mapper. The common space is initially defined by a chosen exemplar from the
+    list of input datasets, but is subsequently refined by iteratively combining
+    the common space with the projected input datasets.
+
+    In the second (optional) level, the original input datasets are again
+    aligned with (or projected into) the intermediate first-level common
+    space. Through a configurable number of iterations the common space is
+    further refined by repeated projections of the input datasets and
+    combination/aggregation of these projections into an updated common space.
+
+    In the third level, the input datasets are again aligned with the, now
+    final, common feature space. The output of this algorithm are trained
+    mappers (one for each input dataset) that transform the individual features
+    spaces into the common space.
+
+    The default values for the parameters of the algorithm (e.g. projection via
+    Procrustean transformation, common space aggregation by averaging) resemble
+    the setup reported in :ref:`Haxby et al., Neuron (2011) <HGC+11>` *A common,
+    high-dimensional model of the representational space in human ventral
+    temporal cortex.*
+
+    Examples
+    --------
+    >>> # get some example data
+    >>> from mvpa2.testing.datasets import datasets
+    >>> from mvpa2.misc.data_generators import distort_dataset
+    >>> ds4l = datasets['uni4large']
+    >>> # generate a number of distorted variants of this data
+    >>> dss = [distort_dataset(ds4l) for i in xrange(4)]
+    >>> ha = Hyperalignment()
+    >>> mappers = ha(dss)
+    >>> len(mappers)
+    4
     """
 
     residual_errors = ConditionalAttribute(enabled=False,
-            doc="""Residual error per each dataset at each level.""")
+            doc="""Residual error (norm of the difference between common space
+                and projected data) per each dataset at each level. The
+                residuals are stored in a dataset with one row per level, and
+                one column per input dataset. The first row corresponds to the
+                error 1st-level of hyperalignment and the last row corresponds
+                to the 3rd-level of hyperalignment. All intermediate rows
+                store the residual errors for each 2nd-level iteration.""")
 
+    # XXX Who cares whether it was chosen, or specified? This should be just
+    # 'ref_ds'
     choosen_ref_ds = ConditionalAttribute(enabled=True,
-            doc="""If ref_ds wasn't provided, it gets choosen.""")
+            doc="""Index of the input dataset used as 1st-level reference
+                dataset.""")
 
     # Lets use built-in facilities to specify parameters which
     # constructor should accept
-    alignment = Parameter(ProcrusteanMapper(), # might provide allowedtype
+    # the ``space`` of the mapper determines where the algorithm places the
+    # common space definition in the datasets
+    alignment = Parameter(ProcrusteanMapper(space='commonspace'), # might provide allowedtype
             allowedtype='basestring',
             doc="""The multidimensional transformation mapper. If
             `None` (default) an instance of
@@ -54,25 +102,41 @@ class Hyperalignment(ClassWithCollections):
             used.""")
 
     level2_niter = Parameter(1, allowedtype='int', min=0,
-            doc="Number of 2nd level iterations.")
+            doc="Number of 2nd-level iterations.")
 
     ref_ds = Parameter(None, allowedtype='int', min=0,
-            doc="""Index of a dataset to use as a reference.  If `None`, then
-            dataset with maximal number of features is used.""")
+            doc="""Index of a dataset to use as 1st-level common space
+                reference.  If `None`, then the dataset with the maximum
+                number of features is used.""")
 
     zscore_all = Parameter(False, allowedtype='bool',
-            doc="""Z-score all datasets prior hyperalignment.  Turn it off
-            if zscoring is not desired or was already performed. If on,
-            resultant mapping becomes a chain with ZScoreMapper""")
+            doc="""Flag to Z-score all datasets prior hyperalignment.
+            Turn it off if Z-scoring is not desired or was already performed.
+            If True, returned mappers are ChainMappers with the Z-scoring
+            prepended to the actual projection.""")
 
     zscore_common = Parameter(True, allowedtype='bool',
-            doc="""Z-score common space after each adjustment.""")
+            doc="""Flag to Z-score the common space after each adjustment.
+                This should be left enabled in most cases.""")
 
     combiner1 = Parameter(lambda x,y: 0.5*(x+y), #
-            doc="How to update common space in the 1st loop")
+            doc="""How to update common space in the 1st-level loop. This must
+                be a callable that takes two arguments. The first argument is
+                one of the input datasets after projection onto the 1st-level
+                common space. The second argument is the current 1st-level
+                common space. The 1st-level combiner is called iteratively for
+                each projected input dataset, except for the reference dataset.
+                By default the new common space is the average of the current
+                common space and the recently projected dataset.""")
 
     combiner2 = Parameter(lambda l: np.mean(l, axis=0),
-            doc="How to combine all individual spaces to common space.")
+            doc="""How to combine all individual spaces to common space. This
+            must be a callable that take a sequence of datasets as an argument.
+            The callable must return a single array. This combiner is called
+            once with all datasets after 1st-level projection to create an
+            updated common space, and is subsequently called again after each
+            2nd-level iteration.""")
+
 
     def __init__(self, **kwargs):
         ClassWithCollections.__init__(self, **kwargs)
@@ -83,11 +147,11 @@ class Hyperalignment(ClassWithCollections):
 
         Parameters
         ----------
-          datasets : list or tuple of datasets
+        datasets : sequence of datasets
 
         Returns
         -------
-        A list of trained Mappers of the same length as datasets
+        A list of trained Mappers matching the number of input datasets.
         """
         params = self.params            # for quicker access ;)
         ca = self.ca
@@ -117,12 +181,8 @@ class Hyperalignment(ClassWithCollections):
                       "bounds. We have only %i datasets provided" \
                       % (ref_ds, ndatasets)
         ca.choosen_ref_ds = ref_ds
-        # might prefer some other way to initialize... later
-        mappers = [deepcopy(params.alignment) for ds in datasets]
         # zscore all data sets
         # ds = [ zscore(ds, chunks_attr=None) for ds in datasets]
-
-        # Level 1 (first)
 
         # TODO since we are doing in-place zscoring create deep copies
         # of the datasets with pruned targets and shallow copies of
@@ -139,6 +199,8 @@ class Hyperalignment(ClassWithCollections):
             if __debug__:
                 debug('HPAL', "Z-scoring all datasets")
             # zscore them once while storing corresponding ZScoreMapper's
+            # so we can assemble a comprehensive mapper at the end
+            # (together with procrustes)
             zmappers = []
             for ids in xrange(len(datasets)):
                 zmapper = ZScoreMapper(chunks_attr=None)
@@ -146,7 +208,10 @@ class Hyperalignment(ClassWithCollections):
                 zmapper.train(datasets[ids])
                 datasets[ids] = zmapper.forward(datasets[ids])
 
-        commonspace = np.asanyarray(datasets[ref_ds])
+        # initial common space is the reference dataset
+        commonspace = datasets[ref_ds].samples
+        # the reference dataset might have been zscored already, don't do it
+        # twice
         if params.zscore_common and not params.zscore_all:
             if __debug__:
                 debug('HPAL_',
@@ -155,87 +220,150 @@ class Hyperalignment(ClassWithCollections):
             commonspace = commonspace.astype(float)
             zscore(commonspace, chunks_attr=None)
 
-        data_mapped = [np.asanyarray(ds) for ds in datasets]
-        #zscore(data_mapped[ref_ds],chunks_attr=None)
-        for i, (m, ds_new) in enumerate(zip(mappers, datasets)):
-            if __debug__:
-                debug('HPAL_', "Level 1: ds #%i" % i)
-            if i == ref_ds:
-                continue
-            #ds_new = ds.copy()
-            #zscore(ds_new, chunks_attr=None);
-            ds_new.targets = commonspace
-            m.train(ds_new)
-            ds_ = m.forward(np.asanyarray(ds_new))
-            if params.zscore_common:
-                zscore(ds_, chunks_attr=None)
-            data_mapped[i] = ds_
+        # create a mapper per dataset
+        # might prefer some other way to initialize... later
+        mappers = [deepcopy(params.alignment) for ds in datasets]
 
-            if residuals is not None:
-                residuals[0, i] = np.linalg.norm(ds_ - commonspace)
-
-            ## if ds_mapped == []:
-            ##     ds_mapped = [zscore(m.forward(d), chunks_attr=None)]
-            ## else:
-            ##     ds_mapped += [zscore(m.forward(d), chunks_attr=None)]
-
-            # zscore before adding
-            # TODO: make just a function so we dont' waste space
-            commonspace = params.combiner1(data_mapped[i], commonspace)
-            if params.zscore_common:
-                zscore(commonspace, chunks_attr=None)
-
-        # update commonspace to mean of ds_mapped
-        commonspace = params.combiner2(data_mapped)
-        #if params.zscore_common:
-        #zscore(commonspace, chunks_attr=None)
+        #
+        # Level 1 -- initial projection
+        #
+        lvl1_projdata = self._level1(datasets, commonspace, ref_ds, mappers,
+                                     residuals)
+        #
         # Level 2 -- might iterate multiple times
-        for loop in xrange(params.level2_niter):
-            for i, (m, ds_new) in enumerate(zip(mappers, datasets)):
-                if __debug__:
-                    debug('HPAL_', "Level 2 (%i-th iteration): ds #%i" % (loop, i))
+        #
+        # this is the final common space
+        commonspace = self._level2(datasets, lvl1_projdata, mappers, residuals)
+        #
+        # Level 3 -- final, from-scratch, alignment to final common space
+        #
+        mappers = self._level3(datasets, commonspace, mappers, residuals)
 
-                ds_temp = (commonspace*ndatasets - data_mapped[i])/(ndatasets-1)
-                if params.zscore_common:
-                    zscore(ds_temp, chunks_attr=None)
-                #ds_new = ds.copy()
-                #zscore(ds_new, chunks_attr=None)
-                ds_new.targets = ds_temp #commonspace #PRJ ds_temp
-                m.train(ds_new) # ds_temp)
-                ds_ =  m.forward(np.asanyarray(ds_new))
-                if params.zscore_common:
-                    zscore(ds_, chunks_attr=None)
-                data_mapped[i] = ds_
-                if residuals is not None:
-                    residuals[1+loop, i] = np.linalg.norm(ds_ - commonspace)
-
-                #ds_mapped[i] = zscore( m.forward(ds_temp), chunks_attr=None)
-
-            commonspace = params.combiner2(data_mapped)
-            #if params.zscore_common:
-                #zscore(commonspace, chunks_attr=None)
-
-        # Level 3 (last) to params.levels
-        for i, (m, ds_new) in enumerate(zip(mappers, datasets)):
-            if __debug__:
-                debug('HPAL_', "Level 3: ds #%i" % i)
-
-            #ds_new = ds.copy()     # shallow copy so we could assign new labels
-            #zscore(ds_new, chunks_attr=None)
-            ds_temp = commonspace
-            #ds_temp = (commonspace*ndatasets - data_mapped[i])/(ndatasets-1)
-            if params.zscore_common:
-                zscore(ds_temp, chunks_attr=None)
-            ds_new.targets = ds_temp #commonspace #PRJ ds_temp#
-            m.train(ds_new) #ds_temp)
-            data_mapped[i] = m.forward(np.asanyarray(ds_new))
-            if residuals is not None:
-                residuals[-1, i] = np.linalg.norm(data_mapped[i] - commonspace)
-
+        # return trained mappers for projection from all datasets into the
+        # common space
         if params.zscore_all:
             # We need to construct new mappers which would chain
             # zscore and then final transformation
             return [ChainMapper([zm, m]) for zm, m in zip(zmappers, mappers)]
         else:
             return mappers
+
+
+    def _level1(self, datasets, commonspace, ref_ds, mappers, residuals):
+        params = self.params            # for quicker access ;)
+        data_mapped = [ds.samples for ds in datasets]
+        for i, (m, ds_new) in enumerate(zip(mappers, datasets)):
+            if __debug__:
+                debug('HPAL_', "Level 1: ds #%i" % i)
+            if i == ref_ds:
+                continue
+            # assign common space to ``space`` of the mapper, because this is
+            # where it will be looking for it
+            ds_new.sa[m.get_space()] = commonspace
+            # find transformation of this dataset into the current common space
+            m.train(ds_new)
+            # remove common space attribute again to save on memory when the
+            # common space is updated for the next iteration
+            del ds_new.sa[m.get_space()]
+            # project this dataset into the current common space
+            ds_ = m.forward(ds_new.samples)
+            if params.zscore_common:
+                zscore(ds_, chunks_attr=None)
+            # replace original dataset with mapped one -- only the reference
+            # dataset will remain unchanged
+            data_mapped[i] = ds_
+
+            # compute first-level residuals wrt to the initial common space
+            if residuals is not None:
+                residuals[0, i] = np.linalg.norm(ds_ - commonspace)
+
+            # Update the common space. This is an incremental update after
+            # processing each 1st-level dataset. Maybe there should be a flag
+            # to make a batch update after processing all 1st-level datasets
+            # to an identical 1st-level common space
+            # TODO: make just a function so we dont' waste space
+            commonspace = params.combiner1(ds_, commonspace)
+            if params.zscore_common:
+                zscore(commonspace, chunks_attr=None)
+        return data_mapped
+
+
+    def _level2(self, datasets, lvl1_data, mappers, residuals):
+        params = self.params            # for quicker access ;)
+        data_mapped = lvl1_data
+        # aggregate all processed 1st-level datasets into a new 2nd-level
+        # common space
+        commonspace = params.combiner2(data_mapped)
+
+        # XXX Why is this commented out? Who knows what combiner2 is doing and
+        # whether it changes the distribution of the data
+        #if params.zscore_common:
+        #zscore(commonspace, chunks_attr=None)
+
+        ndatasets = len(datasets)
+        for loop in xrange(params.level2_niter):
+            # 2nd-level alignment starts from the original/unprojected datasets
+            # again
+            for i, (m, ds_new) in enumerate(zip(mappers, datasets)):
+                if __debug__:
+                    debug('HPAL_', "Level 2 (%i-th iteration): ds #%i" % (loop, i))
+
+                # Optimization speed up heuristic
+                # Slightly modify the common space towards other feature
+                # spaces and reduce influence of this feature space for the
+                # to-be-computed projection
+                temp_commonspace = (commonspace * ndatasets - data_mapped[i]) \
+                                    / (ndatasets - 1)
+
+                if params.zscore_common:
+                    zscore(temp_commonspace, chunks_attr=None)
+                # assign current common space
+                ds_new.sa[m.get_space()] = temp_commonspace
+                # retrain the mapper for this dataset
+                m.train(ds_new)
+                # remove common space attribute again to save on memory when the
+                # common space is updated for the next iteration
+                del ds_new.sa[m.get_space()]
+                # obtain the 2nd-level projection
+                ds_ =  m.forward(ds_new.samples)
+                if params.zscore_common:
+                    zscore(ds_, chunks_attr=None)
+                # store for 2nd-level combiner
+                data_mapped[i] = ds_
+                # compute residuals
+                if residuals is not None:
+                    residuals[1+loop, i] = np.linalg.norm(ds_ - commonspace)
+
+            commonspace = params.combiner2(data_mapped)
+        # return the final common space
+        return commonspace
+
+
+    def _level3(self, datasets, commonspace, mappers, residuals):
+        params = self.params            # for quicker access ;)
+
+        # key different from level-2; the common space is uniform
+        #temp_commonspace = commonspace
+
+        # and again
+        if params.zscore_common:
+            zscore(commonspace, chunks_attr=None)
+
+        # start from original input datasets again
+        for i, (m, ds_new) in enumerate(zip(mappers, datasets)):
+            if __debug__:
+                debug('HPAL_', "Level 3: ds #%i" % i)
+
+            # retrain mapper on final common space
+            ds_new.sa[m.get_space()] = commonspace
+            m.train(ds_new)
+            # remove common space attribute again to save on memory
+            del ds_new.sa[m.get_space()]
+
+            if residuals is not None:
+                # obtain final projection
+                data_mapped = m.forward(ds_new.samples)
+                residuals[-1, i] = np.linalg.norm(data_mapped - commonspace)
+
+        return mappers
 
