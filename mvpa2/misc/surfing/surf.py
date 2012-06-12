@@ -432,8 +432,6 @@ class Surface(object):
         pos_v, all_v = border_positions(all, lambda x:x.nv())
         pos_f, all_f = border_positions(all, lambda x:x.nf())
 
-        print pos_f
-
         for i in xrange(n):
             all_v[pos_v[i]:pos_v[i + 1], :] = all[i].v()
             all_f[pos_f[i]:pos_f[i + 1], :] = all[i].f() + pos_v[i]

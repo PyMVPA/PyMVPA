@@ -18,8 +18,8 @@ If EPIs from multiple sessions are aligned, this script should use different dir
 for refdir for each session, otherwise naming conflicts may occur
 '''
 
-import os, fnmatch, datetime, re, argparse, utils, surf_fs_asc
-from mvpa2.misc.surfing.utils import afni_fileparts
+import os, fnmatch, datetime, re, argparse, utils, surf_fs_asc, collections, copy, surf, afni_suma_spec
+from utils import afni_fileparts
 
 def getdefaults():
     '''set up default parameters - for testing now'''
@@ -65,7 +65,8 @@ def augmentconfig(c):
         surfdir = parent
 
     if not (os.path.exists(surfdir) and os.path.split(surfdir)[1] == 'surf'):
-        raise ValueError('Surface directory %s not does exist or does not end in "surf"' % surfdir)
+        print('Warning: surface directory %s not does exist or does not end in "surf"' % surfdir)
+        surfdir=None
 
     c['surfdir'] = surfdir
 
@@ -73,15 +74,18 @@ def augmentconfig(c):
     c['sumadir'] = '%(surfdir)s/SUMA/' % c
 
     # derive subject id from surfdir
-    sid = os.path.split(os.path.split(surfdir)[0])[1]
-    if not c.get('sid', None):
-        c['sid'] = sid
+    
+    sid = os.path.split(os.path.split(surfdir)[0])[1] if surfdir else None
+    c['sid']=c.get('sid', sid)
+    if c['sid'] is None:
+        print"Warning: no subject id specified"
+
 
     c['prefix_sv2anat'] = 'SurfVol2anat'
 
     # update steps
     if config.get('steps', 'all') == 'all':
-        config['steps'] = 'toafni+mapico+moresurfs+skullstrip+align+makespec'
+        config['steps'] = 'toafni+mapico+moresurfs+skullstrip+align+makespec+makespecboth'
 
     if c['identity']:
         c['expvol_ss'] = c['anatval_ss'] = c['AddEdge'] = False
@@ -113,7 +117,7 @@ def augmentconfig(c):
                     config['isepi'] = True
                     del(config['epivol'])
                 else:
-                    raise Exception("Need either anatvol or epivol")
+                    print("Warning: no anatomical or functional experimental voume defined")
 
         def yesno2bool(d, k): # dict, key
             '''Assuming d[k] contains the word 'yes' or 'no', makes d[k] a boolean 
@@ -134,7 +138,7 @@ def augmentconfig(c):
         yesno2bool(c, 'expvol_ss')
         yesno2bool(c, 'isepi')
         yesno2bool(c, 'AddEdge')
-        
+
 
     pathvars = ['anatvol', 'expvol', 'epivol', 'refdir', 'surfdir']
     for pathvar in pathvars:
@@ -165,6 +169,9 @@ def run_toafni(config, env):
 
     sd = config['sumadir']
     sid = config['sid']
+    
+    if sid is None:
+        raise ValueError("Subject id is not set, cannot continue")
 
     # files that should exist if Make_Spec_FS was run successfully    
     checkfns = ['brainmask.nii',
@@ -457,20 +464,20 @@ def run_alignment(config, env):
         n_dset = afni_fileparts(dset)[1]
 
         addedge_fns = ['_ae.ExamineList.log']
-        
+
         print n, n_dset, dset
 
         exts = ['HEAD', 'BRIK']
-        addedge_rootfns=['%s_%s+orig' % (n, postfix)
+        addedge_rootfns = ['%s_%s+orig' % (n, postfix)
                             for postfix in ['e3', 'ec', n_dset + '_ec']]
         addedge_rootfns.extend(['%s_%s+orig' % (n_dset, postfix)
                             for postfix in ['e3', 'ec']])
 
-        addedge_fns=['%s.%s' % (fn, e) for fn in addedge_rootfns for e in exts]
-        
+        addedge_fns = ['%s.%s' % (fn, e) for fn in addedge_rootfns for e in exts]
+
         addegde_pathfns = map(lambda x:os.path.join(refdir, x), addedge_fns)
 
-        addegde_exists=map(os.path.exists, addegde_pathfns)
+        addegde_exists = map(os.path.exists, addegde_pathfns)
         if overwrite or not all(addegde_exists):
             if overwrite:
                 cmds.extend(map(lambda fn : 'rm "%s"' % fn, addegde_pathfns))
@@ -531,6 +538,28 @@ def run_makespec(config, env):
             if config['overwrite'] or not os.path.exists(runsumafn):
                 suma_makerunsuma(runsumafn, specfn, surfvol)
 
+def run_makespec_bothhemis(config, env):
+    refdir = config['refdir']
+    overwrite = config['overwrite']
+    icolds, hemis = _get_hemis_icolds(config)
+
+    if hemis != ['l', 'r']:
+        raise ValueError("Cannot run without left and right hemisphere")
+
+    for icold in icolds:
+        specs = []
+        for hemi in hemis:
+            surfprefix = '%s%sh' % (config['mi_icopat'] % icold, hemi)
+            specfn = '%s/%s.spec' % (refdir, surfprefix)
+            specs.append(afni_suma_spec.read(specfn))
+
+        specs = afni_suma_spec.hemi_pairs_add_views(specs[0], specs[1], 'inflated', refdir, overwrite=overwrite)
+        spec_both = afni_suma_spec.merge_left_right(specs[0], specs[1])
+        
+        surfprefix = '%s%sh' % (config['mi_icopat'] % icold, 'b')
+        specfn = '%s/%s.spec' % (refdir, surfprefix)
+        spec_both.write(specfn, overwrite=overwrite)
+
 def suma_makerunsuma(fnout, specfn, surfvol):
     '''Generate a simple script to launch AFNI and SUMA with NIML enabled
     Scripts can be run with ./lh_ico100_seesuma.sh (for left hemisphere and ld=100)'''
@@ -549,6 +578,8 @@ def suma_makerunsuma(fnout, specfn, surfvol):
 
     if config['verbose']:
         print 'Generated run suma file in %s' % fnout
+
+
 
 
 def suma_makespec(indir, surfprefix, fnout=None):
@@ -635,13 +666,15 @@ def run_all(config, env):
                'moresurfs':run_moresurfs,
                'skullstrip':run_skullstrip,
                'align':run_alignment,
-               'makespec':run_makespec}
+               'makespec':run_makespec,
+               'makespecboth':run_makespec_bothhemis}
 
     if not all(s in step2func for s in steps):
         raise Exception("Illegal step in %s" % steps)
 
     for step in steps:
         if step in step2func:
+            print "Running: %s" % step
             step2func[step](config, env)
         else:
             raise ValueError('Step not recognized: %r' % step)
@@ -679,7 +712,20 @@ def getoptions():
     namespace = parser.parse_args(args)
     return vars(namespace)
 
+if __name__ == '__Xmain__':
+    d = '/Users/nick/Downloads/subj1/ref4'
+    left = _get_surface_defs(d, 'ico32_lh')
+    right = _get_surface_defs(d, 'ico32_rh')
+
+    print left
+
+    _add_multiview_surfaces(d, left, right)
+
+
 if __name__ == '__main__':
+
+
+
     # get default configuration (for testing)
     # in the future, allow for setting these on command line
     config = getdefaults()
