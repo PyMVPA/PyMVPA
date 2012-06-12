@@ -87,7 +87,6 @@ class HyperAlignmentTests(unittest.TestCase):
             idhashes = [idhash(ds.samples) for ds in dss]
             idhashes_targets = [idhash(ds.targets) for ds in dss]
 
-            ha.train(dss)
             mappers = ha(dss)
 
             idhashes_ = [idhash(ds.samples) for ds in dss]
@@ -159,7 +158,6 @@ class HyperAlignmentTests(unittest.TestCase):
         ha = Hyperalignment(ref_ds=ref_ds, level2_niter=2,
                             enable_ca=['training_residual_errors',
                                        'residual_errors'])
-        ha.train(dss_rotated_clean)
         mappers = ha(dss_rotated_clean)
         self.assertTrue(np.all(ha.ca.training_residual_errors.sa.levels ==
                               ['1', '2:0', '2:1']))
@@ -221,7 +219,6 @@ class HyperAlignmentTests(unittest.TestCase):
         ds_fs = [ sd[:, fselector(sd.fa.bsc_scores)] for sd in ds]
 
         hyper = Hyperalignment()
-        hyper.train(ds_fs)
         mapper_results = hyper(ds_fs)
 
         md_cd = ColumnData('labels.txt', header=['label'])

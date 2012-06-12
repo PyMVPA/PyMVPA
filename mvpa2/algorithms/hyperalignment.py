@@ -243,7 +243,7 @@ class Hyperalignment(ClassWithCollections):
 
 
     def __call__(self, datasets):
-        """Derive a coomon feature space from a series of datasets.
+        """Derive a common feature space from a series of datasets.
 
         Parameters
         ----------
@@ -254,7 +254,7 @@ class Hyperalignment(ClassWithCollections):
         A list of trained Mappers matching the number of input datasets.
         """
         if self.commonspace is None:
-            raise RuntimeError("Hyperalignment hasn't been trained yet.")
+            self.train(datasets)
 
         params = self.params            # for quicker access ;)
         if params.zscore_all:
