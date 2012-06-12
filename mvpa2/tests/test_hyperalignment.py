@@ -87,6 +87,7 @@ class HyperAlignmentTests(unittest.TestCase):
             idhashes = [idhash(ds.samples) for ds in dss]
             idhashes_targets = [idhash(ds.targets) for ds in dss]
 
+            ha.train(dss)
             mappers = ha(dss)
 
             idhashes_ = [idhash(ds.samples) for ds in dss]
@@ -156,14 +157,18 @@ class HyperAlignmentTests(unittest.TestCase):
 
         # Lets see how well we do if asked to compute residuals
         ha = Hyperalignment(ref_ds=ref_ds, level2_niter=2,
-                            enable_ca=['residual_errors'])
+                            enable_ca=['training_residual_errors',
+                                       'residual_errors'])
+        ha.train(dss_rotated_clean)
         mappers = ha(dss_rotated_clean)
-        self.assertTrue(np.all(ha.ca.residual_errors.sa.levels ==
-                              ['1', '2:0', '2:1', '3']))
-        rerrors = ha.ca.residual_errors.samples
+        self.assertTrue(np.all(ha.ca.training_residual_errors.sa.levels ==
+                              ['1', '2:0', '2:1']))
+        rterrors = ha.ca.training_residual_errors.samples
         # just basic tests:
-        self.assertEqual(rerrors[0, ref_ds], 0)
-        self.assertEqual(rerrors.shape, (4, n))
+        self.assertEqual(rterrors[0, ref_ds], 0)
+        self.assertEqual(rterrors.shape, (3, n))
+        rerrors = ha.ca.residual_errors.samples
+        self.assertEqual(rerrors.shape, (1, n))
 
 
     def _test_on_swaroop_data(self):
@@ -216,7 +221,8 @@ class HyperAlignmentTests(unittest.TestCase):
         ds_fs = [ sd[:, fselector(sd.fa.bsc_scores)] for sd in ds]
 
         hyper = Hyperalignment()
-        mapper_results = hyper(datasets=ds_fs)
+        hyper.train(ds_fs)
+        mapper_results = hyper(ds_fs)
 
         md_cd = ColumnData('labels.txt', header=['label'])
         md_labels = [int(x) for x in md_cd['label']]

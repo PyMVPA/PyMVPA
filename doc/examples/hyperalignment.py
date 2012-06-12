@@ -171,7 +171,8 @@ for test_run in range(nruns):
     """
 
     hyper = Hyperalignment()
-    hypmaps = hyper(datasets=ds_train_fs)
+    hyper.train(ds_train_fs)
+    hypmaps = hyper(ds_train_fs)
 
     """
     Applying hyperalignment parameters is similar to applying any mapper in
@@ -275,7 +276,8 @@ fscores = np.mean(np.asarray(vstack(fscores)), axis=0)
 ds_fs = [sd[:,fselector(fscores)] for i,sd in enumerate(ds_all)]
 #run hyperalignment on full datasets
 hyper = Hyperalignment()
-mappers = hyper(datasets=ds_fs)
+hyper.train(ds_fs)
+mappers = hyper(ds_fs)
 ds_hyper = [ mappers[i].forward(ds_) for i,ds_ in enumerate(ds_fs)]
 # similarity of original data samples
 sm_orig = [np.corrcoef(
