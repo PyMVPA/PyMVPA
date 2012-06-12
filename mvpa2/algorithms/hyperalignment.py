@@ -206,6 +206,9 @@ class Hyperalignment(ClassWithCollections):
             ds_new.sa[m.get_space()] = commonspace
             # find transformation of this dataset into the current common space
             m.train(ds_new)
+            # remove common space attribute again to save on memory when the
+            # common space is updated for the next iteration
+            del ds_new.sa[m.get_space()]
             # project this dataset into the current common space
             ds_ = m.forward(ds_new.samples)
             if params.zscore_common:
@@ -262,6 +265,9 @@ class Hyperalignment(ClassWithCollections):
                 ds_new.sa[m.get_space()] = temp_commonspace
                 # retrain the mapper for this dataset
                 m.train(ds_new)
+                # remove common space attribute again to save on memory when the
+                # common space is updated for the next iteration
+                del ds_new.sa[m.get_space()]
                 # obtain the 2nd-level projection
                 ds_ =  m.forward(ds_new.samples)
                 if params.zscore_common:
@@ -295,6 +301,9 @@ class Hyperalignment(ClassWithCollections):
             # retrain mapper on final common space
             ds_new.sa[m.get_space()] = commonspace
             m.train(ds_new)
+            # remove common space attribute again to save on memory
+            del ds_new.sa[m.get_space()]
+
             if residuals is not None:
                 # obtain final projection
                 data_mapped = m.forward(ds_new.samples)
