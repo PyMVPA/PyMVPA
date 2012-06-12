@@ -55,6 +55,11 @@ class Hyperalignment(ClassWithCollections):
     mappers (one for each input dataset) that transform the individual features
     spaces into the common space.
 
+    Level 1 and 2 are performed by the ``train()`` method, and level 3 is
+    performed when the trained Hyperalignment instance is called with a list of
+    datasets. This dataset list may or may not be identical to the training
+    datasets.
+
     The default values for the parameters of the algorithm (e.g. projection via
     Procrustean transformation, common space aggregation by averaging) resemble
     the setup reported in :ref:`Haxby et al., Neuron (2011) <HGC+11>` *A common,
@@ -65,24 +70,29 @@ class Hyperalignment(ClassWithCollections):
     --------
     >>> # get some example data
     >>> from mvpa2.testing.datasets import datasets
-    >>> from mvpa2.misc.data_generators import distort_dataset
+    >>> from mvpa2.misc.data_generators import random_affine_transformation
     >>> ds4l = datasets['uni4large']
     >>> # generate a number of distorted variants of this data
-    >>> dss = [distort_dataset(ds4l) for i in xrange(4)]
+    >>> dss = [random_affine_transformation(ds4l) for i in xrange(4)]
     >>> ha = Hyperalignment()
+    >>> ha.train(dss)
     >>> mappers = ha(dss)
     >>> len(mappers)
     4
     """
 
-    residual_errors = ConditionalAttribute(enabled=False,
+    training_residual_errors = ConditionalAttribute(enabled=False,
             doc="""Residual error (norm of the difference between common space
-                and projected data) per each dataset at each level. The
+                and projected data) per each training dataset at each level. The
                 residuals are stored in a dataset with one row per level, and
                 one column per input dataset. The first row corresponds to the
-                error 1st-level of hyperalignment and the last row corresponds
-                to the 3rd-level of hyperalignment. All intermediate rows
-                store the residual errors for each 2nd-level iteration.""")
+                error 1st-level of hyperalignment the remaining rows store the
+                residual errors for each 2nd-level iteration.""")
+
+    residual_errors = ConditionalAttribute(enabled=False,
+            doc="""Residual error (norm of the difference between common space
+                and projected data) per each dataset. The residuals are stored
+                in a single-row dataset with one column per input dataset.""")
 
     # XXX Who cares whether it was chosen, or specified? This should be just
     # 'ref_ds'
@@ -140,10 +150,11 @@ class Hyperalignment(ClassWithCollections):
 
     def __init__(self, **kwargs):
         ClassWithCollections.__init__(self, **kwargs)
+        self.commonspace = None
 
 
-    def __call__(self, datasets):
-        """Estimate mappers for each dataset
+    def train(self, datasets):
+        """Derive a common feature space from a series of datasets.
 
         Parameters
         ----------
@@ -159,14 +170,13 @@ class Hyperalignment(ClassWithCollections):
         nfeatures = [ds.nfeatures for ds in datasets]
 
         residuals = None
-        if ca['residual_errors'].enabled:
-            residuals = np.zeros((2 + params.level2_niter, ndatasets))
-            ca.residual_errors = Dataset(
+        if ca['training_residual_errors'].enabled:
+            residuals = np.zeros((1 + params.level2_niter, ndatasets))
+            ca.training_residual_errors = Dataset(
                 samples = residuals,
                 sa = {'levels' :
                        ['1'] +
-                       ['2:%i' % i for i in xrange(params.level2_niter)] +
-                       ['3']})
+                       ['2:%i' % i for i in xrange(params.level2_niter)]})
 
         if __debug__:
             debug('HPAL', "Hyperalignment %s for %i datasets"
@@ -198,13 +208,8 @@ class Hyperalignment(ClassWithCollections):
         if params.zscore_all:
             if __debug__:
                 debug('HPAL', "Z-scoring all datasets")
-            # zscore them once while storing corresponding ZScoreMapper's
-            # so we can assemble a comprehensive mapper at the end
-            # (together with procrustes)
-            zmappers = []
             for ids in xrange(len(datasets)):
                 zmapper = ZScoreMapper(chunks_attr=None)
-                zmappers.append(zmapper)
                 zmapper.train(datasets[ids])
                 datasets[ids] = zmapper.forward(datasets[ids])
 
@@ -233,12 +238,41 @@ class Hyperalignment(ClassWithCollections):
         # Level 2 -- might iterate multiple times
         #
         # this is the final common space
-        commonspace = self._level2(datasets, lvl1_projdata, mappers, residuals)
+        self.commonspace = self._level2(datasets, lvl1_projdata, mappers,
+                                        residuals)
+
+
+    def __call__(self, datasets):
+        """Derive a common feature space from a series of datasets.
+
+        Parameters
+        ----------
+        datasets : sequence of datasets
+
+        Returns
+        -------
+        A list of trained Mappers matching the number of input datasets.
+        """
+        if self.commonspace is None:
+            self.train(datasets)
+
+        params = self.params            # for quicker access ;)
+        if params.zscore_all:
+            if __debug__:
+                debug('HPAL', "Z-scoring all datasets")
+            # zscore them once while storing corresponding ZScoreMapper's
+            # so we can assemble a comprehensive mapper at the end
+            # (together with procrustes)
+            zmappers = []
+            for ids in xrange(len(datasets)):
+                zmapper = ZScoreMapper(chunks_attr=None)
+                zmappers.append(zmapper)
+                zmapper.train(datasets[ids])
+                datasets[ids] = zmapper.forward(datasets[ids])
         #
         # Level 3 -- final, from-scratch, alignment to final common space
         #
-        mappers = self._level3(datasets, commonspace, mappers, residuals)
-
+        mappers = self._level3(datasets)
         # return trained mappers for projection from all datasets into the
         # common space
         if params.zscore_all:
@@ -335,19 +369,27 @@ class Hyperalignment(ClassWithCollections):
                     residuals[1+loop, i] = np.linalg.norm(ds_ - commonspace)
 
             commonspace = params.combiner2(data_mapped)
-        # return the final common space
-        return commonspace
-
-
-    def _level3(self, datasets, commonspace, mappers, residuals):
-        params = self.params            # for quicker access ;)
-
-        # key different from level-2; the common space is uniform
-        #temp_commonspace = commonspace
 
         # and again
         if params.zscore_common:
             zscore(commonspace, chunks_attr=None)
+
+        # return the final common space
+        return commonspace
+
+
+    def _level3(self, datasets):
+        params = self.params            # for quicker access ;)
+        # create a mapper per dataset
+        mappers = [deepcopy(params.alignment) for ds in datasets]
+
+        # key different from level-2; the common space is uniform
+        #temp_commonspace = commonspace
+
+        residuals = None
+        if self.ca['residual_errors'].enabled:
+            residuals = np.zeros((1, len(datasets)))
+            self.ca.residual_errors = Dataset(samples=residuals)
 
         # start from original input datasets again
         for i, (m, ds_new) in enumerate(zip(mappers, datasets)):
@@ -355,7 +397,7 @@ class Hyperalignment(ClassWithCollections):
                 debug('HPAL_', "Level 3: ds #%i" % i)
 
             # retrain mapper on final common space
-            ds_new.sa[m.get_space()] = commonspace
+            ds_new.sa[m.get_space()] = self.commonspace
             m.train(ds_new)
             # remove common space attribute again to save on memory
             del ds_new.sa[m.get_space()]
@@ -363,7 +405,7 @@ class Hyperalignment(ClassWithCollections):
             if residuals is not None:
                 # obtain final projection
                 data_mapped = m.forward(ds_new.samples)
-                residuals[-1, i] = np.linalg.norm(data_mapped - commonspace)
+                residuals[0, i] = np.linalg.norm(data_mapped - self.commonspace)
 
         return mappers
 
