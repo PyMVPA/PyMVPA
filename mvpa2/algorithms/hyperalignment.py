@@ -177,6 +177,24 @@ class Hyperalignment(ClassWithCollections):
         #
         # Level 1 -- initial projection
         #
+        lvl1_projdata = self._level1(datasets, commonspace, ref_ds, mappers,
+                                     residuals)
+        #
+        # Level 2 -- might iterate multiple times
+        #
+        # this is the final common space
+        commonspace = self._level2(datasets, lvl1_projdata, mappers, residuals)
+        #
+        # Level 3 -- final, from-scratch, alignment to final common space
+        #
+        mappers = self._level3(datasets, commonspace, mappers, residuals)
+        # return trained mappers for projection from all datasets into the
+        # common space
+        return mappers
+
+
+    def _level1(self, datasets, commonspace, ref_ds, mappers, residuals):
+        params = self.params            # for quicker access ;)
         data_mapped = [ds.samples for ds in datasets]
         for i, (m, ds_new) in enumerate(zip(mappers, datasets)):
             if __debug__:
@@ -208,7 +226,12 @@ class Hyperalignment(ClassWithCollections):
             commonspace = params.combiner1(ds_, commonspace)
             if params.zscore_common:
                 zscore(commonspace, chunks_attr=None)
+        return data_mapped
 
+
+    def _level2(self, datasets, lvl1_data, mappers, residuals):
+        params = self.params            # for quicker access ;)
+        data_mapped = lvl1_data
         # aggregate all processed 1st-level datasets into a new 2nd-level
         # common space
         commonspace = params.combiner2(data_mapped)
@@ -218,9 +241,7 @@ class Hyperalignment(ClassWithCollections):
         #if params.zscore_common:
         #zscore(commonspace, chunks_attr=None)
 
-        #
-        # Level 2 -- might iterate multiple times
-        #
+        ndatasets = len(datasets)
         for loop in xrange(params.level2_niter):
             # 2nd-level alignment starts from the original/unprojected datasets
             # again
@@ -252,10 +273,12 @@ class Hyperalignment(ClassWithCollections):
                     residuals[1+loop, i] = np.linalg.norm(ds_ - commonspace)
 
             commonspace = params.combiner2(data_mapped)
+        # return the final common space
+        return commonspace
 
-        #
-        # Level 3 (last) to params.levels
-        #
+
+    def _level3(self, datasets, commonspace, mappers, residuals):
+        params = self.params            # for quicker access ;)
         # start from original input datasets again
         for i, (m, ds_new) in enumerate(zip(mappers, datasets)):
             if __debug__:
@@ -273,9 +296,9 @@ class Hyperalignment(ClassWithCollections):
             m.train(ds_new)
             # obtain final projection
             # XXX this is only required when residuals are requested
-            data_mapped[i] = m.forward(ds_new.samples)
+            data_mapped = m.forward(ds_new.samples)
             if residuals is not None:
-                residuals[-1, i] = np.linalg.norm(data_mapped[i] - commonspace)
+                residuals[-1, i] = np.linalg.norm(data_mapped - commonspace)
 
         if params.zscore_all:
             # We need to construct new mappers which would chain
