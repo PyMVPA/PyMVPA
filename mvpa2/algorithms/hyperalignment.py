@@ -6,15 +6,19 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Hyperalignment of functional data to the common space
+"""Transformation of individual feature spaces into a common space
 
-References: TODO...
+The :class:`Hyperalignment` class in this module implements an algorithm
+published in :ref:`Haxby et al., Neuron (2011) <HGC+11>` *A common,
+high-dimensional model of the representational space in human ventral temporal
+cortex.*
 
-see SMLR code for example on how to embed the reference so in future
-it gets properly referenced...
 """
 
 __docformat__ = 'restructuredtext'
+
+# don't leak the world
+__all__ = ['Hyperalignment']
 
 from mvpa2.support.copy import deepcopy
 
@@ -32,17 +36,59 @@ if __debug__:
 
 
 class Hyperalignment(ClassWithCollections):
-    """ ...
+    """Align the features across multiple datasets into a common feature space.
 
-    Given a set of datasets (may be just data) provide mapping of
-    features into a common space
+    This is a three-level algorithm. In the first level, a series of input
+    datasets is projected into a common feature space using a configurable
+    mapper. The common space is initially defined by a chosen exemplar from the
+    list of input dataset, but is subsequently refined by iteratively combining
+    the common space with the projected input datasets.
+
+    In the second (optional) level, the original input datasets are again
+    aligned with (or projected into) the intermediate first-level common
+    space. Through a configurable number of iterations the common space is
+    further refined by repeated projections of the input datasets and
+    combination/aggregation of these projections into an updated common space.
+
+    In the third level, the input datasets are again aligned with the, now
+    final, common feature space. The output of this algorithm are trained
+    mappers (one for each input dataset) that transform the individual features
+    space into the common space.
+
+    The default values for the parameters of the algorithm (e.g. projection via
+    Procrustean transformation, common space aggregation by averaging) resemble
+    the setup reported in :ref:`Haxby et al., Neuron (2011) <HGC+11>` *A common,
+    high-dimensional model of the representational space in human ventral
+    temporal cortex.*
+
+    Examples
+    --------
+    >>> # get some example data
+    >>> from mvpa2.testing.datasets import datasets
+    >>> from mvpa2.misc.data_generators import distort_dataset
+    >>> ds4l = datasets['uni4large']
+    >>> # generate a number of distorted variants of this data
+    >>> dss = [distort_dataset(ds4l) for i in xrange(4)]
+    >>> ha = Hyperalignment()
+    >>> mappers = ha(dss)
+    >>> len(mappers)
+    4
     """
 
     residual_errors = ConditionalAttribute(enabled=False,
-            doc="""Residual error per each dataset at each level.""")
+            doc="""Residual error (norm of the difference between common space
+                and projected data) per each dataset at each level. The
+                residuals are stored in a dataset with one row per level, and
+                one column per input dataset. The first row corresponds to the
+                error 1st-level of hyperalignment and the last row corresponds
+                to the 3rd-level of hyperalignment. All intermediate rows
+                store the residual errors for each 2nd-level iteration.""")
 
+    # XXX Who cares whether it was chosen, or specified? This should be just
+    # 'ref_ds'
     choosen_ref_ds = ConditionalAttribute(enabled=True,
-            doc="""If ref_ds wasn't provided, it gets choosen.""")
+            doc="""Index of the input dataset used as 1st-level reference
+                dataset.""")
 
     # Lets use built-in facilities to specify parameters which
     # constructor should accept
@@ -56,19 +102,22 @@ class Hyperalignment(ClassWithCollections):
             used.""")
 
     level2_niter = Parameter(1, allowedtype='int', min=0,
-            doc="Number of 2nd level iterations.")
+            doc="Number of 2nd-level iterations.")
 
     ref_ds = Parameter(None, allowedtype='int', min=0,
-            doc="""Index of a dataset to use as a reference.  If `None`, then
-            dataset with maximal number of features is used.""")
+            doc="""Index of a dataset to use as 1st-level common space
+                reference.  If `None`, then the dataset with the maximum
+                number of features is used.""")
 
     zscore_all = Parameter(False, allowedtype='bool',
-            doc="""Z-score all datasets prior hyperalignment.  Turn it off
-            if zscoring is not desired or was already performed. If on,
-            resultant mapping becomes a chain with ZScoreMapper""")
+            doc="""Flag to Z-score all datasets prior hyperalignment.
+            Turn it off if Z-scoring is not desired or was already performed.
+            If True, returned mappers are ChainMappers with the Z-scoring
+            prepended to the actual projection.""")
 
     zscore_common = Parameter(True, allowedtype='bool',
-            doc="""Z-score common space after each adjustment.""")
+            doc="""Flag to Z-score the common space after each adjustment.
+                This should be left enabled in most cases.""")
 
     combiner1 = Parameter(lambda x,y: 0.5*(x+y), #
             doc="""How to update common space in the 1st-level loop. This must
@@ -88,6 +137,7 @@ class Hyperalignment(ClassWithCollections):
             updated common space, and is subsequently called again after each
             2nd-level iteration.""")
 
+
     def __init__(self, **kwargs):
         ClassWithCollections.__init__(self, **kwargs)
 
@@ -97,11 +147,11 @@ class Hyperalignment(ClassWithCollections):
 
         Parameters
         ----------
-          datasets : list or tuple of datasets
+        datasets : sequence of datasets
 
         Returns
         -------
-        A list of trained Mappers of the same length as datasets
+        A list of trained Mappers matching the number of input datasets.
         """
         params = self.params            # for quicker access ;)
         ca = self.ca
