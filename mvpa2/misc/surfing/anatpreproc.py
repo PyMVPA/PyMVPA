@@ -66,7 +66,7 @@ def augmentconfig(c):
 
     if not (os.path.exists(surfdir) and os.path.split(surfdir)[1] == 'surf'):
         print('Warning: surface directory %s not does exist or does not end in "surf"' % surfdir)
-        surfdir=None
+        surfdir = None
 
     c['surfdir'] = surfdir
 
@@ -74,9 +74,9 @@ def augmentconfig(c):
     c['sumadir'] = '%(surfdir)s/SUMA/' % c
 
     # derive subject id from surfdir
-    
+
     sid = os.path.split(os.path.split(surfdir)[0])[1] if surfdir else None
-    c['sid']=c.get('sid', sid)
+    c['sid'] = c.get('sid', sid)
     if c['sid'] is None:
         print"Warning: no subject id specified"
 
@@ -169,7 +169,7 @@ def run_toafni(config, env):
 
     sd = config['sumadir']
     sid = config['sid']
-    
+
     if sid is None:
         raise ValueError("Subject id is not set, cannot continue")
 
@@ -555,7 +555,7 @@ def run_makespec_bothhemis(config, env):
 
         specs = afni_suma_spec.hemi_pairs_add_views(specs[0], specs[1], 'inflated', refdir, overwrite=overwrite)
         spec_both = afni_suma_spec.merge_left_right(specs[0], specs[1])
-        
+
         surfprefix = '%s%sh' % (config['mi_icopat'] % icold, 'b')
         specfn = '%s/%s.spec' % (refdir, surfprefix)
         spec_both.write(specfn, overwrite=overwrite)

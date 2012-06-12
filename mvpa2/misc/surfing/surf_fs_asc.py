@@ -160,69 +160,10 @@ def hemi_pairs_reposition(surf_left, surf_right, touching_side, min_distance=10.
         #delta = np.zeros((1, 3))
         # sometimes the surfaces are not properly aligned along x and y
         # so fix it by moving by center of mass values along x and y
-        
-        delta=-np.reshape(surfs[i].center_of_mass(),(1,3))
+
+        delta = -np.reshape(surfs[i].center_of_mass(), (1, 3))
         delta[0, 0] = hemisign * (xtreme - min_distance * .5)
         surfs[i] = surfs[i] + delta # make an implicit copy
 
     return tuple(surfs)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    d = '/Users/nick/organized/211_ak12_andy/ref/ab00/'
-    d='/Users/nick/Downloads/subj1/ref4/'
-    #surffn=d+'ico32_lh.pial_al.asc'
-
-
-    #surffn2=d+'ico32_rh.pial_al.asc'
-
-    surffn = d + 'ico32_lh.inflated_al.asc'
-    surffn2 = d + 'ico32_rh.inflated_al.asc'
-
-
-    p = read(surffn)
-    q = read(surffn2)
-
-    for touching in 'msiap':
-        pr, qr = hemi_pairs_reposition(p, q, touching)
-
-        fnout = d + '_' + touching + 'bh.asc'
-
-        both = pr.merge(qr)
-        write(fnout, both, overwrite=True)
-    '''
-    for i in []:
-        cm = s.center_of_mass()
-        print cm
-
-        cm = None
-
-        #cm=[100,100,100]
-
-        theta = [0, 0, 0]
-        theta[2] = i * 45.
-        theta[1] = i * 45.
-        r = s.rotate(theta, unit='deg', center=cm)
-        fnout = d + '_s_%d.asc' % i
-
-        m = s.merge(r, r)
-
-        write(m, fnout, overwrite=True)
-
-    '''
