@@ -238,9 +238,15 @@ class Hyperalignment(ClassWithCollections):
         # Level 3 -- final, from-scratch, alignment to final common space
         #
         mappers = self._level3(datasets, commonspace, mappers, residuals)
+
         # return trained mappers for projection from all datasets into the
         # common space
-        return mappers
+        if params.zscore_all:
+            # We need to construct new mappers which would chain
+            # zscore and then final transformation
+            return [ChainMapper([zm, m]) for zm, m in zip(zmappers, mappers)]
+        else:
+            return mappers
 
 
     def _level1(self, datasets, commonspace, ref_ds, mappers, residuals):
@@ -359,10 +365,5 @@ class Hyperalignment(ClassWithCollections):
                 data_mapped = m.forward(ds_new.samples)
                 residuals[-1, i] = np.linalg.norm(data_mapped - commonspace)
 
-        if params.zscore_all:
-            # We need to construct new mappers which would chain
-            # zscore and then final transformation
-            return [ChainMapper([zm, m]) for zm, m in zip(zmappers, mappers)]
-        else:
-            return mappers
+        return mappers
 
