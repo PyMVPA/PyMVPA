@@ -279,20 +279,21 @@ class Hyperalignment(ClassWithCollections):
 
     def _level3(self, datasets, commonspace, mappers, residuals):
         params = self.params            # for quicker access ;)
+
+        # key different to level-2; the common space is uniform
+        #temp_commonspace = commonspace
+
+        # and again
+        if params.zscore_common:
+            zscore(commonspace, chunks_attr=None)
+
         # start from original input datasets again
         for i, (m, ds_new) in enumerate(zip(mappers, datasets)):
             if __debug__:
                 debug('HPAL_', "Level 3: ds #%i" % i)
 
-            # key different to level-2; the common space is uniform
-            temp_commonspace = commonspace
-            # and again
-            # XXX Why is an unmodified common space zscore over and over again?
-            if params.zscore_common:
-                zscore(temp_commonspace, chunks_attr=None)
-
             # retrain mapper on final common space
-            ds_new.sa[m.get_space()] = temp_commonspace
+            ds_new.sa[m.get_space()] = commonspace
             m.train(ds_new)
             if residuals is not None:
                 # obtain final projection
