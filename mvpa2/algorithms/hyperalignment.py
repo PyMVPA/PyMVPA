@@ -41,7 +41,7 @@ class Hyperalignment(ClassWithCollections):
     This is a three-level algorithm. In the first level, a series of input
     datasets is projected into a common feature space using a configurable
     mapper. The common space is initially defined by a chosen exemplar from the
-    list of input dataset, but is subsequently refined by iteratively combining
+    list of input datasets, but is subsequently refined by iteratively combining
     the common space with the projected input datasets.
 
     In the second (optional) level, the original input datasets are again
@@ -53,7 +53,7 @@ class Hyperalignment(ClassWithCollections):
     In the third level, the input datasets are again aligned with the, now
     final, common feature space. The output of this algorithm are trained
     mappers (one for each input dataset) that transform the individual features
-    space into the common space.
+    spaces into the common space.
 
     The default values for the parameters of the algorithm (e.g. projection via
     Procrustean transformation, common space aggregation by averaging) resemble
@@ -122,7 +122,7 @@ class Hyperalignment(ClassWithCollections):
     combiner1 = Parameter(lambda x,y: 0.5*(x+y), #
             doc="""How to update common space in the 1st-level loop. This must
                 be a callable that takes two arguments. The first argument is
-                one of the input dataset after projection onto the 1st-level
+                one of the input datasets after projection onto the 1st-level
                 common space. The second argument is the current 1st-level
                 common space. The 1st-level combiner is called iteratively for
                 each projected input dataset, except for the reference dataset.
@@ -308,10 +308,10 @@ class Hyperalignment(ClassWithCollections):
                 if __debug__:
                     debug('HPAL_', "Level 2 (%i-th iteration): ds #%i" % (loop, i))
 
-                # XXX this step is not mentioned in the paper
-                # why is the common space modified before alignment? This is
-                # what is different in level-2 and level-3, so it should be
-                # explained somewhere
+                # Optimization speed up heuristic
+                # Slightly modify the common space towards other feature
+                # spaces and reduce influence of this feature space for the
+                # to-be-computed projection
                 temp_commonspace = (commonspace * ndatasets - data_mapped[i]) \
                                     / (ndatasets - 1)
 
@@ -342,7 +342,7 @@ class Hyperalignment(ClassWithCollections):
     def _level3(self, datasets, commonspace, mappers, residuals):
         params = self.params            # for quicker access ;)
 
-        # key different to level-2; the common space is uniform
+        # key different from level-2; the common space is uniform
         #temp_commonspace = commonspace
 
         # and again
