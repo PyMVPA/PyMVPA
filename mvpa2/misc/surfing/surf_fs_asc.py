@@ -125,7 +125,7 @@ def write(surf, fn, overwrite=False, comment=None):
     f.write("\n".join(s))
     f.close()
 
-def inflated_hemi_pairs_reposition(surf_left, surf_right, touching_side, min_distance=10.):
+def hemi_pairs_reposition(surf_left, surf_right, touching_side, min_distance=10.):
     touching_side = touching_side[0].lower()
 
     mn, mx = np.min, np.max
@@ -148,33 +148,22 @@ def inflated_hemi_pairs_reposition(surf_left, surf_right, touching_side, min_dis
         for i in xrange(nsurfs):
             theta[rotate_axis] = rotate_angle * hemisigns[i] * rotatesign
             surfs[i] = surfs[i].rotate(theta, unit='deg')
-            print "Rotating"
+
 
     for i in xrange(nsurfs):
         hemisign = hemisigns[i]
         sign = rotatesign * hemisign
-        print "dim", dim, rotate_axis
-        print np.min(surfs[i].v(), axis=0)
-        print np.max(surfs[i].v(), axis=0)
-
-
         coords = surfs[i].v()
 
-
-        """xtreme=np.min(coords[:,0]*hemisign)
-        
-        delta=np.zeros((1,3))
-        delta[0,0]=hemisign*(xtreme-min_distance*.5)
-        surfs[i]=surfs[i]+(-delta)
-        """
         xtreme = np.min(coords[:, 0] * -hemisign)
 
-        delta = np.zeros((1, 3))
+        #delta = np.zeros((1, 3))
+        # sometimes the surfaces are not properly aligned along x and y
+        # so fix it by moving by center of mass values along x and y
+        
+        delta=-np.reshape(surfs[i].center_of_mass(),(1,3))
         delta[0, 0] = hemisign * (xtreme - min_distance * .5)
-        surfs[i] = surfs[i] + (delta)
-
-        print np.min(surfs[i].v(), axis=0), delta
-        print np.max(surfs[i].v(), axis=0)
+        surfs[i] = surfs[i] + delta # make an implicit copy
 
     return tuple(surfs)
 
@@ -197,6 +186,7 @@ def inflated_hemi_pairs_reposition(surf_left, surf_right, touching_side, min_dis
 
 if __name__ == "__main__":
     d = '/Users/nick/organized/211_ak12_andy/ref/ab00/'
+    d='/Users/nick/Downloads/subj1/ref4/'
     #surffn=d+'ico32_lh.pial_al.asc'
 
 
@@ -210,13 +200,13 @@ if __name__ == "__main__":
     q = read(surffn2)
 
     for touching in 'msiap':
-        pr, qr = inflated_hemi_pairs_reposition(p, q, touching)
+        pr, qr = hemi_pairs_reposition(p, q, touching)
 
         fnout = d + '_' + touching + 'bh.asc'
 
         both = pr.merge(qr)
         write(fnout, both, overwrite=True)
-
+    '''
     for i in []:
         cm = s.center_of_mass()
         print cm
@@ -235,3 +225,4 @@ if __name__ == "__main__":
 
         write(m, fnout, overwrite=True)
 
+    '''
