@@ -18,7 +18,7 @@ from mvpa2.datasets.base import Dataset
 from mvpa2.algorithms.hyperalignment import Hyperalignment
 from mvpa2.mappers.zscore import zscore
 from mvpa2.misc.support import idhash
-from mvpa2.misc.data_generators import distort_dataset
+from mvpa2.misc.data_generators import random_affine_transformation
 from mvpa2.misc.fx import get_random_rotation
 
 # Somewhat slow but provides all needed ;)
@@ -61,7 +61,7 @@ class HyperAlignmentTests(unittest.TestCase):
             #     # if we transform back nicely
             #     R = np.eye(ds_orig.nfeatures)
             ## else:
-            ds_ = distort_dataset(ds_orig, scale_fac=100, shift_fac=10)
+            ds_ = random_affine_transformation(ds_orig, scale_fac=100, shift_fac=10)
             Rs.append(ds_.a.random_rotation)
             # reusing random data from dataset itself
             random_scales += [ds_.a.random_scale]
