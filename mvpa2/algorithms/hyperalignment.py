@@ -294,10 +294,9 @@ class Hyperalignment(ClassWithCollections):
             # retrain mapper on final common space
             ds_new.sa[m.get_space()] = temp_commonspace
             m.train(ds_new)
-            # obtain final projection
-            # XXX this is only required when residuals are requested
-            data_mapped = m.forward(ds_new.samples)
             if residuals is not None:
+                # obtain final projection
+                data_mapped = m.forward(ds_new.samples)
                 residuals[-1, i] = np.linalg.norm(data_mapped - commonspace)
 
         if params.zscore_all:
