@@ -407,8 +407,6 @@ def voxel_selection(vol_surf, surf_srcs, radius, srcs=None, start=0., stop=1., s
                     if __debug__:
                         debug('SVS', msg)
 
-
-
         return node2volume_attributes
 
 
