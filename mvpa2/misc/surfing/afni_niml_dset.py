@@ -220,6 +220,41 @@ def write(fnout, dset, form='binary'):
     dset['filename'] = fn
     niml.write(fnout, dset, form, dset2rawniml)
 
+def sparse2full(dset, pad_to_ico_ld=None, pad_to_node=None):
+    if not pad_to_ico_ld is None:
+        if pad_to_node:
+            raise ValueError("Cannot have both ico_ld and pad_to_node")
+        pad_to_node = ico_ld * pad_to_ico_ld * 10 + 2
+    else:
+        if pad_to_node is None:
+            raise ValueError("Need either pad_to_ico_ld or pad_to_node")
+
+    data = dset['data']
+    nrows, ncols = data.shape
+
+    node_indices = dset.get('node_indices', np.reshape(np.arange(nrows), (-1, 1)))
+
+    # a few sanity checks
+    n = len(node_indices)
+
+    if nrows != n:
+        error('size mismatch between data and node indices')
+
+    if n > pad_to_node:
+        error('data has more rows (%d) than there pad_to_node (%d)', (n, pad_to_node))
+
+    full_node_indices = np.reshape(np.arange(pad_to_node), (pad_to_node, 1))
+    #full_node_indices_vec = np.reshape(full_node_indices, (pad_to_node,))
+
+    fulldata = np.zeros((pad_to_node, ncols), dtype=data.dtype)
+    fulldata[np.reshape(node_indices, (n,)), :] = data[:, :]
+
+    fulldset = dset
+    fulldset['data'] = fulldata
+    fulldset['node_indices'] = full_node_indices
+
+    return fulldset
+
 def _test_dset():
     d = '/Users/nick/Downloads/fingerdata-0.2/glm/'
     fn = d + '__small.niml.dset'
