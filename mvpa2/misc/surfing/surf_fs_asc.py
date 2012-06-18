@@ -174,6 +174,11 @@ def hemi_pairs_reposition(surf_left, surf_right, touching_side, min_distance=10.
     return tuple(surfs)
 
 def sphere_reg_leftrightmapping(surf_sphere_reg_left, surf_sphere_reg_right):
+    '''finds the mapping from left to right hemispehre and vice versa
+    (the mapping is symmetric)
+    
+    this only works on sphere.reg.asc files made with AFNI/SUMA's mapicosehedron'''
+    
     vL, vR=surf_sphere_reg_left.v(), surf_sphere_reg_right.v()
     
     def _check_is_sphere(v, eps=.0001):
@@ -198,9 +203,17 @@ def sphere_reg_leftrightmapping(surf_sphere_reg_left, surf_sphere_reg_right):
     # on the right surface
     left2right=np.zeros((n,),dtype=np.int)
     
+    # find corresponding nodes
     for i in xrange(n):
-        left2right[i]=np.argmin(np.sum((vL[i,:]-vS)**2,axis=1))
+        d2=np.sum((vL[i,:]-vS)**2,axis=1) # squared distance
+        minidx=np.argmin(d2)
+        left2right[i]=minidx
         
-    return left2right
+        if d2[minidx]>.001:
+            raise ValueError('no mapping found for node %r: min distance %r' % (i, d2[minidx]**.5))
     
-        
+    # just one final check     
+    if not all(left2right[left2right[i]]==i for i in xrange(n)):
+        raise ValueError('unsymmetric mapping - this should not happen')
+    
+    return left2right
