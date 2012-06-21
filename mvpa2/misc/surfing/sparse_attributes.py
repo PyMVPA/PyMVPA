@@ -64,30 +64,65 @@ class SparseAttributes(object):
         if not roi_attr in self.sa_labels():
             raise KeyError("attribute %r not in map" % roi_attr)
 
-        class AttrMapping(Mapping):
-            def __init__(self, cls, roi_attr):
-                self._roi_attr = roi_attr
-                self._cls = cls
-
-            def __getitem__(self, key):
-                return self._cls.get(key, self._roi_attr)
-
-            def __len__(self):
-                return len(self.__keys__())
-
-            def __keys__(self):
-                return list(self._cls.keys())
-
-            def __iter__(self):
-                return iter(self.__keys__())
-
         return AttrMapping(self, roi_attr)
+
+    def get_inv_attr_mapping(self, roi_attr):
+        '''Provides an inverse mapping from get_attr_mapping
+        This mapping is computed and returned as a new dict
+        '''
+        if isinstance(roi_attr,AttrMapping):
+            forward=roi_attr
+        else:
+            forward=self.get_attr_mapping(roi_attr)
+        
+        backward=dict()
+        for k, vs in forward.iteritems():
+            for v in vs:
+                if not v in backward:
+                    backward[v]=[]
+                backward[v].append(k)
+        
+        return backward
+            
 
     def __repr__(self):
         return ("SparseAttributes with %i entries, %i labels (%r)\nGeneral attributes: %r" %
                 (len(self.sa), len(self._sa_labels), self._sa_labels, self.a.keys()))
 
+class AttrMapping(Mapping):
+    def __init__(self, cls, roi_attr):
+        self._roi_attr = roi_attr
+        self._cls = cls
 
+    def __getitem__(self, key):
+        return self._cls.get(key, self._roi_attr)
+
+    def __len__(self):
+        return len(self.__keys__())
+
+    def __keys__(self):
+        return list(self._cls.keys())
+
+    def __iter__(self):
+        return iter(self.__keys__())
+    
+def paired_common_attributes_count(sp_attrs, roi_attr):
+    '''function to count how often the same attribute is shared across keys in
+    the input sparse_attributes. Useful to count how many voxels are shared across''' 
+    inv=sp_attrs.get_inv_attr_mapping(roi_attr)
+    swp=lambda x,y: (x,y) if x<y else (y,x)
+    
+    d=dict()
+    for k,vs in inv.iteritems():
+        for i, x in enumerate(vs):
+            for j, y in enumerate(vs):
+                if i<=j: 
+                    continue
+                s=swp(x,y)
+                if not s in d: 
+                    d[s]=0
+                d[s]+=1
+    return d
 
 class SparseVolumeAttributes(SparseAttributes):
     """
@@ -140,7 +175,7 @@ class SparseVolumeAttributes(SparseAttributes):
             center_ids = self.keys() # these are only nodes with voxels associated
 
             if len(mask_idxs) < len(center_ids):
-                raise ValueError("Too many center ids (%r > %r" %
+                raise ValueError("Too many center ids (%r > %r)" %
                                     (len(mask_idxs), len(center_ids)))
 
             attr = SparseVolumeAttributes([voxel_ids_label], vg)
