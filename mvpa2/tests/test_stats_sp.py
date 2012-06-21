@@ -281,6 +281,7 @@ class StatsTestsScipy(unittest.TestCase):
         """Test GLM
         """
         skip_if_no_external('statsmodels')
+        from mvpa2.measures.statsmodels_adaptor import GLM
         # play fmri
         # full-blown HRF with initial dip and undershoot ;-)
         hrf_x = np.linspace(0, 25, 250)
