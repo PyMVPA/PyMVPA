@@ -23,6 +23,7 @@ from mvpa2.base.dataset import AttrDataset, save
 from mvpa2.base.hdf5 import h5save, h5load, obj2hdf, HDF5ConversionError
 from mvpa2.misc.data_generators import load_example_fmri_dataset
 from mvpa2.mappers.fx import mean_sample
+from mvpa2.mappers.boxcar import BoxcarMapper
 
 class HDFDemo(object):
     pass
@@ -180,3 +181,43 @@ def test_h5save_mkdir(dirname):
     ok_(os.path.exists(filename))
     d = h5load(filename)
     assert_equal(d, {})
+
+    # And that we can still just save into a file in current directory
+    # Let's be safe and assure going back to the original directory
+    cwd = os.getcwd()
+    try:
+        os.chdir(dirname)
+        h5save("TEST.hdf5", [1,2,3])
+    finally:
+        os.chdir(cwd)
+
+def test_state_cycle_with_custom_reduce():
+    # BoxcarMapper has a custom __reduce__ implementation . The 'space'
+    # setting will only survive a svae/load cycle if the state is correctly
+    # handle for custom reduce iplementations.
+    bm = BoxcarMapper([0], 1, space='boxy')
+    f = tempfile.NamedTemporaryFile()
+    h5save(f.name, bm)
+    bm_rl = h5load(f.name)
+    assert_equal(bm_rl.get_space(), 'boxy')
+
+def test_store_metaclass_types():
+    f = tempfile.NamedTemporaryFile()
+    from mvpa2.kernels.base import Kernel
+    allowedtype=Kernel
+    h5save(f.name, allowedtype)
+    lkrn = h5load(f.name)
+    assert_equal(lkrn, Kernel)
+    assert_equal(lkrn.__metaclass__, Kernel.__metaclass__)
+
+def test_state_setter_getter():
+    # make sure the presence of custom __setstate__, __getstate__ methods
+    # is honored -- numpy's RNGs have it
+    from numpy.random.mtrand import RandomState
+    f = tempfile.NamedTemporaryFile()
+    r = RandomState()
+    h5save(f.name, r)
+    rl = h5load(f.name)
+    rl_state = rl.get_state()
+    for i, v in enumerate(r.get_state()):
+        assert_array_equal(v, rl_state[i])

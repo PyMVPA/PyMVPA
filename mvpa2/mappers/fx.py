@@ -181,6 +181,9 @@ class FxMapper(Mapper):
             if single_attr:
                 col[attr] = [a]
             else:
+                # TODO -- here might puke if e.g it is a list where some items
+                # are empty lists... I guess just wrap in try/except and
+                # do dtype=object if catch
                 col[attr] = np.atleast_1d(a)
 
         return out

@@ -409,8 +409,11 @@ class SVMModel:
 
     def __del__(self):
         if __debug__:
-            debug('SVM_', 'Destroying libsvm v. %s SVMModel %s'
-                  % (svmc.__version__, `self`))
+            # TODO: place libsvm versioning information into externals
+            debug('SVM_', 'Destroying libsvm v. %s SVMModel %s',
+                  (hasattr(svmc, '__version__') \
+                   and svmc.__version__ or "unknown",
+                   `self`))
         try:
             svmc.svm_destroy_model_helper(self.model)
         except Exception, e:

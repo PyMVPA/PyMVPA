@@ -385,6 +385,8 @@ class GNBSearchlight(BaseSearchlight):
             roi_sizes = [len(x) for x in roi_fids]
         else:
             roi_sizes = []
+        if self.ca.is_enabled('roi_feature_ids'):
+            self.ca.roi_feature_ids = roi_fids
 
         indexsum = self._indexsum
         if indexsum == 'sparse':
