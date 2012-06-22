@@ -12,7 +12,8 @@ Analytical solution + Monte-Carlo checks.
 """
 
 import numpy as np
-from multivariate_polya import log_multivariate_polya_vectorized as log_multivariate_polya
+from mvpa2.support.bayes.multivariate_polya \
+  import log_multivariate_polya_vectorized as log_multivariate_polya
 
 from mvpa2.base import externals
 externals.exists('scipy', raise_=True)
