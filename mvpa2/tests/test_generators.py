@@ -296,7 +296,7 @@ def test_exclude_targets_combinations_subjectchunks():
                             space='partitions')
     # targets do not need even to be defined!
     ds = Dataset(np.arange(18).reshape(9, 2),
-                 sa={'chunks': np.arange(9) / 3,
+                 sa={'chunks': np.arange(9) // 3,
                      'subjects': np.arange(9) % 3})
     dss = list(partitioner.generate(ds))
     assert_equal(len(dss), 9)
