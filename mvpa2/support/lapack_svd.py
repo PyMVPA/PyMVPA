@@ -9,7 +9,8 @@ if externals.exists('ctypes', raise_=True):
 
 from numpy.linalg import LinAlgError
 
-lapacklib = cdll.LoadLibrary('liblapack.so')
+if externals.exists('liblapack.so'):
+    lapacklib = cdll.LoadLibrary('liblapack.so')
 
 __all__ = ['svd']
 

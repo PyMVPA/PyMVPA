@@ -494,6 +494,8 @@ _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
                   "import rpy2.robjects; rpy2.robjects.r.library('elasticnet')",
           'glmnet': "exists('rpy2', raise_='always'); " \
                   "import rpy2.robjects; rpy2.robjects.r.library('glmnet')",
+          'cran-energy': "exists('rpy2', raise_='always'); " \
+                  "import rpy2.robjects; rpy2.robjects.r.library('energy')",
           'matplotlib': "__assign_matplotlib_version()",
           'pylab': "__check_pylab()",
           'pylab plottable': "__check_pylab_plottable()",
@@ -521,6 +523,7 @@ _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'h5py': "import h5py as __",
           'nipy': "__assign_nipy_version()",
           'nipy.neurospin': "__check_nipy_neurospin()",
+          'statsmodels': 'import statsmodels.api as __',
           }
 
 

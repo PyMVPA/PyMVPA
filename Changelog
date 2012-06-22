@@ -33,18 +33,49 @@ Releases
 
 * 2.1.0 (unreleased)
 
+  * Fixes
+
+    - :func:`~mvpa2.misc.support.mask2slice` failed to convert an array of
+      ``False`` values into ``slice(None, 0, None)`` (Fixes #56).
+    - A number of fixes to the HDF5 IO code that ignored parts of an object's
+      state when custom __reduce__() implementations were used (Fixes #42),
+      and had problems storing metaclass types (Fixes #78).
+
   * Enhancements
 
+    - All searchlight implementations can now optionally store the IDs of all
+      features for each generated ROI (conditional attr. ``roi_feature_ids``)
     - Add :func:`~mvpa2.misc.neighborhood.scatter_neighborhood` to aid
       sparse sampling of spaces.
     - Add :class:`~mvpa2.clfs.transerror.ConfusionMatrixError` to compute
       confusion matrices with a error function interface (e.g. for
       CrossValidation(errorfx=...). This class existed for a long time, but
       was hidden in the unit tests.
+    - Add :class:`~mvpa2.clfs.transerror.Confusion` to compute
+      confusion matrices with a Node interface (e.g. for
+      CrossValidation(postproc=...). This is useful if confusion matrices
+      are necessary as an intermediate result and further processing with
+      other nodes is desired.
+
+  * New functionality
+
+    - Add :class:`~mvpa2.clfs.transerror.BayesConfusionHypothesis` to perform
+      Bayesian hypothesis testing of multi-class confusion statistics. This is
+      useful to assess the likelihood of a particular (or all possible)
+      grouping of classes being distinguishable.
     - Add :class:`~mvpa2.mappers.fxy.FxyMapper` to perform arbitrary
       computations involving two datasets.
     - Add :class:`~mvpa2.mappers.base.CombinedMapper` to run a dataset through
       a set of mappers and combine their outputs.
+    - Add :class:`~mvpa2.measures.statsmodels.UnivariateStatsModels` a wrapper
+      for using models from the StatsModels package as a
+      FeaturewiseMeasure.
+
+  * API changes
+
+    - deprecating ``GLM`` that is now implemented with UnivariateStatsModels.
+      This deprecated GLM class no longer supports the ``zstat`` calculation,
+      and none of its previous condtional attributes are available anymore.
 
 * 2.0.1 (Tue, Mar 27 2012)
 

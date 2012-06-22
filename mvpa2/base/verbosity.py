@@ -411,8 +411,10 @@ if __debug__:
             Generic implementation using psutil
             """
             mi = __pymvpa_process__.get_memory_info()
-            vms = mi.vms/1024
-            rss = mi.rss/1024
+            # in later versions of psutil mi is a named tuple.
+            # but that is not the case on Debian squeeze with psutil 0.1.3
+            rss = mi[0]/1024
+            vms = mi[1]/1024
             return "RSS/VMS: %d/%d KB" % (rss, vms)
 
     except ImportError:
