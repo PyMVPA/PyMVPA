@@ -66,6 +66,6 @@ class Partition:
                 r -= cr
                 j += 1
             else:
-                L[i] = r / v + 1
+                L[i] = r // v + 1
                 r  %= v
         return L
