@@ -266,7 +266,7 @@ response patterns for all seven stimulus categories in the datasets. For
 the sake of simplicity, all similarity structures are computed on the full
 dataset without data folding.
 """
-
+alpha = 0.90
 # feature selection as above
 anova = OneWayAnova()
 fscores = [anova(sd) for sd in ds_all]
@@ -344,4 +344,57 @@ and only the coarse structure (faces vs. objects) is preserved. Moreover, we can
 see that after hyperalignment the average similarity structure of individual
 data is essentially identical to the similarity structure of averaged data --
 reflecting the feature correspondence in the common high-dimensional space.
+
+Regularized Hyperalignment
+^^^^^^^^^^^^^^^^^^^^^
+
+Hyperalignment algorithm can be reformulated to a regulariized hyperalignment that
+can emulate CCA & regular hyperalignment by varying a regularization parameter (alpha).
+Here, we repeat the above between-subject hyperalignment & classification analyses with
+varying values of alpha from 0 (CCA) to 1.0 (regular hyperalignment). 
+"""
+nalphas = 21
+bsc_hyper_results = np.zeros((nsubjs, nalphas, nruns))
+# same cross-validation over subjects as before
+cv = CrossValidation(clf, NFoldPartitioner(attr='subject'), 
+                     errorfx=mean_match_accuracy)
+
+# leave-one-run-out for hyperalignment training
+for test_run in range(nruns):
+    # split in training and testing set
+    ds_train = [sd[sd.sa.chunks != test_run,:] for sd in ds_all]
+    ds_test = [sd[sd.sa.chunks == test_run,:] for sd in ds_all]
+
+    # manual feature selection for every individual dataset in the list
+    anova = OneWayAnova()
+    fscores = [anova(sd) for sd in ds_train]
+    featsels = [StaticFeatureSelection(fselector(fscore)) for fscore in fscores]
+    ds_train_fs = [featsels[i].forward(sd) for i, sd in enumerate(ds_train)]
+
+    for alpha in np.arange(nalphas):
+        hyper = Hyperalignment(alignment=ProcrusteanMapper(svd='dgesvd', space='commonspace'),alpha=alpha/float(nalphas-1))
+        #hyper = Hyperalignment(alpha=alpha/float(nalphas-1))
+        hypmaps = hyper(ds_train_fs)
+        ds_test_fs = [featsels[i].forward(sd) for i, sd in enumerate(ds_test)]
+        ds_hyper = [ hypmaps[i].forward(sd) for i, sd in enumerate(ds_test_fs)]
+        ds_hyper = vstack(ds_hyper)
+        zscore(ds_hyper, chunks_attr='subject')
+        res_cv = cv(ds_hyper)
+        bsc_hyper_results[:,alpha, test_run] = res_cv.samples.T
+
+bsc_hyper_results = np.mean(bsc_hyper_results, axis=2)
+pl.figure()
+pl.errorbar( np.arange(nalphas)/float(nalphas-1), np.mean(bsc_hyper_results, axis=0),
+    np.std(bsc_hyper_results, axis=0) / np.sqrt(nsubjs - 1))
+pl.xlabel('Regularization parameter: alpha')
+pl.ylabel('Average BSC using hyperalignment +/- SEM')
+pl.title('Using regularized hyperalignment with varying alpha values')
+
+"""
+
+   Fig. 2: Mean between-subject classification accuracies using regularized
+   hyperalignment with alpha value ranging from 0(CCA)  to 1(vanilla hyperalignment).
+
+We can clearly see that the regular hyperalignment kicks arse (for this dataset).
+
 """
