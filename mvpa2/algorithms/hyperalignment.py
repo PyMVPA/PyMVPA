@@ -258,6 +258,9 @@ class Hyperalignment(ClassWithCollections):
 
         params = self.params            # for quicker access ;)
         if params.zscore_all:
+            # place datasets into a copy of the list since items
+            # will be reassigned
+            datasets = list(datasets)
             if __debug__:
                 debug('HPAL', "Z-scoring all datasets")
             # zscore them once while storing corresponding ZScoreMapper's
