@@ -378,7 +378,7 @@ if __debug__:
 
     __pymvpa_pid__ = getpid()
 
-    def parse_status(field='VmSize'):
+    def parse_status(field='VmSize', value_only=False):
         """Return stat information on current process.
 
         Usually it is needed to know where the memory is gone, that is
@@ -397,7 +397,21 @@ if __debug__:
                 match = re.sub('[ \t]+', ' ', match)
         except IOError:
             pass
+        if match and value_only:
+            match = match.split(':', 1)[1].lstrip()
         return match
+
+    def get_vmem_from_status():
+        """Return a string summary about utilization of virtual memory
+
+        Deprecated implementation which relied on parsing proc/PID/status
+        """
+        rss, vms = [parse_status(field=x, value_only=True)
+                  for x in ['VmRSS', 'VmSize']]
+        if rss[-3:] == vms[-3:]:
+            # the same units
+            rss = rss[:-3]                # strip from rss
+        return "RSS/VMS: %s/%s" % (rss, vms)
 
     try:
         # we prefer to use psutil if available
@@ -411,17 +425,14 @@ if __debug__:
             Generic implementation using psutil
             """
             mi = __pymvpa_process__.get_memory_info()
-            vms = mi.vms/1024
-            rss = mi.rss/1024
-            return "RSS/VMS: %d/%d KB" % (rss, vms)
+            # in later versions of psutil mi is a named tuple.
+            # but that is not the case on Debian squeeze with psutil 0.1.3
+            rss = mi[0]/1024
+            vms = mi[1]/1024
+            return "RSS/VMS: %d/%d kB" % (rss, vms)
 
     except ImportError:
-        def get_vmem():
-            """Return a string summary about utilization of virtual memory
-
-            Deprecated implementation which relied on parsing proc/PID/status
-            """
-            return parse_status(field='VmSize')
+        get_vmem = get_vmem_from_status
 
     def mbasename(s):
         """Custom function to include directory name if filename is too common

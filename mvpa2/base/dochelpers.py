@@ -255,6 +255,8 @@ def enhanced_doc_string(item, *args, **kwargs):
         func = lcl['__init__']
         initdoc = func.__doc__
 
+        skip_params += lcl.get('__init__doc__exclude__', [])
+
         # either to extend arguments
         # do only if kwargs is one of the arguments
         # in python 2.5 args are no longer in co_names but in varnames
@@ -513,7 +515,9 @@ def _str(obj, *args, **kwargs):
     truncate = cfg.get_as_dtype('verbose', 'truncate str', int, default=200)
 
     s = None
-    if hasattr(obj, 'descr'):
+    # don't do descriptions for dicts like our collections as they might contain
+    # an actual item 'descr'
+    if hasattr(obj, 'descr') and not isinstance(obj, dict):
         s = obj.descr
     if s is None:
         s = obj.__class__.__name__
@@ -541,6 +545,13 @@ def _str(obj, *args, **kwargs):
 
 def borrowdoc(cls, methodname=None):
     """Return a decorator to borrow docstring from another `cls`.`methodname`
+
+    It should not be used for __init__ methods of classes derived from
+    ClassWithCollections since __doc__'s of those are handled by the
+    AttributeCollector anyways.
+
+    Common use is to borrow a docstring from the class's method for an
+    adapter function (e.g. sphere_searchlight borrows from Searchlight)
 
     Examples
     --------

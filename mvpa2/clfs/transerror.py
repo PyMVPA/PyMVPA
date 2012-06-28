@@ -18,10 +18,12 @@ from StringIO import StringIO
 from math import log10, ceil
 
 from mvpa2.base import externals
+from mvpa2.base.node import Node
 
 from mvpa2.misc.errorfx import mean_power_fx, root_mean_power_fx, rms_error, \
      relative_rms_error, mean_mismatch_error, auc_error
 from mvpa2.base import warning
+from mvpa2.datasets import Dataset
 from mvpa2.base.collections import Collectable
 from mvpa2.base.state import ConditionalAttribute, ClassWithCollections, \
      UnknownStateError
@@ -1109,6 +1111,162 @@ class ConfusionMatrix(SummaryStatistics):
         return 100.0*self.__Ncorrect/sum(self.__Nsamples)
 
     labels_map = property(fget=get_labels_map, fset=set_labels_map)
+
+
+class ConfusionMatrixError(object):
+    """Compute confusion matrix as an "error function"
+
+    This class can be used to compute confusion matrices from classifier
+    output inside cross-validation fold without the ``stats`` conditional
+    attribute. Simply pass an instance of this class to the ``errorfx``
+    argument of ``CrossValidation``.
+    """
+    def __init__(self, labels=None):
+        """
+        Parameters
+        ----------
+        labels : list
+          Class labels for confusion matrix columns/rows
+        """
+        self.labels = labels
+
+    def __call__(self, predictions, targets):
+        cm = ConfusionMatrix(labels=list(self.labels),
+                             targets=targets, predictions=predictions)
+        #print cm.matrix
+        # We have to add a degenerate leading dimension
+        # so we could separate them into separate 'samples'
+        return cm.matrix[None, :]
+
+
+class Confusion(Node):
+    """Compute a confusion matrix from predictions and targets (Node interface)
+
+    This class is very similar to ``ConfusionMatrix`` and
+    ``ConfusionMatrixError``.  However, in contrast to these this class can be
+    used in any place that accepts ``Nodes`` -- most importantly others node's
+    ``postproc`` functionality. This makes it very straightforward to compute
+    confusion matrices from classifier output as an intermediate result and
+    continue processing with other nodes. A sketch of a cross-validation setup
+    using this functionality looks like this::
+
+      CrossValidation(some_classifier,
+                      some_partitioner,
+                      errorfx=None,
+                      postproc=Confusion())
+
+    It is vital to set ``errorfx`` to ``None`` to preserve raw classifier
+    prediction values in the output dataset to allow for proper data aggregation
+    in a confusion matrix.
+    """
+    def __init__(self, attr='targets', labels=None, add_confusion_obj=False,
+                 **kwargs):
+        """
+        Parameters
+        ----------
+        attr : str
+          Sample attribute name where classification target values are stored
+          for each prediction.
+        labels : list or None
+          Optional list of labels to compute a confusion matrix for. This can be
+          useful if a particular  prediction dataset doesn't have all
+          theoretically possible labels as targets.
+        add_confusion_obj : bool
+          If True, the ConfusionMatrix object will be added to the output
+          dataset as attribute 'confusion_obj', i.e. ds.a.confusion_obj
+        **kwargs
+          All remaining argments will be passed on to the Node base-class.
+        """
+        Node.__init__(self, **kwargs)
+        self._labels = labels
+        self._target_attr = attr
+        self._add_confusion_obj = add_confusion_obj
+
+    def _call(self, ds):
+        if not len(ds.shape) == 2 and ds.shape[1] == 1:
+            raise ValueError("Confusion cannot deal with multi-dimensional "
+                             "predictions, got shape %s." % ds.shape[1:])
+        # MH: we could also make it iterate over individual chunks and create
+        # matrix sets -- but not sure if there is a use case for the Node
+        # interface
+        # compute the confusion matrix
+        cm = ConfusionMatrix(labels=list(self._labels),
+                             predictions=ds.samples[:,0],
+                             targets=ds.sa[self._target_attr].value)
+        # figure out where to store the labels
+        # by default the confusion matrix in the Dataset will look just like
+        # a printed ConfusionMatrix
+        if self.get_space() is None:
+            fa_attr = 'targets'
+            sa_attr = 'predictions'
+        else:
+            sa_attr = fa_attr = self.get_space()
+        out = Dataset(cm.matrix,
+                      sa={sa_attr: cm.labels},
+                      fa={fa_attr: cm.labels})
+        if self._add_confusion_obj:
+            out.a['confusion_obj'] = cm
+
+        return out
+
+
+class BayesConfusionHypothesis(Node):
+    """Bayesian hypothesis testing on confusion matrices.
+
+    For multi-class classification a single accuracy value is often not a
+    meaningful performance measure -- or at least hard to interpret. This class
+    allows for convenient Bayesian hypothesis testing of confusion matrices.
+    It computes the likelihood of discriminibility of any partitions of
+    classes given a confusion matrix.
+
+    The returned dataset contains a single feature (the log likelihood of
+    a hypothesis) and as many samples as possible partitions of classes.
+    The actual partition configurations are stored in a sample attribute
+    of nested lists. The top-level list contains discriminable groups of
+    classes, whereas the second level lists contain groups of classes that
+    cannot be discriminated under a given hypothesis. For example::
+
+      [[0, 1], [2], [3, 4, 5]]
+
+    This hypothesis represent the state where class 0 and 1 cannot be
+    distinguish from each other, but both 0 and 1 together can be distinguished
+    from class 2 and the group of 3, 4, and 5 -- where classes from the later
+    group cannot be distinguished from one another.
+    """
+    def __init__(self, alpha=None, labels_attr='predictions',
+                 space='hypothesis', **kwargs):
+        """
+        Parameters
+        ----------
+        alpha : array
+          Bayesian hyper-prior alpha (in a multivariate-Dirichlet sense)
+        labels_attr : str
+          Name of the sample attribute in the input dataset that contains
+          the class labels corresponding to the confusion matrix rows.
+        space : str
+          Name of the sample attribute in the output dataset where the
+          hypothesis partition configurations will be stored.
+        **kwargs
+          All remaining argments will be passed on to the Node base-class.
+        """
+        Node.__init__(self, space=space, **kwargs)
+        self._alpha = alpha
+        self._labels_attr = labels_attr
+
+    def _call(self, ds):
+        from mvpa2.support.bayes.partitioner import Partition
+        from mvpa2.support.bayes.partial_independence import compute_logp_H
+
+        logp_Hs = []
+        partitions = Partition(range(len(ds)))
+        for psi in partitions:
+            logp_H = compute_logp_H(ds.samples, psi, self._alpha)
+            logp_Hs.append(logp_H)
+
+        out = Dataset(logp_Hs,
+                      sa={self.get_space():
+                            list(Partition(ds.sa[self._labels_attr].value))})
+        return out
 
 
 class RegressionStatistics(SummaryStatistics):

@@ -144,6 +144,7 @@ from mvpa2.mappers.svd import *
 from mvpa2.mappers.procrustean import *
 from mvpa2.mappers.boxcar import *
 from mvpa2.mappers.fx import *
+from mvpa2.mappers.fxy import *
 from mvpa2.mappers.som import *
 from mvpa2.mappers.zscore import *
 if externals.exists('scipy'):
@@ -157,7 +158,8 @@ if externals.exists('mdp ge 2.4'):
 __sdebug('measures')
 from mvpa2 import measures
 from mvpa2.measures.anova import *
-from mvpa2.measures.glm import *
+if externals.exists('statsmodels'):
+    from mvpa2.measures.statsmodels_adaptor import *
 from mvpa2.measures.irelief import *
 from mvpa2.measures.base import *
 from mvpa2.measures.noiseperturbation import *
@@ -185,6 +187,7 @@ from mvpa2.misc.bv import *
 from mvpa2.misc.bv.base import *
 from mvpa2.misc.support import *
 from mvpa2.misc.transformers import *
+from mvpa2.misc.dcov import dCOV, dcorcoef
 
 __sdebug("nibabel")
 if externals.exists("nibabel"):

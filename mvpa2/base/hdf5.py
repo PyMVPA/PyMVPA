@@ -38,6 +38,10 @@ __docformat__ = 'restructuredtext'
 import types
 import numpy as np
 import h5py
+
+import os
+import os.path as osp
+
 from mvpa2.base.types import asobjarray
 
 if __debug__:
@@ -200,6 +204,20 @@ def _get_subclass_entry(cls, clss, exc_msg="", exc=NotImplementedError):
             return clstuple
     raise exc(exc_msg % locals())
 
+def _update_obj_state_from_hdf(obj, hdf, memo):
+    if 'state' in hdf:
+        # insert the state of the object
+        if __debug__:
+            debug('HDF5', "Populating instance state.")
+        if hasattr(obj, '__setstate__'):
+            state = hdf2obj(hdf['state'], memo)
+            obj.__setstate__(state)
+        else:
+            state = _hdf_dict_to_obj(hdf['state'], memo)
+            obj.__dict__.update(state)
+        if __debug__:
+            debug('HDF5', "Updated %i state items." % len(state))
+
 def _recon_customobj_customrecon(hdf, memo):
     """Reconstruct a custom object from HDF using a custom recontructor"""
     # we found something that has some special idea about how it wants
@@ -237,7 +255,8 @@ def _recon_customobj_customrecon(hdf, memo):
 
     # reconstruct
     obj = recon(*recon_args)
-    # TODO Handle potentially avialable state settings
+    # insert any stored object state
+    _update_obj_state_from_hdf(obj, hdf, memo)
     return obj
 
 
@@ -264,15 +283,8 @@ def _recon_customobj_defaultrecon(hdf, memo):
     pcls, = _get_subclass_entry(cls, ((dict,), (list,), (object,)),
                                 "Do not know how to create instance of %(cls)s")
     obj = pcls.__new__(cls)
-
-    if 'state' in hdf:
-        # insert the state of the object
-        if __debug__:
-            debug('HDF5', "Populating instance state.")
-        state = _hdf_dict_to_obj(hdf['state'], memo)
-        obj.__dict__.update(state)
-        if __debug__:
-            debug('HDF5', "Updated %i state items." % len(state))
+    # insert any stored object state
+    _update_obj_state_from_hdf(obj, hdf, memo)
 
     # do we process a container?
     if 'items' in hdf:
@@ -567,6 +579,9 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
             src_module = obj.__class__.__module__
 
         cls_name = obj.__class__.__name__
+        # special case: metaclass types NOT instance of a class with metaclass
+        if hasattr(obj, '__metaclass__') and hasattr(obj, '__base__'):
+            cls_name = 'type'
 
         if src_module != '__builtin__':
             if hasattr(obj, '__name__'):
@@ -600,28 +615,28 @@ def obj2hdf(hdf, obj, name=None, memo=None, noid=False, **kwargs):
                              noid=True, **kwargs)
             grp['items'].attrs.create('__keys_in_tuple__', 1)
 
-        # pull all remaining data from the default __reduce__
-        if not pieces is None and len(pieces) > 2:
-            # there is something in the state
-            state = pieces[2]
-            if __debug__:
-                debug('HDF5', "Store object state (%i items)." % len(state))
-            # need to set noid since state dict is unique to an object
-            obj2hdf(grp, state, name='state', memo=memo, noid=True,
-                    **kwargs)
     else:
         if __debug__:
-            debug('HDF5', "Use custom __reduce__: (%i arguments)."
+            debug('HDF5', "Use custom __reduce__ for storage: (%i arguments)."
                           % len(pieces[1]))
-        # XXX handle custom reduce
         grp.attrs.create('recon', pieces[0].__name__)
         grp.attrs.create('module', pieces[0].__module__)
         args = grp.create_group('rcargs')
         _seqitems_to_hdf(pieces[1], args, memo, **kwargs)
 
+    # pull all remaining data from __reduce__
+    if not pieces is None and len(pieces) > 2:
+        # there is something in the state
+        state = pieces[2]
+        if __debug__:
+            debug('HDF5', "Store object state (%i items)." % len(state))
+        # need to set noid since state dict is unique to an object
+        obj2hdf(grp, state, name='state', memo=memo, noid=True,
+                **kwargs)
 
-def h5save(filename, data, name=None, mode='w', **kwargs):
-    """Stores arbitray data in an HDF5 file.
+
+def h5save(filename, data, name=None, mode='w', mkdir=True, **kwargs):
+    """Stores arbitrary data in an HDF5 file.
 
     This is a convenience wrapper around `obj2hdf()`. Please see its
     documentation for more details -- especially the warnings!!
@@ -639,10 +654,16 @@ def h5save(filename, data, name=None, mode='w', **kwargs):
     mode : {'r', 'r+', 'w', 'w-', 'a'}
       IO mode of the HDF5 file. See `h5py.File` documentation for more
       information.
+    mkdir : bool, optional
+      Create target directory if it does not exist yet.
     **kwargs
       All additional arguments will be passed to `h5py.Group.create_dataset`.
       This could, for example, be `compression='gzip'`.
     """
+    if mkdir:
+        target_dir = osp.dirname(filename)
+        if target_dir and not osp.exists(target_dir):
+            os.makedirs(target_dir)
     hdf = h5py.File(filename, mode)
     hdf.attrs.create('__pymvpa_hdf5_version__', 1)
     try:

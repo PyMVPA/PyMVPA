@@ -12,6 +12,7 @@ import numpy as np
 from numpy import array
 import operator
 import sys
+import itertools
 
 from mvpa2.base import warning
 from mvpa2.base.dochelpers import borrowkwargs, borrowdoc, _repr_attrs, _repr
@@ -396,7 +397,6 @@ class IndexQueryEngine(QueryEngine):
     - repr
     """
 
-    @borrowkwargs(QueryEngine, '__init__')
     def __init__(self, sorted=True, **kwargs):
         """
         Parameters
@@ -658,3 +658,71 @@ class CachedQueryEngine(QueryEngineInterface):
         return v
 
     queryengine = property(fget=lambda self: self._queryengine)
+
+
+
+def scatter_neighborhoods(neighbor_gen, coords, deterministic=False):
+    """Scatter neighborhoods over a coordinate list.
+
+    Neighborhood seeds (or centers) are placed on coordinates drawn from a
+    provided list so that no seed is part of any other neighborhood. Depending
+    on the actual shape and size of the neighborhoods, their elements can be
+    overlapping, only the seeds (or centers) are guaranteed to be
+    non-overlapping with any other neighborhood. This can be used to perform
+    sparse sampling of a given space.
+
+    Parameters
+    ==========
+
+    neighbor_gen : neighborhood generator
+      Callable that return a list of neighborhood element coordinates, when
+      called with a seed coordinate (cf. Sphere)
+    coords : list
+      List of candidate corrdinates that can serve as neighborhood seeds or
+      elements.
+    deterministic : bool
+      If true, performs seed placement using an OrderedDict (available in
+      Python 2.7 or later) to guarantee deterministic placement of neighborhood
+      seeds in consecutive runs with identical input arguments.
+
+    Returns
+    =======
+    coordinates, indices
+      Two lists are returned. The first list contains the choosen seed
+      coordinates (a subset of the input coordinates), the second list
+      contains the indices of the respective seeds coordinates in the input
+      coordinate list. If particular coordinates are present multiple times
+      the index list will contain all indices corresponding to these
+      coordinates.
+    """
+    hasher = dict
+    if deterministic:
+        from collections import OrderedDict
+        hasher = OrderedDict
+
+    # put coordinates into a dict for fast lookup
+    try:
+        # quick test to check whether the given coords are hashable. If not,
+        # this test avoids a potentially long list zipping
+        _ = {coords[0]: None}
+        lookup = hasher()
+        _ = [lookup.setdefault(c, list()).append(i) for i, c in enumerate(coords)]
+    except TypeError:
+        # maybe coords not hashable?
+        lookup = hasher()
+        _ = [lookup.setdefault(tuple(c), list()).append(i) for i, c in enumerate(coords)]
+
+    seeds = []
+    while len(lookup):
+        # get any remaining coordinate
+        # with OrderedDict popitem will return the last inserted item by default
+        seed, idx = lookup.popitem()
+        # remove all coordinates in the neighborhood
+        _ = [lookup.pop(c, None) for c in neighbor_gen(seed)]
+        # store seed
+        seeds.append((seed, idx))
+    # unzip coords and idx again
+    coords, idx = zip(*seeds)
+    # we need a flat idx list
+    idx = list(itertools.chain.from_iterable(idx))
+    return coords, idx

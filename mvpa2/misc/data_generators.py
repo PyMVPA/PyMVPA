@@ -15,6 +15,7 @@ import numpy as np
 
 from mvpa2.datasets.base import dataset_wizard, Dataset
 from mvpa2 import pymvpa_dataroot, pymvpa_datadbroot
+from mvpa2.misc.fx import get_random_rotation
 
 if __debug__:
     from mvpa2.base import debug
@@ -440,3 +441,38 @@ def autocorrelated_noise(ds, sr, cutoff, lfnl=3.0, bord=10, hfnl=None):
 
     fds.samples = nsamples
     return fds
+
+
+def random_affine_transformation(ds, scale_fac=100., shift_fac=10.):
+    """Distort a dataset by random scale, shift, and rotation.
+
+    The original data samples are transformed by applying a random rotation,
+    shifting by a random vector (randomly selected, scaled input sample), and
+    scaled by a random factor (randomly selected input feature values, scaled
+    by an additional factor). The effective transformation values are stored in
+    the output dataset's attribute collection as 'random_rotation',
+    'random_shift', and 'random_scale' respectively.
+
+    Parameters
+    ----------
+    ds : Dataset
+      Input dataset. Its sample and features attributes will be assigned to the
+      output dataset.
+    scale_fac : float
+      Factor by which the randomly selected value for data scaling is scaled
+      itself.
+    shift_fac : float
+      Factor by which the randomly selected shift vector is scaled.
+    """
+    rndidx = np.random.randint
+    R = get_random_rotation(ds.nfeatures)
+    samples = ds.samples
+    # reusing random data from dataset itself
+    random_scale = samples[rndidx(len(ds)), rndidx(ds.nfeatures)] * scale_fac
+    random_shift = samples[rndidx(len(ds))] * shift_fac
+    samples = np.dot(samples, R) * random_scale \
+              + random_shift
+    return Dataset(samples, sa=ds.sa, fa=ds.fa,
+                   a={'random_rotation': R,
+                      'random_scale': random_scale,
+                      'random_shift': random_shift})

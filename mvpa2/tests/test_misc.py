@@ -10,7 +10,9 @@
 
 from mvpa2.testing import *
 
+from mvpa2.datasets import Dataset
 from mvpa2.misc.fx import dual_gaussian, dual_positive_gaussian, fit2histogram
+from mvpa2.misc.data_generators import random_affine_transformation
 
 @reseed_rng()
 @sweepargs(f=(dual_gaussian, dual_positive_gaussian))
@@ -32,3 +34,15 @@ def test_dual_gaussian(f):
         # both amplitudes must be positive
         ok_(params[0] > 0)
         ok_(params[3] > 0)
+
+
+def test_random_affine_transformation():
+    ds = Dataset.from_wizard(np.random.randn(8,3,2))
+    ds_d = random_affine_transformation(ds)
+    # compare original to the inverse of the distortion using reported
+    # parameters
+    assert_array_almost_equal(
+        np.dot((ds_d.samples - ds_d.a.random_shift) / ds_d.a.random_scale,
+               ds_d.a.random_rotation.T),
+        ds.samples)
+

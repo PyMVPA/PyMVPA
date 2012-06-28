@@ -438,23 +438,6 @@ class ClassifiersTests(unittest.TestCase):
         #                     msg="Should classify correctly")
 
 
-
-    def test_harvesting(self):
-        """Basic testing of harvesting based on SplitClassifier
-        """
-        ds = self.data_bin_1
-        clf = SplitClassifier(clf=SameSignClassifier(),
-                enable_ca=['stats', 'training_stats'],
-                harvest_attribs=['clf.ca.training_time'],
-                descr="DESCR")
-        clf.train(ds)                   # train the beast
-        # Number of harvested items should be equal to number of chunks
-        self.assertEqual(
-            len(clf.ca.harvested['clf.ca.training_time']), len(ds.UC))
-        # if we can blame multiple inheritance and ClassWithCollections.__init__
-        self.assertEqual(clf.descr, "DESCR")
-
-
     def test_mapped_classifier(self):
         samples = np.array([ [ 0,  0, -1], [ 1, 0, 1],
                             [-1, -1,  1], [-1, 0, 1],
@@ -568,6 +551,14 @@ class ClassifiersTests(unittest.TestCase):
         clfs = [clfs[i] for i in np.random.permutation(len(clfs))
                 if not '%' in str(clfs[i])]
 
+        # NB: It is necessary that the same classifier was not used at
+        # different nodes, since it would be re-trained for a new set
+        # of targets, thus leading to incorrect behavior/high error.
+        #
+        # Clone only those few leading ones which we will use
+        # throughout the test
+        clfs = [clf.clone() for clf in clfs[:4]]
+
         # Test conflicting definition
         tclf = TreeClassifier(clfs[0], {
             'L0+2' : (('L0', 'L2'), clfs[1]),
@@ -612,13 +603,12 @@ class ClassifiersTests(unittest.TestCase):
 
         # Test trailing nodes with no classifier
 
-        # NB: It is necessary that the same classifier was not used at
-        # different nodes, since it would be re-trained for a new set
-        # of targets, thus leading to incorrect behavior/high error.
         # That is why we use separate pool of classifiers here
+        # (that is probably old/not-needed since switched to use clones)
         clfs_mc = clfswh['multiclass']         # pool of classifiers
         clfs_mc = [clfs_mc[i] for i in np.random.permutation(len(clfs_mc))
                    if not '%' in str(clfs_mc[i])]
+        clfs_mc = [clf.clone() for clf in clfs_mc[:4]] # and clones again
 
         tclf = TreeClassifier(clfs_mc[0], {
             'L0' : (('L0',), None),

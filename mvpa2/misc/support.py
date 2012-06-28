@@ -669,6 +669,8 @@ def mask2slice(mask):
         raise ValueError("Got an empty mask.")
     # get indices of non-zero filter elements
     idx = mask.nonzero()[0]
+    if not len(idx):
+        return slice(0)
     idx_start = idx[0]
     idx_end = idx[-1] + 1
     idx_step = None

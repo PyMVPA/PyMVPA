@@ -277,9 +277,11 @@ class StatsTestsScipy(unittest.TestCase):
 
 
     @reseed_rng()
-    def test_glm(self):
+    def test_statsmodels(self):
         """Test GLM
         """
+        skip_if_no_external('statsmodels')
+        from mvpa2.measures.statsmodels_adaptor import GLM
         # play fmri
         # full-blown HRF with initial dip and undershoot ;-)
         hrf_x = np.linspace(0, 25, 250)
@@ -331,18 +333,35 @@ class StatsTestsScipy(unittest.TestCase):
             self.assertTrue(np.absolute(betas[0,0]) > 1.0)
 
 
-        # check GLM zscores
-        glm = GLM(X, voi='zstat')
-        zstats = glm(data)
+        # check GLM t values
+        glm = GLM(X, voi='tvalues')
+        tstats = glm(data)
 
-        self.assertTrue(zstats.shape == betas.shape)
+        self.assertTrue(tstats.shape == betas.shape)
 
-        self.assertTrue((zstats.samples[1] > 1000).all(),
-                msg='constant zstats should be huge')
+        self.assertTrue((tstats.samples[1] > 1000).all(),
+                msg='constant tvalues should be huge')
 
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.assertTrue(np.absolute(betas[0,0]) > betas[0,1],
-                msg='with signal should have higher zstats')
+                msg='with signal should have higher tvalues')
+
+        # check t-contrast -- should do the same as tvalues for the first
+        # parameter
+        glm = GLM(X, voi=[1, 0])
+        contrast = glm(data)
+        assert_array_almost_equal(contrast.samples[0], tstats.samples[0])
+        assert_equals(len(contrast), 5)
+        # we should be able to recover the approximate effect size of the signal
+        # which is constructed with a baseline offset of 2 (see above)
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            assert_true(1.5 < contrast.samples[2,0] < 2.5)
+
+        # check F-test
+        glm = GLM(X, voi=[[1, 0]])
+        ftest = glm(data)
+        assert_equals(len(ftest), 4)
+        assert_true(ftest.samples[0,0] > ftest.samples[0,1])
 
 
     def test_binomdist_ppf(self):

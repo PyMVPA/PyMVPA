@@ -217,9 +217,11 @@ def collect_nose_tests(verbosity=1):
         # Measures
         'test_transerror',
         'test_datameasure',
+        'test_dcov',
 
         # Misc
         'test_misc',
+        'test_testing',
         'test_usecases',
         ]
 

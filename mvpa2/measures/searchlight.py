@@ -17,8 +17,9 @@ import numpy as np
 
 from mvpa2.base import externals, warning
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
+from mvpa2.base.types import is_datasetlike
 
-from mvpa2.datasets import hstack
+from mvpa2.datasets import hstack, Dataset
 from mvpa2.support import copy
 from mvpa2.featsel.base import StaticFeatureSelection
 from mvpa2.measures.base import Measure
@@ -36,11 +37,13 @@ class BaseSearchlight(Measure):
     roi_sizes = ConditionalAttribute(enabled=False,
         doc="Number of features in each ROI.")
 
+    roi_feature_ids = ConditionalAttribute(enabled=False,
+        doc="Feature IDs for all generated ROIs.")
+
     is_trained = True
     """Indicate that this measure is always trained."""
 
 
-    @borrowkwargs(Measure, '__init__')
     def __init__(self, queryengine, roi_ids=None, nproc=None, **kwargs):
         """
         Parameters
@@ -165,7 +168,6 @@ class Searchlight(BaseSearchlight):
     interest, which is ran at each spatial location.
     """
 
-    @borrowkwargs(BaseSearchlight, '__init__')
     def __init__(self, datameasure, queryengine, add_center_fa=False, **kwargs):
         """
         Parameters
@@ -184,7 +186,7 @@ class Searchlight(BaseSearchlight):
           base-class :class:`~mvpa2.measures.searchlight.BaseSearchlight`.
         """
         BaseSearchlight.__init__(self, queryengine, **kwargs)
-        self.__datameasure = datameasure
+        self.datameasure = datameasure
         if isinstance(add_center_fa, str):
             self.__add_center_fa = add_center_fa
         elif add_center_fa:
@@ -249,12 +251,14 @@ class Searchlight(BaseSearchlight):
         # but be careful: this call also serves as conversion from parallel maps
         # to regular lists!
         # this uses the Dataset-hstack
-        results = hstack(results)
+        result_ds = hstack(results)
+        if self.ca.is_enabled('roi_feature_ids'):
+            self.ca.roi_feature_ids = [r.a.roi_feature_ids for r in results]
 
         if __debug__:
-            debug('SLC', " hstacked shape %s" % (results.shape,))
+            debug('SLC', " hstacked shape %s" % (result_ds.shape,))
 
-        return results, roi_sizes
+        return result_ds, roi_sizes
 
 
     def _proc_block(self, block, ds, measure):
@@ -290,7 +294,14 @@ class Searchlight(BaseSearchlight):
                 roi.fa[self.__add_center_fa] = roi_seed
 
             # compute the datameasure and store in results
-            results.append(measure(roi))
+            res = measure(roi)
+            if self.ca.is_enabled('roi_feature_ids'):
+                if not is_datasetlike(res):
+                    res = Dataset(np.atleast_1d(res))
+                # add roi feature ids to intermediate result dataset for later
+                # aggregation
+                res.a['roi_feature_ids'] = roi_fids
+            results.append(res)
 
             # store the size of the roi dataset
             if not roi_sizes is None:
@@ -305,7 +316,14 @@ class Searchlight(BaseSearchlight):
 
         return results, roi_sizes
 
-    datameasure = property(fget=lambda self: self.__datameasure)
+
+    def __set_datameasure(self, datameasure):
+        """Set the datameasure"""
+        self.untrain()
+        self.__datameasure = datameasure
+
+    datameasure = property(fget=lambda self: self.__datameasure,
+                           fset=__set_datameasure)
     add_center_fa = property(fget=lambda self: self.__add_center_fa)
 
 @borrowkwargs(Searchlight, '__init__', exclude=['roi_ids'])

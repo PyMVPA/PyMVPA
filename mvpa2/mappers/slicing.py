@@ -118,7 +118,7 @@ class SampleSliceMapper(SliceMapper):
 class StripBoundariesSamples(Node):
     """Strip samples on boundaries defines by sample attribute values.
 
-    A sample attribute of a dataset is scanned for consecutive blocks if
+    A sample attribute of a dataset is scanned for consecutive blocks of
     identical values. Every change in the value is treated as a boundary
     and custom number of samples is removed prior and after this boundary.
     """
