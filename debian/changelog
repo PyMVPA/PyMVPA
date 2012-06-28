@@ -1,12 +1,13 @@
-pymvpa2 (2.0.1-2) UNRELEASED; urgency=low
+pymvpa2 (2.1.0-1) unstable; urgency=low
 
+  * Fresh upstream release
   * debian/control
     - unwrapped Depends/Recommends and sorted
     - moved python-lxml and python-sklearn into Recommends
     - added liblapack-dev into Recommends -- provides liblapack.so
       optionally used by Hyperalignment
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 06 Apr 2012 17:27:21 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 28 Jun 2012 13:28:19 -0400
 
 pymvpa2 (2.0.1-1) unstable; urgency=low
 
