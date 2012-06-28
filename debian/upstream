@@ -1,0 +1,18 @@
+Bug-Database: https://github.com/PyMVPA/PyMVPA/issues
+Bug-Submit: https://github.com/PyMVPA/PyMVPA/issues/new
+Contact: Development and support of PyMVPA <pkg-exppsy-pymvpa@lists.alioth.debian.org>
+FAQ: http://www.pymvpa.org/faq.html
+Other-References: http://www.pymvpa.org/index.html#peer-reviewed-publications
+Repository: git://github.com/PyMVPA/PyMVPA.git
+Repository-Browse: https://github.com/PyMVPA/PyMVPA
+Reference:
+ Author: Hanke, Michael and Halchenko, Yaroslav O. and Sederberg, Per B. and Hanson, Stephen José and Haxby, James V. and Pollmann, Stefan
+ Title: 'PyMVPA: A Python toolbox for multivariate pattern analysis of fMRI data'
+ Journal: Neuroinformatics
+ Year: 2009
+ Volume: 7
+ Number: 1
+ DOI: 10.1007/s12021-008-9041-y
+ PMID: 19184561
+ URL: http://www.springerlink.com/content/n4jm3533pw2661q3
+ eprint: http://haxbylab.dartmouth.edu/publications/HHS+09a.pdf

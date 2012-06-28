@@ -6,6 +6,7 @@ pymvpa2 (2.1.0-1) unstable; urgency=low
     - moved python-lxml and python-sklearn into Recommends
     - added liblapack-dev into Recommends -- provides liblapack.so
       optionally used by Hyperalignment
+  * debian/upstream -- added with a canonical reference
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 28 Jun 2012 13:28:19 -0400
 
