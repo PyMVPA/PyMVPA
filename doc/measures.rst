@@ -113,10 +113,12 @@ that is finally called with the computed sensitivity map. PyMVPA already comes
 with some convenience functors which can be used for this purpose (see
 :mod:`~mvpa.misc.transformers`).
 
+ >>> from mvpa import seed
  >>> from mvpa.misc.data_generators import normalFeatureDataset
  >>> from mvpa.clfs.svm import LinearCSVMC
  >>> from mvpa.misc.transformers import Absolute
  >>>
+ >>> seed(1) # to guarantee reproducible result
  >>> ds = normalFeatureDataset()
  >>> ds
  <Dataset / float64 100 x 4 uniq: 2 labels 5 chunks labels_mapped>
