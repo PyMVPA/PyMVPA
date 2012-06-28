@@ -268,12 +268,13 @@ class Hyperalignment(ClassWithCollections):
         if self.commonspace is None:
             self.train(datasets)
 
+        # place datasets into a copy of the list since items
+        # will be reassigned
+        datasets = list(datasets)
+
         params = self.params            # for quicker access ;)
         alpha = params.alpha             # for letting me be lazy ;)
         if params.zscore_all:
-            # place datasets into a copy of the list since items
-            # will be reassigned
-            datasets = list(datasets)
             if __debug__:
                 debug('HPAL', "Z-scoring all datasets")
             # zscore them once while storing corresponding ZScoreMapper's
@@ -313,7 +314,6 @@ class Hyperalignment(ClassWithCollections):
         if __debug__:
             debug('HPAL', "Using regularized hyperalignment with alpha of %d"
                     % alpha)
-        datasets = [ds.copy(deep=True) for ds in datasets]
         wmappers = []
         for ids in xrange(len(datasets)):
             U, S, Vh = np.linalg.svd(datasets[ids])
