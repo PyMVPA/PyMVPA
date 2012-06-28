@@ -6,8 +6,16 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Compute dcov/dcorr measures as done in energy r-cran toolbox for independence testing
+"""Compute dcov/dcorr measures for independence testing
 
+References
+----------
+
+http://en.wikipedia.org/wiki/Distance_covariance
+
+"""
+
+"""
 TODO: consider use of  numexpr to speed all those up -- there is plenty of temp storage
 """
 
