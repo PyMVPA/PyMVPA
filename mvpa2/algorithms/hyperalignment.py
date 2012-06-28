@@ -223,18 +223,7 @@ class Hyperalignment(ClassWithCollections):
                 datasets[ids] = zmapper.forward(datasets[ids])
 
         if alpha < 1:
-            if __debug__:
-                debug('HPAL', "Using regularized hyperalignment with alpha of %d"
-                        %alpha)
-            datasets = [ds.copy(deep=True) for ds in datasets]
-            for ids in xrange(len(datasets)):
-                U, S, Vh = np.linalg.svd(datasets[ids])
-                S = 1/np.sqrt( (1-alpha)*np.square(S) + alpha )
-                S.resize(len(Vh))
-                S = np.matrix(np.diag(S))
-                W = np.matrix(Vh.T)*S*np.matrix(Vh)
-                wmapper = StaticProjectionMapper(proj=W)
-                datasets[ids] = wmapper.forward(datasets[ids])
+            datasets, wmappers = Hyperalignment._regularize(datasets, alpha)
 
         # initial common space is the reference dataset
         commonspace = datasets[ref_ds].samples
@@ -297,21 +286,8 @@ class Hyperalignment(ClassWithCollections):
                 zmapper.train(datasets[ids])
                 datasets[ids] = zmapper.forward(datasets[ids])
 
-        if params.alpha < 1:
-            if __debug__:
-                debug('HPAL', "Using regularized hyperalignment with alpha of %d"
-                        %params.alpha)
-            datasets = [ds.copy(deep=True) for ds in datasets]
-            wmappers = []
-            for ids in xrange(len(datasets)):
-                U, S, Vh = np.linalg.svd(datasets[ids])
-                S = 1/np.sqrt( (1-alpha)*np.square(S) + alpha )
-                S.resize(len(Vh))
-                S = np.matrix(np.diag(S))
-                W = np.matrix(Vh.T)*S*np.matrix(Vh)
-                wmapper = StaticProjectionMapper(proj=W)
-                wmappers.append(wmapper)
-                datasets[ids] = wmapper.forward(datasets[ids])
+        if alpha < 1:
+            datasets, wmappers = Hyperalignment._regularize(datasets, alpha)
 
         #
         # Level 3 -- final, from-scratch, alignment to final common space
@@ -331,6 +307,24 @@ class Hyperalignment(ClassWithCollections):
                 return [ChainMapper([wm, m]) for wm, m in zip(wmappers, mappers)]
             else:
                 return mappers
+
+
+    def _regularize(datasets, alpha):
+        if __debug__:
+            debug('HPAL', "Using regularized hyperalignment with alpha of %d"
+                    % alpha)
+        datasets = [ds.copy(deep=True) for ds in datasets]
+        wmappers = []
+        for ids in xrange(len(datasets)):
+            U, S, Vh = np.linalg.svd(datasets[ids])
+            S = 1/np.sqrt( (1-alpha)*np.square(S) + alpha )
+            S.resize(len(Vh))
+            S = np.matrix(np.diag(S))
+            W = np.matrix(Vh.T)*S*np.matrix(Vh)
+            wmapper = StaticProjectionMapper(proj=W)
+            wmappers.append(wmapper)
+            datasets[ids] = wmapper.forward(datasets[ids])
+        return datasets, wmappers
 
 
     def _level1(self, datasets, commonspace, ref_ds, mappers, residuals):
