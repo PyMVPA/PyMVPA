@@ -107,10 +107,7 @@ How to cite PyMVPA
 .. include:: howtocite.txt
 
 
-Authors & Contributors
-======================
-
-.. include:: authors.txt
+.. include:: contributors.txt
 
 
 Similar or Related Projects
