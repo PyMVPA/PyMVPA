@@ -35,9 +35,7 @@ def test_euclidean_distances():
 
 
 def test_dCOV_against_R_energy():
-    # if True:
-    from mvpa2.base import externals
-
+    skip_if_no_external('cran-energy')
 
     for N in xrange(1, 10): # sweep through size of the first data
         # We will compare to R implementation
