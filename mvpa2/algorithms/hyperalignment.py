@@ -114,8 +114,9 @@ class Hyperalignment(ClassWithCollections):
 
     alpha = Parameter(1, allowedtype='float32', min=0, max=1,
             doc="""Regularization parameter to traverse between (Shrinkage)-CCA
-                and regular hyperalignment. Setting alpha to 1 makes the algorithm 
-                identical to hyperalignment and alpha of 0 makes it CCA. By default,
+                (canonical correlation analysis) and regular hyperalignment.
+                Setting alpha to 1 makes the algorithm identical to
+                hyperalignment and alpha of 0 makes it CCA. By default,
                 it is 1, therefore hyperalignment. """)
 
     level2_niter = Parameter(1, allowedtype='int', min=0,
@@ -234,7 +235,6 @@ class Hyperalignment(ClassWithCollections):
                 W = np.matrix(Vh.T)*S*np.matrix(Vh)
                 wmapper = StaticProjectionMapper(proj=W)
                 datasets[ids] = wmapper.forward(datasets[ids])
-                    
 
         # initial common space is the reference dataset
         commonspace = datasets[ref_ds].samples
