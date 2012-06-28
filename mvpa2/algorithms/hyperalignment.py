@@ -223,7 +223,7 @@ class Hyperalignment(ClassWithCollections):
                 datasets[ids] = zmapper.forward(datasets[ids])
 
         if alpha < 1:
-            datasets, wmappers = Hyperalignment._regularize(datasets, alpha)
+            datasets, wmappers = self._regularize(datasets, alpha)
 
         # initial common space is the reference dataset
         commonspace = datasets[ref_ds].samples
@@ -288,7 +288,7 @@ class Hyperalignment(ClassWithCollections):
                 datasets[ids] = zmapper.forward(datasets[ids])
 
         if alpha < 1:
-            datasets, wmappers = Hyperalignment._regularize(datasets, alpha)
+            datasets, wmappers = self._regularize(datasets, alpha)
 
         #
         # Level 3 -- final, from-scratch, alignment to final common space
@@ -310,7 +310,7 @@ class Hyperalignment(ClassWithCollections):
                 return mappers
 
 
-    def _regularize(datasets, alpha):
+    def _regularize(self, datasets, alpha):
         if __debug__:
             debug('HPAL', "Using regularized hyperalignment with alpha of %d"
                     % alpha)
