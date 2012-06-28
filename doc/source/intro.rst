@@ -26,8 +26,6 @@ come.
 
 PyMVPA stands for *Multivariate Pattern Analysis* in Python_.
 
-.. _Python: http://www.python.org
-
 
 What this Manual is NOT
 =======================
@@ -142,7 +140,6 @@ the mighty NumPy_ package made it easy to support data of any dimensionality.
 Therefore PyMVPA can easily be used with 4d fMRI dataset, but equally well
 with EEG/MEG data (3d) or even non-neuroimaging datasets.
 
-.. _NumPy: http://numpy.scipy.org/
 .. index:: NIfTI
 
 By September 2007 PyMVPA included support for reading and writing datasets
@@ -173,3 +170,4 @@ How to cite PyMVPA
 
 .. include:: contributors.txt
 
+.. include:: link_names.txt
