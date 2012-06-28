@@ -545,6 +545,10 @@ experiments.
   DOI: http://dx.doi.org/10.1111/j.1745-6924.2009.01167.x
 
 
+.. _XLR2012:
+
+**Xu, H., Lorbert, A., Ramadge, P. J., Guntupalli, J. S. & Haxby, J. V.** (2012). Regularized hyperalignment of multi-set fMRI data. Proceedings of the 2012 IEEE Signal Processing Workshop.
+
 .. _ZH05:
 
 **Zou, H. & Hastie, T.** (2005). Regularization and variable selection via the elastic net. *Journal of the Royal Statistical Society Series B*, *67*, 301–320.

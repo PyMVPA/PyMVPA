@@ -265,8 +265,9 @@ Similarity structure in this case is the correlation matrix of multivariate
 response patterns for all seven stimulus categories in the datasets. For
 the sake of simplicity, all similarity structures are computed on the full
 dataset without data folding.
+
 """
-alpha = 0.90
+
 # feature selection as above
 anova = OneWayAnova()
 fscores = [anova(sd) for sd in ds_all]
@@ -328,10 +329,6 @@ for i, sm_t in enumerate((
               rotation=45)
     pl.ylim(ylim)
 
-if cfg.getboolean('examples', 'interactive', True):
-    # show all the cool figures
-    pl.show()
-
 """
 .. figure:: ../pics/ex_hyperalignment_similarity.*
 
@@ -345,16 +342,29 @@ see that after hyperalignment the average similarity structure of individual
 data is essentially identical to the similarity structure of averaged data --
 reflecting the feature correspondence in the common high-dimensional space.
 
-Regularized Hyperalignment
-^^^^^^^^^^^^^^^^^^^^^
 
-Hyperalignment algorithm can be reformulated to a regulariized hyperalignment that
-can emulate CCA & regular hyperalignment by varying a regularization parameter (alpha).
-Here, we repeat the above between-subject hyperalignment & classification analyses with
-varying values of alpha from 0 (CCA) to 1.0 (regular hyperalignment). 
+Regularized Hyperalignment
+--------------------------
+
+According to :ref:`Xu et al. 2012 <XLR2012>`, Hyperalignment can be
+reformulated to a regularized algorithm that can span the whole continuum
+between `canonical correlation analysis (CCA)`_ and regular hyperalignment by
+varying a regularization parameter (alpha).  Here, we repeat the above
+between-subject hyperalignment and classification analyses with varying values
+of alpha from 0 (CCA) to 1.0 (regular hyperalignment).
+
+.. _`canonical correlation analysis (CCA)`: http://en.wikipedia.org/wiki/Canonical_correlation
+
+The following code is essentially identical to the implementation of
+between-subject classification shown above. The only difference is an addition
+``for`` loop doing the alpha value sweep for each cross-validation fold.
 """
-nalphas = 21
-bsc_hyper_results = np.zeros((nsubjs, nalphas, nruns))
+
+alpha_levels = np.concatenate(
+                    (np.linspace(0.0, 0.7, 8),
+                     np.linspace(0.8, 1.0, 9)))
+# to collect the results for later visualization
+bsc_hyper_results = np.zeros((nsubjs, len(alpha_levels), nruns))
 # same cross-validation over subjects as before
 cv = CrossValidation(clf, NFoldPartitioner(attr='subject'), 
                      errorfx=mean_match_accuracy)
@@ -371,30 +381,42 @@ for test_run in range(nruns):
     featsels = [StaticFeatureSelection(fselector(fscore)) for fscore in fscores]
     ds_train_fs = [featsels[i].forward(sd) for i, sd in enumerate(ds_train)]
 
-    for alpha in np.arange(nalphas):
-        hyper = Hyperalignment(alignment=ProcrusteanMapper(svd='dgesvd', space='commonspace'),alpha=alpha/float(nalphas-1))
-        #hyper = Hyperalignment(alpha=alpha/float(nalphas-1))
+    for alpha_level, alpha in enumerate(alpha_levels):
+        hyper = Hyperalignment(alignment=ProcrusteanMapper(svd='dgesvd',
+                                                           space='commonspace'),
+                               alpha=alpha)
         hypmaps = hyper(ds_train_fs)
         ds_test_fs = [featsels[i].forward(sd) for i, sd in enumerate(ds_test)]
         ds_hyper = [ hypmaps[i].forward(sd) for i, sd in enumerate(ds_test_fs)]
         ds_hyper = vstack(ds_hyper)
         zscore(ds_hyper, chunks_attr='subject')
         res_cv = cv(ds_hyper)
-        bsc_hyper_results[:,alpha, test_run] = res_cv.samples.T
+        bsc_hyper_results[:, alpha_level, test_run] = res_cv.samples.T
+
+"""
+Now we can plot the classification accuracy as a function of regularization
+intensity.
+"""
 
 bsc_hyper_results = np.mean(bsc_hyper_results, axis=2)
 pl.figure()
-pl.errorbar( np.arange(nalphas)/float(nalphas-1), np.mean(bsc_hyper_results, axis=0),
-    np.std(bsc_hyper_results, axis=0) / np.sqrt(nsubjs - 1))
+plot_err_line(bsc_hyper_results, alpha_levels)
 pl.xlabel('Regularization parameter: alpha')
 pl.ylabel('Average BSC using hyperalignment +/- SEM')
 pl.title('Using regularized hyperalignment with varying alpha values')
 
+if cfg.getboolean('examples', 'interactive', True):
+    # show all the cool figures
+    pl.show()
+
 """
+.. figure:: ../pics/ex_hyperalignment_alphasweep.*
 
    Fig. 2: Mean between-subject classification accuracies using regularized
-   hyperalignment with alpha value ranging from 0(CCA)  to 1(vanilla hyperalignment).
+   hyperalignment with alpha value ranging from 0 (CCA) to 1 (vanilla
+   hyperalignment).
 
-We can clearly see that the regular hyperalignment kicks arse (for this dataset).
-
+We can clearly see that the regular hyperalignment performs best for this
+dataset. However, please refer to :ref:`Xu et al. 2012 <XLR2012>` for an
+example showing that this is not always the case.
 """
