@@ -10,10 +10,13 @@
 
 import numpy as np
 
+from mvpa2.base.externals import versions
 from mvpa2.testing.tools import *
 
 
 def test_assert_objectarray_equal():
+    if versions['numpy'] < '1.4':
+        raise SkipTest("Skipping because of known segfaults with numpy < 1.4")
     # explicit dtype so we could test with numpy < 1.6
     a = np.array([np.array([0, 1]), np.array(1)], dtype=object)
     b = np.array([np.array([0, 1]), np.array(1)], dtype=object)
