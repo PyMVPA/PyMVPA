@@ -177,7 +177,7 @@ class SearchlightTests(unittest.TestCase):
             # Test if results hold if we "set" a "new" datameasure
             sl.datameasure = CrossValidation(sample_clf_lin, NFoldPartitioner())
             results2 = sl(ds)
-            assert_array_equal(results, results2)
+            assert_array_almost_equal(results, results2)
 
         # test if we graciously puke if center_ids are out of bounds
         dataset0 = ds[:, :50] # so we have no 50th feature
