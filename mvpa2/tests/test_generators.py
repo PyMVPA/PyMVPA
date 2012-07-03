@@ -317,4 +317,6 @@ def test_exclude_targets_combinations_subjectchunks():
     # and we should have gone through all chunks/subjs pairs
     testing_pairs = set(zip(testing_subjs, testing_chunks))
     assert_equal(len(testing_pairs), 9)
-    assert_equal(testing_pairs, set(itertools.product(range(3), range(3))))
+    # yoh: equivalent to set(itertools.product(range(3), range(3))))
+    #      but .product is N/A for python2.5
+    assert_equal(testing_pairs, set(zip(*np.where(np.ones((3,3))))))

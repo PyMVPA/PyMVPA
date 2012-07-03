@@ -26,8 +26,6 @@ come.
 
 PyMVPA stands for *Multivariate Pattern Analysis* in Python_.
 
-.. _Python: http://www.python.org
-
 
 What this Manual is NOT
 =======================
@@ -142,7 +140,6 @@ the mighty NumPy_ package made it easy to support data of any dimensionality.
 Therefore PyMVPA can easily be used with 4d fMRI dataset, but equally well
 with EEG/MEG data (3d) or even non-neuroimaging datasets.
 
-.. _NumPy: http://numpy.scipy.org/
 .. index:: NIfTI
 
 By September 2007 PyMVPA included support for reading and writing datasets
@@ -165,38 +162,12 @@ faster and easier than it has ever been before.
 .. index:: citation, PyMVPA poster
 
 
-Authors & Contributors
-======================
-
-.. include:: authors.txt
-
-
 How to cite PyMVPA
 ==================
 
 .. include:: howtocite.txt
 
 
-Acknowledgements
-================
+.. include:: contributors.txt
 
-We are greatful to the developers and contributers of NumPy_, SciPy_ and
-IPython_ for providing an excellent Python-based computing environment.
-
-Additionally, as PyMVPA makes use of a lot of external software packages (e.g.
-classifier implementations), we want to acknowledge the authors of the
-respective tools and libraries (e.g. LIBSVM_ or Shogun_) and thank them for
-developing their packages as free and open source software.
-
-Finally, we would like to express our acknowledgements to the `Debian project`_
-for providing us with hosting facilities for mailing lists and source code
-repositories. But most of all for developing the *universal operating system*.
-
-.. Please add some notes when you think that you should give credits to someone
-   that enables or motivates you to work on PyMVPA ;-)
-
-.. _Debian project: http://www.debian.org
-.. _SciPy: http://www.scipy.org/
-.. _Shogun: http://www.shogun-toolbox.org
-.. _IPython: http://ipython.scipy.org
-.. _LIBSVM: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+.. include:: link_names.txt

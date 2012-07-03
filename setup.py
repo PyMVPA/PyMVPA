@@ -159,6 +159,7 @@ def setup_package():
                            'mvpa2.misc.io',
                            'mvpa2.misc.plot',
                            'mvpa2.support',
+                           'mvpa2.support.bayes',
                            'mvpa2.support.nipy',
                            'mvpa2.support.ipython',
                            'mvpa2.testing',
