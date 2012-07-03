@@ -31,29 +31,31 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
-* 2.1.0 (unreleased)
+* 2.1.0 (Fri, June 29 2012)
 
   * Fixes
 
     - :func:`~mvpa2.misc.support.mask2slice` failed to convert an array of
       ``False`` values into ``slice(None, 0, None)`` (Fixes #56).
     - A number of fixes to the HDF5 IO code that ignored parts of an object's
-      state when custom __reduce__() implementations were used (Fixes #42),
+      state when custom ``__reduce__()`` implementations were used (Fixes #42),
       and had problems storing metaclass types (Fixes #78).
+    - Proper single quotes in documentation code snippets within PDFs.
+    - Memory leak (model pointer) in LIBSVM bindings.
 
   * Enhancements
 
     - All searchlight implementations can now optionally store the IDs of all
       features for each generated ROI (conditional attr. ``roi_feature_ids``)
-    - Add :func:`~mvpa2.misc.neighborhood.scatter_neighborhood` to aid
+    - Add :func:`~mvpa2.misc.neighborhood.scatter_neighborhoods` to aid
       sparse sampling of spaces.
     - Add :class:`~mvpa2.clfs.transerror.ConfusionMatrixError` to compute
-      confusion matrices with a error function interface (e.g. for
-      CrossValidation(errorfx=...). This class existed for a long time, but
+      confusion matrices with an error function interface (e.g. for
+      ``CrossValidation(errorfx=...)``). This class existed for a long time, but
       was hidden in the unit tests.
     - Add :class:`~mvpa2.clfs.transerror.Confusion` to compute
       confusion matrices with a Node interface (e.g. for
-      CrossValidation(postproc=...). This is useful if confusion matrices
+      ``CrossValidation(postproc=...)``). This is useful if confusion matrices
       are necessary as an intermediate result and further processing with
       other nodes is desired.
 
@@ -67,15 +69,18 @@ Releases
       computations involving two datasets.
     - Add :class:`~mvpa2.mappers.base.CombinedMapper` to run a dataset through
       a set of mappers and combine their outputs.
-    - Add :class:`~mvpa2.measures.statsmodels.UnivariateStatsModels` a wrapper
-      for using models from the StatsModels package as a
+    - Add :class:`~mvpa2.measures.statsmodels_adaptor.UnivariateStatsModels` a wrapper
+      for using models from the statsmodels_ package as a
       FeaturewiseMeasure.
+    - Add :class:`~mvpa2.misc.dcov.dCOV` and
+      :func:`~mvpa2.misc.dcov.dcorcoef` to quantify independence of
+      (multivariate) signals.
 
   * API changes
 
-    - deprecating ``GLM`` that is now implemented with UnivariateStatsModels.
+    - Deprecating ``GLM`` that is now implemented with UnivariateStatsModels.
       This deprecated GLM class no longer supports the ``zstat`` calculation,
-      and none of its previous condtional attributes are available anymore.
+      and none of its previous conditional attributes are available anymore.
 
 * 2.0.1 (Tue, Mar 27 2012)
 
@@ -83,46 +88,48 @@ Releases
 
   * Fixes (21 BF commits)
 
-    - hdf5 storage -- handle loading of objects with bound
-      ``builtin_function_or_method``
-    - use system-wide ``autosummary/generate.py`` for sphinx >= 1.1.2
-	  (Closes: #658593)
-    - :class:`ConditionalAttribute` should not loose value in deepcopy
-	  when default off (Fixes #63)
-    - correct handling of scalar mean/std values for :class:`ZScoreMapper`
+    - HDF5 storage -- handle loading of objects with bound
+      ``builtin_function_or_method``.
+    - Use system-wide ``autosummary/generate.py`` for sphinx >= 1.1.2
+      (Closes: #658593).
+    - :class:`~mvpa2.base.state.ConditionalAttribute` should not loose
+      value in deepcopy when default off (Fixes #63).
+    - Correct handling of scalar mean/std values for
+      :class:`~mvpa2.mappers.zscore.ZScoreMapper`.
     - MRI data import via _img2data now works with unicode
-	  filenames (Fixes #60)
-    - should work with IPython >= 0.11 now (Fixes #59)
-    - various small fixes to improve tests and functionality
-    - fix :class:`SMLR` segfaults on Windows (Thanks cgohlke for the patch)
+      filenames (Fixes #60).
+    - Should work with IPython >= 0.11 now (Fixes #59).
+    - Various small fixes to improve tests and functionality.
+    - Fix :class:`SMLR` segfaults on Windows (Thanks cgohlke for the patch).
 
   * Enhancements (29 ENH, OPT, and NF commits)
 
-    - :class:`FxMapper` calls functions natively (instead of a slow
-      row/column at a time) if they carry ``axis`` as the 2nd argument.
-      Provides tremendous speed up for :func:`mean_sample` etc.
-    - :func:`xrandom_unique_combinations` generator for random unique
-      combinations
-    - :func:`dual_gaussian` made more robust by not handling negative
-      values for the standard deviations
-    - :func:`dual_positive_gaussian`
-    - expose "sensitivities" for :class:`PLR`
-    - :class:`NFoldSplitter` float option for ``cvtype`` and
-      intelligent behavior on 'random' limited by 'count' given a
-      large number of folds
-    - few additional learners from :mod:`sklearn` to the warehouses:
-      ExtraTrees, RandomForest, LassoLarsIC
-    - ``__repr__`` for :class:`Partitioner`s
-	- new performance metric -- F1 score -- in the confusion matrix
-      summary stats
+    - :class:`~mvpa2.mappers.fx.FxMapper` calls functions natively
+      (instead of a slow row/column at a time) if they carry ``axis``
+      as the 2nd argument.  Provides tremendous speed up for
+      :func:`mean_sample` etc.
+    - :func:`~mvpa2.misc.support.xrandom_unique_combinations`
+      generator for random unique combinations.
+    - :func:`~mvpa2.misc.fx.dual_gaussian` made more robust by not
+      handling negative values for the standard deviations.
+    - :func:`~mvpa2.misc.fx.dual_positive_gaussian`.
+    - Expose "sensitivities" for :class:`PLR`.
+    - :class:`~mvpa2.generators.partition.NFoldPartitioner` float
+      option for ``cvtype`` and intelligent behavior on 'random'
+      limited by 'count' given a large number of folds.
+    - Add few additional learners from :mod:`sklearn` to the warehouses:
+      ExtraTrees, RandomForest, LassoLarsIC.
+    - ``__repr__`` for :class:`Partitioner`s.
+    - Add new performance metric -- F1 score -- in the confusion matrix
+      summary stats.
     - :class:`CachedQueryEngine` does not rely now on id but on the
       exact value of the query parameters (converted to hashable
       types). Before it could behave incorrectly on rare occasions.
 
   * API changes
 
-    - deprecating ``.splitattr`` if favor of ``.attr`` in
-      :class:`Partitioner`
+    - Deprecating ``.splitattr`` if favor of ``.attr`` in
+      :class:`mvpa2.generators.partition.Partitioner`
 
 * 2.0.0 (Mon, Dec 19 2011)
 
@@ -135,22 +142,22 @@ Releases
 
   * Fixes (23 BF commits)
 
-    - significance level in the right tail was fixed to include the
+    - Significance level in the right tail was fixed to include the
       value tested -- otherwise resulted in optimistic bias (or
       absurdly high significance in improbable case if all estimates
-      having the same value)
-    - compatible with the upcoming IPython 0.12 and renamed sklearn
-      (Fixes #57)
-    - do not double-train ``slave`` classifiers while assessing
-      sensitivities (Fixes #53)
+      having the same value).
+    - Compatible with the upcoming IPython 0.12 and renamed sklearn
+      (Fixes #57).
+    - Do not double-train ``slave`` classifiers while assessing
+      sensitivities (Fixes #53).
 
   * Enhancements (30 ENH + 3 NF commits)
 
-    - resolving voting ties in kNN based on mean distance, and
-      randomly in SMLR
+    - Resolving voting ties in kNN based on mean distance, and
+      randomly in SMLR.
     - :class:`kNN`\'s ``ca.estimates`` now contains dictionaries with
-      votes for each class
-    - consistent zscoring in :class:`Hyperalignment`
+      votes for each class.
+    - Consistent zscoring in :class:`Hyperalignment`.
 
 * 2.0.0~rc5 (Wed, Oct 19 2011)
 
@@ -159,24 +166,24 @@ Releases
 
   * Fixes
 
-    - compatible with the new Shogun 1.x series
-    - compatible with the new h5py 2.x series
-    - mvpa-prep-fmri -- various compatibility fixes and smoke testing
-    - deepcopying :class:`SummaryStatistics` during __add__
+    - Compatible with the new Shogun 1.x series.
+    - Compatible with the new h5py 2.x series.
+    - :file:`mvpa-prep-fmri` -- various compatibility fixes and smoke testing.
+    - Deepcopying :class:`SummaryStatistics` during __add__.
 
   * Enhancements
 
-    - tutorial uses :mod:`mvpa2.tutorial_suite` now
-    - better suppression of R warnings when needed
-    - internal attributes of many classes were exposed as properties
-    - more unification of ``__repr__`` for many classes
+    - Tutorial uses :mod:`mvpa2.tutorial_suite` now.
+    - Better suppression of R warnings when needed.
+    - Internal attributes of many classes were exposed as properties.
+    - More unification of ``__repr__`` for many classes.
 
 * 0.6.0~rc4 (Wed, Jun 14 2011)
 
   * Fixes
 
-    - Finished transition to :mod:`nibabel` conventions in `plot_lightbox`
-    - Addressed :mod:`matplotlib.hist` API change
+    - Finished transition to :mod:`nibabel` conventions in `plot_lightbox`.
+    - Addressed :mod:`matplotlib.hist` API change.
     - Various adjustments in the tests batteries (:mod:`nibabel` 1.1.0
       compatibility, etc)
 
@@ -720,3 +727,5 @@ Releases
 * 0.1.0 (Wed, 20 Feb 2008)
 
   * First public release.
+
+.. _statsmodels: http://statsmodels.sourceforge.net

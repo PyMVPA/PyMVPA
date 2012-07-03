@@ -106,11 +106,8 @@ How to cite PyMVPA
 
 .. include:: howtocite.txt
 
-
-Authors & Contributors
-======================
-
-.. include:: authors.txt
+.. contributors.txt also would include link_names.txt
+.. include:: contributors.txt
 
 
 Similar or Related Projects
@@ -164,21 +161,6 @@ here.
   programming languages.
   *PyMVPA can optionally use implementations of Support Vector Machines from
   Shogun.*
-
-.. _3dsvm: http://afni.nimh.nih.gov/pub/dist/doc/program_help/3dsvm.html
-.. _AFNI: http://afni.nimh.nih.gov/
-.. _Elefant: http://elefant.developer.nicta.com.au
-.. _Shogun: http://www.fml.tuebingen.mpg.de/raetsch/projects/shogun
-.. _Orange: http://magix.fri.uni-lj.si/orange
-.. _PyML: http://pyml.sourceforge.net
-.. _MDP: http://mdp-toolkit.sourceforge.net
-.. _MVPA Toolbox: http://www.csbmb.princeton.edu/mvpa/
-.. _NiPy: http://neuroimaging.scipy.org
-.. _PROBID: http://www.brainmap.co.uk/probid.htm
-.. _PyMGH/PyFSIO: http://code.google.com/p/pyfsio
-.. _PyNIfTI: http://niftilib.sourceforge.net/pynifti
-.. _OpenMEEG: http://openmeeg.gforge.inria.fr
-.. _scikit-learn: http://scikit-learn.org
 
 .. toctree::
    :hidden:

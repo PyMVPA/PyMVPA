@@ -1,6 +1,8 @@
 .. -*- mode: rst -*-
 .. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
 
+Authors and Contributors
+========================
 
 The PyMVPA developers team currently consists of:
 
@@ -43,3 +45,50 @@ valuable advice, code or documentation to PyMVPA:
 .. _Rajeev Raizada: http://www.dartmouth.edu/~raj
 .. _Per B. Sederberg: http://www.princeton.edu/~persed/
 .. _Tiziano Zito: http://itb.biologie.hu-berlin.de/~zito
+
+Acknowledgements
+================
+
+We are greatful to the developers and contributers of NumPy_, SciPy_ and
+IPython_ for providing an excellent Python-based computing environment.
+
+Additionally, as PyMVPA makes use of a lot of external software
+packages (e.g.  classifier implementations), we want to acknowledge
+the authors of the respective tools and libraries (e.g. LIBSVM_, MDP_,
+scikit-learn_, Shogun_) and thank them for developing their packages
+as free and open source software.
+
+Finally, we would like to express our acknowledgements to the `Debian
+project`_ for providing us with hosting facilities for mailing lists
+and source code repositories. But most of all for developing the
+*universal operating system*.
+
+.. Please add some notes when you think that you should give credits to someone
+   that enables or motivates you to work on PyMVPA ;-)
+
+.. include:: link_names.txt
+
+
+Grant support
+-------------
+
+PyMVPA development was supported, in part, by the following research grants.
+This list includes grants funding development of specific algorithm
+implementations in PyMVPA, as well as grants supporting individuals to work on
+PyMVPA:
+
+German Federal Ministry of Education and Research
+  * BMBF 01GQ11112
+
+German Academic Exchange Service
+  * PPP-USA D/05/504/7
+
+McDonnel Foundation
+
+US National Institutes of Mental Health
+  * 5R01MH075706
+  * F32MH085433-01A1
+
+US National Science Foundation
+  * NSF 1129764
+

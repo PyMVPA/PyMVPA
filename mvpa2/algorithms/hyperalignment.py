@@ -30,6 +30,7 @@ from mvpa2.mappers.procrustean import ProcrusteanMapper
 from mvpa2.datasets import Dataset
 from mvpa2.mappers.base import ChainMapper
 from mvpa2.mappers.zscore import zscore, ZScoreMapper
+from mvpa2.mappers.staticprojection import StaticProjectionMapper
 
 if __debug__:
     from mvpa2.base import debug
@@ -111,6 +112,13 @@ class Hyperalignment(ClassWithCollections):
             :class:`~mvpa2.mappers.procrustean.ProcrusteanMapper` is
             used.""")
 
+    alpha = Parameter(1, allowedtype='float32', min=0, max=1,
+            doc="""Regularization parameter to traverse between (Shrinkage)-CCA
+                (canonical correlation analysis) and regular hyperalignment.
+                Setting alpha to 1 makes the algorithm identical to
+                hyperalignment and alpha of 0 makes it CCA. By default,
+                it is 1, therefore hyperalignment. """)
+
     level2_niter = Parameter(1, allowedtype='int', min=0,
             doc="Number of 2nd-level iterations.")
 
@@ -168,7 +176,8 @@ class Hyperalignment(ClassWithCollections):
         ca = self.ca
         ndatasets = len(datasets)
         nfeatures = [ds.nfeatures for ds in datasets]
-
+        alpha = params.alpha
+        
         residuals = None
         if ca['training_residual_errors'].enabled:
             residuals = np.zeros((1 + params.level2_niter, ndatasets))
@@ -213,6 +222,9 @@ class Hyperalignment(ClassWithCollections):
                 zmapper.train(datasets[ids])
                 datasets[ids] = zmapper.forward(datasets[ids])
 
+        if alpha < 1:
+            datasets, wmappers = self._regularize(datasets, alpha)
+
         # initial common space is the reference dataset
         commonspace = datasets[ref_ds].samples
         # the reference dataset might have been zscored already, don't do it
@@ -256,7 +268,12 @@ class Hyperalignment(ClassWithCollections):
         if self.commonspace is None:
             self.train(datasets)
 
+        # place datasets into a copy of the list since items
+        # will be reassigned
+        datasets = list(datasets)
+
         params = self.params            # for quicker access ;)
+        alpha = params.alpha             # for letting me be lazy ;)
         if params.zscore_all:
             if __debug__:
                 debug('HPAL', "Z-scoring all datasets")
@@ -269,6 +286,10 @@ class Hyperalignment(ClassWithCollections):
                 zmappers.append(zmapper)
                 zmapper.train(datasets[ids])
                 datasets[ids] = zmapper.forward(datasets[ids])
+
+        if alpha < 1:
+            datasets, wmappers = self._regularize(datasets, alpha)
+
         #
         # Level 3 -- final, from-scratch, alignment to final common space
         #
@@ -278,9 +299,32 @@ class Hyperalignment(ClassWithCollections):
         if params.zscore_all:
             # We need to construct new mappers which would chain
             # zscore and then final transformation
-            return [ChainMapper([zm, m]) for zm, m in zip(zmappers, mappers)]
+            if params.alpha < 1:
+                return [ChainMapper([zm, wm, m]) for zm, wm, m in zip(zmappers, wmappers, mappers)]
+            else:
+                return [ChainMapper([zm, m]) for zm, m in zip(zmappers, mappers)]
         else:
-            return mappers
+            if params.alpha < 1:
+                return [ChainMapper([wm, m]) for wm, m in zip(wmappers, mappers)]
+            else:
+                return mappers
+
+
+    def _regularize(self, datasets, alpha):
+        if __debug__:
+            debug('HPAL', "Using regularized hyperalignment with alpha of %d"
+                    % alpha)
+        wmappers = []
+        for ids in xrange(len(datasets)):
+            U, S, Vh = np.linalg.svd(datasets[ids])
+            S = 1/np.sqrt( (1-alpha)*np.square(S) + alpha )
+            S.resize(len(Vh))
+            S = np.matrix(np.diag(S))
+            W = np.matrix(Vh.T)*S*np.matrix(Vh)
+            wmapper = StaticProjectionMapper(proj=W)
+            wmappers.append(wmapper)
+            datasets[ids] = wmapper.forward(datasets[ids])
+        return datasets, wmappers
 
 
     def _level1(self, datasets, commonspace, ref_ds, mappers, residuals):
