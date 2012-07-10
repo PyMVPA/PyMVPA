@@ -108,7 +108,7 @@ if bind_libsvm:
 
 # define the setup
 setup(name         = 'pymvpa2',
-      version      = '2.0.1',
+      version      = '2.1.0',
       author       = 'Michael Hanke, Yaroslav Halchenko, Per B. Sederberg',
       author_email = 'pkg-exppsy-pymvpa@lists.alioth.debian.org',
       license      = 'MIT License',
@@ -144,6 +144,7 @@ setup(name         = 'pymvpa2',
                        'mvpa2.misc.io',
                        'mvpa2.misc.plot',
                        'mvpa2.support',
+                       'mvpa2.support.bayes',
                        'mvpa2.support.nipy',
                        'mvpa2.support.ipython',
                        'mvpa2.testing',

@@ -867,5 +867,7 @@ def scatter_neighborhoods(neighbor_gen, coords, deterministic=False):
     # unzip coords and idx again
     coords, idx = zip(*seeds)
     # we need a flat idx list
-    idx = list(itertools.chain.from_iterable(idx))
+    # yoh: sum trick replaced list(itertools.chain.from_iterable(idx))
+    #      which is not python2.5-compatible
+    idx = sum(idx, [])
     return coords, idx
