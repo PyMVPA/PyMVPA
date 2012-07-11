@@ -6,6 +6,19 @@ preprocessed data), statistical maps or searchlight results.
 Created on Feb 19, 2012
 
 @author: Nikolaas. N. Oosterhof (nikolaas.oosterhof@unitn.it)
+
+Files that are read with the afni_niml_dset.read function contain a dict
+with the following fields:
+
+   .data           PxN data for P nodes and N columns (values per node).
+   .node_indices   P indices of P nodes that data refers to (base 0)
+   .history        String with history information
+   .stats          list with statistical information for each column.
+   .labels         list with labels of the data columns
+   .dset_type      String with the data set type 
+   
+Similarly, such a dict can be saved to a .niml.dset file using the 
+afni_niml_dset.write function
 '''
 
 import afni_niml, random, numpy as np, afni_niml_types as types, os, time, sys, afni_niml as niml
