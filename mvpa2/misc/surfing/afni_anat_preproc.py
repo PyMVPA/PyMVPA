@@ -302,12 +302,13 @@ def run_skullstrip(config, env):
         if overwrite or not utils.afni_fileexists('%s/%s+orig.HEAD' % (refdir, e_n)):
             print "Converting %s from NIFTI to AFNI format" % e_n
             cmds.append('cd "%s"; 3dbucket -prefix ./%s+orig %s' % (refdir, e_n, expvol_src))
-        elif overwrite or not utils.afni_fileexists('%s/%s.nii' % (refdir, e_n)):
-            print "Converting %s from AFNI to NIFTI format" % e_n
-            cmds.append('cd "%s"; 3dbucket -prefix ./%s.nii %s' % (refdir, e_n, expvol_src))
+    elif overwrite or not utils.afni_fileexists('%s/%s.nii' % (refdir, e_n)):
+        print "Converting %s from AFNI to NIFTI format" % e_n
+        cmds.append('cd "%s"; 3dbucket -prefix ./%s.nii %s' % (refdir, e_n, expvol_src))
 
     if overwrite or not utils.afni_fileexists('%s/%s+orig.HEAD' % (refdir, expvol_trg_prefix)):
-        cmds.append('cd "%s";%s -overwrite -prefix ./%s+orig %s %s+orig' % (refdir, cmd, expvol_trg_prefix, input, e_n))
+        cmds.append('cd "%s";%s -overwrite -prefix ./%s+orig %s %s' % 
+                            (refdir, cmd, expvol_trg_prefix, input, expvol_src))
     else:
         print "%s already exists" % expvol_trg_prefix
 
