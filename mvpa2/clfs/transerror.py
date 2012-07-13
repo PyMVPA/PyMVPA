@@ -1234,7 +1234,8 @@ class BayesConfusionHypothesis(Node):
     group cannot be distinguished from one another.
     """
     def __init__(self, alpha=None, labels_attr='predictions',
-                 space='hypothesis', **kwargs):
+                 space='hypothesis', prior_Hs=None, log=True,
+                 postprob=True, hypotheses=None, **kwargs):
         """
         Parameters
         ----------
@@ -1249,29 +1250,71 @@ class BayesConfusionHypothesis(Node):
         space : str
           Name of the sample attribute in the output dataset where the
           hypothesis partition configurations will be stored.
+        prior_Hs : array
+          Vector of priors for each hypotheses. Typically used in conjuction
+          with an explicit set of possible hypotheses (see ``hypotheses``).
+          If ``None`` a flat prior is assumed.
+        log : bool
+          Whether to return values (likelihood or posterior probabilities) in
+          log scale to mitigate numerical precision problems with near-zero
+          probabilities.
+        postprob : bool
+          Whether to return posterior probabilities p(hypothesis|confusion)
+          instead of likelihood(confusion|hypothesis).
+        hypotheses : list
+          List of possible hypotheses. XXX needs work on how to specify them.
         **kwargs
           All remaining argments will be passed on to the Node base-class.
         """
         Node.__init__(self, space=space, **kwargs)
         self._alpha = alpha
+        self._prior_Hs = prior_Hs
         self._labels_attr = labels_attr
+        self._log = log
+        self._postprob = postprob
+        self._hypotheses = hypotheses
 
     def _call(self, ds):
         from mvpa2.support.bayes.partitioner import Partition
         from mvpa2.support.bayes.partial_independence import compute_logp_H
 
-        logp_Hs = []
-        partitions = Partition(range(len(ds)))
-        for psi in partitions:
-            logp_H = compute_logp_H(ds.samples, psi, self._alpha)
-            logp_Hs.append(logp_H)
+        if self._hypotheses is None:
+            partitions = Partition(range(len(ds)))
+        else:
+            # XXX support "literal" hypothesis, i.e. recode labels when needed
+            partitions = self._hypotheses
+        logp_X_given_Hs = np.zeros(len(partitions))
+
+        if self._prior_Hs is None:
+            # default: uniform prior on hypotheses: p(H_i)
+            prior_Hs = np.ones(len(partitions)) / len(partitions)
+        else:
+            prior_Hs = self._prior_Hs
+
+        for i, psi in enumerate(partitions):
+            logp_X_given_Hs[i] = compute_logp_H(ds.samples, psi, self._alpha)
+        out = logp_X_given_Hs
+
+        if self._postprob:
+            # convert into posterior probabilities: p(H|X)
+            # normalization constant: p(X)
+            logp_X = reduce(np.logaddexp, logp_X_given_Hs + np.log(prior_Hs))
+
+            # p(H|X) from Bayes rule:
+            log_posterior_Hs_given_X = logp_X_given_Hs + np.log(prior_Hs) - logp_X
+
+            out = log_posterior_Hs_given_X
+
+        if not self._log:
+            # convert from log scale
+            out = np.exp(out)
 
         if self._labels_attr in ds.sa:
             # recode partition IDs into actual labels, if the necessary attr
             # is available
             partitions = Partition(ds.sa[self._labels_attr].value)
 
-        out = Dataset(logp_Hs,
+        out = Dataset(out,
                       sa={self.get_space(): list(partitions)})
         return out
 
