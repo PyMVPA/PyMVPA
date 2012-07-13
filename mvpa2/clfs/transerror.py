@@ -1242,7 +1242,10 @@ class BayesConfusionHypothesis(Node):
           Bayesian hyper-prior alpha (in a multivariate-Dirichlet sense)
         labels_attr : str
           Name of the sample attribute in the input dataset that contains
-          the class labels corresponding to the confusion matrix rows.
+          the class labels corresponding to the confusion matrix rows. If an
+          attribute with this name is not found, hypotheses will be reported
+          based on confusion table row/column numbers, instead of their
+          corresponding labels.
         space : str
           Name of the sample attribute in the output dataset where the
           hypothesis partition configurations will be stored.
@@ -1263,9 +1266,13 @@ class BayesConfusionHypothesis(Node):
             logp_H = compute_logp_H(ds.samples, psi, self._alpha)
             logp_Hs.append(logp_H)
 
+        if self._labels_attr in ds.sa:
+            # recode partition IDs into actual labels, if the necessary attr
+            # is available
+            partitions = Partition(ds.sa[self._labels_attr].value)
+
         out = Dataset(logp_Hs,
-                      sa={self.get_space():
-                            list(Partition(ds.sa[self._labels_attr].value))})
+                      sa={self.get_space(): list(partitions)})
         return out
 
 
