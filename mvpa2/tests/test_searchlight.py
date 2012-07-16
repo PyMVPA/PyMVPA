@@ -398,6 +398,27 @@ class SearchlightTests(unittest.TestCase):
             ok_(np.all(slmap.samples >= thr))
             ok_(np.mean(slmap.samples) >= thr)
 
+    def test_swaroop_case(self):
+        """Just a smoke (and performance-) test for Swaroop's usecase
+        """
+
+        from mvpa2.measures.base import Measure
+        class sw_measure(Measure):
+            def __init__(self):
+                Measure.__init__(self, auto_train = True)
+            def _call(self, dataset):
+                # For performance measures -- increase to 50-200
+                return np.empty(shape=(2,2))
+            #return Dataset(np.array([{'d': np.empty(shape=(50,50))}], dtype=object))
+        sl = sphere_searchlight(sw_measure(),
+                                radius=1)
+        sl.ca.disable('roi_feature_ids')
+        ds = datasets['3dsmall'].copy(deep=True)
+        ds.fa['voxel_indices'] = ds.fa.myspace
+        sl(ds)
+
+
+
 def suite():
     return unittest.makeSuite(SearchlightTests)
 
