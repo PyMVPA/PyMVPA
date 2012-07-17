@@ -417,8 +417,8 @@ class SearchlightTests(unittest.TestCase):
                 # For performance measures -- increase to 50-200
                 # np.sum here is just to get some meaningful value in
                 # them
-                return np.ones(shape=(2, 2))*np.sum(dataset)
-            #return Dataset(np.array([{'d': np.empty(shape=(50,50))}], dtype=object))
+                #return np.ones(shape=(2, 2))*np.sum(dataset)
+                return Dataset(np.array([{'d': np.empty(shape=(50,50))}], dtype=object))
         results = []
         ds = datasets['3dsmall'].copy(deep=True)
         ds.fa['voxel_indices'] = ds.fa.myspace
