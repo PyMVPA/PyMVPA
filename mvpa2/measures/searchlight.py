@@ -14,10 +14,12 @@ if __debug__:
     from mvpa2.base import debug
 
 import numpy as np
+import tempfile, os
 
 from mvpa2.base import externals, warning
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
 from mvpa2.base.types import is_datasetlike
+from mvpa2.base.hdf5 import h5save, h5load
 
 from mvpa2.datasets import hstack, Dataset
 from mvpa2.support import copy
@@ -168,7 +170,10 @@ class Searchlight(BaseSearchlight):
     interest, which is ran at each spatial location.
     """
 
-    def __init__(self, datameasure, queryengine, add_center_fa=False, **kwargs):
+    def __init__(self, datameasure, queryengine, add_center_fa=False,
+                 results_backend='native',
+                 tmp_prefix='tmpsl',
+                 **kwargs):
         """
         Parameters
         ----------
@@ -181,12 +186,23 @@ class Searchlight(BaseSearchlight):
           seed (e.g. sphere center) for the respective ROI. If True, the
           attribute is named 'roi_seed', the provided string is used as the name
           otherwise.
+        results_backend : ('native', 'hdf5'), optional
+          Specifies the way results are provided back from a processing block
+          in case of nproc > 1. 'native' is pickling/unpickling of results by
+          pprocess, while 'hdf5' would use h5save/h5load functionality.
+          'hdf5' might be more time and memory efficient in some cases.
+        tmp_prefix : str, optional
+          If specified -- serves as a prefix for temporary files storage
+          if results_backend == 'hdf5'.  Thus can specify the directory to use
+          (trailing file path separator is not added automagically).
         **kwargs
           In addition this class supports all keyword arguments of its
           base-class :class:`~mvpa2.measures.searchlight.BaseSearchlight`.
         """
         BaseSearchlight.__init__(self, queryengine, **kwargs)
         self.datameasure = datameasure
+        self.results_backend = results_backend.lower()
+        self.tmp_prefix = tmp_prefix
         if isinstance(add_center_fa, str):
             self.__add_center_fa = add_center_fa
         elif add_center_fa:
@@ -199,12 +215,14 @@ class Searchlight(BaseSearchlight):
             prefixes=prefixes
             + _repr_attrs(self, ['datameasure'])
             + _repr_attrs(self, ['add_center_fa'], default=False)
+            + _repr_attrs(self, ['results_backend'], default='native')
             )
 
 
     def _sl_call(self, dataset, roi_ids, nproc):
         """Classical generic searchlight implementation
         """
+        assert(self.results_backend in ('native', 'hdf5'))
         # compute
         if nproc is not None and nproc > 1:
             # split all target ROIs centers into `nproc` equally sized blocks
@@ -234,13 +252,14 @@ class Searchlight(BaseSearchlight):
                 roi_sizes = None
 
             for r, rsizes in p_results:
-                results += r
+                results += self.__handle_results(r)
                 if not roi_sizes is None:
                     roi_sizes += rsizes
         else:
             # otherwise collect the results in a list
             results, roi_sizes = \
                     self._proc_block(roi_ids, dataset, self.__datameasure)
+            results = self.__handle_results(results)
 
         if __debug__ and 'SLC' in debug.active:
             debug('SLC', '')            # just newline
@@ -314,6 +333,20 @@ class Searchlight(BaseSearchlight):
                        roi.nfeatures,
                        float(i+1)/len(block)*100,), cr=True)
 
+        if self.results_backend == 'native':
+            pass                        # nothing special
+        elif self.results_backend == 'hdf5':
+            # store results in a temporary file and return a filename
+            results_file = tempfile.mktemp(prefix=self.tmp_prefix,
+                                           suffix='.hdf5')
+            if __debug__:
+                debug('SLC', "Storing results into %s" % results_file)
+            h5save(results_file, results)
+            if __debug__:
+                debug('SLC_', "Results stored")
+            results = results_file
+        else:
+            raise RuntimeError("Must not reach this point")
         return results, roi_sizes
 
 
@@ -321,6 +354,21 @@ class Searchlight(BaseSearchlight):
         """Set the datameasure"""
         self.untrain()
         self.__datameasure = datameasure
+
+    def __handle_results(self, results):
+        if self.results_backend == 'hdf5':
+            # 'results' must be just a filename
+            assert(isinstance(results, str))
+            if __debug__:
+                debug('SLC', "Loading results from %s" % results)
+            results_data = h5load(results)
+            os.unlink(results)
+            if __debug__:
+                debug('SLC_', "Loaded results of len=%d from"
+                      % len(results_data))
+            return results_data
+        else:
+            return results
 
     datameasure = property(fget=lambda self: self.__datameasure,
                            fset=__set_datameasure)

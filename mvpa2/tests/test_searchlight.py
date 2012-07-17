@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA searchlight algorithm"""
 
+import tempfile, time
 import numpy.random as rnd
 
 from mvpa2.testing import *
@@ -51,12 +52,17 @@ class SearchlightTests(unittest.TestCase):
 
     @sweepargs(common_variance=(True, False))
     @sweepargs(do_roi=(False, True))
+    @sweepargs(results_backend=('native', 'hdf5'))
     @reseed_rng()
-    def test_spatial_searchlight(self, common_variance=True, do_roi=False):
+    def test_spatial_searchlight(self, common_variance=True, do_roi=False,
+                                 results_backend='native'):
         """Tests both generic and GNBSearchlight
         Test of GNBSearchlight anyways requires a ground-truth
         comparison to the generic version, so we are doing sweepargs here
         """
+        if results_backend == 'hdf5' and not common_variance:
+            # no need for full combination of all possible arguments here
+            return
         # compute N-1 cross-validation for each sphere
         # YOH: unfortunately sample_clf_lin is not guaranteed
         #      to provide exactly the same results due to inherent
@@ -86,7 +92,8 @@ class SearchlightTests(unittest.TestCase):
         else:
             nroi = ds.nfeatures
 
-        sls = [sphere_searchlight(cv, **skwargs),
+        sls = [sphere_searchlight(cv, results_backend=results_backend,
+                                  **skwargs),
                #GNBSearchlight(gnb, NFoldPartitioner(cvtype=1))
                sphere_gnbsearchlight(gnb, NFoldPartitioner(cvtype=1),
                                      indexsum='fancy', **skwargs)
@@ -399,7 +406,7 @@ class SearchlightTests(unittest.TestCase):
             ok_(np.mean(slmap.samples) >= thr)
 
     def test_swaroop_case(self):
-        """Just a smoke (and performance-) test for Swaroop's usecase
+        """Test hdf5 backend to pass results on Swaroop's usecase
         """
 
         from mvpa2.measures.base import Measure
@@ -408,14 +415,27 @@ class SearchlightTests(unittest.TestCase):
                 Measure.__init__(self, auto_train = True)
             def _call(self, dataset):
                 # For performance measures -- increase to 50-200
-                return np.empty(shape=(2,2))
+                # np.sum here is just to get some meaningful value in
+                # them
+                return np.ones(shape=(2, 2))*np.sum(dataset)
             #return Dataset(np.array([{'d': np.empty(shape=(50,50))}], dtype=object))
-        sl = sphere_searchlight(sw_measure(),
-                                radius=1)
-        sl.ca.disable('roi_feature_ids')
+        results = []
         ds = datasets['3dsmall'].copy(deep=True)
         ds.fa['voxel_indices'] = ds.fa.myspace
-        sl(ds)
+
+        our_custom_prefix = tempfile.mktemp()
+        for backend in ('native', 'hdf5'):
+            sl = sphere_searchlight(sw_measure(),
+                                    radius=1,
+                                    tmp_prefix=our_custom_prefix,
+                                    results_backend=backend)
+            t0 = time.time()
+            results.append(sl(ds))
+            # print "Done for backend %s in %d sec" % (backend, time.time() - t0)
+        assert_array_equal(*results)
+        # verify that no junk is left behind
+        tempfiles = glob.glob(our_custom_prefix + '*')
+        assert_equal(len(tempfiles), 0)
 
 
 
