@@ -1232,6 +1232,12 @@ class BayesConfusionHypothesis(Node):
     distinguish from each other, but both 0 and 1 together can be distinguished
     from class 2 and the group of 3, 4, and 5 -- where classes from the later
     group cannot be distinguished from one another.
+
+    This algorithms is based on
+
+        Olivetti, E., Greiner, S. and Avesani, P. (2012). Testing for
+        Information with Brain Decoding. In: Pattern Recognition in NeuroImaging
+        (PRNI), International Workshop on.
     """
     def __init__(self, alpha=None, labels_attr='predictions',
                  space='hypothesis', prior_Hs=None, log=True,
