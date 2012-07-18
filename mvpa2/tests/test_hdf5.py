@@ -131,8 +131,9 @@ def test_various_special_cases():
     a_ = h5load(f.name)
     ok_(a == a_)
     # slice
-    h5save(f.name, slice(None))
+    h5save(f.name, slice(2,5,3))
     sl = h5load(f.name)
+    ok_(sl == slice(2,5,3))
 
 def test_class_oldstyle():
     # AttributeError: CustomOld instance has no attribute '__reduce__'
