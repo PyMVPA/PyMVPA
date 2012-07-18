@@ -418,7 +418,9 @@ class SearchlightTests(unittest.TestCase):
                 # np.sum here is just to get some meaningful value in
                 # them
                 #return np.ones(shape=(2, 2))*np.sum(dataset)
-                return Dataset(np.array([{'d': np.empty(shape=(50,50))}], dtype=object))
+                return Dataset(
+                    np.array([{'d': np.ones(shape=(5,5))*np.sum(dataset)}],
+                             dtype=object))
         results = []
         ds = datasets['3dsmall'].copy(deep=True)
         ds.fa['voxel_indices'] = ds.fa.myspace
@@ -430,9 +432,17 @@ class SearchlightTests(unittest.TestCase):
                                     tmp_prefix=our_custom_prefix,
                                     results_backend=backend)
             t0 = time.time()
-            results.append(sl(ds))
+            results.append(np.asanyarray(sl(ds)))
             # print "Done for backend %s in %d sec" % (backend, time.time() - t0)
-        assert_array_equal(*results)
+        # because of swaroop's ad-hoc (who only could recommend such
+        # a construct?) use case, and absent fancy working assert_objectarray_equal
+        # let's compare manually
+        #assert_objectarray_equal(*results)
+        assert_equal(results[0].shape, results[1].shape)
+        results = [r.flatten() for r in results]
+        for x, y in zip(*results):
+            assert_equal(x.keys(), y.keys())
+            assert_array_equal(x['d'], y['d'])
         # verify that no junk is left behind
         tempfiles = glob.glob(our_custom_prefix + '*')
         assert_equal(len(tempfiles), 0)
