@@ -14,6 +14,7 @@ import numpy as np
 from mvpa2.support.copy import copy
 
 from mvpa2.base.dataset import vstack
+from mvpa2.datasets import Dataset
 from mvpa2.base import externals, warning
 from mvpa2.generators.partition import OddEvenPartitioner, NFoldPartitioner
 from mvpa2.generators.base import Repeater
@@ -705,6 +706,38 @@ def test_confusion_as_node():
     # and the hypothesis is actually less likely than the other one
     # (both classes can be distinguished)
     assert(np.e**res.samples[0,0] < np.e**res.samples[1,0])
+
+
+def test_bayes_confusion_hyp():
+    from mvpa2.clfs.transerror import BayesConfusionHypothesis
+    conf = np.array([
+            [ 10,  0,  5,  5],
+            [  0, 10,  5,  5],
+            [  5,  5, 10,  0],
+            [  5,  5,  0, 10]
+            ])
+    conf = Dataset(conf, sa={'labels': ['A', 'B', 'C', 'D']})
+    bayes = BayesConfusionHypothesis(labels_attr='labels')
+    hyptest = bayes(conf)
+    # by default comes with all hypothesis and posterior probs
+    assert_equal(hyptest.shape, (15,2))
+    assert_array_equal(hyptest.fa.stat, ['log(p(C|H))', 'log(p(H|C))'])
+    # check order of hypothesis (coarse)
+    assert_array_equal(hyptest.sa.hypothesis[0], [['A', 'B', 'C', 'D']])
+    assert_array_equal(hyptest.sa.hypothesis[-1], [['A'], ['B'], ['C'], ['D']])
+    # now with limited hypothesis (given with literal labels), set and in
+    # non-log scale
+    bayes = BayesConfusionHypothesis(labels_attr='labels', log=False,
+                hypotheses=[[['A', 'B', 'C', 'D']],
+                            [['A', 'C',], ['B', 'D']],
+                            [['A', 'D',], ['B', 'C']],
+                            [['A'], ['B'], ['C'], ['D']]])
+    hyptest = bayes(conf)
+    # also with custom hyp the post-probs must add up to 1
+    post_prob = hyptest.samples[:,1]
+    assert_almost_equal(np.sum(post_prob), 1)
+    # in this particular case ...
+    assert(post_prob[3] - np.sum(post_prob[1:3]) < 0.02)
 
 
 def suite():
