@@ -123,12 +123,16 @@ def test_function_ptrs():
     assert_array_equal(ds_loaded.a.mapper.forward(fresh),
                         ds.samples)
 
-def test_0d_object_ndarray():
+def test_various_special_cases():
+    # 0d object ndarray
     f = tempfile.NamedTemporaryFile()
     a = np.array(0, dtype=object)
     h5save(f.name, a)
     a_ = h5load(f.name)
     ok_(a == a_)
+    # slice
+    h5save(f.name, slice(None))
+    sl = h5load(f.name)
 
 def test_class_oldstyle():
     # AttributeError: CustomOld instance has no attribute '__reduce__'
