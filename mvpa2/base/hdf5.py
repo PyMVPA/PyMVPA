@@ -229,11 +229,6 @@ def _recon_customobj_customrecon(hdf, memo):
     # to be reconstructed
     mod_name = hdf.attrs['module']
     recon_name = hdf.attrs['recon']
-    if mod_name == '__builtin__':
-        raise NotImplementedError(
-                "Built-in reconstructors are not supported (yet). "
-                "Got: '%s'" % recon_name)
-
     if __debug__:
         debug('HDF5', "Load from custom reconstructor '%s.%s' [%s]"
                       % (mod_name, recon_name, hdf.name))
