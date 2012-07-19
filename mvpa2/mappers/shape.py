@@ -31,11 +31,11 @@ class TransposeMapper(Mapper):
         Mapper.__init__(self, **kwargs)
 
     def _swap_samples_and_feature_axes(self, ds):
-        ds.samples = np.swapaxes(ds.samples, 0, 1)
-        swap = ds.fa
-        ds.fa = ds.sa
-        ds.sa = swap
-        return ds
+        out = Dataset(np.swapaxes(ds.samples, 0, 1),
+                      sa=ds.fa,
+                      fa=ds.sa,
+                      a=ds.a)
+        return out
 
     def _forward_dataset(self, ds):
         return self._swap_samples_and_feature_axes(ds)
