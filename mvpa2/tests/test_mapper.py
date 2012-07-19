@@ -316,11 +316,17 @@ def test_transpose():
     assert_false(tds.fa is tds.sa)
     # and back
     ttds = tp(tds)
-    assert_equal(ttds, ds)
+    assert_array_equal(ttds.samples, ds.samples)
+    assert_equal(ttds.sa, ds.sa)
+    assert_equal(ttds.fa, ds.fa)
     # or this way
     rds = tp.reverse(tds)
-    assert_equal(rds, ds)
-    assert_equal(ttds, rds)
+    assert_array_equal(rds.samples, ds.samples)
+    assert_equal(rds.sa, ds.sa)
+    assert_equal(rds.fa, ds.fa)
+    assert_array_equal(rds.samples, ttds.samples)
+    assert_equal(rds.sa, ttds.sa)
+    assert_equal(rds.fa, ttds.fa)
 
 def test_addaxis():
     from mvpa2.mappers.shape import AddAxisMapper
