@@ -302,3 +302,22 @@ def test_strip_boundary():
     assert_equal(len(sds), len(ds) - 3)
     for i in [19, 20, 21]:
         assert_false(i in sds.samples.sid)
+
+def test_transpose():
+    from mvpa2.mappers.shape import TransposeMapper
+    ds = Dataset(np.arange(24).reshape(2,3,4),
+                 sa={'testsa': np.arange(2)},
+                 fa={'testfa': np.arange(3)})
+    tp = TransposeMapper()
+    tds = tp(ds)
+    assert_equal(tds.shape, (3, 2, 4))
+    assert_true('testfa' in tds.sa)
+    assert_true('testsa' in tds.fa)
+    assert_false(tds.fa is tds.sa)
+    # and back
+    ttds = tp(tds)
+    assert_equal(ttds, ds)
+    # or this way
+    rds = tp.reverse(tds)
+    assert_equal(rds, ds)
+    assert_equal(ttds, rds)
