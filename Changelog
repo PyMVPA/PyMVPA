@@ -31,6 +31,29 @@ tracking systems accordingly and can be queried by visiting the URLs::
 Releases
 ========
 
+* upcoming ()
+
+  * Fixes
+
+    - HDF5 now properly stores object-type ndarray, where it the array shape
+      was unintentionally modified on-load before (Fixes #84).
+    - HDF5 can now recontruct 'builtin' objects (Fixes #86).
+
+  * Enhancements
+
+    - Initial Python 3 compatibility (spear-headed by Tiziano Zito).
+    - Bayesian hypothesis testing with
+      :class:`~mvpa2.clfs.transerror.BayesConfusionHypothesis` now supports
+      literal hyotheses specification, custom hypotheses subsets, and
+      computing of posterior probabilities.
+
+  * New functionality
+
+   - New HDF5-based storage backend for
+     :class:`~mvpa2.measures.searchlight.Searchlight` the can significantly
+     speed up serialization of large result dataset in parallelized
+     computations.
+
 * 2.1.0 (Fri, June 29 2012)
 
   * Fixes
