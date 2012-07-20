@@ -407,6 +407,12 @@ def __check_pprocess():
     import pprocess as pp
     versions['pprocess'] = SmartVersion(pp.__version__)
 
+def __assign_h5py_version():
+    """Check if h5py present  an if it is -- store its version
+    """
+    import h5py
+    versions['h5py'] = SmartVersion(h5py.version.version)
+
 def __check_rpy():
     """Check either rpy is available and also set it for the sane execution
     """
@@ -663,6 +669,7 @@ versions._KNOWN.update({
     'shogun' : __assign_shogun_version,
     'shogun:rev' : __assign_shogun_version,
     'shogun:full' : __assign_shogun_version,
+    'h5py' : __assign_h5py_version,
     })
 
 
