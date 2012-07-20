@@ -239,10 +239,11 @@ class Searchlight(BaseSearchlight):
                       % nproc_needed)
             compute = p_results.manage(
                         pprocess.MakeParallel(self._proc_block))
-            for block in roi_blocks:
+            for iblock, block in enumerate(roi_blocks):
                 # should we maybe deepcopy the measure to have a unique and
                 # independent one per process?
-                compute(block, dataset, copy.copy(self.__datameasure))
+                compute(block, dataset, copy.copy(self.__datameasure),
+                        iblock=iblock)
 
             # collect results
             results = []
@@ -280,9 +281,16 @@ class Searchlight(BaseSearchlight):
         return result_ds, roi_sizes
 
 
-    def _proc_block(self, block, ds, measure):
+    def _proc_block(self, block, ds, measure, iblock='main'):
         """Little helper to capture the parts of the computation that can be
         parallelized
+
+        Parameters
+        ----------
+        iblock
+          Critical for generating non-colliding temp filenames in case
+          of hdf5 backend.  Otherwise RNGs of different processes might
+          collide in their temporary file names leading to problems.
         """
         if __debug__:
             debug_slc_ = 'SLC_' in debug.active
@@ -338,7 +346,7 @@ class Searchlight(BaseSearchlight):
         elif self.results_backend == 'hdf5':
             # store results in a temporary file and return a filename
             results_file = tempfile.mktemp(prefix=self.tmp_prefix,
-                                           suffix='.hdf5')
+                                           suffix='-%s.hdf5' % iblock)
             if __debug__:
                 debug('SLC', "Storing results into %s" % results_file)
             h5save(results_file, results)
