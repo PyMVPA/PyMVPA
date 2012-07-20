@@ -1219,8 +1219,8 @@ class BayesConfusionHypothesis(Node):
     It computes the likelihood of discriminibility of any partitions of
     classes given a confusion matrix.
 
-    The returned dataset contains a single feature (the log likelihood of
-    a hypothesis) and as many samples as possible partitions of classes.
+    The returned dataset contains at least one feature (the log likelihood of
+    a hypothesis) and as many samples as (possible) partitions of classes.
     The actual partition configurations are stored in a sample attribute
     of nested lists. The top-level list contains discriminable groups of
     classes, whereas the second level lists contain groups of classes that
@@ -1232,9 +1232,16 @@ class BayesConfusionHypothesis(Node):
     distinguish from each other, but both 0 and 1 together can be distinguished
     from class 2 and the group of 3, 4, and 5 -- where classes from the later
     group cannot be distinguished from one another.
+
+    This algorithms is based on
+
+        Olivetti, E., Greiner, S. and Avesani, P. (2012). Testing for
+        Information with Brain Decoding. In: Pattern Recognition in NeuroImaging
+        (PRNI), International Workshop on.
     """
     def __init__(self, alpha=None, labels_attr='predictions',
-                 space='hypothesis', **kwargs):
+                 space='hypothesis', prior_Hs=None, log=True,
+                 postprob=True, hypotheses=None, **kwargs):
         """
         Parameters
         ----------
@@ -1242,30 +1249,104 @@ class BayesConfusionHypothesis(Node):
           Bayesian hyper-prior alpha (in a multivariate-Dirichlet sense)
         labels_attr : str
           Name of the sample attribute in the input dataset that contains
-          the class labels corresponding to the confusion matrix rows.
+          the class labels corresponding to the confusion matrix rows. If an
+          attribute with this name is not found, hypotheses will be reported
+          based on confusion table row/column numbers, instead of their
+          corresponding labels. If such an attribute is found in the input
+          dataset, any ``hypotheses`` specification has to be specified
+          using literal labels also.
         space : str
           Name of the sample attribute in the output dataset where the
           hypothesis partition configurations will be stored.
+        prior_Hs : array
+          Vector of priors for each hypotheses. Typically used in conjuction
+          with an explicit set of possible hypotheses (see ``hypotheses``).
+          If ``None`` a flat prior is assumed.
+        log : bool
+          Whether to return values (likelihood or posterior probabilities) in
+          log scale to mitigate numerical precision problems with near-zero
+          probabilities.
+        postprob : bool
+          Whether to return posterior probabilities p(hypothesis|confusion)
+          instead of likelihood(confusion|hypothesis).
+        hypotheses : list
+          List of possible hypotheses. XXX needs work on how to specify them.
         **kwargs
           All remaining argments will be passed on to the Node base-class.
         """
         Node.__init__(self, space=space, **kwargs)
         self._alpha = alpha
+        self._prior_Hs = prior_Hs
         self._labels_attr = labels_attr
+        self._log = log
+        self._postprob = postprob
+        self._hypotheses = hypotheses
 
     def _call(self, ds):
         from mvpa2.support.bayes.partitioner import Partition
         from mvpa2.support.bayes.partial_independence import compute_logp_H
 
-        logp_Hs = []
-        partitions = Partition(range(len(ds)))
-        for psi in partitions:
-            logp_H = compute_logp_H(ds.samples, psi, self._alpha)
-            logp_Hs.append(logp_H)
+        hypotheses = self._hypotheses
+        if hypotheses is None:
+            # generate all possible hypotheses if none are given
+            partitions = Partition(range(len(ds)))
+        else:
+            if self._labels_attr in ds.sa:
+                # literal labels are given -> recode into digits to match
+                # underlying API
+                recode = dict([(e, i)
+                    for i, e in enumerate(ds.sa[self._labels_attr].value)])
+                partitions = [[[recode[label] for label in class_]
+                                for class_ in hyp]
+                                    for hyp in hypotheses]
+            else:
+                # use hypotheses as is -- all bets are off
+                partitions = hypotheses
 
-        out = Dataset(logp_Hs,
-                      sa={self.get_space():
-                            list(Partition(ds.sa[self._labels_attr].value))})
+        if self._prior_Hs is None:
+            # default: uniform prior on hypotheses: p(H_i)
+            prior_Hs = np.ones(len(partitions)) / len(partitions)
+        else:
+            prior_Hs = self._prior_Hs
+
+        # p(X|H_i) for all H
+        logp_X_given_Hs = np.zeros(len(partitions))
+        for i, psi in enumerate(partitions):
+            # use Emanuele's toolbox
+            logp_X_given_Hs[i] = compute_logp_H(ds.samples, psi, self._alpha)
+        out = logp_X_given_Hs
+        statfa = ['log(p(C|H))']
+
+        if self._postprob:
+            # convert into posterior probabilities: p(H|X)
+            # normalization constant: p(X)
+            logp_X = reduce(np.logaddexp, logp_X_given_Hs + np.log(prior_Hs))
+
+            # p(H|X) from Bayes rule:
+            log_posterior_Hs_given_X = logp_X_given_Hs + np.log(prior_Hs) - logp_X
+
+            out = np.vstack((out, log_posterior_Hs_given_X)).T
+            statfa.append('log(p(H|C))')
+
+        if not self._log:
+            # convert from log scale
+            out = np.exp(out)
+            # remove the log() from the stat label
+            statfa = [s[4:-1] for s in statfa]
+
+        if hypotheses is None:
+            if self._labels_attr in ds.sa:
+                # recode partition IDs into actual labels, if the necessary attr
+                # is available
+                hypotheses = Partition(ds.sa[self._labels_attr].value)
+            else:
+                hypotheses = partitions
+            hypotheses = list(hypotheses)
+
+        out = Dataset(out,
+                      sa={self.get_space(): hypotheses,
+                          'prior': prior_Hs},
+                      fa={'stat': statfa})
         return out
 
 
