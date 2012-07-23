@@ -224,27 +224,30 @@ class SequenceCollectable(Collectable):
 
     @property
     def unique(self):
+        """Return unique values
+        """
         if self.value is None:
             return None
-        try:
-            self._unique_values = np.unique(self.value)
-        except TypeError:
-            # We are probably on Python 3 and value contains None's.
-            # We need to filter them out.
-            # XXX: TypeError could be thrown also if value contains
-            #      any other non-comparable types, e.g. int and str:
-            #      What to do in this case?
-            #      Right now the call to np.unique in the next lines would
-            #      throw TypeError with a cryptic error message...
-            # Get a 1-D array
-            arrvalue = np.asarray(self.value).ravel()
-            # Get the indeces of None's
-            nones = np.equal(arrvalue, None)
-            # Get unique values without None's
-            uniques = np.unique(arrvalue[nones == False])
-            # Put back None
-            self._unique_values = np.insert(uniques, 0, None)
+        if self._unique_values is None:
+            try:
+                self._unique_values = np.unique(self.value)
+            except TypeError:
+                # We are probably on Python 3 and value contains None's
+                # or any other different type breaking the comparison
+                # so operate through set()
+                # See http://projects.scipy.org/numpy/ticket/2188
 
+                # Get a 1-D array
+                #  list around set is required for Python3
+                value_unique = list(set(np.asanyarray(self.value).ravel()))
+                try:
+                    self._unique_values = np.array(value_unique)
+                except ValueError:
+                    # without forced dtype=object it might have failed due to
+                    # something related to
+                    # http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=679948
+                    # which was fixed recently...
+                    self._unique_values = np.array(value_unique, dtype=object)
         return self._unique_values
 
 
