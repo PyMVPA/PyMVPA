@@ -426,7 +426,8 @@ class SearchlightTests(unittest.TestCase):
         ds.fa['voxel_indices'] = ds.fa.myspace
 
         our_custom_prefix = tempfile.mktemp()
-        for backend in ('native', 'hdf5'):
+        for backend in ['native'] + \
+                (externals.exists('h5py') and ['hdf5'] or []):
             sl = sphere_searchlight(sw_measure(),
                                     radius=1,
                                     tmp_prefix=our_custom_prefix,
@@ -438,6 +439,12 @@ class SearchlightTests(unittest.TestCase):
         # a construct?) use case, and absent fancy working assert_objectarray_equal
         # let's compare manually
         #assert_objectarray_equal(*results)
+        if not externals.exists('h5py'):
+            self.assertRaises(RuntimeError,
+                              sphere_searchlight,
+                              sw_measure(),
+                              results_backend='hdf5')
+            raise SkipTest('h5py required for test of backend="hdf5"')
         assert_equal(results[0].shape, results[1].shape)
         results = [r.flatten() for r in results]
         for x, y in zip(*results):

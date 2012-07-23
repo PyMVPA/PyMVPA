@@ -19,7 +19,10 @@ import tempfile, os
 from mvpa2.base import externals, warning
 from mvpa2.base.dochelpers import borrowkwargs, _repr_attrs
 from mvpa2.base.types import is_datasetlike
-from mvpa2.base.hdf5 import h5save, h5load
+if externals.exists('h5py'):
+    # Is optionally required for passing searchlight
+    # results via storing/reloading hdf5 files
+    from mvpa2.base.hdf5 import h5save, h5load
 
 from mvpa2.datasets import hstack, Dataset
 from mvpa2.support import copy
@@ -202,6 +205,9 @@ class Searchlight(BaseSearchlight):
         BaseSearchlight.__init__(self, queryengine, **kwargs)
         self.datameasure = datameasure
         self.results_backend = results_backend.lower()
+        if self.results_backend == 'hdf5':
+            # Assure having hdf5
+            externals.exists('h5py', raise_=True)
         self.tmp_prefix = tmp_prefix
         if isinstance(add_center_fa, str):
             self.__add_center_fa = add_center_fa
