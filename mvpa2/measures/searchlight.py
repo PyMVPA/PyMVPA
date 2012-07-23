@@ -437,6 +437,20 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
     return Searchlight(datameasure, queryengine=qe, roi_ids=center_ids,
                        **kwargs)
 
+@borrowkwargs(Searchlight, '__init__', exclude=['roi_ids'])
+def surface_searchlight(datameasure, surfaceDisk=None,
+                        lhd=None, lhs=None, lhc=None,
+                        rhd=None, rhs=None, rhc=None,
+                        radius=1, center_ids=None,
+                        space='voxel_indices', **kwargs):
+    if surfaceDisk is not None:
+        qe = surfaceDisk
+    else:
+        qe = SurfaceDisk(radius)
+        qe.equip(lhd,lhs,lhc,rhd,rhs,rhc)
+    # init the searchlight with the queryengine
+    return Searchlight(datameasure, queryengine=qe, roi_ids=center_ids,
+                       **kwargs)
 
 #class OptimalSearchlight( object ):
 #    def __init__( self,
