@@ -226,17 +226,25 @@ class SequenceCollectable(Collectable):
     def unique(self):
         if self.value is None:
             return None
-        if self._unique_values is None:
-            # get a 1-D array
+        try:
+            self._unique_values = np.unique(self.value)
+        except TypeError:
+            # We are probably on Python 3 and value contains None's.
+            # We need to filter them out.
+            # XXX: TypeError could be thrown also if value contains
+            #      any other non-comparable types, e.g. int and str:
+            #      What to do in this case?
+            #      Right now the call to np.unique in the next lines would
+            #      throw TypeError with a cryptic error message...
+            # Get a 1-D array
             arrvalue = np.asarray(self.value).ravel()
-            # check if we have None somewhere
+            # Get the indeces of None's
             nones = np.equal(arrvalue, None)
-            if nones.any():
-                uniques = np.unique(arrvalue[nones == False])
-                # put back one None
-                self._unique_values = np.insert(uniques, 0, None)
-            else:
-                self._unique_values = np.unique(arrvalue)
+            # Get unique values without None's
+            uniques = np.unique(arrvalue[nones == False])
+            # Put back None
+            self._unique_values = np.insert(uniques, 0, None)
+
         return self._unique_values
 
 
