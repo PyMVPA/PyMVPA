@@ -47,6 +47,16 @@ def __assign_numpy_version():
     import numpy as np
     versions['numpy'] = SmartVersion(np.__version__)
 
+def __check_numpy_correct_unique():
+    """ndarray.unique fails to operate on heterogeneous object ndarrays
+    See http://projects.scipy.org/numpy/ticket/2188
+    """
+    import numpy as np
+    try:
+        _ = np.unique(np.array([1, None, "str"]))
+    except TypeError, e:
+        raise RuntimeError("numpy.unique thrown %s" % e)
+
 def __assign_scipy_version():
     # To don't allow any crappy warning to sneak in
     import warnings
@@ -483,6 +493,7 @@ _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'shogun.svmocas': '__assign_shogun_version(); import shogun.Classifier as __; x=__.SVMOcas',
           'shogun.svrlight': '__assign_shogun_version(); from shogun.Regression import SVRLight as __',
           'numpy': "__assign_numpy_version()",
+          'numpy_correct_unique': "__check_numpy_correct_unique()",
           'scipy': "__check_scipy()",
           'good scipy.stats.rdist': "__check_stablerdist()",
           'good scipy.stats.rv_discrete.ppf': "__check_rv_discrete_ppf()",
