@@ -29,7 +29,7 @@ class _VersionsChecker(dict):
         dict.__init__(self, *args, **kwargs)
 
     def __getitem__(self, key):
-        if not self.has_key(key):
+        if key not in self:
             if key in self._KNOWN:
                 # run registered procedure to obtain versions
                 self._KNOWN[key]()
@@ -407,6 +407,12 @@ def __check_pprocess():
     import pprocess as pp
     versions['pprocess'] = SmartVersion(pp.__version__)
 
+def __assign_h5py_version():
+    """Check if h5py present  an if it is -- store its version
+    """
+    import h5py
+    versions['h5py'] = SmartVersion(h5py.version.version)
+
 def __check_rpy():
     """Check either rpy is available and also set it for the sane execution
     """
@@ -590,7 +596,7 @@ def exists(dep, force=False, raise_=False, issueWarning=None):
     # default to 'not found'
     result = False
 
-    if not _KNOWN.has_key(dep):
+    if dep not in _KNOWN:
         raise ValueError, "%s is not a known dependency key." % (dep)
     else:
         # try and load the specific dependency
@@ -663,6 +669,7 @@ versions._KNOWN.update({
     'shogun' : __assign_shogun_version,
     'shogun:rev' : __assign_shogun_version,
     'shogun:full' : __assign_shogun_version,
+    'h5py' : __assign_h5py_version,
     })
 
 

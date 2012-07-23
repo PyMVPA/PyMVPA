@@ -29,7 +29,8 @@ TESTS_COMMON="unittests testmanual testsuite testsphinx testexamples testcfg"
 # Branches will be specified prepended with names of the remotes
 repo="git://github.com/PyMVPA/PyMVPA.git"
 remotes="git://github.com/yarikoptic/PyMVPA.git yarikoptic
-git://github.com/hanke/PyMVPA.git hanke"
+git://github.com/hanke/PyMVPA.git hanke
+git://github.com/otizonaizit/PyMVPA.git tiziano"
 
 # Associative array with tests lists per branch
 declare -A TESTS_BRANCHES
@@ -42,6 +43,11 @@ done
 for b in origin/master yarikoptic/master hanke/master; do
     TESTS_BRANCHES["$b"]="$TESTS_COMMON testdatadb testourcfg testdocstrings testmvpa-prep-fmri"
 done
+
+# Python3 testing -- origin and tiziano
+TESTS_BRANCHES["origin/master"]+=" unittest-py3"
+TESTS_BRANCHES["tiziano/master"]=" unittest-py3"
+
 # all known tests
 TESTS_ALL=`echo "${TESTS_BRANCHES[*]}" | tr ' ' '\n' | sort | uniq`
 
@@ -144,7 +150,11 @@ sweep()
     shashums_visited=
     for branch in $BRANCHES; do
         branch_has_problems=
-        blogfile="$logdir/${branch//\//_}.txt"
+        blogdir="$logdir/${branch//\//_}"
+        blogfile="$blogdir.txt"
+        # if given branch supports logging of
+        export MVPA_TESTS_LOGDIR=$blogdir
+        mkdir -p $MVPA_TESTS_LOGDIR
         {
         echo
         echo "I: ---------------{ Branch $branch }--------------"
@@ -177,8 +187,7 @@ sweep()
             echo " D: Reporting WTF due to errors:"
             # allow for both existing API versions
             $precmd python -c 'import mvpa2; print mvpa2.wtf()' || \
-                $precmd python -c 'import mvpa; print mvpa.wtf()'
-
+                $precmd python -c 'import mvpa; print mvpa.wtf()' || echo "WTF failed!!!"
         fi
         } &> "$blogfile"
         blogfiles+=" --file-attach $blogfile"
@@ -206,6 +215,6 @@ sweep >| $logfile 2>&1
 #cat $logfile | mail -s "PyMVPA: daily testing: +$succeeded/-$failed" $EMAILS
 
 # Email using mime-construct with results per branch in attachements
-mime-construct --to yoh@onerussian.com --to michael.hanke@gmail.com \
+mime-construct --to yoh@onerussian.com --to michael.hanke@gmail.com --to opossumnano@gmail.com \
     --subject  "PyMVPA: daily testing: +$succeeded/-$failed" \
     --file "$logfile" $blogfiles

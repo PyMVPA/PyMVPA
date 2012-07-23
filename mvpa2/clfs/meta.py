@@ -21,10 +21,10 @@ Meta Classifiers can be grouped according to their function as
 
 __docformat__ = 'restructuredtext'
 
-import operator
 import numpy as np
 
 from mvpa2.misc.args import group_kwargs
+from mvpa2.base.types import is_sequence_type
 from mvpa2.base.param import Parameter
 
 from mvpa2.generators.splitters import Splitter
@@ -408,7 +408,7 @@ class MaximalVote(PredictionsCombiner):
                 # XXX fishy location due to literal labels,
                 # TODO simplify assumptions and logic
                 if isinstance(prediction, basestring) or \
-                       not operator.isSequenceType(prediction):
+                       not is_sequence_type(prediction):
                     prediction = (prediction,)
                 for label in prediction: # for every label
                     # XXX we might have multiple labels assigned

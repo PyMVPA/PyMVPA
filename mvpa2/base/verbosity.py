@@ -99,7 +99,7 @@ class Logger(object):
         if args is not None:
             msg = msg % args
 
-        if kwargs.has_key('msgargs'):
+        if 'msgargs' in kwargs:
             msg = msg % kwargs['msgargs']
 
         if cr:
@@ -216,7 +216,7 @@ class OnceLogger(Logger):
     def __call__(self, ident, msg, count=1, *args, **kwargs):
         """Write `msg` if `ident` occured less than `count` times by now.
         """
-        if not self._known.has_key(ident):
+        if ident not in self._known:
             self._known[ident] = 0
 
         if count < 0 or self._known[ident] < count:
@@ -332,7 +332,7 @@ class SetLogger(Logger):
         """ "Register" a new setid with a given description for easy finding
         """
 
-        if self.__registered.has_key(setid):
+        if setid in self.__registered:
             raise ValueError, \
                   "Setid %s is already known with description '%s'" % \
                   ( `setid`, self.__registered[setid] )
@@ -568,7 +568,7 @@ if __debug__:
                     func = self._known_metrics.keys()
 
             if isinstance(func, basestring):
-                if DebugLogger._known_metrics.has_key(func):
+                if func in DebugLogger._known_metrics:
                     func = DebugLogger._known_metrics[func]
                 else:
                     if func in ['?', 'list', 'help']:
@@ -597,7 +597,7 @@ if __debug__:
 
         def __call__(self, setid, msg, *args, **kwargs):
 
-            if not self.registered.has_key(setid):
+            if setid not in self.registered:
                 raise ValueError, "Not registered debug ID %s" % setid
 
             if not setid in self.active:

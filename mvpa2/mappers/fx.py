@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 import numpy as np
-import operator, inspect
+import inspect
 
 from mvpa2.base import warning
 from mvpa2.base.node import Node
@@ -416,10 +416,11 @@ def _uniquemerge2literal(attrs):
     a single item representation (see above) and returned.  None is returned
     in case of an empty sequence.
     """
-    # only do something if multiple items are given
-    if not operator.isSequenceType(attrs):
+    try:
+        unq = np.unique(attrs)
+    except TypeError:
+        # so it is not an iterable -- return the original
         return attrs
-    unq = np.unique(attrs)
     lunq = len(unq)
     if lunq > 1:
         return '+'.join([str(l) for l in unq])

@@ -370,7 +370,7 @@ class GNBSearchlight(BaseSearchlight):
                 assert(block_labels[ib] == l)
         block_labels = np.asanyarray(block_labels)
         # additional silly tests for paranoid
-        assert(block_labels.dtype.kind is 'i')
+        assert(block_labels.dtype.kind == 'i')
 
         # 4. Lets deduce all neighbors... might need to be RF into the
         #    parallel part later on

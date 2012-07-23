@@ -24,7 +24,7 @@ from mvpa2.clfs._svmbase import _SVM
 
 from mvpa2.clfs.libsvmc import _svm
 from mvpa2.kernels.libsvm import LinearLSKernel
-from sens import LinearSVMWeights
+from mvpa2.clfs.libsvmc.sens import LinearSVMWeights
 
 if __debug__:
     from mvpa2.base import debug
@@ -201,7 +201,8 @@ class SVM(_SVM):
                 estimates = [ self.model.predict_values_raw(p)[0] for p in src ]
             else:
                 # if 'trained_targets' are literal they have to be mapped
-                if np.issubdtype(self.ca.trained_targets.dtype, 'c'):
+                if ( np.issubdtype(self.ca.trained_targets.dtype, 'c') or
+                     np.issubdtype(self.ca.trained_targets.dtype, 'U') ):
                     trained_targets = self._attrmap.to_numeric(
                             self.ca.trained_targets)
                 else:

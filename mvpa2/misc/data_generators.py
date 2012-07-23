@@ -129,7 +129,7 @@ def normal_feature_dataset(perlabel=50, nlabels=2, nfeatures=4, nchunks=5,
     labels = np.concatenate([np.repeat('L%d' % i, perlabel)
                                 for i in range(nlabels)])
     chunks = np.concatenate([np.repeat(range(nchunks),
-                                     perlabel/nchunks) for i in range(nlabels)])
+                                     perlabel//nchunks) for i in range(nlabels)])
     ds = dataset_wizard(data, targets=labels, chunks=chunks)
 
     # If nonbogus was provided -- assign .a and .fa accordingly

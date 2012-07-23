@@ -32,7 +32,7 @@ if externals.exists('nipy.neurospin'):
     # Import those interesting ones from nipy
     from nipy.neurospin.utils import emp_null
 else:
-    import _emp_null as emp_null
+    import mvpa2.support._emp_null as emp_null
 
 __all__ = ['emp_null']
 

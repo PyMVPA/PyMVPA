@@ -113,7 +113,7 @@ class TransformerTests(unittest.TestCase):
         dataxmax = np.max(np.abs(datax))
 
         # now lets add true positive features
-        tp = [-dataxmax * 1.1] * (ndu/2) + [dataxmax * 1.1] * (ndu/2)
+        tp = [-dataxmax * 1.1] * (ndu//2) + [dataxmax * 1.1] * (ndu//2)
         x = np.hstack((datax, tp))
 
         # lets add just pure normal to it
