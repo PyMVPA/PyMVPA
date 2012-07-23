@@ -13,6 +13,7 @@ import copy
 
 from mvpa2.testing.tools import assert_raises, assert_false, assert_equal, \
     assert_true,  assert_array_equal, assert_array_almost_equal, reseed_rng
+from mvpa2.testing import sweepargs
 
 from mvpa2.base.collections import Collectable, ArrayCollectable, \
         SampleAttributesCollection
@@ -101,6 +102,32 @@ def test_array_collectable():
 
     # names starting with _ are not allowed
     assert_raises(ValueError, c._set_name, "_underscore")
+
+@sweepargs(a=(
+    np.arange(4),
+    # note: numpy casts int(1) it into dtype=float due to presence of
+    #       nan since there is no int('nan'), so float right away
+    [1., np.nan],
+    np.array((1, np.nan)),
+    [1, None],
+    [np.nan, None],
+    [1, 2.0, np.nan, None, "string"],
+    np.arange(6).reshape((2, -1)),      # 2d's unique
+    np.array([(1, 'mom'), (2,)]),       # elaborate object ndarray
+    ))
+def test_array_collectable_unique(a):
+    c = ArrayCollectable(a)
+    a_flat = np.asanyarray(a).ravel()
+    # Since nan != nan, we better compare based on string
+    # representation here
+    assert_equal(repr(set(a_flat)), repr(set(c.unique)))
+    # even if we request it 2nd time ;)
+    assert_equal(repr(set(a_flat)), repr(set(c.unique)))
+    assert_equal(len(a_flat), len(c.unique))
+
+    c2 = ArrayCollectable(list(a_flat) + [float('nan')])
+    # and since nan != nan, we should get new element
+    assert_equal(len(c2.unique), len(c.unique) + 1)
 
 
 def test_collections():
