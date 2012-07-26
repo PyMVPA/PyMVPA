@@ -183,5 +183,5 @@ class Balancer(Node):
 
 
     def __str__(self):
-        return _str(self, self._amount, n=self._attr, count=self.nruns,
+        return _str(self, str(self._amount), n=self._attr, count=self.nruns,
                     apply_selection=self._apply_selection)
