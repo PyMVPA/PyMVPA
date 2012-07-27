@@ -8,7 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Estimator for classifier error distributions."""
 
+from __future__ import with_statement   # Let's start using with
+
 __docformat__ = 'restructuredtext'
+
+import warnings
 
 import numpy as np
 
@@ -921,7 +925,10 @@ if externals.exists('scipy'):
                     debug('STAT__',
                           'Fitting %s distribution %r on data of size %s',
                           (dist_name, dist_opt, data_selected.shape))
-                dist_params = dist_opt.fit(data_selected)
+                # suppress the warnings which might pop up while
+                # matching "inappropriate" distributions
+                with warnings.catch_warnings(record=True) as w:
+                    dist_params = dist_opt.fit(data_selected)
                 if __debug__:
                     debug('STAT__',
                           'Got distribution parameters %s for %s'
