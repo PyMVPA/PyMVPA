@@ -1092,8 +1092,8 @@ if externals.exists('scipy'):
                             tuple(map(np.sum, [tp, fp, fn]))
 
                 pdf = dist.pdf(x)
-                line = pl.plot(x, pdf, '-', linewidth=2, label=label)
-                color = line[0].get_color()
+                line = pl.plot(x, pdf, '-', linewidth=2, label=label)[0]
+                color = line.get_color()
 
                 if plot_cdf:
                     cdf = dist.cdf(x)
