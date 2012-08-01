@@ -388,7 +388,7 @@ class SurfaceDisk(object):
 
         D = self.dijkstra(surf, start, bound)
 
-        disk = [vertex for vertex in D if D[vertex] < self._radius]
+        disk = set(vertex for vertex in D if D[vertex] < self._radius)
         idcs = [idx for idx in range(len(ds.samples[0]))
                     if ds.samples[0][idx] in disk]
 
@@ -396,9 +396,9 @@ class SurfaceDisk(object):
 
     def dijkstra(self, G, start, end=None):
         """Dijkstra's algorithm for shortest paths
-        Modified from version by David Eppstein, UC Irvine, 4 Apr 2002
 
-        Original source: http://code.activestate.com/recipes/119466"""
+        Licensed under the PSF License
+        Copyright: 2002, David Eppstein, UC Irvine"""
         D = {}  # dictionary of final distances
         Q = priorityDictionary()   # est.dist. of non-final vert.
         Q[start] = 0
@@ -422,9 +422,9 @@ class SurfaceDisk(object):
 
 class priorityDictionary(dict):
     """Priority dictionary using binary heaps
-    Modified from version by David Eppstein, UC Irvine, 8 Mar 2002
 
-    Original source: http://code.activestate.com/recipes/117228"""
+    Licensed under the PSF License
+    Copyright: 2002, David Eppstein, UC Irvine"""
     def __init__(self):
         self.__heap = []
         dict.__init__(self)
