@@ -395,6 +395,10 @@ class SurfaceDisk(object):
         return idcs
 
     def dijkstra(self, G, start, end=None):
+        """Dijkstra's algorithm for shortest paths
+        Modified from version by David Eppstein, UC Irvine, 4 Apr 2002
+
+        Original source: http://code.activestate.com/recipes/119466"""
         D = {}  # dictionary of final distances
         Q = priorityDictionary()   # est.dist. of non-final vert.
         Q[start] = 0
@@ -417,6 +421,10 @@ class SurfaceDisk(object):
 
 
 class priorityDictionary(dict):
+    """Priority dictionary using binary heaps
+    Modified from version by David Eppstein, UC Irvine, 8 Mar 2002
+
+    Original source: http://code.activestate.com/recipes/117228"""
     def __init__(self):
         self.__heap = []
         dict.__init__(self)
@@ -451,9 +459,9 @@ class priorityDictionary(dict):
         return iterfn()
 
     def __setitem__(self, key, val):
-        '''Change value stored in dictionary and add corresponding
-pair to heap.  Rebuilds the heap if the number of deleted items grows
-too large, to avoid memory leakage.'''
+        '''Change value stored in dictionary and add corresponding pair to
+        heap. Rebuilds the heap if the number of deleted items grows too large,
+        to avoid memory leakage.'''
         dict.__setitem__(self, key, val)
         heap = self.__heap
         if len(heap) > 2 * len(self):
