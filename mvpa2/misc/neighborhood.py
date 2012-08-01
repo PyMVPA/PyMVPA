@@ -7,11 +7,13 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """ Neighborhood objects """
+from __future__ import division
 
 import numpy as np
 from numpy import array
 import sys
 import itertools
+import nibabel as nib
 
 from mvpa2.base import warning
 from mvpa2.base.types import is_sequence_type
@@ -321,28 +323,56 @@ class SurfaceDisk(object):
     def radius(self):
         return self._radius
 
-    def equip(self, lhdataset, lhsurface, lhcoords,
-                    rhdataset, rhsurface, rhcoords):
+    def equip(self, lverts, lgraph, lcoords,
+                    rverts, rgraph, rcoords):
         """To train a surface disk, we require a dataset with the index of the
         nearest surface mesh vertex to each voxel, as well as a dictionary
         representing that surface mesh and a set of 3d coordinates for each
         vertex."""
-        self.lhdataset = lhdataset
-        self.rhdataset = rhdataset
-        self.lhsurface = lhsurface
-        self.rhsurface = rhsurface
-        self.lhcoords = lhcoords
-        self.rhcoords = rhcoords
+        self.lverts = lverts
+        self.rverts = rverts
+        self.lgraph = lgraph
+        self.rgraph = rgraph
+        self.lcoords = lcoords
+        self.rcoords = rcoords
+
+    def loadFromFiles(self, lvtxvol, lhsurf,
+                            rvtxvol, rhsurf,
+                            mask=None):
+        # Vertex volumes generated with Freesurfer's mri_surf2vol --vtxvol
+        lverts = fmri_dataset(lvtxvol, mask=mask)
+        rverts = fmri_dataset(rvtxvol, mask=mask)
+
+        # Standard freesurfer [lr]h.* files
+        lcoords, lfaces = nib.freesurfer.read_geometry(lhsurf)
+        rcoords, rfaces = nib.freesurfer.read_geometry(rhsurf)
+
+        def buildGraph(coords, faces):
+            """Build a bidirectional graph with Euclidean distances as edges"""
+            edges = [{} for i in range(coords.shape[0])]
+
+            euclid = lambda x, y: np.sqrt(np.sum((x - y) ** 2))
+            for i, j, k in faces:
+                edges[i][j] = edges[j][i] = euclid(coords[i, :], coords[j, :])
+                edges[i][k] = edges[k][i] = euclid(coords[i, :], coords[k, :])
+                edges[j][k] = edges[k][j] = euclid(coords[j, :], coords[k, :])
+
+            return edges
+
+        lgraph = buildGraph(lcoords, lfaces)
+        rgraph = buildGraph(rcoords, rfaces)
+
+        self.equip(lverts, lgraph, lcoords, rverts, rgraph, rcoords)
 
     def train(self, dataset):
         pass
 
     def __getitem__(self, coordinate):
-        if self.lhdataset.samples[0,coordinate] != -1:
+        if self.lhdataset.samples[0, coordinate] != -1:
             ds = self.lhdataset
             surf = self.lhsurface
             coords = self.lhcoords
-        elif self.rhdataset.samples[0,coordinate] != -1:
+        elif self.rhdataset.samples[0, coordinate] != -1:
             ds = self.rhdataset
             surf = self.rhsurface
             coords = self.rhcoords
@@ -351,35 +381,37 @@ class SurfaceDisk(object):
             # Index 0 will never be informative
             return [0]
 
-        start = ds.samples[0,coordinate]
-        dists = np.sqrt(np.sum((coords - coords[start,:])**2,axis=1))
+        start = ds.samples[0, coordinate]
+        dists = np.sqrt(np.sum((coords - coords[start, 0:]) ** 2, axis=1))
         bound = np.nonzero(dists == np.max(dists[dists < self._radius]))[0][0]
 
-        D = self.dijkstra(surf,start,bound)
+        D = self.dijkstra(surf, start, bound)
 
         disk = [vertex for vertex in D if D[vertex] < self._radius]
-        idcs = [idx for idx in range(len(ds.samples[0])) if ds.samples[0][idx] in disk]
+        idcs = [idx for idx in range(len(ds.samples[0]))
+                    if ds.samples[0][idx] in disk]
 
         return idcs
 
-    def dijkstra(self,G,start,end=None):
+    def dijkstra(self, G, start, end=None):
         D = {}  # dictionary of final distances
         Q = priorityDictionary()   # est.dist. of non-final vert.
         Q[start] = 0
-        
+
         for v in Q:
             D[v] = Q[v]
-            if v == end: break
-            
+            if v == end:
+                break
+
             for w in G[v]:
                 vwLength = D[v] + G[v][w]
                 if w in D:
                     if vwLength < D[w]:
-                        raise ValueError, \
-                            "Dijkstra: found better path to already-final vertex"
+                        raise ValueError("Dijkstra: found better path to " \
+                                            "already-final vertex")
                 elif w not in Q or vwLength < Q[w]:
                     Q[w] = vwLength
-        
+
         return D
 
 
@@ -391,15 +423,15 @@ class priorityDictionary(dict):
     def smallest(self):
         '''Find smallest item after removing deleted items from heap.'''
         if len(self) == 0:
-            raise IndexError, "smallest of empty priorityDictionary"
+            raise IndexError("smallest of empty priorityDictionary")
         heap = self.__heap
         while heap[0][1] not in self or self[heap[0][1]] != heap[0][0]:
             lastItem = heap.pop()
             insertionPoint = 0
             while 1:
-                smallChild = 2*insertionPoint+1
-                if smallChild+1 < len(heap) and \
-                        heap[smallChild] > heap[smallChild+1]:
+                smallChild = 2 * insertionPoint + 1
+                if smallChild + 1 < len(heap) and \
+                        heap[smallChild] > heap[smallChild + 1]:
                     smallChild += 1
                 if smallChild >= len(heap) or lastItem <= heap[smallChild]:
                     heap[insertionPoint] = lastItem
@@ -407,7 +439,7 @@ class priorityDictionary(dict):
                 heap[insertionPoint] = heap[smallChild]
                 insertionPoint = smallChild
         return heap[0][1]
-    
+
     def __iter__(self):
         '''Create destructive sorted iterator of priorityDictionary.'''
         def iterfn():
@@ -416,31 +448,32 @@ class priorityDictionary(dict):
                 yield x
                 del self[x]
         return iterfn()
-    
-    def __setitem__(self,key,val):
+
+    def __setitem__(self, key, val):
         '''Change value stored in dictionary and add corresponding
 pair to heap.  Rebuilds the heap if the number of deleted items grows
 too large, to avoid memory leakage.'''
-        dict.__setitem__(self,key,val)
+        dict.__setitem__(self, key, val)
         heap = self.__heap
         if len(heap) > 2 * len(self):
-            self.__heap = [(v,k) for k,v in self.iteritems()]
+            self.__heap = [(v, k) for k, v in self.iteritems()]
             self.__heap.sort()  # builtin sort likely faster than O(n) heapify
         else:
-            newPair = (val,key)
+            newPair = (val, key)
             insertionPoint = len(heap)
             heap.append(None)
             while insertionPoint > 0 and \
-                    newPair < heap[(insertionPoint-1)//2]:
-                heap[insertionPoint] = heap[(insertionPoint-1)//2]
-                insertionPoint = (insertionPoint-1)//2
+                    newPair < heap[(insertionPoint - 1) // 2]:
+                heap[insertionPoint] = heap[(insertionPoint - 1) // 2]
+                insertionPoint = (insertionPoint - 1) // 2
             heap[insertionPoint] = newPair
-    
-    def setdefault(self,key,val):
+
+    def setdefault(self, key, val):
         '''Reimplement setdefault to call our customized __setitem__.'''
         if key not in self:
             self[key] = val
         return self[key]
+
 
 class QueryEngineInterface(object):
     """Very basic class for `QueryEngine`\s defining the interface
