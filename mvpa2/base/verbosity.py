@@ -416,8 +416,11 @@ if __debug__:
     try:
         # we prefer to use psutil if available
         # and let's stay away from "externals" module for now
-        from psutil import Process
-        __pymvpa_process__ = Process(__pymvpa_pid__)
+        # Note: importing as __Process so it does not get
+        #       'queried' by autodoc leading to an exception
+        #       while being unable to get values for the properties
+        from psutil import Process as __Process
+        __pymvpa_process__ = __Process(__pymvpa_pid__)
 
         def get_vmem():
             """Return a string summary about utilization of virtual memory
