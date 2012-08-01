@@ -7,7 +7,7 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """ Neighborhood objects """
-from __future__ import division
+#from __future__ import division
 
 import numpy as np
 from numpy import array
@@ -19,6 +19,7 @@ from mvpa2.base import warning
 from mvpa2.base.types import is_sequence_type
 from mvpa2.base.dochelpers import borrowkwargs, borrowdoc, _repr_attrs, _repr
 from mvpa2.clfs.distance import cartesian_distance
+from mvpa2.datasets.mri import fmri_dataset
 
 from mvpa2.misc.support import idhash as idhash_
 
@@ -368,14 +369,14 @@ class SurfaceDisk(object):
         pass
 
     def __getitem__(self, coordinate):
-        if self.lhdataset.samples[0, coordinate] != -1:
-            ds = self.lhdataset
-            surf = self.lhsurface
-            coords = self.lhcoords
-        elif self.rhdataset.samples[0, coordinate] != -1:
-            ds = self.rhdataset
-            surf = self.rhsurface
-            coords = self.rhcoords
+        if self.lverts.samples[0, coordinate] != -1:
+            ds = self.lverts
+            surf = self.lgraph
+            coords = self.lcoords
+        elif self.rverts.samples[0, coordinate] != -1:
+            ds = self.rverts
+            surf = self.rgraph
+            coords = self.rcoords
         else:
             # XXX BIG ASSUMPTION
             # Index 0 will never be informative
