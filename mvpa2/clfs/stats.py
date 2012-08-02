@@ -943,7 +943,7 @@ if externals.exists('scipy'):
                     if __debug__:
                         res_sum = 'D=%.2f' % D
                 elif test == 'kstest':
-                    D, p = kstest(data, d, args=dist_params)
+                    D, p = kstest(data, dist_gen, args=dist_params)
                     if __debug__:
                         res_sum = 'D=%.3f p=%.3f' % (D, p)
             except (TypeError, ValueError, AttributeError,

@@ -224,6 +224,27 @@ class StatsTestsScipy(unittest.TestCase):
                         #pl.show()
                         pl.close(fig)
 
+    def test_match_distribution_semifrozen(self):
+        """Handle frozen params in match_distribution
+        """
+        matches = match_distribution(np.arange(10),
+                                     distributions=[
+                                         'uniform',
+                                         ('uniform', {'loc': 0})
+                                         ],
+                                     p=-1 # so we get all matches
+                                     )
+        self.assertEqual(len(matches), 2) # we must get some match
+
+        self.assertTrue(abs(matches[0][-1][0]) < 4e-1) # full fit should get close to true loc
+        self.assertTrue(abs(matches[0][-1][1]-9) < 1e-1) # full fit should get close to true scale
+
+        self.assertEqual(matches[1][-1][0], 0) # frozen should maintain the loc
+        # actually it fails ATM to fit uniform with frozen loc=0
+        # nicely -- sets scale = 1 :-/   TODO
+        raise SkipTest("TODO: Known failure to fit uniform with frozen loc")
+        self.assertTrue(abs(matches[1][-1][1]-9) < 1e-1) # frozen fit of scale
+
     def test_r_dist_stability(self):
         """Test either rdist distribution performs nicely
         """
