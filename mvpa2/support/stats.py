@@ -132,7 +132,8 @@ if not externals.exists('good scipy.stats.rv_discrete.ppf'):
                 "It remains broken")
     cfg.set('externals', 'have good scipy.stats.rv_discrete.ppf', 'no')
 
-if not externals.exists('good scipy.stats.rv_continuous._reduce_func(floc,fscale)'):
+if externals.versions['scipy'] >= '0.8.0' and \
+       not externals.exists('good scipy.stats.rv_continuous._reduce_func(floc,fscale)'):
     if __debug__:
         debug("EXT", "Fixing up scipy.stats.rv_continuous._reduce_func")
 

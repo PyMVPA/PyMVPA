@@ -237,9 +237,14 @@ class StatsTestsScipy(unittest.TestCase):
         self.assertEqual(len(matches), 2) # we must get some match
 
         self.assertTrue(abs(matches[0][-1][0]) < 4e-1) # full fit should get close to true loc
-        self.assertTrue(abs(matches[0][-1][1]-9) < 1e-1) # full fit should get close to true scale
-
         self.assertEqual(matches[1][-1][0], 0) # frozen should maintain the loc
+
+        if externals.versions['scipy'] >= '0.10':
+            # known to work on 0.10 and fail on 0.7.3
+            self.assertTrue(abs(matches[0][-1][1]-9) < 1e-1) # full fit should get close to true scale
+        else:
+            raise SkipTest("KnownFailure to fit uniform on older scipy")
+
         # actually it fails ATM to fit uniform with frozen loc=0
         # nicely -- sets scale = 1 :-/   TODO
         raise SkipTest("TODO: Known failure to fit uniform with frozen loc")
@@ -286,6 +291,8 @@ class StatsTestsScipy(unittest.TestCase):
 
     @reseed_rng()
     def test_scipy_fit_2fparams(self):
+        # fixing parameters was not before this version
+        skip_if_no_external('scipy', min_version='0.8.0')
         t = scipy.stats.t
         d = t(10, 1, 10).rvs(10)
         params = t.fit(d, floc=1, fscale=10.)
