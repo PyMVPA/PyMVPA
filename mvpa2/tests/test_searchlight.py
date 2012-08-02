@@ -266,7 +266,7 @@ class SearchlightTests(unittest.TestCase):
                            (1, ds.nfeatures, 8))
         assert_array_equal(sl.ca.null_t.samples.shape,
                            (1, ds.nfeatures))
-        
+
     def test_partial_searchlight_with_full_report(self):
         ds = self.dataset.copy()
         center_ids = np.zeros(ds.nfeatures, dtype='bool')
