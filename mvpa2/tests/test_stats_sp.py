@@ -284,6 +284,15 @@ class StatsTestsScipy(unittest.TestCase):
         v = scipy.stats.rdist(10000, 0, 1).cdf([-0.1])
         self.assertTrue(v>=0, v<=1)
 
+    @reseed_rng()
+    def test_scipy_fit_2fparams(self):
+        t = scipy.stats.t
+        d = t(10, 1, 10).rvs(10)
+        params = t.fit(d, floc=1, fscale=10.)
+        self.assertEqual(params[1:], (1, 10.))
+        # df's are apparently quite difficult to assess unless plenty
+        # of samples
+        #self.assertTrue(abs(params[0] - 10) < 7) # estimate df at least in the right ball park
 
     def test_anova_compliance(self):
         ds = datasets['uni2large']
