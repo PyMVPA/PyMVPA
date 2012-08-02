@@ -966,7 +966,7 @@ if externals.exists('scipy'):
                 continue
 
         # sort in ascending order, so smaller is better
-        results.sort()
+        results.sort(key=lambda x:x[0])
 
         if __debug__ and 'STAT' in debug.active:
             # find the best and report it
