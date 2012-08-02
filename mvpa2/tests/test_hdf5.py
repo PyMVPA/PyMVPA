@@ -23,6 +23,7 @@ from mvpa2.base.dataset import AttrDataset, save
 from mvpa2.base.hdf5 import h5save, h5load, obj2hdf, HDF5ConversionError
 from mvpa2.misc.data_generators import load_example_fmri_dataset
 from mvpa2.mappers.fx import mean_sample
+from mvpa2.mappers.boxcar import BoxcarMapper
 
 class HDFDemo(object):
     pass
@@ -122,12 +123,17 @@ def test_function_ptrs():
     assert_array_equal(ds_loaded.a.mapper.forward(fresh),
                         ds.samples)
 
-def test_0d_object_ndarray():
+def test_various_special_cases():
+    # 0d object ndarray
     f = tempfile.NamedTemporaryFile()
     a = np.array(0, dtype=object)
     h5save(f.name, a)
     a_ = h5load(f.name)
     ok_(a == a_)
+    # slice
+    h5save(f.name, slice(2,5,3))
+    sl = h5load(f.name)
+    ok_(sl == slice(2,5,3))
 
 def test_class_oldstyle():
     # AttributeError: CustomOld instance has no attribute '__reduce__'
@@ -180,3 +186,82 @@ def test_h5save_mkdir(dirname):
     ok_(os.path.exists(filename))
     d = h5load(filename)
     assert_equal(d, {})
+
+    # And that we can still just save into a file in current directory
+    # Let's be safe and assure going back to the original directory
+    cwd = os.getcwd()
+    try:
+        os.chdir(dirname)
+        h5save("TEST.hdf5", [1,2,3])
+    finally:
+        os.chdir(cwd)
+
+def test_state_cycle_with_custom_reduce():
+    # BoxcarMapper has a custom __reduce__ implementation . The 'space'
+    # setting will only survive a svae/load cycle if the state is correctly
+    # handle for custom reduce iplementations.
+    bm = BoxcarMapper([0], 1, space='boxy')
+    f = tempfile.NamedTemporaryFile()
+    h5save(f.name, bm)
+    bm_rl = h5load(f.name)
+    assert_equal(bm_rl.get_space(), 'boxy')
+
+def test_store_metaclass_types():
+    f = tempfile.NamedTemporaryFile()
+    from mvpa2.kernels.base import Kernel
+    allowedtype=Kernel
+    h5save(f.name, allowedtype)
+    lkrn = h5load(f.name)
+    assert_equal(lkrn, Kernel)
+    assert_equal(lkrn.__metaclass__, Kernel.__metaclass__)
+
+def test_state_setter_getter():
+    # make sure the presence of custom __setstate__, __getstate__ methods
+    # is honored -- numpy's RNGs have it
+    from numpy.random.mtrand import RandomState
+    f = tempfile.NamedTemporaryFile()
+    r = RandomState()
+    h5save(f.name, r)
+    rl = h5load(f.name)
+    rl_state = rl.get_state()
+    for i, v in enumerate(r.get_state()):
+        assert_array_equal(v, rl_state[i])
+
+
+@sweepargs(obj=(
+    # simple 1d -- would have worked before as well
+    np.array([{'d': np.empty(shape=(2,3))}], dtype=object),
+    # 2d -- before fix would be reconstructed incorrectly
+    np.array([[{'d': np.empty(shape=(2,3))}]], dtype=object),
+    # a bit more elaborate storage
+    np.array([[{'d': np.empty(shape=(2,3)),
+                'k': 33}]*2]*3, dtype=object),
+    # Swaroop's use-case
+    AttrDataset(np.array([{'d': np.empty(shape=(2,3))}], dtype=object)),
+    # as it would be reconstructed before the fix -- obj array of obj arrays
+    np.array([np.array([{'d': np.empty(shape=(2,3))}], dtype=object)],
+             dtype=object),
+    ))
+def test_save_load_object_dtype_ds(obj=None):
+    """Test saving of custom object ndarray (GH #84)
+    """
+    # print obj, obj.shape
+    f = tempfile.NamedTemporaryFile()
+
+    # save/reload
+    h5save(f.name, obj)
+    obj_ = h5load(f.name)
+
+    # and compare
+    # neh -- not versatile enough
+    #assert_objectarray_equal(np.asanyarray(obj), np.asanyarray(obj_))
+
+    assert_array_equal(obj.shape, obj_.shape)
+    assert_equal(type(obj), type(obj_))
+    # so we could test both ds and arrays
+    aobjf = np.asanyarray(obj).flatten()
+    aobjf_ = np.asanyarray(obj_).flatten()
+    # checks if having just array above
+    assert_equal(type(aobjf[0]), type(aobjf_[0]))
+    assert_array_equal(aobjf[0]['d'], aobjf_[0]['d'])
+

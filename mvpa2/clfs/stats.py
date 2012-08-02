@@ -8,7 +8,11 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Estimator for classifier error distributions."""
 
+from __future__ import with_statement   # Let's start using with
+
 __docformat__ = 'restructuredtext'
+
+import warnings
 
 import numpy as np
 
@@ -921,7 +925,10 @@ if externals.exists('scipy'):
                     debug('STAT__',
                           'Fitting %s distribution %r on data of size %s',
                           (dist_name, dist_opt, data_selected.shape))
-                dist_params = dist_opt.fit(data_selected)
+                # suppress the warnings which might pop up while
+                # matching "inappropriate" distributions
+                with warnings.catch_warnings(record=True) as w:
+                    dist_params = dist_opt.fit(data_selected)
                 if __debug__:
                     debug('STAT__',
                           'Got distribution parameters %s for %s'
@@ -936,7 +943,7 @@ if externals.exists('scipy'):
                     if __debug__:
                         res_sum = 'D=%.2f' % D
                 elif test == 'kstest':
-                    D, p = kstest(data, d, args=dist_params)
+                    D, p = kstest(data, dist_gen, args=dist_params)
                     if __debug__:
                         res_sum = 'D=%.3f p=%.3f' % (D, p)
             except (TypeError, ValueError, AttributeError,
@@ -1085,8 +1092,8 @@ if externals.exists('scipy'):
                             tuple(map(np.sum, [tp, fp, fn]))
 
                 pdf = dist.pdf(x)
-                line = pl.plot(x, pdf, '-', linewidth=2, label=label)
-                color = line[0].get_color()
+                line = pl.plot(x, pdf, '-', linewidth=2, label=label)[0]
+                color = line.get_color()
 
                 if plot_cdf:
                     cdf = dist.cdf(x)

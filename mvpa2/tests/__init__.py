@@ -217,6 +217,7 @@ def collect_nose_tests(verbosity=1):
         # Measures
         'test_transerror',
         'test_datameasure',
+        'test_dcov',
 
         # Misc
         'test_misc',
@@ -333,4 +334,4 @@ run.__test__ = False
 __test__ = False
 
 if __name__ == "__main__":
-    run(exit_=True)
+    run(exit_=True, verbosity=3)

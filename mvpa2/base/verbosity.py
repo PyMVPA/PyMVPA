@@ -99,7 +99,7 @@ class Logger(object):
         if args is not None:
             msg = msg % args
 
-        if kwargs.has_key('msgargs'):
+        if 'msgargs' in kwargs:
             msg = msg % kwargs['msgargs']
 
         if cr:
@@ -216,7 +216,7 @@ class OnceLogger(Logger):
     def __call__(self, ident, msg, count=1, *args, **kwargs):
         """Write `msg` if `ident` occured less than `count` times by now.
         """
-        if not self._known.has_key(ident):
+        if ident not in self._known:
             self._known[ident] = 0
 
         if count < 0 or self._known[ident] < count:
@@ -332,7 +332,7 @@ class SetLogger(Logger):
         """ "Register" a new setid with a given description for easy finding
         """
 
-        if self.__registered.has_key(setid):
+        if setid in self.__registered:
             raise ValueError, \
                   "Setid %s is already known with description '%s'" % \
                   ( `setid`, self.__registered[setid] )
@@ -378,7 +378,7 @@ if __debug__:
 
     __pymvpa_pid__ = getpid()
 
-    def parse_status(field='VmSize'):
+    def parse_status(field='VmSize', value_only=False):
         """Return stat information on current process.
 
         Usually it is needed to know where the memory is gone, that is
@@ -397,13 +397,30 @@ if __debug__:
                 match = re.sub('[ \t]+', ' ', match)
         except IOError:
             pass
+        if match and value_only:
+            match = match.split(':', 1)[1].lstrip()
         return match
+
+    def get_vmem_from_status():
+        """Return a string summary about utilization of virtual memory
+
+        Deprecated implementation which relied on parsing proc/PID/status
+        """
+        rss, vms = [parse_status(field=x, value_only=True)
+                  for x in ['VmRSS', 'VmSize']]
+        if rss[-3:] == vms[-3:]:
+            # the same units
+            rss = rss[:-3]                # strip from rss
+        return "RSS/VMS: %s/%s" % (rss, vms)
 
     try:
         # we prefer to use psutil if available
         # and let's stay away from "externals" module for now
-        from psutil import Process
-        __pymvpa_process__ = Process(__pymvpa_pid__)
+        # Note: importing as __Process so it does not get
+        #       'queried' by autodoc leading to an exception
+        #       while being unable to get values for the properties
+        from psutil import Process as __Process
+        __pymvpa_process__ = __Process(__pymvpa_pid__)
 
         def get_vmem():
             """Return a string summary about utilization of virtual memory
@@ -411,17 +428,14 @@ if __debug__:
             Generic implementation using psutil
             """
             mi = __pymvpa_process__.get_memory_info()
-            vms = mi.vms/1024
-            rss = mi.rss/1024
-            return "RSS/VMS: %d/%d KB" % (rss, vms)
+            # in later versions of psutil mi is a named tuple.
+            # but that is not the case on Debian squeeze with psutil 0.1.3
+            rss = mi[0]/1024
+            vms = mi[1]/1024
+            return "RSS/VMS: %d/%d kB" % (rss, vms)
 
     except ImportError:
-        def get_vmem():
-            """Return a string summary about utilization of virtual memory
-
-            Deprecated implementation which relied on parsing proc/PID/status
-            """
-            return parse_status(field='VmSize')
+        get_vmem = get_vmem_from_status
 
     def mbasename(s):
         """Custom function to include directory name if filename is too common
@@ -557,7 +571,7 @@ if __debug__:
                     func = self._known_metrics.keys()
 
             if isinstance(func, basestring):
-                if DebugLogger._known_metrics.has_key(func):
+                if func in DebugLogger._known_metrics:
                     func = DebugLogger._known_metrics[func]
                 else:
                     if func in ['?', 'list', 'help']:
@@ -586,7 +600,7 @@ if __debug__:
 
         def __call__(self, setid, msg, *args, **kwargs):
 
-            if not self.registered.has_key(setid):
+            if setid not in self.registered:
                 raise ValueError, "Not registered debug ID %s" % setid
 
             if not setid in self.active:

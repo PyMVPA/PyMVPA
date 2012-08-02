@@ -1,6 +1,7 @@
 PROFILE_FILE=$(CURDIR)/$(BUILDDIR)/main.pstats
 COVERAGE_REPORT=$(CURDIR)/$(BUILDDIR)/coverage
 BUILDDIR=$(CURDIR)/build
+BUILD3DIR=$(CURDIR)/build/py3k
 HTML_DIR=$(BUILDDIR)/html
 DOC_DIR=$(CURDIR)/doc
 TUT_DIR=$(CURDIR)/datadb/tutorial_data/tutorial_data
@@ -26,9 +27,26 @@ RSYNC_OPTS_UP=-rzlhv --delete
 # The Python executable to be used
 #
 PYTHON = python
+PYTHON3 = python3
+
+# Setup local PYTHONPATH depending on the version of provided $(PYTHON)
+PYVER = $(shell $(PYTHON) -c 'import sys; print(sys.version_info[0])')
+ifeq ($(PYVER),2)
+ # just use the local sources and run tests 'in source'
+ TEST_DIR = .
+ LPYTHONPATH = .:$(PYTHONPATH)
+else
+ # for 3 (and hopefully not above ;) ) -- corresponding build/
+ # since sources go through 2to3 conversion
+ TEST_DIR = $(BUILD3DIR)
+ LPYTHONPATH = $(BUILD3DIR):$(PYTHONPATH)
+endif
+
 # Assure non-interactive Matplotlib and provide local paths helper
-MPLPYTHONPATH = PYTHONPATH=.:$(PYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg
+MPLPYTHONPATH = PYTHONPATH=.:$(LPYTHONPATH) MVPA_MATPLOTLIB_BACKEND=agg
 MPLPYTHON = $(MPLPYTHONPATH) $(PYTHON)
+MPLPYTHON3 = $(MPLPYTHONPATH) $(PYTHON3)
+
 NOSETESTS = $(PYTHON) $(shell which nosetests)
 
 #
@@ -60,7 +78,6 @@ endif
 #
 
 PYVER := $(shell $(PYTHON) -V 2>&1 | cut -d ' ' -f 2,2 | cut -d '.' -f 1,2)
-DISTUTILS_PLATFORM := $(shell $(PYTHON) -c "import distutils.util; print distutils.util.get_platform()")
 
 #
 # Little helpers
@@ -97,6 +114,11 @@ build-stamp: $(build_depends)
 	$(PYTHON) setup.py build_ext --inplace
 	touch $@
 
+build3: build3-stamp
+build3-stamp: $(build_depends)
+	$(PYTHON3) setup.py config --noisy
+	$(PYTHON3) setup.py build_ext --inplace
+	touch $@
 
 #
 # Cleaning
@@ -134,7 +156,7 @@ clean:
 		 -o -iname '*_flymake.*' \
 		 -o -iname '#*#' | xargs -L 10 rm -f
 	-@rm -rf build
-	-@rm -rf dist *report
+	-@rm -rf dist *report __pycache__
 	-@rm -f *-stamp *_report.pdf *_report.log pymvpa2.cfg
 
 # this target should put the source tree into shape for building the source
@@ -162,7 +184,7 @@ pics:
 
 manpages: mkdir-MAN_DIR
 	@echo "I: Creating manpages"
-	PYTHONPATH=.:$(PYTHONPATH) help2man -N -n 'preprocess fMRI data for PyMVPA' \
+	PYTHONPATH=$(LPYTHONPATH) help2man -N -n 'preprocess fMRI data for PyMVPA' \
 		bin/mvpa-prep-fmri > $(MAN_DIR)/mvpa-prep-fmri.1
 	PYTHONPATH=. help2man -N -n 'query stereotaxic atlases' \
 		bin/atlaslabeler > $(MAN_DIR)/atlaslabeler.1
@@ -228,9 +250,10 @@ apidoc-stamp: build
 	touch $@
 
 # this takes some minutes !!
+# TODO: adjust for py3 compatibility
 profile: build mvpa2/tests/__init__.py
 	@echo "I: Profiling unittests"
-	@PYTHONPATH=.:$(PYTHONPATH) tools/profile -K  -O $(PROFILE_FILE) mvpa2/tests/__init__.py
+	@PYTHONPATH=$(LPYTHONPATH) tools/profile -K  -O $(PROFILE_FILE) mvpa2/tests/__init__.py
 
 
 #
@@ -300,17 +323,17 @@ upload-datadb-descriptions:
 #
 
 ut-%: build
-	@PYTHONPATH=.:$(PYTHONPATH) $(NOSETESTS) --nocapture mvpa2/tests/test_$*.py
+	@cd $(TEST_DIR) && PYTHONPATH=$(LPYTHONPATH) $(NOSETESTS) --nocapture mvpa2/tests/test_$*.py
 
 unittest: build
 	@echo "I: Running unittests (without optimization nor debug output)"
-	$(MPLPYTHON) mvpa2/tests/__init__.py
+	@cd $(TEST_DIR) && $(MPLPYTHON) mvpa2/tests/__init__.py
 
 
 # test if PyMVPA is working if optional externals are missing
 unittest-badexternals: build
 	@echo "I: Running unittests under assumption of missing optional externals."
-	@PYTHONPATH=mvpa2/tests/badexternals:.:$(PYTHONPATH) \
+	@cd $(TEST_DIR) && PYTHONPATH=mvpa2/tests/badexternals:$(LPYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		$(PYTHON) mvpa2/tests/__init__.py 2>&1 \
 		| grep -v -e 'WARNING: Known dependency' -e 'Please note: w' \
@@ -319,20 +342,32 @@ unittest-badexternals: build
 # only non-labile tests
 unittest-nonlabile: build
 	@echo "I: Running only non labile unittests. None of them should ever fail."
-	@MVPA_TESTS_LABILE=no \
+	@cd $(TEST_DIR) && MVPA_TESTS_LABILE=no \
 		$(MPLPYTHON) mvpa2/tests/__init__.py
+
+unittest-py3: build3
+	@echo "I: Running py3-compatible unittests. None of them should ever fail."
+	-@rm -f build3-stamp	# evil Tiziano! ;)
+	@cd $(BUILD3DIR) && MVPA_TESTS_LABILE=no MVPA_TESTS_QUICK=yes \
+		MVPA_TESTS_LOWMEM=yes $(MPLPYTHON3) mvpa2/tests/__init__.py
+
+unittest-py3warn: build
+	@echo "I: Running unittests with py3 warnings. None of them should ever fail."
+	@MVPA_TESTS_LABILE=no MVPA_TESTS_QUICK=yes \
+		MVPA_TESTS_LOWMEM=yes $(MPLPYTHON) -3 mvpa2/tests/__init__.py
+
 
 # test if no errors would result if we force enabling of all ca
 unittest-ca: build
 	@echo "I: Running unittests with all ca enabled."
-	@MVPA_DEBUG=ENFORCE_CA_ENABLED \
+	@cd $(TEST_DIR) && MVPA_DEBUG=ENFORCE_CA_ENABLED \
 		$(MPLPYTHON) mvpa2/tests/__init__.py
 
 # Run unittests with optimization on -- helps to catch unconditional
 # debug calls
 unittest-optimization: build
 	@echo "I: Running unittests with $(PYTHON) -O."
-	@$(MPLPYTHON) -O mvpa2/tests/__init__.py
+	@cd $(TEST_DIR) && $(MPLPYTHON) -O mvpa2/tests/__init__.py
 
 # Run unittests with all debug ids and some metrics (crossplatform ones) on.
 #   That does:
@@ -342,7 +377,7 @@ unittest-optimization: build
 unittest-debug: SHELL=/bin/bash
 unittest-debug: build
 	@echo "I: Running unittests with debug output. No progress output."
-	@MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
+	@cd $(TEST_DIR) && MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL \
 		$(MPLPYTHON) mvpa2/tests/__init__.py 2>&1 \
 		|  sed -n -e '/^[=-]\{60,\}$$/,$$p'; \
 		exit $${PIPESTATUS[0]}	# reaquire status of 1st command, works only in bash!
@@ -377,7 +412,7 @@ testdocstrings: dt-mvpa
 
 dt-%: build
 	@echo "I: Doctesting $*"
-	@PYTHONPATH=.:$(PYTHONPATH) \
+	@PYTHONPATH=$(LPYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_EXTERNALS_RAISE_EXCEPTION=off \
 		MVPA_DATADB_ROOT=datadb \
@@ -397,7 +432,7 @@ tm-%: build
 
 testmanual: build testdocstrings
 	@echo "I: Testing code samples found in documentation"
-	@PYTHONPATH=.:$(PYTHONPATH) \
+	@PYTHONPATH=$(LPYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 		MVPA_DATADB_ROOT=datadb \
@@ -407,7 +442,7 @@ testmanual: build testdocstrings
 
 testtutorial-%: build
 	@echo "I: Testing code samples found in tutorial part $*"
-	@PYTHONPATH=.:$(PYTHONPATH) \
+	@PYTHONPATH=$(LPYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_LOCATION_TUTORIAL_DATA=$(TUT_DIR) \
 		MVPA_WARNINGS_SUPPRESS=1 \
@@ -427,7 +462,7 @@ testtutorials-alt:
 
 testdatadb: build
 	@echo "I: Testing code samples on the dataset DB website"
-	@PYTHONPATH=.:$(PYTHONPATH) \
+	@PYTHONPATH=$(LPYTHONPATH) \
 		MVPA_MATPLOTLIB_BACKEND=agg \
 		MVPA_DATADB_ROOT=datadb \
 		MVPA_WARNINGS_SUPPRESS=1 \
@@ -472,20 +507,20 @@ testsphinx: htmldoc
 testcfg: build
 	@echo "I: Running test to check that stored configuration is acceptable."
 	-@rm -f pymvpa2.cfg
-	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c 'from mvpa2.suite import *; cfg.save("pymvpa2.cfg");'
-	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c 'from mvpa2.suite import *;'
+	@PYTHONPATH=$(LPYTHONPATH)	$(PYTHON) -c 'from mvpa2.suite import *; cfg.save("pymvpa2.cfg");'
+	@PYTHONPATH=$(LPYTHONPATH)	$(PYTHON) -c 'from mvpa2.suite import *;'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa2/tests/__init__.py
+	@cd $(TEST_DIR) && PYTHONPATH=$(LPYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa2/tests/__init__.py
 	@echo "+I: Check all known dependencies and store them"
-	@PYTHONPATH=.:$(PYTHONPATH)	$(PYTHON) -c \
+	@PYTHONPATH=$(LPYTHONPATH)	$(PYTHON) -c \
 	  'from mvpa2.suite import *; mvpa2.base.externals.check_all_dependencies(force=False); cfg.save("pymvpa2.cfg");'
 	@echo "+I: Run non-labile testing to verify safety of stored configuration"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa2/tests/__init__.py
+	@cd $(TEST_DIR) && PYTHONPATH=$(LPYTHONPATH) MVPA_TESTS_LABILE=no $(PYTHON) mvpa2/tests/__init__.py
 	-@rm -f pymvpa2.cfg
 
 testourcfg: build
 	@echo "+I: Run non-labile testing to verify safety of shipped configuration"
-	@PYTHONPATH=.:$(PYTHONPATH) MVPACONFIG=doc/examples/pymvpa2.cfg MVPA_TESTS_LABILE=no $(PYTHON) mvpa2/tests/__init__.py
+	@cd $(TEST_DIR) && PYTHONPATH=$(LPYTHONPATH) MVPACONFIG=doc/examples/pymvpa2.cfg MVPA_TESTS_LABILE=no $(PYTHON) mvpa2/tests/__init__.py
 
 testmvpa-prep-fmri:
 	@echo "+I: Smoke test the functionality of the mvpa-prep-fmri script"
@@ -510,8 +545,8 @@ testrefactor: unittest testmanual testsuite testexamples
 coverage: $(COVERAGE_REPORT)
 $(COVERAGE_REPORT): build
 	@echo "I: Generating coverage data and report. Takes awhile. No progress output."
-	@{ \
-	  export PYTHONPATH=.:$(PYTHONPATH) MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL; \
+	@cd $(TEST_DIR) && { \
+	  export PYTHONPATH=$(LPYTHONPATH) MVPA_DEBUG=.* MVPA_DEBUG_METRICS=ALL; \
 	  python-coverage -x mvpa2/tests/__init__.py >/dev/null 2>&1; \
 	  python-coverage -r -i -o /usr,/var >| $(COVERAGE_REPORT); \
 	  grep -v '100%$$' $(COVERAGE_REPORT); \

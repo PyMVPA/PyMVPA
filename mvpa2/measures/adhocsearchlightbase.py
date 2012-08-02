@@ -139,9 +139,9 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
 
     """
 
-    _ATTRIBUTE_COLLECTIONS = ['params', 'ca']
+    # TODO: implement parallelization (see #67) and then uncomment
+    __init__doc__exclude__ = ['nproc']
 
-    @borrowkwargs(BaseSearchlight, '__init__')
     def __init__(self, generator, qe, errorfx=mean_mismatch_error,
                  indexsum=None,
                  reuse_neighbors=False,
@@ -250,7 +250,7 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
 
         pb.labels = np.asanyarray(pb.labels)
         # additional silly tests for paranoid
-        assert(pb.labels.dtype.kind is 'i')
+        assert(pb.labels.dtype.kind == 'i')
 
 
     def _compute_pl_stats(self, sis, pl):
@@ -463,6 +463,8 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
                       'Phase 4. Reusing neighbors information for %i ROIs'
                       % (nrois,))
             roi_fids = self.__roi_fids
+
+        self.ca.roi_feature_ids = roi_fids
 
         roi_sizes = []
         if isinstance(roi_fids, list):

@@ -95,7 +95,7 @@ class Parameter(IndexedCollectable):
             self._set(value, init=True)
 
         if __debug__:
-            if kwargs.has_key('val'):
+            if 'val' in kwargs:
                 raise ValueError, "'val' property name is illegal."
 
 

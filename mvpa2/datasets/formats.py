@@ -74,7 +74,7 @@ def to_lightsvm_format(dataset, out, targets_attr='targets',
     #  * might be RF to become more generic to be used may be elsewhere as well
 
     if domain is None:
-        if targets.dtype.kind in ['S', 'i']:
+        if targets.dtype.kind in ['S', 'U', 'i']:
             if len(targets_a.unique) == 2:
                 domain = 'binary'
             else:
@@ -112,11 +112,11 @@ def to_lightsvm_format(dataset, out, targets_attr='targets',
         targets = am.to_numeric(targets)
 
     for t, s in zip(targets, dataset.samples):
-        out.write('%g %s\n'
-                  % (t,
-                     ' '.join(
-                         '%i:%.8g' % (i, v)
-                         for i,v in zip(range(1, dataset.nfeatures+1), s))))
+        out.write(('%g %s\n'
+                   % (t,
+                      ' '.join(
+                          '%i:%.8g' % (i, v)
+                          for i,v in zip(range(1, dataset.nfeatures+1), s)))).encode('ascii'))
 
     out.flush()                # push it out
     return am

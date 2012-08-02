@@ -16,7 +16,6 @@ from mvpa2.base import externals
 from mvpa2.clfs.stats import MCNullDist, FixedNullDist, NullDist
 from mvpa2.generators.permutation import AttributePermutator
 from mvpa2.datasets import Dataset
-from mvpa2.measures.glm import GLM
 from mvpa2.measures.anova import OneWayAnova, CompoundOneWayAnova
 from mvpa2.misc.fx import double_gamma_hrf, single_gamma_hrf
 

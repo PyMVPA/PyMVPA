@@ -18,10 +18,12 @@ from mvpa2.datasets.base import Dataset
 from mvpa2.algorithms.hyperalignment import Hyperalignment
 from mvpa2.mappers.zscore import zscore
 from mvpa2.misc.support import idhash
+from mvpa2.misc.data_generators import random_affine_transformation
+from mvpa2.misc.fx import get_random_rotation
 
 # Somewhat slow but provides all needed ;)
 from mvpa2.testing import sweepargs, reseed_rng
-from mvpa2.testing.datasets import datasets, get_random_rotation
+from mvpa2.testing.datasets import datasets
 
 from mvpa2.generators.partition import NFoldPartitioner
 
@@ -59,16 +61,12 @@ class HyperAlignmentTests(unittest.TestCase):
             #     # if we transform back nicely
             #     R = np.eye(ds_orig.nfeatures)
             ## else:
-            R = get_random_rotation(ds_orig.nfeatures)
-
-            Rs.append(R)
-            ds_ = ds_orig.copy()
+            ds_ = random_affine_transformation(ds_orig, scale_fac=100, shift_fac=10)
+            Rs.append(ds_.a.random_rotation)
             # reusing random data from dataset itself
-            random_scales += [ds_orig.samples[i, 3] * 100]
-            random_shifts += [ds_orig.samples[i+10] * 10]
+            random_scales += [ds_.a.random_scale]
+            random_shifts += [ds_.a.random_shift]
             random_noise = ds4l.samples[:, ds4l.a.bogus_features[:4]]
-            ds_.samples = np.dot(ds_orig.samples, R) * random_scales[-1] \
-                          + random_shifts[-1]
 
             ## if (zscore_common or zscore_all):
             ##     # for later on testing of "precise" reconstruction
@@ -141,31 +139,35 @@ class HyperAlignmentTests(unittest.TestCase):
                         % (nddss, snoisy))
                 elif do_labile:
                     # otherwise they all should be somewhat close
-                    #print snoisy, ref_ds,  nddss
-                    self.assertTrue(np.all(np.array(nddss) >= nddss[ref_ds]),
-                        msg="Should have reconstructed orig_ds best of all. "
-                        "Got normed differences %s in %s case with ref_ds=%d."
-                        % (nddss, snoisy, ref_ds))
                     self.assertTrue(np.all(np.array(nddss)
                                            <= (.2, 3)[int(noisy)]),
                         msg="Should have reconstructed original dataset more or"
                         " less for all. Got normed differences %s in %s case."
                         % (nddss, snoisy))
-                    self.assertTrue(np.all(nddss[ref_ds] <= .05),
+                    self.assertTrue(np.all(nddss[ref_ds] <= .09),
                         msg="Should have reconstructed original dataset quite "
                         "well even with zscoring. Got normed differences %s "
                         "in %s case." % (nddss, snoisy))
+                    # yoh: and leave 5% of difference for a chance and numerical
+                    #      fluctuations ;)
+                    self.assertTrue(np.all(np.array(nddss) >= 0.95*nddss[ref_ds]),
+                        msg="Should have reconstructed orig_ds best of all. "
+                        "Got normed differences %s in %s case with ref_ds=%d."
+                        % (nddss, snoisy, ref_ds))
 
         # Lets see how well we do if asked to compute residuals
         ha = Hyperalignment(ref_ds=ref_ds, level2_niter=2,
-                            enable_ca=['residual_errors'])
+                            enable_ca=['training_residual_errors',
+                                       'residual_errors'])
         mappers = ha(dss_rotated_clean)
-        self.assertTrue(np.all(ha.ca.residual_errors.sa.levels ==
-                              ['1', '2:0', '2:1', '3']))
-        rerrors = ha.ca.residual_errors.samples
+        self.assertTrue(np.all(ha.ca.training_residual_errors.sa.levels ==
+                              ['1', '2:0', '2:1']))
+        rterrors = ha.ca.training_residual_errors.samples
         # just basic tests:
-        self.assertEqual(rerrors[0, ref_ds], 0)
-        self.assertEqual(rerrors.shape, (4, n))
+        self.assertEqual(rterrors[0, ref_ds], 0)
+        self.assertEqual(rterrors.shape, (3, n))
+        rerrors = ha.ca.residual_errors.samples
+        self.assertEqual(rerrors.shape, (1, n))
 
 
     def _test_on_swaroop_data(self):
@@ -218,7 +220,7 @@ class HyperAlignmentTests(unittest.TestCase):
         ds_fs = [ sd[:, fselector(sd.fa.bsc_scores)] for sd in ds]
 
         hyper = Hyperalignment()
-        mapper_results = hyper(datasets=ds_fs)
+        mapper_results = hyper(ds_fs)
 
         md_cd = ColumnData('labels.txt', header=['label'])
         md_labels = [int(x) for x in md_cd['label']]

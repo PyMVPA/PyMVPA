@@ -94,7 +94,7 @@ and on how to :ref:`build PyMVPA from source <buildfromsource>` are provided
 in the manual.
 
 
-.. _download area: http://alioth.debian.org/frs/?group_id=30954
+.. _download area: https://github.com/PyMVPA/PyMVPA/tags
 .. _github download area: https://github.com/PyMVPA/PyMVPA/downloads
 .. _Git: http://git.or.cz/
 .. _snapshot: http://github.com/PyMVPA/PyMVPA/archives/master

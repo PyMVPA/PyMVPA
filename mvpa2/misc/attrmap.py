@@ -9,8 +9,8 @@
 """Helper to map literal attribute to numerical ones (and back)"""
 
 
-from operator import isSequenceType
 import numpy as np
+from mvpa2.base.types import is_sequence_type
 
 class AttributeMap(object):
     # might be derived from dict, but do not see advantages right now,
@@ -132,6 +132,9 @@ class AttributeMap(object):
             for k, v in self._nmap:
                 yield k, v
 
+    # Py3 Compatibility method to keep lib2to3 happy
+    items = iteritems
+    
     def to_numeric(self, attr):
         """Map literal attribute values to numerical ones.
 
@@ -147,7 +150,7 @@ class AttributeMap(object):
         attr = np.asanyarray(attr)
 
         # no mapping if already numeric
-        if not np.issubdtype(attr.dtype, 'c') and not self.mapnumeric:
+        if not np.issubdtype(attr.dtype, str) and not self.mapnumeric:
             return attr
 
         if self._nmap is None:
@@ -225,7 +228,7 @@ class AttributeMap(object):
 
         lmap = self._lmap
 
-        if isSequenceType(attr) and not isinstance(attr, str):
+        if is_sequence_type(attr) and not isinstance(attr, str):
             # Choose lookup function
             if recurse:
                 lookupfx = lambda x: self.to_literal(x, recurse=True)

@@ -69,7 +69,7 @@ class PrototypeMapperTests(unittest.TestCase):
         fraction = 0.5
         prototype_number = max(int(len(self.samples)*fraction),1)
         ## debug("MAP","Generating "+str(prototype_number)+" random prototypes.")
-        self.prototypes2 = np.array(random.sample(self.samples, prototype_number))
+        self.prototypes2 = np.array(random.sample(list(self.samples), prototype_number))
         self.pm2 = PrototypeMapper(similarities=self.similarities, prototypes=self.prototypes2)
         self.pm2.train(self.samples)
         assert_array_equal(self.pm2.proj.shape, (self.samples.shape[0], self.pm2.prototypes.shape[0]*len(self.similarities)))

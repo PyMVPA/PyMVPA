@@ -107,7 +107,6 @@ class SimpleSOMMapper(Mapper):
             for s in samples:
                 # determine closest unit (as element coordinate)
                 b = self._get_bmu(s)
-
                 # train all units at once by unfolding the kernel (from the
                 # single quadrant that is precomputed), cutting it to the
                 # right shape and simply multiply it to the difference of target
@@ -184,9 +183,8 @@ class SimpleSOMMapper(Mapper):
         """
         # TODO expose distance function as parameter
         loc = np.argmin(((self.K - sample) ** 2).sum(axis=2))
-
         # assumes 2D Kohonen layer
-        return (np.divide(loc, self.kshape[1]), loc % self.kshape[1])
+        return (np.divide(loc, self.kshape[1]).astype('int'), loc % self.kshape[1])
 
 
     def _forward_data(self, data):

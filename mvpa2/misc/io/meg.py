@@ -10,6 +10,7 @@
 
 __docformat__ = 'restructuredtext'
 
+import sys
 import numpy as np
 
 from mvpa2.base import externals
@@ -68,6 +69,10 @@ class TuebingenMEG(object):
                 externals.exists('gzip', raise_=True)
                 import gzip
                 source = gzip.open(source, 'r')
+                if sys.version >= '3':
+                    # module still can not open text files
+                    # in py3: Issue #13989 and #10791 
+                    source = source.read().decode('ascii').splitlines()
             else:
                 source = open(source, 'r')
 

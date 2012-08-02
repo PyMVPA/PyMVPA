@@ -12,11 +12,12 @@ __docformat__ = 'restructuredtext'
 
 import numpy as np
 import textwrap
-import operator
 
 from mvpa2.support.copy import deepcopy
 
 from mvpa2.base import warning
+from mvpa2.base.types import is_sequence_type
+
 from mvpa2.kernels.base import Kernel
 from mvpa2.base.dochelpers import handle_docstring, _rst, _rst_section, \
      _rst_indentstr
@@ -243,7 +244,7 @@ class _SVM(Classifier):
                   "Requested estimation of default C whenever C was not set"
 
         C = self.params.C
-        if not operator.isSequenceType(C):
+        if not is_sequence_type(C):
             # we were not given a tuple for balancing between classes
             C = [C]
 

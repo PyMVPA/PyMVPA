@@ -515,7 +515,9 @@ def _str(obj, *args, **kwargs):
     truncate = cfg.get_as_dtype('verbose', 'truncate str', int, default=200)
 
     s = None
-    if hasattr(obj, 'descr'):
+    # don't do descriptions for dicts like our collections as they might contain
+    # an actual item 'descr'
+    if hasattr(obj, 'descr') and not isinstance(obj, dict):
         s = obj.descr
     if s is None:
         s = obj.__class__.__name__

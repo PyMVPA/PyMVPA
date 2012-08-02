@@ -250,3 +250,32 @@ def fit2histogram(X, fx, params, nbins=20, x_range=None):
             least_sq_fit(fx, params, H, bin_centers))
 
 
+def get_random_rotation(ns, nt=None, data=None):
+    """Return some random rotation (or rotation + dim reduction) matrix
+
+    Parameters
+    ----------
+    ns : int
+      Dimensionality of source space
+    nt : int, optional
+      Dimensionality of target space
+    data : array, optional
+      Some data (should have rank high enough) to derive
+      rotation
+    """
+    if nt is None:
+        nt = ns
+    # figure out some "random" rotation
+    d = max(ns, nt)
+    if data is None:
+        data = np.random.normal(size=(d*10, d))
+    _u, _s, _vh = np.linalg.svd(data[:, :d])
+    R = _vh[:ns, :nt]
+    if ns == nt:
+        # Test if it is indeed a rotation matrix ;)
+        # Lets flip first axis if necessary
+        if np.linalg.det(R) < 0:
+            R[:, 0] *= -1.0
+    return R
+
+
