@@ -29,7 +29,8 @@ from mvpa2.support import copy
 from mvpa2.featsel.base import StaticFeatureSelection
 from mvpa2.measures.base import Measure
 from mvpa2.base.state import ConditionalAttribute
-from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
+from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere, \
+                                    SurfaceDiskQueryEngine
 
 
 class BaseSearchlight(Measure):
@@ -438,16 +439,15 @@ def sphere_searchlight(datameasure, radius=1, center_ids=None,
                        **kwargs)
 
 @borrowkwargs(Searchlight, '__init__', exclude=['roi_ids'])
-def surface_searchlight(datameasure, surfaceDisk=None,
-                        lhd=None, lhs=None, lhc=None,
-                        rhd=None, rhs=None, rhc=None,
-                        radius=1, center_ids=None,
-                        space='voxel_indices', **kwargs):
+def surface_searchlight(datameasure, sdqe=None, radius=1,
+                        lverts=None, lgraph=None, lcoords=None,
+                        rverts=None, rgraph=None, rcoords=None,
+                        center_ids=None, **kwargs):
     if surfaceDisk is not None:
-        qe = surfaceDisk
+        qe = sdqe
     else:
-        qe = SurfaceDisk(radius)
-        qe.equip(lhd,lhs,lhc,rhd,rhs,rhc)
+        qe = SurfaceDiskQueryEngine(radius, lverts, lgraph, lcoords,
+                                            rverts, rgraph, rcoords)
     # init the searchlight with the queryengine
     return Searchlight(datameasure, queryengine=qe, roi_ids=center_ids,
                        **kwargs)

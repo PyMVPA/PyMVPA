@@ -302,34 +302,19 @@ class HollowSphere(Sphere):
         return res
 
 
-class SurfaceDisk(object):
+class SurfaceDiskQueryEngine(object):
     """Disk on a surface embedded in a higher dimensional space
 
-    This is an IndexedQueryEngine, in effect, but requires training on:
-
+    This is an IndexedQueryEngine, in effect, but requires:
     1) NifTI images of left and right hemispheres, with nearest neighbor
     vertex indices for each voxel as the values
     2) Left and right hemisphere graphs which are lists of dictionaries
     such that G[i][j] is the distance between connected nodes i and j
     3) Coordinates of vertices in Euclidean space
     """
-    def __init__(self, radius):
+    def __init__(self, radius, lverts, lgraph, lcoords,
+                               rverts, rgraph, rcoords):
         self._radius = radius
-
-    def _repr(self, prefixes=[]):
-        return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
-
-    # Cargo cult programming
-    @property
-    def radius(self):
-        return self._radius
-
-    def equip(self, lverts, lgraph, lcoords,
-                    rverts, rgraph, rcoords):
-        """To train a surface disk, we require a dataset with the index of the
-        nearest surface mesh vertex to each voxel, as well as a dictionary
-        representing that surface mesh and a set of 3d coordinates for each
-        vertex."""
         self.lverts = lverts
         self.rverts = rverts
         self.lgraph = lgraph
@@ -337,9 +322,17 @@ class SurfaceDisk(object):
         self.lcoords = lcoords
         self.rcoords = rcoords
 
-    def loadFromFiles(self, lvtxvol, lhsurf,
-                            rvtxvol, rhsurf,
-                            mask=None):
+    def __repr__(self, prefixes=[]):
+        return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
+
+    # Cargo cult programming
+    @property
+    def radius(self):
+        return self._radius
+
+    @classmethod
+    def loadFromFiles(cls, radius, lvtxvol, lhsurf, rvtxvol, rhsurf,
+            mask=None):
         # Vertex volumes generated with Freesurfer's mri_surf2vol --vtxvol
         lverts = fmri_dataset(lvtxvol, mask=mask)
         rverts = fmri_dataset(rvtxvol, mask=mask)
@@ -363,7 +356,7 @@ class SurfaceDisk(object):
         lgraph = buildGraph(lcoords, lfaces)
         rgraph = buildGraph(rcoords, rfaces)
 
-        self.equip(lverts, lgraph, lcoords, rverts, rgraph, rcoords)
+        return cls(radius, lverts, lgraph, lcoords, rverts, rgraph, rcoords)
 
     def train(self, dataset):
         pass
