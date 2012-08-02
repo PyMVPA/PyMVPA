@@ -14,6 +14,7 @@ from numpy import array
 import sys
 import itertools
 import nibabel as nib
+import networkx as nx
 
 from mvpa2.base import warning
 from mvpa2.base.types import is_sequence_type
@@ -323,7 +324,7 @@ class SurfaceDiskQueryEngine(object):
         self.rcoords = rcoords
 
     def __repr__(self, prefixes=[]):
-        return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes_))
+        return "%s(%s)" % (self.__class__.__name__, ', '.join(prefixes))
 
     # Cargo cult programming
     @property
@@ -343,15 +344,15 @@ class SurfaceDiskQueryEngine(object):
 
         def buildGraph(coords, faces):
             """Build a bidirectional graph with Euclidean distances as edges"""
-            edges = [{} for i in range(coords.shape[0])]
-
+            graph = nx.Graph()
+            
             euclid = lambda x, y: np.sqrt(np.sum((x - y) ** 2))
             for i, j, k in faces:
-                edges[i][j] = edges[j][i] = euclid(coords[i, :], coords[j, :])
-                edges[i][k] = edges[k][i] = euclid(coords[i, :], coords[k, :])
-                edges[j][k] = edges[k][j] = euclid(coords[j, :], coords[k, :])
+                graph.add_edge(i, j, weight=euclid(coords[i, :], coords[j, :]))
+                graph.add_edge(i, k, weight=euclid(coords[i, :], coords[k, :]))
+                graph.add_edge(j, k, weight=euclid(coords[j, :], coords[k, :]))
 
-            return edges
+            return graph
 
         lgraph = buildGraph(lcoords, lfaces)
         rgraph = buildGraph(rcoords, rfaces)
@@ -363,118 +364,23 @@ class SurfaceDiskQueryEngine(object):
 
     def __getitem__(self, coordinate):
         if self.lverts.samples[0, coordinate] != -1:
-            ds = self.lverts
-            surf = self.lgraph
-            coords = self.lcoords
+            verts = self.lverts.samples[0]
+            graph = self.lgraph
         elif self.rverts.samples[0, coordinate] != -1:
-            ds = self.rverts
-            surf = self.rgraph
-            coords = self.rcoords
+            verts = self.rverts.samples[0]
+            graph = self.rgraph
         else:
             # XXX BIG ASSUMPTION
             # Index 0 will never be informative
             return [0]
 
-        start = ds.samples[0, coordinate]
-        dists = np.sqrt(np.sum((coords - coords[start, 0:]) ** 2, axis=1))
-        bound = np.nonzero(dists == np.max(dists[dists < self._radius]))[0][0]
+        source = verts[coordinate]
+        disk = nx.single_source_dijkstra_path_length(graph, source,
+                                                     self._radius)
 
-        D = self.dijkstra(surf, start, bound)
-
-        disk = set(vertex for vertex in D if D[vertex] < self._radius)
-        idcs = [idx for idx in range(len(ds.samples[0]))
-                    if ds.samples[0][idx] in disk]
+        idcs = [i for i, v in enumerate(verts) if v in disk]
 
         return idcs
-
-    def dijkstra(self, G, start, end=None):
-        """Dijkstra's algorithm for shortest paths
-
-        Licensed under the PSF License
-        Copyright: 2002, David Eppstein, UC Irvine"""
-        D = {}  # dictionary of final distances
-        Q = priorityDictionary()   # est.dist. of non-final vert.
-        Q[start] = 0
-
-        for v in Q:
-            D[v] = Q[v]
-            if v == end:
-                break
-
-            for w in G[v]:
-                vwLength = D[v] + G[v][w]
-                if w in D:
-                    if vwLength < D[w]:
-                        raise ValueError("Dijkstra: found better path to " \
-                                            "already-final vertex")
-                elif w not in Q or vwLength < Q[w]:
-                    Q[w] = vwLength
-
-        return D
-
-
-class priorityDictionary(dict):
-    """Priority dictionary using binary heaps
-
-    Licensed under the PSF License
-    Copyright: 2002, David Eppstein, UC Irvine"""
-    def __init__(self):
-        self.__heap = []
-        dict.__init__(self)
-
-    def smallest(self):
-        '''Find smallest item after removing deleted items from heap.'''
-        if len(self) == 0:
-            raise IndexError("smallest of empty priorityDictionary")
-        heap = self.__heap
-        while heap[0][1] not in self or self[heap[0][1]] != heap[0][0]:
-            lastItem = heap.pop()
-            insertionPoint = 0
-            while 1:
-                smallChild = 2 * insertionPoint + 1
-                if smallChild + 1 < len(heap) and \
-                        heap[smallChild] > heap[smallChild + 1]:
-                    smallChild += 1
-                if smallChild >= len(heap) or lastItem <= heap[smallChild]:
-                    heap[insertionPoint] = lastItem
-                    break
-                heap[insertionPoint] = heap[smallChild]
-                insertionPoint = smallChild
-        return heap[0][1]
-
-    def __iter__(self):
-        '''Create destructive sorted iterator of priorityDictionary.'''
-        def iterfn():
-            while len(self) > 0:
-                x = self.smallest()
-                yield x
-                del self[x]
-        return iterfn()
-
-    def __setitem__(self, key, val):
-        '''Change value stored in dictionary and add corresponding pair to
-        heap. Rebuilds the heap if the number of deleted items grows too large,
-        to avoid memory leakage.'''
-        dict.__setitem__(self, key, val)
-        heap = self.__heap
-        if len(heap) > 2 * len(self):
-            self.__heap = [(v, k) for k, v in self.iteritems()]
-            self.__heap.sort()  # builtin sort likely faster than O(n) heapify
-        else:
-            newPair = (val, key)
-            insertionPoint = len(heap)
-            heap.append(None)
-            while insertionPoint > 0 and \
-                    newPair < heap[(insertionPoint - 1) // 2]:
-                heap[insertionPoint] = heap[(insertionPoint - 1) // 2]
-                insertionPoint = (insertionPoint - 1) // 2
-            heap[insertionPoint] = newPair
-
-    def setdefault(self, key, val):
-        '''Reimplement setdefault to call our customized __setitem__.'''
-        if key not in self:
-            self[key] = val
-        return self[key]
 
 
 class QueryEngineInterface(object):
