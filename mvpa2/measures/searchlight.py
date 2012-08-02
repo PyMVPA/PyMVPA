@@ -443,13 +443,11 @@ def surface_searchlight(datameasure, sdqe=None, radius=1,
                         lverts=None, lgraph=None, lcoords=None,
                         rverts=None, rgraph=None, rcoords=None,
                         center_ids=None, **kwargs):
-    if surfaceDisk is not None:
-        qe = sdqe
-    else:
-        qe = SurfaceDiskQueryEngine(radius, lverts, lgraph, lcoords,
-                                            rverts, rgraph, rcoords)
+    if sqde is None:
+        sdqe = SurfaceDiskQueryEngine(radius, lverts, lgraph, lcoords,
+                                              rverts, rgraph, rcoords)
     # init the searchlight with the queryengine
-    return Searchlight(datameasure, queryengine=qe, roi_ids=center_ids,
+    return Searchlight(datameasure, queryengine=sdqe, roi_ids=center_ids,
                        **kwargs)
 
 #class OptimalSearchlight( object ):
