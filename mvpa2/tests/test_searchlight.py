@@ -8,6 +8,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for PyMVPA searchlight algorithm"""
 
+import tempfile, time
 import numpy.random as rnd
 
 import mvpa2
@@ -83,13 +84,19 @@ class SearchlightTests(unittest.TestCase):
                 ]
                )
     @sweepargs(do_roi=(False, True))
+    @sweepargs(results_backend=('native', 'hdf5'))
     @reseed_rng()
-    def test_spatial_searchlight(self, lrn_sllrn_SL_partitioner, do_roi=False):
+    def test_spatial_searchlight(self, lrn_sllrn_SL_partitioner, do_roi=False,
+                                 results_backend='native'):
         """Tests both generic and ad-hoc searchlights (e.g. GNBSearchlight)
         Test of and adhoc searchlight anyways requires a ground-truth
         comparison to the generic version, so we are doing sweepargs here
         """
         lrn, sllrn, SL, partitioner = lrn_sllrn_SL_partitioner
+        ## if results_backend == 'hdf5' and not common_variance:
+        ##     # no need for full combination of all possible arguments here
+        ##     return
+
         # e.g. for M1NN we need plain kNN(1) for m1nnsl, but to imitate m1nn
         #      "learner" we must use a chainmapper atm
         if sllrn is None:
@@ -111,7 +118,8 @@ class SearchlightTests(unittest.TestCase):
         #      and pure Python
         cv = CrossValidation(lrn, partitioner)
 
-        skwargs = dict(radius=1, enable_ca=['roi_sizes', 'raw_results'])
+        skwargs = dict(radius=1, enable_ca=['roi_sizes', 'raw_results',
+                                            'roi_feature_ids'])
 
         if do_roi:
             # select some random set of features
@@ -129,7 +137,8 @@ class SearchlightTests(unittest.TestCase):
             roi_ids = np.arange(nroi)
             result_all = None
 
-        sls = [sphere_searchlight(cv, **skwargs),
+        sls = [sphere_searchlight(cv, results_backend=results_backend,
+                                  **skwargs),
                #GNBSearchlight(gnb, NFoldPartitioner(cvtype=1))
                SL(sllrn, partitioner, indexsum='fancy', **skwargs)
                ]
@@ -178,6 +187,9 @@ class SearchlightTests(unittest.TestCase):
 
             # check resonable sphere sizes
             self.assertTrue(len(sl.ca.roi_sizes) == nroi)
+            self.assertTrue(len(sl.ca.roi_feature_ids) == nroi)
+            for i, fids in enumerate(sl.ca.roi_feature_ids):
+                self.assertTrue(len(fids) == sl.ca.roi_sizes[i])
             if do_roi:
                 # for roi we should relax conditions a bit
                 self.assertTrue(max(sl.ca.roi_sizes) <= 7)
@@ -261,7 +273,7 @@ class SearchlightTests(unittest.TestCase):
         center_ids[[3,50]] = True
         ds.fa['center_ids'] = center_ids
         # compute N-1 cross-validation for each sphere
-        cv = CrossValidation(sample_clf_lin, NFoldPartitioner())
+        cv = CrossValidation(GNB(), NFoldPartitioner())
         # contruct diameter 1 (or just radius 0) searchlight
         # one time give center ids as a list, the other one takes it from the
         # dataset itself
@@ -278,9 +290,9 @@ class SearchlightTests(unittest.TestCase):
             # only two spheres but error for all CV-folds
             self.assertEqual(results.shape, (len(self.dataset.UC), 2))
             # Test if results hold if we "set" a "new" datameasure
-            sl.datameasure = CrossValidation(sample_clf_lin, NFoldPartitioner())
+            sl.datameasure = CrossValidation(GNB(), NFoldPartitioner())
             results2 = sl(ds)
-            assert_array_equal(results, results2)
+            assert_array_almost_equal(results, results2)
 
         # test if we graciously puke if center_ids are out of bounds
         dataset0 = ds[:, :50] # so we have no 50th feature
@@ -500,6 +512,57 @@ class SearchlightTests(unittest.TestCase):
             slmap = sl(ds_both)
             ok_(np.all(slmap.samples >= thr))
             ok_(np.mean(slmap.samples) >= thr)
+
+    def test_swaroop_case(self):
+        """Test hdf5 backend to pass results on Swaroop's usecase
+        """
+
+        from mvpa2.measures.base import Measure
+        class sw_measure(Measure):
+            def __init__(self):
+                Measure.__init__(self, auto_train = True)
+            def _call(self, dataset):
+                # For performance measures -- increase to 50-200
+                # np.sum here is just to get some meaningful value in
+                # them
+                #return np.ones(shape=(2, 2))*np.sum(dataset)
+                return Dataset(
+                    np.array([{'d': np.ones(shape=(5,5))*np.sum(dataset)}],
+                             dtype=object))
+        results = []
+        ds = datasets['3dsmall'].copy(deep=True)
+        ds.fa['voxel_indices'] = ds.fa.myspace
+
+        our_custom_prefix = tempfile.mktemp()
+        for backend in ['native'] + \
+                (externals.exists('h5py') and ['hdf5'] or []):
+            sl = sphere_searchlight(sw_measure(),
+                                    radius=1,
+                                    tmp_prefix=our_custom_prefix,
+                                    results_backend=backend)
+            t0 = time.time()
+            results.append(np.asanyarray(sl(ds)))
+            # print "Done for backend %s in %d sec" % (backend, time.time() - t0)
+        # because of swaroop's ad-hoc (who only could recommend such
+        # a construct?) use case, and absent fancy working assert_objectarray_equal
+        # let's compare manually
+        #assert_objectarray_equal(*results)
+        if not externals.exists('h5py'):
+            self.assertRaises(RuntimeError,
+                              sphere_searchlight,
+                              sw_measure(),
+                              results_backend='hdf5')
+            raise SkipTest('h5py required for test of backend="hdf5"')
+        assert_equal(results[0].shape, results[1].shape)
+        results = [r.flatten() for r in results]
+        for x, y in zip(*results):
+            assert_equal(x.keys(), y.keys())
+            assert_array_equal(x['d'], y['d'])
+        # verify that no junk is left behind
+        tempfiles = glob.glob(our_custom_prefix + '*')
+        assert_equal(len(tempfiles), 0)
+
+
 
 def suite():
     return unittest.makeSuite(SearchlightTests)

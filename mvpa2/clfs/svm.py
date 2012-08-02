@@ -27,7 +27,7 @@ __docformat__ = 'restructuredtext'
 
 # take care of conditional import of external classifiers
 from mvpa2.base import warning, cfg, externals
-from _svmbase import _SVM
+from mvpa2.clfs._svmbase import _SVM
 
 if __debug__:
     from mvpa2.base import debug
@@ -65,7 +65,7 @@ if externals.exists('shogun'):
 
 if externals.exists('libsvm'):
     # By default for now we want simply to import all SVMs from libsvm
-    from mvpa2.clfs import libsvmc as libsvm
+    from mvpa2.clfs.libsvmc import svm as libsvm
     _NuSVM = libsvm.SVM
     if _svm_backend == 'libsvm' or SVM is None:
         if __debug__ and _svm_backend != 'libsvm' and SVM is None:

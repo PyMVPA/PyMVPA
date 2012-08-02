@@ -16,6 +16,8 @@ import glob, os, sys, shutil
 import tempfile
 import unittest
 
+import numpy as np
+
 import mvpa2
 from mvpa2.base import externals, warning
 
@@ -271,11 +273,18 @@ def labile(niter=3, nfailures=1):
     return decorate
 
 
-def assert_objectarray_equal(x, y, xorig=None, yorig=None):
+def assert_objectarray_equal(x, y, xorig=None, yorig=None, strict=True):
     """Wrapper around assert_array_equal to compare object arrays
 
     See http://projects.scipy.org/numpy/ticket/2117
     for the original report on oddity of dtype object arrays comparisons
+
+    Parameters
+    ----------
+
+    strict: bool
+        Assure also that dtypes are the same.  Otherwise it is pretty much
+        value comparison
     """
     try:
         assert_array_equal(x, y)
@@ -292,7 +301,10 @@ def assert_objectarray_equal(x, y, xorig=None, yorig=None):
             # we will try harder comparing each element the same way
             # and also enforcing equal dtype
             for x_, y_ in zip(x, y):
-                assert(x_.dtype == y_.dtype)
+                assert(type(x_) == type(y_))
+                if strict and isinstance(x_, np.ndarray) and not (x_.dtype == y_.dtype):
+                    raise AssertionError("dtypes %r and %r do not match" %
+                                         (x_.dtype, y_.dtype))
                 assert_objectarray_equal(x_, y_, xorig, yorig)
         except Exception, e:
             if not isinstance(e, AssertionError):

@@ -75,7 +75,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
         self.assertTrue(f.shape == (1, data.nfeatures))
         self.assertTrue(abs(f.samples[0, 1]) <= 1e-12, # some small value
             msg="Failed test with value %g instead of != 0.0" % f.samples[0, 1])
-        self.assertTrue(f[0] > 0.1)     # some reasonably large value
+        self.assertTrue(f.samples[0,0] > 0.1)     # some reasonably large value
 
         # we should not have NaNs
         self.assertTrue(not np.any(np.isnan(f)))
@@ -365,7 +365,7 @@ class SensitivityAnalysersTests(unittest.TestCase):
                                   ds.nfeatures))
         splits = sana.ca.datasets
         self.assertEqual(len(splits), 2)
-        self.assertTrue(np.all([s.nsamples == ds.nsamples/4 for s in splits]))
+        self.assertTrue(np.all([s.nsamples == ds.nsamples//4 for s in splits]))
         # should have used different samples
         self.assertTrue(np.any([splits[0].sa.origids != splits[1].sa.origids]))
         # and should have got different sensitivities

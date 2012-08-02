@@ -23,6 +23,7 @@ from mvpa2.base.node import Node
 from mvpa2.misc.errorfx import mean_power_fx, root_mean_power_fx, rms_error, \
      relative_rms_error, mean_mismatch_error, auc_error
 from mvpa2.base import warning
+from mvpa2.datasets import Dataset
 from mvpa2.base.collections import Collectable
 from mvpa2.base.state import ConditionalAttribute, ClassWithCollections, \
      UnknownStateError
@@ -1123,7 +1124,7 @@ class ConfusionMatrixError(object):
     def __init__(self, labels=None):
         """
         Parameters
-        ==========
+        ----------
         labels : list
           Class labels for confusion matrix columns/rows
         """
@@ -1136,6 +1137,217 @@ class ConfusionMatrixError(object):
         # We have to add a degenerate leading dimension
         # so we could separate them into separate 'samples'
         return cm.matrix[None, :]
+
+
+class Confusion(Node):
+    """Compute a confusion matrix from predictions and targets (Node interface)
+
+    This class is very similar to ``ConfusionMatrix`` and
+    ``ConfusionMatrixError``.  However, in contrast to these this class can be
+    used in any place that accepts ``Nodes`` -- most importantly others node's
+    ``postproc`` functionality. This makes it very straightforward to compute
+    confusion matrices from classifier output as an intermediate result and
+    continue processing with other nodes. A sketch of a cross-validation setup
+    using this functionality looks like this::
+
+      CrossValidation(some_classifier,
+                      some_partitioner,
+                      errorfx=None,
+                      postproc=Confusion())
+
+    It is vital to set ``errorfx`` to ``None`` to preserve raw classifier
+    prediction values in the output dataset to allow for proper data aggregation
+    in a confusion matrix.
+    """
+    def __init__(self, attr='targets', labels=None, add_confusion_obj=False,
+                 **kwargs):
+        """
+        Parameters
+        ----------
+        attr : str
+          Sample attribute name where classification target values are stored
+          for each prediction.
+        labels : list or None
+          Optional list of labels to compute a confusion matrix for. This can be
+          useful if a particular  prediction dataset doesn't have all
+          theoretically possible labels as targets.
+        add_confusion_obj : bool
+          If True, the ConfusionMatrix object will be added to the output
+          dataset as attribute 'confusion_obj', i.e. ds.a.confusion_obj
+        **kwargs
+          All remaining argments will be passed on to the Node base-class.
+        """
+        Node.__init__(self, **kwargs)
+        self._labels = labels
+        self._target_attr = attr
+        self._add_confusion_obj = add_confusion_obj
+
+    def _call(self, ds):
+        if not len(ds.shape) == 2 and ds.shape[1] == 1:
+            raise ValueError("Confusion cannot deal with multi-dimensional "
+                             "predictions, got shape %s." % ds.shape[1:])
+        # MH: we could also make it iterate over individual chunks and create
+        # matrix sets -- but not sure if there is a use case for the Node
+        # interface
+        # compute the confusion matrix
+        cm = ConfusionMatrix(labels=list(self._labels),
+                             predictions=ds.samples[:,0],
+                             targets=ds.sa[self._target_attr].value)
+        # figure out where to store the labels
+        # by default the confusion matrix in the Dataset will look just like
+        # a printed ConfusionMatrix
+        if self.get_space() is None:
+            fa_attr = 'targets'
+            sa_attr = 'predictions'
+        else:
+            sa_attr = fa_attr = self.get_space()
+        out = Dataset(cm.matrix,
+                      sa={sa_attr: cm.labels},
+                      fa={fa_attr: cm.labels})
+        if self._add_confusion_obj:
+            out.a['confusion_obj'] = cm
+
+        return out
+
+
+class BayesConfusionHypothesis(Node):
+    """Bayesian hypothesis testing on confusion matrices.
+
+    For multi-class classification a single accuracy value is often not a
+    meaningful performance measure -- or at least hard to interpret. This class
+    allows for convenient Bayesian hypothesis testing of confusion matrices.
+    It computes the likelihood of discriminibility of any partitions of
+    classes given a confusion matrix.
+
+    The returned dataset contains at least one feature (the log likelihood of
+    a hypothesis) and as many samples as (possible) partitions of classes.
+    The actual partition configurations are stored in a sample attribute
+    of nested lists. The top-level list contains discriminable groups of
+    classes, whereas the second level lists contain groups of classes that
+    cannot be discriminated under a given hypothesis. For example::
+
+      [[0, 1], [2], [3, 4, 5]]
+
+    This hypothesis represent the state where class 0 and 1 cannot be
+    distinguish from each other, but both 0 and 1 together can be distinguished
+    from class 2 and the group of 3, 4, and 5 -- where classes from the later
+    group cannot be distinguished from one another.
+
+    This algorithms is based on
+
+        Olivetti, E., Greiner, S. and Avesani, P. (2012). Testing for
+        Information with Brain Decoding. In: Pattern Recognition in NeuroImaging
+        (PRNI), International Workshop on.
+    """
+    def __init__(self, alpha=None, labels_attr='predictions',
+                 space='hypothesis', prior_Hs=None, log=True,
+                 postprob=True, hypotheses=None, **kwargs):
+        """
+        Parameters
+        ----------
+        alpha : array
+          Bayesian hyper-prior alpha (in a multivariate-Dirichlet sense)
+        labels_attr : str
+          Name of the sample attribute in the input dataset that contains
+          the class labels corresponding to the confusion matrix rows. If an
+          attribute with this name is not found, hypotheses will be reported
+          based on confusion table row/column numbers, instead of their
+          corresponding labels. If such an attribute is found in the input
+          dataset, any ``hypotheses`` specification has to be specified
+          using literal labels also.
+        space : str
+          Name of the sample attribute in the output dataset where the
+          hypothesis partition configurations will be stored.
+        prior_Hs : array
+          Vector of priors for each hypotheses. Typically used in conjuction
+          with an explicit set of possible hypotheses (see ``hypotheses``).
+          If ``None`` a flat prior is assumed.
+        log : bool
+          Whether to return values (likelihood or posterior probabilities) in
+          log scale to mitigate numerical precision problems with near-zero
+          probabilities.
+        postprob : bool
+          Whether to return posterior probabilities p(hypothesis|confusion)
+          instead of likelihood(confusion|hypothesis).
+        hypotheses : list
+          List of possible hypotheses. XXX needs work on how to specify them.
+        **kwargs
+          All remaining argments will be passed on to the Node base-class.
+        """
+        Node.__init__(self, space=space, **kwargs)
+        self._alpha = alpha
+        self._prior_Hs = prior_Hs
+        self._labels_attr = labels_attr
+        self._log = log
+        self._postprob = postprob
+        self._hypotheses = hypotheses
+
+    def _call(self, ds):
+        from mvpa2.support.bayes.partitioner import Partition
+        from mvpa2.support.bayes.partial_independence import compute_logp_H
+
+        hypotheses = self._hypotheses
+        if hypotheses is None:
+            # generate all possible hypotheses if none are given
+            partitions = Partition(range(len(ds)))
+        else:
+            if self._labels_attr in ds.sa:
+                # literal labels are given -> recode into digits to match
+                # underlying API
+                recode = dict([(e, i)
+                    for i, e in enumerate(ds.sa[self._labels_attr].value)])
+                partitions = [[[recode[label] for label in class_]
+                                for class_ in hyp]
+                                    for hyp in hypotheses]
+            else:
+                # use hypotheses as is -- all bets are off
+                partitions = hypotheses
+
+        if self._prior_Hs is None:
+            # default: uniform prior on hypotheses: p(H_i)
+            prior_Hs = np.ones(len(partitions)) / len(partitions)
+        else:
+            prior_Hs = self._prior_Hs
+
+        # p(X|H_i) for all H
+        logp_X_given_Hs = np.zeros(len(partitions))
+        for i, psi in enumerate(partitions):
+            # use Emanuele's toolbox
+            logp_X_given_Hs[i] = compute_logp_H(ds.samples, psi, self._alpha)
+        out = logp_X_given_Hs
+        statfa = ['log(p(C|H))']
+
+        if self._postprob:
+            # convert into posterior probabilities: p(H|X)
+            # normalization constant: p(X)
+            logp_X = reduce(np.logaddexp, logp_X_given_Hs + np.log(prior_Hs))
+
+            # p(H|X) from Bayes rule:
+            log_posterior_Hs_given_X = logp_X_given_Hs + np.log(prior_Hs) - logp_X
+
+            out = np.vstack((out, log_posterior_Hs_given_X)).T
+            statfa.append('log(p(H|C))')
+
+        if not self._log:
+            # convert from log scale
+            out = np.exp(out)
+            # remove the log() from the stat label
+            statfa = [s[4:-1] for s in statfa]
+
+        if hypotheses is None:
+            if self._labels_attr in ds.sa:
+                # recode partition IDs into actual labels, if the necessary attr
+                # is available
+                hypotheses = Partition(ds.sa[self._labels_attr].value)
+            else:
+                hypotheses = partitions
+            hypotheses = list(hypotheses)
+
+        out = Dataset(out,
+                      sa={self.get_space(): hypotheses,
+                          'prior': prior_Hs},
+                      fa={'stat': statfa})
+        return out
 
 
 class RegressionStatistics(SummaryStatistics):

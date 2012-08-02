@@ -552,6 +552,12 @@ class TransferMeasure(Measure):
         dsgen = splitter.generate(ds)
         dstrain = dsgen.next()
 
+        if not len(dstrain):
+            raise ValueError(
+                "Got empty training dataset from splitting in TransferMeasure. "
+                "Unique values of input split attribute are: %s)" \
+                % (ds.sa[splitter.get_space()].unique))
+
         if space:
             # get unique chunks for training set
             train_chunks = ','.join([str(i)
@@ -565,6 +571,11 @@ class TransferMeasure(Measure):
 
         # run with second
         dstest = dsgen.next()
+        if not len(dstest):
+            raise ValueError(
+                "Got empty testing dataset from splitting in TransferMeasure. "
+                "Unique values of input split attribute are: %s)" \
+                % (ds.sa[splitter.get_space()].unique))
         if space:
             # get unique chunks for testing set
             test_chunks = ','.join([str(i)

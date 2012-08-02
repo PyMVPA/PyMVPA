@@ -14,7 +14,6 @@ first argument since they are bound to Dataset class in the trailer.
 
 __docformat__ = 'restructuredtext'
 
-from operator import isSequenceType
 import random
 
 import numpy as np
@@ -25,6 +24,7 @@ from mvpa2.base.dochelpers import table2string
 from mvpa2.misc.support import get_nelements_per_value
 
 from mvpa2.base import externals, warning
+from mvpa2.base.types import is_sequence_type
 
 if __debug__:
     from mvpa2.base import debug
@@ -212,7 +212,7 @@ def random_samples(dataset, npertarget, targets_attr='targets'):
     targets = satargets.value
     for i, r in enumerate(utargets):
         # get the list of pattern ids for this class
-        sample += random.sample((targets == r).nonzero()[0], npertarget[i] )
+        sample += random.sample(list((targets == r).nonzero()[0]), npertarget[i] )
 
     return dataset[sample]
 
@@ -238,7 +238,7 @@ def get_samples_by_attr(dataset, attr, values, sort=True):
     """Return indices of samples given a list of attributes
     """
 
-    if not isSequenceType(values) \
+    if not is_sequence_type(values) \
            or isinstance(values, basestring):
         values = [ values ]
 
@@ -292,9 +292,9 @@ def summary(dataset, stats=True, lstats='auto', sstats='auto', idhash=False,
         s += '\nID-Hashes: %s' % dataset.idhash
 
     # Deduce if necessary lstats and sstats
-    if lstats is 'auto':
+    if lstats == 'auto':
         lstats = (targets_attr in sa) and (chunks_attr in sa)
-    if sstats is 'auto':
+    if sstats == 'auto':
         sstats = (targets_attr in sa)
 
     ssep = (' ', '\n')[lstats]

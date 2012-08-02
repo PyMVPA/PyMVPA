@@ -25,6 +25,7 @@ Who Is Using It?
 Institutions Where PyMVPA Is Known To Be Used
 =============================================
 
+* Center for Mind/Brain Sciences, **University of Trento**, Italy
 * Department of Psychological and Brain Sciences, **Dartmouth College**, USA
 * Thayer School of Engineering, **Dartmouth College**, USA
 * Department of Psychology & Neuroscience, **Duke University**, USA
@@ -48,10 +49,19 @@ Institutions Where PyMVPA Is Known To Be Used
 Studies employing PyMVPA
 ========================
 
+* :ref:`Gorlin et al., PNAS (2012) <GMS+12>`: Imaging prior information in the
+  brain.
+
 * :ref:`Raizada and Connolly, Cognitive Neuroscience (In press) <RC12>`: What
   makes different people's representations alike: neural similarity-space
   solves the problem of across-subject fMRI decoding.
   `Preprint PDF and code <http://raizadalab.org/publications.html>`__ are available
+
+* :ref:`Connolly et al., Journal of Neuroscience (2012) <CGG+12>`:
+  Representation of Biological Classes in the Human Brain.
+
+* :ref:`Haxby et al., Neuron (2011) <HGC+11>`: A common, high-dimensional model
+  of the representational space in human ventral temporal cortex.
 
 * :ref:`Jimura and Poldrack, Neuropsychologia (2011) <JP11>`: Analyses of
   regional-average activation and multivoxel pattern information tell

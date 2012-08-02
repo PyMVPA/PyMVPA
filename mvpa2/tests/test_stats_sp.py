@@ -224,6 +224,27 @@ class StatsTestsScipy(unittest.TestCase):
                         #pl.show()
                         pl.close(fig)
 
+    def test_match_distribution_semifrozen(self):
+        """Handle frozen params in match_distribution
+        """
+        matches = match_distribution(np.arange(10),
+                                     distributions=[
+                                         'uniform',
+                                         ('uniform', {'loc': 0})
+                                         ],
+                                     p=-1 # so we get all matches
+                                     )
+        self.assertEqual(len(matches), 2) # we must get some match
+
+        self.assertTrue(abs(matches[0][-1][0]) < 4e-1) # full fit should get close to true loc
+        self.assertTrue(abs(matches[0][-1][1]-9) < 1e-1) # full fit should get close to true scale
+
+        self.assertEqual(matches[1][-1][0], 0) # frozen should maintain the loc
+        # actually it fails ATM to fit uniform with frozen loc=0
+        # nicely -- sets scale = 1 :-/   TODO
+        raise SkipTest("TODO: Known failure to fit uniform with frozen loc")
+        self.assertTrue(abs(matches[1][-1][1]-9) < 1e-1) # frozen fit of scale
+
     def test_r_dist_stability(self):
         """Test either rdist distribution performs nicely
         """
@@ -263,6 +284,15 @@ class StatsTestsScipy(unittest.TestCase):
         v = scipy.stats.rdist(10000, 0, 1).cdf([-0.1])
         self.assertTrue(v>=0, v<=1)
 
+    @reseed_rng()
+    def test_scipy_fit_2fparams(self):
+        t = scipy.stats.t
+        d = t(10, 1, 10).rvs(10)
+        params = t.fit(d, floc=1, fscale=10.)
+        self.assertEqual(params[1:], (1, 10.))
+        # df's are apparently quite difficult to assess unless plenty
+        # of samples
+        #self.assertTrue(abs(params[0] - 10) < 7) # estimate df at least in the right ball park
 
     def test_anova_compliance(self):
         ds = datasets['uni2large']
@@ -277,9 +307,11 @@ class StatsTestsScipy(unittest.TestCase):
 
 
     @reseed_rng()
-    def test_glm(self):
+    def test_statsmodels(self):
         """Test GLM
         """
+        skip_if_no_external('statsmodels')
+        from mvpa2.measures.statsmodels_adaptor import GLM
         # play fmri
         # full-blown HRF with initial dip and undershoot ;-)
         hrf_x = np.linspace(0, 25, 250)
@@ -331,18 +363,35 @@ class StatsTestsScipy(unittest.TestCase):
             self.assertTrue(np.absolute(betas[0,0]) > 1.0)
 
 
-        # check GLM zscores
-        glm = GLM(X, voi='zstat')
-        zstats = glm(data)
+        # check GLM t values
+        glm = GLM(X, voi='tvalues')
+        tstats = glm(data)
 
-        self.assertTrue(zstats.shape == betas.shape)
+        self.assertTrue(tstats.shape == betas.shape)
 
-        self.assertTrue((zstats.samples[1] > 1000).all(),
-                msg='constant zstats should be huge')
+        self.assertTrue((tstats.samples[1] > 1000).all(),
+                msg='constant tvalues should be huge')
 
         if cfg.getboolean('tests', 'labile', default='yes'):
             self.assertTrue(np.absolute(betas[0,0]) > betas[0,1],
-                msg='with signal should have higher zstats')
+                msg='with signal should have higher tvalues')
+
+        # check t-contrast -- should do the same as tvalues for the first
+        # parameter
+        glm = GLM(X, voi=[1, 0])
+        contrast = glm(data)
+        assert_array_almost_equal(contrast.samples[0], tstats.samples[0])
+        assert_equals(len(contrast), 5)
+        # we should be able to recover the approximate effect size of the signal
+        # which is constructed with a baseline offset of 2 (see above)
+        if cfg.getboolean('tests', 'labile', default='yes'):
+            assert_true(1.5 < contrast.samples[2,0] < 2.5)
+
+        # check F-test
+        glm = GLM(X, voi=[[1, 0]])
+        ftest = glm(data)
+        assert_equals(len(ftest), 4)
+        assert_true(ftest.samples[0,0] > ftest.samples[0,1])
 
 
     def test_binomdist_ppf(self):
