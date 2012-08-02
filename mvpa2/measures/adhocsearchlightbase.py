@@ -41,25 +41,9 @@ if externals.exists('scipy'):
 
 __all__ = [ "SimpleStatSearchlight" ]
 
-def lastdim_columnsums_fancy_indexing(a, inds, out):#, out=None):
-    ## if out is None:
-    ##     out_ = np.empty(a.shape[:-1] + (len(inds),))
-    ## else:
-    ##     out_ = out
+def lastdim_columnsums_fancy_indexing(a, inds, out):
     for i, inds_ in enumerate(inds):
-        ## if __debug__ and debug_slc_:
-        ##     debug('SLC_', "   Doing %i ROIs: %i (%i features) [%i%%]" \
-        ##           % (nroi_fids,
-        ##              iroi,
-        ##              len(roi_fids_),
-        ##              float(iroi+1)/nroi_fids*100,), cr=True)
         out[..., i] = a[..., inds_].sum(axis=-1)
-    ## # just a new line
-    ## if __debug__ and debug_slc_:
-    ##     debug('SLC_', '   ')
-
-    ## if out is None:
-    ##     return out_
 
 #
 # Machinery for sparse matrix way
@@ -122,20 +106,28 @@ def lastdim_columnsums_spmatrix(a, inds, out):
     sums = np.asarray((sps.csr_matrix(ar) * inds_s).todense())
     out[:] = sums.reshape(in_shape+(n_sums,))
 
+
 class _STATS:
     """Just a dummy container to group/access stats
     """
     pass
 
+
 class SimpleStatBaseSearchlight(BaseSearchlight):
-    """TODO
+    """Base class for clf searchlights based on basic univar. statistics
 
-    TODO s
+    Used for GNB and M1NN Searchlights
 
-    - some stats are not needed (eg per sample X^2's) for MNN, so we
-      should make them optional depending on the derived class
+    TODO
+    ----
 
-    Note: refactored from the original GNBSearchlight
+    some stats are not needed (eg per sample X^2's) for MNN, so we
+    should make them optional depending on the derived class
+
+    Note
+    ----
+
+    refactored from the original GNBSearchlight
 
     """
 
@@ -303,42 +295,6 @@ class SimpleStatBaseSearchlight(BaseSearchlight):
         generator = self.generator
         qe = self.queryengine
         errorfx = self.errorfx
-
-        ## if False:
-        ##     class A(Learner):
-        ##         pass
-        ##     self = A()
-        ##     import numpy as np
-        ##     from mvpa2.clfs.gnb import GNB
-        ##     from mvpa2.generators.partition import NFoldPartitioner
-        ##     from mvpa2.misc.errorfx import mean_mismatch_error
-        ##     from mvpa2.testing.datasets import datasets as tdatasets
-        ##     from mvpa2.datasets import Dataset
-        ##     from mvpa2.misc.neighborhood import IndexQueryEngine, Sphere
-        ##     from mvpa2.clfs.distance import absmin_distance
-        ##     import time
-        ##     if __debug__:
-        ##         from mvpa2.base import debug
-        ##         debug.active += ['SLC.*']
-        ##         # XXX is it that ugly?
-        ##         debug.active.pop(debug.active.index('SLC_'))
-        ##         debug.metrics += ['reltime']
-        ##     dataset = tdatasets['3dlarge'].copy()
-        ##     dataset.fa['voxel_indices'] = dataset.fa.myspace
-        ##     sphere = Sphere(radius=1,
-        ##                     distance_func=absmin_distance)
-        ##     qe = IndexQueryEngine(myspace=sphere)
-
-        ##     # Fracisco's data
-        ##     #dataset = ds_fp
-        ##     qe = IndexQueryEngine(voxel_indices=sphere)
-
-        ##     qe.train(dataset)
-        ##     roi_ids = np.arange(dataset.nfeatures)
-        ##     gnb = GNB()
-        ##     params = gnb.params
-        ##     generator = NFoldPartitioner()
-        ##     errorfx = mean_mismatch_error
 
         if __debug__:
             time_start = time.time()

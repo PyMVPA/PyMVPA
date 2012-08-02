@@ -175,7 +175,7 @@ class Sifter(Node):
 
                     # exit if resultant attributes do no match
                     uvalues_selected = np.unique(attr[mask])
-                    
+
                     # use set() so we could compare results of different lengths as well
                     # and not worry about sorting etc
                     if not (set(uvalues_selected) == set(uvalues) and len(uvalues_selected)):
