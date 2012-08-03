@@ -4,6 +4,14 @@ General AFNI NIML I/O support
 Created on Feb 16, 2012
 
 @author: Nikolaas. N. Oosterhof (nikolaas.oosterhof@unitn.it)
+
+This function reads a NIML file and returns a dict that contains all 
+NIML information in a tree-like structure (dicts for which some values
+are dicts themselves). Branches are stored in a 'nodes' field.
+
+For specific types of data, consider afni_niml_annot or afni_niml_annot
+files which provide easier access to the data.
+
 '''
 import re, numpy as np, afni_niml_types as types, random, os, time, sys, base64, afni_niml_dset as dset, copy
 
@@ -136,7 +144,7 @@ def _datastring2rawniml(s, niml):
             s = base64.decodestring(s)
         elif not 'binary' in niform:
             raise ValueError('Illegal niform %s' % niform)
-
+        
         data_1d = np.fromstring(s, dtype=tp)
         data = np.reshape(data_1d, (nrows, ncols))
 

@@ -211,6 +211,7 @@ searchlight = sparse_attributes.searchlight(cv, nbrhood,
                                            postproc=mean_sample(),
                                            center_ids=center_ids)
 
+
 sl_dset = searchlight(dataset)
 
 """

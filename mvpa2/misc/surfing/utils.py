@@ -302,25 +302,6 @@ def eta(starttime, progress, msg=None, show=True):
     return fullmsg
 
 
-def _get_fingerdata_dir():
-
-    dirs = ['/Users/nick/Downloads',
-          '/apps/nicksurfing/testdata']
-
-    indir = 'fingerdata-0.3'
-
-    for d in dirs:
-        fullpath = '%s/%s/' % (d, indir)
-
-        if os.path.exists(fullpath):
-            return fullpath
-
-    raise ValueError('Directory for fingerdata not found')
-
-
-
-
-
 if __name__ == '__main__':
     fn = "my/dir/file.nii"
     fn = '/Users/nick/Downloads/fingerdata-0.2/sef/anat_al+orig.HEAD'
