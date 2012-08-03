@@ -216,3 +216,108 @@ class DSMatrix(object):
     ##REF: Name was automagically refactored
     def get_metric(self):
         return self.metric
+
+
+
+def ttest_1samp_masked(a, popmean, axis=0, mask=None, tail='both'):
+    """
+    Calculates the T-test for the mean of ONE group of scores `a`.
+
+    This is a refinement for the :func:`scipy.stats.ttest_1samp` for
+    the null hypothesis testing that the expected value (mean) of a
+    sample of independent observations is equal to the given
+    population mean, `popmean`.  It adds ability to test carry single
+    tailed test as well as operate on samples with varying number of
+    active measurements, as specified by `mask` argument.
+
+    Parameters
+    ----------
+    a : array_like
+        sample observations
+    popmean : float or array_like
+        expected value in null hypothesis, if array_like than it must have the
+        same shape as `a` excluding the axis dimension
+    axis : int, optional, (default axis=0)
+        Axis can equal None (ravel array first), or an integer (the axis
+        over which to operate on a).
+    mask : array_like, bool
+        bool array to specify which measurements should participate in the test
+    tail : ('both', 'left', 'right')
+        tail to test
+
+    Returns
+    -------
+    t : float or array
+        t-statistic
+    prob : float or array
+        p-value
+
+    Examples
+    --------
+    TODO
+
+    """
+    # Assure appropriate type
+    a = np.asanyarray(a)
+    if mask is None: # this function to be used with a mask in general
+        mask = np.ones(a.shape, dtype=bool)
+    else:
+        mask = np.asanyarray(mask)
+    assert(a.shape == mask.shape)
+
+    if axis is None:
+        a = np.ravel(a)
+        mask = mask.ravel()
+    elif axis == 0 and a.ndim > 1:
+        assert(a.ndim < 3)              # for now
+        a = a.T
+        mask = mask.T
+    else:
+        pass
+
+    if axis is None or a.ndim == 1:
+        iterables = zip([a], [mask])
+        n = 1
+    else:
+        iterables = zip(a, mask)
+        n = len(a)
+
+    # n/df might vary, so we would simply revert to looping over the
+    # entries while getting within axis
+    t = np.empty(n)
+    prob = np.empty(n)
+    for i, (a_, m_) in enumerate(iterables):
+        a_ = a_[m_]
+        n = len(a_)
+        df = n - 1
+
+        d = np.mean(a_, axis=0) - popmean
+        v = np.var(a_, axis=0, ddof=1)
+        denom = np.sqrt(v / n)
+
+        t_ = np.divide(d, denom)
+        t[i], prob[i] = _ttest_finish(df, t_, tail=tail)
+
+    if axis is None or a.ndim == 1:
+        t, prob = t[0], prob[0]
+
+    # TODO: when allow >2D -- handle shape
+    return t, prob
+
+
+def _ttest_finish(df, t, tail='both'):
+    """Common code between all 3 t-test functions."""
+    dist_gen = st.distributions.t
+    if tail == 'both':
+        prob = dist_gen.sf(np.abs(t), df) * 2 #use np.abs to get upper tail
+    elif tail == 'left':
+        prob = dist_gen.sf(t, df)
+    elif tail == 'right':
+        prob = dist_gen.cdf(t, df)
+    else:
+        raise ValueError("Unknown tail %r" % tail)
+
+    if t.ndim == 0:
+        t = t[()]
+
+    return t, prob
