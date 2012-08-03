@@ -268,40 +268,10 @@ def sparse2full(dset, pad_to_ico_ld=None, pad_to_node=None):
 
     return fulldset
 
-def _test_dset():
-    d = '/Users/nick/Downloads/fingerdata-0.2/glm/'
-    fn = d + '__small.niml.dset'
-    #fn=d+'lh_voxsel_50vx.niml.dset'
-    fn = d + 'lh_cfy_50vx.niml.dset'
-    #fn=d+'__binary.niml.dset'
-    fn = d + '__big_binary.niml.dset'
-    fn = d + '__b64.niml.dset'
-
-
-
-    fnout = d + "__output.niml.dset"
-
-    niml = read(fn)
-
-    write(fnout, niml)
-
-    '''
-    f=open(fn)
-    s=f.read()
-    f.close()
+if __name__=="__main__":
+    fn="/Users/nick/_tmp/weird.niml.dset"
+    raw=afni_niml.read(fn)
     
-    raw=niml.string2rawniml(s)
-    simple=rawniml2dset(raw)
-    shortfn=os.path.split(fn)[1]
-    simple[0]['filename']=shortfn
-    raw2=dset2rawniml(simple)
-    s2=niml.rawniml2string(raw2,form='binary')
+    dset=read(fn)
     
-    f=open(fnout,'w')
-    f.write(s2)
-    f.close()
-    '''
-    print fnout
-
-if __name__ == '__main__':
-    _test_dset()
+    
