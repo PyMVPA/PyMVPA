@@ -194,7 +194,7 @@ def voxel2nearest_node(sp_attrs, sort_by_label=[
 
     n2v = dict((k, v[0]) for k, v in vox2node_and_attrs.iteritems())
 
-    return vox2node_and_attrs
+    return n2v
 
 class SparseVolumeAttributes(SparseAttributes):
     """
