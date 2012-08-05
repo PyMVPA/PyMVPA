@@ -7,6 +7,7 @@ import collections
 import volgeom
 import cPickle as pickle
 import utils
+import operator
 
 from mvpa2.misc.neighborhood import IndexQueryEngine
 from mvpa2.measures.searchlight import Searchlight
@@ -57,6 +58,19 @@ class SparseAttributes(object):
         roiattr = self.sa[roi_label]
         return roiattr[sa_label] if roiattr else None
 
+    def get_tuple(self, roi_label, sa_labels=None):
+        if sa_labels is None:
+            sa_labels = tuple(self._sa_labels)
+
+        roiattr = self.sa[roi_label]
+        if not roiattr:
+            return None
+
+        vs = [roiattr[sa_label] for sa_label in sa_labels]
+
+        return zip(*vs)
+
+
     def get_attr_mapping(self, roi_attr):
         '''Provides a dict-like object with lookup for a 
         single ROI attribute'''
@@ -70,20 +84,20 @@ class SparseAttributes(object):
         '''Provides an inverse mapping from get_attr_mapping
         This mapping is computed and returned as a new dict
         '''
-        if isinstance(roi_attr,AttrMapping):
-            forward=roi_attr
+        if isinstance(roi_attr, AttrMapping):
+            forward = roi_attr
         else:
-            forward=self.get_attr_mapping(roi_attr)
-        
-        backward=dict()
+            forward = self.get_attr_mapping(roi_attr)
+
+        backward = dict()
         for k, vs in forward.iteritems():
             for v in vs:
                 if not v in backward:
-                    backward[v]=[]
+                    backward[v] = []
                 backward[v].append(k)
-        
+
         return backward
-            
+
 
     def __repr__(self):
         return ("SparseAttributes with %i entries, %i labels (%r)\nGeneral attributes: %r" %
@@ -105,24 +119,82 @@ class AttrMapping(Mapping):
 
     def __iter__(self):
         return iter(self.__keys__())
-    
+
 def paired_common_attributes_count(sp_attrs, roi_attr):
     '''function to count how often the same attribute is shared across keys in
-    the input sparse_attributes. Useful to count how many voxels are shared across''' 
-    inv=sp_attrs.get_inv_attr_mapping(roi_attr)
-    swp=lambda x,y: (x,y) if x<y else (y,x)
-    
-    d=dict()
-    for k,vs in inv.iteritems():
+    the input sparse_attributes. Useful to count how many voxels are shared across 
+    center nodes'''
+    inv = sp_attrs.get_inv_attr_mapping(roi_attr)
+    swp = lambda x, y: (x, y) if x < y else (y, x)
+
+    d = dict()
+    for k, vs in inv.iteritems():
         for i, x in enumerate(vs):
             for j, y in enumerate(vs):
-                if i<=j: 
+                if i <= j:
                     continue
-                s=swp(x,y)
-                if not s in d: 
-                    d[s]=0
-                d[s]+=1
+                s = swp(x, y)
+                if not s in d:
+                    d[s] = 0
+                d[s] += 1
     return d
+
+def voxel2nearest_node(sp_attrs, sort_by_label=[
+                                    'center_distances',
+                                    'grey_matter_position'],
+                            sort_by_proc=[None, lambda x : abs(x - .5)],
+                            return_label='lin_vox_idxs'):
+
+    '''finds for each voxel the nearest node
+    
+    'nearest' in this sense depends on the criteria specified in the arguments.
+    by default distances are first compared based on geodesic distance
+    from lines connecting white/pial matter surfaces, and then relative
+    position in the grey matter (.5 means just in between the two) 
+    
+    in a typical use case, the first input argument is the result
+    from running voxel_selection
+    
+    the result is a mapping for which 
+    
+    TODO better documentation
+    '''
+
+
+    all_labels = sort_by_label + [return_label]
+    sort_by_count = len(sort_by_label)
+
+    id = lambda x:x # identity function
+    if sort_by_proc is None:
+        sort_by_proc = [None for _ in xrange(sort_by_count)]
+
+    sort_by_proc = [id if f is None else f for f in sort_by_proc]
+
+
+    sort_by_getter = lambda x: tuple([f(x[i]) for i, f in enumerate(sort_by_proc)])
+    sort_by_getter_count = len(sort_by_proc)
+    #key_getter = operator.itemgetter(*range(sort_by_count))
+    value_getter = operator.itemgetter(sort_by_getter_count) # item after sort_by 
+
+    node_idxs = sp_attrs.keys()
+    vox2node_and_attrs = dict()
+
+    for node_idx in node_idxs:
+        attr_vals = sp_attrs.get_tuple(node_idx, all_labels)
+
+        for attr_val in attr_vals:
+            k, v = sort_by_getter(attr_val), value_getter(attr_val)
+
+            if v in vox2node_and_attrs:
+                n, attrs = vox2node_and_attrs[v]
+                if k >= attrs:
+                    continue
+
+            vox2node_and_attrs[v] = (node_idx, k)
+
+    n2v = dict((k, v[0]) for k, v in vox2node_and_attrs.iteritems())
+
+    return vox2node_and_attrs
 
 class SparseVolumeAttributes(SparseAttributes):
     """
@@ -184,7 +256,7 @@ class SparseVolumeAttributes(SparseAttributes):
                 vs = self.get(center_id, voxel_ids_label)
                 attr.add(mask_idxs[i], {voxel_ids_label:vs})
             """
-            ## Trying the following change :
+            ## (Andy Connoly July 2012) Trying the following change :
             for center_id in center_ids:
                 vs = self.get(center_id, voxel_ids_label)
                 attr.add(mask_idxs[center_id], {voxel_ids_label:vs})
@@ -225,16 +297,16 @@ class SparseVolumeAttributes(SparseAttributes):
 
         keys = self.keys()
         map = self.get_attr_mapping(voxel_ids_label)
-        
+
         for key in keys:
             linmask[map[key]] = 1
-            
+
         nmask = np.sum(linmask)
         nkeys = len(keys)
         delta = nkeys - nmask
 
         print "made maks, %d keys, %d in mask" % (len(keys), nmask)
-        
+
         if auto_grow and delta > 0:
             # not enough values in the mask, have to add
             if nkeys > vg.nv():
@@ -301,7 +373,7 @@ class SparseNeighborhood():
             return tuple()
 
         c_lin = vg.ijk2lin(c_ijk)
-        
+
         print c_lin, c_ijk
 
         if not c_lin in self._attr.keys(): # no nodes associated
