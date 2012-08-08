@@ -218,8 +218,17 @@ class DSMatrix(object):
         return self.metric
 
 
+def _chk_asanyarray(a, axis):
+    a = np.asanyarray(a)
+    if axis is None:
+        a = a.ravel()
+        outaxis = 0
+    else:
+        outaxis = axis
+    return a, outaxis
 
-def ttest_1samp_masked(a, popmean, axis=0, mask=None, tail='both'):
+
+def ttest_1samp(a, popmean, axis=0, mask=None, tail='both'):
     """
     Calculates the T-test for the mean of ONE group of scores `a`.
 
@@ -229,6 +238,18 @@ def ttest_1samp_masked(a, popmean, axis=0, mask=None, tail='both'):
     population mean, `popmean`.  It adds ability to test carry single
     tailed test as well as operate on samples with varying number of
     active measurements, as specified by `mask` argument.
+
+    Since it is only a refinement and otherwise it should perform the
+    same way as the original ttest_1samp -- the name was overloaded.
+
+    Note
+    ----
+
+    Initially it was coded before discovering scipy.mstats which
+    should work with masked arrays.  But ATM (scipy 0.10.1) its
+    ttest_1samp does not support axis argument making it of limited
+    use anyways.
+
 
     Parameters
     ----------
@@ -257,52 +278,41 @@ def ttest_1samp_masked(a, popmean, axis=0, mask=None, tail='both'):
     TODO
 
     """
-    # Assure appropriate type
-    a = np.asanyarray(a)
-    if mask is None: # this function to be used with a mask in general
-        mask = np.ones(a.shape, dtype=bool)
+
+    # would also flatten if no axis specified
+    a, axis = _chk_asanyarray(a, axis)
+
+    if isinstance(a, np.ma.core.MaskedArray):
+        if mask is not None:
+            raise ValueError(
+                "Provided array is already masked, so no additional "
+                "mask should be provided")
+        n = a.count(axis=axis)
+    elif mask is not None:
+        # Create masked array
+        a = np.ma.masked_array(a, mask=~np.asanyarray(mask))
+        n = a.count(axis=axis)
     else:
-        mask = np.asanyarray(mask)
-    assert(a.shape == mask.shape)
+        # why bother doing anything?
+        n = a.shape[axis]
 
-    if axis is None:
-        a = np.ravel(a)
-        mask = mask.ravel()
-    elif axis == 0 and a.ndim > 1:
-        assert(a.ndim < 3)              # for now
-        a = a.T
-        mask = mask.T
-    else:
-        pass
+    df= n - 1
 
-    if axis is None or a.ndim == 1:
-        iterables = zip([a], [mask])
-        n = 1
-    else:
-        iterables = zip(a, mask)
-        n = len(a)
+    d = np.mean(a, axis) - popmean
+    v = np.var(a, axis, ddof=1)
+    denom = np.sqrt(v / n)
 
-    # n/df might vary, so we would simply revert to looping over the
-    # entries while getting within axis
-    t = np.empty(n)
-    prob = np.empty(n)
-    for i, (a_, m_) in enumerate(iterables):
-        a_ = a_[m_]
-        n = len(a_)
-        df = n - 1
+    t = np.divide(d, denom)
+    t, prob = _ttest_finish(df, t, tail=tail)
 
-        d = np.mean(a_, axis=0) - popmean
-        v = np.var(a_, axis=0, ddof=1)
-        denom = np.sqrt(v / n)
+    # t, prob might be full arrays if no masking was actually done
+    def _filled(a):
+        if isinstance(a, np.ma.core.MaskedArray):
+            return a.filled(np.nan)
+        else:
+            return a
 
-        t_ = np.divide(d, denom)
-        t[i], prob[i] = _ttest_finish(df, t_, tail=tail)
-
-    if axis is None or a.ndim == 1:
-        t, prob = t[0], prob[0]
-
-    # TODO: when allow >2D -- handle shape
-    return t, prob
+    return _filled(t), _filled(prob)
 
 
 def _ttest_finish(df, t, tail='both'):
