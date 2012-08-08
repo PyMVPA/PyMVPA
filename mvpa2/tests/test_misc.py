@@ -53,7 +53,6 @@ def test_ttest_1samp_masked():
     import numpy as np
     from mvpa2.misc.stats import ttest_1samp as ttest_1samp_masked
     from scipy.stats import ttest_1samp
-    from mvpa2.testing import *
     # test on some random data to match results of ttest_1samp
     d = np.random.normal(size=(5, 3))
     _assert_array_equal = assert_array_almost_equal
