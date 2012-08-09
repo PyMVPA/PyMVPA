@@ -14,6 +14,8 @@ from mvpa2.base import externals
 
 if externals.exists('scipy', raise_=True):
     import scipy.stats as st
+    # evaluate once the fact of life
+    __scipy_prior0101 =  externals.versions['scipy'] < '0.10.1'
 
 import numpy as np
 import copy
@@ -299,11 +301,20 @@ def ttest_1samp(a, popmean, axis=0, mask=None, tail='both'):
     df= n - 1
 
     d = np.mean(a, axis) - popmean
+    # yoh: there is a bug in old (e.g. 1.4.1) numpy's while operating on
+    #      masked arrays -- for some reason refuses to compute var
+    #      correctly whenever only 2 elements are available and it is
+    #      multi-dimensional:
+    # (Pydb) print np.var(a[:, 9:11], axis, ddof=1)
+    # [540.0 --]
+    # (Pydb) print np.var(a[:, 10:11], axis, ddof=1)
+    # [--]
+    # (Pydb) print np.var(a[:, 10], axis, ddof=1)
+    # 648.0
     v = np.var(a, axis, ddof=1)
     denom = np.sqrt(v / n)
 
     t = np.divide(d, denom)
-    t, prob = _ttest_finish(df, t, tail=tail)
 
     # t, prob might be full arrays if no masking was actually done
     def _filled(a):
@@ -312,7 +323,9 @@ def ttest_1samp(a, popmean, axis=0, mask=None, tail='both'):
         else:
             return a
 
-    return _filled(t), _filled(prob)
+    t, prob = _ttest_finish(_filled(df), _filled(t), tail=tail)
+
+    return t, prob
 
 
 def _ttest_finish(df, t, tail='both'):
@@ -327,7 +340,12 @@ def _ttest_finish(df, t, tail='both'):
     else:
         raise ValueError("Unknown tail %r" % tail)
 
+    t_isnan = np.isnan(t)
+    if np.any(t_isnan) and __scipy_prior0101:
+        # older scipy's would return 0 for nan values of the argument
+        # which is incorrect
+        prob[t_isnan] = np.nan
     if t.ndim == 0:
-        t = t[()]
+        t = np.asscalar(t)
 
     return t, prob

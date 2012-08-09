@@ -52,10 +52,52 @@ def test_ttest_1samp_masked():
     skip_if_no_external('scipy')
     import numpy as np
     from mvpa2.misc.stats import ttest_1samp as ttest_1samp_masked
-    from scipy.stats import ttest_1samp
+
+    # old scipy's ttest_1samp need to be conditioned since they
+    # return 1's and 0's for when should be NaNs
+    if externals.versions['scipy'] < '0.10.1':
+        from scipy.stats import ttest_1samp as scipy_ttest_1samp
+
+        def ttest_1samp(*args, **kwargs):
+            t, p = scipy_ttest_1samp(*args, **kwargs)
+            p_isnan = np.isnan(p)
+            if np.any(p_isnan):
+                if t.ndim == 0:
+                    t = np.nan
+                else:
+                    t[p_isnan] = np.nan
+            return t, p
+    else:
+        from scipy.stats import ttest_1samp
+
+    if externals.versions['numpy'] < '1.6.2':
+        # yoh: there is a bug in old (e.g. 1.4.1) numpy's while operating on
+        #      masked arrays -- for some reason refuses to compute var
+        #      correctly whenever only 2 elements are available and it is
+        #      multi-dimensional:
+        # (Pydb) print np.var(a[:, 9:11], axis, ddof=1)
+        # [540.0 --]
+        # (Pydb) print np.var(a[:, 10:11], axis, ddof=1)
+        # [--]
+        # (Pydb) print np.var(a[:, 10], axis, ddof=1)
+        # 648.0
+        # To overcome -- assure masks with without 2 elements in any
+        # dimension and allow for NaN t-test results in such anyway
+        # degenerate cases
+        def random_mask(shape):
+            # screw it -- let's generate quite primitive mask with
+            return (np.arange(np.prod(shape))%2).astype(bool).reshape(shape)
+        ndshape = (5, 6, 1, 7)          # we need larger structure with this XOR mask
+    else:
+        def random_mask(shape):
+            # otherwise all simple:
+            return np.random.normal(size=shape) > -0.5
+        ndshape = (4, 3, 2, 1)
+
+    _assert_array_equal = assert_array_almost_equal
+
     # test on some random data to match results of ttest_1samp
     d = np.random.normal(size=(5, 3))
-    _assert_array_equal = assert_array_almost_equal
     for null in 0, 0.5:
         # 1D case
         _assert_array_equal(ttest_1samp       (d[0], null),
@@ -88,13 +130,13 @@ def test_ttest_1samp_masked():
                                            mask=[False]*3 + [True]*7))
 
     # random mask
-    m = np.random.normal(size=d.shape) > 0.1
+    m = random_mask(d.shape)
     _assert_array_equal(ttest_1samp       (d[m], 0),
                         ttest_1samp_masked(d,    0, mask=m))
 
     # 2D masking
-    d = np.arange(72).reshape((4,-1))
-    m = np.random.normal(size=d.shape) > -0.5
+    d = np.arange(30).reshape((5,-1))
+    m = random_mask(d.shape)
 
     # axis=1
     ts, ps = ttest_1samp_masked(d, 0, mask=m, axis=1)
@@ -107,8 +149,8 @@ def test_ttest_1samp_masked():
         _assert_array_equal(ttest_1samp (d_[m_], 0), (t_, p_))
 
     #5D masking
-    d = d.reshape((4,3,2,1,-1))
-    m = m.reshape((4,3,2,1,-1))
+    d = np.random.normal(size=ndshape)
+    m = random_mask(d.shape)
 
     for axis in range(d.ndim):
         for t0 in (0, 1.0):             # test for different targets
@@ -126,5 +168,4 @@ def test_ttest_1samp_masked():
                                       ts.flatten(),
                                       ps.flatten()):
                 _assert_array_equal(ttest_1samp (d_[m_], t0), (t_, p_))
-
 
