@@ -47,6 +47,16 @@ def __assign_numpy_version():
     import numpy as np
     versions['numpy'] = SmartVersion(np.__version__)
 
+def __check_numpy_correct_unique():
+    """ndarray.unique fails to operate on heterogeneous object ndarrays
+    See http://projects.scipy.org/numpy/ticket/2188
+    """
+    import numpy as np
+    try:
+        _ = np.unique(np.array([1, None, "str"]))
+    except TypeError, e:
+        raise RuntimeError("numpy.unique thrown %s" % e)
+
 def __assign_scipy_version():
     # To don't allow any crappy warning to sneak in
     import warnings
@@ -301,6 +311,14 @@ def __check_rv_discrete_ppf():
     except TypeError:
         raise RuntimeError, "pmf is broken in discrete dists of scipy.stats"
 
+def __check_rv_continuous_reduce_func():
+    """Unfortunately scipy 0.10.1 pukes when fitting with two params fixed
+    """
+    import scipy.stats as ss
+    try:
+        ss.t.fit(np.arange(6), floc=0.0, fscale=1.)
+    except IndexError, e:
+        raise RuntimeError("rv_continuous.fit can't candle 2 fixed params")
 
 def __check_in_ipython():
     # figure out if ran within IPython
@@ -407,6 +425,12 @@ def __check_pprocess():
     import pprocess as pp
     versions['pprocess'] = SmartVersion(pp.__version__)
 
+def __assign_h5py_version():
+    """Check if h5py present  an if it is -- store its version
+    """
+    import h5py
+    versions['h5py'] = SmartVersion(h5py.version.version)
+
 def __check_rpy():
     """Check either rpy is available and also set it for the sane execution
     """
@@ -477,9 +501,11 @@ _KNOWN = {'libsvm':'import mvpa2.clfs.libsvmc._svm as __; x=__.seq_to_svm_node',
           'shogun.svmocas': '__assign_shogun_version(); import shogun.Classifier as __; x=__.SVMOcas',
           'shogun.svrlight': '__assign_shogun_version(); from shogun.Regression import SVRLight as __',
           'numpy': "__assign_numpy_version()",
+          'numpy_correct_unique': "__check_numpy_correct_unique()",
           'scipy': "__check_scipy()",
           'good scipy.stats.rdist': "__check_stablerdist()",
           'good scipy.stats.rv_discrete.ppf': "__check_rv_discrete_ppf()",
+          'good scipy.stats.rv_continuous._reduce_func(floc,fscale)': "__check_rv_continuous_reduce_func()",
           'weave': "__check_weave()",
           'pywt': "import pywt as __",
           'pywt wp reconstruct': "__check_pywt(['wp reconstruct'])",
@@ -663,6 +689,7 @@ versions._KNOWN.update({
     'shogun' : __assign_shogun_version,
     'shogun:rev' : __assign_shogun_version,
     'shogun:full' : __assign_shogun_version,
+    'h5py' : __assign_h5py_version,
     })
 
 
